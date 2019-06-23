@@ -118,16 +118,16 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 		}
 
 		for (unsigned j = 0; j < smp->length; j++) {
-			enum signal_type fmt = sample_format(smp, j);
+			enum SignalType fmt = sample_format(smp, j);
 			union signal_data *data = &smp->data[j];
 
 			/* Check length */
-			nlen = (o + fmt == SIGNAL_TYPE_COMPLEX ? 2 : 1) * (bits / 8);
+			nlen = (o + (fmt == SignalType::COMPLEX ? 2 : 1)) * (bits / 8);
 			if (nlen >= len)
 				goto out;
 
 			switch (fmt) {
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					switch (bits) {
 						case 8:
 							i8 [o++] = -1;
@@ -151,7 +151,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 					}
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					switch (bits) {
 						case 8:
 							i8 [o++] = data->i;
@@ -177,7 +177,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 					}
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					switch (bits) {
 						case 8:
 							i8 [o++] = data->b ? 1 : 0;
@@ -203,7 +203,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 					}
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
+				case SignalType::COMPLEX:
 					switch (bits) {
 						case  8:
 							i8 [o++]  = -1; /* Not supported */
@@ -233,7 +233,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 					}
 					break;
 
-				case SIGNAL_TYPE_INVALID:
+				case SignalType::INVALID:
 					return -1;
 			}
 		}
@@ -313,7 +313,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 #endif
 		}
 
-		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
+		smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 	else {
 		smp->flags = 0;
@@ -326,11 +326,11 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 
 	unsigned i;
 	for (i = 0; i < smp->capacity && o < nlen; i++) {
-		enum signal_type fmt = sample_format(smp, i);
+		enum SignalType fmt = sample_format(smp, i);
 		union signal_data *data = &smp->data[i];
 
 		switch (fmt) {
-			case SIGNAL_TYPE_FLOAT:
+			case SignalType::FLOAT:
 				switch (bits) {
 					case 8:   data->f = -1; o++; break; /* Not supported */
 					case 16:  data->f = -1; o++; break; /* Not supported */
@@ -343,7 +343,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				}
 				break;
 
-			case SIGNAL_TYPE_INTEGER:
+			case SignalType::INTEGER:
 				switch (bits) {
 					case 8:   data->i = (int8_t)                                                    i8[o++];  break;
 					case 16:  data->i = (int16_t)  SWAP_INT_XTOH(io->flags & RAW_BIG_ENDIAN,  16,  i16[o++]); break;
@@ -355,7 +355,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				}
 				break;
 
-			case SIGNAL_TYPE_BOOLEAN:
+			case SignalType::BOOLEAN:
 				switch (bits) {
 					case 8:   data->b = (bool)                                                  i8[o++];  break;
 					case 16:  data->b = (bool) SWAP_INT_XTOH(io->flags & RAW_BIG_ENDIAN,  16,  i16[o++]); break;
@@ -367,7 +367,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				}
 				break;
 
-			case SIGNAL_TYPE_COMPLEX:
+			case SignalType::COMPLEX:
 				switch (bits) {
 					case 8:  data->z = -1 + _Complex_I * -1; o += 2; break; /* Not supported */
 					case 16: data->z = -1 + _Complex_I * -1; o += 2; break; /* Not supported */
@@ -389,7 +389,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				}
 				break;
 
-			case SIGNAL_TYPE_INVALID:
+			case SignalType::INVALID:
 				warning("Unsupported format in RAW payload");
 				return -1;
 		}
@@ -411,22 +411,22 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 #define REGISTER_FORMAT_RAW(i, n, d, f)					\
 static struct plugin i;							\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {	\
-	if (plugins.state == STATE_DESTROYED)				\
+	if (plugins.state == State::DESTROYED)				\
 		vlist_init(&plugins);					\
 									\
 	i.name 		= n;						\
 	i.description 	= d;						\
-	i.type 		= PLUGIN_TYPE_FORMAT;				\
+	i.type 		= PluginType::FORMAT;				\
 	i.format.sprint = raw_sprint;					\
 	i.format.sscan  = raw_sscan;					\
-	i.format.flags 	= f | IO_HAS_BINARY_PAYLOAD |			\
-			     SAMPLE_HAS_DATA;				\
+	i.format.flags 	= f | (int) IOFlags::HAS_BINARY_PAYLOAD |	\
+			     (int) SampleFlags::HAS_DATA;		\
 									\
 	vlist_push(&plugins, &i);					\
 }									\
 									\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {		\
-        if (plugins.state != STATE_DESTROYED)				\
+        if (plugins.state != State::DESTROYED)				\
 	        vlist_remove_all(&plugins, &i);				\
 }
 /* Feel free to add additional format identifiers here to suit your needs */

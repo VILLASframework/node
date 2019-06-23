@@ -591,13 +591,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "ngsi";
 	p.description		= "OMA Next Generation Services Interface 10 (libcurl, libjansson)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0, /* unlimited */
 	p.node.size		= sizeof(struct ngsi);
 	p.node.type.start	= ngsi_type_start;
@@ -616,6 +616,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

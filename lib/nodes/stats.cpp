@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include <villas/nodes/stats.hpp>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/plugin.h>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
@@ -231,7 +231,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	}
 
 	smps[0]->length = len;
-	smps[0]->flags = SAMPLE_HAS_DATA;
+	smps[0]->flags = (int) SampleFlags::HAS_DATA;
 	smps[0]->signals = &n->in.signals;
 
 	return 1;
@@ -250,13 +250,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "stats";
 	p.description		= "Send statistics to another node";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 1;
 	p.node.flags		= 0;
 	p.node.size		= sizeof(struct stats_node);
@@ -276,6 +276,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

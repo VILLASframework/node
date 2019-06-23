@@ -43,7 +43,7 @@ extern "C" {
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/format_type.h>
 #include <villas/super_node.hpp>
 
@@ -108,7 +108,7 @@ int rtp_init(struct node *n)
 	r->aimd.log = nullptr;
 
 	r->rtcp.enabled = false;
-	r->aimd.rate_hook_type = RTCP_HOOK_DISABLED;
+	r->aimd.rate_hook_type = RTPHookType::DISABLED;
 
 	return 0;
 }
@@ -168,14 +168,14 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 		/* AIMD Hook type */
 		if (!r->rtcp.enabled)
-			r->aimd.rate_hook_type = RTCP_HOOK_DISABLED;
+			r->aimd.rate_hook_type = RTPHookType::DISABLED;
 		else if (hook_type) {
 			if (!strcmp(hook_type, "decimate"))
-				r->aimd.rate_hook_type = RTCP_HOOK_DECIMATE;
+				r->aimd.rate_hook_type = RTPHookType::DECIMATE;
 			else if (!strcmp(hook_type, "limit_rate"))
-				r->aimd.rate_hook_type = RTCP_HOOK_LIMIT_RATE;
+				r->aimd.rate_hook_type = RTPHookType::LIMIT_RATE;
 			else if (!strcmp(hook_type, "disabled"))
-				r->aimd.rate_hook_type = RTCP_HOOK_DISABLED;
+				r->aimd.rate_hook_type = RTPHookType::DISABLED;
 			else
 				r->logger->error("Unknown RTCP hook_type: {}", hook_type);
 		}
@@ -237,15 +237,15 @@ char * rtp_print(struct node *n)
 		const char *hook_type;
 
 		switch (r->aimd.rate_hook_type) {
-			case RTCP_HOOK_DECIMATE:
+			case RTPHookType::DECIMATE:
 				hook_type = "decimate";
 				break;
 
-			case RTCP_HOOK_LIMIT_RATE:
+			case RTPHookType::LIMIT_RATE:
 				hook_type = "limit_rate";
 				break;
 
-			case RTCP_HOOK_DISABLED:
+			case RTPHookType::DISABLED:
 				hook_type = "disabled";
 				break;
 
@@ -321,12 +321,12 @@ int rtp_start(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	/* Initialize queue */
-	ret = queue_signalled_init(&r->recv_queue, 1024, &memory_heap, 0);
+	ret = queue_signalled_init(&r->recv_queue, 1024, &memory_heap);
 	if (ret)
 		return ret;
 
 	/* Initialize IO */
-	ret = io_init(&r->io, r->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&r->io, r->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -344,14 +344,14 @@ int rtp_start(struct node *n)
 		return ret;
 
 	/* Initialize AIMD hook */
-	if (r->aimd.rate_hook_type != RTCP_HOOK_DISABLED) {
+	if (r->aimd.rate_hook_type != RTPHookType::DISABLED) {
 #ifdef WITH_HOOKS
 		switch (r->aimd.rate_hook_type) {
-			case RTCP_HOOK_DECIMATE:
+			case RTPHookType::DECIMATE:
 				r->aimd.rate_hook = new DecimateHook(nullptr, n, 0, 0);
 				break;
 
-			case RTCP_HOOK_LIMIT_RATE:
+			case RTPHookType::LIMIT_RATE:
 				r->aimd.rate_hook = new LimitRateHook(nullptr, n, 0, 0);
 				break;
 
@@ -609,7 +609,7 @@ int rtp_netem_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "rtp";
@@ -618,8 +618,8 @@ static void register_plugin() {
 #else
 	p.description		= "real-time transport protocol (libre)";
 #endif
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct rtp);
 	p.node.type.start	= rtp_type_start;
@@ -642,6 +642,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

@@ -27,7 +27,6 @@
 
 #pragma once
 
-#include <villas/hook.h>
 #include <villas/list.h>
 #include <villas/signal.h>
 #include <villas/log.hpp>
@@ -44,21 +43,36 @@ namespace node {
 
 class Hook {
 
+public:
+	enum class Flags {
+		BUILTIN = (1 << 0),   /**< Should we add this hook by default to every path?. */
+		PATH = (1 << 1),      /**< This hook type is used by paths. */
+		NODE_READ = (1 << 2), /**< This hook type is used by nodes. */
+		NODE_WRITE = (1 << 3) /**< This hook type is used by nodes. */
+	};
+
+	enum class Reason {
+		OK,
+		ERROR,
+		SKIP_SAMPLE,
+		STOP_PROCESSING
+	};
+
 protected:
 	Logger logger;
 
-	enum state state;
+	enum State state;
 
 	int flags;
-	int priority;		/**< A priority to change the order of execution within one type of hook. */
-	int enabled;		/**< Is this hook active? */
+	int priority; /**< A priority to change the order of execution within one type of hook. */
+	int enabled;  /**< Is this hook active? */
 
 	struct path *path;
 	struct node *node;
 
 	vlist signals;
 
-	json_t *cfg;		/**< A JSON object containing the configuration of the hook. */
+	json_t *cfg; /**< A JSON object containing the configuration of the hook. */
 
 public:
 	Hook(struct path *p, struct node *n, int fl, int prio, bool en = true);
@@ -81,42 +95,42 @@ public:
 	/** Called whenever a hook is started; before threads are created. */
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	/** Called whenever a hook is stopped; after threads are destoyed. */
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
 	virtual void check()
 	{
-		assert(state == STATE_PARSED);
+		assert(state == State::PARSED);
 
-		state = STATE_CHECKED;
+		state = State::CHECKED;
 	}
 
 	/** Called periodically. Period is set by global 'stats' option in the configuration file. */
 	virtual void periodic()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 	}
 
 	/** Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 	virtual void restart()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 	}
 
 	/** Called whenever a sample is processed. */
-	virtual int process(sample *smp)
+	virtual Reason process(sample *smp)
 	{
-		return HOOK_OK;
+		return Reason::OK;
 	};
 
 	int getPriority() const
@@ -129,7 +143,7 @@ public:
 		return flags;
 	}
 
-	struct vlist * getSignals()
+	struct vlist *getSignals()
 	{
 		return &signals;
 	}
@@ -149,9 +163,9 @@ public:
 
 	void parse()
 	{
-		assert(state == STATE_INITIALIZED);
+		assert(state == State::INITIALIZED);
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
 	void init()
@@ -170,13 +184,12 @@ protected:
 	int priority;
 
 public:
-	HookFactory(const std::string &name, const std::string &desc, int fl, int prio) :
-		Plugin(name, desc),
-		flags(fl),
-		priority(prio)
+	HookFactory(const std::string &name, const std::string &desc, int fl, int prio) : Plugin(name, desc),
+											  flags(fl),
+											  priority(prio)
 	{ }
 
-	virtual Hook * make(struct path *p, struct node *n) = 0;
+	virtual Hook *make(struct path *p, struct node *n) = 0;
 
 	int getFlags()
 	{
@@ -184,16 +197,17 @@ public:
 	}
 };
 
-template<typename T>
+template <typename T>
 class HookPlugin : public HookFactory {
 
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook * make(struct path *p, struct node *n) {
+	virtual Hook *make(struct path *p, struct node *n)
+	{
 		return new T(p, n, flags, priority);
 	};
 };
 
-} // node
-} // villas
+} // namespace node
+} // namespace villas

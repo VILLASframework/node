@@ -59,7 +59,7 @@ struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 	int enabled;
 
-	enum state state;
+	enum State state;
 
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
@@ -199,6 +199,6 @@ bool node_is_valid_name(const char *name);
 
 bool node_is_enabled(const struct node *n);
 
-struct vlist * node_get_signals(struct node *n, enum node_dir dir);
+struct vlist * node_get_signals(struct node *n, enum NodeDir dir);
 
 /** @} */

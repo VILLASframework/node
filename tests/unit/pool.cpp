@@ -34,16 +34,16 @@ struct param {
 	int thread_count;
 	int pool_size;
 	size_t block_size;
-	enum memory_type_flags memory_type;
+	enum MemoryFlags memory_type;
 };
 
 ParameterizedTestParameters(pool, basic)
 {
 	static struct param params[] = {
-		{ 1,	4096,	150,	MEMORY_HEAP },
-		{ 1,	128,	8,	MEMORY_HUGEPAGE },
-		{ 1,	4,	8192,	MEMORY_HUGEPAGE },
-		{ 1,	1 << 13, 4,	MEMORY_HUGEPAGE }
+		{ 1,	4096,	150,	MemoryFlags::HEAP },
+		{ 1,	128,	8,	MemoryFlags::HUGEPAGE },
+		{ 1,	4,	8192,	MemoryFlags::HUGEPAGE },
+		{ 1,	1 << 13, 4,	MemoryFlags::HUGEPAGE }
 	};
 
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
@@ -52,7 +52,7 @@ ParameterizedTestParameters(pool, basic)
 ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;
-	struct pool pool = { .state = STATE_DESTROYED };
+	struct pool pool = { .state = State::DESTROYED };
 
 	void *ptr, *ptrs[p->pool_size];
 

@@ -54,7 +54,7 @@ class Api {
 protected:
 	Logger logger;
 
-	enum state state;
+	enum State state;
 
 	std::thread thread;
 	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */

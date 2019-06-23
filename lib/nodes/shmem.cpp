@@ -141,7 +141,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 		info("Shared memory segment has been closed.");
 
-		n->state = STATE_STOPPING;
+		n->state = State::STOPPING;
 
 		return recv;
 	}
@@ -201,13 +201,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "shmem";
 	p.description		= "POSIX shared memory interface with external processes";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct shmem);
 	p.node.parse		= shmem_parse;
@@ -224,6 +224,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

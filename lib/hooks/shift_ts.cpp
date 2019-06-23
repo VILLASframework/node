@@ -55,7 +55,7 @@ public:
 		int ret;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: F }",
 			"mode", &m,
@@ -75,14 +75,14 @@ public:
 
 		offset = time_from_double(o);
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		timespec *ts;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		switch (mode) {
 			case SHIFT_ORIGIN:
@@ -94,12 +94,12 @@ public:
 				break;
 
 			default:
-				return HOOK_ERROR;
+				return Hook::Reason::ERROR;
 		}
 
 		*ts = time_add(ts, &offset);;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -107,7 +107,7 @@ public:
 static HookPlugin<ShiftTimestampHook> p(
 	"shift_ts",
 	"Shift timestamps of samples",
-	HOOK_NODE_READ | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
 	99
 );
 

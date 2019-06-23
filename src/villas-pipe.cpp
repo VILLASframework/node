@@ -75,8 +75,8 @@ public:
 		enabled(en),
 		limit(lim)
 	{
-		pool.state = STATE_DESTROYED;
-		pool.queue.state = STATE_DESTROYED;
+		pool.state = State::DESTROYED;
+		pool.queue.state = State::DESTROYED;
 
 		/* Initialize memory */
 		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
@@ -151,7 +151,7 @@ public:
 
 			/* Fill in missing sequence numbers */
 			for (int i = 0; i < scanned; i++) {
-				if (smps[i]->flags & SAMPLE_HAS_SEQUENCE)
+				if (smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE)
 					last_sequenceno = smps[i]->sequence;
 				else
 					smps[i]->sequence = last_sequenceno++;
@@ -211,7 +211,7 @@ public:
 
 			recv = node_read(node, smps, allocated, &release);
 			if (recv < 0) {
-				if (node->state == STATE_STOPPING || stop)
+				if (node->state == State::STOPPING || stop)
 					goto leave2;
 				else
 					logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
@@ -255,7 +255,7 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		io.state = STATE_DESTROYED;
+		io.state = State::DESTROYED;
 
 		cfg_cli = json_object();
 	}
@@ -416,7 +416,7 @@ check:			if (optarg == endptr)
 		if (!ft)
 			throw RuntimeError("Invalid format: {}", format);
 
-		ret = io_init2(&io, ft, dtypes.c_str(), SAMPLE_HAS_ALL);
+		ret = io_init2(&io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 

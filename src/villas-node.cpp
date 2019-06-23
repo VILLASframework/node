@@ -88,7 +88,7 @@ protected:
 				logger->info("Received {} signal. Terminating...", strsignal(signal));
 		}
 
-		sn.setState(STATE_STOPPING);
+		sn.setState(State::STOPPING);
 	}
 
 	void usage()
@@ -108,7 +108,7 @@ protected:
 #endif /* ENABLE_OPAL_ASYNC */
 
 			<< "Supported node-types:" << std::endl;
-		plugin_dump(PLUGIN_TYPE_NODE);
+		plugin_dump(PluginType::NODE);
 		std::cout << std::endl;
 
 #ifdef WITH_HOOKS
@@ -126,7 +126,7 @@ protected:
 #endif /* WITH_API */
 
 		std::cout << "Supported IO formats:" << std::endl;
-		plugin_dump(PLUGIN_TYPE_FORMAT);
+		plugin_dump(PluginType::FORMAT);
 		std::cout << std::endl;
 
 		printCopyright();

@@ -48,10 +48,10 @@ public:
 	StatsWriteHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
-		state = STATE_CHECKED;
+		state = State::CHECKED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		Stats *s = node->stats;
 
@@ -59,7 +59,7 @@ public:
 
 		s->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -72,43 +72,43 @@ public:
 	StatsReadHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
-		state = STATE_CHECKED;
+		state = State::CHECKED;
 	}
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		last = nullptr;
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (last)
 			sample_decref(last);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		Stats *s = node->stats;
 
 		if (last) {
-			if (smp->flags & last->flags & SAMPLE_HAS_TS_RECEIVED)
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 				s->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
 
-			if (smp->flags & last->flags & SAMPLE_HAS_TS_ORIGIN)
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 				s->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
 
-			if ((smp->flags & SAMPLE_HAS_TS_ORIGIN) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
+			if ((smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
 				s->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
 
-			if (smp->flags & last->flags & SAMPLE_HAS_SEQUENCE) {
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_SEQUENCE) {
 				int dist = smp->sequence - (int32_t) last->sequence;
 				if (dist != 1)
 					s->update(Stats::Metric::SMPS_REORDERED, dist);
@@ -122,7 +122,7 @@ public:
 
 		last = smp;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -177,7 +177,7 @@ public:
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		if (uri) {
 			output = afopen(uri, "w+");
@@ -185,31 +185,31 @@ public:
 				throw RuntimeError("Failed to open file '{}' for writing", uri);
 		}
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		stats.print(uri ? output->file : stdout, format, verbose);
 
 		if (uri)
 			afclose(output);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
 	virtual void restart()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		stats.reset();
 	}
 
 	virtual void periodic()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		stats.printPeriodic(uri ? output->file : stdout, format, node);
 	}
@@ -219,7 +219,7 @@ public:
 		int ret;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		const char *f = nullptr;
 		const char *u = nullptr;
@@ -245,7 +245,7 @@ public:
 		if (u)
 			uri = strdup(u);
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 };
 
@@ -253,7 +253,7 @@ public:
 static HookPlugin<StatsHook> p(
 	"stats",
 	"Collect statistics for the current path",
-	HOOK_NODE_READ,
+	(int) Hook::Flags::NODE_READ,
 	99
 );
 

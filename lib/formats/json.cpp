@@ -27,26 +27,26 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
-static enum signal_type json_detect_format(json_t *val)
+static enum SignalType json_detect_format(json_t *val)
 {
 	int type = json_typeof(val);
 
 	switch (type) {
 		case JSON_REAL:
-			return SIGNAL_TYPE_FLOAT;
+			return SignalType::FLOAT;
 
 		case JSON_INTEGER:
-			return SIGNAL_TYPE_INTEGER;
+			return SignalType::INTEGER;
 
 		case JSON_TRUE:
 		case JSON_FALSE:
-			return SIGNAL_TYPE_BOOLEAN;
+			return SignalType::BOOLEAN;
 
 		case JSON_OBJECT:
-			return SIGNAL_TYPE_COMPLEX; /* must be a complex number */
+			return SignalType::COMPLEX; /* must be a complex number */
 
 		default:
-			return SIGNAL_TYPE_INVALID;
+			return SignalType::INVALID;
 	}
 }
 
@@ -60,13 +60,13 @@ static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
 	const char *fmt = "[ I, I ]";
 #endif
 
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
-		if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+		if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 			json_object_set(json_ts, "origin", json_pack(fmt, smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
 	}
 
-	if (io->flags & SAMPLE_HAS_TS_RECEIVED) {
-		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+	if (io->flags & (int) SampleFlags::HAS_TS_RECEIVED) {
+		if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 			json_object_set(json_ts, "received", json_pack(fmt, smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
 	}
 
@@ -90,7 +90,7 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 		if (ret)
 			return ret;
 
-		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
 	if (json_ts_received) {
@@ -98,7 +98,7 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 		if (ret)
 			return ret;
 
-		smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+		smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 	}
 
 	return 0;
@@ -111,42 +111,42 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 
 	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(io, smp));
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE) {
-		if (smp->flags & SAMPLE_HAS_SEQUENCE) {
+	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
+		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
 			json_t *json_sequence = json_integer(smp->sequence);
 
 			json_object_set(json_smp, "sequence", json_sequence);
 		}
 	}
 
-	if (io->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		json_t *json_data = json_array();
 
 		for (unsigned i = 0; i < smp->length; i++) {
-			enum signal_type fmt = sample_format(smp, i);
+			enum SignalType fmt = sample_format(smp, i);
 
 			json_t *json_value;
 			switch (fmt) {
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					json_value = json_integer(smp->data[i].i);
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					json_value = json_real(smp->data[i].f);
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					json_value = json_boolean(smp->data[i].b);
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
+				case SignalType::COMPLEX:
 					json_value = json_pack("{ s: f, s: f }",
 						"real", creal(smp->data[i].z),
 						"imag", cimag(smp->data[i].z)
 					);
 					break;
 
-				case SIGNAL_TYPE_INVALID:
+				case SignalType::INVALID:
 					return -1;
 			}
 
@@ -212,7 +212,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 
 	if (sequence >= 0) {
 		smp->sequence = sequence;
-		smp->flags |= SAMPLE_HAS_SEQUENCE;
+		smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 	}
 
 	json_array_foreach(json_data, i, json_value) {
@@ -223,7 +223,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 		if (!sig)
 			return -1;
 
-		enum signal_type fmt = json_detect_format(json_value);
+		enum SignalType fmt = json_detect_format(json_value);
 		if (sig->type != fmt) {
 			error("Received invalid data type in JSON payload: Received %s, expected %s for signal %s (index %zu).",
 				signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
@@ -238,7 +238,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 	}
 
 	if (smp->length > 0)
-		smp->flags |= SAMPLE_HAS_DATA;
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 
 	return 0;
 }
@@ -362,24 +362,24 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
                 vlist_init(&plugins);
 
 	p.name = "json";
 	p.description = "Javascript Object Notation";
-	p.type = PLUGIN_TYPE_FORMAT;
+	p.type = PluginType::FORMAT;
 	p.format.print = json_print;
 	p.format.scan = json_scan;
 	p.format.sprint = json_sprint;
 	p.format.sscan = json_sscan;
 	p.format.size = 0;
-	p.format.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p.format.flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	p.format.delimiter = '\n';
 
 	vlist_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

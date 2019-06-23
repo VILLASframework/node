@@ -84,8 +84,8 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 		goto out2;
 	}
 	else if (recv < 0) {
-		if (ps->node->state == STATE_STOPPING) {
-			p->state = STATE_STOPPING;
+		if (ps->node->state == State::STOPPING) {
+			p->state = State::STOPPING;
 
 			enqueued = -1;
 			goto out2;
@@ -100,7 +100,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 
 	p->received.set(i);
 
-	if (p->mode == PATH_MODE_ANY) { /* Mux all samples */
+	if (p->mode == PathMode::ANY) { /* Mux all samples */
 		tomux_smps = read_smps;
 		tomux = recv;
 	}
@@ -118,17 +118,17 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
 		else {
 			muxed_smps[i]->sequence = p->last_sequence++;
-			muxed_smps[i]->flags |= SAMPLE_HAS_SEQUENCE;
+			muxed_smps[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
 		}
 
 		/* We reset the sample length after each restart of the simulation.
 		 * This is necessary for the test_rtt node to work properly.
 		 */
-		if (tomux_smps[i]->flags & SAMPLE_IS_FIRST)
+		if (tomux_smps[i]->flags & (int) SampleFlags::IS_FIRST)
 			muxed_smps[i]->length = 0;
 
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
-		muxed_smps[i]->flags |= tomux_smps[i]->flags & (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED);
+		muxed_smps[i]->flags |= tomux_smps[i]->flags & ((int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_TS_RECEIVED);
 
 		ret = mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
 		if (ret)
@@ -152,8 +152,8 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 
 	if (p->mask.test(i)) {
 		/* Check if we received an update from all nodes */
-		if ((p->mode == PATH_MODE_ANY) ||
-		    (p->mode == PATH_MODE_ALL && p->mask == p->received)) {
+		if ((p->mode == PathMode::ANY) ||
+		    (p->mode == PathMode::ALL && p->mask == p->received)) {
 			path_destination_enqueue(p, muxed_smps, toenqueue);
 
 			/* Reset mask of updated nodes */

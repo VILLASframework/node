@@ -457,7 +457,7 @@ int uldaq_check(struct node *n)
 		struct signal *s = (struct signal *) vlist_at(&n->in.signals, i);
 		AiQueueElement *q = &u->in.queues[i];
 
-		if (s->type != SIGNAL_TYPE_FLOAT) {
+		if (s->type != SignalType::FLOAT) {
 			warning("Node '%s' only supports signals of type = float!", node_name(n));
 			return -1;
 		}
@@ -626,7 +626,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		smp->length = u->in.channel_count;
 		smp->signals = &n->in.signals;
 		smp->sequence = u->sequence++;
-		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+		smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	}
 
 	u->in.buffer_pos += u->in.channel_count * cnt;
@@ -640,13 +640,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "uldaq";
 	p.description		= "Measurement Computing DAQ devices like UL201 (libuldaq)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.flags		= 0;
 	p.node.size		= sizeof(struct uldaq);
@@ -665,6 +665,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

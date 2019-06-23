@@ -54,7 +54,7 @@ struct queue_cell {
 
 /** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
-	std::atomic<enum state> state;
+	std::atomic<enum State> state;
 
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 

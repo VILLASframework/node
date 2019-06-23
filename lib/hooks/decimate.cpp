@@ -31,11 +31,11 @@ namespace node {
 
 void DecimateHook::start()
 {
-	assert(state == STATE_PREPARED);
+	assert(state == State::PREPARED);
 
 	counter = 0;
 
-	state = STATE_STARTED;
+	state = State::STARTED;
 }
 
 void DecimateHook::parse(json_t *cfg)
@@ -43,7 +43,7 @@ void DecimateHook::parse(json_t *cfg)
 	int ret;
 	json_error_t err;
 
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
 		"ratio", &ratio
@@ -51,24 +51,24 @@ void DecimateHook::parse(json_t *cfg)
 	if (ret)
 		throw ConfigError(cfg, err, "node-config-hook-decimate");
 
-	state = STATE_PARSED;
+	state = State::PARSED;
 }
 
-int DecimateHook::process(sample *smp)
+Hook::Reason DecimateHook::process(sample *smp)
 {
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	if (ratio && counter++ % ratio != 0)
-		return HOOK_SKIP_SAMPLE;
+		return Hook::Reason::SKIP_SAMPLE;
 
-	return HOOK_OK;
+	return Reason::OK;
 }
 
 /* Register hook */
 static HookPlugin<DecimateHook> p(
 	"decimate",
 	"Downsamping by integer factor",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	99
 );
 

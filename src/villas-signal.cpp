@@ -59,12 +59,12 @@ public:
 	{
 		int ret;
 
-		n.state = STATE_DESTROYED;
-		n.in.state = STATE_DESTROYED;
-		n.out.state = STATE_DESTROYED;
-		io.state = STATE_DESTROYED;
-		q.state = STATE_DESTROYED;
-		q.queue.state = STATE_DESTROYED;
+		n.state = State::DESTROYED;
+		n.in.state = State::DESTROYED;
+		n.out.state = State::DESTROYED;
+		io.state = State::DESTROYED;
+		q.state = State::DESTROYED;
+		q.queue.state = State::DESTROYED;
 
 		ret = memory_init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
@@ -262,7 +262,7 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
-		ret = io_init(&io, ft, &n.in.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+		ret = io_init(&io, ft, &n.in.signals, (int) IOFlags::FLUSH | ((int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET));
 		if (ret)
 			throw RuntimeError("Failed to initialize output");
 
@@ -282,7 +282,7 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
-		while (!stop && n.state == STATE_STARTED) {
+		while (!stop && n.state == State::STARTED) {
 			t = sample_alloc(&q);
 
 			unsigned release = 1; // release = allocated

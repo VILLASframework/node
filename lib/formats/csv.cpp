@@ -38,28 +38,28 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 	size_t off = 0;
 	struct signal *sig;
 
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
-		if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+		if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 			off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
 		else
 			off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
 	}
 
-	if (io->flags & SAMPLE_HAS_OFFSET) {
-		if ((smp->flags & SAMPLE_HAS_TS_RECEIVED) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
+	if (io->flags & (int) SampleFlags::HAS_OFFSET) {
+		if ((smp->flags & (int) SampleFlags::HAS_TS_RECEIVED) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
 			off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
 		else
 			off += snprintf(buf + off, len - off, "%cnan", io->separator);
 	}
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE) {
-		if (smp->flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
+		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
 			off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
 		else
 			off += snprintf(buf + off, len - off, "%cnan", io->separator);
 	}
 
-	if (io->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
 			sig = (struct signal *) vlist_at_safe(smp->signals, i);
 			if (!sig)
@@ -99,7 +99,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 
 	ptr = end + 1;
 
-	smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+	smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
 	offset = strtof(ptr, &end);
 	if (end == ptr || *end == io->delimiter)
@@ -111,7 +111,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
-	smp->flags |= SAMPLE_HAS_SEQUENCE;
+	smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 
 	for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
 
@@ -132,7 +132,7 @@ out:	if (*end == io->delimiter)
 
 	smp->length = i;
 	if (smp->length > 0)
-		smp->flags |= SAMPLE_HAS_DATA;
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 
 	return end - buf;
 }
@@ -170,16 +170,16 @@ void csv_header(struct io *io, const struct sample *smp)
 	FILE *f = io_stream_output(io);
 
 	fprintf(f, "# ");
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 		fprintf(f, "secs%cnsecs%c", io->separator, io->separator);
 
-	if (io->flags & SAMPLE_HAS_OFFSET)
+	if (io->flags & (int) SampleFlags::HAS_OFFSET)
 		fprintf(f, "offset%c", io->separator);
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & (int) SampleFlags::HAS_SEQUENCE)
 		fprintf(f, "sequence%c", io->separator);
 
-	if (io->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
 
@@ -201,48 +201,48 @@ void csv_header(struct io *io, const struct sample *smp)
 
 static struct plugin p1;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == STATE_DESTROYED)
+        if (plugins.state == State::DESTROYED)
 	                vlist_init(&plugins);
 
 	p1.name = "tsv";
 	p1.description = "Tabulator-separated values";
-	p1.type = PLUGIN_TYPE_FORMAT;
+	p1.type = PluginType::FORMAT;
 	p1.format.header = csv_header;
 	p1.format.sprint = csv_sprint;
 	p1.format.sscan	= csv_sscan;
 	p1.format.size 	= 0;
-	p1.format.flags	= IO_NEWLINES |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p1.format.flags	= (int) IOFlags::NEWLINES |
+		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	p1.format.separator = '\t';
 
 	vlist_push(&plugins, &p1);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p1);
 }
 
 static struct plugin p2;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p2.name = "csv";
 	p2.description = "Comma-separated values";
-	p2.type = PLUGIN_TYPE_FORMAT;
+	p2.type = PluginType::FORMAT;
 	p2.format.header = csv_header;
 	p2.format.sprint = csv_sprint;
 	p2.format.sscan	= csv_sscan;
 	p2.format.size 	= 0;
-	p2.format.flags	= IO_NEWLINES |
-			  SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p2.format.flags	= (int) IOFlags::NEWLINES |
+			  (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	p2.format.separator = ',';
 
 	vlist_push(&plugins, &p2);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p2);
 }

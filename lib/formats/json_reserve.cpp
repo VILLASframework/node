@@ -40,10 +40,10 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	json_t *json_created = NULL;
 	json_t *json_sequence = NULL;
 
-	if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
 
-	if (smp->flags & SAMPLE_HAS_SEQUENCE)
+	if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
 		json_sequence = json_integer(smp->sequence);
 
 	json_data = json_array();
@@ -212,11 +212,11 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	}
 
 	if (smp->length > 0)
-		smp->flags |= SAMPLE_HAS_DATA;
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 
 	if (created > 0) {
 		smp->ts.origin = time_from_double(created * 1e-3);
-		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
 	return smp->length > 0 ? 1 : 0;
@@ -326,22 +326,22 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name = "json.reserve";
 	p.description = "RESERVE JSON format";
-	p.type = PLUGIN_TYPE_FORMAT;
+	p.type = PluginType::FORMAT;
 	p.format.print	= json_reserve_print;
 	p.format.scan	= json_reserve_scan;
 	p.format.sprint	= json_reserve_sprint;
 	p.format.sscan	= json_reserve_sscan;
 	p.format.size = 0;
-       
+
 	vlist_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

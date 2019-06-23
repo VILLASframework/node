@@ -87,7 +87,7 @@ protected:
 
 	struct TypeDescription {
 		const char *name;
-		enum signal_type signal_type;
+		enum SignalType signal_type;
 	};
 
 	static std::shared_ptr<Table> table;

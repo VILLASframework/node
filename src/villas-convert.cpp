@@ -55,7 +55,7 @@ public:
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 			dirs[i].format = "villas.human";
-			dirs[i].io.state = STATE_DESTROYED;
+			dirs[i].io.state = State::DESTROYED;
 		}
 	}
 
@@ -132,7 +132,7 @@ protected:
 			if (!ft)
 				throw RuntimeError("Invalid format: {}", dirs[i].format);
 
-			ret = io_init2(&dirs[i].io, ft, dtypes.c_str(), SAMPLE_HAS_ALL);
+			ret = io_init2(&dirs[i].io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
 			if (ret)
 				throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 

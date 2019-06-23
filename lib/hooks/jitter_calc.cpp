@@ -86,9 +86,9 @@ public:
 	 * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
 	 * the variance value will overrun the 64bit value.
 	 */
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		timespec now = time_now();
 		int64_t delay_sec, delay_nsec, curr_delay_us;
@@ -119,7 +119,7 @@ public:
 		if (curr_count >= GPS_NTP_DELAY_WIN_SIZE)
 			curr_count = 0;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -127,7 +127,7 @@ public:
 static HookPlugin<JitterCalcHook> p(
 	"jitter_calc",
 	"Calc jitter, mean and variance of GPS vs NTP TS",
-	HOOK_NODE_READ | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
 	0
 );
 

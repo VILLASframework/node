@@ -121,23 +121,23 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 static struct plugin p1;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 	        vlist_init(&plugins);
 
 	p1.name = "villas.binary";
 	p1.description = "VILLAS binary network format";
-	p1.type = PLUGIN_TYPE_FORMAT;
+	p1.type = PluginType::FORMAT;
 	p1.format.sprint	= villas_binary_sprint;
 	p1.format.sscan	= villas_binary_sscan;
 	p1.format.size	= 0;
-	p1.format.flags	= IO_HAS_BINARY_PAYLOAD |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p1.format.flags	= (int) IOFlags::HAS_BINARY_PAYLOAD |
+		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 
 	vlist_push(&plugins, &p1);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p1);
 }
 /** The WebSocket node-type usually uses little endian byte order intead of network byte order */
@@ -145,22 +145,22 @@ static struct plugin p2;
 
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 	        vlist_init(&plugins);
 
 	p2.name = "villas.web";
 	p2.description = "VILLAS binary network format for WebSockets";
-	p2.type = PLUGIN_TYPE_FORMAT;
+	p2.type = PluginType::FORMAT;
 	p2.format.sprint	= villas_binary_sprint;
 	p2.format.sscan	= villas_binary_sscan;
 	p2.format.size	= 0;
-	p2.format.flags	= IO_HAS_BINARY_PAYLOAD | VILLAS_BINARY_WEB |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p2.format.flags	= (int) IOFlags::HAS_BINARY_PAYLOAD | VILLAS_BINARY_WEB |
+		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 
 	vlist_push(&plugins, &p2);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p2);
 }

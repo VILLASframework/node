@@ -37,8 +37,8 @@
 struct node;
 struct sample;
 
-enum node_type_flags {
-	NODE_TYPE_PROVIDES_SIGNALS	= (1 << 0)
+enum class NodeFlags {
+	PROVIDES_SIGNALS	= (1 << 0)
 };
 
 /** C++ like vtable construct for node_types */
@@ -46,7 +46,7 @@ struct node_type {
 	unsigned vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
 	int flags;
 
-	enum state state;		/**< State of this node-type. */
+	enum State state;		/**< State of this node-type. */
 
 	struct vlist instances;		/**< A list of all existing nodes of this type. */
 

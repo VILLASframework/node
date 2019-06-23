@@ -47,13 +47,13 @@ std::unordered_map<Stats::Metric, Stats::MetricDescription> Stats::metrics = {
 };
 
 std::unordered_map<Stats::Type, Stats::TypeDescription> Stats::types = {
-	{ Stats::Type::LAST,			{ "last",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::HIGHEST,			{ "highest",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::LOWEST,			{ "lowest",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::MEAN,			{ "mean",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::VAR,			{ "var",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::STDDEV,			{ "stddev",		SIGNAL_TYPE_FLOAT }},
-	{ Stats::Type::TOTAL,			{ "total",		SIGNAL_TYPE_INTEGER }}
+	{ Stats::Type::LAST,			{ "last",		SignalType::FLOAT }},
+	{ Stats::Type::HIGHEST,			{ "highest",		SignalType::FLOAT }},
+	{ Stats::Type::LOWEST,			{ "lowest",		SignalType::FLOAT }},
+	{ Stats::Type::MEAN,			{ "mean",		SignalType::FLOAT }},
+	{ Stats::Type::VAR,			{ "var",		SignalType::FLOAT }},
+	{ Stats::Type::STDDEV,			{ "stddev",		SignalType::FLOAT }},
+	{ Stats::Type::TOTAL,			{ "total",		SignalType::INTEGER }}
 };
 
 std::vector<TableColumn> Stats::columns = {

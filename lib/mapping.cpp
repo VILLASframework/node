@@ -66,7 +66,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 	}
 
 	if      (!strcmp(type, "stats")) {
-		me->type = MAPPING_TYPE_STATS;
+		me->type = MappingType::STATS;
 		me->length = 1;
 
 		char *metric = strtok_r(nullptr, ".", &lasts);
@@ -81,7 +81,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->stats.type = Stats::lookupType(type);
 	}
 	else if (!strcmp(type, "hdr")) {
-		me->type = MAPPING_TYPE_HEADER;
+		me->type = MappingType::HEADER;
 		me->length = 1;
 
 		field = strtok_r(nullptr, ".", &lasts);
@@ -91,16 +91,16 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		}
 
 		if      (!strcmp(field, "sequence"))
-			me->header.type = MAPPING_HEADER_TYPE_SEQUENCE;
+			me->header.type = MappingHeaderType::SEQUENCE;
 		else if (!strcmp(field, "length"))
-			me->header.type = MAPPING_HEADER_TYPE_LENGTH;
+			me->header.type = MappingHeaderType::LENGTH;
 		else {
 			warning("Invalid header type");
 			goto invalid_format;
 		}
 	}
 	else if (!strcmp(type, "ts")) {
-		me->type = MAPPING_TYPE_TIMESTAMP;
+		me->type = MappingType::TIMESTAMP;
 		me->length = 2;
 
 		field = strtok_r(nullptr, ".", &lasts);
@@ -110,9 +110,9 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		}
 
 		if      (!strcmp(field, "origin"))
-			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_ORIGIN;
+			me->timestamp.type = MappingTimestampType::ORIGIN;
 		else if (!strcmp(field, "received"))
-			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_RECEIVED;
+			me->timestamp.type = MappingTimestampType::RECEIVED;
 		else {
 			warning("Invalid timestamp type");
 			goto invalid_format;
@@ -122,7 +122,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		char *first_str, *last_str;
 		int first = -1, last = -1;
 
-		me->type = MAPPING_TYPE_DATA;
+		me->type = MappingType::DATA;
 
 		first_str = strtok_r(nullptr, "-]", &lasts);
 		if (first_str) {
@@ -240,18 +240,18 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 		return -1;
 
 	switch (me->type) {
-		case MAPPING_TYPE_STATS:
+		case MappingType::STATS:
 			remapped->data[me->offset] = me->node->stats->getValue(me->stats.metric, me->stats.type);
 			break;
 
-		case MAPPING_TYPE_TIMESTAMP: {
+		case MappingType::TIMESTAMP: {
 			const struct timespec *ts;
 
 			switch (me->timestamp.type) {
-				case MAPPING_TIMESTAMP_TYPE_RECEIVED:
+				case MappingTimestampType::RECEIVED:
 					ts = &original->ts.received;
 					break;
-				case MAPPING_TIMESTAMP_TYPE_ORIGIN:
+				case MappingTimestampType::ORIGIN:
 					ts = &original->ts.origin;
 					break;
 				default:
@@ -263,13 +263,13 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 			break;
 		}
 
-		case MAPPING_TYPE_HEADER:
+		case MappingType::HEADER:
 			switch (me->header.type) {
-				case MAPPING_HEADER_TYPE_LENGTH:
+				case MappingHeaderType::LENGTH:
 					remapped->data[me->offset].i = original->length;
 					break;
 
-				case MAPPING_HEADER_TYPE_SEQUENCE:
+				case MappingHeaderType::SEQUENCE:
 					remapped->data[me->offset].i = original->sequence;
 					break;
 
@@ -278,7 +278,7 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 			}
 			break;
 
-		case MAPPING_TYPE_DATA:
+		case MappingType::DATA:
 			for (unsigned j = me->data.offset,
 				 i = me->offset;
 			         j < MIN(original->length, (unsigned) (me->data.offset + me->length));
@@ -322,7 +322,7 @@ int mapping_list_prepare(struct vlist *ml)
 		struct mapping_entry *me = (struct mapping_entry *) vlist_at(ml, i);
 
 		if (me->length < 0) {
-			struct vlist *sigs = node_get_signals(me->node, NODE_DIR_IN);
+			struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
 
 			me->length = vlist_length(sigs);
 		}
@@ -344,20 +344,20 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 		strcatf(str, "%s.", node_name_short(me->node));
 
 	switch (me->type) {
-		case MAPPING_TYPE_STATS:
+		case MappingType::STATS:
 			strcatf(str, "stats.%s.%s",
 				Stats::metrics[me->stats.metric].name,
 				Stats::types[me->stats.type].name
 			);
 			break;
 
-		case MAPPING_TYPE_HEADER:
+		case MappingType::HEADER:
 			switch (me->header.type) {
-				case MAPPING_HEADER_TYPE_LENGTH:
+				case MappingHeaderType::LENGTH:
 					type = "length";
 					break;
 
-				case MAPPING_HEADER_TYPE_SEQUENCE:
+				case MappingHeaderType::SEQUENCE:
 					type = "sequence";
 					break;
 
@@ -368,13 +368,13 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 			strcatf(str, "hdr.%s", type);
 			break;
 
-		case MAPPING_TYPE_TIMESTAMP:
+		case MappingType::TIMESTAMP:
 			switch (me->timestamp.type) {
-				case MAPPING_TIMESTAMP_TYPE_ORIGIN:
+				case MappingTimestampType::ORIGIN:
 					type = "origin";
 					break;
 
-				case MAPPING_TIMESTAMP_TYPE_RECEIVED:
+				case MappingTimestampType::RECEIVED:
 					type = "received";
 					break;
 
@@ -385,7 +385,7 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 			strcatf(str, "ts.%s.%s", type, index == 0 ? "sec" : "nsec");
 			break;
 
-		case MAPPING_TYPE_DATA:
+		case MappingType::DATA:
 			if (me->node && index < vlist_length(&me->node->in.signals)) {
 				struct signal *s = (struct signal *) vlist_at(&me->node->in.signals, index);
 

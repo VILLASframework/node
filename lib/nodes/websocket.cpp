@@ -42,7 +42,7 @@ using namespace villas::utils;
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
-static struct vlist connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
+static struct vlist connections = { .state = State::DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 static villas::node::Web *web;
 
@@ -60,13 +60,13 @@ static char * websocket_connection_name(struct websocket_connection *c)
 
 			strcatf(&c->_name, "remote.ip=%s, remote.name=%s", ip, name);
 		}
-		else if (c->mode == websocket_connection::mode::CLIENT && c->destination != nullptr)
+		else if (c->mode == websocket_connection::Mode::CLIENT && c->destination != nullptr)
 			strcatf(&c->_name, "dest=%s:%d", c->destination->info.address, c->destination->info.port);
 
 		if (c->node)
 			strcatf(&c->_name, ", node=%s", node_name(c->node));
 
-		strcatf(&c->_name, ", mode=%s", c->mode == websocket_connection::mode::CLIENT ? "client" : "server");
+		strcatf(&c->_name, ", mode=%s", c->mode == websocket_connection::Mode::CLIENT ? "client" : "server");
 	}
 
 	return c->_name;
@@ -90,7 +90,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = io_init(&c->io, c->format, &c->node->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&c->io, c->format, &c->node->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -106,7 +106,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	c->state = websocket_connection::state::INITIALIZED;
+	c->state = websocket_connection::State::INITIALIZED;
 
 	return 0;
 }
@@ -115,7 +115,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 {
 	int ret;
 
-	assert(c->state != websocket_connection::state::DESTROYED);
+	assert(c->state != websocket_connection::State::DESTROYED);
 
 	if (c->_name)
 		free(c->_name);
@@ -145,7 +145,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	c->wsi = nullptr;
 	c->_name = nullptr;
 
-	c->state = websocket_connection::state::DESTROYED;
+	c->state = websocket_connection::State::DESTROYED;
 
 	return 0;
 }
@@ -154,7 +154,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 {
 	int pushed;
 
-	if (c->state != websocket_connection::state::INITIALIZED)
+	if (c->state != websocket_connection::State::INITIALIZED)
 		return -1;
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
@@ -188,14 +188,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:
 		case LWS_CALLBACK_ESTABLISHED:
 			c->wsi = wsi;
-			c->state = websocket_connection::state::ESTABLISHED;
+			c->state = websocket_connection::State::ESTABLISHED;
 
 			info("Established WebSocket connection: %s", websocket_connection_name(c));
 
 			if (reason == LWS_CALLBACK_CLIENT_ESTABLISHED)
-				c->mode = websocket_connection::mode::CLIENT;
+				c->mode = websocket_connection::Mode::CLIENT;
 			else {
-				c->mode = websocket_connection::mode::SERVER;
+				c->mode = websocket_connection::Mode::SERVER;
 				/* We use the URI to associate this connection to a node
 				 * and choose a protocol.
 				 *
@@ -255,7 +255,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-			c->state = websocket_connection::state::ERROR;
+			c->state = websocket_connection::State::ERROR;
 
 			warning("Failed to establish WebSocket connection: %s, reason=%s", websocket_connection_name(c), in ? (char *) in : "unkown");
 
@@ -264,17 +264,17 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLOSED:
 			debug(LOG_WEBSOCKET | 10, "Closed WebSocket connection: %s", websocket_connection_name(c));
 
-			if (c->state != websocket_connection::state::SHUTDOWN) {
+			if (c->state != websocket_connection::State::SHUTDOWN) {
 				/** @todo Attempt reconnect here */
 			}
 
-			if (connections.state == STATE_INITIALIZED)
+			if (connections.state == State::INITIALIZED)
 				vlist_remove_all(&connections, c);
 
-			if (c->state == websocket_connection::state::INITIALIZED)
+			if (c->state == websocket_connection::State::INITIALIZED)
 				websocket_connection_destroy(c);
 
-			if (c->mode == websocket_connection::mode::CLIENT)
+			if (c->mode == websocket_connection::Mode::CLIENT)
 				free(c);
 
 			break;
@@ -288,7 +288,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				size_t wbytes;
 				io_sprint(&c->io, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->io.flags & IO_HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_decref_many(smps, pulled);
 
@@ -300,7 +300,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			if (queue_available(&c->queue) > 0)
 				lws_callback_on_writable(wsi);
-			else if (c->state == websocket_connection::state::SHUTDOWN) {
+			else if (c->state == websocket_connection::State::SHUTDOWN) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 				return -1;
 			}
@@ -347,7 +347,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
 					smps[i]->ts.received = ts_recv;
-					smps[i]->flags |= SAMPLE_HAS_TS_RECEIVED;
+					smps[i]->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 				}
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
@@ -360,7 +360,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				buffer_clear(&c->buffers.recv);
 
-				if (c->state == websocket_connection::state::SHUTDOWN) {
+				if (c->state == websocket_connection::State::SHUTDOWN) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 					return -1;
 				}
@@ -380,7 +380,7 @@ int websocket_type_start(villas::node::SuperNode *sn)
 	vlist_init(&connections);
 
 	web = sn->getWeb();
-	if (web->getState() != STATE_STARTED)
+	if (web->getState() != State::STARTED)
 		return -1;
 
 	return 0;
@@ -395,7 +395,7 @@ int websocket_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUE_LENGTH, &memory_hugepage, 0);
+	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUE_LENGTH, &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -404,7 +404,7 @@ int websocket_start(struct node *n)
 		struct websocket_destination *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
 		struct websocket_connection *c = (struct websocket_connection *) alloc(sizeof(struct websocket_connection));
 
-		c->state = websocket_connection::state::CONNECTING;
+		c->state = websocket_connection::State::CONNECTING;
 
 		format = strchr(d->info.path, '.');
 		if (format)
@@ -440,7 +440,7 @@ int websocket_stop(struct node *n)
 		if (c->node != n)
 			continue;
 
-		c->state = websocket_connection::state::SHUTDOWN;
+		c->state = websocket_connection::State::SHUTDOWN;
 
 		lws_callback_on_writable(c->wsi);
 	}
@@ -612,15 +612,15 @@ int websocket_poll_fds(struct node *n, int fds[])
 }
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "websocket";
 	p.description		= "Send and receive samples of a WebSocket connection (libwebsockets)";
-	p.type			= PLUGIN_TYPE_NODE;
+	p.type			= PluginType::NODE;
 	p.node.vectorize	= 0; /* unlimited */
 	p.node.size		= sizeof(struct websocket);
-	p.node.instances.state  = STATE_DESTROYED;
+	p.node.instances.state  = State::DESTROYED;
 	p.node.type.start	= websocket_type_start;
 	p.node.destroy		= websocket_destroy;
 	p.node.parse		= websocket_parse;
@@ -636,6 +636,6 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != STATE_DESTROYED)
+        if (plugins.state != State::DESTROYED)
                 vlist_remove_all(&plugins, &p);
 }

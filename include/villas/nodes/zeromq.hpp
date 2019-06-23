@@ -59,7 +59,7 @@ struct zeromq {
 		} server, client;
 	} curve;
 
-	enum pattern {
+	enum class Pattern {
 		PUBSUB,
 #ifdef ZMQ_BUILD_DISH
 		RADIODISH

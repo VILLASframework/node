@@ -53,7 +53,7 @@ struct websocket {
 
 /* Internal datastructures */
 struct websocket_connection {
-	enum state {
+	enum State {
 		DESTROYED,
 		INITIALIZED,
 		CONNECTING,
@@ -63,7 +63,7 @@ struct websocket_connection {
 		ERROR
 	} state;				/**< The current status of this connection. */
 
-	enum mode {
+	enum class Mode {
 		CLIENT,
 		SERVER,
 	} mode;

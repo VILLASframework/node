@@ -55,10 +55,10 @@ struct format_type;
 #define RTP_INITIAL_BUFFER_LEN 1500
 #define RTP_PACKET_TYPE 21
 
-enum rtp_hook_type {
-	RTCP_HOOK_DISABLED,
-	RTCP_HOOK_DECIMATE,
-	RTCP_HOOK_LIMIT_RATE
+enum class RTPHookType {
+	DISABLED,
+	DECIMATE,
+	LIMIT_RATE
 };
 
 struct rtp {
@@ -84,7 +84,7 @@ struct rtp {
 		double a;
 		double b;
 
-		enum rtp_hook_type rate_hook_type;
+		enum RTPHookType rate_hook_type;
 
 		villas::node::LimitHook *rate_hook;
 		villas::dsp::PID rate_pid;

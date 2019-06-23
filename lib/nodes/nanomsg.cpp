@@ -155,7 +155,7 @@ int nanomsg_start(struct node *n)
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	ret = io_init(&m->io, m->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&m->io, m->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -296,13 +296,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "nanomsg";
 	p.description		= "scalability protocols library (libnanomsg)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct nanomsg);
 	p.node.type.stop	= nanomsg_type_stop;
@@ -322,6 +322,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

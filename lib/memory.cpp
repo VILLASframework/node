@@ -156,11 +156,11 @@ struct memory_allocation * memory_get_allocation(void *ptr)
 	return allocations[ptr];
 }
 
-struct memory_type * memory_type_lookup(enum memory_type_flags flags)
+struct memory_type * memory_type_lookup(enum MemoryFlags flags)
 {
-	if (flags & MEMORY_HUGEPAGE)
+	if ((int) flags & (int) MemoryFlags::HUGEPAGE)
 		return &memory_hugepage;
-	else if (flags & MEMORY_HEAP)
+	else if ((int) flags & (int) MemoryFlags::HEAP)
 		return &memory_heap;
 	else
 		return nullptr;

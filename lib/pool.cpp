@@ -29,7 +29,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 {
 	int ret;
 
-	assert(p->state == STATE_DESTROYED);
+	assert(p->state == State::DESTROYED);
 
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
 	p->alignment = kernel_get_cacheline_size();
@@ -51,7 +51,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	for (unsigned i = 0; i < cnt; i++)
 		queue_push(&p->queue, (char *) buffer + i * p->blocksz);
 
-	p->state = STATE_INITIALIZED;
+	p->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -60,7 +60,7 @@ int pool_destroy(struct pool *p)
 {
 	int ret;
 
-	if (p->state == STATE_DESTROYED)
+	if (p->state == State::DESTROYED)
 		return 0;
 
 	queue_destroy(&p->queue);
@@ -68,7 +68,7 @@ int pool_destroy(struct pool *p)
 	void *buffer = (char *) p + p->buffer_off;
 	ret = memory_free(buffer);
 	if (ret == 0)
-		p->state = STATE_DESTROYED;
+		p->state = State::DESTROYED;
 
 	return ret;
 }

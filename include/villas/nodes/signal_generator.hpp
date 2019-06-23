@@ -43,7 +43,7 @@ struct signal_generator {
 	struct task task;		/**< Timer for periodic events. */
 	int rt;				/**< Real-time mode? */
 
-	enum type {
+	enum class SignalType {
 		RANDOM,
 		SINE,
 		SQUARE,
@@ -51,8 +51,7 @@ struct signal_generator {
 		RAMP,
 		COUNTER,
 		CONSTANT,
-		MIXED,
-		INVALID
+		MIXED
 	} type; /**< Signal type */
 
 	double rate;			/**< Sampling rate. */

@@ -32,23 +32,23 @@
 struct sample;
 struct format_type;
 
-enum io_flags {
+enum class IOFlags {
 	/* Bits 0-7 are reserved for for flags defined by enum sample_flags */
-	IO_FLUSH		= (1 << 8),	/**< Flush the output stream after each chunk of samples. */
-	IO_NONBLOCK		= (1 << 9),	/**< Dont block io_read() while waiting for new samples. */
-	IO_NEWLINES		= (1 << 10),	/**< The samples of this format are newline delimited. */
-	IO_DESTROY_SIGNALS	= (1 << 11),	/**< Signal descriptors are managed by this IO instance. Destroy them in io_destoy() */
-	IO_HAS_BINARY_PAYLOAD	= (1 << 12)	/**< This IO instance en/decodes binary payloads. */
+	FLUSH			= (1 << 8),	/**< Flush the output stream after each chunk of samples. */
+	NONBLOCK		= (1 << 9),	/**< Dont block io_read() while waiting for new samples. */
+	NEWLINES		= (1 << 10),	/**< The samples of this format are newline delimited. */
+	DESTROY_SIGNALS		= (1 << 11),	/**< Signal descriptors are managed by this IO instance. Destroy them in io_destoy() */
+	HAS_BINARY_PAYLOAD	= (1 << 12)	/**< This IO instance en/decodes binary payloads. */
 };
 
-enum io_mode {
-	IO_MODE_STDIO,
-	IO_MODE_ADVIO,
-	IO_MODE_CUSTOM
+enum class IOMode {
+	STDIO,
+	ADVIO,
+	CUSTOM
 };
 
 struct io {
-	enum state state;
+	enum State state;
 	int flags;
 	char delimiter;				/**< Newline delimiter. */
 	char separator;				/**< Column separator (used by csv and villas.human formats only) */
@@ -70,7 +70,7 @@ struct io {
 	struct vlist *signals;			/**< Signal meta data for parsed samples by io_scan() */
 	bool header_printed;
 
-	enum io_mode mode;
+	enum IOMode mode;
 
 	void *_vd;
 	const struct format_type *_vt;

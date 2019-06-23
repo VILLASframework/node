@@ -60,7 +60,7 @@ int socket_type_start(villas::node::SuperNode *sn)
 		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
 		struct socket *s = (struct socket *) n->_vd;
 
-		if (s->layer == SOCKET_LAYER_UNIX)
+		if (s->layer == SocketLayer::UNIX)
 			continue;
 
 		/* Determine outgoing interface */
@@ -80,19 +80,19 @@ char * socket_print(struct node *n)
 	char *buf;
 
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:
+		case SocketLayer::UDP:
 			layer = "udp";
 			break;
 
-		case SOCKET_LAYER_IP:
+		case SocketLayer::IP:
 			layer = "ip";
 			break;
 
-		case SOCKET_LAYER_ETH:
+		case SocketLayer::ETH:
 			layer = "eth";
 			break;
 
-		case SOCKET_LAYER_UNIX:
+		case SocketLayer::UNIX:
 			layer = "unix";
 			break;
 	}
@@ -127,17 +127,17 @@ int socket_check(struct node *n)
 	struct socket *s = (struct socket *) n->_vd;
 
 	/* Some checks on the addresses */
-	if (s->layer != SOCKET_LAYER_UNIX) {
+	if (s->layer != SocketLayer::UNIX) {
 		if (s->in.saddr.sa.sa_family != s->out.saddr.sa.sa_family)
 			error("Address families of local and remote must match!");
 	}
 
-	if (s->layer == SOCKET_LAYER_IP) {
+	if (s->layer == SocketLayer::IP) {
 		if (ntohs(s->in.saddr.sin.sin_port) != ntohs(s->out.saddr.sin.sin_port))
 			error("IP protocol numbers of local and remote must match!");
 	}
 #ifdef WITH_SOCKET_LAYER_ETH
-	else if (s->layer == SOCKET_LAYER_ETH) {
+	else if (s->layer == SocketLayer::ETH) {
 		if (ntohs(s->in.saddr.sll.sll_protocol) != ntohs(s->out.saddr.sll.sll_protocol))
 			error("Ethertypes of local and remote must match!");
 
@@ -164,7 +164,7 @@ int socket_start(struct node *n)
 	int ret;
 
 	/* Initialize IO */
-	ret = io_init(&s->io, s->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&s->io, s->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -174,21 +174,21 @@ int socket_start(struct node *n)
 
 	/* Create socket */
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:
+		case SocketLayer::UDP:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 			break;
 
-		case SOCKET_LAYER_IP:
+		case SocketLayer::IP:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_RAW, ntohs(s->in.saddr.sin.sin_port));
 			break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
-		case SOCKET_LAYER_ETH:
+		case SocketLayer::ETH:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, s->in.saddr.sll.sll_protocol);
 			break;
 #endif /* WITH_SOCKET_LAYER_ETH */
 
-		case SOCKET_LAYER_UNIX:
+		case SocketLayer::UNIX:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, 0);
 			break;
 
@@ -200,7 +200,7 @@ int socket_start(struct node *n)
 		serror("Failed to create socket");
 
 	/* Delete Unix domain socket if already existing */
-	if (s->layer == SOCKET_LAYER_UNIX) {
+	if (s->layer == SocketLayer::UNIX) {
 		ret = unlink(s->in.saddr.sun.sun_path);
 		if (ret && errno != ENOENT)
 			return ret;
@@ -251,8 +251,8 @@ int socket_start(struct node *n)
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:
-		case SOCKET_LAYER_IP:
+		case SocketLayer::UDP:
+		case SocketLayer::IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
@@ -348,7 +348,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	ptr = s->in.buf;
 
 	/* Strip IP header from packet */
-	if (s->layer == SOCKET_LAYER_IP) {
+	if (s->layer == SocketLayer::IP) {
 		struct ip *iphdr = (struct ip *) ptr;
 
 		bytes -= iphdr->ip_hl * 4;
@@ -357,7 +357,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	/* SOCK_RAW IP sockets to not provide the IP protocol number via recvmsg()
 	 * So we simply set it ourself. */
-	if (s->layer == SOCKET_LAYER_IP) {
+	if (s->layer == SocketLayer::IP) {
 		switch (src.sa.sa_family) {
 			case AF_INET:
 				src.sin.sin_port = s->out.saddr.sin.sin_port;
@@ -436,7 +436,7 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out.saddr, addrlen);
 	if (bytes < 0) {
 		if ((errno == EPERM) ||
-		    (errno == ENOENT && s->layer == SOCKET_LAYER_UNIX))
+		    (errno == ENOENT && s->layer == SocketLayer::UNIX))
 			warning("Failed send to node %s: %s", node_name(n), strerror(errno));
 		else if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
 			warning("socket: send would block");
@@ -465,7 +465,7 @@ int socket_parse(struct node *n, json_t *cfg)
 	json_error_t err;
 
 	/* Default values */
-	s->layer = SOCKET_LAYER_UDP;
+	s->layer = SocketLayer::UDP;
 	s->verify_source = 0;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s: { s: s }, s: { s: s, s?: b, s?: o } }",
@@ -489,15 +489,15 @@ int socket_parse(struct node *n, json_t *cfg)
 	/* IP layer */
 	if (layer) {
 		if (!strcmp(layer, "ip"))
-			s->layer = SOCKET_LAYER_IP;
+			s->layer = SocketLayer::IP;
 #ifdef WITH_SOCKET_LAYER_ETH
 		else if (!strcmp(layer, "eth"))
-			s->layer = SOCKET_LAYER_ETH;
+			s->layer = SocketLayer::ETH;
 #endif /* WITH_SOCKET_LAYER_ETH */
 		else if (!strcmp(layer, "udp"))
-			s->layer = SOCKET_LAYER_UDP;
+			s->layer = SocketLayer::UDP;
 		else if (!strcmp(layer, "unix") || !strcmp(layer, "local"))
-			s->layer = SOCKET_LAYER_UNIX;
+			s->layer = SocketLayer::UNIX;
 		else
 			error("Invalid layer '%s' for node %s", layer, node_name(n));
 	}
@@ -562,7 +562,7 @@ int socket_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name		= "socket";
@@ -571,8 +571,8 @@ static void register_plugin() {
 #else
 	p.description	= "BSD network sockets for Ethernet / IP / UDP";
 #endif
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct socket);
 	p.node.type.start	= socket_type_start;
@@ -593,6 +593,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

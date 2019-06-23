@@ -33,7 +33,7 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Api::Api(SuperNode *sn) :
-	state(STATE_INITIALIZED),
+	state(State::INITIALIZED),
 	super_node(sn),
 	server(this)
 {
@@ -42,12 +42,12 @@ Api::Api(SuperNode *sn) :
 
 Api::~Api()
 {
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 }
 
 void Api::start()
 {
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	logger->info("Starting sub-system");
 
@@ -56,12 +56,12 @@ void Api::start()
 	running = true;
 	thread = std::thread(&Api::worker, this);
 
-	state = STATE_STARTED;
+	state = State::STARTED;
 }
 
 void Api::stop()
 {
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	logger->info("Stopping sub-system");
 
@@ -79,7 +79,7 @@ void Api::stop()
 
 	server.stop();
 
-	state = STATE_STOPPED;
+	state = State::STOPPED;
 }
 
 void Api::run()

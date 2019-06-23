@@ -34,7 +34,7 @@ Test(mapping, parse_nodes)
 {
 	int ret;
 	struct mapping_entry m;
-	struct vlist nodes = { .state = STATE_DESTROYED };
+	struct vlist nodes = { .state = State::DESTROYED };
 
 	const char *node_names[3] = { "apple", "cherry", "carrot" };
 	const char *signal_names[3][4] = {
@@ -49,14 +49,14 @@ Test(mapping, parse_nodes)
 		struct node *n = new struct node;
 
 		n->name = strdup(node_names[i]);
-		n->in.signals.state = STATE_DESTROYED;
+		n->in.signals.state = State::DESTROYED;
 
 		vlist_init(&n->in.signals);
 
 		for (unsigned j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *sig;
 
-			sig = signal_create(signal_names[i][j], nullptr, SIGNAL_TYPE_FLOAT);
+			sig = signal_create(signal_names[i][j], nullptr, SignalType::FLOAT);
 			cr_assert_not_null(sig);
 
 			vlist_push(&n->in.signals, sig);
@@ -68,41 +68,41 @@ Test(mapping, parse_nodes)
 	ret = mapping_parse_str(&m, "apple.ts.origin", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "apple"));
-	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.timestamp.type, MAPPING_TIMESTAMP_TYPE_ORIGIN);
+	cr_assert_eq(m.type, MappingType::TIMESTAMP);
+	cr_assert_eq(m.timestamp.type, MappingTimestampType::ORIGIN);
 
 	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "cherry"));
-	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
+	cr_assert_eq(m.type, MappingType::STATS);
 	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
 	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
 	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
 	ret = mapping_parse_str(&m, "carrot", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 1);
 
 	ret = mapping_parse_str(&m, "carrot.data[sole-mio]", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
@@ -117,47 +117,47 @@ Test(mapping, parse)
 
 	ret = mapping_parse_str(&m, "ts.origin", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.timestamp.type, MAPPING_TIMESTAMP_TYPE_ORIGIN);
+	cr_assert_eq(m.type, MappingType::TIMESTAMP);
+	cr_assert_eq(m.timestamp.type, MappingTimestampType::ORIGIN);
 
 	ret = mapping_parse_str(&m, "hdr.sequence", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_HEADER);
-	cr_assert_eq(m.header.type, MAPPING_HEADER_TYPE_SEQUENCE);
+	cr_assert_eq(m.type, MappingType::HEADER);
+	cr_assert_eq(m.header.type, MappingHeaderType::SEQUENCE);
 
 	ret = mapping_parse_str(&m, "stats.owd.mean", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
+	cr_assert_eq(m.type, MappingType::STATS);
 	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
 	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
 	ret = mapping_parse_str(&m, "data[1-2]", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
 	ret = mapping_parse_str(&m, "data[5-5]", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 5);
 	cr_assert_eq(m.length, 1);
 
 	ret = mapping_parse_str(&m, "data[22]", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 22);
 	cr_assert_eq(m.length, 1);
 
 	ret = mapping_parse_str(&m, "data", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "data[]", nullptr);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, -1);
 

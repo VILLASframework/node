@@ -50,7 +50,7 @@ public:
 
 	virtual void prepare()
 	{
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		if (signal_name) {
 			signal_index = vlist_lookup_index(&signals, signal_name);
@@ -58,7 +58,7 @@ public:
 				throw RuntimeError("Failed to find signal: {}", signal_name);
 		}
 
-		state = STATE_PREPARED;
+		state = State::PREPARED;
 	}
 
 	virtual ~ScaleHook()
@@ -73,7 +73,7 @@ public:
 		json_t *json_signal;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F, s: o }",
 			"scale", &scale,
@@ -97,36 +97,36 @@ public:
 				throw ConfigError(json_signal, "node-config-hook-scale-signal", "Invalid value for setting 'signal'");
 		}
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		int k = signal_index;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		switch (sample_format(smp, k)) {
-			case SIGNAL_TYPE_INTEGER:
+			case SignalType::INTEGER:
 				smp->data[k].i = smp->data[k].i * scale + offset;
 				break;
 
-			case SIGNAL_TYPE_FLOAT:
+			case SignalType::FLOAT:
 				smp->data[k].f = smp->data[k].f * scale + offset;
 				break;
 
-			case SIGNAL_TYPE_COMPLEX:
+			case SignalType::COMPLEX:
 				smp->data[k].z = smp->data[k].z * scale + offset;
 				break;
 
-			case SIGNAL_TYPE_BOOLEAN:
+			case SignalType::BOOLEAN:
 				smp->data[k].b = smp->data[k].b * scale + offset;
 				break;
 
 			default: { }
 		}
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -134,7 +134,7 @@ public:
 static HookPlugin<ScaleHook> p(
 	"scale",
 	"Scale signals by a factor and add offset",
-	HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
+	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
 	99
 );
 

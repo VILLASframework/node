@@ -48,16 +48,16 @@ struct pool;
 #define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))
 
 /** Parts of a sample that can be serialized / de-serialized by the IO formats */
-enum sample_flags {
-	SAMPLE_HAS_TS_ORIGIN	= (1 << 0), /**< Include origin timestamp in output. */
-	SAMPLE_HAS_TS_RECEIVED	= (1 << 1), /**< Include receive timestamp in output. */
-	SAMPLE_HAS_OFFSET	= (1 << 2), /**< Include offset (received - origin timestamp) in output. */
-	SAMPLE_HAS_SEQUENCE	= (1 << 3), /**< Include sequence number in output. */
-	SAMPLE_HAS_DATA		= (1 << 4), /**< Include values in output. */
-	SAMPLE_HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
+enum class SampleFlags {
+	HAS_TS_ORIGIN	= (1 << 0), /**< Include origin timestamp in output. */
+	HAS_TS_RECEIVED	= (1 << 1), /**< Include receive timestamp in output. */
+	HAS_OFFSET	= (1 << 2), /**< Include offset (received - origin timestamp) in output. */
+	HAS_SEQUENCE	= (1 << 3), /**< Include sequence number in output. */
+	HAS_DATA	= (1 << 4), /**< Include values in output. */
+	HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
 
-	SAMPLE_IS_FIRST		= (1 << 16), /**< This sample is the first of a new simulation case */
-	SAMPLE_IS_LAST		= (1 << 17) /**< This sample is the last of a running simulation case */
+	IS_FIRST	= (1 << 16), /**< This sample is the first of a new simulation case */
+	IS_LAST		= (1 << 17) /**< This sample is the last of a running simulation case */
 };
 
 struct sample {
@@ -130,7 +130,7 @@ int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
 int sample_incref_many(struct sample *smps[], int cnt);
 int sample_decref_many(struct sample *smps[], int cnt);
 
-enum signal_type sample_format(const struct sample *s, unsigned idx);
+enum SignalType sample_format(const struct sample *s, unsigned idx);
 
 void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len);
 

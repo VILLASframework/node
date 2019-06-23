@@ -40,28 +40,28 @@ class FixHook : public Hook {
 public:
 	using Hook::Hook;
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		timespec now = time_now();
 
-		if (!(smp->flags & SAMPLE_HAS_SEQUENCE) && node) {
+		if (!(smp->flags & (int) SampleFlags::HAS_SEQUENCE) && node) {
 			smp->sequence = node->sequence++;
-			smp->flags |= SAMPLE_HAS_SEQUENCE;
+			smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 		}
 
-		if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)) {
+		if (!(smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)) {
 			smp->ts.received = now;
-			smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+			smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 		}
 
-		if (!(smp->flags & SAMPLE_HAS_TS_ORIGIN)) {
+		if (!(smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)) {
 			smp->ts.origin = smp->ts.received;
-			smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+			smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 		}
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -69,7 +69,7 @@ public:
 static HookPlugin<FixHook> p(
 	"fix",
 	"Fix received data by adding missing fields",
-	HOOK_BUILTIN | HOOK_NODE_READ,
+	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
 	1
 );
 

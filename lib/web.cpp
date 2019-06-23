@@ -183,7 +183,7 @@ void Web::worker()
 }
 
 Web::Web(Api *a) :
-	state(STATE_INITIALIZED),
+	state(State::INITIALIZED),
 	htdocs(WEB_PATH),
 	api(a)
 {
@@ -229,7 +229,7 @@ int Web::parse(json_t *cfg)
 	if (!enabled)
 		port = CONTEXT_PORT_NO_LISTEN;
 
-	state = STATE_PARSED;
+	state = State::PARSED;
 
 	return 0;
 }
@@ -281,12 +281,12 @@ void Web::start()
 	running = true;
 	thread = std::thread(&Web::worker, this);
 
-	state = STATE_STARTED;
+	state = State::STARTED;
 }
 
 void Web::stop()
 {
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	logger->info("Stopping sub-system");
 
@@ -295,7 +295,7 @@ void Web::stop()
 
 	lws_context_destroy(context);
 
-	state = STATE_STOPPED;
+	state = State::STOPPED;
 }
 
 void Web::callbackOnWritable(lws *wsi)

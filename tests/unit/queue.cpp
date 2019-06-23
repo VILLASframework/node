@@ -42,7 +42,7 @@ extern void init_memory();
 
 #define SIZE	(1 << 10)
 
-static struct queue q = { .state = ATOMIC_VAR_INIT(STATE_DESTROYED) };
+static struct queue q = { .state = ATOMIC_VAR_INIT(State::DESTROYED) };
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
@@ -54,7 +54,7 @@ struct param {
 	int thread_count;
 	bool many;
 	int batch_size;
-	enum memory_type_flags memory_type;
+	enum MemoryFlags memory_type;
 	volatile int start;
 	struct queue queue;
 };
@@ -250,7 +250,7 @@ Test(queue, single_threaded, .init = init_memory)
 	p.iter_count = 1 << 8;
 	p.queue_size = 1 << 10;
 	p.start = 1; /* we start immeadiatly */
-	p.queue.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
+	p.queue.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
@@ -274,35 +274,35 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.thread_count = 32,
 			.many = true,
 			.batch_size = 10,
-			.memory_type = MEMORY_HEAP
+			.memory_type = MemoryFlags::HEAP
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 100,
-			.memory_type = MEMORY_HEAP
+			.memory_type = MemoryFlags::HEAP
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 14,
 			.thread_count = 16,
 			.many = true,
 			.batch_size = 100,
-			.memory_type = MEMORY_HEAP
+			.memory_type = MemoryFlags::HEAP
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 10,
-			.memory_type = MEMORY_HEAP
+			.memory_type = MemoryFlags::HEAP
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 9,
 			.thread_count = 16,
 			.many = false,
 			.batch_size = 10,
-			.memory_type = MEMORY_HUGEPAGE
+			.memory_type = MemoryFlags::HUGEPAGE
 		}
 	};
 
@@ -319,7 +319,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	pthread_t threads[p->thread_count];
 
 	p->start = 0;
-	p->queue.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
+	p->queue.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	struct memory_type *mt = memory_type_lookup(p->memory_type);
 
@@ -368,7 +368,7 @@ Test(queue, init_destroy, .init = init_memory)
 	int ret;
 	struct queue q;
 
-	q.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
+	q.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	ret = queue_init(&q, 1024, &memory_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */

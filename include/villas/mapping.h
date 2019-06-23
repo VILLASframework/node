@@ -34,27 +34,27 @@ struct sample;
 struct signal;
 struct vlist;
 
-enum mapping_type {
-	MAPPING_TYPE_DATA,
-	MAPPING_TYPE_STATS,
-	MAPPING_TYPE_HEADER,
-	MAPPING_TYPE_TIMESTAMP
+enum class MappingType {
+	DATA,
+	STATS,
+	HEADER,
+	TIMESTAMP
 };
 
-enum mapping_header_type {
-	MAPPING_HEADER_TYPE_LENGTH,
-	MAPPING_HEADER_TYPE_SEQUENCE
+enum class MappingHeaderType {
+	LENGTH,
+	SEQUENCE
 };
 
-enum mapping_timestamp_type {
-	MAPPING_TIMESTAMP_TYPE_ORIGIN,
-	MAPPING_TIMESTAMP_TYPE_RECEIVED
+enum class MappingTimestampType {
+	ORIGIN,
+	RECEIVED
 };
 
 struct mapping_entry {
 	struct node *node;		/**< The node to which this mapping refers. */
 
-	enum mapping_type type;		/**< The mapping type. Selects one of the union fields below. */
+	enum MappingType type;		/**< The mapping type. Selects one of the union fields below. */
 
 	/** The number of values which is covered by this mapping entry.
 	 *
@@ -75,11 +75,11 @@ struct mapping_entry {
 		} stats;
 
 		struct {
-			enum mapping_header_type type;
+			enum MappingHeaderType type;
 		} header;
 
 		struct {
-			enum mapping_timestamp_type type;
+			enum MappingTimestampType type;
 		} timestamp;
 	};
 };

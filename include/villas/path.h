@@ -48,16 +48,16 @@ struct stats;
 struct node;
 
 /** The register mode determines under which condition the path is triggered. */
-enum path_mode {
-	PATH_MODE_ANY,				/**< The path is triggered whenever one of the sources receives samples. */
-	PATH_MODE_ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
+enum class PathMode {
+	ANY,				/**< The path is triggered whenever one of the sources receives samples. */
+	ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
 };
 
 /** The datastructure for a path. */
 struct path {
-	enum state state;			/**< Path state. */
+	enum State state;		/**< Path state. */
 
-	enum path_mode mode;		/**< Determines when this path is triggered. */
+	enum PathMode mode;		/**< Determines when this path is triggered. */
 
 	struct {
 		int nfds;

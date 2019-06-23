@@ -61,7 +61,7 @@ static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
 /* List of available memory types */
 struct memory_type memory_heap = {
 	.name = "heap",
-	.flags = MEMORY_HEAP,
+	.flags = (int) MemoryFlags::HEAP,
 	.alignment = 1,
 	.alloc = memory_heap_alloc,
 	.free = memory_heap_free

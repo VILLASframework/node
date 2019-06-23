@@ -51,7 +51,7 @@ class Socket;
 class Server {
 
 protected:
-	enum state state;
+	enum State state;
 
 	Api *api;
 	Logger logger;

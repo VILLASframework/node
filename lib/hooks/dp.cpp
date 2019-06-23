@@ -136,7 +136,7 @@ public:
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		time = 0;
 		steps = 0;
@@ -146,7 +146,7 @@ public:
 
 		window = dsp::Window<double>((1.0 / f0) / timestep, 0.0);
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void parse(json_t *cfg)
@@ -206,19 +206,19 @@ public:
 			fharmonics[i] = json_integer_value(json_harmonic);
 		}
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
 	virtual void prepare()
 	{
 		int ret;
 
-		assert(state == STATE_CHECKED);
+		assert(state == State::CHECKED);
 
 		char *new_sig_name;
 		struct signal *orig_sig, *new_sig;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		if (signal_name) {
 			signal_index = vlist_lookup_index(&signals, signal_name);
@@ -233,7 +233,7 @@ public:
 				if (!orig_sig)
 					throw RuntimeError("Failed to find signal");;
 
-				if (orig_sig->type != SIGNAL_TYPE_COMPLEX)
+				if (orig_sig->type != SignalType::COMPLEX)
 					throw RuntimeError("Signal is not complex");;
 
 				ret = vlist_remove(&signals, signal_index + i);
@@ -244,7 +244,7 @@ public:
 			}
 
 			/* Add new real-valued reconstructed signals */
-			new_sig = signal_create("dp", "idp", SIGNAL_TYPE_FLOAT);
+			new_sig = signal_create("dp", "idp", SignalType::FLOAT);
 			if (!new_sig)
 				throw RuntimeError("Failed to create signal");;
 
@@ -257,7 +257,7 @@ public:
 			if (!orig_sig)
 				throw RuntimeError("Failed to find signal");;
 
-			if (orig_sig->type != SIGNAL_TYPE_FLOAT)
+			if (orig_sig->type != SignalType::FLOAT)
 				throw RuntimeError("Signal is not float");;
 
 			ret = vlist_remove(&signals, signal_index);
@@ -267,7 +267,7 @@ public:
 			for (int i = 0; i < fharmonics_len; i++) {
 				new_sig_name = strf("%s_harm%d", orig_sig->name, i);
 
-				new_sig = signal_create(new_sig_name, orig_sig->unit, SIGNAL_TYPE_COMPLEX);
+				new_sig = signal_create(new_sig_name, orig_sig->unit, SignalType::COMPLEX);
 				if (!new_sig)
 					throw RuntimeError("Failed to create new signal");;
 
@@ -279,13 +279,13 @@ public:
 			signal_decref(orig_sig);
 		}
 
-		state = STATE_PREPARED;
+		state = State::PREPARED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		if (signal_index > smp->length)
-			return HOOK_ERROR;
+			return Hook::Reason::ERROR;
 
 		if (inverse) {
 			double signal;
@@ -311,7 +311,7 @@ public:
 		time += timestep;
 		steps++;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -319,7 +319,7 @@ public:
 static HookPlugin<DPHook> p(
 	"dp",
 	"Transform to/from dynamic phasor domain",
-	HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
+	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
 	99
 );
 

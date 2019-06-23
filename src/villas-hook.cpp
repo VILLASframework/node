@@ -70,8 +70,8 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		p.state = STATE_DESTROYED;
-		io.state = STATE_DESTROYED;
+		p.state = State::DESTROYED;
+		io.state = State::DESTROYED;
 
 		cfg_cli = json_object();
 	}
@@ -123,7 +123,7 @@ protected:
 #endif /* WITH_HOOKS */
 
 		std::cout << "Supported IO formats:" << std::endl;
-		plugin_dump(PLUGIN_TYPE_FORMAT);
+		plugin_dump(PluginType::FORMAT);
 		std::cout << std::endl;
 
 		std::cout << "Example:" << std::endl
@@ -210,7 +210,7 @@ check:			if (optarg == endptr)
 		if (!ft)
 			throw RuntimeError("Unknown IO format '{}'", format);
 
-		ret = io_init2(&io, ft, dtypes.c_str(), SAMPLE_HAS_ALL);
+		ret = io_init2(&io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
@@ -257,24 +257,26 @@ check:			if (optarg == endptr)
 			for (int processed = 0; processed < recv; processed++) {
 				struct sample *smp = smps[processed];
 
-				if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)){
+				if (!(smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)){
 					smp->ts.received = now;
-					smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+					smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 				}
 
-				ret = h->process(smp);
+				auto ret = h->process(smp);
 				switch (ret) {
-					case HOOK_ERROR:
+					using Reason = villas::node::Hook::Reason;
+
+					case Reason::ERROR:
 						throw RuntimeError("Failed to process samples");
 
-					case HOOK_OK:
+					case Reason::OK:
 						smps[send++] = smp;
 						break;
 
-					case HOOK_SKIP_SAMPLE:
+					case Reason::SKIP_SAMPLE:
 						break;
 
-					case HOOK_STOP_PROCESSING:
+					case Reason::STOP_PROCESSING:
 						goto stop;
 				}
 			}

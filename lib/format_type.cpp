@@ -30,7 +30,7 @@ struct format_type * format_type_lookup(const char *name)
 {
 	struct plugin *p;
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, name);
+	p = plugin_lookup(PluginType::FORMAT, name);
 	if (!p)
 		return nullptr;
 

@@ -43,35 +43,35 @@ public:
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED || state == STATE_STOPPED);
+		assert(state == State::PREPARED || state == State::STOPPED);
 
 		prev = nullptr;
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prev)
 			sample_decref(prev);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		int dist;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prev) {
 			dist = smp->sequence - (int64_t) prev->sequence;
 			if (dist <= 0) {
 				logger->debug("Dropping reordered sample: sequence={}, distance={}", smp->sequence, dist);
 
-				return HOOK_SKIP_SAMPLE;
+				return Hook::Reason::SKIP_SAMPLE;
 			}
 		}
 
@@ -81,12 +81,12 @@ public:
 
 		prev = smp;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 
 	virtual void restart()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prev) {
 			sample_decref(prev);
@@ -99,7 +99,7 @@ public:
 static HookPlugin<DropHook> p(
 	"drop",
 	"Drop messages with reordered sequence numbers",
-	HOOK_BUILTIN | HOOK_NODE_READ,
+	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
 	3
 );
 

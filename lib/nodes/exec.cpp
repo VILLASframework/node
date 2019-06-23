@@ -107,7 +107,7 @@ int exec_parse(struct node *n, json_t *cfg)
 		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format: {)", format);
 	}
 
-	if (!(e->format->flags & IO_NEWLINES)) {
+	if (!(e->format->flags & (int) IOFlags::NEWLINES)) {
 		json_t *json_format = json_object_get(cfg, "format");
 		throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
 	}
@@ -121,7 +121,7 @@ int exec_prepare(struct node *n)
 	struct exec *e = (struct exec *) n->_vd;
 
 	/* Initialize IO */
-	ret = io_init(&e->io, e->format, &n->in.signals, SAMPLE_HAS_ALL);
+	ret = io_init(&e->io, e->format, &n->in.signals, (int) SampleFlags::HAS_ALL);
 	if (ret)
 		return ret;
 
@@ -236,13 +236,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "exec";
 	p.description		= "run subprocesses with stdin/stdout communication";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct exec);
 	p.node.parse		= exec_parse;
@@ -261,6 +261,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

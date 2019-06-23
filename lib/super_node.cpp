@@ -47,7 +47,7 @@ using namespace villas::node;
 using namespace villas::utils;
 
 SuperNode::SuperNode() :
-	state(STATE_INITIALIZED),
+	state(State::INITIALIZED),
 	idleStop(false),
 #ifdef WITH_API
 	api(this),
@@ -63,9 +63,9 @@ SuperNode::SuperNode() :
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES)
 {
-	nodes.state = STATE_DESTROYED;
-	paths.state = STATE_DESTROYED;
-	interfaces.state = STATE_DESTROYED;
+	nodes.state = State::DESTROYED;
+	paths.state = State::DESTROYED;
+	interfaces.state = State::DESTROYED;
 
 	vlist_init(&nodes);
 	vlist_init(&paths);
@@ -95,7 +95,7 @@ void SuperNode::parse(json_t *cfg)
 	int ret;
 	const char *nme = nullptr;
 
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	json_t *json_nodes = nullptr;
 	json_t *json_paths = nullptr;
@@ -215,14 +215,14 @@ parse:			path *p = (path *) alloc(sizeof(path));
 		}
 	}
 
-	state = STATE_PARSED;
+	state = State::PARSED;
 }
 
 void SuperNode::check()
 {
 	int ret;
 
-	assert(state == STATE_INITIALIZED || state == STATE_PARSED || state == STATE_CHECKED);
+	assert(state == State::INITIALIZED || state == State::PARSED || state == State::CHECKED);
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
@@ -240,7 +240,7 @@ void SuperNode::check()
 			throw RuntimeError("Invalid configuration for path {}", path_name(p));
 	}
 
-	state = STATE_CHECKED;
+	state = State::CHECKED;
 }
 
 void SuperNode::startNodeTypes()
@@ -345,7 +345,7 @@ void SuperNode::prepare()
 {
 	int ret;
 
-	assert(state == STATE_CHECKED);
+	assert(state == State::CHECKED);
 
 	ret = memory_init(hugepages);
 	if (ret)
@@ -356,14 +356,14 @@ void SuperNode::prepare()
 	prepareNodes();
 	preparePaths();
 
-	state = STATE_PREPARED;
+	state = State::PREPARED;
 }
 
 void SuperNode::start()
 {
 	int ret;
 
-	assert(state == STATE_PREPARED);
+	assert(state == State::PREPARED);
 
 #ifdef WITH_API
 	api.start();
@@ -384,7 +384,7 @@ void SuperNode::start()
 
 	Stats::printHeader(Stats::Format::HUMAN);
 
-	state = STATE_STARTED;
+	state = State::STARTED;
 }
 
 void SuperNode::stopPaths()
@@ -420,7 +420,7 @@ void SuperNode::stopNodeTypes()
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
 		auto *p = (struct plugin *) vlist_at(&plugins, i);
 
-		if (p->type == PLUGIN_TYPE_NODE) {
+		if (p->type == PluginType::NODE) {
 			ret = node_type_stop(&p->node);
 			if (ret)
 				throw RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
@@ -464,25 +464,25 @@ void SuperNode::stop()
 	web.stop();
 #endif
 
-	state = STATE_STOPPED;
+	state = State::STOPPED;
 }
 
 void SuperNode::run()
 {
 	int ret;
 
-	while (state == STATE_STARTED) {
+	while (state == State::STARTED) {
 		task_wait(&task);
 
 		ret = periodic();
 		if (ret)
-			state = STATE_STOPPING;
+			state = State::STOPPING;
 	}
 }
 
 SuperNode::~SuperNode()
 {
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
 	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
@@ -496,7 +496,7 @@ int SuperNode::periodic()
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
-		if (p->state == STATE_STARTED) {
+		if (p->state == State::STARTED) {
 			started++;
 
 #ifdef WITH_HOOKS
@@ -508,7 +508,7 @@ int SuperNode::periodic()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		if (n->state == STATE_STARTED) {
+		if (n->state == State::STARTED) {
 #ifdef WITH_HOOKS
 			hook_list_periodic(&n->in.hooks);
 			hook_list_periodic(&n->out.hooks);
@@ -516,7 +516,7 @@ int SuperNode::periodic()
 		}
 	}
 
-	if (idleStop && state == STATE_STARTED && started == 0) {
+	if (idleStop && state == State::STARTED && started == 0) {
 		info("No more active paths. Stopping super-node");
 
 		return -1;

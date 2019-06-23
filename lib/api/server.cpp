@@ -50,7 +50,7 @@ using namespace villas::node::api;
 #endif
 
 Server::Server(Api *a) :
-	state(STATE_INITIALIZED),
+	state(State::INITIALIZED),
 	api(a)
 {
 	logger = logging.get("api:server");
@@ -58,14 +58,14 @@ Server::Server(Api *a) :
 
 Server::~Server()
 {
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 }
 
 void Server::start()
 {
 	int ret;
 
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sd < 0)
@@ -90,7 +90,7 @@ void Server::start()
 
 	logger->info("Listening on UNIX socket: {}", sun.sun_path);
 
-	state = STATE_STARTED;
+	state = State::STARTED;
 }
 
 struct sockaddr_un Server::getSocketAddress()
@@ -129,20 +129,20 @@ void Server::stop()
 {
 	int ret;
 
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	ret = close(sd);
 	if (ret)
 		throw SystemError("Failed to close API socket");;
 
-	state = STATE_STOPPED;
+	state = State::STOPPED;
 }
 
 void Server::run(int timeout)
 {
 	int ret;
 
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	auto len = pfds.size();
 

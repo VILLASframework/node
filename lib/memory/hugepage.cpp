@@ -146,7 +146,7 @@ static int memory_hugepage_free(struct memory_type *m, struct memory_allocation 
 
 struct memory_type memory_hugepage = {
 	.name = "mmap_hugepages",
-	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
+	.flags = (int) MemoryFlags::MMAP | (int) MemoryFlags::HUGEPAGE,
 	.alignment = 21, /* 2 MiB hugepage */
 	.alloc = memory_hugepage_alloc,
 	.free = memory_hugepage_free

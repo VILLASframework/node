@@ -30,16 +30,16 @@
 
 extern struct vlist plugins;
 
-enum plugin_type {
-	PLUGIN_TYPE_NODE,
-	PLUGIN_TYPE_FORMAT,
+enum PluginType {
+	NODE,
+	FORMAT,
 };
 
 struct plugin {
 	const char *name;
 	const char *description;
 
-	enum plugin_type type;
+	enum PluginType type;
 
 	union {
 		struct format_type	format;
@@ -53,7 +53,7 @@ struct plugin {
 #define plugin_name(vt) plugin(vt)->name
 #define plugin_description(vt) plugin(vt)->description
 
-void plugin_dump(enum plugin_type type);
+void plugin_dump(enum PluginType type);
 
 /** Find registered and loaded plugin with given name and type. */
-struct plugin * plugin_lookup(enum plugin_type type, const char *name);
+struct plugin * plugin_lookup(enum PluginType type, const char *name);

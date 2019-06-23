@@ -85,7 +85,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 	return buf;
 }
 
-int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_layer layer, int flags)
+int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLayer layer, int flags)
 {
 	/** @todo: Add support for IPv6 */
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
@@ -93,7 +93,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 	char *copy = strdup(addr);
 	int ret;
 
-	if (layer == SOCKET_LAYER_UNIX) { /* Format: "/path/to/socket" */
+	if (layer == SocketLayer::UNIX) { /* Format: "/path/to/socket" */
 		sa->sun.sun_family = AF_UNIX;
 
 		if (strlen(addr) > sizeof(sa->sun.sun_path) - 1)
@@ -104,7 +104,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 		ret = 0;
 	}
 #ifdef WITH_SOCKET_LAYER_ETH
-	else if (layer == SOCKET_LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
+	else if (layer == SocketLayer::ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		/* Split string */
 		char *lasts;
 		char *node = strtok_r(copy, "%", &lasts);
@@ -151,13 +151,13 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 			service = nullptr;
 
 		switch (layer) {
-			case SOCKET_LAYER_IP:
+			case SocketLayer::IP:
 				hint.ai_socktype = SOCK_RAW;
 				hint.ai_protocol = (service) ? strtol(service, nullptr, 0) : IPPROTO_VILLAS;
 				hint.ai_flags |= AI_NUMERICSERV;
 				break;
 
-			case SOCKET_LAYER_UDP:
+			case SocketLayer::UDP:
 				hint.ai_socktype = SOCK_DGRAM;
 				hint.ai_protocol = IPPROTO_UDP;
 				break;
@@ -168,9 +168,9 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 
 		/* Lookup address */
 		struct addrinfo *result;
-		ret = getaddrinfo(node, (layer == SOCKET_LAYER_IP) ? nullptr : service, &hint, &result);
+		ret = getaddrinfo(node, (layer == SocketLayer::IP) ? nullptr : service, &hint, &result);
 		if (!ret) {
-			if (layer == SOCKET_LAYER_IP) {
+			if (layer == SocketLayer::IP) {
 				/* We mis-use the sin_port field to store the IP protocol number on RAW sockets */
 				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
 				sin->sin_port = htons(result->ai_protocol);

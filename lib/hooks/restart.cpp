@@ -43,26 +43,26 @@ public:
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		prev = nullptr;
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prev)
 			sample_decref(prev);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prev) {
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
@@ -70,7 +70,7 @@ public:
 				logger->warn("Simulation from node {} restarted (previous->sequence={}, current->sequence={})",
 					node_name(node), prev->sequence, smp->sequence);
 
-				smp->flags |= SAMPLE_IS_FIRST;
+				smp->flags |= (int) SampleFlags::IS_FIRST;
 
 				/* Restart hooks */
 				for (size_t i = 0; i < vlist_length(&node->in.hooks); i++) {
@@ -93,7 +93,7 @@ public:
 
 		prev = smp;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -101,7 +101,7 @@ public:
 static HookPlugin<RestartHook> p(
 	"restart",
 	"Call restart hooks for current node",
-	HOOK_BUILTIN | HOOK_NODE_READ,
+	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
 	1
 );
 

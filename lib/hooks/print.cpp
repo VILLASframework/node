@@ -50,7 +50,7 @@ public:
 		prefix(nullptr),
 		uri(nullptr)
 	{
-		io.state = STATE_DESTROYED;
+		io.state = State::DESTROYED;
 
 		format = format_type_lookup("villas.human");
 	}
@@ -59,9 +59,9 @@ public:
 	{
 		int ret;
 
-		assert(state == STATE_PREPARED || state == STATE_STOPPED);
+		assert(state == State::PREPARED || state == State::STOPPED);
 
-		ret = io_init(&io, format, &signals, SAMPLE_HAS_ALL);
+		ret = io_init(&io, format, &signals, (int) SampleFlags::HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialze IO");
 
@@ -73,14 +73,14 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to open IO");
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
 		int ret;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		ret = io_close(&io);
 		if (ret)
@@ -90,7 +90,7 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to destroy IO");
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
 	virtual void parse(json_t *cfg)
@@ -99,7 +99,7 @@ public:
 		int ret;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s }",
 			"output", &u,
@@ -121,12 +121,12 @@ public:
 				throw ConfigError(cfg, "node-config-hook-print-format", "Invalid IO format '{}'", f);
 		}
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (prefix)
 			printf("%s", prefix);
@@ -137,7 +137,7 @@ public:
 
 		io_print(&io, &smp, 1);
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 
 	virtual ~PrintHook()
@@ -154,7 +154,7 @@ public:
 static HookPlugin<PrintHook> p(
 	"print",
 	"Print the message to stdout",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	99
 );
 

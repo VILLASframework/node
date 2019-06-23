@@ -573,7 +573,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			for (size_t i = 0; i < cnt; i++) {
 				d->counter++;
 
-				smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
+				smps[i]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
 				smps[i]->sequence = d->counter / d->chanlist_len;
 
 				struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
@@ -718,7 +718,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	for (size_t i = 0; i < cnt; i++) {
 		d->counter++;
 
-		smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
+		smps[i]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
 		smps[i]->sequence = d->counter / d->chanlist_len;
 
 		struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
@@ -880,25 +880,25 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 			unsigned raw_value = 0;
 
 			switch (sample_format(sample, si)) {
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					raw_value = comedi_from_phys(sample->data[si].f, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					/* Treat sample as already raw DAC value */
 					raw_value = sample->data[si].i;
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					raw_value = comedi_from_phys(sample->data[si].b ? 1 : 0, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
+				case SignalType::COMPLEX:
 					/* We only output the real part */
 					raw_value = comedi_from_phys(creal(sample->data[si].z), d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					break;
 
-				case SIGNAL_TYPE_INVALID:
+				case SignalType::INVALID:
 					raw_value = 0;
 					break;
 			}
@@ -992,13 +992,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "comedi";
 	p.description		= "Comedi-compatible DAQ/ADC cards";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct comedi);
 	p.node.parse		= comedi_parse;
@@ -1015,6 +1015,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

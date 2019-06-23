@@ -37,10 +37,10 @@ extern void init_memory();
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, PAGESIZE, HUGEPAGESIZE),
 	DataPoints(size_t, 1, 8, PAGESIZE, PAGESIZE),
-	DataPoints(enum memory_type_flags, MEMORY_HEAP, MEMORY_HUGEPAGE, MEMORY_HUGEPAGE)
+	DataPoints(enum MemoryFlags, MemoryFlags::HEAP, MemoryFlags::HUGEPAGE, MemoryFlags::HUGEPAGE)
 };
 
-Theory((size_t len, size_t align, enum memory_type_flags memory_type), memory, aligned, .init = init_memory) {
+Theory((size_t len, size_t align, enum MemoryFlags memory_type), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
 

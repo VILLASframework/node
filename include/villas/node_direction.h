@@ -36,14 +36,14 @@
 /* Forward declarations */
 struct node;
 
-enum node_dir {
-	NODE_DIR_IN,		/**< VILLASnode is receiving/reading */
-	NODE_DIR_OUT		/**< VILLASnode is sending/writing */
+enum class NodeDir {
+	IN,		/**< VILLASnode is receiving/reading */
+	OUT		/**< VILLASnode is sending/writing */
 };
 
 struct node_direction {
-	enum state state;
-	enum node_dir direction;
+	enum State state;
+	enum NodeDir direction;
 
 	int enabled;
 	int builtin;		/**< This node should use built-in hooks by default. */
@@ -55,7 +55,7 @@ struct node_direction {
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
-int node_direction_init(struct node_direction *nd, enum node_dir dir, struct node *n);
+int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node *n);
 
 int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg);
 

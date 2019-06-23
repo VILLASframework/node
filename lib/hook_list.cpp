@@ -102,7 +102,7 @@ static int hook_is_enabled(const Hook *h)
 
 void hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node *n)
 {
-	assert(hs->state == STATE_INITIALIZED);
+	assert(hs->state == State::INITIALIZED);
 
 	if (!m)
 		goto skip_add;
@@ -134,7 +134,7 @@ skip_add:
 
 int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
 {
-	unsigned ret, current, processed = 0;
+	unsigned current, processed = 0;
 
 	if (vlist_length(hs) == 0)
 		return cnt;
@@ -145,18 +145,18 @@ int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
 		for (size_t i = 0; i < vlist_length(hs); i++) {
 			Hook *h = (Hook *) vlist_at(hs, i);
 
-			ret = h->process(smp);
+			auto ret = h->process(smp);
 			switch (ret) {
-				case HOOK_ERROR:
+				case Hook::Reason::ERROR:
 					return -1;
 
-				case HOOK_OK:
+				case Hook::Reason::OK:
 					continue;
 
-				case HOOK_SKIP_SAMPLE:
+				case Hook::Reason::SKIP_SAMPLE:
 					goto skip;
 
-				case HOOK_STOP_PROCESSING:
+				case Hook::Reason::STOP_PROCESSING:
 					goto stop;
 			}
 		}

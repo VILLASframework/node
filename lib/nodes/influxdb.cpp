@@ -138,9 +138,9 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 			union signal_data *data = &smp->data[k];
 
 			if (
-				sig->type != SIGNAL_TYPE_BOOLEAN &&
-				sig->type != SIGNAL_TYPE_INTEGER &&
-				sig->type != SIGNAL_TYPE_INTEGER
+				sig->type != SignalType::BOOLEAN &&
+				sig->type != SignalType::INTEGER &&
+				sig->type != SignalType::INTEGER
 			) {
 				warning("Unsupported signal format for node %s. Skipping", node_name(n));
 				continue;
@@ -158,15 +158,15 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 				strcatf(&buf, "value%d=", j);
 
 			switch (sig->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					strcatf(&buf, "%s", data->b ? "true" : "false");
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					strcatf(&buf, "%f", data->f);
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					strcatf(&buf, "%" PRIi64, data->i);
 					break;
 
@@ -204,13 +204,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "influxdb";
 	p.description		= "Write results to InfluxDB";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct influxdb);
 	p.node.parse		= influxdb_parse;
@@ -226,6 +226,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

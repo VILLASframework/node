@@ -42,7 +42,7 @@ namespace node {
 class SuperNode {
 
 protected:
-	enum state state;
+	enum State state;
 
 	int idleStop;
 
@@ -111,7 +111,7 @@ public:
 	/** Run periodic hooks of this super node. */
 	int periodic();
 
-	void setState(enum state st)
+	void setState(enum State st)
 	{
 		state = st;
 	}
@@ -134,7 +134,7 @@ public:
 		return &interfaces;
 	}
 
-	enum state getState() {
+	enum State getState() {
 		return state;
 	}
 

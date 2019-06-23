@@ -34,7 +34,7 @@
 
 /** A thread-safe memory pool */
 struct pool {
-	enum state state;
+	enum State state;
 
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 

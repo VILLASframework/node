@@ -23,42 +23,43 @@
 
 #include <villas/config.h>
 #include <villas/utils.hpp>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/node.h>
 #include <villas/node_direction.h>
 
+using namespace villas::node;
 using namespace villas::utils;
 
 int node_direction_prepare(struct node_direction *nd, struct node *n)
 {
-	assert(nd->state == STATE_CHECKED);
+	assert(nd->state == State::CHECKED);
 
 #ifdef WITH_HOOKS
-	int t = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
-	int m = nd->builtin ? t | HOOK_BUILTIN : 0;
+	int t = nd->direction == NodeDir::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
+	int m = nd->builtin ? t | (int) Hook::Flags::BUILTIN : 0;
 
 	hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
 #endif /* WITH_HOOKS */
 
-	nd->state = STATE_PREPARED;
+	nd->state = State::PREPARED;
 
 	return 0;
 }
 
-int node_direction_init(struct node_direction *nd, enum node_dir dir, struct node *n)
+int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node *n)
 {
 	int ret;
 
-	assert(nd->state == STATE_DESTROYED);
+	assert(nd->state == State::DESTROYED);
 
 	nd->direction = dir;
 	nd->enabled = 1;
 	nd->vectorize = 1;
 	nd->builtin = 1;
 
-	nd->hooks.state = STATE_DESTROYED;
-	nd->signals.state = STATE_DESTROYED;
+	nd->hooks.state = State::DESTROYED;
+	nd->signals.state = State::DESTROYED;
 
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&nd->hooks);
@@ -70,7 +71,7 @@ int node_direction_init(struct node_direction *nd, enum node_dir dir, struct nod
 	if (ret)
 		return ret;
 
-	nd->state = STATE_INITIALIZED;
+	nd->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -79,7 +80,7 @@ int node_direction_destroy(struct node_direction *nd, struct node *n)
 {
 	int ret = 0;
 
-	assert(nd->state != STATE_DESTROYED && nd->state != STATE_STARTED);
+	assert(nd->state != State::DESTROYED && nd->state != State::STARTED);
 
 #ifdef WITH_HOOKS
 	ret = hook_list_destroy(&nd->hooks);
@@ -91,7 +92,7 @@ int node_direction_destroy(struct node_direction *nd, struct node *n)
 	if (ret)
 		return ret;
 
-	nd->state = STATE_DESTROYED;
+	nd->state = State::DESTROYED;
 
 	return 0;
 }
@@ -100,7 +101,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 {
 	int ret;
 
-	assert(nd->state == STATE_INITIALIZED);
+	assert(nd->state == State::INITIALIZED);
 
 	json_error_t err;
 	json_t *json_hooks = nullptr;
@@ -118,7 +119,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
 
-	if (n->_vt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
+	if (n->_vt->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
 		if (json_signals)
 			error("Node %s does not support signal definitions", node_name(n));
 	}
@@ -145,8 +146,8 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 			);
 		}
 
-		enum signal_type type = signal_type_from_str(type_str);
-		if (type == SIGNAL_TYPE_INVALID)
+		enum SignalType type = signal_type_from_str(type_str);
+		if (type == SignalType::INVALID)
 			error("Invalid signal type %s", type_str);
 
 		ret = signal_list_generate(&nd->signals, count, type);
@@ -156,20 +157,20 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		int m = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
+		int m = nd->direction == NodeDir::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
 
 		hook_list_parse(&nd->hooks, json_hooks, m, nullptr, n);
 	}
 #endif /* WITH_HOOKS */
 
-	nd->state = STATE_PARSED;
+	nd->state = State::PARSED;
 
 	return 0;
 }
 
 int node_direction_check(struct node_direction *nd, struct node *n)
 {
-	assert(nd->state == STATE_PARSED);
+	assert(nd->state == State::PARSED);
 
 	if (nd->vectorize <= 0)
 		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
@@ -178,40 +179,40 @@ int node_direction_check(struct node_direction *nd, struct node *n)
 		error("Invalid value for setting 'vectorize'. Node type requires a number smaller than %d!",
 			node_type(n)->vectorize);
 
-	nd->state = STATE_CHECKED;
+	nd->state = State::CHECKED;
 
 	return 0;
 }
 
 int node_direction_start(struct node_direction *nd, struct node *n)
 {
-	assert(nd->state == STATE_PREPARED);
+	assert(nd->state == State::PREPARED);
 
 #ifdef WITH_HOOKS
 	hook_list_start(&nd->hooks);
 #endif /* WITH_HOOKS */
 
-	nd->state = STATE_STARTED;
+	nd->state = State::STARTED;
 
 	return 0;
 }
 
 int node_direction_stop(struct node_direction *nd, struct node *n)
 {
-	assert(nd->state == STATE_STARTED);
+	assert(nd->state == State::STARTED);
 
 #ifdef WITH_HOOKS
 	hook_list_stop(&nd->hooks);
 #endif /* WITH_HOOKS */
 
-	nd->state = STATE_STOPPED;
+	nd->state = State::STOPPED;
 
 	return 0;
 }
 
 struct vlist * node_direction_get_signals(struct node_direction *nd)
 {
-	assert(nd->state == STATE_PREPARED);
+	assert(nd->state == State::PREPARED);
 
 #ifdef WITH_HOOKS
 	if (vlist_length(&nd->hooks) > 0)

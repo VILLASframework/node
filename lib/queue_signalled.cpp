@@ -33,34 +33,34 @@ static void queue_signalled_cleanup(void *p)
 {
 	struct queue_signalled *qs = (struct queue_signalled *) p;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 }
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, int flags)
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, enum QueueSignalledMode mode, int flags)
 {
 	int ret;
 
-	qs->mode = (enum queue_signalled_flags) (flags & QUEUE_SIGNALLED_MASK);
+	qs->mode = mode;
 
-	if (qs->mode == 0) {
+	if (qs->mode == QueueSignalledMode::AUTO) {
 #ifdef __linux__
-		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED)
-			qs->mode = QUEUE_SIGNALLED_PTHREAD;
+		if (flags & (int) QueueSignalledFlags::PROCESS_SHARED)
+			qs->mode = QueueSignalledMode::PTHREAD;
 		else {
 #ifdef HAS_EVENTFD
-			qs->mode = QUEUE_SIGNALLED_EVENTFD;
+			qs->mode = QueueSignalledMode::EVENTFD;
 #else
-			qs->mode = QUEUE_SIGNALLED_PTHREAD;
+			qs->mode = QueueSignalledMode::PTHREAD;
 #endif
 		}
 #elif defined(__APPLE__)
-		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED)
-			qs->mode = QUEUE_SIGNALLED_PTHREAD;
+		if (flags & (int) QueueSignalledFlags::PROCESS_SHARED)
+			qs->mode = QueueSignalledMode::PTHREAD;
 		else
-			qs->mode = QUEUE_SIGNALLED_PIPE;
+			qs->mode = QueueSignalledMode::PIPE;
 #else
-		qs->mode = QUEUE_SIGNALLED_PTHREAD;
+		qs->mode = QueueSignalledMode::PTHREAD;
 #endif
 	}
 
@@ -68,14 +68,14 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_
 	if (ret < 0)
 		return ret;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
+	if (qs->mode == QueueSignalledMode::PTHREAD) {
 		pthread_condattr_t  cvattr;
 		pthread_mutexattr_t mtattr;
 
 		pthread_mutexattr_init(&mtattr);
 		pthread_condattr_init(&cvattr);
 
-		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED) {
+		if (flags & (int) QueueSignalledFlags::PROCESS_SHARED) {
 			pthread_mutexattr_setpshared(&mtattr, PTHREAD_PROCESS_SHARED);
 			pthread_condattr_setpshared(&cvattr, PTHREAD_PROCESS_SHARED);
 		}
@@ -86,17 +86,17 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_
 		pthread_mutexattr_destroy(&mtattr);
 		pthread_condattr_destroy(&cvattr);
 	}
-	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
+	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
 	}
 #ifdef HAS_EVENTFD
-	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		qs->eventfd = eventfd(0, 0);
 		if (qs->eventfd < 0)
 			return -2;
 	}
 #elif defined(__APPLE__)
-	else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+	else if (qs->mode == QueueSignalledMode::PIPE) {
 		ret = pipe(qs->pipe);
 		if (ret < 0)
 			return -2;
@@ -116,21 +116,21 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 	if (ret < 0)
 		return ret;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
+	if (qs->mode == QueueSignalledMode::PTHREAD) {
 		pthread_cond_destroy(&qs->pthread.ready);
 		pthread_mutex_destroy(&qs->pthread.mutex);
 	}
-	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
+	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
 	}
 #ifdef HAS_EVENTFD
-	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		ret = close(qs->eventfd);
 		if (ret)
 			return ret;
 	}
 #elif defined(__APPLE__)
-	else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+	else if (qs->mode == QueueSignalledMode::PIPE) {
 		ret = close(qs->pipe[0]) + close(qs->pipe[1]);
 		if (ret)
 			return ret;
@@ -150,16 +150,16 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 	if (pushed < 0)
 		return pushed;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
+	if (qs->mode == QueueSignalledMode::PTHREAD) {
 		pthread_mutex_lock(&qs->pthread.mutex);
 		pthread_cond_broadcast(&qs->pthread.ready);
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
-	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
+	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
 	}
 #ifdef HAS_EVENTFD
-	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
 		ret = write(qs->eventfd, &incr, sizeof(incr));
@@ -167,7 +167,7 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 			return ret;
 	}
 #elif defined(__APPLE__)
-	else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+	else if (qs->mode == QueueSignalledMode::PIPE) {
 		int ret;
 		uint8_t incr = 1;
 		ret = write(qs->pipe[1], &incr, sizeof(incr));
@@ -189,16 +189,16 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	if (pushed < 0)
 		return pushed;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
+	if (qs->mode == QueueSignalledMode::PTHREAD) {
 		pthread_mutex_lock(&qs->pthread.mutex);
 		pthread_cond_broadcast(&qs->pthread.ready);
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
-	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
+	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
 	}
 #ifdef HAS_EVENTFD
-	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
 		ret = write(qs->eventfd, &incr, sizeof(incr));
@@ -206,7 +206,7 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 			return ret;
 	}
 #elif defined(__APPLE__)
-	else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+	else if (qs->mode == QueueSignalledMode::PIPE) {
 		int ret;
 		uint8_t incr = 1;
 		ret = write(qs->pipe[1], &incr, sizeof(incr));
@@ -227,7 +227,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_lock(&qs->pthread.mutex);
 
 	while (!pulled) {
@@ -235,12 +235,12 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 		if (pulled < 0)
 			break;
 		else if (pulled == 0) {
-			if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+			if (qs->mode == QueueSignalledMode::PTHREAD)
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
-			else if (qs->mode == QUEUE_SIGNALLED_POLLING)
+			else if (qs->mode == QueueSignalledMode::POLLING)
 				continue; /* Try again */
 #ifdef HAS_EVENTFD
-			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+			else if (qs->mode == QueueSignalledMode::EVENTFD) {
 				int ret;
 				uint64_t cntr;
 				ret = read(qs->eventfd, &cntr, sizeof(cntr));
@@ -248,7 +248,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 					break;
 			}
 #elif defined(__APPLE__)
-			else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+			else if (qs->mode == QueueSignalledMode::PIPE) {
 				int ret;
 				uint8_t incr = 1;
 				ret = read(qs->pipe[0], &incr, sizeof(incr));
@@ -261,7 +261,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 		}
 	}
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 
 	pthread_cleanup_pop(0);
@@ -276,7 +276,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_lock(&qs->pthread.mutex);
 
 	while (!pulled) {
@@ -284,12 +284,12 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 		if (pulled < 0)
 			break;
 		else if (pulled == 0) {
-			if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+			if (qs->mode == QueueSignalledMode::PTHREAD)
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
-			else if (qs->mode == QUEUE_SIGNALLED_POLLING)
+			else if (qs->mode == QueueSignalledMode::POLLING)
 				continue; /* Try again */
 #ifdef HAS_EVENTFD
-			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+			else if (qs->mode == QueueSignalledMode::EVENTFD) {
 				int ret;
 				uint64_t cntr;
 				ret = read(qs->eventfd, &cntr, sizeof(cntr));
@@ -297,7 +297,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 					break;
 			}
 #elif defined(__APPLE__)
-			else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+			else if (qs->mode == QueueSignalledMode::PIPE) {
 				int ret;
 				uint8_t incr = 1;
 				ret = read(qs->pipe[0], &incr, sizeof(incr));
@@ -310,7 +310,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 		}
 	}
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 
 	pthread_cleanup_pop(0);
@@ -322,20 +322,20 @@ int queue_signalled_close(struct queue_signalled *qs)
 {
 	int ret;
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
+	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_lock(&qs->pthread.mutex);
 
 	ret = queue_close(&qs->queue);
 
-	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
+	if (qs->mode == QueueSignalledMode::PTHREAD) {
 		pthread_cond_broadcast(&qs->pthread.ready);
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
-	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
+	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
 	}
 #ifdef HAS_EVENTFD
-	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
 
@@ -344,7 +344,7 @@ int queue_signalled_close(struct queue_signalled *qs)
 			return ret;
 	}
 #elif defined(__APPLE__)
-	else if (qs->mode == QUEUE_SIGNALLED_PIPE) {
+	else if (qs->mode == QueueSignalledMode::PIPE) {
 		int ret;
 		uint64_t incr = 1;
 
@@ -363,10 +363,10 @@ int queue_signalled_fd(struct queue_signalled *qs)
 {
 	switch (qs->mode) {
 #ifdef HAS_EVENTFD
-		case QUEUE_SIGNALLED_EVENTFD:
+		case QueueSignalledMode::EVENTFD:
 			return qs->eventfd;
 #elif defined(__APPLE__)
-		case QUEUE_SIGNALLED_PIPE:
+		case QueueSignalledMode::PIPE:
 			return qs->pipe[0];
 #endif
 		default: { }

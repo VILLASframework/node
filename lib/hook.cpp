@@ -39,7 +39,7 @@ using namespace villas;
 using namespace villas::node;
 
 Hook::Hook(struct path *p, struct node *n, int fl, int prio, bool en) :
-	state(STATE_INITIALIZED),
+	state(State::INITIALIZED),
 	flags(fl),
 	priority(prio),
 	enabled(en),
@@ -50,14 +50,14 @@ Hook::Hook(struct path *p, struct node *n, int fl, int prio, bool en) :
 
 	logger = logging.get("hook");
 
-	signals.state = STATE_DESTROYED;
+	signals.state = State::DESTROYED;
 
 	ret = signal_list_init(&signals);
 	if (ret)
 		throw RuntimeError("Failed to initialize signal list");
 
 	/* We dont need to parse builtin hooks. */
-	state = flags & HOOK_BUILTIN ? STATE_CHECKED : STATE_INITIALIZED;
+	state = flags & (int) Hook::Flags::BUILTIN ? State::CHECKED : State::INITIALIZED;
 }
 
 Hook::~Hook()
@@ -67,9 +67,9 @@ Hook::~Hook()
 
 void Hook::prepare()
 {
-	assert(state == STATE_CHECKED);
+	assert(state == State::CHECKED);
 
-	state = STATE_PREPARED;
+	state = State::PREPARED;
 }
 
 void Hook::parse(json_t *c)
@@ -77,7 +77,7 @@ void Hook::parse(json_t *c)
 	int ret;
 	json_error_t err;
 
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	ret = json_unpack_ex(c, &err, 0, "{ s?: i, s?: b }",
 		"priority", &priority,
@@ -88,5 +88,5 @@ void Hook::parse(json_t *c)
 
 	cfg = c;
 
-	state = STATE_PARSED;
+	state = State::PARSED;
 }

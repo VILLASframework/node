@@ -311,7 +311,7 @@ int mqtt_start(struct node *n)
 	mosquitto_message_callback_set(m->client, mqtt_message_cb);
 	mosquitto_subscribe_callback_set(m->client, mqtt_subscribe_cb);
 
-	ret = io_init(&m->io, m->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&m->io, m->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -323,7 +323,7 @@ int mqtt_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&m->queue, 1024, &memory_hugepage, 0);
+	ret = queue_signalled_init(&m->queue, 1024, &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -453,13 +453,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "mqtt";
 	p.description		= "Message Queuing Telemetry Transport (libmosquitto)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct mqtt);
 	p.node.type.start	= mqtt_type_start;
@@ -481,6 +481,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }
