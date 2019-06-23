@@ -29,9 +29,9 @@ using namespace villas::utils;
 
 TestSuite(popen, .description = "Bi-directional popen");
 
-Test(popen, cat)
+Test(popen, no_shell)
 {
-	Popen proc("cat");
+	Popen proc("/usr/bin/tee", {"tee", "test"});
 
 	proc.cout() << "Hello World" << std::endl;
 	proc.cout().flush();
@@ -40,8 +40,53 @@ Test(popen, cat)
 
 	proc.cin() >> str >> str2;
 
+	std::cout << str << str2 << std::endl;
+
 	cr_assert_eq(str, "Hello");
 	cr_assert_eq(str2, "World");
+
+	proc.kill();
+	proc.close();
+}
+
+Test(popen, shell)
+{
+	Popen proc("echo \"Hello World\"", {}, {}, std::string(), true);
+
+	std::string str, str2;
+
+	proc.cin() >> str >> str2;
+
+	cr_assert_eq(str, "Hello");
+	cr_assert_eq(str2, "World");
+
+	proc.kill();
+	proc.close();
+}
+
+Test(popen, wd)
+{
+	Popen proc("/usr/bin/pwd", {"pwd"}, {}, "/usr/lib");
+
+	std::string wd;
+
+	proc.cin() >> wd;
+
+	cr_assert_eq(wd, "/usr/lib");
+
+	proc.kill();
+	proc.close();
+}
+
+Test(popen, env)
+{
+	Popen proc("echo $MYVAR", {}, {{"MYVAR", "TESTVAL"}}, std::string(), true);
+
+	std::string var;
+
+	proc.cin() >> var;
+
+	cr_assert_eq(var, "TESTVAL");
 
 	proc.kill();
 	proc.close();

@@ -27,6 +27,7 @@
 
 #include <ext/stdio_filebuf.h>
 
+#include <map>
 #include <string>
 #include <istream>
 #include <ostream>
@@ -38,10 +39,17 @@ namespace utils {
 class Popen {
 
 public:
+	using arg_list = std::vector<std::string>;
+	using env_map = std::map<std::string, std::string>;
+
 	using char_type = char;
 	using stdio_buf = __gnu_cxx::stdio_filebuf<char_type>;
 
-	Popen(const std::string &command);
+	Popen(const std::string &cmd,
+	      const arg_list &args = arg_list(),
+	      const env_map &env = env_map(),
+	      const std::string &wd = std::string(),
+	      bool shell = false);
 	~Popen();
 
 	void open();
@@ -70,6 +78,10 @@ public:
 
 protected:
 	std::string command;
+	std::string working_dir;
+	arg_list arguments;
+	env_map environment;
+	bool shell;
 	pid_t pid;
 
 	struct {
@@ -81,7 +93,6 @@ protected:
 		std::unique_ptr<std::ostream> stream;
 		std::unique_ptr<stdio_buf> buffer;
 	} output;
-
 };
 
 } /* namespace utils */
