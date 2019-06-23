@@ -165,9 +165,9 @@ void Hist::plot() const
 	}
 
 	std::vector<TableColumn> cols = {
-		{ -9, TableColumn::align::RIGHT, "Value", "%+9.3g" },
-		{ -6, TableColumn::align::RIGHT, "Count", "%6ju" },
-		{  0, TableColumn::align::LEFT,  "Plot",  "%s", "occurences" }
+		{ -9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g" },
+		{ -6, TableColumn::Alignment::RIGHT, "Count", "%6ju" },
+		{  0, TableColumn::Alignment::LEFT,  "Plot",  "%s", "occurences" }
 	};
 
 	Table table = Table(cols);

@@ -30,7 +30,7 @@
 #include <villas/common.h>
 
 struct buffer {
-	enum state state;
+	enum State state;
 
 	char *buf;
 	size_t len;

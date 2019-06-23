@@ -37,7 +37,7 @@ class TableColumn {
 	friend Table;
 
 public:
-	enum align {
+	enum class Alignment {
 		LEFT,
 		RIGHT
 	};
@@ -48,20 +48,20 @@ protected:
 	int width;	/**< Width of the column. */
 
 public:
-	TableColumn(int w, enum align a, const std::string &t, const std::string &f, const std::string &u = "") :
+	TableColumn(int w, enum Alignment a, const std::string &t, const std::string &f, const std::string &u = "") :
 		width(w),
 		title(t),
 		format(f),
 		unit(u),
 		align(a)
 	{ }
-	
+
 	std::string title;	/**< The title as shown in the table header. */
 	std::string format;	/**< The format which is used to print the table rows. */
 	std::string unit;	/**< An optional unit which will be shown in the table header. */
 
-	enum align align;
-	
+	enum Alignment align;
+
 	int getWidth() const
 	{
 		return _width;
@@ -74,9 +74,9 @@ protected:
 	int resize(int w);
 
 	int width;
-	
+
 	std::vector<TableColumn> columns;
-	
+
 public:
 	Table(const std::vector<TableColumn> &cols) :
 		width(-1),

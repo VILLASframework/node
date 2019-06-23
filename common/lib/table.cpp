@@ -83,7 +83,7 @@ void Table::header()
 		w = columns[i]._width + strlen(col) - strlenp(col);
 		u = columns[i]._width + strlen(unit) - strlenp(unit);
 
-		if (columns[i].align == TableColumn::align::LEFT) {
+		if (columns[i].align == TableColumn::Alignment::LEFT) {
 			strcatf(&line1, " %-*.*s\e[0m", w, w, col);
 			strcatf(&line2, " %-*.*s\e[0m", u, u, unit);
 		}
@@ -133,7 +133,7 @@ void Table::row(int count, ...)
 		int r = strlen(col);
 		int w = columns[i]._width + r - l;
 
-		if (columns[i].align == TableColumn::align::LEFT)
+		if (columns[i].align == TableColumn::Alignment::LEFT)
 			strcatf(&line, " %-*.*s\e[0m ", w, w, col);
 		else
 			strcatf(&line, " %*.*s\e[0m ", w, w, col);

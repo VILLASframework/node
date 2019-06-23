@@ -34,7 +34,7 @@ int buffer_init(struct buffer *b, size_t size)
 	if (!b->buf)
 		return -1;
 
-	b->state = STATE_INITIALIZED;
+	b->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -44,7 +44,7 @@ int buffer_destroy(struct buffer *b)
 	if (b->buf)
 		free(b->buf);
 
-	b->state = STATE_DESTROYED;
+	b->state = State::DESTROYED;
 
 	return 0;
 }

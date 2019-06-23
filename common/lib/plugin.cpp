@@ -55,7 +55,7 @@ Plugin::parse(json_t *cfg)
 		return -1;
 
 	this->path = std::string(path);
-	this->state = STATE_PARSED;
+	this->state = State::PARSED;
 
 	return 0;
 }
@@ -63,7 +63,7 @@ Plugin::parse(json_t *cfg)
 int
 Plugin::load()
 {
-	assert(this->state == STATE_PARSED);
+	assert(this->state == State::PARSED);
 	assert(not this->path.empty());
 
 	this->handle = dlopen(this->path.c_str(), RTLD_NOW);
@@ -71,7 +71,7 @@ Plugin::load()
 	if (this->handle == nullptr)
 		return -1;
 
-	this->state = STATE_LOADED;
+	this->state = State::LOADED;
 
 	return 0;
 }
@@ -81,13 +81,13 @@ Plugin::unload()
 {
 	int ret;
 
-	assert(this->state == STATE_LOADED);
+	assert(this->state == State::LOADED);
 
 	ret = dlclose(this->handle);
 	if (ret != 0)
 		return -1;
 
-	this->state = STATE_UNLOADED;
+	this->state = State::UNLOADED;
 
 	return 0;
 }
