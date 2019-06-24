@@ -27,7 +27,6 @@ set(SOURCES
 	dma.cpp
 	fifo.cpp
 	rtds.cpp
-	rtds2gpu.cpp
 	timer.cpp
 )
 
@@ -36,7 +35,7 @@ add_executable(unit-tests ${SOURCES})
 if(CMAKE_CUDA_COMPILER)
 	enable_language(CUDA)
 	target_sources(unit-tests PRIVATE
-		gpu.cpp gpu_kernels.cu)
+		gpu.cpp rtds2gpu.cpp gpu_kernels.cu)
 endif()
 
 find_package(Criterion REQUIRED)

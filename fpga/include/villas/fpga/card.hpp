@@ -119,7 +119,7 @@ protected:
 	SpdLogger logger;
 };
 
-using CardList = std::list<std::unique_ptr<PCIeCard>>;
+using CardList = std::list<std::shared_ptr<PCIeCard>>;
 
 class PCIeCardFactory : public Plugin {
 public:

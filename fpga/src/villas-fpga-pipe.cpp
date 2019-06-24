@@ -63,7 +63,7 @@ void setupColorHandling()
 	std::atexit([](){std::cout << rang::style::reset;});
 }
 
-fpga::PCIeCard&
+std::shared_ptr<fpga::PCIeCard>
 setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 {
 	if(pci_init(&pci) != 0) {
@@ -107,24 +107,19 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 
 	// create all FPGA card instances using the corresponding plugin
 	auto cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
-	villas::fpga::PCIeCard* card = nullptr;
 
 	for(auto& fpgaCard : cards) {
 		if(fpgaCard->name == fpgaName) {
-			card = fpgaCard.get();
-			break;
+			return fpgaCard;
 		}
 	}
 
-	if(card == nullptr) {
-		logger->error("FPGA card {} not found in config or not working", fpgaName);
-		exit(1);
-	}
+	logger->error("FPGA card {} not found in config or not working", fpgaName);
 
 	// deallocate JSON config
 //	json_decref(json);
 
-	return *card;
+	return std::shared_ptr<villas::fpga::PCIeCard>();
 }
 
 int main(int argc, char* argv[])
@@ -150,16 +145,16 @@ int main(int argc, char* argv[])
 	spdlog::set_level(spdlog::level::debug);
 	setupColorHandling();
 
-	fpga::PCIeCard& card = setupFpgaCard(configFile, fpgaName);
+	auto card = setupFpgaCard(configFile, fpgaName);
 
 	auto rtds = reinterpret_cast<fpga::ip::Rtds*>
-	            (card.lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
+	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
 
 	auto dma = reinterpret_cast<fpga::ip::Dma*>
-	           (card.lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+	           (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
 
 	auto fifo = reinterpret_cast<fpga::ip::Fifo*>
-	           (card.lookupIp(fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:")));
+	           (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:")));
 
 	if(rtds == nullptr) {
 		logger->error("No RTDS interface found on FPGA");
