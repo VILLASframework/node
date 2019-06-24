@@ -253,8 +253,17 @@ int kernel_set_nr_hugepages(int nr)
 	FILE *f;
 
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
-	if (!f)
-		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	if (!f){
+
+		if (access("/.dockerenv", F_OK) != -1)
+			warning("This functionality is unavilable in this mode. Please run in the privileged mode.");
+		else
+			serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	}
+
+
+	}
+
 
 	fprintf(f, "%d\n", nr);
 	fclose(f);
