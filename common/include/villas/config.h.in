@@ -56,7 +56,7 @@
 #define LOG_HEIGHT		25
 
 /* Hard-coded cache line size */
-#if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || defined(__aarch64__)
   #define CACHELINE_SIZE 64
 #else
   #error "Unsupported architecture"
