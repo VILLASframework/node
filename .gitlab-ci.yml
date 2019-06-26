@@ -8,7 +8,7 @@ variables:
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
-  MAKE_OPTS: -j 16
+  MAKE_OPTS: -j $(nproc)
   LD_PRELOAD: /usr/lib64/libSegFault.so
   SEGFAULT_SIGNALS: all
   SEGFAULT_SIGNALS: bus abrt
