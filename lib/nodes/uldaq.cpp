@@ -606,7 +606,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (u->in.status != SS_RUNNING)
 		return -1;
 
-	long long start_index = u->in.buffer_pos;
+	size_t start_index = u->in.buffer_pos;
 
 	/* Wait for data available condition triggered by event callback */
 	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentScanCount)
