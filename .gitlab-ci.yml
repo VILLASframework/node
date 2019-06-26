@@ -8,7 +8,7 @@ variables:
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
-  MAKE_OPTS: -j $(nproc)
+  MAKE_OPTS: -j32
   LD_PRELOAD: /usr/lib64/libSegFault.so
   SEGFAULT_SIGNALS: all
   SEGFAULT_SIGNALS: bus abrt
@@ -99,9 +99,6 @@ build:docs:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
-  only:
-    - tags
-    - master
 
 
 # Stage: test
@@ -189,7 +186,7 @@ deploy:web:
   tags:
     - villas-deploy
 
-deploy:packages:
+.deploy:packages: &deploy_packages
   stage: deploy
   script:
     - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
@@ -200,5 +197,13 @@ deploy:packages:
     - packaging:rpm
   tags:
     - villas-deploy
+
+deploy:packages:manual:
+  <<: *deploy_packages
+  when: manual
+
+deploy:packages:manual:
+  <<: *deploy_packages
   only:
-    - tags
+    # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/"
