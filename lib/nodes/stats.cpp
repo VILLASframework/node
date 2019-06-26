@@ -220,10 +220,9 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	unsigned len = MIN(vlist_length(&s->signals), smps[0]->capacity);
 
 	for (size_t i = 0; i < len; i++) {
-		Stats *st;
 		struct stats_node_signal *sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-		st = sig->node->stats;
+		auto st = sig->node->stats;
 		if (!st)
 			return -1;
 

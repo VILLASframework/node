@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <cstring>
+#include <memory>
 
 #include <villas/common.h>
 #include <villas/advio.h>
@@ -53,11 +53,9 @@ public:
 
 	virtual Hook::Reason process(sample *smp)
 	{
-		Stats *s = node->stats;
-
 		timespec now = time_now();
 
-		s->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
+		node->stats->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
 
 		return Reason::OK;
 	}
@@ -96,22 +94,20 @@ public:
 
 	virtual Hook::Reason process(sample *smp)
 	{
-		Stats *s = node->stats;
-
 		if (last) {
 			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-				s->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
+				node->stats->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
 
 			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-				s->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
+				node->stats->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
 
 			if ((smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
-				s->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
+				node->stats->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
 
 			if (smp->flags & last->flags & (int) SampleFlags::HAS_SEQUENCE) {
 				int dist = smp->sequence - (int32_t) last->sequence;
 				if (dist != 1)
-					s->update(Stats::Metric::SMPS_REORDERED, dist);
+					node->stats->update(Stats::Metric::SMPS_REORDERED, dist);
 			}
 		}
 
@@ -129,8 +125,6 @@ public:
 class StatsHook : public Hook {
 
 protected:
-	Stats stats;
-
 	StatsReadHook *readHook;
 	StatsWriteHook *writeHook;
 
@@ -139,26 +133,22 @@ protected:
 	int warmup;
 	int buckets;
 
+	std::shared_ptr<Stats> stats;
+
 	AFILE *output;
-	char *uri;
+	std::string uri;
 
 public:
 
 	StatsHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		stats(buckets, warmup),
 		format(Stats::Format::HUMAN),
 		verbose(0),
 		warmup(500),
 		buckets(20),
 		output(nullptr),
-		uri(nullptr)
+		uri()
 	{
-		/* Register statistic object to path.
-		*
-		* This allows the path code to update statistics. */
-		node->stats = &stats;
-
 		/* Add child hooks */
 		readHook = new StatsReadHook(p, n, fl, prio, en);
 		writeHook = new StatsWriteHook(p, n, fl, prio, en);
@@ -167,20 +157,12 @@ public:
 		vlist_push(&node->out.hooks, (void *) writeHook);
 	}
 
-	~StatsHook()
-	{
-		if (uri)
-			free(uri);
-
-		stats.~Stats();
-	}
-
 	virtual void start()
 	{
 		assert(state == State::PREPARED);
 
-		if (uri) {
-			output = afopen(uri, "w+");
+		if (!uri.empty()) {
+			output = afopen(uri.c_str(), "w+");
 			if (!output)
 				throw RuntimeError("Failed to open file '{}' for writing", uri);
 		}
@@ -192,9 +174,9 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		stats.print(uri ? output->file : stdout, format, verbose);
+		stats->print(uri.empty() ? stdout : output->file, format, verbose);
 
-		if (uri)
+		if (!uri.empty())
 			afclose(output);
 
 		state = State::STOPPED;
@@ -204,14 +186,14 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		stats.reset();
+		stats->reset();
 	}
 
 	virtual void periodic()
 	{
 		assert(state == State::STARTED);
 
-		stats.printPeriodic(uri ? output->file : stdout, format, node);
+		stats->printPeriodic(uri.empty() ? stdout : output->file, format, node);
 	}
 
 	virtual void parse(json_t *cfg)
@@ -243,9 +225,19 @@ public:
 		}
 
 		if (u)
-			uri = strdup(u);
+			uri = u;
 
 		state = State::PARSED;
+	}
+
+	virtual void prepare()
+	{
+		stats = std::make_shared<villas::Stats>(buckets, warmup);
+
+		/* Register statistic object to path.
+		*
+		* This allows the path code to update statistics. */
+		node->stats = stats;
 	}
 };
 

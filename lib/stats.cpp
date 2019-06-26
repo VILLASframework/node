@@ -104,8 +104,13 @@ enum Stats::Type Stats::lookupType(const std::string &str)
 
 Stats::Stats(int buckets, int warmup)
 {
-	for (auto m : metrics)
-		histograms[m.first] = Hist(buckets, warmup);
+	for (auto m : metrics) {
+		histograms.emplace(
+			std::piecewise_construct,
+          		std::forward_as_tuple(m.first),
+          		std::forward_as_tuple(buckets, warmup)
+		);
+	}
 }
 
 void Stats::update(enum Metric m, double val)

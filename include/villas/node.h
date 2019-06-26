@@ -37,8 +37,8 @@
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/queue.h>
-#include <villas/stats.hpp>
 #include <villas/common.h>
+#include <villas/stats.hpp>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
   #define WITH_NETEM
@@ -68,7 +68,7 @@ struct node {
 
 	uint64_t sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
-	villas::Stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
+	std::shared_ptr<villas::Stats> stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct node_direction in, out;
 

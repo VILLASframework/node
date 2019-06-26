@@ -141,9 +141,11 @@ int exec_destroy(struct node *n)
 	int ret;
 	struct exec *e = (struct exec *) n->_vd;
 
-	ret = io_destroy(&e->io);
-	if (ret)
-		return ret;
+	if (e->io.state == State::INITIALIZED) {
+		ret = io_destroy(&e->io);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
