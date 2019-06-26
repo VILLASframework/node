@@ -23,8 +23,7 @@
 
 #pragma once
 
-#include <cstdio>
-#include <cstdint>
+#include <vector>
 
 #include <jansson.h>
 
@@ -38,12 +37,10 @@ class Hist {
 
 public:
 	using cnt_t = uintmax_t;
+	using idx_t = std::vector<cnt_t>::difference_type;
 
 	/** Initialize struct hist with supplied values and allocate memory for buckets. */
 	Hist(int buckets = 0, cnt_t warmup = 0);
-
-	/** Free the dynamically allocated memory. */
-	~Hist();
 
 	/** Reset all counters and values back to zero. */
 	void reset();
@@ -121,8 +118,6 @@ protected:
 	double lowest;		/**< The lowest value observed (may be lower than #low). */
 	double last;		/**< The last value which has been put into the buckets */
 
-	int length;		/**< The number of buckets in #data. */
-
 	cnt_t total;		/**< Total number of counted values. */
 	cnt_t warmup;		/**< Number of values which are used during warmup phase. */
 
@@ -130,7 +125,7 @@ protected:
 	cnt_t lower;		/**< The number of values which are lower than #low. */
 
 
-	cnt_t *data;		/**< Pointer to dynamically allocated array of size length. */
+	std::vector<cnt_t> data; /**< Bucket counters. */
 
 	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };

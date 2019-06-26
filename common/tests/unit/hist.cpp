@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <array>
+
 #include <criterion/criterion.h>
 
 #include <villas/hist.hpp>
 #include <villas/utils.hpp>
 
-const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+const std::array<double, 10> test_data = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 using namespace villas;
 
@@ -35,10 +37,10 @@ Test(hist, simple) {
 
 	Hist h;
 
-	for (unsigned i = 0; i < ARRAY_LEN(test_data); i++)
-		h.put(test_data[i]);
+	for (auto td : test_data)
+		h.put(td);
 
-	cr_assert_float_eq(h.getMean(), 5.5, 1e-6);
+	cr_assert_float_eq(h.getMean(), 5.5, 1e-6, "Mean is %lf", h.getMean());
 	cr_assert_float_eq(h.getVar(), 9.1666, 1e-3,);
 	cr_assert_float_eq(h.getStddev(), 3.027650, 1e-6);
 }

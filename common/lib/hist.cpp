@@ -20,12 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <float.h>
 #include <cmath>
-#include <ctime>
+#include <algorithm>
 
 #include <villas/utils.hpp>
 #include <villas/hist.hpp>
@@ -36,21 +32,10 @@ using namespace villas::utils;
 
 namespace villas {
 
-Hist::Hist(int buckets, Hist::cnt_t wu)
-{
-	length = buckets;
-	warmup = wu;
-
-	data = (Hist::cnt_t *) (buckets ? alloc(length * sizeof(Hist::cnt_t)) : nullptr);
-
-	Hist::reset();
-}
-
-Hist::~Hist()
-{
-	if (data)
-		free(data);
-}
+Hist::Hist(int buckets, Hist::cnt_t wu) :
+	warmup(wu),
+	data(buckets)
+{ }
 
 void Hist::put(double value)
 {
@@ -62,24 +47,26 @@ void Hist::put(double value)
 	if (value < lowest)
 		lowest = value;
 
-	if (total < warmup) {
+	if (data.size()) {
+		if (total < warmup) {
+			/* We are still in warmup phase... Waiting for more samples... */
+		}
+		else if (data.size() && total == warmup) {
+			low  = getMean() - 3 * getStddev();
+			high = getMean() + 3 * getStddev();
+			resolution = (high - low) / data.size();
+		}
+		else {
+			idx_t idx = std::round((value - low) / resolution);
 
-	}
-	else if (total == warmup) {
-		low  = getMean() - 3 * getStddev();
-		high = getMean() + 3 * getStddev();
-		resolution = (high - low) / length;
-	}
-	else {
-		int idx = round((value - low) / resolution);
-
-		/* Check bounds and increment */
-		if      (idx >= length)
-			higher++;
-		else if (idx < 0)
-			lower++;
-		else if (data != nullptr)
-			data[idx]++;
+			/* Check bounds and increment */
+			if      (idx >= (idx_t) data.size())
+				higher++;
+			else if (idx < 0)
+				lower++;
+			else
+				data[idx]++;
+		}
 	}
 
 	total++;
@@ -107,21 +94,21 @@ void Hist::reset()
 	higher = 0;
 	lower = 0;
 
-	highest = -DBL_MAX;
-	lowest = DBL_MAX;
+	highest = std::numeric_limits<double>::min();
+	lowest  = std::numeric_limits<double>::max();
 
-	if (data)
-		memset(data, 0, length * sizeof(unsigned));
+	for (auto &elm : data)
+		elm = 0;
 }
 
 double Hist::getMean() const
 {
-	return (total > 0) ? _m[0] : NAN;
+	return total > 0 ? _m[0] : std::numeric_limits<double>::quiet_NaN();
 }
 
 double Hist::getVar() const
 {
-	return (total > 1) ? _s[0] / (total - 1) : NAN;
+	return total > 1 ? _s[0] / (total - 1) : std::numeric_limits<double>::quiet_NaN();
 }
 
 double Hist::getStddev() const
@@ -156,13 +143,8 @@ void Hist::print(bool details) const
 
 void Hist::plot() const
 {
-	Hist::cnt_t max = 1;
-
 	/* Get highest bar */
-	for (int i = 0; i < length; i++) {
-		if (data[i] > max)
-			max = data[i];
-	}
+	Hist::cnt_t max = *std::max_element(data.begin(), data.end());
 
 	std::vector<TableColumn> cols = {
 		{ -9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g" },
@@ -175,7 +157,7 @@ void Hist::plot() const
 	/* Print plot */
 	table.header();
 
-	for (int i = 0; i < length; i++) {
+	for (size_t i = 0; i < data.size(); i++) {
 		double value = low + (i) * resolution;
 		Hist::cnt_t cnt = data[i];
 		int bar = cols[2].getWidth() * ((double) cnt / max);
@@ -196,8 +178,8 @@ char * Hist::dump() const
 
 	strcatf(&buf, "[ ");
 
-	for (int i = 0; i < length; i++)
-		strcatf(&buf, "%ju ", data[i]);
+	for (auto elm : data)
+		strcatf(&buf, "%ju ", elm);
 
 	strcatf(&buf, "]");
 
@@ -229,8 +211,8 @@ json_t * Hist::toJson() const
 	if (total - lower - higher > 0) {
 		json_buckets = json_array();
 
-		for (int i = 0; i < length; i++)
-			json_array_append(json_buckets, json_integer(data[i]));
+		for (auto elm : data)
+			json_array_append(json_buckets, json_integer(elm));
 
 		json_object_set(json_hist, "buckets", json_buckets);
 	}
@@ -269,7 +251,7 @@ int Hist::dumpMatlab(FILE *f) const
 		free(buf);
 	}
 	else
-		fprintf(f, "'buckets', zeros(1, %d)", length);
+		fprintf(f, "'buckets', zeros(1, %zu)", data.size());
 
 	fprintf(f, ")");
 
