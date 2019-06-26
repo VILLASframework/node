@@ -29,8 +29,10 @@ set(HOOK_SRC
     dump.cpp
     ebm.cpp
     fix.cpp
+    gate.cpp
     jitter_calc.cpp
     limit_rate.cpp
+    print.cpp
     restart.cpp
     scale.cpp
     shift_seq.cpp
@@ -38,7 +40,6 @@ set(HOOK_SRC
     skip_first.cpp
     stats.cpp
     ts.cpp
-    print.cpp
 )
 
 add_library(hooks STATIC ${HOOK_SRC})
