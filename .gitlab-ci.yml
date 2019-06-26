@@ -44,6 +44,12 @@ prepare:raspbian:docker-dev:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
+prepare:debian-armhf:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-armhf
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
+
 prepare:ubuntu:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
@@ -83,6 +89,11 @@ build:raspbian:armv6l:
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
+
+build:debian-cross:armv7l:
+  extends: build:fedora:x86_64
+  variables:
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
 
 build:docs:
   stage: build
