@@ -1,0 +1,115 @@
+# Dockerfile for VILLASnode development.
+#
+# This Dockerfile builds an image which contains all library dependencies
+# and tools to build VILLASnode.
+# However, VILLASnode itself it not part of the image.
+#
+# This image can be used for developing VILLASnode
+# by running:
+#   make docker
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+# You can choose between Debian and Ubuntu here
+FROM debian:buster
+
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable armhf architecture
+RUN dpkg --add-architecture armhf
+
+# Toolchain
+RUN apt-get update && apt-get install -y \
+	crossbuild-essential-armhf \
+	pkg-config cmake make ninja-build \
+	texinfo git curl tar \
+	protobuf-compiler protobuf-c-compiler
+
+# Dependencies
+RUN apt-get update && apt-get install -y \
+	libssl-dev:armhf \
+	libprotobuf-dev:armhf \
+	libprotobuf-c-dev:armhf \
+	uuid-dev:armhf \
+	libconfig-dev:armhf \
+	libnl-3-dev libnl-route-3-dev:armhf \
+	libcurl4-openssl-dev:armhf \
+	libjansson-dev:armhf \
+	libzmq3-dev:armhf \
+	libnanomsg-dev:armhf \
+	librabbitmq-dev:armhf \
+	libmosquitto-dev:armhf \
+	libcomedi-dev:armhf \
+	libibverbs-dev:armhf \
+	librdmacm-dev:armhf \
+	libre-dev:armhf
+
+ADD cmake/toolchains/debian-armhf.cmake /
+
+ENV TRIPLET=arm-linux-gnueabihf
+ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/pkgconfig:/usr/share/pkgconfig
+ENV PKG_CONFIG_LIBDIR=/usr/lib/${TRIPLET}/pkgconfig:/usr/share/pkgconfig
+
+ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake \
+               -DCMAKE_INSTALL_LIBDIR=/usr/lib/${TRIPLET} \
+			   -DOPENSSL_INCLUDE_DIR=/usr/include/${TRIPLET}/ \
+               -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${TRIPLET}/libcrypto.so \
+               -DOPENSSL_SSL_LIBRARY=/usr/lib/${TRIPLET}/libssl.so \
+			   -DCURL_INCLUDE_DIR=/usr/include/${TRIPLET}/ \
+			   -DCURL_LIBRARY=/usr/lib/${TRIPLET}/libcurl.so"
+
+# Build & Install libwebsockets
+RUN cd /tmp && \
+	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
+	mkdir -p libwebsockets/build && cd libwebsockets/build && \
+	cmake ${CMAKE_OPTS}	-DLWS_INSTALL_LIB_DIR=lib/${TRIPLET} .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install libiec61850
+RUN cd /tmp && \
+	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
+	mkdir -p libiec61850/build && cd libiec61850/build && \
+	cmake ${CMAKE_OPTS} .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+WORKDIR /villas
+ENTRYPOINT bash
+
+LABEL \
+	org.label-schema.schema-version="1.0" \
+	org.label-schema.name="VILLASnode" \
+	org.label-schema.license="GPL-3.0" \
+	org.label-schema.vcs-ref="$GIT_REV" \
+	org.label-schema.vcs-branch="$GIT_BRANCH" \
+	org.label-schema.version="$VERSION" \
+	org.label-schema.variant="$VARIANT" \
+	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.author.name="Steffen Vogel" \
+	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
+	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
+	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
