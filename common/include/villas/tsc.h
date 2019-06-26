@@ -23,6 +23,10 @@
 
 #pragma once
 
+#if !(__x86_64__ || __i386__)
+  #error this header is for x86 only
+#endif
+
 #include <cpuid.h>
 #include <cinttypes>
 
@@ -39,10 +43,6 @@
 
 #define bit_TSC_INVARIANT	(1 << 8)
 #define bit_RDTSCP		(1 << 27)
-
-#if !(__x86_64__ || __i386__)
-  #error this header is for x86 only
-#endif
 
 struct tsc {
 	uint64_t frequency;

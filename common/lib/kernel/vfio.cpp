@@ -24,7 +24,7 @@
 
 #define _DEFAULT_SOURCE
 
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
   #define _LARGEFILE64_SOURCE 1
   #define _FILE_OFFSET_BITS 64
 #endif
@@ -491,7 +491,7 @@ VfioDevice::regionMap(size_t index)
 
 	int flags = MAP_SHARED;
 
-#ifndef __arm__
+#if !(defined(__arm__) || defined(__aarch64__))
 	flags |= MAP_SHARED;
 #endif
 

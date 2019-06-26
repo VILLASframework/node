@@ -34,7 +34,7 @@ add_executable(unit-tests-common
 	popen.cpp
 )
 
-if(ARCH STREQUAL "x86_64")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 	list(APPEND TEST_SRC tsc.cpp)
 endif()
 

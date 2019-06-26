@@ -49,13 +49,7 @@ add_library(villas-common SHARED
 	popen.cpp
 )
 
-execute_process( 
-	COMMAND uname -m
-	COMMAND tr -d '\n'
-	OUTPUT_VARIABLE ARCH
-)
-
-if(ARCH STREQUAL "x86_64")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 	target_sources(villas-common PRIVATE tsc.cpp)
 endif()
 
