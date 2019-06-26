@@ -255,8 +255,10 @@ int kernel_set_nr_hugepages(int nr)
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
 	if (!f){
 
-		if (access("/.dockerenv", F_OK) != -1)
-			warning("This functionality is unavilable in this mode. Please run in the privileged mode.");
+		if (access("/.dockerenv", F_OK) != -1) {
+			warning("This functionality is unavailable in this mode. Please run the Docker container in the privileged mode:");
+			warning("    $ docker run --privilged ...");
+		}
 		else
 			serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
 	}
