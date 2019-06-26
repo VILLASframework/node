@@ -76,13 +76,11 @@ build:fedora-minimal:x86_64:
 build:ubuntu:x86_64:
   extends: build:fedora:x86_64
   variables:
-    LD_PRELOAD: /lib/x86_64-linux-gnu/libSegFault.so
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
 
 build:raspbian:armv6l:
   extends: build:fedora:x86_64
   variables:
-    LD_PRELOAD: /lib/arm-linux-gnueabihf/libSegFault.so
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
 
