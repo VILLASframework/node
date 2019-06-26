@@ -9,9 +9,6 @@ variables:
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
   MAKE_OPTS: -j32
-  LD_PRELOAD: /usr/lib64/libSegFault.so
-  SEGFAULT_SIGNALS: all
-  SEGFAULT_SIGNALS: bus abrt
 
 stages:
   - prepare
@@ -129,6 +126,10 @@ test:unit:
   stage: test
   dependencies:
     - build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /usr/lib64/libSegFault.so
+    SEGFAULT_SIGNALS: all
+    SEGFAULT_SIGNALS: bus abrt
   script:
     - mkdir -p build && cd build
     - cmake .. && make ${MAKE_OPTS} unit-tests
@@ -141,6 +142,10 @@ test:integration:
   stage: test
   dependencies:
     - build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /usr/lib64/libSegFault.so
+    SEGFAULT_SIGNALS: all
+    SEGFAULT_SIGNALS: bus abrt
   script:
     - mkdir -p build && cd build
     - cmake ..
