@@ -31,7 +31,7 @@ before_script:
 prepare:fedora:docker-dev:
   stage: prepare
   script:
-    - docker build
+    - docker build ${DOCKER_OPTS}
         --file ${DOCKER_FILE}
         --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
@@ -44,18 +44,25 @@ prepare:raspbian:docker-dev:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
-prepare:debian-armhf:docker-dev:
-  extends: prepare:fedora:docker-dev
-  variables:
-    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-armhf
-    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
-
 prepare:ubuntu:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
 
+prepare:debian-armhf:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
+    DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
+
+prepare:debian-arm64:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
+    DOCKER_OPTS: --build-arg ARCH=arm64 --build-arg TRIPLET=aarch64-linux-gnu
 
 # Stage: build
 ##############################################################################
@@ -90,10 +97,15 @@ build:raspbian:armv6l:
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
 
-build:debian-cross:armv7l:
+build:debian-multiarch:armhf:
   extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
+
+build:debian-multiarch:arm64:
+  extends: build:fedora:x86_64
+  variables:
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
 
 build:docs:
   stage: build
