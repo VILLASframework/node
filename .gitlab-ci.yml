@@ -9,6 +9,7 @@ variables:
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
   MAKE_OPTS: -j32
+  RELEASEVER: 29
 
 stages:
   - prepare
@@ -213,10 +214,10 @@ deploy:web:
 .deploy:packages: &deploy_packages
   stage: deploy
   script:
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
-    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/../packages/x86_64/
-    - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p $${DEPLOY_PATH_PACKAGES}/{fedora/x86_64,dist}
+    - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/dist/
+    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
   dependencies:
     - packaging:rpm
   tags:
