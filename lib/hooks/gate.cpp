@@ -31,6 +31,7 @@
 #include <villas/hook.hpp>
 #include <villas/node.h>
 #include <villas/sample.h>
+#include <villas/timing.h>
 
 namespace villas {
 namespace node {
@@ -49,15 +50,22 @@ protected:
 	int signalIndex;
 	double threshold;
 	double duration;
+	int samples;
 	double previousValue;
+
+	bool active;
+	uint64_t startSequence;
+	timespec startTime;
 
 public:
 	GateHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		mode(Mode::RISING_EDGE),
 		threshold(0.5),
-		duration(1),
-		previousValue(std::numeric_limits<double>::quiet_NaN())
+		duration(-1),
+		samples(-1),
+		previousValue(std::numeric_limits<double>::quiet_NaN()),
+		active(false)
 	{ }
 
 	virtual void parse(json_t *cfg)
@@ -71,10 +79,11 @@ public:
 
 		assert(state != State::STARTED);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: F, s?: F, s?: s }",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: F, s?: F, s?: i, s?: s }",
 			"signal", &json_signal,
 			"threshold", &threshold,
 			"duration", &duration,
+			"samples", &samples,
 			"mode", &mode_str
 		);
 		if (ret)
@@ -134,28 +143,47 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		double value = smp->data[signalIndex].f;
 		Hook::Reason reason;
+		double value = smp->data[signalIndex].f;
 
-		switch (mode) {
-			case Mode::ABOVE:
-				reason = value > threshold ? Reason::OK : Reason::SKIP_SAMPLE;
-				break;
+		if (active) {
+			if (duration > 0 && time_delta(&smp->ts.origin, &startTime) < duration)
+				reason = Reason::OK;
+			else if (samples > 0 && smp->sequence - startSequence < (uint64_t) samples)
+				reason = Reason::OK;
+			else {
+				reason = Reason::SKIP_SAMPLE;
+				active = false;
+			}
+		}
 
-			case Mode::BELOW:
-				reason = value < threshold ? Reason::OK : Reason::SKIP_SAMPLE;
-				break;
+		if (!active) {
+			switch (mode) {
+				case Mode::ABOVE:
+					reason = value > threshold ? Reason::OK : Reason::SKIP_SAMPLE;
+					break;
 
-			case Mode::RISING_EDGE:
-				reason = (!std::isnan(previousValue) && value > previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
-				break;
+				case Mode::BELOW:
+					reason = value < threshold ? Reason::OK : Reason::SKIP_SAMPLE;
+					break;
 
-			case Mode::FALLING_EDGE:
-				reason = (!std::isnan(previousValue) && value < previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
-				break;
+				case Mode::RISING_EDGE:
+					reason = (!std::isnan(previousValue) && value > previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
+					break;
 
-			default:
-				reason = Reason::ERROR;
+				case Mode::FALLING_EDGE:
+					reason = (!std::isnan(previousValue) && value < previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
+					break;
+
+				default:
+					reason = Reason::ERROR;
+			}
+
+			if (reason == Reason::OK) {
+				startTime = smp->ts.origin;
+				startSequence = smp->sequence;
+				active = true;
+			}
 		}
 
 		previousValue = value;
