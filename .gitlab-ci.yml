@@ -193,9 +193,6 @@ packaging:rpm:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
-  only:
-    - tags
-    - master
 
 # Stage: deploy
 ##############################################################################
@@ -229,7 +226,7 @@ deploy:packages:manual:
   <<: *deploy_packages
   when: manual
 
-deploy:packages:manual:
+deploy:packages:tags:
   <<: *deploy_packages
   only:
     # Only on version tags
