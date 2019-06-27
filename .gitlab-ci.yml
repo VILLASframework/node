@@ -156,6 +156,7 @@ test:integration:
     paths:
       - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  allow_failure: true
   tags:
     - docker
 
