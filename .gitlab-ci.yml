@@ -180,7 +180,7 @@ packaging:docker:
 packaging:rpm:
   stage: packaging
   dependencies:
-    - build:docs
+    - build:fedora:x86_64
   script:
     - mkdir -p build && cd build
     - cmake ..
