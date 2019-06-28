@@ -77,7 +77,7 @@ int memory_lock(size_t lock)
 				warning("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
 				warning("   $ ulimit -Hl %zu", lock);
 
-				goto out;
+				return 0;
 			}
 
 			l.rlim_max = lock;
@@ -91,7 +91,7 @@ int memory_lock(size_t lock)
 
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
-out:
+
 #endif /* __arm__ */
 #ifdef _POSIX_MEMLOCK
 	/* Lock all current and future memory allocations */
