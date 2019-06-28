@@ -184,6 +184,7 @@ packaging:rpm:
   script:
     - mkdir -p build && cd build
     - cmake ..
+    - make ${MAKE_OPTS} doc
     - make ${MAKE_OPTS} package
   artifacts:
     expire_in: 1 week
