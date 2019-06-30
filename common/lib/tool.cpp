@@ -46,10 +46,11 @@ void Tool::printVersion()
 	std::cout << PROJECT_BUILD_ID << std::endl;
 }
 
-Tool::Tool(int ac, char *av[], const std::string &nme) :
+Tool::Tool(int ac, char *av[], const std::string &nme, const std::list<int> &sigs) :
 	argc(ac),
 	argv(av),
-	name(nme)
+	name(nme),
+	handlerSignals(sigs)
 {
 	current_tool = this;
 
@@ -65,7 +66,7 @@ int Tool::run()
 			CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
 			CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
-		ret = utils::signals_init(staticHandler);
+		ret = utils::signals_init(staticHandler, handlerSignals);
 		if (ret)
 			throw RuntimeError("Failed to initialize signal subsystem");
 
