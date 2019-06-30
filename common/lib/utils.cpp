@@ -98,7 +98,7 @@ ssize_t read_random(char *buf, size_t len)
 }
 
 /* Setup exit handler */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals, std::list<int> ignoreSignals)
 {
 	int ret;
 
@@ -106,38 +106,34 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 
 	logger->info("Initialize subsystem");
 
-	struct sigaction sa_quit;
-	sa_quit.sa_flags = SA_SIGINFO | SA_NODEFER;
-	sa_quit.sa_sigaction = cb;
+	struct sigaction sa_cb;
+	sa_cb.sa_flags = SA_SIGINFO | SA_NODEFER;
+	sa_cb.sa_sigaction = cb;
 
-	struct sigaction sa_chld;
-	sa_chld.sa_flags = 0;
-	sa_chld.sa_handler = SIG_IGN;
+	struct sigaction sa_ign;
+	sa_ign.sa_flags = 0;
+	sa_ign.sa_handler = SIG_IGN;
 
 	main_thread = pthread_self();
 
-	sigemptyset(&sa_quit.sa_mask);
-	sigemptyset(&sa_chld.sa_mask);
+	sigemptyset(&sa_cb.sa_mask);
+	sigemptyset(&sa_ign.sa_mask);
 
-	ret = sigaction(SIGINT, &sa_quit, nullptr);
-	if (ret)
-		return ret;
+	cbSignals.insert(cbSignals.begin(), { SIGINT, SIGTERM, SIGUSR1, SIGALRM });
+	cbSignals.sort();
+	cbSignals.unique();
 
-	ret = sigaction(SIGTERM, &sa_quit, nullptr);
-	if (ret)
-		return ret;
+	for (auto signal : cbSignals) {
+		ret = sigaction(signal, &sa_cb, nullptr);
+		if (ret)
+			return ret;
+	}
 
-	ret = sigaction(SIGUSR1, &sa_quit, nullptr);
-	if (ret)
-		return ret;
-
-	ret = sigaction(SIGALRM, &sa_quit, nullptr);
-	if (ret)
-		return ret;
-
-	ret = sigaction(SIGCHLD, &sa_chld, nullptr);
-	if (ret)
-		return ret;
+	for (auto signal : ignoreSignals) {
+		ret = sigaction(signal, &sa_ign, nullptr);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
