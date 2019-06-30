@@ -532,3 +532,20 @@ int SuperNode::periodic()
 
 	return 0;
 }
+
+#ifdef WITH_GRAPHVIZ
+graph_t * SuperNode::getGraph()
+{
+	/* Create a simple digraph */
+	Agraph_t *g;
+	Agnode_t *n, *m;
+	Agedge_t *e;
+
+	g = agopen("g", Agdirected, 0);
+	n = agnode(g, "n", 1);
+	m = agnode(g, "m", 1);
+	e = agedge(g, n, m, 0, 1);
+
+	return g;
+}
+#endif /* WITH_GRAPHVIZ */

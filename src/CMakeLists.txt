@@ -51,6 +51,11 @@ target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
 add_executable(villas-signal villas-signal.cpp)
 target_link_libraries(villas-signal PUBLIC villas)
 
+if(WITH_GRAPHVIZ)
+    add_executable(villas-graph villas-graph.cpp)
+    target_link_libraries(villas-graph PUBLIC villas)
+endif()
+
 if(WITH_WEB)
     add_executable(villas-relay villas-relay.cpp)
     target_include_directories(villas-relay PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})

@@ -52,6 +52,7 @@ RUN apt-get update && \
 RUN apt-get update && \
 	apt-get install -y \
 		libssl-dev \
+		libgraphviz-dev \
 		libprotobuf-dev \
 		libprotobuf-c-dev \
 		uuid-dev \

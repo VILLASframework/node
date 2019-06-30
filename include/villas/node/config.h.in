@@ -54,6 +54,7 @@
 #cmakedefine WITH_API
 #cmakedefine WITH_HOOKS
 #cmakedefine WITH_CONFIG
+#cmakedefine WITH_GRAPHVIZ
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD

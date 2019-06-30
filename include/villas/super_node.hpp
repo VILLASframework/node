@@ -23,6 +23,14 @@
 
 #pragma once
 
+#include <villas/node/config.h>
+
+#ifdef WITH_GRAPHVIZ
+#include <graphviz/gvc.h>
+#endif
+
+#include <fstream>
+
 #include <villas/list.h>
 #include <villas/api.hpp>
 #include <villas/web.hpp>
@@ -107,6 +115,10 @@ public:
 	void stopNodes();
 	void stopNodeTypes();
 	void stopInterfaces();
+
+#ifdef WITH_GRAPHVIZ
+	graph_t * getGraph();
+#endif
 
 	/** Run periodic hooks of this super node. */
 	int periodic();

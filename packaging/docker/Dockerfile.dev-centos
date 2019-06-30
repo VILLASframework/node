@@ -53,6 +53,7 @@ RUN dnf -y install \
 # Dependencies
 RUN dnf -y install \
 	openssl-devel \
+	graphviz-devel \
 	protobuf-devel \
 	protobuf-c-devel \
 	libuuid-devel \
