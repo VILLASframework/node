@@ -106,6 +106,7 @@ pkg_check_modules(COMEDILIB IMPORTED_TARGET comedilib>=0.11.0)
 pkg_check_modules(LIBZMQ IMPORTED_TARGET libzmq>=2.2.0)
 pkg_check_modules(LIBULDAQ IMPORTED_TARGET libuldaq>=1.0.0)
 pkg_check_modules(UUID IMPORTED_TARGET REQUIRED uuid>=2.23)
+pkg_check_modules(NANOMSG IMPORTED_TARGET libcgraph>=2.30)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
@@ -126,6 +127,7 @@ cmake_dependent_option(WITH_TESTS           "Run tests"                         
 cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CLIENTS         "Build client applications"                             ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_DOC             "Build documentation"                                   ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   ON "Graphviz_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP       "Build with amqp node-type"                             ON "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI     "Build with comedi node-type"                           ON "COMEDILIB_FOUND" OFF)
@@ -206,6 +208,7 @@ add_feature_info(TOOLS                  WITH_TOOLS                  "Build auxil
 add_feature_info(TESTS                  WITH_TESTS                  "Run tests")
 add_feature_info(PLUGINS                WITH_PLUGINS                "Build plugins")
 add_feature_info(CLIENTS                WITH_CLIENTS                "Build client applications")
+add_feature_info(GRAPHVIZ               WITH_GRAPHVIZ               "Build with Graphviz support")
 add_feature_info(DOC                    WITH_DOC                    "Build documentation")
 
 add_feature_info(NODE_AMQP              WITH_NODE_AMQP              "Build with amqp node-type")

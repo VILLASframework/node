@@ -92,6 +92,11 @@ if(WITH_CONFIG)
     list(APPEND LIBRARIES PkgConfig::LIBCONFIG)
 endif()
 
+if(WITH_GRAPHVIZ)
+    list(APPEND INCLUDE_DIRS ${GRAPHVIZ_INCLUDE_DIRS})
+    list(APPEND LIBRARIES ${GRAPHVIZ_LIBRARIES})
+endif()
+
 if(WITH_HOOKS)
     list(APPEND LIB_SRC
         hook.cpp
