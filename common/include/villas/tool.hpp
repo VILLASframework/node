@@ -48,11 +48,13 @@ protected:
 	virtual void handler(int, siginfo_t *, void *)
 	{ }
 
+	std::list<int> handlerSignals;
+
 	static void printCopyright();
 	static void printVersion();
 
 public:
-	Tool(int ac, char *av[], const std::string &name);
+	Tool(int ac, char *av[], const std::string &name, const std::list<int> &sigs = { });
 
 	virtual int main()
 	{
