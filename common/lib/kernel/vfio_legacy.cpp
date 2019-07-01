@@ -117,7 +117,7 @@ int vfio_device_destroy(struct vfio_device *d)
 
 	debug(5, "VFIO: closed device: name=%s, fd=%d", d->name, d->fd);
 
-	free(d->mappings);
+	delete[] d->mappings;
 	free(d->name);
 
 	return 0;
@@ -252,7 +252,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 	}
 
 	if (!g) {
-		g = alloc(sizeof(struct vfio_group));
+		g = new struct vfio_group;
 
 		/* Aquire group ownership */
 		ret = vfio_group_attach(g, c, index);
@@ -277,9 +277,9 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 	if (ret < 0)
 		serror("Failed to get VFIO device info for: %s", d->name);
 
-	d->irqs     = alloc(d->info.num_irqs    * sizeof(struct vfio_irq_info));
-	d->regions  = alloc(d->info.num_regions * sizeof(struct vfio_region_info));
-	d->mappings = alloc(d->info.num_regions * sizeof(void *));
+	d->irqs     = new struct vfio_irq_info[d->info.num_irqs];
+	d->regions  = new struct vfio_region_info[d->info.num_regions];
+	d->mappings = new void *[d->info.num_regions];
 
 	/* Get device regions */
 	for (int i = 0; i < d->info.num_regions && i < 8; i++) {
@@ -321,8 +321,8 @@ int vfio_pci_reset(struct vfio_device *d)
 	size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) + sizeof(struct vfio_pci_dependent_device) * 64;
 	size_t resetlen = sizeof(struct vfio_pci_hot_reset) + sizeof(int32_t) * 1;
 
-	struct vfio_pci_hot_reset_info *reset_info = (struct vfio_pci_hot_reset_info *) alloc(reset_infolen);
-	struct vfio_pci_hot_reset *reset = (struct vfio_pci_hot_reset *) alloc(resetlen);
+	struct vfio_pci_hot_reset_info *reset_info = new char[reset_infolen];
+	struct vfio_pci_hot_reset *reset = new char[resetlen];
 
 	reset_info->argsz = reset_infolen;
 	reset->argsz = resetlen;
@@ -400,7 +400,7 @@ int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 		return -1;
 
 	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
-	irq_set = alloc(irq_setlen);
+	irq_set = new char[irq_setlen];
 
 	irq_set->argsz = irq_setlen;
 	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
@@ -434,7 +434,7 @@ int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 		return -1;
 
 	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
-	irq_set = alloc(irq_setlen);
+	irq_set = new char[irq_setlen];
 
 	irq_set->argsz = irq_setlen;
 	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;

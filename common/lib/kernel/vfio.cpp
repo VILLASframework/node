@@ -579,7 +579,7 @@ VfioDevice::pciHotReset()
 	const size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) +
 	                             sizeof(struct vfio_pci_dependent_device) * 64;
 
-	auto reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info*>
+	auto reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info *>
 	                    (calloc(1, reset_infolen));
 
 	reset_info->argsz = reset_infolen;

@@ -22,6 +22,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#if __GNUC__ <= 7 && !defined(__clang__)
+  #include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#else
+  #include <filesystem>
+  namespace fs = std::filesystem;
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -198,10 +206,9 @@ int aislocal(const char *uri)
 AFILE * afopen(const char *uri, const char *mode)
 {
 	int ret;
-	char *cwd;
 	const char *sep;
 
-	AFILE *af = (AFILE *) alloc(sizeof(AFILE));
+	AFILE *af = new AFILE;
 
 	snprintf(af->mode, sizeof(af->mode), "%s", mode);
 
@@ -216,13 +223,8 @@ AFILE * afopen(const char *uri, const char *mode)
 			return nullptr;
 
 		/* Handle relative paths */
-		if (uri[0] != '/') {
-			cwd = getcwd(nullptr, 0);
-
-			af->uri = strf("file://%s/%s", cwd, uri);
-
-			free(cwd);
-		}
+		if (uri[0] != '/')
+			af->uri = strf("file://%s/%s", fs::current_path().c_str(), uri);
 		else
 			af->uri = strf("file://%s", uri);
 	}
@@ -264,7 +266,8 @@ AFILE * afopen(const char *uri, const char *mode)
 out0:	curl_easy_cleanup(af->curl);
 out1:	fclose(af->file);
 out2:	free(af->uri);
-	free(af);
+
+	delete af;
 
 	return nullptr;
 }
@@ -284,7 +287,8 @@ int afclose(AFILE *af)
 		return ret;
 
 	free(af->uri);
-	free(af);
+
+	delete af;
 
 	return 0;
 }

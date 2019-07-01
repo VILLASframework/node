@@ -177,9 +177,6 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 char * strf(const char *fmt, ...);
 char * vstrf(const char *fmt, va_list va);
 
-/** Allocate and initialize memory. */
-void * alloc(size_t bytes);
-
 /** Allocate and copy memory. */
 void * memdup(const void *src, size_t bytes);
 

@@ -143,7 +143,7 @@ void Hist::print(bool details) const
 		info("Stddev:   %g", getStddev());
 
 		if (details && total - higher - lower > 0) {
-			char *buf =dump();
+			char *buf = dump();
 			info("Matlab: %s", buf);
 			free(buf);
 
@@ -187,7 +187,7 @@ void Hist::plot() const
 
 char * Hist::dump() const
 {
-	char *buf = (char *) alloc(128);
+	char *buf = new char[128];
 
 	strcatf(&buf, "[ ");
 
