@@ -30,7 +30,7 @@ int buffer_init(struct buffer *b, size_t size)
 {
 	b->len = 0;
 	b->size = size;
-	b->buf = (char *) malloc(size);
+	b->buf = new char[size];
 	if (!b->buf)
 		return -1;
 
@@ -42,7 +42,7 @@ int buffer_init(struct buffer *b, size_t size)
 int buffer_destroy(struct buffer *b)
 {
 	if (b->buf)
-		free(b->buf);
+		delete[] b->buf;
 
 	b->state = State::DESTROYED;
 

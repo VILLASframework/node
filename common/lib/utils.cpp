@@ -212,17 +212,6 @@ double randf()
 	return (double) random() / RAND_MAX;
 }
 
-void * alloc(size_t bytes)
-{
-	void *p = malloc(bytes);
-	if (!p)
-		error("Failed to allocate memory");
-
-	memset(p, 0, bytes);
-
-	return p;
-}
-
 char * vstrcatf(char **dest, const char *fmt, va_list ap)
 {
 	char *tmp;
@@ -271,7 +260,7 @@ char * vstrf(const char *fmt, va_list va)
 
 void * memdup(const void *src, size_t bytes)
 {
-	void *dst = alloc(bytes);
+	void *dst = new char[bytes];
 
 	memcpy(dst, src, bytes);
 

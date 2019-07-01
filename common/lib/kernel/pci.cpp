@@ -57,7 +57,7 @@ int pci_init(struct pci *p)
 		    (strcmp(e->d_name, "..") == 0) )
 			continue;
 
-		struct pci_device *d = (struct pci_device *) alloc(sizeof(struct pci_device));
+		struct pci_device *d = new struct pci_device;
 
 		struct { const char *s; int *p; } map[] = {
 			{ "vendor", &d->id.vendor },
@@ -227,8 +227,7 @@ int pci_device_parse_id(struct pci_device *f, const char *str, const char **erro
 
 	return 0;
 
-fail:
-	free(tmp);
+fail:	free(tmp);
 	return -1;
 }
 
@@ -314,9 +313,8 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 	}
 
 	if (valid_regions > 0) {
-		const size_t len = valid_regions * sizeof (struct pci_region);
-		*regions = (struct pci_region *) malloc(len);
-		memcpy(*regions, _regions, len);
+		*regions = new struct pci_region[valid_regions];
+		memcpy(*regions, _regions, valid_regions * sizeof (struct pci_region));
 	}
 
 	return valid_regions;
