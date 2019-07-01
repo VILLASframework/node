@@ -318,14 +318,14 @@ int vfio_pci_reset(struct vfio_device *d)
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI))
 		return -1;
 
-	size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) + sizeof(struct vfio_pci_dependent_device) * 64;
-	size_t resetlen = sizeof(struct vfio_pci_hot_reset) + sizeof(int32_t) * 1;
+	size_t reset_info_len = sizeof(struct vfio_pci_hot_reset_info) + sizeof(struct vfio_pci_dependent_device) * 64;
+	size_t reset_len = sizeof(struct vfio_pci_hot_reset) + sizeof(int32_t) * 1;
 
-	struct vfio_pci_hot_reset_info *reset_info = new char[reset_infolen];
-	struct vfio_pci_hot_reset *reset = new char[resetlen];
+	struct vfio_pci_hot_reset_info *reset_info = new char[reset_info_len];
+	struct vfio_pci_hot_reset *reset = new char[reset_len];
 
-	reset_info->argsz = reset_infolen;
-	reset->argsz = resetlen;
+	reset_info->argsz = reset_info_len;
+	reset->argsz = reset_len;
 
 	ret = ioctl(d->fd, VFIO_DEVICE_GET_PCI_HOT_RESET_INFO, reset_info);
 	if (ret)
@@ -345,7 +345,7 @@ int vfio_pci_reset(struct vfio_device *d)
 
 	ret = ioctl(d->fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
 
-	free(reset_info);
+	delete[] reset_info;
 
 	return ret;
 }
@@ -419,7 +419,7 @@ int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 	if (ret)
 		return -4;
 
-	free(irq_set);
+	delete[] irq_set;
 
 	return irq_count;
 }
@@ -454,7 +454,7 @@ int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 	if (ret)
 		return -4;
 
-	free(irq_set);
+	delete[] irq_set;
 
 	return irq_count;
 }

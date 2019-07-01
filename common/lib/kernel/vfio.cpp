@@ -576,17 +576,17 @@ VfioDevice::pciHotReset()
 	if (not isVfioPciDevice())
 		return false;
 
-	const size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) +
+	const size_t reset_info_len = sizeof(struct vfio_pci_hot_reset_info) +
 	                             sizeof(struct vfio_pci_dependent_device) * 64;
 
-	auto reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info *>
-	                    (calloc(1, reset_infolen));
+	auto *reset_info_buf = new char[reset_info_len];
+	auto *reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info *>(reset_info_buf);
 
-	reset_info->argsz = reset_infolen;
+	reset_info->argsz = reset_info_len;
 
 
 	if (ioctl(this->fd, VFIO_DEVICE_GET_PCI_HOT_RESET_INFO, reset_info) != 0) {
-		free(reset_info);
+		delete[] reset_info_buf;
 		return false;
 	}
 
@@ -598,26 +598,26 @@ VfioDevice::pciHotReset()
 		              PCI_SLOT(dd->devfn), PCI_FUNC(dd->devfn), dd->group_id);
 
 		if (static_cast<int>(dd->group_id) != this->group.index) {
-			free(reset_info);
+			delete[] reset_info_buf;
 			return false;
 		}
 	}
 
-	free(reset_info);
+	delete[] reset_info_buf;
 
-	const size_t resetlen = sizeof(struct vfio_pci_hot_reset) +
+	const size_t reset_len = sizeof(struct vfio_pci_hot_reset) +
 	                        sizeof(int32_t) * 1;
-	auto reset = reinterpret_cast<struct vfio_pci_hot_reset*>
-	                (calloc(1, resetlen));
+	auto *reset_buf = new char[reset_len];
+	auto *reset = reinterpret_cast<struct vfio_pci_hot_reset*>(reset_buf);
 
-	reset->argsz = resetlen;
+	reset->argsz = reset_len;
 	reset->count = 1;
 	reset->group_fds[0] = this->group.fd;
 
 	int ret = ioctl(this->fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
 	const bool success = (ret == 0);
 
-	free(reset);
+	delete[] reset_buf;
 
 	if(not success and not group.container->isIommuEnabled()) {
 		logger->info("PCI hot reset failed, but this is expected without IOMMU");
@@ -639,7 +639,8 @@ VfioDevice::pciMsiInit(int efds[])
 	const size_t irqSetSize = sizeof(struct vfio_irq_set) +
 	                          sizeof(int) * irqCount;
 
-	auto irqSet = reinterpret_cast<struct vfio_irq_set*>(calloc(1, irqSetSize));
+	auto *irqSetBuf = new char[irqSetSize];
+	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
 	if(irqSet == nullptr)
 		return -1;
 
@@ -653,7 +654,7 @@ VfioDevice::pciMsiInit(int efds[])
 	for (size_t i = 0; i < irqCount; i++) {
 		efds[i] = eventfd(0, 0);
 		if (efds[i] < 0) {
-			free(irqSet);
+			delete[] irqSetBuf;
 			return -1;
 		}
 	}
@@ -661,11 +662,11 @@ VfioDevice::pciMsiInit(int efds[])
 	memcpy(irqSet->data, efds, sizeof(int) * irqCount);
 
 	if(ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
-		free(irqSet);
+		delete[] irqSetBuf;
 		return -1;
 	}
 
-	free(irqSet);
+	delete[] irqSetBuf;
 
 	return irqCount;
 }
@@ -682,7 +683,8 @@ VfioDevice::pciMsiDeinit(int efds[])
 	const size_t irqSetSize = sizeof(struct vfio_irq_set) +
 	                            sizeof(int) * irqCount;
 
-	auto irqSet = reinterpret_cast<struct vfio_irq_set*>(calloc(1, irqSetSize));
+	auto *irqSetBuf = new char[irqSetSize];
+	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
 	if(irqSet == nullptr)
 		return -1;
 
@@ -700,11 +702,11 @@ VfioDevice::pciMsiDeinit(int efds[])
 	memcpy(irqSet->data, efds, sizeof(int) * irqCount);
 
 	if (ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
-		free(irqSet);
+		delete[] irqSetBuf;
 		return -1;
 	}
 
-	free(irqSet);
+	delete[] irqSetBuf;
 
 	return irqCount;
 }
