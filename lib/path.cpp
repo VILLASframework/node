@@ -148,6 +148,9 @@ int path_init(struct path *p)
 
 	p->_name = nullptr;
 
+	p->reader.pfds = nullptr;
+	p->reader.nfds = 0;
+
 	/* Default values */
 	p->mode = PathMode::ANY;
 	p->rate = 0; /* Disabled */
@@ -167,6 +170,9 @@ int path_init(struct path *p)
 static int path_prepare_poll(struct path *p)
 {
 	int fds[16], ret, n = 0, m;
+
+	if (p->reader.pfds)
+		free(p->reader.pfds);
 
 	p->reader.pfds = nullptr;
 	p->reader.nfds = 0;
@@ -296,13 +302,6 @@ int path_prepare(struct path *p)
 	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(&p->signals)), pool_mt);
 	if (ret)
 		return ret;
-
-	/* Prepare poll() */
-	if (p->poll) {
-		ret = path_prepare_poll(p);
-		if (ret)
-			return ret;
-	}
 
 	if (p->original_sequence_no == -1)
 		p->original_sequence_no = vlist_length(&p->sources) == 1;
@@ -628,6 +627,15 @@ int path_start(struct path *p)
 		p->last_sample->data[i] = sig->init;
 	}
 
+	/* Prepare poll() */
+	if (p->poll) {
+		ret = path_prepare_poll(p);
+		if (ret)
+			return ret;
+	}
+
+	p->state = State::STARTED;
+
 	/* Start one thread per path for sending to destinations
 	 *
 	 * Special case: If the path only has a single source and this source
@@ -637,8 +645,6 @@ int path_start(struct path *p)
 	ret = pthread_create(&p->tid, nullptr, p->poll ? path_run_poll : path_run_single, p);
 	if (ret)
 		return ret;
-
-	p->state = State::STARTED;
 
 	return 0;
 }
