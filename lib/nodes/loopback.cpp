@@ -164,7 +164,7 @@ static void register_plugin() {
 	p.type			= PluginType::NODE;
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.node.flags		= 0;
 	p.node.size		= sizeof(struct loopback);
 	p.node.parse		= loopback_parse;
 	p.node.print		= loopback_print;
