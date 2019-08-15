@@ -88,6 +88,8 @@ public:
 
 	bool isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface);
 
+	virtual void dump();
+
 private:
 	static constexpr char registerMemory[] = "Reg";
 

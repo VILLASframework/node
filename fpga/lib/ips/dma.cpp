@@ -114,6 +114,8 @@ Dma::init()
 bool
 Dma::reset()
 {
+	logger->info("DMA resetted");
+	
 	XAxiDma_Reset(&xDma);
 
 	// value taken from libxil implementation
@@ -394,6 +396,16 @@ Dma::isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface
 	}
 
 	return true;
+}
+
+void
+Dma::dump()
+{
+	IpCore::dump();
+
+	logger->info("S2MM_DMACR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_CR_OFFSET));
+	logger->info("S2MM_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_SR_OFFSET));
+	logger->info("S2MM_LENGTH: {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_BUFFLEN_OFFSET));
 }
 
 
