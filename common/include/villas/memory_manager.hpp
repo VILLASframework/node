@@ -180,6 +180,9 @@ public:
 	static MemoryManager&
 	get();
 
+	MemoryGraph & getMemoryGraph()
+	{ return memoryGraph; }
+
 	AddressSpaceId
 	getProcessAddressSpace()
 	{ return getOrCreateAddressSpace("villas-fpga"); }
