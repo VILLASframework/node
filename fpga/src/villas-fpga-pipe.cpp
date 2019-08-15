@@ -39,7 +39,6 @@
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
-#include <villas/fpga/ips/fifo.hpp>
 
 using namespace villas;
 
@@ -101,7 +100,6 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 		exit(1);
 	}
 
-
 	villas::fpga::PCIeCardFactory* fpgaCardPlugin =
 	        dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
@@ -147,14 +145,14 @@ int main(int argc, char* argv[])
 
 	auto card = setupFpgaCard(configFile, fpgaName);
 
-	auto rtds = reinterpret_cast<fpga::ip::Rtds*>
+	auto rtds = dynamic_cast<fpga::ip::Rtds*>
 	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
 
-	auto dma = reinterpret_cast<fpga::ip::Dma*>
-	           (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-
-	auto fifo = reinterpret_cast<fpga::ip::Fifo*>
-	           (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:")));
+	//auto dma = dynamic_cast<fpga::ip::Dma*>
+	//          (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+	auto dma = dynamic_cast<fpga::ip::Dma*>
+	          (card->lookupIp("hier_0_axi_dma_axi_dma_1"));
+	
 
 	if(rtds == nullptr) {
 		logger->error("No RTDS interface found on FPGA");
@@ -163,11 +161,6 @@ int main(int argc, char* argv[])
 
 	if(dma == nullptr) {
 		logger->error("No DMA found on FPGA ");
-		return 1;
-	}
-
-	if(fifo == nullptr) {
-		logger->error("No Fifo found on FPGA ");
 		return 1;
 	}
 
@@ -182,6 +175,11 @@ int main(int argc, char* argv[])
 	auto &alloc = villas::HostRam::getAllocator();
 	auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
 	auto block = mem.getMemoryBlock();
+	
+	dma->makeAccesibleFromVA(block);
+
+	auto &mm = MemoryManager::get();
+	mm.getMemoryGraph().dump("graph.dot");
 
 	while(true) {
 		dma->read(block, block.getSize());
@@ -206,7 +204,9 @@ int main(int argc, char* argv[])
 			mem[memIdx++] = number;
 		}
 
-		dma->write(block, memIdx * sizeof(int32_t));
+		bool state = dma->write(block, memIdx * sizeof(int32_t));
+		if (!state)
+			logger->error("Failed to write to device");
 	}
 
 	return 0;
