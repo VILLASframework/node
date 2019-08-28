@@ -232,12 +232,16 @@ public:
 
 	virtual void prepare()
 	{
+		assert(state == State::CHECKED);
+
 		stats = std::make_shared<villas::Stats>(buckets, warmup);
 
 		/* Register statistic object to path.
 		*
 		* This allows the path code to update statistics. */
 		node->stats = stats;
+
+		state = State::PREPARED;
 	}
 };
 
