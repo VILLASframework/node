@@ -585,7 +585,7 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 			break;
 
 		case SignalType::COMPLEX: {
-			float real, imag;
+			float real, imag = 0;
 
 			real = strtod(ptr, end);
 			if (*end == ptr)
@@ -593,14 +593,22 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 
 			ptr = *end;
 
-			imag = strtod(ptr, end);
-			if (*end == ptr)
-				return -1;
+			if (*ptr == 'i' || *ptr == 'j') {
+				imag = real;
+				real = 0;
 
-			if (**end != 'i')
-				return -1;
+				(*end)++;
+			}
+			else if (*ptr == '-' || *ptr == '+') {
+				imag = strtod(ptr, end);
+				if (*end == ptr)
+					return -1;
 
-			(*end)++;
+				if (**end != 'i' && **end != 'j')
+					return -1;
+
+				(*end)++;
+			}
 
 			data->z = std::complex<float>(real, imag);
 			break;
