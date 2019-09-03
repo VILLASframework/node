@@ -175,5 +175,7 @@ Log::Level Log::getLevel() const
 
 std::string Log::getLevelName() const
 {
-	return std::string(spdlog::level::to_c_str(level));
+	auto sv = spdlog::level::to_string_view(level);
+
+	return std::string(sv.data());
 }
