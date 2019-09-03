@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM balenalib/rpi-raspbian
+FROM balenalib/rpi-raspbian:buster
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
@@ -29,7 +29,7 @@ ARG VARIANT=unknown
 
 # Toolchain
 RUN apt-get update && apt-get install -y \
-	autoconf automake libtool \
+	autoconf automake libtool cmake \
 	pkg-config make gcc g++\
 	git curl wget tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
@@ -56,14 +56,6 @@ RUN apt-get install -y\
 
 ENV CC=gcc
 ENV CXX=g++
-
-# Build & Install CMake 3.14.1
-RUN cd /tmp && \
-    wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1.tar.gz && \
-    tar -xzf cmake-3.14.1.tar.gz && \
-    cd cmake-3.14.1 && ./bootstrap --parallel=$(nproc) -- -DCMAKE_BUILD_TYPE:STRING=Release && \
-    make -j$(nproc) && make install && \
-    rm -rf /tmp/*
 
 # Add CMake install dir to PATH
 ENV PATH="usr/local/bin:${PATH}"
