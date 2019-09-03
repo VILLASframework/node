@@ -69,7 +69,8 @@ RUN apt-get update && apt-get install -y \
 	libibverbs-dev:${ARCH} \
 	librdmacm-dev:${ARCH} \
 	libre-dev:${ARCH} \
-	libusb-1.0-0-dev:${ARCH}
+	libusb-1.0-0-dev:${ARCH} \
+	libspdlog-dev:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 

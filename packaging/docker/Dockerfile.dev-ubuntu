@@ -78,7 +78,8 @@ RUN apt-get update && apt-get install -y \
 	libcomedi-dev \
 	libibverbs-dev \
 	librdmacm-dev \
-	libre-dev
+	libre-dev \
+	libspdlog-dev
 
 # Build & Install Criterion
 RUN cd /tmp && \
