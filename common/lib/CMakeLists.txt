@@ -74,6 +74,7 @@ target_link_libraries(villas-common PUBLIC
 	${CURL_LIBRARIES}
 	${CMAKE_DL_LIBS}
 	spdlog::spdlog
+	fmt::fmt
 	stdc++
 )
 
