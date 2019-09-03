@@ -52,7 +52,8 @@ RUN apt-get install -y\
 	librdmacm-dev \
 	libre-dev \
 	libusb-1.0-0-dev \
-	libspdlog-dev
+	libspdlog-dev \
+	libfmt-dev
 
 ENV CC=gcc
 ENV CXX=g++

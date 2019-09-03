@@ -79,7 +79,8 @@ RUN apt-get update && apt-get install -y \
 	libibverbs-dev \
 	librdmacm-dev \
 	libre-dev \
-	libspdlog-dev
+	libspdlog-dev \
+	libfmt-dev
 
 # Build & Install Criterion
 RUN cd /tmp && \
