@@ -29,7 +29,7 @@
 #include <villas/compat.h>
 #include <villas/timing.h>
 #include <villas/io.h>
-#include <villas/formats/json.h>
+#include <villas/formats/json_reserve.h>
 
 #define JSON_RESERVE_INTEGER_TARGET 1
 
