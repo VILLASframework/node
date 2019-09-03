@@ -78,9 +78,23 @@ RUN apt-get update && apt-get install -y \
 	libcomedi-dev \
 	libibverbs-dev \
 	librdmacm-dev \
-	libre-dev \
-	libspdlog-dev \
-	libfmt-dev
+	libre-dev
+
+# Build & Install fmtlib
+RUN cd /tmp && \
+	git clone --recursive https://github.com/fmtlib/fmt.git && \
+	mkdir -p fmt/build && cd fmt/build && \
+	git checkout 6.0.0 && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install spdlog
+RUN cd /tmp && \
+	git clone --recursive https://github.com/gabime/spdlog.git && \
+	mkdir -p spdlog/build && cd spdlog/build && \
+	git checkout v1.3.1 && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
 
 # Build & Install Criterion
 RUN cd /tmp && \
