@@ -338,7 +338,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 		if (data && i < len) {
 			char val[32];
 
-			signal_data_snprint(&data[i], sig, val, sizeof(val));
+			signal_data_print_str(&data[i], sig, val, sizeof(val));
 
 			strcatf(&buf, " = %s", val);
 		}
@@ -652,7 +652,7 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 	return 0;
 }
 
-int signal_data_snprint(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
+int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
 {
 	switch (sig->type) {
 		case SignalType::FLOAT:

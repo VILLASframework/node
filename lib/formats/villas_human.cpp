@@ -62,7 +62,7 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 				break;
 
 			off += snprintf(buf + off, len - off, "%c", io->separator);
-			off += signal_data_snprint(&smp->data[i], sig, buf + off, len - off);
+			off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
 		}
 	}
 

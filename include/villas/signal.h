@@ -134,7 +134,7 @@ enum SignalType signal_type_detect(const char *val);
 void signal_data_cast(union signal_data *data, const struct signal *from, const struct signal *to);
 
 /** Print value of a signal to a character buffer. */
-int signal_data_snprint(const union signal_data *data, const struct signal *sig, char *buf, size_t len);
+int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len);
 
 int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end);
 
