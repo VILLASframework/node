@@ -35,6 +35,13 @@ static pthread_t thread;
 static void * mosquitto_loop_thread(void *ctx)
 {
     int ret;
+    // set the cancel type of this thread to async
+    ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+    if (ret != 0) {
+        error("Unable to set cancel type of MQTT communication thread to asynchronous.");
+        return nullptr;
+    }
+
     while(true){
         for (unsigned i = 0; i < vlist_length(&clients); i++) {
             struct node *node = (struct node *) vlist_at(&clients, i);
@@ -380,13 +387,14 @@ int mqtt_stop(struct node *n)
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
+    // unregister client from global MQTT client list
+    // so that mosquitto loop is no longer invoked  for this client
+    // important to do that before disconnecting from broker, otherwise, mosquitto thread will attempt to reconnect
+    vlist_remove(&clients, vlist_index(&clients, n));
+
 	ret = mosquitto_disconnect(m->client);
 	if (ret)
 		goto mosquitto_error;
-
-	// unregister client from global MQTT client list
-	// so that mosquitto loop is no longer invoked  for this client
-	vlist_remove_all(&clients, n);
 
 	ret = io_destroy(&m->io);
 	if (ret)
@@ -435,6 +443,7 @@ int mqtt_type_stop()
     ret = pthread_cancel(thread);
     if (ret)
         return ret;
+    debug(  3, "Called pthread_cancel() on MQTT communication management thread.");
 
     ret = pthread_join(thread, nullptr);
     if (ret) {
