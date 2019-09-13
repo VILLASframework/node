@@ -39,23 +39,23 @@ static void * mosquitto_loop_thread(void *ctx)
     int ret;
     while(true){
         for (unsigned i = 0; i < vlist_length(&clients); i++) {
-            struct node *c = (struct node *) vlist_at(&clients, i);
-            struct mqtt *m = (struct mqtt *) c->_vd;
+            struct node *node = (struct node *) vlist_at(&clients, i);
+            struct mqtt *m = (struct mqtt *) node->_vd;
 
             // execute mosquitto loop for this client
             ret = mosquitto_loop(m->client, 0, 1);
             if(ret){
-                warning("MQTT: connection error for node %s: %s, attempting reconnect", node_name(c), mosquitto_strerror(ret));
+                warning("MQTT: connection error for node %s: %s, attempting reconnect", node_name(node), mosquitto_strerror(ret));
                 ret = mosquitto_reconnect(m->client);
                 if(ret != MOSQ_ERR_SUCCESS){
-                    error("MQTT: reconnection to broker failed for node %s: %s", node_name(c), mosquitto_strerror(ret));
+                    error("MQTT: reconnection to broker failed for node %s: %s", node_name(node), mosquitto_strerror(ret));
                 }
                 else{
-                    warning("MQTT: successfully reconnected to broker for node %s: %s", node_name(c), mosquitto_strerror(ret));
+                    warning("MQTT: successfully reconnected to broker for node %s: %s", node_name(node), mosquitto_strerror(ret));
                 }
                 ret = mosquitto_loop(m->client, -1, 1);
                 if(ret != MOSQ_ERR_SUCCESS){
-                    error("MQTT: persisting connection error for node %s: %s", node_name(c), mosquitto_strerror(ret));
+                    error("MQTT: persisting connection error for node %s: %s", node_name(node), mosquitto_strerror(ret));
                 }
             }
         } // for loop
