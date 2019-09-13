@@ -126,7 +126,7 @@ endif()
 
 # Enable MQTT support
 if(WITH_NODE_MQTT)
-    list(APPEND NODE_SRC mqtt.cpp mqtt_unthreaded.cpp)
+    list(APPEND NODE_SRC mqtt.cpp)
     list(APPEND INCLUDE_DIRS ${MOSQUITTO_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${MOSQUITTO_LIBRARIES})
 endif()
