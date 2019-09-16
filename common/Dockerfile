@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:28
+FROM fedora:29
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -61,7 +61,8 @@ RUN dnf -y install \
 	jansson-devel \
 	libcurl-devel \
 	libconfig-devel \
-	openssl-devel openssl
+	openssl-devel openssl \
+	spdlog-devel
 
 # Build & Install Criterion
 RUN cd /tmp && \
