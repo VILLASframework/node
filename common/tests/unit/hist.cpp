@@ -35,7 +35,7 @@ TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {
 
-	Hist h;
+	Hist h(10,2);
 
 	for (auto td : test_data)
 		h.put(td);
