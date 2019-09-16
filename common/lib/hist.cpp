@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cfloat> // for DBL_MAX
 
 #include <villas/utils.hpp>
 #include <villas/hist.hpp>
@@ -33,9 +34,17 @@ using namespace villas::utils;
 namespace villas {
 
 Hist::Hist(int buckets, Hist::cnt_t wu) :
-	warmup(wu),
-	data(buckets)
-{ }
+	warmup(wu)
+{
+    for ( int i = 0; i<buckets; i++){
+        data.push_back(0);
+    }
+    total=0;
+    highest=0;
+    lowest=DBL_MAX;
+    higher=0;
+    lower=0;
+}
 
 void Hist::put(double value)
 {
@@ -51,11 +60,15 @@ void Hist::put(double value)
 		if (total < warmup) {
 			/* We are still in warmup phase... Waiting for more samples... */
 		}
-		else if (data.size() && total == warmup) {
+		else if (data.size() && total == warmup && warmup != 0) {
 			low  = getMean() - 3 * getStddev();
 			high = getMean() + 3 * getStddev();
 			resolution = (high - low) / data.size();
 		}
+		else if (data.size() && (total == warmup) && (warmup == 0)){
+            // there is no warmup phase
+            // TODO resolution = ?
+        }
 		else {
 			idx_t idx = std::round((value - low) / resolution);
 
