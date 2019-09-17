@@ -104,13 +104,13 @@ build:debian-multiarch:armhf:
   extends: build:base
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
-    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
+    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/arm-linux-gnueabihf
 
 build:debian-multiarch:arm64:
   extends: build:base
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
-    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
+    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-arm64.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/aarch64-linux-gnu
 
 build:docs:
   stage: build

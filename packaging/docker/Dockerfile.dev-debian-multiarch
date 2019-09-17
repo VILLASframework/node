@@ -47,8 +47,8 @@ RUN dpkg --add-architecture ${ARCH}
 # Toolchain
 RUN apt-get update && apt-get install -y \
 	crossbuild-essential-${ARCH} \
-	pkg-config cmake make ninja-build \
-	texinfo git curl tar \
+	pkg-config make ninja-build \
+	texinfo git curl tar wget\
 	protobuf-compiler protobuf-c-compiler
 
 # Dependencies
@@ -71,6 +71,13 @@ RUN apt-get update && apt-get install -y \
 	libre-dev:${ARCH} \
 	libusb-1.0-0-dev:${ARCH}
 
+# Install cmake (version from buster has a bug)
+RUN cd /tmp && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.sh && \
+    chmod +x cmake-3.15.3-Linux-x86_64.sh && \
+    ./cmake-3.15.3-Linux-x86_64.sh --skip-license --prefix=/usr && \
+    rm -rf /tmp/*
+
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/pkgconfig:/usr/share/pkgconfig
@@ -84,7 +91,7 @@ RUN cd /tmp && \
    git clone --recursive https://github.com/fmtlib/fmt.git && \
    mkdir -p fmt/build && cd fmt/build && \
    git checkout 5.2.0 && \
-   cmake -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
+   cmake ${CMAKE_OPTS} -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
    rm -rf /tmp/*
 			   
 # Build & Install spdlog
@@ -92,7 +99,7 @@ RUN cd /tmp && \
    git clone --recursive https://github.com/gabime/spdlog.git && \
    mkdir -p spdlog/build && cd spdlog/build && \
    git checkout v1.3.1 && \
-   cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
+   cmake ${CMAKE_OPTS} -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
    rm -rf /tmp/*
 
 # Build & Install libwebsockets
@@ -117,8 +124,6 @@ RUN cd /tmp && \
 	autoreconf -i && cd build && \
 	../configure --host=${TRIPLET} && make -j$(nproc) install && \
 	rm -rf /tmp/*
-
-ENV LD_LIBRARY_PATH /usr/local/lib:/usr/lib:/usr/lib/${TRIPLET}
 
 WORKDIR /villas
 ENTRYPOINT bash
