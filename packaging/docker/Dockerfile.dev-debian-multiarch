@@ -118,6 +118,8 @@ RUN cd /tmp && \
 	../configure --host=${TRIPLET} && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
+ENV LD_LIBRARY_PATH /usr/local/lib:/usr/lib:/usr/lib/${TRIPLET}
+
 WORKDIR /villas
 ENTRYPOINT bash
 
