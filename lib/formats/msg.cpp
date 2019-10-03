@@ -110,8 +110,8 @@ int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signal
 {
 	msg_in->type     = MSG_TYPE_DATA;
 	msg_in->version  = MSG_VERSION;
-	msg_in->rsvd1	 = 0;
-	msg_in->resv2    = 0;
+	msg_in->reserved1 = 0;
+	msg_in->reserved2 = 0;
 	msg_in->length   = (uint16_t) smp->length;
 	msg_in->sequence = (uint32_t) smp->sequence;
 	msg_in->ts.sec  = smp->ts.origin.tv_sec;
