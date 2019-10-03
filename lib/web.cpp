@@ -170,7 +170,7 @@ void Web::worker()
 	logger->info("Started worker");
 
 	while (running) {
-		lws_service(context, 100);
+		lws_service(context, 10);
 
 		while (!writables.empty()) {
 			wsi = writables.pop();
