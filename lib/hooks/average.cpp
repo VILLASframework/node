@@ -26,7 +26,7 @@
 
 #include <bitset>
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
@@ -54,7 +54,7 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to intialize list");
 
-		state = STATE_INITIALIZED;
+		state = State::INITIALIZED;
 	}
 
 	virtual ~AverageHook()
@@ -67,7 +67,7 @@ public:
 		int ret;
 		struct signal *avg_sig;
 
-		assert(state == STATE_CHECKED);
+		assert(state == State::CHECKED);
 
 		/* Setup mask */
 		for (size_t i = 0; i < vlist_length(&signal_names); i++) {
@@ -84,7 +84,7 @@ public:
 			throw RuntimeError("Invalid signal mask");
 
 		/* Add averaged signal */
-		avg_sig = signal_create("average", nullptr, SIGNAL_TYPE_FLOAT);
+		avg_sig = signal_create("average", nullptr, SignalType::FLOAT);
 		if (!avg_sig)
 			throw RuntimeError("Failed to create new signal");
 
@@ -92,7 +92,7 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to intialize list");
 
-		state = STATE_PREPARED;
+		state = State::PREPARED;
 	}
 
 	virtual void parse(json_t *cfg)
@@ -102,7 +102,7 @@ public:
 		json_error_t err;
 		json_t *json_signals, *json_signal;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		Hook::parse(cfg);
 
@@ -131,33 +131,33 @@ public:
 			}
 		}
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		double avg, sum = 0;
 		int n = 0;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		for (unsigned k = 0; k < smp->length; k++) {
 			if (!mask.test(k))
 				continue;
 
 			switch (sample_format(smp, k)) {
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					sum += smp->data[k].i;
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					sum += smp->data[k].f;
 					break;
 
-				case SIGNAL_TYPE_INVALID:
-				case SIGNAL_TYPE_COMPLEX:
-				case SIGNAL_TYPE_BOOLEAN:
-					return HOOK_ERROR; /* not supported */
+				case SignalType::INVALID:
+				case SignalType::COMPLEX:
+				case SignalType::BOOLEAN:
+					return Hook::Reason::ERROR; /* not supported */
 			}
 
 			n++;
@@ -167,7 +167,7 @@ public:
 		sample_data_insert(smp, (union signal_data *) &avg, offset, 1);
 		smp->signals = &signals;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -175,7 +175,7 @@ public:
 static HookPlugin<AverageHook> p(
 	"average",
 	"Calculate average over some signals",
-	HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
+	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
 	99
 );
 

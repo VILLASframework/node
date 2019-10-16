@@ -63,7 +63,7 @@ int msg_verify(struct msg *m)
 		return -1;
 	else if (m->type    != MSG_TYPE_DATA)
 		return -2;
-	else if (m->rsvd1 != 0)
+	else if (m->reserved1 != 0)
 		return -3;
 	else
 		return 0;

@@ -34,15 +34,15 @@ namespace node {
 class SkipFirstHook : public Hook {
 
 protected:
-	enum {
-		HOOK_SKIP_FIRST_STATE_STARTED,	/**< Path just started. First sample not received yet. */
-		HOOK_SKIP_FIRST_STATE_SKIPPING,	/**< First sample received. Skipping samples now. */
-		HOOK_SKIP_FIRST_STATE_NORMAL	/**< All samples skipped. Normal operation. */
+	enum class SkipState {
+		STARTED,	/**< Path just started. First sample not received yet. */
+		SKIPPING,	/**< First sample received. Skipping samples now. */
+		NORMAL		/**< All samples skipped. Normal operation. */
 	} skip_state;
 
-	enum {
-		HOOK_SKIP_MODE_SECONDS,
-		HOOK_SKIP_MODE_SAMPLES
+	enum class Mode {
+		SECONDS,
+		SAMPLES
 	} mode;
 
 	union {
@@ -67,22 +67,22 @@ public:
 		int ret;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: F }", "seconds", &s);
 		if (!ret) {
 			seconds.wait = time_from_double(s);
-			mode = HOOK_SKIP_MODE_SECONDS;
+			mode = Mode::SECONDS;
 
-			state = STATE_PARSED;
+			state = State::PARSED;
 			return;
 		}
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "samples", &samples.wait);
 		if (!ret) {
-			mode = HOOK_SKIP_MODE_SAMPLES;
+			mode = Mode::SAMPLES;
 
-			state = STATE_PARSED;
+			state = State::PARSED;
 			return;
 		}
 
@@ -91,44 +91,44 @@ public:
 
 	virtual void restart()
 	{
-		skip_state = HOOK_SKIP_FIRST_STATE_STARTED;
+		skip_state = SkipState::STARTED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		/* Remember sequence no or timestamp of first sample. */
-		if (skip_state == HOOK_SKIP_FIRST_STATE_STARTED) {
+		if (skip_state == SkipState::STARTED) {
 			switch (mode) {
-				case HOOK_SKIP_MODE_SAMPLES:
+				case Mode::SAMPLES:
 					samples.until = smp->sequence + samples.wait;
 					break;
 
-				case HOOK_SKIP_MODE_SECONDS:
+				case Mode::SECONDS:
 					seconds.until = time_add(&smp->ts.origin, &seconds.wait);
 					break;
 			}
 
-			skip_state = HOOK_SKIP_FIRST_STATE_SKIPPING;
+			skip_state = SkipState::SKIPPING;
 		}
 
 		switch (mode) {
-			case HOOK_SKIP_MODE_SAMPLES:
+			case Mode::SAMPLES:
 				if (samples.until > smp->sequence)
-					return HOOK_SKIP_SAMPLE;
+					return Hook::Reason::SKIP_SAMPLE;
 				break;
 
-			case HOOK_SKIP_MODE_SECONDS:
+			case Mode::SECONDS:
 				if (time_delta(&seconds.until, &smp->ts.origin) < 0)
-					return HOOK_SKIP_SAMPLE;
+					return Hook::Reason::SKIP_SAMPLE;
 				break;
 
 			default:
 				break;
 		}
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -136,7 +136,7 @@ public:
 static HookPlugin<SkipFirstHook> p(
 	"skip_first",
 	"Skip the first samples",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	99
 );
 

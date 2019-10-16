@@ -20,13 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/node/config.h>
 #include <villas/nodes/loopback.hpp>
 #include <villas/memory.h>
+
+using namespace villas::utils;
 
 int loopback_parse(struct node *n, json_t *cfg)
 {
@@ -37,7 +39,7 @@ int loopback_parse(struct node *n, json_t *cfg)
 	int ret;
 
 	/* Default values */
-	l->queueflags = QUEUE_SIGNALLED_AUTO;
+	l->mode = QueueSignalledMode::AUTO;
 	l->queuelen = DEFAULT_QUEUE_LENGTH;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
@@ -49,18 +51,18 @@ int loopback_parse(struct node *n, json_t *cfg)
 
 	if (mode_str) {
 		if (!strcmp(mode_str, "auto"))
-			l->queueflags = QUEUE_SIGNALLED_AUTO;
+			l->mode = QueueSignalledMode::AUTO;
 #ifdef HAVE_EVENTFD
 		else if (!strcmp(mode_str, "eventfd"))
-			l->queueflags = QUEUE_SIGNALLED_EVENTFD;
+			l->mode = QueueSignalledMode::EVENTFD;
 #endif
 		else if (!strcmp(mode_str, "pthread"))
-			l->queueflags = QUEUE_SIGNALLED_PTHREAD;
+			l->mode = QueueSignalledMode::PTHREAD;
 		else if (!strcmp(mode_str, "polling"))
-			l->queueflags = QUEUE_SIGNALLED_POLLING;
+			l->mode = QueueSignalledMode::POLLING;
 #ifdef __APPLE__
 		else if (!strcmp(mode_str, "pipe"))
-			l->queueflags = QUEUE_SIGNALLED_PIPE;
+			l->mode = QueueSignalledMode::PIPE;
 #endif /* __APPLE__ */
 		else
 			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
@@ -83,7 +85,7 @@ int loopback_start(struct node *n)
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, l->queueflags);
+	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, l->mode);
 }
 
 int loopback_stop(struct node *n)
@@ -154,15 +156,15 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "loopback";
 	p.description		= "Loopback to connect multiple paths";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
-	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
+	p.node.flags		= 0;
 	p.node.size		= sizeof(struct loopback);
 	p.node.parse		= loopback_parse;
 	p.node.print		= loopback_print;
@@ -178,6 +180,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

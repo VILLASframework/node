@@ -67,7 +67,7 @@ int msg_verify(struct msg *m)
 		return -1;
 	else if (m->type != MSG_TYPE_DATA)
 		return -2;
-	else if (m->rsvd1 != 0)
+	else if (m->reserved1 != 0)
 		return -3;
 	else
 		return 0;
@@ -81,20 +81,20 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 	if (ret)
 		return -1;
 
-	smp->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	smp->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
-	smp->ts.origin = MSG_TS(msg);
+	MSG_TS(msg, smp->ts.origin);
 
 	for (unsigned i = 0; i < MIN(smp->length, vlist_length(signals)); i++) {
 		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
 		switch (sig->type) {
-			case SIGNAL_TYPE_FLOAT:
+			case SignalType::FLOAT:
 				smp->data[i].f = msg->data[i].f;
 				break;
 
-			case SIGNAL_TYPE_INTEGER:
+			case SignalType::INTEGER:
 				smp->data[i].i = msg->data[i].i;
 				break;
 
@@ -110,6 +110,8 @@ int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signal
 {
 	msg_in->type     = MSG_TYPE_DATA;
 	msg_in->version  = MSG_VERSION;
+	msg_in->reserved1 = 0;
+	msg_in->reserved2 = 0;
 	msg_in->length   = (uint16_t) smp->length;
 	msg_in->sequence = (uint32_t) smp->sequence;
 	msg_in->ts.sec  = smp->ts.origin.tv_sec;
@@ -119,11 +121,11 @@ int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signal
 		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
 		switch (sig->type) {
-			case SIGNAL_TYPE_FLOAT:
+			case SignalType::FLOAT:
 				msg_in->data[i].f = smp->data[i].f;
 				break;
 
-			case SIGNAL_TYPE_INTEGER:
+			case SignalType::INTEGER:
 				msg_in->data[i].i = smp->data[i].i;
 				break;
 

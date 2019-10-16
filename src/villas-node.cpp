@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 
 #include <iostream>
 #include <exception>
 #include <atomic>
 
+#include <villas/tool.hpp>
 #include <villas/node/config.h>
 #include <villas/version.hpp>
 #include <villas/utils.hpp>
@@ -42,7 +43,6 @@
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/copyright.hpp>
 #include <villas/plugin.h>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
@@ -55,74 +55,86 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::plugin;
 
-SuperNode sn;
+namespace villas {
+namespace node {
+namespace tools {
 
-static void quit(int signal, siginfo_t *sinfo, void *ctx)
-{
-	Logger logger = logging.get("node");
+class Node : public Tool {
 
-	switch (signal)  {
-		case  SIGALRM:
-			logger->info("Reached timeout. Terminating...");
-			break;
+public:
+	Node(int argc, char *argv[]) :
+		Tool(argc, argv, "node")
+	{
+		int ret;
 
-		default:
-			logger->info("Received {} signal. Terminating...", strsignal(signal));
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
 	}
 
-	sn.setState(STATE_STOPPING);
-}
+protected:
+	SuperNode sn;
 
-static void usage()
-{
-	std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -h      show this usage information" << std::endl
-	          << "    -d LVL  set logging level" << std::endl
-	          << "    -V      show the version of the tool" << std::endl << std::endl
-	          << "  CONFIG is the path to an optional configuration file" << std::endl
-	          << "         if omitted, VILLASnode will start without a configuration" << std::endl
-	          << "         and wait for provisioning over the web interface." << std::endl << std::endl
+	std::string uri;
+
+	void handler(int signal, siginfo_t *sinfo, void *ctx)
+	{
+		switch (signal)  {
+			case  SIGALRM:
+				logger->info("Reached timeout. Terminating...");
+				break;
+
+			default:
+				logger->info("Received {} signal. Terminating...", strsignal(signal));
+		}
+
+		sn.setState(State::STOPPING);
+	}
+
+	void usage()
+	{
+		std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl
+			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -h      show this usage information" << std::endl
+			<< "    -d LVL  set logging level" << std::endl
+			<< "    -V      show the version of the tool" << std::endl << std::endl
+			<< "  CONFIG is the path to an optional configuration file" << std::endl
+			<< "         if omitted, VILLASnode will start without a configuration" << std::endl
+			<< "         and wait for provisioning over the web interface." << std::endl << std::endl
 #ifdef ENABLE_OPAL_ASYNC
-	          << "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl
-	          << "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl
-	          << "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
+			<< "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl
+			<< "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl
+			<< "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
 #endif /* ENABLE_OPAL_ASYNC */
 
-	          << "Supported node-types:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_NODE);
-	std::cout << std::endl;
+			<< "Supported node-types:" << std::endl;
+		plugin_dump(PluginType::NODE);
+		std::cout << std::endl;
 
 #ifdef WITH_HOOKS
-	std::cout << "Supported hooks:" << std::endl;
-	for (Plugin *p : Registry::lookup<HookFactory>())
-		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
-	std::cout << std::endl;
+		std::cout << "Supported hooks:" << std::endl;
+		for (Plugin *p : Registry::lookup<HookFactory>())
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+		std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
 #ifdef WITH_API
-	std::cout << "Supported API commands:" << std::endl;
-	for (Plugin *p : Registry::lookup<api::ActionFactory>())
-		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
-	std::cout << std::endl;
+		std::cout << "Supported API commands:" << std::endl;
+		for (Plugin *p : Registry::lookup<api::ActionFactory>())
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+		std::cout << std::endl;
 #endif /* WITH_API */
 
-	std::cout << "Supported IO formats:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_FORMAT);
-	std::cout << std::endl;
+		std::cout << "Supported IO formats:" << std::endl;
+		plugin_dump(PluginType::FORMAT);
+		std::cout << std::endl;
 
-	print_copyright();
-}
+		printCopyright();
+	}
 
-int main(int argc, char *argv[])
-{
-	int ret;
-	const char *uri;
-
-	Logger logger = logging.get("node");
-
-	try {
-		/* Check arguments */
+	void parse()
+	{
+				/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
 		if (argc != 4) {
 			usage();
@@ -139,7 +151,7 @@ int main(int argc, char *argv[])
 		while ((c = getopt(argc, argv, "hVd:")) != -1) {
 			switch (c) {
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'd':
@@ -157,18 +169,15 @@ int main(int argc, char *argv[])
 
 		if (argc == optind + 1)
 			uri = argv[optind];
-		else if (argc == optind)
-			uri = nullptr;
-		else {
+		else if (argc != optind) {
 			usage();
 			exit(EXIT_FAILURE);
 		}
 #endif /* ENABLE_OPAL_ASYNC */
+	}
 
-		logger->info("This is VILLASnode {} (built on {}, {})",
-			CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
-			CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
-
+	int main()
+	{
 #ifdef __linux__
 		/* Checks system requirements*/
 		auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
@@ -176,11 +185,7 @@ int main(int argc, char *argv[])
 			throw RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 #endif /* __linux__ */
 
-		ret = utils::signals_init(quit);
-		if (ret)
-			throw RuntimeError("Failed to initialize signal subsystem");
-
-		if (uri)
+		if (!uri.empty())
 			sn.parse(uri);
 		else
 			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
@@ -191,13 +196,20 @@ int main(int argc, char *argv[])
 		sn.run();
 		sn.stop();
 
-		logger->info(CLR_GRN("Goodbye!"));
-
 		return 0;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	villas::node::tools::Node t(argc, argv);
+
+	return t.run();
 }
+
+/** @} */
+

@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <sys/stat.h>
 #include <linux/limits.h>
 
@@ -30,6 +30,8 @@
 #include <villas/timing.h>
 #include <villas/plugin.h>
 #include <villas/nodes/test_rtt.hpp>
+
+using namespace villas::utils;
 
 static struct plugin p;
 
@@ -109,7 +111,7 @@ int test_rtt_prepare(struct node *n)
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
 
-	ret = signal_list_generate(&n->in.signals, max_values, SIGNAL_TYPE_FLOAT);
+	ret = signal_list_generate(&n->in.signals, max_values, SignalType::FLOAT);
 	if (ret)
 		return ret;
 
@@ -292,7 +294,7 @@ int test_rtt_start(struct node *n)
 		}
 	}
 
-	ret = io_init(&t->io, t->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
+	ret = io_init(&t->io, t->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_DATA);
 	if (ret)
 		return ret;
 
@@ -352,7 +354,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		if ((unsigned) t->current >= vlist_length(&t->cases)) {
 			info("This was the last case. Stopping node %s", node_name(n));
 
-			n->state = STATE_STOPPING;
+			n->state = State::STOPPING;
 
 			return -1;
 		}
@@ -392,7 +394,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			smps[i]->length = c->values;
 			smps[i]->sequence = t->counter;
 			smps[i]->ts.origin = now;
-			smps[i]->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
+			smps[i]->flags = (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
 
 			t->counter++;
 		}
@@ -435,15 +437,15 @@ int test_rtt_poll_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "test_rtt";
 	p.description		= "Test round-trip time with loopback";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
-	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
+	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
 	p.node.size		= sizeof(struct test_rtt);
 	p.node.parse		= test_rtt_parse;
 	p.node.prepare		= test_rtt_prepare;
@@ -460,6 +462,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

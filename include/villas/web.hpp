@@ -41,7 +41,7 @@ class Api;
 class Web {
 
 protected:
-	enum state state;
+	enum State state;
 
 	Logger logger;
 
@@ -93,7 +93,7 @@ public:
 		return vhost;
 	}
 
-	enum state getState() const
+	enum State getState() const
 	{
 		return state;
 	}

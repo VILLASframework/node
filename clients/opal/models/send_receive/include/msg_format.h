@@ -66,9 +66,9 @@ struct msg
 #if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
-	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned reserved1	: 2;	/**< Reserved bits */
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned reserved1	: 2;	/**< Reserved bits */
 	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #else

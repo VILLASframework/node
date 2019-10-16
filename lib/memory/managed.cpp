@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <strings.h>
 
 #include <sys/mman.h>
@@ -33,6 +33,8 @@
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
+
+using namespace villas::utils;
 
 static struct memory_allocation * memory_managed_alloc(struct memory_type *m, size_t len, size_t alignment)
 {

@@ -25,7 +25,7 @@
 #include <villas/super_node.hpp>
 #include <villas/node.h>
 #include <villas/utils.hpp>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/api/action.hpp>
 #include <villas/api/session.hpp>
 
@@ -58,7 +58,7 @@ public:
 			);
 
 			if (n->stats)
-				json_object_set_new(json_node, "stats", stats_json(n->stats));
+				json_object_set_new(json_node, "stats", n->stats->toJson());
 
 			/* Add all additional fields of node here.
 			 * This can be used for metadata */

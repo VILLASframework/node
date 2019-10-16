@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
-#include <inttypes.h>
+#include <cstring>
+#include <cmath>
+#include <cinttypes>
 
 #include <villas/pool.h>
 #include <villas/sample.h>
@@ -31,6 +31,8 @@
 #include <villas/timing.h>
 #include <villas/signal.h>
 #include <villas/list.h>
+
+using namespace villas::utils;
 
 int sample_init(struct sample *s)
 {
@@ -213,7 +215,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare sequence no */
-	if (flags & SAMPLE_HAS_SEQUENCE) {
+	if (flags & (int) SampleFlags::HAS_SEQUENCE) {
 		if (a->sequence != b->sequence) {
 			printf("sequence no: %" PRIu64 " != %" PRIu64 "\n", a->sequence, b->sequence);
 			return 2;
@@ -221,7 +223,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare timestamp */
-	if (flags & SAMPLE_HAS_TS_ORIGIN) {
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
 			return 3;
@@ -229,7 +231,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare data */
-	if (flags & SAMPLE_HAS_DATA) {
+	if (flags & (int) SampleFlags::HAS_DATA) {
 		if (a->length != b->length) {
 			printf("length: %d != %d\n", a->length, b->length);
 			return 4;
@@ -241,30 +243,30 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 				return 6;
 
 			switch (sample_format(a, i)) {
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
 						printf("data[%d].f: %f != %f\n", i, a->data[i].f, b->data[i].f);
 						return 5;
 					}
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					if (a->data[i].i != b->data[i].i) {
 						printf("data[%d].i: %" PRId64 " != %" PRId64 "\n", i, a->data[i].i, b->data[i].i);
 						return 5;
 					}
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					if (a->data[i].b != b->data[i].b) {
 						printf("data[%d].b: %s != %s\n", i, a->data[i].b ? "true" : "false", b->data[i].b ? "true" : "false");
 						return 5;
 					}
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					if (cabs(a->data[i].z - b->data[i].z) > epsilon) {
-						printf("data[%d].z: %f+%fi != %f+%fi\n", i, creal(a->data[i].z), cimag(a->data[i].z), creal(b->data[i].z), cimag(b->data[i].z));
+				case SignalType::COMPLEX:
+					if (std::abs(a->data[i].z - b->data[i].z) > epsilon) {
+						printf("data[%d].z: %f+%fi != %f+%fi\n", i, std::real(a->data[i].z), std::imag(a->data[i].z), std::real(b->data[i].z), std::imag(b->data[i].z));
 						return 5;
 					}
 					break;
@@ -277,13 +279,13 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	return 0;
 }
 
-enum signal_type sample_format(const struct sample *s, unsigned idx)
+enum SignalType sample_format(const struct sample *s, unsigned idx)
 {
 	struct signal *sig;
 
 	sig = (struct signal *) vlist_at_safe(s->signals, idx);
 
-	return sig ? sig->type : SIGNAL_TYPE_INVALID;
+	return sig ? sig->type : SignalType::INVALID;
 }
 
 void sample_dump(struct sample *s)
@@ -293,10 +295,10 @@ void sample_dump(struct sample *s)
 		s->sequence, s->length, s->capacity, s->flags, s->signals,
 		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
 
-	if (s->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (s->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 		debug(5, "  ts.origin=%ld.%ld", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
 
-	if (s->flags & SAMPLE_HAS_TS_RECEIVED)
+	if (s->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 		debug(5, "  ts.received=%ld.%ld", s->ts.received.tv_sec, s->ts.received.tv_nsec);
 
 	if (s->signals)

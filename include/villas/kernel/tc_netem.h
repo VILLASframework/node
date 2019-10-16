@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <netlink/route/qdisc.h>
 #include <netlink/route/classifier.h>

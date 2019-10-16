@@ -20,11 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cerrno>
 #include <unistd.h>
-#include <errno.h>
-#include <strings.h>
 
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -41,6 +39,8 @@
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.h>
+
+using namespace villas::utils;
 
 static size_t pgsz = -1;
 static size_t hugepgsz = -1;
@@ -144,7 +144,7 @@ static int memory_hugepage_free(struct memory_type *m, struct memory_allocation 
 
 struct memory_type memory_hugepage = {
 	.name = "mmap_hugepages",
-	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
+	.flags = (int) MemoryFlags::MMAP | (int) MemoryFlags::HUGEPAGE,
 	.alignment = 21, /* 2 MiB hugepage */
 	.alloc = memory_hugepage_alloc,
 	.free = memory_hugepage_free

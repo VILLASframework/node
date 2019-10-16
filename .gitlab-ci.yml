@@ -8,10 +8,8 @@ variables:
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
-  MAKE_OPTS: -j 16
-  LD_PRELOAD: /usr/lib64/libSegFault.so
-  SEGFAULT_SIGNALS: all
-  SEGFAULT_SIGNALS: bus abrt
+  MAKE_OPTS: -j32
+  RELEASEVER: 29
 
 stages:
   - prepare
@@ -31,18 +29,18 @@ before_script:
 prepare:fedora:docker-dev:
   stage: prepare
   script:
-    - docker build
+    - docker build ${DOCKER_OPTS}
         --file ${DOCKER_FILE}
         --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
     - shell
     - linux
 
-#prepare:raspbian:docker-dev:
-#  extends: prepare:fedora:docker-dev
-#  variables:
-#    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
-#    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+prepare:raspbian:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
 prepare:ubuntu:docker-dev:
   extends: prepare:fedora:docker-dev
@@ -50,11 +48,24 @@ prepare:ubuntu:docker-dev:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
 
+prepare:debian-armhf:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
+    DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
+
+prepare:debian-arm64:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
+    DOCKER_OPTS: --build-arg ARCH=arm64 --build-arg TRIPLET=aarch64-linux-gnu
 
 # Stage: build
 ##############################################################################
 
-build:fedora:x86_64:
+build:base:
   stage: build
   script:
     - mkdir -p build && cd build
@@ -68,22 +79,38 @@ build:fedora:x86_64:
   tags:
     - docker
 
+build:fedora:x86_64:
+  extends: build:base
+
 build:fedora-minimal:x86_64:
-  extends: build:fedora:x86_64
+  extends: build:base
   variables:
     CMAKE_OPTS: -DWITH_HOOKS=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
 
 build:ubuntu:x86_64:
-  extends: build:fedora:x86_64
+  extends: build:base
   variables:
-    LD_PRELOAD: /lib/x86_64-linux-gnu/libSegFault.so
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
+    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
-#build:raspbian:armv6l:
-#  extends: build:fedora:x86_64
-#  variables:
-#    LD_PRELOAD: /lib/arm-linux-gnueabihf/libSegFault.so
-#    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+build:raspbian:armv6l:
+  extends: build:base
+  variables:
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+    CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
+  when: manual
+
+build:debian-multiarch:armhf:
+  extends: build:base
+  variables:
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
+    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/arm-linux-gnueabihf
+
+build:debian-multiarch:arm64:
+  extends: build:base
+  variables:
+    DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
+    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-arm64.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/aarch64-linux-gnu
 
 build:docs:
   stage: build
@@ -98,9 +125,6 @@ build:docs:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
-  only:
-    - tags
-    - master
 
 
 # Stage: test
@@ -110,6 +134,10 @@ test:unit:
   stage: test
   dependencies:
     - build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /usr/lib64/libSegFault.so
+    SEGFAULT_SIGNALS: all
+    SEGFAULT_SIGNALS: bus abrt
   script:
     - mkdir -p build && cd build
     - cmake .. && make ${MAKE_OPTS} unit-tests
@@ -122,6 +150,10 @@ test:integration:
   stage: test
   dependencies:
     - build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /usr/lib64/libSegFault.so
+    SEGFAULT_SIGNALS: all
+    SEGFAULT_SIGNALS: bus abrt
   script:
     - mkdir -p build && cd build
     - cmake ..
@@ -132,6 +164,7 @@ test:integration:
     paths:
       - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  allow_failure: true
   tags:
     - docker
 
@@ -154,10 +187,11 @@ packaging:docker:
 packaging:rpm:
   stage: packaging
   dependencies:
-    - build:docs
+    - build:fedora:x86_64
   script:
     - mkdir -p build && cd build
     - cmake ..
+    - make ${MAKE_OPTS} doc
     - make ${MAKE_OPTS} package
   artifacts:
     expire_in: 1 week
@@ -168,9 +202,6 @@ packaging:rpm:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
-  only:
-    - tags
-    - master
 
 # Stage: deploy
 ##############################################################################
@@ -188,16 +219,24 @@ deploy:web:
   tags:
     - villas-deploy
 
-deploy:packages:
+.deploy:packages: &deploy_packages
   stage: deploy
   script:
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
-    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/../packages/x86_64/
-    - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p $${DEPLOY_PATH_PACKAGES}/{fedora/x86_64,dist}
+    - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/dist/
+    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
   dependencies:
     - packaging:rpm
   tags:
     - villas-deploy
+
+deploy:packages:manual:
+  <<: *deploy_packages
+  when: manual
+
+deploy:packages:tags:
+  <<: *deploy_packages
   only:
-    - tags
+    # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/"

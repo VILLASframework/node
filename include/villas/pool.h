@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 #include <sys/types.h>
 
 #include <villas/queue.h>
@@ -34,7 +34,7 @@
 
 /** A thread-safe memory pool */
 struct pool {
-	enum state state;
+	enum State state;
 
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 
@@ -83,7 +83,7 @@ INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
 INLINE void * pool_get(struct pool *p)
 {
 	void *ptr;
-	return queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
+	return queue_pull(&p->queue, &ptr) == 1 ? ptr : nullptr;
 }
 
 /** Release a memory block back to the pool. */

@@ -41,7 +41,7 @@ public:
 static HookPlugin<ExampleHook> p(
 	"example",
 	"This is just a simple example hook",
-	HOOK_PATH,
+	(int) Hook::Flags::PATH,
 	99
 );
 

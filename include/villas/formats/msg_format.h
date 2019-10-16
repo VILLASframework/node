@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /** The current version number for the message format */
 #define MSG_VERSION		2
@@ -43,10 +43,9 @@
 #define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
 
 /** The timestamp of a message in struct timespec format */
-#define MSG_TS(msg) (struct timespec) {	\
-	.tv_sec  = (msg)->ts.sec,	\
-	.tv_nsec = (msg)->ts.nsec	\
-}
+#define MSG_TS(msg, i)  \
+	i.tv_sec  = (msg)->ts.sec;	\
+	i.tv_nsec = (msg)->ts.nsec;
 
 /** This message format is used by all clients
  *
@@ -57,16 +56,16 @@ struct msg
 #if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
-	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned reserved1	: 2;	/**< Reserved bits */
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned reserved1	: 2;	/**< Reserved bits */
 	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #else
   #error Invalid byte-order
 #endif
 
-	uint8_t resv2;		/**< An id which identifies the source of this sample. */
+	uint8_t reserved2;		/**< An id which identifies the source of this sample. */
 	uint16_t length;	/**< The number of values in msg::data[]. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
 

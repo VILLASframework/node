@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
+#include <cinttypes>
 #include <netdb.h>
 
 #include <villas/node/config.h>
@@ -32,6 +33,8 @@
 #include <villas/memory.h>
 #include <villas/memory/ib.h>
 #include <villas/timing.h>
+
+using namespace villas::utils;
 
 static int ib_disconnect(struct node *n)
 {
@@ -473,7 +476,7 @@ static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
 			"continue as listening node in such cases, set use_fallback = true in the configuration",
 			node_name(n));
 
-	n->state = STATE_STARTED;
+	n->state = State::STARTED;
 
 	/* Acknowledge event */
 	rdma_ack_cm_event(event);
@@ -505,7 +508,7 @@ void * ib_rdma_cm_event_thread(void *n)
 	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
 
 	/* Wait until node is completely started */
-	while (node->state != STATE_STARTED);
+	while (node->state != State::STARTED);
 
 	/* Monitor event channel */
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
@@ -548,9 +551,9 @@ void * ib_rdma_cm_event_thread(void *n)
 				 * with rdma_connect.
 				 */
 				if (ib->conn.port_space == RDMA_PS_UDP && !ib->is_source)
-					node->state = STATE_CONNECTED;
+					node->state = State::CONNECTED;
 				else
-					node->state = STATE_PENDING_CONNECT;
+					node->state = State::PENDING_CONNECT;
 
 				break;
 
@@ -575,14 +578,14 @@ void * ib_rdma_cm_event_thread(void *n)
 					ib->conn.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ud.ah_attr);
 				}
 
-				node->state = STATE_CONNECTED;
+				node->state = State::CONNECTED;
 
 				info("Connection established in node %s", node_name(node));
 
 				break;
 
 			case RDMA_CM_EVENT_DISCONNECTED:
-				node->state = STATE_STARTED;
+				node->state = State::STARTED;
 
 				ret = ib_disconnect(node);
 
@@ -683,7 +686,7 @@ int ib_stop(struct node *n)
 	 * Will flush all outstanding WRs to the Completion Queue and
 	 * will call RDMA_CM_EVENT_DISCONNECTED if that is done.
 	 */
-	if (n->state == STATE_CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
+	if (n->state == State::CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
@@ -736,7 +739,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 	debug(LOG_IB | 15, "ib_read is called");
 
-	if (n->state == STATE_CONNECTED || n->state == STATE_PENDING_CONNECT) {
+	if (n->state == State::CONNECTED || n->state == State::PENDING_CONNECT) {
 
 		max_wr_post = cnt;
 
@@ -747,10 +750,10 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			for (int i = 0;; i++) {
 				if (i % CHK_PER_ITER == CHK_PER_ITER - 1) pthread_testcancel();
 
-				/* If IB node disconnects or if it is still in STATE_PENDING_CONNECT, ib_read
+				/* If IB node disconnects or if it is still in State::PENDING_CONNECT, ib_read
 				 * should return immediately if this condition holds
 				 */
-				if (n->state != STATE_CONNECTED) return 0;
+				if (n->state != State::CONNECTED) return 0;
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
 				if (wcs) {
@@ -830,7 +833,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		ret = ibv_post_recv(ib->ctx.id->qp, &wr[0], &bad_wr);
 
 		if (ret)
-			error("Was unable to post receive WR in node %s: %i, bad WR ID: 0x%lx",
+			error("Was unable to post receive WR in node %s: %i, bad WR ID: 0x%" PRIu64,
 			node_name(n), ret, bad_wr->wr_id);
 
 		debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
@@ -858,7 +861,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
-			smps[j]->flags = (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED | SAMPLE_HAS_SEQUENCE);
+			smps[j]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_TS_RECEIVED | (int) SampleFlags::HAS_SEQUENCE;
 		}
 
 	}
@@ -878,7 +881,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	debug(LOG_IB | 10, "ib_write is called");
 
-	if (n->state == STATE_CONNECTED) {
+	if (n->state == State::CONNECTED) {
 		*release = 0;
 
 		/* First, write */
@@ -959,7 +962,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 				/* The remaining work requests will be bad. Ripple through list
 				 * and prepare them to be released
 				 */
-				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%zx and S/G address: 0x%px: %i",
+				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%" PRIu64 " and S/G address: 0x%px: %i",
 						bad_wr->wr_id, bad_wr->sg_list, ret);
 
 				while (1) {
@@ -1003,13 +1006,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "infiniband";
 	p.description		= "Infiniband interface (libibverbs, librdmacm)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct infiniband);
 	p.node.pool_size	= 8192;
@@ -1030,6 +1033,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

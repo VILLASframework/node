@@ -23,7 +23,7 @@
  *********************************************************************************/
 
 #include <jansson.h>
-#include <math.h>
+#include <cmath>
 
 #include <netlink/route/qdisc/netem.h>
 
@@ -33,6 +33,8 @@
 #include <villas/kernel/tc_netem.h>
 #include <villas/kernel/kernel.h>
 #include <villas/utils.hpp>
+
+using namespace villas::utils;
 
 static const double max_percent_value = 0xffffffff;
 

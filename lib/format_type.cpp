@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include <villas/plugin.h>
 #include <villas/format_type.h>
@@ -30,7 +30,7 @@ struct format_type * format_type_lookup(const char *name)
 {
 	struct plugin *p;
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, name);
+	p = plugin_lookup(PluginType::FORMAT, name);
 	if (!p)
 		return nullptr;
 

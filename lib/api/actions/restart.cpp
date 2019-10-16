@@ -99,7 +99,7 @@ public:
 			return ret;
 
 		/* Properly terminate current instance */
-		killme(SIGTERM);
+		utils::killme(SIGTERM);
 
 		return 0;
 	}

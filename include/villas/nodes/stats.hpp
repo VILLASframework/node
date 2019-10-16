@@ -32,7 +32,7 @@
 #include <jansson.h>
 
 #include <villas/node.h>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/task.h>
 #include <villas/list.h>
 
@@ -40,8 +40,8 @@ struct stats_node_signal {
 	struct node *node;
 	char *node_str;
 
-	enum stats_metric metric;
-	enum stats_type type;
+	enum villas::Stats::Metric metric;
+	enum villas::Stats::Type type;
 };
 
 struct stats_node {

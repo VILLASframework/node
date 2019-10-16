@@ -38,6 +38,7 @@
 #include <villas/list.h>
 #include <villas/queue.h>
 #include <villas/common.h>
+#include <villas/stats.hpp>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
   #define WITH_NETEM
@@ -58,7 +59,7 @@ struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 	int enabled;
 
-	enum state state;
+	enum State state;
 
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
@@ -67,7 +68,7 @@ struct node {
 
 	uint64_t sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
-	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
+	std::shared_ptr<villas::Stats> stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct node_direction in, out;
 
@@ -198,6 +199,6 @@ bool node_is_valid_name(const char *name);
 
 bool node_is_enabled(const struct node *n);
 
-struct vlist * node_get_signals(struct node *n, enum node_dir dir);
+struct vlist * node_get_signals(struct node *n, enum NodeDir dir);
 
 /** @} */

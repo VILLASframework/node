@@ -24,11 +24,12 @@ set(HOOK_SRC
     average.cpp
     cast.cpp
     decimate.cpp
-    dp.cpp
+    #dp.cpp
     drop.cpp
     dump.cpp
     ebm.cpp
     fix.cpp
+    gate.cpp
     jitter_calc.cpp
     limit_rate.cpp
     restart.cpp
@@ -38,6 +39,7 @@ set(HOOK_SRC
     skip_first.cpp
     stats.cpp
     ts.cpp
+    pps_ts.cpp
     print.cpp
 )
 

@@ -30,13 +30,14 @@ set(TEST_SRC
 	pool.cpp
 	queue.cpp
 	queue_signalled.cpp
+	signal.cpp
 )
 
 add_executable(unit-tests ${TEST_SRC})
 target_link_libraries(unit-tests PUBLIC
 	PkgConfig::CRITERION
-	villas
 	Threads::Threads
+	villas
 )
 
 add_custom_target(run-unit-tests

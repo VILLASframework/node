@@ -27,6 +27,8 @@
 #include <villas/utils.hpp>
 #include <villas/memory/ib.h>
 
+using namespace villas::utils;
+
 struct ibv_mr * memory_ib_get_mr(void *ptr)
 {
 	struct memory_allocation *ma;

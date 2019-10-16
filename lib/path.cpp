@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdint>
+#include <cstring>
+#include <cinttypes>
+#include <cerrno>
+
 #include <unistd.h>
-#include <string.h>
-#include <inttypes.h>
 #include <poll.h>
-#include <errno.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
@@ -34,7 +34,7 @@
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/queue.h>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/plugin.h>
 #include <villas/memory.h>
@@ -45,6 +45,8 @@
 #include <villas/path_destination.h>
 
 using namespace villas;
+using namespace villas::node;
+using namespace villas::utils;
 
 static void * path_run_single(void *arg)
 {
@@ -52,7 +54,7 @@ static void * path_run_single(void *arg)
 	struct path *p = (struct path *) arg;
 	struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
-	while (p->state == STATE_STARTED) {
+	while (p->state == State::STARTED) {
 		pthread_testcancel();
 
 		ret = path_source_read(ps, p, 0);
@@ -75,7 +77,7 @@ static void * path_run_poll(void *arg)
 	int ret;
 	struct path *p = (struct path *) arg;
 
-	while (p->state == STATE_STARTED) {
+	while (p->state == State::STARTED) {
 		ret = poll(p->reader.pfds, p->reader.nfds, -1);
 		if (ret < 0)
 			serror("Failed to poll");
@@ -114,7 +116,7 @@ int path_init(struct path *p)
 {
 	int ret;
 
-	assert(p->state == STATE_DESTROYED);
+	assert(p->state == State::DESTROYED);
 
 	new (&p->logger) Logger;
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
@@ -134,6 +136,10 @@ int path_init(struct path *p)
 	if (ret)
 		return ret;
 
+	ret = vlist_init(&p->mappings);
+	if (ret)
+		return ret;
+
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&p->hooks);
 	if (ret)
@@ -142,8 +148,11 @@ int path_init(struct path *p)
 
 	p->_name = nullptr;
 
+	p->reader.pfds = nullptr;
+	p->reader.nfds = 0;
+
 	/* Default values */
-	p->mode = PATH_MODE_ANY;
+	p->mode = PathMode::ANY;
 	p->rate = 0; /* Disabled */
 
 	p->builtin = 1;
@@ -153,7 +162,7 @@ int path_init(struct path *p)
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
 	p->original_sequence_no = -1;
 
-	p->state = STATE_INITIALIZED;
+	p->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -161,6 +170,9 @@ int path_init(struct path *p)
 static int path_prepare_poll(struct path *p)
 {
 	int fds[16], ret, n = 0, m;
+
+	if (p->reader.pfds)
+		free(p->reader.pfds);
 
 	p->reader.pfds = nullptr;
 	p->reader.nfds = 0;
@@ -211,7 +223,7 @@ int path_prepare(struct path *p)
 {
 	int ret;
 
-	assert(p->state == STATE_CHECKED);
+	assert(p->state == State::CHECKED);
 
 	/* Initialize destinations */
 	struct memory_type *pool_mt = &memory_hugepage;
@@ -232,6 +244,10 @@ int path_prepare(struct path *p)
 	}
 
 	/* Initialize sources */
+	ret = mapping_list_prepare(&p->mappings);
+	if (ret)
+		return ret;
+
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
@@ -242,20 +258,16 @@ int path_prepare(struct path *p)
 		if (ps->masked)
 			p->mask.set(i);
 
-		ret = mapping_list_prepare(&ps->mappings);
-		if (ret)
-			return ret;
-
 		for (size_t i = 0; i < vlist_length(&ps->mappings); i++) {
 			struct mapping_entry *me = (struct mapping_entry *) vlist_at(&ps->mappings, i);
-			struct vlist *sigs = node_get_signals(me->node, NODE_DIR_IN);
+			struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
 
 			for (unsigned j = 0; j < (unsigned) me->length; j++) {
 				struct signal *sig;
 
 				/* For data mappings we simple refer to the existing
 				 * signal descriptors of the source node. */
-				if (me->type == MAPPING_TYPE_DATA) {
+				if (me->type == MappingType::DATA) {
 					sig = (struct signal *) vlist_at_safe(sigs, me->data.offset + j);
 					if (!sig) {
 						p->logger->warn("Failed to create signal description for path {}", path_name(p));
@@ -280,12 +292,10 @@ int path_prepare(struct path *p)
 	}
 
 #ifdef WITH_HOOKS
-	int m = p->builtin ? HOOK_PATH | HOOK_BUILTIN : 0;
+	int m = p->builtin ? (int) Hook::Flags::PATH | (int) Hook::Flags::BUILTIN : 0;
 
 	/* Add internal hooks if they are not already in the list */
-	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
-	if (ret)
-		return ret;
+	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
 #endif /* WITH_HOOKS */
 
 	/* Initialize pool */
@@ -293,17 +303,10 @@ int path_prepare(struct path *p)
 	if (ret)
 		return ret;
 
-	/* Prepare poll() */
-	if (p->poll) {
-		ret = path_prepare_poll(p);
-		if (ret)
-			return ret;
-	}
-
 	if (p->original_sequence_no == -1)
 		p->original_sequence_no = vlist_length(&p->sources) == 1;
 
-	p->state = STATE_PREPARED;
+	p->state = State::PREPARED;
 
 	return 0;
 }
@@ -320,10 +323,8 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	const char *mode = nullptr;
 
-	struct vlist sources = { .state = STATE_DESTROYED };
-	struct vlist destinations = { .state = STATE_DESTROYED };
+	struct vlist destinations = { .state = State::DESTROYED };
 
-	vlist_init(&sources);
 	vlist_init(&destinations);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b}",
@@ -344,7 +345,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		jerror(&err, "Failed to parse path configuration");
 
 	/* Input node(s) */
-	ret = mapping_list_parse(&sources, json_in, nodes);
+	ret = mapping_list_parse(&p->mappings, json_in, nodes);
 	if (ret) {
 		p->logger->error("Failed to parse input mapping of path {}", path_name(p));
 		return -1;
@@ -353,9 +354,9 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 	/* Optional settings */
 	if (mode) {
 		if      (!strcmp(mode, "any"))
-			p->mode = PATH_MODE_ANY;
+			p->mode = PathMode::ANY;
 		else if (!strcmp(mode, "all"))
-			p->mode = PATH_MODE_ALL;
+			p->mode = PathMode::ALL;
 		else {
 			p->logger->error("Invalid path mode '{}'", mode);
 			return -1;
@@ -369,8 +370,8 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			jerror(&err, "Failed to parse output nodes");
 	}
 
-	for (size_t i = 0; i < vlist_length(&sources); i++) {
-		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&sources, i);
+	for (size_t i = 0; i < vlist_length(&p->mappings); i++) {
+		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&p->mappings, i);
 		struct path_source *ps = nullptr;
 
 		/* Check if there is already a path_source for this source */
@@ -390,7 +391,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			ps->node = me->node;
 			ps->masked = false;
 
-			ps->mappings.state = STATE_DESTROYED;
+			ps->mappings.state = State::DESTROYED;
 
 			vlist_init(&ps->mappings);
 
@@ -475,9 +476,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		ret = hook_list_parse(&p->hooks, json_hooks, HOOK_PATH, p, nullptr);
-		if (ret)
-			return ret;
+		hook_list_parse(&p->hooks, json_hooks, (int) Hook::Flags::PATH, p, nullptr);
 	}
 #endif /* WITH_HOOKS */
 
@@ -491,23 +490,19 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			p->poll = 0;
 	}
 
-	ret = vlist_destroy(&sources, nullptr, false);
-	if (ret)
-		return ret;
-
 	ret = vlist_destroy(&destinations, nullptr, false);
 	if (ret)
 		return ret;
 
 	p->cfg = cfg;
-	p->state = STATE_PARSED;
+	p->state = State::PARSED;
 
 	return 0;
 }
 
 int path_check(struct path *p)
 {
-	assert(p->state != STATE_DESTROYED);
+	assert(p->state != State::DESTROYED);
 
 	if (p->rate < 0) {
 		p->logger->error("Setting 'rate' of path {} must be a positive number.", path_name(p));
@@ -564,7 +559,7 @@ int path_check(struct path *p)
 		p->logger->warn("Queue length should always be a power of 2. Adjusting to {}", p->queuelen);
 	}
 
-	p->state = STATE_CHECKED;
+	p->state = State::CHECKED;
 
 	return 0;
 }
@@ -574,14 +569,14 @@ int path_start(struct path *p)
 	int ret;
 	const char *mode;
 
-	assert(p->state == STATE_PREPARED);
+	assert(p->state == State::PREPARED);
 
 	switch (p->mode) {
-		case PATH_MODE_ANY:
+		case PathMode::ANY:
 			mode = "any";
 			break;
 
-		case PATH_MODE_ALL:
+		case PathMode::ALL:
 			mode = "all";
 			break;
 
@@ -609,9 +604,7 @@ int path_start(struct path *p)
 	);
 
 #ifdef WITH_HOOKS
-	ret = hook_list_start(&p->hooks);
-	if (ret)
-		return ret;
+	hook_list_start(&p->hooks);
 #endif /* WITH_HOOKS */
 
 	p->last_sequence = 0;
@@ -626,13 +619,22 @@ int path_start(struct path *p)
 	p->last_sample->length = 0;
 	p->last_sample->signals = &p->signals;
 	p->last_sample->sequence = 0;
-	p->last_sample->flags = p->last_sample->length > 0 ? SAMPLE_HAS_DATA : 0;
+	p->last_sample->flags = p->last_sample->length > 0 ? (int) SampleFlags::HAS_DATA : 0;
 
 	for (size_t i = 0; i < p->last_sample->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at(p->last_sample->signals, i);
 
 		p->last_sample->data[i] = sig->init;
 	}
+
+	/* Prepare poll() */
+	if (p->poll) {
+		ret = path_prepare_poll(p);
+		if (ret)
+			return ret;
+	}
+
+	p->state = State::STARTED;
 
 	/* Start one thread per path for sending to destinations
 	 *
@@ -644,8 +646,6 @@ int path_start(struct path *p)
 	if (ret)
 		return ret;
 
-	p->state = STATE_STARTED;
-
 	return 0;
 }
 
@@ -653,13 +653,13 @@ int path_stop(struct path *p)
 {
 	int ret;
 
-	if (p->state != STATE_STARTED && p->state != STATE_STOPPING)
+	if (p->state != State::STARTED && p->state != State::STOPPING)
 		return 0;
 
 	p->logger->info("Stopping path: {}", path_name(p));
 
-	if (p->state != STATE_STOPPING)
-		p->state = STATE_STOPPING;
+	if (p->state != State::STOPPING)
+		p->state = State::STOPPING;
 
 	/* Cancel the thread in case is currently in a blocking syscall.
 	 *
@@ -674,14 +674,12 @@ int path_stop(struct path *p)
 		return ret;
 
 #ifdef WITH_HOOKS
-	ret = hook_list_stop(&p->hooks);
-	if (ret)
-		return ret;
+	hook_list_stop(&p->hooks);
 #endif /* WITH_HOOKS */
 
 	sample_decref(p->last_sample);
 
-	p->state = STATE_STOPPED;
+	p->state = State::STOPPED;
 
 	return 0;
 }
@@ -690,7 +688,7 @@ int path_destroy(struct path *p)
 {
 	int ret;
 
-	if (p->state == STATE_DESTROYED)
+	if (p->state == State::DESTROYED)
 		return 0;
 
 #ifdef WITH_HOOKS
@@ -707,6 +705,10 @@ int path_destroy(struct path *p)
 		return ret;
 
 	ret = vlist_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
+	if (ret)
+		return ret;
+
+	ret = vlist_destroy(&p->mappings, nullptr, true);
 	if (ret)
 		return ret;
 
@@ -730,7 +732,7 @@ int path_destroy(struct path *p)
 	p->mask.~bs();
 	p->logger.~lg();
 
-	p->state = STATE_DESTROYED;
+	p->state = State::DESTROYED;
 
 	return 0;
 }

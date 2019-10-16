@@ -35,6 +35,7 @@ extern void init_memory();
 #define NUM_ELEM 1000
 
 struct param {
+	enum QueueSignalledMode mode;
 	int flags;
 	bool polled;
 };
@@ -112,14 +113,14 @@ again:		ret = poll(&pfd, 1, -1);
 ParameterizedTestParameters(queue_signalled, simple)
 {
 	static struct param params[] = {
-		{ 0, false },
-		{ QUEUE_SIGNALLED_PTHREAD, false },
-		{ QUEUE_SIGNALLED_PTHREAD, false },
-		{ QUEUE_SIGNALLED_PTHREAD | QUEUE_SIGNALLED_PROCESS_SHARED, false },
-		{ QUEUE_SIGNALLED_POLLING, false },
+		{ QueueSignalledMode::AUTO,    0, false },
+		{ QueueSignalledMode::PTHREAD, 0, false },
+		{ QueueSignalledMode::PTHREAD, 0, false },
+		{ QueueSignalledMode::PTHREAD, (int) QueueSignalledFlags::PROCESS_SHARED, false },
+		{ QueueSignalledMode::POLLING, 0, false },
 #if defined(__linux__) && defined(HAS_EVENTFD)
-		{ QUEUE_SIGNALLED_EVENTFD, false },
-		{ QUEUE_SIGNALLED_EVENTFD, true }
+		{ QueueSignalledMode::EVENTFD, 0, false },
+		{ QueueSignalledMode::EVENTFD, 0, true }
 #endif
 	};
 
@@ -131,12 +132,12 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 	int ret;
 	void *r1, *r2;
 	struct queue_signalled q;
-	q.queue.state = STATE_DESTROYED;
+	q.queue.state = State::DESTROYED;
 
 	pthread_t t1, t2;
 
-	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_heap, param->flags);
-	cr_assert_eq(ret, 0, "Failed to initialize queue: flags=%#x, ret=%d", param->flags, ret);
+	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_heap, param->mode, param->flags);
+	cr_assert_eq(ret, 0, "Failed to initialize queue: mode=%d, flags=%#x, ret=%d", (int) param->mode, param->flags, ret);
 
 	ret = pthread_create(&t1, nullptr, producer, &q);
 	cr_assert_eq(ret, 0);

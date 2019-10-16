@@ -35,8 +35,8 @@
 
 #include <atomic>
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <unistd.h>
 
 #include <villas/common.h>
@@ -54,7 +54,7 @@ struct queue_cell {
 
 /** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
-	std::atomic<enum state> state;
+	std::atomic<enum State> state;
 
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 

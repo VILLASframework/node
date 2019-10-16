@@ -37,13 +37,13 @@ class DumpHook : public Hook {
 public:
 	using Hook::Hook;
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		sample_dump(smp);
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -51,7 +51,7 @@ public:
 static HookPlugin<DumpHook> p(
 	"dump",
 	"Dump data to stdout",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	1
 );
 

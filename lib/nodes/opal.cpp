@@ -22,8 +22,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #include <villas/nodes/opal.hpp>
 #include <villas/utils.hpp>
@@ -224,7 +224,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 		ret = OpalWaitForAsyncSendRequest(&id);
 		if (ret != EOK) {
 			state = OpalGetAsyncModelState();
-			if ((state == STATE_RESET) || (state == STATE_STOP))
+			if ((state == State::RESET) || (state == State::STOP))
 				error("OpalGetAsyncModelState(): Model stopped or resetted!");
 
 			return -1; /* @todo correct return value */
@@ -264,7 +264,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 	/* Before continuing, we make sure that the real-time model
 	 * has not been stopped. If it has, we quit. */
 	state = OpalGetAsyncModelState();
-	if ((state == STATE_RESET) || (state == STATE_STOP))
+	if ((state == State::RESET) || (state == State::STOP))
 		error("OpalGetAsyncModelState(): Model stopped or resetted!");
 
 	return 1;
@@ -284,7 +284,7 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 		error("The OPAL-RT node type does not support combining!");
 
 	state = OpalGetAsyncModelState();
-	if ((state == STATE_RESET) || (state == STATE_STOP))
+	if ((state == State::RESET) || (state == State::STOP))
 		error("OpalGetAsyncModelState(): Model stopped or resetted!");
 
 	OpalSetAsyncRecvIconStatus(m->sequence, o->recv_id);	/* Set the Status to the message ID */
@@ -307,13 +307,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "opal";
 	p.description		= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectoroize	= 1;
 	p.node.size		= sizeof(struct opal);
 	p.node.type.start	= opal_type_start;
@@ -331,6 +331,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

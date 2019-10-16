@@ -44,7 +44,7 @@ public:
 		json_error_t err;
 		int ret;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
 			"offset", &offset
@@ -52,16 +52,16 @@ public:
 		if (ret)
 			throw ConfigError(cfg, err, "node-config-hook-shift_seq");
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		smp->sequence += offset;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -69,7 +69,7 @@ public:
 static HookPlugin<ShiftSequenceHook> p(
 	"shift_seq",
 	"Shift sequence number of samples",
-	HOOK_NODE_READ | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
 	99
 );
 

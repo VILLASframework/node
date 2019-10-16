@@ -20,19 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/nodes/stats.hpp>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/plugin.h>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 
-#define STATS_METRICS 6
-
+using namespace villas;
 using namespace villas::node;
+using namespace villas::utils;
 
 static struct vlist *nodes; /** The global list of nodes */
 
@@ -71,13 +71,8 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
 	if (!type)
 		goto invalid_format;
 
-	s->metric = stats_lookup_metric(metric);
-	if (s->metric < 0)
-		goto invalid_format;
-
-	s->type = stats_lookup_type(type);
-	if (s->type < 0)
-		goto invalid_format;
+	s->metric = Stats::lookupMetric(metric);
+	s->type = Stats::lookupType(type);
 
 	s->node_str = strdup(node);
 
@@ -195,16 +190,16 @@ int stats_node_parse(struct node *n, json_t *cfg)
 			error("Failed to parse statistics signal definition of node %s", node_name(n));
 
 		if (!sig->name) {
-			const char *metric = stats_metrics[stats_sig->metric].name;
-			const char *type = stats_types[stats_sig->type].name;
+			const char *metric = Stats::metrics[stats_sig->metric].name;
+			const char *type = Stats::types[stats_sig->type].name;
 
 			sig->name = strf("%s.%s.%s", stats_sig->node_str, metric, type);
 		}
 
 		if (!sig->unit)
-			sig->unit = strdup(stats_metrics[stats_sig->metric].unit);
+			sig->unit = strdup(Stats::metrics[stats_sig->metric].unit);
 
-		if (sig->type != stats_types[stats_sig->type].signal_type)
+		if (sig->type != Stats::types[stats_sig->type].signal_type)
 			error("Invalid type for signal %zu in node %s", i, node_name(n));
 
 		vlist_push(&s->signals, stats_sig);
@@ -225,18 +220,17 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	unsigned len = MIN(vlist_length(&s->signals), smps[0]->capacity);
 
 	for (size_t i = 0; i < len; i++) {
-		struct stats *st;
 		struct stats_node_signal *sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-		st = sig->node->stats;
+		auto st = sig->node->stats;
 		if (!st)
 			return -1;
 
-		smps[0]->data[i] = stats_get_value(st, sig->metric, sig->type);
+		smps[0]->data[i] = st->getValue(sig->metric, sig->type);
 	}
 
 	smps[0]->length = len;
-	smps[0]->flags = SAMPLE_HAS_DATA;
+	smps[0]->flags = (int) SampleFlags::HAS_DATA;
 	smps[0]->signals = &n->in.signals;
 
 	return 1;
@@ -255,13 +249,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "stats";
 	p.description		= "Send statistics to another node";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 1;
 	p.node.flags		= 0;
 	p.node.size		= sizeof(struct stats_node);
@@ -281,6 +275,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

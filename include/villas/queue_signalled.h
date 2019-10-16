@@ -27,27 +27,27 @@
 
 #include <villas/queue.h>
 
-enum queue_signalled_flags {
-	/* Mode */
-	QUEUE_SIGNALLED_AUTO		= (0 << 0), /**< We will choose the best method available on the platform */
-	QUEUE_SIGNALLED_PTHREAD		= (1 << 0),
-	QUEUE_SIGNALLED_POLLING		= (2 << 0),
+enum class QueueSignalledMode {
+	AUTO, /**< We will choose the best method available on the platform */
+	PTHREAD,
+	POLLING,
 #ifdef HAS_EVENTFD
-	QUEUE_SIGNALLED_EVENTFD		= (3 << 0),
+	EVENTFD,
 #elif defined(__APPLE__)
-	QUEUE_SIGNALLED_PIPE		= (3 << 0),
+	PIPE,
 #endif
-	QUEUE_SIGNALLED_MASK		= 0xf,
+};
 
-	/* Other flags */
-	QUEUE_SIGNALLED_PROCESS_SHARED	= (1 << 4)
+enum class QueueSignalledFlags {
+	PROCESS_SHARED	= (1 << 4)
 };
 
 /** Wrapper around queue that uses POSIX CV's for signalling writes. */
 struct queue_signalled {
 	struct queue queue;		/**< Actual underlying queue. */
 
-	enum queue_signalled_flags mode;
+	enum QueueSignalledMode mode;
+	enum QueueSignalledFlags flags;
 
 	union {
 		struct {
@@ -64,7 +64,7 @@ struct queue_signalled {
 
 #define queue_signalled_available(q) queue_available(&((q)->queue))
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, int flags);
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, enum QueueSignalledMode mode = QueueSignalledMode::AUTO, int flags = 0);
 
 int queue_signalled_destroy(struct queue_signalled *qs);
 

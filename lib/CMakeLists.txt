@@ -67,6 +67,15 @@ set(LIB_SRC
     format_type.cpp
 )
 
+if(WITH_WEB)
+    list(APPEND LIB_SRC
+        web.cpp
+    )
+    
+    list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS ${LIBWEBSOCKETS_LDFLAGS})
+endif()
+
 if(WITH_NODE_INFINIBAND)
     list(APPEND LIB_SRC memory/ib.cpp)
 endif()
@@ -90,15 +99,6 @@ if(WITH_HOOKS)
 
     add_subdirectory(hooks)
     list(APPEND WHOLE_ARCHIVES hooks)
-endif()
-
-if(WITH_WEB)
-    list(APPEND LIB_SRC
-        web.cpp
-    )
-    
-    list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
 if(WITH_API)

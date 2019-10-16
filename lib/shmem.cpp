@@ -21,7 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <sys/mman.h>
@@ -102,20 +102,19 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 
 	shared->polling = conf->polling;
 
-	int flags = QUEUE_SIGNALLED_PROCESS_SHARED;
-	if (conf->polling)
-		flags |= QUEUE_SIGNALLED_POLLING;
-	else
-		flags |= QUEUE_SIGNALLED_PTHREAD;
+	int flags = (int) QueueSignalledFlags::PROCESS_SHARED;
+	enum QueueSignalledMode mode = conf->polling
+					? QueueSignalledMode::POLLING
+					: QueueSignalledMode::PTHREAD;
 
-	shared->queue.queue.state = STATE_DESTROYED;
-	ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, flags);
+	shared->queue.queue.state = State::DESTROYED;
+	ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, mode, flags);
 	if (ret) {
 		errno = ENOMEM;
 		return -6;
 	}
 
-	shared->pool.state = STATE_DESTROYED;
+	shared->pool.state = State::DESTROYED;
 	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LENGTH(conf->samplelen), manager);
 	if (ret) {
 		errno = ENOMEM;

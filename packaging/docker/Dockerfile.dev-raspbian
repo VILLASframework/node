@@ -20,31 +20,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM balenalib/rpi-raspbian
+FROM balenalib/rpi-raspbian:buster
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
-RUN echo 'APT::Default-Release "stable";' > /etc/apt/apt.conf.d/99defaultrelease
-RUN echo 'deb http://archive.raspbian.org/raspbian buster main contrib non-free rpi firmware' >> /etc/apt/sources.list.d/buster.list
-
-RUN apt-get install -y -t buster \
-	gcc-8 g++-8 cmake
-
 # Toolchain
 RUN apt-get update && apt-get install -y \
-	autoconf automake libtool \
-	pkg-config make \
-	git curl tar bzip2 \
+	autoconf automake libtool cmake \
+	pkg-config make gcc g++\
+	git curl wget tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
 
-RUN apt-get install -y -t buster \
-	gcc-8 g++-8
-
 # Dependencies
-RUN apt-get install -y \
+RUN apt-get install -y\
 	libssl-dev \
 	libprotobuf-dev \
 	libprotobuf-c-dev \
@@ -58,13 +49,17 @@ RUN apt-get install -y \
 	librabbitmq-dev \
 	libmosquitto-dev \
 	libcomedi-dev \
-	libibverbs-dev \
 	librdmacm-dev \
 	libre-dev \
-	libusb-1.0-0-dev
+	libusb-1.0-0-dev \
+	libspdlog-dev \
+	libfmt-dev
 
-ENV CC=gcc-8
-ENV CXX=gcc-8
+ENV CC=gcc
+ENV CXX=g++
+
+# Add CMake install dir to PATH
+ENV PATH="usr/local/bin:${PATH}"
 
 # Build & Install libwebsockets
 RUN cd /tmp && \
@@ -107,7 +102,7 @@ LABEL \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Raspbian" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"

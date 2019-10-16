@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
+#include <cstring>
 
 #include <amqp_ssl_socket.h>
 #include <amqp_tcp_socket.h>
@@ -29,6 +29,8 @@
 #include <villas/nodes/amqp.hpp>
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
+
+using namespace villas::utils;
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {
@@ -239,7 +241,7 @@ int amqp_start(struct node *n)
 	amqp_rpc_reply_t rep;
 	amqp_queue_declare_ok_t *r;
 
-	ret = io_init(&a->io, a->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&a->io, a->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -396,13 +398,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "amqp";
 	p.description		= "Advanced Message Queueing Protoocl (rabbitmq-c)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct amqp);
 	p.node.destroy		= amqp_destroy;
@@ -420,7 +422,7 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }
 

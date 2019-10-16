@@ -37,7 +37,7 @@ export PATH SRCDIR BUILDDIR LOGDIR
 VERBOSE=${VERBOSE:-0}
 FILTER=${FILTER:-'*'}
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-TIMEOUT=${TIMEOUT:-5m}
+TIMEOUT=${TIMEOUT:-2m}
 
 # Parse command line arguments
 while getopts ":f:l:t:v" OPT; do
@@ -83,6 +83,9 @@ echo -e "Starting integration tests for VILLASnode:\n"
 for TEST in ${TESTS}; do
 	TESTNAME=$(basename -s .sh ${TEST})
 
+	# Start time measurement
+	SECONDS=0
+
 	# Run test
 	if (( ${VERBOSE} == 0 )); then
 		timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
@@ -91,6 +94,8 @@ for TEST in ${TESTS}; do
 		timeout ${TIMEOUT} ${TEST} | tee ${LOGDIR}/${TESTNAME}.log
 		RC=${PIPESTATUS[0]}
 	fi
+
+	TOTAL_SECONDS=${SECONDS}
 	
 	# Show full log in case of an error
 	if (( ${VERBOSE} == 0 )); then
@@ -101,7 +106,7 @@ for TEST in ${TESTS}; do
 
 	case $RC in
 		0)
-			echo -e "\e[32m[PASS] \e[39m ${TESTNAME}"
+			echo -e "\e[32m[PASS] \e[39m ${TESTNAME} (ran for ${SECONDS}s)"
 			PASSED=$((${PASSED} + 1))
 			;;
 		99)
@@ -109,12 +114,12 @@ for TEST in ${TESTS}; do
 			SKIPPED=$((${SKIPPED} + 1))
 			;;
 		124)
-			echo -e "\e[33m[TIME] \e[39m ${TESTNAME}"
+			echo -e "\e[33m[TIME] \e[39m ${TESTNAME} (ran for more then ${TIMEOUT})"
 			TIMEDOUT=$((${TIMEDOUT} + 1))
 			FAILED=$((${FAILED} + 1))
 			;;
 		*)
-			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} with code $RC"
+			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} (exited with code $RC, ran for ${SECONDS}s)"
 			FAILED=$((${FAILED} + 1))
 			;;
 	esac

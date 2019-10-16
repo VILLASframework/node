@@ -44,7 +44,7 @@ struct socket {
 	int sd;				/**< The socket descriptor */
 	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
-	enum socket_layer layer;	/**< The OSI / IP layer which should be used for this socket */
+	enum SocketLayer layer;		/**< The OSI / IP layer which should be used for this socket */
 
 	struct format_type *format;
 	struct io io;

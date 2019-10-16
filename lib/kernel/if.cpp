@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dirent.h>
 #include <linux/if_packet.h>
 
@@ -37,6 +37,8 @@
 #include <villas/kernel/kernel.h>
 
 #include <villas/nodes/socket.hpp>
+
+using namespace villas::utils;
 
 int if_init(struct interface *i, struct rtnl_link *link)
 {

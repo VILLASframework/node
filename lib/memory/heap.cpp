@@ -20,10 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <villas/utils.hpp>
 #include <villas/memory.h>
+
+using namespace villas::utils;
 
 static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
@@ -59,7 +61,7 @@ static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
 /* List of available memory types */
 struct memory_type memory_heap = {
 	.name = "heap",
-	.flags = MEMORY_HEAP,
+	.flags = (int) MemoryFlags::HEAP,
 	.alignment = 1,
 	.alloc = memory_heap_alloc,
 	.free = memory_heap_free

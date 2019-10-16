@@ -48,16 +48,16 @@ struct stats;
 struct node;
 
 /** The register mode determines under which condition the path is triggered. */
-enum path_mode {
-	PATH_MODE_ANY,				/**< The path is triggered whenever one of the sources receives samples. */
-	PATH_MODE_ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
+enum class PathMode {
+	ANY,				/**< The path is triggered whenever one of the sources receives samples. */
+	ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
 };
 
 /** The datastructure for a path. */
 struct path {
-	enum state state;			/**< Path state. */
+	enum State state;		/**< Path state. */
 
-	enum path_mode mode;		/**< Determines when this path is triggered. */
+	enum PathMode mode;		/**< Determines when this path is triggered. */
 
 	struct {
 		int nfds;
@@ -70,6 +70,7 @@ struct path {
 
 	struct vlist sources;		/**< List of all incoming nodes (struct path_source). */
 	struct vlist destinations;	/**< List of all outgoing nodes (struct path_destination). */
+	struct vlist mappings;		/**< List of all input mappings (struct mapping_entry). */
 	struct vlist hooks;		/**< List of processing hooks (struct hook). */
 	struct vlist signals;		/**< List of signals which this path creates (struct signal). */
 

@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <ctype.h>
+#include <cstring>
+#include <cctype>
 
 #include <villas/node/config.h>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
@@ -43,10 +43,13 @@
   #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
 
+using namespace villas;
+using namespace villas::utils;
+
 int node_init(struct node *n, struct node_type *vt)
 {
 	int ret;
-	assert(n->state == STATE_DESTROYED);
+	assert(n->state == State::DESTROYED);
 
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
@@ -67,11 +70,11 @@ int node_init(struct node *n, struct node_type *vt)
 #endif /* WITH_NETEM */
 
 	/* Default values */
-	ret = node_direction_init(&n->in, NODE_DIR_IN, n);
+	ret = node_direction_init(&n->in, NodeDir::IN, n);
 	if (ret)
 		return ret;
 
-	ret = node_direction_init(&n->out, NODE_DIR_OUT, n);
+	ret = node_direction_init(&n->out, NodeDir::OUT, n);
 	if (ret)
 		return ret;
 
@@ -79,7 +82,7 @@ int node_init(struct node *n, struct node_type *vt)
 	if (ret)
 		return ret;
 
-	n->state = STATE_INITIALIZED;
+	n->state = State::INITIALIZED;
 
 	vlist_push(&vt->instances, n);
 
@@ -90,7 +93,7 @@ int node_prepare(struct node *n)
 {
 	int ret;
 
-	assert(n->state == STATE_CHECKED);
+	assert(n->state == State::CHECKED);
 
 	ret = node_type(n)->prepare ? node_type(n)->prepare(n) : 0;
 	if (ret)
@@ -104,7 +107,7 @@ int node_prepare(struct node *n)
 	if (ret)
 		return ret;
 
-	n->state = STATE_PREPARED;
+	n->state = State::PREPARED;
 
 	return 0;
 }
@@ -194,7 +197,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		return ret;
 
 	n->cfg = json;
-	n->state = STATE_PARSED;
+	n->state = State::PARSED;
 
 	return 0;
 }
@@ -202,7 +205,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 int node_check(struct node *n)
 {
 	int ret;
-	assert(n->state != STATE_DESTROYED);
+	assert(n->state != State::DESTROYED);
 
 	ret = node_direction_check(&n->in, n);
 	if (ret)
@@ -216,7 +219,7 @@ int node_check(struct node *n)
 	if (ret)
 		return ret;
 
-	n->state = STATE_CHECKED;
+	n->state = State::CHECKED;
 
 	return 0;
 }
@@ -225,8 +228,8 @@ int node_start(struct node *n)
 {
 	int ret;
 
-	assert(n->state == STATE_PREPARED);
-	assert(node_type(n)->state == STATE_STARTED);
+	assert(n->state == State::PREPARED);
+	assert(node_type(n)->state == State::STARTED);
 
 	info("Starting node %s", node_name_long(n));
 
@@ -260,7 +263,7 @@ int node_start(struct node *n)
 	}
 #endif /* __linux__ */
 
-	n->state = STATE_STARTED;
+	n->state = State::STARTED;
 	n->sequence = 0;
 
 	return ret;
@@ -270,7 +273,7 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STOPPING && n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
+	if (n->state != State::STOPPING && n->state != State::STARTED && n->state != State::CONNECTED && n->state != State::PENDING_CONNECT)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
@@ -286,7 +289,7 @@ int node_stop(struct node *n)
 	ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
 
 	if (ret == 0)
-		n->state = STATE_STOPPED;
+		n->state = State::STOPPED;
 
 	return ret;
 }
@@ -295,7 +298,7 @@ int node_pause(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED)
+	if (n->state != State::STARTED)
 		return -1;
 
 	info("Pausing node %s", node_name(n));
@@ -303,7 +306,7 @@ int node_pause(struct node *n)
 	ret = node_type(n)->pause ? node_type(n)->pause(n) : 0;
 
 	if (ret == 0)
-		n->state = STATE_PAUSED;
+		n->state = State::PAUSED;
 
 	return ret;
 }
@@ -312,7 +315,7 @@ int node_resume(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_PAUSED)
+	if (n->state != State::PAUSED)
 		return -1;
 
 	info("Resuming node %s", node_name(n));
@@ -320,7 +323,7 @@ int node_resume(struct node *n)
 	ret = node_type(n)->resume ? node_type(n)->resume(n) : 0;
 
 	if (ret == 0)
-		n->state = STATE_STARTED;
+		n->state = State::STARTED;
 
 	return ret;
 }
@@ -329,7 +332,7 @@ int node_restart(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED)
+	if (n->state != State::STARTED)
 		return -1;
 
 	info("Restarting node %s", node_name(n));
@@ -352,7 +355,7 @@ int node_restart(struct node *n)
 int node_destroy(struct node *n)
 {
 	int ret;
-	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
+	assert(n->state != State::DESTROYED && n->state != State::STARTED);
 
 	ret = node_direction_destroy(&n->in, n);
 	if (ret)
@@ -387,7 +390,7 @@ int node_destroy(struct node *n)
 	rtnl_cls_put(n->tc_classifier);
 #endif /* WITH_NETEM */
 
-	n->state = STATE_DESTROYED;
+	n->state = State::DESTROYED;
 
 	return 0;
 }
@@ -398,9 +401,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 	assert(node_type(n)->read);
 
-	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+	if (n->state == State::PAUSED || n->state == State::PENDING_CONNECT)
 		return 0;
-	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+	else if (n->state != State::STARTED && n->state != State::CONNECTED)
 		return -1;
 
 	/* Send in parts if vector not supported */
@@ -425,7 +428,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != nullptr) {
-		stats_update(n->stats, STATS_METRIC_SMPS_SKIPPED, skipped);
+		n->stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
 	}
 
 	debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
@@ -444,9 +447,9 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	assert(node_type(n)->write);
 
-	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+	if (n->state == State::PAUSED || n->state == State::PENDING_CONNECT)
 		return 0;
-	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+	else if (n->state != State::STARTED && n->state != State::CONNECTED)
 		return -1;
 
 #ifdef WITH_HOOKS
@@ -616,9 +619,9 @@ bool node_is_enabled(const struct node *n)
 	return n->enabled;
 }
 
-struct vlist * node_get_signals(struct node *n, enum node_dir dir)
+struct vlist * node_get_signals(struct node *n, enum NodeDir dir)
 {
-	struct node_direction *nd = dir == NODE_DIR_IN ? &n->in : &n->out;
+	struct node_direction *nd = dir == NodeDir::IN ? &n->in : &n->out;
 
 	return node_direction_get_signals(nd);
 }

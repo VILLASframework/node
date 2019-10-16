@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <stdbool.h>
 #include <jansson.h>
 
 #include <villas/queue.h>

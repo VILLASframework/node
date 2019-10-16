@@ -23,108 +23,122 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
 #include <iostream>
 #include <atomic>
 
 #include <villas/node/config.h>
-#include <villas/log.hpp>
-#include <villas/node/exceptions.hpp>
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
 #include <villas/colors.hpp>
+#include <villas/tool.hpp>
+#include <villas/log.hpp>
 #include <villas/utils.hpp>
-#include <villas/copyright.hpp>
+#include <villas/node/exceptions.hpp>
 
-using namespace villas;
+namespace villas {
+namespace node {
+namespace tools {
 
-static std::atomic<bool> stop(false);
+class Shmem : public Tool {
 
-static void usage()
-{
-	std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
-	          << "  WNAME     name of the shared memory object for the output queue" << std::endl
-	          << "  RNAME     name of the shared memory object for the input queue" << std::endl
-	          << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
+public:
+	Shmem(int argc, char *argv[]) :
+		Tool(argc, argv, "shmem"),
+		stop(false)
+	{ }
 
-	print_copyright();
-}
+protected:
+	std::atomic<bool> stop;
 
-void quit(int, siginfo_t*, void*)
-{
-	stop = true;
-}
+	void usage()
+	{
+		std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
+				<< "  WNAME     name of the shared memory object for the output queue" << std::endl
+				<< "  RNAME     name of the shared memory object for the input queue" << std::endl
+				<< "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
 
-int main(int argc, char* argv[])
-{
-	int ret, readcnt, writecnt, avail;
-
-	Logger logger = logging.get("test-shmem");
-
-	struct shmem_int shm;
-	struct shmem_conf conf = {
-		.polling = 0,
-		.queuelen = DEFAULT_SHMEM_QUEUELEN,
-		.samplelen = DEFAULT_SHMEM_SAMPLELEN
-	};
-
-	if (argc != 4) {
-		usage();
-		return 1;
+		printCopyright();
 	}
 
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to initialize signals");
-
-	char *wname = argv[1];
-	char *rname = argv[2];
-	int vectorize = atoi(argv[3]);
-
-	ret = shmem_int_open(wname, rname, &shm, &conf);
-	if (ret < 0)
-		throw RuntimeError("Failed to open shared-memory interface");
-
-	struct sample *insmps[vectorize], *outsmps[vectorize];
-
-	while (!stop) {
-		readcnt = shmem_int_read(&shm, insmps, vectorize);
-		if (readcnt == -1) {
-			logger->info("Node stopped, exiting");
-			break;
-		}
-
-		avail = shmem_int_alloc(&shm, outsmps, readcnt);
-		if (avail < readcnt)
-			logger->warn("Pool underrun: %d / %d\n", avail, readcnt);
-
-		for (int i = 0; i < avail; i++) {
-			outsmps[i]->sequence = insmps[i]->sequence;
-			outsmps[i]->ts = insmps[i]->ts;
-
-			int len = MIN(insmps[i]->length, outsmps[i]->capacity);
-			memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LENGTH(len));
-
-			outsmps[i]->length = len;
-		}
-
-		for (int i = 0; i < readcnt; i++)
-			sample_decref(insmps[i]);
-
-		writecnt = shmem_int_write(&shm, outsmps, avail);
-		if (writecnt < avail)
-			logger->warn("Short write");
-
-		logger->info("Read / Write: {}/{}", readcnt, writecnt);
+	void handler(int, siginfo_t *, void *)
+	{
+		stop = true;
 	}
 
-	ret = shmem_int_close(&shm);
-	if (ret)
-		throw RuntimeError("Failed to close shared-memory interface");
+	int main()
+	{
+		int ret, readcnt, writecnt, avail;
 
-	logger->info(CLR_GRN("Goodbye!"));
+		struct shmem_int shm;
+		struct shmem_conf conf = {
+			.polling = 0,
+			.queuelen = DEFAULT_SHMEM_QUEUELEN,
+			.samplelen = DEFAULT_SHMEM_SAMPLELEN
+		};
 
-	return 0;
+		if (argc != 4) {
+			usage();
+			return 1;
+		}
+
+		std::string wname = argv[1];
+		std::string rname = argv[2];
+		int vectorize = atoi(argv[3]);
+
+		ret = shmem_int_open(wname.c_str(), rname.c_str(), &shm, &conf);
+		if (ret < 0)
+			throw RuntimeError("Failed to open shared-memory interface");
+
+		struct sample *insmps[vectorize], *outsmps[vectorize];
+
+		while (!stop) {
+			readcnt = shmem_int_read(&shm, insmps, vectorize);
+			if (readcnt == -1) {
+				logger->info("Node stopped, exiting");
+				break;
+			}
+
+			avail = shmem_int_alloc(&shm, outsmps, readcnt);
+			if (avail < readcnt)
+				logger->warn("Pool underrun: %d / %d\n", avail, readcnt);
+
+			for (int i = 0; i < avail; i++) {
+				outsmps[i]->sequence = insmps[i]->sequence;
+				outsmps[i]->ts = insmps[i]->ts;
+
+				int len = MIN(insmps[i]->length, outsmps[i]->capacity);
+				memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LENGTH(len));
+
+				outsmps[i]->length = len;
+			}
+
+			for (int i = 0; i < readcnt; i++)
+				sample_decref(insmps[i]);
+
+			writecnt = shmem_int_write(&shm, outsmps, avail);
+			if (writecnt < avail)
+				logger->warn("Short write");
+
+			logger->info("Read / Write: {}/{}", readcnt, writecnt);
+		}
+
+		ret = shmem_int_close(&shm);
+		if (ret)
+			throw RuntimeError("Failed to close shared-memory interface");
+
+		return 0;
+	}
+};
+
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	villas::node::tools::Shmem t(argc, argv);
+
+	return t.run();
 }

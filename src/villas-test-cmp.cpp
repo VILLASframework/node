@@ -21,43 +21,46 @@
  *********************************************************************************/
 
 #include <iostream>
-#include <stdbool.h>
 #include <getopt.h>
 
 #include <jansson.h>
 
+#include <villas/tool.hpp>
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/format_type.h>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
-#include <villas/copyright.hpp>
 #include <villas/pool.h>
 #include <villas/exceptions.hpp>
 #include <villas/node/config.h>
 
 using namespace villas;
 
-class Side {
+namespace villas {
+namespace node {
+namespace tools {
+
+class TestCmpSide {
 
 public:
 	std::string path;
+	std::string dtypes;
 
 	struct sample *sample;
 
 	struct io io;
 	struct format_type *format;
-	const char *dtypes;
 
-	Side(const std::string &pth, struct format_type *fmt, const char *dt, struct pool *p) :
+	TestCmpSide(const std::string &pth, struct format_type *fmt, const std::string &dt, struct pool *p) :
 		path(pth),
-		format(fmt),
-		dtypes(dt)
+		dtypes(dt),
+		format(fmt)
 	{
 		int ret;
 
-		io.state = STATE_DESTROYED;
-		ret = io_init2(&io, format, dtypes, 0);
+		io.state = State::DESTROYED;
+		ret = io_init2(&io, format, dtypes.c_str(), 0);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
@@ -74,7 +77,7 @@ public:
 			throw RuntimeError("Failed to allocate samples");
 	}
 
-	~Side() noexcept(false)
+	~TestCmpSide() noexcept(false)
 	{
 		int ret;
 
@@ -90,46 +93,62 @@ public:
 	}
 };
 
-static void usage()
-{
-	std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
-	          << "  FILE     a list of files to compare" << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -d LVL  adjust the debug level" << std::endl
-	          << "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl
-	          << "    -v      ignore data values" << std::endl
-	          << "    -T      ignore timestamp" << std::endl
-	          << "    -s      ignore sequence no" << std::endl
-	          << "    -f FMT  file format for all files" << std::endl
-		  << "    -t DT   the data-type format string" << std::endl
-	          << "    -h      show this usage information" << std::endl
-	          << "    -V      show the version of the tool" << std::endl << std::endl
-	          << "Return codes:" << std::endl
-	          << "  0   files are equal" << std::endl
-	          << "  1   file length not equal" << std::endl
-	          << "  2   sequence no not equal" << std::endl
-	          << "  3   timestamp not equal" << std::endl
-	          << "  4   number of values is not equal" << std::endl
-	          << "  5   data is not equal" << std::endl << std::endl;
+class TestCmp : public Tool {
 
-	print_copyright();
-}
+public:
+	TestCmp(int argc, char *argv[]) :
+		Tool(argc, argv, "test-cmp"),
+		epsilon(1e-9),
+		format("villas.human"),
+		dtypes("64f"),
+		flags((int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN)
+	{
+		pool.state = State::DESTROYED;
 
-int main(int argc, char *argv[])
-{
-	Logger logger = logging.get("test-cmp");
+		int ret;
 
-	try {
-		int ret, rc = 0;
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+	}
 
-		/* Default values */
-		double epsilon = 1e-9;
-		const char *format = "villas.human";
-		const char *dtypes = "64f";
-		int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
+protected:
+	struct pool pool;
 
-		struct pool pool = { .state = STATE_DESTROYED };
+	double epsilon;
+	std::string format;
+	std::string dtypes;
+	int flags;
 
+	std::vector<std::string> filenames;
+
+	void usage()
+	{
+		std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
+			<< "  FILE     a list of files to compare" << std::endl
+			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -d LVL  adjust the debug level" << std::endl
+			<< "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl
+			<< "    -v      ignore data values" << std::endl
+			<< "    -T      ignore timestamp" << std::endl
+			<< "    -s      ignore sequence no" << std::endl
+			<< "    -f FMT  file format for all files" << std::endl
+			<< "    -t DT   the data-type format string" << std::endl
+			<< "    -h      show this usage information" << std::endl
+			<< "    -V      show the version of the tool" << std::endl << std::endl
+			<< "Return codes:" << std::endl
+			<< "  0   files are equal" << std::endl
+			<< "  1   file length not equal" << std::endl
+			<< "  2   sequence no not equal" << std::endl
+			<< "  3   timestamp not equal" << std::endl
+			<< "  4   number of values is not equal" << std::endl
+			<< "  5   data is not equal" << std::endl << std::endl;
+
+		printCopyright();
+	}
+
+	void parse()
+	{
 		/* Parse Arguments */
 		int c;
 		char *endptr;
@@ -140,15 +159,15 @@ int main(int argc, char *argv[])
 					goto check;
 
 				case 'v':
-					flags &= ~SAMPLE_HAS_DATA;
+					flags &= ~(int) SampleFlags::HAS_DATA;
 					break;
 
 				case 'T':
-					flags &= ~SAMPLE_HAS_TS_ORIGIN;
+					flags &= ~(int) SampleFlags::HAS_TS_ORIGIN;
 					break;
 
 				case 's':
-					flags &= ~SAMPLE_HAS_SEQUENCE;
+					flags &= ~(int) SampleFlags::HAS_SEQUENCE;
 					break;
 
 				case 'f':
@@ -160,7 +179,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'd':
@@ -184,38 +203,41 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		int eofs, line, failed;
-		int n = argc - optind; /* The number of files which we compare */
-		Side *s[n];
+		/* Open files */
+		for (int i = 0; i < argc - optind; i++)
+			filenames.push_back(argv[optind + i]);
+	}
 
-		ret = memory_init(0);
-		if (ret)
-			throw RuntimeError("Failed to initialize memory system");
+	int main()
+	{
+		int ret, rc = 0, line, failed;
+		unsigned eofs;
 
-		ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
-		if (ret)
-			throw RuntimeError("Failed to initialize pool");
-
-		struct format_type *fmt = format_type_lookup(format);
+		struct format_type *fmt = format_type_lookup(format.c_str());
 		if (!fmt)
 			throw RuntimeError("Invalid IO format: {}", format);
 
+		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
+		if (ret)
+			throw RuntimeError("Failed to initialize pool");
+
 		/* Open files */
-		for (int i = 0; i < n; i++)
-			s[i] = new Side(argv[optind + i], fmt, dtypes, &pool);
+		std::vector<TestCmpSide *> sides;
+		for (auto filename : filenames)
+			sides.push_back(new TestCmpSide(filename, fmt, dtypes, &pool));
 
 		line = 0;
 		for (;;) {
 			/* Read next sample from all files */
 retry:			eofs = 0;
-			for (int i = 0; i < n; i++) {
-				ret = io_eof(&s[i]->io);
+			for (auto side : sides) {
+				ret = io_eof(&side->io);
 				if (ret)
 					eofs++;
 			}
 
 			if (eofs) {
-				if (eofs == n)
+				if (eofs == sides.size())
 					ret = 0;
 				else {
 					std::cout << "length unequal" << std::endl;
@@ -226,8 +248,8 @@ retry:			eofs = 0;
 			}
 
 			failed = 0;
-			for (int i = 0; i < n; i++) {
-				ret = io_scan(&s[i]->io, &s[i]->sample, 1);
+			for (auto side : sides) {
+				ret = io_scan(&side->io, &side->sample, 1);
 				if (ret <= 0)
 					failed++;
 			}
@@ -235,8 +257,8 @@ retry:			eofs = 0;
 				goto retry;
 
 			/* We compare all files against the first one */
-			for (int i = 1; i < n; i++) {
-				ret = sample_cmp(s[0]->sample, s[i]->sample, epsilon, flags);
+			for (auto side : sides) {
+				ret = sample_cmp(sides[0]->sample, side->sample, epsilon, flags);
 				if (ret) {
 					rc = ret;
 					goto out;
@@ -246,8 +268,8 @@ retry:			eofs = 0;
 			line++;
 		}
 
-out:		for (int i = 0; i < n; i++)
-			delete s[i];
+out:		for (auto side : sides)
+			delete side;
 
 		ret = pool_destroy(&pool);
 		if (ret)
@@ -255,9 +277,15 @@ out:		for (int i = 0; i < n; i++)
 
 		return rc;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	villas::node::tools::TestCmp t(argc, argv);
+
+	return t.run();
 }

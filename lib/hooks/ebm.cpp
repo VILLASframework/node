@@ -75,31 +75,31 @@ public:
 			phases.emplace_back(voltage, current);
 		}
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		energy = 0;
 		last = nullptr;
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void periodic()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		info("Energy: %f", energy);
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
 		double P, P_last, dt;
 
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (last) {
 			for (auto phase : phases) {
@@ -118,14 +118,14 @@ public:
 		sample_incref(smp);
 		last = smp;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
 static HookPlugin<EBMHook> p(
 	"ebm",
 	"Energy-based Metric",
-	HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
+	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
 	99
 );
 

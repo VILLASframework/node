@@ -33,18 +33,17 @@
 
 #include <libwebsockets.h>
 
+namespace villas {
+namespace node {
+namespace tools {
+
 /* Forward declarations */
 lws_callback_function protocol_cb, http_protocol_cb;
-class Session;
-class Connection;
+class Relay;
+class RelaySession;
+class RelayConnection;
 
 class InvalidUrlException { };
-
-struct Options {
-	bool loopback;
-	int port;
-	const char *protocol;
-};
 
 class Frame : public std::vector<uint8_t> {
 public:
@@ -62,31 +61,38 @@ public:
 	}
 };
 
-class Session {
+class RelaySession {
+
+	friend RelayConnection;
+	friend Relay;
+
+public:
+	typedef std::string Identifier;
 
 protected:
 	time_t created;
 	uuid_t uuid;
 
-public:
-	typedef std::string Identifier;
-
-	static Session * get(lws *wsi);
-
-	Session(Identifier sid);
-
-	~Session();
-
-	json_t * toJson() const;
 
 	Identifier identifier;
 
-	std::map<lws *, Connection *> connections;
+	std::map<lws *, RelayConnection *> connections;
 
 	int connects;
+
+	static std::map<std::string, RelaySession *> sessions;
+
+public:
+	static RelaySession * get(lws *wsi);
+
+	RelaySession(Identifier sid);
+
+	~RelaySession();
+
+	json_t * toJson() const;
 };
 
-class Connection {
+class RelayConnection {
 
 protected:
 	lws *wsi;
@@ -95,7 +101,7 @@ protected:
 
 	std::queue<std::shared_ptr<Frame>> outgoingFrames;
 
-	Session *session;
+	RelaySession *session;
 
 	char name[128];
 	char ip[128];
@@ -107,13 +113,62 @@ protected:
 	size_t frames_recv;
 	size_t frames_sent;
 
-public:
-	Connection(lws *w);
+	bool loopback;
 
-	~Connection();
+public:
+	RelayConnection(lws *w, bool lo);
+	~RelayConnection();
 
 	json_t * toJson() const;
 
 	void write();
 	void read(void *in, size_t len);
 };
+
+class Relay : public Tool {
+
+public:
+	Relay(int argc, char *argv[]);
+
+protected:
+	std::atomic<bool> stop;
+
+	/** The libwebsockets server context. */
+	lws_context *context;
+
+	/** The libwebsockets vhost. */
+	lws_vhost *vhost;
+
+	bool loopback;
+	int port;
+	std::string protocol;
+
+	/** List of libwebsockets protocols. */
+	std::vector<lws_protocols> protocols;
+
+	/** List of libwebsockets extensions. */
+	static const std::vector<lws_extension> extensions;
+
+	static const lws_http_mount mount;
+
+	static void logger_cb(int level, const char *msg);
+
+	static int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+	static int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+	void usage();
+
+	void parse();
+
+	int main();
+
+	void handler(int signal, siginfo_t *sinfo, void *ctx)
+	{
+		stop = true;
+	}
+};
+
+} // namespace tools
+} // namespace node
+} // namespace villas

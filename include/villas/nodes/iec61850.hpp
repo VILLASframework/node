@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __APPLE__
   #include <net/ethernet.h>
@@ -45,7 +45,7 @@
 #include <villas/list.h>
 #include <villas/signal.h>
 
-enum iec61850_type {
+enum class IEC61850Type {
 	/* According to IEC 61850-7-2 */
 	BOOLEAN,
 	INT8,
@@ -73,8 +73,8 @@ enum iec61850_type {
 
 struct iec61850_type_descriptor {
 	const char *name;
-	enum iec61850_type iec_type;
-	enum signal_type type;
+	enum IEC61850Type iec_type;
+	enum SignalType type;
 	unsigned size;
 	bool publisher;
 	bool subscriber;
@@ -85,7 +85,7 @@ struct iec61850_receiver {
 
 	EthernetSocket socket;
 
-	enum type {
+	enum class Type {
 		GOOSE,
 		SAMPLED_VALUES
 	} type;
@@ -106,9 +106,9 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
 int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals);
 
-struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::type t, const char *intf);
+struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf);
 
-struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::type t, const char *intf);
+struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf);
 
 int iec61850_receiver_start(struct iec61850_receiver *r);
 

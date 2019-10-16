@@ -23,7 +23,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/node/config.h>
 #include <villas/config_helper.hpp>

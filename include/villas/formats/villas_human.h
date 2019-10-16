@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 
 /* Forward declarations */
 struct io;

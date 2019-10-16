@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/timing.h>
 #include <villas/sample.h>
@@ -38,7 +38,7 @@ void LimitRateHook::parse(json_t *cfg)
 	int ret;
 	json_error_t err;
 
-	assert(state != STATE_STARTED);
+	assert(state != State::STARTED);
 
 	double rate;
 	const char *m = nullptr;
@@ -63,12 +63,12 @@ void LimitRateHook::parse(json_t *cfg)
 
 	deadtime = 1.0 / rate;
 
-	state = STATE_PARSED;
+	state = State::PARSED;
 }
 
-int LimitRateHook::process(sample *smp)
+Hook::Reason LimitRateHook::process(sample *smp)
 {
-	assert(state == STATE_STARTED);
+	assert(state == State::STARTED);
 
 	timespec next;
 	switch (mode) {
@@ -86,18 +86,18 @@ int LimitRateHook::process(sample *smp)
 	}
 
 	if (time_delta(&last, &next) < deadtime)
-		return HOOK_SKIP_SAMPLE;
+		return Hook::Reason::SKIP_SAMPLE;
 
 	last = next;
 
-	return HOOK_OK;
+	return Reason::OK;
 }
 
 /* Register hook */
 static HookPlugin<LimitRateHook> p(
 	"limit_rate",
 	"Limit sending rate",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	99
 );
 

@@ -38,7 +38,7 @@
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, struct memory_type *m)
 {
-	assert(q->state == STATE_DESTROYED);
+	assert(q->state == State::DESTROYED);
 
 	/* Queue size must be 2 exponent */
 	if (!IS_POW2(size)) {
@@ -65,7 +65,7 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 	std::atomic_store_explicit(&q->head, 0u, std::memory_order_relaxed);
 
 #endif
-	q->state = STATE_INITIALIZED;
+	q->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -75,12 +75,12 @@ int queue_destroy(struct queue *q)
 	void *buffer = (char *) q + q->buffer_off;
 	int ret = 0;
 
-	if (q->state == STATE_DESTROYED)
+	if (q->state == State::DESTROYED)
 		return 0;
 
 	ret = memory_free(buffer);
 	if (ret == 0)
-		q->state = STATE_DESTROYED;
+		q->state = State::DESTROYED;
 
 	return ret;
 }
@@ -97,7 +97,7 @@ int queue_push(struct queue *q, void *ptr)
 	size_t pos, seq;
 	intptr_t diff;
 
-	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == STATE_STOPPED)
+	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == State::STOPPED)
 		return -1;
 
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
@@ -129,7 +129,7 @@ int queue_pull(struct queue *q, void **ptr)
 	size_t pos, seq;
 	intptr_t diff;
 
-	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == STATE_STOPPED)
+	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == State::STOPPED)
 		return -1;
 
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
@@ -191,8 +191,8 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 
 int queue_close(struct queue *q)
 {
-	enum state expected = STATE_INITIALIZED;
-	if (std::atomic_compare_exchange_weak_explicit(&q->state, &expected, STATE_STOPPED, std::memory_order_relaxed, std::memory_order_relaxed))
+	enum State expected = State::INITIALIZED;
+	if (std::atomic_compare_exchange_weak_explicit(&q->state, &expected, State::STOPPED, std::memory_order_relaxed, std::memory_order_relaxed))
 		return 0;
 
 	return -1;

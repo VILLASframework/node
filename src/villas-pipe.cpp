@@ -24,19 +24,18 @@
  * @{
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <string.h>
 #include <signal.h>
-#include <pthread.h>
+
+#include <thread>
 #include <iostream>
 #include <atomic>
 
 #include <villas/node/config.h>
 #include <villas/config_helper.hpp>
 #include <villas/super_node.hpp>
-#include <villas/copyright.hpp>
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
@@ -49,24 +48,34 @@
 #include <villas/exceptions.hpp>
 #include <villas/format_type.h>
 #include <villas/nodes/websocket.hpp>
+#include <villas/tool.hpp>
 
-using namespace villas;
-using namespace villas::node;
+namespace villas {
+namespace node {
+namespace tools {
 
-class Direction {
+class PipeDirection {
 
+protected:
+	struct pool pool;
+	struct node *node;
+	struct io *io;
+
+	std::thread thread;
+
+	bool stop;
+	bool enabled;
+	int limit;
 public:
-	Direction(struct node *n, struct io *i, bool en = true, int lim = -1) :
+	PipeDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
 		node(n),
 		io(i),
+		stop(false),
 		enabled(en),
 		limit(lim)
 	{
-		pool.state = STATE_DESTROYED;
-		pool.queue.state = STATE_DESTROYED;
-
-		/* Initialize memory */
-
+		pool.state = State::DESTROYED;
+		pool.queue.state = State::DESTROYED;
 
 		/* Initialize memory */
 		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
@@ -77,206 +86,252 @@ public:
 			throw RuntimeError("Failed to allocate memory for pool.");
 	}
 
-	Direction(const Direction &c)
-	{
-		io = c.io;
-	}
-
-	~Direction()
+	~PipeDirection()
 	{
 		pool_destroy(&pool);
 	}
 
-	struct pool pool;
-	struct node *node;
-	struct io *io;
+	virtual void run()
+	{
 
-	pthread_t thread;
-
-	bool enabled;
-	int limit;
-};
-
-struct Directions {
-	Direction send;
-	Direction recv;
-};
-
-static std::atomic<bool> stop(false);
-
-static void quit(int signal, siginfo_t *sinfo, void *ctx)
-{
-	Logger logger = logging.get("pipe");
-
-	switch (signal)  {
-		case  SIGALRM:
-			logger->info("Reached timeout. Terminating...");
-			break;
-
-		default:
-			logger->info("Received {} signal. Terminating...", strsignal(signal));
-			break;
 	}
 
-	stop = true;
-}
-
-static void usage()
-{
-	std::cout << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl
-	          << "  CONFIG  path to a configuration file" << std::endl
-	          << "  NODE    the name of the node to which samples are sent and received from" << std::endl
-	          << "  OPTIONS are:" << std::endl
-	          << "    -f FMT           set the format" << std::endl
-	          << "    -t DT            the data-type format string" << std::endl
-	          << "    -o OPTION=VALUE  overwrite options in config file" << std::endl
-	          << "    -x               swap read / write endpoints" << std::endl
-	          << "    -s               only read data from stdin and send it to node" << std::endl
-	          << "    -r               only read data from node and write it to stdout" << std::endl
-	          << "    -T NUM           terminate after NUM seconds" << std::endl
-	          << "    -L NUM           terminate after NUM samples sent" << std::endl
-	          << "    -l NUM           terminate after NUM samples received" << std::endl
-	          << "    -h               show this usage information" << std::endl
-	          << "    -d               set logging level" << std::endl
-	          << "    -V               show the version of the tool" << std::endl << std::endl;
-
-	print_copyright();
-}
-
-static void * send_loop(void *ctx)
-{
-	Directions *dirs = static_cast<Directions*>(ctx);
-	Logger logger = logging.get("pipe");
-
-	unsigned last_sequenceno = 0, release;
-	int scanned, sent, allocated, cnt = 0;
-
-	struct node *node = dirs->send.node;
-	struct sample *smps[node->out.vectorize];
-
-	while (node->state == STATE_STARTED && !io_eof(dirs->send.io)) {
-		allocated = sample_alloc_many(&dirs->send.pool, smps, node->out.vectorize);
-		if (allocated < 0)
-			throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
-		else if (allocated < (int) node->out.vectorize)
-			logger->warn("Send pool underrun");
-
-		scanned = io_scan(dirs->send.io, smps, allocated);
-		if (scanned < 0) {
-			logger->warn("Failed to read samples from stdin");
-			continue;
-		}
-		else if (scanned == 0)
-			continue;
-
-		/* Fill in missing sequence numbers */
-		for (int i = 0; i < scanned; i++) {
-			if (smps[i]->flags & SAMPLE_HAS_SEQUENCE)
-				last_sequenceno = smps[i]->sequence;
-			else
-				smps[i]->sequence = last_sequenceno++;
-		}
-
-		release = allocated;
-
-		sent = node_write(node, smps, scanned, &release);
-
-		sample_decref_many(smps, release);
-
-		cnt += sent;
-		if (dirs->send.limit > 0 && cnt >= dirs->send.limit)
-			goto leave;
-
-		pthread_testcancel();
+	void startThread()
+	{
+		stop = false;
+		if (enabled)
+			thread = std::thread(&villas::node::tools::PipeDirection::run, this);
 	}
 
-leave:	if (io_eof(dirs->send.io)) {
-		if (dirs->recv.limit < 0) {
-			logger->info("Reached end-of-file. Terminating...");
-			stop = true;
-		}
-		else
-			logger->info("Reached end-of-file. Wait for receive side...");
-	}
-	else {
-		logger->info("Reached send limit. Terminating...");
+	void stopThread()
+	{
 		stop = true;
+
+		/* We send a signal to the thread in order to interrupt blocking system calls */
+		pthread_kill(thread.native_handle(), SIGUSR1);
+
+		thread.join();
 	}
+};
 
-	return nullptr;
-}
+class PipeSendDirection : public PipeDirection {
 
-static void * recv_loop(void *ctx)
-{
-	Directions *dirs = static_cast<Directions*>(ctx);
-	Logger logger = logging.get("pipe");
+public:
+	PipeSendDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
+		PipeDirection(n, i, en, lim)
+	{ }
 
-	int recv, cnt = 0, allocated = 0;
-	unsigned release;
-	struct node *node = dirs->recv.node;
-	struct sample *smps[node->in.vectorize];
+	virtual void run()
+	{
+		Logger logger = logging.get("pipe:send");
 
-	while (node->state == STATE_STARTED) {
-		allocated = sample_alloc_many(&dirs->recv.pool, smps, node->in.vectorize);
-		if (allocated < 0)
-			throw RuntimeError("Failed to allocate {} samples from receive pool.", node->in.vectorize);
-		else if (allocated < (int) node->in.vectorize)
-			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
+		unsigned last_sequenceno = 0, release;
+		int scanned, sent, allocated, cnt = 0;
 
-		release = allocated;
+		struct sample *smps[node->out.vectorize];
 
-		recv = node_read(node, smps, allocated, &release);
-		if (recv < 0) {
-			if (node->state == STATE_STOPPING)
-				goto leave2;
-			else
-				logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
-		}
-		else {
-			io_print(dirs->recv.io, smps, recv);
+		while (!stop && !io_eof(io)) {
+			allocated = sample_alloc_many(&pool, smps, node->out.vectorize);
+			if (allocated < 0)
+				throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
+			else if (allocated < (int) node->out.vectorize)
+				logger->warn("Send pool underrun");
 
-			cnt += recv;
-			if (dirs->recv.limit > 0 && cnt >= dirs->recv.limit)
+			scanned = io_scan(io, smps, allocated);
+			if (scanned < 0) {
+				if (stop)
+					goto leave2;
+
+				logger->warn("Failed to read samples from stdin");
+				continue;
+			}
+			else if (scanned == 0)
+				continue;
+
+			/* Fill in missing sequence numbers */
+			for (int i = 0; i < scanned; i++) {
+				if (smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE)
+					last_sequenceno = smps[i]->sequence;
+				else
+					smps[i]->sequence = last_sequenceno++;
+			}
+
+			release = allocated;
+
+			sent = node_write(node, smps, scanned, &release);
+
+			sample_decref_many(smps, release);
+
+			cnt += sent;
+			if (limit > 0 && cnt >= limit)
 				goto leave;
 		}
 
-		sample_decref_many(smps, release);
-		pthread_testcancel();
+leave2:		return;
+
+leave:		if (io_eof(io)) {
+			if (limit < 0) {
+				logger->info("Reached end-of-file. Terminating...");
+				raise(SIGINT);
+			}
+			else
+				logger->info("Reached end-of-file. Wait for receive side...");
+		}
+		else {
+			logger->info("Reached send limit. Terminating...");
+			raise(SIGINT);
+		}
+	}
+};
+
+class PipeReceiveDirection : public PipeDirection {
+
+public:
+	PipeReceiveDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
+		PipeDirection(n, i, en, lim)
+	{ }
+
+	virtual void run()
+	{
+		Logger logger = logging.get("pipe:recv");
+
+		int recv, cnt = 0, allocated = 0;
+		unsigned release;
+		struct sample *smps[node->in.vectorize];
+
+		while (!stop) {
+			allocated = sample_alloc_many(&pool, smps, node->in.vectorize);
+			if (allocated < 0)
+				throw RuntimeError("Failed to allocate {} samples from receive pool.", node->in.vectorize);
+			else if (allocated < (int) node->in.vectorize)
+				logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
+
+			release = allocated;
+
+			recv = node_read(node, smps, allocated, &release);
+			if (recv < 0) {
+				if (node->state == State::STOPPING || stop)
+					goto leave2;
+				else
+					logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
+			}
+			else {
+				io_print(io, smps, recv);
+
+				cnt += recv;
+				if (limit > 0 && cnt >= limit)
+					goto leave;
+			}
+
+			sample_decref_many(smps, release);
+		}
+
+		return;
+
+leave:		logger->info("Reached receive limit. Terminating...");
+leave2:		raise(SIGINT);
+	}
+};
+
+class Pipe : public Tool {
+
+public:
+	Pipe(int argc, char *argv[]) :
+		Tool(argc, argv, "pipe"),
+		stop(false),
+		timeout(0),
+		reverse(false),
+		format("villas.human"),
+		dtypes("64f"),
+		enable_send(true),
+		enable_recv(true),
+		limit_send(-1),
+		limit_recv(-1)
+	{
+		int ret;
+
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+
+		io.state = State::DESTROYED;
+
+		cfg_cli = json_object();
 	}
 
-leave:	logger->info("Reached receive limit. Terminating...");
-leave2:	stop = true;
+	~Pipe()
+	{
+		json_decref(cfg_cli);
+	}
 
-	return nullptr;
-}
+protected:
+	std::atomic<bool> stop;
 
-int main(int argc, char *argv[])
-{
-	Logger logger = logging.get("pipe");
+	SuperNode sn; /**< The global configuration */
+	struct io io;
 
-	try {
-		int ret, timeout = 0;
-		bool reverse = false;
-		const char *format = "villas.human";
-		const char *dtypes = "64f";
+	int timeout;
+	bool reverse;
+	std::string format;
+	std::string dtypes;
+	std::string uri;
+	std::string nodestr;
 
-		struct node *node;
-		static struct io io = { .state = STATE_DESTROYED };
+	json_t *cfg_cli;
 
-		SuperNode sn; /**< The global configuration */
+	bool enable_send = true;
+	bool enable_recv = true;
+	int limit_send = -1;
+	int limit_recv = -1;
 
-		json_t *cfg_cli = json_object();
+	void handler(int signal, siginfo_t *sinfo, void *ctx)
+	{
+		switch (signal)  {
+			case SIGALRM:
+				logger->info("Reached timeout. Terminating...");
+				break;
 
-		bool enable_send = true, enable_recv = true;
-		int limit_send = -1, limit_recv = -1;
+			case SIGUSR1:
+				break; /* ignore silently */
 
-		/* Parse optional command line arguments */
-		int c;
+			default:
+				logger->info("Received {} signal. Terminating...", strsignal(signal));
+				break;
+		}
+
+		stop = true;
+	}
+
+	void usage()
+	{
+		std::cout << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl
+			<< "  CONFIG  path to a configuration file" << std::endl
+			<< "  NODE    the name of the node to which samples are sent and received from" << std::endl
+			<< "  OPTIONS are:" << std::endl
+			<< "    -f FMT           set the format" << std::endl
+			<< "    -t DT            the data-type format string" << std::endl
+			<< "    -o OPTION=VALUE  overwrite options in config file" << std::endl
+			<< "    -x               swap read / write endpoints" << std::endl
+			<< "    -s               only read data from stdin and send it to node" << std::endl
+			<< "    -r               only read data from node and write it to stdout" << std::endl
+			<< "    -T NUM           terminate after NUM seconds" << std::endl
+			<< "    -L NUM           terminate after NUM samples sent" << std::endl
+			<< "    -l NUM           terminate after NUM samples received" << std::endl
+			<< "    -h               show this usage information" << std::endl
+			<< "    -d               set logging level" << std::endl
+			<< "    -V               show the version of the tool" << std::endl << std::endl;
+
+		printCopyright();
+	}
+
+	void parse()
+	{
+		int c, ret;
 		char *endptr;
 		while ((c = getopt(argc, argv, "Vhxrsd:l:L:T:f:t:o:")) != -1) {
 			switch (c) {
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'f':
@@ -338,30 +393,29 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		logger->info("Logging level: {}", logging.getLevelName());
+		uri = argv[optind];
+		nodestr = argv[optind+1];
+	}
 
-		char *uri = argv[optind];
-		char *nodestr = argv[optind+1];
+	int main()
+	{
+		int ret;
+
+		struct node *node;
 		struct format_type *ft;
 
-		ret = memory_init(0);
-		if (ret)
-			throw RuntimeError("Failed to intialize memory");
+		logger->info("Logging level: {}", logging.getLevelName());
 
-		ret = utils::signals_init(quit);
-		if (ret)
-			throw RuntimeError("Failed to initialize signals");
-
-		if (uri)
+		if (!uri.empty())
 			sn.parse(uri);
 		else
 			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-		ft = format_type_lookup(format);
+		ft = format_type_lookup(format.c_str());
 		if (!ft)
 			throw RuntimeError("Invalid format: {}", format);
 
-		ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
+		ret = io_init2(&io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
@@ -406,36 +460,19 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
-		/* Start threads */
-		Directions dirs = {
-			.send = Direction(node, &io, enable_send, limit_send),
-			.recv = Direction(node, &io, enable_recv, limit_recv)
-		};
+		PipeReceiveDirection recv_dir(node, &io, enable_recv, limit_recv);
+		PipeSendDirection send_dir(node, &io, enable_recv, limit_recv);
 
-		if (dirs.recv.enabled) {
-			dirs.recv.node = node;
-			pthread_create(&dirs.recv.thread, nullptr, recv_loop, &dirs);
-		}
-
-		if (dirs.send.enabled) {
-			dirs.send.node = node;
-			pthread_create(&dirs.send.thread, nullptr, send_loop, &dirs);
-		}
+		recv_dir.startThread();
+		send_dir.startThread();
 
 		alarm(timeout);
 
 		while (!stop)
 			sleep(1);
 
-		if (dirs.recv.enabled) {
-			pthread_cancel(dirs.recv.thread);
-			pthread_join(dirs.recv.thread, nullptr);
-		}
-
-		if (dirs.send.enabled) {
-			pthread_cancel(dirs.send.thread);
-			pthread_join(dirs.send.thread, nullptr);
-		}
+		recv_dir.stopThread();
+		send_dir.stopThread();
 
 		ret = node_stop(node);
 		if (ret)
@@ -455,15 +492,20 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to destroy IO");
 
-		logger->info(CLR_GRN("Goodbye!"));
-
 		return 0;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	villas::node::tools::Pipe t(argc, argv);
+
+	return t.run();
 }
 
 /** @} */

@@ -24,7 +24,7 @@
 
 #if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
 
-#include <string.h>
+#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -35,6 +35,8 @@
 #define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
+
+using namespace villas::utils;
 
 static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
@@ -72,7 +74,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	}
 
 	smp->sequence = smpcnt;
-	smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	smp->length = 0;
 	smp->signals = &n->in.signals;
 
@@ -81,7 +83,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 
 		smp->ts.origin.tv_sec = refrtm / 1000;
 		smp->ts.origin.tv_nsec = (refrtm % 1000) * 1000000;
-		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
 	unsigned offset = 0;
@@ -92,35 +94,35 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 			continue;
 
 		switch (td->iec_type) {
-			case iec61850_type::INT8:
+			case IEC61850Type::INT8:
 				smp->data[j].i = SVSubscriber_ASDU_getINT8(asdu,    offset);
 				break;
 
-			case iec61850_type::INT16:
+			case IEC61850Type::INT16:
 				smp->data[j].i = SVSubscriber_ASDU_getINT16(asdu,   offset);
 				break;
 
-			case iec61850_type::INT32:
+			case IEC61850Type::INT32:
 				smp->data[j].i = SVSubscriber_ASDU_getINT32(asdu,   offset);
 				break;
 
-			case iec61850_type::INT8U:
+			case IEC61850Type::INT8U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT8U(asdu,   offset);
 				break;
 
-			case iec61850_type::INT16U:
+			case IEC61850Type::INT16U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT16U(asdu,  offset);
 				break;
 
-			case iec61850_type::INT32U:
+			case IEC61850Type::INT32U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT32U(asdu,  offset);
 				break;
 
-			case iec61850_type::FLOAT32:
+			case IEC61850Type::FLOAT32:
 				smp->data[j].f = SVSubscriber_ASDU_getFLOAT32(asdu, offset);
 				break;
 
-			case iec61850_type::FLOAT64:
+			case IEC61850Type::FLOAT64:
 				smp->data[j].f = SVSubscriber_ASDU_getFLOAT64(asdu, offset);
 				break;
 
@@ -280,19 +282,19 @@ int iec61850_sv_start(struct node *n)
 			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
 			switch (td->iec_type) {
-				case iec61850_type::INT8:
+				case IEC61850Type::INT8:
 					SVPublisher_ASDU_addINT8(i->out.asdu);
 					break;
 
-				case iec61850_type::INT32:
+				case IEC61850Type::INT32:
 					SVPublisher_ASDU_addINT32(i->out.asdu);
 					break;
 
-				case iec61850_type::FLOAT32:
+				case IEC61850Type::FLOAT32:
 					SVPublisher_ASDU_addFLOAT(i->out.asdu);
 					break;
 
-				case iec61850_type::FLOAT64:
+				case IEC61850Type::FLOAT64:
 					SVPublisher_ASDU_addFLOAT64(i->out.asdu);
 					break;
 
@@ -314,7 +316,7 @@ int iec61850_sv_start(struct node *n)
 
 	/* Start subscriber */
 	if (i->in.enabled) {
-		struct iec61850_receiver *r = iec61850_receiver_create(iec61850_receiver::type::SAMPLED_VALUES, i->interface);
+		struct iec61850_receiver *r = iec61850_receiver_create(iec61850_receiver::Type::SAMPLED_VALUES, i->interface);
 
 		i->in.receiver = r->sv;
 		i->in.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
@@ -330,7 +332,7 @@ int iec61850_sv_start(struct node *n)
 		if (ret)
 			return ret;
 
-		ret = queue_signalled_init(&i->in.queue, 1024, &memory_hugepage, 0);
+		ret = queue_signalled_init(&i->in.queue, 1024, &memory_hugepage);
 		if (ret)
 			return ret;
 
@@ -338,7 +340,7 @@ int iec61850_sv_start(struct node *n)
 			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
 			struct signal *sig = (struct signal *) vlist_at(&n->in.signals, k);
 
-			if (sig->type == SIGNAL_TYPE_INVALID)
+			if (sig->type == SignalType::INVALID)
 				sig->type = td->type;
 			else if (sig->type != td->type)
 				return -1;
@@ -414,33 +416,33 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 			double fval = 0;
 
 			switch (td->iec_type) {
-				case iec61850_type::INT8:
-				case iec61850_type::INT32:
-					ival = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
+				case IEC61850Type::INT8:
+				case IEC61850Type::INT32:
+					ival = sample_format(smps[j], k) == SignalType::FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
-				case iec61850_type::FLOAT32:
-				case iec61850_type::FLOAT64:
-					fval = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
+				case IEC61850Type::FLOAT32:
+				case IEC61850Type::FLOAT64:
+					fval = sample_format(smps[j], k) == SignalType::FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
 				default: { }
 			}
 
 			switch (td->iec_type) {
-				case iec61850_type::INT8:
+				case IEC61850Type::INT8:
 					SVPublisher_ASDU_setINT8(i->out.asdu,    offset, ival);
 					break;
 
-				case iec61850_type::INT32:
+				case IEC61850Type::INT32:
 					SVPublisher_ASDU_setINT32(i->out.asdu,   offset, ival);
 					break;
 
-				case iec61850_type::FLOAT32:
+				case IEC61850Type::FLOAT32:
 					SVPublisher_ASDU_setFLOAT(i->out.asdu,   offset, fval);
 					break;
 
-				case iec61850_type::FLOAT64:
+				case IEC61850Type::FLOAT64:
 					SVPublisher_ASDU_setFLOAT64(i->out.asdu, offset, fval);
 					break;
 
@@ -452,7 +454,7 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 		SVPublisher_ASDU_setSmpCnt(i->out.asdu, smps[j]->sequence);
 
-		if (smps[j]->flags & SAMPLE_HAS_TS_ORIGIN) {
+		if (smps[j]->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 			uint64_t refrtm = smps[j]->ts.origin.tv_sec * 1000 + smps[j]->ts.origin.tv_nsec / 1000000;
 
 			SVPublisher_ASDU_setRefrTm(i->out.asdu, refrtm);
@@ -477,13 +479,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "iec61850-9-2";
 	p.description		= "IEC 61850-9-2 (Sampled Values)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct iec61850_sv);
 	p.node.type.start	= iec61850_type_start;
@@ -503,7 +505,7 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }
 

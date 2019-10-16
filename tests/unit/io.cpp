@@ -77,7 +77,7 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 	for (unsigned i = 0; i < cnt; i++) {
 		struct sample *smp = smps[i];
 
-		smps[i]->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
+		smps[i]->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN;
 		smps[i]->length = vlist_length(signals);
 		smps[i]->sequence = 235 + i;
 		smps[i]->ts.origin = now;
@@ -88,22 +88,22 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 			union signal_data *data = &smp->data[j];
 
 			switch (sig->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					data->b = j * 0.1 + i * 100;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX: {
+				case SignalType::COMPLEX: {
 					/** @todo: Port to proper C++ */
 					std::complex<float> z = { j * 0.1f, i * 100.0f };
 					memcpy(&data->z, &z, sizeof(data->z));
 					break;
 				}
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					data->f = j * 0.1 + i * 100;
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					data->i = j + i * 1000;
 					break;
 
@@ -119,32 +119,32 @@ void cr_assert_eq_sample(struct sample *a, struct sample *b, int flags)
 {
 	cr_assert_eq(a->length, b->length);
 
-	if (flags & SAMPLE_HAS_SEQUENCE)
+	if (flags & (int) SampleFlags::HAS_SEQUENCE)
 		cr_assert_eq(a->sequence, b->sequence);
 
-	if (flags & SAMPLE_HAS_TS_ORIGIN) {
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		cr_assert_eq(a->ts.origin.tv_sec, b->ts.origin.tv_sec);
 		cr_assert_eq(a->ts.origin.tv_nsec, b->ts.origin.tv_nsec);
 	}
 
-	if (flags & SAMPLE_HAS_DATA) {
+	if (flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned j = 0; j < MIN(a->length, b->length); j++) {
 			cr_assert_eq(sample_format(a, j), sample_format(b, j));
 
 			switch (sample_format(b, j)) {
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					cr_assert_float_eq(a->data[j].f, b->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, a->data[j].f, b->data[j].f);
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					cr_assert_eq(a->data[j].i, b->data[j].i, "Sample data mismatch at index %d: %lld != %lld", j, a->data[j].i, b->data[j].i);
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					cr_assert_eq(a->data[j].b, b->data[j].b, "Sample data mismatch at index %d: %s != %s", j, a->data[j].b ? "true" : "false", b->data[j].b ? "true" : "false");
 					break;
 
-				case SIGNAL_TYPE_COMPLEX: {
+				case SignalType::COMPLEX: {
 					auto ca = * (std::complex<float> *) &a->data[j].z;
 					auto cb = * (std::complex<float> *) &b->data[j].z;
 
@@ -162,33 +162,33 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 {
 	cr_assert_eq(a->length, b->length);
 
-	if (flags & SAMPLE_HAS_SEQUENCE)
+	if (flags & (int) SampleFlags::HAS_SEQUENCE)
 		cr_assert_eq(a->sequence, b->sequence);
 
-	if (flags & SAMPLE_HAS_TS_ORIGIN) {
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		cr_assert_eq(a->ts.origin.tv_sec, b->ts.origin.tv_sec);
 		cr_assert_eq(a->ts.origin.tv_nsec, b->ts.origin.tv_nsec);
 	}
 
-	if (flags & SAMPLE_HAS_DATA) {
+	if (flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned j = 0; j < MIN(a->length, b->length); j++) {
 			cr_assert_eq(sample_format(a, j), sample_format(b, j));
 
 			switch (sample_format(b, j)) {
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					if (bits != 8 && bits != 16)
 						cr_assert_float_eq(a->data[j].f, b->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, a->data[j].f, b->data[j].f);
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					cr_assert_eq(a->data[j].i, b->data[j].i, "Sample data mismatch at index %d: %lld != %lld", j, a->data[j].i, b->data[j].i);
 					break;
 
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					cr_assert_eq(a->data[j].b, b->data[j].b, "Sample data mismatch at index %d: %s != %s", j, a->data[j].b ? "true" : "false", b->data[j].b ? "true" : "false");
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
+				case SignalType::COMPLEX:
 					if (bits != 8 && bits != 16) {
 						auto ca = * (std::complex<float> *) &a->data[j].z;
 						auto cb = * (std::complex<float> *) &b->data[j].z;
@@ -221,9 +221,9 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 	struct format_type *f;
 
-	struct pool pool = { .state = STATE_DESTROYED };
-	struct io io = { .state = STATE_DESTROYED };
-	struct vlist signals = { .state = STATE_DESTROYED };
+	struct pool pool = { .state = State::DESTROYED };
+	struct io io = { .state = State::DESTROYED };
+	struct vlist signals = { .state = State::DESTROYED };
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
@@ -231,7 +231,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 	cr_assert_eq(ret, 0);
 
 	vlist_init(&signals);
-	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	signal_list_generate(&signals, NUM_VALUES, SignalType::FLOAT);
 
 	ret = sample_alloc_many(&pool, smps, p->cnt);
 	cr_assert_eq(ret, p->cnt);
@@ -244,7 +244,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 	f = format_type_lookup(p->fmt.c_str());
 	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
-	ret = io_init(&io, f, &signals, SAMPLE_HAS_ALL);
+	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
 
 	ret = io_check(&io);
@@ -290,9 +290,9 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 
 	struct format_type *f;
 
-	struct io io = { .state = STATE_DESTROYED };
-	struct pool pool = { .state = STATE_DESTROYED };
-	struct vlist signals = { .state = STATE_DESTROYED };
+	struct io io = { .state = State::DESTROYED };
+	struct pool pool = { .state = State::DESTROYED };
+	struct vlist signals = { .state = State::DESTROYED };
 
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
@@ -307,7 +307,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	cr_assert_eq(ret, p->cnt);
 
 	vlist_init(&signals);
-	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	signal_list_generate(&signals, NUM_VALUES, SignalType::FLOAT);
 
 	fill_sample_data(&signals, smps, p->cnt);
 
@@ -325,7 +325,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	f = format_type_lookup(p->fmt.c_str());
 	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
-	ret = io_init(&io, f, &signals, SAMPLE_HAS_ALL);
+	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
 
 	ret = io_check(&io);
@@ -351,7 +351,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 
 	io_rewind(&io);
 
-	if (io.mode == IO_MODE_ADVIO)
+	if (io.mode == IOMode::ADVIO)
 		adownload(io.in.stream.adv, 0);
 
 	cnt = io_scan(&io, smpt, p->cnt);

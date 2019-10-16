@@ -22,9 +22,9 @@
 
 #include <unordered_map>
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <strings.h>
 
 #include <sys/time.h>
@@ -77,7 +77,7 @@ int memory_lock(size_t lock)
 				warning("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
 				warning("   $ ulimit -Hl %zu", lock);
 
-				goto out;
+				return 0;
 			}
 
 			l.rlim_max = lock;
@@ -91,7 +91,7 @@ int memory_lock(size_t lock)
 
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
-out:
+
 #endif /* __arm__ */
 #ifdef _POSIX_MEMLOCK
 	/* Lock all current and future memory allocations */
@@ -156,11 +156,11 @@ struct memory_allocation * memory_get_allocation(void *ptr)
 	return allocations[ptr];
 }
 
-struct memory_type * memory_type_lookup(enum memory_type_flags flags)
+struct memory_type * memory_type_lookup(enum MemoryFlags flags)
 {
-	if (flags & MEMORY_HUGEPAGE)
+	if ((int) flags & (int) MemoryFlags::HUGEPAGE)
 		return &memory_hugepage;
-	else if (flags & MEMORY_HEAP)
+	else if ((int) flags & (int) MemoryFlags::HEAP)
 		return &memory_heap;
 	else
 		return nullptr;

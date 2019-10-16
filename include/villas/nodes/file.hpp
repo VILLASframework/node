@@ -49,7 +49,7 @@ struct file {
 	size_t buffer_size_out;		/**< Defines size of output stream buffer. No buffer is created if value is set to zero. */
 	size_t buffer_size_in;		/**< Defines size of input stream buffer. No buffer is created if value is set to zero. */
 
-	enum epoch {
+	enum class EpochMode {
 		DIRECT,
 		WAIT,
 		RELATIVE,
@@ -57,7 +57,7 @@ struct file {
 		ORIGINAL
 	} epoch_mode;			/**< Specifies how file::offset is calculated. */
 
-	enum eof {
+	enum class EOFBehaviour {
 		STOP,			/**< Terminate when EOF is reached. */
 		REWIND,			/**< Rewind the file when EOF is reached. */
 		SUSPEND			/**< Blocking wait when EOF is reached. */

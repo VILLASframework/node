@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <jansson.h>
 
 #include <villas/list.h>
@@ -59,7 +59,7 @@ struct zeromq {
 		} server, client;
 	} curve;
 
-	enum pattern {
+	enum class Pattern {
 		PUBSUB,
 #ifdef ZMQ_BUILD_DISH
 		RADIODISH

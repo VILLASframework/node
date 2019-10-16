@@ -55,6 +55,10 @@ if(WITH_NODE_FILE)
     list(APPEND NODE_SRC file.cpp)
 endif()
 
+if(WITH_NODE_EXEC)
+    list(APPEND NODE_SRC exec.cpp)
+endif()
+
 # Enable Universal Library for Linux DAQ devices (libuldaq)
 if(WITH_NODE_ULDAQ)
     list(APPEND NODE_SRC uldaq.cpp)

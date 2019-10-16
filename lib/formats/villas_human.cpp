@@ -20,9 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdbool.h>
-#include <inttypes.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstring>
 
 #include <villas/io.h>
 #include <villas/plugin.h>
@@ -37,8 +36,8 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 	size_t off = 0;
 	struct signal *sig;
 
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
-		if (smp->flags & SAMPLE_HAS_TS_ORIGIN) {
+	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+		if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 			off += snprintf(buf + off, len - off, "%llu", (unsigned long long) smp->ts.origin.tv_sec);
 			off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) smp->ts.origin.tv_nsec);
 		}
@@ -46,24 +45,24 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 			off += snprintf(buf + off, len - off, "nan.nan");
 	}
 
-	if (io->flags & SAMPLE_HAS_OFFSET) {
-		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+	if (io->flags & (int) SampleFlags::HAS_OFFSET) {
+		if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 			off += snprintf(buf + off, len - off, "%+e", time_delta(&smp->ts.origin, &smp->ts.received));
 	}
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE) {
-		if (io->flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
+		if (io->flags & (int) SampleFlags::HAS_SEQUENCE)
 			off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
 	}
 
-	if (io->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
 			sig = (struct signal *) vlist_at_safe(smp->signals, i);
 			if (!sig)
 				break;
 
 			off += snprintf(buf + off, len - off, "%c", io->separator);
-			off += signal_data_snprint(&smp->data[i], sig, buf + off, len - off);
+			off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
 		}
 	}
 
@@ -94,7 +93,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 	if (ptr == end || *end == io->delimiter)
 		return -1;
 
-	smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+	smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
 	/* Optional: nano seconds */
 	if (*end == '.') {
@@ -113,7 +112,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 		offset = strtof(ptr, &end); /* offset is ignored for now */
 		if (ptr != end)
-			smp->flags |= SAMPLE_HAS_OFFSET;
+			smp->flags |= (int) SampleFlags::HAS_OFFSET;
 		else
 			return -4;
 	}
@@ -124,7 +123,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 		smp->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
-			smp->flags |= SAMPLE_HAS_SEQUENCE;
+			smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 		else
 			return -5;
 
@@ -152,13 +151,13 @@ out:	if (*end == io->delimiter)
 
 	smp->length = i;
 	if (smp->length > 0)
-		smp->flags |= SAMPLE_HAS_DATA;
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 
-	if (smp->flags & SAMPLE_HAS_OFFSET) {
+	if (smp->flags & (int) SampleFlags::HAS_OFFSET) {
 		struct timespec off = time_from_double(offset);
 		smp->ts.received = time_add(&smp->ts.origin, &off);
 
-		smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+		smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 	}
 
 	return end - buf;
@@ -198,16 +197,16 @@ void villas_human_header(struct io *io, const struct sample *smp)
 
 	fprintf(f, "# ");
 
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 		fprintf(f, "seconds.nanoseconds");
 
-	if (io->flags & SAMPLE_HAS_OFFSET)
+	if (io->flags & (int) SampleFlags::HAS_OFFSET)
 		fprintf(f, "+offset");
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & (int) SampleFlags::HAS_SEQUENCE)
 		fprintf(f, "(sequence)");
 
-	if (io->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
 
@@ -226,17 +225,17 @@ void villas_human_header(struct io *io, const struct sample *smp)
 
 static struct plugin p;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == STATE_DESTROYED)
+        if (plugins.state == State::DESTROYED)
 	                vlist_init(&plugins);
 
 	p.name = "villas.human";
 	p.description = "VILLAS human readable format";
-	p.type = PLUGIN_TYPE_FORMAT;
+	p.type = PluginType::FORMAT;
 	p.format.header = villas_human_header;
 	p.format.sprint	= villas_human_sprint;
 	p.format.sscan	= villas_human_sscan;
 	p.format.size	= 0;
-	p.format.flags	= IO_NEWLINES | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p.format.flags	= (int) IOFlags::NEWLINES | (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	p.format.delimiter = '\n';
 	p.format.separator = '\t';
 
@@ -244,6 +243,6 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != STATE_DESTROYED)
+        if (plugins.state != State::DESTROYED)
                 vlist_remove_all(&plugins, &p);
 }

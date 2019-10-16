@@ -21,16 +21,16 @@
  *********************************************************************************/
 
 #include <dlfcn.h>
-#include <string.h>
+#include <cstring>
 
 #include <villas/plugin.h>
 
 /** Global list of all known plugins */
-struct vlist plugins = { .state = STATE_DESTROYED };
+struct vlist plugins = { .state = State::DESTROYED };
 
 LIST_INIT_STATIC(&plugins)
 
-struct plugin * plugin_lookup(enum plugin_type type, const char *name)
+struct plugin * plugin_lookup(enum PluginType type, const char *name)
 {
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
 		struct plugin *p = (struct plugin *) vlist_at(&plugins, i);
@@ -42,7 +42,7 @@ struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 	return nullptr;
 }
 
-void plugin_dump(enum plugin_type type)
+void plugin_dump(enum PluginType type)
 {
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
 		struct plugin *p = (struct plugin *) vlist_at(&plugins, i);

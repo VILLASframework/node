@@ -41,7 +41,7 @@ struct sample;
  */
 struct loopback {
 	int queuelen;
-	int queueflags;
+	enum QueueSignalledMode mode;
 	struct queue_signalled queue;
 	struct pool pool;
 };

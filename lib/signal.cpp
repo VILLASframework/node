@@ -20,13 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <inttypes.h>
+#include <cstring>
+#include <cinttypes>
 #include <villas/signal.h>
 #include <villas/list.h>
 #include <villas/utils.hpp>
 #include <villas/node.h>
 #include <villas/mapping.h>
+
+using namespace villas;
+using namespace villas::utils;
 
 int signal_init(struct signal *s)
 {
@@ -34,7 +37,7 @@ int signal_init(struct signal *s)
 
 	s->name = nullptr;
 	s->unit = nullptr;
-	s->type = SIGNAL_TYPE_INVALID;
+	s->type = SignalType::INVALID;
 
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -54,24 +57,24 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 		return ret;
 
 	switch (me->type) {
-		case MAPPING_TYPE_STATS:
-			s->type = stats_types[me->stats.type].signal_type;
+		case MappingType::STATS:
+			s->type = Stats::types[me->stats.type].signal_type;
 			break;
 
-		case MAPPING_TYPE_HEADER:
+		case MappingType::HEADER:
 			switch (me->header.type) {
-				case MAPPING_HEADER_TYPE_LENGTH:
-				case MAPPING_HEADER_TYPE_SEQUENCE:
-					s->type = SIGNAL_TYPE_INTEGER;
+				case MappingHeaderType::LENGTH:
+				case MappingHeaderType::SEQUENCE:
+					s->type = SignalType::INTEGER;
 					break;
 			}
 			break;
 
-		case MAPPING_TYPE_TIMESTAMP:
-			s->type = SIGNAL_TYPE_INTEGER;
+		case MappingType::TIMESTAMP:
+			s->type = SignalType::INTEGER;
 			break;
 
-		case MAPPING_TYPE_DATA:
+		case MappingType::DATA:
 			s->type = me->data.signal->type;
 			s->init = me->data.signal->init;
 			s->enabled = me->data.signal->enabled;
@@ -98,7 +101,7 @@ int signal_destroy(struct signal *s)
 	return 0;
 }
 
-struct signal * signal_create(const char *name, const char *unit, enum signal_type fmt)
+struct signal * signal_create(const char *name, const char *unit, enum SignalType fmt)
 {
 	int ret;
 	struct signal *sig;
@@ -201,7 +204,7 @@ int signal_parse(struct signal *s, json_t *cfg)
 
 	if (type) {
 		s->type = signal_type_from_str(type);
-		if (s->type == SIGNAL_TYPE_INVALID)
+		if (s->type == SignalType::INVALID)
 			return -1;
 	}
 
@@ -269,7 +272,7 @@ int signal_list_parse(struct vlist *list, json_t *cfg)
 	return 0;
 }
 
-int signal_list_generate(struct vlist *list, unsigned len, enum signal_type typ)
+int signal_list_generate(struct vlist *list, unsigned len, enum SignalType typ)
 {
 	char name[32];
 
@@ -290,7 +293,7 @@ int signal_list_generate2(struct vlist *list, const char *dt)
 {
 	int len, i = 0;
 	char name[32], *e;
-	enum signal_type typ;
+	enum SignalType typ;
 
 	for (const char *t = dt; *t; t = e + 1) {
 		len = strtoul(t, &e, 10);
@@ -298,7 +301,7 @@ int signal_list_generate2(struct vlist *list, const char *dt)
 			len = 1;
 
 		typ = signal_type_from_fmtstr(*e);
-		if (typ == SIGNAL_TYPE_INVALID)
+		if (typ == SignalType::INVALID)
 			return -1;
 
 		for (int j = 0; j < len; j++) {
@@ -335,7 +338,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 		if (data && i < len) {
 			char val[32];
 
-			signal_data_snprint(&data[i], sig, val, sizeof(val));
+			signal_data_print_str(&data[i], sig, val, sizeof(val));
 
 			strcatf(&buf, " = %s", val);
 		}
@@ -347,8 +350,8 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 
 int signal_list_copy(struct vlist *dst, const struct vlist *src)
 {
-	assert(src->state == STATE_INITIALIZED);
-	assert(dst->state == STATE_INITIALIZED);
+	assert(src->state == State::INITIALIZED);
+	assert(dst->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(src); i++) {
 		struct signal *s = (struct signal *) vlist_at_safe(src, i);
@@ -363,63 +366,63 @@ int signal_list_copy(struct vlist *dst, const struct vlist *src)
 
 /* Signal type */
 
-enum signal_type signal_type_from_str(const char *str)
+enum SignalType signal_type_from_str(const char *str)
 {
 	if      (!strcmp(str, "boolean"))
-		return SIGNAL_TYPE_BOOLEAN;
+		return SignalType::BOOLEAN;
 	else if (!strcmp(str, "complex"))
-		return SIGNAL_TYPE_COMPLEX;
+		return SignalType::COMPLEX;
 	else if (!strcmp(str, "float"))
-		return SIGNAL_TYPE_FLOAT;
+		return SignalType::FLOAT;
 	else if (!strcmp(str, "integer"))
-		return SIGNAL_TYPE_INTEGER;
+		return SignalType::INTEGER;
 	else
-		return SIGNAL_TYPE_INVALID;
+		return SignalType::INVALID;
 }
 
-enum signal_type signal_type_from_fmtstr(char c)
+enum SignalType signal_type_from_fmtstr(char c)
 {
 	switch (c) {
 		case 'f':
-			return SIGNAL_TYPE_FLOAT;
+			return SignalType::FLOAT;
 
 		case 'i':
-			return SIGNAL_TYPE_INTEGER;
+			return SignalType::INTEGER;
 
 		case 'c':
-			return SIGNAL_TYPE_COMPLEX;
+			return SignalType::COMPLEX;
 
 		case 'b':
-			return SIGNAL_TYPE_BOOLEAN;
+			return SignalType::BOOLEAN;
 
 		default:
-			return SIGNAL_TYPE_INVALID;
+			return SignalType::INVALID;
 	}
 }
 
-const char * signal_type_to_str(enum signal_type fmt)
+const char * signal_type_to_str(enum SignalType fmt)
 {
 	switch (fmt) {
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			return "boolean";
 
-		case SIGNAL_TYPE_COMPLEX:
+		case SignalType::COMPLEX:
 			return "complex";
 
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			return "float";
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			return "integer";
 
-		case SIGNAL_TYPE_INVALID:
+		case SignalType::INVALID:
 			return "invalid";
 	}
 
 	return nullptr;
 }
 
-enum signal_type signal_type_detect(const char *val)
+enum SignalType signal_type_detect(const char *val)
 {
 	const char *brk;
 	int len;
@@ -428,17 +431,17 @@ enum signal_type signal_type_detect(const char *val)
 
 	brk = strchr(val, 'i');
 	if (brk)
-		return SIGNAL_TYPE_COMPLEX;
+		return SignalType::COMPLEX;
 
 	brk = strchr(val, '.');
 	if (brk)
-		return SIGNAL_TYPE_FLOAT;
+		return SignalType::FLOAT;
 
 	len = strlen(val);
 	if (len == 1 && (val[0] == '1' || val[0] == '0'))
-		return SIGNAL_TYPE_BOOLEAN;
+		return SignalType::BOOLEAN;
 
-	return SIGNAL_TYPE_INTEGER;
+	return SignalType::INTEGER;
 }
 
 /* Signal data */
@@ -446,24 +449,24 @@ enum signal_type signal_type_detect(const char *val)
 void signal_data_set(union signal_data *data, const struct signal *sig, double val)
 {
 	switch (sig->type) {
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			data->b = val;
 			break;
 
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			data->f = val;
 			break;
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			data->i = val;
 			break;
 
-		case SIGNAL_TYPE_COMPLEX:
+		case SignalType::COMPLEX:
 			data->z = val;
 			break;
 
-		case SIGNAL_TYPE_INVALID:
-			memset(data, 0, sizeof(union signal_data));
+		case SignalType::INVALID:
+			*data = signal_data::nan();
 			break;
 	}
 }
@@ -474,87 +477,87 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 		return;
 
 	switch (to->type) {
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			switch(from->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					data->b = data->b;
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					data->b = data->i;
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					data->b = data->f;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					data->b = creal(data->z);
+				case SignalType::COMPLEX:
+					data->b = std::real(data->z);
 					break;
 
 				default: { }
 			}
 			break;
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			switch(from->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					data->i = data->b;
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					data->i = data->i;
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					data->i = data->f;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					data->i = creal(data->z);
+				case SignalType::COMPLEX:
+					data->i = std::real(data->z);
 					break;
 
 				default: { }
 			}
 			break;
 
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			switch(from->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					data->f = data->b;
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					data->f = data->i;
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					data->f = data->f;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					data->f = creal(data->z);
+				case SignalType::COMPLEX:
+					data->f = std::real(data->z);
 					break;
 
 				default: { }
 			}
 			break;
 
-		case SIGNAL_TYPE_COMPLEX:
+		case SignalType::COMPLEX:
 			switch(from->type) {
-				case SIGNAL_TYPE_BOOLEAN:
+				case SignalType::BOOLEAN:
 					data->z = data->b;
 					break;
 
-				case SIGNAL_TYPE_INTEGER:
+				case SignalType::INTEGER:
 					data->z = data->i;
 					break;
 
-				case SIGNAL_TYPE_FLOAT:
+				case SignalType::FLOAT:
 					data->z = data->f;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
+				case SignalType::COMPLEX:
 					data->z = data->z;
 					break;
 
@@ -569,20 +572,20 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end)
 {
 	switch (sig->type) {
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			data->f = strtod(ptr, end);
 			break;
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			data->i = strtol(ptr, end, 10);
 			break;
 
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			data->b = strtol(ptr, end, 10);
 			break;
 
-		case SIGNAL_TYPE_COMPLEX: {
-			float real, imag;
+		case SignalType::COMPLEX: {
+			float real, imag = 0;
 
 			real = strtod(ptr, end);
 			if (*end == ptr)
@@ -590,20 +593,28 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 
 			ptr = *end;
 
-			imag = strtod(ptr, end);
-			if (*end == ptr)
-				return -1;
+			if (*ptr == 'i' || *ptr == 'j') {
+				imag = real;
+				real = 0;
 
-			if (**end != 'i')
-				return -1;
+				(*end)++;
+			}
+			else if (*ptr == '-' || *ptr == '+') {
+				imag = strtod(ptr, end);
+				if (*end == ptr)
+					return -1;
 
-			(*end)++;
+				if (**end != 'i' && **end != 'j')
+					return -1;
 
-			data->z = real + _Complex_I * imag;
+				(*end)++;
+			}
+
+			data->z = std::complex<float>(real, imag);
 			break;
 		}
 
-		case SIGNAL_TYPE_INVALID:
+		case SignalType::INVALID:
 			return -1;
 	}
 
@@ -615,19 +626,19 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 	int ret;
 
 	switch (sig->type) {
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			data->f = json_real_value(cfg);
 			break;
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			data->i = json_integer_value(cfg);
 			break;
 
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			data->b = json_boolean_value(cfg);
 			break;
 
-		case SIGNAL_TYPE_COMPLEX: {
+		case SignalType::COMPLEX: {
 			double real, imag;
 
 			json_error_t err;
@@ -638,31 +649,31 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 			if (ret)
 				return -2;
 
-			data->z = real + _Complex_I * imag;
+			data->z = std::complex<float>(real, imag);
 			break;
 		}
 
-		case SIGNAL_TYPE_INVALID:
+		case SignalType::INVALID:
 			return -1;
 	}
 
 	return 0;
 }
 
-int signal_data_snprint(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
+int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
 {
 	switch (sig->type) {
-		case SIGNAL_TYPE_FLOAT:
+		case SignalType::FLOAT:
 			return snprintf(buf, len, "%.6f", data->f);
 
-		case SIGNAL_TYPE_INTEGER:
+		case SignalType::INTEGER:
 			return snprintf(buf, len, "%" PRIi64, data->i);
 
-		case SIGNAL_TYPE_BOOLEAN:
+		case SignalType::BOOLEAN:
 			return snprintf(buf, len, "%u", data->b);
 
-		case SIGNAL_TYPE_COMPLEX:
-			return snprintf(buf, len, "%.6f%+.6fi", creal(data->z), cimag(data->z));
+		case SignalType::COMPLEX:
+			return snprintf(buf, len, "%.6f%+.6fi", std::real(data->z), std::imag(data->z));
 
 		default:
 			return 0;

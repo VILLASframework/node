@@ -91,7 +91,8 @@ RUN yum -y install \
 	libibverbs-devel \
 	librdmacm-devel \
 	re-devel \
-	uldaq-devel
+	uldaq-devel \
+	spdlog-devel
 
 # Build & Install Criterion
 RUN cd /tmp && \

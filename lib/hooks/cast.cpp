@@ -25,7 +25,7 @@
  * @{
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/sample.h>
@@ -39,7 +39,7 @@ protected:
 	unsigned signal_index;
 	char *signal_name;
 
-	enum signal_type new_type;
+	enum SignalType new_type;
 	char *new_name;
 	char *new_unit;
 
@@ -48,7 +48,7 @@ public:
 		Hook(p, n, fl, prio, en),
 		signal_index(-1),
 		signal_name(nullptr),
-		new_type(SIGNAL_TYPE_INVALID),
+		new_type(SignalType::INVALID),
 		new_name(nullptr),
 		new_unit(nullptr)
 	{ }
@@ -69,7 +69,7 @@ public:
 	{
 		struct signal *orig_sig, *new_sig;
 
-		assert(state == STATE_CHECKED);
+		assert(state == State::CHECKED);
 
 		if (signal_name) {
 			signal_index = vlist_lookup_index(&signals, signal_name);
@@ -78,11 +78,13 @@ public:
 		}
 
 		char *name, *unit;
-		enum signal_type type;
+		enum SignalType type;
 
 		orig_sig = (struct signal *) vlist_at_safe(&signals, signal_index);
+		if (!orig_sig)
+			throw RuntimeError("Failed to find signal: {}", signal_name);
 
-		type = new_type != SIGNAL_TYPE_INVALID ? new_type : orig_sig->type;
+		type = new_type != SignalType::INVALID ? new_type : orig_sig->type;
 		name = new_name ? new_name : orig_sig->name;
 		unit = new_unit ? new_unit : orig_sig->unit;
 
@@ -91,7 +93,7 @@ public:
 		vlist_set(&signals, signal_index, new_sig);
 		signal_decref(orig_sig);
 
-		state = STATE_PREPARED;
+		state = State::PREPARED;
 	}
 
 	virtual void parse(json_t *cfg)
@@ -101,7 +103,7 @@ public:
 		json_error_t err;
 		json_t *json_signal;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		const char *name = nullptr;
 		const char *unit = nullptr;
@@ -132,12 +134,12 @@ public:
 
 		if (type) {
 			new_type = signal_type_from_str(type);
-			if (new_type == SIGNAL_TYPE_INVALID)
+			if (new_type == SignalType::INVALID)
 				throw RuntimeError("Invalid signal type: {}", type);
 		}
 		else
 			/* We use this constant to indicate that we dont want to change the type. */
-			new_type = SIGNAL_TYPE_INVALID;
+			new_type = SignalType::INVALID;
 
 		if (name)
 			new_name = strdup(name);
@@ -145,12 +147,12 @@ public:
 		if (unit)
 			new_unit = strdup(unit);
 
-		state = STATE_PARSED;
+		state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		struct signal *orig_sig = (struct signal *) vlist_at(smp->signals, signal_index);
 		struct signal *new_sig  = (struct signal *) vlist_at(&signals,  signal_index);
@@ -160,7 +162,7 @@ public:
 		/* Replace signal descriptors of sample */
 		smp->signals = &signals;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -168,7 +170,7 @@ public:
 static HookPlugin<CastHook> p(
 	"cast",
 	"Cast signals types",
-	HOOK_NODE_READ | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
 	99
 );
 

@@ -37,11 +37,11 @@
   #include <netinet/ether.h>
 #endif /* LIBNL3_ROUTE_FOUND */
 
-enum socket_layer {
-	SOCKET_LAYER_ETH,
-	SOCKET_LAYER_IP,
-	SOCKET_LAYER_UDP,
-	SOCKET_LAYER_UNIX
+enum class SocketLayer {
+	ETH,
+	IP,
+	UDP,
+	UNIX
 };
 
 union sockaddr_union {
@@ -79,6 +79,6 @@ char * socket_print_addr(struct sockaddr *saddr);
  * @retval 0	Success. Everything went well.
  * @retval <0	Error. Something went wrong.
  */
-int socket_parse_address(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
+int socket_parse_address(const char *str, struct sockaddr *sa, enum SocketLayer layer, int flags);
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);

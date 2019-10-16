@@ -129,6 +129,7 @@ cmake_dependent_option(WITH_DOC             "Build documentation"               
 cmake_dependent_option(WITH_NODE_AMQP       "Build with amqp node-type"                             ON "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI     "Build with comedi node-type"                           ON "COMEDILIB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_FILE       "Build with file node-type"                             ON "" OFF)
+cmake_dependent_option(WITH_NODE_EXEC       "Build with exec node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"                        ON "LIBIEC61850_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "IBVERBS_FOUND; RDMACM_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_INFLUXDB   "Build with influxdb node-type"                         ON "" OFF)

@@ -20,13 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-if(WITH_CONFIG)
-    add_executable(conf2json conf2json.cpp)
-    target_link_libraries(conf2json PUBLIC villas)
-
-    list(APPEND TOOLS conf2json)
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_executable(rmshm rmshm.cpp)
     target_link_libraries(rmshm PUBLIC Threads::Threads rt)
@@ -35,14 +28,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_link_libraries(rmsem PUBLIC Threads::Threads rt)
 
     list(APPEND TOOLS rmsem rmshm)
-endif()
-
-if(LIBZMQ_FOUND)
-    add_executable(zmq-keygen zmq-keygen.cpp)
-    target_include_directories(zmq-keygen PUBLIC ${LIBZMQ_INCLUDE_DIRS})
-    target_link_libraries(zmq-keygen PUBLIC PkgConfig::LIBZMQ)
-    
-    list(APPEND TOOLS zmq-keygen)
 endif()
 
 install(

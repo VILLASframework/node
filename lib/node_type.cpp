@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/sample.h>
 #include <villas/node.h>
@@ -33,14 +33,14 @@ int node_type_start(struct node_type *vt, villas::node::SuperNode *sn)
 {
 	int ret;
 
-	if (vt->state != STATE_DESTROYED)
+	if (vt->state != State::DESTROYED)
 		return 0;
 
 	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), vlist_length(&vt->instances));
 
 	ret = vt->type.start ? vt->type.start(sn) : 0;
 	if (ret == 0)
-		vt->state = STATE_STARTED;
+		vt->state = State::STARTED;
 
 	return ret;
 }
@@ -49,14 +49,14 @@ int node_type_stop(struct node_type *vt)
 {
 	int ret;
 
-	if (vt->state != STATE_STARTED)
+	if (vt->state != State::STARTED)
 		return 0;
 
 	info("De-initializing " CLR_YEL("%s") " node type", node_type_name(vt));
 
 	ret = vt->type.stop ? vt->type.stop() : 0;
 	if (ret == 0)
-		vt->state = STATE_DESTROYED;
+		vt->state = State::DESTROYED;
 
 	return ret;
 }
@@ -70,7 +70,7 @@ struct node_type * node_type_lookup(const char *name)
 {
 	struct plugin *p;
 
-	p = plugin_lookup(PLUGIN_TYPE_NODE, name);
+	p = plugin_lookup(PluginType::NODE, name);
 	if (!p)
 		return nullptr;
 

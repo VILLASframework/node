@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
+#include <cstring>
 #include <zmq.h>
 
 #if ZMQ_VERSION_MAJOR < 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR <= 1)
@@ -33,6 +33,8 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/format_type.h>
+
+using namespace villas::utils;
 
 static void *context;
 
@@ -189,10 +191,10 @@ int zeromq_parse(struct node *n, json_t *cfg)
 
 	if (type) {
 		if      (!strcmp(type, "pubsub"))
-			z->pattern = zeromq::pattern::PUBSUB;
+			z->pattern = zeromq::Pattern::PUBSUB;
 #ifdef ZMQ_BUILD_DISH
 		else if (!strcmp(type, "radiodish"))
-			z->pattern = zeromq::pattern::RADIODISH;
+			z->pattern = zeromq::Pattern::RADIODISH;
 #endif
 		else
 			error("Invalid type for ZeroMQ node: %s", node_name_short(n));
@@ -209,12 +211,12 @@ char * zeromq_print(struct node *n)
 	const char *pattern = nullptr;
 
 	switch (z->pattern) {
-		case zeromq::pattern::PUBSUB:
+		case zeromq::Pattern::PUBSUB:
 			pattern = "pubsub";
 			break;
 
 #ifdef ZMQ_BUILD_DISH
-		case zeromq::pattern::RADIODISH:
+		case zeromq::Pattern::RADIODISH:
 			pattern = "radiodish";
 			break;
 #endif
@@ -262,7 +264,7 @@ int zeromq_start(struct node *n)
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	ret = io_init(&z->io, z->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&z->io, z->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -272,13 +274,13 @@ int zeromq_start(struct node *n)
 
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-		case zeromq::pattern::RADIODISH:
+		case zeromq::Pattern::RADIODISH:
 			z->in.socket = zmq_socket(context, ZMQ_DISH);
 			z->out.socket  = zmq_socket(context, ZMQ_RADIO);
 			break;
 #endif
 
-		case zeromq::pattern::PUBSUB:
+		case zeromq::Pattern::PUBSUB:
 			z->in.socket = zmq_socket(context, ZMQ_SUB);
 			z->out.socket  = zmq_socket(context, ZMQ_PUB);
 			break;
@@ -292,12 +294,12 @@ int zeromq_start(struct node *n)
 	/* Join group */
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-		case zeromq::pattern::RADIODISH:
+		case zeromq::Pattern::RADIODISH:
 			ret = zmq_join(z->in.socket, z->in.filter);
 			break;
 #endif
 
-		case zeromq::pattern::PUBSUB:
+		case zeromq::Pattern::PUBSUB:
 			ret = zmq_setsockopt(z->in.socket, ZMQ_SUBSCRIBE, z->in.filter, z->in.filter ? strlen(z->in.filter) : 0);
 			break;
 
@@ -457,7 +459,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	if (z->in.filter) {
 		switch (z->pattern) {
-			case zeromq::pattern::PUBSUB:
+			case zeromq::Pattern::PUBSUB:
 				/* Discard envelope */
 				zmq_recv(z->in.socket, nullptr, 0, 0);
 				break;
@@ -499,14 +501,14 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	if (z->out.filter) {
 		switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-			case zeromq::pattern::RADIODISH:
+			case zeromq::Pattern::RADIODISH:
 				ret = zmq_msg_set_group(&m, z->out.filter);
 				if (ret < 0)
 					goto fail;
 				break;
 #endif
 
-			case zeromq::pattern::PUBSUB: /* Send envelope */
+			case zeromq::Pattern::PUBSUB: /* Send envelope */
 				zmq_send(z->out.socket, z->out.filter, strlen(z->out.filter), ZMQ_SNDMORE);
 				break;
 		}
@@ -568,13 +570,13 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == STATE_DESTROYED)
+	if (plugins.state == State::DESTROYED)
 		vlist_init(&plugins);
 
 	p.name			= "zeromq";
 	p.description		= "ZeroMQ Distributed Messaging (libzmq)";
-	p.type			= PLUGIN_TYPE_NODE;
-	p.node.instances.state	= STATE_DESTROYED;
+	p.type			= PluginType::NODE;
+	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct zeromq);
 	p.node.type.start	= zeromq_type_start;
@@ -596,6 +598,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != STATE_DESTROYED)
+	if (plugins.state != State::DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }

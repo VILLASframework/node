@@ -24,13 +24,13 @@
  * @{
  */
 
-#include <string.h>
+#include <memory>
 
 #include <villas/common.h>
 #include <villas/advio.h>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/node.h>
 #include <villas/timing.h>
 
@@ -48,18 +48,16 @@ public:
 	StatsWriteHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
-		state = STATE_CHECKED;
+		state = State::CHECKED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		stats *s = node->stats;
-
 		timespec now = time_now();
 
-		stats_update(s, STATS_METRIC_AGE, time_delta(&smp->ts.received, &now));
+		node->stats->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
@@ -72,46 +70,44 @@ public:
 	StatsReadHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
-		state = STATE_CHECKED;
+		state = State::CHECKED;
 	}
 
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
 		last = nullptr;
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		if (last)
 			sample_decref(last);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
-	virtual int process(sample *smp)
+	virtual Hook::Reason process(sample *smp)
 	{
-		stats *s = node->stats;
-
 		if (last) {
-			if (smp->flags & last->flags & SAMPLE_HAS_TS_RECEIVED)
-				stats_update(s, STATS_METRIC_GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
+				node->stats->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
 
-			if (smp->flags & last->flags & SAMPLE_HAS_TS_ORIGIN)
-				stats_update(s, STATS_METRIC_GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_ORIGIN)
+				node->stats->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
 
-			if ((smp->flags & SAMPLE_HAS_TS_ORIGIN) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
-				stats_update(s, STATS_METRIC_OWD, time_delta(&smp->ts.origin, &smp->ts.received));
+			if ((smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
+				node->stats->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
 
-			if (smp->flags & last->flags & SAMPLE_HAS_SEQUENCE) {
+			if (smp->flags & last->flags & (int) SampleFlags::HAS_SEQUENCE) {
 				int dist = smp->sequence - (int32_t) last->sequence;
 				if (dist != 1)
-					stats_update(s, STATS_METRIC_SMPS_REORDERED, dist);
+					node->stats->update(Stats::Metric::SMPS_REORDERED, dist);
 			}
 		}
 
@@ -122,49 +118,37 @@ public:
 
 		last = smp;
 
-		return HOOK_OK;
+		return Reason::OK;
 	}
 };
 
 class StatsHook : public Hook {
 
 protected:
-	struct stats stats;
-
 	StatsReadHook *readHook;
 	StatsWriteHook *writeHook;
 
-	enum stats_format format;
+	enum Stats::Format format;
 	int verbose;
 	int warmup;
 	int buckets;
 
+	std::shared_ptr<Stats> stats;
+
 	AFILE *output;
-	char *uri;
+	std::string uri;
 
 public:
 
 	StatsHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		format(STATS_FORMAT_HUMAN),
+		format(Stats::Format::HUMAN),
 		verbose(0),
 		warmup(500),
 		buckets(20),
 		output(nullptr),
-		uri(nullptr)
+		uri()
 	{
-		int ret;
-
-		stats.state = STATE_DESTROYED;
-		ret = stats_init(&stats, buckets, warmup);
-		if (ret)
-			throw RuntimeError("Failed to initialize stats");
-
-		/* Register statistic object to path.
-		*
-		* This allows the path code to update statistics. */
-		node->stats = &stats;
-
 		/* Add child hooks */
 		readHook = new StatsReadHook(p, n, fl, prio, en);
 		writeHook = new StatsWriteHook(p, n, fl, prio, en);
@@ -173,60 +157,51 @@ public:
 		vlist_push(&node->out.hooks, (void *) writeHook);
 	}
 
-	~StatsHook()
-	{
-		if (uri)
-			free(uri);
-
-		if (stats.state != STATE_DESTROYED)
-			stats_destroy(&stats);
-	}
-
 	virtual void start()
 	{
-		assert(state == STATE_PREPARED);
+		assert(state == State::PREPARED);
 
-		if (uri) {
-			output = afopen(uri, "w+");
+		if (!uri.empty()) {
+			output = afopen(uri.c_str(), "w+");
 			if (!output)
 				throw RuntimeError("Failed to open file '{}' for writing", uri);
 		}
 
-		state = STATE_STARTED;
+		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
-		stats_print(&stats, uri ? output->file : stdout, format, verbose);
+		stats->print(uri.empty() ? stdout : output->file, format, verbose);
 
-		if (uri)
+		if (!uri.empty())
 			afclose(output);
 
-		state = STATE_STOPPED;
+		state = State::STOPPED;
 	}
 
 	virtual void restart()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
-		stats_reset(&stats);
+		stats->reset();
 	}
 
 	virtual void periodic()
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
-		stats_print_periodic(&stats, uri ? output->file : stdout, format, node);
+		stats->printPeriodic(uri.empty() ? stdout : output->file, format, node);
 	}
 
 	virtual void parse(json_t *cfg)
 	{
-		int ret, fmt;
+		int ret;
 		json_error_t err;
 
-		assert(state != STATE_STARTED);
+		assert(state != State::STARTED);
 
 		const char *f = nullptr;
 		const char *u = nullptr;
@@ -242,17 +217,31 @@ public:
 			throw ConfigError(cfg, err, "node-config-hook-stats");
 
 		if (f) {
-			fmt = stats_lookup_format(f);
-			if (fmt < 0)
+			try {
+				format = Stats::lookupFormat(f);
+			} catch (std::invalid_argument &e) {
 				throw ConfigError(cfg, "node-config-hook-stats", "Invalid statistic output format: {}", f);
-
-			format = static_cast<stats_format>(fmt);
+			}
 		}
 
 		if (u)
-			uri = strdup(u);
+			uri = u;
 
-		state = STATE_PARSED;
+		state = State::PARSED;
+	}
+
+	virtual void prepare()
+	{
+		assert(state == State::CHECKED);
+
+		stats = std::make_shared<villas::Stats>(buckets, warmup);
+
+		/* Register statistic object to path.
+		*
+		* This allows the path code to update statistics. */
+		node->stats = stats;
+
+		state = State::PREPARED;
 	}
 };
 
@@ -260,7 +249,7 @@ public:
 static HookPlugin<StatsHook> p(
 	"stats",
 	"Collect statistics for the current path",
-	HOOK_NODE_READ,
+	(int) Hook::Flags::NODE_READ,
 	99
 );
 
