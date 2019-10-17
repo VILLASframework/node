@@ -28,14 +28,16 @@ ARG VERSION=unknown
 ARG VARIANT=unknown
 
 # Toolchain
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
 	autoconf automake libtool cmake \
 	pkg-config make gcc g++\
 	git curl wget tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
 
 # Dependencies
-RUN apt-get install -y\
+RUN apt-get update && \
+    apt-get install -y\
 	libssl-dev \
 	libprotobuf-dev \
 	libprotobuf-c-dev \
