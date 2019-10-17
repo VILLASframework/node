@@ -65,7 +65,7 @@ prepare:debian-arm64:docker-dev:
 # Stage: build
 ##############################################################################
 
-build:base:
+build:fedora:x86_64:
   stage: build
   script:
     - mkdir -p build && cd build
@@ -79,35 +79,32 @@ build:base:
   tags:
     - docker
 
-build:fedora:x86_64:
-  extends: build:base
-
 build:fedora-minimal:x86_64:
-  extends: build:base
+  extends: build:fedora:x86_64
   variables:
     CMAKE_OPTS: -DWITH_HOOKS=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
 
 build:ubuntu:x86_64:
-  extends: build:base
+  extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
 build:raspbian:armv6l:
-  extends: build:base
+  extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
   when: manual
 
 build:debian-multiarch:armhf:
-  extends: build:base
+  extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-debian-armhf
     CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/arm-linux-gnueabihf
 
 build:debian-multiarch:arm64:
-  extends: build:base
+  extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-debian-arm64
     CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-arm64.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/aarch64-linux-gnu
