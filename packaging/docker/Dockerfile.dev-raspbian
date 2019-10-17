@@ -51,15 +51,29 @@ RUN apt-get install -y\
 	libcomedi-dev \
 	librdmacm-dev \
 	libre-dev \
-	libusb-1.0-0-dev \
-	libspdlog-dev \
-	libfmt-dev
+	libusb-1.0-0-dev
 
 ENV CC=gcc
 ENV CXX=g++
 
 # Add CMake install dir to PATH
 ENV PATH="usr/local/bin:${PATH}"
+
+# Build & Install fmtlib
+RUN cd /tmp && \
+	git clone --recursive https://github.com/fmtlib/fmt.git && \
+	mkdir -p fmt/build && cd fmt/build && \
+	git checkout 5.2.0 && \
+	cmake -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install spdlog
+RUN cd /tmp && \
+	git clone --recursive https://github.com/gabime/spdlog.git && \
+	mkdir -p spdlog/build && cd spdlog/build && \
+	git checkout v1.3.1 && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
 
 # Build & Install libwebsockets
 RUN cd /tmp && \
