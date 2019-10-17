@@ -63,7 +63,7 @@ public:
         	int ret;
 	        json_error_t err;
 
-        	assert(state != STATE_STARTED);
+        	assert(state != State::STARTED);
 
 	        ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f }",
                 	"signal_index", &idx,
@@ -74,12 +74,12 @@ public:
 
 		info("parsed config thresh=%f signal_index=%d", thresh, idx);
 
-	        state = STATE_PARSED;
+	        state = State::PARSED;
 	}
 
-	virtual int process(sample *smp)
+	virtual villas::node::Hook::Reason process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
+		assert(state == State::STARTED);
 
 		/* Get value of PPS signal */
 		float value = smp->data[idx].f; // TODO check if it is really float
@@ -109,7 +109,7 @@ public:
 		lastValue = value;
 
 		if (edgeCounter < 2)
-			return HOOK_SKIP_SAMPLE;
+			return Hook::Reason::SKIP_SAMPLE;
 		else if (edgeCounter == 2 && isEdge)
 			realTime.tv_nsec = 0;
 		else
@@ -122,9 +122,9 @@ public:
 
 		/* Update timestamp */
 		smp->ts.origin = realTime;
-		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
-		return HOOK_OK;
+		return Hook::Reason::OK;
 	}
 };
 
@@ -132,7 +132,7 @@ public:
 static HookPlugin<PpsTsHook> p(
 	"pps_ts",
 	"Timestamp samples based GPS PPS signal",
-	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
 	99
 );
 
