@@ -95,7 +95,8 @@ build:raspbian:armv6l:
   variables:
     DOCKER_IMAGE_DEV: villas/node-dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
-  when: manual
+  only:
+  - master
 
 build:debian-multiarch:armhf:
   extends: build:fedora:x86_64
