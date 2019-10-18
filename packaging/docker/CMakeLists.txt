@@ -36,7 +36,7 @@ set(DOCKER_RUN_OPTS
 	--volume \"${PROJECT_SOURCE_DIR}:/villas\"
 )
 
-foreach(SUFFIX app dev dev-centos dev-ubuntu)
+foreach(SUFFIX app dev dev-centos dev-ubuntu dev-raspbian)
 	add_custom_target(deploy-docker-${SUFFIX}
 		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
 		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:latest
@@ -66,7 +66,7 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 	add_dependencies(deploy-docker-${SUFFIX} docker-${SUFFIX})
 	add_dependencies(run-docker-${SUFFIX} docker-${SUFFIX})
 endforeach()
-	
+
 # Special cases for 'docker' target
 add_custom_target(run-docker
 	COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}:${DOCKER_TAG} node -h
