@@ -561,10 +561,10 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			const size_t raw_samples_available = bytes_available / d->sample_size;
 			const size_t villas_samples_available = raw_samples_available / d->chanlist_len;
 
-			info("there are %ld bytes available (%ld requested) => %ld villas samples",
+			info("there are %zd bytes available (%zu requested) => %zu villas samples",
 			     bytes_available, bytes_requested, villas_samples_available);
 
-			info("there are %ld kB available (%ld kB requested)",
+			info("there are %zu kB available (%zu kB requested)",
 			     bytes_available / 1024, bytes_requested / 1024);
 
 			if (cnt > villas_samples_available)
@@ -582,7 +582,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 				smps[i]->length = d->chanlist_len;
 
 				if (smps[i]->capacity < d->chanlist_len) {
-					error("Sample has insufficient capacity: %d < %ld",
+					error("Sample has insufficient capacity: %d < %zd",
 					      smps[i]->capacity, d->chanlist_len);
 				}
 
@@ -611,7 +611,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 
-			info("consumed %ld bytes", bytes_consumed);
+			info("consumed %zd bytes", bytes_consumed);
 
 			/* Start at the beginning again */
 			c->bufptr = c->buf;
@@ -857,7 +857,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	else {
 		struct timespec now = time_now();
 		if (time_delta(&d->last_debug, &now) >= 1) {
-			debug(LOG_COMEDI | 2, "Comedi write buffer: %4ld villas samples (%2.0f%% of buffer)",
+			debug(LOG_COMEDI | 2, "Comedi write buffer: %4zd villas samples (%2.0f%% of buffer)",
 			      villas_samples_in_buffer,
 			      (100.0f * villas_samples_in_buffer / buffer_capacity_villas));
 
@@ -870,7 +870,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	while (villas_samples_written < cnt) {
 		struct sample *sample = smps[villas_samples_written];
 		if (sample->length != d->chanlist_len)
-			error("Value count in sample (%d) != configured output channels (%ld)",
+			error("Value count in sample (%d) != configured output channels (%zd)",
 			      sample->length, d->chanlist_len);
 
 		d->bufptr = d->buffer;
