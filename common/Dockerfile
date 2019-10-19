@@ -54,7 +54,7 @@ RUN dnf -y install \
 	rpmdevtools rpm-build
 
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
 
 # Dependencies
 RUN dnf -y install \
