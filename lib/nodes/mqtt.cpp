@@ -61,7 +61,7 @@ static void * mosquitto_loop_thread(void *ctx)
 				else
 					warning("MQTT: successfully reconnected to broker for node %s: %s", node_name(node), mosquitto_strerror(ret));
 
-				ret = mosquitto_loop(m->client, -1, 1);
+				ret = mosquitto_loop(m->client, 0, 1);
 				if (ret != MOSQ_ERR_SUCCESS)
 					warning("MQTT: persisting connection error for node %s: %s", node_name(node), mosquitto_strerror(ret));
 			}
