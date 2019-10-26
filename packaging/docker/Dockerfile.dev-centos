@@ -38,7 +38,7 @@ ARG VERSION=unknown
 ARG VARIANT=unknown
 
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
 
 USER root
 
@@ -48,7 +48,7 @@ RUN yum -y install epel-release
 # Toolchain
 RUN yum -y install \
 	devtoolset-7-toolchain \
-	pkgconfig make cmake \
+	pkgconfig make cmake3 \
 	autoconf automake autogen libtool \
 	flex bison \
 	texinfo git curl tar \
@@ -84,28 +84,48 @@ RUN yum -y install \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg \
-	libiec61850 \
 	librabbitmq-devel \
 	mosquitto-devel \
-	comedilib-devel \
 	libibverbs-devel \
 	librdmacm-devel \
 	re-devel \
-	uldaq-devel \
-	spdlog-devel
+	uldaq-devel
+
+# Build & Install fmtlib
+RUN cd /tmp && \
+	git clone --recursive https://github.com/fmtlib/fmt.git && \
+	mkdir -p fmt/build && cd fmt/build && \
+	git checkout 5.2.0 && \
+	cmake3 -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install spdlog
+RUN cd /tmp && \
+	git clone --recursive https://github.com/gabime/spdlog.git && \
+	mkdir -p spdlog/build && cd spdlog/build && \
+	git checkout v1.3.1 && \
+	cmake3 -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
 
 # Build & Install Criterion
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
 	rm -rf /tmp/*
 
-# Build & Install Criterion
+# Build & Install libwebsockets
 RUN cd /tmp && \
-	git clone -b v2.4-stable http://github.com/warmcat/libwebsockets && \
+	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install libiec61850
+RUN cd /tmp && \
+	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
+	mkdir -p libiec61850/build && cd libiec61850/build && \
+	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Workaround for libnl3's search path for netem distributions

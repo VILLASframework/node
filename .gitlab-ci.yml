@@ -48,6 +48,12 @@ prepare:ubuntu:docker-dev:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
     DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
 
+prepare:centos:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-centos
+    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
+
 prepare:debian-armhf:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
@@ -88,6 +94,16 @@ build:ubuntu:x86_64:
   extends: build:fedora:x86_64
   variables:
     DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
+    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
+
+build:centos:x86_64:
+  extends: build:fedora:x86_64
+  script:
+    - mkdir -p build && cd build
+    - cmake3 .. ${CMAKE_OPTS}
+    - make ${MAKE_OPTS}
+  variables:
+    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
 build:raspbian:armv6l:
@@ -178,7 +194,12 @@ packaging:docker:
         --file packaging/docker/Dockerfile.app
         --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf
   tags:
     - shell
     - linux
