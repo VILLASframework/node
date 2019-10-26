@@ -34,16 +34,16 @@ struct param {
 	int thread_count;
 	int pool_size;
 	size_t block_size;
-	enum MemoryFlags memory_type;
+	struct memory_type *mt;
 };
 
 ParameterizedTestParameters(pool, basic)
 {
 	static struct param params[] = {
-		{ 1,	4096,	150,	MemoryFlags::HEAP },
-		{ 1,	128,	8,	MemoryFlags::HUGEPAGE },
-		{ 1,	4,	8192,	MemoryFlags::HUGEPAGE },
-		{ 1,	1 << 13, 4,	MemoryFlags::HUGEPAGE }
+		{ 1,	4096,	150,	&memory_heap },
+		{ 1,	128,	8,	&memory_mmap_hugetlb },
+		{ 1,	4,	8192,	&memory_mmap_hugetlb },
+		{ 1,	1 << 13, 4,	&memory_mmap_hugetlb }
 	};
 
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
@@ -56,9 +56,7 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 
 	void *ptr, *ptrs[p->pool_size];
 
-	struct memory_type *mt = memory_type_lookup(p->memory_type);
-
-	ret = pool_init(&pool, p->pool_size, p->block_size, mt);
+	ret = pool_init(&pool, p->pool_size, p->block_size, p->mt);
 	cr_assert_eq(ret, 0, "Failed to create pool");
 
 	ptr = pool_get(&pool);

@@ -54,7 +54,7 @@ struct param {
 	int thread_count;
 	bool many;
 	int batch_size;
-	enum MemoryFlags memory_type;
+	struct memory_type *mt;
 	volatile int start;
 	struct queue queue;
 };
@@ -274,35 +274,35 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.thread_count = 32,
 			.many = true,
 			.batch_size = 10,
-			.memory_type = MemoryFlags::HEAP
+			.mt = &memory_heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 100,
-			.memory_type = MemoryFlags::HEAP
+			.mt = &memory_heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 14,
 			.thread_count = 16,
 			.many = true,
 			.batch_size = 100,
-			.memory_type = MemoryFlags::HEAP
+			.mt = &memory_heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 10,
-			.memory_type = MemoryFlags::HEAP
+			.mt = &memory_heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 9,
 			.thread_count = 16,
 			.many = false,
 			.batch_size = 10,
-			.memory_type = MemoryFlags::HUGEPAGE
+			.mt = &memory_mmap_hugetlb
 		}
 	};
 
@@ -321,9 +321,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	p->start = 0;
 	p->queue.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
-	struct memory_type *mt = memory_type_lookup(p->memory_type);
-
-	ret = queue_init(&p->queue, p->queue_size, mt);
+	ret = queue_init(&p->queue, p->queue_size, p->mt);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	uint64_t start_tsc_time, end_tsc_time;

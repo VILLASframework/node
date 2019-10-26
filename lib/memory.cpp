@@ -44,9 +44,9 @@ int memory_init(int hugepages)
 
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-	ret = memory_hugepage_init(hugepages);
-	if (ret)
-		return ret;
+		ret = memory_hugepage_init(hugepages);
+		if (ret)
+			return ret;
 
 	size_t lock = kernel_get_hugepage_size() * hugepages;
 
@@ -142,10 +142,10 @@ int memory_free(void *ptr)
 
 	/* Remove allocation entry */
 	auto iter = allocations.find(ptr);
-  	if (iter == allocations.end())
+	if (iter == allocations.end())
 		return -1;
 
-    allocations.erase(iter);
+	allocations.erase(iter);
 	free(ma);
 
 	return 0;
@@ -156,12 +156,4 @@ struct memory_allocation * memory_get_allocation(void *ptr)
 	return allocations[ptr];
 }
 
-struct memory_type * memory_type_lookup(enum MemoryFlags flags)
-{
-	if ((int) flags & (int) MemoryFlags::HUGEPAGE)
-		return &memory_hugepage;
-	else if ((int) flags & (int) MemoryFlags::HEAP)
-		return &memory_heap;
-	else
-		return nullptr;
-}
+struct memory_type *memory_default = nullptr;

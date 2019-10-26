@@ -37,14 +37,12 @@ extern void init_memory();
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, PAGESIZE, HUGEPAGESIZE),
 	DataPoints(size_t, 1, 8, PAGESIZE, PAGESIZE),
-	DataPoints(enum MemoryFlags, MemoryFlags::HEAP, MemoryFlags::HUGEPAGE, MemoryFlags::HUGEPAGE)
+	DataPoints(struct memory_type *, &memory_heap, &memory_mmap_hugetlb, &memory_mmap_hugetlb)
 };
 
-Theory((size_t len, size_t align, enum MemoryFlags memory_type), memory, aligned, .init = init_memory) {
+Theory((size_t len, size_t align, struct memory_type *mt), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
-
-	struct memory_type *mt = memory_type_lookup(memory_type);
 
 	ptr = memory_alloc_aligned(len, align, mt);
 	cr_assert_not_null(ptr, "Failed to allocate memory");
