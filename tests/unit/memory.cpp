@@ -50,7 +50,7 @@ Theory((size_t len, size_t align, struct memory_type *mt), memory, aligned, .ini
 	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
 
 #ifndef __APPLE__
-	if (mt == &memory_hugepage) {
+	if (mt == &memory_mmap_hugetlb) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE), "Memory at %p is not alligned to %#x byte bounary", ptr, HUGEPAGESIZE);
 	}
 #endif

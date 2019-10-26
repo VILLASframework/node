@@ -45,8 +45,8 @@ set(LIB_SRC
     mapping.cpp
     memory.cpp
     memory/heap.cpp
-    memory/hugepage.cpp
     memory/managed.cpp
+    memory/mmap.cpp
     node_direction.cpp
     node_type.cpp
     node.cpp

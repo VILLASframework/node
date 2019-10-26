@@ -1,4 +1,4 @@
-/** Hugepage memory allocator.
+/** mmap memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -74,11 +74,9 @@ int memory_hugepage_init(int hugepages)
 	return 0;
 }
 
-/** Allocate memory backed by hugepages with malloc() like interface */
-static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
+/** Allocate memory backed by mmaps with malloc() like interface */
+static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment, struct memory_type *m)
 {
-	static bool use_huge = true;
-
 	int flags, fd;
 	size_t sz;
 
@@ -86,7 +84,7 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 	if (!ma)
 		return nullptr;
 
-retry:	if (use_huge) {
+	if (m->flags & (int) MemoryFlags::HUGEPAGE) {
 #ifdef __linux__
 		flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 #else
@@ -99,15 +97,19 @@ retry:	if (use_huge) {
 		fd = -1;
 #endif
 		sz = hugepgsz;
+
+		info("allocate %#zx bytes mmap_hugetlb memory", len);
 	}
 	else {
 		flags = MAP_PRIVATE | MAP_ANONYMOUS;
 		fd = -1;
 
 		sz = pgsz;
+
+		info("allocate %#zx bytes mmap memory", len);
 	}
 
-	/** We must make sure that len is a multiple of the (huge)page size
+	/** We must make sure that len is a multiple of the page size
 	 *
 	 * See: https://lkml.org/lkml/2014/10/22/925
 	 */
@@ -117,21 +119,14 @@ retry:	if (use_huge) {
 
 	ma->address = mmap(nullptr, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
-		if (use_huge) {
-			warning("Failed to map hugepages, try with normal pages instead!");
-			use_huge = false;
-			goto retry;
-		}
-		else {
-			free(ma);
-			return nullptr;
-		}
+		free(ma);
+		return nullptr;
 	}
 
 	return ma;
 }
 
-static int memory_hugepage_free(struct memory_type *m, struct memory_allocation *ma)
+static int memory_mmap_free(struct memory_allocation *ma, struct memory_type *m)
 {
 	int ret;
 
@@ -142,10 +137,18 @@ static int memory_hugepage_free(struct memory_type *m, struct memory_allocation 
 	return 0;
 }
 
-struct memory_type memory_hugepage = {
-	.name = "mmap_hugepages",
+struct memory_type memory_mmap = {
+	.name = "mmap",
+	.flags = (int) MemoryFlags::MMAP,
+	.alignment = 12, /* 4k page */
+	.alloc = memory_mmap_alloc,
+	.free = memory_mmap_free
+};
+
+struct memory_type memory_mmap_hugetlb = {
+	.name = "mmap",
 	.flags = (int) MemoryFlags::MMAP | (int) MemoryFlags::HUGEPAGE,
 	.alignment = 21, /* 2 MiB hugepage */
-	.alloc = memory_hugepage_alloc,
-	.free = memory_hugepage_free
+	.alloc = memory_mmap_alloc,
+	.free = memory_mmap_free
 };
