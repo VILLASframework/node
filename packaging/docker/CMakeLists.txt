@@ -21,7 +21,7 @@
 ###################################################################################
 
 set(DOCKER_FILE Dockerfile)
-set(DOCKER_IMAGE villas/node)
+set(DOCKER_IMAGE registry.git.rwth-aachen.de/acs/public/villas/node)
 set(DOCKER_TAG ${CMAKE_PROJECT_GIT_BRANCH})
 set(DOCKER_RUN_OPTS
 	--interactive
@@ -38,29 +38,29 @@ set(DOCKER_RUN_OPTS
 
 foreach(SUFFIX app dev dev-centos dev-ubuntu dev-raspbian)
 	add_custom_target(deploy-docker-${SUFFIX}
-		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
-		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:latest
-		COMMENT "Deploy Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
+		COMMAND docker push ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}
+		COMMAND docker push ${DOCKER_IMAGE}/${SUFFIX}:latest
+		COMMENT "Deploy Docker image: ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_custom_target(run-docker-${SUFFIX}
-		COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
-		COMMENT "Run Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
+		COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}
+		COMMENT "Run Docker image: ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_custom_target(docker-${SUFFIX}
 		COMMAND docker build
 			--file ${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.${SUFFIX}
-			--tag ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
-			--tag ${DOCKER_IMAGE}-${SUFFIX}:latest
-			--build-arg BUILDER_IMAGE=${DOCKER_IMAGE}-dev:${DOCKER_TAG}
+			--tag ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}
+			--tag ${DOCKER_IMAGE}/${SUFFIX}:latest
+			--build-arg BUILDER_IMAGE=${DOCKER_IMAGE}/dev:${DOCKER_TAG}
 			--build-arg DOCKER_TAG=${DOCKER_TAG}
 			--build-arg GIT_BRANCH=${CMAKE_PROJECT_GIT_BRANCH}
 			--build-arg GIT_REV=${CMAKE_PROJECT_GIT_REV}
 			--build-arg VERSION=${CMAKE_PROJECT_VERSION}
 			--build-arg VARIANT=${CMAKE_PROJECT_VARIANT}
 			${DOCKER_BUILD_OPTS} ${PROJECT_SOURCE_DIR}
-		COMMENT "Build Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
+		COMMENT "Build Docker image: ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_dependencies(deploy-docker-${SUFFIX} docker-${SUFFIX})
@@ -74,8 +74,8 @@ add_custom_target(run-docker
 )
 
 add_custom_target(docker
-	COMMAND docker tag ${DOCKER_IMAGE}-app:${DOCKER_TAG} ${DOCKER_IMAGE}:${DOCKER_TAG}
-	COMMAND docker tag ${DOCKER_IMAGE}-app:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+	COMMAND docker tag ${DOCKER_IMAGE}/app:${DOCKER_TAG} ${DOCKER_IMAGE}:${DOCKER_TAG}
+	COMMAND docker tag ${DOCKER_IMAGE}/app:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
 )
 
 add_custom_target(deploy-docker DEPENDS docker-app
