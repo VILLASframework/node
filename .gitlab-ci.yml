@@ -260,12 +260,12 @@ deploy:docker:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:${DOCKER_TAG}
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:${DOCKER_TAG}
   tags:
     - shell
     - linux
