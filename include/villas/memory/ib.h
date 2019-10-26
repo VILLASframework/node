@@ -26,8 +26,8 @@
 #include <villas/node.h>
 
 struct memory_ib {
-    struct ibv_pd *pd;
-    struct memory_type *parent;
+	struct ibv_pd *pd;
+	struct memory_type *parent;
 };
 
 struct ibv_mr * memory_ib_get_mr(void *ptr);
