@@ -6,8 +6,8 @@ variables:
   CRITERION_OPTS: --ignore-warnings
   DOCKER_FILE: packaging/docker/Dockerfile.dev
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
-  DOCKER_IMAGE: villas/node
-  DOCKER_IMAGE_DEV: villas/node-dev
+  DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/villasnode/node
+  DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/villasnode/node-dev
   MAKE_OPTS: -j32
   RELEASEVER: 29
 
@@ -170,6 +170,8 @@ test:integration:
 
 packaging:docker:
   stage: packaging
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker build
         --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
