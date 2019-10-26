@@ -40,7 +40,7 @@ struct ibv_mr * memory_ib_get_mr(void *ptr)
 	return mr;
 }
 
-static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, struct memory_type *m)
 {
 	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 
@@ -52,7 +52,7 @@ static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t 
 	ma->length = len;
 	ma->alignment = alignment;
 
-	ma->parent = mi->parent->alloc(mi->parent, len + sizeof(struct ibv_mr *), alignment);
+	ma->parent = mi->parent->alloc(len + sizeof(struct ibv_mr *), alignment, mi->parent);
 	ma->address = ma->parent->address;
 
 	if (!mi->pd)
@@ -60,7 +60,7 @@ static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t 
 
 	ma->ib.mr = ibv_reg_mr(mi->pd, ma->address, ma->length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 	if (!ma->ib.mr) {
-		mi->parent->free(mi->parent, ma->parent);
+		mi->parent->free(ma->parent, mi->parent);
 		free(ma);
 		return nullptr;
 	}
@@ -68,14 +68,14 @@ static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t 
 	return ma;
 }
 
-static int memory_ib_free(struct memory_type *m, struct memory_allocation *ma)
+static int memory_ib_free(struct memory_allocation *ma, struct memory_type *m)
 {
 	int ret;
 	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 
 	ibv_dereg_mr(ma->ib.mr);
 
-	ret = mi->parent->free(mi->parent, ma->parent);
+	ret = mi->parent->free(ma->parent, mi->parent);
 	if (ret)
 		return ret;
 

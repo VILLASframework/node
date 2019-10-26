@@ -27,7 +27,7 @@
 
 using namespace villas::utils;
 
-static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment, struct memory_type *m)
 {
 	int ret;
 
@@ -51,7 +51,7 @@ static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_
 	return ma;
 }
 
-static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
+static int memory_heap_free(struct memory_allocation *ma, struct memory_type *m)
 {
 	free(ma->address);
 

@@ -30,8 +30,8 @@
 struct memory_type;
 struct node;
 
-typedef struct memory_allocation * (*memory_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
-typedef int (*memory_deallocator_t)(struct memory_type *mem, struct memory_allocation * ma);
+typedef struct memory_allocation * (*memory_allocator_t)(size_t len, size_t alignment, struct memory_type *mem);
+typedef int (*memory_deallocator_t)(struct memory_allocation * ma, struct memory_type *mem);
 
 enum class MemoryFlags {
 	MMAP		= (1 << 0),

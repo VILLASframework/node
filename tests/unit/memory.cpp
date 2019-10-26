@@ -46,7 +46,7 @@ Theory((size_t len, size_t align, enum MemoryFlags memory_type), memory, aligned
 
 	struct memory_type *mt = memory_type_lookup(memory_type);
 
-	ptr = memory_alloc_aligned(mt, len, align);
+	ptr = memory_alloc_aligned(len, align, mt);
 	cr_assert_not_null(ptr, "Failed to allocate memory");
 
 	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
@@ -72,26 +72,26 @@ Test(memory, manager, .init = init_memory) {
 	total_size = 1 << 10;
 	max_block = total_size - sizeof(struct memory_type) - sizeof(struct memory_block);
 
-	p = memory_alloc(&memory_heap, total_size);
+	p = memory_alloc(total_size, &memory_heap);
 	cr_assert_not_null(p);
 
 	m = memory_managed(p, total_size);
 	cr_assert_not_null(m);
 
-	p1 = memory_alloc(m, 16);
+	p1 = memory_alloc(16, m);
 	cr_assert_not_null(p1);
 
-	p2 = memory_alloc(m, 32);
+	p2 = memory_alloc(32, m);
 	cr_assert_not_null(p2);
 
 	ret = memory_free(p1);
 	cr_assert(ret == 0);
 
-	p1 = memory_alloc_aligned(m, 128, 128);
+	p1 = memory_alloc_aligned(128, 128, m);
 	cr_assert_not_null(p1);
 	cr_assert(IS_ALIGNED(p1, 128));
 
-	p3 = memory_alloc_aligned(m, 128, 256);
+	p3 = memory_alloc_aligned(128, 256, m);
 	cr_assert(p3);
 	cr_assert(IS_ALIGNED(p3, 256));
 
@@ -104,7 +104,7 @@ Test(memory, manager, .init = init_memory) {
 	ret = memory_free(p3);
 	cr_assert(ret == 0);
 
-	p1 = memory_alloc(m, max_block);
+	p1 = memory_alloc(max_block, m);
 	cr_assert_not_null(p1);
 
 	ret = memory_free(p1);

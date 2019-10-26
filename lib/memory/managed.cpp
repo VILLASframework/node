@@ -36,7 +36,7 @@
 
 using namespace villas::utils;
 
-static struct memory_allocation * memory_managed_alloc(struct memory_type *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignment, struct memory_type *m)
 {
 	/* Simple first-fit allocation */
 	struct memory_block *first = (struct memory_block *) m->_vd;
@@ -124,7 +124,7 @@ static struct memory_allocation * memory_managed_alloc(struct memory_type *m, si
 	return nullptr;
 }
 
-static int memory_managed_free(struct memory_type *m, struct memory_allocation *ma)
+static int memory_managed_free(struct memory_allocation *ma, struct memory_type *m)
 {
 	struct memory_block *block = ma->managed.block;
 

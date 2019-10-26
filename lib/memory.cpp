@@ -105,16 +105,16 @@ int memory_lock(size_t lock)
 	return 0;
 }
 
-void * memory_alloc(struct memory_type *m, size_t len)
+void * memory_alloc(size_t len, struct memory_type *m)
 {
-	return memory_alloc_aligned(m, len, sizeof(void *));
+	return memory_alloc_aligned(len, sizeof(void *), m);
 }
 
-void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
+void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m)
 {
-	struct memory_allocation *ma = m->alloc(m, len, alignment);
+	struct memory_allocation *ma = m->alloc(len, alignment, m);
 	if (ma == nullptr) {
-		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno) );
+		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno));
 		return nullptr;
 	}
 
@@ -136,7 +136,7 @@ int memory_free(void *ptr)
 
 	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory: %p", ma->length, ma->type->name, ma->address);
 
-	ret = ma->type->free(ma->type, ma);
+	ret = ma->type->free(ma, ma->type);
 	if (ret)
 		return ret;
 
