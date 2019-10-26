@@ -64,13 +64,7 @@ class Node : public Tool {
 public:
 	Node(int argc, char *argv[]) :
 		Tool(argc, argv, "node")
-	{
-		int ret;
-
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
-		if (ret)
-			throw RuntimeError("Failed to initialize memory");
-	}
+	{ }
 
 protected:
 	SuperNode sn;

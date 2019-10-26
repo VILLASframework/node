@@ -48,7 +48,7 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 	}
 
 	q->buffer_mask = size - 1;
-	struct queue_cell *buffer = (struct queue_cell *) memory_alloc(m, sizeof(struct queue_cell) * size);
+	struct queue_cell *buffer = (struct queue_cell *) memory_alloc(sizeof(struct queue_cell) * size, m);
 	if (!buffer)
 		return -2;
 

@@ -41,9 +41,7 @@
 
 #include <villas/common.h>
 #include <villas/config.h>
-
-/* Forward declarations */
-struct memory_type;
+#include <villas/memory_type.h>
 
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
@@ -73,7 +71,7 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memory_type *mem);
+int queue_init(struct queue *q, size_t size, struct memory_type *mem = memory_default);
 
 /** Desroy MPMC queue and release memory */
 int queue_destroy(struct queue *q);

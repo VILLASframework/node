@@ -81,11 +81,11 @@ int loopback_start(struct node *n)
 		vlist_length(&n->out.signals)
 	);
 
-	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(len), &memory_hugepage);
+	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(len));
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, l->mode);
+	return queue_signalled_init(&l->queue, l->queuelen, memory_default, l->mode);
 }
 
 int loopback_stop(struct node *n)

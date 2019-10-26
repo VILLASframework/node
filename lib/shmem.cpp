@@ -94,7 +94,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	close(fd);
 
 	manager = memory_managed(base, len);
-	shared = (struct shmem_shared *) memory_alloc(manager, sizeof(struct shmem_shared));
+	shared = (struct shmem_shared *) memory_alloc(sizeof(struct shmem_shared), manager);
 	if (!shared) {
 		errno = ENOMEM;
 		return -5;

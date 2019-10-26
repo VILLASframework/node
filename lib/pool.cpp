@@ -36,7 +36,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
 
-	void *buffer = memory_alloc_aligned(m, p->len, p->alignment);
+	void *buffer = memory_alloc_aligned(p->len, p->alignment, m);
 	if (!buffer)
 		serror("Failed to allocate memory for memory pool");
 	else

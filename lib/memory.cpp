@@ -44,9 +44,18 @@ int memory_init(int hugepages)
 
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-	ret = memory_hugepage_init(hugepages);
-	if (ret)
-		return ret;
+	if (hugepages > 0) {
+		ret = memory_hugepage_init(hugepages);
+		if (ret)
+			return ret;
+
+		memory_default = &memory_mmap_hugetlb;
+	}
+	else {
+		memory_default = &memory_mmap;
+
+		warning("Hugepage allocator disabled.");
+	}
 
 	size_t lock = kernel_get_hugepage_size() * hugepages;
 
@@ -105,16 +114,16 @@ int memory_lock(size_t lock)
 	return 0;
 }
 
-void * memory_alloc(struct memory_type *m, size_t len)
+void * memory_alloc(size_t len, struct memory_type *m)
 {
-	return memory_alloc_aligned(m, len, sizeof(void *));
+	return memory_alloc_aligned(len, sizeof(void *), m);
 }
 
-void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
+void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m)
 {
-	struct memory_allocation *ma = m->alloc(m, len, alignment);
+	struct memory_allocation *ma = m->alloc(len, alignment, m);
 	if (ma == nullptr) {
-		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno) );
+		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno));
 		return nullptr;
 	}
 
@@ -136,16 +145,16 @@ int memory_free(void *ptr)
 
 	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory: %p", ma->length, ma->type->name, ma->address);
 
-	ret = ma->type->free(ma->type, ma);
+	ret = ma->type->free(ma, ma->type);
 	if (ret)
 		return ret;
 
 	/* Remove allocation entry */
 	auto iter = allocations.find(ptr);
-  	if (iter == allocations.end())
+	if (iter == allocations.end())
 		return -1;
 
-    allocations.erase(iter);
+	allocations.erase(iter);
 	free(ma);
 
 	return 0;
@@ -156,12 +165,4 @@ struct memory_allocation * memory_get_allocation(void *ptr)
 	return allocations[ptr];
 }
 
-struct memory_type * memory_type_lookup(enum MemoryFlags flags)
-{
-	if ((int) flags & (int) MemoryFlags::HUGEPAGE)
-		return &memory_hugepage;
-	else if ((int) flags & (int) MemoryFlags::HEAP)
-		return &memory_heap;
-	else
-		return nullptr;
-}
+struct memory_type *memory_default = nullptr;

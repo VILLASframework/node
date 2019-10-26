@@ -226,7 +226,7 @@ int path_prepare(struct path *p)
 	assert(p->state == State::CHECKED);
 
 	/* Initialize destinations */
-	struct memory_type *pool_mt = &memory_hugepage;
+	struct memory_type *pool_mt = memory_default;
 	unsigned pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
@@ -236,7 +236,7 @@ int path_prepare(struct path *p)
 			pool_size = node_type(pd->node)->pool_size;
 
 		if (node_type(pd->node)->memory_type)
-			pool_mt = node_memory_type(pd->node, &memory_hugepage);
+			pool_mt = node_memory_type(pd->node);
 
 		ret = path_destination_init(pd, p->queuelen);
 		if (ret)

@@ -30,8 +30,8 @@
 struct memory_type;
 struct node;
 
-typedef struct memory_allocation * (*memory_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
-typedef int (*memory_deallocator_t)(struct memory_type *mem, struct memory_allocation * ma);
+typedef struct memory_allocation * (*memory_allocator_t)(size_t len, size_t alignment, struct memory_type *mem);
+typedef int (*memory_deallocator_t)(struct memory_allocation * ma, struct memory_type *mem);
 
 enum class MemoryFlags {
 	MMAP		= (1 << 0),
@@ -53,12 +53,11 @@ struct memory_type {
 };
 
 extern struct memory_type memory_heap;
-extern struct memory_type memory_hugepage;
+extern struct memory_type memory_mmap;
+extern struct memory_type memory_mmap_hugetlb;
+extern struct memory_type *memory_default;
 
 struct memory_type * memory_ib(struct node *n, struct memory_type *parent);
 struct memory_type * memory_managed(void *ptr, size_t len);
 
 int memory_hugepage_init(int hugepages);
-
-struct memory_type * memory_type_lookup(enum MemoryFlags flags);
-

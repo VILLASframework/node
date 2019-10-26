@@ -31,7 +31,7 @@ int path_destination_init(struct path_destination *pd, int queuelen)
 {
 	int ret;
 
-	ret = queue_init(&pd->queue, queuelen, &memory_hugepage);
+	ret = queue_init(&pd->queue, queuelen);
 	if (ret)
 		return ret;
 

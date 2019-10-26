@@ -227,7 +227,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
-	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES), &memory_hugepage);
+	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
 	cr_assert_eq(ret, 0);
 
 	vlist_init(&signals);
@@ -297,7 +297,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
-	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES), &memory_hugepage);
+	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
 	cr_assert_eq(ret, 0);
 
 	ret = sample_alloc_many(&pool, smps, p->cnt);

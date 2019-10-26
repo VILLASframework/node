@@ -73,9 +73,9 @@ int memory_lock(size_t lock);
  * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.
  */
-void * memory_alloc(struct memory_type *m, size_t len);
+void * memory_alloc(size_t len, struct memory_type *m = memory_default);
 
-void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment);
+void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m = memory_default);
 
 int memory_free(void *ptr);
 
