@@ -193,7 +193,7 @@ struct node_type * node_type(struct node *n)
 	return n->_vt;
 }
 
-struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
+struct memory_type * node_memory_type(struct node *n);
 
 bool node_is_valid_name(const char *name);
 

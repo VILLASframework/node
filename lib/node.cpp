@@ -542,9 +542,9 @@ int node_netem_fds(struct node *n, int fds[])
 	return node_type(n)->netem_fds ? node_type(n)->netem_fds(n, fds) : -1;
 }
 
-struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
+struct memory_type * node_memory_type(struct node *n)
 {
-	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
+	return node_type(n)->memory_type ? node_type(n)->memory_type(n, memory_default) : memory_default;
 }
 
 int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
