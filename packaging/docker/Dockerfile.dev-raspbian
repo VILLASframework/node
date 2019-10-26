@@ -81,7 +81,7 @@ RUN cd /tmp && \
 RUN cd /tmp && \
 	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake .. && make -j$(nproc) install && \
+	cmake -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Build & Install libiec61850

@@ -107,7 +107,7 @@ RUN cd /tmp && \
 RUN cd /tmp && \
 	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Build & Install libiec61850
