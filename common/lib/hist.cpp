@@ -28,6 +28,7 @@
 #include <villas/hist.hpp>
 #include <villas/config.h>
 #include <villas/table.hpp>
+#include <villas/exceptions.hpp>
 
 using namespace villas::utils;
 
@@ -188,6 +189,10 @@ void Hist::plot() const
 char * Hist::dump() const
 {
 	char *buf = new char[128];
+	if (!buf)
+		throw RuntimeError("Failed to allocate memory!");
+
+	memset(buf, 0, 128);
 
 	strcatf(&buf, "[ ");
 

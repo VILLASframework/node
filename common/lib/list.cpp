@@ -190,13 +190,11 @@ void * vlist_lookup(struct vlist *l, const char *name)
 	return vlist_search(l, cmp_lookup, (void *) name);
 }
 
-ssize_t vlist_lookup_index(struct vlist *l, const char *name)
+ssize_t vlist_lookup_index(struct vlist *l, const void *ptr)
 {
-	void *ptr = vlist_lookup(l, name);
-	if (!ptr)
-		return -1;
+	void *found = vlist_lookup(l, (char *) ptr);
 
-	return vlist_index(l, ptr);
+	return found ? vlist_index(l, found) : -1;
 }
 
 int vlist_contains(struct vlist *l, void *p)

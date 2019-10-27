@@ -35,7 +35,7 @@
   #include <sys/sysctl.h>
 #endif
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 #ifndef bit_TSC
   #define bit_TSC (1 << 4)

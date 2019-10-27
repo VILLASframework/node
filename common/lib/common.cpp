@@ -21,7 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 
 #include <cstdlib>
 

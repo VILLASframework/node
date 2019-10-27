@@ -33,8 +33,6 @@
 
 #include <jansson.h>
 
-#include <villas/terminal.hpp>
-
 namespace villas {
 
 /* Forward declarations */

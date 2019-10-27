@@ -45,14 +45,14 @@ protected:
 
 public:
 	Window(size_type s = 0, T i = 0) :
-		init(i)
+		init(i),
+		steps(s)
 	{
 		size_type len = LOG2_CEIL(s);
 
 		/* Allocate memory for circular history buffer */
 		data = std::vector<T>(len, i);
 
-		steps = s;
 		pos = len;
 		mask = len - 1;
 	}

@@ -41,8 +41,9 @@
 
 #include <villas/utils.hpp>
 #include <villas/config.h>
-#include <villas/advio.h>
+#include <villas/advio.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
@@ -209,6 +210,10 @@ AFILE * afopen(const char *uri, const char *mode)
 	const char *sep;
 
 	AFILE *af = new AFILE;
+	if (!af)
+		throw RuntimeError("Failed to allocate memory!");
+
+	memset(af, 0, sizeof(AFILE));
 
 	snprintf(af->mode, sizeof(af->mode), "%s", mode);
 

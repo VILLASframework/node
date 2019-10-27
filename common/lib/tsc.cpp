@@ -23,6 +23,8 @@
 
 #include <villas/tsc.h>
 
+using namespace villas;
+
 int tsc_init(struct tsc *t)
 {
 	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
@@ -50,7 +52,7 @@ int tsc_init(struct tsc *t)
 	else {
 		int ret;
 #ifdef __linux__
-		ret = kernel_get_cpu_frequency(&t->frequency);
+		ret = kernel::get_cpu_frequency(&t->frequency);
 		if (ret)
 			return ret;
 #elif defined(__APPLE__)

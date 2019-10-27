@@ -42,7 +42,6 @@
 #include <villas/config.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
-#include <villas/config.h>
 #include <villas/log.hpp>
 
 static pthread_t main_thread;

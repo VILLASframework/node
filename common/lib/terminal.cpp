@@ -40,6 +40,8 @@ Terminal::Terminal()
 	isTty = isatty(fileno(stdin));
 
 	if (isTty) {
+		Logger logger = logging.get("terminal");
+
 		struct sigaction sa_resize;
 		sa_resize.sa_flags = SA_SIGINFO;
 		sa_resize.sa_sigaction = resize;
@@ -53,7 +55,7 @@ Terminal::Terminal()
 		/* Try to get initial terminal dimensions */
 		ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
 		if (ret)
-			throw SystemError("Failed to get terminal dimensions");
+			logger->warn("Failed to get terminal dimensions");
 	}
 
 	/* Fallback if for some reason we can not determine a prober window size */

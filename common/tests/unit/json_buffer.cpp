@@ -30,7 +30,7 @@
 
 using namespace villas;
 
-using villas::Buffer;
+using villas::JsonBuffer;
 
 TestSuite(buffer, .description = "Buffer datastructure");
 

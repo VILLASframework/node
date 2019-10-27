@@ -25,113 +25,101 @@
 #include <cerrno>
 
 #include <villas/utils.hpp>
-#include <villas/task.h>
+#include <villas/task.hpp>
 #include <villas/timing.h>
+#include <villas/exceptions.hpp>
+
+using namespace villas;
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
 #endif /* PERIODIC_TASK_IMPL */
 
-int task_init(struct task *t, double rate, int clock)
+Task::Task(int clk) :
+	clock(clk)
 {
-	int ret;
-
-	t->clock = clock;
-
 #if PERIODIC_TASK_IMPL == TIMERFD
-	t->fd = timerfd_create(t->clock, 0);
-	if (t->fd < 0)
-		return -1;
+	fd = timerfd_create(clock, 0);
+	if (fd < 0)
+		throw SystemError("Failed to create timerfd");
 #elif PERIODIC_TASK_IMPL == RDTSC
-	ret = tsc_init(&t->tsc);
+	int ret = tsc_init(&tsc);
 	if (ret)
 		return ret;
 #endif /* PERIODIC_TASK_IMPL */
-
-	ret = task_set_rate(t, rate);
-	if (ret)
-		return ret;
-
-	return 0;
 }
 
-int task_set_timeout(struct task *t, double to)
+void Task::setTimeout(double to)
 {
 	struct timespec now;
 
-	clock_gettime(t->clock, &now);
+	clock_gettime(clock, &now);
 
 	struct timespec timeout = time_from_double(to);
 	struct timespec next = time_add(&now, &timeout);
 
-	return task_set_next(t, &next);
+	setNext(&next);
 }
 
-int task_set_next(struct task *t, struct timespec *next)
+void Task::setNext(const struct timespec *nxt)
 {
 
 #if PERIODIC_TASK_IMPL != RDTSC
-	t->next = *next;
+	next = *nxt;
 
   #if PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
 		.it_interval = (struct timespec) { 0, 0 },
-		.it_value = t->next
+		.it_value = next
 	};
 
-	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, nullptr);
+	ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, nullptr);
 	if (ret)
-		return ret;
+		throw SystemError("Failed to set timerfd");
   #endif /* PERIODIC_TASK_IMPL == TIMERFD */
 #endif /* PERIODIC_TASK_IMPL != RDTSC */
-
-	return 0;
 }
 
-int task_set_rate(struct task *t, double rate)
+void Task::setRate(double rate)
 {
 #if PERIODIC_TASK_IMPL == RDTSC
-	t->period = tsc_rate_to_cycles(&t->tsc, rate);
-	t->next = tsc_now(&t->tsc) + t->period;
+	period = tsc_rate_to_cycles(&tsc, rate);
+	next = tsc_now(&tsc) + period;
 #else
 	/* A rate of 0 will disarm the timer */
-	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
+	period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
 
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now, next;
 
-	clock_gettime(t->clock, &now);
+	clock_gettime(clock, &now);
 
-	next = time_add(&now, &t->period);
+	next = time_add(&now, &period);
 
-	return task_set_next(t, &next);
+	return setNext(&next);
   #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
-		.it_interval = t->period,
-		.it_value = t->period
+		.it_interval = period,
+		.it_value = period
 	};
 
-	ret = timerfd_settime(t->fd, 0, &its, nullptr);
+	ret = timerfd_settime(fd, 0, &its, nullptr);
 	if (ret)
-		return ret;
+		throw SystemError("Failed to set timerfd");
   #endif /* PERIODIC_TASK_IMPL */
 #endif /* PERIODIC_TASK_IMPL == RDTSC */
-
-	return 0;
 }
 
-int task_destroy(struct task *t)
+Task::~Task()
 {
 #if PERIODIC_TASK_IMPL == TIMERFD
-	return close(t->fd);
-#else
-	return 0;
+	close(fd);
 #endif
 }
 
-uint64_t task_wait(struct task *t)
+uint64_t Task::wait()
 {
 	uint64_t runs;
 
@@ -139,19 +127,19 @@ uint64_t task_wait(struct task *t)
 	int ret;
 	struct timespec now;
 
-	ret = clock_gettime(t->clock, &now);
+	ret = clock_gettime(clock, &now);
 	if (ret)
 		return ret;
 
-	for (runs = 0; time_cmp(&t->next, &now) < 0; runs++)
-		t->next = time_add(&t->next, &t->period);
+	for (runs = 0; time_cmp(&next, &now) < 0; runs++)
+		next = time_add(&next, &period);
 
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
 	do {
-		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, nullptr);
+		ret = clock_nanosleep(clock, TIMER_ABSTIME, &next, nullptr);
 	} while (ret == EINTR);
   #elif PERIODIC_TASK_IMPL == NANOSLEEP
-	struct timespec req, rem = time_diff(&now, &t->next);
+	struct timespec req, rem = time_diff(&now, &next);
 
 	do {
 		req = rem;
@@ -161,28 +149,28 @@ uint64_t task_wait(struct task *t)
 	if (ret)
 		return 0;
 
-	ret = clock_gettime(t->clock, &now);
+	ret = clock_gettime(clock, &now);
 	if (ret)
 		return ret;
 
-	for (; time_cmp(&t->next, &now) < 0; runs++)
-		t->next = time_add(&t->next, &t->period);
+	for (; time_cmp(&next, &now) < 0; runs++)
+		next = time_add(&next, &period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 
-	ret = read(t->fd, &runs, sizeof(runs));
+	ret = read(fd, &runs, sizeof(runs));
 	if (ret < 0)
 		return 0;
 #elif PERIODIC_TASK_IMPL == RDTSC
 	uint64_t now;
 
 	do {
-		now = tsc_now(&t->tsc);
-	} while (now < t->next);
+		now = tsc_now(&tsc);
+	} while (now < next);
 
 
-	for (runs = 0; t->next < now; runs++)
-		t->next += t->period;
+	for (runs = 0; next < now; runs++)
+		next += period;
 #else
   #error "Invalid period task implementation"
 #endif
@@ -190,10 +178,25 @@ uint64_t task_wait(struct task *t)
 	return runs;
 }
 
-int task_fd(struct task *t)
+void Task::stop()
 {
 #if PERIODIC_TASK_IMPL == TIMERFD
-	return t->fd;
+	int ret;
+	struct itimerspec its = {
+		.it_interval = (struct timespec) { 0, 0 },
+		.it_value = (struct timespec) { 0, 0 }
+	};
+
+	ret = timerfd_settime(fd, 0, &its, nullptr);
+	if (ret)
+		throw SystemError("Failed to disarm timerfd");
+#endif /* PERIODIC_TASK_IMPL == TIMERFD */
+}
+
+int Task::getFD() const
+{
+#if PERIODIC_TASK_IMPL == TIMERFD
+	return fd;
 #else
 	return -1;
 #endif

@@ -22,8 +22,9 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/kernel/kernel.h>
 #include <villas/kernel/kernel.hpp>
+
+using namespace villas::kernel;
 
 TestSuite(kernel, .description = "Kernel features");
 
@@ -45,13 +46,13 @@ Test(kernel, sizes)
 {
 	int sz;
 
-	sz = kernel_get_page_size();
+	sz = get_page_size();
 	cr_assert_eq(sz, PAGESIZE);
 
-	sz = kernel_get_hugepage_size();
+	sz = get_hugepage_size();
 	cr_assert(sz == HUGEPAGESIZE);
 
-	sz = kernel_get_cacheline_size();
+	sz = get_cacheline_size();
 	cr_assert_eq(sz, CACHELINESIZE);
 }
 
@@ -60,16 +61,16 @@ Test(kernel, hugepages)
 {
 	int ret;
 
-	ret = kernel_set_nr_hugepages(25);
+	ret = set_nr_hugepages(25);
 	cr_assert_eq(ret, 0);
 
-	ret = kernel_get_nr_hugepages();
+	ret = get_nr_hugepages();
 	cr_assert_eq(ret, 25);
 
-	ret = kernel_set_nr_hugepages(10);
+	ret = set_nr_hugepages(10);
 	cr_assert_eq(ret, 0);
 
-	ret = kernel_get_nr_hugepages();
+	ret = get_nr_hugepages();
 	cr_assert_eq(ret, 10);
 }
 
@@ -89,10 +90,10 @@ Test(kernel, module, .disabled = true)
 {
 	int ret;
 
-	ret = kernel_module_loaded("nf_nat");
+	ret = module_loaded("nf_nat");
 	cr_assert_eq(ret, 0);
 
-	ret = kernel_module_loaded("does_not_exist");
+	ret = module_loaded("does_not_exist");
 	cr_assert_neq(ret, 0);
 }
 
@@ -101,7 +102,7 @@ Test(kernel, frequency)
 	int ret;
 	uint64_t freq;
 
-	ret = kernel_get_cpu_frequency(&freq);
+	ret = get_cpu_frequency(&freq);
 	cr_assert_eq(ret, 0);
 
 	/* Check for plausability only */

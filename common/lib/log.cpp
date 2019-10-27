@@ -27,6 +27,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include <villas/log.hpp>
+#include <villas/terminal.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
@@ -36,6 +37,7 @@ Log villas::logging;
 
 Log::Log(Level lvl) :
 	level(lvl),
+//	pattern("%+")
 	pattern("%H:%M:%S %^%l%$ %n: %v")
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
@@ -91,7 +93,7 @@ void Log::parse(json_t *cfg)
 	json_error_t err;
 	json_t *json_expressions = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: b, s?: s }",
+	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: o, s?: b, s?: s }",
 		"level", &level,
 		"file", &path,
 		"expressions", &json_expressions,

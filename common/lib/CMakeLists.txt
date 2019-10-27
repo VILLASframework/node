@@ -28,7 +28,6 @@ add_library(villas-common SHARED
 	hist.cpp
 	dsp/pid.cpp
 	kernel/kernel.cpp
-	kernel/kernel.cpp
 	kernel/rt.cpp
 	list.cpp
 	log.cpp

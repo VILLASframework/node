@@ -1,4 +1,4 @@
-/** Some common defines, enums and datastructures.
+/** A simple growing buffer.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,33 +23,32 @@
 
 #pragma once
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum class State {
-	DESTROYED	= 0,
-	INITIALIZED	= 1,
-	PARSED		= 2,
-	CHECKED		= 3,
-	STARTED		= 4,
-	LOADED		= 4, /* alias for STARTED used by struct plugin */
-	OPENED		= 4, /* alias for STARTED used by struct io */
-	STOPPED		= 5,
-	UNLOADED	= 5, /* alias for STARTED used by struct plugin */
-	CLOSED		= 5, /* alias for STARTED used by struct io */
-	PENDING_CONNECT	= 6,
-	CONNECTED	= 7,
-	PAUSED		= 8,
-	STARTING	= 9,
-	STOPPING	= 10,
-	PAUSING		= 11,
-	RESUMING	= 12,
-	PREPARED	= 13
+#include <cstdlib>
+
+#include <jansson.h>
+
+#include <villas/common.hpp>
+
+namespace villas {
+
+class Buffer {
+
+public:
+	char *buf;
+	size_t len;
+	size_t size;
+
+	Buffer(size_t size);
+
+	~Buffer();
+
+	void clear();
+
+	int append(const char *data, size_t len);
+
+	int parseJson(json_t **j);
+
+	int appendJson(json_t *j);
 };
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
-
-/** Convert state enum to human readable string. */
-const char * state_print(enum State s);
+} /* namespace villas */

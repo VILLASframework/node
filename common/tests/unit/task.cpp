@@ -24,27 +24,25 @@
 
 #include <math.h>
 
-#include <villas/task.h>
+#include <villas/task.hpp>
 #include <villas/timing.h>
 
 TestSuite(task, .description = "Periodic timer tasks");
 
 Test(task, rate, .timeout = 10)
 {
-	int ret;
 	int runs = 10;
 	double rate = 5, waited;
 	struct timespec start, end;
-	struct task task;
+	Task task(CLOCK_MONOTONIC);
 
-	ret = task_init(&task, rate, CLOCK_MONOTONIC);
-	cr_assert_eq(ret, 0);
+	task.setRate(rate);
 
 	int i;
 	for (i = 0; i < runs; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &start);
 
-		task_wait(&task);
+		task.wait();
 
 		clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -56,19 +54,14 @@ Test(task, rate, .timeout = 10)
 
 	if (i < runs)
 		cr_assert_float_eq(waited, 1.0 / rate, 1e-2, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
-
-	ret = task_destroy(&task);
-	cr_assert_eq(ret, 0);
 }
 
 Test(task, wait_until, .timeout = 5)
 {
 	int ret;
-	struct task task;
 	struct timespec start, end, diff, future;
 
-	ret = task_init(&task, 1, CLOCK_REALTIME);
-	cr_assert_eq(ret, 0);
+	Task task(CLOCK_REALTIME);
 
 	double waitfor = 3.423456789;
 
@@ -76,10 +69,9 @@ Test(task, wait_until, .timeout = 5)
 	diff = time_from_double(waitfor);
 	future = time_add(&start, &diff);
 
-	ret = task_set_next(&task, &future);
-	cr_assert_eq(ret, 0);
+	task.setNext(&future);
 
-	ret = task_wait(&task);
+	ret = task.wait();
 
 	end = time_now();
 
@@ -88,7 +80,4 @@ Test(task, wait_until, .timeout = 5)
 	double waited = time_delta(&start, &end);
 
 	cr_assert_float_eq(waited, waitfor, 1e-2, "We slept for %f instead of %f secs", waited, waitfor);
-
-	ret = task_destroy(&task);
-	cr_assert_eq(ret, 0);
 }

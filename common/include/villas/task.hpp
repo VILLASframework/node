@@ -47,7 +47,7 @@
   #include <villas/tsc.h>
 #endif
 
-struct task {
+struct Task {
 	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
 
 #if PERIODIC_TASK_IMPL == RDTSC		/* We use cycle counts in RDTSC mode */
@@ -63,26 +63,28 @@ struct task {
 #elif PERIODIC_TASK_IMPL == RDTSC
 	struct tsc tsc;			/**< Initialized by tsc_init(). */
 #endif
+
+	/** Create a new task with the given rate. */
+	Task(int clock = CLOCK_REALTIME);
+
+	~Task();
+
+	/** Wait until task elapsed
+	 *
+	 * @retval 0 An error occured. Maybe the task was stopped.
+	 * @retval >0 The nummer of runs this task already fired.
+	 */
+	uint64_t wait();
+
+	void setNext(const struct timespec *next);
+	void setTimeout(double to);
+	void setRate(double rate);
+
+	void stop();
+
+	/** Returns a poll'able file descriptor which becomes readable when the timer expires.
+	 *
+	 * Note: currently not supported on all platforms.
+	 */
+	int getFD() const;
 };
-
-/** Create a new task with the given rate. */
-int task_init(struct task *t, double rate, int clock);
-
-int task_destroy(struct task *t);
-
-/** Wait until task elapsed
- *
- * @retval 0 An error occured. Maybe the task was stopped.
- * @retval >0 The nummer of runs this task already fired.
- */
-uint64_t task_wait(struct task *t);
-
-int task_set_next(struct task *t, struct timespec *next);
-int task_set_timeout(struct task *t, double to);
-int task_set_rate(struct task *t, double rate);
-
-/** Returns a poll'able file descriptor which becomes readable when the timer expires.
- *
- * Note: currently not supported on all platforms.
- */
-int task_fd(struct task *t);

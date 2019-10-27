@@ -27,6 +27,7 @@
 #include <curl/curl.h>
 
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
 struct advio {
 	CURL *curl;
