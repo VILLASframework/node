@@ -46,7 +46,7 @@
 
 #include <villas/log.hpp>
 #include <villas/kernel/pci.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio.hpp>
 
 using namespace villas;
@@ -84,8 +84,8 @@ VfioContainer::VfioContainer()
 	    "vfio", "vfio_pci", "vfio_iommu_type1"
 	};
 
-	for(const char* module : requiredKernelModules) {
-		if(kernel_module_load(module) != 0) {
+	for (const char* module : requiredKernelModules) {
+		if (kernel::module_load(module) != 0) {
 			logger->error("Kernel module '{}' required but could not be loaded. "
 			              "Please load manually!", module);
 			throw std::exception();
@@ -299,7 +299,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	Logger logger = logging.get("kernel:vfio");
 
 	/* Load PCI bus driver for VFIO */
-	if (kernel_module_load("vfio_pci")) {
+	if (kernel::module_load("vfio_pci")) {
 		logger->error("Failed to load kernel driver: vfio_pci");
 		throw std::exception();
 	}
@@ -318,7 +318,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	/* Get IOMMU group of device */
 	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
 	if (index < 0) {
-		ret = kernel_get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
+		ret = kernel::get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
 		if(ret != 0 || strcmp("on", iommu_state) != 0)
 			logger->warn("Kernel booted without command line parameter "
 					"'intel_iommu' set to 'on'. Please check documentation "

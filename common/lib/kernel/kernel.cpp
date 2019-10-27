@@ -34,7 +34,7 @@
 
 #include <villas/utils.hpp>
 #include <villas/config.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 #include <villas/kernel/kernel.hpp>
 #include <villas/exceptions.hpp>
@@ -57,7 +57,7 @@ Version villas::kernel::getVersion()
 	return Version(ver);
 }
 
-int kernel_get_cacheline_size()
+int villas::kernel::get_cacheline_size()
 {
 #if defined(__linux__) && defined(__x86_64__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
@@ -80,7 +80,7 @@ int kernel_get_cacheline_size()
 }
 
 #if defined(__linux__) || defined(__APPLE__)
-int kernel_get_page_size()
+int villas::kernel::get_page_size()
 {
 	return sysconf(_SC_PAGESIZE);
 }
@@ -89,7 +89,7 @@ int kernel_get_page_size()
 #endif
 
 /* There is no sysconf interface to get the hugepage size */
-int kernel_get_hugepage_size()
+int villas::kernel::get_hugepage_size()
 {
 #ifdef __linux__
 	char *key, *value, *unit, *line = nullptr, *lasts;
@@ -127,7 +127,7 @@ int kernel_get_hugepage_size()
 
 #ifdef __linux__
 
-int kernel_module_set_param(const char *module, const char *param, const char *value)
+int villas::kernel::module_set_param(const char *module, const char *param, const char *value)
 {
 	FILE *f;
 	char fn[256];
@@ -144,11 +144,11 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 	return 0;
 }
 
-int kernel_module_load(const char *module)
+int villas::kernel::module_load(const char *module)
 {
 	int ret;
 
-	ret = kernel_module_loaded(module);
+	ret = module_loaded(module);
 	if (!ret) {
 		debug(LOG_KERNEL | 5, "Kernel module %s already loaded...", module);
 		return 0;
@@ -166,11 +166,11 @@ int kernel_module_load(const char *module)
 		default:
 			wait(&ret);
 
-			return kernel_module_loaded(module);
+			return module_loaded(module);
 	}
 }
 
-int kernel_module_loaded(const char *module)
+int villas::kernel::module_loaded(const char *module)
 {
 	FILE *f;
 	int ret = -1;
@@ -194,7 +194,7 @@ int kernel_module_loaded(const char *module)
 	return ret;
 }
 
-int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
+int villas::kernel::get_cmdline_param(const char *param, char *buf, size_t len)
 {
 	int ret;
 	char cmdline[512], key[128], value[128], *lasts, *tok;
@@ -230,7 +230,7 @@ out:
 	return -1; /* not found or error */
 }
 
-int kernel_get_nr_hugepages()
+int villas::kernel::get_nr_hugepages()
 {
 	FILE *f;
 	int nr, ret;
@@ -248,7 +248,7 @@ int kernel_get_nr_hugepages()
 	return nr;
 }
 
-int kernel_set_nr_hugepages(int nr)
+int villas::kernel::set_nr_hugepages(int nr)
 {
 	FILE *f;
 	int ret;
@@ -272,7 +272,7 @@ int kernel_set_nr_hugepages(int nr)
 	return 0;
 }
 
-int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
+int villas::kernel::irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 {
 	char fn[64];
 	FILE *f;
@@ -293,7 +293,7 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 	return ret;
 }
 
-int kernel_get_cpu_frequency(uint64_t *freq)
+int villas::kernel::get_cpu_frequency(uint64_t *freq)
 {
 	char *line = nullptr, *sep, *end;
 	size_t len = 0;

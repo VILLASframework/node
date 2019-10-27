@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <pthread.h>
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 
 #define LIST_CHUNKSIZE		16
 
@@ -76,7 +76,7 @@ int vlist_init(struct vlist *l);
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-int vlist_destroy(struct vlist *l, dtor_cb_t dtor, bool free);
+int vlist_destroy(struct vlist *l, dtor_cb_t dtor = nullptr, bool free = false);
 
 /** Append an element to the end of the list */
 void vlist_push(struct vlist *l, void *p);
@@ -101,7 +101,7 @@ int vlist_insert(struct vlist *l, size_t idx, void *p);
  */
 void * vlist_lookup(struct vlist *l, const char *name);
 
-ssize_t vlist_lookup_index(struct vlist *l, const char *name);
+ssize_t vlist_lookup_index(struct vlist *l, const void *ptr);
 
 /** Return the first element of the list for which cmp returns zero */
 void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx);

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 #include <villas/json_buffer.hpp>
 
 using namespace villas;
@@ -47,7 +47,7 @@ int JsonBuffer::encode(json_t *j)
 
 int JsonBuffer::callback(const char *data, size_t len, void *ctx)
 {
-	Buffer *b = static_cast<Buffer *>(ctx);
+	JsonBuffer *b = static_cast<JsonBuffer *>(ctx);
 
 	/* Append junk of JSON to buffer */
 	b->insert(b->end(), &data[0], &data[len]);

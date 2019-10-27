@@ -29,7 +29,7 @@
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 
@@ -83,7 +83,7 @@ void setAffinity(int affinity)
 	/* Pin threads to CPUs by setting the affinity */
 	CpuSet cset_pin(affinity);
 
-	is_isol = kernel_get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
+	is_isol = get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
 	if (is_isol)
 		logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
 	else {

@@ -26,11 +26,13 @@
 #include <unistd.h>
 #include <linux/limits.h>
 
-#include <villas/log.h>
+#include <villas/log.hpp>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/config.h>
 #include <villas/kernel/pci.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 int pci_init(struct pci *p)
@@ -58,6 +60,10 @@ int pci_init(struct pci *p)
 			continue;
 
 		struct pci_device *d = new struct pci_device;
+		if (!d)
+			throw RuntimeError("Failed to allocate memory!");
+
+		memset(d, 0, sizeof(struct pci_device));
 
 		struct { const char *s; int *p; } map[] = {
 			{ "vendor", &d->id.vendor },
@@ -314,6 +320,9 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 
 	if (valid_regions > 0) {
 		*regions = new struct pci_region[valid_regions];
+		if (!*regions)
+			throw RuntimeError("Failed to allocate memory!");
+
 		memcpy(*regions, _regions, valid_regions * sizeof (struct pci_region));
 	}
 

@@ -17,7 +17,7 @@
 #include <villas/utils.hpp>
 #include <villas/log.h>
 #include <villas/config.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio.h>
 #include <villas/kernel/pci.h>
 
@@ -134,7 +134,7 @@ int vfio_init(struct vfio_container *v)
 	vlist_init(&v->groups);
 
 	/* Load VFIO kernel module */
-	if (kernel_module_load("vfio"))
+	if (module_load("vfio"))
 		error("Failed to load kernel module: %s", "vfio");
 
 	/* Open VFIO API */
@@ -207,7 +207,7 @@ int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_
 	int ret;
 
 	/* Load PCI bus driver for VFIO */
-	if (kernel_module_load("vfio_pci"))
+	if (module_load("vfio_pci"))
 		error("Failed to load kernel driver: %s", "vfio_pci");
 
 	/* Bind PCI card to vfio-pci driver*/
@@ -253,6 +253,10 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 
 	if (!g) {
 		g = new struct vfio_group;
+		if (!g)
+			throw RuntimeError("Failed to allocate memory!");
+
+		memset(g, 0, sizeof(struct vfio_group));
 
 		/* Aquire group ownership */
 		ret = vfio_group_attach(g, c, index);

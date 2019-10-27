@@ -31,17 +31,7 @@
 
 namespace villas {
 
-class Buffer : public std::vector<char> {
-
-public:
-	void append(const char *data, size_t len)
-	{
-		insert(end(), data, data + len);
-	}
-
-};
-
-class JsonBuffer : public Buffer
+class JsonBuffer : public std::vector<char>
 {
 
 protected:
@@ -53,6 +43,11 @@ public:
 
 	/** Decode JSON document from the beginning of the buffer */
 	json_t * decode();
+
+	void append(const char *data, size_t len)
+	{
+		insert(end(), data, data + len);
+	}
 };
 
 } /* namespace villas */

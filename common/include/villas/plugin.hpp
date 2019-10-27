@@ -29,7 +29,7 @@
 #include <jansson.h>
 
 #include <villas/log.hpp>
-#include <villas/common.h>
+#include <villas/common.hpp>
 
 namespace villas {
 namespace plugin {
@@ -120,8 +120,8 @@ public:
 
 	virtual void dump();
 
-	std::string getName();
-	std::string getDescription();
+	const std::string & getName() const;
+	const std::string & getDescription() const;
 
 protected:
 	std::string name;

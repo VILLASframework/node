@@ -22,78 +22,74 @@
 
 #include <cstring>
 
-#include <villas/compat.h>
-#include <villas/buffer.h>
-#include <villas/common.h>
+#include <villas/compat.hpp>
+#include <villas/buffer.hpp>
+#include <villas/common.hpp>
+#include <villas/exceptions.hpp>
 
-int buffer_init(struct buffer *b, size_t size)
+using namespace villas;
+
+Buffer::Buffer(size_t sz) :
+	len(0),
+	size(sz)
 {
-	b->len = 0;
-	b->size = size;
-	b->buf = new char[size];
-	if (!b->buf)
-		return -1;
+	buf = new char[size];
+	if (!buf)
+		throw RuntimeError("Failed to allocate memory");
 
-	b->state = State::INITIALIZED;
-
-	return 0;
+	memset(buf, 0, size);
 }
 
-int buffer_destroy(struct buffer *b)
+Buffer::~Buffer()
 {
-	if (b->buf)
-		delete[] b->buf;
-
-	b->state = State::DESTROYED;
-
-	return 0;
+	delete[] buf;
 }
 
-void buffer_clear(struct buffer *b)
+void Buffer::clear()
 {
-	b->len = 0;
+	len = 0;
 }
 
-int buffer_append(struct buffer *b, const char *data, size_t len)
+int Buffer::append(const char *data, size_t l)
 {
-	if (b->len + len > b->size) {
-		b->size = b->len + len;
-		b->buf = (char *) realloc(b->buf, b->size);
-		if (!b->buf)
+	if (len + l > size) {
+		size = len + l;
+		buf = (char *) realloc(buf, size);
+		if (!buf)
 			return -1;
 	}
 
-	memcpy(b->buf + b->len, data, len);
+	memcpy(buf + len, data, l);
 
-	b->len += len;
+	len += l;
 
 	return 0;
 }
 
-int buffer_parse_json(struct buffer *b, json_t **j)
+int Buffer::parseJson(json_t **j)
 {
-	*j = json_loadb(b->buf, b->len, 0, nullptr);
+	*j = json_loadb(buf, len, 0, nullptr);
 	if (!*j)
 		return -1;
 
 	return 0;
 }
 
-int buffer_append_json(struct buffer *b, json_t *j)
+int Buffer::appendJson(json_t *j)
 {
-	size_t len;
+	size_t l;
 
-retry:	len = json_dumpb(j, b->buf + b->len, b->size - b->len, 0);
-	if (b->size < b->len + len) {
-		b->buf = (char *) realloc(b->buf, b->len + len);
-		if (!b->buf)
+retry:	l = json_dumpb(j, buf + len, size - len, 0);
+	if (size < len + l) {
+		buf = (char *) realloc(buf, len + l);
+		if (!buf)
 			return -1;
 
-		b->size = b->len + len;
+		size = len + l;
 		goto retry;
 	}
 
-	b->len += len;
+	len += l;
 
 	return 0;
 }

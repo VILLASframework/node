@@ -25,7 +25,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/utils.hpp>
-#include <villas/advio.h>
+#include <villas/advio.hpp>
 
 using namespace villas;
 

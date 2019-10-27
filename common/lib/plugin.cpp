@@ -100,12 +100,12 @@ Plugin::dump()
 	logger->info("Name: '{}' Description: '{}'", name, description);
 }
 
-std::string Plugin::getName()
+const std::string & Plugin::getName() const
 {
 	return name;
 }
 
-std::string Plugin::getDescription()
+const std::string & Plugin::getDescription() const
 {
 	return description;
 }
