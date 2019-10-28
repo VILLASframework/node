@@ -45,32 +45,36 @@ using namespace villas::utils;
 static size_t pgsz = -1;
 static size_t hugepgsz = -1;
 
-int memory_hugepage_init(int hugepages)
+int memory_mmap_init(int hugepages)
 {
 	pgsz = kernel_get_page_size();
 	if (pgsz < 0)
 		return -1;
 
-	hugepgsz = kernel_get_hugepage_size();
-	if (hugepgsz < 0)
-		return -1;
+	if (hugepages > 0) {
+        hugepgsz = kernel_get_hugepage_size();
+        if (hugepgsz < 0)
+            return -1;
 
 #if defined(__linux__) && defined(__x86_64__)
-	int pagecnt;
+        int pagecnt;
 
-	pagecnt = kernel_get_nr_hugepages();
-	if (pagecnt < hugepages) {
-		if (getuid() == 0) {
-			kernel_set_nr_hugepages(hugepages);
-			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
-		}
-		else {
-			warning("Failed to reserved hugepages. Please reserve manually by running as root:");
-			warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
-		}
-	}
+        pagecnt = kernel_get_nr_hugepages();
+        if (pagecnt < hugepages) {
+            if (getuid() == 0) {
+                kernel_set_nr_hugepages(hugepages);
+                debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
+            } else {
+                warning("Failed to reserved hugepages. Please reserve manually by running as root:");
+                warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
+            }
+        }
 #endif
-
+        memory_default = &memory_mmap_hugetlb;
+    } else {
+        warning("Hugepage allocator disabled.");
+        memory_default = &memory_mmap;
+	}
 	return 0;
 }
 
