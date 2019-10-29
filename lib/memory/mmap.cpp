@@ -52,30 +52,42 @@ int memory_mmap_init(int hugepages)
 		return -1;
 
 	if (hugepages > 0) {
-        hugepgsz = kernel_get_hugepage_size();
-        if (hugepgsz < 0)
-            return -1;
+		hugepgsz = kernel_get_hugepage_size();
+		if (hugepgsz < 0) {
+			warning("Failed to determine hugepage size.");
+
+			memory_default = &memory_mmap;
+			return 0;
+		}
 
 #if defined(__linux__) && defined(__x86_64__)
-        int pagecnt;
+		int ret, pagecnt;
 
-        pagecnt = kernel_get_nr_hugepages();
-        if (pagecnt < hugepages) {
-            if (getuid() == 0) {
-                kernel_set_nr_hugepages(hugepages);
-                debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
+		pagecnt = kernel_get_nr_hugepages();
+		if (pagecnt < hugepages) {
+			if (getuid() == 0) {
+				ret = kernel_set_nr_hugepages(hugepages);
+				if (ret) {
+					warning("Failed to increase number of reserved hugepages");
+					memory_default = &memory_mmap;
+				}
+
+				debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
+				memory_default = &memory_mmap_hugetlb;
 			}
 			else {
-                warning("Failed to reserved hugepages. Please reserve manually by running as root:");
-                warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
-            }
-        }
+				warning("Failed to reserved hugepages. Please reserve manually by running as root:");
+				warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
+				memory_default = &memory_mmap;
+			}
+		}
+		else
+			memory_default = &memory_mmap_hugetlb;
 #endif
-        memory_default = &memory_mmap_hugetlb;
 	}
 	else {
-        warning("Hugepage allocator disabled.");
-        memory_default = &memory_mmap;
+		warning("Hugepage allocator disabled.");
+		memory_default = &memory_mmap;
 	}
 
 	return 0;
