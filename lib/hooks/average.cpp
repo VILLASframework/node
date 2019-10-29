@@ -39,7 +39,7 @@ namespace node {
 class AverageHook : public Hook {
 
 protected:
-	int offset;
+	unsigned offset;
 
 	std::bitset<MAX_SAMPLE_LENGTH> mask;
 	vlist signal_names;
@@ -164,6 +164,10 @@ public:
 		}
 
 		avg = sum / n;
+
+		if (offset >= smp->length)
+			return Reason::ERROR;
+
 		sample_data_insert(smp, (union signal_data *) &avg, offset, 1);
 		smp->signals = &signals;
 
