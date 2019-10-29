@@ -484,6 +484,14 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
 
+#if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
+		/* Only start web subsystem if villas-pipe is used with a websocket node */
+		if (node_type(node)->stop == websocket_stop) {
+			Web *w = sn.getWeb();
+			w->stop();
+		}
+#endif /* WITH_NODE_WEBSOCKET */
+
 		ret = io_close(&io);
 		if (ret)
 			throw RuntimeError("Failed to close IO");
