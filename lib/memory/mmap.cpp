@@ -64,17 +64,20 @@ int memory_mmap_init(int hugepages)
             if (getuid() == 0) {
                 kernel_set_nr_hugepages(hugepages);
                 debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
-            } else {
+			}
+			else {
                 warning("Failed to reserved hugepages. Please reserve manually by running as root:");
                 warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
             }
         }
 #endif
         memory_default = &memory_mmap_hugetlb;
-    } else {
+	}
+	else {
         warning("Hugepage allocator disabled.");
         memory_default = &memory_mmap;
 	}
+
 	return 0;
 }
 
