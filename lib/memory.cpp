@@ -44,18 +44,9 @@ int memory_init(int hugepages)
 
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-	if (hugepages > 0) {
-		ret = memory_hugepage_init(hugepages);
-		if (ret)
-			return ret;
-
-		memory_default = &memory_mmap_hugetlb;
-	}
-	else {
-		memory_default = &memory_mmap;
-
-		warning("Hugepage allocator disabled.");
-	}
+	ret = memory_mmap_init(hugepages);
+	if (ret < 0)
+		return ret;
 
 	size_t lock = kernel_get_hugepage_size() * hugepages;
 
