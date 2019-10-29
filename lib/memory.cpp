@@ -46,7 +46,7 @@ int memory_init(int hugepages)
 
 	ret = memory_mmap_init(hugepages);
 	if (ret < 0)
-	    return ret;
+		return ret;
 
 	size_t lock = kernel_get_hugepage_size() * hugepages;
 
