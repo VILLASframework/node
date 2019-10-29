@@ -47,11 +47,10 @@ struct sample;
 struct zeromq {
 	int ipv6;
 
-
 	struct format_type *format;
 	struct io io;
 
-	struct {
+	struct Curve {
 		int enabled;
 		struct {
 			char public_key[41];
@@ -66,18 +65,13 @@ struct zeromq {
 #endif
 	} pattern;
 
-	struct {
+	struct Dir {
 		void *socket;	/**< ZeroMQ socket. */
 		void *mon_socket;
-		char *endpoint;
-		char *filter;
-	} in;
-
-	struct {
-		void *socket;	/**< ZeroMQ socket. */
 		struct vlist endpoints;
 		char *filter;
-	} out;
+		int bind, pending;
+	} in, out;
 };
 
 /** @see node_type::print */

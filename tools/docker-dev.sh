@@ -28,7 +28,7 @@ SCRIPTPATH=$(dirname $SCRIPT)
 SRCDIR=${SRCDIR:-$(realpath ${SCRIPTPATH}/..)}
 BUILDDIR=${BUILDDIR:-${SRCDIR}/build}
 
-TAG=${TAG:-develop}
+TAG=${TAG:-latest}
 IMAGE="villas/node-dev:${TAG}"
 
 docker run \

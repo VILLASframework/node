@@ -33,12 +33,13 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/format_type.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static void *context;
 
-#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_MAJOR_VERSION >= 4 && ZMQ_MINOR_VERSION >= 2 && ZMQ_MINOR_VERSION >= 3
 /**  Read one event off the monitor socket; return value and address
  * by reference, if not null, and event number by value.
  *
@@ -75,20 +76,71 @@ static int get_monitor_event(void *monitor, int *value, char **address)
 
 	return event;
 }
-#endif
 
 int zeromq_reverse(struct node *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	if (vlist_length(&z->out.endpoints) != 1)
+	if (vlist_length(&z->out.endpoints) != 1 ||
+	    vlist_length(&z->in.endpoints) != 1)
 		return -1;
 
-	char *subscriber = z->in.endpoint;
-	char *publisher = (char *) vlist_first(&z->out.endpoints);
+	char *subscriber = (char *) vlist_first(&z->in.endpoints);
+	char *publisher =  (char *) vlist_first(&z->out.endpoints);
 
-	z->in.endpoint = publisher;
+	vlist_set(&z->in.endpoints, 0, publisher);
 	vlist_set(&z->out.endpoints, 0, subscriber);
+
+	return 0;
+}
+
+int zeromq_init(struct node *n)
+{
+	struct zeromq *z = (struct zeromq *) n->_vd;
+
+	z->out.bind = 1;
+	z->in.bind = 0;
+
+	z->curve.enabled = false;
+	z->ipv6 = 0;
+
+	z->in.endpoints.state = State::DESTROYED;
+	z->out.endpoints.state = State::DESTROYED;
+
+	z->in.pending = 0;
+	z->out.pending = 0;
+
+	vlist_init(&z->in.endpoints);
+	vlist_init(&z->out.endpoints);
+
+	return 0;
+}
+
+int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
+{
+	json_t *json_val;
+	size_t i;
+	const char *ep;
+
+	switch (json_typeof(json_ep)) {
+		case JSON_ARRAY:
+			json_array_foreach(json_ep, i, json_val) {
+				ep = json_string_value(json_val);
+				if (!ep)
+					error("All 'publish' settings must be strings");
+
+				vlist_push(epl, strdup(ep));
+			}
+			break;
+
+		case JSON_STRING:
+			ep = json_string_value(json_ep);
+			vlist_push(epl, strdup(ep));
+			break;
+
+		default:
+			return -1;
+	}
 
 	return 0;
 }
@@ -98,30 +150,25 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	int ret;
-	const char *ep = nullptr;
 	const char *type = nullptr;
 	const char *in_filter = nullptr;
 	const char *out_filter = nullptr;
 	const char *format = "villas.binary";
 
-	size_t i;
-	json_t *json_pub = nullptr;
+	json_t *json_in_ep = nullptr;
+	json_t *json_out_ep = nullptr;
 	json_t *json_curve = nullptr;
-	json_t *json_val;
 	json_error_t err;
 
-	vlist_init(&z->out.endpoints);
-
-	z->curve.enabled = false;
-	z->ipv6 = 0;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: { s?: s, s?: s }, s?: { s?: o, s?: s }, s?: o, s?: s, s?: b, s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: { s?: o, s?: s, s?: b }, s?: { s?: o, s?: s, s?: b }, s?: o, s?: s, s?: b, s?: s }",
 		"in",
-			"subscribe", &ep,
+			"subscribe", &json_in_ep,
 			"filter", &in_filter,
+			"bind", &z->in.bind,
 		"out",
-			"publish", &json_pub,
+			"publish", &json_out_ep,
 			"filter", &out_filter,
+			"bind", &z->out.bind,
 		"curve", &json_curve,
 		"pattern", &type,
 		"ipv6", &z->ipv6,
@@ -130,7 +177,6 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	z->in.endpoint = ep ? strdup(ep) : nullptr;
 	z->in.filter = in_filter ? strdup(in_filter) : nullptr;
 	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
@@ -138,28 +184,16 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	if (!z->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
-	if (json_pub) {
-		switch (json_typeof(json_pub)) {
-			case JSON_ARRAY:
-				json_array_foreach(json_pub, i, json_val) {
-					ep = json_string_value(json_val);
-					if (!ep)
-						error("All 'publish' settings must be strings");
+	if (json_out_ep) {
+		ret = zeromq_parse_endpoints(json_out_ep, &z->out.endpoints);
+		if (ret)
+			throw ConfigError(json_out_ep, "node-config-node-zeromq-publish", "Failed to parse list of publish endpoints");
+	}
 
-					vlist_push(&z->out.endpoints, strdup(ep));
-				}
-				break;
-
-			case JSON_STRING:
-				ep = json_string_value(json_pub);
-
-				vlist_push(&z->out.endpoints, strdup(ep));
-
-				break;
-
-			default:
-				error("Invalid type for ZeroMQ publisher setting");
-		}
+	if (json_in_ep) {
+		ret = zeromq_parse_endpoints(json_in_ep, &z->in.endpoints);
+		if (ret)
+			throw ConfigError(json_out_ep, "node-config-node-zeromq-subscribe", "Failed to parse list of subscribe endpoints");
 	}
 
 	if (json_curve) {
@@ -222,13 +256,22 @@ char * zeromq_print(struct node *n)
 #endif
 	}
 
-	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, in.subscribe=%s, out.publish=[ ",
+	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, in.bind=%s, out.bind=%s, in.subscribe=[ ",
 		format_type_name(z->format),
 		pattern,
 		z->ipv6 ? "yes" : "no",
 		z->curve.enabled ? "yes" : "no",
-		z->in.endpoint ? z->in.endpoint : ""
+		z->in.bind ? "yes" : "no",
+		z->out.bind ? "yes" : "no"
 	);
+
+	for (size_t i = 0; i < vlist_length(&z->in.endpoints); i++) {
+		char *ep = (char *) vlist_at(&z->in.endpoints, i);
+
+		strcatf(&buf, "%s ", ep);
+	}
+
+	strcatf(&buf, "], out.publish=[ ");
 
 	for (size_t i = 0; i < vlist_length(&z->out.endpoints); i++) {
 		char *ep = (char *) vlist_at(&z->out.endpoints, i);
@@ -245,6 +288,17 @@ char * zeromq_print(struct node *n)
 		strcatf(&buf, ", out.filter=%s", z->out.filter);
 
 	return buf;
+}
+
+int zeromq_check(struct node *n)
+{
+	struct zeromq *z = (struct zeromq *) n->_vd;
+
+	if (vlist_length(&z->in.endpoints) == 0 &&
+	    vlist_length(&z->out.endpoints) == 0)
+		return -1;
+
+	return 0;
 }
 
 int zeromq_type_start(villas::node::SuperNode *sn)
@@ -264,6 +318,8 @@ int zeromq_start(struct node *n)
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
+	struct zeromq::Dir* dirs[] = { &z->out, &z->in };
+
 	ret = io_init(&z->io, z->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
 	if (ret)
 		return ret;
@@ -275,13 +331,13 @@ int zeromq_start(struct node *n)
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
 		case zeromq::Pattern::RADIODISH:
-			z->in.socket = zmq_socket(context, ZMQ_DISH);
+			z->in.socket   = zmq_socket(context, ZMQ_DISH);
 			z->out.socket  = zmq_socket(context, ZMQ_RADIO);
 			break;
 #endif
 
 		case zeromq::Pattern::PUBSUB:
-			z->in.socket = zmq_socket(context, ZMQ_SUB);
+			z->in.socket   = zmq_socket(context, ZMQ_SUB);
 			z->out.socket  = zmq_socket(context, ZMQ_PUB);
 			break;
 	}
@@ -308,14 +364,6 @@ int zeromq_start(struct node *n)
 	}
 
 	if (ret < 0)
-		goto fail;
-
-	ret = zmq_setsockopt(z->out.socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
-	if (ret)
-		goto fail;
-
-	ret = zmq_setsockopt(z->in.socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
-	if (ret)
 		goto fail;
 
 	if (z->curve.enabled) {
@@ -352,40 +400,62 @@ int zeromq_start(struct node *n)
 			goto fail;
 	}
 
-#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_MAJOR_VERSION >= 4 && ZMQ_MINOR_VERSION >= 2 && ZMQ_MINOR_VERSION >= 3
-	/* Monitor handshake events on the server */
-	ret = zmq_socket_monitor(z->in.socket, "inproc://monitor-server", ZMQ_EVENT_HANDSHAKE_SUCCEEDED | ZMQ_EVENT_HANDSHAKE_FAILED_NO_DETAIL | ZMQ_EVENT_HANDSHAKE_FAILED_PROTOCOL | ZMQ_EVENT_HANDSHAKE_FAILED_AUTH);
-	if (ret < 0)
-		goto fail;
+	for (auto d : dirs) {
+		const char *mon_ep = d == &z->in ? "inproc://monitor-in" : "inproc://monitor-out";
 
-	/* Create socket for collecting monitor events */
-	z->in.mon_socket = zmq_socket(context, ZMQ_PAIR);
-	if (!z->in.mon_socket) {
-		ret = -1;
-		goto fail;
-	}
+		ret = zmq_setsockopt(d->socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
+		if (ret)
+			goto fail;
 
-	/* Connect it to the inproc endpoints so they'll get events */
-	ret = zmq_connect(z->in.mon_socket, "inproc://monitor-server");
-	if (ret < 0)
-		goto fail;
-#endif
+		int linger = 1000;
+		ret = zmq_setsockopt(d->socket, ZMQ_LINGER, &linger, sizeof(linger));
+		if (ret)
+			goto fail;
 
-	/* Spawn server for publisher */
-	for (size_t i = 0; i < vlist_length(&z->out.endpoints); i++) {
-		char *ep = (char *) vlist_at(&z->out.endpoints, i);
-
-		ret = zmq_bind(z->out.socket, ep);
+		/* Monitor events on the server */
+		ret = zmq_socket_monitor(d->socket, mon_ep, ZMQ_EVENT_ALL);
 		if (ret < 0)
 			goto fail;
+
+		/* Create socket for collecting monitor events */
+		d->mon_socket = zmq_socket(context, ZMQ_PAIR);
+		if (!d->mon_socket) {
+			ret = -1;
+			goto fail;
+		}
+
+		/* Connect it to the inproc endpoints so they'll get events */
+		ret = zmq_connect(d->mon_socket, mon_ep);
+		if (ret < 0)
+			goto fail;
+
+		/* Connect / bind sockets to endpoints */
+		for (size_t i = 0; i < vlist_length(&d->endpoints); i++) {
+			char *ep = (char *) vlist_at(&d->endpoints, i);
+
+			if (d->bind) {
+				ret = zmq_bind(d->socket, ep);
+				if (ret < 0)
+					goto fail;
+			}
+			else {
+				ret = zmq_connect(d->socket, ep);
+				if (ret < 0)
+					goto fail;
+			}
+
+			d->pending++;
+		}
 	}
 
-	/* Connect subscribers to server socket */
-	if (z->in.endpoint) {
-		ret = zmq_connect(z->in.socket, z->in.endpoint);
-		if (ret < 0) {
-			info("Failed to bind ZeroMQ socket: endpoint=%s, error=%s", z->in.endpoint, zmq_strerror(errno));
-			return ret;
+	/* Wait for all connections to be connected */
+	for (auto d : dirs) {
+		while (d->pending > 0) {
+			int evt = d->bind ? ZMQ_EVENT_LISTENING : ZMQ_EVENT_CONNECTED;
+
+			ret = get_monitor_event(d->mon_socket, nullptr, nullptr);
+			if (ret == evt)
+				d->pending--;
 		}
 	}
 
@@ -411,21 +481,23 @@ int zeromq_stop(struct node *n)
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	ret = zmq_close(z->in.socket);
-	if (ret)
-		return ret;
+	struct zeromq::Dir* dirs[] = { &z->out, &z->in };
 
-#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_MAJOR_VERSION >= 4 && ZMQ_MINOR_VERSION >= 2 && ZMQ_MINOR_VERSION >= 3
-	ret = zmq_close(z->in.mon_socket);
-	if (ret)
-		return ret;
-#endif
+	for (auto d : dirs) {
+		ret = zmq_close(d->socket);
+		if (ret)
+			return ret;
+
+		ret = zmq_close(d->mon_socket);
+		if (ret)
+			return ret;
+	}
 
 	ret = io_destroy(&z->io);
 	if (ret)
 		return ret;
 
-	return zmq_close(z->out.socket);
+	return 0;
 }
 
 int zeromq_destroy(struct node *n)
@@ -581,7 +653,9 @@ static void register_plugin() {
 	p.node.size		= sizeof(struct zeromq);
 	p.node.type.start	= zeromq_type_start;
 	p.node.type.stop	= zeromq_type_stop;
+	p.node.init		= zeromq_init;
 	p.node.destroy		= zeromq_destroy;
+	p.node.check		= zeromq_check;
 	p.node.parse		= zeromq_parse;
 	p.node.print		= zeromq_print;
 	p.node.start		= zeromq_start;

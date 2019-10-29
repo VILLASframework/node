@@ -461,7 +461,7 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 		PipeReceiveDirection recv_dir(node, &io, enable_recv, limit_recv);
-		PipeSendDirection send_dir(node, &io, enable_recv, limit_recv);
+		PipeSendDirection send_dir(node, &io, enable_recv, limit_send);
 
 		recv_dir.startThread();
 		send_dir.startThread();

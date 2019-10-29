@@ -155,6 +155,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 		struct sample *smp = smps[i];
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
+		smp->flags = 0;
 		smp->signals = io->signals;
 
 		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA) {

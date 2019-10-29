@@ -45,20 +45,14 @@ protected:
 	StatsHook *parent;
 
 public:
-	StatsWriteHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en)
+	StatsWriteHook(StatsHook *pa, struct path *p, struct node *n, int fl, int prio, bool en = true) :
+		Hook(p, n, fl, prio, en),
+		parent(pa)
 	{
 		state = State::CHECKED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
-	{
-		timespec now = time_now();
-
-		node->stats->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
-
-		return Reason::OK;
-	}
+	virtual Hook::Reason process(sample *smp);
 };
 
 class StatsReadHook : public Hook {
@@ -66,9 +60,12 @@ class StatsReadHook : public Hook {
 protected:
 	sample *last;
 
+	StatsHook *parent;
+
 public:
-	StatsReadHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en)
+	StatsReadHook(StatsHook *pa, struct path *p, struct node *n, int fl, int prio, bool en = true) :
+		Hook(p, n, fl, prio, en),
+		parent(pa)
 	{
 		state = State::CHECKED;
 	}
@@ -92,37 +89,13 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
-	{
-		if (last) {
-			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-				node->stats->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
-
-			if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-				node->stats->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
-
-			if ((smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
-				node->stats->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
-
-			if (smp->flags & last->flags & (int) SampleFlags::HAS_SEQUENCE) {
-				int dist = smp->sequence - (int32_t) last->sequence;
-				if (dist != 1)
-					node->stats->update(Stats::Metric::SMPS_REORDERED, dist);
-			}
-		}
-
-		sample_incref(smp);
-
-		if (last)
-			sample_decref(last);
-
-		last = smp;
-
-		return Reason::OK;
-	}
+	virtual Hook::Reason process(sample *smp);
 };
 
 class StatsHook : public Hook {
+
+	friend StatsReadHook;
+	friend StatsWriteHook;
 
 protected:
 	StatsReadHook *readHook;
@@ -150,11 +123,13 @@ public:
 		uri()
 	{
 		/* Add child hooks */
-		readHook = new StatsReadHook(p, n, fl, prio, en);
-		writeHook = new StatsWriteHook(p, n, fl, prio, en);
+		readHook = new StatsReadHook(this, p, n, fl, prio, en);
+		writeHook = new StatsWriteHook(this, p, n, fl, prio, en);
 
-		vlist_push(&node->in.hooks, (void *) readHook);
-		vlist_push(&node->out.hooks, (void *) writeHook);
+		if (node) {
+			vlist_push(&node->in.hooks, (void *) readHook);
+			vlist_push(&node->out.hooks, (void *) writeHook);
+		}
 	}
 
 	virtual void start()
@@ -187,6 +162,15 @@ public:
 		assert(state == State::STARTED);
 
 		stats->reset();
+	}
+
+	virtual Hook::Reason process(sample *smp)
+	{
+		// Only call readHook if it hasnt been added to the node's hook list
+		if (!node)
+			return readHook->process(smp);
+
+		return Hook::Reason::OK;
 	}
 
 	virtual void periodic()
@@ -239,11 +223,50 @@ public:
 		/* Register statistic object to path.
 		*
 		* This allows the path code to update statistics. */
-		node->stats = stats;
+		if (node)
+			node->stats = stats;
 
 		state = State::PREPARED;
 	}
 };
+
+Hook::Reason StatsWriteHook::process(sample *smp)
+{
+	timespec now = time_now();
+
+	parent->stats->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
+
+	return Reason::OK;
+}
+
+Hook::Reason StatsReadHook::process(sample *smp)
+{
+	if (last) {
+		if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
+			parent->stats->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
+
+		if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_ORIGIN)
+			parent->stats->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
+
+		if ((smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
+			parent->stats->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
+
+		if (smp->flags & last->flags & (int) SampleFlags::HAS_SEQUENCE) {
+			int dist = smp->sequence - (int32_t) last->sequence;
+			if (dist != 1)
+				parent->stats->update(Stats::Metric::SMPS_REORDERED, dist);
+		}
+	}
+
+	sample_incref(smp);
+
+	if (last)
+		sample_decref(last);
+
+	last = smp;
+
+	return Reason::OK;
+}
 
 /* Register hook */
 static HookPlugin<StatsHook> p(
