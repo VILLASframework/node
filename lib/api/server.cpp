@@ -133,7 +133,7 @@ void Server::stop()
 
 	ret = close(sd);
 	if (ret)
-		throw SystemError("Failed to close API socket");;
+		throw SystemError("Failed to close API socket");
 
 	state = State::STOPPED;
 }
