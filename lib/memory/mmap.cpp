@@ -104,16 +104,12 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 		fd = -1;
 #endif
 		sz = hugepgsz;
-
-		info("allocate %#zx bytes mmap_hugetlb memory", len);
 	}
 	else {
 		flags = MAP_PRIVATE | MAP_ANONYMOUS;
 		fd = -1;
 
 		sz = pgsz;
-
-		info("allocate %#zx bytes mmap memory", len);
 	}
 
 	/** We must make sure that len is a multiple of the page size
