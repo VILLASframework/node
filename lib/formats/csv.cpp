@@ -38,36 +38,28 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 	size_t off = 0;
 	struct signal *sig;
 
-	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
-		if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-			off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
-		else
-			off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
-	}
+	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)
+		off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
+	else
+		off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
 
-	if (io->flags & (int) SampleFlags::HAS_OFFSET) {
-		if ((smp->flags & (int) SampleFlags::HAS_TS_RECEIVED) && (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED))
-			off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
-		else
-			off += snprintf(buf + off, len - off, "%cnan", io->separator);
-	}
+	if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)
+		off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
+	else
+		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
-	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
-		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
-			off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
-		else
-			off += snprintf(buf + off, len - off, "%cnan", io->separator);
-	}
+	if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
+		off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
+	else
+		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
-	if (io->flags & (int) SampleFlags::HAS_DATA) {
-		for (unsigned i = 0; i < smp->length; i++) {
-			sig = (struct signal *) vlist_at_safe(smp->signals, i);
-			if (!sig)
-				break;
+	for (unsigned i = 0; i < smp->length; i++) {
+		sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		if (!sig)
+			break;
 
-			off += snprintf(buf + off, len - off, "%c", io->separator);
-			off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
-		}
+		off += snprintf(buf + off, len - off, "%c", io->separator);
+		off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
 	}
 
 	off += snprintf(buf + off, len - off, "%c", io->delimiter);
@@ -82,7 +74,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	const char *ptr = buf;
 	char *end;
 
-	double offset __attribute__((unused));
+	struct timespec offset;
 
 	smp->flags = 0;
 	smp->signals = io->signals;
@@ -101,9 +93,13 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 
 	smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
-	offset = strtof(ptr, &end);
+	offset = time_from_double(strtof(ptr, &end));
 	if (end == ptr || *end == io->delimiter)
 		goto out;
+
+	smp->ts.received = time_add(&smp->ts.origin, &offset);
+
+	smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 
 	ptr = end + 1;
 
