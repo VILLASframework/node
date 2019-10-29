@@ -153,7 +153,7 @@ struct memory_type memory_mmap = {
 };
 
 struct memory_type memory_mmap_hugetlb = {
-	.name = "mmap",
+	.name = "mmap_hugetlb",
 	.flags = (int) MemoryFlags::MMAP | (int) MemoryFlags::HUGEPAGE,
 	.alignment = 21, /* 2 MiB hugepage */
 	.alloc = memory_mmap_alloc,
