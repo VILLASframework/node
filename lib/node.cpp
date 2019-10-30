@@ -22,6 +22,7 @@
 
 #include <cstring>
 #include <cctype>
+#include <openssl/md5.h>
 
 #include <villas/node/config.h>
 #include <villas/hook.hpp>
@@ -120,12 +121,13 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	json_error_t err;
 	json_t *json_netem = nullptr;
 
-	const char *type;
+	const char *type, *uuid = nullptr;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: b }",
 		"type", &type,
+		"uuid", &uuid,
 		"enabled", &n->enabled
 	);
 	if (ret)
@@ -145,6 +147,20 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	assert(nt == node_type(n));
 
 	n->_vt = nt;
+
+	if (uuid) {
+		ret = uuid_parse(uuid, n->uuid);
+		if (ret)
+			throw ConfigError(json, "node-config-node-uuid", "Failed to parse UUID: {}", uuid);
+	}
+	else {
+		/* Generate UUID from hashed config */
+		char *json_str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
+
+		MD5((unsigned char*) json_str, strlen(json_str), (unsigned char*) &n->uuid);
+
+		free(json_str);
+	}
 
 	if (json_netem) {
 #ifdef WITH_NETEM
@@ -496,8 +512,11 @@ char * node_name_long(struct node *n)
 		if (node_type(n)->print) {
 			struct node_type *vt = node_type(n);
 
-			strcatf(&n->_name_long, "%s: #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
-				node_name(n),
+			char uuid[37];
+			uuid_unparse(n->uuid, uuid);
+
+			strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
+				node_name(n), uuid,
 				vlist_length(&n->in.signals), vlist_length(&n->out.signals),
 				vlist_length(&n->in.hooks),   vlist_length(&n->out.hooks),
 				n->in.vectorize, n->out.vectorize

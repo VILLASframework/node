@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <jansson.h>
+#include <uuid/uuid.h>
 
 #include <villas/node_type.h>
 #include <villas/node_direction.h>
@@ -63,6 +64,8 @@ struct node {
 
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
+
+	uuid_t uuid;
 
 	int affinity;		/**< CPU Affinity of this node */
 

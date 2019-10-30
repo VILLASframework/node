@@ -30,6 +30,7 @@ list(APPEND INCLUDE_DIRS
 
 set(LIBRARIES
     PkgConfig::JANSSON
+    PkgConfig::UUID
     villas-common
     m
     stdc++
