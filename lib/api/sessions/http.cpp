@@ -38,21 +38,22 @@ Http::Http(Api *a, lws *w) :
 	Wsi(a, w),
 	headersSent(false)
 {
-	int hdrlen, options = -1, version;
+	int ret, hdrlen, options = -1, version;
 	char *uri;
 
 	if      ((hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI)))
 		options = 1;
 	else if ((hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI)))
 		options = 0;
+	else
+		throw RuntimeError("Invalid request");
 
 	uri = new char[hdrlen + 1];
 	lws_hdr_copy(wsi, uri, hdrlen + 1, options ? WSI_TOKEN_OPTIONS_URI : WSI_TOKEN_POST_URI);
 
 	/* Parse request URI */
-	sscanf(uri, "/api/v%d", (int *) &version);
-
-	if (version != api::version)
+	ret = sscanf(uri, "/api/v%d", (int *) &version);
+	if (ret != 1 || version != api::version)
 		throw RuntimeError("Unsupported API version: {}", version);
 
 	/* This is an OPTIONS request.
@@ -158,9 +159,14 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (a == nullptr)
 				return -1;
 
-			new (s) Http(a, wsi);
+			try {
+				new (s) Http(a, wsi);
 
-			a->sessions.push_back(s);
+				a->sessions.push_back(s);
+			}
+			catch (RuntimeError &e) {
+				return -1;
+			}
 
 			break;
 
