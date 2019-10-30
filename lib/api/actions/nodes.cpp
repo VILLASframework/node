@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <jansson.h>
+#include <uuid/uuid.h>
 
 #include <villas/super_node.hpp>
 #include <villas/node.h>
@@ -47,8 +48,12 @@ public:
 		for (size_t i = 0; i < vlist_length(nodes); i++) {
 			struct node *n = (struct node *) vlist_at(nodes, i);
 
-			json_t *json_node = json_pack("{ s: s, s: s, s: i, s: { s: i }, s: { s: i } }",
+			char uuid[37];
+			uuid_unparse(n->uuid, uuid);
+
+			json_t *json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i }, s: { s: i } }",
 				"name",		node_name_short(n),
+				"uuid", 	uuid,
 				"state",	state_print(n->state),
 				"affinity",	n->affinity,
 				"in",
