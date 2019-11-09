@@ -226,7 +226,7 @@ Relay::Relay(int argc, char *argv[]) :
 {
 	int ret;
 
-	ret = memory_init(DEFAULT_NR_HUGEPAGES);
+	ret = memory_init(0);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory");
 
