@@ -268,7 +268,33 @@ deploy:docker:
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:latest
+    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:latest
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:latest
+  tags:
+    - shell
+    - linux
+  only:
+    # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/"
+
+deploy:docker:tags:
+  stage: deploy
+  before_script:
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+    - docker push registry.git.rwth-aachen.de/acs/public/villas/node:${DOCKER_TAG}
     - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG}
     - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:${DOCKER_TAG}
     - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:${DOCKER_TAG}
