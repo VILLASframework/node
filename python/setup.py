@@ -7,7 +7,7 @@ with open('README.md') as f:
 
 setup(
     name = 'villas-node',
-    version = '0.6.5',
+    version = '0.9.0',
     author = 'Steffen Vogel',
     author_email = 'acs-software@eonerc.rwth-aachen.de',
     description = 'Python-support for VILLASnode simulation-data gateway',
