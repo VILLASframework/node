@@ -9,7 +9,7 @@ variables:
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
   DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev
   MAKE_OPTS: -j32
-  RELEASEVER: 29
+  RELEASEVER: '29'
 
 stages:
   - prepare
@@ -221,28 +221,37 @@ packaging:rpm:
 
 deploy:web:
   stage: deploy
+  image:
+    name: rclone/rclone:1.50
+    entrypoint: [""]
+  before_script:
+    - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
   script:
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{coverage,doc}/${CI_BUILD_REF_NAME}/
-    - rsync ${RSYNC_OPTS} build/doc/html/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/doc/$CI_BUILD_REF_NAME/
-    - rsync ${RSYNC_OPTS} web/            ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+    - rclone copy build/doc/html fein:villas/doc-dev/${CI_BUILD_REF_NAME}
   dependencies:
     - build:docs
   only:
-    - tags
+    # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/"
   tags:
-    - villas-deploy
+    - docker
 
 .deploy:packages: &deploy_packages
   stage: deploy
+  image:
+    name: rclone/rclone:1.50
+    entrypoint: [""]
+  before_script:
+    - apk add curl
+    - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
   script:
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p $${DEPLOY_PATH_PACKAGES}/{fedora/x86_64,dist}
-    - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/dist/
-    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
-    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH_PACKAGES}/fedora/${RELEASEVER}/x86_64
+    - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
+    - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
+    - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
   dependencies:
     - packaging:rpm
   tags:
-    - villas-deploy
+    - docker
 
 deploy:packages:manual:
   <<: *deploy_packages
@@ -257,7 +266,7 @@ deploy:packages:tags:
 deploy:docker:
   stage: deploy
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
     - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG}
@@ -269,3 +278,6 @@ deploy:docker:
   tags:
     - shell
     - linux
+  only:
+    # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/"
