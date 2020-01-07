@@ -139,7 +139,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 
 			if (
 				sig->type != SignalType::BOOLEAN &&
-				sig->type != SignalType::INTEGER &&
+				sig->type != SignalType::FLOAT &&
 				sig->type != SignalType::INTEGER
 			) {
 				warning("Unsupported signal format for node %s. Skipping", node_name(n));
