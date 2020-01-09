@@ -54,6 +54,7 @@ public:
 			throw RuntimeError("Failed to initialize memory");
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+			dirs[i].name = i == 0 ? "in" : "out";
 			dirs[i].format = "villas.human";
 			dirs[i].io.state = State::DESTROYED;
 		}
