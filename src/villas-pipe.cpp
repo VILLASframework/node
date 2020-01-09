@@ -279,10 +279,10 @@ protected:
 
 	json_t *cfg_cli;
 
-	bool enable_send = true;
-	bool enable_recv = true;
-	int limit_send = -1;
-	int limit_recv = -1;
+	bool enable_send;
+	bool enable_recv;
+	int limit_send;
+	int limit_recv;
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{
@@ -431,6 +431,12 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("Node {} does not exist!", nodestr);
 
+		if (!node->_vt->read && enable_recv)
+			throw RuntimeError("Node {} can not receive data. Consider using send-only mode by using '-s' option", nodestr);
+
+		if (!node->_vt->write && enable_send)
+			throw RuntimeError("Node {} can not send data. Consider using receive-only mode by using '-r' option", nodestr);
+
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */
 		if (node_type(node)->start == websocket_start) {
@@ -461,7 +467,7 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 		PipeReceiveDirection recv_dir(node, &io, enable_recv, limit_recv);
-		PipeSendDirection send_dir(node, &io, enable_recv, limit_send);
+		PipeSendDirection send_dir(node, &io, enable_send, limit_send);
 
 		recv_dir.startThread();
 		send_dir.startThread();
