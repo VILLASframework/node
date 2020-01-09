@@ -140,7 +140,8 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 			if (
 				sig->type != SignalType::BOOLEAN &&
 				sig->type != SignalType::FLOAT &&
-				sig->type != SignalType::INTEGER
+				sig->type != SignalType::INTEGER &&
+				sig->type != SignalType::COMPLEX
 			) {
 				warning("Unsupported signal format for node %s. Skipping", node_name(n));
 				continue;
@@ -152,25 +153,36 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 			if (!sig)
 				return -1;
 
+			char name[32];
 			if (sig->name)
-				strcatf(&buf, "%s=", sig->name);
+				strncpy(name, sig->name, sizeof(name));
 			else
-				strcatf(&buf, "value%d=", j);
+				snprintf(name, sizeof(name), "value%d", j);
 
-			switch (sig->type) {
-				case SignalType::BOOLEAN:
-					strcatf(&buf, "%s", data->b ? "true" : "false");
-					break;
+			if (sig->type == SignalType::COMPLEX) {
+				strcatf(&buf, "%s_re=%f, %s_im=%f",
+					name, std::real(data->z),
+					name, std::imag(data->z)
+				);
+			}
+			else {
+				strcatf(&buf, "%s=", name);
 
-				case SignalType::FLOAT:
-					strcatf(&buf, "%f", data->f);
-					break;
+				switch (sig->type) {
+					case SignalType::BOOLEAN:
+						strcatf(&buf, "%s", data->b ? "true" : "false");
+						break;
 
-				case SignalType::INTEGER:
-					strcatf(&buf, "%" PRIi64, data->i);
-					break;
+					case SignalType::FLOAT:
+						strcatf(&buf, "%f", data->f);
+						break;
 
-				default: { }
+					case SignalType::INTEGER:
+						strcatf(&buf, "%" PRIi64, data->i);
+						break;
+
+					default: { }
+				}
 			}
 		}
 
