@@ -27,9 +27,12 @@
  *
  ****************************************************************************/
 
+#define _POSIX_C_SOURCE 200112L
+
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -74,15 +77,21 @@ static ec_slave_config_state_t sc_ana_out_state = {};
 
 /****************************************************************************/
 
-// process data
+// Process data
 static uint8_t *domain1_pd = NULL;
 
+#if 0
 #define MediaConvACSPos 0, 0
 #define MediaConvCWDPos 0, 1
 #define BusCouplerPos   0, 2
 #define AnaOutSlavePos  0, 3
 #define AnaInSlavePos   0, 4
 #define PCISlavePos     0, 5
+#else
+#define BusCouplerPos   0, 0
+#define AnaOutSlavePos  0, 1
+#define AnaInSlavePos   0, 2
+#endif
 
 #define Beckhoff_EK1100 0x00000002, 0x044c2c52
 #define Beckhoff_EL2004 0x00000002, 0x07d43052
@@ -91,12 +100,12 @@ static uint8_t *domain1_pd = NULL;
 #define Beckhoff_EL3102 0x00000002, 0x0c1e3052
 #define Beckhoff_EL4102 0x00000002, 0x10063052
 
-//CWD Bus
+// CWD Bus
 #define Beckhoff_EL4038 0x00000002, 0x0fc63052
 #define Beckhoff_EL3008 0x00000002, 0x0bc03052
 #define Beckhoff_FC1100 0x00000002, 0x044c0c62
 
-// offsets for PDO entries
+// Offsets for PDO entries
 static unsigned int off_ana_out_values[8] = {0};
 static unsigned int off_ana_in_values[8] = {0};
 
@@ -271,7 +280,6 @@ static ec_sync_info_t slave_4_syncs[] = {
 
 /*****************************************************************************/
 
-
 static const char* DOMAIN_STATES[] = {[0]="ZERO",
                                       [1]="INCOMPLETE",
                                       [2]="COMPLETE",
@@ -393,12 +401,14 @@ void cyclic_task()
     } else { // do this at 1 Hz
         counter = FREQUENCY;
 
-
 #if 1
-        //read process data
+        // Read process data
         for(int i=0; i<8; ++i) {
-            printf("AnaIn(%d): value=%d\n",
-                i, EC_READ_S16(domain1_pd + off_ana_in_values[i]));
+	    int16_t ain_value = EC_READ_S16(domain1_pd + off_ana_in_values[i]);
+
+            float ain_voltage = 10.0 * (float) ain_value / INT16_MAX;
+
+            printf("AnaIn(%d): value=%f Volts\n", i, ain_voltage);
         }
         printf("\n");
 #endif
@@ -412,8 +422,15 @@ void cyclic_task()
 
 #if 1
     // write process data
-    for(int i=0; i<8; ++i) {
-        EC_WRITE_U16(domain1_pd + off_ana_out_values[i], 0x8000);
+    for (int i=0; i<8; ++i) {
+	float aout_voltage = i * 1.0;
+
+	int16_t aout_value = aout_voltage / 10.0 * INT16_MAX;
+
+	if (counter == 0)
+		printf("AnaOut(%d): value=%f Volts\n", i, aout_voltage);
+
+        EC_WRITE_U16(domain1_pd + off_ana_out_values[i], aout_value);
     }
     //EC_WRITE_U8(domain1_pd + off_dig_out, blink ? 0x06 : 0x09);
 #endif
@@ -458,7 +475,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //Configure analog in
+    // Configure analog in
     printf("Configuring PDOs...\n");
     if (!(sc_ana_in = ecrt_master_slave_config(
                     master, AnaInSlavePos, Beckhoff_EL3008))) {
@@ -471,7 +488,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //Configure analog out
+    // Configure analog out
     if (!(sc_ana_out = ecrt_master_slave_config(
                     master, AnaOutSlavePos, Beckhoff_EL4038))) {
         fprintf(stderr, "Failed to get slave configuration.\n");
@@ -483,7 +500,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //Configure PCI Slave
+    // Configure PCI Slave
     /*sc = ecrt_master_slave_config(master, PCISlavePos, Beckhoff_FC1100);
     if (!sc) {
         fprintf(stderr, "failed to configure PCI Card (FC1100)\n");
@@ -537,7 +554,9 @@ int main(int argc, char **argv)
         }
 
         cyclic_task();
+
         wakeup_time.tv_nsec += PERIOD_NS;
+
         while (wakeup_time.tv_nsec >= NSEC_PER_SEC) {
             wakeup_time.tv_nsec -= NSEC_PER_SEC;
             wakeup_time.tv_sec++;
