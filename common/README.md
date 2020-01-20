@@ -10,7 +10,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/>
 
 ## Copyright
 
-2014-2019, Institute for Automation of Complex Power Systems, EONERC
+2014-2020, Institute for Automation of Complex Power Systems, EONERC
 
 ## License
 
