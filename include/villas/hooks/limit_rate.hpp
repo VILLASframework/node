@@ -1,7 +1,7 @@
 /** Rate-limiting hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode

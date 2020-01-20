@@ -2,7 +2,7 @@
 # Wrapper around villas-pipe which uses the signal generator node-type
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -46,7 +46,7 @@ function usage() {
 	echo "    -l NUM  only send LIMIT messages and stop"
     echo
     echo "VILLASnode $(villas-node -v)"
-    echo " Copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC"
+    echo " Copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC"
     echo "  Steffen Vogel <StVogel@eonerc.rwth-aachen.de>"
     exit 1
 }

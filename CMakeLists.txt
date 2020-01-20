@@ -1,7 +1,7 @@
 # Main CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -28,7 +28,7 @@ project(villas-node
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2019, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_COPYRIGHT "2014-2020, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 set(PROJECT_HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/")
 
 # Several CMake settings/defaults
