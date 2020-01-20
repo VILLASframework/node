@@ -37,20 +37,42 @@
 #include <villas/io.h>
 #include <villas/config.h>
 
+// Include hard-coded Ethercat Bus configuration
+#include <villas/nodes/ethercat_config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <ecrt.h>
+
 #define DEFAULT_ETHERCAT_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 #define DEFAULT_ETHERCAT_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH
 
-/* Forward declaration */
-struct lws;
-
 /** Internal data per ethercat node */
 struct ethercat {
+
+	/* Settings */
+	struct {
+		int num_channels;
+	} in, out;
+
+
 	struct pool pool;
 	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
+
+	ec_domain_t *domain;
+
+	ec_slave_config_t *sc_in;
+	ec_slave_config_t *sc_out;
+
+	uint8_t *domain_pd;
+
+	// Offsets for PDO entries
+	unsigned int off_out_values[ETHERCAT_NUM_CHANNELS];
+	unsigned int off_in_values[ETHERCAT_NUM_CHANNELS];
+
+	ec_pdo_entry_reg_t domain_regs[2 * ETHERCAT_NUM_CHANNELS + 1];
 };
 
 /* Internal datastructures */
@@ -67,9 +89,6 @@ int ethercat_start(struct node *n);
 
 /** @see node_type::close */
 int ethercat_stop(struct node *n);
-
-/** @see node_type::close */
-int ethercat_destroy(struct node *n);
 
 /** @see node_type::read */
 int ethercat_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);

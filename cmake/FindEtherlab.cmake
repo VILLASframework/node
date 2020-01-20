@@ -23,19 +23,23 @@
 
 find_path(ETHERLAB_INCLUDE_DIR
 	NAMES ecrt.h
+	PATHS
+		/opt/etherlab/include
 )
 
 find_library(ETHERLAB_LIBRARY
 	NAMES ethercat
+	PATHS
+		/opt/etherlab/lib
 )
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(Etherlab DEFAULT_MSG
-    ETHERLAB_LIBRARY ETHERLAB_INCLUDE_DIR)
+find_package_handle_standard_args(Etherlab DEFAULT_MSG ETHERLAB_LIBRARY ETHERLAB_INCLUDE_DIR)
 
 mark_as_advanced(ETHERLAB_INCLUDE_DIR ETHERLAB_LIBRARY)
 
 set(ETHERLAB_LIBRARIES ${ETHERLAB_LIBRARY})
 set(ETHERLAB_INCLUDE_DIRS ${ETHERLAB_INCLUDE_DIR})
+
+
+set(ETHERLAB_FOUND TRUE)
