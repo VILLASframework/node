@@ -148,6 +148,11 @@ if(WITH_NODE_RTP)
     list(APPEND LIBRARIES PkgConfig::RE)
 endif()
 
+# Enable CAN node type
+if(WITH_NODE_CAN)
+    list(APPEND NODE_SRC can.cpp)
+endif()
+
 # Enable Example node type
 if(WITH_NODE_EXAMPLE)
     list(APPEND NODE_SRC example.cpp)

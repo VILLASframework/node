@@ -154,6 +154,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"        
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         ON "ETHERLAB_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_CAN        "Build with can node-type"                              ON "" OFF)
 cmake_dependent_option(WITH_NODE_EXAMPLE    "Build with example node-type"                          ON "" OFF)
 cmake_dependent_option(WITH_NODE_FPGA       "Build with fpga node-type"                             ON "WITH_FPGA" OFF)
 
