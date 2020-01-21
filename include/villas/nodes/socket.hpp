@@ -1,4 +1,4 @@
-/** Node type: socket
+/** The socket node-type for Layer 2, 3, 4 BSD-style sockets
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>

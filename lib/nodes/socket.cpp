@@ -1,4 +1,4 @@
-/** Various socket related functions
+/** The socket node-type for Layer 2, 3, 4 BSD-style sockets
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
