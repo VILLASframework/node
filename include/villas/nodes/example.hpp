@@ -88,7 +88,7 @@ int example_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 int example_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::reverse */
-char * example_reverse(struct node *n);
+int example_reverse(struct node *n);
 
 /** @see node_type::poll_fds */
 int example_poll_fds(struct node *n, int fds[]);
