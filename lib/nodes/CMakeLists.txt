@@ -152,6 +152,15 @@ if(WITH_NODE_RTP)
     list(APPEND LIBRARIES PkgConfig::RE)
 endif()
 
+# Enable Example node type
+if(WITH_NODE_EXAMPLE)
+    list(APPEND NODE_SRC example.cpp)
+
+# Add your library dependencies for the new node-type here
+#    list(APPEND INCLUDE_DIRS ${EXAMPLELIB_INCLUDE_DIRS})
+#    list(APPEND LIBRARIES PkgConfig::EXAMPLELIB)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes INTERFACE ${LIBRARIES} PUBLIC villas-common)
