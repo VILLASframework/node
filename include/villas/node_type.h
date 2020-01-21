@@ -43,7 +43,7 @@ enum class NodeFlags {
 
 /** C++ like vtable construct for node_types */
 struct node_type {
-	unsigned vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
+	unsigned vectorize;		/**< Maximal vector length supported by this node type. Zero is unlimited. */
 	int flags;
 
 	enum State state;		/**< State of this node-type. */
@@ -57,7 +57,7 @@ struct node_type {
 		/** Global initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
-		 * This callback is optional.
+		 * This callback is optional. It will only be called if non-null.
 		 *
 		 * @retval 0	Success. Everything went well.
 		 * @retval <0	Error. Something went wrong.
@@ -67,7 +67,7 @@ struct node_type {
 		/** Global de-initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
-		 * This callback is optional.
+		 * This callback is optional. It will only be called if non-null.
 		 *
 		 * @retval 0	Success. Everything went well.
 		 * @retval <0	Error. Something went wrong.
@@ -77,6 +77,8 @@ struct node_type {
 
 	/** Initialize a new node instance.
 	 *
+	 * This callback is optional. It will only be called if non-null.
+	 *
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
@@ -84,11 +86,15 @@ struct node_type {
 
 	/** Free memory of an instance of this type.
 	 *
+	 * This callback is optional. It will only be called if non-null.
+	 *
 	 * @param n	A pointer to the node object.
 	 */
 	int (*destroy)(struct node *n);
 
 	/** Parse node connection details.
+	 *
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @param cfg	A JSON object containing the configuration of the node.
@@ -99,7 +105,7 @@ struct node_type {
 
 	/** Check the current node configuration for plausability and errors.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0 	Success. Node configuration is good.
@@ -111,12 +117,16 @@ struct node_type {
 
 	/** Returns a string with a textual represenation of this node.
 	 *
+	 * This callback is optional. It will only be called if non-null.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @return	A pointer to a dynamically allocated string. Must be freed().
 	 */
 	char * (*print)(struct node *n);
 
 	/** Start this node.
+	 *
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
@@ -126,7 +136,7 @@ struct node_type {
 
 	/** Restart this node.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
@@ -136,6 +146,8 @@ struct node_type {
 
 	/** Stop this node.
 	 *
+	 * This callback is optional. It will only be called if non-null.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
@@ -144,7 +156,7 @@ struct node_type {
 
 	/** Pause this node.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
@@ -154,7 +166,7 @@ struct node_type {
 
 	/** Resume this node.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
@@ -164,7 +176,7 @@ struct node_type {
 
 	/** Receive multiple messages at once.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * Messages are received with a single recvmsg() syscall by
 	 * using gathering techniques (struct iovec).
@@ -182,7 +194,7 @@ struct node_type {
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * Messages are sent with a single sendmsg() syscall by
 	 * using gathering techniques (struct iovec).
@@ -199,7 +211,7 @@ struct node_type {
 
 	/** Reverse source and destination of a node.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
 	 */
@@ -207,7 +219,7 @@ struct node_type {
 
 	/** Get list of file descriptors which can be used by poll/select to detect the availability of new data.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @return The number of file descriptors which have been put into \p fds.
 	 */
@@ -215,7 +227,8 @@ struct node_type {
 
 	/** Get list of socket file descriptors for configuring network emulation.
 	 *
-	 * This callback is optional.
+	 * This callback is optional. It will only be called if non-null.
+	 *
 	 * @return The number of file descriptors which have been put into \p sds.
 	 */
 	int (*netem_fds)(struct node *n, int sds[]);
