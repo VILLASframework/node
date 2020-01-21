@@ -54,10 +54,10 @@ char * influxdb_print(struct node *n);
 /** @see node_type::parse */
 int influxdb_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int influxdb_open(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int influxdb_close(struct node *n);
 
 /** @see node_type::write */

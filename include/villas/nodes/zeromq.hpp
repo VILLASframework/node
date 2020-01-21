@@ -86,10 +86,10 @@ int zeromq_type_start(villas::node::SuperNode *sn);
 /** @see node_type::type_stop */
 int zeromq_type_stop();
 
-/** @see node_type::open */
+/** @see node_type::start */
 int zeromq_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int zeromq_stop(struct node *n);
 
 /** @see node_type::read */

@@ -82,10 +82,10 @@ int ngsi_parse(struct node *n, json_t *cfg);
 /** @see node_type::print */
 char * ngsi_print(struct node *n);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int ngsi_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int ngsi_stop(struct node *n);
 
 /** @see node_type::read */

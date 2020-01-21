@@ -124,31 +124,31 @@ int node_check(struct node *n);
 
 /** Start operation of a node.
  *
- * @see node_type::open
+ * @see node_type::start
  */
 int node_start(struct node *n);
 
 /** Stops operation of a node.
  *
- * @see node_type::close
+ * @see node_type::stop
  */
 int node_stop(struct node *n);
 
 /** Pauses operation of a node.
  *
- * @see node_type::close
+ * @see node_type::stop
  */
 int node_pause(struct node *n);
 
 /** Resumes operation of a node.
  *
- * @see node_type::close
+ * @see node_type::stop
  */
 int node_resume(struct node *n);
 
 /** Restarts operation of a node.
  *
- * @see node_type::close
+ * @see node_type::stop
  */
 int node_restart(struct node *n);
 

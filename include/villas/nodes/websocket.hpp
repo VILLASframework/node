@@ -97,13 +97,13 @@ int websocket_type_start(villas::node::SuperNode *sn);
 /** @see node_type::type_stop */
 int websocket_type_stop();
 
-/** @see node_type::open */
+/** @see node_type::start */
 int websocket_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int websocket_stop(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int websocket_destroy(struct node *n);
 
 /** @see node_type::read */

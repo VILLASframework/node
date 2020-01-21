@@ -111,10 +111,10 @@ char * rtp_print(struct node *n);
 /** @see node_type::parse */
 int rtp_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int rtp_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int rtp_stop(struct node *n);
 
 /** @see node_type::read */

@@ -73,10 +73,10 @@ char * opal_print(struct node *n);
 /** Print global settings of the OPAL node type. */
 int opal_print_global();
 
-/** @see node_type::open */
+/** @see node_type::start */
 int opal_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int opal_stop(struct node *n);
 
 /** @see node_type::read */

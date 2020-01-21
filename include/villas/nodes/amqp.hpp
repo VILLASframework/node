@@ -69,10 +69,10 @@ char * amqp_print(struct node *n);
 /** @see node_type::parse */
 int amqp_parse(struct node *n, json_t *json);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int amqp_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int amqp_stop(struct node *n);
 
 /** @see node_type::read */

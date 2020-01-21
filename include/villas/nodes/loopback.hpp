@@ -52,10 +52,10 @@ char * loopback_print(struct node *n);
 /** @see node_type::parse */
 int loopback_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int loopback_open(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int loopback_close(struct node *n);
 
 /** @see node_type::read */

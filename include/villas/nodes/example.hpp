@@ -69,10 +69,10 @@ int example_check();
 /** @see node_type::prepare */
 int example_prepare();
 
-/** @see node_type::open */
+/** @see node_type::start */
 int example_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int example_stop(struct node *n);
 
 /** @see node_type::pause */

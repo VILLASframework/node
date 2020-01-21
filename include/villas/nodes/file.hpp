@@ -74,10 +74,10 @@ char * file_print(struct node *n);
 /** @see node_type::parse */
 int file_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int file_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int file_stop(struct node *n);
 
 /** @see node_type::read */

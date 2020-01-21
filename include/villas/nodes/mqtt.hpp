@@ -75,13 +75,13 @@ char * mqtt_print(struct node *n);
 /** @see node_type::parse */
 int mqtt_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int mqtt_start(struct node *n);
 
 /** @see node_type::destroy */
 int mqtt_destroy(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int mqtt_stop(struct node *n);
 
 /** @see node_type::type_start */

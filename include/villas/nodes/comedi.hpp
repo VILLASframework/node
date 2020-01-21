@@ -86,10 +86,10 @@ char * comedi_print(struct node *n);
 /** @see node_type::parse */
 int comedi_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int comedi_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int comedi_stop(struct node *n);
 
 /** @see node_type::read */

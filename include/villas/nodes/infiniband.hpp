@@ -118,13 +118,13 @@ char * ib_print(struct node *n);
 /** @see node_type::parse */
 int ib_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int ib_start(struct node *n);
 
 /** @see node_type::destroy */
 int ib_destroy(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int ib_stop(struct node *n);
 
 /** @see node_type::read */

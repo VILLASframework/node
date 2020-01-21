@@ -55,10 +55,10 @@ char * nanomsg_print(struct node *n);
 /** @see node_type::parse */
 int nanomsg_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
+/** @see node_type::start */
 int nanomsg_start(struct node *n);
 
-/** @see node_type::close */
+/** @see node_type::stop */
 int nanomsg_stop(struct node *n);
 
 /** @see node_type::read */
