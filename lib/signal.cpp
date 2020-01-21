@@ -106,7 +106,7 @@ struct signal * signal_create(const char *name, const char *unit, enum SignalTyp
 	int ret;
 	struct signal *sig;
 
-	sig = (struct signal *) alloc(sizeof(struct signal));
+	sig = new struct signal;
 	if (!sig)
 		return nullptr;
 
@@ -133,7 +133,7 @@ int signal_free(struct signal *s)
 	if (ret)
 		 return ret;
 
-	free(s);
+	delete s;
 
 	return 0;
 }
@@ -158,7 +158,7 @@ struct signal * signal_copy(struct signal *s)
 {
 	struct signal *ns;
 
-	ns = (struct signal *) alloc(sizeof(struct signal));
+	ns = new struct signal;
 	if (!ns)
 		return nullptr;
 
@@ -254,7 +254,7 @@ int signal_list_parse(struct vlist *list, json_t *cfg)
 	size_t i;
 	json_t *json_signal;
 	json_array_foreach(cfg, i, json_signal) {
-		s = (struct signal *) alloc(sizeof(struct signal));
+		s = new struct signal;
 		if (!s)
 			return -1;
 

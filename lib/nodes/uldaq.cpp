@@ -264,7 +264,7 @@ int uldaq_destroy(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	if (u->in.queues)
-		free(u->in.queues);
+		delete[] u->in.queues;
 
 	ret = pthread_mutex_destroy(&u->in.mutex);
 	if (ret)
@@ -311,8 +311,11 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		u->device_interface_type = (DaqDeviceInterface) iftype;
 	}
 
+	if (u->in.queues)
+		delete[] u->in.queues;
+
 	u->in.channel_count = vlist_length(&n->in.signals);
-	u->in.queues = (struct AiQueueElement *) realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
+	u->in.queues = new struct AiQueueElement[u->in.channel_count];
 
 	json_array_foreach(json_signals, i, json_signal) {
 		const char *range_str = nullptr, *input_mode_str = nullptr;
@@ -521,7 +524,7 @@ int uldaq_start(struct node *n)
 
 	/* Allocate a buffer to receive the data */
 	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 50;
-	u->in.buffer = (double *) alloc(u->in.buffer_len * sizeof(double));
+	u->in.buffer = new double[u->in.buffer_len];
 	if (!u->in.buffer) {
 		warning("Out of memory, unable to create scan buffer");
 		return -1;

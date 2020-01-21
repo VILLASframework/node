@@ -44,7 +44,7 @@ static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, 
 {
 	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 
-	struct memory_allocation *ma = (struct memory_allocation *) alloc(sizeof(struct memory_allocation));
+	auto *ma = new struct memory_allocation;
 	if (!ma)
 		return nullptr;
 
@@ -61,7 +61,7 @@ static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, 
 	ma->ib.mr = ibv_reg_mr(mi->pd, ma->address, ma->length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 	if (!ma->ib.mr) {
 		mi->parent->free(ma->parent, mi->parent);
-		free(ma);
+		delete ma;
 		return nullptr;
 	}
 

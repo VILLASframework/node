@@ -274,12 +274,12 @@ int socket_start(struct node *n)
 	}
 
 	s->out.buflen = SOCKET_INITIAL_BUFFER_LEN;
-	s->out.buf = (char *) alloc(s->out.buflen);
+	s->out.buf = new char[s->out.buflen];
 	if (!s->out.buf)
 		return -1;
 
 	s->in.buflen = SOCKET_INITIAL_BUFFER_LEN;
-	s->in.buf = (char *) alloc(s->in.buflen);
+	s->in.buf = new char[s->in.buflen];
 	if (!s->in.buf)
 		return -1;
 
@@ -320,8 +320,8 @@ int socket_stop(struct node *n)
 	if (ret)
 		return ret;
 
-	free(s->in.buf);
-	free(s->out.buf);
+	delete[] s->in.buf;
+	delete[] s->out.buf;
 
 	return 0;
 }
@@ -405,7 +405,10 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 
 	if (wbytes > s->out.buflen) {
 		s->out.buflen = wbytes;
-		s->out.buf = (char *) realloc(s->out.buf, s->out.buflen);
+
+		delete[] s->out.buf;
+		s->out.buf = new char[s->out.buflen];
+
 		goto retry;
 	}
 

@@ -80,8 +80,8 @@ int opal_type_start(villas::node::SuperNode *sn)
 	if (err != EOK)
 		error("Failed to get number of recv blocks (%d)", err);
 
-	send_ids = alloc(send_icons * sizeof(int));
-	recv_ids = alloc(recv_icons * sizeof(int));
+	send_ids = new int[send_icons];
+	recv_ids = new int[recv_icons];
 
 	err = OpalGetAsyncSendIDList(send_ids, send_icons * sizeof(int));
 	if (err != EOK)
@@ -115,8 +115,8 @@ int opal_type_stop()
 
 	pthread_mutex_destroy(&lock);
 
-	free(send_ids);
-	free(recv_ids);
+	delete[] send_ids;
+	delete[] recv_ids;
 
 	return 0;
 }
@@ -125,8 +125,8 @@ int opal_print_global()
 {
 	debug(LOG_OPAL | 2, "Controller ID: %u", params.controllerID);
 
-	char *sbuf = alloc(send_icons * 5);
-	char *rbuf = alloc(recv_icons * 5);
+	auto *sbuf = new char[send_icons * 5];
+	auto *rbuf = new char[recv_icons * 5];
 
 	for (int i = 0; i < send_icons; i++)
 		strcatf(&sbuf, "%u ", send_ids[i]);
@@ -136,8 +136,8 @@ int opal_print_global()
 	debug(LOG_OPAL | 2, "Send Blocks: %s",    sbuf);
 	debug(LOG_OPAL | 2, "Receive Blocks: %s", rbuf);
 
-	free(sbuf);
-	free(rbuf);
+	delete[] sbuf;
+	delete[] rbuf;
 
 	debug(LOG_OPAL | 2, "Control Block Parameters:");
 	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)

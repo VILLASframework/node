@@ -72,10 +72,10 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 		return 0;
 	}
 
-	d->chanlist = (unsigned int*) alloc(d->chanlist_len * sizeof(*d->chanlist));
+	d->chanlist = new unsigned int[d->chanlist_len];
 	assert(d->chanlist != nullptr);
 
-	d->chanspecs = (comedi_chanspec *) alloc(d->chanlist_len * sizeof(*d->chanspecs));
+	d->chanspecs = new comedi_chanspec[d->chanlist_len];
 	assert(d->chanspecs != nullptr);
 
 	json_array_foreach(json_chans, i, json_chan) {
@@ -236,7 +236,7 @@ static int comedi_start_in(struct node *n)
 
 #if COMEDI_USE_READ
 	/* Be prepared to consume one entire buffer */
-	c->buf = (char *) alloc(c->in.buffer_size);
+	c->buf = new char[c->in.buffer_size];
 	c->bufptr = c->buf;
 	assert(c->bufptr != nullptr);
 
@@ -326,7 +326,7 @@ static int comedi_start_out(struct node *n)
 	/* Allocate buffer for one complete villas sample */
 	/** @todo: maybe increase buffer size according to c->vectorize */
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
-	d->buffer = (char *) alloc(local_buffer_size);
+	d->buffer = new char[local_buffer_size];
 	d->bufptr = d->buffer;
 	assert(d->buffer != nullptr);
 

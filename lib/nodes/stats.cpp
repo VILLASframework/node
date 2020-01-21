@@ -181,7 +181,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 		struct signal *sig = (struct signal *) vlist_at(&n->in.signals, i);
 		struct stats_node_signal *stats_sig;
 
-		stats_sig = (struct stats_node_signal *) alloc(sizeof(struct stats_node_signal));
+		stats_sig = new struct stats_node_signal;
 		if (!stats_sig)
 			return -1;
 

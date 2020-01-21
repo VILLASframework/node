@@ -106,7 +106,7 @@ int test_rtt_prepare(struct node *n)
 		if (c->values > max_values)
 			max_values = c->values;
 
-		c->filename_formatted = (char *) alloc(NAME_MAX);
+		c->filename_formatted = new char[NAME_MAX];
 
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
@@ -223,7 +223,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 
 		for (int i = 0; i < numrates; i++) {
 			for (int j = 0; j < numvalues; j++) {
-				struct test_rtt_case *c = (struct test_rtt_case *) alloc(sizeof(struct test_rtt_case));
+				auto *c = new struct test_rtt_case;
 
 				c->rate = rates[i];
 				c->values = values[j];

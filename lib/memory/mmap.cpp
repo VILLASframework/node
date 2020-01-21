@@ -99,7 +99,7 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 	int flags, fd;
 	size_t sz;
 
-	struct memory_allocation *ma = (struct memory_allocation *) alloc(sizeof(struct memory_allocation));
+	auto *ma = new struct memory_allocation;
 	if (!ma)
 		return nullptr;
 
@@ -134,7 +134,7 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 
 	ma->address = mmap(nullptr, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
-		free(ma);
+		delete ma;
 		return nullptr;
 	}
 

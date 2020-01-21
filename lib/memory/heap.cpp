@@ -31,7 +31,7 @@ static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment
 {
 	int ret;
 
-	struct memory_allocation *ma = (struct memory_allocation *) alloc(sizeof(struct memory_allocation));
+	auto *ma = new struct memory_allocation;
 	if (!ma)
 		return nullptr;
 
@@ -44,7 +44,7 @@ static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment
 
 	ret = posix_memalign(&ma->address, ma->alignment, ma->length);
 	if (ret) {
-		free(ma);
+		delete ma;
 		return nullptr;
 	}
 

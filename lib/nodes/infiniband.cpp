@@ -655,7 +655,7 @@ int ib_start(struct node *n)
 
 	/* Allocate space for 40 Byte GHR. We don't use this. */
 	if (ib->conn.port_space == RDMA_PS_UDP) {
-		ib->conn.ud.grh_ptr = alloc(GRH_SIZE);
+		ib->conn.ud.grh_ptr = new char[GRH_SIZE];
 		ib->conn.ud.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.ud.grh_ptr, GRH_SIZE, IBV_ACCESS_LOCAL_WRITE);
 	}
 

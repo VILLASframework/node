@@ -53,7 +53,7 @@ int node_init(struct node *n, struct node_type *vt)
 	assert(n->state == State::DESTROYED);
 
 	n->_vt = vt;
-	n->_vd = alloc(vt->size);
+	n->_vd = new char[vt->size];
 
 	//n->stats = nullptr;
 	n->name = nullptr;
@@ -390,7 +390,7 @@ int node_destroy(struct node *n)
 	vlist_remove_all(&node_type(n)->instances, n);
 
 	if (n->_vd)
-		free(n->_vd);
+		delete[] (char *) n->_vd;
 
 	if (n->_name)
 		free(n->_name);

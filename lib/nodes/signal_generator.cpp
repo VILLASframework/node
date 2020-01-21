@@ -91,7 +91,7 @@ int signal_generator_prepare(struct node *n)
 	assert(vlist_length(&n->in.signals) == 0);
 
 	for (unsigned i = 0; i < s->values; i++) {
-		struct signal *sig = (struct signal *) alloc(sizeof(struct signal));
+		auto *sig = new struct signal;
 
 		int rtype = s->type == signal_generator::SignalType::MIXED ? i % 7 : (int) s->type;
 
@@ -154,7 +154,7 @@ int signal_generator_start(struct node *n)
 	s->missed_steps = 0;
 	s->counter = 0;
 	s->started = time_now();
-	s->last = (double *) alloc(sizeof(double) * s->values);
+	s->last = new double[s->values];
 
 	for (unsigned i = 0; i < s->values; i++)
 		s->last[i] = s->offset;
@@ -183,7 +183,7 @@ int signal_generator_stop(struct node *n)
 	if (s->missed_steps > 0 && s->monitor_missed)
 		warning("Node %s missed a total of %d steps.", node_name(n), s->missed_steps);
 
-	free(s->last);
+	delete[] s->last;
 
 	return 0;
 }

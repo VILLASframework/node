@@ -275,7 +275,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				websocket_connection_destroy(c);
 
 			if (c->mode == websocket_connection::Mode::CLIENT)
-				free(c);
+				delete c;
 
 			break;
 
@@ -401,8 +401,8 @@ int websocket_start(struct node *n)
 
 	for (size_t i = 0; i < vlist_length(&w->destinations); i++) {
 		const char *format;
-		struct websocket_destination *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
-		struct websocket_connection *c = (struct websocket_connection *) alloc(sizeof(struct websocket_connection));
+		auto *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
+		auto *c = new struct websocket_connection;
 
 		c->state = websocket_connection::State::CONNECTING;
 
@@ -555,7 +555,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 			if (!uri)
 				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
-			struct websocket_destination *d = (struct websocket_destination *) alloc(sizeof(struct websocket_destination));
+			auto *d = new struct websocket_destination;
 
 			d->uri = strdup(uri);
 

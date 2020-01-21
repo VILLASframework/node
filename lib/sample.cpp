@@ -64,7 +64,7 @@ struct sample * sample_alloc_mem(int capacity)
 {
 	size_t sz = SAMPLE_LENGTH(capacity);
 
-	char *b = (char *) alloc(sz);
+	char *b = new char[sz];
 	if (!b)
 		return nullptr;
 
@@ -86,7 +86,7 @@ void sample_free(struct sample *s)
 	if (p)
 		pool_put(p, s);
 	else
-		free(s);
+		delete[] (char *) s;
 }
 
 int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)

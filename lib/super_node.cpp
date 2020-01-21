@@ -154,7 +154,7 @@ void SuperNode::parse(json_t *cfg)
 			if (!nt)
 				throw ConfigError(json_node, "node-config-node-type", "Invalid node type: {}", type);
 
-			auto *n = (struct node *) alloc(sizeof(struct node));
+			auto *n = new struct node;
 
 			ret = node_init(n, nt);
 			if (ret)
@@ -179,7 +179,7 @@ void SuperNode::parse(json_t *cfg)
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-parse:			path *p = (path *) alloc(sizeof(path));
+parse:			path *p = new path;
 
 			ret = path_init(p);
 			if (ret)

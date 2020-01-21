@@ -172,7 +172,7 @@ static int path_prepare_poll(struct path *p)
 	int fds[16], ret, n = 0, m;
 
 	if (p->reader.pfds)
-		free(p->reader.pfds);
+		delete[] p->reader.pfds;
 
 	p->reader.pfds = nullptr;
 	p->reader.nfds = 0;
@@ -278,7 +278,7 @@ int path_prepare(struct path *p)
 				}
 				/* For other mappings we create new signal descriptors */
 				else {
-					sig = (struct signal *) alloc(sizeof(struct signal));
+					sig = new struct signal;
 
 					ret = signal_init_from_mapping(sig, me, j);
 					if (ret)
@@ -386,7 +386,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 		/* Create new path_source of not existing */
 		if (!ps) {
-			ps = (struct path_source *) alloc(sizeof(struct path_source));
+			ps = new struct path_source;
 
 			ps->node = me->node;
 			ps->masked = false;
@@ -409,7 +409,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 	for (size_t i = 0; i < vlist_length(&destinations); i++) {
 		struct node *n = (struct node *) vlist_at(&destinations, i);
 
-		struct path_destination *pd = (struct path_destination *) alloc(sizeof(struct path_destination));
+		auto *pd = new struct path_destination;
 
 		pd->node = n;
 
@@ -713,7 +713,7 @@ int path_destroy(struct path *p)
 		return ret;
 
 	if (p->reader.pfds)
-		free(p->reader.pfds);
+		delete[] p->reader.pfds;
 
 	if (p->_name)
 		free(p->_name);

@@ -80,7 +80,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 		if (!json_is_array(json_exec))
 			error("Setting 'exec' of node %s must be an array of strings", node_name(n));
 
-		shm->exec = (char **) alloc(sizeof(char *) * (json_array_size(json_exec) + 1));
+		shm->exec = new char*[json_array_size(json_exec) + 1];
 
 		size_t i;
 		json_t *json_val;

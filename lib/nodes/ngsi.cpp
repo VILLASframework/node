@@ -217,7 +217,7 @@ static int ngsi_parse_mapping(struct vlist *mapping, json_t *cfg)
 		if (!token)
 			return -2;
 
-		struct ngsi_attribute *a = (struct ngsi_attribute *) alloc(sizeof(struct ngsi_attribute));
+		auto *a = new struct ngsi_attribute;
 
 		a->index = j;
 

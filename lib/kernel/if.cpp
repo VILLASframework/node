@@ -160,7 +160,7 @@ struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces)
 	}
 
 	/* If not found, create a new interface */
-	i = (struct interface *) alloc(sizeof(struct interface));
+	i = new struct interface;
 	if (!i)
 		return nullptr;
 

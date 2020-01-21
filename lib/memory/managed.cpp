@@ -106,7 +106,7 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 
 			block->used = true;
 
-			struct memory_allocation *ma = (struct memory_allocation *) alloc(sizeof(struct memory_allocation));
+			auto *ma = new struct memory_allocation;
 			if (!ma)
 				return nullptr;
 

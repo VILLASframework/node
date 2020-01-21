@@ -90,7 +90,7 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 	assert(io->state == State::DESTROYED);
 
 	io->_vt = fmt;
-	io->_vd = alloc(fmt->size);
+	io->_vd = new char[fmt->size];
 
 	io->flags = flags | (io_type(io)->flags & ~(int) SampleFlags::HAS_ALL);
 	io->delimiter = io_type(io)->delimiter ? io_type(io)->delimiter : '\n';
@@ -99,8 +99,8 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 	io->in.buflen =
 	io->out.buflen = 4096;
 
-	io->in.buffer = (char *) alloc(io->in.buflen);
-	io->out.buffer = (char *) alloc(io->out.buflen);
+	io->in.buffer = new char[io->in.buflen];
+	io->out.buffer = new char[io->out.buflen];
 
 	io->signals = signals;
 
@@ -118,7 +118,7 @@ int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int f
 	int ret;
 	struct vlist *signals;
 
-	signals = (struct vlist *) alloc(sizeof(struct vlist));
+	signals = new struct vlist;
 	signals->state = State::DESTROYED;
 
 	ret = vlist_init(signals);
@@ -144,9 +144,9 @@ int io_destroy(struct io *io)
 	if (ret)
 		return ret;
 
-	free(io->_vd);
-	free(io->in.buffer);
-	free(io->out.buffer);
+	delete[] (char *) io->_vd;
+	delete[] io->in.buffer;
+	delete[] io->out.buffer;
 
 	if (io->flags & (int) IOFlags::DESTROY_SIGNALS) {
 		ret = vlist_destroy(io->signals, (dtor_cb_t) signal_decref, false);

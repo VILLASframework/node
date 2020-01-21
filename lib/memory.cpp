@@ -146,7 +146,7 @@ int memory_free(void *ptr)
 		return -1;
 
 	allocations.erase(iter);
-	free(ma);
+	delete ma;
 
 	return 0;
 }

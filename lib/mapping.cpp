@@ -216,7 +216,7 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes)
 		return -1;
 
 	json_array_foreach(json_mapping, i, json_entry) {
-		struct mapping_entry *me = (struct mapping_entry *) alloc(sizeof(struct mapping_entry));
+		auto *me = new struct mapping_entry;
 
 		ret = mapping_parse(me, json_entry, nodes);
 		if (ret)

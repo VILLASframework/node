@@ -271,7 +271,7 @@ int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 		size_t idx;
 		size_t len = json_array_size(json);
 
-		int16_t *data = (int16_t *) alloc(len * sizeof(int16_t));
+		int16_t *data = new int16_t[len];
 
 		json_array_foreach(json, idx, elm) {
 			if (!json_is_integer(elm))

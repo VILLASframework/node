@@ -39,7 +39,7 @@ using namespace villas::utils;
 static char * file_format_name(const char *format, struct timespec *ts)
 {
 	struct tm tm;
-	char *buf = (char *) alloc(FILE_MAX_PATHLEN);
+	char *buf = new char[FILE_MAX_PATHLEN];
 
 	/* Convert time */
 	gmtime_r(&ts->tv_sec, &tm);
@@ -349,7 +349,7 @@ int file_stop(struct node *n)
 	if (ret)
 		return ret;
 
-	free(f->uri);
+	delete f->uri;
 
 	return 0;
 }

@@ -293,7 +293,7 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type
 	/* Check if there is already a SVReceiver for this interface */
 	r = iec61850_receiver_lookup(t, intf);
 	if (!r) {
-		r = (struct iec61850_receiver *) alloc(sizeof(struct iec61850_receiver));
+		r = new struct iec61850_receiver;
 		if (!r)
 			return nullptr;
 
