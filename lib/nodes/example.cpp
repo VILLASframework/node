@@ -89,7 +89,6 @@ int example_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-/** This output will be used by VILLASnode to show debug information during the initialization. */
 char * example_print(struct node *n)
 {
 	struct example *s = (struct example *) n->_vd;
@@ -140,6 +139,24 @@ int example_start(struct node *n)
 }
 
 int example_stop(struct node *n)
+{
+	//struct example *s = (struct example *) n->_vd;
+
+	/* TODO: Add implementation here. */
+
+	return 0;
+}
+
+int example_pause(struct node *n)
+{
+	//struct example *s = (struct example *) n->_vd;
+
+	/* TODO: Add implementation here. */
+
+	return 0;
+}
+
+int example_resume(struct node *n)
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -227,6 +244,8 @@ static void register_plugin() {
 	p.node.check		= example_check;
 	p.node.start		= example_start;
 	p.node.stop		= example_stop;
+	p.node.pause		= example_pause;
+	p.node.resume		= example_resume;
 	p.node.read		= example_read;
 	p.node.write		= example_write;
 	p.node.reverse		= example_reverse;

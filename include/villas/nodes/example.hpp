@@ -75,6 +75,12 @@ int example_start(struct node *n);
 /** @see node_type::close */
 int example_stop(struct node *n);
 
+/** @see node_type::pause */
+int example_pause(struct node *n);
+
+/** @see node_type::resume */
+int example_resume(struct node *n);
+
 /** @see node_type::write */
 int example_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
