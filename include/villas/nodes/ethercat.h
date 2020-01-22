@@ -77,7 +77,6 @@ struct ethercat {
 
 /* Internal datastructures */
 
-
 /** @see node_type::type_start */
 int ethercat_type_start(struct super_node *sn);
 
@@ -95,6 +94,10 @@ int ethercat_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 /** @see node_type::write */
 int ethercat_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+
+/** @see node_type::parse */
+int ethercat_parse(struct node *n, json_t *cfg);
+
 
 /** @} */
 

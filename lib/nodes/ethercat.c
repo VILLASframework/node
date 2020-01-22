@@ -153,34 +153,34 @@ int ethercat_start(struct node *n)
 	memset(&w->domain_regs[2*ETHERCAT_NUM_CHANNELS], 0, sizeof(ec_pdo_entry_reg_t));
 
 	// Configure analog in
-	printf("Configuring PDOs...\n");
+	info("Configuring PDOs...\n");
 	if (!(w->sc_in = ecrt_master_slave_config(master, ETHERCAT_ALIAS, ETHERCAT_POS_SLAVE_IN, ETHERCAT_VID_BECKHOFF, ETHERCAT_PID_EL3008))) {
-		fprintf(stderr, "Failed to get slave configuration.\n");
+		warning("Failed to get slave configuration.\n");
 		return -1;
 	}
 
 	if (ecrt_slave_config_pdos(w->sc_in, EC_END, slave_4_syncs)) {
-		fprintf(stderr, "Failed to configure PDOs.\n");
+		error("Failed to configure PDOs.\n");
 		return -1;
 	}
 
 	// Configure analog out
 	if (!(w->sc_out = ecrt_master_slave_config(master, ETHERCAT_ALIAS, ETHERCAT_POS_SLAVE_OUT, ETHERCAT_VID_BECKHOFF, ETHERCAT_PID_EL4038))) {
-		fprintf(stderr, "Failed to get slave configuration.\n");
+		warning("Failed to get slave configuration.\n");
 		return -1;
 	}
 
 	if (ecrt_slave_config_pdos(w->sc_out, EC_END, slave_3_syncs)) {
-		fprintf(stderr, "Failed to configure PDOs.\n");
+		warning("Failed to configure PDOs.\n");
 		return -1;
 	}
 
 		if (ecrt_domain_reg_pdo_entry_list(w->domain, w->domain_regs)) {
-		fprintf(stderr, "PDO entry registration failed!\n");
+		error("PDO entry registration failed!\n");
 		return -1;
 	}
 
-	printf("Activating master...\n");
+	info("Activating master...\n");
 	if (ecrt_master_activate(master)) {
 		return -1;
 	}
@@ -196,9 +196,9 @@ int ethercat_stop(struct node *n)
 {
 	int ret;
 	struct ethercat *w = (struct ethercat *) n->_vd;
-	printf("releasing master\n");
+	info("releasing master\n");
 	ecrt_release_master(master);
-	printf("have a nice day!\n");
+	info("have a nice day!\n");
 
 	ret = queue_signalled_destroy(&w->queue);
 	if (ret)
@@ -275,6 +275,42 @@ int ethercat_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return 1;
 }
 
+int ethercat_parse(struct node *n, json_t *cfg)
+{
+	struct ethercat *w = (struct ethercat *) n->_vd;
+
+	//const char *local, *remote;
+	//const char *layer = NULL;
+	const char *format = "villas.binary";
+
+	int ret;
+
+	json_error_t err;
+ 
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: { s: i, s?: i, s?: i }, s?: { s: i, s?: i, s?: i } }",
+		"alias", &alias,
+		"out",
+			"num_channels", &w->in.num_channels,
+			"pid", &w->out.pid,
+			"vid", &w->out.vid,
+		"in",
+			"num_channels", &w->in.num_channels,
+			"pid", &w->in.pid,
+			"vid", &w->in.vid,
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	/* Format */
+	w->format = format_type_lookup(format);
+	if (!w->format)
+		error("Invalid format '%s' for node %s", format, node_name(n));
+
+	return 0;
+}
+
+
 // int ethercat_poll_fds(struct node *n, int *fds)
 // {
 // 	struct ethercat *w = (struct ethercat *) n->_vd;
@@ -293,6 +329,7 @@ static struct plugin p = {
 		.size		= sizeof(struct ethercat),
 		.type.start	= ethercat_type_start,
 		.start		= ethercat_start,
+		.parse		= ethercat_parse,
 		.stop		= ethercat_stop,
 		.read		= ethercat_read,
 		.write		= ethercat_write,
