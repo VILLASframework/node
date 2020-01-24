@@ -7,7 +7,7 @@ variables:
   DOCKER_FILE: packaging/docker/Dockerfile.dev
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
-  DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev
+  DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev
   MAKE_OPTS: -j32
   RELEASEVER: '29'
 
@@ -40,32 +40,32 @@ prepare:raspbian:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-raspbian
 
 prepare:ubuntu:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
 
 prepare:centos:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-centos
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
 
 prepare:debian-armhf:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
     DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
 
 prepare:debian-arm64:docker-dev:
   extends: prepare:fedora:docker-dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
     DOCKER_OPTS: --build-arg ARCH=arm64 --build-arg TRIPLET=aarch64-linux-gnu
 
 # Stage: build
@@ -93,7 +93,7 @@ build:fedora-minimal:x86_64:
 build:ubuntu:x86_64:
   extends: build:fedora:x86_64
   variables:
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
 build:centos:x86_64:
@@ -103,26 +103,26 @@ build:centos:x86_64:
     - cmake3 .. ${CMAKE_OPTS}
     - make ${MAKE_OPTS}
   variables:
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
 build:raspbian:armv6l:
   extends: build:fedora:x86_64
   variables:
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-raspbian
     CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
   when: manual
 
 build:debian-multiarch:armhf:
   extends: build:fedora:x86_64
   variables:
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
     CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/arm-linux-gnueabihf
 
 build:debian-multiarch:arm64:
   extends: build:fedora:x86_64
   variables:
-    DOCKER_IMAGE_DEV: registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
     CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-arm64.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/aarch64-linux-gnu
 
 build:docs:
@@ -268,20 +268,20 @@ deploy:docker:
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:latest
-    - docker tag registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:${DOCKER_TAG} registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:latest
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:latest
+    - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+    - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
+    - docker tag ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-ubuntu:latest
+    - docker tag ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-centos:latest
+    - docker tag ${DOCKER_IMAGE}/dev-raspbian:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-raspbian:latest
+    - docker tag ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-arm64:latest
+    - docker tag ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-armhf:latest
+    - docker push ${DOCKER_IMAGE}:latest
+    - docker push ${DOCKER_IMAGE}/dev:latest
+    - docker push ${DOCKER_IMAGE}/dev-ubuntu:latest
+    - docker push ${DOCKER_IMAGE}/dev-centos:latest
+    - docker push ${DOCKER_IMAGE}/dev-raspbian:latest
+    - docker push ${DOCKER_IMAGE}/dev-debian-arm64:latest
+    - docker push ${DOCKER_IMAGE}/dev-debian-armhf:latest
   tags:
     - shell
     - linux
@@ -294,13 +294,13 @@ deploy:docker:tags:
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-ubuntu:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-centos:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-raspbian:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-arm64:${DOCKER_TAG}
-    - docker push registry.git.rwth-aachen.de/acs/public/villas/node/dev-debian-armhf:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-raspbian:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG}
   tags:
     - shell
     - linux
