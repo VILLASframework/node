@@ -97,7 +97,7 @@ RUN cd /tmp && \
 	mkdir -p fmt/build && cd fmt/build && \
 	git checkout 5.2.0 && \
 	cmake3 -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
-	rm -rf /tmp/*
+	rm -rf /tmp/fmt
 
 # Build & Install spdlog
 RUN cd /tmp && \
@@ -105,12 +105,13 @@ RUN cd /tmp && \
 	mkdir -p spdlog/build && cd spdlog/build && \
 	git checkout v1.3.1 && \
 	cmake3 -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
-	rm -rf /tmp/*
+	rm -rf /tmp/spdlog
 
 # Build & Install Criterion
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
+	git checkout v2.3.3 && \
 	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
 	rm -rf /tmp/*
 
@@ -119,14 +120,30 @@ RUN cd /tmp && \
 	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
 	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
-	rm -rf /tmp/*
+	rm -rf /tmp/libwebsockets
 
 # Build & Install libiec61850
 RUN cd /tmp && \
 	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
 	mkdir -p libiec61850/build && cd libiec61850/build && \
 	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
-	rm -rf /tmp/*
+	rm -rf /tmp/libiec61850
+
+# Build & Install uldaq
+RUN cd /tmp && \
+	git clone -b rpm https://github.com/stv0g/uldaq && \
+	cd uldaq && \
+	autoreconf -i && ./configure --enable-examples=no && \
+	make -j$(nproc) install && \
+	rm -rf /tmp/uldaq
+
+# Build & Install EtherLab
+RUN cmd /tmp && \
+	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
+	cd etherlab && \
+	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
+	make -j$(nproc) install && \
+	rm -rf /tmp/etherlab
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc

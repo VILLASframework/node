@@ -42,8 +42,9 @@ ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
 RUN dnf -y install \
 	gcc gcc-c++ \
 	pkgconfig cmake make ninja-build \
-	texinfo git curl tar \
-	protobuf-compiler protobuf-c-compiler
+	texinfo git mercurial curl tar \
+	protobuf-compiler protobuf-c-compiler \
+	libtool
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
@@ -90,8 +91,17 @@ RUN dnf -y install \
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
+	git checkout v2.3.3 && \
 	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
-	rm -rf /tmp/*
+	rm -rf /tmp/Criterion
+
+# Build & Install EtherLab
+RUN cmd /tmp && \
+	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
+	cd etherlab && \
+	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
+	make -j$(nproc) install && \
+	rm -rf /tmp/etherlab
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
