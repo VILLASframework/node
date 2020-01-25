@@ -27,11 +27,13 @@
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/colors.hpp>
 #include <villas/timing.h>
 #include <villas/signal.h>
 #include <villas/list.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 int sample_init(struct sample *s)
@@ -66,7 +68,9 @@ struct sample * sample_alloc_mem(int capacity)
 
 	char *b = new char[sz];
 	if (!b)
-		return nullptr;
+		throw RuntimeError("Failed to allocate memoery");
+
+	memset(b, 0, sz);
 
 	struct sample *s = (struct sample *) b;
 
