@@ -1,11 +1,10 @@
 BINARY=ethertest
-#ETHERCAT_ROOT=/projects/ethercat/etherlab-master
-ETHERCAT_ROOT=/home/laxetti/ethercat-1.5.2/
+ETHERCAT_ROOT=/opt/etherlab
 CC=gcc
 SRC=main.c
 
 INC_PATH=$(ETHERCAT_ROOT)/include
-LIB_PATH=$(ETHERCAT_ROOT)/lib/.libs
+LIB_PATH=$(ETHERCAT_ROOT)/lib
 
 LD_FLAGS=-lethercat -lrt
 C_FLAGS=-Wall -std=c99
