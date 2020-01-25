@@ -32,7 +32,7 @@ RUN apt-get update && \
     apt-get install -y \
 	autoconf automake libtool cmake \
 	pkg-config make gcc g++\
-	git curl wget tar bzip2 \
+	git mercurial curl wget tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
 
 # Dependencies
@@ -100,7 +100,7 @@ RUN cd /tmp && \
 	rm -rf /tmp/uldaq
 
 # Build & Install EtherLab
-RUN cmd /tmp && \
+RUN cd /tmp && \
 	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
 	cd etherlab && \
 	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \

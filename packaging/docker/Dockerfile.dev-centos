@@ -51,7 +51,7 @@ RUN yum -y install \
 	pkgconfig make cmake3 \
 	autoconf automake autogen libtool \
 	flex bison \
-	texinfo git curl tar \
+	texinfo git mercurial curl tar \
 	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
@@ -89,7 +89,7 @@ RUN yum -y install \
 	libibverbs-devel \
 	librdmacm-devel \
 	re-devel \
-	uldaq-devel
+	libusb1-devel
 
 # Build & Install fmtlib
 RUN cd /tmp && \
@@ -138,7 +138,7 @@ RUN cd /tmp && \
 	rm -rf /tmp/uldaq
 
 # Build & Install EtherLab
-RUN cmd /tmp && \
+RUN cd /tmp && \
 	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
 	cd etherlab && \
 	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \

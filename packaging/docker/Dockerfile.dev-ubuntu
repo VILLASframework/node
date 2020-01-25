@@ -40,9 +40,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Toolchain
 RUN apt-get update && apt-get install -y \
-	gcc g++ \
-	pkg-config cmake make ninja-build \
-	texinfo git curl tar \
+	autoconf automake libtool cmake \
+	pkg-config make gcc g++ ninja-build \
+	texinfo git mercurial curl tar \
 	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
@@ -78,7 +78,8 @@ RUN apt-get update && apt-get install -y \
 	libcomedi-dev \
 	libibverbs-dev \
 	librdmacm-dev \
-	libre-dev
+	libre-dev \
+	libusb-1.0-0-dev
 
 # Build & Install fmtlib
 RUN cd /tmp && \
@@ -127,7 +128,7 @@ RUN cd /tmp && \
 	rm -rf /tmp/uldaq
 
 # Build & Install EtherLab
-RUN cmd /tmp && \
+RUN cd /tmp && \
 	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
 	cd etherlab && \
 	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
