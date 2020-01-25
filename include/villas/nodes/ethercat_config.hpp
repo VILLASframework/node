@@ -3,7 +3,8 @@
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
+ * @author Divya Laxetti <divya.laxetti@rwth-aachen.de>
+ * @copyright 2018-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,13 +25,7 @@
 
 #pragma once
 
-#define ETHERCAT_NUM_CHANNELS 8
-#define ETHERCAT_VOLTAGE_RANGE 10.0
-
-#define ETHERCAT_ALIAS          0
-#define ETHERCAT_POS_COUPLER    0
-#define ETHERCAT_POS_SLAVE_OUT  1
-#define ETHERCAT_POS_SLAVE_IN   2
+#include <ecrt.h>
 
 #define ETHERCAT_VID_BECKHOFF 0x00000002
 
@@ -46,9 +41,8 @@
 #define ETHERCAT_PID_EL3008 0x0bc03052
 #define ETHERCAT_PID_FC1100 0x044c0c62
 
-#include <ecrt.h>
 
-/*****************************************************************************/
+/** @todo: Make PDO entry tables configurable */
 
 /* Master 0, Slave 3, "EL4038"
  * Vendor ID:       0x00000002

@@ -20,16 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-<<<<<<< HEAD
 set(NODE_SRC)
-=======
-set(NODE_SRC
-    influxdb.c
-    stats.c
-    signal_generator.c
-    loopback.c
-)
->>>>>>> ethercat: add ethercat plugin to cmake. removed some whitespaces.
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
@@ -172,7 +163,7 @@ endif()
 
 # Enable Ethercat support
 if(ETHERLAB_FOUND AND WITH_IO)
-    list(APPEND NODE_SRC ethercat.c)
+    list(APPEND NODE_SRC ethercat.cpp)
     list(APPEND INCLUDE_DIRS ${ETHERLAB_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${ETHERLAB_LIBRARIES})
 endif()
