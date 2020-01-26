@@ -36,34 +36,40 @@
 #include <villas/io.h>
 #include <villas/log.hpp>
 
+#include "helpers.hpp"
+
 using namespace villas;
 
 extern void init_memory();
 
 #define NUM_VALUES 10
 
-struct param {
-	std::basic_string<char, std::char_traits<char>, criterion::allocator<char>> fmt;
+class Param {
+
+public:
+	char * fmt;
 	int cnt;
 	int bits;
 };
 
-static struct param params[] = {
-	{ "gtnet",		1, 32 },
-	{ "gtnet.fake",		1, 32 },
-	{ "raw.8",		1,  8 },
-	{ "raw.16.be",		1, 16 },
-	{ "raw.16.le",		1, 16 },
-	{ "raw.32.be",		1, 32 },
-	{ "raw.32.le",		1, 32 },
-	{ "raw.64.be",		1, 64 },
-	{ "raw.64.le",		1, 64 },
-	{ "villas.human",	10, 0 },
-	{ "villas.binary",	10, 0 },
-	{ "csv",		10, 0 },
-	{ "json",		10, 0 },
+const auto d = cr_strdup;
+
+static criterion::parameters<Param> params = {
+	{ d("gtnet"),		1, 32 },
+	{ d("gtnet.fake"),	1, 32 },
+	{ d("raw.8"),		1,  8 },
+	{ d("raw.16.be"),	1, 16 },
+	{ d("raw.16.le"),	1, 16 },
+	{ d("raw.32.be"),	1, 32 },
+	{ d("raw.32.le"),	1, 32 },
+	{ d("raw.64.be"),	1, 64 },
+	{ d("raw.64.le"),	1, 64 },
+	{ d("villas.human"),	10, 0 },
+	{ d("villas.binary"),	10, 0 },
+	{ d("csv"),		10, 0 },
+	{ d("json"),		10, 0 },
 #ifdef PROTOBUF_FOUND
-	{ "protobuf",		10, 0 }
+	{ d("protobuf"),	10, 0 }
 #endif
 };
 
@@ -205,10 +211,10 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 
 ParameterizedTestParameters(io, lowlevel)
 {
-	return criterion_test_params(params);
+	return params;
 }
 
-ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
+ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 {
 	int ret;
 	unsigned cnt;
@@ -241,8 +247,8 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 	fill_sample_data(&signals, smps, p->cnt);
 
-	f = format_type_lookup(p->fmt.c_str());
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
+	f = format_type_lookup(p->fmt);
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
 
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
@@ -274,10 +280,10 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 ParameterizedTestParameters(io, highlevel)
 {
-	return criterion_test_params(params);
+	return params;
 }
 
-ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
+ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 {
 	int ret, cnt;
 	char *retp;
@@ -322,8 +328,8 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
-	f = format_type_lookup(p->fmt.c_str());
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
+	f = format_type_lookup(p->fmt);
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
 
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);

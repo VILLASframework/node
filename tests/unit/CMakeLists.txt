@@ -31,6 +31,7 @@ set(TEST_SRC
 	queue.cpp
 	queue_signalled.cpp
 	signal.cpp
+	helpers.cpp
 )
 
 add_executable(unit-tests ${TEST_SRC})

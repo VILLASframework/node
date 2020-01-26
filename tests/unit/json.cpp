@@ -27,54 +27,56 @@
 #include <villas/utils.hpp>
 #include <villas/config_helper.hpp>
 
-using str = std::basic_string<char, std::char_traits<char>, criterion::allocator<char>>;
+#include "helpers.hpp"
 
 struct param {
-	std::vector<str, criterion::allocator<str>> argv;
-	str json;
+	char *argv[32];
+	char *json;
 };
 
 ParameterizedTestParameters(json, json_load_cli)
 {
-	static struct param params[] = {
+	const auto d = cr_strdup;
+
+	static criterion::parameters<struct param> params = {
 		// Combined long option
 		{
-			.argv = { "dummy", "--option=value" },
-			.json = "{ \"option\" : \"value\" }"
+			.argv = { d("dummy"), d("--option=value") },
+			.json = d("{ \"option\" : \"value\" }")
 		},
 		// Separated long option
 		{
-			.argv = { "dummy", "--option", "value" },
-			.json = "{ \"option\" : \"value\" }"
+			.argv = { d("dummy"), d("--option"), d("value") },
+			.json = d("{ \"option\" : \"value\" }")
 		},
 		// All kinds of data types
 		{
-			.argv = { "dummy", "--integer", "1", "--real", "1.1", "--bool", "true", "--null", "null", "--string", "hello world" },
-			.json = "{ \"integer\" : 1, \"real\" : 1.1, \"bool\" : true, \"null\" : null, \"string\" : \"hello world\" }"
+			.argv = { d("dummy"), d("--integer"), d("1"), d("--real"), d("1.1"), d("--bool"), d("true"), d("--null"), d("null"), d("--string"), d("hello world") },
+			.json = d("{ \"integer\" : 1, \"real\" : 1.1, \"bool\" : true, \"null\" : null, \"string\" : \"hello world\" }")
 		},
 		// Array generation
 		{
-			.argv = { "dummy", "--bool", "true", "--bool", "false" },
-			.json = "{ \"bool\" : [ true, false ] }"
+			.argv = { d("dummy"), d("--bool"), d("true"), d("--bool"), d("false") },
+			.json = d("{ \"bool\" : [ true, false ] }")
 		},
 		// Dots in the option name generate sub objects
 		{
-			.argv = { "dummy", "--sub.option", "value" },
-			.json = "{ \"sub\" : { \"option\" : \"value\" } }"
+			.argv = { d("dummy"), d("--sub.option"), d("value") },
+			.json = d("{ \"sub\" : { \"option\" : \"value\" } }")
 		},
 		// Nesting is possible
 		{
-			.argv = { "dummy", "--sub.sub.option", "value" },
-			.json = "{ \"sub\" : { \"sub\" : { \"option\" : \"value\" } } }"
+			.argv = { d("dummy"), d("--sub.sub.option"), d("value") },
+			.json = d("{ \"sub\" : { \"sub\" : { \"option\" : \"value\" } } }")
 		},
 		// Multiple subgroups are merged
 		{
-			.argv = { "dummy", "--sub.sub.option", "value1", "--sub.option", "value2" },
-			.json = "{ \"sub\" : { \"option\" : \"value2\", \"sub\" : { \"option\" : \"value1\" } } }"
+			.argv = { d("dummy"), d("--sub.sub.option"), d("value1"), d("--sub.option"), d("value2") },
+			.json = d("{ \"sub\" : { \"option\" : \"value2\", \"sub\" : { \"option\" : \"value1\" } } }")
 		}
 	};
 
-	return criterion_test_params(params);
+	return params;
 }
 
 ParameterizedTest(struct param *p, json, json_load_cli)
@@ -82,15 +84,13 @@ ParameterizedTest(struct param *p, json, json_load_cli)
 	json_error_t err;
 	json_t *json, *cli;
 
-	json = json_loads(p->json.c_str(), 0, &err);
+	json = json_loads(p->json, 0, &err);
 	cr_assert_not_null(json);
 
-	auto argv = new const char*[p->argv.size() + 1];
-	for (unsigned i = 0; i < p->argv.size(); i++)
-		argv[i] = p->argv[i].c_str();
-	argv[p->argv.size()] = nullptr;
+	int argc = 0;
+	while (p->argv[argc]) argc++;
 
-	cli = json_load_cli(p->argv.size(), argv);
+	cli = json_load_cli(argc, (const char **) p->argv);
 	cr_assert_not_null(cli);
 
 	//json_dumpf(json, stdout, JSON_INDENT(2)); putc('\n', stdout);

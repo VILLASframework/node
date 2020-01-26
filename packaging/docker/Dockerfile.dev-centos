@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# This is a Centos 7 image including the devtoolset-7 for a more recenter toolchain
+# This is a Centos 7 image including the devtoolset-7 for a more up-to-date toolchain
 # See: https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/
 FROM registry.centos.org/centos/devtoolset-7-toolchain-centos7
 
@@ -108,12 +108,12 @@ RUN cd /tmp && \
 	rm -rf /tmp/spdlog
 
 # Build & Install Criterion
-RUN cd /tmp && \
-	git clone --recursive https://github.com/Snaipe/Criterion && \
-	mkdir -p Criterion/build && cd Criterion/build && \
-	git checkout v2.3.3 && \
-	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
-	rm -rf /tmp/*
+#RUN cd /tmp && \
+#	git clone --recursive https://github.com/Snaipe/Criterion && \
+#	mkdir -p Criterion/build && cd Criterion/build && \
+#	git checkout v2.3.3 && \
+#	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+#	rm -rf /tmp/*
 
 # Build & Install libwebsockets
 RUN cd /tmp && \
