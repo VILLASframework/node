@@ -129,7 +129,7 @@ RUN cd /tmp && \
 RUN cd /tmp && \
 	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
 	cd etherlab && \
-	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
+	./bootstrap && ./configure --host=${TRIPLET} --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
 	make -j$(nproc) install && \
 	rm -rf /tmp/etherlab
 
