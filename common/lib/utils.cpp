@@ -42,6 +42,7 @@
 #include <villas/config.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 
 static pthread_t main_thread;
@@ -260,6 +261,8 @@ char * vstrf(const char *fmt, va_list va)
 void * memdup(const void *src, size_t bytes)
 {
 	void *dst = new char[bytes];
+	if (!dst)
+		throw RuntimeError("Failed to allocate memory!");
 
 	memcpy(dst, src, bytes);
 
