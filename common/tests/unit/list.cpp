@@ -24,8 +24,11 @@
 #include <cstring>
 #include <criterion/criterion.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 #include <villas/list.h>
+
+using namespace villas;
 
 static const char *nouns[] = { "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact" };
 
@@ -45,6 +48,8 @@ Test(list, vlist_lookup)
 
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
 		struct data *d = new struct data;
+		if (!d)
+			throw RuntimeError("Failed to allocate memory!");
 
 		d->tag = nouns[i];
 		d->data = i;

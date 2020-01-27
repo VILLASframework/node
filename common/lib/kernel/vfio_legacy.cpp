@@ -285,6 +285,9 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 	d->regions  = new struct vfio_region_info[d->info.num_regions];
 	d->mappings = new void *[d->info.num_regions];
 
+	if (!d->irqs || !d->regions || !d->mappsings)
+		throw RuntimeError("Failed to allocate memory!");
+
 	/* Get device regions */
 	for (int i = 0; i < d->info.num_regions && i < 8; i++) {
 		struct vfio_region_info *region = &d->regions[i];
@@ -327,6 +330,9 @@ int vfio_pci_reset(struct vfio_device *d)
 
 	struct vfio_pci_hot_reset_info *reset_info = new char[reset_info_len];
 	struct vfio_pci_hot_reset *reset = new char[reset_len];
+
+	if (!reset_info || !reset)
+		throw RuntimeError("Failed to allocate memory!");
 
 	reset_info->argsz = reset_info_len;
 	reset->argsz = reset_len;
@@ -405,6 +411,8 @@ int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 
 	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
 	irq_set = new char[irq_setlen];
+	if (!irq_set)
+		throw RuntimeError("Failed to allocate memory!");
 
 	irq_set->argsz = irq_setlen;
 	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
@@ -439,6 +447,8 @@ int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 
 	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
 	irq_set = new char[irq_setlen];
+	if (!irq_set)
+		throw RuntimeError("Failed to allocate memory!");
 
 	irq_set->argsz = irq_setlen;
 	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
