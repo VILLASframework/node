@@ -148,6 +148,7 @@ cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"     
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            ON "LIBULDAQ_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         ON "ETHERLAB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_EXAMPLE    "Build with example node-type"                          ON "" OFF)
 
 # Add more build configurations
