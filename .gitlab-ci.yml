@@ -203,7 +203,7 @@ packaging:rpm:
     - build:fedora:x86_64
   script:
     - mkdir -p build && cd build
-    - cmake ..
+    - cmake -DWITH_NODE_ETHERCAT=OFF ..
     - make ${MAKE_OPTS} doc
     - make ${MAKE_OPTS} package
   artifacts:

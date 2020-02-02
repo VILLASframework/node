@@ -38,7 +38,7 @@ COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake -DCPACK_GENERATOR=RPM ..
+RUN cmake -DCPACK_GENERATOR=RPM -DWITH_NODE_ETHERCAT=OFF ..
 RUN make -j$(nproc) doc
 RUN make -j$(nproc) package
 
