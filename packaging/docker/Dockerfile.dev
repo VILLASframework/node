@@ -128,5 +128,5 @@ LABEL \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
 	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
-	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
+	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"

@@ -278,7 +278,7 @@ Major changes in all parts of the software
 
 ### Removed
 
-- User documentation has been moved to separate repository: http://git.rwth-aachen.de/VILLASframework/Documentation
+- User documentation has been moved to separate repository: http://git.rwth-aachen.de/acs/public/villas/documentation
 
 ## [0.2.0] - 2015-09-22
 

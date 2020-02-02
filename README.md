@@ -1,7 +1,7 @@
 # <img src="doc/pictures/villas_node.png" width=40 /> VILLASnode
 
-[![build status](https://git.rwth-aachen.de/VILLASframework/VILLASnode/badges/develop/build.svg)](https://git.rwth-aachen.de/acs/VILLASnode/commits/develop)
-[![coverage report](https://git.rwth-aachen.de/VILLASframework/VILLASnode/badges/develop/coverage.svg)](https://git.rwth-aachen.de/acs/VILLASnode/commits/develop)
+[![build status](https://git.rwth-aachen.de/acs/public/villas/node/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/node/commits/develop)
+[![coverage report](https://git.rwth-aachen.de/acs/public/villas/node/badges/master/coverage.svg)](https://git.rwth-aachen.de/acs/public/villas/node/commits/develop)
 
 This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
 VILLASnode is a client/server application to connect simulation equipment and software such as:

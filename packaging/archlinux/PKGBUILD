@@ -17,7 +17,7 @@ depends=('libwebsockets' 'zeromq' 'nanomsg' 'libxil' 'openssl' 'jansson' 'curl'
          'libnl' 'protobuf' 'libpgm')
 
 repo=VILLASnode
-url="https://git.rwth-aachen.de/VILLASframework/$repo"
+url="https://git.rwth-aachen.de/acs/public/villas/$repo"
 source=("$url/repository/$branch/archive.tar.bz2")
 sha256sums=(SKIP)
 
