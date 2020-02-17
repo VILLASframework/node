@@ -4,3 +4,6 @@
 [submodule "common"]
 	path = common
 	url = ../VILLAScommon.git
+[submodule "packaging/live-iso/fedora-kickstarts"]
+	path = packaging/live-iso/fedora-kickstarts
+	url = https://pagure.io/fedora-kickstarts.git

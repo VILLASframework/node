@@ -1,0 +1,21 @@
+# ChangeLog
+
+# 0.9.0
+ - Upgrade Fedora 25 to 29
+ - Use new repo location for FEIN e.V. packages
+
+# 0.8.2
+ - Upgrade Fedora 24 to 25
+
+# 0.8.1
+ - Upgrade villas-node to villas-node-0.3
+ - Fix villas repository URL
+
+# 0.8
+ - Add live image and installable support
+ - Add villas-node-0.2
+ - Upgrade to fedora 24
+
+# Prior versions
+Prior version 0.8 the villas ISO was not made with anaconda/kickstart/livemedia-creator, but manually and not versioned, thus no older versions provided.
+

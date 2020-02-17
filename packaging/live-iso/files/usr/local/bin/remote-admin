@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -e
+
+SERVER=vpn.fein-aachen.org
+USER=remote-admin
+
+# This is the Tinc internal IP of villas.fein-aachen.org
+BIND_TO=10.10.12.7
+
+PORT=15000
+PORT_MAX=150010
+
+SSH_OPTS="-f -N -o ExitOnForwardFailure=yes -o BatchMode=yes -o ConnectTimeout=5"
+
+# setup SSH reverse tunnel for remote administration
+echo "Starting to establish SSH tunnel"
+
+while ! ssh $SSH_OPTS -R $BIND_TO:$PORT:localhost:22 $USER@$SERVER &>/dev/null; do
+	PID=$!
+	PORT=$(($PORT+1))
+	if (( $PORT > $PORT_MAX )); then
+		echo "Failed to find available port"
+		exit -1;
+	fi
+done
+
+echo "Listening via SSH reverse tunnel at: $SERVER:$PORT with pid: $PID"
+
+# get internet IP
+IP=$(curl -s http://canihazip.com/s)
+
+# get reverse DNS hostname
+HOSTNAME=$(dig +short -x $IP)
+if [ -z "$HOSTNAME" ]; then
+	HOSTNAME=$(hostname)
+fi
+
+MAIL_CONTENTS=$(mktemp)
+
+# send mail with notification about new node
+cat << EOF > $MAIL_CONTENTS
+There's a new host with the VILLASlive Image running:
+
+Image version: $(cat /etc/image-release)
+Reverse SSH tunnel port: $PORT
+Internet IP: $IP
+Hostname: $HOSTNAME
+
+Latency:
+$(ping -qc 5 $SERVER)
+
+Traceroute:
+$(traceroute $SERVER)
+
+Interfaces:
+$(ip addr)
+
+Kernel:
+$(uname -a)
+
+Hardware:
+$(lshw)
+
+EOF
+
+ssh $USER@$SERVER < $MAIL_CONTENTS > /dev/null
+
+rm $MAIL_CONTENTS
+
+echo "Notified admins about new VILLASlive instance."

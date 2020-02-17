@@ -1,0 +1,49 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  BUILDDIR: /var/tmp/lmc-build-${CI_JOB_ID}
+
+before_script:
+  - eval $(ssh-agent -s)
+  - ssh-add <(echo "${SSH_PRIVATE_KEY}")
+
+stages:
+  - prepare
+  - build
+
+# Stage: prepare
+##############################################################################
+
+# Build docker image which is used to build & test VILLASnode
+docker:
+  stage: prepare
+  script:
+    - docker build -t villas/live-image-creator .
+  tags:
+    - shell
+    - linux
+  only:
+    - tags
+    - trigger
+
+# Stage: build
+##############################################################################
+
+iso:
+  stage: build
+  script:
+    - make
+    - make deploy
+  artifacts:
+    name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}-logs"
+    paths:
+      - "*.log"
+      - "anaconda/*.log"
+      - "/tmp/ks-script-*"
+    when: always
+  image: villas/live-image-creator
+  tags:
+    - docker
+  only:
+    - tags
+    - trigger

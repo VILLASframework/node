@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Usage:  install-tinc ip-address network-name invitation-token
+# Example install-tinc 10.10.12.111 villas 134.130.169.31:12010/Pgm3usgu7X65akq_0oudfas0htjdgaHnbavWTVQ0Nq6M0JkiW3
+#
+# One-liner:
+#
+#  curl -s https://git.rwth-aachen.de/acs/public/villas/Images/raw/master/files/usr/local/bin/install-tinc | bash /dev/stdin 10.10.12.111 villas 134.130.169.31:12010/Pgm3usgu7X65akq_0oudfas0htjdgaHnbavWTVQ0Nq6M0JkiW3
+
+DEFAULT_IP=10.10.12.$((128 + RANDOM % 127))/24
+DEFAULT_NET=villas
+
+IP=${1:-${DEFAULT_IP}}
+NET=${2:-${DEFAULT_NET}}
+INVITATION=$3
+
+# Abort on error
+set -e
+
+# Add /usr/local to path if not present
+if ! echo "${PATH}" | grep -q /usr/local/bin; then
+	cat <<-'EOF' >> /etc/profile.d/local_path.sh
+		# Set our default path
+		PATH="/usr/local/bin:${PATH}"
+		export PATH
+	EOF
+
+	source /etc/profile
+
+	echo "Added /usr/local/bin to PATH"
+fi
+
+if ! command tinc --version > /dev/null; then
+	echo "Tinc is not yet installed. Starting installation"
+
+	source /etc/os-release
+
+	case $ID in
+		debian|ubuntu)
+			apt-get -y install git autoconf automake build-essential libssl-dev zlib1g-dev liblzo2-dev libreadline-dev libncurses-dev libsystemd-dev texinfo
+			;;
+
+		fedora|centos|redhat)
+			dnf -y install git autoconf automake make gcc openssl-devel zlib-devel lzo-devel readline-devel ncurses-devel systemd-devel texinfo
+			;;
+	esac
+
+	mkdir -p /root/build
+	pushd /root/build
+
+	git clone https://github.com/gsliepen/tinc.git
+
+	pushd /root/build/tinc
+
+	git checkout 1.1
+
+	autoreconf
+	automake --add-missing
+
+	./configure --sysconfdir=/etc --localstatedir=/var --with-systemd=/etc/systemd/system
+	make install
+	
+	systemctl daemon-reload
+
+	popd
+	popd
+fi
+
+if [ -n "${NET}" ]; then
+
+	if [ -n "${INVITATION}" ]; then
+		tinc -n ${NET} join ${INVITATION}
+	fi
+
+	if [ -n "${IP}" ]; then
+		cat <<- EOF > /etc/tinc/${NET}/tinc-up
+			#!/bin/bash
+			ip link set dev \$INTERFACE up
+			ip addr add ${IP} dev \$INTERFACE
+		EOF
+
+		# Get the name of this node from the config file
+		NAME=$(sed -n 's/^Name = //p' /etc/tinc/${NET}/tinc.conf)
+
+		cat <<- EOF >> /etc/tinc/${NET}/hosts/${NAME}
+			Subnet = ${IP}
+		EOF
+
+		chmod +x /etc/tinc/${NET}/tinc-up
+	fi
+
+	systemctl enable tinc@${NET}
+	systemctl restart tinc@${NET}
+fi
