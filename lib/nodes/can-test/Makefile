@@ -10,20 +10,25 @@ CC_FLAGS=
 LD_FLAGS=
 
 OBJ_FILES=main.o
+SRC_FILES=main.c
 MISC_FILES=create_vcan.sh
 FPGA_IP=137.226.133.231
 
-BINARY=can
+BINARY_SEND=can_send
+BINARY_RECEIVE=can_receive
 
 .PHONY: all clean deploy
 
-all : $(BINARY)
+all : $(BINARY_SEND) $(BINARY_RECEIVE)
 
-$(BINARY) : $(OBJ_FILES)
+$(BINARY_SEND) : $(SRC_FILES)
+	$(LD) $(CC_FLAGS) -DSEND -o $@ $^ $(LD_FLAGS)
+
+$(BINARY_RECEIVE) : $(SRC_FILES)
 	$(LD) $(CC_FLAGS) -o $@ $^ $(LD_FLAGS)
 
-%.o : %.c
-	$(CC) $(CC_FLAGS) -c -o $@ $<
+#%.o : %.c
+#	$(CC) $(CC_FLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(BINARY) $(OBJ_FILES)
