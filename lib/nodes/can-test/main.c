@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+
 /** An accurate timestamp can be obtained with an ioctl(2) call after reading
   * a message from the socket:
   *
@@ -115,6 +116,8 @@ int can_send(char *ifn)
 		perror("Error while opening socket");
 		return -1;
 	}
+
+	printf("%d,%d\n", a.tv_sec, a.tv_usec);
 
 	strcpy(ifr.ifr_name, ifname);
 	ioctl(s, SIOCGIFINDEX, &ifr);
