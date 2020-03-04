@@ -34,7 +34,7 @@
 #include <villas/kernel/tc.h>
 #include <villas/kernel/tc_netem.h>
 #include <villas/kernel/nl.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 #include <villas/nodes/socket.hpp>
 

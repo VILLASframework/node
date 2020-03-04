@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <villas/advio.h>
-#include <villas/common.h>
+#include <villas/advio.hpp>
+#include <villas/common.hpp>
 #include <villas/node.h>
 #include <villas/signal.h>
 

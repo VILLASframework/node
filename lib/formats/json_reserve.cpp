@@ -26,7 +26,7 @@
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/signal.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 #include <villas/timing.h>
 #include <villas/io.h>
 #include <villas/formats/json_reserve.h>

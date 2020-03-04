@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/log.h>
 #include <villas/shmem.h>
 #include <villas/nodes/shmem.hpp>

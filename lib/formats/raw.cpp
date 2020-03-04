@@ -25,7 +25,7 @@
 #include <villas/utils.hpp>
 #include <villas/io.h>
 #include <villas/formats/raw.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 
 typedef float flt32_t;
 typedef double flt64_t;

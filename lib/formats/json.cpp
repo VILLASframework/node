@@ -22,7 +22,7 @@
 
 #include <villas/plugin.h>
 #include <villas/sample.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 #include <villas/signal.h>
 #include <villas/io.h>
 #include <villas/formats/json.h>

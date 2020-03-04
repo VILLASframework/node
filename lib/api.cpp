@@ -26,7 +26,7 @@
 #include <villas/utils.hpp>
 #include <villas/node/config.h>
 #include <villas/memory.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 
 using namespace villas;
 using namespace villas::node;

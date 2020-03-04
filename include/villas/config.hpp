@@ -26,7 +26,7 @@
 #include <jansson.h>
 
 #include <villas/node/config.h>
-#include <villas/advio.h>
+#include <villas/advio.hpp>
 
 namespace villas {
 namespace node {

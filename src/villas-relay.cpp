@@ -32,7 +32,7 @@
 #include <jansson.h>
 
 #include <villas/node/config.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 #include <villas/memory.h>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>

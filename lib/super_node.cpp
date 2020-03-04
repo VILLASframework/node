@@ -29,7 +29,7 @@
 #include <villas/utils.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.hpp>
-#include <villas/advio.h>
+#include <villas/advio.hpp>
 #include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/config_helper.hpp>

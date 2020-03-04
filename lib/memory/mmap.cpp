@@ -34,11 +34,11 @@
   #include <mach/vm_statistics.h>
 #endif /* __MACH__ */
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 using namespace villas::utils;
 

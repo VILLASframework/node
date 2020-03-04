@@ -23,7 +23,7 @@
 #include <villas/utils.hpp>
 #include <villas/pool.h>
 #include <villas/memory.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 {

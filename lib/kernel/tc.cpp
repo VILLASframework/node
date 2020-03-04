@@ -29,7 +29,7 @@
 
 #include <villas/utils.hpp>
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/if.h>
 #include <villas/kernel/tc.h>
 #include <villas/kernel/nl.h>

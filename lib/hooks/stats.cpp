@@ -26,8 +26,8 @@
 
 #include <memory>
 
-#include <villas/common.h>
-#include <villas/advio.h>
+#include <villas/common.hpp>
+#include <villas/advio.hpp>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/stats.hpp>

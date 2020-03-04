@@ -27,7 +27,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/sample.h>

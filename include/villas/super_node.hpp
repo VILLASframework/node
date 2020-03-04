@@ -39,8 +39,8 @@ extern "C" {
 #include <villas/log.hpp>
 #include <villas/config.hpp>
 #include <villas/node.h>
-#include <villas/task.h>
-#include <villas/common.h>
+#include <villas/task.hpp>
+#include <villas/common.hpp>
 
 /* Forward declarations */
 struct node;

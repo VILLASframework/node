@@ -32,7 +32,7 @@
 #include <villas/sample.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>
-#include <villas/compat.h>
+#include <villas/compat.hpp>
 #include <villas/super_node.hpp>
 
 #ifdef WITH_SOCKET_LAYER_ETH
