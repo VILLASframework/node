@@ -26,7 +26,9 @@
 #include <villas/node/config.h>
 
 #ifdef WITH_GRAPHVIZ
-#include <graphviz/gvc.h>
+extern "C" {
+  #include <graphviz/gvc.h>
+}
 #endif
 
 #include <fstream>
