@@ -40,7 +40,7 @@
 
 #include <villas/list.h>
 #include <villas/node.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 
 /* Forward declarations */
 struct node;
@@ -54,7 +54,7 @@ struct ngsi {
 	double timeout;			/**< HTTP timeout in seconds */
 	double rate;			/**< Rate used for polling. */
 
-	struct task task;		/**< Timer for periodic events. */
+	struct Task task;		/**< Timer for periodic events. */
 	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */

@@ -148,7 +148,6 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 
 int signal_generator_start(struct node *n)
 {
-	int ret;
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	s->missed_steps = 0;
@@ -160,25 +159,18 @@ int signal_generator_start(struct node *n)
 		s->last[i] = s->offset;
 
 	/* Setup task */
-	if (s->rt) {
-		ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
-		if (ret)
-			return ret;
-	}
+	if (s->rt)
+		s->task.setRate(s->rate);
 
 	return 0;
 }
 
 int signal_generator_stop(struct node *n)
 {
-	int ret;
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	if (s->rt) {
-		ret = task_destroy(&s->task);
-		if (ret)
-			return ret;
-	}
+	if (s->rt)
+		s->task.stop();
 
 	if (s->missed_steps > 0 && s->monitor_missed)
 		warning("Node %s missed a total of %d steps.", node_name(n), s->missed_steps);
@@ -201,7 +193,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		steps = task_wait(&s->task);
+		steps = s->task.wait();
 		if (steps > 1 && s->monitor_missed) {
 			debug(5, "Missed steps: %u", steps-1);
 			s->missed_steps += steps-1;
@@ -295,9 +287,27 @@ int signal_generator_poll_fds(struct node *n, int fds[])
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	fds[0] = task_fd(&s->task);
+	fds[0] = s->task.getFD();
 
 	return 1;
+}
+
+int signal_generator_init(struct node *n)
+{
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
+
+	new (&s->task) Task(CLOCK_MONOTONIC);
+
+	return 0;
+}
+
+int signal_generator_destroy(struct node *n)
+{
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
+
+	s->task.~Task();
+
+	return 0;
 }
 
 static struct plugin p;
@@ -314,6 +324,8 @@ static void register_plugin() {
 	p.node.vectorize	= 1;
 	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
 	p.node.size		= sizeof(struct signal_generator);
+	p.node.init		= signal_generator_init;
+	p.node.destroy		= signal_generator_destroy;
 	p.node.parse		= signal_generator_parse;
 	p.node.prepare		= signal_generator_prepare;
 	p.node.print		= signal_generator_print;

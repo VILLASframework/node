@@ -61,7 +61,8 @@ SuperNode::SuperNode() :
 #endif
 	priority(0),
 	affinity(0),
-	hugepages(DEFAULT_NR_HUGEPAGES)
+	hugepages(DEFAULT_NR_HUGEPAGES),
+	task(CLOCK_REALTIME)
 {
 	nodes.state = State::DESTROYED;
 	paths.state = State::DESTROYED;
@@ -386,9 +387,7 @@ void SuperNode::start()
 	startNodes();
 	startPaths();
 
-	ret = task_init(&task, 1.0, CLOCK_REALTIME);
-	if (ret)
-		throw RuntimeError("Failed to create timer");
+	task.setRate(1.0);
 
 	Stats::printHeader(Stats::Format::HUMAN);
 
@@ -455,10 +454,6 @@ void SuperNode::stop()
 {
 	int ret;
 
-	ret = task_destroy(&task);
-	if (ret)
-		throw RuntimeError("Failed to stop timer");
-
 	stopNodes();
 	stopPaths();
 	stopNodeTypes();
@@ -480,7 +475,7 @@ void SuperNode::run()
 	int ret;
 
 	while (state == State::STARTED) {
-		task_wait(&task);
+		task.wait();
 
 		ret = periodic();
 		if (ret)

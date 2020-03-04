@@ -35,7 +35,7 @@
 
 #include <villas/node.h>
 #include <villas/pool.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/io.h>
@@ -74,7 +74,7 @@ struct ethercat {
 	uint8_t *domain_pd;			/**< Process data */
 
 	std::thread thread;			/**< Cyclic task thread */
-	struct task task;			/**< Periodic timer */
+	struct Task task;			/**< Periodic timer */
 	struct pool pool;
 	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
 

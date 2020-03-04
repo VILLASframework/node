@@ -33,7 +33,7 @@
 
 #include <villas/node.h>
 #include <villas/stats.hpp>
-#include <villas/task.h>
+#include <villas/task.hpp>
 #include <villas/list.h>
 
 struct stats_node_signal {
@@ -47,7 +47,7 @@ struct stats_node_signal {
 struct stats_node {
 	double rate;
 
-	struct task task;
+	struct Task task;
 
 	struct vlist signals; /** List of type struct stats_node_signal */
 };

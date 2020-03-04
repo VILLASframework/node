@@ -65,7 +65,7 @@ static void ethercat_cyclic_task(struct node *n)
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
 	while (true) {
-		task_wait(&w->task);
+		w->task.wait();
 
 		/* Receive process data */
 		ecrt_master_receive(master);
@@ -309,9 +309,7 @@ int ethercat_start(struct node *n)
 		return -1;
 
 	/* Start cyclic timer */
-	ret = task_init(&w->task, w->rate, CLOCK_REALTIME);
-	if (ret)
-		return -1;
+	w->task.setRate(w->rate);
 
 	/* Start cyclic task */
 	w->thread = std::thread(ethercat_cyclic_task, n);
@@ -396,6 +394,7 @@ int ethercat_init(struct node *n)
 	/* Placement new for C++ objects */
 	new (&w->send) std::atomic<struct sample *>();
 	new (&w->thread) std::thread();
+	new (&w->task) Task(CLOCK_REALTIME);
 
 	ret = pool_init(&w->pool, DEFAULT_ETHERCAT_QUEUE_LENGTH, SAMPLE_LENGTH(DEFAULT_ETHERCAT_SAMPLE_LENGTH));
 	if (ret)
@@ -422,10 +421,6 @@ int ethercat_destroy(struct node *n)
 	if (w->out.offsets)
 		delete[] w->out.offsets;
 
-	ret = task_destroy(&w->task);
-	if (ret)
-		return ret;
-
 	ret = queue_signalled_destroy(&w->queue);
 	if (ret)
 		return ret;
@@ -433,6 +428,8 @@ int ethercat_destroy(struct node *n)
 	ret = pool_destroy(&w->pool);
 	if (ret)
 		return ret;
+
+	w->task.~Task();
 
 	/** @todo Destroy domain? */
 

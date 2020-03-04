@@ -89,8 +89,8 @@ static void * path_run_poll(void *arg)
 
 			if (p->reader.pfds[i].revents & POLLIN) {
 				/* Timeout: re-enqueue the last sample */
-				if (p->reader.pfds[i].fd == task_fd(&p->timeout)) {
-					task_wait(&p->timeout);
+				if (p->reader.pfds[i].fd == p->timeout.getFD()) {
+					p->timeout.wait();
 
 					p->last_sample->sequence = p->last_sequence++;
 
@@ -119,6 +119,7 @@ int path_init(struct vpath *p)
 	new (&p->logger) Logger;
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
+	new (&p->rate) Task(CLOCK_MONOTONIC);
 
 	p->logger = logging.get("path");
 
@@ -199,15 +200,13 @@ static int path_prepare_poll(struct vpath *p)
 
 	/* We use the last slot for the timeout timer. */
 	if (p->rate > 0) {
-		ret = task_init(&p->timeout, p->rate, CLOCK_MONOTONIC);
-		if (ret)
-			return ret;
+		p->rate.setRate(&p->timeout);
 
 		p->reader.nfds++;
 		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
 
 		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
-		p->reader.pfds[p->reader.nfds-1].fd = task_fd(&p->timeout);
+		p->reader.pfds[p->reader.nfds-1].fd = p->timeout.getFD();
 		if (p->reader.pfds[p->reader.nfds-1].fd < 0) {
 			p->logger->warn("Failed to get file descriptor for timer of path {}", path_name(p));
 			return -1;
@@ -716,9 +715,6 @@ int path_destroy(struct vpath *p)
 	if (p->_name)
 		free(p->_name);
 
-	if (p->rate > 0)
-		task_destroy(&p->timeout);
-
 	ret = pool_destroy(&p->pool);
 	if (ret)
 		return ret;
@@ -729,6 +725,7 @@ int path_destroy(struct vpath *p)
 	p->received.~bs();
 	p->mask.~bs();
 	p->logger.~lg();
+	p->timeout.~Task();
 
 	p->state = State::DESTROYED;
 

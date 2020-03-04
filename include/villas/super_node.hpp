@@ -74,7 +74,7 @@ protected:
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
 
-	struct task task;	/**< Task for periodic stats output */
+	struct Task task;	/**< Task for periodic stats output */
 
 	std::string name;	/**< A name of this super node. Usually the hostname. */
 	std::string uri;	/**< URI of configuration */

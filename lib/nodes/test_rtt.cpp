@@ -48,9 +48,7 @@ static int test_rtt_case_start(struct test_rtt *t, int id)
 		return ret;
 
 	/* Start timer. */
-	ret = task_set_rate(&t->task, c->rate);
-	if (ret)
-		return ret;
+	t->task.setRate(c->rate);
 
 	t->counter = 0;
 	t->current = id;
@@ -63,9 +61,7 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 	int ret;
 
 	/* Stop timer */
-	ret = task_set_rate(&t->task, 0);
-	if (ret)
-		return ret;
+	t->task.stop();
 
 	/* Close file */
 	ret = io_close(&t->io);
@@ -248,6 +244,15 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
+int test_rtt_init(struct node *n)
+{
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
+
+	new (&t->task) Task(CLOCK_MONOTONIC);
+
+	return 0;
+}
+
 int test_rtt_destroy(struct node *n)
 {
 	int ret;
@@ -257,9 +262,7 @@ int test_rtt_destroy(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = task_destroy(&t->task);
-	if (ret)
-		return ret;
+	t->task.~Task();
 
 	if (t->output)
 		free(t->output);
@@ -302,9 +305,7 @@ int test_rtt_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = task_init(&t->task, c->rate, CLOCK_MONOTONIC);
-	if (ret)
-		return ret;
+	t->task.setRate(c->rate);
 
 	t->current = -1;
 	t->counter = -1;
@@ -368,7 +369,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
 
 	/* Wait */
-	steps = task_wait(&t->task);
+	steps = t->task.wait();
 	if (steps > 1)
 		warning("Skipped %ld steps", (long) (steps - 1));
 
@@ -379,9 +380,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 		if (t->cooldown) {
 			info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
-			ret = task_set_timeout(&t->task, t->cooldown);
-			if (ret < 0)
-				return ret;
+			t->task.setTimeout(t->cooldown);
 		}
 
 		return 0;
@@ -398,7 +397,6 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 			t->counter++;
 		}
-
 
 		return i;
 	}
@@ -430,7 +428,7 @@ int test_rtt_poll_fds(struct node *n, int fds[])
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	fds[0] = task_fd(&t->task);
+	fds[0] = t->task.getFD();
 
 	return 1;
 }
@@ -449,6 +447,7 @@ static void register_plugin() {
 	p.node.size		= sizeof(struct test_rtt);
 	p.node.parse		= test_rtt_parse;
 	p.node.prepare		= test_rtt_prepare;
+	p.node.init		= test_rtt_init;
 	p.node.destroy		= test_rtt_destroy;
 	p.node.print		= test_rtt_print;
 	p.node.start		= test_rtt_start;

@@ -31,7 +31,7 @@
 
 #include <villas/list.h>
 #include <villas/io.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 
 /* Forward declarations */
 struct test_rtt;
@@ -48,7 +48,7 @@ struct test_rtt_case {
 };
 
 struct test_rtt {
-	struct task task;	/**< The periodic task for test_rtt_read() */
+	struct Task task;	/**< The periodic task for test_rtt_read() */
 	struct io io;		/**< The format of the output file */
 	struct format_type *format;
 

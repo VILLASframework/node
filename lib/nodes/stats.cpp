@@ -94,11 +94,8 @@ int stats_node_type_start(villas::node::SuperNode *sn)
 int stats_node_start(struct node *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
-	int ret;
 
-	ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
-	if (ret)
-		serror("Failed to create task");
+	s->task.setRate(s->rate);
 
 	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
 		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
@@ -114,11 +111,8 @@ int stats_node_start(struct node *n)
 int stats_node_stop(struct node *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
-	int ret;
 
-	ret = task_destroy(&s->task);
-	if (ret)
-		return ret;
+	s->task.stop();
 
 	return 0;
 }
@@ -135,6 +129,8 @@ int stats_node_init(struct node *n)
 	int ret;
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
+	new (&s->task) Task(CLOCK_MONOTONIC);
+
 	ret = vlist_init(&s->signals);
 	if (ret)
 		return ret;
@@ -146,6 +142,8 @@ int stats_node_destroy(struct node *n)
 {
 	int ret;
 	struct stats_node *s = (struct stats_node *) n->_vd;
+
+	s->task.~Task();
 
 	ret = vlist_destroy(&s->signals, (dtor_cb_t) stats_node_signal_destroy, true);
 	if (ret)
@@ -215,7 +213,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	if (!cnt)
 		return 0;
 
-	task_wait(&s->task);
+	s->task.wait();
 
 	unsigned len = MIN(vlist_length(&s->signals), smps[0]->capacity);
 
@@ -240,7 +238,7 @@ int stats_node_poll_fds(struct node *n, int fds[])
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
-	fds[0] = task_fd(&s->task);
+	fds[0] = s->task.getFD();
 
 	return 0;
 }

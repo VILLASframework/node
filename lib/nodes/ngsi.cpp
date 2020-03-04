@@ -470,15 +470,6 @@ static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 	return 0;
 }
 
-int ngsi_destroy(struct node *n)
-{
-	struct ngsi *i = (struct ngsi *) n->_vd;
-
-	vlist_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
-
-	return 0;
-}
-
 int ngsi_start(struct node *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
@@ -497,9 +488,7 @@ int ngsi_start(struct node *n)
 	if (i->timeout > 1 / i->rate)
 		warning("Timeout is to large for given rate: %f", i->rate);
 
-	ret = task_init(&i->task, i->rate, CLOCK_MONOTONIC);
-	if (ret)
-		serror("Failed to create task");
+	i->task.setRate(i->rate);
 
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
@@ -526,6 +515,8 @@ int ngsi_stop(struct node *n)
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
+	i->task.stop();
+
 	/* Delete complete entity (not just attributes) */
 	json_t *entity = ngsi_build_entity(i, nullptr, 0, 0);
 
@@ -544,7 +535,7 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
-	if (task_wait(&i->task) == 0)
+	if (i->task.wait() == 0)
 		perror("Failed to wait for task");
 
 	json_t *rentity;
@@ -582,9 +573,29 @@ int ngsi_poll_fds(struct node *n, int fds[])
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
-	fds[0] = task_fd(&i->task);
+	fds[0] = i->task.getFD();
 
 	return 1;
+}
+
+int ngsi_init(struct node *n)
+{
+	struct ngsi *i = (struct ngsi *) n->_vd;
+
+	new (&i->task) Task(CLOCK_REALTIME);
+
+	return 0;
+}
+
+int ngsi_destroy(struct node *n)
+{
+	struct ngsi *i = (struct ngsi *) n->_vd;
+
+	vlist_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
+
+	i->task.~Task();
+
+	return 0;
 }
 
 static struct plugin p;
@@ -602,6 +613,8 @@ static void register_plugin() {
 	p.node.size		= sizeof(struct ngsi);
 	p.node.type.start	= ngsi_type_start;
 	p.node.type.stop	= ngsi_type_stop;
+	p.node.init		= ngsi_init;
+	p.node.destroy		= ngsi_destroy;
 	p.node.parse		= ngsi_parse;
 	p.node.print		= ngsi_print;
 	p.node.start		= ngsi_start;

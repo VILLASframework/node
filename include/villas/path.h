@@ -39,7 +39,7 @@
 #include <villas/pool.h>
 #include <villas/common.hpp>
 #include <villas/mapping.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 
 #include <villas/log.hpp>
 
@@ -74,7 +74,7 @@ struct vpath {
 	struct vlist hooks;		/**< List of processing hooks (struct hook). */
 	struct vlist signals;		/**< List of signals which this path creates (struct signal). */
 
-	struct task timeout;
+	struct Task timeout;
 
 	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */

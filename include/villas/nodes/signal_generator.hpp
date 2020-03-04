@@ -30,7 +30,7 @@
 #pragma once
 
 #include <villas/timing.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 
 /* Forward declarations */
 struct node;
@@ -40,7 +40,7 @@ struct sample;
  * @see node_type
  */
 struct signal_generator {
-	struct task task;		/**< Timer for periodic events. */
+	struct Task task;		/**< Timer for periodic events. */
 	int rt;				/**< Real-time mode? */
 
 	enum class SignalType {

@@ -300,9 +300,7 @@ int file_start(struct node *n)
 	}
 
 	/* Create timer */
-	ret = task_init(&f->task, f->rate, CLOCK_REALTIME);
-	if (ret)
-		serror("Failed to create timer");
+	f->task.setRate(f->rate);
 
 	/* Get timestamp of first line */
 	if (f->epoch_mode != file::EpochMode::ORIGINAL) {
@@ -337,9 +335,7 @@ int file_stop(struct node *n)
 	int ret;
 	struct file *f = (struct file *) n->_vd;
 
-	ret = task_destroy(&f->task);
-	if (ret)
-		return ret;
+	f->task.stop();
 
 	ret = io_close(&f->io);
 	if (ret)
@@ -424,15 +420,15 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 		return cnt;
 
 	if (f->rate) {
-		steps = task_wait(&f->task);
+		steps = f->task.wait();
 
 		smps[0]->ts.origin = time_now();
 	}
 	else {
 		smps[0]->ts.origin = time_add(&smps[0]->ts.origin, &f->offset);
 
-		task_set_next(&f->task, &smps[0]->ts.origin);
-		steps = task_wait(&f->task);
+		f->task.setNext(&smps[0]->ts.origin);
+		steps = f->task.wait();
 	}
 
 	/* Check for overruns */
@@ -463,7 +459,7 @@ int file_poll_fds(struct node *n, int fds[])
 	struct file *f = (struct file *) n->_vd;
 
 	if (f->rate) {
-		fds[0] = task_fd(&f->task);
+		fds[0] = f->task.getFD();
 
 		return 1;
 	}
@@ -474,6 +470,24 @@ int file_poll_fds(struct node *n, int fds[])
 	}
 
 	return -1; /** @todo not supported yet */
+}
+
+int file_init(struct node *n)
+{
+	struct file *f = (struct file *) n->_vd;
+
+	new (&f->task) Task(CLOCK_REALTIME);
+
+	return 0;
+}
+
+int file_destroy(struct node *n)
+{
+	struct file *f = (struct file *) n->_vd;
+
+	f->task.~Task();
+
+	return 0;
 }
 
 static struct plugin p;
@@ -489,6 +503,8 @@ static void register_plugin() {
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 1;
 	p.node.size		= sizeof(struct file);
+	p.node.init		= file_init;
+	p.node.destroy		= file_destroy;
 	p.node.parse		= file_parse;
 	p.node.print		= file_print;
 	p.node.start		= file_start;

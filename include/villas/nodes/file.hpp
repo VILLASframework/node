@@ -31,7 +31,7 @@
 
 #include <villas/io.h>
 #include <villas/node.h>
-#include <villas/task.h>
+#include <villas/task.hpp>
 
 #define FILE_MAX_PATHLEN	512
 
@@ -44,7 +44,7 @@ struct file {
 	char *mode;			/**< File access mode. */
 
 	int flush;			/**< Flush / upload file contents after each write. */
-	struct task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
+	struct Task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double rate;			/**< The read rate. */
 	size_t buffer_size_out;		/**< Defines size of output stream buffer. No buffer is created if value is set to zero. */
 	size_t buffer_size_in;		/**< Defines size of input stream buffer. No buffer is created if value is set to zero. */
