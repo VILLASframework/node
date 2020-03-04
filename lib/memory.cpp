@@ -36,6 +36,8 @@
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
 
+using namespace villas;
+
 static std::unordered_map<void *, struct memory_allocation *> allocations;
 
 int memory_init(int hugepages)
@@ -48,7 +50,7 @@ int memory_init(int hugepages)
 	if (ret < 0)
 		return ret;
 
-	size_t lock = kernel_get_hugepage_size() * hugepages;
+	size_t lock = kernel::get_hugepage_size() * hugepages;
 
 	ret = memory_lock(lock);
 	if (ret)

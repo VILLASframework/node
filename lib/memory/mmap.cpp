@@ -40,6 +40,7 @@
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static size_t pgsz = -1;
@@ -47,12 +48,12 @@ static size_t hugepgsz = -1;
 
 int memory_mmap_init(int hugepages)
 {
-	pgsz = kernel_get_page_size();
+	pgsz = kernel::get_page_size();
 	if (pgsz < 0)
 		return -1;
 
 	if (hugepages > 0) {
-		hugepgsz = kernel_get_hugepage_size();
+		hugepgsz = kernel::get_hugepage_size();
 		if (hugepgsz < 0) {
 			warning("Failed to determine hugepage size.");
 
@@ -63,10 +64,10 @@ int memory_mmap_init(int hugepages)
 #if defined(__linux__) && defined(__x86_64__)
 		int ret, pagecnt;
 
-		pagecnt = kernel_get_nr_hugepages();
+		pagecnt = kernel::get_nr_hugepages();
 		if (pagecnt < hugepages) {
 			if (getuid() == 0) {
-				ret = kernel_set_nr_hugepages(hugepages);
+				ret = kernel::set_nr_hugepages(hugepages);
 				if (ret) {
 					warning("Failed to increase number of reserved hugepages");
 					memory_default = &memory_mmap;

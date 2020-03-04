@@ -25,12 +25,14 @@
 #include <villas/memory.h>
 #include <villas/kernel/kernel.hpp>
 
+using namespace villas;
+
 int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 {
 	int ret;
 
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
-	p->alignment = kernel_get_cacheline_size();
+	p->alignment = kernel::get_cacheline_size();
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
 

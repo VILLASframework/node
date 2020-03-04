@@ -34,6 +34,7 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/utils.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static const double max_percent_value = 0xffffffff;
@@ -216,7 +217,7 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = *qd;
 
-	ret = kernel_module_load("sch_netem");
+	ret = kernel::module_load("sch_netem");
 	if (ret)
 		error("Failed to load kernel module: sch_netem (%d)", ret);
 

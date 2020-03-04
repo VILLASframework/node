@@ -34,13 +34,15 @@
 #include <villas/kernel/tc.h>
 #include <villas/kernel/nl.h>
 
+using namespace villas;
+
 int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
 {
 	int ret;
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
-	ret = kernel_module_load("sch_prio");
+	ret = kernel::module_load("sch_prio");
 	if (ret)
 		error("Failed to load kernel module: sch_prio (%d)", ret);
 
@@ -73,7 +75,7 @@ int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_
 	struct nl_sock *sock = nl_init();
 	struct rtnl_cls *c = rtnl_cls_alloc();
 
-	ret = kernel_module_load("cls_fw");
+	ret = kernel::module_load("cls_fw");
 	if (ret)
 		error("Failed to load kernel module: cls_fw");
 
