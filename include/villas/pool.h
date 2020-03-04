@@ -29,7 +29,7 @@
 #include <sys/types.h>
 
 #include <villas/queue.h>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/memory.h>
 
 /** A thread-safe memory pool */

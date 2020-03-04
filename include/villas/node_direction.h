@@ -30,7 +30,7 @@
 
 #include <jansson.h>
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/list.h>
 
 /* Forward declarations */

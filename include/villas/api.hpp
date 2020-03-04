@@ -31,7 +31,7 @@
 #include <list>
 
 #include <villas/log.hpp>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/api/server.hpp>
 #include <villas/queue_signalled.hpp>
 

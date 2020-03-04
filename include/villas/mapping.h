@@ -26,7 +26,7 @@
 #include <jansson.h>
 
 #include <villas/stats.hpp>
-#include <villas/common.h>
+#include <villas/common.hpp>
 
 /* Forward declarations */
 struct node;

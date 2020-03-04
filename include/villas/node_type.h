@@ -30,7 +30,7 @@
 
 #include <villas/super_node.hpp>
 #include <villas/list.h>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/memory.h>
 
 /* Forward declarations */

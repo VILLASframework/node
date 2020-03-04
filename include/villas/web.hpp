@@ -29,7 +29,7 @@
 #include <jansson.h>
 
 #include <villas/log.hpp>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/queue.hpp>
 
 namespace villas {

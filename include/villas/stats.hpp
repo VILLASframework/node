@@ -30,7 +30,7 @@
 #include <memory>
 #include <string>
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/hist.hpp>
 #include <villas/table.hpp>
 #include <villas/signal.h>

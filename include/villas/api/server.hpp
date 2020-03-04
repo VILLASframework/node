@@ -31,7 +31,7 @@
 #include <sys/un.h>
 #include <poll.h>
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/log.hpp>
 
 namespace villas {

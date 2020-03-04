@@ -37,7 +37,7 @@
 #include <villas/pool.h>
 #include <villas/task.h>
 #include <villas/queue_signalled.h>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/io.h>
 #include <villas/config.h>
 

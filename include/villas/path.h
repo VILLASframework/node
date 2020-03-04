@@ -37,7 +37,7 @@
 #include <villas/list.h>
 #include <villas/queue.h>
 #include <villas/pool.h>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/mapping.h>
 #include <villas/task.h>
 

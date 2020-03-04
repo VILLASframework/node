@@ -39,7 +39,7 @@
 #include <cstdint>
 #include <unistd.h>
 
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/config.h>
 #include <villas/memory_type.h>
 

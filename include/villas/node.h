@@ -38,7 +38,7 @@
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/queue.h>
-#include <villas/common.h>
+#include <villas/common.hpp>
 #include <villas/stats.hpp>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
