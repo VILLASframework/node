@@ -62,6 +62,7 @@ endif()
 
 list(APPEND FORMAT_SRC
     json.cpp
+    iotagent_ul.cpp
     json_reserve.cpp
     villas_binary.cpp
     villas_human.cpp
