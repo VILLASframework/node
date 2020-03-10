@@ -135,7 +135,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 		/* Fields */
 		for (unsigned j = 0; j < smp->length; j++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
-			union signal_data *data = &smp->data[k];
+			union signal_data *data = &smp->data[j];
 
 			if (
 				sig->type != SignalType::BOOLEAN &&
