@@ -116,8 +116,6 @@ int path_init(struct path *p)
 {
 	int ret;
 
-	assert(p->state == State::DESTROYED);
-
 	new (&p->logger) Logger;
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;

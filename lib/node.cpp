@@ -50,7 +50,6 @@ using namespace villas::utils;
 int node_init(struct node *n, struct node_type *vt)
 {
 	int ret;
-	assert(n->state == State::DESTROYED);
 
 	n->_vt = vt;
 	n->_vd = new char[vt->size];

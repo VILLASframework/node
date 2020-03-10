@@ -51,8 +51,6 @@ int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node
 {
 	int ret;
 
-	assert(nd->state == State::DESTROYED);
-
 	nd->direction = dir;
 	nd->enabled = 1;
 	nd->vectorize = 1;

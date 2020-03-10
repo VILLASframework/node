@@ -87,8 +87,6 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 {
 	int ret;
 
-	assert(io->state == State::DESTROYED);
-
 	io->_vt = fmt;
 	io->_vd = new char[fmt->size];
 

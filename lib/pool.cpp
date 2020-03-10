@@ -29,8 +29,6 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 {
 	int ret;
 
-	assert(p->state == State::DESTROYED);
-
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
 	p->alignment = kernel_get_cacheline_size();
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);

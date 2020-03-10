@@ -38,8 +38,6 @@
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, struct memory_type *m)
 {
-	assert(q->state == State::DESTROYED);
-
 	/* Queue size must be 2 exponent */
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
@@ -63,8 +61,8 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 #else
 	std::atomic_store_explicit(&q->tail, 0u, std::memory_order_relaxed);
 	std::atomic_store_explicit(&q->head, 0u, std::memory_order_relaxed);
-
 #endif
+
 	q->state = State::INITIALIZED;
 
 	return 0;
