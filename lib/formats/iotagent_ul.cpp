@@ -34,27 +34,27 @@
 
 int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
-    size_t printed = 0;
-    struct signal *sig;
-    struct sample *smp = smps[0];
+	size_t printed = 0;
+	struct signal *sig;
+	struct sample *smp = smps[0];
 
-    unsigned int i;
-    for (i = 0; (i < smp->length) && (printed < len); i++) {
-        sig = (struct signal *) vlist_at_safe(smp->signals, i);
-        if (!sig)
-            return -1;
+	unsigned int i;
+	for (i = 0; (i < smp->length) && (printed < len); i++) {
+		sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		if (!sig)
+			return -1;
 
-        if (sig->name)
-            printed += snprintf(buf + printed, len - printed, "%s|%f|", sig->name, smp->data[i].f);
-        else {
-            char name[32];
-            snprintf(name, 32, "signal_%d", i);
-            printed += snprintf(buf + printed, len - printed, "%s|%f|", name, smp->data[i].f);
-        }
-    }
+		if (sig->name)
+			printed += snprintf(buf + printed, len - printed, "%s|%f|", sig->name, smp->data[i].f);
+		else {
+			char name[32];
+			snprintf(name, 32, "signal_%d", i);
+			printed += snprintf(buf + printed, len - printed, "%s|%f|", name, smp->data[i].f);
+		}
+	}
 
-    if (wbytes)
-        *wbytes = printed - 1; // -1 to cut off last '|'
+	if (wbytes)
+		*wbytes = printed - 1; // -1 to cut off last '|'
 
 	return 0;
 }
