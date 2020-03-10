@@ -31,15 +31,13 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
-
 int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	size_t printed = 0;
 	struct signal *sig;
 	struct sample *smp = smps[0];
 
-	unsigned int i;
-	for (i = 0; (i < smp->length) && (printed < len); i++) {
+	for (unsigned i = 0; (i < smp->length) && (printed < len); i++) {
 		sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
 			return -1;
@@ -58,6 +56,7 @@ int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, str
 
 	return 0;
 }
+
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
