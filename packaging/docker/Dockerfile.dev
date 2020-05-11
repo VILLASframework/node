@@ -28,21 +28,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:29
+FROM fedora:32
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
-# Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
-
 # Toolchain
 RUN dnf -y install \
 	gcc gcc-c++ \
 	pkgconfig cmake make ninja-build \
 	texinfo git mercurial curl tar \
+	flex bison rpmdevtools \
 	protobuf-compiler protobuf-c-compiler \
 	libtool
 
@@ -67,42 +65,37 @@ RUN pip install \
 
 # Dependencies
 RUN dnf -y install \
-	openssl-devel \
-	protobuf-devel \
-	protobuf-c-devel \
-	libuuid-devel \
-	libconfig-devel \
-	libnl3-devel \
-	libcurl-devel \
-	jansson-devel \
-	libwebsockets-devel \
-	zeromq-devel \
-	nanomsg-devel \
-	libiec61850-1.4.3 \
-	librabbitmq-devel \
-	mosquitto-devel \
-	comedilib-devel \
-	libibverbs-devel \
-	librdmacm-devel \
-	re-devel \
-	uldaq-devel \
-	spdlog-devel
+    openssl-devel \
+    protobuf-devel \
+    protobuf-c-devel \
+    libuuid-devel \
+    libconfig-devel \
+    libnl3-devel \
+    libcurl-devel \
+    jansson-devel \
+    libwebsockets-devel \
+    zeromq-devel \
+    nanomsg-devel \
+    librabbitmq-devel \
+    mosquitto-devel \
+    libibverbs-devel \
+    librdmacm-devel \
+    libusb-devel
 
-# Build & Install Criterion
-RUN cd /tmp && \
-	git clone --recursive https://github.com/Snaipe/Criterion && \
-	mkdir -p Criterion/build && cd Criterion/build && \
-	git checkout v2.3.3 && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
-	rm -rf /tmp/Criterion
+# Some of the dependencies are only available in our own repo
+# ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
+# RUN dnf -y install \
+#     re-devel \
+#     libiec61850-devel \
+#     etherlab-devel \
+#     fmt-devel \
+#     spdlog-devel \
+#     uldaq-devel \
+#     comedilib-devel
 
-# Build & Install EtherLab
-RUN cd /tmp && \
-	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
-	cd etherlab && \
-	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
-	make -j$(nproc) install && \
-	rm -rf /tmp/etherlab
+# or install unpackaged dependencies from source
+ADD packaging/deps.sh /
+RUN bash deps.sh
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
