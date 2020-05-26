@@ -1,0 +1,317 @@
+{
+  "affinity": 1,
+  "stats": 3,
+  "name": "villas-acs",
+  "logging": {
+    "level": 5,
+    "faciltities": [
+      "path",
+      "socket"
+    ],
+    "file": "/var/log/villas-node.log",
+    "syslog": true
+  },
+  "http": {
+    "enabled": true,
+    "htdocs": "/villas/web/socket/",
+    "port": 80
+  },
+  "plugins": [
+    "simple_circuit.so",
+    "example_hook.so"
+  ],
+  "fpgas": {
+    "vc707": {
+      "id": "10ee:7022",
+      "do_reset": true,
+"ips":
+{
+  "hier_0_aurora_0": {
+    "vlnv": "acs.eonerc.rwth-aachen.de:user:aurora:1.9",
+    "ports": [
+      {
+        "role": "master",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S00_AXIS",
+        "name": "m_axis"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M00_AXIS",
+        "name": "s_axis"
+      }
+    ]
+  },
+  "pcie_0_axi_reset_0": {
+    "vlnv": "xilinx.com:ip:axi_gpio:2.0"
+  },
+  "hier_0_axis_data_fifo_1": {
+    "vlnv": "xilinx.com:ip:axis_data_fifo:2.0",
+    "ports": [
+      {
+        "role": "master",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S04_AXIS",
+        "name": "AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M04_AXIS",
+        "name": "AXIS"
+      }
+    ]
+  },
+  "hier_0_axi_dma_axi_dma_0": {
+    "vlnv": "xilinx.com:ip:axi_dma:7.1",
+    "ports": [
+      {
+        "role": "master",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S01_AXIS",
+        "name": "MM2S"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M01_AXIS",
+        "name": "S2MM"
+      }
+    ],
+    "memory-view": {
+      "M_AXI_MM2S": {
+        "pcie_0_axi_pcie_0": {
+          "BAR0": {
+            "highaddr": 4294967295,
+            "baseaddr": 0,
+            "size": 4294967296
+          }
+        }
+      },
+      "M_AXI_S2MM": {
+        "pcie_0_axi_pcie_0": {
+          "BAR0": {
+            "highaddr": 4294967295,
+            "baseaddr": 0,
+            "size": 4294967296
+          }
+        }
+      }
+    },
+    "irqs": {
+      "mm2s_introut": "pcie_0_axi_pcie_intc_0:2",
+      "s2mm_introut": "pcie_0_axi_pcie_intc_0:3"
+    }
+  },
+  "timer_0_axi_timer_0": {
+    "vlnv": "xilinx.com:ip:axi_timer:2.0",
+    "irqs": {
+      "generateout0": "pcie_0_axi_pcie_intc_0:0"
+    }
+  },
+  "pcie_0_axi_pcie_0": {
+    "pcie_bars": {
+      "BAR0": {
+        "translation": 0
+      }
+    },
+    "axi_bars": {
+      "BAR0": {
+        "highaddr": 4294967295,
+        "translation": 0,
+        "baseaddr": 0,
+        "size": 4294967296
+      }
+    },
+    "vlnv": "xilinx.com:ip:axi_pcie:2.9",
+    "memory-view": {
+      "M_AXI": {
+        "hier_0_aurora_0": {
+          "reg0": {
+            "highaddr": 28671,
+            "baseaddr": 24576,
+            "size": 4096
+          }
+        },
+        "pcie_0_axi_pcie_0": {
+          "CTL0": {
+            "highaddr": 536870911,
+            "baseaddr": 268435456,
+            "size": 268435456
+          }
+        },
+        "hier_0_axi_dma_axi_dma_0": {
+          "Reg": {
+            "highaddr": 16383,
+            "baseaddr": 12288,
+            "size": 4096
+          }
+        },
+        "pcie_0_axi_pcie_intc_0": {
+          "reg0": {
+            "highaddr": 8191,
+            "baseaddr": 4096,
+            "size": 4096
+          }
+        },
+        "timer_0_axi_timer_0": {
+          "Reg": {
+            "highaddr": 20479,
+            "baseaddr": 16384,
+            "size": 4096
+          }
+        },
+        "hier_0_axi_fifo_mm_s_0": {
+          "Mem1": {
+            "highaddr": 57343,
+            "baseaddr": 49152,
+            "size": 8192
+          },
+          "Mem0": {
+            "highaddr": 40959,
+            "baseaddr": 32768,
+            "size": 8192
+          }
+        },
+        "pcie_0_axi_reset_0": {
+          "Reg": {
+            "highaddr": 32767,
+            "baseaddr": 28672,
+            "size": 4096
+          }
+        },
+        "hier_0_axis_interconnect_0_axis_interconnect_0_xbar": {
+          "Reg": {
+            "highaddr": 24575,
+            "baseaddr": 20480,
+            "size": 4096
+          }
+        }
+      }
+    }
+  },
+  "hier_0_axis_interconnect_0_axis_interconnect_0_xbar": {
+    "num_ports": 5,
+    "vlnv": "xilinx.com:ip:axis_switch:1.1",
+    "ports": [
+      {
+        "role": "slave",
+        "target": "hier_0_aurora_0:m_axis",
+        "name": "S00_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "hier_0_aurora_0:s_axis",
+        "name": "M00_AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axi_dma_axi_dma_0:MM2S",
+        "name": "S01_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "hier_0_axi_dma_axi_dma_0:S2MM",
+        "name": "M01_AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axi_fifo_mm_s_0:STR_TXD",
+        "name": "S02_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "hier_0_axi_fifo_mm_s_0:STR_RXD",
+        "name": "M02_AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_data_fifo_0:AXIS",
+        "name": "S03_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "hier_0_axis_data_fifo_0:AXIS",
+        "name": "M03_AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_data_fifo_1:AXIS",
+        "name": "S04_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "hier_0_axis_data_fifo_1:AXIS",
+        "name": "M04_AXIS"
+      }
+    ]
+  },
+  "hier_0_axis_data_fifo_0": {
+    "vlnv": "xilinx.com:ip:axis_data_fifo:2.0",
+    "ports": [
+      {
+        "role": "master",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S03_AXIS",
+        "name": "AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M03_AXIS",
+        "name": "AXIS"
+      }
+    ]
+  },
+  "pcie_0_axi_pcie_intc_0": {
+    "vlnv": "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:1.3"
+  },
+  "hier_0_axi_fifo_mm_s_0": {
+    "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.2",
+    "ports": [
+      {
+        "role": "master",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S02_AXIS",
+        "name": "STR_TXD"
+      },
+      {
+        "role": "slave",
+        "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M02_AXIS",
+        "name": "STR_RXD"
+      }
+    ],
+    "irqs": {
+      "interrupt": "pcie_0_axi_pcie_intc_0:1"
+    }
+  }
+}
+    }
+  },
+  "nodes": {
+    "dma_0": {
+      "type": "fpga",
+      "datamover": "dma_0",
+      "use_irqs": false
+    },
+    "dma_1": {
+      "type": "fpga",
+      "datamover": "dma_1",
+      "use_irqs": false
+    },
+    "fifo_0": {
+      "type": "fpga",
+      "datamover": "fifo_mm_s_0",
+      "use_irqs": false
+    },
+    "simple_circuit": {
+      "type": "cbuilder",
+      "model": "simple_circuit",
+      "timestep": 2.5000000000000001e-5,
+      "parameters": [
+        1.0,
+        0.001
+      ]
+    }
+  },
+  "paths": [
+    {
+      "in": "dma_1",
+      "out": "simple_circuit",
+      "reverse": true
+    }
+  ]
+}
+
