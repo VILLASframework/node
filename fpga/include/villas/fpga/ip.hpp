@@ -199,6 +199,10 @@ protected:
 	template<typename T>
 	T readMemory(const std::string& block, uintptr_t address) const
 	{ return *(reinterpret_cast<T*>(getLocalAddr(block, address))); }
+	
+	template<typename T>
+	void writeMemory(const std::string& block, uintptr_t address, T value)
+	{ T* ptr = reinterpret_cast<T*>(getLocalAddr(block, address)); *ptr = value; }
 
 protected:
 	struct IrqPort {
