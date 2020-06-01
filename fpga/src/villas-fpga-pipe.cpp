@@ -39,6 +39,7 @@
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/fpga/ips/aurora.hpp>
 
 using namespace villas;
 
@@ -145,17 +146,15 @@ int main(int argc, char* argv[])
 
 	auto card = setupFpgaCard(configFile, fpgaName);
 
-	auto rtds = dynamic_cast<fpga::ip::Rtds*>
-	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
+	auto aurora = dynamic_cast<fpga::ip::Aurora*>
+	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:aurora:")));
 
-	//auto dma = dynamic_cast<fpga::ip::Dma*>
-	//          (card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
 	auto dma = dynamic_cast<fpga::ip::Dma*>
 	          (card->lookupIp("hier_0_axi_dma_axi_dma_1"));
 	
 
-	if(rtds == nullptr) {
-		logger->error("No RTDS interface found on FPGA");
+	if(aurora == nullptr) {
+		logger->error("No Aurora interface found on FPGA");
 		return 1;
 	}
 
@@ -164,13 +163,13 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	rtds->dump();
+	aurora->dump();
 
-	rtds->connect(rtds->getMasterPort(rtds->masterPort),
+	aurora->connect(aurora->getMasterPort(aurora->masterPort),
 	              dma->getSlavePort(dma->s2mmPort));
 
 	dma->connect(dma->getMasterPort(dma->mm2sPort),
-	             rtds->getSlavePort(rtds->slavePort));
+	             aurora->getSlavePort(aurora->slavePort));
 
 	auto &alloc = villas::HostRam::getAllocator();
 	auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));

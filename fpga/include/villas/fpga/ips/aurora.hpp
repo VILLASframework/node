@@ -39,7 +39,6 @@ public:
 	static constexpr const char* slavePort = "s_axis";
 
 	void dump();
-	double getDt();
 
 	std::list<std::string> getMemoryBlocks() const
 	{ return { registerMemory }; }

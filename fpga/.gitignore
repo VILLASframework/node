@@ -4,3 +4,6 @@ build/
 *.o
 *.so
 *.user
+
+.vscode/
+
