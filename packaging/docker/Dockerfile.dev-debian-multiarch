@@ -47,8 +47,9 @@ RUN dpkg --add-architecture ${ARCH}
 # Toolchain
 RUN apt-get update && apt-get install -y \
 	crossbuild-essential-${ARCH} \
-	pkg-config make ninja-build \
-	texinfo git mercurial curl tar wget\
+	autoconf automake autogen libtool \
+	pkg-config make \
+	texinfo git mercurial curl tar wget \
 	protobuf-compiler protobuf-c-compiler
 
 # Dependencies
@@ -65,7 +66,6 @@ RUN apt-get update && apt-get install -y \
 	libnanomsg-dev:${ARCH} \
 	librabbitmq-dev:${ARCH} \
 	libmosquitto-dev:${ARCH} \
-	libcomedi-dev:${ARCH} \
 	libibverbs-dev:${ARCH} \
 	librdmacm-dev:${ARCH} \
 	libre-dev:${ARCH} \
@@ -84,54 +84,11 @@ ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/pkgconfig:/usr/
 ENV PKG_CONFIG_LIBDIR=/usr/lib/${TRIPLET}/pkgconfig:/usr/share/pkgconfig
 
 ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
-			   -DCMAKE_INSTALL_LIBDIR=/usr/lib/${TRIPLET}"
-			   
-# Build & Install fmtlib
-RUN cd /tmp && \
-   git clone --recursive https://github.com/fmtlib/fmt.git && \
-   mkdir -p fmt/build && cd fmt/build && \
-   git checkout 5.2.0 && \
-   cmake ${CMAKE_OPTS} -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
-   rm -rf /tmp/fmt
-			   
-# Build & Install spdlog
-RUN cd /tmp && \
-   git clone --recursive https://github.com/gabime/spdlog.git && \
-   mkdir -p spdlog/build && cd spdlog/build && \
-   git checkout v1.3.1 && \
-   cmake ${CMAKE_OPTS} -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
-   rm -rf /tmp/spdlog
+			    -DCMAKE_INSTALL_LIBDIR=/usr/lib/${TRIPLET}"
 
-# Build & Install libwebsockets
-RUN cd /tmp && \
-	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
-	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake ${CMAKE_OPTS}	-DLWS_INSTALL_LIB_DIR=/usr/lib/${TRIPLET} -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
-	rm -rf /tmp/libwebsockets
-
-# Build & Install libiec61850
-RUN cd /tmp && \
-	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
-	mkdir -p libiec61850/build && cd libiec61850/build && \
-	cmake ${CMAKE_OPTS} .. && make -j$(nproc) install && \
-	rm -rf /tmp/libiec61850
-
-# Build & Install uldaq
-RUN apt-get -y install automake autoconf libtool
-RUN cd /tmp && \
-	git clone -b rpm https://github.com/stv0g/uldaq && \
-	mkdir -p uldaq/build && cd uldaq && \
-	autoreconf -i && cd build && \
-	../configure --host=${TRIPLET} && make -j$(nproc) install && \
-	rm -rf /tmp/uldaq
-
-# Build & Install EtherLab
-RUN cd /tmp && \
-	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
-	cd etherlab && \
-	./bootstrap && ./configure --host=${TRIPLET} --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
-	make -j$(nproc) install && \
-	rm -rf /tmp/etherlab
+# Install unpackaged dependencies from source
+ADD packaging/deps.sh /
+RUN bash deps.sh
 
 WORKDIR /villas
 ENTRYPOINT bash

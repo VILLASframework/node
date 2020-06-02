@@ -22,15 +22,17 @@ mkdir -p thirdparty
 pushd thirdparty
 
 # Build & Install Criterion
-git clone --recursive https://github.com/Snaipe/Criterion
-mkdir -p Criterion/build
-pushd Criterion/build
-git checkout v2.3.3
-cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
-if [ -z "${PACKAGE}" ]; then
-    make -j$(nproc) install
+if [ $(uname -m) != "armv6l" ]; then
+    git clone --recursive https://github.com/Snaipe/Criterion
+    mkdir -p Criterion/build
+    pushd Criterion/build
+    git checkout v2.3.3
+    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    fi
+    popd
 fi
-popd
 
 # Build & Install EtherLab
 hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab

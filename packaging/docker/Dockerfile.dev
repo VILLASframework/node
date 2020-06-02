@@ -82,17 +82,6 @@ RUN dnf -y install \
     librdmacm-devel \
     libusb-devel
 
-# Some of the dependencies are only available in our own repo
-# ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
-# RUN dnf -y install \
-#     re-devel \
-#     libiec61850-devel \
-#     etherlab-devel \
-#     fmt-devel \
-#     spdlog-devel \
-#     uldaq-devel \
-#     comedilib-devel
-
 # or install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh

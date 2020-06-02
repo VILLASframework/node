@@ -28,43 +28,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# This is a Centos 7 image including the devtoolset-7 for a more up-to-date toolchain
-# See: https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/
-FROM registry.centos.org/centos/devtoolset-7-toolchain-centos7
+FROM centos:8
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
-# Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
-
 USER root
 
-# Enable Extra Packages for Enterprise Linux (EPEL) repo
-RUN yum -y install epel-release
+# Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
+RUN dnf -y install epel-release dnf-plugins-core
+RUN dnf config-manager --set-enabled PowerTools
 
 # Toolchain
-RUN yum -y install \
-	devtoolset-7-toolchain \
-	pkgconfig make cmake3 \
+RUN dnf -y install \
+	pkgconfig make cmake \
 	autoconf automake autogen libtool \
 	flex bison \
 	texinfo git mercurial curl tar \
 	protobuf-compiler protobuf-c-compiler
-
-# Several tools only needed for developement and testing
-RUN yum -y install \
-	doxygen dia graphviz \
-	openssh-clients \
-	rpmdevtools rpm-build \
-	jq netcat \
-	iproute \
-	python-pip \
-	valgrind gdb gdb-gdbserver \
-	xmlto rubygem-asciidoctor \
-	rabbitmq-server mosquitto
 
 # Tools for debugging, coverage, profiling
 RUN pip install \
@@ -72,7 +55,7 @@ RUN pip install \
 	protobuf
 
 # Dependencies
-RUN yum -y install \
+RUN dnf -y install \
 	openssl-devel \
 	protobuf-devel \
 	protobuf-c-devel \
@@ -81,69 +64,17 @@ RUN yum -y install \
 	libnl3-devel \
 	libcurl-devel \
 	jansson-devel \
-	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg \
 	librabbitmq-devel \
 	mosquitto-devel \
 	libibverbs-devel \
 	librdmacm-devel \
-	re-devel \
 	libusb1-devel
 
-# Build & Install fmtlib
-RUN cd /tmp && \
-	git clone --recursive https://github.com/fmtlib/fmt.git && \
-	mkdir -p fmt/build && cd fmt/build && \
-	git checkout 5.2.0 && \
-	cmake3 -DBUILD_SHARED_LIBS=1 .. && make -j$(nproc) install && \
-	rm -rf /tmp/fmt
-
-# Build & Install spdlog
-RUN cd /tmp && \
-	git clone --recursive https://github.com/gabime/spdlog.git && \
-	mkdir -p spdlog/build && cd spdlog/build && \
-	git checkout v1.3.1 && \
-	cmake3 -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF .. && make -j$(nproc) install && \
-	rm -rf /tmp/spdlog
-
-# Build & Install Criterion
-#RUN cd /tmp && \
-#	git clone --recursive https://github.com/Snaipe/Criterion && \
-#	mkdir -p Criterion/build && cd Criterion/build && \
-#	git checkout v2.3.3 && \
-#	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
-#	rm -rf /tmp/*
-
-# Build & Install libwebsockets
-RUN cd /tmp && \
-	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
-	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_TESTAPPS=ON .. && make -j$(nproc) install && \
-	rm -rf /tmp/libwebsockets
-
-# Build & Install libiec61850
-RUN cd /tmp && \
-	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
-	mkdir -p libiec61850/build && cd libiec61850/build && \
-	cmake3 -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
-	rm -rf /tmp/libiec61850
-
-# Build & Install uldaq
-RUN cd /tmp && \
-	git clone -b rpm https://github.com/stv0g/uldaq && \
-	cd uldaq && \
-	autoreconf -i && ./configure --enable-examples=no && \
-	make -j$(nproc) install && \
-	rm -rf /tmp/uldaq
-
-# Build & Install EtherLab
-RUN cd /tmp && \
-	hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab && \
-	cd etherlab && \
-	./bootstrap && ./configure --enable-userlib=yes --enable-kernel=no --enable-tool=no && \
-	make -j$(nproc) install && \
-	rm -rf /tmp/etherlab
+# or install unpackaged dependencies from source
+ADD packaging/deps.sh /
+RUN bash deps.sh
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
