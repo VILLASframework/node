@@ -731,7 +731,6 @@ struct sockaddr_in rec_addr;
 		msg->version = MSG_VERSION;
 		msg->type = MSG_TYPE_DATA;
 		msg->reserved1 = 0;
-		msg->reserved2 = 0;
 		msg->id = 0;
 		msg->length = NO_SEND_DATA;
 		msg->sequence = sequence++;

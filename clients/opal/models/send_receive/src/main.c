@@ -119,7 +119,6 @@ static void * SendToIPPort(void *arg)
 		msg->version = MSG_VERSION;
 		msg->type = MSG_TYPE_DATA;
 		msg->reserved1 = 0;
-		msg->reserved2 = 0;
 		msg->id = SendID;
 		msg->length = cnt;
 		msg->sequence = Sequence++;
