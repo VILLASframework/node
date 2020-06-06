@@ -153,7 +153,8 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0"; then
     git clone https://github.com/nanomsg/nanomsg.git
-    pushd nanomsg
+    mkdir -p nanomsg/build
+    pushd nanomsg/build
     cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
