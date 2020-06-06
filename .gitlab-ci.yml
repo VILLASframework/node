@@ -12,57 +12,57 @@ variables:
   RELEASEVER: '29'
 
 stages:
-  - prepare
-  - build
-  - test
-  - packaging
-  - deploy
+- prepare
+- build
+- test
+- packaging
+- deploy
 
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
 before_script:
-  - git submodule foreach git checkout .
+- git submodule foreach git checkout .
 
 # Stage: prepare
 ##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
-prepare:fedora:docker-dev:
+.prepare:docker-dev: &prepare_docker_dev
   stage: prepare
   script:
-    - docker build ${DOCKER_OPTS}
-        --file ${DOCKER_FILE}
-        --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
+  - docker build ${DOCKER_OPTS}
+      --file ${DOCKER_FILE}
+      --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
-    - shell
-    - linux
+  - shell
+  - linux
 
-prepare:raspbian:docker-dev:
-  extends: prepare:fedora:docker-dev
+prepare:fedora:docker-dev:
+  <<: *prepare_docker_dev
   variables:
-    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-raspbian
+    DOCKER_FILE: packaging/docker/Dockerfile.dev
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev
 
 prepare:ubuntu:docker-dev:
-  extends: prepare:fedora:docker-dev
+  <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
 
 prepare:centos:docker-dev:
-  extends: prepare:fedora:docker-dev
+  <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-centos
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
 
 prepare:debian-armhf:docker-dev:
-  extends: prepare:fedora:docker-dev
+  <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
     DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
 
 prepare:debian-arm64:docker-dev:
-  extends: prepare:fedora:docker-dev
+  <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.dev-debian-multiarch
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
@@ -71,73 +71,67 @@ prepare:debian-arm64:docker-dev:
 # Stage: build
 ##############################################################################
 
-build:fedora:x86_64:
+.build:fedora:x86_64: &build
   stage: build
   script:
-    - mkdir -p build && cd build
-    - cmake .. ${CMAKE_OPTS}
-    - make ${MAKE_OPTS}
+  - mkdir -p build && cd build
+  - cmake .. ${CMAKE_OPTS}
+  - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
     paths:
-      - build/
+    - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
-    - docker
+  - docker
+
+build:fedora:x86_64:
+  <<: *build
 
 build:fedora-minimal:x86_64:
-  extends: build:fedora:x86_64
+  <<: *build
   variables:
     CMAKE_OPTS: -DWITH_HOOKS=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
 
 build:ubuntu:x86_64:
-  extends: build:fedora:x86_64
+  <<: *build
   variables:
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
 build:centos:x86_64:
-  extends: build:fedora:x86_64
+  <<: *build
   script:
-    - mkdir -p build && cd build
-    - cmake3 .. ${CMAKE_OPTS}
-    - make ${MAKE_OPTS}
+  - mkdir -p build && cd build
+  - cmake3 .. ${CMAKE_OPTS}
+  - make ${MAKE_OPTS}
   variables:
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
 
-build:raspbian:armv6l:
-  extends: build:fedora:x86_64
-  variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-raspbian
-    CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF
-  when: manual
-
 build:debian-multiarch:armhf:
-  extends: build:fedora:x86_64
+  <<: *build
   variables:
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
-    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-armhf.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/arm-linux-gnueabihf
 
 build:debian-multiarch:arm64:
-  extends: build:fedora:x86_64
+  <<: *build
   variables:
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
-    CMAKE_OPTS: -DCMAKE_TOOLCHAIN_FILE=/debian-arm64.cmake -DCMAKE_INSTALL_LIBDIR=/usr/lib/aarch64-linux-gnu
 
 build:docs:
   stage: build
   artifacts:
     name: ${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}
     paths:
-      - build/doc/
+    - build/doc/
   script:
-    - mkdir -p build && cd build
-    - cmake ..
-    - make ${MAKE_OPTS} doc
+  - mkdir -p build && cd build
+  - cmake ..
+  - make ${MAKE_OPTS} doc
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
-    - docker
+  - docker
 
 
 # Stage: test
@@ -154,46 +148,47 @@ test:flake8:
 test:unit:
   stage: test
   dependencies:
-    - build:fedora:x86_64
+  - build:fedora:x86_64
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
     SEGFAULT_SIGNALS: bus abrt
   script:
-    - mkdir -p build && cd build
-    - cmake .. && make ${MAKE_OPTS} unit-tests
-    - "tests/unit/unit-tests || true"
+  - mkdir -p build && cd build
+  - cmake .. && make ${MAKE_OPTS} unit-tests
+  - "tests/unit/unit-tests || true"
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
-    - docker
+  - docker
 
 test:integration:
   stage: test
   dependencies:
-    - build:fedora:x86_64
+  - build:fedora:x86_64
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
     SEGFAULT_SIGNALS: bus abrt
   script:
-    - mkdir -p build && cd build
-    - cmake ..
-    - make ${MAKE_OPTS} run-integration-tests
+  - mkdir -p build && cd build
+  - cmake ..
+  - make ${MAKE_OPTS} run-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
     paths:
-      - build/tests/integration/
+    - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   allow_failure: true
   tags:
-    - docker
+  - docker
 
 # Stage: packaging
 ##############################################################################
 
 packaging:docker:
   stage: packaging
+  image: docker:19.03
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -202,27 +197,26 @@ packaging:docker:
         --file packaging/docker/Dockerfile.app
         --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
   tags:
-    - shell
-    - linux
+  - docker
 
 packaging:rpm:
   stage: packaging
   dependencies:
-    - build:fedora:x86_64
+  - build:fedora:x86_64
   script:
-    - mkdir -p build && cd build
-    - cmake -DWITH_NODE_ETHERCAT=OFF ..
-    - make ${MAKE_OPTS} doc
-    - make ${MAKE_OPTS} package
+  - mkdir -p build && cd build
+  - cmake -DWITH_NODE_ETHERCAT=OFF ..
+  - make ${MAKE_OPTS} doc
+  - make ${MAKE_OPTS} package
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}
     paths:
-      - build/*.tar.gz
-      - build/*.rpm
+    - build/*.tar.gz
+    - build/*.rpm
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
-    - docker
+  - docker
 
 # Stage: deploy
 ##############################################################################
@@ -233,16 +227,16 @@ deploy:web:
     name: rclone/rclone:1.50
     entrypoint: [""]
   before_script:
-    - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
+  - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
   script:
-    - rclone copy build/doc/html fein:villas/doc-dev/${CI_BUILD_REF_NAME}
+  - rclone copy build/doc/html fein:villas/doc-dev/${CI_BUILD_REF_NAME}
   dependencies:
-    - build:docs
+  - build:docs
   only:
     # Only on version tags
-    - "/^v\\d+(\\.\\d+)+$/"
+  - "/^v\\d+(\\.\\d+)+$/"
   tags:
-    - docker
+  - docker
 
 .deploy:packages: &deploy_packages
   stage: deploy
@@ -250,16 +244,16 @@ deploy:web:
     name: rclone/rclone:1.50
     entrypoint: [""]
   before_script:
-    - apk add curl
-    - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
+  - apk add curl
+  - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
   script:
-    - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
-    - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
-    - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
+  - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
+  - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
+  - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
   dependencies:
-    - packaging:rpm
+  - packaging:rpm
   tags:
-    - docker
+  - docker
 
 deploy:packages:manual:
   <<: *deploy_packages
@@ -268,50 +262,47 @@ deploy:packages:manual:
 deploy:packages:tags:
   <<: *deploy_packages
   only:
-    # Only on version tags
-    - "/^v\\d+(\\.\\d+)+$/"
+  # Only on version tags
+  - "/^v\\d+(\\.\\d+)+$/"
 
 deploy:docker:
   stage: deploy
+  image: docker:19.03
   before_script:
-    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
-    - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
-    - docker tag ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-ubuntu:latest
-    - docker tag ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-centos:latest
-    - docker tag ${DOCKER_IMAGE}/dev-raspbian:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-raspbian:latest
-    - docker tag ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-arm64:latest
-    - docker tag ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-armhf:latest
-    - docker push ${DOCKER_IMAGE}:latest
-    - docker push ${DOCKER_IMAGE}/dev:latest
-    - docker push ${DOCKER_IMAGE}/dev-ubuntu:latest
-    - docker push ${DOCKER_IMAGE}/dev-centos:latest
-    - docker push ${DOCKER_IMAGE}/dev-raspbian:latest
-    - docker push ${DOCKER_IMAGE}/dev-debian-arm64:latest
-    - docker push ${DOCKER_IMAGE}/dev-debian-armhf:latest
+  - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+  - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
+  - docker tag ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-ubuntu:latest
+  - docker tag ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-centos:latest
+  - docker tag ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-arm64:latest
+  - docker tag ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-armhf:latest
+  - docker push ${DOCKER_IMAGE}:latest
+  - docker push ${DOCKER_IMAGE}/dev:latest
+  - docker push ${DOCKER_IMAGE}/dev-ubuntu:latest
+  - docker push ${DOCKER_IMAGE}/dev-centos:latest
+  - docker push ${DOCKER_IMAGE}/dev-debian-arm64:latest
+  - docker push ${DOCKER_IMAGE}/dev-debian-armhf:latest
   tags:
-    - shell
-    - linux
+  - docker
   only:
-    # Only on version tags
-    - "/^v\\d+(\\.\\d+)+$/"
+  # Only on version tags
+  - "/^v\\d+(\\.\\d+)+$/"
 
 deploy:docker:tags:
   stage: deploy
+  image: docker:19.03
   before_script:
-    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev-raspbian:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG}
   tags:
-    - shell
-    - linux
+  - docker
   only:
-    # Only on version tags
-    - "/^v\\d+(\\.\\d+)+$/"
+  # Only on version tags
+  - "/^v\\d+(\\.\\d+)+$/"

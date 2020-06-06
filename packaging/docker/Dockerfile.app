@@ -32,23 +32,15 @@ ARG VERSION=unknown
 ARG VARIANT=unknown
 
 # This image is built by villas-node-git/packaging/docker/Dockerfile.dev
-FROM $BUILDER_IMAGE AS builder
+FROM $BUILDER_IMAGE
 
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake -DCPACK_GENERATOR=RPM -DWITH_NODE_ETHERCAT=OFF ..
-RUN make -j$(nproc) doc
-RUN make -j$(nproc) package
-
-FROM fedora:29
-	
-# Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
-
-COPY --from=builder /villas/build/*.rpm /tmp/
-RUN dnf -y install /tmp/*.rpm
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install
 
 # For WebSocket / API access
 EXPOSE 80

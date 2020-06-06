@@ -2,7 +2,11 @@
 
 set -e
 
-CMAKE_OPTS="-DCMAKE_BUILD_TYPE=Release"
+PREFIX=${PREFIX:-/usr/local}
+TRIPLET=${TRIPLET:-x86_64-linux-gnu}
+
+CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
+CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
 if [ -n "${PACKAGE}" ]; then
     TARGET="package"
@@ -19,16 +23,12 @@ else
     TARGET="install"
 fi
 
-if [ -f /etc/redhat-release -o  -f /etc/fedora-release ]; then
-    CMAKE_OPTS+=" -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64"
-fi
-
-rm -rf thirdparty
-mkdir -p thirdparty
-pushd thirdparty
+DIR=$(mktemp -d)
+pushd ${DIR}
 
 # Build & Install Criterion
-if [ $(uname -m) != "armv6l" ] && ! pkg-config "criterion >= 2.3.1"; then
+if ! pkg-config "criterion >= 2.3.1" && \
+   [ "${ARCH}" == "x86_64" ]; then
     git clone --recursive https://github.com/Snaipe/Criterion
     mkdir -p Criterion/build
     pushd Criterion/build
@@ -44,7 +44,7 @@ fi
 hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
 pushd etherlab
 ./bootstrap
-./configure --enable-userlib=yes --enable-kernel=no
+./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
 if [ -z "${PACKAGE}" ]; then
     make -j$(nproc) install
 else
@@ -102,18 +102,19 @@ if ! pkg-config "libwebsockets >= 2.3.0"; then
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     git checkout v4.0-stable
-    cmake -DLWS_WITHOUT_EXTENSIONS=OFF ${CMAKE_OPTS} ..
+    cmake -DLWS_WITHOUT_TESTAPPS=ON -DLWS_WITHOUT_EXTENSIONS=OFF ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
 fi
 
 # Build & Install uldaq
-if [ "${DEBIAN_MULTIARCH}" != "1" ] && ! pkg-config "libuldaq >= 1.0.0"; then
+if ! pkg-config "libuldaq >= 1.0.0" && \
+   [ "${VARIANT}" != "debian-multiarch" ]; then
     git clone https://github.com/stv0g/uldaq
     pushd uldaq
     git checkout rpmbuild
     autoreconf -i
-    ./configure --enable-examples=no
+    ./configure --enable-examples=no ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
     else
@@ -130,7 +131,7 @@ if ! pkg-config "comedilib >= 0.11.0"; then
     pushd comedilib
     git checkout r0_11_0
     ./autogen.sh
-    ./configure
+    ./configure ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
     else
@@ -173,6 +174,9 @@ if [ -n "${PACKAGE}" ]; then
 fi
 
 popd
+rm -rf ${DIR}
 
 # Update linker cache
-ldconfig
+if [ -z "${PACKAGE}" ]; then
+    ldconfig
+fi

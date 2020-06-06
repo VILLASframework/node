@@ -36,7 +36,7 @@ set(DOCKER_RUN_OPTS
 	--volume \"${PROJECT_SOURCE_DIR}:/villas\"
 )
 
-foreach(SUFFIX app dev dev-centos dev-ubuntu dev-raspbian)
+foreach(SUFFIX app dev dev-centos dev-ubuntu)
 	add_custom_target(deploy-docker-${SUFFIX}
 		COMMAND docker push ${DOCKER_IMAGE}/${SUFFIX}:${DOCKER_TAG}
 		COMMAND docker push ${DOCKER_IMAGE}/${SUFFIX}:latest

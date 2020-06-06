@@ -69,9 +69,14 @@ RUN apt-get update && \
 		libnanomsg-dev:${ARCH} \
 		librabbitmq-dev:${ARCH} \
 		libmosquitto-dev:${ARCH} \
+		libcomedi-dev:${ARCH} \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \
 		libre-dev:${ARCH}
+
+# Add local and 64-bit locations to linker paths
+ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+    echo /usr/local/lib64 >> /etc/ld.so.conf
 
 # Install cmake (version from buster has a bug)
 RUN cd /tmp && \
@@ -82,20 +87,37 @@ RUN cd /tmp && \
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
-ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/pkgconfig:/usr/share/pkgconfig
-ENV PKG_CONFIG_LIBDIR=/usr/lib/${TRIPLET}/pkgconfig:/usr/share/pkgconfig
+ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
 
 ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
-			    -DCMAKE_INSTALL_LIBDIR=/usr/lib/${TRIPLET}"
+				-DCMAKE_INSTALL_LIBDIR=/usr/local/lib/${TRIPLET} \
+				-DLWS_INSTALL_LIB_DIR=/usr/local/lib/${TRIPLET}"
 
-ENV DEBIAN_MULTIARCH=1
+ENV CONFIGURE_OPTS="--libdir=/usr/local/lib/${TRIPLET}"
+
+RUN mkdir -p /usr/local/lib/${TRIPLET}
+
+ENV CPP=${TRIPLET}-cpp
+ENV CC=${TRIPLET}-gcc
+ENV CXX=${TRIPLET}-g++
+ENV LD=${TRIPLET}-ld
+ENV AS=${TRIPLET}-as
+ENV AR=${TRIPLET}-ar
+ENV RANLIB=${TRIPLET}-ranlib
+
+ENV VARIANT=debian-multiarch
+ENV ARCH=${ARCH}
+ENV TRIPLET=${TRIPLET}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
 
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
 WORKDIR /villas
-ENTRYPOINT bash
 
 LABEL \
 	org.label-schema.schema-version="1.0" \

@@ -93,7 +93,7 @@ endif()
 if(WITH_NODE_NANOMSG)
     list(APPEND NODE_SRC nanomsg.cpp)
     list(APPEND INCLUDE_DIRS ${NANOMSG_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::NANOMSG)
+    list(APPEND LIBRARIES ${NANOMSG_LIBRARIES})
 endif()
 
 # Enable ZeroMQ node type when libzmq is available
@@ -135,7 +135,7 @@ endif()
 if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.cpp)
     list(APPEND INCLUDE_DIRS ${COMEDILIB_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::COMEDILIB)
+    list(APPEND LIBRARIES ${COMEDILIB_LIBRARIES})
 endif()
 
 # Enable Infiniband support

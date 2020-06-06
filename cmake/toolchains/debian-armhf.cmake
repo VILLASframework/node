@@ -11,5 +11,5 @@ set(CMAKE_C_FLAGS "-mfloat-abi=hard ${CMAKE_C_FLAGS}" CACHE STRING "Buildroot CF
 set(CMAKE_CXX_FLAGS "-mfloat-abi=hard ${CMAKE_CXX_FLAGS}" CACHE STRING "Buildroot CXXFLAGS")
 set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Buildroot LDFLAGS")
 
-set(CMAKE_LIBRARY_PATH "/usr/lib/${TRIPLET}")
+set(CMAKE_LIBRARY_PATH "/usr/lib/${TRIPLET};/usr/local/lib/${TRIPLET}")
 

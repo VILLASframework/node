@@ -66,24 +66,32 @@ RUN pip install \
 
 # Dependencies
 RUN dnf -y install \
-    openssl-devel \
-    protobuf-devel \
-    protobuf-c-devel \
-    libuuid-devel \
-    libconfig-devel \
-    libnl3-devel \
-    libcurl-devel \
-    jansson-devel \
-    libwebsockets-devel \
-    zeromq-devel \
-    nanomsg-devel \
-    librabbitmq-devel \
-    mosquitto-devel \
-    libibverbs-devel \
-    librdmacm-devel \
-    libusb-devel
+	openssl-devel \
+	protobuf-devel \
+	protobuf-c-devel \
+	libuuid-devel \
+	libconfig-devel \
+	libnl3-devel \
+	libcurl-devel \
+	jansson-devel \
+	zeromq-devel \
+	nanomsg-devel \
+	librabbitmq-devel \
+	mosquitto-devel \
+	libibverbs-devel \
+	librdmacm-devel \
+	libusb-devel \
+	libwebsockets-devel
 
-# or install unpackaged dependencies from source
+# Add local and 64-bit locations to linker paths
+ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+    echo /usr/local/lib64 >> /etc/ld.so.conf
+
+ENV VARIANT=ubuntu
+ENV ARCH=x86_64
+ENV TRIPLET=x86_64-linux-gnu
+
+# Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
 
@@ -93,8 +101,6 @@ RUN ln -s /usr/lib64/tc /usr/lib/tc
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443
-
-ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
 WORKDIR /villas
 ENTRYPOINT bash
