@@ -44,7 +44,7 @@ RUN apt-get update && \
 		gcc g++ \
 		pkg-config cmake make \
 		autoconf automake autogen libtool \
-		texinfo git mercurial curl tar \
+		texinfo git mercurial curl tar wget diffutils \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler
 

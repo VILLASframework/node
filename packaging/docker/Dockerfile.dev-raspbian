@@ -33,7 +33,7 @@ RUN apt-get update && \
 		gcc g++ \
 		pkg-config cmake make \
 		autoconf automake autogen libtool \
-		git mercurial curl wget tar bzip2 \
+		git mercurial curl wget tar bzip2 diffutils \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler
 
