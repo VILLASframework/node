@@ -46,22 +46,6 @@ RUN apt-get update && apt-get install -y \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler
 
-# Several tools only needed for developement and testing
-RUN apt-get update && apt-get install -y \
-	doxygen dia graphviz \
-	openssh-client \
-	jq netcat \
-	iproute2 \
-	python-pip \
-	valgrind gdb gdbserver \
-	xmlto asciidoctor \
-	rabbitmq-server mosquitto
-
-# Tools for debugging, coverage, profiling
-RUN pip install \
-	gcovr \
-	protobuf
-
 # Dependencies
 RUN apt-get update && apt-get install -y \
 	libssl-dev \

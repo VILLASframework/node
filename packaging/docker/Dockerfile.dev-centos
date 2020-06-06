@@ -49,11 +49,6 @@ RUN dnf -y install \
 	texinfo git mercurial curl tar \
 	protobuf-compiler protobuf-c-compiler
 
-# Tools for debugging, coverage, profiling
-RUN pip install \
-	gcovr \
-	protobuf
-
 # Dependencies
 RUN dnf -y install \
 	openssl-devel \
