@@ -65,7 +65,7 @@ git clone --recursive https://github.com/gabime/spdlog.git
 mkdir -p spdlog/build
 pushd spdlog/build
 git checkout v1.3.1
-cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=1 -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
+cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
 make -j$(nproc) ${TARGET}
 if [ -n "${PACKAGE}" ]; then
     cp spdlog/build/*.rpm rpms
