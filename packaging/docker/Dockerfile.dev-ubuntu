@@ -41,8 +41,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Toolchain
 RUN apt-get update && \
 	apt-get install -y \
-		autoconf automake libtool cmake make \
-		pkg-config make gcc g++\
+		gcc g++ \
+		pkg-config cmake make \
+		autoconf automake autogen libtool \
 		texinfo git mercurial curl tar \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler

@@ -48,8 +48,8 @@ RUN dpkg --add-architecture ${ARCH}
 RUN apt-get update && \
 	apt-get install -y \
 		crossbuild-essential-${ARCH} \
-		autoconf automake autogen libtool \
 		pkg-config make \
+		autoconf automake autogen libtool \
 		texinfo git mercurial curl tar wget \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler

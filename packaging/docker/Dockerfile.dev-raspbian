@@ -30,8 +30,9 @@ ARG VARIANT=unknown
 # Toolchain
 RUN apt-get update && \
     apt-get install -y \
-		autoconf automake autogen libtool cmake \
-		pkg-config make gcc g++ \
+		gcc g++ \
+		pkg-config cmake make \
+		autoconf automake autogen libtool \
 		git mercurial curl wget tar bzip2 \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler
