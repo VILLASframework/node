@@ -22,7 +22,7 @@ mkdir -p thirdparty
 pushd thirdparty
 
 # Build & Install Criterion
-if [ $(uname -m) != "armv6l" ]; then
+if [ $(uname -m) != "armv6l" ] && ! pkg-config "criterion >= 2.3.1"; then
     git clone --recursive https://github.com/Snaipe/Criterion
     mkdir -p Criterion/build
     pushd Criterion/build
@@ -49,92 +49,106 @@ fi
 popd
 
 # Build & Install Fmtlib
-git clone --recursive https://github.com/fmtlib/fmt.git
-mkdir -p fmt/build
-pushd fmt/build
-git checkout 5.2.0
-cmake -DBUILD_SHARED_LIBS=1 ${CMAKE_OPTS} ..
-make -j$(nproc) ${TARGET}
-if [ -n "${PACKAGE}" ]; then
-    cp fmt/build/*.rpm rpms
+if ! pkg-config "fmt >= 5.2.0"; then
+    git clone --recursive https://github.com/fmtlib/fmt.git
+    mkdir -p fmt/build
+    pushd fmt/build
+    git checkout 5.2.0
+    cmake -DBUILD_SHARED_LIBS=1 ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp fmt/build/*.rpm rpms
+    fi
+    popd
 fi
-popd
 
 # Build & Install spdlog
-git clone --recursive https://github.com/gabime/spdlog.git
-mkdir -p spdlog/build
-pushd spdlog/build
-git checkout v1.3.1
-cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
-make -j$(nproc) ${TARGET}
-if [ -n "${PACKAGE}" ]; then
-    cp spdlog/build/*.rpm rpms
+if ! pkg-config "spdlog >= 1.3.1"; then
+    git clone --recursive https://github.com/gabime/spdlog.git
+    mkdir -p spdlog/build
+    pushd spdlog/build
+    git checkout v1.3.1
+    cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp spdlog/build/*.rpm rpms
+    fi
+    popd
 fi
-popd
 
 # Build & Install libiec61850
-git clone https://github.com/mz-automation/libiec61850
-mkdir -p libiec61850/build
-pushd libiec61850/build
-git checkout v1.3.1
-cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
-make -j$(nproc) ${TARGET}
-if [ -n "${PACKAGE}" ]; then
-    cp libiec61850/build/*.rpm rpms
+if ! pkg-config "libiec61850 >= 1.3.1"; then
+    git clone https://github.com/mz-automation/libiec61850
+    mkdir -p libiec61850/build
+    pushd libiec61850/build
+    git checkout v1.3.1
+    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp libiec61850/build/*.rpm rpms
+    fi
+    popd
 fi
-popd
 
 # Build & Install libwebsockets
-git clone https://libwebsockets.org/repo/libwebsockets
-mkdir -p libwebsockets/build
-pushd libwebsockets/build
-git checkout v4.0-stable
-cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
-make -j$(nproc) ${TARGET}
-popd
+if ! pkg-config "libwebsockets >= 2.3.0"; then
+    git clone https://libwebsockets.org/repo/libwebsockets
+    mkdir -p libwebsockets/build
+    pushd libwebsockets/build
+    git checkout v4.0-stable
+    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    popd
+fi
 
 # Build & Install uldaq
-git clone https://github.com/stv0g/uldaq
-pushd uldaq
-git checkout rpmbuild
-autoreconf -i
-./configure --enable-examples=no
-if [ -z "${PACKAGE}" ]; then
-    make -j$(nproc) install
-else
-    make dist
-    cp fedora/uldaq_ldconfig.patch libuldaq-1.1.2.tar.gz ~/rpmbuild/SOURCES
-    rpmbuild -ba fedora/uldaq.spec
+if ! pkg-config "libuldaq >= 1.0.0"; then
+    git clone https://github.com/stv0g/uldaq
+    pushd uldaq
+    git checkout rpmbuild
+    autoreconf -i
+    ./configure --enable-examples=no
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    else
+        make dist
+        cp fedora/uldaq_ldconfig.patch libuldaq-1.1.2.tar.gz ~/rpmbuild/SOURCES
+        rpmbuild -ba fedora/uldaq.spec
+    fi
+    popd
 fi
-popd
 
 # Build & Install comedilib
-git clone https://github.com/Linux-Comedi/comedilib.git
-pushd comedilib
-git checkout r0_11_0
-./autogen.sh
-./configure
-if [ -z "${PACKAGE}" ]; then
-    make -j$(nproc) install
-else
-    touch doc/pdf/comedilib.pdf # skip build of PDF which is broken..
-    make dist
-    cp comedilib-0.11.0.tar.gz ~/rpmbuild/SOURCES
-    rpmbuild -ba comedilib.spec
+if ! pkg-config "comedilib >= 0.11.0"; then
+    git clone https://github.com/Linux-Comedi/comedilib.git
+    pushd comedilib
+    git checkout r0_11_0
+    ./autogen.sh
+    ./configure
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    else
+        touch doc/pdf/comedilib.pdf # skip build of PDF which is broken..
+        make dist
+        cp comedilib-0.11.0.tar.gz ~/rpmbuild/SOURCES
+        rpmbuild -ba comedilib.spec
+    fi
+    popd
 fi
-popd
 
 # Build & Install libre
-git clone https://github.com/creytiv/re.git
-pushd re
-git checkout v0.6.1
-if [ -z "${PACKAGE}" ]; then
-    make -j$(nproc) install
-else
-    tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-0.6.1.tar.gz .
-    rpmbuild -ba rpm/re.spec
+if ! pkg-config "libre >= 0.5.6"; then
+    git clone https://github.com/creytiv/re.git
+    pushd re
+    git checkout v0.6.1
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    else
+        tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-0.6.1.tar.gz .
+        rpmbuild -ba rpm/re.spec
+    fi
+    popd
 fi
-popd
 
 if [ -n "${PACKAGE}" ]; then
     cp ~/rpmbuild/RPMS/x86_64/*.rpm rpms
