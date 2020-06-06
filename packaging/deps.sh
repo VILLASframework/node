@@ -2,9 +2,11 @@
 
 set -e
 
+CMAKE_OPTS="-DCMAKE_BUILD_TYPE=Release"
+
 if [ -n "${PACKAGE}" ]; then
     TARGET="package"
-    CMAKE_OPTS="-DCPACK_GENERATOR=RPM"
+    CMAKE_OPTS+=" -DCPACK_GENERATOR=RPM"
 
     # Prepare rpmbuild dir
     mkdir -p ~/rpmbuild/SOURCES
@@ -17,6 +19,10 @@ else
     TARGET="install"
 fi
 
+if [ -f /etc/redhat-release -o  -f /etc/fedora-release ]; then
+    CMAKE_OPTS+=" -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64"
+fi
+
 rm -rf thirdparty
 mkdir -p thirdparty
 pushd thirdparty
@@ -27,7 +33,7 @@ if [ $(uname -m) != "armv6l" ] && ! pkg-config "criterion >= 2.3.1"; then
     mkdir -p Criterion/build
     pushd Criterion/build
     git checkout v2.3.3
-    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
+    cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
     fi
@@ -68,7 +74,7 @@ if ! pkg-config "spdlog >= 1.3.1"; then
     mkdir -p spdlog/build
     pushd spdlog/build
     git checkout v1.3.1
-    cmake -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
+    cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp spdlog/build/*.rpm rpms
@@ -82,7 +88,7 @@ if ! pkg-config "libiec61850 >= 1.3.1"; then
     mkdir -p libiec61850/build
     pushd libiec61850/build
     git checkout v1.3.1
-    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
+    cmake ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp libiec61850/build/*.rpm rpms
@@ -96,7 +102,7 @@ if ! pkg-config "libwebsockets >= 2.3.0"; then
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     git checkout v4.0-stable
-    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_EXTENSIONS=OFF ${CMAKE_OPTS} ..
+    cmake -DLWS_WITHOUT_EXTENSIONS=OFF ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
 fi
@@ -155,7 +161,7 @@ if ! pkg-config "nanomsg >= 1.0.0"; then
     git clone https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
-    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
+    cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
     fi
@@ -167,3 +173,6 @@ if [ -n "${PACKAGE}" ]; then
 fi
 
 popd
+
+# Update linker cache
+ldconfig
