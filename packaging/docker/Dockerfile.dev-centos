@@ -43,7 +43,8 @@ RUN dnf config-manager --set-enabled PowerTools
 
 # Toolchain
 RUN dnf -y install \
-	pkgconfig make cmake \
+	gcc gcc-c++ \
+	pkgconfig cmake make \
 	autoconf automake autogen libtool \
 	flex bison \
 	texinfo git mercurial curl tar \

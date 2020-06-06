@@ -38,7 +38,8 @@ ARG VARIANT=unknown
 # Toolchain
 RUN dnf -y install \
 	gcc gcc-c++ \
-	pkgconfig cmake make ninja-build \
+	pkgconfig cmake make \
+	autoconf automake autogen libtool \
 	texinfo git mercurial curl tar \
 	flex bison rpmdevtools \
 	protobuf-compiler protobuf-c-compiler \
