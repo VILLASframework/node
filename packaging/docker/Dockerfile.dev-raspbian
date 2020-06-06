@@ -30,28 +30,29 @@ ARG VARIANT=unknown
 # Toolchain
 RUN apt-get update && \
     apt-get install -y \
-	autoconf automake autogen libtool cmake \
-	pkg-config make gcc g++\
-	git mercurial curl wget tar bzip2 \
-	protobuf-compiler protobuf-c-compiler
+		autoconf automake autogen libtool cmake \
+		pkg-config make gcc g++ \
+		git mercurial curl wget tar bzip2 \
+		flex bison \
+		protobuf-compiler protobuf-c-compiler
 
 # Dependencies
 RUN apt-get update && \
     apt-get install -y\
-	libssl-dev \
-	libprotobuf-dev \
-	libprotobuf-c-dev \
-	uuid-dev \
-	libconfig-dev \
-	libnl-3-dev libnl-route-3-dev \
-	libcurl4-openssl-dev \
-	libjansson-dev \
-	libzmq3-dev \
-	libnanomsg-dev \
-	librabbitmq-dev \
-	libmosquitto-dev \
-	librdmacm-dev \
-	libusb-1.0-0-dev
+		libssl-dev \
+		libprotobuf-dev \
+		libprotobuf-c-dev \
+		uuid-dev \
+		libconfig-dev \
+		libnl-3-dev libnl-route-3-dev \
+		libcurl4-openssl-dev \
+		libjansson-dev \
+		libzmq3-dev \
+		libnanomsg-dev \
+		librabbitmq-dev \
+		libmosquitto-dev \
+		librdmacm-dev \
+		libusb-1.0-0-dev
 
 ENV CC=gcc
 ENV CXX=g++

@@ -39,31 +39,33 @@ ARG VARIANT=unknown
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Toolchain
-RUN apt-get update && apt-get install -y \
-	autoconf automake libtool cmake \
-	pkg-config make gcc g++ ninja-build \
-	texinfo git mercurial curl tar \
-	flex bison \
-	protobuf-compiler protobuf-c-compiler
+RUN apt-get update && \
+	apt-get install -y \
+		autoconf automake libtool cmake make \
+		pkg-config make gcc g++\
+		texinfo git mercurial curl tar \
+		flex bison \
+		protobuf-compiler protobuf-c-compiler
 
 # Dependencies
-RUN apt-get update && apt-get install -y \
-	libssl-dev \
-	libprotobuf-dev \
-	libprotobuf-c-dev \
-	uuid-dev \
-	libconfig-dev \
-	libnl-3-dev libnl-route-3-dev \
-	libcurl4-openssl-dev \
-	libjansson-dev \
-	libzmq3-dev \
-	libnanomsg-dev \
-	librabbitmq-dev \
-	libmosquitto-dev \
-	libcomedi-dev \
-	libibverbs-dev \
-	librdmacm-dev \
-	libusb-1.0-0-dev
+RUN apt-get update && \
+	apt-get install -y \
+		libssl-dev \
+		libprotobuf-dev \
+		libprotobuf-c-dev \
+		uuid-dev \
+		libconfig-dev \
+		libnl-3-dev libnl-route-3-dev \
+		libcurl4-openssl-dev \
+		libjansson-dev \
+		libzmq3-dev \
+		libnanomsg-dev \
+		librabbitmq-dev \
+		libmosquitto-dev \
+		libcomedi-dev \
+		libibverbs-dev \
+		librdmacm-dev \
+		libusb-1.0-0-dev
 
 # or install unpackaged dependencies from source
 ADD packaging/deps.sh /

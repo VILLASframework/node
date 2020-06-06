@@ -45,30 +45,33 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN dpkg --add-architecture ${ARCH}
 
 # Toolchain
-RUN apt-get update && apt-get install -y \
-	crossbuild-essential-${ARCH} \
-	autoconf automake autogen libtool \
-	pkg-config make \
-	texinfo git mercurial curl tar wget \
-	protobuf-compiler protobuf-c-compiler
+RUN apt-get update && \
+	apt-get install -y \
+		crossbuild-essential-${ARCH} \
+		autoconf automake autogen libtool \
+		pkg-config make \
+		texinfo git mercurial curl tar wget \
+		flex bison \
+		protobuf-compiler protobuf-c-compiler
 
 # Dependencies
-RUN apt-get update && apt-get install -y \
-	libssl-dev:${ARCH} \
-	libprotobuf-dev:${ARCH} \
-	libprotobuf-c-dev:${ARCH} \
-	uuid-dev:${ARCH} \
-	libconfig-dev:${ARCH} \
-	libnl-3-dev libnl-route-3-dev:${ARCH} \
-	libcurl4-openssl-dev:${ARCH} \
-	libjansson-dev:${ARCH} \
-	libzmq3-dev:${ARCH} \
-	libnanomsg-dev:${ARCH} \
-	librabbitmq-dev:${ARCH} \
-	libmosquitto-dev:${ARCH} \
-	libibverbs-dev:${ARCH} \
-	librdmacm-dev:${ARCH} \
-	libre-dev:${ARCH}
+RUN apt-get update && \
+	apt-get install -y \
+		libssl-dev:${ARCH} \
+		libprotobuf-dev:${ARCH} \
+		libprotobuf-c-dev:${ARCH} \
+		uuid-dev:${ARCH} \
+		libconfig-dev:${ARCH} \
+		libnl-3-dev libnl-route-3-dev:${ARCH} \
+		libcurl4-openssl-dev:${ARCH} \
+		libjansson-dev:${ARCH} \
+		libzmq3-dev:${ARCH} \
+		libnanomsg-dev:${ARCH} \
+		librabbitmq-dev:${ARCH} \
+		libmosquitto-dev:${ARCH} \
+		libibverbs-dev:${ARCH} \
+		librdmacm-dev:${ARCH} \
+		libre-dev:${ARCH}
 
 # Install cmake (version from buster has a bug)
 RUN cd /tmp && \
