@@ -96,7 +96,7 @@ if ! pkg-config "libwebsockets >= 2.3.0"; then
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     git checkout v4.0-stable
-    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
+    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 -DLWS_WITHOUT_EXTENSIONS=OFF ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
 fi
