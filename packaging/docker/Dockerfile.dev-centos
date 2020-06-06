@@ -60,7 +60,6 @@ RUN dnf -y install \
 	libcurl-devel \
 	jansson-devel \
 	zeromq-devel \
-	nanomsg \
 	librabbitmq-devel \
 	mosquitto-devel \
 	libibverbs-devel \
