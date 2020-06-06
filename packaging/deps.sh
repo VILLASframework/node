@@ -150,6 +150,17 @@ if ! pkg-config "libre >= 0.5.6"; then
     popd
 fi
 
+# Build & Install nanomsg
+if ! pkg-config "nanomsg >= 1.0.0"; then
+    git clone https://github.com/nanomsg/nanomsg.git
+    pushd nanomsg
+    cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ..
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    fi
+    popd
+fi
+
 if [ -n "${PACKAGE}" ]; then
     cp ~/rpmbuild/RPMS/x86_64/*.rpm rpms
 fi
