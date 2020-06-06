@@ -84,6 +84,15 @@ if [ -n "${PACKAGE}" ]; then
 fi
 popd
 
+# Build & Install libwebsockets
+git clone https://libwebsockets.org/repo/libwebsockets
+mkdir -p libwebsockets/build
+pushd libwebsockets/build
+git checkout v4.0-stable
+cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 ${CMAKE_OPTS} ..
+make -j$(nproc) ${TARGET}
+popd
+
 # Build & Install uldaq
 git clone https://github.com/stv0g/uldaq
 pushd uldaq
