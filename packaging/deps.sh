@@ -102,7 +102,7 @@ if ! pkg-config "libwebsockets >= 2.3.0"; then
 fi
 
 # Build & Install uldaq
-if ! pkg-config "libuldaq >= 1.0.0"; then
+if [ "${DEBIAN_MULTIARCH}" != "1" ] && ! pkg-config "libuldaq >= 1.0.0"; then
     git clone https://github.com/stv0g/uldaq
     pushd uldaq
     git checkout rpmbuild

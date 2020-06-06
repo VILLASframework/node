@@ -88,6 +88,8 @@ ENV PKG_CONFIG_LIBDIR=/usr/lib/${TRIPLET}/pkgconfig:/usr/share/pkgconfig
 ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
 			    -DCMAKE_INSTALL_LIBDIR=/usr/lib/${TRIPLET}"
 
+ENV DEBIAN_MULTIARCH=1
+
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
