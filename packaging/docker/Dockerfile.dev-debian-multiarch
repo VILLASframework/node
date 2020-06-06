@@ -68,8 +68,7 @@ RUN apt-get update && apt-get install -y \
 	libmosquitto-dev:${ARCH} \
 	libibverbs-dev:${ARCH} \
 	librdmacm-dev:${ARCH} \
-	libre-dev:${ARCH} \
-	libusb-1.0-0-dev:${ARCH}
+	libre-dev:${ARCH}
 
 # Install cmake (version from buster has a bug)
 RUN cd /tmp && \
