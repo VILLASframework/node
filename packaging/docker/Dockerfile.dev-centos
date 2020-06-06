@@ -81,7 +81,6 @@ EXPOSE 443
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
 WORKDIR /villas
-ENTRYPOINT scl enable devtoolset-7 bash
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
