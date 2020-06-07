@@ -7,6 +7,7 @@ from threading import Thread
 
 logger = logging.getLogger(__name__)
 
+
 class RecvThread(Thread):
 
     def __init__(self, cb):

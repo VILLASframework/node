@@ -1,2 +1,2 @@
-from message import Message
-from timestamp import Timestamp
+from message import Message # noqa F401
+from timestamp import Timestamp # noqa F401

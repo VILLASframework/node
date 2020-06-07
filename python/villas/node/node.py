@@ -9,9 +9,12 @@ import datetime
 
 LOGGER = logging.getLogger('villas.node')
 
+
 class Node(object):
 
-    def __init__(self, log_filename = None, config_filename = None, config = { }, api = 'http://localhost:8080', executable = 'villas-node', **kwargs):
+    def __init__(self, log_filename=None, config_filename=None,
+                 config={}, api='http://localhost:8080',
+                 executable='villas-node', **kwargs):
         self.config = config
         self.config_filename = config_filename
         self.log_filename = log_filename
@@ -21,7 +24,8 @@ class Node(object):
         self.child = None
 
     def start(self):
-        self.config_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.json')
+        self.config_file = tempfile.NamedTemporaryFile(mode='w+',
+                                                       suffix='.json')
 
         if self.config_filename:
             with open(self.config_filename) as f:
@@ -33,13 +37,16 @@ class Node(object):
 
         if self.log_filename is None:
             now = datetime.datetime.now()
-            self.log_filename = now.strftime('villas-node_%Y-%m-%d_%H-%M-%S.log')
+            self.log_filename = now.strftime(
+                'villas-node_%Y-%m-%d_%H-%M-%S.log')
 
         self.log = open(self.log_filename, 'w+')
 
-        LOGGER.info("Starting VILLASnode instance with config: %s", self.config_file.name)
+        LOGGER.info("Starting VILLASnode instance with config: %s",
+                    self.config_file.name)
 
-        self.child = subprocess.Popen([self.executable, self.config_file.name], stdout=self.log, stderr=self.log)
+        self.child = subprocess.Popen([self.executable, self.config_file.name],
+                                      stdout=self.log, stderr=self.log)
 
     def pause(self):
         LOGGER.info("Pausing VILLASnode instance")
@@ -74,10 +81,10 @@ class Node(object):
     def paths(self):
         return self.request('paths')['response']
 
-    def request(self, action, req = None):
+    def request(self, action, req=None):
         body = {
-            'action' : action,
-            'id' : str(uuid.uuid4())
+            'action': action,
+            'id': str(uuid.uuid4())
         }
 
         if req is not None:
