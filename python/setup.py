@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 from glob import glob
 
 with open('README.md') as f:
@@ -14,7 +14,7 @@ setup(
     license = 'GPL-3.0',
     keywords = 'simulation power system real-time villas',
     url = 'https://git.rwth-aachen.de/acs/public/villas/VILLASnode',
-    packages = [ 'villas.node' ],
+    packages = find_namespace_packages(include=['villas.*']),
     long_description = long_description,
     long_description_content_type = 'text/markdown',
     classifiers = [
