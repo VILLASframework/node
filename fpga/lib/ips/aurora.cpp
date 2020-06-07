@@ -31,10 +31,10 @@
 /* Register offsets */
 #define AUR_AXIS_SR_OFFSET			0x00	/**< Status Register (read-only) */
 #define AUR_AXIS_CR_OFFSET			0x04	/**< Control Register (read/write) */
-#define AUR_AXIS_CNTR_IN_H_OFFSET	0x0C	/**< Control Register (read/write) */
-#define AUR_AXIS_CNTR_IN_L_OFFSET	0x08	/**< Control Register (read/write) */
-#define AUR_AXIS_CNTR_OUT_H_OFFSET	0x18	/**< Control Register (read/write) */
-#define AUR_AXIS_CNTR_OUT_L_OFFSET	0x1C	/**< Control Register (read/write) */
+#define AUR_AXIS_CNTR_IN_H_OFFSET	0x0C	/**< Higher 32-bits of incoming frame counter */
+#define AUR_AXIS_CNTR_IN_L_OFFSET	0x08	/**< Lower 32-bits of incoming frame counter  */
+#define AUR_AXIS_CNTR_OUT_H_OFFSET	0x18	/**< Higher 32-bits of outgoing frame counter  */
+#define AUR_AXIS_CNTR_OUT_L_OFFSET	0x1C	/**< Lower 32-bits of outgoing frame counter  */
 
 /* Status register bits */
 #define AUR_AXIS_SR_CHAN_UP			(1 << 0)/**< 1-bit, asserted when channel initialisation is complete and is ready for data transfer */
@@ -45,9 +45,23 @@
 #define AUR_AXIS_SR_HOT_PLUG		(1 << 5)/**< 1-bit, assserted when hot-plug count expires */
 
 /* Control register bits */
-#define AUR_AXIS_CR_LOOPBACK		(1 << 0)/**< 1-bit, assert to put Aurora IP in loopback mode. */
-#define AUR_AXIS_CR_RST_CTRS		(1 << 1)/**< 1-bit, assert to reset counters */
-#define AUR_AXIS_CR_SEQ_MODE		(1 << 2)/**< 2-bit, determines Sequence Number mode */
+/** 1-bit, assert to put Aurora IP in loopback mode. */
+#define AUR_AXIS_CR_LOOPBACK		(1 << 0)
+/** 1-bit, assert to reset counters, incoming and outgoing frame counters. */
+#define AUR_AXIS_CR_RST_CTRS		(1 << 1)
+/** 1-bit, assert to turn off any sequence number handling by Aurora IP 
+ * Sequence number must be handled in software then. */
+#define AUR_AXIS_CR_SEQ_MODE		(1 << 2)
+/** 1-bit, assert to strip the received frame of the trailing sequence 
+ * number. Sequence number mode must be set to handled by Aurora IP, 
+ * otherwise this bit is ignored. */
+#define AUR_AXIS_CR_SEQ_STRIP		(1 << 3)
+/** 1-bit, assert to use the same sequence number in the outgoing 
+ * NovaCor-bound frames as the sequence number received from the 
+ * incoming frames from NovaCor. Sequence number mode must be set to 
+ * handled by Aurora IP, otherwise this bit is ignored.*/
+#define AUR_AXIS_CR_SEQ_ECHO		(1 << 4)
+
 
 namespace villas {
 namespace fpga {
