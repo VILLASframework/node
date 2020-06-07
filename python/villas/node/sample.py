@@ -1,13 +1,23 @@
 import re
+from datetime import datetime
 
 class Timestamp:
 	"""Parsing the VILLASnode human-readable timestamp format"""
 
-	def __init__(self, seconds = 0, nanoseconds = None, offset = None, sequence = None):
+	def __init__(self, seconds=None, nanoseconds=None, offset=None, sequence=None):
 		self.seconds = seconds
 		self.nanoseconds = nanoseconds
 		self.offset = offset
 		self.sequence = sequence
+
+	@classmethod
+	def now(self, offset=None, sequence=None):
+		n = datetime.utcnow()
+
+		secs = int(n.timestamp())
+		nsecs = 1000 * n.microsecond
+
+		return Timestamp(seconds=secs, nanoseconds=nsecs, offset=offset, sequence=sequence)
 
 	@classmethod
 	def parse(self, ts):
