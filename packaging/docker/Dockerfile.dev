@@ -62,7 +62,8 @@ RUN dnf -y install \
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \
-	protobuf
+	protobuf \
+	flake8
 
 # Dependencies
 RUN dnf -y install \

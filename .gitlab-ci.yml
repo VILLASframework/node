@@ -143,6 +143,14 @@ build:docs:
 # Stage: test
 ##############################################################################
 
+test:flake8:
+  stage: test
+  script:
+  - flake8 python/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - docker
+
 test:unit:
   stage: test
   dependencies:
