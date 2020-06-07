@@ -90,7 +90,12 @@ class Node(object):
         return r.json()
 
     def get_version(self):
-            ver = subprocess.check_output([ self.executable, '-V'], )
+        try:
+            resp = self.request('capabilities')
+
+            return resp['response']['build']
+        except Exception:
+            ver = subprocess.check_output([self.executable, '-V'], )
 
             return ver.decode('ascii').rstrip()
 
