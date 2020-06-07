@@ -60,7 +60,7 @@ class SendThread(Thread):
             self.sequence += 1
 
 
-def communicate(rate, recv_cb=None, send_cb=None):
+def communicate(rate, recv_cb=None, send_cb=None, wait=True):
 
     if recv_cb:
         rt = RecvThread(recv_cb)
@@ -70,11 +70,12 @@ def communicate(rate, recv_cb=None, send_cb=None):
         st = SendThread(send_cb, rate)
         st.start()
 
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logger.info('Received Ctrl+C. Stopping send/recv threads')
+    if wait:
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info('Received Ctrl+C. Stopping send/recv threads')
 
     # Threads are daemon threads
     # and therefore killed with program termination
