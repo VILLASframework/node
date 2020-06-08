@@ -32,21 +32,21 @@
 #include <villas/queue.h>
 
 /* Forward declarations */
-struct path;
+struct vpath;
 struct sample;
 
-struct path_destination {
+struct vpath_destination {
 	struct node *node;
 
 	struct queue queue;
 };
 
-int path_destination_init(struct path_destination *pd, int queuelen);
+int path_destination_init(struct vpath_destination *pd, int queuelen);
 
-int path_destination_destroy(struct path_destination *pd);
+int path_destination_destroy(struct vpath_destination *pd);
 
-void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cnt);
+void path_destination_enqueue(struct vpath *p, struct sample *smps[], unsigned cnt);
 
-void path_destination_write(struct path_destination *pd, struct path *p);
+void path_destination_write(struct vpath_destination *pd, struct vpath *p);
 
 /** @} */

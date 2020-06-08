@@ -38,7 +38,7 @@ const char *hook_reasons[] = {
 using namespace villas;
 using namespace villas::node;
 
-Hook::Hook(struct path *p, struct node *n, int fl, int prio, bool en) :
+Hook::Hook(struct vpath *p, struct node *n, int fl, int prio, bool en) :
 	state(State::INITIALIZED),
 	flags(fl),
 	priority(prio),

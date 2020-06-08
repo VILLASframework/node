@@ -42,7 +42,7 @@ protected:
 	double offset;
 
 public:
-	ScaleHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	ScaleHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		scale(1),
 		offset(0)

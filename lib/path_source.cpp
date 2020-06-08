@@ -29,7 +29,7 @@
 #include <villas/path_destination.h>
 #include <villas/path_source.h>
 
-int path_source_init(struct path_source *ps)
+int path_source_init(struct vpath_source *ps)
 {
 	int ret;
 	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize);
@@ -44,7 +44,7 @@ int path_source_init(struct path_source *ps)
 	return 0;
 }
 
-int path_source_destroy(struct path_source *ps)
+int path_source_destroy(struct vpath_source *ps)
 {
 	int ret;
 
@@ -59,7 +59,7 @@ int path_source_destroy(struct path_source *ps)
 	return 0;
 }
 
-int path_source_read(struct path_source *ps, struct path *p, int i)
+int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 {
 	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 	unsigned release;

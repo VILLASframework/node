@@ -27,7 +27,7 @@
 #include <villas/path.h>
 #include <villas/path_destination.h>
 
-int path_destination_init(struct path_destination *pd, int queuelen)
+int path_destination_init(struct vpath_destination *pd, int queuelen)
 {
 	int ret;
 
@@ -38,7 +38,7 @@ int path_destination_init(struct path_destination *pd, int queuelen)
 	return 0;
 }
 
-int path_destination_destroy(struct path_destination *pd)
+int path_destination_destroy(struct vpath_destination *pd)
 {
 	int ret;
 
@@ -49,7 +49,7 @@ int path_destination_destroy(struct path_destination *pd)
 	return 0;
 }
 
-void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cnt)
+void path_destination_enqueue(struct vpath *p, struct sample *smps[], unsigned cnt)
 {
 	unsigned enqueued, cloned;
 
@@ -60,7 +60,7 @@ void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cn
 		p->logger->warn("Pool underrun in path {}", path_name(p));
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
+		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
 
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
@@ -75,7 +75,7 @@ void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cn
 	sample_decref_many(clones, cloned);
 }
 
-void path_destination_write(struct path_destination *pd, struct path *p)
+void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 {
 	int cnt = pd->node->out.vectorize;
 	int sent;

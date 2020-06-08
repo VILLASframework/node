@@ -54,7 +54,7 @@ enum class PathMode {
 };
 
 /** The datastructure for a path. */
-struct path {
+struct vpath {
 	enum State state;		/**< Path state. */
 
 	enum PathMode mode;		/**< Determines when this path is triggered. */
@@ -68,8 +68,8 @@ struct path {
 	struct sample *last_sample;
 	int last_sequence;
 
-	struct vlist sources;		/**< List of all incoming nodes (struct path_source). */
-	struct vlist destinations;	/**< List of all outgoing nodes (struct path_destination). */
+	struct vlist sources;		/**< List of all incoming nodes (struct vpath_source). */
+	struct vlist destinations;	/**< List of all outgoing nodes (struct vpath_destination). */
 	struct vlist mappings;		/**< List of all input mappings (struct mapping_entry). */
 	struct vlist hooks;		/**< List of processing hooks (struct hook). */
 	struct vlist signals;		/**< List of signals which this path creates (struct signal). */
@@ -96,12 +96,12 @@ struct path {
 };
 
 /** Initialize internal data structures. */
-int path_init(struct path *p);
+int path_init(struct vpath *p);
 
-int path_prepare(struct path *p);
+int path_prepare(struct vpath *p);
 
 /** Check if path configuration is proper. */
-int path_check(struct path *p);
+int path_check(struct vpath *p);
 
 /** Start a path.
  *
@@ -111,7 +111,7 @@ int path_check(struct path *p);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_start(struct path *p);
+int path_start(struct vpath *p);
 
 /** Stop a path.
  *
@@ -119,19 +119,19 @@ int path_start(struct path *p);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_stop(struct path *p);
+int path_stop(struct vpath *p);
 
 /** Destroy path by freeing dynamically allocated memory.
  *
  * @param i A pointer to the path structure.
  */
-int path_destroy(struct path *p);
+int path_destroy(struct vpath *p);
 
 /** Show some basic statistics for a path.
  *
  * @param p A pointer to the path structure.
  */
-void path_print_stats(struct path *p);
+void path_print_stats(struct vpath *p);
 
 /** Fills the provided buffer with a string representation of the path.
  *
@@ -140,13 +140,13 @@ void path_print_stats(struct path *p);
  * @param p A pointer to the path structure.
  * @return A pointer to a string containing a textual representation of the path.
  */
-const char * path_name(struct path *p);
+const char * path_name(struct vpath *p);
 
 /** Reverse a path */
-int path_reverse(struct path *p, struct path *r);
+int path_reverse(struct vpath *p, struct vpath *r);
 
 /** Check if node is used as source or destination of a path. */
-int path_uses_node(struct path *p, struct node *n);
+int path_uses_node(struct vpath *p, struct node *n);
 
 /** Parse a single path and add it to the global configuration.
  *
@@ -156,14 +156,14 @@ int path_uses_node(struct path *p, struct node *n);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct path *p, json_t *cfg, struct vlist *nodes);
+int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes);
 
-bool path_is_simple(const struct path *p);
+bool path_is_simple(const struct vpath *p);
 
-bool path_is_enabled(const struct path *p);
+bool path_is_enabled(const struct vpath *p);
 
-bool path_is_reversed(const struct path *p);
+bool path_is_reversed(const struct vpath *p);
 
-struct vlist * path_get_signals(struct path *p);
+struct vlist * path_get_signals(struct vpath *p);
 
 /** @} */

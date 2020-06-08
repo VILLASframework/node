@@ -36,7 +36,7 @@
 /* Forward declarations */
 struct vlist;
 struct sample;
-struct path;
+struct vpath;
 struct node;
 
 int hook_list_init(struct vlist *hs);
@@ -57,13 +57,13 @@ int hook_list_destroy(struct vlist *hs);
  *    hooks = [ "print" ]
  * }
  */
-void hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *p, struct node *n);
+void hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct vpath *p, struct node *n);
 
-void hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct path *p, struct node *n);
+void hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct vpath *p, struct node *n);
 
 int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
 
-int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n);
+int hook_list_add(struct vlist *hs, int mask, struct vpath *p, struct node *n);
 
 int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt);
 

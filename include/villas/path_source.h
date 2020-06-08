@@ -33,10 +33,10 @@
 #include <villas/list.h>
 
 /* Forward declarations */
-struct path;
+struct vpath;
 struct sample;
 
-struct path_source {
+struct vpath_source {
 	struct node *node;
 
 	bool masked;
@@ -45,10 +45,10 @@ struct path_source {
 	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
 };
 
-int path_source_init(struct path_source *ps);
+int path_source_init(struct vpath_source *ps);
 
-int path_source_destroy(struct path_source *ps);
+int path_source_destroy(struct vpath_source *ps);
 
-int path_source_read(struct path_source *ps, struct path *p, int i);
+int path_source_read(struct vpath_source *ps, struct vpath *p, int i);
 
 /** @} */

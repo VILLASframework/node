@@ -50,7 +50,7 @@ protected:
 
 public:
 
-	JitterCalcHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	JitterCalcHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
 		size_t sz = GPS_NTP_DELAY_WIN_SIZE;

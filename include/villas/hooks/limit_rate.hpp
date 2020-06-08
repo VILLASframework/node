@@ -44,7 +44,7 @@ protected:
 	timespec last;
 
 public:
-	LimitRateHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	LimitRateHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		LimitHook(p, n, fl, prio, en),
 		mode(LIMIT_RATE_LOCAL)
 	{

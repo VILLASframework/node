@@ -43,7 +43,7 @@ protected:
 	} mode;
 
 public:
-	ShiftTimestampHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	ShiftTimestampHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		mode(SHIFT_ORIGIN)
 	{ }

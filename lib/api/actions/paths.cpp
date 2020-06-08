@@ -44,7 +44,7 @@ public:
 		struct vlist *paths = session->getSuperNode()->getPaths();
 
 		for (size_t i = 0; i < vlist_length(paths); i++) {
-			struct path *p = (struct path *) vlist_at(paths, i);
+			struct vpath *p = (struct vpath *) vlist_at(paths, i);
 
 			json_t *json_path = json_pack("{ s: i }",
 				"state",	p->state

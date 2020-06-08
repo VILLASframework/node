@@ -44,7 +44,7 @@ protected:
 	char *new_unit;
 
 public:
-	CastHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	CastHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		signal_index(-1),
 		signal_name(nullptr),

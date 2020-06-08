@@ -46,7 +46,7 @@ protected:
 	timespec realTime;
 
 public:
-	PpsTsHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	PpsTsHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		lastValue(0),
 		thresh(1.5),

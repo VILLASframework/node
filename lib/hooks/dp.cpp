@@ -116,7 +116,7 @@ protected:
 
 public:
 
-	DPHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	DPHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		inverse(0)
 	{ }

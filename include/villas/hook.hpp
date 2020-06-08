@@ -34,7 +34,7 @@
 #include <villas/exceptions.hpp>
 
 /* Forward declarations */
-struct path;
+struct vpath;
 struct node;
 struct sample;
 
@@ -67,7 +67,7 @@ protected:
 	int priority; /**< A priority to change the order of execution within one type of hook. */
 	int enabled;  /**< Is this hook active? */
 
-	struct path *path;
+	struct vpath *path;
 	struct node *node;
 
 	vlist signals;
@@ -75,7 +75,7 @@ protected:
 	json_t *cfg; /**< A JSON object containing the configuration of the hook. */
 
 public:
-	Hook(struct path *p, struct node *n, int fl, int prio, bool en = true);
+	Hook(struct vpath *p, struct node *n, int fl, int prio, bool en = true);
 	virtual ~Hook();
 
 	virtual void parse(json_t *c);
@@ -189,7 +189,7 @@ public:
 											  priority(prio)
 	{ }
 
-	virtual Hook *make(struct path *p, struct node *n) = 0;
+	virtual Hook *make(struct vpath *p, struct node *n) = 0;
 
 	int getFlags()
 	{
@@ -203,7 +203,7 @@ class HookPlugin : public HookFactory {
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook *make(struct path *p, struct node *n)
+	virtual Hook *make(struct vpath *p, struct node *n)
 	{
 		return new T(p, n, flags, priority);
 	};

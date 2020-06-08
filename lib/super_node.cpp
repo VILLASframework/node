@@ -187,7 +187,7 @@ void SuperNode::parse(json_t *cfg)
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-parse:			path *p = new path;
+parse:			auto *p = new vpath;
 
 			ret = path_init(p);
 			if (ret)
@@ -241,7 +241,7 @@ void SuperNode::check()
 	}
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
+		auto *p = (struct vpath *) vlist_at(&paths, i);
 
 		ret = path_check(p);
 		if (ret)
@@ -300,7 +300,7 @@ void SuperNode::startPaths()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
+		auto *p = (struct vpath *) vlist_at(&paths, i);
 
 		if (!path_is_enabled(p))
 			continue;
@@ -338,7 +338,7 @@ void SuperNode::preparePaths()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
+		auto *p = (struct vpath *) vlist_at(&paths, i);
 
 		if (!path_is_enabled(p))
 			continue;
@@ -400,7 +400,7 @@ void SuperNode::stopPaths()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
+		auto *p = (struct vpath *) vlist_at(&paths, i);
 
 		ret = path_stop(p);
 		if (ret)
@@ -502,7 +502,7 @@ int SuperNode::periodic()
 	int started = 0;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
+		auto *p = (struct vpath *) vlist_at(&paths, i);
 
 		if (p->state == State::STARTED) {
 			started++;
@@ -539,12 +539,11 @@ graph_t * SuperNode::getGraph()
 	/* Create a simple digraph */
 	Agraph_t *g;
 	Agnode_t *n, *m;
-	Agedge_t *e;
 
-	g = agopen("g", Agdirected, 0);
-	n = agnode(g, "n", 1);
-	m = agnode(g, "m", 1);
-	e = agedge(g, n, m, 0, 1);
+	g = agopen((char *) "g", Agdirected, 0);
+	n = agnode(g, (char *) "n", 1);
+	m = agnode(g, (char *) "m", 1);
+	agedge(g, n, m, 0, 1);
 
 	return g;
 }

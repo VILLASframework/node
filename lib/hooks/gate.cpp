@@ -58,7 +58,7 @@ protected:
 	timespec startTime;
 
 public:
-	GateHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+	GateHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		mode(Mode::RISING_EDGE),
 		threshold(0.5),
