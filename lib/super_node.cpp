@@ -370,8 +370,6 @@ void SuperNode::prepare()
 
 void SuperNode::start()
 {
-	int ret;
-
 	assert(state == State::PREPARED);
 
 #ifdef WITH_API
@@ -452,8 +450,6 @@ void SuperNode::stopInterfaces()
 
 void SuperNode::stop()
 {
-	int ret;
-
 	stopNodes();
 	stopPaths();
 	stopNodeTypes();

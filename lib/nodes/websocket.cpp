@@ -30,13 +30,13 @@
 
 #include <villas/timing.h>
 #include <villas/utils.hpp>
-#include <villas/buffer.h>
 #include <villas/plugin.h>
 #include <villas/nodes/websocket.hpp>
 #include <villas/format_type.h>
 #include <villas/formats/msg_format.h>
 #include <villas/super_node.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
@@ -98,13 +98,8 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = buffer_init(&c->buffers.recv, DEFAULT_WEBSOCKET_BUFFER_SIZE);
-	if (ret)
-		return ret;
-
-	ret = buffer_init(&c->buffers.send, DEFAULT_WEBSOCKET_BUFFER_SIZE);
-	if (ret)
-		return ret;
+	c->buffers.recv = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
+	c->buffers.send = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 
 	c->state = websocket_connection::State::INITIALIZED;
 
@@ -134,13 +129,8 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = buffer_destroy(&c->buffers.recv);
-	if (ret)
-		return ret;
-
-	ret = buffer_destroy(&c->buffers.send);
-	if (ret)
-		return ret;
+	delete c->buffers.recv;
+	delete c->buffers.send;
 
 	c->wsi = nullptr;
 	c->_name = nullptr;
@@ -286,9 +276,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
 				size_t wbytes;
-				io_sprint(&c->io, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled);
+				io_sprint(&c->io, c->buffers.send->buf + LWS_PRE, c->buffers.send->size - LWS_PRE, &wbytes, smps, pulled);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send->buf + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_decref_many(smps, pulled);
 
@@ -311,9 +301,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_RECEIVE:
 		case LWS_CALLBACK_RECEIVE:
 			if (lws_is_first_fragment(wsi))
-				buffer_clear(&c->buffers.recv);
+				c->buffers.recv->clear();
 
-			ret = buffer_append(&c->buffers.recv, (char *) in, len);
+			ret = c->buffers.recv->append((char *) in, len);
 			if (ret) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_UNACCEPTABLE_OPCODE, "Failed to process data");
 				return -1;
@@ -336,7 +326,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (avail < cnt)
 					warning("Pool underrun for connection: %s", websocket_connection_name(c));
 
-				recvd = io_sscan(&c->io, c->buffers.recv.buf, c->buffers.recv.len, nullptr, smps, avail);
+				recvd = io_sscan(&c->io, c->buffers.recv->buf, c->buffers.recv->len, nullptr, smps, avail);
 				if (recvd < 0) {
 					warning("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;
@@ -358,7 +348,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (enqueued < avail)
 					sample_decref_many(&smps[enqueued], avail - enqueued);
 
-				buffer_clear(&c->buffers.recv);
+				c->buffers.recv->clear();
 
 				if (c->state == websocket_connection::State::SHUTDOWN) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");

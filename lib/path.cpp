@@ -119,7 +119,7 @@ int path_init(struct vpath *p)
 	new (&p->logger) Logger;
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
-	new (&p->rate) Task(CLOCK_MONOTONIC);
+	new (&p->timeout) Task(CLOCK_MONOTONIC);
 
 	p->logger = logging.get("path");
 
@@ -168,7 +168,7 @@ int path_init(struct vpath *p)
 
 static int path_prepare_poll(struct vpath *p)
 {
-	int fds[16], ret, n = 0, m;
+	int fds[16], n = 0, m;
 
 	if (p->reader.pfds)
 		delete[] p->reader.pfds;
@@ -200,7 +200,7 @@ static int path_prepare_poll(struct vpath *p)
 
 	/* We use the last slot for the timeout timer. */
 	if (p->rate > 0) {
-		p->rate.setRate(&p->timeout);
+		p->timeout.setRate(p->rate);
 
 		p->reader.nfds++;
 		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));

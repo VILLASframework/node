@@ -22,10 +22,10 @@
 
 #include <unordered_map>
 
-#include <cstdlib>
 #include <unistd.h>
+#include <cstdlib>
 #include <cerrno>
-#include <strings.h>
+#include <cstring>
 
 #include <sys/time.h>
 #include <sys/resource.h>

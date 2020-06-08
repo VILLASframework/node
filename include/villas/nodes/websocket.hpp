@@ -33,7 +33,7 @@
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
-#include <villas/buffer.h>
+#include <villas/buffer.hpp>
 #include <villas/io.h>
 #include <villas/node/config.h>
 
@@ -77,8 +77,8 @@ struct websocket_connection {
 	struct websocket_destination *destination;
 
 	struct {
-		struct buffer recv;		/**< A buffer for reconstructing fragmented messags. */
-		struct buffer send;		/**< A buffer for contsructing messages before calling lws_write() */
+		villas::Buffer *recv;		/**< A buffer for reconstructing fragmented messags. */
+		villas::Buffer *send;		/**< A buffer for contsructing messages before calling lws_write() */
 	} buffers;
 
 	char *_name;
