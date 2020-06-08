@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:29
+FROM fedora:32
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -45,16 +45,8 @@ LABEL \
 # Toolchain
 RUN dnf -y install \
 	gcc gcc-c++ \
-	pkgconfig make cmake \
-	autoconf automake autogen libtool \
-	texinfo git curl tar
-
-# Several tools only needed for developement and testing
-RUN dnf -y install \
-	rpmdevtools rpm-build
-
-# Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
+	make cmake \
+	git curl tar
 
 # Dependencies
 RUN dnf -y install \
@@ -68,10 +60,10 @@ RUN dnf -y install \
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
+	git checkout v2.3.3 && \
 	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
 	rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
 WORKDIR /villas
-ENTRYPOINT bash
