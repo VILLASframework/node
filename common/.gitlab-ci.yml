@@ -1,18 +1,13 @@
 variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  PREFIX: /usr/
   DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
   DOCKER_IMAGE_DEV: villas/common-dev
 
-# For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
-before_script:
-  - git submodule foreach git checkout .
-
 stages:
-  - prepare
-  - build
-  - test
+- prepare
+- build
+- test
 
 # Stage: prepare
 ##############################################################################
@@ -22,9 +17,9 @@ docker-dev:
   stage: prepare
   image: docker:19.03
   script:
-    - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+  - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
   tags:
-    - docker
+  - docker
 
 # Stage: build
 ##############################################################################
@@ -32,15 +27,15 @@ docker-dev:
 build:source:
   stage: build
   script:
-    - mkdir build && cd build && cmake .. && make -j8
+  - mkdir build && cd build && cmake .. && make -j8
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
-      - build/
+    - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
-    - docker
+  - docker
 
 # Stage: test
 ##############################################################################
@@ -48,9 +43,9 @@ build:source:
 test:unit:
   stage: test
   dependencies:
-    - build:source
+  - build:source
   script:
-    - build/tests/unit/unit-tests-common
+  - build/tests/unit/unit-tests-common
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
-    - docker
+  - docker

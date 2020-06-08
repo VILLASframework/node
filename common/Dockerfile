@@ -46,15 +46,14 @@ LABEL \
 RUN dnf -y install \
 	gcc gcc-c++ \
 	make cmake \
-	git curl tar
+	pkgconfig git curl tar
 
 # Dependencies
 RUN dnf -y install \
 	jansson-devel \
 	libcurl-devel \
 	libconfig-devel \
-	openssl-devel openssl \
-	spdlog-devel
+	openssl-devel openssl
 
 # Build & Install Criterion
 RUN cd /tmp && \
@@ -62,6 +61,22 @@ RUN cd /tmp && \
 	mkdir -p Criterion/build && cd Criterion/build && \
 	git checkout v2.3.3 && \
 	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
+
+# Build & Install Fmtlib
+RUN cd /tmp && \
+	git clone --recursive https://github.com/fmtlib/fmt.git && \
+    mkdir -p fmt/build && cd fmt/build && \
+    git checkout 5.2.0 && \
+    cmake -DBUILD_SHARED_LIBS=1 .. && make install && \
+	rm -rf /tmp/*
+
+# Build & Install spdlog
+RUN cd /tmp && \
+	git clone --recursive https://github.com/gabime/spdlog.git && \
+    mkdir -p spdlog/build && cd spdlog/build && \
+    git checkout v1.3.1 && \
+    cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF .. && make install && \
 	rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
