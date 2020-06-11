@@ -79,7 +79,7 @@ private:
 	std::string version;
 };
 
-} // namespace fpga
-} // namespace villas
+} /* namespace fpga */
+} /* namespace villas */
 
 /** _FPGA_VLNV_HPP_ @} */

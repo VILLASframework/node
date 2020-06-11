@@ -112,5 +112,5 @@ private:
 	Logger logger;
 };
 
-} // namespace villas
-} // namespace gpu
+} /* namespace villas */
+} /* namespace gpu */

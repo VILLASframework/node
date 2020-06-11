@@ -138,7 +138,7 @@ public:
 	{ return villas::logging.get("PCIeCardFactory"); }
 };
 
-} // namespace fpga
-} // namespace villas
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

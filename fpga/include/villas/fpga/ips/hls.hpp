@@ -132,6 +132,6 @@ protected:
 	bool running;
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */

@@ -1,5 +1,4 @@
-#ifndef REGISTER_TYPES_H
-#define REGISTER_TYPES_H
+#pragma once
 
 #include <stdint.h>
 #include <cstddef>
@@ -53,5 +52,3 @@ struct Rtds2GpuMemoryBuffer {
 	T data[N];
 	reg_doorbell_t doorbell;
 };
-
-#endif // REGISTER_TYPES_H

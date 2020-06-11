@@ -94,8 +94,8 @@ public:
 	{ return Vlnv(getCompatibleVlnvString()); }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

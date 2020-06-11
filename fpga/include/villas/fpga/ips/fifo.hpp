@@ -107,8 +107,8 @@ public:
 	{ return {"xilinx.com:ip:axis_data_fifo:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

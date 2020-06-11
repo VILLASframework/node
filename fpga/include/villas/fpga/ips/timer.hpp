@@ -95,8 +95,8 @@ public:
 	{ return {"xilinx.com:ip:axi_timer:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

@@ -80,8 +80,8 @@ public:
 	{ return {"xilinx.com:ip:axi_bram_ctrl:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

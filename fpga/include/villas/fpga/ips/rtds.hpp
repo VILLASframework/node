@@ -79,8 +79,8 @@ public:
 	{ return {"acs.eonerc.rwth-aachen.de:user:rtds_axis:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */

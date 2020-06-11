@@ -28,8 +28,7 @@
  * @{
  */
 
-#ifndef VILLAS_IP_NODE_HPP
-#define VILLAS_IP_NODE_HPP
+#pragma once
 
 #include <map>
 #include <string>
@@ -147,8 +146,6 @@ public:
 
 /** @} */
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
-
-#endif // VILLAS_IP_NODE_HPP
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */

@@ -82,6 +82,6 @@ public:
 	{ return {"acs.eonerc.rwth-aachen.de:hls:gpu2rtds:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */

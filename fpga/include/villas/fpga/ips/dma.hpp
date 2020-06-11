@@ -130,8 +130,8 @@ public:
 	{ return {"xilinx.com:ip:axi_dma:"}; }
 };
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */
 
 /** @} */
