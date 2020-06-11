@@ -85,6 +85,17 @@ void Aurora::dump()
 	logger->info("  Hard error:           {}", sr & AURORA_AXIS_SR_HARD_ERR ? CLR_GRN("yes") : CLR_RED("no"));
 	logger->info("  Soft error:           {}", sr & AURORA_AXIS_SR_SOFT_ERR ? CLR_GRN("yes") : CLR_RED("no"));
 	logger->info("  Frame error:          {}", sr & AURORA_AXIS_SR_FRAME_ERR ? CLR_GRN("yes") : CLR_RED("no"));
+
+	const uint64_t inCntLow  = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_IN_LOW_OFFSET);
+	const uint64_t inCntHigh = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_IN_HIGH_OFFSET);
+	const uint64_t inCnt = (inCntHigh << 32) | inCntLow;
+
+	const uint64_t outCntLow  = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_OUT_LOW_OFFSET);
+	const uint64_t outCntHigh = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_OUT_HIGH_OFFSET);
+	const uint64_t outCnt = (outCntHigh << 32) | outCntLow;
+
+	logger->info("Aurora frames received: {}", inCnt);
+	logger->info("Aurora frames sent:     {}", outCnt);
 }
 
 AuroraFactory::AuroraFactory() :
