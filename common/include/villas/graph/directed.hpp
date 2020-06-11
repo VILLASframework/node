@@ -242,7 +242,7 @@ public:
 		return false;
 	}
 
-	void dump(const std::string& fileName = "")
+	void dump(const std::string& fileName = "") const
 	{
 		logger->info("Vertices:");
 		for (auto& v : vertices) {
