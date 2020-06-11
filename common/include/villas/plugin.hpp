@@ -75,7 +75,7 @@ public:
 	{
 		for (Plugin *p : *plugins) {
 			T *t = dynamic_cast<T *>(p);
-			if (!t || t->name != name)
+			if (!t || t->getName() != name)
 				continue;
 
 			return t;
@@ -118,7 +118,7 @@ class Plugin {
 	friend plugin::Registry;
 
 public:
-	Plugin(const std::string& name, const std::string &desc);
+	Plugin();
 	virtual ~Plugin();
 
 	// copying a plugin doesn't make sense, so explicitly deny it
@@ -127,18 +127,21 @@ public:
 
 	virtual void dump();
 
-	const std::string & getName() const;
-	const std::string & getDescription() const;
+	/// Get plugin name
+	virtual std::string
+	getName() const = 0;
+
+	// Get plugin description
+	virtual std::string
+	getDescription() const = 0;
 
 protected:
-	std::string name;
-	std::string description;
 	std::string path;
 
 	Logger
 	getLogger()
 	{
-		return logging.get("plugin:" + name);
+		return logging.get("plugin:" + getName());
 	}
 };
 
@@ -146,10 +149,12 @@ template<typename T = Plugin>
 void
 Registry::dumpList()
 {
+	getLogger()->info("Available plugins:");
+
 	for (Plugin *p : *plugins) {
 		T *t = dynamic_cast<T *>(p);
 		if (t)
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			getLogger()->info(" - {}: {}", p->getName(), p->getDescription());
 	}
 }
 
