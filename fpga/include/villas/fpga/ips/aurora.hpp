@@ -69,10 +69,17 @@ public:
 
 	std::string
 	getDescription() const
-	{ return "Aurora 8B/10B and additional support modules, like, communication with NovaCor and read/write status/control registers."; }
+	{ return "Aurora 8B/10B and additional support modules, like an AXI4-Lite register interface."; }
 
 	Vlnv getCompatibleVlnv() const
 	{ return {"acs.eonerc.rwth-aachen.de:user:aurora_axis:"}; }
+
+	void
+	setLoopback(bool state);
+
+	void
+	resetFrameCounters();
+
 };
 
 } // namespace ip

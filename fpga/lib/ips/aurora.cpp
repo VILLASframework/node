@@ -98,6 +98,27 @@ void Aurora::dump()
 	logger->info("Aurora frames sent:     {}", outCnt);
 }
 
+void Aurora::setLoopback(bool state)
+{
+	auto cr = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET);
+
+	if (state)
+		cr |= AURORA_AXIS_CR_LOOPBACK;
+	else
+		cr &= ~AURORA_AXIS_CR_LOOPBACK;
+
+	writeMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET, cr);
+}
+
+void Aurora::resetFrameCounters()
+{
+	auto cr = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET);
+
+	cr |= AURORA_AXIS_CR_RST_CTRS;
+
+	writeMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET, cr);
+}
+
 AuroraFactory::AuroraFactory() :
     IpNodeFactory(getName())
 {
