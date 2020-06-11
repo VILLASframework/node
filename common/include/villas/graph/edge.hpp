@@ -53,5 +53,5 @@ private:
 	Vertex::Identifier to;
 };
 
-} // namespacae graph
+} /* namespace graph */
 } /* namespace villas */
