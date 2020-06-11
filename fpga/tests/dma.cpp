@@ -100,7 +100,8 @@ Test(fpga, dma, .description = "DMA")
 		logger->info(CLR_GRN("Passed"));
 	}
 
-	MemoryManager::get().dump();
+	cr_assert(count > 0, "No DMA found");
 
-	cr_assert(count > 0, "No Dma found");
+	MemoryManager::getGraph().dump();
+	IpNode::getGraph().dump();
 }

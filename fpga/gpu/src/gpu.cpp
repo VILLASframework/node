@@ -454,7 +454,7 @@ bool Gpu::init()
 {
 	auto& mm = MemoryManager::get();
 
-	const auto gpuPciEAddrSpaceName = mm.getMasterAddrSpaceName(getName(), "PCIe");
+	const auto gpuPciEAddrSpaceName = mm.getMasterAddrSpaceName(getName(), "pcie");
 	masterPciEAddrSpaceId = mm.getOrCreateAddressSpace(gpuPciEAddrSpaceName);
 
 	allocator = std::make_unique<GpuAllocator>(*this);

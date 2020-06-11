@@ -119,7 +119,7 @@ PCIeCardFactory::create()
 
 PCIeCard::~PCIeCard()
 {
-	auto& mm = MemoryManager::get();
+	auto& mg = MemoryManager::get().getGraph();
 
 	// unmap all memory blocks
 	for (auto& mappedMemoryBlock : memoryBlocksMapped) {

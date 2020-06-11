@@ -142,7 +142,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 			                 CLR_RED("Failed"));
 		}
 
-		villas::MemoryManager::get().dump();
+		MemoryManager::getGraph().dump();
 	}
 
 

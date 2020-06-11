@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
 	dma->makeAccesibleFromVA(block);
 
 	auto &mm = MemoryManager::get();
-	mm.getMemoryGraph().dump("graph.dot");
+	mm.getGraph().dump("graph.dot");
 
 	while (true) {
 		dma->read(block, block.getSize());
