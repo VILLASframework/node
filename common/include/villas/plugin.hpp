@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <list>
 #include <string>
 #include <jansson.h>
@@ -53,7 +54,8 @@ public:
 		return logging.get("plugin:registry");
 	}
 
-	static void add(Plugin *p)
+	static void
+	add(Plugin *p)
 	{
 		if (plugins == nullptr)
 			plugins = new List<>;
@@ -61,7 +63,8 @@ public:
 		plugins->push_back(p);
 	}
 
-	static void remove(Plugin *p)
+	static void
+	remove(Plugin *p)
 	{
 		plugins->remove(p);
 	}
@@ -95,6 +98,10 @@ public:
 
 		return list;
 	}
+
+	template<typename T = Plugin>
+	static void
+	dumpList();
 };
 
 class Loader {
@@ -134,6 +141,17 @@ protected:
 		return logging.get("plugin:" + name);
 	}
 };
+
+template<typename T = Plugin>
+void
+Registry::dumpList()
+{
+	for (Plugin *p : *plugins) {
+		T *t = dynamic_cast<T *>(p);
+		if (t)
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+	}
+}
 
 } /* namespace plugin */
 } /* namespace villas */
