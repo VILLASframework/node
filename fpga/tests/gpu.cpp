@@ -30,7 +30,7 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/bram.hpp>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include "global.hpp"
 
@@ -40,12 +40,11 @@
 
 Test(fpga, gpu_dma, .description = "GPU DMA tests")
 {
-	auto logger = loggerGetOrCreate("unittest:dma");
+	auto logger = villas::logging.get("unittest:dma");
 
 	auto& card = state.cards.front();
 
-	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::Gpu, "");
-	auto gpuPlugin = dynamic_cast<villas::gpu::GpuFactory*>(plugin);
+	auto gpuPlugin = villas::Plugin::Registry<GpuFactory>("");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
 
 	auto gpus = gpuPlugin->make();
@@ -132,15 +131,15 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 			logger->info("Testing {}", name);
 
 			/* Get new random data */
-			const size_t lenRandom = read_random(&src, len);
+			const size_t lenRandom = utils::read_random(&src, len);
 			cr_assert(len == lenRandom, "Failed to get random data");
 
 			memcpyFunc();
 			const bool success = memcmp(&src, &dst, len) == 0;
 
 			logger->info("  {}", success ?
-			                 TXT_GREEN("Passed") :
-			                 TXT_RED("Failed"));
+			                 CLR_GRN("Passed") :
+			                 CLR_RED("Failed"));
 		}
 
 		villas::MemoryManager::get().dump();

@@ -69,9 +69,9 @@ villas::gpu::GpuAllocator::getName() const
 
 
 GpuFactory::GpuFactory() :
-    Plugin(Plugin::Type::Gpu, "GPU")
+    Plugin("GPU", "GpuFactory")
 {
-	logger = loggerGetOrCreate("GpuFactory");
+	logger = villas::logging.get("GpuFactory");
 }
 
 // required to be defined here for PIMPL to compile
@@ -94,7 +94,7 @@ std::string Gpu::getName() const
 	cudaDeviceProp deviceProp;
 	if(cudaGetDeviceProperties(&deviceProp, gpuId) != cudaSuccess) {
 		// logger not yet availabe
-		loggerGetOrCreate("Gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
+		villas::logging.get("Gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
 		throw std::exception();
 	}
 
@@ -442,7 +442,7 @@ Gpu::Gpu(int gpuId) :
     pImpl{std::make_unique<impl>()},
     gpuId(gpuId)
 {
-	logger = loggerGetOrCreate(getName());
+	logger = villas::logging.get(getName());
 
 	pImpl->gdr = gdr_open();
 	if(pImpl->gdr == nullptr) {

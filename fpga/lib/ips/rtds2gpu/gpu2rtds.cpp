@@ -132,7 +132,7 @@ Gpu2Rtds::getMaxFrameSize()
 //}
 
 Gpu2RtdsFactory::Gpu2RtdsFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 }
 

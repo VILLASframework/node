@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.h>
 
 #include <villas/fpga/ip.h>

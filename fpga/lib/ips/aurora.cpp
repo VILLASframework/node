@@ -22,7 +22,7 @@
 
 #include <cstdint>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/aurora.hpp>
@@ -120,7 +120,7 @@ void Aurora::resetFrameCounters()
 }
 
 AuroraFactory::AuroraFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 }
 

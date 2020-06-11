@@ -73,7 +73,7 @@ private:
 class AxiStreamSwitchFactory : public IpNodeFactory {
 public:
 	AxiStreamSwitchFactory() :
-	    IpNodeFactory(getName()) {}
+	    IpNodeFactory(getName(), getDescription()) {}
 
 	static constexpr const char*
 	getCompatibleVlnvString()

@@ -82,10 +82,6 @@ bool Rtds2Gpu::startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOf
 	return start();
 }
 
-
-
-
-
 bool
 Rtds2Gpu::updateStatus()
 {
@@ -121,7 +117,7 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 }
 
 Rtds2GpuFactory::Rtds2GpuFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 }
 

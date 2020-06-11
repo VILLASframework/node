@@ -51,6 +51,12 @@ public:
 	getDefaultMasterPort() const
 	{ return getMasterPort(masterPort); }
 
+	void
+	setLoopback(bool state);
+
+	void
+	resetFrameCounters();
+
 private:
 	static constexpr const char registerMemory[] = "reg0";
 };
@@ -73,12 +79,6 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return {"acs.eonerc.rwth-aachen.de:user:aurora_axis:"}; }
-
-	void
-	setLoopback(bool state);
-
-	void
-	resetFrameCounters();
 
 };
 

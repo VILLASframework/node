@@ -31,7 +31,7 @@
 
 Test(fpga, timer, .description = "Timer Counter")
 {
-	auto logger = loggerGetOrCreate("unittest:timer");
+	auto logger = villas::logging.get("unittest:timer");
 
 	size_t count = 0;
 
@@ -68,7 +68,7 @@ Test(fpga, timer, .description = "Timer Counter")
 		cr_assert(std::abs(durationUs - oneSecondInUs) < 0.01 * oneSecondInUs,
 		          "Timer deviation > 1%%");
 
-		logger->info(TXT_GREEN("Passed"));
+		logger->info(CLR_GRN("Passed"));
 	}
 
 	cr_assert(count > 0, "No timer found");

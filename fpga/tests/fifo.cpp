@@ -23,13 +23,14 @@
 #include <criterion/criterion.h>
 
 #include <villas/log.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/fifo.hpp>
 
 #include "global.hpp"
 
+using namespace villas;
 
 Test(fpga, fifo, .description = "FIFO")
 {
@@ -37,16 +38,16 @@ Test(fpga, fifo, .description = "FIFO")
 	char src[255], dst[255];
 	size_t count = 0;
 
-	auto logger = loggerGetOrCreate("unittest:fifo");
+	auto logger = logging.get("unittest:fifo");
 
 	for(auto& ip : state.cards.front()->ips) {
 		// skip non-fifo IPs
-		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
+		if(*ip != fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;
 
 		logger->info("Testing {}", *ip);
 
-		auto fifo = dynamic_cast<villas::fpga::ip::Fifo&>(*ip);
+		auto fifo = dynamic_cast<fpga::ip::Fifo&>(*ip);
 
 		if(not fifo.connectLoopback()) {
 			continue;
@@ -61,7 +62,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 		/* Get some random data to compare */
 		memset(dst, 0, sizeof(dst));
-		len = read_random((char *) src, sizeof(src));
+		len = utils::read_random((char *) src, sizeof(src));
 		if (len != sizeof(src)) {
 			logger->error("Failed to get random data");
 			continue;
@@ -82,7 +83,7 @@ Test(fpga, fifo, .description = "FIFO")
 		/* Compare data */
 		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0, "Data not equal");
 
-		logger->info(TXT_GREEN("Passed"));
+		logger->info(CLR_GRN("Passed"));
 	}
 
 	cr_assert(count > 0, "No fifo found");

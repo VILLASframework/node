@@ -77,7 +77,7 @@ class TimerFactory : public IpCoreFactory {
 public:
 
 	TimerFactory() :
-	    IpCoreFactory(getName())
+	    IpCoreFactory(getName(), getDescription())
 	{}
 
 	IpCore* create()

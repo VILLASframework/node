@@ -140,7 +140,7 @@ protected:
 
 class IpNodeFactory : public IpCoreFactory {
 public:
-	IpNodeFactory(std::string name) : IpCoreFactory("Ip Node - " + name) {}
+	using IpCoreFactory::IpCoreFactory;
 
 	virtual bool configureJson(IpCore& ip, json_t *json_ip);
 };

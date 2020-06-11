@@ -37,6 +37,7 @@
 #include <jansson.h>
 
 #include <villas/log.hpp>
+#include <villas/colors.hpp>
 #include <villas/memory.hpp>
 #include <villas/plugin.hpp>
 
@@ -76,7 +77,7 @@ public:
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpIdentifier& id)
-	{ return stream << TXT_BOLD(id.name) << " vlnv=" << id.vlnv; }
+	{ return stream << id.name << " vlnv=" << id.vlnv; }
 
 	bool
 	operator==(const IpIdentifier& otherId) const {
@@ -212,7 +213,7 @@ protected:
 	};
 
 	/// Specialized logger instance with the IPs name set as category
-	SpdLogger logger;
+	Logger logger;
 
 	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
 	PCIeCard* card;
@@ -235,20 +236,18 @@ protected:
 
 
 
-class IpCoreFactory : public Plugin {
+class IpCoreFactory : public plugin::Plugin {
 public:
-	IpCoreFactory(std::string concreteName) :
-	    Plugin(Plugin::Type::FpgaIp, std::string("IpCore - ") + concreteName)
-	{}
+	using plugin::Plugin::Plugin;
 
 	/// Returns a running and checked FPGA IP
 	static IpCoreList
 	make(PCIeCard* card, json_t *json_ips);
 
 protected:
-	SpdLogger
+	Logger
 	getLogger() const
-	{ return loggerGetOrCreate(getName()); }
+	{ return villas::logging.get(getName()); }
 
 private:
 	/// Create a concrete IP instance
@@ -263,8 +262,8 @@ private:
 	virtual std::string getDescription() const = 0;
 
 protected:
-	static SpdLogger
-	getStaticLogger() { return loggerGetOrCreate("IpCoreFactory"); }
+	static Logger
+	getStaticLogger() { return villas::logging.get("IpCoreFactory"); }
 
 private:
 	static IpCoreFactory*

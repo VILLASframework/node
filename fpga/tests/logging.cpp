@@ -55,7 +55,7 @@ static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 
 void criterion_log_noformat(enum criterion_severity severity, const char *msg)
 {
-	auto logger = loggerGetOrCreate("criterion");
+	auto logger = villas::logging.get("criterion");
 	
 	switch (severity) {
 		case CR_LOG_INFO:
@@ -81,7 +81,7 @@ void criterion_vlog(enum criterion_logging_level level, const char *msg, va_list
 
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 
-	auto logger = loggerGetOrCreate("criterion");
+	auto logger = villas::logging.get("criterion");
 	logger->info(formatted_msg);
 }
 
@@ -98,7 +98,7 @@ void criterion_plog(enum criterion_logging_level level, const struct criterion_p
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 	va_end(args);
 	
-	auto logger = loggerGetOrCreate("criterion");
+	auto logger = villas::logging.get("criterion");
 
 	if (strstr(formatted_msg, "Warning"))
 		logger->warn(formatted_msg);

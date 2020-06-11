@@ -74,7 +74,7 @@ private:
 
 	MemoryManager::AddressSpaceId slaveMemoryAddrSpaceId;
 
-	SpdLogger logger;
+	Logger logger;
 
 	int gpuId;
 
@@ -109,7 +109,7 @@ public:
 	void run(void*);
 
 private:
-	SpdLogger logger;
+	Logger logger;
 };
 
 } // namespace villas

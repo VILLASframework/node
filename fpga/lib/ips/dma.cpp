@@ -43,7 +43,7 @@ namespace ip {
 static DmaFactory factory;
 
 DmaFactory::DmaFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 	// nothing to do
 }

@@ -68,7 +68,7 @@ static void dumpMem(const uint32_t* addr, size_t len)
 
 Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 {
-	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unittest:rtds2gpu");
 
 	for(auto& ip : state.cards.front()->ips) {
 		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
@@ -170,13 +170,13 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		dumpMem(dataDst, dmaMemDst.getMemoryBlock().getSize());
 		dumpMem(dataDst2, dmaMemDst2.getMemoryBlock().getSize());
 
-		logger->info(TXT_GREEN("Passed"));
+		logger->info(CLR_GRN("Passed"));
 	}
 }
 
 Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 {
-	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unittest:rtds2gpu");
 
 	/* Collect neccessary IPs */
 
@@ -236,7 +236,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 			}
 		}
 
-		logger->info(TXT_GREEN("Passed"));
+		logger->info(CLR_GRN("Passed"));
 	}
 }
 
@@ -247,7 +247,7 @@ void gpu_rtds_rtt_stop();
 
 Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 {
-	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unittest:rtds2gpu");
 
 	/* Collect neccessary IPs */
 
@@ -260,8 +260,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
 	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
 
-	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::Gpu, "");
-	auto gpuPlugin = dynamic_cast<villas::gpu::GpuFactory*>(plugin);
+	auto gpuPlugin = villas::Registry::lookup<GpuFactory>("");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
 
 	auto gpus = gpuPlugin->make();
@@ -344,6 +343,6 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 
 
 
-		logger->info(TXT_GREEN("Passed"));
+		logger->info(CLR_GRN("Passed"));
 	}
 }

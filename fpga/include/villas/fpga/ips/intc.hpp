@@ -85,7 +85,7 @@ class InterruptControllerFactory : public IpCoreFactory {
 public:
 
 	InterruptControllerFactory() :
-	    IpCoreFactory(getName())
+	    IpCoreFactory(getName(), getDescription())
 	{}
 
 	static constexpr const char*

@@ -42,13 +42,13 @@ static FifoDataFactory factoryData;
 
 
 FifoFactory::FifoFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 	// nothing to do
 }
 
 FifoDataFactory::FifoDataFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 	// nothing to do
 }

@@ -66,7 +66,7 @@ private:
 class AxiPciExpressBridgeFactory : public IpCoreFactory {
 public:
 	AxiPciExpressBridgeFactory() :
-	    IpCoreFactory(getName()) {}
+	    IpCoreFactory(getName(), getDescription()) {}
 
 	static constexpr const char*
 	getCompatibleVlnvString()

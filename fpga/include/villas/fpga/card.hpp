@@ -112,20 +112,20 @@ public:	// TODO: make this private
 	MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
 protected:
-	SpdLogger
+	Logger
 	getLogger() const
-	{ return loggerGetOrCreate(name); }
+	{ return villas::logging.get(name); }
 
-	SpdLogger logger;
+	Logger logger;
 };
 
 using CardList = std::list<std::shared_ptr<PCIeCard>>;
 
-class PCIeCardFactory : public Plugin {
+class PCIeCardFactory : public plugin::Plugin {
 public:
 
 	PCIeCardFactory() :
-	    Plugin(Plugin::Type::FpgaCard, "FPGA Card plugin") {}
+	    Plugin("pcie", "Xilinx PCIe FPGA cards") {}
 
 	static CardList
 	make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc);
@@ -133,9 +133,9 @@ public:
 	static PCIeCard*
 	create();
 
-	static SpdLogger
+	static Logger
 	getStaticLogger()
-	{ return loggerGetOrCreate("PCIeCardFactory"); }
+	{ return villas::logging.get("PCIeCardFactory"); }
 };
 
 } // namespace fpga

@@ -100,7 +100,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	loggerStatic->debug("IP initialization order:");
 	for(auto& id : orderedIps) {
-		loggerStatic->debug("  {}", TXT_BOLD(id.getName()));
+		loggerStatic->debug("  " CLR_BLD("{}"), id.getName());
 	}
 
 	// configure all IPs
@@ -141,7 +141,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// setup generic IP type properties
 		ip->card = card;
 		ip->id = id;
-		ip->logger = loggerGetOrCreate(id.getName());
+		ip->logger = villas::logging.get(id.getName());
 
 		json_t* json_ip = json_object_get(json_ips, id.getName().c_str());
 
@@ -157,8 +157,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 				auto tokens = utils::tokenize(irqEntry, ":");
 				if(tokens.size() != 2) {
-					logger->warn("Cannot parse IRQ '{}' of {}",
-					             irqEntry, TXT_BOLD(id.getName()));
+					logger->warn("Cannot parse IRQ '{}' of " CLR_BLD("{}"),
+					             irqEntry, id.getName());
 					continue;
 				}
 
@@ -335,11 +335,9 @@ IpCore::dump()
 IpCoreFactory*
 IpCoreFactory::lookup(const Vlnv &vlnv)
 {
-	for(auto& ip : Plugin::lookup(Plugin::Type::FpgaIp)) {
-		IpCoreFactory* ipCoreFactory = dynamic_cast<IpCoreFactory*>(ip);
-
-		if(ipCoreFactory->getCompatibleVlnv() == vlnv)
-			return ipCoreFactory;
+	for(auto& ip : plugin::Registry::lookup<IpCoreFactory>()) {
+		if(ip->getCompatibleVlnv() == vlnv)
+			return ip;
 	}
 
 	return nullptr;

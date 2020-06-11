@@ -22,7 +22,7 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/fpga/ip.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/vlnv.hpp>
@@ -38,6 +38,8 @@
 #define CPU_HZ		3392389000
 #define FPGA_AXI_HZ	125000000
 
+using namespace villas;
+
 static struct pci pci;
 
 FpgaState state;
@@ -52,12 +54,12 @@ static void init()
 	spdlog::set_level(spdlog::level::debug);
 	spdlog::set_pattern("[%T] [%l] [%n] %v");
 
-	villas::Plugin::dumpList();
+	plugin::Registry::dumpList();
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
 
-	auto vfioContainer = villas::VfioContainer::create();
+	auto vfioContainer = VfioContainer::create();
 
 	/* Parse FPGA configuration */
 	f = fopen(TEST_CONFIG, "r");
@@ -73,9 +75,8 @@ static void init()
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
 
 	// get the FPGA card plugin
-	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::FpgaCard, "");
-	cr_assert_not_null(plugin, "No plugin for FPGA card found");
-	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
+	auto fpgaCardPlugin = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
+	cr_assert_not_null(fpgaCardPlugin, "No plugin for FPGA card found");
 
 	// create all FPGA card instances using the corresponding plugin
 	state.cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);

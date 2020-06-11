@@ -60,7 +60,7 @@ class BramFactory : public IpCoreFactory {
 public:
 
 	BramFactory() :
-	    IpCoreFactory(getName())
+	    IpCoreFactory(getName(), getDescription())
 	{}
 
 	bool configureJson(IpCore& ip, json_t *json_ip);

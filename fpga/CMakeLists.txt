@@ -20,9 +20,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
  
- cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5)
 
-project(VILLASfpga C CXX)
+project(VILLASfpga
+	LANGUAGES C CXX
+	VERSION 0.1.0
+)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 

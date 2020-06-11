@@ -22,7 +22,7 @@
 
 #include <cstdint>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/rtds.hpp>
@@ -93,7 +93,7 @@ double Rtds::getDt()
 }
 
 RtdsFactory::RtdsFactory() :
-    IpNodeFactory(getName())
+    IpNodeFactory(getName(), getDescription())
 {
 }
 

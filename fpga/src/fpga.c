@@ -26,10 +26,10 @@
 #include <getopt.h>
 
 #include <villas/log.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include <villas/kernel/pci.h>
-#include <villas/kernel/kernel.h>
+#include <villas/kernel/kernel.hpp>
 
 #include <villas/fpga/card.h>
 

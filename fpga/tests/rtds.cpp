@@ -26,7 +26,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/log.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
@@ -35,7 +35,7 @@
 #include <villas/fpga/ips/switch.hpp>
 
 #include <chrono>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include "global.hpp"
 
@@ -47,7 +47,7 @@ using namespace villas::fpga::ip;
 
 Test(fpga, rtds, .description = "RTDS")
 {
-	auto logger = loggerGetOrCreate("unittest:rtds");
+	auto logger = villas::logging.get("unittest:rtds");
 
 	std::list<villas::fpga::ip::Rtds*> rtdsIps;
 	std::list<villas::fpga::ip::Dma*> dmaIps;
@@ -132,7 +132,7 @@ Test(fpga, rtds, .description = "RTDS")
 //				}
 			}
 
-			logger->info(TXT_GREEN("Passed"));
+			logger->info(CLR_GRN("Passed"));
 		}
 	}
 }

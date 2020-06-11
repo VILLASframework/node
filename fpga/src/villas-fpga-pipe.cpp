@@ -31,7 +31,7 @@
 #include <rang.hpp>
 
 #include <villas/log.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
 #include <villas/fpga/ip.hpp>
@@ -44,7 +44,7 @@
 using namespace villas;
 
 static struct pci pci;
-static auto logger = loggerGetOrCreate("streamer");
+static auto logger = villas::logging.get("streamer");
 
 void setupColorHandling()
 {
@@ -95,14 +95,11 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 	}
 
 	// get the FPGA card plugin
-	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::FpgaCard, "");
-	if(plugin == nullptr) {
+	auto fpgaCardPlugin = plugin::Registry::lookup<fpga::PCIeCardFactory>("");
+	if(fpgaCardPlugin == nullptr) {
 		logger->error("No FPGA plugin found");
 		exit(1);
 	}
-
-	villas::fpga::PCIeCardFactory* fpgaCardPlugin =
-	        dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
 	// create all FPGA card instances using the corresponding plugin
 	auto cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
