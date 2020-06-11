@@ -32,9 +32,7 @@ using namespace villas::plugin;
 
 List<> * Registry::plugins;
 
-Plugin::Plugin(const std::string& name, const std::string& desc) :
-    name(name),
-    description(desc)
+Plugin::Plugin()
 {
 	Registry::add(this);
 }
@@ -97,15 +95,5 @@ void
 Plugin::dump()
 {
 	Logger logger = Registry::getLogger();
-	logger->info("Name: '{}' Description: '{}'", name, description);
-}
-
-const std::string & Plugin::getName() const
-{
-	return name;
-}
-
-const std::string & Plugin::getDescription() const
-{
-	return description;
+	logger->info("Name: '{}' Description: '{}'", getName(), getDescription());
 }
