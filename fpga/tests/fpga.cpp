@@ -62,7 +62,8 @@ static void init()
 	auto vfioContainer = VfioContainer::create();
 
 	/* Parse FPGA configuration */
-	f = fopen(TEST_CONFIG, "r");
+	char *fn = getenv("TEST_CONFIG");
+	f = fopen(fn ? fn : TEST_CONFIG, "r");
 	cr_assert_not_null(f, "Cannot open config file");
 
 	json_t *json = json_loadf(f, 0, &err);
