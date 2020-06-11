@@ -293,5 +293,5 @@ protected:
 	Logger logger;
 };
 
-} // namespacae graph
+} /* namespace graph */
 } /* namespace villas */

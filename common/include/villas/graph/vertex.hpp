@@ -51,5 +51,5 @@ private:
 	std::list<std::size_t> edges;
 };
 
-} // namespacae graph
+} /* namespace graph */
 } /* namespace villas */
