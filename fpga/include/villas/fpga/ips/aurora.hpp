@@ -72,7 +72,7 @@ public:
 	{ return "Aurora 8B/10B and additional support modules, like, communication with NovaCor and read/write status/control registers."; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"acs.eonerc.rwth-aachen.de:user:aurora:"}; }
+	{ return {"acs.eonerc.rwth-aachen.de:user:aurora_axis:"}; }
 };
 
 } // namespace ip
