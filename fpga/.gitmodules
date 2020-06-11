@@ -3,7 +3,7 @@
 	url = https://github.com/Snaipe/Criterion.git
 [submodule "thirdparty/libxil"]
 	path = thirdparty/libxil
-	url = https://git.rwth-aachen.de/acs/public/villas/libxil.git
+	url = ../libxil.git
 [submodule "lib/gpu/gdrcopy"]
 	path = gpu/thirdparty/gdrcopy
 	url = https://github.com/daniel-k/gdrcopy.git
@@ -12,7 +12,7 @@
 	url = https://github.com/ikwzm/udmabuf
 [submodule "hardware"]
 	path = hardware
-	url = ../VILLASfpga-hardware.git
+	url = ../fpga-hardware.git
 [submodule "common"]
 	path = common
-	url = ../VILLAScommon.git
+	url = ../../common.git
