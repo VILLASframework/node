@@ -144,7 +144,6 @@ private:
 			              << ", size=0x" << mapping.size
 			              << ")";
 		}
-
 	};
 
 
@@ -185,15 +184,15 @@ public:
 
 	AddressSpaceId
 	getProcessAddressSpace()
-	{ return getOrCreateAddressSpace("villas-fpga"); }
+	{ return getOrCreateAddressSpace("process"); }
 
 	AddressSpaceId
 	getPciAddressSpace()
-	{ return getOrCreateAddressSpace("PCIe"); }
+	{ return getOrCreateAddressSpace("pcie"); }
 
 	AddressSpaceId
 	getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
-	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("villas-fpga", memoryBlock)); }
+	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("process", memoryBlock)); }
 
 
 	AddressSpaceId
