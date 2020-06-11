@@ -107,7 +107,7 @@ public:
 
 	const MemoryBlock&
 	getMemoryBlock() const
-	{ if(not memoryBlock) throw std::bad_alloc(); else return *memoryBlock; }
+	{ if (not memoryBlock) throw std::bad_alloc(); else return *memoryBlock; }
 
 private:
 	/// cached memory translation for fast access
@@ -159,7 +159,7 @@ public:
 	MemoryAccessor<T>
 	allocate(size_t num)
 	{
-		if(num == 0) {
+		if (num == 0) {
 			// doesn't make sense to allocate an empty block
 			logger->error("Trying to allocate empty memory");
 			throw std::bad_alloc();
@@ -173,10 +173,10 @@ public:
 		// speed up testing.
 		MemoryAccessor<volatile uint8_t> byteAccessor(*mem);
 		size_t idx = 0;
-		for(int i = 0; idx < mem->getSize(); i++, idx = (1 << i)) {
+		for (int i = 0; idx < mem->getSize(); i++, idx = (1 << i)) {
 			auto val = static_cast<uint8_t>(i);
 			byteAccessor[idx] = val;
-			if(byteAccessor[idx] != val) {
+			if (byteAccessor[idx] != val) {
 				logger->error("Cannot access allocated memory");
 				throw std::bad_alloc();
 			}

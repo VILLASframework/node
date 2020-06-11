@@ -77,7 +77,7 @@
   auto &_y = y;		\
   x = _y;		\
   y = _x;		\
-} while(0)
+} while (0)
 
 /** Round-up integer division */
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))

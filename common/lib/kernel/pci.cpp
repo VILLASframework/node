@@ -291,7 +291,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 		for (int i = 0; i < 3; i++) {
 			char* end;
 			tokens[i] = strtoull(s, &end, 16);
-			if(s == end) {
+			if (s == end) {
 				printf("Error parsing line %d of %s\n", region + 1, sysfs);
 				tokens[0] = tokens[1] = 0; /* Mark invalid */
 				break;

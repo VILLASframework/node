@@ -47,7 +47,7 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 	const int mmap_protection = PROT_READ | PROT_WRITE;
 
 	const void* addr = mmap(nullptr, size, mmap_protection, mmap_flags, 0, 0);
-	if(addr == nullptr) {
+	if (addr == nullptr) {
 		throw std::bad_alloc();
 	}
 
@@ -79,7 +79,7 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
     allocationCount(0)
 {
 	/* Make sure to start at aligned offset, reduce size in case we need padding */
-	if(const size_t paddingBytes = getAlignmentPadding(internalOffset)) {
+	if (const size_t paddingBytes = getAlignmentPadding(internalOffset)) {
 		assert(paddingBytes < memorySize);
 
 		internalOffset += paddingBytes;
@@ -94,7 +94,7 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 		removeMemoryBlock(*mem);
 
 		allocationCount--;
-		if(allocationCount == 0) {
+		if (allocationCount == 0) {
 			logger->debug("All allocations are deallocated now, freeing memory");
 
 			/* All allocations have been deallocated, free all memory */
@@ -111,7 +111,7 @@ LinearAllocator::getName() const
 {
 	std::stringstream name;
 	name << "LinearAlloc" << getAddrSpaceId();
-	if(internalOffset != 0) {
+	if (internalOffset != 0) {
 		name << "@0x" << std::hex << internalOffset;
 	}
 
@@ -122,7 +122,7 @@ LinearAllocator::getName() const
 std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 LinearAllocator::allocateBlock(size_t size)
 {
-	if(size > getAvailableMemory()) {
+	if (size > getAvailableMemory()) {
 		throw std::bad_alloc();
 	}
 
@@ -133,7 +133,7 @@ LinearAllocator::allocateBlock(size_t size)
 	nextFreeAddress += size;
 
 	/* Make sure it is aligned */
-	if(const size_t paddingBytes = getAlignmentPadding(nextFreeAddress)) {
+	if (const size_t paddingBytes = getAlignmentPadding(nextFreeAddress)) {
 		nextFreeAddress += paddingBytes;
 
 		/* If next free address is outside this block due to padding, cap it */
@@ -174,7 +174,7 @@ HostRam::HostRamAllocator::HostRamAllocator() :
     BaseAllocator(MemoryManager::get().getProcessAddressSpace())
 {
 	free = [&](MemoryBlock* mem) {
-		if(::munmap(reinterpret_cast<void*>(mem->getOffset()), mem->getSize()) != 0) {
+		if (::munmap(reinterpret_cast<void*>(mem->getOffset()), mem->getSize()) != 0) {
 			logger->warn("munmap() failed for {:#x} of size {:#x}",
 			             mem->getOffset(), mem->getSize());
 		}
@@ -194,7 +194,7 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
 	auto& mm = MemoryManager::get();
 	logger = logging.get(getName());
 
-	if(getSize() == 0) {
+	if (getSize() == 0) {
 		logger->error("Zero-sized DMA buffer not supported, is the kernel module loaded?");
 		throw std::bad_alloc();
 	}
@@ -206,11 +206,11 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
 
 	const auto bufPath = std::string("/dev/") + getUdmaBufName(num);
 	const int bufFd = open(bufPath.c_str(), O_RDWR | O_SYNC);
-	if(bufFd != -1) {
+	if (bufFd != -1) {
 		void* buf = mmap(nullptr, getSize(), PROT_READ|PROT_WRITE, MAP_SHARED, bufFd, 0);
 		close(bufFd);
 
-		if(buf != MAP_FAILED) {
+		if (buf != MAP_FAILED) {
 			mm.createMapping(reinterpret_cast<uintptr_t>(buf), 0, getSize(),
 			                 getName() + "-VA",
 			                 mm.getProcessAddressSpace(), getAddrSpaceId());
@@ -240,7 +240,7 @@ HostDmaRam::HostDmaRamAllocator::~HostDmaRamAllocator()
 	logger->debug("Unmapping {}", getName());
 
 	/* Try to unmap it */
-	if(::munmap(baseVirt, getSize()) != 0) {
+	if (::munmap(baseVirt, getSize()) != 0) {
 		logger->warn("munmap() failed for {:p} of size {:#x}",
 		             baseVirt, getSize());
 	}
@@ -267,9 +267,9 @@ size_t
 HostDmaRam::getUdmaBufBufSize(int num)
 {
 	std::fstream s(getUdmaBufBasePath(num) + "size", s.in);
-	if(s.is_open()) {
+	if (s.is_open()) {
 		std::string line;
-		if(std::getline(s, line)) {
+		if (std::getline(s, line)) {
 			return std::strtoul(line.c_str(), nullptr, 10);
 		}
 	}
@@ -281,9 +281,9 @@ uintptr_t
 HostDmaRam::getUdmaBufPhysAddr(int num)
 {
 	std::fstream s(getUdmaBufBasePath(num) + "phys_addr", s.in);
-	if(s.is_open()) {
+	if (s.is_open()) {
 		std::string line;
-		if(std::getline(s, line)) {
+		if (std::getline(s, line)) {
 			return std::strtoul(line.c_str(), nullptr, 16);
 		}
 	}
@@ -294,7 +294,7 @@ HostDmaRam::getUdmaBufPhysAddr(int num)
 HostDmaRam::HostDmaRamAllocator&HostDmaRam::getAllocator(int num)
 {
 	auto& allocator = allocators[num];
-	if(not allocator) {
+	if (not allocator) {
 		allocator = std::make_unique<HostDmaRamAllocator>(num);
 	}
 
