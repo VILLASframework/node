@@ -260,7 +260,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
 	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
 
-	auto gpuPlugin = villas::Registry::lookup<GpuFactory>("");
+	auto gpuPlugin = villas::Registry::lookup<GpuFactory>("cuda");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
 
 	auto gpus = gpuPlugin->make();

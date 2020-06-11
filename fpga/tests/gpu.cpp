@@ -44,7 +44,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 
 	auto& card = state.cards.front();
 
-	auto gpuPlugin = villas::Plugin::Registry<GpuFactory>("");
+	auto gpuPlugin = villas::Plugin::Registry<GpuFactory>("cuda");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
 
 	auto gpus = gpuPlugin->make();

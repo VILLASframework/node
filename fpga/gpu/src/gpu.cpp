@@ -69,7 +69,7 @@ villas::gpu::GpuAllocator::getName() const
 
 
 GpuFactory::GpuFactory() :
-    Plugin("GPU", "GpuFactory")
+    Plugin("cuda", "CUDA capable GPUs")
 {
 	logger = villas::logging.get("GpuFactory");
 }
