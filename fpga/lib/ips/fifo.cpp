@@ -56,7 +56,7 @@ bool Fifo::init()
 	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS)
 		return false;
 
-	if(irqs.find(irqName) == irqs.end()) {
+	if (irqs.find(irqName) == irqs.end()) {
 		logger->error("IRQ '{}' not found but required", irqName);
 		return false;
 	}

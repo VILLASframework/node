@@ -42,7 +42,7 @@ kernel_mailbox(volatile uint32_t *mailbox, volatile uint32_t* counter)
 
 	printf("[kernel] started\n");
 
-	while(1) {
+	while (1) {
 		if (*mailbox == 1) {
 			*mailbox = 0;
 			printf("[gpu] counter = %d\n", *counter);
@@ -56,7 +56,7 @@ kernel_mailbox(volatile uint32_t *mailbox, volatile uint32_t* counter)
 __global__ void
 kernel_memcpy(volatile uint8_t* dst, volatile uint8_t* src, size_t length)
 {
-	while(length > 0) {
+	while (length > 0) {
 		*dst++ = *src++;
 		length--;
 	}

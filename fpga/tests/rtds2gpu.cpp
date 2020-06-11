@@ -54,11 +54,11 @@ static void dumpMem(const uint32_t* addr, size_t len)
 
 	size_t bytesRead = 0;
 
-	for(size_t line = 0; line < lines; line++) {
+	for (size_t line = 0; line < lines; line++) {
 		const unsigned base = line * bytesPerLine;
 		printf("0x%04x: ", base);
 
-		for(size_t i = 0; i < bytesPerLine && bytesRead < len; i++) {
+		for (size_t i = 0; i < bytesPerLine && bytesRead < len; i++) {
 			printf("0x%02x ", buf[base + i]);
 			bytesRead++;
 		}
@@ -68,10 +68,10 @@ static void dumpMem(const uint32_t* addr, size_t len)
 
 Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 {
-	auto logger = villas::logging.get("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unit-test:rtds2gpu");
 
-	for(auto& ip : state.cards.front()->ips) {
-		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
+	for (auto& ip : state.cards.front()->ips) {
+		if (*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
 			continue;
 
 		logger->info("Testing {}", *ip);
@@ -136,7 +136,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		cr_assert(dma->writeComplete(),
 		          "DMA failed");
 
-		while(not rtds2gpu.isFinished());
+		while (not rtds2gpu.isFinished());
 
 		const uint32_t* doorbellDst = &dmaMemDst[DOORBELL_OFFSET];
 		rtds2gpu.dump(spdlog::level::info);
@@ -145,7 +145,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		cr_assert(memcmp(dataSrc, dataDst, FRAME_SIZE) == 0, "Memory not equal");
 
 
-		for(size_t i = 0; i < SAMPLE_COUNT; i++) {
+		for (size_t i = 0; i < SAMPLE_COUNT; i++) {
 			gpu2rtds->registerFrames[i] = dmaMemDst[i];
 		}
 
@@ -162,7 +162,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		cr_assert(dma->readComplete(),
 		          "DMA failed");
 
-		while(not gpu2rtds->isFinished());
+		while (not gpu2rtds->isFinished());
 
 		cr_assert(memcmp(dataSrc, dataDst2, FRAME_SIZE) == 0, "Memory not equal");
 
@@ -176,7 +176,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 
 Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 {
-	auto logger = villas::logging.get("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unit-test:rtds2gpu");
 
 	/* Collect neccessary IPs */
 
@@ -189,8 +189,8 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
 	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
 
-	for(auto& ip : state.cards.front()->ips) {
-		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
+	for (auto& ip : state.cards.front()->ips) {
+		if (*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
 			continue;
 
 		auto& rtds = dynamic_cast<villas::fpga::ip::Rtds&>(*ip);
@@ -203,33 +203,33 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 		// TEST: rtds loopback via switch, this should always work and have RTT=1
 		//cr_assert(rtds.connect(rtds));
 		//logger->info("loopback");
-		//while(1);
+		//while (1);
 
 		cr_assert(rtds.connect(*rtds2gpu));
 		cr_assert(gpu2rtds->connect(rtds));
 
 
-		for(size_t i = 1; i <= 10000; ) {
+		for (size_t i = 1; i <= 10000; ) {
 			rtds2gpu->doorbellReset(*doorbell);
 			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4);
 
 			// Wait by polling rtds2gpu IP or ...
-			// while(not rtds2gpu->isFinished());
+			// while (not rtds2gpu->isFinished());
 
 			// Wait by polling (local) doorbell register (= just memory)
-			while(not rtds2gpu->doorbellIsValid(*doorbell));
+			while (not rtds2gpu->doorbellIsValid(*doorbell));
 
 
 			// copy samples to gpu2rtds IP
-			for(size_t i = 0; i < SAMPLE_COUNT; i++) {
+			for (size_t i = 0; i < SAMPLE_COUNT; i++) {
 				gpu2rtds->registerFrames[i] = data[i];
 			}
 
 			// Waiting for gpu2rtds is not strictly required
 			gpu2rtds->startOnce(SAMPLE_COUNT);
-			//while(not gpu2rtds->isFinished());
+			//while (not gpu2rtds->isFinished());
 
-			if(i % 1000 == 0) {
+			if (i % 1000 == 0) {
 				logger->info("Successful iterations {}, data {}", i, data[0]);
 				rtds2gpu->dump();
 				rtds2gpu->dumpDoorbell(data[1]);
@@ -247,7 +247,7 @@ void gpu_rtds_rtt_stop();
 
 Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 {
-	auto logger = villas::logging.get("unittest:rtds2gpu");
+	auto logger = villas::logging.get("unit-test:rtds2gpu");
 
 	/* Collect neccessary IPs */
 
@@ -289,8 +289,8 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 
 //	auto doorbellInCpu = reinterpret_cast<reg_doorbell_t*>(&gpuRam[DOORBELL_OFFSET]);
 
-	for(auto& ip : state.cards.front()->ips) {
-		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
+	for (auto& ip : state.cards.front()->ips) {
+		if (*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
 			continue;
 
 		auto& rtds = dynamic_cast<villas::fpga::ip::Rtds&>(*ip);
@@ -300,7 +300,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 		// TEST: rtds loopback via switch, this should always work and have RTT=1
 		//cr_assert(rtds.connect(rtds));
 		//logger->info("loopback");
-		//while(1);
+		//while (1);
 
 		cr_assert(rtds.connect(*rtds2gpu));
 		cr_assert(gpu2rtds->connect(rtds));
@@ -321,19 +321,19 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 
 		gpu_rtds_rtt_start(dataIn, doorbellIn, frameRegister, controlRegister);
 
-//		while(1) {
+//		while (1) {
 //			cr_assert(rtds2gpu->startOnce(gpuRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4));
 //		}
 
-//		for(int i = 0; i < 10000; i++) {
-//			while(not doorbellInCpu->is_valid);
+//		for (int i = 0; i < 10000; i++) {
+//			while (not doorbellInCpu->is_valid);
 //			logger->debug("received data");
 //		}
 
 //		logger->info("Press enter to cancel");
 //		std::cin >> dummy;
 
-		while(1) {
+		while (1) {
 			sleep(1);
 //			logger->debug("Current sequence number: {}", doorbellInCpu->seq_nr);
 			logger->debug("Still running");

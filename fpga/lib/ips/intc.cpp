@@ -53,7 +53,7 @@ InterruptController::init()
 	if (num_irqs < 0)
 		return false;
 
-	if(not card->vfioDevice->pciMsiFind(nos)) {
+	if (not card->vfioDevice->pciMsiFind(nos)) {
 		return false;
 	}
 

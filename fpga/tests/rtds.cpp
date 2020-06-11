@@ -39,26 +39,23 @@
 
 #include "global.hpp"
 
-#undef cr_assert
-#define cr_assert(cond, ...) (cond);
-
 using namespace villas::fpga::ip;
 
 
 Test(fpga, rtds, .description = "RTDS")
 {
-	auto logger = villas::logging.get("unittest:rtds");
+	auto logger = villas::logging.get("unit-test:rtds");
 
 	std::list<villas::fpga::ip::Rtds*> rtdsIps;
 	std::list<villas::fpga::ip::Dma*> dmaIps;
 
-	for(auto& ip : state.cards.front()->ips) {
-		if(*ip == villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
+	for (auto& ip : state.cards.front()->ips) {
+		if (*ip == villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
 			auto rtds = reinterpret_cast<villas::fpga::ip::Rtds*>(ip.get());
 			rtdsIps.push_back(rtds);
 		}
 
-		if(*ip == villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")) {
+		if (*ip == villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")) {
 			auto dma = reinterpret_cast<villas::fpga::ip::Dma*>(ip.get());
 			dmaIps.push_back(dma);
 		}
@@ -68,8 +65,8 @@ Test(fpga, rtds, .description = "RTDS")
 	cr_assert(dmaIps.size() > 0, "No DMA IPs available to test RTDS with");
 
 
-	for(auto rtds : rtdsIps) {
-		for(auto dma : dmaIps) {
+	for (auto rtds : rtdsIps) {
+		for (auto dma : dmaIps) {
 			logger->info("Testing {} with DMA {}", *rtds, *dma);
 
 			rtds->dump();
@@ -82,7 +79,7 @@ Test(fpga, rtds, .description = "RTDS")
 
 //			rtds->connect(*rtds);
 //			logger->info("loopback");
-//			while(1);
+//			while (1);
 
 //			rtds->connect(rtdsMaster, dmaSlave);
 //			dma->connect(dmaMaster, rtdsSlave);
@@ -92,7 +89,7 @@ Test(fpga, rtds, .description = "RTDS")
 
 //			auto start = std::chrono::high_resolution_clock::now();
 
-			for(int i = 1; i < 5; i++) {
+			for (int i = 1; i < 5; i++) {
 				logger->info("RTT iteration {}", i);
 
 //				logger->info("Prepare read");
@@ -117,11 +114,11 @@ Test(fpga, rtds, .description = "RTDS")
 //				usleep(5);
 //				sched_yield();
 
-//				for(int i = 0;)
+//				for (int i = 0;)
 //				rdtsc_sleep();
 
 //				static constexpr int loopCount = 10000;
-//				if(i % loopCount == 0) {
+//				if (i % loopCount == 0) {
 //					const auto end = std::chrono::high_resolution_clock::now();
 
 //					auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(end - start) / loopCount;

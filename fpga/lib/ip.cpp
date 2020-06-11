@@ -70,7 +70,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	json_t* json_ip;
 	json_object_foreach(json_ips, ipName, json_ip) {
 		const char* vlnv;
-		if(json_unpack(json_ip, "{ s: s }", "vlnv", &vlnv) != 0) {
+		if (json_unpack(json_ip, "{ s: s }", "vlnv", &vlnv) != 0) {
 			loggerStatic->warn("IP {} has no VLNV", ipName);
 			continue;
 		}
@@ -85,10 +85,10 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	// first to be initialized.
 	vlnvInitializationOrder.reverse();
 
-	for(auto& vlnvInitFirst : vlnvInitializationOrder) {
+	for (auto& vlnvInitFirst : vlnvInitializationOrder) {
 		// iterate over IPs, if VLNV matches, push to front and remove from list
-		for(auto it = allIps.begin(); it != allIps.end(); ++it) {
-			if(vlnvInitFirst == it->getVlnv()) {
+		for (auto it = allIps.begin(); it != allIps.end(); ++it) {
+			if (vlnvInitFirst == it->getVlnv()) {
 				orderedIps.push_front(*it);
 				it = allIps.erase(it);
 			}
@@ -99,12 +99,12 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	orderedIps.splice(orderedIps.end(), allIps);
 
 	loggerStatic->debug("IP initialization order:");
-	for(auto& id : orderedIps) {
+	for (auto& id : orderedIps) {
 		loggerStatic->debug("  " CLR_BLD("{}"), id.getName());
 	}
 
 	// configure all IPs
-	for(auto& id : orderedIps) {
+	for (auto& id : orderedIps) {
 		loggerStatic->info("Configuring {}", id);
 
 		// find the appropriate factory that can create the specified VLNV
@@ -114,7 +114,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// candidates, the first suitable factory will be used.
 		IpCoreFactory* ipCoreFactory = lookup(id.getVlnv());
 
-		if(ipCoreFactory == nullptr) {
+		if (ipCoreFactory == nullptr) {
 			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
 		} else {
@@ -132,7 +132,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// the list and will run out of scope.
 		auto ip = std::unique_ptr<IpCore>(ipCoreFactory->create());
 
-		if(ip == nullptr) {
+		if (ip == nullptr) {
 			logger->warn("Cannot create an instance of {}",
 			             ipCoreFactory->getName());
 			continue;
@@ -146,7 +146,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		json_t* json_ip = json_object_get(json_ips, id.getName().c_str());
 
 		json_t* json_irqs = json_object_get(json_ip, "irqs");
-		if(json_is_object(json_irqs)) {
+		if (json_is_object(json_irqs)) {
 			logger->debug("Parse IRQs of {}", *ip);
 
 			const char* irqName;
@@ -156,7 +156,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 				auto tokens = utils::tokenize(irqEntry, ":");
-				if(tokens.size() != 2) {
+				if (tokens.size() != 2) {
 					logger->warn("Cannot parse IRQ '{}' of " CLR_BLD("{}"),
 					             irqEntry, id.getName());
 					continue;
@@ -165,14 +165,14 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 				const std::string& irqControllerName = tokens[0];
 				InterruptController* intc = nullptr;
 
-				for(auto& configuredIp : configuredIps) {
-					if(*configuredIp == irqControllerName) {
+				for (auto& configuredIp : configuredIps) {
+					if (*configuredIp == irqControllerName) {
 						intc = dynamic_cast<InterruptController*>(configuredIp.get());
 						break;
 					}
 				}
 
-				if(intc == nullptr) {
+				if (intc == nullptr) {
 					logger->error("Interrupt Controller {} for IRQ {} not found",
 					              irqControllerName, irqName);
 					continue;
@@ -192,7 +192,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 		json_t* json_memory_view = json_object_get(json_ip, "memory-view");
-		if(json_is_object(json_memory_view)) {
+		if (json_is_object(json_memory_view)) {
 			logger->debug("Parse memory view of {}", *ip);
 
 
@@ -227,7 +227,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 						                      "baseaddr", &base,
 						                      "highaddr", &high,
 						                      "size", &size);
-						if(ret != 0) {
+						if (ret != 0) {
 							logger->error("Cannot parse address block {}/{}/{}/{}",
 							              ip->getInstanceName(),
 							              bus_name, instance_name, block_name);
@@ -255,7 +255,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		if(not ipCoreFactory->configureJson(*ip, json_ip)) {
+		if (not ipCoreFactory->configureJson(*ip, json_ip)) {
 			logger->warn("Cannot configure IP from JSON");
 			continue;
 		}
@@ -265,12 +265,12 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	}
 
 	// Start and check IPs now
-	for(auto& ip : configuredIps) {
+	for (auto& ip : configuredIps) {
 
 		// Translate all memory blocks that the IP needs to be accessible from
 		// the process and cache in the instance, so this has not to be done at
 		// runtime.
-		for(auto& memoryBlock : ip->getMemoryBlocks()) {
+		for (auto& memoryBlock : ip->getMemoryBlocks()) {
 			// construct the global name of this address block
 			const auto addrSpaceName =
 			        MemoryManager::getSlaveAddrSpaceName(ip->getInstanceName(),
@@ -293,12 +293,12 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 		loggerStatic->info("Initializing {}", *ip);
 
-		if(not ip->init()) {
+		if (not ip->init()) {
 			loggerStatic->error("Cannot start IP {}", *ip);
 			continue;
 		}
 
-		if(not ip->check()) {
+		if (not ip->check()) {
 			loggerStatic->error("Checking failed for IP {}", *ip);
 			continue;
 		}
@@ -309,7 +309,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 	loggerStatic->debug("Initialized IPs:");
-	for(auto& ip : initializedIps) {
+	for (auto& ip : initializedIps) {
 		loggerStatic->debug("  {}", *ip);
 	}
 
@@ -321,12 +321,12 @@ void
 IpCore::dump()
 {
 	logger->info("IP: {}", *this);
-	for(auto& [num, irq] : irqs) {
+	for (auto& [num, irq] : irqs) {
 		logger->info("  IRQ {}: {}:{}",
 		             num, irq.irqController->getInstanceName(), irq.num);
 	}
 
-	for(auto& [block, translation] : addressTranslations) {
+	for (auto& [block, translation] : addressTranslations) {
 		logger->info("  Memory {}: {}", block, translation);
 	}
 }
@@ -335,8 +335,8 @@ IpCore::dump()
 IpCoreFactory*
 IpCoreFactory::lookup(const Vlnv &vlnv)
 {
-	for(auto& ip : plugin::Registry::lookup<IpCoreFactory>()) {
-		if(ip->getCompatibleVlnv() == vlnv)
+	for (auto& ip : plugin::Registry::lookup<IpCoreFactory>()) {
+		if (ip->getCompatibleVlnv() == vlnv)
 			return ip;
 	}
 

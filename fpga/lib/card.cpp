@@ -62,7 +62,7 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 		    "slot", &pci_slot,
 		    "id", &pci_id);
 
-		if(ret != 0) {
+		if (ret != 0) {
 			logger->warn("Cannot parse JSON config");
 			continue;
 		}
@@ -87,18 +87,18 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 		}
 
 
-		if(not card->init()) {
+		if (not card->init()) {
 			logger->warn("Cannot start FPGA card {}", card_name);
 			continue;
 		}
 
 		card->ips = ip::IpCoreFactory::make(card.get(), json_ips);
-		if(card->ips.empty()) {
+		if (card->ips.empty()) {
 			logger->error("Cannot initialize IPs of FPGA card {}", card_name);
 			continue;
 		}
 
-		if(not card->check()) {
+		if (not card->check()) {
 			logger->warn("Checking of FPGA card {} failed", card_name);
 			continue;
 		}
@@ -122,7 +122,7 @@ PCIeCard::~PCIeCard()
 	auto& mm = MemoryManager::get();
 
 	// unmap all memory blocks
-	for(auto& mappedMemoryBlock : memoryBlocksMapped) {
+	for (auto& mappedMemoryBlock : memoryBlocksMapped) {
 		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
 		                                     mappedMemoryBlock);
 
@@ -139,8 +139,8 @@ PCIeCard::~PCIeCard()
 ip::IpCore*
 PCIeCard::lookupIp(const std::string& name) const
 {
-	for(auto& ip : ips) {
-		if(*ip == name) {
+	for (auto& ip : ips) {
+		if (*ip == name) {
 			return ip.get();
 		}
 	}
@@ -152,8 +152,8 @@ PCIeCard::lookupIp(const std::string& name) const
 ip::IpCore*
 PCIeCard::lookupIp(const Vlnv& vlnv) const
 {
-	for(auto& ip : ips) {
-		if(*ip == vlnv) {
+	for (auto& ip : ips) {
+		if (*ip == vlnv) {
 			return ip.get();
 		}
 	}
@@ -163,8 +163,8 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 
 ip::IpCore*PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 {
-	for(auto& ip : ips) {
-		if(*ip == id) {
+	for (auto& ip : ips) {
+		if (*ip == id) {
 			return ip.get();
 		}
 	}
@@ -176,7 +176,7 @@ ip::IpCore*PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 bool
 PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 {
-	if(not vfioContainer->isIommuEnabled()) {
+	if (not vfioContainer->isIommuEnabled()) {
 		logger->warn("VFIO mapping not supported without IOMMU");
 		return false;
 	}
@@ -184,7 +184,7 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 	auto& mm = MemoryManager::get();
 	const auto& addrSpaceId = block.getAddrSpaceId();
 
-	if(memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end()) {
+	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end()) {
 		// block already mapped
 		return true;
 	} else {
@@ -197,7 +197,7 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 	                                              UINTPTR_MAX,
 	                                              block.getSize());
 
-	if(iovaAddr == UINTPTR_MAX) {
+	if (iovaAddr == UINTPTR_MAX) {
 		logger->error("Cannot map memory at {:#x} of size {:#x}",
 		              processBaseAddr, block.getSize());
 		return false;
@@ -242,12 +242,12 @@ PCIeCard::init()
 	/* Reset system? */
 	if (do_reset) {
 		/* Reset / detect PCI device */
-		if(not vfioDevice->pciHotReset()) {
+		if (not vfioDevice->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
 			return false;
 		}
 
-		if(not reset()) {
+		if (not reset()) {
 			logger->error("Failed to reset FGPA card");
 			return false;
 		}

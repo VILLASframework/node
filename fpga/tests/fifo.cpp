@@ -38,24 +38,24 @@ Test(fpga, fifo, .description = "FIFO")
 	char src[255], dst[255];
 	size_t count = 0;
 
-	auto logger = logging.get("unittest:fifo");
+	auto logger = logging.get("unit-test:fifo");
 
-	for(auto& ip : state.cards.front()->ips) {
+	for (auto& ip : state.cards.front()->ips) {
 		// skip non-fifo IPs
-		if(*ip != fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
+		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;
 
 		logger->info("Testing {}", *ip);
 
 		auto fifo = dynamic_cast<fpga::ip::Fifo&>(*ip);
 
-		if(not fifo.connectLoopback()) {
+		if (not fifo.connectLoopback()) {
 			continue;
 		}
 
 		count++;
 
-		if(not fifo.loopbackPossible()) {
+		if (not fifo.loopbackPossible()) {
 			logger->info("Loopback test not possible for {}", *ip);
 			continue;
 		}

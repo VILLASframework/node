@@ -46,7 +46,7 @@ bool Timer::init()
 	XTmrCtr_CfgInitialize(&xTmr, &xtmr_cfg, getBaseAddr(registerMemory));
 	XTmrCtr_InitHw(&xTmr);
 
-	if(irqs.find(irqName) == irqs.end()) {
+	if (irqs.find(irqName) == irqs.end()) {
 		logger->error("IRQ '{}' not found but required", irqName);
 		return false;
 	}

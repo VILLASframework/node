@@ -104,7 +104,7 @@ void criterion_plog(enum criterion_logging_level level, const struct criterion_p
 		logger->warn(formatted_msg);
 	else if (strstr(formatted_msg, "Failed"))
 		logger->error(formatted_msg);
-	else if(!strcmp(prefix->prefix, "----") && !strcmp(prefix->color, "\33[0;34m"))
+	else if (!strcmp(prefix->prefix, "----") && !strcmp(prefix->color, "\33[0;34m"))
 			logger->info(formatted_msg);
 	else if (!strcmp(prefix->prefix, "----") && !strcmp(prefix->color,  "\33[1;30m"))
 		logger->debug(formatted_msg);

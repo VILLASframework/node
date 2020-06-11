@@ -70,9 +70,9 @@ public:
 	                        const std::string& port,
 	                        bool isMaster)
 	{
-		for(auto& vertexEntry : vertices) {
+		for (auto& vertexEntry : vertices) {
 			auto& vertex = vertexEntry.second;
-			if(vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
+			if (vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
 				return vertex;
 		}
 

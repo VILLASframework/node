@@ -42,7 +42,7 @@ AxiStreamSwitch::init()
 	sw_cfg.MaxNumMI = num_ports;
 	sw_cfg.MaxNumSI = num_ports;
 
-	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS) {
+	if (XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS) {
 		logger->error("Cannot initialize switch");
 		return false;
 	}
@@ -52,13 +52,13 @@ AxiStreamSwitch::init()
 	XAxisScr_MiPortDisableAll(&xSwitch);
 	XAxisScr_RegUpdateEnable(&xSwitch);
 
-	for(auto& [masterName, masterPort] : portsMaster) {
+	for (auto& [masterName, masterPort] : portsMaster) {
 
 		// initialize internal mapping
 		portMapping[masterName] = PORT_DISABLED;
 
 		// each slave port may be internally routed to a master port
-		for(auto& [slaveName, slavePort] : portsSlave) {
+		for (auto& [slaveName, slavePort] : portsSlave) {
 			(void) slaveName;
 
 			streamGraph.addDefaultEdge(slavePort->getIdentifier(),
@@ -89,21 +89,21 @@ AxiStreamSwitch::connectInternal(const std::string& portSlave,
 		return false;
 	}
 
-	if(portSlave.substr(0, 1) != "S" or
+	if (portSlave.substr(0, 1) != "S" or
 	   portMaster.substr(0, 1) != "M") {
 		logger->error("sanity check failed: master {} slave {}",
 		              portMaster, portSlave);
 		return false;
 	}
 
-	if(portMapping[portMaster] == portSlave) {
+	if (portMapping[portMaster] == portSlave) {
 		logger->debug("Ports already connected (slave {} to master {}",
 		              portSlave, portMaster);
 		return true;
 	}
 
-	for(auto [master, slave] : portMapping) {
-		if(slave == portSlave) {
+	for (auto [master, slave] : portMapping) {
+		if (slave == portSlave) {
 			logger->warn("Slave {} has already been connected to master {}. "
 			             "Disabling master {}.",
 			             slave, master, master);
@@ -138,14 +138,14 @@ AxiStreamSwitch::portNameToNum(const std::string& portName)
 bool
 AxiStreamSwitchFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
-	if(not IpNodeFactory::configureJson(ip, json_ip))
+	if (not IpNodeFactory::configureJson(ip, json_ip))
 		return false;
 
 	auto logger = getLogger();
 
 	auto& axiSwitch = dynamic_cast<AxiStreamSwitch&>(ip);
 
-	if(json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
+	if (json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
 		logger->error("Cannot parse 'num_ports'");
 		return false;
 	}

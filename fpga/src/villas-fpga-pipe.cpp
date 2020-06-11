@@ -66,7 +66,7 @@ void setupColorHandling()
 std::shared_ptr<fpga::PCIeCard>
 setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 {
-	if(pci_init(&pci) != 0) {
+	if (pci_init(&pci) != 0) {
 		logger->error("Cannot initialize PCI");
 		exit(1);
 	}
@@ -75,12 +75,12 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 
 	/* Parse FPGA configuration */
 	FILE* f = fopen(configFile.c_str(), "r");
-	if(f == nullptr) {
+	if (f == nullptr) {
 		logger->error("Cannot open config file: {}", configFile);
 	}
 
 	json_t* json = json_loadf(f, 0, nullptr);
-	if(json == nullptr) {
+	if (json == nullptr) {
 		logger->error("Cannot parse JSON config");
 		fclose(f);
 		exit(1);
@@ -89,14 +89,14 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 	fclose(f);
 
 	json_t* fpgas = json_object_get(json, "fpgas");
-	if(fpgas == nullptr) {
+	if (fpgas == nullptr) {
 		logger->error("No section 'fpgas' found in config");
 		exit(1);
 	}
 
 	// get the FPGA card plugin
 	auto fpgaCardPlugin = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
-	if(fpgaCardPlugin == nullptr) {
+	if (fpgaCardPlugin == nullptr) {
 		logger->error("No FPGA plugin found");
 		exit(1);
 	}
@@ -104,8 +104,8 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 	// create all FPGA card instances using the corresponding plugin
 	auto cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
 
-	for(auto& fpgaCard : cards) {
-		if(fpgaCard->name == fpgaName) {
+	for (auto& fpgaCard : cards) {
+		if (fpgaCard->name == fpgaName) {
 			return fpgaCard;
 		}
 	}
@@ -150,12 +150,12 @@ int main(int argc, char* argv[])
 	          (card->lookupIp("hier_0_axi_dma_axi_dma_1"));
 	
 
-	if(aurora == nullptr) {
+	if (aurora == nullptr) {
 		logger->error("No Aurora interface found on FPGA");
 		return 1;
 	}
 
-	if(dma == nullptr) {
+	if (dma == nullptr) {
 		logger->error("No DMA found on FPGA ");
 		return 1;
 	}
@@ -177,12 +177,12 @@ int main(int argc, char* argv[])
 	auto &mm = MemoryManager::get();
 	mm.getMemoryGraph().dump("graph.dot");
 
-	while(true) {
+	while (true) {
 		dma->read(block, block.getSize());
 		const size_t bytesRead = dma->readComplete();
 		const size_t valuesRead = bytesRead / sizeof(int32_t);
 
-		for(size_t i = 0; i < valuesRead; i++) {
+		for (size_t i = 0; i < valuesRead; i++) {
 			std::cerr << mem[i] << ";";
 		}
 		std::cerr << std::endl;
@@ -193,8 +193,8 @@ int main(int argc, char* argv[])
 
 		size_t memIdx = 0;
 
-		for(auto& value: values) {
-			if(value.empty()) continue;
+		for (auto& value: values) {
+			if (value.empty()) continue;
 
 			const int32_t number = std::stoi(value);
 			mem[memIdx++] = number;

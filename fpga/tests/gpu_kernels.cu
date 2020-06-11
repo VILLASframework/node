@@ -26,16 +26,16 @@ gpu_rtds_rtt_kernel(volatile uint32_t* dataIn, volatile reg_doorbell_t* doorbell
 //	**run = true;
 
 	uint32_t last_seq;
-	while(*run) {
+	while (*run) {
 		// wait for data
 //		printf("[gpu] wait for data, last_seq=%u\n", last_seq);
-		while(not (doorbellIn->is_valid and (last_seq != doorbellIn->seq_nr)) and *run);
+		while (not (doorbellIn->is_valid and (last_seq != doorbellIn->seq_nr)) and *run);
 //			printf("doorbell: 0x%08x\n", doorbellIn->value);
 
 		last_seq = doorbellIn->seq_nr;
 
 //		printf("[gpu] copy data\n");
-		for(size_t i = 0; i < doorbellIn->count; i++) {
+		for (size_t i = 0; i < doorbellIn->count; i++) {
 			dataOut[i] = dataIn[i];
 		}
 
@@ -56,7 +56,7 @@ void gpu_rtds_rtt_start(volatile uint32_t* dataIn, volatile reg_doorbell_t* door
                         volatile uint32_t* dataOut, volatile villas::fpga::ip::ControlRegister* controlRegister)
 {
 	printf("run:         %p\n", run);
-	if(run == nullptr) {
+	if (run == nullptr) {
 		run = (int*)malloc(sizeof(uint32_t));
 		cudaHostRegister(run, sizeof(uint32_t), 0);
 	}

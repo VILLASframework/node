@@ -40,7 +40,7 @@
 
 Test(fpga, gpu_dma, .description = "GPU DMA tests")
 {
-	auto logger = villas::logging.get("unittest:dma");
+	auto logger = villas::logging.get("unit-test:dma");
 
 	auto& card = state.cards.front();
 
@@ -54,9 +54,9 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 	auto& gpu = gpus.front();
 
 	size_t count = 0;
-	for(auto& ip : card->ips) {
+	for (auto& ip : card->ips) {
 		// skip non-dma IPs
-		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
+		if (*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
 			continue;
 
 		logger->info("Testing {}", *ip);
@@ -116,10 +116,10 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		auto dmaIp = card->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axi_dma:"));
 		auto dma = dynamic_cast<villas::fpga::ip::Dma*>(dmaIp);
 
-		if(dma != nullptr and dma->connectLoopback()) {
+		if (dma != nullptr and dma->connectLoopback()) {
 			memcpyFuncs.push_back({
 			    "DMA memcpy", [&]() {
-			        if(not dma->makeAccesibleFromVA(src.getMemoryBlock()) or
+			        if (not dma->makeAccesibleFromVA(src.getMemoryBlock()) or
 			           not dma->makeAccesibleFromVA(dst.getMemoryBlock())) {
 			            return;
 			        }
@@ -127,7 +127,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 			    }});
 		}
 
-		for(auto& [name, memcpyFunc] : memcpyFuncs) {
+		for (auto& [name, memcpyFunc] : memcpyFuncs) {
 			logger->info("Testing {}", name);
 
 			/* Get new random data */

@@ -45,7 +45,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
-	if(not json_is_array(json_ports)) {
+	if (not json_is_array(json_ports)) {
 		logger->debug("IP has no ports");
 		return true;
 	}
@@ -53,7 +53,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	size_t index;
 	json_t* json_port;
 	json_array_foreach(json_ports, index, json_port) {
-		if(not json_is_object(json_port)) {
+		if (not json_is_object(json_port)) {
 			logger->error("Port {} is not an object", index);
 			return false;
 		}
@@ -63,13 +63,13 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		                           "role", &role_raw,
 		                           "target", &target_raw,
 		                           "name", &name_raw);
-		if(ret != 0) {
+		if (ret != 0) {
 			logger->error("Cannot parse port {}", index);
 			return false;
 		}
 
 		const auto tokens = utils::tokenize(target_raw, ":");
-		if(tokens.size() != 2) {
+		if (tokens.size() != 2) {
 			logger->error("Cannot parse 'target' of port {}", index);
 			return false;
 		}
@@ -89,7 +89,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		                           not isMaster);
 
 
-		if(isMaster) {
+		if (isMaster) {
 			IpNode::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
 			                                   connectedVertex->getIdentifier());
 			ipNode.portsMaster[name_raw] = thisVertex;
@@ -104,10 +104,10 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 std::pair<std::string, std::string>
 IpNode::getLoopbackPorts() const
 {
-	for(auto& [masterName, masterTo] : portsMaster) {
-		for(auto& [slaveName, slaveTo] : portsSlave) {
+	for (auto& [masterName, masterTo] : portsMaster) {
+		for (auto& [slaveName, slaveTo] : portsSlave) {
 			// TODO: should we also check which IP both ports are connected to?
-			if(masterTo->nodeName == slaveTo->nodeName) {
+			if (masterTo->nodeName == slaveTo->nodeName) {
 				return { masterName, slaveName };
 			}
 		}
@@ -118,18 +118,18 @@ IpNode::getLoopbackPorts() const
 
 bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 {
-	if(from.nodeName != getInstanceName()) {
+	if (from.nodeName != getInstanceName()) {
 		logger->error("Cannot connect from a foreign StreamVertex: {}", from);
 		return false;
 	}
 
 	StreamGraph::Path path;
-	if(not streamGraph.getPath(from.getIdentifier(), to.getIdentifier(), path)) {
+	if (not streamGraph.getPath(from.getIdentifier(), to.getIdentifier(), path)) {
 		logger->error("No path from {} to {}", from, to);
 		return false;
 	}
 
-	if(path.size() == 0) {
+	if (path.size() == 0) {
 		return true;
 	}
 
@@ -140,16 +140,16 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 	auto nextHopNode = firstHopNode;
 
 	// check if next hop is an internal connection
-	if(firstHopNode->nodeName == getInstanceName()) {
+	if (firstHopNode->nodeName == getInstanceName()) {
 
-		if(not connectInternal(from.portName, firstHopNode->portName)) {
+		if (not connectInternal(from.portName, firstHopNode->portName)) {
 			logger->error("Making internal connection from {} to {} failed",
 			              from, *firstHopNode);
 			return false;
 		}
 
 		// we have to advance to next hop
-		if(++currentEdge == path.end()) {
+		if (++currentEdge == path.end()) {
 			// arrived at the end of path
 			return true;
 		}
@@ -162,7 +162,7 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 	auto nextHopNodeIp = dynamic_cast<IpNode*>
 	                     (card->lookupIp(nextHopNode->nodeName));
 
-	if(nextHopNodeIp == nullptr) {
+	if (nextHopNodeIp == nullptr) {
 		logger->error("Cannot find IP {}, this shouldn't happen!",
 		              nextHopNode->nodeName);
 		return false;
@@ -219,7 +219,7 @@ IpNode::connectLoopback()
 	auto axiStreamSwitch = dynamic_cast<ip::AxiStreamSwitch*>(
 	                            card->lookupIp(portMaster->nodeName));
 
-	if(axiStreamSwitch == nullptr) {
+	if (axiStreamSwitch == nullptr) {
 		logger->error("Cannot find switch");
 		return false;
 	}

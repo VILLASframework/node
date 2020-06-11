@@ -59,7 +59,7 @@ void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
 //{
 //	auto& mm = MemoryManager::get();
 
-//	if(frameSize > maxFrameSize) {
+//	if (frameSize > maxFrameSize) {
 //		logger->error("Requested frame size of {} exceeds max. frame size of {}",
 //		              frameSize, maxFrameSize);
 //		return false;
@@ -92,7 +92,7 @@ void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
 //bool
 //Gpu2Rtds::updateStatus()
 //{
-//	if(not XGpu2Rtds_Get_status_vld(&xInstance))
+//	if (not XGpu2Rtds_Get_status_vld(&xInstance))
 //		return false;
 
 //	status.value = XGpu2Rtds_Get_status(&xInstance);
@@ -106,9 +106,9 @@ Gpu2Rtds::getMaxFrameSize()
 	*registerFrameSize = 0;
 
 	start();
-	while(not isFinished());
+	while (not isFinished());
 
-	while(not registerStatusCtrl->status_ap_vld);
+	while (not registerStatusCtrl->status_ap_vld);
 
 	axilite_reg_status_t status = *registerStatus;
 

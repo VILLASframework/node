@@ -77,7 +77,7 @@ AxiPciExpressBridge::init()
 	struct pci_region* pci_regions = nullptr;
 	size_t num_regions = pci_get_regions(card->pdev, &pci_regions);
 
-	for(size_t i = 0; i < num_regions; i++) {
+	for (size_t i = 0; i < num_regions; i++) {
 		const size_t region_size = pci_regions[i].end - pci_regions[i].start + 1;
 
 		char barName[] = "BARx";
@@ -96,13 +96,13 @@ AxiPciExpressBridge::init()
 
 	}
 
-	if(pci_regions != nullptr) {
+	if (pci_regions != nullptr) {
 		logger->debug("freeing pci regions");
 		free(pci_regions);
 	}
 
 
-	for(auto& [barName, axiBar] : axiToPcieTranslations) {
+	for (auto& [barName, axiBar] : axiToPcieTranslations) {
 		logger->info("AXI-{}: bus addr={:#x} size={:#x}",
 		             barName, axiBar.base, axiBar.size);
 		logger->info("AXI-{}: PCI translation offset: {:#x}",
@@ -127,9 +127,9 @@ AxiPciExpressBridgeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	auto logger = getLogger();
 	auto& pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
-	for(auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
+	for (auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
 		json_t* json_bars = json_object_get(json_ip, barType.c_str());
-		if(not json_is_object(json_bars)) {
+		if (not json_is_object(json_bars)) {
 			return false;
 		}
 
@@ -138,18 +138,18 @@ AxiPciExpressBridgeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		json_object_foreach(json_bars, bar_name, json_bar) {
 			unsigned int translation;
 			int ret = json_unpack(json_bar, "{ s: i }", "translation", &translation);
-			if(ret != 0) {
+			if (ret != 0) {
 				logger->error("Cannot parse {}/{}", barType, bar_name);
 				return false;
 			}
 
-			if(barType == "axi_bars") {
+			if (barType == "axi_bars") {
 				json_int_t base, high, size;
 				int ret = json_unpack(json_bar, "{ s: I, s: I, s: I }",
 				                      "baseaddr", &base,
 				                      "highaddr", &high,
 				                      "size", &size);
-				if(ret != 0) {
+				if (ret != 0) {
 					logger->error("Cannot parse {}/{}", barType, bar_name);
 					return false;
 				}

@@ -50,7 +50,7 @@ GpuAllocator::GpuAllocator(Gpu& gpu) :
 {
 	free = [&](MemoryBlock* mem) {
 		cudaSetDevice(gpu.gpuId);
-		if(cudaFree(reinterpret_cast<void*>(mem->getOffset())) != cudaSuccess) {
+		if (cudaFree(reinterpret_cast<void*>(mem->getOffset())) != cudaSuccess) {
 			logger->warn("cudaFree() failed for {:#x} of size {:#x}",
 			             mem->getOffset(), mem->getSize());
 		}
@@ -92,7 +92,7 @@ public:
 std::string Gpu::getName() const
 {
 	cudaDeviceProp deviceProp;
-	if(cudaGetDeviceProperties(&deviceProp, gpuId) != cudaSuccess) {
+	if (cudaGetDeviceProperties(&deviceProp, gpuId) != cudaSuccess) {
 		// logger not yet availabe
 		villas::logging.get("Gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
 		throw std::exception();
@@ -115,7 +115,7 @@ bool Gpu::registerIoMemory(const MemoryBlock& mem)
 		// overlapping window, so this will fail badly!
 		auto translation = mm.getTranslation(masterPciEAddrSpaceId,
 		                                     mem.getAddrSpaceId());
-		if(translation.getSize() >= mem.getSize()) {
+		if (translation.getSize() >= mem.getSize()) {
 			// there is already a sufficient path
 			logger->debug("Already mapped through another mapping");
 			return true;
@@ -159,7 +159,7 @@ bool Gpu::registerIoMemory(const MemoryBlock& mem)
 		return false;
 	}
 
-	if(sizeOnPci < mem.getSize()) {
+	if (sizeOnPci < mem.getSize()) {
 		logger->warn("VA mapping of IO memory is too small: {:#x} instead of {:#x} bytes",
 		              sizeOnPci, mem.getSize());
 		logger->warn("If something later on fails or behaves strangely, this might be the cause!");
@@ -169,13 +169,13 @@ bool Gpu::registerIoMemory(const MemoryBlock& mem)
 	cudaSetDevice(gpuId);
 
 	auto baseAddrVA = reinterpret_cast<void*>(baseAddrForProcess);
-	if(cudaHostRegister(baseAddrVA, sizeOnPci, cudaHostRegisterIoMemory) != cudaSuccess) {
+	if (cudaHostRegister(baseAddrVA, sizeOnPci, cudaHostRegisterIoMemory) != cudaSuccess) {
 		logger->error("Cannot register IO memory for block {}", mem.getAddrSpaceId());
 		return false;
 	}
 
 	void* devicePointer = nullptr;
-	if(cudaHostGetDevicePointer(&devicePointer, baseAddrVA, 0) != cudaSuccess) {
+	if (cudaHostGetDevicePointer(&devicePointer, baseAddrVA, 0) != cudaSuccess) {
 		logger->error("Cannot retrieve device pointer for IO memory");
 		return false;
 	}
@@ -195,7 +195,7 @@ Gpu::registerHostMemory(const MemoryBlock& mem)
 	auto localBase = reinterpret_cast<void*>(translation.getLocalAddr(0));
 
 	int ret = cudaHostRegister(localBase, mem.getSize(), 0);
-	if(ret != cudaSuccess) {
+	if (ret != cudaSuccess) {
 		logger->error("Cannot register memory block {} addr={:p} size={:#x} to CUDA: ret={}",
 		              mem.getAddrSpaceId(), localBase, mem.getSize(), ret);
 		return false;
@@ -203,7 +203,7 @@ Gpu::registerHostMemory(const MemoryBlock& mem)
 
 	void* devicePointer = nullptr;
 	ret = cudaHostGetDevicePointer(&devicePointer, localBase, 0);
-	if(ret != cudaSuccess) {
+	if (ret != cudaSuccess) {
 		logger->error("Cannot retrieve device pointer for IO memory: ret={}", ret);
 		return false;
 	}
@@ -216,7 +216,7 @@ Gpu::registerHostMemory(const MemoryBlock& mem)
 
 bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 {
-	if(pImpl->gdr == nullptr) {
+	if (pImpl->gdr == nullptr) {
 		logger->warn("GDRcopy not available");
 		return false;
 	}
@@ -226,7 +226,7 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 	try {
 		auto path = mm.findPath(masterPciEAddrSpaceId, mem.getAddrSpaceId());
 		// if first hop is the PCIe bus, we know that memory is off-GPU
-		if(path.front() == mm.getPciAddressSpace()) {
+		if (path.front() == mm.getPciAddressSpace()) {
 			throw std::out_of_range("Memory block is outside of this GPU");
 		}
 
@@ -246,7 +246,7 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 	// required to set this flag before mapping
 	unsigned int enable = 1;
 	ret = cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS, devptr);
-	if(ret != CUDA_SUCCESS) {
+	if (ret != CUDA_SUCCESS) {
 		logger->error("Cannot set pointer attributes on memory block {}: {}",
 		              mem.getAddrSpaceId(), ret);
 		return false;
@@ -254,7 +254,7 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 
 	gdr_mh_t mh;
 	ret = gdr_pin_buffer(pImpl->gdr, devptr, mem.getSize(), 0, 0, &mh);
-	if(ret != 0) {
+	if (ret != 0) {
 		logger->error("Cannot pin memory block {} via gdrcopy: {}",
 		              mem.getAddrSpaceId(), ret);
 		return false;
@@ -262,7 +262,7 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 
 	void* bar = nullptr;
 	ret = gdr_map(pImpl->gdr, mh, &bar, mem.getSize());
-	if(ret != 0) {
+	if (ret != 0) {
 		logger->error("Cannot map memory block {} via gdrcopy: {}",
 		              mem.getAddrSpaceId(), ret);
 		return false;
@@ -270,7 +270,7 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 
 	gdr_info_t info;
 	ret = gdr_get_info(pImpl->gdr, mh, &info);
-	if(ret != 0) {
+	if (ret != 0) {
 		logger->error("Cannot get info for mapping of memory block {}: {}",
 		              mem.getAddrSpaceId(), ret);
 		return false;
@@ -294,11 +294,11 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 	uint64_t addr[8];
 	ret = gdr_map_dma(pImpl->gdr, mh, 3, 0, 0, addr, 8);
 
-	for(int i = 0; i < ret; i++) {
+	for (int i = 0; i < ret; i++) {
 		logger->debug("DMA addr[{}]:      {:#x}", i, addr[i]);
 	}
 
-	if(ret != 1) {
+	if (ret != 1) {
 		logger->error("Only one DMA address per block supported at the moment");
 		return false;
 	}
@@ -328,7 +328,7 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock& mem)
 		// not reachable via PCI -> not IO memory
 	}
 
-	if(isIoMemory) {
+	if (isIoMemory) {
 		logger->debug("Memory block {} is assumed to be IO memory",
 		              mem.getAddrSpaceId());
 
@@ -396,7 +396,7 @@ GpuAllocator::allocateBlock(size_t size)
 	});
 
 
-	if(chunk != chunks.end()) {
+	if (chunk != chunks.end()) {
 		logger->debug("Found existing chunk that can host the requested block");
 
 		return (*chunk)->allocateBlock(size);
@@ -408,7 +408,7 @@ GpuAllocator::allocateBlock(size_t size)
 		const size_t chunkSize = size - (size & (GpuPageSize - 1)) + GpuPageSize;
 		logger->debug("Allocate new chunk of {:#x} bytes", chunkSize);
 
-		if(cudaSuccess != cudaMalloc(&addr, chunkSize)) {
+		if (cudaSuccess != cudaMalloc(&addr, chunkSize)) {
 			logger->error("cudaMalloc(..., size={}) failed", chunkSize);
 			throw std::bad_alloc();
 		}
@@ -445,7 +445,7 @@ Gpu::Gpu(int gpuId) :
 	logger = villas::logging.get(getName());
 
 	pImpl->gdr = gdr_open();
-	if(pImpl->gdr == nullptr) {
+	if (pImpl->gdr == nullptr) {
 		logger->warn("No GDRcopy support enabled, cannot open /dev/gdrdrv");
 	}
 }
@@ -470,7 +470,7 @@ bool Gpu::init()
 
 	struct pci_region* pci_regions = nullptr;
 	const size_t pci_num_regions = pci_get_regions(&pImpl->pdev, &pci_regions);
-	for(size_t i = 0; i < pci_num_regions; i++) {
+	for (size_t i = 0; i < pci_num_regions; i++) {
 		const size_t region_size = pci_regions[i].end - pci_regions[i].start + 1;
 		logger->info("BAR{}: bus addr={:#x} size={:#x}",
 		             pci_regions[i].num, pci_regions[i].start, region_size);
@@ -500,15 +500,15 @@ GpuFactory::make()
 
 	std::list<std::unique_ptr<Gpu>> gpuList;
 
-	for(int gpuId = 0; gpuId < deviceCount; gpuId++) {
-		if(cudaSetDevice(gpuId) != cudaSuccess) {
+	for (int gpuId = 0; gpuId < deviceCount; gpuId++) {
+		if (cudaSetDevice(gpuId) != cudaSuccess) {
 			logger->warn("Cannot activate GPU {}", gpuId);
 			continue;
 		}
 
 		auto gpu = std::make_unique<Gpu>(gpuId);
 
-		if(not gpu->init()) {
+		if (not gpu->init()) {
 			logger->warn("Cannot initialize GPU {}", gpuId);
 			continue;
 		}
@@ -517,7 +517,7 @@ GpuFactory::make()
 	}
 
 	logger->info("Initialized {} GPUs", gpuList.size());
-	for(auto& gpu : gpuList) {
+	for (auto& gpu : gpuList) {
 		logger->debug(" - {}", gpu->getName());
 	}
 

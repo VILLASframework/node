@@ -56,7 +56,7 @@ bool Rtds2Gpu::startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOf
 {
 	auto& mm = MemoryManager::get();
 
-	if(frameSize > maxFrameSize) {
+	if (frameSize > maxFrameSize) {
 		logger->error("Requested frame size of {} exceeds max. frame size of {}",
 		              frameSize, maxFrameSize);
 		return false;
@@ -85,7 +85,7 @@ bool Rtds2Gpu::startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOf
 bool
 Rtds2Gpu::updateStatus()
 {
-	if(not XRtds2gpu_Get_status_vld(&xInstance))
+	if (not XRtds2gpu_Get_status_vld(&xInstance))
 		return false;
 
 	status.value = XRtds2gpu_Get_status(&xInstance);
@@ -99,7 +99,7 @@ Rtds2Gpu::getMaxFrameSize()
 	XRtds2gpu_Set_frame_size(&xInstance, 0);
 
 	start();
-	while(not isFinished());
+	while (not isFinished());
 	updateStatus();
 
 	return status.max_frame_size;

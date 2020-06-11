@@ -79,7 +79,7 @@ public:
 private:
 	void updateRunningStatus()
 	{
-		if(running and isIdleBit())
+		if (running and isIdleBit())
 			running = false;
 	}
 

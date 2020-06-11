@@ -114,8 +114,8 @@ Dma::reset()
 	// value taken from libxil implementation
 	int timeout = 500;
 
-	while(timeout > 0) {
-		if(XAxiDma_ResetIsDone(&xDma))
+	while (timeout > 0) {
+		if (XAxiDma_ResetIsDone(&xDma))
 			return true;
 
 		timeout--;
@@ -128,22 +128,22 @@ Dma::reset()
 bool
 Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 {
-	if(len == 0)
+	if (len == 0)
 		return true;
 
-	if(not connectLoopback())
+	if (not connectLoopback())
 		return false;
 
-	if(this->read(dst, len) == 0)
+	if (this->read(dst, len) == 0)
 		return false;
 
-	if(this->write(src, len) == 0)
+	if (this->write(src, len) == 0)
 		return false;
 
-	if(not this->writeComplete())
+	if (not this->writeComplete())
 		return false;
 
-	if(not this->readComplete())
+	if (not this->readComplete())
 		return false;
 
 	return true;
@@ -354,19 +354,19 @@ bool
 Dma::makeAccesibleFromVA(const MemoryBlock& mem)
 {
 	// only symmetric mapping supported currently
-	if(isMemoryBlockAccesible(mem, s2mmInterface) and
+	if (isMemoryBlockAccesible(mem, s2mmInterface) and
 	   isMemoryBlockAccesible(mem, mm2sInterface)) {
 		return true;
 	}
 
 	// try mapping via FPGA-card (VFIO)
-	if(not card->mapMemoryBlock(mem)) {
+	if (not card->mapMemoryBlock(mem)) {
 		logger->error("Memory not accessible by DMA");
 		return false;
 	}
 
 	// sanity-check if mapping worked, this shouldn't be neccessary
-	if(not isMemoryBlockAccesible(mem, s2mmInterface) or
+	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
 	   not isMemoryBlockAccesible(mem, mm2sInterface)) {
 		logger->error("Mapping memory via card didn't work, but reported success?!");
 		return false;
