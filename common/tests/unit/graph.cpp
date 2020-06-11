@@ -142,5 +142,5 @@ Test(graph, memory_manager, .description = "Global Memory Manager")
 	auto vertex = mm.findAddressSpace("PCIe Bridge");
 	logger->info("  found: {}", vertex);
 
-	mm.dump();
+	mm.getGraph().dump();
 }
