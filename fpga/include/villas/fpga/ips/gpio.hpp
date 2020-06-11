@@ -1,9 +1,9 @@
-/** AXI-PCIe Interrupt controller
+/** AXI General Purpose IO (GPIO)
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2017-2018, Steffen Vogel
+ * @copyright 2017-2020, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
@@ -37,71 +37,41 @@ namespace fpga {
 namespace ip {
 
 
-class InterruptController : public IpCore
+class GeneralPurposeIO : public IpCore
 {
 public:
-	using IrqMaskType = uint32_t;
-	static constexpr int maxIrqs = 32;
-
-	~InterruptController();
 
 	bool init();
 
-	bool enableInterrupt(IrqMaskType mask, bool polling);
-	bool enableInterrupt(IrqPort irq, bool polling)
-	{ return enableInterrupt(1 << irq.num, polling); }
-
-	bool disableInterrupt(IrqMaskType mask);
-	bool disableInterrupt(IrqPort irq)
-	{ return disableInterrupt(1 << irq.num); }
-
-	int waitForInterrupt(int irq);
-	int waitForInterrupt(IrqPort irq)
-	{ return waitForInterrupt(irq.num); }
-
 private:
 
-	static constexpr char registerMemory[] = "reg0";
+	static constexpr char registerMemory[] = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
 	{ return { registerMemory }; }
-
-
-	struct Interrupt {
-		int eventFd;			/**< Event file descriptor */
-		int number;				/**< Interrupt number from /proc/interrupts */
-		bool polling;			/**< Polled or not */
-	};
-
-	int num_irqs;				/**< Number of available MSI vectors */
-	int efds[maxIrqs];
-	int nos[maxIrqs];
-	bool polling[maxIrqs];
 };
 
-
-
-class InterruptControllerFactory : public IpCoreFactory {
+class GeneralPurposeIOFactory : public IpCoreFactory {
 public:
 
-	InterruptControllerFactory() :
+	GeneralPurposeIOFactory() :
 	    IpCoreFactory(getName(), getDescription())
 	{}
 
 	static constexpr const char*
 	getCompatibleVlnvString()
-	{ return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"; }
+	{ return "xilinx.com:ip:axi_gpio:"; }
 
 	IpCore* create()
-	{ return new InterruptController; }
+	{ return new GeneralPurposeIO; }
 
 	std::string
 	getName() const
-	{ return "InterruptController"; }
+	{ return "GeneralPurposeIO"; }
 
 	std::string
 	getDescription() const
-	{ return "Xilinx's programmable interrupt controller"; }
+	{ return "Xilinx's AXI4 general purpose IO"; }
 
 	Vlnv getCompatibleVlnv() const
 	{ return Vlnv(getCompatibleVlnvString()); }

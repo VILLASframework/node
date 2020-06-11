@@ -80,7 +80,7 @@ InterruptController::init()
 		XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
 	}
 
-	XIntc_Out32(base + XIN_IMR_OFFSET, 0);		/* Use manual acknowlegement for all IRQs */
+	XIntc_Out32(base + XIN_IMR_OFFSET, 0x00000000); /* Use manual acknowlegement for all IRQs */
 	XIntc_Out32(base + XIN_IAR_OFFSET, 0xFFFFFFFF); /* Acknowlege all pending IRQs manually */
 	XIntc_Out32(base + XIN_IMR_OFFSET, 0xFFFFFFFF); /* Use fast acknowlegement for all IRQs */
 	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); /* Disable all IRQs by default */
