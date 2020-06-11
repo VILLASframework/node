@@ -21,22 +21,26 @@
 ##############################################################################
 
 set(SOURCES
-	main.cpp
-	fpga.cpp
-	logging.cpp
 	dma.cpp
 	fifo.cpp
+	fpga.cpp
+	logging.cpp
+	main.cpp
 	rtds.cpp
 	timer.cpp
 )
 
+#	rtds_rtt.cpp
+#	hls.cpp
+#	intc.cpp
+
 add_executable(unit-tests ${SOURCES})
 
-if(CMAKE_CUDA_COMPILER)
+if (CMAKE_CUDA_COMPILER)
 	enable_language(CUDA)
 	target_sources(unit-tests PRIVATE
 		gpu.cpp rtds2gpu.cpp gpu_kernels.cu)
-endif()
+endif ()
 
 find_package(Criterion REQUIRED)
 

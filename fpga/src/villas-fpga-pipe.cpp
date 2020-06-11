@@ -143,12 +143,11 @@ int main(int argc, char* argv[])
 
 	auto card = setupFpgaCard(configFile, fpgaName);
 
-	auto aurora = dynamic_cast<fpga::ip::Aurora*>
+	auto aurora = std::dynamic_pointer_cast<fpga::ip::Aurora>
 	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:aurora_axis:")));
 
-	auto dma = dynamic_cast<fpga::ip::Dma*>
+	auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
 	          (card->lookupIp("hier_0_axi_dma_axi_dma_0"));
-	
 
 	if (aurora == nullptr) {
 		logger->error("No Aurora interface found on FPGA");

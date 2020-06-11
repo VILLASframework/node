@@ -47,16 +47,14 @@ Test(fpga, fifo, .description = "FIFO")
 
 		logger->info("Testing {}", *ip);
 
-		auto fifo = dynamic_cast<fpga::ip::Fifo&>(*ip);
+		auto fifo = std::dynamic_pointer_cast<fpga::ip::Fifo>(ip);
 
-		if (not fifo.connectLoopback()) {
+		if (not fifo->loopbackPossible()) {
+			logger->info("Loopback test not possible for {}", *ip);
 			continue;
 		}
 
-		count++;
-
-		if (not fifo.loopbackPossible()) {
-			logger->info("Loopback test not possible for {}", *ip);
+		if (not fifo->connectLoopback()) {
 			continue;
 		}
 
@@ -68,13 +66,13 @@ Test(fpga, fifo, .description = "FIFO")
 			continue;
 		}
 
-		len = fifo.write(src, sizeof(src));
+		len = fifo->write(src, sizeof(src));
 		if (len != sizeof(src)) {
 			logger->error("Failed to send to FIFO");
 			continue;
 		}
 
-		len = fifo.read(dst, sizeof(dst));
+		len = fifo->read(dst, sizeof(dst));
 		if (len != sizeof(dst)) {
 			logger->error("Failed to read from FIFO");
 			continue;
@@ -84,7 +82,9 @@ Test(fpga, fifo, .description = "FIFO")
 		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0, "Data not equal");
 
 		logger->info(CLR_GRN("Passed"));
+
+		count++;
 	}
 
-	cr_assert(count > 0, "No fifo found");
+	cr_assert(count > 0, "No FIFO found");
 }

@@ -64,7 +64,6 @@ Test(fpga, rtds, .description = "RTDS")
 	cr_assert(rtdsIps.size() > 0, "No RTDS IPs available to test");
 	cr_assert(dmaIps.size() > 0, "No DMA IPs available to test RTDS with");
 
-
 	for (auto rtds : rtdsIps) {
 		for (auto dma : dmaIps) {
 			logger->info("Testing {} with DMA {}", *rtds, *dma);

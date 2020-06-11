@@ -118,10 +118,9 @@ public:
 	virtual const StreamVertex&
 	getDefaultMasterPort() const;
 
-	const StreamGraph&
-	getGraph() const
+	static const StreamGraph&
+	getGraph()
 	{ return streamGraph; }
-
 
 	bool loopbackPossible() const;
 	bool connectLoopback();

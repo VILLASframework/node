@@ -22,10 +22,10 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/fpga/card.h>
-#include <villas/fpga/ip.h>
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ip.hpp>
 
-#include <villas/fpga/ips/intc.h>
+#include <villas/fpga/ips/intc.hpp>
 
 extern struct fpga_card *card;
 

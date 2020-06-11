@@ -55,11 +55,10 @@ class IpCore;
 class IpCoreFactory;
 class InterruptController;
 
-using IpCoreList = std::list<std::unique_ptr<IpCore>>;
-
 
 class IpIdentifier {
 public:
+
 	IpIdentifier(Vlnv vlnv = Vlnv::getWildcard(), std::string name = "") :
 	    vlnv(vlnv), name(name) {}
 
@@ -105,6 +104,9 @@ class IpCore {
 public:
 	IpCore() : card(nullptr) {}
 	virtual ~IpCore() = default;
+
+	using Ptr = std::shared_ptr<IpCore>;
+	using List = std::list<IpCore::Ptr>;
 
 public:
 	/* Generic management interface for IPs */
@@ -240,7 +242,7 @@ public:
 	using plugin::Plugin::Plugin;
 
 	/// Returns a running and checked FPGA IP
-	static IpCoreList
+	static IpCore::List
 	make(PCIeCard* card, json_t *json_ips);
 
 protected:

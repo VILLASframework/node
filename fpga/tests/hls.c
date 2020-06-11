@@ -24,9 +24,9 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/fpga/card.h>
-#include <villas/fpga/vlnv.h>
-#include <villas/fpga/ip.h>
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/vlnv.hpp>
+#include <villas/fpga/ip.hpp>
 
 extern struct fpga_card *card;
 
@@ -50,7 +50,7 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 	ret = switch_connect(card->sw, hls, rtds);
 	cr_assert_eq(ret, 0, "Failed to configure switch");
 
-	while(1) {
+	while (1) {
 		/* Dump RTDS AXI Stream state */
 		rtds_axis_dump(rtds);
 		sleep(1);
@@ -62,10 +62,10 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 
 	for (int i = 0; i < len; i++) {
 		src[i] = 4 + 5.0 * sin(2.0 * M_PI * 1 * i / NSAMPLES) +
-		             2.0 * sin(2.0 * M_PI * 2 * i / NSAMPLES) +
-			     1.0 * sin(2.0 * M_PI * 5 * i / NSAMPLES) +
-			     0.5 * sin(2.0 * M_PI * 9 * i / NSAMPLES) +
-			     0.2 * sin(2.0 * M_PI * 15 * i / NSAMPLES);
+		         2.0 * sin(2.0 * M_PI * 2 * i / NSAMPLES) +
+		         1.0 * sin(2.0 * M_PI * 5 * i / NSAMPLES) +
+		         0.5 * sin(2.0 * M_PI * 9 * i / NSAMPLES) +
+		         0.2 * sin(2.0 * M_PI * 15 * i / NSAMPLES);
 
 		fifo_write()
 	}

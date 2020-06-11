@@ -52,7 +52,7 @@ vlnvInitializationOrder = {
 };
 
 
-IpCoreList
+IpCore::List
 IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
 	// We only have this logger until we know the factory to build an IP with
@@ -61,8 +61,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	std::list<IpIdentifier> allIps;		// all IPs available in config
 	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
 
-	IpCoreList configuredIps;	// Successfully configured IPs
-	IpCoreList initializedIps;	// Initialized, i.e. ready-to-use IPs
+	IpCore::List configuredIps;	// Successfully configured IPs
+	IpCore::List initializedIps;	// Initialized, i.e. ready-to-use IPs
 
 
 	// parse all IP instance names and their VLNV into list `allIps`

@@ -77,7 +77,6 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		const std::string role(role_raw);
 		const bool isMaster = (role == "master" or role == "initiator");
 
-
 		auto thisVertex = IpNode::streamGraph.getOrCreateStreamVertex(
 		                      ip.getInstanceName(),
 		                      name_raw,
@@ -104,10 +103,10 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 std::pair<std::string, std::string>
 IpNode::getLoopbackPorts() const
 {
-	for (auto& [masterName, masterTo] : portsMaster) {
-		for (auto& [slaveName, slaveTo] : portsSlave) {
-			// TODO: should we also check which IP both ports are connected to?
-			if (masterTo->nodeName == slaveTo->nodeName) {
+	for (auto& [masterName, masterVertex] : portsMaster) {
+		for (auto& [slaveName, slaveVertex] : portsSlave) {
+			StreamGraph::Path path;
+			if (streamGraph.getPath(masterVertex->getIdentifier(), slaveVertex->getIdentifier(), path)) {
 				return { masterName, slaveName };
 			}
 		}
@@ -159,7 +158,7 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 		nextHopNode = secondHopNode;
 	}
 
-	auto nextHopNodeIp = dynamic_cast<IpNode*>
+	auto nextHopNodeIp = std::dynamic_pointer_cast<IpNode>
 	                     (card->lookupIp(nextHopNode->nodeName));
 
 	if (nextHopNodeIp == nullptr) {
@@ -213,19 +212,7 @@ IpNode::connectLoopback()
 	logger->debug("master port: {}", ports.first);
 	logger->debug("slave port: {}", ports.second);
 
-	logger->debug("switch at: {}", portMaster->nodeName);
-
-	// TODO: verify this is really a switch!
-	auto axiStreamSwitch = dynamic_cast<ip::AxiStreamSwitch*>(
-	                            card->lookupIp(portMaster->nodeName));
-
-	if (axiStreamSwitch == nullptr) {
-		logger->error("Cannot find switch");
-		return false;
-	}
-
-	// switch's slave port is our master port and vice versa
-	return axiStreamSwitch->connect(*portMaster, *portSlave);
+	return connect(*portMaster, *portSlave);
 }
 
 } // namespace ip

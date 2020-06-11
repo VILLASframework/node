@@ -75,9 +75,9 @@ public:
 	bool reset() { return true; }
 	void dump()  { }
 
-	ip::IpCore* lookupIp(const std::string& name) const;
-	ip::IpCore* lookupIp(const Vlnv& vlnv) const;
-	ip::IpCore* lookupIp(const ip::IpIdentifier& id) const;
+	ip::IpCore::Ptr lookupIp(const std::string& name) const;
+	ip::IpCore::Ptr lookupIp(const Vlnv& vlnv) const;
+	ip::IpCore::Ptr lookupIp(const ip::IpIdentifier& id) const;
 
 	bool
 	mapMemoryBlock(const MemoryBlock& block);
@@ -87,7 +87,7 @@ private:
 	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
 public:	// TODO: make this private
-	ip::IpCoreList ips;		///< IPs located on this FPGA card
+	ip::IpCore::List ips;		///< IPs located on this FPGA card
 
 	bool do_reset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */

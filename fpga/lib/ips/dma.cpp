@@ -367,7 +367,7 @@ Dma::makeAccesibleFromVA(const MemoryBlock& mem)
 
 	// sanity-check if mapping worked, this shouldn't be neccessary
 	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
-	   not isMemoryBlockAccesible(mem, mm2sInterface)) {
+	    not isMemoryBlockAccesible(mem, mm2sInterface)) {
 		logger->error("Mapping memory via card didn't work, but reported success?!");
 		return false;
 	}

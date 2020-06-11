@@ -56,7 +56,7 @@ AxiPciExpressBridge::init()
 
 	// create a mapping from process address space to the FPGA card via vfio
 	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
-	                 0, bar0_size, "VFIO-H2D",
+	                 0, bar0_size, "vfio-h2d",
 	                 mm.getProcessAddressSpace(),
 	                 card->addrSpaceIdHostToDevice);
 

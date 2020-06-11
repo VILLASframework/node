@@ -37,14 +37,16 @@
 #include <villas/memory.hpp>
 #include <villas/gpu.hpp>
 
+using namespace villas;
+
 
 Test(fpga, gpu_dma, .description = "GPU DMA tests")
 {
-	auto logger = villas::logging.get("unit-test:dma");
+	auto logger = logging.get("unit-test:dma");
 
 	auto& card = state.cards.front();
 
-	auto gpuPlugin = villas::Plugin::Registry<GpuFactory>("cuda");
+	auto gpuPlugin = Plugin::Registry<GpuFactory>("cuda");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
 
 	auto gpus = gpuPlugin->make();
@@ -56,12 +58,12 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 	size_t count = 0;
 	for (auto& ip : card->ips) {
 		// skip non-dma IPs
-		if (*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
+		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
 			continue;
 
 		logger->info("Testing {}", *ip);
 
-		auto bram = dynamic_cast<villas::fpga::ip::Bram*>(ip.get());
+		auto bram = dynamic_cast<fpga::ip::Bram*>(ip.get());
 		cr_assert_not_null(bram, "Couldn't find BRAM");
 
 		count++;
@@ -76,14 +78,14 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		gpu->makeAccessibleFromPCIeOrHostRam(bram0.getMemoryBlock());
 		gpu->makeAccessibleFromPCIeOrHostRam(bram1.getMemoryBlock());
 
-		auto hostRam0 = villas::HostRam::getAllocator().allocate<char>(len);
-		auto hostRam1 = villas::HostRam::getAllocator().allocate<char>(len);
+		auto hostRam0 = HostRam::getAllocator().allocate<char>(len);
+		auto hostRam1 = HostRam::getAllocator().allocate<char>(len);
 
 		gpu->makeAccessibleFromPCIeOrHostRam(hostRam0.getMemoryBlock());
 		gpu->makeAccessibleFromPCIeOrHostRam(hostRam1.getMemoryBlock());
 
-		auto dmaRam0 = villas::HostDmaRam::getAllocator().allocate<char>(len);
-		auto dmaRam1 = villas::HostDmaRam::getAllocator().allocate<char>(len);
+		auto dmaRam0 = HostDmaRam::getAllocator().allocate<char>(len);
+		auto dmaRam1 = HostDmaRam::getAllocator().allocate<char>(len);
 
 		gpu->makeAccessibleFromPCIeOrHostRam(dmaRam0.getMemoryBlock());
 		gpu->makeAccessibleFromPCIeOrHostRam(dmaRam1.getMemoryBlock());
@@ -113,8 +115,8 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		    {"CUDA kernel", [&]() {gpu->memcpyKernel(src.getMemoryBlock(), dst.getMemoryBlock(), len);}},
 	    };
 
-		auto dmaIp = card->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axi_dma:"));
-		auto dma = dynamic_cast<villas::fpga::ip::Dma*>(dmaIp);
+		auto dmaIp = card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:"));
+		auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dmaIp);
 
 		if (dma != nullptr and dma->connectLoopback()) {
 			memcpyFuncs.push_back({

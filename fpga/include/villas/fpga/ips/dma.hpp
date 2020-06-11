@@ -58,6 +58,7 @@ public:
 	bool memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
 
 	bool makeAccesibleFromVA(const MemoryBlock& mem);
+	bool makeInaccesibleFromVA(const MemoryBlock& mem);
 
 	inline bool
 	hasScatterGather() const

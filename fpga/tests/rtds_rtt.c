@@ -22,12 +22,12 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/fpga/card.h>
-#include <villas/fpga/vlnv.h>
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/vlnv.hpp>
 
-#include <villas/fpga/ips/dma.h>
-#include <villas/fpga/ips/switch.h>
-#include <villas/fpga/ips/rtds_axis.h>
+#include <villas/fpga/ips/dma.hpp>
+#include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/ips/rtds.hpp>
 
 extern struct fpga_card *card;
 
@@ -38,12 +38,29 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 	struct dma_mem buf;
 	size_t recvlen;
 
-	/* Get IP cores */
-	rtds = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
-	cr_assert(rtds);
+	std::list<villas::fpga::ip::Rtds*> rtdsIps;
+	std::list<villas::fpga::ip::Dma*> dmaIps;
 
-	ip   = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
-	cr_assert(ip);
+	/* Get IP cores */
+	for (auto& ip : state.cards.front()->ips) {
+		if (*ip == villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
+			auto rtds = reinterpret_cast<villas::fpga::ip::Rtds*>(ip.get());
+			rtdsIps.push_back(rtds);
+		}
+
+		if (*ip == villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")) {
+			auto dma = reinterpret_cast<villas::fpga::ip::Dma*>(ip.get());
+			dmaIps.push_back(dma);
+		}
+	}
+
+	for (auto rtds : rtdsIps) {
+		for (auto dma : dmaIps) {
+
+			rtds->connect
+
+		}
+	}
 
 	ret = switch_connect(card->sw, rtds, ip);
 	cr_assert_eq(ret, 0, "Failed to configure switch");

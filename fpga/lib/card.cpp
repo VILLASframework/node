@@ -119,7 +119,7 @@ PCIeCardFactory::create()
 
 PCIeCard::~PCIeCard()
 {
-	auto& mg = MemoryManager::get().getGraph();
+	auto& mm = MemoryManager::get();
 
 	// unmap all memory blocks
 	for (auto& mappedMemoryBlock : memoryBlocksMapped) {
@@ -136,12 +136,12 @@ PCIeCard::~PCIeCard()
 }
 
 
-ip::IpCore*
+ip::IpCore::Ptr
 PCIeCard::lookupIp(const std::string& name) const
 {
 	for (auto& ip : ips) {
 		if (*ip == name) {
-			return ip.get();
+			return ip;
 		}
 	}
 
@@ -149,23 +149,24 @@ PCIeCard::lookupIp(const std::string& name) const
 }
 
 
-ip::IpCore*
+ip::IpCore::Ptr
 PCIeCard::lookupIp(const Vlnv& vlnv) const
 {
 	for (auto& ip : ips) {
 		if (*ip == vlnv) {
-			return ip.get();
+			return ip;
 		}
 	}
 
 	return nullptr;
 }
 
-ip::IpCore*PCIeCard::lookupIp(const ip::IpIdentifier& id) const
+ip::IpCore::Ptr
+PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 {
 	for (auto& ip : ips) {
 		if (*ip == id) {
-			return ip.get();
+			return ip;
 		}
 	}
 
