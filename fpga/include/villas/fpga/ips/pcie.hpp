@@ -32,13 +32,13 @@
 
 #include <xilinx/xaxis_switch.h>
 
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class AxiPciExpressBridge : public IpCore {
+class AxiPciExpressBridge : public Core {
 public:
 	friend class AxiPciExpressBridgeFactory;
 
@@ -63,16 +63,16 @@ private:
 };
 
 
-class AxiPciExpressBridgeFactory : public IpCoreFactory {
+class AxiPciExpressBridgeFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axi_pcie:"; }
 
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	bool configureJson(Core& ip, json_t *json_ip);
 
-	IpCore* create()
+	Core* create()
 	{ return new AxiPciExpressBridge; }
 
 	virtual std::string

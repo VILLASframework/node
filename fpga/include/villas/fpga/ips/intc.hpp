@@ -30,14 +30,14 @@
 
 #include <xilinx/xintc.h>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class InterruptController : public IpCore
+class InterruptController : public Core
 {
 public:
 	using IrqMaskType = uint32_t;
@@ -81,14 +81,14 @@ private:
 
 
 
-class InterruptControllerFactory : public IpCoreFactory {
+class InterruptControllerFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"; }
 
-	IpCore* create()
+	Core* create()
 	{ return new InterruptController; }
 
 	virtual std::string

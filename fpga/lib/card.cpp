@@ -29,7 +29,7 @@
 #include <villas/kernel/pci.h>
 #include <villas/kernel/vfio.hpp>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
 
 namespace villas {
@@ -92,7 +92,7 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 			continue;
 		}
 
-		card->ips = ip::IpCoreFactory::make(card.get(), json_ips);
+		card->ips = ip::CoreFactory::make(card.get(), json_ips);
 		if (card->ips.empty()) {
 			logger->error("Cannot initialize IPs of FPGA card {}", card_name);
 			continue;
@@ -136,7 +136,7 @@ PCIeCard::~PCIeCard()
 }
 
 
-ip::IpCore::Ptr
+ip::Core::Ptr
 PCIeCard::lookupIp(const std::string& name) const
 {
 	for (auto& ip : ips) {
@@ -149,7 +149,7 @@ PCIeCard::lookupIp(const std::string& name) const
 }
 
 
-ip::IpCore::Ptr
+ip::Core::Ptr
 PCIeCard::lookupIp(const Vlnv& vlnv) const
 {
 	for (auto& ip : ips) {
@@ -161,7 +161,7 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 	return nullptr;
 }
 
-ip::IpCore::Ptr
+ip::Core::Ptr
 PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 {
 	for (auto& ip : ips) {

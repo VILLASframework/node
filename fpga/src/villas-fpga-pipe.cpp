@@ -34,7 +34,7 @@
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>

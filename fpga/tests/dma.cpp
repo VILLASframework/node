@@ -105,5 +105,5 @@ Test(fpga, dma, .description = "DMA")
 	cr_assert(count > 0, "No DMA found");
 
 	MemoryManager::get().getGraph().dump();
-	fpga::ip::IpNode::getGraph().dump();
+	fpga::ip::Node::getGraph().dump();
 }

@@ -136,9 +136,9 @@ AxiStreamSwitch::portNameToNum(const std::string& portName)
 }
 
 bool
-AxiStreamSwitchFactory::configureJson(IpCore& ip, json_t* json_ip)
+AxiStreamSwitchFactory::configureJson(Core& ip, json_t* json_ip)
 {
-	if (not IpNodeFactory::configureJson(ip, json_ip))
+	if (not NodeFactory::configureJson(ip, json_ip))
 		return false;
 
 	auto logger = getLogger();

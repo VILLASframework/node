@@ -34,13 +34,13 @@
 
 #include <xilinx/xaxis_switch.h>
 
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class AxiStreamSwitch : public IpNode {
+class AxiStreamSwitch : public Node {
 public:
 	friend class AxiStreamSwitchFactory;
 
@@ -60,8 +60,8 @@ private:
 	{ return { registerMemory }; }
 
 	struct Path {
-		IpCore* masterOut;
-		IpCore* slaveIn;
+		Core* masterOut;
+		Core* slaveIn;
 	};
 
 	int num_ports;
@@ -70,16 +70,16 @@ private:
 };
 
 
-class AxiStreamSwitchFactory : public IpNodeFactory {
+class AxiStreamSwitchFactory : public NodeFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axis_switch:"; }
 
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	bool configureJson(Core& ip, json_t *json_ip);
 
-	IpCore* create()
+	Core* create()
 	{ return new AxiStreamSwitch; }
 
 	virtual std::string

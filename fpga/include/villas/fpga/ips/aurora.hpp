@@ -27,13 +27,13 @@
 
 #pragma once
 
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class Aurora : public IpNode {
+class Aurora : public Node {
 public:
 	static constexpr const char* masterPort = "m_axis";
 	static constexpr const char* slavePort = "s_axis";
@@ -62,10 +62,10 @@ private:
 };
 
 
-class AuroraFactory : public IpNodeFactory {
+class AuroraFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Aurora; }
 
 	virtual std::string

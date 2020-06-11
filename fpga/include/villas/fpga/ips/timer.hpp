@@ -33,14 +33,14 @@
 #include <xilinx/xtmrctr.h>
 
 #include <villas/fpga/config.h>
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class Timer : public IpCore
+class Timer : public Core
 {
 	friend class TimerFactory;
 public:
@@ -73,10 +73,10 @@ private:
 
 
 
-class TimerFactory : public IpCoreFactory {
+class TimerFactory : public CoreFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Timer; }
 
 	virtual std::string

@@ -30,14 +30,14 @@
 
 #include <xilinx/xintc.h>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class GeneralPurposeIO : public IpCore
+class GeneralPurposeIO : public Core
 {
 public:
 
@@ -51,14 +51,14 @@ private:
 	{ return { registerMemory }; }
 };
 
-class GeneralPurposeIOFactory : public IpCoreFactory {
+class GeneralPurposeIOFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axi_gpio:"; }
 
-	IpCore* create()
+	Core* create()
 	{ return new GeneralPurposeIO; }
 
 	virtual std::string

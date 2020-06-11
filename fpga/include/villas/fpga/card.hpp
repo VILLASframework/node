@@ -42,7 +42,7 @@
 #include <villas/kernel/vfio.hpp>
 
 #include <villas/fpga/config.h>
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 #define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\
@@ -75,9 +75,9 @@ public:
 	bool reset() { return true; }
 	void dump()  { }
 
-	ip::IpCore::Ptr lookupIp(const std::string& name) const;
-	ip::IpCore::Ptr lookupIp(const Vlnv& vlnv) const;
-	ip::IpCore::Ptr lookupIp(const ip::IpIdentifier& id) const;
+	ip::Core::Ptr lookupIp(const std::string& name) const;
+	ip::Core::Ptr lookupIp(const Vlnv& vlnv) const;
+	ip::Core::Ptr lookupIp(const ip::IpIdentifier& id) const;
 
 	bool
 	mapMemoryBlock(const MemoryBlock& block);
@@ -87,7 +87,7 @@ private:
 	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
 public:	// TODO: make this private
-	ip::IpCore::List ips;		///< IPs located on this FPGA card
+	ip::Core::List ips;		///< IPs located on this FPGA card
 
 	bool do_reset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */

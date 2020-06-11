@@ -1,14 +1,14 @@
 #pragma once
 
 #include <villas/memory.hpp>
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class Hls : public virtual IpCore
+class Hls : public virtual Core
 {
 public:
 	virtual bool init()

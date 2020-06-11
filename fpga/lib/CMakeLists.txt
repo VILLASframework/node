@@ -23,8 +23,8 @@
 set(SOURCES
 	vlnv.cpp
 	card.cpp
-	ip.cpp
-	ip_node.cpp
+	core.cpp
+	node.cpp
 
 	ips/timer.cpp
 	ips/switch.cpp

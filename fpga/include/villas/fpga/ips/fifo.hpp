@@ -31,7 +31,7 @@
 
 #include <xilinx/xllfifo.h>
 
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 
 namespace villas {
@@ -39,7 +39,7 @@ namespace fpga {
 namespace ip {
 
 
-class Fifo : public IpNode
+class Fifo : public Node
 {
 public:
 	friend class FifoFactory;
@@ -63,10 +63,10 @@ private:
 
 
 
-class FifoFactory : public IpNodeFactory {
+class FifoFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Fifo; }
 
 	std::string
@@ -82,15 +82,15 @@ public:
 };
 
 
-class FifoData : public IpNode {
+class FifoData : public Node {
 	friend class FifoDataFactory;
 };
 
 
-class FifoDataFactory : public IpNodeFactory {
+class FifoDataFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new FifoData; }
 
 	virtual std::string

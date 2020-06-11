@@ -34,7 +34,7 @@
 #include <string>
 #include <jansson.h>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 #include <villas/graph/directed.hpp>
 
@@ -85,10 +85,10 @@ public:
 };
 
 
-class IpNode : public virtual IpCore {
+class Node : public virtual Core {
 public:
 
-	friend class IpNodeFactory;
+	friend class NodeFactory;
 
 	struct StreamPort {
 		int portNumber;
@@ -107,7 +107,7 @@ public:
 
 	// easy-usage assuming that the slave IP to connect to only has one slave
 	// port and implements the getDefaultSlavePort() function
-	bool connect(const IpNode& slaveNode)
+	bool connect(const Node& slaveNode)
 	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort()); }
 
 	// used by easy-usage connect, will throw if not implemented by derived node
@@ -140,11 +140,11 @@ protected:
 	static StreamGraph streamGraph;
 };
 
-class IpNodeFactory : public IpCoreFactory {
+class NodeFactory : public CoreFactory {
 public:
-	using IpCoreFactory::IpCoreFactory;
+	using CoreFactory::CoreFactory;
 
-	virtual bool configureJson(IpCore& ip, json_t *json_ip);
+	virtual bool configureJson(Core& ip, json_t *json_ip);
 };
 
 /** @} */

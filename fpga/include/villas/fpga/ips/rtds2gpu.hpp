@@ -1,7 +1,7 @@
 #pragma once
 
 #include <villas/memory.hpp>
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/hls.hpp>
 
 #include "rtds2gpu/xrtds2gpu.h"
@@ -25,7 +25,7 @@ union ControlRegister {
 };
 
 
-class Rtds2Gpu : public IpNode, public Hls
+class Rtds2Gpu : public Node, public Hls
 {
 public:
 	friend class Rtds2GpuFactory;
@@ -72,10 +72,10 @@ private:
 };
 
 
-class Rtds2GpuFactory : public IpNodeFactory {
+class Rtds2GpuFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Rtds2Gpu; }
 
 	virtual std::string

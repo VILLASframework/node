@@ -51,8 +51,8 @@ class PCIeCard;
 namespace ip {
 
 // forward declarations
-class IpCore;
-class IpCoreFactory;
+class Core;
+class CoreFactory;
 class InterruptController;
 
 
@@ -98,15 +98,15 @@ private:
 };
 
 
-class IpCore {
-	friend IpCoreFactory;
+class Core {
+	friend CoreFactory;
 
 public:
-	IpCore() : card(nullptr) {}
-	virtual ~IpCore() = default;
+	Core() : card(nullptr) {}
+	virtual ~Core() = default;
 
-	using Ptr = std::shared_ptr<IpCore>;
-	using List = std::list<IpCore::Ptr>;
+	using Ptr = std::shared_ptr<Core>;
+	using List = std::list<Core::Ptr>;
 
 public:
 	/* Generic management interface for IPs */
@@ -168,15 +168,15 @@ public:
 	{ return getInstanceName() != otherName; }
 
 	bool
-	operator==(const IpCore& otherIp) const
+	operator==(const Core& otherIp) const
 	{ return this->id == otherIp.id; }
 
 	bool
-	operator!=(const IpCore& otherIp) const
+	operator!=(const Core& otherIp) const
 	{ return this->id != otherIp.id; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const IpCore& ip)
+	operator<< (std::ostream& stream, const Core& ip)
 	{ return stream << ip.id; }
 
 protected:
@@ -237,12 +237,12 @@ protected:
 
 
 
-class IpCoreFactory : public plugin::Plugin {
+class CoreFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
 	/// Returns a running and checked FPGA IP
-	static IpCore::List
+	static Core::List
 	make(PCIeCard* card, json_t *json_ips);
 
 protected:
@@ -252,20 +252,20 @@ protected:
 
 private:
 	/// Create a concrete IP instance
-	virtual IpCore* create() = 0;
+	virtual Core* create() = 0;
 
 	/// Configure IP instance from JSON config
-	virtual bool configureJson(IpCore& /* ip */, json_t* /* json */)
+	virtual bool configureJson(Core& /* ip */, json_t* /* json */)
 	{ return true; }
 
 	virtual Vlnv getCompatibleVlnv() const = 0;
 
 protected:
 	static Logger
-	getStaticLogger() { return villas::logging.get("IpCoreFactory"); }
+	getStaticLogger() { return villas::logging.get("CoreFactory"); }
 
 private:
-	static IpCoreFactory*
+	static CoreFactory*
 	lookup(const Vlnv& vlnv);
 };
 

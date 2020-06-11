@@ -1,7 +1,7 @@
 #pragma once
 
 #include <villas/memory.hpp>
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/hls.hpp>
 
 #include <villas/fpga/ips/rtds2gpu/register_types.hpp>
@@ -12,7 +12,7 @@ namespace fpga {
 namespace ip {
 
 
-class Gpu2Rtds : public IpNode, public Hls
+class Gpu2Rtds : public Node, public Hls
 {
 public:
 	friend class Gpu2RtdsFactory;
@@ -63,10 +63,10 @@ public:
 };
 
 
-class Gpu2RtdsFactory : public IpNodeFactory {
+class Gpu2RtdsFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Gpu2Rtds; }
 
 	virtual std::string

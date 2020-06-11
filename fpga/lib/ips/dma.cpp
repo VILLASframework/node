@@ -394,7 +394,7 @@ Dma::isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface
 void
 Dma::dump()
 {
-	IpCore::dump();
+	Core::dump();
 
 	logger->info("S2MM_DMACR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_CR_OFFSET));
 	logger->info("S2MM_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_SR_OFFSET));

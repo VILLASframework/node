@@ -26,7 +26,7 @@
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/vlnv.hpp>
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 extern struct fpga_card *card;
 

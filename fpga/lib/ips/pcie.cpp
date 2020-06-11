@@ -122,7 +122,7 @@ AxiPciExpressBridge::init()
 }
 
 bool
-AxiPciExpressBridgeFactory::configureJson(IpCore& ip, json_t* json_ip)
+AxiPciExpressBridgeFactory::configureJson(Core& ip, json_t* json_ip)
 {
 	auto logger = getLogger();
 	auto& pcie = dynamic_cast<AxiPciExpressBridge&>(ip);

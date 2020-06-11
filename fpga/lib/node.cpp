@@ -27,7 +27,7 @@
 #include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/switch.hpp>
 
 namespace villas {
@@ -36,12 +36,12 @@ namespace ip {
 
 
 StreamGraph
-IpNode::streamGraph;
+Node::streamGraph;
 
 bool
-IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
+NodeFactory::configureJson(Core& ip, json_t* json_ip)
 {
-	auto& ipNode = dynamic_cast<IpNode&>(ip);
+	auto& Node = dynamic_cast<ip::Node&>(ip);
 	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
@@ -77,23 +77,23 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		const std::string role(role_raw);
 		const bool isMaster = (role == "master" or role == "initiator");
 
-		auto thisVertex = IpNode::streamGraph.getOrCreateStreamVertex(
+		auto thisVertex = Node::streamGraph.getOrCreateStreamVertex(
 		                      ip.getInstanceName(),
 		                      name_raw,
 		                      isMaster);
 
-		auto connectedVertex = IpNode::streamGraph.getOrCreateStreamVertex(
+		auto connectedVertex = Node::streamGraph.getOrCreateStreamVertex(
 		                           tokens[0],
 		                           tokens[1],
 		                           not isMaster);
 
 
 		if (isMaster) {
-			IpNode::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
+			Node::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
 			                                   connectedVertex->getIdentifier());
-			ipNode.portsMaster[name_raw] = thisVertex;
+			Node.portsMaster[name_raw] = thisVertex;
 		} else /* slave */ {
-			ipNode.portsSlave[name_raw] = thisVertex;
+			Node.portsSlave[name_raw] = thisVertex;
 		}
 	}
 
@@ -101,7 +101,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 }
 
 std::pair<std::string, std::string>
-IpNode::getLoopbackPorts() const
+Node::getLoopbackPorts() const
 {
 	for (auto& [masterName, masterVertex] : portsMaster) {
 		for (auto& [slaveName, slaveVertex] : portsSlave) {
@@ -115,7 +115,7 @@ IpNode::getLoopbackPorts() const
 	return { "", "" };
 }
 
-bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
+bool Node::connect(const StreamVertex& from, const StreamVertex& to)
 {
 	if (from.nodeName != getInstanceName()) {
 		logger->error("Cannot connect from a foreign StreamVertex: {}", from);
@@ -158,7 +158,7 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 		nextHopNode = secondHopNode;
 	}
 
-	auto nextHopNodeIp = std::dynamic_pointer_cast<IpNode>
+	auto nextHopNodeIp = std::dynamic_pointer_cast<Node>
 	                     (card->lookupIp(nextHopNode->nodeName));
 
 	if (nextHopNodeIp == nullptr) {
@@ -171,28 +171,28 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 }
 
 const StreamVertex&
-IpNode::getDefaultSlavePort() const
+Node::getDefaultSlavePort() const
 {
 	logger->error("No default slave port available");
 	throw std::exception();
 }
 
 const StreamVertex&
-IpNode::getDefaultMasterPort() const
+Node::getDefaultMasterPort() const
 {
 	logger->error("No default master port available");
 	throw std::exception();
 }
 
 bool
-IpNode::loopbackPossible() const
+Node::loopbackPossible() const
 {
 	auto ports = getLoopbackPorts();
 	return (not ports.first.empty()) and (not ports.second.empty());
 }
 
 bool
-IpNode::connectInternal(const std::string& slavePort,
+Node::connectInternal(const std::string& slavePort,
                         const std::string& masterPort)
 {
 	(void) slavePort;
@@ -203,7 +203,7 @@ IpNode::connectInternal(const std::string& slavePort,
 }
 
 bool
-IpNode::connectLoopback()
+Node::connectLoopback()
 {
 	auto ports = getLoopbackPorts();
 	const auto& portMaster = portsMaster[ports.first];

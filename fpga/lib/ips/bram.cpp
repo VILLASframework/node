@@ -29,7 +29,7 @@ namespace ip {
 static BramFactory factory;
 
 bool
-BramFactory::configureJson(IpCore& ip, json_t* json_ip)
+BramFactory::configureJson(Core& ip, json_t* json_ip)
 {
 	auto& bram = dynamic_cast<Bram&>(ip);
 

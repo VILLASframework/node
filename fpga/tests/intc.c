@@ -23,7 +23,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 #include <villas/fpga/ips/intc.hpp>
 

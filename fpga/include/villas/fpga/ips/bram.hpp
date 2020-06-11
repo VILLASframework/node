@@ -27,14 +27,14 @@
 #pragma once
 
 #include <villas/memory.hpp>
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class Bram : public IpCore
+class Bram : public Core
 {
 	friend class BramFactory;
 public:
@@ -56,12 +56,12 @@ private:
 
 
 
-class BramFactory : public IpCoreFactory {
+class BramFactory : public CoreFactory {
 public:
 
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	bool configureJson(Core& ip, json_t *json_ip);
 
-	IpCore* create()
+	Core* create()
 	{ return new Bram; }
 
 	virtual std::string

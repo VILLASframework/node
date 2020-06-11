@@ -31,7 +31,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/vlnv.hpp>
 
-#include <villas/fpga/ip.hpp>
+#include <villas/fpga/core.hpp>
 #include <villas/fpga/ips/pcie.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
@@ -52,8 +52,8 @@ vlnvInitializationOrder = {
 };
 
 
-IpCore::List
-IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
+Core::List
+CoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
 	// We only have this logger until we know the factory to build an IP with
 	auto loggerStatic = getStaticLogger();
@@ -61,8 +61,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	std::list<IpIdentifier> allIps;		// all IPs available in config
 	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
 
-	IpCore::List configuredIps;	// Successfully configured IPs
-	IpCore::List initializedIps;	// Initialized, i.e. ready-to-use IPs
+	Core::List configuredIps;	// Successfully configured IPs
+	Core::List initializedIps;	// Initialized, i.e. ready-to-use IPs
 
 
 	// parse all IP instance names and their VLNV into list `allIps`
@@ -112,29 +112,29 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// This is the magic part! Factories automatically register as a
 		// plugin as soon as they are instantiated. If there are multiple
 		// candidates, the first suitable factory will be used.
-		IpCoreFactory* ipCoreFactory = lookup(id.getVlnv());
+		CoreFactory* CoreFactory = lookup(id.getVlnv());
 
-		if (ipCoreFactory == nullptr) {
+		if (CoreFactory == nullptr) {
 			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
 		} else {
 			loggerStatic->debug("Using {} for IP {}",
-			                    ipCoreFactory->getName(), id.getVlnv());
+			                    CoreFactory->getName(), id.getVlnv());
 		}
 
-		auto logger = ipCoreFactory->getLogger();
+		auto logger = CoreFactory->getLogger();
 
 		// Create new IP instance. Since this function is virtual, it will
 		// construct the right, specialized type without knowing it here
 		// because we have already picked the right factory.
 		// If something goes wrong with initialization, the shared_ptr will
-		// take care to desctruct the IpCore again as it is not pushed to
+		// take care to desctruct the Core again as it is not pushed to
 		// the list and will run out of scope.
-		auto ip = std::unique_ptr<IpCore>(ipCoreFactory->create());
+		auto ip = std::unique_ptr<Core>(CoreFactory->create());
 
 		if (ip == nullptr) {
 			logger->warn("Cannot create an instance of {}",
-			             ipCoreFactory->getName());
+			             CoreFactory->getName());
 			continue;
 		}
 
@@ -255,7 +255,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		if (not ipCoreFactory->configureJson(*ip, json_ip)) {
+		if (not CoreFactory->configureJson(*ip, json_ip)) {
 			logger->warn("Cannot configure IP from JSON");
 			continue;
 		}
@@ -318,7 +318,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 void
-IpCore::dump()
+Core::dump()
 {
 	logger->info("IP: {}", *this);
 	for (auto& [num, irq] : irqs) {
@@ -332,10 +332,10 @@ IpCore::dump()
 }
 
 
-IpCoreFactory*
-IpCoreFactory::lookup(const Vlnv &vlnv)
+CoreFactory*
+CoreFactory::lookup(const Vlnv &vlnv)
 {
-	for (auto& ip : plugin::Registry::lookup<IpCoreFactory>()) {
+	for (auto& ip : plugin::Registry::lookup<CoreFactory>()) {
 		if (ip->getCompatibleVlnv() == vlnv)
 			return ip;
 	}
@@ -345,7 +345,7 @@ IpCoreFactory::lookup(const Vlnv &vlnv)
 
 
 uintptr_t
-IpCore::getLocalAddr(const MemoryBlockName& block, uintptr_t address) const
+Core::getLocalAddr(const MemoryBlockName& block, uintptr_t address) const
 {
 	// throws exception if block not present
 	auto& translation = addressTranslations.at(block);
@@ -355,7 +355,7 @@ IpCore::getLocalAddr(const MemoryBlockName& block, uintptr_t address) const
 
 
 InterruptController*
-IpCore::getInterruptController(const std::string& interruptName) const
+Core::getInterruptController(const std::string& interruptName) const
 {
 	try {
 		const IrqPort irq = irqs.at(interruptName);

@@ -29,13 +29,13 @@
 #include <xilinx/xaxidma.h>
 
 #include <villas/memory.hpp>
-#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class Dma : public IpNode
+class Dma : public Node
 {
 public:
 	friend class DmaFactory;
@@ -112,10 +112,10 @@ private:
 
 
 
-class DmaFactory : public IpNodeFactory {
+class DmaFactory : public NodeFactory {
 public:
 
-	IpCore* create()
+	Core* create()
 	{ return new Dma; }
 
 	virtual std::string
