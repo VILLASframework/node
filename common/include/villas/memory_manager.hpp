@@ -179,7 +179,7 @@ public:
 	static MemoryManager&
 	get();
 
-	MemoryGraph & getMemoryGraph()
+	MemoryGraph & getGraph()
 	{ return memoryGraph; }
 
 	AddressSpaceId
@@ -240,14 +240,6 @@ public:
 	getMasterAddrSpaceName(const std::string& ipInstance, const std::string& busInterface)
 	{ return ipInstance + ":" + busInterface; }
 
-	void
-	dump()
-	{ memoryGraph.dump(); }
-
-	void
-	dumpToFile(const std::string& fileName)
-	{ memoryGraph.dump(fileName); }
-
 private:
 	/// Convert a Mapping to MemoryTranslation for calculations
 	static MemoryTranslation
@@ -257,7 +249,6 @@ private:
 	bool
 	pathCheck(const MemoryGraph::Path& path);
 
-private:
 	/// Directed graph that stores address spaces and memory mappings
 	MemoryGraph memoryGraph;
 

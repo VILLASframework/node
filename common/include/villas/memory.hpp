@@ -54,8 +54,8 @@ public:
 	{ return offset; }
 
 protected:
-	size_t offset;								///< Offset (or address) inside address space
-	size_t size;								///< Size in bytes of this block
+	size_t offset;					///< Offset (or address) inside address space
+	size_t size;					///< Size in bytes of this block
 	MemoryManager::AddressSpaceId addrSpaceId;	///< Identifier in memory graph
 };
 
@@ -79,14 +79,17 @@ public:
 	// take ownership of the MemoryBlock
 	MemoryAccessor(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem->getAddrSpaceId())),
-	    memoryBlock(std::move(mem)) {}
+	    memoryBlock(std::move(mem))
+	{}
 
 	// just act as an accessor, do not take ownership of MemoryBlock
 	MemoryAccessor(const MemoryBlock& mem) :
-	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId())) {}
+	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId()))
+	{}
 
 	MemoryAccessor(const MemoryTranslation& translation) :
-	    translation(translation) {}
+	    translation(translation)
+	{}
 
 	T& operator*() const {
 		return *reinterpret_cast<T*>(translation.getLocalAddr(0));
@@ -205,7 +208,6 @@ protected:
 	MemoryManager::AddressSpaceId getAddrSpaceId() const
 	{ return memoryAddrSpaceId; }
 
-protected:
 	MemoryBlock::deallocator_fn free;
 	Logger logger;
 
@@ -257,7 +259,6 @@ private:
 	size_t getAlignmentPadding(uintptr_t addr) const
 	{ return (alignBytes - (addr & alignMask)) & alignMask; }
 
-private:
 	size_t nextFreeAddress;	///< next chunk will be allocated here
 	size_t memorySize;		///< total size of managed memory
 	size_t internalOffset;	///< offset in address space (usually 0)
@@ -294,20 +295,6 @@ private:
 
 
 class HostDmaRam {
-private:
-
-	static std::string
-	getUdmaBufName(int num);
-
-	static std::string
-	getUdmaBufBasePath(int num);
-
-	static size_t
-	getUdmaBufBufSize(int num);
-
-	static uintptr_t
-	getUdmaBufPhysAddr(int num);
-
 public:
 	class HostDmaRamAllocator : public LinearAllocator {
 	public:
@@ -327,6 +314,18 @@ public:
 
 private:
 	static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
+
+	static std::string
+	getUdmaBufName(int num);
+
+	static std::string
+	getUdmaBufBasePath(int num);
+
+	static size_t
+	getUdmaBufBufSize(int num);
+
+	static uintptr_t
+	getUdmaBufPhysAddr(int num);
 };
 
 } /* namespace villas */
