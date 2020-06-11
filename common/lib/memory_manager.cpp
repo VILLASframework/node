@@ -37,7 +37,7 @@ MemoryManager::instance = nullptr;
 MemoryManager&
 MemoryManager::get()
 {
-	if(instance == nullptr) {
+	if (instance == nullptr) {
 		instance = new MemoryManager;
 	}
 
@@ -106,7 +106,7 @@ MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
 
 	/* Find a path through the memory graph */
 	MemoryGraph::Path pathGraph;
-	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
+	if (not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
 
 		logger->debug("No translation found from ({}) to ({})",
 		              *fromAddrSpace, *toAddrSpace);
@@ -114,7 +114,7 @@ MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
 		throw std::out_of_range("no translation found");
 	}
 
-	for(auto& mappingId : pathGraph) {
+	for (auto& mappingId : pathGraph) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		path.push_back(mapping->getVertexTo());
 	}
@@ -128,7 +128,7 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 {
 	/* Find a path through the memory graph */
 	MemoryGraph::Path path;
-	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
+	if (not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
 
 		auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
 		auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
@@ -142,7 +142,7 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
 	/* Iterate through path and merge all mappings into a single translation */
-	for(auto& mappingId : path) {
+	for (auto& mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		translation += getTranslationFromMapping(*mapping);
 	}
@@ -159,7 +159,7 @@ MemoryManager::pathCheck(const MemoryGraph::Path& path)
 	/* Try to add all mappings together to a common translation. If this fails
 	 * there is a non-overlapping window.
 	 */
-	for(auto& mappingId : path) {
+	for (auto& mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		try {
 			translation += getTranslationFromMapping(*mapping);
@@ -237,7 +237,7 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	/* The source stays the same and can only increase with merged translations */
 	//this->src = this->src;
 
-	if(otherSrcIsSmaller) {
+	if (otherSrcIsSmaller) {
 		/* Other mapping starts at lower addresses, so we actually arrive at
 		 * higher addresses
 		 */

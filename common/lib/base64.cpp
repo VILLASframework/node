@@ -81,8 +81,8 @@ std::vector<byte> decode(const std::string& input)
 	std::size_t padding{};
 
 	if (input.length()) {
-		if(input[input.length() - 1] == kPadCharacter) padding++;
-		if(input[input.length() - 2] == kPadCharacter) padding++;
+		if (input[input.length() - 1] == kPadCharacter) padding++;
+		if (input[input.length() - 2] == kPadCharacter) padding++;
 	}
 
 	std::vector<byte> decoded;

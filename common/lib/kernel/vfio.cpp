@@ -121,8 +121,8 @@ VfioContainer::VfioContainer()
 
 	hasIommu = false;
 
-	if(not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
-		if(not (extensions & (1 << VFIO_TYPE1_IOMMU))) {
+	if (not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
+		if (not (extensions & (1 << VFIO_TYPE1_IOMMU))) {
 			logger->error("No supported IOMMU extension found");
 			throw std::exception();
 		} else {
@@ -170,14 +170,14 @@ VfioContainer::dump()
 	logger->info("Version: {}", version);
 	logger->info("Extensions: 0x{:x}", extensions);
 
-	for(auto& group : groups) {
+	for (auto& group : groups) {
 		logger->info("VFIO Group {}, viable={}, container={}",
 		             group->index,
 		             (group->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
 		             (group->status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0
 		);
 
-		for(auto& device : group->devices) {
+		for (auto& device : group->devices) {
 			logger->info("Device {}: regions={}, irqs={}, flags={}",
 			             device->name,
 			             device->info.num_regions,
@@ -319,7 +319,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
 	if (index < 0) {
 		ret = kernel::get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
-		if(ret != 0 || strcmp("on", iommu_state) != 0)
+		if (ret != 0 || strcmp("on", iommu_state) != 0)
 			logger->warn("Kernel booted without command line parameter "
 					"'intel_iommu' set to 'on'. Please check documentation "
 					"(https://villas.fein-aachen.org/doc/fpga-setup.html) "
@@ -339,7 +339,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	device.pci_device = pdev;
 
 	/* Check if this is really a vfio-pci device */
-	if(not device.isVfioPciDevice()) {
+	if (not device.isVfioPciDevice()) {
 		logger->error("Device is not a vfio-pci device");
 		throw std::exception();
 	}
@@ -433,7 +433,7 @@ VfioContainer::getOrAttachGroup(int index)
 
 	/* Search if group with index already exists */
 	for (auto& group : groups) {
-		if(group->index == index) {
+		if (group->index == index) {
 			return *group;
 		}
 	}
@@ -460,7 +460,7 @@ VfioDevice::~VfioDevice()
 
 	logger->debug("Clean up device {} with fd {}", this->name, this->fd);
 
-	for(auto& region : regions) {
+	for (auto& region : regions) {
 		regionUnmap(region.index);
 	}
 
@@ -531,7 +531,7 @@ VfioDevice::regionGetSize(size_t index)
 {
 	Logger logger = logging.get("kernel:vfio");
 
-	if(index >= regions.size()) {
+	if (index >= regions.size()) {
 		logger->error("Index out of range: {} >= {}", index, regions.size());
 		throw std::out_of_range("Index out of range");
 	}
@@ -619,7 +619,7 @@ VfioDevice::pciHotReset()
 
 	delete[] reset_buf;
 
-	if(not success and not group.container->isIommuEnabled()) {
+	if (not success and not group.container->isIommuEnabled()) {
 		logger->info("PCI hot reset failed, but this is expected without IOMMU");
 		return true;
 	}
@@ -632,7 +632,7 @@ int
 VfioDevice::pciMsiInit(int efds[])
 {
 	/* Check if this is really a vfio-pci device */
-	if(not isVfioPciDevice())
+	if (not isVfioPciDevice())
 		return -1;
 
 	const size_t irqCount = irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
@@ -641,7 +641,7 @@ VfioDevice::pciMsiInit(int efds[])
 
 	auto *irqSetBuf = new char[irqSetSize];
 	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
-	if(irqSet == nullptr)
+	if (irqSet == nullptr)
 		return -1;
 
 	irqSet->argsz = irqSetSize;
@@ -661,7 +661,7 @@ VfioDevice::pciMsiInit(int efds[])
 
 	memcpy(irqSet->data, efds, sizeof(int) * irqCount);
 
-	if(ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
+	if (ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
 		delete[] irqSetBuf;
 		return -1;
 	}
@@ -676,7 +676,7 @@ int
 VfioDevice::pciMsiDeinit(int efds[])
 {
 	/* Check if this is really a vfio-pci device */
-	if(not isVfioPciDevice())
+	if (not isVfioPciDevice())
 		return -1;
 
 	const size_t irqCount = irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
@@ -685,7 +685,7 @@ VfioDevice::pciMsiDeinit(int efds[])
 
 	auto *irqSetBuf = new char[irqSetSize];
 	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
-	if(irqSet == nullptr)
+	if (irqSet == nullptr)
 		return -1;
 
 	irqSet->argsz = irqSetSize;
@@ -770,7 +770,7 @@ VfioGroup::~VfioGroup()
 	/* Release memory and close fds */
 	devices.clear();
 
-	if(fd < 0) {
+	if (fd < 0) {
 		logger->debug("Destructing group that has not been attached");
 	} else {
 		int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
