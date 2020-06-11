@@ -65,7 +65,6 @@ private:
 
 class FifoFactory : public IpNodeFactory {
 public:
-	FifoFactory();
 
 	IpCore* create()
 	{ return new Fifo; }
@@ -90,20 +89,20 @@ class FifoData : public IpNode {
 
 class FifoDataFactory : public IpNodeFactory {
 public:
-	FifoDataFactory();
 
 	IpCore* create()
 	{ return new FifoData; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "FifoData"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Xilinx's AXI4 data stream FIFO"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axis_data_fifo:"}; }
 };
 

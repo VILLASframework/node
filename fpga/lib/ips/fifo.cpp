@@ -41,19 +41,6 @@ static FifoFactory factory;
 static FifoDataFactory factoryData;
 
 
-FifoFactory::FifoFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-	// nothing to do
-}
-
-FifoDataFactory::FifoDataFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-	// nothing to do
-}
-
-
 bool Fifo::init()
 {
 	XLlFifo_Config fifo_cfg;

@@ -113,20 +113,20 @@ private:
 
 class DmaFactory : public IpNodeFactory {
 public:
-	DmaFactory();
 
 	IpCore* create()
 	{ return new Dma; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "Dma"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Xilinx's AXI4 Direct Memory Access Controller"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axi_dma:"}; }
 };
 

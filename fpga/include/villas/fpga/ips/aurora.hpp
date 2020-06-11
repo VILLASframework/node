@@ -64,20 +64,20 @@ private:
 
 class AuroraFactory : public IpNodeFactory {
 public:
-	AuroraFactory();
 
 	IpCore* create()
 	{ return new Aurora; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "Aurora"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Aurora 8B/10B and additional support modules, like an AXI4-Lite register interface."; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"acs.eonerc.rwth-aachen.de:user:aurora_axis:"}; }
 
 };

@@ -76,22 +76,19 @@ private:
 class TimerFactory : public IpCoreFactory {
 public:
 
-	TimerFactory() :
-	    IpCoreFactory(getName(), getDescription())
-	{}
-
 	IpCore* create()
 	{ return new Timer; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "Timer"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Xilinx's programmable timer / counter"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axi_timer:"}; }
 };
 

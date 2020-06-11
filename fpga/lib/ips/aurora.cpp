@@ -119,11 +119,6 @@ void Aurora::resetFrameCounters()
 	writeMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET, cr);
 }
 
-AuroraFactory::AuroraFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-}
-
 } // namespace ip
 } // namespace fpga
 } // namespace villas

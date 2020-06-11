@@ -54,10 +54,6 @@ private:
 class GeneralPurposeIOFactory : public IpCoreFactory {
 public:
 
-	GeneralPurposeIOFactory() :
-	    IpCoreFactory(getName(), getDescription())
-	{}
-
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axi_gpio:"; }
@@ -65,15 +61,16 @@ public:
 	IpCore* create()
 	{ return new GeneralPurposeIO; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "GeneralPurposeIO"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Xilinx's AXI4 general purpose IO"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return Vlnv(getCompatibleVlnvString()); }
 };
 

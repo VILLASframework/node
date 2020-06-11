@@ -131,11 +131,6 @@ Gpu2Rtds::getMaxFrameSize()
 //	logger->info("  Seq. number: {}", doorbell.seq_nr);
 //}
 
-Gpu2RtdsFactory::Gpu2RtdsFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-}
-
 } // namespace ip
 } // namespace fpga
 } // namespace villas

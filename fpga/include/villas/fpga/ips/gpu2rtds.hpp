@@ -65,20 +65,20 @@ public:
 
 class Gpu2RtdsFactory : public IpNodeFactory {
 public:
-	Gpu2RtdsFactory();
 
 	IpCore* create()
 	{ return new Gpu2Rtds; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "Gpu2Rtds"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "HLS Gpu2Rtds IP"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"acs.eonerc.rwth-aachen.de:hls:gpu2rtds:"}; }
 };
 

@@ -116,11 +116,6 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 	logger->info("  Seq. number: {}", doorbell.seq_nr);
 }
 
-Rtds2GpuFactory::Rtds2GpuFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-}
-
 } // namespace ip
 } // namespace fpga
 } // namespace villas

@@ -92,11 +92,6 @@ double Rtds::getDt()
 	return (dt == 0xFFFF) ? 0.0 : (double) dt / RTDS_HZ;
 }
 
-RtdsFactory::RtdsFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-}
-
 } // namespace ip
 } // namespace fpga
 } // namespace villas

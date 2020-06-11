@@ -84,10 +84,6 @@ private:
 class InterruptControllerFactory : public IpCoreFactory {
 public:
 
-	InterruptControllerFactory() :
-	    IpCoreFactory(getName(), getDescription())
-	{}
-
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"; }
@@ -95,15 +91,16 @@ public:
 	IpCore* create()
 	{ return new InterruptController; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "InterruptController"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Xilinx's programmable interrupt controller"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return Vlnv(getCompatibleVlnvString()); }
 };
 

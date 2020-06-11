@@ -42,13 +42,6 @@ namespace ip {
 // instantiate factory to make available to plugin infrastructure
 static DmaFactory factory;
 
-DmaFactory::DmaFactory() :
-    IpNodeFactory(getName(), getDescription())
-{
-	// nothing to do
-}
-
-
 bool
 Dma::init()
 {
@@ -89,7 +82,7 @@ Dma::init()
 	/* Map buffer descriptors */
 	if (hasScatterGather()) {
 		logger->warn("Scatter Gather not yet implemented");
-//		return false;
+		return false;
 
 //		ret = dma_alloc(c, &dma->bd, FPGA_DMA_BD_SIZE, 0);
 //		if (ret)

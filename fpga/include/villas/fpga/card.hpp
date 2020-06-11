@@ -124,9 +124,6 @@ using CardList = std::list<std::shared_ptr<PCIeCard>>;
 class PCIeCardFactory : public plugin::Plugin {
 public:
 
-	PCIeCardFactory() :
-	    Plugin("pcie", "Xilinx PCIe FPGA cards") {}
-
 	static CardList
 	make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc);
 
@@ -136,6 +133,14 @@ public:
 	static Logger
 	getStaticLogger()
 	{ return villas::logging.get("PCIeCardFactory"); }
+
+	virtual std::string
+	getName() const
+	{ return "pcie"; }
+
+	virtual std::string
+	getDescription() const
+	{ return "Xilinx PCIe FPGA cards"; } 
 };
 
 } /* namespace fpga */

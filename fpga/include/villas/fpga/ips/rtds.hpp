@@ -62,20 +62,19 @@ private:
 
 class RtdsFactory : public IpNodeFactory {
 public:
-	RtdsFactory();
-
 	IpCore* create()
 	{ return new Rtds; }
 
-	std::string
+	virtual std::string
 	getName() const
-	{ return "Rtds"; }
+	{ return "rtds"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "RTDS's AXI4-Stream - GTFPGA interface"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"acs.eonerc.rwth-aachen.de:user:rtds_axis:"}; }
 };
 

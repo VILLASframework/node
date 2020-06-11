@@ -72,8 +72,6 @@ private:
 
 class AxiStreamSwitchFactory : public IpNodeFactory {
 public:
-	AxiStreamSwitchFactory() :
-	    IpNodeFactory(getName(), getDescription()) {}
 
 	static constexpr const char*
 	getCompatibleVlnvString()
@@ -84,13 +82,16 @@ public:
 	IpCore* create()
 	{ return new AxiStreamSwitch; }
 
-	std::string	getName() const
+	virtual std::string
+	getName() const
 	{ return "AxiStreamSwitch"; }
 
-	std::string getDescription() const
+	virtual std::string
+	getDescription() const
 	{ return "Xilinx's AXI4-Stream switch"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return Vlnv(getCompatibleVlnvString()); }
 };
 

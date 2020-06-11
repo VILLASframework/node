@@ -59,24 +59,21 @@ private:
 class BramFactory : public IpCoreFactory {
 public:
 
-	BramFactory() :
-	    IpCoreFactory(getName(), getDescription())
-	{}
-
 	bool configureJson(IpCore& ip, json_t *json_ip);
 
 	IpCore* create()
 	{ return new Bram; }
 
-	std::string
+	virtual std::string
 	getName() const
 	{ return "Bram"; }
 
-	std::string
+	virtual std::string
 	getDescription() const
 	{ return "Block RAM"; }
 
-	Vlnv getCompatibleVlnv() const
+	virtual Vlnv
+	getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axi_bram_ctrl:"}; }
 };
 
