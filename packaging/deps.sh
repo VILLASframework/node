@@ -169,6 +169,18 @@ if ! pkg-config "nanomsg >= 1.0.0"; then
     popd
 fi
 
+# Build & Install libxil
+if ! pkg-config "libxil >= 1.0.0"; then
+    git clone https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
+    mkdir -p libxil/build
+    pushd libxil/build
+    cmake ${CMAKE_OPTS} ..
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    fi
+    popd
+fi
+
 if [ -n "${PACKAGE}" ]; then
     cp ~/rpmbuild/RPMS/x86_64/*.rpm rpms
 fi
