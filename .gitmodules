@@ -3,7 +3,7 @@
 	url = https://github.com/flot/flot.git
 [submodule "common"]
 	path = common
-	url = ../VILLAScommon.git
+	url = ../common.git
 [submodule "packaging/live-iso/fedora-kickstarts"]
 	path = packaging/live-iso/fedora-kickstarts
 	url = https://pagure.io/fedora-kickstarts.git
