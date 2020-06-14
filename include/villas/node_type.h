@@ -28,7 +28,6 @@
 
 #include <jansson.h>
 
-#include <villas/super_node.hpp>
 #include <villas/list.h>
 #include <villas/common.hpp>
 #include <villas/memory.h>
@@ -36,6 +35,12 @@
 /* Forward declarations */
 struct node;
 struct sample;
+
+namespace villas {
+namespace node {
+class SuperNode;
+}
+}
 
 enum class NodeFlags {
 	PROVIDES_SIGNALS	= (1 << 0)
