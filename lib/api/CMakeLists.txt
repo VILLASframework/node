@@ -48,5 +48,5 @@ endif()
 
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(api INTERFACE ${LIBRARIES} PUBLIC villas-common)
+target_link_libraries(api PUBLIC ${LIBRARIES})
 

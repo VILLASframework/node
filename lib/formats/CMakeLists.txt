@@ -73,4 +73,4 @@ list(APPEND FORMAT_SRC
 
 add_library(formats STATIC ${FORMAT_SRC})
 target_include_directories(formats PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(formats INTERFACE ${LIBRARIES} PUBLIC villas-common)
+target_link_libraries(formats PUBLIC ${LIBRARIES})

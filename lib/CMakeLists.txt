@@ -29,9 +29,9 @@ list(APPEND INCLUDE_DIRS
 )
 
 set(LIBRARIES
+    villas-common
     PkgConfig::JANSSON
     PkgConfig::UUID
-    villas-common
     m
     stdc++
 )
@@ -137,7 +137,7 @@ endif()
 add_library(villas SHARED ${LIB_SRC})
 
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(villas PUBLIC ${LIBRARIES} villas-common)
+target_link_libraries(villas PUBLIC ${LIBRARIES})
 
 if(APPLE)
     target_link_libraries(villas PRIVATE -Wl,-all_load ${WHOLE_ARCHIVES} -Wl,-noall_load)
