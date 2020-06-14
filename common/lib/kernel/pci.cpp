@@ -30,12 +30,11 @@
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/config.h>
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 
-using namespace villas;
-using namespace villas::utils;
+using namespace villas::kernel::pci;
 
-int pci_init(struct pci *p)
+DeviceList::DeviceList()
 {
 	struct dirent *e;
 	DIR *dp;
@@ -43,15 +42,11 @@ int pci_init(struct pci *p)
 	char path[PATH_MAX];
 	int ret;
 
-	vlist_init(&p->devices);
-
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
 
 	dp = opendir(path);
-	if (dp == nullptr) {
-		serror("Failed to detect PCI devices");
-		return -1;
-	}
+	if (!dp)
+		throw SystemError("Failed to detect PCI devices");
 
 	while ((e = readdir(dp))) {
 		/* Ignore special entries */
@@ -59,15 +54,12 @@ int pci_init(struct pci *p)
 		    (strcmp(e->d_name, "..") == 0) )
 			continue;
 
-		struct pci_device *d = new struct pci_device;
-		if (!d)
-			throw RuntimeError("Failed to allocate memory!");
-
-		memset(d, 0, sizeof(struct pci_device));
+		Id id;
+		Slot slot;
 
 		struct { const char *s; int *p; } map[] = {
-			{ "vendor", &d->id.vendor },
-			{ "device", &d->id.device }
+			{ "vendor", &id.vendor },
+			{ "device", &id.device }
 		};
 
 		/* Read vendor & device id */
@@ -76,7 +68,7 @@ int pci_init(struct pci *p)
 
 			f = fopen(path, "r");
 			if (!f)
-				serror("Failed to open '%s'", path);
+				throw SystemError("Failed to open '{}'", path);
 
 			ret = fscanf(f, "%x", map[i].p);
 			if (ret != 1)
@@ -86,63 +78,138 @@ int pci_init(struct pci *p)
 		}
 
 		/* Get slot id */
-		ret = sscanf(e->d_name, "%4x:%2x:%2x.%u", &d->slot.domain, &d->slot.bus, &d->slot.device, &d->slot.function);
+		ret = sscanf(e->d_name, "%4x:%2x:%2x.%u", &slot.domain, &slot.bus, &slot.device, &slot.function);
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", e->d_name);
 
-		vlist_push(&p->devices, d);
+		emplace_back(id, slot);
 	}
 
 	closedir(dp);
-
-	return 0;
 }
 
-int pci_destroy(struct pci *p)
+Device &
+DeviceList::lookupDevice(const Slot &s)
 {
-	vlist_destroy(&p->devices, nullptr, true);
-
-	return 0;
+	return *std::find(begin(), end(), s);
 }
 
-int pci_device_parse_slot(struct pci_device *f, const char *s, const char **error)
+Device &
+DeviceList::lookupDevice(const Id &i)
 {
-	char *str = strdup(s);
-	char *colon = strrchr(str, ':');
-	char *dot = strchr((colon ? colon + 1 : str), '.');
-	char *mid = str;
-	char *e, *bus, *colon2;
+	return *std::find(begin(), end(), i);
+}
+
+Id::Id(const std::string &str) :
+	vendor(0),
+	device(0),
+	class_code(0)
+{
+	char *s, *c, *e;
+	char *tmp = strdup(str.c_str());
+
+	if (!*tmp)
+		return;
+
+	s = strchr(tmp, ':');
+	if (!s) {
+		free(tmp);
+			throw RuntimeError("Failed to parse PCI id: ':' expected", str);
+	}
+
+	*s++ = 0;
+	if (tmp[0] && strcmp(tmp, "*")) {
+		long int x = strtol(tmp, &e, 16);
+
+		if ((e && *e) || (x < 0 || x > 0xffff)) {
+			free(tmp);
+			throw RuntimeError("Failed to parse PCI id: {}: Invalid vendor id", str);
+		}
+
+		vendor = x;
+	}
+
+	c = strchr(s, ':');
+	if (c)
+		*c++ = 0;
+
+	if (s[0] && strcmp(s, "*")) {
+		long int x = strtol(s, &e, 16);
+		if ((e && *e) || (x < 0 || x > 0xffff)) {
+			free(tmp);
+			throw RuntimeError("Failed to parse PCI id: {}: Invalid device id", str);
+		}
+
+		device = x;
+	}
+
+	if (c && c[0] && strcmp(s, "*")) {
+		long int x = strtol(c, &e, 16);
+
+		if ((e && *e) || (x < 0 || x > 0xffff)) {
+			free(tmp);
+			throw RuntimeError("Failed to parse PCI id: {}: Invalid class code", str);
+		}
+
+		class_code = x;
+	}
+}
+
+bool
+Id::operator==(const Id &i)
+{
+	if ((i.device	!= 0 && i.device != device) ||
+	    (i.vendor	!= 0 && i.vendor != vendor))
+		return false;
+
+	if ((i.class_code != 0) || (i.class_code != class_code))
+		return false;
+
+	return true;
+}
+
+Slot::Slot(const std::string &str) :
+	domain(0),
+	bus(0),
+	device(0),
+	function(0)
+{
+	char *tmp = strdup(str.c_str());
+	char *colon = strrchr(tmp, ':');
+	char *dot = strchr((colon ? colon + 1 : tmp), '.');
+	char *mid = tmp;
+	char *e, *buss, *colon2;
 
 	if (colon) {
 		*colon++ = 0;
 		mid = colon;
 
-		colon2 = strchr(str, ':');
+		colon2 = strchr(tmp, ':');
 		if (colon2) {
 			*colon2++ = 0;
-			bus = colon2;
+			buss = colon2;
 
-			if (str[0] && strcmp(str, "*")) {
-				long int x = strtol(str, &e, 16);
+			if (tmp[0] && strcmp(tmp, "*")) {
+				long int x = strtol(tmp, &e, 16);
 				if ((e && *e) || (x < 0 || x > 0x7fffffff)) {
-					*error = "Invalid domain number";
-					goto fail;
+					free(tmp);
+					throw RuntimeError("Failed to parse PCI slot: {}: invalid domain", str);
 				}
 
-				f->slot.domain = x;
+				domain = x;
 			}
 		}
 		else
-			bus = str;
+			buss = tmp;
 
-		if (bus[0] && strcmp(bus, "*")) {
-			long int x = strtol(bus, &e, 16);
+		if (buss[0] && strcmp(buss, "*")) {
+			long int x = strtol(buss, &e, 16);
 			if ((e && *e) || (x < 0 || x > 0xff)) {
-				*error = "Invalid bus number";
-				goto fail;
+				free(tmp);
+				throw RuntimeError("Failed to parse PCI slot: {}: invalid bus", str);
 			}
 
-			f->slot.bus = x;
+			bus = x;
 		}
 	}
 
@@ -153,146 +220,87 @@ int pci_device_parse_slot(struct pci_device *f, const char *s, const char **erro
 		long int x = strtol(mid, &e, 16);
 
 		if ((e && *e) || (x < 0 || x > 0x1f)) {
-			*error = "Invalid slot number";
-			goto fail;
+			free(tmp);
+			throw RuntimeError("Failed to parse PCI slot: {}: invalid slot", str);
 		}
 
-		f->slot.device = x;
+		device = x;
 	}
 
 	if (dot && dot[0] && strcmp(dot, "*")) {
 		long int x = strtol(dot, &e, 16);
 
 		if ((e && *e) || (x < 0 || x > 7)) {
-			*error = "Invalid function number";
-			goto fail;
+			free(tmp);
+			throw RuntimeError("Failed to parse PCI slot: {}: invalid function", str);
 		}
 
-		f->slot.function = x;
+		function = x;
 	}
 
-	free(str);
-	return 0;
-
-fail:
-	free(str);
-	return -1;
+	free(tmp);
 }
 
-/* ID filter syntax: [vendor]:[device][:class] */
-int pci_device_parse_id(struct pci_device *f, const char *str, const char **error)
+bool
+Slot::operator==(const Slot &s)
 {
-	char *s, *c, *e;
-	char *tmp = strdup(str);
+	if ((s.domain	!= 0 && s.domain   != domain) ||
+	    (s.bus	!= 0 && s.bus      != bus) ||
+	    (s.device	!= 0 && s.device   != device) ||
+	    (s.function	!= 0 && s.function != function))
+		return false;
 
-	if (!*tmp)
-		return 0;
-
-	s = strchr(tmp, ':');
-	if (!s) {
-		*error = "':' expected";
-		goto fail;
-	}
-
-	*s++ = 0;
-	if (tmp[0] && strcmp(tmp, "*")) {
-		long int x = strtol(tmp, &e, 16);
-
-		if ((e && *e) || (x < 0 || x > 0xffff)) {
-			*error = "Invalid vendor ID";
-			goto fail;
-		}
-
-		f->id.vendor = x;
-	}
-
-	c = strchr(s, ':');
-	if (c)
-		*c++ = 0;
-
-	if (s[0] && strcmp(s, "*")) {
-		long int x = strtol(s, &e, 16);
-		if ((e && *e) || (x < 0 || x > 0xffff)) {
-			*error = "Invalid device ID";
-			goto fail;
-		}
-
-		f->id.device = x;
-	}
-
-	if (c && c[0] && strcmp(s, "*")) {
-		long int x = strtol(c, &e, 16);
-
-		if ((e && *e) || (x < 0 || x > 0xffff)) {
-			*error = "Invalid class code";
-			goto fail;
-		}
-
-		f->id.class_code = x;
-	}
-
-	return 0;
-
-fail:	free(tmp);
-	return -1;
+	return true;
 }
 
-int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
+bool
+Device::operator==(const Device &f)
 {
-	if ((f->slot.domain	!= 0 && f->slot.domain != d->slot.domain) ||
-	    (f->slot.bus	!= 0 && f->slot.bus != d->slot.bus) ||
-	    (f->slot.device	!= 0 && f->slot.device != d->slot.device) ||
-	    (f->slot.function	!= 0 && f->slot.function != d->slot.function))
-		return 1;
-
-	if ((f->id.device	!= 0 && f->id.device != d->id.device) ||
-	    (f->id.vendor	!= 0 && f->id.vendor != d->id.vendor))
-		return 1;
-
-	if ((f->id.class_code != 0) || (f->id.class_code != d->id.class_code))
-		return 1;
-
-	return 0; /* found */
+	return id == f.id && slot == f.slot;
 }
 
-struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
+bool
+Device::operator==(const Slot &s)
 {
-	return (struct pci_device *) vlist_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
+	return slot == s;
 }
 
-size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
+bool
+Device::operator==(const Id &i)
+{
+	return id == i;
+}
+
+std::list<Region>
+Device::getRegions() const
 {
 	FILE* f;
 	char sysfs[1024];
 
-	assert(regions != nullptr);
-
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource",
-	         SYSFS_PATH, d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+	         SYSFS_PATH, slot.domain, slot.bus, slot.device, slot.function);
 
 	f = fopen(sysfs, "r");
 	if (!f)
-		serror("Failed to open resource mapping %s", sysfs);
+		throw SystemError("Failed to open resource mapping {}", sysfs);
 
-	struct pci_region _regions[8];
-	struct pci_region* cur_region = _regions;
-	size_t valid_regions = 0;
+	std::list<Region> regions;
 
 	ssize_t bytesRead;
 	char* line = nullptr;
 	size_t len = 0;
 
-	int region = 0;
+	int reg_num = 0;
 
 	/* Cap to 8 regions, just because we don't know how many may exist. */
-	while (region < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
+	while (reg_num < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
 		unsigned long long tokens[3];
 		char* s = line;
 		for (int i = 0; i < 3; i++) {
 			char* end;
 			tokens[i] = strtoull(s, &end, 16);
 			if (s == end) {
-				printf("Error parsing line %d of %s\n", region + 1, sysfs);
+				printf("Error parsing line %d of %s\n", reg_num + 1, sysfs);
 				tokens[0] = tokens[1] = 0; /* Mark invalid */
 				break;
 			}
@@ -305,86 +313,79 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 		line = nullptr;
 		len = 0;
 
-		if (tokens[0] != tokens[1]) {
-			/* This is a valid region */
-			cur_region->num = region;
-			cur_region->start = tokens[0];
-			cur_region->end = tokens[1];
-			cur_region->flags = tokens[2];
-			cur_region++;
-			valid_regions++;
+		if (tokens[0] != tokens[1]) { /* This is a valid region */
+			Region region;
+
+			region.num = reg_num;
+			region.start = tokens[0];
+			region.end   = tokens[1];
+			region.flags = tokens[2];
+
+			regions.push_back(region);
 		}
 
-		region++;
+		reg_num++;
 	}
 
-	if (valid_regions > 0) {
-		*regions = new struct pci_region[valid_regions];
-		if (!*regions)
-			throw RuntimeError("Failed to allocate memory!");
+	fclose(f);
 
-		memcpy(*regions, _regions, valid_regions * sizeof (struct pci_region));
-	}
-
-	return valid_regions;
+	return regions;
 }
 
-
-int pci_get_driver(const struct pci_device *d, char *buf, size_t buflen)
+std::string
+Device::getDriver() const
 {
 	int ret;
 	char sysfs[1024], syml[1024];
 	memset(syml, 0, sizeof(syml));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/driver", SYSFS_PATH,
-		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+		slot.domain, slot.bus, slot.device, slot.function);
 
 	ret = readlink(sysfs, syml, sizeof(syml));
 	if (ret < 0)
-		return ret;
+		throw SystemError("Failed to follow link: {}", sysfs);
 
-	char *driver = basename(syml);
-
-	strncpy(buf, driver, buflen);
-
-	return 0;
+	return basename(syml);
 }
 
-int pci_attach_driver(const struct pci_device *d, const char *driver)
+bool
+Device::attachDriver(const std::string &driver) const
 {
 	FILE *f;
 	char fn[1024];
 
 	/* Add new ID to driver */
-	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/new_id", SYSFS_PATH, driver);
+	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/new_id", SYSFS_PATH, driver.c_str());
 	f = fopen(fn, "w");
 	if (!f)
-		serror("Failed to add PCI id to %s driver (%s)", driver, fn);
+		throw SystemError("Failed to add PCI id to {} driver ({})", driver, fn);
 
-	info("Adding ID to %s module: %04x %04x", driver, d->id.vendor, d->id.device);
-	fprintf(f, "%04x %04x", d->id.vendor, d->id.device);
+	info("Adding ID to %s module: %04x %04x", driver.c_str(), id.vendor, id.device);
+	fprintf(f, "%04x %04x", id.vendor, id.device);
 	fclose(f);
 
 	/* Bind to driver */
-	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/bind", SYSFS_PATH, driver);
+	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/bind", SYSFS_PATH, driver.c_str());
 	f = fopen(fn, "w");
 	if (!f)
-		serror("Failed to bind PCI device to %s driver (%s)", driver, fn);
+		throw SystemError("Failed to bind PCI device to {} driver ({})", driver, fn);
 
-	info("Bind device to %s driver", driver);
-	fprintf(f, "%04x:%02x:%02x.%x\n", d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+	info("Bind device to %s driver", driver.c_str());
+	fprintf(f, "%04x:%02x:%02x.%x\n", slot.domain, slot.bus, slot.device, slot.function);
 	fclose(f);
 
-	return 0;
+	return true;
 }
 
-int pci_get_iommu_group(const struct pci_device *d)
+int
+Device::getIOMMUGroup() const
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/iommu_group", SYSFS_PATH,
-		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+		slot.domain, slot.bus, slot.device, slot.function);
 
 	ret = readlink(sysfs, link, sizeof(link));
 	if (ret < 0)
