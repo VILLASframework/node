@@ -49,7 +49,7 @@ public:
 	using EdgeIdentifier = Edge::Identifier;
 	using Path = std::list<EdgeIdentifier>;
 
-	DirectedGraph(const std::string& name = "DirectedGraph") :
+	DirectedGraph(const std::string &name = "DirectedGraph") :
 	    lastVertexId(0), lastEdgeId(0)
 	{
 		logger = logging.get(name);
@@ -68,9 +68,9 @@ public:
 	template<class UnaryPredicate>
 	VertexIdentifier findVertex(UnaryPredicate p)
 	{
-		for (auto& v : vertices) {
-			auto& vertexId = v.first;
-			auto& vertex = v.second;
+		for (auto &v : vertices) {
+			auto &vertexId = v.first;
+			auto &vertex = v.second;
 
 			if (p(vertex)) {
 				return vertexId;
@@ -156,8 +156,8 @@ public:
 		// delete every edge that start or ends at this vertex
 		auto it = edges.begin();
 		while (it != edges.end()) {
-			auto& edgeId = it->first;
-			auto& edge = it->second;
+			auto &edgeId = it->first;
+			auto &edge = it->second;
 
 			bool removeEdge = false;
 
@@ -197,7 +197,7 @@ public:
 
 	bool getPath(VertexIdentifier fromVertexId,
 	             VertexIdentifier toVertexId,
-	             Path& path,
+	             Path &path,
 	             check_path_fn pathCheckFunc = checkPath)
 	{
 		if (fromVertexId == toVertexId) {
@@ -206,12 +206,12 @@ public:
 		} else {
 			auto fromVertex = getVertex(fromVertexId);
 
-			for (auto& edgeId : fromVertex->edges) {
+			for (auto &edgeId : fromVertex->edges) {
 				auto edgeOfFromVertex = getEdge(edgeId);
 
 				// loop detection
 				bool loop = false;
-				for (auto& edgeIdInPath : path) {
+				for (auto &edgeIdInPath : path) {
 					auto edgeInPath = getEdge(edgeIdInPath);
 					if (edgeInPath->from == edgeOfFromVertex->to) {
 						loop = true;
@@ -242,15 +242,15 @@ public:
 		return false;
 	}
 
-	void dump(const std::string& fileName = "") const
+	void dump(const std::string &fileName = "") const
 	{
 		logger->info("Vertices:");
-		for (auto& v : vertices) {
-			auto& vertex = v.second;
+		for (auto &v : vertices) {
+			auto &vertex = v.second;
 
 			// format connected vertices into a list
 			std::stringstream ssEdges;
-			for (auto& edge : vertex->edges) {
+			for (auto &edge : vertex->edges) {
 				ssEdges << getEdge(edge)->to << " ";
 			}
 
@@ -263,8 +263,8 @@ public:
 		}
 
 		logger->info("Edges:");
-		for (auto& e : edges) {
-			auto& edge = e.second;
+		for (auto &e : edges) {
+			auto &edge = e.second;
 
 			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
 			if (s.is_open()) {

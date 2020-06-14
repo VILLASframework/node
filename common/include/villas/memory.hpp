@@ -83,19 +83,19 @@ public:
 	{}
 
 	// just act as an accessor, do not take ownership of MemoryBlock
-	MemoryAccessor(const MemoryBlock& mem) :
+	MemoryAccessor(const MemoryBlock &mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId()))
 	{}
 
-	MemoryAccessor(const MemoryTranslation& translation) :
+	MemoryAccessor(const MemoryTranslation &translation) :
 	    translation(translation)
 	{}
 
-	T& operator*() const {
+	T & operator*() const {
 		return *reinterpret_cast<T*>(translation.getLocalAddr(0));
 	}
 
-	T& operator[](size_t idx) const {
+	T & operator[](size_t idx) const {
 		const size_t offset = sizeof(T) * idx;
 		return *reinterpret_cast<T*>(translation.getLocalAddr(offset));
 	}
@@ -189,19 +189,19 @@ public:
 	}
 
 protected:
-	void insertMemoryBlock(const MemoryBlock& mem)
+	void insertMemoryBlock(const MemoryBlock &mem)
 	{
-		auto& mm = MemoryManager::get();
+		auto & mm = MemoryManager::get();
 		mm.createMapping(mem.getOffset(), 0, mem.getSize(),
 		                 derivedAlloc->getName(),
 		                 memoryAddrSpaceId,
 		                 mem.getAddrSpaceId());
 	}
 
-	void removeMemoryBlock(const MemoryBlock& mem)
+	void removeMemoryBlock(const MemoryBlock &mem)
 	{
 		// this will also remove any mapping to and from the memory block
-		auto& mm = MemoryManager::get();
+		auto & mm = MemoryManager::get();
 		mm.removeAddressSpace(mem.getAddrSpaceId());
 	}
 

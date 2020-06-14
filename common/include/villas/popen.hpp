@@ -99,7 +99,7 @@ protected:
 } /* namespace villas */
 
 template<typename T>
-std::istream& operator>>(villas::utils::Popen& po, T& value)
+std::istream &operator>>(villas::utils::Popen &po, T &value)
 {
 	return *(po.input.stream) >> value;
 }

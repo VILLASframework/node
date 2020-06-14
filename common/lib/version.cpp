@@ -56,7 +56,7 @@ Version::Version(int maj, int min, int pat) :
 
 }
 
-int Version::cmp(const Version& lhs, const Version& rhs)
+int Version::cmp(const Version &lhs, const Version &rhs)
 {
 	int d;
 

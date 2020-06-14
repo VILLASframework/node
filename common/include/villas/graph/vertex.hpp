@@ -38,11 +38,11 @@ public:
 	{ return id; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const Vertex& vertex)
+	operator<< (std::ostream &stream, const Vertex &vertex)
 	{ return stream << vertex.id; }
 
 	bool
-	operator==(const Vertex& other)
+	operator==(const Vertex &other)
 	{ return this->id == other.id; }
 
 private:

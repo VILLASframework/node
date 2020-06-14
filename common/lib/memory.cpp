@@ -51,7 +51,7 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 		throw std::bad_alloc();
 	}
 
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	/* Assemble name for this block */
 	std::stringstream name;
@@ -141,7 +141,7 @@ LinearAllocator::allocateBlock(size_t size)
 	}
 
 
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	/* Assemble name for this block */
 	std::stringstream blockName;
@@ -191,7 +191,7 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
     LinearAllocator(MemoryManager::get().getOrCreateAddressSpace(getUdmaBufName(num)), getUdmaBufBufSize(num)),
     num(num)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 	logger = logging.get(getName());
 
 	if (getSize() == 0) {
@@ -226,7 +226,7 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
 
 HostDmaRam::HostDmaRamAllocator::~HostDmaRamAllocator()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	void* baseVirt;
 	try {
@@ -293,7 +293,7 @@ HostDmaRam::getUdmaBufPhysAddr(int num)
 
 HostDmaRam::HostDmaRamAllocator&HostDmaRam::getAllocator(int num)
 {
-	auto& allocator = allocators[num];
+	auto &allocator = allocators[num];
 	if (not allocator) {
 		allocator = std::make_unique<HostDmaRamAllocator>(num);
 	}

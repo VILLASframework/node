@@ -34,11 +34,11 @@ public:
 	using Identifier = std::size_t;
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const Edge& edge)
+	operator<< (std::ostream &stream, const Edge &edge)
 	{ return stream << edge.id; }
 
 	bool
-	operator==(const Edge& other)
+	operator==(const Edge &other)
 	{ return this->id == other.id; }
 
 	Vertex::Identifier getVertexTo() const

@@ -131,19 +131,19 @@ public:
 		return CPU_EQUAL_S(sz, setp, rhs.setp);
 	}
 
-	CpuSet& operator&=(const CpuSet &rhs)
+	CpuSet & operator&=(const CpuSet &rhs)
 	{
 		CPU_AND_S(sz, setp, setp, rhs.setp);
 		return *this;
 	}
 
-	CpuSet& operator|=(const CpuSet &rhs)
+	CpuSet & operator|=(const CpuSet &rhs)
 	{
 		CPU_OR_S(sz, setp, setp, rhs.setp);
 		return *this;
 	}
 
-	CpuSet& operator^=(const CpuSet &rhs)
+	CpuSet & operator^=(const CpuSet &rhs)
 	{
 		CPU_XOR_S(sz, setp, setp, rhs.setp);
 		return *this;
