@@ -44,10 +44,10 @@ public:
 	bool reset();
 
 	// memory-mapped to stream (MM2S)
-	bool write(const MemoryBlock& mem, size_t len);
+	bool write(const MemoryBlock &mem, size_t len);
 
 	// stream to memory-mapped (S2MM)
-	bool read(const MemoryBlock& mem, size_t len);
+	bool read(const MemoryBlock &mem, size_t len);
 
 	size_t writeComplete()
 	{ return hasScatterGather() ? writeCompleteSG() : writeCompleteSimple(); }
@@ -55,10 +55,10 @@ public:
 	size_t readComplete()
 	{ return hasScatterGather() ? readCompleteSG() : readCompleteSimple(); }
 
-	bool memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
+	bool memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len);
 
-	bool makeAccesibleFromVA(const MemoryBlock& mem);
-	bool makeInaccesibleFromVA(const MemoryBlock& mem);
+	bool makeAccesibleFromVA(const MemoryBlock &mem);
+	bool makeInaccesibleFromVA(const MemoryBlock &mem);
 
 	inline bool
 	hasScatterGather() const
@@ -87,7 +87,7 @@ public:
 	static constexpr const char* s2mmPort = "S2MM";
 	static constexpr const char* mm2sPort = "MM2S";
 
-	bool isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface);
+	bool isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface);
 
 	virtual void dump();
 

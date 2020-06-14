@@ -28,7 +28,7 @@
 #include <villas/log.h>
 #include <villas/utils.hpp>
 
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/kernel.hpp>
 
 #include <villas/fpga/card.h>

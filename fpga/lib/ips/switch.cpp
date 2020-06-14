@@ -70,8 +70,8 @@ AxiStreamSwitch::init()
 }
 
 bool
-AxiStreamSwitch::connectInternal(const std::string& portSlave,
-                                 const std::string& portMaster)
+AxiStreamSwitch::connectInternal(const std::string &portSlave,
+                                 const std::string &portMaster)
 {
 	// check if slave port exists
 	try {
@@ -129,21 +129,21 @@ AxiStreamSwitch::connectInternal(const std::string& portSlave,
 }
 
 int
-AxiStreamSwitch::portNameToNum(const std::string& portName)
+AxiStreamSwitch::portNameToNum(const std::string &portName)
 {
 	const std::string number = portName.substr(1, 2);
 	return std::stoi(number);
 }
 
 bool
-AxiStreamSwitchFactory::configureJson(Core& ip, json_t* json_ip)
+AxiStreamSwitchFactory::configureJson(Core &ip, json_t* json_ip)
 {
 	if (not NodeFactory::configureJson(ip, json_ip))
 		return false;
 
 	auto logger = getLogger();
 
-	auto& axiSwitch = dynamic_cast<AxiStreamSwitch&>(ip);
+	auto &axiSwitch = dynamic_cast<AxiStreamSwitch&>(ip);
 
 	if (json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
 		logger->error("Cannot parse 'num_ports'");
@@ -154,6 +154,6 @@ AxiStreamSwitchFactory::configureJson(Core& ip, json_t* json_ip)
 }
 
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
+} /* namespace ip */
+} /* namespace fpga */
+} /* namespace villas */

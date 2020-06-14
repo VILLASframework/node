@@ -44,14 +44,14 @@ namespace ip {
 
 class StreamVertex : public graph::Vertex {
 public:
-	StreamVertex(const std::string& node, const std::string& port, bool isMaster) :
+	StreamVertex(const std::string &node, const std::string &port, bool isMaster) :
 	    nodeName(node), portName(port), isMaster(isMaster) {}
 
 	std::string getName() const
 	{ return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")"; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const StreamVertex& vertex)
+	operator<< (std::ostream &stream, const StreamVertex &vertex)
 	{ return stream << vertex.getIdentifier() << ": " << vertex.getName(); }
 
 public:
@@ -66,12 +66,12 @@ public:
 	StreamGraph() : graph::DirectedGraph<StreamVertex>("StreamGraph") {}
 
 	std::shared_ptr<StreamVertex>
-	getOrCreateStreamVertex(const std::string& node,
-	                        const std::string& port,
+	getOrCreateStreamVertex(const std::string &node,
+	                        const std::string &port,
 	                        bool isMaster)
 	{
-		for (auto& vertexEntry : vertices) {
-			auto& vertex = vertexEntry.second;
+		for (auto &vertexEntry : vertices) {
+			auto &vertex = vertexEntry.second;
 			if (vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
 				return vertex;
 		}
@@ -95,14 +95,12 @@ public:
 		std::string nodeName;
 	};
 
-	bool connect(const StreamVertex& from, const StreamVertex& to);
-
 	const StreamVertex&
-	getMasterPort(const std::string& name) const
+	getMasterPort(const std::string &name) const
 	{ return *portsMaster.at(name); }
 
 	const StreamVertex&
-	getSlavePort(const std::string& name) const
+	getSlavePort(const std::string &name) const
 	{ return *portsSlave.at(name); }
 
 	// easy-usage assuming that the slave IP to connect to only has one slave

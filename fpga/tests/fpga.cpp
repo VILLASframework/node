@@ -59,7 +59,7 @@ static void init()
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
 
-	auto vfioContainer = VfioContainer::create();
+	auto vfioContainer = kernel::vfio::Container::create();
 
 	/* Parse FPGA configuration */
 	char *fn = getenv("TEST_CONFIG");

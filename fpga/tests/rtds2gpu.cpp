@@ -72,7 +72,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");
 
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		if (*ip != fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
 			continue;
 
@@ -191,11 +191,11 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
 	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
 
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		if (*ip != fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
 			continue;
 
-		auto& rtds = dynamic_cast<fpga::ip::Rtds&>(*ip);
+		auto &rtds = dynamic_cast<fpga::ip::Rtds&>(*ip);
 		logger->info("Testing {}", rtds);
 
 		auto dmaRam = HostDmaRam::getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
@@ -269,7 +269,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 	cr_assert(gpus.size() > 0, "No GPUs found");
 
 	// just get first cpu
-	auto& gpu = gpus.front();
+	auto &gpu = gpus.front();
 
 	// allocate memory on GPU and make accessible by to PCIe/FPGA
 	auto gpuRam = gpu->getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
@@ -291,11 +291,11 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 
 //	auto doorbellInCpu = reinterpret_cast<reg_doorbell_t*>(&gpuRam[DOORBELL_OFFSET]);
 
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		if (*ip != fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
 			continue;
 
-		auto& rtds = dynamic_cast<fpga::ip::Rtds&>(*ip);
+		auto &rtds = dynamic_cast<fpga::ip::Rtds&>(*ip);
 		logger->info("Testing {}", rtds);
 
 

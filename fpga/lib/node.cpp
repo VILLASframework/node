@@ -39,9 +39,9 @@ StreamGraph
 Node::streamGraph;
 
 bool
-NodeFactory::configureJson(Core& ip, json_t* json_ip)
+NodeFactory::configureJson(Core &ip, json_t* json_ip)
 {
-	auto& Node = dynamic_cast<ip::Node&>(ip);
+	auto &Node = dynamic_cast<ip::Node&>(ip);
 	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
@@ -115,7 +115,7 @@ Node::getLoopbackPorts() const
 	return { "", "" };
 }
 
-bool Node::connect(const StreamVertex& from, const StreamVertex& to)
+bool Node::connect(const StreamVertex &from, const StreamVertex &to)
 {
 	if (from.nodeName != getInstanceName()) {
 		logger->error("Cannot connect from a foreign StreamVertex: {}", from);
@@ -192,8 +192,8 @@ Node::loopbackPossible() const
 }
 
 bool
-Node::connectInternal(const std::string& slavePort,
-                        const std::string& masterPort)
+Node::connectInternal(const std::string &slavePort,
+                        const std::string &masterPort)
 {
 	(void) slavePort;
 	(void) masterPort;
@@ -206,8 +206,8 @@ bool
 Node::connectLoopback()
 {
 	auto ports = getLoopbackPorts();
-	const auto& portMaster = portsMaster[ports.first];
-	const auto& portSlave = portsSlave[ports.second];
+	const auto &portMaster = portsMaster[ports.first];
+	const auto &portSlave = portsSlave[ports.second];
 
 	logger->debug("master port: {}", ports.first);
 	logger->debug("slave port: {}", ports.second);

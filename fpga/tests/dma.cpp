@@ -39,7 +39,7 @@ Test(fpga, dma, .description = "DMA")
 
 	std::list<std::shared_ptr<fpga::ip::Dma>> dmaIps;
 	
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		if (*ip == fpga::Vlnv("xilinx.com:ip:axi_dma:")) {
 			auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(ip);
 			dmaIps.push_back(dma);
@@ -47,7 +47,7 @@ Test(fpga, dma, .description = "DMA")
 	}
 
 	size_t count = 0;
-	for (auto& dma : dmaIps) {
+	for (auto &dma : dmaIps) {
 		logger->info("Testing {}", *dma);
 
 		if (not dma->loopbackPossible()) {

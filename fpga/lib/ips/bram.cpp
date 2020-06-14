@@ -29,9 +29,9 @@ namespace ip {
 static BramFactory factory;
 
 bool
-BramFactory::configureJson(Core& ip, json_t* json_ip)
+BramFactory::configureJson(Core &ip, json_t* json_ip)
 {
-	auto& bram = dynamic_cast<Bram&>(ip);
+	auto &bram = dynamic_cast<Bram&>(ip);
 
 	if (json_unpack(json_ip, "{ s: i }", "size", &bram.size) != 0) {
 		getLogger()->error("Cannot parse 'size'");

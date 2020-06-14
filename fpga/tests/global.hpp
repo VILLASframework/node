@@ -29,7 +29,7 @@
 class FpgaState {
 public:
 	// list of all available FPGA cards, only first will be tested at the moment
-	villas::fpga::CardList cards;
+	villas::fpga::PCIeCard::List cards;
 };
 
 // global state to be shared by unittests

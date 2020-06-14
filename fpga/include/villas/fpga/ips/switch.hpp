@@ -46,11 +46,11 @@ public:
 
 	bool init();
 
-	bool connectInternal(const std::string& slavePort,
-	                     const std::string& masterPort);
+	bool connectInternal(const std::string &slavePort,
+	                     const std::string &masterPort);
 
 private:
-	int portNameToNum(const std::string& portName);
+	int portNameToNum(const std::string &portName);
 
 private:
 	static constexpr const char* PORT_DISABLED = "DISABLED";
@@ -77,7 +77,7 @@ public:
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axis_switch:"; }
 
-	bool configureJson(Core& ip, json_t *json_ip);
+	bool configureJson(Core &ip, json_t *json_ip);
 
 	Core* create()
 	{ return new AxiStreamSwitch; }

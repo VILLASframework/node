@@ -38,21 +38,21 @@ static AxiPciExpressBridgeFactory factory;
 bool
 AxiPciExpressBridge::init()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// Throw an exception if the is no bus master interface and thus no
 	// address space we can use for translation -> error
 	card->addrSpaceIdHostToDevice = busMasterInterfaces.at(axiInterface);
 
 	/* Map PCIe BAR0 via VFIO */
-	const void* bar0_mapped = card->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
+	const void* bar0_mapped = card->kernel::vfio::Device->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
 	if (bar0_mapped == MAP_FAILED) {
 		logger->error("Failed to mmap() BAR0");
 		return false;
 	}
 
 	// determine size of BAR0 region
-	const size_t bar0_size = card->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
+	const size_t bar0_size = card->kernel::vfio::Device->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
 
 	// create a mapping from process address space to the FPGA card via vfio
 	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
@@ -122,10 +122,10 @@ AxiPciExpressBridge::init()
 }
 
 bool
-AxiPciExpressBridgeFactory::configureJson(Core& ip, json_t* json_ip)
+AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 {
 	auto logger = getLogger();
-	auto& pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
+	auto &pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
 	for (auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
 		json_t* json_bars = json_object_get(json_ip, barType.c_str());

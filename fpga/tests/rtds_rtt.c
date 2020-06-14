@@ -42,7 +42,7 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 	std::list<villas::fpga::ip::Dma*> dmaIps;
 
 	/* Get IP cores */
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		if (*ip == villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
 			auto rtds = reinterpret_cast<villas::fpga::ip::Rtds*>(ip.get());
 			rtdsIps.push_back(rtds);

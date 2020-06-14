@@ -74,11 +74,11 @@ public:
 	{ return vlnv; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const IpIdentifier& id)
+	operator<< (std::ostream &stream, const IpIdentifier &id)
 	{ return stream << id.name << " vlnv=" << id.vlnv; }
 
 	bool
-	operator==(const IpIdentifier& otherId) const {
+	operator==(const IpIdentifier &otherId) const {
 		const bool vlnvWildcard = otherId.getVlnv() == Vlnv::getWildcard();
 		const bool nameWildcard = this->getName().empty() or otherId.getName().empty();
 
@@ -89,7 +89,7 @@ public:
 	}
 
 	bool
-	operator!=(const IpIdentifier& otherId) const
+	operator!=(const IpIdentifier &otherId) const
 	{ return !(*this == otherId); }
 
 private:
@@ -144,66 +144,66 @@ public:
 	/* Operators */
 
 	bool
-	operator==(const Vlnv& otherVlnv) const
+	operator==(const Vlnv &otherVlnv) const
 	{ return id.getVlnv() == otherVlnv; }
 
 	bool
-	operator!=(const Vlnv& otherVlnv) const
+	operator!=(const Vlnv &otherVlnv) const
 	{ return id.getVlnv() != otherVlnv; }
 
 	bool
-	operator==(const IpIdentifier& otherId) const
+	operator==(const IpIdentifier &otherId) const
 	{ return this->id == otherId; }
 
 	bool
-	operator!=(const IpIdentifier& otherId) const
+	operator!=(const IpIdentifier &otherId) const
 	{ return this->id != otherId; }
 
 	bool
-	operator==(const std::string& otherName) const
+	operator==(const std::string &otherName) const
 	{ return getInstanceName() == otherName; }
 
 	bool
-	operator!=(const std::string& otherName) const
+	operator!=(const std::string &otherName) const
 	{ return getInstanceName() != otherName; }
 
 	bool
-	operator==(const Core& otherIp) const
+	operator==(const Core &otherIp) const
 	{ return this->id == otherIp.id; }
 
 	bool
-	operator!=(const Core& otherIp) const
+	operator!=(const Core &otherIp) const
 	{ return this->id != otherIp.id; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const Core& ip)
+	operator<< (std::ostream &stream, const Core &ip)
 	{ return stream << ip.id; }
 
 protected:
 	uintptr_t
-	getBaseAddr(const MemoryBlockName& block) const
+	getBaseAddr(const MemoryBlockName &block) const
 	{ return getLocalAddr(block, 0); }
 
 	uintptr_t
-	getLocalAddr(const MemoryBlockName& block, uintptr_t address) const;
+	getLocalAddr(const MemoryBlockName &block, uintptr_t address) const;
 
 	MemoryManager::AddressSpaceId
-	getAddressSpaceId(const MemoryBlockName& block) const
+	getAddressSpaceId(const MemoryBlockName &block) const
 	{ return slaveAddressSpaces.at(block); }
 
 	InterruptController*
-	getInterruptController(const std::string& interruptName) const;
+	getInterruptController(const std::string &interruptName) const;
 
 	MemoryManager::AddressSpaceId
-	getMasterAddrSpaceByInterface(const std::string& masterInterfaceName) const
+	getMasterAddrSpaceByInterface(const std::string &masterInterfaceName) const
 	{ return busMasterInterfaces.at(masterInterfaceName); }
 
 	template<typename T>
-	T readMemory(const std::string& block, uintptr_t address) const
+	T readMemory(const std::string &block, uintptr_t address) const
 	{ return *(reinterpret_cast<T*>(getLocalAddr(block, address))); }
 	
 	template<typename T>
-	void writeMemory(const std::string& block, uintptr_t address, T value)
+	void writeMemory(const std::string &block, uintptr_t address, T value)
 	{ T* ptr = reinterpret_cast<T*>(getLocalAddr(block, address)); *ptr = value; }
 
 protected:
@@ -266,7 +266,7 @@ protected:
 
 private:
 	static CoreFactory*
-	lookup(const Vlnv& vlnv);
+	lookup(const Vlnv &vlnv);
 };
 
 /** @} */

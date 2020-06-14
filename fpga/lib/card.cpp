@@ -119,10 +119,10 @@ PCIeCardFactory::create()
 
 PCIeCard::~PCIeCard()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// unmap all memory blocks
-	for (auto& mappedMemoryBlock : memoryBlocksMapped) {
+	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
 		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
 		                                     mappedMemoryBlock);
 
@@ -137,9 +137,9 @@ PCIeCard::~PCIeCard()
 
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const std::string& name) const
+PCIeCard::lookupIp(const std::string &name) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == name) {
 			return ip;
 		}
@@ -150,9 +150,9 @@ PCIeCard::lookupIp(const std::string& name) const
 
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const Vlnv& vlnv) const
+PCIeCard::lookupIp(const Vlnv &vlnv) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == vlnv) {
 			return ip;
 		}
@@ -162,9 +162,9 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 }
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const ip::IpIdentifier& id) const
+PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == id) {
 			return ip;
 		}
@@ -175,15 +175,15 @@ PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 
 
 bool
-PCIeCard::mapMemoryBlock(const MemoryBlock& block)
+PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 {
 	if (not vfioContainer->isIommuEnabled()) {
 		logger->warn("VFIO mapping not supported without IOMMU");
 		return false;
 	}
 
-	auto& mm = MemoryManager::get();
-	const auto& addrSpaceId = block.getAddrSpaceId();
+	auto &mm = MemoryManager::get();
+	const auto &addrSpaceId = block.getAddrSpaceId();
 
 	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end()) {
 		// block already mapped

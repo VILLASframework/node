@@ -34,16 +34,16 @@ public:
 
 	void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 
-	bool startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset);
+	bool startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset);
 
 	size_t getMaxFrameSize();
 
 	void dumpDoorbell(uint32_t doorbellRegister) const;
 
-	bool doorbellIsValid(const uint32_t& doorbellRegister) const
+	bool doorbellIsValid(const uint32_t &doorbellRegister) const
 	{ return reinterpret_cast<const reg_doorbell_t&>(doorbellRegister).is_valid; }
 
-	void doorbellReset(uint32_t& doorbellRegister) const
+	void doorbellReset(uint32_t &doorbellRegister) const
 	{ doorbellRegister = 0; }
 
 	static constexpr const char* registerMemory = "Reg";

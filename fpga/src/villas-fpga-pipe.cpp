@@ -64,7 +64,7 @@ void setupColorHandling()
 }
 
 std::shared_ptr<fpga::PCIeCard>
-setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
+setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 {
 	if (pci_init(&pci) != 0) {
 		logger->error("Cannot initialize PCI");
@@ -104,7 +104,7 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 	// create all FPGA card instances using the corresponding plugin
 	auto cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
 
-	for (auto& fpgaCard : cards) {
+	for (auto &fpgaCard : cards) {
 		if (fpgaCard->name == fpgaName) {
 			return fpgaCard;
 		}
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
 
 		size_t memIdx = 0;
 
-		for (auto& value: values) {
+		for (auto &value: values) {
 			if (value.empty()) continue;
 
 			const int32_t number = std::stoi(value);
