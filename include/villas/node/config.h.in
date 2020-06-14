@@ -55,6 +55,7 @@
 #cmakedefine WITH_HOOKS
 #cmakedefine WITH_CONFIG
 #cmakedefine WITH_GRAPHVIZ
+#cmakedefine WITH_FPGA
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD

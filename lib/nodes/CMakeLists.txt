@@ -164,6 +164,12 @@ if(WITH_NODE_ETHERCAT)
     list(APPEND LIBRARIES ${ETHERLAB_LIBRARIES})
 endif()
 
+# Enable VILLASfpga support
+if(WITH_NODE_FPGA)
+    list(APPEND NODE_SRC villas_fpga.cpp)
+    list(APPEND LIBRARIES villas-fpga)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

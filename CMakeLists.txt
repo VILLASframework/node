@@ -123,6 +123,7 @@ cmake_dependent_option(WITH_WEB             "Build with internal webserver"     
 cmake_dependent_option(WITH_API             "Build with remote control API"                         ON "" OFF)
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" ON "LIBCONFIG_FOUND" OFF)
 cmake_dependent_option(WITH_SRC             "Build executables"                                     ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "" OFF)
 cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_TESTS           "Run tests"                                             ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
@@ -153,6 +154,7 @@ cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"    
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         ON "ETHERLAB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_EXAMPLE    "Build with example node-type"                          ON "" OFF)
+cmake_dependent_option(WITH_NODE_FPGA       "Build with fpga node-type"                             ON "WITH_FPGA" OFF)
 
 # Add more build configurations
 include(cmake/config/Debug.cmake)
@@ -169,6 +171,10 @@ add_subdirectory(lib)
 add_subdirectory(web)
 add_subdirectory(packaging)
 add_subdirectory(python)
+
+if(WITH_FPGA)
+    add_subdirectory(fpga)
+endif()
 
 if(WITH_SRC)
     add_subdirectory(src)
@@ -205,6 +211,7 @@ add_feature_info(WEB                    WITH_WEB                    "Build with 
 add_feature_info(API                    WITH_API                    "Build with remote control API")
 add_feature_info(CONFIG                 WITH_CONFIG                 "Build with support for libconfig configuration syntax")
 add_feature_info(SRC                    WITH_SRC                    "Build executables")
+add_feature_info(FPGA                   WITH_FPGA                   "Build with FPGA support")
 add_feature_info(TOOLS                  WITH_TOOLS                  "Build auxilary tools")
 add_feature_info(TESTS                  WITH_TESTS                  "Run tests")
 add_feature_info(PLUGINS                WITH_PLUGINS                "Build plugins")
