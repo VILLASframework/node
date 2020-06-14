@@ -37,9 +37,7 @@
 #include <villas/fpga/ips/switch.hpp>
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 // Special IPs that have to be initialized first. Will be initialized in the
 // same order as they appear in this list, i.e. first here will be initialized
@@ -364,8 +362,3 @@ Core::getInterruptController(const std::string &interruptName) const
 		return nullptr;
 	}
 }
-
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

@@ -39,8 +39,8 @@
 
 #include "kernels.hpp"
 
-namespace villas {
-namespace gpu {
+
+using namespace villas::gpu;
 
 static GpuFactory gpuFactory;
 
@@ -523,6 +523,3 @@ GpuFactory::make()
 
 	return gpuList;
 }
-
-} // namespace villas
-} // namespace gpu

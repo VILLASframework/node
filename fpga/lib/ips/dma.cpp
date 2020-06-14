@@ -35,9 +35,7 @@
 #define FPGA_DMA_BOUNDARY	0x1000
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 // instantiate factory to make available to plugin infrastructure
 static DmaFactory factory;
@@ -401,7 +399,3 @@ Dma::dump()
 	logger->info("S2MM_LENGTH: {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_BUFFLEN_OFFSET));
 }
 
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

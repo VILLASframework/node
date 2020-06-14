@@ -29,9 +29,7 @@
 #include <villas/fpga/ips/pcie.hpp>
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static AxiPciExpressBridgeFactory factory;
 
@@ -170,7 +168,3 @@ AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 
 	return true;
 }
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

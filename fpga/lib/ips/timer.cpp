@@ -30,9 +30,7 @@
 #include <villas/fpga/ips/timer.hpp>
 #include <villas/fpga/ips/intc.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 
 // instantiate factory to make available to plugin infrastructure
@@ -80,8 +78,3 @@ uint32_t Timer::remaining()
 {
 	return XTmrCtr_GetValue(&xTmr, 0);
 }
-
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

@@ -30,10 +30,7 @@
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/switch.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
-
+using namespace villas::fpga::ip;
 
 StreamGraph
 Node::streamGraph;
@@ -214,7 +211,3 @@ Node::connectLoopback()
 
 	return connect(*portMaster, *portSlave);
 }
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

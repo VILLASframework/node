@@ -5,9 +5,7 @@
 #include <villas/memory_manager.hpp>
 #include <villas/fpga/ips/gpu2rtds.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static Gpu2RtdsFactory factory;
 
@@ -131,6 +129,3 @@ Gpu2Rtds::getMaxFrameSize()
 //	logger->info("  Seq. number: {}", doorbell.seq_nr);
 //}
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

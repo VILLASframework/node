@@ -25,8 +25,7 @@
 
 #include <villas/fpga/vlnv.hpp>
 
-namespace villas {
-namespace fpga {
+using namespace villas::fpga;
 
 bool
 Vlnv::operator==(const Vlnv &other) const
@@ -74,5 +73,3 @@ Vlnv::toString() const
 	return string;
 }
 
-} // namespace fpga
-} // namespace villas

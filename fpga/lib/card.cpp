@@ -24,24 +24,24 @@
 #include <memory>
 #include <utility>
 
+#include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
 
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/vfio.hpp>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
 
-namespace villas {
-namespace fpga {
+using namespace villas::fpga;
 
 // instantiate factory to register
 static PCIeCardFactory PCIeCardFactory;
 
-CardList
-PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc)
+PCIeCard::List
+PCIeCardFactory::make(json_t *json, kernel::pci::DeviceList *pci, std::shared_ptr<kernel::vfio::Container> vc)
 {
-	CardList cards;
+	PCIeCard::List cards;
 	auto logger = getStaticLogger();
 
 	const char *card_name;
@@ -74,7 +74,7 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 		card->pci = pci;
 		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
-		card->do_reset = do_reset != 0;
+		card->doReset = do_reset != 0;
 
 		const char* error;
 
@@ -86,22 +86,20 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 			logger->warn("Failed to parse PCI ID: {}", error);
 		}
 
-
 		if (not card->init()) {
 			logger->warn("Cannot start FPGA card {}", card_name);
 			continue;
 		}
 
-		card->ips = ip::CoreFactory::make(card.get(), json_ips);
-		if (card->ips.empty()) {
-			logger->error("Cannot initialize IPs of FPGA card {}", card_name);
-			continue;
-		}
+		if (not json_is_object(json_ips))
+			throw ConfigError(json_ips, "node-config-fpga-ips", "FPGA IP core list must be an object!");
 
-		if (not card->check()) {
-			logger->warn("Checking of FPGA card {} failed", card_name);
-			continue;
-		}
+		card->ips = ip::CoreFactory::make(card.get(), json_ips);
+		if (card->ips.empty())
+			throw ConfigError(json_ips, "node-config-fpga-ips", "Cannot initialize IPs of FPGA card {}", card_name);
+
+		if (not card->check())
+			throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
 		cards.push_back(std::move(card));
 	}
@@ -231,8 +229,8 @@ PCIeCard::init()
 	}
 
 	/* Attach PCIe card to VFIO container */
-	VfioDevice& device = vfioContainer->attachDevice(pdev);
-	this->vfioDevice = &device;
+	kernel::vfio::Device &device = vfioContainer->attachDevice(pdev);
+	this->kernel::vfio::Device = &device;
 
 	/* Enable memory access and PCI bus mastering for DMA */
 	if (not device.pciEnable()) {
@@ -241,9 +239,9 @@ PCIeCard::init()
 	}
 
 	/* Reset system? */
-	if (do_reset) {
+	if (doReset) {
 		/* Reset / detect PCI device */
-		if (not vfioDevice->pciHotReset()) {
+		if (not kernel::vfio::Device->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
 			return false;
 		}
@@ -256,6 +254,3 @@ PCIeCard::init()
 
 	return true;
 }
-
-} // namespace fpga
-} // namespace villas

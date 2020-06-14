@@ -31,9 +31,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/gpio.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 
 // instantiate factory to make available to plugin infrastructure
@@ -47,6 +45,3 @@ GeneralPurposeIO::init()
 	return true;
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

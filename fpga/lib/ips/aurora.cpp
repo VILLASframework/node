@@ -66,9 +66,7 @@
 #define AURORA_AXIS_CR_SEQ_ECHO		(1 << 4)
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static AuroraFactory auroraFactoryInstance;
 
@@ -118,7 +116,3 @@ void Aurora::resetFrameCounters()
 
 	writeMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET, cr);
 }
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

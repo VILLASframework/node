@@ -32,9 +32,7 @@
 #include <villas/fpga/ips/intc.hpp>
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 // instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
@@ -113,6 +111,3 @@ size_t Fifo::read(void *buf, size_t len)
 	return nextlen;
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

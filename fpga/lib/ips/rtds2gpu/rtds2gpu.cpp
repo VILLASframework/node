@@ -5,10 +5,7 @@
 #include <villas/memory_manager.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
-
+using namespace villas::fpga::ip;
 static Rtds2GpuFactory factory;
 
 bool Rtds2Gpu::init()
@@ -27,8 +24,6 @@ bool Rtds2Gpu::init()
 
 	return true;
 }
-
-
 
 void Rtds2Gpu::dump(spdlog::level::level_enum logLevel)
 {
@@ -116,6 +111,3 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 	logger->info("  Seq. number: {}", doorbell.seq_nr);
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

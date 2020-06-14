@@ -53,9 +53,7 @@
 /* Control register bits */
 #define RTDS_AXIS_CR_DISABLE_LINK	0	/**< Disable SFP TX when set */
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static RtdsFactory rtdsFactoryInstance;
 
@@ -92,6 +90,3 @@ double Rtds::getDt()
 	return (dt == 0xFFFF) ? 0.0 : (double) dt / RTDS_HZ;
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

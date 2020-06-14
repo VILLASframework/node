@@ -22,9 +22,7 @@
 
 #include <villas/fpga/ips/bram.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static BramFactory factory;
 
@@ -49,6 +47,3 @@ bool Bram::init()
 	return true;
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas
