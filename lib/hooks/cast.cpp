@@ -167,12 +167,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<CastHook> p(
-	"cast",
-	"Cast signals types",
-	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "cast";
+static char d[] = "Cast signals types";
+static HookPlugin<CastHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

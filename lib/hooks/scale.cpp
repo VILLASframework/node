@@ -131,12 +131,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<ScaleHook> p(
-	"scale",
-	"Scale signals by a factor and add offset",
-	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
-	99
-);
+static char n[] = "scale";
+static char d[] = "Scale signals by a factor and add offset";
+static HookPlugin<ScaleHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
 } /* namespace node */
 } /* namespace villas */

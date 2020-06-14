@@ -72,7 +72,9 @@ public:
 };
 
 /* Register actions */
-static ActionPlugin<StatsAction>    p1("stats", "get or reset internal statistics counters");
+static char n[] = "stats";
+static char d[] = "get or reset internal statistics counters";
+static ActionPlugin<StatsAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

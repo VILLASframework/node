@@ -316,12 +316,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<DPHook> p(
-	"dp",
-	"Transform to/from dynamic phasor domain",
-	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
-	99
-);
+static char n[] = "dp";
+static char d[] = "Transform to/from dynamic phasor domain";
+static HookPlugin<DPHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
 } /* namespace node */
 } /* namespace villas */

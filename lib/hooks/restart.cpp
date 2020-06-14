@@ -98,12 +98,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<RestartHook> p(
-	"restart",
-	"Call restart hooks for current node",
-	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
-	1
-);
+static char n[] = "restart";
+static char d[] = "Call restart hooks for current node";
+static HookPlugin<RestartHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;
 
 } /* namespace node */
 } /* namespace villas */

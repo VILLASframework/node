@@ -52,10 +52,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<StatusAction> p(
-	"status",
-	"get status and statistics of web server"
-);
+static char n[] = "status";
+static char d[] = "get status and statistics of web server";
+static ActionPlugin<StatusAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

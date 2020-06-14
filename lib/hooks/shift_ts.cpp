@@ -104,12 +104,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<ShiftTimestampHook> p(
-	"shift_ts",
-	"Shift timestamps of samples",
-	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "shift_ts";
+static char d[] = "Shift timestamps of samples";
+static HookPlugin<ShiftTimestampHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

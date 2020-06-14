@@ -61,7 +61,7 @@ public:
 	virtual Action * make(Session *s) = 0;
 };
 
-template<typename T>
+template<typename T, const char *name, const char *desc>
 class ActionPlugin : public ActionFactory {
 
 public:
@@ -69,7 +69,17 @@ public:
 
 	virtual Action * make(Session *s) {
 		return new T(s);
-	};
+	}
+
+	// Get plugin name
+	virtual std::string
+	getName() const
+	{ return name; }
+
+	// Get plugin description
+	virtual std::string
+	getDescription() const
+	{ return desc; }
 };
 
 } // api

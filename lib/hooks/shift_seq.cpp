@@ -66,12 +66,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<ShiftSequenceHook> p(
-	"shift_seq",
-	"Shift sequence number of samples",
-	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "shift_seq";
+static char d[] = "Shift sequence number of samples";
+static HookPlugin<ShiftSequenceHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

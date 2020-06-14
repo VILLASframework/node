@@ -269,12 +269,9 @@ Hook::Reason StatsReadHook::process(sample *smp)
 }
 
 /* Register hook */
-static HookPlugin<StatsHook> p(
-	"stats",
-	"Collect statistics for the current path",
-	(int) Hook::Flags::NODE_READ,
-	99
-);
+static char n[] = "stats";
+static char d[] = "Collect statistics for the current path";
+static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
 
 } /* namespace node */
 } /* namespace villas */

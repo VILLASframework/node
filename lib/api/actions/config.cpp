@@ -46,10 +46,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<ConfigAction> p(
-	"config",
-	"get configuration of this VILLASnode instance"
-);
+static char n[] = "config";
+static char d[] = "get configuration of this VILLASnode instance";
+static ActionPlugin<ConfigAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

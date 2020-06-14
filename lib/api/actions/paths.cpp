@@ -64,10 +64,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<PathsAction> p(
-	"paths",
-	"retrieve list of all paths with details"
-);
+static char n[] = "paths";
+static char d[] = "retrieve list of all paths with details";
+static ActionPlugin<PathsAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

@@ -151,12 +151,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<PrintHook> p(
-	"print",
-	"Print the message to stdout",
-	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "print";
+static char d[] = "Print the message to stdout";
+static HookPlugin<PrintHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

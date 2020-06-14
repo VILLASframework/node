@@ -129,12 +129,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<PpsTsHook> p(
-	"pps_ts",
-	"Timestamp samples based GPS PPS signal",
-	(int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "pps_ts";
+static char d[] = "Timestamp samples based GPS PPS signal";
+static HookPlugin<PpsTsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

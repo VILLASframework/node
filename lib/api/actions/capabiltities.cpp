@@ -79,10 +79,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<CapabilitiesAction> p(
-	"capabilities",
-	"get capabiltities and details about this VILLASnode instance"
-);
+static char n[] = "capabilities";
+static char d[] = "get capabiltities and details about this VILLASnode instance";
+static ActionPlugin<CapabilitiesAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

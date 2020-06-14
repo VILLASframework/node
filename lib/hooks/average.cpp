@@ -176,12 +176,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<AverageHook> p(
-	"average",
-	"Calculate average over some signals",
-	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
-	99
-);
+static char n[] = "average";
+static char d[] = "Calculate average over some signals";
+static HookPlugin<AverageHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
 } /* namespace node */
 } /* namespace villas */

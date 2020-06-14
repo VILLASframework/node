@@ -43,10 +43,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<ShutdownAction> p(
-	"shutdown",
-	"quit VILLASnode"
-);
+static char n[] = "shutdown";
+static char d[] = "quit VILLASnode";
+static ActionPlugin<ShutdownAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

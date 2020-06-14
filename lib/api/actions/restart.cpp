@@ -108,10 +108,9 @@ public:
 std::string RestartAction::configUri;
 
 /* Register action */
-static ActionPlugin<RestartAction> p(
-	"restart",
-	"restart VILLASnode with new configuration"
-);
+static char n[] = "restart";
+static char d[] = "restart VILLASnode with new configuration";
+static ActionPlugin<RestartAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

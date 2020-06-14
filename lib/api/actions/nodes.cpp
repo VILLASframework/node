@@ -79,10 +79,9 @@ public:
 };
 
 /* Register action */
-static ActionPlugin<NodesAction> p(
-	"nodes",
-	"retrieve list of all known nodes"
-);
+static char n[] = "nodes";
+static char d[] = "retrieve list of all known nodes";
+static ActionPlugin<NodesAction, n, d> p;
 
 } /* namespace api */
 } /* namespace node */

@@ -122,12 +122,10 @@ public:
 	}
 };
 
-static HookPlugin<EBMHook> p(
-	"ebm",
-	"Energy-based Metric",
-	(int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE,
-	99
-);
+/* Register hook */
+static char n[] = "ebm";
+static char d[] = "Energy-based Metric";
+static HookPlugin<EBMHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
 } /* namespace node */
 } /* namespace villas */

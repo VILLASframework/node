@@ -179,25 +179,16 @@ public:
 
 class HookFactory : public plugin::Plugin {
 
-protected:
-	int flags;
-	int priority;
-
 public:
-	HookFactory(const std::string &name, const std::string &desc, int fl, int prio) : Plugin(name, desc),
-											  flags(fl),
-											  priority(prio)
-	{ }
+	using plugin::Plugin::Plugin;
 
 	virtual Hook *make(struct vpath *p, struct node *n) = 0;
 
-	int getFlags()
-	{
-		return flags;
-	}
+	virtual int getFlags() const = 0;
+	virtual int getPriority() const = 0;
 };
 
-template <typename T>
+template <typename T, const char *name, const char *desc, int flags = 0, int prio = 99>
 class HookPlugin : public HookFactory {
 
 public:
@@ -205,8 +196,28 @@ public:
 
 	virtual Hook *make(struct vpath *p, struct node *n)
 	{
-		return new T(p, n, flags, priority);
-	};
+		return new T(p, n, getFlags(), getPriority());
+	}
+
+	/// Get plugin name
+	virtual std::string
+	getName() const
+	{ return name; }
+
+	/// Get plugin description
+	virtual std::string
+	getDescription() const
+	{ return desc; }
+
+	/// Get hook flags
+	virtual int
+	getFlags() const
+	{ return flags; }
+
+	/// Get hook priority
+	virtual int
+	getPriority() const
+	{ return prio; }
 };
 
 } // namespace node

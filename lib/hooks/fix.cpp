@@ -66,12 +66,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<FixHook> p(
-	"fix",
-	"Fix received data by adding missing fields",
-	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
-	1
-);
+static char n[] = "fix";
+static char d[] = "Fix received data by adding missing fields";
+static HookPlugin<FixHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;
 
 } /* namespace node */
 } /* namespace villas */

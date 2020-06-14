@@ -45,4 +45,4 @@ set(HOOK_SRC
 
 add_library(hooks STATIC ${HOOK_SRC})
 target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(hooks INTERFACE ${LIBRARIES} PUBLIC villas-common)
+target_link_libraries(hooks PUBLIC ${LIBRARIES})

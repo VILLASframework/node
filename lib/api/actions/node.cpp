@@ -64,11 +64,26 @@ public:
 };
 
 /* Register actions */
-static ActionPlugin<NodeAction<node_start>>    p1("node.start",   "start a node");
-static ActionPlugin<NodeAction<node_stop>>     p2("node.stop",    "stop a node");
-static ActionPlugin<NodeAction<node_pause>>    p3("node.pause",   "pause a node");
-static ActionPlugin<NodeAction<node_resume>>   p4("node.resume",  "resume a node");
-static ActionPlugin<NodeAction<node_restart>>  p5("node.restart", "restart a node");
+char n1[] = "node.start";
+char d1[] = "start a node";
+static ActionPlugin<NodeAction<node_start>,   n1, d1> p1;
+
+char n2[] = "node.stop";
+char d2[] = "stop a node";
+static ActionPlugin<NodeAction<node_stop>,    n2, d2> p2;
+
+char n3[] = "node.pause";
+char d3[] = "pause a node";
+static ActionPlugin<NodeAction<node_pause>,   n3, d3> p3;
+
+char n4[] = "node.resume";
+char d4[] = "resume a node";
+static ActionPlugin<NodeAction<node_resume>,  n4, d4> p4;
+
+char n5[] = "node.restart";
+char d5[] = "restart a node";
+static ActionPlugin<NodeAction<node_restart>, n5, d5> p5;
+
 
 } /* namespace api */
 } /* namespace node */

@@ -38,12 +38,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<ExampleHook> p(
-	"example",
-	"This is just a simple example hook",
-	(int) Hook::Flags::PATH,
-	99
-);
+static char n[] = "example";
+static char d[] = "This is just a simple example hook";
+static HookPlugin<ExampleHook, n, d, (int) Hook::Flags::PATH> p;
 
 } // namespace node
 } // namespace villas

@@ -96,12 +96,9 @@ public:
 };
 
 /* Register hook */
-static HookPlugin<DropHook> p(
-	"drop",
-	"Drop messages with reordered sequence numbers",
-	(int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ,
-	3
-);
+static char n[] = "drop";
+static char d[] = "Drop messages with reordered sequence numbers";
+static HookPlugin<DropHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 3> p;
 
 } /* namespace node */
 } /* namespace villas */
