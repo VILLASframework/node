@@ -29,8 +29,15 @@ project(VILLASfpga
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+# Several CMake settings/defaults
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(TOPLEVEL_PROJECT ON)
+else()
+    set(TOPLEVEL_PROJECT OFF)
+endif()
 
 # GPU library is optional, check for CUDA presence
 include(CheckLanguage)
@@ -42,13 +49,23 @@ else()
 	message("No CUDA support, not building GPU library")
 endif()
 
+include(FindPkgConfig)
+
+pkg_check_modules(JANSSON REQUIRED IMPORTED_TARGET jansson)
+pkg_check_modules(XIL REQUIRED IMPORTED_TARGET libxil)
+
+find_package(Threads)
+
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
-add_subdirectory(common)
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(tests)
+
+if(NOT CMAKE_PROJECT_NAME STREQUAL "villas-node")
+	add_subdirectory(common)
+endif()
 
 # Project settings
 set(PROJECT_NAME "VILLASfpga")
