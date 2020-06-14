@@ -45,7 +45,7 @@
 #include <linux/pci_regs.h>
 
 #include <villas/log.hpp>
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio.hpp>
 
@@ -305,18 +305,13 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	}
 
 	/* Bind PCI card to vfio-pci driver if not already bound */
-	ret = pci_get_driver(pdev, name, sizeof(name));
-	if (ret || strcmp(name, kernelDriver)) {
+	if (pdev.getDriver() != kernelDriver) {
 		logger->debug("Bind PCI card to kernel driver '{}'", kernelDriver);
-		ret = pci_attach_driver(pdev, kernelDriver);
-		if (ret) {
-			logger->error("Failed to attach device to driver");
-			throw std::exception();
-		}
+		pdev.attachDriver(kernelDriver);
 	}
 
 	/* Get IOMMU group of device */
-	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
+	int index = isIommuEnabled() ? pdev.getIOMMUGroup() : 0;
 	if (index < 0) {
 		ret = kernel::get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
 		if (ret != 0 || strcmp("on", iommu_state) != 0)
