@@ -64,7 +64,7 @@ public:
 	{ return size; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const MemoryTranslation& translation)
+	operator<< (std::ostream &stream, const MemoryTranslation &translation)
 	{
 		return stream << std::hex
 		              << "(src=0x"   << translation.src
@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Merge two MemoryTranslations together
-	MemoryTranslation& operator+=(const MemoryTranslation& other);
+	MemoryTranslation &operator+=(const MemoryTranslation &other);
 
 private:
 	uintptr_t	src;	///< Base address of local address space
@@ -100,14 +100,14 @@ private:
 	{
 		logger = logging.get("memory:manager");
 
-		pathCheckFunc = [&](const MemoryGraph::Path& path) {
+		pathCheckFunc = [&](const MemoryGraph::Path &path) {
 			return this->pathCheck(path);
 		};
 	}
 
 	// ... and no copying or assigning
 	MemoryManager(const MemoryManager&) = delete;
-	MemoryManager& operator=(const MemoryManager&) = delete;
+	MemoryManager &operator=(const MemoryManager&) = delete;
 
 	/**
 	 * @brief Custom edge in memory graph representing a memory mapping
@@ -134,7 +134,7 @@ private:
 		size_t		size;	///< Size of the mapping
 
 		friend std::ostream&
-		operator<< (std::ostream& stream, const Mapping& mapping)
+		operator<< (std::ostream &stream, const Mapping &mapping)
 		{
 			return stream << static_cast<const Edge&>(mapping) << " = "
 			              << mapping.name
@@ -159,7 +159,7 @@ private:
 		std::string name;	///< Human-readable name
 
 		friend std::ostream&
-		operator<< (std::ostream& stream, const AddressSpace& addrSpace)
+		operator<< (std::ostream &stream, const AddressSpace &addrSpace)
 		{
 			return stream << static_cast<const Vertex&>(addrSpace) << " = "
 			              << addrSpace.name;
@@ -191,7 +191,7 @@ public:
 	{ return getOrCreateAddressSpace("pcie"); }
 
 	AddressSpaceId
-	getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
+	getProcessAddressSpaceMemoryBlock(const std::string &memoryBlock)
 	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("process", memoryBlock)); }
 
 
@@ -205,7 +205,7 @@ public:
 	/// Create a default mapping
 	MappingId
 	createMapping(uintptr_t src, uintptr_t dest, size_t size,
-	              const std::string& name,
+	              const std::string &name,
 	              AddressSpaceId fromAddrSpace,
 	              AddressSpaceId toAddrSpace);
 
@@ -220,7 +220,7 @@ public:
 
 
 	AddressSpaceId
-	findAddressSpace(const std::string& name);
+	findAddressSpace(const std::string &name);
 
 	std::list<AddressSpaceId>
 	findPath(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
@@ -233,21 +233,21 @@ public:
 	{ return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId); }
 
 	static std::string
-	getSlaveAddrSpaceName(const std::string& ipInstance, const std::string& memoryBlock)
+	getSlaveAddrSpaceName(const std::string &ipInstance, const std::string &memoryBlock)
 	{ return ipInstance + "/" + memoryBlock; }
 
 	static std::string
-	getMasterAddrSpaceName(const std::string& ipInstance, const std::string& busInterface)
+	getMasterAddrSpaceName(const std::string &ipInstance, const std::string &busInterface)
 	{ return ipInstance + ":" + busInterface; }
 
 private:
 	/// Convert a Mapping to MemoryTranslation for calculations
 	static MemoryTranslation
-	getTranslationFromMapping(const Mapping& mapping)
+	getTranslationFromMapping(const Mapping &mapping)
 	{ return MemoryTranslation(mapping.src, mapping.dest, mapping.size); }
 
 	bool
-	pathCheck(const MemoryGraph::Path& path);
+	pathCheck(const MemoryGraph::Path &path);
 
 	/// Directed graph that stores address spaces and memory mappings
 	MemoryGraph memoryGraph;

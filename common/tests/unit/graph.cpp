@@ -100,7 +100,7 @@ Test(graph, path, .description = "Find path")
 	cr_assert(g.getPath(v1id, v3id, path1));
 
 	logger->info("  Path from {} to {} via:", v1id, v3id);
-	for(auto& edge : path1) {
+	for(auto &edge : path1) {
 		logger->info("  -> edge {}", edge);
 	}
 
@@ -121,7 +121,7 @@ Test(graph, path, .description = "Find path")
 	cr_assert(g.getPath(v4id, v6id, path4));
 
 	logger->info("  Path from {} to {} via:", v4id, v6id);
-	for(auto& edge : path4) {
+	for(auto &edge : path4) {
 		logger->info("  -> edge {}", edge);
 	}
 }
@@ -129,7 +129,7 @@ Test(graph, path, .description = "Find path")
 Test(graph, memory_manager, .description = "Global Memory Manager")
 {
 	Logger logger = logging.get("test:graph:mm");
-	auto& mm = villas::MemoryManager::get();
+	auto &mm = villas::MemoryManager::get();
 
 	logger->info("Create address spaces");
 	auto dmaRegs = mm.getOrCreateAddressSpace("DMA Registers");

@@ -64,7 +64,7 @@ MemoryManager::getOrCreateAddressSpace(std::string name)
 
 MemoryManager::MappingId
 MemoryManager::createMapping(uintptr_t src, uintptr_t dest, size_t size,
-                             const std::string& name,
+                             const std::string &name,
                              MemoryManager::AddressSpaceId fromAddrSpace,
                              MemoryManager::AddressSpaceId toAddrSpace)
 {
@@ -87,7 +87,7 @@ MemoryManager::addMapping(std::shared_ptr<Mapping> mapping,
 }
 
 MemoryManager::AddressSpaceId
-MemoryManager::findAddressSpace(const std::string& name)
+MemoryManager::findAddressSpace(const std::string &name)
 {
 	return memoryGraph.findVertex(
 	            [&](const std::shared_ptr<AddressSpace>& v) {
@@ -114,7 +114,7 @@ MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
 		throw std::out_of_range("no translation found");
 	}
 
-	for (auto& mappingId : pathGraph) {
+	for (auto &mappingId : pathGraph) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		path.push_back(mapping->getVertexTo());
 	}
@@ -142,7 +142,7 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
 	/* Iterate through path and merge all mappings into a single translation */
-	for (auto& mappingId : path) {
+	for (auto &mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		translation += getTranslationFromMapping(*mapping);
 	}
@@ -151,7 +151,7 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 }
 
 bool
-MemoryManager::pathCheck(const MemoryGraph::Path& path)
+MemoryManager::pathCheck(const MemoryGraph::Path &path)
 {
 	/* Start with an identity mapping */
 	MemoryTranslation translation(0, 0, SIZE_MAX);
@@ -159,7 +159,7 @@ MemoryManager::pathCheck(const MemoryGraph::Path& path)
 	/* Try to add all mappings together to a common translation. If this fails
 	 * there is a non-overlapping window.
 	 */
-	for (auto& mappingId : path) {
+	for (auto &mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		try {
 			translation += getTranslationFromMapping(*mapping);
@@ -188,7 +188,7 @@ MemoryTranslation::getForeignAddr(uintptr_t addrInLocalAddrSpace) const
 }
 
 MemoryTranslation&
-MemoryTranslation::operator+=(const MemoryTranslation& other)
+MemoryTranslation::operator+=(const MemoryTranslation &other)
 {
 	Logger logger = logging.get("MemoryTranslation");
 

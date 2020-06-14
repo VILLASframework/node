@@ -73,7 +73,7 @@ std::string encode(const std::vector<byte>& input)
 	return encoded;
 }
 
-std::vector<byte> decode(const std::string& input)
+std::vector<byte> decode(const std::string &input)
 {
 	if (input.length() % 4)
 		throw std::runtime_error("Invalid base64 length!");
