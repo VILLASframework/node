@@ -44,12 +44,13 @@
 #include <sys/eventfd.h>
 #include <linux/pci_regs.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/kernel/pci.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio.hpp>
 
-using namespace villas;
+using namespace villas::kernel::vfio;
 
 static const char *vfio_pci_region_names[] = {
     "PCI_BAR0",		/* VFIO_PCI_BAR0_REGION_INDEX */
@@ -74,7 +75,7 @@ static const char *vfio_pci_irq_names[] = {
 namespace villas {
 
 
-VfioContainer::VfioContainer()
+Container::Container()
     : iova_next(0)
 {
 
@@ -136,7 +137,7 @@ VfioContainer::VfioContainer()
 }
 
 
-VfioContainer::~VfioContainer()
+Container::~Container()
 {
 	Logger logger = logging.get("kernel:vfio");
 
@@ -153,16 +154,16 @@ VfioContainer::~VfioContainer()
 }
 
 
-std::shared_ptr<VfioContainer>
-VfioContainer::create()
+std::shared_ptr<Container>
+Container::create()
 {
-	std::shared_ptr<VfioContainer> container { new VfioContainer };
+	std::shared_ptr<Container> container { new Container };
 	return container;
 }
 
 
 void
-VfioContainer::dump()
+Container::dump()
 {
 	Logger logger = logging.get("kernel:vfio");
 
@@ -170,14 +171,14 @@ VfioContainer::dump()
 	logger->info("Version: {}", version);
 	logger->info("Extensions: 0x{:x}", extensions);
 
-	for (auto& group : groups) {
+	for (auto &group : groups) {
 		logger->info("VFIO Group {}, viable={}, container={}",
 		             group->index,
 		             (group->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
 		             (group->status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0
 		);
 
-		for (auto& device : group->devices) {
+		for (auto &device : group->devices) {
 			logger->info("Device {}: regions={}, irqs={}, flags={}",
 			             device->name,
 			             device->info.num_regions,
@@ -216,13 +217,13 @@ VfioContainer::dump()
 }
 
 
-VfioDevice&
-VfioContainer::attachDevice(const char* name, int index)
+Device&
+Container::attachDevice(const char* name, int index)
 {
 	Logger logger = logging.get("kernel:vfio");
 
-	VfioGroup& group = getOrAttachGroup(index);
-	auto device = std::make_unique<VfioDevice>(name, group);
+	Group &group = getOrAttachGroup(index);
+	auto device = std::make_unique<Device>(name, group);
 
 	/* Open device fd */
 	device->fd = ioctl(group.fd, VFIO_GROUP_GET_DEVICE_FD, name);
@@ -289,8 +290,8 @@ VfioContainer::attachDevice(const char* name, int index)
 }
 
 
-VfioDevice&
-VfioContainer::attachDevice(const pci_device* pdev)
+Device&
+Container::attachDevice(const pci::Device &pdev)
 {
 	int ret;
 	char name[32], iommu_state[4];
@@ -299,10 +300,8 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	Logger logger = logging.get("kernel:vfio");
 
 	/* Load PCI bus driver for VFIO */
-	if (kernel::module_load("vfio_pci")) {
-		logger->error("Failed to load kernel driver: vfio_pci");
-		throw std::exception();
-	}
+	if (kernel::module_load("vfio_pci"))
+		throw RuntimeError("Failed to load kernel driver: vfio_pci");
 
 	/* Bind PCI card to vfio-pci driver if not already bound */
 	if (pdev.getDriver() != kernelDriver) {
@@ -325,13 +324,13 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	}
 
 	/* VFIO device name consists of PCI BDF */
-	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev->slot.domain,
-	         pdev->slot.bus, pdev->slot.device, pdev->slot.function);
+	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev.slot.domain,
+	         pdev.slot.bus, pdev.slot.device, pdev.slot.function);
 
 	logger->info("Attach to device {} with index {}", std::string(name), index);
-	auto& device = attachDevice(name, index);
+	auto &device = attachDevice(name, index);
 
-	device.pci_device = pdev;
+	device.pci_device = &pdev;
 
 	/* Check if this is really a vfio-pci device */
 	if (not device.isVfioPciDevice()) {
@@ -344,7 +343,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 
 
 uintptr_t
-VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
+Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
 	int ret;
 
@@ -396,7 +395,7 @@ VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 
 
 bool
-VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
+Container::memoryUnmap(uintptr_t phys, size_t length)
 {
 	int ret;
 
@@ -421,20 +420,20 @@ VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
 }
 
 
-VfioGroup&
-VfioContainer::getOrAttachGroup(int index)
+Group&
+Container::getOrAttachGroup(int index)
 {
 	Logger logger = logging.get("kernel:vfio");
 
 	/* Search if group with index already exists */
-	for (auto& group : groups) {
+	for (auto &group : groups) {
 		if (group->index == index) {
 			return *group;
 		}
 	}
 
 	/* Group not yet part of this container, so acquire ownership */
-	auto group = VfioGroup::attach(*this, index);
+	auto group = Group::attach(*this, index);
 	if (not group) {
 		logger->error("Failed to attach to IOMMU group: {}", index);
 		throw std::exception();
@@ -449,13 +448,13 @@ VfioContainer::getOrAttachGroup(int index)
 }
 
 
-VfioDevice::~VfioDevice()
+Device::~Device()
 {
 	Logger logger = logging.get("kernel:vfio");
 
 	logger->debug("Clean up device {} with fd {}", this->name, this->fd);
 
-	for (auto& region : regions) {
+	for (auto &region : regions) {
 		regionUnmap(region.index);
 	}
 
@@ -467,7 +466,7 @@ VfioDevice::~VfioDevice()
 
 
 bool
-VfioDevice::reset()
+Device::reset()
 {
 	if (this->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(this->fd, VFIO_DEVICE_RESET) == 0;
@@ -477,7 +476,7 @@ VfioDevice::reset()
 
 
 void*
-VfioDevice::regionMap(size_t index)
+Device::regionMap(size_t index)
 {
 	struct vfio_region_info *r = &regions[index];
 
@@ -499,7 +498,7 @@ VfioDevice::regionMap(size_t index)
 
 
 bool
-VfioDevice::regionUnmap(size_t index)
+Device::regionUnmap(size_t index)
 {
 	int ret;
 	struct vfio_region_info *r = &regions[index];
@@ -522,7 +521,7 @@ VfioDevice::regionUnmap(size_t index)
 
 
 size_t
-VfioDevice::regionGetSize(size_t index)
+Device::regionGetSize(size_t index)
 {
 	Logger logger = logging.get("kernel:vfio");
 
@@ -536,7 +535,7 @@ VfioDevice::regionGetSize(size_t index)
 
 
 bool
-VfioDevice::pciEnable()
+Device::pciEnable()
 {
 	int ret;
 	uint32_t reg;
@@ -563,7 +562,7 @@ VfioDevice::pciEnable()
 
 
 bool
-VfioDevice::pciHotReset()
+Device::pciHotReset()
 {
 	Logger logger = logging.get("kernel:vfio");
 
@@ -624,7 +623,7 @@ VfioDevice::pciHotReset()
 
 
 int
-VfioDevice::pciMsiInit(int efds[])
+Device::pciMsiInit(int efds[])
 {
 	/* Check if this is really a vfio-pci device */
 	if (not isVfioPciDevice())
@@ -668,7 +667,7 @@ VfioDevice::pciMsiInit(int efds[])
 
 
 int
-VfioDevice::pciMsiDeinit(int efds[])
+Device::pciMsiDeinit(int efds[])
 {
 	/* Check if this is really a vfio-pci device */
 	if (not isVfioPciDevice())
@@ -708,7 +707,7 @@ VfioDevice::pciMsiDeinit(int efds[])
 
 
 bool
-VfioDevice::pciMsiFind(int nos[])
+Device::pciMsiFind(int nos[])
 {
 	int ret, idx, irq;
 	char *end, *col, *last, line[1024], name[13];
@@ -750,13 +749,13 @@ VfioDevice::pciMsiFind(int nos[])
 
 
 bool
-VfioDevice::isVfioPciDevice() const
+Device::isVfioPciDevice() const
 {
 	return info.flags & VFIO_DEVICE_FLAGS_PCI;
 }
 
 
-VfioGroup::~VfioGroup()
+Group::~Group()
 {
 	Logger logger = logging.get("kernel:vfio");
 
@@ -781,12 +780,12 @@ VfioGroup::~VfioGroup()
 }
 
 
-std::unique_ptr<VfioGroup>
-VfioGroup::attach(VfioContainer& container, int groupIndex)
+std::unique_ptr<Group>
+Group::attach(Container &container, int groupIndex)
 {
 	Logger logger = logging.get("kernel:vfio");
 
-	std::unique_ptr<VfioGroup> group { new VfioGroup(groupIndex) };
+	std::unique_ptr<Group> group { new Group(groupIndex) };
 
 	group->container = &container;
 

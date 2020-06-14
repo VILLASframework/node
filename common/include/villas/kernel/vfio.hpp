@@ -25,22 +25,29 @@
   #define VFIO_NOIOMMU_IOMMU 8
 #endif
 
-/* Forward declarations */
-struct pci_device;
-
 namespace villas {
+namespace kernel {
 
-class VfioContainer;
-class VfioGroup;
+namespace pci {
 
+/* Forward declarations */
+struct Device;
 
-class VfioDevice {
-	friend class VfioContainer;
+}
+
+namespace vfio {
+
+/* Forward declarations */
+class Container;
+class Group;
+
+class Device {
+	friend class Container;
 public:
-	VfioDevice(const std::string& name, VfioGroup& group) :
+	Device(const std::string &name, Group &group) :
 	    name(name), group(group) {}
 
-	~VfioDevice();
+	~Device();
 
 	bool reset();
 
@@ -79,23 +86,23 @@ private:
 	std::vector<void*> mappings;
 
 	/**< libpci handle of the device */
-	const struct pci_device *pci_device;
+	const kernel::pci::Device *pci_device;
 
-	VfioGroup& group;		/**< The VFIO group this device belongs to */
+	Group &group;		/**< The VFIO group this device belongs to */
 };
 
 
 
-class VfioGroup {
-	friend class VfioContainer;
-	friend VfioDevice;
+class Group {
+	friend class Container;
+	friend Device;
 private:
-	VfioGroup(int index) : fd(-1), index(index) {}
+	Group(int index) : fd(-1), index(index) {}
 public:
-	~VfioGroup();
+	~Group();
 
-	static std::unique_ptr<VfioGroup>
-	attach(VfioContainer& container, int groupIndex);
+	static std::unique_ptr<Group>
+	attach(Container &container, int groupIndex);
 
 private:
 	/// VFIO group file descriptor
@@ -108,25 +115,25 @@ private:
 	struct vfio_group_status status;
 
 	/// All devices owned by this group
-	std::list<std::unique_ptr<VfioDevice>> devices;
+	std::list<std::unique_ptr<Device>> devices;
 
-	VfioContainer* container;	/**< The VFIO container to which this group is belonging */
+	Container* container;	/**< The VFIO container to which this group is belonging */
 };
 
 
-class VfioContainer {
+class Container {
 private:
-	VfioContainer();
+	Container();
 public:
-	~VfioContainer();
+	~Container();
 
-	static std::shared_ptr<VfioContainer>
+	static std::shared_ptr<Container>
 	create();
 
 	void dump();
 
-	VfioDevice& attachDevice(const char *name, int groupIndex);
-	VfioDevice& attachDevice(const struct pci_device *pdev);
+	Device & attachDevice(const char *name, int groupIndex);
+	Device & attachDevice(const pci::Device &pdev);
 
 	/**
 	 * @brief Map VM to an IOVA, which is accessible by devices in the container
@@ -143,11 +150,11 @@ public:
 	bool isIommuEnabled() const
 	{ return this->hasIommu; }
 
-	const int& getFd() const
+	const int &getFd() const
 	{ return fd; }
 
 private:
-	VfioGroup& getOrAttachGroup(int index);
+	Group & getOrAttachGroup(int index);
 
 private:
 	int fd;
@@ -157,9 +164,11 @@ private:
 	bool hasIommu;
 
 	/// All groups bound to this container
-	std::list<std::unique_ptr<VfioGroup>> groups;
+	std::list<std::unique_ptr<Group>> groups;
 };
 
 /** @} */
 
+} /* namespace vfio */
+} /* namespace kernel */
 } /* namespace villas */
