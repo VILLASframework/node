@@ -166,7 +166,7 @@ endif()
 
 # Enable VILLASfpga support
 if(WITH_NODE_FPGA)
-    list(APPEND NODE_SRC villas_fpga.cpp)
+    list(APPEND NODE_SRC fpga.cpp)
     list(APPEND LIBRARIES villas-fpga)
 endif()
 

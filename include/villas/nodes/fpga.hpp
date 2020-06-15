@@ -22,7 +22,7 @@
  *********************************************************************************/
 
 /**
- * @addtogroup villas_fpga BSD villas_fpga Node Type
+ * @addtogroup fpga BSD fpga Node Type
  * @ingroup node
  * @{
  */
@@ -34,67 +34,73 @@
 #include <villas/io.h>
 #include <villas/timing.h>
 
-struct villas_fpga {
-	std::string fpga_name;
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/node.hpp>
+#include <villas/fpga/ips/dma.hpp>
+
+using namespace villas;
+
+#define FPGA_DMA_VLNV
+#define FPGA_AURORA_VLNV "acs.eonerc.rwth-aachen.de:user:aurora_axis:"
+
+struct fpga {
+	int irqFd;
+	int coalesce;
+	bool polling;
 
 	std::shared_ptr<villas::fpga::PCIeCard> card;
 
-	fpga::IpNode *dma;
-	fpga::IpNode *intf;
+	std::shared_ptr<villas::fpga::ip::Dma> dma;
+	std::shared_ptr<villas::fpga::ip::Node> intf;
 
-	fpga::Mem mem;
-	fpga::Block block;
+	struct {
+		villas::MemoryAccessor<uint32_t> mem;
+		villas::MemoryBlock block;
+	} in, out;
+
+	// Config only
+	std::string cardName;
+	std::string intfName;
+	std::string dmaName;
 };
 
 /** @see node_vtable::type_start */
-int villas_fpga_type_start(villas::node::SuperNode *sn);
+int fpga_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::type_stop */
-int villas_fpga_type_stop();
+int fpga_type_stop();
 
 /** @see node_type::init */
-int villas_fpga_init(struct node *n);
+int fpga_init(struct node *n);
 
 /** @see node_type::destroy */
-int villas_fpga_destroy(struct node *n);
+int fpga_destroy(struct node *n);
 
 /** @see node_type::parse */
-int villas_fpga_parse(struct node *n, json_t *cfg);
+int fpga_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
-char * villas_fpga_print(struct node *n);
+char * fpga_print(struct node *n);
 
 /** @see node_type::check */
-int villas_fpga_check();
+int fpga_check();
 
 /** @see node_type::prepare */
-int villas_fpga_prepare();
+int fpga_prepare();
 
 /** @see node_type::start */
-int villas_fpga_start(struct node *n);
+int fpga_start(struct node *n);
 
 /** @see node_type::stop */
-int villas_fpga_stop(struct node *n);
-
-/** @see node_type::pause */
-int villas_fpga_pause(struct node *n);
-
-/** @see node_type::resume */
-int villas_fpga_resume(struct node *n);
+int fpga_stop(struct node *n);
 
 /** @see node_type::write */
-int villas_fpga_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int fpga_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int villas_fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-/** @see node_type::reverse */
-int villas_fpga_reverse(struct node *n);
+int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::poll_fds */
-int villas_fpga_poll_fds(struct node *n, int fds[]);
-
-/** @see node_type::netem_fds */
-int villas_fpga_netem_fds(struct node *n, int fds[]);
+int fpga_poll_fds(struct node *n, int fds[]);
 
 /** @} */
