@@ -105,10 +105,23 @@ public:
 	getSlavePort(const std::string &name) const
 	{ return *portsSlave.at(name); }
 
+	bool connect(const StreamVertex &from, const StreamVertex &to);
+	bool connect(const StreamVertex &from, const StreamVertex &to, bool reverse)
+	{
+		bool ret;
+		
+		ret = connect(from, to);
+
+		if (reverse)
+			ret &= connect(to, from);
+
+		return ret;
+	}
+
 	// easy-usage assuming that the slave IP to connect to only has one slave
 	// port and implements the getDefaultSlavePort() function
-	bool connect(const Node& slaveNode)
-	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort()); }
+	bool connect(const Node &slaveNode, bool reverse = false)
+	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort(), reverse); }
 
 	// used by easy-usage connect, will throw if not implemented by derived node
 	virtual const StreamVertex&
