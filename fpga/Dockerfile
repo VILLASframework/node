@@ -71,7 +71,6 @@ RUN git clone --recursive https://github.com/fmtlib/fmt.git /tmp/fmt && \
     make -j$(nproc) install && \
 	rm -rf /tmp/fmt
 
-
 # Build & Install spdlog
 RUN git clone --recursive https://github.com/gabime/spdlog.git /tmp/spdlog && \
     mkdir -p /tmp/spdlog/build && cd /tmp/spdlog/build && \
@@ -81,12 +80,19 @@ RUN git clone --recursive https://github.com/gabime/spdlog.git /tmp/spdlog && \
 	rm -rf /tmp/spdlog
 
 # Build & Install Criterion
-COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake3 .. && make install && rm -rf /tmp/*
+RUN git clone --recursive https://github.com/Snaipe/Criterion /tmp/criterion && \
+    mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && \
+    git checkout v2.3.3 && \
+	cmake3 .. && \
+	make -j$(nproc) install && \
+	rm -rf /tmp/*
 
 # Build & Install libxil
-COPY thirdparty/libxil /tmp/libxil
-RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake3 .. && make install && rm -rf /tmp/*
+RUN git clone https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git /tmp/libxil && \
+	mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && \
+	cmake3 .. && \
+	make -j$(nproc) install && \
+	rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 

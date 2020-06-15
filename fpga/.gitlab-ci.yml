@@ -1,19 +1,13 @@
 variables:
-  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
   DOCKER_IMAGE_DEV: villas/fpga-dev
 
-# For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
-before_script:
-  - git submodule foreach git checkout .
-
 stages:
   - prepare
   - build
   - test
-#  - deploy
 
 # Stage: prepare
 ##############################################################################
@@ -43,19 +37,6 @@ build:source:
   tags:
     - docker
 
-#build:packages:
-#  stage: build
-#  script:
-#    - mkdir build && cd build && cmake3 .. && make package
-#  artifacts:
-#    expire_in: 1 week
-#    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
-#    paths:
-#      - build/
-#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-#  tags:
-#    - docker
-
 # Stage: test
 ##############################################################################
 
@@ -66,32 +47,12 @@ test:unit:
     - cuda
   allow_failure: true
   script: |
-    rm -r build && mkdir build && cd build && cmake3 .. && make unit-tests -j8
+    rm -r build && mkdir build && cd build
+    cmake3 ..
+    make -j$(nproc) unit-tests
     if [ "$(who | wc -l)" -eq "0" ]; then
-      tests/unit-tests --jobs 1 --filter 'fpga/*'
+      tests/fpga-unit-tests --jobs 1 --filter 'fpga/*'
     else
       echo "System is currently used by: $(who)"
       echo "We are skipping the test. Please restart manually."
     fi
-
-# Stage: deploy
-##############################################################################
-
-#deploy:packages:
-#  stage: deploy
-#  script:
-#    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
-#    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/../packages/
-#    - rsync ${RSYNC_OPTS} build//*.tar.gz  ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
-#    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
-#  dependencies:
-#    - build:packages
-#  tags:
-#    - villas-deploy
-#  only:
-#    - tags
-#
-#deploy:git-mirror:
-#  stage: deploy
-#  script:
-#    - git push --force --mirror --prune https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com:VILLASframework/VILLASnode.git
