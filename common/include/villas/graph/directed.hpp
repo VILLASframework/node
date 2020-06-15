@@ -175,9 +175,9 @@ public:
 				logger->debug("Remove edge {}", edgeId);
 				// remove edge from global edge list
 				it = edges.erase(it);
-			} else {
-				++it;
 			}
+			else
+				++it;
 		}
 
 		logger->debug("Remove vertex {}", vertexId);
@@ -200,10 +200,10 @@ public:
 	             Path &path,
 	             check_path_fn pathCheckFunc = checkPath)
 	{
-		if (fromVertexId == toVertexId) {
+		if (fromVertexId == toVertexId)
 			// arrived at the destination
 			return true;
-		} else {
+		else {
 			auto fromVertex = getVertex(fromVertexId);
 
 			for (auto &edgeId : fromVertex->edges) {
@@ -228,14 +228,12 @@ public:
 				path.push_back(edgeId);
 
 				// recursive, depth-first search
-				if (getPath(edgeOfFromVertex->to, toVertexId, path, pathCheckFunc) and
-				   pathCheckFunc(path)) {
+				if (getPath(edgeOfFromVertex->to, toVertexId, path, pathCheckFunc) and pathCheckFunc(path))
 					// path found, we're done
-				    return true;
-				} else {
+					return true;
+				else
 					// tear down path that didn't lead to the destination
 					path.pop_back();
-				}
 			}
 		}
 

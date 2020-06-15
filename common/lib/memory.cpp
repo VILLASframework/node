@@ -210,16 +210,15 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
 		void* buf = mmap(nullptr, getSize(), PROT_READ|PROT_WRITE, MAP_SHARED, bufFd, 0);
 		close(bufFd);
 
-		if (buf != MAP_FAILED) {
+		if (buf != MAP_FAILED)
 			mm.createMapping(reinterpret_cast<uintptr_t>(buf), 0, getSize(),
 			                 getName() + "-VA",
 			                 mm.getProcessAddressSpace(), getAddrSpaceId());
-		} else {
+		else
 			logger->warn("Cannot map {}", bufPath);
-		}
-	} else {
-		logger->warn("Cannot open {}", bufPath);
 	}
+	else
+		logger->warn("Cannot open {}", bufPath);
 
 	logger->info("Mapped {} of size {} bytes", bufPath, getSize());
 }

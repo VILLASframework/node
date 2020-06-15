@@ -78,7 +78,6 @@ namespace villas {
 Container::Container()
     : iova_next(0)
 {
-
 	Logger logger = logging.get("kernel:vfio");
 
 	static constexpr const char* requiredKernelModules[] = {
@@ -86,49 +85,38 @@ Container::Container()
 	};
 
 	for (const char* module : requiredKernelModules) {
-		if (kernel::module_load(module) != 0) {
-			logger->error("Kernel module '{}' required but could not be loaded. "
+		if (kernel::module_load(module) != 0)
+			throw RuntimeError("Kernel module '{}' required but could not be loaded. "
 			              "Please load manually!", module);
-			throw std::exception();
-		}
 	}
 
 	/* Open VFIO API */
 	fd = open(VFIO_DEV, O_RDWR);
-	if (fd < 0) {
-		logger->error("Failed to open VFIO container");
-		throw std::exception();
-	}
+	if (fd < 0)
+		throw RuntimeError("Failed to open VFIO container");
 
 	/* Check VFIO API version */
 	version = ioctl(fd, VFIO_GET_API_VERSION);
-	if (version < 0 || version != VFIO_API_VERSION) {
-		logger->error("Failed to get VFIO version");
-		throw std::exception();
-	}
+	if (version < 0 || version != VFIO_API_VERSION)
+		throw RuntimeError("Failed to get VFIO version");
 
 	/* Check available VFIO extensions (IOMMU types) */
 	extensions = 0;
 	for (unsigned int i = VFIO_TYPE1_IOMMU; i <= VFIO_NOIOMMU_IOMMU; i++) {
 		int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
-		if (ret < 0) {
-			logger->error("Failed to get VFIO extensions");
-			throw std::exception();
-		}
-		else if (ret > 0) {
+		if (ret < 0)
+			throw RuntimeError("Failed to get VFIO extensions");
+		else if (ret > 0)
 			extensions |= (1 << i);
-		}
 	}
 
 	hasIommu = false;
 
 	if (not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
-		if (not (extensions & (1 << VFIO_TYPE1_IOMMU))) {
-			logger->error("No supported IOMMU extension found");
-			throw std::exception();
-		} else {
+		if (not (extensions & (1 << VFIO_TYPE1_IOMMU)))
+			throw RuntimeError("No supported IOMMU extension found");
+		else
 			hasIommu = true;
-		}
 	}
 
 	logger->debug("Version:    {:#x}", version);
@@ -148,9 +136,8 @@ Container::~Container()
 
 	/* Close container */
 	int ret = close(fd);
-	if (ret < 0) {
+	if (ret < 0)
 		logger->error("Cannot close vfio container fd {}", fd);
-	}
 }
 
 
@@ -158,6 +145,7 @@ std::shared_ptr<Container>
 Container::create()
 {
 	std::shared_ptr<Container> container { new Container };
+
 	return container;
 }
 
@@ -227,19 +215,15 @@ Container::attachDevice(const char* name, int index)
 
 	/* Open device fd */
 	device->fd = ioctl(group.fd, VFIO_GROUP_GET_DEVICE_FD, name);
-	if (device->fd < 0) {
-		logger->error("Failed to open VFIO device: {}", device->name);
-		throw std::exception();
-	}
+	if (device->fd < 0)
+		throw RuntimeError("Failed to open VFIO device: {}", device->name);
 
 	/* Get device info */
 	device->info.argsz = sizeof(device->info);
 
 	int ret = ioctl(device->fd, VFIO_DEVICE_GET_INFO, &device->info);
-	if (ret < 0) {
-		logger->error("Failed to get VFIO device info for: {}", device->name);
-		throw std::exception();
-	}
+	if (ret < 0)
+		throw RuntimeError("Failed to get VFIO device info for: {}", device->name);
 
 	logger->debug("Device has {} regions", device->info.num_regions);
 	logger->debug("Device has {} IRQs", device->info.num_irqs);
@@ -258,10 +242,8 @@ Container::attachDevice(const char* name, int index)
 		region.index = i;
 
 		ret = ioctl(device->fd, VFIO_DEVICE_GET_REGION_INFO, &region);
-		if (ret < 0) {
-			logger->error("Failed to get region of VFIO device: {}", device->name);
-			throw std::exception();
-		}
+		if (ret < 0)
+			throw RuntimeError("Failed to get region of VFIO device: {}", device->name);
 
 		device->regions[i] = region;
 	}
@@ -276,10 +258,8 @@ Container::attachDevice(const char* name, int index)
 		irq.index = i;
 
 		ret = ioctl(device->fd, VFIO_DEVICE_GET_IRQ_INFO, &irq);
-		if (ret < 0) {
-			logger->error("Failed to get IRQs of VFIO device: {}", device->name);
-			throw std::exception();
-		}
+		if (ret < 0)
+			throw RuntimeError("Failed to get IRQs of VFIO device: {}", device->name);
 
 		device->irqs[i] = irq;
 	}
@@ -319,8 +299,7 @@ Container::attachDevice(const pci::Device &pdev)
 					"(https://villas.fein-aachen.org/doc/fpga-setup.html) "
 					"for help with troubleshooting.");
 
-		logger->error("Failed to get IOMMU group of device");
-		throw std::exception();
+		throw RuntimeError("Failed to get IOMMU group of device");
 	}
 
 	/* VFIO device name consists of PCI BDF */
@@ -333,10 +312,8 @@ Container::attachDevice(const pci::Device &pdev)
 	device.pci_device = &pdev;
 
 	/* Check if this is really a vfio-pci device */
-	if (not device.isVfioPciDevice()) {
-		logger->error("Device is not a vfio-pci device");
-		throw std::exception();
-	}
+	if (not device.isVfioPciDevice())
+		throw RuntimeError("Device is not a vfio-pci device");
 
 	return device;
 }
@@ -434,12 +411,10 @@ Container::getOrAttachGroup(int index)
 
 	/* Group not yet part of this container, so acquire ownership */
 	auto group = Group::attach(*this, index);
-	if (not group) {
-		logger->error("Failed to attach to IOMMU group: {}", index);
-		throw std::exception();
-	} else {
+	if (not group)
+		throw RuntimeError("Failed to attach to IOMMU group: {}", index);
+	else
 		logger->debug("Attached new group {} to VFIO container", index);
-	}
 
 	/* Push to our list */
 	groups.push_back(std::move(group));
@@ -764,18 +739,16 @@ Group::~Group()
 	/* Release memory and close fds */
 	devices.clear();
 
-	if (fd < 0) {
+	if (fd < 0)
 		logger->debug("Destructing group that has not been attached");
-	} else {
+	else {
 		int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
-		if (ret != 0) {
+		if (ret != 0)
 			logger->error("Cannot unset container for group fd {}", fd);
-		}
 
 		ret = close(fd);
-		if (ret != 0) {
+		if (ret != 0)
 			logger->error("Cannot close group fd {}", fd);
-		}
 	}
 }
 
