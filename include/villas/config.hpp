@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <functional>
+#include <regex>
 #include <jansson.h>
 
 #include <villas/node/config.h>
@@ -34,10 +36,7 @@ namespace node {
 class Config {
 
 protected:
-	std::string uri;
-
-	FILE *local_file;
-	AFILE *remote_file;
+	using str_walk_fcn_t = std::function<json_t *(json_t *)>;
 
 	Logger logger;
 
@@ -48,21 +47,30 @@ protected:
 	}
 
 	/** Decode configuration file. */
-	void decode();
+	json_t * decode(FILE *f);
 
 #ifdef WITH_CONFIG
 	/** Convert libconfig .conf file to libjansson .json file. */
-	void libconfigDecode();
+	json_t * libconfigDecode(FILE *f);
 #endif /* WITH_CONFIG */
 
 	/** Load configuration from standard input (stdim). */
-	void loadFromStdio();
+	FILE * loadFromStdio();
 
 	/** Load configuration from local file. */
-	void loadFromLocalFile(const std::string &u);
+	FILE * loadFromLocalFile(const std::string &u);
 
 	/** Load configuration from a remote URI via advio. */
-	void loadFromRemoteFile(const std::string &u);
+	AFILE * loadFromRemoteFile(const std::string &u);
+
+	/** Resolve custom include directives. */
+	void resolveIncludes();
+
+	/** To shell-like subsitution of environment variables in strings. */
+	void expandEnvVars();
+
+	/** Run a callback function for each string in the config */
+	json_t * walkStrings(json_t *root, str_walk_fcn_t cb);
 
 public:
 	json_t *root;
@@ -72,11 +80,8 @@ public:
 
 	~Config();
 
-	void load(const std::string &u);
-
-	/** Pretty-print libjansson error. */
-	void prettyPrintError(json_error_t err);
+	json_t * load(const std::string &u);
 };
 
-} // namespace node
-} // namespace villas
+} /* namespace node */
+} /* namespace villas */

@@ -40,8 +40,6 @@ using namespace villas;
 using namespace villas::node;
 
 Config::Config() :
-	local_file(nullptr),
-	remote_file(nullptr),
 	root(nullptr)
 {
 	logger = logging.get("config");
@@ -50,81 +48,87 @@ Config::Config() :
 Config::Config(const std::string &u) :
 	Config()
 {
-	load(u);
+	root = load(u);
 }
 
 Config::~Config()
 {
-	/* Close configuration file */
-	if (remote_file)
-		afclose(remote_file);
-	else if (local_file && local_file != stdin)
-		fclose(local_file);
-
 	if (root)
 		json_decref(root);
 }
 
-void Config::load(const std::string &u)
+json_t * Config::load(const std::string &u)
 {
-	if (u == "-")
-		loadFromStdio();
-	else if (isLocalFile(u))
-		loadFromLocalFile(u);
-	else
-		loadFromRemoteFile(u);
+	FILE *f;
+	AFILE *af = nullptr;
 
-	decode();
+	if (u == "-")
+		f = loadFromStdio();
+	else if (isLocalFile(u))
+		f = loadFromLocalFile(u);
+	else {
+		af = loadFromRemoteFile(u);
+		f = af->file;
+	}
+
+	json_t *root = decode(f);
+
+	if (af)
+		afclose(af);
+	else
+		fclose(f);
+
+	return root;
 }
 
-void Config::loadFromStdio()
+FILE * Config::loadFromStdio()
 {
 	logger->info("Reading configuration from standard input");
 
-	local_file = stdin;
+	return stdin;
 }
 
-void Config::loadFromLocalFile(const std::string &u)
+FILE * Config::loadFromLocalFile(const std::string &u)
 {
 	logger->info("Reading configuration from local file: {}", u);
 
-	local_file = fopen(u.c_str(), "r");
-	if (!local_file)
+	FILE *f = fopen(u.c_str(), "r");
+	if (!f)
 		throw RuntimeError("Failed to open configuration from: {}", u);
 
-	uri = u;
+	return f;
 }
 
-void Config::loadFromRemoteFile(const std::string &u)
+AFILE * Config::loadFromRemoteFile(const std::string &u)
 {
 	logger->info("Reading configuration from remote URI: {}", u);
 
-	remote_file = afopen(u.c_str(), "r");
-	if (!remote_file)
+	AFILE *f = afopen(u.c_str(), "r");
+	if (!f)
 		throw RuntimeError("Failed to open configuration from: {}", u);
 
-	local_file = remote_file->file;
-
-	uri = u;
+	return f;
 }
 
-void Config::decode()
+json_t * Config::decode(FILE *f)
 {
 	json_error_t err;
 
-	root = json_loadf(local_file, 0, &err);
+	json_t *root = json_loadf(f, 0, &err);
 	if (root == nullptr) {
 #ifdef WITH_CONFIG
 		/* We try again to parse the config in the legacy format */
-		libconfigDecode();
+		root = libconfigDecode(f);
 #else
 		throw JanssonParseError(err);
 #endif /* WITH_CONFIG */
 	}
+
+	return root;
 }
 
 #ifdef WITH_CONFIG
-void Config::libconfigDecode()
+json_t * Config::libconfigDecode(FILE *f)
 {
 	int ret;
 
@@ -135,59 +139,118 @@ void Config::libconfigDecode()
 
 	/* Setup libconfig include path.
 	* This is only supported for local files */
-	if (isLocalFile(uri)) {
-		char *cpy = strdup(uri.c_str());
+	// if (isLocalFile(uri)) {
+	// 	char *cpy = strdup(uri.c_str());
 
-		config_set_include_dir(&cfg, dirname(cpy));
+	// 	config_set_include_dir(&cfg, dirname(cpy));
 
-		free(cpy);
-	}
+	// 	free(cpy);
+	// }
 
-	if (remote_file)
-		arewind(remote_file);
-	else
-		rewind(local_file);
+	/* Rewind before re-reading */
+	rewind(f);
 
-	ret = config_read(&cfg, local_file);
+	ret = config_read(&cfg, f);
 	if (ret != CONFIG_TRUE)
 		throw LibconfigParseError(&cfg);
 
 	cfg_root = config_root_setting(&cfg);
 
-	root = config_to_json(cfg_root);
-	if (root == nullptr)
+	json_t *root = config_to_json(cfg_root);
+	if (!root)
 		throw RuntimeError("Failed to convert JSON to configuration file");
 
 	config_destroy(&cfg);
+
+	return root;
 }
 #endif /* WITH_CONFIG */
 
-void Config::prettyPrintError(json_error_t err)
+json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
 {
-	std::ifstream infile(uri);
-	std::string line;
+	const char *key;
+	size_t index;
+	json_t *val, *new_val, *new_root;
 
-	int context = 4;
-	int start_line = err.line - context;
-	int end_line = err.line + context;
+	switch (json_typeof(root)) {
+		case JSON_STRING:
+			return cb(root);
 
-	for (int line_no = 0; std::getline(infile, line); line_no++) {
-		if (line_no < start_line || line_no > end_line)
-			continue;
+		case JSON_OBJECT:
+			new_root = json_object();
 
-		std::cerr << std::setw(4) << std::right << line_no << " " BOX_UD " " << line << std::endl;
+			json_object_foreach(root, key, val) {
+				new_val = walkStrings(val, cb);
 
-		if (line_no == err.line) {
-			for (int col = 0; col < err.column; col++)
-				std::cerr << " ";
+				json_object_set_new(new_root, key, new_val);
+			}
 
-			std::cerr << BOX_UD;
+			json_decref(root);
 
-			for (int col = 0; col < err.column; col++)
-				std::cerr << " ";
+			return new_root;
 
-			std::cerr << BOX_UR << err.text << std::endl;
-			std::cerr << std::endl;
+		case JSON_ARRAY:
+			new_root = json_array();
+
+			json_array_foreach(root, index, val) {
+				new_val = walkStrings(val, cb);
+
+				json_array_append_new(new_root, new_val);
+			}
+
+			json_decref(root);
+
+			return new_root;
+
+		default:
+			return root;
+	};
+}
+
+void Config::expandEnvVars()
+{
+	static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
+
+	root = walkStrings(root, [this](json_t *str) -> json_t * {
+		std::string text = json_string_value(str);
+
+		std::smatch match;
+		while (std::regex_search(text, match, env_re)) {
+			auto const from = match[0];
+			auto const var_name = match[1].str().c_str();
+			char * var_value = std::getenv(var_name);
+
+			text.replace(from.first, from.second, var_value);
+
+			logger->debug("Replace env var {} in \"{}\" with value \"{}\"",
+				var_name, text, var_value);
 		}
-	}
+
+		return json_string(text.c_str());
+	});
+}
+
+void Config::resolveIncludes()
+{
+	root = walkStrings(root, [this](json_t *str) -> json_t * {
+		std::string text = json_string_value(str);
+		static const std::string kw = "@include ";
+
+		if (text.find(kw) != 0)
+			return str;
+		else {
+			std::string path = text.substr(kw.size());
+
+			json_error_t err;
+			json_t *incl;
+
+			incl = load(path);
+			if (!incl)
+				throw ConfigError(str, err, "Failed to include config file from {}", path);
+
+			logger->debug("Included config from: {}", path);
+
+			return incl;
+		}
+	});
 }
