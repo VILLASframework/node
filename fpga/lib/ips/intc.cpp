@@ -38,7 +38,7 @@ static InterruptControllerFactory factory;
 
 InterruptController::~InterruptController()
 {
-	card->kernel::vfio::Device->pciMsiDeinit(this->efds);
+	card->vfioDevice->pciMsiDeinit(this->efds);
 }
 
 bool
@@ -46,11 +46,11 @@ InterruptController::init()
 {
 	const uintptr_t base = getBaseAddr(registerMemory);
 
-	num_irqs = card->kernel::vfio::Device->pciMsiInit(efds);
+	num_irqs = card->vfioDevice->pciMsiInit(efds);
 	if (num_irqs < 0)
 		return false;
 
-	if (not card->kernel::vfio::Device->pciMsiFind(nos)) {
+	if (not card->vfioDevice->pciMsiFind(nos)) {
 		return false;
 	}
 

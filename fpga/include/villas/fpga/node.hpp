@@ -88,6 +88,8 @@ public:
 class Node : public virtual Core {
 public:
 
+	using Ptr = std::shared_ptr<Node>;
+
 	friend class NodeFactory;
 
 	struct StreamPort {

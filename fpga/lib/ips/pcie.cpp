@@ -43,14 +43,14 @@ AxiPciExpressBridge::init()
 	card->addrSpaceIdHostToDevice = busMasterInterfaces.at(axiInterface);
 
 	/* Map PCIe BAR0 via VFIO */
-	const void* bar0_mapped = card->kernel::vfio::Device->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
+	const void* bar0_mapped = card->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
 	if (bar0_mapped == MAP_FAILED) {
 		logger->error("Failed to mmap() BAR0");
 		return false;
 	}
 
 	// determine size of BAR0 region
-	const size_t bar0_size = card->kernel::vfio::Device->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
+	const size_t bar0_size = card->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
 
 	// create a mapping from process address space to the FPGA card via vfio
 	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
@@ -72,33 +72,27 @@ AxiPciExpressBridge::init()
 
 	auto pciAddrSpaceId = mm.getPciAddressSpace();
 
-	struct pci_region* pci_regions = nullptr;
-	size_t num_regions = pci_get_regions(card->pdev, &pci_regions);
+	auto regions = card->pdev->getRegions();
 
-	for (size_t i = 0; i < num_regions; i++) {
-		const size_t region_size = pci_regions[i].end - pci_regions[i].start + 1;
+	int i = 0;
+	for (auto region : regions) {
+		const size_t region_size = region.end - region.start + 1;
 
 		char barName[] = "BARx";
-		barName[3] = '0' + pci_regions[i].num;
+		barName[3] = '0' + region.num;
 		auto pciBar = pcieToAxiTranslations.at(barName);
 
 
 		logger->info("PCI-BAR{}: bus addr={:#x} size={:#x}",
-		             pci_regions[i].num, pci_regions[i].start, region_size);
+		             region.num, region.start, region_size);
 		logger->info("PCI-BAR{}: AXI translation offset {:#x}",
 		             i, pciBar.translation);
 
-		mm.createMapping(pci_regions[i].start, pciBar.translation, region_size,
+		mm.createMapping(region.start, pciBar.translation, region_size,
 		                 std::string("PCI-") + barName,
 		                 pciAddrSpaceId, card->addrSpaceIdHostToDevice);
 
 	}
-
-	if (pci_regions != nullptr) {
-		logger->debug("freeing pci regions");
-		free(pci_regions);
-	}
-
 
 	for (auto& [barName, axiBar] : axiToPcieTranslations) {
 		logger->info("AXI-{}: bus addr={:#x} size={:#x}",
@@ -114,6 +108,8 @@ AxiPciExpressBridge::init()
 		mm.createMapping(0, axiBar.translation, axiBar.size,
 		                 std::string("AXI-") + barName,
 		                 barXAddrSpaceId, pciAddrSpaceId);
+
+		i++;
 	}
 
 	return true;

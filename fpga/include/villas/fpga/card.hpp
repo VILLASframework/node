@@ -38,35 +38,32 @@
 #include <villas/plugin.hpp>
 #include <villas/memory.hpp>
 
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/vfio.hpp>
 
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
 
-#define PCI_FILTER_DEFAULT_FPGA {		\
-	.id = {								\
-	    .vendor = FPGA_PCI_VID_XILINX,	\
-	    .device = FPGA_PCI_PID_VFPGA,	\
-	    .class_code = 0					\
-	},									\
-	.slot = { }							\
-}
-
 namespace villas {
 namespace fpga {
-
 
 /* Forward declarations */
 struct vfio_container;
 class PCIeCardFactory;
 
-class PCIeCard {
+class Card {
 public:
+
+	using Ptr = std::shared_ptr<PCIeCard>;
+	using List = std::list<Ptr>;
 
 	friend PCIeCardFactory;
 
-	PCIeCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
+};
+
+class PCIeCard : public Card {
+public:
+
 	~PCIeCard();
 
 	bool init();
@@ -95,20 +92,18 @@ private:
 public:	// TODO: make this private
 	ip::Core::List ips;		///< IPs located on this FPGA card
 
-	bool do_reset;			/**< Reset VILLASfpga during startup? */
+	bool doReset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */
 
 	std::string name;			/**< The name of the FPGA card */
 
-	struct pci* pci;
-	struct pci_device filter;		/**< Filter for PCI device. */
-	struct pci_device* pdev;		/**< PCI device handle */
+	std::shared_ptr<kernel::pci::Device> pdev;	/**< PCI device handle */
 
 	/// The VFIO container that this card is part of
-	std::shared_ptr<VfioContainer> vfioContainer;
+	std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 	/// The VFIO device that represents this card
-	VfioDevice* vfioDevice;
+	kernel::vfio::Device* vfioDevice;
 
 	/// Slave address space ID to access the PCIe address space from the FPGA
 	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
@@ -125,16 +120,15 @@ protected:
 	Logger logger;
 };
 
-using CardList = std::list<std::shared_ptr<PCIeCard>>;
-
 class PCIeCardFactory : public plugin::Plugin {
 public:
 
-	static CardList
-	make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc);
+	static Card::List
+	make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
 
 	static PCIeCard*
-	create();
+	create()
+	{ return new PCIeCard(); }
 
 	static Logger
 	getStaticLogger()
