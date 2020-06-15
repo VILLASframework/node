@@ -43,7 +43,7 @@ LABEL \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/fpga.html"
 
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
 
 # Enable Extra Packages for Enterprise Linux (EPEL) and Software collection repo
 RUN yum -y install epel-release centos-release-scl
