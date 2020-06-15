@@ -40,14 +40,12 @@
 
 using namespace villas;
 
-static struct pci pci;
+static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 
 FpgaState state;
 
 static void init()
 {
-	int ret;
-
 	FILE *f;
 	json_error_t err;
 
@@ -56,10 +54,9 @@ static void init()
 
 	plugin::Registry::dumpList();
 
-	ret = pci_init(&pci);
-	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
+	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-	auto vfioContainer = VfioContainer::create();
+	auto vfioContainer = kernel::vfio::Container::create();
 
 	/* Parse FPGA configuration */
 	char *fn = getenv("TEST_CONFIG");
@@ -80,7 +77,7 @@ static void init()
 	cr_assert_not_null(fpgaCardPlugin, "No plugin for FPGA card found");
 
 	// create all FPGA card instances using the corresponding plugin
-	state.cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
+	state.cards = fpgaCardPlugin->make(fpgas, pciDevices, vfioContainer);
 
 	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
 

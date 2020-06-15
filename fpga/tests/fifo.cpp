@@ -40,7 +40,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 	auto logger = logging.get("unit-test:fifo");
 
-	for (auto& ip : state.cards.front()->ips) {
+	for (auto &ip : state.cards.front()->ips) {
 		// skip non-fifo IPs
 		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;

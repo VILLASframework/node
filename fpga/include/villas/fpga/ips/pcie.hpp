@@ -70,7 +70,7 @@ public:
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axi_pcie:"; }
 
-	bool configureJson(Core& ip, json_t *json_ip);
+	bool configureJson(Core &ip, json_t *json_ip);
 
 	Core* create()
 	{ return new AxiPciExpressBridge; }

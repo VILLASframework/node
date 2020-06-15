@@ -53,14 +53,14 @@ public:
 	toString() const;
 
 	bool
-	operator==(const Vlnv& other) const;
+	operator==(const Vlnv &other) const;
 
 	bool
-	operator!=(const Vlnv& other) const
+	operator!=(const Vlnv &other) const
 	{ return !(*this == other); }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const Vlnv& vlnv)
+	operator<< (std::ostream &stream, const Vlnv &vlnv)
 	{
 		return stream
 		        << (vlnv.vendor.empty()		? "*" : vlnv.vendor)	<< ":"

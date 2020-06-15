@@ -34,22 +34,22 @@ set(SOURCES
 #	hls.cpp
 #	intc.cpp
 
-add_executable(unit-tests ${SOURCES})
+add_executable(unit-tests-fpga ${SOURCES})
 
 if (CMAKE_CUDA_COMPILER)
 	enable_language(CUDA)
-	target_sources(unit-tests PRIVATE
+	target_sources(unit-tests-fpga PRIVATE
 		gpu.cpp rtds2gpu.cpp gpu_kernels.cu)
 endif ()
 
 find_package(Criterion REQUIRED)
 
-target_include_directories(unit-tests PUBLIC
+target_include_directories(unit-tests-fpga PUBLIC
 	../include
 	${CRITERION_INCLUDE_DIRECTORIES}
 )
 
-target_link_libraries(unit-tests PUBLIC
+target_link_libraries(unit-tests-fpga PUBLIC
 	villas-fpga
 	${CRITERION_LIBRARIES}
 )

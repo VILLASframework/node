@@ -20,8 +20,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
- 
- #include <stdio.h>
+
+#include <stdio.h>
 
 #include <villas/gpu.hpp>
 
@@ -30,8 +30,7 @@
 
 #include "kernels.hpp"
 
-namespace villas {
-namespace gpu {
+using namespace villas::gpu;
 
 
 __global__ void
@@ -61,6 +60,3 @@ kernel_memcpy(volatile uint8_t* dst, volatile uint8_t* src, size_t length)
 		length--;
 	}
 }
-
-} // namespace villas
-} // namespace gpu

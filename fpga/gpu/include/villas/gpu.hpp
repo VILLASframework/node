@@ -45,25 +45,25 @@ public:
 
 	std::string getName() const;
 
-	GpuAllocator& getAllocator() const
+	GpuAllocator &getAllocator() const
 	{ return *allocator; }
 
 
-	bool makeAccessibleToPCIeAndVA(const MemoryBlock& mem);
+	bool makeAccessibleToPCIeAndVA(const MemoryBlock &mem);
 
 	/// Make some memory block accssible for this GPU
-	bool makeAccessibleFromPCIeOrHostRam(const MemoryBlock& mem);
+	bool makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem);
 
-	void memcpySync(const MemoryBlock& src, const MemoryBlock& dst, size_t size);
+	void memcpySync(const MemoryBlock &src, const MemoryBlock &dst, size_t size);
 
-	void memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t size);
+	void memcpyKernel(const MemoryBlock &src, const MemoryBlock &dst, size_t size);
 
 	MemoryTranslation
-	translate(const MemoryBlock& dst);
+	translate(const MemoryBlock &dst);
 
 private:
-	bool registerIoMemory(const MemoryBlock& mem);
-	bool registerHostMemory(const MemoryBlock& mem);
+	bool registerIoMemory(const MemoryBlock &mem);
+	bool registerHostMemory(const MemoryBlock &mem);
 
 private:
 	class impl;
@@ -86,7 +86,7 @@ class GpuAllocator : public BaseAllocator<GpuAllocator> {
 public:
 	static constexpr size_t GpuPageSize = 64UL << 10;
 
-	GpuAllocator(Gpu& gpu);
+	GpuAllocator(Gpu &gpu);
 
 	std::string getName() const;
 
@@ -94,7 +94,7 @@ public:
 	allocateBlock(size_t size);
 
 private:
-	Gpu& gpu;
+	Gpu &gpu;
 	// TODO: replace by multimap (key is available memory)
 	std::list<std::unique_ptr<LinearAllocator>> chunks;
 };

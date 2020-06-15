@@ -46,13 +46,6 @@ set(SOURCES
 set_source_files_properties(ips/rtds2gpu/xrtds2gpu.c
 	PROPERTIES COMPILE_FLAGS -Wno-int-to-pointer-cast)
 
-include(FindPkgConfig)
-
-pkg_check_modules(JANSSON jansson)
-pkg_check_modules(XIL libxil)
-
-find_package(Threads)
-
 add_library(villas-fpga SHARED ${SOURCES})
 
 target_link_libraries(villas-fpga PUBLIC villas-common)
@@ -64,7 +57,8 @@ target_compile_definitions(villas-fpga PRIVATE
 
 target_include_directories(villas-fpga
 	PUBLIC
-		../include
+		${PROJECT_BINARY_DIR}/include
+		${PROJECT_SOURCE_DIR}/include
 		${XIL_INCLUDE_DIRS}
 		${JANSSON_INCLUDE_DIRS}
 )

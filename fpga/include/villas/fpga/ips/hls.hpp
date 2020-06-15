@@ -13,7 +13,7 @@ class Hls : public virtual Core
 public:
 	virtual bool init()
 	{
-		auto& registers = addressTranslations.at(registerMemory);
+		auto &registers = addressTranslations.at(registerMemory);
 
 		controlRegister = reinterpret_cast<ControlRegister*>(registers.getLocalAddr(registerControlAddr));
 		globalIntRegister = reinterpret_cast<GlobalIntRegister*>(registers.getLocalAddr(registerGlobalIntEnableAddr));

@@ -5,10 +5,7 @@
 #include <villas/memory_manager.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
-
+using namespace villas::fpga::ip;
 static Rtds2GpuFactory factory;
 
 bool Rtds2Gpu::init()
@@ -27,8 +24,6 @@ bool Rtds2Gpu::init()
 
 	return true;
 }
-
-
 
 void Rtds2Gpu::dump(spdlog::level::level_enum logLevel)
 {
@@ -52,9 +47,9 @@ void Rtds2Gpu::dump(spdlog::level::level_enum logLevel)
 	logger->log(logLevel, "    Max. frame size:    {}", status.max_frame_size);
 }
 
-bool Rtds2Gpu::startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset)
+bool Rtds2Gpu::startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	if (frameSize > maxFrameSize) {
 		logger->error("Requested frame size of {} exceeds max. frame size of {}",
@@ -108,7 +103,7 @@ Rtds2Gpu::getMaxFrameSize()
 void
 Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 {
-	auto& doorbell = reinterpret_cast<reg_doorbell_t&>(doorbellRegister);
+	auto &doorbell = reinterpret_cast<reg_doorbell_t&>(doorbellRegister);
 
 	logger->info("Doorbell register: {:#08x}", doorbell.value);
 	logger->info("  Valid:       {}", (doorbell.is_valid ? "yes" : "no"));
@@ -116,6 +111,3 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 	logger->info("  Seq. number: {}", doorbell.seq_nr);
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

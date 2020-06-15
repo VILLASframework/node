@@ -44,7 +44,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 {
 	auto logger = logging.get("unit-test:dma");
 
-	auto& card = state.cards.front();
+	auto &card = state.cards.front();
 
 	auto gpuPlugin = Plugin::Registry<GpuFactory>("cuda");
 	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
@@ -53,10 +53,10 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 	cr_assert(gpus.size() > 0, "No GPUs found");
 
 	// just get first cpu
-	auto& gpu = gpus.front();
+	auto &gpu = gpus.front();
 
 	size_t count = 0;
-	for (auto& ip : card->ips) {
+	for (auto &ip : card->ips) {
 		// skip non-dma IPs
 		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
 			continue;
@@ -97,17 +97,17 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		gpu->makeAccessibleToPCIeAndVA(gpuMem1.getMemoryBlock());
 
 
-//		auto& src = bram0;
-//		auto& dst = bram1;
+//		auto &src = bram0;
+//		auto &dst = bram1;
 
-//		auto& src = hostRam0;
-//		auto& dst = hostRam1;
+//		auto &src = hostRam0;
+//		auto &dst = hostRam1;
 
-		auto& src = dmaRam0;
-//		auto& dst = dmaRam1;
+		auto &src = dmaRam0;
+//		auto &dst = dmaRam1;
 
-//		auto& src = gpuMem0;
-		auto& dst = gpuMem1;
+//		auto &src = gpuMem0;
+		auto &dst = gpuMem1;
 
 
 		std::list<std::pair<std::string, std::function<void()>>> memcpyFuncs = {

@@ -29,16 +29,14 @@
 #include <villas/fpga/ips/pcie.hpp>
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 static AxiPciExpressBridgeFactory factory;
 
 bool
 AxiPciExpressBridge::init()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// Throw an exception if the is no bus master interface and thus no
 	// address space we can use for translation -> error
@@ -74,33 +72,27 @@ AxiPciExpressBridge::init()
 
 	auto pciAddrSpaceId = mm.getPciAddressSpace();
 
-	struct pci_region* pci_regions = nullptr;
-	size_t num_regions = pci_get_regions(card->pdev, &pci_regions);
+	auto regions = card->pdev->getRegions();
 
-	for (size_t i = 0; i < num_regions; i++) {
-		const size_t region_size = pci_regions[i].end - pci_regions[i].start + 1;
+	int i = 0;
+	for (auto region : regions) {
+		const size_t region_size = region.end - region.start + 1;
 
 		char barName[] = "BARx";
-		barName[3] = '0' + pci_regions[i].num;
+		barName[3] = '0' + region.num;
 		auto pciBar = pcieToAxiTranslations.at(barName);
 
 
 		logger->info("PCI-BAR{}: bus addr={:#x} size={:#x}",
-		             pci_regions[i].num, pci_regions[i].start, region_size);
+		             region.num, region.start, region_size);
 		logger->info("PCI-BAR{}: AXI translation offset {:#x}",
 		             i, pciBar.translation);
 
-		mm.createMapping(pci_regions[i].start, pciBar.translation, region_size,
+		mm.createMapping(region.start, pciBar.translation, region_size,
 		                 std::string("PCI-") + barName,
 		                 pciAddrSpaceId, card->addrSpaceIdHostToDevice);
 
 	}
-
-	if (pci_regions != nullptr) {
-		logger->debug("freeing pci regions");
-		free(pci_regions);
-	}
-
 
 	for (auto& [barName, axiBar] : axiToPcieTranslations) {
 		logger->info("AXI-{}: bus addr={:#x} size={:#x}",
@@ -116,16 +108,18 @@ AxiPciExpressBridge::init()
 		mm.createMapping(0, axiBar.translation, axiBar.size,
 		                 std::string("AXI-") + barName,
 		                 barXAddrSpaceId, pciAddrSpaceId);
+
+		i++;
 	}
 
 	return true;
 }
 
 bool
-AxiPciExpressBridgeFactory::configureJson(Core& ip, json_t* json_ip)
+AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 {
 	auto logger = getLogger();
-	auto& pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
+	auto &pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
 	for (auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
 		json_t* json_bars = json_object_get(json_ip, barType.c_str());
@@ -159,18 +153,12 @@ AxiPciExpressBridgeFactory::configureJson(Core& ip, json_t* json_ip)
 				    .size = static_cast<size_t>(size),
 				    .translation = translation
 				};
-
-			} else {
+			} else
 				pcie.pcieToAxiTranslations[bar_name] = {
 				    .translation = translation
 				};
-			}
 		}
 	}
 
 	return true;
 }
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

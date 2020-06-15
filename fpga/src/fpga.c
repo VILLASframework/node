@@ -28,7 +28,7 @@
 #include <villas/log.h>
 #include <villas/utils.hpp>
 
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/kernel.hpp>
 
 #include <villas/fpga/card.h>
@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
 
 	struct list cards;
 	struct vfio_container vc;
-	struct pci pci;
 	struct fpga_card *card;
 
 	/* Parse arguments */
@@ -88,9 +87,7 @@ check:		if (optarg == endptr)
 	json_error_t err;
 	json_t *json;
 
-	ret = pci_init(&pci);
-	if (ret)
-		return -1;
+	auto pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
 	ret = vfio_init(&vc);
 	if (ret)

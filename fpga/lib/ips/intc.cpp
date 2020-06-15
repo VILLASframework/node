@@ -31,10 +31,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/intc.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
-
+using namespace villas::fpga::ip;
 
 // instantiate factory to make available to plugin infrastructure
 static InterruptControllerFactory factory;
@@ -171,6 +168,3 @@ InterruptController::waitForInterrupt(int irq)
 	}
 }
 
-} // namespace ip
-} // namespace fpga
-} // namespace villas

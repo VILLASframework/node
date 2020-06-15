@@ -35,9 +35,7 @@
 #define FPGA_DMA_BOUNDARY	0x1000
 
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
 // instantiate factory to make available to plugin infrastructure
 static DmaFactory factory;
@@ -75,9 +73,9 @@ Dma::init()
 	if (XAxiDma_Selftest(&xDma) != XST_SUCCESS) {
 		logger->error("DMA selftest failed");
 		return false;
-	} else {
-		logger->debug("DMA selftest passed");
 	}
+	else
+		logger->debug("DMA selftest passed");
 
 	/* Map buffer descriptors */
 	if (hasScatterGather()) {
@@ -126,7 +124,7 @@ Dma::reset()
 
 
 bool
-Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
+Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 {
 	if (len == 0)
 		return true;
@@ -151,9 +149,9 @@ Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 
 
 bool
-Dma::write(const MemoryBlock& mem, size_t len)
+Dma::write(const MemoryBlock &mem, size_t len)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// user has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[mm2sInterface],
@@ -166,9 +164,9 @@ Dma::write(const MemoryBlock& mem, size_t len)
 
 
 bool
-Dma::read(const MemoryBlock& mem, size_t len)
+Dma::read(const MemoryBlock &mem, size_t len)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// user has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[s2mmInterface],
@@ -351,7 +349,7 @@ Dma::readCompleteSimple()
 
 
 bool
-Dma::makeAccesibleFromVA(const MemoryBlock& mem)
+Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 {
 	// only symmetric mapping supported currently
 	if (isMemoryBlockAccesible(mem, s2mmInterface) and
@@ -377,9 +375,9 @@ Dma::makeAccesibleFromVA(const MemoryBlock& mem)
 
 
 bool
-Dma::isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface)
+Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	try {
 		mm.findPath(getMasterAddrSpaceByInterface(interface), mem.getAddrSpaceId());
@@ -401,7 +399,3 @@ Dma::dump()
 	logger->info("S2MM_LENGTH: {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_BUFFLEN_OFFSET));
 }
 
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

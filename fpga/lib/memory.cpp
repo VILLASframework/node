@@ -25,7 +25,7 @@
 
 #include <villas/memory.hpp>
 
-namespace villas {
+using namespace villas;
 
 bool
 HostRam::free(void* addr, size_t length)
@@ -42,5 +42,3 @@ HostRam::allocate(size_t length, int flags)
 
 	return mmap(nullptr, length, mmap_protection, mmap_flags, 0, 0);
 }
-
-} // namespace villas

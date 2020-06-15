@@ -30,7 +30,7 @@
 
 #include <villas/gpu.hpp>
 #include <villas/log.hpp>
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/memory_manager.hpp>
 
 #include <cuda.h>
@@ -39,12 +39,12 @@
 
 #include "kernels.hpp"
 
-namespace villas {
-namespace gpu {
+
+using namespace villas::gpu;
 
 static GpuFactory gpuFactory;
 
-GpuAllocator::GpuAllocator(Gpu& gpu) :
+GpuAllocator::GpuAllocator(Gpu &gpu) :
     BaseAllocator(gpu.masterPciEAddrSpaceId),
     gpu(gpu)
 {
@@ -77,7 +77,7 @@ GpuFactory::GpuFactory() :
 // required to be defined here for PIMPL to compile
 Gpu::~Gpu()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 	mm.removeAddressSpace(masterPciEAddrSpaceId);
 }
 
@@ -104,9 +104,9 @@ std::string Gpu::getName() const
 	return name.str();
 }
 
-bool Gpu::registerIoMemory(const MemoryBlock& mem)
+bool Gpu::registerIoMemory(const MemoryBlock &mem)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 	const auto pciAddrSpaceId = mm.getPciAddressSpace();
 
 	// Check if we need to map anything at all, maybe it's already reachable
@@ -115,14 +115,14 @@ bool Gpu::registerIoMemory(const MemoryBlock& mem)
 		// overlapping window, so this will fail badly!
 		auto translation = mm.getTranslation(masterPciEAddrSpaceId,
 		                                     mem.getAddrSpaceId());
-		if (translation.getSize() >= mem.getSize()) {
+		if (translation.getSize() >= mem.getSize())
 			// there is already a sufficient path
 			logger->debug("Already mapped through another mapping");
 			return true;
-		} else {
+		else 
 			logger->warn("There's already a mapping, but too small");
-		}
-	} catch(const std::out_of_range&) {
+	}
+	catch(const std::out_of_range&) {
 		// not yet reachable, that's okay, proceed
 	}
 
@@ -187,9 +187,9 @@ bool Gpu::registerIoMemory(const MemoryBlock& mem)
 }
 
 bool
-Gpu::registerHostMemory(const MemoryBlock& mem)
+Gpu::registerHostMemory(const MemoryBlock &mem)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	auto translation = mm.getTranslationFromProcess(mem.getAddrSpaceId());
 	auto localBase = reinterpret_cast<void*>(translation.getLocalAddr(0));
@@ -214,14 +214,14 @@ Gpu::registerHostMemory(const MemoryBlock& mem)
 	return true;
 }
 
-bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
+bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock &mem)
 {
 	if (pImpl->gdr == nullptr) {
 		logger->warn("GDRcopy not available");
 		return false;
 	}
 
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	try {
 		auto path = mm.findPath(masterPciEAddrSpaceId, mem.getAddrSpaceId());
@@ -311,14 +311,14 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock& mem)
 }
 
 bool
-Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock& mem)
+Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem)
 {
 	// Check which kind of memory this is and where it resides
 	// There are two possibilities:
 	//  - Host memory not managed by CUDA
 	//  - IO memory somewhere on the PCIe bus
 
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	bool isIoMemory = false;
 	try {
@@ -333,7 +333,8 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock& mem)
 		              mem.getAddrSpaceId());
 
 		return registerIoMemory(mem);
-	} else {
+	}
+	else {
 		logger->debug("Memory block {} is assumed to be non-CUDA host memory",
 		              mem.getAddrSpaceId());
 
@@ -341,9 +342,9 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock& mem)
 	}
 }
 
-void Gpu::memcpySync(const MemoryBlock& src, const MemoryBlock& dst, size_t size)
+void Gpu::memcpySync(const MemoryBlock &src, const MemoryBlock &dst, size_t size)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	auto src_translation = mm.getTranslation(masterPciEAddrSpaceId,
 	                                         src.getAddrSpaceId());
@@ -357,9 +358,9 @@ void Gpu::memcpySync(const MemoryBlock& src, const MemoryBlock& dst, size_t size
 	cudaMemcpy(dst_buf, src_buf, size, cudaMemcpyDefault);
 }
 
-void Gpu::memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t size)
+void Gpu::memcpyKernel(const MemoryBlock &src, const MemoryBlock &dst, size_t size)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	auto src_translation = mm.getTranslation(masterPciEAddrSpaceId,
 	                                         src.getAddrSpaceId());
@@ -375,9 +376,9 @@ void Gpu::memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t si
 }
 
 MemoryTranslation
-Gpu::translate(const MemoryBlock& dst)
+Gpu::translate(const MemoryBlock &dst)
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 	return mm.getTranslation(masterPciEAddrSpaceId, dst.getAddrSpaceId());
 }
 
@@ -388,10 +389,10 @@ GpuAllocator::allocateBlock(size_t size)
 	cudaSetDevice(gpu.gpuId);
 
 	void* addr;
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// search for an existing chunk that has enough free memory
-	auto chunk = std::find_if(chunks.begin(), chunks.end(), [&](const auto& chunk) {
+	auto chunk = std::find_if(chunks.begin(), chunks.end(), [&](const auto &chunk) {
 		return chunk->getAvailableMemory() >= size;
 	});
 
@@ -400,8 +401,8 @@ GpuAllocator::allocateBlock(size_t size)
 		logger->debug("Found existing chunk that can host the requested block");
 
 		return (*chunk)->allocateBlock(size);
-
-	} else {
+	}
+	else {
 		// allocate a new chunk
 
 		// rounded-up multiple of GPU page size
@@ -452,7 +453,7 @@ Gpu::Gpu(int gpuId) :
 
 bool Gpu::init()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	const auto gpuPciEAddrSpaceName = mm.getMasterAddrSpaceName(getName(), "pcie");
 	masterPciEAddrSpaceId = mm.getOrCreateAddressSpace(gpuPciEAddrSpaceName);
@@ -517,12 +518,9 @@ GpuFactory::make()
 	}
 
 	logger->info("Initialized {} GPUs", gpuList.size());
-	for (auto& gpu : gpuList) {
+	for (auto &gpu : gpuList) {
 		logger->debug(" - {}", gpu->getName());
 	}
 
 	return gpuList;
 }
-
-} // namespace villas
-} // namespace gpu

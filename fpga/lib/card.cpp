@@ -24,24 +24,27 @@
 #include <memory>
 #include <utility>
 
+#include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
 
-#include <villas/kernel/pci.h>
+#include <villas/kernel/pci.hpp>
 #include <villas/kernel/vfio.hpp>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
 
-namespace villas {
-namespace fpga {
+using namespace villas;
+using namespace villas::fpga;
 
 // instantiate factory to register
-static PCIeCardFactory PCIeCardFactory;
+static PCIeCardFactory villas::fpga::PCIeCardFactory;
 
-CardList
-PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc)
+static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
+
+PCIeCard::List
+PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
 {
-	CardList cards;
+	PCIeCard::List cards;
 	auto logger = getStaticLogger();
 
 	const char *card_name;
@@ -71,37 +74,38 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 
 		// populate generic properties
 		card->name = std::string(card_name);
-		card->pci = pci;
 		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
-		card->do_reset = do_reset != 0;
+		card->doReset = do_reset != 0;
 
-		const char* error;
+		kernel::pci::Device filter = defaultFilter;
+		
+		if (pci_id)
+			filter.id = kernel::pci::Id(pci_id);
+		if (pci_slot)
+			filter.slot = kernel::pci::Slot(pci_slot);
 
-		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0) {
-			logger->warn("Failed to parse PCI slot: {}", error);
+		/* Search for FPGA card */
+		card->pdev = pci->lookupDevice(filter);
+		if (!card->pdev) {
+			logger->warn("Failed to find PCI device");
+			continue;
 		}
-
-		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0) {
-			logger->warn("Failed to parse PCI ID: {}", error);
-		}
-
 
 		if (not card->init()) {
 			logger->warn("Cannot start FPGA card {}", card_name);
 			continue;
 		}
 
-		card->ips = ip::CoreFactory::make(card.get(), json_ips);
-		if (card->ips.empty()) {
-			logger->error("Cannot initialize IPs of FPGA card {}", card_name);
-			continue;
-		}
+		if (not json_is_object(json_ips))
+			throw ConfigError(json_ips, "node-config-fpga-ips", "FPGA IP core list must be an object!");
 
-		if (not card->check()) {
-			logger->warn("Checking of FPGA card {} failed", card_name);
-			continue;
-		}
+		card->ips = ip::CoreFactory::make(card.get(), json_ips);
+		if (card->ips.empty())
+			throw ConfigError(json_ips, "node-config-fpga-ips", "Cannot initialize IPs of FPGA card {}", card_name);
+
+		if (not card->check())
+			throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
 		cards.push_back(std::move(card));
 	}
@@ -109,20 +113,12 @@ PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContain
 	return cards;
 }
 
-
-PCIeCard*
-PCIeCardFactory::create()
-{
-	return new fpga::PCIeCard;
-}
-
-
 PCIeCard::~PCIeCard()
 {
-	auto& mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
 	// unmap all memory blocks
-	for (auto& mappedMemoryBlock : memoryBlocksMapped) {
+	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
 		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
 		                                     mappedMemoryBlock);
 
@@ -137,9 +133,9 @@ PCIeCard::~PCIeCard()
 
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const std::string& name) const
+PCIeCard::lookupIp(const std::string &name) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == name) {
 			return ip;
 		}
@@ -150,9 +146,9 @@ PCIeCard::lookupIp(const std::string& name) const
 
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const Vlnv& vlnv) const
+PCIeCard::lookupIp(const Vlnv &vlnv) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == vlnv) {
 			return ip;
 		}
@@ -162,9 +158,9 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 }
 
 ip::Core::Ptr
-PCIeCard::lookupIp(const ip::IpIdentifier& id) const
+PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 {
-	for (auto& ip : ips) {
+	for (auto &ip : ips) {
 		if (*ip == id) {
 			return ip;
 		}
@@ -175,22 +171,21 @@ PCIeCard::lookupIp(const ip::IpIdentifier& id) const
 
 
 bool
-PCIeCard::mapMemoryBlock(const MemoryBlock& block)
+PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 {
 	if (not vfioContainer->isIommuEnabled()) {
 		logger->warn("VFIO mapping not supported without IOMMU");
 		return false;
 	}
 
-	auto& mm = MemoryManager::get();
-	const auto& addrSpaceId = block.getAddrSpaceId();
+	auto &mm = MemoryManager::get();
+	const auto &addrSpaceId = block.getAddrSpaceId();
 
-	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end()) {
+	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end())
 		// block already mapped
 		return true;
-	} else {
+	else
 		logger->debug("Create VFIO mapping for {}", addrSpaceId);
-	}
 
 	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
 	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
@@ -223,15 +218,8 @@ PCIeCard::init()
 
 	logger->info("Initializing FPGA card {}", name);
 
-	/* Search for FPGA card */
-	pdev = pci_lookup_device(pci, &filter);
-	if (!pdev) {
-		logger->error("Failed to find PCI device");
-		return false;
-	}
-
 	/* Attach PCIe card to VFIO container */
-	VfioDevice& device = vfioContainer->attachDevice(pdev);
+	kernel::vfio::Device &device = vfioContainer->attachDevice(*pdev);
 	this->vfioDevice = &device;
 
 	/* Enable memory access and PCI bus mastering for DMA */
@@ -241,7 +229,7 @@ PCIeCard::init()
 	}
 
 	/* Reset system? */
-	if (do_reset) {
+	if (doReset) {
 		/* Reset / detect PCI device */
 		if (not vfioDevice->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
@@ -256,6 +244,3 @@ PCIeCard::init()
 
 	return true;
 }
-
-} // namespace fpga
-} // namespace villas

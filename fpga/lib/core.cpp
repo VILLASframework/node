@@ -36,10 +36,8 @@
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
 
-
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga;
+using namespace villas::fpga::ip;
 
 // Special IPs that have to be initialized first. Will be initialized in the
 // same order as they appear in this list, i.e. first here will be initialized
@@ -85,7 +83,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	// first to be initialized.
 	vlnvInitializationOrder.reverse();
 
-	for (auto& vlnvInitFirst : vlnvInitializationOrder) {
+	for (auto &vlnvInitFirst : vlnvInitializationOrder) {
 		// iterate over IPs, if VLNV matches, push to front and remove from list
 		for (auto it = allIps.begin(); it != allIps.end(); ++it) {
 			if (vlnvInitFirst == it->getVlnv()) {
@@ -99,12 +97,12 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	orderedIps.splice(orderedIps.end(), allIps);
 
 	loggerStatic->debug("IP initialization order:");
-	for (auto& id : orderedIps) {
+	for (auto &id : orderedIps) {
 		loggerStatic->debug("  " CLR_BLD("{}"), id.getName());
 	}
 
 	// configure all IPs
-	for (auto& id : orderedIps) {
+	for (auto &id : orderedIps) {
 		loggerStatic->info("Configuring {}", id);
 
 		// find the appropriate factory that can create the specified VLNV
@@ -117,10 +115,9 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		if (CoreFactory == nullptr) {
 			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
-		} else {
-			loggerStatic->debug("Using {} for IP {}",
-			                    CoreFactory->getName(), id.getVlnv());
 		}
+		else
+			loggerStatic->debug("Using {} for IP {}", CoreFactory->getName(), id.getVlnv());
 
 		auto logger = CoreFactory->getLogger();
 
@@ -162,10 +159,10 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 					continue;
 				}
 
-				const std::string& irqControllerName = tokens[0];
+				const std::string &irqControllerName = tokens[0];
 				InterruptController* intc = nullptr;
 
-				for (auto& configuredIp : configuredIps) {
+				for (auto &configuredIp : configuredIps) {
 					if (*configuredIp == irqControllerName) {
 						intc = dynamic_cast<InterruptController*>(configuredIp.get());
 						break;
@@ -265,12 +262,12 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	}
 
 	// Start and check IPs now
-	for (auto& ip : configuredIps) {
+	for (auto &ip : configuredIps) {
 
 		// Translate all memory blocks that the IP needs to be accessible from
 		// the process and cache in the instance, so this has not to be done at
 		// runtime.
-		for (auto& memoryBlock : ip->getMemoryBlocks()) {
+		for (auto &memoryBlock : ip->getMemoryBlocks()) {
 			// construct the global name of this address block
 			const auto addrSpaceName =
 			        MemoryManager::getSlaveAddrSpaceName(ip->getInstanceName(),
@@ -284,7 +281,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			ip->slaveAddressSpaces.emplace(memoryBlock, addrSpaceId);
 
 			// get the translation to the address space
-			const auto& translation =
+			const auto &translation =
 			        MemoryManager::get().getTranslationFromProcess(addrSpaceId);
 
 			// cache it in the IP instance only with local name
@@ -309,7 +306,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 	loggerStatic->debug("Initialized IPs:");
-	for (auto& ip : initializedIps) {
+	for (auto &ip : initializedIps) {
 		loggerStatic->debug("  {}", *ip);
 	}
 
@@ -335,7 +332,7 @@ Core::dump()
 CoreFactory*
 CoreFactory::lookup(const Vlnv &vlnv)
 {
-	for (auto& ip : plugin::Registry::lookup<CoreFactory>()) {
+	for (auto &ip : plugin::Registry::lookup<CoreFactory>()) {
 		if (ip->getCompatibleVlnv() == vlnv)
 			return ip;
 	}
@@ -345,17 +342,17 @@ CoreFactory::lookup(const Vlnv &vlnv)
 
 
 uintptr_t
-Core::getLocalAddr(const MemoryBlockName& block, uintptr_t address) const
+Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 {
 	// throws exception if block not present
-	auto& translation = addressTranslations.at(block);
+	auto &translation = addressTranslations.at(block);
 
 	return translation.getLocalAddr(address);
 }
 
 
 InterruptController*
-Core::getInterruptController(const std::string& interruptName) const
+Core::getInterruptController(const std::string &interruptName) const
 {
 	try {
 		const IrqPort irq = irqs.at(interruptName);
@@ -364,8 +361,3 @@ Core::getInterruptController(const std::string& interruptName) const
 		return nullptr;
 	}
 }
-
-
-} // namespace ip
-} // namespace fpga
-} // namespace villas

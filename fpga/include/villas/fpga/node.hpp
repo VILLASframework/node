@@ -44,14 +44,14 @@ namespace ip {
 
 class StreamVertex : public graph::Vertex {
 public:
-	StreamVertex(const std::string& node, const std::string& port, bool isMaster) :
+	StreamVertex(const std::string &node, const std::string &port, bool isMaster) :
 	    nodeName(node), portName(port), isMaster(isMaster) {}
 
 	std::string getName() const
 	{ return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")"; }
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const StreamVertex& vertex)
+	operator<< (std::ostream &stream, const StreamVertex &vertex)
 	{ return stream << vertex.getIdentifier() << ": " << vertex.getName(); }
 
 public:
@@ -66,12 +66,12 @@ public:
 	StreamGraph() : graph::DirectedGraph<StreamVertex>("StreamGraph") {}
 
 	std::shared_ptr<StreamVertex>
-	getOrCreateStreamVertex(const std::string& node,
-	                        const std::string& port,
+	getOrCreateStreamVertex(const std::string &node,
+	                        const std::string &port,
 	                        bool isMaster)
 	{
-		for (auto& vertexEntry : vertices) {
-			auto& vertex = vertexEntry.second;
+		for (auto &vertexEntry : vertices) {
+			auto &vertex = vertexEntry.second;
 			if (vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
 				return vertex;
 		}
@@ -88,6 +88,8 @@ public:
 class Node : public virtual Core {
 public:
 
+	using Ptr = std::shared_ptr<Node>;
+
 	friend class NodeFactory;
 
 	struct StreamPort {
@@ -95,20 +97,31 @@ public:
 		std::string nodeName;
 	};
 
-	bool connect(const StreamVertex& from, const StreamVertex& to);
-
 	const StreamVertex&
-	getMasterPort(const std::string& name) const
+	getMasterPort(const std::string &name) const
 	{ return *portsMaster.at(name); }
 
 	const StreamVertex&
-	getSlavePort(const std::string& name) const
+	getSlavePort(const std::string &name) const
 	{ return *portsSlave.at(name); }
+
+	bool connect(const StreamVertex &from, const StreamVertex &to);
+	bool connect(const StreamVertex &from, const StreamVertex &to, bool reverse)
+	{
+		bool ret;
+		
+		ret = connect(from, to);
+
+		if (reverse)
+			ret &= connect(to, from);
+
+		return ret;
+	}
 
 	// easy-usage assuming that the slave IP to connect to only has one slave
 	// port and implements the getDefaultSlavePort() function
-	bool connect(const Node& slaveNode)
-	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort()); }
+	bool connect(const Node &slaveNode, bool reverse = false)
+	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort(), reverse); }
 
 	// used by easy-usage connect, will throw if not implemented by derived node
 	virtual const StreamVertex&
@@ -127,8 +140,8 @@ public:
 
 protected:
 	virtual bool
-	connectInternal(const std::string& slavePort,
-	                const std::string& masterPort);
+	connectInternal(const std::string &slavePort,
+	                const std::string &masterPort);
 
 private:
 	std::pair<std::string, std::string> getLoopbackPorts() const;
@@ -144,7 +157,7 @@ class NodeFactory : public CoreFactory {
 public:
 	using CoreFactory::CoreFactory;
 
-	virtual bool configureJson(Core& ip, json_t *json_ip);
+	virtual bool configureJson(Core &ip, json_t *json_ip);
 };
 
 /** @} */

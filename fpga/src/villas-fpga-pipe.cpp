@@ -43,7 +43,7 @@
 
 using namespace villas;
 
-static struct pci pci;
+static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("streamer");
 
 void setupColorHandling()
@@ -64,14 +64,11 @@ void setupColorHandling()
 }
 
 std::shared_ptr<fpga::PCIeCard>
-setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
+setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 {
-	if (pci_init(&pci) != 0) {
-		logger->error("Cannot initialize PCI");
-		exit(1);
-	}
+	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-	auto vfioContainer = villas::VfioContainer::create();
+	auto vfioContainer = kernel::vfio::Container::create();
 
 	/* Parse FPGA configuration */
 	FILE* f = fopen(configFile.c_str(), "r");
@@ -102,9 +99,9 @@ setupFpgaCard(const std::string& configFile, const std::string& fpgaName)
 	}
 
 	// create all FPGA card instances using the corresponding plugin
-	auto cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
+	auto cards = fpgaCardPlugin->make(fpgas, pciDevices, vfioContainer);
 
-	for (auto& fpgaCard : cards) {
+	for (auto &fpgaCard : cards) {
 		if (fpgaCard->name == fpgaName) {
 			return fpgaCard;
 		}
@@ -192,7 +189,7 @@ int main(int argc, char* argv[])
 
 		size_t memIdx = 0;
 
-		for (auto& value: values) {
+		for (auto &value: values) {
 			if (value.empty()) continue;
 
 			const int32_t number = std::stoi(value);
