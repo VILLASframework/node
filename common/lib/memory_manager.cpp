@@ -237,18 +237,17 @@ MemoryTranslation::operator+=(const MemoryTranslation &other)
 	/* The source stays the same and can only increase with merged translations */
 	//this->src = this->src;
 
-	if (otherSrcIsSmaller) {
+	if (otherSrcIsSmaller)
 		/* Other mapping starts at lower addresses, so we actually arrive at
 		 * higher addresses
 		 */
 		this->dst += diff_lo;
-	} else {
+	else
 		/* Other mapping starts at higher addresses than this, so we have to
 		 * increase the start
 		 * NOTE: for addresses equality, this just adds 0
 		 */
 		this->src += diff_lo;
-	}
 
 	logger->debug("result src:     {:#x}", this->src);
 	logger->debug("result dst:     {:#x}", this->dst);

@@ -83,21 +83,22 @@ struct Region {
 };
 
 class Device {
-
 public:
 	Device(Id i, Slot s) :
 		id(i),
 		slot(s)
 	{ }
 
+	Device(Id i) :
+		id(i)
+	{ }
+
+	Device(Slot s) :
+		slot(s)
+	{ }
+
 	bool
 	operator==(const Device &other);
-
-	bool
-	operator==(const Id &other);
-
-	bool
-	operator==(const Slot &other);
 
 	/** Get currently loaded driver for device */
 	std::string
@@ -118,7 +119,7 @@ public:
 	Slot slot;
 };
 
-class DeviceList : public std::list<Device> {
+class DeviceList : public std::list<std::shared_ptr<Device>> {
 public:
 	/** Initialize Linux PCI handle.
 	 *
@@ -126,11 +127,14 @@ public:
 	 */
 	DeviceList();
 
-	Device &
-	lookupDevice(const Slot &slot);
+	DeviceList::value_type
+	lookupDevice(const Slot &s);
 
-	Device &
-	lookupDevice(const Id &id);
+	DeviceList::value_type
+	lookupDevice(const Id &i);
+
+	DeviceList::value_type
+	lookupDevice(const Device &f);
 };
 
 } /* namespace pci */

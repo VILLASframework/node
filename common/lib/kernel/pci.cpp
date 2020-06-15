@@ -82,22 +82,34 @@ DeviceList::DeviceList()
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", e->d_name);
 
-		emplace_back(id, slot);
+		emplace_back(std::make_shared<Device>(id, slot));
 	}
 
 	closedir(dp);
 }
 
-Device &
+DeviceList::value_type
 DeviceList::lookupDevice(const Slot &s)
 {
-	return *std::find(begin(), end(), s);
+	return *std::find_if(begin(), end(), [s](const DeviceList::value_type &d) {
+		return d->slot == s;
+	});
 }
 
-Device &
+DeviceList::value_type
 DeviceList::lookupDevice(const Id &i)
 {
-	return *std::find(begin(), end(), i);
+	return *std::find_if(begin(), end(), [i](const DeviceList::value_type &d) {
+		return d->id == i;
+	});
+}
+
+DeviceList::value_type
+DeviceList::lookupDevice(const Device &d)
+{
+	return *std::find_if(begin(), end(), [d](const DeviceList::value_type &e) {
+		return *e == d;
+	});
 }
 
 Id::Id(const std::string &str) :
@@ -257,18 +269,6 @@ bool
 Device::operator==(const Device &f)
 {
 	return id == f.id && slot == f.slot;
-}
-
-bool
-Device::operator==(const Slot &s)
-{
-	return slot == s;
-}
-
-bool
-Device::operator==(const Id &i)
-{
-	return id == i;
 }
 
 std::list<Region>
