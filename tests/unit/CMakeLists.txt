@@ -22,16 +22,16 @@
 
 set(TEST_SRC
 	config_json.cpp
-	io.cpp
-	json.cpp
 	main.cpp
 	mapping.cpp
 	memory.cpp
+	signal.cpp
+	helpers.cpp
+	json.cpp
 	pool.cpp
 	queue.cpp
 	queue_signalled.cpp
-	signal.cpp
-	helpers.cpp
+	io.cpp
 )
 
 add_executable(unit-tests ${TEST_SRC})
@@ -43,12 +43,10 @@ target_link_libraries(unit-tests PUBLIC
 
 add_custom_target(run-unit-tests
 	COMMAND
-		SRCDIR=${PROJECT_SOURCE_DIR}
-		BUILDDIR=${PROJECT_BINARY_DIR}
 		LD_PRELOAD=/usr/lib64/libSegFault.so
 		SEGFAULT_SIGNALS=all
 		SEGFAULT_SIGNALS="bus abrt"
-		${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt
+		$<TARGET_FILE:unit-tests>
 	DEPENDS
 		unit-tests
 	USES_TERMINAL

@@ -44,33 +44,17 @@ extern void init_memory();
 
 #define NUM_VALUES 10
 
-class Param {
+using string = std::basic_string<char, std::char_traits<char>, criterion::allocator<char>>;
 
+struct Param {
 public:
-	char * fmt;
+	Param(const char *f, int c, int b) :
+		fmt(f), cnt(c), bits(b)
+	{}
+
+	string fmt;
 	int cnt;
 	int bits;
-};
-
-const auto d = cr_strdup;
-
-static criterion::parameters<Param> params = {
-	{ d("gtnet"),		1, 32 },
-	{ d("gtnet.fake"),	1, 32 },
-	{ d("raw.8"),		1,  8 },
-	{ d("raw.16.be"),	1, 16 },
-	{ d("raw.16.le"),	1, 16 },
-	{ d("raw.32.be"),	1, 32 },
-	{ d("raw.32.le"),	1, 32 },
-	{ d("raw.64.be"),	1, 64 },
-	{ d("raw.64.le"),	1, 64 },
-	{ d("villas.human"),	10, 0 },
-	{ d("villas.binary"),	10, 0 },
-	{ d("csv"),		10, 0 },
-	{ d("json"),		10, 0 },
-#ifdef PROTOBUF_FOUND
-	{ d("protobuf"),	10, 0 }
-#endif
 };
 
 void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt)
@@ -211,6 +195,25 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 
 ParameterizedTestParameters(io, lowlevel)
 {
+	static criterion::parameters<Param> params;
+
+	params.emplace_back("gtnet",		1, 32);
+	params.emplace_back("gtnet.fake",	1, 32);
+	params.emplace_back("raw.8",		1,  8);
+	params.emplace_back("raw.16.be",	1, 16);
+	params.emplace_back("raw.16.le",	1, 16);
+	params.emplace_back("raw.32.be",	1, 32);
+	params.emplace_back("raw.32.le",	1, 32);
+	params.emplace_back("raw.64.be",	1, 64);
+	params.emplace_back("raw.64.le",	1, 64);
+	params.emplace_back("villas.human",	10, 0);
+	params.emplace_back("villas.binary",	10, 0);
+	params.emplace_back("csv",		10, 0);
+	params.emplace_back("json",		10, 0);
+#ifdef PROTOBUF_FOUND
+	params.emplace_back("protobuf",		10, 0 );
+#endif
+
 	return params;
 }
 
@@ -223,7 +226,7 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 	Logger logger = logging.get("test:io:lowlevel");
 
-	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
+	logger->info("Running test for format={}, cnt={}", p->fmt.c_str(), p->cnt);
 
 	struct format_type *f;
 
@@ -247,8 +250,8 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 	fill_sample_data(&signals, smps, p->cnt);
 
-	f = format_type_lookup(p->fmt);
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
+	f = format_type_lookup(p->fmt.c_str());
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
@@ -280,6 +283,25 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 ParameterizedTestParameters(io, highlevel)
 {
+	static criterion::parameters<Param> params;
+
+	params.emplace_back("gtnet",		1, 32);
+	params.emplace_back("gtnet.fake",	1, 32);
+	params.emplace_back("raw.8",		1,  8);
+	params.emplace_back("raw.16.be",	1, 16);
+	params.emplace_back("raw.16.le",	1, 16);
+	params.emplace_back("raw.32.be",	1, 32);
+	params.emplace_back("raw.32.le",	1, 32);
+	params.emplace_back("raw.64.be",	1, 64);
+	params.emplace_back("raw.64.le",	1, 64);
+	params.emplace_back("villas.human",	10, 0);
+	params.emplace_back("villas.binary",	10, 0);
+	params.emplace_back("csv",		10, 0);
+	params.emplace_back("json",		10, 0);
+#ifdef PROTOBUF_FOUND
+	params.emplace_back("protobuf",		10, 0 );
+#endif
+
 	return params;
 }
 
@@ -290,7 +312,7 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 
 	Logger logger = logging.get("test:io:highlevel");
 
-	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
+	logger->info("Running test for format={}, cnt={}", p->fmt.c_str(), p->cnt);
 
 	return;
 
@@ -328,8 +350,8 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
-	f = format_type_lookup(p->fmt);
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
+	f = format_type_lookup(p->fmt.c_str());
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
@@ -348,7 +370,7 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 
 #if 0 /* Show the file contents */
 	char cmd[128];
-	if (!strcmp(p->fmt, "csv") || !strcmp(p->fmt, "json") || !strcmp(p->fmt, "villas.human"))
+	if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);
 	else
 		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
