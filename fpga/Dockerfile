@@ -62,6 +62,7 @@ RUN yum -y install \
 # Dependencies
 RUN yum -y install \
 	jansson-devel \
+	openssl-devel \
 	libxil-devel \
 	lapack-devel
 
