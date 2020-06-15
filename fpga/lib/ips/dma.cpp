@@ -73,9 +73,9 @@ Dma::init()
 	if (XAxiDma_Selftest(&xDma) != XST_SUCCESS) {
 		logger->error("DMA selftest failed");
 		return false;
-	} else {
-		logger->debug("DMA selftest passed");
 	}
+	else
+		logger->debug("DMA selftest passed");
 
 	/* Map buffer descriptors */
 	if (hasScatterGather()) {

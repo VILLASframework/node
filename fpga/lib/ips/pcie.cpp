@@ -157,12 +157,10 @@ AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 				    .size = static_cast<size_t>(size),
 				    .translation = translation
 				};
-
-			} else {
+			} else
 				pcie.pcieToAxiTranslations[bar_name] = {
 				    .translation = translation
 				};
-			}
 		}
 	}
 

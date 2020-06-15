@@ -36,7 +36,7 @@
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
 
-
+using namespace villas::fpga;
 using namespace villas::fpga::ip;
 
 // Special IPs that have to be initialized first. Will be initialized in the
@@ -115,10 +115,9 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		if (CoreFactory == nullptr) {
 			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
-		} else {
-			loggerStatic->debug("Using {} for IP {}",
-			                    CoreFactory->getName(), id.getVlnv());
 		}
+		else
+			loggerStatic->debug("Using {} for IP {}", CoreFactory->getName(), id.getVlnv());
 
 		auto logger = CoreFactory->getLogger();
 

@@ -125,8 +125,8 @@ public:
 
 protected:
 	virtual bool
-	connectInternal(const std::string& slavePort,
-	                const std::string& masterPort);
+	connectInternal(const std::string &slavePort,
+	                const std::string &masterPort);
 
 private:
 	std::pair<std::string, std::string> getLoopbackPorts() const;
@@ -142,7 +142,7 @@ class NodeFactory : public CoreFactory {
 public:
 	using CoreFactory::CoreFactory;
 
-	virtual bool configureJson(Core& ip, json_t *json_ip);
+	virtual bool configureJson(Core &ip, json_t *json_ip);
 };
 
 /** @} */

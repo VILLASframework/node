@@ -115,14 +115,14 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 		// overlapping window, so this will fail badly!
 		auto translation = mm.getTranslation(masterPciEAddrSpaceId,
 		                                     mem.getAddrSpaceId());
-		if (translation.getSize() >= mem.getSize()) {
+		if (translation.getSize() >= mem.getSize())
 			// there is already a sufficient path
 			logger->debug("Already mapped through another mapping");
 			return true;
-		} else {
+		else 
 			logger->warn("There's already a mapping, but too small");
-		}
-	} catch(const std::out_of_range&) {
+	}
+	catch(const std::out_of_range&) {
 		// not yet reachable, that's okay, proceed
 	}
 
@@ -333,7 +333,8 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem)
 		              mem.getAddrSpaceId());
 
 		return registerIoMemory(mem);
-	} else {
+	}
+	else {
 		logger->debug("Memory block {} is assumed to be non-CUDA host memory",
 		              mem.getAddrSpaceId());
 
@@ -400,8 +401,8 @@ GpuAllocator::allocateBlock(size_t size)
 		logger->debug("Found existing chunk that can host the requested block");
 
 		return (*chunk)->allocateBlock(size);
-
-	} else {
+	}
+	else {
 		// allocate a new chunk
 
 		// rounded-up multiple of GPU page size

@@ -75,9 +75,15 @@ public:
 	bool reset() { return true; }
 	void dump()  { }
 
-	ip::Core::Ptr lookupIp(const std::string &name) const;
-	ip::Core::Ptr lookupIp(const Vlnv &vlnv) const;
-	ip::Core::Ptr lookupIp(const ip::IpIdentifier &id) const;
+	ip::Core::Ptr
+	lookupIp(const std::string &name) const;
+	
+	ip::Core::Ptr
+	lookupIp(const Vlnv &vlnv) const;
+	
+	ip::Core::Ptr
+	lookupIp(const ip::IpIdentifier &id) const;
+
 
 	bool
 	mapMemoryBlock(const MemoryBlock &block);
