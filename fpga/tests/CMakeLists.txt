@@ -42,8 +42,6 @@ if (CMAKE_CUDA_COMPILER)
 		gpu.cpp rtds2gpu.cpp gpu_kernels.cu)
 endif ()
 
-find_package(Criterion REQUIRED)
-
 target_include_directories(unit-tests-fpga PUBLIC
 	../include
 	${CRITERION_INCLUDE_DIRECTORIES}

@@ -57,13 +57,17 @@ pkg_check_modules(JANSSON REQUIRED IMPORTED_TARGET jansson)
 pkg_check_modules(XIL REQUIRED IMPORTED_TARGET libxil)
 
 find_package(Threads)
+find_package(Criterion)
 
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
 add_subdirectory(lib)
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if(CRITERION_FOUND AND TOPLEVEL_PROJECT)
+	add_subdirectory(tests)
+endif()
 
 if(NOT CMAKE_PROJECT_NAME STREQUAL "villas-node")
 	add_subdirectory(common)
