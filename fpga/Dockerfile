@@ -42,9 +42,6 @@ LABEL \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASfpga" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/fpga.html"
 
-# Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
-
 # Enable Extra Packages for Enterprise Linux (EPEL) and Software collection repo
 RUN yum -y install epel-release centos-release-scl
 
@@ -63,12 +60,33 @@ RUN yum -y install \
 RUN yum -y install \
 	jansson-devel \
 	openssl-devel \
-	libxil-devel \
+	curl-devel \
 	lapack-devel
+
+# Build & Install Fmtlib
+RUN git clone --recursive https://github.com/fmtlib/fmt.git /tmp/fmt && \
+    mkdir -p /tmp/fmt/build && cd /tmp/fmt/build && \
+    git checkout 5.2.0 && \
+    cmake3 -DBUILD_SHARED_LIBS=1 .. && \
+    make -j$(nproc) install && \
+	rm -rf /tmp/fmt
+
+
+# Build & Install spdlog
+RUN git clone --recursive https://github.com/gabime/spdlog.git /tmp/spdlog && \
+    mkdir -p /tmp/spdlog/build && cd /tmp/spdlog/build && \
+    git checkout v1.3.1 && \
+    cmake3 -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF .. && \
+    make -j$(nproc) install && \
+	rm -rf /tmp/spdlog
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
 RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake3 .. && make install && rm -rf /tmp/*
+
+# Build & Install libxil
+COPY thirdparty/libxil /tmp/libxil
+RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake3 .. && make install && rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
