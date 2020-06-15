@@ -220,5 +220,5 @@ public:
 	{ return prio; }
 };
 
-} // namespace node
-} // namespace villas
+} /* namespace node */
+} /* namespace villas */

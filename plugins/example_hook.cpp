@@ -42,5 +42,5 @@ static char n[] = "example";
 static char d[] = "This is just a simple example hook";
 static HookPlugin<ExampleHook, n, d, (int) Hook::Flags::PATH> p;
 
-} // namespace node
-} // namespace villas
+} /* namespace node */
+} /* namespace villas */

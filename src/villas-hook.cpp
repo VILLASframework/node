@@ -312,9 +312,9 @@ stop:			sent = io_print(&io, smps, send);
 	}
 };
 
-} // namespace tools
-} // namespace node
-} // namespace villas
+} /* namespace tools */
+} /* namespace node */
+} /* namespace villas */
 
 int main(int argc, char *argv[])
 {

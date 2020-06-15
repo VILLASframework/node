@@ -46,7 +46,7 @@ namespace sessions {
 /* Forward declarations */
 class Socket;
 
-} // namespace sessions
+} /* namespace sessions */
 
 class Server {
 
@@ -76,6 +76,6 @@ public:
 	void run(int timeout = 100);
 };
 
-} // namespace api
-} // namespace node
-} // namespace villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

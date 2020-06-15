@@ -44,7 +44,7 @@ const int version = 1;
 /* Forward declarations */
 class Session;
 
-} // namespace api
+} /* namespace api */
 
 /* Forward declarations */
 class SuperNode;

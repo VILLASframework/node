@@ -37,7 +37,7 @@ private:
 	std::condition_variable cv;
 
 public:
-	void push(const T& data)
+	void push(const T &data)
 	{
 		Queue<T>::push(data);
 
@@ -58,4 +58,4 @@ public:
 	}
 };
 
-} // namespace villas
+} /* namespace villas */

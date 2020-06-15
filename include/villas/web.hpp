@@ -101,5 +101,5 @@ public:
 	void callbackOnWritable(struct lws *wsi);
 };
 
-} // namespace node
-} // namespace villas
+} /* namespace node */
+} /* namespace villas */
