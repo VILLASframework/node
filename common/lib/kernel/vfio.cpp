@@ -458,10 +458,10 @@ Device::regionMap(size_t index)
 	if (!(r->flags & VFIO_REGION_INFO_FLAG_MMAP))
 		return MAP_FAILED;
 
-	int flags = MAP_SHARED | MAP_32BIT;
+	int flags = MAP_SHARED;
 
 #if !(defined(__arm__) || defined(__aarch64__))
-	flags |= MAP_SHARED;
+	flags |= MAP_SHARED | MAP_32BIT;
 #endif
 
 	mappings[index] = mmap(nullptr, r->size,
