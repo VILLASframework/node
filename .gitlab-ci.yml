@@ -75,7 +75,7 @@ prepare:debian-arm64:docker-dev:
   stage: build
   script:
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTS}
+  - cmake ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
@@ -103,7 +103,7 @@ build:centos:x86_64:
   <<: *build
   script:
   - mkdir -p build && cd build
-  - cmake3 .. ${CMAKE_OPTS}
+  - cmake3 ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS}
   variables:
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
@@ -127,7 +127,7 @@ build:docs:
     - build/doc/
   script:
   - mkdir -p build && cd build
-  - cmake ..
+  - cmake ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS} doc
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
@@ -155,8 +155,8 @@ test:unit:
     SEGFAULT_SIGNALS: bus abrt
   script:
   - mkdir -p build && cd build
-  - cmake .. && make ${MAKE_OPTS} unit-tests
-  - "tests/unit/unit-tests || true"
+  - cmake ${CMAKE_OPTS} ..
+  - make ${MAKE_OPTS} run-unit-tests
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
@@ -165,13 +165,9 @@ test:integration:
   stage: test
   dependencies:
   - build:fedora:x86_64
-  variables:
-    LD_PRELOAD: /usr/lib64/libSegFault.so
-    SEGFAULT_SIGNALS: all
-    SEGFAULT_SIGNALS: bus abrt
   script:
   - mkdir -p build && cd build
-  - cmake ..
+  - cmake ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS} run-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
@@ -179,7 +175,6 @@ test:integration:
     paths:
     - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  allow_failure: true
   tags:
   - docker
 

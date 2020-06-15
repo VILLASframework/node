@@ -42,11 +42,17 @@ target_link_libraries(unit-tests PUBLIC
 )
 
 add_custom_target(run-unit-tests
-	COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
+	COMMAND
+		SRCDIR=${PROJECT_SOURCE_DIR}
+		BUILDDIR=${PROJECT_BINARY_DIR}
+		LD_PRELOAD=/usr/lib64/libSegFault.so
+		SEGFAULT_SIGNALS=all
+		SEGFAULT_SIGNALS="bus abrt"
+		${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt
+	DEPENDS
+		unit-tests
 	USES_TERMINAL
 )
 
 add_dependencies(tests unit-tests)
 add_dependencies(run-tests run-unit-tests)
-
-add_dependencies(run-unit-tests unit-tests)
