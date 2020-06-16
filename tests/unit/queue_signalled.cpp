@@ -132,7 +132,6 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 	int ret;
 	void *r1, *r2;
 	struct queue_signalled q;
-	q.queue.state = State::DESTROYED;
 
 	pthread_t t1, t2;
 

@@ -109,14 +109,12 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 					? QueueSignalledMode::POLLING
 					: QueueSignalledMode::PTHREAD;
 
-	shared->queue.queue.state = State::DESTROYED;
 	ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, mode, flags);
 	if (ret) {
 		errno = ENOMEM;
 		return -6;
 	}
 
-	shared->pool.state = State::DESTROYED;
 	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LENGTH(conf->samplelen), manager);
 	if (ret) {
 		errno = ENOMEM;

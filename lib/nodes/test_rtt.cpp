@@ -435,9 +435,6 @@ int test_rtt_poll_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "test_rtt";
 	p.description		= "Test round-trip time with loopback";
 	p.type			= PluginType::NODE;
@@ -461,6 +458,5 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

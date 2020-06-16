@@ -121,9 +121,6 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 static struct plugin p1;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-	        vlist_init(&plugins);
-
 	p1.name = "villas.binary";
 	p1.description = "VILLAS binary network format";
 	p1.type = PluginType::FORMAT;
@@ -137,17 +134,13 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p1);
+	vlist_remove_all(&plugins, &p1);
 }
 /** The WebSocket node-type usually uses little endian byte order intead of network byte order */
 static struct plugin p2;
 
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-	        vlist_init(&plugins);
-
 	p2.name = "villas.web";
 	p2.description = "VILLAS binary network format for WebSockets";
 	p2.type = PluginType::FORMAT;
@@ -161,6 +154,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p2);
+	vlist_remove_all(&plugins, &p2);
 }

@@ -34,7 +34,7 @@ Test(mapping, parse_nodes)
 {
 	int ret;
 	struct mapping_entry m;
-	struct vlist nodes = { .state = State::DESTROYED };
+	struct vlist nodes;
 
 	const char *node_names[3] = { "apple", "cherry", "carrot" };
 	const char *signal_names[3][4] = {
@@ -49,7 +49,6 @@ Test(mapping, parse_nodes)
 		struct node *n = new struct node;
 
 		n->name = strdup(node_names[i]);
-		n->in.signals.state = State::DESTROYED;
 
 		vlist_init(&n->in.signals);
 

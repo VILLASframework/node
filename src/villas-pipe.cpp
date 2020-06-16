@@ -74,9 +74,6 @@ public:
 		enabled(en),
 		limit(lim)
 	{
-		pool.state = State::DESTROYED;
-		pool.queue.state = State::DESTROYED;
-
 		/* Initialize memory */
 		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
 		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : vec;
@@ -253,8 +250,6 @@ public:
 		ret = memory_init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
-
-		io.state = State::DESTROYED;
 
 		cfg_cli = json_object();
 	}

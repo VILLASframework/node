@@ -227,9 +227,6 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name = "protobuf";
 	p.description = "Google Protobuf";
 	p.type = PluginType::FORMAT;
@@ -242,7 +239,6 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }
 

@@ -197,10 +197,7 @@ void csv_header(struct io *io, const struct sample *smp)
 
 static struct plugin p1;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == State::DESTROYED)
-	                vlist_init(&plugins);
-
-	p1.name = "tsv";
+        p1.name = "tsv";
 	p1.description = "Tabulator-separated values";
 	p1.type = PluginType::FORMAT;
 	p1.format.header = csv_header;
@@ -215,15 +212,11 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p1);
+	vlist_remove_all(&plugins, &p1);
 }
 
 static struct plugin p2;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p2.name = "csv";
 	p2.description = "Comma-separated values";
 	p2.type = PluginType::FORMAT;
@@ -239,6 +232,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p2);
+	vlist_remove_all(&plugins, &p2);
 }

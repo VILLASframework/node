@@ -320,8 +320,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 
 	const char *mode = nullptr;
 
-	struct vlist destinations = { .state = State::DESTROYED };
-
+	struct vlist destinations;
 	vlist_init(&destinations);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b}",
@@ -387,8 +386,6 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 
 			ps->node = me->node;
 			ps->masked = false;
-
-			ps->mappings.state = State::DESTROYED;
 
 			vlist_init(&ps->mappings);
 

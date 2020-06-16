@@ -64,10 +64,6 @@ SuperNode::SuperNode() :
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	task(CLOCK_REALTIME)
 {
-	nodes.state = State::DESTROYED;
-	paths.state = State::DESTROYED;
-	interfaces.state = State::DESTROYED;
-
 	vlist_init(&nodes);
 	vlist_init(&paths);
 	vlist_init(&interfaces);
@@ -160,10 +156,6 @@ void SuperNode::parse(json_t *cfg)
 			auto *n = new struct node;
 			if (!n)
 				throw RuntimeError("Failed to allocate memory");
-
-			n->state = State::DESTROYED;
-			n->in.state = State::DESTROYED;
-			n->out.state = State::DESTROYED;
 
 			ret = node_init(n, nt);
 			if (ret)

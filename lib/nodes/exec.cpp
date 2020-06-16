@@ -136,6 +136,19 @@ int exec_prepare(struct node *n)
 	return 0;
 }
 
+int exec_init(struct node *n)
+{
+	struct exec *e = (struct exec *) n->_vd;
+
+	new (&e->proc) std::unique_ptr<Popen>();
+	new (&e->working_dir) std::string();
+	new (&e->command) std::string();
+	new (&e->arguments) Popen::arg_list();
+	new (&e->environment) Popen::env_map();
+
+	return 0;
+}
+
 int exec_destroy(struct node *n)
 {
 	int ret;
@@ -146,6 +159,17 @@ int exec_destroy(struct node *n)
 		if (ret)
 			return ret;
 	}
+
+	using uptr = std::unique_ptr<Popen>;
+	using str = std::string;
+	using al = Popen::arg_list;
+	using em = Popen::env_map;
+
+	e->proc.~uptr();
+	e->working_dir.~str();
+	e->command.~str();
+	e->arguments.~al();
+	e->environment.~em();
 
 	return 0;
 }
@@ -242,9 +266,6 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "exec";
 	p.description		= "run subprocesses with stdin/stdout communication";
 	p.type			= PluginType::NODE;
@@ -254,6 +275,7 @@ static void register_plugin() {
 	p.node.parse		= exec_parse;
 	p.node.print		= exec_print;
 	p.node.prepare		= exec_prepare;
+	p.node.init		= exec_init;
 	p.node.destroy		= exec_destroy;
 	p.node.start		= exec_start;
 	p.node.stop		= exec_stop;
@@ -267,6 +289,5 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

@@ -52,7 +52,7 @@ ParameterizedTestParameters(pool, basic)
 ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;
-	struct pool pool = { .state = State::DESTROYED };
+	struct pool pool;
 
 	void *ptr, *ptrs[p->pool_size];
 

@@ -366,8 +366,6 @@ int ethercat_init(struct node *n)
 	int ret;
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
-	w->pool.state = State::DESTROYED;
-
 	/* Default values */
 	w->rate = 1000;
 
@@ -447,9 +445,6 @@ int ethercat_poll_fds(struct node *n, int *fds)
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "ethercat";
 	p.description		= "Send and receive samples of an ethercat connection";
 	p.type			= PluginType::NODE;
@@ -475,7 +470,6 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }
 

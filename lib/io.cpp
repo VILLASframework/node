@@ -117,7 +117,6 @@ int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int f
 	struct vlist *signals;
 
 	signals = new struct vlist;
-	signals->state = State::DESTROYED;
 
 	ret = vlist_init(signals);
 	if (ret)
@@ -152,15 +151,11 @@ int io_destroy(struct io *io)
 			return ret;
 	}
 
-	io->state = State::DESTROYED;
-
 	return 0;
 }
 
 int io_check(struct io *io)
 {
-	assert(io->state != State::DESTROYED);
-
 	io->state = State::CHECKED;
 
 	return 0;

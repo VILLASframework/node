@@ -414,9 +414,6 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 #define REGISTER_FORMAT_RAW(i, n, d, f)					\
 static struct plugin i;							\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {	\
-	if (plugins.state == State::DESTROYED)				\
-		vlist_init(&plugins);					\
-									\
 	i.name 		= n;						\
 	i.description 	= d;						\
 	i.type 		= PluginType::FORMAT;				\
@@ -429,8 +426,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {	\
 }									\
 									\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {		\
-        if (plugins.state != State::DESTROYED)				\
-	        vlist_remove_all(&plugins, &i);				\
+        vlist_remove_all(&plugins, &i);				\
 }
 /* Feel free to add additional format identifiers here to suit your needs */
 REGISTER_FORMAT_RAW(p_8,	"raw.8",	"Raw  8 bit",					RAW_BITS_8)

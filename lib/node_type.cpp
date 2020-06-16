@@ -33,7 +33,7 @@ int node_type_start(struct node_type *vt, villas::node::SuperNode *sn)
 {
 	int ret;
 
-	if (vt->state != State::DESTROYED)
+	if (vt->state == State::STARTED)
 		return 0;
 
 	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), vlist_length(&vt->instances));
@@ -56,7 +56,7 @@ int node_type_stop(struct node_type *vt)
 
 	ret = vt->type.stop ? vt->type.stop() : 0;
 	if (ret == 0)
-		vt->state = State::DESTROYED;
+		vt->state = State::STOPPED;
 
 	return ret;
 }

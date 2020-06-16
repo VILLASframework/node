@@ -59,7 +59,6 @@ public:
 	{
 		int ret;
 
-		io.state = State::DESTROYED;
 		ret = io_init2(&io, format, dtypes.c_str(), 0);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
@@ -103,8 +102,6 @@ public:
 		dtypes("64f"),
 		flags((int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN)
 	{
-		pool.state = State::DESTROYED;
-
 		int ret;
 
 		ret = memory_init(DEFAULT_NR_HUGEPAGES);

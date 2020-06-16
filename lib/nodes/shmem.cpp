@@ -201,9 +201,6 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "shmem";
 	p.description		= "POSIX shared memory interface with external processes";
 	p.type			= PluginType::NODE;
@@ -224,6 +221,5 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

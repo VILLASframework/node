@@ -59,13 +59,6 @@ public:
 	{
 		int ret;
 
-		n.state = State::DESTROYED;
-		n.in.state = State::DESTROYED;
-		n.out.state = State::DESTROYED;
-		io.state = State::DESTROYED;
-		q.state = State::DESTROYED;
-		q.queue.state = State::DESTROYED;
-
 		ret = memory_init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");

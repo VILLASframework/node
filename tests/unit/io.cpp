@@ -230,9 +230,9 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 	struct format_type *f;
 
-	struct pool pool = { .state = State::DESTROYED };
-	struct io io = { .state = State::DESTROYED };
-	struct vlist signals = { .state = State::DESTROYED };
+	struct pool pool;
+	struct io io;
+	struct vlist signals;
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
@@ -318,12 +318,12 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 
 	struct format_type *f;
 
-	struct io io = { .state = State::DESTROYED };
-	struct pool pool = { .state = State::DESTROYED };
-	struct vlist signals = { .state = State::DESTROYED };
-
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
+
+	struct pool pool;
+	struct vlist signals;
+	struct io io;
 
 	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
 	cr_assert_eq(ret, 0);

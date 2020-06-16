@@ -56,9 +56,6 @@ int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node
 	nd->vectorize = 1;
 	nd->builtin = 1;
 
-	nd->hooks.state = State::DESTROYED;
-	nd->signals.state = State::DESTROYED;
-
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&nd->hooks);
 	if (ret)

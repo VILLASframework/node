@@ -26,7 +26,7 @@
 #include <villas/plugin.h>
 
 /** Global list of all known plugins */
-struct vlist plugins = { .state = State::DESTROYED };
+struct vlist plugins;
 
 LIST_INIT_STATIC(&plugins)
 

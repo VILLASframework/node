@@ -60,9 +60,6 @@ int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, str
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name = "iotagent_ul";
 	p.description = "FIWARE IotAgent UltraLight format";
 	p.type = PluginType::FORMAT;
@@ -73,6 +70,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

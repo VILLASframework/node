@@ -70,9 +70,6 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		p.state = State::DESTROYED;
-		io.state = State::DESTROYED;
-
 		cfg_cli = json_object();
 	}
 

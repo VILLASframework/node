@@ -479,9 +479,6 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "iec61850-9-2";
 	p.description		= "IEC 61850-9-2 (Sampled Values)";
 	p.type			= PluginType::NODE;
@@ -505,8 +502,7 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }
 
 #endif /* CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT */

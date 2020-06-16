@@ -42,7 +42,7 @@ using namespace villas::utils;
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
-static struct vlist connections = { .state = State::DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
+static struct vlist connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 static villas::node::Web *web;
 
@@ -602,9 +602,6 @@ int websocket_poll_fds(struct node *n, int fds[])
 }
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "websocket";
 	p.description		= "Send and receive samples of a WebSocket connection (libwebsockets)";
 	p.type			= PluginType::NODE;
@@ -626,6 +623,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != State::DESTROYED)
-                vlist_remove_all(&plugins, &p);
+        vlist_remove_all(&plugins, &p);
 }

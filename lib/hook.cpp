@@ -50,8 +50,6 @@ Hook::Hook(struct vpath *p, struct node *n, int fl, int prio, bool en) :
 
 	logger = logging.get("hook");
 
-	signals.state = State::DESTROYED;
-
 	ret = signal_list_init(&signals);
 	if (ret)
 		throw RuntimeError("Failed to initialize signal list");

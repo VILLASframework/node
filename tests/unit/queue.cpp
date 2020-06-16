@@ -42,7 +42,7 @@ extern void init_memory();
 
 #define SIZE	(1 << 10)
 
-static struct queue q = { .state = ATOMIC_VAR_INIT(State::DESTROYED) };
+static struct queue q;
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
@@ -250,7 +250,6 @@ Test(queue, single_threaded, .init = init_memory)
 	p.iter_count = 1 << 8;
 	p.queue_size = 1 << 10;
 	p.start = 1; /* we start immeadiatly */
-	p.queue.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
@@ -319,7 +318,6 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	pthread_t threads[p->thread_count];
 
 	p->start = 0;
-	p->queue.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	ret = queue_init(&p->queue, p->queue_size, p->mt);
 	cr_assert_eq(ret, 0, "Failed to create queue");
@@ -365,8 +363,6 @@ Test(queue, init_destroy, .init = init_memory)
 {
 	int ret;
 	struct queue q;
-
-	q.state = ATOMIC_VAR_INIT(State::DESTROYED);
 
 	ret = queue_init(&q, 1024, &memory_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */

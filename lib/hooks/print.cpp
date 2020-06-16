@@ -50,8 +50,6 @@ public:
 		prefix(nullptr),
 		uri(nullptr)
 	{
-		io.state = State::DESTROYED;
-
 		format = format_type_lookup("villas.human");
 	}
 

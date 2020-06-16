@@ -609,9 +609,6 @@ int rtp_netem_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "rtp";
 #ifdef WITH_NETEM
 	p.description		= "real-time transport protocol (libre, libnl3 netem support)";
@@ -642,6 +639,5 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

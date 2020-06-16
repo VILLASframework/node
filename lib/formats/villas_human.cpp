@@ -225,10 +225,7 @@ void villas_human_header(struct io *io, const struct sample *smp)
 
 static struct plugin p;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == State::DESTROYED)
-	                vlist_init(&plugins);
-
-	p.name = "villas.human";
+        p.name = "villas.human";
 	p.description = "VILLAS human readable format";
 	p.type = PluginType::FORMAT;
 	p.format.header = villas_human_header;
@@ -243,6 +240,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != State::DESTROYED)
-                vlist_remove_all(&plugins, &p);
+        vlist_remove_all(&plugins, &p);
 }

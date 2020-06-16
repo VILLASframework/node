@@ -104,9 +104,6 @@ int zeromq_init(struct node *n)
 	z->curve.enabled = false;
 	z->ipv6 = 0;
 
-	z->in.endpoints.state = State::DESTROYED;
-	z->out.endpoints.state = State::DESTROYED;
-
 	z->in.pending = 0;
 	z->out.pending = 0;
 
@@ -642,9 +639,6 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "zeromq";
 	p.description		= "ZeroMQ Distributed Messaging (libzmq)";
 	p.type			= PluginType::NODE;
@@ -672,6 +666,5 @@ static void register_plugin() {
 
 __attribute__((destructor(110)))
 static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }

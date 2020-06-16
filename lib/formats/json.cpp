@@ -362,9 +362,6 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p;
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-                vlist_init(&plugins);
-
 	p.name = "json";
 	p.description = "Javascript Object Notation";
 	p.type = PluginType::FORMAT;
@@ -380,6 +377,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }
