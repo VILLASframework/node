@@ -22,12 +22,13 @@
 
 add_custom_target(run-integration-tests
 	COMMAND
-		SRCDIR=${PROJECT_SOURCE_DIR}
-		BUILDDIR=${PROJECT_BINARY_DIR}
-		LD_PRELOAD=/usr/lib64/libSegFault.so
-		SEGFAULT_SIGNALS=all
-		SEGFAULT_SIGNALS="bus abrt"
-		${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt
+		/bin/bash -o pipefail -c \"
+			SRCDIR=${PROJECT_SOURCE_DIR}
+			BUILDDIR=${PROJECT_BINARY_DIR}
+			LD_PRELOAD=/usr/lib64/libSegFault.so
+			SEGFAULT_SIGNALS=all
+			SEGFAULT_SIGNALS='bus abrt'
+			${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt\"
 	USES_TERMINAL
 	DEPENDS
 		villas-node
