@@ -91,12 +91,9 @@ int signal_generator_prepare(struct node *n)
 	assert(vlist_length(&n->in.signals) == 0);
 
 	for (unsigned i = 0; i < s->values; i++) {
-		auto *sig = new struct signal;
-
 		int rtype = s->type == signal_generator::SignalType::MIXED ? i % 7 : (int) s->type;
-
-		sig->name = strdup(signal_generator_type_str((enum signal_generator::SignalType) rtype));
-		sig->type = SignalType::FLOAT; /* All generated signals are of type float */
+		auto name = signal_generator_type_str((enum signal_generator::SignalType) rtype);
+		auto *sig = signal_create(name, nullptr, SignalType::FLOAT);
 
 		vlist_push(&n->in.signals, sig);
 	}
