@@ -46,7 +46,7 @@ add_custom_target(run-unit-tests
 		/bin/bash -o pipefail -c \"
 			LD_PRELOAD=/usr/lib64/libSegFault.so
 			SEGFAULT_SIGNALS=all
-			SEGFAULT_SIGNALS="bus abrt"
+			SEGFAULT_SIGNALS='bus abrt'
 			$<TARGET_FILE:unit-tests> 2>&1 | c++filt\"
 	DEPENDS
 		unit-tests
