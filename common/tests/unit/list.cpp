@@ -42,7 +42,6 @@ TestSuite(list, .description = "List datastructure");
 Test(list, vlist_lookup)
 {
 	struct vlist l;
-	l.state = State::DESTROYED;
 
 	vlist_init(&l);
 
@@ -67,7 +66,6 @@ Test(list, vlist_lookup)
 Test(list, vlist_search)
 {
 	struct vlist l;
-	l.state = State::DESTROYED;
 
 	vlist_init(&l);
 
@@ -108,7 +106,6 @@ static int dtor(void *ptr)
 Test(list, destructor)
 {
 	struct vlist l;
-	l.state = State::DESTROYED;
 
 	struct content elm;
 	elm.destroyed = 0;
@@ -128,7 +125,6 @@ Test(list, basics)
 	uintptr_t i;
 	int ret;
 	struct vlist l;
-	l.state = State::DESTROYED;
 
 	vlist_init(&l);
 
