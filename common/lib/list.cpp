@@ -55,8 +55,6 @@ static int cmp_sort(const void *a, const void *b, void *thunk) {
 
 int vlist_init(struct vlist *l)
 {
-	assert(l->state == State::DESTROYED);
-
 	pthread_mutex_init(&l->lock, nullptr);
 
 	l->length = 0;

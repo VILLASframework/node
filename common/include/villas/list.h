@@ -38,8 +38,7 @@
 /** Static list initialization */
 #define LIST_INIT_STATIC(l)					\
 __attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
-	if ((l)->state == State::DESTROYED)			\
-		vlist_init(l);					\
+	vlist_init(l);						\
 }								\
 __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 	vlist_destroy(l, nullptr, false);				\
