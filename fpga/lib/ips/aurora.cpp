@@ -80,9 +80,9 @@ void Aurora::dump()
 	logger->info("Aurora status:          {:#x}",  sr);
 	logger->info("  Channel up:           {}", sr & AURORA_AXIS_SR_CHAN_UP ? CLR_GRN("yes") : CLR_RED("no"));
 	logger->info("  Lane up:              {}", sr & AURORA_AXIS_SR_LANE_UP ? CLR_GRN("yes") : CLR_RED("no"));
-	logger->info("  Hard error:           {}", sr & AURORA_AXIS_SR_HARD_ERR ? CLR_GRN("yes") : CLR_RED("no"));
-	logger->info("  Soft error:           {}", sr & AURORA_AXIS_SR_SOFT_ERR ? CLR_GRN("yes") : CLR_RED("no"));
-	logger->info("  Frame error:          {}", sr & AURORA_AXIS_SR_FRAME_ERR ? CLR_GRN("yes") : CLR_RED("no"));
+	logger->info("  Hard error:           {}", sr & AURORA_AXIS_SR_HARD_ERR ? CLR_RED("yes") : CLR_GRN("no"));
+	logger->info("  Soft error:           {}", sr & AURORA_AXIS_SR_SOFT_ERR ? CLR_RED("yes") : CLR_GRN("no"));
+	logger->info("  Frame error:          {}", sr & AURORA_AXIS_SR_FRAME_ERR ? CLR_RED("yes") : CLR_GRN("no"));
 
 	const uint64_t inCntLow  = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_IN_LOW_OFFSET);
 	const uint64_t inCntHigh = readMemory<uint32_t>(registerMemory, AURORA_AXIS_CNTR_IN_HIGH_OFFSET);
