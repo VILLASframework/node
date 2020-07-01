@@ -36,8 +36,13 @@ set(LIBRARIES
     stdc++
 )
 
+# For shmem_unlink
+if(UNIX AND NOT APPLE)
+    list(APPEND LIBRARIES "rt")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-	list(APPEND LIBRARIES "-lstdc++fs")
+    list(APPEND LIBRARIES "-lstdc++fs")
 endif()
 
 set(LIB_SRC

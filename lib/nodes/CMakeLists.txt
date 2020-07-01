@@ -69,10 +69,6 @@ endif()
 # Enable shared memory node-type
 if(WITH_NODE_SHMEM)
     list(APPEND NODE_SRC shmem.cpp)
-
-    if(CMAKE_SUSTEM_NAME STREQUAL Linux)
-        list(APPEND LIBRARIES rt)
-    endif()
 endif()
 
 # Enable IEC61850 node-types when libiec61850 is available
