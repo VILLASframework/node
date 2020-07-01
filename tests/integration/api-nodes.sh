@@ -42,13 +42,23 @@ cat > ${CONFIG_FILE} <<EOF
 			"dummy" : "value2",
 
 			"in" : {
-				"address" : "*:12001"
+				"address" : "*:12001",
+				"signals" : [
+					{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
+					{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
+				]
 			},
 			"out" : {
 				"address" : "localhost:12000"
 			}
 		}
-	}
+	},
+	"paths": [
+		{
+			"in": "testnode2",
+			"out": "testnode1"
+		}
+	]
 }
 EOF
 
@@ -60,6 +70,8 @@ sleep 1
 
 # Fetch config via API
 curl -sX POST --data '{ "action" : "nodes", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1 > ${FETCHED_NODES}
+
+cat ${FETCHED_NODES}
 
 # Shutdown VILLASnode
 kill $!
