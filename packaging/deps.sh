@@ -74,7 +74,7 @@ if ! pkg-config "spdlog >= 1.5.0"; then
     mkdir -p spdlog/build
     pushd spdlog/build
     git checkout v1.5.0
-    cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF ${CMAKE_OPTS} ..
+    cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF -DSPDLOG_BUILD_SHARED=ON ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp spdlog/build/*.rpm rpms
