@@ -23,6 +23,7 @@
 #include <list>
 #include <algorithm>
 
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/syslog_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -113,7 +114,7 @@ void Log::parse(json_t *cfg)
 	}
 
 	if (syslog) {
-		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON);
+		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON, true);
 
 		sinks->add_sink(sink);
 	}
