@@ -42,6 +42,12 @@ prepare:fedora:docker-dev:
     DOCKER_FILE: packaging/docker/Dockerfile.dev
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev
 
+prepare:fedora:docker-dev-minimal:
+  <<: *prepare_docker_dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-minimal
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-minimal
+
 prepare:ubuntu:docker-dev:
   <<: *prepare_docker_dev
   variables:
@@ -91,7 +97,23 @@ build:fedora:x86_64:
 build:fedora-minimal:x86_64:
   <<: *build
   variables:
-    CMAKE_OPTS: -DWITH_HOOKS=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-minimal
+    CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
+                -DWITH_HOOKS=OFF
+                -DWITH_WEB=OFF
+                -DWITH_API=OFF
+                -DWITH_CONFIG=OFF
+                -DWITH_SRC=OFF
+                -DWITH_TOOLS=OFF
+                -DWITH_TESTS=OFF
+                -DWITH_PLUGINS=OFF
+                -DWITH_CLIENTS=OFF
+                -DWITH_DOC=OFF
+
+build:fedora-minimal-default:x86_64:
+  <<: *build
+  variables:
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-minimal
 
 build:ubuntu:x86_64:
   <<: *build
