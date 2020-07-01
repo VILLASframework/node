@@ -67,22 +67,24 @@ RUN pip install \
 # Dependencies
 RUN dnf -y install \
 	openssl-devel \
+	libuuid-devel \
+	libconfig-devel \
+	libwebsockets-devel \
+	libcurl-devel \
+	jansson-devel \
+	spdlog-devel \
+	fmt-devel \
+	libnl3-devel \
 	graphviz-devel \
 	protobuf-devel \
 	protobuf-c-devel \
-	libuuid-devel \
-	libconfig-devel \
-	libnl3-devel \
-	libcurl-devel \
-	jansson-devel \
 	zeromq-devel \
 	nanomsg-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
 	libibverbs-devel \
 	librdmacm-devel \
-	libusb-devel \
-	libwebsockets-devel
+	libusb-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
