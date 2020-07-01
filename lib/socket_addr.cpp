@@ -27,7 +27,10 @@
 
 #include <villas/socket_addr.h>
 #include <villas/utils.hpp>
-#include <villas/kernel/nl.h>
+
+#ifdef WITH_SOCKET_LAYER_ETH
+  #include <villas/kernel/nl.h>
+#endif /* WITH_SOCKET_LAYER_ETH */
 
 using namespace villas::utils;
 

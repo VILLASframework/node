@@ -477,7 +477,9 @@ SuperNode::~SuperNode()
 
 	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
 	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
+#ifdef WITH_NETEM
 	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
+#endif /* WITH_NETEM */
 }
 
 int SuperNode::periodic()
