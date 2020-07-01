@@ -142,6 +142,9 @@ void path_print_stats(struct vpath *p);
  */
 const char * path_name(struct vpath *p);
 
+/** Get a list of signals which is emitted by the path. */
+struct vlist * path_output_signals(struct vpath *n);
+
 /** Reverse a path */
 int path_reverse(struct vpath *p, struct vpath *r);
 

@@ -123,32 +123,9 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 		json_t *json_data = json_array();
 
 		for (unsigned i = 0; i < smp->length; i++) {
-			enum SignalType fmt = sample_format(smp, i);
+			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
 
-			json_t *json_value;
-			switch (fmt) {
-				case SignalType::INTEGER:
-					json_value = json_integer(smp->data[i].i);
-					break;
-
-				case SignalType::FLOAT:
-					json_value = json_real(smp->data[i].f);
-					break;
-
-				case SignalType::BOOLEAN:
-					json_value = json_boolean(smp->data[i].b);
-					break;
-
-				case SignalType::COMPLEX:
-					json_value = json_pack("{ s: f, s: f }",
-						"real", std::real(smp->data[i].z),
-						"imag", std::imag(smp->data[i].z)
-					);
-					break;
-
-				case SignalType::INVALID:
-					return -1;
-			}
+			json_t *json_value = signal_data_to_json(&smp->data[i], sig);
 
 			json_array_append(json_data, json_value);
 		}

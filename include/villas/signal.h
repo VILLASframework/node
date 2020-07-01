@@ -121,6 +121,7 @@ int signal_list_generate(struct vlist *list, unsigned len, enum SignalType fmt);
 int signal_list_generate2(struct vlist *list, const char *dt);
 void signal_list_dump(const struct vlist *list, const union signal_data *data, unsigned len);
 int signal_list_copy(struct vlist *dst, const struct vlist *src);
+json_t * signal_list_to_json(struct vlist *list);
 
 enum SignalType signal_type_from_str(const char *str);
 
@@ -139,5 +140,7 @@ int signal_data_print_str(const union signal_data *data, const struct signal *si
 int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end);
 
 int signal_data_parse_json(union signal_data *data, const struct signal *sig, json_t *cfg);
+
+json_t * signal_data_to_json(union signal_data *data, const struct signal *sig);
 
 void signal_data_set(union signal_data *data, const struct signal *sig, double val);

@@ -354,14 +354,35 @@ int signal_list_copy(struct vlist *dst, const struct vlist *src)
 	assert(dst->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(src); i++) {
-		struct signal *s = (struct signal *) vlist_at_safe(src, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(src, i);
 
-		signal_incref(s);
+		signal_incref(sig);
 
-		vlist_push(dst, s);
+		vlist_push(dst, sig);
 	}
 
 	return 0;
+}
+
+json_t * signal_list_to_json(struct vlist *list)
+{
+	json_t *json_signals = json_array();
+
+	for (size_t i = 0; i < vlist_length(list); i++) {
+		struct signal *sig = (struct signal *) vlist_at_safe(list, i);
+
+		json_t *json_signal = json_pack("{ s: s?, s: s?, s: s, s: b, s: o }",
+			"name", sig->name,
+			"unit", sig->unit,
+			"type", signal_type_to_str(sig->type),
+			"enabled", sig->enabled,
+			"init", signal_data_to_json(&sig->init, sig)
+		);
+
+		json_array_append_new(json_signals, json_signal);
+	}
+
+	return json_signals;
 }
 
 /* Signal type */
@@ -658,6 +679,31 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 	}
 
 	return 0;
+}
+
+json_t * signal_data_to_json(union signal_data *data, const struct signal *sig)
+{
+	switch (sig->type) {
+		case SignalType::INTEGER:
+			return json_integer(data->i);
+
+		case SignalType::FLOAT:
+			return json_real(data->f);
+
+		case SignalType::BOOLEAN:
+			return json_boolean(data->b);
+
+		case SignalType::COMPLEX:
+			return json_pack("{ s: f, s: f }",
+				"real", std::real(data->z),
+				"imag", std::imag(data->z)
+			);
+
+		case SignalType::INVALID:
+			return nullptr;
+	}
+
+	return nullptr;
 }
 
 int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len)

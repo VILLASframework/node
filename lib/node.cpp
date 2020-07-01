@@ -29,6 +29,7 @@
 #include <villas/hook_list.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
+#include <villas/path.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/plugin.h>
@@ -58,7 +59,11 @@ int node_init(struct node *n, struct node_type *vt)
 
 	memset(n->_vd, 0, vt->size);
 
-	//n->stats = nullptr;
+	using stats_ptr = std::shared_ptr<Stats>;
+
+	new (&n->stats) stats_ptr();
+
+	n->output_path = nullptr;
 	n->name = nullptr;
 	n->_name = nullptr;
 	n->_name_long = nullptr;
@@ -409,6 +414,10 @@ int node_destroy(struct node *n)
 	rtnl_cls_put(n->tc_classifier);
 #endif /* WITH_NETEM */
 
+	using stats_ptr = std::shared_ptr<Stats>;
+
+	n->stats.~stats_ptr();
+
 	n->state = State::DESTROYED;
 
 	return 0;
@@ -547,6 +556,14 @@ char * node_name_long(struct node *n)
 const char * node_name_short(struct node *n)
 {
 	return n->name;
+}
+
+struct vlist * node_output_signals(struct node *n)
+{
+	if (n->output_path)
+		return path_output_signals(n->output_path);
+
+	return nullptr;
 }
 
 int node_reverse(struct node *n)

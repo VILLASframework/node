@@ -48,18 +48,33 @@ public:
 		for (size_t i = 0; i < vlist_length(nodes); i++) {
 			struct node *n = (struct node *) vlist_at(nodes, i);
 
+			struct vlist *output_signals;
+
+			json_t *json_node;
+			json_t *json_signals_in = nullptr;
+			json_t *json_signals_out = nullptr;
+
 			char uuid[37];
 			uuid_unparse(n->uuid, uuid);
 
-			json_t *json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i }, s: { s: i } }",
+			output_signals = node_output_signals(n);
+
+			json_signals_in = signal_list_to_json(&n->in.signals);
+
+			if (output_signals)
+				json_signals_out = signal_list_to_json(output_signals);
+
+			json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i, s: o? }, s: { s: i, s: o? } }",
 				"name",		node_name_short(n),
 				"uuid", 	uuid,
 				"state",	state_print(n->state),
 				"affinity",	n->affinity,
 				"in",
 					"vectorize",	n->in.vectorize,
+					"signals", 	json_signals_in,
 				"out",
-					"vectorize",	n->out.vectorize
+					"vectorize",	n->out.vectorize,
+					"signals",	json_signals_out
 			);
 
 			if (n->stats)

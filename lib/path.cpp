@@ -403,9 +403,13 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	for (size_t i = 0; i < vlist_length(&destinations); i++) {
 		struct node *n = (struct node *) vlist_at(&destinations, i);
 
+		if (!n->output_path)
+			throw ConfigError(cfg, "node-config-path", "Every node must only be used by a single path as destination");
+
 		auto *pd = new struct vpath_destination;
 
 		pd->node = n;
+		pd->node->output_path = p;
 
 		if (!node_is_enabled(pd->node)) {
 			p->logger->error("Destination {} of path {} is not enabled", node_name(pd->node), path_name(p));
@@ -752,6 +756,11 @@ const char * path_name(struct vpath *p)
 	}
 
 	return p->_name;
+}
+
+struct vlist * path_output_signals(struct vpath *p)
+{
+	return &p->signals;
 }
 
 int path_uses_node(struct vpath *p, struct node *n)

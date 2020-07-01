@@ -71,7 +71,12 @@ struct node {
 
 	uint64_t sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
-	std::shared_ptr<villas::Stats> stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
+	/** The path which uses this node as a destination.
+	 * Usually every node should be used only by a single path as destination.
+	 * Otherwise samples from different paths would be interleaved.
+	 */
+	struct vpath *output_path;
+	std::shared_ptr<villas::Stats> stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct node_direction in, out;
 
@@ -175,6 +180,12 @@ char * node_name(struct node *n);
  * @param n A pointer to the node structure.
  */
 char * node_name_long(struct node *n);
+
+/** Return a list of signals which are sent to this node.
+ *
+ * This list is derived from the path which uses the node as destination.
+ */
+struct vlist * node_output_signals(struct node *n);
 
 /** Reverse local and remote socket address.
  *
