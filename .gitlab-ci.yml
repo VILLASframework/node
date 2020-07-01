@@ -109,6 +109,7 @@ build:fedora-minimal:x86_64:
                 -DWITH_PLUGINS=OFF
                 -DWITH_CLIENTS=OFF
                 -DWITH_DOC=OFF
+                -DWITH_FPGA=OFF
 
 build:fedora-minimal-default:x86_64:
   <<: *build
