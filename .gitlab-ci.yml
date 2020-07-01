@@ -163,6 +163,7 @@ test:unit:
 
 test:integration:
   stage: test
+  allow_failure: true
   dependencies:
   - build:fedora:x86_64
   script:
