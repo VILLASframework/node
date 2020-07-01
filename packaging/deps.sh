@@ -55,11 +55,11 @@ fi
 popd
 
 # Build & Install Fmtlib
-if ! pkg-config "fmt >= 5.2.0"; then
+if ! pkg-config "fmt >= 6.1.2"; then
     git clone --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
-    git checkout 5.2.0
+    git checkout 6.1.2
     cmake -DBUILD_SHARED_LIBS=1 ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
