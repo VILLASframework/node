@@ -218,9 +218,9 @@ void Config::expandEnvVars()
 		while (std::regex_search(text, match, env_re)) {
 			auto const from = match[0];
 			auto const var_name = match[1].str().c_str();
-			char * var_value = std::getenv(var_name);
+			char *var_value = std::getenv(var_name);
 
-			text.replace(from.first, from.second, var_value);
+			text.replace(from.first - text.begin(), from.second - from.first, var_value);
 
 			logger->debug("Replace env var {} in \"{}\" with value \"{}\"",
 				var_name, text, var_value);
