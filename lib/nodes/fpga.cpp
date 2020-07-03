@@ -273,7 +273,7 @@ int fpga_stop(struct node *n)
 
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int read;
+	unsigned read;
 	struct fpga *f = (struct fpga *) n->_vd;
 	struct sample *smp = smps[0];
 
