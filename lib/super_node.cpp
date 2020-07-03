@@ -115,7 +115,7 @@ void SuperNode::parse(json_t *cfg)
 		"idle_stop", &idleStop
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config");
+		throw ConfigError(cfg, err, "node-config", "Unpacking top-level config failed");
 
 	if (nme)
 		name = nme;
