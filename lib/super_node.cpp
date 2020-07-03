@@ -98,15 +98,13 @@ void SuperNode::parse(json_t *cfg)
 	json_t *json_paths = nullptr;
 	json_t *json_logging = nullptr;
 	json_t *json_web = nullptr;
-	json_t *json_ethercat = nullptr;
 
 	json_error_t err;
 
 	idleStop = true;
 
-	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
 		"http", &json_web,
-		"ethercat", &json_ethercat,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
 		"paths", &json_paths,
