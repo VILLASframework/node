@@ -114,8 +114,11 @@ void Log::parse(json_t *cfg)
 	}
 
 	if (syslog) {
+#if SPDLOG_VERSION >= 10400
 		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON, true);
-
+#else
+		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON);
+#endif
 		sinks->add_sink(sink);
 	}
 
