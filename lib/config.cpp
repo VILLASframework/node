@@ -48,7 +48,7 @@ Config::Config() :
 Config::Config(const std::string &u) :
 	Config()
 {
-	root = load(u);
+	load(u);
 }
 
 Config::~Config()
@@ -71,7 +71,7 @@ json_t * Config::load(const std::string &u)
 		f = af->file;
 	}
 
-	json_t *root = decode(f);
+	root = decode(f);
 
 	if (af)
 		afclose(af);
