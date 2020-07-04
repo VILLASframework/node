@@ -73,10 +73,12 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	}
 
 	d->chanlist = new unsigned int[d->chanlist_len];
-	assert(d->chanlist != nullptr);
+	if (!d->chanlist)
+		throw MemoryAllocationError();
 
 	d->chanspecs = new comedi_chanspec[d->chanlist_len];
-	assert(d->chanspecs != nullptr);
+	if (!d->chanspecs)
+		throw MemoryAllocationError();
 
 	json_array_foreach(json_chans, i, json_chan) {
 		int num, range, aref;
@@ -238,7 +240,8 @@ static int comedi_start_in(struct node *n)
 	/* Be prepared to consume one entire buffer */
 	c->buf = new char[c->in.buffer_size];
 	c->bufptr = c->buf;
-	assert(c->bufptr != nullptr);
+	if (!c->buf)
+		throw MemoryAllocationError();
 
 	info("Compiled for kernel read() interface");
 #else
@@ -328,7 +331,8 @@ static int comedi_start_out(struct node *n)
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = new char[local_buffer_size];
 	d->bufptr = d->buffer;
-	assert(d->buffer != nullptr);
+	if (!d->buffer)
+		throw MemoryAllocationError();
 
 	/* Initialize local buffer used for write() syscalls */
 	for (unsigned channel = 0; channel < d->chanlist_len; channel++) {

@@ -47,6 +47,7 @@
 /* Forward declartions */
 static struct plugin p;
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -276,13 +277,12 @@ int socket_start(struct node *n)
 	s->out.buflen = SOCKET_INITIAL_BUFFER_LEN;
 	s->out.buf = new char[s->out.buflen];
 	if (!s->out.buf)
-		return -1;
+		throw MemoryAllocationError();
 
 	s->in.buflen = SOCKET_INITIAL_BUFFER_LEN;
 	s->in.buf = new char[s->in.buflen];
 	if (!s->in.buf)
-		return -1;
-
+		throw MemoryAllocationError();
 
 	return 0;
 }
@@ -408,6 +408,8 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 
 		delete[] s->out.buf;
 		s->out.buf = new char[s->out.buflen];
+		if (!s->out.buf)
+			throw MemoryAllocationError();
 
 		goto retry;
 	}

@@ -359,6 +359,9 @@ int rtp_start(struct node *n)
 				return -1;
 		}
 
+		if (!r->aimd.rate_hook)
+			throw MemoryAllocationError();
+
 		r->aimd.rate_hook->init();
 
 		vlist_push(&n->out.hooks, (void *) r->aimd.rate_hook);
@@ -396,6 +399,8 @@ int rtp_start(struct node *n)
 			strftime(fn, sizeof(fn), r->aimd.log_filename, &tm);
 
 			r->aimd.log = new std::ofstream(fn, std::ios::out | std::ios::trunc);
+			if (!r->aimd.log)
+				throw MemoryAllocationError();
 
 			*(r->aimd.log) << "# cnt\tfrac_loss\trate" << std::endl;
 		}

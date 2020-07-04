@@ -30,10 +30,12 @@
 
 #include <villas/nodes/ngsi.hpp>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/timing.h>
 #include <villas/plugin.h>
 #include <villas/node/config.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 /* Some global settings */
@@ -218,6 +220,8 @@ static int ngsi_parse_mapping(struct vlist *mapping, json_t *cfg)
 			return -2;
 
 		auto *a = new struct ngsi_attribute;
+		if (!a)
+			throw MemoryAllocationError();
 
 		a->index = j;
 

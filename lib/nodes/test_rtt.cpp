@@ -31,6 +31,7 @@
 #include <villas/plugin.h>
 #include <villas/nodes/test_rtt.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static struct plugin p;
@@ -103,6 +104,8 @@ int test_rtt_prepare(struct node *n)
 			max_values = c->values;
 
 		c->filename_formatted = new char[NAME_MAX];
+		if (!c->filename_formatted)
+			throw MemoryAllocationError();
 
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
@@ -220,6 +223,8 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		for (int i = 0; i < numrates; i++) {
 			for (int j = 0; j < numvalues; j++) {
 				auto *c = new struct test_rtt_case;
+				if (!c)
+					throw MemoryAllocationError();
 
 				c->rate = rates[i];
 				c->values = values[j];

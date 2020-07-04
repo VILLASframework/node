@@ -126,6 +126,9 @@ public:
 		readHook = new StatsReadHook(this, p, n, fl, prio, en);
 		writeHook = new StatsWriteHook(this, p, n, fl, prio, en);
 
+		if (!readHook || !writeHook)
+			throw MemoryAllocationError();
+
 		if (node) {
 			vlist_push(&node->in.hooks, (void *) readHook);
 			vlist_push(&node->out.hooks, (void *) writeHook);

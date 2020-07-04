@@ -295,7 +295,7 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type
 	if (!r) {
 		r = new struct iec61850_receiver;
 		if (!r)
-			return nullptr;
+			throw MemoryAllocationError();
 
 		r->interface = strdup(intf);
 		r->type = t;

@@ -197,6 +197,8 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Vectorize option must be greater than 0");
 
 		smps = new struct sample*[cnt];
+		if (!smps)
+			throw MemoryAllocationError();
 
 		ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH));
 		if (ret)

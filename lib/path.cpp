@@ -276,6 +276,8 @@ int path_prepare(struct vpath *p)
 				/* For other mappings we create new signal descriptors */
 				else {
 					sig = new struct signal;
+					if (!sig)
+						throw MemoryAllocationError();
 
 					ret = signal_init_from_mapping(sig, me, j);
 					if (ret)
@@ -383,6 +385,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		/* Create new path_source of not existing */
 		if (!ps) {
 			ps = new struct vpath_source;
+			if (!ps)
+				throw MemoryAllocationError();
 
 			ps->node = me->node;
 			ps->masked = false;
@@ -407,6 +411,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 			throw ConfigError(cfg, "node-config-path", "Every node must only be used by a single path as destination");
 
 		auto *pd = new struct vpath_destination;
+		if (!pd)
+			throw MemoryAllocationError();
 
 		pd->node = n;
 		pd->node->output_path = p;

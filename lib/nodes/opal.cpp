@@ -83,6 +83,9 @@ int opal_type_start(villas::node::SuperNode *sn)
 	send_ids = new int[send_icons];
 	recv_ids = new int[recv_icons];
 
+	if (!send_ids || !recv_ids)
+		throw MemoryAllocationError();
+
 	err = OpalGetAsyncSendIDList(send_ids, send_icons * sizeof(int));
 	if (err != EOK)
 		error("Failed to get list of send ids (%d)", err);
@@ -127,6 +130,9 @@ int opal_print_global()
 
 	auto *sbuf = new char[send_icons * 5];
 	auto *rbuf = new char[recv_icons * 5];
+
+	if (!sbuf || !rbuf)
+		throw MemoryAllocationError();
 
 	for (int i = 0; i < send_icons; i++)
 		strcatf(&sbuf, "%u ", send_ids[i]);

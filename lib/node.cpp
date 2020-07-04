@@ -55,7 +55,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_vt = vt;
 	n->_vd = new char[vt->size];
 	if (!n->_vd)
-		throw RuntimeError("Failed to allocate memory");
+		throw MemoryAllocationError();
 
 	memset(n->_vd, 0, vt->size);
 

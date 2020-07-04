@@ -33,6 +33,7 @@
 #include <villas/kernel/tc_netem.h>
 #include <villas/kernel/kernel.hpp>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -273,6 +274,8 @@ int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 		size_t len = json_array_size(json);
 
 		int16_t *data = new int16_t[len];
+		if (!data)
+			throw MemoryAllocationError();
 
 		json_array_foreach(json, idx, elm) {
 			if (!json_is_integer(elm))

@@ -220,8 +220,13 @@ check:			if (optarg == endptr)
 
 		/* Open files */
 		std::vector<TestCmpSide *> sides;
-		for (auto filename : filenames)
-			sides.push_back(new TestCmpSide(filename, fmt, dtypes, &pool));
+		for (auto filename : filenames) {
+			auto *s = new TestCmpSide(filename, fmt, dtypes, &pool);
+			if (!s)
+				throw MemoryAllocationError();
+
+			sides.push_back(s);
+		}
 
 		line = 0;
 		for (;;) {

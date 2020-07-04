@@ -27,6 +27,7 @@
 #include <villas/utils.hpp>
 #include <villas/node.h>
 #include <villas/mapping.h>
+#include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -108,7 +109,7 @@ struct signal * signal_create(const char *name, const char *unit, enum SignalTyp
 
 	sig = new struct signal;
 	if (!sig)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	ret = signal_init(sig);
 	if (ret)
@@ -160,7 +161,7 @@ struct signal * signal_copy(struct signal *s)
 
 	ns = new struct signal;
 	if (!ns)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	signal_init(ns);
 
@@ -256,7 +257,7 @@ int signal_list_parse(struct vlist *list, json_t *cfg)
 	json_array_foreach(cfg, i, json_signal) {
 		s = new struct signal;
 		if (!s)
-			return -1;
+			throw MemoryAllocationError();
 
 		ret = signal_init(s);
 		if (ret)

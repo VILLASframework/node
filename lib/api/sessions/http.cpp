@@ -49,6 +49,9 @@ Http::Http(Api *a, lws *w) :
 		throw RuntimeError("Invalid request");
 
 	uri = new char[hdrlen + 1];
+	if (!uri)
+		throw MemoryAllocationError();
+
 	lws_hdr_copy(wsi, uri, hdrlen + 1, options ? WSI_TOKEN_OPTIONS_URI : WSI_TOKEN_POST_URI);
 
 	/* Parse request URI */

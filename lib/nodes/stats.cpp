@@ -181,7 +181,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 		stats_sig = new struct stats_node_signal;
 		if (!stats_sig)
-			return -1;
+			throw MemoryAllocationError();
 
 		ret = stats_node_signal_parse(stats_sig, json_signal);
 		if (ret)

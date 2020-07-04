@@ -30,7 +30,9 @@
 #include <villas/format_type.h>
 #include <villas/utils.hpp>
 #include <villas/sample.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
@@ -89,6 +91,8 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 
 	io->_vt = fmt;
 	io->_vd = new char[fmt->size];
+	if (!io->_vd)
+		throw MemoryAllocationError();
 
 	io->flags = flags | (io_type(io)->flags & ~(int) SampleFlags::HAS_ALL);
 	io->delimiter = io_type(io)->delimiter ? io_type(io)->delimiter : '\n';
@@ -99,6 +103,9 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 
 	io->in.buffer = new char[io->in.buflen];
 	io->out.buffer = new char[io->out.buflen];
+
+	if (!io->in.buffer || !io->out.buffer)
+		throw MemoryAllocationError();
 
 	io->signals = signals;
 
@@ -117,6 +124,8 @@ int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int f
 	struct vlist *signals;
 
 	signals = new struct vlist;
+	if (!signals)
+		throw MemoryAllocationError();
 
 	ret = vlist_init(signals);
 	if (ret)

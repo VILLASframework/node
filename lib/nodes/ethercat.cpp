@@ -212,15 +212,15 @@ int ethercat_prepare(struct node *n)
 
 	w->in.offsets = new unsigned[w->in.num_channels];
 	if (!w->in.offsets)
-		throw RuntimeError("Failed to allocate memory");
+		throw MemoryAllocationError();
 
 	w->out.offsets = new unsigned[w->out.num_channels];
 	if (!w->out.offsets)
-		throw RuntimeError("Failed to allocate memory");
+		throw MemoryAllocationError();
 
 	w->domain_regs = new ec_pdo_entry_reg_t[w->in.num_channels + w->out.num_channels + 1];
 	if (!w->domain_regs)
-		throw RuntimeError("Failed to allocate memory");
+		throw MemoryAllocationError();
 
 	memset(w->domain_regs, 0, (w->in.num_channels + w->out.num_channels + 1) * sizeof(ec_pdo_entry_reg_t));
 

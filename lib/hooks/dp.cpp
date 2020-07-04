@@ -197,7 +197,7 @@ public:
 		fharmonics = new int[fharmonics_len];
 		coeffs = new std::complex<double>[fharmonics_len];
 		if (!fharmonics || !coeffs)
-			throw RuntimeError("Failed to allocate memory");
+			throw MemoryAllocationError();
 
 		json_array_foreach(json_harmonics, i, json_harmonic) {
 			if (!json_is_integer(json_harmonic))

@@ -26,6 +26,7 @@
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/node.h>
 #include <villas/signal.h>
 
@@ -217,6 +218,8 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes)
 
 	json_array_foreach(json_mapping, i, json_entry) {
 		auto *me = new struct mapping_entry;
+		if (!me)
+			throw MemoryAllocationError();
 
 		ret = mapping_parse(me, json_entry, nodes);
 		if (ret)

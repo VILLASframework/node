@@ -47,6 +47,7 @@ Test(mapping, parse_nodes)
 
 	for (unsigned i = 0; i < ARRAY_LEN(node_names); i++) {
 		struct node *n = new struct node;
+		cr_assert_not_null(n);
 
 		n->name = strdup(node_names[i]);
 

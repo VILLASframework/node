@@ -29,6 +29,7 @@
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
 #include <villas/kernel/if.h>
 #include <villas/kernel/tc.h>
@@ -38,6 +39,7 @@
 
 #include <villas/nodes/socket.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int if_init(struct interface *i, struct rtnl_link *link)
@@ -162,7 +164,7 @@ struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces)
 	/* If not found, create a new interface */
 	i = new struct interface;
 	if (!i)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	ret = if_init(i, link);
 	if (ret)

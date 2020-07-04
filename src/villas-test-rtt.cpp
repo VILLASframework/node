@@ -174,6 +174,9 @@ check:			if (optarg == endptr)
 		struct sample *smp_send = (struct sample *) new char[SAMPLE_LENGTH(2)];
 		struct sample *smp_recv = (struct sample *) new char[SAMPLE_LENGTH(2)];
 
+		if (!smp_send || !smp_recv)
+			throw MemoryAllocationError();
+
 		struct node *node;
 
 		if (!uri.empty())

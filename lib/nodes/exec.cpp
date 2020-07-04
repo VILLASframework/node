@@ -220,6 +220,8 @@ int exec_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	size_t wbytes;
 	int ret;
 	char *line = new char[1024];
+	if (!line)
+		throw MemoryAllocationError();
 
 	ret = io_sprint(&e->io, line, 1024, &wbytes, smps, cnt);
 	if (ret < 0)

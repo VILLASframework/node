@@ -153,7 +153,7 @@ void SuperNode::parse(json_t *cfg)
 
 			auto *n = new struct node;
 			if (!n)
-				throw RuntimeError("Failed to allocate memory");
+				throw MemoryAllocationError();
 
 			ret = node_init(n, nt);
 			if (ret)
@@ -179,6 +179,8 @@ void SuperNode::parse(json_t *cfg)
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
 parse:			auto *p = new vpath;
+			if (!p)
+				throw MemoryAllocationError();
 
 			ret = path_init(p);
 			if (ret)

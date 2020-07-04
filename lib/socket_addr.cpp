@@ -27,17 +27,21 @@
 
 #include <villas/socket_addr.h>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
 #ifdef WITH_SOCKET_LAYER_ETH
   #include <villas/kernel/nl.h>
 #endif /* WITH_SOCKET_LAYER_ETH */
 
+using namespace villas;
 using namespace villas::utils;
 
 char * socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
 	char *buf = new char[64];
+	if (!buf)
+		throw MemoryAllocationError();
 
 	/* Address */
 	switch (sa->sa.sa_family) {

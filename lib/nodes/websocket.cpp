@@ -101,6 +101,9 @@ static int websocket_connection_init(struct websocket_connection *c)
 	c->buffers.recv = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 	c->buffers.send = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 
+	if (!c->buffers.recv || !c->buffers.send)
+		throw MemoryAllocationError();
+
 	c->state = websocket_connection::State::INITIALIZED;
 
 	return 0;
@@ -393,6 +396,8 @@ int websocket_start(struct node *n)
 		const char *format;
 		auto *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
 		auto *c = new struct websocket_connection;
+		if (!c)
+			throw MemoryAllocationError();
 
 		c->state = websocket_connection::State::CONNECTING;
 
@@ -546,6 +551,10 @@ int websocket_parse(struct node *n, json_t *cfg)
 				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
 			auto *d = new struct websocket_destination;
+			if (!d)
+				throw MemoryAllocationError();
+
+			memset(d, 0, sizeof(struct websocket_destination));
 
 			d->uri = strdup(uri);
 

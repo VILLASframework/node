@@ -33,7 +33,9 @@
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignment, struct memory_type *m)
@@ -108,7 +110,7 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 
 			auto *ma = new struct memory_allocation;
 			if (!ma)
-				return nullptr;
+				throw MemoryAllocationError();
 
 			ma->address = cptr;
 			ma->type = m;

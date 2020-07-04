@@ -46,7 +46,7 @@ static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, 
 
 	auto *ma = new struct memory_allocation;
 	if (!ma)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	ma->type = m;
 	ma->length = len;

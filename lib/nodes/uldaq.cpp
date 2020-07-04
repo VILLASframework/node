@@ -316,6 +316,8 @@ int uldaq_parse(struct node *n, json_t *cfg)
 
 	u->in.channel_count = vlist_length(&n->in.signals);
 	u->in.queues = new struct AiQueueElement[u->in.channel_count];
+	if (!u->in.queues)
+		throw MemoryAllocationError();
 
 	json_array_foreach(json_signals, i, json_signal) {
 		const char *range_str = nullptr, *input_mode_str = nullptr;
@@ -525,10 +527,8 @@ int uldaq_start(struct node *n)
 	/* Allocate a buffer to receive the data */
 	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 50;
 	u->in.buffer = new double[u->in.buffer_len];
-	if (!u->in.buffer) {
-		warning("Out of memory, unable to create scan buffer");
-		return -1;
-	}
+	if (!u->in.buffer)
+		throw MemoryAllocationError();
 
 	ret = uldaq_connect(n);
 	if (ret)

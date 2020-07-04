@@ -57,13 +57,21 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 	unsigned psz;
 
 	auto *pb_msg = new Villas__Node__Message;
+	if (!pb_msg)
+		throw MemoryAllocationError();
+
 	villas__node__message__init(pb_msg);
 
 	pb_msg->n_samples = cnt;
 	pb_msg->samples = new Villas__Node__Sample*[pb_msg->n_samples];
+	if (!pb_msg->samples)
+		throw MemoryAllocationError();
 
 	for (unsigned i = 0; i < pb_msg->n_samples; i++) {
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i] = new Villas__Node__Sample;
+		if (!pb_msg->samples[i])
+			throw MemoryAllocationError();
+
 		villas__node__sample__init(pb_smp);
 
 		struct sample *smp = smps[i];
@@ -77,6 +85,9 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		if (io->flags & smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 			pb_smp->timestamp = new Villas__Node__Timestamp;
+			if (!pb_smp->timestamp)
+				throw MemoryAllocationError();
+
 			villas__node__timestamp__init(pb_smp->timestamp);
 
 			pb_smp->timestamp->sec = smp->ts.origin.tv_sec;
@@ -85,9 +96,14 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		pb_smp->n_values = smp->length;
 		pb_smp->values = new Villas__Node__Value*[pb_smp->n_values];
+		if (pb_msg->values)
+			throw MemoryAllocationError();
 
 		for (unsigned j = 0; j < pb_smp->n_values; j++) {
 			Villas__Node__Value *pb_val = pb_smp->values[j] = new Villas__Node__Value;
+			if (!pb_smp->values[i])
+				throw MemoryAllocationError();
+
 			villas__node__value__init(pb_val);
 
 			enum SignalType fmt = sample_format(smp, j);
@@ -110,6 +126,8 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 				case SignalType::COMPLEX:
 					pb_val->value_case = VILLAS__NODE__VALUE__VALUE_Z;
 					pb_val->z = new Villas__Node__Complex;
+					if (!pb_val->z)
+						throw MemoryAllocationError();
 
 					villas__node__complex__init(pb_val->z);
 

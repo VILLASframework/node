@@ -26,8 +26,10 @@
 
 #include <villas/node.h>
 #include <villas/plugin.h>
+#include <villas/exceptions.hpp>
 #include <villas/nodes/signal_generator.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static enum signal_generator::SignalType signal_generator_lookup_type(const char *type)
@@ -151,6 +153,8 @@ int signal_generator_start(struct node *n)
 	s->counter = 0;
 	s->started = time_now();
 	s->last = new double[s->values];
+	if (!s->last)
+		throw MemoryAllocationError();
 
 	for (unsigned i = 0; i < s->values; i++)
 		s->last[i] = s->offset;

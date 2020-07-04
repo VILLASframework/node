@@ -88,7 +88,11 @@ RelaySession * RelaySession::get(lws *wsi)
 
 	auto it = sessions.find(sid);
 	if (it == sessions.end()) {
-		return new RelaySession(sid);
+		auto *rs = new RelaySession(sid);
+		if (!rs)
+			throw MemoryAllocationError();
+
+		return rs;
 	}
 	else {
 		logger->info("Found existing session: {}", sid);

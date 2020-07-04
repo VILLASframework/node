@@ -30,12 +30,14 @@
 
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.h>
+#include <villas/exceptions.hpp>
 #include <villas/shmem.h>
 #include <villas/nodes/shmem.hpp>
 #include <villas/plugin.h>
 #include <villas/timing.h>
 #include <villas/utils.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int shmem_parse(struct node *n, json_t *cfg)
@@ -81,6 +83,8 @@ int shmem_parse(struct node *n, json_t *cfg)
 			error("Setting 'exec' of node %s must be an array of strings", node_name(n));
 
 		shm->exec = new char*[json_array_size(json_exec) + 1];
+		if (!shm->exec)
+			throw MemoryAllocationError();
 
 		size_t i;
 		json_t *json_val;

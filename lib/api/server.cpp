@@ -182,6 +182,8 @@ void Server::acceptNewSession() {
 	int fd = ::accept(sd, nullptr, nullptr);
 
 	auto s = new sessions::Socket(api, fd);
+	if (!s)
+		throw MemoryAllocationError();
 
 	pollfd pfd = {
 		.fd = fd,

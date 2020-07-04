@@ -39,7 +39,9 @@
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas;
 using namespace villas::utils;
 
@@ -104,7 +106,7 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 
 	auto *ma = new struct memory_allocation;
 	if (!ma)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	if (m->flags & (int) MemoryFlags::HUGEPAGE) {
 #ifdef __linux__

@@ -60,6 +60,9 @@ public:
 		moving_avg	= new int64_t[sz];
 		moving_var	= new int64_t[sz];
 
+		if (!jitter_val || !delay_series || !moving_avg || !moving_var)
+			throw MemoryAllocationError();
+
 		memset(jitter_val, 0, sz);
 		memset(delay_series, 0, sz);
 		memset(moving_avg, 0, sz);

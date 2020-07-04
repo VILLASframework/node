@@ -24,7 +24,9 @@
 
 #include <villas/utils.hpp>
 #include <villas/memory.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment, struct memory_type *m)
@@ -33,7 +35,7 @@ static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment
 
 	auto *ma = new struct memory_allocation;
 	if (!ma)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	ma->alignment = alignment;
 	ma->type = m;
