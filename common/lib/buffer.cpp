@@ -35,7 +35,7 @@ Buffer::Buffer(size_t sz) :
 {
 	buf = new char[size];
 	if (!buf)
-		throw RuntimeError("Failed to allocate memory");
+		throw MemoryAllocationError();
 
 	memset(buf, 0, size);
 }

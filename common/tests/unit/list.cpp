@@ -48,7 +48,7 @@ Test(list, vlist_lookup)
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
 		struct data *d = new struct data;
 		if (!d)
-			throw RuntimeError("Failed to allocate memory!");
+			throw MemoryAllocationError();
 
 		d->tag = nouns[i];
 		d->data = i;

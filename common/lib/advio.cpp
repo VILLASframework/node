@@ -211,7 +211,7 @@ AFILE * afopen(const char *uri, const char *mode)
 
 	AFILE *af = new AFILE;
 	if (!af)
-		throw RuntimeError("Failed to allocate memory!");
+		throw MemoryAllocationError();
 
 	memset(af, 0, sizeof(AFILE));
 
