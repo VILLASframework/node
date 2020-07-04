@@ -127,12 +127,6 @@ int path_stop(struct vpath *p);
  */
 int path_destroy(struct vpath *p);
 
-/** Show some basic statistics for a path.
- *
- * @param p A pointer to the path structure.
- */
-void path_print_stats(struct vpath *p);
-
 /** Fills the provided buffer with a string representation of the path.
  *
  * Format: source => [ dest1 dest2 dest3 ]
