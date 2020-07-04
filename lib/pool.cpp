@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/pool.h>
 #include <villas/memory.h>
 #include <villas/kernel/kernel.hpp>
@@ -38,9 +39,9 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 
 	void *buffer = memory_alloc_aligned(p->len, p->alignment, m);
 	if (!buffer)
-		serror("Failed to allocate memory for memory pool");
-	else
-		debug(LOG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
+		throw MemoryAllocationError();
+
+	debug(LOG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
 
 	p->buffer_off = (char*) buffer - (char*) p;
 

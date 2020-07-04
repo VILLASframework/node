@@ -70,7 +70,7 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 
 	struct rtnl_qdisc *ne = rtnl_qdisc_alloc();
 	if (!ne)
-		error("Failed to allocated memory!");
+		throw MemoryAllocationError();
 
 	rtnl_tc_set_kind(TC_CAST(ne), "netem");
 

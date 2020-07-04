@@ -28,10 +28,13 @@
 #include <netlink/route/link.h>
 
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/kernel/nl.h>
 
 /** Singleton for global netlink socket */
 static struct nl_sock *sock = nullptr;
+
+using namespace villas;
 
 struct nl_sock * nl_init()
 {
@@ -41,7 +44,7 @@ struct nl_sock * nl_init()
 		/* Create connection to netlink */
 		sock = nl_socket_alloc();
 		if (!sock)
-			error("Failed to allocate memory");
+			throw MemoryAllocationError();
 
 		ret = nl_connect(sock, NETLINK_ROUTE);
 		if (ret)

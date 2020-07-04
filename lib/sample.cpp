@@ -68,7 +68,7 @@ struct sample * sample_alloc_mem(int capacity)
 
 	char *b = new char[sz];
 	if (!b)
-		throw RuntimeError("Failed to allocate memoery");
+		throw MemoryAllocationError();
 
 	memset(b, 0, sz);
 
