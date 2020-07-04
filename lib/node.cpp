@@ -68,6 +68,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = nullptr;
 	n->_name_long = nullptr;
 	n->enabled = 1;
+	n->affinity = -1; /* all cores */
 
 #ifdef __linux__
 	n->fwmark = -1;
@@ -521,33 +522,34 @@ char * node_name(struct node *n)
 char * node_name_long(struct node *n)
 {
 	if (!n->_name_long) {
-		if (node_type(n)->print) {
-			struct node_type *vt = node_type(n);
+		char uuid[37];
+		uuid_unparse(n->uuid, uuid);
 
-			char uuid[37];
-			uuid_unparse(n->uuid, uuid);
-
-			strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
-				node_name(n), uuid,
-				vlist_length(&n->in.signals), vlist_length(&n->out.signals),
-				vlist_length(&n->in.hooks),   vlist_length(&n->out.hooks),
-				n->in.vectorize, n->out.vectorize
-			);
+		strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
+			node_name(n), uuid,
+			vlist_length(&n->in.signals), vlist_length(&n->out.signals),
+			vlist_length(&n->in.hooks),   vlist_length(&n->out.hooks),
+			n->in.vectorize, n->out.vectorize
+		);
 
 #ifdef WITH_NETEM
-			strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
+		strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
 
-			if (n->tc_qdisc)
-				strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
+		if (n->tc_qdisc)
+			strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
+
+		if (n->output_path)
+			strcatf(&n->_name_long, ", output_path=%s", path_name(n->output_path));
+
+		if (node_type(n)->print) {
+			struct node_type *vt = node_type(n);
 
 			/* Append node-type specific details */
 			char *name_long = vt->print(n);
 			strcatf(&n->_name_long, ", %s", name_long);
 			free(name_long);
 		}
-		else
-			n->_name_long = node_name(n);
 	}
 
 	return n->_name_long;
