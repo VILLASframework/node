@@ -66,6 +66,9 @@ set(LIB_SRC
     sample.cpp
     shmem.cpp
     signal.cpp
+    signal_data.cpp
+    signal_list.cpp
+    signal_type.cpp
     stats.cpp
     super_node.cpp
     socket_addr.cpp
