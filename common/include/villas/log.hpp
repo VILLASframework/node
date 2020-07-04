@@ -60,7 +60,7 @@ protected:
 
 public:
 
-	Log(Level level = Level::debug);
+	Log(Level level = Level::info);
 
 	/**< Get the real usable log output width which fits into one line. */
 	int getWidth();
