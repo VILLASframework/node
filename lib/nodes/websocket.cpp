@@ -183,8 +183,6 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			c->wsi = wsi;
 			c->state = websocket_connection::State::ESTABLISHED;
 
-			info("Established WebSocket connection: %s", websocket_connection_name(c));
-
 			if (reason == LWS_CALLBACK_CLIENT_ESTABLISHED)
 				c->mode = websocket_connection::Mode::CLIENT;
 			else {
@@ -244,7 +242,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			vlist_push(&connections, c);
 
-			debug(LOG_WEBSOCKET | 10, "Initialized WebSocket connection: %s", websocket_connection_name(c));
+			info("Established WebSocket connection: %s", websocket_connection_name(c));
+
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
