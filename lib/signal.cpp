@@ -39,6 +39,7 @@ int signal_init(struct signal *s)
 	s->name = nullptr;
 	s->unit = nullptr;
 	s->type = SignalType::INVALID;
+	s->init = signal_data::nan();
 
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -122,6 +123,7 @@ struct signal * signal_create(const char *name, const char *unit, enum SignalTyp
 		sig->unit = strdup(unit);
 
 	sig->type = fmt;
+	sig->init = signal_data::nan();
 
 	return sig;
 }
