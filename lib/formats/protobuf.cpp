@@ -28,7 +28,9 @@
 #include <villas/io.h>
 #include <villas/plugin.h>
 #include <villas/formats/protobuf.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static enum SignalType protobuf_detect_format(Villas__Node__Value *val)
@@ -96,7 +98,7 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		pb_smp->n_values = smp->length;
 		pb_smp->values = new Villas__Node__Value*[pb_smp->n_values];
-		if (pb_msg->values)
+		if (!pb_smp->values)
 			throw MemoryAllocationError();
 
 		for (unsigned j = 0; j < pb_smp->n_values; j++) {
