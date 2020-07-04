@@ -57,10 +57,9 @@ public:
 			char uuid[37];
 			uuid_unparse(n->uuid, uuid);
 
-			output_signals = node_output_signals(n);
-
 			json_signals_in = signal_list_to_json(&n->in.signals);
 
+			output_signals = node_output_signals(n);
 			if (output_signals)
 				json_signals_out = signal_list_to_json(output_signals);
 
@@ -101,4 +100,3 @@ static ActionPlugin<NodesAction, n, d> p;
 } /* namespace api */
 } /* namespace node */
 } /* namespace villas */
-

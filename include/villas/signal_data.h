@@ -40,7 +40,8 @@ union signal_data {
 	bool b;			/**< Boolean values. */
 	std::complex<float> z;	/**< Complex values. */
 
-	signal_data()
+	signal_data() :
+		i(0)
 	{ }
 
 	static union signal_data nan()
@@ -50,6 +51,11 @@ union signal_data {
 		d.f = std::numeric_limits<double>::quiet_NaN();
 
 		return d;
+	}
+
+	bool is_nan()
+	{
+		return f == std::numeric_limits<double>::quiet_NaN();
 	}
 };
 

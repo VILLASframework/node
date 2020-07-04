@@ -119,7 +119,6 @@ struct signal * signal_create(const char *name, const char *unit, enum SignalTyp
 		sig->unit = strdup(unit);
 
 	sig->type = fmt;
-	sig->init = signal_data::nan();
 
 	return sig;
 }

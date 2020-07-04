@@ -179,13 +179,19 @@ json_t * signal_list_to_json(struct vlist *list)
 	for (size_t i = 0; i < vlist_length(list); i++) {
 		struct signal *sig = (struct signal *) vlist_at_safe(list, i);
 
-		json_t *json_signal = json_pack("{ s: s?, s: s?, s: s, s: b, s: o }",
-			"name", sig->name,
-			"unit", sig->unit,
+		json_t *json_signal = json_pack("{ s: s, s: b }",
 			"type", signal_type_to_str(sig->type),
-			"enabled", sig->enabled,
-			"init", signal_data_to_json(&sig->init, sig)
+			"enabled", sig->enabled
 		);
+
+		if (sig->name)
+			json_object_set_new(json_signal, "name", json_string(sig->name));
+
+		if (sig->unit)
+			json_object_set_new(json_signal, "unit", json_string(sig->unit));
+
+		if (!sig->init.is_nan())
+			json_object_set_new(json_signal, "init", signal_data_to_json(&sig->init, sig));
 
 		json_array_append_new(json_signals, json_signal);
 	}
