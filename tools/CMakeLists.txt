@@ -44,3 +44,10 @@ install(
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     RENAME villas
 )
+
+install(
+    PROGRAMS villas-api.sh
+    COMPONENT bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RENAME villas-api
+)
