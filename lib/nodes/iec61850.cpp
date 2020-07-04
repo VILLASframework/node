@@ -29,12 +29,14 @@
 #include <villas/nodes/iec61850_sv.hpp>
 #include <villas/plugin.h>
 #include <villas/signal.h>
+#include <villas/exceptions.hpp>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
 #define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
+using namespace villas;
 using namespace villas::utils;
 
 const struct iec61850_type_descriptor type_descriptors[] = {

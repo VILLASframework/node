@@ -30,6 +30,7 @@
 #include <villas/nodes/fpga.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/super_node.hpp>

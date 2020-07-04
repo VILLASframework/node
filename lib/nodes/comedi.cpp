@@ -30,7 +30,9 @@
 #include <villas/plugin.h>
 #include <villas/nodes/comedi.hpp>
 #include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */

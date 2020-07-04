@@ -28,8 +28,10 @@
 #include <villas/plugin.h>
 #include <villas/config.h>
 #include <villas/nodes/uldaq.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/memory.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
