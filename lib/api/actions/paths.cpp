@@ -46,8 +46,8 @@ public:
 		for (size_t i = 0; i < vlist_length(paths); i++) {
 			struct vpath *p = (struct vpath *) vlist_at(paths, i);
 
-			json_t *json_path = json_pack("{ s: i }",
-				"state",	p->state
+			json_t *json_path = json_pack("{ s: s }",
+				"state", state_print(p->state)
 			);
 
 			/* Add all additional fields of node here.
