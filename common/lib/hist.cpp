@@ -190,7 +190,7 @@ char * Hist::dump() const
 {
 	char *buf = new char[128];
 	if (!buf)
-		throw RuntimeError("Failed to allocate memory!");
+		throw MemoryAllocationError();
 
 	memset(buf, 0, 128);
 

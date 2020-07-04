@@ -144,7 +144,7 @@ Container::~Container()
 std::shared_ptr<Container>
 Container::create()
 {
-	std::shared_ptr<Container> container { new Container };
+	std::shared_ptr<Container> container(new Container);
 
 	return container;
 }
@@ -549,6 +549,9 @@ Device::pciHotReset()
 	                             sizeof(struct vfio_pci_dependent_device) * 64;
 
 	auto *reset_info_buf = new char[reset_info_len];
+	if (!reset_info_buf)
+		throw MemoryAllocationError();
+
 	auto *reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info *>(reset_info_buf);
 
 	reset_info->argsz = reset_info_len;
@@ -577,6 +580,9 @@ Device::pciHotReset()
 	const size_t reset_len = sizeof(struct vfio_pci_hot_reset) +
 	                        sizeof(int32_t) * 1;
 	auto *reset_buf = new char[reset_len];
+	if (!reset_buf)
+		throw MemoryAllocationError();
+
 	auto *reset = reinterpret_cast<struct vfio_pci_hot_reset*>(reset_buf);
 
 	reset->argsz = reset_len;
@@ -609,9 +615,10 @@ Device::pciMsiInit(int efds[])
 	                          sizeof(int) * irqCount;
 
 	auto *irqSetBuf = new char[irqSetSize];
+	if (!irqSetBuf)
+		throw MemoryAllocationError();
+
 	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
-	if (irqSet == nullptr)
-		return -1;
 
 	irqSet->argsz = irqSetSize;
 	irqSet->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
@@ -653,9 +660,10 @@ Device::pciMsiDeinit(int efds[])
 	                            sizeof(int) * irqCount;
 
 	auto *irqSetBuf = new char[irqSetSize];
+	if (!irqSetBuf)
+		throw MemoryAllocationError();
+
 	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
-	if (irqSet == nullptr)
-		return -1;
 
 	irqSet->argsz = irqSetSize;
 	irqSet->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;

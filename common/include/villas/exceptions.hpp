@@ -62,6 +62,14 @@ public:
 	{ }
 };
 
+class MemoryAllocationError : public RuntimeError {
+
+public:
+	MemoryAllocationError() :
+		RuntimeError("Failed to allocate memory")
+	{ }
+};
+
 class JsonError : public std::runtime_error {
 
 protected:

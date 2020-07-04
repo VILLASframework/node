@@ -262,7 +262,7 @@ void * memdup(const void *src, size_t bytes)
 {
 	void *dst = new char[bytes];
 	if (!dst)
-		throw RuntimeError("Failed to allocate memory!");
+		throw MemoryAllocationError();
 
 	memcpy(dst, src, bytes);
 

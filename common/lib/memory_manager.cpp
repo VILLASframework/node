@@ -24,9 +24,11 @@
 #include <limits>
 #include <cstdint>
 
+#include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 #include <villas/memory_manager.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 namespace villas {
@@ -39,6 +41,8 @@ MemoryManager::get()
 {
 	if (instance == nullptr) {
 		instance = new MemoryManager;
+		if (!instance)
+			throw MemoryAllocationError();
 	}
 
 	return *instance;
