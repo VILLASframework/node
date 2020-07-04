@@ -305,6 +305,9 @@ int path_prepare(struct vpath *p)
 	if (p->original_sequence_no == -1)
 		p->original_sequence_no = vlist_length(&p->sources) == 1;
 
+	p->logger->info("Prepared path {} with output signals:", path_name(p));
+	signal_list_dump(&p->signals);
+
 	p->state = State::PREPARED;
 
 	return 0;

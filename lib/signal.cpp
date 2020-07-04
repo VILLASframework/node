@@ -321,8 +321,6 @@ int signal_list_generate2(struct vlist *list, const char *dt)
 
 void signal_list_dump(const struct vlist *list, const union signal_data *data, unsigned len)
 {
-	debug(5, "  Signals:");
-
 	for (size_t i = 0; i < vlist_length(list); i++) {
 		struct signal *sig = (struct signal *) vlist_at(list, i);
 
@@ -344,7 +342,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 			strcatf(&buf, " = %s", val);
 		}
 
-		debug(5, "%s", buf);
+		info("%s", buf);
 		free(buf);
 	}
 }

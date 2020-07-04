@@ -294,19 +294,21 @@ enum SignalType sample_format(const struct sample *s, unsigned idx)
 
 void sample_dump(struct sample *s)
 {
-	debug(5, "Sample: sequence=%" PRIu64 ", length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
+	info("Sample: sequence=%" PRIu64 ", length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
 		"refcnt=%d, pool_off=%zd",
 		s->sequence, s->length, s->capacity, s->flags, s->signals,
 		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-		debug(5, "  ts.origin=%ld.%ld", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
+		info("  ts.origin=%ld.%ld", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-		debug(5, "  ts.received=%ld.%ld", s->ts.received.tv_sec, s->ts.received.tv_nsec);
+		info("  ts.received=%ld.%ld", s->ts.received.tv_sec, s->ts.received.tv_nsec);
 
-	if (s->signals)
+	if (s->signals) {
+		info("  Signals:");
 		signal_list_dump(s->signals, s->data, s->length);
+	}
 }
 
 void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len)
