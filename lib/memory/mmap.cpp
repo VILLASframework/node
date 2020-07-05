@@ -84,6 +84,8 @@ int memory_mmap_init(int hugepages)
 		}
 		else
 			memory_default = &memory_mmap_hugetlb;
+#else
+		memory_default = &memory_mmap;
 #endif
 	}
 	else {
