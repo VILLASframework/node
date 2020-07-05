@@ -225,7 +225,7 @@ void villas_human_header(struct io *io, const struct sample *smp)
 
 static struct plugin p;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        p.name = "villas.human";
+	p.name = "villas.human";
 	p.description = "VILLAS human readable format";
 	p.type = PluginType::FORMAT;
 	p.format.header = villas_human_header;
@@ -236,9 +236,9 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.format.delimiter = '\n';
 	p.format.separator = '\t';
 
-        vlist_push(&plugins, &p);
+	vlist_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        vlist_remove_all(&plugins, &p);
+	vlist_remove_all(&plugins, &p);
 }
