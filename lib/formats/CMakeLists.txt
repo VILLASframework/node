@@ -69,6 +69,7 @@ list(APPEND FORMAT_SRC
     csv.cpp
     raw.cpp
     msg.cpp
+    value.cpp
 )
 
 add_library(formats STATIC ${FORMAT_SRC})
