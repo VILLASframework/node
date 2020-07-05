@@ -57,6 +57,7 @@ class SendThread(Thread):
             sample = Sample(ts, values)
 
             sys.stdout.write(str(sample) + '\n')
+            sys.stdout.flush()
 
             self.sequence += 1
 
