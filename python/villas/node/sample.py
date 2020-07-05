@@ -98,7 +98,7 @@ class Sample:
         return Sample(ts, vs)
 
     def __str__(self):
-        return '%s %s' % (self.ts, " ".join(map(str, self.values)))
+        return '%s\t%s' % (self.ts, "\t".join(map(str, self.values)))
 
     def __eq__(self, other):
         return self.ts == other.ts
