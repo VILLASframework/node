@@ -103,7 +103,7 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		for (unsigned j = 0; j < pb_smp->n_values; j++) {
 			Villas__Node__Value *pb_val = pb_smp->values[j] = new Villas__Node__Value;
-			if (!pb_smp->values[i])
+			if (!pb_val)
 				throw MemoryAllocationError();
 
 			villas__node__value__init(pb_val);
