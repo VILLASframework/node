@@ -282,6 +282,6 @@ int signal_data_print_str(const union signal_data *data, const struct signal *si
 			return snprintf(buf, len, "%.6f%+.6fi", std::real(data->z), std::imag(data->z));
 
 		default:
-			return 0;
+			return snprintf(buf, len, "< ? >");
 	}
 }
