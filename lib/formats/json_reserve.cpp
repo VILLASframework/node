@@ -49,9 +49,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	json_data = json_array();
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig;
-
-		sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
 			return -1;
 

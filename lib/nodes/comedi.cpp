@@ -579,6 +579,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			for (size_t i = 0; i < cnt; i++) {
 				d->counter++;
 
+				smps[i]->signals = &n->in.signals;
 				smps[i]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
 				smps[i]->sequence = d->counter / d->chanlist_len;
 

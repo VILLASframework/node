@@ -76,18 +76,17 @@ int msg_verify(struct msg *m)
 int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 {
 	int ret;
+	unsigned i;
 
 	ret = msg_verify(msg);
 	if (ret)
-		return -1;
+		return ret;
 
-	smp->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-	smp->length = MIN(msg->length, smp->capacity);
-	smp->sequence = msg->sequence;
-	MSG_TS(msg, smp->ts.origin);
-
-	for (unsigned i = 0; i < MIN(smp->length, vlist_length(signals)); i++) {
-		struct signal *sig = (struct signal *) vlist_at(signals, i);
+	unsigned len = MIN(msg->length, smp->capacity);
+	for (i = 0; i < MIN(len, vlist_length(signals)); i++) {
+		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+		if (!sig)
+			return -1;
 
 		switch (sig->type) {
 			case SignalType::FLOAT:
@@ -102,6 +101,11 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 				return -1;
 		}
 	}
+
+	smp->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
+	smp->length = i;
+	smp->sequence = msg->sequence;
+	MSG_TS(msg, smp->ts.origin);
 
 	return 0;
 }
@@ -118,7 +122,9 @@ int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signal
 	msg_in->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at(signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+		if (!sig)
+			return -1;
 
 		switch (sig->type) {
 			case SignalType::FLOAT:

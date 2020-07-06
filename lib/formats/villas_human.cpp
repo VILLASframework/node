@@ -133,7 +133,6 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 	unsigned i;
 	for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
-
 		if (*end == io->delimiter)
 			goto out;
 
@@ -208,7 +207,9 @@ void villas_human_header(struct io *io, const struct sample *smp)
 
 	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
-			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
+			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+			if (!sig)
+				break;
 
 			if (sig->name)
 				fprintf(f, "%c%s", io->separator, sig->name);

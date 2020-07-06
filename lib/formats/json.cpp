@@ -124,6 +124,8 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 
 		for (unsigned i = 0; i < smp->length; i++) {
 			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+			if (!sig)
+				return -1;
 
 			json_t *json_value = signal_data_to_json(&smp->data[i], sig);
 

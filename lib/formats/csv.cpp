@@ -110,7 +110,6 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 
 	for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
-
 		if (*end == io->delimiter)
 			goto out;
 
@@ -177,7 +176,9 @@ void csv_header(struct io *io, const struct sample *smp)
 
 	if (io->flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
-			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
+			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+			if (!sig)
+				break;
 
 			if (sig->name)
 				fprintf(f, "%s", sig->name);

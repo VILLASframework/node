@@ -399,6 +399,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			smps[i]->sequence = t->counter;
 			smps[i]->ts.origin = now;
 			smps[i]->flags = (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
+			smps[i]->signals = &n->in.signals;
 
 			t->counter++;
 		}

@@ -287,6 +287,8 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	for (unsigned i = 0; i < MIN(read, smp->capacity); i++)
 		smp->data[i].i = f->in.mem[i];
 
+	smp->signals = &n->in.signals;
+
 	return read;
 }
 

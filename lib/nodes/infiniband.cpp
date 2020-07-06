@@ -865,6 +865,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
 			smps[j]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_TS_RECEIVED | (int) SampleFlags::HAS_SEQUENCE;
+			smps[j]->signals = &n->in.signals;
 		}
 
 	}

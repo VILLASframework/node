@@ -43,7 +43,7 @@ int value_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sa
 	for (i = 0; i < smp->length; i++) {
 		sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
-			break;
+			return -1;
 
 		off += signal_data_print_str(&smp->data[i], sig, buf, len);
 		off += snprintf(buf + off, len - off, "\n");
@@ -70,7 +70,7 @@ int value_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, stru
 	if (smp->capacity >= 1) {
 		struct signal *sig = (struct signal *) vlist_at_safe(io->signals, i);
 		if (!sig)
-			goto out;
+			return -1;
 
 		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
