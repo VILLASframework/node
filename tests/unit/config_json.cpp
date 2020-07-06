@@ -59,7 +59,7 @@ const char *json_example = "{\n"
 			   "  ]\n"
 			   "}";
 
-Test(utils, config_to_json)
+Test(config, config_to_json)
 {
 	int ret;
 	config_t cfg;
@@ -87,7 +87,7 @@ Test(utils, config_to_json)
 	config_destroy(&cfg);
 }
 
-Test(utils, json_to_config)
+Test(config, json_to_config)
 {
 	config_t cfg;
 	config_setting_t *cfg_root;

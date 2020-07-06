@@ -57,7 +57,20 @@ Config::~Config()
 		json_decref(root);
 }
 
-json_t * Config::load(const std::string &u)
+json_t * Config::load(std::FILE *f, bool resolveInc, bool resolveEnvVars)
+{
+	root = decode(f);
+
+	if (resolveInc)
+		root = resolveIncludes(root);
+
+	if (resolveEnvVars)
+		root = expandEnvVars(root);
+
+	return root;
+}
+
+json_t * Config::load(const std::string &u, bool resolveInc, bool resolveEnvVars)
 {
 	FILE *f;
 	AFILE *af = nullptr;
@@ -71,7 +84,7 @@ json_t * Config::load(const std::string &u)
 		f = af->file;
 	}
 
-	root = decode(f);
+	root = load(f, resolveInc, resolveEnvVars);
 
 	if (af)
 		afclose(af);
@@ -166,52 +179,48 @@ json_t * Config::libconfigDecode(FILE *f)
 }
 #endif /* WITH_CONFIG */
 
-json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
+json_t * Config::walkStrings(json_t *in, str_walk_fcn_t cb)
 {
 	const char *key;
 	size_t index;
 	json_t *val, *new_val, *new_root;
 
-	switch (json_typeof(root)) {
+	switch (json_typeof(in)) {
 		case JSON_STRING:
-			return cb(root);
+			return cb(in);
 
 		case JSON_OBJECT:
 			new_root = json_object();
 
-			json_object_foreach(root, key, val) {
+			json_object_foreach(in, key, val) {
 				new_val = walkStrings(val, cb);
 
-				json_object_set_new(new_root, key, new_val);
+				json_object_set(new_root, key, new_val);
 			}
-
-			json_decref(root);
 
 			return new_root;
 
 		case JSON_ARRAY:
 			new_root = json_array();
 
-			json_array_foreach(root, index, val) {
+			json_array_foreach(in, index, val) {
 				new_val = walkStrings(val, cb);
 
-				json_array_append_new(new_root, new_val);
+				json_array_append(new_root, new_val);
 			}
-
-			json_decref(root);
 
 			return new_root;
 
 		default:
-			return root;
+			return in;
 	};
 }
 
-void Config::expandEnvVars()
+json_t * Config::expandEnvVars(json_t *in)
 {
 	static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
 
-	root = walkStrings(root, [this](json_t *str) -> json_t * {
+	return walkStrings(in, [this](json_t *str) -> json_t * {
 		std::string text = json_string_value(str);
 
 		std::smatch match;
@@ -230,9 +239,9 @@ void Config::expandEnvVars()
 	});
 }
 
-void Config::resolveIncludes()
+json_t * Config::resolveIncludes(json_t *in)
 {
-	root = walkStrings(root, [this](json_t *str) -> json_t * {
+	return walkStrings(in, [this](json_t *str) -> json_t * {
 		std::string text = json_string_value(str);
 		static const std::string kw = "@include ";
 

@@ -22,6 +22,7 @@
 
 set(TEST_SRC
 	config_json.cpp
+	config.cpp
 	main.cpp
 	mapping.cpp
 	memory.cpp

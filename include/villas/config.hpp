@@ -23,11 +23,14 @@
 
 #pragma once
 
+#include <cstdio>
+
 #include <functional>
 #include <regex>
 #include <jansson.h>
 
 #include <villas/node/config.h>
+#include <villas/log.hpp>
 #include <villas/advio.hpp>
 
 namespace villas {
@@ -64,13 +67,13 @@ protected:
 	AFILE * loadFromRemoteFile(const std::string &u);
 
 	/** Resolve custom include directives. */
-	void resolveIncludes();
+	json_t * resolveIncludes(json_t *in);
 
 	/** To shell-like subsitution of environment variables in strings. */
-	void expandEnvVars();
+	json_t * expandEnvVars(json_t *in);
 
 	/** Run a callback function for each string in the config */
-	json_t * walkStrings(json_t *root, str_walk_fcn_t cb);
+	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
 
 public:
 	json_t *root;
@@ -80,7 +83,9 @@ public:
 
 	~Config();
 
-	json_t * load(const std::string &u);
+	json_t * load(std::FILE *f, bool resolveIncludes=true, bool resolveEnvVars=true);
+
+	json_t * load(const std::string &u, bool resolveIncludes=true, bool resolveEnvVars=true);
 };
 
 } /* namespace node */

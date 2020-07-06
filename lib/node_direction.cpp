@@ -27,7 +27,9 @@
 #include <villas/hook_list.hpp>
 #include <villas/node.h>
 #include <villas/node_direction.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -135,10 +137,12 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 		const char *type_str = "float";
 
 		if (json_is_object(json_signals)) {
-			json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
+			ret = json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
 				"count", &count,
 				"type", &type_str
 			);
+			if  (ret)
+				throw ConfigError(json_signals, "node-config-node-signals", "Invalid signal definition");
 		}
 
 		enum SignalType type = signal_type_from_str(type_str);
