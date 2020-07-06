@@ -32,5 +32,6 @@ setup(
     ],
     setup_requires=[
         'm2r'
-    ]
+    ],
+    scripts=glob('bin/*')
 )
