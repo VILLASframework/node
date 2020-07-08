@@ -36,12 +36,10 @@
 
 struct can {
     /* Settings */
-    int setting1;
-
-    char *setting2;
+    char *interface_name;
 
     /* States */
-    int state1;
+    int socket;
     struct timespec start_time;
 };
 

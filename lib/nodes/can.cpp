@@ -20,6 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <net/if.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+
+#include <linux/can.h>
+#include <linux/can/raw.h>
+
 #include <villas/nodes/can.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.h>
@@ -50,10 +62,8 @@ int can_init(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. The following is just an can */
-
-	c->setting1 = 0;
-	c->setting2 = nullptr;
+	c->interface_name = nullptr;
+	c->socket = 0;
 
 	return 0;
 }
@@ -62,11 +72,10 @@ int can_destroy(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. The following is just an can */
-
-	if (c->setting2)
-		free(c->setting2);
-
+    free(c->interface_name);
+    if (c->socket != 0) {
+        close(c->socket);
+    }
 	return 0;
 }
 
@@ -77,11 +86,8 @@ int can_parse(struct node *n, json_t *cfg)
 
 	json_error_t err;
 
-	/* TODO: Add implementation here. The following is just an can */
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
-		"setting1", &c->setting1,
-		"setting2", &c->setting2
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
+		"interface_name", &c->interface_name
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -93,21 +99,14 @@ char * can_print(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. The following is just an can */
-
-	return strf("setting1=%d, setting2=%s", c->setting1, c->setting2);
+	return strf("interface_name=%s", c->interface_name);
 }
 
 int can_check(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. The following is just an can */
-
-	if (c->setting1 > 100 || c->setting1 < 0)
-		return -1;
-
-	if (!c->setting2 || strlen(c->setting2) > 10)
+	if (c->interface_name != nullptr && strlen(c->interface_name) > 0)
 		return -1;
 
 	return 0;
@@ -118,31 +117,52 @@ int can_prepare(struct node *n)
 	struct can *c = (struct can *) n->_vd;
 
 	/* TODO: Add implementation here. The following is just an can */
-
-	c->state1 = c->setting1;
-
-	if (strcmp(c->setting2, "double") == 0)
-		c->state1 *= 2;
+//
+//	c->state1 = c->setting1;
+//
+//	if (strcmp(c->setting2, "double") == 0)
+//		c->state1 *= 2;
 
 	return 0;
 }
 
 int can_start(struct node *n)
 {
+	struct sockaddr_can addr = {0};
+	struct can_frame frame;
+	struct ifreq ifr;
+
 	struct can *c = (struct can *) n->_vd;
-
-	/* TODO: Add implementation here. The following is just an can */
-
 	c->start_time = time_now();
+
+	if((c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+	    return strf("Error while opening CAN socket");
+	}
+
+	strcpy(ifr.ifr_name, c->interface_name);
+    if (ioctl(c->socket, SIOCGIFINDEX, &ifr) != 0) {
+        return strf("Could not find interface with name \"%s\".", c->interface_name);
+    }
+
+	addr.can_family  = AF_CAN;
+	addr.can_ifindex = ifr.ifr_ifindex;
+
+	if(bind(c->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		return strf("Could not bind to interface with name \"%s\" (%d).", c->interface_name, ifr.ifr_ifindex);
+	}
 
 	return 0;
 }
 
 int can_stop(struct node *n)
 {
-	//struct can *c = (struct can *) n->_vd;
+	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. */
+    if (c->socket != 0) {
+        close(c->socket);
+        c->socket = 0;
+    }
+    //TODO: do we need to free c->interface_name here?
 
 	return 0;
 }
@@ -167,33 +187,47 @@ int can_resume(struct node *n)
 
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int read;
-	struct can *c = (struct can *) n->_vd;
+	int nbytes;
+	struct can_frame frame;
 	struct timespec now;
+
+	struct can *c = (struct can *) n->_vd;
 
 	/* TODO: Add implementation here. The following is just an can */
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-	now = time_now();
+    nbytes = read(c->socket, &frame, sizeof(struct can_frame));
+    if (nbytes != sizeof(struct can_frame)) {
+        return strf("CAN read() error. read() returned %d bytes but expected %d",
+                    nbytes, sizeof(struct can_frame));
+    }
 
+    printf("id:%d, len:%d, data: 0x%x:0x%x\n", frame.can_id,
+            frame.can_dlc,
+            ((uint32_t*)&frame.data)[0],
+            ((uint32_t*)&frame.data)[1]);
+
+	now = time_now();
 	smps[0]->data[0].f = time_delta(&now, &c->start_time);
 
-	read = 1; /* The number of samples read */
-
-	return read;
+	return nbytes;
 }
 
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int written;
-	//struct can *c = (struct can *) n->_vd;
+	int nbytes;
+	struct can_frame frame = {0};
+    struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. */
+    nbytes = write(c->socket, &frame, sizeof(struct can_frame));
+    if (nbytes != sizeof(struct can_frame)) {
+        return strf("CAN write() error. write() returned %d bytes but expected %d",
+                    nbytes, sizeof(struct can_frame));
+    }
 
-	written = 0; /* The number of samples written */
 
-	return written;
+	return nbytes;
 }
 
 int can_reverse(struct node *n)
