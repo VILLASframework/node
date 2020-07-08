@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <xilinx/xilflash.h>
+
 #include <villas/fpga/core.hpp>
 
 namespace villas {
@@ -40,7 +42,14 @@ public:
 
 	bool init();
 
+	bool flash(uint32_t offset, const std::string &filename);
+	bool flash(uint32_t offset, uint32_t length, uint8_t *data);
+
+	bool read(uint32_t offset, uint32_t length, uint8_t *data);
+
 private:
+
+	XFlash xflash;
 
 	static constexpr char registerMemory[] = "Reg";
 
