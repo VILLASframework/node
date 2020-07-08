@@ -28,6 +28,7 @@ set(SOURCES
 
 	ips/timer.cpp
 	ips/switch.cpp
+	ips/emc.cpp
 	ips/fifo.cpp
 	ips/intc.cpp
 	ips/pcie.cpp

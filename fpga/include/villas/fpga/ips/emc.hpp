@@ -1,8 +1,7 @@
-/** AXI General Purpose IO (GPIO)
+/** AXI External Memory Controller (EMC)
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017-2020, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
@@ -35,7 +34,7 @@ namespace fpga {
 namespace ip {
 
 
-class GeneralPurposeIO : public Core
+class EMC : public Core
 {
 public:
 
@@ -49,23 +48,23 @@ private:
 	{ return { registerMemory }; }
 };
 
-class GeneralPurposeIOFactory : public CoreFactory {
+class EMCFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
-	{ return "xilinx.com:ip:axi_gpio:"; }
+	{ return "xilinx.com:ip:axi_emc:"; }
 
 	Core* create()
-	{ return new GeneralPurposeIO; }
+	{ return new EMC; }
 
 	virtual std::string
 	getName() const
-	{ return "GeneralPurposeIO"; }
+	{ return "ExternalMemoryController"; }
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 general purpose IO"; }
+	{ return "Xilinx's AXI External Memory Controller (EMC) "; }
 
 	virtual Vlnv
 	getCompatibleVlnv() const

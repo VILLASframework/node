@@ -1,4 +1,4 @@
-/** AXI General Purpose IO (GPIO)
+/** AXI External Memory Controller (EMC)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2020, Steffen Vogel
@@ -22,16 +22,16 @@
 
 #include <villas/plugin.hpp>
 
-#include <villas/fpga/ips/gpio.hpp>
+#include <villas/fpga/ips/emc.hpp>
 
 using namespace villas::fpga::ip;
 
 
 // instantiate factory to make available to plugin infrastructure
-static GeneralPurposeIOFactory factory;
+static EMCFactory factory;
 
 bool
-GeneralPurposeIO::init()
+EMC::init()
 {
 	//const uintptr_t base = getBaseAddr(registerMemory);
 

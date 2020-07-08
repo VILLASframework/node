@@ -132,6 +132,29 @@ protected:
 	bool running;
 };
 
+class HlsFactory : public CoreFactory {
+public:
+
+	static constexpr const char*
+	getCompatibleVlnvString()
+	{ return "acs.eonerc.rwth-aachen.de:hls:"; }
+
+	Core* create()
+	{ return new Hls; }
+
+	virtual std::string
+	getName() const
+	{ return "HighLevelSynthesis"; }
+
+	virtual std::string
+	getDescription() const
+	{ return "Xilinx's HLS IP Cores"; }
+
+	virtual Vlnv
+	getCompatibleVlnv() const
+	{ return Vlnv(getCompatibleVlnvString()); }
+};
+
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
