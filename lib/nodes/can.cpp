@@ -20,11 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "villas/signal_data.h"
-#include "villas/signal_list.h"
-#include "villas/signal_type.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 
 #include <net/if.h>

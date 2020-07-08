@@ -29,11 +29,13 @@
 
 #pragma once
 
-#include "villas/signal_list.h"
-#include <villas/node/config.h>
-#include <villas/node.h>
-#include <villas/io.h>
+#include <jansson.h>
+
 #include <villas/timing.h>
+
+/* Forward declarations */
+struct node;
+union signal_data;
 
 struct can_signal {
     uint32_t id;
