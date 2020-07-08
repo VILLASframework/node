@@ -34,9 +34,18 @@
 #include <villas/io.h>
 #include <villas/timing.h>
 
+struct can_signal {
+    uint32_t id;
+    int offset;
+    int size;
+};
+
 struct can {
     /* Settings */
     char *interface_name;
+    double *sample_rate;
+    struct can_signal *in;
+    struct can_signal *out;
 
     /* States */
     int socket;

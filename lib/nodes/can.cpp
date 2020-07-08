@@ -1,5 +1,6 @@
 /** Node-type: CAN bus
  *
+ * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -31,6 +32,7 @@
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <linux/sockios.h>
 
 #include <villas/nodes/can.hpp>
 #include <villas/utils.hpp>
@@ -76,26 +78,136 @@ int can_destroy(struct node *n)
     if (c->socket != 0) {
         close(c->socket);
     }
+    free(c->in);
+    free(c->out);
 	return 0;
 }
 
 int can_parse(struct node *n, json_t *cfg)
 {
-	int ret;
+	int ret = 1;
 	struct can *c = (struct can *) n->_vd;
-
+    size_t i;
+    json_t *json_in_signals;
+    json_t *json_out_signals;
+    json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
-		"interface_name", &c->interface_name
-	);
-	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+    c->in = nullptr;
+    c->out = nullptr;
 
-	return 0;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: F, s: { s: o}, s: { s: o}}",
+		"interface_name", &c->interface_name,
+        "sample_rate", &c->sample_rate,
+        "in",
+            "signals", &json_in_signals,
+        "out",
+            "signals", &json_out_signals
+	);
+	if (ret) {
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+        goto out;
+    }
+
+    if ((c->in = (struct can_signal*)calloc(
+                          json_array_size(json_in_signals),
+                          sizeof(struct can_signal))) == nullptr) {
+        error("failed to allocate memory for input ids");
+        goto out;
+    }
+    if ((c->out = (struct can_signal*)calloc(
+                          json_array_size(json_out_signals),
+                          sizeof(struct can_signal))) == nullptr) {
+        error("failed to allocate memory for output ids");
+        goto out;
+    }
+
+    json_array_foreach(json_in_signals, i, json_signal) {
+		const char *name = nullptr;
+        uint64_t can_id = 0;
+        int can_size = 8;
+        int can_offset = 0;
+        struct signal* sig = nullptr;
+
+		ret = json_unpack_ex(json_signal, &err, 0, "{ s: s, s?: i, s?: i, s?: i }",
+			"name", &name,
+			"can_id", &can_id,
+            "can_size", &can_size,
+            "can_offset", &can_offset
+		);
+		if (ret) {
+			jerror(&err, "Failed to parse signal configuration of node %s", node_name(n));
+            goto out;
+        }
+
+		if (!name) {
+			error("No signale name specified for signal %zu of node %s.", i, node_name(n));
+            goto out;
+        }
+
+        for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
+            sig = (struct signal*)vlist_at(&n->in.signals, i);
+            if (strcmp(name, sig->name) == 0) {
+                c->in[i].id = can_id;
+                c->in[i].size = can_size;
+                c->in[i].offset = can_offset;
+                break;
+            }
+        }
+	}
+    json_array_foreach(json_out_signals, i, json_signal) {
+		const char *name = nullptr;
+        uint64_t can_id;
+        int can_size = 8;
+        int can_offset = 0;
+        struct signal* sig = nullptr;
+
+		ret = json_unpack_ex(json_signal, &err, 0, "{ s: s, s?: i, s?: i, s?: i }",
+			"name", &name,
+			"can_id", &can_id,
+            "can_size", &can_size,
+            "can_offset", &can_offset
+		);
+		if (ret) {
+			jerror(&err, "Failed to parse signal configuration of node %s", node_name(n));
+            goto out;
+        }
+
+		if (!name) {
+			error("No signale name specified for signal %zu of node %s.", i, node_name(n));
+            goto out;
+        }
+
+        if (can_size > 8 || can_size <= 0) {
+            error("can_size of %d for signal \"%s\" is invalid. You must satisfy 0 < can_size <= 8.", can_size, name);
+            goto out;
+        }
+
+        if (can_offset > 8 || can_offset < 0) {
+            error("can_offset of %d for signal \"%s\" is invalid. You must satisfy 0 <= can_offset <= 8.", can_offset, name);
+            goto out;
+        }
+
+        for (size_t i=0; i < vlist_length(&n->in.signals); i++) {
+            sig = (struct signal*)vlist_at(&n->in.signals, i);
+            if (strcmp(name, sig->name) == 0) {
+                c->in[i].id = can_id;
+                c->in[i].size = can_size;
+                c->in[i].offset = can_offset;
+                break;
+            }
+        }
+	}
+    ret = 0;
+ out:
+    if (ret != 0) {
+        free(c->in);
+        free(c->out);
+    }
+	return ret;
 }
 
-char * can_print(struct node *n)
+char *can_print(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -106,15 +218,17 @@ int can_check(struct node *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	if (c->interface_name != nullptr && strlen(c->interface_name) > 0)
-		return -1;
+	if (c->interface_name == nullptr || strlen(c->interface_name) == 0) {
+        error("interface_name is empty. Please specify the name of the CAN interface!");
+		return 1;
+    }
 
 	return 0;
 }
 
 int can_prepare(struct node *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	//struct can *c = (struct can *) n->_vd;
 
 	/* TODO: Add implementation here. The following is just an can */
 //
@@ -129,26 +243,28 @@ int can_prepare(struct node *n)
 int can_start(struct node *n)
 {
 	struct sockaddr_can addr = {0};
-	struct can_frame frame;
 	struct ifreq ifr;
 
 	struct can *c = (struct can *) n->_vd;
 	c->start_time = time_now();
 
 	if((c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-	    return strf("Error while opening CAN socket");
+        error("Error while opening CAN socket");
+	    return 1;
 	}
 
 	strcpy(ifr.ifr_name, c->interface_name);
     if (ioctl(c->socket, SIOCGIFINDEX, &ifr) != 0) {
-        return strf("Could not find interface with name \"%s\".", c->interface_name);
+        error("Could not find interface with name \"%s\".", c->interface_name);
+        return 1;
     }
 
 	addr.can_family  = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
 
 	if(bind(c->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		return strf("Could not bind to interface with name \"%s\" (%d).", c->interface_name, ifr.ifr_ifindex);
+        error("Could not bind to interface with name \"%s\" (%d).", c->interface_name, ifr.ifr_ifindex);
+		return 1;
 	}
 
 	return 0;
@@ -188,30 +304,54 @@ int can_resume(struct node *n)
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int nbytes;
+    unsigned nread;
 	struct can_frame frame;
-	struct timespec now;
+    struct timeval tv;
 
 	struct can *c = (struct can *) n->_vd;
 
-	/* TODO: Add implementation here. The following is just an can */
-
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-    nbytes = read(c->socket, &frame, sizeof(struct can_frame));
-    if (nbytes != sizeof(struct can_frame)) {
-        return strf("CAN read() error. read() returned %d bytes but expected %d",
-                    nbytes, sizeof(struct can_frame));
+    for (nread=0; nread < cnt; nread++) {
+        if ((nbytes = read(c->socket, &frame, sizeof(struct can_frame))) == -1) {
+            error("CAN read() returned -1. Is the CAN interface up?");
+            return 1;
+        }
+        if ((unsigned)nbytes != sizeof(struct can_frame)) {
+            error("CAN read() error. read() returned %d bytes but expected %zu",
+                        nbytes, sizeof(struct can_frame));
+            return 1;
+        }
+
+        printf("id:%d, len:%u, data: 0x%x:0x%x\n", frame.can_id,
+                frame.can_dlc,
+                ((uint32_t*)&frame.data)[0],
+                ((uint32_t*)&frame.data)[1]);
+
+        if (ioctl(c->socket, SIOCGSTAMP, &tv) != 0) {
+            warning("Could not get timestamp from CAN driver on interface \"%s\".", c->interface_name);
+            smps[nread]->ts.received = time_now();
+        } else {
+           TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
+        }
+
+        for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
+            if (c->in[i].id == frame.can_id) {
+                /* This is a bit ugly. But there is no clean way to
+                 * clear the union. */
+                smps[nread]->data[i].i = 0;
+                memcpy(&smps[nread]->data[i],
+                       ((uint8_t*)&frame.data) + c->in[i].offset,
+                       c->in[i].size);
+            }
+
+        }
+        /* Set signals, because other VILLASnode parts expect us to */
+        smps[nread]->signals = &n->in.signals;
     }
 
-    printf("id:%d, len:%d, data: 0x%x:0x%x\n", frame.can_id,
-            frame.can_dlc,
-            ((uint32_t*)&frame.data)[0],
-            ((uint32_t*)&frame.data)[1]);
 
-	now = time_now();
-	smps[0]->data[0].f = time_delta(&now, &c->start_time);
-
-	return nbytes;
+	return 1;
 }
 
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -222,12 +362,13 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
     nbytes = write(c->socket, &frame, sizeof(struct can_frame));
     if (nbytes != sizeof(struct can_frame)) {
-        return strf("CAN write() error. write() returned %d bytes but expected %d",
+        error("CAN write() error. write() returned %u bytes but expected %zu",
                     nbytes, sizeof(struct can_frame));
+        return 0;
     }
 
 
-	return nbytes;
+	return 1;
 }
 
 int can_reverse(struct node *n)
