@@ -49,7 +49,7 @@ public:
 	int write();
 };
 
-} // sessions
-} // api
-} // node
-} // villas
+} /* namespace sessions */
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

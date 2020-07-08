@@ -85,5 +85,5 @@ public:
 	villas::QueueSignalled<api::Session *> pending;	/**< A queue of api_sessions which have pending requests. */
 };
 
-} // node
-} // villas
+} /* namespace node */
+} /* namespace villas */

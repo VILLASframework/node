@@ -55,7 +55,7 @@ public:
 	virtual std::string getName();
 };
 
-} // sessions
-} // api
-} // node
-} // villas
+} /* namespace sessions */
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

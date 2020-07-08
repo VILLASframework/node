@@ -82,6 +82,6 @@ public:
 	{ return desc; }
 };
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

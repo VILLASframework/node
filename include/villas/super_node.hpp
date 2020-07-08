@@ -183,5 +183,5 @@ public:
 	~SuperNode();
 };
 
-} // node
-} // villas
+} /* namespace node */
+} /* namespace villas */
