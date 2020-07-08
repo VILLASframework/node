@@ -73,11 +73,11 @@ static void init()
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
 
 	// get the FPGA card plugin
-	auto fpgaCardPlugin = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
-	cr_assert_not_null(fpgaCardPlugin, "No plugin for FPGA card found");
+	auto fpgaCardFactory = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
+	cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
 	// create all FPGA card instances using the corresponding plugin
-	state.cards = fpgaCardPlugin->make(fpgas, pciDevices, vfioContainer);
+	state.cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
 
 	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
 
