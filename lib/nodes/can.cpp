@@ -203,6 +203,8 @@ int can_parse(struct node *n, json_t *cfg)
     if (ret != 0) {
         free(c->in);
         free(c->out);
+        c->in = nullptr;
+        c->out = nullptr;
     }
 	return ret;
 }
@@ -332,7 +334,7 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
             warning("Could not get timestamp from CAN driver on interface \"%s\".", c->interface_name);
             smps[nread]->ts.received = time_now();
         } else {
-           TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
+            TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
         }
 
         for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
@@ -344,31 +346,71 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
                        ((uint8_t*)&frame.data) + c->in[i].offset,
                        c->in[i].size);
             }
-
         }
         /* Set signals, because other VILLASnode parts expect us to */
         smps[nread]->signals = &n->in.signals;
     }
-
-
-	return 1;
+	return nread;
 }
 
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int nbytes;
-	struct can_frame frame = {0};
-    struct can *c = (struct can *) n->_vd;
+    unsigned nwrite;
+	struct can_frame *frame;
+    size_t fsize = 0; /* number of frames in use */
 
-    nbytes = write(c->socket, &frame, sizeof(struct can_frame));
-    if (nbytes != sizeof(struct can_frame)) {
-        error("CAN write() error. write() returned %u bytes but expected %zu",
-                    nbytes, sizeof(struct can_frame));
-        return 0;
+	struct can *c = (struct can *) n->_vd;
+
+	assert(cnt >= 1 && smps[0]->capacity >= 1);
+
+    frame = (struct can_frame*) calloc(sizeof(struct can_frame),
+                                       vlist_length(&(n->out.signals)));
+
+    for (nwrite=0; nwrite < cnt; nwrite++) {
+        for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
+            if (c->out[i].offset != 0) { /* frame is shared */
+                continue;
+            }
+            frame[fsize].can_dlc = c->out[i].size;
+            frame[fsize].can_id = c->out[i].id;
+            memcpy(((uint8_t*)&frame[fsize].data) + c->out[i].offset,
+                   &smps[nwrite]->data[i],
+                   c->in[i].size);
+            fsize++;
+        }
+        for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
+            if (c->out[i].offset == 0) { /* frame already stored */
+                continue;
+            }
+            for (size_t j=0; j < fsize; j++) {
+                if (c->out[i].id == frame[j].can_id) {
+                    frame[j].can_dlc += c->out[i].size;
+                    memcpy(((uint8_t*)&frame[j].data) + c->out[i].offset,
+                           &smps[nwrite]->data[i],
+                           c->in[i].size);
+                }
+            }
+        }
+        for (size_t j=0; j < fsize; j++) {
+            printf("id:%d, len:%u, data: 0x%x:0x%x\n", frame[j].can_id,
+                    frame[j].can_dlc,
+                    ((uint32_t*)&frame[j].data)[0],
+                    ((uint32_t*)&frame[j].data)[1]);
+
+            if ((nbytes = write(c->socket, &frame, sizeof(struct can_frame))) == -1) {
+                error("CAN write() returned -1. Is the CAN interface up?");
+                return nwrite;
+            }
+            if ((unsigned)nbytes != sizeof(struct can_frame)) {
+                error("CAN write() error. write() returned %d bytes but expected %zu",
+                            nbytes, sizeof(struct can_frame));
+                return nwrite;
+            }
+        }
+
     }
-
-
-	return 1;
+	return nwrite;
 }
 
 int can_reverse(struct node *n)
