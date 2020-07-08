@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include "villas/signal_type.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -66,6 +67,9 @@ int can_init(struct node *n)
 
 	c->interface_name = nullptr;
 	c->socket = 0;
+	c->sample_buf = nullptr;
+	c->in = nullptr;
+	c->out = nullptr;
 
 	return 0;
 }
@@ -78,6 +82,7 @@ int can_destroy(struct node *n)
 	if (c->socket != 0) {
 		close(c->socket);
 	}
+	free(c->sample_buf);
 	free(c->in);
 	free(c->out);
 	return 0;
@@ -104,11 +109,6 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 		jerror(&err, "Failed to parse signal configuration for can");
 		goto out;
 	}
-
-	/*if (!name) {
-		error("No signale name specified for signal.");
-		goto out;
-	}*/
 
 	if (can_size > 8 || can_size <= 0) {
 		error("can_size of %d for signal \"%s\" is invalid. You must satisfy 0 < can_size <= 8.", can_size, name);
@@ -217,20 +217,16 @@ int can_check(struct node *n)
 
 int can_prepare(struct node *n)
 {
-	//struct can *c = (struct can *) n->_vd;
-
-	/* TODO: Add implementation here. The following is just an can */
-	//
-	//	c->state1 = c->setting1;
-	//
-	//	if (strcmp(c->setting2, "double") == 0)
-	//		c->state1 *= 2;
-
-	return 0;
+	struct can *c = (struct can *) n->_vd;
+	c->sample_buf = (union signal_data*) calloc(
+				vlist_length(&n->in.signals),
+			        sizeof(union signal_data));
+	return (c->sample_buf != 0 ? 0 : 1);
 }
 
 int can_start(struct node *n)
 {
+	int ret = 1;
 	struct sockaddr_can addr = {0};
 	struct ifreq ifr;
 
@@ -239,13 +235,13 @@ int can_start(struct node *n)
 
 	if((c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		error("Error while opening CAN socket");
-		return 1;
+		goto out;
 	}
 
 	strcpy(ifr.ifr_name, c->interface_name);
 	if (ioctl(c->socket, SIOCGIFINDEX, &ifr) != 0) {
 		error("Could not find interface with name \"%s\".", c->interface_name);
-		return 1;
+		goto out;
 	}
 
 	addr.can_family  = AF_CAN;
@@ -253,10 +249,11 @@ int can_start(struct node *n)
 
 	if(bind(c->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		error("Could not bind to interface with name \"%s\" (%d).", c->interface_name, ifr.ifr_ifindex);
-		return 1;
+		goto out;
 	}
-
-	return 0;
+	ret = 0;
+ out:
+	return ret;
 }
 
 int can_stop(struct node *n)
@@ -288,6 +285,55 @@ int can_resume(struct node *n)
 	/* TODO: Add implementation here. */
 
 	return 0;
+}
+
+int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signal *to)
+{
+	if (size <= 0 || size > 8) {
+		return 1;
+	}
+	switch(to->type) {
+	case SignalType::BOOLEAN:
+		sig->b = (bool)*(uint8_t*)from;
+		return 0;
+	case SignalType::INTEGER:
+		switch(size) {
+		case 1:
+			sig->i = (int64_t)*(int8_t*)from;
+			return 0;
+		case 2:
+			sig->i = (int64_t)*(int16_t*)from;
+			return 0;
+		case 3:
+			sig->i = (int64_t)*(int16_t*)from;
+			sig->i += ((int64_t)*((int8_t*)(from)+2)) << 16;
+			return 0;
+		case 4:
+			sig->i = (int64_t)*(int32_t*)from;
+			return 0;
+		case 8:
+			sig->i = *(uint64_t*)from;
+			return 0;
+		default:
+			error("unsupported conversion");
+			return 1;
+		}
+	case SignalType::FLOAT:
+		switch(size) {
+		case 4:
+			sig->f = (double)*(float*)from;
+			return 0;
+		case 8:
+			sig->f = *(double*)from;
+			return 0;
+		default:
+			error("unsupported conversion");
+			return 1;
+		}
+	default:
+		error("unsupported conversion");
+		return 1;
+	}
 }
 
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -327,12 +373,12 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
 		if (c->in[i].id == frame.can_id) {
-			/* This is a bit ugly. But there is no clean way to
-			 * clear the union. */
-			smps[nread]->data[i].i = 0;
-			memcpy(&smps[nread]->data[i],
-			       ((uint8_t*)&frame.data) + c->in[i].offset,
-			       c->in[i].size);
+			if (can_conv_from_raw(&c->sample_buf[i],
+				((uint8_t*)&frame.data) + c->in[i].offset,
+				c->in[i].size,
+				(struct signal*) vlist_at(&n->in.signals, i)) == 0) {
+				return 1;
+			}
 			signal_num++;
 			found_id = true;
 		}
