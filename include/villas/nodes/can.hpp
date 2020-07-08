@@ -55,12 +55,6 @@ struct can {
     struct timespec start_time;
 };
 
-/** @see node_vtable::type_start */
-int can_type_start(villas::node::SuperNode *sn);
-
-/** @see node_type::type_stop */
-int can_type_stop();
-
 /** @see node_type::init */
 int can_init(struct node *n);
 
@@ -85,25 +79,13 @@ int can_start(struct node *n);
 /** @see node_type::stop */
 int can_stop(struct node *n);
 
-/** @see node_type::pause */
-int can_pause(struct node *n);
-
-/** @see node_type::resume */
-int can_resume(struct node *n);
-
 /** @see node_type::write */
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-/** @see node_type::reverse */
-int can_reverse(struct node *n);
-
 /** @see node_type::poll_fds */
 int can_poll_fds(struct node *n, int fds[]);
-
-/** @see node_type::netem_fds */
-int can_netem_fds(struct node *n, int fds[]);
 
 /** @} */

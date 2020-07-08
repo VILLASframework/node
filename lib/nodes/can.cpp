@@ -41,27 +41,15 @@
 #include <villas/utils.hpp>
 #include <villas/sample.h>
 #include <villas/plugin.h>
-#include <villas/super_node.hpp>
+#include <villas/signal.h>
+#include <villas/node.h>
 
-/* Forward declartions */
+
+/* Forward declarations */
 static struct plugin p;
 
 using namespace villas::node;
 using namespace villas::utils;
-
-int can_type_start(villas::node::SuperNode *sn)
-{
-	/* TODO: Add implementation here */
-
-	return 0;
-}
-
-int can_type_stop()
-{
-	/* TODO: Add implementation here */
-
-	return 0;
-}
 
 int can_init(struct node *n)
 {
@@ -267,25 +255,6 @@ int can_stop(struct node *n)
 		close(c->socket);
 		c->socket = 0;
 	}
-	//TODO: do we need to free c->interface_name here?
-
-	return 0;
-}
-
-int can_pause(struct node *n)
-{
-	//struct can *c = (struct can *) n->_vd;
-
-	/* TODO: Add implementation here. */
-
-	return 0;
-}
-
-int can_resume(struct node *n)
-{
-	//struct can *c = (struct can *) n->_vd;
-
-	/* TODO: Add implementation here. */
 
 	return 0;
 }
@@ -542,13 +511,7 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return nwrite;
 }
 
-int can_reverse(struct node *n)
-{
-	//struct can *c = (struct can *) n->_vd;
-
-	/* TODO: Add implementation here. */
-
-	return 0;
+	return nwrite;
 }
 
 int can_poll_fds(struct node *n, int fds[])
@@ -559,49 +522,34 @@ int can_poll_fds(struct node *n, int fds[])
 	return 1; /* The number of file descriptors which have been set in fds */
 }
 
-int can_netem_fds(struct node *n, int fds[])
-{
-	//struct can *c = (struct can *) n->_vd;
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == State::DESTROYED)
+		vlist_init(&plugins);
 
-	/* TODO: Add implementation here. */
+	p.name			= "can";
+	p.description		= "Receive CAN messages using the socketCAN driver";
+	p.node.instances.state	= State::DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct can);
+	p.node.init		= can_init;
+	p.node.destroy		= can_destroy;
+	p.node.prepare		= can_prepare;
+	p.node.parse		= can_parse;
+	p.node.print		= can_print;
+	p.node.check		= can_check;
+	p.node.start		= can_start;
+	p.node.stop		= can_stop;
+	p.node.read		= can_read;
+	p.node.write		= can_write;
+	p.node.poll_fds		= can_poll_fds;
 
-	return 0; /* The number of file descriptors which have been set in fds */
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
 }
 
-__attribute__((constructor(110)))
-	static void register_plugin() {
-		if (plugins.state == State::DESTROYED)
-			vlist_init(&plugins);
-
-		p.name			= "can";
-		p.description		= "Receive CAN messages using the socketCAN driver";
-		p.node.instances.state	= State::DESTROYED;
-		p.node.vectorize	= 0;
-		p.node.size		= sizeof(struct can);
-		p.node.type.start	= can_type_start;
-		p.node.type.stop	= can_type_stop;
-		p.node.init		= can_init;
-		p.node.destroy		= can_destroy;
-		p.node.prepare		= can_prepare;
-		p.node.parse		= can_parse;
-		p.node.print		= can_print;
-		p.node.check		= can_check;
-		p.node.start		= can_start;
-		p.node.stop		= can_stop;
-		p.node.pause		= can_pause;
-		p.node.resume		= can_resume;
-		p.node.read		= can_read;
-		p.node.write		= can_write;
-		p.node.reverse		= can_reverse;
-		p.node.poll_fds		= can_poll_fds;
-		p.node.netem_fds	= can_netem_fds;
-
-		vlist_init(&p.node.instances);
-		vlist_push(&plugins, &p);
-	}
-
 __attribute__((destructor(110)))
-	static void deregister_plugin() {
-		if (plugins.state != State::DESTROYED)
-			vlist_remove_all(&plugins, &p);
-	}
+static void deregister_plugin() {
+	if (plugins.state != State::DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
