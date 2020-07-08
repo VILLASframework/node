@@ -83,7 +83,7 @@ int can_destroy(struct node *n)
 	return 0;
 }
 
-int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal *can_signals)
+int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal *can_signals, size_t signal_index)
 {
 	const char *name = nullptr;
 	uint64_t can_id = 0;
@@ -93,7 +93,7 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 	int ret = 1;
 	json_error_t err;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: i, s?: i, s?: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: i, s?: i, s?: i }",
 			     "name", &name,
 			     "can_id", &can_id,
 			     "can_size", &can_size,
@@ -105,10 +105,10 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 		goto out;
 	}
 
-	if (!name) {
+	/*if (!name) {
 		error("No signale name specified for signal.");
 		goto out;
-	}
+	}*/
 
 	if (can_size > 8 || can_size <= 0) {
 		error("can_size of %d for signal \"%s\" is invalid. You must satisfy 0 < can_size <= 8.", can_size, name);
@@ -120,17 +120,16 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 		goto out;
 	}
 
-	for (size_t i=0; i < vlist_length(node_signals); i++) {
-		sig = (struct signal*)vlist_at(node_signals, i);
-		if (strcmp(name, sig->name) == 0) {
-			can_signals[i].id = can_id;
-			can_signals[i].size = can_size;
-			can_signals[i].offset = can_offset;
-			ret = 0;
-			goto out;
-		}
+	sig = (struct signal*)vlist_at(node_signals, signal_index);
+	if ((!name && !sig->name) || (name && strcmp(name, sig->name) == 0)) {
+		can_signals[signal_index].id = can_id;
+		can_signals[signal_index].size = can_size;
+		can_signals[signal_index].offset = can_offset;
+		ret = 0;
+		goto out;
+	} else {
+		error("Signal configuration inconsistency detected: Signal with index %zu (\"%s\") does not match can_signal \"%s\"\n", signal_index, sig->name, name);
 	}
-	error("Did not find signal for can_signal \"%s\"\n while parsing configuration file", name);
      out:
 	return ret;
 }
@@ -152,9 +151,9 @@ int can_parse(struct node *n, json_t *cfg)
 			     "interface_name", &c->interface_name,
 			     "sample_rate", &c->sample_rate,
 			     "in",
-			     "signals", &json_in_signals,
+				     "signals", &json_in_signals,
 			     "out",
-			     "signals", &json_out_signals
+				     "signals", &json_out_signals
 			    );
 	if (ret) {
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -162,26 +161,26 @@ int can_parse(struct node *n, json_t *cfg)
 	}
 
 	if ((c->in = (struct can_signal*)calloc(
-						json_array_size(json_in_signals),
-						sizeof(struct can_signal))) == nullptr) {
+			json_array_size(json_in_signals),
+			sizeof(struct can_signal))) == nullptr) {
 		error("failed to allocate memory for input ids");
 		goto out;
 	}
 	if ((c->out = (struct can_signal*)calloc(
-						 json_array_size(json_out_signals),
-						 sizeof(struct can_signal))) == nullptr) {
+			 json_array_size(json_out_signals),
+			 sizeof(struct can_signal))) == nullptr) {
 		error("failed to allocate memory for output ids");
 		goto out;
 	}
 
 	json_array_foreach(json_in_signals, i, json_signal) {
-		if (can_parse_signal(json_signal, &n->in.signals, c->in) != 0) {
+		if (can_parse_signal(json_signal, &n->in.signals, c->in, i) != 0) {
 			error("at signal %zu in node %s.",i , node_name(n));
 			goto out;
 		}
 	}
 	json_array_foreach(json_out_signals, i, json_signal) {
-		if (can_parse_signal(json_signal, &n->out.signals, c->out) != 0) {
+		if (can_parse_signal(json_signal, &n->out.signals, c->out, i) != 0) {
 			error("at signal %zu in node %s.",i , node_name(n));
 			goto out;
 		}

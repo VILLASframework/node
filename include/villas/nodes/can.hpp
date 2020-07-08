@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "villas/signal_list.h"
 #include <villas/node/config.h>
 #include <villas/node.h>
 #include <villas/io.h>
@@ -49,6 +50,7 @@ struct can {
 
     /* States */
     int socket;
+    union signal_data *data;
     struct timespec start_time;
 };
 
