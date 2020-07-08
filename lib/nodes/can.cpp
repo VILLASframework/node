@@ -294,8 +294,8 @@ int can_resume(struct node *n)
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int nbytes;
-    unsigned nread;
-    unsigned signal_num;
+    unsigned nread = 0;
+    unsigned signal_num = 0;
 	struct can_frame frame;
     struct timeval tv;
     bool found_id = false;
@@ -304,55 +304,53 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-    for (nread=0; nread < cnt; nread++) {
-        signal_num = 0;
-        found_id = false;
-        while (signal_num < (unsigned)vlist_length(&(n->in.signals))) {
-            if ((nbytes = read(c->socket, &frame, sizeof(struct can_frame))) == -1) {
-                error("CAN read() returned -1. Is the CAN interface up?");
-                return 0;
-            }
-            if ((unsigned)nbytes != sizeof(struct can_frame)) {
-                error("CAN read() error. read() returned %d bytes but expected %zu",
-                            nbytes, sizeof(struct can_frame));
-                return 0;
-            }
-
-            debug(0,"received can message: (id:%d, len:%u, data: 0x%x:0x%x)",
-                    frame.can_id,
-                    frame.can_dlc,
-                    ((uint32_t*)&frame.data)[0],
-                    ((uint32_t*)&frame.data)[1]);
-
-            if (ioctl(c->socket, SIOCGSTAMP, &tv) != 0) {
-                warning("Could not get timestamp from CAN driver on interface \"%s\".", c->interface_name);
-                smps[nread]->ts.received = time_now();
-            } else {
-                TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
-            }
-
-            for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
-                if (c->in[i].id == frame.can_id) {
-                    /* This is a bit ugly. But there is no clean way to
-                     * clear the union. */
-                    smps[nread]->data[i].i = 0;
-                    memcpy(&smps[nread]->data[i],
-                           ((uint8_t*)&frame.data) + c->in[i].offset,
-                           c->in[i].size);
-                    signal_num++;
-                    found_id = true;
-                }
-            }
-            if (!found_id) {
-                error("did not find signal for can id %d\n", frame.can_id);
-                return 0;
-            }
-        }
-        /* Set signals, because other VILLASnode parts expect us to */
-        smps[nread]->signals = &n->in.signals;
-        smps[nread]->length = signal_num;
+    nbytes = recv(c->socket, &frame, sizeof(struct can_frame), MSG_DONTWAIT);
+    if (nbytes == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        return 0;
     }
-	return nread;
+    if (nbytes == -1) {
+        error("CAN read() returned -1. Is the CAN interface up?");
+        return 0;
+    }
+    if ((unsigned)nbytes != sizeof(struct can_frame)) {
+        error("CAN read() error. read() returned %d bytes but expected %zu",
+                    nbytes, sizeof(struct can_frame));
+        return 0;
+    }
+
+    debug(0,"received can message: (id:%d, len:%u, data: 0x%x:0x%x)",
+            frame.can_id,
+            frame.can_dlc,
+            ((uint32_t*)&frame.data)[0],
+            ((uint32_t*)&frame.data)[1]);
+
+    if (ioctl(c->socket, SIOCGSTAMP, &tv) != 0) {
+        warning("Could not get timestamp from CAN driver on interface \"%s\".", c->interface_name);
+        smps[nread]->ts.received = time_now();
+    } else {
+        TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
+    }
+
+    for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
+        if (c->in[i].id == frame.can_id) {
+            /* This is a bit ugly. But there is no clean way to
+             * clear the union. */
+            smps[nread]->data[i].i = 0;
+            memcpy(&smps[nread]->data[i],
+                   ((uint8_t*)&frame.data) + c->in[i].offset,
+                   c->in[i].size);
+            signal_num++;
+            found_id = true;
+        }
+    }
+    if (!found_id) {
+        error("did not find signal for can id %d\n", frame.can_id);
+        return 0;
+    }
+    /* Set signals, because other VILLASnode parts expect us to */
+    smps[nread]->signals = &n->in.signals;
+    smps[nread]->length = signal_num;
+	return 1;
 }
 
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -426,11 +424,12 @@ int can_reverse(struct node *n)
 
 int can_poll_fds(struct node *n, int fds[])
 {
-	//struct can *c = (struct can *) n->_vd;
+	struct can *c = (struct can *) n->_vd;
+    fds[0] = c->socket;
 
 	/* TODO: Add implementation here. */
 
-	return 0; /* The number of file descriptors which have been set in fds */
+	return 1; /* The number of file descriptors which have been set in fds */
 }
 
 int can_netem_fds(struct node *n, int fds[])
