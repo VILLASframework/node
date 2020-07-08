@@ -35,6 +35,11 @@ CAN_IF=vcan0
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 NUM_VALUES=${NUM_VALUES:-3}
 
+# Check if vcan0 interface is present
+if [[ ! $(ip link show "${CAN_IF}" up) ]]; then
+    echo "Did not find any vcan interface ${CAN_IF} or interface is not up"
+    exit 99
+fi
 
 #sudo modprobe vcan
 #sudo ip link add dev vcan0 type vcan
