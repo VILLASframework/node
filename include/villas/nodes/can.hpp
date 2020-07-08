@@ -51,6 +51,7 @@ struct can {
     /* States */
     int socket;
     union signal_data *sample_buf;
+    size_t sample_buf_num;
     struct timespec start_time;
 };
 

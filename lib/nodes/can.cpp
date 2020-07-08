@@ -21,6 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include "villas/signal_data.h"
+#include "villas/signal_list.h"
 #include "villas/signal_type.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +70,7 @@ int can_init(struct node *n)
 	c->interface_name = nullptr;
 	c->socket = 0;
 	c->sample_buf = nullptr;
+	c->sample_buf_num = 0;
 	c->in = nullptr;
 	c->out = nullptr;
 
@@ -287,9 +290,70 @@ int can_resume(struct node *n)
 	return 0;
 }
 
+int can_conv_to_raw(union signal_data* sig, struct signal *from, void* to, int size)
+{
+	if (size <= 0 || size > 8) {
+		error("signal size cannot be larger than 8!");
+		return 1;
+	}
+	switch(from->type) {
+	case SignalType::BOOLEAN:
+		*(uint8_t*)to = sig->b;
+		return 0;
+	case SignalType::INTEGER:
+		switch(size) {
+		case 1:
+			*(int8_t*)to = (int8_t)sig->i;
+			return 0;
+		case 2:
+			*(int16_t*)to = (int16_t)sig->i;
+			sig->i = (int64_t)*(int16_t*)from;
+			return 0;
+		case 3:
+			*(int16_t*)to = (int16_t)sig->i;
+			*((int8_t*)to+2) = (int8_t)(sig->i >> 16);
+			return 0;
+		case 4:
+			*(int32_t*)to = (int32_t)sig->i;
+			return 0;
+		case 8:
+			*(int64_t*)to = sig->i;
+			return 0;
+		default:
+			goto fail;
+		}
+	case SignalType::FLOAT:
+		switch(size) {
+		case 4:
+			assert(sizeof(float) == 4);
+			*(float*)to = (float)sig->f;
+			return 0;
+		case 8:
+			*(double*)to = sig->f;
+			return 0;
+		default:
+			goto fail;
+		}
+	case SignalType::COMPLEX:
+		if (size != 8) {
+			goto fail;
+		}
+		*(float*)to = sig->z.real();
+		*((float*)to+1) = sig->z.imag();
+		return 0;
+	default:
+		goto fail;
+	}
+ fail:
+	error("unsupported conversion to %s from raw (%p, %d)",
+	      signal_type_to_str(from->type), to, size);
+	return 1;
+}
+
 int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signal *to)
 {
 	if (size <= 0 || size > 8) {
+		error("signal size cannot be larger than 8!");
 		return 1;
 	}
 	switch(to->type) {
@@ -315,32 +379,40 @@ int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signa
 			sig->i = *(uint64_t*)from;
 			return 0;
 		default:
-			error("unsupported conversion");
-			return 1;
+			goto fail;
 		}
 	case SignalType::FLOAT:
 		switch(size) {
 		case 4:
+			assert(sizeof(float) == 4);
 			sig->f = (double)*(float*)from;
 			return 0;
 		case 8:
 			sig->f = *(double*)from;
 			return 0;
 		default:
-			error("unsupported conversion");
-			return 1;
+			goto fail;
 		}
+	case SignalType::COMPLEX:
+		if (size != 8) {
+			goto fail;
+		}
+		sig->z = std::complex<float>(*(float*)from, *((float*)from+1));
+		return 0;
 	default:
-		error("unsupported conversion");
-		return 1;
+		goto fail;
 	}
+ fail:
+	error("unsupported conversion from %s to raw (%p, %d)",
+	      signal_type_to_str(to->type), from, size);
+	return 1;
 }
 
 int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
+	int ret = 0;
 	int nbytes;
 	unsigned nread = 0;
-	unsigned signal_num = 0;
 	struct can_frame frame;
 	struct timeval tv;
 	bool found_id = false;
@@ -352,12 +424,12 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	nbytes = read(c->socket, &frame, sizeof(struct can_frame));
 	if (nbytes == -1) {
 		error("CAN read() returned -1. Is the CAN interface up?");
-		return 0;
+		goto out;
 	}
 	if ((unsigned)nbytes != sizeof(struct can_frame)) {
 		error("CAN read() error. read() returned %d bytes but expected %zu",
 		      nbytes, sizeof(struct can_frame));
-		return 0;
+		goto out;
 	}
 
 	debug(0,"received can message: (id:%d, len:%u, data: 0x%x:0x%x)",
@@ -376,10 +448,10 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			if (can_conv_from_raw(&c->sample_buf[i],
 				((uint8_t*)&frame.data) + c->in[i].offset,
 				c->in[i].size,
-				(struct signal*) vlist_at(&n->in.signals, i)) == 0) {
-				return 1;
+				(struct signal*) vlist_at(&n->in.signals, i)) != 0) {
+				goto out;
 			}
-			signal_num++;
+			c->sample_buf_num++;
 			found_id = true;
 		}
 	}
@@ -387,12 +459,22 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		error("did not find signal for can id %d\n", frame.can_id);
 		return 0;
 	}
+	debug(0, "received %zu signals\n", c->sample_buf_num);
+	/* Copy signal data to sample only when all signals have been received */
+	if (c->sample_buf_num == vlist_length(&n->in.signals)) {
+		smps[nread]->length = c->sample_buf_num;
+		memcpy(smps[nread]->data, c->sample_buf, c->sample_buf_num*sizeof(union signal_data));
+		c->sample_buf_num = 0;
+		smps[nread]->flags |= (int) SampleFlags::HAS_DATA;
+		ret = 1;
+	} else {
+		smps[nread]->length = 0;
+		ret = 0;
+	}
+ out:
 	/* Set signals, because other VILLASnode parts expect us to */
 	smps[nread]->signals = &n->in.signals;
-	smps[nread]->length = signal_num;
-	smps[nread]->flags |= (int) SampleFlags::HAS_DATA;
-	printf("flags: %d\n", smps[nread]->flags);
-	return 1;
+	return ret;
 }
 
 int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -416,9 +498,11 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 			}
 			frame[fsize].can_dlc = c->out[i].size;
 			frame[fsize].can_id = c->out[i].id;
-			memcpy(((uint8_t*)&frame[fsize].data) + c->out[i].offset,
-			       &smps[nwrite]->data[i],
-			       c->out[i].size);
+			can_conv_to_raw(
+				&smps[nwrite]->data[i],
+				(struct signal*)vlist_at(&(n->out.signals), i),
+				&frame[fsize].data,
+				c->out[i].size);
 			fsize++;
 		}
 		for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
@@ -426,13 +510,16 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 				continue;
 			}
 			for (size_t j=0; j < fsize; j++) {
-				if (c->out[i].id == frame[j].can_id) {
-					frame[j].can_dlc += c->out[i].size;
-					memcpy(((uint8_t*)&frame[j].data) + c->out[i].offset,
-					       &smps[nwrite]->data[i],
-					       c->out[i].size);
-					break;
+				if (c->out[i].id != frame[j].can_id) {
+					continue;
 				}
+				frame[j].can_dlc += c->out[i].size;
+				can_conv_to_raw(
+					&smps[nwrite]->data[i],
+					(struct signal*)vlist_at(&(n->out.signals), i),
+					(uint8_t*)&frame[j].data + c->out[i].offset,
+					c->out[i].size);
+				break;
 			}
 		}
 		for (size_t j=0; j < fsize; j++) {
