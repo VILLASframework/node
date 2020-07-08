@@ -147,7 +147,6 @@ int can_parse(struct node *n, json_t *cfg)
 
     c->in = nullptr;
     c->out = nullptr;
-    printf("can_parse\n");
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: F, s?: { s?: o }, s?: { s?: o } }",
 		"interface_name", &c->interface_name,
@@ -161,7 +160,6 @@ int can_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
         goto out;
     }
-    printf("in: %lu, out: %lu\n", json_array_size(json_in_signals), json_array_size(json_out_signals));
 
     if ((c->in = (struct can_signal*)calloc(
                           json_array_size(json_in_signals),
@@ -220,11 +218,6 @@ int can_check(struct node *n)
 
 int can_prepare(struct node *n)
 {
-    struct signal* sig;
-    for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
-        sig = (struct signal*)vlist_at(&n->in.signals, i);
-        printf("signal: %s\n", sig->name);
-    }
 	//struct can *c = (struct can *) n->_vd;
 
 	/* TODO: Add implementation here. The following is just an can */
@@ -325,7 +318,8 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
                 return 0;
             }
 
-            printf("id:%d, len:%u, data: 0x%x:0x%x\n", frame.can_id,
+            debug(0,"received can message: (id:%d, len:%u, data: 0x%x:0x%x)",
+                    frame.can_id,
                     frame.can_dlc,
                     ((uint32_t*)&frame.data)[0],
                     ((uint32_t*)&frame.data)[1]);
@@ -338,7 +332,6 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
             }
 
             for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
-                printf("%d\n", c->in[i].id);
                 if (c->in[i].id == frame.can_id) {
                     /* This is a bit ugly. But there is no clean way to
                      * clear the union. */
@@ -385,7 +378,7 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
             frame[fsize].can_id = c->out[i].id;
             memcpy(((uint8_t*)&frame[fsize].data) + c->out[i].offset,
                    &smps[nwrite]->data[i],
-                   c->in[i].size);
+                   c->out[i].size);
             fsize++;
         }
         for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
@@ -397,17 +390,18 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
                     frame[j].can_dlc += c->out[i].size;
                     memcpy(((uint8_t*)&frame[j].data) + c->out[i].offset,
                            &smps[nwrite]->data[i],
-                           c->in[i].size);
+                           c->out[i].size);
+                    break;
                 }
             }
         }
         for (size_t j=0; j < fsize; j++) {
-            printf("id:%d, len:%u, data: 0x%x:0x%x\n", frame[j].can_id,
+            debug(0,"writing can message: (id:%d, dlc:%u, data:0x%x:0x%x)", frame[j].can_id,
                     frame[j].can_dlc,
                     ((uint32_t*)&frame[j].data)[0],
                     ((uint32_t*)&frame[j].data)[1]);
 
-            if ((nbytes = write(c->socket, &frame, sizeof(struct can_frame))) == -1) {
+            if ((nbytes = write(c->socket, &frame[j], sizeof(struct can_frame))) == -1) {
                 error("CAN write() returned -1. Is the CAN interface up?");
                 return nwrite;
             }
@@ -417,7 +411,6 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
                 return nwrite;
             }
         }
-
     }
 	return nwrite;
 }
@@ -455,8 +448,7 @@ static void register_plugin() {
 		vlist_init(&plugins);
 
 	p.name			= "can";
-	p.description		= "CAN bus for Xilinx MPSoC boards";
-	p.type			= PluginType::NODE;
+	p.description		= "Receive CAN messages using the socketCAN driver";
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct can);
