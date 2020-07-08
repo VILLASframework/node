@@ -38,23 +38,23 @@ struct node;
 union signal_data;
 
 struct can_signal {
-    uint32_t id;
-    int offset;
-    int size;
+	uint32_t id;
+	int offset;
+	int size;
 };
 
 struct can {
-    /* Settings */
-    char *interface_name;
-    double *sample_rate;
-    struct can_signal *in;
-    struct can_signal *out;
+	/* Settings */
+	char *interface_name;
+	double *sample_rate;
+	struct can_signal *in;
+	struct can_signal *out;
 
-    /* States */
-    int socket;
-    union signal_data *sample_buf;
-    size_t sample_buf_num;
-    struct timespec start_time;
+	/* States */
+	int socket;
+	union signal_data *sample_buf;
+	size_t sample_buf_num;
+	struct timespec start_time;
 };
 
 /** @see node_type::init */
