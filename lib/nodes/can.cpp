@@ -304,10 +304,7 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-    nbytes = recv(c->socket, &frame, sizeof(struct can_frame), MSG_DONTWAIT);
-    if (nbytes == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        return 0;
-    }
+    nbytes = read(c->socket, &frame, sizeof(struct can_frame));
     if (nbytes == -1) {
         error("CAN read() returned -1. Is the CAN interface up?");
         return 0;
@@ -324,11 +321,9 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
             ((uint32_t*)&frame.data)[0],
             ((uint32_t*)&frame.data)[1]);
 
-    if (ioctl(c->socket, SIOCGSTAMP, &tv) != 0) {
-        warning("Could not get timestamp from CAN driver on interface \"%s\".", c->interface_name);
-        smps[nread]->ts.received = time_now();
-    } else {
+    if (ioctl(c->socket, SIOCGSTAMP, &tv) == 0) {
         TIMEVAL_TO_TIMESPEC(&tv, &smps[nread]->ts.received);
+        smps[nread]->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
     }
 
     for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
@@ -350,6 +345,8 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
     /* Set signals, because other VILLASnode parts expect us to */
     smps[nread]->signals = &n->in.signals;
     smps[nread]->length = signal_num;
+    smps[nread]->flags |= (int) SampleFlags::HAS_DATA;
+    printf("flags: %d\n", smps[nread]->flags);
 	return 1;
 }
 
@@ -426,8 +423,6 @@ int can_poll_fds(struct node *n, int fds[])
 {
 	struct can *c = (struct can *) n->_vd;
     fds[0] = c->socket;
-
-	/* TODO: Add implementation here. */
 
 	return 1; /* The number of file descriptors which have been set in fds */
 }
