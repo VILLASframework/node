@@ -28,6 +28,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <filesystem>
 
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
@@ -35,6 +36,8 @@
 #include <villas/boxes.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/config_helper.hpp>
+
+namespace fs = std::filesystem;
 
 using namespace villas;
 using namespace villas::node;
@@ -150,15 +153,15 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_init(&cfg);
 	config_set_auto_convert(&cfg, 1);
 
-	/* Setup libconfig include path.
-	* This is only supported for local files */
-	// if (isLocalFile(uri)) {
-	// 	char *cpy = strdup(uri.c_str());
+	/* Setup libconfig include path. */
+	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
+	if (isLocalFile(uri)) {
+		const auto &inclDir = uri.parent_path();
 
-	// 	config_set_include_dir(&cfg, dirname(cpy));
+		logger->info("Setting include dir to: {}", inclDir);
 
-	// 	free(cpy);
-	// }
+		config_set_include_dir(&cfg, inclDir.c_str());
+	}
 
 	/* Rewind before re-reading */
 	rewind(f);
