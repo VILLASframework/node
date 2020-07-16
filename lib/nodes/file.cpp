@@ -92,15 +92,7 @@ int file_parse(struct node *n, json_t *cfg)
 	const char *epoch = nullptr;
 	double epoch_flt = 0;
 
-	/* Default values */
-	f->rate = 0;
-	f->eof_mode = file::EOFBehaviour::STOP;
-	f->epoch_mode = file::EpochMode::DIRECT;
-	f->flush = 0;
-	f->buffer_size_in = 0;
-	f->buffer_size_out = 0;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i }, s?: { s?: b, s?: i } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i, s?: i }, s?: { s?: b, s?: i } }",
 		"uri", &uri_tmpl,
 		"format", &format,
 		"in",
@@ -109,6 +101,7 @@ int file_parse(struct node *n, json_t *cfg)
 			"epoch_mode", &epoch,
 			"epoch", &epoch_flt,
 			"buffer_size", &f->buffer_size_in,
+			"skip", &f->skip_lines,
 		"out",
 			"flush", &f->flush,
 			"buffer_size", &f->buffer_size_out
@@ -206,17 +199,18 @@ char * file_print(struct node *n)
 			break;
 	}
 
-	strcatf(&buf, "uri=%s, format=%s, flush=%s, eof=%s, epoch=%s, epoch=%.2f",
+	strcatf(&buf, "uri=%s, format=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
 		f->uri ? f->uri : f->uri_tmpl,
 		format_type_name(f->format),
 		f->flush ? "yes" : "no",
+		f->skip_lines,
 		eof_str,
 		epoch_str,
 		time_to_double(&f->epoch)
 	);
 
 	if (f->rate)
-		strcatf(&buf, ", rate=%.1f", f->rate);
+		strcatf(&buf, ", in.rate=%.1f", f->rate);
 
 	if (f->first.tv_sec || f->first.tv_nsec)
 		strcatf(&buf, ", first=%.2f", time_to_double(&f->first));
@@ -329,6 +323,12 @@ int file_start(struct node *n)
 	}
 
 	io_rewind(&f->io);
+
+	/* Fast-forward */
+	struct sample *smp = sample_alloc_mem(vlist_length(&n->in.signals));
+	for (unsigned i = 0; i < f->skip_lines; i++)
+		io_scan(&f->io, &smp, 1);
+	sample_free(smp);
 
 	return 0;
 }
@@ -480,6 +480,15 @@ int file_init(struct node *n)
 	struct file *f = (struct file *) n->_vd;
 
 	new (&f->task) Task(CLOCK_REALTIME);
+
+	/* Default values */
+	f->rate = 0;
+	f->eof_mode = file::EOFBehaviour::STOP;
+	f->epoch_mode = file::EpochMode::DIRECT;
+	f->flush = 0;
+	f->buffer_size_in = 0;
+	f->buffer_size_out = 0;
+	f->skip_lines = 0;
 
 	return 0;
 }

@@ -43,6 +43,7 @@ struct file {
 	char *uri;			/**< Real file name. */
 	char *mode;			/**< File access mode. */
 
+	unsigned skip_lines;		/**< Skip the first n-th lines/samples of the file. */
 	int flush;			/**< Flush / upload file contents after each write. */
 	struct Task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double rate;			/**< The read rate. */
