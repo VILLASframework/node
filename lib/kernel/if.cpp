@@ -48,7 +48,7 @@ int if_init(struct interface *i, struct rtnl_link *link)
 
 	debug(LOG_IF | 3, "Created interface '%s'", if_name(i));
 
-	int  n = if_get_irqs(i);
+	int n = if_get_irqs(i);
 	if (n > 0)
 		debug(6, "Found %u IRQs for interface '%s'", n, if_name(i));
 	else
@@ -165,6 +165,8 @@ struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces)
 	i = new struct interface;
 	if (!i)
 		throw MemoryAllocationError();
+
+	memset(i, 0, sizeof(struct interface));
 
 	ret = if_init(i, link);
 	if (ret)
