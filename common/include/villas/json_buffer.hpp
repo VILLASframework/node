@@ -39,7 +39,7 @@ protected:
 
 public:
 	/** Encode JSON document /p j and append it to the buffer */
-	int encode(json_t *j, int flags = JSON_INDENT(4));
+	int encode(json_t *j, int flags = 0);
 
 	/** Decode JSON document from the beginning of the buffer */
 	json_t * decode();
