@@ -79,8 +79,7 @@ int Tool::run()
 		logger->info(CLR_GRN("Goodbye!"));
 
 		return ret;
-	}
-	catch (std::runtime_error &e) {
+	} catch (const std::runtime_error &e) {
 		logger->error("{}", e.what());
 
 		return -1;
