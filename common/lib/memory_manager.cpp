@@ -167,7 +167,7 @@ MemoryManager::pathCheck(const MemoryGraph::Path &path)
 		auto mapping = memoryGraph.getEdge(mappingId);
 		try {
 			translation += getTranslationFromMapping(*mapping);
-		} catch(const InvalidTranslation&) {
+		} catch (const InvalidTranslation&) {
 			return false;
 		}
 	}

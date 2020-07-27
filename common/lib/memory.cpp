@@ -233,7 +233,7 @@ HostDmaRam::HostDmaRamAllocator::~HostDmaRamAllocator()
 	try {
 		auto translation = mm.getTranslationFromProcess(getAddrSpaceId());
 		baseVirt = reinterpret_cast<void*>(translation.getLocalAddr(0));
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		/* Not mapped, nothing to do */
 		return;
 	}
