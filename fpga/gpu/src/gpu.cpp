@@ -121,8 +121,7 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 			return true;
 		else 
 			logger->warn("There's already a mapping, but too small");
-	}
-	catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		// not yet reachable, that's okay, proceed
 	}
 
@@ -154,7 +153,7 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 		                                        mappedBaseAddrSpaceId);
 		baseAddrOnPci = translationPci.getLocalAddr(0);
 		sizeOnPci = translationPci.getSize();
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		logger->error("Memory is not reachable via PCIe bus");
 		return false;
 	}
@@ -324,7 +323,7 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem)
 	try {
 		auto path = mm.findPath(mm.getPciAddressSpace(), mem.getAddrSpaceId());
 		isIoMemory = true;
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		// not reachable via PCI -> not IO memory
 	}
 
