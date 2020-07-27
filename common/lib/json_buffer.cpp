@@ -40,9 +40,9 @@ json_t * JsonBuffer::decode()
 	return j;
 }
 
-int JsonBuffer::encode(json_t *j)
+int JsonBuffer::encode(json_t *j, int flags)
 {
-	return json_dump_callback(j, callback, this, 0);
+	return json_dump_callback(j, callback, this, flags);
 }
 
 int JsonBuffer::callback(const char *data, size_t len, void *ctx)

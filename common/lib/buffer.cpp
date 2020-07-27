@@ -75,11 +75,11 @@ int Buffer::parseJson(json_t **j)
 	return 0;
 }
 
-int Buffer::appendJson(json_t *j)
+int Buffer::appendJson(json_t *j, int flags)
 {
 	size_t l;
 
-retry:	l = json_dumpb(j, buf + len, size - len, 0);
+retry:	l = json_dumpb(j, buf + len, size - len, flags);
 	if (size < len + l) {
 		buf = (char *) realloc(buf, len + l);
 		if (!buf)
