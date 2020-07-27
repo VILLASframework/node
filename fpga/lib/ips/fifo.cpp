@@ -47,7 +47,7 @@ bool Fifo::init()
 		// if this throws an exception, then there's no AXI4 data interface
 		fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
 		fifo_cfg.Datainterface = 1;
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		fifo_cfg.Datainterface = 0;
 	}
 

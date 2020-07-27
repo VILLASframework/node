@@ -381,7 +381,7 @@ Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface
 
 	try {
 		mm.findPath(getMasterAddrSpaceByInterface(interface), mem.getAddrSpaceId());
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		// not (yet) accessible
 		return false;
 	}

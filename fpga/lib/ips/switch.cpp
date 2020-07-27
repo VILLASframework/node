@@ -76,7 +76,7 @@ AxiStreamSwitch::connectInternal(const std::string &portSlave,
 	// check if slave port exists
 	try {
 		getSlavePort(portSlave);
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		logger->error("Switch doesn't have a slave port named '{}'", portSlave);
 		return false;
 	}
@@ -84,7 +84,7 @@ AxiStreamSwitch::connectInternal(const std::string &portSlave,
 	// check if master port exists
 	try {
 		getMasterPort(portMaster);
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		logger->error("Switch doesn't have a master port named '{}'", portMaster);
 		return false;
 	}

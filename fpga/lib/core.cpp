@@ -178,7 +178,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 				int num;
 				try {
 					num = std::stoi(tokens[1]);
-				} catch(const std::invalid_argument&) {
+				} catch (const std::invalid_argument&) {
 					logger->warn("IRQ number is not an integer: '{}'", irqEntry);
 					continue;
 				}
@@ -357,7 +357,7 @@ Core::getInterruptController(const std::string &interruptName) const
 	try {
 		const IrqPort irq = irqs.at(interruptName);
 		return irq.irqController;
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		return nullptr;
 	}
 }
