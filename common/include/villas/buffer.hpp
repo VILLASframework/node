@@ -48,7 +48,7 @@ public:
 
 	int parseJson(json_t **j);
 
-	int appendJson(json_t *j, int flags = JSON_INDENT(4));
+	int appendJson(json_t *j, int flags = 0);
 };
 
 } /* namespace villas */
