@@ -12,6 +12,8 @@ LOGGER = logging.getLogger('villas.node')
 
 class Node(object):
 
+    api_version = 'v2'
+
     def __init__(self, log_filename=None, config_filename=None,
                  config={}, api='http://localhost:8080',
                  executable='villas-node', **kwargs):
@@ -21,7 +23,13 @@ class Node(object):
         self.api_endpoint = api
         self.executable = executable
 
-        self.child = None
+        schema, _ = api.split('://')
+        if schema in ('http', 'https'):
+            pass
+        elif schema in ('ws', 'wss'):
+            pass
+        elif schema == 'unix':
+            pass
 
     def start(self):
         self.config_file = tempfile.NamedTemporaryFile(mode='w+',
@@ -71,26 +79,25 @@ class Node(object):
     def active_config(self):
         resp = self.request('config')
 
-        return resp['response']
+        return resp
 
     @property
     def nodes(self):
-        return self.request('nodes')['response']
+        return self.request('nodes')
 
     @property
     def paths(self):
-        return self.request('paths')['response']
+        return self.request('paths')
 
     def request(self, action, req=None):
-        body = {
-            'action': action,
-            'id': str(uuid.uuid4())
+        args = {
+            'timeout': 1
         }
 
         if req is not None:
-            body['request'] = req
+            args['json'] = req
 
-        r = requests.post(self.api_endpoint + '/api/v1', json=body, timeout=1)
+        r = requests.get(f'{self.api_endpoint}/api/{self.api_version}/{action}', **args)
 
         r.raise_for_status()
 
@@ -100,7 +107,7 @@ class Node(object):
         try:
             resp = self.request('capabilities')
 
-            return resp['response']['build']
+            return resp['build']
         except Exception:
             ver = subprocess.check_output([self.executable, '-V'], )
 
