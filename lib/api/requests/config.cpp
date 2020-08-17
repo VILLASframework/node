@@ -1,4 +1,4 @@
-/** Unix domain socket Api session.
+/** The "config" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -20,66 +20,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <sstream>
+#include <villas/super_node.hpp>
+#include <villas/api/session.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
-#include <villas/compat.hpp>
-#include <villas/log.hpp>
-#include <villas/api/sessions/socket.hpp>
+namespace villas {
+namespace node {
+namespace api {
 
-using namespace villas::node::api::sessions;
+class ConfigRequest : public Request {
 
-Socket::Socket(Api *a, int s) :
-	Session(a),
-	sd(s)
-{
+public:
+	using Request::Request;
 
-}
+	virtual Response * execute()
+	{
+		json_t *cfg = session->getSuperNode()->getConfig();
 
-Socket::~Socket()
-{
-	close(sd);
-}
+		if (method != Method::GET)
+			throw InvalidMethod(this);
 
-std::string Socket::getName()
-{
-	std::stringstream ss;
+		if (body != nullptr)
+			throw BadRequest("Config endpoint does not accept any body data");
 
-	ss << Session::getName() << ", mode=socket";
+		auto *json_config = cfg
+			? json_incref(cfg)
+			: json_object();
 
-	return ss.str();
-}
-
-int Socket::read()
-{
-	json_t *j;
-	json_error_t err;
-
-	j = json_loadfd(sd, JSON_DISABLE_EOF_CHECK, &err);
-	if (!j)
-		return -1;
-
-	request.queue.push(j);
-
-	api->pending.push(this);
-
-	return 0;
-}
-
-int Socket::write()
-{
-	int ret;
-	json_t *j;
-
-	while (!response.queue.empty()) {
-		j = response.queue.pop();
-
-		ret = json_dumpfd(j, sd, 0);
-		if (ret)
-			return ret;
-
-		char nl = '\n';
-		send(sd, &nl, 1, 0);
+		return new Response(session, json_config);
 	}
+};
 
-	return 0;
-}
+/* Register API request */
+static char n[] = "config";
+static char r[] = "/config";
+static char d[] = "get configuration of this VILLASnode instance";
+static RequestPlugin<ConfigRequest, n, r, d> p;
+
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

@@ -30,19 +30,49 @@
 #include <thread>
 #include <list>
 
+#include <libwebsockets.h>
+
 #include <villas/log.hpp>
 #include <villas/common.hpp>
 #include <villas/api/server.hpp>
 #include <villas/queue_signalled.hpp>
+#include <villas/exceptions.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-const int version = 1;
+const int version = 2;
 
 /* Forward declarations */
 class Session;
+class Response;
+class Request;
+
+class Error : public RuntimeError {
+
+public:
+	Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR, const std::string &msg = "Invalid API request") :
+		RuntimeError(msg),
+		code(c)
+	{ }
+
+	int code;
+};
+
+class BadRequest : public Error {
+
+public:
+	BadRequest(const std::string &msg = "Bad API request") :
+		Error(HTTP_STATUS_BAD_REQUEST, msg)
+	{ }
+};
+
+class InvalidMethod : public BadRequest {
+
+public:
+	InvalidMethod(Request *req);
+};
 
 } /* namespace api */
 
@@ -60,7 +90,6 @@ protected:
 	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */
 
 	SuperNode *super_node;
-	api::Server server;
 
 	void run();
 	void worker();

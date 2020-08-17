@@ -27,20 +27,27 @@
 #include <villas/node.h>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
-#include <villas/api/action.hpp>
 #include <villas/api/session.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class NodesAction : public Action {
+class NodesRequest : public Request {
 
 public:
-	using Action::Action;
+	using Request::Request;
 
-	virtual int execute(json_t *args, json_t **resp)
+	virtual Response * execute()
 	{
+		if (method != Method::GET)
+			throw InvalidMethod(this);
+
+		if (body != nullptr)
+			throw BadRequest("Nodes endpoint does not accept any body data");
+
 		json_t *json_nodes = json_array();
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
@@ -86,16 +93,15 @@ public:
 			json_array_append_new(json_nodes, json_node);
 		}
 
-		*resp = json_nodes;
-
-		return 0;
+		return new Response(session, json_nodes);
 	}
 };
 
-/* Register action */
+/* Register API request */
 static char n[] = "nodes";
+static char r[] = "/nodes";
 static char d[] = "retrieve list of all known nodes";
-static ActionPlugin<NodesAction, n, d> p;
+static RequestPlugin<NodesRequest, n, r, d> p;
 
 } /* namespace api */
 } /* namespace node */

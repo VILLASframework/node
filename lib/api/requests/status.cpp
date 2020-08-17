@@ -1,6 +1,5 @@
-/** HTTP Api session.
+/** The "stats" API request.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,41 +20,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#ifdef LWS_WITH_SERVER_STATUS
 
-#include <villas/api/sessions/wsi.hpp>
+#include <jansson.h>
 
-extern "C" int api_http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
-
-/* Forward declarations */
-class SuperNode;
-class Api;
-
 namespace api {
-namespace sessions {
 
-class Http : public Wsi {
-
-protected:
-	bool headersSent;
+class StatusRequest : public Request {
 
 public:
-	Http(Api *s, lws *w);
-	virtual ~Http() { };
+	using Request::Request;
 
-	void read(void *in, size_t len);
+	virtual Response * execute()
+	{
+		int ret;
+		struct lws_context *ctx = lws_get_context(s->wsi);
+		char buf[4096];
 
-	int complete();
+		if (method != Method::GET)
+			throw InvalidMethod(this);
 
-	int write();
+		if (body != nullptr)
+			throw BadRequest("Status endpoint does not accept any body data");
 
-	virtual std::string getName();
+		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
+		if (ret)
+			throw Error();
+
+		auto *json_status = json_loads(buf, 0, nullptr);
+
+		return new Response(session, json_status);
+	}
 };
 
-} /* namespace sessions */
+/* Register API request */
+static char n[] = "status";
+static char r[] = "/status";
+static char d[] = "get status and statistics of web server";
+static RequestPlugin<StatusRequest, n, r, d> p;
+
 } /* namespace api */
 } /* namespace node */
 } /* namespace villas */
+
+#endif /* LWS_WITH_SERVER_STATUS */

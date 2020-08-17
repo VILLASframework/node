@@ -1,4 +1,4 @@
-/** The API ressource for getting and resetting statistics.
+/** The "file" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -20,61 +20,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <jansson.h>
-
-#include <villas/log.h>
-#include <villas/node.h>
-#include <villas/stats.hpp>
 #include <villas/super_node.hpp>
-#include <villas/utils.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/action.hpp>
-#include <villas/api.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
+
+#include <villas/nodes/file.hpp>
+#include <villas/io.h>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class StatsAction : public Action  {
+class FileRequest : public Request {
 
 public:
-	using Action::Action;
+	using Request::Request;
 
-	virtual int execute(json_t *args, json_t **resp)
+	virtual Response * execute()
 	{
-		int ret, reset = 0;
-		json_error_t err;
+		if (method != Method::GET && method != Method::POST)
+			throw InvalidMethod(this);
 
-		ret = json_unpack_ex(args, &err, 0, "{ s?: b }",
-			"reset", &reset
-		);
-		if (ret < 0)
-			return ret;
+		if (body != nullptr)
+			throw BadRequest("File endpoint does not accept any body data");
+
+		const auto &nodeName = matches[1].str();
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
+		struct node *n = (struct node *) vlist_lookup(nodes, nodeName.c_str());
+		if (!n)
+			throw BadRequest("Invalid node");
 
-		for (size_t i = 0; i < vlist_length(nodes); i++) {
-			struct node *n = (struct node *) vlist_at(nodes, i);
+		struct node_type *vt = node_type_lookup("file");
 
-			if (n->stats) {
-				if (reset) {
-					n->stats->reset();
-					info("Stats resetted for node %s", node_name(n));
-				}
-			}
-		}
+		if (n->_vt != vt)
+			throw BadRequest("This node is not a file node");
 
-		*resp = json_object();
+		struct file *f = (struct file *) n->_vd;
 
-		return 0;
+		if (matches[1].str() == "rewind")
+			io_rewind(&f->io);
+
+		return new Response(session);
 	}
-
 };
 
-/* Register actions */
-static char n[] = "stats";
-static char d[] = "get or reset internal statistics counters";
-static ActionPlugin<StatsAction, n, d> p;
+/* Register API request */
+static char n[] = "file";
+static char r[] = "/node/([^/]+)/file(?:/([^/]+))?";
+static char d[] = "control instances of 'file' node-type";
+static RequestPlugin<FileRequest, n, r, d> p;
 
 } /* namespace api */
 } /* namespace node */

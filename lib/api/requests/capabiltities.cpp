@@ -21,19 +21,20 @@
  *********************************************************************************/
 
 #include <villas/config.h>
-#include <villas/api/action.hpp>
 #include <villas/hook.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class CapabilitiesAction : public Action {
+class CapabilitiesRequest : public Request {
 
 public:
-	using Action::Action;
+	using Request::Request;
 
-	virtual int execute(json_t *args, json_t **resp)
+	virtual Response * execute()
 	{
 		json_t *json_hooks = json_array();
 		json_t *json_apis  = json_array();
@@ -41,7 +42,13 @@ public:
 		json_t *json_formats = json_array();
 		json_t *json_name;
 
-		for (auto f : plugin::Registry::lookup<ActionFactory>()) {
+		if (method != Method::GET)
+			throw InvalidMethod(this);
+
+		if (body != nullptr)
+			throw BadRequest("Capabilities endpoint does not accept any body data");
+
+		for (auto f : plugin::Registry::lookup<RequestFactory>()) {
 			json_name = json_string(f->getName().c_str());
 
 			json_array_append_new(json_apis, json_name);
@@ -67,21 +74,22 @@ public:
 		}
 #endif
 
-		*resp = json_pack("{ s: s, s: o, s: o, s: o, s: o }",
+		auto *json_capabilities = json_pack("{ s: s, s: o, s: o, s: o, s: o }",
 				"build", PROJECT_BUILD_ID,
 				"hooks", json_hooks,
 				"node-types", json_nodes,
 				"apis", json_apis,
 				"formats", json_formats);
 
-		return 0;
+		return new Response(session, json_capabilities);
 	}
 };
 
-/* Register action */
+/* Register API request */
 static char n[] = "capabilities";
+static char r[] = "/capabilities";
 static char d[] = "get capabiltities and details about this VILLASnode instance";
-static ActionPlugin<CapabilitiesAction, n, d> p;
+static RequestPlugin<CapabilitiesRequest, n, r, d> p;
 
 } /* namespace api */
 } /* namespace node */

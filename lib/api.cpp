@@ -21,7 +21,9 @@
  *********************************************************************************/
 
 #include <villas/api.hpp>
+#include <villas/web.hpp>
 #include <villas/api/session.hpp>
+#include <villas/api/request.hpp>
 #include <villas/utils.hpp>
 #include <villas/node/config.h>
 #include <villas/memory.h>
@@ -31,10 +33,17 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::api;
 
+InvalidMethod::InvalidMethod(Request *req) :
+	BadRequest(
+		fmt::format("The '{}' API endpoint does not support {} requests",
+			req->factory->getName(), Session::methodToString(req->method)
+		)
+	)
+{ }
+
 Api::Api(SuperNode *sn) :
 	state(State::INITIALIZED),
-	super_node(sn),
-	server(this)
+	super_node(sn)
 {
 	logger = logging.get("api");
 }
@@ -49,8 +58,6 @@ void Api::start()
 	assert(state != State::STARTED);
 
 	logger->info("Starting sub-system");
-
-	server.start();
 
 	running = true;
 	thread = std::thread(&Api::worker, this);
@@ -76,28 +83,7 @@ void Api::stop()
 	pending.push(nullptr); /* unblock thread */
 	thread.join();
 
-	server.stop();
-
 	state = State::STOPPED;
-}
-
-void Api::run()
-{
-	if (pending.empty())
-		return;
-
-	/* Process pending actions */
-	while (!pending.empty()) {
-		Session *s = pending.pop();
-		if (s) {
-			/* Check that the session is still alive */
-			auto it = std::find(sessions.begin(), sessions.end(), s);
-			if (it == sessions.end())
-				return;
-
-			s->runPendingActions();
-		}
-	}
 }
 
 void Api::worker()
@@ -105,8 +91,16 @@ void Api::worker()
 	logger->info("Started worker");
 
 	while (running) {
-		run();
-		server.run();
+		/* Process pending requests */
+		while (!pending.empty()) {
+			Session *s = pending.pop();
+			if (s) {
+				/* Check that the session is still alive */
+				auto it = std::find(sessions.begin(), sessions.end(), s);
+				if (it != sessions.end())
+					s->execute();
+			}
+		}
 	}
 
 	logger->info("Stopped worker");

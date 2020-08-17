@@ -1,4 +1,4 @@
-/** The "paths" API ressource.
+/** The API ressource for start/stop/pause/resume paths.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -22,51 +22,66 @@
 
 #include <jansson.h>
 
+#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/super_node.hpp>
-#include <villas/path.h>
 #include <villas/utils.hpp>
-#include <villas/api/action.hpp>
+#include <villas/api.hpp>
 #include <villas/api/session.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class PathsAction : public Action {
+template<int (*A)(struct node *)>
+class PathActionRequest : public Request  {
 
 public:
-	using Action::Action;
+	using Request::Request;
 
-	virtual int execute(json_t *args, json_t **resp)
+	virtual Response * execute()
 	{
-		json_t *json_paths = json_array();
+		if (method != Method::POST)
+			throw InvalidMethod(this);
 
-		struct vlist *paths = session->getSuperNode()->getPaths();
+		if (body != nullptr)
+			throw BadRequest("Path endpoints do not accept any body data");
 
-		for (size_t i = 0; i < vlist_length(paths); i++) {
-			struct vpath *p = (struct vpath *) vlist_at(paths, i);
+		unsigned long pathIndex;
+		const auto &pathIndexStr = matches[1].str();
 
-			json_t *json_path = json_pack("{ s: s }",
-				"state", state_print(p->state)
-			);
-
-			/* Add all additional fields of node here.
-			 * This can be used for metadata */
-			json_object_update(json_path, p->cfg);
-
-			json_array_append_new(json_paths, json_path);
+		try {
+			pathIndex = std::atoul(pathIndexStr);
+		} catch (const std::invalid_argument &e) {
+			throw BadRequest("Invalid argument");
 		}
 
-		*resp = json_paths;
+		struct vlist *paths = session->getSuperNode()->getPaths();
+		struct vpath *p = (struct path *) vlist_at_safe(pathIndex);
 
-		return 0;
+		if (!p)
+			throw Error(HTTP_STATUS_NOT_FOUND, "Node not found");
+
+		A(p);
+
+		return new Response(session);
 	}
+
 };
 
-/* Register action */
-static char n[] = "paths";
-static char d[] = "retrieve list of all paths with details";
-static ActionPlugin<PathsAction, n, d> p;
+/* Register API requests */
+char n1[] = "path/start";
+char r1[] = "/path/([^/]+)/start";
+char d1[] = "start a path";
+static RequestPlugin<PathActionRequest<path_start>, n1, r1, d1> p1;
+
+char n2[] = "path/stop";
+char r2[] = "/path/([^/]+)/stop";
+char d2[] = "stop a path";
+static RequestPlugin<PathActionRequest<path_stop>, n2, r2, d2> p2;
+
 
 } /* namespace api */
 } /* namespace node */

@@ -26,63 +26,69 @@
 #include <villas/node.h>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/api/session.hpp>
-#include <villas/api/action.hpp>
 #include <villas/api.hpp>
+#include <villas/api/session.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
 template<int (*A)(struct node *)>
-class NodeAction : public Action  {
+class NodeActionRequest : public Request  {
 
 public:
-	using Action::Action;
+	using Request::Request;
 
-	virtual int execute(json_t *args, json_t **resp)
+	virtual Response * execute()
 	{
-		int ret;
-		json_error_t err;
-		const char *node_str;
+		if (method != Method::POST)
+			throw InvalidMethod(this);
 
-		ret = json_unpack_ex(args, &err, 0, "{ s: s }",
-			"node", &node_str
-		);
-		if (ret < 0)
-			return ret;
+		if (body != nullptr)
+			throw BadRequest("Node endpoints do not accept any body data");
+
+		const auto &nodeName = matches[1].str();
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
-		struct node *n = (struct node *) vlist_lookup(nodes, node_str);
+		struct node *n = (struct node *) vlist_lookup(nodes, nodeName.c_str());
 
 		if (!n)
-			return -1;
+			throw Error(HTTP_STATUS_NOT_FOUND, "Node not found");
 
-		return A(n);
+		A(n);
+
+		return new Response(session);
 	}
 
 };
 
-/* Register actions */
-char n1[] = "node.start";
+/* Register API requests */
+char n1[] = "node/start";
+char r1[] = "/node/([^/]+)/start";
 char d1[] = "start a node";
-static ActionPlugin<NodeAction<node_start>,   n1, d1> p1;
+static RequestPlugin<NodeActionRequest<node_start>, n1, r1, d1> p1;
 
-char n2[] = "node.stop";
+char n2[] = "node/stop";
+char r2[] = "/node/([^/]+)/stop";
 char d2[] = "stop a node";
-static ActionPlugin<NodeAction<node_stop>,    n2, d2> p2;
+static RequestPlugin<NodeActionRequest<node_stop>, n2, r2, d2> p2;
 
-char n3[] = "node.pause";
+char n3[] = "node/pause";
+char r3[] = "/node/([^/]+)/pause";
 char d3[] = "pause a node";
-static ActionPlugin<NodeAction<node_pause>,   n3, d3> p3;
+static RequestPlugin<NodeActionRequest<node_pause>, n3, r3, d3> p3;
 
-char n4[] = "node.resume";
+char n4[] = "node/resume";
+char r4[] = "/node/([^/]+)/resume";
 char d4[] = "resume a node";
-static ActionPlugin<NodeAction<node_resume>,  n4, d4> p4;
+static RequestPlugin<NodeActionRequest<node_resume>, n4, r4, d4> p4;
 
-char n5[] = "node.restart";
+char n5[] = "node/restart";
+char r5[] = "/node/([^/]+)/restart";
 char d5[] = "restart a node";
-static ActionPlugin<NodeAction<node_restart>, n5, d5> p5;
+static RequestPlugin<NodeActionRequest<node_restart>, n5, r5, d5> p5;
 
 
 } /* namespace api */

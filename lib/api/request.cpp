@@ -1,4 +1,4 @@
-/** Socket API endpoint.
+/** API Request.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -21,61 +21,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <villas/plugin.hpp>
+#include <villas/api.hpp>
+#include <villas/api/request.hpp>
 
-#include <string>
-#include <vector>
-#include <map>
+using namespace villas;
+using namespace villas::node::api;
 
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <poll.h>
+Request * RequestFactory::make(Session *s, const std::string &uri, int meth)
+{
+	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
+		std::smatch mr;
+		if (not rf->match(uri, mr))
+			continue;
 
-#include <villas/common.hpp>
-#include <villas/log.hpp>
+		auto *r = rf->make(s);
 
-namespace villas {
-namespace node {
+		r->uri = uri;
+		r->method = meth;
+		r->matches = mr;
+		r->factory = rf;
 
-/* Forward declarations */
-class Api;
+		return  r;
+	}
 
-namespace api {
-namespace sessions {
-
-/* Forward declarations */
-class Socket;
-
-} /* namespace sessions */
-
-class Server {
-
-protected:
-	enum State state;
-
-	Api *api;
-	Logger logger;
-
-	int sd;
-
-	std::vector<pollfd> pfds;
-	std::map<int, sessions::Socket *> sessions;
-
-	void acceptNewSession();
-	void closeSession(sessions::Socket *s);
-
-	struct sockaddr_un getSocketAddress();
-
-public:
-	Server(Api *a);
-	~Server();
-
-	void start();
-	void stop();
-
-	void run(int timeout = 100);
-};
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+	throw BadRequest("Unknown API request");
+}

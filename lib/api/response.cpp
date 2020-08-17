@@ -1,5 +1,6 @@
-/** The "config" API ressource.
+/** API Response.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,36 +21,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/api/action.hpp>
-#include <villas/api/session.hpp>
-#include <villas/super_node.hpp>
+#include <villas/api/response.hpp>
+#include <villas/api/request.hpp>
 
-namespace villas {
-namespace node {
-namespace api {
+using namespace villas::node::api;
 
-class ConfigAction : public Action {
+Response::Response(Session *s, json_t *resp) :
+	session(s),
+	response(resp),
+	code(HTTP_STATUS_OK)
+{
+	logger = logging.get("api:response");
+}
 
-public:
-	using Action::Action;
+Response::~Response()
+{
+	if (response)
+		json_decref(response);
+}
 
-	virtual int execute(json_t *args, json_t **resp)
-	{
-		json_t *cfg = session->getSuperNode()->getConfig();
-
-		*resp = cfg
-			? json_incref(cfg)
-			: json_object();
-
-		return 0;
-	}
-};
-
-/* Register action */
-static char n[] = "config";
-static char d[] = "get configuration of this VILLASnode instance";
-static ActionPlugin<ConfigAction, n, d> p;
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+json_t * ErrorResponse::toJson()
+{
+	return json_pack("{ s: s }",
+		"error", error.c_str()
+	);
+}

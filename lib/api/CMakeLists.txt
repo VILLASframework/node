@@ -23,30 +23,21 @@
 
 set(API_SRC
     session.cpp
-    server.cpp
+    request.cpp
+    response.cpp
 
-    sessions/socket.cpp
-
-    actions/capabiltities.cpp
-    actions/shutdown.cpp
-    actions/status.cpp
-    actions/config.cpp
-    actions/nodes.cpp
-    actions/paths.cpp
-    actions/restart.cpp
-    actions/node.cpp
-    actions/stats.cpp
+    requests/capabiltities.cpp
+    requests/shutdown.cpp
+    requests/status.cpp
+    requests/config.cpp
+    requests/nodes.cpp
+    requests/paths.cpp
+    requests/restart.cpp
+    requests/node_action.cpp
+    requests/file.cpp
+    requests/stats_reset.cpp
 )
-
-if(WITH_WEB)
-    list(APPEND API_SRC
-        sessions/wsi.cpp
-        sessions/http.cpp
-        sessions/websocket.cpp
-    )
-endif()
 
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(api PUBLIC ${LIBRARIES})
-

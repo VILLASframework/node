@@ -1,6 +1,5 @@
-/** WebSockets API session.
+/** The "shutdown" API request.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,35 +20,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <signal.h>
 
-#include <villas/api/sessions/wsi.hpp>
-
-extern "C" int api_ws_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+#include <villas/utils.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
-
-/* Forward declarations */
-class Api;
-
 namespace api {
-namespace sessions {
 
-class WebSocket : public Wsi {
+class ShutdownRequest : public Request {
 
 public:
-	WebSocket(Api *a, lws *w);
-	virtual ~WebSocket() { };
+	using Request::Request;
 
-	virtual std::string getName();
+	virtual Response * execute()
+	{
+		if (method != Method::GET)
+			throw InvalidMethod(this);
 
-	int read(void *in, size_t len);
+		if (body != nullptr)
+			throw BadRequest("Shutdown endpoint does not accept any body data");
 
-	int write();
+		utils::killme(SIGTERM);
+
+		return new Response(session);
+	}
 };
 
-} /* namespace sessions */
+/* Register API request */
+static char n[] = "shutdown";
+static char r[] = "/shutdown";
+static char d[] = "quit VILLASnode";
+static RequestPlugin<ShutdownRequest, n, r, d> p;
+
 } /* namespace api */
 } /* namespace node */
 } /* namespace villas */

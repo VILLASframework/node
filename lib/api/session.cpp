@@ -29,109 +29,334 @@
 #include <villas/memory.h>
 
 #include <villas/api/session.hpp>
-#include <villas/api/action.hpp>
+#include <villas/api/request.hpp>
+#include <villas/api/response.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::node::api;
 
-Session::Session(Api *a) :
-	runs(0),
-	api(a)
+Session::Session(lws *w) :
+	wsi(w)
 {
 	logger = logging.get("api:session");
 
+	lws_context *ctx = lws_get_context(wsi);
+	void *user_ctx = lws_context_user(ctx);
+
+	web = static_cast<Web *>(user_ctx);
+	api = web->getApi();
+
+	if (!api)
+		throw RuntimeError("API is disabled");
+
+	api->sessions.push_back(this);
+
 	logger->debug("Initiated API session: {}", getName());
+
+	state = Session::State::ESTABLISHED;
 }
 
 Session::~Session()
 {
+	api->sessions.remove(this);
+
+	if (request)
+		delete request;
+
+	if (response)
+		delete response;
+
 	logger->debug("Destroyed API session: {}", getName());
 }
 
-
-void Session::runPendingActions()
+void Session::execute()
 {
-	json_t *req, *resp;
+	Request *req = request.exchange(nullptr);
 
-	while (!request.queue.empty()) {
-		req = request.queue.pop();
+	logger->debug("Running API request: uri={}, method={}", req->uri, req->method);
 
-		runAction(req, &resp);
+	try {
+		response = req->execute();
 
-		json_decref(req);
+		logger->debug("Completed API request: request={}", req->uri, req->method);
+	} catch (const Error &e) {
+		response = new ErrorResponse(this, e);
 
-		response.queue.push(resp);
+		logger->warn("API request failed: uri={}, method={}, code={}: {}", req->uri, req->method, e.code, e.what());
+	} catch (const RuntimeError &e) {
+		response = new ErrorResponse(this, e);
+
+		logger->warn("API request failed: uri={}, method={}: {}", req->uri, req->method, e.what());
+	}
+
+	logger->debug("Ran pending API requests. Triggering on_writeable callback: wsi={}", (void *) wsi);
+
+	web->callbackOnWritable(wsi);
+}
+
+std::string Session::getName() const
+{
+	std::stringstream ss;
+
+	ss << "version=" << version;
+
+	if (wsi) {
+		char name[128];
+		char ip[128];
+
+		lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), name, sizeof(name), ip, sizeof(ip));
+
+		ss << ", remote.name=" << name << ", remote.ip=" << ip;
+	}
+
+	return ss.str();
+}
+
+void Session::shutdown()
+{
+	state = State::SHUTDOWN;
+
+	web->callbackOnWritable(wsi);
+}
+
+void Session::open(void *in, size_t len)
+{
+	int ret;
+	char buf[32];
+	unsigned long contentLength;
+
+	int meth;
+	std::string uri = reinterpret_cast<char *>(in);
+
+	try {
+		meth = getRequestMethod(wsi);
+		if (meth == Request::Method::UNKNOWN_METHOD)
+			throw RuntimeError("Invalid request method");
+
+		request = RequestFactory::make(this, uri, meth);
+
+		ret = lws_hdr_copy(wsi, buf, sizeof(buf), WSI_TOKEN_HTTP_CONTENT_LENGTH);
+		if (ret < 0)
+			throw RuntimeError("Failed to get content length");
+
+		try {
+			contentLength = std::stoull(buf);
+		} catch (const std::invalid_argument &) {
+			contentLength = 0;
+		}
+	} catch (const Error &e) {
+		response = new ErrorResponse(this, e);
+		lws_callback_on_writable(wsi);
+	} catch (const RuntimeError &e) {
+		response = new ErrorResponse(this, e);
+		lws_callback_on_writable(wsi);
+	}
+
+	/* This is an OPTIONS request.
+	 *
+	 *  We immediatly send headers and close the connection
+	 *  without waiting for a POST body */
+	if (meth == Request::Method::OPTIONS)
+		lws_callback_on_writable(wsi);
+	/* This request has no body.
+	 * We can reply immediatly */
+	else if (contentLength == 0)
+		api->pending.push(this);
+	else {
+		/* This request has a HTTP body. We wait for more data to arrive */
 	}
 }
 
-int Session::runAction(json_t *json_in, json_t **json_out)
+void Session::body(void *in, size_t len)
+{
+	requestBuffer.append((const char *) in, len);
+}
+
+void Session::bodyComplete()
+{
+	try {
+		auto *j = requestBuffer.decode();
+		if (!j)
+			throw BadRequest("Failed to decode request payload");
+
+		requestBuffer.clear();
+
+		(*request).setBody(j);
+
+		api->pending.push(this);
+	} catch (const Error &e) {
+		response = new ErrorResponse(this, e);
+
+		logger->warn("Failed to decode API request: {}", e.what());
+	}
+}
+
+int Session::writeable()
 {
 	int ret;
-	const char *action;
-	char *id;
 
-	json_error_t err;
-	json_t *json_args = nullptr;
-	json_t *json_resp = nullptr;
+	if (!headersSent) {
+		int code = HTTP_STATUS_OK;
+		const char *contentType = "application/json";
 
-	ret = json_unpack_ex(json_in, &err, 0, "{ s: s, s: s, s?: o }",
-		"action", &action,
-		"id", &id,
-		"request", &json_args);
-	if (ret) {
-		ret = -100;
-		*json_out = json_pack("{ s: s, s: i }",
-				"error", "invalid request",
-				"code", ret);
+		uint8_t headers[2048], *p = headers, *end = &headers[sizeof(headers) - 1];
 
-		logger->debug("Completed API request: action={}, id={}, code={}", action, id, ret);
+		responseBuffer.clear();
+		if (response) {
+			Response *resp = response;
+
+			json_t *json_response = resp->toJson();
+
+			responseBuffer.encode(json_response);
+
+			code = resp->getCode();
+		}
+
+		if (lws_add_http_common_headers(wsi, code, contentType,
+				responseBuffer.size(), /* no content len */
+				&p, end))
+			return 1;
+
+		std::map<const char *, const char *> constantHeaders = {
+			{ "Server:", USER_AGENT },
+			{ "Access-Control-Allow-Origin:", "*" },
+			{ "Access-Control-Allow-Methods:", "GET, POST, OPTIONS" },
+			{ "Access-Control-Allow-Headers:", "Content-Type" },
+			{ "Access-Control-Max-Age:", "86400" }
+		};
+
+		for (auto &hdr : constantHeaders) {
+			if (lws_add_http_header_by_name (wsi,
+					reinterpret_cast<const unsigned char *>(hdr.first),
+					reinterpret_cast<const unsigned char *>(hdr.second),
+					strlen(hdr.second), &p, end))
+				return -1;
+		}
+
+		if (lws_finalize_write_http_header(wsi, headers, &p, end))
+			return 1;
+
+		/* No wait, until we can send the body */
+		headersSent = true;
+
+		/* Do we have a body to send */
+		if (responseBuffer.size() > 0)
+			lws_callback_on_writable(wsi);
+
 		return 0;
 	}
+	else {
+		ret = lws_write(wsi, (unsigned char *) responseBuffer.data(), responseBuffer.size(), LWS_WRITE_HTTP_FINAL);
+		if (ret < 0)
+			return -1;
 
-	auto acf = plugin::Registry::lookup<ActionFactory>(action);
-	if (!acf) {
-		ret = -101;
-		*json_out = json_pack("{ s: s, s: s, s: i, s: s }",
-				"action", action,
-				"id", id,
-				"code", ret,
-				"error", "action not found");
-
-		logger->debug("Completed API request: action={}, id={}, code={}", action, id, ret);
-		return 0;
+		return 1;
 	}
+}
 
-	logger->debug("Running API request: action={}, id={}", action, id);
+int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+{
+	int ret;
+	Session *s = reinterpret_cast<Session *>(user);
 
-	Action *act = acf->make(this);
+	switch (reason) {
+		case LWS_CALLBACK_HTTP_BIND_PROTOCOL:
+			try {
+				new (s) Session(wsi);
+			} catch (const RuntimeError &e) {
+				return -1;
+			}
 
-	ret = act->execute(json_args, &json_resp);
-	if (ret)
-		*json_out = json_pack("{ s: s, s: s, s: i, s: s }",
-				"action", action,
-				"id", id,
-				"code", ret,
-				"error", "action failed");
-	else
-		*json_out = json_pack("{ s: s, s: s }",
-				"action", action,
-				"id", id);
+			break;
 
-	if (json_resp)
-		json_object_set_new(*json_out, "response", json_resp);
+		case LWS_CALLBACK_HTTP_DROP_PROTOCOL:
+			if (s == nullptr)
+				return -1;
 
-	logger->debug("Completed API request: action={}, id={}, code={}", action, id, ret);
+			s->~Session();
 
-	runs++;
+			break;
+
+		case LWS_CALLBACK_HTTP:
+			s->open(in, len);
+
+			break;
+
+		case LWS_CALLBACK_HTTP_BODY:
+			s->body(in, len);
+
+			break;
+
+		case LWS_CALLBACK_HTTP_BODY_COMPLETION:
+			s->bodyComplete();
+
+			break;
+
+		case LWS_CALLBACK_HTTP_WRITEABLE:
+			ret = s->writeable();
+
+			/*
+			 * HTTP/1.0 no keepalive: close network connection
+			 * HTTP/1.1 or HTTP1.0 + KA: wait / process next transaction
+			 * HTTP/2: stream ended, parent connection remains up
+			 */
+			if (ret) {
+				if (lws_http_transaction_completed(wsi))
+					return -1;
+			}
+			else
+				lws_callback_on_writable(wsi);
+
+			break;
+
+		default:
+			break;
+	}
 
 	return 0;
 }
 
-std::string Session::getName()
+int Session::getRequestMethod(struct lws *wsi)
 {
-	std::stringstream ss;
+	if      (lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI))
+		return Request::Method::GET;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI))
+		return Request::Method::POST;
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PUT_URI))
+		return Request::Method::PUT;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PATCH_URI))
+		return Request::Method::PATCH;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI))
+		return Request::Method::OPTIONS;
+#endif
+	else
+		return Request::Method::UNKNOWN_METHOD;
+}
 
-	ss << "version=" << version << ", runs=" << runs;
+std::string Session::methodToString(int method)
+{
+	switch (method) {
+		case Request::Method::POST:
+			return "POST";
 
-	return ss.str();
+		case Request::Method::GET:
+			return "GET";
+
+		case Request::Method::DELETE:
+			return "DELETE";
+
+		case Request::Method::PUT:
+			return "PUT";
+
+		case Request::Method::PATCH:
+			return "GPATCHET";
+
+		case Request::Method::OPTIONS:
+			return "OPTIONS";
+
+		default:
+			return "UNKNOWN";
+	}
 }

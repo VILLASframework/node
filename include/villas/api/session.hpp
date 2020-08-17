@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <jansson.h>
 
 #include <villas/queue.h>
@@ -35,10 +37,15 @@ namespace node {
 /* Forward declarations */
 class SuperNode;
 class Api;
+class Web;
 
 namespace api {
 
-/** A connection via HTTP REST or WebSockets to issue API actions. */
+/* Forward declarations */
+class Request;
+class Response;
+
+/** A connection via HTTP REST or WebSockets to issue API requests. */
 class Session {
 
 public:
@@ -48,47 +55,54 @@ public:
 	};
 
 	enum Version {
-		UNKOWN		= 0,
-		VERSION_1	= 1
+		UNKNOWN_VERSION	= 0,
+		VERSION_1	= 1,
+		VERSION_2	= 2
 	};
 
 protected:
 	enum State state;
 	enum Version version;
 
-	Logger logger;
+	lws *wsi;
 
-	int runs;
-
-	struct {
-		JsonBuffer buffer;
-		Queue<json_t *> queue;
-	} request, response;
-
+	Web *web;
 	Api *api;
 
+	Logger logger;
+
+	JsonBuffer requestBuffer;
+	JsonBuffer responseBuffer;
+
+	std::atomic<Request *> request;
+	std::atomic<Response *> response;
+
+	bool headersSent;
+
 public:
-	Session(Api *a);
+	Session(struct lws *w);
+	~Session();
 
-	virtual ~Session();
+	std::string getName() const;
 
-	int runAction(json_t *req, json_t **resp);
-	virtual void runPendingActions();
-
-	virtual std::string getName();
-
-	int getRuns()
-	{
-		return runs;
-	}
-
-	SuperNode * getSuperNode()
+	SuperNode * getSuperNode() const
 	{
 		return api->getSuperNode();
 	}
 
-	virtual void shutdown()
-	{ }
+	void open(void *in, size_t len);
+	int writeable();
+	void body(void *in, size_t len);
+	void bodyComplete();
+	void execute();
+	void shutdown();
+
+	static int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+	int getRequestMethod(struct lws *wsi);
+
+	static std::string methodToString(int meth);
+
 };
 
 } /* namespace api */
