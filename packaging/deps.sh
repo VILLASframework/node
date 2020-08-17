@@ -174,6 +174,7 @@ if ! pkg-config "libxil >= 1.0.0"; then
     git clone https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
+    git checkout b622ddef4315b7e8a56637d07aa2b26ba480d53a
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
