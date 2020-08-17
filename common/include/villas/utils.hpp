@@ -72,11 +72,10 @@
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
 
-#define SWAP(x,y) do {	\
-  auto &_x = x;		\
-  auto &_y = y;		\
-  x = _y;		\
-  y = _x;		\
+#define SWAP(x, y) do {	\
+  auto t = x;		\
+  x = y;		\
+  y = t;		\
 } while (0)
 
 /** Round-up integer division */
