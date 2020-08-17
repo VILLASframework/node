@@ -206,7 +206,7 @@ public:
 		if (f) {
 			try {
 				format = Stats::lookupFormat(f);
-			} catch (std::invalid_argument &e) {
+			} catch (const std::invalid_argument &e) {
 				throw ConfigError(cfg, "node-config-hook-stats", "Invalid statistic output format: {}", f);
 			}
 		}

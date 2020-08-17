@@ -375,7 +375,7 @@ int Relay::protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, v
 			try {
 				new (c) RelayConnection(wsi, r->loopback);
 			}
-			catch (InvalidUrlException &e) {
+			catch (const InvalidUrlException &e) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "Invalid URL", strlen("Invalid URL"));
 
 				return -1;
