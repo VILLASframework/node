@@ -51,6 +51,9 @@ struct ngsi {
 	const char *entity_type;	/**< The type of the entity */
 	const char *access_token;	/**< An optional authentication token which will be sent as HTTP header. */
 
+	bool create;			/**< Weather we want to create the context element during startup. */
+	bool remove;			/**< Weather we want to delete the context element during startup. */
+
 	double timeout;			/**< HTTP timeout in seconds */
 	double rate;			/**< Rate used for polling. */
 
@@ -89,6 +92,9 @@ int ngsi_start(struct node *n);
 
 /** @see node_type::stop */
 int ngsi_stop(struct node *n);
+
+/** @see node_type::reverse */
+int ngsi_reverse(struct node *n);
 
 /** @see node_type::read */
 int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
