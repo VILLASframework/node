@@ -41,7 +41,7 @@ timeout -s SIGKILL 3 villas-node ${CONFIG_FILE} &
 sleep 1
 
 # Restart with configuration
-curl -sX POST --data '{ "action" : "shutdown", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1
+curl -sX POST http://localhost:8080/api/v2/shutdown
 
 rm ${CONFIG_FILE}
 

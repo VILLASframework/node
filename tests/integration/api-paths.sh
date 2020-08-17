@@ -24,63 +24,60 @@
 
 set -e
 
-BASE_CONF=$(mktemp)
-LOCAL_CONF=$(mktemp)
-FETCHED_CONF=$(mktemp)
+CONFIG_FILE=$(mktemp)
+FETCHED_PATHS=$(mktemp)
 
-cat <<EOF > ${LOCAL_CONF}
+cat > ${CONFIG_FILE} <<EOF
 {
 	"http" : {
 		"port" : 8080
 	},
 	"nodes" : {
-		"node1" : {
-			"type"   : "socket",
-			"format" : "csv",
-			
+		"testnode1" : {
+			"type" : "websocket",
+			"dummy" : "value1"
+		},
+		"testnode2" : {
+			"type" : "socket",
+			"dummy" : "value2",
+
 			"in" : {
-				"address"  : "*:12000"
+				"address" : "*:12001",
+				"signals" : [
+					{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
+					{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
+				]
 			},
 			"out" : {
-				"address" : "127.0.0.1:12001"
+				"address" : "127.0.0.1:12000"
 			}
 		}
 	},
-	"paths" : [
+	"paths": [
 		{
-			"in" : "node1",
-			"out" : "node1",
-			"hooks" : [
-				{ "type" : "print" }
-			]
+			"in": "testnode2",
+			"out": "testnode1"
 		}
 	]
 }
 EOF
 
-# Start with base configuration
-villas-node &
+# Start VILLASnode instance with local config (via advio)
+villas-node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
 
-# Restart with configuration
-curl -sX POST --data '{ "config": "'${LOCAL_CONF}'" }' http://localhost:8080/api/v2/restart
-echo
-
-# Wait for node to complete init
-sleep 2
-
 # Fetch config via API
-curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/paths > ${FETCHED_PATHS}
 
 # Shutdown VILLASnode
-kill %%
+kill $!
 
 # Compare local config with the fetched one
-diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
+jq -e '(.[0].in | index("testnode2")) and (.[0].out | index("testnode1")) and (. | length == 1)' ${FETCHED_PATHS} > /dev/null
 RC=$?
 
-rm -f ${LOCAL_CONF} ${FETCHED_CONF} ${BASE_CONF}
+rm -f ${CONFIG_FILE} ${FETCHED_PATHS}
 
 exit $RC

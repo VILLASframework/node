@@ -34,12 +34,12 @@ PID=$!
 sleep 1
 
 # Fetch capabilities
-echo '{ "action" : "capabilities", "id" : "1" }' | nc -U /usr/local/var/lib/villas/node-*.sock > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/capabilities > ${FETCHED_CONF}
 
 kill $PID
 wait
 
-jq -e '.response.apis | index( "capabilities" ) != null' < ${FETCHED_CONF}
+jq -e '.apis | index( "capabilities" ) != null' < ${FETCHED_CONF}
 RC=$?
 
 rm ${FETCHED_CONF}

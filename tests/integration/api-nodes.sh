@@ -49,7 +49,7 @@ cat > ${CONFIG_FILE} <<EOF
 				]
 			},
 			"out" : {
-				"address" : "localhost:12000"
+				"address" : "127.0.0.1:12000"
 			}
 		}
 	},
@@ -69,15 +69,13 @@ villas-node ${CONFIG_FILE} &
 sleep 1
 
 # Fetch config via API
-curl -sX POST --data '{ "action" : "nodes", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1 > ${FETCHED_NODES}
-
-cat ${FETCHED_NODES}
+curl -s http://localhost:8080/api/v2/nodes > ${FETCHED_NODES}
 
 # Shutdown VILLASnode
 kill $!
 
 # Compare local config with the fetched one
-jq -e '.response[0].name == "testnode1" and .response[0].type == "websocket" and (.response | length == 2)' ${FETCHED_NODES} > /dev/null
+jq -e '.[0].name == "testnode1" and .[0].type == "websocket" and (. | length == 2)' ${FETCHED_NODES} > /dev/null
 RC=$?
 
 rm -f ${CONFIG_FILE} ${FETCHED_NODES}

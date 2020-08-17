@@ -50,13 +50,13 @@ villas-node ${CONFIG_FILE} &
 sleep 1
 
 # Fetch config via API
-curl -sX POST --data '{ "action" : "config", "id" : "'${ID}'" }' http://localhost:8080/api/v1 > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
 
 # Shutdown VILLASnode
 kill $!
 
 # Compare local config with the fetched one
-diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${CONFIG_FILE})
+diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${CONFIG_FILE})
 RC=$?
 
 rm -f ${FETCHED_CONF} ${CONFIG_FILE}
