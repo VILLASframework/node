@@ -253,12 +253,9 @@ json_t * Config::resolveIncludes(json_t *in)
 		else {
 			std::string path = text.substr(kw.size());
 
-			json_error_t err;
-			json_t *incl;
-
-			incl = load(path);
+			json_t *incl = load(path);
 			if (!incl)
-				throw ConfigError(str, err, "Failed to include config file from {}", path);
+				throw ConfigError(str, "Failed to include config file from {}", path);
 
 			logger->debug("Included config from: {}", path);
 
