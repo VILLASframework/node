@@ -249,7 +249,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			c->state = websocket_connection::State::ERROR;
 
-			warning("Failed to establish WebSocket connection: %s, reason=%s", websocket_connection_name(c), in ? (char *) in : "unkown");
+			warning("Failed to establish WebSocket connection: reason=%s", in ? (char *) in : "unknown");
 
 			return -1;
 
