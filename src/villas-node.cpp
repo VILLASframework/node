@@ -33,7 +33,7 @@
 #include <villas/utils.hpp>
 #include <villas/super_node.hpp>
 #include <villas/plugin.hpp>
-#include <villas/api/action.hpp>
+#include <villas/api/request.hpp>
 #include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/path.h>
@@ -114,7 +114,7 @@ protected:
 
 #ifdef WITH_API
 		std::cout << "Supported API commands:" << std::endl;
-		for (Plugin *p : Registry::lookup<api::ActionFactory>())
+		for (Plugin *p : Registry::lookup<api::RequestFactory>())
 			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_API */
