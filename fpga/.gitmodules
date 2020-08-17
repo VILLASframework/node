@@ -1,9 +1,3 @@
-[submodule "thirdparty/criterion"]
-	path = thirdparty/criterion
-	url = https://github.com/Snaipe/Criterion.git
-[submodule "thirdparty/libxil"]
-	path = thirdparty/libxil
-	url = ../libxil.git
 [submodule "lib/gpu/gdrcopy"]
 	path = gpu/thirdparty/gdrcopy
 	url = https://github.com/daniel-k/gdrcopy.git
