@@ -77,7 +77,7 @@ void hook_list_parse(vlist *hs, json_t *cfg, int mask, struct vpath *o, struct n
 
 		auto hf = plugin::Registry::lookup<HookFactory>(type);
 		if (!hf)
-			throw ConfigError(json_hook, "node-config-hook", "Unkown hook type '{}'", type);
+			throw ConfigError(json_hook, "node-config-hook", "Unknown hook type '{}'", type);
 
 		if (!(hf->getFlags() & mask))
 			throw ConfigError(json_hook, "node-config-hook", "Hook '{}' not allowed here", type);
