@@ -89,6 +89,12 @@ public:
 		throw ConfigError(cfg, err, "node-config-hook-skip_first");
 	}
 
+	virtual void start()
+	{
+		skip_state = SkipState::STARTED;
+		state = State::STARTED;
+	}
+
 	virtual void restart()
 	{
 		skip_state = SkipState::STARTED;
