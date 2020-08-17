@@ -148,6 +148,11 @@ public:
 		return &signals;
 	}
 
+	json_t * getConfig() const
+	{
+		return cfg;
+	}
+
 	bool isEnabled() const
 	{
 		return enabled;
