@@ -25,6 +25,9 @@
 #include <villas/mapping.h>
 #include <villas/exceptions.hpp>
 
+#include <villas/signal_type.h>
+#include <villas/signal_data.h>
+
 using namespace villas;
 using namespace villas::utils;
 
@@ -215,4 +218,21 @@ int signal_parse(struct signal *s, json_t *cfg)
 		signal_data_set(&s->init, s, 0);
 
 	return 0;
+}
+
+json_t * signal_to_json(struct signal *s)
+{
+	json_t *json_sig = json_pack("{ s: s, s: b, s: o }",
+		"type", signal_type_to_str(s->type),
+		"enabled", s->enabled,
+		"init", signal_data_to_json(&s->init, s)
+	);
+
+	if (s->name)
+		json_object_set(json_sig, "name", json_string(s->name));
+
+	if (s->unit)
+		json_object_set(json_sig, "unit", json_string(s->unit));
+
+	return json_sig;
 }

@@ -30,3 +30,11 @@ enum class SignalType {
 	BOOLEAN = 3,	/**< See signal_data::b */
 	COMPLEX = 4	/**< See signal_data::z */
 };
+
+enum SignalType signal_type_from_str(const char *str);
+
+enum SignalType signal_type_from_fmtstr(char c);
+
+const char * signal_type_to_str(enum SignalType fmt);
+
+enum SignalType signal_type_detect(const char *val);

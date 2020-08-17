@@ -81,11 +81,5 @@ int signal_parse(struct signal *s, json_t *cfg);
 /** Initialize signal from a mapping_entry. */
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 
-enum SignalType signal_type_from_str(const char *str);
-
-enum SignalType signal_type_from_fmtstr(char c);
-
-const char * signal_type_to_str(enum SignalType fmt);
-
-enum SignalType signal_type_detect(const char *val);
-
+/** Produce JSON representation of signal. */
+json_t * signal_to_json(struct signal *s);
