@@ -27,10 +27,8 @@
 #include <villas/utils.hpp>
 #include <villas/web.hpp>
 #include <villas/api.hpp>
+#include <villas/api/session.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/api/sessions/http.hpp>
-#include <villas/api/sessions/websocket.hpp>
-
 #include <villas/nodes/websocket.hpp>
 
 using namespace villas;
@@ -50,15 +48,9 @@ lws_protocols protocols[] = {
 #ifdef WITH_API
 	{
 		.name = "http-api",
-		.callback = api_http_protocol_cb,
-		.per_session_data_size = sizeof(api::sessions::Http),
+		.callback = api::Session::protocolCallback,
+		.per_session_data_size = sizeof(api::Session),
 		.rx_buffer_size = 1024
-	},
-	{
-		.name = "api",
-		.callback = api_ws_protocol_cb,
-		.per_session_data_size = sizeof(api::sessions::WebSocket),
-		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
 #ifdef WITH_NODE_WEBSOCKET
@@ -79,7 +71,7 @@ static lws_http_mount mounts[] = {
 #ifdef WITH_API
 	{
 		.mount_next =		&mounts[1],	/* linked-list "next" */
-		.mountpoint =		"/api/v1",	/* mountpoint URL */
+		.mountpoint =		"/api/v2",	/* mountpoint URL */
 		.origin =		"http-api",	/* protocol */
 		.def =			nullptr,
 		.protocol =		"http-api",

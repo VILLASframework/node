@@ -115,7 +115,7 @@ if(WITH_HOOKS)
     list(APPEND WHOLE_ARCHIVES hooks)
 endif()
 
-if(WITH_API)
+if(WITH_API AND WITH_WEB)
     list(APPEND LIB_SRC
         api.cpp
     )
