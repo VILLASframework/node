@@ -34,7 +34,6 @@
 
 #include <villas/log.hpp>
 #include <villas/common.hpp>
-#include <villas/api/server.hpp>
 #include <villas/queue_signalled.hpp>
 #include <villas/exceptions.hpp>
 

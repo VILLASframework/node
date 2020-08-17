@@ -4,7 +4,6 @@ import subprocess
 import logging
 import signal
 import requests
-import uuid
 import datetime
 
 LOGGER = logging.getLogger('villas.node')
@@ -97,7 +96,8 @@ class Node(object):
         if req is not None:
             args['json'] = req
 
-        r = requests.get(f'{self.api_endpoint}/api/{self.api_version}/{action}', **args)
+        r = requests.get(
+            f'{self.api_endpoint}/api/{self.api_version}/{action}', **args)
 
         r.raise_for_status()
 
