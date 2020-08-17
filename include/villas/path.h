@@ -31,6 +31,7 @@
 
 #include <bitset>
 
+#include <uuid/uuid.h>
 #include <pthread.h>
 #include <jansson.h>
 
@@ -59,6 +60,8 @@ struct vpath {
 
 	enum PathMode mode;		/**< Determines when this path is triggered. */
 
+	uuid_t uuid;
+
 	struct {
 		int nfds;
 		struct pollfd *pfds;
@@ -79,10 +82,10 @@ struct vpath {
 	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */
 	int poll;			/**< Weather or not to use poll(2). */
-	int reverse;			/**< This path as a matching reverse path. */
+	int reverse;			/**< This path has a matching reverse path. */
 	int builtin;			/**< This path should use built-in hooks by default. */
-	int original_sequence_no;       /**< Use original source sequence number when multiplexing */
-	unsigned queuelen;			/**< The queue length for each path_destination::queue */
+	int original_sequence_no;	/**< Use original source sequence number when multiplexing */
+	unsigned queuelen;		/**< The queue length for each path_destination::queue */
 
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 
@@ -92,7 +95,7 @@ struct vpath {
 	villas::Logger logger;
 
 	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of path_sources which are enabled for poll(). */
-	std::bitset<MAX_SAMPLE_LENGTH> received;		/**< A mask of path_sources for which we already received samples. */
+	std::bitset<MAX_SAMPLE_LENGTH> received;	/**< A mask of path_sources for which we already received samples. */
 };
 
 /** Initialize internal data structures. */

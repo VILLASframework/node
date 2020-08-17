@@ -27,6 +27,7 @@
 
 #include <unistd.h>
 #include <poll.h>
+#include <openssl/md5.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
@@ -323,12 +324,12 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	json_t *json_hooks = nullptr;
 	json_t *json_mask = nullptr;
 
-	const char *mode = nullptr;
+	const char *mode = nullptr, *uuid = nullptr;
 
 	struct vlist destinations;
 	vlist_init(&destinations);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b}",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s}",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
@@ -340,7 +341,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		"poll", &p->poll,
 		"rate", &p->rate,
 		"mask", &json_mask,
-		"original_sequence_no", &p->original_sequence_no
+		"original_sequence_no", &p->original_sequence_no,
+		"uuid", &uuid
 	);
 	if (ret)
 		jerror(&err, "Failed to parse path configuration");
@@ -362,6 +364,20 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 			p->logger->error("Invalid path mode '{}'", mode);
 			return -1;
 		}
+	}
+
+	if (uuid) {
+		ret = uuid_parse(uuid, p->uuid);
+		if (ret)
+			throw ConfigError(cfg, "node-config-path-uuid", "Failed to parse UUID: {}", uuid);
+	}
+	else {
+		/* Generate UUID from hashed config */
+		char *json_str = json_dumps(cfg, JSON_COMPACT | JSON_SORT_KEYS);
+
+		MD5((unsigned char*) json_str, strlen(json_str), (unsigned char*) &p->uuid);
+
+		free(json_str);
 	}
 
 	/* Output node(s) */
