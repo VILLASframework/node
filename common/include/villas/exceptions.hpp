@@ -107,7 +107,9 @@ public:
 		std::runtime_error(what),
 		id(i),
 		setting(s)
-	{ }
+	{
+		error.position = -1;
+	}
 
 	template<typename... Args>
 	ConfigError(json_t *s, const std::string &i, const std::string &what, Args&&... args) :
@@ -145,6 +147,10 @@ public:
 
 		ss << std::runtime_error::what() << std::endl;
 		ss << " Please consult the user documentation for details: " << docUri();
+
+		if (error.position >= 0) {
+			ss << std::endl << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
+		}
 
 		auto str = new std::string(ss.str());
 
