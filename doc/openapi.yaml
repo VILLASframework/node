@@ -1,0 +1,395 @@
+openapi: '3.0.0'
+info:
+  title: VILLASnode
+  version: 0.10.0
+  description: 'A HTTP/REST API for controlling VILLASnode remotely without the need to restart the daemon.'
+  termsOfService: 'https://www.fein-aachen.org/projects/villas-node/'
+  contact:
+    name: 'Steffen Vogel'
+    email: svogel2@eonerc.rwth-aachen.de
+    url: 'https://fein-aachen.org/contact/'
+  license:
+    name: GPL-v3
+    url: 'https://www.gnu.org/licenses/gpl-3.0.en.html'
+externalDocs:
+  url: 'https://villas.fein-aachen.org/doc/node.html'
+servers:
+  - url: "https://villas-new.k8s.eonerc.rwth-aachen.de/api/v2"
+    description: "The production API server in our EONERC OpenStack Kubernetes"
+tags:
+  - name: super-node
+    description: Global super-node related operations.
+  - name: nodes
+    description: Node related operations.
+  - name: paths
+    description: Path related operations.
+components:
+  parameters:
+    node-uuid:
+      name: uuid
+      description: A globally unique identifier for each node.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    path-uuid:
+      name: uuid
+      description: A globally unique identifier for each path.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      
+paths:
+  "/status":
+    get:
+      summary: Get the current status of the VILLASnode instance.
+      tags:
+      - super-node
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/capabilities":
+    get:
+      summary: Get the capabilities of the VILLASnode instance.
+      tags:
+      - super-node
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/config":
+    get:
+      summary: Get the currently loaded configuration.
+      tags:
+      - super-node
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+  
+  "/restart":
+    post:
+      summary: Restart the VILLASnode instance.
+      tags:
+      - super-node
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: string
+                  example: "http://example.com/path/to/config.json"
+                  description: An optional path to a new configuration file which should be loaded after restarting the node.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+      
+  "/shutdown":
+    post:
+      summary: Shutdown the VILLASnode instance.
+      tags:
+      - super-node
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+      
+  "/nodes":
+    get:
+      summary: Get a list of all configure node instances.
+      tags:
+      - nodes
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+      
+  "/node/{uuid}/stats":
+    get:
+      summary: Get the statistics of a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/node/{uuid}/stats/reset":
+    post:
+      summary: Reset the statistics counters for a specific node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/node/{uuid}/start":
+    post:
+      summary: Start a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+      
+  "/node/{uuid}/stop":
+    post:
+      summary: Stop a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+      
+  "/node/{uuid}/pause":
+    post:
+      summary: Pause a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/node/{uuid}/resume":
+    post:
+      summary: Resume a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+                    
+  "/node/{uuid}/restart":
+    post:
+      summary: Retart a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+                  
+  "/node/{uuid}/file/rewind":
+    post:
+      summary: Rewind the playback file to the beginning.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+    
+  "/node/{uuid}/file/seek":
+    post:
+      summary: Rewind the playback file to the beginning.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid"
+      requestBody:
+        description: Sample position in file
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - position
+              properties:
+                position:
+                  type: integer
+                  example: 123
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+                    
+  "/paths":
+    get:
+      summary: Get a list of all configure paths.
+      tags:
+      - paths
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/path/{uuid}/start":
+    post:
+      summary: Start a path.
+      tags:
+      - paths
+      parameters: 
+      - $ref: "#/components/parameters/path-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+                    
+  "/path/{uuid}/stop":
+    post:
+      summary: Start a path.
+      tags:
+      - paths
+      parameters: 
+      - $ref: "#/components/parameters/path-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/path/{uuid}/stats":
+    get:
+      summary: Get the statistics of a path.
+      tags:
+      - paths
+      parameters: 
+      - $ref: "#/components/parameters/path-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+
+  "/path/{uuid}/stats/reset":
+    post:
+      summary: Reset the statistics counters for a specific path.
+      tags:
+      - paths
+      parameters: 
+      - $ref: "#/components/parameters/path-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    { test: 1 }
+    
