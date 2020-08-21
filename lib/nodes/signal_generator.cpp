@@ -349,7 +349,10 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 			case signal_generator::SignalType::MIXED:
 				break;
 			case signal_generator::SignalType::PULSE:
-				t->data[i].f = 5;
+				if (fmod(running , s->frequency) < .5)
+					t->data[i].f = s->amplitude;
+				else
+					t->data[i].f = 0;
 				break;
 		}
 	}
