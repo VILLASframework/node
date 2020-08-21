@@ -105,6 +105,10 @@ int signal_generator_init(struct node *n)
 	s->amplitude = nullptr;
 	s->stddev = nullptr;
 	s->offset = nullptr;
+	s->phase = nullptr;
+	s->pulse_width = nullptr;
+	s->pulse_low = nullptr;
+	s->pulse_high = nullptr;
 
 	return 0;
 }
@@ -160,8 +164,12 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	json_t *json_offset = nullptr;
 	json_t *json_frequency = nullptr;
 	json_t *json_stddev = nullptr;
+	json_t *json_pulse_width = nullptr;
+	json_t *json_pulse_high = nullptr;
+	json_t *json_pulse_low = nullptr;
+	json_t *json_phase = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: b }",
 		"signal", &type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
@@ -171,6 +179,10 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 		"amplitude", &json_amplitude,
 		"stddev", &json_stddev,
 		"offset", &json_offset,
+		"pulse_width", &json_pulse_width,
+		"pulse_low", &json_pulse_low,
+		"pulse_high", &json_pulse_high,
+		"phase", &json_phase,
 		"monitor_missed", &s->monitor_missed
 	);
 	if (ret)
@@ -187,7 +199,11 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 		{ json_frequency, &s->frequency, 1, "frequency" },
 		{ json_amplitude, &s->amplitude, 1, "amplitude" },
 		{ json_stddev, &s->stddev, 0.2, "stddev" },
-		{ json_offset, &s->offset, 0, "offset" }
+		{ json_offset, &s->offset, 0, "offset" },
+		{ json_pulse_width, &s->pulse_width, 1, "pulse_width" },
+		{ json_pulse_high, &s->pulse_high, 1, "pulse_high" },
+		{ json_pulse_low, &s->pulse_low, 0, "pulse_low" },
+		{ json_phase, &s->phase, 0, "phase" }
 	};
 
 	for (auto &a : arrays) {
@@ -322,15 +338,15 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 				break;
 
 			case signal_generator::SignalType::SINE:
-				t->data[i].f = s->offset[i] + s->amplitude[i] *        sin(running * s->frequency[i] * 2 * M_PI);
+				t->data[i].f = s->offset[i] + s->amplitude[i] *        sin(running * s->frequency[i] * 2 * M_PI + s->phase[i]);
 				break;
 
 			case signal_generator::SignalType::TRIANGLE:
-				t->data[i].f = s->offset[i] + s->amplitude[i] * (fabs(fmod(running * s->frequency[i], 1) - .5) - 0.25) * 4;
+				t->data[i].f = s->offset[i] + s->amplitude[i] * (fabs(fmod(running * s->frequency[i] + (s->phase[i] / (2 * M_PI)), 1) - .5) - 0.25) * 4;
 				break;
 
 			case signal_generator::SignalType::SQUARE:
-				t->data[i].f = s->offset[i] + s->amplitude[i] * (    (fmod(running * s->frequency[i], 1) < .5) ? -1 : 1);
+				t->data[i].f = s->offset[i] + s->amplitude[i] * (    (fmod(running * s->frequency[i] + (s->phase[i] / (2 * M_PI)), 1) < .5) ? -1 : 1);
 				break;
 
 			case signal_generator::SignalType::RAMP:
@@ -348,11 +364,12 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 
 			case signal_generator::SignalType::MIXED:
 				break;
+
 			case signal_generator::SignalType::PULSE:
-				if (fmod(running , s->frequency) < .5)
-					t->data[i].f = s->amplitude;
-				else
-					t->data[i].f = 0;
+				t->data[i].f = abs(fmod(running * s->frequency[i] + (s->phase[i] / (2 * M_PI)) , 1)) <= (s->pulse_width[i] / s->rate)
+						? s->pulse_high[i]
+						: s->pulse_low[i];
+				t->data[i].f += s->offset[i];
 				break;
 		}
 	}
