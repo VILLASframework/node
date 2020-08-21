@@ -221,7 +221,7 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 				throw ConfigError(json_type, "node-config-node-signal", "Length of values must match");
 
 			json_array_foreach(json_type, i, json_value) {
-				type_str = json_string_value(json_type);
+				type_str = json_string_value(json_value);
 
 				s->type[i] = signal_generator_lookup_type(type_str);
 			}
