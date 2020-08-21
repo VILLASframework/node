@@ -53,18 +53,18 @@ struct signal_generator {
 		CONSTANT,
 		MIXED,
 		PULSE
-	} type; /**< Signal type */
+	} *type;			/**< Signal type */
 
 	double rate;			/**< Sampling rate. */
 	double *frequency;		/**< Frequency of the generated signals. */
 	double *amplitude;		/**< Amplitude of the generated signals. */
 	double *stddev;			/**< Standard deviation of random signals (normal distributed). */
 	double *offset;			/**< A constant bias. */
+	double *pulse_width;		/**< Width of a pulse with respect to the rate (duration = pulse_width/rate) */
+	double *pulse_low;		/**< Amplitude when pulse signal is off */
+	double *pulse_high;		/**< Amplitude when pulse signal is on */
+	double *phase;			/**< Phase (rad) offset with respect to program start */
 	int monitor_missed;		/**< Boolean, if set, node counts missed steps and warns user. */
-	int pulse_width;		/**< Width of a pulse with respect to the rate (duration = pulse_width/rate) */
-	double pulse_low;		/**< Amplitude when pulse signal is off */
-	double pulse_high;		/**< Amplitude when pulse signal is on */
-	double phase;			/**< Phase (rad) offset with respect to program start */
 
 	double *last;			/**< The values from the previous period which are required for random walk. */
 

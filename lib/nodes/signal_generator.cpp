@@ -74,6 +74,7 @@ static const char * signal_generator_type_str(enum signal_generator::SignalType 
 
 		case signal_generator::SignalType::RAMP:
 			return "ramp";
+
 		case signal_generator::SignalType::COUNTER:
 			return "counter";
 
@@ -82,8 +83,10 @@ static const char * signal_generator_type_str(enum signal_generator::SignalType 
 
 		case signal_generator::SignalType::MIXED:
 			return "mixed";
+
 		case signal_generator::SignalType::PULSE:
 			return "pulse";
+
 		default:
 			return nullptr;
 	}
@@ -141,8 +144,7 @@ int signal_generator_prepare(struct node *n)
 	assert(vlist_length(&n->in.signals) == 0);
 
 	for (unsigned i = 0; i < s->values; i++) {
-		int rtype = s->type == signal_generator::SignalType::MIXED ? i % 7 : (int) s->type;
-		auto name = signal_generator_type_str((enum signal_generator::SignalType) rtype);
+		auto name = signal_generator_type_str((enum signal_generator::SignalType) s->type[i]);
 		auto *sig = signal_create(name, nullptr, SignalType::FLOAT);
 
 		vlist_push(&n->in.signals, sig);
@@ -156,10 +158,10 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	int ret;
-	const char *type = nullptr;
 
 	json_error_t err;
 
+	json_t *json_type = nullptr;
 	json_t *json_amplitude = nullptr;
 	json_t *json_offset = nullptr;
 	json_t *json_frequency = nullptr;
@@ -169,8 +171,8 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	json_t *json_pulse_low = nullptr;
 	json_t *json_phase = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: b }",
-		"signal", &type,
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: b }",
+		"signal", &json_type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
 		"values", &s->values,
@@ -205,6 +207,40 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 		{ json_pulse_low, &s->pulse_low, 0, "pulse_low" },
 		{ json_phase, &s->phase, 0, "phase" }
 	};
+
+	size_t i;
+	json_t *json_value;
+	const char *type_str;
+	signal_generator::SignalType type;
+
+	s->type = new enum signal_generator::SignalType[s->values];
+
+	switch (json_typeof(json_type)) {
+		case JSON_ARRAY:
+			if (json_array_size(json_type) != s->values)
+				throw ConfigError(json_type, "node-config-node-signal", "Length of values must match");
+
+			json_array_foreach(json_type, i, json_value) {
+				type_str = json_string_value(json_type);
+
+				s->type[i] = signal_generator_lookup_type(type_str);
+			}
+			break;
+
+		case JSON_STRING:
+			type_str = json_string_value(json_type);
+			type = signal_generator_lookup_type(type_str);
+
+			for (size_t i = 0; i < s->values; i++) {
+				s->type[i] = (type == signal_generator::SignalType::MIXED
+					? (signal_generator::SignalType) (i % 7)
+					: type);
+			}
+			break;
+
+		default:
+			throw ConfigError(json_type, "node-config-node-signal", "Invalid setting 'signal' for node {}", node_name(n));
+	}
 
 	for (auto &a : arrays) {
 		if (*a.array)
@@ -247,11 +283,6 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 				(*a.array)[i] = a.def_value;
 		}
 	}
-
-	if (type)
-		s->type = signal_generator_lookup_type(type);
-	else
-		s->type = signal_generator::SignalType::MIXED;
 
 	return 0;
 }
@@ -302,17 +333,8 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 
 	assert(cnt == 1);
 
-	/* Throttle output if desired */
-	if (s->rt) {
-		/* Block until 1/p->rate seconds elapsed */
-		steps = s->task.wait();
-		if (steps > 1 && s->monitor_missed) {
-			debug(5, "Missed steps: %u", steps-1);
-			s->missed_steps += steps-1;
-		}
-
+	if (s->rt)
 		ts = time_now();
-	}
 	else {
 		struct timespec offset = time_from_double(s->counter * 1.0 / s->rate);
 
@@ -320,6 +342,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 
 		steps = 1;
 	}
+
 
 	double running = time_delta(&s->started, &ts);
 
@@ -330,9 +353,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	t->signals = &n->in.signals;
 
 	for (unsigned i = 0; i < MIN(s->values, t->capacity); i++) {
-		auto rtype = (s->type != signal_generator::SignalType::MIXED) ? s->type : (signal_generator::SignalType) (i % 7);
-
-		switch (rtype) {
+		switch (s->type[i]) {
 			case signal_generator::SignalType::CONSTANT:
 				t->data[i].f = s->offset[i] + s->amplitude[i];
 				break;
@@ -382,6 +403,16 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 		return -1;
 	}
 
+	/* Throttle output if desired */
+	if (s->rt) {
+		/* Block until 1/p->rate seconds elapsed */
+		steps = s->task.wait();
+		if (steps > 1 && s->monitor_missed) {
+			debug(5, "Missed steps: %u", steps-1);
+			s->missed_steps += steps-1;
+		}
+	}
+
 	s->counter += steps;
 
 	return 1;
@@ -391,10 +422,8 @@ char * signal_generator_print(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	char *buf = nullptr;
-	const char *type = signal_generator_type_str(s->type);
 
-	strcatf(&buf, "signal=%s, rt=%s, rate=%.2f, values=%d",
-		type, s->rt ? "yes" : "no", s->rate, s->values);
+	strcatf(&buf, "rt=%s, rate=%.2f, values=%d", s->rt ? "yes" : "no", s->rate, s->values);
 
 	if (s->limit > 0)
 		strcatf(&buf, ", limit=%d", s->limit);
