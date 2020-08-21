@@ -51,6 +51,8 @@ static enum signal_generator::SignalType signal_generator_lookup_type(const char
 		return signal_generator::SignalType::CONSTANT;
 	else if (!strcmp(type, "mixed"))
 		return signal_generator::SignalType::MIXED;
+	else if (!strcmp(type, "pulse"))
+		return signal_generator::SignalType::PULSE;
 
 	throw std::invalid_argument("Invalid signal type");
 }
@@ -72,7 +74,6 @@ static const char * signal_generator_type_str(enum signal_generator::SignalType 
 
 		case signal_generator::SignalType::RAMP:
 			return "ramp";
-
 		case signal_generator::SignalType::COUNTER:
 			return "counter";
 
@@ -81,7 +82,8 @@ static const char * signal_generator_type_str(enum signal_generator::SignalType 
 
 		case signal_generator::SignalType::MIXED:
 			return "mixed";
-
+		case signal_generator::SignalType::PULSE:
+			return "pulse";
 		default:
 			return nullptr;
 	}
@@ -345,6 +347,9 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 				break;
 
 			case signal_generator::SignalType::MIXED:
+				break;
+			case signal_generator::SignalType::PULSE:
+				t->data[i].f = 5;
 				break;
 		}
 	}

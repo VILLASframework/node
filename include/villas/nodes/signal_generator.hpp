@@ -51,7 +51,8 @@ struct signal_generator {
 		RAMP,
 		COUNTER,
 		CONSTANT,
-		MIXED
+		MIXED,
+		PULSE
 	} type; /**< Signal type */
 
 	double rate;			/**< Sampling rate. */
