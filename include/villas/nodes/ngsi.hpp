@@ -62,9 +62,8 @@ struct ngsi {
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
 
-	CURL *curl;			/**< libcurl: handle */
-
 	struct {
+		CURL *curl;		/**< libcurl: handle */
 		struct vlist signals;	/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
 	} in, out;
 };
