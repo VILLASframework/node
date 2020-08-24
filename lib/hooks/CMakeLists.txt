@@ -32,6 +32,7 @@ set(HOOK_SRC
     gate.cpp
     jitter_calc.cpp
     limit_rate.cpp
+    limit_value.cpp
     restart.cpp
     scale.cpp
     shift_seq.cpp
