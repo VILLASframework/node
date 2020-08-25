@@ -53,6 +53,7 @@ RUN dnf -y install \
 	jansson-devel \
 	libcurl-devel \
 	libconfig-devel \
+	libuuid-devel \
 	spdlog-devel \
 	fmt-devel \
 	openssl-devel openssl

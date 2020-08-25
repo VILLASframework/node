@@ -72,6 +72,7 @@ target_include_directories(villas-common PUBLIC
 
 target_link_libraries(villas-common PUBLIC
 	PkgConfig::JANSSON
+	PkgConfig::UUID
 	${OPENSSL_LIBRARIES}
 	${CURL_LIBRARIES}
 	${CMAKE_DL_LIBS}
