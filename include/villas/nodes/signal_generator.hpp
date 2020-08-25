@@ -33,7 +33,7 @@
 #include <villas/task.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 
 /** Node-type for signal generation.
@@ -77,18 +77,18 @@ struct signal_generator {
 };
 
 /** @see node_type::print */
-char * signal_generator_print(struct node *n);
+char * signal_generator_print(struct vnode *n);
 
 /** @see node_type::parse */
-int signal_generator_parse(struct node *n, json_t *cfg);
+int signal_generator_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int signal_generator_start(struct node *n);
+int signal_generator_start(struct vnode *n);
 
 /** @see node_type::stop */
-int signal_generator_stop(struct node *n);
+int signal_generator_stop(struct vnode *n);
 
 /** @see node_type::read */
-int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

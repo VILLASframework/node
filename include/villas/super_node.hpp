@@ -43,7 +43,7 @@ extern "C" {
 #include <villas/common.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 namespace villas {
 namespace node {
@@ -130,9 +130,9 @@ public:
 		state = st;
 	}
 
-	struct node * getNode(const std::string &name)
+	struct vnode * getNode(const std::string &name)
 	{
-		return vlist_lookup_name<struct node>(&nodes, name);
+		return vlist_lookup_name<struct vnode>(&nodes, name);
 	}
 
 	struct vlist * getNodes()

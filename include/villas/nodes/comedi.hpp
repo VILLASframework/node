@@ -81,21 +81,21 @@ struct comedi {
 };
 
 /** @see node_type::print */
-char * comedi_print(struct node *n);
+char * comedi_print(struct vnode *n);
 
 /** @see node_type::parse */
-int comedi_parse(struct node *n, json_t *cfg);
+int comedi_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int comedi_start(struct node *n);
+int comedi_start(struct vnode *n);
 
 /** @see node_type::stop */
-int comedi_stop(struct node *n);
+int comedi_stop(struct vnode *n);
 
 /** @see node_type::read */
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

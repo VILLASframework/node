@@ -43,7 +43,7 @@
 #include <villas/task.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 struct ngsi {
 	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
@@ -81,24 +81,24 @@ int ngsi_type_start(villas::node::SuperNode *sn);
 int ngsi_type_stop();
 
 /** @see node_type::parse */
-int ngsi_parse(struct node *n, json_t *cfg);
+int ngsi_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * ngsi_print(struct node *n);
+char * ngsi_print(struct vnode *n);
 
 /** @see node_type::start */
-int ngsi_start(struct node *n);
+int ngsi_start(struct vnode *n);
 
 /** @see node_type::stop */
-int ngsi_stop(struct node *n);
+int ngsi_stop(struct vnode *n);
 
 /** @see node_type::reverse */
-int ngsi_reverse(struct node *n);
+int ngsi_reverse(struct vnode *n);
 
 /** @see node_type::read */
-int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ngsi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ngsi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

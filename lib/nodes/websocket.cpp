@@ -218,7 +218,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					format = (char *) "villas.web";
 
 				/* Search for node whose name matches the URI. */
-				c->node = vlist_lookup_name<struct node>(&p.node.instances, node);
+				c->node = vlist_lookup_name<struct vnode>(&p.node.instances, node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					warning("Failed to find node: node=%s", node);
@@ -314,7 +314,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			/* We dont try to parse the frame yet, as we have to wait for the remaining fragments */
 			if (lws_is_final_fragment(wsi)) {
 				struct timespec ts_recv = time_now();
-				struct node *n = c->node;
+				struct vnode *n = c->node;
 
 				int avail, enqueued;
 				struct websocket *w = (struct websocket *) n->_vd;
@@ -378,7 +378,7 @@ int websocket_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int websocket_start(struct node *n)
+int websocket_start(struct vnode *n)
 {
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
@@ -423,7 +423,7 @@ int websocket_start(struct node *n)
 	return 0;
 }
 
-int websocket_stop(struct node *n)
+int websocket_stop(struct vnode *n)
 {
 	int ret, open_connections = 0;;
 	struct websocket *w = (struct websocket *) n->_vd;
@@ -467,7 +467,7 @@ int websocket_stop(struct node *n)
 	return 0;
 }
 
-int websocket_destroy(struct node *n)
+int websocket_destroy(struct vnode *n)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
@@ -479,7 +479,7 @@ int websocket_destroy(struct node *n)
 	return 0;
 }
 
-int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int websocket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
@@ -496,7 +496,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return avail;
 }
 
-int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
@@ -522,7 +522,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	return cnt;
 }
 
-int websocket_parse(struct node *n, json_t *cfg)
+int websocket_parse(struct vnode *n, json_t *cfg)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
@@ -576,7 +576,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * websocket_print(struct node *n)
+char * websocket_print(struct vnode *n)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 
@@ -600,7 +600,7 @@ char * websocket_print(struct node *n)
 	return buf;
 }
 
-int websocket_poll_fds(struct node *n, int fds[])
+int websocket_poll_fds(struct vnode *n, int fds[])
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 

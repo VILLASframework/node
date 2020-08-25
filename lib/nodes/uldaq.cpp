@@ -174,7 +174,7 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 	return nullptr;
 }
 
-static int uldaq_connect(struct node *n)
+static int uldaq_connect(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 	UlError err;
@@ -236,7 +236,7 @@ int uldaq_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int uldaq_init(struct node *n)
+int uldaq_init(struct vnode *n)
 {
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
@@ -260,7 +260,7 @@ int uldaq_init(struct node *n)
 	return 0;
 }
 
-int uldaq_destroy(struct node *n)
+int uldaq_destroy(struct vnode *n)
 {
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
@@ -279,7 +279,7 @@ int uldaq_destroy(struct node *n)
 	return 0;
 }
 
-int uldaq_parse(struct node *n, json_t *cfg)
+int uldaq_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
@@ -364,7 +364,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	return ret;
 }
 
-char * uldaq_print(struct node *n)
+char * uldaq_print(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
@@ -389,7 +389,7 @@ char * uldaq_print(struct node *n)
 	return buf;
 }
 
-int uldaq_check(struct node *n)
+int uldaq_check(struct vnode *n)
 {
 	int ret;
 	long long has_ai, event_types, max_channel, scan_options, num_ranges_se, num_ranges_diff;
@@ -500,7 +500,7 @@ found:		if (q->channel > max_channel) {
 
 void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type, unsigned long long event_data, void *ctx)
 {
-	struct node *n = (struct node *) ctx;
+	struct vnode *n = (struct vnode *) ctx;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	pthread_mutex_lock(&u->in.mutex);
@@ -516,7 +516,7 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 	pthread_cond_signal(&u->in.cv);
 }
 
-int uldaq_start(struct node *n)
+int uldaq_start(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
@@ -567,7 +567,7 @@ int uldaq_start(struct node *n)
 	return 0;
 }
 
-int uldaq_stop(struct node *n)
+int uldaq_stop(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
@@ -601,7 +601,7 @@ int uldaq_stop(struct node *n)
 	return 0;
 }
 
-int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int uldaq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 

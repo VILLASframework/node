@@ -106,21 +106,21 @@ struct rtp {
 };
 
 /** @see node_type::print */
-char * rtp_print(struct node *n);
+char * rtp_print(struct vnode *n);
 
 /** @see node_type::parse */
-int rtp_parse(struct node *n, json_t *cfg);
+int rtp_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int rtp_start(struct node *n);
+int rtp_start(struct vnode *n);
 
 /** @see node_type::stop */
-int rtp_stop(struct node *n);
+int rtp_stop(struct vnode *n);
 
 /** @see node_type::read */
-int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int rtp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int rtp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

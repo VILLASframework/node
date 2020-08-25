@@ -67,22 +67,22 @@ struct mqtt {
 };
 
 /** @see node_type::reverse */
-int mqtt_reverse(struct node *n);
+int mqtt_reverse(struct vnode *n);
 
 /** @see node_type::print */
-char * mqtt_print(struct node *n);
+char * mqtt_print(struct vnode *n);
 
 /** @see node_type::parse */
-int mqtt_parse(struct node *n, json_t *cfg);
+int mqtt_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int mqtt_start(struct node *n);
+int mqtt_start(struct vnode *n);
 
 /** @see node_type::destroy */
-int mqtt_destroy(struct node *n);
+int mqtt_destroy(struct vnode *n);
 
 /** @see node_type::stop */
-int mqtt_stop(struct node *n);
+int mqtt_stop(struct vnode *n);
 
 /** @see node_type::type_start */
 int mqtt_type_start(villas::node::SuperNode *sn);
@@ -91,9 +91,9 @@ int mqtt_type_start(villas::node::SuperNode *sn);
 int mqtt_type_stop();
 
 /** @see node_type::read */
-int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int mqtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

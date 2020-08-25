@@ -40,7 +40,7 @@
 using namespace villas;
 using namespace villas::utils;
 
-int shmem_parse(struct node *n, json_t *cfg)
+int shmem_parse(struct vnode *n, json_t *cfg)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	const char *val, *mode_str = nullptr;
@@ -102,7 +102,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int shmem_start(struct node *n)
+int shmem_start(struct vnode *n)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int ret;
@@ -122,14 +122,14 @@ int shmem_start(struct node *n)
 	return 0;
 }
 
-int shmem_stop(struct node *n)
+int shmem_stop(struct vnode *n)
 {
 	struct shmem* shm = (struct shmem *) n->_vd;
 
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int shmem_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
@@ -160,7 +160,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return recv;
 }
 
-int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int shmem_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
@@ -181,7 +181,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	return pushed;
 }
 
-char * shmem_print(struct node *n)
+char * shmem_print(struct vnode *n)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	char *buf = nullptr;

@@ -35,7 +35,7 @@ namespace villas {
 namespace node {
 namespace api {
 
-template<int (*A)(struct node *)>
+template<int (*A)(struct vnode *)>
 class NodeActionRequest : public NodeRequest  {
 
 public:

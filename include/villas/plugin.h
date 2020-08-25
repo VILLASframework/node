@@ -43,7 +43,7 @@ struct plugin {
 
 	union {
 		struct format_type	format;
-		struct node_type	node;
+		struct vnode_type	node;
 	};
 };
 

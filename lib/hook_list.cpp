@@ -58,7 +58,7 @@ int hook_list_destroy(vlist *hs)
 	return 0;
 }
 
-void hook_list_parse(vlist *hs, json_t *cfg, int mask, struct vpath *o, struct node *n)
+void hook_list_parse(vlist *hs, json_t *cfg, int mask, struct vpath *o, struct vnode *n)
 {
 	if (!json_is_array(cfg))
 		throw ConfigError(cfg, "node-config-hook", "Hooks must be configured as a list of hook objects");
@@ -100,7 +100,7 @@ static int hook_is_enabled(const Hook *h)
 	return h->isEnabled() ? 0 : -1;
 }
 
-void hook_list_prepare(vlist *hs, vlist *sigs, int m, struct vpath *p, struct node *n)
+void hook_list_prepare(vlist *hs, vlist *sigs, int m, struct vpath *p, struct vnode *n)
 {
 	assert(hs->state == State::INITIALIZED);
 

@@ -235,7 +235,7 @@ struct ngsi_response {
 	size_t len;
 };
 
-static json_t* ngsi_build_entity(struct node *n, struct sample *smps[], unsigned cnt, int flags)
+static json_t* ngsi_build_entity(struct vnode *n, struct sample *smps[], unsigned cnt, int flags)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -274,7 +274,7 @@ static json_t* ngsi_build_entity(struct node *n, struct sample *smps[], unsigned
 	return json_entity;
 }
 
-static int ngsi_parse_entity(struct node *n, json_t *json_entity, struct sample *smps[], unsigned cnt)
+static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample *smps[], unsigned cnt)
 {
 	int ret, length = 0;
 	const char *id, *name, *type;
@@ -603,7 +603,7 @@ int ngsi_type_stop()
 	return 0;
 }
 
-int ngsi_parse(struct node *n, json_t *cfg)
+int ngsi_parse(struct vnode *n, json_t *cfg)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -651,7 +651,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * ngsi_print(struct node *n)
+char * ngsi_print(struct vnode *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -659,7 +659,7 @@ char * ngsi_print(struct node *n)
 		i->endpoint, i->timeout);
 }
 
-int ngsi_start(struct node *n)
+int ngsi_start(struct vnode *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -706,7 +706,7 @@ int ngsi_start(struct node *n)
 	return ret;
 }
 
-int ngsi_stop(struct node *n)
+int ngsi_stop(struct vnode *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -727,7 +727,7 @@ int ngsi_stop(struct node *n)
 	return ret;
 }
 
-int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ngsi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -752,7 +752,7 @@ out:	json_decref(json_entity);
 	return ret;
 }
 
-int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ngsi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -766,7 +766,7 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return ret ? 0 : cnt;
 }
 
-int ngsi_poll_fds(struct node *n, int fds[])
+int ngsi_poll_fds(struct vnode *n, int fds[])
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -775,7 +775,7 @@ int ngsi_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-int ngsi_init(struct node *n)
+int ngsi_init(struct vnode *n)
 {
 	int ret;
 	struct ngsi *i = (struct ngsi *) n->_vd;
@@ -799,7 +799,7 @@ int ngsi_init(struct node *n)
 	return 0;
 }
 
-int ngsi_destroy(struct node *n)
+int ngsi_destroy(struct vnode *n)
 {
 	int ret;
 	struct ngsi *i = (struct ngsi *) n->_vd;
@@ -830,7 +830,7 @@ int ngsi_destroy(struct node *n)
 	return 0;
 }
 
-int ngsi_reverse(struct node *n)
+int ngsi_reverse(struct vnode *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 

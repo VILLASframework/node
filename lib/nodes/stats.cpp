@@ -91,7 +91,7 @@ int stats_node_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int stats_node_start(struct node *n)
+int stats_node_start(struct vnode *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
@@ -100,7 +100,7 @@ int stats_node_start(struct node *n)
 	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
 		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-		stats_sig->node = vlist_lookup_name<struct node>(nodes, stats_sig->node_str);
+		stats_sig->node = vlist_lookup_name<struct vnode>(nodes, stats_sig->node_str);
 		if (!stats_sig->node)
 			error("Invalid reference node %s for setting 'node' of node %s", stats_sig->node_str, node_name(n));
 	}
@@ -108,7 +108,7 @@ int stats_node_start(struct node *n)
 	return 0;
 }
 
-int stats_node_stop(struct node *n)
+int stats_node_stop(struct vnode *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
@@ -117,14 +117,14 @@ int stats_node_stop(struct node *n)
 	return 0;
 }
 
-char * stats_node_print(struct node *n)
+char * stats_node_print(struct vnode *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	return strf("rate=%f", s->rate);
 }
 
-int stats_node_init(struct node *n)
+int stats_node_init(struct vnode *n)
 {
 	int ret;
 	struct stats_node *s = (struct stats_node *) n->_vd;
@@ -138,7 +138,7 @@ int stats_node_init(struct node *n)
 	return 0;
 }
 
-int stats_node_destroy(struct node *n)
+int stats_node_destroy(struct vnode *n)
 {
 	int ret;
 	struct stats_node *s = (struct stats_node *) n->_vd;
@@ -152,7 +152,7 @@ int stats_node_destroy(struct node *n)
 	return 0;
 }
 
-int stats_node_parse(struct node *n, json_t *cfg)
+int stats_node_parse(struct vnode *n, json_t *cfg)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
@@ -206,7 +206,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int stats_node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
@@ -234,7 +234,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	return 1;
 }
 
-int stats_node_poll_fds(struct node *n, int fds[])
+int stats_node_poll_fds(struct vnode *n, int fds[])
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 

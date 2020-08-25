@@ -26,7 +26,7 @@
 #include <villas/api/request.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 namespace villas {
 namespace node {
@@ -42,7 +42,7 @@ class NodeRequest : public Request {
 public:
 	using Request::Request;
 
-	struct node *node;
+	struct vnode *node;
 
 	virtual void
 	prepare()
@@ -54,12 +54,12 @@ public:
 		uuid_t uuid;
 		ret = uuid_parse(matches[1].str().c_str(), uuid);
 		if (ret) {
-			node = vlist_lookup_name<struct node>(nodes, matches[1].str());
+			node = vlist_lookup_name<struct vnode>(nodes, matches[1].str());
 			if (!node)
 				throw BadRequest("Unknown node");
 		}
 		else {
-			node = vlist_lookup_uuid<struct node>(nodes, uuid);
+			node = vlist_lookup_uuid<struct vnode>(nodes, uuid);
 			if (!node)
 				throw BadRequest("No node found with with matching UUID");
 		}

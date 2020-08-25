@@ -33,7 +33,7 @@
 #include <villas/pool.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 
 /** Node-type for signal generation.
@@ -47,21 +47,21 @@ struct loopback {
 };
 
 /** @see node_type::print */
-char * loopback_print(struct node *n);
+char * loopback_print(struct vnode *n);
 
 /** @see node_type::parse */
-int loopback_parse(struct node *n, json_t *cfg);
+int loopback_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int loopback_open(struct node *n);
+int loopback_open(struct vnode *n);
 
 /** @see node_type::stop */
-int loopback_close(struct node *n);
+int loopback_close(struct vnode *n);
 
 /** @see node_type::read */
-int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int loopback_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int loopback_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

@@ -47,7 +47,7 @@ protected:
 	vlist signal_names;
 
 public:
-	LimitValueHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	LimitValueHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en)
 	{
 		int ret;

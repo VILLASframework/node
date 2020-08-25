@@ -79,7 +79,7 @@ static struct timespec file_calc_offset(const struct timespec *first, const stru
 	}
 }
 
-int file_parse(struct node *n, json_t *cfg)
+int file_parse(struct vnode *n, json_t *cfg)
 {
 	struct file *f = (struct file *) n->_vd;
 
@@ -147,7 +147,7 @@ int file_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * file_print(struct node *n)
+char * file_print(struct vnode *n)
 {
 	struct file *f = (struct file *) n->_vd;
 	char *buf = nullptr;
@@ -232,7 +232,7 @@ char * file_print(struct node *n)
 	return buf;
 }
 
-int file_start(struct node *n)
+int file_start(struct vnode *n)
 {
 	struct file *f = (struct file *) n->_vd;
 
@@ -334,7 +334,7 @@ int file_start(struct node *n)
 	return 0;
 }
 
-int file_stop(struct node *n)
+int file_stop(struct vnode *n)
 {
 	int ret;
 	struct file *f = (struct file *) n->_vd;
@@ -354,7 +354,7 @@ int file_stop(struct node *n)
 	return 0;
 }
 
-int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int file_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
 	int ret;
@@ -434,7 +434,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 	return cnt;
 }
 
-int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int file_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct file *f = (struct file *) n->_vd;
@@ -448,7 +448,7 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-int file_poll_fds(struct node *n, int fds[])
+int file_poll_fds(struct vnode *n, int fds[])
 {
 	struct file *f = (struct file *) n->_vd;
 
@@ -466,7 +466,7 @@ int file_poll_fds(struct node *n, int fds[])
 	return -1; /** @todo not supported yet */
 }
 
-int file_init(struct node *n)
+int file_init(struct vnode *n)
 {
 	struct file *f = (struct file *) n->_vd;
 
@@ -484,7 +484,7 @@ int file_init(struct node *n)
 	return 0;
 }
 
-int file_destroy(struct node *n)
+int file_destroy(struct vnode *n)
 {
 	struct file *f = (struct file *) n->_vd;
 

@@ -154,7 +154,7 @@ int opal_print_global()
 	return 0;
 }
 
-int opal_parse(struct node *n, json_t *cfg)
+int opal_parse(struct vnode *n, json_t *cfg)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
@@ -172,7 +172,7 @@ int opal_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * opal_print(struct node *n)
+char * opal_print(struct vnode *n)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
@@ -182,7 +182,7 @@ char * opal_print(struct node *n)
 		o->send_id, o->recv_id, o->reply);
 }
 
-int opal_start(struct node *n)
+int opal_start(struct vnode *n)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
@@ -206,12 +206,12 @@ int opal_start(struct node *n)
 	return 0;
 }
 
-int opal_stop(struct node *n)
+int opal_stop(struct vnode *n)
 {
 	return 0;
 }
 
-int opal_read(struct node *n, struct pool *pool, unsigned cnt)
+int opal_read(struct vnode *n, struct pool *pool, unsigned cnt)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
@@ -276,7 +276,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 	return 1;
 }
 
-int opal_write(struct node *n, struct pool *pool, unsigned cnt)
+int opal_write(struct vnode *n, struct pool *pool, unsigned cnt)
 {
 	struct opal *o = (struct opal *) n->_vd;
 

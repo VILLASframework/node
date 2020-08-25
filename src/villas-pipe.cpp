@@ -58,7 +58,7 @@ class PipeDirection {
 
 protected:
 	struct pool pool;
-	struct node *node;
+	struct vnode *node;
 	struct io *io;
 
 	std::thread thread;
@@ -67,7 +67,7 @@ protected:
 	bool enabled;
 	int limit;
 public:
-	PipeDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
+	PipeDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
 		node(n),
 		io(i),
 		stop(false),
@@ -114,7 +114,7 @@ public:
 class PipeSendDirection : public PipeDirection {
 
 public:
-	PipeSendDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
+	PipeSendDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim)
 	{ }
 
@@ -184,7 +184,7 @@ leave:		if (io_eof(io)) {
 class PipeReceiveDirection : public PipeDirection {
 
 public:
-	PipeReceiveDirection(struct node *n, struct io *i, bool en = true, int lim = -1) :
+	PipeReceiveDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim)
 	{ }
 
@@ -396,7 +396,7 @@ check:			if (optarg == endptr)
 	{
 		int ret;
 
-		struct node *node;
+		struct vnode *node;
 		struct format_type *ft;
 
 		logger->info("Logging level: {}", logging.getLevelName());

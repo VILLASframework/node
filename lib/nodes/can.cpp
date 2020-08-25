@@ -48,7 +48,7 @@ static struct plugin p;
 using namespace villas::node;
 using namespace villas::utils;
 
-int can_init(struct node *n)
+int can_init(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -62,7 +62,7 @@ int can_init(struct node *n)
 	return 0;
 }
 
-int can_destroy(struct node *n)
+int can_destroy(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -124,7 +124,7 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 out:	return ret;
 }
 
-int can_parse(struct node *n, json_t *cfg)
+int can_parse(struct vnode *n, json_t *cfg)
 {
 	int ret = 1;
 	struct can *c = (struct can *) n->_vd;
@@ -189,14 +189,14 @@ out:	if (ret != 0) {
 	return ret;
 }
 
-char * can_print(struct node *n)
+char * can_print(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
 	return strf("interface_name=%s", c->interface_name);
 }
 
-int can_check(struct node *n)
+int can_check(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -208,7 +208,7 @@ int can_check(struct node *n)
 	return 0;
 }
 
-int can_prepare(struct node *n)
+int can_prepare(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -217,7 +217,7 @@ int can_prepare(struct node *n)
 	return (c->sample_buf != 0 ? 0 : 1);
 }
 
-int can_start(struct node *n)
+int can_start(struct vnode *n)
 {
 	int ret = 1;
 	struct sockaddr_can addr = {0};
@@ -250,7 +250,7 @@ int can_start(struct node *n)
 out:	return ret;
 }
 
-int can_stop(struct node *n)
+int can_stop(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
@@ -399,7 +399,7 @@ fail:
 	return 1;
 }
 
-int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret = 0;
 	int nbytes;
@@ -474,7 +474,7 @@ int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	return ret;
 }
 
-int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int nbytes;
 	unsigned nwrite;
@@ -547,7 +547,7 @@ int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return nwrite;
 }
 
-int can_poll_fds(struct node *n, int fds[])
+int can_poll_fds(struct vnode *n, int fds[])
 {
 	struct can *c = (struct can *) n->_vd;
 

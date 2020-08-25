@@ -52,16 +52,16 @@ int example_type_start(villas::node::SuperNode *sn);
 int example_type_stop();
 
 /** @see node_type::init */
-int example_init(struct node *n);
+int example_init(struct vnode *n);
 
 /** @see node_type::destroy */
-int example_destroy(struct node *n);
+int example_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int example_parse(struct node *n, json_t *cfg);
+int example_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * example_print(struct node *n);
+char * example_print(struct vnode *n);
 
 /** @see node_type::check */
 int example_check();
@@ -70,30 +70,30 @@ int example_check();
 int example_prepare();
 
 /** @see node_type::start */
-int example_start(struct node *n);
+int example_start(struct vnode *n);
 
 /** @see node_type::stop */
-int example_stop(struct node *n);
+int example_stop(struct vnode *n);
 
 /** @see node_type::pause */
-int example_pause(struct node *n);
+int example_pause(struct vnode *n);
 
 /** @see node_type::resume */
-int example_resume(struct node *n);
+int example_resume(struct vnode *n);
 
 /** @see node_type::write */
-int example_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int example_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int example_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int example_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::reverse */
-int example_reverse(struct node *n);
+int example_reverse(struct vnode *n);
 
 /** @see node_type::poll_fds */
-int example_poll_fds(struct node *n, int fds[]);
+int example_poll_fds(struct vnode *n, int fds[]);
 
 /** @see node_type::netem_fds */
-int example_netem_fds(struct node *n, int fds[]);
+int example_netem_fds(struct vnode *n, int fds[]);
 
 /** @} */

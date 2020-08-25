@@ -30,7 +30,7 @@
 
 using namespace villas::utils;
 
-int loopback_parse(struct node *n, json_t *cfg)
+int loopback_parse(struct vnode *n, json_t *cfg)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 	const char *mode_str = nullptr;
@@ -71,7 +71,7 @@ int loopback_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int loopback_start(struct node *n)
+int loopback_start(struct vnode *n)
 {
 	int ret;
 	struct loopback *l = (struct loopback *) n->_vd;
@@ -88,7 +88,7 @@ int loopback_start(struct node *n)
 	return queue_signalled_init(&l->queue, l->queuelen, memory_default, l->mode);
 }
 
-int loopback_stop(struct node *n)
+int loopback_stop(struct vnode *n)
 {
 	int ret;
 	struct loopback *l= (struct loopback *) n->_vd;
@@ -100,7 +100,7 @@ int loopback_stop(struct node *n)
 	return queue_signalled_destroy(&l->queue);
 }
 
-int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int loopback_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
@@ -117,7 +117,7 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	return avail;
 }
 
-int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int loopback_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 	struct sample *copies[cnt];
@@ -133,7 +133,7 @@ int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return queue_signalled_push_many(&l->queue, (void **) copies, copied);
 }
 
-char * loopback_print(struct node *n)
+char * loopback_print(struct vnode *n)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 	char *buf = nullptr;
@@ -143,7 +143,7 @@ char * loopback_print(struct node *n)
 	return buf;
 }
 
-int loopback_poll_fds(struct node *n, int fds[])
+int loopback_poll_fds(struct vnode *n, int fds[])
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 

@@ -36,7 +36,7 @@
 
 using namespace villas::utils;
 
-static int ib_disconnect(struct node *n)
+static int ib_disconnect(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)];
@@ -68,7 +68,7 @@ static int ib_disconnect(struct node *n)
 	return ib->stopThreads;
 }
 
-static void ib_build_ibv(struct node *n)
+static void ib_build_ibv(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -104,7 +104,7 @@ static void ib_build_ibv(struct node *n)
 		info("Maximum inline size is set to %i byte", ib->qp_init.cap.max_inline_data);
 }
 
-static int ib_addr_resolved(struct node *n)
+static int ib_addr_resolved(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -122,7 +122,7 @@ static int ib_addr_resolved(struct node *n)
 	return 0;
 }
 
-static int ib_route_resolved(struct node *n)
+static int ib_route_resolved(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -140,7 +140,7 @@ static int ib_route_resolved(struct node *n)
 	return 0;
 }
 
-static int ib_connect_request(struct node *n, struct rdma_cm_id *id)
+static int ib_connect_request(struct vnode *n, struct rdma_cm_id *id)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -162,7 +162,7 @@ static int ib_connect_request(struct node *n, struct rdma_cm_id *id)
 	return 0;
 }
 
-int ib_reverse(struct node *n)
+int ib_reverse(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
@@ -171,7 +171,7 @@ int ib_reverse(struct node *n)
 	return 0;
 }
 
-int ib_parse(struct node *n, json_t *cfg)
+int ib_parse(struct vnode *n, json_t *cfg)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
@@ -342,7 +342,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int ib_check(struct node *n)
+int ib_check(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
@@ -393,17 +393,17 @@ int ib_check(struct node *n)
 	return 0;
 }
 
-char * ib_print(struct node *n)
+char * ib_print(struct vnode *n)
 {
 	return 0;
 }
 
-int ib_destroy(struct node *n)
+int ib_destroy(struct vnode *n)
 {
 	return 0;
 }
 
-static void ib_create_bind_id(struct node *n)
+static void ib_create_bind_id(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -464,7 +464,7 @@ static void ib_create_bind_id(struct node *n)
 	ib->ctx.listen_id = ib->ctx.id;
 }
 
-static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
+static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -500,7 +500,7 @@ static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
 
 void * ib_rdma_cm_event_thread(void *n)
 {
-	struct node *node = (struct node *) n;
+	struct vnode *node = (struct vnode *) n;
 	struct infiniband *ib = (struct infiniband *) node->_vd;
 	struct rdma_cm_event *event;
 	int ret = 0;
@@ -610,7 +610,7 @@ void * ib_rdma_cm_event_thread(void *n)
 	return nullptr;
 }
 
-int ib_start(struct node *n)
+int ib_start(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -676,7 +676,7 @@ int ib_start(struct node *n)
 	return 0;
 }
 
-int ib_stop(struct node *n)
+int ib_stop(struct vnode *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
@@ -730,7 +730,7 @@ int ib_stop(struct node *n)
 	return 0;
 }
 
-int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[cnt];
@@ -872,7 +872,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 	return read_values;
 }
 
-int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_send_wr wr[cnt], *bad_wr = nullptr;

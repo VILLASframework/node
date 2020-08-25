@@ -33,7 +33,7 @@
 #include <villas/memory.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 
 namespace villas {
@@ -47,7 +47,7 @@ enum class NodeFlags {
 };
 
 /** C++ like vtable construct for node_types */
-struct node_type {
+struct vnode_type {
 	unsigned vectorize;		/**< Maximal vector length supported by this node type. Zero is unlimited. */
 	int flags;
 
@@ -87,7 +87,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*init)(struct node *n);
+	int (*init)(struct vnode *n);
 
 	/** Free memory of an instance of this type.
 	 *
@@ -95,7 +95,7 @@ struct node_type {
 	 *
 	 * @param n	A pointer to the node object.
 	 */
-	int (*destroy)(struct node *n);
+	int (*destroy)(struct vnode *n);
 
 	/** Parse node connection details.
 	 *
@@ -106,7 +106,7 @@ struct node_type {
 	 * @retval 0 	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*parse)(struct node *n, json_t *cfg);
+	int (*parse)(struct vnode *n, json_t *cfg);
 
 	/** Check the current node configuration for plausability and errors.
 	 *
@@ -116,9 +116,9 @@ struct node_type {
 	 * @retval 0 	Success. Node configuration is good.
 	 * @retval <0	Error. The node configuration is bogus.
 	 */
-	int (*check)(struct node *n);
+	int (*check)(struct vnode *n);
 
-	int (*prepare)(struct node *);
+	int (*prepare)(struct vnode *);
 
 	/** Returns a string with a textual represenation of this node.
 	 *
@@ -127,7 +127,7 @@ struct node_type {
 	 * @param n	A pointer to the node object.
 	 * @return	A pointer to a dynamically allocated string. Must be freed().
 	 */
-	char * (*print)(struct node *n);
+	char * (*print)(struct vnode *n);
 
 	/** Start this node.
 	 *
@@ -137,7 +137,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*start)(struct node *n);
+	int (*start)(struct vnode *n);
 
 	/** Restart this node.
 	 *
@@ -147,7 +147,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*restart)(struct node *n);
+	int (*restart)(struct vnode *n);
 
 	/** Stop this node.
 	 *
@@ -157,7 +157,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*stop)(struct node *n);
+	int (*stop)(struct vnode *n);
 
 	/** Pause this node.
 	 *
@@ -167,7 +167,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*pause)(struct node *n);
+	int (*pause)(struct vnode *n);
 
 	/** Resume this node.
 	 *
@@ -177,7 +177,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*resume)(struct node *n);
+	int (*resume)(struct vnode *n);
 
 	/** Receive multiple messages at once.
 	 *
@@ -195,7 +195,7 @@ struct node_type {
 	 * @param release	The number of samples that should be released after read is called.
 	 * @return		    The number of messages actually received.
 	 */
-	int (*read)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+	int (*read)(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
@@ -212,7 +212,7 @@ struct node_type {
 	 * @param release	The number of samples that should be released after write is called
 	 * @return		    The number of messages actually sent.
 	 */
-	int (*write)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+	int (*write)(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 	/** Reverse source and destination of a node.
 	 *
@@ -220,7 +220,7 @@ struct node_type {
 	 *
 	 * @param n	A pointer to the node object.
 	 */
-	int (*reverse)(struct node *n);
+	int (*reverse)(struct vnode *n);
 
 	/** Get list of file descriptors which can be used by poll/select to detect the availability of new data.
 	 *
@@ -228,7 +228,7 @@ struct node_type {
 	 *
 	 * @return The number of file descriptors which have been put into \p fds.
 	 */
-	int (*poll_fds)(struct node *n, int fds[]);
+	int (*poll_fds)(struct vnode *n, int fds[]);
 
 	/** Get list of socket file descriptors for configuring network emulation.
 	 *
@@ -236,27 +236,27 @@ struct node_type {
 	 *
 	 * @return The number of file descriptors which have been put into \p sds.
 	 */
-	int (*netem_fds)(struct node *n, int sds[]);
+	int (*netem_fds)(struct vnode *n, int sds[]);
 
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
-	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);
+	struct memory_type * (*memory_type)(struct vnode *n, struct memory_type *parent);
 };
 
 /** Initialize all registered node type subsystems.
  *
  * @see node_type::init
  */
-int node_type_start(struct node_type *vt, villas::node::SuperNode *sn);
+int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn);
 
 /** De-initialize node type subsystems.
  *
  * @see node_type::deinit
  */
-int node_type_stop(struct node_type *vt);
+int node_type_stop(struct vnode_type *vt);
 
 /** Return a printable representation of the node-type. */
-const char * node_type_name(struct node_type *vt);
+const char * node_type_name(struct vnode_type *vt);
 
-struct node_type * node_type_lookup(const char *name);
+struct vnode_type * node_type_lookup(const char *name);
 
 /** @} */

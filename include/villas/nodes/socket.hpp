@@ -72,21 +72,21 @@ int socket_type_start(villas::node::SuperNode *sn);
 int socket_type_stop();
 
 /** @see node_type::start */
-int socket_start(struct node *n);
+int socket_start(struct vnode *n);
 
 /** @see node_type::stop */
-int socket_stop(struct node *n);
+int socket_stop(struct vnode *n);
 
 /** @see node_type::write */
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::parse */
-int socket_parse(struct node *n, json_t *cfg);
+int socket_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * socket_print(struct node *n);
+char * socket_print(struct vnode *n);
 
 /** @} */

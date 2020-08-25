@@ -37,7 +37,7 @@ struct vpath;
 struct sample;
 
 struct vpath_source {
-	struct node *node;
+	struct vnode *node;
 
 	bool masked;
 

@@ -47,7 +47,7 @@ static void * mosquitto_loop_thread(void *ctx)
 
 	while (true) {
 		for (unsigned i = 0; i < vlist_length(&clients); i++) {
-			struct node *node = (struct node *) vlist_at(&clients, i);
+			struct vnode *node = (struct vnode *) vlist_at(&clients, i);
 			struct mqtt *m = (struct mqtt *) node->_vd;
 
 			// Execute mosquitto loop for this client
@@ -96,7 +96,7 @@ static void mqtt_log_cb(struct mosquitto *mosq, void *userdata, int level, const
 
 static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 {
-	struct node *n = (struct node *) userdata;
+	struct vnode *n = (struct vnode *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	int ret;
@@ -114,7 +114,7 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 
 static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int result)
 {
-	struct node *n = (struct node *) userdata;
+	struct vnode *n = (struct vnode *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	info("MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
@@ -123,7 +123,7 @@ static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int resul
 static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg)
 {
 	int ret;
-	struct node *n = (struct node *) userdata;
+	struct vnode *n = (struct vnode *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 	struct sample *smps[n->in.vectorize];
 
@@ -153,13 +153,13 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 
 static void mqtt_subscribe_cb(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
 {
-	struct node *n = (struct node *) userdata;
+	struct vnode *n = (struct vnode *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	info("MQTT: Node %s subscribed to broker %s", node_name(n), m->host);
 }
 
-int mqtt_reverse(struct node *n)
+int mqtt_reverse(struct vnode *n)
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
@@ -168,7 +168,7 @@ int mqtt_reverse(struct node *n)
 	return 0;
 }
 
-int mqtt_parse(struct node *n, json_t *cfg)
+int mqtt_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -251,7 +251,7 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int mqtt_check(struct node *n)
+int mqtt_check(struct vnode *n)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -267,7 +267,7 @@ int mqtt_check(struct node *n)
 	return 0;
 }
 
-char * mqtt_print(struct node *n)
+char * mqtt_print(struct vnode *n)
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
@@ -293,7 +293,7 @@ char * mqtt_print(struct node *n)
 	return buf;
 }
 
-int mqtt_destroy(struct node *n)
+int mqtt_destroy(struct vnode *n)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -322,7 +322,7 @@ int mqtt_destroy(struct node *n)
 	return 0;
 }
 
-int mqtt_start(struct node *n)
+int mqtt_start(struct vnode *n)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -385,7 +385,7 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_stop(struct node *n)
+int mqtt_stop(struct vnode *n)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -471,7 +471,7 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int mqtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int pulled;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -485,7 +485,7 @@ int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return pulled;
 }
 
-int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -511,7 +511,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-int mqtt_poll_fds(struct node *n, int fds[])
+int mqtt_poll_fds(struct vnode *n, int fds[])
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
 

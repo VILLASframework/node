@@ -155,7 +155,7 @@ void Stats::setupTable()
 		table = std::make_shared<Table>(columns);
 }
 
-void Stats::printPeriodic(FILE *f, enum Format fmt, struct node *n) const
+void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
 {
 	switch (fmt) {
 		case Format::HUMAN:

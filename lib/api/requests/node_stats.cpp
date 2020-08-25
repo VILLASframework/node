@@ -52,7 +52,7 @@ public:
 		const auto &nodeName = matches[1].str();
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
-		struct node *node = vlist_lookup_name<struct node>(nodes, nodeName.c_str());
+		struct vnode *node = vlist_lookup_name<struct vnode>(nodes, nodeName.c_str());
 
 		if (!node)
 			throw BadRequest("Unknown node");
@@ -65,7 +65,7 @@ public:
 };
 
 /* Register API requests */
-static char n[] = "stats";
+static char n[] = "node/stats";
 static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/stats";
 static char d[] = "get internal statistics counters";
 static RequestPlugin<StatsRequest, n, r, d> p;

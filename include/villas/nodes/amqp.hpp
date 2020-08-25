@@ -64,21 +64,21 @@ struct amqp {
 };
 
 /** @see node_type::print */
-char * amqp_print(struct node *n);
+char * amqp_print(struct vnode *n);
 
 /** @see node_type::parse */
-int amqp_parse(struct node *n, json_t *json);
+int amqp_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
-int amqp_start(struct node *n);
+int amqp_start(struct vnode *n);
 
 /** @see node_type::stop */
-int amqp_stop(struct node *n);
+int amqp_stop(struct vnode *n);
 
 /** @see node_type::read */
-int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int amqp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int amqp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

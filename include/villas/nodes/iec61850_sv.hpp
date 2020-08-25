@@ -81,27 +81,27 @@ struct iec61850_sv {
 int iec61850_sv_type_stop();
 
 /** @see node_type::parse */
-int iec61850_sv_parse(struct node *n, json_t *json);
+int iec61850_sv_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
-char * iec61850_sv_print(struct node *n);
+char * iec61850_sv_print(struct vnode *n);
 
 /** @see node_type::start */
-int iec61850_sv_start(struct node *n);
+int iec61850_sv_start(struct vnode *n);
 
 /** @see node_type::stop */
-int iec61850_sv_stop(struct node *n);
+int iec61850_sv_stop(struct vnode *n);
 
 /** @see node_type::destroy */
-int iec61850_sv_destroy(struct node *n);
+int iec61850_sv_destroy(struct vnode *n);
 
 /** @see node_type::read */
-int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int iec61850_sv_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int iec61850_sv_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::fd */
-int iec61850_sv_fd(struct node *n);
+int iec61850_sv_fd(struct vnode *n);
 
 /** @} */

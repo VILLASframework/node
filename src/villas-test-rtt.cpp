@@ -177,7 +177,7 @@ check:			if (optarg == endptr)
 		if (!smp_send || !smp_recv)
 			throw MemoryAllocationError();
 
-		struct node *node;
+		struct vnode *node;
 
 		if (!uri.empty())
 			sn.parse(uri);

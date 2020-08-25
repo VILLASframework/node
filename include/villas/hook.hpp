@@ -35,7 +35,7 @@
 
 /* Forward declarations */
 struct vpath;
-struct node;
+struct vnode;
 struct sample;
 
 namespace villas {
@@ -68,14 +68,14 @@ protected:
 	int enabled;  /**< Is this hook active? */
 
 	struct vpath *path;
-	struct node *node;
+	struct vnode *node;
 
 	vlist signals;
 
 	json_t *cfg; /**< A JSON object containing the configuration of the hook. */
 
 public:
-	Hook(struct vpath *p, struct node *n, int fl, int prio, bool en = true);
+	Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
 	virtual ~Hook();
 
 	virtual void parse(json_t *c);
@@ -187,7 +187,7 @@ class HookFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual Hook *make(struct vpath *p, struct node *n) = 0;
+	virtual Hook *make(struct vpath *p, struct vnode *n) = 0;
 
 	virtual int getFlags() const = 0;
 	virtual int getPriority() const = 0;
@@ -199,7 +199,7 @@ class HookPlugin : public HookFactory {
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook *make(struct vpath *p, struct node *n)
+	virtual Hook *make(struct vpath *p, struct vnode *n)
 	{
 		return new T(p, n, getFlags(), getPriority());
 	}

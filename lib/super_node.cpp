@@ -136,7 +136,7 @@ void SuperNode::parse(json_t *cfg)
 		const char *name;
 		json_t *json_node;
 		json_object_foreach(json_nodes, name, json_node) {
-			struct node_type *nt;
+			struct vnode_type *nt;
 			const char *type;
 
 			ret = node_is_valid_name(name);
@@ -151,7 +151,7 @@ void SuperNode::parse(json_t *cfg)
 			if (!nt)
 				throw ConfigError(json_node, "node-config-node-type", "Invalid node type: {}", type);
 
-			auto *n = new struct node;
+			auto *n = new struct vnode;
 			if (!n)
 				throw MemoryAllocationError();
 
@@ -226,7 +226,7 @@ void SuperNode::check()
 	assert(state == State::INITIALIZED || state == State::PARSED || state == State::CHECKED);
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		ret = node_check(n);
 		if (ret)
@@ -249,7 +249,7 @@ void SuperNode::startNodeTypes()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		ret = node_type_start(n->_vt, this);
 		if (ret)
@@ -277,7 +277,7 @@ void SuperNode::startNodes()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		if (!node_is_enabled(n))
 			continue;
@@ -309,7 +309,7 @@ void SuperNode::prepareNodes()
 	int ret, refs;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
 		if (refs <= 0) {
@@ -402,7 +402,7 @@ void SuperNode::stopNodes()
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		ret = node_stop(n);
 		if (ret)
@@ -499,7 +499,7 @@ int SuperNode::periodic()
 	}
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		if (n->state == State::STARTED) {
 #ifdef WITH_HOOKS

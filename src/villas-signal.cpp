@@ -67,7 +67,7 @@ public:
 protected:
 	std::atomic<bool> stop;
 
-	struct node n;
+	struct vnode n;
 	struct io io;
 	struct pool q;
 
@@ -213,7 +213,7 @@ check:			if (optarg == endptr)
 	{
 		int ret;
 		json_t *cfg;
-		struct node_type *nt;
+		struct vnode_type *nt;
 		struct format_type *ft;
 
 		struct sample *t;

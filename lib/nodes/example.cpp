@@ -46,7 +46,7 @@ int example_type_stop()
 	return 0;
 }
 
-int example_init(struct node *n)
+int example_init(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -58,7 +58,7 @@ int example_init(struct node *n)
 	return 0;
 }
 
-int example_destroy(struct node *n)
+int example_destroy(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -70,7 +70,7 @@ int example_destroy(struct node *n)
 	return 0;
 }
 
-int example_parse(struct node *n, json_t *cfg)
+int example_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct example *s = (struct example *) n->_vd;
@@ -89,7 +89,7 @@ int example_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * example_print(struct node *n)
+char * example_print(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -98,7 +98,7 @@ char * example_print(struct node *n)
 	return strf("setting1=%d, setting2=%s", s->setting1, s->setting2);
 }
 
-int example_check(struct node *n)
+int example_check(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -113,7 +113,7 @@ int example_check(struct node *n)
 	return 0;
 }
 
-int example_prepare(struct node *n)
+int example_prepare(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -127,7 +127,7 @@ int example_prepare(struct node *n)
 	return 0;
 }
 
-int example_start(struct node *n)
+int example_start(struct vnode *n)
 {
 	struct example *s = (struct example *) n->_vd;
 
@@ -138,7 +138,7 @@ int example_start(struct node *n)
 	return 0;
 }
 
-int example_stop(struct node *n)
+int example_stop(struct vnode *n)
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -147,7 +147,7 @@ int example_stop(struct node *n)
 	return 0;
 }
 
-int example_pause(struct node *n)
+int example_pause(struct vnode *n)
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -156,7 +156,7 @@ int example_pause(struct node *n)
 	return 0;
 }
 
-int example_resume(struct node *n)
+int example_resume(struct vnode *n)
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -165,7 +165,7 @@ int example_resume(struct node *n)
 	return 0;
 }
 
-int example_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int example_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int read;
 	struct example *s = (struct example *) n->_vd;
@@ -189,7 +189,7 @@ int example_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	return read;
 }
 
-int example_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int example_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int written;
 	//struct example *s = (struct example *) n->_vd;
@@ -201,7 +201,7 @@ int example_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	return written;
 }
 
-int example_reverse(struct node *n)
+int example_reverse(struct vnode *n)
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -210,7 +210,7 @@ int example_reverse(struct node *n)
 	return 0;
 }
 
-int example_poll_fds(struct node *n, int fds[])
+int example_poll_fds(struct vnode *n, int fds[])
 {
 	//struct example *s = (struct example *) n->_vd;
 
@@ -219,7 +219,7 @@ int example_poll_fds(struct node *n, int fds[])
 	return 0; /* The number of file descriptors which have been set in fds */
 }
 
-int example_netem_fds(struct node *n, int fds[])
+int example_netem_fds(struct vnode *n, int fds[])
 {
 	//struct example *s = (struct example *) n->_vd;
 

@@ -113,7 +113,7 @@ static int amqp_close(amqp_connection_state_t conn)
 	return 0;
 }
 
-int amqp_parse(struct node *n, json_t *json)
+int amqp_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -195,7 +195,7 @@ int amqp_parse(struct node *n, json_t *json)
 	return 0;
 }
 
-char * amqp_print(struct node *n)
+char * amqp_print(struct vnode *n)
 {
 	struct amqp *a = (struct amqp *) n->_vd;
 
@@ -232,7 +232,7 @@ char * amqp_print(struct node *n)
 	return buf;
 }
 
-int amqp_start(struct node *n)
+int amqp_start(struct vnode *n)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -292,7 +292,7 @@ int amqp_start(struct node *n)
 	return 0;
 }
 
-int amqp_stop(struct node *n)
+int amqp_stop(struct vnode *n)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -312,7 +312,7 @@ int amqp_stop(struct node *n)
 	return 0;
 }
 
-int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int amqp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -330,7 +330,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return ret;
 }
 
-int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int amqp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -358,7 +358,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-int amqp_poll_fds(struct node *n, int fds[])
+int amqp_poll_fds(struct vnode *n, int fds[])
 {
 	struct amqp *a = (struct amqp *) n->_vd;
 
@@ -369,7 +369,7 @@ int amqp_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-int amqp_destroy(struct node *n)
+int amqp_destroy(struct vnode *n)
 {
 	struct amqp *a = (struct amqp *) n->_vd;
 

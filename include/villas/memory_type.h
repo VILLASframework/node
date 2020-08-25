@@ -28,7 +28,7 @@
 
 /* Forward declarations */
 struct memory_type;
-struct node;
+struct vnode;
 
 typedef struct memory_allocation * (*memory_allocator_t)(size_t len, size_t alignment, struct memory_type *mem);
 typedef int (*memory_deallocator_t)(struct memory_allocation * ma, struct memory_type *mem);
@@ -57,7 +57,7 @@ extern struct memory_type memory_mmap;
 extern struct memory_type memory_mmap_hugetlb;
 extern struct memory_type *memory_default;
 
-struct memory_type * memory_ib(struct node *n, struct memory_type *parent);
+struct memory_type * memory_ib(struct vnode *n, struct memory_type *parent);
 struct memory_type * memory_managed(void *ptr, size_t len);
 
 int memory_mmap_init(int hugepages);

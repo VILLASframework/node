@@ -45,7 +45,7 @@
 #include <villas/log.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 /** The register mode determines under which condition the path is triggered. */
 enum class PathMode {
@@ -145,7 +145,7 @@ struct vlist * path_output_signals(struct vpath *n);
 int path_reverse(struct vpath *p, struct vpath *r);
 
 /** Check if node is used as source or destination of a path. */
-int path_uses_node(struct vpath *p, struct node *n);
+int path_uses_node(struct vpath *p, struct vnode *n);
 
 /** Parse a single path and add it to the global configuration.
  *

@@ -48,21 +48,21 @@ struct shmem {
 };
 
 /** @see node_type::print */
-char * shmem_print(struct node *n);
+char * shmem_print(struct vnode *n);
 
 /** @see node_type::parse */
-int shmem_parse(struct node *n, json_t *cfg);
+int shmem_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int shmem_start(struct node *n);
+int shmem_start(struct vnode *n);
 
 /** @see node_type::stop */
-int shmem_stop(struct node *n);
+int shmem_stop(struct vnode *n);
 
 /** @see node_type::read */
-int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int shmem_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int shmem_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

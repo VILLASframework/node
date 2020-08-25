@@ -85,7 +85,7 @@ static int test_rtt_case_destroy(struct test_rtt_case *c)
 	return 0;
 }
 
-int test_rtt_prepare(struct node *n)
+int test_rtt_prepare(struct vnode *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
@@ -117,7 +117,7 @@ int test_rtt_prepare(struct node *n)
 	return 0;
 }
 
-int test_rtt_parse(struct node *n, json_t *cfg)
+int test_rtt_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -249,7 +249,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int test_rtt_init(struct node *n)
+int test_rtt_init(struct vnode *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
@@ -258,7 +258,7 @@ int test_rtt_init(struct node *n)
 	return 0;
 }
 
-int test_rtt_destroy(struct node *n)
+int test_rtt_destroy(struct vnode *n)
 {
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -278,14 +278,14 @@ int test_rtt_destroy(struct node *n)
 	return 0;
 }
 
-char * test_rtt_print(struct node *n)
+char * test_rtt_print(struct vnode *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, vlist_length(&t->cases));
 }
 
-int test_rtt_start(struct node *n)
+int test_rtt_start(struct vnode *n)
 {
 	int ret;
 	struct stat st;
@@ -318,7 +318,7 @@ int test_rtt_start(struct node *n)
 	return 0;
 }
 
-int test_rtt_stop(struct node *n)
+int test_rtt_stop(struct vnode *n)
 {
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -336,7 +336,7 @@ int test_rtt_stop(struct node *n)
 	return 0;
 }
 
-int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	unsigned i;
@@ -408,7 +408,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	}
 }
 
-int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
@@ -430,7 +430,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return i;
 }
 
-int test_rtt_poll_fds(struct node *n, int fds[])
+int test_rtt_poll_fds(struct vnode *n, int fds[])
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 

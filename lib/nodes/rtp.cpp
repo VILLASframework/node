@@ -59,7 +59,7 @@ using namespace villas::utils;
 
 static struct plugin p;
 
-static int rtp_aimd(struct node *n, double loss_frac)
+static int rtp_aimd(struct vnode *n, double loss_frac)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -88,7 +88,7 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	return 0;
 }
 
-int rtp_init(struct node *n)
+int rtp_init(struct vnode *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -113,7 +113,7 @@ int rtp_init(struct node *n)
 	return 0;
 }
 
-int rtp_reverse(struct node *n)
+int rtp_reverse(struct vnode *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -123,7 +123,7 @@ int rtp_reverse(struct node *n)
 	return 0;
 }
 
-int rtp_parse(struct node *n, json_t *cfg)
+int rtp_parse(struct vnode *n, json_t *cfg)
 {
 	int ret = 0;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -220,7 +220,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	return ret;
 }
 
-char * rtp_print(struct node *n)
+char * rtp_print(struct vnode *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 	char *buf;
@@ -266,7 +266,7 @@ char * rtp_print(struct node *n)
 static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
 {
 	int ret;
-	struct node *n = (struct node *) arg;
+	struct vnode *n = (struct vnode *) arg;
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	/* source, header not used */
@@ -284,7 +284,7 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 
 static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 {
-	struct node *n = (struct node *) arg;
+	struct vnode *n = (struct vnode *) arg;
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	/* source not used */
@@ -315,7 +315,7 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	r->rtcp.num_rrs++;
 }
 
-int rtp_start(struct node *n)
+int rtp_start(struct vnode *n)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -411,7 +411,7 @@ int rtp_start(struct node *n)
 	return ret;
 }
 
-int rtp_stop(struct node *n)
+int rtp_stop(struct vnode *n)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -442,7 +442,7 @@ int rtp_stop(struct node *n)
 	return ret;
 }
 
-int rtp_destroy(struct node *n)
+int rtp_destroy(struct vnode *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -495,7 +495,7 @@ int rtp_type_start(villas::node::SuperNode *sn)
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
-		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
+		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
 		struct rtp *r = (struct rtp *) n->_vd;
 		struct interface *j = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
 
@@ -528,7 +528,7 @@ int rtp_type_stop()
 	return ret;
 }
 
-int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int rtp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -549,7 +549,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	return ret;
 }
 
-int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int rtp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -587,7 +587,7 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	return cnt;
 }
 
-int rtp_poll_fds(struct node *n, int fds[])
+int rtp_poll_fds(struct vnode *n, int fds[])
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -596,7 +596,7 @@ int rtp_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-int rtp_netem_fds(struct node *n, int fds[])
+int rtp_netem_fds(struct vnode *n, int fds[])
 {
 	struct rtp *r = (struct rtp *) n->_vd;
 

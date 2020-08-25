@@ -77,7 +77,7 @@ static int get_monitor_event(void *monitor, int *value, char **address)
 	return event;
 }
 
-int zeromq_reverse(struct node *n)
+int zeromq_reverse(struct vnode *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -94,7 +94,7 @@ int zeromq_reverse(struct node *n)
 	return 0;
 }
 
-int zeromq_init(struct node *n)
+int zeromq_init(struct vnode *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -142,7 +142,7 @@ int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
 	return 0;
 }
 
-int zeromq_parse(struct node *n, json_t *cfg)
+int zeromq_parse(struct vnode *n, json_t *cfg)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -234,7 +234,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * zeromq_print(struct node *n)
+char * zeromq_print(struct vnode *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -287,7 +287,7 @@ char * zeromq_print(struct node *n)
 	return buf;
 }
 
-int zeromq_check(struct node *n)
+int zeromq_check(struct vnode *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -310,7 +310,7 @@ int zeromq_type_stop()
 	return zmq_ctx_term(context);
 }
 
-int zeromq_start(struct node *n)
+int zeromq_start(struct vnode *n)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -473,7 +473,7 @@ fail:
 	return ret;
 }
 
-int zeromq_stop(struct node *n)
+int zeromq_stop(struct vnode *n)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -497,7 +497,7 @@ int zeromq_stop(struct node *n)
 	return 0;
 }
 
-int zeromq_destroy(struct node *n)
+int zeromq_destroy(struct vnode *n)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -515,7 +515,7 @@ int zeromq_destroy(struct node *n)
 	return 0;
 }
 
-int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int recv, ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -551,7 +551,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	return recv;
 }
 
-int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int zeromq_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -601,7 +601,7 @@ fail:
 	return ret;
 }
 
-int zeromq_poll_fds(struct node *n, int fds[])
+int zeromq_poll_fds(struct vnode *n, int fds[])
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -618,7 +618,7 @@ int zeromq_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-int zeromq_netem_fds(struct node *n, int fds[])
+int zeromq_netem_fds(struct vnode *n, int fds[])
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;

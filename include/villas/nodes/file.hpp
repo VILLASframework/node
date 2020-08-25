@@ -70,21 +70,21 @@ struct file {
 };
 
 /** @see node_type::print */
-char * file_print(struct node *n);
+char * file_print(struct vnode *n);
 
 /** @see node_type::parse */
-int file_parse(struct node *n, json_t *cfg);
+int file_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int file_start(struct node *n);
+int file_start(struct vnode *n);
 
 /** @see node_type::stop */
-int file_stop(struct node *n);
+int file_stop(struct vnode *n);
 
 /** @see node_type::read */
-int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int file_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int file_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

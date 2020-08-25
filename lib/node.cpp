@@ -49,7 +49,7 @@
 using namespace villas;
 using namespace villas::utils;
 
-int node_init(struct node *n, struct node_type *vt)
+int node_init(struct vnode *n, struct vnode_type *vt)
 {
 	int ret;
 
@@ -100,7 +100,7 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
-int node_prepare(struct node *n)
+int node_prepare(struct vnode *n)
 {
 	int ret;
 
@@ -123,9 +123,9 @@ int node_prepare(struct node *n)
 	return 0;
 }
 
-int node_parse(struct node *n, json_t *json, const char *name)
+int node_parse(struct vnode *n, json_t *json, const char *name)
 {
-	struct node_type *nt;
+	struct vnode_type *nt;
 	int ret;
 
 	json_error_t err;
@@ -189,7 +189,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	struct {
 		const char *str;
-		struct node_direction *dir;
+		struct vnode_direction *dir;
 	} dirs[] = {
 		{ "in", &n->in },
 		{ "out", &n->out }
@@ -228,7 +228,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	return 0;
 }
 
-int node_check(struct node *n)
+int node_check(struct vnode *n)
 {
 	int ret;
 	assert(n->state != State::DESTROYED);
@@ -250,7 +250,7 @@ int node_check(struct node *n)
 	return 0;
 }
 
-int node_start(struct node *n)
+int node_start(struct vnode *n)
 {
 	int ret;
 
@@ -295,7 +295,7 @@ int node_start(struct node *n)
 	return ret;
 }
 
-int node_stop(struct node *n)
+int node_stop(struct vnode *n)
 {
 	int ret;
 
@@ -320,7 +320,7 @@ int node_stop(struct node *n)
 	return ret;
 }
 
-int node_pause(struct node *n)
+int node_pause(struct vnode *n)
 {
 	int ret;
 
@@ -337,7 +337,7 @@ int node_pause(struct node *n)
 	return ret;
 }
 
-int node_resume(struct node *n)
+int node_resume(struct vnode *n)
 {
 	int ret;
 
@@ -354,7 +354,7 @@ int node_resume(struct node *n)
 	return ret;
 }
 
-int node_restart(struct node *n)
+int node_restart(struct vnode *n)
 {
 	int ret;
 
@@ -378,7 +378,7 @@ int node_restart(struct node *n)
 	return 0;
 }
 
-int node_destroy(struct node *n)
+int node_destroy(struct vnode *n)
 {
 	int ret;
 	assert(n->state != State::DESTROYED && n->state != State::STARTED);
@@ -425,7 +425,7 @@ int node_destroy(struct node *n)
 	return 0;
 }
 
-int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int readd, nread = 0;
 
@@ -471,7 +471,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int tosend, sent, nsent = 0;
 
@@ -512,7 +512,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return nsent;
 }
 
-char * node_name(struct node *n)
+char * node_name(struct vnode *n)
 {
 	if (!n->_name)
 		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(node_type(n)));
@@ -520,7 +520,7 @@ char * node_name(struct node *n)
 	return n->_name;
 }
 
-char * node_name_long(struct node *n)
+char * node_name_long(struct vnode *n)
 {
 	if (!n->_name_long) {
 		char uuid[37];
@@ -544,7 +544,7 @@ char * node_name_long(struct node *n)
 			strcatf(&n->_name_long, ", output_path=%s", path_name(n->output_path));
 
 		if (node_type(n)->print) {
-			struct node_type *vt = node_type(n);
+			struct vnode_type *vt = node_type(n);
 
 			/* Append node-type specific details */
 			char *name_long = vt->print(n);
@@ -556,12 +556,12 @@ char * node_name_long(struct node *n)
 	return n->_name_long;
 }
 
-const char * node_name_short(struct node *n)
+const char * node_name_short(struct vnode *n)
 {
 	return n->name;
 }
 
-struct vlist * node_output_signals(struct node *n)
+struct vlist * node_output_signals(struct vnode *n)
 {
 	if (n->output_path)
 		return path_output_signals(n->output_path);
@@ -569,29 +569,29 @@ struct vlist * node_output_signals(struct node *n)
 	return nullptr;
 }
 
-int node_reverse(struct node *n)
+int node_reverse(struct vnode *n)
 {
 	return node_type(n)->reverse ? node_type(n)->reverse(n) : -1;
 }
 
-int node_poll_fds(struct node *n, int fds[])
+int node_poll_fds(struct vnode *n, int fds[])
 {
 	return node_type(n)->poll_fds ? node_type(n)->poll_fds(n, fds) : -1;
 }
 
-int node_netem_fds(struct node *n, int fds[])
+int node_netem_fds(struct vnode *n, int fds[])
 {
 	return node_type(n)->netem_fds ? node_type(n)->netem_fds(n, fds) : -1;
 }
 
-struct memory_type * node_memory_type(struct node *n)
+struct memory_type * node_memory_type(struct vnode *n)
 {
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, memory_default) : memory_default;
 }
 
 int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 {
-	struct node *node;
+	struct vnode *node;
 	const char *str;
 	char *allstr = nullptr;
 
@@ -601,7 +601,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 	switch (json_typeof(cfg)) {
 		case JSON_STRING:
 			str = json_string_value(cfg);
-			node = vlist_lookup_name<struct node>(all, str);
+			node = vlist_lookup_name<struct vnode>(all, str);
 			if (!node)
 				goto invalid2;
 
@@ -613,7 +613,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 				if (!json_is_string(elm))
 					goto invalid;
 
-				node = vlist_lookup_name<struct node>(all, json_string_value(elm));
+				node = vlist_lookup_name<struct vnode>(all, json_string_value(elm));
 				if (!node)
 					goto invalid;
 
@@ -634,7 +634,7 @@ invalid:
 
 invalid2:
 	for (size_t i = 0; i < vlist_length(all); i++) {
-		struct node *n = (struct node *) vlist_at(all, i);
+		struct vnode *n = (struct vnode *) vlist_at(all, i);
 
 		strcatf(&allstr, " %s", node_name_short(n));
 	}
@@ -651,19 +651,19 @@ bool node_is_valid_name(const char *name)
 	return std::regex_match(name, re);
 }
 
-bool node_is_enabled(const struct node *n)
+bool node_is_enabled(const struct vnode *n)
 {
 	return n->enabled;
 }
 
-struct vlist * node_get_signals(struct node *n, enum NodeDir dir)
+struct vlist * node_get_signals(struct vnode *n, enum NodeDir dir)
 {
-	struct node_direction *nd = dir == NodeDir::IN ? &n->in : &n->out;
+	struct vnode_direction *nd = dir == NodeDir::IN ? &n->in : &n->out;
 
 	return node_direction_get_signals(nd);
 }
 
-json_t * node_to_json(struct node *n)
+json_t * node_to_json(struct vnode *n)
 {
 	struct vlist *output_signals;
 

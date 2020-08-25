@@ -30,7 +30,7 @@
 #include <villas/memory_type.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 /** Descriptor of a memory block. Associated block always starts at
  * &m + sizeof(struct memory_block). */

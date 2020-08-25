@@ -36,7 +36,7 @@ struct vpath;
 struct sample;
 
 struct vpath_destination {
-	struct node *node;
+	struct vnode *node;
 
 	struct queue queue;
 };

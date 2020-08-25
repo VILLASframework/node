@@ -31,7 +31,7 @@
 using namespace villas;
 using namespace villas::utils;
 
-int exec_parse(struct node *n, json_t *cfg)
+int exec_parse(struct vnode *n, json_t *cfg)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -115,7 +115,7 @@ int exec_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int exec_prepare(struct node *n)
+int exec_prepare(struct vnode *n)
 {
 	int ret;
 	struct exec *e = (struct exec *) n->_vd;
@@ -136,7 +136,7 @@ int exec_prepare(struct node *n)
 	return 0;
 }
 
-int exec_init(struct node *n)
+int exec_init(struct vnode *n)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -149,7 +149,7 @@ int exec_init(struct node *n)
 	return 0;
 }
 
-int exec_destroy(struct node *n)
+int exec_destroy(struct vnode *n)
 {
 	int ret;
 	struct exec *e = (struct exec *) n->_vd;
@@ -174,14 +174,14 @@ int exec_destroy(struct node *n)
 	return 0;
 }
 
-int exec_start(struct node *n)
+int exec_start(struct vnode *n)
 {
 //	struct exec *e = (struct exec *) n->_vd;
 
 	return 0;
 }
 
-int exec_stop(struct node *n)
+int exec_stop(struct vnode *n)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -196,7 +196,7 @@ int exec_stop(struct node *n)
 	return 0;
 }
 
-int exec_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int exec_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -213,7 +213,7 @@ int exec_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return avail;
 }
 
-int exec_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -237,7 +237,7 @@ int exec_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-char * exec_print(struct node *n)
+char * exec_print(struct vnode *n)
 {
 	struct exec *e = (struct exec *) n->_vd;
 	char *buf = nullptr;
@@ -255,7 +255,7 @@ char * exec_print(struct node *n)
 	return buf;
 }
 
-int exec_poll_fds(struct node *n, int fds[])
+int exec_poll_fds(struct vnode *n, int fds[])
 {
 	struct exec *e = (struct exec *) n->_vd;
 

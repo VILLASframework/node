@@ -59,7 +59,7 @@ struct coupler {
 	.sc = nullptr
 };
 
-static void ethercat_cyclic_task(struct node *n)
+static void ethercat_cyclic_task(struct vnode *n)
 {
 	struct sample *smp;
 	struct ethercat *w = (struct ethercat *) n->_vd;
@@ -149,7 +149,7 @@ int ethercat_type_stop()
 	return 0;
 }
 
-int ethercat_parse(struct node *n, json_t *cfg)
+int ethercat_parse(struct vnode *n, json_t *cfg)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -177,7 +177,7 @@ int ethercat_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * ethercat_print(struct node *n)
+char * ethercat_print(struct vnode *n)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 	std::stringstream ss;
@@ -189,7 +189,7 @@ char * ethercat_print(struct node *n)
 	return strdup(ss.str().c_str());
 }
 
-int ethercat_check(struct node *n)
+int ethercat_check(struct vnode *n)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -206,7 +206,7 @@ int ethercat_check(struct node *n)
 	return 0;
 }
 
-int ethercat_prepare(struct node *n)
+int ethercat_prepare(struct vnode *n)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -262,7 +262,7 @@ int ethercat_prepare(struct node *n)
 	return 0;
 }
 
-int ethercat_start(struct node *n)
+int ethercat_start(struct vnode *n)
 {
 	int ret;
 	struct ethercat *w = (struct ethercat *) n->_vd;
@@ -317,7 +317,7 @@ int ethercat_start(struct node *n)
 	return 0;
 }
 
-int ethercat_stop(struct node *n)
+int ethercat_stop(struct vnode *n)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -326,7 +326,7 @@ int ethercat_stop(struct node *n)
 	return 0;
 }
 
-int ethercat_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -343,7 +343,7 @@ int ethercat_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	return avail;
 }
 
-int ethercat_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ethercat_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -361,7 +361,7 @@ int ethercat_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return 1;
 }
 
-int ethercat_init(struct node *n)
+int ethercat_init(struct vnode *n)
 {
 	int ret;
 	struct ethercat *w = (struct ethercat *) n->_vd;
@@ -405,7 +405,7 @@ int ethercat_init(struct node *n)
 	return 0;
 }
 
-int ethercat_destroy(struct node *n)
+int ethercat_destroy(struct vnode *n)
 {
 	int ret;
 	struct ethercat *w = (struct ethercat *) n->_vd;
@@ -434,7 +434,7 @@ int ethercat_destroy(struct node *n)
 	return 0;
 }
 
-int ethercat_poll_fds(struct node *n, int *fds)
+int ethercat_poll_fds(struct vnode *n, int *fds)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 

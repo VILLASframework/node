@@ -110,27 +110,27 @@ struct infiniband {
 };
 
 /** @see node_type::reverse */
-int ib_reverse(struct node *n);
+int ib_reverse(struct vnode *n);
 
 /** @see node_type::print */
-char * ib_print(struct node *n);
+char * ib_print(struct vnode *n);
 
 /** @see node_type::parse */
-int ib_parse(struct node *n, json_t *cfg);
+int ib_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int ib_start(struct node *n);
+int ib_start(struct vnode *n);
 
 /** @see node_type::destroy */
-int ib_destroy(struct node *n);
+int ib_destroy(struct vnode *n);
 
 /** @see node_type::stop */
-int ib_stop(struct node *n);
+int ib_stop(struct vnode *n);
 
 /** @see node_type::read */
-int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

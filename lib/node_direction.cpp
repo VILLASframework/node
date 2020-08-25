@@ -33,7 +33,7 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int node_direction_prepare(struct node_direction *nd, struct node *n)
+int node_direction_prepare(struct vnode_direction *nd, struct vnode *n)
 {
 	assert(nd->state == State::CHECKED);
 
@@ -49,7 +49,7 @@ int node_direction_prepare(struct node_direction *nd, struct node *n)
 	return 0;
 }
 
-int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node *n)
+int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n)
 {
 	int ret;
 
@@ -73,7 +73,7 @@ int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node
 	return 0;
 }
 
-int node_direction_destroy(struct node_direction *nd, struct node *n)
+int node_direction_destroy(struct vnode_direction *nd, struct vnode *n)
 {
 	int ret = 0;
 
@@ -94,7 +94,7 @@ int node_direction_destroy(struct node_direction *nd, struct node *n)
 	return 0;
 }
 
-int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
+int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cfg)
 {
 	int ret;
 
@@ -167,7 +167,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 	return 0;
 }
 
-int node_direction_check(struct node_direction *nd, struct node *n)
+int node_direction_check(struct vnode_direction *nd, struct vnode *n)
 {
 	assert(nd->state == State::PARSED);
 
@@ -183,7 +183,7 @@ int node_direction_check(struct node_direction *nd, struct node *n)
 	return 0;
 }
 
-int node_direction_start(struct node_direction *nd, struct node *n)
+int node_direction_start(struct vnode_direction *nd, struct vnode *n)
 {
 	assert(nd->state == State::PREPARED);
 
@@ -196,7 +196,7 @@ int node_direction_start(struct node_direction *nd, struct node *n)
 	return 0;
 }
 
-int node_direction_stop(struct node_direction *nd, struct node *n)
+int node_direction_stop(struct vnode_direction *nd, struct vnode *n)
 {
 	assert(nd->state == State::STARTED);
 
@@ -209,7 +209,7 @@ int node_direction_stop(struct node_direction *nd, struct node *n)
 	return 0;
 }
 
-struct vlist * node_direction_get_signals(struct node_direction *nd)
+struct vlist * node_direction_get_signals(struct vnode_direction *nd)
 {
 	assert(nd->state == State::PREPARED);
 

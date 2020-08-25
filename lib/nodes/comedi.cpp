@@ -100,7 +100,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	return 0;
 }
 
-static int comedi_start_common(struct node *n)
+static int comedi_start_common(struct vnode *n)
 {
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction* directions[2] = { &c->in, &c->out };
@@ -162,7 +162,7 @@ static int comedi_start_common(struct node *n)
 	return 0;
 }
 
-static int comedi_start_in(struct node *n)
+static int comedi_start_in(struct vnode *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -253,7 +253,7 @@ static int comedi_start_in(struct node *n)
 	return 0;
 }
 
-static int comedi_start_out(struct node *n)
+static int comedi_start_out(struct vnode *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -363,7 +363,7 @@ static int comedi_start_out(struct node *n)
 	return 0;
 }
 
-static int comedi_stop_in(struct node *n)
+static int comedi_stop_in(struct vnode *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -378,7 +378,7 @@ static int comedi_stop_in(struct node *n)
 	return 0;
 }
 
-static int comedi_stop_out(struct node *n)
+static int comedi_stop_out(struct vnode *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -393,7 +393,7 @@ static int comedi_stop_out(struct node *n)
 	return 0;
 }
 
-int comedi_parse(struct node *n, json_t *cfg)
+int comedi_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -437,7 +437,7 @@ int comedi_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * comedi_print(struct node *n)
+char * comedi_print(struct vnode *n)
 {
 	struct comedi *c = (struct comedi *) n->_vd;
 
@@ -451,7 +451,7 @@ char * comedi_print(struct node *n)
 	return buf;
 }
 
-int comedi_start(struct node *n)
+int comedi_start(struct vnode *n)
 {
 	struct comedi *c = (struct comedi *) n->_vd;
 
@@ -498,7 +498,7 @@ int comedi_start(struct node *n)
 	return 0;
 }
 
-int comedi_stop(struct node *n)
+int comedi_stop(struct vnode *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -518,7 +518,7 @@ int comedi_stop(struct node *n)
 
 #if COMEDI_USE_READ
 
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -636,7 +636,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 #else
 
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -817,7 +817,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 #endif
 
-int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -986,7 +986,7 @@ void comedi_dump_cmd(comedi_cmd *cmd, int debug_level)
 	debug(LOG_COMEDI | debug_level, "stop:       %-8s %u", src, cmd->stop_arg);
 }
 
-int comedi_poll_fds(struct node *n, int fds[])
+int comedi_poll_fds(struct vnode *n, int fds[])
 {
 	struct comedi *c = (struct comedi *) n->_vd;
 

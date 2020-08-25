@@ -37,7 +37,7 @@
 
 /* Forward declarations */
 struct sample;
-struct node;
+struct vnode;
 
 namespace villas {
 
@@ -116,7 +116,7 @@ public:
 	static
 	void printHeader(enum Format fmt);
 
-	void printPeriodic(FILE *f, enum Format fmt, struct node *p) const;
+	void printPeriodic(FILE *f, enum Format fmt, struct vnode *p) const;
 
 	void print(FILE *f, enum Format fmt, int verbose) const;
 

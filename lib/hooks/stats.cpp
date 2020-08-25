@@ -45,7 +45,7 @@ protected:
 	StatsHook *parent;
 
 public:
-	StatsWriteHook(StatsHook *pa, struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	StatsWriteHook(StatsHook *pa, struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		parent(pa)
 	{
@@ -63,7 +63,7 @@ protected:
 	StatsHook *parent;
 
 public:
-	StatsReadHook(StatsHook *pa, struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	StatsReadHook(StatsHook *pa, struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		parent(pa)
 	{
@@ -113,7 +113,7 @@ protected:
 
 public:
 
-	StatsHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	StatsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		format(Stats::Format::HUMAN),
 		verbose(0),

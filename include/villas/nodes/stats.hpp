@@ -37,7 +37,7 @@
 #include <villas/list.h>
 
 struct stats_node_signal {
-	struct node *node;
+	struct vnode *node;
 	char *node_str;
 
 	enum villas::Stats::Metric metric;
@@ -56,20 +56,20 @@ struct stats_node {
 int stats_node_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::print */
-char *stats_node_print(struct node *n);
+char *stats_node_print(struct vnode *n);
 
 /** @see node_type::parse */
-int stats_node_parse(struct node *n, json_t *cfg);
+int stats_node_parse(struct vnode *n, json_t *cfg);
 
 int stats_node_parse_signal(struct stats_node_signal *s, json_t *cfg);
 
 /** @see node_type::start */
-int stats_node_start(struct node *n);
+int stats_node_start(struct vnode *n);
 
 /** @see node_type::stop */
-int stats_node_stop(struct node *n);
+int stats_node_stop(struct vnode *n);
 
 /** @see node_type::read */
-int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int stats_node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

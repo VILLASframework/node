@@ -48,7 +48,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 			goto invalid_format;
 		}
 
-		me->node = vlist_lookup_name<struct node>(nodes, node);
+		me->node = vlist_lookup_name<struct vnode>(nodes, node);
 		if (!me->node) {
 			warning("Unknown node %s", node);
 			goto invalid_format;

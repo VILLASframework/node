@@ -58,7 +58,7 @@
  * Every entity which exchanges messages is represented by a node.
  * Nodes can be remote machines and simulators or locally running processes.
  */
-struct node {
+struct vnode {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 	int enabled;
 
@@ -80,7 +80,7 @@ struct node {
 	struct vpath *output_path;
 	std::shared_ptr<villas::Stats> stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
-	struct node_direction in, out;
+	struct vnode_direction in, out;
 
 #ifdef __linux__
 	int fwmark;			/**< Socket mark for netem, routing and filtering */
@@ -91,17 +91,17 @@ struct node {
 #endif /* WITH_NETEM */
 #endif /* __linux__ */
 
-	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
-	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
+	struct vnode_type *_vt;	/**< Virtual functions (C++ OOP style) */
+	void *_vd;		/**< Virtual data (used by struct vnode::_vt functions) */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
 /** Initialize node with default values */
-int node_init(struct node *n, struct node_type *vt);
+int node_init(struct vnode *n, struct vnode_type *vt);
 
 /** Do initialization after parsing the configuration */
-int node_prepare(struct node *n);
+int node_prepare(struct vnode *n);
 
 /** Parse settings of a node.
  *
@@ -109,7 +109,7 @@ int node_prepare(struct node *n);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int node_parse(struct node *n, json_t *cfg, const char *name);
+int node_parse(struct vnode *n, json_t *cfg, const char *name);
 
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *
@@ -127,53 +127,53 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all);
 int node_parse_signals(struct vlist *list, json_t *cfg);
 
 /** Validate node configuration. */
-int node_check(struct node *n);
+int node_check(struct vnode *n);
 
 /** Start operation of a node.
  *
  * @see node_type::start
  */
-int node_start(struct node *n);
+int node_start(struct vnode *n);
 
 /** Stops operation of a node.
  *
  * @see node_type::stop
  */
-int node_stop(struct node *n);
+int node_stop(struct vnode *n);
 
 /** Pauses operation of a node.
  *
  * @see node_type::stop
  */
-int node_pause(struct node *n);
+int node_pause(struct vnode *n);
 
 /** Resumes operation of a node.
  *
  * @see node_type::stop
  */
-int node_resume(struct node *n);
+int node_resume(struct vnode *n);
 
 /** Restarts operation of a node.
  *
  * @see node_type::stop
  */
-int node_restart(struct node *n);
+int node_restart(struct vnode *n);
 
 /** Destroy node by freeing dynamically allocated memory.
  *
  * @see node_type::destroy
  */
-int node_destroy(struct node *n);
+int node_destroy(struct vnode *n);
 
 /** Return a pointer to a string which should be used to print this node.
  *
  * @see node::_name‚
  * @param n A pointer to the node structure.
  */
-const char * node_name_short(struct node *n);
+const char * node_name_short(struct vnode *n);
 
 /** Return a pointer to a string which should be used to print this node. */
-char * node_name(struct node *n);
+char * node_name(struct vnode *n);
 
 /** Return a pointer to a string which should be used to print this node.
  *
@@ -181,42 +181,42 @@ char * node_name(struct node *n);
  * @see node_type::print
  * @param n A pointer to the node structure.
  */
-char * node_name_long(struct node *n);
+char * node_name_long(struct vnode *n);
 
 /** Return a list of signals which are sent to this node.
  *
  * This list is derived from the path which uses the node as destination.
  */
-struct vlist * node_output_signals(struct node *n);
+struct vlist * node_output_signals(struct vnode *n);
 
 /** Reverse local and remote socket address.
  *
  * @see node_type::reverse
  */
-int node_reverse(struct node *n);
+int node_reverse(struct vnode *n);
 
-int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-int node_poll_fds(struct node *n, int fds[]);
+int node_poll_fds(struct vnode *n, int fds[]);
 
-int node_netem_fds(struct node *n, int fds[]);
+int node_netem_fds(struct vnode *n, int fds[]);
 
 static inline
-struct node_type * node_type(struct node *n)
+struct vnode_type * node_type(struct vnode *n)
 {
 	return n->_vt;
 }
 
-struct memory_type * node_memory_type(struct node *n);
+struct memory_type * node_memory_type(struct vnode *n);
 
 bool node_is_valid_name(const char *name);
 
-bool node_is_enabled(const struct node *n);
+bool node_is_enabled(const struct vnode *n);
 
-struct vlist * node_get_signals(struct node *n, enum NodeDir dir);
+struct vlist * node_get_signals(struct vnode *n, enum NodeDir dir);
 
-json_t * node_to_json(struct node *);
+json_t * node_to_json(struct vnode *);
 
 /** @} */

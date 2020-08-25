@@ -45,7 +45,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("File endpoint does not accept any body data");
 
-		struct node_type *vt = node_type_lookup("file");
+		struct vnode_type *vt = node_type_lookup("file");
 
 		if (node->_vt != vt)
 			throw BadRequest("This node is not a file node");

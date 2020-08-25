@@ -45,7 +45,7 @@ protected:
 	char *uri;
 
 public:
-	PrintHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	PrintHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		prefix(nullptr),
 		uri(nullptr)

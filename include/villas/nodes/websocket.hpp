@@ -69,7 +69,7 @@ struct websocket_connection {
 	} mode;
 
 	struct lws *wsi;
-	struct node *node;
+	struct vnode *node;
 	struct io io;
 	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
@@ -98,18 +98,18 @@ int websocket_type_start(villas::node::SuperNode *sn);
 int websocket_type_stop();
 
 /** @see node_type::start */
-int websocket_start(struct node *n);
+int websocket_start(struct vnode *n);
 
 /** @see node_type::stop */
-int websocket_stop(struct node *n);
+int websocket_stop(struct vnode *n);
 
 /** @see node_type::stop */
-int websocket_destroy(struct node *n);
+int websocket_destroy(struct vnode *n);
 
 /** @see node_type::read */
-int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int websocket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

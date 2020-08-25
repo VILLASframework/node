@@ -34,14 +34,14 @@
 #include <villas/list.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 
 enum class NodeDir {
 	IN,		/**< VILLASnode is receiving/reading */
 	OUT		/**< VILLASnode is sending/writing */
 };
 
-struct node_direction {
+struct vnode_direction {
 	enum State state;
 	enum NodeDir direction;
 
@@ -55,20 +55,20 @@ struct node_direction {
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
-int node_direction_init(struct node_direction *nd, enum NodeDir dir, struct node *n);
+int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n);
 
-int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg);
+int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cfg);
 
-int node_direction_check(struct node_direction *nd, struct node *n);
+int node_direction_check(struct vnode_direction *nd, struct vnode *n);
 
-int node_direction_prepare(struct node_direction *nd, struct node *n);
+int node_direction_prepare(struct vnode_direction *nd, struct vnode *n);
 
-int node_direction_start(struct node_direction *nd, struct node *n);
+int node_direction_start(struct vnode_direction *nd, struct vnode *n);
 
-int node_direction_stop(struct node_direction *nd, struct node *n);
+int node_direction_stop(struct vnode_direction *nd, struct vnode *n);
 
-int node_direction_destroy(struct node_direction *nd, struct node *n);
+int node_direction_destroy(struct vnode_direction *nd, struct vnode *n);
 
-struct vlist * node_direction_get_signals(struct node_direction *nd);
+struct vlist * node_direction_get_signals(struct vnode_direction *nd);
 
 /** @} */

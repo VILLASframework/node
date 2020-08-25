@@ -95,7 +95,7 @@ int fpga_type_stop()
 	return 0;
 }
 
-int fpga_init(struct node *n)
+int fpga_init(struct vnode *n)
 {
 	struct fpga *f = (struct fpga *) n->_vd;
 
@@ -118,7 +118,7 @@ int fpga_init(struct node *n)
 	return 0;
 }
 
-int fpga_destroy(struct node *n)
+int fpga_destroy(struct vnode *n)
 {
 	struct fpga *f = (struct fpga *) n->_vd;
 
@@ -143,7 +143,7 @@ int fpga_destroy(struct node *n)
 	return 0;
 }
 
-int fpga_parse(struct node *n, json_t *cfg)
+int fpga_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -179,7 +179,7 @@ int fpga_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * fpga_print(struct node *n)
+char * fpga_print(struct vnode *n)
 {
 	struct fpga *f = (struct fpga *) n->_vd;
 
@@ -191,14 +191,14 @@ char * fpga_print(struct node *n)
 	);
 }
 
-int fpga_check(struct node *n)
+int fpga_check(struct vnode *n)
 {
 	// struct fpga *f = (struct fpga *) n->_vd;
 
 	return 0;
 }
 
-int fpga_prepare(struct node *n)
+int fpga_prepare(struct vnode *n)
 {
 	int ret;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -258,21 +258,21 @@ int fpga_prepare(struct node *n)
 	return 0;
 }
 
-int fpga_start(struct node *n)
+int fpga_start(struct vnode *n)
 {
 	// struct fpga *f = (struct fpga *) n->_vd;
 
 	return 0;
 }
 
-int fpga_stop(struct node *n)
+int fpga_stop(struct vnode *n)
 {
 	//struct fpga *f = (struct fpga *) n->_vd;
 
 	return 0;
 }
 
-int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int fpga_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	unsigned read;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -292,7 +292,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return read;
 }
 
-int fpga_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int fpga_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int written;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -312,7 +312,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return written;
 }
 
-int fpga_poll_fds(struct node *n, int fds[])
+int fpga_poll_fds(struct vnode *n, int fds[])
 {
 	struct fpga *f = (struct fpga *) n->_vd;
 

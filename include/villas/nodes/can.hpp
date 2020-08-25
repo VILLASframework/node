@@ -34,7 +34,7 @@
 #include <villas/timing.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 union signal_data;
 
 struct can_signal {
@@ -58,16 +58,16 @@ struct can {
 };
 
 /** @see node_type::init */
-int can_init(struct node *n);
+int can_init(struct vnode *n);
 
 /** @see node_type::destroy */
-int can_destroy(struct node *n);
+int can_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int can_parse(struct node *n, json_t *cfg);
+int can_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * can_print(struct node *n);
+char * can_print(struct vnode *n);
 
 /** @see node_type::check */
 int can_check();
@@ -76,18 +76,18 @@ int can_check();
 int can_prepare();
 
 /** @see node_type::start */
-int can_start(struct node *n);
+int can_start(struct vnode *n);
 
 /** @see node_type::stop */
-int can_stop(struct node *n);
+int can_stop(struct vnode *n);
 
 /** @see node_type::write */
-int can_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int can_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::poll_fds */
-int can_poll_fds(struct node *n, int fds[]);
+int can_poll_fds(struct vnode *n, int fds[]);
 
 /** @} */

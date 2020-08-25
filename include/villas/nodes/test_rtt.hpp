@@ -35,7 +35,7 @@
 
 /* Forward declarations */
 struct test_rtt;
-struct node;
+struct vnode;
 struct sample;
 
 struct test_rtt_case {
@@ -64,21 +64,21 @@ struct test_rtt {
 };
 
 /** @see node_type::print */
-char * test_rtt_print(struct node *n);
+char * test_rtt_print(struct vnode *n);
 
 /** @see node_type::parse */
-int test_rtt_parse(struct node *n, json_t *cfg);
+int test_rtt_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int test_rtt_start(struct node *n);
+int test_rtt_start(struct vnode *n);
 
 /** @see node_type::stop */
-int test_rtt_stop(struct node *n);
+int test_rtt_stop(struct vnode *n);
 
 /** @see node_type::read */
-int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

@@ -58,7 +58,7 @@ int socket_type_start(villas::node::SuperNode *sn)
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
-		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
+		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
 		struct socket *s = (struct socket *) n->_vd;
 
 		if (s->layer == SocketLayer::UNIX)
@@ -74,7 +74,7 @@ int socket_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-char * socket_print(struct node *n)
+char * socket_print(struct vnode *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
 	const char *layer = nullptr;
@@ -123,7 +123,7 @@ char * socket_print(struct node *n)
 	return buf;
 }
 
-int socket_check(struct node *n)
+int socket_check(struct vnode *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -159,7 +159,7 @@ int socket_check(struct node *n)
 	return 0;
 }
 
-int socket_start(struct node *n)
+int socket_start(struct vnode *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
 	int ret;
@@ -287,7 +287,7 @@ int socket_start(struct node *n)
 	return 0;
 }
 
-int socket_reverse(struct node *n)
+int socket_reverse(struct vnode *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
 	union sockaddr_union tmp;
@@ -299,7 +299,7 @@ int socket_reverse(struct node *n)
 	return 0;
 }
 
-int socket_stop(struct node *n)
+int socket_stop(struct vnode *n)
 {
 	int ret;
 	struct socket *s = (struct socket *) n->_vd;
@@ -326,7 +326,7 @@ int socket_stop(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct socket *s = (struct socket *) n->_vd;
@@ -384,7 +384,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	return ret;
 }
 
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -456,7 +456,7 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out
 	return cnt;
 }
 
-int socket_parse(struct node *n, json_t *cfg)
+int socket_parse(struct vnode *n, json_t *cfg)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -556,7 +556,7 @@ int socket_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int socket_fds(struct node *n, int fds[])
+int socket_fds(struct vnode *n, int fds[])
 {
 	struct socket *s = (struct socket *) n->_vd;
 

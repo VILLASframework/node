@@ -40,7 +40,7 @@ using namespace villas::utils;
 
 static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
-	struct node *n = (struct node *) ctx;
+	struct vnode *n = (struct vnode *) ctx;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 	struct sample *smp;
 
@@ -137,7 +137,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	queue_signalled_push(&i->in.queue, smp);
 }
 
-int iec61850_sv_parse(struct node *n, json_t *json)
+int iec61850_sv_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -243,7 +243,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	return 0;
 }
 
-char * iec61850_sv_print(struct node *n)
+char * iec61850_sv_print(struct vnode *n)
 {
 	char *buf;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -268,7 +268,7 @@ char * iec61850_sv_print(struct node *n)
 	return buf;
 }
 
-int iec61850_sv_start(struct node *n)
+int iec61850_sv_start(struct vnode *n)
 {
 	int ret;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -350,7 +350,7 @@ int iec61850_sv_start(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_stop(struct node *n)
+int iec61850_sv_stop(struct vnode *n)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
@@ -360,7 +360,7 @@ int iec61850_sv_stop(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_destroy(struct node *n)
+int iec61850_sv_destroy(struct vnode *n)
 {
 	int ret;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -383,7 +383,7 @@ int iec61850_sv_destroy(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int iec61850_sv_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int pulled;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -400,7 +400,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsign
 	return pulled;
 }
 
-int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int iec61850_sv_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
@@ -466,7 +466,7 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	return cnt;
 }
 
-int iec61850_sv_poll_fds(struct node *n, int fds[])
+int iec61850_sv_poll_fds(struct vnode *n, int fds[])
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 

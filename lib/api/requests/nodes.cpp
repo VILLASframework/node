@@ -53,7 +53,7 @@ public:
 		struct vlist *nodes = session->getSuperNode()->getNodes();
 
 		for (size_t i = 0; i < vlist_length(nodes); i++) {
-			struct node *n = (struct node *) vlist_at(nodes, i);
+			struct vnode *n = (struct vnode *) vlist_at(nodes, i);
 
 			json_array_append_new(json_nodes, node_to_json(n));
 		}

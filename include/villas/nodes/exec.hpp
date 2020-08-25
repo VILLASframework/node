@@ -33,7 +33,7 @@
 #include <villas/io.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 struct format_type;
 
@@ -54,21 +54,21 @@ struct exec {
 };
 
 /** @see node_type::print */
-char * exec_print(struct node *n);
+char * exec_print(struct vnode *n);
 
 /** @see node_type::parse */
-int exec_parse(struct node *n, json_t *cfg);
+int exec_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int exec_open(struct node *n);
+int exec_open(struct vnode *n);
 
 /** @see node_type::stop */
-int exec_close(struct node *n);
+int exec_close(struct vnode *n);
 
 /** @see node_type::read */
-int exec_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int exec_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int exec_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

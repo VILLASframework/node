@@ -41,7 +41,7 @@
 
 /* Forward declarations */
 struct format_type;
-struct node;
+struct vnode;
 struct sample;
 
 struct zeromq {
@@ -75,10 +75,10 @@ struct zeromq {
 };
 
 /** @see node_type::print */
-char * zeromq_print(struct node *n);
+char * zeromq_print(struct vnode *n);
 
 /** @see node_type::parse */
-int zeromq_parse(struct node *n, json_t *cfg);
+int zeromq_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::type_start */
 int zeromq_type_start(villas::node::SuperNode *sn);
@@ -87,15 +87,15 @@ int zeromq_type_start(villas::node::SuperNode *sn);
 int zeromq_type_stop();
 
 /** @see node_type::start */
-int zeromq_start(struct node *n);
+int zeromq_start(struct vnode *n);
 
 /** @see node_type::stop */
-int zeromq_stop(struct node *n);
+int zeromq_stop(struct vnode *n);
 
 /** @see node_type::read */
-int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int zeromq_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

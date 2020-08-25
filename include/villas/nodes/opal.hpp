@@ -65,24 +65,24 @@ int opal_type_start(villas::node::SuperNode *sn);
 int opal_type_stop();
 
 /** @see node_type::parse */
-int opal_parse(struct node *n, json_t *cfg);
+int opal_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * opal_print(struct node *n);
+char * opal_print(struct vnode *n);
 
 /** Print global settings of the OPAL node type. */
 int opal_print_global();
 
 /** @see node_type::start */
-int opal_start(struct node *n);
+int opal_start(struct vnode *n);
 
 /** @see node_type::stop */
-int opal_stop(struct node *n);
+int opal_stop(struct vnode *n);
 
 /** @see node_type::read */
-int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
+int opal_read(struct vnode *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
-int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
+int opal_write(struct vnode *n, struct sample *smps[], unsigned cnt);
 
 /** @} */

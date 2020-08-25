@@ -29,7 +29,7 @@
 #include <villas/common.hpp>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 struct signal;
 struct vlist;
@@ -52,7 +52,7 @@ enum class MappingTimestampType {
 };
 
 struct mapping_entry {
-	struct node *node;		/**< The node to which this mapping refers. */
+	struct vnode *node;		/**< The node to which this mapping refers. */
 
 	enum MappingType type;		/**< The mapping type. Selects one of the union fields below. */
 

@@ -32,7 +32,7 @@
 #include <villas/list.h>
 
 /* Forward declarations */
-struct node;
+struct vnode;
 struct sample;
 
 /** Node-type for signal generation.
@@ -49,18 +49,18 @@ struct influxdb {
 };
 
 /** @see node_type::print */
-char * influxdb_print(struct node *n);
+char * influxdb_print(struct vnode *n);
 
 /** @see node_type::parse */
-int influxdb_parse(struct node *n, json_t *cfg);
+int influxdb_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int influxdb_open(struct node *n);
+int influxdb_open(struct vnode *n);
 
 /** @see node_type::stop */
-int influxdb_close(struct node *n);
+int influxdb_close(struct vnode *n);
 
 /** @see node_type::write */
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

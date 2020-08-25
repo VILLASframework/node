@@ -424,7 +424,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	}
 
 	for (size_t i = 0; i < vlist_length(&destinations); i++) {
-		struct node *n = (struct node *) vlist_at(&destinations, i);
+		struct vnode *n = (struct vnode *) vlist_at(&destinations, i);
 
 		if (n->output_path)
 			throw ConfigError(cfg, "node-config-path", "Every node must only be used by a single path as destination");
@@ -455,7 +455,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 
 		json_array_foreach(json_mask, i, json_entry) {
 			const char *name;
-			struct node *node;
+			struct vnode *node;
 			struct vpath_source *ps = nullptr;
 
 			name = json_string_value(json_entry);
@@ -464,7 +464,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 				return -1;
 			}
 
-			node = vlist_lookup_name<struct node>(nodes, name);
+			node = vlist_lookup_name<struct vnode>(nodes, name);
 			if (!node) {
 				p->logger->error("The 'mask' entry '{}' is not a valid node name", name);
 				return -1;
@@ -788,7 +788,7 @@ struct vlist * path_output_signals(struct vpath *p)
 	return &p->signals;
 }
 
-int path_uses_node(struct vpath *p, struct node *n)
+int path_uses_node(struct vpath *p, struct vnode *n)
 {
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);

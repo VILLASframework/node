@@ -50,21 +50,21 @@ struct nanomsg {
 };
 
 /** @see node_type::print */
-char * nanomsg_print(struct node *n);
+char * nanomsg_print(struct vnode *n);
 
 /** @see node_type::parse */
-int nanomsg_parse(struct node *n, json_t *cfg);
+int nanomsg_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::start */
-int nanomsg_start(struct node *n);
+int nanomsg_start(struct vnode *n);
 
 /** @see node_type::stop */
-int nanomsg_stop(struct node *n);
+int nanomsg_stop(struct vnode *n);
 
 /** @see node_type::read */
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int nanomsg_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int nanomsg_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

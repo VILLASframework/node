@@ -35,7 +35,7 @@
 
 using namespace villas::utils;
 
-int influxdb_parse(struct node *n, json_t *json)
+int influxdb_parse(struct vnode *n, json_t *json)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
@@ -66,7 +66,7 @@ int influxdb_parse(struct node *n, json_t *json)
 	return 0;
 }
 
-int influxdb_open(struct node *n)
+int influxdb_open(struct vnode *n)
 {
 	int ret;
 	struct influxdb *i = (struct influxdb *) n->_vd;
@@ -103,7 +103,7 @@ int influxdb_open(struct node *n)
 	return p ? 0 : -1;
 }
 
-int influxdb_close(struct node *n)
+int influxdb_close(struct vnode *n)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
@@ -119,7 +119,7 @@ int influxdb_close(struct node *n)
 	return 0;
 }
 
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
@@ -202,7 +202,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return cnt;
 }
 
-char * influxdb_print(struct node *n)
+char * influxdb_print(struct vnode *n)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 	char *buf = nullptr;

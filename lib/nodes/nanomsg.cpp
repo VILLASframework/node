@@ -31,7 +31,7 @@
 
 using namespace villas::utils;
 
-int nanomsg_reverse(struct node *n)
+int nanomsg_reverse(struct vnode *n)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
@@ -79,7 +79,7 @@ static int nanomsg_parse_endpoints(struct vlist *l, json_t *cfg)
 	return 0;
 }
 
-int nanomsg_parse(struct node *n, json_t *cfg)
+int nanomsg_parse(struct vnode *n, json_t *cfg)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -123,7 +123,7 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-char * nanomsg_print(struct node *n)
+char * nanomsg_print(struct vnode *n)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
@@ -150,7 +150,7 @@ char * nanomsg_print(struct node *n)
 	return buf;
 }
 
-int nanomsg_start(struct node *n)
+int nanomsg_start(struct vnode *n)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -205,7 +205,7 @@ int nanomsg_start(struct node *n)
 	return 0;
 }
 
-int nanomsg_stop(struct node *n)
+int nanomsg_stop(struct vnode *n)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -232,7 +232,7 @@ int nanomsg_type_stop()
 	return 0;
 }
 
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int nanomsg_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 	int bytes;
@@ -246,7 +246,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	return io_sscan(&m->io, data, bytes, nullptr, smps, cnt);
 }
 
-int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int nanomsg_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -266,7 +266,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	return cnt;
 }
 
-int nanomsg_poll_fds(struct node *n, int fds[])
+int nanomsg_poll_fds(struct vnode *n, int fds[])
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -283,7 +283,7 @@ int nanomsg_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-int nanomsg_netem_fds(struct node *n, int fds[])
+int nanomsg_netem_fds(struct vnode *n, int fds[])
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 

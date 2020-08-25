@@ -79,7 +79,7 @@ int if_start(struct interface *i)
 	/* Assign fwmark's to nodes which have netem options */
 	int ret, fwmark = 0;
 	for (size_t j = 0; j < vlist_length(&i->nodes); j++) {
-		struct node *n = (struct node *) vlist_at(&i->nodes, j);
+		struct vnode *n = (struct vnode *) vlist_at(&i->nodes, j);
 
 		if (n->tc_qdisc && n->fwmark < 0)
 			n->fwmark = 1 + fwmark++;
@@ -99,7 +99,7 @@ int if_start(struct interface *i)
 
 	/* Create netem qdisks and appropriate filter per netem node */
 	for (size_t j = 0; j < vlist_length(&i->nodes); j++) {
-		struct node *n = (struct node *) vlist_at(&i->nodes, j);
+		struct vnode *n = (struct vnode *) vlist_at(&i->nodes, j);
 
 		if (n->tc_qdisc) {
 			ret = tc_mark(i,  &n->tc_classifier, TC_HANDLE(1, n->fwmark), n->fwmark);

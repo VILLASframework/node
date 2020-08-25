@@ -92,7 +92,7 @@ static const char * signal_generator_type_str(enum signal_generator::SignalType 
 	}
 }
 
-int signal_generator_init(struct node *n)
+int signal_generator_init(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -116,7 +116,7 @@ int signal_generator_init(struct node *n)
 	return 0;
 }
 
-int signal_generator_destroy(struct node *n)
+int signal_generator_destroy(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -137,7 +137,7 @@ int signal_generator_destroy(struct node *n)
 	return 0;
 }
 
-int signal_generator_prepare(struct node *n)
+int signal_generator_prepare(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -153,7 +153,7 @@ int signal_generator_prepare(struct node *n)
 	return 0;
 }
 
-int signal_generator_parse(struct node *n, json_t *cfg)
+int signal_generator_parse(struct vnode *n, json_t *cfg)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -287,7 +287,7 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int signal_generator_start(struct node *n)
+int signal_generator_start(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -308,7 +308,7 @@ int signal_generator_start(struct node *n)
 	return 0;
 }
 
-int signal_generator_stop(struct node *n)
+int signal_generator_stop(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -323,7 +323,7 @@ int signal_generator_stop(struct node *n)
 	return 0;
 }
 
-int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	struct sample *t = smps[0];
@@ -418,7 +418,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	return 1;
 }
 
-char * signal_generator_print(struct node *n)
+char * signal_generator_print(struct vnode *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	char *buf = nullptr;
@@ -431,7 +431,7 @@ char * signal_generator_print(struct node *n)
 	return buf;
 }
 
-int signal_generator_poll_fds(struct node *n, int fds[])
+int signal_generator_poll_fds(struct vnode *n, int fds[])
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 

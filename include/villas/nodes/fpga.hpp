@@ -71,16 +71,16 @@ int fpga_type_start(villas::node::SuperNode *sn);
 int fpga_type_stop();
 
 /** @see node_type::init */
-int fpga_init(struct node *n);
+int fpga_init(struct vnode *n);
 
 /** @see node_type::destroy */
-int fpga_destroy(struct node *n);
+int fpga_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int fpga_parse(struct node *n, json_t *cfg);
+int fpga_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::print */
-char * fpga_print(struct node *n);
+char * fpga_print(struct vnode *n);
 
 /** @see node_type::check */
 int fpga_check();
@@ -89,18 +89,18 @@ int fpga_check();
 int fpga_prepare();
 
 /** @see node_type::start */
-int fpga_start(struct node *n);
+int fpga_start(struct vnode *n);
 
 /** @see node_type::stop */
-int fpga_stop(struct node *n);
+int fpga_stop(struct vnode *n);
 
 /** @see node_type::write */
-int fpga_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int fpga_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int fpga_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int fpga_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::poll_fds */
-int fpga_poll_fds(struct node *n, int fds[]);
+int fpga_poll_fds(struct vnode *n, int fds[]);
 
 /** @} */

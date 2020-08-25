@@ -90,31 +90,31 @@ int ethercat_type_start(struct super_node *sn);
 int ethercat_type_stop();
 
 /** @see node_type::init */
-int ethercat_init(struct node *n);
+int ethercat_init(struct vnode *n);
 
 /** @see node_type::destroy */
-int ethercat_destroy(struct node *n);
+int ethercat_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int ethercat_parse(struct node *n, json_t *cfg);
+int ethercat_parse(struct vnode *n, json_t *cfg);
 
 /** @see node_type::check */
-int ethercat_check(struct node *n);
+int ethercat_check(struct vnode *n);
 
 /** @see node_type::prepare */
-int ethercat_prepare(struct node *n);
+int ethercat_prepare(struct vnode *n);
 
 /** @see node_type::open */
-int ethercat_start(struct node *n);
+int ethercat_start(struct vnode *n);
 
 /** @see node_type::close */
-int ethercat_stop(struct node *n);
+int ethercat_stop(struct vnode *n);
 
 /** @see node_type::read */
-int ethercat_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int ethercat_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ethercat_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 
 /** @} */
