@@ -72,22 +72,22 @@ Session::~Session()
 
 void Session::execute()
 {
-	Request *req = request.exchange(nullptr);
+	Request *r = request.exchange(nullptr);
 
-	logger->debug("Running API request: uri={}, method={}", req->uri, req->method);
+	logger->debug("Running API request: uri={}, method={}", r->uri, r->method);
 
 	try {
 		response = req->execute();
 
-		logger->debug("Completed API request: request={}", req->uri, req->method);
+		logger->debug("Completed API request: request={}", r->uri, r->method);
 	} catch (const Error &e) {
 		response = new ErrorResponse(this, e);
 
-		logger->warn("API request failed: uri={}, method={}, code={}: {}", req->uri, req->method, e.code, e.what());
+		logger->warn("API request failed: uri={}, method={}, code={}: {}", r->uri, r->method, e.code, e.what());
 	} catch (const RuntimeError &e) {
 		response = new ErrorResponse(this, e);
 
-		logger->warn("API request failed: uri={}, method={}: {}", req->uri, req->method, e.what());
+		logger->warn("API request failed: uri={}, method={}: {}", r->uri, r->method, e.what());
 	}
 
 	logger->debug("Ran pending API requests. Triggering on_writeable callback: wsi={}", (void *) wsi);
