@@ -32,11 +32,13 @@ set(API_SRC
     requests/shutdown.cpp
     requests/restart.cpp
     requests/nodes.cpp
+    requests/node_info.cpp
     requests/node_action.cpp
     requests/node_stats.cpp
     requests/node_stats_reset.cpp
     requests/node_file.cpp
     requests/paths.cpp
+	requests/path_info.cpp
     requests/path_action.cpp
 )
 

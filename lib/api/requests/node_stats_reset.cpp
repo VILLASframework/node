@@ -80,8 +80,8 @@ public:
 };
 
 /* Register API requests */
-static char n[] = "stats/reset";
-static char r[] = "/node/([^/]+)/stats/reset";
+static char n[] = "node/stats/reset";
+static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/stats/reset";
 static char d[] = "reset internal statistics counters";
 static RequestPlugin<StatsRequest, n, r, d> p;
 

@@ -28,7 +28,7 @@
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/request.hpp>
+#include <villas/api/node_request.hpp>
 #include <villas/api/response.hpp>
 
 namespace villas {
@@ -36,10 +36,10 @@ namespace node {
 namespace api {
 
 template<int (*A)(struct node *)>
-class NodeActionRequest : public Request  {
+class NodeActionRequest : public NodeRequest  {
 
 public:
-	using Request::Request;
+	using NodeRequest::NodeRequest;
 
 	virtual Response * execute()
 	{
@@ -49,15 +49,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Node endpoints do not accept any body data");
 
-		const auto &nodeName = matches[1].str();
-
-		struct vlist *nodes = session->getSuperNode()->getNodes();
-		struct node *n = (struct node *) vlist_lookup(nodes, nodeName.c_str());
-
-		if (!n)
-			throw Error(HTTP_STATUS_NOT_FOUND, "Node not found");
-
-		A(n);
+		A(node);
 
 		return new Response(session);
 	}
@@ -66,27 +58,27 @@ public:
 
 /* Register API requests */
 static char n1[] = "node/start";
-static char r1[] = "/node/([^/]+)/start";
+static char r1[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/start";
 static char d1[] = "start a node";
 static RequestPlugin<NodeActionRequest<node_start>, n1, r1, d1> p1;
 
 static char n2[] = "node/stop";
-static char r2[] = "/node/([^/]+)/stop";
+static char r2[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/stop";
 static char d2[] = "stop a node";
 static RequestPlugin<NodeActionRequest<node_stop>, n2, r2, d2> p2;
 
 static char n3[] = "node/pause";
-static char r3[] = "/node/([^/]+)/pause";
+static char r3[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/pause";
 static char d3[] = "pause a node";
 static RequestPlugin<NodeActionRequest<node_pause>, n3, r3, d3> p3;
 
 static char n4[] = "node/resume";
-static char r4[] = "/node/([^/]+)/resume";
+static char r4[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/resume";
 static char d4[] = "resume a node";
 static RequestPlugin<NodeActionRequest<node_resume>, n4, r4, d4> p4;
 
 static char n5[] = "node/restart";
-static char r5[] = "/node/([^/]+)/restart";
+static char r5[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/restart";
 static char d5[] = "restart a node";
 static RequestPlugin<NodeActionRequest<node_restart>, n5, r5, d5> p5;
 

@@ -28,7 +28,7 @@
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/request.hpp>
+#include <villas/api/path_request.hpp>
 #include <villas/api/response.hpp>
 
 namespace villas {
@@ -36,10 +36,10 @@ namespace node {
 namespace api {
 
 template<int (*A)(struct vpath *)>
-class PathActionRequest : public Request  {
+class PathActionRequest : public PathRequest  {
 
 public:
-	using Request::Request;
+	using PathRequest::PathRequest;
 
 	virtual Response * execute()
 	{
@@ -49,22 +49,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Path endpoints do not accept any body data");
 
-		unsigned long pathIndex;
-		const auto &pathIndexStr = matches[1].str();
-
-		try {
-			pathIndex = std::stoul(pathIndexStr);
-		} catch (const std::invalid_argument &e) {
-			throw BadRequest("Invalid argument");
-		}
-
-		struct vlist *paths = session->getSuperNode()->getPaths();
-		struct vpath *p = (struct vpath *) vlist_at_safe(paths, pathIndex);
-
-		if (!p)
-			throw Error(HTTP_STATUS_NOT_FOUND, "Path not found");
-
-		A(p);
+		A(path);
 
 		return new Response(session);
 	}
@@ -73,12 +58,12 @@ public:
 
 /* Register API requests */
 static char n1[] = "path/start";
-static char r1[] = "/path/([^/]+)/start";
+static char r1[] = "/path/(" REGEX_UUID ")/start";
 static char d1[] = "start a path";
 static RequestPlugin<PathActionRequest<path_start>, n1, r1, d1> p1;
 
 static char n2[] = "path/stop";
-static char r2[] = "/path/([^/]+)/stop";
+static char r2[] = "/path/(" REGEX_UUID ")/stop";
 static char d2[] = "stop a path";
 static RequestPlugin<PathActionRequest<path_stop>, n2, r2, d2> p2;
 

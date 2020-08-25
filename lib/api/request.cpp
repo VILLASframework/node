@@ -35,14 +35,14 @@ Request * RequestFactory::make(Session *s, const std::string &uri, int meth)
 		if (not rf->match(uri, mr))
 			continue;
 
-		auto *r = rf->make(s);
+		auto *p = rf->make(s);
 
-		r->uri = uri;
-		r->method = meth;
-		r->matches = mr;
-		r->factory = rf;
+		p->matches = mr;
+		p->factory = rf;
+		p->method = meth;
+		p->uri = uri;
 
-		return  r;
+		return p;
 	}
 
 	throw BadRequest("Unknown API request");

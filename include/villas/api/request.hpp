@@ -24,11 +24,14 @@
 #pragma once
 
 #include <regex>
-
 #include <jansson.h>
 
 #include <villas/log.hpp>
 #include <villas/plugin.hpp>
+#include <villas/super_node.hpp>
+#include <villas/api/session.hpp>
+
+#define REGEX_UUID "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
 
 namespace villas {
 namespace node {
@@ -82,6 +85,9 @@ public:
 
 	virtual Response * execute() = 0;
 
+	virtual void prepare()
+	{ }
+
 	void setBody(json_t *j)
 	{
 		body = j;
@@ -110,8 +116,6 @@ protected:
 	std::regex regex;
 
 public:
-	using RequestFactory::RequestFactory;
-
 	RequestPlugin() :
 		RequestFactory(),
 		regex(re)

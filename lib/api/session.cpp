@@ -77,7 +77,8 @@ void Session::execute()
 	logger->debug("Running API request: uri={}, method={}", r->uri, r->method);
 
 	try {
-		response = req->execute();
+		r->prepare();
+		response = r->execute();
 
 		logger->debug("Completed API request: request={}", r->uri, r->method);
 	} catch (const Error &e) {

@@ -1,4 +1,4 @@
-/** The "file" API ressource.
+/** The "node" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -20,50 +20,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <jansson.h>
+#include <uuid/uuid.h>
+
 #include <villas/super_node.hpp>
+#include <villas/node.h>
+#include <villas/utils.hpp>
+#include <villas/stats.hpp>
 #include <villas/api/session.hpp>
 #include <villas/api/node_request.hpp>
 #include <villas/api/response.hpp>
-
-#include <villas/nodes/file.hpp>
-#include <villas/io.h>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class FileRequest : public NodeRequest {
+class NodeInfoRequest : public NodeRequest {
 
 public:
 	using NodeRequest::NodeRequest;
 
 	virtual Response * execute()
 	{
-		if (method != Method::GET && method != Method::POST)
+		if (method != Method::GET)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)
-			throw BadRequest("File endpoint does not accept any body data");
+			throw BadRequest("Nodes endpoint does not accept any body data");
 
-		struct node_type *vt = node_type_lookup("file");
-
-		if (node->_vt != vt)
-			throw BadRequest("This node is not a file node");
-
-		struct file *f = (struct file *) node->_vd;
-
-		if (matches[2].str() == "rewind")
-			io_rewind(&f->io);
-
-		return new Response(session);
+		return new Response(session, node_to_json(node));
 	}
 };
 
 /* Register API request */
-static char n[] = "node/file";
-static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/file(?:/([^/]+))?";
-static char d[] = "control instances of 'file' node-type";
-static RequestPlugin<FileRequest, n, r, d> p;
+static char n[] = "node";
+static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")";
+static char d[] = "retrieve info of a node";
+static RequestPlugin<NodeInfoRequest, n, r, d> p;
 
 } /* namespace api */
 } /* namespace node */
