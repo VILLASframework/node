@@ -48,7 +48,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 			goto invalid_format;
 		}
 
-		me->node = (struct node *) vlist_lookup(nodes, node);
+		me->node = vlist_lookup_name<struct node>(nodes, node);
 		if (!me->node) {
 			warning("Unknown node %s", node);
 			goto invalid_format;
@@ -128,7 +128,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		first_str = strtok_r(nullptr, "-]", &lasts);
 		if (first_str) {
 			if (me->node)
-				first = vlist_lookup_index(&me->node->in.signals, first_str);
+				first = vlist_lookup_index<struct signal>(&me->node->in.signals, first_str);
 
 			if (first < 0) {
 				char *endptr;
@@ -149,7 +149,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		last_str = strtok_r(nullptr, "]", &lasts);
 		if (last_str) {
 			if (me->node)
-				last = vlist_lookup_index(&me->node->in.signals, last_str);
+				last = vlist_lookup_index<struct signal>(&me->node->in.signals, last_str);
 
 			if (last < 0) {
 				char *endptr;

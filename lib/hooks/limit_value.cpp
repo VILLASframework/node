@@ -75,7 +75,7 @@ public:
 		for (size_t i = 0; i < vlist_length(&signal_names); i++) {
 			char *signal_name = (char *) vlist_at_safe(&signal_names, i);
 
-			int index = vlist_lookup_index(&signals, signal_name);
+			int index = vlist_lookup_index<struct signal>(&signals, signal_name);
 			if (index < 0)
 				throw RuntimeError("Failed to find signal {}", signal_name);
 

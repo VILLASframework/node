@@ -1,5 +1,6 @@
-/** The "shutdown" API request.
+/** API Request.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,41 +21,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <signal.h>
+#pragma once
 
-#include <villas/utils.hpp>
 #include <villas/api/request.hpp>
-#include <villas/api/response.hpp>
 
-namespace villas {
-namespace node {
-namespace api {
-
-class ShutdownRequest : public Request {
+class NodeRequest : public Request {
 
 public:
-	using Request::Request;
 
-	virtual Response * execute()
-	{
-		if (method != Method::POST)
-			throw InvalidMethod(this);
-
-		if (body != nullptr)
-			throw BadRequest("Shutdown endpoint does not accept any body data");
-
-		utils::killme(SIGTERM);
-
-		return new Response(session);
-	}
 };
-
-/* Register API request */
-static char n[] = "shutdown";
-static char r[] = "/shutdown";
-static char d[] = "quit VILLASnode";
-static RequestPlugin<ShutdownRequest, n, r, d> p;
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */

@@ -122,7 +122,7 @@ public:
 		assert(state == State::CHECKED);
 
 		if (!signalName.empty()) {
-			signalIndex = vlist_lookup_index(&signals, signalName.c_str());
+			signalIndex = vlist_lookup_index<struct signal>(&signals, signalName);
 			if (signalIndex < 0)
 				throw RuntimeError("Failed to find signal: {}", signalName);
 		}

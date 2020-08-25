@@ -100,7 +100,7 @@ int stats_node_start(struct node *n)
 	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
 		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-		stats_sig->node = (struct node *) vlist_lookup(nodes, stats_sig->node_str);
+		stats_sig->node = vlist_lookup_name<struct node>(nodes, stats_sig->node_str);
 		if (!stats_sig->node)
 			error("Invalid reference node %s for setting 'node' of node %s", stats_sig->node_str, node_name(n));
 	}

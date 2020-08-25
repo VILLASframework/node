@@ -600,7 +600,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 	switch (json_typeof(cfg)) {
 		case JSON_STRING:
 			str = json_string_value(cfg);
-			node = (struct node *) vlist_lookup(all, str);
+			node = vlist_lookup_name<struct node>(all, str);
 			if (!node)
 				goto invalid2;
 
@@ -612,7 +612,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 				if (!json_is_string(elm))
 					goto invalid;
 
-				node = (struct node *) vlist_lookup(all, json_string_value(elm));
+				node = vlist_lookup_name<struct node>(all, json_string_value(elm));
 				if (!node)
 					goto invalid;
 

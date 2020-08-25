@@ -185,7 +185,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 
 		struct signal *sig;
 
-		sig = (struct signal *) vlist_lookup(io->signals, name);
+		sig = vlist_lookup_name<struct signal>(io->signals, name);
 		if (sig) {
 			if (!sig->enabled)
 				continue;

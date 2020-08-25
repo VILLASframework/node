@@ -1,4 +1,4 @@
-/** The API ressource for resetting statistics.
+/** The API ressource for querying statistics.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -43,39 +43,31 @@ public:
 
 	virtual Response * execute()
 	{
-		int ret;
-		json_error_t err;
+		if (method != Method::GET)
+			throw InvalidMethod(this);
 
-		char *node = nullptr;
+		if (body != nullptr)
+			throw BadRequest("Stats endpoint does not accept any body data");
 
-		ret = json_unpack_ex(body, &err, 0, "{ s?: s }",
-			"node", &node
-		);
-		if (ret < 0)
-			throw Error();
+		const auto &nodeName = matches[1].str();
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
+		struct node *node = (struct node *) vlist_lookup(nodes, nodeName.c_str());
 
-		for (size_t i = 0; i < vlist_length(nodes); i++) {
-			struct node *n = (struct node *) vlist_at(nodes, i);
+		if (!node)
+			throw BadRequest("Unknown node");
 
-			if (node && strcmp(node, node_name(n)))
-				continue;
+		if (!node->stats)
+			throw BadRequest("The statistics collection for this node is not enabled");
 
-			if (n->stats) {
-				n->stats->reset();
-				info("Stats resetted for node %s", node_name(n));
-			}
-		}
-
-		return new Response(session);
+		return new Response(session, node->stats->toJson());
 	}
 };
 
 /* Register API requests */
-static char n[] = "stats/reset";
-static char r[] = "/stats/reset";
-static char d[] = "reset internal statistics counters";
+static char n[] = "stats";
+static char r[] = "/node/([^/]+)/stats";
+static char d[] = "get internal statistics counters";
 static RequestPlugin<StatsRequest, n, r, d> p;
 
 } /* namespace api */

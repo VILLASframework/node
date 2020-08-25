@@ -79,7 +79,7 @@ public:
 			     ? cfg
 			     : session->getSuperNode()->getConfigUri();
 
-		logger->info("Restarting to %s", configUri.c_str());
+		logger->info("Restarting to {}", configUri.c_str());
 
 		/* Increment API restart counter */
 		char *scnt = getenv("VILLAS_API_RESTART_COUNT");

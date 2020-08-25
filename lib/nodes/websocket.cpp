@@ -218,7 +218,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					format = (char *) "villas.web";
 
 				/* Search for node whose name matches the URI. */
-				c->node = (struct node *) vlist_lookup(&p.node.instances, node);
+				c->node = vlist_lookup_name<struct node>(&p.node.instances, node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					warning("Failed to find node: node=%s", node);

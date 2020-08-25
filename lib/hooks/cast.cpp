@@ -72,7 +72,7 @@ public:
 		assert(state == State::CHECKED);
 
 		if (signal_name) {
-			signal_index = vlist_lookup_index(&signals, signal_name);
+			signal_index = vlist_lookup_index<struct signal>(&signals, signal_name);
 			if (signal_index < 0)
 				throw RuntimeError("Failed to find signal: {}", signal_name);
 		}

@@ -328,6 +328,7 @@ int file_start(struct node *n)
 	struct sample *smp = sample_alloc_mem(vlist_length(&n->in.signals));
 	for (unsigned i = 0; i < f->skip_lines; i++)
 		io_scan(&f->io, &smp, 1);
+
 	sample_free(smp);
 
 	return 0;

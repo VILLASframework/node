@@ -45,7 +45,6 @@
 #include <villas/log.hpp>
 
 /* Forward declarations */
-struct stats;
 struct node;
 
 /** The register mode determines under which condition the path is triggered. */

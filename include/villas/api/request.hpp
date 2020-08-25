@@ -58,7 +58,7 @@ public:
 	RequestFactory *factory;
 
 	enum Method {
-		UNKNOWN_METHOD,
+		UNKNOWN,
 		GET,
 		POST,
 		DELETE,

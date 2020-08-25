@@ -464,7 +464,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 				return -1;
 			}
 
-			node = (struct node *) vlist_lookup(nodes, name);
+			node = vlist_lookup_name<struct node>(nodes, name);
 			if (!node) {
 				p->logger->error("The 'mask' entry '{}' is not a valid node name", name);
 				return -1;

@@ -131,7 +131,7 @@ void Session::open(void *in, size_t len)
 
 	try {
 		meth = getRequestMethod(wsi);
-		if (meth == Request::Method::UNKNOWN_METHOD)
+		if (meth == Request::Method::UNKNOWN)
 			throw RuntimeError("Invalid request method");
 
 		request = RequestFactory::make(this, uri, meth);
@@ -332,7 +332,7 @@ int Session::getRequestMethod(struct lws *wsi)
 		return Request::Method::OPTIONS;
 #endif
 	else
-		return Request::Method::UNKNOWN_METHOD;
+		return Request::Method::UNKNOWN;
 }
 
 std::string Session::methodToString(int method)

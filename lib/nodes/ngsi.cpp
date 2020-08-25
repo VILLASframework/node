@@ -315,7 +315,7 @@ static int ngsi_parse_entity(struct node *n, json_t *json_entity, struct sample 
 			return -3;
 
 		/* Check attribute name and type */
-		attr = (NgsiAttribute *) vlist_lookup(&i->in.signals, name);
+		attr = vlist_lookup_name<NgsiAttribute>(&i->in.signals, name);
 		if (!attr || attr->type != type)
 			continue; /* skip unknown attributes */
 

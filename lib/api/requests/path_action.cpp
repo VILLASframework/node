@@ -23,7 +23,7 @@
 #include <jansson.h>
 
 #include <villas/plugin.h>
-#include <villas/node.h>
+#include <villas/path.h>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
@@ -35,7 +35,7 @@ namespace villas {
 namespace node {
 namespace api {
 
-template<int (*A)(struct node *)>
+template<int (*A)(struct vpath *)>
 class PathActionRequest : public Request  {
 
 public:
@@ -53,16 +53,16 @@ public:
 		const auto &pathIndexStr = matches[1].str();
 
 		try {
-			pathIndex = std::atoul(pathIndexStr);
+			pathIndex = std::stoul(pathIndexStr);
 		} catch (const std::invalid_argument &e) {
 			throw BadRequest("Invalid argument");
 		}
 
 		struct vlist *paths = session->getSuperNode()->getPaths();
-		struct vpath *p = (struct path *) vlist_at_safe(pathIndex);
+		struct vpath *p = (struct vpath *) vlist_at_safe(paths, pathIndex);
 
 		if (!p)
-			throw Error(HTTP_STATUS_NOT_FOUND, "Node not found");
+			throw Error(HTTP_STATUS_NOT_FOUND, "Path not found");
 
 		A(p);
 
@@ -72,14 +72,14 @@ public:
 };
 
 /* Register API requests */
-char n1[] = "path/start";
-char r1[] = "/path/([^/]+)/start";
-char d1[] = "start a path";
+static char n1[] = "path/start";
+static char r1[] = "/path/([^/]+)/start";
+static char d1[] = "start a path";
 static RequestPlugin<PathActionRequest<path_start>, n1, r1, d1> p1;
 
-char n2[] = "path/stop";
-char r2[] = "/path/([^/]+)/stop";
-char d2[] = "stop a path";
+static char n2[] = "path/stop";
+static char r2[] = "/path/([^/]+)/stop";
+static char d2[] = "stop a path";
 static RequestPlugin<PathActionRequest<path_stop>, n2, r2, d2> p2;
 
 

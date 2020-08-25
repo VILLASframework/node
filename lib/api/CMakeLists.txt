@@ -26,16 +26,18 @@ set(API_SRC
     request.cpp
     response.cpp
 
-    requests/capabiltities.cpp
-    requests/shutdown.cpp
     requests/status.cpp
+    requests/capabiltities.cpp
     requests/config.cpp
-    requests/nodes.cpp
-    requests/paths.cpp
+    requests/shutdown.cpp
     requests/restart.cpp
+    requests/nodes.cpp
     requests/node_action.cpp
-    requests/file.cpp
-    requests/stats_reset.cpp
+    requests/node_stats.cpp
+    requests/node_stats_reset.cpp
+    requests/node_file.cpp
+    requests/paths.cpp
+    requests/path_action.cpp
 )
 
 add_library(api STATIC ${API_SRC})

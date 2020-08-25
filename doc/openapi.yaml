@@ -16,6 +16,8 @@ externalDocs:
 servers:
   - url: "https://villas-new.k8s.eonerc.rwth-aachen.de/api/v2"
     description: "The production API server in our EONERC OpenStack Kubernetes"
+  - url: "http://ernie.acs-lab.eonerc.rwth-aachen.de:8080/api/v2"
+    description: "VILLASnode lab instance in ACS laboratory"
 tags:
   - name: super-node
     description: Global super-node related operations.
@@ -71,7 +73,47 @@ paths:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    build: v0.10.0-4b9e8a6-debug
+                    hooks:
+                      - average
+                      - cast
+                      - decimate
+                      - drop
+                      - dump
+                      - ebm
+                      - fix
+                      - gate
+                      - jitter_calc
+                      - limit_rate
+                      - restart
+                      - scale
+                      - shift_seq
+                      - shift_ts
+                      - skip_first
+                      - stats
+                      - ts
+                      - pps_ts
+                      - print
+                    node-types: []
+                    apis:
+                      - capabilities
+                      - config
+                      - shutdown
+                      - restart
+                      - nodes
+                      - node/start
+                      - node/stop
+                      - node/pause
+                      - node/resume
+                      - node/restart
+                      - stats
+                      - stats/reset
+                      - file
+                      - paths
+                      - path/start
+                      - path/stop
+                    formats: []
+                    
 
   "/config":
     get:
@@ -86,7 +128,42 @@ paths:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    nodes:
+                      udp_node1:
+                        type: socket
+                        layer: udp
+                        in:
+                          address: '*:12000'
+                          signals:
+                            count: 8
+                            type: float
+                        out:
+                          address: '127.0.0.1:12001'
+                      web_node1:
+                        type: websocket
+                        vectorize: 2
+                        series:
+                          - label: Random walk
+                            unit: V
+                          - label: Sine
+                            unit: A
+                          - label: Rect
+                            unit: Var
+                          - label: Ramp
+                            unit: °C
+                    paths:
+                      - in:
+                          - udp_node1
+                        out:
+                          - web_node1
+                        hooks:
+                          - type: decimate
+                            ratio: 2
+                      - in:
+                          - web_node1
+                        out:
+                          - udp_node1
+                    
   
   "/restart":
     post:
@@ -106,13 +183,14 @@ paths:
                   description: An optional path to a new configuration file which should be loaded after restarting the node.
       responses:
         '200':
-          description: Success
+          description: Success. The instance has been restarted.
           content:
             application/json:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    restarts: 5
+                    config: http://example.com/path/to/config.json
       
   "/shutdown":
     post:
@@ -121,13 +199,7 @@ paths:
       - super-node
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
+          description: Success. The instance has been shut down.
       
   "/nodes":
     get:
@@ -142,7 +214,95 @@ paths:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    - name: udp_node1
+                      uuid: b3df1d73-f483-f16c-5936-4ea48295615c
+                      state: running
+                      affinity: -1
+                      in:
+                        address: '*:12000'
+                        signals:
+                          count: 8
+                          type: float
+                      out:
+                        address: '127.0.0.1:12001'
+                      type: socket
+                      layer: udp
+                    - name: web_node1
+                      uuid: 19c84350-c83a-8a3b-224b-43fa591c8998
+                      state: running
+                      affinity: -1
+                      in:
+                        vectorize: 2
+                        signals:
+                          - type: float
+                            enabled: true
+                            name: signal0
+                          - type: float
+                            enabled: true
+                            name: signal1
+                          - type: float
+                            enabled: true
+                            name: signal2
+                          - type: float
+                            enabled: true
+                            name: signal3
+                          - type: float
+                            enabled: true
+                            name: signal4
+                          - type: float
+                            enabled: true
+                            name: signal5
+                          - type: float
+                            enabled: true
+                            name: signal6
+                          - type: float
+                            enabled: true
+                            name: signal7
+                          - type: float
+                            enabled: true
+                            name: signal8
+                          - type: float
+                            enabled: true
+                            name: signal9
+                          - type: float
+                            enabled: true
+                            name: signal10
+                          - type: float
+                            enabled: true
+                            name: signal11
+                          - type: float
+                            enabled: true
+                            name: signal12
+                          - type: float
+                            enabled: true
+                            name: signal13
+                          - type: float
+                            enabled: true
+                            name: signal14
+                      out:
+                        vectorize: 2
+                        signals:
+                          - type: float
+                            enabled: true
+                            name: signal0
+                          - type: float
+                            enabled: true
+                            name: signal1
+                          - type: float
+                            enabled: true
+                            name: signal2
+                      type: websocket
+                      vectorize: 2
+                      series:
+                        - label: Random walk
+                          unit: V
+                        - label: Sine
+                          unit: A
+                        - label: Rect
+                          unit: Var
+                        - label: Ramp
+                          unit: °C
+                    
       
   "/node/{uuid}/stats":
     get:
@@ -160,6 +320,8 @@ paths:
                 example1:
                   value:
                     { test: 1 }
+        '404':
+          description: Error. There is no node with the given UUID or the node does not collect statistics.
 
   "/node/{uuid}/stats/reset":
     post:
@@ -170,13 +332,9 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
+          description: Success. The statistics of the node have been reset.
+        '404':
+          description: Error. There is no node with the given UUID.
 
   "/node/{uuid}/start":
     post:
@@ -187,14 +345,10 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-      
+          description: Success. The node has been started.
+        '404':
+          description: Error. There is no node with the given UUID.
+
   "/node/{uuid}/stop":
     post:
       summary: Stop a node.
@@ -204,14 +358,10 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-      
+          description: Success. The node has been stopped.
+        '404':
+          description: Error. There is no node with the given UUID.
+
   "/node/{uuid}/pause":
     post:
       summary: Pause a node.
@@ -221,13 +371,9 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
+          description: Success. The node has been paused.
+        '404':
+          description: Error. There is no node with the given UUID.
 
   "/node/{uuid}/resume":
     post:
@@ -238,14 +384,10 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-                    
+          description: Success. The node has been resumed.
+        '404':
+          description: Error. There is no node with the given UUID.
+
   "/node/{uuid}/restart":
     post:
       summary: Retart a node.
@@ -255,14 +397,10 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-                  
+          description: Success. The node has been restarted.
+        '404':
+          description: Error. There is no node with the given UUID.
+
   "/node/{uuid}/file/rewind":
     post:
       summary: Rewind the playback file to the beginning.
@@ -272,13 +410,9 @@ paths:
       - $ref: "#/components/parameters/node-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
+          description: Success. The file has been rewound.
+        '404':
+          description: Error. There is no node with the given UUID.
     
   "/node/{uuid}/file/seek":
     post:
@@ -302,17 +436,13 @@ paths:
                   example: 123
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-                    
+          description: Success. The read-pointer of the file has been changed.
+        '404':
+          description: Error. There is no node with the given UUID.
+
   "/paths":
     get:
-      summary: Get a list of all configure paths.
+      summary: Get a list of all paths.
       tags:
       - paths
       responses:
@@ -323,7 +453,38 @@ paths:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    - uuid: 251c99af-4b05-9de4-367e-2bb550412e56
+                      state: running
+                      mode: any
+                      enabled: true
+                      builtin: true
+                      reverse: false
+                      original_sequence_no: true
+                      last_sequence: false
+                      poll: false
+                      queuelen: 1024
+                      signals: []
+                      hooks: []
+                      in:
+                        - udp_node1
+                      out:
+                        - web_node1
+                    - uuid: 61b5674b-95fa-b35f-bff8-c877acf21e3b
+                      state: running
+                      mode: any
+                      enabled: true
+                      builtin: true
+                      reverse: false
+                      original_sequence_no: true
+                      last_sequence: false
+                      poll: false
+                      queuelen: 1024
+                      signals: []
+                      hooks: []
+                      in:
+                        - web_node1
+                      out:
+                        - udp_node1
 
   "/path/{uuid}/start":
     post:
@@ -334,14 +495,10 @@ paths:
       - $ref: "#/components/parameters/path-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-                    
+          description: Success. The path has been started.
+        '404':
+          description: Error. There is no path with the given UUID.
+
   "/path/{uuid}/stop":
     post:
       summary: Start a path.
@@ -351,45 +508,6 @@ paths:
       - $ref: "#/components/parameters/path-uuid"
       responses:
         '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-
-  "/path/{uuid}/stats":
-    get:
-      summary: Get the statistics of a path.
-      tags:
-      - paths
-      parameters: 
-      - $ref: "#/components/parameters/path-uuid"
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-
-  "/path/{uuid}/stats/reset":
-    post:
-      summary: Reset the statistics counters for a specific path.
-      tags:
-      - paths
-      parameters: 
-      - $ref: "#/components/parameters/path-uuid"
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              examples: 
-                example1:
-                  value:
-                    { test: 1 }
-    
+          description: Success. The path has been stopped.
+        '404':
+          description: Error. There is no path with the given UUID.

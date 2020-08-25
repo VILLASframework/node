@@ -132,7 +132,7 @@ public:
 
 	struct node * getNode(const std::string &name)
 	{
-		return (struct node *) vlist_lookup(&nodes, name.c_str());
+		return vlist_lookup_name<struct node>(&nodes, name);
 	}
 
 	struct vlist * getNodes()

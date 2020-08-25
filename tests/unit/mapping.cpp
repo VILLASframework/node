@@ -67,41 +67,41 @@ Test(mapping, parse_nodes)
 
 	ret = mapping_parse_str(&m, "apple.ts.origin", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "apple"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "apple"));
 	cr_assert_eq(m.type, MappingType::TIMESTAMP);
 	cr_assert_eq(m.timestamp.type, MappingTimestampType::ORIGIN);
 
 	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "cherry"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "cherry"));
 	cr_assert_eq(m.type, MappingType::STATS);
 	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
 	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
 	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "carrot"));
 	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
 	ret = mapping_parse_str(&m, "carrot", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "carrot"));
 	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "carrot"));
 	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 1);
 
 	ret = mapping_parse_str(&m, "carrot.data[sole-mio]", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.node, vlist_lookup_name<struct node>(&nodes, "carrot"));
 	cr_assert_eq(m.type, MappingType::DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);

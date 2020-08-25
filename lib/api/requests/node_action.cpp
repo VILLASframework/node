@@ -65,29 +65,29 @@ public:
 };
 
 /* Register API requests */
-char n1[] = "node/start";
-char r1[] = "/node/([^/]+)/start";
-char d1[] = "start a node";
+static char n1[] = "node/start";
+static char r1[] = "/node/([^/]+)/start";
+static char d1[] = "start a node";
 static RequestPlugin<NodeActionRequest<node_start>, n1, r1, d1> p1;
 
-char n2[] = "node/stop";
-char r2[] = "/node/([^/]+)/stop";
-char d2[] = "stop a node";
+static char n2[] = "node/stop";
+static char r2[] = "/node/([^/]+)/stop";
+static char d2[] = "stop a node";
 static RequestPlugin<NodeActionRequest<node_stop>, n2, r2, d2> p2;
 
-char n3[] = "node/pause";
-char r3[] = "/node/([^/]+)/pause";
-char d3[] = "pause a node";
+static char n3[] = "node/pause";
+static char r3[] = "/node/([^/]+)/pause";
+static char d3[] = "pause a node";
 static RequestPlugin<NodeActionRequest<node_pause>, n3, r3, d3> p3;
 
-char n4[] = "node/resume";
-char r4[] = "/node/([^/]+)/resume";
-char d4[] = "resume a node";
+static char n4[] = "node/resume";
+static char r4[] = "/node/([^/]+)/resume";
+static char d4[] = "resume a node";
 static RequestPlugin<NodeActionRequest<node_resume>, n4, r4, d4> p4;
 
-char n5[] = "node/restart";
-char r5[] = "/node/([^/]+)/restart";
-char d5[] = "restart a node";
+static char n5[] = "node/restart";
+static char r5[] = "/node/([^/]+)/restart";
+static char d5[] = "restart a node";
 static RequestPlugin<NodeActionRequest<node_restart>, n5, r5, d5> p5;
 
 
