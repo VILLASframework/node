@@ -51,6 +51,8 @@
   struct rtnl_cls;
 #endif /* WITH_NETEM */
 
+#define REGEX_NODE_NAME "[a-z0-9_-]{3,32}"
+
 /** The data structure for a node.
  *
  * Every entity which exchanges messages is represented by a node.

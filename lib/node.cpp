@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <regex>
 #include <cstring>
 #include <cctype>
 #include <openssl/md5.h>
@@ -645,14 +646,9 @@ invalid2:
 
 bool node_is_valid_name(const char *name)
 {
-	for (const char *p = name; *p; p++) {
-		if (isalnum(*p) || (*p == '_') || (*p == '-'))
-			continue;
+	std::regex re(REGEX_NODE_NAME);
 
-		return false;
-	}
-
-	return true;
+	return std::regex_match(name, re);
 }
 
 bool node_is_enabled(const struct node *n)
