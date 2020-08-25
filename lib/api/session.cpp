@@ -208,7 +208,7 @@ int Session::writeable()
 
 			json_t *json_response = resp->toJson();
 
-			responseBuffer.encode(json_response);
+			responseBuffer.encode(json_response, JSON_INDENT(4));
 
 			code = resp->getCode();
 		}
