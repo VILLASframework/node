@@ -354,16 +354,6 @@ int file_stop(struct node *n)
 	return 0;
 }
 
-int file_restart(struct node *n)
-{
-	struct file *f = (struct file *) n->_vd;
-
-	f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
-	io_rewind(&f->io);
-
-	return 0;
-}
-
 int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
@@ -518,7 +508,6 @@ static void register_plugin() {
 	p.node.parse		= file_parse;
 	p.node.print		= file_print;
 	p.node.start		= file_start;
-	p.node.restart		= file_restart;
 	p.node.stop		= file_stop;
 	p.node.read		= file_read;
 	p.node.write		= file_write;
