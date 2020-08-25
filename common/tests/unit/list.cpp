@@ -39,7 +39,7 @@ struct data {
 
 TestSuite(list, .description = "List datastructure");
 
-Test(list, vlist_lookup)
+Test(list, vlist_lookup_name)
 {
 	struct vlist l;
 
@@ -56,7 +56,7 @@ Test(list, vlist_lookup)
 		vlist_push(&l, d);
 	}
 
-	struct data *found = (struct data *) vlist_lookup(&l, "woman");
+	struct data *found = vlist_lookup_name<struct data>(&l, "woman");
 
 	cr_assert_eq(found->data, 13);
 
