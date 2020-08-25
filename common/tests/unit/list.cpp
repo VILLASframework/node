@@ -33,7 +33,7 @@ using namespace villas;
 static const char *nouns[] = { "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact" };
 
 struct data {
-	const char *tag;
+	const char *name;
 	int data;
 };
 
@@ -50,7 +50,7 @@ Test(list, vlist_lookup_name)
 		if (!d)
 			throw MemoryAllocationError();
 
-		d->tag = nouns[i];
+		d->name = nouns[i];
 		d->data = i;
 
 		vlist_push(&l, d);
