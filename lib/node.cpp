@@ -666,3 +666,43 @@ struct vlist * node_get_signals(struct node *n, enum NodeDir dir)
 
 	return node_direction_get_signals(nd);
 }
+
+json_t * node_to_json(struct node *n)
+{
+	struct vlist *output_signals;
+
+	json_t *json_node;
+	json_t *json_signals_in = nullptr;
+	json_t *json_signals_out = nullptr;
+
+	char uuid[37];
+	uuid_unparse(n->uuid, uuid);
+
+	json_signals_in = signal_list_to_json(&n->in.signals);
+
+	output_signals = node_output_signals(n);
+	if (output_signals)
+		json_signals_out = signal_list_to_json(output_signals);
+
+	json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i, s: o? }, s: { s: i, s: o? } }",
+		"name",		node_name_short(n),
+		"uuid", 	uuid,
+		"state",	state_print(n->state),
+		"affinity",	n->affinity,
+		"in",
+			"vectorize",	n->in.vectorize,
+			"signals", 	json_signals_in,
+		"out",
+			"vectorize",	n->out.vectorize,
+			"signals",	json_signals_out
+	);
+
+	if (n->stats)
+		json_object_set_new(json_node, "stats", n->stats->toJson());
+
+	/* Add all additional fields of node here.
+	 * This can be used for metadata */
+	json_object_update(json_node, n->cfg);
+
+	return json_node;
+}

@@ -56,56 +56,7 @@ public:
 		for (size_t i = 0; i < vlist_length(paths); i++) {
 			struct vpath *p = (struct vpath *) vlist_at(paths, i);
 
-			char uuid[37];
-			uuid_unparse(p->uuid, uuid);
-
-			json_t *json_signals = json_array();
-			json_t *json_hooks = json_array();
-			json_t *json_sources = json_array();
-			json_t *json_destinations = json_array();
-
-			for (size_t i = 0; i < vlist_length(&p->signals); i++) {
-				struct signal *sig = (struct signal *) vlist_at_safe(&p->signals, i);
-
-				json_array_append(json_signals, signal_to_json(sig));
-			}
-
-			for (size_t i = 0; i < vlist_length(&p->hooks); i++) {
-				Hook *h = (Hook *) vlist_at_safe(&p->hooks, i);
-
-				json_array_append(json_hooks, h->getConfig());
-			}
-
-			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-				struct vpath_source *pd = (struct vpath_source *) vlist_at_safe(&p->sources, i);
-
-				json_array_append_new(json_sources, json_string(node_name_short(pd->node)));
-			}
-
-			for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-				struct vpath_destination *pd = (struct vpath_destination *) vlist_at_safe(&p->destinations, i);
-
-				json_array_append_new(json_destinations, json_string(node_name_short(pd->node)));
-			}
-
-			json_t *json_path = json_pack("{ s: s, s: s, s: s, s: b, s: b s: b, s: b, s: b, s: b s: i, s: o, s: o, s: o, s: o }",
-				"uuid", uuid,
-				"state", state_print(p->state),
-				"mode", p->mode == PathMode::ANY ? "any" : "all",
-				"enabled", p->enabled,
-				"builtin", p->builtin,
-				"reverse", p->reverse,
-				"original_sequence_no", p->original_sequence_no,
-				"last_sequence", p->last_sequence,
-				"poll", p->poll,
-				"queuelen", p->queuelen,
-				"signals", json_signals,
-				"hooks", json_hooks,
-				"in", json_sources,
-				"out", json_destinations
-			);
-
-			json_array_append_new(json_paths, json_path);
+			json_array_append_new(json_paths, path_to_json(p));
 		}
 
 		return new Response(session, json_paths);

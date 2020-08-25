@@ -201,3 +201,16 @@ vlist * hook_list_get_signals(vlist *hs)
 
 	return h->getSignals();
 }
+
+json_t * hook_list_to_json(vlist *hs)
+{
+	json_t *json_hooks = json_array();
+
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		Hook *h = (Hook *) vlist_at_safe(hs, i);
+
+		json_array_append(json_hooks, h->getConfig());
+	}
+
+	return json_hooks;
+}

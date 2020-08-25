@@ -165,4 +165,6 @@ bool path_is_reversed(const struct vpath *p);
 
 struct vlist * path_get_signals(struct vpath *p);
 
+json_t * path_to_json(struct vpath *p);
+
 /** @} */

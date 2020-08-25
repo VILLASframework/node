@@ -215,4 +215,6 @@ bool node_is_enabled(const struct node *n);
 
 struct vlist * node_get_signals(struct node *n, enum NodeDir dir);
 
+json_t * node_to_json(struct node *);
+
 /** @} */
