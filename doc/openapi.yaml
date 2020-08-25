@@ -101,14 +101,16 @@ paths:
                       - shutdown
                       - restart
                       - nodes
+                      - node
                       - node/start
                       - node/stop
                       - node/pause
                       - node/resume
                       - node/restart
-                      - stats
-                      - stats/reset
-                      - file
+                      - node/file
+                      - node/stats
+                      - node/stats/reset
+                      - path
                       - paths
                       - path/start
                       - path/stop
@@ -246,39 +248,6 @@ paths:
                           - type: float
                             enabled: true
                             name: signal3
-                          - type: float
-                            enabled: true
-                            name: signal4
-                          - type: float
-                            enabled: true
-                            name: signal5
-                          - type: float
-                            enabled: true
-                            name: signal6
-                          - type: float
-                            enabled: true
-                            name: signal7
-                          - type: float
-                            enabled: true
-                            name: signal8
-                          - type: float
-                            enabled: true
-                            name: signal9
-                          - type: float
-                            enabled: true
-                            name: signal10
-                          - type: float
-                            enabled: true
-                            name: signal11
-                          - type: float
-                            enabled: true
-                            name: signal12
-                          - type: float
-                            enabled: true
-                            name: signal13
-                          - type: float
-                            enabled: true
-                            name: signal14
                       out:
                         vectorize: 2
                         signals:
@@ -302,15 +271,14 @@ paths:
                           unit: Var
                         - label: Ramp
                           unit: °C
-                    
-      
-  "/node/{uuid}/stats":
+
+  "/node/{uuid-or-name}":
     get:
-      summary: Get the statistics of a node.
+      summary: Get the information of a specific node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success
@@ -319,108 +287,258 @@ paths:
               examples: 
                 example1:
                   value:
-                    { test: 1 }
+                    name: udp_node1
+                    uuid: b3df1d73-f483-f16c-5936-4ea48295615c
+                    state: running
+                    affinity: -1
+                    in:
+                      address: '*:12000'
+                      signals:
+                        count: 8
+                        type: float
+                    out:
+                      address: '127.0.0.1:12001'
+                    type: socket
+                    layer: udp
         '404':
           description: Error. There is no node with the given UUID or the node does not collect statistics.
 
-  "/node/{uuid}/stats/reset":
+  "/node/{uuid-or-name}/stats":
+    get:
+      summary: Get the statistics of a node.
+      tags:
+      - nodes
+      parameters: 
+      - $ref: "#/components/parameters/node-uuid-name"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    rtp.jitter:
+                      low: 1.3293196e-316
+                      high: 0
+                      total: 0
+                    rtp.pkts_lost:
+                      low: 1.3285797e-316
+                      high: 1.3290532e-316
+                      total: 0
+                    rtp.loss_fraction:
+                      low: 3.0e-323
+                      high: 1.32907453e-316
+                      total: 0
+                    age:
+                      low: 1.3288619e-316
+                      high: 1.32909588e-316
+                      total: 0
+                    owd:
+                      low: 3.0e-323
+                      high: 3.0e-322
+                      total: 144
+                      higher: 0
+                      lower: 0
+                      highest: 0.099986117
+                      lowest: 0.09990915800000001
+                      mean: 0.09998063221527778
+                      variance: 7.736879555478282e-11
+                      stddev: 8.795953362472019e-06
+                      buckets:
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                    gap_received:
+                      low: 0
+                      high: 1.32743107e-316
+                      total: 144
+                      higher: 0
+                      lower: 0
+                      highest: 0.10000411000000001
+                      lowest: 0.09999650900000001
+                      mean: 0.09999998652777778
+                      variance: 5.701784607620545e-13
+                      stddev: 7.551016228045431e-07
+                      buckets:
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                    gap_sent:
+                      low: 1.58e-321
+                      high: 1.3292848e-316
+                      total: 144
+                      higher: 0
+                      lower: 0
+                      highest: 0.10004273400000001
+                      lowest: 0.09926839700000001
+                      mean: 0.09999436691666665
+                      variance: 3.7637473716438304e-09
+                      stddev: 6.134938770390321e-05
+                      buckets:
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                      - 0
+                    reordered:
+                      low: 8.28904606e-315
+                      high: 1.32930615e-316
+                      total: 0
+                    skipped:
+                      low: 1.32879865e-316
+                      high: 1.3293275e-316
+                      total: 0
+        '404':
+          description: Error. There is no node with the given UUID or the node does not collect statistics.
+
+  "/node/{uuid-or-name}/stats/reset":
     post:
       summary: Reset the statistics counters for a specific node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The statistics of the node have been reset.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/start":
+  "/node/{uuid-or-name}/start":
     post:
       summary: Start a node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The node has been started.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/stop":
+  "/node/{uuid-or-name}/stop":
     post:
       summary: Stop a node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The node has been stopped.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/pause":
+  "/node/{uuid-or-name}/pause":
     post:
       summary: Pause a node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The node has been paused.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/resume":
+  "/node/{uuid-or-name}/resume":
     post:
       summary: Resume a node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The node has been resumed.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/restart":
+  "/node/{uuid-or-name}/restart":
     post:
       summary: Retart a node.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The node has been restarted.
         '404':
           description: Error. There is no node with the given UUID.
 
-  "/node/{uuid}/file/rewind":
+  "/node/{uuid-or-name}/file/rewind":
     post:
       summary: Rewind the playback file to the beginning.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       responses:
         '200':
           description: Success. The file has been rewound.
         '404':
           description: Error. There is no node with the given UUID.
     
-  "/node/{uuid}/file/seek":
+  "/node/{uuid-or-name}/file/seek":
     post:
       summary: Rewind the playback file to the beginning.
       tags:
       - nodes
       parameters: 
-      - $ref: "#/components/parameters/node-uuid"
+      - $ref: "#/components/parameters/node-uuid-name"
       requestBody:
         description: Sample position in file
         required: true
@@ -434,6 +552,7 @@ paths:
                 position:
                   type: integer
                   example: 123
+                  description: Skip the first nth samples in the file.
       responses:
         '200':
           description: Success. The read-pointer of the file has been changed.
@@ -485,6 +604,40 @@ paths:
                         - web_node1
                       out:
                         - udp_node1
+
+  "/path/{uuid}":
+    post:
+      summary: Get details of a single path.
+      tags:
+      - paths
+      parameters: 
+      - $ref: "#/components/parameters/path-uuid"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    uuid: 251c99af-4b05-9de4-367e-2bb550412e56
+                    state: running
+                    mode: any
+                    enabled: true
+                    builtin: true
+                    reverse: false
+                    original_sequence_no: true
+                    last_sequence: false
+                    poll: false
+                    queuelen: 1024
+                    signals: []
+                    hooks: []
+                    in:
+                      - udp_node1
+                    out:
+                      - web_node1
+        '404':
+          description: Error. There is no path with the given UUID.
 
   "/path/{uuid}/start":
     post:
