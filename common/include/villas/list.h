@@ -29,6 +29,9 @@
 #pragma once
 
 #include <sys/types.h>
+#include <cstring>
+#include <string>
+#include <uuid/uuid.h>
 #include <pthread.h>
 
 #include <villas/common.hpp>
@@ -87,23 +90,8 @@ int vlist_remove(struct vlist *l, size_t idx);
 
 int vlist_insert(struct vlist *l, size_t idx, void *p);
 
-/** Return the first list element which is identified by a string in its first member variable.
- *
- * List elements are pointers to structures of the following form:
- *
- * struct obj {
- *    char *name;
- *    // more members
- * }
- *
- * @see Only possible because of §1424 of http://c0x.coding-guidelines.com/6.7.2.1.html
- */
-void * vlist_lookup(struct vlist *l, const char *name);
-
-ssize_t vlist_lookup_index(struct vlist *l, const void *ptr);
-
 /** Return the first element of the list for which cmp returns zero */
-void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx);
+void * vlist_search(struct vlist *l, cmp_cb_t cmp, const void *ctx);
 
 /** Returns the number of occurences for which cmp returns zero when called on all list elements. */
 int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx);
@@ -129,3 +117,38 @@ void vlist_extend(struct vlist *l, size_t len, void *val);
 
 /** Remove all elements for which the callback returns a non-zero return code. */
 void vlist_filter(struct vlist *l, dtor_cb_t cb);
+
+#include <villas/log.h>
+
+/** Lookup an element from the list based on an UUID */
+template<typename T>
+T * vlist_lookup_uuid(struct vlist *l, uuid_t uuid)
+{
+	return (T *) vlist_search(l, [](const void *a, const void *b) -> int {
+		auto *n = reinterpret_cast<const T *>(a);
+		uuid_t u; memcpy(u, b, sizeof(uuid_t));
+
+		return uuid_compare(n->uuid, u);
+	}, uuid);
+}
+
+/** Lookup an element from the list based on a name */
+template<typename T>
+T * vlist_lookup_name(struct vlist *l, const std::string &name)
+{
+	return (T *) vlist_search(l, [](const void *a, const void *b) -> int {
+		auto *e = reinterpret_cast<const T *>(a);
+		auto *s = reinterpret_cast<const std::string *>(b);
+
+		return *s == e->name ? 0 : 1;
+	}, &name);
+}
+
+/** Lookup index of list element based on name */
+template<typename T>
+ssize_t vlist_lookup_index(struct vlist *l, const std::string &name)
+{
+	auto *f = vlist_lookup_name<T>(l, name);
+
+	return f ? vlist_index(l, f) : -1;
+}

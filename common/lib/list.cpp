@@ -28,21 +28,6 @@
 #include <villas/list.h>
 #include <villas/utils.hpp>
 
-/* Compare functions */
-static int cmp_lookup(const void *a, const void *b) {
-	struct name_tag {
-		char *name;
-	};
-
-	const name_tag *obj = (struct name_tag *) a;
-
-	return strcmp(obj->name, (char *) b);
-}
-
-static int cmp_contains(const void *a, const void *b) {
-	return a == b ? 0 : 1;
-}
-
 #ifdef __APPLE__
 static int cmp_sort(void *thunk, const void *a, const void *b) {
 #else
@@ -183,21 +168,11 @@ void vlist_remove_all(struct vlist *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-void * vlist_lookup(struct vlist *l, const char *name)
-{
-	return vlist_search(l, cmp_lookup, (void *) name);
-}
-
-ssize_t vlist_lookup_index(struct vlist *l, const void *ptr)
-{
-	void *found = vlist_lookup(l, (char *) ptr);
-
-	return found ? vlist_index(l, found) : -1;
-}
-
 int vlist_contains(struct vlist *l, void *p)
 {
-	return vlist_count(l, cmp_contains, p);
+	return vlist_count(l, [](const void *a, const void *b) {
+		return a == b ? 0 : 1;
+	}, p);
 }
 
 int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
@@ -220,7 +195,7 @@ int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
 	return c;
 }
 
-void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx)
+void * vlist_search(struct vlist *l, cmp_cb_t cmp, const void *ctx)
 {
 	void *e;
 

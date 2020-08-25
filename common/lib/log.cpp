@@ -88,8 +88,7 @@ void Log::parse(json_t *cfg)
 	const char *path = nullptr;
 	const char *pattern = nullptr;
 
-	int syslog;
-	int ret;
+	int ret, syslog = 0;
 
 	json_error_t err;
 	json_t *json_expressions = nullptr;
