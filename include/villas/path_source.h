@@ -43,6 +43,7 @@ struct vpath_source {
 
 	struct pool pool;
 	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
+	struct vlist secondaries;
 };
 
 int path_source_init(struct vpath_source *ps);

@@ -65,6 +65,10 @@ int path_source_destroy(struct vpath_source *ps)
 	if (ret)
 		return ret;
 
+	ret = vlist_destroy(&ps->secondaries, nullptr, false);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
@@ -106,6 +110,19 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 	}
 	else if (recv < allocated)
 		p->logger->warn("Partial read for path {}: read={}, expected={}", path_name(p), recv, allocated);
+
+	/* Forward samples to secondary path sources */
+	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
+		struct vpath_source *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
+
+		sample_incref_many(read_smps, recv);
+
+		int sent, release = recv;
+
+		sent = node_write(sps->node, read_smps, recv, &release);
+		if (sent < recv)
+			p->logger->warn("Partial write to secondary path source");
+	}
 
 	p->received.set(i);
 

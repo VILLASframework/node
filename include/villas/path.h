@@ -157,6 +157,8 @@ int path_uses_node(struct vpath *p, struct vnode *n);
  */
 int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes);
 
+void path_parse_mask(struct vpath *p, json_t *json_mask);
+
 bool path_is_simple(const struct vpath *p);
 
 bool path_is_enabled(const struct vpath *p);
