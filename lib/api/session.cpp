@@ -146,26 +146,26 @@ void Session::open(void *in, size_t len)
 		} catch (const std::invalid_argument &) {
 			contentLength = 0;
 		}
+
+		/* This is an OPTIONS request.
+		 *
+		 *  We immediatly send headers and close the connection
+		 *  without waiting for a POST body */
+		if (meth == Request::Method::OPTIONS)
+			lws_callback_on_writable(wsi);
+		/* This request has no body.
+		 * We can reply immediatly */
+		else if (contentLength == 0)
+			api->pending.push(this);
+		else {
+			/* This request has a HTTP body. We wait for more data to arrive */
+		}
 	} catch (const Error &e) {
 		response = new ErrorResponse(this, e);
 		lws_callback_on_writable(wsi);
 	} catch (const RuntimeError &e) {
 		response = new ErrorResponse(this, e);
 		lws_callback_on_writable(wsi);
-	}
-
-	/* This is an OPTIONS request.
-	 *
-	 *  We immediatly send headers and close the connection
-	 *  without waiting for a POST body */
-	if (meth == Request::Method::OPTIONS)
-		lws_callback_on_writable(wsi);
-	/* This request has no body.
-	 * We can reply immediatly */
-	else if (contentLength == 0)
-		api->pending.push(this);
-	else {
-		/* This request has a HTTP body. We wait for more data to arrive */
 	}
 }
 
