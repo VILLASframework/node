@@ -31,6 +31,15 @@
 
 int path_source_init(struct vpath_source *ps)
 {
+	ps->node = me->node;
+	ps->masked = false;
+
+	vlist_init(&ps->mappings);
+	vlist_init(&ps->secondaries);
+}
+
+int path_source_prepare(struct vpath_source *ps)
+{
 	int ret;
 	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize);
 

@@ -47,6 +47,8 @@ struct vpath_source {
 
 int path_source_init(struct vpath_source *ps);
 
+int path_source_prepare(struct vpath_source *ps);
+
 int path_source_destroy(struct vpath_source *ps);
 
 int path_source_read(struct vpath_source *ps, struct vpath *p, int i);

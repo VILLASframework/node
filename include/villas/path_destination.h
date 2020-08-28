@@ -41,7 +41,9 @@ struct vpath_destination {
 	struct queue queue;
 };
 
-int path_destination_init(struct vpath_destination *pd, int queuelen);
+int path_destination_init(struct vpath_destination *pd);
+
+int path_destination_prepare(struct vpath_destination *pd, int queuelen);
 
 int path_destination_destroy(struct vpath_destination *pd);
 

@@ -27,7 +27,13 @@
 #include <villas/path.h>
 #include <villas/path_destination.h>
 
-int path_destination_init(struct vpath_destination *pd, int queuelen)
+int path_destination_init(struct vpath_destination *pd)
+{
+	pd->node = n;
+	pd->node->output_path = p;
+}
+
+int path_destination_prepare(struct vpath_destination *pd, int queuelen)
 {
 	int ret;
 

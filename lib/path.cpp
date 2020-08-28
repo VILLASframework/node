@@ -236,7 +236,7 @@ int path_prepare(struct vpath *p)
 		if (node_type(pd->node)->memory_type)
 			pool_mt = node_memory_type(pd->node);
 
-		ret = path_destination_init(pd, p->queuelen);
+		ret = path_destination_prepare(pd, p->queuelen);
 		if (ret)
 			return ret;
 	}
@@ -249,7 +249,7 @@ int path_prepare(struct vpath *p)
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
 
-		ret = path_source_init(ps);
+		ret = path_source_prepare(ps);
 		if (ret)
 			return ret;
 
@@ -433,8 +433,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		if (!pd)
 			throw MemoryAllocationError();
 
-		pd->node = n;
-		pd->node->output_path = p;
+		path_destination_init(pd);
+
 
 		if (!node_is_enabled(pd->node)) {
 			p->logger->error("Destination {} of path {} is not enabled", node_name(pd->node), path_name(p));
