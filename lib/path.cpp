@@ -49,6 +49,14 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
+/** Main thread function per path:
+ *     read samples from source -> write samples to destinations
+ *
+ * This is an optimized version of path_run_poll() which is
+ * used for paths which only have a single source.
+ * In this case we case save a call to poll() and directly call
+ * path_source_read() / node_read().
+ */
 static void * path_run_single(void *arg)
 {
 	int ret;
@@ -72,7 +80,12 @@ static void * path_run_single(void *arg)
 	return nullptr;
 }
 
-/** Main thread function per path: read samples -> write samples */
+/** Main thread function per path:
+ *     read samples from source -> write samples to destinations
+ *
+ * This variant of the path uses poll() to listen on an event from
+ * all path sources.
+ */
 static void * path_run_poll(void *arg)
 {
 	int ret;
@@ -221,7 +234,7 @@ int path_prepare(struct vpath *p)
 
 	assert(p->state == State::CHECKED);
 
-	/* Initialize destinations */
+	/* Prepare destinations */
 	struct memory_type *pool_mt = memory_default;
 	unsigned pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
 
@@ -239,7 +252,7 @@ int path_prepare(struct vpath *p)
 			return ret;
 	}
 
-	/* Initialize sources */
+	/* Prepare sources */
 	ret = mapping_list_prepare(&p->mappings);
 	if (ret)
 		return ret;
