@@ -427,7 +427,7 @@ int node_destroy(struct vnode *n)
 
 int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int readd, nread = 0;
+	int toread, readd, vect, nread = 0;
 
 	assert(node_type(n)->read);
 
@@ -436,21 +436,19 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	else if (n->state != State::STARTED && n->state != State::CONNECTED)
 		return -1;
 
-	/* Send in parts if vector not supported */
-	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
-		while (cnt - nread > 0) {
-			readd = node_type(n)->read(n, &smps[nread], MIN(cnt - nread, node_type(n)->vectorize), release);
-			if (readd < 0)
-				return readd;
+	vect = node_type(n)->vectorize;
+	if (!vect)
+		vect = cnt;
 
-			nread += readd;
-		}
+	while (cnt - nread > 0) {
+		toread = MIN(cnt - nread, node_type(n)->vectorize);
+		readd = node_type(n)->read(n, &smps[nread], toread, release);
+		if (readd < 0)
+			return readd;
+
+		nread += readd;
 	}
-	else {
-		nread = node_type(n)->read(n, smps, cnt, release);
-		if (nread < 0)
-			return nread;
-	}
+
 
 #ifdef WITH_HOOKS
 	/* Run read hooks */
@@ -473,7 +471,7 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int tosend, sent, nsent = 0;
+	int tosend, sent, vect, nsent = 0;
 
 	assert(node_type(n)->write);
 
@@ -489,24 +487,18 @@ int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 		return cnt;
 #endif /* WITH_HOOKS */
 
-	/* Send in parts if vector not supported */
-	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
-		while (cnt - nsent > 0) {
-			tosend = MIN(cnt - nsent, node_type(n)->vectorize);
-			sent = node_type(n)->write(n, &smps[nsent], tosend, release);
-			if (sent < 0)
-				return sent;
+	vect = node_type(n)->vectorize;
+	if (!vect)
+		vect = cnt;
 
-			nsent += sent;
-			debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
-		}
-	}
-	else {
-		nsent = node_type(n)->write(n, smps, cnt, release);
-		if (nsent < 0)
-			return nsent;
+	while (cnt - nsent > 0) {
+		tosend = MIN(cnt - nsent, node_type(n)->vectorize);
+		sent = node_type(n)->write(n, &smps[nsent], tosend, release);
+		if (sent < 0)
+			return sent;
 
-		debug(LOG_NODE | 5, "Sent %u samples to node %s", nsent, node_name(n));
+		nsent += sent;
+		debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
 	}
 
 	return nsent;
