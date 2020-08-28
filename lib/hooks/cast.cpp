@@ -105,6 +105,8 @@ public:
 
 		assert(state != State::STARTED);
 
+		Hook::parse(cfg);
+
 		const char *name = nullptr;
 		const char *unit = nullptr;
 		const char *type = nullptr;

@@ -190,6 +190,8 @@ public:
 
 		assert(state != State::STARTED);
 
+		Hook::parse(cfg);
+
 		const char *f = nullptr;
 		const char *u = nullptr;
 

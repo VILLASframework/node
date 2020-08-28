@@ -156,6 +156,8 @@ public:
 		json_t *json_harmonics, *json_harmonic, *json_signal;
 		size_t i;
 
+		Hook::parse(cfg);
+
 		double rate = -1, dt = -1;
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s: F, s?: F, s?: F, s: o, s?: b }",

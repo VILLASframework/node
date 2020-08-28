@@ -75,6 +75,8 @@ public:
 
 		assert(state != State::STARTED);
 
+		Hook::parse(cfg);
+
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F, s: o }",
 			"scale", &scale,
 			"offset", &offset,

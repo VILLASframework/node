@@ -43,6 +43,8 @@ void LimitRateHook::parse(json_t *cfg)
 	double rate;
 	const char *m = nullptr;
 
+	Hook::parse(cfg);
+
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s?: s }",
 		"rate", &rate,
 		"mode", &m

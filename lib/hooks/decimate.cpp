@@ -45,6 +45,8 @@ void DecimateHook::parse(json_t *cfg)
 
 	assert(state != State::STARTED);
 
+	Hook::parse(cfg);
+
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
 		"ratio", &ratio
 	);

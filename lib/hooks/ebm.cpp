@@ -54,6 +54,8 @@ public:
 		json_error_t err;
 		json_t *json_phases, *json_phase;
 
+		Hook::parse(cfg);
+
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: o }",
 			"phases", &json_phases
 		);
