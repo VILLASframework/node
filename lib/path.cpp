@@ -188,10 +188,8 @@ static int path_prepare_poll(struct vpath *p)
 		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
 
 		for (int i = 0; i < m; i++) {
-			if (fds[i] < 0) {
-				p->logger->error("Failed to get file descriptor for node {}", node_name(ps->node));
-				return -1;
-			}
+			if (fds[i] < 0)
+				throw RuntimeError("Failed to get file descriptor for node {}", node_name(ps->node));
 
 			/* This slot is only used if it is not masked */
 			p->reader.pfds[n].events = POLLIN;
@@ -345,14 +343,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		"uuid", &uuid
 	);
 	if (ret)
-		jerror(&err, "Failed to parse path configuration");
-
-	/* Input node(s) */
-	ret = mapping_list_parse(&p->mappings, json_in, nodes);
-	if (ret) {
-		p->logger->error("Failed to parse input mapping of path {}", path_name(p));
-		return -1;
-	}
+		throw ConfigError(cfg, &err, "node-config-path", "Failed to parse path configuration");
 
 	/* Optional settings */
 	if (mode) {
@@ -360,10 +351,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 			p->mode = PathMode::ANY;
 		else if (!strcmp(mode, "all"))
 			p->mode = PathMode::ALL;
-		else {
-			p->logger->error("Invalid path mode '{}'", mode);
-			return -1;
-		}
+		else
+			throw ConfigError(cfg, "node-config-path", "Invalid path mode '{}'", mode);
 	}
 
 	if (uuid) {
@@ -448,27 +437,21 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		json_t *json_entry;
 		size_t i;
 
-		if (!json_is_array(json_mask)) {
-			p->logger->error("The 'mask' setting must be a list of node names");
-			return -1;
-		}
+	if (!json_is_array(json_mask))
+		throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' setting must be a list of node names");
 
 		json_array_foreach(json_mask, i, json_entry) {
 			const char *name;
 			struct vnode *node;
 			struct vpath_source *ps = nullptr;
 
-			name = json_string_value(json_entry);
-			if (!name) {
-				p->logger->error("The 'mask' setting must be a list of node names");
-				return -1;
-			}
+		name = json_string_value(json_entry);
+		if (!name)
+			throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' setting must be a list of node names");
 
-			node = vlist_lookup_name<struct vnode>(nodes, name);
-			if (!node) {
-				p->logger->error("The 'mask' entry '{}' is not a valid node name", name);
-				return -1;
-			}
+		node = vlist_lookup_name<struct vnode>(nodes, name);
+		if (!node)
+			throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' entry '{}' is not a valid node name", name);
 
 			/* Search correspondending path_source to node */
 			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
@@ -527,10 +510,8 @@ int path_check(struct vpath *p)
 {
 	assert(p->state != State::DESTROYED);
 
-	if (p->rate < 0) {
-		p->logger->error("Setting 'rate' of path {} must be a positive number.", path_name(p));
-		return -1;
-	}
+	if (p->rate < 0)
+		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", path_name(p));
 
 	if (p->poll) {
 		if (p->rate <= 0) {
@@ -538,43 +519,39 @@ int path_check(struct vpath *p)
 			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 				struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
 
-				if (!node_type(ps->node)->poll_fds) {
-					p->logger->error("Node {} can not be used in polling mode with path {}", node_name(ps->node), path_name(p));
-					return -1;
-				}
+				if (!node_type(ps->node)->poll_fds)
+					throw RuntimeError("Node {} can not be used in polling mode with path {}", node_name(ps->node), path_name(p));
 			}
 		}
 	}
 	else {
 		/* Check that we do not need to multiplex between multiple sources when polling is disabled */
-		if (vlist_length(&p->sources) > 1) {
-			p->logger->error("Setting 'poll' must be active if the path has more than one source");
-			return -1;
-		}
+		if (vlist_length(&p->sources) > 1)
+			throw RuntimeError("Setting 'poll' must be active if the path has more than one source");
 
 		/* Check that we do not use the fixed rate feature when polling is disabled */
-		if (p->rate > 0) {
-			p->logger->error("Setting 'poll' must be activated when used together with setting 'rate'");
-			return -1;
-		}
+		if (p->rate > 0)
+			throw RuntimeError("Setting 'poll' must be activated when used together with setting 'rate'");
 	}
 
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
 
-		if (!node_type(ps->node)->read) {
-			p->logger->error("Node {} is not supported as a source for path {}", node_name(ps->node), path_name(p));
-			return -1;
-		}
+		if (!node_is_enabled(ps->node))
+			throw RuntimeError("Source {} of path {} is not enabled", node_name(ps->node), path_name(p));
+
+		if (!node_type(ps->node)->read)
+			throw RuntimeError("Node {} is not supported as a source for path {}", node_name(ps->node), path_name(p));
 	}
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
 
-		if (!node_type(pd->node)->write) {
-			p->logger->error("Destiation node {} is not supported as a sink for path ", node_name(pd->node), path_name(p));
-			return -1;
-		}
+		if (!node_is_enabled(pd->node))
+			throw RuntimeError("Destination {} of path {} is not enabled", node_name(pd->node), path_name(p));
+
+		if (!node_type(pd->node)->write)
+			throw RuntimeError("Destiation node {} is not supported as a sink for path ", node_name(pd->node), path_name(p));
 	}
 
 	if (!IS_POW2(p->queuelen)) {
