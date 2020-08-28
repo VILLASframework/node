@@ -172,7 +172,7 @@ endif()
 # Enable VILLASfpga support
 if(WITH_NODE_FPGA)
     list(APPEND NODE_SRC fpga.cpp)
-    list(APPEND LIBRARIES villas-fpga)
+    list(APPEND INCLUDE_DIRS $<TARGET_PROPERTY:villas-fpga,INCLUDE_DIRECTORIES>)
 endif()
 
 add_library(nodes STATIC ${NODE_SRC})

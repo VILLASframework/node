@@ -137,6 +137,10 @@ if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
 endif()
 
+if(WITH_FPGA)
+    list(APPEND LIBRARIES villas-fpga)
+endif()
+
 add_library(villas SHARED ${LIB_SRC})
 
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
