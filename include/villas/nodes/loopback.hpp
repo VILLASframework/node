@@ -43,7 +43,6 @@ struct loopback {
 	int queuelen;
 	enum QueueSignalledMode mode;
 	struct queue_signalled queue;
-	struct pool pool;
 };
 
 /** @see node_type::print */
