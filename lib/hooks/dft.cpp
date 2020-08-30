@@ -42,22 +42,22 @@ protected:
 	struct format_type *format;
 
 	//double* smp_memory;
-	double smp_memory[200];
+	double smp_memory[2000];
 
 	uint smp_mem_pos;
 	uint smp_mem_size;
 	
-	std::complex<double> dftMatrix[200][200];
+	std::complex<double> dftMatrix[2000][2000];
 	std::complex<double> omega;
 	std::complex<double> M_I;
-	std::complex<double> dftResults[200];
-	double absDftResults[200];
+	std::complex<double> dftResults[2000];
+	double absDftResults[2000];
 
 public:
 	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		smp_mem_pos(0),
-		smp_mem_size(200),
+		smp_mem_size(2000),
 		M_I(0.0,1.0)
 	{
 		format = format_type_lookup("villas.human");
@@ -137,11 +137,13 @@ public:
 		smp_memory[smp_mem_pos % smp_mem_size] = smp->data[1].f;
 		smp_mem_pos ++ ;
 
+		if((smp_mem_pos % smp_mem_size) == 0){
+			calcDft();
 
-		calcDft();
-
-		for(uint i=0; i<smp_mem_size; i++){
-			absDftResults[i] = abs(dftResults[i]);
+			for(uint i=0; i<smp_mem_size; i++){
+				absDftResults[i] = abs(dftResults[i]);
+			}
+			info("9.9Hz -> %f\t\t10Hz -> %f\t\t10.1Hz -> %f",absDftResults[99]/1000,absDftResults[100]/1000,absDftResults[101]/1000);
 		}
 		return Reason::OK;
 	}
@@ -168,7 +170,7 @@ public:
 		for( uint i=0; i < smp_mem_size; i++){
 			dftResults[i] = 0;
 			for(uint j=0; j < smp_mem_size; j++){
-				dftResults[i]+= smp_memory[( j + smp_mem_pos ) % smp_mem_size] * dftMatrix[i][j];
+				dftResults[i]+= smp_memory[( j + smp_mem_pos + 1) % smp_mem_size] * dftMatrix[i][j];
 			}
 		}
 	}
