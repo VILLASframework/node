@@ -34,7 +34,7 @@
 #include <complex>
 
 #define MULTI 10
-#define SMP_RATE 100
+#define SMP_RATE 1000
 
 namespace villas {
 namespace node {
@@ -56,6 +56,12 @@ protected:
 	std::complex<double> dftResults[SMP_RATE * MULTI];
 	double filterWindowCoefficents[SMP_RATE];
 	double absDftResults[SMP_RATE * MULTI];
+
+	enum paddingStyle{
+		NONE,
+		ZERO,
+		SIG_REPEAT
+	};
 
 public:
 	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
@@ -91,7 +97,7 @@ public:
 		//offset = vlist_length(&signals) - 1;//needs to be cleaned up
 
 		genDftMatrix();
-		calcWindow("hanning");
+		calcWindow("ha1nning");
 
 
 		state = State::PREPARED;
@@ -142,12 +148,12 @@ public:
 		smp_mem_pos ++ ;
 
 		if((smp_mem_pos % smp_mem_size) == 0){
-			calcDft();
+			calcDft(paddingStyle::SIG_REPEAT);
 
 			for(uint i=0; i<smp_mem_size * MULTI; i++){
 				absDftResults[i] = abs(dftResults[i]);
 			}
-			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[9] * 2 / (SMP_RATE * MULTI),absDftResults[10] * 2 / (SMP_RATE * MULTI) ,absDftResults[11] * 2 / (SMP_RATE * MULTI) );
+			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[99] * 2 / (SMP_RATE * MULTI),absDftResults[100] * 2 / (SMP_RATE * MULTI) ,absDftResults[101] * 2 / (SMP_RATE * MULTI) );
 		}
 		return Reason::OK;
 	}
@@ -161,7 +167,7 @@ public:
 	void genDftMatrix(){
 		using namespace std::complex_literals;
 
-		omega = exp((-2 * M_PI * M_I) / (double)smp_mem_size);
+		omega = exp((-2 * M_PI * M_I) / (double)(smp_mem_size * MULTI));
 
 		for( uint i=0 ; i < smp_mem_size * MULTI ; i++){
 			for( uint j=0 ; j < smp_mem_size * MULTI ; j++){
@@ -170,7 +176,7 @@ public:
 		}
 	}
 
-	void calcDft(){
+	void calcDft(paddingStyle padding){
 		//prepare sample window
 		double tmp_smp_window[SMP_RATE];
 		for(uint i = 0; i< smp_mem_size; i++){
@@ -181,7 +187,15 @@ public:
 		for( uint i=0; i < smp_mem_size * MULTI; i++){
 			dftResults[i] = 0;
 			for(uint j=0; j < smp_mem_size * MULTI; j++){
-				dftResults[i]+= tmp_smp_window[j % smp_mem_size] * dftMatrix[i][j];
+				if(padding == paddingStyle::ZERO){
+					if(j < (smp_mem_size)){
+						dftResults[i]+= tmp_smp_window[j] * dftMatrix[i][j];
+					}else{
+						dftResults[i]+= 0;
+					}
+				}else if(padding == paddingStyle::SIG_REPEAT){//repeate samples
+					dftResults[i]+= tmp_smp_window[j % smp_mem_size] * dftMatrix[i][j];
+				}			
 			}
 		}
 	}
@@ -201,7 +215,7 @@ public:
 			
 			for(uint i=0; i < smp_mem_size; i++)
 				filterWindowCoefficents[i] = 	a_0
-												- (1 - a_0) * cos(2 * M_PI * i / (smp_mem_size));
+												- (1 - a_0) * cos(2 * M_PI * i / ( smp_mem_size ));
 		
 		}else{
 			for(uint i=0; i < smp_mem_size; i++)
