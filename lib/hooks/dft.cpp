@@ -33,6 +33,8 @@
 #include <villas/plugin.h>
 #include <complex>
 
+#define MULTI 10
+
 namespace villas {
 namespace node {
 
@@ -42,22 +44,23 @@ protected:
 	struct format_type *format;
 
 	//double* smp_memory;
-	double smp_memory[2000];
+	double smp_memory[1000];
 
 	uint smp_mem_pos;
 	uint smp_mem_size;
 	
-	std::complex<double> dftMatrix[2000][2000];
+	std::complex<double> dftMatrix[1000 * MULTI][1000 * MULTI];
 	std::complex<double> omega;
 	std::complex<double> M_I;
-	std::complex<double> dftResults[2000];
-	double absDftResults[2000];
+	std::complex<double> dftResults[1000 * MULTI];
+	double filterWindowCoefficents[1000];
+	double absDftResults[1000 * MULTI];
 
 public:
 	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		smp_mem_pos(0),
-		smp_mem_size(2000),
+		smp_mem_size(1000),
 		M_I(0.0,1.0)
 	{
 		format = format_type_lookup("villas.human");
@@ -87,7 +90,7 @@ public:
 		//offset = vlist_length(&signals) - 1;//needs to be cleaned up
 
 		genDftMatrix();
-
+		calcWindow("flatto");
 
 
 		state = State::PREPARED;
@@ -143,7 +146,7 @@ public:
 			for(uint i=0; i<smp_mem_size; i++){
 				absDftResults[i] = abs(dftResults[i]);
 			}
-			info("9.9Hz -> %f\t\t10Hz -> %f\t\t10.1Hz -> %f",absDftResults[99]/1000,absDftResults[100]/1000,absDftResults[101]/1000);
+			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[99]/1000,absDftResults[100]/1000,absDftResults[101]/1000);
 		}
 		return Reason::OK;
 	}
@@ -167,11 +170,33 @@ public:
 	}
 
 	void calcDft(){
-		for( uint i=0; i < smp_mem_size; i++){
+		//prepare sample window
+		double tmp_smp_window[1000];
+		for(uint i = 0; i< smp_mem_size; i++){
+			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos + 1) % smp_mem_size] * filterWindowCoefficents[i];
+		}
+
+
+		for( uint i=0; i < smp_mem_size * MULTI; i++){
 			dftResults[i] = 0;
-			for(uint j=0; j < smp_mem_size; j++){
-				dftResults[i]+= smp_memory[( j + smp_mem_pos + 1) % smp_mem_size] * dftMatrix[i][j];
+			for(uint j=0; j < smp_mem_size * MULTI; j++){
+				dftResults[i]+= tmp_smp_window[j % smp_mem_size] * dftMatrix[i][j];
 			}
+		}
+	}
+
+	void calcWindow(const char *window_name){
+		if(strcmp(window_name, "flattop") == 0){
+			for(uint i=0; i < smp_mem_size; i++)
+				filterWindowCoefficents[i] = 	0.21557895
+												- 0.41663158 * cos(2 * M_PI * i / ( smp_mem_size - 1 ))
+												+ 0.277263158 * cos(4 * M_PI * i / ( smp_mem_size - 1 ))
+												- 0.083578947 * cos(6 * M_PI * i / ( smp_mem_size - 1 ))
+												+ 0.006947368 * cos(8 * M_PI * i / ( smp_mem_size - 1 ));
+
+		}else{
+			for(uint i=0; i < smp_mem_size; i++)
+				filterWindowCoefficents[i] = 1;
 		}
 	}
 };
