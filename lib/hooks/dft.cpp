@@ -32,8 +32,10 @@
 #include <villas/io.h>
 #include <villas/plugin.h>
 #include <complex>
+#include <iostream>
+#include <fstream>
 
-#define MULTI 10
+#define MULTI 1
 #define SMP_RATE 1000
 
 namespace villas {
@@ -63,12 +65,15 @@ protected:
 		SIG_REPEAT
 	};
 
+	int skipDft;//this is tmp to skip the dft next time
+
 public:
 	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		smp_mem_pos(0),
 		smp_mem_size(SMP_RATE),
-		M_I(0.0,1.0)
+		M_I(0.0,1.0),
+		skipDft(10)
 	{
 		format = format_type_lookup("villas.human");
 	}
@@ -144,16 +149,25 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		smp_memory[smp_mem_pos % smp_mem_size] = smp->data[1].f;
-		smp_mem_pos ++ ;
 
-		if((smp_mem_pos % smp_mem_size) == 0){
+
+		if(skipDft > 0){
+			skipDft --;
+		}else if((smp_mem_pos % smp_mem_size) == 0 && skipDft < 0){
 			calcDft(paddingStyle::SIG_REPEAT);
 
 			for(uint i=0; i<smp_mem_size * MULTI; i++){
 				absDftResults[i] = abs(dftResults[i]);
 			}
 			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[99] * 2 / (SMP_RATE * MULTI),absDftResults[100] * 2 / (SMP_RATE * MULTI) ,absDftResults[101] * 2 / (SMP_RATE * MULTI) );
+			
+
+			dumpData("/tmp/absDftResults",absDftResults,smp_mem_size * MULTI);
+			skipDft = 10; 
+		}else{
+			smp_memory[smp_mem_pos % smp_mem_size] = smp->data[1].f;
+			smp_mem_pos ++ ;
+			skipDft --;
 		}
 		return Reason::OK;
 	}
@@ -161,6 +175,17 @@ public:
 	virtual ~DftHook()
 	{
 		//delete smp_memory;
+	}
+
+	void dumpData(const char *path, double *data, uint size){
+		std::ofstream fh;
+		fh.open(path);
+		for(uint i = 0 ; i < size ; i++){
+			if(i>0)fh << ";";
+			fh << data[i];
+			
+		}
+		fh.close();
 	}
 
 
@@ -180,9 +205,18 @@ public:
 		//prepare sample window
 		double tmp_smp_window[SMP_RATE];
 		for(uint i = 0; i< smp_mem_size; i++){
-			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos + 1) % smp_mem_size] * filterWindowCoefficents[i];
+			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos ) % smp_mem_size] * filterWindowCoefficents[i];
 		}
+		dumpData("/tmp/signal_original",tmp_smp_window,smp_mem_size);
 
+		for(uint i = 0; i< smp_mem_size; i++){
+			tmp_smp_window[i] *= filterWindowCoefficents[i];
+		}
+		dumpData("/tmp/signal_windowed",tmp_smp_window,smp_mem_size);
+
+		dumpData("/tmp/smp_window",smp_memory,smp_mem_size);
+
+		dumpData("/tmp/window",filterWindowCoefficents,smp_mem_size);
 
 		for( uint i=0; i < smp_mem_size * MULTI; i++){
 			dftResults[i] = 0;
