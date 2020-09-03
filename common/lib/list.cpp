@@ -287,3 +287,18 @@ void vlist_filter(struct vlist *l, dtor_cb_t cb)
 
 	pthread_mutex_unlock(&l->lock);
 }
+
+int vlist_init_and_push(struct vlist *l, void *p)
+{
+	int ret;
+
+	if (l->state == State::DESTROYED) {
+		ret = vlist_init(l);
+		if (ret)
+			return ret;
+	}
+
+	vlist_push(l, p);
+
+	return 0;
+}

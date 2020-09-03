@@ -154,3 +154,5 @@ ssize_t vlist_lookup_index(struct vlist *l, const std::string &name)
 
 	return f ? vlist_index(l, f) : -1;
 }
+
+int vlist_init_and_push(struct vlist *l, void *p);
