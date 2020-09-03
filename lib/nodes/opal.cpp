@@ -128,8 +128,8 @@ int opal_print_global()
 {
 	debug(LOG_OPAL | 2, "Controller ID: %u", params.controllerID);
 
-	auto *sbuf = new char[send_icons * 5];
-	auto *rbuf = new char[recv_icons * 5];
+	auto *sbuf = new (std::nothrow) char[send_icons * 5];
+	auto *rbuf = new (std::nothrow) char[recv_icons * 5];
 
 	if (!sbuf || !rbuf)
 		throw MemoryAllocationError();

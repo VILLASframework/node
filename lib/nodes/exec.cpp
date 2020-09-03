@@ -232,7 +232,7 @@ int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (e->flush)
 		e->proc->cout().flush();
 
-	delete line;
+	delete[] line;
 
 	return cnt;
 }
