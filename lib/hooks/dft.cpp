@@ -35,7 +35,7 @@
 #include <iostream>
 #include <fstream>
 
-#define MULTI 20
+#define MULTI 10
 #define SMP_RATE 1000
 
 namespace villas {
@@ -106,7 +106,7 @@ public:
 		//offset = vlist_length(&signals) - 1;//needs to be cleaned up
 
 		genDftMatrix();
-		calcWindow("flattopz");
+		calcWindow("hanning");
 
 
 		state = State::PREPARED;
@@ -169,7 +169,7 @@ public:
 			dumpData("/tmp/absDftResults",absDftResults,smp_mem_size * MULTI/2);
 			skipDft = 10; 
 		}else{
-			smp_memory[smp_mem_pos % smp_mem_size] = smp->data[1].f;
+			smp_memory[smp_mem_pos % smp_mem_size] = smp->data[0].f;
 			smp_mem_pos ++ ;
 			skipDft --;
 		}
