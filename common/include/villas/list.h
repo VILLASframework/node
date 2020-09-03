@@ -41,10 +41,12 @@
 /** Static list initialization */
 #define LIST_INIT_STATIC(l)					\
 __attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
-	vlist_init(l);						\
+	int ret __attribute__((unused));			\
+	ret = vlist_init(l);					\
 }								\
 __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
-	vlist_destroy(l, nullptr, false);				\
+	int ret __attribute__((unused));			\
+	ret = vlist_destroy(l, nullptr, false);			\
 }
 
 #define vlist_length(list)		((list)->length)
@@ -70,7 +72,7 @@ struct vlist {
  *
  * @param l A pointer to the list data structure.
  */
-int vlist_init(struct vlist *l);
+int vlist_init(struct vlist *l) __attribute__ ((warn_unused_result));
 
 /** Destroy a list and call destructors for all list elements
  *
@@ -78,7 +80,7 @@ int vlist_init(struct vlist *l);
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-int vlist_destroy(struct vlist *l, dtor_cb_t dtor = nullptr, bool free = false);
+int vlist_destroy(struct vlist *l, dtor_cb_t dtor = nullptr, bool free = false) __attribute__ ((warn_unused_result));
 
 /** Append an element to the end of the list */
 void vlist_push(struct vlist *l, void *p);
