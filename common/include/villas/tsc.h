@@ -95,6 +95,6 @@ static uint64_t tsc_now(struct tsc *t)
 		: rdtsc();
 }
 
-int tsc_init(struct tsc *t);
+int tsc_init(struct tsc *t) __attribute__ ((warn_unused_result));
 
 uint64_t tsc_rate_to_cycles(struct tsc *t, double rate);

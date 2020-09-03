@@ -137,7 +137,7 @@ assertExcept(bool condition, const T &exception)
 }
 
 /** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals = {}, std::list<int> ignoreSignals = { SIGCHLD });
+int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals = {}, std::list<int> ignoreSignals = { SIGCHLD }) __attribute__ ((warn_unused_result));
 
 /** Fill buffer with random data */
 ssize_t read_random(char *buf, size_t len);
