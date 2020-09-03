@@ -640,7 +640,7 @@ invalid2:
 
 bool node_is_valid_name(const char *name)
 {
-	std::regex re(REGEX_NODE_NAME);
+	std::regex re(RE_NODE_NAME);
 
 	return std::regex_match(name, re);
 }

@@ -54,7 +54,7 @@ public:
 
 /* Register API request */
 static char n[] = "node";
-static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")";
+static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")";
 static char d[] = "retrieve info of a node";
 static RequestPlugin<NodeInfoRequest, n, r, d> p;
 

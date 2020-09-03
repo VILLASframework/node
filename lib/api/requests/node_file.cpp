@@ -61,7 +61,7 @@ public:
 
 /* Register API request */
 static char n[] = "node/file";
-static char r[] = "/node/(" REGEX_NODE_NAME "|" REGEX_UUID ")/file(?:/([^/]+))?";
+static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/file(?:/([^/]+))?";
 static char d[] = "control instances of 'file' node-type";
 static RequestPlugin<FileRequest, n, r, d> p;
 
