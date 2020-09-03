@@ -87,6 +87,12 @@ find_package(RDMACM)
 find_package(spdlog)
 find_package(Etherlab)
 
+# Check for tools
+find_program(PASTE NAMES paste)
+if(NOT PASTE)
+	message(SEND_ERROR "GNU paste is missing. Please install coreutils")
+endif()
+
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
 find_program(PROTOBUF_COMPILER NAMES protoc)
