@@ -35,7 +35,7 @@
 #include <iostream>
 #include <fstream>
 
-#define MULTI 1
+#define MULTI 20
 #define SMP_RATE 1000
 
 namespace villas {
@@ -57,7 +57,11 @@ protected:
 	std::complex<double> M_I;
 	std::complex<double> dftResults[SMP_RATE * MULTI];
 	double filterWindowCoefficents[SMP_RATE];
-	double absDftResults[SMP_RATE * MULTI];
+	double absDftResults[SMP_RATE * MULTI/2];
+
+
+	int skipDft;//this is tmp to skip the dft next time
+	double window_corretion_factor;
 
 	enum paddingStyle{
 		NONE,
@@ -65,7 +69,6 @@ protected:
 		SIG_REPEAT
 	};
 
-	int skipDft;//this is tmp to skip the dft next time
 
 public:
 	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
@@ -73,7 +76,8 @@ public:
 		smp_mem_pos(0),
 		smp_mem_size(SMP_RATE),
 		M_I(0.0,1.0),
-		skipDft(10)
+		skipDft(10),
+		window_corretion_factor(0)
 	{
 		format = format_type_lookup("villas.human");
 	}
@@ -102,7 +106,7 @@ public:
 		//offset = vlist_length(&signals) - 1;//needs to be cleaned up
 
 		genDftMatrix();
-		calcWindow("ha1nning");
+		calcWindow("flattopz");
 
 
 		state = State::PREPARED;
@@ -154,15 +158,15 @@ public:
 		if(skipDft > 0){
 			skipDft --;
 		}else if((smp_mem_pos % smp_mem_size) == 0 && skipDft < 0){
-			calcDft(paddingStyle::SIG_REPEAT);
+			calcDft(paddingStyle::ZERO);
 
-			for(uint i=0; i<smp_mem_size * MULTI; i++){
-				absDftResults[i] = abs(dftResults[i]);
+			for(uint i=0; i<smp_mem_size * MULTI / 2; i++){
+				absDftResults[i] = abs(dftResults[i])* 2 / (SMP_RATE * window_corretion_factor);
 			}
-			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[99] * 2 / (SMP_RATE * MULTI),absDftResults[100] * 2 / (SMP_RATE * MULTI) ,absDftResults[101] * 2 / (SMP_RATE * MULTI) );
+			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[99], absDftResults[100] ,absDftResults[101]);
 			
 
-			dumpData("/tmp/absDftResults",absDftResults,smp_mem_size * MULTI);
+			dumpData("/tmp/absDftResults",absDftResults,smp_mem_size * MULTI/2);
 			skipDft = 10; 
 		}else{
 			smp_memory[smp_mem_pos % smp_mem_size] = smp->data[1].f;
@@ -205,7 +209,7 @@ public:
 		//prepare sample window
 		double tmp_smp_window[SMP_RATE];
 		for(uint i = 0; i< smp_mem_size; i++){
-			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos ) % smp_mem_size] * filterWindowCoefficents[i];
+			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos ) % smp_mem_size];
 		}
 		dumpData("/tmp/signal_original",tmp_smp_window,smp_mem_size);
 
@@ -216,9 +220,7 @@ public:
 
 		dumpData("/tmp/smp_window",smp_memory,smp_mem_size);
 
-		dumpData("/tmp/window",filterWindowCoefficents,smp_mem_size);
-
-		for( uint i=0; i < smp_mem_size * MULTI; i++){
+		for( uint i=0; i < smp_mem_size * MULTI / 2; i++){
 			dftResults[i] = 0;
 			for(uint j=0; j < smp_mem_size * MULTI; j++){
 				if(padding == paddingStyle::ZERO){
@@ -236,25 +238,32 @@ public:
 
 	void calcWindow(const char *window_name){
 		if(strcmp(window_name, "flattop") == 0){
-			for(uint i=0; i < smp_mem_size; i++)
+			for(uint i=0; i < smp_mem_size; i++){
 				filterWindowCoefficents[i] = 	0.21557895
 												- 0.41663158 * cos(2 * M_PI * i / ( smp_mem_size ))
 												+ 0.277263158 * cos(4 * M_PI * i / ( smp_mem_size ))
 												- 0.083578947 * cos(6 * M_PI * i / ( smp_mem_size ))
 												+ 0.006947368 * cos(8 * M_PI * i / ( smp_mem_size ));
+				window_corretion_factor += filterWindowCoefficents[i];
+			}
 		}else if(strcmp(window_name, "hanning") == 0 || strcmp(window_name, "hann") == 0){
 			double a_0 = 0.5;//this is the hann window
 			if(strcmp(window_name, "hanning"))
 				a_0 = 25/46;
 			
-			for(uint i=0; i < smp_mem_size; i++)
+			for(uint i=0; i < smp_mem_size; i++){
 				filterWindowCoefficents[i] = 	a_0
 												- (1 - a_0) * cos(2 * M_PI * i / ( smp_mem_size ));
-		
+				window_corretion_factor += filterWindowCoefficents[i];
+			}
 		}else{
-			for(uint i=0; i < smp_mem_size; i++)
+			for(uint i=0; i < smp_mem_size; i++){
 				filterWindowCoefficents[i] = 1;
+				window_corretion_factor += filterWindowCoefficents[i];
+			}
 		}
+		window_corretion_factor /= smp_mem_size;
+		dumpData("/tmp/filter_window",filterWindowCoefficents,smp_mem_size);
 	}
 };
 
