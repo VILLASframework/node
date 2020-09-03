@@ -23,5 +23,5 @@
 install(
 	DIRECTORY socket/
 	COMPONENT bin
-	DESTINATION share/villas/node/web
+	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/villas/node/web
 )

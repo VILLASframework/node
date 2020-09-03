@@ -181,13 +181,3 @@ install(
         PATTERN "*.h"
         PATTERN "*.hpp"
 )
-
-#install(
-#    EXPORT VILLASNodeConfig
-#   DESTINATION share/VILLASNode/cmake
-#)
-
-#export(
-#    TARGETS villas
-#    FILE VILLASNodeConfig.cmake
-#)
