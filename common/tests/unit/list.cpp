@@ -41,9 +41,11 @@ TestSuite(list, .description = "List datastructure");
 
 Test(list, vlist_lookup_name)
 {
+	int ret;
 	struct vlist l;
 
-	vlist_init(&l);
+	ret = vlist_init(&l);
+	cr_assert_eq(ret, 0);
 
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
 		struct data *d = new struct data;
@@ -60,14 +62,17 @@ Test(list, vlist_lookup_name)
 
 	cr_assert_eq(found->data, 13);
 
-	vlist_destroy(&l, nullptr, true);
+	ret = vlist_destroy(&l, nullptr, true);
+	cr_assert_eq(ret, 0);
 }
 
 Test(list, vlist_search)
 {
+	int ret;
 	struct vlist l;
 
-	vlist_init(&l);
+	ret = vlist_init(&l);
+	cr_assert_eq(ret, 0);
 
 	/* Fill list */
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++)
@@ -87,7 +92,8 @@ Test(list, vlist_search)
 	char *not_found = (char *) vlist_search(&l, (cmp_cb_t) strcmp, negative);
 	cr_assert_null(not_found);
 
-	vlist_destroy(&l, nullptr, false);
+	ret = vlist_destroy(&l, nullptr, false);
+	cr_assert_eq(ret, 0);
 }
 
 struct content {
@@ -105,17 +111,21 @@ static int dtor(void *ptr)
 
 Test(list, destructor)
 {
+	int ret;
 	struct vlist l;
 
 	struct content elm;
 	elm.destroyed = 0;
 
-	vlist_init(&l);
+	ret = vlist_init(&l);
+	cr_assert_eq(ret, 0);
+
 	vlist_push(&l, &elm);
 
 	cr_assert_eq(vlist_length(&l), 1);
 
-	vlist_destroy(&l, dtor, false);
+	ret = vlist_destroy(&l, dtor, false);
+	cr_assert_eq(ret, 0);
 
 	cr_assert_eq(elm.destroyed, 1);
 }
@@ -126,7 +136,8 @@ Test(list, basics)
 	int ret;
 	struct vlist l;
 
-	vlist_init(&l);
+	ret = vlist_init(&l);
+	cr_assert_eq(ret, 0);
 
 	for (i = 0; i < 100; i++) {
 		cr_assert_eq(vlist_length(&l), i);
