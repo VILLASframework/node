@@ -174,10 +174,6 @@ int node_direction_check(struct vnode_direction *nd, struct vnode *n)
 	if (nd->vectorize <= 0)
 		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
 
-	if (node_type(n)->vectorize && node_type(n)->vectorize < nd->vectorize)
-		error("Invalid value for setting 'vectorize'. Node type requires a number smaller than %d!",
-			node_type(n)->vectorize);
-
 	nd->state = State::CHECKED;
 
 	return 0;

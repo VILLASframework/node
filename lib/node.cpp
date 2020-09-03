@@ -427,7 +427,8 @@ int node_destroy(struct vnode *n)
 
 int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int toread, readd, vect, nread = 0;
+	int toread, readd, nread = 0;
+	unsigned vect;
 
 	assert(node_type(n)->read);
 
@@ -441,7 +442,7 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 		vect = cnt;
 
 	while (cnt - nread > 0) {
-		toread = MIN(cnt - nread, node_type(n)->vectorize);
+		toread = MIN(cnt - nread, vect);
 		readd = node_type(n)->read(n, &smps[nread], toread, release);
 		if (readd < 0)
 			return readd;
@@ -471,7 +472,8 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int tosend, sent, vect, nsent = 0;
+	int tosend, sent, nsent = 0;
+	unsigned vect;
 
 	assert(node_type(n)->write);
 
@@ -492,7 +494,7 @@ int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 		vect = cnt;
 
 	while (cnt - nsent > 0) {
-		tosend = MIN(cnt - nsent, node_type(n)->vectorize);
+		tosend = MIN(cnt - nsent, vect);
 		sent = node_type(n)->write(n, &smps[nsent], tosend, release);
 		if (sent < 0)
 			return sent;
