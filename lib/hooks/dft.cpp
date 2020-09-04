@@ -34,6 +34,7 @@
 #include <complex>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 namespace villas {
 namespace node {
@@ -65,13 +66,12 @@ protected:
 	double* absDftResults;
 	double* absDftFreqs;
 
-	double sample_rate;
+	uint sample_rate;
 	double start_freqency;
 	double end_freqency;
 	double frequency_resolution;
-	double dft_rate;
+	uint dft_rate;
 	uint window_size;
-	uint sample_rate_i;
 	uint window_multiplier;//multiplyer for the window to achieve frequency resolution
 	uint freq_count;//number of requency bins that are calculated
 
@@ -99,7 +99,6 @@ public:
 		frequency_resolution(0),
 		dft_rate(0),
 		window_size(0),
-		sample_rate_i(0),
 		window_multiplier(0),
 		smp_mem_pos(0),
 		M_I(0.0,1.0),
@@ -133,7 +132,7 @@ public:
 		//offset = vlist_length(&signals) - 1;//needs to be cleaned up
 
 
-		window_multiplier = ceil( ( sample_rate / window_size ) / frequency_resolution);//calculate how much zero padding ist needed for a needed resolution
+		window_multiplier = ceil( ( (double)sample_rate / window_size ) / frequency_resolution);//calculate how much zero padding ist needed for a needed resolution
 
 		freq_count = ceil( ( end_freqency - start_freqency ) / frequency_resolution) + 1;
 
@@ -206,7 +205,7 @@ public:
 
 		state = State::PARSED;
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F, s?: F, s?: F, s?: F , s?: i, s?: s, s?: s}",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s}",
 			"sample_rate", &sample_rate,
 			"start_freqency", &start_freqency,
 			"end_freqency", &end_freqency,
@@ -244,16 +243,16 @@ public:
 
 
 		if(end_freqency < 0 || end_freqency > sample_rate){
-			error("End frequency must be smaller than sample_rate (%f)",sample_rate);
+			error("End frequency must be smaller than sample_rate (%i)",sample_rate);
 			ret = 1;
 		}
 
-		if(frequency_resolution > (sample_rate/window_size)){
-			error("The maximum frequency resolution with smaple_rate:%f and window_site:%i is %f",sample_rate, window_size, sample_rate/window_size);
+		if(frequency_resolution > ((double)sample_rate/window_size)){
+			error("The maximum frequency resolution with smaple_rate:%i and window_site:%i is %f",sample_rate, window_size, ((double)sample_rate/window_size) );
 			ret = 1;
 		}
 
-		sample_rate_i = ceil(sample_rate);
+
 
 		if (ret)
 			throw ConfigError(cfg, err, "node-config-hook-dft");
@@ -262,12 +261,13 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
+		auto start_time = std::chrono::high_resolution_clock::now(); 
 
 
+		smp_memory[smp_mem_pos % window_size] = smp->data[1].f;
+		smp_mem_pos ++ ;
 
-		if(skipDft > 0){
-			skipDft --;
-		}else if((smp_mem_pos % window_size) == 0 && skipDft < 0){
+		if((smp_mem_pos % ( sample_rate / dft_rate )) == 0){
 			calcDft(paddingType::ZERO);
 
 			for(uint i=0; i<freq_count; i++){
@@ -277,12 +277,14 @@ public:
 			
 
 			dumpData("/tmp/absDftResults", absDftResults, freq_count, absDftFreqs);
-			skipDft = 10; 
-		}else{
-			smp_memory[smp_mem_pos % window_size] = smp->data[1].f;
-			smp_mem_pos ++ ;
-			skipDft --;
 		}
+
+		
+		double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time )).count();
+		double period = ((1000000) / sample_rate);
+		if( duration > period )
+			warning("Calculation is not Realtime");
+
 		return Reason::OK;
 	}
 
