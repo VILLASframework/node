@@ -34,7 +34,6 @@
 #include <complex>
 #include <iostream>
 #include <fstream>
-#include <chrono>
 
 namespace villas {
 namespace node {
@@ -74,17 +73,18 @@ protected:
 	uint window_size;
 	uint window_multiplier;//multiplyer for the window to achieve frequency resolution
 	uint freq_count;//number of requency bins that are calculated
+	bool sync_dft;
 
 	uint smp_mem_pos;
+	uint64_t last_sequence;
 	
 	
 	std::complex<double> omega;
 	std::complex<double> M_I;
 
 
-	int skipDft;//this is tmp to skip the dft next time
 	double window_corretion_factor;
-
+	timespec last_dft_cal;
 	
 
 
@@ -100,10 +100,13 @@ public:
 		dft_rate(0),
 		window_size(0),
 		window_multiplier(0),
+		freq_count(0),
+		sync_dft(0),
 		smp_mem_pos(0),
+		last_sequence(0),
 		M_I(0.0,1.0),
-		skipDft(10),
-		window_corretion_factor(0)
+		window_corretion_factor(0),
+		last_dft_cal({0,0})
 	{
 		format = format_type_lookup("villas.human");
 	}
@@ -133,6 +136,7 @@ public:
 
 
 		window_multiplier = ceil( ( (double)sample_rate / window_size ) / frequency_resolution);//calculate how much zero padding ist needed for a needed resolution
+
 
 		freq_count = ceil( ( end_freqency - start_freqency ) / frequency_resolution) + 1;
 
@@ -205,7 +209,7 @@ public:
 
 		state = State::PARSED;
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s}",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: b}",
 			"sample_rate", &sample_rate,
 			"start_freqency", &start_freqency,
 			"end_freqency", &end_freqency,
@@ -213,7 +217,8 @@ public:
 			"dft_rate", &dft_rate,
 			"window_size", &window_size,
 			"window_type", &window_type_c,
-			"padding_type", &padding_type_c
+			"padding_type", &padding_type_c,
+			"sync", &sync_dft
 
 		);
 
@@ -234,9 +239,9 @@ public:
 		if(!padding_type_c) {
 			info("No Padding type given, assume no zeropadding");
 			padding_type = paddingType::ZERO;
-		} else if(strcmp(padding_type_c, "signal_repeat") == 0)
+		} else if(strcmp(padding_type_c, "signal_repeat") == 0) {
 			padding_type = paddingType::SIG_REPEAT;
-		else{
+		} else {
 			info("Padding type %s not recognized, assume zero padding",padding_type_c);
 			padding_type = paddingType::ZERO;
 		}	
@@ -261,29 +266,43 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-		auto start_time = std::chrono::high_resolution_clock::now(); 
 
-
-		smp_memory[smp_mem_pos % window_size] = smp->data[1].f;
+		smp_memory[smp_mem_pos % window_size] = smp->data[0].f;
 		smp_mem_pos ++ ;
 
-		if((smp_mem_pos % ( sample_rate / dft_rate )) == 0){
+
+		double timediff = 0;
+		if( sync_dft ){
+			timediff = ( smp->ts.origin.tv_sec - last_dft_cal.tv_sec ) + ( smp->ts.origin.tv_nsec - last_dft_cal.tv_nsec ) * 1e-9;
+		}
+
+		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || (sync_dft && timediff >= ( 1 / dft_rate ) ) ) {
 			calcDft(paddingType::ZERO);
+			double maxF = 0;
+			double maxA = 0;
+			int maxPos = 0;
 
 			for(uint i=0; i<freq_count; i++){
-				absDftResults[i] = abs(dftResults[i]) / (sample_rate * window_corretion_factor);
+				absDftResults[i] = abs(dftResults[i]) * 2 / (window_size * window_corretion_factor * ((padding_type == paddingType::ZERO)?1:window_multiplier) );
+				if(maxA < absDftResults[i]){
+					maxF = absDftFreqs[i];
+					maxA = absDftResults[i];
+					maxPos = i;
+				}
 			}
-			info("49.5Hz -> %f\t\t50Hz -> %f\t\t50.5Hz -> %f",absDftResults[1], absDftResults[1] ,absDftResults[1]);
+			info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
 			
 
 			dumpData("/tmp/absDftResults", absDftResults, freq_count, absDftFreqs);
+
+			last_dft_cal = smp->ts.origin;
 		}
 
 		
-		double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time )).count();
-		double period = ((1000000) / sample_rate);
-		if( duration > period )
-			warning("Calculation is not Realtime");
+		if((smp->sequence - last_sequence) > 1 )
+			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - last_sequence);
+
+		last_sequence = smp->sequence;
 
 		return Reason::OK;
 	}
@@ -294,6 +313,7 @@ public:
 	}
 
 	void dumpData(const char *path, double *ydata, uint size, double *xdata=nullptr){
+		
 		std::ofstream fh;
 		fh.open(path);
 		for(uint i = 0 ; i < size ; i++){
