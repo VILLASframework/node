@@ -38,8 +38,11 @@ class PpsTsHook : public Hook {
 protected:
 	double lastValue;
 	double thresh;
-	double realSmpRate;
+	double realSmpRateAvg;
 	unsigned idx;
+	uint avg_length;//number of seconds over which the samplerate value will be averaged
+	uint avg_pos;
+	double *avg_array;
 	int lastSeqNr;
 	unsigned edgeCounter;
 
@@ -50,8 +53,9 @@ public:
 		Hook(p, n, fl, prio, en),
 		lastValue(0),
 		thresh(1.5),
-		realSmpRate(0),
+		realSmpRateAvg(0),
 		idx(0),
+		avg_length(1),
 		lastSeqNr(0),
 		edgeCounter(0),
 		realTime({ 0, 0 })
@@ -60,23 +64,28 @@ public:
 
 	virtual void parse(json_t *cfg)
 	{
-        	int ret;
-	        json_error_t err;
+		int ret;
+		json_error_t err;
 
-        	assert(state != State::STARTED);
+		assert(state != State::STARTED);
 
 		Hook::parse(cfg);
 
-	        ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f }",
-                	"signal_index", &idx,
-			"threshold", &thresh
-        	);
-	        if (ret)
-        	        throw ConfigError(cfg, err, "node-config-hook-pps_ts");
+		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f, s: i}",
+			"signal_index", &idx,
+			"threshold", &thresh,
+			"avg_length", &avg_length
+		);
+		if (ret)
+				throw ConfigError(cfg, err, "node-config-hook-pps_ts");
 
 		info("parsed config thresh=%f signal_index=%d", thresh, idx);
 
-	        state = State::PARSED;
+		avg_array = new double[avg_length];
+		avg_array = {0};
+
+
+		state = State::PARSED;
 	}
 
 	virtual villas::node::Hook::Reason process(sample *smp)
@@ -90,8 +99,12 @@ public:
 		/* Detect Edge */
 		bool isEdge = lastValue < thresh && value > thresh;
 		if (isEdge) {
-			if (edgeCounter >= 1)
-				realSmpRate = seqNr - lastSeqNr;
+			if (edgeCounter >= 1){
+				double currentSmpRate = (double)(seqNr - lastSeqNr);
+
+				realSmpRateAvg += (currentSmpRate - avg_array[avg_pos % avg_length]) / avg_length;
+				avg_array[avg_pos % avg_length] = currentSmpRate;
+			}
 			if (edgeCounter == 1) {
 				auto now = time_now();
 
@@ -103,7 +116,7 @@ public:
 
 			lastSeqNr = seqNr;
 
-			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRate);
+			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
 
 			edgeCounter++;
 		}
@@ -115,7 +128,7 @@ public:
 		else if (edgeCounter == 2 && isEdge)
 			realTime.tv_nsec = 0;
 		else
-			realTime.tv_nsec += 1e9 / realSmpRate;
+			realTime.tv_nsec += 1e9 / realSmpRateAvg;
 
 		if (realTime.tv_nsec >= 1000000000) {
 			realTime.tv_sec++;
@@ -127,6 +140,10 @@ public:
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
 		return Hook::Reason::OK;
+	}
+
+	~PpsTsHook(){
+		delete avg_array;
 	}
 };
 
