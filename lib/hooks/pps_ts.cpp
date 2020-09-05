@@ -42,7 +42,7 @@ protected:
 	unsigned idx;
 	uint avg_length;//number of seconds over which the samplerate value will be averaged
 	uint avg_pos;
-	double *avg_array;
+	double* avg_array;
 	int lastSeqNr;
 	unsigned edgeCounter;
 
@@ -56,6 +56,7 @@ public:
 		realSmpRateAvg(0),
 		idx(0),
 		avg_length(1),
+		avg_pos(0),
 		lastSeqNr(0),
 		edgeCounter(0),
 		realTime({ 0, 0 })
@@ -82,7 +83,7 @@ public:
 		info("parsed config thresh=%f signal_index=%d", thresh, idx);
 
 		avg_array = new double[avg_length];
-		avg_array = {0};
+		//avg_array = {0};
 
 
 		state = State::PARSED;
@@ -104,6 +105,7 @@ public:
 
 				realSmpRateAvg += (currentSmpRate - avg_array[avg_pos % avg_length]) / avg_length;
 				avg_array[avg_pos % avg_length] = currentSmpRate;
+				avg_pos++;
 			}
 			if (edgeCounter == 1) {
 				auto now = time_now();
@@ -116,7 +118,7 @@ public:
 
 			lastSeqNr = seqNr;
 
-			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
+			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f.10", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
 
 			edgeCounter++;
 		}
