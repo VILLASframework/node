@@ -363,7 +363,7 @@ int uldaq_init(struct vnode *n)
 
 	u->in.queues = nullptr;
 	u->in.sample_rate = 1000;
-	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS | SO_EXTTIMEBASE);
+	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS | SO_EXTCLOCK);
 	u->in.flags = AINSCAN_FF_DEFAULT;
 
 	ret = pthread_mutex_init(&u->in.mutex, nullptr);
@@ -481,7 +481,7 @@ int uldaq_parse(struct vnode *n, json_t *cfg)
 	return ret;
 }
 void ul_decode_error(UlError err){
-	for( uint i=0; i < sizeof(errorList) / sizeof(errorList[0]) ;i++){
+	for( uint i=0; i < ARRAY_LEN(errorList) ;i++){
 		if(err&(1<<errorList[i].bitPos))
 			warning("Found error: %s",errorList[i].errStr);
 	}
