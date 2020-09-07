@@ -83,7 +83,8 @@ public:
 		info("parsed config thresh=%f signal_index=%d", thresh, idx);
 
 		avg_array = new double[avg_length];
-		//avg_array = {0};
+		for ( uint i = 0; i < avg_length; i++)
+			avg_array[i] = 0;
 
 
 		state = State::PARSED;
@@ -102,7 +103,6 @@ public:
 		if (isEdge) {
 			if (edgeCounter >= 1){
 				double currentSmpRate = (double)(seqNr - lastSeqNr);
-
 				realSmpRateAvg += (currentSmpRate - avg_array[avg_pos % avg_length]) / avg_length;
 				avg_array[avg_pos % avg_length] = currentSmpRate;
 				avg_pos++;
@@ -118,7 +118,7 @@ public:
 
 			lastSeqNr = seqNr;
 
-			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f.10", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
+			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
 
 			edgeCounter++;
 		}
