@@ -72,12 +72,13 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 
 	/* Parse FPGA configuration */
 	FILE* f = fopen(configFile.c_str(), "r");
-	if (f == nullptr) {
+	if (!f) {
 		logger->error("Cannot open config file: {}", configFile);
+		exit(1);
 	}
 
 	json_t* json = json_loadf(f, 0, nullptr);
-	if (json == nullptr) {
+	if (!json) {
 		logger->error("Cannot parse JSON config");
 		fclose(f);
 		exit(1);
@@ -86,14 +87,14 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	fclose(f);
 
 	json_t* fpgas = json_object_get(json, "fpgas");
-	if (fpgas == nullptr) {
+	if (!fpgas) {
 		logger->error("No section 'fpgas' found in config");
 		exit(1);
 	}
 
 	// get the FPGA card plugin
 	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-	if (fpgaCardFactory == nullptr) {
+	if (!fpgaCardFactory) {
 		logger->error("No FPGA plugin found");
 		exit(1);
 	}
@@ -102,9 +103,8 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
 
 	for (auto &fpgaCard : cards) {
-		if (fpgaCard->name == fpgaName) {
+		if (fpgaCard->name == fpgaName)
 			return fpgaCard;
-		}
 	}
 
 	logger->error("FPGA card {} not found in config or not working", fpgaName);
@@ -146,12 +146,12 @@ int main(int argc, char* argv[])
 	auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
 	          (card->lookupIp("hier_0_axi_dma_axi_dma_0"));
 
-	if (aurora == nullptr) {
+	if (!aurora) {
 		logger->error("No Aurora interface found on FPGA");
 		return 1;
 	}
 
-	if (dma == nullptr) {
+	if (!dma) {
 		logger->error("No DMA found on FPGA ");
 		return 1;
 	}
@@ -178,9 +178,8 @@ int main(int argc, char* argv[])
 		const size_t bytesRead = dma->readComplete();
 		const size_t valuesRead = bytesRead / sizeof(int32_t);
 
-		for (size_t i = 0; i < valuesRead; i++) {
+		for (size_t i = 0; i < valuesRead; i++)
 			std::cerr << mem[i] << ";";
-		}
 		std::cerr << std::endl;
 
 		std::string line;
@@ -189,8 +188,9 @@ int main(int argc, char* argv[])
 
 		size_t memIdx = 0;
 
-		for (auto &value: values) {
-			if (value.empty()) continue;
+		for (auto& value: values) {
+			if (value.empty())
+				continue;
 
 			const int32_t number = std::stoi(value);
 			mem[memIdx++] = number;
