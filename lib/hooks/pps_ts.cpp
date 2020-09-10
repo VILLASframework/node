@@ -38,28 +38,26 @@ class PpsTsHook : public Hook {
 protected:
 	double lastValue;
 	double thresh;
-	double realSmpRateAvg;
+	double realSmpRate;
 	unsigned idx;
-	uint avg_length;//number of seconds over which the samplerate value will be averaged
-	uint avg_pos;
-	double* avg_array;
 	int lastSeqNr;
 	unsigned edgeCounter;
-
+	double pll_gain;
 	timespec realTime;
+	uint64_t last_sequence;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		lastValue(0),
 		thresh(1.5),
-		realSmpRateAvg(0),
+		realSmpRate(0),
 		idx(0),
-		avg_length(1),
-		avg_pos(0),
 		lastSeqNr(0),
 		edgeCounter(0),
-		realTime({ 0, 0 })
+		pll_gain(1),
+		realTime({ 0, 0 }),
+		last_sequence(0)
 	{
 	}
 
@@ -72,19 +70,15 @@ public:
 
 		Hook::parse(cfg);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f, s: i}",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f, s?: f}",
 			"signal_index", &idx,
 			"threshold", &thresh,
-			"avg_length", &avg_length
+			"pll_gain", &pll_gain
 		);
 		if (ret)
 				throw ConfigError(cfg, err, "node-config-hook-pps_ts");
 
 		info("parsed config thresh=%f signal_index=%d", thresh, idx);
-
-		avg_array = new double[avg_length];
-		for ( uint i = 0; i < avg_length; i++)
-			avg_array[i] = 0;
 
 
 		state = State::PARSED;
@@ -100,13 +94,8 @@ public:
 
 		/* Detect Edge */
 		bool isEdge = lastValue < thresh && value > thresh;
+
 		if (isEdge) {
-			if (edgeCounter >= 1){
-				double currentSmpRate = (double)(seqNr - lastSeqNr);
-				realSmpRateAvg += (currentSmpRate - avg_array[avg_pos % avg_length]) / avg_length;
-				avg_array[avg_pos % avg_length] = currentSmpRate;
-				avg_pos++;
-			}
 			if (edgeCounter == 1) {
 				auto now = time_now();
 
@@ -118,34 +107,61 @@ public:
 
 			lastSeqNr = seqNr;
 
-			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRateAvg);
 
 			edgeCounter++;
 		}
 
 		lastValue = value;
 
+		double timeErr;
+		double changeVal;
+		if(isEdge){
+			timeErr = ( 1e9 - realTime.tv_nsec);
+			changeVal = 0;
+			if (edgeCounter >= 1){//pll mode
+				double targetVal = 0.95e9;
+				changeVal = pll_gain * abs(targetVal - timeErr);
+				changeVal = pll_gain;
+				if(timeErr > targetVal)
+					realSmpRate -= changeVal;
+				else if(timeErr < targetVal){
+					realSmpRate += changeVal;
+				}
+				if(realSmpRate > 10010)realSmpRate = 10010;
+				if(realSmpRate < 9990)realSmpRate = 9990;
+			}
+			//info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%f, smpRate=%f, pll_gain=%f", seqNr, realTime.tv_sec, (1e9 - realTime.tv_nsec + 1e9/realSmpRate), realSmpRate, pll_gain);
+		}
+
 		if (edgeCounter < 2)
 			return Hook::Reason::SKIP_SAMPLE;
 		else if (edgeCounter == 2 && isEdge)
 			realTime.tv_nsec = 0;
 		else
-			realTime.tv_nsec += 1e9 / realSmpRateAvg;
+			realTime.tv_nsec += 1e9 / realSmpRate;
 
-		if (realTime.tv_nsec >= 1000000000) {
+		if (realTime.tv_nsec >= 1e9) {
 			realTime.tv_sec++;
-			realTime.tv_nsec -= 1000000000;
+			realTime.tv_nsec -= 1e9;
+		}
+		
+		if(isEdge){
+			info("Edge detected: seq=%u, realTime.nsec=%ld, timeErr=%f , smpRate=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, realSmpRate, changeVal);
 		}
 
 		/* Update timestamp */
 		smp->ts.origin = realTime;
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
+		if((smp->sequence - last_sequence) > 1 )
+			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - last_sequence);
+
+		last_sequence = smp->sequence;
+
 		return Hook::Reason::OK;
 	}
 
 	~PpsTsHook(){
-		delete avg_array;
 	}
 };
 
