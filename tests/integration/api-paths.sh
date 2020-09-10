@@ -80,4 +80,4 @@ RC=$?
 
 rm -f ${CONFIG_FILE} ${FETCHED_PATHS}
 
-exit $RC
+exit ${RC}

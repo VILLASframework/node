@@ -41,4 +41,4 @@ RC=$?
 
 rm ${STATS_FILE}
 
-exit $RC
+exit ${RC}

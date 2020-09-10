@@ -191,7 +191,7 @@ do
     if [[ $RC != 0 ]]; then
         rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
     
-        exit $RC
+        exit ${RC}
     fi
 
     echo "#############################"
@@ -206,4 +206,4 @@ done
 
 rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
 
-exit $RC
+exit ${RC}

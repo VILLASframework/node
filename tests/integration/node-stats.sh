@@ -40,7 +40,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"rate": 10.0,
 			"in": {
 				"signals": [
-					{ "name": "gap", "stats": "signal_1.gap_sent.mean" },
+					{ "name": "gap",   "stats": "signal_1.gap_sent.mean" },
 					{ "name": "total", "stats": "signal_1.owd.total" }
 				]
 			}
@@ -48,6 +48,7 @@ cat > ${CONFIG_FILE} <<EOF
 		"signal_1": {
 			"type": "signal",
 			"limit": 100,
+			"signal": "sine",
 			"rate": ${RATE},
 			"in" : {
 				"hooks": [
@@ -80,8 +81,8 @@ villas-node ${CONFIG_FILE} &
 PID=$!
 
 sleep 5
-
 kill ${PID}
+wait ${PID}
 
 tail -n1 ${STATS_LOG} | jq -e "(.data[0] - 1/${RATE} | length) < 1e-4 and .data[1] == 99" > /dev/null
 RC=$?

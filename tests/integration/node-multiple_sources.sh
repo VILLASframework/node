@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration test for remote API
+# Integration loopback test using villas-node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -24,41 +24,67 @@
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
+source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
-FETCHED_CONF=$(mktemp)
+OUTPUT_FILE1=$(mktemp)
+OUTPUT_FILE2=$(mktemp)
+EXPECT_FILE=$(mktemp)
 
 cat > ${CONFIG_FILE} <<EOF
 {
-	"http" : {
-		"port" : 8080
-	},
-	"nodes" : {
-		"node1" : {
-			"type" : "loopback"
-		}
-	}
+  "nodes": {
+    "sig_1": {
+      "type": "signal",
+      "values": 2,
+      "signal": "counter",
+      "offset": 100,
+      "limit": 10
+    },
+    "file_1": {
+        "type": "file",
+        "uri": "${OUTPUT_FILE1}"
+    },
+    "file_2": {
+        "type": "file",
+        "uri": "${OUTPUT_FILE2}"
+    }
+  },
+  "paths": [
+    {
+      "in": [
+        "sig_1.data[0]"
+      ],
+      "out": "file_1"
+    },
+    {
+      "in": [
+        "sig_1.data[0]"
+      ],
+      "out": "file_2"
+    }
+  ]
 }
 EOF
 
-ID=$(uuidgen)
+villas signal counter -o 100 -v 1 -l 10 -n > ${EXPECT_FILE}
 
-# Start VILLASnode instance with local config (via advio)
+# Start node
+VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
 villas-node ${CONFIG_FILE} &
+P1=$!
 
-# Wait for node to complete init
-sleep 1
+sleep 2
 
-# Fetch config via API
-curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
+kill ${P1}
+wait ${P1}
 
-# Shutdown VILLASnode
-kill $!
-
-# Compare local config with the fetched one
-diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${CONFIG_FILE})
+# Compare only the data values
+villas-test-cmp ${OUTPUT_FILE1} ${EXPECT_FILE} && \
+villas-test-cmp ${OUTPUT_FILE2} ${EXPECT_FILE}
 RC=$?
 
-rm -f ${FETCHED_CONF} ${CONFIG_FILE}
+rm ${CONFIG_FILE} ${EXPECT_FILE} \
+   ${OUTPUT_FILE1} ${OUTPUT_FILE2}
 
 exit ${RC}

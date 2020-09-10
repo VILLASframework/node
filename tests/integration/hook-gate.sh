@@ -57,4 +57,4 @@ RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
 
-exit $RC
+exit ${RC}

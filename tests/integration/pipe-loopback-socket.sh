@@ -127,4 +127,4 @@ done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 
-exit $RC
+exit ${RC}

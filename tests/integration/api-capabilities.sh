@@ -44,4 +44,4 @@ RC=$?
 
 rm ${FETCHED_CONF}
 
-exit $RC
+exit ${RC}

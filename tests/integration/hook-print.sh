@@ -39,4 +39,4 @@ RC=$?
 
 rm -f ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}
 
-exit $RC
+exit ${RC}

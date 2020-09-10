@@ -28,6 +28,14 @@ source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
+EXPECT_FILE=$(mktemp)
+
+cat <<EOF > ${EXPECT_FILE}
+1599745986.343431058+1.451000e-06(7)	4.000000	20.000000	100.000000
+1599745986.843081878+8.820000e-07(16)	9.000000	50.000000	200.000000
+1599745987.343081848+9.440000e-07(24)	14.000000	70.000000	300.000000
+1599745987.843081745+8.630000e-07(33)	19.000000	100.000000	400.000000
+EOF
 
 cat > ${CONFIG_FILE} <<EOF
 {
@@ -36,7 +44,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "signal",
 
 			"signal" : "counter",
-			"values" : 4,
+			"values" : 1,
 			"offset" : 0.0,
 			"rate" : 10.0,
 			"limit" : 20
@@ -45,7 +53,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "signal",
 
 			"signal" : "counter",
-			"values" : 4,
+			"values" : 1,
 			"offset" : 10.0,
 			"amplitude" : 10.0,
 			"rate" : 5.0,
@@ -55,7 +63,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "signal",
 
 			"signal" : "counter",
-			"values" : 4,
+			"values" : 1,
 			"offset" : 100.0,
 			"amplitude" : 100.0,
 			"rate" : 2.0,
@@ -63,7 +71,6 @@ cat > ${CONFIG_FILE} <<EOF
 		},
 		"file_1": {
 			"type": "file",
-			
 			"uri" : "${OUTPUT_FILE}"
 		}
 	},
@@ -77,9 +84,7 @@ cat > ${CONFIG_FILE} <<EOF
 				"sig_1.hdr.sequence",
 				"sig_1.ts.origin"
 			],
-			"hooks" : [
-				{ "type" : "print" }
-			],
+			"out": "file_1",
 			"mode" : "all"
 		}
 	]
@@ -88,13 +93,12 @@ EOF
 
 # Start node
 VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE} &
+villas-node ${CONFIG_FILE}
 
-sleep 10
+# Compare only the data values
+villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
+RC=$?
 
-# Stop node
-kill %1
+rm ${CONFIG_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
 
-rm ${CONFIG_FILE} ${OUTPUT_FILE}
-
-exit $RC
+exit ${RC}

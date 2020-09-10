@@ -83,4 +83,4 @@ RC=$?
 
 rm -f ${LOCAL_CONF} ${FETCHED_CONF} ${BASE_CONF}
 
-exit $RC
+exit ${RC}

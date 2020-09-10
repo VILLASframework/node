@@ -76,4 +76,4 @@ done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
-exit $RC
+exit ${RC}

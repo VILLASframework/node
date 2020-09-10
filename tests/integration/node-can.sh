@@ -150,4 +150,4 @@ RC=$?
 #rm ${CAN_OUT_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
 rm ${INPUT_FILE} ${OUTPUT_FILE}
 
-exit $RC
+exit ${RC}

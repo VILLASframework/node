@@ -80,4 +80,4 @@ RC=$?
 
 rm -f ${CONFIG_FILE} ${FETCHED_NODES}
 
-exit $RC
+exit ${RC}

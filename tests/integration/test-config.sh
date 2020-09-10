@@ -25,13 +25,13 @@
 
 set -e
 
-cd ${SRCDIR}/etc/
-
-CONFIGS=$(find . -name '*.conf' -o -name '*.json')
+CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
 
 for CONFIG in ${CONFIGS}; do
     if [ "$(basename ${CONFIG})" == "opal.conf" ] ||
        [ "$(basename ${CONFIG})" == "paths.conf" ] ||
+	   [ "$(basename ${CONFIG})" == "vc707_ips.conf" ] ||
+	   [ "$(basename ${CONFIG})" == "uldaq.conf" ] ||
        [ "$(basename ${CONFIG})" == "global.conf" ]; then
         echo "=== Skipping config: ${CONFIG}"
         continue

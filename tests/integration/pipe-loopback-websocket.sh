@@ -80,4 +80,4 @@ RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${CONFIG_FILE2}
 
-exit $RC
+exit ${RC}

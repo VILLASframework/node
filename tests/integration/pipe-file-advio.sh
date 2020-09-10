@@ -77,4 +77,4 @@ RC=$?
 
 rm -f ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
 
-exit $RC
+exit ${RC}

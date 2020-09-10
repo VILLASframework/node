@@ -145,4 +145,4 @@ ${REMOTE} rm ${OUTPUT_FILE} ${CONFIG_FILE_DEST}
 
 kill ${PID}
 
-exit $RC
+exit ${RC}

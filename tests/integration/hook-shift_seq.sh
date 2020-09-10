@@ -38,4 +38,4 @@ RC=$?
 
 rm -f ${OUTPUT_FILE}
 
-exit $RC
+exit ${RC}
