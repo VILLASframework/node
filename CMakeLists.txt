@@ -133,6 +133,7 @@ cmake_dependent_option(WITH_SRC             "Build executables"                 
 cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "XIL_FOUND" OFF)
 cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_TESTS           "Run tests"                                             ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_CPPCHECK        "Run cppcheck"                                          OFF "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CLIENTS         "Build client applications"                             ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_DOC             "Build documentation"                                   ON "TOPLEVEL_PROJECT" OFF)
@@ -172,6 +173,15 @@ include(cmake/config/Profiling.cmake)
 
 # Get version info and buildid from Git
 GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
+
+if(WITH_CPPCHECK)
+	find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+	if (CMAKE_CXX_CPPCHECK)
+		list(APPEND CMAKE_CXX_CPPCHECK
+				"-D__x86_64__"
+		)
+	endif()
+endif()
 
 add_subdirectory(common)
 add_subdirectory(etc)
