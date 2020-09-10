@@ -117,8 +117,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 		jerror(&err, "Failed to parse node %s", node_name(n));
 
 	if (n->_vt->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
-		if (json_signals)
-			error("Node %s does not support signal definitions", node_name(n));
+		/* Do nothing.. Node-type will provide signals */
 	}
 	else if (json_is_array(json_signals)) {
 		ret = signal_list_parse(&nd->signals, json_signals);
@@ -169,7 +168,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 
 int node_direction_check(struct vnode_direction *nd, struct vnode *n)
 {
-	assert(nd->state == State::PARSED);
+	assert(n->state != State::DESTROYED);
 
 	if (nd->vectorize <= 0)
 		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));

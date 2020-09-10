@@ -36,21 +36,30 @@
 struct vpath;
 struct sample;
 
+enum PathSourceType {
+	MASTER,
+	SECONDARY
+};
+
 struct vpath_source {
 	struct vnode *node;
 
 	bool masked;
+	
+	enum PathSourceType type;
 
 	struct pool pool;
 	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
 	struct vlist secondaries;
 };
 
-int path_source_init(struct vpath_source *ps);
+int path_source_init_master(struct vpath_source *ps, struct vnode *n) __attribute__ ((warn_unused_result));
 
-int path_source_prepare(struct vpath_source *ps);
+int path_source_init_secondary(struct vpath_source *ps, struct vnode *n) __attribute__ ((warn_unused_result));
 
-int path_source_destroy(struct vpath_source *ps);
+int path_source_destroy(struct vpath_source *ps) __attribute__ ((warn_unused_result));
+
+void path_source_check(struct vpath_source *ps);
 
 int path_source_read(struct vpath_source *ps, struct vpath *p, int i);
 

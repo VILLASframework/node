@@ -93,6 +93,8 @@ struct vpath {
 
 	villas::Logger logger;
 
+	std::list<struct vnode *> mask_list;
+
 	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of path_sources which are enabled for poll(). */
 	std::bitset<MAX_SAMPLE_LENGTH> received;	/**< A mask of path_sources for which we already received samples. */
 };
@@ -100,10 +102,10 @@ struct vpath {
 /** Initialize internal data structures. */
 int path_init(struct vpath *p) __attribute__ ((warn_unused_result));
 
-int path_prepare(struct vpath *p);
+int path_prepare(struct vpath *p, struct vlist *nodes);
 
 /** Check if path configuration is proper. */
-int path_check(struct vpath *p);
+void path_check(struct vpath *p);
 
 /** Start a path.
  *
@@ -154,7 +156,7 @@ int path_reverse(struct vpath *p, struct vpath *r);
  */
 int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes);
 
-void path_parse_mask(struct vpath *p, json_t *json_mask);
+void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes);
 
 bool path_is_simple(const struct vpath *p);
 

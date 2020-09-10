@@ -20,27 +20,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <fmt/format.h>
+
 #include <villas/utils.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/path.h>
+#include <villas/exceptions.hpp>
 #include <villas/hook_list.hpp>
+
+#include <villas/nodes/loopback_internal.hpp>
 
 #include <villas/path_destination.h>
 #include <villas/path_source.h>
 
-int path_source_init(struct vpath_source *ps)
-{
-	ps->node = me->node;
-	ps->masked = false;
+using namespace villas;
 
-	vlist_init(&ps->mappings);
-	vlist_init(&ps->secondaries);
-}
-
-int path_source_prepare(struct vpath_source *ps)
+int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 {
 	int ret;
+
+	ps->node = n;
+	ps->masked = false;
+	ps->type = PathSourceType::MASTER;
+
+	ret = vlist_init(&ps->mappings);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&ps->secondaries);
+	if (ret)
+		return ret;
+
 	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize);
 
 	if (ps->node->_vt->pool_size)
@@ -49,6 +60,38 @@ int path_source_prepare(struct vpath_source *ps)
 	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->in.signals)), node_memory_type(ps->node));
 	if (ret)
 		return ret;
+
+	return 0;
+}
+
+int path_source_init_secondary(struct vpath_source *ps, struct vnode *n)
+{
+	int ret;
+	struct vpath_source *mps;
+
+	ret = path_source_init_master(ps, n);
+	if (ret)
+		return ret;
+
+	ps->type = PathSourceType::SECONDARY;
+
+	ps->node = loopback_internal_create(n);
+	if (!ps->node)
+		return -1;
+
+	ret = node_check(ps->node);
+	if (ret)
+		return -1;
+
+	ret = node_prepare(ps->node);
+	if (ret)
+		return -1;
+
+	mps = (struct vpath_source *) vlist_at_safe(&n->sources, 0);
+	if (!mps)
+		return -1;
+
+	vlist_push(&mps->secondaries, ps);
 
 	return 0;
 }
@@ -113,15 +156,16 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 
 	/* Forward samples to secondary path sources */
 	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
-		struct vpath_source *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
+		auto *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
 
-		sample_incref_many(read_smps, recv);
-
-		int sent, release = recv;
+		int sent;
+		unsigned release = recv;
 
 		sent = node_write(sps->node, read_smps, recv, &release);
 		if (sent < recv)
-			p->logger->warn("Partial write to secondary path source");
+			p->logger->warn("Partial write to secondary path source {} of path {}", node_name(sps->node), path_name(p));
+
+		sample_incref_many(read_smps+release, recv-release);
 	}
 
 	p->received.set(i);
@@ -193,4 +237,13 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 out2:	sample_decref_many(read_smps, release);
 
 	return enqueued;
+}
+
+void path_source_check(struct vpath_source *ps)
+{
+	if (!node_is_enabled(ps->node))
+		throw RuntimeError("Source {} is not enabled", node_name(ps->node));
+
+	if (!node_type(ps->node)->read)
+		throw RuntimeError("Node {} is not supported as a source for a path", node_name(ps->node));
 }

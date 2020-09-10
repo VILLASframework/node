@@ -25,12 +25,18 @@
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/path.h>
+#include <villas/exceptions.hpp>
 #include <villas/path_destination.h>
 
-int path_destination_init(struct vpath_destination *pd)
+using namespace villas;
+
+int path_destination_init(struct vpath_destination *pd, struct vnode *n)
 {
 	pd->node = n;
-	pd->node->output_path = p;
+
+	vlist_push(&n->destinations, pd);
+
+	return 0;
 }
 
 int path_destination_prepare(struct vpath_destination *pd, int queuelen)
@@ -115,4 +121,13 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 
 		p->logger->debug("Released {} samples back to memory pool", released);
 	}
+}
+
+void path_destination_check(struct vpath_destination *pd)
+{
+	if (!node_is_enabled(pd->node))
+		throw RuntimeError("Destination {} is not enabled", node_name(pd->node));
+
+	if (!node_type(pd->node)->write)
+		throw RuntimeError("Destiation node {} is not supported as a sink for path ", node_name(pd->node));
 }

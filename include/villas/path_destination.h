@@ -41,11 +41,13 @@ struct vpath_destination {
 	struct queue queue;
 };
 
-int path_destination_init(struct vpath_destination *pd);
+int path_destination_init(struct vpath_destination *pd, struct vnode *n) __attribute__ ((warn_unused_result));
+
+int path_destination_destroy(struct vpath_destination *pd) __attribute__ ((warn_unused_result));
 
 int path_destination_prepare(struct vpath_destination *pd, int queuelen);
 
-int path_destination_destroy(struct vpath_destination *pd);
+void path_destination_check(struct vpath_destination *pd);
 
 void path_destination_enqueue(struct vpath *p, struct sample *smps[], unsigned cnt);
 
