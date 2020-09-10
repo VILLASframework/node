@@ -54,6 +54,7 @@ RUN dnf -y install \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
+	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
 	psmisc procps-ng \
 	rabbitmq-server mosquitto
@@ -85,9 +86,6 @@ RUN dnf -y install \
 	libibverbs-devel \
 	librdmacm-devel \
 	libusb-devel
-
-RUN dnf -y install \
-    cppcheck
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
