@@ -26,9 +26,23 @@
 #include <villas/plugin.h>
 #include <villas/node/config.h>
 #include <villas/nodes/loopback.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/memory.h>
 
+using namespace villas;
 using namespace villas::utils;
+
+static struct plugin p;
+
+int loopback_init(struct vnode *n)
+{
+	struct loopback *l = (struct loopback *) n->_vd;
+
+	l->mode = QueueSignalledMode::AUTO;
+	l->queuelen = DEFAULT_QUEUE_LENGTH;
+
+	return 0;
+}
 
 int loopback_parse(struct vnode *n, json_t *cfg)
 {
@@ -36,11 +50,7 @@ int loopback_parse(struct vnode *n, json_t *cfg)
 	const char *mode_str = nullptr;
 
 	json_error_t err;
-	int ret, copy = 1;
-
-	/* Default values */
-	l->mode = QueueSignalledMode::AUTO;
-	l->queuelen = DEFAULT_QUEUE_LENGTH;
+	int ret;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
 		"queuelen", &l->queuelen,
@@ -68,24 +78,18 @@ int loopback_parse(struct vnode *n, json_t *cfg)
 			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
 	}
 
-	l->copy = copy;
-
 	return 0;
 }
 
-int loopback_start(struct vnode *n)
+int loopback_prepare(struct vnode *n)
 {
-	int ret;
 	struct loopback *l = (struct loopback *) n->_vd;
-
-	int len = vlist_length(&n->in.signals);
 
 	return queue_signalled_init(&l->queue, l->queuelen, memory_default, l->mode);
 }
 
-int loopback_stop(struct vnode *n)
+int loopback_destroy(struct vnode *n)
 {
-	int ret;
 	struct loopback *l= (struct loopback *) n->_vd;
 
 	return queue_signalled_destroy(&l->queue);
@@ -136,8 +140,6 @@ int loopback_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
-
 __attribute__((constructor(110)))
 static void register_plugin() {
 	p.name			= "loopback";
@@ -149,14 +151,16 @@ static void register_plugin() {
 	p.node.size		= sizeof(struct loopback);
 	p.node.parse		= loopback_parse;
 	p.node.print		= loopback_print;
-	p.node.start		= loopback_start;
-	p.node.stop		= loopback_stop;
+	p.node.prepare		= loopback_prepare;
+	p.node.init		= loopback_init;
+	p.node.destroy		= loopback_destroy;
 	p.node.read		= loopback_read;
 	p.node.write		= loopback_write;
 	p.node.poll_fds		= loopback_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))
