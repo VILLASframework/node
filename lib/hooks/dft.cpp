@@ -59,6 +59,7 @@ protected:
 	struct format_type *format;
 
 	double* smp_memory;
+	double* pps_memory;
 	std::complex<double>** dftMatrix;
 	std::complex<double>* dftResults;
 	double* filterWindowCoefficents;
@@ -148,6 +149,13 @@ public:
 		for(uint i = 0; i < window_size; i++)
 			smp_memory[i] = 0;
 
+
+		pps_memory = new double[window_size];
+		if (!pps_memory)
+			throw MemoryAllocationError();
+
+		for(uint i = 0; i < window_size; i++)
+			pps_memory[i] = 0;
 
 
 		//init matrix of dft coeffients
@@ -268,15 +276,16 @@ public:
 		assert(state == State::STARTED);
 
 		smp_memory[smp_mem_pos % window_size] = smp->data[0].f;
+		pps_memory[smp_mem_pos % window_size] = smp->data[1].f;
 		smp_mem_pos ++ ;
 
-
-		double timediff = 0;
+		bool runDft = false;
 		if( sync_dft ){
-			timediff = ( smp->ts.origin.tv_sec - last_dft_cal.tv_sec ) + ( smp->ts.origin.tv_nsec - last_dft_cal.tv_nsec ) * 1e-9;
+			if( last_dft_cal.tv_sec != smp->ts.origin.tv_sec )
+				runDft = true;
 		}
-
-		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || (sync_dft && timediff >= ( 1 / dft_rate ) ) ) {
+		last_dft_cal = smp->ts.origin;
+		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || ( runDft ) ) {
 			calcDft(paddingType::ZERO);
 			double maxF = 0;
 			double maxA = 0;
@@ -292,10 +301,13 @@ public:
 			}
 			info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
 			
+			if(smp_mem_pos>100e3){
+				appendDumpData("/tmp/plot/phaseOut",atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()));
+				appendDumpData("/tmp/plot/voltageOut",(maxA / pow(2,1./2)));
+				appendDumpData("/tmp/plot/freqOut",maxF);
+			}
 
-			dumpData("/tmp/absDftResults", absDftResults, freq_count, absDftFreqs);
-
-			last_dft_cal = smp->ts.origin;
+			dumpData("/tmp/plot/absDftResults", absDftResults, freq_count, absDftFreqs);
 		}
 
 		
@@ -310,6 +322,16 @@ public:
 	virtual ~DftHook()
 	{
 		//delete smp_memory;
+	}
+
+	void appendDumpData(const char *path, double ydata){
+		std::ofstream fh;
+		fh.open(path,std::ios_base::app);
+		if(fh.tellp()>0)
+			fh << ";";
+		fh << ydata;
+
+		fh.close();
 	}
 
 	void dumpData(const char *path, double *ydata, uint size, double *xdata=nullptr){
@@ -350,17 +372,31 @@ public:
 
 		//prepare sample window The following parts can be combined
 		double tmp_smp_window[window_size];
+		double tmp_smp_pps[window_size];
+		
+		uint lastEdge = 0;
+		uint edgeCount = 0;
 		for(uint i = 0; i< window_size; i++){
-			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos ) % window_size];
+			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos) % window_size];
+			tmp_smp_pps[i] = pps_memory[( i + smp_mem_pos) % window_size];
+			if(edgeCount == 0 || (lastEdge + 1500) < i){
+				if(tmp_smp_pps[i] > 2. && i > 5000){
+					lastEdge = i;
+					info("edge detected %i",lastEdge);
+					edgeCount++;
+					appendDumpData("/tmp/plot/ppsAmplitude",tmp_smp_window[i]);
+				}
+			}
 		}
-		dumpData("/tmp/signal_original",tmp_smp_window,window_size);
+		dumpData("/tmp/plot/pps_original",tmp_smp_pps,window_size);
+		dumpData("/tmp/plot/signal_original",tmp_smp_window,window_size);
 
 		for(uint i = 0; i< window_size; i++){
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
 		}
-		dumpData("/tmp/signal_windowed",tmp_smp_window,window_size);
+		dumpData("/tmp/plot/signal_windowed",tmp_smp_window,window_size);
 
-		dumpData("/tmp/smp_window",smp_memory,window_size);
+		dumpData("/tmp/plot/smp_window",smp_memory,window_size);
 
 		for( uint i=0; i < freq_count; i++){
 			dftResults[i] = 0;
@@ -407,7 +443,7 @@ public:
 			}
 		}
 		window_corretion_factor /= window_size;
-		dumpData("/tmp/filter_window",filterWindowCoefficents,window_size);
+		dumpData("/tmp/plot/filter_window",filterWindowCoefficents,window_size);
 	}
 };
 
