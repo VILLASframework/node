@@ -228,6 +228,9 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 				if (!c)
 					throw MemoryAllocationError();
 
+				c->filename = nullptr;
+				c->filename_formatted = nullptr;
+
 				c->rate = rates[i];
 				c->values = values[j];
 
@@ -461,7 +464,7 @@ static void register_plugin() {
 	p.node.write		= test_rtt_write;
 
 	int ret = vlist_init(&p.node.instances);
-	if (ret)
+	if (!ret)
 		vlist_init_and_push(&plugins, &p);
 }
 

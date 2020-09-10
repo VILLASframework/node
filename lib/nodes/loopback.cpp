@@ -52,7 +52,7 @@ int loopback_parse(struct vnode *n, json_t *cfg)
 	json_error_t err;
 	int ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
 		"queuelen", &l->queuelen,
 		"mode", &mode_str
 	);

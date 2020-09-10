@@ -869,7 +869,7 @@ static void register_plugin() {
 	p.node.reverse		= ngsi_reverse;
 
 	int ret = vlist_init(&p.node.instances);
-	if (ret)
+	if (!ret)
 		vlist_init_and_push(&plugins, &p);
 }
 

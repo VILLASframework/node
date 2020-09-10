@@ -84,9 +84,9 @@ public:
 
 	~Config();
 
-	json_t * load(std::FILE *f, bool resolveIncludes=true, bool resolveEnvVars=true);
+	json_t * load(std::FILE *f, bool resolveIncludes = true, bool resolveEnvVars = true);
 
-	json_t * load(const std::string &u, bool resolveIncludes=true, bool resolveEnvVars=true);
+	json_t * load(const std::string &u, bool resolveIncludes = true, bool resolveEnvVars = true);
 };
 
 } /* namespace node */

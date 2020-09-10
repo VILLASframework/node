@@ -51,7 +51,7 @@ Config::Config() :
 Config::Config(const std::string &u) :
 	Config()
 {
-	load(u);
+	root = load(u);
 }
 
 Config::~Config()
@@ -62,7 +62,7 @@ Config::~Config()
 
 json_t * Config::load(std::FILE *f, bool resolveInc, bool resolveEnvVars)
 {
-	root = decode(f);
+	json_t *root = decode(f);
 
 	if (resolveInc)
 		root = resolveIncludes(root);
@@ -87,7 +87,7 @@ json_t * Config::load(const std::string &u, bool resolveInc, bool resolveEnvVars
 		f = af->file;
 	}
 
-	root = load(f, resolveInc, resolveEnvVars);
+	json_t *root = load(f, resolveInc, resolveEnvVars);
 
 	if (af)
 		afclose(af);
@@ -182,23 +182,23 @@ json_t * Config::libconfigDecode(FILE *f)
 }
 #endif /* WITH_CONFIG */
 
-json_t * Config::walkStrings(json_t *in, str_walk_fcn_t cb)
+json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
 {
 	const char *key;
 	size_t index;
 	json_t *val, *new_val, *new_root;
 
-	switch (json_typeof(in)) {
+	switch (json_typeof(root)) {
 		case JSON_STRING:
-			return cb(in);
+			return cb(root);
 
 		case JSON_OBJECT:
 			new_root = json_object();
 
-			json_object_foreach(in, key, val) {
+			json_object_foreach(root, key, val) {
 				new_val = walkStrings(val, cb);
 
-				json_object_set(new_root, key, new_val);
+				json_object_set_new(new_root, key, new_val);
 			}
 
 			return new_root;
@@ -206,16 +206,16 @@ json_t * Config::walkStrings(json_t *in, str_walk_fcn_t cb)
 		case JSON_ARRAY:
 			new_root = json_array();
 
-			json_array_foreach(in, index, val) {
+			json_array_foreach(root, index, val) {
 				new_val = walkStrings(val, cb);
 
-				json_array_append(new_root, new_val);
+				json_array_append_new(new_root, new_val);
 			}
 
 			return new_root;
 
 		default:
-			return in;
+			return root;
 	};
 }
 

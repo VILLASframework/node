@@ -62,8 +62,9 @@ protected:
 			<< "  CONFIG is the path to an optional configuration file" << std::endl
 			<< "  OPTIONS is one or more of the following options:" << std::endl
 			<< "    -d LVL  set debug level" << std::endl
-			<< "    -V        show version and exit" << std::endl
-			<< "    -h        show usage and exit" << std::endl << std::endl;
+			<< "    -V      show version and exit" << std::endl
+			<< "    -c      perform plausability checks on config" << std::endl
+			<< "    -h      show usage and exit" << std::endl << std::endl;
 
 		printCopyright();
 	}

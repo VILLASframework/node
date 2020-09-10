@@ -51,7 +51,7 @@
   struct rtnl_cls;
 #endif /* WITH_NETEM */
 
-#define RE_NODE_NAME "[a-z0-9_-]{3,32}"
+#define RE_NODE_NAME "[a-z0-9_-]{2,32}"
 
 /** The data structure for a node.
  *

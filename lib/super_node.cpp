@@ -48,7 +48,7 @@ using namespace villas::utils;
 
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
-	idleStop(false),
+	idleStop(true),
 #ifdef WITH_API
 	api(this),
 #endif
@@ -92,12 +92,12 @@ SuperNode::SuperNode() :
 
 void SuperNode::parse(const std::string &u)
 {
-	config.load(u);
+	config.root = config.load(u);
 
 	parse(config.root);
 }
 
-void SuperNode::parse(json_t *cfg)
+void SuperNode::parse(json_t *root)
 {
 	int ret;
 	const char *nme = nullptr;
@@ -107,14 +107,12 @@ void SuperNode::parse(json_t *cfg)
 	json_t *json_nodes = nullptr;
 	json_t *json_paths = nullptr;
 	json_t *json_logging = nullptr;
-	json_t *json_web = nullptr;
+	json_t *json_http = nullptr;
 
 	json_error_t err;
 
-	idleStop = true;
-
-	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
-		"http", &json_web,
+	ret = json_unpack_ex(root, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+		"http", &json_http,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
 		"paths", &json_paths,
@@ -125,14 +123,14 @@ void SuperNode::parse(json_t *cfg)
 		"idle_stop", &idleStop
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config", "Unpacking top-level config failed");
+		throw ConfigError(root, err, "node-config", "Unpacking top-level config failed");
 
 	if (nme)
 		name = nme;
 
 #ifdef WITH_WEB
-	if (json_web)
-		web.parse(json_web);
+	if (json_http)
+		web.parse(json_http);
 #endif /* WITH_WEB */
 
 	if (json_logging)
@@ -155,7 +153,7 @@ void SuperNode::parse(json_t *cfg)
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
-				throw ConfigError(cfg, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
+				throw ConfigError(root, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
 
 			nt = node_type_lookup(type);
 			if (!nt)
@@ -358,6 +356,15 @@ void SuperNode::prepare()
 
 	prepareNodes();
 	preparePaths();
+
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
+		if (vlist_length(&n->sources) == 0 &&
+		    vlist_length(&n->destinations) == 0) {
+			logger->info("Node {} is not used by any path. Disabling...");
+			n->enabled = false;
+		}
+	}
 
 	state = State::PREPARED;
 }

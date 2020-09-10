@@ -259,25 +259,23 @@ int signal_generator_parse(struct vnode *n, json_t *cfg)
 					size_t i;
 					json_t *json_value;
 					json_array_foreach(a.json, i, json_value) {
-						if (!json_is_real(json_value))
-							throw ConfigError(json_value, "node-config-node-signal", "Values must gives as array of float values!");
+						if (!json_is_number(json_value))
+							throw ConfigError(json_value, "node-config-node-signal", "Values must gives as array of integer or float values!");
 
-						(*a.array)[i] = json_real_value(json_value);
+						(*a.array)[i] = json_number_value(json_value);
 					}
 
 					break;
 
+				case JSON_INTEGER:
 				case JSON_REAL:
-					if (!json_is_real(a.json))
-						throw ConfigError(a.json, "node-config-node-signal", "Values must gives as array of float values!");
-
 					for (size_t i = 0; i < s->values; i++)
-						(*a.array)[i] = json_real_value(a.json);
+						(*a.array)[i] = json_number_value(a.json);
 
 					break;
 
 				default:
-					throw ConfigError(a.json, "node-config-node-signal", "Values must given as array or scalar float value!");
+					throw ConfigError(a.json, "node-config-node-signal", "Values must given as array or scalar integer or float value!");
 			}
 		}
 		else {
@@ -398,7 +396,7 @@ int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, 
 	}
 
 	if (s->limit > 0 && s->counter >= (unsigned) s->limit) {
-		info("Reached limit.");
+		info("Node %s reached limit.", node_name(n));
 
 		n->state = State::STOPPING;
 
@@ -437,9 +435,13 @@ int signal_generator_poll_fds(struct vnode *n, int fds[])
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	fds[0] = s->task.getFD();
+	if (s->rt) {
+		fds[0] = s->task.getFD();
 
-	return 1;
+		return 1;
+	}
+	else
+		return 0;
 }
 
 static struct plugin p;

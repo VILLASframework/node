@@ -38,7 +38,6 @@ int loopback_internal_init(struct vnode *n)
 {
 	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
 
-	l->mode = QueueSignalledMode::EVENTFD;
 	l->queuelen = DEFAULT_QUEUE_LENGTH;
 
 	return 0;
@@ -46,7 +45,12 @@ int loopback_internal_init(struct vnode *n)
 
 int loopback_internal_prepare(struct vnode *n)
 {
+	int ret;
 	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
+
+	ret = signal_list_copy(&n->in.signals, &l->source->in.signals);
+	if (ret)
+		return -1;
 
 	return queue_signalled_init(&l->queue, l->queuelen, memory_default, QueueSignalledMode::EVENTFD);
 }
@@ -84,16 +88,6 @@ int loopback_internal_write(struct vnode *n, struct sample *smps[], unsigned cnt
 	return queue_signalled_push_many(&l->queue, (void **) smps, cnt);
 }
 
-char * loopback_internal_print(struct vnode *n)
-{
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
-	char *buf = nullptr;
-
-	strcatf(&buf, "queuelen=%d", l->queuelen);
-
-	return buf;
-}
-
 int loopback_internal_poll_fds(struct vnode *n, int fds[])
 {
 	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
@@ -108,24 +102,20 @@ struct vnode * loopback_internal_create(struct vnode *orig)
 	int ret;
 	struct vnode *n;
 	struct loopback_internal *l;
-	
+
 	n = new struct vnode;
 	if (!n)
 		throw MemoryAllocationError();
-
-	l = (struct loopback_internal *) n->_vd;
 
 	ret = node_init(n, &p.node);
 	if (ret)
 		return nullptr;
 
+	l = (struct loopback_internal *) n->_vd;
+
 	l->source = orig;
 
 	asprintf(&n->name, "%s_lo%zu", node_name_short(orig), vlist_length(&orig->sources));
-
-	ret = signal_list_copy(&n->in.signals, &orig->in.signals);
-	if (ret)
-		return nullptr;
 
 	return n;
 }
@@ -139,7 +129,6 @@ static void register_plugin() {
 	p.node.vectorize	= 0;
 	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS | (int) NodeFlags::INTERNAL;
 	p.node.size		= sizeof(struct loopback_internal);
-	p.node.print		= loopback_internal_print;
 	p.node.prepare		= loopback_internal_prepare;
 	p.node.init		= loopback_internal_init;
 	p.node.destroy		= loopback_internal_destroy;

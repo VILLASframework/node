@@ -91,6 +91,32 @@ int stats_node_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
+int stats_node_prepare(struct vnode *n)
+{
+	struct stats_node *s = (struct stats_node *) n->_vd;
+
+	assert(vlist_length(&n->in.signals) == 0);
+
+	/* Generate signal list */
+	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
+		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
+		struct signal *sig;
+
+		const char *metric = Stats::metrics[stats_sig->metric].name;
+		const char *type = Stats::types[stats_sig->type].name;
+
+		auto name = fmt::format("{}.{}.{}", stats_sig->node_str, metric, type);
+
+		sig = signal_create(name.c_str(),
+			Stats::metrics[stats_sig->metric].unit,
+			Stats::types[stats_sig->type].signal_type);
+
+		vlist_push(&n->in.signals, sig);
+	}
+
+	return 0;
+}
+
 int stats_node_start(struct vnode *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
@@ -176,29 +202,13 @@ int stats_node_parse(struct vnode *n, json_t *cfg)
 		error("Setting 'in.signals' of node %s must be an array", node_name(n));
 
 	json_array_foreach(json_signals, i, json_signal) {
-		struct signal *sig = (struct signal *) vlist_at(&n->in.signals, i);
-		struct stats_node_signal *stats_sig;
-
-		stats_sig = new struct stats_node_signal;
+		auto *stats_sig = new struct stats_node_signal;
 		if (!stats_sig)
 			throw MemoryAllocationError();
 
 		ret = stats_node_signal_parse(stats_sig, json_signal);
 		if (ret)
 			error("Failed to parse statistics signal definition of node %s", node_name(n));
-
-		if (!sig->name) {
-			const char *metric = Stats::metrics[stats_sig->metric].name;
-			const char *type = Stats::types[stats_sig->type].name;
-
-			sig->name = strf("%s.%s.%s", stats_sig->node_str, metric, type);
-		}
-
-		if (!sig->unit)
-			sig->unit = strdup(Stats::metrics[stats_sig->metric].unit);
-
-		if (sig->type != Stats::types[stats_sig->type].signal_type)
-			error("Invalid type for signal %zu in node %s", i, node_name(n));
 
 		vlist_push(&s->signals, stats_sig);
 	}
@@ -252,13 +262,14 @@ static void register_plugin() {
 	p.type			= PluginType::NODE;
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 1;
-	p.node.flags		= 0;
+	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
 	p.node.size		= sizeof(struct stats_node);
 	p.node.type.start	= stats_node_type_start;
 	p.node.parse		= stats_node_parse;
 	p.node.init		= stats_node_init;
 	p.node.destroy		= stats_node_destroy;
 	p.node.print		= stats_node_print;
+	p.node.prepare		= stats_node_prepare;
 	p.node.start		= stats_node_start;
 	p.node.stop		= stats_node_stop;
 	p.node.read		= stats_node_read;

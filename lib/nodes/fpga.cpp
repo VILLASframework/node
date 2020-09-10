@@ -112,8 +112,9 @@ int fpga_init(struct vnode *n)
 	new (&f->dma) std::shared_ptr<fpga::ip::Node>();
 	new (&f->intf) std::shared_ptr<fpga::ip::Node>();
 
-	new (&f->in.mem) std::shared_ptr<MemoryBlock>();
-	new (&f->out.mem) std::shared_ptr<MemoryBlock>();
+	// TODO: fixme
+	// new (&f->in.mem) std::shared_ptr<MemoryBlock>();
+	// new (&f->out.mem) std::shared_ptr<MemoryBlock>();
 
 	return 0;
 }

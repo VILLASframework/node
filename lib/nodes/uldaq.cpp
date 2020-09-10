@@ -662,7 +662,7 @@ static void register_plugin() {
 	p.node.read		= uldaq_read;
 
 	int ret = vlist_init(&p.node.instances);
-	if (ret)
+	if (!ret)
 		vlist_init_and_push(&plugins, &p);
 }
 

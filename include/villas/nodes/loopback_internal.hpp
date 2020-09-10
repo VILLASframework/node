@@ -41,7 +41,6 @@ struct sample;
  */
 struct loopback_internal {
 	int queuelen;
-	enum QueueSignalledMode mode;
 	struct queue_signalled queue;
 
 	struct vnode *source;
