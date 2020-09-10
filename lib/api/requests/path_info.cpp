@@ -54,7 +54,7 @@ public:
 
 /* Register API request */
 static char n[] = "path";
-static char r[] = "/path/(" REGEX_UUID ")";
+static char r[] = "/path/(" RE_UUID ")";
 static char d[] = "retrieve info of a path";
 static RequestPlugin<PathInfoRequest, n, r, d> p;
 

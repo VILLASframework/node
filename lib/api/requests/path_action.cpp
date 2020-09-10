@@ -58,12 +58,12 @@ public:
 
 /* Register API requests */
 static char n1[] = "path/start";
-static char r1[] = "/path/(" REGEX_UUID ")/start";
+static char r1[] = "/path/(" RE_UUID ")/start";
 static char d1[] = "start a path";
 static RequestPlugin<PathActionRequest<path_start>, n1, r1, d1> p1;
 
 static char n2[] = "path/stop";
-static char r2[] = "/path/(" REGEX_UUID ")/stop";
+static char r2[] = "/path/(" RE_UUID ")/stop";
 static char d2[] = "stop a path";
 static RequestPlugin<PathActionRequest<path_stop>, n2, r2, d2> p2;
 
