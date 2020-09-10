@@ -91,8 +91,8 @@ struct vnode {
 #endif /* WITH_NETEM */
 #endif /* __linux__ */
 
-	struct vpath sources;		/**< A list of path sources which reference this node (struct vpath_sources). */
-	struct vpath destinations;	/**< A list of path destinations which reference this node (struct vpath_destinations). */
+	struct vlist sources;		/**< A list of path sources which reference this node (struct vpath_sources). */
+	struct vlist destinations;	/**< A list of path destinations which reference this node (struct vpath_destinations). */
 
 	struct vnode_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct vnode::_vt functions) */

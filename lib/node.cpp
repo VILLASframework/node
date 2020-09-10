@@ -89,6 +89,14 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 	if (ret)
 		return ret;
 
+	ret = vlist_init(&n->sources);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&n->destinations);
+	if (ret)
+		return ret;
+
 	ret = vt->init ? vt->init(n) : 0;
 	if (ret)
 		return ret;
@@ -389,6 +397,14 @@ int node_destroy(struct vnode *n)
 		return ret;
 
 	ret = node_direction_destroy(&n->out, n);
+	if (ret)
+		return ret;
+
+	ret = vlist_destroy(&n->sources);
+	if (ret)
+		return ret;
+
+	ret = vlist_destroy(&n->destinations);
 	if (ret)
 		return ret;
 
