@@ -45,6 +45,7 @@ struct signal;
 struct vlist;
 
 enum class MappingType {
+	UNKNOWN,
 	DATA,
 	STATS,
 	HEADER,
@@ -62,7 +63,7 @@ enum class MappingTimestampType {
 };
 
 struct mapping_entry {
-	const char *node_name;
+	char *node_name;
 	struct vnode *node;		/**< The node to which this mapping refers. */
 
 	enum MappingType type;		/**< The mapping type. Selects one of the union fields below. */
@@ -79,8 +80,8 @@ struct mapping_entry {
 			int offset;
 			struct signal *signal;
 
-			const char *first;
-			const char *last;
+			char *first;
+			char *last;
 		} data;
 
 		struct {
@@ -100,9 +101,13 @@ struct mapping_entry {
 
 int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes);
 
-int mapping_entry_update(const struct mapping_entry *e, struct sample *remapped, const struct sample *original);
+int mapping_entry_update(const struct mapping_entry *me, struct sample *remapped, const struct sample *original);
 
-int mapping_entry_parse(struct mapping_entry *e, json_t *cfg);
+int mapping_entry_init(struct mapping_entry *me);
+
+int mapping_entry_destroy(struct mapping_entry *me);
+
+int mapping_entry_parse(struct mapping_entry *me, json_t *cfg);
 
 int mapping_entry_parse_str(struct mapping_entry *e, const std::string &str);
 

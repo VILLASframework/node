@@ -86,6 +86,9 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 			if (me->data.signal->unit)
 				s->name = strdup(me->data.signal->unit);
 			break;
+
+		case MappingType::UNKNOWN:
+			return -1;
 	}
 
 	return 0;

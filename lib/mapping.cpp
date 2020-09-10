@@ -44,28 +44,29 @@ int mapping_entry_parse_str(struct mapping_entry *me, const std::string &str)
 
 	if (mr[1].matched)
 		me->node_name = strdup(mr.str(1).c_str());
-	
+
 	if (mr[9].matched)
 		me->node_name = strdup(mr.str(9).c_str());
 
 	if (mr[6].matched) {
 		me->data.first = strdup(mr.str(6).c_str());
-		
-		if (mr[7].matched)
-			me->data.last  = strdup(mr.str(7).c_str());
+		me->data.last = mr[7].matched
+			? strdup(mr.str(7).c_str())
+			: nullptr;
 
 		me->type = MappingType::DATA;
 	}
 	else if (mr[10].matched) {
 		me->data.first = strdup(mr.str(10).c_str());
-		
-		if (mr[11].matched)
-			me->data.last  = strdup(mr.str(11).c_str());
+		me->data.last = mr[11].matched
+			? strdup(mr.str(11).c_str())
+			: nullptr;
 
 		me->type = MappingType::DATA;
 	}
 	else if (mr[8].matched) {
 		me->data.first = strdup(mr.str(8).c_str());
+		me->data.last = nullptr;
 
 		me->type = MappingType::DATA;
 	}
@@ -106,8 +107,26 @@ int mapping_entry_parse_str(struct mapping_entry *me, const std::string &str)
 	return 0;
 
 invalid_format:
-	
+
 	throw RuntimeError("Failed to parse mapping expression: {}", str);
+}
+
+int mapping_entry_init(struct mapping_entry *me)
+{
+	me->type = MappingType::UNKNOWN;
+
+	me->node = nullptr;
+	me->node_name = nullptr;
+
+	return 0;
+}
+
+int mapping_entry_destroy(struct mapping_entry *me)
+{
+	if (me->node_name)
+		free(me->node_name);
+
+	return 0;
 }
 
 int mapping_entry_parse(struct mapping_entry *me, json_t *cfg)
@@ -142,6 +161,10 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg)
 		auto *me = new struct mapping_entry;
 		if (!me)
 			throw MemoryAllocationError();
+
+		ret = mapping_entry_init(me);
+		if (ret)
+			goto out;
 
 		ret = mapping_entry_parse(me, json_entry);
 		if (ret)
@@ -218,6 +241,9 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 
 			len = MIN((unsigned) me->length, original->length - me->data.offset);
 			break;
+
+		case MappingType::UNKNOWN:
+			return -1;
 	}
 
 	if (me->offset + len > remapped->length)
@@ -379,6 +405,9 @@ int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **
 			else
 				strcatf(str, "data[%u]", index);
 			break;
+
+		case MappingType::UNKNOWN:
+			return -1;
 	}
 
 	return 0;
