@@ -314,16 +314,10 @@ void SuperNode::startPaths()
 
 void SuperNode::prepareNodes()
 {
-	int ret, refs;
+	int ret;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
-		refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
-		if (refs <= 0) {
-			logger->warn("No path is using the node {}. Skipping...", node_name(n));
-			n->enabled = false;
-		}
 
 		if (!node_is_enabled(n))
 			continue;

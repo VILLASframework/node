@@ -787,25 +787,6 @@ struct vlist * path_output_signals(struct vpath *p)
 	return &p->signals;
 }
 
-int path_uses_node(struct vpath *p, struct vnode *n)
-{
-	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-		if (pd->node == n)
-			return 0;
-	}
-
-	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
-
-		if (ps->node == n)
-			return 0;
-	}
-
-	return -1;
-}
-
 bool path_is_simple(const struct vpath *p)
 {
 	int ret;

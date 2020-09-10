@@ -144,9 +144,6 @@ struct vlist * path_output_signals(struct vpath *n);
 /** Reverse a path */
 int path_reverse(struct vpath *p, struct vpath *r);
 
-/** Check if node is used as source or destination of a path. */
-int path_uses_node(struct vpath *p, struct vnode *n);
-
 /** Parse a single path and add it to the global configuration.
  *
  * @param cfg A JSON object containing the configuration of the path.
