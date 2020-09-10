@@ -66,13 +66,11 @@ struct sample * sample_alloc_mem(int capacity)
 {
 	size_t sz = SAMPLE_LENGTH(capacity);
 
-	char *b = new char[sz];
-	if (!b)
+	auto *s = (struct sample *) new char[sz];
+	if (!s)
 		throw MemoryAllocationError();
 
-	memset(b, 0, sz);
-
-	struct sample *s = (struct sample *) b;
+	memset((void *) s, 0, sz);
 
 	s->pool_off = SAMPLE_NON_POOL;
 

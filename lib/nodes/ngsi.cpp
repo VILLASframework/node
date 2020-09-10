@@ -662,7 +662,6 @@ char * ngsi_print(struct vnode *n)
 int ngsi_start(struct vnode *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
-	int ret;
 
 	i->in.curl = curl_easy_init();
 	i->out.curl = curl_easy_init();
@@ -696,14 +695,14 @@ int ngsi_start(struct vnode *n)
 	if (i->create) {
 		json_t *json_entity = ngsi_build_entity(n, nullptr, 0, NGSI_ENTITY_ATTRIBUTES | NGSI_ENTITY_METADATA);
 
-		ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity);
+		int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity);
 		if (ret)
 			throw RuntimeError("Failed to create NGSI context for node {}", node_name(n));
 
 		json_decref(json_entity);
 	}
 
-	return ret;
+	return 0;
 }
 
 int ngsi_stop(struct vnode *n)

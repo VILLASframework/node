@@ -191,14 +191,10 @@ check:			if (optarg == endptr)
 		int ret, recv, sent;
 
 		struct format_type *ft;
-		struct sample **smps;
+		struct sample *smps[cnt];
 
 		if (cnt < 1)
 			throw RuntimeError("Vectorize option must be greater than 0");
-
-		smps = new struct sample*[cnt];
-		if (!smps)
-			throw MemoryAllocationError();
 
 		ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH));
 		if (ret)
@@ -300,8 +296,6 @@ stop:			sent = io_print(&io, smps, send);
 			throw RuntimeError("Failed to destroy IO");
 
 		sample_free_many(smps, cnt);
-
-		delete smps;
 
 		ret = pool_destroy(&p);
 		if (ret)

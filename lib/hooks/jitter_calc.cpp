@@ -75,10 +75,10 @@ public:
 
 	~JitterCalcHook()
 	{
-		delete jitter_val;
-		delete delay_series;
-		delete moving_avg;
-		delete moving_var;
+		delete[] jitter_val;
+		delete[] delay_series;
+		delete[] moving_avg;
+		delete[] moving_var;
 	}
 
 	/**
