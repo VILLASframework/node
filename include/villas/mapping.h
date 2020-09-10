@@ -28,6 +28,16 @@
 #include <villas/stats.hpp>
 #include <villas/common.hpp>
 
+#define RE_MAPPING_INDEX "[a-zA-Z0-9_]+"
+#define RE_MAPPING_RANGE "(" RE_MAPPING_INDEX ")(?:-(" RE_MAPPING_INDEX "))?"
+
+#define RE_MAPPING_STATS "stats\\.([a-z]+)\\.([a-z]+)"
+#define RE_MAPPING_HDR   "hdr\\.(sequence|length)"
+#define RE_MAPPING_TS    "ts\\.(origin|received)"
+#define RE_MAPPING_DATA1 "data\\[" RE_MAPPING_RANGE "\\]"
+#define RE_MAPPING_DATA2 "(?:data\\.)?(" RE_MAPPING_INDEX ")"
+#define RE_MAPPING       "(?:(" RE_NODE_NAME ")\\.(?:" RE_MAPPING_STATS "|" RE_MAPPING_HDR "|" RE_MAPPING_TS "|" RE_MAPPING_DATA1 "|" RE_MAPPING_DATA2 ")|(" RE_NODE_NAME ")(?:\\[" RE_MAPPING_RANGE "\\])?)"
+
 /* Forward declarations */
 struct vnode;
 struct sample;
@@ -52,6 +62,7 @@ enum class MappingTimestampType {
 };
 
 struct mapping_entry {
+	const char *node_name;
 	struct vnode *node;		/**< The node to which this mapping refers. */
 
 	enum MappingType type;		/**< The mapping type. Selects one of the union fields below. */
@@ -67,6 +78,9 @@ struct mapping_entry {
 		struct {
 			int offset;
 			struct signal *signal;
+
+			const char *first;
+			const char *last;
 		} data;
 
 		struct {
@@ -84,16 +98,18 @@ struct mapping_entry {
 	};
 };
 
-int mapping_update(const struct mapping_entry *e, struct sample *remapped, const struct sample *original);
+int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes);
 
-int mapping_parse(struct mapping_entry *e, json_t *cfg, struct vlist *nodes);
+int mapping_entry_update(const struct mapping_entry *e, struct sample *remapped, const struct sample *original);
 
-int mapping_parse_str(struct mapping_entry *e, const char *str, struct vlist *nodes);
+int mapping_entry_parse(struct mapping_entry *e, json_t *cfg);
 
-int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str);
+int mapping_entry_parse_str(struct mapping_entry *e, const std::string &str);
 
-int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes);
+int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **str);
 
-int mapping_list_prepare(struct vlist *ml);
+int mapping_list_parse(struct vlist *ml, json_t *cfg);
+
+int mapping_list_prepare(struct vlist *ml, struct vlist *nodes);
 
 int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const struct sample *original);

@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <cstring>
+#include <regex>
+#include <iostream>
 
 #include <villas/mapping.h>
 #include <villas/sample.h>
@@ -33,162 +34,83 @@
 using namespace villas;
 using namespace villas::utils;
 
-int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
+int mapping_entry_parse_str(struct mapping_entry *me, const std::string &str)
 {
-	char *cpy, *node, *type, *field, *end, *lasts;
+	std::smatch mr;
+	std::regex re(RE_MAPPING);
 
-	cpy = strdup(str);
-	if (!cpy)
-		return -1;
+	if (!std::regex_match(str, mr, re))
+		goto invalid_format;
 
-	if (nodes) {
-		node = strtok_r(cpy, ".", &lasts);
-		if (!node) {
-			warning("Missing node name");
-			goto invalid_format;
-		}
+	if (mr[1].matched)
+		me->node_name = strdup(mr.str(1).c_str());
+	
+	if (mr[9].matched)
+		me->node_name = strdup(mr.str(9).c_str());
 
-		me->node = vlist_lookup_name<struct vnode>(nodes, node);
-		if (!me->node) {
-			warning("Unknown node %s", node);
-			goto invalid_format;
-		}
-
-		type = strtok_r(nullptr, ".[", &lasts);
-		if (!type)
-			type = strf("data");
-	}
-	else {
-		me->node = nullptr;
-
-		type = strtok_r(cpy, ".[", &lasts);
-		if (!type)
-			goto invalid_format;
-	}
-
-	if      (!strcmp(type, "stats")) {
-		me->type = MappingType::STATS;
-		me->length = 1;
-
-		char *metric = strtok_r(nullptr, ".", &lasts);
-		if (!metric)
-			goto invalid_format;
-
-		type = strtok_r(nullptr, ".", &lasts);
-		if (!type)
-			goto invalid_format;
-
-		me->stats.metric = Stats::lookupMetric(metric);
-		me->stats.type = Stats::lookupType(type);
-	}
-	else if (!strcmp(type, "hdr")) {
-		me->type = MappingType::HEADER;
-		me->length = 1;
-
-		field = strtok_r(nullptr, ".", &lasts);
-		if (!field) {
-			warning("Missing header type");
-			goto invalid_format;
-		}
-
-		if      (!strcmp(field, "sequence"))
-			me->header.type = MappingHeaderType::SEQUENCE;
-		else if (!strcmp(field, "length"))
-			me->header.type = MappingHeaderType::LENGTH;
-		else {
-			warning("Invalid header type");
-			goto invalid_format;
-		}
-	}
-	else if (!strcmp(type, "ts")) {
-		me->type = MappingType::TIMESTAMP;
-		me->length = 2;
-
-		field = strtok_r(nullptr, ".", &lasts);
-		if (!field) {
-			warning("Missing timestamp type");
-			goto invalid_format;
-		}
-
-		if      (!strcmp(field, "origin"))
-			me->timestamp.type = MappingTimestampType::ORIGIN;
-		else if (!strcmp(field, "received"))
-			me->timestamp.type = MappingTimestampType::RECEIVED;
-		else {
-			warning("Invalid timestamp type");
-			goto invalid_format;
-		}
-	}
-	else if (!strcmp(type, "data")) {
-		char *first_str, *last_str;
-		int first = -1, last = -1;
+	if (mr[6].matched) {
+		me->data.first = strdup(mr.str(6).c_str());
+		
+		if (mr[7].matched)
+			me->data.last  = strdup(mr.str(7).c_str());
 
 		me->type = MappingType::DATA;
+	}
+	else if (mr[10].matched) {
+		me->data.first = strdup(mr.str(10).c_str());
+		
+		if (mr[11].matched)
+			me->data.last  = strdup(mr.str(11).c_str());
 
-		first_str = strtok_r(nullptr, "-]", &lasts);
-		if (first_str) {
-			if (me->node)
-				first = vlist_lookup_index<struct signal>(&me->node->in.signals, first_str);
+		me->type = MappingType::DATA;
+	}
+	else if (mr[8].matched) {
+		me->data.first = strdup(mr.str(8).c_str());
 
-			if (first < 0) {
-				char *endptr;
-				first = strtoul(first_str, &endptr, 10);
-				if (endptr != first_str + strlen(first_str)) {
-					warning("Failed to parse data range");
-					goto invalid_format;
-				}
-			}
-		}
-		else {
-			/* Map all signals */
-			me->data.offset = 0;
-			me->length = -1;
-			goto end;
-		}
+		me->type = MappingType::DATA;
+	}
+	else if (mr[2].matched) {
+		me->stats.type   = Stats::lookupType(mr.str(3));
+		me->stats.metric = Stats::lookupMetric(mr.str(2));
 
-		last_str = strtok_r(nullptr, "]", &lasts);
-		if (last_str) {
-			if (me->node)
-				last = vlist_lookup_index<struct signal>(&me->node->in.signals, last_str);
-
-			if (last < 0) {
-				char *endptr;
-				last = strtoul(last_str, &endptr, 10);
-				if (endptr != last_str + strlen(last_str)) {
-					warning("Failed to parse data range");
-					goto invalid_format;
-				}
-			}
-		}
+		me->type = MappingType::STATS;
+	}
+	else if (mr[5].matched) {
+		if      (mr.str(5) == "origin")
+			me->timestamp.type = MappingTimestampType::ORIGIN;
+		else if (mr.str(5) == "received")
+			me->timestamp.type = MappingTimestampType::RECEIVED;
 		else
-			last = first; /* single element: data[5] => data[5-5] */
-
-		if (last < first)
 			goto invalid_format;
 
-		me->data.offset = first;
-		me->length = last - first + 1;
+		me->type = MappingType::TIMESTAMP;
 	}
-	else
-		goto invalid_format;
+	else if (mr[4].matched) {
+		if      (mr.str(4) == "sequence")
+			me->header.type = MappingHeaderType::SEQUENCE;
+		else if (mr.str(4) == "length")
+			me->header.type = MappingHeaderType::LENGTH;
+		else
+			goto invalid_format;
 
-end:	/* Check that there is no garbage at the end */
-	end = strtok_r(nullptr, "", &lasts);
-	if (end)
-		goto invalid_format;
+		me->type = MappingType::HEADER;
+	}
+	/* Only node name given.. We map all data */
+	else if (me->node_name) {
+		me->data.first = nullptr;
+		me->data.last = nullptr;
 
-	free(cpy);
+		me->type = MappingType::DATA;
+	}
 
 	return 0;
 
 invalid_format:
-
-	free(cpy);
-
-	return -1;
+	
+	throw RuntimeError("Failed to parse mapping expression: {}", str);
 }
 
-int mapping_parse(struct mapping_entry *me, json_t *cfg, struct vlist *nodes)
+int mapping_entry_parse(struct mapping_entry *me, json_t *cfg)
 {
 	const char *str;
 
@@ -196,10 +118,10 @@ int mapping_parse(struct mapping_entry *me, json_t *cfg, struct vlist *nodes)
 	if (!str)
 		return -1;
 
-	return mapping_parse_str(me, str, nodes);
+	return mapping_entry_parse_str(me, str);
 }
 
-int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes)
+int mapping_list_parse(struct vlist *ml, json_t *cfg)
 {
 	int ret;
 
@@ -221,7 +143,7 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes)
 		if (!me)
 			throw MemoryAllocationError();
 
-		ret = mapping_parse(me, json_entry, nodes);
+		ret = mapping_entry_parse(me, json_entry);
 		if (ret)
 			goto out;
 
@@ -319,16 +241,76 @@ int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const st
 	return 0;
 }
 
-int mapping_list_prepare(struct vlist *ml)
+int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes)
 {
+	if (me->node_name && me->node == nullptr) {
+		me->node = vlist_lookup_name<struct vnode>(nodes, me->node_name);
+		if (!me->node)
+			throw RuntimeError("Invalid node name in mapping: {}", me->node_name);
+	}
+
+	if (me->type == MappingType::DATA) {
+		int first = -1, last = -1;
+
+		if (me->data.first) {
+			if (me->node)
+				first = vlist_lookup_index<struct signal>(&me->node->in.signals, me->data.first);
+
+			if (first < 0) {
+				char *endptr;
+				first = strtoul(me->data.first, &endptr, 10);
+				if (endptr != me->data.first + strlen(me->data.first))
+					throw RuntimeError("Failed to parse data index in mapping: {}", me->data.first);
+			}
+		}
+		else {
+			/* Map all signals */
+			me->data.offset = 0;
+			me->length = -1;
+			goto end;
+		}
+
+		if (me->data.last) {
+			if (me->node)
+				last = vlist_lookup_index<struct signal>(&me->node->in.signals, me->data.last);
+
+			if (last < 0) {
+				char *endptr;
+				last = strtoul(me->data.last, &endptr, 10);
+				if (endptr != me->data.last + strlen(me->data.last))
+					throw RuntimeError("Failed to parse data index in mapping: {}", me->data.last);
+			}
+		}
+		else
+			last = first; /* single element: data[5] => data[5-5] */
+
+		if (last < first)
+			throw RuntimeError("Invalid data range indices for mapping: {} < {}", last, first);
+
+		me->data.offset = first;
+		me->length = last - first + 1;
+	}
+
+end:
+	if (me->length < 0) {
+		struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
+
+		me->length = vlist_length(sigs);
+	}
+
+	return 0;
+}
+
+int mapping_list_prepare(struct vlist *ml, struct vlist *nodes)
+{
+	int ret;
+
 	for (size_t i = 0, off = 0; i < vlist_length(ml); i++) {
 		struct mapping_entry *me = (struct mapping_entry *) vlist_at(ml, i);
 
-		if (me->length < 0) {
-			struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
-
-			me->length = vlist_length(sigs);
-		}
+		ret = mapping_entry_prepare(me, nodes);
+		if (ret)
+			return ret;
 
 		me->offset = off;
 		off += me->length;
@@ -337,7 +319,7 @@ int mapping_list_prepare(struct vlist *ml)
 	return 0;
 }
 
-int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
+int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **str)
 {
 	const char *type;
 

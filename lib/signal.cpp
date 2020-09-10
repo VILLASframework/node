@@ -53,7 +53,7 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 	if (ret)
 		return ret;
 
-	ret = mapping_to_str(me, index, &s->name);
+	ret = mapping_entry_to_str(me, index, &s->name);
 	if (ret)
 		return ret;
 
