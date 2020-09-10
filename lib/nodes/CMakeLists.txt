@@ -20,7 +20,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(NODE_SRC)
+set(NODE_SRC
+	loopback_internal.cpp
+)
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)

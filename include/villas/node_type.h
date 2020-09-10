@@ -43,7 +43,8 @@ class SuperNode;
 }
 
 enum class NodeFlags {
-	PROVIDES_SIGNALS	= (1 << 0)
+	PROVIDES_SIGNALS	= (1 << 0),
+	INTERNAL		= (1 << 1)
 };
 
 /** C++ like vtable construct for node_types */
