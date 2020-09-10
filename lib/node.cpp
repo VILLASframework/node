@@ -138,12 +138,11 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	json_error_t err;
 	json_t *json_netem = nullptr;
 
-	const char *type, *uuid = nullptr;
+	const char *uuid = nullptr;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: b }",
-		"type", &type,
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b }",
 		"uuid", &uuid,
 		"enabled", &enabled
 	);
@@ -161,11 +160,6 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	if (ret)
 		return ret;
 #endif /* __linux__ */
-
-	nt = node_type_lookup(type);
-	assert(nt == node_type(n));
-
-	n->_vt = nt;
 
 	if (uuid) {
 		ret = uuid_parse(uuid, n->uuid);
