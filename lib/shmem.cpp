@@ -164,13 +164,19 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 
 int shmem_int_close(struct shmem_int *shm)
 {
+	int ret;
+
 	atomic_store(&shm->closed, 1);
 
-	queue_signalled_close(&shm->write.shared->queue);
+	ret = queue_signalled_close(&shm->write.shared->queue);
+	if (ret)
+		return ret;
 
 	shm_unlink(shm->write.name);
+
 	if (atomic_load(&shm->readers) == 0)
 		munmap(shm->read.base, shm->read.len);
+
 	if (atomic_load(&shm->writers) == 0)
 		munmap(shm->write.base, shm->write.len);
 

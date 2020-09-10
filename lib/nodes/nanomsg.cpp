@@ -91,8 +91,13 @@ int nanomsg_parse(struct vnode *n, json_t *cfg)
 	json_t *json_out_endpoints = nullptr;
 	json_t *json_in_endpoints = nullptr;
 
-	vlist_init(&m->out.endpoints);
-	vlist_init(&m->in.endpoints);
+	ret = vlist_init(&m->out.endpoints);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&m->in.endpoints);
+	if (ret)
+		return ret;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: { s?: o }, s?: { s?: o } }",
 		"format", &format,
@@ -313,8 +318,9 @@ static void register_plugin() {
 	p.node.poll_fds		= nanomsg_poll_fds;
 	p.node.netem_fds	= nanomsg_netem_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

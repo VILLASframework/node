@@ -254,8 +254,9 @@ static void register_plugin() {
 	p.node.poll_fds		= example_poll_fds;
 	p.node.netem_fds	= example_netem_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

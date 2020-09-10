@@ -134,7 +134,8 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 		smp->length++;
 	}
 
-	queue_signalled_push(&i->in.queue, smp);
+	int pushed __attribute__((unused));
+	pushed = queue_signalled_push(&i->in.queue, smp);
 }
 
 int iec61850_sv_parse(struct vnode *n, json_t *json)
@@ -496,8 +497,9 @@ static void register_plugin() {
 	p.node.write		= iec61850_sv_write;
 	p.node.poll_fds		= iec61850_sv_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

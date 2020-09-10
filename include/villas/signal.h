@@ -55,16 +55,16 @@ struct signal {
 };
 
 /** Initialize a signal with default values. */
-int signal_init(struct signal *s);
+int signal_init(struct signal *s) __attribute__ ((warn_unused_result));
 
 /** Destroy a signal and release memory. */
-int signal_destroy(struct signal *s);
+int signal_destroy(struct signal *s) __attribute__ ((warn_unused_result));
 
 /** Allocate memory for a new signal, and initialize it with provided values. */
-struct signal * signal_create(const char *name, const char *unit, enum SignalType fmt);
+struct signal * signal_create(const char *name, const char *unit, enum SignalType fmt) __attribute__ ((warn_unused_result));
 
 /** Destroy and release memory of signal. */
-int signal_free(struct signal *s);
+int signal_free(struct signal *s) __attribute__ ((warn_unused_result));
 
 /** Increase reference counter. */
 int signal_incref(struct signal *s);

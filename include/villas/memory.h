@@ -64,7 +64,7 @@ struct memory_allocation {
 };
 
 /** Initilialize memory subsystem */
-int memory_init(int hugepages);
+int memory_init(int hugepages) __attribute__ ((warn_unused_result));
 
 int memory_lock(size_t lock);
 

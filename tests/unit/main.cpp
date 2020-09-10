@@ -24,5 +24,6 @@
 
 void init_memory()
 {
-	memory_init(DEFAULT_NR_HUGEPAGES);
+	int ret __attribute__((unused));
+	ret = memory_init(DEFAULT_NR_HUGEPAGES);
 }

@@ -55,7 +55,9 @@ struct vnode_direction {
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
-int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n);
+int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n) __attribute__ ((warn_unused_result));
+
+int node_direction_destroy(struct vnode_direction *nd, struct vnode *n) __attribute__ ((warn_unused_result));
 
 int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cfg);
 
@@ -66,8 +68,6 @@ int node_direction_prepare(struct vnode_direction *nd, struct vnode *n);
 int node_direction_start(struct vnode_direction *nd, struct vnode *n);
 
 int node_direction_stop(struct vnode_direction *nd, struct vnode *n);
-
-int node_direction_destroy(struct vnode_direction *nd, struct vnode *n);
 
 struct vlist * node_direction_get_signals(struct vnode_direction *nd);
 

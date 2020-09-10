@@ -98,7 +98,7 @@ struct vpath {
 };
 
 /** Initialize internal data structures. */
-int path_init(struct vpath *p);
+int path_init(struct vpath *p) __attribute__ ((warn_unused_result));
 
 int path_prepare(struct vpath *p);
 
@@ -127,7 +127,7 @@ int path_stop(struct vpath *p);
  *
  * @param i A pointer to the path structure.
  */
-int path_destroy(struct vpath *p);
+int path_destroy(struct vpath *p) __attribute__ ((warn_unused_result));
 
 /** Fills the provided buffer with a string representation of the path.
  *

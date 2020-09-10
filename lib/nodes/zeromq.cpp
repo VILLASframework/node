@@ -96,6 +96,7 @@ int zeromq_reverse(struct vnode *n)
 
 int zeromq_init(struct vnode *n)
 {
+	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	z->out.bind = 1;
@@ -107,8 +108,13 @@ int zeromq_init(struct vnode *n)
 	z->in.pending = 0;
 	z->out.pending = 0;
 
-	vlist_init(&z->in.endpoints);
-	vlist_init(&z->out.endpoints);
+	ret = vlist_init(&z->in.endpoints);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&z->out.endpoints);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -660,8 +666,9 @@ static void register_plugin() {
 	p.node.poll_fds		= zeromq_poll_fds;
 	p.node.netem_fds	= zeromq_netem_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

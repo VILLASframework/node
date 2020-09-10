@@ -85,7 +85,9 @@ public:
 
 	~PipeDirection()
 	{
-		pool_destroy(&pool);
+		int ret __attribute__((unused));
+		
+		ret = pool_destroy(&pool);
 	}
 
 	virtual void run()
@@ -164,7 +166,9 @@ public:
 				goto leave;
 		}
 
-leave2:		return;
+leave2:	
+		logger->info("Send thread stopped");
+		return;
 
 leave:		if (io_eof(io)) {
 			if (limit < 0) {
@@ -225,8 +229,11 @@ public:
 
 		return;
 
-leave:		logger->info("Reached receive limit. Terminating...");
-leave2:		raise(SIGINT);
+leave:
+		logger->info("Reached receive limit. Terminating...");
+leave2:
+		logger->info("Receive thread stopped");
+		raise(SIGINT);
 	}
 };
 

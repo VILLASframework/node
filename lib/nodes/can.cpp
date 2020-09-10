@@ -558,9 +558,6 @@ int can_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "can";
 	p.description		= "Receive CAN messages using the socketCAN driver";
 	p.node.instances.state	= State::DESTROYED;
@@ -578,8 +575,9 @@ static void register_plugin() {
 	p.node.write		= can_write;
 	p.node.poll_fds		= can_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

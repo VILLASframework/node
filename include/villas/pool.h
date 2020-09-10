@@ -57,10 +57,10 @@ struct pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *mem = memory_default);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *mem = memory_default) __attribute__ ((warn_unused_result));
 
 /** Destroy and release memory used by pool. */
-int pool_destroy(struct pool *p);
+int pool_destroy(struct pool *p) __attribute__ ((warn_unused_result));
 
 /** Pop up to \p cnt values from the stack an place them in the array \p blocks.
  *

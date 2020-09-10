@@ -39,9 +39,9 @@ struct sample;
 struct vpath;
 struct vnode;
 
-int hook_list_init(struct vlist *hs);
+int hook_list_init(struct vlist *hs) __attribute__ ((warn_unused_result));
 
-int hook_list_destroy(struct vlist *hs);
+int hook_list_destroy(struct vlist *hs) __attribute__ ((warn_unused_result));
 
 /** Parses an object of hooks
  *

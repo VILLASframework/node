@@ -661,8 +661,9 @@ static void register_plugin() {
 	p.node.stop		= uldaq_stop;
 	p.node.read		= uldaq_read;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

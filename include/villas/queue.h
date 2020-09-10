@@ -71,10 +71,10 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memory_type *mem = memory_default);
+int queue_init(struct queue *q, size_t size, struct memory_type *mem = memory_default) __attribute__ ((warn_unused_result));
 
 /** Desroy MPMC queue and release memory */
-int queue_destroy(struct queue *q);
+int queue_destroy(struct queue *q) __attribute__ ((warn_unused_result));
 
 /** Return estimation of current queue usage.
  *

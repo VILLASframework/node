@@ -237,7 +237,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.format.delimiter = '\n';
 	p.format.separator = '\t';
 
-	vlist_push(&plugins, &p);
+	vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {

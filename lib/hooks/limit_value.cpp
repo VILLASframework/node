@@ -61,7 +61,9 @@ public:
 
 	virtual ~LimitValueHook()
 	{
-		vlist_destroy(&signal_names, nullptr, true);
+		int ret __attribute__((unused));
+
+		ret = vlist_destroy(&signal_names, nullptr, true);
 	}
 
 	virtual void prepare()

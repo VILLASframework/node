@@ -369,7 +369,11 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 int websocket_type_start(villas::node::SuperNode *sn)
 {
-	vlist_init(&connections);
+	int ret;
+
+	ret = vlist_init(&connections);
+	if (ret)
+		return ret;
 
 	web = sn->getWeb();
 	if (web->getState() != State::STARTED)
@@ -532,7 +536,9 @@ int websocket_parse(struct vnode *n, json_t *cfg)
 	json_t *json_dest;
 	json_error_t err;
 
-	vlist_init(&w->destinations);
+	ret = vlist_init(&w->destinations);
+	if (ret)
+		return ret;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &json_dests);
 	if (ret)
@@ -626,8 +632,9 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.node.write		= websocket_write;
 	p.node.poll_fds		= websocket_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {

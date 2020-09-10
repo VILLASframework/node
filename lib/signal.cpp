@@ -149,21 +149,27 @@ int signal_decref(struct signal *s)
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 
 	/* Did we had the last reference? */
-	if (prev == 1)
-		signal_free(s);
+	if (prev == 1) {
+		int ret = signal_free(s);
+		if (ret)
+			throw RuntimeError("Failed to release sample");
+	}
 
 	return prev - 1;
 }
 
 struct signal * signal_copy(struct signal *s)
 {
+	int ret;
 	struct signal *ns;
 
 	ns = new struct signal;
 	if (!ns)
 		throw MemoryAllocationError();
 
-	signal_init(ns);
+	ret = signal_init(ns);
+	if (!ret)
+		throw RuntimeError("Failed to initialize signal");
 
 	ns->type = s->type;
 	ns->init = s->init;

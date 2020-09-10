@@ -101,7 +101,7 @@ struct vnode {
 };
 
 /** Initialize node with default values */
-int node_init(struct vnode *n, struct vnode_type *vt);
+int node_init(struct vnode *n, struct vnode_type *vt) __attribute__ ((warn_unused_result));
 
 /** Do initialization after parsing the configuration */
 int node_prepare(struct vnode *n);
@@ -166,7 +166,7 @@ int node_restart(struct vnode *n);
  *
  * @see node_type::destroy
  */
-int node_destroy(struct vnode *n);
+int node_destroy(struct vnode *n) __attribute__ ((warn_unused_result));
 
 /** Return a pointer to a string which should be used to print this node.
  *

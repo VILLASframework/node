@@ -94,9 +94,6 @@ out:	smp->flags = 0;
 
 static struct plugin p;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name = "value";
 	p.description = "A bare text value without any headers";
 	p.type = PluginType::FORMAT;
@@ -105,7 +102,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.format.size 	= 0;
 	p.format.flags	= (int) SampleFlags::HAS_DATA | (int) IOFlags::NEWLINES;
 
-	vlist_push(&plugins, &p);
+	vlist_init_and_push(&plugins, &p);;
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {

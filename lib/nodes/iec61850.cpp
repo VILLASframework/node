@@ -220,7 +220,9 @@ int iec61850_type_stop()
 
 	EthernetHandleSet_destroy(hset);
 
-	vlist_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
+	ret = vlist_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
+	if (ret)
+		return ret;
 
 	return 0;
 }

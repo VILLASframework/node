@@ -44,6 +44,8 @@ using namespace villas::utils;
 
 int if_init(struct interface *i, struct rtnl_link *link)
 {
+	int ret;
+
 	i->nl_link = link;
 
 	debug(LOG_IF | 3, "Created interface '%s'", if_name(i));
@@ -54,15 +56,21 @@ int if_init(struct interface *i, struct rtnl_link *link)
 	else
 		warning("Did not found any interrupts for interface '%s'", if_name(i));
 
-	vlist_init(&i->nodes);
+	ret = vlist_init(&i->nodes);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
 int if_destroy(struct interface *i)
 {
+	int ret;
+
 	/* List members are freed by the nodes they belong to. */
-	vlist_destroy(&i->nodes, nullptr, false);
+	ret = vlist_destroy(&i->nodes);
+	if (ret)
+		return ret;
 
 	rtnl_qdisc_put(i->tc_qdisc);
 

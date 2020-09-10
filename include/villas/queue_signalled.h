@@ -64,19 +64,19 @@ struct queue_signalled {
 
 #define queue_signalled_available(q) queue_available(&((q)->queue))
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem = memory_default, enum QueueSignalledMode mode = QueueSignalledMode::AUTO, int flags = 0);
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem = memory_default, enum QueueSignalledMode mode = QueueSignalledMode::AUTO, int flags = 0) __attribute__ ((warn_unused_result));
 
-int queue_signalled_destroy(struct queue_signalled *qs);
+int queue_signalled_destroy(struct queue_signalled *qs) __attribute__ ((warn_unused_result));
 
-int queue_signalled_push(struct queue_signalled *qs, void *ptr);
+int queue_signalled_push(struct queue_signalled *qs, void *ptr) __attribute__ ((warn_unused_result));
 
-int queue_signalled_pull(struct queue_signalled *qs, void **ptr);
+int queue_signalled_pull(struct queue_signalled *qs, void **ptr) __attribute__ ((warn_unused_result));
 
-int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
+int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt) __attribute__ ((warn_unused_result));
 
-int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
+int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt) __attribute__ ((warn_unused_result));
 
-int queue_signalled_close(struct queue_signalled *qs);
+int queue_signalled_close(struct queue_signalled *qs) __attribute__ ((warn_unused_result));
 
 /** Returns a file descriptor which can be used with poll / select to wait for new data */
 int queue_signalled_fd(struct queue_signalled *qs);

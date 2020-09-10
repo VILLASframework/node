@@ -76,11 +76,11 @@ struct io {
 	const struct format_type *_vt;
 };
 
-int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags);
+int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags) __attribute__ ((warn_unused_result));
 
-int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int flags);
+int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int flags) __attribute__ ((warn_unused_result));
 
-int io_destroy(struct io *io);
+int io_destroy(struct io *io) __attribute__ ((warn_unused_result));
 
 int io_check(struct io *io);
 

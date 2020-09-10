@@ -60,4 +60,4 @@ extern struct memory_type *memory_default;
 struct memory_type * memory_ib(struct vnode *n, struct memory_type *parent);
 struct memory_type * memory_managed(void *ptr, size_t len);
 
-int memory_mmap_init(int hugepages);
+int memory_mmap_init(int hugepages) __attribute__ ((warn_unused_result));

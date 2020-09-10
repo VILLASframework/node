@@ -62,7 +62,7 @@ struct interface {
  * @retval >0 Success. A pointer to the new interface.
  * @retval 0 Error. The creation failed.
  */
-int if_init(struct interface * , struct rtnl_link *link);
+int if_init(struct interface * , struct rtnl_link *link) __attribute__ ((warn_unused_result));
 
 /** Get name of interface */
 const char * if_name(struct interface *);
@@ -71,7 +71,7 @@ const char * if_name(struct interface *);
  *
  * @param i A pointer to the interface structure.
  */
-int if_destroy(struct interface *i);
+int if_destroy(struct interface *i) __attribute__ ((warn_unused_result));
 
 /** Start interface.
  *

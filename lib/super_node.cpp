@@ -64,9 +64,19 @@ SuperNode::SuperNode() :
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	task(CLOCK_REALTIME)
 {
-	vlist_init(&nodes);
-	vlist_init(&paths);
-	vlist_init(&interfaces);
+	int ret;
+
+	ret = vlist_init(&nodes);
+	if (ret)
+		throw RuntimeError("Failed to initialize list");
+
+	ret = vlist_init(&paths);
+	if (ret)
+		throw RuntimeError("Failed to initialize list");
+
+	ret = vlist_init(&interfaces);
+	if (ret)
+		throw RuntimeError("Failed to initialize list");
 
 #ifdef WITH_NETEM
 	nl_init(); /* Fill link cache */
@@ -236,9 +246,7 @@ void SuperNode::check()
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct vpath *) vlist_at(&paths, i);
 
-		ret = path_check(p);
-		if (ret)
-			throw RuntimeError("Invalid configuration for path {}", path_name(p));
+		path_check(p);
 	}
 
 	state = State::CHECKED;
@@ -336,7 +344,7 @@ void SuperNode::preparePaths()
 		if (!path_is_enabled(p))
 			continue;
 
-		ret = path_prepare(p);
+		ret = path_prepare(p, &nodes);
 		if (ret)
 			throw RuntimeError("Failed to prepare path: {}", path_name(p));
 	}
@@ -473,12 +481,14 @@ void SuperNode::run()
 
 SuperNode::~SuperNode()
 {
+	int ret __attribute__((unused));
+
 	assert(state != State::STARTED);
 
-	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
-	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
+	ret = vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
+	ret = vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
 #ifdef WITH_NETEM
-	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
+	ret = vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
 #endif /* WITH_NETEM */
 }
 

@@ -222,6 +222,8 @@ int signal_generator_parse(struct vnode *n, json_t *cfg)
 
 			json_array_foreach(json_type, i, json_value) {
 				type_str = json_string_value(json_value);
+				if (!type_str)
+					throw ConfigError(json_value, "node-config-node-signal", "Signal type must be a string");
 
 				s->type[i] = signal_generator_lookup_type(type_str);
 			}
@@ -461,8 +463,9 @@ static void register_plugin() {
 	p.node.read		= signal_generator_read;
 	p.node.poll_fds		= signal_generator_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

@@ -30,9 +30,9 @@
 /* Forward declarations */
 struct vlist;
 
-int signal_list_init(struct vlist *list);
+int signal_list_init(struct vlist *list) __attribute__ ((warn_unused_result));
 
-int signal_list_destroy(struct vlist *list);
+int signal_list_destroy(struct vlist *list) __attribute__ ((warn_unused_result));
 
 int signal_list_parse(struct vlist *list, json_t *cfg);
 

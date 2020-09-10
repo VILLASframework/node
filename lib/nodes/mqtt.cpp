@@ -148,7 +148,9 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	queue_signalled_push_many(&m->queue, (void **) smps, n->in.vectorize);
+	ret = queue_signalled_push_many(&m->queue, (void **) smps, n->in.vectorize);
+	if (ret < (int) n->in.vectorize)
+		warning("MQTT: Failed to enqueue samples");
 }
 
 static void mqtt_subscribe_cb(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
@@ -416,9 +418,8 @@ int mqtt_type_start(villas::node::SuperNode *sn)
 	int ret;
 
 	ret = vlist_init(&clients);
-	if (ret) {
-	    return ret;
-	}
+	if (ret)
+		return ret;
 
 	ret = mosquitto_lib_init();
 	if (ret)
@@ -426,9 +427,8 @@ int mqtt_type_start(villas::node::SuperNode *sn)
 
 	// Start thread here to run mosquitto loop for registered clients
 	ret = pthread_create(&thread, nullptr, mosquitto_loop_thread, nullptr);
-	if (ret) {
-	    return ret;
-	}
+	if (ret)
+		return ret;
 
 	return 0;
 
@@ -445,23 +445,24 @@ int mqtt_type_stop()
 	// Stop thread here that executes mosquitto loop
 	ret = pthread_cancel(thread);
 	if (ret)
-	    return ret;
+		return ret;
 	debug(  3, "Called pthread_cancel() on MQTT communication management thread.");
 
 	ret = pthread_join(thread, nullptr);
-	if (ret) {
-	    return ret;
-	}
+	if (ret)
+		return ret;
 
 	ret = mosquitto_lib_cleanup();
 	if (ret)
 		goto mosquitto_error;
 
 	// When this is called the list of clients should be empty
-	if (vlist_length(&clients) > 0) {
-	    error("List of MQTT clients contains elements at time of destruction. Call node_stop for each MQTT node before stopping node type!");
-	}
-	vlist_destroy(&clients, nullptr, false);
+	if (vlist_length(&clients) > 0) 
+		error("List of MQTT clients contains elements at time of destruction. Call node_stop for each MQTT node before stopping node type!");
+	
+	ret = vlist_destroy(&clients, nullptr, false);
+	if (ret)
+		return ret;
 
 	return 0;
 
@@ -543,8 +544,9 @@ static void register_plugin() {
 	p.node.reverse		= mqtt_reverse;
 	p.node.poll_fds		= mqtt_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

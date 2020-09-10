@@ -1013,8 +1013,9 @@ static void register_plugin() {
 	p.node.write		= comedi_write;
 	p.node.poll_fds		= comedi_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

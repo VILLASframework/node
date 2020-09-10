@@ -327,9 +327,6 @@ int fpga_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	if (plugins.state == State::DESTROYED)
-		vlist_init(&plugins);
-
 	p.name			= "fpga";
 	p.description		= "Communicate with VILLASfpga Xilinx FPGA boards";
 	p.type			= PluginType::NODE;
@@ -350,8 +347,9 @@ static void register_plugin() {
 	p.node.write		= fpga_write;
 	p.node.poll_fds		= fpga_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

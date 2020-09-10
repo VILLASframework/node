@@ -66,7 +66,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.format.sprint	= iotagent_ul_sprint;
 	p.format.size = 0;
 
-	vlist_push(&plugins, &p);
+	vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {

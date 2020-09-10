@@ -60,7 +60,9 @@ Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
 
 Hook::~Hook()
 {
-	signal_list_destroy(&signals);
+	int ret __attribute__((unused));
+	
+	ret = signal_list_destroy(&signals);
 }
 
 void Hook::prepare()

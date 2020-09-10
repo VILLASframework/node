@@ -140,7 +140,9 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 	t->cooldown = 0;
 
 	/* Generate list of test cases */
-	vlist_init(&t->cases);
+	ret = vlist_init(&t->cases);
+	if (ret)
+		return ret;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: F, s: o }",
 		"prefix", &prefix,
@@ -458,8 +460,9 @@ static void register_plugin() {
 	p.node.read		= test_rtt_read;
 	p.node.write		= test_rtt_write;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

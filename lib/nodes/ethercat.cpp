@@ -61,6 +61,7 @@ struct coupler {
 
 static void ethercat_cyclic_task(struct vnode *n)
 {
+	int ret;
 	struct sample *smp;
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -89,7 +90,9 @@ static void ethercat_cyclic_task(struct vnode *n)
 			smp->data[i].f = w->in.range * (float) ain_value / INT16_MAX;
 		}
 
-		queue_signalled_push(&w->queue, smp);
+		ret = queue_signalled_push(&w->queue, smp);
+		if (ret)
+			warning("Ethercat: Failed to enqueue samples");
 
 		/* Write process data */
 		smp = w->send.exchange(nullptr);
@@ -464,8 +467,9 @@ static void register_plugin() {
 	p.node.write		= ethercat_write;
 	p.node.poll_fds		= ethercat_poll_fds;
 
-	vlist_init(&p.node.instances);
-	vlist_push(&plugins, &p);
+	int ret = vlist_init(&p.node.instances);
+	if (!ret)
+		vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110)))

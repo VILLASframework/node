@@ -255,7 +255,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.format.flags = (int) IOFlags::HAS_BINARY_PAYLOAD |
 		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 
-	vlist_push(&plugins, &p);
+	vlist_init_and_push(&plugins, &p);
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
