@@ -89,7 +89,7 @@ enum Stats::Metric Stats::lookupMetric(const std::string &str)
 			return m.first;
 	}
 
-	throw std::invalid_argument("Invalid metric");
+	throw std::invalid_argument("Invalid stats metric");
 }
 
 enum Stats::Type Stats::lookupType(const std::string &str)
@@ -99,7 +99,7 @@ enum Stats::Type Stats::lookupType(const std::string &str)
 			return t.first;
 	}
 
-	throw std::invalid_argument("Invalid type");
+	throw std::invalid_argument("Invalid stats type");
 }
 
 Stats::Stats(int buckets, int warmup)
@@ -107,8 +107,8 @@ Stats::Stats(int buckets, int warmup)
 	for (auto m : metrics) {
 		histograms.emplace(
 			std::piecewise_construct,
-          		std::forward_as_tuple(m.first),
-          		std::forward_as_tuple(buckets, warmup)
+			std::forward_as_tuple(m.first),
+			std::forward_as_tuple(buckets, warmup)
 		);
 	}
 }
