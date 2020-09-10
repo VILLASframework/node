@@ -68,7 +68,7 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 	n->name = nullptr;
 	n->_name = nullptr;
 	n->_name_long = nullptr;
-	n->enabled = 1;
+	n->enabled = true;
 	n->affinity = -1; /* all cores */
 
 #ifdef __linux__
@@ -125,8 +125,7 @@ int node_prepare(struct vnode *n)
 
 int node_parse(struct vnode *n, json_t *json, const char *name)
 {
-	struct vnode_type *nt;
-	int ret;
+	int ret, enabled = n->enabled;
 
 	json_error_t err;
 	json_t *json_netem = nullptr;
@@ -138,10 +137,12 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: b }",
 		"type", &type,
 		"uuid", &uuid,
-		"enabled", &n->enabled
+		"enabled", &enabled
 	);
 	if (ret)
 		return ret;
+
+	n->enabled = enabled;
 
 #ifdef __linux__
 	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",

@@ -60,7 +60,7 @@
  */
 struct vnode {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
-	int enabled;
+	bool enabled;
 
 	enum State state;
 
