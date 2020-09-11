@@ -118,7 +118,17 @@ public:
 
 	DPHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		inverse(0)
+		signal_name(nullptr),
+		signal_index(0),
+		offset(0),
+		inverse(0),
+		f0(50.0),
+		timestep(50e-6),
+		time(),
+		steps(0),
+		coeffs(),
+		fharmonics(),
+		fharmonics_len(0)
 	{ }
 
 	virtual ~DPHook()

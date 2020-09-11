@@ -54,7 +54,6 @@ protected:
 
 public:
 	std::string uri;
-	int method;
 	std::smatch matches;
 	json_t *body;
 
@@ -68,14 +67,15 @@ public:
 		OPTIONS,
 		PUT,
 		PATCH
-	};
+	} method;
 
 	Request(Session *s) :
 		session(s),
-		body(nullptr)
-	{
-		logger = logging.get("api:request");
-	}
+		logger(logging.get("api:request")),
+		body(nullptr),
+		factory(nullptr),
+		method(Method::UNKNOWN)
+	{ }
 
 	virtual ~Request()
 	{
@@ -106,7 +106,7 @@ public:
 	make(Session *s) = 0;
 
 	static Request *
-	make(Session *s, const std::string &uri, int meth);
+	make(Session *s, const std::string &uri, Request::Method meth);
 };
 
 template<typename T, const char *name, const char *re, const char *desc>

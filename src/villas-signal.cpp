@@ -55,6 +55,9 @@ public:
 	Signal(int argc, char *argv[]) :
 		Tool(argc, argv, "signal"),
 		stop(false),
+		n(),
+		io(),
+		q(),
 		format("villas.human")
 	{
 		int ret;

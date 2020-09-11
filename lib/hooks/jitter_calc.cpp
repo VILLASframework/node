@@ -24,6 +24,7 @@
  * @{
  */
 
+#include <vector>
 #include <cinttypes>
 #include <cstring>
 
@@ -40,10 +41,11 @@ namespace node {
 class JitterCalcHook : public Hook {
 
 protected:
-	int64_t *jitter_val;
-	int64_t *delay_series;
-	int64_t *moving_avg;
-	int64_t *moving_var;
+	std::vector<int64_t> jitter_val;
+	std::vector<int64_t> delay_series;
+	std::vector<int64_t> moving_avg;
+	std::vector<int64_t> moving_var;
+
 	int64_t delay_mov_sum;
 	int64_t delay_mov_sum_sqrd;
 	int curr_count;
@@ -51,35 +53,15 @@ protected:
 public:
 
 	JitterCalcHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en)
-	{
-		size_t sz = GPS_NTP_DELAY_WIN_SIZE;
-
-		jitter_val	= new int64_t[sz];
-		delay_series	= new int64_t[sz];
-		moving_avg	= new int64_t[sz];
-		moving_var	= new int64_t[sz];
-
-		if (!jitter_val || !delay_series || !moving_avg || !moving_var)
-			throw MemoryAllocationError();
-
-		memset(jitter_val, 0, sz);
-		memset(delay_series, 0, sz);
-		memset(moving_avg, 0, sz);
-		memset(moving_var, 0, sz);
-
-		delay_mov_sum = 0;
-		delay_mov_sum_sqrd = 0;
-		curr_count = 0;
-	}
-
-	~JitterCalcHook()
-	{
-		delete[] jitter_val;
-		delete[] delay_series;
-		delete[] moving_avg;
-		delete[] moving_var;
-	}
+		Hook(p, n, fl, prio, en),
+		jitter_val(GPS_NTP_DELAY_WIN_SIZE),
+		delay_series(GPS_NTP_DELAY_WIN_SIZE),
+		moving_avg(GPS_NTP_DELAY_WIN_SIZE),
+		moving_var(GPS_NTP_DELAY_WIN_SIZE),
+		delay_mov_sum(0),
+		delay_mov_sum_sqrd(0),
+		curr_count(0)
+	{ }
 
 	/**
 	 * Hook to calculate jitter between GTNET-SKT GPS timestamp and Villas node NTP timestamp.

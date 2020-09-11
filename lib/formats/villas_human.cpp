@@ -51,7 +51,7 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 	}
 
 	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
-		if (io->flags & (int) SampleFlags::HAS_SEQUENCE)
+		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
 			off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
 	}
 
@@ -214,7 +214,7 @@ void villas_human_header(struct io *io, const struct sample *smp)
 			if (sig->name)
 				fprintf(f, "%c%s", io->separator, sig->name);
 			else
-				fprintf(f, "%csignal%d", io->separator, i);
+				fprintf(f, "%csignal%u", io->separator, i);
 
 			if (sig->unit)
 				fprintf(f, "[%s]", sig->unit);

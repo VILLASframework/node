@@ -61,11 +61,14 @@ public:
 	GateHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		mode(Mode::RISING_EDGE),
+		signalName(),
+		signalIndex(0),
 		threshold(0.5),
 		duration(-1),
 		samples(-1),
 		previousValue(std::numeric_limits<double>::quiet_NaN()),
-		active(false)
+		active(false),
+		startSequence(0)
 	{ }
 
 	virtual void parse(json_t *cfg)

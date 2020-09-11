@@ -217,6 +217,7 @@ ParameterizedTestParameters(io, lowlevel)
 	return params;
 }
 
+// cppcheck-suppress unknownMacro
 ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 {
 	int ret;

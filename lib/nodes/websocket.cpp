@@ -273,7 +273,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
-			struct sample **smps = (struct sample **) alloca(cnt * sizeof(struct sample *));
+			struct sample *smps[cnt];
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
@@ -318,7 +318,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				int avail, enqueued;
 				struct websocket *w = (struct websocket *) n->_vd;
-				struct sample **smps = (struct sample **) alloca(cnt * sizeof(struct sample *));
+				struct sample *smps[cnt];
 				if (!smps) {
 					warning("Failed to allocate memory for connection: %s", websocket_connection_name(c));
 					break;

@@ -48,7 +48,9 @@ protected:
 
 public:
 	LimitValueHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en)
+		Hook(p, n, fl, prio, en),
+		offset(0),
+		min(0), max(0)
 	{
 		int ret;
 

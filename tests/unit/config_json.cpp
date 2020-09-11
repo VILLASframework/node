@@ -59,6 +59,7 @@ const char *json_example = "{\n"
 			   "  ]\n"
 			   "}";
 
+// cppcheck-suppress syntaxError
 Test(config, config_to_json)
 {
 	int ret;

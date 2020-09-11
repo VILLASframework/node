@@ -37,10 +37,9 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Session::Session(lws *w) :
-	wsi(w)
+	wsi(w),
+	logger(logging.get("api:session"))
 {
-	logger = logging.get("api:session");
-
 	lws_context *ctx = lws_get_context(wsi);
 	void *user_ctx = lws_context_user(ctx);
 
@@ -127,11 +126,11 @@ void Session::open(void *in, size_t len)
 	char buf[32];
 	unsigned long contentLength;
 
-	int meth;
+	Request::Method meth;
 	std::string uri = reinterpret_cast<char *>(in);
 
 	try {
-		meth = getRequestMethod(wsi);
+		meth = (Request::Method) getRequestMethod(wsi);
 		if (meth == Request::Method::UNKNOWN)
 			throw RuntimeError("Invalid request method");
 

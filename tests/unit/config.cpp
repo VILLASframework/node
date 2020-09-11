@@ -31,6 +31,7 @@
 namespace fs = std::filesystem;
 using namespace villas::node;
 
+// cppcheck-suppress syntaxError
 Test(config, env)
 {
 	const char *cfg_f = "test = \"${MY_ENV_VAR}\"\n";
@@ -53,7 +54,6 @@ Test(config, env)
 	cr_assert(json_is_string(j));
 	cr_assert_str_eq("mobydick", json_string_value(j));
 }
-
 
 Test(config, include)
 {

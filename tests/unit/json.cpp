@@ -34,6 +34,7 @@ struct param {
 	char *json;
 };
 
+// cppcheck-suppress syntaxError
 ParameterizedTestParameters(json, json_load_cli)
 {
 	const auto d = cr_strdup;

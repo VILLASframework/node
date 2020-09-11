@@ -62,6 +62,8 @@ public:
 		stop(false),
 		format("villas.human"),
 		dtypes("64f"),
+		p(),
+		io(),
 		cnt(1)
 	{
 		int ret;

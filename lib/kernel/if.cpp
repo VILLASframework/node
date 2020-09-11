@@ -247,7 +247,7 @@ int if_set_affinity(struct interface *i, int affinity)
 	FILE *file;
 
 	for (int n = 0; n < IF_IRQ_MAX && i->irqs[n]; n++) {
-		snprintf(filename, sizeof(filename), "/proc/irq/%u/smp_affinity", i->irqs[n]);
+		snprintf(filename, sizeof(filename), "/proc/irq/%d/smp_affinity", (int) i->irqs[n]);
 
 		file = fopen(filename, "w");
 		if (file) {

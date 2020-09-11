@@ -78,15 +78,10 @@ public:
 
 	~TestCmpSide() noexcept(false)
 	{
-		int ret;
+		int ret __attribute((unused));
 
 		ret = io_close(&io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
-
 		ret = io_destroy(&io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
 
 		sample_decref(sample);
 	}
@@ -97,6 +92,7 @@ class TestCmp : public Tool {
 public:
 	TestCmp(int argc, char *argv[]) :
 		Tool(argc, argv, "test-cmp"),
+		pool(),
 		epsilon(1e-9),
 		format("villas.human"),
 		dtypes("64f"),

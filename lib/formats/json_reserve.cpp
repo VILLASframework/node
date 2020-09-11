@@ -57,7 +57,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 			json_name = json_string(sig->name);
 		else {
 			char name[32];
-			snprintf(name, 32, "signal_%d", i);
+			snprintf(name, 32, "signal%u", i);
 
 			json_name = json_string(name);
 		}

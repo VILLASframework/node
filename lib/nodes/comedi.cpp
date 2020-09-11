@@ -951,9 +951,6 @@ char* comedi_cmd_trigger_src(unsigned int src, char *buf)
 	if (src & TRIG_COUNT)	strcat(buf, "count|");
 	if (src & TRIG_EXT)		strcat(buf, "ext|");
 	if (src & TRIG_INT)		strcat(buf, "int|");
-#ifdef TRIG_OTHER
-	if (src & TRIG_OTHER)	strcat(buf, "other|");
-#endif
 
 	if (strlen(buf) == 0)
 		sprintf(buf, "unknown(0x%08x)", src);

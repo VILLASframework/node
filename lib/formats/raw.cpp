@@ -56,15 +56,17 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 	int o = 0;
 	size_t nlen;
 
-	int8_t     *i8  =  (int8_t *) buf;
-	int16_t    *i16 =  (int16_t *) buf;
-	int32_t    *i32 =  (int32_t *) buf;
-	int64_t    *i64 =  (int64_t *) buf;
-	float      *f32 =  (float *) buf;
-	double     *f64 =  (double *) buf;
+	void *vbuf = (char *) buf;  // avoid warning about invalid pointer cast
+
+	int8_t     *i8  =  (int8_t *) vbuf;
+	int16_t    *i16 =  (int16_t *) vbuf;
+	int32_t    *i32 =  (int32_t *) vbuf;
+	int64_t    *i64 =  (int64_t *) vbuf;
+	float      *f32 =  (float *) vbuf;
+	double     *f64 =  (double *) vbuf;
 #ifdef HAS_128BIT
-	__int128   *i128 = (__int128 *) buf;
-	__float128 *f128 = (__float128 *) buf;
+	__int128   *i128 = (__int128 *) vbuf;
+	__float128 *f128 = (__float128 *) vbuf;
 #endif
 
 	int bits = 1 << (io->flags >> 24);
@@ -226,8 +228,8 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 							break;
 #ifdef HAS_128BIT
 						case 128:
-							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::real(data->z);
-							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::imag(data->z);
+							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::real(data->z));
+							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::imag(data->z));
 							break;
 #endif
 					}
@@ -247,15 +249,17 @@ out:	if (wbytes)
 
 int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
-	int8_t     *i8  =  (int8_t *)  buf;
-	int16_t    *i16 =  (int16_t *) buf;
-	int32_t    *i32 =  (int32_t *) buf;
-	int64_t    *i64 =  (int64_t *) buf;
-	float      *f32 =  (float *) buf;
-	double     *f64 =  (double *) buf;
+	void *vbuf = (void *) buf; // avoid warning about invalid pointer cast
+
+	int8_t     *i8  =  (int8_t *)  vbuf;
+	int16_t    *i16 =  (int16_t *) vbuf;
+	int32_t    *i32 =  (int32_t *) vbuf;
+	int64_t    *i64 =  (int64_t *) vbuf;
+	float      *f32 =  (float *) vbuf;
+	double     *f64 =  (double *) vbuf;
 #ifdef HAS_128BIT
-	__int128   *i128 = (__int128 *) buf;
-	__float128 *f128 = (__float128 *) buf;
+	__int128   *i128 = (__int128 *) vbuf;
+	__float128 *f128 = (__float128 *) vbuf;
 #endif
 
 	/* The raw format can not encode multiple samples in one buffer

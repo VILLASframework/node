@@ -176,19 +176,15 @@ void Web::worker()
 
 Web::Web(Api *a) :
 	state(State::INITIALIZED),
+	logger(logging.get("web")),
+	context(nullptr),
+	vhost(nullptr),
+	port(getuid() > 0 ? 8080 : 80),
 	htdocs(WEB_PATH),
 	api(a)
 {
-	int lvl = LLL_ERR | LLL_WARN | LLL_NOTICE;
-
 	/** @todo: Port to C++: add LLL_DEBUG and others if trace log level is activated */
-
-	lws_set_log_level(lvl, lwsLogger);
-
-	/* Default values */
-	port = getuid() > 0 ? 8080 : 80;
-
-	logger = logging.get("web");
+	lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, lwsLogger);
 }
 
 int Web::parse(json_t *cfg)

@@ -26,6 +26,7 @@
 
 extern void init_memory();
 
+// cppcheck-suppress unknownMacro
 Test(signal, parse, .init = init_memory) {
 	int ret;
 	struct signal sig;
@@ -36,7 +37,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "1";
 	sig.type = SignalType::INTEGER;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
@@ -44,7 +45,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "1.2";
 	sig.type = SignalType::FLOAT;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
@@ -52,7 +53,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "1";
 	sig.type = SignalType::BOOLEAN;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
@@ -60,7 +61,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "1";
 	sig.type = SignalType::COMPLEX;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
@@ -69,7 +70,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "-1-3i";
 	sig.type = SignalType::COMPLEX;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
@@ -78,7 +79,7 @@ Test(signal, parse, .init = init_memory) {
 
 	str = "-3i";
 	sig.type = SignalType::COMPLEX;
-	
+
 	ret = signal_data_parse_str(&sd, &sig, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));

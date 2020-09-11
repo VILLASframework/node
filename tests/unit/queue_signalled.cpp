@@ -127,6 +127,7 @@ ParameterizedTestParameters(queue_signalled, simple)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
+// cppcheck-suppress unknownMacro
 ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .init = init_memory)
 {
 	int ret;

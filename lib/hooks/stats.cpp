@@ -65,6 +65,7 @@ protected:
 public:
 	StatsReadHook(StatsHook *pa, struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
+		last(nullptr),
 		parent(pa)
 	{
 		state = State::CHECKED;
@@ -98,8 +99,8 @@ class StatsHook : public Hook {
 	friend StatsWriteHook;
 
 protected:
-	StatsReadHook *readHook;
-	StatsWriteHook *writeHook;
+	StatsReadHook readHook;
+	StatsWriteHook writeHook;
 
 	enum Stats::Format format;
 	int verbose;
@@ -115,6 +116,8 @@ public:
 
 	StatsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
+		readHook(this, p, n, fl, prio, en),
+		writeHook(this, p, n, fl, prio, en),
 		format(Stats::Format::HUMAN),
 		verbose(0),
 		warmup(500),
@@ -123,15 +126,9 @@ public:
 		uri()
 	{
 		/* Add child hooks */
-		readHook = new StatsReadHook(this, p, n, fl, prio, en);
-		writeHook = new StatsWriteHook(this, p, n, fl, prio, en);
-
-		if (!readHook || !writeHook)
-			throw MemoryAllocationError();
-
 		if (node) {
-			vlist_push(&node->in.hooks, (void *) readHook);
-			vlist_push(&node->out.hooks, (void *) writeHook);
+			vlist_push(&node->in.hooks, (void *) &readHook);
+			vlist_push(&node->out.hooks, (void *) &writeHook);
 		}
 	}
 
@@ -171,7 +168,7 @@ public:
 	{
 		// Only call readHook if it hasnt been added to the node's hook list
 		if (!node)
-			return readHook->process(smp);
+			return readHook.process(smp);
 
 		return Hook::Reason::OK;
 	}

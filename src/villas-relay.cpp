@@ -224,6 +224,8 @@ void RelayConnection::read(void *in, size_t len)
 Relay::Relay(int argc, char *argv[]) :
 	Tool(argc, argv, "relay"),
 	stop(false),
+	context(nullptr),
+	vhost(nullptr),
 	loopback(false),
 	port(8088),
 	protocol("live")

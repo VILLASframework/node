@@ -87,7 +87,7 @@ int signal_list_generate(struct vlist *list, unsigned len, enum SignalType typ)
 	char name[32];
 
 	for (unsigned i = 0; i < len; i++) {
-		snprintf(name, sizeof(name), "signal%d", i);
+		snprintf(name, sizeof(name), "signal%u", i);
 
 		struct signal *sig = signal_create(name, nullptr, typ);
 		if (!sig)

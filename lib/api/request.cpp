@@ -28,7 +28,7 @@
 using namespace villas;
 using namespace villas::node::api;
 
-Request * RequestFactory::make(Session *s, const std::string &uri, int meth)
+Request * RequestFactory::make(Session *s, const std::string &uri, Request::Method meth)
 {
 	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
 		std::smatch mr;

@@ -157,7 +157,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 			if (sig->name)
 				strncpy(name, sig->name, sizeof(name));
 			else
-				snprintf(name, sizeof(name), "value%d", j);
+				snprintf(name, sizeof(name), "value%u", j);
 
 			if (sig->type == SignalType::COMPLEX) {
 				strcatf(&buf, "%s_re=%f, %s_im=%f",

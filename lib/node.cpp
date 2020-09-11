@@ -285,7 +285,7 @@ int node_start(struct vnode *n)
 
 			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->fwmark, sizeof(n->fwmark));
 			if (ret)
-				serror("Failed to set FW mark for outgoing packets");
+				throw RuntimeError("Failed to set FW mark for outgoing packets");
 			else
 				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->fwmark);
 		}
@@ -295,7 +295,7 @@ int node_start(struct vnode *n)
 	n->state = State::STARTED;
 	n->sequence = 0;
 
-	return ret;
+	return 0;
 }
 
 int node_stop(struct vnode *n)

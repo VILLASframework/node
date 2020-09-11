@@ -43,10 +43,9 @@ using namespace villas;
 using namespace villas::node;
 
 Config::Config() :
+	logger(logging.get("config")),
 	root(nullptr)
-{
-	logger = logging.get("config");
-}
+{ }
 
 Config::Config(const std::string &u) :
 	Config()

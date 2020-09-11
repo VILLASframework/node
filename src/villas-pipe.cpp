@@ -86,7 +86,7 @@ public:
 	~PipeDirection()
 	{
 		int ret __attribute__((unused));
-		
+
 		ret = pool_destroy(&pool);
 	}
 
@@ -166,7 +166,7 @@ public:
 				goto leave;
 		}
 
-leave2:	
+leave2:
 		logger->info("Send thread stopped");
 		return;
 
@@ -243,10 +243,12 @@ public:
 	Pipe(int argc, char *argv[]) :
 		Tool(argc, argv, "pipe"),
 		stop(false),
+		io(),
 		timeout(0),
 		reverse(false),
 		format("villas.human"),
 		dtypes("64f"),
+		cfg_cli(json_object()),
 		enable_send(true),
 		enable_recv(true),
 		limit_send(-1),
@@ -257,8 +259,6 @@ public:
 		ret = memory_init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
-
-		cfg_cli = json_object();
 	}
 
 	~Pipe()

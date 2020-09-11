@@ -28,11 +28,10 @@ using namespace villas::node::api;
 
 Response::Response(Session *s, json_t *resp) :
 	session(s),
+	logger(logging.get("api:response")),
 	response(resp),
 	code(HTTP_STATUS_OK)
-{
-	logger = logging.get("api:response");
-}
+{ }
 
 Response::~Response()
 {

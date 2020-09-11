@@ -40,6 +40,7 @@ TheoryDataPoints(memory, aligned) = {
 	DataPoints(struct memory_type *, &memory_heap, &memory_mmap_hugetlb, &memory_mmap_hugetlb)
 };
 
+// cppcheck-suppress unknownMacro
 Theory((size_t len, size_t align, struct memory_type *mt), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;

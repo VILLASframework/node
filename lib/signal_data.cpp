@@ -61,7 +61,6 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 		case SignalType::BOOLEAN:
 			switch(from->type) {
 				case SignalType::BOOLEAN:
-					data->b = data->b;
 					break;
 
 				case SignalType::INTEGER:
@@ -87,7 +86,6 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::INTEGER:
-					data->i = data->i;
 					break;
 
 				case SignalType::FLOAT:
@@ -113,7 +111,6 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::FLOAT:
-					data->f = data->f;
 					break;
 
 				case SignalType::COMPLEX:
@@ -139,7 +136,6 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::COMPLEX:
-					data->z = data->z;
 					break;
 
 				default: { }

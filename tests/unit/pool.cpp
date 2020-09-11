@@ -49,6 +49,7 @@ ParameterizedTestParameters(pool, basic)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
+// cppcheck-suppress unknownMacro
 ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;

@@ -30,6 +30,7 @@
 
 using namespace villas;
 
+// cppcheck-suppress syntaxError
 Test(mapping, parse_nodes)
 {
 	int ret;

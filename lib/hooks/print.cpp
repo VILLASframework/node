@@ -47,6 +47,7 @@ protected:
 public:
 	PrintHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
+		io(),
 		prefix(nullptr),
 		uri(nullptr)
 	{

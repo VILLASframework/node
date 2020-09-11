@@ -46,10 +46,10 @@ protected:
 public:
 	LimitRateHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		LimitHook(p, n, fl, prio, en),
-		mode(LIMIT_RATE_LOCAL)
-	{
-		last = (timespec) { 0, 0 };
-	}
+		mode(LIMIT_RATE_LOCAL),
+		deadtime(0),
+		last({0, 0})
+	{ }
 
 	virtual void setRate(double rate, double maxRate = -1)
 	{

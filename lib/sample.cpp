@@ -235,7 +235,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	/* Compare data */
 	if (flags & (int) SampleFlags::HAS_DATA) {
 		if (a->length != b->length) {
-			printf("length: %d != %d\n", a->length, b->length);
+			printf("length: %u != %u\n", a->length, b->length);
 			return 4;
 		}
 
@@ -247,28 +247,28 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 			switch (sample_format(a, i)) {
 				case SignalType::FLOAT:
 					if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
-						printf("data[%d].f: %f != %f\n", i, a->data[i].f, b->data[i].f);
+						printf("data[%u].f: %f != %f\n", i, a->data[i].f, b->data[i].f);
 						return 5;
 					}
 					break;
 
 				case SignalType::INTEGER:
 					if (a->data[i].i != b->data[i].i) {
-						printf("data[%d].i: %" PRId64 " != %" PRId64 "\n", i, a->data[i].i, b->data[i].i);
+						printf("data[%u].i: %" PRId64 " != %" PRId64 "\n", i, a->data[i].i, b->data[i].i);
 						return 5;
 					}
 					break;
 
 				case SignalType::BOOLEAN:
 					if (a->data[i].b != b->data[i].b) {
-						printf("data[%d].b: %s != %s\n", i, a->data[i].b ? "true" : "false", b->data[i].b ? "true" : "false");
+						printf("data[%u].b: %s != %s\n", i, a->data[i].b ? "true" : "false", b->data[i].b ? "true" : "false");
 						return 5;
 					}
 					break;
 
 				case SignalType::COMPLEX:
 					if (std::abs(a->data[i].z - b->data[i].z) > epsilon) {
-						printf("data[%d].z: %f+%fi != %f+%fi\n", i, std::real(a->data[i].z), std::imag(a->data[i].z), std::real(b->data[i].z), std::imag(b->data[i].z));
+						printf("data[%u].z: %f+%fi != %f+%fi\n", i, std::real(a->data[i].z), std::imag(a->data[i].z), std::real(b->data[i].z), std::imag(b->data[i].z));
 						return 5;
 					}
 					break;

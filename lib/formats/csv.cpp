@@ -183,7 +183,7 @@ void csv_header(struct io *io, const struct sample *smp)
 			if (sig->name)
 				fprintf(f, "%s", sig->name);
 			else
-				fprintf(f, "signal%d", i);
+				fprintf(f, "signal%u", i);
 
 			if (sig->unit)
 				fprintf(f, "[%s]", sig->unit);

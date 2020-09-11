@@ -46,7 +46,7 @@ int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, str
 			printed += snprintf(buf + printed, len - printed, "%s|%f|", sig->name, smp->data[i].f);
 		else {
 			char name[32];
-			snprintf(name, 32, "signal_%d", i);
+			snprintf(name, 32, "signal_%u", i);
 			printed += snprintf(buf + printed, len - printed, "%s|%f|", name, smp->data[i].f);
 		}
 	}

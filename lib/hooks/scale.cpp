@@ -44,6 +44,8 @@ protected:
 public:
 	ScaleHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
+		signal_name(nullptr),
+		signal_index(0),
 		scale(1),
 		offset(0)
 	{ }

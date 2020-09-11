@@ -39,16 +39,16 @@ using namespace villas;
 using namespace villas::node;
 
 Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
+	logger(logging.get("hook")),
 	state(State::INITIALIZED),
 	flags(fl),
 	priority(prio),
 	enabled(en),
 	path(p),
-	node(n)
+	node(n),
+	cfg(nullptr)
 {
 	int ret;
-
-	logger = logging.get("hook");
 
 	ret = signal_list_init(&signals);
 	if (ret)
@@ -61,7 +61,7 @@ Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
 Hook::~Hook()
 {
 	int ret __attribute__((unused));
-	
+
 	ret = signal_list_destroy(&signals);
 }
 

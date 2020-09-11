@@ -439,7 +439,7 @@ int rtp_stop(struct vnode *n)
 	if (ret)
 		return ret;
 
-	return ret;
+	return 0;
 }
 
 int rtp_destroy(struct vnode *n)
@@ -508,7 +508,7 @@ int rtp_type_start(villas::node::SuperNode *sn)
 	}
 #endif /* WITH_NETEM */
 
-	return ret;
+	return 0;
 }
 
 int rtp_type_stop()
