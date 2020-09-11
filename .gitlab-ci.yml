@@ -177,7 +177,8 @@ test:cppcheck 1/2:
                --error-exitcode=1
                --quiet
                --std=c++11
-               -I include/villas
+               -I include
+               -I common/include
                src/
                lib/
                tests/unit/ | tee cppcheck-error.log
@@ -203,7 +204,8 @@ test:cppcheck 2/2:
                --quiet
                --enable=warning,performance,portability,information,missingInclude
                --std=c++11
-               -I include/villas
+               -I include
+               -I common/include
                src/
                lib/
                tests/unit/ | tee cppcheck-warn.log
