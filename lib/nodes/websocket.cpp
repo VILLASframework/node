@@ -278,9 +278,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
 				size_t wbytes;
-				io_sprint(&c->io, c->buffers.send->buf + LWS_PRE, c->buffers.send->size - LWS_PRE, &wbytes, smps, pulled);
+				io_sprint(&c->io, c->buffers.send->buf.data() + LWS_PRE, c->buffers.send->buf.size() - LWS_PRE, &wbytes, smps, pulled);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send->buf + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send->buf.data() + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_decref_many(smps, pulled);
 
@@ -328,7 +328,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (avail < cnt)
 					warning("Pool underrun for connection: %s", websocket_connection_name(c));
 
-				recvd = io_sscan(&c->io, c->buffers.recv->buf, c->buffers.recv->len, nullptr, smps, avail);
+				recvd = io_sscan(&c->io, c->buffers.recv->buf.data(), c->buffers.recv->buf.size(), nullptr, smps, avail);
 				if (recvd < 0) {
 					warning("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;

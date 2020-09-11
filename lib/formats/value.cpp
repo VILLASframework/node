@@ -93,6 +93,7 @@ out:	smp->flags = 0;
 }
 
 static struct plugin p;
+
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.name = "value";
 	p.description = "A bare text value without any headers";

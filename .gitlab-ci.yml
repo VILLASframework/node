@@ -178,6 +178,7 @@ test:cppcheck:
                --inline-suppr
                --enable=warning,performance,portability,information,missingInclude
                --std=c++11
+               --suppress=noValidConfiguration
                -I include
                -I common/include
                src/
