@@ -40,7 +40,7 @@ protected:
 	double thresh;
 	double realSmpRate;
 	unsigned idx;
-	int lastSeqNr;
+	uint64_t lastSeqNr;
 	unsigned edgeCounter;
 	double pll_gain;
 	timespec realTime;
@@ -90,55 +90,51 @@ public:
 
 		/* Get value of PPS signal */
 		float value = smp->data[idx].f; // TODO check if it is really float
-		int seqNr = smp->sequence;
+		uint64_t seqNr = smp->sequence;
 
 		/* Detect Edge */
 		bool isEdge = lastValue < thresh && value > thresh;
+		lastValue = value;
+
+
+		double timeErr;
+		double changeVal;
+		static const double targetVal = 0.5e9;
 
 		if (isEdge) {
-			if (edgeCounter == 1) {
+			if (edgeCounter == 2) {
 				auto now = time_now();
 
 				if (now.tv_nsec >= 0.5e9)
 					realTime.tv_sec = now.tv_sec + 1;
 				else
 					realTime.tv_sec = now.tv_sec;
+				realTime.tv_nsec = targetVal;
 			}
 
 			lastSeqNr = seqNr;
-
-
 			edgeCounter++;
-		}
 
-		lastValue = value;
-
-		double timeErr;
-		double changeVal;
-		if(isEdge){
-			timeErr = ( 1e9 - realTime.tv_nsec);
-			changeVal = 0;
-			if (edgeCounter >= 1){//pll mode
-				double targetVal = 0.95e9;
-				changeVal = pll_gain * abs(targetVal - timeErr);
-				changeVal = pll_gain;
-				if(timeErr > targetVal)
+			timeErr = ( targetVal - realTime.tv_nsec);
+			if (edgeCounter >= 2){//pll mode
+				
+				changeVal = pll_gain * -1 * timeErr;
+				//changeVal = pll_gain;
+				/*if(timeErr > 0 )
 					realSmpRate -= changeVal;
-				else if(timeErr < targetVal){
+				else if(timeErr < 0){*/
 					realSmpRate += changeVal;
-				}
-				if(realSmpRate > 10010)realSmpRate = 10010;
-				if(realSmpRate < 9990)realSmpRate = 9990;
+				//}
+				if(realSmpRate > 10100.)realSmpRate = 10100;
+				if(realSmpRate < 9900.)realSmpRate = 9900;
 			}
 			//info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%f, smpRate=%f, pll_gain=%f", seqNr, realTime.tv_sec, (1e9 - realTime.tv_nsec + 1e9/realSmpRate), realSmpRate, pll_gain);
 		}
 
 		if (edgeCounter < 2)
 			return Hook::Reason::SKIP_SAMPLE;
-		else if (edgeCounter == 2 && isEdge)
-			realTime.tv_nsec = 0;
 		else
-			realTime.tv_nsec += 1e9 / realSmpRate;
+			realTime.tv_nsec += 1.e9 / realSmpRate;
 
 		if (realTime.tv_nsec >= 1e9) {
 			realTime.tv_sec++;
@@ -146,7 +142,7 @@ public:
 		}
 		
 		if(isEdge){
-			info("Edge detected: seq=%u, realTime.nsec=%ld, timeErr=%f , smpRate=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, realSmpRate, changeVal);
+			info("Edge detected: seq=%lu, realTime.nsec=%ld, timeErr=%f , smpRate=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, realSmpRate, changeVal);
 		}
 
 		/* Update timestamp */
