@@ -49,6 +49,7 @@ protected:
 
 public:
 	TableColumn(int w, enum Alignment a, const std::string &t, const std::string &f, const std::string &u = "") :
+		_width(0),
 		width(w),
 		title(t),
 		format(f),

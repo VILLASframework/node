@@ -32,6 +32,7 @@ using namespace villas;
 
 using villas::JsonBuffer;
 
+// cppcheck-suppress unknownMacro
 TestSuite(buffer, .description = "Buffer datastructure");
 
 Test(json_buffer, decode)

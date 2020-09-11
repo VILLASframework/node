@@ -26,6 +26,7 @@
 
 using namespace villas::kernel;
 
+// cppcheck-suppress unknownMacro
 TestSuite(kernel, .description = "Kernel features");
 
 #if defined(__x86_64__) || defined(__i386__)

@@ -37,6 +37,7 @@ struct data {
 	int data;
 };
 
+// cppcheck-suppress unknownMacro
 TestSuite(list, .description = "List datastructure");
 
 Test(list, vlist_lookup_name)

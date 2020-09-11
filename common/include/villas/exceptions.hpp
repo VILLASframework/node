@@ -101,6 +101,8 @@ protected:
 	json_t *setting;
 	json_error_t error;
 
+	std::string msg;
+
 public:
 	template<typename... Args>
 	ConfigError(json_t *s, const std::string &i, const std::string &what = "Failed to parse configuration") :
@@ -143,18 +145,17 @@ public:
 
 	virtual const char * what() const noexcept
 	{
-		std::stringstream ss;
+		if (msg.empty()) {
+			std::stringstream ss;
 
-		ss << std::runtime_error::what() << std::endl;
-		ss << " Please consult the user documentation for details: " << docUri();
+			ss << std::runtime_error::what() << std::endl;
+			ss << " Please consult the user documentation for details: " << docUri();
 
-		if (error.position >= 0) {
-			ss << std::endl << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
+			if (error.position >= 0)
+				ss << std::endl << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
 		}
 
-		auto str = new std::string(ss.str());
-
-		return str->c_str();
+		return msg.c_str();
 	}
 };
 

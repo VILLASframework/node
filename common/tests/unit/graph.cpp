@@ -29,6 +29,7 @@
 
 using namespace villas;
 
+// cppcheck-suppress unknownMacro
 TestSuite(graph, .description = "Graph library");
 
 Test(graph, basic, .description = "DirectedGraph")

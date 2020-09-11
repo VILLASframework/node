@@ -28,6 +28,7 @@
 
 using namespace villas::utils::base64;
 
+// cppcheck-suppress unknownMacro
 TestSuite(base64, .description = "Base64 En/decoder");
 
 static std::vector<byte> vec(const char *str)
