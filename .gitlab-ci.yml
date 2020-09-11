@@ -168,47 +168,21 @@ test:flake8:
   tags:
     - docker
 
-test:cppcheck 1/2:
+test:cppcheck:
   stage: test
-  needs: ["build:fedora:x86_64"]
-  script:
-    - cppcheck -j $(nproc)
-               --max-configs=32 
-               --error-exitcode=1
-               --quiet
-               --std=c++11
-               -I include
-               -I common/include
-               src/
-               lib/
-               tests/unit/ | tee cppcheck-error.log
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  dependencies:
-    - build:fedora:x86_64
-  tags:
-    - docker
-  artifacts:
-    when: on_failure
-    paths:
-      - cppcheck-error.log
-    expose_as: 'cppcheck-error'
-
-test:cppcheck 2/2:
-  stage: test
-  needs: ["build:fedora:x86_64"]
-  allow_failure: true
   script:
     - cppcheck -j $(nproc)
                --max-configs=32
                --error-exitcode=1
                --quiet
+               --inline-suppr
                --enable=warning,performance,portability,information,missingInclude
                --std=c++11
                -I include
                -I common/include
                src/
                lib/
-               tests/unit/ | tee cppcheck-warn.log
+               tests/unit/ | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   dependencies:
     - build:fedora:x86_64
@@ -217,8 +191,8 @@ test:cppcheck 2/2:
   artifacts:
     when: on_failure
     paths:
-      - cppcheck-warn.log
-    expose_as: 'cppcheck-warn'
+      - cppcheck.log
+    expose_as: cppcheck
 
 test:unit:
   stage: test
