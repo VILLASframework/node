@@ -49,3 +49,27 @@ test:unit:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
   - docker
+
+test:cppcheck:
+  stage: test
+  script:
+    - cppcheck -j $(nproc)
+               --max-configs=32
+               --error-exitcode=1
+               --quiet
+               --inline-suppr
+               --enable=warning,performance,portability,information,missingInclude
+               --std=c++11
+               -I include
+               lib/
+               tests/unit/ | tee cppcheck.log
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  dependencies:
+    - build:source
+  tags:
+    - docker
+  artifacts:
+    when: on_failure
+    paths:
+      - cppcheck.log
+    expose_as: cppcheck
