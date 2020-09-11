@@ -227,8 +227,8 @@ Test(advio, append)
 	char c;
 	fseek(af->file, 0, SEEK_SET);
 	if (af->file) {
-	    while ((c = getc(af->file)) != EOF)
-	        putchar(c);
+		while ((c = getc(af->file)) != EOF)
+			putchar(c);
 	}
 
 	len = afwrite(append1, 1, 64, af);

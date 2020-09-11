@@ -30,45 +30,24 @@
 using namespace villas;
 
 Buffer::Buffer(size_t sz) :
-	len(0),
-	size(sz)
-{
-	buf = new char[size];
-	if (!buf)
-		throw MemoryAllocationError();
-
-	memset(buf, 0, size);
-}
-
-Buffer::~Buffer()
-{
-	delete[] buf;
-}
+	buf(sz, 0)
+{ }
 
 void Buffer::clear()
 {
-	len = 0;
+	buf.clear();
 }
 
 int Buffer::append(const char *data, size_t l)
 {
-	if (len + l > size) {
-		size = len + l;
-		buf = (char *) realloc(buf, size);
-		if (!buf)
-			return -1;
-	}
-
-	memcpy(buf + len, data, l);
-
-	len += l;
+	buf.insert(buf.end(), data, data+l);
 
 	return 0;
 }
 
 int Buffer::parseJson(json_t **j)
 {
-	*j = json_loadb(buf, len, 0, nullptr);
+	*j = json_loadb(buf.data(), buf.size(), 0, nullptr);
 	if (!*j)
 		return -1;
 
@@ -79,17 +58,11 @@ int Buffer::appendJson(json_t *j, int flags)
 {
 	size_t l;
 
-retry:	l = json_dumpb(j, buf + len, size - len, flags);
-	if (size < len + l) {
-		buf = (char *) realloc(buf, len + l);
-		if (!buf)
-			return -1;
-
-		size = len + l;
+retry:	l = json_dumpb(j, buf.data() + buf.size(), buf.capacity() - buf.size(), flags);
+	if (buf.capacity() < buf.size() + l) {
+		buf.reserve(buf.size() + l);
 		goto retry;
 	}
-
-	len += l;
 
 	return 0;
 }

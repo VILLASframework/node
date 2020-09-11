@@ -96,7 +96,7 @@ static char * advio_human_time(double t, char *buf, size_t len)
 	const char *units[] = { "secs", "mins", "hrs", "days", "weeks", "months", "years" };
 	int divs[]          = {     60,     60,    24,      7,       4,       12 };
 
-	while (t > divs[i] && i < ARRAY_LEN(divs)) {
+	while (i < ARRAY_LEN(divs) && t > divs[i]) {
 		t /= divs[i];
 		i++;
 	}

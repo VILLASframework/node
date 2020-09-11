@@ -45,7 +45,11 @@ class Device {
 	friend class Container;
 public:
 	Device(const std::string &name, Group &group) :
-	    name(name), group(group) {}
+		name(name),
+		fd(-1),
+		pci_device(nullptr),
+		group(group)
+	{ }
 
 	~Device();
 
@@ -97,7 +101,11 @@ class Group {
 	friend class Container;
 	friend Device;
 private:
-	Group(int index) : fd(-1), index(index) {}
+	Group(int index) :
+		fd(-1),
+		index(index),
+		container(nullptr)
+	{ }
 public:
 	~Group();
 

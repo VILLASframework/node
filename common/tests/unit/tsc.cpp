@@ -28,7 +28,6 @@
 
 #define CNT (1 << 18)
 
-// cppcheck-suppress unknownMacro
 TestSuite(tsc, .description = "Timestamp counters");
 
 Test(tsc, increasing)

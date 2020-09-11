@@ -135,7 +135,7 @@ int villas::kernel::module_set_param(const char *module, const char *param, cons
 	snprintf(fn, sizeof(fn), "%s/module/%s/parameters/%s", SYSFS_PATH, module, param);
 	f = fopen(fn, "w");
 	if (!f)
-		serror("Failed set parameter %s for kernel module %s to %s", module, param, value);
+		throw RuntimeError("Failed set parameter {} for kernel module {} to {}", module, param, value);
 
 	debug(LOG_KERNEL | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
 	fprintf(f, "%s", value);
