@@ -46,6 +46,7 @@ LABEL \
 RUN dnf -y install \
 	gcc gcc-c++ \
 	make cmake \
+	cppcheck \
 	pkgconfig git curl tar
 
 # Dependencies
