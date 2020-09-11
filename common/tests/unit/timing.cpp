@@ -26,6 +26,7 @@
 
 #include <villas/timing.h>
 
+// cppcheck-suppress unknownMacro
 TestSuite(timing, .description = "Time measurements");
 
 Test(timing, time_now)

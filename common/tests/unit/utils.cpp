@@ -30,6 +30,7 @@
 
 using namespace villas::utils;
 
+// cppcheck-suppress unknownMacro
 TestSuite(utils, .description = "Utilities");
 
 /* Simple normality test for 1,2,3s intervals */

@@ -33,6 +33,7 @@ using namespace villas;
  * The Sciebo share is read/write accessible via WebDAV. */
 #define BASE_URI "https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests"
 
+// cppcheck-suppress unknownMacro
 TestSuite(advio,
 	.description = "Advanced file IO"
 );

@@ -27,6 +27,7 @@
 
 using namespace villas::utils;
 
+// cppcheck-suppress unknownMacro
 TestSuite(popen, .description = "Bi-directional popen");
 
 Test(popen, no_shell)

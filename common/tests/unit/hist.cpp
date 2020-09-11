@@ -31,6 +31,7 @@ const std::array<double, 10> test_data = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 using namespace villas;
 
+// cppcheck-suppress unknownMacro
 TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {

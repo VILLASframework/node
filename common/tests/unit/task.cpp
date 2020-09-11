@@ -27,6 +27,7 @@
 #include <villas/task.hpp>
 #include <villas/timing.h>
 
+// cppcheck-suppress unknownMacro
 TestSuite(task, .description = "Periodic timer tasks");
 
 Test(task, rate, .timeout = 10)
