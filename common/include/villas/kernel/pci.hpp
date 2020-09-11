@@ -50,9 +50,9 @@ public:
 	bool
 	operator==(const Id &i);
 
-	int vendor;
-	int device;
-	int class_code;
+	unsigned int vendor;
+	unsigned int device;
+	unsigned int class_code;
 };
 
 class Slot {
@@ -69,10 +69,10 @@ public:
 	bool
 	operator==(const Slot &s);
 
-	int domain;
-	int bus;
-	int device;
-	int function;
+	unsigned int domain;
+	unsigned int bus;
+	unsigned int device;
+	unsigned int function;
 };
 
 struct Region {

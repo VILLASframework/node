@@ -24,6 +24,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <vector>
 
 #include <jansson.h>
 
@@ -34,13 +35,9 @@ namespace villas {
 class Buffer {
 
 public:
-	char *buf;
-	size_t len;
-	size_t size;
+	std::vector<char> buf;
 
 	Buffer(size_t size);
-
-	~Buffer();
 
 	void clear();
 

@@ -59,6 +59,7 @@ test:cppcheck:
                --quiet
                --inline-suppr
                --enable=warning,performance,portability,information,missingInclude
+               --suppress=noValidConfiguration
                --std=c++11
                -I include
                lib/

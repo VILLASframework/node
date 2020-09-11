@@ -57,7 +57,7 @@ DeviceList::DeviceList()
 		Id id;
 		Slot slot;
 
-		struct { const char *s; int *p; } map[] = {
+		struct { const char *s; unsigned int *p; } map[] = {
 			{ "vendor", &id.vendor },
 			{ "device", &id.device }
 		};

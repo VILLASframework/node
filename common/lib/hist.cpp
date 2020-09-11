@@ -35,17 +35,20 @@ using namespace villas::utils;
 namespace villas {
 
 Hist::Hist(int buckets, Hist::cnt_t wu) :
-	warmup(wu)
-{
-    for ( int i = 0; i<buckets; i++){
-        data.push_back(0);
-    }
-    total=0;
-    highest=0;
-    lowest=DBL_MAX;
-    higher=0;
-    lower=0;
-}
+	resolution(0),
+	high(),
+	low(),
+	highest(std::numeric_limits<double>::min()),
+	lowest(std::numeric_limits<double>::max()),
+	last(),
+	total(0),
+	warmup(wu),
+	higher(0),
+	lower(0),
+	data(buckets, 0),
+	_m{0, 0},
+	_s{0, 0}
+{ }
 
 void Hist::put(double value)
 {
@@ -66,10 +69,10 @@ void Hist::put(double value)
 			high = getMean() + 3 * getStddev();
 			resolution = (high - low) / data.size();
 		}
-		else if (data.size() && (total == warmup) && (warmup == 0)){
-            // there is no warmup phase
-            // TODO resolution = ?
-        }
+		else if (data.size() && (total == warmup) && (warmup == 0)) {
+			// there is no warmup phase
+			// TODO resolution = ?
+		}
 		else {
 			idx_t idx = std::round((value - low) / resolution);
 
@@ -99,7 +102,6 @@ void Hist::put(double value)
 		_m[1] = _m[0];
 		_s[1] = _s[0];
 	}
-
 }
 
 void Hist::reset()

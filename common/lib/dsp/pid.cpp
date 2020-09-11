@@ -33,7 +33,9 @@ PID::PID(double _dt, double _max, double _min, double _Kp, double _Kd, double _K
 	min(_min),
 	Kp(_Kp),
 	Kd(_Kd),
-	Ki(_Ki)
+	Ki(_Ki),
+	pre_error(0),
+	integral(0)
 { }
 
 double PID::calculate(double setpoint, double pv)

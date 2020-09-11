@@ -51,7 +51,10 @@ public:
 	 * @param size	Size of "memory window"
 	 */
 	MemoryTranslation(uintptr_t src, uintptr_t dst, size_t size) :
-	    src(src), dst(dst), size(size) {}
+		src(src),
+		dst(dst),
+		size(size)
+	{ }
 
 	uintptr_t
 	getLocalAddr(uintptr_t addrInForeignAddrSpace) const;
@@ -96,10 +99,9 @@ class MemoryManager {
 private:
 	// This is a singleton, so private constructor ...
 	MemoryManager() :
-	    memoryGraph("memory:graph")
+		memoryGraph("memory:graph"),
+		logger(logging.get("memory:manager"))
 	{
-		logger = logging.get("memory:manager");
-
 		pathCheckFunc = [&](const MemoryGraph::Path &path) {
 			return this->pathCheck(path);
 		};

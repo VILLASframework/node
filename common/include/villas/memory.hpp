@@ -133,7 +133,7 @@ class BaseAllocator {
 public:
 	/// memoryAddrSpaceId: memory that is managed by this allocator
 	BaseAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId) :
-	    memoryAddrSpaceId(memoryAddrSpaceId)
+		memoryAddrSpaceId(memoryAddrSpaceId)
 	{
 		// CRTP
 		derivedAlloc = static_cast<DerivedAllocator*>(this);
@@ -150,9 +150,11 @@ public:
 	}
 
 	BaseAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
-	    BaseAllocator(mem->getAddrSpaceId())
+		BaseAllocator(mem->getAddrSpaceId())
 	{
+		// cppcheck-suppress useInitializationList
 		memoryBlock = std::move(mem);
+		derivedAlloc = nullptr;
 	}
 
 	virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>

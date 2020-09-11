@@ -718,7 +718,7 @@ Device::pciMsiFind(int nos[])
 		} while ((col = strtok(nullptr, " ")));
 
 
-		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);
+		ret = sscanf(last, "vfio-msi[%d](%12[0-9:])", &idx, name);
 		if (ret == 2) {
 			if (strstr(this->name.c_str(), name) == this->name.c_str())
 				nos[idx] = irq;
