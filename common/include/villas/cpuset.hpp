@@ -167,17 +167,12 @@ public:
 		return lhs;
 	}
 
-	//bool& operator[](std::size_t cpu)
-	//{
-	//	void cpuset_set_cpu(cpuset_t*setp, cpu_t cpu, int state)
-	//}
-
 	bool operator[](size_t cpu) const
 	{
-		return isset(cpu);
+		return isSet(cpu);
 	}
 
-	bool isset(size_t cpu) const
+	bool isSet(size_t cpu) const
 	{
 		return CPU_ISSET_S(cpu, sz, setp);
 	}

@@ -84,7 +84,7 @@ CpuSet::operator uintmax_t()
 	uintmax_t iset = 0;
 
 	for (size_t i = 0; i < num_cpus; i++) {
-		if (isset(i))
+		if (isSet(i))
 			iset |= 1ULL << i;
 	}
 
@@ -98,10 +98,10 @@ CpuSet::operator std::string ()
 	bool first = true;
 
 	for (size_t i = 0; i < num_cpus; i++) {
-		if (isset(i)) {
+		if (isSet(i)) {
 			size_t run = 0;
 			for (size_t j = i + 1; j < num_cpus; j++) {
-				if (!isset(j))
+				if (!isSet(j))
 					break;
 
 				run++;
