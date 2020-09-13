@@ -62,6 +62,7 @@ SuperNode::SuperNode() :
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
+	statsRate(1.0),
 	task(CLOCK_REALTIME)
 {
 	int ret;
@@ -111,7 +112,8 @@ void SuperNode::parse(json_t *root)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(root, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+		"stats", &statsRate,
 		"http", &json_http,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
@@ -386,7 +388,8 @@ void SuperNode::start()
 	startNodes();
 	startPaths();
 
-	task.setRate(1.0);
+	if (statsRate > 0) // A rate <0 will disable the periodic stats
+		task.setRate(statsRate);
 
 	Stats::printHeader(Stats::Format::HUMAN);
 

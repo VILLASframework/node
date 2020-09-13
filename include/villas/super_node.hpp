@@ -73,6 +73,7 @@ protected:
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
+	double statsRate;	/**< Rate at which we display the periodic stats. */
 
 	struct Task task;	/**< Task for periodic stats output */
 
