@@ -28,18 +28,6 @@ using namespace villas::utils;
 
 #ifdef __linux__
 
-CpuSet::operator uintmax_t()
-{
-	uintmax_t iset = 0;
-
-	for (size_t i = 0; i < num_cpus; i++) {
-		if (isset(i))
-			iset |= 1ULL << i;
-	}
-
-	return iset;
-}
-
 CpuSet::CpuSet(uintmax_t iset) :
 	CpuSet()
 {
@@ -90,6 +78,18 @@ CpuSet::CpuSet(const std::string &str) :
 CpuSet::CpuSet(const char *str)
 	: CpuSet(std::string(str))
 { }
+
+CpuSet::operator uintmax_t()
+{
+	uintmax_t iset = 0;
+
+	for (size_t i = 0; i < num_cpus; i++) {
+		if (isset(i))
+			iset |= 1ULL << i;
+	}
+
+	return iset;
+}
 
 CpuSet::operator std::string ()
 {

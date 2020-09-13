@@ -91,6 +91,8 @@ void setProcessAffinity(int affinity)
 {
 	int ret;
 
+	assert(affinity != 0);
+
 	Logger logger = logging.get("kernel:rt");
 
 	/* Pin threads to CPUs by setting the affinity */
@@ -98,14 +100,16 @@ void setProcessAffinity(int affinity)
 
 	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
 	if (ret)
-		throw SystemError("Failed to set CPU affinity to cores: {}", (std::string) cset_pin);
+		throw SystemError("Failed to set CPU affinity of process");
 
-	logger->debug("Set affinity to cores: {}", (std::string) cset_pin);
+	logger->debug("Set affinity to {} {}", cset_pin.count() == 1 ? "core" : "cores", (std::string) cset_pin);
 }
 
 void setThreadAffinity(pthread_t thread, int affinity)
 {
 	int ret;
+
+	assert(affinity != 0);
 
 	Logger logger = logging.get("kernel:rt");
 
@@ -113,9 +117,9 @@ void setThreadAffinity(pthread_t thread, int affinity)
 
 	ret = pthread_setaffinity_np(thread, cset_pin.size(), cset_pin);
 	if (ret)
-		throw SystemError("Failed to set CPU affinity to cores: {}", (std::string) cset_pin);
+		throw SystemError("Failed to set CPU affinity of thread");
 
-	logger->debug("Set affinity of thread {} to cores: {}", (long unsigned) thread, (std::string) cset_pin);
+	logger->debug("Set affinity of thread {} to {} {}", (long unsigned) thread, cset_pin.count() == 1 ? "core" : "cores", (std::string) cset_pin);
 }
 
 void setPriority(int priority)
