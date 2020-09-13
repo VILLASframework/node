@@ -48,7 +48,8 @@ void init(int priority, int affinity)
 	logger->info("Initialize sub-system");
 
 #ifdef __linux__
-	int is_rt;
+	int is_rt, is_isol;
+	char isolcpus[255];
 
 	/* Use FIFO scheduler with real time priority */
 	is_rt = isPreemptible();
@@ -60,8 +61,21 @@ void init(int priority, int affinity)
 	else
 		logger->warn("You might want to use the 'priority' setting to increase " PROJECT_NAME "'s process priority");
 
-	if (affinity)
-		setAffinity(affinity);
+	if (affinity) {
+		is_isol = get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
+		if (is_isol)
+			logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
+		else {
+			CpuSet cset_pin(affinity);
+			CpuSet cset_isol(isolcpus);
+			CpuSet cset_non_isol = ~cset_isol & cset_pin;
+
+			if (cset_non_isol.count() > 0)
+				logger->warn("Affinity setting includes cores which are not isolated: affinity={}, isolcpus={}, non_isolated={}", (std::string) cset_pin, (std::string) cset_isol, (std::string) cset_non_isol);
+		}
+
+		setProcessAffinity(affinity);
+	}
 	else
 		logger->warn("You might want to use the 'affinity' setting to pin " PROJECT_NAME " to dedicate CPU cores");
 #else
@@ -73,32 +87,35 @@ void init(int priority, int affinity)
 }
 
 #ifdef __linux__
-void setAffinity(int affinity)
+void setProcessAffinity(int affinity)
 {
-	char isolcpus[255];
-	int is_isol, ret;
+	int ret;
 
 	Logger logger = logging.get("kernel:rt");
 
 	/* Pin threads to CPUs by setting the affinity */
 	CpuSet cset_pin(affinity);
 
-	is_isol = get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
-	if (is_isol)
-		logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
-	else {
-		CpuSet cset_isol(isolcpus);
-		CpuSet cset_non_isol = ~cset_isol & cset_pin;
-
-		if (cset_non_isol.count() > 0)
-			logger->warn("Affinity setting includes cores which are not isolated: affinity={}, isolcpus={}, non_isolated={}", (std::string) cset_pin, (std::string) cset_isol, (std::string) cset_non_isol);
-	}
-
 	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
 	if (ret)
 		throw SystemError("Failed to set CPU affinity to cores: {}", (std::string) cset_pin);
 
 	logger->debug("Set affinity to cores: {}", (std::string) cset_pin);
+}
+
+void setThreadAffinity(pthread_t thread, int affinity)
+{
+	int ret;
+
+	Logger logger = logging.get("kernel:rt");
+
+	CpuSet cset_pin(affinity);
+
+	ret = pthread_setaffinity_np(thread, cset_pin.size(), cset_pin);
+	if (ret)
+		throw SystemError("Failed to set CPU affinity to cores: {}", (std::string) cset_pin);
+
+	logger->debug("Set affinity of thread {} to cores: {}", (long unsigned) thread, (std::string) cset_pin);
 }
 
 void setPriority(int priority)

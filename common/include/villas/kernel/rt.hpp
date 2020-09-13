@@ -28,13 +28,16 @@
 
 #pragma once
 
+#include <pthread.h>
+
 namespace villas {
 namespace kernel {
 namespace rt {
 
 void init(int priority, int affinity);
 
-void setAffinity(int affinity);
+void setProcessAffinity(int affinity);
+void setThreadAffinity(pthread_t thread, int affinity);
 
 void setPriority(int priority);
 
