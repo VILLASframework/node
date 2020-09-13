@@ -46,6 +46,7 @@
 #include <villas/node.h>
 #include <villas/signal.h>
 #include <villas/path.h>
+#include <villas/kernel/rt.hpp>
 #include <villas/path_source.h>
 #include <villas/path_destination.h>
 
@@ -178,6 +179,7 @@ int path_init(struct vpath *p)
 	p->poll = -1;
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
 	p->original_sequence_no = -1;
+	p->affinity = 0;
 
 	p->state = State::INITIALIZED;
 
@@ -401,7 +403,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s}",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
@@ -414,7 +416,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		"rate", &p->rate,
 		"mask", &json_mask,
 		"original_sequence_no", &p->original_sequence_no,
-		"uuid", &uuid
+		"uuid", &uuid,
+		"affinity", &p->affinity
 	);
 	if (ret)
 		throw ConfigError(cfg, err, "node-config-path", "Failed to parse path configuration");
@@ -640,6 +643,9 @@ int path_start(struct vpath *p)
 	ret = pthread_create(&p->tid, nullptr, p->poll ? path_run_poll : path_run_single, p);
 	if (ret)
 		return ret;
+
+	if (p->affinity)
+		kernel::rt::setThreadAffinity(p->tid, p->affinity);
 
 	return 0;
 }

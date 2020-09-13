@@ -80,6 +80,7 @@ struct vpath {
 
 	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */
+	int affinity;			/**< Thread affinity. */
 	int poll;			/**< Weather or not to use poll(2). */
 	int reverse;			/**< This path has a matching reverse path. */
 	int builtin;			/**< This path should use built-in hooks by default. */
