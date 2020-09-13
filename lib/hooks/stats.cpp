@@ -99,8 +99,8 @@ class StatsHook : public Hook {
 	friend StatsWriteHook;
 
 protected:
-	StatsReadHook readHook;
-	StatsWriteHook writeHook;
+	StatsReadHook *readHook;
+	StatsWriteHook *writeHook;
 
 	enum Stats::Format format;
 	int verbose;
@@ -116,8 +116,6 @@ public:
 
 	StatsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		readHook(this, p, n, fl, prio, en),
-		writeHook(this, p, n, fl, prio, en),
 		format(Stats::Format::HUMAN),
 		verbose(0),
 		warmup(500),
@@ -125,12 +123,21 @@ public:
 		output(nullptr),
 		uri()
 	{
+		readHook = new StatsReadHook(this, p, n, fl, prio, en);
+		writeHook = new StatsWriteHook(this, p, n, fl, prio, en);
+
+		if (!readHook || !writeHook)
+			throw MemoryAllocationError();
+
 		/* Add child hooks */
 		if (node) {
-			vlist_push(&node->in.hooks, (void *) &readHook);
-			vlist_push(&node->out.hooks, (void *) &writeHook);
+			vlist_push(&node->in.hooks, (void *) readHook);
+			vlist_push(&node->out.hooks, (void *) writeHook);
 		}
 	}
+
+	StatsHook & operator=(const StatsHook&) = delete;
+	StatsHook(const StatsHook&) = delete;
 
 	virtual void start()
 	{
@@ -168,7 +175,7 @@ public:
 	{
 		// Only call readHook if it hasnt been added to the node's hook list
 		if (!node)
-			return readHook.process(smp);
+			return readHook->process(smp);
 
 		return Hook::Reason::OK;
 	}
