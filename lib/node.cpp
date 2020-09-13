@@ -40,10 +40,10 @@
 #include <villas/memory.h>
 
 #ifdef WITH_NETEM
-  #include <villas/kernel/if.h>
-  #include <villas/kernel/nl.h>
-  #include <villas/kernel/tc.h>
-  #include <villas/kernel/tc_netem.h>
+  #include <villas/kernel/if.hpp>
+  #include <villas/kernel/nl.hpp>
+  #include <villas/kernel/tc.hpp>
+  #include <villas/kernel/tc_netem.hpp>
 #endif /* WITH_NETEM */
 
 using namespace villas;
@@ -184,7 +184,7 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 			return ret;
 
 		if (enabled)
-			tc_netem_parse(&n->tc_qdisc, json_netem);
+			kernel::tc::netem_parse(&n->tc_qdisc, json_netem);
 		else
 			n->tc_qdisc = nullptr;
 #endif /* WITH_NETEM */

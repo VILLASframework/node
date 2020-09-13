@@ -27,20 +27,75 @@
 
 #include <netlink/route/qdisc/netem.h>
 
-#include <villas/kernel/if.h>
-#include <villas/kernel/nl.h>
+#include <villas/kernel/if.hpp>
+#include <villas/kernel/nl.hpp>
 #include <villas/kernel/nl-private.h>
-#include <villas/kernel/tc_netem.h>
+#include <villas/kernel/tc_netem.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::utils;
+using namespace villas::kernel;
 
 static const double max_percent_value = 0xffffffff;
 
-int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
+/**
+ * Set the delay distribution. Latency/jitter must be set before applying.
+ * @arg qdisc Netem qdisc.
+ * @return 0 on success, error code on failure.
+ */
+static int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, short *data, size_t len)
+{
+	struct rtnl_netem *netem;
+
+	if (!(netem = (struct rtnl_netem *) rtnl_tc_data(TC_CAST(qdisc))))
+		return -1;
+
+	if (len > MAXDIST)
+		return -NLE_INVAL;
+
+	netem->qnm_dist.dist_data = (int16_t *) calloc(len, sizeof(int16_t));
+
+	size_t i;
+	for (i = 0; i < len; i++)
+		netem->qnm_dist.dist_data[i] = data[i];
+
+	netem->qnm_dist.dist_size = len;
+	netem->qnm_mask |= SCH_NETEM_ATTR_DIST;
+
+	return 0;
+}
+
+/** Customized version of rtnl_netem_set_delay_distribution() of libnl */
+static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
+{
+	if (json_is_string(json))
+		return rtnl_netem_set_delay_distribution(qdisc, json_string_value(json));
+	else if (json_is_array(json)) {
+		json_t *elm;
+		size_t idx;
+		size_t len = json_array_size(json);
+
+		int16_t *data = new int16_t[len];
+		if (!data)
+			throw MemoryAllocationError();
+
+		json_array_foreach(json, idx, elm) {
+			if (!json_is_integer(elm))
+				return -1;
+
+			data[idx] = json_integer_value(elm);;
+		}
+
+		return rtnl_netem_set_delay_distribution_data(qdisc, data, len);
+	}
+
+	return 0;
+}
+
+int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 {
 	int ret, val;
 
@@ -75,7 +130,7 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	rtnl_tc_set_kind(TC_CAST(ne), "netem");
 
 	if (json_delay_distribution) {
-		if (tc_netem_set_delay_distribution(ne, json_delay_distribution))
+		if (set_delay_distribution(ne, json_delay_distribution))
 			error("Invalid delay distribution in netem config");
 	}
 
@@ -163,7 +218,7 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	return 0;
 }
 
-char * tc_netem_print(struct rtnl_qdisc *ne)
+char * villas::kernel::tc::netem_print(struct rtnl_qdisc *ne)
 {
 	char *buf = nullptr;
 
@@ -212,10 +267,10 @@ char * tc_netem_print(struct rtnl_qdisc *ne)
 	return buf;
 }
 
-int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent)
+int villas::kernel::tc::netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent)
 {
 	int ret;
-	struct nl_sock *sock = nl_init();
+	struct nl_sock *sock = nl::init();
 	struct rtnl_qdisc *q = *qd;
 
 	ret = kernel::module_load("sch_netem");
@@ -234,58 +289,4 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
 	debug(LOG_TC | 3, "Added netem qdisc to interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	return ret;
-}
-
-/**
- * Set the delay distribution. Latency/jitter must be set before applying.
- * @arg qdisc Netem qdisc.
- * @return 0 on success, error code on failure.
- */
-int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, short *data, size_t len)
-{
-	struct rtnl_netem *netem;
-
-	if (!(netem = (struct rtnl_netem *) rtnl_tc_data(TC_CAST(qdisc))))
-		return -1;
-
-	if (len > MAXDIST)
-		return -NLE_INVAL;
-
-	netem->qnm_dist.dist_data = (int16_t *) calloc(len, sizeof(int16_t));
-
-	size_t i;
-	for (i = 0; i < len; i++)
-		netem->qnm_dist.dist_data[i] = data[i];
-
-	netem->qnm_dist.dist_size = len;
-	netem->qnm_mask |= SCH_NETEM_ATTR_DIST;
-
-	return 0;
-}
-
-/** Customized version of rtnl_netem_set_delay_distribution() of libnl */
-int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
-{
-	if (json_is_string(json))
-		return rtnl_netem_set_delay_distribution(qdisc, json_string_value(json));
-	else if (json_is_array(json)) {
-		json_t *elm;
-		size_t idx;
-		size_t len = json_array_size(json);
-
-		int16_t *data = new int16_t[len];
-		if (!data)
-			throw MemoryAllocationError();
-
-		json_array_foreach(json, idx, elm) {
-			if (!json_is_integer(elm))
-				return -1;
-
-			data[idx] = json_integer_value(elm);;
-		}
-
-		return rtnl_netem_set_delay_distribution_data(qdisc, data, len);
-	}
-
-	return 0;
 }

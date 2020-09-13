@@ -151,7 +151,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 			strcatf(&buf, " = %s", val);
 		}
 
-		info("%s", buf);
+		debug(5, "%s", buf);
 		free(buf);
 	}
 }

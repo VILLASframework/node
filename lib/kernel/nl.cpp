@@ -24,19 +24,22 @@
 
 #include <cstdio>
 
+#include <linux/if_packet.h>
+
 #include <netlink/route/route.h>
 #include <netlink/route/link.h>
 
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/kernel/nl.h>
+#include <villas/kernel/nl.hpp>
 
 /** Singleton for global netlink socket */
 static struct nl_sock *sock = nullptr;
 
 using namespace villas;
+using namespace villas::kernel::nl;
 
-struct nl_sock * nl_init()
+struct nl_sock * villas::kernel::nl::init()
 {
 	int ret;
 
@@ -62,7 +65,7 @@ struct nl_sock * nl_init()
 	return sock;
 }
 
-void nl_shutdown()
+void villas::kernel::nl::shutdown()
 {
 	nl_close(sock);
 	nl_socket_free(sock);
@@ -80,10 +83,10 @@ static int egress_cb(struct nl_msg *msg, void *arg)
 	return NL_STOP;
 }
 
-int nl_get_egress(struct nl_addr *addr)
+int villas::kernel::nl::get_egress(struct nl_addr *addr)
 {
 	int ret;
-	struct nl_sock *sock = nl_init();
+	struct nl_sock *sock = nl::init();
 	struct nl_cb *cb;
 	struct nl_msg *msg = nlmsg_alloc_simple(RTM_GETROUTE, 0);
 	struct rtnl_route *route = nullptr;
@@ -129,4 +132,37 @@ out2:	nl_cb_put(cb);
 out:	nlmsg_free(msg);
 
 	return ret;
+}
+
+struct rtnl_link * villas::kernel::nl::get_egress_link(struct sockaddr *sa)
+{
+	int ifindex = -1;
+
+	switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6: {
+			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
+
+			struct nl_addr *addr = (sa->sa_family == AF_INET)
+				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
+				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
+
+			ifindex = nl::get_egress(addr); nl_addr_put(addr);
+			if (ifindex < 0)
+				error("Netlink error: %s", nl_geterror(ifindex));
+			break;
+		}
+
+		case AF_PACKET: {
+			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
+
+			ifindex = sll->sll_ifindex;
+			break;
+		}
+	}
+
+	struct nl_cache *cache = nl_cache_mngt_require("route/link");
+
+	return rtnl_link_get(cache, ifindex);
 }

@@ -36,10 +36,10 @@
 #include <villas/log.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/kernel/rt.hpp>
-#include <villas/kernel/if.h>
+#include <villas/kernel/if.hpp>
 
 #ifdef WITH_NETEM
-  #include <villas/kernel/nl.h>
+  #include <villas/kernel/nl.hpp>
 #endif
 
 using namespace villas;
@@ -75,12 +75,8 @@ SuperNode::SuperNode() :
 	if (ret)
 		throw RuntimeError("Failed to initialize list");
 
-	ret = vlist_init(&interfaces);
-	if (ret)
-		throw RuntimeError("Failed to initialize list");
-
 #ifdef WITH_NETEM
-	nl_init(); /* Fill link cache */
+	kernel::nl::init(); /* Fill link cache */
 #endif /* WITH_NETEM */
 
 	char hname[128];
@@ -270,12 +266,10 @@ void SuperNode::startInterfaces()
 #ifdef WITH_NETEM
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&interfaces); i++) {
-		auto *j = (struct interface *) vlist_at(&interfaces, i);
-
-		ret = if_start(j);
+	for (auto *i : interfaces) {
+		ret = i->start();
 		if (ret)
-			throw RuntimeError("Failed to initialize network interface: {}", if_name(j));
+			throw RuntimeError("Failed to start network interface: {}", i->getName());
 	}
 #endif /* WITH_NETEM */
 }
@@ -363,7 +357,7 @@ void SuperNode::prepare()
 		auto *n = (struct vnode *) vlist_at(&nodes, i);
 		if (vlist_length(&n->sources) == 0 &&
 		    vlist_length(&n->destinations) == 0) {
-			logger->info("Node {} is not used by any path. Disabling...");
+			logger->info("Node {} is not used by any path. Disabling...", node_name(n));
 			n->enabled = false;
 		}
 	}
@@ -442,12 +436,10 @@ void SuperNode::stopInterfaces()
 #ifdef WITH_NETEM
 	int ret;
 
-	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
-
-		ret = if_stop(i);
+	for (auto *i : interfaces) {
+		ret = i->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop interface: {}", if_name(i));
+			throw RuntimeError("Failed to stop interface: {}", i->getName());
 	}
 #endif /* WITH_NETEM */
 }
@@ -491,9 +483,6 @@ SuperNode::~SuperNode()
 
 	ret = vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
 	ret = vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
-#ifdef WITH_NETEM
-	ret = vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
-#endif /* WITH_NETEM */
 }
 
 int SuperNode::periodic()

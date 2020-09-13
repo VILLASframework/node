@@ -30,16 +30,17 @@
 #include <villas/utils.hpp>
 
 #include <villas/kernel/kernel.hpp>
-#include <villas/kernel/if.h>
-#include <villas/kernel/tc.h>
-#include <villas/kernel/nl.h>
+#include <villas/kernel/if.hpp>
+#include <villas/kernel/tc.hpp>
+#include <villas/kernel/nl.hpp>
 
 using namespace villas;
+using namespace villas::kernel;
 
-int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
+int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
 {
 	int ret;
-	struct nl_sock *sock = nl_init();
+	struct nl_sock *sock = nl::init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
 	ret = kernel::module_load("sch_prio");
@@ -69,10 +70,10 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
 	return ret;
 }
 
-int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark)
+int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark)
 {
 	int ret;
-	struct nl_sock *sock = nl_init();
+	struct nl_sock *sock = nl::init();
 	struct rtnl_cls *c = rtnl_cls_alloc();
 
 	ret = kernel::module_load("cls_fw");
@@ -97,9 +98,9 @@ int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_
 	return ret;
 }
 
-int tc_reset(struct interface *i)
+int villas::kernel::tc::reset(Interface *i)
 {
-	struct nl_sock *sock = nl_init();
+	struct nl_sock *sock = nl::init();
 
 	/* We restore the default pfifo_fast qdisc, by deleting ours */
 	return rtnl_qdisc_delete(sock, i->tc_qdisc);

@@ -40,22 +40,21 @@
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 #ifdef WITH_NETEM
-  #include <villas/kernel/if.h>
-  #include <villas/kernel/nl.h>
+  #include <villas/kernel/if.hpp>
+  #include <villas/kernel/nl.hpp>
 #endif /* WITH_NETEM */
 
 /* Forward declartions */
 static struct plugin p;
 
 using namespace villas;
-using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node;
+using namespace villas::kernel;
 
 int socket_type_start(villas::node::SuperNode *sn)
 {
 #ifdef WITH_NETEM
-	struct vlist *interfaces = sn->getInterfaces();
-
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
 		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
@@ -65,9 +64,9 @@ int socket_type_start(villas::node::SuperNode *sn)
 			continue;
 
 		/* Determine outgoing interface */
-		struct interface *j = if_get_egress((struct sockaddr *) &s->out.saddr, interfaces);
+		Interface *j = Interface::getEgress((struct sockaddr *) &s->out.saddr, sn);
 
-		vlist_push(&j->nodes, n);
+		j->addNode(n);
 	}
 #endif /* WITH_NETEM */
 

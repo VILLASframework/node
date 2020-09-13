@@ -30,7 +30,7 @@
 #include <villas/exceptions.hpp>
 
 #ifdef WITH_SOCKET_LAYER_ETH
-  #include <villas/kernel/nl.h>
+  #include <villas/kernel/nl.hpp>
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 using namespace villas;
@@ -126,7 +126,8 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, ETHER_ADDR_LEN);
 
 		/* Get interface index from name */
-		nl_init();
+		kernel::nl::init();
+
 		struct nl_cache *cache = nl_cache_mngt_require("route/link");
 		struct rtnl_link *link = rtnl_link_get_by_name(cache, ifname);
 		if (!link)

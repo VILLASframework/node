@@ -39,9 +39,15 @@
 
 #include <jansson.h>
 
-typedef uint32_t tc_hdl_t;
+namespace villas {
+namespace kernel {
 
-struct interface;
+/* Forward declarations */
+class Interface;
+
+namespace tc {
+
+typedef uint32_t tc_hdl_t;
 
 /** Remove all queuing disciplines and filters.
  *
@@ -49,7 +55,7 @@ struct interface;
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_reset(struct interface *i);
+int reset(Interface *i);
 
 /** Create a priority (prio) queueing discipline.
  *
@@ -61,7 +67,7 @@ int tc_reset(struct interface *i);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
+int prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
 
 /** Add a new filter based on the netfilter mark.
  *
@@ -72,6 +78,10 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
 */
-int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
+int mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
+
+} /* namespace tc */
+} /* namespace kernel */
+} /* namespace villas */
 
 /** @} */

@@ -39,9 +39,15 @@
 
 #include <jansson.h>
 
-typedef uint32_t tc_hdl_t;
+namespace villas {
+namespace kernel {
 
-struct interface;
+/* Forward declarations */
+class Interface;
+
+namespace tc {
+
+typedef uint32_t tc_hdl_t;
 
 /** Parse network emulator (netem) settings.
  *
@@ -50,14 +56,14 @@ struct interface;
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_netem_parse(struct rtnl_qdisc **ne, json_t *cfg);
+int netem_parse(struct rtnl_qdisc **ne, json_t *cfg);
 
 /** Print network emulator (netem) setting into buffer.
  *
  * @param tc A pointer to the libnl3 qdisc object where settings will be read from.
  * @return A pointer to a string which must be freed() by the caller.
  */
-char * tc_netem_print(struct rtnl_qdisc *ne);
+char * netem_print(struct rtnl_qdisc *ne);
 
 /** Add a new network emulator (netem) discipline.
  *
@@ -68,8 +74,12 @@ char * tc_netem_print(struct rtnl_qdisc *ne);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent);
+int netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent);
 
-int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json);
+int netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json);
+
+} /* namespace tc */
+} /* namespace kernel */
+} /* namespace villas */
 
 /** @} */

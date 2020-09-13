@@ -41,6 +41,7 @@ extern "C" {
 #include <villas/node.h>
 #include <villas/task.hpp>
 #include <villas/common.hpp>
+#include <villas/kernel/if.hpp>
 
 /* Forward declarations */
 struct vnode;
@@ -60,7 +61,7 @@ protected:
 
 	struct vlist nodes;
 	struct vlist paths;
-	struct vlist interfaces;
+	std::list<kernel::Interface *> interfaces;
 
 #ifdef WITH_API
 	Api api;
@@ -141,26 +142,31 @@ public:
 		return &nodes;
 	}
 
-	struct vlist * getPaths() {
+	struct vlist * getPaths()
+	{
 		return &paths;
 	}
 
-	struct vlist * getInterfaces() {
-		return &interfaces;
+	std::list<kernel::Interface *> & getInterfaces()
+	{
+		return interfaces;
 	}
 
-	enum State getState() {
+	enum State getState()  const
+	{
 		return state;
 	}
 
 #ifdef WITH_API
-	Api * getApi() {
+	Api * getApi()
+	{
 		return &api;
 	}
 #endif
 
 #ifdef WITH_WEB
-	Web * getWeb() {
+	Web * getWeb()
+	{
 		return &web;
 	}
 #endif
@@ -170,14 +176,19 @@ public:
 		return config.root;
 	}
 
-	std::string getConfigUri()
+	std::string getConfigUri() const
 	{
 		return uri;
 	}
 
-	std::string getName()
+	std::string getName() const
 	{
 		return name;
+	}
+
+	int getAffinity() const
+	{
+		return affinity;
 	}
 
 	/** Destroy configuration object. */

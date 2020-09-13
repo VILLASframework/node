@@ -48,14 +48,15 @@ extern "C" {
 #include <villas/super_node.hpp>
 
 #ifdef WITH_NETEM
-  #include <villas/kernel/if.h>
+  #include <villas/kernel/if.hpp>
 #endif /* WITH_NETEM */
 
 static pthread_t re_pthread;
 
 using namespace villas;
-using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node;
+using namespace villas::kernel;
 
 static struct plugin p;
 
@@ -491,20 +492,18 @@ int rtp_type_start(villas::node::SuperNode *sn)
 		return ret;
 
 #ifdef WITH_NETEM
-	struct vlist *interfaces = sn->getInterfaces();
-
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
 		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
 		struct rtp *r = (struct rtp *) n->_vd;
-		struct interface *j = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
+		Interface *j = Interface::getEgress(&r->out.saddr_rtp.u.sa, sn);
 
 		if (!j) {
 			r->logger->error("Failed to find egress interface for node: {}", node_name(n));
 			return -1;
 		}
 
-		vlist_push(&j->nodes, n);
+		j->addNode(n);
 	}
 #endif /* WITH_NETEM */
 

@@ -23,72 +23,59 @@
 #include <cstdio>
 #include <cstdlib>
 #include <dirent.h>
-#include <linux/if_packet.h>
 
 #include <netlink/route/link.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/super_node.hpp>
+#include <villas/cpuset.hpp>
 
-#include <villas/kernel/if.h>
-#include <villas/kernel/tc.h>
-#include <villas/kernel/tc_netem.h>
-#include <villas/kernel/nl.h>
+#include <villas/kernel/if.hpp>
+#include <villas/kernel/tc.hpp>
+#include <villas/kernel/tc_netem.hpp>
+#include <villas/kernel/nl.hpp>
 #include <villas/kernel/kernel.hpp>
 
 #include <villas/nodes/socket.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::kernel;
 
-int if_init(struct interface *i, struct rtnl_link *link)
+Interface::Interface(struct rtnl_link *link, int aff) :
+	nl_link(link),
+	tc_qdisc(nullptr),
+	affinity(aff)
 {
-	int ret;
+	logger = logging.get(fmt::format("kernel:if:{}", getName()));
 
-	i->nl_link = link;
+	int n = getIRQs();
+	if (n)
+		logger->warn("Did not found any interrupts");
 
-	debug(LOG_IF | 3, "Created interface '%s'", if_name(i));
-
-	int n = if_get_irqs(i);
-	if (n > 0)
-		debug(6, "Found %u IRQs for interface '%s'", n, if_name(i));
-	else
-		warning("Did not found any interrupts for interface '%s'", if_name(i));
-
-	ret = vlist_init(&i->nodes);
-	if (ret)
-		return ret;
-
-	return 0;
+	logger->debug("Found {} IRQs", irqs.size());
 }
 
-int if_destroy(struct interface *i)
+Interface::~Interface()
 {
-	int ret;
-
-	/* List members are freed by the nodes they belong to. */
-	ret = vlist_destroy(&i->nodes);
-	if (ret)
-		return ret;
-
-	rtnl_qdisc_put(i->tc_qdisc);
-
-	return 0;
+	if (tc_qdisc)
+		rtnl_qdisc_put(tc_qdisc);
 }
 
-int if_start(struct interface *i)
+int Interface::start()
 {
-	info("Starting interface '%s' which is used by %zu nodes", if_name(i), vlist_length(&i->nodes));
+	logger->info("Starting interface which is used by {} nodes", nodes.size());
 
 	/* Set affinity for network interfaces (skip _loopback_ dev) */
-	//if_set_affinity(i, i->affinity);
+	if (affinity)
+		setAffinity(affinity);
 
 	/* Assign fwmark's to nodes which have netem options */
 	int ret, fwmark = 0;
-	for (size_t j = 0; j < vlist_length(&i->nodes); j++) {
-		struct vnode *n = (struct vnode *) vlist_at(&i->nodes, j);
-
+	for (auto *n : nodes) {
 		if (n->tc_qdisc && n->fwmark < 0)
 			n->fwmark = 1 + fwmark++;
 	}
@@ -98,141 +85,97 @@ int if_start(struct interface *i)
 		return 0;
 
 	if (getuid() != 0)
-		error("Network emulation requires super-user privileges!");
+		throw RuntimeError("Network emulation requires super-user privileges!");
 
 	/* Replace root qdisc */
-	ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, fwmark);
+	ret = tc::prio(this, &tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, fwmark);
 	if (ret)
-		error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
+		throw RuntimeError("Failed to setup priority queuing discipline: {}", nl_geterror(ret));
 
 	/* Create netem qdisks and appropriate filter per netem node */
-	for (size_t j = 0; j < vlist_length(&i->nodes); j++) {
-		struct vnode *n = (struct vnode *) vlist_at(&i->nodes, j);
-
+	for (auto *n : nodes) {
 		if (n->tc_qdisc) {
-			ret = tc_mark(i,  &n->tc_classifier, TC_HANDLE(1, n->fwmark), n->fwmark);
+			ret = tc::mark(this,  &n->tc_classifier, TC_HANDLE(1, n->fwmark), n->fwmark);
 			if (ret)
-				error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
+				throw RuntimeError("Failed to setup FW mark classifier: {}", nl_geterror(ret));
 
-			char *buf = tc_netem_print(n->tc_qdisc);
-			debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
-					if_name(i), n->fwmark, buf);
+			char *buf = tc::netem_print(n->tc_qdisc);
+			logger->debug("Starting network emulation for FW mark {}: {}", n->fwmark, buf);
 			free(buf);
 
-			ret = tc_netem(i, &n->tc_qdisc, TC_HANDLE(0x1000+n->fwmark, 0), TC_HANDLE(1, n->fwmark));
+			ret = tc::netem(this, &n->tc_qdisc, TC_HANDLE(0x1000+n->fwmark, 0), TC_HANDLE(1, n->fwmark));
 			if (ret)
-				error("Failed to setup netem qdisc: %s", nl_geterror(ret));
+				throw RuntimeError("Failed to setup netem qdisc: {}", nl_geterror(ret));
 		}
 	}
 
 	return 0;
 }
 
-int if_stop(struct interface *i)
+int Interface::stop()
 {
-	info("Stopping interface '%s'", if_name(i));
+	logger->info("Stopping interface");
 
-	//if_set_affinity(i, -1L);
+	if (affinity)
+		setAffinity(-1L);
 
-	if (i->tc_qdisc)
-		tc_reset(i);
+	if (tc_qdisc)
+		tc::reset(this);
 
 	return 0;
 }
 
-const char * if_name(struct interface *i)
+std::string Interface::getName() const
 {
-	return rtnl_link_get_name(i->nl_link);
+	auto str = rtnl_link_get_name(nl_link);
+
+	return std::string(str);
 }
 
-struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces)
+Interface * Interface::getEgress(struct sockaddr *sa, SuperNode *sn)
 {
-	int ret;
 	struct rtnl_link *link;
 
-	/* Determine outgoing interface */
-	link = if_get_egress_link(sa);
-	if (!link) {
-		char *buf = socket_print_addr(sa);
-		error("Failed to get interface for socket address '%s'", buf);
-		free(buf);
+	Logger logger = logging.get("kernel:if");
 
-		return nullptr;
-	}
+	auto & interfaces = sn->getInterfaces();
+	auto affinity = sn->getAffinity();
+
+	/* Determine outgoing interface */
+	link = nl::get_egress_link(sa);
+	if (!link)
+		throw RuntimeError("Failed to get interface for socket address '{}'", socket_print_addr(sa));
 
 	/* Search of existing interface with correct ifindex */
-	struct interface *i;
-	for (size_t k = 0; k < vlist_length(interfaces); k++) {
-		i = (struct interface *) vlist_at(interfaces, k);
-
+	for (auto *i : interfaces) {
 		if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 			return i;
 	}
 
 	/* If not found, create a new interface */
-	i = new struct interface;
+	auto *i = new Interface(link, affinity);
 	if (!i)
 		throw MemoryAllocationError();
 
-	memset(i, 0, sizeof(struct interface));
-
-	ret = if_init(i, link);
-	if (ret)
-		return nullptr;
-
-	vlist_push(interfaces, i);
+	interfaces.push_back(i);
 
 	return i;
 }
 
-struct rtnl_link * if_get_egress_link(struct sockaddr *sa)
+int Interface::getIRQs()
 {
-	int ifindex = -1;
+	int irq;
 
-	switch (sa->sa_family) {
-		case AF_INET:
-		case AF_INET6: {
-			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
-			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
-
-			struct nl_addr *addr = (sa->sa_family == AF_INET)
-				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
-				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
-
-			ifindex = nl_get_egress(addr); nl_addr_put(addr);
-			if (ifindex < 0)
-				error("Netlink error: %s", nl_geterror(ifindex));
-			break;
-		}
-
-		case AF_PACKET: {
-			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-
-			ifindex = sll->sll_ifindex;
-			break;
-		}
-	}
-
-	struct nl_cache *cache = nl_cache_mngt_require("route/link");
-
-	return rtnl_link_get(cache, ifindex);
-}
-
-int if_get_irqs(struct interface *i)
-{
-	char dirname[NAME_MAX];
-	int irq, n = 0;
-
-	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", if_name(i));
-	DIR *dir = opendir(dirname);
+	auto dirname = fmt::format("/sys/class/net/{}/device/msi_irqs/", getName());
+	DIR *dir = opendir(dirname.c_str());
 	if (dir) {
-		memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
+		irqs.clear();
 
 		struct dirent *entry;
-		while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
+		while ((entry = readdir(dir))) {
 			irq = atoi(entry->d_name);
 			if (irq)
-				i->irqs[n++] = irq;
+				irqs.push_back(irq);
 		}
 
 		closedir(dir);
@@ -241,24 +184,32 @@ int if_get_irqs(struct interface *i)
 	return 0;
 }
 
-int if_set_affinity(struct interface *i, int affinity)
+int Interface::setAffinity(int affinity)
 {
-	char filename[NAME_MAX];
+	assert(affinity != 0);
+
+	if (getuid() != 0) {
+		logger->warn("Failed to tune IRQ affinity. Please run as super-user");
+		return 0;
+	}
+
 	FILE *file;
 
-	for (int n = 0; n < IF_IRQ_MAX && i->irqs[n]; n++) {
-		snprintf(filename, sizeof(filename), "/proc/irq/%d/smp_affinity", (int) i->irqs[n]);
+	CpuSet cset_pin(affinity);
 
-		file = fopen(filename, "w");
+	for (int irq : irqs) {
+		std::string filename = fmt::format("/proc/irq/{}/smp_affinity", irq);
+
+		file = fopen(filename.c_str(), "w");
 		if (file) {
-			if (fprintf(file, "%8x", affinity) < 0)
-				error("Failed to set affinity for IRQ %u", i->irqs[n]);
+			if (fprintf(file, "%8lx", (unsigned long) cset_pin) < 0)
+				throw SystemError("Failed to set affinity for for IRQ {} on interface '{}'", irq, getName());
 
 			fclose(file);
-			debug(LOG_IF | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], if_name(i), affinity);
+			logger->debug("Set affinity of IRQ {} to {} {}", irq, cset_pin.count() == 1 ? "core" : "cores", (std::string) cset_pin);
 		}
 		else
-			error("Failed to set affinity for interface '%s'", if_name(i));
+			throw SystemError("Failed to set affinity for for IRQ {} on interface '{}'", irq, getName());
 	}
 
 	return 0;
