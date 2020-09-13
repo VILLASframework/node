@@ -88,8 +88,8 @@ Test(utils, cpuset)
 	cr_assert_eq(cset3, cset4);
 	cr_assert_eq(cset3.count(), 5);
 
-	cr_assert(cset3.isset(3));
-	cr_assert_not(cset3.isset(6));
+	cr_assert(cset3.isSet(3));
+	cr_assert_not(cset3.isSet(6));
 
 	cr_assert(cset3[3]);
 	cr_assert_not(cset3[6]);
