@@ -33,6 +33,100 @@
 namespace villas {
 namespace node {
 
+class TimeSync {
+protected:
+    //Algorithms stability parameters
+    //Examples from Paper:
+    //const double p = 0.99;
+    //const double k1 = 1.1;
+    //const double k2 = 1.0;
+    //Tuned parameters:
+    const double p = 1.2;
+    const double k1 = 1.3;
+    const double k2 = 0.9;
+    const double c = 0.7; // ~= mü_max
+    const double tau = 1.; //Time between synchronizations
+    //We assume no skew of our internal clock
+    const double r = 1.;
+
+    //Time estimate
+    uint64_t x;
+    //Skew correction
+    double s;
+    //Dampening Factor
+    double y;
+public:
+    TimeSync() : x(0), s(1.), y(0.)
+    {
+        //Check stability
+        assert( tau < (p*(k2-p*(k1-k2)))/
+                (c*(k1-p*(k1-k2))*(k1-p*(k1-k2))) );
+        assert( 2*k1/3*p > k1-k2 );
+        assert( k1-k2 > 0 );
+        assert( 2 > p && p > 0 );
+    }
+
+    /** Returns the current time Error
+     *
+     *  @actualTime The actual time from an external clock
+     *  @nanoseconds the nanoseconds since the last synchronization event
+     */
+    int64_t timeError(const uint64_t actualTime, const uint64_t nanoseconds)
+    {
+        uint64_t currentEstimate = timeFromNanoseconds(nanoseconds);
+        return (int64_t)actualTime + (int64_t)tau*1e9 - (int64_t)currentEstimate;
+    }
+
+    /** synchronizes with external clock
+     *
+     *  @actualTime nanoseconds at which event should occur
+     *  @return nanoseconds estimate
+     */
+    uint64_t synchronize(const uint64_t actualTime, const uint64_t nanoseconds)
+    {
+        double t_err;
+        uint64_t ret;
+		//Time estimate
+		x = timeFromNanoseconds(nanoseconds);
+        //Time Error
+        t_err = ((int64_t)actualTime + (int64_t)tau*1e9 - (int64_t)x)/1e9;
+		//Skew correction or internal frequency / external frequency
+		s = s + k1*(t_err) - k2*y;
+		//Dampening Factor
+		y = p*(t_err) + (1-p)*y;
+
+        //Clip skew correction
+        if (s > 1.1) {
+            s = 1.1;
+        } else if (s < 0.9) {
+            s = 0.9;
+        }
+        printf("time error: %f, x: %lu, s: %f, y: %f\n", t_err, x, s, y);
+
+        ret = x;
+        //If time estimate gets too large, reset x
+        if ( x > tau*1e9) {
+            x -= tau*1e9;
+        }
+        return ret;
+	}
+
+    uint64_t time(const double partOfFullSecond)
+    {
+        return x + partOfFullSecond*tau*r*s*1e9;
+    }
+
+    /** Returns time estimate based on the nanoseconds that passed since
+     *  last synchrsonization
+     *
+     *  @return nanoesecond estimate
+     */
+    uint64_t timeFromNanoseconds(const uint64_t n)
+    {
+        return time(n / 1.e9);
+    }
+};
+
 class PpsTsHook : public Hook {
 
 protected:
@@ -46,6 +140,7 @@ protected:
 	timespec realTime;
 	uint64_t last_sequence;
 	double y;
+	TimeSync ts;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
@@ -59,7 +154,8 @@ public:
 		pll_gain(1),
 		realTime({ 0, 0 }),
 		last_sequence(0),
-		y(0)
+		y(0),
+		ts()
 	{
 	}
 
@@ -103,8 +199,8 @@ public:
 		double changeVal;
 		static const double targetVal = 0.5;
 
-
-		realTime.tv_nsec += periodTime * 1e9 / 10000;
+		auto now = time_now();
+		realTime.tv_nsec = ts.timeFromNanoseconds(now.tv_nsec);
 
 		if (realTime.tv_nsec >= 1e9) {
 			realTime.tv_sec++;
@@ -113,47 +209,15 @@ public:
 
 
 		if (isEdge) {
-			if (edgeCounter == 2) {
-				auto now = time_now();
-
-				if (now.tv_nsec >= 0.5e9)
-					realTime.tv_sec = now.tv_sec + 1;
-				else
-					realTime.tv_sec = now.tv_sec;
-				realTime.tv_nsec = targetVal * 1e9;
-			}
-
-			lastSeqNr = seqNr;
 			edgeCounter++;
-
-			timeErr = ( targetVal - (realTime.tv_nsec / 1e9) );
-			if (edgeCounter >= 2){//pll mode
-				
-				changeVal = pll_gain * timeErr;
-
-				double k2 = 1.;
-				double p = 0.99;
-				
-				y = p * timeErr + ( 1 - p) * y;
-				changeVal -= k2 * y;
- 
-				//changeVal = pll_gain;
-				/*if(timeErr > 0 )
-					periodTime -= changeVal;
-				else if(timeErr < 0){*/
-					periodTime += changeVal;
-				//}
-				double nominalSmpRate = 1;
-				if(periodTime > 1.1/nominalSmpRate)periodTime = 1.1/nominalSmpRate;
-				if(periodTime < 0.9/nominalSmpRate)periodTime = 0.9/nominalSmpRate;
-			}
-			//info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%f, smpRate=%f, pll_gain=%f", seqNr, realTime.tv_sec, (1e9 - realTime.tv_nsec + 1e9/periodTime), periodTime, pll_gain);
+			currentNanoseconds = now.tv_nsec;
+			ts.synchronize(0.5e9, currentNanoseconds);
 		}
 
 
 
 
-		
+
 		if(isEdge){
 			info("Edge detected: seq=%lu, realTime.nsec=%lu, timeErr=%f , timePeriod=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, periodTime, changeVal);
 		}
