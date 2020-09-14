@@ -38,26 +38,28 @@ class PpsTsHook : public Hook {
 protected:
 	double lastValue;
 	double thresh;
-	double realSmpRate;
+	double periodTime;//Period of sample frequency (Villas samples)
 	unsigned idx;
 	uint64_t lastSeqNr;
 	unsigned edgeCounter;
 	double pll_gain;
 	timespec realTime;
 	uint64_t last_sequence;
+	double y;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		lastValue(0),
 		thresh(1.5),
-		realSmpRate(0),
+		periodTime(1),
 		idx(0),
 		lastSeqNr(0),
 		edgeCounter(0),
 		pll_gain(1),
 		realTime({ 0, 0 }),
-		last_sequence(0)
+		last_sequence(0),
+		y(0)
 	{
 	}
 
@@ -99,7 +101,16 @@ public:
 
 		double timeErr;
 		double changeVal;
-		static const double targetVal = 0.5e9;
+		static const double targetVal = 0.5;
+
+
+		realTime.tv_nsec += periodTime * 1e9 / 10000;
+
+		if (realTime.tv_nsec >= 1e9) {
+			realTime.tv_sec++;
+			realTime.tv_nsec -= 1e9;
+		}
+
 
 		if (isEdge) {
 			if (edgeCounter == 2) {
@@ -109,48 +120,53 @@ public:
 					realTime.tv_sec = now.tv_sec + 1;
 				else
 					realTime.tv_sec = now.tv_sec;
-				realTime.tv_nsec = targetVal;
+				realTime.tv_nsec = targetVal * 1e9;
 			}
 
 			lastSeqNr = seqNr;
 			edgeCounter++;
 
-			timeErr = ( targetVal - realTime.tv_nsec);
+			timeErr = ( targetVal - (realTime.tv_nsec / 1e9) );
 			if (edgeCounter >= 2){//pll mode
 				
-				changeVal = pll_gain * -1 * timeErr;
+				changeVal = pll_gain * timeErr;
+
+				double k2 = 1.;
+				double p = 0.99;
+				
+				y = p * timeErr + ( 1 - p) * y;
+				changeVal -= k2 * y;
+ 
 				//changeVal = pll_gain;
 				/*if(timeErr > 0 )
-					realSmpRate -= changeVal;
+					periodTime -= changeVal;
 				else if(timeErr < 0){*/
-					realSmpRate += changeVal;
+					periodTime += changeVal;
 				//}
-				if(realSmpRate > 10100.)realSmpRate = 10100;
-				if(realSmpRate < 9900.)realSmpRate = 9900;
+				double nominalSmpRate = 1;
+				if(periodTime > 1.1/nominalSmpRate)periodTime = 1.1/nominalSmpRate;
+				if(periodTime < 0.9/nominalSmpRate)periodTime = 0.9/nominalSmpRate;
 			}
-			//info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%f, smpRate=%f, pll_gain=%f", seqNr, realTime.tv_sec, (1e9 - realTime.tv_nsec + 1e9/realSmpRate), realSmpRate, pll_gain);
+			//info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%f, smpRate=%f, pll_gain=%f", seqNr, realTime.tv_sec, (1e9 - realTime.tv_nsec + 1e9/periodTime), periodTime, pll_gain);
+		}
+
+
+
+
+		
+		if(isEdge){
+			info("Edge detected: seq=%lu, realTime.nsec=%lu, timeErr=%f , timePeriod=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, periodTime, changeVal);
 		}
 
 		if (edgeCounter < 2)
 			return Hook::Reason::SKIP_SAMPLE;
-		else
-			realTime.tv_nsec += 1.e9 / realSmpRate;
-
-		if (realTime.tv_nsec >= 1e9) {
-			realTime.tv_sec++;
-			realTime.tv_nsec -= 1e9;
-		}
-		
-		if(isEdge){
-			info("Edge detected: seq=%lu, realTime.nsec=%ld, timeErr=%f , smpRate=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, realSmpRate, changeVal);
-		}
 
 		/* Update timestamp */
 		smp->ts.origin = realTime;
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
 		if((smp->sequence - last_sequence) > 1 )
-			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - last_sequence);
+			warning("Samples missed: %li sampled missed", smp->sequence - last_sequence);
 
 		last_sequence = smp->sequence;
 
