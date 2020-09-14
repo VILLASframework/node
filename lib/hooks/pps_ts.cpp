@@ -56,7 +56,7 @@ protected:
     //Dampening Factor
     double y;
 public:
-    TimeSync() : x(0), s(1.), y(0.)
+    TimeSync() : x(0.5e9), s(1.), y(0.)
     {
         //Check stability
         assert( tau < (p*(k2-p*(k1-k2)))/
@@ -101,7 +101,7 @@ public:
         } else if (s < 0.9) {
             s = 0.9;
         }
-        printf("time error: %f, x: %lu, s: %f, y: %f\n", t_err, x, s, y);
+        printf("time error: %f, nanoseconds: %lu, x: %ld, s: %f, y: %f\n", t_err, nanoseconds, x, s, y);
 
         ret = x;
         //If time estimate gets too large, reset x
@@ -138,6 +138,7 @@ protected:
 	unsigned edgeCounter;
 	double pll_gain;
 	timespec realTime;
+	timespec lastEdge;
 	uint64_t last_sequence;
 	double y;
 	TimeSync ts;
@@ -153,6 +154,7 @@ public:
 		edgeCounter(0),
 		pll_gain(1),
 		realTime({ 0, 0 }),
+		lastEdge({0,0}),
 		last_sequence(0),
 		y(0),
 		ts()
@@ -188,39 +190,41 @@ public:
 
 		/* Get value of PPS signal */
 		float value = smp->data[idx].f; // TODO check if it is really float
-		uint64_t seqNr = smp->sequence;
+		//uint64_t seqNr = smp->sequence;
 
 		/* Detect Edge */
 		bool isEdge = lastValue < thresh && value > thresh;
 		lastValue = value;
 
 
-		double timeErr;
+		/*double timeErr;
 		double changeVal;
-		static const double targetVal = 0.5;
+		//static const double targetVal = 0.5;*/
 
 		auto now = time_now();
-		realTime.tv_nsec = ts.timeFromNanoseconds(now.tv_nsec);
+		uint64_t timediff = (now.tv_nsec - lastEdge.tv_nsec)+(now.tv_sec - lastEdge.tv_sec)*1e9;
+
+		realTime.tv_nsec = ts.timeFromNanoseconds(timediff);
 
 		if (realTime.tv_nsec >= 1e9) {
 			realTime.tv_sec++;
 			realTime.tv_nsec -= 1e9;
 		}
 
-
 		if (isEdge) {
 			edgeCounter++;
-			currentNanoseconds = now.tv_nsec;
-			ts.synchronize(0.5e9, currentNanoseconds);
+			ts.synchronize(0.5e9, timediff);
+			lastEdge = now;
 		}
 
 
 
 
 
-		if(isEdge){
+		/*if(isEdge){
 			info("Edge detected: seq=%lu, realTime.nsec=%lu, timeErr=%f , timePeriod=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, periodTime, changeVal);
-		}
+		}*/
+
 
 		if (edgeCounter < 2)
 			return Hook::Reason::SKIP_SAMPLE;
