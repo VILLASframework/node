@@ -86,14 +86,14 @@ public:
     {
         double t_err;
         uint64_t ret;
-		//Time estimate
-		x = timeFromNanoseconds(nanoseconds);
+	//Time estimate
+	x = timeFromNanoseconds(nanoseconds);
         //Time Error
         t_err = ((int64_t)actualTime + (int64_t)tau*1e9 - (int64_t)x)/1e9;
-		//Skew correction or internal frequency / external frequency
-		s = s + k1*(t_err) - k2*y;
-		//Dampening Factor
-		y = p*(t_err) + (1-p)*y;
+	//Skew correction or internal frequency / external frequency
+	s = s + k1*(t_err) - k2*y;
+	//Dampening Factor
+	y = p*(t_err) + (1-p)*y;
 
         //Clip skew correction
         if (s > 1.1) {
@@ -132,32 +132,28 @@ class PpsTsHook : public Hook {
 protected:
 	double lastValue;
 	double thresh;
-	double periodTime;//Period of sample frequency (Villas samples)
 	unsigned idx;
 	uint64_t lastSeqNr;
 	unsigned edgeCounter;
-	double pll_gain;
 	timespec realTime;
 	timespec lastEdge;
 	uint64_t last_sequence;
-	double y;
 	TimeSync ts;
+	bool converged;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		lastValue(0),
 		thresh(1.5),
-		periodTime(1),
 		idx(0),
 		lastSeqNr(0),
 		edgeCounter(0),
-		pll_gain(1),
 		realTime({ 0, 0 }),
 		lastEdge({0,0}),
 		last_sequence(0),
-		y(0),
-		ts()
+		ts(),
+		converged(false)
 	{
 	}
 
@@ -188,44 +184,45 @@ public:
 	{
 		assert(state == State::STARTED);
 
+		static const uint64_t targetVal = 0.5e9;
 		/* Get value of PPS signal */
 		float value = smp->data[idx].f; // TODO check if it is really float
 		//uint64_t seqNr = smp->sequence;
 
 		/* Detect Edge */
 		bool isEdge = lastValue < thresh && value > thresh;
+
 		lastValue = value;
 
-
-		/*double timeErr;
-		double changeVal;
-		//static const double targetVal = 0.5;*/
 
 		auto now = time_now();
 		uint64_t timediff = (now.tv_nsec - lastEdge.tv_nsec)+(now.tv_sec - lastEdge.tv_sec)*1e9;
 
+		// nsec is between 0.5e9 and 1.5e9 when converged
 		realTime.tv_nsec = ts.timeFromNanoseconds(timediff);
+		realTime.tv_sec = lastEdge.tv_sec;
 
-		if (realTime.tv_nsec >= 1e9) {
+		// when not converged, nsec might be really high.
+		// using a loop assures no time jumps.
+		//TODO: can nsec also become negative?
+		while (realTime.tv_nsec >= 1e9) {
 			realTime.tv_sec++;
 			realTime.tv_nsec -= 1e9;
 		}
 
 		if (isEdge) {
 			edgeCounter++;
-			ts.synchronize(0.5e9, timediff);
+			ts.synchronize(targetVal, timediff);
 			lastEdge = now;
+			converged = abs(ts.timeError(targetVal, timediff)) < 0.001;
 		}
-
-
-
-
 
 		/*if(isEdge){
 			info("Edge detected: seq=%lu, realTime.nsec=%lu, timeErr=%f , timePeriod=%f, changeVal=%f", seqNr,realTime.tv_nsec,  timeErr, periodTime, changeVal);
 		}*/
 
 
+		//if (!converged || edgeCounter < 2)
 		if (edgeCounter < 2)
 			return Hook::Reason::SKIP_SAMPLE;
 
