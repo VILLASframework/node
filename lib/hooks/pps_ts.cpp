@@ -166,10 +166,9 @@ public:
 
 		Hook::parse(cfg);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f, s?: f}",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f}",
 			"signal_index", &idx,
-			"threshold", &thresh,
-			"pll_gain", &pll_gain
+			"threshold", &thresh
 		);
 		if (ret)
 				throw ConfigError(cfg, err, "node-config-hook-pps_ts");
