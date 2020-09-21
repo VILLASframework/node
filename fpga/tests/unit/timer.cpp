@@ -29,6 +29,7 @@
 #include <villas/config.h>
 #include "global.hpp"
 
+// cppcheck-suppress unknownMacro
 Test(fpga, timer, .description = "Timer Counter")
 {
 	auto logger = villas::logging.get("unit-test:timer");

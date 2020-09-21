@@ -32,6 +32,7 @@
 
 using namespace villas;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, fifo, .description = "FIFO")
 {
 	ssize_t len;

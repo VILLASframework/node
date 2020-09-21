@@ -33,6 +33,7 @@
 
 using namespace villas;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, dma, .description = "DMA")
 {
 	auto logger = logging.get("unit-test:dma");

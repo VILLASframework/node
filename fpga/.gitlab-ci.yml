@@ -56,3 +56,31 @@ test:unit:
       echo "System is currently used by: $(who)"
       echo "We are skipping the test. Please restart manually."
     fi
+
+test:cppcheck:
+  stage: test
+  script:
+    - cppcheck -j $(nproc)
+               --max-configs=32
+               --error-exitcode=1
+               --quiet
+               --inline-suppr
+               --enable=warning,performance,portability,information,missingInclude
+               --std=c++11
+               --suppress=noValidConfiguration
+               -I include
+               -I common/include
+               gpu/
+               src/
+               lib/
+               tests/unit/ | tee cppcheck.log
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  dependencies:
+    - build:source
+  tags:
+    - docker
+  artifacts:
+    when: on_failure
+    paths:
+      - cppcheck.log
+    expose_as: cppcheck

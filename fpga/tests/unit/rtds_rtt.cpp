@@ -31,6 +31,7 @@
 
 extern struct fpga_card *card;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 {
 	int ret;

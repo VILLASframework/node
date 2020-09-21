@@ -30,6 +30,7 @@
 
 extern struct fpga_card *card;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, hls_dft, .description = "HLS: hls_dft")
 {
 	int ret;

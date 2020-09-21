@@ -90,6 +90,7 @@ static void fini()
 	state.cards.clear();
 }
 
+// cppcheck-suppress unknownMacro
 TestSuite(fpga,
 	.init = init,
 	.fini = fini,

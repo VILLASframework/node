@@ -29,6 +29,7 @@
 
 extern struct fpga_card *card;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, intc, .description = "Interrupt Controller")
 {
 	int ret;
