@@ -301,17 +301,7 @@ deploy:web:
   tags:
   - docker
 
-deploy:packages:manual:
-  <<: *deploy_packages
-  when: manual
-
-deploy:packages:tags:
-  <<: *deploy_packages
-  only:
-  # Only on version tags
-  - "/^v\\d+(\\.\\d+)+$/"
-
-deploy:docker:
+.deploy:docker: &deploy_docker_latest
   stage: deploy
   image: docker:19.03
   before_script:
@@ -331,9 +321,6 @@ deploy:docker:
   - docker push ${DOCKER_IMAGE}/dev-debian-armhf:latest
   tags:
   - docker
-  only:
-  # Only on version tags
-  - "/^v\\d+(\\.\\d+)+$/"
 
 deploy:docker:tags:
   stage: deploy
@@ -349,6 +336,26 @@ deploy:docker:tags:
   - docker push ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG}
   tags:
   - docker
+  only:
+  # Only on version tags
+  - "/^v\\d+(\\.\\d+)+$/"
+
+deploy:packages:manual:
+  <<: *deploy_packages
+  when: manual
+
+deploy:packages:tags:
+  <<: *deploy_packages
+  only:
+  # Only on version tags
+  - "/^v\\d+(\\.\\d+)+$/"
+
+deploy:docker:manual:
+  <<: *deploy_docker_latest
+  when: manual
+
+deploy:docker:tags:
+  <<: *deploy_docker_latest
   only:
   # Only on version tags
   - "/^v\\d+(\\.\\d+)+$/"
