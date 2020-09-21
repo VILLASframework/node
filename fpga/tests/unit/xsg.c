@@ -34,6 +34,7 @@
 
 extern struct fpga_card *card;
 
+// cppcheck-suppress unknownMacro
 Test(fpga, xsg, .description = "XSG: multiply_add")
 {
 	int ret;

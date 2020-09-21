@@ -68,6 +68,7 @@ static void dumpMem(const uint32_t* addr, size_t len)
 	}
 }
 
+// cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");
@@ -176,6 +177,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 	}
 }
 
+// cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");
@@ -247,6 +249,7 @@ void gpu_rtds_rtt_start(volatile uint32_t* dataIn, volatile reg_doorbell_t* door
 
 void gpu_rtds_rtt_stop();
 
+// cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");

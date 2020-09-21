@@ -50,6 +50,7 @@ RUN yum -y install \
 	devtoolset-7-toolchain \
 	pkgconfig make cmake3 \
 	autoconf automake autogen libtool \
+	cppcheck \
 	texinfo git curl tar
 
 # Several tools only needed for developement and testing
@@ -65,24 +66,24 @@ RUN yum -y install \
 
 # Build & Install Fmtlib
 RUN git clone --recursive https://github.com/fmtlib/fmt.git /tmp/fmt && \
-    mkdir -p /tmp/fmt/build && cd /tmp/fmt/build && \
-    git checkout 5.2.0 && \
-    cmake3 -DBUILD_SHARED_LIBS=1 .. && \
-    make -j$(nproc) install && \
+	mkdir -p /tmp/fmt/build && cd /tmp/fmt/build && \
+	git checkout 5.2.0 && \
+	cmake3 -DBUILD_SHARED_LIBS=1 .. && \
+	make -j$(nproc) install && \
 	rm -rf /tmp/fmt
 
 # Build & Install spdlog
 RUN git clone --recursive https://github.com/gabime/spdlog.git /tmp/spdlog && \
-    mkdir -p /tmp/spdlog/build && cd /tmp/spdlog/build && \
-    git checkout v1.3.1 && \
-    cmake3 -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF .. && \
-    make -j$(nproc) install && \
+	mkdir -p /tmp/spdlog/build && cd /tmp/spdlog/build && \
+	git checkout v1.3.1 && \
+	cmake3 -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF .. && \
+	make -j$(nproc) install && \
 	rm -rf /tmp/spdlog
 
 # Build & Install Criterion
 RUN git clone --recursive https://github.com/Snaipe/Criterion /tmp/criterion && \
-    mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && \
-    git checkout v2.3.3 && \
+	mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && \
+	git checkout v2.3.3 && \
 	cmake3 .. && \
 	make -j$(nproc) install && \
 	rm -rf /tmp/*

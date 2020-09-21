@@ -66,7 +66,7 @@ add_subdirectory(lib)
 add_subdirectory(src)
 
 if(CRITERION_FOUND AND TOPLEVEL_PROJECT)
-	add_subdirectory(tests)
+	add_subdirectory(tests/unit)
 endif()
 
 if(NOT CMAKE_PROJECT_NAME STREQUAL "villas-node")
