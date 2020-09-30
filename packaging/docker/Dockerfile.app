@@ -40,7 +40,8 @@ RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
 RUN cmake .. && \
 	make -j$(nproc) doc && \
-	make -j$(nproc) install
+	make -j$(nproc) install && \
+	ldconfig
 
 # For WebSocket / API access
 EXPOSE 80
