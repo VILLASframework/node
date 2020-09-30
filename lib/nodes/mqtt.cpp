@@ -195,8 +195,19 @@ int mqtt_init(struct vnode *n)
 	m->qos = 0;
 	m->retain = 0;
 	m->keepalive = 1; /* 1 second */
+
+	m->host = nullptr;
+	m->username = nullptr;
+	m->password = nullptr;
+	m->publish = nullptr;
+	m->subscribe = nullptr;
+
 	m->ssl.enabled = 0;
 	m->ssl.insecure = 0;
+	m->ssl.cafile = nullptr;
+	m->ssl.capath = nullptr;
+	m->ssl.certfile = nullptr;
+	m->ssl.keyfile = nullptr;
 
 	return 0;
 
@@ -249,6 +260,8 @@ int mqtt_parse(struct vnode *n, json_t *cfg)
 		throw ConfigError(cfg, "node-config-node-mqtt", "At least one topic has to be specified for node {}", node_name(n));
 
 	if (json_ssl) {
+		m->ssl.enabled = 1;
+
 		const char *cafile = nullptr;
 		const char *capath = nullptr;
 		const char *certfile = nullptr;
