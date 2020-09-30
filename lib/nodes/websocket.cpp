@@ -236,7 +236,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			ret = websocket_connection_init(c);
 			if (ret) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Internal error");
-				warning("Failed to intialize websocket connection: reason=%d", ret);
+				warning("Failed to intialize WebSocket connection: reason=%d", ret);
 				return -1;
 			}
 
@@ -569,7 +569,7 @@ int websocket_parse(struct vnode *n, json_t *cfg)
 
 			d->info.ssl_connection = !strcmp(prot, "https");
 			d->info.address = strdup(ads);
-			d->info.path    = strdup(path);
+			d->info.path    = strf("/%s", path);
 			d->info.host    = d->info.address;
 			d->info.origin  = d->info.address;
 			d->info.ietf_version_or_minus_one = -1;
