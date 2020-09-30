@@ -81,10 +81,10 @@ RelaySession * RelaySession::get(lws *wsi)
 
 	/* Get path of incoming request */
 	lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
-	if (strlen(uri) <= 0)
+	if (strlen(uri) <= 1)
 		throw InvalidUrlException();
 
-	Identifier sid = uri;
+	Identifier sid = uri + 1;
 
 	auto it = sessions.find(sid);
 	if (it == sessions.end()) {
