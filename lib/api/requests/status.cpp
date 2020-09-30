@@ -42,7 +42,7 @@ public:
 		struct lws_context *ctx = lws_get_context(s->wsi);
 		char buf[4096];
 
-		if (method != Method::GET)
+		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)

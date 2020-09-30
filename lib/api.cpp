@@ -34,10 +34,9 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 InvalidMethod::InvalidMethod(Request *req) :
-	BadRequest(
-		fmt::format("The '{}' API endpoint does not support {} requests",
-			req->factory->getName(), Session::methodToString(req->method)
-		)
+	BadRequest("The '{}' API endpoint does not support {} requests",
+			req->factory->getName(),
+			Session::methodToString(req->method)
 	)
 { }
 

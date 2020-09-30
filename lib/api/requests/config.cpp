@@ -38,7 +38,7 @@ public:
 	{
 		json_t *cfg = session->getSuperNode()->getConfig();
 
-		if (method != Method::GET)
+		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)

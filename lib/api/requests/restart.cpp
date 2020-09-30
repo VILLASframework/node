@@ -63,7 +63,7 @@ public:
 		int ret;
 		json_error_t err;
 
-		if (method != Method::POST)
+		if (method != Session::Method::POST)
 			throw InvalidMethod(this);
 
 		const char *cfg = nullptr;

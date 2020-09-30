@@ -32,11 +32,6 @@ namespace villas {
 namespace node {
 namespace api {
 
-/* Forward declarations */
-class Session;
-class Response;
-class RequestFactory;
-
 class PathRequest : public Request {
 
 public:

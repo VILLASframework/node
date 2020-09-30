@@ -37,6 +37,9 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Session::Session(lws *w) :
+	uri(),
+	method(Method::UNKNOWN),
+	contentLength(0),
 	wsi(w),
 	logger(logging.get("api:session"))
 {
@@ -73,21 +76,21 @@ void Session::execute()
 {
 	Request *r = request.exchange(nullptr);
 
-	logger->debug("Running API request: uri={}, method={}", r->uri, r->method);
+	logger->debug("Running API request: uri={}, method={}", uri, method);
 
 	try {
 		r->prepare();
 		response = r->execute();
 
-		logger->debug("Completed API request: request={}", r->uri, r->method);
+		logger->debug("Completed API request: request={}", uri, method);
 	} catch (const Error &e) {
 		response = new ErrorResponse(this, e);
 
-		logger->warn("API request failed: uri={}, method={}, code={}: {}", r->uri, r->method, e.code, e.what());
+		logger->warn("API request failed: uri={}, method={}, code={}: {}", uri, method, e.code, e.what());
 	} catch (const RuntimeError &e) {
 		response = new ErrorResponse(this, e);
 
-		logger->warn("API request failed: uri={}, method={}: {}", r->uri, r->method, e.what());
+		logger->warn("API request failed: uri={}, method={}: {}", uri, method, e.what());
 	}
 
 	logger->debug("Ran pending API requests. Triggering on_writeable callback: wsi={}", (void *) wsi);
@@ -124,17 +127,15 @@ void Session::open(void *in, size_t len)
 {
 	int ret;
 	char buf[32];
-	unsigned long contentLength;
 
-	Request::Method meth;
-	std::string uri = reinterpret_cast<char *>(in);
+	uri = reinterpret_cast<char *>(in);
 
 	try {
-		meth = (Request::Method) getRequestMethod(wsi);
-		if (meth == Request::Method::UNKNOWN)
+		auto method = getRequestMethod();
+		if (method == Method::UNKNOWN)
 			throw RuntimeError("Invalid request method");
 
-		request = RequestFactory::make(this, uri, meth);
+		request = RequestFactory::create(this);
 
 		ret = lws_hdr_copy(wsi, buf, sizeof(buf), WSI_TOKEN_HTTP_CONTENT_LENGTH);
 		if (ret < 0)
@@ -150,7 +151,7 @@ void Session::open(void *in, size_t len)
 		 *
 		 *  We immediatly send headers and close the connection
 		 *  without waiting for a POST body */
-		if (meth == Request::Method::OPTIONS)
+		if (method == Method::OPTIONS)
 			lws_callback_on_writable(wsi);
 		/* This request has no body.
 		 * We can reply immediatly */
@@ -317,43 +318,48 @@ int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
 	return 0;
 }
 
-int Session::getRequestMethod(struct lws *wsi)
+std::string Session::getRequestURI() const
 {
-	if      (lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI))
-		return Request::Method::GET;
-	else if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI))
-		return Request::Method::POST;
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
-	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PUT_URI))
-		return Request::Method::PUT;
-	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PATCH_URI))
-		return Request::Method::PATCH;
-	else if (lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI))
-		return Request::Method::OPTIONS;
-#endif
-	else
-		return Request::Method::UNKNOWN;
+	return uri;
 }
 
-std::string Session::methodToString(int method)
+Session::Method Session::getRequestMethod() const
+{
+	if      (lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI))
+		return Method::GET;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI))
+		return Method::POST;
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PUT_URI))
+		return Method::PUT;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_PATCH_URI))
+		return Method::PATCH;
+	else if (lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI))
+		return Method::OPTIONS;
+#endif
+	else
+		return Method::UNKNOWN;
+}
+
+std::string Session::methodToString(Method method)
 {
 	switch (method) {
-		case Request::Method::POST:
+		case Method::POST:
 			return "POST";
 
-		case Request::Method::GET:
+		case Method::GET:
 			return "GET";
 
-		case Request::Method::DELETE:
+		case Method::DELETE:
 			return "DELETE";
 
-		case Request::Method::PUT:
+		case Method::PUT:
 			return "PUT";
 
-		case Request::Method::PATCH:
+		case Method::PATCH:
 			return "GPATCHET";
 
-		case Request::Method::OPTIONS:
+		case Method::OPTIONS:
 			return "OPTIONS";
 
 		default:

@@ -42,7 +42,7 @@ public:
 		json_t *json_formats = json_array();
 		json_t *json_name;
 
-		if (method != Method::GET)
+		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)

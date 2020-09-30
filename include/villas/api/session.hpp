@@ -60,9 +60,23 @@ public:
 		VERSION_2	= 2
 	};
 
+	enum Method {
+		UNKNOWN,
+		GET,
+		POST,
+		DELETE,
+		OPTIONS,
+		PUT,
+		PATCH
+	};
+
 protected:
 	enum State state;
 	enum Version version;
+
+	std::string uri;
+	Method method;
+	unsigned long contentLength;
 
 	lws *wsi;
 
@@ -97,11 +111,14 @@ public:
 	void execute();
 	void shutdown();
 
-	static int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static int
+	protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-	int getRequestMethod(struct lws *wsi);
+	Method getRequestMethod() const;
+	std::string getRequestURI() const;
 
-	static std::string methodToString(int meth);
+	static std::string
+	methodToString(Method meth);
 
 };
 

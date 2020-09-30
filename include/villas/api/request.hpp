@@ -53,28 +53,18 @@ protected:
 	Logger logger;
 
 public:
-	std::string uri;
 	std::smatch matches;
+	Session::Method method;
 	json_t *body;
 
 	RequestFactory *factory;
 
-	enum Method {
-		UNKNOWN,
-		GET,
-		POST,
-		DELETE,
-		OPTIONS,
-		PUT,
-		PATCH
-	} method;
-
 	Request(Session *s) :
 		session(s),
 		logger(logging.get("api:request")),
+		method(Session::Method::UNKNOWN),
 		body(nullptr),
-		factory(nullptr),
-		method(Method::UNKNOWN)
+		factory(nullptr)
 	{ }
 
 	virtual ~Request()
@@ -106,7 +96,7 @@ public:
 	make(Session *s) = 0;
 
 	static Request *
-	make(Session *s, const std::string &uri, Request::Method meth);
+	create(Session *s);
 };
 
 template<typename T, const char *name, const char *re, const char *desc>

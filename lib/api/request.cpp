@@ -28,8 +28,11 @@
 using namespace villas;
 using namespace villas::node::api;
 
-Request * RequestFactory::make(Session *s, const std::string &uri, Request::Method meth)
+Request * RequestFactory::create(Session *s)
 {
+	auto uri = s->getRequestURI();
+	auto meth = s->getRequestMethod();
+
 	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
 		std::smatch mr;
 		if (not rf->match(uri, mr))
@@ -40,13 +43,12 @@ Request * RequestFactory::make(Session *s, const std::string &uri, Request::Meth
 		p->matches = mr;
 		p->factory = rf;
 		p->method = meth;
-		p->uri = uri;
 
 		return p;
 	}
 
-	throw BadRequest("Unknown API request", "{ s: s, s: i }",
+	throw BadRequest("Unknown API request", "{ s: s, s: s }",
 		"uri", uri.c_str(),
-		"method", meth
+		"method", Session::methodToString(meth).c_str()
 	);
 }

@@ -43,7 +43,7 @@ public:
 
 	virtual Response * execute()
 	{
-		if (method != Method::POST)
+		if (method != Session::Method::POST)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)
