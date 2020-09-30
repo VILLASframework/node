@@ -155,7 +155,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 
 			char name[32];
 			if (sig->name)
-				strncpy(name, sig->name, sizeof(name));
+				strncpy(name, sig->name, sizeof(name)-1);
 			else
 				snprintf(name, sizeof(name), "value%u", j);
 
