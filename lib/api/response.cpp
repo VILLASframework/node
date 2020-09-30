@@ -41,7 +41,14 @@ Response::~Response()
 
 json_t * ErrorResponse::toJson()
 {
-	return json_pack("{ s: s }",
+	json_t *ret;
+
+	ret = json_pack("{ s: s }",
 		"error", error.c_str()
 	);
+
+	if (json)
+		json_object_update(ret, json);
+
+	return ret;
 }

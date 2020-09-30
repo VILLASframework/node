@@ -45,5 +45,8 @@ Request * RequestFactory::make(Session *s, const std::string &uri, Request::Meth
 		return p;
 	}
 
-	throw BadRequest("Unknown API request");
+	throw BadRequest("Unknown API request", "{ s: s, s: i }",
+		"uri", uri.c_str(),
+		"method", meth
+	);
 }

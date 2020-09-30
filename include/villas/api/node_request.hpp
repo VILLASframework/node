@@ -56,12 +56,16 @@ public:
 		if (ret) {
 			node = vlist_lookup_name<struct vnode>(nodes, matches[1].str());
 			if (!node)
-				throw BadRequest("Unknown node");
+				throw BadRequest("Unknown node", "{ s: s }",
+					"node", matches[1].str().c_str()
+				);
 		}
 		else {
 			node = vlist_lookup_uuid<struct vnode>(nodes, uuid);
 			if (!node)
-				throw BadRequest("No node found with with matching UUID");
+				throw BadRequest("No node found with with matching UUID", "{ s: s }",
+					"uuid", matches[1].str().c_str()
+				);
 		}
 	}
 };

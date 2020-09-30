@@ -29,17 +29,17 @@
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/request.hpp>
+#include <villas/api/node_request.hpp>
 #include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class StatsRequest : public Request  {
+class StatsRequest : public NodeRequest {
 
 public:
-	using Request::Request;
+	using NodeRequest::NodeRequest;
 
 	virtual Response * execute()
 	{
@@ -49,15 +49,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Stats endpoint does not accept any body data");
 
-		const auto &nodeName = matches[1].str();
-
-		struct vlist *nodes = session->getSuperNode()->getNodes();
-		struct vnode *node = vlist_lookup_name<struct vnode>(nodes, nodeName.c_str());
-
-		if (!node)
-			throw BadRequest("Unknown node");
-
-		if (!node->stats)
+		if (node->stats == nullptr)
 			throw BadRequest("The statistics collection for this node is not enabled");
 
 		return new Response(session, node->stats->toJson());

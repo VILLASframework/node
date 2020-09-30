@@ -71,7 +71,7 @@ public:
 		if (body) {
 			ret = json_unpack_ex(body, &err, 0, "{ s?: s }", "config", &cfg);
 			if (ret < 0)
-				throw Error();
+				throw BadRequest("Failed to parse request body");
 		}
 
 		/* If no config is provided via request, we will use the previous one */

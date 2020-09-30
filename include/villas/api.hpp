@@ -51,19 +51,34 @@ class Request;
 class Error : public RuntimeError {
 
 public:
-	Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR, const std::string &msg = "Invalid API request") :
+
+	template<typename... Args>
+	Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR, const std::string &msg = "Invalid API request", Args&&... args) :
+		RuntimeError(msg, std::forward<Args>(args)...),
+		code(c),
+		json(nullptr)
+	{ }
+
+	template<typename... Args>
+	Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR, const std::string &msg = "Invalid API request", const char *fmt = nullptr, Args&&... args) :
 		RuntimeError(msg),
-		code(c)
+		code(c),
+		json(fmt
+			? json_pack(fmt, std::forward<Args>(args)...)
+			: nullptr
+		)
 	{ }
 
 	int code;
+	json_t *json;
 };
 
 class BadRequest : public Error {
 
 public:
-	BadRequest(const std::string &msg = "Bad API request") :
-		Error(HTTP_STATUS_BAD_REQUEST, msg)
+	template<typename... Args>
+	BadRequest(const std::string &msg = "Bad API request", Args&&... args) :
+		Error(HTTP_STATUS_BAD_REQUEST, msg, std::forward<Args>(args)...)
 	{ }
 };
 

@@ -52,12 +52,16 @@ public:
 
 		ret = uuid_parse(matches[1].str().c_str(), uuid);
 		if (ret)
-			throw BadRequest("Invalid UUID");
+			throw BadRequest("Invalid UUID", "{ s: s }",
+				"uuid", matches[1].str().c_str()
+			);
 
 		auto *paths = session->getSuperNode()->getPaths();
 		path = vlist_lookup_uuid<struct vpath>(paths, uuid);
 		if (!path)
-			throw BadRequest("No path found with with matching UUID");
+			throw BadRequest("No path found with with matching UUID", "{ s: s }",
+				"uuid", matches[1].str().c_str()
+			);
 	}
 };
 

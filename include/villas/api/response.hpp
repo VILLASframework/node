@@ -70,18 +70,21 @@ class ErrorResponse : public Response {
 
 protected:
 	std::string error;
+	json_t *json;
 
 public:
 	ErrorResponse(Session *s, const RuntimeError &e) :
 		Response(s),
-		error(e.what())
+		error(e.what()),
+		json(nullptr)
 	{
 		code = 500;
 	}
 
 	ErrorResponse(Session *s, const Error &e) :
 		Response(s),
-		error(e.what())
+		error(e.what()),
+		json(e.json)
 	{
 		code = e.code;
 	}

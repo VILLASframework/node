@@ -29,51 +29,30 @@
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/request.hpp>
+#include <villas/api/node_request.hpp>
 #include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class StatsRequest : public Request  {
+class StatsRequest : public NodeRequest  {
 
 public:
-	using Request::Request;
+	using NodeRequest::NodeRequest;
 
 	virtual Response * execute()
 	{
-		int ret;
-		json_error_t err;
-
 		if (method != Method::POST)
 			throw InvalidMethod(this);
 
 		if (body != nullptr)
 			throw BadRequest("Stats endpoint does not accept any body data");
 
+		if (node->stats == nullptr)
+			throw BadRequest("The statistics collection for this node is not enabled");
 
-		char *node = nullptr;
-
-		ret = json_unpack_ex(body, &err, 0, "{ s?: s }",
-			"node", &node
-		);
-		if (ret < 0)
-			throw Error();
-
-		struct vlist *nodes = session->getSuperNode()->getNodes();
-
-		for (size_t i = 0; i < vlist_length(nodes); i++) {
-			struct vnode *n = (struct vnode *) vlist_at(nodes, i);
-
-			if (node && strcmp(node, node_name(n)))
-				continue;
-
-			if (n->stats) {
-				n->stats->reset();
-				info("Stats resetted for node %s", node_name(n));
-			}
-		}
+		node->stats->reset();
 
 		return new Response(session);
 	}
