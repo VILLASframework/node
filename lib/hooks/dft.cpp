@@ -90,7 +90,7 @@ protected:
 
 
 public:
-	DftHook(struct vpath *p, struct node *n, int fl, int prio, bool en = true) :
+	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		window_type(windowType::NONE),
 		padding_type(paddingType::ZERO),

@@ -486,7 +486,7 @@ void ul_decode_error(UlError err){
 			warning("Found error: %s",errorList[i].errStr);
 	}
 }
-char * uldaq_print(struct node *n)
+char * uldaq_print(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
