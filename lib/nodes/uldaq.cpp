@@ -363,7 +363,7 @@ int uldaq_init(struct vnode *n)
 
 	u->in.queues = nullptr;
 	u->in.sample_rate = 1000;
-	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS | SO_EXTCLOCK);
+	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
 	u->in.flags = AINSCAN_FF_DEFAULT;
 
 	ret = pthread_mutex_init(&u->in.mutex, nullptr);
