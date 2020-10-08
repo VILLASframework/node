@@ -222,6 +222,12 @@ static const struct {
 	{ "unipolar-0.01", UNIPT01VOLTS,   0.0,   +0.01  },
 	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
+static void ul_decode_error(UlError err){
+	for( uint i=0; i < ARRAY_LEN(errorList) ;i++){
+		if(err&(1<<errorList[i].bitPos))
+			warning("Found error: %s",errorList[i].errStr);
+	}
+}
 
 static AiInputMode uldaq_parse_input_mode(const char *str)
 {
@@ -307,7 +313,7 @@ static int uldaq_connect(struct vnode *n)
 
 	/* Get a handle to the DAQ device associated with the first descriptor */
 	if (!u->device_handle) {
-		u->device_handle = ulCreateDaqDevice(descriptors[0]);
+		u->device_handle = ulCreateDaqDevice(*u->device_descriptor);
 		if (!u->device_handle) {
 			warning("Unable to create handle for DAQ device for node '%s'", node_name(n));
 			return -1;
@@ -325,6 +331,7 @@ static int uldaq_connect(struct vnode *n)
 		err = ulConnectDaqDevice(u->device_handle);
 		if (err != ERR_NO_ERROR) {
 			warning("Failed to connect to DAQ device for node '%s'", node_name(n));
+			ul_decode_error(err);
 			return -1;
 		}
 	}
@@ -480,12 +487,7 @@ int uldaq_parse(struct vnode *n, json_t *cfg)
 
 	return ret;
 }
-void ul_decode_error(UlError err){
-	for( uint i=0; i < ARRAY_LEN(errorList) ;i++){
-		if(err&(1<<errorList[i].bitPos))
-			warning("Found error: %s",errorList[i].errStr);
-	}
-}
+
 char * uldaq_print(struct vnode *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
