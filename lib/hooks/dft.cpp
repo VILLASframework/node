@@ -35,8 +35,76 @@
 #include <iostream>
 #include <fstream>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
+
 namespace villas {
 namespace node {
+
+class dataDump {
+	protected:
+		int socketFd;
+		std::string socketName;
+
+	public:
+
+		dataDump(std::string socketNameIn) :
+			socketName("")
+		{
+			openSocket(socketNameIn);
+		}
+
+		~dataDump() {
+			closeSocket();
+		}
+
+		int openSocket(std::string socketNameIn) {
+			socketName = socketNameIn;
+
+			socketFd = socket(AF_LOCAL,SOCK_STREAM, 0);
+			if (socketFd < 0) {
+				info("Error creating socket %s", socketName.c_str());
+				return -1;
+			}
+
+			sockaddr_un socketaddr_un;
+			socketaddr_un.sun_family = AF_UNIX;
+			strcpy(socketaddr_un.sun_path, socketName.c_str());
+			socketName = socketNameIn;
+
+			//unlink(socketName.c_str());
+			//bind(socketFd, (struct sockaddr *) &socketaddr_un, sizeof(socketaddr_un));
+			connect(socketFd, (struct sockaddr *) &socketaddr_un, sizeof(socketaddr_un));
+
+			return 1;
+		}
+
+		void closeSocket() {
+			info("Remove socket");
+			//unlink(socketName.c_str());
+			close(socketFd);
+		}
+
+		void writeData(uint len, double* yData, double* xData = nullptr) {
+			ssize_t bytesWritten;
+
+			for (uint i = 0; i<len; i++) {
+				std::string str = std::to_string(yData[i]);
+				if( xData != nullptr) {
+					str+= ";" + std::to_string(xData[i]);
+				}
+				str += "\n";
+				
+				bytesWritten =  write(socketFd, str.c_str(), str.length());
+				if( (long unsigned int) bytesWritten != str.length() ) {
+					warning("Could not send all content to socket %s", socketName.c_str());
+				}
+			}
+		}
+
+};
+
 
 class DftHook : public Hook {
 
@@ -52,6 +120,11 @@ protected:
 		HANN,
 		HAMMING
 	};
+
+	dataDump* originalSignalDump;
+	dataDump* ppsSignalDump;
+	dataDump* originalSignalDumpSynced;
+	dataDump* ppsSignalDumpSynced;
 
 	windowType window_type;
 	paddingType padding_type;
@@ -110,6 +183,11 @@ public:
 		last_dft_cal({0,0})
 	{
 		format = format_type_lookup("villas.human");
+
+		originalSignalDump = new dataDump("/tmp/plot/originalSignalDump");
+		ppsSignalDump = new dataDump("/tmp/plot/ppsSignalDump");
+		originalSignalDumpSynced = new dataDump("/tmp/plot/originalSignalDumpSynced");
+		ppsSignalDumpSynced = new dataDump("/tmp/plot/ppsSignalDumpSynced");
 	}
 
 	virtual void prepare(){
@@ -274,10 +352,14 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-
+	
 		smp_memory[smp_mem_pos % window_size] = smp->data[0].f;
 		pps_memory[smp_mem_pos % window_size] = smp->data[1].f;
-		smp_mem_pos ++ ;
+		smp_mem_pos++ ;
+		//if (smp_mem_pos%1000 == 0) {
+		originalSignalDump->writeData(1,&(smp->data[0].f));
+		ppsSignalDump->writeData(1,&(smp->data[1].f));
+		//}
 
 		bool runDft = false;
 		if( sync_dft ){
@@ -285,9 +367,9 @@ public:
 				runDft = true;
 		}
 		last_dft_cal = smp->ts.origin;
-		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || ( runDft ) ) {
+		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || ( runDft ))// {
 			calcDft(paddingType::ZERO);
-			double maxF = 0;
+			/*double maxF = 0;
 			double maxA = 0;
 			int maxPos = 0;
 
@@ -299,7 +381,7 @@ public:
 					maxPos = i;
 				}
 			}
-			info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
+			//info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
 			
 			if(smp_mem_pos>100e3){
 				appendDumpData("/tmp/plot/phaseOut",atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()));
@@ -308,7 +390,7 @@ public:
 			}
 
 			dumpData("/tmp/plot/absDftResults", absDftResults, freq_count, absDftFreqs);
-		}
+		}*/
 
 		
 		if((smp->sequence - last_sequence) > 1 )
@@ -322,6 +404,8 @@ public:
 	virtual ~DftHook()
 	{
 		//delete smp_memory;
+		delete originalSignalDump;
+		delete ppsSignalDump;
 	}
 
 	void appendDumpData(const char *path, double ydata){
@@ -374,23 +458,25 @@ public:
 		double tmp_smp_window[window_size];
 		double tmp_smp_pps[window_size];
 		
-		uint lastEdge = 0;
-		uint edgeCount = 0;
+		//uint lastEdge = 0;
+		//uint edgeCount = 0;
 		for(uint i = 0; i< window_size; i++){
 			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos) % window_size];
 			tmp_smp_pps[i] = pps_memory[( i + smp_mem_pos) % window_size];
-			if(edgeCount == 0 || (lastEdge + 1500) < i){
+			/*if(edgeCount == 0 || (lastEdge + 1500) < i){
 				if(tmp_smp_pps[i] > 2. && i > 5000){
-					lastEdge = i;
+					lastEdge = i;dumpData("/tmp/plot/pps_original",tmp_smp_pps,window_size);
+		dumpData("/tmp/plot/signal_original",tmp_smp_window,window_size);
+
 					info("edge detected %i",lastEdge);
 					edgeCount++;
 					appendDumpData("/tmp/plot/ppsAmplitude",tmp_smp_window[i]);
 				}
-			}
+			}*/
 		}
-		dumpData("/tmp/plot/pps_original",tmp_smp_pps,window_size);
-		dumpData("/tmp/plot/signal_original",tmp_smp_window,window_size);
-
+		originalSignalDumpSynced->writeData(window_size,tmp_smp_window);
+		ppsSignalDumpSynced->writeData(window_size,tmp_smp_pps);
+return;
 		for(uint i = 0; i< window_size; i++){
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
 		}
