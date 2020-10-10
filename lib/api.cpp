@@ -88,16 +88,14 @@ void Api::worker()
 {
 	logger->info("Started worker");
 
-	while (running) {
-		/* Process pending requests */
-		while (!pending.empty()) {
-			Session *s = pending.pop();
-			if (s) {
-				/* Check that the session is still alive */
-				auto it = std::find(sessions.begin(), sessions.end(), s);
-				if (it != sessions.end())
-					s->execute();
-			}
+	/* Process pending requests */
+	while (!pending.empty() && running) {
+		Session *s = pending.pop();
+		if (s) {
+			/* Check that the session is still alive */
+			auto it = std::find(sessions.begin(), sessions.end(), s);
+			if (it != sessions.end())
+				s->execute();
 		}
 	}
 
