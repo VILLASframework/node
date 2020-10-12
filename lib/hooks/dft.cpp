@@ -52,10 +52,12 @@ protected:
 		HAMMING
 	};
 
-	Dumper* originalSignalDump;
-	Dumper* ppsSignalDump;
-	Dumper* originalSignalDumpSynced;
-	Dumper* ppsSignalDumpSynced;
+	Dumper* origSigSync;
+	Dumper* ppsSigSync;
+	Dumper* windowdSigSync;
+	Dumper* phasorPhase;
+	Dumper* phasorAmpitude;
+	Dumper* phasorFreq;
 
 	windowType window_type;
 	paddingType padding_type;
@@ -70,6 +72,7 @@ protected:
 	double* absDftResults;
 	double* absDftFreqs;
 
+	uint64_t dftCalcCnt;
 	uint sample_rate;
 	double start_freqency;
 	double end_freqency;
@@ -80,7 +83,7 @@ protected:
 	uint freq_count;//number of requency bins that are calculated
 	bool sync_dft;
 
-	uint smp_mem_pos;
+	uint64_t smp_mem_pos;
 	uint64_t last_sequence;
 	
 	
@@ -98,6 +101,7 @@ public:
 		Hook(p, n, fl, prio, en),
 		window_type(windowType::NONE),
 		padding_type(paddingType::ZERO),
+		dftCalcCnt(0),
 		sample_rate(0),
 		start_freqency(0),
 		end_freqency(0),
@@ -115,10 +119,13 @@ public:
 	{
 		format = format_type_lookup("villas.human");
 
-		originalSignalDump = new Dumper("/tmp/plot/originalSignalDump");
-		ppsSignalDump = new Dumper("/tmp/plot/ppsSignalDump");
-		originalSignalDumpSynced = new Dumper("/tmp/plot/originalSignalDumpSynced");
-		ppsSignalDumpSynced = new Dumper("/tmp/plot/ppsSignalDumpSynced");
+		origSigSync = new Dumper("/tmp/plot/origSigSync");
+		ppsSigSync = new Dumper("/tmp/plot/ppsSigSync");
+		windowdSigSync = new Dumper("/tmp/plot/windowdSigSync");
+		phasorPhase = new Dumper("/tmp/plot/phasorPhase");
+		phasorAmpitude = new Dumper("/tmp/plot/phasorAmpitude");
+		phasorFreq = new Dumper("/tmp/plot/phasorFreq");
+
 	}
 
 	virtual void prepare(){
@@ -187,7 +194,7 @@ public:
 		absDftFreqs = new double[freq_count];
 		for(uint i=0; i < freq_count; i++)
 			absDftFreqs[i] = start_freqency + i * frequency_resolution;
-
+		
 		genDftMatrix();
 		calcWindow(window_type);
 
@@ -283,26 +290,24 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-	
+
 		smp_memory[smp_mem_pos % window_size] = smp->data[0].f;
 		pps_memory[smp_mem_pos % window_size] = smp->data[1].f;
 		smp_mem_pos++ ;
-		//if (smp_mem_pos%1000 == 0) {
-		originalSignalDump->writeData(1,&(smp->data[0].f));
-		ppsSignalDump->writeData(1,&(smp->data[1].f));
-		//}
 
 		bool runDft = false;
-		if( sync_dft ){
+		if( sync_dft ) {
 			if( last_dft_cal.tv_sec != smp->ts.origin.tv_sec )
 				runDft = true;
 		}
 		last_dft_cal = smp->ts.origin;
-		if(	(( !sync_dft && ( smp_mem_pos % ( sample_rate / dft_rate )) == 0 ) ) || ( runDft ))// {
+	
+		if(	runDft ) {
 			calcDft(paddingType::ZERO);
-			/*double maxF = 0;
+			double maxF = 0;
 			double maxA = 0;
 			int maxPos = 0;
+			
 
 			for(uint i=0; i<freq_count; i++){
 				absDftResults[i] = abs(dftResults[i]) * 2 / (window_size * window_corretion_factor * ((padding_type == paddingType::ZERO)?1:window_multiplier) );
@@ -312,16 +317,18 @@ public:
 					maxPos = i;
 				}
 			}
-			//info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
-			
-			if(smp_mem_pos>100e3){
-				appendDumpData("/tmp/plot/phaseOut",atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()));
-				appendDumpData("/tmp/plot/voltageOut",(maxA / pow(2,1./2)));
-				appendDumpData("/tmp/plot/freqOut",maxF);
-			}
 
-			dumpData("/tmp/plot/absDftResults", absDftResults, freq_count, absDftFreqs);
-		}*/
+			info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)) );
+			
+			if(dftCalcCnt > 1) {
+				double tmpPhase = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real());
+				phasorPhase->writeData(1,&tmpPhase);
+				//double tmpMaxA = maxA / pow(2,1./2);
+				//phasorAmpitude->writeData(1,&tmpMaxA);
+				phasorFreq->writeData(1,&maxF);
+			}
+			dftCalcCnt++;
+		}
 
 		
 		if((smp->sequence - last_sequence) > 1 )
@@ -335,8 +342,14 @@ public:
 	virtual ~DftHook()
 	{
 		//delete smp_memory;
-		delete originalSignalDump;
-		delete ppsSignalDump;
+
+		delete origSigSync;
+		delete ppsSigSync;
+		delete windowdSigSync;
+		delete phasorPhase;
+		delete phasorAmpitude;
+		delete phasorFreq;
+
 	}
 
 	void genDftMatrix(){
@@ -365,23 +378,18 @@ public:
 		for(uint i = 0; i< window_size; i++){
 			tmp_smp_window[i] = smp_memory[( i + smp_mem_pos) % window_size];
 			tmp_smp_pps[i] = pps_memory[( i + smp_mem_pos) % window_size];
-			/*if(edgeCount == 0 || (lastEdge + 1500) < i){
-				if(tmp_smp_pps[i] > 2. && i > 5000){
-					lastEdge = i;dumpData("/tmp/plot/pps_original",tmp_smp_pps,window_size);
-		dumpData("/tmp/plot/signal_original",tmp_smp_window,window_size);
-
-					info("edge detected %i",lastEdge);
-					edgeCount++;
-					appendDumpData("/tmp/plot/ppsAmplitude",tmp_smp_window[i]);
-				}
-			}*/
 		}
-		originalSignalDumpSynced->writeData(window_size,tmp_smp_window);
-		ppsSignalDumpSynced->writeData(window_size,tmp_smp_pps);
-return;
-		for(uint i = 0; i< window_size; i++){
+
+		origSigSync->writeData(window_size,tmp_smp_window);
+		ppsSigSync->writeData(window_size,tmp_smp_pps);
+
+		if(dftCalcCnt > 1)
+			phasorAmpitude->writeData(1,&tmp_smp_window[window_size - 1]);
+
+		for(uint i = 0; i< window_size; i++) {
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
 		}
+		windowdSigSync->writeData(window_size,tmp_smp_window);
 		//dumpData("/tmp/plot/signal_windowed",tmp_smp_window,window_size);
 
 		//dumpData("/tmp/plot/smp_window",smp_memory,window_size);
