@@ -607,14 +607,13 @@ int uldaq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	pthread_mutex_lock(&u->in.mutex);
 
-
 	if (u->in.status != SS_RUNNING)
 		return -1;
 
 	size_t start_index = u->in.buffer_pos;
 
 	/* Wait for data available condition triggered by event callback */
-	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentScanCount)
+	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentTotalCount)
 		pthread_cond_wait(&u->in.cv, &u->in.mutex);
 
 	for (unsigned j = 0; j < cnt; j++) {
