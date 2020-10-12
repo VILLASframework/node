@@ -25,86 +25,17 @@
  */
 
 #include <cstring>
-
+#include "villas/dumper.hpp"
 #include <villas/hook.hpp>
 #include <villas/path.h>
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/plugin.h>
 #include <complex>
-#include <iostream>
-#include <fstream>
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
 
 namespace villas {
 namespace node {
-
-class dataDump {
-	protected:
-		int socketFd;
-		std::string socketName;
-
-	public:
-
-		dataDump(std::string socketNameIn) :
-			socketName("")
-		{
-			openSocket(socketNameIn);
-		}
-
-		~dataDump() {
-			closeSocket();
-		}
-
-		int openSocket(std::string socketNameIn) {
-			socketName = socketNameIn;
-
-			socketFd = socket(AF_LOCAL,SOCK_STREAM, 0);
-			if (socketFd < 0) {
-				info("Error creating socket %s", socketName.c_str());
-				return -1;
-			}
-
-			sockaddr_un socketaddr_un;
-			socketaddr_un.sun_family = AF_UNIX;
-			strcpy(socketaddr_un.sun_path, socketName.c_str());
-			socketName = socketNameIn;
-
-			//unlink(socketName.c_str());
-			//bind(socketFd, (struct sockaddr *) &socketaddr_un, sizeof(socketaddr_un));
-			connect(socketFd, (struct sockaddr *) &socketaddr_un, sizeof(socketaddr_un));
-
-			return 1;
-		}
-
-		void closeSocket() {
-			info("Remove socket");
-			//unlink(socketName.c_str());
-			close(socketFd);
-		}
-
-		void writeData(uint len, double* yData, double* xData = nullptr) {
-			ssize_t bytesWritten;
-
-			for (uint i = 0; i<len; i++) {
-				std::string str = std::to_string(yData[i]);
-				if( xData != nullptr) {
-					str+= ";" + std::to_string(xData[i]);
-				}
-				str += "\n";
-				
-				bytesWritten =  write(socketFd, str.c_str(), str.length());
-				if( (long unsigned int) bytesWritten != str.length() ) {
-					warning("Could not send all content to socket %s", socketName.c_str());
-				}
-			}
-		}
-
-};
-
 
 class DftHook : public Hook {
 
@@ -121,10 +52,10 @@ protected:
 		HAMMING
 	};
 
-	dataDump* originalSignalDump;
-	dataDump* ppsSignalDump;
-	dataDump* originalSignalDumpSynced;
-	dataDump* ppsSignalDumpSynced;
+	Dumper* originalSignalDump;
+	Dumper* ppsSignalDump;
+	Dumper* originalSignalDumpSynced;
+	Dumper* ppsSignalDumpSynced;
 
 	windowType window_type;
 	paddingType padding_type;
@@ -184,10 +115,10 @@ public:
 	{
 		format = format_type_lookup("villas.human");
 
-		originalSignalDump = new dataDump("/tmp/plot/originalSignalDump");
-		ppsSignalDump = new dataDump("/tmp/plot/ppsSignalDump");
-		originalSignalDumpSynced = new dataDump("/tmp/plot/originalSignalDumpSynced");
-		ppsSignalDumpSynced = new dataDump("/tmp/plot/ppsSignalDumpSynced");
+		originalSignalDump = new Dumper("/tmp/plot/originalSignalDump");
+		ppsSignalDump = new Dumper("/tmp/plot/ppsSignalDump");
+		originalSignalDumpSynced = new Dumper("/tmp/plot/originalSignalDumpSynced");
+		ppsSignalDumpSynced = new Dumper("/tmp/plot/ppsSignalDumpSynced");
 	}
 
 	virtual void prepare(){
@@ -408,35 +339,6 @@ public:
 		delete ppsSignalDump;
 	}
 
-	void appendDumpData(const char *path, double ydata){
-		std::ofstream fh;
-		fh.open(path,std::ios_base::app);
-		if(fh.tellp()>0)
-			fh << ";";
-		fh << ydata;
-
-		fh.close();
-	}
-
-	void dumpData(const char *path, double *ydata, uint size, double *xdata=nullptr){
-		
-		std::ofstream fh;
-		fh.open(path);
-		for(uint i = 0 ; i < size ; i++){
-			if(i>0)fh << ";";
-			fh << ydata[i];
-		}
-		if(xdata){
-			fh << "\n";
-			for(uint i = 0 ; i < size ; i++){
-				if(i>0)fh << ";";
-				fh << xdata[i];
-			}
-		}
-		fh.close();
-	}
-
-
 	void genDftMatrix(){
 		using namespace std::complex_literals;
 
@@ -480,9 +382,9 @@ return;
 		for(uint i = 0; i< window_size; i++){
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
 		}
-		dumpData("/tmp/plot/signal_windowed",tmp_smp_window,window_size);
+		//dumpData("/tmp/plot/signal_windowed",tmp_smp_window,window_size);
 
-		dumpData("/tmp/plot/smp_window",smp_memory,window_size);
+		//dumpData("/tmp/plot/smp_window",smp_memory,window_size);
 
 		for( uint i=0; i < freq_count; i++){
 			dftResults[i] = 0;
@@ -529,7 +431,7 @@ return;
 			}
 		}
 		window_corretion_factor /= window_size;
-		dumpData("/tmp/plot/filter_window",filterWindowCoefficents,window_size);
+		//dumpData("/tmp/plot/filter_window",filterWindowCoefficents,window_size);
 	}
 };
 

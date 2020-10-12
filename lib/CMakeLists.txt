@@ -48,6 +48,7 @@ endif()
 set(LIB_SRC
     config_helper.cpp
     config.cpp
+    dumper.cpp
     mapping.cpp
     memory.cpp
     memory/heap.cpp
