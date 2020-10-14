@@ -68,8 +68,8 @@ public:
 		timeErr(0.0),
 		period(0.0),
 		cntEdges(0),
-		horizonComp(1),
-		horizonEst(1),
+		horizonComp(10),
+		horizonEst(10),
 		filtLen(horizonEst + 1)
 	{
 		filtWin = new uintmax_t[filtLen];
