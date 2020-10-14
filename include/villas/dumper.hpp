@@ -38,5 +38,5 @@ class Dumper {
 		void closeSocket();
 		void writeData(uint len, double* yData, double* xData = nullptr);
     };
-}
-}
+} /* namespace node */
+} /* namespace villas */
