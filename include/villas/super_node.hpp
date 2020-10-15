@@ -78,7 +78,6 @@ protected:
 
 	struct Task task;	/**< Task for periodic stats output */
 
-	std::string name;	/**< A name of this super node. Usually the hostname. */
 	std::string uri;	/**< URI of configuration */
 
 	Config config;		/** The configuration file. */
@@ -179,11 +178,6 @@ public:
 	std::string getConfigUri() const
 	{
 		return uri;
-	}
-
-	std::string getName() const
-	{
-		return name;
 	}
 
 	int getAffinity() const

@@ -79,11 +79,6 @@ SuperNode::SuperNode() :
 	kernel::nl::init(); /* Fill link cache */
 #endif /* WITH_NETEM */
 
-	char hname[128];
-	gethostname(hname, 128);
-
-	name = hname;
-
 	logger = logging.get("super_node");
 }
 
@@ -97,7 +92,6 @@ void SuperNode::parse(const std::string &u)
 void SuperNode::parse(json_t *root)
 {
 	int ret;
-	const char *nme = nullptr;
 
 	assert(state != State::STARTED);
 
@@ -108,7 +102,7 @@ void SuperNode::parse(json_t *root)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: b }",
 		"stats", &statsRate,
 		"http", &json_http,
 		"logging", &json_logging,
@@ -117,14 +111,10 @@ void SuperNode::parse(json_t *root)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"name", &nme,
 		"idle_stop", &idleStop
 	);
 	if (ret)
 		throw ConfigError(root, err, "node-config", "Unpacking top-level config failed");
-
-	if (nme)
-		name = nme;
 
 #ifdef WITH_WEB
 	if (json_http)
