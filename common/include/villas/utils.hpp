@@ -204,13 +204,16 @@ int sha1sum(FILE *f, unsigned char *sha1);
 /** Generate an UUID by MD5 hashing the provided string */
 int uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns = "");
 
+/** Generate an UUID by MD5 hashing the provided string */
 int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns);
+
+/** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
+void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns = "");
 
 /** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
 int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns);
 
 /** Check if process is running inside a Docker container */
-
 bool is_docker();
 
 /** Check if process is running inside a Kubernetes container */
