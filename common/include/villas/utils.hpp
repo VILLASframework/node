@@ -36,6 +36,8 @@
 #include <sys/types.h>
 
 #include <openssl/sha.h>
+#include <jansson.h>
+#include <uuid/uuid.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
@@ -199,6 +201,12 @@ size_t strlenp(const char *str);
  * @retval 0 Everything was okay.
  */
 int sha1sum(FILE *f, unsigned char *sha1);
+
+/** Generate an UUID by MD5 hashing the provided string */
+void uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns = "");
+
+/** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
+void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns = "");
 
 namespace base64 {
 
