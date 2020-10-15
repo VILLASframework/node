@@ -166,14 +166,9 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 		if (ret)
 			throw ConfigError(json, "node-config-node-uuid", "Failed to parse UUID: {}", uuid);
 	}
-	else {
-		/* Generate UUID from hashed config */
-		char *json_str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
-
-		MD5((unsigned char*) json_str, strlen(json_str), (unsigned char*) &n->uuid);
-
-		free(json_str);
-	}
+	else
+		/* Generate UUID from hashed config including node name */
+		uuid_generate_from_json(n->uuid, json, name);
 
 	if (json_netem) {
 #ifdef WITH_NETEM
