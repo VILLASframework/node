@@ -13,22 +13,16 @@ class Node(object):
 
     api_version = 'v2'
 
-    def __init__(self, log_filename=None, config_filename=None,
-                 config={}, api='http://localhost:8080',
+    def __init__(self, api_url=None,
+                 log_filename=None,
+                 config_filename=None, config={},
                  executable='villas-node', **kwargs):
+
+        self.api_url = api_url
+        self.log_filename = log_filename
         self.config = config
         self.config_filename = config_filename
-        self.log_filename = log_filename
-        self.api_endpoint = api
         self.executable = executable
-
-        schema, _ = api.split('://')
-        if schema in ('http', 'https'):
-            pass
-        elif schema in ('ws', 'wss'):
-            pass
-        elif schema == 'unix':
-            pass
 
     def start(self):
         self.config_file = tempfile.NamedTemporaryFile(mode='w+',
@@ -97,21 +91,21 @@ class Node(object):
             args['json'] = req
 
         r = requests.get(
-            f'{self.api_endpoint}/api/{self.api_version}/{action}', **args)
+            f'{self.api_url}/api/{self.api_version}/{action}', **args)
 
         r.raise_for_status()
 
         return r.json()
 
+    def get_local_version(self):
+        ver = subprocess.check_output([self.executable, '-V'])
+
+        return ver.decode('ascii').rstrip()
+
     def get_version(self):
-        try:
-            resp = self.request('capabilities')
+        resp = self.request('capabilities')
 
-            return resp['build']
-        except Exception:
-            ver = subprocess.check_output([self.executable, '-V'], )
-
-            return ver.decode('ascii').rstrip()
+        return resp['build']
 
     def is_running(self):
         if self.child is None:
