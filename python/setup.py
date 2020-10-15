@@ -1,5 +1,6 @@
 from setuptools import setup, find_namespace_packages
 from glob import glob
+import sys
 
 with open('README.md') as f:
     long_description = f.read()
@@ -27,9 +28,10 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     install_requires=[
-        'requests',
+        'requests'
+    ] + [
         'linuxfd'
-    ],
+    ] if sys.platform == 'linux' else [],
     setup_requires=[
         'm2r'
     ],
