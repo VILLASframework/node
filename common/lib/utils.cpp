@@ -1,6 +1,7 @@
 /** Utilities.
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -38,6 +39,9 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include <openssl/md5.h>
+#include <jansson.h>
+#include <uuid/uuid.h>
 
 #include <villas/config.h>
 #include <villas/utils.hpp>
@@ -351,6 +355,27 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	fseek(f, seek, SEEK_SET);
 
 	return 0;
+}
+
+void uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns)
+{
+	std::stringstream ss;
+
+	if (!ns.empty())
+		ss << ns << "|";
+
+	ss << data;
+
+	MD5((unsigned char*) ss.str().c_str(), ss.str().size(), (unsigned char *) &out);
+}
+
+void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns)
+{
+	char *str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
+
+	uuid_generate_from_str(out, str, ns);
+
+	free(str);
 }
 
 } /* namespace utils */
