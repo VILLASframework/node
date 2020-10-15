@@ -89,7 +89,7 @@ void Api::worker()
 	logger->info("Started worker");
 
 	/* Process pending requests */
-	while (!pending.empty() && running) {
+	while (running) {
 		Session *s = pending.pop();
 		if (s) {
 			/* Check that the session is still alive */

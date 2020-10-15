@@ -34,6 +34,7 @@
 #include <villas/memory.h>
 #include <villas/config_helper.hpp>
 #include <villas/log.hpp>
+#include <villas/timing.h>
 #include <villas/node/exceptions.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/kernel/if.hpp>
@@ -48,7 +49,7 @@ using namespace villas::utils;
 
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
-	idleStop(true),
+	idleStop(-1),
 #ifdef WITH_API
 	api(this),
 #endif
@@ -63,9 +64,17 @@ SuperNode::SuperNode() :
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	statsRate(1.0),
-	task(CLOCK_REALTIME)
+	task(CLOCK_REALTIME),
+	started(time_now())
 {
 	int ret;
+
+	char hname[128];
+	ret = gethostname(hname, sizeof(hname));
+	if (ret)
+		throw SystemError("Failed to determine hostname");
+
+	uuid_generate_from_str(uuid, hname);
 
 	ret = vlist_init(&nodes);
 	if (ret)
@@ -95,6 +104,8 @@ void SuperNode::parse(json_t *root)
 
 	assert(state != State::STARTED);
 
+	const char *uuid_str = nullptr;
+
 	json_t *json_nodes = nullptr;
 	json_t *json_paths = nullptr;
 	json_t *json_logging = nullptr;
@@ -102,7 +113,9 @@ void SuperNode::parse(json_t *root)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: b }",
+	idleStop = 1;
+
+	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: b, s?: s }",
 		"stats", &statsRate,
 		"http", &json_http,
 		"logging", &json_logging,
@@ -111,10 +124,17 @@ void SuperNode::parse(json_t *root)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"idle_stop", &idleStop
+		"idle_stop", &idleStop,
+		"uuid", &uuid_str
 	);
 	if (ret)
 		throw ConfigError(root, err, "node-config", "Unpacking top-level config failed");
+
+	if (uuid_str) {
+		ret = uuid_parse(uuid_str, uuid);
+		if (ret)
+			throw ConfigError(root, "node-config-uuid", "Failed to parse UUID: {}", uuid_str);
+	}
 
 #ifdef WITH_WEB
 	if (json_http)
@@ -502,7 +522,7 @@ int SuperNode::periodic()
 		}
 	}
 
-	if (idleStop && state == State::STARTED && started == 0) {
+	if (idleStop > 0 && state == State::STARTED && started == 0) {
 		info("No more active paths. Stopping super-node");
 
 		return -1;

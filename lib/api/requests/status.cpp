@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#ifdef LWS_WITH_SERVER_STATUS
+#include <time.h>
+#include <uuid/uuid.h>
+#include <sys/utsname.h>
+#include <sys/sysinfo.h>
 
-#include <jansson.h>
-
+#include <villas/timing.h>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
+
+#ifndef UUID_STR_LEN
+  #define UUID_STR_LEN 37
+#endif
 
 namespace villas {
 namespace node {
@@ -33,14 +39,30 @@ namespace api {
 
 class StatusRequest : public Request {
 
+protected:
+
+#ifdef LWS_WITH_SERVER_STATUS
+	json_t * getLwsStatus()
+	{
+		int ret;
+
+		struct lws_context *ctx = lws_get_context(session->wsi);
+		char buf[4096];
+
+		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
+		if (ret)
+			throw Error();
+
+		return json_loads(buf, 0, nullptr);
+	}
+#endif /* LWS_WITH_SERVER_STATUS */
+
 public:
 	using Request::Request;
 
 	virtual Response * execute()
 	{
 		int ret;
-		struct lws_context *ctx = lws_get_context(s->wsi);
-		char buf[4096];
 
 		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
@@ -48,11 +70,83 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Status endpoint does not accept any body data");
 
-		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
-		if (ret)
-			throw Error();
+		auto *sn = session->getSuperNode();
 
-		auto *json_status = json_loads(buf, 0, nullptr);
+		uuid_t uuid;
+		struct utsname uts;
+		struct sysinfo sinfo;
+		char hname[128];
+		char uuid_str[UUID_STR_LEN];
+
+		sn->getUUID(uuid);
+		uuid_unparse_lower(uuid, uuid_str);
+
+		auto now = time_now();
+		auto started = sn->getStartTime();
+
+		ret = gethostname(hname, sizeof(hname));
+		if (ret)
+			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to get system hostname");
+
+		ret = uname(&uts);
+		if (ret)
+			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to get kernel information");
+
+		ret = sysinfo(&sinfo);
+		if (ret)
+			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to get system information");
+
+		float f_load = 1.f / (1 << SI_LOAD_SHIFT);
+
+		json_error_t err;
+		json_t *json_status = json_pack_ex(&err, 0, "{ s: s, s: s, s: s, s: s, s: s, s: s, s: s, s: f, s: f, s: { s: s, s: I, s: b }, s: { s: s, s: s, s: s, s: s, s: s, s: s}, s: { s: i, s: i, s: I, s: I, s: [ f, f, f ], s: { s: I, s, I, s: I, s: I }, s: { s: I, s: I }, s: { s: I, s: I } } }",
+			"state", state_print(sn->getState()),
+			"version", PROJECT_VERSION_STR,
+			"release", PROJECT_RELEASE,
+			"build_id", PROJECT_BUILD_ID,
+			"build_date", PROJECT_BUILD_DATE,
+			"hostname", hname,
+			"uuid", uuid_str,
+			"time_now", time_to_double(&now),
+			"time_started", time_to_double(&started),
+			"timezone",
+				"name", tzname[daylight],
+				"offset", (json_int_t) timezone,
+				"dst", daylight,
+			"kernel",
+				"sysname", uts.sysname,
+				"nodename", uts.nodename,
+				"release", uts.release,
+				"version", uts.version,
+				"machine", uts.machine,
+				"domainname", uts.domainname,
+			"system",
+				"cores_configured", get_nprocs_conf(),
+				"cores", get_nprocs(),
+				"procecces", (json_int_t) sinfo.procs,
+				"uptime", (json_int_t) sinfo.uptime,
+				"load",
+					f_load * sinfo.loads[0],
+					f_load * sinfo.loads[1],
+					f_load * sinfo.loads[2],
+				"ram",
+					"total", (json_int_t) (sinfo.totalram * sinfo.mem_unit),
+					"free", (json_int_t) (sinfo.freeram * sinfo.mem_unit),
+					"shared", (json_int_t) (sinfo.sharedram * sinfo.mem_unit),
+					"buffer", (json_int_t) (sinfo.bufferram * sinfo.mem_unit),
+				"swap",
+					"total", (json_int_t) (sinfo.totalswap * sinfo.mem_unit),
+					"free", (json_int_t) (sinfo.freeswap * sinfo.mem_unit),
+				"highmem",
+					"total", (json_int_t) (sinfo.totalhigh * sinfo.mem_unit),
+					"free", (json_int_t) (sinfo.freehigh * sinfo.mem_unit)
+		);
+		if (!json_status)
+			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to prepare response: {}", err.text);
+
+#ifdef LWS_WITH_SERVER_STATUS
+		json_object_set(json_status, "lws", getLwsStatus());
+#endif /* LWS_WITH_SERVER_STATUS */
 
 		return new Response(session, json_status);
 	}
@@ -68,4 +162,3 @@ static RequestPlugin<StatusRequest, n, r, d> p;
 } /* namespace node */
 } /* namespace villas */
 
-#endif /* LWS_WITH_SERVER_STATUS */

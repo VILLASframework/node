@@ -78,6 +78,10 @@ protected:
 
 	struct Task task;	/**< Task for periodic stats output */
 
+	uuid_t uuid;		/**< A globally unique identifier of the instance */
+
+	struct timespec started;	/**< The time at which the instance has been started. */
+
 	std::string uri;	/**< URI of configuration */
 
 	Config config;		/** The configuration file. */
@@ -154,6 +158,16 @@ public:
 	enum State getState()  const
 	{
 		return state;
+	}
+
+	void getUUID(uuid_t out) const
+	{
+		uuid_copy(out, uuid);
+	}
+
+	struct timespec getStartTime() const
+	{
+		return started;
 	}
 
 #ifdef WITH_API

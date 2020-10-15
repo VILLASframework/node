@@ -74,8 +74,7 @@ public:
 		}
 #endif
 
-		auto *json_capabilities = json_pack("{ s: s, s: o, s: o, s: o, s: o }",
-				"build", PROJECT_BUILD_ID,
+		auto *json_capabilities = json_pack("{ s: o, s: o, s: o, s: o }",
 				"hooks", json_hooks,
 				"node-types", json_nodes,
 				"apis", json_apis,
