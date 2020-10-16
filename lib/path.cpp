@@ -386,7 +386,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 	return 0;
 }
 
-int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
+int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t sn_uuid)
 {
 	int ret;
 
@@ -442,7 +442,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	}
 	else
 		/* Generate UUID from hashed config */
-		uuid_generate_from_json(p->uuid, cfg);
+		uuid_generate_from_json(p->uuid, cfg, sn_uuid);
 
 	/* Input node(s) */
 	ret = mapping_list_parse(&p->mappings, json_in);

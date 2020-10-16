@@ -133,7 +133,7 @@ int node_prepare(struct vnode *n)
 	return 0;
 }
 
-int node_parse(struct vnode *n, json_t *json, const char *name)
+int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 {
 	int ret, enabled = n->enabled;
 
@@ -141,17 +141,15 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	json_t *json_netem = nullptr;
 
 	const char *uuid_str = nullptr;
+	const char *name_str = nullptr;
 
-	n->name = strdup(name);
-
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: b }",
+		"name", &name_str,
 		"uuid", &uuid_str,
 		"enabled", &enabled
 	);
 	if (ret)
 		return ret;
-
-	n->enabled = enabled;
 
 #ifdef __linux__
 	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
@@ -163,6 +161,13 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 		return ret;
 #endif /* __linux__ */
 
+	n->enabled = enabled;
+
+	if (name_str)
+		n->name = strdup(name_str);
+	else
+		n->name = strdup("<none>");
+
 	if (uuid_str) {
 		ret = uuid_parse(uuid_str, n->uuid);
 		if (ret)
@@ -170,7 +175,7 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	}
 	else
 		/* Generate UUID from hashed config including node name */
-		uuid_generate_from_json(n->uuid, json, name);
+		uuid_generate_from_json(n->uuid, json, sn_uuid);
 
 	if (json_netem) {
 #ifdef WITH_NETEM

@@ -74,6 +74,7 @@ SuperNode::SuperNode() :
 	if (ret)
 		throw SystemError("Failed to determine hostname");
 
+	/* Default UUID is derived from hostname */
 	uuid_generate_from_str(uuid, hname);
 
 	ret = vlist_init(&nodes);
@@ -163,6 +164,8 @@ void SuperNode::parse(json_t *root)
 			if (ret)
 				throw ConfigError(root, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
 
+			json_object_set(json_node, "name", json_string(name));
+
 			nt = node_type_lookup(type);
 			if (!nt)
 				throw ConfigError(json_node, "node-config-node-type", "Invalid node type: {}", type);
@@ -175,7 +178,7 @@ void SuperNode::parse(json_t *root)
 			if (ret)
 				throw RuntimeError("Failed to initialize node");
 
-			ret = node_parse(n, json_node, name);
+			ret = node_parse(n, json_node, uuid);
 			if (ret) {
 				auto config_id = fmt::format("node-config-node-{}", type);
 
@@ -202,7 +205,7 @@ parse:			auto *p = new vpath;
 			if (ret)
 				throw RuntimeError("Failed to initialize path");
 
-			ret = path_parse(p, json_path, &nodes);
+			ret = path_parse(p, json_path, &nodes, uuid);
 			if (ret)
 				throw RuntimeError("Failed to parse path");
 

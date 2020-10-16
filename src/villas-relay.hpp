@@ -27,10 +27,6 @@
 #include <spdlog/spdlog.h>
 #include <uuid/uuid.h>
 
-#ifndef UUID_STR_LEN
-  #define UUID_STR_LEN   37
-#endif
-
 #include <libwebsockets.h>
 
 namespace villas {
@@ -38,12 +34,13 @@ namespace node {
 namespace tools {
 
 /* Forward declarations */
-lws_callback_function protocol_cb, http_protocol_cb;
 class Relay;
 class RelaySession;
 class RelayConnection;
 
 class InvalidUrlException { };
+
+typedef std::string Identifier;
 
 class Frame : public std::vector<uint8_t> {
 public:
@@ -66,13 +63,9 @@ class RelaySession {
 	friend RelayConnection;
 	friend Relay;
 
-public:
-	typedef std::string Identifier;
-
 protected:
 	time_t created;
 	uuid_t uuid;
-
 
 	Identifier identifier;
 
@@ -83,9 +76,9 @@ protected:
 	static std::map<std::string, RelaySession *> sessions;
 
 public:
-	static RelaySession * get(lws *wsi);
+	static RelaySession * get(Relay *r, lws *wsi);
 
-	RelaySession(Identifier sid);
+	RelaySession(Relay *r, Identifier sid);
 
 	~RelaySession();
 
@@ -116,7 +109,7 @@ protected:
 	bool loopback;
 
 public:
-	RelayConnection(lws *w, bool lo);
+	RelayConnection(Relay *r, lws *w, bool lo);
 	~RelayConnection();
 
 	json_t * toJson() const;
@@ -128,6 +121,8 @@ public:
 class Relay : public Tool {
 
 public:
+	friend RelaySession;
+
 	Relay(int argc, char *argv[]);
 
 protected:
@@ -142,6 +137,9 @@ protected:
 	bool loopback;
 	int port;
 	std::string protocol;
+	std::string hostname;
+
+	uuid_t uuid;
 
 	/** List of libwebsockets protocols. */
 	std::vector<lws_protocols> protocols;
@@ -151,11 +149,11 @@ protected:
 
 	static const lws_http_mount mount;
 
-	static void logger_cb(int level, const char *msg);
+	static void loggerCallback(int level, const char *msg);
 
-	static int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static int httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-	static int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static int protocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 	void usage();
 
