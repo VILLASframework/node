@@ -105,6 +105,10 @@ protected:
 		plugin_dump(PluginType::NODE);
 		std::cout << std::endl;
 
+		std::cout << "Supported IO formats:" << std::endl;
+		plugin_dump(PluginType::FORMAT);
+		std::cout << std::endl;
+
 #ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
 		for (Plugin *p : Registry::lookup<HookFactory>())
@@ -118,10 +122,6 @@ protected:
 			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_API */
-
-		std::cout << "Supported IO formats:" << std::endl;
-		plugin_dump(PluginType::FORMAT);
-		std::cout << std::endl;
 
 		printCopyright();
 	}

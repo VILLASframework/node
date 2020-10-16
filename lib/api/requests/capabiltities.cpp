@@ -60,6 +60,23 @@ public:
 			json_array_append_new(json_hooks, json_name);
 		}
 
+		for (size_t i = 0; i < vlist_length(&plugins); i++) {
+			struct plugin *p = (struct plugin *) vlist_at(&plugins, i);
+
+			json_t *json_name;
+			switch(p->type) {
+				case PluginType::NODE:
+					json_name = json_string(p->name);
+					json_array_append_new(json_nodes, json_name);
+					break;
+
+				case PluginType::FORMAT:
+					json_name = json_string(p->name);
+					json_array_append_new(json_formats, json_name);
+					break;
+			}
+		}
+
 #if 0 /* @todo Port to C++ */
 		for (auto f : NodeFactory::lookup()) {
 			json_name = json_string(f->getName().c_str());
