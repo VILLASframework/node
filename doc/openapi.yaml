@@ -25,6 +25,7 @@ tags:
     description: Node related operations.
   - name: paths
     description: Path related operations.
+
 components:
   parameters:
     node-uuid:
@@ -35,6 +36,7 @@ components:
       schema:
         type: string
         format: uuid
+
     path-uuid:
       name: uuid
       description: A globally unique identifier for each path.
@@ -43,6 +45,18 @@ components:
       schema:
         type: string
         format: uuid
+
+    node-uuid-name:
+      name: uuid-or-name
+      description: Either a UUID or node-name
+      in: path
+      required: true
+      schema:
+        oneOf:
+        - type: string
+          format: uuid
+        - type: string
+          pattern: "[a-z0-9_-]{2,32}"
       
 paths:
   "/status":
@@ -112,50 +126,87 @@ paths:
               examples: 
                 example1:
                   value:
-                    build: v0.10.0-4b9e8a6-debug
                     hooks:
-                      - average
-                      - cast
-                      - decimate
-                      - drop
-                      - dump
-                      - ebm
-                      - fix
-                      - gate
-                      - jitter_calc
-                      - limit_rate
-                      - restart
-                      - scale
-                      - shift_seq
-                      - shift_ts
-                      - skip_first
-                      - stats
-                      - ts
-                      - pps_ts
-                      - print
-                    node-types: []
+                    - average
+                    - cast
+                    - decimate
+                    - dp
+                    - drop
+                    - dump
+                    - ebm
+                    - fix
+                    - gate
+                    - jitter_calc
+                    - limit_rate
+                    - average
+                    - restart
+                    - scale
+                    - shift_seq
+                    - shift_ts
+                    - skip_first
+                    - stats
+                    - ts
+                    - pps_ts
+                    - print
+                    node-types:
+                    - loopback_internal
+                    - influxdb
+                    - stats
+                    - signal
+                    - loopback
+                    - test_rtt
+                    - socket
+                    - file
+                    - exec
+                    - shmem
+                    - zeromq
+                    - ngsi
+                    - websocket
+                    - amqp
+                    - mqtt
+                    - can
+                    - example
+                    - ethercat
                     apis:
-                      - capabilities
-                      - config
-                      - shutdown
-                      - restart
-                      - nodes
-                      - node
-                      - node/start
-                      - node/stop
-                      - node/pause
-                      - node/resume
-                      - node/restart
-                      - node/file
-                      - node/stats
-                      - node/stats/reset
-                      - path
-                      - paths
-                      - path/start
-                      - path/stop
-                    formats: []
+                    - status
+                    - capabilities
+                    - config
+                    - shutdown
+                    - restart
+                    - nodes
+                    - node
+                    - node/start
+                    - node/stop
+                    - node/pause
+                    - node/resume
+                    - node/restart
+                    - node/stats
+                    - node/stats/reset
+                    - node/file
+                    - paths
+                    - path
+                    - path/start
+                    - path/stop
+                    formats:
+                    - json
+                    - iotagent_ul
+                    - json.reserve
+                    - villas.binary
+                    - villas.web
+                    - villas.human
+                    - tsv
+                    - csv
+                    - raw.8
+                    - raw.16.be
+                    - raw.32.be
+                    - raw.64.be
+                    - raw.16.le
+                    - raw.32.le
+                    - raw.64.le
+                    - gtnet
+                    - gtnet.fake
+                    - value
                     
-
   "/config":
     get:
       summary: Get the currently loaded configuration.
@@ -205,7 +256,6 @@ paths:
                         out:
                           - udp_node1
                     
-  
   "/restart":
     post:
       summary: Restart the VILLASnode instance.
@@ -219,9 +269,12 @@ paths:
               type: object
               properties:
                 config:
-                  type: string
-                  example: "http://example.com/path/to/config.json"
-                  description: An optional path to a new configuration file which should be loaded after restarting the node.
+                  oneOf:
+                  - type: string
+                    example: "http://example.com/path/to/config.json"
+                    description: An optional path or URI to a new configuration file which should be loaded after restarting the node.
+                  - type: object
+                    description: An optional JSON object containing thenew configuration which should be loaded
       responses:
         '200':
           description: Success. The instance has been restarted.
@@ -316,8 +369,8 @@ paths:
       summary: Get the information of a specific node.
       tags:
       - nodes
-      parameters: 
-      - $ref: "#/components/parameters/node-uuid-name"
+      parameters:
+      - $ref: '#/components/parameters/node-uuid-name'
       responses:
         '200':
           description: Success
