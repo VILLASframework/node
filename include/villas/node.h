@@ -112,7 +112,7 @@ int node_prepare(struct vnode *n);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int node_parse(struct vnode *n, json_t *cfg, const char *name);
+int node_parse(struct vnode *n, json_t *cfg, const uuid_t sn_uuid);
 
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *

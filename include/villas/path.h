@@ -155,7 +155,7 @@ int path_reverse(struct vpath *p, struct vpath *r);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes);
+int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t sn_uuid);
 
 void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes);
 

@@ -235,7 +235,10 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		ret = node_parse(&n, cfg, "cli");
+		uuid_t uuid;
+		uuid_clear(uuid);
+
+		ret = node_parse(&n, cfg, uuid);
 		if (ret) {
 			usage();
 			exit(EXIT_FAILURE);

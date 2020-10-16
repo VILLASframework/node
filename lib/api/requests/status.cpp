@@ -29,9 +29,7 @@
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 
-#ifndef UUID_STR_LEN
-  #define UUID_STR_LEN 37
-#endif
+typedef char uuid_string_t[37];
 
 namespace villas {
 namespace node {
@@ -73,10 +71,10 @@ public:
 		auto *sn = session->getSuperNode();
 
 		uuid_t uuid;
+		uuid_string_t uuid_str;
 		struct utsname uts;
 		struct sysinfo sinfo;
 		char hname[128];
-		char uuid_str[UUID_STR_LEN];
 
 		sn->getUUID(uuid);
 		uuid_unparse_lower(uuid, uuid_str);

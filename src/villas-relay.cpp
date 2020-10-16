@@ -30,21 +30,26 @@
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <jansson.h>
+#include <unistd.h>
 
 #include <villas/node/config.h>
 #include <villas/compat.hpp>
 #include <villas/memory.h>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
+#include <villas/utils.hpp>
 
 #include "villas-relay.hpp"
 
+typedef char uuid_string_t[37];
+
+using namespace villas::utils;
 
 namespace villas {
 namespace node {
 namespace tools {
 
-RelaySession::RelaySession(Identifier sid) :
+RelaySession::RelaySession(Relay *r, Identifier sid) :
 	identifier(sid),
 	connects(0)
 {
@@ -56,7 +61,7 @@ RelaySession::RelaySession(Identifier sid) :
 
 	created = time(nullptr);
 
-	uuid_generate(uuid);
+	uuid_generate_from_str(uuid, identifier, r->uuid);
 }
 
 RelaySession::~RelaySession()
@@ -68,7 +73,7 @@ RelaySession::~RelaySession()
 	sessions.erase(identifier);
 }
 
-RelaySession * RelaySession::get(lws *wsi)
+RelaySession * RelaySession::get(Relay *r, lws *wsi)
 {
 	Logger logger = villas::logging.get("console");
 
@@ -88,7 +93,7 @@ RelaySession * RelaySession::get(lws *wsi)
 
 	auto it = sessions.find(sid);
 	if (it == sessions.end()) {
-		auto *rs = new RelaySession(sid);
+		auto *rs = new RelaySession(r, sid);
 		if (!rs)
 			throw MemoryAllocationError();
 
@@ -111,7 +116,7 @@ json_t * RelaySession::toJson() const
 		json_array_append(json_connections, conn->toJson());
 	}
 
-	char uuid_str[UUID_STR_LEN];
+	uuid_string_t uuid_str;
 	uuid_unparse_lower(uuid, uuid_str);
 
 	return json_pack("{ s: s, s: s, s: o, s: I, s: i }",
@@ -125,7 +130,7 @@ json_t * RelaySession::toJson() const
 
 std::map<std::string, RelaySession *> RelaySession::sessions;
 
-RelayConnection::RelayConnection(lws *w, bool lo) :
+RelayConnection::RelayConnection(Relay *r, lws *w, bool lo) :
 	wsi(w),
 	currentFrame(std::make_shared<Frame>()),
 	outgoingFrames(),
@@ -137,7 +142,7 @@ RelayConnection::RelayConnection(lws *w, bool lo) :
 {
 	Logger logger = villas::logging.get("console");
 
-	session = RelaySession::get(wsi);
+	session = RelaySession::get(r, wsi);
 	session->connections[wsi] = this;
 	session->connects++;
 
@@ -232,13 +237,23 @@ Relay::Relay(int argc, char *argv[]) :
 {
 	int ret;
 
+	char hname[128];
+	ret = gethostname(hname, sizeof(hname));
+	if (ret)
+		throw SystemError("Failed to get hostname");
+
+	hostname = hname;
+
+	/* Default UUID is derived from hostname */
+	uuid_generate_from_str(uuid, hname);
+
 	ret = memory_init(0);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory");
 
 	/* Initialize logging */
 	spdlog::stdout_color_mt("lws");
-	lws_set_log_level((1 << LLL_COUNT) - 1, logger_cb);
+	lws_set_log_level((1 << LLL_COUNT) - 1, loggerCallback);
 
 	protocols = {
 		{
@@ -249,13 +264,13 @@ Relay::Relay(int argc, char *argv[]) :
 		},
 		{
 			.name = "http-api",
-			.callback = http_protocol_cb,
+			.callback = httpProtocolCallback,
 			.per_session_data_size = 0,
 			.rx_buffer_size = 1024
 		},
 		{
 			.name = "live",
-			.callback = protocol_cb,
+			.callback = protocolCallback,
 			.per_session_data_size = sizeof(RelayConnection),
 			.rx_buffer_size = 0
 		},
@@ -263,7 +278,7 @@ Relay::Relay(int argc, char *argv[]) :
 	};
 }
 
-void Relay::logger_cb(int level, const char *msg)
+void Relay::loggerCallback(int level, const char *msg)
 {
 	auto log = spdlog::get("lws");
 
@@ -294,7 +309,7 @@ void Relay::logger_cb(int level, const char *msg)
 	}
 }
 
-int Relay::http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	int ret;
 	size_t json_len;
@@ -332,13 +347,14 @@ int Relay::http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *us
 				json_array_append(json_sessions, session->toJson());
 			}
 
-			char hname[128];
-			gethostname(hname, 128);
+			uuid_string_t uuid_str;
+			uuid_unparse(r->uuid, uuid_str);
 
-			json_body = json_pack("{ s: o, s: s, s: s, s: { s: b, s: i, s: s } }",
+			json_body = json_pack("{ s: o, s: s, s: s, s: s, s: { s: b, s: i, s: s } }",
 				"sessions", json_sessions,
 				"version", PROJECT_VERSION_STR,
-				"hostname", hname,
+				"hostname", r->hostname.c_str(),
+				"uuid", uuid_str,
 				"options",
 					"loopback", r->loopback,
 					"port", r->port,
@@ -363,7 +379,7 @@ int Relay::http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *us
 	return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
-int Relay::protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int Relay::protocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	lws_context *ctx = lws_get_context(wsi);
 	void *user_ctx = lws_context_user(ctx);
@@ -375,7 +391,7 @@ int Relay::protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, v
 
 		case LWS_CALLBACK_ESTABLISHED:
 			try {
-				new (c) RelayConnection(wsi, r->loopback);
+				new (c) RelayConnection(r, wsi, r->loopback);
 			}
 			catch (const InvalidUrlException &e) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "Invalid URL", strlen("Invalid URL"));
@@ -411,6 +427,7 @@ void Relay::usage()
 		<< "    -p PORT   the port number to listen on" << std::endl
 		<< "    -P PROT   the websocket protocol" << std::endl
 		<< "    -l        enable loopback of own data" << std::endl
+		<< "    -u UUID   unique instance id" << std::endl
 		<< "    -V        show version and exit" << std::endl
 		<< "    -h        show usage and exit" << std::endl << std::endl;
 
@@ -419,8 +436,9 @@ void Relay::usage()
 
 void Relay::parse()
 {
+	int ret;
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
+	while ((c = getopt (argc, argv, "hVp:P:ld:u:")) != -1) {
 		switch (c) {
 			case 'd':
 				spdlog::set_level(spdlog::level::from_str(optarg));
@@ -436,6 +454,14 @@ void Relay::parse()
 
 			case 'l':
 				loopback = true;
+				break;
+
+			case 'u':
+				ret = uuid_parse(optarg, uuid);
+				if (ret) {
+					logger->error("Failed to parse UUID: {}", optarg);
+					exit(EXIT_FAILURE);
+				}
 				break;
 
 			case 'V':
