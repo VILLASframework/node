@@ -357,25 +357,67 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	return 0;
 }
 
-void uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns)
+int uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns)
 {
-	std::stringstream ss;
+	int ret;
+	MD5_CTX c;
 
-	if (!ns.empty())
-		ss << ns << "|";
+	ret = MD5_Init(&c);
+	if (!ret)
+		return -1;
 
-	ss << data;
+	/* Namespace */
+	ret = MD5_Update(&c, (unsigned char *) ns.c_str(), ns.size());
+	if (!ret)
+		return -1;
 
-	MD5((unsigned char*) ss.str().c_str(), ss.str().size(), (unsigned char *) &out);
+	/* Data */
+	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
+	if (!ret)
+		return -1;
+
+	ret = MD5_Final((unsigned char *) out, &c);
+	if (!ret)
+		return -1;
+
+	return 0;
 }
 
-void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns)
+int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns)
+{
+	int ret;
+	MD5_CTX c;
+
+	ret = MD5_Init(&c);
+	if (!ret)
+		return -1;
+
+	/* Namespace */
+	ret = MD5_Update(&c, (unsigned char *) ns, 16);
+	if (!ret)
+		return -1;
+
+	/* Data */
+	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
+	if (!ret)
+		return -1;
+
+	ret = MD5_Final((unsigned char *) out, &c);
+	if (!ret)
+		return -1;
+
+	return 0;
+}
+
+int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns)
 {
 	char *str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
 
-	uuid_generate_from_str(out, str, ns);
+	int ret = uuid_generate_from_str(out, str, ns);
 
 	free(str);
+
+	return ret;
 }
 
 } /* namespace utils */
