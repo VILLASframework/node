@@ -66,18 +66,35 @@ public:
 		if (method != Session::Method::POST)
 			throw InvalidMethod(this);
 
-		const char *cfg = nullptr;
+		json_t *json_config = nullptr;
 
 		if (body) {
-			ret = json_unpack_ex(body, &err, 0, "{ s?: s }", "config", &cfg);
+			ret = json_unpack_ex(body, &err, 0, "{ s?: o }",
+				"config", &json_config
+			);
 			if (ret < 0)
 				throw BadRequest("Failed to parse request body");
 		}
 
-		/* If no config is provided via request, we will use the previous one */
-		configUri = cfg
-			     ? cfg
-			     : session->getSuperNode()->getConfigUri();
+		if (json_config) {
+			if (json_is_string(json_config))
+				configUri = json_string_value(json_config);
+			else if (json_is_object(json_config)) {
+				configUri = tmpnam(nullptr);
+
+				FILE *configFile = fopen(configUri.c_str(), "w");
+
+				ret = json_dumpf(json_config, configFile, JSON_INDENT(4));
+				if (ret < 0)
+					throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create temporary config file");
+
+				fclose(configFile);
+			}
+			elif (json_config != nullptr)
+				throw BadRequest("Parameter 'config' must be either a URL (string) or a configuration (object)");
+		}
+		else	/* If no config is provided via request, we will use the previous one */
+			configUri = session->getSuperNode()->getConfigUri();
 
 		logger->info("Restarting to {}", configUri.c_str());
 
