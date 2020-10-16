@@ -203,10 +203,12 @@ size_t strlenp(const char *str);
 int sha1sum(FILE *f, unsigned char *sha1);
 
 /** Generate an UUID by MD5 hashing the provided string */
-void uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns = "");
+int uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns = "");
+
+int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns);
 
 /** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
-void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns = "");
+int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns);
 
 namespace base64 {
 
