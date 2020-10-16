@@ -64,6 +64,8 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 
 	new (&n->stats) stats_ptr();
 
+	uuid_clear(n->uuid);
+
 	n->output_path = nullptr;
 	n->name = nullptr;
 	n->_name = nullptr;
@@ -138,12 +140,12 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 	json_error_t err;
 	json_t *json_netem = nullptr;
 
-	const char *uuid = nullptr;
+	const char *uuid_str = nullptr;
 
 	n->name = strdup(name);
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b }",
-		"uuid", &uuid,
+		"uuid", &uuid_str,
 		"enabled", &enabled
 	);
 	if (ret)
@@ -161,10 +163,10 @@ int node_parse(struct vnode *n, json_t *json, const char *name)
 		return ret;
 #endif /* __linux__ */
 
-	if (uuid) {
-		ret = uuid_parse(uuid, n->uuid);
+	if (uuid_str) {
+		ret = uuid_parse(uuid_str, n->uuid);
 		if (ret)
-			throw ConfigError(json, "node-config-node-uuid", "Failed to parse UUID: {}", uuid);
+			throw ConfigError(json, "node-config-node-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
 	else
 		/* Generate UUID from hashed config including node name */

@@ -31,7 +31,6 @@
 
 #include <unistd.h>
 #include <poll.h>
-#include <openssl/md5.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
@@ -141,6 +140,8 @@ int path_init(struct vpath *p)
 	new (&p->timeout) Task(CLOCK_MONOTONIC);
 
 	p->logger = logging.get("path");
+
+	uuid_clear(p->uuid);
 
 	ret = vlist_init(&p->destinations);
 	if (ret)
@@ -395,7 +396,8 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	json_t *json_hooks = nullptr;
 	json_t *json_mask = nullptr;
 
-	const char *mode = nullptr, *uuid = nullptr;
+	const char *mode = nullptr;
+	const char *uuid_str = nullptr;
 
 	struct vlist destinations;
 
@@ -416,7 +418,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 		"rate", &p->rate,
 		"mask", &json_mask,
 		"original_sequence_no", &p->original_sequence_no,
-		"uuid", &uuid,
+		"uuid", &uuid_str,
 		"affinity", &p->affinity
 	);
 	if (ret)
@@ -433,19 +435,14 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes)
 	}
 
 	/* UUID */
-	if (uuid) {
-		ret = uuid_parse(uuid, p->uuid);
+	if (uuid_str) {
+		ret = uuid_parse(uuid_str, p->uuid);
 		if (ret)
-			throw ConfigError(cfg, "node-config-path-uuid", "Failed to parse UUID: {}", uuid);
+			throw ConfigError(cfg, "node-config-path-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
-	else {
+	else
 		/* Generate UUID from hashed config */
-		char *json_str = json_dumps(cfg, JSON_COMPACT | JSON_SORT_KEYS);
-
-		MD5((unsigned char*) json_str, strlen(json_str), (unsigned char*) &p->uuid);
-
-		free(json_str);
-	}
+		uuid_generate_from_json(p->uuid, cfg);
 
 	/* Input node(s) */
 	ret = mapping_list_parse(&p->mappings, json_in);
