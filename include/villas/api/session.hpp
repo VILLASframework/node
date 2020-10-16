@@ -44,11 +44,14 @@ namespace api {
 /* Forward declarations */
 class Request;
 class Response;
+class StatusRequest;
 
 /** A connection via HTTP REST or WebSockets to issue API requests. */
 class Session {
 
 public:
+	friend StatusRequest; /**< Requires access to wsi */
+
 	enum State {
 		ESTABLISHED,
 		SHUTDOWN

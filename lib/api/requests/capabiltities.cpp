@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <villas/config.h>
+#include <villas/plugin.h>
 #include <villas/hook.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>

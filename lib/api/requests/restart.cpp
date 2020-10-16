@@ -90,7 +90,7 @@ public:
 
 				fclose(configFile);
 			}
-			elif (json_config != nullptr)
+			else if (json_config != nullptr)
 				throw BadRequest("Parameter 'config' must be either a URL (string) or a configuration (object)");
 		}
 		else	/* If no config is provided via request, we will use the previous one */
