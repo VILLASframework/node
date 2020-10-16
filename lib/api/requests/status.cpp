@@ -49,7 +49,7 @@ protected:
 
 		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
 		if (ret)
-			throw Error();
+			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to dump LWS context");
 
 		return json_loads(buf, 0, nullptr);
 	}
