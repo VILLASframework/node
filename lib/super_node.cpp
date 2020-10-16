@@ -26,6 +26,8 @@
 #include <villas/super_node.hpp>
 #include <villas/node.h>
 #include <villas/path.h>
+#include <villas/path_source.h>
+#include <villas/path_destination.h>
 #include <villas/utils.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.hpp>
@@ -537,15 +539,40 @@ int SuperNode::periodic()
 #ifdef WITH_GRAPHVIZ
 graph_t * SuperNode::getGraph()
 {
-	/* Create a simple digraph */
 	Agraph_t *g;
-	Agnode_t *n, *m;
+	Agnode_t *m;
 
 	g = agopen((char *) "g", Agdirected, 0);
-	n = agnode(g, (char *) "n", 1);
-	m = agnode(g, (char *) "m", 1);
-	agedge(g, n, m, 0, 1);
+
+	std::map<struct vnode *, Agnode_t *> nodeMap;
+
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct vnode *) vlist_at(&nodes, i);
+
+		nodeMap[n] = agnode(g, (char *) node_name_short(n), 1);
+	}
+
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct vpath *) vlist_at(&paths, i);
+
+		auto name = fmt::format("path_{}", i);
+
+		m = agnode(g, (char *) name.c_str(), 1);
+
+		for (size_t j = 0; j < vlist_length(&p->sources); j++) {
+			auto *ps = (struct vpath_source *) vlist_at(&p->sources, j);
+
+			agedge(g, nodeMap[ps->node], m, nullptr, 1);
+		}
+
+		for (size_t j = 0; j < vlist_length(&p->destinations); j++) {
+			auto *pd = (struct vpath_destination *) vlist_at(&p->destinations, j);
+
+			agedge(g, m, nodeMap[pd->node], nullptr, 1);
+		}
+	}
 
 	return g;
+
 }
 #endif /* WITH_GRAPHVIZ */
