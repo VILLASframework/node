@@ -30,6 +30,8 @@ class Dumper {
 	protected:
 		int socketFd;
 		std::string socketName;
+    	bool supressRepeatedWarning;
+    	uint64_t warningCounter;
 
 	public:
 		Dumper(std::string socketNameIn);
