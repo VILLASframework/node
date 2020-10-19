@@ -35,7 +35,9 @@ using namespace villas::node;
 
 
 Dumper::Dumper(std::string socketNameIn) :
-    socketName("")
+    socketName(""),
+    supressRepeatedWarning(true),
+    warningCounter(0)
 {
     openSocket(socketNameIn);
 }
@@ -82,8 +84,9 @@ void Dumper::writeData(uint len, double* yData, double* xData) {
         str += "\n";
         
         bytesWritten =  write(socketFd, str.c_str(), str.length());
-        if( (long unsigned int) bytesWritten != str.length() ) {
+        if( (long unsigned int) bytesWritten != str.length() && (!supressRepeatedWarning ||  warningCounter<1) ) {
             warning("Could not send all content to socket %s", socketName.c_str());
+            warningCounter++;
         }
     }
 }
