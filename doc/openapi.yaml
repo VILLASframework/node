@@ -756,3 +756,45 @@ paths:
           description: Success. The path has been stopped.
         '404':
           description: Error. There is no path with the given UUID.
+
+  "/graph.{format}":
+    get:
+      summary: Get a graph representation of the currently loaded configuration.
+      parameters:
+      - in: path
+        name: format
+        schema:
+          type: string
+          description: The image format of the generated graph.
+          enum:
+          - ps
+          - eps
+          - txt
+          - svg
+          - svgz
+          - gif
+          - png
+          - jpg
+          - jpeg
+          - bmp
+          - dot
+          - fig
+          - json
+          - pdf
+      - in: query
+        name: layout
+        schema:
+          type: string
+          description: The Graphviz layout engine used for rendering the graph.
+          enum:
+          - circo
+          - dot
+          - fdp
+          - neato
+          - nop
+          - nop1
+          - nop2
+          - osage
+          - patchwork
+          - sfdp
+          - twopi
