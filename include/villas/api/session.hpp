@@ -48,7 +48,9 @@ class StatusRequest;
 class Session {
 
 public:
-	friend Request; /**< Requires access to wsi */
+	friend Request; /**< Requires access to wsi for getting URL args and headers */
+	friend StatusRequest; /**< Requires access to wsi for context status */
+
 
 	enum State {
 		ESTABLISHED,
