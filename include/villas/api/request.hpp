@@ -67,6 +67,7 @@ public:
 		session(s),
 		logger(logging.get("api:request")),
 		method(Session::Method::UNKNOWN),
+		contentLength(0),
 		body(nullptr),
 		factory(nullptr)
 	{ }
