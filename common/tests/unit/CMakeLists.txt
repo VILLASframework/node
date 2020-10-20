@@ -22,7 +22,7 @@
 
 add_executable(unit-tests-common
 	advio.cpp
-	json_buffer.cpp
+	buffer.cpp
 	graph.cpp
 	hist.cpp
 	kernel.cpp

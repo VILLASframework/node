@@ -23,7 +23,6 @@
 add_library(villas-common SHARED
 	advio.cpp
 	buffer.cpp
-	json_buffer.cpp
 	compat.cpp
 	hist.cpp
 	dsp/pid.cpp

@@ -26,18 +26,16 @@
 #include <criterion/criterion.h>
 #include <jansson.h>
 
-#include <villas/json_buffer.hpp>
+#include <villas/buffer.hpp>
 
 using namespace villas;
-
-using villas::JsonBuffer;
 
 // cppcheck-suppress unknownMacro
 TestSuite(buffer, .description = "Buffer datastructure");
 
-Test(json_buffer, decode)
+Test(buffer, decode)
 {
-	JsonBuffer buf;
+	Buffer buf;
 	json_t *j;
 	json_t *k;
 
@@ -54,10 +52,10 @@ Test(json_buffer, decode)
 	cr_assert(json_equal(j, k));
 }
 
-Test(json_buffer, encode)
+Test(buffer, encode)
 {
 	int ret;
-	JsonBuffer buf;
+	Buffer buf;
 	json_t *k;
 
 	const char *e = "{\"id\": \"5a786626-fbc6-4c04-98c2-48027e68c2fa\"}";
@@ -76,10 +74,10 @@ Test(json_buffer, encode)
 	json_decref(k);
 }
 
-Test(json_buffer, encode_decode)
+Test(buffer, encode_decode)
 {
 	int ret;
-	JsonBuffer buf;
+	Buffer buf;
 	json_t *k;
 	json_t *j;
 
@@ -100,12 +98,12 @@ Test(json_buffer, encode_decode)
 	json_decref(k);
 }
 
-Test(json_buffer, multiple)
+Test(buffer, multiple)
 {
 	int ret;
 	const int N = 100;
 
-	JsonBuffer buf;
+	Buffer buf;
 	json_t *k[N];
 	json_t *j[N];
 
