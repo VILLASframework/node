@@ -1,4 +1,4 @@
-/** A simple growing buffer.
+/** A simple buffer for encoding streamed JSON messages.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -20,49 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <cstring>
-
 #include <villas/compat.hpp>
 #include <villas/buffer.hpp>
-#include <villas/common.hpp>
-#include <villas/exceptions.hpp>
 
 using namespace villas;
 
-Buffer::Buffer(size_t sz) :
-	buf(sz, 0)
-{ }
-
-void Buffer::clear()
+json_t * Buffer::decode()
 {
-	buf.clear();
+	json_t *j;
+	json_error_t err;
+
+	j = json_loadb(data(), size(), JSON_DISABLE_EOF_CHECK, &err);
+	if (!j)
+		return nullptr;
+
+	/* Remove decoded JSON document from beginning */
+	erase(begin(), begin() + err.position);
+
+	return j;
 }
 
-int Buffer::append(const char *data, size_t l)
+int Buffer::encode(json_t *j, int flags)
 {
-	buf.insert(buf.end(), data, data+l);
-
-	return 0;
+	return json_dump_callback(j, callback, this, flags);
 }
 
-int Buffer::parseJson(json_t **j)
+int Buffer::callback(const char *data, size_t len, void *ctx)
 {
-	*j = json_loadb(buf.data(), buf.size(), 0, nullptr);
-	if (!*j)
-		return -1;
+	Buffer *b = static_cast<Buffer *>(ctx);
 
-	return 0;
-}
-
-int Buffer::appendJson(json_t *j, int flags)
-{
-	size_t l;
-
-retry:	l = json_dumpb(j, buf.data() + buf.size(), buf.capacity() - buf.size(), flags);
-	if (buf.capacity() < buf.size() + l) {
-		buf.reserve(buf.size() + l);
-		goto retry;
-	}
+	/* Append junk of JSON to buffer */
+	b->insert(b->end(), &data[0], &data[len]);
 
 	return 0;
 }

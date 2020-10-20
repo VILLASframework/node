@@ -1,4 +1,4 @@
-/** A simple growing buffer.
+/** A simple buffer for encoding streamed JSON messages.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,29 +23,38 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <vector>
+
+#include <cstdlib>
 
 #include <jansson.h>
 
-#include <villas/common.hpp>
-
 namespace villas {
 
-class Buffer {
+class Buffer : public std::vector<char> {
+
+protected:
+	static int callback(const char *data, size_t len, void *ctx);
 
 public:
-	std::vector<char> buf;
+	Buffer(const char *buf, size_type len) :
+		std::vector<char>(buf, buf+len)
+	{ }
 
-	Buffer(size_t size);
+	Buffer(size_type count = 0) :
+		std::vector<char>(count, 0)
+	{ }
 
-	void clear();
+	/** Encode JSON document /p j and append it to the buffer */
+	int encode(json_t *j, int flags = 0);
 
-	int append(const char *data, size_t len);
+	/** Decode JSON document from the beginning of the buffer */
+	json_t * decode();
 
-	int parseJson(json_t **j);
-
-	int appendJson(json_t *j, int flags = 0);
+	void append(const char *data, size_t len)
+	{
+		insert(end(), data, data + len);
+	}
 };
 
 } /* namespace villas */

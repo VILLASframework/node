@@ -245,7 +245,7 @@ AFILE * afopen(const char *uri, const char *mode)
 	/* Setup libcurl handle */
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
-	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
+	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, HTTP_USER_AGENT);
 	curl_easy_setopt(af->curl, CURLOPT_URL, af->uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
 	curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
