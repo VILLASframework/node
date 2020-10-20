@@ -760,6 +760,8 @@ paths:
   "/graph.{format}":
     get:
       summary: Get a graph representation of the currently loaded configuration.
+      tags:
+      - super-node
       parameters:
       - in: path
         name: format
