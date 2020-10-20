@@ -49,6 +49,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
+typedef char uuid_string_t[37];
+
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
 	idleStop(-1),
@@ -537,6 +539,19 @@ int SuperNode::periodic()
 }
 
 #ifdef WITH_GRAPHVIZ
+static void
+set_attr(void *ptr, const std::string &key, const std::string &value, bool html = false) {
+	Agraph_t *g = agraphof(ptr);
+
+	char *d = (char *) "";
+	char *k = (char *) key.c_str();
+	char *v = (char *) value.c_str();
+	char *vd = html ? agstrdup_html(g, v) : agstrdup(g, v);
+
+	agsafeset(ptr, k, vd, d);
+}
+
+
 graph_t * SuperNode::getGraph()
 {
 	Agraph_t *g;
@@ -546,10 +561,20 @@ graph_t * SuperNode::getGraph()
 
 	std::map<struct vnode *, Agnode_t *> nodeMap;
 
+	uuid_string_t uuid_str;
+
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct vnode *) vlist_at(&nodes, i);
 
 		nodeMap[n] = agnode(g, (char *) node_name_short(n), 1);
+
+		uuid_unparse(n->uuid, uuid_str);
+
+		set_attr(nodeMap[n], "shape", "ellipse");
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", plugin_name(node_type(n)), uuid_str));
+		// set_attr(nodeMap[n], "fixedsize", "true");
+		// set_attr(nodeMap[n], "width", "0.15");
+		// set_attr(nodeMap[n], "height", "0.15");
 	}
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
@@ -558,6 +583,11 @@ graph_t * SuperNode::getGraph()
 		auto name = fmt::format("path_{}", i);
 
 		m = agnode(g, (char *) name.c_str(), 1);
+
+		uuid_unparse(p->uuid, uuid_str);
+
+		set_attr(m, "shape", "box");
+		set_attr(m, "tooltip", fmt::format("uuid={}", uuid_str));
 
 		for (size_t j = 0; j < vlist_length(&p->sources); j++) {
 			auto *ps = (struct vpath_source *) vlist_at(&p->sources, j);
