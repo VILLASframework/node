@@ -59,7 +59,7 @@ public:
 			json_array_append_new(json_paths, path_to_json(p));
 		}
 
-		return new Response(session, json_paths);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
 	}
 };
 

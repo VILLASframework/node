@@ -48,7 +48,7 @@ public:
 			? json_incref(cfg)
 			: json_object();
 
-		return new Response(session, json_config);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_config);
 	}
 };
 

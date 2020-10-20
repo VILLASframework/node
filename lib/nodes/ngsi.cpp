@@ -688,7 +688,7 @@ int ngsi_start(struct vnode *n)
 		curl_easy_setopt(handles[p], CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 		curl_easy_setopt(handles[p], CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 		curl_easy_setopt(handles[p], CURLOPT_HTTPHEADER, i->headers);
-		curl_easy_setopt(handles[p], CURLOPT_USERAGENT, USER_AGENT);
+		curl_easy_setopt(handles[p], CURLOPT_USERAGENT, HTTP_USER_AGENT);
 	}
 
 	/* Create entity and atributes */

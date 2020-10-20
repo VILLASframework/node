@@ -28,10 +28,22 @@
 using namespace villas;
 using namespace villas::node::api;
 
-Request * RequestFactory::create(Session *s)
+void Request::decode()
 {
-	auto uri = s->getRequestURI();
-	auto meth = s->getRequestMethod();
+	body = buffer.decode();
+	if (!body)
+		throw BadRequest("Failed to decode request payload");
+}
+
+std::string
+Request::toString()
+{
+	return fmt::format("endpoint={}, method={}", factory->getName(), Session::methodToString(method));
+}
+
+Request * RequestFactory::create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct)
+{
+	info("api: Trying to find request handler for: uri=%s", uri.c_str());
 
 	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
 		std::smatch mr;
@@ -43,6 +55,7 @@ Request * RequestFactory::create(Session *s)
 		p->matches = mr;
 		p->factory = rf;
 		p->method = meth;
+		p->contentLength = ct;
 
 		return p;
 	}

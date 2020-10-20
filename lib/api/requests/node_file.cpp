@@ -57,7 +57,7 @@ public:
 		if (matches[2].str() == "rewind")
 			io_rewind(&f->io);
 
-		return new Response(session);
+		return new Response(session, HTTP_STATUS_OK);
 	}
 };
 

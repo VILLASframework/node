@@ -58,7 +58,7 @@ public:
 			json_array_append_new(json_nodes, node_to_json(n));
 		}
 
-		return new Response(session, json_nodes);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_nodes);
 	}
 };
 

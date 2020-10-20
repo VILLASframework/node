@@ -27,6 +27,7 @@
 #include <jansson.h>
 
 #include <villas/log.hpp>
+#include <villas/buffer.hpp>
 #include <villas/plugin.hpp>
 #include <villas/super_node.hpp>
 #include <villas/api/session.hpp>
@@ -44,6 +45,7 @@ class RequestFactory;
 
 class Request {
 
+	friend Session;
 	friend RequestFactory;
 	friend Response;
 
@@ -51,10 +53,12 @@ protected:
 	Session *session;
 
 	Logger logger;
+	Buffer buffer;
 
 public:
 	std::smatch matches;
 	Session::Method method;
+	unsigned long contentLength;
 	json_t *body;
 
 	RequestFactory *factory;
@@ -75,13 +79,37 @@ public:
 
 	virtual Response * execute() = 0;
 
-	virtual void prepare()
-	{ }
+	virtual void decode();
 
-	void setBody(json_t *j)
+	std::string
+	getMatch(int idx)
 	{
-		body = j;
+		return matches[idx].str();
 	}
+
+	std::string
+	getQueryArg(const std::string &arg)
+	{
+		char buf[1024];
+		const char *val;
+
+		val = lws_get_urlarg_by_name(session->wsi, (arg + "=").c_str(), buf, sizeof(buf));
+
+		return val ? std::string(val) : std::string();
+	}
+
+	std::string
+	getHeader(enum lws_token_indexes hdr)
+	{
+		char buf[1024];
+
+		lws_hdr_copy(session->wsi, buf, sizeof(buf), hdr);
+
+		return std::string(buf);
+	}
+
+	virtual std::string
+	toString();
 };
 
 class RequestFactory : public plugin::Plugin {
@@ -96,7 +124,7 @@ public:
 	make(Session *s) = 0;
 
 	static Request *
-	create(Session *s);
+	create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
 };
 
 template<typename T, const char *name, const char *re, const char *desc>

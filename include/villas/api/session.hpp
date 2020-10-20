@@ -23,12 +23,10 @@
 
 #pragma once
 
-#include <atomic>
-
 #include <jansson.h>
 
 #include <villas/queue.h>
-#include <villas/json_buffer.hpp>
+#include <villas/buffer.hpp>
 #include <villas/api.hpp>
 
 namespace villas {
@@ -50,7 +48,7 @@ class StatusRequest;
 class Session {
 
 public:
-	friend StatusRequest; /**< Requires access to wsi */
+	friend Request; /**< Requires access to wsi */
 
 	enum State {
 		ESTABLISHED,
@@ -77,10 +75,6 @@ protected:
 	enum State state;
 	enum Version version;
 
-	std::string uri;
-	Method method;
-	unsigned long contentLength;
-
 	lws *wsi;
 
 	Web *web;
@@ -88,11 +82,8 @@ protected:
 
 	Logger logger;
 
-	JsonBuffer requestBuffer;
-	JsonBuffer responseBuffer;
-
-	std::atomic<Request *> request;
-	std::atomic<Response *> response;
+	std::unique_ptr<Request>  request;
+	std::unique_ptr<Response> response;
 
 	bool headersSent;
 
@@ -118,7 +109,6 @@ public:
 	protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 	Method getRequestMethod() const;
-	std::string getRequestURI() const;
 
 	static std::string
 	methodToString(Method meth);

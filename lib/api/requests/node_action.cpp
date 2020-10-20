@@ -51,7 +51,7 @@ public:
 
 		A(node);
 
-		return new Response(session);
+		return new Response(session, HTTP_STATUS_OK);
 	}
 
 };

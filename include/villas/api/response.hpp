@@ -23,9 +23,12 @@
 
 #pragma once
 
+#include <map>
+
 #include <jansson.h>
 
 #include <villas/log.hpp>
+#include <villas/buffer.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/plugin.hpp>
 #include <villas/api.hpp>
@@ -40,56 +43,71 @@ class Request;
 
 class Response {
 
+public:
+	friend Session;
+
+	Response(Session *s, int c = HTTP_STATUS_OK, const std::string &ct = "text/html; charset=UTF-8", const Buffer &b = Buffer());
+
+	virtual
+	~Response()
+	{ }
+
+	virtual void
+	encodeBody()
+	{ }
+
+	int
+	writeBody(struct lws *wsi);
+
+	int
+	writeHeaders(struct lws *wsi);
+
+	void
+	setHeader(const std::string &key, const std::string &value)
+	{
+		headers[key] = value;
+	}
+
 protected:
 	Session *session;
 	Logger logger;
+	Buffer buffer;
 
-public:
-	json_t *response;
 	int code;
-
-	Response(Session *s, json_t *resp = nullptr);
-
-	virtual ~Response();
-
-	int
-	getCode() const
-	{
-		return code;
-	}
-
-	/** Return JSON representation of response as used by API sockets. */
-	virtual json_t *
-	toJson()
-	{
-		return response;
-	}
+	std::string contentType;
+	std::map<std::string, std::string> headers;
 };
 
-class ErrorResponse : public Response {
+class JsonResponse : public Response {
 
 protected:
-	std::string error;
-	json_t *json;
+	json_t *response;
+
+public:
+	JsonResponse(Session *s, int c, json_t *r) :
+		Response(s, c, "application/json"),
+		response(r)
+	{ }
+
+	virtual ~JsonResponse();
+
+	virtual void
+	encodeBody();
+};
+
+class ErrorResponse : public JsonResponse {
 
 public:
 	ErrorResponse(Session *s, const RuntimeError &e) :
-		Response(s),
-		error(e.what()),
-		json(nullptr)
-	{
-		code = 500;
-	}
+		JsonResponse(s, HTTP_STATUS_INTERNAL_SERVER_ERROR, json_pack("{ s: s }", "error", e.what()))
+	{ }
 
 	ErrorResponse(Session *s, const Error &e) :
-		Response(s),
-		error(e.what()),
-		json(e.json)
+		JsonResponse(s, e.code, json_pack("{ s: s }", "error", e.what()))
 	{
-		code = e.code;
+		if (e.json)
+			json_object_update(response, e.json);
 	}
-
-	virtual json_t * toJson();
 };
 
 } /* namespace api */

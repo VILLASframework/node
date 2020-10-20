@@ -48,7 +48,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Endpoint does not accept any body data");
 
-		return new Response(session, path_to_json(path));
+		return new JsonResponse(session, HTTP_STATUS_OK, path_to_json(path));
 	}
 };
 

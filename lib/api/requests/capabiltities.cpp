@@ -98,7 +98,7 @@ public:
 				"apis", json_apis,
 				"formats", json_formats);
 
-		return new Response(session, json_capabilities);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_capabilities);
 	}
 };
 

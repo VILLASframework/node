@@ -52,7 +52,7 @@ public:
 		if (node->stats == nullptr)
 			throw BadRequest("The statistics collection for this node is not enabled");
 
-		return new Response(session, node->stats->toJson());
+		return new JsonResponse(session, HTTP_STATUS_OK, node->stats->toJson());
 	}
 };
 

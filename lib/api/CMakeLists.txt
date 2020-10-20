@@ -38,9 +38,15 @@ set(API_SRC
     requests/node_stats_reset.cpp
     requests/node_file.cpp
     requests/paths.cpp
-	requests/path_info.cpp
+    requests/path_info.cpp
     requests/path_action.cpp
 )
+
+if(WITH_GRAPHVIZ)
+    list(APPEND API_SRC requests/graph.cpp)
+    list(APPEND INCLUDE_DIRS ${CGRAPH_INCLUDE_DIRS} ${GVC_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::CGRAPH PkgConfig::GVC)
+endif()
 
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})

@@ -80,15 +80,17 @@ public:
 			if (json_is_string(json_config))
 				configUri = json_string_value(json_config);
 			else if (json_is_object(json_config)) {
-				configUri = tmpnam(nullptr);
+				char configUriBuf[] = "villas-node.json.XXXXXX";
+				int configFd = mkstemp(configUriBuf);
 
-				FILE *configFile = fopen(configUri.c_str(), "w");
+				FILE *configFile = fdopen(configFd, "w+");
 
 				ret = json_dumpf(json_config, configFile, JSON_INDENT(4));
 				if (ret < 0)
 					throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create temporary config file");
 
 				fclose(configFile);
+				configUri = configUriBuf;
 			}
 			else if (json_config != nullptr)
 				throw BadRequest("Parameter 'config' must be either a URL (string) or a configuration (object)");
@@ -122,7 +124,7 @@ public:
 		/* Properly terminate current instance */
 		utils::killme(SIGTERM);
 
-		return new Response(session, json_response);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_response);
 	}
 };
 

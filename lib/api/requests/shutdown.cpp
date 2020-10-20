@@ -45,7 +45,7 @@ public:
 
 		utils::killme(SIGTERM);
 
-		return new Response(session);
+		return new Response(session, HTTP_STATUS_OK);
 	}
 };
 

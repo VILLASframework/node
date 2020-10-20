@@ -71,14 +71,14 @@ struct websocket_connection {
 	struct lws *wsi;
 	struct vnode *node;
 	struct io io;
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
+	struct queue queue;			/**< For samples which are sent to the Websocket */
 
 	struct format_type *format;
 	struct websocket_destination *destination;
 
 	struct {
-		villas::Buffer *recv;		/**< A buffer for reconstructing fragmented messags. */
-		villas::Buffer *send;		/**< A buffer for contsructing messages before calling lws_write() */
+		villas::Buffer *recv;		/**< A buffer for reconstructing fragmented messages. */
+		villas::Buffer *send;		/**< A buffer for constructing messages before calling lws_write() */
 	} buffers;
 
 	char *_name;

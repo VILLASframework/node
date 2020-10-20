@@ -37,9 +37,7 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Session::Session(lws *w) :
-	uri(),
-	method(Method::UNKNOWN),
-	contentLength(0),
+	version(Version::VERSION_2),
 	wsi(w),
 	logger(logging.get("api:session"))
 {
@@ -63,34 +61,25 @@ Session::~Session()
 {
 	api->sessions.remove(this);
 
-	if (request)
-		delete request;
-
-	if (response)
-		delete response;
-
 	logger->debug("Destroyed API session: {}", getName());
 }
 
 void Session::execute()
 {
-	Request *r = request.exchange(nullptr);
-
-	logger->debug("Running API request: uri={}, method={}", uri, method);
+	logger->debug("Running API request: {}", request->toString());
 
 	try {
-		r->prepare();
-		response = r->execute();
+		response = std::unique_ptr<Response>(request->execute());
 
-		logger->debug("Completed API request: request={}", uri, method);
+		logger->debug("Completed API request: {}", request->toString());
 	} catch (const Error &e) {
-		response = new ErrorResponse(this, e);
+		response = std::make_unique<ErrorResponse>(this, e);
 
-		logger->warn("API request failed: uri={}, method={}, code={}: {}", uri, method, e.code, e.what());
+		logger->warn("API request failed: {}, code={}: {}", request->toString(), e.code, e.what());
 	} catch (const RuntimeError &e) {
-		response = new ErrorResponse(this, e);
+		response = std::make_unique<ErrorResponse>(this, e);
 
-		logger->warn("API request failed: uri={}, method={}: {}", uri, method, e.what());
+		logger->warn("API request failed: {}: {}", request->toString(), e.what());
 	}
 
 	logger->debug("Ran pending API requests. Triggering on_writeable callback: wsi={}", (void *) wsi);
@@ -128,24 +117,25 @@ void Session::open(void *in, size_t len)
 	int ret;
 	char buf[32];
 
-	uri = reinterpret_cast<char *>(in);
+	auto uri = reinterpret_cast<char *>(in);
 
 	try {
+		unsigned int len;
 		auto method = getRequestMethod();
 		if (method == Method::UNKNOWN)
 			throw RuntimeError("Invalid request method");
-
-		request = RequestFactory::create(this);
 
 		ret = lws_hdr_copy(wsi, buf, sizeof(buf), WSI_TOKEN_HTTP_CONTENT_LENGTH);
 		if (ret < 0)
 			throw RuntimeError("Failed to get content length");
 
 		try {
-			contentLength = std::stoull(buf);
+			len = std::stoull(buf);
 		} catch (const std::invalid_argument &) {
-			contentLength = 0;
+			len = 0;
 		}
+
+		request = std::unique_ptr<Request>(RequestFactory::create(this, uri, method, len));
 
 		/* This is an OPTIONS request.
 		 *
@@ -155,39 +145,33 @@ void Session::open(void *in, size_t len)
 			lws_callback_on_writable(wsi);
 		/* This request has no body.
 		 * We can reply immediatly */
-		else if (contentLength == 0)
+		else if (len == 0)
 			api->pending.push(this);
 		else {
 			/* This request has a HTTP body. We wait for more data to arrive */
 		}
 	} catch (const Error &e) {
-		response = new ErrorResponse(this, e);
+		response = std::make_unique<ErrorResponse>(this, e);
 		lws_callback_on_writable(wsi);
 	} catch (const RuntimeError &e) {
-		response = new ErrorResponse(this, e);
+		response = std::make_unique<ErrorResponse>(this, e);
 		lws_callback_on_writable(wsi);
 	}
 }
 
 void Session::body(void *in, size_t len)
 {
-	requestBuffer.append((const char *) in, len);
+	request->buffer.append((const char *) in, len);
 }
 
 void Session::bodyComplete()
 {
 	try {
-		auto *j = requestBuffer.decode();
-		if (!j)
-			throw BadRequest("Failed to decode request payload");
-
-		requestBuffer.clear();
-
-		(*request).setBody(j);
+		request->decode();
 
 		api->pending.push(this);
 	} catch (const Error &e) {
-		response = new ErrorResponse(this, e);
+		response = std::make_unique<ErrorResponse>(this, e);
 
 		logger->warn("Failed to decode API request: {}", e.what());
 	}
@@ -195,65 +179,17 @@ void Session::bodyComplete()
 
 int Session::writeable()
 {
-	int ret;
-
 	if (!headersSent) {
-		int code = HTTP_STATUS_OK;
-		const char *contentType = "application/json";
+		if (response)
+			response->writeHeaders(wsi);
 
-		uint8_t headers[2048], *p = headers, *end = &headers[sizeof(headers) - 1];
-
-		responseBuffer.clear();
-		if (response) {
-			Response *resp = response;
-
-			json_t *json_response = resp->toJson();
-
-			responseBuffer.encode(json_response, JSON_INDENT(4));
-
-			code = resp->getCode();
-		}
-
-		if (lws_add_http_common_headers(wsi, code, contentType,
-				responseBuffer.size(), /* no content len */
-				&p, end))
-			return 1;
-
-		std::map<const char *, const char *> constantHeaders = {
-			{ "Server:", USER_AGENT },
-			{ "Access-Control-Allow-Origin:", "*" },
-			{ "Access-Control-Allow-Methods:", "GET, POST, OPTIONS" },
-			{ "Access-Control-Allow-Headers:", "Content-Type" },
-			{ "Access-Control-Max-Age:", "86400" }
-		};
-
-		for (auto &hdr : constantHeaders) {
-			if (lws_add_http_header_by_name (wsi,
-					reinterpret_cast<const unsigned char *>(hdr.first),
-					reinterpret_cast<const unsigned char *>(hdr.second),
-					strlen(hdr.second), &p, end))
-				return -1;
-		}
-
-		if (lws_finalize_write_http_header(wsi, headers, &p, end))
-			return 1;
-
-		/* No wait, until we can send the body */
+		/* Now wait, until we can send the body */
 		headersSent = true;
-
-		/* Do we have a body to send */
-		if (responseBuffer.size() > 0)
-			lws_callback_on_writable(wsi);
 
 		return 0;
 	}
-	else {
-		ret = lws_write(wsi, (unsigned char *) responseBuffer.data(), responseBuffer.size(), LWS_WRITE_HTTP_FINAL);
-		if (ret < 0)
-			return -1;
-
-		return 1;
-	}
+	else
+		return response->writeBody(wsi);
 }
 
 int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
@@ -316,11 +252,6 @@ int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
 	}
 
 	return 0;
-}
-
-std::string Session::getRequestURI() const
-{
-	return uri;
 }
 
 Session::Method Session::getRequestMethod() const

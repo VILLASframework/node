@@ -146,7 +146,7 @@ public:
 		json_object_set(json_status, "lws", getLwsStatus());
 #endif /* LWS_WITH_SERVER_STATUS */
 
-		return new Response(session, json_status);
+		return new JsonResponse(session, HTTP_STATUS_OK, json_status);
 	}
 };
 
