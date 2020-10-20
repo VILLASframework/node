@@ -38,7 +38,6 @@ Log villas::logging;
 
 Log::Log(Level lvl) :
 	level(lvl),
-//	pattern("%+")
 	pattern("%H:%M:%S %^%l%$ %n: %v")
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
@@ -151,7 +150,7 @@ void Log::setPattern(const std::string &pat)
 	pattern = pat;
 
 	spdlog::set_pattern(pattern, spdlog::pattern_time_type::utc);
-	//sinks.set_pattern(pattern);
+	sinks->set_pattern(pattern);
 }
 
 void Log::setLevel(Level lvl)
@@ -159,7 +158,7 @@ void Log::setLevel(Level lvl)
 	level = lvl;
 
 	spdlog::set_level(lvl);
-	//sinks.set_level(lvl);
+	sinks->set_level(lvl);
 }
 
 void Log::setLevel(const std::string &lvl)
