@@ -34,6 +34,8 @@ int signal_list_init(struct vlist *list) __attribute__ ((warn_unused_result));
 
 int signal_list_destroy(struct vlist *list) __attribute__ ((warn_unused_result));
 
+int signal_list_clear(struct vlist *list);
+
 int signal_list_parse(struct vlist *list, json_t *cfg);
 
 int signal_list_generate(struct vlist *list, unsigned len, enum SignalType fmt);

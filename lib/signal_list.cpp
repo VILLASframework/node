@@ -42,6 +42,19 @@ int signal_list_init(struct vlist *list)
 	return 0;
 }
 
+int signal_list_clear(struct vlist *list)
+{
+	for (size_t i = 0; i < vlist_length(list); i++) {
+		struct signal *sig = (struct signal *) vlist_at(list, i);
+
+		signal_decref(sig);
+	}
+
+	vlist_clear(list);
+
+	return 0;
+}
+
 int signal_list_destroy(struct vlist *list)
 {
 	int ret;
