@@ -24,6 +24,7 @@
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/list.h>
+#include <villas/sample.h>
 #include <villas/log.h>
 
 using namespace villas;
@@ -129,6 +130,8 @@ skip_add:
 		h->prepare(sigs);
 
 		sigs = h->getSignals();
+
+		signal_list_dump(sigs);
 	}
 }
 
@@ -146,6 +149,7 @@ int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
 			Hook *h = (Hook *) vlist_at(hs, i);
 
 			auto ret = h->process(smp);
+			smp->signals = h->getSignals();
 			switch (ret) {
 				case Hook::Reason::ERROR:
 					return -1;

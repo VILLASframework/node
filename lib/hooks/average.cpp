@@ -172,7 +172,6 @@ public:
 			return Reason::ERROR;
 
 		sample_data_insert(smp, (union signal_data *) &avg, offset, 1);
-		smp->signals = &signals;
 
 		return Reason::OK;
 	}
