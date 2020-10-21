@@ -294,7 +294,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 			vlist_push(&p->sources, ps);
 		}
 
-		struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
+		struct vlist *sigs = node_input_signals(me->node);
 
 		/* Update signals of path */
 		for (unsigned j = 0; j < (unsigned) me->length; j++) {
@@ -379,7 +379,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 #endif /* WITH_HOOKS */
 
 	p->logger->info("Prepared path {} with output signals:", path_name(p));
-	signal_list_dump(&p->signals);
+	signal_list_dump(path_output_signals(p));
 
 	p->state = State::PREPARED;
 
@@ -758,11 +758,6 @@ const char * path_name(struct vpath *p)
 	return p->_name;
 }
 
-struct vlist * path_output_signals(struct vpath *p)
-{
-	return &p->signals;
-}
-
 bool path_is_simple(const struct vpath *p)
 {
 	int ret;
@@ -794,9 +789,20 @@ bool path_is_reversed(const struct vpath *p)
 	return p->reverse;
 }
 
-struct vlist * path_get_signals(struct vpath *p)
+struct vlist * path_signals(struct vpath *p)
 {
 	return &p->signals;
+}
+
+struct vlist * path_output_signals(struct vpath *p)
+{
+#ifdef WITH_HOOKS
+	Hook *last_hook = (Hook *) vlist_last(&p->hooks);
+
+	return last_hook->getSignals();
+#else
+	return &p->signals;
+#endif
 }
 
 json_t * path_to_json(struct vpath *p)

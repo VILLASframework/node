@@ -319,7 +319,7 @@ int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes)
 
 end:
 	if (me->length < 0) {
-		struct vlist *sigs = node_get_signals(me->node, NodeDir::IN);
+		struct vlist *sigs = node_input_signals(me->node);
 
 		me->length = vlist_length(sigs);
 	}

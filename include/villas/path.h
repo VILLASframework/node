@@ -144,6 +144,8 @@ const char * path_name(struct vpath *p);
 /** Get a list of signals which is emitted by the path. */
 struct vlist * path_output_signals(struct vpath *n);
 
+struct vlist * path_signals(struct vpath *p);
+
 /** Reverse a path */
 int path_reverse(struct vpath *p, struct vpath *r);
 
@@ -164,8 +166,6 @@ bool path_is_simple(const struct vpath *p);
 bool path_is_enabled(const struct vpath *p);
 
 bool path_is_reversed(const struct vpath *p);
-
-struct vlist * path_get_signals(struct vpath *p);
 
 json_t * path_to_json(struct vpath *p);
 

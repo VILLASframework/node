@@ -568,14 +568,6 @@ const char * node_name_short(struct vnode *n)
 	return n->name;
 }
 
-struct vlist * node_output_signals(struct vnode *n)
-{
-	if (n->output_path)
-		return path_output_signals(n->output_path);
-
-	return nullptr;
-}
-
 int node_reverse(struct vnode *n)
 {
 	return node_type(n)->reverse ? node_type(n)->reverse(n) : -1;
@@ -663,11 +655,17 @@ bool node_is_enabled(const struct vnode *n)
 	return n->enabled;
 }
 
-struct vlist * node_get_signals(struct vnode *n, enum NodeDir dir)
+struct vlist * node_input_signals(struct vnode *n)
 {
-	struct vnode_direction *nd = dir == NodeDir::IN ? &n->in : &n->out;
+	return node_direction_get_signals(&n->in);
+}
 
-	return node_direction_get_signals(nd);
+struct vlist * node_output_signals(struct vnode *n)
+{
+	if (n->output_path)
+		return path_output_signals(n->output_path);
+
+	return nullptr;
 }
 
 json_t * node_to_json(struct vnode *n)
