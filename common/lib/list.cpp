@@ -96,6 +96,15 @@ void vlist_push(struct vlist *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
+void vlist_clear(struct vlist *l)
+{
+	pthread_mutex_lock(&l->lock);
+
+	l->length = 0;
+	
+	pthread_mutex_unlock(&l->lock);
+}
+
 int vlist_remove(struct vlist *l, size_t idx)
 {
 	pthread_mutex_lock(&l->lock);

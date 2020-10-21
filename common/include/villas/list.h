@@ -85,6 +85,9 @@ int vlist_destroy(struct vlist *l, dtor_cb_t dtor = nullptr, bool free = false) 
 /** Append an element to the end of the list */
 void vlist_push(struct vlist *l, void *p);
 
+/** Clear list */
+void vlist_clear(struct vlist *l);
+
 /** Remove all occurences of a list item */
 void vlist_remove_all(struct vlist *l, void *p);
 
