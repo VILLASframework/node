@@ -127,7 +127,7 @@ public:
 				unsigned int tmp = cntEdges < filtLen ? cntEdges : horizonEst;
 				double cntSmpsAvg = (cntSmpsTotal - filtWin[(cntEdges - tmp) % filtLen]) / tmp;
 				periodEst = 1.0 / cntSmpsAvg;
-				info("cntSmpsAvg %f", cntSmpsAvg);
+				//info("cntSmpsAvg %f", cntSmpsAvg);
 				periodErrComp = timeErr / (cntSmpsAvg * horizonComp);
 				period = periodEst + periodErrComp;
 			}
@@ -141,7 +141,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			info("Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
+			//info("Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
 		}
 
 		cntSmps++;
