@@ -318,8 +318,6 @@ public:
 			sample_data_insert(smp, (union signal_data *) coeffs, offset, fharmonics_len);
 		}
 
-		smp->signals = &signals;
-
 		time += timestep;
 		steps++;
 

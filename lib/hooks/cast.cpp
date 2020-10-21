@@ -161,9 +161,6 @@ public:
 
 		signal_data_cast(&smp->data[signal_index], orig_sig, new_sig);
 
-		/* Replace signal descriptors of sample */
-		smp->signals = &signals;
-
 		return Reason::OK;
 	}
 };
