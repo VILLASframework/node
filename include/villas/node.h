@@ -192,6 +192,8 @@ char * node_name_long(struct vnode *n);
  */
 struct vlist * node_output_signals(struct vnode *n);
 
+struct vlist * node_input_signals(struct vnode *n);
+
 /** Reverse local and remote socket address.
  *
  * @see node_type::reverse
@@ -217,8 +219,6 @@ struct memory_type * node_memory_type(struct vnode *n);
 bool node_is_valid_name(const char *name);
 
 bool node_is_enabled(const struct vnode *n);
-
-struct vlist * node_get_signals(struct vnode *n, enum NodeDir dir);
 
 json_t * node_to_json(struct vnode *);
 
