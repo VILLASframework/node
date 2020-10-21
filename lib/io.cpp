@@ -505,14 +505,14 @@ FILE * io_stream_input(struct io *io) {
 
 int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
-	assert(io->state == State::CHECKED || io->state == State::OPENED);
+	assert(io->state == State::CHECKED || io->state == State::INITIALIZED || io->state == State::OPENED);
 
 	return io_type(io)->sscan ? io_type(io)->sscan(io, buf, len, rbytes, smps, cnt) : -1;
 }
 
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
-	assert(io->state == State::CHECKED || io->state == State::OPENED);
+	assert(io->state == State::CHECKED || io->state == State::INITIALIZED || io->state == State::OPENED);
 
 	return io_type(io)->sprint ? io_type(io)->sprint(io, buf, len, wbytes, smps, cnt) : -1;
 }
