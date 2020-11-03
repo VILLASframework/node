@@ -27,18 +27,20 @@ namespace villas {
 namespace node {
 
 class Dumper {
-	protected:
-		int socketFd;
-		std::string socketName;
-    	bool supressRepeatedWarning;
-    	uint64_t warningCounter;
 
-	public:
-		Dumper(std::string socketNameIn);
-		~Dumper();
-		int openSocket(std::string socketNameIn);
-		void closeSocket();
-		void writeData(uint len, double* yData, double* xData = nullptr);
-    };
+protected:
+	int socketFd;
+	std::string socketName;
+	bool supressRepeatedWarning;
+	uint64_t warningCounter;
+
+public:
+	Dumper(std::string socketNameIn);
+	~Dumper();
+	int openSocket(std::string socketNameIn);
+	void closeSocket();
+	void writeData(uint len, double* yData, double* xData = nullptr);
+};
+
 } /* namespace node */
 } /* namespace villas */
