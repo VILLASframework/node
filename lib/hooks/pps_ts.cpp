@@ -121,7 +121,13 @@ public:
 
 		if (isEdge) {
 			if (isSynced) {
-				timeErr += 1.0 - (cntSmps * period);
+				//timeErr += 1.0 - (cntSmps * period);
+				if(tsVirt.tv_nsec > 0.5e9)
+					timeErr += 1.0 - (tsVirt.tv_nsec / 1.0e9);
+				else
+					timeErr -= (tsVirt.tv_nsec / 1.0e9);
+
+				
 				filtWin[cntEdges % filtLen] = cntSmpsTotal;
 				/* Estimated sample period over last 'horizonEst' seconds */
 				unsigned int tmp = cntEdges < filtLen ? cntEdges : horizonEst;
@@ -141,7 +147,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			//info("Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
+			info("Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
 		}
 
 		cntSmps++;
