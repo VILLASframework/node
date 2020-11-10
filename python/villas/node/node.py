@@ -70,9 +70,7 @@ class Node(object):
 
     @property
     def active_config(self):
-        resp = self.request('config')
-
-        return resp
+        return self.request('config')
 
     @property
     def nodes(self):
@@ -82,17 +80,33 @@ class Node(object):
     def paths(self):
         return self.request('paths')
 
-    def request(self, action, req=None):
-        args = {
-            'timeout': 1
+    @property
+    def status(self):
+        return self.request('status')
+
+    def load_config(self, i):
+        if type(i) is dict:
+            cfg = i
+        elif type(i) is str:
+            cfg = json.loads(i)
+        elif hasattr(i, 'read'): # file-like?
+            cfg = json.load(i)
+        else:
+            raise TypeError()
+
+        req = {
+            'config': cfg
         }
+    
+        self.request('restart', method='POST', json=req)
 
-        if req is not None:
-            args['json'] = req
+    def request(self, action, method='GET', **args):
+        
+        if 'timeout' not in args:
+            args['timeout'] = 1
 
-        r = requests.get(
+        r = requests.request(method,
             f'{self.api_url}/api/{self.api_version}/{action}', **args)
-
         r.raise_for_status()
 
         return r.json()
@@ -103,9 +117,9 @@ class Node(object):
         return ver.decode('ascii').rstrip()
 
     def get_version(self):
-        resp = self.request('capabilities')
+        resp = self.request('status')
 
-        return resp['build']
+        return resp['version']
 
     def is_running(self):
         if self.child is None:
