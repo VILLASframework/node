@@ -9,7 +9,8 @@ variables:
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev
   MAKE_OPTS: -j32
-  RELEASEVER: '29'
+  RELEASEVER: '33'
+  DOCKER_CLI_EXPERIMENTAL: enabled
 
 stages:
 - prepare
@@ -29,7 +30,7 @@ before_script:
 .prepare:docker-dev: &prepare_docker_dev
   stage: prepare
   script:
-  - docker buildx ${DOCKER_OPTS}
+  - docker buildx build ${DOCKER_OPTS}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
