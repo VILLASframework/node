@@ -125,9 +125,8 @@ void setThreadAffinity(pthread_t thread, int affinity)
 void setPriority(int priority)
 {
 	int ret;
-	struct sched_param param = {
-		.sched_priority = priority
-	};
+	struct sched_param param;
+	param.sched_priority = priority;
 
 	Logger logger = logging.get("kernel:rt");
 
