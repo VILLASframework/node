@@ -28,7 +28,8 @@ pushd ${DIR}
 
 # Build & Install Criterion
 if ! pkg-config "criterion >= 2.3.1" && \
-   [ "${ARCH}" == "x86_64" ]; then
+   [ "${ARCH}" == "x86_64" ] && \
+   [ -z "${SKIP_CRITERION}" ]; then
     git clone --recursive https://github.com/Snaipe/Criterion
     mkdir -p Criterion/build
     pushd Criterion/build
@@ -41,18 +42,20 @@ if ! pkg-config "criterion >= 2.3.1" && \
 fi
 
 # Build & Install EtherLab
-hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
-pushd etherlab
-./bootstrap
-./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
-if [ -z "${PACKAGE}" ]; then
-    make -j$(nproc) install
-else
-    wget https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
-    cp ethercat-1.5.2.tar.bz2 ~/rpmbuild/SOURCES
-    rpmbuild -ba ethercat.spec
+if [ -z "${SKIP_CRITERION}" ]; then
+    hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
+    pushd etherlab
+    ./bootstrap
+    ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
+    if [ -z "${PACKAGE}" ]; then
+        make -j$(nproc) install
+    else
+        wget https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
+        cp ethercat-1.5.2.tar.bz2 ~/rpmbuild/SOURCES
+        rpmbuild -ba ethercat.spec
+    fi
+    popd
 fi
-popd
 
 # Build & Install Fmtlib
 if ! pkg-config "fmt >= 6.1.2"; then
@@ -87,7 +90,7 @@ if ! pkg-config "libiec61850 >= 1.3.1"; then
     git clone https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
-    git checkout v1.3.1
+    git checkout v1.4
     cmake ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
@@ -144,7 +147,8 @@ if ! pkg-config "comedilib >= 0.11.0"; then
 fi
 
 # Build & Install libre
-if ! pkg-config "libre >= 0.5.6"; then
+if ! pkg-config "libre >= 0.5.6" && \
+    [ -z "${SKIP_LIBRE}" ]; then
     git clone https://github.com/creytiv/re.git
     pushd re
     git checkout v0.6.1
