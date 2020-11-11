@@ -110,6 +110,7 @@ static lws_http_mount mounts[] = {
 
 /** List of libwebsockets extensions. */
 static const lws_extension extensions[] = {
+#ifdef LWS_DEFLATE_FOUND
 	{
 		.name = "permessage-deflate",
 		.callback = lws_extension_callback_pm_deflate,
@@ -120,6 +121,7 @@ static const lws_extension extensions[] = {
 		.callback = lws_extension_callback_pm_deflate,
 		.client_offer = "deflate_frame"
 	},
+#endif /* LWS_DEFLATE_FOUND */
 	{ nullptr /* terminator */ }
 };
 

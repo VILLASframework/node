@@ -52,6 +52,7 @@ include(CheckIncludeFile)
 include(FeatureSummary)
 include(GNUInstallDirs)
 include(GetVersion)
+include(FindSymbol)
 include(CMakeDependentOption)
 
 # Compiler flags
@@ -90,7 +91,7 @@ find_package(Etherlab)
 # Check for tools
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
-	message(SEND_ERROR "GNU paste is missing. Please install coreutils")
+    message(SEND_ERROR "GNU paste is missing. Please install coreutils")
 endif()
 
 # Check programs
@@ -123,6 +124,9 @@ pkg_check_modules(RE IMPORTED_TARGET re>=0.5.6)
 if(NOT RE_FOUND)
     pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.6)
 endif()
+
+# Check if libwebsockets is build with deflate extension
+FindSymbol(${LIBWEBSOCKETS_LINK_LIBRARIES} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
 # Build options
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)

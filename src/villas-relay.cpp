@@ -522,6 +522,7 @@ int Relay::main() {
 }
 
 const std::vector<lws_extension> Relay::extensions = {
+#ifdef LWS_DEFLATE_FOUND
 	{
 		"permessage-deflate",
 		lws_extension_callback_pm_deflate,
@@ -532,6 +533,7 @@ const std::vector<lws_extension> Relay::extensions = {
 		lws_extension_callback_pm_deflate,
 		"deflate_frame"
 	},
+#endif /* LWS_DEFLATE_FOUND */
 	{ nullptr /* terminator */ }
 };
 
