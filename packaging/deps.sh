@@ -129,7 +129,7 @@ fi
 if ! pkg-config "comedilib >= 0.11.0"; then
     git clone https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
-    git checkout r0_11_0
+    git checkout r0_12_0
     ./autogen.sh
     ./configure ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
@@ -137,7 +137,7 @@ if ! pkg-config "comedilib >= 0.11.0"; then
     else
         touch doc/pdf/comedilib.pdf # skip build of PDF which is broken..
         make dist
-        cp comedilib-0.11.0.tar.gz ~/rpmbuild/SOURCES
+        cp comedilib-0.12.0.tar.gz ~/rpmbuild/SOURCES
         rpmbuild -ba comedilib.spec
     fi
     popd
