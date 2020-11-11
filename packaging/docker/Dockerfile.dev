@@ -41,9 +41,8 @@ RUN dnf -y install \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
 	texinfo git mercurial curl tar \
-	flex bison rpmdevtools \
-	protobuf-compiler protobuf-c-compiler \
-	libtool
+	flex bison \
+	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
