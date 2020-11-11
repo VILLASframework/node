@@ -22,21 +22,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <array>
+#include <algorithm>
+
 #include <cstdlib>
 #include <cstring>
 
 #include <villas/list.h>
 #include <villas/utils.hpp>
-
-#ifdef __APPLE__
-static int cmp_sort(void *thunk, const void *a, const void *b) {
-#else
-static int cmp_sort(const void *a, const void *b, void *thunk) {
-#endif
-	cmp_cb_t cmp = (cmp_cb_t) thunk;
-
-	return cmp(*(const void **) a, *(const void **) b);
-}
 
 int vlist_init(struct vlist *l)
 {
@@ -231,11 +224,13 @@ void vlist_sort(struct vlist *l, cmp_cb_t cmp)
 
 	assert(l->state == State::INITIALIZED);
 
-#ifdef __APPLE__
-	qsort_r(l->array, l->length, sizeof(void *), (void *) cmp, cmp_sort);
-#else
-	qsort_r(l->array, l->length, sizeof(void *), cmp_sort, (void *) cmp);
-#endif
+	auto array = std::vector<void *>(l->array, l->array + l->length);
+
+	std::sort(array.begin(), array.end(), [cmp](void *&a, void *&b) -> bool {
+		return cmp(a, b) < 0;
+	});
+
+	std::copy(array.begin(), array.end(), l->array);
 
 	pthread_mutex_unlock(&l->lock);
 }

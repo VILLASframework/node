@@ -59,7 +59,7 @@ Version villas::kernel::getVersion()
 
 int villas::kernel::get_cacheline_size()
 {
-#if defined(__linux__) && defined(__x86_64__)
+#if defined(__linux__) && defined(__x86_64__) && defined(__GLIBC__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 #elif defined(__MACH__)
 	  /* Open the command for reading. */
