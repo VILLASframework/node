@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libiec61850/stack_config.h>
-
 #include <cstring>
 #include <pthread.h>
 #include <unistd.h>

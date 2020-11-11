@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libiec61850/stack_config.h>
-
 #if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
 
 #include <cstring>
