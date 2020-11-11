@@ -65,7 +65,7 @@ endif()
 if(WITH_NODE_ULDAQ)
     list(APPEND NODE_SRC uldaq.cpp)
     list(APPEND INCLUDE_DIRS ${LIBULDAQ_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBULDAQ uldaq)
+    list(APPEND LIBRARIES ${LIBULDAQ_LINK_LIBRARIES})
 endif()
 
 # Enable shared memory node-type
@@ -77,7 +77,7 @@ endif()
 if(WITH_NODE_IEC61850)
     list(APPEND NODE_SRC iec61850_sv.cpp iec61850.cpp)
     list(APPEND INCLUDE_DIRS ${LIBIEC61850_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBIEC61850 ${LIBIEC61850_LIBRARIES})
+    list(APPEND LIBRARIES ${LIBIEC61850_LINK_LIBRARIES})
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
@@ -91,7 +91,7 @@ endif()
 if(WITH_NODE_NANOMSG)
     list(APPEND NODE_SRC nanomsg.cpp)
     list(APPEND INCLUDE_DIRS ${NANOMSG_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${NANOMSG_LIBRARIES})
+    list(APPEND LIBRARIES ${NANOMSG_LINK_LIBRARIES})
 endif()
 
 # Enable ZeroMQ node type when libzmq is available
@@ -133,7 +133,7 @@ endif()
 if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.cpp)
     list(APPEND INCLUDE_DIRS ${COMEDILIB_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${COMEDILIB_LIBRARIES})
+    list(APPEND LIBRARIES ${COMEDILIB_LINK_LIBRARIES})
 endif()
 
 # Enable Infiniband support
@@ -147,7 +147,7 @@ endif()
 if(WITH_NODE_RTP)
     list(APPEND NODE_SRC rtp.cpp)
     list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::RE)
+    list(APPEND LIBRARIES ${RE_LINK_LIBRARIES})
 endif()
 
 # Enable CAN node type
