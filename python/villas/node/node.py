@@ -89,7 +89,7 @@ class Node(object):
             cfg = i
         elif type(i) is str:
             cfg = json.loads(i)
-        elif hasattr(i, 'read'): # file-like?
+        elif hasattr(i, 'read'):  # file-like?
             cfg = json.load(i)
         else:
             raise TypeError()
@@ -97,16 +97,17 @@ class Node(object):
         req = {
             'config': cfg
         }
-    
+
         self.request('restart', method='POST', json=req)
 
     def request(self, action, method='GET', **args):
-        
+
         if 'timeout' not in args:
             args['timeout'] = 1
 
         r = requests.request(method,
-            f'{self.api_url}/api/{self.api_version}/{action}', **args)
+                             f'{self.api_url}/api/{self.api_version}/{action}',
+                             **args)
         r.raise_for_status()
 
         return r.json()
