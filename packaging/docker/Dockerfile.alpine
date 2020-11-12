@@ -28,86 +28,109 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:33
-
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
-ARG VARIANT=unknown
+ARG DISTRO=unknown
+
+FROM alpine:edge AS dev
 
 # Toolchain
-RUN dnf -y install \
-	gcc gcc-c++ \
-	pkgconfig cmake make \
-	autoconf automake autogen libtool \
-	texinfo git mercurial curl tar \
-	flex bison \
-	protobuf-compiler protobuf-c-compiler
+RUN apk update && \
+	apk add gcc g++ \
+		pkgconf cmake make \
+		autoconf automake libtool \
+		git mercurial \
+		flex bison \
+		protobuf \
+		file
 
-# Several tools only needed for developement and testing
-RUN dnf -y install \
-	doxygen dia graphviz \
-	openssh-clients \
-	rpmdevtools rpm-build \
-	jq nmap-ncat \
-	iproute \
-	python-pip \
-	valgrind gdb gdb-gdbserver \
-	cppcheck \
-	xmlto dblatex rubygem-asciidoctor \
-	psmisc procps-ng \
-	rabbitmq-server mosquitto
-
-# Tools for debugging, coverage, profiling
-RUN pip install \
-	gcovr \
-	protobuf \
-	flake8
+RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
 # Dependencies
-RUN dnf -y install \
-	openssl-devel \
-	libuuid-devel \
-	libconfig-devel \
-	libwebsockets-devel \
-	libcurl-devel \
-	jansson-devel \
-	spdlog-devel \
-	fmt-devel \
-	libnl3-devel \
-	graphviz-devel \
-	protobuf-devel \
-	protobuf-c-devel \
-	zeromq-devel \
-	nanomsg-devel \
-	librabbitmq-devel \
-	mosquitto-devel \
-	libibverbs-devel \
-	librdmacm-devel \
-	libusb-devel
+RUN apk update && \
+	apk add \
+		openssl-dev \
+		ossp-uuid-dev@testing \
+		libconfig-dev \
+		libwebsockets-dev \
+		curl-dev \
+		jansson-dev \
+		spdlog-dev \
+		fmt-dev \
+		libnl3-dev \
+		graphviz-dev \
+		protobuf-dev \
+		protobuf-c-dev \
+		zeromq-dev \
+		nanomsg-dev@testing \
+		rabbitmq-c-dev \
+		mosquitto-dev \
+		libusb-dev
 
-# Add local and 64-bit locations to linker paths
-RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
-    echo /usr/local/lib64 >> /etc/ld.so.conf
-
-ENV VARIANT=fedora
+ENV DISTRO=alpine
 ENV ARCH=x86_64
 ENV TRIPLET=x86_64-linux-gnu
 
+# Some fixes for Alpine
+RUN echo -e "#!/bin/sh\n" | \
+	   tee /usr/bin/udevadm | \
+	   tee /bin/ldconfig && \
+	chmod +x /usr/bin/udevadm /bin/ldconfig && \
+	mv /sbin/ldconfig /sbin/ldconfig.orig
+
+# Disabling a few dependencies due to incompatability with musl-libc:
+#   https://github.com/creytiv/re/issues/256
+#   https://github.com/mz-automation/libiec61850/issues/279
+ENV SKIP_CRITERION=1
+ENV SKIP_LIBRE=1
+
+ENV PREFIX=/app
+RUN mkdir /app
+
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
-RUN bash deps.sh
-RUN ldconfig
+RUN bash deps.sh && \
+	ldconfig.orig /usr/local/lib /usr/lib
 
-# Workaround for libnl3's search path for netem distributions
-RUN ln -s /usr/lib64/tc /usr/lib/tc
+FROM dev AS builder
 
-# Expose ports for HTTP and WebSocket frontend
-EXPOSE 80
-EXPOSE 443
+COPY . /villas/
 
-WORKDIR /villas
-ENTRYPOINT bash
+RUN mkdir -p /villas/build
+WORKDIR /villas/build
+RUN cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
+	make -j$(nproc) install
+
+FROM alpine:edge AS app
+
+RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+RUN apk add \
+	openssl \
+	ossp-uuid@testing \
+	libconfig \
+	libwebsockets \
+	curl \
+	jansson \
+	spdlog \
+	fmt \
+	libnl3 \
+	graphviz \
+	protobuf \
+	protobuf-c \
+	zeromq \
+	nanomsg@testing \
+	rabbitmq-c \
+	mosquitto \
+	libusb
+
+COPY --from=builder /app /app
+RUN ldconfig /app/lib /app/lib64
+
+ENV LD_LIBRARY_PATH=/app/lib:/app/lib64
+ENV PATH=/app/bin:${PATH}
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -116,7 +139,6 @@ LABEL \
 	org.label-schema.vcs-ref="$GIT_REV" \
 	org.label-schema.vcs-branch="$GIT_BRANCH" \
 	org.label-schema.version="$VERSION" \
-	org.label-schema.variant="$VARIANT" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
@@ -124,3 +146,5 @@ LABEL \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
+
+ENTRYPOINT ["villas"]

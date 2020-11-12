@@ -112,7 +112,7 @@ fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.0.0" && \
-   [ "${VARIANT}" != "debian-multiarch" ]; then
+   [ "${DISTRO}" != "debian-multiarch" ]; then
     git clone https://github.com/stv0g/uldaq
     pushd uldaq
     git checkout rpmbuild

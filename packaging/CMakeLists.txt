@@ -52,5 +52,3 @@ install(
 	COMPONENT devel
 	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
 )
-
-add_subdirectory(docker)

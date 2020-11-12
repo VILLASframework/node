@@ -28,91 +28,60 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# You can choose between Debian and Ubuntu here
-FROM debian:buster
+FROM centos:8
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
-ARG VARIANT=unknown
+ARG DISTRO=unknown
 
-ARG ARCH=armhf
-ARG TRIPLET=arm-linux-gnueabihf
+USER root
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Enable ${ARCH} architecture
-RUN dpkg --add-architecture ${ARCH}
+# Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
+RUN dnf -y install epel-release dnf-plugins-core
+RUN dnf config-manager --set-enabled PowerTools
 
 # Toolchain
-RUN apt-get update && \
-	apt-get install -y \
-		crossbuild-essential-${ARCH} \
-		pkg-config make \
-		autoconf automake autogen libtool \
-		texinfo git mercurial curl tar wget diffutils \
-		flex bison \
-		protobuf-compiler protobuf-c-compiler
+RUN dnf -y install \
+	gcc gcc-c++ \
+	pkgconfig cmake make \
+	autoconf automake autogen libtool \
+	flex bison \
+	texinfo git mercurial curl tar \
+	protobuf-compiler protobuf-c-compiler
 
 # Dependencies
-RUN apt-get update && \
-	apt-get install -y \
-		libssl-dev:${ARCH} \
-		libgraphviz-dev:${ARCH} \
-		libprotobuf-dev:${ARCH} \
-		libprotobuf-c-dev:${ARCH} \
-		uuid-dev:${ARCH} \
-		libconfig-dev:${ARCH} \
-		libnl-3-dev libnl-route-3-dev:${ARCH} \
-		libcurl4-openssl-dev:${ARCH} \
-		libjansson-dev:${ARCH} \
-		libzmq3-dev:${ARCH} \
-		libnanomsg-dev:${ARCH} \
-		librabbitmq-dev:${ARCH} \
-		libmosquitto-dev:${ARCH} \
-		libcomedi-dev:${ARCH} \
-		libibverbs-dev:${ARCH} \
-		librdmacm-dev:${ARCH} \
-		libre-dev:${ARCH}
+RUN dnf -y install \
+	openssl-devel \
+	graphviz-devel \
+	protobuf-devel \
+	protobuf-c-devel \
+	libuuid-devel \
+	libconfig-devel \
+	libnl3-devel \
+	libcurl-devel \
+	jansson-devel \
+	zeromq-devel \
+	librabbitmq-devel \
+	mosquitto-devel \
+	libibverbs-devel \
+	librdmacm-devel \
+	libusb1-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
 
-# Install cmake (version from buster has a bug)
-RUN cd /tmp && \
-    wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.sh && \
-    chmod +x cmake-3.15.3-Linux-x86_64.sh && \
-    ./cmake-3.15.3-Linux-x86_64.sh --skip-license --prefix=/usr && \
-    rm -rf /tmp/*
+ENV DISTRO=centos
+ENV ARCH=x86_64
+ENV TRIPLET=x86_64-linux-gnu
 
-ADD cmake/toolchains/debian-${ARCH}.cmake /
-
-ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
-
-ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
-				-DCMAKE_INSTALL_LIBDIR=/usr/local/lib/${TRIPLET} \
-				-DLWS_INSTALL_LIB_DIR=/usr/local/lib/${TRIPLET}"
-
-ENV CONFIGURE_OPTS="--libdir=/usr/local/lib/${TRIPLET}"
-
-RUN mkdir -p /usr/local/lib/${TRIPLET}
-
-ENV CPP=${TRIPLET}-cpp
-ENV CC=${TRIPLET}-gcc
-ENV CXX=${TRIPLET}-g++
-ENV LD=${TRIPLET}-ld
-ENV AS=${TRIPLET}-as
-ENV AR=${TRIPLET}-ar
-ENV RANLIB=${TRIPLET}-ranlib
-
-ENV VARIANT=debian-multiarch
-ENV ARCH=${ARCH}
-ENV TRIPLET=${TRIPLET}
-
-# Install unpackaged dependencies from source
+# or install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
+
+# Workaround for libnl3's search path for netem distributions
+RUN ln -s /usr/lib64/tc /usr/lib/tc
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
@@ -127,11 +96,10 @@ LABEL \
 	org.label-schema.vcs-ref="$GIT_REV" \
 	org.label-schema.vcs-branch="$GIT_BRANCH" \
 	org.label-schema.version="$VERSION" \
-	org.label-schema.variant="$VARIANT" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on CentOS" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"

@@ -6,7 +6,7 @@
 #
 # This image can be used for developing VILLASnode
 # by running:
-#   make docker
+#   make docker-dev
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -28,67 +28,103 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# You can choose between Debian and Ubuntu here
-FROM ubuntu:20.04
+FROM fedora:33 AS dev
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
-ARG VARIANT=unknown
-
-ENV DEBIAN_FRONTEND=noninteractive
+ARG DISTRO=unknown
 
 # Toolchain
-RUN apt-get update && \
-	apt-get install -y \
-		gcc g++ \
-		pkg-config cmake make \
-		autoconf automake autogen libtool \
-		texinfo git mercurial curl tar wget diffutils \
-		flex bison \
-		protobuf-compiler protobuf-c-compiler
+RUN dnf -y install \
+	gcc gcc-c++ \
+	pkgconfig cmake make \
+	autoconf automake autogen libtool \
+	texinfo git mercurial curl tar \
+	flex bison \
+	protobuf-compiler protobuf-c-compiler
+
+# Several tools only needed for developement and testing
+RUN dnf -y install \
+	doxygen dia graphviz \
+	openssh-clients \
+	rpmdevtools rpm-build \
+	jq nmap-ncat \
+	iproute \
+	python-pip \
+	valgrind gdb gdb-gdbserver \
+	cppcheck \
+	xmlto dblatex rubygem-asciidoctor \
+	psmisc procps-ng \
+	rabbitmq-server mosquitto
+
+# Tools for debugging, coverage, profiling
+RUN pip install \
+	gcovr \
+	protobuf \
+	flake8
 
 # Dependencies
-RUN apt-get update && \
-	apt-get install -y \
-		libssl-dev \
-		libgraphviz-dev \
-		libprotobuf-dev \
-		libprotobuf-c-dev \
-		uuid-dev \
-		libconfig-dev \
-		libnl-3-dev libnl-route-3-dev \
-		libcurl4-openssl-dev \
-		libjansson-dev \
-		libzmq3-dev \
-		libnanomsg-dev \
-		librabbitmq-dev \
-		libmosquitto-dev \
-		libcomedi-dev \
-		libibverbs-dev \
-		librdmacm-dev \
-		libusb-1.0-0-dev
+RUN dnf -y install \
+	openssl-devel \
+	libuuid-devel \
+	libconfig-devel \
+	libwebsockets-devel \
+	libcurl-devel \
+	jansson-devel \
+	spdlog-devel \
+	fmt-devel \
+	libnl3-devel \
+	graphviz-devel \
+	protobuf-devel \
+	protobuf-c-devel \
+	zeromq-devel \
+	nanomsg-devel \
+	librabbitmq-devel \
+	mosquitto-devel \
+	libibverbs-devel \
+	librdmacm-devel \
+	libusb-devel
 
 # Add local and 64-bit locations to linker paths
-ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
 
-ENV VARIANT=ubuntu
+ENV DISTRO=fedora
 ENV ARCH=x86_64
 ENV TRIPLET=x86_64-linux-gnu
 
-# or install unpackaged dependencies from source
+# Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
+RUN ldconfig
+
+# Workaround for libnl3's search path for netem distributions
+RUN ln -s /usr/lib64/tc /usr/lib/tc
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443
 
-# Workaround for libnl3's search path for netem distributions
-RUN ln -s /usr/lib64/tc /usr/lib/tc
-
 WORKDIR /villas
+ENTRYPOINT ["bash"]
+
+FROM dev AS app
+
+COPY . /villas/
+
+RUN rm -rf /villas/build && mkdir /villas/build
+WORKDIR /villas/build
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install && \
+	ldconfig
+
+# For WebSocket / API access
+EXPOSE 80
+EXPOSE 443
+
+ENTRYPOINT ["villas"]
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -97,11 +133,10 @@ LABEL \
 	org.label-schema.vcs-ref="$GIT_REV" \
 	org.label-schema.vcs-branch="$GIT_BRANCH" \
 	org.label-schema.version="$VERSION" \
-	org.label-schema.variant="$VARIANT" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
