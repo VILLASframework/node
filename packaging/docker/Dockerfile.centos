@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM centos:8
+FROM centos:8 AS dev
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown

@@ -2,14 +2,14 @@ variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
-  RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
   CRITERION_OPTS: --ignore-warnings
-  DOCKER_FILE: packaging/docker/Dockerfile.dev
+  DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
-  MAKE_OPTS: -j32
-  RELEASEVER: '33'
+  DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
+  MAKE_OPTS: "-j16"
+  RELEASEVER: "33"
 
 stages:
 - prepare
@@ -37,49 +37,40 @@ before_script:
   - shell
   - linux
 
-prepare:fedora:docker-dev:
+prepare:fedora:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: fedora
-    DOCKER_FILE: packaging/docker/Dockerfile.fedora
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora
+    DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev
 
-prepare:fedora:docker-dev-minimal:
+prepare:fedora-minimal:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: fedora-minimal
-    DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
 
-prepare:ubuntu:docker-dev:
+prepare:ubuntu:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: ubuntu
-    DOCKER_FILE: packaging/docker/Dockerfile.ubuntu
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
 
-prepare:centos:docker-dev:
+prepare:centos:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: centos
-    DOCKER_FILE: packaging/docker/Dockerfile.centos
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
 
-prepare:alpine:docker-dev:
+prepare:alpine:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: alpine
-    DOCKER_FILE: packaging/docker/Dockerfile.alpine
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-alpine
 
-prepare:debian-armhf:docker-dev:
+prepare:debian-multiarch:armhf:
   <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
     DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
 
-prepare:debian-arm64:docker-dev:
+prepare:debian-multiarch:arm64:
   <<: *prepare_docker_dev
   variables:
     DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
@@ -89,7 +80,7 @@ prepare:debian-arm64:docker-dev:
 # Stage: build
 ##############################################################################
 
-.build:fedora:x86_64: &build
+.build: &build
   stage: build
   script:
   - mkdir -p build && cd build
@@ -99,17 +90,21 @@ prepare:debian-arm64:docker-dev:
     expire_in: 1 week
     paths:
     - build/
-  image: ${DOCKER_IMAGE}/dev-fedora:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
 
 build:fedora:x86_64:
   <<: *build
+  variables:
+    DISTRO: fedora
+  needs:
+  - job: prepare:fedora:x86_64
 
 build:fedora-minimal:x86_64:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
+    DISTRO: fedora-minimal
     CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
                 -DWITH_HOOKS=OFF
                 -DWITH_WEB=OFF
@@ -122,17 +117,23 @@ build:fedora-minimal:x86_64:
                 -DWITH_CLIENTS=OFF
                 -DWITH_DOC=OFF
                 -DWITH_FPGA=OFF
+  needs:
+  - job: prepare:fedora-minimal:x86_64
 
 build:fedora-minimal-default:x86_64:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
+    DISTRO: fedora-minimal
+  needs:
+  - job: prepare:fedora-minimal:x86_64
 
 build:ubuntu:x86_64:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-ubuntu
+    DISTRO: ubuntu
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
+  needs:
+  - job: prepare:ubuntu:x86_64
 
 build:centos:x86_64:
   <<: *build
@@ -141,24 +142,32 @@ build:centos:x86_64:
   - cmake3 ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS}
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-centos
+    DISTRO: centos
     CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
+  needs:
+  - job: prepare:centos:x86_64
 
 build:alpine:x86_64:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-alpine
+    DISTRO: alpine
     CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_PREFIX_PATH=/app -DWITH_FPGA=OFF
+  needs:
+  - job: prepare:alpine:x86_64
 
 build:debian-multiarch:armhf:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
+    DISTRO: debian-armhf
+  needs:
+  - job: prepare:debian-multiarch:armhf
 
 build:debian-multiarch:arm64:
   <<: *build
   variables:
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
+    DISTRO: debian-arm64
+  needs:
+  - job: prepare:debian-multiarch:arm64
 
 build:docs:
   stage: build
@@ -173,6 +182,7 @@ build:docs:
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
+  needs: []
 
 
 # Stage: test
@@ -184,29 +194,27 @@ test:flake8:
   - flake8 python/
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
-    - docker
+  - docker
 
 test:cppcheck:
   stage: test
   script:
-    - cppcheck -j $(nproc)
-               --max-configs=32
-               --error-exitcode=1
-               --quiet
-               --inline-suppr
-               --enable=warning,performance,portability,information,missingInclude
-               --std=c++11
-               --suppress=noValidConfiguration
-               -I include
-               -I common/include
-               src/
-               lib/
-               tests/unit/ | tee cppcheck.log
+  - cppcheck -j $(nproc)
+             --max-configs=32
+             --error-exitcode=1
+             --quiet
+             --inline-suppr
+             --enable=warning,performance,portability,information,missingInclude
+             --std=c++11
+             --suppress=noValidConfiguration
+             -I include
+             -I common/include
+             src/ lib/ tests/unit/ | tee cppcheck.log
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  dependencies:
-    - build:fedora:x86_64
+  needs:
+  - job: build:fedora:x86_64
   tags:
-    - docker
+  - docker
   artifacts:
     when: on_failure
     paths:
@@ -215,8 +223,8 @@ test:cppcheck:
 
 test:unit:
   stage: test
-  dependencies:
-  - build:fedora:x86_64
+  needs:
+  - job: build:fedora:x86_64
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
@@ -232,8 +240,8 @@ test:unit:
 test:integration:
   stage: test
   allow_failure: true
-  dependencies:
-  - build:fedora:x86_64
+  needs:
+  - job: build:fedora:x86_64
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
@@ -250,31 +258,21 @@ test:integration:
 # Stage: packaging
 ##############################################################################
 
-.packaging:docker: &packaging_docker
+packaging:docker:
   stage: packaging
   image: docker:19.03
   script:
-    - docker build
-        --target app
-        --file packaging/docker/Dockerfile.${DISTRO}
-        --tag ${DOCKER_IMAGE}:${DISTRO}-${DOCKER_TAG} .
+  - docker buildx build
+      --target app
+      --file packaging/docker/Dockerfile.alpine
+      --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
   tags:
   - docker
 
-packaging:docker:fedora:x86_64:
-  <<: *packaging_docker
-  variables:
-    DISTRO: fedora
-
-packaging:docker:alpine:x86_64:
-  <<: *packaging_docker
-  variables:
-    DISTRO: alpine
-
 packaging:rpm:
   stage: packaging
-  dependencies:
-  - build:fedora:x86_64
+  needs:
+  - job: build:fedora:x86_64
   script:
   - mkdir -p build && cd build
   - cmake -DWITH_NODE_ETHERCAT=OFF ..
@@ -302,8 +300,8 @@ deploy:web:
   - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
   script:
   - rclone copy build/doc/html fein:villas/doc-dev/${CI_BUILD_REF_NAME}
-  dependencies:
-  - build:docs
+  needs:
+  - job: build:docs
   only:
     # Only on version tags
   - "/^v\\d+(\\.\\d+)+$/"
@@ -322,8 +320,8 @@ deploy:web:
   - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
   - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
   - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
-  dependencies:
-  - packaging:rpm
+  needs:
+  - job: packaging:rpm
   tags:
   - docker
 
@@ -346,18 +344,10 @@ deploy:packages:tags:
 .deploy:docker:latest: &deploy_docker_latest
   <<: *deploy_docker
   script:
-  - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG}                  ${DOCKER_IMAGE}:latest
-  - docker tag ${DOCKER_IMAGE}/dev-fedora:${DOCKER_TAG}       ${DOCKER_IMAGE}/dev-fedora:latest
-  - docker tag ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG}       ${DOCKER_IMAGE}/dev-ubuntu:latest
-  - docker tag ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG}       ${DOCKER_IMAGE}/dev-centos:latest
-  - docker tag ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-arm64:latest
-  - docker tag ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG} ${DOCKER_IMAGE}/dev-debian-armhf:latest
+  - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG}     ${DOCKER_IMAGE}:latest
+  - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
   - docker push ${DOCKER_IMAGE}:latest
-  - docker push ${DOCKER_IMAGE}/dev-fedora:latest
-  - docker push ${DOCKER_IMAGE}/dev-ubuntu:latest
-  - docker push ${DOCKER_IMAGE}/dev-centos:latest
-  - docker push ${DOCKER_IMAGE}/dev-debian-arm64:latest
-  - docker push ${DOCKER_IMAGE}/dev-debian-armhf:latest
+  - docker push ${DOCKER_IMAGE}/dev:latest
   tags:
   - docker
 
@@ -375,11 +365,7 @@ deploy:docker:tags:
   <<: *deploy_docker
   script:
   - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-  - docker push ${DOCKER_IMAGE}/dev-fedora:${DOCKER_TAG}
-  - docker push ${DOCKER_IMAGE}/dev-ubuntu:${DOCKER_TAG}
-  - docker push ${DOCKER_IMAGE}/dev-centos:${DOCKER_TAG}
-  - docker push ${DOCKER_IMAGE}/dev-debian-arm64:${DOCKER_TAG}
-  - docker push ${DOCKER_IMAGE}/dev-debian-armhf:${DOCKER_TAG}
+  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
   only:

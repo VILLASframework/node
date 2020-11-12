@@ -29,7 +29,7 @@
 ###################################################################################
 
 # You can choose between Debian and Ubuntu here
-FROM ubuntu:20.04
+FROM ubuntu:20.04 AS dev
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
