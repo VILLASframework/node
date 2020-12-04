@@ -176,7 +176,7 @@ int mqtt_init(struct vnode *n)
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	m->client = mosquitto_new(n->name, 0, (void *) n);
+	m->client = mosquitto_new(NULL, true, (void *) n);
 	if (!m->client)
 		return -1;
 
@@ -194,7 +194,7 @@ int mqtt_init(struct vnode *n)
 	m->port = 1883;
 	m->qos = 0;
 	m->retain = 0;
-	m->keepalive = 1; /* 1 second */
+	m->keepalive = 5; /* 5 second, minimum required for libmosquitto */
 
 	m->host = nullptr;
 	m->username = nullptr;
