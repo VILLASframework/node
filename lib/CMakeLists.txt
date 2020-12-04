@@ -23,7 +23,6 @@
 add_compile_options(-fPIC)
 
 list(APPEND INCLUDE_DIRS
-    ${JANSSON_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/include
 )
@@ -80,13 +79,11 @@ if(WITH_WEB)
     list(APPEND LIB_SRC
         web.cpp
     )
-    
-    list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS ${LIBWEBSOCKETS_LDFLAGS})
+
+    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
 if(WITH_GRAPHVIZ)
-    list(APPEND INCLUDE_DIRS ${CGRAPH_INCLUDE_DIRS} ${GVC_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
 

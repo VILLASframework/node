@@ -26,7 +26,6 @@ set(NODE_SRC
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
-    list(APPEND INCLUDE_DIRS ${LIBNL3_ROUTE_INCLUDE_DIRS})
 endif()
 
 if(WITH_NODE_INFLUXDB)
@@ -64,8 +63,7 @@ endif()
 # Enable Universal Library for Linux DAQ devices (libuldaq)
 if(WITH_NODE_ULDAQ)
     list(APPEND NODE_SRC uldaq.cpp)
-    list(APPEND INCLUDE_DIRS ${LIBULDAQ_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${LIBULDAQ_LINK_LIBRARIES})
+    list(APPEND LIBRARIES PkgConfig::LIBULDAQ)
 endif()
 
 # Enable shared memory node-type
@@ -76,8 +74,7 @@ endif()
 # Enable IEC61850 node-types when libiec61850 is available
 if(WITH_NODE_IEC61850)
     list(APPEND NODE_SRC iec61850_sv.cpp iec61850.cpp)
-    list(APPEND INCLUDE_DIRS ${LIBIEC61850_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${LIBIEC61850_LINK_LIBRARIES})
+    list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
@@ -90,35 +87,31 @@ endif()
 # Enable nanomsg node type when libnanomsg is available
 if(WITH_NODE_NANOMSG)
     list(APPEND NODE_SRC nanomsg.cpp)
-    list(APPEND INCLUDE_DIRS ${NANOMSG_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${NANOMSG_LINK_LIBRARIES})
+    list(APPEND LIBRARIES PkgConfig::NANOMSG)
 endif()
 
 # Enable ZeroMQ node type when libzmq is available
 if(WITH_NODE_ZEROMQ)
     list(APPEND NODE_SRC zeromq.cpp)
-    list(APPEND INCLUDE_DIRS ${LIBZMQ_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBZMQ)
 endif()
 
 # Enable NGSI support
 if(WITH_NODE_NGSI)
     list(APPEND NODE_SRC ngsi.cpp)
-    list(APPEND INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
+    list(APPEND INCLUDE_DIRECTORIES ${CURL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${CURL_LIBRARIES})
 endif()
 
 # Enable WebSocket support
 if(WITH_NODE_WEBSOCKET)
     list(APPEND NODE_SRC websocket.cpp)
-    list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${LIBWEBSOCKETS_LDLIBS})
+    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
 # Enable AMQP support
 if(WITH_NODE_AMQP)
     list(APPEND NODE_SRC amqp.cpp)
-    list(APPEND INCLUDE_DIRS ${RABBITMQ_C_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::RABBITMQ_C)
 endif()
 
@@ -132,7 +125,8 @@ endif()
 if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.cpp)
     list(APPEND INCLUDE_DIRS ${COMEDILIB_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${COMEDILIB_LINK_LIBRARIES})
+    list(APPEND LIBRARY_DIRS ${COMEDILIB_LIBDIR})
+    list(APPEND LIBRARIES ${COMEDILIB_LIBRARIES})
 endif()
 
 # Enable Infiniband support
@@ -145,8 +139,7 @@ endif()
 # Enable RTP node type when libre is available
 if(WITH_NODE_RTP)
     list(APPEND NODE_SRC rtp.cpp)
-    list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${RE_LINK_LIBRARIES})
+    list(APPEND LIBRARIES PkgConfig::RE)
 endif()
 
 # Enable CAN node type
@@ -159,7 +152,6 @@ if(WITH_NODE_EXAMPLE)
     list(APPEND NODE_SRC example.cpp)
 
 # Add your library dependencies for the new node-type here
-#    list(APPEND INCLUDE_DIRS ${EXAMPLELIB_INCLUDE_DIRS})
 #    list(APPEND LIBRARIES PkgConfig::EXAMPLELIB)
 endif()
 
@@ -178,4 +170,5 @@ endif()
 
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
+target_link_directories(nodes PUBLIC ${LIBRARY_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

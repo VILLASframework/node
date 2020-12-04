@@ -44,7 +44,6 @@ set(API_SRC
 
 if(WITH_GRAPHVIZ)
     list(APPEND API_SRC requests/graph.cpp)
-    list(APPEND INCLUDE_DIRS ${CGRAPH_INCLUDE_DIRS} ${GVC_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
 
