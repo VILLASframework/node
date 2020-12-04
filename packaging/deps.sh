@@ -42,7 +42,7 @@ if ! pkg-config "criterion >= 2.3.1" && \
 fi
 
 # Build & Install EtherLab
-if [ -z "${SKIP_CRITERION}" ]; then
+if [ -z "${SKIP_ETHERLAB}" ]; then
     hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
     pushd etherlab
     ./bootstrap
@@ -58,7 +58,8 @@ if [ -z "${SKIP_CRITERION}" ]; then
 fi
 
 # Build & Install Fmtlib
-if ! pkg-config "fmt >= 6.1.2"; then
+if ! pkg-config "fmt >= 6.1.2" && \
+    [ -z "${SKIP_FMTLIB}" ]; then
     git clone --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
@@ -72,7 +73,8 @@ if ! pkg-config "fmt >= 6.1.2"; then
 fi
 
 # Build & Install spdlog
-if ! pkg-config "spdlog >= 1.5.0"; then
+if ! pkg-config "spdlog >= 1.5.0" && \
+    [ -z "${SKIP_SPDLOG}" ]; then
     git clone --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
@@ -86,7 +88,8 @@ if ! pkg-config "spdlog >= 1.5.0"; then
 fi
 
 # Build & Install libiec61850
-if ! pkg-config "libiec61850 >= 1.3.1"; then
+if ! pkg-config "libiec61850 >= 1.3.1" && \
+    [ -z "${SKIP_LIBIEC61850}" ]; then
     git clone https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
@@ -100,7 +103,8 @@ if ! pkg-config "libiec61850 >= 1.3.1"; then
 fi
 
 # Build & Install libwebsockets
-if ! pkg-config "libwebsockets >= 2.3.0"; then
+if ! pkg-config "libwebsockets >= 2.3.0" && \
+    [ -z "${SKIP_WEBSOCKETS}" ]; then
     git clone https://libwebsockets.org/repo/libwebsockets
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
@@ -112,7 +116,8 @@ fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.0.0" && \
-   [ "${DISTRO}" != "debian-multiarch" ]; then
+    [ "${DISTRO}" != "debian-multiarch" ] && \
+    [ -z "${SKIP_ULDAQ}" ]; then
     git clone https://github.com/stv0g/uldaq
     pushd uldaq
     git checkout rpmbuild
@@ -129,7 +134,8 @@ if ! pkg-config "libuldaq >= 1.0.0" && \
 fi
 
 # Build & Install comedilib
-if ! pkg-config "comedilib >= 0.11.0"; then
+if ! pkg-config "comedilib >= 0.11.0" && \
+    [ -z "${SKIP_COMEDILIB}" ]; then
     git clone https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
     git checkout r0_12_0
@@ -162,7 +168,8 @@ if ! pkg-config "libre >= 0.5.6" && \
 fi
 
 # Build & Install nanomsg
-if ! pkg-config "nanomsg >= 1.0.0"; then
+if ! pkg-config "nanomsg >= 1.0.0" && \
+    [ -z "${SKIP_NANOMSG}" ]; then
     git clone https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
@@ -174,7 +181,8 @@ if ! pkg-config "nanomsg >= 1.0.0"; then
 fi
 
 # Build & Install libxil
-if ! pkg-config "libxil >= 1.0.0"; then
+if ! pkg-config "libxil >= 1.0.0" && \
+    [ -z "${SKIP_LIBXIL}" ]; then
     git clone https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
