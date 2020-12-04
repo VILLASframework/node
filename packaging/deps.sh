@@ -8,6 +8,9 @@ TRIPLET=${TRIPLET:-x86_64-linux-gnu}
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
 CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
+git config --global http.postBuffer 524288000
+git config --global core.compression 0
+
 if [ -n "${PACKAGE}" ]; then
     TARGET="package"
     CMAKE_OPTS+=" -DCPACK_GENERATOR=RPM"
@@ -30,10 +33,9 @@ pushd ${DIR}
 if ! pkg-config "criterion >= 2.3.1" && \
    [ "${ARCH}" == "x86_64" ] && \
    [ -z "${SKIP_CRITERION}" ]; then
-    git clone --recursive https://github.com/Snaipe/Criterion
+    git clone --branch v2.3.3 --depth 1 --recursive https://github.com/Snaipe/Criterion
     mkdir -p Criterion/build
     pushd Criterion/build
-    git checkout v2.3.3
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
@@ -60,10 +62,9 @@ fi
 # Build & Install Fmtlib
 if ! pkg-config "fmt >= 6.1.2" && \
     [ -z "${SKIP_FMTLIB}" ]; then
-    git clone --recursive https://github.com/fmtlib/fmt.git
+    git clone --branch 6.1.2 --depth 1 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
-    git checkout 6.1.2
     cmake -DBUILD_SHARED_LIBS=1 ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
@@ -75,10 +76,9 @@ fi
 # Build & Install spdlog
 if ! pkg-config "spdlog >= 1.5.0" && \
     [ -z "${SKIP_SPDLOG}" ]; then
-    git clone --recursive https://github.com/gabime/spdlog.git
+    git clone --branch v1.5.0 --depth 1 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
-    git checkout v1.5.0
     cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF -DSPDLOG_BUILD_SHARED=ON ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
@@ -90,10 +90,9 @@ fi
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.3.1" && \
     [ -z "${SKIP_LIBIEC61850}" ]; then
-    git clone https://github.com/mz-automation/libiec61850
+    git clone --branch v1.4 --depth 1 https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
-    git checkout v1.4
     cmake ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
@@ -105,10 +104,9 @@ fi
 # Build & Install libwebsockets
 if ! pkg-config "libwebsockets >= 2.3.0" && \
     [ -z "${SKIP_WEBSOCKETS}" ]; then
-    git clone https://libwebsockets.org/repo/libwebsockets
+    git clone --branch v4.0-stable --depth 1 https://libwebsockets.org/repo/libwebsockets
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
-    git checkout v4.0-stable
     cmake -DLWS_WITHOUT_TESTAPPS=ON -DLWS_WITHOUT_EXTENSIONS=OFF -DLWS_WITH_SERVER_STATUS=ON ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
@@ -118,9 +116,8 @@ fi
 if ! pkg-config "libuldaq >= 1.0.0" && \
     [ "${DISTRO}" != "debian-multiarch" ] && \
     [ -z "${SKIP_ULDAQ}" ]; then
-    git clone https://github.com/stv0g/uldaq
+    git clone --branch rpmbuild --depth 1 https://github.com/stv0g/uldaq
     pushd uldaq
-    git checkout rpmbuild
     autoreconf -i
     ./configure --enable-examples=no ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
@@ -136,9 +133,8 @@ fi
 # Build & Install comedilib
 if ! pkg-config "comedilib >= 0.11.0" && \
     [ -z "${SKIP_COMEDILIB}" ]; then
-    git clone https://github.com/Linux-Comedi/comedilib.git
+    git clone --branch r0_12_0 --depth 1 https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
-    git checkout r0_12_0
     ./autogen.sh
     ./configure ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
@@ -155,9 +151,8 @@ fi
 # Build & Install libre
 if ! pkg-config "libre >= 0.5.6" && \
     [ -z "${SKIP_LIBRE}" ]; then
-    git clone https://github.com/creytiv/re.git
+    git clone --branch v0.6.1 --depth 1 https://github.com/creytiv/re.git
     pushd re
-    git checkout v0.6.1
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install
     else
@@ -170,7 +165,7 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
     [ -z "${SKIP_NANOMSG}" ]; then
-    git clone https://github.com/nanomsg/nanomsg.git
+    git clone --branch 1.1.5 --depth 1 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake ${CMAKE_OPTS} ..
@@ -183,10 +178,9 @@ fi
 # Build & Install libxil
 if ! pkg-config "libxil >= 1.0.0" && \
     [ -z "${SKIP_LIBXIL}" ]; then
-    git clone https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
+    git clone --branch v0.1.0 --depth 1 https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
-    git checkout b622ddef4315b7e8a56637d07aa2b26ba480d53a
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make -j$(nproc) install

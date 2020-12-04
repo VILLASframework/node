@@ -125,8 +125,7 @@ endif()
 if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.cpp)
     list(APPEND INCLUDE_DIRS ${COMEDILIB_INCLUDE_DIRS})
-    list(APPEND LIBRARY_DIRS ${COMEDILIB_LIBDIR})
-    list(APPEND LIBRARIES ${COMEDILIB_LIBRARIES})
+    list(APPEND LIBRARIES ${COMEDILIB_LDFLAGS})
 endif()
 
 # Enable Infiniband support
@@ -170,5 +169,4 @@ endif()
 
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
-target_link_directories(nodes PUBLIC ${LIBRARY_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

@@ -125,7 +125,12 @@ if(NOT RE_FOUND)
 endif()
 
 # Check if libwebsockets is build with deflate extension
-FindSymbol(${LIBWEBSOCKETS_LINK_LIBRARIES} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
+if(${CMAKE_VERSION} VERSION_LESS "3.12.4")
+    set(LWS_LOCATION "${LIBWEBSOCKETS_LIBRARY_DIRS}/lib${LIBWEBSOCKETS_LIBRARIES}.so")
+else()
+    set(LWS_LOCATION ${LIBWEBSOCKETS_LINK_LIBRARIES})
+endif()
+FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
 # Build options
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)
