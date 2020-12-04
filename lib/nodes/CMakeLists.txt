@@ -125,8 +125,7 @@ endif()
 # Enable MQTT support
 if(WITH_NODE_MQTT)
     list(APPEND NODE_SRC mqtt.cpp)
-    list(APPEND INCLUDE_DIRS ${MOSQUITTO_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${MOSQUITTO_LIBRARIES})
+    list(APPEND LIBRARIES PkgConfig::MOSQUITTO)
 endif()
 
 # Enable Comedi support
