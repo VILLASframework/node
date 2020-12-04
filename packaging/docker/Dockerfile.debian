@@ -6,7 +6,7 @@
 #
 # This image can be used for developing VILLASnode
 # by running:
-#   make docker-dev
+#   make docker
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -28,113 +28,79 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+# You can choose between Debian and Ubuntu here
+FROM debian:buster AS dev
+
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG DISTRO=unknown
 
-FROM alpine:edge AS dev
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Toolchain
-RUN apk update && \
-	apk add gcc g++ \
-		pkgconf cmake make \
-		autoconf automake libtool \
-		git mercurial \
+RUN apt-get update && \
+	apt-get install -y \
+		gcc g++ \
+		pkg-config cmake make \
+		autoconf automake autogen libtool \
+		texinfo git mercurial curl tar wget diffutils \
 		flex bison \
-		protobuf \
-		file
-
-RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+		protobuf-compiler protobuf-c-compiler
 
 # Dependencies
-RUN apk update && \
-	apk add \
-		openssl-dev \
-		ossp-uuid-dev@testing \
+RUN apt-get update && \
+	apt-get install -y \
+		libssl-dev \
+		libgraphviz-dev \
+		libprotobuf-dev \
+		libprotobuf-c-dev \
+		uuid-dev \
 		libconfig-dev \
-		libwebsockets-dev \
-		curl-dev \
-		jansson-dev \
-		spdlog-dev \
-		fmt-dev \
-		libnl3-dev \
-		graphviz-dev \
-		protobuf-dev \
-		protobuf-c-dev \
-		zeromq-dev \
-		nanomsg-dev@testing \
-		rabbitmq-c-dev \
-		mosquitto-dev \
-		libusb-dev
+		libnl-3-dev libnl-route-3-dev \
+		libcurl4-openssl-dev \
+		libjansson-dev \
+		libzmq3-dev \
+		libnanomsg-dev \
+		librabbitmq-dev \
+		libmosquitto-dev \
+		libcomedi-dev \
+		libibverbs-dev \
+		librdmacm-dev \
+		libusb-1.0-0-dev \
+		libfmt-dev \
+		libspdlog-dev
 
-ENV DISTRO=alpine
+# Add local and 64-bit locations to linker paths
+ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+    echo /usr/local/lib64 >> /etc/ld.so.conf
+
+ENV DISTRO=debian
 ENV ARCH=x86_64
 ENV TRIPLET=x86_64-linux-gnu
 
-# Some fixes for Alpine
-RUN echo -e "#!/bin/sh\n" | \
-	   tee /usr/bin/udevadm | \
-	   tee /bin/ldconfig && \
-	chmod +x /usr/bin/udevadm /bin/ldconfig && \
-	mv /sbin/ldconfig /sbin/ldconfig.orig
-
-# Disabling a few dependencies due to incompatability with musl-libc:
-#   https://github.com/creytiv/re/issues/256
-#   https://github.com/mz-automation/libiec61850/issues/279
-ENV SKIP_CRITERION=1
-ENV SKIP_ETHERLAB=1
-ENV SKIP_LIBRE=1
-
-ENV PREFIX=/app
-RUN mkdir /app
-
-# Install unpackaged dependencies from source
+# or install unpackaged dependencies from source
 ADD packaging/deps.sh /
-RUN bash deps.sh && \
-	ldconfig.orig /usr/local/lib /usr/lib
+RUN bash deps.sh
 
-FROM dev AS builder
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
+WORKDIR /villas
+
+FROM dev AS app
 
 COPY . /villas/
 
-RUN mkdir -p /villas/build
+RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
-	make -j$(nproc) install
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install && \
+	ldconfig
 
-FROM alpine:edge AS app
-
-RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-
-RUN apk add \
-	openssl \
-	ossp-uuid@testing \
-	libconfig \
-	libwebsockets \
-	curl \
-	jansson \
-	spdlog \
-	fmt \
-	libnl3 \
-	graphviz \
-	protobuf \
-	protobuf-c \
-	zeromq \
-	nanomsg@testing \
-	rabbitmq-c \
-	mosquitto \
-	libusb
-
-COPY --from=builder /app /app
-RUN ldconfig /app/lib /app/lib64
-
-ENV LD_LIBRARY_PATH=/app/lib:/app/lib64
-ENV PATH=/app/bin:${PATH}
-
-# Test if it runs
-RUN villas node -h 2&>1 > /dev/null
+ENTRYPOINT ["villas"]
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -150,5 +116,3 @@ LABEL \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
-
-ENTRYPOINT ["villas"]

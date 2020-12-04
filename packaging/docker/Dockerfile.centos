@@ -89,6 +89,19 @@ EXPOSE 443
 
 WORKDIR /villas
 
+FROM dev AS app
+
+COPY . /villas/
+
+RUN rm -rf /villas/build && mkdir /villas/build
+WORKDIR /villas/build
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install && \
+	ldconfig
+
+ENTRYPOINT ["villas"]
+
 LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
@@ -99,7 +112,7 @@ LABEL \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on CentOS" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"

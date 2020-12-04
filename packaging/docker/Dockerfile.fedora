@@ -107,7 +107,6 @@ EXPOSE 80
 EXPOSE 443
 
 WORKDIR /villas
-ENTRYPOINT ["bash"]
 
 FROM dev AS app
 
@@ -119,10 +118,6 @@ RUN cmake .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
-
-# For WebSocket / API access
-EXPOSE 80
-EXPOSE 443
 
 ENTRYPOINT ["villas"]
 

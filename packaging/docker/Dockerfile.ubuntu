@@ -67,7 +67,10 @@ RUN apt-get update && \
 		libcomedi-dev \
 		libibverbs-dev \
 		librdmacm-dev \
-		libusb-1.0-0-dev
+		libusb-1.0-0-dev \
+		libwebsockets-dev \
+		libfmt-dev \
+		libspdlog-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
@@ -85,10 +88,20 @@ RUN bash deps.sh
 EXPOSE 80
 EXPOSE 443
 
-# Workaround for libnl3's search path for netem distributions
-RUN ln -s /usr/lib64/tc /usr/lib/tc
-
 WORKDIR /villas
+
+FROM dev AS app
+
+COPY . /villas/
+
+RUN rm -rf /villas/build && mkdir /villas/build
+WORKDIR /villas/build
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install && \
+	ldconfig
+
+ENTRYPOINT ["villas"]
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -100,7 +113,7 @@ LABEL \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
