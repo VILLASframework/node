@@ -65,6 +65,7 @@
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
 #cmakedefine IBVERBS_FOUND
+#cmakedefine LUAJIT_FOUND
 
 /* Library features */
 #cmakedefine LWS_DEFLATE_FOUND

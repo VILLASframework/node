@@ -70,7 +70,7 @@ protected:
 	struct vpath *path;
 	struct vnode *node;
 
-	vlist signals;
+	struct vlist signals;
 
 	json_t *cfg; /**< A JSON object containing the configuration of the hook. */
 

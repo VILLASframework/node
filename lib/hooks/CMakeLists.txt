@@ -44,6 +44,10 @@ set(HOOK_SRC
     print.cpp
 )
 
+if(WITH_LUA)
+	list(APPEND lua.cpp)
+endif()
+
 add_library(hooks STATIC ${HOOK_SRC})
 target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(hooks PUBLIC ${LIBRARIES})
