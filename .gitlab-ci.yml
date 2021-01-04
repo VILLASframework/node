@@ -356,6 +356,8 @@ deploy:web:
 deploy:packages:manual:
   <<: *deploy_packages
   when: manual
+  except:
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 deploy:packages:tags:
   <<: *deploy_packages
@@ -408,6 +410,8 @@ deploy:docker:
 deploy:docker:manual:
   <<: *deploy_docker_latest
   when: manual
+  except:
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 deploy:docker:tags:
   <<: *deploy_docker_latest
