@@ -3,6 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   CRITERION_OPTS: --ignore-warnings
+  DISTRO: fedora # standard distro
   DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
@@ -30,7 +31,7 @@ stages:
   script:
   - docker build ${DOCKER_OPTS}
       --file ${DOCKER_FILE}
-      --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} 
+      --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
       --target dev .
   tags:
   - docker
@@ -39,12 +40,14 @@ prepare:fedora:x86_64:
   <<: *prepare_docker_dev
   variables:
     DISTRO: fedora
-    DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev
+    DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
 
 prepare:fedora-minimal:x86_64:
   <<: *prepare_docker_dev
   variables:
-    DISTRO: fedora-minimal
+    DISTRO: fedora
+    DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
+    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
 
 prepare:ubuntu:x86_64:
   <<: *prepare_docker_dev
@@ -64,16 +67,20 @@ prepare:alpine:x86_64:
 prepare:debian-multiarch:armhf:
   <<: *prepare_docker_dev
   variables:
+    DISTRO: debian
     DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
-    DOCKER_OPTS: --build-arg ARCH=armhf --build-arg TRIPLET=arm-linux-gnueabihf
+    DOCKER_OPTS: --build-arg ARCH=armhf
+                 --build-arg TRIPLET=arm-linux-gnueabihf
 
 prepare:debian-multiarch:arm64:
   <<: *prepare_docker_dev
   variables:
+    DISTRO: debian
     DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
     DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
-    DOCKER_OPTS: --build-arg ARCH=arm64 --build-arg TRIPLET=aarch64-linux-gnu
+    DOCKER_OPTS: --build-arg ARCH=arm64
+                 --build-arg TRIPLET=aarch64-linux-gnu
 
 # Stage: build
 ##############################################################################
@@ -180,78 +187,79 @@ build:docs:
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
-  needs: []
+  needs:
+  - job: prepare:fedora:x86_64
 
 
 # Stage: test
 ##############################################################################
 
-# test:flake8:
-#   stage: test
-#   script:
-#   - flake8 python/
-#   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-#   tags:
-#   - docker
+test:flake8:
+  stage: test
+  script:
+  - flake8 python/
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  tags:
+  - docker
 
-# test:cppcheck:
-#   stage: test
-#   script:
-#   - cppcheck -j $(nproc)
-#              --max-configs=32
-#              --error-exitcode=1
-#              --quiet
-#              --inline-suppr
-#              --enable=warning,performance,portability,information,missingInclude
-#              --std=c++11
-#              --suppress=noValidConfiguration
-#              -I include
-#              -I common/include
-#              src/ lib/ tests/unit/ | tee cppcheck.log
-#   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-#   needs:
-#   - job: build:fedora:x86_64
-#   tags:
-#   - docker
-#   artifacts:
-#     when: on_failure
-#     paths:
-#       - cppcheck.log
-#     expose_as: cppcheck
+test:cppcheck:
+  stage: test
+  script:
+  - cppcheck -j $(nproc)
+             --max-configs=32
+             --error-exitcode=1
+             --quiet
+             --inline-suppr
+             --enable=warning,performance,portability,information,missingInclude
+             --std=c++11
+             --suppress=noValidConfiguration
+             -I include
+             -I common/include
+             src/ lib/ tests/unit/ | tee cppcheck.log
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  needs:
+  - job: build:fedora:x86_64
+  tags:
+  - docker
+  artifacts:
+    when: on_failure
+    paths:
+      - cppcheck.log
+    expose_as: cppcheck
 
-# test:unit:
-#   stage: test
-#   needs:
-#   - job: build:fedora:x86_64
-#   variables:
-#     LD_PRELOAD: /usr/lib64/libSegFault.so
-#     SEGFAULT_SIGNALS: all
-#     SEGFAULT_SIGNALS: bus abrt
-#   script:
-#   - mkdir -p build && cd build
-#   - cmake ${CMAKE_OPTS} ..
-#   - make ${MAKE_OPTS} run-unit-tests
-#   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-#   tags:
-#   - docker
+test:unit:
+  stage: test
+  needs:
+  - job: build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /usr/lib64/libSegFault.so
+    SEGFAULT_SIGNALS: all
+    SEGFAULT_SIGNALS: bus abrt
+  script:
+  - mkdir -p build && cd build
+  - cmake ${CMAKE_OPTS} ..
+  - make ${MAKE_OPTS} run-unit-tests
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  tags:
+  - docker
 
-# test:integration:
-#   stage: test
-#   allow_failure: true
-#   needs:
-#   - job: build:fedora:x86_64
-#   script:
-#   - mkdir -p build && cd build
-#   - cmake ${CMAKE_OPTS} ..
-#   - make ${MAKE_OPTS} run-integration-tests
-#   artifacts:
-#     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
-#     when: always
-#     paths:
-#     - build/tests/integration/
-#   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-#   tags:
-#   - docker
+test:integration:
+  stage: test
+  allow_failure: true
+  needs:
+  - job: build:fedora:x86_64
+  script:
+  - mkdir -p build && cd build
+  - cmake ${CMAKE_OPTS} ..
+  - make ${MAKE_OPTS} run-integration-tests
+  artifacts:
+    name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
+    when: always
+    paths:
+    - build/tests/integration/
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  tags:
+  - docker
 
 # Stage: packaging
 ##############################################################################
@@ -324,8 +332,7 @@ deploy:web:
   needs:
   - job: build:docs
   only:
-    # Only on version tags
-  - "/^v\\d+(\\.\\d+)+$/"
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
   tags:
   - docker
 
@@ -353,8 +360,7 @@ deploy:packages:manual:
 deploy:packages:tags:
   <<: *deploy_packages
   only:
-  # Only on version tags
-  - "/^v\\d+(\\.\\d+)+$/"
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 deploy:docker:
   stage: deploy
@@ -384,7 +390,7 @@ deploy:docker:
 # Stage: deploy2
 ##############################################################################
 
-deploy:docker:latest:
+.deploy:docker:latest: &deploy_docker_latest
   stage: deploy2
   image: docker:19.03
   before_script:
@@ -398,5 +404,12 @@ deploy:docker:latest:
   - docker push ${DOCKER_IMAGE}/dev:latest
   tags:
   - docker
+
+deploy:docker:manual:
+  <<: *deploy_docker_latest
+  when: manual
+
+deploy:docker:tags:
+  <<: *deploy_docker_latest
   only:
-  - master
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
