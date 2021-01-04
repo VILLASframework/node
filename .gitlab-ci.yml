@@ -286,10 +286,13 @@ packaging:rpm:
 .packaging:docker: &packaging_docker
   stage: packaging
   image: docker:19.03
-  script:
+  before_script:
   - mkdir -p ~/.docker/cli-plugins/
   - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
   - chmod a+x ~/.docker/cli-plugins/docker-buildx
+  - docker buildx create --use --name cross-platform-build
+  - docker buildx inspect --bootstrap cross-platform-build
+  script:
   - docker buildx build
       --target app
       --platform ${PLATFORM}
