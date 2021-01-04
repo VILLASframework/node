@@ -126,11 +126,8 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 	const char *output = ".";
 	const char *prefix = node_name_short(n);
 
-	int *rates = nullptr;
-	int *values = nullptr;
-
-	int numrates = 0;
-	int numvalues = 0;
+	std::vector<int> rates;
+	std::vector<int> values;
 
 	size_t i;
 	json_t *json_cases, *json_case, *json_val;
@@ -181,22 +178,14 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 		if (limit > 0 && duration > 0)
 			error("The settings 'duration' and 'limit' of node %s must be used exclusively", node_name(n));
 
-		if (json_is_array(json_rates))
-			numrates = json_array_size(json_rates);
-		else if (json_is_number(json_rates))
-			numrates = 1;
-		else
+		if (!json_is_array(json_rates) && !json_is_number(json_rates))
 			error("The 'rates' setting of node %s must be a real or an array of real numbers", node_name(n));
 
-		if (json_is_array(json_values))
-			numvalues = json_array_size(json_values);
-		else if (json_is_integer(json_values))
-			numvalues = 1;
-		else
+		if (!json_is_array(json_values) && !json_is_integer(json_values))
 			error("The 'values' setting of node %s must be an integer or an array of integers", node_name(n));
 
-		rates  = (int *) realloc(rates, sizeof(rates[0]) * numrates);
-		values = (int *) realloc(values, sizeof(values[0]) * numvalues);
+		values.clear();
+		rates.clear();
 
 		if (json_is_array(json_rates)) {
 			size_t j;
@@ -204,11 +193,11 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 				if (!json_is_number(json_val))
 					error("The 'rates' setting of node %s must be an array of real numbers", node_name(n));
 
-				rates[j] = json_integer_value(json_val);
+				rates.push_back(json_integer_value(json_val));
 			}
 		}
 		else
-			rates[0] = json_number_value(json_rates);
+			rates.push_back(json_number_value(json_rates));
 
 		if (json_is_array(json_values)) {
 			size_t j;
@@ -216,14 +205,14 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 				if (!json_is_integer(json_val))
 					error("The 'values' setting of node %s must be an array of integers", node_name(n));
 
-				values[j] = json_integer_value(json_val);
+				values.push_back(json_integer_value(json_val));
 			}
 		}
 		else
-			values[0] = json_integer_value(json_values);
+			values.push_back(json_integer_value(json_values));
 
-		for (int i = 0; i < numrates; i++) {
-			for (int j = 0; j < numvalues; j++) {
+		for (int rate : rates) {
+			for (int value : values) {
 				auto *c = new struct test_rtt_case;
 				if (!c)
 					throw MemoryAllocationError();
@@ -231,8 +220,8 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 				c->filename = nullptr;
 				c->filename_formatted = nullptr;
 
-				c->rate = rates[i];
-				c->values = values[j];
+				c->rate = rate;
+				c->values = value;
 
 				if (limit > 0)
 					c->limit = limit;
@@ -247,9 +236,6 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 			}
 		}
 	}
-
-	free(values);
-	free(rates);
 
 	return 0;
 }
