@@ -54,7 +54,7 @@ public:
 
 		struct file *f = (struct file *) node->_vd;
 
-		if (matches[2].str() == "rewind")
+		if (matches[2] == "rewind")
 			io_rewind(&f->io);
 
 		return new Response(session, HTTP_STATUS_OK);

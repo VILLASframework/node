@@ -52,7 +52,9 @@ Request * RequestFactory::create(Session *s, const std::string &uri, Session::Me
 
 		auto *p = rf->make(s);
 
-		p->matches = mr;
+		for (auto m : mr)
+			p->matches.push_back(m.str());
+
 		p->factory = rf;
 		p->method = meth;
 		p->contentLength = ct;

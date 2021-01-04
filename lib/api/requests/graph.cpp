@@ -74,7 +74,7 @@ public:
 		std::list<std::string> supportedLayouts = { "circo", "dot", "fdp", "neato", "nop", "nop1", "nop2", "osage", "patchwork", "sfdp", "twopi" };
 		std::list<std::string> supportedFormats = { "ps", "eps", "txt", "svg", "svgz", "gif", "png", "jpg", "jpeg", "bmp", "dot", "fig", "json", "pdf" };
 
-		format = matches[1].str();
+		format = matches[1];
 
 		auto lit = std::find(supportedLayouts.begin(), supportedLayouts.end(), layout);
 		if (lit == supportedLayouts.end())

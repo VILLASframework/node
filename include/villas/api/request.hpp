@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <vector>
 #include <regex>
 #include <jansson.h>
 
@@ -56,7 +57,7 @@ protected:
 	Buffer buffer;
 
 public:
-	std::smatch matches;
+	std::vector<std::string> matches;
 	Session::Method method;
 	unsigned long contentLength;
 	json_t *body;
@@ -82,10 +83,10 @@ public:
 
 	virtual void decode();
 
-	std::string
-	getMatch(int idx)
+	const std::string &
+	getMatch(int idx) const
 	{
-		return matches[idx].str();
+		return matches[idx];
 	}
 
 	std::string
