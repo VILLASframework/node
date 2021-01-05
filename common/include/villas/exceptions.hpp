@@ -101,9 +101,33 @@ protected:
 	json_t *setting;
 	json_error_t error;
 
-	std::string msg;
+	char *msg;
+
+	std::string getMessage() const
+	{
+		std::stringstream ss;
+
+		ss << std::runtime_error::what() << std::endl;
+		ss << " Please consult the user documentation for details: " << std::endl;
+		ss << "   " << docUri();
+
+		if (error.position >= 0) {
+			ss << std::endl;
+			ss << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
+		}
+
+		ss << std::endl;
+
+		return ss.str();
+	}
 
 public:
+	~ConfigError()
+	{
+		if (msg)
+			free(msg);
+	}
+
 	template<typename... Args>
 	ConfigError(json_t *s, const std::string &i, const std::string &what = "Failed to parse configuration") :
 		std::runtime_error(what),
@@ -111,6 +135,8 @@ public:
 		setting(s)
 	{
 		error.position = -1;
+
+		msg = strdup(getMessage().c_str());
 	}
 
 	template<typename... Args>
@@ -118,7 +144,11 @@ public:
 		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
 		id(i),
 		setting(s)
-	{ }
+	{
+		error.position = -1;
+
+		msg = strdup(getMessage().c_str());
+	}
 
 	template<typename... Args>
 	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what = "Failed to parse configuration") :
@@ -126,7 +156,11 @@ public:
 		id(i),
 		setting(s),
 		error(e)
-	{ }
+	{
+		error.position = -1;
+
+		msg = strdup(getMessage().c_str());
+	}
 
 	template<typename... Args>
 	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what, Args&&... args) :
@@ -134,7 +168,11 @@ public:
 		id(i),
 		setting(s),
 		error(e)
-	{ }
+	{
+		error.position = -1;
+
+		msg = strdup(getMessage().c_str());
+	}
 
 	std::string docUri() const
 	{
@@ -145,17 +183,7 @@ public:
 
 	virtual const char * what() const noexcept
 	{
-		if (msg.empty()) {
-			std::stringstream ss;
-
-			ss << std::runtime_error::what() << std::endl;
-			ss << " Please consult the user documentation for details: " << docUri();
-
-			if (error.position >= 0)
-				ss << std::endl << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
-		}
-
-		return msg.c_str();
+		return msg;
 	}
 };
 

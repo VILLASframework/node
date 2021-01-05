@@ -1,4 +1,3 @@
-
 /** Common entry point for all villas command line tools.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
