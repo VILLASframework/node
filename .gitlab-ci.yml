@@ -293,7 +293,7 @@ packaging:rpm:
   - docker buildx create --use --name cross-platform-build
   - docker buildx inspect --bootstrap cross-platform-build
   script:
-  - docker buildx build
+  - docker buildx build ${DOCKER_OPTS}
       --target app
       --platform ${PLATFORM}
       --file packaging/docker/Dockerfile.alpine
@@ -313,12 +313,16 @@ packaging:docker:arm64:
   variables:
     PLATFORM: linux/arm64
     DOCKER_TAG: ${CI_COMMIT_REF_NAME}-arm64
+    DOCKER_OPTS: --build-arg ARCH=arm64
+                 --build-arg TRIPLET=aarch64-linux-gnu
 
 packaging:docker:armv7:
   <<: *packaging_docker
   variables:
     PLATFORM: linux/arm/v7
     DOCKER_TAG: ${CI_COMMIT_REF_NAME}-armv7
+    DOCKER_OPTS: --build-arg ARCH=armhf
+                 --build-arg TRIPLET=arm-linux-gnueabihf
 
 # Stage: deploy
 ##############################################################################
