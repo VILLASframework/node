@@ -225,8 +225,9 @@ check:			if (optarg == endptr)
 
 			smp_send->sequence++;
 
-			fprintf(stdout, "%10lu.%06lu%5" PRIu64 "%10.3f%10.3f%10.3f%10.3f%10.3f\n",
-				recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
+			fprintf(stdout, "%10lld.%06lld%5" PRIu64 "%10.3f%10.3f%10.3f%10.3f%10.3f\n",
+				(long long) recv.tv_sec,
+				(long long) recv.tv_nsec / 1000, smp_send->sequence,
 				1e3 * rtt, 1e3 * hist.getLowest(), 1e3 * hist.getHighest(),
 				1e3 * hist.getMean(), 1e3 * hist.getStddev());
 		}

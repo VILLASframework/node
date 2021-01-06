@@ -103,7 +103,9 @@ public:
 
 			lastSeqNr = seqNr;
 
-			info("Edge detected: seq=%u, realTime.sec=%ld, realTime.nsec=%ld, smpRate=%f", seqNr, realTime.tv_sec, realTime.tv_nsec, realSmpRate);
+			info("Edge detected: seq=%u, realTime.sec=%lld, realTime.nsec=%lld, smpRate=%f", seqNr, (long long) realTime.tv_sec,
+													        (long long) realTime.tv_nsec,
+													        realSmpRate);
 
 			edgeCounter++;
 		}

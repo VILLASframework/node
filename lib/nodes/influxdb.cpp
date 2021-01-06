@@ -187,7 +187,8 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 		}
 
 		/* Timestamp */
-		strcatf(&buf, " %ld%09ld\n", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec);
+		strcatf(&buf, " %lld%09lld\n", (long long) smp->ts.origin.tv_sec,
+					       (long long) smp->ts.origin.tv_nsec);
 	}
 
 	buflen = strlen(buf) + 1;

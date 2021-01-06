@@ -39,7 +39,8 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 	struct signal *sig;
 
 	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-		off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
+			off += snprintf(buf + off, len - off, "%lld%c%09lld", (long long) smp->ts.origin.tv_sec, io->separator,
+									      (long long) smp->ts.origin.tv_nsec);
 	else
 		off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
 

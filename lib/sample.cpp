@@ -298,10 +298,12 @@ void sample_dump(struct sample *s)
 		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-		info("  ts.origin=%ld.%ld", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
+		info("  ts.origin=%lld.%lld", (long long) s->ts.origin.tv_sec,
+					      (long long) s->ts.origin.tv_nsec);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-		info("  ts.received=%ld.%ld", s->ts.received.tv_sec, s->ts.received.tv_nsec);
+		info("  ts.received=%lld.%lld", (long long) s->ts.received.tv_sec,
+					        (long long) s->ts.received.tv_nsec);
 
 	if (s->signals) {
 		info("  Signals:");
