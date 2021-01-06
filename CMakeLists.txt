@@ -154,7 +154,7 @@ cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"    
 cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "IBVERBS_FOUND; RDMACM_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_INFLUXDB   "Build with influxdb node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_LOOPBACK   "Build with loopback node-type"                         ON "" OFF)
-cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             ON "Mosquitto_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             ON "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          ON "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             ON "BUILD32; Opal_FOUND" OFF)
