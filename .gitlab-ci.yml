@@ -9,7 +9,7 @@ variables:
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
-  DOCKER_PLATFORMS: amd64 armv7 arm64
+  DOCKER_PLATFORMS: amd64 armv6 armv7 arm64
   MAKE_OPTS: "-j16"
   RELEASEVER: "33"
 
@@ -294,6 +294,7 @@ packaging:rpm:
   - docker buildx inspect --bootstrap cross-platform-build
   script:
   - docker buildx build ${DOCKER_OPTS}
+      --push
       --target app
       --platform ${PLATFORM}
       --file packaging/docker/Dockerfile.alpine
@@ -395,9 +396,6 @@ deploy:docker:
   - packaging:docker:arm64
   script:
   - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  - for PF in ${DOCKER_PLATFORMS}; do
-      docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${PF};
-    done
   - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
