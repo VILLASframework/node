@@ -307,22 +307,32 @@ packaging:docker:amd64:
   variables:
     PLATFORM: linux/amd64
     DOCKER_TAG: ${CI_COMMIT_REF_NAME}-amd64
+    DOCKER_OPTS: --build-arg ARCH=amd64
+                 --build-arg TRIPLET=x86_64-alpine-linux-musl
 
 packaging:docker:arm64:
   <<: *packaging_docker
   variables:
-    PLATFORM: linux/arm64
+    PLATFORM: linux/arm64/v8
     DOCKER_TAG: ${CI_COMMIT_REF_NAME}-arm64
     DOCKER_OPTS: --build-arg ARCH=arm64
-                 --build-arg TRIPLET=aarch64-linux-gnu
+                 --build-arg TRIPLET=aarch64-alpine-linux-musl
+
+packaging:docker:armv6:
+  <<: *packaging_docker
+  variables:
+    PLATFORM: linux/arm/v6
+    DOCKER_TAG: ${CI_COMMIT_REF_NAME}-armv6
+    DOCKER_OPTS: --build-arg ARCH=armv6
+                 --build-arg TRIPLET=armv6-alpine-linux-musleabihf
 
 packaging:docker:armv7:
   <<: *packaging_docker
   variables:
     PLATFORM: linux/arm/v7
     DOCKER_TAG: ${CI_COMMIT_REF_NAME}-armv7
-    DOCKER_OPTS: --build-arg ARCH=armhf
-                 --build-arg TRIPLET=arm-linux-gnueabihf
+    DOCKER_OPTS: --build-arg ARCH=armv7
+                 --build-arg TRIPLET=armv7-alpine-linux-musleabihf
 
 # Stage: deploy
 ##############################################################################
@@ -380,6 +390,7 @@ deploy:docker:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   needs:
   - packaging:docker:amd64
+  - packaging:docker:armv6
   - packaging:docker:armv7
   - packaging:docker:arm64
   script:
@@ -390,6 +401,7 @@ deploy:docker:
   - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
   - docker manifest push ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
