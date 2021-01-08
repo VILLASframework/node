@@ -235,6 +235,7 @@ add_feature_info(TESTS                  WITH_TESTS                  "Run tests")
 add_feature_info(PLUGINS                WITH_PLUGINS                "Build plugins")
 add_feature_info(CLIENTS                WITH_CLIENTS                "Build client applications")
 add_feature_info(GRAPHVIZ               WITH_GRAPHVIZ               "Build with Graphviz support")
+add_feature_info(LUA                    WITH_LUA                    "Build with Lua support")
 add_feature_info(DOC                    WITH_DOC                    "Build documentation")
 
 add_feature_info(NODE_AMQP              WITH_NODE_AMQP              "Build with amqp node-type")
