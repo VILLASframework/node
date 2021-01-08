@@ -53,7 +53,6 @@ RUN apk update && \
 		openssl-dev \
 		ossp-uuid-dev@testing \
 		libconfig-dev \
-		libwebsockets-dev \
 		curl-dev \
 		jansson-dev \
 		spdlog-dev \
@@ -112,7 +111,6 @@ RUN apk add \
 	openssl \
 	ossp-uuid@testing \
 	libconfig \
-	libwebsockets \
 	curl \
 	jansson \
 	spdlog \
