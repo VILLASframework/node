@@ -245,10 +245,6 @@ int amqp_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&a->io);
-	if (ret)
-		return ret;
-
 	/* Connect producer */
 	a->producer = amqp_connect(&a->connection_info, &a->ssl_info);
 	if (!a->producer)

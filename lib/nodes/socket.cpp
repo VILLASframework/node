@@ -168,10 +168,6 @@ int socket_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&s->io);
-	if (ret)
-		return ret;
-
 	/* Create socket */
 	switch (s->layer) {
 		case SocketLayer::UDP:

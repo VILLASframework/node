@@ -164,10 +164,6 @@ int nanomsg_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&m->io);
-	if (ret)
-		return ret;
-
 	ret = m->in.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0) {
 		warning("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));

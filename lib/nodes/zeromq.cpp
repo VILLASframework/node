@@ -327,10 +327,6 @@ int zeromq_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&z->io);
-	if (ret)
-		return ret;
-
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
 		case zeromq::Pattern::RADIODISH:

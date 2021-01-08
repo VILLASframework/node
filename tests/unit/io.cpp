@@ -258,9 +258,6 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
 	cr_assert_eq(ret, 0);
 
-	ret = io_check(&io);
-	cr_assert_eq(ret, 0);
-
 	cnt = io_sprint(&io, buf, sizeof(buf), &wbytes, smps, p->cnt);
 	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples for format %s", cnt, p->cnt, format_type_name(f));
 
@@ -357,9 +354,6 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
 	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
-	cr_assert_eq(ret, 0);
-
-	ret = io_check(&io);
 	cr_assert_eq(ret, 0);
 
 	ret = io_open(&io, fn);

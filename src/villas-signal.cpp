@@ -265,10 +265,6 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to initialize output");
 
-		ret = io_check(&io);
-		if (ret)
-			throw RuntimeError("Failed to validate IO configuration");
-
 		ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.in.signals)), &memory_heap);
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");

@@ -340,10 +340,6 @@ int rtp_start(struct vnode *n)
 	if (ret)
 		return -1;
 
-	ret = io_check(&r->io);
-	if (ret)
-		return ret;
-
 	/* Initialize AIMD hook */
 	if (r->aimd.rate_hook_type != RTPHookType::DISABLED) {
 #ifdef WITH_HOOKS

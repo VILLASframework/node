@@ -64,10 +64,6 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialze IO");
 
-		ret = io_check(&io);
-		if (ret)
-			throw RuntimeError("Failed to check IO");
-
 		ret = io_open(&io, uri);
 		if (ret)
 			throw RuntimeError("Failed to open IO");

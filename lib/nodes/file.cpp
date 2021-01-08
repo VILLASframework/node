@@ -276,10 +276,6 @@ int file_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&f->io);
-	if (ret)
-		return ret;
-
 	ret = io_open(&f->io, f->uri);
 	if (ret)
 		return ret;

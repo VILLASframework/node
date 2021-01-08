@@ -94,10 +94,6 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = io_check(&c->io);
-	if (ret)
-		return ret;
-
 	c->buffers.recv = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 	c->buffers.send = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 

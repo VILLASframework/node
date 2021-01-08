@@ -144,7 +144,7 @@ int io_destroy(struct io *io)
 {
 	int ret;
 
-	assert(io->state == State::CLOSED || io->state == State::INITIALIZED || io->state == State::CHECKED);
+	assert(io->state == State::CLOSED || io->state == State::INITIALIZED);
 
 	ret = io_type(io)->destroy ? io_type(io)->destroy(io) : 0;
 	if (ret)
@@ -159,13 +159,6 @@ int io_destroy(struct io *io)
 		if (ret)
 			return ret;
 	}
-
-	return 0;
-}
-
-int io_check(struct io *io)
-{
-	io->state = State::CHECKED;
 
 	return 0;
 }
@@ -338,7 +331,7 @@ int io_open(struct io *io, const char *uri)
 {
 	int ret;
 
-	assert(io->state == State::CHECKED || io->state == State::CLOSED);
+	assert(io->state == State::INITIALIZED || io->state == State::CLOSED);
 
 	ret = io_type(io)->open
 		? io_type(io)->open(io, uri)
@@ -505,14 +498,14 @@ FILE * io_stream_input(struct io *io) {
 
 int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
-	assert(io->state == State::CHECKED || io->state == State::OPENED);
+	assert(io->state == State::INITIALIZED || io->state == State::OPENED || io->state == State::CLOSED);
 
 	return io_type(io)->sscan ? io_type(io)->sscan(io, buf, len, rbytes, smps, cnt) : -1;
 }
 
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
-	assert(io->state == State::CHECKED || io->state == State::OPENED);
+	assert(io->state == State::INITIALIZED || io->state == State::OPENED || io->state == State::CLOSED);
 
 	return io_type(io)->sprint ? io_type(io)->sprint(io, buf, len, wbytes, smps, cnt) : -1;
 }

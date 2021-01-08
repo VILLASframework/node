@@ -82,8 +82,6 @@ int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int f
 
 int io_destroy(struct io *io) __attribute__ ((warn_unused_result));
 
-int io_check(struct io *io);
-
 int io_open(struct io *io, const char *uri);
 
 int io_close(struct io *io);

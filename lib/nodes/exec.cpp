@@ -125,10 +125,6 @@ int exec_prepare(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&e->io);
-	if (ret)
-		return ret;
-
 	/* Start subprocess */
 	e->proc = std::make_unique<Popen>(e->command, e->arguments, e->environment, e->working_dir, e->shell);
 	debug(2, "Started sub-process with pid=%d", e->proc->getPid());

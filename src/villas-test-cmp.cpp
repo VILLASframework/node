@@ -63,10 +63,6 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
-		ret = io_check(&io);
-		if (ret)
-			throw RuntimeError("Failed to validate IO configuration");
-
 		ret = io_open(&io, path.c_str());
 		if (ret)
 			throw RuntimeError("Failed to open file: {}", path);

@@ -136,10 +136,6 @@ protected:
 			if (ret)
 				throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 
-			ret = io_check(&dirs[i].io);
-			if (ret)
-				throw RuntimeError("Failed to validate IO configuration");
-
 			ret = io_open(&dirs[i].io, nullptr);
 			if (ret)
 				throw RuntimeError("Failed to open IO");

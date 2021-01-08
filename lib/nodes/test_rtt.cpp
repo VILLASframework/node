@@ -297,10 +297,6 @@ int test_rtt_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_check(&t->io);
-	if (ret)
-		return ret;
-
 	t->task.setRate(c->rate);
 
 	t->current = -1;
