@@ -1,14 +1,5 @@
 #syntax=docker/dockerfile:1.2-labs
-
-# Dockerfile for VILLASnode development.
-#
-# This Dockerfile builds an image which contains all library dependencies
-# and tools to build VILLASnode.
-# However, VILLASnode itself it not part of the image.
-#
-# This image can be used for developing VILLASnode
-# by running:
-#   make docker-dev
+# Alpine Dockerfile
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -109,7 +100,7 @@ WORKDIR /villas/build
 RUN --security=insecure \
 	cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
-	make -j$(nproc) install
+	make -j8 install
 
 FROM alpine:edge AS app
 
