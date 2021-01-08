@@ -32,7 +32,7 @@ OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
-URI=https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests/pipe
+URI=https://Q9ZHPBD5eRlZcAi:badpass@rwth-aachen.sciebo.de/public.php/webdav/tests/pipe
 
 # WebDav / OwnCloud / Sciebo do not support partial upload
 # So we do not flush the output
