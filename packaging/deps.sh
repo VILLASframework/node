@@ -65,7 +65,8 @@ if ! pkg-config "fmt >= 6.1.2" && \
     git clone --branch 6.1.2 --depth 1 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
-    cmake -DBUILD_SHARED_LIBS=1 ${CMAKE_OPTS} ..
+    cmake -DBUILD_SHARED_LIBS=1 \
+        ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp fmt/build/*.rpm rpms
@@ -79,7 +80,10 @@ if ! pkg-config "spdlog >= 1.5.0" && \
     git clone --branch v1.5.0 --depth 1 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
-    cmake -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF -DSPDLOG_BUILD_SHARED=ON ${CMAKE_OPTS} ..
+    cmake -DSPDLOG_FMT_EXTERNAL=ON \
+          -DSPDLOG_BUILD_BENCH=OFF \
+          -DSPDLOG_BUILD_SHARED=ON \
+          ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp spdlog/build/*.rpm rpms
@@ -107,7 +111,11 @@ if ! pkg-config "libwebsockets >= 2.3.0" && \
     git clone --branch v4.0-stable --depth 1 https://libwebsockets.org/repo/libwebsockets
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
-    cmake -DLWS_WITHOUT_TESTAPPS=ON -DLWS_WITHOUT_EXTENSIONS=OFF -DLWS_WITH_SERVER_STATUS=ON ${CMAKE_OPTS} ..
+    cmake -DLWS_WITH_IPV6=ON \
+          -DLWS_WITHOUT_TESTAPPS=ON \
+          -DLWS_WITHOUT_EXTENSIONS=OFF \
+          -DLWS_WITH_SERVER_STATUS=ON \
+          ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
 fi
