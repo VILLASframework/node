@@ -229,13 +229,14 @@ packaging:docker:
   - docker buildx inspect --bootstrap cross-platform-build
   script:
   - docker buildx build ${DOCKER_OPTS}
-      --push
+      --output type=docker
       --target app
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
       --platform ${PLATFORM}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
+  - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
   variables:
     DISTRO: alpine
   tags:
