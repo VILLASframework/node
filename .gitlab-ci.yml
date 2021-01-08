@@ -19,13 +19,12 @@ stages:
 - test
 - packaging
 - deploy
-- deploy2
 
 # Stage: prepare
 ##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
-.prepare:docker-dev: &prepare_docker_dev
+prepare:docker:
   stage: prepare
   image: docker:19.03
   script:
@@ -33,59 +32,31 @@ stages:
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
       --target dev .
+  parallel:
+    matrix:
+    - DISTRO: [ ubuntu, debian, centos, alpine ]
+    - DISTRO: fedora
+      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+    - DISTRO: fedora
+      DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
+      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
+    - DISTRO: debian
+      DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
+      DOCKER_OPTS: --build-arg ARCH=armhf
+                   --build-arg TRIPLET=arm-linux-gnueabihf
+    - DISTRO: debian
+      DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
+      DOCKER_OPTS: --build-arg ARCH=arm64
+                   --build-arg TRIPLET=aarch64-linux-gnu
   tags:
   - docker
-
-prepare:fedora:x86_64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: fedora
-    DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
-
-prepare:fedora-minimal:x86_64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: fedora
-    DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
-
-prepare:ubuntu:x86_64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: ubuntu
-
-prepare:centos:x86_64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: centos
-
-prepare:alpine:x86_64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: alpine
-
-prepare:debian-multiarch:armhf:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: debian
-    DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
-    DOCKER_OPTS: --build-arg ARCH=armhf
-                 --build-arg TRIPLET=arm-linux-gnueabihf
-
-prepare:debian-multiarch:arm64:
-  <<: *prepare_docker_dev
-  variables:
-    DISTRO: debian
-    DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-    DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
-    DOCKER_OPTS: --build-arg ARCH=arm64
-                 --build-arg TRIPLET=aarch64-linux-gnu
 
 # Stage: build
 ##############################################################################
 
-.build: &build
+build:
   stage: build
   script:
   - mkdir -p build && cd build
@@ -96,83 +67,48 @@ prepare:debian-multiarch:arm64:
     paths:
     - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  parallel:
+    matrix:
+    - DISTRO: fedora
+    - DISTRO: fedora-minimal
+    - DISTRO: fedora-minimal
+      CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
+                  -DWITH_HOOKS=OFF
+                  -DWITH_WEB=OFF
+                  -DWITH_API=OFF
+                  -DWITH_CONFIG=OFF
+                  -DWITH_SRC=OFF
+                  -DWITH_TOOLS=OFF
+                  -DWITH_TESTS=OFF
+                  -DWITH_PLUGINS=OFF
+                  -DWITH_CLIENTS=OFF
+                  -DWITH_DOC=OFF
+                  -DWITH_FPGA=OFF
+    # - DISTRO: centos
+    #   CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+    #               -DCMAKE_PREFIX_PATH=/usr/local
+    - DISTRO: ubuntu
+      CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+                  -DCMAKE_PREFIX_PATH=/usr/local
+    - DISTRO: alpine
+      CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=/app
+                  -DCMAKE_PREFIX_PATH=/app
+                  -DWITH_FPGA=OFF
+    - DISTRO: debian-armhf
+    - DISTRO: debian-arm64
   tags:
   - docker
 
-build:fedora:x86_64:
-  <<: *build
-  variables:
-    DISTRO: fedora
-  needs:
-  - job: prepare:fedora:x86_64
-
-build:fedora-minimal:x86_64:
-  <<: *build
-  variables:
-    DISTRO: fedora-minimal
-    CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
-                -DWITH_HOOKS=OFF
-                -DWITH_WEB=OFF
-                -DWITH_API=OFF
-                -DWITH_CONFIG=OFF
-                -DWITH_SRC=OFF
-                -DWITH_TOOLS=OFF
-                -DWITH_TESTS=OFF
-                -DWITH_PLUGINS=OFF
-                -DWITH_CLIENTS=OFF
-                -DWITH_DOC=OFF
-                -DWITH_FPGA=OFF
-  needs:
-  - job: prepare:fedora-minimal:x86_64
-
-build:fedora-minimal-default:x86_64:
-  <<: *build
-  variables:
-    DISTRO: fedora-minimal
-  needs:
-  - job: prepare:fedora-minimal:x86_64
-
-build:ubuntu:x86_64:
-  <<: *build
-  variables:
-    DISTRO: ubuntu
-    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
-  needs:
-  - job: prepare:ubuntu:x86_64
-
-build:centos:x86_64:
-  <<: *build
-  script:
-  - mkdir -p build && cd build
-  - cmake3 ${CMAKE_OPTS} ..
-  - make ${MAKE_OPTS}
-  variables:
-    DISTRO: centos
-    CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake -DCMAKE_PREFIX_PATH=/usr/local
-  needs:
-  - job: prepare:centos:x86_64
-
-build:alpine:x86_64:
-  <<: *build
-  variables:
-    DISTRO: alpine
-    CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_PREFIX_PATH=/app -DWITH_FPGA=OFF
-  needs:
-  - job: prepare:alpine:x86_64
-
-build:debian-multiarch:armhf:
-  <<: *build
-  variables:
-    DISTRO: debian-armhf
-  needs:
-  - job: prepare:debian-multiarch:armhf
-
-build:debian-multiarch:arm64:
-  <<: *build
-  variables:
-    DISTRO: debian-arm64
-  needs:
-  - job: prepare:debian-multiarch:arm64
+# build:centos:x86_64:
+#   <<: *build
+#   script:
+#   - mkdir -p build && cd build
+#   - cmake3 ${CMAKE_OPTS} ..
+#   - make ${MAKE_OPTS}
+#   variables:
+    
+#   needs:
+#   - job: prepare:docker
 
 build:docs:
   stage: build
@@ -188,7 +124,7 @@ build:docs:
   tags:
   - docker
   needs:
-  - job: prepare:fedora:x86_64
+  - job: prepare:docker
 
 
 # Stage: test
@@ -218,7 +154,7 @@ test:cppcheck:
              src/ lib/ tests/unit/ | tee cppcheck.log
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   needs:
-  - job: build:fedora:x86_64
+  - job: build
   tags:
   - docker
   artifacts:
@@ -230,11 +166,10 @@ test:cppcheck:
 test:unit:
   stage: test
   needs:
-  - job: build:fedora:x86_64
+  - job: build
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
-    SEGFAULT_SIGNALS: bus abrt
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
@@ -247,7 +182,7 @@ test:integration:
   stage: test
   allow_failure: true
   needs:
-  - job: build:fedora:x86_64
+  - job: build
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
@@ -268,7 +203,7 @@ packaging:rpm:
   stage: packaging
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   needs:
-  - job: build:fedora:x86_64
+  - job: build
   script:
   - mkdir -p build && cd build
   - cmake -DWITH_NODE_ETHERCAT=OFF ..
@@ -283,7 +218,7 @@ packaging:rpm:
   tags:
   - docker
 
-.packaging:docker: &packaging_docker
+packaging:docker:
   stage: packaging
   image: docker:19.03
   before_script:
@@ -296,44 +231,31 @@ packaging:rpm:
   - docker buildx build ${DOCKER_OPTS}
       --push
       --target app
+      --build-arg ARCH=${ARCH}
+      --build-arg TRIPLET=${TRIPLET}
       --platform ${PLATFORM}
-      --file packaging/docker/Dockerfile.alpine
-      --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
+      --file ${DOCKER_FILE}
+      --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
+  variables:
+    DISTRO: alpine
   tags:
   - docker
+  parallel:
+    matrix:
+      - PLATFORM: linux/amd64
+        ARCH: amd64
+        TRIPLET: x86_64-alpine-linux-musl
+      - PLATFORM: linux/arm64/v8
+        ARCH: arm64
+        TRIPLET: aarch64-alpine-linux-musl
+      - PLATFORM: linux/arm/v6
+        ARCH: armv6
+        TRIPLET: armv6-alpine-linux-musleabihf
+      - PLATFORM: linux/arm/v7
+        ARCH: armv7
+        TRIPLET: armv7-alpine-linux-musleabihf
   needs: []
 
-packaging:docker:amd64:
-  <<: *packaging_docker
-  variables:
-    PLATFORM: linux/amd64
-    DOCKER_TAG: ${CI_COMMIT_REF_NAME}-amd64
-    DOCKER_OPTS: --build-arg ARCH=amd64
-                 --build-arg TRIPLET=x86_64-alpine-linux-musl
-
-packaging:docker:arm64:
-  <<: *packaging_docker
-  variables:
-    PLATFORM: linux/arm64/v8
-    DOCKER_TAG: ${CI_COMMIT_REF_NAME}-arm64
-    DOCKER_OPTS: --build-arg ARCH=arm64
-                 --build-arg TRIPLET=aarch64-alpine-linux-musl
-
-packaging:docker:armv6:
-  <<: *packaging_docker
-  variables:
-    PLATFORM: linux/arm/v6
-    DOCKER_TAG: ${CI_COMMIT_REF_NAME}-armv6
-    DOCKER_OPTS: --build-arg ARCH=armv6
-                 --build-arg TRIPLET=armv6-alpine-linux-musleabihf
-
-packaging:docker:armv7:
-  <<: *packaging_docker
-  variables:
-    PLATFORM: linux/arm/v7
-    DOCKER_TAG: ${CI_COMMIT_REF_NAME}-armv7
-    DOCKER_OPTS: --build-arg ARCH=armv7
-                 --build-arg TRIPLET=armv7-alpine-linux-musleabihf
 
 # Stage: deploy
 ##############################################################################
@@ -390,10 +312,7 @@ deploy:docker:
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   needs:
-  - packaging:docker:amd64
-  - packaging:docker:armv6
-  - packaging:docker:armv7
-  - packaging:docker:arm64
+  - job: packaging:docker
   script:
   - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
@@ -405,22 +324,24 @@ deploy:docker:
   tags:
   - docker
 
-
-# Stage: deploy2
-##############################################################################
-
 .deploy:docker:latest: &deploy_docker_latest
-  stage: deploy2
+  stage: deploy
   image: docker:19.03
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   needs:
-  - deploy:docker
+  - job: deploy:docker
   script:
-  - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
-  - docker push ${DOCKER_IMAGE}:latest
+  - docker manifest create ${DOCKER_IMAGE}:latest
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
+  - docker manifest push ${DOCKER_IMAGE}:latest
   - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
   - docker push ${DOCKER_IMAGE}/dev:latest
+  needs:
+  - job: packaging:docker
   tags:
   - docker
 
