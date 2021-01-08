@@ -72,6 +72,9 @@ int mqtt_reverse(struct vnode *n);
 /** @see node_type::print */
 char * mqtt_print(struct vnode *n);
 
+/** @see node_type::prepare */
+int mqtt_prepare(struct vnode *n);
+
 /** @see node_type::parse */
 int mqtt_parse(struct vnode *n, json_t *cfg);
 
