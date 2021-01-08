@@ -1,8 +1,6 @@
 variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  PREFIX: /usr/
-  CRITERION_OPTS: --ignore-warnings
   DISTRO: fedora # standard distro
   DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
@@ -11,7 +9,6 @@ variables:
   DOCKER_CLI_EXPERIMENTAL: enabled
   DOCKER_PLATFORMS: amd64 armv6 armv7 arm64
   MAKE_OPTS: "-j16"
-  RELEASEVER: "33"
 
 stages:
 - prepare
@@ -19,6 +16,7 @@ stages:
 - test
 - packaging
 - deploy
+- latest
 
 # Stage: prepare
 ##############################################################################
@@ -34,9 +32,9 @@ prepare:docker:
       --target dev .
   parallel:
     matrix:
-    - DISTRO: [ ubuntu, debian, centos, alpine ]
+    - DISTRO: [ ubuntu, debian, centos ]
     - DISTRO: fedora
-      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
     - DISTRO: fedora
       DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
       DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
@@ -56,21 +54,22 @@ prepare:docker:
 # Stage: build
 ##############################################################################
 
-build:
+build:source:
   stage: build
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
   - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ..
+  - ${CMAKE} ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
     paths:
     - build/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  variables:
+    CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: fedora
-    - DISTRO: fedora-minimal
+    - DISTRO: [ fedora, fedora-minimal, debian, debian-armhf, debian-arm64 ]
     - DISTRO: fedora-minimal
       CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
                   -DWITH_HOOKS=OFF
@@ -84,31 +83,15 @@ build:
                   -DWITH_CLIENTS=OFF
                   -DWITH_DOC=OFF
                   -DWITH_FPGA=OFF
-    # - DISTRO: centos
-    #   CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
-    #               -DCMAKE_PREFIX_PATH=/usr/local
+    - DISTRO: centos
+      CMAKE: cmake3
+      CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+                  -DCMAKE_PREFIX_PATH=/usr/local
     - DISTRO: ubuntu
       CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
                   -DCMAKE_PREFIX_PATH=/usr/local
-    - DISTRO: alpine
-      CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=/app
-                  -DCMAKE_PREFIX_PATH=/app
-                  -DWITH_FPGA=OFF
-    - DISTRO: debian-armhf
-    - DISTRO: debian-arm64
   tags:
   - docker
-
-# build:centos:x86_64:
-#   <<: *build
-#   script:
-#   - mkdir -p build && cd build
-#   - cmake3 ${CMAKE_OPTS} ..
-#   - make ${MAKE_OPTS}
-#   variables:
-    
-#   needs:
-#   - job: prepare:docker
 
 build:docs:
   stage: build
@@ -123,8 +106,6 @@ build:docs:
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
-  needs:
-  - job: prepare:docker
 
 
 # Stage: test
@@ -137,6 +118,8 @@ test:flake8:
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
+  needs:
+  - job: "build:source: [fedora]"
 
 test:cppcheck:
   stage: test
@@ -153,10 +136,10 @@ test:cppcheck:
              -I common/include
              src/ lib/ tests/unit/ | tee cppcheck.log
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  needs:
-  - job: build
   tags:
   - docker
+  needs:
+  - job: "build:source: [fedora]"
   artifacts:
     when: on_failure
     paths:
@@ -165,8 +148,7 @@ test:cppcheck:
 
 test:unit:
   stage: test
-  needs:
-  - job: build
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
@@ -174,15 +156,16 @@ test:unit:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS} run-unit-tests
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
+  needs:
+  - job: "build:source: [fedora]"
+    artifacts: true
 
 test:integration:
   stage: test
+  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   allow_failure: true
-  needs:
-  - job: build
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
@@ -192,18 +175,18 @@ test:integration:
     when: always
     paths:
     - build/tests/integration/
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
   - docker
+  needs:
+  - job: "build:source: [fedora]"
+    artifacts: true
 
 # Stage: packaging
 ##############################################################################
 
-packaging:rpm:
+pkg:rpm:
   stage: packaging
   image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  needs:
-  - job: build
   script:
   - mkdir -p build && cd build
   - cmake -DWITH_NODE_ETHERCAT=OFF ..
@@ -215,10 +198,13 @@ packaging:rpm:
     paths:
     - build/*.tar.gz
     - build/*.rpm
+  needs:
+  - job: "build:source: [fedora]"
+    artifacts: true
   tags:
   - docker
 
-packaging:docker:
+pkg:alpine:
   stage: packaging
   image: docker:19.03
   before_script:
@@ -227,6 +213,7 @@ packaging:docker:
   - chmod a+x ~/.docker/cli-plugins/docker-buildx
   - docker buildx create --use --name cross-platform-build
   - docker buildx inspect --bootstrap cross-platform-build
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
   - docker buildx build ${DOCKER_OPTS}
       --output type=docker
@@ -277,6 +264,30 @@ deploy:web:
   tags:
   - docker
 
+deploy:docker:
+  stage: deploy
+  image: docker:19.03
+  variables:
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  before_script:
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
+  - docker manifest push ${DOCKER_IMAGE}:${DOCKER_TAG}
+  tags:
+  - docker
+  needs:
+  - job: "pkg:alpine: [linux/amd64, amd64, x86_64-alpine-linux-musl]"
+  - job: "pkg:alpine: [linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
+  - job: "pkg:alpine: [linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
+  - job: "pkg:alpine: [linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
+  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
+
 .deploy:packages: &deploy_packages
   stage: deploy
   image:
@@ -289,8 +300,10 @@ deploy:web:
   - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
   - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
   - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
+  variables:
+    RELEASEVER: "33"
   needs:
-  - job: packaging:rpm
+  - job: pkg:rpm
   tags:
   - docker
 
@@ -305,33 +318,14 @@ deploy:packages:tags:
   only:
   - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
-deploy:docker:
-  stage: deploy
-  image: docker:19.03
-  variables:
-    DOCKER_CLI_EXPERIMENTAL: enabled
-  before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-  needs:
-  - job: packaging:docker
-  script:
-  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
-  - docker manifest push ${DOCKER_IMAGE}:${DOCKER_TAG}
-  tags:
-  - docker
+# Stage: latest
+##############################################################################
 
-.deploy:docker:latest: &deploy_docker_latest
-  stage: deploy
+.latest:docker:latest: &deploy_latest_docker
+  stage: latest
   image: docker:19.03
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-  needs:
-  - job: deploy:docker
   script:
   - docker manifest create ${DOCKER_IMAGE}:latest
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
@@ -341,18 +335,18 @@ deploy:docker:
   - docker manifest push ${DOCKER_IMAGE}:latest
   - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
   - docker push ${DOCKER_IMAGE}/dev:latest
-  needs:
-  - job: packaging:docker
   tags:
   - docker
+  needs:
+  - job: deploy:docker
 
-deploy:docker:manual:
-  <<: *deploy_docker_latest
-  when: manual
-  except:
+latest:docker:
+  <<: *deploy_latest_docker
+  only:
   - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
-deploy:docker:tags:
-  <<: *deploy_docker_latest
-  only:
+latest:docker:manual:
+  <<: *deploy_latest_docker
+  when: manual
+  except:
   - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
