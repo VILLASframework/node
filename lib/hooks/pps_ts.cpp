@@ -127,7 +127,7 @@ public:
 				else
 					timeErr -= (tsVirt.tv_nsec / 1.0e9);
 
-				
+
 				filtWin[cntEdges % filtLen] = cntSmpsTotal;
 				/* Estimated sample period over last 'horizonEst' seconds */
 				unsigned int tmp = cntEdges < filtLen ? cntEdges : horizonEst;
