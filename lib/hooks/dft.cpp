@@ -25,7 +25,7 @@
  */
 
 #include <cstring>
-#include "villas/dumper.hpp"
+#include <villas/dumper.hpp>
 #include <villas/hook.hpp>
 #include <villas/path.h>
 #include <villas/sample.h>
@@ -83,7 +83,6 @@ protected:
 
 	uint64_t smp_mem_pos;
 	uint64_t last_sequence;
-
 
 	std::complex<double> omega;
 	std::complex<double> M_I;
