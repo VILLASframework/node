@@ -44,10 +44,10 @@ protected:
 	bool isSynced;
 	bool isLocked;
 	struct timespec tsVirt;
-	double timeErr;				// in seconds
-	double periodEst;			// in seconds
+	double timeErr;			// in seconds
+	double periodEst;		// in seconds
 	double periodErrComp;		// in seconds
-	double period;				// in seconds
+	double period;			// in seconds
 	uintmax_t cntEdges;
 	uintmax_t cntSmps;
 	uintmax_t cntSmpsTotal;
