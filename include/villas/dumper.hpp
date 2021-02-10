@@ -39,7 +39,7 @@ public:
 	~Dumper();
 	int openSocket(std::string socketNameIn);
 	void closeSocket();
-	void writeData(uint len, double* yData, double* xData = nullptr);
+	void writeData(uint len, double *yData, double *xData = nullptr);
 };
 
 } /* namespace node */

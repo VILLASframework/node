@@ -83,8 +83,8 @@ protected:
 
 	uint64_t smp_mem_pos;
 	uint64_t last_sequence;
-	
-	
+
+
 	std::complex<double> omega;
 	std::complex<double> M_I;
 
@@ -93,7 +93,7 @@ protected:
 
 	int* signal_index;//a list of signal_index to do dft on
 	uint signalCnt;//number of signal_index given by config file
-	
+
 
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
@@ -140,7 +140,8 @@ public:
 
 	}
 
-	virtual void prepare() {
+	virtual void prepare()
+	{
 
 		signal_list_clear(&signals);
 
@@ -197,11 +198,11 @@ public:
 		filterWindowCoefficents = new double[window_size];
 
 		absDftResults = new double[freq_count];
-		
+
 		absDftFreqs = new double[freq_count];
-		for (uint i=0; i < freq_count; i++)
+		for (uint i = 0; i < freq_count; i++)
 			absDftFreqs[i] = start_freqency + i * frequency_resolution;
-		
+
 		genDftMatrix();
 		calcWindow(window_type);
 
@@ -211,16 +212,13 @@ public:
 
 	virtual void start()
 	{
-
 		assert(state == State::PREPARED || state == State::STOPPED);
-
 		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
 		assert(state == State::STARTED);
-
 		state = State::STOPPED;
 	}
 
@@ -263,7 +261,8 @@ public:
 						throw ConfigError(json_value, "node-config-hook-dft-channel", "Values must be given as array of integer values!");
 					signal_index[i] = json_number_value(json_value);
 				}
-			}else if (json_channel_list->type == JSON_INTEGER) {
+			}
+			else if (json_channel_list->type == JSON_INTEGER) {
 				signalCnt = 1;
 				signal_index = new int[signalCnt];
 				if (!json_is_number(json_channel_list))
@@ -279,7 +278,8 @@ public:
 		if (!window_type_c) {
 			info("No Window type given, assume no windowing");
 			window_type = windowType::NONE;
-		} else if (strcmp(window_type_c, "flattop") == 0)
+		}
+		else if (strcmp(window_type_c, "flattop") == 0)
 			window_type = windowType::FLATTOP;
 		else if (strcmp(window_type_c, "hamming") == 0)
 			window_type = windowType::HAMMING;
@@ -293,13 +293,13 @@ public:
 		if (!padding_type_c) {
 			info("No Padding type given, assume no zeropadding");
 			padding_type = paddingType::ZERO;
-		} else if (strcmp(padding_type_c, "signal_repeat") == 0) {
-			padding_type = paddingType::SIG_REPEAT;
 		}
+		else if (strcmp(padding_type_c, "signal_repeat") == 0)
+			padding_type = paddingType::SIG_REPEAT;
 		else {
 			info("Padding type %s not recognized, assume zero padding",padding_type_c);
 			padding_type = paddingType::ZERO;
-		}	
+		}
 
 		if (end_freqency < 0 || end_freqency > sample_rate) {
 			error("End frequency must be smaller than sample_rate (%i)",sample_rate);
@@ -319,7 +319,7 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-		for (uint i=0; i< signalCnt; i++) {
+		for (uint i = 0; i< signalCnt; i++) {
 			smp_memory[i][smp_mem_pos % window_size] = smp->data[signal_index[i]].f;
 		}
 		smp_mem_pos++;
@@ -330,16 +330,16 @@ public:
 				runDft = true;
 		}
 		last_dft_cal = smp->ts.origin;
-	
+
 		if (runDft) {
-			for (uint i = 0; i < signalCnt; i++){
+			for (uint i = 0; i < signalCnt; i++) {
 				calcDft(paddingType::ZERO, smp_memory[i], smp_mem_pos);
 				double maxF = 0;
 				double maxA = 0;
 				int maxPos = 0;
-				
 
-				for (uint i=0; i<freq_count; i++) {
+
+				for (uint i = 0; i<freq_count; i++) {
 					absDftResults[i] = abs(dftResults[i]) * 2 / (window_size * window_corretion_factor * ((padding_type == paddingType::ZERO)?1:window_multiplier));
 					if (maxA < absDftResults[i]) {
 						maxF = absDftFreqs[i];
@@ -350,25 +350,25 @@ public:
 
 
 				//info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)));
-				
+
 				if (dftCalcCnt > 1) {
 					//double tmpMaxA = maxA / pow(2,1./2);
 					//phasorAmpitude->writeData(1,&tmpMaxA);
 					phasorFreq->writeData(1,&maxF);
 
 					smp->data[i * 4].f = maxF;//frequency
-					smp->data[i * 4 + 1].f = (maxA / pow(2,1./2));//amplitude 
+					smp->data[i * 4 + 1].f = (maxA / pow(2,1./2));//amplitude
 					smp->data[i * 4 + 2].f = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real());//phase
 					smp->data[i * 4 + 3].f = 0;//rocof
 
 					phasorPhase->writeData(1,&(smp->data[i * 4 + 2].f));
 				}
-			}	
+			}
 			dftCalcCnt++;
 			smp->length = signalCnt * 4;
 		}
-		
-		
+
+
 		if ((smp->sequence - last_sequence) > 1)
 			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - last_sequence);
 
@@ -385,7 +385,7 @@ public:
 
 		omega = exp((-2 * M_PI * M_I) / (double)(window_size * window_multiplier));
 		uint startBin = floor(start_freqency / frequency_resolution);
-	
+
 
 		for (uint i = 0; i <  freq_count ; i++) {
 			for (uint j=0 ; j < window_size * window_multiplier ; j++) {
@@ -395,39 +395,36 @@ public:
 	}
 
 	/** mem size needs to be equal to window size **/
-	void calcDft(paddingType padding, double* ringBuffer, uint ringBufferPos) {
+	void calcDft(paddingType padding, double *ringBuffer, uint ringBufferPos) {
 
 		//prepare sample window The following parts can be combined
 		double tmp_smp_window[window_size];
-		
-		for (uint i = 0; i< window_size; i++) {
+
+		for (uint i = 0; i< window_size; i++)
 			tmp_smp_window[i] = ringBuffer[(i + ringBufferPos) % window_size];
-		}
 
 		origSigSync->writeData(window_size,tmp_smp_window);
 
 		if (dftCalcCnt > 1)
 			phasorAmpitude->writeData(1,&tmp_smp_window[window_size - 1]);
 
-		for (uint i = 0; i< window_size; i++) {
+		for (uint i = 0; i< window_size; i++)
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
-		}
+
 		windowdSigSync->writeData(window_size,tmp_smp_window);
 
-		for (uint i=0; i < freq_count; i++) {
+		for (uint i = 0; i < freq_count; i++) {
 			dftResults[i] = 0;
 			for (uint j=0; j < window_size * window_multiplier; j++) {
 				if (padding == paddingType::ZERO) {
-					if (j < (window_size)) {
-						dftResults[i]+= tmp_smp_window[j] * dftMatrix[i][j];
-					}
-					else{
-						dftResults[i]+= 0;
-					}
+					if (j < (window_size))
+						dftResults[i] += tmp_smp_window[j] * dftMatrix[i][j];
+					else
+						dftResults[i] += 0;
 				}
-				else if (padding == paddingType::SIG_REPEAT) {//repeate samples
-					dftResults[i]+= tmp_smp_window[j % window_size] * dftMatrix[i][j];
-				}			
+				else if (padding == paddingType::SIG_REPEAT)//repeate samples
+					dftResults[i] += tmp_smp_window[j % window_size] * dftMatrix[i][j];
+
 			}
 		}
 	}
@@ -435,27 +432,26 @@ public:
 	void calcWindow(windowType window_type_in) {
 
 		if (window_type_in == windowType::FLATTOP) {
-			for (uint i=0; i < window_size; i++) {
+			for (uint i = 0; i < window_size; i++) {
 				filterWindowCoefficents[i] = 	0.21557895
-												- 0.41663158 * cos(2 * M_PI * i / (window_size))
-												+ 0.277263158 * cos(4 * M_PI * i / (window_size))
-												- 0.083578947 * cos(6 * M_PI * i / (window_size))
-												+ 0.006947368 * cos(8 * M_PI * i / (window_size));
+								- 0.41663158 * cos(2 * M_PI * i / (window_size))
+								+ 0.277263158 * cos(4 * M_PI * i / (window_size))
+								- 0.083578947 * cos(6 * M_PI * i / (window_size))
+								+ 0.006947368 * cos(8 * M_PI * i / (window_size));
 				window_corretion_factor += filterWindowCoefficents[i];
 			}
 		}else if (window_type_in == windowType::HAMMING || window_type_in == windowType::HANN) {
 			double a_0 = 0.5;//this is the hann window
 			if (window_type_in == windowType::HAMMING)
 				a_0 = 25./46;
-			
-			for (uint i=0; i < window_size; i++) {
-				filterWindowCoefficents[i] = 	a_0
-												- (1 - a_0) * cos(2 * M_PI * i / (window_size));
+
+			for (uint i = 0; i < window_size; i++) {
+				filterWindowCoefficents[i] = a_0								- (1 - a_0) * cos(2 * M_PI * i / (window_size));
 				window_corretion_factor += filterWindowCoefficents[i];
 			}
 		}
 		else {
-			for (uint i=0; i < window_size; i++) {
+			for (uint i = 0; i < window_size; i++) {
 				filterWindowCoefficents[i] = 1;
 				window_corretion_factor += filterWindowCoefficents[i];
 			}
@@ -474,4 +470,3 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 } /* namespace villas */
 
 /** @} */
-
