@@ -101,7 +101,7 @@ public:
 
 		period = 1.0 / fSmps;
 
-		info("parsed config thresh=%f signal_index=%d nominal_period=%f", thresh, idx, period);
+		debug(LOG_HOOK | 5, "parsed config thresh=%f signal_index=%d nominal_period=%f", thresh, idx, period);
 
 
 		state = State::PARSED;
@@ -121,7 +121,6 @@ public:
 
 		if (isEdge) {
 			if (isSynced) {
-				//timeErr += 1.0 - (cntSmps * period);
 				if(tsVirt.tv_nsec > 0.5e9)
 					timeErr += 1.0 - (tsVirt.tv_nsec / 1.0e9);
 				else
@@ -133,7 +132,6 @@ public:
 				unsigned int tmp = cntEdges < filtLen ? cntEdges : horizonEst;
 				double cntSmpsAvg = (cntSmpsTotal - filtWin[(cntEdges - tmp) % filtLen]) / tmp;
 				periodEst = 1.0 / cntSmpsAvg;
-				//info("cntSmpsAvg %f", cntSmpsAvg);
 				periodErrComp = timeErr / (cntSmpsAvg * horizonComp);
 				period = periodEst + periodErrComp;
 			}
@@ -147,7 +145,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			info("Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
+			debug(LOG_HOOK | 5, "Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
 		}
 
 		cntSmps++;

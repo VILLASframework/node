@@ -671,7 +671,7 @@ int uldaq_start(struct vnode *n)
 
 	/* Start the acquisition */
 	err = ulAInScan(u->device_handle, 0, 0, (AiInputMode) 0, (Range) 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
-	
+
 	if (err != ERR_NO_ERROR) {
 		ul_decode_error(err);
 		warning("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
@@ -767,8 +767,6 @@ int uldaq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	return cnt;
 }
-
-
 
 static struct plugin p;
 
