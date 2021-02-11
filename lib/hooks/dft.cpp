@@ -93,7 +93,6 @@ protected:
 	int* signal_index;//a list of signal_index to do dft on
 	uint signalCnt;//number of signal_index given by config file
 
-
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
@@ -124,7 +123,6 @@ public:
 		phasorPhase = new Dumper("/tmp/plot/phasorPhase");
 		phasorAmpitude = new Dumper("/tmp/plot/phasorAmpitude");
 		phasorFreq = new Dumper("/tmp/plot/phasorFreq");
-
 	}
 
 	virtual ~DftHook()
@@ -136,7 +134,6 @@ public:
 		delete phasorPhase;
 		delete phasorAmpitude;
 		delete phasorFreq;
-
 	}
 
 	virtual void prepare()
@@ -174,7 +171,7 @@ public:
 				smp_memory[i][j] = 0;
 		}
 
-		window_multiplier = ceil(((double)sample_rate / window_size) / frequency_resolution);//calculate how much zero padding ist needed for a needed resolution
+		window_multiplier = ceil(((double)sample_rate / window_size) / frequency_resolution); //calculate how much zero padding ist needed for a needed resolution
 
 		freq_count = ceil((end_freqency - start_freqency) / frequency_resolution) + 1;
 
@@ -206,7 +203,6 @@ public:
 		calcWindow(window_type);
 
 		state = State::PREPARED;
-
 	}
 
 	virtual void start()
