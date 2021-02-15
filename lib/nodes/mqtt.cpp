@@ -351,6 +351,26 @@ int mqtt_check(struct vnode *n)
 	return 0;
 }
 
+int mqtt_prepare(struct vnode *n)
+{
+	int ret;
+	struct mqtt *m = (struct mqtt *) n->_vd;
+
+	ret = io_init(&m->io, m->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
+	if (ret)
+		return ret;
+
+	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
+	if (ret)
+		return ret;
+
+	ret = queue_signalled_init(&m->queue, 1024);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 char * mqtt_print(struct vnode *n)
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
