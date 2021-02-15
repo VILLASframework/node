@@ -176,7 +176,7 @@ int mqtt_init(struct vnode *n)
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	m->client = mosquitto_new(NULL, true, (void *) n);
+	m->client = mosquitto_new(nullptr, true, (void *) n);
 	if (!m->client)
 		return -1;
 
@@ -415,6 +415,22 @@ int mqtt_start(struct vnode *n)
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
+	if (m->username && m->password) {
+		ret = mosquitto_username_pw_set(m->client, m->username, m->password);
+		if (ret != MOSQ_ERR_SUCCESS)
+			goto mosquitto_error;
+	}
+
+	if (m->ssl.enabled) {
+		ret = mosquitto_tls_set(m->client, m->ssl.cafile, m->ssl.capath, m->ssl.certfile, m->ssl.keyfile, nullptr);
+		if (ret != MOSQ_ERR_SUCCESS)
+			goto mosquitto_error;
+
+		ret = mosquitto_tls_insecure_set(m->client, m->ssl.insecure);
+		if (ret != MOSQ_ERR_SUCCESS)
+			goto mosquitto_error;
+	}
+
 	ret = mosquitto_connect(m->client, m->host, m->port, m->keepalive);
 	if (ret != MOSQ_ERR_SUCCESS)
 		goto mosquitto_error;
@@ -577,6 +593,7 @@ static void register_plugin() {
 	p.node.prepare		= mqtt_prepare;
 	p.node.parse		= mqtt_parse;
 	p.node.check		= mqtt_check;
+	p.node.prepare		= mqtt_prepare;
 	p.node.print		= mqtt_print;
 	p.node.init		= mqtt_init;
 	p.node.destroy		= mqtt_destroy;
