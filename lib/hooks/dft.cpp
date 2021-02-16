@@ -60,8 +60,8 @@ protected:
 	Dumper *phasorAmplitude;
 	Dumper *phasorFreq;
 
-	WindowType windowType;
-	PaddingType paddingType;
+	enum WindowType windowType;
+	enum PaddingType paddingType;
 
 	struct format_type *format;
 
@@ -89,7 +89,7 @@ protected:
 	std::complex<double> omega;
 
 	double windowCorretionFactor;
-	timespec lastDftCal;
+	struct timespec lastDftCal;
 
 	int *signalIndex;		/**< A list of signalIndex to do dft on */
 	unsigned signalCnt;		/**< Number of signalIndex given by config file */
@@ -99,6 +99,12 @@ public:
 		Hook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
+		smpMemory(nullptr),
+		dftMatrix(nullptr),
+		dftResults(nullptr),
+		filterWindowCoefficents(nullptr),
+		absDftResults(nullptr),
+		absDftFreqs(nullptr),
 		dftCalcCnt(0),
 		sampleRate(0),
 		startFreqency(0),
@@ -113,6 +119,7 @@ public:
 		lastSequence(0),
 		windowCorretionFactor(0),
 		lastDftCal({0, 0}),
+		signalIndex(nullptr),
 		signalCnt(0)
 	{
 		format = format_type_lookup("villas.human");

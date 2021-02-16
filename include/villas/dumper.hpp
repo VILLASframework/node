@@ -35,9 +35,9 @@ protected:
 	uint64_t warningCounter;
 
 public:
-	Dumper(const std::string socketNameIn);
+	Dumper(const std::string &socketNameIn);
 	~Dumper();
-	int openSocket(std::string socketNameIn);
+	int openSocket();
 	void closeSocket();
 	void writeData(uint len, double *yData, double *xData = nullptr);
 };

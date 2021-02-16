@@ -30,23 +30,21 @@
 using namespace villas;
 using namespace villas::node;
 
-Dumper::Dumper(const std::string socketNameIn) :
-	socketName(""),
+Dumper::Dumper(const std::string &socketNameIn) :
+	socketName(socketNameIn),
 	supressRepeatedWarning(true),
 	warningCounter(0)
 {
-	openSocket(socketNameIn);
+	openSocket();
 }
 
 Dumper::~Dumper() {
 	closeSocket();
 }
 
-int Dumper::openSocket(std::string socketNameIn)
+int Dumper::openSocket()
 {
-	socketName = socketNameIn;
-
-	socketFd = socket(AF_LOCAL,SOCK_STREAM, 0);
+	socketFd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (socketFd < 0) {
 		info("Error creating socket %s", socketName.c_str());
 		return -1;
@@ -64,15 +62,14 @@ int Dumper::openSocket(std::string socketNameIn)
 
 void Dumper::closeSocket()
 {
-	info("Remove socket");
 	close(socketFd);
 }
 
-void Dumper::writeData(uint len, double *yData, double *xData)
+void Dumper::writeData(unsigned len, double *yData, double *xData)
 {
 	ssize_t bytesWritten;
 
-	for (uint i = 0; i<len; i++) {
+	for (unsigned i = 0; i<len; i++) {
 		std::string str = std::to_string(yData[i]);
 		if(xData != nullptr)
 			str+= ";" + std::to_string(xData[i]);

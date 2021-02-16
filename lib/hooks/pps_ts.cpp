@@ -67,8 +67,12 @@ public:
 		isSynced(false),
 		isLocked(false),
 		timeErr(0.0),
+		periodEst(0.0),
+		periodErrComp(0.0),
 		period(0.0),
 		cntEdges(0),
+		cntSmps(0),
+		cntSmpsTotal(0),
 		horizonComp(10),
 		horizonEst(10),
 		filtLen(horizonEst + 1)
