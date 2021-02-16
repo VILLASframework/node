@@ -140,7 +140,7 @@ public:
 	{
 
 		signal_list_clear(&signals);
-
+		/*init sample memory*/
 		smp_memory = new double*[signalCnt];
 
 		for (uint i = 0; i < signalCnt; i++) {
@@ -174,9 +174,6 @@ public:
 		window_multiplier = ceil(((double)sample_rate / window_size) / frequency_resolution); //calculate how much zero padding ist needed for a needed resolution
 
 		freq_count = ceil((end_freqency - start_freqency) / frequency_resolution) + 1;
-
-		//init sample memory
-
 
 		/*init matrix of dft coeffients*/
 		dftMatrix = new std::complex<double>*[freq_count];
@@ -306,7 +303,6 @@ public:
 			ret = 1;
 		}
 
-
 		if (ret)
 			throw ConfigError(cfg, err, "node-config-hook-dft");
 	}
@@ -333,7 +329,6 @@ public:
 				double maxA = 0;
 				int maxPos = 0;
 
-
 				for (uint i = 0; i<freq_count; i++) {
 					absDftResults[i] = abs(dftResults[i]) * 2 / (window_size * window_corretion_factor * ((padding_type == paddingType::ZERO)?1:window_multiplier));
 					if (maxA < absDftResults[i]) {
@@ -343,12 +338,7 @@ public:
 					}
 				}
 
-
-				//info("sec=%ld, nsec=%ld freq: %f \t phase: %f \t amplitude: %f",last_dft_cal.tv_sec, smp->ts.origin.tv_nsec, maxF, atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()), (maxA / pow(2,1./2)));
-
 				if (dftCalcCnt > 1) {
-					//double tmpMaxA = maxA / pow(2,1./2);
-					//phasorAmpitude->writeData(1,&tmpMaxA);
 					phasorFreq->writeData(1,&maxF);
 
 					smp->data[i * 4].f = maxF;//frequency
@@ -362,7 +352,6 @@ public:
 			dftCalcCnt++;
 			smp->length = signalCnt * 4;
 		}
-
 
 		if ((smp->sequence - last_sequence) > 1)
 			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - last_sequence);
@@ -380,7 +369,6 @@ public:
 
 		omega = exp((-2 * M_PI * M_I) / (double)(window_size * window_multiplier));
 		uint startBin = floor(start_freqency / frequency_resolution);
-
 
 		for (uint i = 0; i <  freq_count ; i++) {
 			for (uint j=0 ; j < window_size * window_multiplier ; j++) {
@@ -417,7 +405,7 @@ public:
 					else
 						dftResults[i] += 0;
 				}
-				else if (padding == paddingType::SIG_REPEAT)//repeate samples
+				else if (padding == paddingType::SIG_REPEAT) //repeate samples
 					dftResults[i] += tmp_smp_window[j % window_size] * dftMatrix[i][j];
 
 			}
