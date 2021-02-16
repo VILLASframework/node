@@ -55,7 +55,7 @@ protected:
 	Dumper* ppsSigSync;
 	Dumper* windowdSigSync;
 	Dumper* phasorPhase;
-	Dumper* phasorAmpitude;
+	Dumper* phasorAmplitude;
 	Dumper* phasorFreq;
 
 	windowType window_type;
@@ -121,7 +121,7 @@ public:
 		ppsSigSync = new Dumper("/tmp/plot/ppsSigSync");
 		windowdSigSync = new Dumper("/tmp/plot/windowdSigSync");
 		phasorPhase = new Dumper("/tmp/plot/phasorPhase");
-		phasorAmpitude = new Dumper("/tmp/plot/phasorAmpitude");
+		phasorAmplitude = new Dumper("/tmp/plot/phasorAmplitude");
 		phasorFreq = new Dumper("/tmp/plot/phasorFreq");
 	}
 
@@ -132,7 +132,7 @@ public:
 		delete ppsSigSync;
 		delete windowdSigSync;
 		delete phasorPhase;
-		delete phasorAmpitude;
+		delete phasorAmplitude;
 		delete phasorFreq;
 	}
 
@@ -392,7 +392,7 @@ public:
 		origSigSync->writeData(window_size,tmp_smp_window);
 
 		if (dftCalcCnt > 1)
-			phasorAmpitude->writeData(1,&tmp_smp_window[window_size - 1]);
+			phasorAmplitude->writeData(1,&tmp_smp_window[window_size - 1]);
 
 		for (uint i = 0; i< window_size; i++)
 			tmp_smp_window[i] *= filterWindowCoefficents[i];
@@ -433,7 +433,7 @@ public:
 				a_0 = 25./46;
 
 			for (uint i = 0; i < window_size; i++) {
-				filterWindowCoefficents[i] = a_0								- (1 - a_0) * cos(2 * M_PI * i / (window_size));
+				filterWindowCoefficents[i] = a_0 - (1 - a_0) * cos(2 * M_PI * i / (window_size));
 				window_corretion_factor += filterWindowCoefficents[i];
 			}
 		}
@@ -444,7 +444,6 @@ public:
 			}
 		}
 		window_corretion_factor /= window_size;
-		//dumpData("/tmp/plot/filter_window",filterWindowCoefficents,window_size);
 	}
 };
 

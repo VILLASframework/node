@@ -29,6 +29,7 @@
 #include <villas/sample.h>
 
 #include <villas/log.h>
+#include <cinttypes>
 
 namespace villas {
 namespace node {
@@ -162,7 +163,7 @@ public:
 
 
 		if ((smp->sequence - last_sequence) > 1)
-			warning("Samples missed: %li sampled missed", smp->sequence - last_sequence);
+			warning("Samples missed: %" PRIu64 " sampled missed", smp->sequence - last_sequence);
 
 		last_sequence = smp->sequence;
 
