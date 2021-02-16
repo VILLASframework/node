@@ -26,6 +26,9 @@
 #include <villas/signal.h>
 #include <villas/io.h>
 #include <villas/formats/json.h>
+#include <villas/exceptions.hpp>
+
+using namespace villas;
 
 static enum SignalType json_detect_format(json_t *val)
 {
@@ -203,11 +206,9 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 			return -1;
 
 		enum SignalType fmt = json_detect_format(json_value);
-		if (sig->type != fmt) {
-			error("Received invalid data type in JSON payload: Received %s, expected %s for signal %s (index %zu).",
+		if (sig->type != fmt)
+			throw RuntimeError("Received invalid data type in JSON payload: Received {}, expected {} for signal {} (index {}).",
 				signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
-			return -2;
-		}
 
 		ret = signal_data_parse_json(&smp->data[i], sig->type, json_value);
 		if (ret)

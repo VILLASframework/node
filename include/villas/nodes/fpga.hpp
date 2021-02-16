@@ -77,7 +77,7 @@ int fpga_init(struct vnode *n);
 int fpga_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int fpga_parse(struct vnode *n, json_t *cfg);
+int fpga_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
 char * fpga_print(struct vnode *n);

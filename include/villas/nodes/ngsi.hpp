@@ -81,7 +81,7 @@ int ngsi_type_start(villas::node::SuperNode *sn);
 int ngsi_type_stop();
 
 /** @see node_type::parse */
-int ngsi_parse(struct vnode *n, json_t *cfg);
+int ngsi_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
 char * ngsi_print(struct vnode *n);

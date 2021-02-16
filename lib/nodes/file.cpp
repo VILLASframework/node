@@ -33,6 +33,7 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/io.h>
+#include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -79,7 +80,7 @@ static struct timespec file_calc_offset(const struct timespec *first, const stru
 	}
 }
 
-int file_parse(struct vnode *n, json_t *cfg)
+int file_parse(struct vnode *n, json_t *json)
 {
 	struct file *f = (struct file *) n->_vd;
 
@@ -92,7 +93,7 @@ int file_parse(struct vnode *n, json_t *cfg)
 	const char *epoch = nullptr;
 	double epoch_flt = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i, s?: i }, s?: { s?: b, s?: i } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i, s?: i }, s?: { s?: b, s?: i } }",
 		"uri", &uri_tmpl,
 		"format", &format,
 		"in",
@@ -107,14 +108,14 @@ int file_parse(struct vnode *n, json_t *cfg)
 			"buffer_size", &f->buffer_size_out
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-file");
 
 	f->epoch = time_from_double(epoch_flt);
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
 
 	f->format = format_type_lookup(format);
 	if (!f->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		throw RuntimeError("Invalid format '{}'", format);
 
 	if (eof) {
 		if      (!strcmp(eof, "exit") || !strcmp(eof, "stop"))
@@ -124,7 +125,7 @@ int file_parse(struct vnode *n, json_t *cfg)
 		else if (!strcmp(eof, "wait"))
 			f->eof_mode = file::EOFBehaviour::SUSPEND;
 		else
-			error("Invalid mode '%s' for 'eof' setting of node %s", eof, node_name(n));
+			throw RuntimeError("Invalid mode '{}' for 'eof' setting", eof);
 	}
 
 	if (epoch) {
@@ -139,7 +140,7 @@ int file_parse(struct vnode *n, json_t *cfg)
 		else if (!strcmp(epoch, "original"))
 			f->epoch_mode = file::EpochMode::ORIGINAL;
 		else
-			error("Invalid value '%s' for setting 'epoch' of node %s", epoch, node_name(n));
+			throw RuntimeError("Invalid value '{}' for setting 'epoch'", epoch);
 	}
 
 	n->_vd = f;
@@ -242,30 +243,29 @@ int file_start(struct vnode *n)
 	/* Prepare file name */
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
-	/* Check if local directory exists */
-	if (aislocal(f->uri)) {
-		struct stat sb;
-		char *cpy = strdup(f->uri);
-		char *dir = dirname(cpy);
+	/* Check if directory exists */
+	struct stat sb;
+	char *cpy = strdup(f->uri);
+	char *dir = dirname(cpy);
 
-		ret = stat(dir, &sb);
-		if (ret) {
-			if (errno == ENOENT || errno == ENOTDIR) {
-				ret = mkdir(dir, 0644);
-				if (ret)
-					serror("Failed to create directory");
-			}
-			else if (errno != EISDIR)
-				serror("Failed to stat");
-		}
-		else if (!S_ISDIR(sb.st_mode)) {
+	ret = stat(dir, &sb);
+	if (ret) {
+		if (errno == ENOENT || errno == ENOTDIR) {
 			ret = mkdir(dir, 0644);
 			if (ret)
-				serror("Failed to create directory");
+				throw SystemError("Failed to create directory");
 		}
-
-		free(cpy);
+		else if (errno != EISDIR)
+			throw SystemError("Failed to stat");
 	}
+	else if (!S_ISDIR(sb.st_mode)) {
+		ret = mkdir(dir, 0644);
+		if (ret)
+			throw SystemError("Failed to create directory");
+	}
+
+	free(cpy);
+
 
 	/* Open file */
 	flags = (int) SampleFlags::HAS_ALL;
@@ -281,13 +281,13 @@ int file_start(struct vnode *n)
 		return ret;
 
 	if (f->buffer_size_in) {
-		ret = setvbuf(f->io.in.stream.std, nullptr, _IOFBF, f->buffer_size_in);
+		ret = setvbuf(f->io.in.stream, nullptr, _IOFBF, f->buffer_size_in);
 		if (ret)
 			return ret;
 	}
 
 	if (f->buffer_size_out) {
-		ret = setvbuf(f->io.out.stream.std, nullptr, _IOFBF, f->buffer_size_out);
+		ret = setvbuf(f->io.out.stream, nullptr, _IOFBF, f->buffer_size_out);
 		if (ret)
 			return ret;
 	}
@@ -300,7 +300,7 @@ int file_start(struct vnode *n)
 		io_rewind(&f->io);
 
 		if (io_eof(&f->io)) {
-			warning("Empty file");
+			n->logger->warn("Empty file");
 		}
 		else {
 			struct sample s;
@@ -314,7 +314,7 @@ int file_start(struct vnode *n)
 				f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
 			}
 			else
-				warning("Failed to read first timestamp of node %s", node_name(n));
+				n->logger->warn("Failed to read first timestamp");
 		}
 	}
 
@@ -363,7 +363,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 		if (io_eof(&f->io)) {
 			switch (f->eof_mode) {
 				case file::EOFBehaviour::REWIND:
-					info("Rewind input file of node %s", node_name(n));
+					n->logger->info("Rewind input file");
 
 					f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
 					io_rewind(&f->io);
@@ -375,12 +375,8 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 					/* Try to download more data if this is a remote file. */
 					switch (f->io.mode) {
-						case IOMode::ADVIO:
-							adownload(f->io.in.stream.adv, 1);
-							break;
-
 						case IOMode::STDIO:
-							clearerr(f->io.in.stream.std);
+							clearerr(f->io.in.stream);
 							break;
 
 						case IOMode::CUSTOM:
@@ -390,7 +386,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 					goto retry;
 
 				case file::EOFBehaviour::STOP:
-					info("Reached end-of-file.");
+					n->logger->info("Reached end-of-file.");
 
 					n->state = State::STOPPING;
 
@@ -400,7 +396,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 			}
 		}
 		else
-			warning("Failed to read messages from node %s: reason=%d", node_name(n), ret);
+			n->logger->warn("Failed to read messages: reason={}", ret);
 
 		return 0;
 	}
@@ -423,9 +419,9 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 	/* Check for overruns */
 	if      (steps == 0)
-		serror("Failed to wait for timer");
+		throw SystemError("Failed to wait for timer");
 	else if (steps != 1)
-		warning("Missed steps: %" PRIu64, steps - 1);
+		n->logger->warn("Missed steps: {}", steps - 1);
 
 	return cnt;
 }

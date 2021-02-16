@@ -171,35 +171,24 @@ int io_stream_open(struct io *io, const char *uri)
 		if (!strcmp(uri, "-")) {
 			goto stdio;
 		}
-		else if (aislocal(uri) == 1) {
+		else {
 			io->mode = IOMode::STDIO;
 
-			io->out.stream.std = fopen(uri, "a+");
-			if (io->out.stream.std == nullptr)
+			io->out.stream = fopen(uri, "a+");
+			if (io->out.stream == nullptr)
 				return -1;
 
-			io->in.stream.std  = fopen(uri, "r");
-			if (io->in.stream.std == nullptr)
+			io->in.stream  = fopen(uri, "r");
+			if (io->in.stream == nullptr)
 				return -1;
-		}
-		else {
-			io->mode = IOMode::ADVIO;
-
-			io->out.stream.adv = afopen(uri, "a+");
-			if (io->out.stream.adv == nullptr)
-				return -1;
-
-			io->in.stream.adv = afopen(uri, "a+");
-			if (io->in.stream.adv == nullptr)
-				return -2;
 		}
 	}
 	else {
 stdio:		io->mode = IOMode::STDIO;
 		io->flags |= (int) IOFlags::FLUSH;
 
-		io->in.stream.std  = stdin;
-		io->out.stream.std = stdout;
+		io->in.stream  = stdin;
+		io->out.stream = stdout;
 	}
 
 	/* Make stream non-blocking if desired */
@@ -223,11 +212,11 @@ stdio:		io->mode = IOMode::STDIO;
 
 	/* Enable line buffering on stdio */
 	if (io->mode == IOMode::STDIO) {
-		ret = setvbuf(io->in.stream.std, nullptr, _IOLBF, BUFSIZ);
+		ret = setvbuf(io->in.stream, nullptr, _IOLBF, BUFSIZ);
 		if (ret)
 			return -1;
 
-		ret = setvbuf(io->out.stream.std, nullptr, _IOLBF, BUFSIZ);
+		ret = setvbuf(io->out.stream, nullptr, _IOLBF, BUFSIZ);
 		if (ret)
 			return -1;
 	}
@@ -240,26 +229,15 @@ int io_stream_close(struct io *io)
 	int ret;
 
 	switch (io->mode) {
-		case IOMode::ADVIO:
-			ret = afclose(io->in.stream.adv);
-			if (ret)
-				return ret;
-
-			ret = afclose(io->out.stream.adv);
-			if (ret)
-				return ret;
-
-			return 0;
-
 		case IOMode::STDIO:
-			if (io->in.stream.std == stdin)
+			if (io->in.stream == stdin)
 				return 0;
 
-			ret = fclose(io->in.stream.std);
+			ret = fclose(io->in.stream);
 			if (ret)
 				return ret;
 
-			ret = fclose(io->out.stream.std);
+			ret = fclose(io->out.stream);
 			if (ret)
 				return ret;
 
@@ -275,10 +253,8 @@ int io_stream_close(struct io *io)
 int io_stream_flush(struct io *io)
 {
 	switch (io->mode) {
-		case IOMode::ADVIO:
-			return afflush(io->out.stream.adv);
 		case IOMode::STDIO:
-			return fflush(io->out.stream.std);
+			return fflush(io->out.stream);
 		case IOMode::CUSTOM:
 			return 0;
 	}
@@ -289,10 +265,8 @@ int io_stream_flush(struct io *io)
 int io_stream_eof(struct io *io)
 {
 	switch (io->mode) {
-		case IOMode::ADVIO:
-			return afeof(io->in.stream.adv);
 		case IOMode::STDIO:
-			return feof(io->in.stream.std);
+			return feof(io->in.stream);
 		case IOMode::CUSTOM:
 			return 0;
 	}
@@ -303,11 +277,8 @@ int io_stream_eof(struct io *io)
 void io_stream_rewind(struct io *io)
 {
 	switch (io->mode) {
-		case IOMode::ADVIO:
-			arewind(io->in.stream.adv);
-			break;
 		case IOMode::STDIO:
-			rewind(io->in.stream.std);
+			rewind(io->in.stream);
 			break;
 		case IOMode::CUSTOM: { }
 	}
@@ -316,10 +287,8 @@ void io_stream_rewind(struct io *io)
 int io_stream_fd(struct io *io)
 {
 	switch (io->mode) {
-		case IOMode::ADVIO:
-			return afileno(io->in.stream.adv);
 		case IOMode::STDIO:
-			return fileno(io->in.stream.std);
+			return fileno(io->in.stream);
 		case IOMode::CUSTOM:
 			return -1;
 	}
@@ -482,18 +451,14 @@ FILE * io_stream_output(struct io *io) {
 	if (io->state != State::OPENED)
 		return 0;
 
-	return io->mode == IOMode::ADVIO
-		? io->out.stream.adv->file
-		: io->out.stream.std;
+	return io->out.stream;
 }
 
 FILE * io_stream_input(struct io *io) {
 	if (io->state != State::OPENED)
 		return 0;
 
-	return io->mode == IOMode::ADVIO
-		? io->in.stream.adv->file
-		: io->in.stream.std;
+	return io->in.stream;
 }
 
 int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)

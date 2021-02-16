@@ -58,7 +58,7 @@ public:
 
 	virtual void start();
 
-	virtual void parse(json_t *cfg);
+	virtual void parse(json_t *json);
 
 	virtual Hook::Reason process(sample *smp);
 };

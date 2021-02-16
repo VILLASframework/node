@@ -129,18 +129,18 @@ int mapping_entry_destroy(struct mapping_entry *me)
 	return 0;
 }
 
-int mapping_entry_parse(struct mapping_entry *me, json_t *cfg)
+int mapping_entry_parse(struct mapping_entry *me, json_t *json)
 {
 	const char *str;
 
-	str = json_string_value(cfg);
+	str = json_string_value(json);
 	if (!str)
 		return -1;
 
 	return mapping_entry_parse_str(me, str);
 }
 
-int mapping_list_parse(struct vlist *ml, json_t *cfg)
+int mapping_list_parse(struct vlist *ml, json_t *json)
 {
 	int ret;
 
@@ -148,12 +148,12 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg)
 	json_t *json_entry;
 	json_t *json_mapping;
 
-	if (json_is_string(cfg)) {
+	if (json_is_string(json)) {
 		json_mapping = json_array();
-		json_array_append(json_mapping, cfg);
+		json_array_append(json_mapping, json);
 	}
-	else if (json_is_array(cfg))
-		json_mapping = json_incref(cfg);
+	else if (json_is_array(json))
+		json_mapping = json_incref(json);
 	else
 		return -1;
 

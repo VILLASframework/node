@@ -1,3 +1,4 @@
+
 /** Node type: Node-type for testing Round-trip Time.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -29,6 +30,7 @@
 #include <villas/sample.h>
 #include <villas/timing.h>
 #include <villas/plugin.h>
+#include <villas/exceptions.hpp>
 #include <villas/nodes/test_rtt.hpp>
 
 using namespace villas;
@@ -36,12 +38,13 @@ using namespace villas::utils;
 
 static struct plugin p;
 
-static int test_rtt_case_start(struct test_rtt *t, int id)
+static int test_rtt_case_start(struct vnode *n, int id)
 {
 	int ret;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
 
-	info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename_formatted, c->rate, c->values, c->limit);
+	n->logger->info("Starting case #{}: filename={}, rate={}, values={}, limit={}", t->current, c->filename_formatted, c->rate, c->values, c->limit);
 
 	/* Open file */
 	ret = io_open(&t->io, c->filename_formatted);
@@ -57,9 +60,10 @@ static int test_rtt_case_start(struct test_rtt *t, int id)
 	return 0;
 }
 
-static int test_rtt_case_stop(struct test_rtt *t, int id)
+static int test_rtt_case_stop(struct vnode *n, int id)
 {
 	int ret;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	/* Stop timer */
 	t->task.stop();
@@ -69,7 +73,7 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 	if (ret)
 		return ret;
 
-	info("Stopping case #%d", id);
+	n->logger->info("Stopping case #{}", id);
 
 	return 0;
 }
@@ -117,7 +121,7 @@ int test_rtt_prepare(struct vnode *n)
 	return 0;
 }
 
-int test_rtt_parse(struct vnode *n, json_t *cfg)
+int test_rtt_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -141,7 +145,7 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: F, s: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: F, s: o }",
 		"prefix", &prefix,
 		"output", &output,
 		"format", &format,
@@ -149,7 +153,7 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 		"cases", &json_cases
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-test-rtt");
 
 	t->output = strdup(output);
 	t->prefix = strdup(prefix);
@@ -157,12 +161,12 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 	/* Initialize IO module */
 	t->format = format_type_lookup(format);
 	if (!t->format)
-		error("Invalid value for setting 'format' of node %s", node_name(n));
+		throw ConfigError(json, "node-config-node-test-rtt-format", "Invalid value for setting 'format'");
 
 
 	/* Construct vlist of test cases */
 	if (!json_is_array(json_cases))
-		error("The 'cases' setting of node %s must be an array.", node_name(n));
+		throw ConfigError(json_cases, "node-config-node-test-rtt-format", "The 'cases' setting must be an array.");
 
 	json_array_foreach(json_cases, i, json_case) {
 		int limit = -1;
@@ -176,13 +180,13 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 		);
 
 		if (limit > 0 && duration > 0)
-			error("The settings 'duration' and 'limit' of node %s must be used exclusively", node_name(n));
+			throw ConfigError(json_case, "node-config-node-test-rtt-duration", "The settings 'duration' and 'limit' must be used exclusively");
 
 		if (!json_is_array(json_rates) && !json_is_number(json_rates))
-			error("The 'rates' setting of node %s must be a real or an array of real numbers", node_name(n));
+			throw ConfigError(json_case, "node-config-node-test-rtt-rates", "The 'rates' setting must be a real or an array of real numbers");
 
 		if (!json_is_array(json_values) && !json_is_integer(json_values))
-			error("The 'values' setting of node %s must be an integer or an array of integers", node_name(n));
+			throw ConfigError(json_case, "node-config-node-test-rtt-values", "The 'values' setting must be an integer or an array of integers");
 
 		values.clear();
 		rates.clear();
@@ -191,7 +195,7 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 			size_t j;
 			json_array_foreach(json_rates, j, json_val) {
 				if (!json_is_number(json_val))
-					error("The 'rates' setting of node %s must be an array of real numbers", node_name(n));
+					throw ConfigError(json_val, "node-config-node-test-rtt-rates", "The 'rates' setting must be an array of real numbers");
 
 				rates.push_back(json_integer_value(json_val));
 			}
@@ -203,7 +207,7 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 			size_t j;
 			json_array_foreach(json_values, j, json_val) {
 				if (!json_is_integer(json_val))
-					error("The 'values' setting of node %s must be an array of integers", node_name(n));
+					throw ConfigError(json_val, "node-config-node-test-rtt-values", "The 'values' setting must be an array of integers");
 
 				values.push_back(json_integer_value(json_val));
 			}
@@ -219,6 +223,7 @@ int test_rtt_parse(struct vnode *n, json_t *cfg)
 
 				c->filename = nullptr;
 				c->filename_formatted = nullptr;
+				c->node = n;
 
 				c->rate = rate;
 				c->values = value;
@@ -287,10 +292,8 @@ int test_rtt_start(struct vnode *n)
 	ret = stat(t->output, &st);
 	if (ret || !S_ISDIR(st.st_mode)) {
 		ret = mkdir(t->output, 0777);
-		if (ret) {
-			warning("Failed to create output directory: %s", t->output);
-			return ret;
-		}
+		if (ret)
+			throw SystemError("Failed to create output directory: {}", t->output);
 	}
 
 	ret = io_init(&t->io, t->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_DATA);
@@ -311,7 +314,7 @@ int test_rtt_stop(struct vnode *n)
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	if (t->counter >= 0) {
-		ret = test_rtt_case_stop(t, t->current);
+		ret = test_rtt_case_stop(n, t->current);
 		if (ret)
 			return ret;
 	}
@@ -337,7 +340,7 @@ int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 			t->current = 0;
 		}
 		else {
-			ret = test_rtt_case_stop(t, t->current);
+			ret = test_rtt_case_stop(n, t->current);
 			if (ret)
 				return ret;
 
@@ -345,14 +348,14 @@ int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 		}
 
 		if ((unsigned) t->current >= vlist_length(&t->cases)) {
-			info("This was the last case. Stopping node %s", node_name(n));
+			n->logger->info("This was the last case.");
 
 			n->state = State::STOPPING;
 
 			return -1;
 		}
 		else {
-			ret = test_rtt_case_start(t, t->current);
+			ret = test_rtt_case_start(n, t->current);
 			if (ret)
 				return ret;
 		}
@@ -363,15 +366,15 @@ int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 	/* Wait */
 	steps = t->task.wait();
 	if (steps > 1)
-		warning("Skipped %ld steps", (long) (steps - 1));
+		n->logger->warn("Skipped {} steps", steps - 1);
 
 	if ((unsigned) t->counter >= c->limit) {
-		info("Stopping case #%d", t->current);
+		n->logger->info("Stopping case #{}", t->current);
 
 		t->counter = -1;
 
 		if (t->cooldown) {
-			info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
+			n->logger->info("Entering cooldown phase. Waiting {} seconds...", t->cooldown);
 			t->task.setTimeout(t->cooldown);
 		}
 
@@ -407,7 +410,7 @@ int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 	unsigned i;
 	for (i = 0; i < cnt; i++) {
 		if (smps[i]->length != c->values) {
-			warning("Discarding invalid sample due to mismatching length: expecting=%d, has=%d", c->values, smps[i]->length);
+			n->logger->warn("Discarding invalid sample due to mismatching length: expecting={}, has={}", c->values, smps[i]->length);
 			continue;
 		}
 

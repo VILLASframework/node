@@ -31,7 +31,6 @@
 #include <villas/utils.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.hpp>
-#include <villas/advio.hpp>
 #include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/config_helper.hpp>
@@ -530,7 +529,7 @@ int SuperNode::periodic()
 	}
 
 	if (idleStop > 0 && state == State::STARTED && started == 0) {
-		info("No more active paths. Stopping super-node");
+		logger->info("No more active paths. Stopping super-node");
 
 		return -1;
 	}

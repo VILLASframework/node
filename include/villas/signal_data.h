@@ -67,7 +67,7 @@ int signal_data_print_str(const union signal_data *data, enum SignalType type, c
 
 int signal_data_parse_str(union signal_data *data, enum SignalType type, const char *ptr, char **end);
 
-int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *cfg);
+int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *json);
 
 json_t * signal_data_to_json(union signal_data *data, enum SignalType type);
 

@@ -27,9 +27,7 @@
 #include <villas/timing.h>
 #include <villas/node.h>
 #include <villas/utils.hpp>
-#include <villas/log.h>
 #include <villas/node.h>
-#include <villas/table.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -102,7 +100,8 @@ enum Stats::Type Stats::lookupType(const std::string &str)
 	throw std::invalid_argument("Invalid stats type");
 }
 
-Stats::Stats(int buckets, int warmup)
+Stats::Stats(int buckets, int warmup) :
+	logger(logging.get("stats"))
 {
 	for (auto m : metrics) {
 		histograms.emplace(
@@ -151,8 +150,10 @@ void Stats::printHeader(enum Format fmt)
 
 void Stats::setupTable()
 {
-	if (!table)
-		table = std::make_shared<Table>(columns);
+	if (!table) {
+		auto logger = logging.get("stats");
+		table = std::make_shared<Table>(logger, columns);
+	}
 }
 
 void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
@@ -202,8 +203,8 @@ void Stats::print(FILE *f, enum Format fmt, int verbose) const
 	switch (fmt) {
 		case Format::HUMAN:
 			for (auto m : metrics) {
-				info("%s: %s", m.second.name, m.second.desc);
-				histograms.at(m.first).print(verbose);
+				logger->info("{}: {}", m.second.name, m.second.desc);
+				histograms.at(m.first).print(logger, verbose);
 			}
 			break;
 

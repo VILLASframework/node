@@ -36,7 +36,7 @@ public:
 
 	virtual Response * execute()
 	{
-		json_t *cfg = session->getSuperNode()->getConfig();
+		json_t *json = session->getSuperNode()->getConfig();
 
 		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
@@ -44,8 +44,8 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Config endpoint does not accept any body data");
 
-		auto *json_config = cfg
-			? json_incref(cfg)
+		auto *json_config = json
+			? json_incref(json)
 			: json_object();
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_config);

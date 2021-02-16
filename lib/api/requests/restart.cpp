@@ -98,7 +98,7 @@ public:
 		else	/* If no config is provided via request, we will use the previous one */
 			configUri = session->getSuperNode()->getConfigUri();
 
-		logger->info("Restarting to {}", configUri.c_str());
+		logger->info("Restarting to {}", configUri);
 
 		/* Increment API restart counter */
 		char *scnt = getenv("VILLAS_API_RESTART_COUNT");

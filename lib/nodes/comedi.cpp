@@ -37,9 +37,9 @@ using namespace villas::utils;
 
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
 static char* comedi_cmd_trigger_src(unsigned int src, char *buf);
-static void comedi_dump_cmd(comedi_cmd *cmd, int debug_level);
+static void comedi_dump_cmd(Logger logger, comedi_cmd *cmd);
 
-static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t *cfg)
+static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t *json)
 {
 	int ret;
 
@@ -50,14 +50,14 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	d->subdevice = -1;
 	d->buffer_size = 16;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: i, s: o, s: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: i, s: o, s: i }",
 		"subdevice", &d->subdevice,
 		"bufsize", &d->buffer_size,
 		"signals", &json_chans,
 		"rate", &d->sample_rate_hz
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration");
+		throw ConfigError(json, err, "node-config-node-comedi");
 
 	if (!json_is_array(json_chans))
 		return -1;
@@ -69,10 +69,8 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	json_t *json_chan;
 
 	d->chanlist_len = json_array_size(json_chans);
-	if (d->chanlist_len == 0) {
-		error("No channels configured");
-		return 0;
-	}
+	if (d->chanlist_len == 0)
+		throw ConfigError(json_chans, "node-config-node-channels", "No channels configured");
 
 	d->chanlist = new unsigned int[d->chanlist_len];
 	if (!d->chanlist)
@@ -85,14 +83,15 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	json_array_foreach(json_chans, i, json_chan) {
 		int num, range, aref;
 		ret = json_unpack_ex(json_chan, &err, 0, "{ s: i, s: i, s: i }",
-		                     "channel", &num,
-		                     "range", &range,
-		                     "aref", &aref);
+			"channel", &num,
+			"range", &range,
+			"aref", &aref
+		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration");
+			throw ConfigError(json_chan, err, "node-config-node-comedi");
 
 		if (aref < AREF_GROUND || aref > AREF_OTHER)
-			error("Invalid value for analog reference: aref=%d", aref);
+			throw ConfigError(json_chan, "node-config-node-comedi-aref", "Invalid value for analog reference: aref={}", aref);
 
 		d->chanlist[i] = CR_PACK(num, range, aref);
 	}
@@ -121,25 +120,22 @@ static int comedi_start_common(struct vnode *n)
 
 			ret = comedi_get_n_ranges(c->dev, d->subdevice, channel);
 			if (ret < 0)
-				error("Failed to get ranges for channel %d on subdevice %d",
-				      channel, d->subdevice);
+				throw RuntimeError("Failed to get ranges for channel {} on subdevice {}", channel, d->subdevice);
 
 			if (range >= ret)
-				error("Invalid range for channel %d on subdevice %d: range=%d",
-				      channel, d->subdevice, range);
+				throw RuntimeError("Invalid range for channel {} on subdevice {}: range={}", channel, d->subdevice, range);
 
 			ret = comedi_get_maxdata(c->dev, d->subdevice, channel);
 			if (ret <= 0)
-				error("Failed to get max. data value for channel %d on subdevice %d",
-				      channel, d->subdevice);
+				throw RuntimeError("Failed to get max. data value for channel {} on subdevice {}", channel, d->subdevice);
 
 			d->chanspecs[i].maxdata = ret;
 			d->chanspecs[i].range = comedi_get_range(c->dev, d->subdevice,
 			                                         channel, range);
 
-			info("%s channel: %d aref=%d range=%d maxdata=%d",
-			     (d == &c->in ? "Input" : "Output"), channel,
-			     CR_AREF(d->chanlist[i]), range, d->chanspecs[i].maxdata);
+			n->logger->info("{} channel: {} aref={} range={} maxdata={}",
+				(d == &c->in ? "Input" : "Output"), channel,
+				CR_AREF(d->chanlist[i]), range, d->chanspecs[i].maxdata);
 		}
 
 		const int flags = comedi_get_subdevice_flags(c->dev, d->subdevice);
@@ -150,13 +146,13 @@ static int comedi_start_common(struct vnode *n)
 		comedi_set_max_buffer_size(c->dev, d->subdevice, d->buffer_size);
 		ret = comedi_get_buffer_size(c->dev, d->subdevice);
 		if (ret != d->buffer_size)
-			error("Failed to set buffer size for subdevice %d of node '%s'", d->subdevice, node_name(n));
+			throw RuntimeError("Failed to set buffer size for subdevice {}", d->subdevice);
 
-		info("Set buffer size for subdevice %d to %d bytes", d->subdevice, d->buffer_size);
+		n->logger->info("Set buffer size for subdevice {} to {} bytes", d->subdevice, d->buffer_size);
 
 		ret = comedi_lock(c->dev, d->subdevice);
 		if (ret)
-			error("Failed to lock subdevice %d for node '%s'", d->subdevice, node_name(n));
+			throw RuntimeError("Failed to lock subdevice {}", d->subdevice);
 	}
 
 	return 0;
@@ -172,24 +168,23 @@ static int comedi_start_in(struct vnode *n)
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AI, 0);
 		if (d->subdevice < 0)
-			error("Cannot find analog input device for node '%s'", node_name(n));
+			throw RuntimeError("Cannot find analog input device for node '{}'");
 	}
 	else {
 		/* Check if subdevice is usable */
 		ret = comedi_get_subdevice_type(c->dev, d->subdevice);
 		if (ret != COMEDI_SUBD_AI)
-			error("Input subdevice of node '%s' is not an analog input", node_name(n));
+			throw RuntimeError("Input subdevice is not an analog input");
 	}
 
 	ret = comedi_get_subdevice_flags(c->dev, d->subdevice);
 	if (ret < 0 || !(ret & SDF_CMD_READ))
-		error("Input subdevice of node '%s' does not support 'read' commands", node_name(n));
+		throw RuntimeError("Input subdevice does not support 'read' commands");
 
 	comedi_set_read_subdevice(c->dev, d->subdevice);
 	ret = comedi_get_read_subdevice(c->dev);
 	if (ret < 0 || ret != d->subdevice)
-		error("Failed to change 'read' subdevice from %d to %d of node '%s'",
-		      ret, d->subdevice, node_name(n));
+		throw RuntimeError("Failed to change 'read' subdevice from {} to {}", ret, d->subdevice);
 
 	comedi_cmd cmd;
 	memset(&cmd, 0, sizeof(cmd));
@@ -225,14 +220,14 @@ static int comedi_start_in(struct vnode *n)
 	ret = comedi_command_test(c->dev, &cmd);
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
-		error("Invalid command for input subdevice of node '%s'", node_name(n));
+		throw RuntimeError("Invalid command for input subdevice");
 
-	info("Input command:");
-	comedi_dump_cmd(&cmd, 1);
+	n->logger->info("Input command:");
+	comedi_dump_cmd(n->logger, &cmd);
 
 	ret = comedi_command(c->dev, &cmd);
 	if (ret < 0)
-		error("Failed to issue command to input subdevice of node '%s'", node_name(n));
+		throw RuntimeError("Failed to issue command to input subdevice");
 
 	d->started = time_now();
 	d->counter = 0;
@@ -245,9 +240,9 @@ static int comedi_start_in(struct vnode *n)
 	if (!c->buf)
 		throw MemoryAllocationError();
 
-	info("Compiled for kernel read() interface");
+	n->logger->info("Compiled for kernel read() interface");
 #else
-	info("Compiled for kernel mmap() interface");
+	n->logger->info("Compiled for kernel mmap() interface");
 #endif
 
 	return 0;
@@ -263,23 +258,22 @@ static int comedi_start_out(struct vnode *n)
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AO, 0);
 		if (d->subdevice < 0)
-			error("Cannot find analog output device for node '%s'", node_name(n));
+			throw RuntimeError("Cannot find analog output device");
 	}
 	else {
 		ret = comedi_get_subdevice_type(c->dev, d->subdevice);
 		if (ret != COMEDI_SUBD_AO)
-			error("Output subdevice of node '%s' is not an analog output", node_name(n));
+			throw RuntimeError("Output subdevice is not an analog output");
 	}
 
 	ret = comedi_get_subdevice_flags(c->dev, d->subdevice);
 	if (ret < 0 || !(ret & SDF_CMD_WRITE))
-		error("Output subdevice of node '%s' does not support 'write' commands", node_name(n));
+		throw RuntimeError("Output subdevice does not support 'write' commands");
 
 	comedi_set_write_subdevice(c->dev, d->subdevice);
 	ret = comedi_get_write_subdevice(c->dev);
 	if (ret < 0 || ret != d->subdevice)
-		error("Failed to change 'write' subdevice from %d to %d of node '%s'",
-		      ret, d->subdevice, node_name(n));
+		throw RuntimeError("Failed to change 'write' subdevice from {} to {}", ret, d->subdevice);
 
 	comedi_cmd cmd;
 	memset(&cmd, 0, sizeof(cmd));
@@ -311,24 +305,24 @@ static int comedi_start_out(struct vnode *n)
 	/* First run might change command, second should return successfully */
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
-		error("Invalid command for input subdevice of node '%s'", node_name(n));
+		throw RuntimeError("Invalid command for input subdevice");
 
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
-		error("Invalid command for input subdevice of node '%s'", node_name(n));
+		throw RuntimeError("Invalid command for input subdevice");
 
-	info("Output command:");
-	comedi_dump_cmd(&cmd, 1);
+	n->logger->info("Output command:");
+	comedi_dump_cmd(n->logger, &cmd);
 
 	ret = comedi_command(c->dev, &cmd);
 	if (ret < 0)
-		error("Failed to issue command to input subdevice of node '%s'", node_name(n));
+		throw RuntimeError("Failed to issue command to input subdevice of node '{}'");
 
 	/* Output will only start after the internal trigger */
 	d->running = false;
 	d->last_debug = time_now();
 
-	/* Allocate buffer for one complete villas sample */
+	/* Allocate buffer for one complete VILLAS sample */
 	/** @todo: maybe increase buffer size according to c->vectorize */
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = new char[local_buffer_size];
@@ -352,13 +346,13 @@ static int comedi_start_out(struct vnode *n)
 	for (unsigned i = 0; i < d->buffer_size / local_buffer_size; i++) {
 		size_t written = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
 		if (written != local_buffer_size) {
-			error("Cannot preload Comedi buffer");
+			throw RuntimeError("Cannot preload Comedi buffer");
 		}
 	}
 
 	const size_t villas_samples_in_kernel_buf = d->buffer_size / (d->sample_size * d->chanlist_len);
-	const double latencyMs = (double)villas_samples_in_kernel_buf / d->sample_rate_hz * 1e3;
-	info("Added latency due to buffering: %4.1f ms\n", latencyMs);
+	const double latencyMs = (double) villas_samples_in_kernel_buf / d->sample_rate_hz * 1e3;
+	n->logger->info("Added latency due to buffering: {:4.1f} ms", latencyMs);
 
 	return 0;
 }
@@ -373,7 +367,7 @@ static int comedi_stop_in(struct vnode *n)
 
 	ret = comedi_unlock(c->dev, d->subdevice);
 	if (ret)
-		error("Failed to lock subdevice %d for node '%s'", d->subdevice, node_name(n));
+		throw RuntimeError("Failed to lock subdevice {}", d->subdevice);
 
 	return 0;
 }
@@ -388,12 +382,12 @@ static int comedi_stop_out(struct vnode *n)
 
 	ret = comedi_unlock(c->dev, d->subdevice);
 	if (ret)
-		error("Failed to lock subdevice %d for node '%s'", d->subdevice, node_name(n));
+		throw RuntimeError("Failed to lock subdevice {}", d->subdevice);
 
 	return 0;
 }
 
-int comedi_parse(struct vnode *n, json_t *cfg)
+int comedi_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -404,13 +398,13 @@ int comedi_parse(struct vnode *n, json_t *cfg)
 	json_t *json_out = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: o, s?: o }",
-	                     "device", &device,
-	                     "in", &json_in,
-	                     "out", &json_out);
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: o, s?: o }",
+		"device", &device,
+		"in", &json_in,
+		"out", &json_out);
 
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-comedi");
 
 	c->in.present = json_in != nullptr;
 	c->in.enabled = false;
@@ -456,15 +450,13 @@ int comedi_start(struct vnode *n)
 	struct comedi *c = (struct comedi *) n->_vd;
 
 	c->dev = comedi_open(c->device);
-	if (!c->dev) {
-		const char *err = comedi_strerror(comedi_errno());
-		error("Failed to open device: %s", err);
-	}
+	if (!c->dev)
+		throw RuntimeError("Failed to open device: {}", comedi_strerror(comedi_errno()));
 
 	/* Enable non-blocking syscalls */
 	/** @todo: verify if this works with both input and output, so comment out */
 	//if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
-	//	error("Failed to set non-blocking flag in Comedi FD of node '%s'", node_name(n));
+	//	throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
 
 	comedi_start_common(n);
 
@@ -485,10 +477,10 @@ int comedi_start(struct vnode *n)
 	}
 
 #if !COMEDI_USE_READ
-	info("Mapping Comedi buffer of %d bytes", c->in.buffer_size);
+	n->logger->info("Mapping Comedi buffer of {} bytes", c->in.buffer_size);
 	c->map = mmap(nullptr, c->in.buffer_size, PROT_READ, MAP_SHARED, comedi_fileno(c->dev), 0);
 	if (c->map == MAP_FAILED)
-		error("Failed to map comedi buffer of node '%s'", node_name(n));
+		throw RuntimeError("Failed to map Comedi buffer");
 
 	c->front = 0;
 	c->back = 0;
@@ -528,9 +520,9 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
 	if (ret < 0) {
 		if (comedi_errno() == EBUF_OVR)
-			error("Comedi buffer overflow");
+			throw RuntimeError("Comedi buffer overflow");
 		else
-			error("Comedi error: %s", comedi_strerror(comedi_errno()));
+			throw RuntimeError("Comedi error: {}", comedi_strerror(comedi_errno()));
 	}
 
 	fd_set rdset;
@@ -543,7 +535,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	ret = select(comedi_fileno(c->dev) + 1, &rdset, nullptr, nullptr, &timeout);
 	if (ret < 0)
-		error("select");
+		throw RuntimeError("Failed select()");
 	else if (ret == 0) /* hit timeout */
 		return 0;
 	else if (FD_ISSET(comedi_fileno(c->dev), &rdset)) { /* comedi file descriptor became ready */
@@ -553,12 +545,12 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 		ret = read(comedi_fileno(c->dev), c->bufptr, MIN(bytes_requested, buffer_bytes_free));
 		if (ret < 0) {
 			if (errno == EAGAIN)
-				error("read");
+				throw RuntimeError("Failed read()");
 			else
 				return 0;
 		}
 		else if (ret == 0) {
-			warning("select timeout, no samples available");
+			n->logger->warn("Timeout in select(), no samples available");
 			return 0;
 		}
 		else {
@@ -567,11 +559,8 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 			const size_t raw_samples_available = bytes_available / d->sample_size;
 			const size_t villas_samples_available = raw_samples_available / d->chanlist_len;
 
-			info("there are %zd bytes available (%zu requested) => %zu villas samples",
-			     bytes_available, bytes_requested, villas_samples_available);
-
-			info("there are %zu kB available (%zu kB requested)",
-			     bytes_available / 1024, bytes_requested / 1024);
+			n->logger->info("There are {} bytes available ({} requested) => {} VILLAS samples",
+				bytes_available, bytes_requested, villas_samples_available);
 
 			if (cnt > villas_samples_available)
 				cnt = villas_samples_available;
@@ -588,10 +577,8 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 				smps[i]->length = d->chanlist_len;
 
-				if (smps[i]->capacity < d->chanlist_len) {
-					error("Sample has insufficient capacity: %d < %zd",
-					      smps[i]->capacity, d->chanlist_len);
-				}
+				if (smps[i]->capacity < d->chanlist_len)
+					throw RuntimeError("Sample has insufficient capacity: {} < {}", smps[i]->capacity, d->chanlist_len);
 
 				for (unsigned si = 0; si < d->chanlist_len; si++) {
 					unsigned int raw;
@@ -606,7 +593,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 					smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 
 					if (std::isnan(smps[i]->data[si].f))
-						warning("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
+						n->logger->warn("Input: channel {} clipped", CR_CHAN(d->chanlist[si]));
 				}
 			}
 
@@ -618,7 +605,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 
-			info("consumed %zd bytes", bytes_consumed);
+			n->logger->info("Consumed {} bytes", bytes_consumed);
 
 			/* Start at the beginning again */
 			c->bufptr = c->buf;
@@ -626,10 +613,9 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 			return cnt;
 		}
 	}
-	else {
+	else
 		/* unknown file descriptor became ready */
-		printf("unknown file descriptor ready\n");
-	}
+		n->logger->warn("Unknown file descriptor ready");
 
 	return -1;
 }
@@ -646,16 +632,16 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	comedi_set_read_subdevice(c->dev, d->subdevice);
 
-	info("current bufpos=%ld", c->bufpos);
+	n->logger->info("Current bufpos={}", c->bufpos);
 
 #if 0
 	if (c->bufpos > (d->buffer_size - villas_sample_size)) {
 		ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
 		if (ret < 0)
-			error("Canot get offset");
+			throw RuntimeError("Canot get offset");
 
 		c->bufpos = ret;
-		info("change bufpos=%ld", c->bufpos);
+		n->logger->info("Change bufpos={}", c->bufpos);
 	}
 #endif
 
@@ -664,9 +650,9 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 		return 0;
 	else if (ret < 0) {
 		if (comedi_errno() == EBUF_OVR)
-			error("Comedi buffer overflow");
+			throw RuntimeError("Comedi buffer overflow");
 		else
-			error("Comedi error: %s", comedi_strerror(comedi_errno()));
+			throw RuntimeError("Comedi error: {}", comedi_strerror(comedi_errno()));
 	}
 
 	const size_t bytes_available = ret;
@@ -675,17 +661,17 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 	if (villas_sample_count == 0)
 		return 0;
 
-	info("there are %ld villas samples (%ld raw bytes, %ld channels)", villas_sample_count, bytes_available, d->chanlist_len);
+	n->logger->info("There are {} VILLAS samples ({} raw bytes, {} channels)", villas_sample_count, bytes_available, d->chanlist_len);
 
 #if 0
 	if (villas_sample_count == 1)
-		info("front=%ld back=%ld bufpos=%ld", c->front, c->back, c->bufpos);
+		n->logger->info("front={} back={} bufpos={}", c->front, c->back, c->bufpos);
 
 	if ((c->bufpos + bytes_available) >= d->buffer_size) {
 		/* Let comedi do the wraparound, only consume until end of buffer */
 		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
-		warning("Reducing consumption from %d to %ld bytes", ret, bytes_available);
-		warning("Only consume %ld villas samples b/c of buffer wraparound", villas_sample_count);
+		n->logger->warn("Reducing consumption from {} to {} bytes", ret, bytes_available);
+		n->logger->warn("Only consume {} VILLAS samples b/c of buffer wraparound", villas_sample_count);
 	}
 #endif
 
@@ -694,12 +680,11 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 #if 0
 	if (bytes_available != 0 && bytes_available < villas_sample_size) {
-		warning("Cannot consume samples, only %d bytes available, throw away", ret);
+		n->logger->warn("Cannot consume samples, only {} bytes available, throw away", ret);
 
 		ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
 		if (ret != bytes_available)
-			error("Cannot throw away %ld bytes, returned %d, wtf comedi?!",
-			      bytes_available, ret);
+			throw RuntimeError("Cannot throw away {} bytes, returned {}", bytes_available, ret);
 
 		return 0;
 	}
@@ -709,15 +694,15 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	ret = comedi_mark_buffer_read(c->dev, d->subdevice, samples_total_bytes);
 	if (ret == 0) {
-		warning("Marking read buffer (%ld bytes) not working, try again later", samples_total_bytes);
+		n->logger->warn("Marking read buffer ({} bytes) not working, try again later", samples_total_bytes);
 		return 0;
 	}
 	else if (ret != samples_total_bytes) {
-		warning("Can only mark %d bytes as read, reducing samples", ret);
+		n->logger->warn("Can only mark {} bytes as read, reducing samples", ret);
 		return 0;
 	}
 	else
-		info("Consume %d bytes", ret);
+		n->logger->info("Consume {} bytes", ret);
 
 	/* Align front to whole samples */
 	c->front = c->back + samples_total_bytes;
@@ -734,8 +719,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 		smps[i]->length = d->chanlist_len;
 
 		if (smps[i]->capacity < d->chanlist_len)
-			error("Sample has insufficient capacity: %d < %ld",
-			      smps[i]->capacity, d->chanlist_len);
+			throw RuntimeError("Sample has insufficient capacity: {} < {}", smps[i]->capacity, d->chanlist_len);
 
 		for (int si = 0; si < d->chanlist_len; si++) {
 			unsigned int raw;
@@ -747,15 +731,14 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 			smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 
-			if (isnan(smps[i]->data[si].f)) {
-				error("got nan");
-			}
+			if (isnan(smps[i]->data[si].f))
+				throw RuntimeError("Got nan");
 
 //			smps[i]->data[si].i = raw;
 
 			c->bufpos += d->sample_size;
 			if (c->bufpos >= d->buffer_size) {
-				warning("read buffer wraparound");
+				n->logger->warn("Read buffer wraparound");
 //				c->bufpos = 0;
 			}
 		}
@@ -763,52 +746,52 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 //	const size_t bytes_consumed = c->front - c->back;
 
-//	info("advance comedi buffer by %ld bytes", bytes_consumed);
+//	n->logger->info("Advance Comedi buffer by {} bytes", bytes_consumed);
 
 	ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
 	if (ret < 0) {
 		if (comedi_errno() != EPIPE)
-			error("Failed to get read buffer offset: %d, comedi errno %d", ret, comedi_errno());
+			throw RuntimeError("Failed to get read buffer offset: {}, Comedi error {}", ret, comedi_strerror(comedi_errno()));
 		else
 			ret = c->bufpos;
 	}
 
-	warning("change bufpos: %ld to %d", c->bufpos, ret);
+	n->logger->warn("Change bufpos: {} to {}", c->bufpos, ret);
 	c->bufpos = ret;
 
 #if 0
 	ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
 	if (ret < 0) //!= bytes_consumed)
-		error("Failed to mark buffer position (ret=%d) for input stream of node '%s'", ret, node_name(n));
+		throw RuntimeError("Failed to mark buffer position (ret={}) for input stream", ret);
 //	else if (ret == 0) {
 	else {
-		info("consumed %ld bytes", bytes_consumed);
-		info("mark buffer returned %d", ret);
+		n->logger->info("Consumed {} bytes", bytes_consumed);
+		n->logger->info("Mark buffer returned {}", ret);
 
 		if (ret == 0) {
 			ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
-			info("trying again, mark buffer returned now %d", ret);
+			n->logger->info("Trying again, mark buffer returned now {}", ret);
 		}
 
 		if (ret > 0) {
 			ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
 			if (ret < 0)
-				error("Failed to get read buffer offset");
+				throw RuntimeError("Failed to get read buffer offset");
 
-			warning("change bufpos1: %ld to %d", c->bufpos, ret);
+			n->logger->warn("Change bufpos1: {} to {}", c->bufpos, ret);
 			c->bufpos = ret;
 		}
 		else {
-//			warning("change bufpos2: %ld to %ld", c->bufpos, c->);
+//			n->logger->warn("Change bufpos2: {} to {}", c->bufpos, c->);
 //			c->bufpos += bytes_consumed;
-			warning("keep bufpos=%ld", c->bufpos);
+			n->logger->warn("Keep bufpos={}", c->bufpos);
 		}
 
 //		c->bufpos = 0;
 	}
 #endif
 
-//	info("new bufpos: %ld", c->bufpos);
+//	n->logger->info("New bufpos: {}", c->bufpos);
 
 	c->back = c->front;
 
@@ -824,7 +807,7 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	struct comedi_direction *d = &c->out;
 
 	if (!d->enabled) {
-		warning("Attempting to write, but output is not enabled");
+		n->logger->warn("Attempting to write, but output is not enabled");
 		return 0;
 	}
 
@@ -832,13 +815,13 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 		/* Output was not yet running, so start now */
 		ret = comedi_internal_trigger(c->dev, d->subdevice, 0);
 		if (ret < 0)
-			error("Failed to trigger-start output");
+			throw RuntimeError("Failed to trigger-start output");
 
 		d->started = time_now();
 		d->counter = 0;
 		d->running = true;
 
-		info("Starting output of node '%s'", node_name(n));
+		n->logger->info("Starting output");
 	}
 
 	const size_t buffer_capacity_raw = d->buffer_size / d->sample_size;
@@ -848,9 +831,9 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
 	if (ret < 0) {
 		if (comedi_errno() == EBUF_OVR)
-			error("Comedi buffer overflow");
+			throw RuntimeError("Comedi buffer overflow");
 		else
-			error("Comedi error: %s", comedi_strerror(comedi_errno()));
+			throw RuntimeError("Comedi error: {}", comedi_strerror(comedi_errno()));
 	}
 
 	const size_t bytes_in_buffer = ret;
@@ -858,15 +841,15 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanlist_len;
 
 	if (villas_samples_in_buffer == buffer_capacity_villas) {
-		warning("Comedi buffer is full");
+		n->logger->warn("Comedi buffer is full");
 		return 0;
 	}
 	else {
 		struct timespec now = time_now();
 		if (time_delta(&d->last_debug, &now) >= 1) {
-			debug(LOG_COMEDI | 2, "Comedi write buffer: %4zd villas samples (%2.0f%% of buffer)",
-			      villas_samples_in_buffer,
-			      (100.0f * villas_samples_in_buffer / buffer_capacity_villas));
+			n->logger->debug("Comedi write buffer: {} VILLAS samples ({}% of buffer)",
+			                  villas_samples_in_buffer,
+			                  (100.0f * villas_samples_in_buffer / buffer_capacity_villas));
 
 			d->last_debug = time_now();
 		}
@@ -877,8 +860,7 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	while (villas_samples_written < cnt) {
 		struct sample *sample = smps[villas_samples_written];
 		if (sample->length != d->chanlist_len)
-			error("Value count in sample (%d) != configured output channels (%zd)",
-			      sample->length, d->chanlist_len);
+			throw RuntimeError("Value count in sample ({}) != configured output channels ({})", sample->length, d->chanlist_len);
 
 		d->bufptr = d->buffer;
 
@@ -921,18 +903,17 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 		/* Try to write one complete villas sample to comedi */
 		size_t written = write(comedi_fileno(c->dev), d->buffer, villas_sample_size);
 		if (written < 0)
-			error("write");
+			throw RuntimeError("write() failed");
 		else if (written == 0)
 			break;	/* Comedi doesn't accept any more samples at the moment */
 		else if (written == villas_sample_size)
 			villas_samples_written++;
 		else
-			error("Only partial sample written (%zu bytes), oops", written);
+			throw RuntimeError("Only partial sample written ({} bytes), oops", written);
 	}
 
-	if (villas_samples_written == 0) {
-		warning("Nothing done");
-	}
+	if (villas_samples_written == 0)
+		n->logger->warn("Nothing done");
 
 	d->counter += villas_samples_written;
 
@@ -960,27 +941,27 @@ char* comedi_cmd_trigger_src(unsigned int src, char *buf)
 	return buf;
 }
 
-void comedi_dump_cmd(comedi_cmd *cmd, int debug_level)
+void comedi_dump_cmd(Logger logger, comedi_cmd *cmd)
 {
 	char buf[256];
 	char* src;
 
-	debug(LOG_COMEDI | debug_level, "subdevice:           %u", cmd->subdev);
+	logger->debug("subdevice:  {}", cmd->subdev);
 
 	src = comedi_cmd_trigger_src(cmd->start_src, buf);
-	debug(LOG_COMEDI | debug_level, "start:      %-8s %u", src, cmd->start_arg);
+	logger->debug("start:      {:-8s} {}", src, cmd->start_arg);
 
 	src = comedi_cmd_trigger_src(cmd->scan_begin_src, buf);
-	debug(LOG_COMEDI | debug_level, "scan_begin: %-8s %u", src, cmd->scan_begin_arg);
+	logger->debug("scan_begin: {:-8s} {}", src, cmd->scan_begin_arg);
 
 	src = comedi_cmd_trigger_src(cmd->convert_src, buf);
-	debug(LOG_COMEDI | debug_level, "convert:    %-8s %u", src, cmd->convert_arg);
+	logger->debug("convert:    {:-8s} {}", src, cmd->convert_arg);
 
 	src = comedi_cmd_trigger_src(cmd->scan_end_src, buf);
-	debug(LOG_COMEDI | debug_level, "scan_end:   %-8s %u", src, cmd->scan_end_arg);
+	logger->debug("scan_end:   {:-8s} {}", src, cmd->scan_end_arg);
 
 	src = comedi_cmd_trigger_src(cmd->stop_src,buf);
-	debug(LOG_COMEDI | debug_level, "stop:       %-8s %u", src, cmd->stop_arg);
+	logger->debug("stop:       {:-8s} {}", src, cmd->stop_arg);
 }
 
 int comedi_poll_fds(struct vnode *n, int fds[])

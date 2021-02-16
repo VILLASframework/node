@@ -34,6 +34,7 @@
 #include <villas/hist.hpp>
 #include <villas/table.hpp>
 #include <villas/signal.h>
+#include <villas/log.hpp>
 
 /* Forward declarations */
 struct sample;
@@ -93,6 +94,8 @@ protected:
 	static std::shared_ptr<Table> table;
 
 	static void setupTable();
+
+	Logger logger;
 
 public:
 

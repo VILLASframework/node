@@ -58,7 +58,7 @@ int example_init(struct vnode *n);
 int example_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int example_parse(struct vnode *n, json_t *cfg);
+int example_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
 char * example_print(struct vnode *n);

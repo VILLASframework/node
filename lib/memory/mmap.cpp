@@ -35,11 +35,11 @@
 #endif /* __MACH__ */
 
 #include <villas/kernel/kernel.hpp>
-#include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 
 using namespace villas;
 using namespace villas;
@@ -47,9 +47,12 @@ using namespace villas::utils;
 
 static size_t pgsz = -1;
 static size_t hugepgsz = -1;
+static Logger logger;
 
 int memory_mmap_init(int hugepages)
 {
+	logger = logging.get("memory:mmap");
+
 	pgsz = kernel::get_page_size();
 	if (pgsz < 0)
 		return -1;
@@ -57,7 +60,7 @@ int memory_mmap_init(int hugepages)
 	if (hugepages > 0) {
 		hugepgsz = kernel::get_hugepage_size();
 		if (hugepgsz < 0) {
-			warning("Failed to determine hugepage size.");
+			logger->warn("Failed to determine hugepage size.");
 
 			memory_default = &memory_mmap;
 			return 0;
@@ -71,16 +74,16 @@ int memory_mmap_init(int hugepages)
 			if (getuid() == 0) {
 				ret = kernel::set_nr_hugepages(hugepages);
 				if (ret) {
-					warning("Failed to increase number of reserved hugepages");
+					logger->warn("Failed to increase number of reserved hugepages");
 					memory_default = &memory_mmap;
 				}
 
-				debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
+				logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
 				memory_default = &memory_mmap_hugetlb;
 			}
 			else {
-				warning("Failed to reserved hugepages. Please reserve manually by running as root:");
-				warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
+				logger->warn("Failed to reserved hugepages. Please reserve manually by running as root:");
+				logger->warn("   $ echo {} > /proc/sys/vm/nr_hugepages", hugepages);
 				memory_default = &memory_mmap;
 			}
 		}
@@ -91,7 +94,7 @@ int memory_mmap_init(int hugepages)
 #endif
 	}
 	else {
-		warning("Hugepage allocator disabled.");
+		logger->warn("Hugepage allocator disabled.");
 		memory_default = &memory_mmap;
 	}
 

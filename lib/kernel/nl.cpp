@@ -51,13 +51,13 @@ struct nl_sock * villas::kernel::nl::init()
 
 		ret = nl_connect(sock, NETLINK_ROUTE);
 		if (ret)
-			error("Failed to connect to kernel: %s", nl_geterror(ret));
+			throw RuntimeError("Failed to connect to kernel: {}", nl_geterror(ret));
 
 		/* Fill some caches */
 		struct nl_cache *cache;
 		ret = rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache);
 		if (ret)
-			error("Failed to get list of interfaces: %s", nl_geterror(ret));
+			throw RuntimeError("Failed to get list of interfaces: {}", nl_geterror(ret));
 
 		nl_cache_mngt_provide(cache);
 	}
@@ -150,7 +150,7 @@ struct rtnl_link * villas::kernel::nl::get_egress_link(struct sockaddr *sa)
 
 			ifindex = nl::get_egress(addr); nl_addr_put(addr);
 			if (ifindex < 0)
-				error("Netlink error: %s", nl_geterror(ifindex));
+				throw RuntimeError("Netlink error: {}", nl_geterror(ifindex));
 			break;
 		}
 

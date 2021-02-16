@@ -39,20 +39,20 @@ public:
 
 	using Hook::Hook;
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		json_error_t err;
 		int ret;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: i }",
 			"offset", &offset
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-shift_seq");
+			throw ConfigError(json, err, "node-config-hook-shift_seq");
 
 		state = State::PARSED;
 	}

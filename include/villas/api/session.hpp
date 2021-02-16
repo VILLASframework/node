@@ -43,6 +43,7 @@ namespace api {
 class Request;
 class Response;
 class StatusRequest;
+class RequestFactory;
 
 /** A connection via HTTP REST or WebSockets to issue API requests. */
 class Session {
@@ -50,7 +51,7 @@ class Session {
 public:
 	friend Request; /**< Requires access to wsi for getting URL args and headers */
 	friend StatusRequest; /**< Requires access to wsi for context status */
-
+	friend RequestFactory;
 
 	enum State {
 		ESTABLISHED,

@@ -32,7 +32,9 @@
 #include <villas/node/config.h>
 #include <villas/nodes/influxdb.hpp>
 #include <villas/memory.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int influxdb_parse(struct vnode *n, json_t *json)
@@ -50,7 +52,7 @@ int influxdb_parse(struct vnode *n, json_t *json)
 		"key", &key
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-influx");
 
 	tmp = strdup(server);
 
@@ -79,21 +81,19 @@ int influxdb_open(struct vnode *n)
 
 	ret = getaddrinfo(i->host, i->port, &hints, &servinfo);
 	if (ret)
-	    error("Failed to lookup server: %s", gai_strerror(ret));
+		throw RuntimeError("Failed to lookup server: {}", gai_strerror(ret));
 
 	/* Loop through all the results and connect to the first we can */
 	for (p = servinfo; p != nullptr; p = p->ai_next) {
 		i->sd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-		if (i->sd == -1) {
-	        	serror("socket");
-			continue;
-	    	}
+		if (i->sd == -1)
+			throw SystemError("Failed to create socket");
 
 		ret = connect(i->sd, p->ai_addr, p->ai_addrlen);
 		if (ret == -1) {
-			warning("connect");
-	        	close(i->sd);
-	        	continue;
+			n->logger->warn("Connect failed: {}", strerror(errno));
+			close(i->sd);
+			continue;
 		}
 
 		/* If we get here, we must have connected successfully */
@@ -143,7 +143,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 				sig->type != SignalType::INTEGER &&
 				sig->type != SignalType::COMPLEX
 			) {
-				warning("Unsupported signal format for node %s. Skipping", node_name(n));
+				n->logger->warn("Unsupported signal format. Skipping");
 				continue;
 			}
 
@@ -196,7 +196,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 	if (sentlen < 0)
 		return -1;
 	else if (sentlen < buflen)
-		warning("Partial sent");
+		n->logger->warn("Partial sent");
 
 	free(buf);
 

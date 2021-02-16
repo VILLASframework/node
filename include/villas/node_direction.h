@@ -37,8 +37,8 @@
 struct vnode;
 
 enum class NodeDir {
-	IN,		/**< VILLASnode is receiving/reading */
-	OUT		/**< VILLASnode is sending/writing */
+	IN,			/**< VILLASnode is receiving/reading */
+	OUT			/**< VILLASnode is sending/writing */
 };
 
 struct vnode_direction {
@@ -47,19 +47,19 @@ struct vnode_direction {
 
 	int enabled;
 	int builtin;		/**< This node should use built-in hooks by default. */
-	unsigned vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
+	unsigned vectorize;	/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct vlist hooks;	/**< List of read / write hooks (struct hook). */
 	struct vlist signals;	/**< Signal description. */
 
-	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
+	json_t *config;		/**< A JSON object containing the configuration of the node. */
 };
 
 int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n) __attribute__ ((warn_unused_result));
 
 int node_direction_destroy(struct vnode_direction *nd, struct vnode *n) __attribute__ ((warn_unused_result));
 
-int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cfg);
+int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *json);
 
 int node_direction_check(struct vnode_direction *nd, struct vnode *n);
 

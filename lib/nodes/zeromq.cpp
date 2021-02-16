@@ -130,7 +130,7 @@ int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
 			json_array_foreach(json_ep, i, json_val) {
 				ep = json_string_value(json_val);
 				if (!ep)
-					error("All 'publish' settings must be strings");
+					throw ConfigError(json_val, "node-config-node-publish", "All 'publish' settings must be strings");
 
 				vlist_push(epl, strdup(ep));
 			}
@@ -148,7 +148,7 @@ int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
 	return 0;
 }
 
-int zeromq_parse(struct vnode *n, json_t *cfg)
+int zeromq_parse(struct vnode *n, json_t *json)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
@@ -163,7 +163,7 @@ int zeromq_parse(struct vnode *n, json_t *cfg)
 	json_t *json_curve = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: { s?: o, s?: s, s?: b }, s?: { s?: o, s?: s, s?: b }, s?: o, s?: s, s?: b, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: s, s?: b }, s?: { s?: o, s?: s, s?: b }, s?: o, s?: s, s?: b, s?: s }",
 		"in",
 			"subscribe", &json_in_ep,
 			"filter", &in_filter,
@@ -178,14 +178,14 @@ int zeromq_parse(struct vnode *n, json_t *cfg)
 		"format", &format
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-zeromq");
 
 	z->in.filter = in_filter ? strdup(in_filter) : nullptr;
 	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
 	z->format = format_type_lookup(format);
 	if (!z->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		throw ConfigError(json, "node-config-node-zeromq-format", "Invalid format '{}'", format);
 
 	if (json_out_ep) {
 		ret = zeromq_parse_endpoints(json_out_ep, &z->out.endpoints);
@@ -210,13 +210,13 @@ int zeromq_parse(struct vnode *n, json_t *cfg)
 			"enabled", &z->curve.enabled
 		);
 		if (ret)
-			jerror(&err, "Failed to parse setting 'curve' of node %s", node_name(n));
+			throw ConfigError(json_curve, err, "node-config-node-zeromq-curve", "Failed to parse setting 'curve'");
 
 		if (strlen(secret_key) != 40)
-			error("Setting 'curve.secret_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
+			throw ConfigError(json_curve, err, "node-config-node-zeromq-curve", "Setting 'curve.secret_key' must be a Z85 encoded CurveZMQ key");
 
 		if (strlen(public_key) != 40)
-			error("Setting 'curve.public_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
+			throw ConfigError(json_curve, err, "node-config-node-zeromq-curve", "Setting 'curve.public_key' must be a Z85 encoded CurveZMQ key");
 
 		memcpy(z->curve.server.public_key, public_key, 41);
 		memcpy(z->curve.server.secret_key, secret_key, 41);
@@ -224,7 +224,7 @@ int zeromq_parse(struct vnode *n, json_t *cfg)
 
 	/** @todo We should fix this. Its mostly done. */
 	if (z->curve.enabled)
-		error("CurveZMQ support is currently broken");
+		throw ConfigError(json_curve, "node-config-zeromq-curve", "CurveZMQ support is currently broken");
 
 	if (type) {
 		if      (!strcmp(type, "pubsub"))
@@ -234,7 +234,7 @@ int zeromq_parse(struct vnode *n, json_t *cfg)
 			z->pattern = zeromq::Pattern::RADIODISH;
 #endif
 		else
-			error("Invalid type for ZeroMQ node: %s", node_name_short(n));
+			throw ConfigError(json, "node-config-node-zeromq-type", "Invalid type for ZeroMQ node: {}", node_name_short(n));
 	}
 
 	return 0;
@@ -470,7 +470,7 @@ int zeromq_start(struct vnode *n)
 #endif
 
 fail:
-	info("Failed to start ZeroMQ node: %s, error=%s", node_name(n), zmq_strerror(errno));
+	n->logger->info("Failed to start: {}", zmq_strerror(errno));
 
 	return ret;
 }

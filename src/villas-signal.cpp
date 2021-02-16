@@ -198,8 +198,6 @@ check:			if (optarg == endptr)
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{
-		Logger logger = logging.get("signal");
-
 		switch (signal)  {
 			case  SIGALRM:
 				logger->info("Reached timeout. Terminating...");
@@ -215,7 +213,7 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret;
-		json_t *cfg;
+		json_t *json;
 		struct vnode_type *nt;
 		struct format_type *ft;
 
@@ -229,8 +227,8 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to initialize node");
 
-		cfg = parse_cli(argc, argv);
-		if (!cfg) {
+		json = parse_cli(argc, argv);
+		if (!json) {
 			usage();
 			exit(EXIT_FAILURE);
 		}
@@ -238,7 +236,7 @@ check:			if (optarg == endptr)
 		uuid_t uuid;
 		uuid_clear(uuid);
 
-		ret = node_parse(&n, cfg, uuid);
+		ret = node_parse(&n, json, uuid);
 		if (ret) {
 			usage();
 			exit(EXIT_FAILURE);
@@ -259,7 +257,7 @@ check:			if (optarg == endptr)
 
 		ret = node_prepare(&n);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(&n), ret);
 
 		ret = io_init(&io, ft, &n.in.signals, (int) IOFlags::FLUSH | ((int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET));
 		if (ret)

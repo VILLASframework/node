@@ -84,7 +84,7 @@ int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::parse */
-int socket_parse(struct vnode *n, json_t *cfg);
+int socket_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
 char * socket_print(struct vnode *n);

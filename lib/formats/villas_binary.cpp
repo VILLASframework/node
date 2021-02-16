@@ -68,10 +68,8 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 	unsigned i = 0;
 	const char *ptr = buf;
 
-	if (len % 4 != 0) {
-		warning("Packet size is invalid: %zd Must be multiple of 4 bytes.", len);
-		return -1;
-	}
+	if (len % 4 != 0)
+		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
 
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
@@ -84,18 +82,14 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 			break;
 
 		/* Check if header is still in buffer bounaries */
-		if (ptr + sizeof(struct msg) > buf + len) {
-			warning("Invalid msg received: reason=1");
-			break;
-		}
+		if (ptr + sizeof(struct msg) > buf + len)
+			return -2; /* Invalid msg received */
 
 		values = (io->flags & VILLAS_BINARY_WEB) ? msg->length : ntohs(msg->length);
 
 		/* Check if remainder of message is in buffer boundaries */
-		if (ptr + MSG_LEN(values) > buf + len) {
-			warning("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf=%p, i=%u", MSG_LEN(values), len, ptr, buf, i);
-			break;
-		}
+		if (ptr + MSG_LEN(values) > buf + len)
+			return -3; /*Invalid msg receive */
 
 		if (io->flags & VILLAS_BINARY_WEB) {
 			/** @todo convert from little endian */
@@ -104,10 +98,8 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 			msg_ntoh(msg);
 
 		ret = msg_to_sample(msg, smp, io->signals);
-		if (ret) {
-			warning("Invalid msg received: reason=3, ret=%d", ret);
-			break;
-		}
+		if (ret)
+			return ret; /* Invalid msg received */
 
 		ptr += MSG_LEN(smp->length);
 	}

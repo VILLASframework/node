@@ -98,7 +98,7 @@ static void * path_run_poll(void *arg)
 	while (p->state == State::STARTED) {
 		ret = poll(p->reader.pfds, p->reader.nfds, -1);
 		if (ret < 0)
-			serror("Failed to poll");
+			throw SystemError("Failed to poll");
 
 		p->logger->debug("Path {} returned from poll(2)", path_name(p));
 
@@ -379,14 +379,14 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 #endif /* WITH_HOOKS */
 
 	p->logger->info("Prepared path {} with output signals:", path_name(p));
-	signal_list_dump(path_output_signals(p));
+	signal_list_dump(p->logger, path_output_signals(p));
 
 	p->state = State::PREPARED;
 
 	return 0;
 }
 
-int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t sn_uuid)
+int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t sn_uuid)
 {
 	int ret;
 
@@ -405,7 +405,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t s
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
@@ -422,7 +422,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t s
 		"affinity", &p->affinity
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-path", "Failed to parse path configuration");
+		throw ConfigError(json, err, "node-config-path", "Failed to parse path configuration");
 
 	/* Optional settings */
 	if (mode) {
@@ -431,18 +431,18 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t s
 		else if (!strcmp(mode, "all"))
 			p->mode = PathMode::ALL;
 		else
-			throw ConfigError(cfg, "node-config-path", "Invalid path mode '{}'", mode);
+			throw ConfigError(json, "node-config-path", "Invalid path mode '{}'", mode);
 	}
 
 	/* UUID */
 	if (uuid_str) {
 		ret = uuid_parse(uuid_str, p->uuid);
 		if (ret)
-			throw ConfigError(cfg, "node-config-path-uuid", "Failed to parse UUID: {}", uuid_str);
+			throw ConfigError(json, "node-config-path-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
 	else
 		/* Generate UUID from hashed config */
-		uuid_generate_from_json(p->uuid, cfg, sn_uuid);
+		uuid_generate_from_json(p->uuid, json, sn_uuid);
 
 	/* Input node(s) */
 	ret = mapping_list_parse(&p->mappings, json_in);
@@ -460,7 +460,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t s
 		struct vnode *n = (struct vnode *) vlist_at(&destinations, i);
 
 		if (n->output_path)
-			throw ConfigError(cfg, "node-config-path", "Every node must only be used by a single path as destination");
+			throw ConfigError(json, "node-config-path", "Every node must only be used by a single path as destination");
 
 		n->output_path = p;
 
@@ -488,7 +488,7 @@ int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t s
 	if (ret)
 		return ret;
 
-	p->cfg = cfg;
+	p->config = json;
 	p->state = State::PARSED;
 
 	return 0;
@@ -764,7 +764,7 @@ bool path_is_simple(const struct vpath *p)
 	const char *in = nullptr, *out = nullptr;
 
 	json_error_t err;
-	ret = json_unpack_ex(p->cfg, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
+	ret = json_unpack_ex(p->config, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
 	if (ret)
 		return false;
 

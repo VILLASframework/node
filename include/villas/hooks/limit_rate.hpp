@@ -56,7 +56,7 @@ public:
 		deadtime = 1.0 / rate;
 	}
 
-	virtual void parse(json_t *cfg);
+	virtual void parse(json_t *json);
 
 	virtual Hook::Reason process(sample *smp);
 };

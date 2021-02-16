@@ -31,7 +31,7 @@
 #include <sys/resource.h>
 #include <sys/mman.h>
 
-#include <villas/log.h>
+#include <villas/log.hpp>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
@@ -39,12 +39,15 @@
 using namespace villas;
 
 static std::unordered_map<void *, struct memory_allocation *> allocations;
+static Logger logger;
 
 int memory_init(int hugepages)
 {
 	int ret;
 
-	info("Initialize memory sub-system: #hugepages=%d", hugepages);
+	logger = logging.get("memory");
+
+	logger->info("Initialize memory sub-system: #hugepages={}", hugepages);
 
 	ret = memory_mmap_init(hugepages);
 	if (ret < 0)
@@ -76,8 +79,8 @@ int memory_lock(size_t lock)
 	if (l.rlim_cur < lock) {
 		if (l.rlim_max < lock) {
 			if (getuid() != 0) {
-				warning("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
-				warning("   $ ulimit -Hl %zu", lock);
+				logger->warn("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
+				logger->warn("   $ ulimit -Hl {}", lock);
 
 				return 0;
 			}
@@ -91,7 +94,7 @@ int memory_lock(size_t lock)
 		if (ret)
 			return ret;
 
-		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
+		logger->debug("Increased ressource limit of locked memory to {} bytes", lock);
 	}
 
 #endif /* __arm__ */
@@ -116,13 +119,13 @@ void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m)
 {
 	struct memory_allocation *ma = m->alloc(len, alignment, m);
 	if (ma == nullptr) {
-		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno));
+		logger->warn("Memory allocation of type {} failed. reason={}", m->name, strerror(errno));
 		return nullptr;
 	}
 
 	allocations[ma->address] = ma;
 
-	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", ma->length, ma->alignment, ma->type->name, ma->address);
+	logger->debug("Allocated {:#x} bytes of {:#x}-byte-aligned {} memory: {}", ma->length, ma->alignment, ma->type->name, ma->address);
 
 	return ma->address;
 }
@@ -136,7 +139,7 @@ int memory_free(void *ptr)
 	if (!ma)
 		return -1;
 
-	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory: %p", ma->length, ma->type->name, ma->address);
+	logger->debug("Releasing {:#x} bytes of {} memory: {}", ma->length, ma->type->name, ma->address);
 
 	ret = ma->type->free(ma, ma->type);
 	if (ret)

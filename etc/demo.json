@@ -1,0 +1,37 @@
+{
+    "hugepages": 0,
+    "http": {
+        "htdocs": "/usr/share/villas/node/web"
+    },
+    "nodes": {
+        "sig": {
+            "type": "signal",
+            "signal": "mixed",
+            "values": 5,
+            "rate": 20
+        },
+        "ws_sig": {
+            "type": "websocket"
+        },
+        "ws_lo": {
+            "type": "websocket"
+        },
+        "lo": {
+            "type": "loopback"
+        }
+    },
+    "paths": [
+        {
+            "in": "sig",
+            "out": "ws_sig"
+        },
+        {
+            "in": "ws_lo",
+            "out": "lo"
+        },
+        {
+            "in": "lo",
+            "out": "ws_lo"
+        }
+    ]
+}

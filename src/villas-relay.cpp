@@ -28,7 +28,6 @@
 
 #include <cstring>
 
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <jansson.h>
 #include <unistd.h>
 
@@ -53,7 +52,8 @@ RelaySession::RelaySession(Relay *r, Identifier sid) :
 	identifier(sid),
 	connects(0)
 {
-	Logger logger = villas::logging.get("console");
+	auto loggerName = fmt::format("relay:{}", sid);
+	logger = villas::logging.get(loggerName);
 
 	logger->info("RelaySession created: {}", identifier);
 
@@ -66,8 +66,6 @@ RelaySession::RelaySession(Relay *r, Identifier sid) :
 
 RelaySession::~RelaySession()
 {
-	Logger logger = villas::logging.get("console");
-
 	logger->info("RelaySession destroyed: {}", identifier);
 
 	sessions.erase(identifier);
@@ -75,8 +73,6 @@ RelaySession::~RelaySession()
 
 RelaySession * RelaySession::get(Relay *r, lws *wsi)
 {
-	Logger logger = villas::logging.get("console");
-
 	char uri[64];
 
 	/* We use the URI to associate this connection to a session
@@ -100,6 +96,7 @@ RelaySession * RelaySession::get(Relay *r, lws *wsi)
 		return rs;
 	}
 	else {
+		auto logger = logging.get("villas-relay");
 		logger->info("Found existing session: {}", sid);
 
 		return it->second;
@@ -140,8 +137,6 @@ RelayConnection::RelayConnection(Relay *r, lws *w, bool lo) :
 	frames_sent(0),
 	loopback(lo)
 {
-	Logger logger = villas::logging.get("console");
-
 	session = RelaySession::get(r, wsi);
 	session->connections[wsi] = this;
 	session->connects++;
@@ -150,14 +145,12 @@ RelayConnection::RelayConnection(Relay *r, lws *w, bool lo) :
 
 	created = time(nullptr);
 
-	logger->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
+	session->logger->info("New connection established: {} ({})", name, ip);
 }
 
 RelayConnection::~RelayConnection()
 {
-	Logger logger = villas::logging.get("console");
-
-	logger->info("RelayConnection closed: session={}, remote={} ({})", session->identifier, name, ip);
+	session->logger->info("RelayConnection closed: {} ({})", name, ip);
 
 	session->connections.erase(wsi);
 
@@ -199,15 +192,13 @@ void RelayConnection::write()
 
 void RelayConnection::read(void *in, size_t len)
 {
-	Logger logger = villas::logging.get("console");
-
 	currentFrame->insert(currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
 
 	bytes_recv += len;
 
 	if (lws_is_final_fragment(wsi)) {
 		frames_recv++;
-		logger->debug("Received frame, relaying to {} connections", session->connections.size() - (loopback ? 0 : 1));
+		session->logger->debug("Received frame, relaying to {} connections", session->connections.size() - (loopback ? 0 : 1));
 
 		for (auto p : session->connections) {
 			auto c = p.second;
@@ -252,7 +243,6 @@ Relay::Relay(int argc, char *argv[]) :
 		throw RuntimeError("Failed to initialize memory");
 
 	/* Initialize logging */
-	spdlog::stdout_color_mt("lws");
 	lws_set_log_level((1 << LLL_COUNT) - 1, loggerCallback);
 
 	protocols = {
@@ -280,7 +270,7 @@ Relay::Relay(int argc, char *argv[]) :
 
 void Relay::loggerCallback(int level, const char *msg)
 {
-	auto log = spdlog::get("lws");
+	auto logger = logging.get("lws");
 
 	char *nl = (char *) strchr(msg, '\n');
 	if (nl)
@@ -292,19 +282,19 @@ void Relay::loggerCallback(int level, const char *msg)
 
 	switch (level) {
 		case LLL_ERR:
-			log->error("{}", msg);
+			logger->error("{}", msg);
 			break;
 
 		case LLL_WARN:
-			log->warn( "{}", msg);
+			logger->warn( "{}", msg);
 			break;
 
 		case LLL_INFO:
-			log->info( "{}", msg);
+			logger->info( "{}", msg);
 			break;
 
 		default:
-			log->debug("{}", msg);
+			logger->debug("{}", msg);
 			break;
 	}
 }
@@ -441,7 +431,7 @@ void Relay::parse()
 	while ((c = getopt (argc, argv, "hVp:P:ld:u:")) != -1) {
 		switch (c) {
 			case 'd':
-				spdlog::set_level(spdlog::level::from_str(optarg));
+				logging.setLevel(optarg);
 				break;
 
 			case 'p':
@@ -503,15 +493,17 @@ int Relay::main() {
 	ctx_info.mounts = &mount;
 	ctx_info.user = (void *) this;
 
+	auto lwsLogger = logging.get("lws");
+
 	context = lws_create_context(&ctx_info);
 	if (context == nullptr) {
-		logger->error("WebSocket: failed to initialize server context");
+		lwsLogger->error("Failed to initialize server context");
 		exit(EXIT_FAILURE);
 	}
 
 	vhost = lws_create_vhost(context, &ctx_info);
 	if (vhost == nullptr) {
-		logger->error("WebSocket: failed to initialize virtual host");
+		lwsLogger->error("Failed to initialize virtual host");
 		exit(EXIT_FAILURE);
 	}
 

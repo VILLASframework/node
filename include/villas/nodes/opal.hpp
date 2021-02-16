@@ -65,7 +65,7 @@ int opal_register_region(int argc, char *argv[]);
 int opal_type_stop();
 
 /** @see node_type::parse */
-int opal_parse(struct vnode *n, json_t *cfg);
+int opal_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::print */
 char * opal_print(struct vnode *n);

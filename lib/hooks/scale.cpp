@@ -69,7 +69,7 @@ public:
 			free(signal_name);
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 		json_t *json_signal;
@@ -77,15 +77,15 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F, s: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F, s: o }",
 			"scale", &scale,
 			"offset", &offset,
 			"signal", &json_signal
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-scale");
+			throw ConfigError(json, err, "node-config-hook-scale");
 
 		switch (json_typeof(json_signal)) {
 			case JSON_STRING:

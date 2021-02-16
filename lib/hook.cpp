@@ -46,7 +46,7 @@ Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
 	enabled(en),
 	path(p),
 	node(n),
-	cfg(nullptr)
+	config(nullptr)
 {
 	int ret;
 
@@ -80,21 +80,21 @@ void Hook::prepare(struct vlist *sigs)
 	state = State::PREPARED;
 }
 
-void Hook::parse(json_t *c)
+void Hook::parse(json_t *json)
 {
 	int ret;
 	json_error_t err;
 
 	assert(state != State::STARTED);
 
-	ret = json_unpack_ex(c, &err, 0, "{ s?: i, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }",
 		"priority", &priority,
 		"enabled", &enabled
 	);
 	if (ret)
-		throw ConfigError(c, err, "node-config-hook");
+		throw ConfigError(json, err, "node-config-hook");
 
-	cfg = c;
+	config = json;
 
 	state = State::PARSED;
 }

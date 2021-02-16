@@ -29,6 +29,8 @@
 #include <villas/node/config.h>
 #include <villas/plugin.h>
 
+using namespace villas;
+
 int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn)
 {
 	int ret;
@@ -36,7 +38,8 @@ int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn)
 	if (vt->state == State::STARTED)
 		return 0;
 
-	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), vlist_length(&vt->instances));
+	auto logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
+	logger->info("Initializing node type which is used by {} nodes", vlist_length(&vt->instances));
 
 	ret = vt->type.start ? vt->type.start(sn) : 0;
 	if (ret == 0)
@@ -52,7 +55,8 @@ int node_type_stop(struct vnode_type *vt)
 	if (vt->state != State::STARTED)
 		return 0;
 
-	info("De-initializing " CLR_YEL("%s") " node type", node_type_name(vt));
+	auto logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
+	logger->info("De-initializing node type");
 
 	ret = vt->type.stop ? vt->type.stop() : 0;
 	if (ret == 0)

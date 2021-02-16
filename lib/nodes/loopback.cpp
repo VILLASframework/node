@@ -44,7 +44,7 @@ int loopback_init(struct vnode *n)
 	return 0;
 }
 
-int loopback_parse(struct vnode *n, json_t *cfg)
+int loopback_parse(struct vnode *n, json_t *json)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 	const char *mode_str = nullptr;
@@ -52,12 +52,12 @@ int loopback_parse(struct vnode *n, json_t *cfg)
 	json_error_t err;
 	int ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
 		"queuelen", &l->queuelen,
 		"mode", &mode_str
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-loopback");
 
 	if (mode_str) {
 		if (!strcmp(mode_str, "auto"))
@@ -75,7 +75,7 @@ int loopback_parse(struct vnode *n, json_t *cfg)
 			l->mode = QueueSignalledMode::PIPE;
 #endif /* __APPLE__ */
 		else
-			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
+			throw ConfigError(json, "node-config-node-loopback-mode", "Unknown mode '{}'", mode_str);
 	}
 
 	return 0;

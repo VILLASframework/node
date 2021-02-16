@@ -62,18 +62,22 @@ protected:
 	struct io *io;
 
 	std::thread thread;
+	Logger logger;
 
 	bool stop;
 	bool enabled;
 	int limit;
 public:
-	PipeDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
+	PipeDirection(struct vnode *n, struct io *i, bool en, int lim, const std::string &name) :
 		node(n),
 		io(i),
 		stop(false),
 		enabled(en),
 		limit(lim)
 	{
+		auto loggerName = fmt::format("pipe:{}", name);
+		logger = logging.get(loggerName);
+
 		/* Initialize memory */
 		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
 		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : vec;
@@ -117,13 +121,11 @@ class PipeSendDirection : public PipeDirection {
 
 public:
 	PipeSendDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
-		PipeDirection(n, i, en, lim)
+		PipeDirection(n, i, en, lim, "send")
 	{ }
 
 	virtual void run()
 	{
-		Logger logger = logging.get("pipe:send");
-
 		unsigned last_sequenceno = 0, release;
 		int scanned, sent, allocated, cnt = 0;
 
@@ -189,13 +191,11 @@ class PipeReceiveDirection : public PipeDirection {
 
 public:
 	PipeReceiveDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
-		PipeDirection(n, i, en, lim)
+		PipeDirection(n, i, en, lim, "recv")
 	{ }
 
 	virtual void run()
 	{
-		Logger logger = logging.get("pipe:recv");
-
 		int recv, cnt = 0, allocated = 0;
 		unsigned release;
 		struct sample *smps[node->in.vectorize];
@@ -248,7 +248,7 @@ public:
 		reverse(false),
 		format("villas.human"),
 		dtypes("64f"),
-		cfg_cli(json_object()),
+		config_cli(json_object()),
 		enable_send(true),
 		enable_recv(true),
 		limit_send(-1),
@@ -263,7 +263,7 @@ public:
 
 	~Pipe()
 	{
-		json_decref(cfg_cli);
+		json_decref(config_cli);
 	}
 
 protected:
@@ -279,7 +279,7 @@ protected:
 	std::string uri;
 	std::string nodestr;
 
-	json_t *cfg_cli;
+	json_t *config_cli;
 
 	bool enable_send;
 	bool enable_recv;
@@ -369,7 +369,7 @@ protected:
 					goto check;
 
 				case 'o':
-					ret = json_object_extend_str(cfg_cli, optarg);
+					ret = json_object_extend_str(config_cli, optarg);
 					if (ret)
 						throw RuntimeError("Invalid option: {}", optarg);
 					break;
@@ -458,7 +458,7 @@ check:			if (optarg == endptr)
 
 		ret = node_prepare(node);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(node), ret);
 
 		ret = node_start(node);
 		if (ret)

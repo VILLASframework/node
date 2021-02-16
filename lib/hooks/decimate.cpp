@@ -38,20 +38,20 @@ void DecimateHook::start()
 	state = State::STARTED;
 }
 
-void DecimateHook::parse(json_t *cfg)
+void DecimateHook::parse(json_t *json)
 {
 	int ret;
 	json_error_t err;
 
 	assert(state != State::STARTED);
 
-	Hook::parse(cfg);
+	Hook::parse(json);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: i }",
 		"ratio", &ratio
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-hook-decimate");
+		throw ConfigError(json, err, "node-config-hook-decimate");
 
 	state = State::PARSED;
 }

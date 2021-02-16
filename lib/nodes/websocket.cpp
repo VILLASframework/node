@@ -45,6 +45,7 @@ using namespace villas::utils;
 static struct vlist connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 static villas::node::Web *web;
+static villas::Logger logger = logging.get("websocket");
 
 /* Forward declarations */
 static struct plugin p;
@@ -148,11 +149,11 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
 	if (pushed < (int) cnt)
-		warning("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
+		c->node->logger->warn("Queue overrun in WebSocket connection: {}", websocket_connection_name(c));
 
 	sample_incref_many(smps, pushed);
 
-	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
+	c->node->logger->debug("Enqueued {} samples to {}", pushed, websocket_connection_name(c));
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
 	if (c->wsi)
@@ -165,7 +166,7 @@ static void websocket_connection_close(struct websocket_connection *c, struct lw
 {
 	lws_close_reason(wsi, status, (unsigned char *) reason, strlen(reason));
 
-	debug(LOG_WEBSOCKET | 10, "Closing WebSocket connection with %s: status=%u, reason=%s", websocket_connection_name(c), status, reason);
+	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", websocket_connection_name(c), status, reason);
 }
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
@@ -198,14 +199,16 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
 				if (strlen(uri) <= 0) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid URL");
-					warning("Failed to get request URI");
+
+					logger->warn("Failed to get request URI");
+
 					return -1;
 				}
 
 				node = strtok_r(uri, "/.", &lasts);
 				if (!node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
-					warning("Failed to tokenize request URI");
+					logger->warn("Failed to tokenize request URI");
 					return -1;
 				}
 
@@ -217,14 +220,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				c->node = vlist_lookup_name<struct vnode>(&p.node.instances, node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
-					warning("Failed to find node: node=%s", node);
+					logger->warn("Failed to find node: {}", node);
 					return -1;
 				}
 
 				c->format = format_type_lookup(format);
 				if (!c->format) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown format");
-					warning("Failed to find format: format=%s", format);
+					c->node->logger->warn("Failed to find format: format={}", format);
 					return -1;
 				}
 			}
@@ -232,25 +235,25 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			ret = websocket_connection_init(c);
 			if (ret) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Internal error");
-				warning("Failed to intialize WebSocket connection: reason=%d", ret);
+				c->node->logger->warn("Failed to intialize WebSocket connection: reason={}", ret);
 				return -1;
 			}
 
 			vlist_push(&connections, c);
 
-			info("Established WebSocket connection: %s", websocket_connection_name(c));
+			c->node->logger->info("Established WebSocket connection: {}", websocket_connection_name(c));
 
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			c->state = websocket_connection::State::ERROR;
 
-			warning("Failed to establish WebSocket connection: reason=%s", in ? (char *) in : "unknown");
+			logger->warn("Failed to establish WebSocket connection: reason={}", in ? (char *) in : "unknown");
 
 			return -1;
 
 		case LWS_CALLBACK_CLOSED:
-			debug(LOG_WEBSOCKET | 10, "Closed WebSocket connection: %s", websocket_connection_name(c));
+			c->node->logger->debug("Closed WebSocket connection: {}", websocket_connection_name(c));
 
 			if (c->state != websocket_connection::State::SHUTDOWN) {
 				/** @todo Attempt reconnect here */
@@ -283,7 +286,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (ret < 0)
 					return ret;
 
-				debug(LOG_WEBSOCKET | 10, "Send %d samples to connection: %s, bytes=%d", pulled, websocket_connection_name(c), ret);
+				c->node->logger->debug("Send {} samples to connection: {}, bytes={}", pulled, websocket_connection_name(c), ret);
 			}
 
 			if (queue_available(&c->queue) > 0)
@@ -314,15 +317,15 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
-					warning("Pool underrun for connection: %s", websocket_connection_name(c));
+					c->node->logger->warn("Pool underrun for connection: {}", websocket_connection_name(c));
 
 				recvd = io_sscan(&c->io, c->buffers.recv->data(), c->buffers.recv->size(), nullptr, smps, avail);
 				if (recvd < 0) {
-					warning("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
+					c->node->logger->warn("Failed to parse sample data received on connection: {}", websocket_connection_name(c));
 					break;
 				}
 
-				debug(LOG_WEBSOCKET | 10, "Received %d samples from connection: %s", recvd, websocket_connection_name(c));
+				c->node->logger->debug("Received {} samples from connection: {}", recvd, websocket_connection_name(c));
 
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
@@ -332,7 +335,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					warning("Queue overrun in connection: %s", websocket_connection_name(c));
+					c->node->logger->warn("Queue overrun in connection: {}", websocket_connection_name(c));
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
@@ -440,7 +443,7 @@ int websocket_stop(struct vnode *n)
 	}
 
 	if (open_connections > 0) {
-		info("Waiting for shutdown of %u connections...", open_connections);
+		n->logger->info("Waiting for shutdown of {} connections...", open_connections);
 		sleep(1);
 	}
 
@@ -498,7 +501,7 @@ int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsign
 	/* Make copies of all samples */
 	avail = sample_alloc_many(&w->pool, cpys, cnt);
 	if (avail < (int) cnt)
-		warning("Pool underrun for node %s: avail=%u", node_name(n), avail);
+		n->logger->warn("Pool underrun: avail={}", avail);
 
 	sample_copy_many(cpys, smps, avail);
 
@@ -514,7 +517,7 @@ int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsign
 	return cnt;
 }
 
-int websocket_parse(struct vnode *n, json_t *cfg)
+int websocket_parse(struct vnode *n, json_t *json)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
@@ -528,20 +531,20 @@ int websocket_parse(struct vnode *n, json_t *cfg)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &json_dests);
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o }", "destinations", &json_dests);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-websocket");
 
 	if (json_dests) {
 		if (!json_is_array(json_dests))
-			error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
+			throw ConfigError(json_dests, err, "node-config-node-websocket-destinations", "The 'destinations' setting must be an array of URLs");
 
 		json_array_foreach(json_dests, i, json_dest) {
 			const char *uri, *prot, *ads, *path;
 
 			uri = json_string_value(json_dest);
 			if (!uri)
-				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
+				throw ConfigError(json_dest, err, "node-config-node-websocket-destinations", "The 'destinations' setting must be an array of URLs");
 
 			auto *d = new struct websocket_destination;
 			if (!d)
@@ -553,7 +556,7 @@ int websocket_parse(struct vnode *n, json_t *cfg)
 
 			ret = lws_parse_uri(d->uri, &prot, &ads, &d->info.port, &path);
 			if (ret)
-				error("Failed to parse WebSocket URI: '%s'", uri);
+				throw ConfigError(json_dest, err, "node-config-node-websocket-destinations", "Failed to parse WebSocket URI: '{}'", uri);
 
 			d->info.ssl_connection = !strcmp(prot, "https");
 			d->info.address = strdup(ads);

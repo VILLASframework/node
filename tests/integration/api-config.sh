@@ -43,7 +43,7 @@ EOF
 
 ID=$(uuidgen)
 
-# Start VILLASnode instance with local config (via advio)
+# Start VILLASnode instance with local config
 villas-node ${CONFIG_FILE} &
 
 # Wait for node to complete init

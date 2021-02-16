@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <villas/advio.hpp>
 #include <villas/common.hpp>
 #include <villas/node.h>
 #include <villas/signal.h>
@@ -43,7 +42,6 @@ enum class IOFlags {
 
 enum class IOMode {
 	STDIO,
-	ADVIO,
 	CUSTOM
 };
 
@@ -58,10 +56,7 @@ struct io {
 		 * format::{open,close,eof,rewind} functions and the private
 		 * data in io::_vd.
 		 */
-		union {
-			FILE *std;
-			AFILE *adv;
-		} stream;
+		FILE *stream;
 
 		char *buffer;
 		size_t buflen;

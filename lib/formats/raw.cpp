@@ -56,7 +56,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 	int o = 0;
 	size_t nlen;
 
-	void *vbuf = (char *) buf;  // avoid warning about invalid pointer cast
+	void *vbuf = (char *) buf;  /* Avoid warning about invalid pointer cast */
 
 	int8_t     *i8  =  (int8_t *) vbuf;
 	int16_t    *i16 =  (int16_t *) vbuf;
@@ -249,7 +249,7 @@ out:	if (wbytes)
 
 int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
-	void *vbuf = (void *) buf; // avoid warning about invalid pointer cast
+	void *vbuf = (void *) buf; /* Avoid warning about invalid pointer cast */
 
 	int8_t     *i8  =  (int8_t *)  vbuf;
 	int16_t    *i16 =  (int16_t *) vbuf;
@@ -272,16 +272,12 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 	if (cnt > 1)
 		return -1;
 
-	if (len % (bits / 8)) {
-		warning("Invalid RAW Payload length: %#zx", len);
-		return -1;
-	}
+	if (len % (bits / 8))
+		return -1; /* Invalid RAW Payload length */
 
 	if (io->flags & RAW_FAKE_HEADER) {
-		if (nlen < o + 3) {
-			warning("Received a packet with no fake header. Skipping...");
-			return -1;
-		}
+		if (nlen < o + 3)
+			return -1; /* Received a packet with no fake header. Skipping... */
 
 		switch (bits) {
 			case 8:
@@ -397,17 +393,14 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				break;
 
 			case SignalType::INVALID:
-				warning("Unsupported format in RAW payload");
-				return -1;
+				return -1; /* Unsupported format in RAW payload */
 		}
 	}
 
 	smp->length = i;
 
-	if (smp->length > smp->capacity) {
-		warning("Received more values than supported: length=%u, capacity=%u", smp->length, smp->capacity);
-		smp->length = smp->capacity;
-	}
+	if (smp->length > smp->capacity)
+		smp->length = smp->capacity; /* Received more values than supported */
 
 	if (rbytes)
 		*rbytes = o * (bits / 8);

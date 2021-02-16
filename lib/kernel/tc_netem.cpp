@@ -95,7 +95,7 @@ static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 	return 0;
 }
 
-int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
+int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json)
 {
 	int ret, val;
 
@@ -110,7 +110,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o }",
 		"distribution", &json_delay_distribution,
 		"correlation", &json_delay_correlation,
 		"limit", &json_limit,
@@ -121,7 +121,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		"corruption", &json_corruption
 	);
 	if (ret)
-		jerror(&err, "Failed to parse setting network emulation settings");
+		throw ConfigError(json, err, "node-config-netem", "Failed to parse setting network emulation settings");
 
 	struct rtnl_qdisc *ne = rtnl_qdisc_alloc();
 	if (!ne)
@@ -131,14 +131,14 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 
 	if (json_delay_distribution) {
 		if (set_delay_distribution(ne, json_delay_distribution))
-			error("Invalid delay distribution in netem config");
+			throw ConfigError(json_delay_distribution, "Invalid delay distribution in netem config");
 	}
 
 	if (json_delay_correlation) {
 		double dval = json_number_value(json_delay_correlation);
 
 		if (!json_is_number(json_delay_correlation) || dval < 0 || dval > 100)
-			error("Setting 'correlation' must be a positive integer within the range [ 0, 100 ]");
+			throw ConfigError(json_delay_correlation, "Setting 'correlation' must be a positive integer within the range [ 0, 100 ]");
 
 		unsigned *pval = (unsigned *) &val;
 		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
@@ -152,7 +152,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		val = json_integer_value(json_limit);
 
 		if (!json_is_integer(json_limit) || val <= 0)
-			error("Setting 'limit' must be a positive integer");
+			throw ConfigError(json_limit, "Setting 'limit' must be a positive integer");
 
 		rtnl_netem_set_limit(ne, val);
 	}
@@ -163,7 +163,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		val = json_integer_value(json_delay);
 
 		if (!json_is_integer(json_delay) || val <= 0)
-			error("Setting 'delay' must be a positive integer");
+			throw ConfigError(json_delay, "Setting 'delay' must be a positive integer");
 
 		rtnl_netem_set_delay(ne, val);
 	}
@@ -172,7 +172,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		val = json_integer_value(json_jitter);
 
 		if (!json_is_integer(json_jitter) || val <= 0)
-			error("Setting 'jitter' must be a positive integer");
+			throw ConfigError(json_jitter, "Setting 'jitter' must be a positive integer");
 
 		rtnl_netem_set_jitter(ne, val);
 	}
@@ -181,7 +181,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		double dval = json_number_value(json_loss);
 
 		if (!json_is_number(json_loss) || dval < 0 || dval > 100)
-			error("Setting 'loss' must be a positive integer within the range [ 0, 100 ]");
+			throw ConfigError(json_loss, "Setting 'loss' must be a positive integer within the range [ 0, 100 ]");
 
 		unsigned *pval = (unsigned *) &val;
 		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
@@ -193,7 +193,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		double dval = json_number_value(json_duplicate);
 
 		if (!json_is_number(json_duplicate) || dval < 0 || dval > 100)
-			error("Setting 'duplicate' must be a positive integer within the range [ 0, 100 ]");
+			throw ConfigError(json_duplicate, "Setting 'duplicate' must be a positive integer within the range [ 0, 100 ]");
 
 		unsigned *pval = (unsigned *) &val;
 		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
@@ -205,7 +205,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		double dval = json_number_value(json_corruption);
 
 		if (!json_is_number(json_corruption) || dval < 0 || dval > 100)
-			error("Setting 'corruption' must be a positive integer within the range [ 0, 100 ]");
+			throw ConfigError(json_corruption, "Setting 'corruption' must be a positive integer within the range [ 0, 100 ]");
 
 		unsigned *pval = (unsigned *) &val;
 		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
@@ -275,7 +275,7 @@ int villas::kernel::tc::netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t han
 
 	ret = kernel::module_load("sch_netem");
 	if (ret)
-		error("Failed to load kernel module: sch_netem (%d)", ret);
+		throw RuntimeError("Failed to load kernel module: sch_netem ({})", ret);
 
 	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
 	rtnl_tc_set_parent(TC_CAST(q), parent);
@@ -286,7 +286,8 @@ int villas::kernel::tc::netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t han
 
 	*qd = q;
 
-	debug(LOG_TC | 3, "Added netem qdisc to interface '%s'", rtnl_link_get_name(i->nl_link));
+	auto logger = logging.get("kernel");
+	logger->debug("Added netem qdisc to interface '{}'", rtnl_link_get_name(i->nl_link));
 
 	return ret;
 }

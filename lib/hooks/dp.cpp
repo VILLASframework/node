@@ -159,18 +159,18 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
 		json_t *json_harmonics, *json_harmonic, *json_signal;
 		size_t i;
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
 		double rate = -1, dt = -1;
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s: F, s?: F, s?: F, s: o, s?: b }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: o, s: F, s?: F, s?: F, s: o, s?: b }",
 			"signal", &json_signal,
 			"f0", &f0,
 			"dt", &dt,
@@ -179,14 +179,14 @@ public:
 			"inverse", &inverse
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-dp");
+			throw ConfigError(json, err, "node-config-hook-dp");
 
 		if (rate > 0)
 			timestep = 1. / rate;
 		else if (dt > 0)
 			timestep = dt;
 		else
-			throw ConfigError(cfg, "node-config-hook-dp", "Either on of the settings 'dt' or 'rate' must be given");
+			throw ConfigError(json, "node-config-hook-dp", "Either on of the settings 'dt' or 'rate' must be given");
 
 		if (!json_is_array(json_harmonics))
 			throw ConfigError(json_harmonics, "node-config-hook-dp-harmonics", "Setting 'harmonics' must be a list of integers");

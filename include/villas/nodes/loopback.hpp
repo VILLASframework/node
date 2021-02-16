@@ -49,7 +49,7 @@ struct loopback {
 char * loopback_print(struct vnode *n);
 
 /** @see node_type::parse */
-int loopback_parse(struct vnode *n, json_t *cfg);
+int loopback_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int loopback_open(struct vnode *n);

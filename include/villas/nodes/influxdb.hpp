@@ -52,7 +52,7 @@ struct influxdb {
 char * influxdb_print(struct vnode *n);
 
 /** @see node_type::parse */
-int influxdb_parse(struct vnode *n, json_t *cfg);
+int influxdb_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int influxdb_open(struct vnode *n);

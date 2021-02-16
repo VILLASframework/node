@@ -28,7 +28,9 @@
 #include <villas/nodes/nanomsg.hpp>
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int nanomsg_reverse(struct vnode *n)
@@ -48,16 +50,16 @@ int nanomsg_reverse(struct vnode *n)
 	return 0;
 }
 
-static int nanomsg_parse_endpoints(struct vlist *l, json_t *cfg)
+static int nanomsg_parse_endpoints(struct vlist *l, json_t *json)
 {
 	const char *ep;
 
 	size_t i;
 	json_t *json_val;
 
-	switch (json_typeof(cfg)) {
+	switch (json_typeof(json)) {
 		case JSON_ARRAY:
-			json_array_foreach(cfg, i, json_val) {
+			json_array_foreach(json, i, json_val) {
 				ep = json_string_value(json_val);
 				if (!ep)
 					return -1;
@@ -67,7 +69,7 @@ static int nanomsg_parse_endpoints(struct vlist *l, json_t *cfg)
 			break;
 
 		case JSON_STRING:
-			ep = json_string_value(cfg);
+			ep = json_string_value(json);
 
 			vlist_push(l, strdup(ep));
 			break;
@@ -79,7 +81,7 @@ static int nanomsg_parse_endpoints(struct vlist *l, json_t *cfg)
 	return 0;
 }
 
-int nanomsg_parse(struct vnode *n, json_t *cfg)
+int nanomsg_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -99,7 +101,7 @@ int nanomsg_parse(struct vnode *n, json_t *cfg)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: { s?: o }, s?: { s?: o } }",
 		"format", &format,
 		"out",
 			"endpoints", &json_out_endpoints,
@@ -107,23 +109,23 @@ int nanomsg_parse(struct vnode *n, json_t *cfg)
 			"endpoints", &json_in_endpoints
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-nanomsg");
 
 	if (json_out_endpoints) {
 		ret = nanomsg_parse_endpoints(&m->out.endpoints, json_out_endpoints);
 		if (ret < 0)
-			error("Invalid type for 'publish' setting of node %s", node_name(n));
+			throw RuntimeError("Invalid type for 'publish' setting");
 	}
 
 	if (json_in_endpoints) {
 		ret = nanomsg_parse_endpoints(&m->in.endpoints, json_in_endpoints);
 		if (ret < 0)
-			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
+			throw RuntimeError("Invalid type for 'subscribe' setting");
 	}
 
 	m->format = format_type_lookup(format);
 	if (!m->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		throw RuntimeError("Invalid format '{}'", format);
 
 	return 0;
 }
@@ -165,16 +167,12 @@ int nanomsg_start(struct vnode *n)
 		return ret;
 
 	ret = m->in.socket = nn_socket(AF_SP, NN_SUB);
-	if (ret < 0) {
-		warning("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
-		return ret;
-	}
+	if (ret < 0)
+		throw RuntimeError("Failed to create nanomsg socket: {}", nn_strerror(errno));
 
 	ret = m->out.socket = nn_socket(AF_SP, NN_PUB);
-	if (ret < 0) {
-		warning("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
-		return ret;
-	}
+	if (ret < 0)
+		throw RuntimeError("Failed to create nanomsg socket: {}", nn_strerror(errno));
 
 	/* Subscribe to all topics */
 	ret = nn_setsockopt(ret = m->in.socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
@@ -186,10 +184,8 @@ int nanomsg_start(struct vnode *n)
 		char *ep = (char *) vlist_at(&m->out.endpoints, i);
 
 		ret = nn_bind(m->out.socket, ep);
-		if (ret < 0) {
-			warning("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
-			return ret;
-		}
+		if (ret < 0)
+			throw RuntimeError("Failed to connect nanomsg socket to endpoint {}: {}", ep, nn_strerror(errno));
 	}
 
 	/* Connect subscribers socket */
@@ -197,10 +193,8 @@ int nanomsg_start(struct vnode *n)
 		char *ep = (char *) vlist_at(&m->in.endpoints, i);
 
 		ret = nn_connect(m->in.socket, ep);
-		if (ret < 0) {
-			warning("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
-			return ret;
-		}
+		if (ret < 0)
+			throw RuntimeError("Failed to connect nanomsg socket to endpoint {}: {}", ep, nn_strerror(errno));
 	}
 
 	return 0;

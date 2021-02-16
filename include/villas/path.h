@@ -90,7 +90,7 @@ struct vpath {
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 
 	pthread_t tid;			/**< The thread id for this path. */
-	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
+	json_t *config;			/**< A JSON object containing the configuration of the path. */
 
 	villas::Logger logger;
 
@@ -151,13 +151,13 @@ int path_reverse(struct vpath *p, struct vpath *r);
 
 /** Parse a single path and add it to the global configuration.
  *
- * @param cfg A JSON object containing the configuration of the path.
+ * @param json A JSON object containing the configuration of the path.
  * @param p Pointer to the allocated memory for this path
  * @param nodes A linked list of all existing nodes
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct vpath *p, json_t *cfg, struct vlist *nodes, const uuid_t sn_uuid);
+int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t sn_uuid);
 
 void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes);
 

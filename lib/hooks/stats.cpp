@@ -27,7 +27,6 @@
 #include <memory>
 
 #include <villas/common.hpp>
-#include <villas/advio.hpp>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/stats.hpp>
@@ -109,7 +108,7 @@ protected:
 
 	std::shared_ptr<Stats> stats;
 
-	AFILE *output;
+	FILE *output;
 	std::string uri;
 
 public:
@@ -144,7 +143,7 @@ public:
 		assert(state == State::PREPARED);
 
 		if (!uri.empty()) {
-			output = afopen(uri.c_str(), "w+");
+			output = fopen(uri.c_str(), "w+");
 			if (!output)
 				throw RuntimeError("Failed to open file '{}' for writing", uri);
 		}
@@ -156,10 +155,10 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		stats->print(uri.empty() ? stdout : output->file, format, verbose);
+		stats->print(uri.empty() ? stdout : output, format, verbose);
 
 		if (!uri.empty())
-			afclose(output);
+			fclose(output);
 
 		state = State::STOPPED;
 	}
@@ -184,22 +183,22 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		stats->printPeriodic(uri.empty() ? stdout : output->file, format, node);
+		stats->printPeriodic(uri.empty() ? stdout : output, format, node);
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
 		const char *f = nullptr;
 		const char *u = nullptr;
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: s }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: s }",
 			"format", &f,
 			"verbose", &verbose,
 			"warmup", &warmup,
@@ -207,13 +206,13 @@ public:
 			"output", &u
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-stats");
+			throw ConfigError(json, err, "node-config-hook-stats");
 
 		if (f) {
 			try {
 				format = Stats::lookupFormat(f);
 			} catch (const std::invalid_argument &e) {
-				throw ConfigError(cfg, "node-config-hook-stats", "Invalid statistic output format: {}", f);
+				throw ConfigError(json, "node-config-hook-stats", "Invalid statistic output format: {}", f);
 			}
 		}
 

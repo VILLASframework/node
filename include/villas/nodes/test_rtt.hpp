@@ -45,6 +45,8 @@ struct test_rtt_case {
 
 	char *filename;
 	char *filename_formatted;
+
+	struct vnode *node;
 };
 
 struct test_rtt {
@@ -67,7 +69,7 @@ struct test_rtt {
 char * test_rtt_print(struct vnode *n);
 
 /** @see node_type::parse */
-int test_rtt_parse(struct vnode *n, json_t *cfg);
+int test_rtt_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int test_rtt_start(struct vnode *n);

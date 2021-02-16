@@ -43,7 +43,7 @@ int stats_node_signal_destroy(struct stats_node_signal *s)
 	return 0;
 }
 
-int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
+int stats_node_signal_parse(struct stats_node_signal *s, json_t *json)
 {
 	json_error_t err;
 
@@ -51,11 +51,11 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
 	const char *stats;
 	char *metric, *type, *node, *cpy, *lasts;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s }",
 		"stats", &stats
 	);
 	if (ret)
-		return -1;
+		throw ConfigError(json, err, "node-config-node-stats");
 
 	cpy = strdup(stats);
 
@@ -128,7 +128,7 @@ int stats_node_start(struct vnode *n)
 
 		stats_sig->node = vlist_lookup_name<struct vnode>(nodes, stats_sig->node_str);
 		if (!stats_sig->node)
-			error("Invalid reference node %s for setting 'node' of node %s", stats_sig->node_str, node_name(n));
+			throw ConfigError(n->config, "node-config-node-stats-node", "Invalid reference node {}", stats_sig->node_str);
 	}
 
 	return 0;
@@ -178,7 +178,7 @@ int stats_node_destroy(struct vnode *n)
 	return 0;
 }
 
-int stats_node_parse(struct vnode *n, json_t *cfg)
+int stats_node_parse(struct vnode *n, json_t *json)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
@@ -187,19 +187,19 @@ int stats_node_parse(struct vnode *n, json_t *cfg)
 	json_error_t err;
 	json_t *json_signals, *json_signal;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: { s: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: F, s: { s: o } }",
 		"rate", &s->rate,
 		"in",
 			"signals", &json_signals
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-stats");
 
 	if (s->rate <= 0)
-		error("Setting 'rate' of node %s must be positive", node_name(n));
+		throw ConfigError(json, "node-config-node-stats-rate", "Setting 'rate' must be positive");
 
 	if (!json_is_array(json_signals))
-		error("Setting 'in.signals' of node %s must be an array", node_name(n));
+		throw ConfigError(json, "node-config-node-stats-in-signals", "Setting 'in.signals' must be an array");
 
 	json_array_foreach(json_signals, i, json_signal) {
 		auto *stats_sig = new struct stats_node_signal;
@@ -208,7 +208,7 @@ int stats_node_parse(struct vnode *n, json_t *cfg)
 
 		ret = stats_node_signal_parse(stats_sig, json_signal);
 		if (ret)
-			error("Failed to parse statistics signal definition of node %s", node_name(n));
+			throw ConfigError(json_signal, "node-config-node-stats-signals", "Failed to parse statistics signal definition");
 
 		vlist_push(&s->signals, stats_sig);
 	}

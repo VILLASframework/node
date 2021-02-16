@@ -71,7 +71,7 @@ public:
 		startSequence(0)
 	{ }
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 
@@ -82,9 +82,9 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: F, s?: F, s?: i, s?: s }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: F, s?: F, s?: i, s?: s }",
 			"signal", &json_signal,
 			"threshold", &threshold,
 			"duration", &duration,
@@ -92,7 +92,7 @@ public:
 			"mode", &mode_str
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-gate");
+			throw ConfigError(json, err, "node-config-hook-gate");
 
 		if (mode_str) {
 			if      (!strcmp(mode_str, "above"))

@@ -31,6 +31,7 @@
 #include <villas/list.h>
 #include <villas/common.hpp>
 #include <villas/memory.h>
+#include <villas/log.hpp>
 
 /* Forward declarations */
 struct vnode;
@@ -103,11 +104,11 @@ struct vnode_type {
 	 * This callback is optional. It will only be called if non-null.
 	 *
 	 * @param n	A pointer to the node object.
-	 * @param cfg	A JSON object containing the configuration of the node.
+	 * @param json	A JSON object containing the configuration of the node.
 	 * @retval 0 	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*parse)(struct vnode *n, json_t *cfg);
+	int (*parse)(struct vnode *n, json_t *json);
 
 	/** Check the current node configuration for plausability and errors.
 	 *

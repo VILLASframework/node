@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <villas/log.hpp>
+
 #include <string>
 
 namespace villas {
@@ -35,6 +37,7 @@ protected:
 	std::string socketName;
 	bool supressRepeatedWarning;
 	uint64_t warningCounter;
+	Logger logger;
 
 public:
 	Dumper(const std::string &socketNameIn);

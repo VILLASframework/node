@@ -24,11 +24,14 @@
 #include <villas/utils.hpp>
 #include <villas/sample.h>
 #include <villas/plugin.h>
+#include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
+#include <villas/exceptions.hpp>
 
 /* Forward declartions */
 static struct plugin p;
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -70,7 +73,7 @@ int example_destroy(struct vnode *n)
 	return 0;
 }
 
-int example_parse(struct vnode *n, json_t *cfg)
+int example_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct example *s = (struct example *) n->_vd;
@@ -79,12 +82,12 @@ int example_parse(struct vnode *n, json_t *cfg)
 
 	/* TODO: Add implementation here. The following is just an example */
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
 		"setting1", &s->setting1,
 		"setting2", &s->setting2
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-example");
 
 	return 0;
 }

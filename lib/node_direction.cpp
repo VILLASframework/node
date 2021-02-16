@@ -94,7 +94,7 @@ int node_direction_destroy(struct vnode_direction *nd, struct vnode *n)
 	return 0;
 }
 
-int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cfg)
+int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *json)
 {
 	int ret;
 
@@ -104,9 +104,9 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 	json_t *json_hooks = nullptr;
 	json_t *json_signals = nullptr;
 
-	nd->cfg = cfg;
+	nd->config = json;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
 		"hooks", &json_hooks,
 		"signals", &json_signals,
 		"vectorize", &nd->vectorize,
@@ -114,7 +114,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 		"enabled", &nd->enabled
 	);
 	if (ret)
-		jerror(&err, "Failed to parse node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-in");
 
 	if (n->_vt->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
 		/* Do nothing.. Node-type will provide signals */
@@ -122,7 +122,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 	else if (json_is_array(json_signals)) {
 		ret = signal_list_parse(&nd->signals, json_signals);
 		if (ret)
-			error("Failed to parse signal definition of node %s", node_name(n));
+			throw ConfigError(json_signals, "node-config-node-signals", "Failed to parse signal definition");
 	}
 	else if (json_is_string(json_signals)) {
 		const char *dt = json_string_value(json_signals);
@@ -146,7 +146,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *cf
 
 		enum SignalType type = signal_type_from_str(type_str);
 		if (type == SignalType::INVALID)
-			error("Invalid signal type %s", type_str);
+			throw ConfigError(json_signals, "node-config-node-signals", "Invalid signal type {}", type_str);
 
 		ret = signal_list_generate(&nd->signals, count, type);
 		if (ret)
@@ -171,7 +171,7 @@ int node_direction_check(struct vnode_direction *nd, struct vnode *n)
 	assert(n->state != State::DESTROYED);
 
 	if (nd->vectorize <= 0)
-		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
+		throw RuntimeError("Invalid setting 'vectorize' with value {}. Must be natural number!", nd->vectorize);
 
 	nd->state = State::CHECKED;
 

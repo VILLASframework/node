@@ -88,12 +88,8 @@ static void * producer(void *ctx)
 	int ret;
 	struct param *p = (struct param *) ctx;
 
-	Logger logger = logging.get("test:queue:producer");
-
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
-
-	//logger->info("tid = {}", thread_get_id());
 
 #ifdef __APPLE__
   #define pthread_yield pthread_yield_np
@@ -102,13 +98,9 @@ static void * producer(void *ctx)
 	while (p->start == 0)
 		pthread_yield();
 
-	//logger->info("wait for {} nops", nops);
-
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
-
-	//logger->info("start pushing");
 
 	/* Enqueue */
 	for (intptr_t count = 0; count < p->iter_count; count++) {
@@ -117,8 +109,6 @@ static void * producer(void *ctx)
 			pthread_yield();
 		} while (ret != 1);
 	}
-
-	//logger->info("finished");
 
 	return nullptr;
 }
@@ -131,21 +121,13 @@ static void * consumer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	Logger logger = logging.get("test:queue:consumer");
-
-	//logger->info("tid = {}", thread_get_id());
-
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
 
-	//logger->info("wait for {} nops", nops);
-
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
-
-	//logger->info("start pulling");
 
 	/* Dequeue */
 	for (intptr_t count = 0; count < p->iter_count; count++) {
@@ -159,8 +141,6 @@ static void * consumer(void *ctx)
 
 		//cr_assert_eq((intptr_t) ptr, count);
 	}
-
-	//logger->info("finished");
 
 	return nullptr;
 }
@@ -344,9 +324,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
 
 	if (cycpop < 400)
-		logger->debug("cycles/op: {}", cycpop);
+		logger->debug("Cycles/op: {}", cycpop);
 	else
-		logger->warn("cycles/op are very high ({}). Are you running on a hypervisor?", cycpop);
+		logger->warn("Cycles/op are very high ({}). Are you running on a hypervisor?", cycpop);
 
 	ret = queue_available(&q);
 	cr_assert_eq(ret, 0);

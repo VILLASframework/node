@@ -31,7 +31,7 @@
   #include <libconfig.h>
 
 /** Convert a libconfig object to a jansson object */
-json_t *config_to_json(config_setting_t *cfg);
+json_t *config_to_json(config_setting_t *json);
 
 /** Convert a jansson object into a libconfig object. */
 int json_to_config(json_t *json, config_setting_t *parent);

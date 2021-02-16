@@ -98,7 +98,7 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 		size_t i;
@@ -107,14 +107,14 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: i, s: o }",
 			"offset", &offset,
 			"signals", &json_signals
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-average");
+			throw ConfigError(json, err, "node-config-hook-average");
 
 		if (!json_is_array(json_signals))
 			throw ConfigError(json_signals, "node-config-hook-average-signals", "Setting 'signals' must be a list of signal names");

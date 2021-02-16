@@ -64,8 +64,6 @@ enum class RTPHookType {
 struct rtp {
 	struct rtp_sock *rs;	/**< RTP socket */
 
-	villas::Logger logger;
-
 	struct {
 		struct sa saddr_rtp;	/**< Local/Remote address of the RTP socket */
 		struct sa saddr_rtcp;	/**< Local/Remote address of the RTCP socket */
@@ -109,7 +107,7 @@ struct rtp {
 char * rtp_print(struct vnode *n);
 
 /** @see node_type::parse */
-int rtp_parse(struct vnode *n, json_t *cfg);
+int rtp_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int rtp_start(struct vnode *n);

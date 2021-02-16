@@ -60,7 +60,7 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		double s;
 
@@ -69,9 +69,9 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: F }", "seconds", &s);
+		ret = json_unpack_ex(json, &err, 0, "{ s: F }", "seconds", &s);
 		if (!ret) {
 			seconds.wait = time_from_double(s);
 			mode = Mode::SECONDS;
@@ -80,7 +80,7 @@ public:
 			return;
 		}
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "samples", &samples.wait);
+		ret = json_unpack_ex(json, &err, 0, "{ s: i }", "samples", &samples.wait);
 		if (!ret) {
 			mode = Mode::SAMPLES;
 
@@ -88,7 +88,7 @@ public:
 			return;
 		}
 
-		throw ConfigError(cfg, err, "node-config-hook-skip_first");
+		throw ConfigError(json, err, "node-config-hook-skip_first");
 	}
 
 	virtual void start()

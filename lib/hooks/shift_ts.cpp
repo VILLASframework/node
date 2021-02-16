@@ -48,7 +48,7 @@ public:
 		mode(SHIFT_ORIGIN)
 	{ }
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		double o;
 		const char *m = nullptr;
@@ -57,14 +57,14 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: F }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s: F }",
 			"mode", &m,
 			"offset", &o
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-shift_ts");
+			throw ConfigError(json, err, "node-config-hook-shift_ts");
 
 		if (m) {
 			if      (!strcmp(m, "origin"))
@@ -72,7 +72,7 @@ public:
 			else if (!strcmp(m, "received"))
 				mode = SHIFT_RECEIVED;
 			else
-				throw ConfigError(cfg, "node-config-hook-shift_ts-mode", "Invalid mode parameter '{}'", m);
+				throw ConfigError(json, "node-config-hook-shift_ts-mode", "Invalid mode parameter '{}'", m);
 		}
 
 		offset = time_from_double(o);

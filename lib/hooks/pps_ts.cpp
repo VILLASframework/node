@@ -30,7 +30,6 @@
 #include <villas/hook.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
-#include <villas/log.h>
 
 namespace villas {
 namespace node {
@@ -78,28 +77,27 @@ public:
 		filterWindow(horizonEst + 1, 0)
 	{ }
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
 		double fSmps = 0;
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: f, s: F}",
+		ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: f, s: F}",
 			"signal_index", &idx,
 			"threshold", &thresh,
 			"expected_smp_rate", &fSmps
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-pps_ts");
+			throw ConfigError(json, err, "node-config-hook-pps_ts");
 
 		period = 1.0 / fSmps;
 
-		debug(LOG_HOOK | 5, "parsed config thresh=%f signal_index=%d nominal_period=%f", thresh, idx, period);
-
+		logger->debug("Parsed config thresh={} signal_index={} nominal_period={}", thresh, idx, period);
 
 		state = State::PARSED;
 	}
@@ -142,7 +140,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			debug(LOG_HOOK | 5, "Time Error is: %f periodEst %f periodErrComp %f", timeError, periodEst, periodErrComp);
+			logger->debug("Time Error is: {} periodEst {} periodErrComp {}", timeError, periodEst, periodErrComp);
 		}
 
 		cntSmps++;
@@ -159,7 +157,7 @@ public:
 
 
 		if ((smp->sequence - lastSequence) > 1)
-			warning("Samples missed: %" PRIu64 " sampled missed", smp->sequence - lastSequence);
+			logger->warn("Samples missed: {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
 

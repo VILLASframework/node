@@ -73,7 +73,7 @@ struct file {
 char * file_print(struct vnode *n);
 
 /** @see node_type::parse */
-int file_parse(struct vnode *n, json_t *cfg);
+int file_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int file_start(struct vnode *n);

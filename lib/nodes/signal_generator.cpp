@@ -153,7 +153,7 @@ int signal_generator_prepare(struct vnode *n)
 	return 0;
 }
 
-int signal_generator_parse(struct vnode *n, json_t *cfg)
+int signal_generator_parse(struct vnode *n, json_t *json)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -171,7 +171,7 @@ int signal_generator_parse(struct vnode *n, json_t *cfg)
 	json_t *json_pulse_low = nullptr;
 	json_t *json_phase = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: b, s?: i, s?: i, s?: F, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: b }",
 		"signal", &json_type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
@@ -188,7 +188,7 @@ int signal_generator_parse(struct vnode *n, json_t *cfg)
 		"monitor_missed", &s->monitor_missed
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-signal");
 
 	struct desc {
 		json_t *json;
@@ -316,7 +316,7 @@ int signal_generator_stop(struct vnode *n)
 		s->task.stop();
 
 	if (s->missed_steps > 0 && s->monitor_missed)
-		warning("Node %s missed a total of %d steps.", node_name(n), s->missed_steps);
+		n->logger->warn("Missed a total of {} steps.", s->missed_steps);
 
 	delete[] s->last;
 
@@ -396,7 +396,7 @@ int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, 
 	}
 
 	if (s->limit > 0 && s->counter >= (unsigned) s->limit) {
-		info("Node %s reached limit.", node_name(n));
+		n->logger->info("Reached limit.");
 
 		n->state = State::STOPPING;
 
@@ -408,7 +408,7 @@ int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, 
 		/* Block until 1/p->rate seconds elapsed */
 		steps = s->task.wait();
 		if (steps > 1 && s->monitor_missed) {
-			debug(5, "Missed steps: %u", steps-1);
+			n->logger->debug("Missed steps: {}", steps-1);
 			s->missed_steps += steps-1;
 		}
 	}

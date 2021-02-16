@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <ctime>
 
+#include <villas/log.hpp>
 #include <villas/signal.h>
 
 /* Forward declarations */
@@ -122,7 +123,7 @@ int sample_decref(struct sample *s);
 int sample_copy(struct sample *dst, struct sample *src);
 
 /** Dump all details about a sample to debug log */
-void sample_dump(struct sample *s);
+void sample_dump(villas::Logger logger, struct sample *s);
 
 /** Compare two samples */
 int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags);

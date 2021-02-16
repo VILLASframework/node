@@ -76,7 +76,7 @@ int signal_decref(struct signal *s);
 struct signal * signal_copy(struct signal *s);
 
 /** Parse signal description. */
-int signal_parse(struct signal *s, json_t *cfg);
+int signal_parse(struct signal *s, json_t *json);
 
 /** Initialize signal from a mapping_entry. */
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);

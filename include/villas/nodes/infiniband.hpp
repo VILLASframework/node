@@ -116,7 +116,7 @@ int ib_reverse(struct vnode *n);
 char * ib_print(struct vnode *n);
 
 /** @see node_type::parse */
-int ib_parse(struct vnode *n, json_t *cfg);
+int ib_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int ib_start(struct vnode *n);

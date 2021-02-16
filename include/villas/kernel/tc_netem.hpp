@@ -51,12 +51,12 @@ typedef uint32_t tc_hdl_t;
 
 /** Parse network emulator (netem) settings.
  *
- * @param cfg A jansson object containing the settings.
+ * @param json A jansson object containing the settings.
  * @param[out] ne A pointer to a libnl3 qdisc object where setting will be written to.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int netem_parse(struct rtnl_qdisc **ne, json_t *cfg);
+int netem_parse(struct rtnl_qdisc **ne, json_t *json);
 
 /** Print network emulator (netem) setting into buffer.
  *

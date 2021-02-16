@@ -75,10 +75,10 @@ int fpga_type_start(node::SuperNode *sn)
 	if (!pcieCardPlugin)
 		throw RuntimeError("No FPGA PCIe plugin found");
 
-	json_t *cfg = sn->getConfig();
-	json_t *fpgas = json_object_get(cfg, "fpgas");
+	json_t *json = sn->getConfig();
+	json_t *fpgas = json_object_get(json, "fpgas");
 	if (!fpgas)
-		throw ConfigError(cfg, "node-config-fpgas", "No section 'fpgas' found in config");
+		throw ConfigError(json, "node-config-fpgas", "No section 'fpgas' found in config");
 
 	// create all FPGA card instances using the corresponding plugin
 	auto pcieCards = pcieCardPlugin->make(fpgas, pciDevices, vfioContainer);
@@ -144,7 +144,7 @@ int fpga_destroy(struct vnode *n)
 	return 0;
 }
 
-int fpga_parse(struct vnode *n, json_t *cfg)
+int fpga_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -156,7 +156,7 @@ int fpga_parse(struct vnode *n, json_t *cfg)
 	const char *dma = nullptr;
 	int polling = f->polling;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
 		"card", &card,
 		"interface", &intf,
 		"dma", &dma,
@@ -164,7 +164,7 @@ int fpga_parse(struct vnode *n, json_t *cfg)
 		"polling", &polling
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", node_name(n));
+		throw ConfigError(json, err, "node-config-node-fpga");
 
 	if (card)
 		f->cardName = card;
@@ -211,7 +211,7 @@ int fpga_prepare(struct vnode *n)
 		});
 
 	if (it == cards.end())
-		throw ConfigError(json_object_get(n->cfg, "fpga"), "node-config-fpga-card", "Invalid FPGA card name: {}", f->cardName);
+		throw ConfigError(json_object_get(n->config, "fpga"), "node-config-node-fpga-card", "Invalid FPGA card name: {}", f->cardName);
 
 	f->card = *it;
 
@@ -219,7 +219,7 @@ int fpga_prepare(struct vnode *n)
 		? f->card->lookupIp(fpga::Vlnv(FPGA_AURORA_VLNV))
 		: f->card->lookupIp(f->intfName);
 	if (!intf)
-		throw ConfigError(n->cfg, "node-config-fpga-interface", "There is no interface IP with the name: {}", f->intfName);
+		throw ConfigError(n->config, "node-config-node-fpga-interface", "There is no interface IP with the name: {}", f->intfName);
 
 	f->intf = std::dynamic_pointer_cast<fpga::ip::Node>(intf);
 	if (!f->intf)
@@ -229,7 +229,7 @@ int fpga_prepare(struct vnode *n)
 		? f->card->lookupIp(fpga::Vlnv(FPGA_DMA_VLNV))
 		: f->card->lookupIp(f->dmaName);
 	if (!dma)
-		throw ConfigError(n->cfg, "node-config-fpga-dma", "There is no DMA IP with the name: {}", f->dmaName);
+		throw ConfigError(n->config, "node-config-node-fpga-dma", "There is no DMA IP with the name: {}", f->dmaName);
 
 	f->dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dma);
 	if (!f->dma)

@@ -41,7 +41,7 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		sample_dump(smp);
+		sample_dump(logger, smp);
 
 		return Reason::OK;
 	}

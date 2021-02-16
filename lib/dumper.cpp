@@ -29,7 +29,6 @@
 #include <cstring>
 
 #include <villas/dumper.hpp>
-#include <villas/log.h>
 
 using namespace villas;
 using namespace villas::node;
@@ -37,7 +36,8 @@ using namespace villas::node;
 Dumper::Dumper(const std::string &socketNameIn) :
 	socketName(socketNameIn),
 	supressRepeatedWarning(true),
-	warningCounter(0)
+	warningCounter(0),
+	logger(logging.get("dumper"))
 {
 	openSocket();
 }
@@ -50,7 +50,7 @@ int Dumper::openSocket()
 {
 	socketFd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (socketFd < 0) {
-		info("Error creating socket %s", socketName.c_str());
+		logger->info("Error creating socket {}", socketName);
 		return -1;
 	}
 
@@ -89,7 +89,7 @@ void Dumper::writeData(unsigned len, double *yData, double *xData)
 		auto str = ss.str();
 		auto bytesWritten =  write(socketFd, str.c_str(), str.length());
 		if ((long unsigned int) bytesWritten != str.length() && (!supressRepeatedWarning || warningCounter <1 )) {
-			warning("Could not send all content to socket %s", socketName.c_str());
+			logger->warn("Could not send all content to socket {}", socketName);
 			warningCounter++;
 		}
 	}

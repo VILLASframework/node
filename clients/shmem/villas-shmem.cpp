@@ -102,7 +102,7 @@ protected:
 
 			avail = shmem_int_alloc(&shm, outsmps, readcnt);
 			if (avail < readcnt)
-				logger->warn("Pool underrun: %d / %d\n", avail, readcnt);
+				logger->warn("Pool underrun: {} / {}", avail, readcnt);
 
 			for (int i = 0; i < avail; i++) {
 				outsmps[i]->sequence = insmps[i]->sequence;

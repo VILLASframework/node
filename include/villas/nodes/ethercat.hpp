@@ -94,7 +94,7 @@ int ethercat_init(struct vnode *n);
 int ethercat_destroy(struct vnode *n);
 
 /** @see node_type::parse */
-int ethercat_parse(struct vnode *n, json_t *cfg);
+int ethercat_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::check */
 int ethercat_check(struct vnode *n);

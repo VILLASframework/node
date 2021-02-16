@@ -41,7 +41,8 @@ static int ib_disconnect(struct vnode *n)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)];
 	int wcs;
-	debug(LOG_IB | 1, "Starting to clean up");
+
+	n->logger->debug("Starting to clean up");
 
 	rdma_disconnect(ib->ctx.id);
 
@@ -63,7 +64,8 @@ static int ib_disconnect(struct vnode *n)
 
 	/* Destroy QP */
 	rdma_destroy_qp(ib->ctx.id);
-	debug(LOG_IB | 3, "Destroyed QP");
+
+	n->logger->debug("Destroyed QP");
 
 	return ib->stopThreads;
 }
@@ -73,20 +75,20 @@ static void ib_build_ibv(struct vnode *n)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
 
-	debug(LOG_IB | 1, "Starting to build IBV components");
+	n->logger->debug("Starting to build IBV components");
 
 	/* Create completion queues (No completion channel!) */
 	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->recv_cq_size, nullptr, nullptr, 0);
 	if (!ib->ctx.recv_cq)
-		error("Could not create receive completion queue in node %s", node_name(n));
+		throw RuntimeError("Could not create receive completion queue");
 
-	debug(LOG_IB | 3, "Created receive Completion Queue");
+	n->logger->debug("Created receive Completion Queue");
 
 	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->send_cq_size, nullptr, nullptr, 0);
 	if (!ib->ctx.send_cq)
-		error("Could not create send completion queue in node %s", node_name(n));
+		throw RuntimeError("Could not create send completion queue");
 
-	debug(LOG_IB | 3, "Created send Completion Queue");
+	n->logger->debug("Created send Completion Queue");
 
 	/* Prepare remaining Queue Pair (QP) attributes */
 	ib->qp_init.send_cq = ib->ctx.send_cq;
@@ -95,13 +97,13 @@ static void ib_build_ibv(struct vnode *n)
 	/* Create the actual QP */
 	ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
 	if (ret)
-		error("Failed to create Queue Pair in node %s", node_name(n));
+		throw RuntimeError("Failed to create Queue Pair");
 
-	debug(LOG_IB | 3, "Created Queue Pair with %i receive and %i send elements",
+	n->logger->debug("Created Queue Pair with {} receive and {} send elements",
 		ib->qp_init.cap.max_recv_wr, ib->qp_init.cap.max_send_wr);
 
 	if (ib->conn.send_inline)
-		info("Maximum inline size is set to %i byte", ib->qp_init.cap.max_inline_data);
+		n->logger->info("Maximum inline size is set to {} byte", ib->qp_init.cap.max_inline_data);
 }
 
 static int ib_addr_resolved(struct vnode *n)
@@ -109,7 +111,7 @@ static int ib_addr_resolved(struct vnode *n)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
 
-	debug(LOG_IB | 1, "Successfully resolved address");
+	n->logger->debug("Successfully resolved address");
 
 	/* Build all components from IB Verbs */
 	ib_build_ibv(n);
@@ -117,7 +119,7 @@ static int ib_addr_resolved(struct vnode *n)
 	/* Resolve address */
 	ret = rdma_resolve_route(ib->ctx.id, ib->conn.timeout);
 	if (ret)
-		error("Failed to resolve route in node %s", node_name(n));
+		throw RuntimeError("Failed to resolve route");
 
 	return 0;
 }
@@ -133,9 +135,9 @@ static int ib_route_resolved(struct vnode *n)
 	/* Send connection request */
 	ret = rdma_connect(ib->ctx.id, &cm_params);
 	if (ret)
-		error("Failed to connect in node %s", node_name(n));
+		throw RuntimeError("Failed to connect");
 
-	debug(LOG_IB | 1, "Called rdma_connect");
+	n->logger->debug("Called rdma_connect");
 
 	return 0;
 }
@@ -144,7 +146,8 @@ static int ib_connect_request(struct vnode *n, struct rdma_cm_id *id)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
-	debug(LOG_IB | 1, "Received a connection request!");
+
+	n->logger->debug("Received a connection request!");
 
 	ib->ctx.id = id;
 	ib_build_ibv(n);
@@ -155,9 +158,9 @@ static int ib_connect_request(struct vnode *n, struct rdma_cm_id *id)
 	/* Accept connection request */
 	ret = rdma_accept(ib->ctx.id, &cm_params);
 	if (ret)
-		error("Failed to connect in node %s", node_name(n));
+		throw RuntimeError("Failed to connect");
 
-	info("Successfully accepted connection request in node %s", node_name(n));
+	n->logger->info("Successfully accepted connection request");
 
 	return 0;
 }
@@ -171,7 +174,7 @@ int ib_reverse(struct vnode *n)
 	return 0;
 }
 
-int ib_parse(struct vnode *n, json_t *cfg)
+int ib_parse(struct vnode *n, json_t *json)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
@@ -195,13 +198,13 @@ int ib_parse(struct vnode *n, json_t *cfg)
 	json_t *json_out = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: s }",
 		"in", &json_in,
 		"out", &json_out,
 		"rdma_transport_mode", &transport_mode
 	);
 	if (ret)
-		jerror(&err, "Failed to parse in/out json blocks");
+		throw ConfigError(json, err, "node-config-node-ib");
 
 
 	if (json_in) {
@@ -213,7 +216,7 @@ int ib_parse(struct vnode *n, json_t *cfg)
 			"buffer_subtraction", &buffer_subtraction
 		);
 		if (ret)
-			jerror(&err, "Failed to parse input configuration of node %s", node_name(n));
+			throw ConfigError(json_in, err, "node-config-node-ib-in");
 	}
 
 	if (json_out) {
@@ -229,18 +232,18 @@ int ib_parse(struct vnode *n, json_t *cfg)
 			"periodic_signaling", &ib->periodic_signaling
 		);
 		if (ret)
-			jerror(&err, "Failed to parse output configuration of node %s", node_name(n));
+			throw ConfigError(json_out, err, "node-config-node-ib-out");
 
 		if (remote) {
 			ib->is_source = 1;
 
-			debug(LOG_IB | 3, "Node %s is up as source and target", node_name(n));
+			n->logger->debug("Setup as source and target");
 		}
 	}
 	else {
 		ib->is_source = 0;
 
-		debug(LOG_IB | 3, "Node %s is up as target", node_name(n));
+		n->logger->debug("Setup as target");
 	}
 
 	/* Set fallback mode */
@@ -253,7 +256,7 @@ int ib_parse(struct vnode *n, json_t *cfg)
 	/* Set buffer subtraction */
 	ib->conn.buffer_subtraction = buffer_subtraction;
 
-	debug(LOG_IB | 4, "Set buffer subtraction to %i in node %s", buffer_subtraction, node_name(n));
+	n->logger->debug("Set buffer subtraction to {}", buffer_subtraction);
 
 	/* Translate IP:PORT to a struct addrinfo */
 	char *ip_adr = strtok_r(local, ":", &lasts);
@@ -261,10 +264,9 @@ int ib_parse(struct vnode *n, json_t *cfg)
 
 	ret = getaddrinfo(ip_adr, port, nullptr, &ib->conn.src_addr);
 	if (ret)
-		error("Failed to resolve local address '%s' of node %s: %s",
-			local, node_name(n), gai_strerror(ret));
+		throw RuntimeError("Failed to resolve local address '{}': {}", local, gai_strerror(ret));
 
-	debug(LOG_IB | 4, "Translated %s:%s to a struct addrinfo in node %s", ip_adr, port, node_name(n));
+	n->logger->debug("Translated {}:{} to a struct addrinfo", ip_adr, port);
 
 	/* Translate port space */
 	if (strcmp(transport_mode, "RC") == 0) {
@@ -276,8 +278,8 @@ int ib_parse(struct vnode *n, json_t *cfg)
 		ib->conn.port_space = RDMA_PS_IB;
 		ib->qp_init.qp_type = IBV_QPT_UC;
 #else
-		error("Unreliable Connected (UC) mode is only available with an adapted version of librdma. "
-			"Please read the Infiniband node type Documentation for more information on UC!");
+		throw RuntimeError("Unreliable Connected (UC) mode is only available with an adapted version of librdma. "
+		                   "Please read the Infiniband node type Documentation for more information on UC!");
 #endif
 	}
 	else if (strcmp(transport_mode, "UD") == 0) {
@@ -285,35 +287,34 @@ int ib_parse(struct vnode *n, json_t *cfg)
 		ib->qp_init.qp_type = IBV_QPT_UD;
 	}
 	else
-		error("transport_mode = %s is not a valid transport mode in node %s!",
-				transport_mode, node_name(n));
+		throw RuntimeError("Invalid transport_mode = '{}'!", transport_mode);
 
-	debug(LOG_IB | 4, "Set transport mode to %s in node %s", transport_mode, node_name(n));
+	n->logger->debug("Set transport mode to {}", transport_mode);
 
 	/* Set timeout */
 	ib->conn.timeout = timeout;
 
-	debug(LOG_IB | 4, "Set  timeout to %i in node %s", timeout, node_name(n));
+	n->logger->debug("Set timeout to {}", timeout);
 
 	/* Set completion queue size */
 	ib->recv_cq_size = recv_cq_size;
 	ib->send_cq_size = send_cq_size;
 
-	debug(LOG_IB | 4, "Set Completion Queue size to %i & %i (in & out) in node %s",
-			recv_cq_size, send_cq_size, node_name(n));
+	n->logger->debug("Set Completion Queue size to {} & {} (in & out)",
+		recv_cq_size, send_cq_size);
 
 
 	/* Translate inline mode */
 	ib->conn.send_inline = send_inline;
 
-	debug(LOG_IB | 4, "Set send_inline to %i in node %s", send_inline, node_name(n));
+	n->logger->debug("Set send_inline to {}", send_inline);
 
 	/* Set max. send and receive Work Requests */
 	ib->qp_init.cap.max_send_wr = max_send_wr;
 	ib->qp_init.cap.max_recv_wr = max_recv_wr;
 
-	debug(LOG_IB | 4, "Set max_send_wr and max_recv_wr in node %s to %i and %i, respectively",
-			node_name(n), max_send_wr, max_recv_wr);
+	n->logger->debug("Set max_send_wr and max_recv_wr to {} and {}, respectively",
+		max_send_wr, max_recv_wr);
 
 	/* Set available receive Work Requests to 0 */
 	ib->conn.available_recv_wrs = 0;
@@ -333,10 +334,9 @@ int ib_parse(struct vnode *n, json_t *cfg)
 
 		ret = getaddrinfo(ip_adr, port, nullptr, &ib->conn.dst_addr);
 		if (ret)
-			error("Failed to resolve remote address '%s' of node %s: %s",
-				remote, node_name(n), gai_strerror(ret));
+			throw RuntimeError("Failed to resolve remote address '{}': {}", remote, gai_strerror(ret));
 
-		debug(LOG_IB | 4, "Translated %s:%s to a struct addrinfo", ip_adr, port);
+		n->logger->debug("Translated {}:{} to a struct addrinfo", ip_adr, port);
 	}
 
 	return 0;
@@ -348,17 +348,17 @@ int ib_check(struct vnode *n)
 
 	/* Check if read substraction makes sense */
 	if (ib->conn.buffer_subtraction <  2 * n->in.vectorize)
-		error("The buffer substraction value must be bigger than 2 * in.vectorize");
+		throw RuntimeError("The buffer substraction value must be bigger than 2 * in.vectorize");
 
 	if (ib->conn.buffer_subtraction >= ib->qp_init.cap.max_recv_wr - n->in.vectorize)
-		error("The buffer substraction value cannot be bigger than in.max_wrs - in.vectorize");
+		throw RuntimeError("The buffer substraction value cannot be bigger than in.max_wrs - in.vectorize");
 
 	/* Check if the set value is a power of 2, and warn the user if this is not the case */
 	unsigned max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
 	unsigned max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
 
 	if (ib->qp_init.cap.max_send_wr != max_send_pow) {
-		warning("Max nr. of send WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
+		n->logger->warn("Max nr. of send WRs ({}) is not a power of 2! It will be changed to a power of 2: {}",
 			ib->qp_init.cap.max_send_wr, max_send_pow);
 
 		/* Change it now, because otherwise errors are possible in ib_start(). */
@@ -366,7 +366,7 @@ int ib_check(struct vnode *n)
 	}
 
 	if (ib->qp_init.cap.max_recv_wr != max_recv_pow) {
-		warning("Max nr. of recv WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
+		n->logger->warn("Max nr. of recv WRs ({}) is not a power of 2! It will be changed to a power of 2: {}",
 			ib->qp_init.cap.max_recv_wr, max_recv_pow);
 
 		/* Change it now, because otherwise errors are possible in ib_start(). */
@@ -375,10 +375,10 @@ int ib_check(struct vnode *n)
 
 	/* Check maximum size of max_recv_wr and max_send_wr */
 	if (ib->qp_init.cap.max_send_wr > 8192)
-		warning("Max number of send WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
+		n->logger->warn("Max number of send WRs ({}) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
 
 	if (ib->qp_init.cap.max_recv_wr > 8192)
-		warning("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
+		n->logger->warn("Max number of receive WRs ({}) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
 
 	/* Set periodic signaling
 	 * This is done here, so that it uses the checked max_send_wr value */
@@ -387,7 +387,7 @@ int ib_check(struct vnode *n)
 
 	/* Warn user if he changed the default inline value */
 	if (ib->qp_init.cap.max_inline_data != 0)
-		warning("You changed the default value of max_inline_data. This might influence the maximum number "
+		n->logger->warn("You changed the default value of max_inline_data. This might influence the maximum number "
 			"of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
 
 	return 0;
@@ -420,8 +420,8 @@ static void ib_create_bind_id(struct vnode *n)
 	 * 2. Edit librdmacm/cma.c and remove the keyword 'static' in front of:
 	 *
 	 *     static int rdma_create_id2(struct rdma_event_channel *channel,
-         *         struct rdma_cm_id **id, void *context,
-         *         enum rdma_port_space ps, enum ibv_qp_type qp_type)
+	 *         struct rdma_cm_id **id, void *context,
+	 *         enum rdma_port_space ps, enum ibv_qp_type qp_type)
 	 *
 	 * 3. Edit librdmacm/rdma_cma.h and add the following two entries to the file:
 	 *
@@ -445,17 +445,16 @@ static void ib_create_bind_id(struct vnode *n)
 	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, nullptr, ib->conn.port_space);
 #endif
 	if (ret)
-		error("Failed to create rdma_cm_id of node %s: %s", node_name(n), gai_strerror(ret));
+		throw RuntimeError("Failed to create rdma_cm_id: {}", gai_strerror(ret));
 
-	debug(LOG_IB | 3, "Created rdma_cm_id");
+	n->logger->debug("Created rdma_cm_id");
 
 	/* Bind rdma_cm_id to the HCA */
 	ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
 	if (ret)
-		error("Failed to bind to local device of node %s: %s",
-			node_name(n), gai_strerror(ret));
+		throw RuntimeError("Failed to bind to local device: {}", gai_strerror(ret));
 
-	debug(LOG_IB | 3, "Bound rdma_cm_id to Infiniband device");
+	n->logger->debug("Bound rdma_cm_id to Infiniband device");
 
 	/* The ID will be overwritten for the target. If the event type is
 	 * RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
@@ -470,11 +469,10 @@ static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
 	int ret;
 
 	if (ib->conn.use_fallback)
-		warning("Trying to continue as listening node");
+		n->logger->warn("Trying to continue as listening node");
 	else
-		error("Cannot establish a connection with remote host! If you want that %s tries to "
-			"continue as listening node in such cases, set use_fallback = true in the configuration",
-			node_name(n));
+		throw RuntimeError("Cannot establish a connection with remote host! If you want that {} tries to "
+			"continue as listening node in such cases, set use_fallback = true in the configuration");
 
 	n->state = State::STARTED;
 
@@ -490,84 +488,84 @@ static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
 	/* Listen to id for events */
 	ret = rdma_listen(ib->ctx.listen_id, 10);
 	if (ret)
-		error("Failed to listen to rdma_cm_id on node %s", node_name(n));
+		throw RuntimeError("Failed to listen to rdma_cm_id");
 
 	/* Node is not a source (and will not send data */
 	ib->is_source = 0;
 
-	info("Node %s is set to listening mode", node_name(n));
+	n->logger->info("Use listening mode");
 }
 
-void * ib_rdma_cm_event_thread(void *n)
+void * ib_rdma_cm_event_thread(void *ctx)
 {
-	struct vnode *node = (struct vnode *) n;
-	struct infiniband *ib = (struct infiniband *) node->_vd;
+	struct vnode *n = (struct vnode *) ctx;
+	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct rdma_cm_event *event;
 	int ret = 0;
 
-	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
+	n->logger->debug("Started rdma_cm_event thread");
 
 	/* Wait until node is completely started */
-	while (node->state != State::STARTED);
+	while (n->state != State::STARTED);
 
 	/* Monitor event channel */
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
-		debug(LOG_IB | 2, "Received communication event: %s", rdma_event_str(event->event));
+		n->logger->debug("Received communication event: {}", rdma_event_str(event->event));
 
 		switch(event->event) {
 			case RDMA_CM_EVENT_ADDR_RESOLVED:
-				ret = ib_addr_resolved(node);
+				ret = ib_addr_resolved(n);
 				break;
 
 			case RDMA_CM_EVENT_ADDR_ERROR:
-				warning("Address resolution (rdma_resolve_addr) failed!");
+				n->logger->warn("Address resolution (rdma_resolve_addr) failed!");
 
-				ib_continue_as_listen(node, event);
+				ib_continue_as_listen(n, event);
 
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_RESOLVED:
-				ret = ib_route_resolved(node);
+				ret = ib_route_resolved(n);
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_ERROR:
-				warning("Route resolution (rdma_resovle_route) failed!");
+				n->logger->warn("Route resolution (rdma_resovle_route) failed!");
 
-				ib_continue_as_listen(node, event);
+				ib_continue_as_listen(n, event);
 
 				break;
 
 			case RDMA_CM_EVENT_UNREACHABLE:
-				warning("Remote server unreachable!");
+				n->logger->warn("Remote server unreachable!");
 
-				ib_continue_as_listen(node, event);
+				ib_continue_as_listen(n, event);
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
-				ret = ib_connect_request(node, event->id);
+				ret = ib_connect_request(n, event->id);
 
 				/* A target UDP node will never really connect. In order to receive data,
 				 * we set it to connected after it answered the connection request
 				 * with rdma_connect.
 				 */
 				if (ib->conn.port_space == RDMA_PS_UDP && !ib->is_source)
-					node->state = State::CONNECTED;
+					n->state = State::CONNECTED;
 				else
-					node->state = State::PENDING_CONNECT;
+					n->state = State::PENDING_CONNECT;
 
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_ERROR:
-				warning("An error has occurred trying to establish a connection!");
+				n->logger->warn("An error has occurred trying to establish a connection!");
 
-				ib_continue_as_listen(node, event);
+				ib_continue_as_listen(n, event);
 
 				break;
 
 			case RDMA_CM_EVENT_REJECTED:
-				warning("Connection request or response was rejected by the remote end point!");
+				n->logger->warn("Connection request or response was rejected by the remote end point!");
 
-				ib_continue_as_listen(node, event);
+				ib_continue_as_listen(n, event);
 
 				break;
 
@@ -578,19 +576,19 @@ void * ib_rdma_cm_event_thread(void *n)
 					ib->conn.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ud.ah_attr);
 				}
 
-				node->state = State::CONNECTED;
+				n->state = State::CONNECTED;
 
-				info("Connection established in node %s", node_name(node));
+				n->logger->info("Connection established");
 
 				break;
 
 			case RDMA_CM_EVENT_DISCONNECTED:
-				node->state = State::STARTED;
+				n->state = State::STARTED;
 
-				ret = ib_disconnect(node);
+				ret = ib_disconnect(n);
 
 				if (!ret)
-					info("Host disconnected. Ready to accept new connections.");
+					n->logger->info("Host disconnected. Ready to accept new connections.");
 
 				break;
 
@@ -598,7 +596,7 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			default:
-				error("Unknown event occurred: %u", event->event);
+				throw RuntimeError("Unknown event occurred: {}", event->event);
 		}
 
 		rdma_ack_cm_event(event);
@@ -615,43 +613,42 @@ int ib_start(struct vnode *n)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
 
-	debug(LOG_IB | 1, "Started ib_start");
+	n->logger->debug("Started ib_start");
 
 	/* Create event channel */
 	ib->ctx.ec = rdma_create_event_channel();
 	if (!ib->ctx.ec)
-		error("Failed to create event channel in node %s!", node_name(n));
+		throw RuntimeError("Failed to create event channel!");
 
-	debug(LOG_IB | 3, "Created event channel");
+	n->logger->debug("Created event channel");
 
 	/* Create rdma_cm_id and bind to device */
 	ib_create_bind_id(n);
 
-	debug(LOG_IB | 3, "Initialized Work Completion Buffer");
+	n->logger->debug("Initialized Work Completion Buffer");
 
 	/* Resolve address or listen to rdma_cm_id */
 	if (ib->is_source) {
 		/* Resolve address */
 		ret = rdma_resolve_addr(ib->ctx.id, nullptr, ib->conn.dst_addr->ai_addr, ib->conn.timeout);
 		if (ret)
-			error("Failed to resolve remote address after %ims of node %s: %s",
-				ib->conn.timeout, node_name(n), gai_strerror(ret));
+			throw RuntimeError("Failed to resolve remote address after {}ms: {}", ib->conn.timeout, gai_strerror(ret));
 	}
 	else {
 		/* Listen on rdma_cm_id for events */
 		ret = rdma_listen(ib->ctx.listen_id, 10);
 		if (ret)
-			error("Failed to listen to rdma_cm_id on node %s", node_name(n));
+			throw RuntimeError("Failed to listen to rdma_cm_id");
 
-		debug(LOG_IB | 3, "Started to listen to rdma_cm_id");
+		n->logger->debug("Started to listen to rdma_cm_id");
 	}
 
 	/* Allocate protection domain */
 	ib->ctx.pd = ibv_alloc_pd(ib->ctx.id->verbs);
 	if (!ib->ctx.pd)
-		error("Could not allocate protection domain in node %s", node_name(n));
+		throw RuntimeError("Could not allocate protection domain");
 
-	debug(LOG_IB | 3, "Allocated Protection Domain");
+	n->logger->debug("Allocated Protection Domain");
 
 	/* Allocate space for 40 Byte GHR. We don't use this. */
 	if (ib->conn.port_space == RDMA_PS_UDP) {
@@ -665,13 +662,12 @@ int ib_start(struct vnode *n)
 	/* Several events should occur on the event channel, to make
 	 * sure the nodes are succesfully connected.
 	 */
-	debug(LOG_IB | 1, "Starting to monitor events on rdma_cm_id");
+	n->logger->debug("Starting to monitor events on rdma_cm_id");
 
 	/* Create thread to monitor rdma_cm_event channel */
 	ret = pthread_create(&ib->conn.rdma_cm_event_thread, nullptr, ib_rdma_cm_event_thread, n);
 	if (ret)
-		error("Failed to create thread to monitor rdma_cm events in node %s: %s",
-			node_name(n), gai_strerror(ret));
+		throw RuntimeError("Failed to create thread to monitor rdma_cm events: {}", gai_strerror(ret));
 
 	return 0;
 }
@@ -681,7 +677,7 @@ int ib_stop(struct vnode *n)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
 
-	debug(LOG_IB | 1, "Called ib_stop");
+	n->logger->debug("Called ib_stop");
 
 	ib->stopThreads = 1;
 
@@ -693,39 +689,38 @@ int ib_stop(struct vnode *n)
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
-			error("Error while calling rdma_disconnect in node %s: %s",
-				node_name(n), gai_strerror(ret));
+			throw RuntimeError("Error while calling rdma_disconnect: {}", gai_strerror(ret));
 
-		debug(LOG_IB | 3, "Called rdma_disconnect");
+		n->logger->debug("Called rdma_disconnect");
 	}
 	else {
 		pthread_cancel(ib->conn.rdma_cm_event_thread);
 
-		debug(LOG_IB | 3, "Called pthread_cancel() on communication management thread.");
+		n->logger->debug("Called pthread_cancel() on communication management thread.");
 	}
 
-	info("Disconnecting... Waiting for threads to join.");
+	n->logger->info("Disconnecting... Waiting for threads to join.");
 
 	/* Wait for event thread to join */
 	ret = pthread_join(ib->conn.rdma_cm_event_thread, nullptr);
 	if (ret)
-		error("Error while joining rdma_cm_event_thread in node %s: %i", node_name(n), ret);
+		throw RuntimeError("Error while joining rdma_cm_event_thread: {}", ret);
 
-	debug(LOG_IB | 3, "Joined rdma_cm_event_thread");
+	n->logger->debug("Joined rdma_cm_event_thread");
 
 	/* Destroy RDMA CM ID */
 	rdma_destroy_id(ib->ctx.id);
-	debug(LOG_IB | 3, "Destroyed rdma_cm_id");
+	n->logger->debug("Destroyed rdma_cm_id");
 
 	/* Dealloc Protection Domain */
 	ibv_dealloc_pd(ib->ctx.pd);
-	debug(LOG_IB | 3, "Destroyed protection domain");
+	n->logger->debug("Destroyed protection domain");
 
 	/* Destroy event channel */
 	rdma_destroy_event_channel(ib->ctx.ec);
-	debug(LOG_IB | 3, "Destroyed event channel");
+	n->logger->debug("Destroyed event channel");
 
-	info("Successfully stopped %s", node_name(n));
+	n->logger->info("Successfully stopped node");
 
 	return 0;
 }
@@ -740,7 +735,7 @@ int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct timespec ts_receive;
 	int ret = 0, wcs = 0, read_values = 0, max_wr_post;
 
-	debug(LOG_IB | 15, "ib_read is called");
+	n->logger->debug("ib_read is called");
 
 	if (n->state == State::CONNECTED || n->state == State::PENDING_CONNECT) {
 
@@ -763,7 +758,7 @@ int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rele
 					/* Get time directly after something arrived in Completion Queue */
 					ts_receive = time_now();
 
-					debug(LOG_IB | 10, "Received %i Work Completions", wcs);
+					n->logger->debug("Received {} Work Completions", wcs);
 
 					read_values = wcs; /* Value to return */
 					max_wr_post = wcs; /* Make space free in smps[] */
@@ -829,17 +824,15 @@ int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 		wr[max_wr_post-1].next = nullptr;
 
-		debug(LOG_IB | 5, "Prepared %i new receive Work Requests", max_wr_post);
-		debug(LOG_IB | 5, "%i receive Work Requests in Receive Queue", ib->conn.available_recv_wrs);
+		n->logger->debug("Prepared {} new receive Work Requests", max_wr_post);
+		n->logger->debug("{} receive Work Requests in Receive Queue", ib->conn.available_recv_wrs);
 
 		/* Post list of Work Requests */
 		ret = ibv_post_recv(ib->ctx.id->qp, &wr[0], &bad_wr);
-
 		if (ret)
-			error("Was unable to post receive WR in node %s: %i, bad WR ID: 0x%" PRIu64,
-			node_name(n), ret, bad_wr->wr_id);
+			throw RuntimeError("Was unable to post receive WR: {}, bad WR ID: {:#x}", ret, bad_wr->wr_id);
 
-		debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
+		n->logger->debug("Succesfully posted receive Work Requests");
 
 		/* Doesn't start if wcs == 0 */
 		for (int j = 0; j < wcs; j++) {
@@ -849,10 +842,10 @@ int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			}
 
 			if (wc[j].status == IBV_WC_WR_FLUSH_ERR)
-				debug(LOG_IB | 5, "Received IBV_WC_WR_FLUSH_ERR (ib_read). Ignore it.");
+				n->logger->debug("Received IBV_WC_WR_FLUSH_ERR (ib_read). Ignore it.");
 			else if (wc[j].status != IBV_WC_SUCCESS)
-				warning("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
-					node_name(n), wc[j].status);
+				n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
+					wc[j].status);
 
 			/* 32 byte of meta data is always transferred. We should substract it.
 			 * Furthermore, in case of an unreliable connection, a 40 byte
@@ -883,7 +876,7 @@ int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int ret;
 	unsigned sent = 0; /* Used for first loop: prepare work requests to post to send queue */
 
-	debug(LOG_IB | 10, "ib_write is called");
+	n->logger->debug("ib_write is called");
 
 	if (n->state == State::CONNECTED) {
 		*release = 0;
@@ -936,7 +929,7 @@ int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 				&& ((++ib->signaling_counter % ib->periodic_signaling) != 0)  ?
 				ib->conn.send_inline : 0;
 
-			debug(LOG_IB | 10, "Sample will be send inline [0/1]: %i", send_inline);
+			n->logger->debug("Sample will be send inline [0/1]: {}", send_inline);
 
 			/* Set Send Work Request */
 			wr[sent].wr_id = (uintptr_t) smps[sent];
@@ -948,12 +941,12 @@ int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 			wr[sent].opcode = IBV_WR_SEND;
 		}
 
-		debug(LOG_IB | 10, "Prepared %i send Work Requests", cnt);
+		n->logger->debug("Prepared {} send Work Requests", cnt);
 		wr[cnt-1].next = nullptr;
 
 		/* Send linked list of Work Requests */
 		ret = ibv_post_send(ib->ctx.id->qp, wr, &bad_wr);
-		debug(LOG_IB | 4, "Posted send Work Requests");
+		n->logger->debug("Posted send Work Requests");
 
 		/* Reorder list. Place inline and unposted samples to the top
 		 * m will always be equal or smaller than *release
@@ -966,8 +959,8 @@ int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 				/* The remaining work requests will be bad. Ripple through list
 				 * and prepare them to be released
 				 */
-				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%" PRIu64 " and S/G address: 0x%px: %i",
-						bad_wr->wr_id, bad_wr->sg_list, ret);
+				n->logger->debug("Bad WR occured with ID: {:#x} and S/G address: {:#x}: {}",
+					bad_wr->wr_id, bad_wr->sg_list, ret);
 
 				while (1) {
 					smps[*release] = smps[m];
@@ -983,24 +976,23 @@ int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 				(*release)++;
 			}
-
 		}
 
-		debug(LOG_IB | 4, "%i samples will be released (before WC)", *release);
+		n->logger->debug("{} samples will be released (before WC)", *release);
 
 		/* Try to grab as many CQEs from CQ as there is space in *smps[] */
 		ret = ibv_poll_cq(ib->ctx.send_cq, cnt - *release, wc);
 
 		for (int i = 0; i < ret; i++) {
 			if (wc[i].status != IBV_WC_SUCCESS && wc[i].status != IBV_WC_WR_FLUSH_ERR)
-				warning("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
-					node_name(n), wc[i].status);
+				n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
+					wc[i].status);
 
 			smps[*release] = (struct sample *) (wc[i].wr_id);
 			(*release)++;
 		}
 
-		debug(LOG_IB | 4, "%i samples will be released (after WC)", *release);
+		n->logger->debug("{} samples will be released (after WC)", *release);
 	}
 
 	return sent;

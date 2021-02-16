@@ -27,7 +27,6 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/plugin.h>
-#include <villas/log.h>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/ethercat.hpp>
 
@@ -75,7 +74,7 @@ static void ethercat_cyclic_task(struct vnode *n)
 		/* Receive process data */
 		smp = sample_alloc(&w->pool);
 		if (!smp) {
-			warning("Pool underrun in node %s", node_name(n));
+			n->logger->warn("Pool underrun");
 			continue;
 		}
 
@@ -92,7 +91,7 @@ static void ethercat_cyclic_task(struct vnode *n)
 
 		ret = queue_signalled_push(&w->queue, smp);
 		if (ret)
-			warning("Ethercat: Failed to enqueue samples");
+			n->logger->warn("Failed to enqueue samples");
 
 		/* Write process data */
 		smp = w->send.exchange(nullptr);
@@ -116,9 +115,9 @@ int ethercat_type_start(villas::node::SuperNode *sn)
 	int ret;
 	json_error_t err;
 
-	json_t *cfg = sn->getConfig();
-	if (cfg) {
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?:i, s?: { s?: { s?: i, s?: i, s?: i } } }",
+	json_t *json = sn->getConfig();
+	if (json) {
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?:i, s?: { s?: { s?: i, s?: i, s?: i } } }",
 			"ethernet",
 				"master", &master_id,
 				"alias", &alias,
@@ -128,7 +127,7 @@ int ethercat_type_start(villas::node::SuperNode *sn)
 					"vendor_id", &coupler.vendor_id
 		);
 		if (ret)
-			jerror(&err, "Failed to parse EtherCAT configuration");
+			throw ConfigError(json, err, "node-config-node-ethercat");
 	}
 
 	master = ecrt_request_master(master_id);
@@ -145,21 +144,23 @@ int ethercat_type_start(villas::node::SuperNode *sn)
 
 int ethercat_type_stop()
 {
-	info("Releasing EtherCAT master");
+	auto logger = logging.get("node:ethercat");
+
+	logger->info("Releasing EtherCAT master");
 
 	ecrt_release_master(master);
 
 	return 0;
 }
 
-int ethercat_parse(struct vnode *n, json_t *cfg)
+int ethercat_parse(struct vnode *n, json_t *json)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
 	int ret;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: { s: i, s?: F, s?: i, s?: i, s?: i }, s?: { s: i, s?: F, s?: i, s?: i, s?: i } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: { s: i, s?: F, s?: i, s?: i, s?: i }, s?: { s: i, s?: F, s?: i, s?: i, s?: i } }",
 		"rate", &w->rate,
 		"out",
 			"num_channels", &w->out.num_channels,
@@ -175,7 +176,7 @@ int ethercat_parse(struct vnode *n, json_t *cfg)
 			"vendor_id", &w->in.vendor_id
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-ethercat");
 
 	return 0;
 }
@@ -272,35 +273,25 @@ int ethercat_start(struct vnode *n)
 
 	/* Configure analog in */
 	w->in.sc = ecrt_master_slave_config(master, alias, w->in.position, w->in.vendor_id, w->in.product_code);
-	if (!w->in.sc) {
-		warning("Failed to get slave configuration.");
-		return -1;
-	}
+	if (!w->in.sc)
+		throw RuntimeError("Failed to get slave configuration.");
 
 	ret = ecrt_slave_config_pdos(w->in.sc, EC_END, slave_4_syncs);
-	if (ret) {
-		error("Failed to configure PDOs.");
-		return -1;
-	}
+	if (ret)
+		throw RuntimeError("Failed to configure PDOs.");
 
 	/* Configure analog out */
 	w->out.sc = ecrt_master_slave_config(master, alias, w->out.position, w->out.vendor_id, w->out.product_code);
-	if (!w->out.sc) {
-		warning("Failed to get slave configuration.");
-		return -1;
-	}
+	if (!w->out.sc)
+		throw RuntimeError("Failed to get slave configuration.");
 
 	ret = ecrt_slave_config_pdos(w->out.sc, EC_END, slave_3_syncs);
-	if (ret) {
-		warning("Failed to configure PDOs.");
-		return -1;
-	}
+	if (ret)
+		throw RuntimeError("Failed to configure PDOs.");
 
 	ret = ecrt_domain_reg_pdo_entry_list(w->domain, w->domain_regs);
-	if (ret) {
-		error("PDO entry registration failed!");
-		return -1;
-	}
+	if (ret)
+		throw RuntimeError("PDO entry registration failed!");
 
 	/** @todo Check that master is not already active... */
 	ret = ecrt_master_activate(master);
@@ -338,7 +329,7 @@ int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 
 	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
 	if (avail < 0)
-		warning("Pool underrun for node %s: avail=%u", node_name(n), avail);
+		n->logger->warn("Pool underrun: avail={}", avail);
 
 	sample_copy_many(smps, cpys, avail);
 	sample_decref_many(cpys, avail);

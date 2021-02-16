@@ -194,7 +194,7 @@ check:			if (optarg == endptr)
 
 		ret = node_prepare(node);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(node), ret);
 
 		ret = node_start(node);
 		if (ret)
@@ -241,7 +241,7 @@ check:			if (optarg == endptr)
 		else
 			throw RuntimeError("Invalid file descriptor: {}", fd);
 
-		hist.print(true);
+		hist.print(logger, true);
 
 		ret = node_stop(node);
 		if (ret)

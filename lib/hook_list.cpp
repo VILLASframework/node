@@ -25,12 +25,11 @@
 #include <villas/hook_list.hpp>
 #include <villas/list.h>
 #include <villas/sample.h>
-#include <villas/log.h>
 
 using namespace villas;
 using namespace villas::node;
 
-int hook_list_init(vlist *hs)
+int hook_list_init(struct vlist *hs)
 {
 	int ret;
 
@@ -48,7 +47,7 @@ static int hook_destroy(Hook *h)
 	return 0;
 }
 
-int hook_list_destroy(vlist *hs)
+int hook_list_destroy(struct vlist *hs)
 {
 	int ret;
 
@@ -59,14 +58,14 @@ int hook_list_destroy(vlist *hs)
 	return 0;
 }
 
-void hook_list_parse(vlist *hs, json_t *cfg, int mask, struct vpath *o, struct vnode *n)
+void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, struct vnode *n)
 {
-	if (!json_is_array(cfg))
-		throw ConfigError(cfg, "node-config-hook", "Hooks must be configured as a list of hook objects");
+	if (!json_is_array(json))
+		throw ConfigError(json, "node-config-hook", "Hooks must be configured as a list of hook objects");
 
 	size_t i;
 	json_t *json_hook;
-	json_array_foreach(cfg, i, json_hook) {
+	json_array_foreach(json, i, json_hook) {
 		int ret;
 		const char *type;
 		Hook *h;
@@ -101,7 +100,7 @@ static int hook_is_enabled(const Hook *h)
 	return h->isEnabled() ? 0 : -1;
 }
 
-void hook_list_prepare(vlist *hs, vlist *sigs, int m, struct vpath *p, struct vnode *n)
+void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, struct vnode *n)
 {
 	assert(hs->state == State::INITIALIZED);
 
@@ -131,11 +130,12 @@ skip_add:
 
 		sigs = h->getSignals();
 
-		signal_list_dump(sigs);
+		auto logger = logging.get("hook");
+		signal_list_dump(logger, sigs);
 	}
 }
 
-int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
+int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
 {
 	unsigned current, processed = 0;
 
@@ -172,7 +172,7 @@ skip: {}
 stop:	return processed;
 }
 
-void hook_list_periodic(vlist *hs)
+void hook_list_periodic(struct vlist *hs)
 {
 	for (size_t j = 0; j < vlist_length(hs); j++) {
 		Hook *h = (Hook *) vlist_at(hs, j);
@@ -181,7 +181,7 @@ void hook_list_periodic(vlist *hs)
 	}
 }
 
-void hook_list_start(vlist *hs)
+void hook_list_start(struct vlist *hs)
 {
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
@@ -190,7 +190,7 @@ void hook_list_start(vlist *hs)
 	}
 }
 
-void hook_list_stop(vlist *hs)
+void hook_list_stop(struct vlist *hs)
 {
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
@@ -199,14 +199,14 @@ void hook_list_stop(vlist *hs)
 	}
 }
 
-vlist * hook_list_get_signals(vlist *hs)
+struct vlist * hook_list_get_signals(struct vlist *hs)
 {
 	Hook *h = (Hook *) vlist_last(hs);
 
 	return h->getSignals();
 }
 
-json_t * hook_list_to_json(vlist *hs)
+json_t * hook_list_to_json(struct vlist *hs)
 {
 	json_t *json_hooks = json_array();
 

@@ -75,7 +75,7 @@ public:
 	void stop();
 
 	/** Parse HTTPd and WebSocket related options */
-	int parse(json_t *cfg);
+	int parse(json_t *json);
 
 	Api * getApi()
 	{

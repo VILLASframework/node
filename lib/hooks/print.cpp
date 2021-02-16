@@ -88,7 +88,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		const char *f = nullptr, *p = nullptr, *u = nullptr;
 		int ret;
@@ -96,15 +96,15 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s }",
 			"output", &u,
 			"prefix", &p,
 			"format", &f
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-print");
+			throw ConfigError(json, err, "node-config-hook-print");
 
 		if (p)
 			prefix = strdup(p);
@@ -115,7 +115,7 @@ public:
 		if (f) {
 			format = format_type_lookup(f);
 			if (!format)
-				throw ConfigError(cfg, "node-config-hook-print-format", "Invalid IO format '{}'", f);
+				throw ConfigError(json, "node-config-hook-print-format", "Invalid IO format '{}'", f);
 		}
 
 		state = State::PARSED;

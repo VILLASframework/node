@@ -28,7 +28,7 @@
 #include <linux/if_ether.h>
 
 #include <villas/utils.hpp>
-
+#include <villas/exceptions.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/if.hpp>
 #include <villas/kernel/tc.hpp>
@@ -45,7 +45,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t hand
 
 	ret = kernel::module_load("sch_prio");
 	if (ret)
-		error("Failed to load kernel module: sch_prio (%d)", ret);
+		throw RuntimeError("Failed to load kernel module: sch_prio ({})", ret);
 
 	/* This is the default priomap used by the tc-prio qdisc
 	 * We will use the first 'bands' bands internally */
@@ -65,7 +65,8 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t hand
 
 	*qd = q;
 
-	debug(LOG_TC | 3, "Added prio qdisc with %d bands to interface '%s'", bands, rtnl_link_get_name(i->nl_link));
+	auto logger = logging.get("kernel");
+	logger->debug("Added prio qdisc with {} bands to interface '{}'", bands, rtnl_link_get_name(i->nl_link));
 
 	return ret;
 }
@@ -78,7 +79,7 @@ int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowi
 
 	ret = kernel::module_load("cls_fw");
 	if (ret)
-		error("Failed to load kernel module: cls_fw");
+		throw RuntimeError("Failed to load kernel module: cls_fw");
 
 	rtnl_tc_set_link(TC_CAST(c), i->nl_link);
 	rtnl_tc_set_handle(TC_CAST(c), mark);
@@ -93,7 +94,8 @@ int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowi
 
 	*cls = c;
 
-	debug(LOG_TC | 3, "Added fwmark classifier with mark %d to interface '%s'", mark, rtnl_link_get_name(i->nl_link));
+	auto logger = logging.get("kernel");
+	logger->debug("Added fwmark classifier with mark {} to interface '{}'", mark, rtnl_link_get_name(i->nl_link));
 
 	return ret;
 }

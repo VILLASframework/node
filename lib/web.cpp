@@ -189,7 +189,7 @@ Web::Web(Api *a) :
 	lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, lwsLogger);
 }
 
-int Web::parse(json_t *cfg)
+int Web::parse(json_t *json)
 {
 	int ret, enabled = 1;
 	const char *cert = nullptr;
@@ -197,7 +197,7 @@ int Web::parse(json_t *cfg)
 	const char *htd = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
 		"ssl_cert", &cert,
 		"ssl_private_key", &pkey,
 		"htdocs", &htd,
@@ -205,7 +205,7 @@ int Web::parse(json_t *cfg)
 		"enabled", &enabled
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-http");
+		throw ConfigError(json, err, "node-config-http");
 
 	if (cert)
 		ssl_cert = cert;
@@ -246,7 +246,7 @@ void Web::start()
  #endif
 	ctx_info.mounts = mounts;
 
-	logger->info("Starting sub-system: htdocs={}", htdocs.c_str());
+	logger->info("Starting sub-system: htdocs={}", htdocs);
 
 	/* update web root of mount point */
 	mounts[ARRAY_LEN(mounts)-1].origin = htdocs.c_str();

@@ -98,7 +98,10 @@ public:
 		*/
 		jitter_val[(curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE] = jitter_val[curr_count] + (labs(curr_delay_us) - jitter_val[curr_count]) / 16;
 
-		logger->info("{}: jitter={} usec, moving average={} usec, moving variance={} usec", __FUNCTION__, jitter_val[(curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE], moving_avg[curr_count], moving_var[curr_count]);
+		logger->info("{}: jitter={} usec, moving average={} usec, moving variance={} usec", __FUNCTION__,
+			jitter_val[(curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE],
+			moving_avg[curr_count],
+			moving_var[curr_count]);
 
 		curr_count++;
 		if (curr_count >= GPS_NTP_DELAY_WIN_SIZE)

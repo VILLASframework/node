@@ -75,9 +75,9 @@ if ! pkg-config "fmt >= 6.1.2" && \
 fi
 
 # Build & Install spdlog
-if ! pkg-config "spdlog >= 1.5.0" && \
+if ! pkg-config "spdlog >= 1.8.2" && \
     [ -z "${SKIP_SPDLOG}" ]; then
-    git clone --branch v1.5.0 --depth 1 --recursive https://github.com/gabime/spdlog.git
+    git clone --branch v1.8.2 --depth 1 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
     cmake -DSPDLOG_FMT_EXTERNAL=ON \

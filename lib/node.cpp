@@ -63,6 +63,9 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 	using stats_ptr = std::shared_ptr<Stats>;
 
 	new (&n->stats) stats_ptr();
+	new (&n->logger) Logger();
+
+	n->logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
 
 	uuid_clear(n->uuid);
 
@@ -151,6 +154,9 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 	if (ret)
 		return ret;
 
+	if (name_str)
+		n->logger = logging.get(fmt::format("node:{}", name_str));
+
 #ifdef __linux__
 	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
 		"out",
@@ -227,7 +233,7 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 	if (ret)
 		return ret;
 
-	n->cfg = json;
+	n->config = json;
 	n->state = State::PARSED;
 
 	return 0;
@@ -262,7 +268,7 @@ int node_start(struct vnode *n)
 	assert(n->state == State::PREPARED);
 	assert(node_type(n)->state == State::STARTED);
 
-	info("Starting node %s", node_name_long(n));
+	n->logger->info("Starting node");
 
 	ret = node_direction_start(&n->in, n);
 	if (ret)
@@ -289,7 +295,7 @@ int node_start(struct vnode *n)
 			if (ret)
 				throw RuntimeError("Failed to set FW mark for outgoing packets");
 			else
-				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->fwmark);
+				n->logger->debug("Set FW mark for socket (sd={}) to {}", fd, n->fwmark);
 		}
 	}
 #endif /* __linux__ */
@@ -307,7 +313,7 @@ int node_stop(struct vnode *n)
 	if (n->state != State::STOPPING && n->state != State::STARTED && n->state != State::CONNECTED && n->state != State::PENDING_CONNECT)
 		return 0;
 
-	info("Stopping node %s", node_name(n));
+	n->logger->info("Stopping node");
 
 	ret = node_direction_stop(&n->in, n);
 	if (ret)
@@ -332,7 +338,7 @@ int node_pause(struct vnode *n)
 	if (n->state != State::STARTED)
 		return -1;
 
-	info("Pausing node %s", node_name(n));
+	n->logger->info("Pausing node");
 
 	ret = node_type(n)->pause ? node_type(n)->pause(n) : 0;
 
@@ -349,7 +355,7 @@ int node_resume(struct vnode *n)
 	if (n->state != State::PAUSED)
 		return -1;
 
-	info("Resuming node %s", node_name(n));
+	n->logger->info("Resuming node");
 
 	ret = node_type(n)->resume ? node_type(n)->resume(n) : 0;
 
@@ -366,7 +372,7 @@ int node_restart(struct vnode *n)
 	if (n->state != State::STARTED)
 		return -1;
 
-	info("Restarting node %s", node_name(n));
+	n->logger->info("Restarting node");
 
 	if (node_type(n)->restart)
 		ret = node_type(n)->restart(n);
@@ -475,14 +481,14 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 		if (n->stats != nullptr)
 			n->stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
 
-		debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
+		n->logger->debug("Received {} samples of which {} have been skipped", nread, skipped);
 	}
 	else
-		debug(LOG_NODE | 5, "Received %u samples from node %s", nread, node_name(n));
+		n->logger->debug( "Received {} samples", nread);
 
 	return rread;
 #else
-	debug(LOG_NODE | 5, "Received %u samples from node %s", nread, node_name(n));
+	n->logger->debug("Received {} samples", nread);
 
 	return nread;
 #endif /* WITH_HOOKS */
@@ -518,7 +524,7 @@ int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 			return sent;
 
 		nsent += sent;
-		debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
+		n->logger->debug("Sent {} samples", sent);
 	}
 
 	return nsent;
@@ -593,7 +599,7 @@ struct memory_type * node_memory_type(struct vnode *n)
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, memory_default) : memory_default;
 }
 
-int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
+int node_list_parse(struct vlist *list, json_t *json, struct vlist *all)
 {
 	struct vnode *node;
 	const char *str;
@@ -602,9 +608,11 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 	size_t index;
 	json_t *elm;
 
-	switch (json_typeof(cfg)) {
+	auto logger = logging.get("node");
+
+	switch (json_typeof(json)) {
 		case JSON_STRING:
-			str = json_string_value(cfg);
+			str = json_string_value(json);
 			node = vlist_lookup_name<struct vnode>(all, str);
 			if (!node)
 				goto invalid2;
@@ -613,7 +621,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 			break;
 
 		case JSON_ARRAY:
-			json_array_foreach(cfg, index, elm) {
+			json_array_foreach(json, index, elm) {
 				if (!json_is_string(elm))
 					goto invalid;
 
@@ -632,7 +640,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 	return 0;
 
 invalid:
-	error("The node list must be an a single or an array of strings referring to the keys of the 'nodes' section");
+	throw RuntimeError("The node list must be an a single or an array of strings referring to the keys of the 'nodes' section");
 
 	return -1;
 
@@ -643,7 +651,7 @@ invalid2:
 		strcatf(&allstr, " %s", node_name_short(n));
 	}
 
-	error("Unknown node %s. Choose of one of: %s", str, allstr);
+	throw RuntimeError("Unknown node {}. Choose of one of: {}", str, allstr);
 
 	return 0;
 }
@@ -708,7 +716,7 @@ json_t * node_to_json(struct vnode *n)
 
 	/* Add all additional fields of node here.
 	 * This can be used for metadata */
-	json_object_update(json_node, n->cfg);
+	json_object_update(json_node, n->config);
 
 	return json_node;
 }

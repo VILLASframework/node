@@ -31,7 +31,7 @@
 using namespace villas;
 using namespace villas::utils;
 
-int exec_parse(struct vnode *n, json_t *cfg)
+int exec_parse(struct vnode *n, json_t *json)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -45,7 +45,7 @@ int exec_parse(struct vnode *n, json_t *cfg)
 	const char *format = "villas.human";
 	int shell = -1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: s, s?: b, s?: o, s?: b, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: s, s?: b, s?: o, s?: b, s?: s }",
 		"exec", &json_exec,
 		"format", &format,
 		"flush", &flush,
@@ -54,7 +54,7 @@ int exec_parse(struct vnode *n, json_t *cfg)
 		"working_directory", &wd
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-node-exec");
+		throw ConfigError(json, err, "node-config-node-exec");
 
 	e->flush = flush;
 	e->shell = shell < 0 ? json_is_string(json_exec) : shell;
@@ -101,16 +101,13 @@ int exec_parse(struct vnode *n, json_t *cfg)
 		}
 	}
 
+	json_t *json_format = json_object_get(json, "format");
 	e->format = format_type_lookup(format);
-	if (!e->format) {
-		json_t *json_format = json_object_get(cfg, "format");
+	if (!e->format)
 		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format: {)", format);
-	}
 
-	if (!(e->format->flags & (int) IOFlags::NEWLINES)) {
-		json_t *json_format = json_object_get(cfg, "format");
+	if (!(e->format->flags & (int) IOFlags::NEWLINES))
 		throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
-	}
 
 	return 0;
 }
@@ -127,7 +124,7 @@ int exec_prepare(struct vnode *n)
 
 	/* Start subprocess */
 	e->proc = std::make_unique<Popen>(e->command, e->arguments, e->environment, e->working_dir, e->shell);
-	debug(2, "Started sub-process with pid=%d", e->proc->getPid());
+	n->logger->debug("Started sub-process with pid={}", e->proc->getPid());
 
 	return 0;
 }
@@ -170,22 +167,15 @@ int exec_destroy(struct vnode *n)
 	return 0;
 }
 
-int exec_start(struct vnode *n)
-{
-//	struct exec *e = (struct exec *) n->_vd;
-
-	return 0;
-}
-
 int exec_stop(struct vnode *n)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
 	/* Stop subprocess */
-	debug(2, "Killing sub-process with pid=%d", e->proc->getPid());
+	n->logger->debug("Killing sub-process with pid={}", e->proc->getPid());
 	e->proc->kill(SIGINT);
 
-	debug(2, "Waiting for sub-process with pid=%d to terminate", e->proc->getPid());
+	n->logger->debug("Waiting for sub-process with pid={} to terminate", e->proc->getPid());
 	e->proc->close();
 
 	/** @todo: Check exit code of subprocess? */
@@ -275,7 +265,6 @@ static void register_plugin() {
 	p.node.prepare		= exec_prepare;
 	p.node.init		= exec_init;
 	p.node.destroy		= exec_destroy;
-	p.node.start		= exec_start;
 	p.node.stop		= exec_stop;
 	p.node.read		= exec_read;
 	p.node.write		= exec_write;

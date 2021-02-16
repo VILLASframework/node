@@ -57,7 +57,7 @@ struct exec {
 char * exec_print(struct vnode *n);
 
 /** @see node_type::parse */
-int exec_parse(struct vnode *n, json_t *cfg);
+int exec_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int exec_open(struct vnode *n);

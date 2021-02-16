@@ -27,6 +27,7 @@
 #include <villas/plugin.h>
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
+#include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -34,6 +35,7 @@ using namespace villas::utils;
 // Each process has a list of clients for which a thread invokes the mosquitto loop
 static struct vlist clients;
 static pthread_t thread;
+static Logger logger;
 
 static void * mosquitto_loop_thread(void *ctx)
 {
@@ -41,30 +43,28 @@ static void * mosquitto_loop_thread(void *ctx)
 
 	// Set the cancel type of this thread to async
 	ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
-	if (ret != 0) {
-		error("Unable to set cancel type of MQTT communication thread to asynchronous.");
-		return nullptr;
-	}
+	if (ret != 0)
+		throw RuntimeError("Unable to set cancel type of MQTT communication thread to asynchronous.");
 
 	while (true) {
 		for (unsigned i = 0; i < vlist_length(&clients); i++) {
-			struct vnode *node = (struct vnode *) vlist_at(&clients, i);
-			struct mqtt *m = (struct mqtt *) node->_vd;
+			struct vnode *n = (struct vnode *) vlist_at(&clients, i);
+			struct mqtt *m = (struct mqtt *) n->_vd;
 
 			// Execute mosquitto loop for this client
 			ret = mosquitto_loop(m->client, 0, 1);
 			if (ret) {
-				warning("MQTT: connection error for node %s: %s, attempting reconnect", node_name(node), mosquitto_strerror(ret));
+				n->logger->warn("Connection error: {}, attempting reconnect", mosquitto_strerror(ret));
 
 				ret = mosquitto_reconnect(m->client);
 				if (ret != MOSQ_ERR_SUCCESS)
-					warning("MQTT: reconnection to broker failed for node %s: %s", node_name(node), mosquitto_strerror(ret));
+					n->logger->warn("Reconnection to broker failed: {}", mosquitto_strerror(ret));
 				else
-					warning("MQTT: successfully reconnected to broker for node %s: %s", node_name(node), mosquitto_strerror(ret));
+					n->logger->warn("Successfully reconnected to broker: {}", mosquitto_strerror(ret));
 
 				ret = mosquitto_loop(m->client, 0, 1);
 				if (ret != MOSQ_ERR_SUCCESS)
-					warning("MQTT: persisting connection error for node %s: %s", node_name(node), mosquitto_strerror(ret));
+					n->logger->warn("Persisting connection error: {}", mosquitto_strerror(ret));
 			}
 		}
 	}
@@ -72,94 +72,96 @@ static void * mosquitto_loop_thread(void *ctx)
 	return nullptr;
 }
 
-static void mqtt_log_cb(struct mosquitto *mosq, void *userdata, int level, const char *str)
+static void mqtt_log_cb(struct mosquitto *mosq, void *ctx, int level, const char *str)
 {
+	struct vnode *n = (struct vnode *) ctx;
+
 	switch (level) {
 		case MOSQ_LOG_NONE:
 		case MOSQ_LOG_INFO:
 		case MOSQ_LOG_NOTICE:
-			info("MQTT: %s", str);
+			n->logger->info("{}", str);
 			break;
 
 		case MOSQ_LOG_WARNING:
-			warning("MQTT: %s", str);
+			n->logger->warn("{}", str);
 			break;
 
 		case MOSQ_LOG_ERR:
-			error("MQTT: %s", str);
+			n->logger->error("{}", str);
 			break;
 
 		case MOSQ_LOG_DEBUG:
-			debug(5, "MQTT: %s", str);
+			n->logger->debug("{}", str);
 			break;
 	}
 }
 
-static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
+static void mqtt_connect_cb(struct mosquitto *mosq, void *ctx, int result)
 {
-	struct vnode *n = (struct vnode *) userdata;
+	struct vnode *n = (struct vnode *) ctx;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	int ret;
 
-	info("MQTT: Node %s connected to broker %s", node_name(n), m->host);
+	n->logger->info("Connected to broker {}", m->host);
 
 	if (m->subscribe) {
 		ret = mosquitto_subscribe(m->client, nullptr, m->subscribe, m->qos);
 		if (ret)
-			warning("MQTT: failed to subscribe to topic '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
+			n->logger->warn("Failed to subscribe to topic '{}': {}", m->subscribe, mosquitto_strerror(ret));
 	}
 	else
-		warning("MQTT: no subscribe for node %s as no subscribe topic is given", node_name(n));
+		n->logger->warn("No subscription as no topic is configured");
 }
 
-static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int result)
+static void mqtt_disconnect_cb(struct mosquitto *mosq, void *ctx, int result)
 {
-	struct vnode *n = (struct vnode *) userdata;
+	struct vnode *n = (struct vnode *) ctx;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	info("MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
+	n->logger->info("Disconnected from broker {}", m->host);
 }
 
-static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg)
+static void mqtt_message_cb(struct mosquitto *mosq, void *ctx, const struct mosquitto_message *msg)
 {
 	int ret;
-	struct vnode *n = (struct vnode *) userdata;
+	struct vnode *n = (struct vnode *) ctx;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 	struct sample *smps[n->in.vectorize];
 
-	debug(5, "MQTT: Node %s received a message of %d bytes from broker %s", node_name(n), msg->payloadlen, m->host);
+	n->logger->debug("Received a message of {} bytes from broker {}", msg->payloadlen, m->host);
 
 	ret = sample_alloc_many(&m->pool, smps, n->in.vectorize);
 	if (ret <= 0) {
-		warning("Pool underrun in subscriber of %s", node_name(n));
+		n->logger->warn("Pool underrun in subscriber");
 		return;
 	}
 
 	ret = io_sscan(&m->io, (char *) msg->payload, msg->payloadlen, nullptr, smps, n->in.vectorize);
 	if (ret < 0) {
-		warning("MQTT: Node %s received an invalid message", node_name(n));
-		warning("  Payload: %s", (char *) msg->payload);
+		n->logger->warn("Received an invalid message");
+		n->logger->warn("  Payload: {}", (char *) msg->payload);
 		return;
 	}
 
 	if (ret == 0) {
-		debug(4, "MQTT: skip empty message for node %s", node_name(n));
+		n->logger->debug("Skip empty message");
 		sample_decref_many(smps, n->in.vectorize);
 		return;
 	}
 
 	ret = queue_signalled_push_many(&m->queue, (void **) smps, n->in.vectorize);
 	if (ret < (int) n->in.vectorize)
-		warning("MQTT: Failed to enqueue samples");
+		n->logger->warn("Failed to enqueue samples");
 }
 
-static void mqtt_subscribe_cb(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
+static void mqtt_subscribe_cb(struct mosquitto *mosq, void *ctx, int mid, int qos_count, const int *granted_qos)
 {
-	struct vnode *n = (struct vnode *) userdata;
+	struct vnode *n = (struct vnode *) ctx;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	info("MQTT: Node %s subscribed to broker %s", node_name(n), m->host);
+	n->logger->info("Subscribed to broker {}", m->host);
 }
 
 int mqtt_reverse(struct vnode *n)
@@ -212,12 +214,12 @@ int mqtt_init(struct vnode *n)
 	return 0;
 
 mosquitto_error:
-	warning("MQTT: %s", mosquitto_strerror(ret));
+	n->logger->warn("{}", mosquitto_strerror(ret));
 
 	return ret;
 }
 
-int mqtt_parse(struct vnode *n, json_t *cfg)
+int mqtt_parse(struct vnode *n, json_t *json)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -232,7 +234,7 @@ int mqtt_parse(struct vnode *n, json_t *cfg)
 	json_error_t err;
 	json_t *json_ssl = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: { s?: s }, s?: { s?: s }, s?: s, s: s, s?: i, s?: i, s?: i, s?: b, s?: s, s?: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s }, s?: s, s: s, s?: i, s?: i, s?: i, s?: b, s?: s, s?: s, s?: o }",
 		"out",
 			"publish", &publish,
 		"in",
@@ -248,7 +250,7 @@ int mqtt_parse(struct vnode *n, json_t *cfg)
 		"ssl", &json_ssl
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-node-mqtt", "Failed to parse configuration of node {}", node_name(n));
+		throw ConfigError(json, err, "node-config-node-mqtt");
 
 	m->host = strdup(host);
 	m->publish = publish ? strdup(publish) : nullptr;
@@ -257,7 +259,7 @@ int mqtt_parse(struct vnode *n, json_t *cfg)
 	m->password = password ? strdup(password) : nullptr;
 
 	if (!m->publish && !m->subscribe)
-		throw ConfigError(cfg, "node-config-node-mqtt", "At least one topic has to be specified for node {}", node_name(n));
+		throw ConfigError(json, "node-config-node-mqtt", "At least one topic has to be specified for node {}", node_name(n));
 
 	if (json_ssl) {
 		m->ssl.enabled = 1;
@@ -301,11 +303,11 @@ int mqtt_check(struct vnode *n)
 
 	ret = mosquitto_sub_topic_check(m->subscribe);
 	if (ret != MOSQ_ERR_SUCCESS)
-		error("Invalid subscribe topic: '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
+		throw RuntimeError("Invalid subscribe topic: '{}': {}", m->subscribe, mosquitto_strerror(ret));
 
 	ret = mosquitto_pub_topic_check(m->publish);
 	if (ret != MOSQ_ERR_SUCCESS)
-		error("Invalid publish topic: '%s' for node %s: %s", m->publish, node_name(n), mosquitto_strerror(ret));
+		throw RuntimeError("Invalid publish topic: '{}': {}", m->publish, mosquitto_strerror(ret));
 
 	return 0;
 }
@@ -421,7 +423,7 @@ int mqtt_start(struct vnode *n)
 	return 0;
 
 mosquitto_error:
-	warning("MQTT: %s", mosquitto_strerror(ret));
+	n->logger->warn("{}", mosquitto_strerror(ret));
 
 	return ret;
 }
@@ -443,7 +445,7 @@ int mqtt_stop(struct vnode *n)
 	return 0;
 
 mosquitto_error:
-	warning("MQTT: %s", mosquitto_strerror(ret));
+	n->logger->warn("{}", mosquitto_strerror(ret));
 
 	return ret;
 }
@@ -451,6 +453,8 @@ mosquitto_error:
 int mqtt_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
+
+	logger = logging.get("node:mqtt");
 
 	ret = vlist_init(&clients);
 	if (ret)
@@ -468,7 +472,7 @@ int mqtt_type_start(villas::node::SuperNode *sn)
 	return 0;
 
 mosquitto_error:
-	warning("MQTT: %s", mosquitto_strerror(ret));
+	logger->warn("{}", mosquitto_strerror(ret));
 
 	return ret;
 }
@@ -481,7 +485,8 @@ int mqtt_type_stop()
 	ret = pthread_cancel(thread);
 	if (ret)
 		return ret;
-	debug(  3, "Called pthread_cancel() on MQTT communication management thread.");
+
+	logger->debug("Called pthread_cancel() on MQTT communication management thread.");
 
 	ret = pthread_join(thread, nullptr);
 	if (ret)
@@ -493,7 +498,7 @@ int mqtt_type_stop()
 
 	// When this is called the list of clients should be empty
 	if (vlist_length(&clients) > 0)
-		error("List of MQTT clients contains elements at time of destruction. Call node_stop for each MQTT node before stopping node type!");
+		throw RuntimeError("List of MQTT clients contains elements at time of destruction. Call node_stop for each MQTT node before stopping node type!");
 
 	ret = vlist_destroy(&clients, nullptr, false);
 	if (ret)
@@ -502,7 +507,7 @@ int mqtt_type_stop()
 	return 0;
 
 mosquitto_error:
-	warning("MQTT: %s", mosquitto_strerror(ret));
+	logger->warn("{}", mosquitto_strerror(ret));
 
 	return ret;
 }
@@ -537,12 +542,12 @@ int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (m->publish) {
 		ret = mosquitto_publish(m->client, nullptr /* mid */, m->publish, wbytes, data, m->qos, m->retain);
 		if (ret != MOSQ_ERR_SUCCESS) {
-			warning("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
+			n->logger->warn("Publish failed: {}", mosquitto_strerror(ret));
 			return -abs(ret);
 		}
 	}
 	else
-		warning("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
+		n->logger->warn("No publish possible because no publish topic is configured");
 
 	return cnt;
 }

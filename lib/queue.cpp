@@ -34,6 +34,9 @@
 #include <villas/queue.h>
 #include <villas/utils.hpp>
 #include <villas/memory.h>
+#include <villas/log.hpp>
+
+using namespace villas;
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, struct memory_type *m)
@@ -42,7 +45,9 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
 		size = LOG2_CEIL(size);
-		warning("A queue size was changed from %zu to %zu", old_size, size);
+
+		auto logger = logging.get("queue");
+		logger->warn("A queue size was changed from {} to {}", old_size, size);
 	}
 
 	q->buffer_mask = size - 1;

@@ -96,7 +96,7 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 
@@ -105,20 +105,20 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
 		const char *name = nullptr;
 		const char *unit = nullptr;
 		const char *type = nullptr;
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: s, s?: s, s?: s }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: s, s?: s, s?: s }",
 			"signal", &json_signal,
 			"new_type", &type,
 			"new_name", &name,
 			"new_unit", &unit
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-cast");
+			throw ConfigError(json, err, "node-config-hook-cast");
 
 		switch (json_typeof(json_signal)) {
 			case JSON_STRING:

@@ -187,7 +187,7 @@ struct signal * signal_copy(struct signal *s)
 	return ns;
 }
 
-int signal_parse(struct signal *s, json_t *cfg)
+int signal_parse(struct signal *s, json_t *json)
 {
 	int ret;
 	json_error_t err;
@@ -196,7 +196,7 @@ int signal_parse(struct signal *s, json_t *cfg)
 	const char *unit = nullptr;
 	const char *type = "float";
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: o, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: o, s?: b }",
 		"name", &name,
 		"unit", &unit,
 		"type", &type,

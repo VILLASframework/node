@@ -47,11 +47,11 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	int confrev      = SVSubscriber_ASDU_getConfRev(asdu);
 	int sz;
 
-	debug(10, "Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
+	n->logger->debug("Received SV: svid={}, smpcnt={}, confrev={}", svid, smpcnt, confrev);
 
 	sz = SVSubscriber_ASDU_getDataSize(asdu);
 	if (sz < i->in.total_size) {
-		warning("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
+		n->node->warn("Received truncated ASDU: size={}, expected={}", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
 		return;
 	}
 
@@ -67,7 +67,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 
 	smp = sample_alloc(&i->in.pool);
 	if (!smp) {
-		warning("Pool underrun in subscriber of %s", node_name(n));
+		n->logger->warn("Pool underrun in subscriber");
 		return;
 	}
 
@@ -173,7 +173,7 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 		"dst_address", &dst_address
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-iec61850-sv");
 
 	if (interface)
 		i->interface = strdup(interface);
@@ -200,7 +200,7 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 			"vlan_priority", &i->out.vlan_priority
 		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			throw ConfigError(json_out, err, "node-config-node-iec61850-sv-out");
 
 		if (smpmod) {
 			if      (!strcmp(smpmod, "per_nominal_period"))
@@ -210,14 +210,14 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 			else if (!strcmp(smpmod, "seconds_per_sample"))
 				i->out.smpmod = IEC61850_SV_SMPMOD_SECONDS_PER_SAMPLE;
 			else
-				error("Invalid value '%s' for setting 'smpmod'", smpmod);
+				throw RuntimeError("Invalid value '{}' for setting 'smpmod'", smpmod);
 		}
 
 		i->out.svid = svid ? strdup(svid) : nullptr;
 
 		ret = iec61850_parse_signals(json_signals, &i->out.signals, &n->out.signals);
 		if (ret <= 0)
-			error("Failed to parse setting 'signals' of node %s", node_name(n));
+			throw RuntimeError("Failed to parse setting 'signals'");
 
 		i->out.total_size = ret;
 	}
@@ -230,11 +230,11 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 			"signals", &json_signals
 		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			throw ConfigError(json_in, err, "node-config-node-iec61850-in");
 
 		ret = iec61850_parse_signals(json_signals, &i->in.signals, &n->in.signals);
 		if (ret <= 0)
-			error("Failed to parse setting 'signals' of node %s", node_name(n));
+			throw RuntimeError("Failed to parse setting 'signals'");
 
 		i->in.total_size = ret;
 	}

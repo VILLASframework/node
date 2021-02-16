@@ -22,7 +22,6 @@
 
 #include <cstring>
 
-#include <villas/log.h>
 #include <villas/signal_type.h>
 
 enum SignalType signal_type_from_str(const char *str)
@@ -85,8 +84,6 @@ enum SignalType signal_type_detect(const char *val)
 {
 	const char *brk;
 	int len;
-
-	debug(LOG_IO | 5, "Attempt to detect type of value: %s", val);
 
 	brk = strchr(val, 'i');
 	if (brk)

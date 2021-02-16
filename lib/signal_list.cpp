@@ -66,17 +66,17 @@ int signal_list_destroy(struct vlist *list)
 	return 0;
 }
 
-int signal_list_parse(struct vlist *list, json_t *cfg)
+int signal_list_parse(struct vlist *list, json_t *json)
 {
 	int ret;
 	struct signal *s;
 
-	if (!json_is_array(cfg))
+	if (!json_is_array(json))
 		return -1;
 
 	size_t i;
 	json_t *json_signal;
-	json_array_foreach(cfg, i, json_signal) {
+	json_array_foreach(json, i, json_signal) {
 		s = new struct signal;
 		if (!s)
 			throw MemoryAllocationError();
@@ -141,7 +141,7 @@ int signal_list_generate2(struct vlist *list, const char *dt)
 	return 0;
 }
 
-void signal_list_dump(const struct vlist *list, const union signal_data *data, unsigned len)
+void signal_list_dump(Logger logger, const struct vlist *list, const union signal_data *data, unsigned len)
 {
 	for (size_t i = 0; i < vlist_length(list); i++) {
 		struct signal *sig = (struct signal *) vlist_at(list, i);
@@ -164,7 +164,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 			strcatf(&buf, " = %s", val);
 		}
 
-		debug(5, "%s", buf);
+		logger->debug("{}", buf);
 		free(buf);
 	}
 }

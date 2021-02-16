@@ -53,7 +53,7 @@ struct nanomsg {
 char * nanomsg_print(struct vnode *n);
 
 /** @see node_type::parse */
-int nanomsg_parse(struct vnode *n, json_t *cfg);
+int nanomsg_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int nanomsg_start(struct vnode *n);

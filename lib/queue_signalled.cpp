@@ -23,7 +23,6 @@
 
 #include <villas/node/config.h>
 #include <villas/queue_signalled.h>
-#include <villas/log.h>
 
 #ifdef HAS_EVENTFD
   #include <sys/eventfd.h>

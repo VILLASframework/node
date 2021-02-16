@@ -33,7 +33,6 @@
 
 #include <villas/node/config.h>
 #include <villas/log.hpp>
-#include <villas/advio.hpp>
 
 namespace villas {
 namespace node {
@@ -64,9 +63,6 @@ protected:
 
 	/** Load configuration from local file. */
 	FILE * loadFromLocalFile(const std::string &u);
-
-	/** Load configuration from a remote URI via advio. */
-	AFILE * loadFromRemoteFile(const std::string &u);
 
 	/** Resolve custom include directives. */
 	json_t * resolveIncludes(json_t *in);

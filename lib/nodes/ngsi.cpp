@@ -33,6 +33,7 @@
 
 #include <villas/nodes/ngsi.hpp>
 #include <villas/utils.hpp>
+#include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/timing.h>
 #include <villas/plugin.h>
@@ -54,8 +55,12 @@ static pthread_mutex_t *mutex_buf = NULL;
 
 void handle_error(const char *file, int lineno, const char *msg)
 {
-	error("** %s:%d %s\n", file, lineno, msg);
+	auto logger = logging.get("curl");
+
+	logger->error("** {}:{} {}", file, lineno, msg);
+
 	ERR_print_errors_fp(stderr);
+
 	/* exit(-1); */
 }
 
@@ -108,7 +113,7 @@ public:
 			"value", &val
 		);
 		if (ret)
-			throw ConfigError(json, "Failed to parse NGSI metadata");
+			throw ConfigError(json, "node-config-node-ngsi-metadata", "Failed to parse NGSI metadata");
 
 		name = nam;
 		type = typ;
@@ -165,7 +170,7 @@ public:
 
 		if (json_metadatas) {
 			if (!json_is_array(json_metadatas))
-				throw ConfigError(json_metadatas, "node-config-ngsi-metadata", "ngsi_metadata must be a list of objects");
+				throw ConfigError(json_metadatas, "node-config-node-ngsi-metadata", "ngsi_metadata must be a list of objects");
 
 			json_t *json_metadata;
 			json_array_foreach(json_metadatas, j, json_metadata)
@@ -427,7 +432,7 @@ static int ngsi_parse_signals(json_t *json_signals, struct vlist *ngsi_signals, 
 	return 0;
 }
 
-static int ngsi_parse_context_response(json_t *json_response, int *code, char **reason, json_t **json_rentity) {
+static int ngsi_parse_context_response(json_t *json_response, int *code, char **reason, json_t **json_rentity, Logger logger) {
 	int ret;
 	char *codestr;
 
@@ -441,14 +446,14 @@ static int ngsi_parse_context_response(json_t *json_response, int *code, char **
 				"reasonPhrase", reason
 	);
 	if (ret) {
-		warning("Failed to find NGSI response code");
+		logger->warn("Failed to find NGSI response code");
 		return ret;
 	}
 
 	*code = atoi(codestr);
 
 	if (*code != 200)
-		warning("NGSI response: %s %s", codestr, *reason);
+		logger->warn("NGSI response: {} {}", codestr, *reason);
 
 	return ret;
 }
@@ -469,7 +474,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json_t *json_request, json_t **json_response)
+static int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json_t *json_request, json_t **json_response, Logger logger)
 {
 	struct ngsi_response chunk = { 0 };
 	char *post = json_dumps(json_request, JSON_INDENT(4));
@@ -486,7 +491,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
 
-	debug(LOG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
+	logger->debug("Request to context broker: {}\n{}", url, post);
 
 	/* We don't want to leave the handle in an invalid state */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
@@ -494,18 +499,18 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	pthread_setcancelstate(old, nullptr);
 
 	if (ret) {
-		warning("HTTP request failed: %s", curl_easy_strerror(ret));
+		logger->warn("HTTP request failed: {}", curl_easy_strerror(ret));
 		goto out;
 	}
 
 	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 
-	debug(LOG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
-	debug(LOG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
+	logger->debug("Request to context broker completed in {} seconds", time);
+	logger->debug("Response from context broker:\n{}", chunk.data);
 
 	*json_response = json_loads(chunk.data, 0, &err);
 	if (!*json_response)
-		warning("Received invalid JSON: %s in %s:%u:%u\n%s", err.text, err.source, err.line, err.column, chunk.data);
+		logger->warn("Received invalid JSON: {} in {}:{}:{}\n{}", err.text, err.source, err.line, err.column, chunk.data);
 
 out:	free(post);
 	free(chunk.data);
@@ -513,7 +518,7 @@ out:	free(post);
 	return ret;
 }
 
-static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *json_entity, json_t **json_rentity)
+static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *json_entity, json_t **json_rentity, Logger logger)
 {
 	int ret, code;
 	char *reason;
@@ -521,13 +526,13 @@ static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t
 	json_t *json_response;
 	json_t *json_request = json_pack("{ s: [ o ] }", "entities", json_entity);
 
-	ret = ngsi_request(handle, endpoint, "queryContext", json_request, &json_response);
+	ret = ngsi_request(handle, endpoint, "queryContext", json_request, &json_response, logger);
 	if (ret) {
 		ret = -1;
 		goto out;
 	}
 
-	ret = ngsi_parse_context_response(json_response, &code, &reason, json_rentity);
+	ret = ngsi_parse_context_response(json_response, &code, &reason, json_rentity, logger);
 	if (ret)
 		goto out2;
 
@@ -537,7 +542,7 @@ out:	json_decref(json_request);
 	return ret;
 }
 
-static int ngsi_request_context_update(CURL *handle, const char *endpoint, const char *action, json_t *json_entity)
+static int ngsi_request_context_update(CURL *handle, const char *endpoint, const char *action, json_t *json_entity, Logger logger)
 {
 	int ret, code;
 	char *reason;
@@ -548,12 +553,12 @@ static int ngsi_request_context_update(CURL *handle, const char *endpoint, const
 		"contextElements", json_entity
 	);
 
-	ret = ngsi_request(handle, endpoint, "updateContext", json_request, &json_response);
+	ret = ngsi_request(handle, endpoint, "updateContext", json_request, &json_response, logger);
 	if (ret)
 		goto out;
 
 	json_t *json_rentity;
-	ret = ngsi_parse_context_response(json_response, &code, &reason, &json_rentity);
+	ret = ngsi_parse_context_response(json_response, &code, &reason, &json_rentity, logger);
 	if (ret)
 		goto out2;
 
@@ -577,7 +582,7 @@ int ngsi_type_start(villas::node::SuperNode *sn)
 	CRYPTO_set_id_callback(curl_ssl_thread_id_function);
 	CRYPTO_set_locking_callback(curl_ssl_locking_function);
 
-	info("Setup libcurl/openssl locking primitives");
+	sn->getLogger()->info("Setup libcurl/openssl locking primitives");
 #endif /* CURL_SSL_REQUIRES_LOCKING */
 
 	return curl_global_init(CURL_GLOBAL_ALL);
@@ -603,7 +608,7 @@ int ngsi_type_stop()
 	return 0;
 }
 
-int ngsi_parse(struct vnode *n, json_t *cfg)
+int ngsi_parse(struct vnode *n, json_t *json)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -615,7 +620,7 @@ int ngsi_parse(struct vnode *n, json_t *cfg)
 	int create = 1;
 	int remove = 1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: F, s?: F, s?: b, s?: b, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: F, s?: F, s?: b, s?: b, s?: { s?: o }, s?: { s?: o } }",
 		"access_token", &i->access_token,
 		"endpoint", &i->endpoint,
 		"entity_id", &i->entity_id,
@@ -631,7 +636,7 @@ int ngsi_parse(struct vnode *n, json_t *cfg)
 			"signals", &json_signals_out
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-node-ngsi", "Failed to parse configuration of node {}", node_name(n));
+		throw ConfigError(json, err, "node-config-node-ngsi");
 
 	i->create = create;
 	i->remove = remove;
@@ -675,7 +680,7 @@ int ngsi_start(struct vnode *n)
 
 	/* Create task */
 	if (i->timeout > 1 / i->rate)
-		warning("Timeout is to large for given rate: %f", i->rate);
+		n->logger->warn("Timeout is to large for given rate: {}", i->rate);
 
 	i->task.setRate(i->rate);
 
@@ -695,7 +700,7 @@ int ngsi_start(struct vnode *n)
 	if (i->create) {
 		json_t *json_entity = ngsi_build_entity(n, nullptr, 0, NGSI_ENTITY_ATTRIBUTES | NGSI_ENTITY_METADATA);
 
-		int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity);
+		int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity, n->logger);
 		if (ret)
 			throw RuntimeError("Failed to create NGSI context for node {}", node_name(n));
 
@@ -715,7 +720,7 @@ int ngsi_stop(struct vnode *n)
 	/* Delete complete entity (not just attributes) */
 	json_t *json_entity = ngsi_build_entity(n, nullptr, 0, 0);
 
-	ret = ngsi_request_context_update(i->out.curl, i->endpoint, "DELETE", json_entity);
+	ret = ngsi_request_context_update(i->out.curl, i->endpoint, "DELETE", json_entity, n->logger);
 
 	json_decref(json_entity);
 
@@ -737,7 +742,7 @@ int ngsi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	json_t *json_rentity;
 	json_t *json_entity = ngsi_build_entity(n, nullptr, 0, 0);
 
-	ret = ngsi_request_context_query(i->in.curl, i->endpoint, json_entity, &json_rentity);
+	ret = ngsi_request_context_query(i->in.curl, i->endpoint, json_entity, &json_rentity, n->logger);
 	if (ret)
 		goto out;
 
@@ -758,7 +763,7 @@ int ngsi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	json_t *json_entity = ngsi_build_entity(n, smps, cnt, NGSI_ENTITY_ATTRIBUTES_OUT | NGSI_ENTITY_VALUES);
 
-	ret = ngsi_request_context_update(i->out.curl, i->endpoint, "UPDATE", json_entity);
+	ret = ngsi_request_context_update(i->out.curl, i->endpoint, "UPDATE", json_entity, n->logger);
 
 	json_decref(json_entity);
 

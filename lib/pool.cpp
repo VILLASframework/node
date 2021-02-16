@@ -25,6 +25,7 @@
 #include <villas/pool.h>
 #include <villas/memory.h>
 #include <villas/kernel/kernel.hpp>
+#include <villas/log.hpp>
 
 using namespace villas;
 
@@ -41,7 +42,8 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	if (!buffer)
 		throw MemoryAllocationError();
 
-	debug(LOG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
+	auto logger = logging.get("pool");
+	logger->debug("Allocated {#x} bytes for memory pool", p->len);
 
 	p->buffer_off = (char*) buffer - (char*) p;
 

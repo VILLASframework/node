@@ -72,12 +72,12 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		cfg_cli = json_object();
+		config_cli = json_object();
 	}
 
 	~Hook()
 	{
-		json_decref(cfg_cli);
+		json_decref(config_cli);
 	}
 
 protected:
@@ -94,7 +94,7 @@ protected:
 
 	int cnt;
 
-	json_t *cfg_cli;
+	json_t *config_cli;
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{
@@ -162,7 +162,7 @@ protected:
 					break;
 
 				case 'o':
-					ret = json_object_extend_str(cfg_cli, optarg);
+					ret = json_object_extend_str(config_cli, optarg);
 					if (ret)
 						throw RuntimeError("Invalid option: {}", optarg);
 					break;
@@ -224,7 +224,7 @@ check:			if (optarg == endptr)
 		if (!h)
 			throw RuntimeError("Failed to initialize hook");
 
-		h->parse(cfg_cli);
+		h->parse(config_cli);
 		h->check();
 		h->prepare(io.signals);
 		h->start();
@@ -232,7 +232,7 @@ check:			if (optarg == endptr)
 		while (!stop) {
 			ret = sample_alloc_many(&p, smps, cnt);
 			if (ret != cnt)
-				throw RuntimeError("Failed to allocate %d smps from pool", cnt);
+				throw RuntimeError("Failed to allocate {} smps from pool", cnt);
 
 			recv = io_scan(&io, smps, cnt);
 			if (recv < 0) {

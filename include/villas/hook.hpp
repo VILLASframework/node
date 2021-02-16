@@ -72,7 +72,7 @@ protected:
 
 	struct vlist signals;
 
-	json_t *cfg; /**< A JSON object containing the configuration of the hook. */
+	json_t *config; /**< A JSON object containing the configuration of the hook. */
 
 public:
 	Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
@@ -142,7 +142,7 @@ public:
 
 	json_t * getConfig() const
 	{
-		return cfg;
+		return config;
 	}
 
 	bool isEnabled() const

@@ -290,24 +290,28 @@ enum SignalType sample_format(const struct sample *s, unsigned idx)
 	return sig ? sig->type : SignalType::INVALID;
 }
 
-void sample_dump(struct sample *s)
+void sample_dump(Logger logger, struct sample *s)
 {
-	info("Sample: sequence=%" PRIu64 ", length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
-		"refcnt=%d, pool_off=%zd",
-		s->sequence, s->length, s->capacity, s->flags, s->signals,
-		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
+	logger->info("Sample: sequence={}, length={}, capacity={},"
+		"flags={:#x}, #signals={}, "
+		"refcnt={}, pool_off={}",
+		s->sequence,
+		s->length,
+		s->capacity,
+		s->flags,
+		s->signals ? vlist_length(s->signals) : -1,
+		atomic_load(&s->refcnt),
+		s->pool_off);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-		info("  ts.origin=%lld.%lld", (long long) s->ts.origin.tv_sec,
-					      (long long) s->ts.origin.tv_nsec);
+		logger->info("  ts.origin={}.{:09f}", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-		info("  ts.received=%lld.%lld", (long long) s->ts.received.tv_sec,
-					        (long long) s->ts.received.tv_nsec);
+		logger->info("  ts.received={}.{:09f}", s->ts.received.tv_sec, s->ts.received.tv_nsec);
 
 	if (s->signals) {
-		info("  Signals:");
-		signal_list_dump(s->signals, s->data, s->length);
+		logger->info("  Signals:");
+		signal_list_dump(logger, s->signals, s->data, s->length);
 	}
 }
 

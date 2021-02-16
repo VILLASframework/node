@@ -80,7 +80,7 @@ struct signal_generator {
 char * signal_generator_print(struct vnode *n);
 
 /** @see node_type::parse */
-int signal_generator_parse(struct vnode *n, json_t *cfg);
+int signal_generator_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int signal_generator_start(struct vnode *n);

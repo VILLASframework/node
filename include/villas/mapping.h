@@ -107,13 +107,13 @@ int mapping_entry_init(struct mapping_entry *me);
 
 int mapping_entry_destroy(struct mapping_entry *me);
 
-int mapping_entry_parse(struct mapping_entry *me, json_t *cfg);
+int mapping_entry_parse(struct mapping_entry *me, json_t *json);
 
 int mapping_entry_parse_str(struct mapping_entry *e, const std::string &str);
 
 int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **str);
 
-int mapping_list_parse(struct vlist *ml, json_t *cfg);
+int mapping_list_parse(struct vlist *ml, json_t *json);
 
 int mapping_list_prepare(struct vlist *ml, struct vlist *nodes);
 

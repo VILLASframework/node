@@ -139,13 +139,10 @@ lua_tosignaldata(lua_State *L, union signal_data *data, enum SignalType targetTy
 			break;
 
 		default:
-			warning("Failed to convert Lua type %s to signal data", lua_typename(L, luaType));
 			return;
 	}
 
 	signal_data_cast(data, type, targetType);
-
-	return;
 }
 
 static void
@@ -472,7 +469,7 @@ LuaHook::parseExpressions(json_t *json_sigs)
 }
 
 void
-LuaHook::parse(json_t *c)
+LuaHook::parse(json_t *json)
 {
 	int ret;
 	const char *script_str = nullptr;
@@ -482,15 +479,15 @@ LuaHook::parse(json_t *c)
 
 	assert(state != State::STARTED);
 
-	Hook::parse(c);
+	Hook::parse(json);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: o, s?: b }",
 		"script", &script_str,
 		"signals", &json_signals,
 		"use_names", &names
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-hook-lua");
+		throw ConfigError(json, err, "node-config-hook-lua");
 
 	useNames = names;
 
@@ -522,7 +519,7 @@ LuaHook::lookupFunctions()
 
 		ret = lua_type(L, -1);
 		if (ret == LUA_TFUNCTION) {
-			logger->debug("Found Lua function: %s()", it.first);
+			logger->debug("Found Lua function: {}()", it.first);
 			*(it.second) = lua_gettop(L);
 		}
 		else {
@@ -602,7 +599,7 @@ LuaHook::prepare()
 	luaL_openlibs(L);
 
 	/* Load our Lua script */
-	logger->debug("Loading Lua script: %s", script.c_str());
+	logger->debug("Loading Lua script: {}", script);
 
 	setupEnvironment();
 	loadScript();
@@ -640,7 +637,7 @@ LuaHook::prepare()
 
 		logger->debug("Executing Lua function: prepare()");
 		lua_pushvalue(L, functions.prepare);
-		lua_pushjson(L, cfg);
+		lua_pushjson(L, config);
 		int ret = lua_pcall(L, 1, 0, 0);
 		if (ret)
 			throw LuaError(L, ret);

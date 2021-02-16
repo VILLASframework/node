@@ -346,7 +346,6 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 	retp = mkdtemp(dir);
 	cr_assert_not_null(retp);
 
-//	ret = asprintf(&fn, "file://%s/file", dir);
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
@@ -375,9 +374,6 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 #endif
 
 	io_rewind(&io);
-
-	if (io.mode == IOMode::ADVIO)
-		adownload(io.in.stream.adv, 0);
 
 	cnt = io_scan(&io, smpt, p->cnt);
 	cr_assert_gt(cnt, 0, "Failed to read samples back: cnt=%d", cnt);

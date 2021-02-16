@@ -97,9 +97,9 @@ public:
 
 	/** Parse super-node configuration.
 	 *
-	 * @param cfg A libjansson object which contains the configuration.
+	 * @param json A libjansson object which contains the configuration.
 	 */
-	void parse(json_t *cfg);
+	void parse(json_t *json);
 
 	/** Check validity of super node configuration. */
 	void check();
@@ -197,6 +197,11 @@ public:
 	int getAffinity() const
 	{
 		return affinity;
+	}
+
+	Logger getLogger()
+	{
+		return logger;
 	}
 
 	/** Destroy configuration object. */

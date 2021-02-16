@@ -235,13 +235,13 @@ public:
 				signalIndex.push_back(idx);
 			}
 			else
-				warning("Could not parse channel list. Please check documentation for syntax");
+				logger->warn("Could not parse channel list. Please check documentation for syntax");
 		}
 		else
 			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
 
 		if (!windowTypeC) {
-			info("No Window type given, assume no windowing");
+			logger->info("No Window type given, assume no windowing");
 			windowType = WindowType::NONE;
 		}
 		else if (strcmp(windowTypeC, "flattop") == 0)
@@ -251,18 +251,18 @@ public:
 		else if (strcmp(windowTypeC, "hann") == 0)
 			windowType = WindowType::HANN;
 		else {
-			info("Window type %s not recognized, assume no windowing", windowTypeC);
+			logger->info("Window type {} not recognized, assume no windowing", windowTypeC);
 			windowType = WindowType::NONE;
 		}
 
 		if (!paddingTypeC) {
-			info("No Padding type given, assume no zeropadding");
+			logger->info("No Padding type given, assume no zeropadding");
 			paddingType = PaddingType::ZERO;
 		}
 		else if (strcmp(paddingTypeC, "signal_repeat") == 0)
 			paddingType = PaddingType::SIG_REPEAT;
 		else {
-			info("Padding type %s not recognized, assume zero padding", paddingTypeC);
+			logger->info("Padding type {} not recognized, assume zero padding", paddingTypeC);
 			paddingType = PaddingType::ZERO;
 		}
 
@@ -326,7 +326,7 @@ public:
 		}
 
 		if ((smp->sequence - lastSequence) > 1)
-			warning("Calculation is not Realtime. %" PRIu64 " sampled missed", smp->sequence - lastSequence);
+			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
 

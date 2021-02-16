@@ -197,28 +197,28 @@ int signal_data_parse_str(union signal_data *data, enum SignalType type, const c
 	return 0;
 }
 
-int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *cfg)
+int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *json)
 {
 	int ret;
 
 	switch (type) {
 		case SignalType::FLOAT:
-			data->f = json_real_value(cfg);
+			data->f = json_real_value(json);
 			break;
 
 		case SignalType::INTEGER:
-			data->i = json_integer_value(cfg);
+			data->i = json_integer_value(json);
 			break;
 
 		case SignalType::BOOLEAN:
-			data->b = json_boolean_value(cfg);
+			data->b = json_boolean_value(json);
 			break;
 
 		case SignalType::COMPLEX: {
 			double real, imag;
 
 			json_error_t err;
-			ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: F }",
+			ret = json_unpack_ex(json, &err, 0, "{ s: F, s: F }",
 				"real", &real,
 				"imag", &imag
 			);

@@ -75,23 +75,15 @@ json_t * Config::load(std::FILE *f, bool resolveInc, bool resolveEnvVars)
 json_t * Config::load(const std::string &u, bool resolveInc, bool resolveEnvVars)
 {
 	FILE *f;
-	AFILE *af = nullptr;
 
 	if (u == "-")
 		f = loadFromStdio();
-	else if (isLocalFile(u))
+	else
 		f = loadFromLocalFile(u);
-	else {
-		af = loadFromRemoteFile(u);
-		f = af->file;
-	}
 
 	json_t *root = load(f, resolveInc, resolveEnvVars);
 
-	if (af)
-		afclose(af);
-	else
-		fclose(f);
+	fclose(f);
 
 	return root;
 }
@@ -108,17 +100,6 @@ FILE * Config::loadFromLocalFile(const std::string &u)
 	logger->info("Reading configuration from local file: {}", u);
 
 	FILE *f = fopen(u.c_str(), "r");
-	if (!f)
-		throw RuntimeError("Failed to open configuration from: {}", u);
-
-	return f;
-}
-
-AFILE * Config::loadFromRemoteFile(const std::string &u)
-{
-	logger->info("Reading configuration from remote URI: {}", u);
-
-	AFILE *f = afopen(u.c_str(), "r");
 	if (!f)
 		throw RuntimeError("Failed to open configuration from: {}", u);
 

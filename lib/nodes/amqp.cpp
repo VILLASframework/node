@@ -29,7 +29,9 @@
 #include <villas/nodes/amqp.hpp>
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
@@ -148,7 +150,7 @@ int amqp_parse(struct vnode *n, json_t *json)
 		"ssl", &json_ssl
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-amqp");
 
 	a->exchange = amqp_bytes_strdup(exchange);
 	a->routing_key = amqp_bytes_strdup(routing_key);
@@ -159,9 +161,8 @@ int amqp_parse(struct vnode *n, json_t *json)
 		a->uri = strf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost);
 
 	ret = amqp_parse_url(a->uri, &a->connection_info);
-
 	if (ret != AMQP_STATUS_OK)
-		error("Failed to parse URI '%s' of node %s", uri, node_name(n));
+		throw ConfigError(json, "node-config-node-uri", "Failed to parse URI '{}'", uri);
 
 	if (json_ssl) {
 		const char *ca_cert = nullptr;
@@ -176,7 +177,7 @@ int amqp_parse(struct vnode *n, json_t *json)
 			"client_cert", &client_cert
 		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			throw ConfigError(json_ssl, err, "node-config-node-amqp-ssl", "Failed to parse SSL configuration");
 
 		if (ca_cert)
 			a->ssl_info.ca_cert = strdup(ca_cert);
@@ -190,7 +191,7 @@ int amqp_parse(struct vnode *n, json_t *json)
 
 	a->format = format_type_lookup(format);
 	if (!a->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		throw ConfigError(json, "node-config-node-amqp-format", "Invalid format '{}'", format);
 
 	return 0;
 }

@@ -84,7 +84,7 @@ struct comedi {
 char * comedi_print(struct vnode *n);
 
 /** @see node_type::parse */
-int comedi_parse(struct vnode *n, json_t *cfg);
+int comedi_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::start */
 int comedi_start(struct vnode *n);

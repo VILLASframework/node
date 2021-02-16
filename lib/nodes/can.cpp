@@ -40,11 +40,13 @@
 #include <villas/plugin.h>
 #include <villas/signal.h>
 #include <villas/node.h>
+#include <villas/exceptions.hpp>
 
 
 /* Forward declarations */
 static struct plugin p;
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -72,8 +74,12 @@ int can_destroy(struct vnode *n)
 		close(c->socket);
 
 	free(c->sample_buf);
-	free(c->in);
-	free(c->out);
+
+	if (c->in)
+		free(c->in);
+
+	if (c->out)
+		free(c->out);
 
 	return 0;
 }
@@ -94,21 +100,14 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 		"can_size", &can_size,
 		"can_offset", &can_offset
 	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-can-signals");
 
-	if (ret) {
-		jerror(&err, "Failed to parse signal configuration for can");
-		goto out;
-	}
+	if (can_size > 8 || can_size <= 0)
+		throw ConfigError(json, "node-config-node-can-can-size", "can_size of {} for signal '{}' is invalid. You must satisfy 0 < can_size <= 8.", can_size, name);
 
-	if (can_size > 8 || can_size <= 0) {
-		error("can_size of %d for signal \"%s\" is invalid. You must satisfy 0 < can_size <= 8.", can_size, name);
-		goto out;
-	}
-
-	if (can_offset > 8 || can_offset < 0) {
-		error("can_offset of %d for signal \"%s\" is invalid. You must satisfy 0 <= can_offset <= 8.", can_offset, name);
-		goto out;
-	}
+	if (can_offset > 8 || can_offset < 0)
+		throw ConfigError(json, "node-config-node-can-can-offset", "can_offset of {} for signal '{}' is invalid. You must satisfy 0 <= can_offset <= 8.", can_offset, name);
 
 	sig = (struct signal*)vlist_at(node_signals, signal_index);
 	if ((!name && !sig->name) || (name && strcmp(name, sig->name) == 0)) {
@@ -119,12 +118,12 @@ int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal
 		goto out;
 	}
 	else
-		error("Signal configuration inconsistency detected: Signal with index %zu (\"%s\") does not match can_signal \"%s\"\n", signal_index, sig->name, name);
+		throw ConfigError(json, "node-config-node-can-signa;s", "Signal configuration inconsistency detected: Signal with index {} '{}' does not match can_signal '{}'", signal_index, sig->name, name);
 
 out:	return ret;
 }
 
-int can_parse(struct vnode *n, json_t *cfg)
+int can_parse(struct vnode *n, json_t *json)
 {
 	int ret = 1;
 	struct can *c = (struct can *) n->_vd;
@@ -137,7 +136,7 @@ int can_parse(struct vnode *n, json_t *cfg)
 	c->in = nullptr;
 	c->out = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: F, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: F, s?: { s?: o }, s?: { s?: o } }",
 		"interface_name", &c->interface_name,
 		"sample_rate", &c->sample_rate,
 		"in",
@@ -145,46 +144,34 @@ int can_parse(struct vnode *n, json_t *cfg)
 		"out",
 			"signals", &json_out_signals
 	);
-	if (ret) {
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
-		goto out;
-	}
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-can");
 
-	if ((c->in = (struct can_signal*)calloc(
+	c->in = (struct can_signal*) calloc(
 			json_array_size(json_in_signals),
-			sizeof(struct can_signal))) == nullptr) {
-		error("failed to allocate memory for input ids");
-		goto out;
-	}
-	if ((c->out = (struct can_signal*)calloc(
+			sizeof(struct can_signal));
+	if (!c->in)
+		throw MemoryAllocationError();
+
+	c->out = (struct can_signal*)calloc(
 			 json_array_size(json_out_signals),
-			 sizeof(struct can_signal))) == nullptr) {
-		error("failed to allocate memory for output ids");
-		goto out;
-	}
+			 sizeof(struct can_signal));
+	if (c->out)
+		throw MemoryAllocationError();
 
 	json_array_foreach(json_in_signals, i, json_signal) {
-		if (can_parse_signal(json_signal, &n->in.signals, c->in, i) != 0) {
-			error("at signal %zu in node %s.",i , node_name(n));
-			goto out;
-		}
+		ret = can_parse_signal(json_signal, &n->in.signals, c->in, i);
+		if (ret)
+			throw RuntimeError("at signal {}.",i);
 	}
 
 	json_array_foreach(json_out_signals, i, json_signal) {
-		if (can_parse_signal(json_signal, &n->out.signals, c->out, i) != 0) {
-			error("at signal %zu in node %s.",i , node_name(n));
-			goto out;
-		}
+		ret = can_parse_signal(json_signal, &n->out.signals, c->out, i);
+		if (ret)
+			throw RuntimeError("at signal {}.", i);
 	}
 
 	ret = 0;
-
-out:	if (ret != 0) {
-		free(c->in);
-		free(c->out);
-		c->in = nullptr;
-		c->out = nullptr;
-	}
 
 	return ret;
 }
@@ -193,17 +180,15 @@ char * can_print(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	return strf("interface_name=%s", c->interface_name);
+	return strf("interface_name={}", c->interface_name);
 }
 
 int can_check(struct vnode *n)
 {
 	struct can *c = (struct can *) n->_vd;
 
-	if (c->interface_name == nullptr || strlen(c->interface_name) == 0) {
-		error("interface_name is empty. Please specify the name of the CAN interface!");
-		return 1;
-	}
+	if (c->interface_name == nullptr || strlen(c->interface_name) == 0)
+		throw RuntimeError("Empty interface_name. Please specify the name of the CAN interface!");
 
 	return 0;
 }
@@ -226,28 +211,24 @@ int can_start(struct vnode *n)
 	struct can *c = (struct can *) n->_vd;
 	c->start_time = time_now();
 
-	if ((c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		error("Error while opening CAN socket");
-		goto out;
-	}
+	c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	if (c->socket < 0)
+		throw SystemError("Error while opening CAN socket");
 
 	strcpy(ifr.ifr_name, c->interface_name);
-	if (ioctl(c->socket, SIOCGIFINDEX, &ifr) != 0) {
-		error("Could not find interface with name \"%s\".", c->interface_name);
-		goto out;
-	}
+
+	ret = ioctl(c->socket, SIOCGIFINDEX, &ifr);
+	if (ret != 0)
+		throw SystemError("Could not find interface with name '{}'.", c->interface_name);
 
 	addr.can_family  = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
 
-	if (bind(c->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		error("Could not bind to interface with name \"%s\" (%d).", c->interface_name, ifr.ifr_ifindex);
-		goto out;
-	}
+	ret = bind(c->socket, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0)
+		throw SystemError("Could not bind to interface with name '{}' ({}).", c->interface_name, ifr.ifr_ifindex);
 
-	ret = 0;
-
-out:	return ret;
+	return 0;
 }
 
 int can_stop(struct vnode *n)
@@ -264,10 +245,8 @@ int can_stop(struct vnode *n)
 
 int can_conv_to_raw(union signal_data* sig, struct signal *from, void* to, int size)
 {
-	if (size <= 0 || size > 8) {
-		error("signal size cannot be larger than 8!");
-		return 1;
-	}
+	if (size <= 0 || size > 8)
+		throw RuntimeError("Signal size cannot be larger than 8!");
 
 	switch(from->type) {
 		case SignalType::BOOLEAN:
@@ -327,17 +306,16 @@ int can_conv_to_raw(union signal_data* sig, struct signal *from, void* to, int s
 			goto fail;
 	}
 
-fail:	error("unsupported conversion to %s from raw (%p, %d)", signal_type_to_str(from->type), to, size);
+fail:
+	throw RuntimeError("Unsupported conversion to {} from raw ({}, {})", signal_type_to_str(from->type), to, size);
 
 	return 1;
 }
 
 int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signal *to)
 {
-	if (size <= 0 || size > 8) {
-		error("signal size cannot be larger than 8!");
-		return 1;
-	}
+	if (size <= 0 || size > 8)
+		throw RuntimeError("Signal size cannot be larger than 8!");
 
 	switch(to->type) {
 		case SignalType::BOOLEAN:
@@ -394,7 +372,7 @@ int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signa
 			goto fail;
 	}
 fail:
-	error("unsupported conversion from %s to raw (%p, %d)", signal_type_to_str(to->type), from, size);
+	throw RuntimeError("Unsupported conversion from {} to raw ({}, {})", signal_type_to_str(to->type), from, size);
 
 	return 1;
 }
@@ -413,17 +391,13 @@ int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
 	nbytes = read(c->socket, &frame, sizeof(struct can_frame));
-	if (nbytes == -1) {
-		error("CAN read() returned -1. Is the CAN interface up?");
-		goto out;
-	}
+	if (nbytes == -1)
+		throw RuntimeError("CAN read() returned -1. Is the CAN interface up?");
 
-	if ((unsigned)nbytes != sizeof(struct can_frame)) {
-		error("CAN read() error. read() returned %d bytes but expected %zu", nbytes, sizeof(struct can_frame));
-		goto out;
-	}
+	if ((unsigned)nbytes != sizeof(struct can_frame))
+		throw RuntimeError("CAN read() error. Returned {} bytes but expected {}", nbytes, sizeof(struct can_frame));
 
-	debug(0,"received can message: (id:%d, len:%u, data: 0x%x:0x%x)",
+	n->logger->debug("Received can message: (id={}, len={}, data={:#x}:{:#x})",
 		frame.can_id,
 		frame.can_dlc,
 		((uint32_t*)&frame.data)[0],
@@ -448,12 +422,10 @@ int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		}
 	}
 
-	if (!found_id) {
-		error("did not find signal for can id %d\n", frame.can_id);
-		return 0;
-	}
+	if (!found_id)
+		throw RuntimeError("Did not find signal for can id {}", frame.can_id);
 
-	debug(0, "received %zu signals\n", c->sample_buf_num);
+	n->logger->debug("Received {} signals", c->sample_buf_num);
 
 	/* Copy signal data to sample only when all signals have been received */
 	if (c->sample_buf_num == vlist_length(&n->in.signals)) {
@@ -524,23 +496,19 @@ int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 		}
 
 		for (size_t j=0; j < fsize; j++) {
-			debug(0,"writing can message: (id:%d, dlc:%u, data:0x%x:0x%x)",
+			n->logger->debug("Writing CAN message: (id={}, dlc={}, data={:#x}:{:#x})",
 				frame[j].can_id,
 				frame[j].can_dlc,
 				((uint32_t*)&frame[j].data)[0],
 				((uint32_t*)&frame[j].data)[1]
 			);
 
-			if ((nbytes = write(c->socket, &frame[j], sizeof(struct can_frame))) == -1) {
-				error("CAN write() returned -1. Is the CAN interface up?");
-				return nwrite;
-			}
+			if ((nbytes = write(c->socket, &frame[j], sizeof(struct can_frame))) == -1)
+				throw RuntimeError("CAN write() returned -1. Is the CAN interface up?");
 
-			if ((unsigned)nbytes != sizeof(struct can_frame)) {
-				error("CAN write() error. write() returned %d bytes but expected %zu",
+			if ((unsigned)nbytes != sizeof(struct can_frame))
+				throw RuntimeError("CAN write() returned {} bytes but expected {}",
 					nbytes, sizeof(struct can_frame));
-				return nwrite;
-			}
 		}
 	}
 

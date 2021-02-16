@@ -65,7 +65,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			break;
 
 		default:
-			error("Unknown address family: '%u'", sa->sa.sa_family);
+			throw RuntimeError("Unknown address family: '{}'", sa->sa.sa_family);
 	}
 
 	/* Port  / Interface */
@@ -80,7 +80,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			struct nl_cache *cache = nl_cache_mngt_require("route/link");
 			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
 			if (!link)
-				error("Failed to get interface for index: %u", sa->sll.sll_ifindex);
+				throw RuntimeError("Failed to get interface for index: {}", sa->sll.sll_ifindex);
 
 			strcatf(&buf, "%%%s", rtnl_link_get_name(link));
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
@@ -104,7 +104,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 		sa->sun.sun_family = AF_UNIX;
 
 		if (strlen(addr) > sizeof(sa->sun.sun_path) - 1)
-			error("Length of unix socket path is too long!");
+			throw RuntimeError("Length of unix socket path is too long!");
 
 		memcpy(sa->sun.sun_path, addr, strlen(addr) + 1);
 
@@ -121,7 +121,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 		/* Parse link layer (MAC) address */
 		struct ether_addr *mac = ether_aton(node);
 		if (!mac)
-			error("Failed to parse MAC address: %s", node);
+			throw RuntimeError("Failed to parse MAC address: {}", node);
 
 		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, ETHER_ADDR_LEN);
 
@@ -131,7 +131,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 		struct nl_cache *cache = nl_cache_mngt_require("route/link");
 		struct rtnl_link *link = rtnl_link_get_by_name(cache, ifname);
 		if (!link)
-			error("Failed to get network interface: '%s'", ifname);
+			throw RuntimeError("Failed to get network interface: '{}'", ifname);
 
 		sa->sll.sll_protocol = htons(proto ? strtol(proto, nullptr, 0) : ETH_P_VILLAS);
 		sa->sll.sll_halen = ETHER_ADDR_LEN;
@@ -171,7 +171,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 				break;
 
 			default:
-				error("Invalid address type");
+				throw RuntimeError("Invalid address type");
 		}
 
 		/* Lookup address */

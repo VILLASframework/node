@@ -40,6 +40,7 @@
 #include <villas/queue.h>
 #include <villas/common.hpp>
 #include <villas/stats.hpp>
+#include <villas/log.hpp>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
   #define WITH_NETEM
@@ -63,6 +64,7 @@ struct vnode {
 	bool enabled;
 
 	enum State state;
+	villas::Logger logger;
 
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
@@ -97,7 +99,7 @@ struct vnode {
 	struct vnode_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct vnode::_vt functions) */
 
-	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
+	json_t *config;		/**< A JSON object containing the configuration of the node. */
 };
 
 /** Initialize node with default values */
@@ -108,11 +110,11 @@ int node_prepare(struct vnode *n);
 
 /** Parse settings of a node.
  *
- * @param cfg A JSON object containing the configuration of the node.
+ * @param json A JSON object containing the configuration of the node.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int node_parse(struct vnode *n, json_t *cfg, const uuid_t sn_uuid);
+int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid);
 
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *
@@ -120,14 +122,14 @@ int node_parse(struct vnode *n, json_t *cfg, const uuid_t sn_uuid);
  *     out = [ "sintef", "scedu" ]
  *     out = "acs"
  *
- * @param cfg A JSON array or string. See examples above.
+ * @param json A JSON array or string. See examples above.
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all);
+int node_list_parse(struct vlist *list, json_t *json, struct vlist *all);
 
 /** Parse the list of signal definitions. */
-int node_parse_signals(struct vlist *list, json_t *cfg);
+int node_parse_signals(struct vlist *list, json_t *json);
 
 /** Validate node configuration. */
 int node_check(struct vnode *n);

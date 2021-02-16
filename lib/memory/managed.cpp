@@ -30,10 +30,10 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 
-#include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 
 using namespace villas;
 using namespace villas::utils;
@@ -166,7 +166,8 @@ struct memory_type * memory_managed(void *ptr, size_t len)
 	char *cptr = (char *) ptr;
 
 	if (len < sizeof(struct memory_type) + sizeof(struct memory_block)) {
-		info("memory_managed: passed region too small");
+		auto logger = logging.get("memory:managed");
+		logger->info("Passed region is too small");
 		return nullptr;
 	}
 

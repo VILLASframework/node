@@ -178,10 +178,8 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 		smp->flags = 0;
 		smp->signals = io->signals;
 
-		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA) {
-			warning("Parsed non supported message type. Skipping");
-			continue;
-		}
+		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA)
+			throw RuntimeError("Parsed non supported message type. Skipping");
 
 		if (pb_smp->has_sequence) {
 			smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
@@ -203,11 +201,9 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 			if (!sig)
 				return -1;
 
-			if (sig->type != fmt) {
-				error("Received invalid data type in Protobuf payload: Received %s, expected %s for signal %s (index %u).",
+			if (sig->type != fmt)
+				throw RuntimeError("Received invalid data type in Protobuf payload: Received {}, expected {} for signal {} (index {}).",
 					signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
-				return -2;
-			}
 
 			switch (sig->type) {
 				case SignalType::FLOAT:

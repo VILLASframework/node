@@ -24,10 +24,11 @@
 #include <vector>
 #include <memory>
 
-#include <spdlog/spdlog.h>
 #include <uuid/uuid.h>
 
 #include <libwebsockets.h>
+
+#include <villas/log.hpp>
 
 namespace villas {
 namespace node {
@@ -68,6 +69,7 @@ protected:
 	uuid_t uuid;
 
 	Identifier identifier;
+	Logger logger;
 
 	std::map<lws *, RelayConnection *> connections;
 

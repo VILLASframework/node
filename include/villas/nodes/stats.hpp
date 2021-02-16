@@ -59,9 +59,9 @@ int stats_node_type_start(villas::node::SuperNode *sn);
 char *stats_node_print(struct vnode *n);
 
 /** @see node_type::parse */
-int stats_node_parse(struct vnode *n, json_t *cfg);
+int stats_node_parse(struct vnode *n, json_t *json);
 
-int stats_node_parse_signal(struct stats_node_signal *s, json_t *cfg);
+int stats_node_parse_signal(struct stats_node_signal *s, json_t *json);
 
 /** @see node_type::start */
 int stats_node_start(struct vnode *n);

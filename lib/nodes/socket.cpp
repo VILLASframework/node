@@ -129,30 +129,30 @@ int socket_check(struct vnode *n)
 	/* Some checks on the addresses */
 	if (s->layer != SocketLayer::UNIX) {
 		if (s->in.saddr.sa.sa_family != s->out.saddr.sa.sa_family)
-			error("Address families of local and remote must match!");
+			throw RuntimeError("Address families of local and remote must match!");
 	}
 
 	if (s->layer == SocketLayer::IP) {
 		if (ntohs(s->in.saddr.sin.sin_port) != ntohs(s->out.saddr.sin.sin_port))
-			error("IP protocol numbers of local and remote must match!");
+			throw RuntimeError("IP protocol numbers of local and remote must match!");
 	}
 #ifdef WITH_SOCKET_LAYER_ETH
 	else if (s->layer == SocketLayer::ETH) {
 		if (ntohs(s->in.saddr.sll.sll_protocol) != ntohs(s->out.saddr.sll.sll_protocol))
-			error("Ethertypes of local and remote must match!");
+			throw RuntimeError("Ethertypes of local and remote must match!");
 
 		if (ntohs(s->in.saddr.sll.sll_protocol) <= 0x5DC)
-			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
+			throw RuntimeError("Ethertype must be large than {} or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 	if (s->multicast.enabled) {
 		if (s->in.saddr.sa.sa_family != AF_INET)
-			error("Multicast is only supported by IPv4 for node %s", node_name(n));
+			throw RuntimeError("Multicast is only supported by IPv4");
 
 		uint32_t addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
 		if ((addr >> 28) != 14)
-			error("Multicast group address of node %s must be within 224.0.0.0/4", node_name(n));
+			throw RuntimeError("Multicast group address must be within 224.0.0.0/4");
 	}
 
 	return 0;
@@ -189,11 +189,11 @@ int socket_start(struct vnode *n)
 			break;
 
 		default:
-			error("Invalid socket type!");
+			throw RuntimeError("Invalid socket type!");
 	}
 
 	if (s->sd < 0)
-		serror("Failed to create socket");
+		throw SystemError("Failed to create socket");
 
 	/* Delete Unix domain socket if already existing */
 	if (s->layer == SocketLayer::UNIX) {
@@ -228,20 +228,20 @@ int socket_start(struct vnode *n)
 
 	ret = bind(s->sd, (struct sockaddr *) &s->in.saddr, addrlen);
 	if (ret < 0)
-		serror("Failed to bind socket");
+		throw SystemError("Failed to bind socket");
 
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_LOOP, &s->multicast.loop, sizeof(s->multicast.loop));
 		if (ret)
-			serror("Failed to set multicast loop option");
+			throw SystemError("Failed to set multicast loop option");
 
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl, sizeof(s->multicast.ttl));
 		if (ret)
-			serror("Failed to set multicast ttl option");
+			throw SystemError("Failed to set multicast ttl option");
 
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
 		if (ret)
-			serror("Failed to join multicast group");
+			throw SystemError("Failed to join multicast group");
 	}
 
 	/* Set socket priority, QoS or TOS IP options */
@@ -251,18 +251,18 @@ int socket_start(struct vnode *n)
 		case SocketLayer::IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
-				serror("Failed to set type of service (QoS)");
+				throw SystemError("Failed to set type of service (QoS)");
 			else
-				debug(LOG_SOCKET | 4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
+				n->logger->debug("Set QoS/TOS IP option to {#x}", node_name(n), prio);
 			break;
 
 		default:
 #ifdef __linux__
 			prio = SOCKET_PRIO;
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-				serror("Failed to set socket priority");
+				throw SystemError("Failed to set socket priority");
 			else
-				debug(LOG_SOCKET | 4, "Set socket priority for node %s to %d", node_name(n), prio);
+				n->logger->debug("Set socket priority to {}", prio);
 			break;
 #else
 			{ }
@@ -302,7 +302,7 @@ int socket_stop(struct vnode *n)
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
 		if (ret)
-			serror("Failed to leave multicast group");
+			throw SystemError("Failed to leave multicast group");
 	}
 
 	if (s->sd >= 0) {
@@ -336,7 +336,7 @@ int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 	/* Receive next sample */
 	bytes = recvfrom(s->sd, s->in.buf, s->in.buflen, 0, &src.sa, &srclen);
 	if (bytes < 0)
-		serror("Failed recv from node %s", node_name(n));
+		throw SystemError("Failed recvfrom()");
 	else if (bytes == 0)
 		return 0;
 
@@ -366,7 +366,7 @@ int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	if (s->verify_source && socket_compare_addr(&src.sa, &s->out.saddr.sa) != 0) {
 		char *buf = socket_print_addr((struct sockaddr *) &src);
-		warning("Received packet from unauthorized source: %s", buf);
+		n->logger->warn("Received packet from unauthorized source: {}", buf);
 		free(buf);
 
 		return 0;
@@ -374,7 +374,7 @@ int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
 	if (ret < 0 || (size_t) bytes != rbytes)
-		warning("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
+		n->logger->warn("Received invalid packet: ret={}, bytes={}, rbytes={}", ret, bytes, rbytes);
 
 	return ret;
 }
@@ -389,12 +389,12 @@ int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 
 retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 	if (ret < 0) {
-		warning("Failed to format payload: reason=%d", ret);
+		n->logger->warn("Failed to format payload: reason={}", ret);
 		return ret;
 	}
 
 	if (wbytes == 0) {
-		warning("Failed to format payload: wbytes=%zu", wbytes);
+		n->logger->warn("Failed to format payload: wbytes={}", wbytes);
 		return -1;
 	}
 
@@ -437,21 +437,21 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out
 	if (bytes < 0) {
 		if ((errno == EPERM) ||
 		    (errno == ENOENT && s->layer == SocketLayer::UNIX))
-			warning("Failed send to node %s: %s", node_name(n), strerror(errno));
+			n->logger->warn("Failed sendto(): {}", strerror(errno));
 		else if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-			warning("socket: send would block");
+			n->logger->warn("Blocking sendto()");
 			goto retry2;
 		}
 		else
-			warning("Failed sendto() to node %s", node_name(n));
+			n->logger->warn("Failed sendto(): {}", strerror(errno));
 	}
 	else if ((size_t) bytes < wbytes)
-		warning("Partial sendto() to node %s", node_name(n));
+		n->logger->warn("Partial sendto()");
 
 	return cnt;
 }
 
-int socket_parse(struct vnode *n, json_t *cfg)
+int socket_parse(struct vnode *n, json_t *json)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -468,7 +468,7 @@ int socket_parse(struct vnode *n, json_t *cfg)
 	s->layer = SocketLayer::UDP;
 	s->verify_source = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s: { s: s }, s: { s: s, s?: b, s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s: { s: s }, s: { s: s, s?: b, s?: o } }",
 		"layer", &layer,
 		"format", &format,
 		"out",
@@ -479,12 +479,12 @@ int socket_parse(struct vnode *n, json_t *cfg)
 			"multicast", &json_multicast
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-socket");
 
 	/* Format */
 	s->format = format_type_lookup(format);
 	if (!s->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		throw RuntimeError("Invalid format '{}'", format);
 
 	/* IP layer */
 	if (layer) {
@@ -499,20 +499,16 @@ int socket_parse(struct vnode *n, json_t *cfg)
 		else if (!strcmp(layer, "unix") || !strcmp(layer, "local"))
 			s->layer = SocketLayer::UNIX;
 		else
-			error("Invalid layer '%s' for node %s", layer, node_name(n));
+			throw SystemError("Invalid layer '{}'", layer);
 	}
 
 	ret = socket_parse_address(remote, (struct sockaddr *) &s->out.saddr, s->layer, 0);
-	if (ret) {
-		error("Failed to resolve remote address '%s' of node %s: %s",
-			remote, node_name(n), gai_strerror(ret));
-	}
+	if (ret)
+		throw SystemError("Failed to resolve remote address '{}': {}", remote, gai_strerror(ret));
 
 	ret = socket_parse_address(local, (struct sockaddr *) &s->in.saddr, s->layer, AI_PASSIVE);
-	if (ret) {
-		error("Failed to resolve local address '%s' of node %s: %s",
-			local, node_name(n), gai_strerror(ret));
-	}
+	if (ret)
+		throw SystemError("Failed to resolve local address '{}': {}", local, gai_strerror(ret));
 
 	if (json_multicast) {
 		const char *group, *interface = nullptr;
@@ -531,20 +527,16 @@ int socket_parse(struct vnode *n, json_t *cfg)
 			"ttl", &s->multicast.ttl
 		);
 		if (ret)
-			jerror(&err, "Failed to parse setting 'multicast' of node %s", node_name(n));
+			throw ConfigError(json_multicast, err, "node-config-node-socket-multicast", "Failed to parse multicast settings");
 
 		ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);
-		if (!ret) {
-			error("Failed to resolve multicast group address '%s' of node %s",
-				group, node_name(n));
-		}
+		if (!ret)
+			throw SystemError("Failed to resolve multicast group address '{}'", group);
 
 		if (interface) {
 			ret = inet_aton(group, &s->multicast.mreq.imr_interface);
-			if (!ret) {
-				error("Failed to resolve multicast interface address '%s' of node %s",
-					interface, node_name(n));
-			}
+			if (!ret)
+				throw SystemError("Failed to resolve multicast interface address '{}'", interface);
 		}
 	}
 

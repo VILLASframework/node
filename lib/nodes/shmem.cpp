@@ -29,7 +29,7 @@
 #include <unistd.h>
 
 #include <villas/kernel/kernel.hpp>
-#include <villas/log.h>
+#include <villas/log.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/shmem.h>
 #include <villas/nodes/shmem.hpp>
@@ -40,7 +40,7 @@
 using namespace villas;
 using namespace villas::utils;
 
-int shmem_parse(struct vnode *n, json_t *cfg)
+int shmem_parse(struct vnode *n, json_t *json)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	const char *val, *mode_str = nullptr;
@@ -57,7 +57,7 @@ int shmem_parse(struct vnode *n, json_t *cfg)
 	shm->conf.polling = false;
 	shm->exec = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: o, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: o, s?: s }",
 		"out",
 			"name", &shm->out_name,
 		"in",
@@ -67,7 +67,7 @@ int shmem_parse(struct vnode *n, json_t *cfg)
 		"mode", &mode_str
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(json, err, "node-config-node-shmem");
 
 	if (mode_str) {
 		if (!strcmp(mode_str, "polling"))
@@ -75,12 +75,12 @@ int shmem_parse(struct vnode *n, json_t *cfg)
 		else if (!strcmp(mode_str, "pthread"))
 			shm->conf.polling = false;
 		else
-			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
+			throw SystemError("Unknown mode '{}'", mode_str);
 	}
 
 	if (json_exec) {
 		if (!json_is_array(json_exec))
-			error("Setting 'exec' of node %s must be an array of strings", node_name(n));
+			throw SystemError("Setting 'exec' must be an array of strings");
 
 		shm->exec = new char*[json_array_size(json_exec) + 1];
 		if (!shm->exec)
@@ -91,7 +91,7 @@ int shmem_parse(struct vnode *n, json_t *cfg)
 		json_array_foreach(json_exec, i, json_val) {
 			val = json_string_value(json_val);
 			if (!val)
-				error("Setting 'exec' of node %s must be an array of strings", node_name(n));
+				throw SystemError("Setting 'exec' must be an array of strings");
 
 			shm->exec[i] = strdup(val);
 		}
@@ -110,14 +110,14 @@ int shmem_start(struct vnode *n)
 	if (shm->exec) {
 		ret = spawn(shm->exec[0], shm->exec);
 		if (!ret)
-			serror("Failed to spawn external program");
+			throw SystemError("Failed to spawn external program");
 
 		sleep(1);
 	}
 
 	ret = shmem_int_open(shm->out_name, shm->in_name, &shm->intf, &shm->conf);
 	if (ret < 0)
-		serror("Opening shared memory interface failed (%d)", ret);
+		throw SystemError("Opening shared memory interface failed (ret={})", ret);
 
 	return 0;
 }
@@ -143,7 +143,7 @@ int shmem_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
 
-		info("Shared memory segment has been closed.");
+		n->logger->info("Shared memory segment has been closed.");
 
 		n->state = State::STOPPING;
 
@@ -168,15 +168,15 @@ int shmem_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
 	if (avail != (int) cnt)
-		warning("Pool underrun for shmem node %s", shm->out_name);
+		n->logger->warn("Pool underrun for shmem node {}", shm->out_name);
 
 	copied = sample_copy_many(shared_smps, smps, avail);
 	if (copied < avail)
-		warning("Outgoing pool underrun for node %s", node_name(n));
+		n->logger->warn("Outgoing pool underrun");
 
 	pushed = shmem_int_write(&shm->intf, shared_smps, copied);
 	if (pushed != avail)
-		warning("Outgoing queue overrun for node %s", node_name(n));
+		n->logger->warn("Outgoing queue overrun for node");
 
 	return pushed;
 }

@@ -78,7 +78,7 @@ struct zeromq {
 char * zeromq_print(struct vnode *n);
 
 /** @see node_type::parse */
-int zeromq_parse(struct vnode *n, json_t *cfg);
+int zeromq_parse(struct vnode *n, json_t *json);
 
 /** @see node_type::type_start */
 int zeromq_type_start(villas::node::SuperNode *sn);

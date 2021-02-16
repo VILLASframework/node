@@ -27,7 +27,6 @@
 #include <vector>
 
 #include <villas/hook.hpp>
-#include <villas/log.h>
 #include <villas/sample.h>
 #include <villas/timing.h>
 
@@ -46,7 +45,7 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void parse(json_t *cfg)
+	virtual void parse(json_t *json)
 	{
 		int ret;
 
@@ -54,13 +53,13 @@ public:
 		json_error_t err;
 		json_t *json_phases, *json_phase;
 
-		Hook::parse(cfg);
+		Hook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: o }",
 			"phases", &json_phases
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-ebm");
+			throw ConfigError(json, err, "node-config-hook-ebm");
 
 		if (!json_is_array(json_phases))
 			throw ConfigError(json_phases, "node-config-hook-ebm-phases");
@@ -72,7 +71,7 @@ public:
 				&voltage, &current
 			);
 			if (ret)
-				throw ConfigError(cfg, err, "node-config-hook-ebm-phases");
+				throw ConfigError(json, err, "node-config-hook-ebm-phases");
 
 			phases.emplace_back(voltage, current);
 		}
@@ -94,7 +93,7 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		info("Energy: %f", energy);
+		logger->info("Energy: {}", energy);
 	}
 
 	virtual Hook::Reason process(sample *smp)

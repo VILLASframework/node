@@ -33,7 +33,7 @@
 namespace villas {
 namespace node {
 
-void LimitRateHook::parse(json_t *cfg)
+void LimitRateHook::parse(json_t *json)
 {
 	int ret;
 	json_error_t err;
@@ -43,14 +43,14 @@ void LimitRateHook::parse(json_t *cfg)
 	double rate;
 	const char *m = nullptr;
 
-	Hook::parse(cfg);
+	Hook::parse(json);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: F, s?: s }",
 		"rate", &rate,
 		"mode", &m
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-hook-limit_rate");
+		throw ConfigError(json, err, "node-config-hook-limit_rate");
 
 	if (m) {
 		if (!strcmp(m, "origin"))
@@ -60,7 +60,7 @@ void LimitRateHook::parse(json_t *cfg)
 		else if (!strcmp(m, "local"))
 			mode = LIMIT_RATE_LOCAL;
 		else
-			throw ConfigError(cfg, "node-config-hook-limit_rate-mode", "Invalid value '{}' for setting 'mode'", mode);
+			throw ConfigError(json, "node-config-hook-limit_rate-mode", "Invalid value '{}' for setting 'mode'", mode);
 	}
 
 	deadtime = 1.0 / rate;
