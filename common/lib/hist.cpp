@@ -30,6 +30,7 @@
 #include <villas/table.hpp>
 #include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 namespace villas {
@@ -132,32 +133,32 @@ double Hist::getStddev() const
 	return sqrt(getVar());
 }
 
-void Hist::print(bool details) const
+void Hist::print(Logger logger, bool details) const
 {
 	if (total > 0) {
 		Hist::cnt_t missed = total - higher - lower;
 
-		info("Counted values: %ju (%ju between %f and %f)", total, missed, low, high);
-		info("Highest:  %g", highest);
-		info("Lowest:   %g", lowest);
-		info("Mu:       %g", getMean());
-		info("1/Mu:     %g", 1.0 / getMean());
-		info("Variance: %g", getVar());
-		info("Stddev:   %g", getStddev());
+		logger->info("Counted values: {} ({} between {} and {})", total, missed, low, high);
+		logger->info("Highest:  {:g}", highest);
+		logger->info("Lowest:   {:g}", lowest);
+		logger->info("Mu:       {:g}", getMean());
+		logger->info("1/Mu:     {:g}", 1.0 / getMean());
+		logger->info("Variance: {:g}", getVar());
+		logger->info("Stddev:   {:g}", getStddev());
 
 		if (details && total - higher - lower > 0) {
 			char *buf = dump();
-			info("Matlab: %s", buf);
+			logger->info("Matlab: {}", buf);
 			free(buf);
 
-			plot();
+			plot(logger);
 		}
 	}
 	else
-		info("Counted values: %ju", total);
+		logger->info("Counted values: {}", total);
 }
 
-void Hist::plot() const
+void Hist::plot(Logger logger) const
 {
 	/* Get highest bar */
 	Hist::cnt_t max = *std::max_element(data.begin(), data.end());
@@ -168,7 +169,7 @@ void Hist::plot() const
 		{  0, TableColumn::Alignment::LEFT,  "Plot",  "%s", "occurences" }
 	};
 
-	Table table = Table(cols);
+	Table table = Table(logger, cols);
 
 	/* Print plot */
 	table.header();

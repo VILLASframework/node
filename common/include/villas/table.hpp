@@ -30,6 +30,10 @@
 #include <vector>
 #include <string>
 
+#include <villas/log.hpp>
+
+namespace villas {
+
 class Table;
 
 class TableColumn {
@@ -78,10 +82,13 @@ protected:
 
 	std::vector<TableColumn> columns;
 
+	Logger logger;
+
 public:
-	Table(const std::vector<TableColumn> &cols) :
+	Table(Logger log, const std::vector<TableColumn> &cols) :
 		width(-1),
-		columns(cols)
+		columns(cols),
+		logger(log)
 	{ }
 
 	/** Print a table header consisting of \p n columns. */
@@ -95,5 +102,7 @@ public:
 		return width;
 	}
 };
+
+} /* namespace villas */
 
 /** @} */

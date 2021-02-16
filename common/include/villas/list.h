@@ -123,8 +123,6 @@ void vlist_extend(struct vlist *l, size_t len, void *val);
 /** Remove all elements for which the callback returns a non-zero return code. */
 void vlist_filter(struct vlist *l, dtor_cb_t cb);
 
-#include <villas/log.h>
-
 /** Lookup an element from the list based on an UUID */
 template<typename T>
 T * vlist_lookup_uuid(struct vlist *l, uuid_t uuid)

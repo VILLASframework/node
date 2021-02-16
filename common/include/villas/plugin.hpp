@@ -110,7 +110,7 @@ public:
 	int load(const std::string &path);
 	int unload();
 
-	virtual int parse(json_t *cfg);
+	virtual int parse(json_t *json);
 };
 
 class Plugin {

@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <villas/log.hpp>
 #include <villas/utils.hpp>
 #include <villas/config.h>
 #include <villas/kernel/kernel.hpp>
@@ -39,6 +40,7 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 Version villas::kernel::getVersion()
@@ -137,7 +139,9 @@ int villas::kernel::module_set_param(const char *module, const char *param, cons
 	if (!f)
 		throw RuntimeError("Failed set parameter {} for kernel module {} to {}", module, param, value);
 
-	debug(LOG_KERNEL | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
+	auto logger = logging.get("kernel");
+	logger->debug("Set parameter {} of kernel module {} to {}", module, param, value);
+
 	fprintf(f, "%s", value);
 	fclose(f);
 
@@ -150,7 +154,8 @@ int villas::kernel::module_load(const char *module)
 
 	ret = module_loaded(module);
 	if (!ret) {
-		debug(LOG_KERNEL | 5, "Kernel module %s already loaded...", module);
+		auto logger = logging.get("kernel");
+		logger->debug("Kernel module {} already loaded...", module);
 		return 0;
 	}
 
@@ -210,10 +215,11 @@ int villas::kernel::get_cmdline_param(const char *param, char *buf, size_t len)
 	do {
 		ret = sscanf(tok, "%127[^=]=%127s", key, value);
 		if (ret >= 1) {
+			auto logger = logging.get("kernel");
 			if (ret >= 2)
-				debug(30, "Found kernel param: %s=%s", key, value);
+				logger->debug("Found kernel param: {}={}", key, value);
 			else
-				debug(30, "Found kernel param: %s", key);
+				logger->debug("Found kernel param: {}", key);
 
 			if (strcmp(param, key) == 0) {
 				if (ret >= 2 && buf)
@@ -236,8 +242,11 @@ int villas::kernel::get_nr_hugepages()
 	int nr, ret;
 
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "r");
-	if (!f)
-		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	if (!f) {
+		auto logger = logging.get("kernel");
+		logger->error("Failed to open {}: {}", PROCFS_PATH "/sys/vm/nr_hugepages", strerror(errno));
+		return -1;
+	}
 
 	ret = fscanf(f, "%d", &nr);
 	if (ret != 1)
@@ -255,13 +264,15 @@ int villas::kernel::set_nr_hugepages(int nr)
 
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
 	if (!f) {
+		auto logger = logging.get("kernel");
+
 		ret = access("/.dockerenv", F_OK);
 		if (ret != -1) {
-			warning("This functionality is unavailable in this mode. Please run the Docker container in the privileged mode:");
-			warning("    $ docker run --privilged ...");
+			logger->warn("This functionality is unavailable in this mode. Please run the Docker container in the privileged mode:");
+			logger->warn("    $ docker run --privilged ...");
 		}
 		else
-			warning("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+			logger->warn("Failed to open {}", PROCFS_PATH "/sys/vm/nr_hugepages");
 
 		return -1;
 	}

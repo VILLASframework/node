@@ -21,30 +21,28 @@
 ##############################################################################
 
 add_library(villas-common SHARED
-	advio.cpp
+	base64.cpp
 	buffer.cpp
+	common.cpp
 	compat.cpp
-	hist.cpp
+	cpuset.cpp
 	dsp/pid.cpp
+	hist.cpp
 	kernel/kernel.cpp
 	kernel/rt.cpp
 	list.cpp
 	log.cpp
-	log_legacy.cpp
-	memory.cpp
 	memory_manager.cpp
+	memory.cpp
 	plugin.cpp
+	popen.cpp
 	table.cpp
 	task.cpp
-	timing.cpp
-	utils.cpp
-	cpuset.cpp
 	terminal.cpp
-	version.cpp
-	common.cpp
+	timing.cpp
 	tool.cpp
-	base64.cpp
-	popen.cpp
+	utils.cpp
+	version.cpp
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)

@@ -44,11 +44,11 @@ Plugin::~Plugin()
 
 #if 0
 int
-Plugin::parse(json_t *cfg)
+Plugin::parse(json_t *json)
 {
 	const char *path;
 
-	path = json_string_value(cfg);
+	path = json_string_value(json);
 	if (!path)
 		return -1;
 
