@@ -137,6 +137,7 @@ public:
 		signal_list_clear(&signals);
 
 		/* Initialize sample memory */
+		smpMemory.clear();
 		for (unsigned i = 0; i < signalIndex.size(); i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
@@ -166,6 +167,7 @@ public:
 		freqCount = ceil((endFreqency - startFreqency) / frequencyResolution) + 1;
 
 		/* Initialize matrix of dft coeffients */
+		dftMatrix.clear();
 		for (unsigned i = 0; i < freqCount; i++)
 			dftMatrix.emplace_back(windowSize * windowMultiplier, 0.0);
 

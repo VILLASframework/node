@@ -21,6 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <string>
 
 namespace villas {
@@ -37,8 +39,10 @@ protected:
 public:
 	Dumper(const std::string &socketNameIn);
 	~Dumper();
+
 	int openSocket();
-	void closeSocket();
+	int closeSocket();
+
 	void writeData(uint len, double *yData, double *xData = nullptr);
 };
 

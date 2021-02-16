@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/dumper.hpp>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
-#include <villas/log.h>
 #include <unistd.h>
+
+#include <sstream>
+
+#include <villas/dumper.hpp>
+#include <villas/log.h>
 
 using namespace villas;
 using namespace villas::node;
@@ -54,28 +57,37 @@ int Dumper::openSocket()
 	socketaddrUn.sun_family = AF_UNIX;
 	strcpy(socketaddrUn.sun_path, socketName.c_str());
 
-	connect(socketFd, (struct sockaddr *) &socketaddrUn, sizeof(socketaddrUn));
+	int ret = connect(socketFd, (struct sockaddr *) &socketaddrUn, sizeof(socketaddrUn));
+	if (!ret)
+		return ret;
 
-	return 1;
+	return 0;
 }
 
-void Dumper::closeSocket()
+int Dumper::closeSocket()
 {
-	close(socketFd);
+	int ret = close(socketFd);
+	if (!ret)
+		return ret;
+
+	return 0;
 }
 
 void Dumper::writeData(unsigned len, double *yData, double *xData)
 {
-	ssize_t bytesWritten;
-
 	for (unsigned i = 0; i<len; i++) {
-		std::string str = std::to_string(yData[i]);
-		if(xData != nullptr)
-			str+= ";" + std::to_string(xData[i]);
-		str += "\n";
+		std::stringstream ss;
 
-		bytesWritten =  write(socketFd, str.c_str(), str.length());
-		if ((long unsigned int) bytesWritten != str.length() && (!supressRepeatedWarning ||  warningCounter<1)) {
+		ss << yData[i];
+
+		if(xData != nullptr)
+			ss << ";" << xData[i];
+
+		ss << std::endl;
+
+		auto str = ss.str();
+		auto bytesWritten =  write(socketFd, str.c_str(), str.length());
+		if ((long unsigned int) bytesWritten != str.length() && (!supressRepeatedWarning || warningCounter <1 )) {
 			warning("Could not send all content to socket %s", socketName.c_str());
 			warningCounter++;
 		}
