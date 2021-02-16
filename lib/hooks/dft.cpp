@@ -377,7 +377,7 @@ public:
 		}
 	}
 
-	/** mem size needs to be equal to window size **/
+	/* mem size needs to be equal to window size */
 	void calcDft(paddingType padding, double *ringBuffer, uint ringBufferPos) {
 
 		//prepare sample window The following parts can be combined
@@ -423,8 +423,9 @@ public:
 								+ 0.006947368 * cos(8 * M_PI * i / (window_size));
 				window_corretion_factor += filterWindowCoefficents[i];
 			}
-		}else if (window_type_in == windowType::HAMMING || window_type_in == windowType::HANN) {
-			double a_0 = 0.5;//this is the hann window
+		}
+		else if (window_type_in == windowType::HAMMING || window_type_in == windowType::HANN) {
+			double a_0 = 0.5; //this is the hann window
 			if (window_type_in == windowType::HAMMING)
 				a_0 = 25./46;
 
