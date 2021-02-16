@@ -68,7 +68,7 @@ void Dumper::closeSocket()
 	close(socketFd);
 }
 
-void Dumper::writeData(uint len, double* yData, double* xData)
+void Dumper::writeData(uint len, double *yData, double *xData)
 {
 	ssize_t bytesWritten;
 

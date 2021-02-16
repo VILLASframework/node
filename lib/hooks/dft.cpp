@@ -298,9 +298,9 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-		for (uint i = 0; i< signalCnt; i++) {
+		for (uint i = 0; i< signalCnt; i++)
 			smp_memory[i][smp_mem_pos % window_size] = smp->data[signal_index[i]].f;
-		}
+
 		smp_mem_pos++;
 
 		bool runDft = false;
@@ -368,7 +368,7 @@ public:
 	/* mem size needs to be equal to window size */
 	void calcDft(paddingType padding, double *ringBuffer, uint ringBufferPos) {
 
-		//prepare sample window The following parts can be combined
+		/* prepare sample window The following parts can be combined */
 		double tmp_smp_window[window_size];
 
 		for (uint i = 0; i< window_size; i++)
