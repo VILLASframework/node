@@ -53,7 +53,6 @@ int Dumper::openSocket()
 	sockaddr_un socketaddrUn;
 	socketaddrUn.sun_family = AF_UNIX;
 	strcpy(socketaddrUn.sun_path, socketName.c_str());
-	socketName = socketNameIn;
 
 	connect(socketFd, (struct sockaddr *) &socketaddrUn, sizeof(socketaddrUn));
 
