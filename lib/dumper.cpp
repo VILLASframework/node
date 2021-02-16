@@ -74,7 +74,7 @@ void Dumper::writeData(uint len, double* yData, double* xData)
 
 	for (uint i = 0; i<len; i++) {
 		std::string str = std::to_string(yData[i]);
-		if( xData != nullptr)
+		if(xData != nullptr)
 			str+= ";" + std::to_string(xData[i]);
 		str += "\n";
 

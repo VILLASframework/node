@@ -178,7 +178,7 @@ public:
 		//init sample memory
 
 
-		//init matrix of dft coeffients
+		/*init matrix of dft coeffients*/
 		dftMatrix = new std::complex<double>*[freq_count];
 		if (!dftMatrix)
 			throw MemoryAllocationError();
@@ -199,7 +199,7 @@ public:
 		for (uint i = 0; i < freq_count; i++)
 			absDftFreqs[i] = start_freqency + i * frequency_resolution;
 
-		genDftMatrix();
+		generateDftMatrix();
 		calcWindow(window_type);
 
 		state = State::PREPARED;
@@ -375,7 +375,7 @@ public:
 		return Reason::SKIP_SAMPLE;
 	}
 
-	void genDftMatrix() {
+	void generateDftMatrix() {
 		using namespace std::complex_literals;
 
 		omega = exp((-2 * M_PI * M_I) / (double)(window_size * window_multiplier));
