@@ -25,14 +25,15 @@
  */
 
 #include <cstring>
+#include <complex>
+#include <cinttypes>
+
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
 #include <villas/path.h>
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/plugin.h>
-#include <complex>
-#include <cinttypes>
 
 namespace villas {
 namespace node {
