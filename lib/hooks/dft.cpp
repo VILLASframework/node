@@ -140,7 +140,7 @@ public:
 	{
 
 		signal_list_clear(&signals);
-		/*init sample memory*/
+		/* init sample memory */
 		smp_memory = new double*[signalCnt];
 
 		for (uint i = 0; i < signalCnt; i++) {
@@ -175,7 +175,7 @@ public:
 
 		freq_count = ceil((end_freqency - start_freqency) / frequency_resolution) + 1;
 
-		/*init matrix of dft coeffients*/
+		/* init matrix of dft coeffients */
 		dftMatrix = new std::complex<double>*[freq_count];
 		if (!dftMatrix)
 			throw MemoryAllocationError();
@@ -200,18 +200,6 @@ public:
 		calcWindow(window_type);
 
 		state = State::PREPARED;
-	}
-
-	virtual void start()
-	{
-		assert(state == State::PREPARED || state == State::STOPPED);
-		state = State::STARTED;
-	}
-
-	virtual void stop()
-	{
-		assert(state == State::STARTED);
-		state = State::STOPPED;
 	}
 
 	virtual void parse(json_t *cfg)
@@ -405,7 +393,7 @@ public:
 					else
 						dftResults[i] += 0;
 				}
-				else if (padding == paddingType::SIG_REPEAT) //repeate samples
+				else if (padding == paddingType::SIG_REPEAT) //repeat samples
 					dftResults[i] += tmp_smp_window[j % window_size] * dftMatrix[i][j];
 
 			}
