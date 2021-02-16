@@ -38,123 +38,6 @@ static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
 static DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
 
 static const struct {
-	const char *errStr;
-	uint bitPos;
-} errorList[] = {
-	{"No error has occurred ERR_NO_ERROR" , 0},
-	{"Unhandled internal exception ERR_UNHANDLED_EXCEPTION" , 1},
-	{"Invalid device handle ERR_BAD_DEV_HANDLE" , 2},
-	{"This function cannot be used with this device ERR_BAD_DEV_TYPE" , 3},
-	{"Insufficient permission to access this device ERR_USB_DEV_NO_PERMISSION" , 4},
-	{"USB interface is already claimed ERR_USB_INTERFACE_CLAIMED" , 5},
-	{"Device not found ERR_DEV_NOT_FOUND" , 6},
-	{"Device not connected or connection lost	ERR_DEV_NOT_CONNECTED" , 7},
-	{"Device no longer responding	ERR_DEAD_DEV" , 8},
-	{"Buffer too small for operation ERR_BAD_BUFFER_SIZE" , 9},
-	{"Invalid buffer ERR_BAD_BUFFER" , 10},
-	{"Invalid memory type ERR_BAD_MEM_TYPE" , 11},
-	{"Invalid memory region ERR_BAD_MEM_REGION" , 12},
-	{"Invalid range ERR_BAD_RANGE" , 13},
-	{"Invalid analog input channel specified ERR_BAD_AI_CHAN" , 14},
-	{"Invalid input mode specified ERR_BAD_INPUT_MODE" , 15},
-	{"A background process is already in progress ERR_ALREADY_ACTIVE" , 16},
-	{"Invalid trigger type specified ERR_BAD_TRIG_TYPE" , 17},
-	{"FIFO overrun, data was not transferred from device fast enough ERR_OVERRUN" , 18},
-	{"FIFO underrun, data was not transferred to device fast enough ERR_UNDERRUN" , 19},
-	{"Operation timed out ERR_TIMEDOUT" , 20},
-	{"Invalid option specified ERR_BAD_OPTION" , 21},
-	{"Invalid sampling rate specified	ERR_BAD_RATE" , 22},
-	{"Sample count cannot be greater than FIFO size for BURSTIO scans ERR_BAD_BURSTIO_COUNT" , 23},
-	{"Configuration not supported	ERR_CONFIG_NOT_SUPPORTED" , 24},
-	{"Invalid configuration value	ERR_BAD_CONFIG_VAL" , 25},
-	{"Invalid analog input channel type specified	ERR_BAD_AI_CHAN_TYPE" , 26},
-	{"ADC overrun occurred ERR_ADC_OVERRUN" , 27},
-	{"Invalid thermocouple type specified	ERR_BAD_TC_TYPE" , 28},
-	{"Invalid unit specified ERR_BAD_UNIT" , 29},
-	{"Invalid queue size ERR_BAD_QUEUE_SIZE" , 30},
-	{"Invalid config item specified ERR_BAD_CONFIG_ITEM" , 31},
-	{"Invalid info item specified	ERR_BAD_INFO_ITEM" , 32},
-	{"Invalid flag specified ERR_BAD_FLAG" , 33},
-	{"Invalid sample count specified ERR_BAD_SAMPLE_COUNT" , 34},
-	{"Internal error ERR_INTERNAL" , 35},
-	{"Invalid coupling mode ERR_BAD_COUPLING_MODE" , 36},
-	{"Invalid sensor sensitivity ERR_BAD_SENSOR_SENSITIVITY" , 37},
-	{"Invalid IEPE mode ERR_BAD_IEPE_MODE" , 38},
-	{"Invalid channel queue specified ERR_BAD_AI_CHAN_QUEUE" , 39},
-	{"Invalid gain queue specified ERR_BAD_AI_GAIN_QUEUE" , 40},
-	{"Invalid mode queue specified ERR_BAD_AI_MODE_QUEUE" , 41},
-	{"FPGA file not found ERR_FPGA_FILE_NOT_FOUND" , 42},
-	{"Unable to read FPGA file ERR_UNABLE_TO_READ_FPGA_FILE" , 43},
-	{"FPGA not loaded ERR_NO_FPGA" , 44},
-	{"Invalid argument ERR_BAD_ARG" , 45},
-	{"Minimum slope value reached ERR_MIN_SLOPE_VAL_REACHED" , 46},
-	{"Maximum slope value reached ERR_MAX_SLOPE_VAL_REACHED" , 47},
-	{"Minimum offset value reached ERR_MIN_OFFSET_VAL_REACHED" , 48},
-	{"Maximum offset value reached ERR_MAX_OFFSET_VAL_REACHED" , 49},
-	{"Invalid port type specified ERR_BAD_PORT_TYPE" , 50},
-	{"Digital I/O is configured incorrectly ERR_WRONG_DIG_CONFIG" , 51},
-	{"Invalid bit number ERR_BAD_BIT_NUM" , 52},
-	{"Invalid port value specified ERR_BAD_PORT_VAL" , 53},
-	{"Invalid re-trigger count ERR_BAD_RETRIG_COUNT" , 54},
-	{"Invalid analog output channel specified ERR_BAD_AO_CHAN" , 55},
-	{"Invalid D/A output value specified ERR_BAD_DA_VAL" , 56},
-	{"Invalid timer specified ERR_BAD_TMR" , 57},
-	{"Invalid frequency specified ERR_BAD_FREQUENCY" , 58},
-	{"Invalid duty cycle specified ERR_BAD_DUTY_CYCLE" , 59},
-	{"Invalid initial delay specified ERR_BAD_INITIAL_DELAY" , 60},
-	{"Invalid counter specified ERR_BAD_CTR" , 61},
-	{"Invalid counter value specified ERR_BAD_CTR_VAL" , 62},
-	{"Invalid DAQ input channel type specified ERR_BAD_DAQI_CHAN_TYPE" , 63},
-	{"Invalid number of channels specified ERR_BAD_NUM_CHANS" , 64},
-	{"Invalid counter register specified ERR_BAD_CTR_REG" , 65},
-	{"Invalid counter measurement type specified ERR_BAD_CTR_MEASURE_TYPE" , 66},
-	{"Invalid counter measurement mode specified ERR_BAD_CTR_MEASURE_MODE" , 67},
-	{"Invalid debounce time specified ERR_BAD_DEBOUNCE_TIME" , 68},
-	{"Invalid debounce mode specified ERR_BAD_DEBOUNCE_MODE" , 69},
-	{"Invalid edge detection mode specified ERR_BAD_EDGE_DETECTION" , 70},
-	{"Invalid tick size specified ERR_BAD_TICK_SIZE" , 71},
-	{"Invalid DAQ output channel type specified ERR_BAD_DAQO_CHAN_TYPE" , 72},
-	{"No connection established ERR_NO_CONNECTION_ESTABLISHED" , 73},
-	{"Invalid event type specified ERR_BAD_EVENT_TYPE" , 74},
-	{"An event handler has already been enabled for this event type ERR_EVENT_ALREADY_ENABLED" , 75},
-	{"Invalid event parameter specified ERR_BAD_EVENT_PARAMETER" , 76},
-	{"Invalid callback function specified ERR_BAD_CALLBACK_FUCNTION" , 77},
-	{"Invalid memory address ERR_BAD_MEM_ADDRESS" , 78},
-	{"Memory access denied ERR_MEM_ACCESS_DENIED" , 79},
-	{"Device is not available at time of request ERR_DEV_UNAVAILABLE" , 80},
-	{"Re-trigger option is not supported for the specified trigger type ERR_BAD_RETRIG_TRIG_TYPE" , 81},
-	{"This function cannot be used with this version of the device ERR_BAD_DEV_VER" , 82},
-	{"This digital operation is not supported on the specified port ERR_BAD_DIG_OPERATION" , 83},
-	{"Invalid digital port index specified ERR_BAD_PORT_INDEX" , 84},
-	{"Temperature input has open connection ERR_OPEN_CONNECTION" , 85},
-	{"Device is not ready to send data ERR_DEV_NOT_READY" , 86},
-	{"Pacer overrun, external clock rate too fast. ERR_PACER_OVERRUN" , 7},
-	{"Invalid trigger channel specified ERR_BAD_TRIG_CHANNEL" , 88},
-	{"Invalid trigger level specified ERR_BAD_TRIG_LEVEL" , 89},
-	{"Invalid channel order ERR_BAD_CHAN_ORDER" , 90},
-	{"Temperature input is out of range ERR_TEMP_OUT_OF_RANGE" , 91},
-	{"Trigger threshold is out of range ERR_TRIG_THRESHOLD_OUT_OF_RANGE" , 92},
-	{"Incompatible firmware version, firmware update required ERR_INCOMPATIBLE_FIRMWARE" , 93},
-	{"Specified network interface is not available or disconnected ERR_BAD_NET_IFC" , 94},
-	{"Invalid host specified ERR_BAD_NET_HOST" , 95},
-	{"Invalid port specified ERR_BAD_NET_PORT" , 96},
-	{"Network interface used to obtain the device descriptor not available or disconnected ERR_NET_IFC_UNAVAILABLE" , 97},
-	{"Network connection failed ERR_NET_CONNECTION_FAILED" , 98},
-	{"Invalid connection code ERR_BAD_CONNECTION_CODE" , 99},
-	{"Connection code ignored ERR_CONNECTION_CODE_IGNORED" , 100},
-	{"Network device already in use ERR_NET_DEV_IN_USE" , 101},
-	{"Invalid network frame ERR_BAD_NET_FRAME" , 102},
-	{"Network device did not respond within expected time ERR_NET_TIMEOUT" , 103},
-	{"Data socket connection failed ERR_DATA_SOCKET_CONNECTION_FAILED" , 104},
-	{"One or more bits on the specified port are used for alarm ERR_PORT_USED_FOR_ALARM" , 105},
-	{"The specified bit is used for alarm ERR_BIT_USED_FOR_ALARM" , 106},
-	{"Common-mode voltage range exceeded ERR_CMR_EXCEEDED" , 107},
-	{"Network buffer overrun, data was not transferred from buffer fast enough ERR_NET_BUFFER_OVERRUN" , 108},
-	{"Invalid network buffer ERR_BAD_NET_BUFFER" , 109}
-};
-
-
-static const struct {
 	const char *name;
 	AiInputMode mode;
 } input_modes[] = {
@@ -222,12 +105,6 @@ static const struct {
 	{ "unipolar-0.01", UNIPT01VOLTS,   0.0,   +0.01  },
 	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
-static void ul_decode_error(UlError err){
-	for( uint i=0; i < ARRAY_LEN(errorList) ;i++){
-		if(err&(1<<errorList[i].bitPos))
-			warning("Found error: %s",errorList[i].errStr);
-	}
-}
 
 static AiInputMode uldaq_parse_input_mode(const char *str)
 {
@@ -330,8 +207,9 @@ static int uldaq_connect(struct vnode *n)
 	if (!connected) {
 		err = ulConnectDaqDevice(u->device_handle);
 		if (err != ERR_NO_ERROR) {
-			warning("Failed to connect to DAQ device for node '%s'", node_name(n));
-			ul_decode_error(err);
+			char buf[ERR_MSG_LEN];
+			ulGetErrMsg(err, buf);
+			warning("Failed to connect to DAQ device for node '%s': %s", node_name(n), buf);
 			return -1;
 		}
 	}
@@ -673,22 +551,25 @@ int uldaq_start(struct vnode *n)
 	err = ulAInScan(u->device_handle, 0, 0, (AiInputMode) 0, (Range) 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
 
 	if (err != ERR_NO_ERROR) {
-		ul_decode_error(err);
-		warning("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
+		char buf[ERR_MSG_LEN];
+		ulGetErrMsg(err, buf);
+		warning("Failed to start acquisition on DAQ device for node '%s': %s", node_name(n), buf);
 		return -1;
 	}
 
 	/* Get the initial status of the acquisition */
 	err = ulAInScanStatus(u->device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR) {
-		ul_decode_error(err);
-		warning("Failed to retrieve scan status on DAQ device for node '%s'", node_name(n));
+		char buf[ERR_MSG_LEN];
+		ulGetErrMsg(err, buf);
+		warning("Failed to retrieve scan status on DAQ device for node '%s': %s", node_name(n), buf);
 		return -1;
 	}
 
 	if (u->in.status != SS_RUNNING) {
-		ul_decode_error(err);
-		warning("Acquisition did not start on DAQ device for node '%s'", node_name(n));
+		char buf[ERR_MSG_LEN];
+		ulGetErrMsg(err, buf);
+		warning("Acquisition did not start on DAQ device for node '%s': %s", node_name(n), buf);
 		return -1;
 	}
 
