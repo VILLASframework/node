@@ -239,6 +239,8 @@ public:
 			"sync", &syncDft,
 			"signalIndex", &jsonChannelList
 		);
+		if (ret)
+			throw ConfigError(cfg, err, "node-config-hook-dft");
 
 		if (jsonChannelList != nullptr) {
 			if (jsonChannelList->type == JSON_ARRAY) {
@@ -296,18 +298,14 @@ public:
 			paddingType = paddingTypeEnum::ZERO;
 		}
 
-		if (endFreqency < 0 || endFreqency > sampleRate) {
-			error("End frequency must be smaller than sampleRate (%i)",sampleRate);
-			ret = 1;
-		}
+		if (endFreqency < 0 || endFreqency > sampleRate)
+			throw ConfigError(cfg, err, "node-config-hook-dft","End frequency must be smaller than sampleRate {}",sampleRate);
 
-		if (frequencyResolution > ((double)sampleRate/windowSize)) {
-			error("The maximum frequency resolution with smaple_rate:%i and window_site:%i is %f",sampleRate, windowSize, ((double)sampleRate/windowSize));
-			ret = 1;
-		}
+		if (frequencyResolution > ((double)sampleRate/windowSize))
+			throw ConfigError(cfg, err, "node-config-hook-dft","The maximum frequency resolution with smaple_rate:{} and window_site:{} is {}",sampleRate, windowSize, ((double)sampleRate/windowSize));
 
-		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-dft");
+
+
 	}
 
 	virtual Hook::Reason process(sample *smp)
