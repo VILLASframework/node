@@ -30,7 +30,7 @@
 using namespace villas;
 using namespace villas::node;
 
-Dumper::Dumper(std::string socketNameIn) :
+Dumper::Dumper(const std::string socketNameIn) :
 	socketName(""),
 	supressRepeatedWarning(true),
 	warningCounter(0)
