@@ -32,6 +32,7 @@
 #include <villas/io.h>
 #include <villas/plugin.h>
 #include <complex>
+#include <cinttypes>
 
 namespace villas {
 namespace node {
@@ -355,7 +356,7 @@ public:
 		}
 
 		if ((smp->sequence - lastSequence) > 1)
-			warning("Calculation is not Realtime. %li sampled missed",smp->sequence - lastSequence);
+			warning("Calculation is not Realtime. %" PRIu64 " sampled missed",smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
 
