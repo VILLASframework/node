@@ -41,12 +41,12 @@ namespace node {
 class DftHook : public Hook {
 
 protected:
-	enum paddingTypeEnum {
+	enum PaddingType {
 		ZERO,
 		SIG_REPEAT
 	};
 
-	enum windowTypeEnum {
+	enum WindowType {
 		NONE,
 		FLATTOP,
 		HANN,
@@ -60,8 +60,8 @@ protected:
 	Dumper* phasorAmplitude;
 	Dumper* phasorFreq;
 
-	windowTypeEnum windowType;
-	paddingTypeEnum paddingType;
+	WindowType windowType;
+	PaddingType paddingType;
 
 	struct format_type *format;
 
@@ -98,8 +98,8 @@ protected:
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		windowType(windowTypeEnum::NONE),
-		paddingType(paddingTypeEnum::ZERO),
+		windowType(WindowType::NONE),
+		paddingType(PaddingType::ZERO),
 		dftCalcCnt(0),
 		sampleRate(0),
 		startFreqency(0),
@@ -276,28 +276,28 @@ public:
 
 		if (!windowTypeC) {
 			info("No Window type given, assume no windowing");
-			windowType = windowTypeEnum::NONE;
+			windowType = WindowType::NONE;
 		}
 		else if (strcmp(windowTypeC, "flattop") == 0)
-			windowType = windowTypeEnum::FLATTOP;
+			windowType = WindowType::FLATTOP;
 		else if (strcmp(windowTypeC, "hamming") == 0)
-			windowType = windowTypeEnum::HAMMING;
+			windowType = WindowType::HAMMING;
 		else if (strcmp(windowTypeC, "hann") == 0)
-			windowType = windowTypeEnum::HANN;
+			windowType = WindowType::HANN;
 		else {
 			info("Window type %s not recognized, assume no windowing",windowTypeC);
-			windowType = windowTypeEnum::NONE;
+			windowType = WindowType::NONE;
 		}
 
 		if (!paddingTypeC) {
 			info("No Padding type given, assume no zeropadding");
-			paddingType = paddingTypeEnum::ZERO;
+			paddingType = PaddingType::ZERO;
 		}
 		else if (strcmp(paddingTypeC, "signal_repeat") == 0)
-			paddingType = paddingTypeEnum::SIG_REPEAT;
+			paddingType = PaddingType::SIG_REPEAT;
 		else {
 			info("Padding type %s not recognized, assume zero padding",paddingTypeC);
-			paddingType = paddingTypeEnum::ZERO;
+			paddingType = PaddingType::ZERO;
 		}
 
 		if (endFreqency < 0 || endFreqency > sampleRate)
@@ -327,13 +327,13 @@ public:
 
 		if (runDft) {
 			for (uint i = 0; i < signalCnt; i++) {
-				calcDft(paddingTypeEnum::ZERO, smpMemory[i], smpMemPos);
+				calcDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
 				double maxF = 0;
 				double maxA = 0;
 				int maxPos = 0;
 
 				for (uint i = 0; i<freqCount; i++) {
-					absDftResults[i] = abs(dftResults[i]) * 2 / (windowSize * windowCorretionFactor * ((paddingType == paddingTypeEnum::ZERO)?1:windowMultiplier));
+					absDftResults[i] = abs(dftResults[i]) * 2 / (windowSize * windowCorretionFactor * ((paddingType == PaddingType::ZERO)?1:windowMultiplier));
 					if (maxA < absDftResults[i]) {
 						maxF = absDftFreqs[i];
 						maxA = absDftResults[i];
@@ -381,7 +381,7 @@ public:
 	}
 
 
-	void calcDft(paddingTypeEnum padding, double *ringBuffer, uint ringBufferPos) {
+	void calcDft(PaddingType padding, double *ringBuffer, uint ringBufferPos) {
 		/* ringBuffer size needs to be equal to windowSize */
 		/* prepare sample window The following parts can be combined */
 		double tmpSmpWindow[windowSize];
@@ -402,22 +402,22 @@ public:
 		for (uint i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
 			for (uint j=0; j < windowSize * windowMultiplier; j++) {
-				if (padding == paddingTypeEnum::ZERO) {
+				if (padding == PaddingType::ZERO) {
 					if (j < (windowSize))
 						dftResults[i] += tmpSmpWindow[j] * dftMatrix[i][j];
 					else
 						dftResults[i] += 0;
 				}
-				else if (padding == paddingTypeEnum::SIG_REPEAT) //repeat samples
+				else if (padding == PaddingType::SIG_REPEAT) //repeat samples
 					dftResults[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
 
 			}
 		}
 	}
 
-	void calcWindow(windowTypeEnum windowTypeIn) {
+	void calcWindow(WindowType windowTypeIn) {
 
-		if (windowTypeIn == windowTypeEnum::FLATTOP) {
+		if (windowTypeIn == WindowType::FLATTOP) {
 			for (uint i = 0; i < windowSize; i++) {
 				filterWindowCoefficents[i] = 	0.21557895
 								- 0.41663158 * cos(2 * M_PI * i / (windowSize))
@@ -427,9 +427,9 @@ public:
 				windowCorretionFactor += filterWindowCoefficents[i];
 			}
 		}
-		else if (windowTypeIn == windowTypeEnum::HAMMING || windowTypeIn == windowTypeEnum::HANN) {
+		else if (windowTypeIn == WindowType::HAMMING || windowTypeIn == WindowType::HANN) {
 			double a0 = 0.5; //this is the hann window
-			if (windowTypeIn == windowTypeEnum::HAMMING)
+			if (windowTypeIn == WindowType::HAMMING)
 				a0 = 25./46;
 
 			for (uint i = 0; i < windowSize; i++) {
