@@ -43,7 +43,7 @@ public:
 	int openSocket();
 	int closeSocket();
 
-	void writeData(uint len, double *yData, double *xData = nullptr);
+	void writeData(unsigned len, double *yData, double *xData = nullptr);
 };
 
 } /* namespace node */

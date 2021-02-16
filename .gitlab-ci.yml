@@ -216,6 +216,7 @@ pkg:alpine:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
   - docker buildx build ${DOCKER_OPTS}
+      --pull
       --output type=docker
       --target app
       --build-arg ARCH=${ARCH}

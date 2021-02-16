@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM alpine:edge AS dev
+FROM alpine:3.13.1 AS dev
 
 ARG DISTRO=alpine
 ARG ARCH=x86_64
