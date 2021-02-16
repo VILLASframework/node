@@ -72,7 +72,7 @@ DeviceList::DeviceList()
 
 			ret = fscanf(f, "%x", map[i].p);
 			if (ret != 1)
-				error("Failed to parse %s ID from: %s", map[i].s, path);
+				throw RuntimeError("Failed to parse {} ID from: {}", map[i].s, path);
 
 			fclose(f);
 		}
@@ -80,7 +80,7 @@ DeviceList::DeviceList()
 		/* Get slot id */
 		ret = sscanf(e->d_name, "%4x:%2x:%2x.%u", &slot.domain, &slot.bus, &slot.device, &slot.function);
 		if (ret != 4)
-			error("Failed to parse PCI slot number: %s", e->d_name);
+			throw RuntimeError("Failed to parse PCI slot number: {}", e->d_name);
 
 		emplace_back(std::make_shared<Device>(id, slot));
 	}
@@ -361,7 +361,8 @@ Device::attachDriver(const std::string &driver) const
 	if (!f)
 		throw SystemError("Failed to add PCI id to {} driver ({})", driver, fn);
 
-	info("Adding ID to %s module: %04x %04x", driver.c_str(), id.vendor, id.device);
+	auto logger = logging.get("kernel:pci");
+	logger->info("Adding ID to {} module: {:04x} {:04x}", driver, id.vendor, id.device);
 	fprintf(f, "%04x %04x", id.vendor, id.device);
 	fclose(f);
 
@@ -371,7 +372,7 @@ Device::attachDriver(const std::string &driver) const
 	if (!f)
 		throw SystemError("Failed to bind PCI device to {} driver ({})", driver, fn);
 
-	info("Bind device to %s driver", driver.c_str());
+	logger->info("Bind device to {} driver", driver);
 	fprintf(f, "%04x:%02x:%02x.%x\n", slot.domain, slot.bus, slot.device, slot.function);
 	fclose(f);
 

@@ -23,7 +23,6 @@
 #include <list>
 #include <algorithm>
 
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/syslog_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -81,7 +80,7 @@ Logger Log::get(const std::string &name)
 	return logger;
 }
 
-void Log::parse(json_t *cfg)
+void Log::parse(json_t *json)
 {
 	const char *level = nullptr;
 	const char *path = nullptr;
@@ -92,7 +91,7 @@ void Log::parse(json_t *cfg)
 	json_error_t err;
 	json_t *json_expressions = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: o, s?: b, s?: s }",
+	ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s?: s, s?: s, s?: o, s?: b, s?: s }",
 		"level", &level,
 		"file", &path,
 		"expressions", &json_expressions,
@@ -100,7 +99,7 @@ void Log::parse(json_t *cfg)
 		"pattern", &pattern
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-logging");
+		throw ConfigError(json, err, "node-config-logging");
 
 	if (level)
 		setLevel(level);

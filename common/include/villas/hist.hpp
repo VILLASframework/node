@@ -27,6 +27,8 @@
 
 #include <jansson.h>
 
+#include <villas/log.hpp>
+
 #define HEIGHT	(LOG_WIDTH - 55)
 #define SEQ	17
 
@@ -58,10 +60,10 @@ public:
 	double getStddev() const;
 
 	/** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-	void print(bool details) const;
+	void print(Logger logger, bool details) const;
 
 	/** Print ASCII style plot of histogram */
-	void plot() const;
+	void plot(Logger logger) const;
 
 	/** Dump histogram data in Matlab format.
 	 *

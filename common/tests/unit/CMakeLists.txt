@@ -21,7 +21,6 @@
 ##############################################################################
 
 add_executable(unit-tests-common
-	advio.cpp
 	buffer.cpp
 	graph.cpp
 	hist.cpp

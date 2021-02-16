@@ -27,8 +27,9 @@
 #include <villas/table.hpp>
 #include <villas/colors.hpp>
 #include <villas/boxes.hpp>
-#include <villas/log.h>
+#include <villas/log.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int Table::resize(int w)
@@ -66,8 +67,8 @@ int Table::resize(int w)
 
 void Table::header()
 {
-	if (width != log_get_width())
-		resize(log_get_width());
+	if (width != logging.getWidth())
+		resize(logging.getWidth());
 
 	char *line1 = nullptr;
 	char *line2 = nullptr;
@@ -105,9 +106,9 @@ void Table::header()
 		free(col);
 	}
 
-	info("%s", line1);
-	info("%s", line2);
-	info("%s", line3);
+	logger->info("{}", line1);
+	logger->info("{}", line2);
+	logger->info("{}", line3);
 
 	free(line1);
 	free(line2);
@@ -116,8 +117,8 @@ void Table::header()
 
 void Table::row(int count, ...)
 {
-	if (width != log_get_width()) {
-		resize(log_get_width());
+	if (width != logging.getWidth()) {
+		resize(logging.getWidth());
 		header();
 	}
 
@@ -146,6 +147,6 @@ void Table::row(int count, ...)
 
 	va_end(args);
 
-	info("%s", line);
+	logger->info("{}", line);
 	free(line);
 }

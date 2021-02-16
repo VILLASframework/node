@@ -40,7 +40,6 @@
 #include <uuid/uuid.h>
 
 #include <villas/config.h>
-#include <villas/log.h>
 
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)

@@ -65,7 +65,7 @@ public:
 	/**< Get the real usable log output width which fits into one line. */
 	int getWidth();
 
-	void parse(json_t *cfg);
+	void parse(json_t *json);
 
 	Logger get(const std::string &name);
 
