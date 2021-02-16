@@ -229,16 +229,16 @@ public:
 		state = State::PARSED;
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: b, s?: o}",
-			"sampleRate", &sampleRate,
-			"startFreqency", &startFreqency,
-			"endFreqency", &endFreqency,
-			"frequencyResolution", &frequencyResolution,
-			"dftRate", &dftRate,
-			"windowSize", &windowSize,
-			"windowType", &windowTypeC,
-			"paddingType", &paddingTypeC,
+			"sample_rate", &sampleRate,
+			"start_freqency", &startFreqency,
+			"end_freqency", &endFreqency,
+			"frequency_resolution", &frequencyResolution,
+			"dft_rate", &dftRate,
+			"window_size", &windowSize,
+			"window_type", &windowTypeC,
+			"padding_type", &paddingTypeC,
 			"sync", &syncDft,
-			"signalIndex", &jsonChannelList
+			"signal_index", &jsonChannelList
 		);
 		if (ret)
 			throw ConfigError(cfg, err, "node-config-hook-dft");
@@ -271,7 +271,7 @@ public:
 				warning("Could not parse channel list. Please check documentation for syntax");
 		}
 		else
-			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter channel given.");
+			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
 
 		if (!windowTypeC) {
 			info("No Window type given, assume no windowing");
