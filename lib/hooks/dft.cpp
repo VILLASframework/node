@@ -73,14 +73,14 @@ protected:
 	double *absDftFreqs;
 
 	uint64_t dftCalcCnt;
-	uint sampleRate;
+	unsigned sampleRate;
 	double startFreqency;
 	double endFreqency;
 	double frequencyResolution;
-	uint dftRate;
-	uint windowSize;
-	uint windowMultiplier;//multiplyer for the window to achieve frequency resolution
-	uint freqCount;//number of requency bins that are calculated
+	unsigned dftRate;
+	unsigned windowSize;
+	unsigned windowMultiplier;	/**< Multiplyer for the window to achieve frequency resolution */
+	unsigned freqCount;		/**< Number of requency bins that are calculated */
 	bool syncDft;
 
 	uint64_t smpMemPos;
@@ -92,8 +92,8 @@ protected:
 	double windowCorretionFactor;
 	timespec lastDftCal;
 
-	int *signalIndex;//a list of signalIndex to do dft on
-	uint signalCnt;//number of signalIndex given by config file
+	int *signalIndex;		/**< A list of signalIndex to do dft on */
+	unsigned signalCnt;		/**< Number of signalIndex given by config file */
 
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
@@ -147,7 +147,7 @@ public:
 		if (!smpMemory)
 			throw MemoryAllocationError();
 
-		for (uint i = 0; i < signalCnt; i++) {
+		for (unsigned i = 0; i < signalCnt; i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
 			struct signal *phaseSig;
@@ -171,7 +171,7 @@ public:
 			if (!smpMemory[i])
 				throw MemoryAllocationError();
 
-			for (uint j = 0; j < windowSize; j++)
+			for (unsigned j = 0; j < windowSize; j++)
 				smpMemory[i][j] = 0;
 		}
 
@@ -184,7 +184,7 @@ public:
 		if (!dftMatrix)
 			throw MemoryAllocationError();
 
-		for (uint i = 0; i < freqCount; i++) {
+		for (unsigned i = 0; i < freqCount; i++) {
 			dftMatrix[i] = new std::complex<double>[windowSize * windowMultiplier]();
 			if (!dftMatrix[i])
 				throw MemoryAllocationError();
@@ -206,7 +206,7 @@ public:
 		if (!absDftFreqs)
 			throw MemoryAllocationError();
 
-		for (uint i = 0; i < freqCount; i++)
+		for (unsigned i = 0; i < freqCount; i++)
 			absDftFreqs[i] = startFreqency + i * frequencyResolution;
 
 		generateDftMatrix();
@@ -313,7 +313,8 @@ public:
 	virtual Hook::Reason process(sample *smp)
 	{
 		assert(state == State::STARTED);
-		for (uint i = 0; i< signalCnt; i++)
+
+		for (unsigned i = 0; i< signalCnt; i++)
 			smpMemory[i][smpMemPos % windowSize] = smp->data[signalIndex[i]].f;
 
 		smpMemPos++;
@@ -326,13 +327,12 @@ public:
 		lastDftCal = smp->ts.origin;
 
 		if (runDft) {
-			for (uint i = 0; i < signalCnt; i++) {
-				calcDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
+			for (unsigned i = 0; i < signalCnt; i++) {
 				double maxF = 0;
 				double maxA = 0;
 				int maxPos = 0;
 
-				for (uint i = 0; i<freqCount; i++) {
+				for (unsigned i = 0; i<freqCount; i++) {
 					absDftResults[i] = abs(dftResults[i]) * 2 / (windowSize * windowCorretionFactor * ((paddingType == PaddingType::ZERO)?1:windowMultiplier));
 					if (maxA < absDftResults[i]) {
 						maxF = absDftFreqs[i];
@@ -370,11 +370,10 @@ public:
 	void generateDftMatrix() {
 		using namespace std::complex_literals;
 
-		omega = exp((-2 * M_PI * M_I) / (double)(windowSize * windowMultiplier));
-		uint startBin = floor(startFreqency / frequencyResolution);
+		unsigned startBin = floor(startFreqency / frequencyResolution);
 
-		for (uint i = 0; i <  freqCount ; i++) {
-			for (uint j=0 ; j < windowSize * windowMultiplier ; j++) {
+		for (unsigned i = 0; i <  freqCount ; i++) {
+			for (unsigned j = 0 ; j < windowSize * windowMultiplier ; j++)
 				dftMatrix[i][j] = pow(omega, (i + startBin) * j);
 			}
 		}
@@ -386,7 +385,7 @@ public:
 		/* prepare sample window The following parts can be combined */
 		double tmpSmpWindow[windowSize];
 
-		for (uint i = 0; i< windowSize; i++)
+		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
 		origSigSync->writeData(windowSize,tmpSmpWindow);
@@ -394,14 +393,14 @@ public:
 		if (dftCalcCnt > 1)
 			phasorAmplitude->writeData(1,&tmpSmpWindow[windowSize - 1]);
 
-		for (uint i = 0; i< windowSize; i++)
+		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
 		windowdSigSync->writeData(windowSize,tmpSmpWindow);
 
-		for (uint i = 0; i < freqCount; i++) {
+		for (unsigned i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
-			for (uint j=0; j < windowSize * windowMultiplier; j++) {
+			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
 					if (j < (windowSize))
 						dftResults[i] += tmpSmpWindow[j] * dftMatrix[i][j];
