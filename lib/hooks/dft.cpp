@@ -53,24 +53,24 @@ protected:
 		HAMMING
 	};
 
-	Dumper* origSigSync;
-	Dumper* ppsSigSync;
-	Dumper* windowdSigSync;
-	Dumper* phasorPhase;
-	Dumper* phasorAmplitude;
-	Dumper* phasorFreq;
+	Dumper *origSigSync;
+	Dumper *ppsSigSync;
+	Dumper *windowdSigSync;
+	Dumper *phasorPhase;
+	Dumper *phasorAmplitude;
+	Dumper *phasorFreq;
 
 	WindowType windowType;
 	PaddingType paddingType;
 
 	struct format_type *format;
 
-	double** smpMemory;
-	std::complex<double>** dftMatrix;
-	std::complex<double>* dftResults;
-	double* filterWindowCoefficents;
-	double* absDftResults;
-	double* absDftFreqs;
+	double **smpMemory;
+	std::complex<double> **dftMatrix;
+	std::complex<double> *dftResults;
+	double *filterWindowCoefficents;
+	double *absDftResults;
+	double *absDftFreqs;
 
 	uint64_t dftCalcCnt;
 	uint sampleRate;
@@ -92,7 +92,7 @@ protected:
 	double windowCorretionFactor;
 	timespec lastDftCal;
 
-	int* signalIndex;//a list of signalIndex to do dft on
+	int *signalIndex;//a list of signalIndex to do dft on
 	uint signalCnt;//number of signalIndex given by config file
 
 public:
