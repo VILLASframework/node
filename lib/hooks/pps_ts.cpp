@@ -40,7 +40,7 @@ protected:
 	double lastValue;
 	double thresh;
 	unsigned idx;
-	uint64_t last_sequence;
+	uint64_t lastSequence;
 
 	bool isSynced;
 	bool isLocked;
@@ -63,7 +63,7 @@ public:
 		lastValue(0),
 		thresh(1.5),
 		idx(0),
-		last_sequence(0),
+		lastSequence(0),
 		isSynced(false),
 		isLocked(false),
 		timeErr(0.0),
@@ -162,10 +162,10 @@ public:
 		tsVirt = time_add(&tsVirt, &tsPeriod);
 
 
-		if ((smp->sequence - last_sequence) > 1)
-			warning("Samples missed: %" PRIu64 " sampled missed", smp->sequence - last_sequence);
+		if ((smp->sequence - lastSequence) > 1)
+			warning("Samples missed: %" PRIu64 " sampled missed", smp->sequence - lastSequence);
 
-		last_sequence = smp->sequence;
+		lastSequence = smp->sequence;
 
 		return Hook::Reason::OK;
 	}

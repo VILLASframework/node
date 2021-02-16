@@ -52,12 +52,12 @@ int Dumper::openSocket(std::string socketNameIn)
 		return -1;
 	}
 
-	sockaddr_un socketaddr_un;
-	socketaddr_un.sun_family = AF_UNIX;
-	strcpy(socketaddr_un.sun_path, socketName.c_str());
+	sockaddr_un socketaddrUn;
+	socketaddrUn.sun_family = AF_UNIX;
+	strcpy(socketaddrUn.sun_path, socketName.c_str());
 	socketName = socketNameIn;
 
-	connect(socketFd, (struct sockaddr *) &socketaddr_un, sizeof(socketaddr_un));
+	connect(socketFd, (struct sockaddr *) &socketaddrUn, sizeof(socketaddrUn));
 
 	return 1;
 }
