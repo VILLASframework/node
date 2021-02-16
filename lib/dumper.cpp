@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include <sstream>
+#include <cstring>
 
 #include <villas/dumper.hpp>
 #include <villas/log.h>
