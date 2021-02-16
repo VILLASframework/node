@@ -24,12 +24,13 @@
  * @{
  */
 
+#include <cinttypes>
+#include <vector>
+
 #include <villas/hook.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
-
 #include <villas/log.h>
-#include <cinttypes>
 
 namespace villas {
 namespace node {
@@ -45,17 +46,16 @@ protected:
 	bool isSynced;
 	bool isLocked;
 	struct timespec tsVirt;
-	double timeErr;			// in seconds
-	double periodEst;		// in seconds
-	double periodErrComp;		// in seconds
-	double period;			// in seconds
+	double timeError;		/**< In seconds */
+	double periodEst;		/**< In seconds */
+	double periodErrComp;		/**< In seconds */
+	double period;			/**< In seconds */
 	uintmax_t cntEdges;
 	uintmax_t cntSmps;
 	uintmax_t cntSmpsTotal;
 	unsigned horizonComp;
 	unsigned horizonEst;
-	uintmax_t filtLen;
-	uintmax_t *filtWin;
+	std::vector<uintmax_t> filterWindow;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
@@ -66,7 +66,7 @@ public:
 		lastSequence(0),
 		isSynced(false),
 		isLocked(false),
-		timeErr(0.0),
+		timeError(0.0),
 		periodEst(0.0),
 		periodErrComp(0.0),
 		period(0.0),
@@ -75,16 +75,8 @@ public:
 		cntSmpsTotal(0),
 		horizonComp(10),
 		horizonEst(10),
-		filtLen(horizonEst + 1)
-	{
-		filtWin = new uintmax_t[filtLen];
-		memset(filtWin, 0, filtLen * sizeof(uintmax_t));
-	}
-
-	~PpsTsHook()
-	{
-		delete[] filtWin;
-	}
+		filterWindow(horizonEst + 1, 0)
+	{ }
 
 	virtual void parse(json_t *cfg)
 	{
@@ -127,17 +119,17 @@ public:
 		if (isEdge) {
 			if (isSynced) {
 				if(tsVirt.tv_nsec > 0.5e9)
-					timeErr += 1.0 - (tsVirt.tv_nsec / 1.0e9);
+					timeError += 1.0 - (tsVirt.tv_nsec / 1.0e9);
 				else
-					timeErr -= (tsVirt.tv_nsec / 1.0e9);
+					timeError -= (tsVirt.tv_nsec / 1.0e9);
 
 
-				filtWin[cntEdges % filtLen] = cntSmpsTotal;
+				filterWindow[cntEdges % filterWindow.size()] = cntSmpsTotal;
 				/* Estimated sample period over last 'horizonEst' seconds */
-				unsigned int tmp = cntEdges < filtLen ? cntEdges : horizonEst;
-				double cntSmpsAvg = (cntSmpsTotal - filtWin[(cntEdges - tmp) % filtLen]) / tmp;
+				unsigned int tmp = cntEdges < filterWindow.size() ? cntEdges : horizonEst;
+				double cntSmpsAvg = (cntSmpsTotal - filterWindow[(cntEdges - tmp) % filterWindow.size()]) / tmp;
 				periodEst = 1.0 / cntSmpsAvg;
-				periodErrComp = timeErr / (cntSmpsAvg * horizonComp);
+				periodErrComp = timeError / (cntSmpsAvg * horizonComp);
 				period = periodEst + periodErrComp;
 			}
 			else {
@@ -150,7 +142,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			debug(LOG_HOOK | 5, "Time Error is: %f periodEst %f periodErrComp %f", timeErr, periodEst, periodErrComp);
+			debug(LOG_HOOK | 5, "Time Error is: %f periodEst %f periodErrComp %f", timeError, periodEst, periodErrComp);
 		}
 
 		cntSmps++;

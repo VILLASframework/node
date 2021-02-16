@@ -25,8 +25,9 @@
  */
 
 #include <cstring>
-#include <complex>
 #include <cinttypes>
+#include <complex>
+#include <vector>
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
@@ -53,24 +54,23 @@ protected:
 		HAMMING
 	};
 
-	Dumper *origSigSync;
-	Dumper *ppsSigSync;
-	Dumper *windowdSigSync;
-	Dumper *phasorPhase;
-	Dumper *phasorAmplitude;
-	Dumper *phasorFreq;
+	std::shared_ptr<Dumper> origSigSync;
+	std::shared_ptr<Dumper> windowdSigSync;
+	std::shared_ptr<Dumper> phasorPhase;
+	std::shared_ptr<Dumper> phasorAmplitude;
+	std::shared_ptr<Dumper> phasorFreq;
 
 	enum WindowType windowType;
 	enum PaddingType paddingType;
 
 	struct format_type *format;
 
-	double **smpMemory;
-	std::complex<double> **dftMatrix;
-	std::complex<double> *dftResults;
-	double *filterWindowCoefficents;
-	double *absDftResults;
-	double *absDftFreqs;
+	std::vector<std::vector<double>> smpMemory;
+	std::vector<std::vector<std::complex<double>>> dftMatrix;
+	std::vector<std::complex<double>> dftResults;
+	std::vector<double> filterWindowCoefficents;
+	std::vector<double> absDftResults;
+	std::vector<double> absDftFreqs;
 
 	uint64_t dftCalcCnt;
 	unsigned sampleRate;
@@ -91,20 +91,19 @@ protected:
 	double windowCorretionFactor;
 	struct timespec lastDftCal;
 
-	int *signalIndex;		/**< A list of signalIndex to do dft on */
-	unsigned signalCnt;		/**< Number of signalIndex given by config file */
+	std::vector<int> signalIndex;	/**< A list of signalIndex to do dft on */
 
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
-		smpMemory(nullptr),
-		dftMatrix(nullptr),
-		dftResults(nullptr),
-		filterWindowCoefficents(nullptr),
-		absDftResults(nullptr),
-		absDftFreqs(nullptr),
+		smpMemory(),
+		dftMatrix(),
+		dftResults(),
+		filterWindowCoefficents(),
+		absDftResults(),
+		absDftFreqs(),
 		dftCalcCnt(0),
 		sampleRate(0),
 		startFreqency(0),
@@ -119,28 +118,18 @@ public:
 		lastSequence(0),
 		windowCorretionFactor(0),
 		lastDftCal({0, 0}),
-		signalIndex(nullptr),
-		signalCnt(0)
+		signalIndex()
 	{
 		format = format_type_lookup("villas.human");
 
-		origSigSync = new Dumper("/tmp/plot/origSigSync");
-		ppsSigSync = new Dumper("/tmp/plot/ppsSigSync");
-		windowdSigSync = new Dumper("/tmp/plot/windowdSigSync");
-		phasorPhase = new Dumper("/tmp/plot/phasorPhase");
-		phasorAmplitude = new Dumper("/tmp/plot/phasorAmplitude");
-		phasorFreq = new Dumper("/tmp/plot/phasorFreq");
-	}
-
-	virtual ~DftHook()
-	{
-		delete smpMemory;
-		delete origSigSync;
-		delete ppsSigSync;
-		delete windowdSigSync;
-		delete phasorPhase;
-		delete phasorAmplitude;
-		delete phasorFreq;
+		bool debug = false;
+		if (debug) {
+			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
+			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
+			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
+			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
+			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
+		}
 	}
 
 	virtual void prepare()
@@ -148,11 +137,7 @@ public:
 		signal_list_clear(&signals);
 
 		/* Initialize sample memory */
-		smpMemory = new double*[signalCnt];
-		if (!smpMemory)
-			throw MemoryAllocationError();
-
-		for (unsigned i = 0; i < signalCnt; i++) {
+		for (unsigned i = 0; i < signalIndex.size(); i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
 			struct signal *phaseSig;
@@ -172,12 +157,7 @@ public:
 			vlist_push(&signals, phaseSig);
 			vlist_push(&signals, rocofSig);
 
-			smpMemory[i] = new double[windowSize];
-			if (!smpMemory[i])
-				throw MemoryAllocationError();
-
-			for (unsigned j = 0; j < windowSize; j++)
-				smpMemory[i][j] = 0;
+			smpMemory.emplace_back(windowSize, 0.0);
 		}
 
 		/* Calculate how much zero padding ist needed for a needed resolution */
@@ -186,33 +166,15 @@ public:
 		freqCount = ceil((endFreqency - startFreqency) / frequencyResolution) + 1;
 
 		/* Initialize matrix of dft coeffients */
-		dftMatrix = new std::complex<double>*[freqCount];
-		if (!dftMatrix)
-			throw MemoryAllocationError();
-
-		for (unsigned i = 0; i < freqCount; i++) {
-			dftMatrix[i] = new std::complex<double>[windowSize * windowMultiplier]();
-			if (!dftMatrix[i])
-				throw MemoryAllocationError();
-		}
-
-		dftResults = new std::complex<double>[freqCount]();
-		if (!dftResults)
-			throw MemoryAllocationError();
-
-		filterWindowCoefficents = new double[windowSize];
-		if (!filterWindowCoefficents)
-			throw MemoryAllocationError();
-
-		absDftResults = new double[freqCount];
-		if (!absDftResults)
-			throw MemoryAllocationError();
-
-		absDftFreqs = new double[freqCount];
-		if (!absDftFreqs)
-			throw MemoryAllocationError();
-
 		for (unsigned i = 0; i < freqCount; i++)
+			dftMatrix.emplace_back(windowSize * windowMultiplier, 0.0);
+
+		dftResults.resize(freqCount);
+		filterWindowCoefficents.resize(windowSize);
+		absDftResults.resize(freqCount);
+		absDftFreqs.resize(freqCount);
+
+		for (unsigned i = 0; i < absDftFreqs.size(); i++)
 			absDftFreqs[i] = startFreqency + i * frequencyResolution;
 
 		generateDftMatrix();
@@ -249,28 +211,26 @@ public:
 			throw ConfigError(cfg, err, "node-config-hook-dft");
 
 		if (jsonChannelList != nullptr) {
+			signalIndex.clear();
 			if (jsonChannelList->type == JSON_ARRAY) {
-				signalCnt = json_array_size(jsonChannelList);
-				signalIndex = new int[signalCnt];
-				if (!signalIndex)
-					throw MemoryAllocationError();
-
 				size_t i;
 				json_t *jsonValue;
 				json_array_foreach(jsonChannelList, i, jsonValue) {
 					if (!json_is_number(jsonValue))
 						throw ConfigError(jsonValue, "node-config-hook-dft-channel", "Values must be given as array of integer values!");
-					signalIndex[i] = json_number_value(jsonValue);
+
+					auto idx = json_number_value(jsonValue);
+
+					signalIndex.push_back(idx);
 				}
 			}
 			else if (jsonChannelList->type == JSON_INTEGER) {
-				signalCnt = 1;
-				signalIndex = new int[signalCnt];
-				if (!signalIndex)
-					throw MemoryAllocationError();
 				if (!json_is_number(jsonChannelList))
 					throw ConfigError(jsonChannelList, "node-config-hook-dft-channel", "Value must be given as integer value!");
-				signalIndex[0] = json_number_value(jsonChannelList);
+
+				auto idx = json_number_value(jsonChannelList);
+
+				signalIndex.push_back(idx);
 			}
 			else
 				warning("Could not parse channel list. Please check documentation for syntax");
@@ -317,7 +277,7 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		for (unsigned i = 0; i< signalCnt; i++)
+		for (unsigned i = 0; i < signalIndex.size(); i++)
 			smpMemory[i][smpMemPos % windowSize] = smp->data[signalIndex[i]].f;
 
 		smpMemPos++;
@@ -331,7 +291,7 @@ public:
 		lastDftCal = smp->ts.origin;
 
 		if (runDft) {
-			for (unsigned i = 0; i < signalCnt; i++) {
+			for (unsigned i = 0; i < signalIndex.size(); i++) {
 				calculateDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
 				double maxF = 0;
 				double maxA = 0;
@@ -347,18 +307,20 @@ public:
 				}
 
 				if (dftCalcCnt > 1) {
-					phasorFreq->writeData(1, &maxF);
+					if (phasorFreq)
+						phasorFreq->writeData(1, &maxF);
 
 					smp->data[i * 4].f = maxF; /* Frequency */
 					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
 					smp->data[i * 4 + 2].f = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()); /* Phase */
 					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
-					phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
+					if (phasorPhase)
+						phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
 				}
 			}
 			dftCalcCnt++;
-			smp->length = signalCnt * 4;
+			smp->length = signalIndex.size() * 4;
 		}
 
 		if ((smp->sequence - lastSequence) > 1)
@@ -385,7 +347,7 @@ public:
 		}
 	}
 
-	void calculateDft(enum PaddingType padding, double *ringBuffer, unsigned ringBufferPos)
+	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, unsigned ringBufferPos)
 	{
 		/* RingBuffer size needs to be equal to windowSize
 		 * prepare sample window The following parts can be combined */
@@ -394,15 +356,17 @@ public:
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
-		origSigSync->writeData(windowSize, tmpSmpWindow);
+		if (origSigSync)
+			origSigSync->writeData(windowSize, tmpSmpWindow);
 
-		if (dftCalcCnt > 1)
+		if (dftCalcCnt > 1 && phasorAmplitude)
 			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
 
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
-		windowdSigSync->writeData(windowSize, tmpSmpWindow);
+		if (windowdSigSync)
+			windowdSigSync->writeData(windowSize, tmpSmpWindow);
 
 		for (unsigned i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
