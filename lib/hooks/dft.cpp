@@ -87,7 +87,6 @@ protected:
 	uint64_t lastSequence;
 
 	std::complex<double> omega;
-	std::complex<double> M_I;
 
 	double windowCorretionFactor;
 	timespec lastDftCal;
@@ -112,9 +111,8 @@ public:
 		syncDft(0),
 		smpMemPos(0),
 		lastSequence(0),
-		M_I(0.0,1.0),
 		windowCorretionFactor(0),
-		lastDftCal({0,0}),
+		lastDftCal({0, 0}),
 		signalCnt(0)
 	{
 		format = format_type_lookup("villas.human");
@@ -140,9 +138,9 @@ public:
 
 	virtual void prepare()
 	{
-
 		signal_list_clear(&signals);
-		/* init sample memory */
+
+		/* Initialize sample memory */
 		smpMemory = new double*[signalCnt];
 		if (!smpMemory)
 			throw MemoryAllocationError();
@@ -175,11 +173,12 @@ public:
 				smpMemory[i][j] = 0;
 		}
 
-		windowMultiplier = ceil(((double)sampleRate / windowSize) / frequencyResolution); //calculate how much zero padding ist needed for a needed resolution
+		/* Calculate how much zero padding ist needed for a needed resolution */
+		windowMultiplier = ceil(((double)sampleRate / windowSize) / frequencyResolution);
 
 		freqCount = ceil((endFreqency - startFreqency) / frequencyResolution) + 1;
 
-		/* init matrix of dft coeffients */
+		/* Initialize matrix of dft coeffients */
 		dftMatrix = new std::complex<double>*[freqCount];
 		if (!dftMatrix)
 			throw MemoryAllocationError();
@@ -210,7 +209,7 @@ public:
 			absDftFreqs[i] = startFreqency + i * frequencyResolution;
 
 		generateDftMatrix();
-		calcWindow(windowType);
+		calculateWindow(windowType);
 
 		state = State::PREPARED;
 	}
@@ -226,8 +225,6 @@ public:
 		assert(state != State::STARTED);
 
 		Hook::parse(cfg);
-
-		state = State::PARSED;
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: b, s?: o}",
 			"sample_rate", &sampleRate,
@@ -285,7 +282,7 @@ public:
 		else if (strcmp(windowTypeC, "hann") == 0)
 			windowType = WindowType::HANN;
 		else {
-			info("Window type %s not recognized, assume no windowing",windowTypeC);
+			info("Window type %s not recognized, assume no windowing", windowTypeC);
 			windowType = WindowType::NONE;
 		}
 
@@ -296,21 +293,20 @@ public:
 		else if (strcmp(paddingTypeC, "signal_repeat") == 0)
 			paddingType = PaddingType::SIG_REPEAT;
 		else {
-			info("Padding type %s not recognized, assume zero padding",paddingTypeC);
+			info("Padding type %s not recognized, assume zero padding", paddingTypeC);
 			paddingType = PaddingType::ZERO;
 		}
 
 		if (endFreqency < 0 || endFreqency > sampleRate)
-			throw ConfigError(cfg, err, "node-config-hook-dft","End frequency must be smaller than sampleRate {}",sampleRate);
+			throw ConfigError(cfg, err, "node-config-hook-dft", "End frequency must be smaller than sampleRate {}", sampleRate);
 
 		if (frequencyResolution > ((double)sampleRate/windowSize))
-			throw ConfigError(cfg, err, "node-config-hook-dft","The maximum frequency resolution with smaple_rate:{} and window_site:{} is {}",sampleRate, windowSize, ((double)sampleRate/windowSize));
+			throw ConfigError(cfg, err, "node-config-hook-dft", "The maximum frequency resolution with smaple_rate:{} and window_site:{} is {}", sampleRate, windowSize, ((double)sampleRate/windowSize));
 
-
-
+		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -324,10 +320,12 @@ public:
 			if (lastDftCal.tv_sec != smp->ts.origin.tv_sec)
 				runDft = true;
 		}
+
 		lastDftCal = smp->ts.origin;
 
 		if (runDft) {
 			for (unsigned i = 0; i < signalCnt; i++) {
+				calculateDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
 				double maxF = 0;
 				double maxA = 0;
 				int maxPos = 0;
@@ -342,14 +340,14 @@ public:
 				}
 
 				if (dftCalcCnt > 1) {
-					phasorFreq->writeData(1,&maxF);
+					phasorFreq->writeData(1, &maxF);
 
-					smp->data[i * 4].f = maxF;//frequency
-					smp->data[i * 4 + 1].f = (maxA / pow(2,1./2));//amplitude
-					smp->data[i * 4 + 2].f = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real());//phase
-					smp->data[i * 4 + 3].f = 0;//rocof
+					smp->data[i * 4].f = maxF; /* Frequency */
+					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
+					smp->data[i * 4 + 2].f = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()); /* Phase */
+					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
-					phasorPhase->writeData(1,&(smp->data[i * 4 + 2].f));
+					phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
 				}
 			}
 			dftCalcCnt++;
@@ -357,7 +355,7 @@ public:
 		}
 
 		if ((smp->sequence - lastSequence) > 1)
-			warning("Calculation is not Realtime. %" PRIu64 " sampled missed",smp->sequence - lastSequence);
+			warning("Calculation is not Realtime. %" PRIu64 " sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
 
@@ -367,36 +365,37 @@ public:
 		return Reason::SKIP_SAMPLE;
 	}
 
-	void generateDftMatrix() {
+	void generateDftMatrix()
+	{
 		using namespace std::complex_literals;
 
+		omega = exp((-2i * M_PI) / (double)(windowSize * windowMultiplier));
 		unsigned startBin = floor(startFreqency / frequencyResolution);
 
 		for (unsigned i = 0; i <  freqCount ; i++) {
 			for (unsigned j = 0 ; j < windowSize * windowMultiplier ; j++)
 				dftMatrix[i][j] = pow(omega, (i + startBin) * j);
-			}
 		}
 	}
 
-
-	void calcDft(PaddingType padding, double *ringBuffer, uint ringBufferPos) {
-		/* ringBuffer size needs to be equal to windowSize */
-		/* prepare sample window The following parts can be combined */
+	void calculateDft(enum PaddingType padding, double *ringBuffer, unsigned ringBufferPos)
+	{
+		/* RingBuffer size needs to be equal to windowSize
+		 * prepare sample window The following parts can be combined */
 		double tmpSmpWindow[windowSize];
 
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
-		origSigSync->writeData(windowSize,tmpSmpWindow);
+		origSigSync->writeData(windowSize, tmpSmpWindow);
 
 		if (dftCalcCnt > 1)
-			phasorAmplitude->writeData(1,&tmpSmpWindow[windowSize - 1]);
+			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
 
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
-		windowdSigSync->writeData(windowSize,tmpSmpWindow);
+		windowdSigSync->writeData(windowSize, tmpSmpWindow);
 
 		for (unsigned i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
@@ -407,41 +406,48 @@ public:
 					else
 						dftResults[i] += 0;
 				}
-				else if (padding == PaddingType::SIG_REPEAT) //repeat samples
+				else if (padding == PaddingType::SIG_REPEAT) /* Repeat samples */
 					dftResults[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
-
 			}
 		}
 	}
 
-	void calcWindow(WindowType windowTypeIn) {
+	void calculateWindow(enum WindowType windowTypeIn)
+	{
+		switch (windowTypeIn) {
+			case WindowType::FLATTOP:
+				for (unsigned i = 0; i < windowSize; i++) {
+					filterWindowCoefficents[i] = 	0.21557895
+									- 0.41663158 * cos(2 * M_PI * i / (windowSize))
+									+ 0.277263158 * cos(4 * M_PI * i / (windowSize))
+									- 0.083578947 * cos(6 * M_PI * i / (windowSize))
+									+ 0.006947368 * cos(8 * M_PI * i / (windowSize));
+					windowCorretionFactor += filterWindowCoefficents[i];
+				}
+				break;
 
-		if (windowTypeIn == WindowType::FLATTOP) {
-			for (uint i = 0; i < windowSize; i++) {
-				filterWindowCoefficents[i] = 	0.21557895
-								- 0.41663158 * cos(2 * M_PI * i / (windowSize))
-								+ 0.277263158 * cos(4 * M_PI * i / (windowSize))
-								- 0.083578947 * cos(6 * M_PI * i / (windowSize))
-								+ 0.006947368 * cos(8 * M_PI * i / (windowSize));
-				windowCorretionFactor += filterWindowCoefficents[i];
-			}
-		}
-		else if (windowTypeIn == WindowType::HAMMING || windowTypeIn == WindowType::HANN) {
-			double a0 = 0.5; //this is the hann window
-			if (windowTypeIn == WindowType::HAMMING)
-				a0 = 25./46;
+			case WindowType::HAMMING:
+			case WindowType::HANN: {
+				double a0 = 0.5; /* This is the hann window */
+				if (windowTypeIn == WindowType::HAMMING)
+					a0 = 25./46;
 
-			for (uint i = 0; i < windowSize; i++) {
-				filterWindowCoefficents[i] = a0 - (1 - a0) * cos(2 * M_PI * i / (windowSize));
-				windowCorretionFactor += filterWindowCoefficents[i];
+				for (unsigned i = 0; i < windowSize; i++) {
+					filterWindowCoefficents[i] = a0 - (1 - a0) * cos(2 * M_PI * i / (windowSize));
+					windowCorretionFactor += filterWindowCoefficents[i];
+				}
+
+				break;
 			}
+
+			default:
+				for (unsigned i = 0; i < windowSize; i++) {
+					filterWindowCoefficents[i] = 1;
+					windowCorretionFactor += filterWindowCoefficents[i];
+				}
+				break;
 		}
-		else {
-			for (uint i = 0; i < windowSize; i++) {
-				filterWindowCoefficents[i] = 1;
-				windowCorretionFactor += filterWindowCoefficents[i];
-			}
-		}
+
 		windowCorretionFactor /= windowSize;
 	}
 };
