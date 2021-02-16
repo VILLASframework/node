@@ -142,6 +142,8 @@ public:
 		signal_list_clear(&signals);
 		/* init sample memory */
 		smp_memory = new double*[signalCnt];
+		if (!smp_memory)
+			throw MemoryAllocationError();
 
 		for (uint i = 0; i < signalCnt; i++) {
 			struct signal *freqSig;
@@ -164,7 +166,7 @@ public:
 			vlist_push(&signals, rocofSig);
 
 			smp_memory[i] = new double[window_size];
-			if (!smp_memory)
+			if (!smp_memory[i])
 				throw MemoryAllocationError();
 
 			for (uint j = 0; j < window_size; j++)
@@ -187,12 +189,21 @@ public:
 		}
 
 		dftResults = new std::complex<double>[freq_count]();
+		if (!dftResults)
+			throw MemoryAllocationError();
 
 		filterWindowCoefficents = new double[window_size];
+		if (!filterWindowCoefficents)
+			throw MemoryAllocationError();
 
 		absDftResults = new double[freq_count];
+		if (!absDftResults)
+			throw MemoryAllocationError();
 
 		absDftFreqs = new double[freq_count];
+		if (!absDftFreqs)
+			throw MemoryAllocationError();
+
 		for (uint i = 0; i < freq_count; i++)
 			absDftFreqs[i] = start_freqency + i * frequency_resolution;
 
@@ -233,6 +244,8 @@ public:
 			if (json_channel_list->type == JSON_ARRAY) {
 				signalCnt = json_array_size(json_channel_list);
 				signal_index = new int[signalCnt];
+				if (!signal_index)
+					throw MemoryAllocationError();
 
 				size_t i;
 				json_t *json_value;
@@ -245,6 +258,8 @@ public:
 			else if (json_channel_list->type == JSON_INTEGER) {
 				signalCnt = 1;
 				signal_index = new int[signalCnt];
+				if (!signal_index)
+					throw MemoryAllocationError();
 				if (!json_is_number(json_channel_list))
 					throw ConfigError(json_channel_list, "node-config-hook-dft-channel", "Value must be given as integer value!");
 				signal_index[0] = json_number_value(json_channel_list);
