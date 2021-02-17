@@ -5,9 +5,11 @@ from villas.node.node import Node as VILLASnode
 
 
 def get_dpsim_shmem_interface_signals():
-    """ It would be nice if the DPsim Shmem interface could build-up a list of actual
-        signal descriptions (names, units, etc..) which attributes are exported.
-        This would eliviate the user from manually configuring signal mappings """
+    """ It would be nice if the DPsim Shmem interface could
+        build-up a list of actual signal descriptions
+        (names, units, etc..) which attributes are exported.
+        This would eliviate the user from manually configuring
+        signal mappings """
     signals = []
 
     for i in range(0, 30):
