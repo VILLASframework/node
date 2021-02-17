@@ -39,7 +39,7 @@ USER root
 
 # Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
 RUN dnf -y install epel-release dnf-plugins-core
-RUN dnf config-manager --set-enabled PowerTools
+RUN dnf config-manager --set-enabled powertools
 
 # Toolchain
 RUN dnf -y install \

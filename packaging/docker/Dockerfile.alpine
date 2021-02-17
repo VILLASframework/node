@@ -1,3 +1,5 @@
+#syntax=docker/dockerfile:1.2-labs
+
 # Dockerfile for VILLASnode development.
 #
 # This Dockerfile builds an image which contains all library dependencies
@@ -87,7 +89,8 @@ ADD packaging/deps.sh /
 #   https://github.com/creytiv/re/issues/256
 #   https://github.com/mz-automation/libiec61850/issues/279
 
-RUN export SKIP_CRITERION=1; \
+RUN --security=insecure \
+	export SKIP_CRITERION=1; \
 	export SKIP_ETHERLAB=1; \
 	export SKIP_LIBRE=1; \
 	if [ "${ARCH}" == "armv6" -o "${ARCH}" == "armv7" ]; then \
@@ -103,7 +106,8 @@ COPY . /villas/
 
 RUN mkdir -p /villas/build
 WORKDIR /villas/build
-RUN cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+RUN --security=insecure \
+	cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
 	make -j$(nproc) install
 
@@ -115,22 +119,23 @@ ARG TRIPLET=x86_64-alpine-linux-musl
 
 RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
+RUN apk update
 RUN apk add \
-	openssl \
-	ossp-uuid@testing \
-	libconfig \
-	curl \
-	jansson \
-	spdlog \
-	fmt \
-	libnl3 \
-	graphviz \
-	protobuf \
-	protobuf-c \
-	zeromq \
-	rabbitmq-c \
-	mosquitto \
-	libusb
+		openssl \
+		libconfig \
+		curl \
+		jansson \
+		spdlog \
+		fmt \
+		libnl3 \
+		graphviz \
+		protobuf \
+		protobuf-c \
+		zeromq \
+		rabbitmq-c \
+		mosquitto \
+		libusb \
+		ossp-uuid@testing
 
 RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 	apk add \
@@ -144,7 +149,7 @@ ENV LD_LIBRARY_PATH=/app/lib:/app/lib64
 ENV PATH=/app/bin:${PATH}
 
 # Test if it runs
-RUN villas node -h 2&>1 > /dev/null
+RUN /app/bin/villas-node -h 2>&1 > /dev/null
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
