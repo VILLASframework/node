@@ -1,21 +1,34 @@
-
-
 import time
 from villas.node.node import Node as VILLASnode
 
 # This could be moved to the DPsim Python code later
+
+# It would be nice if the DPsim Shmem interface could build-up a list of actual
+# signal descriptions (names, units, etc..) which attributes are exported.
+# This would eliviate the user from manually configuring signal mappings
+def get_dpsim_shmem_interface_signals():
+    signals = []
+
+    for i in range(0, 30):
+        signals.append({
+            'name': f'signal_{i}',
+            'type': 'float',
+            'unit': 'volts'
+        })
+    
+    return signals
+
 def get_dpsim_shmem_interface_config():
     return {
             'type': 'shmem',
             'in': {
                 'name': '/dpsim1-villas',
                 'hooks': [
-                    {'type': 'stats'}
+                    {
+                        'type': 'stats'
+                    }
                 ],
-                'signals': {
-                    'count': 30,
-                    'type': 'float'
-                }
+                'signals': get_dpsim_shmem_interface_signals()
             },
             'out': {
                 'name': '/villas-dpsim1'
