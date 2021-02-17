@@ -3,10 +3,11 @@ from villas.node.node import Node as VILLASnode
 
 # This could be moved to the DPsim Python code later
 
-# It would be nice if the DPsim Shmem interface could build-up a list of actual
-# signal descriptions (names, units, etc..) which attributes are exported.
-# This would eliviate the user from manually configuring signal mappings
+
 def get_dpsim_shmem_interface_signals():
+    """ It would be nice if the DPsim Shmem interface could build-up a list of actual
+        signal descriptions (names, units, etc..) which attributes are exported.
+        This would eliviate the user from manually configuring signal mappings """
     signals = []
 
     for i in range(0, 30):
@@ -15,8 +16,9 @@ def get_dpsim_shmem_interface_signals():
             'type': 'float',
             'unit': 'volts'
         })
-    
+
     return signals
+
 
 def get_dpsim_shmem_interface_config():
     return {
@@ -34,6 +36,7 @@ def get_dpsim_shmem_interface_config():
                 'name': '/villas-dpsim1'
             }
         }
+
 
 def get_villas_config():
     return {
@@ -65,13 +68,14 @@ def get_villas_config():
         ]
     }
 
+
 def main():
 
     node = VILLASnode(
         config=get_villas_config()
     )
 
-    node.start() # VILLASnode starts running in the background from here..
+    node.start()  # VILLASnode starts running in the background from here..
 
     # Some infos from the running VILLASnode instance queried via its REST API
     print('VILLASnode running?: ', node.is_running())
@@ -81,7 +85,8 @@ def main():
     print('VILLASnode config: ', node.active_config)
     print('VILLASnode version: ', node.get_version())
 
-    # Load a new config into the running VILLASnode instance (old config will be replaced)
+    # Load a new config into the running
+    # VILLASnode instance (old config will be replaced)
     new_config = node.active_config
     new_config['paths'].append({
         'out': 'dpsim1',
@@ -95,5 +100,5 @@ def main():
     node.stop()
 
 
-if __name___ == 'main':
+if __name__ == 'main':
     main()
