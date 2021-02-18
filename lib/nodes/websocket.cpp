@@ -311,10 +311,6 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				int avail, enqueued;
 				struct websocket *w = (struct websocket *) n->_vd;
 				struct sample *smps[cnt];
-				if (!smps) {
-					warning("Failed to allocate memory for connection: %s", websocket_connection_name(c));
-					break;
-				}
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
