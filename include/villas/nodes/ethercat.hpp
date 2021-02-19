@@ -41,14 +41,12 @@
 #include <villas/io.h>
 #include <villas/config.h>
 
-// Include hard-coded Ethercat Bus configuration
+/* Include hard-coded Ethercat Bus configuration */
 #include <villas/nodes/ethercat_config.hpp>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
-#include <ecrt.h>
+	#include <ecrt.h>
+}
 
 #define DEFAULT_ETHERCAT_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 #define DEFAULT_ETHERCAT_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH
@@ -116,9 +114,4 @@ int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 /** @see node_type::write */
 int ethercat_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

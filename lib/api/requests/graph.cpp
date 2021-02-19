@@ -20,11 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#ifdef WITH_GRAPHVIZ
 extern "C" {
-  #include <graphviz/gvc.h>
+	#include <graphviz/gvc.h>
 }
-#endif
 
 #include <villas/timing.h>
 #include <villas/api/request.hpp>
