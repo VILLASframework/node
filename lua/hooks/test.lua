@@ -17,12 +17,27 @@ function stop()
 end
 
 
-function process(data)
+function process(seq, ts_origin, ts_recv, data, flags)
 	print("Process test_hook")
-	printf("Test data: ", data)
+
+	out = ""
+	for key, value in pairs(smp) do
+		out = out .. " " .. value
+	end
+
+	-- smp[1] = smp[1] * 10
+
+	print(out)
+
+	return smp
 end
 
 
 function periodic()
 	print("Periodic test_hook")
+end
+
+
+function restart()
+	print("Restarted test_hook")
 end
