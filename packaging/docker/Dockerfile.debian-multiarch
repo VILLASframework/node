@@ -65,7 +65,8 @@ RUN apt-get update && \
 		libcomedi-dev:${ARCH} \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \
-		libre-dev:${ARCH}
+		libre-dev:${ARCH} \
+		liblua5.3-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \

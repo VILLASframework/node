@@ -56,7 +56,8 @@ RUN apk update && \
 		zeromq-dev \
 		rabbitmq-c-dev \
 		mosquitto-dev \
-		libusb-dev
+		libusb-dev \
+		lua-dev
 
 RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 	apk add \
@@ -126,7 +127,8 @@ RUN apk add \
 		rabbitmq-c \
 		mosquitto \
 		libusb \
-		ossp-uuid@testing
+		ossp-uuid@testing \
+		lua
 
 RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 	apk add \

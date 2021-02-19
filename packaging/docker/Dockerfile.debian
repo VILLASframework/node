@@ -61,7 +61,8 @@ RUN apt-get update && \
 		librdmacm-dev \
 		libusb-1.0-0-dev \
 		libfmt-dev \
-		libspdlog-dev
+		libspdlog-dev \
+		liblua5.3-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
