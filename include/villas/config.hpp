@@ -78,7 +78,7 @@ protected:
 	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
 
 	/** Get the include dirs */
-	std::list<std::filesystem::path> getIncludeDirs() const;
+	std::list<std::filesystem::path> getIncludeDirs(FILE *f) const;
 
 public:
 	json_t *root;

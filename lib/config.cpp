@@ -142,7 +142,7 @@ json_t * Config::decode(FILE *f)
 	return root;
 }
 
-std::list<std::filesystem::path> Config::getIncludeDirs()
+std::list<std::filesystem::path> Config::getIncludeDirs(FILE *f) const
 {
 	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
 	if (isLocalFile(uri)) {
@@ -165,11 +165,11 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_set_auto_convert(&cfg, 1);
 
 	/* Setup libconfig include path. */
-	auto inclDirs = getIncludeDirs();
+	auto inclDirs = getIncludeDirs(f);
 	if (inclDirs.size() > 0) {
-		logger->info("Setting include dir to: {}", inclDirs[0]);
+		logger->info("Setting include dir to: {}", inclDirs.front());
 
-		config_set_include_dir(&cfg, inclDirs[0].c_str());
+		config_set_include_dir(&cfg, inclDirs.front().c_str());
 
 		if (inclDirs.size() > 1) {
 			logger->warn("Ignoring all but the first include directories for libconfig");
