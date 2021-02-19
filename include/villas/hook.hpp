@@ -79,18 +79,7 @@ public:
 	virtual ~Hook();
 
 	virtual void parse(json_t *c);
-	virtual void prepare();
-
-	void prepare(struct vlist *sigs)
-	{
-		int ret;
-
-		ret = signal_list_copy(&signals, sigs);
-		if (ret)
-			throw RuntimeError("Failed to copy signal list");
-
-		prepare();
-	}
+	void prepare(struct vlist *sigs);
 
 	/** Called whenever a hook is started; before threads are created. */
 	virtual void start()
@@ -114,6 +103,9 @@ public:
 
 		state = State::CHECKED;
 	}
+
+	virtual void prepare()
+	{ }
 
 	/** Called periodically. Period is set by global 'stats' option in the configuration file. */
 	virtual void periodic()

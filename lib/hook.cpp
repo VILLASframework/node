@@ -65,9 +65,17 @@ Hook::~Hook()
 	ret = signal_list_destroy(&signals);
 }
 
-void Hook::prepare()
+void Hook::prepare(struct vlist *sigs)
 {
+	int ret;
+
 	assert(state == State::CHECKED);
+
+	ret = signal_list_copy(&signals, sigs);
+	if (ret)
+		throw RuntimeError("Failed to copy signal list");
+
+	prepare();
 
 	state = State::PREPARED;
 }
