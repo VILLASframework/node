@@ -142,6 +142,18 @@ json_t * Config::decode(FILE *f)
 	return root;
 }
 
+std::list<std::filesystem::path> Config::getIncludeDirs()
+{
+	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
+	if (isLocalFile(uri)) {
+		return {
+			uri.parent_path()
+		};
+	}
+	else
+		return { };
+}
+
 #ifdef WITH_CONFIG
 json_t * Config::libconfigDecode(FILE *f)
 {
@@ -153,13 +165,16 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_set_auto_convert(&cfg, 1);
 
 	/* Setup libconfig include path. */
-	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
-	if (isLocalFile(uri)) {
-		const auto &inclDir = uri.parent_path();
+	auto inclDirs = getIncludeDirs();
+	if (inclDirs.size() > 0) {
+		logger->info("Setting include dir to: {}", inclDirs[0]);
 
-		logger->info("Setting include dir to: {}", inclDir);
+		config_set_include_dir(&cfg, inclDirs[0].c_str());
 
-		config_set_include_dir(&cfg, inclDir.c_str());
+		if (inclDirs.size() > 1) {
+			logger->warn("Ignoring all but the first include directories for libconfig");
+			logger->warn("  libconfig does not support more than a single include dir!");
+		}
 	}
 
 	/* Rewind before re-reading */

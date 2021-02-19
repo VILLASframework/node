@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <regex>
+#include <filesystem>
 #include <jansson.h>
 
 #include <villas/node/config.h>
@@ -75,6 +76,9 @@ protected:
 
 	/** Run a callback function for each string in the config */
 	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
+
+	/** Get the include dirs */
+	std::list<std::filesystem::path> getIncludeDirs() const;
 
 public:
 	json_t *root;
