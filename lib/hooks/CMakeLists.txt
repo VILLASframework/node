@@ -46,7 +46,7 @@ set(HOOK_SRC
 )
 
 if(WITH_LUA)
-	list(APPEND lua.cpp)
+    list(APPEND HOOK_SRC lua.cpp)
 endif()
 
 add_library(hooks STATIC ${HOOK_SRC})

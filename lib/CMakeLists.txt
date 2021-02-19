@@ -88,6 +88,10 @@ if(WITH_GRAPHVIZ)
     list(APPEND LIBRARIES PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
 
+if(WITH_LUA)
+    list(APPEND LIBRARIES PkgConfig::LUA)
+endif()
+
 if(WITH_NODE_INFINIBAND)
     list(APPEND LIB_SRC memory/ib.cpp)
 endif()
