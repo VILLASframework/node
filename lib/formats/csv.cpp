@@ -60,7 +60,7 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 			break;
 
 		off += snprintf(buf + off, len - off, "%c", io->separator);
-		off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
+		off += signal_data_print_str(&smp->data[i], sig->type, buf + off, len - off);
 	}
 
 	off += snprintf(buf + off, len - off, "%c", io->delimiter);
@@ -118,7 +118,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 		if (!sig)
 			goto out;
 
-		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
+		ret = signal_data_parse_str(&smp->data[i], sig->type, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 	}

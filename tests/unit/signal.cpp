@@ -27,18 +27,17 @@
 extern void init_memory();
 
 // cppcheck-suppress unknownMacro
-Test(signal, parse, .init = init_memory) {
+Test(signal_data, parse, .init = init_memory) {
 	int ret;
-	struct signal sig;
+	enum SignalType type;
 	union signal_data sd;
 	const char *str;
 	char *end;
 
-
 	str = "1";
-	sig.type = SignalType::INTEGER;
+	type = SignalType::INTEGER;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_eq(sd.i, 1);
@@ -46,7 +45,7 @@ Test(signal, parse, .init = init_memory) {
 	str = "1.2";
 	sig.type = SignalType::FLOAT;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(sd.f, 1.2, 1e-6);
@@ -54,7 +53,7 @@ Test(signal, parse, .init = init_memory) {
 	str = "1";
 	sig.type = SignalType::BOOLEAN;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_eq(sd.b, 1);
@@ -62,7 +61,7 @@ Test(signal, parse, .init = init_memory) {
 	str = "1";
 	sig.type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), 1, 1e-6);
@@ -71,7 +70,7 @@ Test(signal, parse, .init = init_memory) {
 	str = "-1-3i";
 	sig.type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), -1, 1e-6);
@@ -80,7 +79,7 @@ Test(signal, parse, .init = init_memory) {
 	str = "-3i";
 	sig.type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, &sig, str, &end);
+	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), 0, 1e-6);

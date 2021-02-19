@@ -219,12 +219,12 @@ int signal_parse(struct signal *s, json_t *cfg)
 	}
 
 	if (json_init) {
-		ret = signal_data_parse_json(&s->init, s, json_init);
+		ret = signal_data_parse_json(&s->init, s->type, json_init);
 		if (ret)
 			return ret;
 	}
 	else
-		signal_data_set(&s->init, s, 0);
+		signal_data_set(&s->init, s->type, 0);
 
 	return 0;
 }
@@ -234,7 +234,7 @@ json_t * signal_to_json(struct signal *s)
 	json_t *json_sig = json_pack("{ s: s, s: b, s: o }",
 		"type", signal_type_to_str(s->type),
 		"enabled", s->enabled,
-		"init", signal_data_to_json(&s->init, s)
+		"init", signal_data_to_json(&s->init, s->type)
 	);
 
 	if (s->name)

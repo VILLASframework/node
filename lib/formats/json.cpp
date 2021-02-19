@@ -127,7 +127,7 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 			if (!sig)
 				return -1;
 
-			json_t *json_value = signal_data_to_json(&smp->data[i], sig);
+			json_t *json_value = signal_data_to_json(&smp->data[i], sig->type);
 
 			json_array_append(json_data, json_value);
 		}
@@ -209,7 +209,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 			return -2;
 		}
 
-		ret = signal_data_parse_json(&smp->data[i], sig, json_value);
+		ret = signal_data_parse_json(&smp->data[i], sig->type, json_value);
 		if (ret)
 			return -3;
 

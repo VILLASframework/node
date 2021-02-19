@@ -196,7 +196,7 @@ public:
 
 				json_array_append_new(json_value, json_pack("[ f, o, i ]",
 					time_to_double(smp->ts.origin),
-					signal_data_to_json(sd, sig),
+					signal_data_to_json(sd, sig->type),
 					smp->sequence
 				));
 			}
@@ -206,7 +206,7 @@ public:
 			union signal_data *sd = &smp->data[index];
 			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, index);
 
-			json_t *json_value = signal_data_to_json(sd, sig);
+			json_t *json_value = signal_data_to_json(sd, sig->type);
 #endif
 
 			json_object_set(json_attribute, "value", json_value);
@@ -361,7 +361,7 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 			if (value[0] == '\0') /* No data on Orion CB? -> Use init value */
 				*sd = sig->init;
 			else {
-				signal_data_parse_str(sd, sig, value, &end);
+				signal_data_parse_str(sd, sig->type, value, &end);
 				if (value == end)
 					return -10;
 			}
@@ -383,7 +383,7 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 		if (value[0] == '\0') /* No data on Orion CB? -> Use init value */
 			*sd = sig->init;
 		else {
-			signal_data_parse_str(sd, sig, value, &end);
+			signal_data_parse_str(sd, sig->type, value, &end);
 			if (value == end)
 				return -10;
 		}

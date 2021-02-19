@@ -23,13 +23,12 @@
 #include <cstring>
 #include <cinttypes>
 
-#include <villas/signal.h>
 #include <villas/signal_type.h>
 #include <villas/signal_data.h>
 
-void signal_data_set(union signal_data *data, const struct signal *sig, double val)
+void signal_data_set(union signal_data *data, enum SignalType type, double val)
 {
-	switch (sig->type) {
+	switch (type) {
 		case SignalType::BOOLEAN:
 			data->b = val;
 			break;
@@ -52,14 +51,14 @@ void signal_data_set(union signal_data *data, const struct signal *sig, double v
 	}
 }
 
-void signal_data_cast(union signal_data *data, const struct signal *from, const struct signal *to)
+void signal_data_cast(union signal_data *data, enum SignalType from, enum SignalType to)
 {
-	if (from->type == to->type) /* Nothing to do */
+	if (from == to) /* Nothing to do */
 		return;
 
-	switch (to->type) {
+	switch (to) {
 		case SignalType::BOOLEAN:
-			switch(from->type) {
+			switch(from) {
 				case SignalType::BOOLEAN:
 					break;
 
@@ -80,7 +79,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 			break;
 
 		case SignalType::INTEGER:
-			switch(from->type) {
+			switch(from) {
 				case SignalType::BOOLEAN:
 					data->i = data->b;
 					break;
@@ -101,7 +100,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 			break;
 
 		case SignalType::FLOAT:
-			switch(from->type) {
+			switch(from) {
 				case SignalType::BOOLEAN:
 					data->f = data->b;
 					break;
@@ -122,7 +121,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 			break;
 
 		case SignalType::COMPLEX:
-			switch(from->type) {
+			switch(from) {
 				case SignalType::BOOLEAN:
 					data->z = data->b;
 					break;
@@ -146,9 +145,9 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 	}
 }
 
-int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end)
+int signal_data_parse_str(union signal_data *data, enum SignalType type, const char *ptr, char **end)
 {
-	switch (sig->type) {
+	switch (type) {
 		case SignalType::FLOAT:
 			data->f = strtod(ptr, end);
 			break;
@@ -198,11 +197,11 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 	return 0;
 }
 
-int signal_data_parse_json(union signal_data *data, const struct signal *sig, json_t *cfg)
+int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *cfg)
 {
 	int ret;
 
-	switch (sig->type) {
+	switch (type) {
 		case SignalType::FLOAT:
 			data->f = json_real_value(cfg);
 			break;
@@ -237,9 +236,9 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 	return 0;
 }
 
-json_t * signal_data_to_json(union signal_data *data, const struct signal *sig)
+json_t * signal_data_to_json(union signal_data *data, enum SignalType type)
 {
-	switch (sig->type) {
+	switch (type) {
 		case SignalType::INTEGER:
 			return json_integer(data->i);
 
@@ -262,9 +261,9 @@ json_t * signal_data_to_json(union signal_data *data, const struct signal *sig)
 	return nullptr;
 }
 
-int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
+int signal_data_print_str(const union signal_data *data, enum SignalType type, char *buf, size_t len)
 {
-	switch (sig->type) {
+	switch (type) {
 		case SignalType::FLOAT:
 			return snprintf(buf, len, "%.6f", data->f);
 

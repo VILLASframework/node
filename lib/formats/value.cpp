@@ -45,7 +45,7 @@ int value_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sa
 		if (!sig)
 			return -1;
 
-		off += signal_data_print_str(&smp->data[i], sig, buf, len);
+		off += signal_data_print_str(&smp->data[i], sig->type, buf, len);
 		off += snprintf(buf + off, len - off, "\n");
 	}
 
@@ -72,7 +72,7 @@ int value_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, stru
 		if (!sig)
 			return -1;
 
-		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
+		ret = signal_data_parse_str(&smp->data[i], sig->type, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 

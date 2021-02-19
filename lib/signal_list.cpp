@@ -159,7 +159,7 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, u
 		if (data && i < len) {
 			char val[32];
 
-			signal_data_print_str(&data[i], sig, val, sizeof(val));
+			signal_data_print_str(&data[i], sig->type, val, sizeof(val));
 
 			strcatf(&buf, " = %s", val);
 		}
@@ -204,7 +204,7 @@ json_t * signal_list_to_json(struct vlist *list)
 			json_object_set_new(json_signal, "unit", json_string(sig->unit));
 
 		if (!sig->init.is_nan())
-			json_object_set_new(json_signal, "init", signal_data_to_json(&sig->init, sig));
+			json_object_set_new(json_signal, "init", signal_data_to_json(&sig->init, sig->type));
 
 		json_array_append_new(json_signals, json_signal);
 	}

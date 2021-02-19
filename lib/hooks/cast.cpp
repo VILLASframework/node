@@ -159,7 +159,7 @@ public:
 		struct signal *orig_sig = (struct signal *) vlist_at(smp->signals, signal_index);
 		struct signal *new_sig  = (struct signal *) vlist_at(&signals,  signal_index);
 
-		signal_data_cast(&smp->data[signal_index], orig_sig, new_sig);
+		signal_data_cast(&smp->data[signal_index], orig_sig->type, new_sig->type);
 
 		return Reason::OK;
 	}

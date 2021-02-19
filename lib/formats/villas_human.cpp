@@ -62,7 +62,7 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 				break;
 
 			off += snprintf(buf + off, len - off, "%c", io->separator);
-			off += signal_data_print_str(&smp->data[i], sig, buf + off, len - off);
+			off += signal_data_print_str(&smp->data[i], sig->type, buf + off, len - off);
 		}
 	}
 
@@ -140,7 +140,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 		if (!sig)
 			goto out;
 
-		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
+		ret = signal_data_parse_str(&smp->data[i], sig->type, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 	}

@@ -60,15 +60,15 @@ union signal_data {
 };
 
 /** Convert signal data from one description/format to another. */
-void signal_data_cast(union signal_data *data, const struct signal *from, const struct signal *to);
+void signal_data_cast(union signal_data *data, enum SignalType from, enum SignalType to);
 
 /** Print value of a signal to a character buffer. */
-int signal_data_print_str(const union signal_data *data, const struct signal *sig, char *buf, size_t len);
+int signal_data_print_str(const union signal_data *data, enum SignalType type, char *buf, size_t len);
 
-int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end);
+int signal_data_parse_str(union signal_data *data, enum SignalType type, const char *ptr, char **end);
 
-int signal_data_parse_json(union signal_data *data, const struct signal *sig, json_t *cfg);
+int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *cfg);
 
-json_t * signal_data_to_json(union signal_data *data, const struct signal *sig);
+json_t * signal_data_to_json(union signal_data *data, enum SignalType type);
 
-void signal_data_set(union signal_data *data, const struct signal *sig, double val);
+void signal_data_set(union signal_data *data, enum SignalType type, double val);
