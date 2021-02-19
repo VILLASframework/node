@@ -1,12 +1,4 @@
-# Dockerfile for VILLASnode development.
-#
-# This Dockerfile builds an image which contains all library dependencies
-# and tools to build VILLASnode.
-# However, VILLASnode itself it not part of the image.
-#
-# This image can be used for developing VILLASnode
-# by running:
-#   make docker
+# Ubuntu Dockerfile
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC

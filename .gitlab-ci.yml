@@ -24,7 +24,7 @@ stages:
 # Build docker image which is used to build & test VILLASnode
 prepare:docker:
   stage: prepare
-  image: docker:19.03
+  image: docker:20.10
   script:
   - docker build ${DOCKER_OPTS}
       --file ${DOCKER_FILE}
@@ -206,17 +206,18 @@ pkg:rpm:
 
 pkg:alpine:
   stage: packaging
-  image: docker:19.03
+  image: docker:20.10
   before_script:
   - mkdir -p ~/.docker/cli-plugins/
   - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
   - chmod a+x ~/.docker/cli-plugins/docker-buildx
-  - docker buildx create --use --name cross-platform-build
+  - docker buildx create --use --name cross-platform-build --buildkitd-flags "--allow-insecure-entitlement security.insecure"
   - docker buildx inspect --bootstrap cross-platform-build
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
   - docker buildx build ${DOCKER_OPTS}
       --pull
+      --allow security.insecure
       --output type=docker
       --target app
       --build-arg ARCH=${ARCH}
@@ -267,7 +268,7 @@ deploy:web:
 
 deploy:docker:
   stage: deploy
-  image: docker:19.03
+  image: docker:20.10
   variables:
     DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
@@ -324,7 +325,7 @@ deploy:packages:tags:
 
 .latest:docker:latest: &deploy_latest_docker
   stage: latest
-  image: docker:19.03
+  image: docker:20.10
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
