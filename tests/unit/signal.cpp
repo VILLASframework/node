@@ -43,7 +43,7 @@ Test(signal_data, parse, .init = init_memory) {
 	cr_assert_eq(sd.i, 1);
 
 	str = "1.2";
-	sig.type = SignalType::FLOAT;
+	type = SignalType::FLOAT;
 
 	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
@@ -51,7 +51,7 @@ Test(signal_data, parse, .init = init_memory) {
 	cr_assert_float_eq(sd.f, 1.2, 1e-6);
 
 	str = "1";
-	sig.type = SignalType::BOOLEAN;
+	type = SignalType::BOOLEAN;
 
 	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
@@ -59,7 +59,7 @@ Test(signal_data, parse, .init = init_memory) {
 	cr_assert_eq(sd.b, 1);
 
 	str = "1";
-	sig.type = SignalType::COMPLEX;
+	type = SignalType::COMPLEX;
 
 	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
@@ -68,7 +68,7 @@ Test(signal_data, parse, .init = init_memory) {
 	cr_assert_float_eq(std::imag(sd.z), 0, 1e-6);
 
 	str = "-1-3i";
-	sig.type = SignalType::COMPLEX;
+	type = SignalType::COMPLEX;
 
 	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
@@ -77,7 +77,7 @@ Test(signal_data, parse, .init = init_memory) {
 	cr_assert_float_eq(std::imag(sd.z), -3, 1e-6);
 
 	str = "-3i";
-	sig.type = SignalType::COMPLEX;
+	type = SignalType::COMPLEX;
 
 	ret = signal_data_parse_str(&sd, type, str, &end);
 	cr_assert_eq(ret, 0);
