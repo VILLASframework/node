@@ -54,6 +54,8 @@ enum class SampleFlags {
 	HAS_OFFSET	= (1 << 2), /**< Include offset (received - origin timestamp) in output. */
 	HAS_SEQUENCE	= (1 << 3), /**< Include sequence number in output. */
 	HAS_DATA	= (1 << 4), /**< Include values in output. */
+
+	HAS_TS		= HAS_TS_ORIGIN | HAS_TS_RECEIVED, /**< Include origin timestamp in output. */
 	HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
 
 	IS_FIRST	= (1 << 16), /**< This sample is the first of a new simulation case */

@@ -184,8 +184,10 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		if (p->original_sequence_no)
+		if (p->original_sequence_no) {
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
+			muxed_smps[i]->flags |= tomux_smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE;
+		}
 		else {
 			muxed_smps[i]->sequence = p->last_sequence++;
 			muxed_smps[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
@@ -198,11 +200,14 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 			muxed_smps[i]->length = 0;
 
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
-		muxed_smps[i]->flags |= tomux_smps[i]->flags & ((int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_TS_RECEIVED);
+		muxed_smps[i]->flags |= tomux_smps[i]->flags & (int) SampleFlags::HAS_TS;
 
 		ret = mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
 		if (ret)
 			return ret;
+
+		if (muxed_smps[i]->length > 0)
+			muxed_smps[i]->flags |= (int) SampleFlags::HAS_DATA;
 	}
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);
@@ -211,7 +216,11 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 
 #ifdef WITH_HOOKS
 	toenqueue = hook_list_process(&p->hooks, muxed_smps, tomux);
-	if (toenqueue != tomux) {
+	if (toenqueue == -1) {
+		p->logger->error("An error occured during hook processing. Skipping sample");
+
+	}
+	else if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
 		p->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, path_name(p));

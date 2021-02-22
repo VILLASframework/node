@@ -52,7 +52,7 @@ public:
 	};
 
 	enum class Reason {
-		OK,
+		OK = 0,
 		ERROR,
 		SKIP_SAMPLE,
 		STOP_PROCESSING
@@ -135,7 +135,7 @@ public:
 		return flags;
 	}
 
-	struct vlist *getSignals()
+	virtual struct vlist *getSignals()
 	{
 		return &signals;
 	}

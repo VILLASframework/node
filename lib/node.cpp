@@ -467,13 +467,18 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 #ifdef WITH_HOOKS
 	/* Run read hooks */
 	int rread = hook_list_process(&n->in.hooks, smps, nread);
+	if (rread < 0)
+		return rread;
+
 	int skipped = nread - rread;
+	if (skipped > 0) {
+		if (n->stats != nullptr)
+			n->stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
 
-	if (skipped > 0 && n->stats != nullptr) {
-		n->stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
+		debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
 	}
-
-	debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
+	else
+		debug(LOG_NODE | 5, "Received %u samples from node %s", nread, node_name(n));
 
 	return rread;
 #else
