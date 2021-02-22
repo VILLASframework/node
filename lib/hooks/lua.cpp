@@ -60,25 +60,41 @@ public:
 
 	virtual const char * what() const noexcept
 	{
+		const char *msg;
+
 		switch (err) {
 			case LUA_ERRSYNTAX:
-				return "Lua: Syntax error";
+				msg = "Syntax error";
+				break;
 
 			case LUA_ERRMEM:
-				return "Lua: memory allocation error";
+				msg = "Memory allocation error";
+				break;
 
 			case LUA_ERRFILE:
-				return "Lua: failed to open Lua script";
+				msg = "Failed to open Lua script";
+				break;
 
 			case LUA_ERRRUN:
-				return lua_tostring(L, -1);
+				msg = "Runtime error";
+				break;
 
 			case LUA_ERRERR:
-				return "Lua: failed to call error handler";
+				msg = "Failed to call error handler";
+				break;
 
 			default:
-				return "Lua: unknown error";
+				msg = "Unknown error";
+				break;
 		}
+
+		/* Append Lua error message */
+		std::string emsg = "Lua: ";
+		emsg += msg;
+		emsg += ": ";
+		emsg += lua_tostring(L, -1);
+
+		return emsg.c_str();
 	}
 };
 
@@ -101,7 +117,7 @@ lua_totimespec(lua_State *L, struct timespec *ts)
 	ts->tv_sec = lua_tonumber(L, -1);
 
 	lua_rawgeti(L, -2, 1);
-	ts->tv_sec = lua_tonumber(L, -1);
+	ts->tv_nsec = lua_tonumber(L, -1);
 
 	lua_pop(L, 2);
 }
@@ -109,11 +125,11 @@ lua_totimespec(lua_State *L, struct timespec *ts)
 static void
 lua_tosignaldata(lua_State *L, union signal_data *data, enum SignalType targetType, int idx = -1)
 {
-	int ret;
+	int luaType;
 	enum SignalType type;
 
-	ret = lua_type(L, idx);
-	switch (ret) {
+	luaType = lua_type(L, idx);
+	switch (luaType) {
 		case LUA_TBOOLEAN:
 			data->b = lua_toboolean(L, idx);
 			type = SignalType::BOOLEAN;
@@ -125,6 +141,7 @@ lua_tosignaldata(lua_State *L, union signal_data *data, enum SignalType targetTy
 			break;
 
 		default:
+			warning("Failed to convert Lua type %s to signal data", lua_typename(L, luaType));
 			return;
 	}
 
@@ -154,14 +171,6 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 
 	lua_getfield(L, idx, "data");
 
-	smp->length = lua_objlen(L, -1);
-
-	if (smp->length > vlist_length(signals))
-		smp->length = vlist_length(signals);
-
-	if (smp->length > smp->capacity)
-		smp->length = smp->capacity;
-
 	for (unsigned i = 0; i < smp->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
@@ -183,68 +192,194 @@ lua_pushsample(lua_State *L, struct sample *smp, bool use_names = true)
 {
 	lua_createtable(L, 0, 5);
 
-	lua_pushnumber(L, smp->sequence);
-	lua_setfield(L, -2, "sequence");
-
 	lua_pushnumber(L, smp->flags);
 	lua_setfield(L, -2, "flags");
 
-	lua_pushtimespec(L, &smp->ts.origin);
-	lua_setfield(L, -2, "ts_origin");
-
-	lua_pushtimespec(L, &smp->ts.received);
-	lua_setfield(L, -2, "ts_received");
-
-	lua_createtable(L, smp->length, 0);
-
-	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
-		union signal_data *data = &smp->data[i];
-
-		switch (sig->type) {
-			case SignalType::FLOAT:
-				lua_pushnumber(L, data->f);
-				break;
-
-			case SignalType::INTEGER:
-				lua_pushinteger(L, data->i);
-				break;
-
-			case SignalType::BOOLEAN:
-				lua_pushboolean(L, data->b);
-				break;
-
-			case SignalType::COMPLEX:
-			case SignalType::INVALID:
-			default:
-				continue; /* we skip unknown types. Lua will see a nil value in the table */
-		}
-
-		if (use_names)
-			lua_setfield(L, -1, sig->name);
-		else
-			lua_rawseti(L, -2, i);
+	if (smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
+		lua_pushnumber(L, smp->sequence);
+		lua_setfield(L, -2, "sequence");
 	}
 
-	lua_setfield(L, -2, "data");
+	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+		lua_pushtimespec(L, &smp->ts.origin);
+		lua_setfield(L, -2, "ts_origin");
+	}
+
+	if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED) {
+		lua_pushtimespec(L, &smp->ts.received);
+		lua_setfield(L, -2, "ts_received");
+	}
+
+	if (smp->flags & (int) SampleFlags::HAS_DATA) {
+		lua_createtable(L, smp->length, 0);
+
+		for (unsigned i = 0; i < smp->length; i++) {
+			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
+			union signal_data *data = &smp->data[i];
+
+			switch (sig->type) {
+				case SignalType::FLOAT:
+					lua_pushnumber(L, data->f);
+					break;
+
+				case SignalType::INTEGER:
+					lua_pushinteger(L, data->i);
+					break;
+
+				case SignalType::BOOLEAN:
+					lua_pushboolean(L, data->b);
+					break;
+
+				case SignalType::COMPLEX:
+				case SignalType::INVALID:
+				default:
+					continue; /* we skip unknown types. Lua will see a nil value in the table */
+			}
+
+			if (use_names)
+				lua_setfield(L, -2, sig->name);
+			else
+				lua_rawseti(L, -2, i);
+		}
+
+		lua_setfield(L, -2, "data");
+	}
+}
+
+static void
+lua_pushjson(lua_State *L, json_t *json)
+{
+	size_t i;
+	const char *key;
+	json_t *json_value;
+
+	switch (json_typeof(json)) {
+		case JSON_OBJECT:
+			lua_newtable(L);
+			json_object_foreach(json, key, json_value) {
+				lua_pushjson(L, json_value);
+				lua_setfield(L, -2, key);
+			}
+			break;;
+
+		case JSON_ARRAY:
+			lua_newtable(L);
+			json_array_foreach(json, i, json_value) {
+				lua_pushjson(L, json_value);
+				lua_rawseti(L, -2, i);
+			}
+			break;
+
+		case JSON_STRING:
+			lua_pushstring(L, json_string_value(json));
+			break;
+
+		case JSON_REAL:
+		case JSON_INTEGER:
+			lua_pushnumber(L, json_integer_value(json));
+			break;
+
+		case JSON_TRUE:
+		case JSON_FALSE:
+			lua_pushboolean(L, json_boolean_value(json));
+			break;
+
+		case JSON_NULL:
+			lua_pushnil(L);
+			break;
+	}
+}
+
+static json_t * lua_tojson(lua_State *L, int index = -1)
+{
+	double n;
+	const char *s;
+	bool b;
+
+	switch (lua_type(L, index)) {
+		case LUA_TFUNCTION:
+		case LUA_TUSERDATA:
+		case LUA_TTHREAD:
+		case LUA_TLIGHTUSERDATA:
+		case LUA_TNIL:
+			return json_null();
+
+		case LUA_TNUMBER:
+			n = lua_tonumber(L, index);
+			return n == (int) n
+				? json_integer(n)
+				: json_real(n);
+
+		case LUA_TBOOLEAN:
+			b = lua_toboolean(L, index);
+			return json_boolean(b);
+
+		case LUA_TSTRING:
+			s = lua_tostring(L, index);
+			return json_string(s);
+
+		case LUA_TTABLE: {
+			int keys_total = 0, keys_int = 0, key_highest = -1;
+
+			lua_pushnil(L);
+			while (lua_next(L, index) != 0) {
+				keys_total++;
+				if (lua_type(L, -2) == LUA_TNUMBER) {
+					int key = lua_tonumber(L, -1);
+
+					if (key == (int) key) {
+						keys_int++;
+						if (key > key_highest)
+						key_highest = key;
+					}
+				}
+				lua_pop(L, 1);
+			}
+
+			bool is_array = keys_total == keys_int && key_highest / keys_int > 0.5;
+
+			json_t *json = is_array
+				? json_array()
+				: json_object();
+
+			lua_pushnil(L);
+			while (lua_next(L, index) != 0) {
+				json_t *val = lua_tojson(L, -1);
+				if (is_array) {
+					int key = lua_tonumber(L, -2);
+					json_array_set(json, key, val);
+				}
+				else {
+					const char *key = lua_tostring(L, -2);
+					if (key) /* Skip table entries whose keys are neither string or number! */
+						json_object_set(json, key, val);
+				}
+				lua_pop(L, 1);
+			}
+
+			return json;
+		}
+	}
+
+	return nullptr;
 }
 
 namespace villas {
 namespace node {
 
 
-LuaSignalExpression::LuaSignalExpression(int index, json_t *json_sig, LuaHook *h) :
+LuaSignalExpression::LuaSignalExpression(lua_State *l, json_t *json_sig) :
 	cookie(0),
-	index(-1),
-	hook(h)
+	L(l)
 {
 	int ret;
 
+	json_error_t err;
 	const char *expr;
 
-	json_error_t err;
+	/* Parse expression */
 	ret = json_unpack_ex(json_sig, &err, 0, "{ s: s }",
-		"script", &expr
+		"expression", &expr
 	);
 	if (ret)
 		throw ConfigError(json_sig, err, "node-config-hook-lua-signals");
@@ -254,65 +389,44 @@ LuaSignalExpression::LuaSignalExpression(int index, json_t *json_sig, LuaHook *h
 	expression = expr;
 }
 
-LuaSignalExpression::~LuaSignalExpression()
-{
-	if (cookie)
-		luaL_unref(hook->L, LUA_REGISTRYINDEX, cookie);
-}
-
 void
 LuaSignalExpression::prepare()
 {
-	signal = (struct signal *) vlist_at(&hook->signals, index);
-
-	loadExpression(expression);
+	parseExpression(expression);
 }
 
 void
-LuaSignalExpression::loadExpression(const std::string &expr)
+LuaSignalExpression::parseExpression(const std::string &expr)
 {
 	/* Release previous expression */
 	if (cookie)
-		luaL_unref(hook->L, LUA_REGISTRYINDEX, cookie);
+		luaL_unref(L, LUA_REGISTRYINDEX, cookie);
 
 	auto fexpr = fmt::format("return {}", expr);
 
-	int err = luaL_loadstring(hook->L, fexpr.c_str());
+	int err = luaL_loadstring(L, fexpr.c_str());
 	if (err)
-		throw ConfigError(cfg, "node-config-hook-lua-signals", "Failed to load Lua expression: {}", lua_tostring(hook->L, -1));
+		throw ConfigError(cfg, "node-config-hook-lua-signals", "Failed to load Lua expression: {}", lua_tostring(L, -1));
 
-	cookie = luaL_ref(hook->L, LUA_REGISTRYINDEX);
+	cookie = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
 void
-LuaSignalExpression::evaluate(union signal_data *data)
+LuaSignalExpression::evaluate(union signal_data *data, enum SignalType type)
 {
 	int err;
 
-	lua_rawgeti(hook->L, LUA_REGISTRYINDEX, cookie);
+	lua_rawgeti(L, LUA_REGISTRYINDEX, cookie);
 
-	err = lua_pcall(hook->L, 0, 1, 0);
+	err = lua_pcall(L, 0, 1, 0);
 	if (err) {
-		throw RuntimeError("Lua: Evaluation failed: {}", lua_tostring(hook->L, -1));
-		lua_pop(hook->L, 1);
+		throw RuntimeError("Lua: Evaluation failed: {}", lua_tostring(L, -1));
+		lua_pop(L, 1);
 	}
 
-	lua_tosignaldata(hook->L, data, signal->type);
+	lua_tosignaldata(L, data, type);
 
-	lua_pop(hook->L, 1);
-}
-
-void
-LuaHook::parseExpressions(json_t *json_sigs)
-{
-	size_t i;
-	json_t *json_sig;
-
-	if (!json_is_array(json_sigs))
-		throw ConfigError(json_sigs, "node-config-hook-lua-signals", "Setting 'signals' must be a list of dicts");
-
-	json_array_foreach(json_sigs, i, json_sig)
-		expressions.emplace_back(i, json_sig, this);
+	lua_pop(L, 1);
 }
 
 LuaHook::LuaHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
@@ -320,11 +434,43 @@ LuaHook::LuaHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
 	L(luaL_newstate()),
 	useNames(true),
 	hasExpressions(false)
-{ }
+{
+	int ret;
+	ret = signal_list_init(&signalsProcessed);
+	if (ret)
+		throw RuntimeError("Failed to initialize signal list");
+
+	ret = signal_list_init(&signalsExpressions);
+	if (ret)
+		throw RuntimeError("Failed to initialize signal list");
+}
 
 LuaHook::~LuaHook()
 {
+	int ret __attribute__((unused));
+
 	lua_close(L);
+
+	ret = signal_list_destroy(&signalsProcessed);
+	ret = signal_list_destroy(&signalsExpressions);
+}
+
+void
+LuaHook::parseExpressions(json_t *json_sigs)
+{
+	int ret;
+	size_t i;
+	json_t *json_sig;
+
+	signal_list_clear(&signalsExpressions);
+	ret = signal_list_parse(&signalsExpressions, json_sigs);
+	if (ret)
+		throw ConfigError(json_sigs, "node-config-hook-lua-signals", "Setting 'signals' must be a list of dicts");
+
+	json_array_foreach(json_sigs, i, json_sig)
+		expressions.emplace_back(L, json_sig);
+
+	hasExpressions = true;
 }
 
 void
@@ -360,34 +506,10 @@ LuaHook::parse(json_t *c)
 }
 
 void
-LuaHook::prepare()
+LuaHook::lookupFunctions()
 {
 	int ret;
 
-	/* Load Lua standard libraries */
-	luaL_openlibs(L);
-
-	/* Load our Lua script */
-	logger->debug("Loading Lua script: %s", script.c_str());
-
-	ret = luaL_loadfile(L, script.c_str());
-	if (ret)
-		throw LuaError(L, ret);
-
-	ret = lua_pcall(L, 0, LUA_MULTRET, 0);
-	if (ret)
-		throw LuaError(L, ret);
-
-	/* Prepare Lua expressions */
-	if (hasExpressions) {
-		// signal_list_clear(&signals);
-
-		for (auto &expr : expressions) {
-			expr.prepare();
-		}
-	}
-
-	/* Lookup functions */
 	std::map<const char *, int *> funcs = {
 		{ "start",    &functions.start    },
 		{ "stop",     &functions.stop     },
@@ -410,88 +532,256 @@ LuaHook::prepare()
 			lua_pop(L, 1);
 		}
 	}
+}
 
-	if (functions.process && hasExpressions)
-		throw ConfigError(cfg, "node-config-hook-lua", "Lua expressions in the signal definition can not be combined with a process() function in the script.");
+void
+LuaHook::loadScript()
+{
+	int ret;
+
+	ret = luaL_loadfile(L, script.c_str());
+	if (ret)
+		throw LuaError(L, ret);
+
+	ret = lua_pcall(L, 0, LUA_MULTRET, 0);
+	if (ret)
+		throw LuaError(L, ret);
+}
+
+int
+LuaHook::luaRegisterApiHandler(lua_State *L)
+{
+	// register_api_handler(path_regex)
+	return 0;
+}
+
+int
+LuaHook::luaInfo(lua_State *L)
+{
+	logger->info(luaL_checkstring(L, 1));
+	return 0;
+}
+
+int
+LuaHook::luaWarn(lua_State *L)
+{
+	logger->warn(luaL_checkstring(L, 1));
+	return 0;
+}
+
+int
+LuaHook::luaError(lua_State *L)
+{
+	logger->error(luaL_checkstring(L, 1));
+	return 0;
+}
+
+int
+LuaHook::luaDebug(lua_State *L)
+{
+	logger->debug(luaL_checkstring(L, 1));
+	return 0;
+}
+
+void
+LuaHook::setupEnvironment()
+{
+	lua_pushlightuserdata(L, this);
+	lua_rawseti(L, LUA_REGISTRYINDEX, SELF_REFERENCE);
+
+	lua_register(L, "info", &dispatch<&LuaHook::luaInfo>);
+	lua_register(L, "warn", &dispatch<&LuaHook::luaWarn>);
+	lua_register(L, "error", &dispatch<&LuaHook::luaError>);
+	lua_register(L, "debug", &dispatch<&LuaHook::luaDebug>);
+
+	lua_register(L, "register_api_handler", &dispatch<&LuaHook::luaRegisterApiHandler>);
+}
+
+void
+LuaHook::prepare()
+{
+	/* Load Lua standard libraries */
+	luaL_openlibs(L);
+
+	/* Load our Lua script */
+	logger->debug("Loading Lua script: %s", script.c_str());
+
+	setupEnvironment();
+	loadScript();
+	lookupFunctions();
+
+	/* Check if we need to protect the Lua state with a mutex
+	 * This is the case if we have a periodic callback defined
+	 * As periodic() gets called from the main thread
+	 */
+	needsLocking = functions.periodic > 0;
+
+	/* Prepare Lua process() */
+	if (functions.process) {
+		/* We currently do not support the alteration of
+		 * signal metadata in process() */
+		signal_list_copy(&signalsProcessed, &signals);
+	}
+
+	/* Prepare Lua expressions */
+	if (hasExpressions) {
+		for (auto &expr : expressions)
+			expr.prepare();
+
+		signal_list_clear(&signals);
+		signal_list_copy(&signals, &signalsExpressions);
+	}
+
+	if (!functions.process && !hasExpressions)
+		logger->warn("The hook has neither a script or expressions defined. It is a no-op!");
 
 	if (functions.prepare) {
+		auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
+
 		logger->debug("Executing Lua function: prepare()");
 		lua_pushvalue(L, functions.prepare);
-		lua_call(L, 0, 0);
+		lua_pushjson(L, cfg);
+		int ret = lua_pcall(L, 1, 0, 0);
+		if (ret)
+			throw LuaError(L, ret);
 	}
 }
 
-/** Called whenever a hook is started; before threads are created. */
 void
 LuaHook::start()
 {
 	assert(state == State::PREPARED);
 
+	auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
+
 	if (functions.start) {
 		logger->debug("Executing Lua function: start()");
 		lua_pushvalue(L, functions.start);
-		lua_call(L, 0, 0);
+		int ret = lua_pcall(L, 0, 0, 0);
+		if (ret)
+			throw LuaError(L, ret);
 	}
 
 	state = State::STARTED;
 }
 
-/** Called whenever a hook is stopped; after threads are destoyed. */
 void
 LuaHook::stop()
 {
 	assert(state == State::STARTED);
 
+	auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
+
 	if (functions.stop) {
 		logger->debug("Executing Lua function: stop()");
 		lua_pushvalue(L, functions.stop);
-		lua_call(L, 0, 0);
+		int ret = lua_pcall(L, 0, 0, 0);
+		if (ret)
+			throw LuaError(L, ret);
 	}
 
 	state = State::STOPPED;
 }
 
-/** Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 void
 LuaHook::restart()
 {
+	auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
+
 	assert(state == State::STARTED);
 
 	if (functions.restart) {
 		logger->debug("Executing Lua function: restart()");
 		lua_pushvalue(L, functions.restart);
-		lua_call(L, 0, 0);
+		int ret = lua_pcall(L, 0, 0, 0);
+		if (ret)
+			throw LuaError(L, ret);
 	}
 	else
 		Hook::restart();
 }
 
-/** Called whenever a sample is processed. */
+void
+LuaHook::periodic()
+{
+	assert(state == State::STARTED);
+
+	if (functions.periodic) {
+		auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
+
+		logger->debug("Executing Lua function: restart()");
+		lua_pushvalue(L, functions.periodic);
+		int ret = lua_pcall(L, 0, 0, 0);
+		if (ret)
+			throw LuaError(L, ret);
+	}
+}
+
 Hook::Reason
 LuaHook::process(sample *smp)
 {
-	/* First evaluate expressions */
-	if (hasExpressions) {
-		for (unsigned i = 0; i < expressions.size(); i++)
-			expressions[i].evaluate(&smp->data[i]);
+	if (!functions.process && !hasExpressions)
+		return Reason::OK;
 
-		smp->length = expressions.size();
+	int rtype;
+	enum Reason reason;
+	auto lockScope = needsLocking
+			? std::unique_lock<std::mutex>(mutex)
+			: std::unique_lock<std::mutex>();
 
-		smp->signals = &signals;
-	}
-
-	/* Run the process() function of the script */
+	/* First, run the process() function of the script */
 	if (functions.process) {
 		logger->debug("Executing Lua function: process(smp)");
 
-		lua_pushvalue(L, functions.process);
-
 		lua_pushsample(L, smp, useNames);
-		lua_call(L, 1, 1);
-		lua_tosample(L, smp, &signals, useNames);
+
+		lua_pushvalue(L, functions.process);
+		lua_pushvalue(L, -2); // Push a copy since lua_pcall() will pop it
+		int ret = lua_pcall(L, 1, 1, 0);
+		if (ret)
+			throw LuaError(L, ret);
+
+		rtype = lua_type(L, -1);
+		if (rtype == LUA_TNUMBER) {
+			reason = (Reason) lua_tonumber(L, -1);
+		}
+		else {
+			logger->warn("Lua process() did not return a valid number. Assuming Reason::OK");
+			reason = Reason::OK;
+		}
+
+		lua_pop(L, 1);
+
+		lua_tosample(L, smp, &signalsProcessed, useNames);
+	}
+	else
+		reason = Reason::OK;
+
+	/* After that evaluate expressions */
+	if (hasExpressions) {
+		lua_pushsample(L, smp, useNames);
+		lua_setglobal(L, "smp");
+
+		for (unsigned i = 0; i < expressions.size(); i++) {
+			auto *sig = (struct signal *) vlist_at(&signalsExpressions, i);
+
+			expressions[i].evaluate(&smp->data[i], sig->type);
+		}
+
+		smp->length = expressions.size();
 	}
 
-	return Reason::OK;
+	return reason;
 }
 
 /* Register hook */
