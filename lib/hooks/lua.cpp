@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <map>
+#include <cstdio>
 
 extern "C" {
 	#include "lua.h"
@@ -61,7 +62,6 @@ public:
 	virtual const char * what() const noexcept
 	{
 		const char *msg;
-
 		switch (err) {
 			case LUA_ERRSYNTAX:
 				msg = "Syntax error";
@@ -88,13 +88,11 @@ public:
 				break;
 		}
 
-		/* Append Lua error message */
-		std::string emsg = "Lua: ";
-		emsg += msg;
-		emsg += ": ";
-		emsg += lua_tostring(L, -1);
+		char *buf;
 
-		return emsg.c_str();
+		asprintf(&buf, "Lua: %s: %s", msg, lua_tostring(L, -1));
+
+		return buf;
 	}
 };
 
