@@ -797,9 +797,13 @@ struct vlist * path_signals(struct vpath *p)
 struct vlist * path_output_signals(struct vpath *p)
 {
 #ifdef WITH_HOOKS
-	Hook *last_hook = (Hook *) vlist_last(&p->hooks);
+	if (vlist_length(&p->hooks) > 0) {
+		Hook *last_hook = (Hook *) vlist_last(&p->hooks);
 
-	return last_hook->getSignals();
+		return last_hook->getSignals();
+	}
+	else
+		return &p->signals;
 #else
 	return &p->signals;
 #endif
