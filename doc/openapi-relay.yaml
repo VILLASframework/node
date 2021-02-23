@@ -1,0 +1,63 @@
+---
+openapi: '3.0.0'
+info:
+  title: VILLASnode Relay
+  version: 0.10.0
+  description: 'A HTTP/REST API for observing the state of VILLASnode relay.'
+  termsOfService: 'https://www.fein-aachen.org/projects/villas-node/'
+  contact:
+    name: 'Steffen Vogel'
+    email: svogel2@eonerc.rwth-aachen.de
+    url: 'https://fein-aachen.org/contact/'
+  license:
+    name: GPL-v3
+    url: 'https://www.gnu.org/licenses/gpl-3.0.en.html'
+externalDocs:
+  url: 'https://villas.fein-aachen.org/doc/node.html'
+servers:
+  - url: "https://villas.k8s.eonerc.rwth-aachen.de/ws/relay/api/v1"
+    description: "The production API server in our EONERC OpenStack Kubernetes"
+tags:
+  - name: status
+
+paths:
+  "/":
+    get:
+      summary: Get the current status of the VILLASnode relay instance including all active sessions.
+      tags:
+      - status
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              examples: 
+                example1:
+                  value:
+                    sessions:
+                    - identifier: node_1
+                      uuid: 8c58c29d-db3a-821b-7a4c-c4be5930d751
+                      connections:
+                      - name: "::ffff:10.245.0.66"
+                        ip: 10.245.0.66
+                        created: 1614042974
+                        bytes_recv: 3480
+                        bytes_sent: 3480
+                        frames_recv: 174
+                        frames_sent: 174
+                      - name: "::ffff:10.245.0.66"
+                        ip: 10.245.0.67
+                        created: 1614042962
+                        bytes_recv: 5880
+                        bytes_sent: 3480
+                        frames_recv: 294
+                        frames_sent: 174
+                      created: 1614042962
+                      connects: 2
+                    version: v0.11.0
+                    hostname: villas-relay-cccfdd5bb-bvvwk
+                    uuid: 32dd320b-3f86-497f-a77c-f83ecdb55c54
+                    options:
+                      loopback: false
+                      port: 8088
+                      protocol: live
