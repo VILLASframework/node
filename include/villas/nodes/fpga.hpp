@@ -9,6 +9,7 @@
 #pragma once
 
 #include <villas/node/config.hpp>
+#include <villas/node.hpp>
 #include <villas/format.hpp>
 #include <villas/timing.hpp>
 
@@ -27,7 +28,10 @@ using namespace villas;
 #define FPGA_DMA_VLNV
 #define FPGA_AURORA_VLNV "acs.eonerc.rwth-aachen.de:user:aurora_axis:"
 
-struct fpga_node {
+
+class FpgaNode : public Node {
+
+protected:
 	int irqFd;
 	int coalesce;
 	bool polling;
@@ -49,29 +53,38 @@ struct fpga_node {
 	std::string cardName;
 	std::string intfName;
 	std::string dmaName;
+
+public:
+	FpgaNode();
+	virtual ~FpgaNode();
+
+	static int
+	typeStart(node::SuperNode *sn);
+
+	static int
+	typeStop();
+
+	virtual int
+	parse(json_t *cfg);
+
+	virtual char *
+	print();
+
+	virtual int
+	check();
+
+	virtual int
+	prepare();
+
+	virtual int
+	read(struct sample *smps[], unsigned cnt, unsigned *release);
+
+	virtual int
+	write(struct sample *smps[], unsigned cnt, unsigned *release);
+
+	virtual int
+	pollFDs(int fds[]);
 };
-
-int fpga_type_start(SuperNode *sn);
-
-int fpga_type_stop();
-
-int fpga_init(NodeCompat *n);
-
-int fpga_destroy(NodeCompat *n);
-
-int fpga_parse(NodeCompat *n, json_t *json);
-
-char * fpga_print(NodeCompat *n);
-
-int fpga_check(NodeCompat *n);
-
-int fpga_prepare(NodeCompat *n);
-
-int fpga_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
-
-int fpga_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
-
-int fpga_poll_fds(NodeCompat *n, int fds[]);
 
 } /* namespace node */
 } /* namespace villas */
