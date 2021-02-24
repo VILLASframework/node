@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import subprocess
 import logging
@@ -20,19 +21,31 @@ class Node(object):
 
         self.api_url = api_url
         self.log_filename = log_filename
-        self.config = config
-        self.config_filename = config_filename
         self.executable = executable
+
+        if config_filename and config:
+            raise RuntimeError('Can\'t provide config_filename and '
+                               'config at the same time!')
+
+        if config_filename:
+            with open(self.config_filename) as f:
+                self.config = json.load(f)
+        else:
+            self.config = config
+
+        # Try to deduct api_url from config
+        if self.api_url is None:
+            port = config.get('http', {}).get('port')
+            if port is None:
+                port = 80 if os.getuid() == 0 else 8080
+
+            self.api_url = f'http://localhost:{port}'
 
     def start(self):
         self.config_file = tempfile.NamedTemporaryFile(mode='w+',
                                                        suffix='.json')
 
-        if self.config_filename:
-            with open(self.config_filename) as f:
-                self.config_file.write(f.read())
-        else:
-            json.dump(self.config, self.config_file)
+        json.dump(self.config, self.config_file)
 
         self.config_file.flush()
 
