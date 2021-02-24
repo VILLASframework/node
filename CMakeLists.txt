@@ -158,7 +158,7 @@ cmake_dependent_option(WITH_NODE_LOOPBACK   "Build with loopback node-type"     
 cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             ON "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          ON "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             ON "" OFF)
-cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             ON "BUILD32; Opal_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             ON "Opal_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              ON "RE_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            ON "HAS_SEMAPHORE; HAS_MMAN" OFF)
 cmake_dependent_option(WITH_NODE_SIGNAL     "Build with signal node-type"                           ON "" OFF)

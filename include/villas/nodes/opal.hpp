@@ -32,24 +32,22 @@
 #include <pthread.h>
 
 #include <villas/node.h>
-#include <villas/msg.h>
+#include <villas/sample.h>
 
-/* Define RTLAB before including OpalPrint.h for messages to be sent
- * to the OpalDisplay. Otherwise stdout will be used. */
-#define RTLAB
-#include "OpalPrint.h"
-#include "AsyncApi.h"
-#include "OpalGenAsyncParamCtrl.h"
+extern "C" {
+	#include <OpalGenAsyncParamCtrl.h>
+}
 
 struct opal {
 	int reply;
 	int mode;
+	int sequenceNo;
 
-	int send_id;
-	int recv_id;
+	unsigned sendID;
+	unsigned recvID;
 
-	Opal_SendAsyncParam send_params;
-	Opal_RecvAsyncParam recv_params;
+	Opal_SendAsyncParam sendParams;
+	Opal_RecvAsyncParam recvParams;
 };
 
 /** Initialize global OPAL settings and maps shared memory regions.
@@ -57,6 +55,8 @@ struct opal {
  * @see node_type::type_start
  */
 int opal_type_start(villas::node::SuperNode *sn);
+
+int opal_register_region(int argc, char *argv[]);
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *

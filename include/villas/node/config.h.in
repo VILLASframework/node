@@ -51,6 +51,7 @@
 /* Available Features */
 #cmakedefine WITH_WEB
 #cmakedefine WITH_NODE_WEBSOCKET
+#cmakedefine WITH_NODE_OPAL
 #cmakedefine WITH_API
 #cmakedefine WITH_HOOKS
 #cmakedefine WITH_CONFIG

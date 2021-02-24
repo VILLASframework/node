@@ -47,7 +47,7 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 
-#ifdef ENABLE_OPAL_ASYNC
+#ifdef WITH_NODE_OPAL
   #include <villas/nodes/opal.hpp>
 #endif
 
@@ -95,11 +95,11 @@ protected:
 			<< "  CONFIG is the path to an optional configuration file" << std::endl
 			<< "         if omitted, VILLASnode will start without a configuration" << std::endl
 			<< "         and wait for provisioning over the web interface." << std::endl << std::endl
-#ifdef ENABLE_OPAL_ASYNC
+#ifdef WITH_NODE_OPAL
 			<< "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl
 			<< "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl
 			<< "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
-#endif /* ENABLE_OPAL_ASYNC */
+#endif /* WITH_NODE_OPAL */
 
 			<< "Supported node-types:" << std::endl;
 		plugin_dump(PluginType::NODE);
@@ -128,8 +128,8 @@ protected:
 
 	void parse()
 	{
-				/* Check arguments */
-#ifdef ENABLE_OPAL_ASYNC
+		/* Check arguments */
+#ifdef WITH_NODE_OPAL
 		if (argc != 4) {
 			usage();
 			exit(EXIT_FAILURE);
@@ -137,7 +137,7 @@ protected:
 
 		opal_register_region(argc, argv);
 
-		uri = "opal-shmem.conf";
+		uri = "villas-node.conf";
 #else
 
 		/* Parse optional command line arguments */
@@ -172,13 +172,6 @@ protected:
 
 	int main()
 	{
-#ifdef __linux__
-		/* Checks system requirements*/
-		auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
-		if (kernel::getVersion() < required)
-			throw RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
-#endif /* __linux__ */
-
 		if (!uri.empty())
 			sn.parse(uri);
 		else
