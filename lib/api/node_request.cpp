@@ -1,4 +1,4 @@
-/** API Request for nodes.
+/** Node API Request.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -21,28 +21,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <uuid/uuid.h>
+#include <villas/api/node_request.hpp>
 
-#include <villas/api/request.hpp>
+using namespace villas::node::api;
 
-/* Forward declarations */
-struct vnode;
+void
+NodeRequest::prepare()
+{
+	int ret;
 
-namespace villas {
-namespace node {
-namespace api {
+	auto *nodes = session->getSuperNode()->getNodes();
 
-class NodeRequest : public Request {
-
-public:
-	using Request::Request;
-
-	struct vnode *node;
-
-	virtual void
-	prepare();
-};
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+	uuid_t uuid;
+	ret = uuid_parse(matches[1].c_str(), uuid);
+	if (ret) {
+		node = vlist_lookup_name<struct vnode>(nodes, matches[1]);
+		if (!node)
+			throw BadRequest("Unknown node", "{ s: s }",
+				"node", matches[1].c_str()
+			);
+	}
+	else {
+		node = vlist_lookup_uuid<struct vnode>(nodes, uuid);
+		if (!node)
+			throw BadRequest("No node found with with matching UUID", "{ s: s }",
+				"uuid", matches[1].c_str()
+			);
+	}
+}

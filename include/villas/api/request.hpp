@@ -79,9 +79,15 @@ public:
 			json_decref(body);
 	}
 
-	virtual Response * execute() = 0;
+	virtual void
+	prepare()
+	{ }
 
-	virtual void decode();
+	virtual Response *
+	execute() = 0;
+
+	virtual void
+	decode();
 
 	const std::string &
 	getMatch(int idx) const

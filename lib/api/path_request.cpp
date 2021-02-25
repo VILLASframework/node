@@ -1,4 +1,4 @@
-/** API Request for nodes.
+/** Path API Request.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -21,28 +21,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <uuid/uuid.h>
+#include <villas/api/path_request.hpp>
+#include <villas/path.h>
 
-#include <villas/api/request.hpp>
+using namespace villas::node::api;
 
-/* Forward declarations */
-struct vnode;
+void
+PathRequest::prepare()
+{
+	int ret;
+	uuid_t uuid;
 
-namespace villas {
-namespace node {
-namespace api {
+	ret = uuid_parse(matches[1].c_str(), uuid);
+	if (ret)
+		throw BadRequest("Invalid UUID", "{ s: s }",
+			"uuid", matches[1].c_str()
+		);
 
-class NodeRequest : public Request {
-
-public:
-	using Request::Request;
-
-	struct vnode *node;
-
-	virtual void
-	prepare();
-};
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+	auto *paths = session->getSuperNode()->getPaths();
+	path = vlist_lookup_uuid<struct vpath>(paths, uuid);
+	if (!path)
+		throw BadRequest("No path found with with matching UUID", "{ s: s }",
+			"uuid", matches[1].c_str()
+		);
+}

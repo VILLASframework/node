@@ -59,6 +59,8 @@ Request * RequestFactory::create(Session *s, const std::string &uri, Session::Me
 		p->method = meth;
 		p->contentLength = ct;
 
+		p->prepare();
+
 		return p;
 	}
 

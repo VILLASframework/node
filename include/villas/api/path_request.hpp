@@ -40,24 +40,7 @@ public:
 	struct vpath *path;
 
 	virtual void
-	prepare()
-	{
-		int ret;
-		uuid_t uuid;
-
-		ret = uuid_parse(matches[1].c_str(), uuid);
-		if (ret)
-			throw BadRequest("Invalid UUID", "{ s: s }",
-				"uuid", matches[1].c_str()
-			);
-
-		auto *paths = session->getSuperNode()->getPaths();
-		path = vlist_lookup_uuid<struct vpath>(paths, uuid);
-		if (!path)
-			throw BadRequest("No path found with with matching UUID", "{ s: s }",
-				"uuid", matches[1].c_str()
-			);
-	}
+	prepare();
 };
 
 } /* namespace api */
