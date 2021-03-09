@@ -188,6 +188,8 @@ void SuperNode::parse(json_t *root)
 				throw ConfigError(json_node, config_id, "Failed to parse configuration of node '{}'", name);
 			}
 
+			json_object_del(json_node, "name");
+
 			vlist_push(&nodes, n);
 		}
 	}
