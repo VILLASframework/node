@@ -44,8 +44,8 @@
 #include <villas/dsp/pid.hpp>
 
 extern "C" {
-  #include <re/re_sa.h>
-  #include <re/re_rtp.h>
+	#include <re/re_sa.h>
+	#include <re/re_rtp.h>
 }
 
 /* Forward declarations */
