@@ -148,24 +148,32 @@ lua_tosignaldata(lua_State *L, union signal_data *data, enum SignalType targetTy
 static void
 lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_names = true, int idx = -1)
 {
-	lua_getfield(L, idx, "sequence");
-	smp->sequence = lua_tonumber(L, -1);
-	lua_pop(L, 1);
+	int ret;
 
-	lua_getfield(L, idx, "flags");
-	smp->flags = lua_tonumber(L, -1);
+	smp->flags = 0;
+
+	ret = lua_getfield(L, idx, "sequence");
+	if (ret != LUA_TNIL) {
+		smp->sequence = lua_tonumber(L, -1);
+		smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
+	}
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "ts_origin");
-	lua_totimespec(L, &smp->ts.origin);
+	if (ret != LUA_TNIL) {
+		lua_totimespec(L, &smp->ts.origin);
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
+	}
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "ts_received");
-	lua_totimespec(L, &smp->ts.received);
+	if (ret != LUA_TNIL) {
+		lua_totimespec(L, &smp->ts.received);
+		smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
+	}
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "data");
-
 	for (unsigned i = 0; i < smp->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
@@ -178,8 +186,10 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 
 		lua_pop(L, 1);
 	}
-
 	lua_pop(L, 1);
+
+	if (smp->length > 0)
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 }
 
 static void
@@ -533,6 +543,9 @@ void
 LuaHook::loadScript()
 {
 	int ret;
+
+	if (script.empty())
+		return; /* No script given. */
 
 	ret = luaL_loadfile(L, script.c_str());
 	if (ret)
