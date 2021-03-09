@@ -65,13 +65,7 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-rabbitmq-server -detached
-
-sleep 5
-
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
-
-rabbitmqctl stop
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}

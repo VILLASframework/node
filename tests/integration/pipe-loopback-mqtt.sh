@@ -62,15 +62,7 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-# Start broker
-mosquitto &
-MPID=$!
-
-sleep 1
-
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
-
-kill $MPID
 
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
