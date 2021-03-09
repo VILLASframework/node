@@ -45,6 +45,7 @@
 #include <villas/config_helper.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/node/config.h>
+#include <villas/node/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -72,12 +73,12 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		config_cli = json_object();
+		config = json_object();
 	}
 
 	~Hook()
 	{
-		json_decref(config_cli);
+		json_decref(config);
 	}
 
 protected:
@@ -94,7 +95,7 @@ protected:
 
 	int cnt;
 
-	json_t *config_cli;
+	json_t *config;
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{
@@ -107,6 +108,7 @@ protected:
 			<< "  NAME      the name of the hook function" << std::endl
 			<< "  PARAM*    a string of configuration settings for the hook" << std::endl
 			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -c CONFIG a JSON file containing just the hook configuration" << std::endl
 			<< "    -f FMT  the data format" << std::endl
 			<< "    -t DT   the data-type format string" << std::endl
 			<< "    -d LVL  set debug level to LVL" << std::endl
@@ -135,12 +137,17 @@ protected:
 	void parse()
 	{
 		int ret;
+		std::string file;
 
 		/* Parse optional command line arguments */
 		int c;
 		char *endptr;
-		while ((c = getopt(argc, argv, "Vhv:d:f:t:o:")) != -1) {
+		while ((c = getopt(argc, argv, "Vhv:d:f:F:t:o:c:")) != -1) {
 			switch (c) {
+				case 'c':
+					file = optarg;
+					break;
+
 				case 'V':
 					printVersion();
 					exit(EXIT_SUCCESS);
@@ -162,7 +169,7 @@ protected:
 					break;
 
 				case 'o':
-					ret = json_object_extend_str(config_cli, optarg);
+					ret = json_object_extend_str(config, optarg);
 					if (ret)
 						throw RuntimeError("Invalid option: {}", optarg);
 					break;
@@ -178,6 +185,15 @@ protected:
 check:			if (optarg == endptr)
 				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 
+		}
+
+		if (!file.empty()) {
+			json_error_t err;
+			json_t *j = json_load_file(file.c_str(), 0, &err);
+			if (!j)
+				throw JanssonParseError(err);
+
+			json_object_update_missing(config, j);
 		}
 
 		if (argc < optind + 1) {
@@ -224,7 +240,7 @@ check:			if (optarg == endptr)
 		if (!h)
 			throw RuntimeError("Failed to initialize hook");
 
-		h->parse(config_cli);
+		h->parse(config);
 		h->check();
 		h->prepare(io.signals);
 		h->start();
