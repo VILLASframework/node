@@ -61,10 +61,11 @@ public:
 	Hook(int argc, char *argv[]) :
 		Tool(argc, argv, "hook"),
 		stop(false),
-		format("villas.human"),
+		input_format("villas.human"),
 		dtypes("64f"),
 		p(),
-		io(),
+		input(),
+		output(),
 		cnt(1)
 	{
 		int ret;
@@ -87,11 +88,13 @@ protected:
 
 	std::string hook;
 
-	std::string format;
+	std::string output_format;
+	std::string input_format;
 	std::string dtypes;
 
 	struct pool p;
-	struct io  io;
+	struct io input;
+	struct io output;
 
 	int cnt;
 
@@ -109,12 +112,13 @@ protected:
 			<< "  PARAM*    a string of configuration settings for the hook" << std::endl
 			<< "  OPTIONS is one or more of the following options:" << std::endl
 			<< "    -c CONFIG a JSON file containing just the hook configuration" << std::endl
-			<< "    -f FMT  the data format" << std::endl
-			<< "    -t DT   the data-type format string" << std::endl
-			<< "    -d LVL  set debug level to LVL" << std::endl
-			<< "    -v CNT  process CNT smps at once" << std::endl
-			<< "    -h      show this help" << std::endl
-			<< "    -V      show the version of the tool" << std::endl << std::endl;
+			<< "    -f FMT    the input data format" << std::endl
+			<< "    -F FMT    the output data format" << std::endl
+			<< "    -t DT     the data-type format string" << std::endl
+			<< "    -d LVL    set debug level to LVL" << std::endl
+			<< "    -v CNT    process CNT smps at once" << std::endl
+			<< "    -h        show this help" << std::endl
+			<< "    -V        show the version of the tool" << std::endl << std::endl;
 
 #ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
@@ -153,7 +157,11 @@ protected:
 					exit(EXIT_SUCCESS);
 
 				case 'f':
-					format = optarg;
+					input_format = optarg;
+					break;
+
+				case 'F':
+					output_format = optarg;
 					break;
 
 				case 't':
@@ -187,6 +195,9 @@ check:			if (optarg == endptr)
 
 		}
 
+		if (output_format.empty())
+			output_format = input_format;
+
 		if (!file.empty()) {
 			json_error_t err;
 			json_t *j = json_load_file(file.c_str(), 0, &err);
@@ -207,8 +218,6 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret, recv, sent;
-
-		struct format_type *ft;
 		struct sample *smps[cnt];
 
 		if (cnt < 1)
@@ -219,17 +228,29 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Failed to initilize memory pool");
 
 		/* Initialize IO */
-		ft = format_type_lookup(format.c_str());
-		if (!ft)
-			throw RuntimeError("Unknown IO format '{}'", format);
+		struct desc {
+			const char *dir;
+			const char *format;
+			struct io *io;
+		};
+		std::list<struct desc> descs = {
+			{ "in",  input_format.c_str(),  &input  },
+			{ "out", output_format.c_str(), &output }
+		};
 
-		ret = io_init2(&io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
-		if (ret)
-			throw RuntimeError("Failed to initialize IO");
+		for (auto &d : descs) {
+			struct format_type *ft = format_type_lookup(d.format);
+			if (!ft)
+				throw RuntimeError("Unknown {} IO format '{}'", d.dir, d.format);
 
-		ret = io_open(&io, nullptr);
-		if (ret)
-			throw RuntimeError("Failed to open IO");
+			ret = io_init2(d.io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
+			if (ret)
+				throw RuntimeError("Failed to initialize {} IO", d.dir);
+
+			ret = io_open(d.io, nullptr);
+			if (ret)
+				throw RuntimeError("Failed to open {} IO", d.dir);
+		}
 
 		/* Initialize hook */
 		auto hf = plugin::Registry::lookup<HookFactory>(hook);
@@ -242,7 +263,7 @@ check:			if (optarg == endptr)
 
 		h->parse(config);
 		h->check();
-		h->prepare(io.signals);
+		h->prepare(input.signals);
 		h->start();
 
 		while (!stop) {
@@ -250,9 +271,9 @@ check:			if (optarg == endptr)
 			if (ret != cnt)
 				throw RuntimeError("Failed to allocate {} smps from pool", cnt);
 
-			recv = io_scan(&io, smps, cnt);
+			recv = io_scan(&input, smps, cnt);
 			if (recv < 0) {
-				if (io_eof(&io))
+				if (io_eof(&input))
 					break;
 
 				throw RuntimeError("Failed to read from stdin");
@@ -288,9 +309,11 @@ check:			if (optarg == endptr)
 					case Reason::STOP_PROCESSING:
 						goto stop;
 				}
+
+				smp->signals = h->getSignals();
 			}
 
-stop:			sent = io_print(&io, smps, send);
+stop:			sent = io_print(&output, smps, send);
 			if (sent < 0)
 				throw RuntimeError("Failed to write to stdout");
 
@@ -301,13 +324,15 @@ stop:			sent = io_print(&io, smps, send);
 
 		delete h;
 
-		ret = io_close(&io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
+		for (auto &d : descs) {
+			ret = io_close(d.io);
+			if (ret)
+				throw RuntimeError("Failed to close {} IO", d.dir);
 
-		ret = io_destroy(&io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
+			ret = io_destroy(d.io);
+			if (ret)
+				throw RuntimeError("Failed to destroy {} IO", d.dir);
+		}
 
 		sample_free_many(smps, cnt);
 
