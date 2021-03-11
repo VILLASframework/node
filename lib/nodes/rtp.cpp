@@ -214,7 +214,7 @@ int rtp_parse(struct vnode *n, json_t *json)
 
 	/** @todo parse * in addresses */
 
-	return ret;
+	return 0;
 }
 
 char * rtp_print(struct vnode *n)
@@ -502,7 +502,7 @@ int rtp_type_stop()
 
 	libre_close();
 
-	return ret;
+	return 0;
 }
 
 int rtp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
