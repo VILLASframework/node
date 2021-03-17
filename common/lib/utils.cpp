@@ -420,5 +420,20 @@ int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns)
 	return ret;
 }
 
+bool is_docker()
+{
+	return access("/.dockerenv", F_OK) != -1;
+}
+
+bool is_kubernetes()
+{
+	return access("/var/run/secrets/kubernetes.io", F_OK) != -1 ||
+	       getenv("KUBERNETES_SERVICE_HOST") != nullptr;
+}
+
+bool is_container() {
+	return is_docker() || is_kubernetes();
+}
+
 } /* namespace utils */
 } /* namespace villas */

@@ -209,6 +209,16 @@ int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns)
 /** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
 int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns);
 
+/** Check if process is running inside a Docker container */
+
+bool is_docker();
+
+/** Check if process is running inside a Kubernetes container */
+bool is_kubernetes();
+
+/** Check if process is running inside a containerized environment */
+bool is_container();
+
 namespace base64 {
 
 using byte = std::uint8_t;
