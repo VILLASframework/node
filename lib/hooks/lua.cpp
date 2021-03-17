@@ -150,9 +150,11 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 {
 	int ret;
 
+	smp->length = 0;
 	smp->flags = 0;
 
-	ret = lua_getfield(L, idx, "sequence");
+	lua_getfield(L, idx, "sequence");
+	ret = lua_type(L, -1);
 	if (ret != LUA_TNIL) {
 		smp->sequence = lua_tonumber(L, -1);
 		smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
@@ -160,6 +162,7 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "ts_origin");
+	ret = lua_type(L, -1);
 	if (ret != LUA_TNIL) {
 		lua_totimespec(L, &smp->ts.origin);
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
@@ -167,6 +170,7 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "ts_received");
+	ret = lua_type(L, -1);
 	if (ret != LUA_TNIL) {
 		lua_totimespec(L, &smp->ts.received);
 		smp->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
@@ -174,22 +178,27 @@ lua_tosample(lua_State *L, struct sample *smp, struct vlist *signals, bool use_n
 	lua_pop(L, 1);
 
 	lua_getfield(L, idx, "data");
-	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at(signals, i);
+	ret = lua_type(L, -1);
+	if (ret != LUA_TNIL) {
+		for (unsigned i = 0; i < smp->length; i++) {
+			struct signal *sig = (struct signal *) vlist_at(signals, i);
 
-		if (use_names)
-			lua_getfield(L, -1, sig->name);
-		else
-			lua_rawgeti(L, -1, i);
+			if (use_names)
+				lua_getfield(L, -1, sig->name);
+			else
+				lua_rawgeti(L, -1, i);
 
-		lua_tosignaldata(L, &smp->data[i], sig->type);
+			ret = lua_type(L, -1);
+			if (ret != LUA_TNIL)
+				lua_tosignaldata(L, &smp->data[i], sig->type, -1);
 
-		lua_pop(L, 1);
+			lua_pop(L, 1);
+		}
+
+		if (smp->length > 0)
+			smp->flags |= (int) SampleFlags::HAS_DATA;
 	}
 	lua_pop(L, 1);
-
-	if (smp->length > 0)
-		smp->flags |= (int) SampleFlags::HAS_DATA;
 }
 
 static void
@@ -429,7 +438,7 @@ LuaSignalExpression::evaluate(union signal_data *data, enum SignalType type)
 		lua_pop(L, 1);
 	}
 
-	lua_tosignaldata(L, data, type);
+	lua_tosignaldata(L, data, type, -1);
 
 	lua_pop(L, 1);
 }
