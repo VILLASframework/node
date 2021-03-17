@@ -260,14 +260,12 @@ int villas::kernel::get_nr_hugepages()
 int villas::kernel::set_nr_hugepages(int nr)
 {
 	FILE *f;
-	int ret;
 
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
 	if (!f) {
 		auto logger = logging.get("kernel");
 
-		ret = access("/.dockerenv", F_OK);
-		if (ret != -1) {
+		if (is_container()) {
 			logger->warn("This functionality is unavailable in this mode. Please run the Docker container in the privileged mode:");
 			logger->warn("    $ docker run --privilged ...");
 		}
