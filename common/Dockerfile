@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:32
+FROM fedora:33
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
