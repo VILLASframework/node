@@ -50,10 +50,10 @@ public:
 	using Path = std::list<EdgeIdentifier>;
 
 	DirectedGraph(const std::string &name = "DirectedGraph") :
-	    lastVertexId(0), lastEdgeId(0)
-	{
-		logger = logging.get(name);
-	}
+	    lastVertexId(0),
+	    lastEdgeId(0),
+	    logger(logging.get(name))
+	{ }
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
 	{
