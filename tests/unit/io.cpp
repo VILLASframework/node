@@ -227,7 +227,7 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 	Logger logger = logging.get("test:io:lowlevel");
 
-	logger->info("Running test for format={}, cnt={}", p->fmt.c_str(), p->cnt);
+	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
 	struct format_type *f;
 
@@ -311,7 +311,7 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 
 	Logger logger = logging.get("test:io:highlevel");
 
-	logger->info("Running test for format={}, cnt={}", p->fmt.c_str(), p->cnt);
+	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
 	return;
 

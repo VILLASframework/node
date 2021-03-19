@@ -1,4 +1,6 @@
-/** UltraLight format for FISMEP project.
+/** UltraLight 2.0 format as used by FIWARE IotAgent.
+ *
+ * See: https://fiware-iotagent-ul.readthedocs.io/en/latest/usermanual/index.html
  *
  * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
