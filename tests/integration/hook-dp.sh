@@ -22,15 +22,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-set -x
+# Test is not ready yet
+exit 99
 
-#INPUT_FILE=$(mktemp)
-#OUTPUT_FILE=$(mktemp)
-#RECON_FILE=$(mktemp)
 
-INPUT_FILE=in
-OUTPUT_FILE=out
-RECON_FILE=recon
+INPUT_FILE=$(mktemp)
+OUTPUT_FILE=$(mktemp)
+RECON_FILE=$(mktemp)
 
 NUM_SAMPLES=10000
 RATE=5000
