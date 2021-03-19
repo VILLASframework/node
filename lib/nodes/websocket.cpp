@@ -26,6 +26,7 @@
 #include <cstring>
 #include <signal.h>
 
+#include <curl/curl.h>
 #include <libwebsockets.h>
 
 #include <villas/timing.h>
@@ -81,6 +82,34 @@ static void websocket_destination_destroy(struct websocket_destination *d)
 	free((char *) d->info.address);
 }
 
+static void websocket_connection_send_metadata(struct websocket_connection *c)
+{
+	json_t *json = node_to_json(c->node);
+
+	CURL *handle = curl_easy_init();
+
+	curl_easy_setopt(handle, CURLOPT_TIMEOUT, 3L);
+	curl_easy_setopt(handle, CURLOPT_URL, c->destination->uri);
+	curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, json_dumps(json, 0));
+
+	CURLcode ret = curl_easy_perform(handle);
+	if (ret) {
+		logger->warn("Failed to update metadata of node {}: {}", node_name(c->node), curl_easy_strerror(ret));
+		goto out;
+	}
+
+	long code;
+	curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
+
+	if (ret)
+		logger->warn("Failed to update metadata of node {}: Received HTTP code {}", node_name(c->node), code);
+
+out:	curl_easy_cleanup(handle);
+
+	return;
+}
+
 static int websocket_connection_init(struct websocket_connection *c)
 {
 	int ret;
@@ -100,6 +129,9 @@ static int websocket_connection_init(struct websocket_connection *c)
 
 	if (!c->buffers.recv || !c->buffers.send)
 		throw MemoryAllocationError();
+
+	if (c->mode == websocket_connection::Mode::CLIENT)
+		websocket_connection_send_metadata(c);
 
 	c->state = websocket_connection::State::INITIALIZED;
 
