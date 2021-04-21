@@ -40,10 +40,9 @@ InvalidMethod::InvalidMethod(Request *req) :
 	)
 { }
 
-Api::Api(SuperNode *sn) :
+Api::Api() :
 	logger(logging.get("api")),
 	state(State::INITIALIZED),
-	super_node(sn)
 { }
 
 Api::~Api()

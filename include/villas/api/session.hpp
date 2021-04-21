@@ -30,10 +30,12 @@
 #include <villas/api.hpp>
 
 namespace villas {
-namespace node {
 
 /* Forward declarations */
-class SuperNode;
+namespace node {
+	class SuperNode;
+}
+
 class Api;
 class Web;
 
@@ -115,9 +117,7 @@ public:
 
 	static std::string
 	methodToString(Method meth);
-
 };
 
 } /* namespace api */
-} /* namespace node */
 } /* namespace villas */

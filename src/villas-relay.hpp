@@ -27,7 +27,7 @@
 #include <uuid/uuid.h>
 
 #include <libwebsockets.h>
-
+#include <villas/api.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
@@ -75,16 +75,25 @@ protected:
 
 	int connects;
 
+	json_t *metadata;
+
 	static std::map<std::string, RelaySession *> sessions;
 
 public:
-	static RelaySession * get(Relay *r, lws *wsi);
+	static RelaySession * getOrCreate(Relay *r, lws *wsi);
+
+	static RelaySession * lookup(std::string &name_or_uuid);
 
 	RelaySession(Relay *r, Identifier sid);
 
 	~RelaySession();
 
 	json_t * toJson() const;
+
+	Identifier getIdentifier() const
+	{
+		return identifier;
+	}
 };
 
 class RelayConnection {
@@ -120,6 +129,10 @@ public:
 	void read(void *in, size_t len);
 };
 
+class RelayRequestFactory : public {
+
+};
+
 class Relay : public Tool {
 
 public:
@@ -143,6 +156,9 @@ protected:
 
 	uuid_t uuid;
 
+	Web web;
+	Api<RelayRequestFactory> api;
+
 	/** List of libwebsockets protocols. */
 	std::vector<lws_protocols> protocols;
 
@@ -162,6 +178,8 @@ protected:
 	void parse();
 
 	int main();
+
+	json_t * toJson();
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{

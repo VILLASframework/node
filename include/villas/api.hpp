@@ -38,7 +38,14 @@
 #include <villas/exceptions.hpp>
 
 namespace villas {
-namespace node {
+
+/* Forward declarations */
+class SuperNode;
+
+namespace tools {
+	class Relay;
+}
+
 namespace api {
 
 const int version = 2;
@@ -90,9 +97,6 @@ public:
 
 } /* namespace api */
 
-/* Forward declarations */
-class SuperNode;
-
 class Api {
 
 protected:
@@ -103,8 +107,6 @@ protected:
 	std::thread thread;
 	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */
 
-	SuperNode *super_node;
-
 	void run();
 	void worker();
 
@@ -113,20 +115,64 @@ public:
 	 *
 	 * Save references to list of paths / nodes for command execution.
 	 */
-	Api(SuperNode *sn);
+	Api();
 	~Api();
 
 	void start();
 	void stop();
 
-	SuperNode * getSuperNode()
-	{
-		return super_node;
-	}
-
 	std::list<api::Session *> sessions;		/**< List of currently active connections */
 	villas::QueueSignalled<api::Session *> pending;	/**< A queue of api_sessions which have pending requests. */
 };
 
+namespace node {
+
+class Api : public Api {
+
+protected:
+	SuperNode *super_node;
+
+public:
+	/** Initalize the API.
+	 *
+	 * Save references to list of paths / nodes for command execution.
+	 */
+	Api(SuperNode *sn) :
+		Api(),
+		super_node(sn)
+	{ }
+
+	SuperNode * getSuperNode()
+	{
+		return super_node;
+	}
+}
+
 } /* namespace node */
+
+namespace relay {
+
+class Api : public Api {
+
+protected:
+	tools::Relay *relay;
+
+public:
+	/** Initalize the API.
+	 *
+	 * Save references to list of paths / nodes for command execution.
+	 */
+	Api(tools::Relay *r) :
+		Api(),
+		relay(r)
+	{ }
+
+	tools::Relay * getRelay()
+	{
+		return r;
+	}
+}
+
+} /* namespace relay */
+
 } /* namespace villas */

@@ -36,7 +36,6 @@
 #define RE_UUID "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
 
 namespace villas {
-namespace node {
 namespace api {
 
 /* Forward declarations */
@@ -120,6 +119,7 @@ public:
 	toString();
 };
 
+template<typename R>
 class RequestFactory : public plugin::Plugin {
 
 public:
@@ -128,10 +128,10 @@ public:
 	virtual bool
 	match(const std::string &uri, std::smatch &m) const = 0;
 
-	virtual Request *
+	virtual R *
 	make(Session *s) = 0;
 
-	static Request *
+	static R *
 	create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
 };
 
@@ -175,5 +175,4 @@ public:
 };
 
 } /* namespace api */
-} /* namespace node */
 } /* namespace villas */
