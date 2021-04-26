@@ -113,6 +113,7 @@ RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/ap
 
 RUN apk update
 RUN apk add \
+		bash \
 		openssl \
 		libconfig \
 		curl \
