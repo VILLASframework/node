@@ -164,7 +164,7 @@ void Web::worker()
 	logger->info("Started worker");
 
 	while (running) {
-		lws_service(context, 10);
+		lws_service(context, 0);
 
 		while (!writables.empty()) {
 			wsi = writables.pop();
@@ -291,4 +291,5 @@ void Web::stop()
 void Web::callbackOnWritable(lws *wsi)
 {
 	writables.push(wsi);
+	lws_cancel_service(context);
 }
