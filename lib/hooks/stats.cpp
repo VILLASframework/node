@@ -228,9 +228,9 @@ public:
 
 		stats = std::make_shared<villas::Stats>(buckets, warmup);
 
-		/* Register statistic object to path.
+		/* Register statistic object to node.
 		*
-		* This allows the path code to update statistics. */
+		* This allows the node code to update statistics. */
 		if (node)
 			node->stats = stats;
 
@@ -278,7 +278,7 @@ Hook::Reason StatsReadHook::process(sample *smp)
 
 /* Register hook */
 static char n[] = "stats";
-static char d[] = "Collect statistics for the current path";
+static char d[] = "Collect statistics for the current node";
 static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
 
 } /* namespace node */
