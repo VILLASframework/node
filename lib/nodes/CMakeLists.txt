@@ -121,7 +121,7 @@ if(WITH_NODE_MQTT)
     list(APPEND LIBRARIES PkgConfig::MOSQUITTO)
 endif()
 
-# Enable KAFKA support
+# Enable Kafka support
 if(WITH_NODE_KAFKA)
     list(APPEND NODE_SRC kafka.cpp)
     list(APPEND LIBRARIES PkgConfig::RDKAFKA)
