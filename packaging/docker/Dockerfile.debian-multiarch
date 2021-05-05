@@ -62,6 +62,7 @@ RUN apt-get update && \
 		libnanomsg-dev:${ARCH} \
 		librabbitmq-dev:${ARCH} \
 		libmosquitto-dev:${ARCH} \
+		librdkafka-dev:${ARCH} \
 		libcomedi-dev:${ARCH} \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \

@@ -120,6 +120,17 @@ if ! pkg-config "libwebsockets >= 2.3.0" && \
     popd
 fi
 
+# Build & Install librdkafka
+if ! pkg-config "rdkafka>=1.5.0" && \
+    [ -z "${SKIP_RDKAFKA}" ]; then
+    git clone --branch v1.6.0 --depth 1 https://github.com/edenhill/librdkafka.git
+    mkdir -p librdkafka/build
+    pushd librdkafka/build
+    cmake ..
+    make -j$(nproc) ${TARGET}
+    popd
+fi
+
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.0.0" && \
     [ "${DISTRO}" != "debian-multiarch" ] && \

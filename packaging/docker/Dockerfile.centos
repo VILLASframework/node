@@ -56,6 +56,7 @@ RUN dnf -y install \
 	zeromq-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
+	librdkafka-devel \
 	libibverbs-devel \
 	librdmacm-devel \
 	libusb1-devel \

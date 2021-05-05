@@ -74,6 +74,7 @@ RUN dnf -y install \
 	nanomsg-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
+	librdkafka-devel \
 	libibverbs-devel \
 	librdmacm-devel \
 	libusb-devel \

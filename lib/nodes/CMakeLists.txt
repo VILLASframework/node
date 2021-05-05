@@ -121,6 +121,12 @@ if(WITH_NODE_MQTT)
     list(APPEND LIBRARIES PkgConfig::MOSQUITTO)
 endif()
 
+# Enable KAFKA support
+if(WITH_NODE_KAFKA)
+    list(APPEND NODE_SRC kafka.cpp)
+    list(APPEND LIBRARIES PkgConfig::RDKAFKA)
+endif()
+
 # Enable Comedi support
 if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.cpp)
