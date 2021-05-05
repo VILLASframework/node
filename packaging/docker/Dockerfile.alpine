@@ -56,6 +56,7 @@ RUN apk update && \
 		zeromq-dev \
 		rabbitmq-c-dev \
 		mosquitto-dev \
+		librdkafka-dev \
 		libusb-dev \
 		lua-dev
 
@@ -127,6 +128,7 @@ RUN apk add \
 		zeromq \
 		rabbitmq-c \
 		mosquitto \
+		librdkafka \
 		libusb \
 		ossp-uuid@testing \
 		lua
