@@ -41,27 +41,34 @@
 struct format_type;
 
 struct kafka {
-	rd_kafka_t *client;
-	rd_kafka_topic_t *topic;
 	struct queue_signalled queue;
 	struct pool pool;
 
-	int timeout;            /**< Timeout in ms. */
-	char *server;	    /**< Hostname/IP:Port address of the bootstrap server. */
-	char *protocol;         /**< Security protocol. */
-	char *produce;          /**< Producer topic. */
-	char *consume;	    /**< Consumer topic. */
-	char *client_id;        /**< Client id. */
-	char *group_id;         /**< Group id. */
+	int timeout;			/**< Timeout in ms. */
+	char *server;			/**< Hostname/IP:Port address of the bootstrap server. */
+	char *protocol;			/**< Security protocol. */
+	char *produce;			/**< Producer topic. */
+	char *consume;			/**< Consumer topic. */
+	char *client_id;		/**< Client id. */
 
 	struct {
-		char *calocation;   /**< SSL CA file. */
+		rd_kafka_t *client;
+		rd_kafka_topic_t *topic;
+	} producer;
+
+	struct {
+		rd_kafka_t *client;
+		char *group_id;		/**< Group id. */
+	} consumer;
+
+	struct {
+		char *calocation;	/**< SSL CA file. */
 	} ssl;
 
 	struct {
-		char *mechanism;    /**< SASL mechanism. */
-		char *username;	    /**< SSL CA path. */
-		char *password;	    /**< SSL certificate. */
+		char *mechanism;	/**< SASL mechanism. */
+		char *username;		/**< SSL CA path. */
+		char *password;		/**< SSL certificate. */
 	} sasl;
 
 	struct format_type *format;
