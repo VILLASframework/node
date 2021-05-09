@@ -129,7 +129,7 @@ int kafka_init(struct vnode *n)
 	k->sasl.username = nullptr;
 	k->sasl.password = nullptr;
 
-	k->ssl.calocation = nullptr;
+	k->ssl.ca = nullptr;
 
 	ret = 0;
 
@@ -182,18 +182,18 @@ int kafka_parse(struct vnode *n, json_t *json)
 
 	if (json_ssl) {
 
-		const char *calocation = nullptr;
+		const char *ca = nullptr;
 
 		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: s }",
-			"calocation", &calocation
+			"ca", &ca
 		);
 		if (ret)
 			throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl", "Failed to parse SSL configuration of node {}", node_name(n));
 
-		if (!calocation)
-			throw ConfigError(json_ssl, "node-config-node-kafka-ssl", "'calocation' settings must be set for node {}.", node_name(n));
+		if (!ca)
+			throw ConfigError(json_ssl, "node-config-node-kafka-ssl", "'ca' settings must be set for node {}.", node_name(n));
 
-		k->ssl.calocation = calocation ? strdup(calocation) : nullptr;
+		k->ssl.ca = ca ? strdup(ca) : nullptr;
 	}
 
 	if (json_sasl) {
@@ -324,7 +324,7 @@ int kafka_start(struct vnode *n)
 		ret = 1;
 
 	if (!strcmp(k->protocol, "SASL_SSL") || !strcmp(k->protocol, "SSL")) {
-		if (rd_kafka_conf_set(rdkconf, "ssl.ca.location", k->ssl.calocation, errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK)
+		if (rd_kafka_conf_set(rdkconf, "ssl.ca.location", k->ssl.ca, errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK)
 			ret = 1;
 	}
 

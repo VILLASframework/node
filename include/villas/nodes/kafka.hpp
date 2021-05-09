@@ -49,7 +49,7 @@ struct kafka {
 	char *protocol;			/**< Security protocol. */
 	char *produce;			/**< Producer topic. */
 	char *consume;			/**< Consumer topic. */
-	char *client_id;		/**< Client id. */
+	char *client_id;		/**< Client ID. */
 
 	struct {
 		rd_kafka_t *client;
@@ -62,7 +62,7 @@ struct kafka {
 	} consumer;
 
 	struct {
-		char *calocation;	/**< SSL CA file. */
+		char *ca;	/**< SSL CA file. */
 	} ssl;
 
 	struct {
