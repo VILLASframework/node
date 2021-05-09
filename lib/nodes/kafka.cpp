@@ -206,9 +206,9 @@ int kafka_parse(struct vnode *n, json_t *json)
 	k->client_id = client_id ? strdup(client_id) : nullptr;
 	k->consumer.group_id = group_id ? strdup(group_id) : nullptr;
 
-	if (strcmp(protocol), "SSL") &&
-	    strcmp(protocol), "SASL_SSL") &&
-	    strcmp(protocol), "SASL_PLAINTEXT"))
+	if (strcmp(protocol, "SSL") &&
+	    strcmp(protocol, "SASL_SSL") &&
+	    strcmp(protocol, "SASL_PLAINTEXT"))
 		throw ConfigError(json, "node-config-node-kafka-protocol", "Invalid security protocol: {}", protocol);
 
 	if (!k->produce && !k->consume)
@@ -351,7 +351,7 @@ int kafka_start(struct vnode *n)
 	if (ret != RD_KAFKA_CONF_OK)
 		goto kafka_config_error;
 
-	ret rd_kafka_conf_set(rdkconf, "security.protocol", k->protocol, errstr, sizeof(errstr));
+	ret = rd_kafka_conf_set(rdkconf, "security.protocol", k->protocol, errstr, sizeof(errstr));
 	if (ret != RD_KAFKA_CONF_OK)
 		goto kafka_config_error;
 
