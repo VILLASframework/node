@@ -175,7 +175,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 	const char *produce = nullptr;
 	const char *consume = nullptr;
 	const char *protocol;
-	const char *client_id = nullptr;
+	const char *client_id = "villas-node";
 	const char *group_id = nullptr;
 
 	json_error_t err;
@@ -203,7 +203,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 	k->produce = produce ? strdup(produce) : nullptr;
 	k->consume = consume ? strdup(consume) : nullptr;
 	k->protocol = strdup(protocol);
-	k->client_id = client_id ? strdup(client_id) : nullptr;
+	k->client_id = strdup(client_id);
 	k->consumer.group_id = group_id ? strdup(group_id) : nullptr;
 
 	if (strcmp(protocol, "SSL") &&
