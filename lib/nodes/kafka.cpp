@@ -374,11 +374,11 @@ int kafka_start(struct vnode *n)
 
 kafka_config_error:
 	rd_kafka_conf_destroy(rdkconf);
-	n->logger->warn("{}", errstr);
+	n->logger->error("{}", errstr);
 	return ret;
 
 kafka_server_error:
-	n->logger->warn("Error subscribing to {} at {} ", k->consume, k->server);
+	n->logger->error("Error subscribing to {} at {} ", k->consume, k->server);
 	return ret;
 
 }
