@@ -1,7 +1,7 @@
 /** Node type: kafka
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @author Juan Pablo Noreña <jpnorenam@unal.edu.co>
+ * @copyright 2021, Universidad Nacional de Colombia
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
