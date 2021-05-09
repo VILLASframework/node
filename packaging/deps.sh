@@ -126,7 +126,9 @@ if ! pkg-config "rdkafka>=1.5.0" && \
     git clone --branch v1.6.0 --depth 1 https://github.com/edenhill/librdkafka.git
     mkdir -p librdkafka/build
     pushd librdkafka/build
-    cmake ${CMAKE_OPTS} ..
+    cmake -DRDKAFKA_BUILD_TESTS=OFF \
+          -DRDKAFKA_BUILD_EXAMPLES=OFF \
+          ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
     popd
 fi
