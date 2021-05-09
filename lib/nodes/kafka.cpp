@@ -207,6 +207,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 	k->consumer.group_id = group_id ? strdup(group_id) : nullptr;
 
 	if (strcmp(protocol, "SSL") &&
+	    strcmp(protocol, "PLAINTEXT") &&
 	    strcmp(protocol, "SASL_SSL") &&
 	    strcmp(protocol, "SASL_PLAINTEXT"))
 		throw ConfigError(json, "node-config-node-kafka-protocol", "Invalid security protocol: {}", protocol);
