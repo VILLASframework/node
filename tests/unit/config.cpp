@@ -59,18 +59,20 @@ Test(config, include)
 {
 	const char *cfg_f2 = "magic = 1234\n";
 
-	std::string f2_fn = std::tmpnam(nullptr);
-	std::FILE *f2 = std::fopen(f2_fn.c_str(), "w");
+	char f2_fn_tpl[] = "/tmp/villas.unit-test.XXXXXX";
+	int f2_fd = mkstemp(f2_fn_tpl);
+
+	std::FILE *f2 = fdopen(f2_fd, "w");
 	std::fputs(cfg_f2, f2);
 	std::rewind(f2);
 
-	auto cfg_f1 = fmt::format("subval = \"@include {}\"\n", f2_fn);
+	auto cfg_f1 = fmt::format("subval = \"@include {}\"\n", f2_fn_tpl);
 
 	std::FILE *f1 = std::tmpfile();
 	std::fputs(cfg_f1.c_str(), f1);
 	std::rewind(f1);
 
-	auto env = fmt::format("INCLUDE_FILE={}", f2_fn).c_str();
+	auto env = fmt::format("INCLUDE_FILE={}", f2_fn_tpl).c_str();
 	putenv((char *) env);
 
 	auto c = Config();
@@ -88,5 +90,5 @@ Test(config, include)
 	cr_assert_eq(json_number_value(j2), 1234);
 
 	std::fclose(f2);
-	std::remove(f2_fn.c_str());
+	std::remove(f2_fn_tpl);
 }

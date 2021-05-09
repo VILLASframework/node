@@ -96,9 +96,9 @@ int ngsi_stop(struct vnode *n);
 int ngsi_reverse(struct vnode *n);
 
 /** @see node_type::read */
-int ngsi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ngsi_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int ngsi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ngsi_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

@@ -58,9 +58,9 @@ int loopback_open(struct vnode *n);
 int loopback_close(struct vnode *n);
 
 /** @see node_type::read */
-int loopback_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int loopback_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int loopback_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int loopback_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

@@ -30,12 +30,11 @@
 #pragma once
 
 #include <villas/popen.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 
 /* Forward declarations */
 struct vnode;
 struct sample;
-struct format_type;
 
 /** Node-type for signal generation.
  * @see node_type
@@ -49,8 +48,8 @@ struct exec {
 	std::string command;
 	villas::utils::Popen::arg_list arguments;
 	villas::utils::Popen::env_map environment;
-	struct format_type *format;
-	struct io io;
+
+	villas::node::Format *formatter;
 };
 
 /** @see node_type::print */
@@ -66,9 +65,9 @@ int exec_open(struct vnode *n);
 int exec_close(struct vnode *n);
 
 /** @see node_type::read */
-int exec_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int exec_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int exec_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

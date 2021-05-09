@@ -23,16 +23,16 @@
 set(TEST_SRC
 	config_json.cpp
 	config.cpp
+	format.cpp
+	helpers.cpp
+	json.cpp
 	main.cpp
 	mapping.cpp
 	memory.cpp
-	signal.cpp
-	helpers.cpp
-	json.cpp
 	pool.cpp
-	queue.cpp
 	queue_signalled.cpp
-	io.cpp
+	queue.cpp
+	signal.cpp
 )
 
 add_executable(unit-tests ${TEST_SRC})

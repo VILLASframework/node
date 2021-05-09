@@ -105,7 +105,7 @@ if ! villas_format_supports_header $FORMAT; then
 fi
 
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then

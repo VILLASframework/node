@@ -60,16 +60,17 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
 endif()
 
 list(APPEND FORMAT_SRC
-    json.cpp
+    column.cpp
     iotagent_ul.cpp
-    json_reserve.cpp
     json_kafka.cpp
+    json_reserve.cpp
+    json.cpp
+    line.cpp
+    msg.cpp
+    raw.cpp
+    value.cpp
     villas_binary.cpp
     villas_human.cpp
-    csv.cpp
-    raw.cpp
-    msg.cpp
-    value.cpp
 )
 
 add_library(formats STATIC ${FORMAT_SRC})

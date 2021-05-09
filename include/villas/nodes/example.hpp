@@ -31,7 +31,7 @@
 
 #include <villas/node/config.h>
 #include <villas/node.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/timing.h>
 
 struct example {
@@ -82,10 +82,10 @@ int example_pause(struct vnode *n);
 int example_resume(struct vnode *n);
 
 /** @see node_type::write */
-int example_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int example_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::read */
-int example_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int example_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::reverse */
 int example_reverse(struct vnode *n);

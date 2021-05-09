@@ -206,13 +206,8 @@ check:			if (optarg == endptr)
 		while (!stop && (count < 0 || count--)) {
 			clock_gettime(CLOCK_ID, &send);
 
-			unsigned release;
-
-			release = 1; // release = allocated
-			node_write(node, &smp_send, 1, &release); /* Ping */
-
-			release = 1; // release = allocated
-			node_read(node,  &smp_recv, 1, &release); /* Pong */
+			node_write(node, &smp_send, 1); /* Ping */
+			node_read(node,  &smp_recv, 1); /* Pong */
 
 			clock_gettime(CLOCK_ID, &recv);
 

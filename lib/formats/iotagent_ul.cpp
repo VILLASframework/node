@@ -24,20 +24,21 @@
 
 #include <cstring>
 
-#include <villas/plugin.h>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/signal.h>
 #include <villas/compat.hpp>
 #include <villas/timing.h>
-#include <villas/io.h>
-#include <villas/formats/json.h>
+#include <villas/formats/iotagent_ul.hpp>
 
-int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+using namespace villas;
+using namespace villas::node;
+
+int IotAgentUltraLightFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
 {
 	size_t printed = 0;
 	struct signal *sig;
-	struct sample *smp = smps[0];
+	const struct sample *smp = smps[0];
 
 	for (unsigned i = 0; (i < smp->length) && (printed < len); i++) {
 		sig = (struct signal *) vlist_at_safe(smp->signals, i);
@@ -59,18 +60,11 @@ int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, str
 	return 0;
 }
 
-static struct plugin p;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "iotagent_ul";
-	p.description = "FIWARE IotAgent UltraLight format";
-	p.type = PluginType::FORMAT;
-	p.format.sprint	= iotagent_ul_sprint;
-	p.format.size = 0;
-
-	vlist_init_and_push(&plugins, &p);
+int IotAgentUltraLightFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+{
+	return -1;
 }
 
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
+static char n[] = "iotagent_ul";
+static char d[] = "FIWARE IotAgent UltraLight format";
+static FormatPlugin<IotAgentUltraLightFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

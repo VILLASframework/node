@@ -43,10 +43,9 @@
 #include <villas/node.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/format_type.h>
 #include <villas/nodes/websocket.hpp>
 #include <villas/tool.hpp>
 
@@ -59,7 +58,7 @@ class PipeDirection {
 protected:
 	struct pool pool;
 	struct vnode *node;
-	struct io *io;
+	Format *formatter;
 
 	std::thread thread;
 	Logger logger;
@@ -68,9 +67,9 @@ protected:
 	bool enabled;
 	int limit;
 public:
-	PipeDirection(struct vnode *n, struct io *i, bool en, int lim, const std::string &name) :
+	PipeDirection(struct vnode *n, Format *fmt, bool en, int lim, const std::string &name) :
 		node(n),
-		io(i),
+		formatter(fmt),
 		stop(false),
 		enabled(en),
 		limit(lim)
@@ -120,25 +119,25 @@ public:
 class PipeSendDirection : public PipeDirection {
 
 public:
-	PipeSendDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
+	PipeSendDirection(struct vnode *n, Format *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim, "send")
 	{ }
 
 	virtual void run()
 	{
-		unsigned last_sequenceno = 0, release;
+		unsigned last_sequenceno = 0;
 		int scanned, sent, allocated, cnt = 0;
 
 		struct sample *smps[node->out.vectorize];
 
-		while (!stop && !io_eof(io)) {
+		while (!stop && !feof(stdin)) {
 			allocated = sample_alloc_many(&pool, smps, node->out.vectorize);
 			if (allocated < 0)
 				throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
 			else if (allocated < (int) node->out.vectorize)
 				logger->warn("Send pool underrun");
 
-			scanned = io_scan(io, smps, allocated);
+			scanned = formatter->scan(stdin, smps, allocated);
 			if (scanned < 0) {
 				if (stop)
 					goto leave2;
@@ -157,11 +156,9 @@ public:
 					smps[i]->sequence = last_sequenceno++;
 			}
 
-			release = allocated;
+			sent = node_write(node, smps, scanned);
 
-			sent = node_write(node, smps, scanned, &release);
-
-			sample_decref_many(smps, release);
+			sample_decref_many(smps, scanned);
 
 			cnt += sent;
 			if (limit > 0 && cnt >= limit)
@@ -172,7 +169,7 @@ leave2:
 		logger->info("Send thread stopped");
 		return;
 
-leave:		if (io_eof(io)) {
+leave:		if (feof(stdin)) {
 			if (limit < 0) {
 				logger->info("Reached end-of-file. Terminating...");
 				raise(SIGINT);
@@ -190,14 +187,13 @@ leave:		if (io_eof(io)) {
 class PipeReceiveDirection : public PipeDirection {
 
 public:
-	PipeReceiveDirection(struct vnode *n, struct io *i, bool en = true, int lim = -1) :
+	PipeReceiveDirection(struct vnode *n, Format *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim, "recv")
 	{ }
 
 	virtual void run()
 	{
 		int recv, cnt = 0, allocated = 0;
-		unsigned release;
 		struct sample *smps[node->in.vectorize];
 
 		while (!stop) {
@@ -207,9 +203,7 @@ public:
 			else if (allocated < (int) node->in.vectorize)
 				logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
 
-			release = allocated;
-
-			recv = node_read(node, smps, allocated, &release);
+			recv = node_read(node, smps, allocated);
 			if (recv < 0) {
 				if (node->state == State::STOPPING || stop)
 					goto leave2;
@@ -217,14 +211,14 @@ public:
 					logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
 			}
 			else {
-				io_print(io, smps, recv);
+				formatter->print(stdout, smps, recv);
 
 				cnt += recv;
 				if (limit > 0 && cnt >= limit)
 					goto leave;
 			}
 
-			sample_decref_many(smps, release);
+			sample_decref_many(smps, allocated);
 		}
 
 		return;
@@ -243,7 +237,7 @@ public:
 	Pipe(int argc, char *argv[]) :
 		Tool(argc, argv, "pipe"),
 		stop(false),
-		io(),
+		formatter(),
 		timeout(0),
 		reverse(false),
 		format("villas.human"),
@@ -270,7 +264,7 @@ protected:
 	std::atomic<bool> stop;
 
 	SuperNode sn; /**< The global configuration */
-	struct io io;
+	Format *formatter;
 
 	int timeout;
 	bool reverse;
@@ -402,9 +396,9 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret;
-
 		struct vnode *node;
-		struct format_type *ft;
+		json_t *json_format;
+		json_error_t err;
 
 		logger->info("Logging level: {}", logging.getLevelName());
 
@@ -413,17 +407,16 @@ check:			if (optarg == endptr)
 		else
 			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-		ft = format_type_lookup(format.c_str());
-		if (!ft)
-			throw RuntimeError("Invalid format: {}", format);
 
-		ret = io_init2(&io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
-		if (ret)
-			throw RuntimeError("Failed to initialize IO");
+		/* Try parsing format config as JSON */
+		json_format = json_loads(format.c_str(), 0, &err);
+		formatter = json_format
+				? FormatFactory::make(json_format)
+				: FormatFactory::make(format);
+		if (!formatter)
+			throw RuntimeError("Failed to initialize formatter");
 
-		ret = io_open(&io, nullptr);
-		if (ret)
-			throw RuntimeError("Failed to open IO");
+		formatter->start(dtypes);
 
 		node = sn.getNode(nodestr);
 		if (!node)
@@ -464,8 +457,8 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
-		PipeReceiveDirection recv_dir(node, &io, enable_recv, limit_recv);
-		PipeSendDirection send_dir(node, &io, enable_send, limit_send);
+		PipeReceiveDirection recv_dir(node, formatter, enable_recv, limit_recv);
+		PipeSendDirection send_dir(node, formatter, enable_send, limit_send);
 
 		recv_dir.startThread();
 		send_dir.startThread();
@@ -496,13 +489,7 @@ check:			if (optarg == endptr)
 		}
 #endif /* WITH_NODE_WEBSOCKET */
 
-		ret = io_close(&io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
-
-		ret = io_destroy(&io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
+		delete formatter;
 
 		return 0;
 	}

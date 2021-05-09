@@ -20,18 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <cstring>
-
-#include <villas/plugin.h>
-#include <villas/sample.h>
-#include <villas/node.h>
-#include <villas/signal.h>
-#include <villas/compat.hpp>
 #include <villas/timing.h>
-#include <villas/io.h>
-#include <villas/formats/json_kafka.h>
+#include <villas/utils.hpp>
+#include <villas/formats/json_kafka.hpp>
+#include <villas/exceptions.hpp>
 
-static const char * json_kafka_type_villas_to_kafka(enum SignalType vt)
+using namespace villas;
+using namespace villas::node;
+
+const char * JsonKafkaFormat::villasToKafkaType(enum SignalType vt)
 {
 	switch (vt) {
 		case SignalType::FLOAT:
@@ -50,9 +47,9 @@ static const char * json_kafka_type_villas_to_kafka(enum SignalType vt)
 	}
 }
 
-static int json_kafka_pack_sample(struct io *io, json_t **json_smp, struct sample *smp)
+int JsonKafkaFormat::packSample(json_t **json_smp, const struct sample *smp)
 {
-	json_t *json_root, *json_schema, *json_payload, *json_fields, *json_field, *json_value;
+	json_t *json_payload, *json_fields, *json_field, *json_value;
 
 	json_fields = json_array();
 	json_payload = json_object();
@@ -66,8 +63,8 @@ static int json_kafka_pack_sample(struct io *io, json_t **json_smp, struct sampl
 		);
 
 		uint64_t ts_origin_ms = smp->ts.origin.tv_sec * 1e3 + smp->ts.origin.tv_nsec / 1e6;
-		json_array_append(json_fields, json_field);
-		json_object_set(json_payload, "timestamp", json_integer(ts_origin_ms));
+		json_array_append_new(json_fields, json_field);
+		json_object_set_new(json_payload, "timestamp", json_integer(ts_origin_ms));
 	}
 
 	/* Include sample sequence no */
@@ -78,44 +75,41 @@ static int json_kafka_pack_sample(struct io *io, json_t **json_smp, struct sampl
 			"field", "sequence"
 		);
 
-		json_array_append(json_fields, json_field);
-		json_object_set(json_payload, "sequence", json_integer(smp->sequence));
+		json_array_append_new(json_fields, json_field);
+		json_object_set_new(json_payload, "sequence", json_integer(smp->sequence));
 	}
 
 	/* Include sample data */
 	for (size_t i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
 		struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
-		union signal_data *data = &smp->data[i];
+		const union signal_data *data = &smp->data[i];
 
 		json_field = json_pack("{ s: s, s: b, s: s }",
-			"type", json_kafka_type_villas_to_kafka(sig->type),
+			"type", villasToKafkaType(sig->type),
 			"optional", false,
 			"field", sig->name
 		);
 
 		json_value = signal_data_to_json(data, sig->type);
 
-		json_array_append(json_fields, json_field);
-		json_object_set(json_payload, sig->name, json_value);
+		json_array_append_new(json_fields, json_field);
+		json_object_set_new(json_payload, sig->name, json_value);
 	}
 
-	json_schema = json_pack("{ s: s, s: s, s: o }",
-		"type", "struct",
-		"name", "villas-node.Value",
-		"fields", json_fields
-	);
+	json_object_set_new(json_schema, "fields", json_fields);
 
-	json_root = json_pack("{ s: o, s: o }",
+	json_incref(json_schema);
+	*json_smp = json_pack("{ s: o, s: o }",
 		"schema", json_schema,
 		"payload", json_payload
-	);
-
-	*json_smp = json_root;
+	);;
+	if (*json_smp == nullptr)
+		return -1;
 
 	return 0;
 }
 
-static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
+int JsonKafkaFormat::unpackSample(json_t *json_smp, struct sample *smp)
 {
 	json_t *json_payload, *json_value;
 
@@ -125,7 +119,7 @@ static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct samp
 
 	smp->length = 0;
 	smp->flags = 0;
-	smp->signals = io->signals;
+	smp->signals = signals;
 
 	/* Unpack timestamp */
 	json_value = json_object_get(json_payload, "timestamp");
@@ -145,8 +139,8 @@ static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct samp
 	}
 
 	/* Unpack signal data */
-	for (size_t i = 0; i < vlist_length(io->signals); i++) {
-		struct signal *sig = (struct signal *) vlist_at(io->signals, i);
+	for (size_t i = 0; i < vlist_length(signals); i++) {
+		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
 		json_value = json_object_get(json_payload, sig->name);
 		if (!json_value)
@@ -159,125 +153,44 @@ static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct samp
 	if (smp->length > 0)
 		smp->flags |= (int) SampleFlags::HAS_DATA;
 
-	return 1;
+	return 0;
 }
 
-/*
- * Note: The following functions are the same as io/json.c !!!
- */
-
-int json_kafka_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+void JsonKafkaFormat::parse(json_t *json)
 {
 	int ret;
-	json_t *json;
-	size_t wr;
 
-	assert(cnt == 1);
-
-	ret = json_kafka_pack_sample(io, &json, smps[0]);
-	if (ret < 0)
-		return ret;
-
-	wr = json_dumpb(json, buf, len, 0);
-
-	json_decref(json);
-
-	if (wbytes)
-		*wbytes = wr;
-
-	return ret;
-}
-
-int json_kafka_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	json_t *json;
 	json_error_t err;
+	json_t *json_schema_tmp = nullptr;
 
-	assert(cnt == 1);
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o }",
+		"schema", &json_schema_tmp
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-format-json-kafka", "Failed to parse format configuration");
 
-	json = json_loadb(buf, len, 0, &err);
-	if (!json)
-		return -1;
+	if (json_schema_tmp) {
+		if (!json_is_object(json_schema_tmp))
+			throw ConfigError(json, "node-config-format-json-kafka-schema", "Kafka schema must be configured as a dictionary");
 
-	ret = json_kafka_unpack_sample(io, json, smps[0]);
+		if (json_schema)
+			json_decref(json_schema);
 
-	json_decref(json);
-
-	if (ret < 0)
-		return ret;
-
-	if (rbytes)
-		*rbytes = err.position;
-
-	return ret;
-}
-
-int json_kafka_print(struct io *io, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	unsigned i;
-	json_t *json;
-
-	FILE *f = io_stream_output(io);
-
-	for (i = 0; i < cnt; i++) {
-		ret = json_kafka_pack_sample(io, &json, smps[i]);
-		if (ret)
-			return ret;
-
-		ret = json_dumpf(json, f, 0);
-		fputc('\n', f);
-
-		json_decref(json);
-
-		if (ret)
-			return ret;
+		json_schema = json_schema_tmp;
 	}
 
-	return i;
+	JsonFormat::parse(json);
 }
 
-int json_kafka_scan(struct io *io, struct sample *smps[], unsigned cnt)
+JsonKafkaFormat::JsonKafkaFormat(int fl) :
+	JsonFormat(fl)
 {
-	int ret;
-	unsigned i;
-	json_t *json;
-	json_error_t err;
-
-	FILE *f = io_stream_input(io);
-
-	for (i = 0; i < cnt; i++) {
-skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
-		if (!json)
-			break;
-
-		ret = json_kafka_unpack_sample(io, json, smps[i]);
-
-		json_decref(json);
-
-		if (ret < 0)
-			goto skip;
-	}
-
-	return i;
+	json_schema = json_pack("{ s: s, s: s }",
+		"type", "struct",
+		"name", "villas-node.Value"
+	);
 }
 
-static struct plugin p;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "json.kafka";
-	p.description = "JSON Kafka schema/payload messages";
-	p.type = PluginType::FORMAT;
-	p.format.print	= json_kafka_print;
-	p.format.scan	= json_kafka_scan;
-	p.format.sprint	= json_kafka_sprint;
-	p.format.sscan	= json_kafka_sscan;
-	p.format.size = 0;
-
-	vlist_init_and_push(&plugins, &p);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
+static char n[] = "json.kafka";
+static char d[] = "JSON Kafka schema/payload messages";
+static FormatPlugin<JsonKafkaFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

@@ -44,7 +44,6 @@ extern "C" {
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
 #include <villas/hook.hpp>
-#include <villas/format_type.h>
 #include <villas/super_node.hpp>
 
 #ifdef WITH_NETEM
@@ -130,16 +129,16 @@ int rtp_parse(struct vnode *n, json_t *json)
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	const char *local, *remote;
-	const char *format = "villas.binary";
 	const char *log = nullptr;
 	const char *hook_type = nullptr;
 	uint16_t port;
 
 	json_error_t err;
 	json_t *json_aimd = nullptr;
+	json_t *json_format = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: o, s: { s: s }, s: { s: s } }",
-		"format", &format,
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: b, s?: o, s: { s: s }, s: { s: s } }",
+		"format", &json_format,
 		"rtcp", &r->rtcp.enabled,
 		"aimd", &json_aimd,
 		"out",
@@ -186,9 +185,11 @@ int rtp_parse(struct vnode *n, json_t *json)
 		r->aimd.log_filename = strdup(log);
 
 	/* Format */
-	r->format = format_type_lookup(format);
-	if (!r->format)
-		throw RuntimeError("Invalid format '{}'", format);
+	r->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.binary");
+	if (!r->formatter)
+		throw ConfigError(json_format, "node-config-node-rtp-format", "Invalid format configuration");
 
 	/* Remote address */
 	ret = sa_decode(&r->out.saddr_rtp, remote, strlen(remote));
@@ -225,8 +226,7 @@ char * rtp_print(struct vnode *n)
 	char *local = socket_print_addr((struct sockaddr *) &r->in.saddr_rtp.u);
 	char *remote = socket_print_addr((struct sockaddr *) &r->out.saddr_rtp.u);
 
-	buf = strf("format=%s, in.address=%s, out.address=%s, rtcp.enabled=%s",
-		format_type_name(r->format),
+	buf = strf("in.address=%s, out.address=%s, rtcp.enabled=%s",
 		local, remote,
 		r->rtcp.enabled ? "yes" : "no");
 
@@ -323,9 +323,7 @@ int rtp_start(struct vnode *n)
 		return ret;
 
 	/* Initialize IO */
-	ret = io_init(&r->io, r->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	r->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Initialize memory buffer for sending */
 	r->send_mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN);
@@ -424,9 +422,7 @@ int rtp_stop(struct vnode *n)
 	if (r->aimd.log)
 		r->aimd.log->close();
 
-	ret = io_destroy(&r->io);
-	if (ret)
-		return ret;
+	delete r->formatter;
 
 	return 0;
 }
@@ -505,7 +501,7 @@ int rtp_type_stop()
 	return 0;
 }
 
-int rtp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int rtp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -517,14 +513,14 @@ int rtp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		throw RuntimeError("Failed to pull from queue");
 
 	/* Unpack data */
-	ret = io_sscan(&r->io, (char *) mb->buf + mb->pos, mbuf_get_left(mb), nullptr, smps, cnt);
+	ret = r->formatter->sscan((char *) mb->buf + mb->pos, mbuf_get_left(mb), nullptr, smps, cnt);
 
 	mem_deref(mb);
 
 	return ret;
 }
 
-int rtp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int rtp_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -536,7 +532,7 @@ int rtp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	avail = mbuf_get_space(r->send_mb);
-	cnt = io_sprint(&r->io, (char *) r->send_mb->buf + r->send_mb->pos, avail, &wbytes, smps, cnt);
+	cnt = r->formatter->sprint((char *) r->send_mb->buf + r->send_mb->pos, avail, &wbytes, smps, cnt);
 	if (cnt < 0)
 		return -1;
 

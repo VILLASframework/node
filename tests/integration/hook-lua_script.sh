@@ -104,7 +104,7 @@ EOF
 villas-hook lua -c ${CONFIG_FILE} < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
+villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE} ${CONFIG_FILE}

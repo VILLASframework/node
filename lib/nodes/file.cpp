@@ -32,10 +32,11 @@
 #include <villas/timing.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static char * file_format_name(const char *format, struct timespec *ts)
@@ -86,16 +87,16 @@ int file_parse(struct vnode *n, json_t *json)
 
 	int ret;
 	json_error_t err;
+	json_t *json_format;
 
 	const char *uri_tmpl = nullptr;
-	const char *format = "villas.human";
 	const char *eof = nullptr;
 	const char *epoch = nullptr;
 	double epoch_flt = 0;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i, s?: i }, s?: { s?: b, s?: i } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: o, s?: { s?: s, s?: F, s?: s, s?: F, s?: i, s?: i }, s?: { s?: b, s?: i } }",
 		"uri", &uri_tmpl,
-		"format", &format,
+		"format", &json_format,
 		"in",
 			"eof", &eof,
 			"rate", &f->rate,
@@ -113,9 +114,12 @@ int file_parse(struct vnode *n, json_t *json)
 	f->epoch = time_from_double(epoch_flt);
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
 
-	f->format = format_type_lookup(format);
-	if (!f->format)
-		throw RuntimeError("Invalid format '{}'", format);
+	/* Format */
+	f->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.human");
+	if (!f->formatter)
+		throw ConfigError(json_format, "node-config-node-file-format", "Invalid format configuration");
 
 	if (eof) {
 		if      (!strcmp(eof, "exit") || !strcmp(eof, "stop"))
@@ -200,9 +204,8 @@ char * file_print(struct vnode *n)
 			break;
 	}
 
-	strcatf(&buf, "uri=%s, format=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
+	strcatf(&buf, "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
 		f->uri ? f->uri : f->uri_tmpl,
-		format_type_name(f->format),
 		f->flush ? "yes" : "no",
 		f->skip_lines,
 		eof_str,
@@ -238,7 +241,7 @@ int file_start(struct vnode *n)
 	struct file *f = (struct file *) n->_vd;
 
 	struct timespec now = time_now();
-	int ret, flags;
+	int ret;
 
 	/* Prepare file name */
 	f->uri = file_format_name(f->uri_tmpl, &now);
@@ -266,28 +269,26 @@ int file_start(struct vnode *n)
 
 	free(cpy);
 
-
 	/* Open file */
-	flags = (int) SampleFlags::HAS_ALL;
-	if (f->flush)
-		flags |= (int) IOFlags::FLUSH;
 
-	ret = io_init(&f->io, f->format, &n->in.signals, flags);
-	if (ret)
-		return ret;
+	f->formatter->start(&n->in.signals);
 
-	ret = io_open(&f->io, f->uri);
-	if (ret)
-		return ret;
+	f->stream_in = fopen(f->uri, "r");
+	if (!f->stream_in)
+		return -1;
+
+	f->stream_out = fopen(f->uri, "a+");
+	if (!f->stream_out)
+		return -1;
 
 	if (f->buffer_size_in) {
-		ret = setvbuf(f->io.in.stream, nullptr, _IOFBF, f->buffer_size_in);
+		ret = setvbuf(f->stream_in, nullptr, _IOFBF, f->buffer_size_in);
 		if (ret)
 			return ret;
 	}
 
 	if (f->buffer_size_out) {
-		ret = setvbuf(f->io.out.stream, nullptr, _IOFBF, f->buffer_size_out);
+		ret = setvbuf(f->stream_out, nullptr, _IOFBF, f->buffer_size_out);
 		if (ret)
 			return ret;
 	}
@@ -297,20 +298,19 @@ int file_start(struct vnode *n)
 
 	/* Get timestamp of first line */
 	if (f->epoch_mode != file::EpochMode::ORIGINAL) {
-		io_rewind(&f->io);
+		rewind(f->stream_in);
 
-		if (io_eof(&f->io)) {
+		if (feof(f->stream_in)) {
 			n->logger->warn("Empty file");
 		}
 		else {
-			struct sample s;
-			struct sample *smps[] = { &s };
+			struct sample smp;
 
-			s.capacity = 0;
+			smp.capacity = 0;
 
-			ret = io_scan(&f->io, smps, 1);
+			ret = f->formatter->scan(f->stream_in, &smp);
 			if (ret == 1) {
-				f->first = s.ts.origin;
+				f->first = smp.ts.origin;
 				f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
 			}
 			else
@@ -318,12 +318,12 @@ int file_start(struct vnode *n)
 		}
 	}
 
-	io_rewind(&f->io);
+	rewind(f->stream_in);
 
 	/* Fast-forward */
 	struct sample *smp = sample_alloc_mem(vlist_length(&n->in.signals));
 	for (unsigned i = 0; i < f->skip_lines; i++)
-		io_scan(&f->io, &smp, 1);
+		f->formatter->scan(f->stream_in, smp);
 
 	sample_free(smp);
 
@@ -332,25 +332,20 @@ int file_start(struct vnode *n)
 
 int file_stop(struct vnode *n)
 {
-	int ret;
 	struct file *f = (struct file *) n->_vd;
 
 	f->task.stop();
 
-	ret = io_close(&f->io);
-	if (ret)
-		return ret;
+	fclose(f->stream_in);
+	fclose(f->stream_out);
 
-	ret = io_destroy(&f->io);
-	if (ret)
-		return ret;
-
+	delete f->formatter;
 	delete f->uri;
 
 	return 0;
 }
 
-int file_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int file_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct file *f = (struct file *) n->_vd;
 	int ret;
@@ -358,15 +353,15 @@ int file_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	assert(cnt == 1);
 
-retry:	ret = io_scan(&f->io, smps, cnt);
+retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 	if (ret <= 0) {
-		if (io_eof(&f->io)) {
+		if (feof(f->stream_in)) {
 			switch (f->eof_mode) {
 				case file::EOFBehaviour::REWIND:
 					n->logger->info("Rewind input file");
 
 					f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
-					io_rewind(&f->io);
+					rewind(f->stream_in);
 					goto retry;
 
 				case file::EOFBehaviour::SUSPEND:
@@ -374,15 +369,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 					usleep(100000);
 
 					/* Try to download more data if this is a remote file. */
-					switch (f->io.mode) {
-						case IOMode::STDIO:
-							clearerr(f->io.in.stream);
-							break;
-
-						case IOMode::CUSTOM:
-							break;
-					}
-
+					clearerr(f->stream_in);
 					goto retry;
 
 				case file::EOFBehaviour::STOP:
@@ -426,16 +413,19 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 	return cnt;
 }
 
-int file_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int file_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct file *f = (struct file *) n->_vd;
 
 	assert(cnt == 1);
 
-	ret = io_print(&f->io, smps, cnt);
+	ret = f->formatter->print(f->stream_out, smps, cnt);
 	if (ret < 0)
 		return ret;
+
+	if (f->flush)
+		fflush(f->stream_out);
 
 	return cnt;
 }
@@ -450,7 +440,7 @@ int file_poll_fds(struct vnode *n, int fds[])
 		return 1;
 	}
 	else if (f->epoch_mode == file::EpochMode::ORIGINAL) {
-		fds[0] = io_fd(&f->io);
+		fds[0] = fileno(f->stream_in);
 
 		return 1;
 	}

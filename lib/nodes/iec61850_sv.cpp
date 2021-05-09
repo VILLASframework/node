@@ -34,7 +34,9 @@
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
+using namespace villas;
 using namespace villas::utils;
+using namespace villas::node;
 
 static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
@@ -382,7 +384,7 @@ int iec61850_sv_destroy(struct vnode *n)
 	return 0;
 }
 
-int iec61850_sv_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int iec61850_sv_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int pulled;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -399,7 +401,7 @@ int iec61850_sv_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsig
 	return pulled;
 }
 
-int iec61850_sv_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int iec61850_sv_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 

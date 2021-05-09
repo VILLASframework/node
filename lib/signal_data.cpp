@@ -236,7 +236,7 @@ int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t
 	return 0;
 }
 
-json_t * signal_data_to_json(union signal_data *data, enum SignalType type)
+json_t * signal_data_to_json(const union signal_data *data, enum SignalType type)
 {
 	switch (type) {
 		case SignalType::INTEGER:
@@ -261,11 +261,11 @@ json_t * signal_data_to_json(union signal_data *data, enum SignalType type)
 	return nullptr;
 }
 
-int signal_data_print_str(const union signal_data *data, enum SignalType type, char *buf, size_t len)
+int signal_data_print_str(const union signal_data *data, enum SignalType type, char *buf, size_t len, int precision)
 {
 	switch (type) {
 		case SignalType::FLOAT:
-			return snprintf(buf, len, "%.6f", data->f);
+			return snprintf(buf, len, "%.*f", precision, data->f);
 
 		case SignalType::INTEGER:
 			return snprintf(buf, len, "%" PRIi64, data->i);
@@ -274,7 +274,7 @@ int signal_data_print_str(const union signal_data *data, enum SignalType type, c
 			return snprintf(buf, len, "%u", data->b);
 
 		case SignalType::COMPLEX:
-			return snprintf(buf, len, "%.6f%+.6fi", std::real(data->z), std::imag(data->z));
+			return snprintf(buf, len, "%.*f%+.*fi", precision, std::real(data->z), precision, std::imag(data->z));
 
 		default:
 			return snprintf(buf, len, "<?>");

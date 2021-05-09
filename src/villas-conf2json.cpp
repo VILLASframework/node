@@ -63,7 +63,7 @@ protected:
 		}
 
 		FILE *f = fopen(argv[1], "r");
-		if(f == nullptr)
+		if (f == nullptr)
 			return -1;
 
 		const char *confdir = dirname(argv[1]);

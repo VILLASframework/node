@@ -32,6 +32,7 @@
 #include <villas/memory.h>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
@@ -585,7 +586,7 @@ int uldaq_stop(struct vnode *n)
 	return 0;
 }
 
-int uldaq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 

@@ -57,6 +57,7 @@ int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vno
 	nd->enabled = 1;
 	nd->vectorize = 1;
 	nd->builtin = 1;
+	nd->path = nullptr;
 
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&nd->hooks);

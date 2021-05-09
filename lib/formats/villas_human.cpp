@@ -23,20 +23,20 @@
 #include <cinttypes>
 #include <cstring>
 
-#include <villas/io.h>
-#include <villas/plugin.h>
 #include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/signal.h>
-#include <villas/formats/villas_human.h>
+#include <villas/formats/villas_human.hpp>
 
-static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, const struct sample *smp)
+using namespace villas::node;
+
+size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct sample *smp)
 {
 	size_t off = 0;
 	struct signal *sig;
 
-	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 			off += snprintf(buf + off, len - off, "%llu", (unsigned long long) smp->ts.origin.tv_sec);
 			off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) smp->ts.origin.tv_nsec);
@@ -45,33 +45,33 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 			off += snprintf(buf + off, len - off, "nan.nan");
 	}
 
-	if (io->flags & (int) SampleFlags::HAS_OFFSET) {
+	if (flags & (int) SampleFlags::HAS_OFFSET) {
 		if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 			off += snprintf(buf + off, len - off, "%+e", time_delta(&smp->ts.origin, &smp->ts.received));
 	}
 
-	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
+	if (flags & (int) SampleFlags::HAS_SEQUENCE) {
 		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE)
 			off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
 	}
 
-	if (io->flags & (int) SampleFlags::HAS_DATA) {
+	if (flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
 			sig = (struct signal *) vlist_at_safe(smp->signals, i);
 			if (!sig)
 				break;
 
-			off += snprintf(buf + off, len - off, "%c", io->separator);
-			off += signal_data_print_str(&smp->data[i], sig->type, buf + off, len - off);
+			off += snprintf(buf + off, len - off, "\t");
+			off += signal_data_print_str(&smp->data[i], sig->type, buf + off, len - off, real_precision);
 		}
 	}
 
-	off += snprintf(buf + off, len - off, "%c", io->delimiter);
+	off += snprintf(buf + off, len - off, "%c", delimiter);
 
 	return off;
 }
 
-static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t len, struct sample *smp)
+size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct sample *smp)
 {
 	int ret;
 	char *end;
@@ -80,7 +80,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 	double offset = 0;
 
 	smp->flags = 0;
-	smp->signals = io->signals;
+	smp->signals = signals;
 
 	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
 	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?
@@ -90,7 +90,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 	/* Mandatory: seconds */
 	smp->ts.origin.tv_sec = (uint32_t) strtoul(ptr, &end, 10);
-	if (ptr == end || *end == io->delimiter)
+	if (ptr == end || *end == delimiter)
 		return -1;
 
 	smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
@@ -133,10 +133,10 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 	unsigned i;
 	for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
-		if (*end == io->delimiter)
+		if (*end == delimiter)
 			goto out;
 
-		struct signal *sig = (struct signal *) vlist_at_safe(io->signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
 		if (!sig)
 			goto out;
 
@@ -145,7 +145,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 			goto out;
 	}
 
-out:	if (*end == io->delimiter)
+out:	if (*end == delimiter)
 		end++;
 
 	smp->length = i;
@@ -162,84 +162,44 @@ out:	if (*end == io->delimiter)
 	return end - buf;
 }
 
-int villas_human_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+void VILLASHumanFormat::header(FILE *f, const struct vlist *sigs)
 {
-	unsigned i;
-	size_t off = 0;
-
-	for (i = 0; i < cnt && off < len; i++)
-		off += villas_human_sprint_single(io, buf + off, len - off, smps[i]);
-
-	if (wbytes)
-		*wbytes = off;
-
-	return i;
-}
-
-int villas_human_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
-{
-	unsigned i;
-	size_t off = 0;
-
-	for (i = 0; i < cnt && off < len; i++)
-		off += villas_human_sscan_single(io, buf + off, len - off, smps[i]);
-
-	if (rbytes)
-		*rbytes = off;
-
-	return i;
-}
-
-void villas_human_header(struct io *io, const struct sample *smp)
-{
-	FILE *f = io_stream_output(io);
+	/* Abort if we are not supposed to, or have already printed the header */
+	if (!print_header || header_printed)
+		return;
 
 	fprintf(f, "# ");
 
-	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN)
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN)
 		fprintf(f, "seconds.nanoseconds");
 
-	if (io->flags & (int) SampleFlags::HAS_OFFSET)
+	if (flags & (int) SampleFlags::HAS_OFFSET)
 		fprintf(f, "+offset");
 
-	if (io->flags & (int) SampleFlags::HAS_SEQUENCE)
+	if (flags & (int) SampleFlags::HAS_SEQUENCE)
 		fprintf(f, "(sequence)");
 
-	if (io->flags & (int) SampleFlags::HAS_DATA) {
-		for (unsigned i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
-			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+	if (flags & (int) SampleFlags::HAS_DATA) {
+		for (unsigned i = 0; i < vlist_length(sigs); i++) {
+			struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
 			if (!sig)
 				break;
 
 			if (sig->name)
-				fprintf(f, "%c%s", io->separator, sig->name);
+				fprintf(f, "\t%s", sig->name);
 			else
-				fprintf(f, "%csignal%u", io->separator, i);
+				fprintf(f, "\tsignal%u", i);
 
 			if (sig->unit)
 				fprintf(f, "[%s]", sig->unit);
 		}
 	}
 
-	fprintf(f, "%c", io->delimiter);
+	fprintf(f, "%c", delimiter);
+
+	LineFormat::header(f, sigs);
 }
 
-static struct plugin p;
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "villas.human";
-	p.description = "VILLAS human readable format";
-	p.type = PluginType::FORMAT;
-	p.format.header = villas_human_header;
-	p.format.sprint	= villas_human_sprint;
-	p.format.sscan	= villas_human_sscan;
-	p.format.size	= 0;
-	p.format.flags	= (int) IOFlags::NEWLINES | (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-	p.format.delimiter = '\n';
-	p.format.separator = '\t';
-
-	vlist_init_and_push(&plugins, &p);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
+static char n[] = "villas.human";
+static char d[] = "VILLAS human readable format";
+static LineFormatPlugin<VILLASHumanFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA, '\n'> p;

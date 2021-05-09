@@ -27,10 +27,10 @@
 #include <villas/nodes/kafka.hpp>
 #include <villas/plugin.h>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 // Each process has a list of clients for which a thread invokes the kafka loop
@@ -62,7 +62,6 @@ static void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, co
 		default:
 			logger->info("{}: {}", fac, buf);
 			break;
-
 	}
 }
 
@@ -81,7 +80,7 @@ static void kafka_message_cb(void *ctx, const rd_kafka_message_t *msg)
 		return;
 	}
 
-	ret = io_sscan(&k->io, (char *) msg->payload, msg->len, nullptr, smps, n->in.vectorize);
+	ret = k->formatter->sscan((char *) msg->payload, msg->len, nullptr, smps, n->in.vectorize);
 	if (ret < 0) {
 		n->logger->warn("Received an invalid message");
 		n->logger->warn("  Payload: {}", (char *) msg->payload);
@@ -171,7 +170,6 @@ int kafka_parse(struct vnode *n, json_t *json)
 	struct kafka *k = (struct kafka *) n->_vd;
 
 	const char *server;
-	const char *format = "villas.binary";
 	const char *produce = nullptr;
 	const char *consume = nullptr;
 	const char *protocol;
@@ -181,14 +179,15 @@ int kafka_parse(struct vnode *n, json_t *json)
 	json_error_t err;
 	json_t *json_ssl = nullptr;
 	json_t *json_sasl = nullptr;
+	json_t *json_format = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s, s?: s }, s?: s, s: s, s?: F, s: s, s?: s, s?: o, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s, s?: s }, s?: o, s: s, s?: F, s: s, s?: s, s?: o, s?: o }",
 		"out",
 			"produce", &produce,
 		"in",
 			"consume", &consume,
 			"group_id", &group_id,
-		"format", &format,
+		"format", &json_format,
 		"server", &server,
 		"timeout", &k->timeout,
 		"protocol", &protocol,
@@ -245,10 +244,12 @@ int kafka_parse(struct vnode *n, json_t *json)
 		k->sasl.password = strdup(password);
 	}
 
-	k->format = format_type_lookup(format);
-	if (!k->format)
-		throw ConfigError(json_ssl, "node-config-node-kafka-format", "Invalid format '{}' for node {}", format, node_name(n));
-
+	/* Format */
+	k->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.binary");
+	if (!k->formatter)
+		throw ConfigError(json_format, "node-config-node-kafka-format", "Invalid format configuration");
 	return 0;
 }
 
@@ -257,9 +258,7 @@ int kafka_prepare(struct vnode *n)
 	int ret;
 	struct kafka *k = (struct kafka *) n->_vd;
 
-	ret = io_init(&k->io, k->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	k->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	ret = pool_init(&k->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
 	if (ret)
@@ -278,7 +277,7 @@ char * kafka_print(struct vnode *n)
 
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, bootstrap.server=%s, client.id=%s, security.protocol=%s", format_type_name(k->format),
+	strcatf(&buf, "bootstrap.server=%s, client.id=%s, security.protocol=%s",
 		k->server,
 		k->client_id,
 		k->protocol
@@ -305,9 +304,7 @@ int kafka_destroy(struct vnode *n)
 	if (k->consumer.client)
 		rd_kafka_destroy(k->consumer.client);
 
-	ret = io_destroy(&k->io);
-	if (ret)
-		return ret;
+	delete k->formatter;
 
 	ret = pool_destroy(&k->pool);
 	if (ret)
@@ -528,7 +525,7 @@ kafka_error:
 	return ret;
 }
 
-int kafka_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int kafka_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int pulled;
 	struct kafka *k = (struct kafka *) n->_vd;
@@ -542,7 +539,7 @@ int kafka_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 	return pulled;
 }
 
-int kafka_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int kafka_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct kafka *k = (struct kafka *) n->_vd;
@@ -551,7 +548,7 @@ int kafka_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	char data[4096];
 
-	ret = io_sprint(&k->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = k->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)
 		return ret;
 

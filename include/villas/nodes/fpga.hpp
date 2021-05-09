@@ -31,7 +31,7 @@
 
 #include <villas/node/config.h>
 #include <villas/node.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/timing.h>
 
 #include <villas/fpga/card.hpp>
@@ -95,10 +95,10 @@ int fpga_start(struct vnode *n);
 int fpga_stop(struct vnode *n);
 
 /** @see node_type::write */
-int fpga_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int fpga_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::read */
-int fpga_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int fpga_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::poll_fds */
 int fpga_poll_fds(struct vnode *n, int fds[]);

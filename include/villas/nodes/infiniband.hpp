@@ -31,7 +31,7 @@
 
 #include <villas/node.h>
 #include <villas/pool.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
 
@@ -128,9 +128,9 @@ int ib_destroy(struct vnode *n);
 int ib_stop(struct vnode *n);
 
 /** @see node_type::read */
-int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

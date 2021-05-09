@@ -84,7 +84,7 @@ int can_destroy(struct vnode *n)
 	return 0;
 }
 
-int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal *can_signals, size_t signal_index)
+static int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal *can_signals, size_t signal_index)
 {
 	const char *name = nullptr;
 	uint64_t can_id = 0;
@@ -243,7 +243,7 @@ int can_stop(struct vnode *n)
 	return 0;
 }
 
-int can_conv_to_raw(union signal_data* sig, struct signal *from, void* to, int size)
+static int can_convert_to_raw(const union signal_data *sig, const struct signal *from, void *to, int size)
 {
 	if (size <= 0 || size > 8)
 		throw RuntimeError("Signal size cannot be larger than 8!");
@@ -261,7 +261,6 @@ int can_conv_to_raw(union signal_data* sig, struct signal *from, void* to, int s
 
 				case 2:
 					*(int16_t*)to = (int16_t)sig->i;
-					sig->i = (int64_t)*(int16_t*)from;
 					return 0;
 
 				case 3:
@@ -377,7 +376,7 @@ fail:
 	return 1;
 }
 
-int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret = 0;
 	int nbytes;
@@ -446,7 +445,7 @@ int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	return ret;
 }
 
-int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int nbytes;
 	unsigned nwrite;
@@ -467,7 +466,7 @@ int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 			frame[fsize].can_dlc = c->out[i].size;
 			frame[fsize].can_id = c->out[i].id;
 
-			can_conv_to_raw(
+			can_convert_to_raw(
 				&smps[nwrite]->data[i],
 				(struct signal*)vlist_at(&(n->out.signals), i),
 				&frame[fsize].data,
@@ -486,7 +485,7 @@ int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 					continue;
 
 				frame[j].can_dlc += c->out[i].size;
-				can_conv_to_raw(
+				can_convert_to_raw(
 					&smps[nwrite]->data[i],
 					(struct signal*)vlist_at(&(n->out.signals), i),
 					(uint8_t*)&frame[j].data + c->out[i].offset,

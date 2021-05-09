@@ -114,7 +114,7 @@ void sample_free_many(struct sample *smps[], int cnt)
 		sample_free(smps[i]);
 }
 
-int sample_decref_many(struct sample *smps[], int cnt)
+int sample_decref_many(struct sample * const smps[], int cnt)
 {
 	int released = 0;
 
@@ -126,7 +126,7 @@ int sample_decref_many(struct sample *smps[], int cnt)
 	return released;
 }
 
-int sample_incref_many(struct sample *smps[], int cnt)
+int sample_incref_many(struct sample * const smps[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
 		sample_incref(smps[i]);
@@ -150,7 +150,7 @@ int sample_decref(struct sample *s)
 	return prev - 1;
 }
 
-int sample_copy(struct sample *dst, struct sample *src)
+int sample_copy(struct sample *dst, const struct sample *src)
 {
 	dst->length = MIN(src->length, dst->capacity);
 
@@ -182,7 +182,7 @@ struct sample * sample_clone(struct sample *orig)
 	return clone;
 }
 
-int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt)
+int sample_clone_many(struct sample *dsts[], const struct sample * const srcs[], int cnt)
 {
 	int alloced, copied;
 	struct pool *pool;
@@ -190,18 +190,18 @@ int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt)
 	if (cnt <= 0)
 		return 0;
 
-	pool = sample_pool(origs[0]);
+	pool = sample_pool(srcs[0]);
 	if (!pool)
 		return 0;
 
-	alloced = sample_alloc_many(pool, clones, cnt);
+	alloced = sample_alloc_many(pool, dsts, cnt);
 
-	copied = sample_copy_many(clones, origs, alloced);
+	copied = sample_copy_many(dsts, srcs, alloced);
 
 	return copied;
 }
 
-int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt)
+int sample_copy_many(struct sample * const dsts[], const struct sample * const srcs[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
 		sample_copy(dsts[i], srcs[i]);

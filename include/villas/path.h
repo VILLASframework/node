@@ -79,7 +79,8 @@ struct vpath {
 	struct Task timeout;
 
 	double rate;			/**< A timeout for */
-	int enabled;			/**< Is this path enabled. */
+	int enabled;			/**< Is this path enabled? */
+	int muxed;			/**< Is this path muxed? */
 	int affinity;			/**< Thread affinity. */
 	int poll;			/**< Weather or not to use poll(2). */
 	int reverse;			/**< This path has a matching reverse path. */
@@ -162,6 +163,8 @@ int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t 
 void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes);
 
 bool path_is_simple(const struct vpath *p);
+
+bool path_is_muxed(const struct vpath *p);
 
 bool path_is_enabled(const struct vpath *p);
 

@@ -28,7 +28,6 @@
 
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/sample.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>
@@ -100,7 +99,7 @@ char * socket_print(struct vnode *n)
 	char *local = socket_print_addr((struct sockaddr *) &s->in.saddr);
 	char *remote = socket_print_addr((struct sockaddr *) &s->out.saddr);
 
-	buf = strf("layer=%s, format=%s, in.address=%s, out.address=%s", layer, format_type_name(s->format), local, remote);
+	buf = strf("layer=%s, in.address=%s, out.address=%s", layer, local, remote);
 
 	if (s->multicast.enabled) {
 		char group[INET_ADDRSTRLEN];
@@ -164,9 +163,7 @@ int socket_start(struct vnode *n)
 	int ret;
 
 	/* Initialize IO */
-	ret = io_init(&s->io, s->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	s->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Create socket */
 	switch (s->layer) {
@@ -311,17 +308,14 @@ int socket_stop(struct vnode *n)
 			return ret;
 	}
 
-	ret = io_destroy(&s->io);
-	if (ret)
-		return ret;
-
+	delete s->formatter;
 	delete[] s->in.buf;
 	delete[] s->out.buf;
 
 	return 0;
 }
 
-int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct socket *s = (struct socket *) n->_vd;
@@ -372,14 +366,14 @@ int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 		return 0;
 	}
 
-	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
+	ret = s->formatter->sscan(ptr, bytes, &rbytes, smps, cnt);
 	if (ret < 0 || (size_t) bytes != rbytes)
 		n->logger->warn("Received invalid packet: ret={}, bytes={}, rbytes={}", ret, bytes, rbytes);
 
 	return ret;
 }
 
-int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int socket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -387,7 +381,7 @@ int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	ssize_t bytes;
 	size_t wbytes;
 
-retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
+retry:	ret = s->formatter->sprint(s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 	if (ret < 0) {
 		n->logger->warn("Failed to format payload: reason={}", ret);
 		return ret;
@@ -453,24 +447,23 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out
 
 int socket_parse(struct vnode *n, json_t *json)
 {
+	int ret;
 	struct socket *s = (struct socket *) n->_vd;
 
 	const char *local, *remote;
 	const char *layer = nullptr;
-	const char *format = "villas.binary";
 
-	int ret;
-
-	json_t *json_multicast = nullptr;
 	json_error_t err;
+	json_t *json_multicast = nullptr;
+	json_t *json_format = nullptr;
 
 	/* Default values */
 	s->layer = SocketLayer::UDP;
 	s->verify_source = 0;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s: { s: s }, s: { s: s, s?: b, s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: o, s: { s: s }, s: { s: s, s?: b, s?: o } }",
 		"layer", &layer,
-		"format", &format,
+		"format", &json_format,
 		"out",
 			"address", &remote,
 		"in",
@@ -482,9 +475,11 @@ int socket_parse(struct vnode *n, json_t *json)
 		throw ConfigError(json, err, "node-config-node-socket");
 
 	/* Format */
-	s->format = format_type_lookup(format);
-	if (!s->format)
-		throw RuntimeError("Invalid format '{}'", format);
+	s->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.binary");
+	if (!s->formatter)
+		throw ConfigError(json_format, "node-config-node-socket-format", "Invalid format configuration");
 
 	/* IP layer */
 	if (layer) {

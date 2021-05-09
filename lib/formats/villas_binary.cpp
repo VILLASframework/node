@@ -21,16 +21,17 @@
  *********************************************************************************/
 
 #include <cstring>
+#include <arpa/inet.h>
 
-#include <villas/io.h>
-#include <villas/formats/villas_binary.h>
-#include <villas/formats/msg.h>
-#include <villas/formats/msg_format.h>
+#include <villas/formats/villas_binary.hpp>
+#include <villas/formats/msg.hpp>
+#include <villas/formats/msg_format.hpp>
 #include <villas/sample.h>
 #include <villas/utils.hpp>
-#include <villas/plugin.h>
 
-int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+using namespace villas::node;
+
+int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i = 0;
@@ -38,7 +39,7 @@ int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, s
 
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
-		struct sample *smp = smps[i];
+		const struct sample *smp = smps[i];
 
 		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
@@ -47,7 +48,7 @@ int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, s
 		if (ret)
 			return ret;
 
-		if (io->flags & VILLAS_BINARY_WEB) {
+		if (web) {
 			/** @todo convert to little endian */
 		}
 		else
@@ -62,7 +63,7 @@ int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, s
 	return i;
 }
 
-int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
 {
 	int ret, values;
 	unsigned i = 0;
@@ -75,7 +76,7 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 		struct msg *msg = (struct msg *) ptr;
 		struct sample *smp = smps[i];
 
-		smp->signals = io->signals;
+		smp->signals = signals;
 
 		/* Complete buffer has been parsed */
 		if (ptr == buf + len)
@@ -85,19 +86,19 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 		if (ptr + sizeof(struct msg) > buf + len)
 			return -2; /* Invalid msg received */
 
-		values = (io->flags & VILLAS_BINARY_WEB) ? msg->length : ntohs(msg->length);
+		values = web ? msg->length : ntohs(msg->length);
 
 		/* Check if remainder of message is in buffer boundaries */
 		if (ptr + MSG_LEN(values) > buf + len)
 			return -3; /*Invalid msg receive */
 
-		if (io->flags & VILLAS_BINARY_WEB) {
+		if (web) {
 			/** @todo convert from little endian */
 		}
 		else
 			msg_ntoh(msg);
 
-		ret = msg_to_sample(msg, smp, io->signals);
+		ret = msg_to_sample(msg, smp, signals);
 		if (ret)
 			return ret; /* Invalid msg received */
 
@@ -110,41 +111,5 @@ int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbyt
 	return i;
 }
 
-static struct plugin p1;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p1.name = "villas.binary";
-	p1.description = "VILLAS binary network format";
-	p1.type = PluginType::FORMAT;
-	p1.format.sprint	= villas_binary_sprint;
-	p1.format.sscan	= villas_binary_sscan;
-	p1.format.size	= 0;
-	p1.format.flags	= (int) IOFlags::HAS_BINARY_PAYLOAD |
-		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-
-	vlist_push(&plugins, &p1);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p1);
-}
-/** The WebSocket node-type usually uses little endian byte order intead of network byte order */
-static struct plugin p2;
-
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p2.name = "villas.web";
-	p2.description = "VILLAS binary network format for WebSockets";
-	p2.type = PluginType::FORMAT;
-	p2.format.sprint	= villas_binary_sprint;
-	p2.format.sscan	= villas_binary_sscan;
-	p2.format.size	= 0;
-	p2.format.flags	= (int) IOFlags::HAS_BINARY_PAYLOAD | VILLAS_BINARY_WEB |
-		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-
-	vlist_push(&plugins, &p2);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p2);
-}
+static VillasBinaryFormatPlugin<false> p1;
+static VillasBinaryFormatPlugin<true> p2;

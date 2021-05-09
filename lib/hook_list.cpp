@@ -135,7 +135,7 @@ skip_add:
 	}
 }
 
-int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
+int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
 {
 	unsigned current, processed = 0;
 

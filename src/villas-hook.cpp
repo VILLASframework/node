@@ -33,7 +33,7 @@
 #include <villas/tool.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/hook.hpp>
 #include <villas/utils.hpp>
 #include <villas/pool.h>
@@ -93,8 +93,8 @@ protected:
 	std::string dtypes;
 
 	struct pool p;
-	struct io input;
-	struct io output;
+	Format *input;
+	Format *output;
 
 	int cnt;
 
@@ -113,22 +113,21 @@ protected:
 			<< "  OPTIONS is one or more of the following options:" << std::endl
 			<< "    -c CONFIG a JSON file containing just the hook configuration" << std::endl
 			<< "    -f FMT    the input data format" << std::endl
-			<< "    -F FMT    the output data format" << std::endl
+			<< "    -F FMT    the output data format (defaults to input format)" << std::endl
 			<< "    -t DT     the data-type format string" << std::endl
 			<< "    -d LVL    set debug level to LVL" << std::endl
 			<< "    -v CNT    process CNT smps at once" << std::endl
 			<< "    -h        show this help" << std::endl
 			<< "    -V        show the version of the tool" << std::endl << std::endl;
 
-#ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
 		for (Plugin *p : Registry::lookup<HookFactory>())
 			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
-#endif /* WITH_HOOKS */
 
 		std::cout << "Supported IO formats:" << std::endl;
-		plugin_dump(PluginType::FORMAT);
+		for (Plugin *p : Registry::lookup<FormatFactory>())
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Example:" << std::endl
@@ -229,9 +228,9 @@ check:			if (optarg == endptr)
 
 		/* Initialize IO */
 		struct desc {
-			const char *dir;
-			const char *format;
-			struct io *io;
+			std::string dir;
+			std::string format;
+			Format **formatter;
 		};
 		std::list<struct desc> descs = {
 			{ "in",  input_format.c_str(),  &input  },
@@ -239,17 +238,18 @@ check:			if (optarg == endptr)
 		};
 
 		for (auto &d : descs) {
-			struct format_type *ft = format_type_lookup(d.format);
-			if (!ft)
-				throw RuntimeError("Unknown {} IO format '{}'", d.dir, d.format);
+			json_t *json_format;
+			json_error_t err;
 
-			ret = io_init2(d.io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
-			if (ret)
+			/* Try parsing format config as JSON */
+			json_format = json_loads(d.format.c_str(), 0, &err);
+			(*d.formatter) = json_format
+				? FormatFactory::make(json_format)
+				: FormatFactory::make(d.format);
+			if (!(*d.formatter))
 				throw RuntimeError("Failed to initialize {} IO", d.dir);
 
-			ret = io_open(d.io, nullptr);
-			if (ret)
-				throw RuntimeError("Failed to open {} IO", d.dir);
+			(*d.formatter)->start(dtypes, (int) SampleFlags::HAS_ALL);
 		}
 
 		/* Initialize hook */
@@ -263,7 +263,7 @@ check:			if (optarg == endptr)
 
 		h->parse(config);
 		h->check();
-		h->prepare(input.signals);
+		h->prepare(input->getSignals());
 		h->start();
 
 		while (!stop) {
@@ -271,9 +271,9 @@ check:			if (optarg == endptr)
 			if (ret != cnt)
 				throw RuntimeError("Failed to allocate {} smps from pool", cnt);
 
-			recv = io_scan(&input, smps, cnt);
+			recv = input->scan(stdin, smps, cnt);
 			if (recv < 0) {
-				if (io_eof(&input))
+				if (feof(stdin))
 					break;
 
 				throw RuntimeError("Failed to read from stdin");
@@ -313,7 +313,7 @@ check:			if (optarg == endptr)
 				smp->signals = h->getSignals();
 			}
 
-stop:			sent = io_print(&output, smps, send);
+stop:			sent = output->print(stdout, smps, send);
 			if (sent < 0)
 				throw RuntimeError("Failed to write to stdout");
 
@@ -324,15 +324,8 @@ stop:			sent = io_print(&output, smps, send);
 
 		delete h;
 
-		for (auto &d : descs) {
-			ret = io_close(d.io);
-			if (ret)
-				throw RuntimeError("Failed to close {} IO", d.dir);
-
-			ret = io_destroy(d.io);
-			if (ret)
-				throw RuntimeError("Failed to destroy {} IO", d.dir);
-		}
+		for (auto &d : descs)
+			delete (*d.formatter);
 
 		sample_free_many(smps, cnt);
 

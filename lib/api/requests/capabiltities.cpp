@@ -23,6 +23,7 @@
 #include <villas/config.h>
 #include <villas/plugin.h>
 #include <villas/hook.hpp>
+#include <villas/format.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 
@@ -49,18 +50,31 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Capabilities endpoint does not accept any body data");
 
-		for (auto f : plugin::Registry::lookup<RequestFactory>()) {
-			json_name = json_string(f->getName().c_str());
+		for (auto p : plugin::Registry::lookup<RequestFactory>()) {
+			json_name = json_string(p->getName().c_str());
 
 			json_array_append_new(json_apis, json_name);
 		}
 
-		for (auto f : plugin::Registry::lookup<HookFactory>()) {
-			json_name = json_string(f->getName().c_str());
+		for (auto p : plugin::Registry::lookup<HookFactory>()) {
+			json_name = json_string(p->getName().c_str());
 
 			json_array_append_new(json_hooks, json_name);
 		}
 
+		for (auto p : plugin::Registry::lookup<FormatFactory>()) {
+			json_name = json_string(p->getName().c_str());
+
+			json_array_append_new(json_formats, json_name);
+		}
+
+#if 0 /* @todo Port to C++ */
+		for (auto f : NodeFactory::lookup()) {
+			json_name = json_string(f->getName().c_str());
+
+			json_array_append_new(json_nodes, json_name);
+		}
+#else
 		for (size_t i = 0; i < vlist_length(&plugins); i++) {
 			struct plugin *p = (struct plugin *) vlist_at(&plugins, i);
 
@@ -70,25 +84,7 @@ public:
 					json_name = json_string(p->name);
 					json_array_append_new(json_nodes, json_name);
 					break;
-
-				case PluginType::FORMAT:
-					json_name = json_string(p->name);
-					json_array_append_new(json_formats, json_name);
-					break;
 			}
-		}
-
-#if 0 /* @todo Port to C++ */
-		for (auto f : NodeFactory::lookup()) {
-			json_name = json_string(f->getName().c_str());
-
-			json_array_append_new(json_nodes, json_name);
-		}
-
-		for (auto f : FormatFactory::lookup()) {
-			json_name = json_string(f->getName().c_str());
-
-			json_array_append_new(json_formats, json_name);
 		}
 #endif
 

@@ -34,7 +34,7 @@
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/buffer.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/node/config.h>
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
@@ -70,10 +70,9 @@ struct websocket_connection {
 
 	struct lws *wsi;
 	struct vnode *node;
-	struct io io;
+	villas::node::Format *formatter;
 	struct queue queue;			/**< For samples which are sent to the Websocket */
 
-	struct format_type *format;
 	struct websocket_destination *destination;
 
 	struct {
@@ -107,9 +106,9 @@ int websocket_stop(struct vnode *n);
 int websocket_destroy(struct vnode *n);
 
 /** @see node_type::read */
-int websocket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int websocket_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

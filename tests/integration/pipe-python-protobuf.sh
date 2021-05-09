@@ -95,7 +95,7 @@ kill ${CPID}
 wait ${CPID}
 
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}

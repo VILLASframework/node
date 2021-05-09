@@ -40,6 +40,7 @@
 #include <villas/node/config.h>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 /* Some global settings */
@@ -181,7 +182,7 @@ public:
 		metadata.emplace_back("index", "integer", fmt::format("{}", j));
 	}
 
-	json_t * build(struct sample *smps[], unsigned cnt, int flags)
+	json_t * build(const struct sample * const smps[], unsigned cnt, int flags)
 	{
 		json_t *json_attribute = json_pack("{ s: s, s: s }",
 			"name", name.c_str(),
@@ -206,10 +207,10 @@ public:
 				));
 			}
 #else
-			struct sample *smp = smps[0];
+			const struct sample *smp = smps[0];
 
-			union signal_data *sd = &smp->data[index];
-			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, index);
+			const union signal_data *sd = &smp->data[index];
+			const struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, index);
 
 			json_t *json_value = signal_data_to_json(sd, sig->type);
 #endif
@@ -240,7 +241,7 @@ struct ngsi_response {
 	size_t len;
 };
 
-static json_t* ngsi_build_entity(struct vnode *n, struct sample *smps[], unsigned cnt, int flags)
+static json_t* ngsi_build_entity(struct vnode *n, const struct sample * const smps[], unsigned cnt, int flags)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
@@ -279,7 +280,7 @@ static json_t* ngsi_build_entity(struct vnode *n, struct sample *smps[], unsigne
 	return json_entity;
 }
 
-static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample *smps[], unsigned cnt)
+static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample * const smps[], unsigned cnt)
 {
 	int ret, length = 0;
 	const char *id, *name, *type;
@@ -731,7 +732,7 @@ int ngsi_stop(struct vnode *n)
 	return ret;
 }
 
-int ngsi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ngsi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -756,7 +757,7 @@ out:	json_decref(json_entity);
 	return ret;
 }
 
-int ngsi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ngsi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;

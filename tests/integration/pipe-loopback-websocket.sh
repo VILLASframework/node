@@ -78,7 +78,7 @@ villas-pipe -s ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
 wait $!
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${CONFIG_FILE2}

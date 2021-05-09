@@ -26,13 +26,11 @@
 #include <villas/common.hpp>
 #include <villas/utils.hpp>
 #include <villas/node_type.h>
-#include <villas/format_type.h>
 
 extern struct vlist plugins;
 
 enum PluginType {
-	NODE,
-	FORMAT,
+	NODE
 };
 
 struct plugin {
@@ -42,13 +40,12 @@ struct plugin {
 	enum PluginType type;
 
 	union {
-		struct format_type	format;
 		struct vnode_type	node;
 	};
 };
 
 /** Return a pointer to the plugin structure */
-#define plugin(vt) ((struct plugin *) ((char *) (vt) - offsetof(struct plugin, format)))
+#define plugin(vt) ((struct plugin *) ((char *) (vt) - offsetof(struct plugin, node)))
 
 #define plugin_name(vt) plugin(vt)->name
 #define plugin_description(vt) plugin(vt)->description

@@ -69,7 +69,6 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 
 	uuid_clear(n->uuid);
 
-	n->output_path = nullptr;
 	n->name = nullptr;
 	n->_name = nullptr;
 	n->_name_long = nullptr;
@@ -444,7 +443,7 @@ int node_destroy(struct vnode *n)
 	return 0;
 }
 
-int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int node_read(struct vnode *n, struct sample * smps[], unsigned cnt)
 {
 	int toread, readd, nread = 0;
 	unsigned vect;
@@ -462,7 +461,7 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	while (cnt - nread > 0) {
 		toread = MIN(cnt - nread, vect);
-		readd = node_type(n)->read(n, &smps[nread], toread, release);
+		readd = node_type(n)->read(n, &smps[nread], toread);
 		if (readd < 0)
 			return readd;
 
@@ -494,7 +493,7 @@ int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int node_write(struct vnode *n, struct sample * smps[], unsigned cnt)
 {
 	int tosend, sent, nsent = 0;
 	unsigned vect;
@@ -519,7 +518,7 @@ int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	while (cnt - nsent > 0) {
 		tosend = MIN(cnt - nsent, vect);
-		sent = node_type(n)->write(n, &smps[nsent], tosend, release);
+		sent = node_type(n)->write(n, &smps[nsent], tosend);
 		if (sent < 0)
 			return sent;
 
@@ -558,8 +557,8 @@ char * node_name_long(struct vnode *n)
 			strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
 
-		if (n->output_path)
-			strcatf(&n->_name_long, ", output_path=%s", path_name(n->output_path));
+		if (n->out.path)
+			strcatf(&n->_name_long, ", out.path=%s", path_name(n->out.path));
 
 		if (node_type(n)->print) {
 			struct vnode_type *vt = node_type(n);
@@ -675,8 +674,8 @@ struct vlist * node_input_signals(struct vnode *n)
 
 struct vlist * node_output_signals(struct vnode *n)
 {
-	if (n->output_path)
-		return path_output_signals(n->output_path);
+	if (n->out.path)
+		return path_output_signals(n->out.path);
 
 	return nullptr;
 }

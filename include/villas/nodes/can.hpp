@@ -82,10 +82,10 @@ int can_start(struct vnode *n);
 int can_stop(struct vnode *n);
 
 /** @see node_type::write */
-int can_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::read */
-int can_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::poll_fds */
 int can_poll_fds(struct vnode *n, int fds[]);

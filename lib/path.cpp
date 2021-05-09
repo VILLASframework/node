@@ -251,6 +251,8 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 	if (ret)
 		return ret;
 
+	p->muxed = path_is_muxed(p);
+
 	/* Create path sources */
 	std::map<struct vnode *, struct vpath_source *> pss;
 	for (size_t i = 0; i < vlist_length(&p->mappings); i++) {
@@ -378,7 +380,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
 #endif /* WITH_HOOKS */
 
-	p->logger->info("Prepared path {} with output signals:", path_name(p));
+	p->logger->info("Prepared path {} with {} output signals", path_name(p), vlist_length(path_output_signals(p)));
 	signal_list_dump(p->logger, path_output_signals(p));
 
 	p->state = State::PREPARED;
@@ -459,10 +461,10 @@ int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t 
 	for (size_t i = 0; i < vlist_length(&destinations); i++) {
 		struct vnode *n = (struct vnode *) vlist_at(&destinations, i);
 
-		if (n->output_path)
+		if (n->out.path)
 			throw ConfigError(json, "node-config-path", "Every node must only be used by a single path as destination");
 
-		n->output_path = p;
+		n->out.path = p;
 
 		auto *pd = new struct vpath_destination;
 		if (!pd)
@@ -777,6 +779,28 @@ bool path_is_simple(const struct vpath *p)
 		return false;
 
 	return true;
+}
+
+bool path_is_muxed(const struct vpath *p)
+{
+	if (vlist_length(&p->sources) > 0)
+		return true;
+
+	if (vlist_length(&p->mappings) > 0)
+		return true;
+
+	struct mapping_entry *me = (struct mapping_entry *) vlist_at_safe(&p->mappings, 0);
+
+	if (me->type != MappingType::DATA)
+		return true;
+
+	if (me->data.offset != 0)
+		return true;
+
+	if (me->length != -1)
+		return true;
+
+	return false;
 }
 
 bool path_is_enabled(const struct vpath *p)

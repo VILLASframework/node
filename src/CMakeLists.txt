@@ -21,13 +21,13 @@
 ###################################################################################
 
 set(SRCS
-    villas-node
-    villas-test-config
-    villas-test-rtt
-    villas-test-cmp
     villas-convert
+    villas-node
     villas-pipe
     villas-signal
+    villas-compare
+    villas-test-config
+    villas-test-rtt
 )
 
 add_executable(villas-node villas-node.cpp)
@@ -39,8 +39,8 @@ target_link_libraries(villas-test-config PUBLIC villas)
 add_executable(villas-test-rtt villas-test-rtt.cpp)
 target_link_libraries(villas-test-rtt PUBLIC villas)
 
-add_executable(villas-test-cmp villas-test-cmp.cpp)
-target_link_libraries(villas-test-cmp PUBLIC villas)
+add_executable(villas-compare villas-compare.cpp)
+target_link_libraries(villas-compare PUBLIC villas)
 
 add_executable(villas-convert villas-convert.cpp)
 target_link_libraries(villas-convert PUBLIC villas)

@@ -105,7 +105,7 @@ int queue_push(struct queue *q, void *ptr)
 
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
-	for (;;) {
+	while (true) {
 		cell = &buffer[pos & q->buffer_mask];
 		seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
 		diff = (intptr_t) seq - (intptr_t) pos;
@@ -137,7 +137,7 @@ int queue_pull(struct queue *q, void **ptr)
 
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
-	for (;;) {
+	while (true) {
 		cell = &buffer[pos & q->buffer_mask];
 		seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
 		diff = (intptr_t) seq - (intptr_t) (pos + 1);

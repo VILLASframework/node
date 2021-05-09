@@ -31,11 +31,10 @@
 
 #include <villas/node.h>
 #include <villas/pool.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 
 /* Forward declarations */
-struct format_type;
 struct mosquitto;
 
 struct mqtt {
@@ -62,8 +61,7 @@ struct mqtt {
 		char *keyfile;	/**< SSL private key. */
 	} ssl;
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 };
 
 /** @see node_type::reverse */
@@ -94,9 +92,9 @@ int mqtt_type_start(villas::node::SuperNode *sn);
 int mqtt_type_stop();
 
 /** @see node_type::read */
-int mqtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int mqtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int mqtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

@@ -44,7 +44,7 @@ villas-signal -v 5 -l ${NUM_SAMPLES} -n mixed > ${INPUT_FILE}
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}

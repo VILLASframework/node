@@ -118,7 +118,6 @@ int path_source_destroy(struct vpath_source *ps)
 int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 {
 	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
-	unsigned release;
 
 	cnt = ps->node->in.vectorize;
 
@@ -132,9 +131,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 		p->logger->warn("Pool underrun for path source {}", node_name(ps->node));
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
-	release = allocated;
-
-	recv = node_read(ps->node, read_smps, allocated, &release);
+	recv = node_read(ps->node, read_smps, allocated);
 	if (recv == 0) {
 		enqueued = 0;
 		goto out2;
@@ -159,13 +156,12 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 		auto *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
 
 		int sent;
-		unsigned release = recv;
 
-		sent = node_write(sps->node, read_smps, recv, &release);
+		sent = node_write(sps->node, read_smps, recv);
 		if (sent < recv)
 			p->logger->warn("Partial write to secondary path source {} of path {}", node_name(sps->node), path_name(p));
 
-		sample_incref_many(read_smps+release, recv-release);
+		sample_incref_many(read_smps, recv);
 	}
 
 	p->received.set(i);
@@ -243,7 +239,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 	}
 
 	sample_decref_many(muxed_smps, tomux);
-out2:	sample_decref_many(read_smps, release);
+out2:	sample_decref_many(read_smps, recv);
 
 	return enqueued;
 }

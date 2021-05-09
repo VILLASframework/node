@@ -273,7 +273,7 @@ int fpga_stop(struct vnode *n)
 	return 0;
 }
 
-int fpga_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int fpga_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	unsigned read;
 	struct fpga *f = (struct fpga *) n->_vd;
@@ -293,7 +293,7 @@ int fpga_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return read;
 }
 
-int fpga_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int fpga_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int written;
 	struct fpga *f = (struct fpga *) n->_vd;

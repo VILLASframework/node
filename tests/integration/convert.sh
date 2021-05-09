@@ -36,5 +36,5 @@ for FORMAT in ${FORMATS}; do
 	villas-convert -o ${FORMAT} < ${INPUT_FILE} | tee ${TEMP} | \
 	villas-convert -i ${FORMAT} > ${OUTPUT_FILE}
 
-	villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+	villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
 done

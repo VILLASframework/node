@@ -29,15 +29,18 @@
 
 #pragma once
 
-#include <villas/io.h>
+#include <cstdio>
+
+#include <villas/format.hpp>
 #include <villas/node.h>
 #include <villas/task.hpp>
 
 #define FILE_MAX_PATHLEN	512
 
 struct file {
-	struct io io;			/**< Format and file IO */
-	struct format_type *format;
+	villas::node::Format *formatter;
+	FILE *stream_in;
+	FILE *stream_out;
 
 	char *uri_tmpl;			/**< Format string for file name. */
 	char *uri;			/**< Real file name. */
@@ -82,9 +85,9 @@ int file_start(struct vnode *n);
 int file_stop(struct vnode *n);
 
 /** @see node_type::read */
-int file_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int file_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int file_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int file_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

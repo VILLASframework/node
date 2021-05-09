@@ -32,11 +32,10 @@
 #include <villas/utils.hpp>
 #include <villas/plugin.h>
 #include <villas/nodes/websocket.hpp>
-#include <villas/format_type.h>
-#include <villas/formats/msg_format.h>
 #include <villas/super_node.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
@@ -91,9 +90,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = io_init(&c->io, c->format, &c->node->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	c->formatter->start(&c->node->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	c->buffers.recv = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 	c->buffers.send = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
@@ -125,10 +122,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = io_destroy(&c->io);
-	if (ret)
-		return ret;
-
+	delete c->formatter;
 	delete c->buffers.recv;
 	delete c->buffers.send;
 
@@ -140,7 +134,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	return 0;
 }
 
-static int websocket_connection_write(struct websocket_connection *c, struct sample *smps[], unsigned cnt)
+static int websocket_connection_write(struct websocket_connection *c, struct sample * const smps[], unsigned cnt)
 {
 	int pushed;
 
@@ -224,8 +218,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					return -1;
 				}
 
-				c->format = format_type_lookup(format);
-				if (!c->format) {
+				c->formatter = FormatFactory::make(format);
+				if (!c->formatter) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown format");
 					c->node->logger->warn("Failed to find format: format={}", format);
 					return -1;
@@ -277,9 +271,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
 				size_t wbytes;
-				io_sprint(&c->io, c->buffers.send->data() + LWS_PRE, c->buffers.send->size() - LWS_PRE, &wbytes, smps, pulled);
+				c->formatter->sprint(c->buffers.send->data() + LWS_PRE, c->buffers.send->size() - LWS_PRE, &wbytes, smps, pulled);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send->data() + LWS_PRE, wbytes, c->io.flags & (int) IOFlags::HAS_BINARY_PAYLOAD ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send->data() + LWS_PRE, wbytes, c->formatter->isBinaryPayload() ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_decref_many(smps, pulled);
 
@@ -319,7 +313,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (avail < cnt)
 					c->node->logger->warn("Pool underrun for connection: {}", websocket_connection_name(c));
 
-				recvd = io_sscan(&c->io, c->buffers.recv->data(), c->buffers.recv->size(), nullptr, smps, avail);
+				recvd = c->formatter->sscan(c->buffers.recv->data(), c->buffers.recv->size(), nullptr, smps, avail);
 				if (recvd < 0) {
 					c->node->logger->warn("Failed to parse sample data received on connection: {}", websocket_connection_name(c));
 					break;
@@ -401,8 +395,8 @@ int websocket_start(struct vnode *n)
 		else
 			format = "villas.web";
 
-		c->format = format_type_lookup(format);
-		if (!c->format)
+		c->formatter = FormatFactory::make(format);
+		if (!c->formatter)
 			return -1;
 
 		c->node = n;
@@ -474,7 +468,7 @@ int websocket_destroy(struct vnode *n)
 	return 0;
 }
 
-int websocket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int websocket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int avail;
 
@@ -491,7 +485,7 @@ int websocket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 	return avail;
 }
 
-int websocket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int avail;
 

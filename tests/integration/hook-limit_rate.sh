@@ -32,7 +32,7 @@ awk 'NR % 10 == 2' < ${INPUT_FILE} > ${EXPECT_FILE}
 villas-hook -o rate=100 -o mode=origin limit_rate < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
+villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
 
 RC=$?
 

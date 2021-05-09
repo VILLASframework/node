@@ -22,8 +22,8 @@
 
 #include <arpa/inet.h>
 
-#include <villas/formats/msg.h>
-#include <villas/formats/msg_format.h>
+#include <villas/formats/msg.hpp>
+#include <villas/formats/msg_format.hpp>
 #include <villas/sample.h>
 #include <villas/signal.h>
 #include <villas/utils.hpp>
@@ -61,7 +61,7 @@ void msg_hdr_ntoh(struct msg *m)
 	m->ts.nsec  = ntohl(m->ts.nsec);
 }
 
-int msg_verify(struct msg *m)
+int msg_verify(const struct msg *m)
 {
 	if      (m->version != MSG_VERSION)
 		return -1;
@@ -73,7 +73,7 @@ int msg_verify(struct msg *m)
 		return 0;
 }
 
-int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
+int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs)
 {
 	int ret;
 	unsigned i;
@@ -83,8 +83,8 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 		return ret;
 
 	unsigned len = MIN(msg->length, smp->capacity);
-	for (i = 0; i < MIN(len, vlist_length(signals)); i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+	for (i = 0; i < MIN(len, vlist_length(sigs)); i++) {
+		struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
 		if (!sig)
 			return -1;
 
@@ -110,7 +110,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 	return 0;
 }
 
-int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signals)
+int msg_from_sample(struct msg *msg_in, const struct sample *smp, const struct vlist *sigs)
 {
 	msg_in->type     = MSG_TYPE_DATA;
 	msg_in->version  = MSG_VERSION;
@@ -122,7 +122,7 @@ int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signal
 	msg_in->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
 		if (!sig)
 			return -1;
 

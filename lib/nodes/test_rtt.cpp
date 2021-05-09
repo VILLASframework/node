@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 
+#include <villas/format.hpp>
 #include <villas/node.h>
 #include <villas/sample.h>
 #include <villas/timing.h>
@@ -34,22 +35,22 @@
 #include <villas/nodes/test_rtt.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static struct plugin p;
 
 static int test_rtt_case_start(struct vnode *n, int id)
 {
-	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
 
 	n->logger->info("Starting case #{}: filename={}, rate={}, values={}, limit={}", t->current, c->filename_formatted, c->rate, c->values, c->limit);
 
 	/* Open file */
-	ret = io_open(&t->io, c->filename_formatted);
-	if (ret)
-		return ret;
+	t->stream = fopen(c->filename_formatted, "a+");
+	if (!t->stream)
+		return -1;
 
 	/* Start timer. */
 	t->task.setRate(c->rate);
@@ -68,10 +69,9 @@ static int test_rtt_case_stop(struct vnode *n, int id)
 	/* Stop timer */
 	t->task.stop();
 
-	/* Close file */
-	ret = io_close(&t->io);
+	ret = fclose(t->stream);
 	if (ret)
-		return ret;
+		throw SystemError("Failed to close file");
 
 	n->logger->info("Stopping case #{}", id);
 
@@ -126,7 +126,6 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	const char *format = "villas.binary";
 	const char *output = ".";
 	const char *prefix = node_name_short(n);
 
@@ -134,7 +133,7 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	std::vector<int> values;
 
 	size_t i;
-	json_t *json_cases, *json_case, *json_val;
+	json_t *json_cases, *json_case, *json_val, *json_format = nullptr;
 	json_t *json_rates = nullptr, *json_values = nullptr;
 	json_error_t err;
 
@@ -145,10 +144,10 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: F, s: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: o, s?: F, s: o }",
 		"prefix", &prefix,
 		"output", &output,
-		"format", &format,
+		"format", &json_format,
 		"cooldown", &t->cooldown,
 		"cases", &json_cases
 	);
@@ -159,10 +158,12 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	t->prefix = strdup(prefix);
 
 	/* Initialize IO module */
-	t->format = format_type_lookup(format);
-	if (!t->format)
-		throw ConfigError(json, "node-config-node-test-rtt-format", "Invalid value for setting 'format'");
+	if (!json_format)
+		json_format = json_string("villas.binary");
 
+	t->formatter = FormatFactory::make(json_format);
+	if (!t->formatter)
+		throw ConfigError(json, "node-config-node-test-rtt-format", "Invalid value for setting 'format'");
 
 	/* Construct vlist of test cases */
 	if (!json_is_array(json_cases))
@@ -296,9 +297,7 @@ int test_rtt_start(struct vnode *n)
 			throw SystemError("Failed to create output directory: {}", t->output);
 	}
 
-	ret = io_init(&t->io, t->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_DATA);
-	if (ret)
-		return ret;
+	t->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_DATA);
 
 	t->task.setRate(c->rate);
 
@@ -319,14 +318,12 @@ int test_rtt_stop(struct vnode *n)
 			return ret;
 	}
 
-	ret = io_destroy(&t->io);
-	if (ret)
-		return ret;
+	delete t->formatter;
 
 	return 0;
 }
 
-int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
@@ -398,7 +395,7 @@ int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 	}
 }
 
-int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int test_rtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
@@ -414,7 +411,7 @@ int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 			continue;
 		}
 
-		io_print(&t->io, &smps[i], 1);
+		t->formatter->print(t->stream, smps[i]);
 	}
 
 	return i;

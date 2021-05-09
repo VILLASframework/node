@@ -20,17 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/plugin.h>
 #include <villas/sample.h>
 #include <villas/compat.hpp>
 #include <villas/signal.h>
-#include <villas/io.h>
-#include <villas/formats/json.h>
+#include <villas/formats/json.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
-static enum SignalType json_detect_format(json_t *val)
+enum SignalType JsonFormat::detect(const json_t *val)
 {
 	int type = json_typeof(val);
 
@@ -53,7 +52,7 @@ static enum SignalType json_detect_format(json_t *val)
 	}
 }
 
-static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
+json_t * JsonFormat::packTimestamps(const struct sample *smp)
 {
 	json_t *json_ts = json_object();
 
@@ -63,12 +62,12 @@ static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
 	const char *fmt = "[ I, I ]";
 #endif
 
-	if (io->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN)
 			json_object_set(json_ts, "origin", json_pack(fmt, smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
 	}
 
-	if (io->flags & (int) SampleFlags::HAS_TS_RECEIVED) {
+	if (flags & (int) SampleFlags::HAS_TS_RECEIVED) {
 		if (smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)
 			json_object_set(json_ts, "received", json_pack(fmt, smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
 	}
@@ -76,7 +75,7 @@ static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
 	return json_ts;
 }
 
-static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
+int JsonFormat::unpackTimestamps(json_t *json_ts, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -107,22 +106,22 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 	return 0;
 }
 
-static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
+int JsonFormat::packSample(json_t **json_smp, const struct sample *smp)
 {
-	json_t *json_smp;
+	json_t *json_root;
 	json_error_t err;
 
-	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(io, smp));
+	json_root = json_pack_ex(&err, 0, "{ s: o }", "ts", packTimestamps(smp));
 
-	if (io->flags & (int) SampleFlags::HAS_SEQUENCE) {
+	if (flags & (int) SampleFlags::HAS_SEQUENCE) {
 		if (smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
 			json_t *json_sequence = json_integer(smp->sequence);
 
-			json_object_set(json_smp, "sequence", json_sequence);
+			json_object_set_new(json_root, "sequence", json_sequence);
 		}
 	}
 
-	if (io->flags & (int) SampleFlags::HAS_DATA) {
+	if (flags & (int) SampleFlags::HAS_DATA) {
 		json_t *json_data = json_array();
 
 		for (unsigned i = 0; i < smp->length; i++) {
@@ -132,38 +131,38 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 
 			json_t *json_value = signal_data_to_json(&smp->data[i], sig->type);
 
-			json_array_append(json_data, json_value);
+			json_array_append_new(json_data, json_value);
 		}
 
-		json_object_set(json_smp, "data", json_data);
+		json_object_set_new(json_root, "data", json_data);
 	}
 
-	*j = json_smp;
+	*json_smp = json_root;
 
 	return 0;
 }
 
-static int json_pack_samples(struct io *io, json_t **j, struct sample *smps[], unsigned cnt)
+int JsonFormat::packSamples(json_t **json_smps, const struct sample * const smps[], unsigned cnt)
 {
 	int ret;
-	json_t *json_smps = json_array();
+	json_t *json_root = json_array();
 
 	for (unsigned i = 0; i < cnt; i++) {
 		json_t *json_smp;
 
-		ret = json_pack_sample(io, &json_smp, smps[i]);
+		ret = packSample(&json_smp, smps[i]);
 		if (ret)
 			break;
 
-		json_array_append(json_smps, json_smp);
+		json_array_append_new(json_root, json_smp);
 	}
 
-	*j = json_smps;
+	*json_smps = json_root;
 
 	return cnt;
 }
 
-static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
+int JsonFormat::unpackSample(json_t *json_smp, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -171,7 +170,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 	size_t i;
 	int64_t sequence = -1;
 
-	smp->signals = io->signals;
+	smp->signals = signals;
 
 	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: I, s: o }",
 		"ts", &json_ts,
@@ -184,7 +183,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 	smp->length = 0;
 
 	if (json_ts) {
-		ret = json_unpack_timestamps(json_ts, smp);
+		ret = unpackTimestamps(json_ts, smp);
 		if (ret)
 			return ret;
 	}
@@ -205,7 +204,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 		if (!sig)
 			return -1;
 
-		enum SignalType fmt = json_detect_format(json_value);
+		enum SignalType fmt = detect(json_value);
 		if (sig->type != fmt)
 			throw RuntimeError("Received invalid data type in JSON payload: Received {}, expected {} for signal {} (index {}).",
 				signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
@@ -223,7 +222,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 	return 0;
 }
 
-static int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *smps[], unsigned cnt)
+int JsonFormat::unpackSamples(json_t *json_smps, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smp;
@@ -236,7 +235,7 @@ static int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *
 		if (i >= cnt)
 			break;
 
-		ret = json_unpack_sample(io, json_smp, smps[i]);
+		ret = unpackSample(json_smp, smps[i]);
 		if (ret < 0)
 			break;
 	}
@@ -244,17 +243,17 @@ static int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *
 	return i;
 }
 
-int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+int JsonFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
 	size_t wr;
 
-	ret = json_pack_samples(io, &json, smps, cnt);
+	ret = packSamples(&json, smps, cnt);
 	if (ret < 0)
 		return ret;
 
-	wr = json_dumpb(json, buf, len, 0);
+	wr = json_dumpb(json, buf, len, dump_flags);
 
 	json_decref(json);
 
@@ -264,7 +263,7 @@ int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sam
 	return ret;
 }
 
-int json_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int JsonFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -274,7 +273,7 @@ int json_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struc
 	if (!json)
 		return -1;
 
-	ret = json_unpack_samples(io, json, smps, cnt);
+	ret = unpackSamples(json, smps, cnt);
 
 	json_decref(json);
 
@@ -287,21 +286,19 @@ int json_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struc
 	return ret;
 }
 
-int json_print(struct io *io, struct sample *smps[], unsigned cnt)
+int JsonFormat::print(FILE *f, const struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
 	json_t *json;
 
-	FILE *f = io_stream_output(io);
-
 	for (i = 0; i < cnt; i++) {
-		ret = json_pack_sample(io, &json, smps[i]);
+		ret = packSample(&json, smps[i]);
 		if (ret)
 			return ret;
 
-		ret = json_dumpf(json, f, 0);
-		fputc(io->delimiter, f);
+		ret = json_dumpf(json, f, dump_flags);
+		fputc('\n', f);
 
 		json_decref(json);
 
@@ -312,14 +309,12 @@ int json_print(struct io *io, struct sample *smps[], unsigned cnt)
 	return i;
 }
 
-int json_scan(struct io *io, struct sample *smps[], unsigned cnt)
+int JsonFormat::scan(FILE *f, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
 	json_t *json;
 	json_error_t err;
-
-	FILE *f = io_stream_input(io);
 
 	for (i = 0; i < cnt; i++) {
 		if (feof(f))
@@ -329,7 +324,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = json_unpack_sample(io, json, smps[i]);
+		ret = unpackSample(json, smps[i]);
 		if (ret)
 			goto skip;
 
@@ -339,23 +334,54 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 	return i;
 }
 
-static struct plugin p;
+void JsonFormat::parse(json_t *json)
+{
+	int ret;
+	json_error_t err;
 
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "json";
-	p.description = "Javascript Object Notation";
-	p.type = PluginType::FORMAT;
-	p.format.print = json_print;
-	p.format.scan = json_scan;
-	p.format.sprint = json_sprint;
-	p.format.sscan = json_sscan;
-	p.format.size = 0;
-	p.format.flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-	p.format.delimiter = '\n';
+	int indent = 0;
+	int compact = 0;
+	int ensure_ascii = 0;
+	int escape_slash = 0;
+	int sort_keys = 0;
 
-	vlist_init_and_push(&plugins, &p);
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b, s?: b, s?: b, s?: b }",
+		"indent", &indent,
+		"compact", &compact,
+		"ensure_ascii", &ensure_ascii,
+		"escape_slash", &escape_slash,
+		"sort_keys", &sort_keys
+
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-format-json", "Failed to parse format configuration");
+
+	if (indent > JSON_MAX_INDENT)
+		throw ConfigError(json, "node-config-format-json-indent", "The maximum indentation level is {}", JSON_MAX_INDENT);
+
+	dump_flags = 0;
+
+	if (indent)
+		dump_flags |= JSON_INDENT(indent);
+
+	if (compact)
+		dump_flags |= JSON_COMPACT;
+
+	if (ensure_ascii)
+		dump_flags |= JSON_ENSURE_ASCII;
+
+	if (escape_slash)
+		dump_flags |= JSON_ESCAPE_SLASH;
+
+	if (sort_keys)
+		dump_flags |= JSON_SORT_KEYS;
+
+	Format::parse(json);
+
+	if (real_precision)
+		dump_flags |= JSON_REAL_PRECISION(real_precision);
 }
 
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
+static char n[] = "json";
+static char d[] = "Javascript Object Notation";
+static FormatPlugin<JsonFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

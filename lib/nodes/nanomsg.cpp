@@ -27,10 +27,10 @@
 #include <villas/plugin.h>
 #include <villas/nodes/nanomsg.hpp>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int nanomsg_reverse(struct vnode *n)
@@ -86,10 +86,8 @@ int nanomsg_parse(struct vnode *n, json_t *json)
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	const char *format = "villas.binary";
-
 	json_error_t err;
-
+	json_t *json_format = nullptr;
 	json_t *json_out_endpoints = nullptr;
 	json_t *json_in_endpoints = nullptr;
 
@@ -101,8 +99,8 @@ int nanomsg_parse(struct vnode *n, json_t *json)
 	if (ret)
 		return ret;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: { s?: o }, s?: { s?: o } }",
-		"format", &format,
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: { s?: o }, s?: { s?: o } }",
+		"format", &json_format,
 		"out",
 			"endpoints", &json_out_endpoints,
 		"in",
@@ -123,9 +121,12 @@ int nanomsg_parse(struct vnode *n, json_t *json)
 			throw RuntimeError("Invalid type for 'subscribe' setting");
 	}
 
-	m->format = format_type_lookup(format);
-	if (!m->format)
-		throw RuntimeError("Invalid format '{}'", format);
+	/* Format */
+	m->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("json");
+	if (!m->formatter)
+		throw ConfigError(json_format, "node-config-node-nanomsg-format", "Invalid format configuration");
 
 	return 0;
 }
@@ -136,7 +137,7 @@ char * nanomsg_print(struct vnode *n)
 
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, in.endpoints=[ ", format_type_name(m->format));
+	strcatf(&buf, "in.endpoints=[ ");
 
 	for (size_t i = 0; i < vlist_length(&m->in.endpoints); i++) {
 		char *ep = (char *) vlist_at(&m->in.endpoints, i);
@@ -162,9 +163,7 @@ int nanomsg_start(struct vnode *n)
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	ret = io_init(&m->io, m->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	m->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	ret = m->in.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0)
@@ -213,9 +212,7 @@ int nanomsg_stop(struct vnode *n)
 	if (ret < 0)
 		return ret;
 
-	ret = io_destroy(&m->io);
-	if (ret)
-		return ret;
+	delete m->formatter;
 
 	return 0;
 }
@@ -227,7 +224,7 @@ int nanomsg_type_stop()
 	return 0;
 }
 
-int nanomsg_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int nanomsg_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 	int bytes;
@@ -238,10 +235,10 @@ int nanomsg_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	if (bytes < 0)
 		return -1;
 
-	return io_sscan(&m->io, data, bytes, nullptr, smps, cnt);
+	return m->formatter->sscan(data, bytes, nullptr, smps, cnt);
 }
 
-int nanomsg_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int nanomsg_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -250,7 +247,7 @@ int nanomsg_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = m->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 

@@ -168,7 +168,7 @@ int example_resume(struct vnode *n)
 	return 0;
 }
 
-int example_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int example_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int read;
 	struct example *s = (struct example *) n->_vd;
@@ -192,7 +192,7 @@ int example_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	return read;
 }
 
-int example_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int example_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int written;
 	//struct example *s = (struct example *) n->_vd;

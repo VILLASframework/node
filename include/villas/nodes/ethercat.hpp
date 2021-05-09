@@ -38,7 +38,7 @@
 #include <villas/task.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/config.h>
 
 /* Include hard-coded Ethercat Bus configuration */
@@ -109,9 +109,9 @@ int ethercat_start(struct vnode *n);
 int ethercat_stop(struct vnode *n);
 
 /** @see node_type::read */
-int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ethercat_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int ethercat_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int ethercat_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

@@ -61,6 +61,6 @@ int influxdb_open(struct vnode *n);
 int influxdb_close(struct vnode *n);
 
 /** @see node_type::write */
-int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

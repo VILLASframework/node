@@ -22,21 +22,21 @@
 
 #include <cstring>
 
-#include <villas/plugin.h>
-#include <villas/sample.h>
-#include <villas/node.h>
-#include <villas/signal.h>
-#include <villas/compat.hpp>
 #include <villas/timing.h>
-#include <villas/io.h>
-#include <villas/formats/json_reserve.h>
+#include <villas/formats/json_reserve.hpp>
+
+using namespace villas::node;
 
 #define JSON_RESERVE_INTEGER_TARGET 1
 
-static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
+int JsonReserveFormat::packSample(json_t **json_smp, const struct sample *smp)
 {
 	json_error_t err;
-	json_t *json_data, *json_name, *json_unit, *json_value;
+	json_t *json_root;
+	json_t *json_data;
+	json_t *json_name;
+	json_t *json_unit;
+	json_t *json_value;
 	json_t *json_created = nullptr;
 	json_t *json_sequence = nullptr;
 
@@ -75,24 +75,19 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 			continue;
 
 		if (json_unit)
-			json_object_set(json_value, "unit", json_unit);
+			json_object_set_new(json_value, "unit", json_unit);
 		if (json_created)
-			json_object_set(json_value, "created", json_created);
+			json_object_set_new(json_value, "created", json_created);
 		if (json_sequence)
-			json_object_set(json_value, "sequence", json_sequence);
+			json_object_set_new(json_value, "sequence", json_sequence);
 
-		json_array_append(json_data, json_value);
+		json_array_append_new(json_data, json_value);
 	}
 
-	if (json_created)
-		json_decref(json_created);
-	if (json_sequence)
-		json_decref(json_sequence);
-
-	*j = json_pack_ex(&err, 0, "{ s: o }",
+	json_root = json_pack_ex(&err, 0, "{ s: o }",
 		"measurements", json_data
 	);
-	if (*j == nullptr)
+	if (json_root == nullptr)
 		return -1;
 #if 0
 #ifdef JSON_RESERVE_INTEGER_TARGET
@@ -106,18 +101,20 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 		if (endptr[0] != 0)
 			return -1;
 
-		json_object_set_new(*j, "target", json_integer(id));
+		json_object_set_new(json_root, "target", json_integer(id));
 	}
 #else
 	if (io->out.node)
-		json_object_set_new(*j, "target", json_string(io->out.node->name));
+		json_object_set_new(json_root, "target", json_string(io->out.node->name));
 #endif
 #endif
+
+	*json_smp = json_root;
 
 	return 0;
 }
 
-static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
+int JsonReserveFormat::unpackSample(json_t *json_smp, struct sample *smp)
 {
 	int ret, idx;
 	double created = -1;
@@ -185,12 +182,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 
 		struct signal *sig;
 
-		sig = vlist_lookup_name<struct signal>(io->signals, name);
+		sig = vlist_lookup_name<struct signal>(signals, name);
 		if (sig) {
 			if (!sig->enabled)
 				continue;
 
-			idx = vlist_index(io->signals, sig);
+			idx = vlist_index(signals, sig);
 		}
 		else {
 			ret = sscanf(name, "signal_%d", &idx);
@@ -220,122 +217,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	return smp->length > 0 ? 1 : 0;
 }
 
-/*
- * Note: The following functions are the same as io/json.c !!!
- */
 
-int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	json_t *json;
-	size_t wr;
-
-	assert(cnt == 1);
-
-	ret = json_reserve_pack_sample(io, &json, smps[0]);
-	if (ret < 0)
-		return ret;
-
-	wr = json_dumpb(json, buf, len, 0);
-
-	json_decref(json);
-
-	if (wbytes)
-		*wbytes = wr;
-
-	return ret;
-}
-
-int json_reserve_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	json_t *json;
-	json_error_t err;
-
-	assert(cnt == 1);
-
-	json = json_loadb(buf, len, 0, &err);
-	if (!json)
-		return -1;
-
-	ret = json_reserve_unpack_sample(io, json, smps[0]);
-
-	json_decref(json);
-
-	if (ret < 0)
-		return ret;
-
-	if (rbytes)
-		*rbytes = err.position;
-
-	return ret;
-}
-
-int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	unsigned i;
-	json_t *json;
-
-	FILE *f = io_stream_output(io);
-
-	for (i = 0; i < cnt; i++) {
-		ret = json_reserve_pack_sample(io, &json, smps[i]);
-		if (ret)
-			return ret;
-
-		ret = json_dumpf(json, f, 0);
-		fputc('\n', f);
-
-		json_decref(json);
-
-		if (ret)
-			return ret;
-	}
-
-	return i;
-}
-
-int json_reserve_scan(struct io *io, struct sample *smps[], unsigned cnt)
-{
-	int ret;
-	unsigned i;
-	json_t *json;
-	json_error_t err;
-
-	FILE *f = io_stream_input(io);
-
-	for (i = 0; i < cnt; i++) {
-skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
-		if (!json)
-			break;
-
-		ret = json_reserve_unpack_sample(io, json, smps[i]);
-
-		json_decref(json);
-
-		if (ret < 0)
-			goto skip;
-	}
-
-	return i;
-}
-
-static struct plugin p;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "json.reserve";
-	p.description = "RESERVE JSON format";
-	p.type = PluginType::FORMAT;
-	p.format.print	= json_reserve_print;
-	p.format.scan	= json_reserve_scan;
-	p.format.sprint	= json_reserve_sprint;
-	p.format.sscan	= json_reserve_sscan;
-	p.format.size = 0;
-
-	vlist_init_and_push(&plugins, &p);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
+static char n[] = "json.reserve";
+static char d[] = "RESERVE JSON format";
+static FormatPlugin<JsonReserveFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

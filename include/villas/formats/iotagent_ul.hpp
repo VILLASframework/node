@@ -1,6 +1,6 @@
-/** JSON serializtion sample data.
+/** UltraLight format for FISMEP project.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -22,14 +22,23 @@
 
 #pragma once
 
-#include <jansson.h>
+#include <villas/format.hpp>
 
 /* Forward declarations */
 struct sample;
 
-int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-int json_sscan(struct io *io, const char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+namespace villas {
+namespace node {
 
-int json_print(struct io *io, struct sample *smps[], unsigned cnt);
-int json_scan(struct io *io, struct sample *smps[], unsigned cnt);
+class IotAgentUltraLightFormat : public Format {
 
+protected:
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+
+public:
+	using Format::Format;
+};
+
+} /* namespace node */
+} /* namespace villas */

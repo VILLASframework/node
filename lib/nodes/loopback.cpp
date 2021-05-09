@@ -30,6 +30,7 @@
 #include <villas/memory.h>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static struct plugin p;
@@ -95,7 +96,7 @@ int loopback_destroy(struct vnode *n)
 	return queue_signalled_destroy(&l->queue);
 }
 
-int loopback_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int loopback_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int avail;
 
@@ -112,7 +113,7 @@ int loopback_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 	return avail;
 }
 
-int loopback_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int loopback_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 

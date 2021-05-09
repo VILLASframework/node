@@ -137,7 +137,7 @@ villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
 scp ${REMOTE_USER}@${REMOTE_ADDR}:${OUTPUT_FILE} ${OUTPUT_FILE}
 
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${INPUT_FILE} ${OUTPUT_FILE} ${CONFIG_FILE_DEST} ${CONFIG_FILE_SRC}

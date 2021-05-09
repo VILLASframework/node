@@ -33,12 +33,9 @@
 
 #include <villas/node.h>
 #include <villas/pool.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 
-
-/* Forward declarations */
-struct format_type;
 
 struct kafka {
 	struct queue_signalled queue;
@@ -71,8 +68,7 @@ struct kafka {
 		char *password;		/**< SSL certificate. */
 	} sasl;
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 };
 
 /** @see node_type::reverse */
@@ -103,9 +99,9 @@ int kafka_type_start(villas::node::SuperNode *sn);
 int kafka_type_stop();
 
 /** @see node_type::read */
-int kafka_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int kafka_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int kafka_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int kafka_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

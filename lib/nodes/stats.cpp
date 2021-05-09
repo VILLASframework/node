@@ -216,7 +216,7 @@ int stats_node_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int stats_node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int stats_node_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 

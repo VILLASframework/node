@@ -1,4 +1,4 @@
-/** Unit tests for IO formats.
+/** Unit tests for formatters.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -33,12 +33,13 @@
 #include <villas/signal.h>
 #include <villas/plugin.h>
 #include <villas/pool.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/log.hpp>
 
 #include "helpers.hpp"
 
 using namespace villas;
+using namespace villas::node;
 
 extern void init_memory();
 
@@ -107,7 +108,7 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 
 void cr_assert_eq_sample(struct sample *a, struct sample *b, int flags)
 {
-	cr_assert_eq(a->length, b->length);
+	cr_assert_eq(a->length, b->length, "a->length=%d, b->length=%d", a->length, b->length);
 
 	if (flags & (int) SampleFlags::HAS_SEQUENCE)
 		cr_assert_eq(a->sequence, b->sequence);
@@ -193,46 +194,47 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 	}
 }
 
-ParameterizedTestParameters(io, lowlevel)
+ParameterizedTestParameters(format, lowlevel)
 {
 	static criterion::parameters<Param> params;
 
-	params.emplace_back("gtnet",		1, 32);
-	params.emplace_back("gtnet.fake",	1, 32);
-	params.emplace_back("raw.8",		1,  8);
-	params.emplace_back("raw.16.be",	1, 16);
-	params.emplace_back("raw.16.le",	1, 16);
-	params.emplace_back("raw.32.be",	1, 32);
-	params.emplace_back("raw.32.le",	1, 32);
-	params.emplace_back("raw.64.be",	1, 64);
-	params.emplace_back("raw.64.le",	1, 64);
-	params.emplace_back("villas.human",	10, 0);
-	params.emplace_back("villas.binary",	10, 0);
-	params.emplace_back("csv",		10, 0);
-	params.emplace_back("json",		10, 0);
+	params.emplace_back("{ \"type\": \"gtnet\" }",						1, 32);
+	params.emplace_back("{ \"type\": \"gtnet\", \"fake\": true }",				1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 8 }",				1,  8);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 16, \"endianess\": \"big\"    }",	1, 16);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 16, \"endianess\": \"little\" }",	1, 16);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 32, \"endianess\": \"big\"    }",	1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 32, \"endianess\": \"little\" }",	1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 64, \"endianess\": \"big\"    }",	1, 64);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 64, \"endianess\": \"little\" }",	1, 64);
+	params.emplace_back("{ \"type\": \"villas.human\" }",					10, 0);
+	params.emplace_back("{ \"type\": \"villas.binary\" }",					10, 0);
+	params.emplace_back("{ \"type\": \"csv\" }",						10, 0);
+	params.emplace_back("{ \"type\": \"tsv\" }",						10, 0);
+	params.emplace_back("{ \"type\": \"json\" }",						10, 0);
+	// params.emplace_back("{ \"type\": \"json.kafka\" }",					10, 0); # broken due to signal names
+	// params.emplace_back("{ \"type\": \"json.reserve\" }",				10, 0);
 #ifdef PROTOBUF_FOUND
-	params.emplace_back("protobuf",		10, 0 );
+	params.emplace_back("{ \"type\": \"protobuf\" }",					10, 0 );
 #endif
 
 	return params;
 }
 
 // cppcheck-suppress unknownMacro
-ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
+ParameterizedTest(Param *p, format, lowlevel, .init = init_memory)
 {
 	int ret;
 	unsigned cnt;
 	char buf[8192];
 	size_t wbytes, rbytes;
 
-	Logger logger = logging.get("test:io:lowlevel");
+	Logger logger = logging.get("test:format:lowlevel");
 
 	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
-	struct format_type *f;
-
 	struct pool pool;
-	struct io io;
+	Format *fmt;
 	struct vlist signals;
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
@@ -252,25 +254,27 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 
 	fill_sample_data(&signals, smps, p->cnt);
 
-	f = format_type_lookup(p->fmt.c_str());
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
+	json_t *json_format = json_loads(p->fmt.c_str(), 0, nullptr);
+	cr_assert_not_null(json_format);
 
-	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
-	cr_assert_eq(ret, 0);
+	fmt = FormatFactory::make(json_format);
+	cr_assert_not_null(fmt, "Failed to create formatter of type '%s'", p->fmt.c_str());
 
-	cnt = io_sprint(&io, buf, sizeof(buf), &wbytes, smps, p->cnt);
-	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples for format %s", cnt, p->cnt, format_type_name(f));
+	fmt->start(&signals, (int) SampleFlags::HAS_ALL);
 
-	cnt = io_sscan(&io, buf, wbytes, &rbytes, smpt, p->cnt);
-	cr_assert_eq(cnt, p->cnt, "Read only %d of %d samples back for format %s", cnt, p->cnt, format_type_name(f));
+	cnt = fmt->sprint(buf, sizeof(buf), &wbytes, smps, p->cnt);
+	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples", cnt, p->cnt);
+
+	cnt = fmt->sscan(buf, wbytes, &rbytes, smpt, p->cnt);
+	cr_assert_eq(cnt, p->cnt, "Read only %d of %d samples back", cnt, p->cnt);
 
 	cr_assert_eq(rbytes, wbytes, "rbytes != wbytes: %#zx != %#zx", rbytes, wbytes);
 
 	for (unsigned i = 0; i < cnt; i++) {
 		if (p->bits)
-			cr_assert_eq_sample_raw(smps[i], smpt[i], f->flags, p->bits);
+			cr_assert_eq_sample_raw(smps[i], smpt[i], fmt->getFlags(), p->bits);
 		else
-			cr_assert_eq_sample(smps[i], smpt[i], f->flags);
+			cr_assert_eq_sample(smps[i], smpt[i], fmt->getFlags());
 	}
 
 	sample_free_many(smps, p->cnt);
@@ -280,49 +284,48 @@ ParameterizedTest(Param *p, io, lowlevel, .init = init_memory)
 	cr_assert_eq(ret, 0);
 }
 
-ParameterizedTestParameters(io, highlevel)
+ParameterizedTestParameters(format, highlevel)
 {
 	static criterion::parameters<Param> params;
 
-	params.emplace_back("gtnet",		1, 32);
-	params.emplace_back("gtnet.fake",	1, 32);
-	params.emplace_back("raw.8",		1,  8);
-	params.emplace_back("raw.16.be",	1, 16);
-	params.emplace_back("raw.16.le",	1, 16);
-	params.emplace_back("raw.32.be",	1, 32);
-	params.emplace_back("raw.32.le",	1, 32);
-	params.emplace_back("raw.64.be",	1, 64);
-	params.emplace_back("raw.64.le",	1, 64);
-	params.emplace_back("villas.human",	10, 0);
-	params.emplace_back("villas.binary",	10, 0);
-	params.emplace_back("csv",		10, 0);
-	params.emplace_back("json",		10, 0);
+	params.emplace_back("{ \"type\": \"gtnet\" }",						1, 32);
+	params.emplace_back("{ \"type\": \"gtnet\", \"fake\": true }",				1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 8 }",				1,  8);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 16, \"endianess\": \"big\"    }",	1, 16);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 16, \"endianess\": \"little\" }",	1, 16);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 32, \"endianess\": \"big\"    }",	1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 32, \"endianess\": \"little\" }",	1, 32);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 64, \"endianess\": \"big\"    }",	1, 64);
+	params.emplace_back("{ \"type\": \"raw\", \"bits\": 64, \"endianess\": \"little\" }",	1, 64);
+	params.emplace_back("{ \"type\": \"villas.human\" }",					10, 0);
+	params.emplace_back("{ \"type\": \"villas.binary\" }",					10, 0);
+	params.emplace_back("{ \"type\": \"csv\" }",						10, 0);
+	params.emplace_back("{ \"type\": \"tsv\" }",						10, 0);
+	params.emplace_back("{ \"type\": \"json\" }",						10, 0);
+	// params.emplace_back("{ \"type\": \"json.kafka\" }",					10, 0); # broken due to signal names
+	// params.emplace_back("{ \"type\": \"json.reserve\" }",				10, 0);
 #ifdef PROTOBUF_FOUND
-	params.emplace_back("protobuf",		10, 0 );
+	params.emplace_back("{ \"type\": \"protobuf\" }",					10, 0 );
 #endif
 
 	return params;
 }
 
-ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
+ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 {
 	int ret, cnt;
 	char *retp;
 
-	Logger logger = logging.get("test:io:highlevel");
+	Logger logger = logging.get("test:format:highlevel");
 
 	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
-
-	return;
-
-	struct format_type *f;
 
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
 	struct pool pool;
 	struct vlist signals;
-	struct io io;
+	Format *fmt;
 
 	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
 	cr_assert_eq(ret, 0);
@@ -339,7 +342,7 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 
 	fill_sample_data(&signals, smps, p->cnt);
 
-	/* Open a file for IO */
+	/* Open a file for testing the formatter */
 	char *fn, dir[64];
 	strncpy(dir, "/tmp/villas.XXXXXX", sizeof(dir));
 
@@ -349,19 +352,21 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
-	f = format_type_lookup(p->fmt.c_str());
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
+	json_t *json_format = json_loads(p->fmt.c_str(), 0, nullptr);
+	cr_assert_not_null(json_format);
 
-	ret = io_init(&io, f, &signals, (int) SampleFlags::HAS_ALL);
-	cr_assert_eq(ret, 0);
+	fmt = FormatFactory::make(json_format);
+	cr_assert_not_null(fmt, "Failed to create formatter of type '%s'", p->fmt.c_str());
 
-	ret = io_open(&io, fn);
-	cr_assert_eq(ret, 0);
+	fmt->start(&signals, (int) SampleFlags::HAS_ALL);
 
-	cnt = io_print(&io, smps, p->cnt);
-	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples for format %s", cnt, p->cnt, format_type_name(f));
+	auto *stream = fopen(fn, "w+");
+	cr_assert_not_null(stream);
 
-	ret = io_flush(&io);
+	cnt = fmt->print(stream, smps, p->cnt);
+	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples", cnt, p->cnt);
+
+	ret = fflush(stream);
 	cr_assert_eq(ret, 0);
 
 #if 0 /* Show the file contents */
@@ -373,25 +378,22 @@ ParameterizedTest(Param *p, io, highlevel, .init = init_memory)
 	system(cmd);
 #endif
 
-	io_rewind(&io);
+	rewind(stream);
 
-	cnt = io_scan(&io, smpt, p->cnt);
-	cr_assert_gt(cnt, 0, "Failed to read samples back: cnt=%d", cnt);
-
+	cnt = fmt->scan(stream, smpt, p->cnt);
 	cr_assert_eq(cnt, p->cnt, "Read only %d of %d samples back", cnt, p->cnt);
 
 	for (int i = 0; i < cnt; i++) {
 		if (p->bits)
-			cr_assert_eq_sample_raw(smps[i], smpt[i], f->flags, p->bits);
+			cr_assert_eq_sample_raw(smps[i], smpt[i], fmt->getFlags(), p->bits);
 		else
-			cr_assert_eq_sample(smps[i], smpt[i], f->flags);
+			cr_assert_eq_sample(smps[i], smpt[i], fmt->getFlags());
 	}
 
-	ret = io_close(&io);
+	ret = fclose(stream);
 	cr_assert_eq(ret, 0);
 
-	ret = io_destroy(&io);
-	cr_assert_eq(ret, 0);
+	delete fmt;
 
 	ret = unlink(fn);
 	cr_assert_eq(ret, 0);

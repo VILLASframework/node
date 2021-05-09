@@ -97,7 +97,7 @@ sleep 1
 kill %1
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}

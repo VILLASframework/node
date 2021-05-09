@@ -33,10 +33,7 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
-#include <villas/io.h>
-
-/* Forward declarations */
-struct format_type;
+#include <villas/format.hpp>
 
 struct amqp_ssl_info {
 	int verify_peer;
@@ -59,8 +56,7 @@ struct amqp {
 	amqp_connection_state_t producer;
 	amqp_connection_state_t consumer;
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 };
 
 /** @see node_type::print */
@@ -76,9 +72,9 @@ int amqp_start(struct vnode *n);
 int amqp_stop(struct vnode *n);
 
 /** @see node_type::read */
-int amqp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int amqp_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int amqp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int amqp_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

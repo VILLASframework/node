@@ -29,13 +29,14 @@
 
 #include <villas/nodes/zeromq.hpp>
 #include <villas/node.h>
+#include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/queue.h>
 #include <villas/plugin.h>
-#include <villas/format_type.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static void *context;
@@ -156,14 +157,14 @@ int zeromq_parse(struct vnode *n, json_t *json)
 	const char *type = nullptr;
 	const char *in_filter = nullptr;
 	const char *out_filter = nullptr;
-	const char *format = "villas.binary";
 
+	json_error_t err;
 	json_t *json_in_ep = nullptr;
 	json_t *json_out_ep = nullptr;
 	json_t *json_curve = nullptr;
-	json_error_t err;
+	json_t *json_format = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: s, s?: b }, s?: { s?: o, s?: s, s?: b }, s?: o, s?: s, s?: b, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: s, s?: b }, s?: { s?: o, s?: s, s?: b }, s?: o, s?: s, s?: b, s?: o }",
 		"in",
 			"subscribe", &json_in_ep,
 			"filter", &in_filter,
@@ -175,7 +176,7 @@ int zeromq_parse(struct vnode *n, json_t *json)
 		"curve", &json_curve,
 		"pattern", &type,
 		"ipv6", &z->ipv6,
-		"format", &format
+		"format", &json_format
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-zeromq");
@@ -183,9 +184,12 @@ int zeromq_parse(struct vnode *n, json_t *json)
 	z->in.filter = in_filter ? strdup(in_filter) : nullptr;
 	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
-	z->format = format_type_lookup(format);
-	if (!z->format)
-		throw ConfigError(json, "node-config-node-zeromq-format", "Invalid format '{}'", format);
+	/* Format */
+	z->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.binary");
+	if (!z->formatter)
+		throw ConfigError(json_format, "node-config-node-zeromq-format", "Invalid format configuration");
 
 	if (json_out_ep) {
 		ret = zeromq_parse_endpoints(json_out_ep, &z->out.endpoints);
@@ -259,8 +263,7 @@ char * zeromq_print(struct vnode *n)
 #endif
 	}
 
-	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, in.bind=%s, out.bind=%s, in.subscribe=[ ",
-		format_type_name(z->format),
+	strcatf(&buf, "pattern=%s, ipv6=%s, crypto=%s, in.bind=%s, out.bind=%s, in.subscribe=[ ",
 		pattern,
 		z->ipv6 ? "yes" : "no",
 		z->curve.enabled ? "yes" : "no",
@@ -323,9 +326,7 @@ int zeromq_start(struct vnode *n)
 
 	struct zeromq::Dir* dirs[] = { &z->out, &z->in };
 
-	ret = io_init(&z->io, z->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	z->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
@@ -492,9 +493,7 @@ int zeromq_stop(struct vnode *n)
 			return ret;
 	}
 
-	ret = io_destroy(&z->io);
-	if (ret)
-		return ret;
+	delete z->formatter;
 
 	return 0;
 }
@@ -517,7 +516,7 @@ int zeromq_destroy(struct vnode *n)
 	return 0;
 }
 
-int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int zeromq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int recv, ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -544,7 +543,7 @@ int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 	if (ret < 0)
 		return ret;
 
-	recv = io_sscan(&z->io, (const char *) zmq_msg_data(&m), zmq_msg_size(&m), nullptr, smps, cnt);
+	recv = z->formatter->sscan((const char *) zmq_msg_data(&m), zmq_msg_size(&m), nullptr, smps, cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -553,7 +552,7 @@ int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 	return recv;
 }
 
-int zeromq_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int zeromq_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -563,7 +562,7 @@ int zeromq_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 
 	char data[4096];
 
-	ret = io_sprint(&z->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = z->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 

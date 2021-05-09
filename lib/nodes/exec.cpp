@@ -29,6 +29,7 @@
 #include <villas/node/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int exec_parse(struct vnode *n, json_t *json)
@@ -40,14 +41,14 @@ int exec_parse(struct vnode *n, json_t *json)
 
 	json_t *json_exec;
 	json_t *json_env = nullptr;
+	json_t *json_format = nullptr;
 
 	const char *wd = nullptr;
-	const char *format = "villas.human";
 	int shell = -1;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: s, s?: b, s?: o, s?: b, s?: s }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: o, s?: b, s?: s }",
 		"exec", &json_exec,
-		"format", &format,
+		"format", &json_format,
 		"flush", &flush,
 		"environment", &json_env,
 		"shell", &shell,
@@ -101,26 +102,25 @@ int exec_parse(struct vnode *n, json_t *json)
 		}
 	}
 
-	json_t *json_format = json_object_get(json, "format");
-	e->format = format_type_lookup(format);
-	if (!e->format)
-		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format: {)", format);
+	/* Format */
+	e->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("villas.human");
+	if (!e->formatter)
+		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format configuration");
 
-	if (!(e->format->flags & (int) IOFlags::NEWLINES))
-		throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
+	// if (!(e->format->flags & (int) Flags::NEWLINES))
+	// 	throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
 
 	return 0;
 }
 
 int exec_prepare(struct vnode *n)
 {
-	int ret;
 	struct exec *e = (struct exec *) n->_vd;
 
 	/* Initialize IO */
-	ret = io_init(&e->io, e->format, &n->in.signals, (int) SampleFlags::HAS_ALL);
-	if (ret)
-		return ret;
+	e->formatter->start(&n->in.signals);
 
 	/* Start subprocess */
 	e->proc = std::make_unique<Popen>(e->command, e->arguments, e->environment, e->working_dir, e->shell);
@@ -144,14 +144,9 @@ int exec_init(struct vnode *n)
 
 int exec_destroy(struct vnode *n)
 {
-	int ret;
 	struct exec *e = (struct exec *) n->_vd;
 
-	if (e->io.state == State::INITIALIZED) {
-		ret = io_destroy(&e->io);
-		if (ret)
-			return ret;
-	}
+	delete e->formatter;
 
 	using uptr = std::unique_ptr<Popen>;
 	using str = std::string;
@@ -182,7 +177,7 @@ int exec_stop(struct vnode *n)
 	return 0;
 }
 
-int exec_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int exec_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -192,14 +187,14 @@ int exec_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	std::getline(e->proc->cin(), line);
 
-	avail = io_sscan(&e->io, line.c_str(), line.length(), &rbytes, smps, cnt);
+	avail = e->formatter->sscan(line.c_str(), line.length(), &rbytes, smps, cnt);
 	if (rbytes - 1 != line.length())
 		return -1;
 
 	return avail;
 }
 
-int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int exec_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct exec *e = (struct exec *) n->_vd;
 
@@ -209,7 +204,7 @@ int exec_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (!line)
 		throw MemoryAllocationError();
 
-	ret = io_sprint(&e->io, line, 1024, &wbytes, smps, cnt);
+	ret = e->formatter->sprint(line, 1024, &wbytes, smps, cnt);
 	if (ret < 0)
 		return ret;
 
@@ -228,8 +223,7 @@ char * exec_print(struct vnode *n)
 	struct exec *e = (struct exec *) n->_vd;
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, exec=%s, shell=%s, flush=%s, #environment=%zu, #arguments=%zu, working_dir=%s",
-		format_type_name(e->format),
+	strcatf(&buf, "exec=%s, shell=%s, flush=%s, #environment=%zu, #arguments=%zu, working_dir=%s",
 		e->command.c_str(),
 		e->shell ? "yes" : "no",
 		e->flush ? "yes" : "no",

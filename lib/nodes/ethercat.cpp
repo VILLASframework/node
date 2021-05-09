@@ -31,6 +31,7 @@
 #include <villas/nodes/ethercat.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
 /* Forward declartions */
 static struct plugin p;
@@ -320,7 +321,7 @@ int ethercat_stop(struct vnode *n)
 	return 0;
 }
 
-int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ethercat_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 
@@ -337,7 +338,7 @@ int ethercat_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned
 	return avail;
 }
 
-int ethercat_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ethercat_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct ethercat *w = (struct ethercat *) n->_vd;
 

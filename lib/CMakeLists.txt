@@ -48,6 +48,7 @@ set(LIB_SRC
     config_helper.cpp
     config.cpp
     dumper.cpp
+    format.cpp
     mapping.cpp
     memory.cpp
     memory/heap.cpp
@@ -65,15 +66,13 @@ set(LIB_SRC
     queue.cpp
     sample.cpp
     shmem.cpp
-    signal.cpp
     signal_data.cpp
     signal_list.cpp
     signal_type.cpp
+    signal.cpp
+    socket_addr.cpp
     stats.cpp
     super_node.cpp
-    socket_addr.cpp
-    io.cpp
-    format_type.cpp
 )
 
 if(WITH_WEB)

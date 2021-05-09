@@ -35,6 +35,7 @@
 
 /* Forward declarations */
 struct vnode;
+struct vpath;
 
 enum class NodeDir {
 	IN,			/**< VILLASnode is receiving/reading */
@@ -44,6 +45,13 @@ enum class NodeDir {
 struct vnode_direction {
 	enum State state;
 	enum NodeDir direction;
+
+	/** The path which uses this node as a source/destination.
+	 *
+	 * Usually every node should be used only by a single path as destination.
+	 * Otherwise samples from different paths would be interleaved.
+	 */
+	struct vpath *path;
 
 	int enabled;
 	int builtin;		/**< This node should use built-in hooks by default. */

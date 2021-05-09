@@ -1,8 +1,8 @@
-/** Comma-separated values.
+/** The VILLASframework sample format
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,13 +23,21 @@
 
 #pragma once
 
-#include <cstdlib>
+#include <cstdio>
 
-/* Forward declarations. */
-struct io;
-struct sample;
+#include <villas/format.hpp>
 
-void csv_header(struct io *io, const struct sample *smp);
+namespace villas {
+namespace node {
 
-int csv_sprint(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
-int csv_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+class ValueFormat : public Format {
+
+public:
+	using Format::Format;
+
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+};
+
+} /* namespace node */
+} /* namespace villas */

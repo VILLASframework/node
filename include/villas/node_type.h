@@ -197,7 +197,7 @@ struct vnode_type {
 	 * @param release	The number of samples that should be released after read is called.
 	 * @return		    The number of messages actually received.
 	 */
-	int (*read)(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+	int (*read)(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
@@ -214,7 +214,7 @@ struct vnode_type {
 	 * @param release	The number of samples that should be released after write is called
 	 * @return		    The number of messages actually sent.
 	 */
-	int (*write)(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+	int (*write)(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 	/** Reverse source and destination of a node.
 	 *

@@ -96,10 +96,10 @@ int iec61850_sv_stop(struct vnode *n);
 int iec61850_sv_destroy(struct vnode *n);
 
 /** @see node_type::read */
-int iec61850_sv_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int iec61850_sv_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int iec61850_sv_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int iec61850_sv_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::fd */
 int iec61850_sv_fd(struct vnode *n);

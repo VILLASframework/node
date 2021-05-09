@@ -29,11 +29,12 @@
 #include <villas/nodes/infiniband.hpp>
 #include <villas/plugin.h>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/memory.h>
 #include <villas/memory/ib.h>
 #include <villas/timing.h>
 
+using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static int ib_disconnect(struct vnode *n)
@@ -725,7 +726,7 @@ int ib_stop(struct vnode *n)
 	return 0;
 }
 
-int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[cnt];
@@ -865,7 +866,7 @@ int ib_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	return read_values;
 }
 
-int ib_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_send_wr wr[cnt], *bad_wr = nullptr;

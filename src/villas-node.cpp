@@ -39,6 +39,7 @@
 #include <villas/path.h>
 #include <villas/api.hpp>
 #include <villas/hook.hpp>
+#include <villas/format.hpp>
 #include <villas/colors.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
@@ -106,7 +107,8 @@ protected:
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
-		plugin_dump(PluginType::FORMAT);
+		for (Plugin *p : Registry::lookup<FormatFactory>())
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 #ifdef WITH_HOOKS

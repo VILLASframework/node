@@ -89,6 +89,6 @@ int signal_generator_start(struct vnode *n);
 int signal_generator_stop(struct vnode *n);
 
 /** @see node_type::read */
-int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int signal_generator_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

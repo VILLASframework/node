@@ -61,7 +61,7 @@ int path_destination_destroy(struct vpath_destination *pd)
 	return 0;
 }
 
-void path_destination_enqueue(struct vpath *p, struct sample *smps[], unsigned cnt)
+void path_destination_enqueue(struct vpath *p, const struct sample * const smps[], unsigned cnt)
 {
 	unsigned enqueued, cloned;
 
@@ -91,9 +91,7 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 {
 	int cnt = pd->node->out.vectorize;
 	int sent;
-	int released;
 	int allocated;
-	unsigned release;
 
 	struct sample *smps[cnt];
 
@@ -107,9 +105,7 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 
 		p->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, node_name(pd->node), path_name(p));
 
-		release = allocated;
-
-		sent = node_write(pd->node, smps, allocated, &release);
+		sent = node_write(pd->node, smps, allocated);
 		if (sent < 0) {
 			p->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node_name(pd->node), sent);
 			return;
@@ -117,7 +113,7 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 		else if (sent < allocated)
 			p->logger->debug("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, allocated);
 
-		released = sample_decref_many(smps, release);
+		int released = sample_decref_many(smps, allocated);
 
 		p->logger->debug("Released {} samples back to memory pool", released);
 	}

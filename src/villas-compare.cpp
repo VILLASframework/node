@@ -21,14 +21,13 @@
  *********************************************************************************/
 
 #include <iostream>
-#include <getopt.h>
+#include <unistd.h>
 
 #include <jansson.h>
 
 #include <villas/tool.hpp>
 #include <villas/sample.h>
-#include <villas/io.h>
-#include <villas/format_type.h>
+#include <villas/format.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/pool.h>
@@ -41,52 +40,65 @@ namespace villas {
 namespace node {
 namespace tools {
 
-class TestCmpSide {
+class CompareSide {
 
 public:
 	std::string path;
 	std::string dtypes;
+	std::string format;
 
 	struct sample *sample;
 
-	struct io io;
-	struct format_type *format;
+	Format *formatter;
 
-	TestCmpSide(const std::string &pth, struct format_type *fmt, const std::string &dt, struct pool *p) :
+	FILE *stream;
+
+	CompareSide(const CompareSide&) = delete;
+	CompareSide & operator=(const CompareSide&) = delete;
+
+	CompareSide(const std::string &pth, const std::string &fmt, const std::string &dt, struct pool *p) :
 		path(pth),
 		dtypes(dt),
 		format(fmt)
 	{
-		int ret;
+		json_t *json_format;
+		json_error_t err;
 
-		ret = io_init2(&io, format, dtypes.c_str(), 0);
-		if (ret)
-			throw RuntimeError("Failed to initialize IO");
+		/* Try parsing format config as JSON */
+		json_format = json_loads(format.c_str(), 0, &err);
+		formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make(format);
+		if (!formatter)
+			throw RuntimeError("Failed to initialize formatter");
 
-		ret = io_open(&io, path.c_str());
-		if (ret)
-			throw RuntimeError("Failed to open file: {}", path);
+		formatter->start(dtypes);
+
+		stream = fopen(path.c_str(), "r");
+		if (!stream)
+			throw SystemError("Failed to open file: {}", path);
 
 		sample = sample_alloc(p);
 		if (!sample)
 			throw RuntimeError("Failed to allocate samples");
 	}
 
-	~TestCmpSide() noexcept(false)
+	~CompareSide() noexcept(false)
 	{
 		int ret __attribute((unused));
 
-		ret = io_close(&io);
-		ret = io_destroy(&io);
+		ret = fclose(stream);
+
+		delete formatter;
 
 		sample_decref(sample);
 	}
 };
 
-class TestCmp : public Tool {
+class Compare : public Tool {
 
 public:
-	TestCmp(int argc, char *argv[]) :
+	Compare(int argc, char *argv[]) :
 		Tool(argc, argv, "test-cmp"),
 		pool(),
 		epsilon(1e-9),
@@ -113,7 +125,7 @@ protected:
 
 	void usage()
 	{
-		std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
+		std::cout << "Usage: villas-compare [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
 			<< "  FILE     a list of files to compare" << std::endl
 			<< "  OPTIONS is one or more of the following options:" << std::endl
 			<< "    -d LVL  adjust the debug level" << std::endl
@@ -202,18 +214,14 @@ check:			if (optarg == endptr)
 		int ret, rc = 0, line, failed;
 		unsigned eofs;
 
-		struct format_type *fmt = format_type_lookup(format.c_str());
-		if (!fmt)
-			throw RuntimeError("Invalid IO format: {}", format);
-
 		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");
 
 		/* Open files */
-		std::vector<TestCmpSide *> sides;
+		std::vector<CompareSide *> sides;
 		for (auto filename : filenames) {
-			auto *s = new TestCmpSide(filename, fmt, dtypes, &pool);
+			auto *s = new CompareSide(filename, format, dtypes, &pool);
 			if (!s)
 				throw MemoryAllocationError();
 
@@ -221,11 +229,11 @@ check:			if (optarg == endptr)
 		}
 
 		line = 0;
-		for (;;) {
+		while (true) {
 			/* Read next sample from all files */
 retry:			eofs = 0;
 			for (auto side : sides) {
-				ret = io_eof(&side->io);
+				ret = feof(side->stream);
 				if (ret)
 					eofs++;
 			}
@@ -243,7 +251,7 @@ retry:			eofs = 0;
 
 			failed = 0;
 			for (auto side : sides) {
-				ret = io_scan(&side->io, &side->sample, 1);
+				ret = side->formatter->scan(side->stream, side->sample);
 				if (ret <= 0)
 					failed++;
 			}
@@ -279,7 +287,7 @@ out:		for (auto side : sides)
 
 int main(int argc, char *argv[])
 {
-	villas::node::tools::TestCmp t(argc, argv);
+	villas::node::tools::Compare t(argc, argv);
 
 	return t.run();
 }

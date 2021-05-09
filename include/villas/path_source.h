@@ -45,12 +45,12 @@ struct vpath_source {
 	struct vnode *node;
 
 	bool masked;
-	
+
 	enum PathSourceType type;
 
 	struct pool pool;
 	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
-	struct vlist secondaries;
+	struct vlist secondaries;		/**< List of secondary path sources (struct path_sourced). */
 };
 
 int path_source_init_master(struct vpath_source *ps, struct vnode *n) __attribute__ ((warn_unused_result));

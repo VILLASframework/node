@@ -57,7 +57,7 @@ villas-signal -l ${NUM_SAMPLES} -v ${SIGNAL_COUNT} -n random > ${INPUT_FILE}
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then

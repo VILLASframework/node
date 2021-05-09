@@ -132,7 +132,7 @@ VILLAS_LOG_PREFIX="[SRC]  " \
 villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE_SRC} ${CONFIG_FILE_DEST}

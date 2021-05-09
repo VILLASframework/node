@@ -75,11 +75,6 @@ struct vnode {
 
 	uint64_t sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
-	/** The path which uses this node as a destination.
-	 * Usually every node should be used only by a single path as destination.
-	 * Otherwise samples from different paths would be interleaved.
-	 */
-	struct vpath *output_path;
 	std::shared_ptr<villas::Stats> stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct vnode_direction in, out;
@@ -202,9 +197,9 @@ struct vlist * node_input_signals(struct vnode *n);
  */
 int node_reverse(struct vnode *n);
 
-int node_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int node_read(struct vnode *n, struct sample * smps[], unsigned cnt);
 
-int node_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int node_write(struct vnode *n, struct sample * smps[], unsigned cnt);
 
 int node_poll_fds(struct vnode *n, int fds[]);
 

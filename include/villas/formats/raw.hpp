@@ -23,7 +23,10 @@
 
 #pragma once
 
+#include <sstream>
 #include <cstdlib>
+
+#include <villas/format.hpp>
 
 /* float128 is currently not yet supported as htole128() functions a missing */
 #if 0 && defined(__GNUC__) && defined(__linux__)
@@ -33,23 +36,47 @@
 /* Forward declarations */
 struct sample;
 
-enum raw_flags {
-	/** Treat the first three values as: sequenceno, seconds, nanoseconds */
-	RAW_FAKE_HEADER	= (1 << 16),
-	RAW_BIG_ENDIAN	= (1 << 17),	/**< Encode data in big-endian byte order */
+namespace villas {
+namespace node {
 
-	RAW_BITS_8	= (3 << 24),	/**< Pack each value as a byte. */
-	RAW_BITS_16	= (4 << 24),	/**< Pack each value as a word. */
-	RAW_BITS_32	= (5 << 24),	/**< Pack each value as a double word. */
-	RAW_BITS_64	= (6 << 24), 	/**< Pack each value as a quad word. */
-#ifdef HAS_128BIT
-	RAW_128		= (7 << 24)  /**< Pack each value as a double quad word. */
-#endif
+class RawFormat : public BinaryFormat {
+
+public:
+	enum Endianess {
+		BIG,
+		LITTLE
+	};
+
+protected:
+
+	enum Endianess endianess;
+	int bits;
+	bool fake;
+
+public:
+	RawFormat(int fl, int b = 32, enum Endianess e = Endianess::LITTLE) :
+		BinaryFormat(fl),
+		endianess(e),
+		bits(b),
+		fake(false)
+	{
+		if (fake)
+			flags |= (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
+	}
+
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+
+	virtual void parse(json_t *json);
 };
 
-/** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
-int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+class GtnetRawFormat : public RawFormat {
 
-/** Read struct sample's from buffer \p buf into samples \p smps. */
-int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+public:
+	GtnetRawFormat(int fl) :
+		RawFormat(fl, 32, Endianess::BIG)
+	{ }
+};
 
+} /* namespace node */
+} /* namespace villas */

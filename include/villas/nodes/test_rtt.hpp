@@ -30,7 +30,7 @@
 #pragma once
 
 #include <villas/list.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/task.hpp>
 
 /* Forward declarations */
@@ -41,7 +41,7 @@ struct sample;
 struct test_rtt_case {
 	double rate;
 	unsigned values;
-	unsigned limit;		/**< The number of samples we take per test. */
+	unsigned limit;			/**< The number of samples we take per test. */
 
 	char *filename;
 	char *filename_formatted;
@@ -50,19 +50,19 @@ struct test_rtt_case {
 };
 
 struct test_rtt {
-	struct Task task;	/**< The periodic task for test_rtt_read() */
-	struct io io;		/**< The format of the output file */
-	struct format_type *format;
+	struct Task task;		/**< The periodic task for test_rtt_read() */
+	villas::node::Format *formatter;/**< The format of the output file */
+	FILE *stream;
 
-	double cooldown;	/**< Number of seconds to wait beween tests. */
+	double cooldown;		/**< Number of seconds to wait beween tests. */
 
-	int current;		/**< Index of current test in test_rtt::cases */
+	int current;			/**< Index of current test in test_rtt::cases */
 	int counter;
 
-	struct vlist cases;	/**< List of test cases */
+	struct vlist cases;		/**< List of test cases */
 
-	char *output;	/**< The directory where we place the results. */
-	char *prefix;	/**< An optional prefix in the filename. */
+	char *output;			/**< The directory where we place the results. */
+	char *prefix;			/**< An optional prefix in the filename. */
 };
 
 /** @see node_type::print */
@@ -78,9 +78,9 @@ int test_rtt_start(struct vnode *n);
 int test_rtt_stop(struct vnode *n);
 
 /** @see node_type::read */
-int test_rtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int test_rtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int test_rtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

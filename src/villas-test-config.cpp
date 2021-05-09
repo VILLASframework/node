@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <iostream>
+#include <unistd.h>
 
 #include <villas/tool.hpp>
 #include <villas/node/config.h>

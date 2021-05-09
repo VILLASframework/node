@@ -96,7 +96,7 @@ int shmem_int_close(struct shmem_int *shm);
  * @retval >=0 Number of samples that were read. Can be less than cnt (including 0) in case not enough samples were available.
  * @retval -1 The other process closed the interface; no samples can be read anymore.
  */
-int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
+int shmem_int_read(struct shmem_int *shm, struct sample * const smps[], unsigned cnt);
 
 /** Write samples to the interface.
  *
@@ -106,7 +106,7 @@ int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
  * @retval >=0 Number of samples that were successfully written. Can be less than cnt (including 0) in case of a full queue.
  * @retval -1 The write failed for some reason; no more samples can be written.
  */
-int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
+int shmem_int_write(struct shmem_int *shm, const struct sample * const smps[], unsigned cnt);
 
 /** Allocate samples to be written to the interface.
  *

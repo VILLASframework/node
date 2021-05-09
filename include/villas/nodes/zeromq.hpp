@@ -32,23 +32,22 @@
 #include <cstdint>
 #include <jansson.h>
 
+#include <villas/super_node.hpp>
 #include <villas/list.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 
 #if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
   #define ZMQ_BUILD_DISH 1
 #endif
 
 /* Forward declarations */
-struct format_type;
 struct vnode;
 struct sample;
 
 struct zeromq {
 	int ipv6;
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 
 	struct Curve {
 		int enabled;
@@ -93,9 +92,9 @@ int zeromq_start(struct vnode *n);
 int zeromq_stop(struct vnode *n);
 
 /** @see node_type::read */
-int zeromq_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int zeromq_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int zeromq_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int zeromq_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

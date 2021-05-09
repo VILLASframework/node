@@ -253,7 +253,7 @@ int opal_start(struct vnode *n)
 	return 0;
 }
 
-int opal_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
@@ -318,7 +318,7 @@ int opal_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return 1;
 }
 
-int opal_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct opal *o = (struct opal *) n->_vd;
 

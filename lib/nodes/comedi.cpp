@@ -33,6 +33,7 @@
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
@@ -510,7 +511,7 @@ int comedi_stop(struct vnode *n)
 
 #if COMEDI_USE_READ
 
-int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -622,7 +623,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 #else
 
-int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -800,7 +801,7 @@ int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 #endif
 
-int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int comedi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -858,7 +859,7 @@ int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned 
 	size_t villas_samples_written = 0;
 
 	while (villas_samples_written < cnt) {
-		struct sample *sample = smps[villas_samples_written];
+		const struct sample *sample = smps[villas_samples_written];
 		if (sample->length != d->chanlist_len)
 			throw RuntimeError("Value count in sample ({}) != configured output channels ({})", sample->length, d->chanlist_len);
 

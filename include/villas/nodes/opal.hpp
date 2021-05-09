@@ -80,9 +80,9 @@ int opal_start(struct vnode *n);
 int opal_stop(struct vnode *n);
 
 /** @see node_type::read */
-int opal_read(struct vnode *n, struct sample *smps[], unsigned cnt);
+int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int opal_write(struct vnode *n, struct sample *smps[], unsigned cnt);
+int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

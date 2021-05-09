@@ -93,9 +93,9 @@ int comedi_start(struct vnode *n);
 int comedi_stop(struct vnode *n);
 
 /** @see node_type::read */
-int comedi_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int comedi_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int comedi_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

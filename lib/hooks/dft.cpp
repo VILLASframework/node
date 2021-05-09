@@ -33,7 +33,7 @@
 #include <villas/hook.hpp>
 #include <villas/path.h>
 #include <villas/sample.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/plugin.h>
 
 namespace villas {
@@ -62,8 +62,6 @@ protected:
 
 	enum WindowType windowType;
 	enum PaddingType paddingType;
-
-	struct format_type *format;
 
 	std::vector<std::vector<double>> smpMemory;
 	std::vector<std::vector<std::complex<double>>> dftMatrix;
@@ -120,8 +118,6 @@ public:
 		lastDftCal({0, 0}),
 		signalIndex()
 	{
-		format = format_type_lookup("villas.human");
-
 		bool debug = false;
 		if (debug) {
 			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");

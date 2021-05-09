@@ -120,7 +120,7 @@ public:
 	}
 
 	/** Called whenever a sample is processed. */
-	virtual Reason process(sample *smp)
+	virtual Reason process(struct sample *smp)
 	{
 		return Reason::OK;
 	};
@@ -135,7 +135,7 @@ public:
 		return flags;
 	}
 
-	virtual struct vlist *getSignals()
+	virtual struct vlist * getSignals()
 	{
 		return &signals;
 	}
@@ -179,7 +179,7 @@ class HookFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual Hook *make(struct vpath *p, struct vnode *n) = 0;
+	virtual Hook * make(struct vpath *p, struct vnode *n) = 0;
 
 	virtual int getFlags() const = 0;
 	virtual int getPriority() const = 0;
@@ -191,7 +191,7 @@ class HookPlugin : public HookFactory {
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook *make(struct vpath *p, struct vnode *n)
+	virtual Hook * make(struct vpath *p, struct vnode *n)
 	{
 		return new T(p, n, getFlags(), getPriority());
 	}

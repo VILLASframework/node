@@ -25,12 +25,28 @@
 
 #include <cstdlib>
 
-/* Forward declarations */
+#include <villas/format.hpp>
+
+/* Generated message descriptors by protoc */
+#include <villas.pb-c.h>
+
+/* Forward declarations. */
 struct sample;
 
-/** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
-int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+namespace villas {
+namespace node {
 
-/** Read struct sample's from buffer \p buf into samples \p smps. */
-int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+class ProtobufFormat : public BinaryFormat {
 
+protected:
+	enum SignalType detect(const Villas__Node__Value *val);
+
+public:
+	using BinaryFormat::BinaryFormat;
+
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+};
+
+} /* namespace node */
+} /* namespace villas */

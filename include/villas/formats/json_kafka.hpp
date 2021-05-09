@@ -22,14 +22,27 @@
 
 #pragma once
 
-#include <jansson.h>
+#include <villas/signal_type.h>
+#include <villas/formats/json.hpp>
 
-/* Forward declarations */
-struct sample;
-struct io;
+namespace villas {
+namespace node {
 
-int json_kafka_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-int json_kafka_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+class JsonKafkaFormat : public JsonFormat {
 
-int json_kafka_print(struct io *io, struct sample *smps[], unsigned cnt);
-int json_kafka_scan(struct io *io, struct sample *smps[], unsigned cnt);
+protected:
+	int packSample(json_t **j, const struct sample *smp);
+	int unpackSample(json_t *json_smp, struct sample *smp);
+
+	const char * villasToKafkaType(enum SignalType vt);
+
+	json_t *json_schema;
+
+public:
+	JsonKafkaFormat(int fl);
+
+	virtual void parse(json_t *json);
+};
+
+} /* namespace node */
+} /* namespace villas */

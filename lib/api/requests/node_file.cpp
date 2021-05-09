@@ -26,7 +26,7 @@
 #include <villas/api/response.hpp>
 
 #include <villas/nodes/file.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 
 namespace villas {
 namespace node {
@@ -55,7 +55,7 @@ public:
 		struct file *f = (struct file *) node->_vd;
 
 		if (matches[2] == "rewind")
-			io_rewind(&f->io);
+			rewind(f->stream_in);
 
 		return new Response(session, HTTP_STATUS_OK);
 	}

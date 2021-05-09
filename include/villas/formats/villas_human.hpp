@@ -1,6 +1,7 @@
-/** UltraLight format for FISMEP project.
+/** The VILLASframework sample format
  *
- * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -22,10 +23,24 @@
 
 #pragma once
 
-#include <jansson.h>
+#include <cstdio>
 
-/* Forward declarations */
-struct sample;
-struct io;
+#include <villas/formats/line.hpp>
 
-int iotagent_ul_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+namespace villas {
+namespace node {
+
+class VILLASHumanFormat : public LineFormat {
+
+protected:
+	size_t sprintLine(char *buf, size_t len, const struct sample *smp);
+	size_t sscanLine(const char *buf, size_t len, struct sample *smp);
+
+public:
+	using LineFormat::LineFormat;
+
+	void header(FILE *f, const struct vlist *sigs);
+};
+
+} /* namespace node */
+} /* namespace villas */

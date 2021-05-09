@@ -20,20 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/io.h>
-#include <villas/formats/csv.h>
-#include <villas/plugin.h>
+#include <villas/formats/value.hpp>
 #include <villas/sample.h>
 #include <villas/signal.h>
 
-using namespace villas::utils;
+using namespace villas::node;
 
-int value_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
 {
 	unsigned i;
 	size_t off = 0;
 	struct signal *sig;
-	struct sample *smp = smps[0];
+	const struct sample *smp = smps[0];
 
 	assert(cnt == 1);
 	assert(smp->length <= 1);
@@ -45,7 +43,7 @@ int value_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sa
 		if (!sig)
 			return -1;
 
-		off += signal_data_print_str(&smp->data[i], sig->type, buf, len);
+		off += signal_data_print_str(&smp->data[i], sig->type, buf, len, real_precision);
 		off += snprintf(buf + off, len - off, "\n");
 	}
 
@@ -55,7 +53,7 @@ int value_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sa
 	return i;
 }
 
-int value_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int ValueFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
 {
 	unsigned i = 0, ret;
 	struct sample *smp = smps[0];
@@ -68,7 +66,7 @@ int value_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, stru
 	printf("Reading: %s", buf);
 
 	if (smp->capacity >= 1) {
-		struct signal *sig = (struct signal *) vlist_at_safe(io->signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
 		if (!sig)
 			return -1;
 
@@ -81,7 +79,7 @@ int value_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, stru
 	}
 
 out:	smp->flags = 0;
-	smp->signals = io->signals;
+	smp->signals = signals;
 	smp->length = i;
 	if (smp->length > 0)
 		smp->flags |= (int) SampleFlags::HAS_DATA;
@@ -92,21 +90,6 @@ out:	smp->flags = 0;
 	return i;
 }
 
-static struct plugin p;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "value";
-	p.description = "A bare text value without any headers";
-	p.type = PluginType::FORMAT;
-	p.format.sprint = value_sprint;
-	p.format.sscan	= value_sscan;
-	p.format.size 	= 0;
-	p.format.flags	= (int) SampleFlags::HAS_DATA | (int) IOFlags::NEWLINES;
-
-	vlist_init_and_push(&plugins, &p);;
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
-}
+static char n[] = "value";
+static char d[] = "A bare text value without any headers";
+static FormatPlugin<ValueFormat, n, d, (int) SampleFlags::HAS_DATA> p;

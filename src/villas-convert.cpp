@@ -25,11 +25,12 @@
  *********************************************************************************/
 
 #include <iostream>
+#include <unistd.h>
 
 #include <villas/tool.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/exceptions.hpp>
@@ -65,7 +66,7 @@ protected:
 	struct {
 		std::string name;
 		std::string format;
-		struct io io;
+		Format *formatter;
 	} dirs[2];
 
 	void usage()
@@ -126,42 +127,35 @@ protected:
 		int ret;
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-			struct format_type *ft;
+			json_t *json_format;
+			json_error_t err;
+			std::string format = dirs[i].format;
 
-			ft = format_type_lookup(dirs[i].format.c_str());
-			if (!ft)
-				throw RuntimeError("Invalid format: {}", dirs[i].format);
+			/* Try parsing format config as JSON */
+			json_format = json_loads(format.c_str(), 0, &err);
+			dirs[i].formatter = json_format
+				? FormatFactory::make(json_format)
+				: FormatFactory::make(format);
+			if (!dirs[i].formatter)
+				throw RuntimeError("Failed to initialize format: {}", dirs[i].name);
 
-			ret = io_init2(&dirs[i].io, ft, dtypes.c_str(), (int) SampleFlags::HAS_ALL);
-			if (ret)
-				throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
-
-			ret = io_open(&dirs[i].io, nullptr);
-			if (ret)
-				throw RuntimeError("Failed to open IO");
+			dirs[i].formatter->start(dtypes);
 		}
 
 		struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
 
-		for (;;) {
-			ret = io_scan(&dirs[0].io, &smp, 1);
+		while (true) {
+			ret = dirs[0].formatter->scan(stdin, smp);
 			if (ret == 0)
 				continue;
-			if (ret < 0)
+			else if (ret < 0)
 				break;
 
-			io_print(&dirs[1].io, &smp, 1);
+			dirs[1].formatter->print(stdout, smp);
 		}
 
-		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-			ret = io_close(&dirs[i].io);
-			if (ret)
-				throw RuntimeError("Failed to close IO");
-
-			ret = io_destroy(&dirs[i].io);
-			if (ret)
-				throw RuntimeError("Failed to destroy IO");
-		}
+		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++)
+			delete dirs[i].formatter;
 
 		return 0;
 	}

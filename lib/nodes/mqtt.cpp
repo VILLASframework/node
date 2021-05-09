@@ -26,10 +26,10 @@
 #include <villas/nodes/mqtt.hpp>
 #include <villas/plugin.h>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 // Each process has a list of clients for which a thread invokes the mosquitto loop
@@ -138,7 +138,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *ctx, const struct mosq
 		return;
 	}
 
-	ret = io_sscan(&m->io, (char *) msg->payload, msg->payloadlen, nullptr, smps, n->in.vectorize);
+	ret = m->formatter->sscan((char *) msg->payload, msg->payloadlen, nullptr, smps, n->in.vectorize);
 	if (ret < 0) {
 		n->logger->warn("Received an invalid message");
 		n->logger->warn("  Payload: {}", (char *) msg->payload);
@@ -225,7 +225,6 @@ int mqtt_parse(struct vnode *n, json_t *json)
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	const char *host;
-	const char *format = "villas.binary";
 	const char *publish = nullptr;
 	const char *subscribe = nullptr;
 	const char *username = nullptr;
@@ -233,13 +232,14 @@ int mqtt_parse(struct vnode *n, json_t *json)
 
 	json_error_t err;
 	json_t *json_ssl = nullptr;
+	json_t *json_format = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s }, s?: s, s: s, s?: i, s?: i, s?: i, s?: b, s?: s, s?: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s }, s?: o, s: s, s?: i, s?: i, s?: i, s?: b, s?: s, s?: s, s?: o }",
 		"out",
 			"publish", &publish,
 		"in",
 			"subscribe", &subscribe,
-		"format", &format,
+		"format", &json_format,
 		"host", &host,
 		"port", &m->port,
 		"qos", &m->qos,
@@ -289,10 +289,12 @@ int mqtt_parse(struct vnode *n, json_t *json)
 		m->ssl.keyfile = keyfile ? strdup(keyfile) : nullptr;
 	}
 
-	m->format = format_type_lookup(format);
-	if (!m->format)
-		throw ConfigError(json_ssl, "node-config-node-mqtt-format", "Invalid format '{}' for node {}", format, node_name(n));
-
+	/* Format */
+	m->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("json");
+	if (!m->formatter)
+		throw ConfigError(json_format, "node-config-node-mqtt-format", "Invalid format configuration");
 	return 0;
 }
 
@@ -317,9 +319,7 @@ int mqtt_prepare(struct vnode *n)
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	ret = io_init(&m->io, m->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	m->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
 	if (ret)
@@ -338,7 +338,7 @@ char * mqtt_print(struct vnode *n)
 
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, host=%s, port=%d, keepalive=%d, ssl=%s", format_type_name(m->format),
+	strcatf(&buf, "host=%s, port=%d, keepalive=%d, ssl=%s",
 		m->host,
 		m->port,
 		m->keepalive,
@@ -365,9 +365,7 @@ int mqtt_destroy(struct vnode *n)
 
 	mosquitto_destroy(m->client);
 
-	ret = io_destroy(&m->io);
-	if (ret)
-		return ret;
+	delete m->formatter;
 
 	ret = pool_destroy(&m->pool);
 	if (ret)
@@ -512,7 +510,7 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int mqtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int pulled;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -526,7 +524,7 @@ int mqtt_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return pulled;
 }
 
-int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int mqtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -535,7 +533,7 @@ int mqtt_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	char data[1500];
 
-	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = m->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)
 		return ret;
 

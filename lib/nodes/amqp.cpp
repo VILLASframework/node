@@ -28,10 +28,10 @@
 #include <villas/plugin.h>
 #include <villas/nodes/amqp.hpp>
 #include <villas/utils.hpp>
-#include <villas/format_type.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
@@ -121,7 +121,6 @@ int amqp_parse(struct vnode *n, json_t *json)
 	struct amqp *a = (struct amqp *) n->_vd;
 
 	int port = 5672;
-	const char *format = "json";
 	const char *uri = nullptr;
 	const char *host = "localhost";
 	const char *vhost = "/";
@@ -132,12 +131,13 @@ int amqp_parse(struct vnode *n, json_t *json)
 	json_error_t err;
 
 	json_t *json_ssl = nullptr;
+	json_t *json_format = nullptr;
 
 	/* Default values */
 	amqp_default_ssl_info(&a->ssl_info);
 	amqp_default_connection_info(&a->connection_info);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: i, s: s, s: s, s?: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: i, s: s, s: s, s?: o, s?: o }",
 		"uri", &uri,
 		"host", &host,
 		"vhost", &vhost,
@@ -146,7 +146,7 @@ int amqp_parse(struct vnode *n, json_t *json)
 		"port", &port,
 		"exchange", &exchange,
 		"routing_key", &routing_key,
-		"format", &format,
+		"format", &json_format,
 		"ssl", &json_ssl
 	);
 	if (ret)
@@ -189,9 +189,12 @@ int amqp_parse(struct vnode *n, json_t *json)
 			a->ssl_info.client_key = strdup(client_key);
 	}
 
-	a->format = format_type_lookup(format);
-	if (!a->format)
-		throw ConfigError(json, "node-config-node-amqp-format", "Invalid format '{}'", format);
+	/* Format */
+	a->formatter = json_format
+			? FormatFactory::make(json_format)
+			: FormatFactory::make("json");
+	if (!a->formatter)
+		throw ConfigError(json_format, "node-config-node-amqp-format", "Invalid format configuration");
 
 	return 0;
 }
@@ -202,8 +205,7 @@ char * amqp_print(struct vnode *n)
 
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, uri=%s://%s:%s@%s:%d%s, exchange=%s, routing_key=%s",
-		format_type_name(a->format),
+	strcatf(&buf, "uri=%s://%s:%s@%s:%d%s, exchange=%s, routing_key=%s",
 		a->connection_info.ssl ? "amqps" : "amqp",
 		a->connection_info.user,
 		a->connection_info.password,
@@ -235,16 +237,13 @@ char * amqp_print(struct vnode *n)
 
 int amqp_start(struct vnode *n)
 {
-	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
 
 	amqp_bytes_t queue;
 	amqp_rpc_reply_t rep;
 	amqp_queue_declare_ok_t *r;
 
-	ret = io_init(&a->io, a->format, &n->in.signals, (int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET);
-	if (ret)
-		return ret;
+	a->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Connect producer */
 	a->producer = amqp_connect(&a->connection_info, &a->ssl_info);
@@ -302,14 +301,12 @@ int amqp_stop(struct vnode *n)
 	if (ret)
 		return ret;
 
-	ret = io_destroy(&a->io);
-	if (ret)
-		return ret;
+	delete a->formatter;
 
 	return 0;
 }
 
-int amqp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int amqp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
@@ -320,21 +317,21 @@ int amqp_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = io_sscan(&a->io, static_cast<char *>(env.message.body.bytes), env.message.body.len, nullptr, smps, cnt);
+	ret = a->formatter->sscan(static_cast<char *>(env.message.body.bytes), env.message.body.len, nullptr, smps, cnt);
 
 	amqp_destroy_envelope(&env);
 
 	return ret;
 }
 
-int amqp_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int amqp_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 	struct amqp *a = (struct amqp *) n->_vd;
 	char data[1500];
 	size_t wbytes;
 
-	ret = io_sprint(&a->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = a->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 

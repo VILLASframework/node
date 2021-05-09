@@ -38,6 +38,7 @@
 #include <villas/utils.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int shmem_parse(struct vnode *n, json_t *json)
@@ -129,7 +130,7 @@ int shmem_stop(struct vnode *n)
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
@@ -160,7 +161,7 @@ int shmem_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *r
 	return recv;
 }
 
-int shmem_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int shmem_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */

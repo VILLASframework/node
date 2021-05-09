@@ -32,10 +32,7 @@
 #include <villas/node/config.h>
 #include <villas/node.h>
 #include <villas/socket_addr.h>
-#include <villas/io.h>
-
-/* Forward declarations */
-struct format_type;
+#include <villas/format.hpp>
 
 /** The maximum length of a packet which contains stuct msg. */
 #define SOCKET_INITIAL_BUFFER_LEN (64*1024)
@@ -46,8 +43,7 @@ struct socket {
 
 	enum SocketLayer layer;		/**< The OSI / IP layer which should be used for this socket */
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 
 	/* Multicast options */
 	struct multicast {
@@ -78,10 +74,10 @@ int socket_start(struct vnode *n);
 int socket_stop(struct vnode *n);
 
 /** @see node_type::write */
-int socket_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int socket_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::read */
-int socket_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::parse */
 int socket_parse(struct vnode *n, json_t *json);

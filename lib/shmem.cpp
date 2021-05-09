@@ -183,7 +183,7 @@ int shmem_int_close(struct shmem_int *shm)
 	return 0;
 }
 
-int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
+int shmem_int_read(struct shmem_int *shm, struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 
@@ -197,7 +197,7 @@ int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 	return ret;
 }
 
-int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
+int shmem_int_write(struct shmem_int *shm, const struct sample * const smps[], unsigned cnt)
 {
 	int ret;
 

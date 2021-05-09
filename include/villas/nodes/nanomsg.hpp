@@ -31,13 +31,10 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500
-
-/* Forward declarations */
-struct format_type;
 
 struct nanomsg {
 	struct {
@@ -45,8 +42,7 @@ struct nanomsg {
 		struct vlist endpoints;
 	} in, out;
 
-	struct format_type *format;
-	struct io io;
+	villas::node::Format *formatter;
 };
 
 /** @see node_type::print */
@@ -62,9 +58,9 @@ int nanomsg_start(struct vnode *n);
 int nanomsg_stop(struct vnode *n);
 
 /** @see node_type::read */
-int nanomsg_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int nanomsg_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @see node_type::write */
-int nanomsg_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int nanomsg_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
 /** @} */

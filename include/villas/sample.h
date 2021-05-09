@@ -120,7 +120,7 @@ int sample_incref(struct sample *s);
 /** Decrease reference count and release memory if last reference was held. */
 int sample_decref(struct sample *s);
 
-int sample_copy(struct sample *dst, struct sample *src);
+int sample_copy(struct sample *dst, const struct sample *src);
 
 /** Dump all details about a sample to debug log */
 void sample_dump(villas::Logger logger, struct sample *s);
@@ -128,13 +128,12 @@ void sample_dump(villas::Logger logger, struct sample *s);
 /** Compare two samples */
 int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags);
 
-int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt);
-int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
-int sample_incref_many(struct sample *smps[], int cnt);
-int sample_decref_many(struct sample *smps[], int cnt);
+int sample_clone_many(struct sample *dsts[], const struct sample * const srcs[], int cnt);
+int sample_copy_many(struct sample * const dsts[], const struct sample * const srcs[], int cnt);
+int sample_incref_many(struct sample * const smps[], int cnt);
+int sample_decref_many(struct sample * const smps[], int cnt);
 
 enum SignalType sample_format(const struct sample *s, unsigned idx);
 
 void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len);
-
 void sample_data_remove(struct sample *smp, size_t offset, size_t len);

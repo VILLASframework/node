@@ -35,6 +35,7 @@
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int influxdb_parse(struct vnode *n, json_t *json)
@@ -119,7 +120,7 @@ int influxdb_close(struct vnode *n)
 	return 0;
 }
 
-int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
@@ -127,7 +128,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 	ssize_t sentlen, buflen;
 
 	for (unsigned k = 0; k < cnt; k++) {
-		struct sample *smp = smps[k];
+		const struct sample *smp = smps[k];
 
 		/* Key */
 		strcatf(&buf, "%s", i->key);
@@ -135,7 +136,7 @@ int influxdb_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigne
 		/* Fields */
 		for (unsigned j = 0; j < smp->length; j++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
-			union signal_data *data = &smp->data[j];
+			const union signal_data *data = &smp->data[j];
 
 			if (
 				sig->type != SignalType::BOOLEAN &&

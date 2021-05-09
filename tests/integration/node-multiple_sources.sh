@@ -83,8 +83,8 @@ kill ${P1}
 wait ${P1}
 
 # Compare only the data values
-villas-test-cmp ${OUTPUT_FILE1} ${EXPECT_FILE} && \
-villas-test-cmp ${OUTPUT_FILE2} ${EXPECT_FILE}
+villas-compare ${OUTPUT_FILE1} ${EXPECT_FILE} && \
+villas-compare ${OUTPUT_FILE2} ${EXPECT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${EXPECT_FILE} \

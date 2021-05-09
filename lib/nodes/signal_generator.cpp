@@ -31,6 +31,7 @@
 #include <villas/nodes/signal_generator.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 static enum signal_generator::SignalType signal_generator_lookup_type(const char *type)
@@ -323,7 +324,7 @@ int signal_generator_stop(struct vnode *n)
 	return 0;
 }
 
-int signal_generator_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release)
+int signal_generator_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	struct sample *t = smps[0];

@@ -22,14 +22,20 @@
 
 #pragma once
 
-#include <jansson.h>
+#include <villas/formats/json.hpp>
 
-/* Forward declarations */
-struct sample;
-struct io;
+namespace villas {
+namespace node {
 
-int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-int json_reserve_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+class JsonReserveFormat : public JsonFormat {
 
-int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt);
-int json_reserve_scan(struct io *io, struct sample *smps[], unsigned cnt);
+protected:
+	int packSample(json_t **j, const struct sample *smp);
+	int unpackSample(json_t *json_smp, struct sample *smp);
+
+public:
+	using JsonFormat::JsonFormat;
+};
+
+} /* namespace node */
+} /* namespace villas */

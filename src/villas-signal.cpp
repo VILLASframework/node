@@ -31,7 +31,7 @@
 #include <atomic>
 
 #include <villas/tool.hpp>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
@@ -55,9 +55,9 @@ public:
 	Signal(int argc, char *argv[]) :
 		Tool(argc, argv, "signal"),
 		stop(false),
-		n(),
-		io(),
-		q(),
+		node(),
+		formatter(nullptr),
+		pool(),
 		format("villas.human")
 	{
 		int ret;
@@ -70,9 +70,9 @@ public:
 protected:
 	std::atomic<bool> stop;
 
-	struct vnode n;
-	struct io io;
-	struct pool q;
+	struct vnode node;
+	Format *formatter;
+	struct pool pool;
 
 	std::string format;
 
@@ -213,9 +213,9 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret;
-		json_t *json;
+		json_t *json, *json_format;
+		json_error_t err;
 		struct vnode_type *nt;
-		struct format_type *ft;
 
 		struct sample *t;
 
@@ -223,7 +223,7 @@ check:			if (optarg == endptr)
 		if (!nt)
 			throw RuntimeError("Signal generation is not supported.");
 
-		ret = node_init(&n, nt);
+		ret = node_init(&node, nt);
 		if (ret)
 			throw RuntimeError("Failed to initialize node");
 
@@ -236,78 +236,69 @@ check:			if (optarg == endptr)
 		uuid_t uuid;
 		uuid_clear(uuid);
 
-		ret = node_parse(&n, json, uuid);
+		ret = node_parse(&node, json, uuid);
 		if (ret) {
 			usage();
 			exit(EXIT_FAILURE);
 		}
-
-		ft = format_type_lookup(format.c_str());
-		if (!ft)
-			throw RuntimeError("Invalid output format '{}'", format);
 
 		// nt == n._vt
 		ret = node_type_start(nt, nullptr);
 		if (ret)
 			throw RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
 
-		ret = node_check(&n);
+		ret = node_check(&node);
 		if (ret)
 			throw RuntimeError("Failed to verify node configuration");
 
-		ret = node_prepare(&n);
+		ret = node_prepare(&node);
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(&n), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(&node), ret);
 
-		ret = io_init(&io, ft, &n.in.signals, (int) IOFlags::FLUSH | ((int) SampleFlags::HAS_ALL & ~(int) SampleFlags::HAS_OFFSET));
-		if (ret)
+		/* Try parsing format config as JSON */
+		json_format = json_loads(format.c_str(), 0, &err);
+		formatter = json_format
+				? FormatFactory::make(json_format)
+				: FormatFactory::make(format);
+		if (!formatter)
 			throw RuntimeError("Failed to initialize output");
 
-		ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.in.signals)), &memory_heap);
+		formatter->start(&node.in.signals, ~(int) SampleFlags::HAS_OFFSET);
+
+		ret = pool_init(&pool, 16, SAMPLE_LENGTH(vlist_length(&node.in.signals)), &memory_heap);
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");
 
-		ret = io_open(&io, nullptr);
+		ret = node_start(&node);
 		if (ret)
-			throw RuntimeError("Failed to open output");
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(&node), ret);
 
-		ret = node_start(&n);
-		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+		while (!stop && node.state == State::STARTED) {
+			t = sample_alloc(&pool);
 
-		while (!stop && n.state == State::STARTED) {
-			t = sample_alloc(&q);
-
-			unsigned release = 1; // release = allocated
-
-retry:			ret = node_read(&n, &t, 1, &release);
+retry:			ret = node_read(&node, &t, 1);
 			if (ret == 0)
 				goto retry;
 			else if (ret < 0)
 				goto out;
 
-			io_print(&io, &t, 1);
+			formatter->print(stdout, t);
+			fflush(stdout);
 
 out:			sample_decref(t);
 		}
 
-		ret = node_stop(&n);
+		ret = node_stop(&node);
 		if (ret)
 			throw RuntimeError("Failed to stop node");
 
-		ret = node_destroy(&n);
+		ret = node_destroy(&node);
 		if (ret)
 			throw RuntimeError("Failed to destroy node");
 
-		ret = io_close(&io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
+		delete formatter;
 
-		ret = io_destroy(&io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
-
-		ret = pool_destroy(&q);
+		ret = pool_destroy(&pool);
 		if (ret)
 			throw RuntimeError("Failed to destroy pool");
 

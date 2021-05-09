@@ -20,20 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/* Generated message descriptors by protoc */
-#include <villas.pb-c.h>
-
 #include <villas/sample.h>
 #include <villas/signal.h>
-#include <villas/io.h>
-#include <villas/plugin.h>
-#include <villas/formats/protobuf.h>
+#include <villas/formats/protobuf.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/utils.hpp>
 
-using namespace villas;
-using namespace villas::utils;
+using namespace villas::node;
 
-static enum SignalType protobuf_detect_format(Villas__Node__Value *val)
+enum SignalType ProtobufFormat::detect(const Villas__Node__Value *val)
 {
 	switch (val->value_case) {
 		case VILLAS__NODE__VALUE__VALUE_F:
@@ -54,7 +49,7 @@ static enum SignalType protobuf_detect_format(Villas__Node__Value *val)
 	}
 }
 
-int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
 {
 	unsigned psz;
 
@@ -76,16 +71,16 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		villas__node__sample__init(pb_smp);
 
-		struct sample *smp = smps[i];
+		const struct sample *smp = smps[i];
 
 		pb_smp->type = VILLAS__NODE__SAMPLE__TYPE__DATA;
 
-		if (io->flags & smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
+		if (flags & smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
 			pb_smp->has_sequence = 1;
 			pb_smp->sequence = smp->sequence;
 		}
 
-		if (io->flags & smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
+		if (flags & smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 			pb_smp->timestamp = new Villas__Node__Timestamp;
 			if (!pb_smp->timestamp)
 				throw MemoryAllocationError();
@@ -162,7 +157,7 @@ out:
 	return -1;
 }
 
-int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
 {
 	unsigned i, j;
 	Villas__Node__Message *pb_msg;
@@ -176,7 +171,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
 		smp->flags = 0;
-		smp->signals = io->signals;
+		smp->signals = signals;
 
 		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA)
 			throw RuntimeError("Parsed non supported message type. Skipping");
@@ -195,7 +190,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 		for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
 			Villas__Node__Value *pb_val = pb_smp->values[j];
 
-			enum SignalType fmt = protobuf_detect_format(pb_val);
+			enum SignalType fmt = detect(pb_val);
 
 			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, j);
 			if (!sig)
@@ -240,21 +235,6 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 	return i;
 }
 
-static struct plugin p;
-
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name = "protobuf";
-	p.description = "Google Protobuf";
-	p.type = PluginType::FORMAT;
-	p.format.sprint	= protobuf_sprint;
-	p.format.sscan = protobuf_sscan;
-	p.format.flags = (int) IOFlags::HAS_BINARY_PAYLOAD |
-		          (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
-
-	vlist_init_and_push(&plugins, &p);
-}
-
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-	vlist_remove_all(&plugins, &p);
-}
-
+static char n[] = "protobuf";
+static char d[] = "Google Protobuf";
+static FormatPlugin<ProtobufFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

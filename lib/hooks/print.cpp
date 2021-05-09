@@ -24,12 +24,14 @@
  * @{
  */
 
+#include <cstdio>
 #include <cstring>
 
+#include <villas/node.h>
 #include <villas/hook.hpp>
 #include <villas/path.h>
 #include <villas/sample.h>
-#include <villas/io.h>
+#include <villas/format.hpp>
 #include <villas/plugin.h>
 
 namespace villas {
@@ -38,85 +40,79 @@ namespace node {
 class PrintHook : public Hook {
 
 protected:
-	struct io io;
-	struct format_type *format;
+	Format *formatter;
+	FILE *stream;
 
-	char *prefix;
-	char *uri;
+	std::string prefix;
+	std::string uri;
 
 public:
 	PrintHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		io(),
-		prefix(nullptr),
-		uri(nullptr)
+		formatter(nullptr),
+		stream(nullptr)
+	{ }
+
+	virtual ~PrintHook()
 	{
-		format = format_type_lookup("villas.human");
+		if (formatter)
+			delete formatter;
 	}
 
 	virtual void start()
 	{
-		int ret;
-
 		assert(state == State::PREPARED || state == State::STOPPED);
 
-		ret = io_init(&io, format, &signals, (int) SampleFlags::HAS_ALL);
-		if (ret)
-			throw RuntimeError("Failed to initialze IO");
+		formatter->start(&signals);
 
-		ret = io_open(&io, uri);
-		if (ret)
-			throw RuntimeError("Failed to open IO");
+		stream = !uri.empty() ? fopen(uri.c_str(), "a+") : stdout;
+		if (!stream)
+			throw SystemError("Failed to open IO");
 
 		state = State::STARTED;
 	}
 
 	virtual void stop()
 	{
-		int ret;
-
 		assert(state == State::STARTED);
 
-		ret = io_close(&io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
-
-		ret = io_destroy(&io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
+		if (stream != stdout)
+			fclose(stream);
 
 		state = State::STOPPED;
 	}
 
 	virtual void parse(json_t *json)
 	{
-		const char *f = nullptr, *p = nullptr, *u = nullptr;
+		const char *p = nullptr, *u = nullptr;
 		int ret;
 		json_error_t err;
+		json_t *json_format = nullptr;
 
 		assert(state != State::STARTED);
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: o }",
 			"output", &u,
 			"prefix", &p,
-			"format", &f
+			"format", &json_format
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-print");
 
 		if (p)
-			prefix = strdup(p);
+			prefix = p;
 
 		if (u)
-			uri = strdup(u);
+			uri = u;
 
-		if (f) {
-			format = format_type_lookup(f);
-			if (!format)
-				throw ConfigError(json, "node-config-hook-print-format", "Invalid IO format '{}'", f);
-		}
+		/* Format */
+		formatter = json_format
+				? FormatFactory::make(json_format)
+				: FormatFactory::make("villas.human");
+		if (!formatter)
+			throw ConfigError(json_format, "node-config-hook-print-format", "Invalid format configuration");
 
 		state = State::PARSED;
 	}
@@ -125,25 +121,18 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		if (prefix)
-			printf("%s", prefix);
-		else if (node)
-			printf("Node %s: ", node_name(node));
-		else if (path)
-			printf("Path %s: ", path_name(path));
+		if (stream == stdout) {
+			if (!prefix.empty())
+				printf("%s", prefix.c_str());
+			else if (node)
+				printf("Node %s: ", node_name(node));
+			else if (path)
+				printf("Path %s: ", path_name(path));
+		}
 
-		io_print(&io, &smp, 1);
+		formatter->print(stream, smp);
 
 		return Reason::OK;
-	}
-
-	virtual ~PrintHook()
-	{
-		if (uri)
-			free(uri);
-
-		if (prefix)
-			free(prefix);
 	}
 };
 

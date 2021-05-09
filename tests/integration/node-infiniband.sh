@@ -184,7 +184,7 @@ do
     kill $node_proc
     
     # Compare data
-    villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+    villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
     RC=$?
 
     # Exit, if an error occurs

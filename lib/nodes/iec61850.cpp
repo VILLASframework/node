@@ -35,6 +35,7 @@
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 const struct iec61850_type_descriptor type_descriptors[] = {
