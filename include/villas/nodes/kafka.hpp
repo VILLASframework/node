@@ -44,7 +44,7 @@ struct kafka {
 	struct queue_signalled queue;
 	struct pool pool;
 
-	int timeout;			/**< Timeout in ms. */
+	double timeout;			/**< Timeout in seconds. */
 	char *server;			/**< Hostname/IP:Port address of the bootstrap server. */
 	char *protocol;			/**< Security protocol. */
 	char *produce;			/**< Producer topic. */

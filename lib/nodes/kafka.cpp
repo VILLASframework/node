@@ -86,8 +86,7 @@ static void * kafka_loop_thread(void *ctx)
 
 			// Execute kafka loop for this client
 			if (k->consumer.client) {
-				rd_kafka_message_t *msg = rd_kafka_consumer_poll(k->consumer.client, k->timeout);
-
+				rd_kafka_message_t *msg = rd_kafka_consumer_poll(k->consumer.client, k->timeout * 1000);
 				if (msg) {
 					kafka_message((void *) n, msg);
 					rd_kafka_message_destroy(msg);
@@ -119,6 +118,7 @@ int kafka_init(struct vnode *n)
 	k->produce = nullptr;
 	k->consume = nullptr;
 	k->client_id = nullptr;
+	k->timeout = 1.0;
 
 	k->consumer.client = nullptr;
 	k->consumer.group_id = nullptr;
@@ -153,7 +153,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 	json_t *json_ssl = nullptr;
 	json_t *json_sasl = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s, s?: s }, s?: s, s: s, s?: i, s: s, s?: s, s?: o, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: s }, s?: { s?: s, s?: s }, s?: s, s: s, s?: F, s: s, s?: s, s?: o, s?: o }",
 		"out",
 			"produce", &produce,
 		"in",
