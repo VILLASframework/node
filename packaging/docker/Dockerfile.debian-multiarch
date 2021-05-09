@@ -106,7 +106,8 @@ ENV TRIPLET=${TRIPLET}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
-RUN bash deps.sh
+RUN export SKIP_ULDAQ=1; \
+    bash deps.sh
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
