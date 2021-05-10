@@ -34,7 +34,7 @@ prepare:docker:
     matrix:
     - DISTRO: [ ubuntu, debian, centos ]
     - DISTRO: fedora
-      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
+      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
     - DISTRO: fedora
       DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
       DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
@@ -148,7 +148,7 @@ test:cppcheck:
 
 test:unit:
   stage: test
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   variables:
     LD_PRELOAD: /usr/lib64/libSegFault.so
     SEGFAULT_SIGNALS: all
@@ -164,7 +164,7 @@ test:unit:
 
 test:integration:
   stage: test
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   allow_failure: true
   script:
   - mkdir -p build && cd build
@@ -189,7 +189,7 @@ test:integration:
 
 pkg:rpm:
   stage: packaging
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
   - mkdir -p build && cd build
   - cmake -DWITH_NODE_ETHERCAT=OFF ..
@@ -291,7 +291,7 @@ deploy:docker:
   - job: "pkg:alpine: [linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
   - job: "pkg:alpine: [linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
   - job: "pkg:alpine: [linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
-  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
+  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}]"
 
 .deploy:packages: &deploy_packages
   stage: deploy
