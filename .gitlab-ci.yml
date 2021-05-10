@@ -34,7 +34,7 @@ prepare:docker:
     matrix:
     - DISTRO: [ ubuntu, debian, centos ]
     - DISTRO: fedora
-      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
     - DISTRO: fedora
       DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
       DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
@@ -291,7 +291,7 @@ deploy:docker:
   - job: "pkg:alpine: [linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
   - job: "pkg:alpine: [linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
   - job: "pkg:alpine: [linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
-  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}]"
+  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
 
 .deploy:packages: &deploy_packages
   stage: deploy
