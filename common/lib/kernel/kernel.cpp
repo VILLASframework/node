@@ -59,7 +59,7 @@ Version villas::kernel::getVersion()
 	return Version(ver);
 }
 
-int villas::kernel::get_cacheline_size()
+int villas::kernel::getCachelineSize()
 {
 #if defined(__linux__) && defined(__x86_64__) && defined(__GLIBC__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
@@ -82,7 +82,7 @@ int villas::kernel::get_cacheline_size()
 }
 
 #if defined(__linux__) || defined(__APPLE__)
-int villas::kernel::get_page_size()
+int villas::kernel::getPageSize()
 {
 	return sysconf(_SC_PAGESIZE);
 }
@@ -91,7 +91,7 @@ int villas::kernel::get_page_size()
 #endif
 
 /* There is no sysconf interface to get the hugepage size */
-int villas::kernel::get_hugepage_size()
+int villas::kernel::getHugePageSize()
 {
 #ifdef __linux__
 	char *key, *value, *unit, *line = nullptr, *lasts;
@@ -129,7 +129,7 @@ int villas::kernel::get_hugepage_size()
 
 #ifdef __linux__
 
-int villas::kernel::module_set_param(const char *module, const char *param, const char *value)
+int villas::kernel::setModuleParam(const char *module, const char *param, const char *value)
 {
 	FILE *f;
 	char fn[256];
@@ -148,11 +148,11 @@ int villas::kernel::module_set_param(const char *module, const char *param, cons
 	return 0;
 }
 
-int villas::kernel::module_load(const char *module)
+int villas::kernel::loadModule(const char *module)
 {
 	int ret;
 
-	ret = module_loaded(module);
+	ret = isModuleLoaded(module);
 	if (!ret) {
 		auto logger = logging.get("kernel");
 		logger->debug("Kernel module {} already loaded...", module);
@@ -171,11 +171,11 @@ int villas::kernel::module_load(const char *module)
 		default:
 			wait(&ret);
 
-			return module_loaded(module);
+			return isModuleLoaded(module);
 	}
 }
 
-int villas::kernel::module_loaded(const char *module)
+int villas::kernel::isModuleLoaded(const char *module)
 {
 	FILE *f;
 	int ret = -1;
@@ -199,7 +199,7 @@ int villas::kernel::module_loaded(const char *module)
 	return ret;
 }
 
-int villas::kernel::get_cmdline_param(const char *param, char *buf, size_t len)
+int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len)
 {
 	int ret;
 	char cmdline[512], key[128], value[128], *lasts, *tok;
@@ -236,7 +236,7 @@ out:
 	return -1; /* not found or error */
 }
 
-int villas::kernel::get_nr_hugepages()
+int villas::kernel::getNrHugepages()
 {
 	FILE *f;
 	int nr, ret;
@@ -257,7 +257,7 @@ int villas::kernel::get_nr_hugepages()
 	return nr;
 }
 
-int villas::kernel::set_nr_hugepages(int nr)
+int villas::kernel::setNrHugepages(int nr)
 {
 	FILE *f;
 
@@ -266,7 +266,7 @@ int villas::kernel::set_nr_hugepages(int nr)
 		auto logger = logging.get("kernel");
 
 		if (is_container()) {
-			logger->warn("This functionality is unavailable in this mode. Please run the Docker container in the privileged mode:");
+			logger->warn("This functionality is unavailable in this mode. Please run the container in the privileged mode:");
 			logger->warn("    $ docker run --privilged ...");
 		}
 		else
@@ -281,7 +281,7 @@ int villas::kernel::set_nr_hugepages(int nr)
 	return 0;
 }
 
-int villas::kernel::irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
+int villas::kernel::setIRQAffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 {
 	char fn[64];
 	FILE *f;

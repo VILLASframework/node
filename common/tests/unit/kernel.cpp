@@ -47,13 +47,13 @@ Test(kernel, sizes)
 {
 	int sz;
 
-	sz = get_page_size();
+	sz = getPageSize();
 	cr_assert_eq(sz, PAGESIZE);
 
-	sz = get_hugepage_size();
+	sz = getHugePageSize();
 	cr_assert(sz == HUGEPAGESIZE);
 
-	sz = get_cacheline_size();
+	sz = getCachelineSize();
 	cr_assert_eq(sz, CACHELINESIZE);
 }
 
@@ -62,16 +62,16 @@ Test(kernel, hugepages)
 {
 	int ret;
 
-	ret = set_nr_hugepages(25);
+	ret = setNrHugepages(25);
 	cr_assert_eq(ret, 0);
 
-	ret = get_nr_hugepages();
+	ret = getNrHugepages();
 	cr_assert_eq(ret, 25);
 
-	ret = set_nr_hugepages(10);
+	ret = setNrHugepages(10);
 	cr_assert_eq(ret, 0);
 
-	ret = get_nr_hugepages();
+	ret = getNrHugepages();
 	cr_assert_eq(ret, 10);
 }
 
@@ -91,10 +91,10 @@ Test(kernel, module, .disabled = true)
 {
 	int ret;
 
-	ret = module_loaded("nf_nat");
+	ret = isModuleLoaded("nf_nat");
 	cr_assert_eq(ret, 0);
 
-	ret = module_loaded("does_not_exist");
+	ret = isModuleLoaded("does_not_exist");
 	cr_assert_neq(ret, 0);
 }
 

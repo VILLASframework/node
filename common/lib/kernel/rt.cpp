@@ -62,7 +62,7 @@ void init(int priority, int affinity)
 		logger->warn("You might want to use the 'priority' setting to increase " PROJECT_NAME "'s process priority");
 
 	if (affinity) {
-		is_isol = get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
+		is_isol = getCmdlineParam("isolcpus", isolcpus, sizeof(isolcpus));
 		if (is_isol)
 			logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
 		else {
