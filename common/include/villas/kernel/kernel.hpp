@@ -33,17 +33,6 @@ namespace kernel {
 /** Get the version of the kernel. */
 utils::Version getVersion();
 
-#if WITH_CAP
-#include <sys/capability.h>
-
-/** Check if current process has capability \p cap.
- *
- * @retval 0 If capabilty is present.
- * @retval <0 If capability is not present.
- */
-int check_cap(cap_value_t cap);
-#endif
-
 /** Get number of reserved hugepages. */
 int get_nr_hugepages();
 
