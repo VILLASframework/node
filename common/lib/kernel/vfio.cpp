@@ -85,7 +85,7 @@ Container::Container()
 	};
 
 	for (const char* module : requiredKernelModules) {
-		if (kernel::module_load(module) != 0)
+		if (kernel::loadModule(module) != 0)
 			throw RuntimeError("Kernel module '{}' required but could not be loaded. "
 			              "Please load manually!", module);
 	}
@@ -280,7 +280,7 @@ Container::attachDevice(const pci::Device &pdev)
 	Logger logger = logging.get("kernel:vfio");
 
 	/* Load PCI bus driver for VFIO */
-	if (kernel::module_load("vfio_pci"))
+	if (kernel::loadModule("vfio_pci"))
 		throw RuntimeError("Failed to load kernel driver: vfio_pci");
 
 	/* Bind PCI card to vfio-pci driver if not already bound */
@@ -292,7 +292,7 @@ Container::attachDevice(const pci::Device &pdev)
 	/* Get IOMMU group of device */
 	int index = isIommuEnabled() ? pdev.getIOMMUGroup() : 0;
 	if (index < 0) {
-		ret = kernel::get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
+		ret = kernel::getCmdlineParam("intel_iommu", iommu_state, sizeof(iommu_state));
 		if (ret != 0 || strcmp("on", iommu_state) != 0)
 			logger->warn("Kernel booted without command line parameter "
 					"'intel_iommu' set to 'on'. Please check documentation "

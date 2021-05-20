@@ -34,10 +34,10 @@ namespace kernel {
 utils::Version getVersion();
 
 /** Get number of reserved hugepages. */
-int get_nr_hugepages();
+int getNrHugepages();
 
 /** Set number of reserved hugepages. */
-int set_nr_hugepages(int nr);
+int setNrHugepages(int nr);
 
 /** Get kernel cmdline parameter
  *
@@ -49,7 +49,7 @@ int set_nr_hugepages(int nr);
  * @retval 0 Parameter \p key was found and value was copied to \p value
  * @reval <>0 Kernel was not booted with parameter \p key
  */
-int get_cmdline_param(const char *param, char *buf, size_t len);
+int getCmdlineParam(const char *param, char *buf, size_t len);
 
 /** Checks if a kernel module is loaded
  *
@@ -57,28 +57,28 @@ int get_cmdline_param(const char *param, char *buf, size_t len);
  * @retval 0 Module is loaded.
  * @reval <>0 Module is not loaded.
  */
-int module_loaded(const char *module);
+int isModuleLoaded(const char *module);
 
 /** Load kernel module via modprobe */
-int module_load(const char *module);
+int loadModule(const char *module);
 
 /** Set parameter of loaded kernel module */
-int module_set_param(const char *module, const char *param, const char *value);
+int setModuleParam(const char *module, const char *param, const char *value);
 
 /** Get cacheline size in bytes */
-int get_cacheline_size();
+int getCachelineSize();
 
 /** Get the size of a standard page in bytes. */
-int get_page_size();
+int getPageSize();
 
 /** Get the size of a huge page in bytes. */
-int get_hugepage_size();
+int getHugePageSize();
 
 /** Get CPU base frequency */
 int get_cpu_frequency(uint64_t *freq);
 
 /** Set SMP affinity of IRQ */
-int irq_setaffinity(unsigned irq, uintmax_t aff , uintmax_t *old);
+int setIRQAffinity(unsigned irq, uintmax_t aff , uintmax_t *old);
 
 } /* namespace villas */
 } /* namespace kernel */
