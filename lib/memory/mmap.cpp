@@ -77,9 +77,10 @@ int memory_mmap_init(int hugepages)
 					logger->warn("Failed to increase number of reserved hugepages");
 					memory_default = &memory_mmap;
 				}
-
-				logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
-				memory_default = &memory_mmap_hugetlb;
+				else {
+					logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
+					memory_default = &memory_mmap_hugetlb;
+				}
 			}
 			else {
 				logger->warn("Failed to reserved hugepages. Please reserve manually by running as root:");
