@@ -53,12 +53,12 @@ int memory_mmap_init(int hugepages)
 {
 	logger = logging.get("memory:mmap");
 
-	pgsz = kernel::get_page_size();
+	pgsz = kernel::getPageSize();
 	if (pgsz < 0)
 		return -1;
 
 	if (hugepages > 0) {
-		hugepgsz = kernel::get_hugepage_size();
+		hugepgsz = kernel::getHugePageSize();
 		if (hugepgsz < 0) {
 			logger->warn("Failed to determine hugepage size.");
 
@@ -69,10 +69,10 @@ int memory_mmap_init(int hugepages)
 #if defined(__linux__) && defined(__x86_64__)
 		int ret, pagecnt;
 
-		pagecnt = kernel::get_nr_hugepages();
+		pagecnt = kernel::getNrHugepages();
 		if (pagecnt < hugepages) {
 			if (getuid() == 0) {
-				ret = kernel::set_nr_hugepages(hugepages);
+				ret = kernel::setNrHugepages(hugepages);
 				if (ret) {
 					logger->warn("Failed to increase number of reserved hugepages");
 					memory_default = &memory_mmap;

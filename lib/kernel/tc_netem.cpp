@@ -273,7 +273,7 @@ int villas::kernel::tc::netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t han
 	struct nl_sock *sock = nl::init();
 	struct rtnl_qdisc *q = *qd;
 
-	ret = kernel::module_load("sch_netem");
+	ret = kernel::loadModule("sch_netem");
 	if (ret)
 		throw RuntimeError("Failed to load kernel module: sch_netem ({})", ret);
 

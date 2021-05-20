@@ -44,7 +44,7 @@ size_t shmem_total_size(int queuelen, int samplelen)
 		/* the size of the actual queue and the queue for the pool */
 		+ queuelen * (2 * sizeof(struct queue_cell))
 		/* the size of the pool */
-		+ queuelen * kernel::get_cacheline_size() * CEIL(SAMPLE_LENGTH(samplelen), kernel::get_cacheline_size())
+		+ queuelen * kernel::getCachelineSize() * CEIL(SAMPLE_LENGTH(samplelen), kernel::getCachelineSize())
 		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
 		+ 4 * sizeof(struct memory_block)
 		/* and some extra buffer for alignment */

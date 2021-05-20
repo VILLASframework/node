@@ -53,7 +53,7 @@ int memory_init(int hugepages)
 	if (ret < 0)
 		return ret;
 
-	size_t lock = kernel::get_hugepage_size() * hugepages;
+	size_t lock = kernel::getHugePageSize() * hugepages;
 
 	ret = memory_lock(lock);
 	if (ret)

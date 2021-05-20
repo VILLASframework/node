@@ -43,7 +43,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t hand
 	struct nl_sock *sock = nl::init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
-	ret = kernel::module_load("sch_prio");
+	ret = kernel::loadModule("sch_prio");
 	if (ret)
 		throw RuntimeError("Failed to load kernel module: sch_prio ({})", ret);
 
@@ -77,7 +77,7 @@ int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowi
 	struct nl_sock *sock = nl::init();
 	struct rtnl_cls *c = rtnl_cls_alloc();
 
-	ret = kernel::module_load("cls_fw");
+	ret = kernel::loadModule("cls_fw");
 	if (ret)
 		throw RuntimeError("Failed to load kernel module: cls_fw");
 
