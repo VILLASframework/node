@@ -43,7 +43,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 		throw MemoryAllocationError();
 
 	auto logger = logging.get("pool");
-	logger->debug("Allocated {#x} bytes for memory pool", p->len);
+	logger->debug("Allocated {:#x} bytes for memory pool", p->len);
 
 	p->buffer_off = (char*) buffer - (char*) p;
 
