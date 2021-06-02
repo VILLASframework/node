@@ -63,6 +63,7 @@ list(APPEND FORMAT_SRC
     json.cpp
     iotagent_ul.cpp
     json_reserve.cpp
+    json_kafka.cpp
     villas_binary.cpp
     villas_human.cpp
     csv.cpp
