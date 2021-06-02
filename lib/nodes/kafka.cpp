@@ -549,7 +549,7 @@ int kafka_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	size_t wbytes;
 
-	char data[1500];
+	char data[4096];
 
 	ret = io_sprint(&k->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)
