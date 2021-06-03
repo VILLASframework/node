@@ -29,7 +29,7 @@
 #include <villas/compat.hpp>
 #include <villas/timing.h>
 #include <villas/io.h>
-#include <villas/formats/json_reserve.h>
+#include <villas/formats/json_kafka.h>
 
 static const char * json_kafka_type_villas_to_kafka(enum SignalType vt)
 {
