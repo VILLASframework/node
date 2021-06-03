@@ -583,12 +583,12 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name				= "kafka";
+	p.name			= "kafka";
 	p.description		= "Kafka event message streaming (rdkafka)";
-	p.type				= PluginType::NODE;
+	p.type			= PluginType::NODE;
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
-	p.node.size			= sizeof(struct kafka);
+	p.node.size		= sizeof(struct kafka);
 	p.node.type.start	= kafka_type_start;
 	p.node.type.stop	= kafka_type_stop;
 	p.node.destroy		= kafka_destroy;
@@ -596,11 +596,11 @@ static void register_plugin() {
 	p.node.parse		= kafka_parse;
 	p.node.prepare		= kafka_prepare;
 	p.node.print		= kafka_print;
-	p.node.init			= kafka_init;
+	p.node.init		= kafka_init;
 	p.node.destroy		= kafka_destroy;
 	p.node.start		= kafka_start;
-	p.node.stop			= kafka_stop;
-	p.node.read			= kafka_read;
+	p.node.stop		= kafka_stop;
+	p.node.read		= kafka_read;
 	p.node.write		= kafka_write;
 	p.node.reverse		= kafka_reverse;
 	p.node.poll_fds		= kafka_poll_fds;
