@@ -41,12 +41,10 @@ static const char * json_kafka_type_villas_to_kafka(enum SignalType vt)
 			return "int64";
 
 		case SignalType::BOOLEAN:
-			return "?";
-
-		case SignalType::COMPLEX:
-			return "?";
+			return "boolean";
 
 		default:
+		case SignalType::COMPLEX:
 		case SignalType::INVALID:
 			return "unknown";
 	}
@@ -129,7 +127,7 @@ static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct samp
 	smp->flags = 0;
 	smp->signals = io->signals;
 
-	/* Get timestamp */
+	/* Unpack timestamp */
 	json_value = json_object_get(json_payload, "timestamp");
 	if (json_value) {
 		uint64_t ts_origin_ms = json_integer_value(json_value);
@@ -138,18 +136,18 @@ static int json_kafka_unpack_sample(struct io *io, json_t *json_smp, struct samp
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
-	/* Get sequence no */
+	/* Unpack sequence no */
 	json_value = json_object_get(json_payload, "sequence");
 	if (json_value) {
 		smp->sequence = json_integer_value(json_value);
-	
+
 		smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 	}
 
-	/* Get sample signals */
+	/* Unpack signal data */
 	for (size_t i = 0; i < vlist_length(io->signals); i++) {
 		struct signal *sig = (struct signal *) vlist_at(io->signals, i);
-		
+
 		json_value = json_object_get(json_payload, sig->name);
 		if (!json_value)
 			continue;
