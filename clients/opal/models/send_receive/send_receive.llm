@@ -110,3 +110,4 @@ sm_send_receive_DEBUG=OFF
 sm_send_receive_XHP_ENABLE=FALSE
 [UserEnvVars]
 PROTOCOL=VILLAS
+RTLAB_INTEL_COMPILER=1
