@@ -58,11 +58,13 @@ protected:
 	std::shared_ptr<Dumper> phasorPhase;
 	std::shared_ptr<Dumper> phasorAmplitude;
 	std::shared_ptr<Dumper> phasorFreq;
+	std::shared_ptr<Dumper> ppsSigSync;
 
 	enum WindowType windowType;
 	enum PaddingType paddingType;
 
 	std::vector<std::vector<double>> smpMemory;
+	std::vector<double> ppsMemory;//this is just temporary for debugging
 	std::vector<std::vector<std::complex<double>>> dftMatrix;
 	std::vector<std::complex<double>> dftResults;
 	std::vector<double> filterWindowCoefficents;
@@ -75,6 +77,7 @@ protected:
 	double endFreqency;
 	double frequencyResolution;
 	unsigned dftRate;
+	unsigned ppsIndex;
 	unsigned windowSize;
 	unsigned windowMultiplier;	/**< Multiplyer for the window to achieve frequency resolution */
 	unsigned freqCount;		/**< Number of requency bins that are calculated */
@@ -96,6 +99,7 @@ public:
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
 		smpMemory(),
+		ppsMemory(),
 		dftMatrix(),
 		dftResults(),
 		filterWindowCoefficents(),
@@ -107,6 +111,7 @@ public:
 		endFreqency(0),
 		frequencyResolution(0),
 		dftRate(0),
+		ppsIndex(0),
 		windowSize(0),
 		windowMultiplier(0),
 		freqCount(0),
@@ -117,13 +122,17 @@ public:
 		lastDftCal({0, 0}),
 		signalIndex()
 	{
-		bool debug = false;
-		if (debug) {
+		logger = logging.get("hook:dft");
+
+		format = format_type_lookup("villas.human");
+
+		if (logger->level() >= SPDLOG_LEVEL_DEBUG) {
 			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
 			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
 			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
 			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
 			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
+			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
 		}
 	}
 
@@ -153,8 +162,12 @@ public:
 			vlist_push(&signals, phaseSig);
 			vlist_push(&signals, rocofSig);
 
-			smpMemory.emplace_back(windowSize, 0.0);
+			smpMemory.emplace_back(std::vector<double>(windowSize, 0.0));
 		}
+
+		//temporary ppsMemory
+		ppsMemory.clear();
+		ppsMemory.resize(windowSize, 0.0);
 
 		/* Calculate how much zero padding ist needed for a needed resolution */
 		windowMultiplier = ceil(((double)sampleRate / windowSize) / frequencyResolution);
@@ -202,7 +215,8 @@ public:
 			"window_type", &windowTypeC,
 			"padding_type", &paddingTypeC,
 			"sync", &syncDft,
-			"signal_index", &jsonChannelList
+			"signal_index", &jsonChannelList,
+			"pps_index", &ppsIndex
 		);
 		if (ret)
 			throw ConfigError(cfg, err, "node-config-hook-dft");
@@ -277,6 +291,11 @@ public:
 		for (unsigned i = 0; i < signalIndex.size(); i++)
 			smpMemory[i][smpMemPos % windowSize] = smp->data[signalIndex[i]].f;
 
+		//debugging for pps signal this should only be temporary
+		if (ppsSigSync)
+			ppsMemory[smpMemPos % windowSize] = smp->data[ppsIndex].f;
+		//debugging for pps signal this should only be temporary
+
 		smpMemPos++;
 
 		bool runDft = false;
@@ -289,6 +308,16 @@ public:
 
 		if (runDft) {
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
+
+				//debugging for pps signal this should only be temporary
+				if (ppsSigSync) {
+					double tmpPPSWindow[windowSize];
+					for (unsigned i = 0; i< windowSize; i++)
+						tmpPPSWindow[i] = ppsMemory[(i + smpMemPos) % windowSize];
+					ppsSigSync->writeData(windowSize, tmpPPSWindow);	
+				}
+				//debugging for pps signal this should only be temporary
+
 				calculateDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
 				double maxF = 0;
 				double maxA = 0;
@@ -313,7 +342,9 @@ public:
 					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
 					if (phasorPhase)
-						phasorPhase->writeDataBinary(1, &(smp->data[i * 4 + 2].f));
+						phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
+					if (phasorAmplitude)
+						phasorAmplitude->writeData(1, &(smp->data[i * 4 + 1].f));
 				}
 			}
 			dftCalcCnt++;
@@ -356,8 +387,8 @@ public:
 		if (origSigSync)
 			origSigSync->writeDataBinary(windowSize, tmpSmpWindow);
 
-		if (dftCalcCnt > 1 && phasorAmplitude)
-			phasorAmplitude->writeDataBinary(1, &tmpSmpWindow[windowSize - 1]);
+		//if (dftCalcCnt > 1 && phasorAmplitude)
+		//	phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
 
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
