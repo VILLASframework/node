@@ -358,6 +358,8 @@ public:
 				{
 					Point estimate = quadraticEstimation(absDftFreqs[maxPos - 1], absDftFreqs[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos - 1] , absDftResults[maxPos] , absDftResults[maxPos + 1], maxPos);
 					logger->info("1: {};{}  2: {};{} 3: {};{} estimate: {}:{} ", absDftFreqs[maxPos - 1], absDftResults[maxPos - 1], absDftFreqs[maxPos], absDftResults[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos + 1], estimate.x, estimate.y);
+					maxF = estimate.x;
+					maxA = estimate.y;
 				}
 
 				if (dftCalcCnt > 1) {
@@ -495,7 +497,8 @@ public:
 	 * 
 	 * This function is based on the following paper:
 	 * https://mgasior.web.cern.ch/pap/biw2004.pdf
-	 * 
+	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
+	 * 	 * 
 	 * In particular equation 10
 	 * 
 	 */
@@ -526,7 +529,22 @@ public:
 		
 		y_Fmax = startFreqency + maxBinEst * frequencyResolution;
 
-		Point ret = {y_Fmax, 0};
+
+		//calc amplitude
+		//double h = (y2 - ( (y1 * x2^2) / x1^2)) / (1 - x2^2 / x1^2 )
+
+		//double h = (y2 - ( (y1 * pow(x2, 2)) / pow(x1, 2))) / (1 - pow(x2, 2) / pow(x1, 2));
+
+		//double h = ( - y3 + ( (y1 * pow(x3, 2)) / pow(x1, 2))) / (pow(x3, 2) / pow(x1, 2) - 1 );
+
+		double a = (x1 * (y2-y3)+x2 * (y3-y1)+x3 * (y1-y2))/((x1-x2) * (x1-x3) * (x3-x2));
+		double b = (pow(x1,2)*(y2-y3)+pow(x2,2)*(y3-y1)+pow(x3,2) * (y1-y2))/((x1-x2) * (x1-x3) * (x2-x3));
+		double c = (pow(x1,2) * (x2 * y3 - x3 *y2)+x1 * (pow(x3,2) * y2 - pow(x2,2) * y3)+ x2 * x3 * y1 * (x2-x3))/((x1-x2) * (x1-x3) * (x2-x3));
+
+		 
+		double h = a * pow(y_Fmax,2) + b * y_Fmax + c;
+
+		Point ret = {y_Fmax, h};
 
 		return ret;
 	}
