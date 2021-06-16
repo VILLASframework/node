@@ -60,7 +60,8 @@ RUN dnf -y install \
 	libibverbs-devel \
 	librdmacm-devel \
 	libusb1-devel \
-	lua-devel
+	lua-devel \
+	hiredis-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \

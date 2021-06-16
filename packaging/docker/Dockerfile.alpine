@@ -58,7 +58,8 @@ RUN apk update && \
 		mosquitto-dev \
 		librdkafka-dev \
 		libusb-dev \
-		lua-dev
+		lua-dev \
+		hiredis-dev
 
 RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 	apk add \

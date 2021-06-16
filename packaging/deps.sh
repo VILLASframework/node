@@ -133,6 +133,32 @@ if ! pkg-config "rdkafka>=1.5.0" && \
     popd
 fi
 
+# Build & Install hiredis
+if ! pkg-config "hiredis>1.0.0" && \
+    [ -z "${SKIP_HIREDIS}" ]; then
+    git clone --branch v1.0.0 --depth 1 https://github.com/redis/hiredis.git
+    mkdir -p hiredis/build
+    pushd hiredis/build
+    cmake -DDISABLE_TESTS=ON \
+          -DENABLE_SSL=ON \
+          ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    popd
+fi
+
+# Build & Install redis++
+if [ -z "${SKIP_REDISPP}" ]; then
+    git clone --depth 1 https://github.com/sewenew/redis-plus-plus.git
+    mkdir -p redis-plus-plus/build
+    pushd redis-plus-plus/build
+    cmake -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
+          -DREDIS_PLUS_PLUS_USE_TLS=ON \
+          -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
+          ${CMAKE_OPTS} ..
+    make -j$(nproc) ${TARGET}
+    popd
+fi
+
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.0.0" && \
     [ -z "${SKIP_ULDAQ}" ]; then

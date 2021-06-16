@@ -738,7 +738,7 @@ int ngsi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	int ret;
 
 	if (i->task.wait() == 0)
-		perror("Failed to wait for task");
+		throw SystemError("Failed to wait for task");
 
 	json_t *json_rentity;
 	json_t *json_entity = ngsi_build_entity(n, nullptr, 0, 0);

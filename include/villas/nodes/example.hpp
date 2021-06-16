@@ -22,7 +22,7 @@
  *********************************************************************************/
 
 /**
- * @addtogroup example BSD example Node Type
+ * @addtogroup example Example node-type
  * @ingroup node
  * @{
  */

@@ -179,6 +179,12 @@ if(WITH_NODE_TEMPER)
     list(APPEND LIBRARIES PkgConfig::LIBUSB)
 endif()
 
+# Enable Redis support
+if(WITH_NODE_REDIS)
+	list(APPEND NODE_SRC redis.cpp)
+	list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

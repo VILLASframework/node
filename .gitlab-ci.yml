@@ -178,6 +178,7 @@ test:integration:
   services:
   - eclipse-mosquitto
   - rabbitmq
+  - redis
   tags:
   - docker
   needs:
