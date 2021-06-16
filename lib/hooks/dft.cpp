@@ -28,6 +28,7 @@
 #include <cinttypes>
 #include <complex>
 #include <vector>
+#include <villas/timing.h>
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
@@ -138,7 +139,7 @@ public:
 
 		format = format_type_lookup("villas.human");
 
-		if (logger->level() >= SPDLOG_LEVEL_DEBUG) {
+		if (logger->level() <= SPDLOG_LEVEL_DEBUG) {
 			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
 			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
 			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
@@ -295,8 +296,6 @@ public:
 		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
 			freqEstType = FreqEstimationType::QUADRATIC;
 
-
-
 		if (endFreqency < 0 || endFreqency > sampleRate)
 			throw ConfigError(cfg, err, "node-config-hook-dft", "End frequency must be smaller than sampleRate {}", sampleRate);
 
@@ -322,13 +321,16 @@ public:
 
 		bool runDft = false;
 		if (syncDft) {
-			if (lastDftCal.tv_sec != smp->ts.origin.tv_sec)
+			struct timespec timeDiff = time_diff(&lastDftCal, &smp->ts.origin);
+			if (timeDiff.tv_sec > 0)
 				runDft = true;
+
+			//if (lastDftCal.tv_sec != smp->ts.origin.tv_sec)
+			//	runDft = true;
 		}
 
-		lastDftCal = smp->ts.origin;
-
 		if (runDft) {
+			lastDftCal = smp->ts.origin;
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
 
 				//debugging for pps signal this should only be temporary
@@ -354,8 +356,7 @@ public:
 					}
 				}
 
-				if (freqEstType == FreqEstimationType::QUADRATIC)
-				{
+				if (freqEstType == FreqEstimationType::QUADRATIC) {
 					Point estimate = quadraticEstimation(absDftFreqs[maxPos - 1], absDftFreqs[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos - 1] , absDftResults[maxPos] , absDftResults[maxPos + 1], maxPos);
 					logger->info("1: {};{}  2: {};{} 3: {};{} estimate: {}:{} ", absDftFreqs[maxPos - 1], absDftResults[maxPos - 1], absDftFreqs[maxPos], absDftResults[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos + 1], estimate.x, estimate.y);
 					maxF = estimate.x;
@@ -457,8 +458,8 @@ public:
 		switch (windowTypeIn) {
 			case WindowType::FLATTOP:
 				for (unsigned i = 0; i < windowSize; i++) {
-					filterWindowCoefficents[i] = 	0.21557895
-									- 0.41663158 * cos(2 * M_PI * i / (windowSize))
+					filterWindowCoefficents[i] = 0.21557895
+									- 0.41663158  * cos(2 * M_PI * i / (windowSize))
 									+ 0.277263158 * cos(4 * M_PI * i / (windowSize))
 									- 0.083578947 * cos(6 * M_PI * i / (windowSize))
 									+ 0.006947368 * cos(8 * M_PI * i / (windowSize));
