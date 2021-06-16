@@ -41,16 +41,26 @@ namespace node {
 class DftHook : public Hook {
 
 protected:
-	enum PaddingType {
+	enum class PaddingType {
 		ZERO,
 		SIG_REPEAT
 	};
 
-	enum WindowType {
+	enum class WindowType {
 		NONE,
 		FLATTOP,
 		HANN,
 		HAMMING
+	};
+
+	enum class FreqEstimationType {
+		NONE,
+		QUADRATIC
+	};
+
+	struct Point {
+		double x;
+		double y;
 	};
 
 	std::shared_ptr<Dumper> origSigSync;
@@ -62,6 +72,7 @@ protected:
 
 	enum WindowType windowType;
 	enum PaddingType paddingType;
+	enum FreqEstimationType freqEstType;
 
 	std::vector<std::vector<double>> smpMemory;
 	std::vector<double> ppsMemory;//this is just temporary for debugging
@@ -98,6 +109,7 @@ public:
 		Hook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
+		freqEstType(FreqEstimationType::NONE),
 		smpMemory(),
 		ppsMemory(),
 		dftMatrix(),
@@ -195,7 +207,7 @@ public:
 
 	virtual void parse(json_t *cfg)
 	{
-		const char *paddingTypeC = nullptr, *windowTypeC= nullptr;
+		const char *paddingTypeC = nullptr, *windowTypeC = nullptr, *freqEstimateTypeC = nullptr;
 		int ret;
 		json_error_t err;
 
@@ -205,7 +217,7 @@ public:
 
 		Hook::parse(cfg);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: b, s?: o}",
+		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: o}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFreqency,
 			"end_freqency", &endFreqency,
@@ -214,6 +226,7 @@ public:
 			"window_size", &windowSize,
 			"window_type", &windowTypeC,
 			"padding_type", &paddingTypeC,
+			"freq_estimate_type", &freqEstimateTypeC,
 			"sync", &syncDft,
 			"signal_index", &jsonChannelList,
 			"pps_index", &ppsIndex
@@ -275,6 +288,15 @@ public:
 			paddingType = PaddingType::ZERO;
 		}
 
+		if (!freqEstimateTypeC) {
+			logger->info("No Frequency estimation type given, assume no none");
+			freqEstType = FreqEstimationType::NONE;
+		}
+		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
+			freqEstType = FreqEstimationType::QUADRATIC;
+
+
+
 		if (endFreqency < 0 || endFreqency > sampleRate)
 			throw ConfigError(cfg, err, "node-config-hook-dft", "End frequency must be smaller than sampleRate {}", sampleRate);
 
@@ -332,6 +354,12 @@ public:
 					}
 				}
 
+				if (freqEstType == FreqEstimationType::QUADRATIC)
+				{
+					Point estimate = quadraticEstimation(absDftFreqs[maxPos - 1], absDftFreqs[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos - 1] , absDftResults[maxPos] , absDftResults[maxPos + 1], maxPos);
+					logger->info("1: {};{}  2: {};{} 3: {};{} estimate: {}:{} ", absDftFreqs[maxPos - 1], absDftResults[maxPos - 1], absDftFreqs[maxPos], absDftResults[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos + 1], estimate.x, estimate.y);
+				}
+
 				if (dftCalcCnt > 1) {
 					if (phasorFreq)
 						phasorFreq->writeDataBinary(1, &maxF);
@@ -362,6 +390,10 @@ public:
 		return Reason::SKIP_SAMPLE;
 	}
 
+
+	/**
+	 * This function generates the furie coeffients for the calculateDft function
+	 */
 	void generateDftMatrix()
 	{
 		using namespace std::complex_literals;
@@ -375,6 +407,10 @@ public:
 		}
 	}
 
+
+	/**
+	 * This function calculates the discrete furie transform of the input signal 
+	 */
 	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, unsigned ringBufferPos)
 	{
 		/* RingBuffer size needs to be equal to windowSize
@@ -411,6 +447,9 @@ public:
 		}
 	}
 
+	/**
+	 * This function prepares the selected window coefficents
+	 */
 	void calculateWindow(enum WindowType windowTypeIn)
 	{
 		switch (windowTypeIn) {
@@ -448,6 +487,48 @@ public:
 		}
 
 		windowCorretionFactor /= windowSize;
+	}
+
+
+	/**
+	 * This function is calculating the mximum based on a quadratic interpolation
+	 * 
+	 * This function is based on the following paper:
+	 * https://mgasior.web.cern.ch/pap/biw2004.pdf
+	 * 
+	 * In particular equation 10
+	 * 
+	 */
+	Point quadraticEstimation(double x1, double x2, double x3, double y1, double y2, double y3, unsigned maxFBin)
+	{
+
+		//double y_max = x2 - (y3 - y1) / (2 * ( 2 * y2  - y1 - y3));
+		double y_Fmax = 0;
+
+		/*Quadratic Method */
+		double maxBinEst =  ((y3 - y1) / ( 2 * ( 2 * y2 - y1 - y3)));
+		
+
+
+		logger->info("y3 - y1 {} ; y_max : {}", (y3 - y1), maxBinEst);
+
+		maxBinEst = (double)maxFBin + maxBinEst;
+
+		/*Jain’s Method
+		if (y1 > y3)
+		{
+			y_max = (double)maxFBin - 1 + (((y2 / y1) / ( 1 + (y2/y1))));
+		}
+		else
+		{
+			y_max = (double)maxFBin + ((y3 / y2) / ( 1 + (y3 / y2)));
+		}*/
+		
+		y_Fmax = startFreqency + maxBinEst * frequencyResolution;
+
+		Point ret = {y_Fmax, 0};
+
+		return ret;
 	}
 };
 
