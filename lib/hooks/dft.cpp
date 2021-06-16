@@ -779,6 +779,15 @@ public:
 	{
 		assert(state == State::PARSED);
 
+		if (!freqEstimateTypeC) {
+			logger->info("No Frequency estimation type given, assume no none");
+			freqEstType = FreqEstimationType::NONE;
+		}
+		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
+			freqEstType = FreqEstimationType::QUADRATIC;
+
+
+
 		if (endFreqency < 0 || endFreqency > sampleRate)
 			throw RuntimeError("End frequency must be smaller than sampleRate {}", sampleRate);
 
@@ -1141,6 +1150,48 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 		double i = f * pow(y_Fmax,2) + g * y_Fmax + h;
 
 		return { y_Fmax, i };
+	}
+
+
+	/**
+	 * This function is calculating the mximum based on a quadratic interpolation
+	 * 
+	 * This function is based on the following paper:
+	 * https://mgasior.web.cern.ch/pap/biw2004.pdf
+	 * 
+	 * In particular equation 10
+	 * 
+	 */
+	Point quadraticEstimation(double x1, double x2, double x3, double y1, double y2, double y3, unsigned maxFBin)
+	{
+
+		//double y_max = x2 - (y3 - y1) / (2 * ( 2 * y2  - y1 - y3));
+		double y_Fmax = 0;
+
+		/*Quadratic Method */
+		double maxBinEst =  ((y3 - y1) / ( 2 * ( 2 * y2 - y1 - y3)));
+		
+
+
+		logger->info("y3 - y1 {} ; y_max : {}", (y3 - y1), maxBinEst);
+
+		maxBinEst = (double)maxFBin + maxBinEst;
+
+		/*Jain’s Method
+		if (y1 > y3)
+		{
+			y_max = (double)maxFBin - 1 + (((y2 / y1) / ( 1 + (y2/y1))));
+		}
+		else
+		{
+			y_max = (double)maxFBin + ((y3 / y2) / ( 1 + (y3 / y2)));
+		}*/
+		
+		y_Fmax = startFreqency + maxBinEst * frequencyResolution;
+
+		Point ret = {y_Fmax, 0};
+
+		return ret;
 	}
 };
 
