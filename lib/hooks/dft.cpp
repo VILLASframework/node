@@ -786,8 +786,6 @@ public:
 		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
 			freqEstType = FreqEstimationType::QUADRATIC;
 
-
-
 		if (endFreqency < 0 || endFreqency > sampleRate)
 			throw RuntimeError("End frequency must be smaller than sampleRate {}", sampleRate);
 
