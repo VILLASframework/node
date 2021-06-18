@@ -104,27 +104,27 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
-		int k = signal_index;
+		unsigned k = signal_index;
 
+		assert(k < smp->length);
 		assert(state == State::STARTED);
 
 		switch (sample_format(smp, k)) {
 			case SignalType::INTEGER:
-				smp->data[k].i = smp->data[k].i * scale + offset;
+				smp->data[k].i *= scale;
+				smp->data[k].i += offset;
 				break;
 
 			case SignalType::FLOAT:
-				smp->data[k].f = smp->data[k].f * scale + offset;
+				smp->data[k].f *= scale;
+				smp->data[k].f += offset;
 				break;
 
 			case SignalType::COMPLEX:
-				smp->data[k].z = smp->data[k].z * (float) scale + (float) offset;
-				break;
-
-			case SignalType::BOOLEAN:
-				smp->data[k].b = smp->data[k].b * (float) scale + (float) offset;
+				smp->data[k].z *= scale;
+				smp->data[k].z += offset;
 				break;
 
 			default: { }
