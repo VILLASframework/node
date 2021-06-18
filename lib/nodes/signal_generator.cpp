@@ -344,7 +344,6 @@ int signal_generator_read(struct vnode *n, struct sample * const smps[], unsigne
 		steps = 1;
 	}
 
-
 	double running = time_delta(&s->started, &ts);
 
 	t->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;

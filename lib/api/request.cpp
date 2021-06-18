@@ -35,8 +35,7 @@ void Request::decode()
 		throw BadRequest("Failed to decode request payload");
 }
 
-std::string
-Request::toString()
+std::string Request::toString()
 {
 	return fmt::format("endpoint={}, method={}", factory->getName(), Session::methodToString(method));
 }

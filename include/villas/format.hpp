@@ -35,9 +35,7 @@ class Format {
 protected:
 
 	int flags;		/**< A set of flags which is automatically used. */
-
 	int real_precision;	/**< Number of digits used for floatint point numbers */
-
 	bool destroy_signals;
 
 	Logger logger;
@@ -52,7 +50,11 @@ protected:
 public:
 	Format(int fl);
 
-	virtual bool isBinaryPayload()
+	virtual
+	~Format();
+
+	virtual
+	bool isBinaryPayload()
 	{ return false; }
 
 	struct vlist * getSignals() const
@@ -67,13 +69,18 @@ public:
 	void start(struct vlist *sigs, int fl = (int) SampleFlags::HAS_ALL);
 	void start(const std::string &dtypes, int fl = (int) SampleFlags::HAS_ALL);
 
-	virtual void start()
+	virtual
+	void start()
 	{ }
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 
-	virtual int print(FILE *f, const struct sample * const smps[], unsigned cnt);
-	virtual int scan(FILE *f, struct sample * const smps[], unsigned cnt);
+	virtual
+	int print(FILE *f, const struct sample * const smps[], unsigned cnt);
+
+	virtual
+	int scan(FILE *f, struct sample * const smps[], unsigned cnt);
 
 	/** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
 	 *
@@ -86,7 +93,8 @@ public:
 	 * @retval >=0		The number of samples from \p smps which have been written into \p buf.
 	 * @retval <0		Something went wrong.
 	 */
-	virtual int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt) = 0;
+	virtual
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt) = 0;
 
 	/** Parse samples from the buffer \p buf with a length of \p len bytes.
 	 *
@@ -99,7 +107,8 @@ public:
 	 * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
 	 * @retval <0		Something went wrong.
 	 */
-	virtual int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt) = 0;
+	virtual
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt) = 0;
 
 	/* Wrappers for sending a (un)parsing single samples */
 
@@ -138,7 +147,8 @@ class FormatFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual Format * make() = 0;
+	virtual
+	Format * make() = 0;
 
 	static
 	Format * make(json_t *json);

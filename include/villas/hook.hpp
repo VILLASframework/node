@@ -76,16 +76,21 @@ protected:
 
 public:
 	Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
-	virtual ~Hook();
 
-	virtual void parse(json_t *c);
+	virtual
+	~Hook();
+
+	virtual
+	void parse(json_t *c);
+
 	void prepare(struct vlist *sigs);
 
 	void setLogger(Logger log)
 	{ logger = log; }
 
 	/** Called whenever a hook is started; before threads are created. */
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -93,37 +98,43 @@ public:
 	}
 
 	/** Called whenever a hook is stopped; after threads are destoyed. */
-	virtual void stop()
+	virtual
+	void stop()
 	{
 		assert(state == State::STARTED);
 
 		state = State::STOPPED;
 	}
 
-	virtual void check()
+	virtual
+	void check()
 	{
 		assert(state == State::PARSED);
 
 		state = State::CHECKED;
 	}
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{ }
 
 	/** Called periodically. Period is set by global 'stats' option in the configuration file. */
-	virtual void periodic()
+	virtual
+	void periodic()
 	{
 		assert(state == State::STARTED);
 	}
 
 	/** Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
-	virtual void restart()
+	virtual
+	void restart()
 	{
 		assert(state == State::STARTED);
 	}
 
 	/** Called whenever a sample is processed. */
-	virtual Reason process(struct sample *smp)
+	virtual
+	Reason process(struct sample *smp)
 	{
 		return Reason::OK;
 	};
@@ -138,7 +149,8 @@ public:
 		return flags;
 	}
 
-	virtual struct vlist * getSignals()
+	virtual
+	struct vlist * getSignals()
 	{
 		return &signals;
 	}
@@ -208,22 +220,18 @@ public:
 		return h;
 	}
 
-	/// Get plugin name
 	virtual std::string
 	getName() const
 	{ return name; }
 
-	/// Get plugin description
 	virtual std::string
 	getDescription() const
 	{ return desc; }
 
-	/// Get hook flags
 	virtual int
 	getFlags() const
 	{ return flags; }
 
-	/// Get hook priority
 	virtual int
 	getPriority() const
 	{ return prio; }

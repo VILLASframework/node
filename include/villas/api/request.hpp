@@ -66,37 +66,35 @@ public:
 
 	Request(Session *s) :
 		session(s),
-		logger(logging.get("api:request")),
 		method(Session::Method::UNKNOWN),
 		contentLength(0),
 		body(nullptr),
 		factory(nullptr)
 	{ }
 
-	virtual ~Request()
+	virtual
+	~Request()
 	{
 		if (body)
 			json_decref(body);
 	}
 
-	virtual void
-	prepare()
+	virtual
+	void prepare()
 	{ }
 
-	virtual Response *
-	execute() = 0;
+	virtual
+	Response * execute() = 0;
 
-	virtual void
-	decode();
+	virtual
+	void decode();
 
-	const std::string &
-	getMatch(int idx) const
+	const std::string & getMatch(int idx) const
 	{
 		return matches[idx];
 	}
 
-	std::string
-	getQueryArg(const std::string &arg)
+	std::string getQueryArg(const std::string &arg)
 	{
 		char buf[1024];
 		const char *val;
@@ -106,8 +104,7 @@ public:
 		return val ? std::string(val) : std::string();
 	}
 
-	std::string
-	getHeader(enum lws_token_indexes hdr)
+	std::string getHeader(enum lws_token_indexes hdr)
 	{
 		char buf[1024];
 
@@ -116,6 +113,8 @@ public:
 		return std::string(buf);
 	}
 
+	virtual
+	std::string toString();
 
 	void setLogger(Logger log)
 	{ logger = log; }
@@ -126,14 +125,14 @@ class RequestFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual bool
-	match(const std::string &uri, std::smatch &m) const = 0;
+	virtual
+	bool match(const std::string &uri, std::smatch &m) const = 0;
 
-	virtual Request *
-	make(Session *s) = 0;
+	virtual
+	Request * make(Session *s) = 0;
 
-	static Request *
-	create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
+	static
+	Request * create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
 
 	virtual
 	std::string
