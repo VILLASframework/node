@@ -40,6 +40,8 @@ protected:
 
 	bool destroy_signals;
 
+	Logger logger;
+
 	struct {
 		char *buffer;
 		size_t buflen;
@@ -59,7 +61,8 @@ public:
 	int getFlags() const
 	{ return flags; }
 
-	virtual ~Format();
+	void setLogger(Logger log)
+	{ logger = log; }
 
 	void start(struct vlist *sigs, int fl = (int) SampleFlags::HAS_ALL);
 	void start(const std::string &dtypes, int fl = (int) SampleFlags::HAS_ALL);
@@ -142,6 +145,10 @@ public:
 
 	static
 	Format * make(const std::string &format);
+
+	virtual
+	std::string getType() const
+	{ return "format"; }
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0>
@@ -152,7 +159,11 @@ public:
 
 	virtual Format * make()
 	{
-		return new T(flags);
+		auto *f = new T(flags);
+
+		f->setLogger(getLogger());
+
+		return f;
 	}
 
 	/// Get plugin name

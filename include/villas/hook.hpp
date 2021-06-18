@@ -81,6 +81,9 @@ public:
 	virtual void parse(json_t *c);
 	void prepare(struct vlist *sigs);
 
+	void setLogger(Logger log)
+	{ logger = log; }
+
 	/** Called whenever a hook is started; before threads are created. */
 	virtual void start()
 	{
@@ -183,6 +186,11 @@ public:
 
 	virtual int getFlags() const = 0;
 	virtual int getPriority() const = 0;
+
+	virtual
+	std::string
+	getType() const
+	{ return "hook"; }
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0, int prio = 99>
@@ -193,7 +201,11 @@ public:
 
 	virtual Hook * make(struct vpath *p, struct vnode *n)
 	{
-		return new T(p, n, getFlags(), getPriority());
+		auto *h = new T(p, n, getFlags(), getPriority());
+
+		h->setLogger(getLogger());
+
+		return h;
 	}
 
 	/// Get plugin name

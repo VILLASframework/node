@@ -116,8 +116,9 @@ public:
 		return std::string(buf);
 	}
 
-	virtual std::string
-	toString();
+
+	void setLogger(Logger log)
+	{ logger = log; }
 };
 
 class RequestFactory : public plugin::Plugin {
@@ -133,6 +134,11 @@ public:
 
 	static Request *
 	create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
+
+	virtual
+	std::string
+	getType() const
+	{ return "api:request"; }
 };
 
 template<typename T, const char *name, const char *re, const char *desc>
@@ -150,7 +156,11 @@ public:
 	virtual Request *
 	make(Session *s)
 	{
-		return new T(s);
+		auto *r = new T(s);
+
+		r->setLogger(getLogger());
+
+		return r;
 	}
 
 	// Get plugin name
