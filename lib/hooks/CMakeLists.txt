@@ -35,6 +35,7 @@ set(HOOK_SRC
     limit_rate.cpp
     limit_value.cpp
     restart.cpp
+    rms.cpp
     scale.cpp
     shift_seq.cpp
     shift_ts.cpp
