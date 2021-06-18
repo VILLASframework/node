@@ -138,6 +138,11 @@ if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
 endif()
 
+if(LIBUSB_FOUND)
+	list(APPEND LIB_SRC usb.cpp)
+	list(APPEND LIBRARIES PkgConfig::LIBUSB)
+endif()
+
 if(WITH_FPGA)
     list(APPEND LIBRARIES villas-fpga)
 endif()

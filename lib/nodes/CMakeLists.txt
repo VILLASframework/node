@@ -173,6 +173,12 @@ if(WITH_NODE_FPGA)
     list(APPEND INCLUDE_DIRS $<TARGET_PROPERTY:villas-fpga,INCLUDE_DIRECTORIES>)
 endif()
 
+# Enable TEMPer node-type support
+if(WITH_NODE_TEMPER)
+    list(APPEND NODE_SRC temper.cpp)
+    list(APPEND LIBRARIES PkgConfig::LIBUSB)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})
