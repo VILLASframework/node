@@ -352,7 +352,7 @@ int signal_generator_read(struct vnode *n, struct sample * const smps[], unsigne
 	t->length = MIN(s->values, t->capacity);
 	t->signals = &n->in.signals;
 
-	for (unsigned i = 0; i < MIN(s->values, t->capacity); i++) {
+	for (unsigned i = 0; i < t->length; i++) {
 		switch (s->type[i]) {
 			case signal_generator::SignalType::CONSTANT:
 				t->data[i].f = s->offset[i] + s->amplitude[i];

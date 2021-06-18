@@ -62,7 +62,7 @@ Format * FormatFactory::make(json_t *json)
 		return f;
 	}
 	else
-		throw ConfigError(json, "Invalid format config");
+		throw ConfigError(json, "node-config-format", "Invalid format config");
 }
 
 Format * FormatFactory::make(const std::string &format)

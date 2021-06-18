@@ -42,7 +42,7 @@ std::string Request::toString()
 
 Request * RequestFactory::create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct)
 {
-	s->logger->info("Trying to find request handler for: uri={}", uri);
+	s->logger->info("Lookup request handler for: uri={}", uri);
 
 	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
 		std::smatch mr;

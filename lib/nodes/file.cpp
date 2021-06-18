@@ -87,7 +87,7 @@ int file_parse(struct vnode *n, json_t *json)
 
 	int ret;
 	json_error_t err;
-	json_t *json_format;
+	json_t *json_format = nullptr;
 
 	const char *uri_tmpl = nullptr;
 	const char *eof = nullptr;

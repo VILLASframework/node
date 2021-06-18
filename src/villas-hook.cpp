@@ -107,18 +107,19 @@ protected:
 
 	void usage()
 	{
-		std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl
+		std::cout << "Usage: villas-hook [OPTIONS] NAME" << std::endl
 			<< "  NAME      the name of the hook function" << std::endl
 			<< "  PARAM*    a string of configuration settings for the hook" << std::endl
 			<< "  OPTIONS is one or more of the following options:" << std::endl
-			<< "    -c CONFIG a JSON file containing just the hook configuration" << std::endl
-			<< "    -f FMT    the input data format" << std::endl
-			<< "    -F FMT    the output data format (defaults to input format)" << std::endl
-			<< "    -t DT     the data-type format string" << std::endl
-			<< "    -d LVL    set debug level to LVL" << std::endl
-			<< "    -v CNT    process CNT smps at once" << std::endl
-			<< "    -h        show this help" << std::endl
-			<< "    -V        show the version of the tool" << std::endl << std::endl;
+			<< "    -c CONFIG       a JSON file containing just the hook configuration" << std::endl
+			<< "    -f FMT          the input data format" << std::endl
+			<< "    -F FMT          the output data format (defaults to input format)" << std::endl
+			<< "    -t DT           the data-type format string" << std::endl
+			<< "    -d LVL          set debug level to LVL" << std::endl
+			<< "    -v CNT          process CNT smps at once" << std::endl
+			<< "    -o PARAM=VALUE  provide parameters for hook configuration" << std::endl
+			<< "    -h              show this help" << std::endl
+			<< "    -V              show the version of the tool" << std::endl << std::endl;
 
 		std::cout << "Supported hooks:" << std::endl;
 		for (Plugin *p : Registry::lookup<HookFactory>())
