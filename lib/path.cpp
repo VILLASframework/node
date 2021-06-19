@@ -401,7 +401,7 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	const char *mode = nullptr;
 	const char *uuid_str = nullptr;
 
-	int enabled = -1, reverse = -1, builtin_hooks = -1, original_sequence_no = -1, poll = -1;
+	int enabled = -1, reverse = -1, builtin_hooks = -1;
 
 	struct vlist destinations;
 
@@ -429,10 +429,10 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 		throw ConfigError(json, err, "node-config-path", "Failed to parse path configuration");
 
 	if (enabled >= 0)
-		p->enabled = enabled;
+		p->enabled = enabled != 0;
 
 	if (reverse >= 0)
-		p->reverse = reverse;
+		p->reverse = reverse != 0;
 
 	if (builtin_hooks >= 0)
 		p->builtin_hooks = builtin_hooks;
