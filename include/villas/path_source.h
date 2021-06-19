@@ -31,6 +31,7 @@
 
 #include <villas/pool.h>
 #include <villas/list.h>
+#include <villas/log.hpp>
 
 /* Forward declarations */
 struct vpath;
@@ -42,6 +43,8 @@ enum PathSourceType {
 };
 
 struct vpath_source {
+	Logger logger;
+
 	struct vnode *node;
 	struct vpath *path;
 

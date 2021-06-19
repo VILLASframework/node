@@ -32,9 +32,10 @@ using namespace villas;
 
 int path_destination_init(struct vpath_destination *pd, struct vpath *p, struct vnode *n)
 {
+	new (&pd->logger) Logger(logging.get("path:out"));
+
 	pd->node = n;
 	pd->path = p;
-
 
 	vlist_push(&n->destinations, pd);
 

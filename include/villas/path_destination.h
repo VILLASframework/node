@@ -30,12 +30,15 @@
 #pragma once
 
 #include <villas/queue.h>
+#include <villas/log.hpp>
 
 /* Forward declarations */
 struct vpath;
 struct sample;
 
 struct vpath_destination {
+	villas::Logger logger;
+
 	struct vnode *node;
 	struct vpath *path;
 

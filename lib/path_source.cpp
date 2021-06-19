@@ -40,6 +40,8 @@ int path_source_init_master(struct vpath_source *ps, struct vpath *p, struct vno
 {
 	int ret;
 
+	new (&pd->logger) Logger(logging.get("path:in"));
+
 	ps->node = n;
 	ps->path = p;
 	ps->masked = false;
