@@ -32,6 +32,7 @@
 #include <villas/memory.h>
 #include <villas/memory/ib.h>
 #include <villas/timing.h>
+#include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::node;

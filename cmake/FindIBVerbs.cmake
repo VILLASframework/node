@@ -31,8 +31,8 @@ find_library(IBVERBS_LIBRARY
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(IBVERBS DEFAULT_MSG
-	IBVERBS_LIBRARY MOSQUITTO_INCLUDE_DIR)
+find_package_handle_standard_args(IBVerbs DEFAULT_MSG
+	IBVERBS_LIBRARY IBVERBS_INCLUDE_DIR)
 
 mark_as_advanced(IBVERBS_INCLUDE_DIR IBVERBS_LIBRARY)
 
