@@ -200,7 +200,7 @@ int node_reverse(struct vnode *n);
 
 int node_read(struct vnode *n, struct sample * smps[], unsigned cnt);
 
-int node_write(struct vnode *n, struct sample * smps[], unsigned cnt);
+int node_write(struct vnode *n, struct sample * smps[], unsigned cnt, bool clone_if_modified = false);
 
 int node_poll_fds(struct vnode *n, int fds[]);
 

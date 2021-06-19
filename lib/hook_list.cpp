@@ -135,18 +135,27 @@ void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, st
 	}
 }
 
-int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
+int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt, bool clone_if_modified)
 {
-	unsigned current, processed = 0;
+	unsigned processed = 0;
 
 	if (vlist_length(hs) == 0)
 		return cnt;
 
-	for (current = 0; current < cnt; current++) {
-		struct sample *smp = smps[current];
+	for (unsigned i = 0; i < cnt; i++) {
+		struct sample *smp, *old_smp;
 
-		for (size_t i = 0; i < vlist_length(hs); i++) {
-			Hook *h = (Hook *) vlist_at(hs, i);
+		if (clone_if_modified) {
+			old_smp = smps[i];
+			smps[i] = sample_clone(old_smp);
+
+			sample_decref(old_smp);
+		}
+
+		smp = smps[i];
+
+		for (size_t j = 0; j < vlist_length(hs); j++) {
+			Hook *h = (Hook *) vlist_at(hs, j);
 
 			auto ret = h->process(smp);
 			smp->signals = h->getSignals();
@@ -165,7 +174,7 @@ int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
 			}
 		}
 
-stop:	SWAP(smps[processed], smps[current]);
+stop:		SWAP(smps[processed], smps[i]);
 		processed++;
 skip: {}
 	}
