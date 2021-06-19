@@ -98,7 +98,7 @@ Hook::Reason LimitRateHook::process(sample *smp)
 /* Register hook */
 static char n[] = "limit_rate";
 static char d[] = "Limit sending rate";
-static HookPlugin<LimitRateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
+static HookPlugin<LimitRateHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

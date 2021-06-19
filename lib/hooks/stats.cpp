@@ -279,7 +279,7 @@ Hook::Reason StatsReadHook::process(sample *smp)
 /* Register hook */
 static char n[] = "stats";
 static char d[] = "Collect statistics for the current node";
-static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
+static HookPlugin<StatsHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ> p;
 
 } /* namespace node */
 } /* namespace villas */

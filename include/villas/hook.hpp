@@ -45,10 +45,12 @@ class Hook {
 
 public:
 	enum class Flags {
-		BUILTIN = (1 << 0),   /**< Should we add this hook by default to every path?. */
-		PATH = (1 << 1),      /**< This hook type is used by paths. */
-		NODE_READ = (1 << 2), /**< This hook type is used by nodes. */
-		NODE_WRITE = (1 << 3) /**< This hook type is used by nodes. */
+		BUILTIN = (1 << 0),	/**< Should we add this hook by default to every path?. */
+		READ_ONLY = (1 << 1),	/**< The does not modify the sample contents */
+
+		PATH = (1 << 8),	/**< This hook type is used by paths. */
+		NODE_READ = (1 << 9),	/**< This hook type is used by nodes. */
+		NODE_WRITE = (1 << 10)	/**< This hook type is used by nodes. */
 	};
 
 	enum class Reason {
@@ -163,6 +165,11 @@ public:
 	bool isEnabled() const
 	{
 		return enabled;
+	}
+
+	bool isReadOnly() const
+	{
+		return flags & HookFlags::READ_ONLY;
 	}
 };
 

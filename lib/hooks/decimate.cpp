@@ -69,7 +69,7 @@ Hook::Reason DecimateHook::process(sample *smp)
 /* Register hook */
 static char n[] = "decimate";
 static char d[] = "Downsamping by integer factor";
-static HookPlugin<DecimateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
+static HookPlugin<DecimateHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

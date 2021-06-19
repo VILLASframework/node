@@ -200,7 +200,7 @@ public:
 /* Register hook */
 static char n[] = "gate";
 static char d[] = "Skip samples only if an enable signal is under a specified threshold";
-static HookPlugin<GateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
+static HookPlugin<GateHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

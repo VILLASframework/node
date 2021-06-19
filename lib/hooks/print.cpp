@@ -138,7 +138,7 @@ public:
 /* Register hook */
 static char n[] = "print";
 static char d[] = "Print the message to stdout";
-static HookPlugin<PrintHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
+static HookPlugin<PrintHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */

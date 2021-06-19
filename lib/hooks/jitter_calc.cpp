@@ -114,7 +114,7 @@ public:
 /* Register hook */
 static char n[] = "jitter_calc";
 static char d[] = "Calc jitter, mean and variance of GPS vs NTP TS";
-static HookPlugin<JitterCalcHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH, 0> p;
+static HookPlugin<JitterCalcHook, n, d, (int) Hook::Flags::READ_ONLY | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH, 0> p;
 
 } /* namespace node */
 } /* namespace villas */
