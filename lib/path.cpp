@@ -602,7 +602,7 @@ int path_start(struct vpath *p)
 
 	p->logger->info("Starting path {}: #signals={}({}), #hooks={}, #sources={}, "
 	                "#destinations={}, mode={}, poll={}, mask={:b}, rate={}, "
-	                "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
+	                "enabled={}, reversed={}, muxed={}, queuelen={}, original_sequence_no={}",
 		path_name(p),
 		vlist_length(&p->signals),
 		vlist_length(path_output_signals(p)),
@@ -615,6 +615,7 @@ int path_start(struct vpath *p)
 		p->rate,
 		path_is_enabled(p) ? "yes" : "no",
 		path_is_reversed(p) ? "yes" : "no",
+		path_is_muxed(p) ? "yes" : "no",
 		p->queuelen,
 		p->original_sequence_no ? "yes" : "no"
 	);
