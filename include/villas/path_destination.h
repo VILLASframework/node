@@ -53,8 +53,12 @@ int path_destination_prepare(struct vpath_destination *pd, int queuelen);
 
 void path_destination_check(struct vpath_destination *pd);
 
-void path_destination_enqueue(struct vpath *p, const struct sample * const smps[], unsigned cnt);
+void path_destination_enqueue(struct vpath *pd, struct sample * const smps[], unsigned cnt);
 
-void path_destination_write(struct vpath_destination *pd, struct vpath *p);
+void path_destination_write(struct vpath_destination *pd);
+
+void path_destination_enqueue_all(struct vpath *p, struct sample * const smps[], unsigned cnt);
+
+void path_destination_write_all(struct vpath *p);
 
 /** @} */

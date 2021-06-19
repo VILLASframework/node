@@ -73,11 +73,7 @@ static void * path_run_single(void *arg)
 		if (ret <= 0)
 			continue;
 
-		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-			path_destination_write(pd, p);
-		}
+		path_destination_write_all(p);
 	}
 
 	return nullptr;
@@ -111,7 +107,7 @@ static void * path_run_poll(void *arg)
 
 					p->last_sample->sequence = p->last_sequence++;
 
-					path_destination_enqueue(p, &p->last_sample, 1);
+					path_destination_enqueue_all(p, &p->last_sample, 1);
 				}
 				/* A source is ready to receive samples */
 				else
@@ -119,11 +115,7 @@ static void * path_run_poll(void *arg)
 			}
 		}
 
-		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-			path_destination_write(pd, p);
-		}
+		path_destination_write_all(p);
 	}
 
 	return nullptr;
