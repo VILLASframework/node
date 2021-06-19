@@ -39,7 +39,7 @@ int node_direction_prepare(struct vnode_direction *nd, struct vnode *n)
 
 #ifdef WITH_HOOKS
 	int t = nd->direction == NodeDir::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
-	int m = nd->builtin ? t | (int) Hook::Flags::BUILTIN : 0;
+	int m = nd->builtin_hooks ? t | (int) Hook::Flags::BUILTIN : 0;
 
 	hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
 
@@ -56,11 +56,11 @@ int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vno
 	int ret;
 
 	nd->direction = dir;
-	nd->enabled = 1;
+	nd->enabled = true;
 	nd->vectorize = 1;
-	nd->builtin = 1;
 	nd->path = nullptr;
 	nd->read_only_hooks = false;
+	nd->builtin_hooks = true;
 
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&nd->hooks);
@@ -100,7 +100,7 @@ int node_direction_destroy(struct vnode_direction *nd, struct vnode *n)
 
 int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *json)
 {
-	int ret;
+	int ret, builtin_hooks = -1, enabled = -1;
 
 	assert(nd->state == State::INITIALIZED);
 
@@ -114,11 +114,17 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *js
 		"hooks", &json_hooks,
 		"signals", &json_signals,
 		"vectorize", &nd->vectorize,
-		"builtin", &nd->builtin,
-		"enabled", &nd->enabled
+		"builtin", &builtin_hooks,
+		"enabled", &enabled
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-in");
+
+	if (builtin_hooks >= 0)
+		nd->builtin_hooks = builtin_hooks != 0;
+
+	if (enabled >= 0)
+		nd->enabled = enabled != 0;
 
 	if (n->_vt->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
 		/* Do nothing.. Node-type will provide signals */

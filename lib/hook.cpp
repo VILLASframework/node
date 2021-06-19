@@ -81,17 +81,20 @@ void Hook::prepare(struct vlist *sigs)
 
 void Hook::parse(json_t *json)
 {
-	int ret;
+	int ret, en = -1;
 	json_error_t err;
 
 	assert(state != State::STARTED);
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }",
 		"priority", &priority,
-		"enabled", &enabled
+		"enabled", &en
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-hook");
+
+	if (en >= 0)
+		enabled = en != 0;
 
 	config = json;
 

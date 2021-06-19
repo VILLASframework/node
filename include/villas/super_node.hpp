@@ -56,7 +56,7 @@ class SuperNode {
 protected:
 	enum State state;
 
-	int idleStop;
+	bool idleStop;
 
 	Logger logger;
 

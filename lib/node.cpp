@@ -138,7 +138,7 @@ int node_prepare(struct vnode *n)
 
 int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 {
-	int ret, enabled = n->enabled;
+	int ret, en = -1;
 
 	json_error_t err;
 	json_t *json_netem = nullptr;
@@ -149,7 +149,7 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: b }",
 		"name", &name_str,
 		"uuid", &uuid_str,
-		"enabled", &enabled
+		"enabled", &en
 	);
 	if (ret)
 		return ret;
@@ -167,7 +167,8 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 		return ret;
 #endif /* __linux__ */
 
-	n->enabled = enabled;
+	if (en >= 0)
+		n->enabled = en != 0;
 
 	if (name_str)
 		n->name = strdup(name_str);
@@ -185,13 +186,14 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 
 	if (json_netem) {
 #ifdef WITH_NETEM
-		int enabled = 1;
+		/* Enabled by default */
+		int en = 1;
 
-		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
+		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }", "enabled", &en);
 		if (ret)
 			return ret;
 
-		if (enabled)
+		if (en)
 			kernel::tc::netem_parse(&n->tc_qdisc, json_netem);
 		else
 			n->tc_qdisc = nullptr;

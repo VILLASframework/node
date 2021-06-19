@@ -80,12 +80,12 @@ struct vpath {
 	struct Task timeout;
 
 	double rate;			/**< A timeout for */
-	int enabled;			/**< Is this path enabled? */
-	int muxed;			/**< Is this path muxed? */
+	bool enabled;			/**< Is this path enabled? */
+	bool muxed;			/**< Is this path muxed? */
 	int affinity;			/**< Thread affinity. */
 	int poll;			/**< Weather or not to use poll(2). */
-	int reverse;			/**< This path has a matching reverse path. */
-	int builtin;			/**< This path should use built-in hooks by default. */
+	bool reverse;			/**< This path has a matching reverse path. */
+	bool builtin_hooks;		/**< This path should use built-in hooks by default. */
 	int original_sequence_no;	/**< Use original source sequence number when multiplexing */
 	unsigned queuelen;		/**< The queue length for each path_destination::queue */
 

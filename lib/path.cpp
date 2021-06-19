@@ -173,9 +173,9 @@ int path_init(struct vpath *p)
 	p->mode = PathMode::ANY;
 	p->rate = 0; /* Disabled */
 
-	p->builtin = 1;
-	p->reverse = 0;
-	p->enabled = 1;
+	p->builtin_hooks = true;
+	p->reverse = false;
+	p->enabled = true;
 	p->poll = -1;
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
 	p->original_sequence_no = -1;
@@ -368,7 +368,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 
 #ifdef WITH_HOOKS
 	/* Prepare path hooks */
-	int m = p->builtin ? (int) Hook::Flags::PATH | (int) Hook::Flags::BUILTIN : 0;
+	int m = p->builtin_hooks ? (int) Hook::Flags::PATH | (int) Hook::Flags::BUILTIN : 0;
 
 	/* Add internal hooks if they are not already in the list */
 	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
@@ -401,6 +401,8 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	const char *mode = nullptr;
 	const char *uuid_str = nullptr;
 
+	int enabled = -1, reverse = -1, builtin_hooks = -1, original_sequence_no = -1, poll = -1;
+
 	struct vlist destinations;
 
 	ret = vlist_init(&destinations);
@@ -411,9 +413,9 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
-		"reverse", &p->reverse,
-		"enabled", &p->enabled,
-		"builtin", &p->builtin,
+		"reverse", &reverse,
+		"enabled", &enabled,
+		"builtin", &builtin_hooks,
 		"queuelen", &p->queuelen,
 		"mode", &mode,
 		"poll", &p->poll,
@@ -425,6 +427,15 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-path", "Failed to parse path configuration");
+
+	if (enabled >= 0)
+		p->enabled = enabled;
+
+	if (reverse >= 0)
+		p->reverse = reverse;
+
+	if (builtin_hooks >= 0)
+		p->builtin_hooks = builtin_hooks;
 
 	/* Optional settings */
 	if (mode) {
@@ -851,7 +862,7 @@ json_t * path_to_json(struct vpath *p)
 		"state", state_print(p->state),
 		"mode", p->mode == PathMode::ANY ? "any" : "all",
 		"enabled", p->enabled,
-		"builtin", p->builtin,
+		"builtin", p->builtin_hooks,
 		"reverse", p->reverse,
 		"original_sequence_no", p->original_sequence_no,
 		"last_sequence", p->last_sequence,

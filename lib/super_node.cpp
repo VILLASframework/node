@@ -52,7 +52,7 @@ typedef char uuid_string_t[37];
 
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
-	idleStop(-1),
+	idleStop(true),
 #ifdef WITH_API
 	api(this),
 #endif
@@ -96,7 +96,7 @@ void SuperNode::parse(const std::string &u)
 
 void SuperNode::parse(json_t *root)
 {
-	int ret;
+	int ret, is = -1;
 
 	assert(state != State::STARTED);
 
@@ -109,8 +109,6 @@ void SuperNode::parse(json_t *root)
 
 	json_error_t err;
 
-	idleStop = 1;
-
 	ret = json_unpack_ex(root, &err, 0, "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: b, s?: s }",
 		"stats", &statsRate,
 		"http", &json_http,
@@ -120,7 +118,7 @@ void SuperNode::parse(json_t *root)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"idle_stop", &idleStop,
+		"idle_stop", &is,
 		"uuid", &uuid_str
 	);
 	if (ret)
@@ -131,6 +129,9 @@ void SuperNode::parse(json_t *root)
 		if (ret)
 			throw ConfigError(root, "node-config-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
+
+	if (is >= 0)
+		idleStop = is != 0;
 
 #ifdef WITH_WEB
 	if (json_http)
@@ -501,7 +502,7 @@ int SuperNode::periodic()
 		}
 	}
 
-	if (idleStop > 0 && state == State::STARTED && started == 0) {
+	if (idleStop && state == State::STARTED && started == 0) {
 		logger->info("No more active paths. Stopping super-node");
 
 		return -1;

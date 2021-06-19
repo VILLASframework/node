@@ -195,13 +195,14 @@ int signal_parse(struct signal *s, json_t *json)
 	const char *name = nullptr;
 	const char *unit = nullptr;
 	const char *type = "float";
+	int en = -1;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: o, s?: b }",
 		"name", &name,
 		"unit", &unit,
 		"type", &type,
 		"init", &json_init,
-		"enabled", &s->enabled
+		"enabled", &en
 	);
 	if (ret)
 		return -1;
@@ -225,6 +226,9 @@ int signal_parse(struct signal *s, json_t *json)
 	}
 	else
 		signal_data_set(&s->init, s->type, 0);
+
+	if (en >= 0)
+		s->enabled == en != 0;
 
 	return 0;
 }
