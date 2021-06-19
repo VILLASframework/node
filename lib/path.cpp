@@ -69,7 +69,7 @@ static void * path_run_single(void *arg)
 	while (p->state == State::STARTED) {
 		pthread_testcancel();
 
-		ret = path_source_read(ps, p, 0);
+		ret = path_source_read(ps, 0);
 		if (ret <= 0)
 			continue;
 
@@ -115,7 +115,7 @@ static void * path_run_poll(void *arg)
 				}
 				/* A source is ready to receive samples */
 				else
-					path_source_read(ps, p, i);
+					path_source_read(ps, i);
 			}
 		}
 
@@ -276,8 +276,8 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 			 */
 			bool isSecondary = vlist_length(&n->sources) > 0;
 			ret = isSecondary
-				? path_source_init_secondary(ps, n)
-				: path_source_init_master(ps, n);
+				? path_source_init_secondary(ps, p, n)
+				: path_source_init_master(ps, p, n);
 			if (ret)
 				return ret;
 
@@ -481,7 +481,7 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 		if (!pd)
 			throw MemoryAllocationError();
 
-		ret = path_destination_init(pd, n);
+		ret = path_destination_init(pd, p, n);
 		if (ret)
 			return ret;
 

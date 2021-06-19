@@ -30,9 +30,11 @@
 
 using namespace villas;
 
-int path_destination_init(struct vpath_destination *pd, struct vnode *n)
+int path_destination_init(struct vpath_destination *pd, struct vpath *p, struct vnode *n)
 {
 	pd->node = n;
+	pd->path = p;
+
 
 	vlist_push(&n->destinations, pd);
 

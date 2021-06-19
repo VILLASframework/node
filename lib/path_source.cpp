@@ -36,11 +36,12 @@
 
 using namespace villas;
 
-int path_source_init_master(struct vpath_source *ps, struct vnode *n)
+int path_source_init_master(struct vpath_source *ps, struct vpath *p, struct vnode *n)
 {
 	int ret;
 
 	ps->node = n;
+	ps->path = p;
 	ps->masked = false;
 	ps->type = PathSourceType::MASTER;
 
@@ -64,7 +65,7 @@ int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 	return 0;
 }
 
-int path_source_init_secondary(struct vpath_source *ps, struct vnode *n)
+int path_source_init_secondary(struct vpath_source *ps, struct vpath *p, struct vnode *n)
 {
 	int ret;
 	struct vpath_source *mps;
@@ -75,6 +76,7 @@ int path_source_init_secondary(struct vpath_source *ps, struct vnode *n)
 
 	ps->type = PathSourceType::SECONDARY;
 
+	ps->path = p;
 	ps->node = loopback_internal_create(n);
 	if (!ps->node)
 		return -1;
@@ -115,7 +117,7 @@ int path_source_destroy(struct vpath_source *ps)
 	return 0;
 }
 
-int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
+int path_source_read(struct vpath_source *ps, int i)
 {
 	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 

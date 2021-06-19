@@ -37,11 +37,12 @@ struct sample;
 
 struct vpath_destination {
 	struct vnode *node;
+	struct vpath *path;
 
 	struct queue queue;
 };
 
-int path_destination_init(struct vpath_destination *pd, struct vnode *n) __attribute__ ((warn_unused_result));
+int path_destination_init(struct vpath_destination *pd, struct vpath *p, struct vnode *n) __attribute__ ((warn_unused_result));
 
 int path_destination_destroy(struct vpath_destination *pd) __attribute__ ((warn_unused_result));
 
