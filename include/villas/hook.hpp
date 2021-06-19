@@ -169,7 +169,7 @@ public:
 
 	bool isReadOnly() const
 	{
-		return flags & HookFlags::READ_ONLY;
+		return flags & (int) Flags::READ_ONLY;
 	}
 };
 

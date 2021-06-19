@@ -53,8 +53,10 @@ struct vnode_direction {
 	 */
 	struct vpath *path;
 
-	int enabled;
-	int builtin;		/**< This node should use built-in hooks by default. */
+	bool enabled;		/**< This node direction is enabled. */
+	bool builtin_hooks;	/**< This node direction should use built-in hooks by default. */
+	bool read_only_hooks;	/**< The hooks of this node direction do not alter samples while processing them. */
+
 	unsigned vectorize;	/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct vlist hooks;	/**< List of read / write hooks (struct hook). */

@@ -76,3 +76,5 @@ void hook_list_stop(struct vlist *hs);
 struct vlist * hook_list_get_signals(struct vlist *hs);
 
 json_t * hook_list_to_json(struct vlist *hs);
+
+bool hook_list_is_read_only(struct vlist *hs);

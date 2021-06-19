@@ -105,25 +105,24 @@ void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, st
 {
 	assert(hs->state == State::INITIALIZED);
 
-	if (!m)
-		goto skip_add;
-
 	/* Add internal hooks if they are not already in the list */
-	for (auto f : plugin::Registry::lookup<HookFactory>()) {
-		if ((f->getFlags() & m) == m) {
-			auto h = f->make(p, n);
+	if (m) {
+		for (auto f : plugin::Registry::lookup<HookFactory>()) {
+			if ((f->getFlags() & m) == m) {
+				auto h = f->make(p, n);
 
-			vlist_push(hs, h);
+				vlist_push(hs, h);
+			}
 		}
 	}
 
-skip_add:
 	/* Remove filters which are not enabled */
 	vlist_filter(hs, (dtor_cb_t) hook_is_enabled);
 
 	/* We sort the hooks according to their priority */
 	vlist_sort(hs, (cmp_cb_t) hook_cmp_priority);
 
+	/* Prepare signal list by passing is through all hooks */
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
 
@@ -221,4 +220,17 @@ json_t * hook_list_to_json(struct vlist *hs)
 	}
 
 	return json_hooks;
+}
+
+bool hook_list_is_read_only(struct vlist *hs)
+{
+	bool ret = true;
+
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		Hook *h = (Hook *) vlist_at_safe(hs, i);
+
+		ret &= h->isReadOnly();
+	}
+
+	return ret;
 }
