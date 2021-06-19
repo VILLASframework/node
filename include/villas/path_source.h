@@ -49,6 +49,7 @@ struct vpath_source {
 	struct vpath *path;
 
 	bool masked;
+	int index;
 
 	enum PathSourceType type;
 
