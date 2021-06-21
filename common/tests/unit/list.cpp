@@ -40,33 +40,6 @@ struct data {
 // cppcheck-suppress unknownMacro
 TestSuite(list, .description = "List datastructure");
 
-Test(list, vlist_lookup_name)
-{
-	int ret;
-	struct vlist l;
-
-	ret = vlist_init(&l);
-	cr_assert_eq(ret, 0);
-
-	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
-		struct data *d = new struct data;
-		if (!d)
-			throw MemoryAllocationError();
-
-		d->name = nouns[i];
-		d->data = i;
-
-		vlist_push(&l, d);
-	}
-
-	struct data *found = vlist_lookup_name<struct data>(&l, "woman");
-
-	cr_assert_eq(found->data, 13);
-
-	ret = vlist_destroy(&l, nullptr, true);
-	cr_assert_eq(ret, 0);
-}
-
 Test(list, vlist_search)
 {
 	int ret;
