@@ -131,6 +131,10 @@ public:
 	virtual std::string
 	getName() const = 0;
 
+	/// Get plugin type
+	virtual std::string
+	getType() const = 0;
+
 	// Get plugin description
 	virtual std::string
 	getDescription() const = 0;
@@ -138,10 +142,12 @@ public:
 protected:
 	std::string path;
 
+	virtual
 	Logger
 	getLogger()
 	{
-		return logging.get("plugin:" + getName());
+		auto name = fmt::format("{}:{}", getType(), getName());
+		return logging.get(name);
 	}
 };
 
