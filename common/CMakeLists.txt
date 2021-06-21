@@ -1,7 +1,7 @@
 ## CMakeLists.txt
 #
 # @author Daniel Krebs <github@daniel-krebs.net>
-# @copyright 2014-2020, RWTH Institute for Automation of Complex Power Systems (ACS)
+# @copyright 2014-2021, RWTH Institute for Automation of Complex Power Systems (ACS)
 # @license GNU General Public License (version 3)
 #
 # VILLAScommon
@@ -28,7 +28,7 @@ project(villas-common
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2020, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 set(PROJECT_HOMEPAGE_URL "https://git.rwth-aachen.de/acs/public/villas/VILLAScommon")
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
