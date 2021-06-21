@@ -57,9 +57,11 @@ set(LIB_SRC
     node_direction.cpp
     node_type.cpp
     node.cpp
+    node_list.cpp
     path_destination.cpp
     path_source.cpp
     path.cpp
+	path_list.cpp
     pool.cpp
     queue_signalled.cpp
     queue.cpp

@@ -50,13 +50,8 @@ public:
 
 		json_t *json_nodes = json_array();
 
-		struct vlist *nodes = session->getSuperNode()->getNodes();
-
-		for (size_t i = 0; i < vlist_length(nodes); i++) {
-			struct vnode *n = (struct vnode *) vlist_at(nodes, i);
-
+		for (auto *n : session->getSuperNode()->getNodes())
 			json_array_append_new(json_nodes, node_to_json(n));
-		}
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_nodes);
 	}

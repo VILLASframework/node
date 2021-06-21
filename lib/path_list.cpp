@@ -1,8 +1,7 @@
-/** Node API Request.
+/** Path list
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,33 +18,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *********************************************************************************/
+ */
 
-#include <villas/api/node_request.hpp>
+#include <villas/path_list.hpp>
+#include <villas/path.h>
 
-using namespace villas::node::api;
+using namespace villas::node;
 
-void
-NodeRequest::prepare()
+struct vpath * PathList::lookup(const uuid_t &uuid)
 {
-	int ret;
-
-	auto &nodes = session->getSuperNode()->getNodes();
-
-	uuid_t uuid;
-	ret = uuid_parse(matches[1].c_str(), uuid);
-	if (ret) {
-		node = nodes.lookup(matches[1]);
-		if (!node)
-			throw BadRequest("Unknown node", "{ s: s }",
-				"node", matches[1].c_str()
-			);
+	for (auto *p : *this) {
+		if (!uuid_compare(uuid, p->uuid))
+			return p;
 	}
-	else {
-		node = nodes.lookup(uuid);
-		if (!node)
-			throw BadRequest("No node found with with matching UUID", "{ s: s }",
-				"uuid", matches[1].c_str()
-			);
-	}
+
+	return nullptr;
 }

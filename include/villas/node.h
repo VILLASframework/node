@@ -34,6 +34,7 @@
 #include <uuid/uuid.h>
 
 #include <villas/node_type.h>
+#include <villas/node_list.hpp>
 #include <villas/node_direction.h>
 #include <villas/sample.h>
 #include <villas/list.h>
@@ -121,7 +122,7 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid);
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_list_parse(struct vlist *list, json_t *json, struct vlist *all);
+int node_list_parse(struct vlist *list, json_t *json, villas::node::NodeList &all);
 
 /** Parse the list of signal definitions. */
 int node_parse_signals(struct vlist *list, json_t *json);

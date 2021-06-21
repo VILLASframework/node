@@ -30,10 +30,10 @@
 #include <villas/hook_list.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
+#include <villas/node_list.hpp>
 #include <villas/path.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
-#include <villas/plugin.h>
 #include <villas/mapping.h>
 #include <villas/timing.h>
 #include <villas/signal.h>
@@ -47,6 +47,7 @@
 #endif /* WITH_NETEM */
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int node_init(struct vnode *n, struct vnode_type *vt)
@@ -107,7 +108,7 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 
 	n->state = State::INITIALIZED;
 
-	vlist_push(&vt->instances, n);
+	vt->instances.push_back(n);
 
 	return 0;
 }
@@ -415,7 +416,7 @@ int node_destroy(struct vnode *n)
 			return ret;
 	}
 
-	vlist_remove_all(&node_type(n)->instances, n);
+	node_type(n)->instances.remove(n);
 
 	if (n->_vd)
 		delete[] (char *) n->_vd;
@@ -598,7 +599,7 @@ struct memory_type * node_memory_type(struct vnode *n)
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, memory_default) : memory_default;
 }
 
-int node_list_parse(struct vlist *list, json_t *json, struct vlist *all)
+int node_list_parse(struct vlist *list, json_t *json, NodeList &all)
 {
 	struct vnode *node;
 	const char *str;
@@ -612,7 +613,7 @@ int node_list_parse(struct vlist *list, json_t *json, struct vlist *all)
 	switch (json_typeof(json)) {
 		case JSON_STRING:
 			str = json_string_value(json);
-			node = vlist_lookup_name<struct vnode>(all, str);
+			node = all.lookup(str);
 			if (!node)
 				goto invalid2;
 
@@ -624,7 +625,8 @@ int node_list_parse(struct vlist *list, json_t *json, struct vlist *all)
 				if (!json_is_string(elm))
 					goto invalid;
 
-				node = vlist_lookup_name<struct vnode>(all, json_string_value(elm));
+				str = json_string_value(elm);
+				node = all.lookup(str);
 				if (!node)
 					goto invalid;
 
@@ -644,11 +646,8 @@ invalid:
 	return -1;
 
 invalid2:
-	for (size_t i = 0; i < vlist_length(all); i++) {
-		struct vnode *n = (struct vnode *) vlist_at(all, i);
-
+	for (auto *n : all)
 		strcatf(&allstr, " %s", node_name_short(n));
-	}
 
 	throw RuntimeError("Unknown node {}. Choose of one of: {}", str, allstr);
 

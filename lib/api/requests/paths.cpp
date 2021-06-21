@@ -51,13 +51,8 @@ public:
 
 		json_t *json_paths = json_array();
 
-		struct vlist *paths = session->getSuperNode()->getPaths();
-
-		for (size_t i = 0; i < vlist_length(paths); i++) {
-			struct vpath *p = (struct vpath *) vlist_at(paths, i);
-
+		for (auto *p : session->getSuperNode()->getPaths())
 			json_array_append_new(json_paths, path_to_json(p));
-		}
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
 	}

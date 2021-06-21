@@ -33,12 +33,13 @@ extern "C" {
 
 #include <fstream>
 
-#include <villas/list.h>
 #include <villas/api.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/config.hpp>
 #include <villas/node.h>
+#include <villas/node_list.hpp>
+#include <villas/path_list.hpp>
 #include <villas/task.hpp>
 #include <villas/common.hpp>
 #include <villas/kernel/if.hpp>
@@ -59,8 +60,8 @@ protected:
 
 	Logger logger;
 
-	struct vlist nodes;
-	struct vlist paths;
+	NodeList nodes;
+	PathList paths;
 	std::list<kernel::Interface *> interfaces;
 
 #ifdef WITH_API
@@ -137,17 +138,17 @@ public:
 
 	struct vnode * getNode(const std::string &name)
 	{
-		return vlist_lookup_name<struct vnode>(&nodes, name);
+		return nodes.lookup(name);
 	}
 
-	struct vlist * getNodes()
+	NodeList & getNodes()
 	{
-		return &nodes;
+		return nodes;
 	}
 
-	struct vlist * getPaths()
+	PathList & getPaths()
 	{
-		return &paths;
+		return paths;
 	}
 
 	std::list<kernel::Interface *> & getInterfaces()

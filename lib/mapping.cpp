@@ -32,6 +32,7 @@
 #include <villas/signal.h>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 int mapping_entry_parse_str(struct mapping_entry *me, const std::string &str)
@@ -267,10 +268,10 @@ int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const st
 	return 0;
 }
 
-int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes)
+int mapping_entry_prepare(struct mapping_entry *me, NodeList &nodes)
 {
 	if (me->node_name && me->node == nullptr) {
-		me->node = vlist_lookup_name<struct vnode>(nodes, me->node_name);
+		me->node = nodes.lookup(me->node_name);
 		if (!me->node)
 			throw RuntimeError("Invalid node name in mapping: {}", me->node_name);
 	}
@@ -327,7 +328,7 @@ end:
 	return 0;
 }
 
-int mapping_list_prepare(struct vlist *ml, struct vlist *nodes)
+int mapping_list_prepare(struct vlist *ml, NodeList &nodes)
 {
 	int ret;
 

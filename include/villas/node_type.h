@@ -28,7 +28,7 @@
 
 #include <jansson.h>
 
-#include <villas/list.h>
+#include <villas/node_list.hpp>
 #include <villas/common.hpp>
 #include <villas/memory.h>
 #include <villas/log.hpp>
@@ -58,7 +58,7 @@ struct vnode_type {
 
 	enum State state;			/**< State of this node-type. */
 
-	struct vlist instances;		/**< A list of all existing nodes of this type. */
+	villas::node::NodeList instances;	/**< A list of all existing nodes of this type. */
 
 	size_t size;				/**< Size of private data bock. @see node::_vd */
 	size_t pool_size;

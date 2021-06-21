@@ -27,6 +27,7 @@
 
 #include <villas/stats.hpp>
 #include <villas/common.hpp>
+#include <villas/node_list.hpp>
 
 #define RE_MAPPING_INDEX "[a-zA-Z0-9_]+"
 #define RE_MAPPING_RANGE "(" RE_MAPPING_INDEX ")(?:-(" RE_MAPPING_INDEX "))?"
@@ -99,7 +100,7 @@ struct mapping_entry {
 	};
 };
 
-int mapping_entry_prepare(struct mapping_entry *me, struct vlist *nodes);
+int mapping_entry_prepare(struct mapping_entry *me, villas::node::NodeList &nodes);
 
 int mapping_entry_update(const struct mapping_entry *me, struct sample *remapped, const struct sample *original);
 
@@ -115,6 +116,6 @@ int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **
 
 int mapping_list_parse(struct vlist *ml, json_t *json);
 
-int mapping_list_prepare(struct vlist *ml, struct vlist *nodes);
+int mapping_list_prepare(struct vlist *ml, villas::node::NodeList &nodes);
 
 int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const struct sample *original);

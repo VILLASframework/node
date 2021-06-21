@@ -25,7 +25,6 @@
 #include <libwebsockets.h>
 
 #include <villas/web.hpp>
-#include <villas/plugin.h>
 #include <villas/memory.h>
 
 #include <villas/api/session.hpp>

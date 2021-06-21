@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 
@@ -31,7 +32,6 @@
 #include <villas/utils.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.hpp>
-#include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/config_helper.hpp>
 #include <villas/log.hpp>
@@ -79,14 +79,6 @@ SuperNode::SuperNode() :
 
 	/* Default UUID is derived from hostname */
 	uuid_generate_from_str(uuid, hname);
-
-	ret = vlist_init(&nodes);
-	if (ret)
-		throw RuntimeError("Failed to initialize list");
-
-	ret = vlist_init(&paths);
-	if (ret)
-		throw RuntimeError("Failed to initialize list");
 
 #ifdef WITH_NETEM
 	kernel::nl::init(); /* Fill link cache */
@@ -190,7 +182,7 @@ void SuperNode::parse(json_t *root)
 
 			json_object_del(json_node, "name");
 
-			vlist_push(&nodes, n);
+			nodes.push_back(n);
 		}
 	}
 
@@ -210,11 +202,11 @@ parse:			auto *p = new vpath;
 			if (ret)
 				throw RuntimeError("Failed to initialize path");
 
-			ret = path_parse(p, json_path, &nodes, uuid);
+			ret = path_parse(p, json_path, nodes, uuid);
 			if (ret)
 				throw RuntimeError("Failed to parse path");
 
-			vlist_push(&paths, p);
+			paths.push_back(p);
 
 			if (p->reverse) {
 				/* Only simple paths can be reversed */
@@ -249,19 +241,14 @@ void SuperNode::check()
 
 	assert(state == State::INITIALIZED || state == State::PARSED || state == State::CHECKED);
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		ret = node_check(n);
 		if (ret)
 			throw RuntimeError("Invalid configuration for node {}", node_name(n));
 	}
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
+	for (auto *p : paths)
 		path_check(p);
-	}
 
 	state = State::CHECKED;
 }
@@ -270,9 +257,7 @@ void SuperNode::startNodeTypes()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		ret = node_type_start(n->_vt, this);
 		if (ret)
 			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
@@ -296,9 +281,7 @@ void SuperNode::startNodes()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		if (!node_is_enabled(n))
 			continue;
 
@@ -312,9 +295,7 @@ void SuperNode::startPaths()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
+	for (auto *p : paths) {
 		if (!path_is_enabled(p))
 			continue;
 
@@ -328,9 +309,7 @@ void SuperNode::prepareNodes()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		if (!node_is_enabled(n))
 			continue;
 
@@ -344,13 +323,11 @@ void SuperNode::preparePaths()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
+	for (auto *p : paths) {
 		if (!path_is_enabled(p))
 			continue;
 
-		ret = path_prepare(p, &nodes);
+		ret = path_prepare(p, nodes);
 		if (ret)
 			throw RuntimeError("Failed to prepare path: {}", path_name(p));
 	}
@@ -371,8 +348,7 @@ void SuperNode::prepare()
 	prepareNodes();
 	preparePaths();
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
+	for (auto *n : nodes) {
 		if (vlist_length(&n->sources) == 0 &&
 		    vlist_length(&n->destinations) == 0) {
 			logger->info("Node {} is not used by any path. Disabling...", node_name(n));
@@ -412,9 +388,7 @@ void SuperNode::stopPaths()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
+	for (auto *p : paths) {
 		ret = path_stop(p);
 		if (ret)
 			throw RuntimeError("Failed to stop path: {}", path_name(p));
@@ -425,9 +399,7 @@ void SuperNode::stopNodes()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		ret = node_stop(n);
 		if (ret)
 			throw RuntimeError("Failed to stop node: {}", node_name(n));
@@ -438,14 +410,10 @@ void SuperNode::stopNodeTypes()
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&plugins); i++) {
-		auto *p = (struct plugin *) vlist_at(&plugins, i);
-
-		if (p->type == PluginType::NODE) {
-			ret = node_type_stop(&p->node);
-			if (ret)
-				throw RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
-		}
+	for (auto *vt : *node_types) {
+		ret = node_type_stop(vt);
+		if (ret)
+			throw RuntimeError("Failed to stop node-type: {}", node_type_name(vt));
 	}
 }
 
@@ -495,21 +463,26 @@ void SuperNode::run()
 
 SuperNode::~SuperNode()
 {
-	int ret __attribute__((unused));
-
 	assert(state != State::STARTED);
 
-	ret = vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
-	ret = vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
+	int ret __attribute__((unused));
+
+	for (auto *p : paths) {
+		ret = path_destroy(p);
+		delete p;
+	}
+
+	for (auto *n : nodes) {
+		ret = node_destroy(n);
+		delete n;
+	}
 }
 
 int SuperNode::periodic()
 {
 	int started = 0;
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
+	for (auto *p : paths) {
 		if (p->state == State::STARTED) {
 			started++;
 
@@ -519,9 +492,7 @@ int SuperNode::periodic()
 		}
 	}
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		if (n->state == State::STARTED) {
 #ifdef WITH_HOOKS
 			hook_list_periodic(&n->in.hooks);
@@ -564,24 +535,21 @@ graph_t * SuperNode::getGraph()
 
 	uuid_string_t uuid_str;
 
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct vnode *) vlist_at(&nodes, i);
-
+	for (auto *n : nodes) {
 		nodeMap[n] = agnode(g, (char *) node_name_short(n), 1);
 
 		uuid_unparse(n->uuid, uuid_str);
 
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", plugin_name(node_type(n)), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", node_type_name((node_type(n))), uuid_str));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");
 	}
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct vpath *) vlist_at(&paths, i);
-
-		auto name = fmt::format("path_{}", i);
+	unsigned i = 0;
+	for (auto *p : paths) {
+		auto name = fmt::format("path_{}", i++);
 
 		m = agnode(g, (char *) name.c_str(), 1);
 

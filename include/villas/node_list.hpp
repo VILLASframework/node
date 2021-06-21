@@ -1,8 +1,8 @@
-/** Node API Request.
+/** Node list
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,33 +19,30 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *********************************************************************************/
+ */
 
-#include <villas/api/node_request.hpp>
+#pragma once
 
-using namespace villas::node::api;
+#include <uuid/uuid.h>
 
-void
-NodeRequest::prepare()
-{
-	int ret;
+#include <list>
+#include <string>
 
-	auto &nodes = session->getSuperNode()->getNodes();
+/* Forward declarations */
+struct vnode;
 
-	uuid_t uuid;
-	ret = uuid_parse(matches[1].c_str(), uuid);
-	if (ret) {
-		node = nodes.lookup(matches[1]);
-		if (!node)
-			throw BadRequest("Unknown node", "{ s: s }",
-				"node", matches[1].c_str()
-			);
-	}
-	else {
-		node = nodes.lookup(uuid);
-		if (!node)
-			throw BadRequest("No node found with with matching UUID", "{ s: s }",
-				"uuid", matches[1].c_str()
-			);
-	}
-}
+namespace villas {
+namespace node {
+
+class NodeList : public std::list<struct vnode *> {
+
+public:
+	/** Lookup a node from the list based on its name */
+	struct vnode * lookup(const std::string &name);
+
+	/** Lookup a node from the list based on its UUID */
+	struct vnode * lookup(const uuid_t &uuid);
+};
+
+} /* namespace node */
+} /* namespace villas */

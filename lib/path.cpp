@@ -40,7 +40,6 @@
 #include <villas/queue.h>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
-#include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/signal.h>
@@ -235,7 +234,7 @@ static int path_prepare_poll(struct vpath *p)
 	return 0;
 }
 
-int path_prepare(struct vpath *p, struct vlist *nodes)
+int path_prepare(struct vpath *p, NodeList &nodes)
 {
 	int ret;
 	unsigned pool_size;
@@ -283,7 +282,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 				return ret;
 
 			if (ps->type == PathSourceType::SECONDARY) {
-				vlist_push(nodes, ps->node);
+				nodes.push_back(ps->node);
 				vlist_push(&ps->node->sources, ps);
 			}
 
@@ -388,7 +387,7 @@ int path_prepare(struct vpath *p, struct vlist *nodes)
 	return 0;
 }
 
-int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t sn_uuid)
+int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 {
 	int ret;
 
@@ -496,7 +495,7 @@ int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t 
 	return 0;
 }
 
-void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes)
+void path_parse_mask(struct vpath *p, json_t *json_mask, villas::node::NodeList &nodes)
 {
 	json_t *json_entry;
 	size_t i;
@@ -512,7 +511,7 @@ void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes)
 		if (!name)
 			throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' setting must be a list of node names");
 
-		node = vlist_lookup_name<struct vnode>(nodes, name);
+		node = nodes.lookup(name);
 		if (!node)
 			throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' entry '{}' is not a valid node name", name);
 

@@ -41,6 +41,7 @@
 #include <villas/common.hpp>
 #include <villas/mapping.h>
 #include <villas/task.hpp>
+#include <villas/node_list.hpp>
 
 #include <villas/log.hpp>
 
@@ -104,7 +105,7 @@ struct vpath {
 /** Initialize internal data structures. */
 int path_init(struct vpath *p) __attribute__ ((warn_unused_result));
 
-int path_prepare(struct vpath *p, struct vlist *nodes);
+int path_prepare(struct vpath *p, villas::node::NodeList &nodes);
 
 /** Check if path configuration is proper. */
 void path_check(struct vpath *p);
@@ -158,9 +159,9 @@ int path_reverse(struct vpath *p, struct vpath *r);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct vpath *p, json_t *json, struct vlist *nodes, const uuid_t sn_uuid);
+int path_parse(struct vpath *p, json_t *json, villas::node::NodeList &nodes, const uuid_t sn_uuid);
 
-void path_parse_mask(struct vpath *p, json_t *json_mask, struct vlist *nodes);
+void path_parse_mask(struct vpath *p, json_t *json_mask, villas::node::NodeList &nodes);
 
 bool path_is_simple(const struct vpath *p);
 
