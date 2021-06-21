@@ -580,13 +580,12 @@ static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "kafka";
-	p.description		= "Kafka event message streaming (rdkafka)";
-	p.instances.state	= State::DESTROYED;
+	p.name		= "kafka";
+	p.description	= "Kafka event message streaming (rdkafka)";
 	p.vectorize	= 0;
 	p.size		= sizeof(struct kafka);
-	p.start	= kafka_type_start;
-	p.stop	= kafka_type_stop;
+	p.type.start	= kafka_type_start;
+	p.type.stop	= kafka_type_stop;
 	p.destroy	= kafka_destroy;
 	p.prepare	= kafka_prepare;
 	p.parse		= kafka_parse;
