@@ -3,7 +3,7 @@
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2014-2020, Steffen Vogel
+ * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
  *********************************************************************************/
 

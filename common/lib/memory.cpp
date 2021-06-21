@@ -1,7 +1,7 @@
 /** Memory managment.
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLAScommon
