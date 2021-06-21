@@ -22,19 +22,19 @@
 
 #include <cstring>
 
+#include <villas/node.h>
 #include <villas/nodes/stats.hpp>
 #include <villas/hook.hpp>
-#include <villas/plugin.h>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/sample.h>
-#include <villas/node.h>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static struct vlist *nodes; /** The global list of nodes */
+static NodeList nodes; /** The global list of nodes */
 
 int stats_node_signal_destroy(struct stats_node_signal *s)
 {
@@ -126,7 +126,7 @@ int stats_node_start(struct vnode *n)
 	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
 		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-		stats_sig->node = vlist_lookup_name<struct vnode>(nodes, stats_sig->node_str);
+		stats_sig->node = nodes.lookup(stats_sig->node_str);
 		if (!stats_sig->node)
 			throw ConfigError(n->config, "node-config-node-stats-node", "Invalid reference node {}", stats_sig->node_str);
 	}
@@ -253,34 +253,28 @@ int stats_node_poll_fds(struct vnode *n, int fds[])
 	return 0;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "stats";
-	p.description		= "Send statistics to another node";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
-	p.node.size		= sizeof(struct stats_node);
-	p.node.type.start	= stats_node_type_start;
-	p.node.parse		= stats_node_parse;
-	p.node.init		= stats_node_init;
-	p.node.destroy		= stats_node_destroy;
-	p.node.print		= stats_node_print;
-	p.node.prepare		= stats_node_prepare;
-	p.node.start		= stats_node_start;
-	p.node.stop		= stats_node_stop;
-	p.node.read		= stats_node_read;
-	p.node.poll_fds		= stats_node_poll_fds;
+	p.name		= "stats";
+	p.description	= "Send statistics to another node";
+	p.vectorize	= 1;
+	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.size		= sizeof(struct stats_node);
+	p.type.start	= stats_node_type_start;
+	p.parse		= stats_node_parse;
+	p.init		= stats_node_init;
+	p.destroy	= stats_node_destroy;
+	p.print		= stats_node_print;
+	p.prepare	= stats_node_prepare;
+	p.start		= stats_node_start;
+	p.stop		= stats_node_stop;
+	p.read		= stats_node_read;
+	p.poll_fds	= stats_node_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

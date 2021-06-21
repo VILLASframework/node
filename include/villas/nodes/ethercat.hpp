@@ -33,13 +33,15 @@
 
 #include <thread>
 
-#include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/task.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/format.hpp>
 #include <villas/config.h>
+
+/* Forward declarations */
+struct vnode;
 
 /* Include hard-coded Ethercat Bus configuration */
 #include <villas/nodes/ethercat_config.hpp>

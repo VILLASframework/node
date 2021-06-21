@@ -31,10 +31,12 @@
 
 #include <jansson.h>
 
-#include <villas/node.h>
 #include <villas/stats.hpp>
 #include <villas/task.hpp>
 #include <villas/list.h>
+
+/* Forward declarations */
+struct vnode;
 
 struct stats_node_signal {
 	struct vnode *node;

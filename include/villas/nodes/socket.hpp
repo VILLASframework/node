@@ -30,9 +30,11 @@
 #pragma once
 
 #include <villas/node/config.h>
-#include <villas/node.h>
 #include <villas/socket_addr.h>
 #include <villas/format.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define SOCKET_INITIAL_BUFFER_LEN (64*1024)

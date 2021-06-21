@@ -31,8 +31,10 @@
 
 #include <pthread.h>
 
-#include <villas/node.h>
 #include <villas/sample.h>
+
+/* Forward declarations */
+struct vnode;
 
 extern "C" {
 	#include <OpalGenAsyncParamCtrl.h>

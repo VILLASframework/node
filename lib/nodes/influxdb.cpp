@@ -26,12 +26,13 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/signal.h>
+#include <villas/sample.h>
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/nodes/influxdb.hpp>
 #include <villas/memory.h>
+#include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
@@ -214,28 +215,22 @@ char * influxdb_print(struct vnode *n)
 	return buf;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "influxdb";
-	p.description		= "Write results to InfluxDB";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct influxdb);
-	p.node.parse		= influxdb_parse;
-	p.node.print		= influxdb_print;
-	p.node.start		= influxdb_open;
-	p.node.stop		= influxdb_close;
-	p.node.write		= influxdb_write;
+	p.name		= "influxdb";
+	p.description	= "Write results to InfluxDB";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct influxdb);
+	p.parse		= influxdb_parse;
+	p.print		= influxdb_print;
+	p.start		= influxdb_open;
+	p.stop		= influxdb_close;
+	p.write		= influxdb_write;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

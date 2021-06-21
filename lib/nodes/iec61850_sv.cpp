@@ -27,7 +27,6 @@
 #include <unistd.h>
 
 #include <villas/nodes/iec61850_sv.hpp>
-#include <villas/plugin.h>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
 #define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
@@ -476,35 +475,29 @@ int iec61850_sv_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "iec61850-9-2";
-	p.description		= "IEC 61850-9-2 (Sampled Values)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct iec61850_sv);
-	p.node.type.start	= iec61850_type_start;
-	p.node.type.stop	= iec61850_type_stop;
-	p.node.destroy		= iec61850_sv_destroy;
-	p.node.parse		= iec61850_sv_parse;
-	p.node.print		= iec61850_sv_print;
-	p.node.start		= iec61850_sv_start;
-	p.node.stop		= iec61850_sv_stop;
-	p.node.read		= iec61850_sv_read;
-	p.node.write		= iec61850_sv_write;
-	p.node.poll_fds		= iec61850_sv_poll_fds;
+	p.name		= "iec61850-9-2";
+	p.description	= "IEC 61850-9-2 (Sampled Values)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct iec61850_sv);
+	p.start	= iec61850_type_start;
+	p.stop	= iec61850_type_stop;
+	p.destroy	= iec61850_sv_destroy;
+	p.parse		= iec61850_sv_parse;
+	p.print		= iec61850_sv_print;
+	p.start		= iec61850_sv_start;
+	p.stop		= iec61850_sv_stop;
+	p.read		= iec61850_sv_read;
+	p.write		= iec61850_sv_write;
+	p.poll_fds	= iec61850_sv_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }
 
 #endif /* CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT */

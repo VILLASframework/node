@@ -26,15 +26,15 @@
 
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
+#include <villas/node.h>
 #include <villas/nodes/ethercat.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
 /* Forward declartions */
-static struct plugin p;
+static struct vnode_type p;
 
 /* Constants */
 #define NSEC_PER_SEC (1000000000)
@@ -440,32 +440,27 @@ int ethercat_poll_fds(struct vnode *n, int *fds)
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "ethercat";
-	p.description		= "Send and receive samples of an ethercat connection";
-	p.type			= PluginType::NODE;
-	p.node.vectorize	= 1; /* we only process a single sample per call */
-	p.node.size		= sizeof(struct ethercat);
-	p.node.type.start	= ethercat_type_start;
-	p.node.type.stop	= ethercat_type_stop;
-	p.node.parse		= ethercat_parse;
-	p.node.print		= ethercat_print;
-	p.node.check		= ethercat_check;
-	p.node.init		= ethercat_init;
-	p.node.destroy		= ethercat_destroy;
-	p.node.prepare		= ethercat_prepare;
-	p.node.start		= ethercat_start;
-	p.node.stop		= ethercat_stop;
-	p.node.read		= ethercat_read;
-	p.node.write		= ethercat_write;
-	p.node.poll_fds		= ethercat_poll_fds;
+	p.name		= "ethercat";
+	p.description	= "Send and receive samples of an ethercat connection";
+	p.vectorize	= 1; /* we only process a single sample per call */
+	p.size		= sizeof(struct ethercat);
+	p.type.start	= ethercat_type_start;
+	p.type.stop	= ethercat_type_stop;
+	p.parse		= ethercat_parse;
+	p.print		= ethercat_print;
+	p.check		= ethercat_check;
+	p.init		= ethercat_init;
+	p.destroy	= ethercat_destroy;
+	p.prepare	= ethercat_prepare;
+	p.start		= ethercat_start;
+	p.stop		= ethercat_stop;
+	p.read		= ethercat_read;
+	p.write		= ethercat_write;
+	p.poll_fds	= ethercat_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }
 

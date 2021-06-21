@@ -30,9 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <villas/node.h>
 #include <villas/nodes/temper.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/plugin.h>
 #include <villas/utils.hpp>
 
 using namespace villas;
@@ -46,7 +46,7 @@ static std::list<TEMPerDevice *> devices;
 static struct libusb_context *context;
 
 /* Forward declartions */
-static struct plugin p;
+static struct vnode_type p;
 
 
 TEMPerDevice::TEMPerDevice(struct libusb_device *dev) :
@@ -414,30 +414,24 @@ int temper_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "temper";
-	p.description		= "An temper for staring new node-type implementations";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
-	p.node.size		= sizeof(struct temper);
-	p.node.type.start	= temper_type_start;
-	p.node.type.stop	= temper_type_stop;
-	p.node.init		= temper_init;
-	p.node.destroy		= temper_destroy;
-	p.node.prepare		= temper_prepare;
-	p.node.parse		= temper_parse;
-	p.node.print		= temper_print;
-	p.node.start		= temper_start;
-	p.node.stop		= temper_stop;
-	p.node.read		= temper_read;
+	p.name		= "temper";
+	p.description	= "An temper for staring new node-type implementations";
+	p.vectorize	= 1;
+	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.size		= sizeof(struct temper);
+	p.type.start	= temper_type_start;
+	p.type.stop	= temper_type_stop;
+	p.init		= temper_init;
+	p.destroy	= temper_destroy;
+	p.prepare	= temper_prepare;
+	p.parse		= temper_parse;
+	p.print		= temper_print;
+	p.start		= temper_start;
+	p.stop		= temper_stop;
+	p.read		= temper_read;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

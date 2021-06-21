@@ -29,9 +29,11 @@
 
 #pragma once
 
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/format.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500

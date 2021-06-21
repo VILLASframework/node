@@ -26,8 +26,8 @@
 #include <netdb.h>
 
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/nodes/infiniband.hpp>
-#include <villas/plugin.h>
 #include <villas/utils.hpp>
 #include <villas/memory.h>
 #include <villas/memory/ib.h>
@@ -1000,34 +1000,28 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return sent;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "infiniband";
-	p.description		= "Infiniband interface (libibverbs, librdmacm)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct infiniband);
-	p.node.pool_size	= 8192;
-	p.node.destroy		= ib_destroy;
-	p.node.parse		= ib_parse;
-	p.node.check		= ib_check;
-	p.node.print		= ib_print;
-	p.node.start		= ib_start;
-	p.node.stop		= ib_stop;
-	p.node.read		= ib_read;
-	p.node.write		= ib_write;
-	p.node.reverse		= ib_reverse;
-	p.node.memory_type	= memory_ib;
+	p.name		= "infiniband";
+	p.description	= "Infiniband interface (libibverbs, librdmacm)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct infiniband);
+	p.pool_size	= 8192;
+	p.destroy	= ib_destroy;
+	p.parse		= ib_parse;
+	p.check		= ib_check;
+	p.print		= ib_print;
+	p.start		= ib_start;
+	p.stop		= ib_stop;
+	p.read		= ib_read;
+	p.write		= ib_write;
+	p.reverse	= ib_reverse;
+	p.memory_type	= memory_ib;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

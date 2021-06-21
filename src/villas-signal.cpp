@@ -40,7 +40,6 @@
 #include <villas/timing.h>
 #include <villas/node.h>
 #include <villas/pool.h>
-#include <villas/plugin.h>
 #include <villas/nodes/signal_generator.hpp>
 
 using namespace villas;

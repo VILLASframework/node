@@ -22,18 +22,16 @@
 
 #include <cstring>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/nodes/loopback_internal.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/memory.h>
 
 using namespace villas;
 using namespace villas::node;
-using namespace villas::utils;
 
-static struct plugin p;
+static struct vnode_type p;
 
 int loopback_internal_init(struct vnode *n)
 {
@@ -108,7 +106,7 @@ struct vnode * loopback_internal_create(struct vnode *orig)
 	if (!n)
 		throw MemoryAllocationError();
 
-	ret = node_init(n, &p.node);
+	ret = node_init(n, &p);
 	if (ret)
 		return nullptr;
 
@@ -123,26 +121,20 @@ struct vnode * loopback_internal_create(struct vnode *orig)
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "loopback_internal";
-	p.description		= "internal loopback to connect multiple paths";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS | (int) NodeFlags::INTERNAL;
-	p.node.size		= sizeof(struct loopback_internal);
-	p.node.prepare		= loopback_internal_prepare;
-	p.node.init		= loopback_internal_init;
-	p.node.destroy		= loopback_internal_destroy;
-	p.node.read		= loopback_internal_read;
-	p.node.write		= loopback_internal_write;
-	p.node.poll_fds		= loopback_internal_poll_fds;
+	p.name		= "loopback_internal";
+	p.description	= "internal loopback to connect multiple paths";
+	p.vectorize	= 0;
+	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS | (int) NodeFlags::INTERNAL;
+	p.size		= sizeof(struct loopback_internal);
+	p.prepare	= loopback_internal_prepare;
+	p.init		= loopback_internal_init;
+	p.destroy	= loopback_internal_destroy;
+	p.read		= loopback_internal_read;
+	p.write		= loopback_internal_write;
+	p.poll_fds	= loopback_internal_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

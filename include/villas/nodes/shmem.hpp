@@ -29,12 +29,14 @@
 
 #pragma once
 
-#include <villas/node.h>
 #include <villas/memory.h>
 #include <villas/pool.h>
 #include <villas/queue.h>
 #include <villas/node/config.h>
 #include <villas/shmem.h>
+
+/* Forward declarations */
+struct vnode;
 
 /** Node-type for shared memory communication.
  * @see node_type

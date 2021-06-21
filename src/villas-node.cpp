@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
+#include <iomanip>
 #include <iostream>
 #include <exception>
 #include <atomic>
@@ -44,7 +45,6 @@
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/plugin.h>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 
@@ -102,26 +102,27 @@ protected:
 			<< "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
 #endif /* WITH_NODE_OPAL */
 
-			<< "Supported node-types:" << std::endl;
-		plugin_dump(PluginType::NODE);
+		<< "Supported node-types:" << std::endl;
+		for (auto *vt : *node_types)
+			std::cout << " - " << std::left << std::setw(18) << node_type_name(vt) << vt->description << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
 		for (Plugin *p : Registry::lookup<FormatFactory>())
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 #ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
 		for (Plugin *p : Registry::lookup<HookFactory>())
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
 #ifdef WITH_API
 		std::cout << "Supported API commands:" << std::endl;
 		for (Plugin *p : Registry::lookup<api::RequestFactory>())
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_API */
 

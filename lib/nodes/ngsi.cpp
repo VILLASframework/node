@@ -31,12 +31,12 @@
 #include <openssl/opensslv.h>
 #include <curl/curl.h>
 
+#include <villas/node.h>
 #include <villas/nodes/ngsi.hpp>
 #include <villas/utils.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/timing.h>
-#include <villas/plugin.h>
 #include <villas/node/config.h>
 
 using namespace villas;
@@ -846,39 +846,33 @@ int ngsi_reverse(struct vnode *n)
 }
 
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
 	p.name			= "ngsi";
 	p.description		= "OMA Next Generation Services Interface 10 (libcurl, libjansson)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
 #ifdef NGSI_VECTORS
-	p.node.vectorize	= 0, /* unlimited */
+	p.vectorize	= 0, /* unlimited */
 #else
-	p.node.vectorize	= 1,
+	p.vectorize	= 1,
 #endif
-	p.node.size		= sizeof(struct ngsi);
-	p.node.type.start	= ngsi_type_start;
-	p.node.type.stop	= ngsi_type_stop;
-	p.node.init		= ngsi_init;
-	p.node.destroy		= ngsi_destroy;
-	p.node.parse		= ngsi_parse;
-	p.node.print		= ngsi_print;
-	p.node.start		= ngsi_start;
-	p.node.stop		= ngsi_stop;
-	p.node.read		= ngsi_read;
-	p.node.write		= ngsi_write;
-	p.node.poll_fds		= ngsi_poll_fds;
-	p.node.reverse		= ngsi_reverse;
+	p.size		= sizeof(struct ngsi);
+	p.type.start	= ngsi_type_start;
+	p.type.stop	= ngsi_type_stop;
+	p.init		= ngsi_init;
+	p.destroy	= ngsi_destroy;
+	p.parse		= ngsi_parse;
+	p.print		= ngsi_print;
+	p.start		= ngsi_start;
+	p.stop		= ngsi_stop;
+	p.read		= ngsi_read;
+	p.write		= ngsi_write;
+	p.poll_fds	= ngsi_poll_fds;
+	p.reverse	= ngsi_reverse;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

@@ -27,9 +27,11 @@
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/node/config.h>
-#include <villas/plugin.h>
 
 using namespace villas;
+
+/** Global list of all known plugins */
+std::list<struct vnode_type *> *node_types = nullptr;
 
 int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn)
 {
@@ -39,7 +41,7 @@ int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn)
 		return 0;
 
 	auto logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
-	logger->info("Initializing node type which is used by {} nodes", vlist_length(&vt->instances));
+	logger->info("Initializing node type which is used by {} nodes", vt->instances.size());
 
 	ret = vt->type.start ? vt->type.start(sn) : 0;
 	if (ret == 0)
@@ -67,16 +69,15 @@ int node_type_stop(struct vnode_type *vt)
 
 const char * node_type_name(struct vnode_type *vt)
 {
-	return plugin_name(vt);
+	return vt->name;
 }
 
-struct vnode_type * node_type_lookup(const char *name)
+struct vnode_type * node_type_lookup(const std::string &name)
 {
-	struct plugin *p;
+	for (auto *vt : *node_types) {
+		if (name == vt->name)
+			return vt;
+	}
 
-	p = plugin_lookup(PluginType::NODE, name);
-	if (!p)
-		return nullptr;
-
-	return &p->node;
+	return nullptr;
 }

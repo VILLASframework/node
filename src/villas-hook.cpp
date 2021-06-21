@@ -41,7 +41,6 @@
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/plugin.hpp>
-#include <villas/plugin.h>
 #include <villas/config_helper.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/node/config.h>

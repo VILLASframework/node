@@ -24,8 +24,8 @@
 #include <sys/syslog.h>
 #include <librdkafka/rdkafkacpp.h>
 
+#include <villas/node.h>
 #include <villas/nodes/kafka.hpp>
-#include <villas/plugin.h>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
@@ -576,38 +576,33 @@ int kafka_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
 	p.name			= "kafka";
 	p.description		= "Kafka event message streaming (rdkafka)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct kafka);
-	p.node.type.start	= kafka_type_start;
-	p.node.type.stop	= kafka_type_stop;
-	p.node.destroy		= kafka_destroy;
-	p.node.prepare		= kafka_prepare;
-	p.node.parse		= kafka_parse;
-	p.node.prepare		= kafka_prepare;
-	p.node.print		= kafka_print;
-	p.node.init		= kafka_init;
-	p.node.destroy		= kafka_destroy;
-	p.node.start		= kafka_start;
-	p.node.stop		= kafka_stop;
-	p.node.read		= kafka_read;
-	p.node.write		= kafka_write;
-	p.node.reverse		= kafka_reverse;
-	p.node.poll_fds		= kafka_poll_fds;
+	p.instances.state	= State::DESTROYED;
+	p.vectorize	= 0;
+	p.size		= sizeof(struct kafka);
+	p.start	= kafka_type_start;
+	p.stop	= kafka_type_stop;
+	p.destroy	= kafka_destroy;
+	p.prepare	= kafka_prepare;
+	p.parse		= kafka_parse;
+	p.prepare	= kafka_prepare;
+	p.print		= kafka_print;
+	p.init		= kafka_init;
+	p.destroy	= kafka_destroy;
+	p.start		= kafka_start;
+	p.stop		= kafka_stop;
+	p.read		= kafka_read;
+	p.write		= kafka_write;
+	p.reverse	= kafka_reverse;
+	p.poll_fds	= kafka_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

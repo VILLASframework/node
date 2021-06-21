@@ -60,7 +60,6 @@ set(LIB_SRC
     path_destination.cpp
     path_source.cpp
     path.cpp
-    plugin.cpp
     pool.cpp
     queue_signalled.cpp
     queue.cpp

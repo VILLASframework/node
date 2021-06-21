@@ -21,7 +21,6 @@
  *********************************************************************************/
 
 #include <villas/config.h>
-#include <villas/plugin.h>
 #include <villas/hook.hpp>
 #include <villas/format.hpp>
 #include <villas/api/request.hpp>
@@ -75,17 +74,8 @@ public:
 			json_array_append_new(json_nodes, json_name);
 		}
 #else
-		for (size_t i = 0; i < vlist_length(&plugins); i++) {
-			struct plugin *p = (struct plugin *) vlist_at(&plugins, i);
-
-			json_t *json_name;
-			switch(p->type) {
-				case PluginType::NODE:
-					json_name = json_string(p->name);
-					json_array_append_new(json_nodes, json_name);
-					break;
-			}
-		}
+		for (auto *vt : *node_types)
+			json_array_append_new(json_nodes, json_string(vt->name));
 #endif
 
 		auto *json_capabilities = json_pack("{ s: o, s: o, s: o, s: o }",

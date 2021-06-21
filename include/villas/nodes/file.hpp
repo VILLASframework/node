@@ -32,8 +32,10 @@
 #include <cstdio>
 
 #include <villas/format.hpp>
-#include <villas/node.h>
 #include <villas/task.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 #define FILE_MAX_PATHLEN	512
 

@@ -41,9 +41,11 @@
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/sv_subscriber.h>
 
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/signal.h>
+
+/* Forward declarations */
+struct vnode;
 
 enum class IEC61850Type {
 	/* According to IEC 61850-7-2 */

@@ -39,7 +39,6 @@
 #include <jansson.h>
 
 #include <villas/list.h>
-#include <villas/node.h>
 #include <villas/task.hpp>
 
 /* Forward declarations */

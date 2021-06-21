@@ -27,11 +27,11 @@
 #include <sys/stat.h>
 #include <cerrno>
 
+#include <villas/node.h>
 #include <villas/nodes/file.hpp>
 #include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/queue.h>
-#include <villas/plugin.h>
 #include <villas/format.hpp>
 #include <villas/exceptions.hpp>
 
@@ -475,32 +475,26 @@ int file_destroy(struct vnode *n)
 	return 0;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "file";
-	p.description		= "support for file log / replay node type";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.size		= sizeof(struct file);
-	p.node.init		= file_init;
-	p.node.destroy		= file_destroy;
-	p.node.parse		= file_parse;
-	p.node.print		= file_print;
-	p.node.start		= file_start;
-	p.node.stop		= file_stop;
-	p.node.read		= file_read;
-	p.node.write		= file_write;
-	p.node.poll_fds		= file_poll_fds;
+	p.name		= "file";
+	p.description	= "support for file log / replay node type";
+	p.vectorize	= 1;
+	p.size		= sizeof(struct file);
+	p.init		= file_init;
+	p.destroy	= file_destroy;
+	p.parse		= file_parse;
+	p.print		= file_print;
+	p.start		= file_start;
+	p.stop		= file_stop;
+	p.read		= file_read;
+	p.write		= file_write;
+	p.poll_fds	= file_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

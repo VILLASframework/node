@@ -31,11 +31,12 @@
 
 #include <librdkafka/rdkafka.h>
 
-#include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 
+/* Forward declarations */
+struct vnode;
 
 struct kafka {
 	struct queue_signalled queue;

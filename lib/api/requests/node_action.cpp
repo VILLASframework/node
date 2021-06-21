@@ -22,7 +22,6 @@
 
 #include <jansson.h>
 
-#include <villas/plugin.h>
 #include <villas/node.h>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>

@@ -23,8 +23,8 @@
 #include <cstring>
 #include <mosquitto.h>
 
+#include <villas/node.h>
 #include <villas/nodes/mqtt.hpp>
-#include <villas/plugin.h>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
@@ -559,39 +559,33 @@ int mqtt_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "mqtt";
-	p.description		= "Message Queuing Telemetry Transport (libmosquitto)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct mqtt);
-	p.node.type.start	= mqtt_type_start;
-	p.node.type.stop	= mqtt_type_stop;
-	p.node.destroy		= mqtt_destroy;
-	p.node.prepare		= mqtt_prepare;
-	p.node.parse		= mqtt_parse;
-	p.node.check		= mqtt_check;
-	p.node.prepare		= mqtt_prepare;
-	p.node.print		= mqtt_print;
-	p.node.init		= mqtt_init;
-	p.node.destroy		= mqtt_destroy;
-	p.node.start		= mqtt_start;
-	p.node.stop		= mqtt_stop;
-	p.node.read		= mqtt_read;
-	p.node.write		= mqtt_write;
-	p.node.reverse		= mqtt_reverse;
-	p.node.poll_fds		= mqtt_poll_fds;
+	p.name		= "mqtt";
+	p.description	= "Message Queuing Telemetry Transport (libmosquitto)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct mqtt);
+	p.type.start	= mqtt_type_start;
+	p.type.stop	= mqtt_type_stop;
+	p.destroy	= mqtt_destroy;
+	p.prepare	= mqtt_prepare;
+	p.parse		= mqtt_parse;
+	p.check		= mqtt_check;
+	p.prepare	= mqtt_prepare;
+	p.print		= mqtt_print;
+	p.init		= mqtt_init;
+	p.destroy	= mqtt_destroy;
+	p.start		= mqtt_start;
+	p.stop		= mqtt_stop;
+	p.read		= mqtt_read;
+	p.write		= mqtt_write;
+	p.reverse	= mqtt_reverse;
+	p.poll_fds	= mqtt_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

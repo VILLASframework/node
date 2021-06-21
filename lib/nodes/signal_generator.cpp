@@ -25,10 +25,10 @@
 #include <cmath>
 #include <cstring>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
+#include <villas/node.h>
 #include <villas/nodes/signal_generator.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -444,33 +444,27 @@ int signal_generator_poll_fds(struct vnode *n, int fds[])
 		return 0;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "signal";
-	p.description		= "Signal generator";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
-	p.node.size		= sizeof(struct signal_generator);
-	p.node.init		= signal_generator_init;
-	p.node.destroy		= signal_generator_destroy;
-	p.node.parse		= signal_generator_parse;
-	p.node.prepare		= signal_generator_prepare;
-	p.node.print		= signal_generator_print;
-	p.node.start		= signal_generator_start;
-	p.node.stop		= signal_generator_stop;
-	p.node.read		= signal_generator_read;
-	p.node.poll_fds		= signal_generator_poll_fds;
+	p.name		= "signal";
+	p.description	= "Signal generator";
+	p.vectorize	= 1;
+	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.size		= sizeof(struct signal_generator);
+	p.init		= signal_generator_init;
+	p.destroy	= signal_generator_destroy;
+	p.parse		= signal_generator_parse;
+	p.prepare	= signal_generator_prepare;
+	p.print		= signal_generator_print;
+	p.start		= signal_generator_start;
+	p.stop		= signal_generator_stop;
+	p.read		= signal_generator_read;
+	p.poll_fds	= signal_generator_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

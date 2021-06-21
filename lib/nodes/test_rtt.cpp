@@ -27,18 +27,19 @@
 #include <linux/limits.h>
 
 #include <villas/format.hpp>
-#include <villas/node.h>
 #include <villas/sample.h>
+#include <villas/node.h>
+#include <villas/utils.hpp>
 #include <villas/timing.h>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
+#include <villas/node.h>
 #include <villas/nodes/test_rtt.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static struct plugin p;
+static struct vnode_type p;
 
 static int test_rtt_case_start(struct vnode *n, int id)
 {
@@ -428,29 +429,23 @@ int test_rtt_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "test_rtt";
-	p.description		= "Test round-trip time with loopback";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
-	p.node.size		= sizeof(struct test_rtt);
-	p.node.parse		= test_rtt_parse;
-	p.node.prepare		= test_rtt_prepare;
-	p.node.init		= test_rtt_init;
-	p.node.destroy		= test_rtt_destroy;
-	p.node.print		= test_rtt_print;
-	p.node.start		= test_rtt_start;
-	p.node.stop		= test_rtt_stop;
-	p.node.read		= test_rtt_read;
-	p.node.write		= test_rtt_write;
+	p.name		= "test_rtt";
+	p.description	= "Test round-trip time with loopback";
+	p.vectorize	= 0;
+	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.size		= sizeof(struct test_rtt);
+	p.parse		= test_rtt_parse;
+	p.prepare	= test_rtt_prepare;
+	p.init		= test_rtt_init;
+	p.destroy	= test_rtt_destroy;
+	p.print		= test_rtt_print;
+	p.start		= test_rtt_start;
+	p.stop		= test_rtt_stop;
+	p.read		= test_rtt_read;
+	p.write		= test_rtt_write;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

@@ -24,12 +24,12 @@
 
 #include <cstring>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/config.h>
+#include <villas/node.h>
 #include <villas/nodes/uldaq.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/memory.h>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -625,32 +625,26 @@ int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "uldaq";
-	p.description		= "Measurement Computing DAQ devices like UL201 (libuldaq)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.flags		= 0;
-	p.node.size		= sizeof(struct uldaq);
-	p.node.type.start	= uldaq_type_start;
-	p.node.init		= uldaq_init;
-	p.node.destroy		= uldaq_destroy;
-	p.node.parse		= uldaq_parse;
-	p.node.print		= uldaq_print;
-	p.node.start		= uldaq_start;
-	p.node.stop		= uldaq_stop;
-	p.node.read		= uldaq_read;
+	p.name		= "uldaq";
+	p.description	= "Measurement Computing DAQ devices like UL201 (libuldaq)";
+	p.vectorize	= 0;
+	p.flags		= 0;
+	p.size		= sizeof(struct uldaq);
+	p.type.start	= uldaq_type_start;
+	p.init		= uldaq_init;
+	p.destroy	= uldaq_destroy;
+	p.parse		= uldaq_parse;
+	p.print		= uldaq_print;
+	p.start		= uldaq_start;
+	p.stop		= uldaq_stop;
+	p.read		= uldaq_read;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

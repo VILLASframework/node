@@ -22,10 +22,10 @@
 
 #include <string>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/nodes/exec.hpp>
+#include <villas/utils.hpp>
 #include <villas/node/exceptions.hpp>
 
 using namespace villas;
@@ -244,32 +244,26 @@ int exec_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "exec";
-	p.description		= "run subprocesses with stdin/stdout communication";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct exec);
-	p.node.parse		= exec_parse;
-	p.node.print		= exec_print;
-	p.node.prepare		= exec_prepare;
-	p.node.init		= exec_init;
-	p.node.destroy		= exec_destroy;
-	p.node.stop		= exec_stop;
-	p.node.read		= exec_read;
-	p.node.write		= exec_write;
-	p.node.poll_fds		= exec_poll_fds;
+	p.name		= "exec";
+	p.description	= "run subprocesses with stdin/stdout communication";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct exec);
+	p.parse		= exec_parse;
+	p.print		= exec_print;
+	p.prepare	= exec_prepare;
+	p.init		= exec_init;
+	p.destroy	= exec_destroy;
+	p.stop		= exec_stop;
+	p.read		= exec_read;
+	p.write		= exec_write;
+	p.poll_fds	= exec_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

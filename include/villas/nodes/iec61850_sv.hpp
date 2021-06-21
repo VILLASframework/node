@@ -36,9 +36,11 @@
 
 #include <villas/queue_signalled.h>
 #include <villas/pool.h>
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/nodes/iec61850.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 struct iec61850_sv {
 	char *interface;

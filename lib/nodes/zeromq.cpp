@@ -27,12 +27,11 @@
   #include <zmq_utils.h>
 #endif
 
-#include <villas/nodes/zeromq.hpp>
 #include <villas/node.h>
+#include <villas/nodes/zeromq.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/queue.h>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
@@ -636,37 +635,31 @@ int zeromq_netem_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "zeromq";
-	p.description		= "ZeroMQ Distributed Messaging (libzmq)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct zeromq);
-	p.node.type.start	= zeromq_type_start;
-	p.node.type.stop	= zeromq_type_stop;
-	p.node.init		= zeromq_init;
-	p.node.destroy		= zeromq_destroy;
-	p.node.check		= zeromq_check;
-	p.node.parse		= zeromq_parse;
-	p.node.print		= zeromq_print;
-	p.node.start		= zeromq_start;
-	p.node.stop		= zeromq_stop;
-	p.node.read		= zeromq_read;
-	p.node.write		= zeromq_write;
-	p.node.reverse		= zeromq_reverse;
-	p.node.poll_fds		= zeromq_poll_fds;
-	p.node.netem_fds	= zeromq_netem_fds;
+	p.name		= "zeromq";
+	p.description	= "ZeroMQ Distributed Messaging (libzmq)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct zeromq);
+	p.type.start	= zeromq_type_start;
+	p.type.stop	= zeromq_type_stop;
+	p.init		= zeromq_init;
+	p.destroy	= zeromq_destroy;
+	p.check		= zeromq_check;
+	p.parse		= zeromq_parse;
+	p.print		= zeromq_print;
+	p.start		= zeromq_start;
+	p.stop		= zeromq_stop;
+	p.read		= zeromq_read;
+	p.write		= zeromq_write;
+	p.reverse	= zeromq_reverse;
+	p.poll_fds	= zeromq_poll_fds;
+	p.netem_fds	= zeromq_netem_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

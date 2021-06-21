@@ -30,13 +30,15 @@
 #pragma once
 
 #include <villas/node/config.h>
-#include <villas/node.h>
 #include <villas/format.hpp>
 #include <villas/timing.h>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/dma.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 using namespace villas;
 

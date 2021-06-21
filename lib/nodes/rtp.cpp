@@ -39,7 +39,7 @@ extern "C" {
 	#undef ALIGN_MASK
 }
 
-#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
@@ -57,7 +57,7 @@ using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::kernel;
 
-static struct plugin p;
+static struct vnode_type p;
 
 static int rtp_aimd(struct vnode *n, double loss_frac)
 {
@@ -471,8 +471,7 @@ int rtp_type_start(villas::node::SuperNode *sn)
 
 #ifdef WITH_NETEM
 	/* Gather list of used network interfaces */
-	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
-		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
+	for (auto *n : p.instances) {
 		struct rtp *r = (struct rtp *) n->_vd;
 		Interface *j = Interface::getEgress(&r->out.saddr_rtp.u.sa, sn);
 
@@ -589,30 +588,24 @@ static void register_plugin() {
 #else
 	p.description		= "real-time transport protocol (libre)";
 #endif
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct rtp);
-	p.node.type.start	= rtp_type_start;
-	p.node.type.stop	= rtp_type_stop;
-	p.node.init		= rtp_init;
-	p.node.destroy		= rtp_destroy;
-	p.node.parse		= rtp_parse;
-	p.node.print		= rtp_print;
-	p.node.start		= rtp_start;
-	p.node.stop		= rtp_stop;
-	p.node.read		= rtp_read;
-	p.node.write		= rtp_write;
-	p.node.reverse		= rtp_reverse;
-	p.node.poll_fds	= rtp_poll_fds;
-	p.node.netem_fds	= rtp_netem_fds;
+	p.vectorize	= 0;
+	p.size		= sizeof(struct rtp);
+	p.type.start	= rtp_type_start;
+	p.type.stop	= rtp_type_stop;
+	p.init		= rtp_init;
+	p.destroy	= rtp_destroy;
+	p.parse		= rtp_parse;
+	p.print		= rtp_print;
+	p.start		= rtp_start;
+	p.stop		= rtp_stop;
+	p.read		= rtp_read;
+	p.write		= rtp_write;
+	p.reverse	= rtp_reverse;
+	p.poll_fds	= rtp_poll_fds;
+	p.netem_fds	= rtp_netem_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

@@ -30,7 +30,7 @@
 
 #include <villas/timing.h>
 #include <villas/utils.hpp>
-#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/nodes/websocket.hpp>
 #include <villas/super_node.hpp>
 
@@ -47,7 +47,7 @@ static villas::node::Web *web;
 static villas::Logger logger = logging.get("websocket");
 
 /* Forward declarations */
-static struct plugin p;
+static struct vnode_type p;
 
 static char * websocket_connection_name(struct websocket_connection *c)
 {
@@ -211,7 +211,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					format = (char *) "villas.web";
 
 				/* Search for node whose name matches the URI. */
-				c->node = vlist_lookup_name<struct vnode>(&p.node.instances, node);
+				c->node = p.instances.lookup(node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					logger->warn("Failed to find node: {}", node);
@@ -601,27 +601,22 @@ int websocket_poll_fds(struct vnode *n, int fds[])
 }
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-	p.name			= "websocket";
-	p.description		= "Send and receive samples of a WebSocket connection (libwebsockets)";
-	p.type			= PluginType::NODE;
-	p.node.vectorize	= 0; /* unlimited */
-	p.node.size		= sizeof(struct websocket);
-	p.node.instances.state  = State::DESTROYED;
-	p.node.type.start	= websocket_type_start;
-	p.node.destroy		= websocket_destroy;
-	p.node.parse		= websocket_parse;
-	p.node.print		= websocket_print;
-	p.node.start		= websocket_start;
-	p.node.stop		= websocket_stop;
-	p.node.read		= websocket_read;
-	p.node.write		= websocket_write;
-	p.node.poll_fds		= websocket_poll_fds;
+	p.name		= "websocket";
+	p.description	= "Send and receive samples of a WebSocket connection (libwebsockets)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct websocket);
+	p.type.start	= websocket_type_start;
+	p.destroy	= websocket_destroy;
+	p.parse		= websocket_parse;
+	p.print		= websocket_print;
+	p.start		= websocket_start;
+	p.stop		= websocket_stop;
+	p.read		= websocket_read;
+	p.write		= websocket_write;
+	p.poll_fds	= websocket_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

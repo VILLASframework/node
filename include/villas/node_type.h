@@ -50,14 +50,17 @@ enum class NodeFlags {
 
 /** C++ like vtable construct for node_types */
 struct vnode_type {
-	unsigned vectorize;		/**< Maximal vector length supported by this node type. Zero is unlimited. */
+	const char *name;
+	const char *description;
+
+	unsigned vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
 	int flags;
 
-	enum State state;		/**< State of this node-type. */
+	enum State state;			/**< State of this node-type. */
 
 	struct vlist instances;		/**< A list of all existing nodes of this type. */
 
-	size_t size;			/**< Size of private data bock. @see node::_vd */
+	size_t size;				/**< Size of private data bock. @see node::_vd */
 	size_t pool_size;
 
 	struct {
@@ -259,6 +262,10 @@ int node_type_stop(struct vnode_type *vt);
 /** Return a printable representation of the node-type. */
 const char * node_type_name(struct vnode_type *vt);
 
-struct vnode_type * node_type_lookup(const char *name);
+struct vnode_type * node_type_lookup(const std::string &name);
+
+using NodeTypeList = std::list<struct vnode_type *>;
+
+extern NodeTypeList *node_types;
 
 /** @} */

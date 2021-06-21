@@ -34,17 +34,16 @@
 #include <linux/can/raw.h>
 #include <linux/sockios.h>
 
+#include <villas/node.h>
 #include <villas/nodes/can.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.h>
-#include <villas/plugin.h>
 #include <villas/signal.h>
-#include <villas/node.h>
 #include <villas/exceptions.hpp>
 
 
 /* Forward declarations */
-static struct plugin p;
+static struct vnode_type p;
 
 using namespace villas;
 using namespace villas::node;
@@ -525,30 +524,24 @@ int can_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "can";
-	p.description		= "Receive CAN messages using the socketCAN driver";
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct can);
-	p.node.init		= can_init;
-	p.node.destroy		= can_destroy;
-	p.node.prepare		= can_prepare;
-	p.node.parse		= can_parse;
-	p.node.print		= can_print;
-	p.node.check		= can_check;
-	p.node.start		= can_start;
-	p.node.stop		= can_stop;
-	p.node.read		= can_read;
-	p.node.write		= can_write;
-	p.node.poll_fds		= can_poll_fds;
+	p.name		= "can";
+	p.description	= "Receive CAN messages using the socketCAN driver";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct can);
+	p.init		= can_init;
+	p.destroy	= can_destroy;
+	p.prepare	= can_prepare;
+	p.parse		= can_parse;
+	p.print		= can_print;
+	p.check		= can_check;
+	p.start		= can_start;
+	p.stop		= can_stop;
+	p.read		= can_read;
+	p.write		= can_write;
+	p.poll_fds	= can_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

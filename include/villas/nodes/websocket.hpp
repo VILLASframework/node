@@ -29,13 +29,15 @@
 
 #pragma once
 
-#include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/buffer.hpp>
 #include <villas/format.hpp>
 #include <villas/node/config.h>
+
+/* Forward declarations */
+struct vnode;
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 #define DEFAULT_WEBSOCKET_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH

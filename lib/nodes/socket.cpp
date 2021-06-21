@@ -26,11 +26,11 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 
+#include <villas/node.h>
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.h>
 #include <villas/queue.h>
-#include <villas/plugin.h>
 #include <villas/compat.hpp>
 #include <villas/super_node.hpp>
 
@@ -44,7 +44,7 @@
 #endif /* WITH_NETEM */
 
 /* Forward declartions */
-static struct plugin p;
+static struct vnode_type p;
 
 using namespace villas;
 using namespace villas::utils;
@@ -55,8 +55,7 @@ int socket_type_start(villas::node::SuperNode *sn)
 {
 #ifdef WITH_NETEM
 	/* Gather list of used network interfaces */
-	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
-		struct vnode *n = (struct vnode *) vlist_at(&p.node.instances, i);
+	for (auto *n : p.instances) {
 		struct socket *s = (struct socket *) n->_vd;
 
 		if (s->layer == SocketLayer::UNIX)
@@ -555,28 +554,22 @@ static void register_plugin() {
 #else
 	p.description	= "BSD network sockets for Ethernet / IP / UDP";
 #endif
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct socket);
-	p.node.type.start	= socket_type_start;
-	p.node.reverse		= socket_reverse;
-	p.node.parse		= socket_parse;
-	p.node.print		= socket_print;
-	p.node.check		= socket_check;
-	p.node.start		= socket_start;
-	p.node.stop		= socket_stop;
-	p.node.read		= socket_read;
-	p.node.write		= socket_write;
-	p.node.poll_fds		= socket_fds;
-	p.node.netem_fds	= socket_fds;
+	p.vectorize	= 0;
+	p.size		= sizeof(struct socket);
+	p.type.start	= socket_type_start;
+	p.reverse	= socket_reverse;
+	p.parse		= socket_parse;
+	p.print		= socket_print;
+	p.check		= socket_check;
+	p.start		= socket_start;
+	p.stop		= socket_stop;
+	p.read		= socket_read;
+	p.write		= socket_write;
+	p.poll_fds	= socket_fds;
+	p.netem_fds	= socket_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

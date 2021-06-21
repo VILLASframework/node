@@ -34,7 +34,6 @@
 
 #include <fstream>
 
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/log.hpp>
 #include <villas/format.hpp>
@@ -42,6 +41,9 @@
 #include <villas/hooks/limit_rate.hpp>
 #include <villas/hooks/decimate.hpp>
 #include <villas/dsp/pid.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 extern "C" {
 	#include <re/re_sa.h>

@@ -31,9 +31,11 @@
 
 #include <comedilib.h>
 
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/timing.h>
+
+/* Forward declarations */
+struct vnode;
 
 // whether to use read() or mmap() kernel interface
 #define COMEDI_USE_READ (1)

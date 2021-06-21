@@ -25,7 +25,7 @@
 #include <amqp_ssl_socket.h>
 #include <amqp_tcp_socket.h>
 
-#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/nodes/amqp.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -388,33 +388,28 @@ int amqp_destroy(struct vnode *n)
 	return 0;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "amqp";
-	p.description		= "Advanced Message Queueing Protoocl (rabbitmq-c)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct amqp);
-	p.node.destroy		= amqp_destroy;
-	p.node.parse		= amqp_parse;
-	p.node.print		= amqp_print;
-	p.node.start		= amqp_start;
-	p.node.stop		= amqp_stop;
-	p.node.read		= amqp_read;
-	p.node.write		= amqp_write;
-	p.node.poll_fds		= amqp_poll_fds;
+	p.name		= "amqp";
+	p.description	= "Advanced Message Queueing Protoocl (rabbitmq-c)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct amqp);
+	p.destroy	= amqp_destroy;
+	p.parse		= amqp_parse;
+	p.print		= amqp_print;
+	p.start		= amqp_start;
+	p.stop		= amqp_stop;
+	p.read		= amqp_read;
+	p.write		= amqp_write;
+	p.poll_fds	= amqp_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
+	if (!node_types)
+		node_types = new NodeTypeList();
+
+	node_types->push_back(&p);
 }
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
-}
 
 

@@ -31,9 +31,11 @@
 
 #include <amqp.h>
 
-#include <villas/node.h>
 #include <villas/list.h>
 #include <villas/format.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 struct amqp_ssl_info {
 	int verify_peer;

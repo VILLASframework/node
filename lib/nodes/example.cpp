@@ -20,16 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <villas/node.h>
 #include <villas/nodes/example.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.h>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 
 /* Forward declartions */
-static struct plugin p;
+static struct vnode_type p;
 
 using namespace villas;
 using namespace villas::node;
@@ -235,34 +235,28 @@ __attribute__((constructor(110)))
 static void register_plugin() {
 	p.name			= "example";
 	p.description		= "An example for staring new node-type implementations";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct example);
-	p.node.type.start	= example_type_start;
-	p.node.type.stop	= example_type_stop;
-	p.node.init		= example_init;
-	p.node.destroy		= example_destroy;
-	p.node.prepare		= example_prepare;
-	p.node.parse		= example_parse;
-	p.node.print		= example_print;
-	p.node.check		= example_check;
-	p.node.start		= example_start;
-	p.node.stop		= example_stop;
-	p.node.pause		= example_pause;
-	p.node.resume		= example_resume;
-	p.node.read		= example_read;
-	p.node.write		= example_write;
-	p.node.reverse		= example_reverse;
-	p.node.poll_fds		= example_poll_fds;
-	p.node.netem_fds	= example_netem_fds;
+	p.vectorize	= 0;
+	p.size		= sizeof(struct example);
+	p.type.start	= example_type_start;
+	p.type.stop	= example_type_stop;
+	p.init		= example_init;
+	p.destroy	= example_destroy;
+	p.prepare	= example_prepare;
+	p.parse		= example_parse;
+	p.print		= example_print;
+	p.check		= example_check;
+	p.start		= example_start;
+	p.stop		= example_stop;
+	p.pause		= example_pause;
+	p.resume	= example_resume;
+	p.read		= example_read;
+	p.write		= example_write;
+	p.reverse	= example_reverse;
+	p.poll_fds	= example_poll_fds;
+	p.netem_fds	= example_netem_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

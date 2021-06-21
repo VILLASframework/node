@@ -30,9 +30,9 @@
 #include <cmath>
 #include <vector>
 
+#include <villas/node.h>
 #include <villas/nodes/opal.hpp>
 #include <villas/utils.hpp>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
 
 extern "C" {
@@ -351,30 +351,24 @@ int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "opal";
-	p.description		= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.size		= sizeof(struct opal);
-	p.node.type.start	= opal_type_start;
-	p.node.type.stop	= opal_type_stop;
-	p.node.parse		= opal_parse;
-	p.node.print		= opal_print;
-	p.node.start		= opal_start;
-	p.node.read		= opal_read;
-	p.node.write		= opal_write;
+	p.name		= "opal";
+	p.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
+	p.vectorize	= 1;
+	p.size		= sizeof(struct opal);
+	p.start		= opal_type_start;
+	p.stop		= opal_type_stop;
+	p.parse		= opal_parse;
+	p.print		= opal_print;
+	p.start		= opal_start;
+	p.read		= opal_read;
+	p.write		= opal_write;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

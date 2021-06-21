@@ -24,7 +24,7 @@
 #include <nanomsg/pubsub.h>
 #include <cstring>
 
-#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/nodes/nanomsg.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -284,33 +284,27 @@ int nanomsg_netem_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "nanomsg";
-	p.description		= "scalability protocols library (libnanomsg)";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct nanomsg);
-	p.node.type.stop	= nanomsg_type_stop;
-	p.node.parse		= nanomsg_parse;
-	p.node.print		= nanomsg_print;
-	p.node.start		= nanomsg_start;
-	p.node.stop		= nanomsg_stop;
-	p.node.read		= nanomsg_read;
-	p.node.write		= nanomsg_write;
-	p.node.reverse		= nanomsg_reverse;
-	p.node.poll_fds		= nanomsg_poll_fds;
-	p.node.netem_fds	= nanomsg_netem_fds;
+	p.name		= "nanomsg";
+	p.description	= "scalability protocols library (libnanomsg)";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct nanomsg);
+	p.type.stop	= nanomsg_type_stop;
+	p.parse		= nanomsg_parse;
+	p.print		= nanomsg_print;
+	p.start		= nanomsg_start;
+	p.stop		= nanomsg_stop;
+	p.read		= nanomsg_read;
+	p.write		= nanomsg_write;
+	p.reverse	= nanomsg_reverse;
+	p.poll_fds	= nanomsg_poll_fds;
+	p.netem_fds	= nanomsg_netem_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

@@ -30,9 +30,11 @@
 #pragma once
 
 #include <villas/node/config.h>
-#include <villas/node.h>
 #include <villas/format.hpp>
 #include <villas/timing.h>
+
+/* Forward declarations */
+struct vnode;
 
 struct example {
     /* Settings */

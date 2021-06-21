@@ -27,7 +27,7 @@
 #include <comedilib.h>
 #include <comedi_errno.h>
 
-#include <villas/plugin.h>
+#include <villas/node.h>
 #include <villas/nodes/comedi.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -974,30 +974,24 @@ int comedi_poll_fds(struct vnode *n, int fds[])
 	return 0;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "comedi";
-	p.description		= "Comedi-compatible DAQ/ADC cards";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct comedi);
-	p.node.parse		= comedi_parse;
-	p.node.print		= comedi_print;
-	p.node.start		= comedi_start;
-	p.node.stop		= comedi_stop;
-	p.node.read		= comedi_read;
-	p.node.write		= comedi_write;
-	p.node.poll_fds		= comedi_poll_fds;
+	p.name		= "comedi";
+	p.description	= "Comedi-compatible DAQ/ADC cards";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct comedi);
+	p.parse		= comedi_parse;
+	p.print		= comedi_print;
+	p.start		= comedi_start;
+	p.stop		= comedi_stop;
+	p.read		= comedi_read;
+	p.write		= comedi_write;
+	p.poll_fds	= comedi_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

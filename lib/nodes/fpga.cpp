@@ -27,12 +27,12 @@
 #include <algorithm>
 #include <jansson.h>
 
+#include <villas/node.h>
 #include <villas/nodes/fpga.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/sample.h>
-#include <villas/plugin.h>
 #include <villas/super_node.hpp>
 
 #include <villas/fpga/core.hpp>
@@ -40,7 +40,7 @@
 #include <villas/fpga/ips/dma.hpp>
 
 /* Forward declartions */
-static struct plugin p;
+static struct vnode_type p;
 
 using namespace villas;
 using namespace villas::node;
@@ -328,33 +328,27 @@ int fpga_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "fpga";
-	p.description		= "Communicate with VILLASfpga Xilinx FPGA boards";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 1;
-	p.node.size		= sizeof(struct fpga);
-	p.node.type.start	= fpga_type_start;
-	p.node.type.stop	= fpga_type_stop;
-	p.node.init		= fpga_init;
-	p.node.destroy		= fpga_destroy;
-	p.node.prepare		= fpga_prepare;
-	p.node.parse		= fpga_parse;
-	p.node.print		= fpga_print;
-	p.node.check		= fpga_check;
-	p.node.start		= fpga_start;
-	p.node.stop		= fpga_stop;
-	p.node.read		= fpga_read;
-	p.node.write		= fpga_write;
-	p.node.poll_fds		= fpga_poll_fds;
+	p.name		= "fpga";
+	p.description	= "Communicate with VILLASfpga Xilinx FPGA boards";
+	p.vectorize	= 1;
+	p.size		= sizeof(struct fpga);
+	p.start	= fpga_type_start;
+	p.stop	= fpga_type_stop;
+	p.init		= fpga_init;
+	p.destroy	= fpga_destroy;
+	p.prepare	= fpga_prepare;
+	p.parse		= fpga_parse;
+	p.print		= fpga_print;
+	p.check		= fpga_check;
+	p.start		= fpga_start;
+	p.stop		= fpga_stop;
+	p.read		= fpga_read;
+	p.write		= fpga_write;
+	p.poll_fds	= fpga_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
+	if (!node_types)
+		node_types = new NodeTypeList();
+
+	node_types->push_back(&p);
 }
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	if (plugins.state != State::DESTROYED)
-		vlist_remove_all(&plugins, &p);
-}

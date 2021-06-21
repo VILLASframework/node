@@ -29,11 +29,13 @@
 
 #pragma once
 
-#include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
+
+/* Forward declarations */
+struct vnode;
 
 /* Constants */
 #define META_SIZE 24

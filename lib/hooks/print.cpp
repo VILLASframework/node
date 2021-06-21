@@ -32,7 +32,6 @@
 #include <villas/path.h>
 #include <villas/sample.h>
 #include <villas/format.hpp>
-#include <villas/plugin.h>
 
 namespace villas {
 namespace node {

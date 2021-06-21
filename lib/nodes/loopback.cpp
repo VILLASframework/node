@@ -22,18 +22,18 @@
 
 #include <cstring>
 
-#include <villas/node.h>
-#include <villas/plugin.h>
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/nodes/loopback.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/memory.h>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static struct plugin p;
+static struct vnode_type p;
 
 int loopback_init(struct vnode *n)
 {
@@ -143,28 +143,22 @@ int loopback_poll_fds(struct vnode *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "loopback";
-	p.description		= "Loopback to connect multiple paths";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.flags		= 0;
-	p.node.size		= sizeof(struct loopback);
-	p.node.parse		= loopback_parse;
-	p.node.print		= loopback_print;
-	p.node.prepare		= loopback_prepare;
-	p.node.init		= loopback_init;
-	p.node.destroy		= loopback_destroy;
-	p.node.read		= loopback_read;
-	p.node.write		= loopback_write;
-	p.node.poll_fds		= loopback_poll_fds;
+	p.name		= "loopback";
+	p.description	= "Loopback to connect multiple paths";
+	p.vectorize	= 0;
+	p.flags		= 0;
+	p.size		= sizeof(struct loopback);
+	p.parse		= loopback_parse;
+	p.print		= loopback_print;
+	p.prepare	= loopback_prepare;
+	p.init		= loopback_init;
+	p.destroy	= loopback_destroy;
+	p.read		= loopback_read;
+	p.write		= loopback_write;
+	p.poll_fds	= loopback_poll_fds;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

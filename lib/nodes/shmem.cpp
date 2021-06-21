@@ -32,8 +32,8 @@
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/shmem.h>
+#include <villas/node.h>
 #include <villas/nodes/shmem.hpp>
-#include <villas/plugin.h>
 #include <villas/timing.h>
 #include <villas/utils.hpp>
 
@@ -202,29 +202,23 @@ char * shmem_print(struct vnode *n)
 	return buf;
 }
 
-static struct plugin p;
+static struct vnode_type p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name			= "shmem";
-	p.description		= "POSIX shared memory interface with external processes";
-	p.type			= PluginType::NODE;
-	p.node.instances.state	= State::DESTROYED;
-	p.node.vectorize	= 0;
-	p.node.size		= sizeof(struct shmem);
-	p.node.parse		= shmem_parse;
-	p.node.print		= shmem_print;
-	p.node.start		= shmem_start;
-	p.node.stop		= shmem_stop;
-	p.node.read		= shmem_read;
-	p.node.write		= shmem_write;
+	p.name		= "shmem";
+	p.description	= "POSIX shared memory interface with external processes";
+	p.vectorize	= 0;
+	p.size		= sizeof(struct shmem);
+	p.parse		= shmem_parse;
+	p.print		= shmem_print;
+	p.start		= shmem_start;
+	p.stop		= shmem_stop;
+	p.read		= shmem_read;
+	p.write		= shmem_write;
 
-	int ret = vlist_init(&p.node.instances);
-	if (!ret)
-		vlist_init_and_push(&plugins, &p);
-}
+	if (!node_types)
+		node_types = new NodeTypeList();
 
-__attribute__((destructor(110)))
-static void deregister_plugin() {
-	vlist_remove_all(&plugins, &p);
+	node_types->push_back(&p);
 }

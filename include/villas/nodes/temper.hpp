@@ -30,11 +30,13 @@
 #pragma once
 
 #include <villas/node/config.h>
-#include <villas/node.h>
 #include <villas/format.hpp>
 #include <villas/timing.h>
 #include <villas/usb.hpp>
 #include <villas/log.hpp>
+
+/* Forward declarations */
+struct vnode;
 
 class TEMPerDevice : public villas::usb::Device {
 

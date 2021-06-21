@@ -32,8 +32,9 @@
 #include <villas/log.hpp>
 #include <villas/format.hpp>
 #include <villas/sample.h>
-#include <villas/plugin.h>
 #include <villas/exceptions.hpp>
+#include <villas/node/config.h>
+#include <villas/memory.h>
 
 using namespace villas;
 
