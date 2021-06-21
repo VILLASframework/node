@@ -123,18 +123,6 @@ void vlist_extend(struct vlist *l, size_t len, void *val);
 /** Remove all elements for which the callback returns a non-zero return code. */
 void vlist_filter(struct vlist *l, dtor_cb_t cb);
 
-/** Lookup an element from the list based on an UUID */
-template<typename T>
-T * vlist_lookup_uuid(struct vlist *l, uuid_t uuid)
-{
-	return (T *) vlist_search(l, [](const void *a, const void *b) -> int {
-		auto *n = reinterpret_cast<const T *>(a);
-		uuid_t u; memcpy(u, b, sizeof(uuid_t));
-
-		return uuid_compare(n->uuid, u);
-	}, uuid);
-}
-
 /** Lookup an element from the list based on a name */
 template<typename T>
 T * vlist_lookup_name(struct vlist *l, const std::string &name)
@@ -155,5 +143,3 @@ ssize_t vlist_lookup_index(struct vlist *l, const std::string &name)
 
 	return f ? vlist_index(l, f) : -1;
 }
-
-int vlist_init_and_push(struct vlist *l, void *p);
