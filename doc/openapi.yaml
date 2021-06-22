@@ -127,6 +127,7 @@ paths:
                   value:
                     hooks:
                     - average
+                    - average
                     - cast
                     - decimate
                     - dp
@@ -137,7 +138,8 @@ paths:
                     - gate
                     - jitter_calc
                     - limit_rate
-                    - average
+                    - pps_ts
+                    - print
                     - restart
                     - scale
                     - shift_seq
@@ -145,66 +147,62 @@ paths:
                     - skip_first
                     - stats
                     - ts
-                    - pps_ts
-                    - print
                     node-types:
-                    - loopback_internal
-                    - influxdb
-                    - stats
-                    - signal
-                    - loopback
-                    - test_rtt
-                    - socket
-                    - file
-                    - exec
-                    - shmem
-                    - zeromq
-                    - ngsi
-                    - websocket
                     - amqp
-                    - mqtt
                     - can
-                    - example
                     - ethercat
+                    - example
+                    - exec
+                    - file
+                    - influxdb
+                    - kafka
+                    - loopback
+                    - loopback_internal
+                    - mqtt
+                    - ngsi
+                    - redis
+                    - shmem
+                    - signal
+                    - socket
+                    - stats
+                    - temper
+                    - test_rtt
+                    - websocket
+                    - zeromq
                     apis:
-                    - status
                     - capabilities
                     - config
-                    - shutdown
-                    - restart
-                    - nodes
                     - node
-                    - node/start
-                    - node/stop
+                    - node/file
                     - node/pause
-                    - node/resume
                     - node/restart
+                    - node/resume
+                    - node/start
                     - node/stats
                     - node/stats/reset
-                    - node/file
-                    - paths
+                    - node/stop
+                    - nodes
                     - path
                     - path/start
                     - path/stop
+                    - paths
+                    - restart
+                    - shutdown
+                    - status
                     formats:
-                    - json
-                    - iotagent_ul
-                    - json.reserve
-                    - villas.binary
-                    - villas.web
-                    - villas.human
-                    - tsv
                     - csv
-                    - raw.8
-                    - raw.16.be
-                    - raw.32.be
-                    - raw.64.be
-                    - raw.16.le
-                    - raw.32.le
-                    - raw.64.le
                     - gtnet
                     - gtnet.fake
+                    - iotagent_ul
+                    - json
+                    - json.kafka
+                    - json.reserve
+                    - raw
+                    - tsv
                     - value
+                    - villas.binary
+                    - villas.human
+                    - villas.web
                     
   "/config":
     get:
