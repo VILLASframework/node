@@ -140,7 +140,6 @@ void TEMPer1Device::decode(unsigned char *answer, float *temp)
 	temp[0] = buf * (125.0 / 32000.0);
 	temp[0] *= scale;
 	temp[0] += offset;
-
 }
 
 void TEMPer2Device::decode(unsigned char *answer, float *temp)
