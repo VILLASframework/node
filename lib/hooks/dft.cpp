@@ -1183,7 +1183,6 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 		return { y_Fmax, i };
 	}
 
-
 	/**
 	 * This function is calculating the mximum based on a quadratic interpolation
 	 * 
@@ -1192,53 +1191,20 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
 	 * 	 * 
 	 * In particular equation 10
-	 * 
 	 */
-	Point quadraticEstimation(double x1, double x2, double x3, double y1, double y2, double y3, unsigned maxFBin)
-	{
-
-		//double y_max = x2 - (y3 - y1) / (2 * ( 2 * y2  - y1 - y3));
-		double y_Fmax = 0;
-
-		/*Quadratic Method */
-		double maxBinEst =  ((y3 - y1) / ( 2 * ( 2 * y2 - y1 - y3)));
-		
-
-
-		logger->info("y3 - y1 {} ; y_max : {}", (y3 - y1), maxBinEst);
-
-		maxBinEst = (double)maxFBin + maxBinEst;
-
-		/*Jain’s Method
-		if (y1 > y3)
+	Point quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin)
 		{
-			y_max = (double)maxFBin - 1 + (((y2 / y1) / ( 1 + (y2/y1))));
-		}
-		else
-		{
-			y_max = (double)maxFBin + ((y3 / y2) / ( 1 + (y3 / y2)));
-		}*/
-		
-		y_Fmax = startFreqency + maxBinEst * frequencyResolution;
+		// Frequency estimation
+		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
+		double y_Fmax = startFreqency + maxBinEst * frequencyResolution; // convert bin to frequency
 
+		// Amplitude estimation
+		double f = (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
+		double g = (pow(a.x, 2) * (b.y - c.y) + pow(b.x, 2) * (c.y - a.y) + pow(c.x, 2) * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
+		double h = (pow(a.x, 2) * (b.x * c.y - c.x * b.y) + a.x * (pow(c.x, 2) * b.y - pow(b.x,2) * c.y)+ b.x * c.x * a.y * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x)); 
+		double i = f * pow(y_Fmax,2) + g * y_Fmax + h;
 
-		//calc amplitude
-		//double h = (y2 - ( (y1 * x2^2) / x1^2)) / (1 - x2^2 / x1^2 )
-
-		//double h = (y2 - ( (y1 * pow(x2, 2)) / pow(x1, 2))) / (1 - pow(x2, 2) / pow(x1, 2));
-
-		//double h = ( - y3 + ( (y1 * pow(x3, 2)) / pow(x1, 2))) / (pow(x3, 2) / pow(x1, 2) - 1 );
-
-		double a = (x1 * (y2-y3)+x2 * (y3-y1)+x3 * (y1-y2))/((x1-x2) * (x1-x3) * (x3-x2));
-		double b = (pow(x1,2)*(y2-y3)+pow(x2,2)*(y3-y1)+pow(x3,2) * (y1-y2))/((x1-x2) * (x1-x3) * (x2-x3));
-		double c = (pow(x1,2) * (x2 * y3 - x3 *y2)+x1 * (pow(x3,2) * y2 - pow(x2,2) * y3)+ x2 * x3 * y1 * (x2-x3))/((x1-x2) * (x1-x3) * (x2-x3));
-
-		 
-		double h = a * pow(y_Fmax,2) + b * y_Fmax + c;
-
-		Point ret = {y_Fmax, h};
-
-		return ret;
+		return { y_Fmax, i };
 	}
 };
 
