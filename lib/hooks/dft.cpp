@@ -227,21 +227,8 @@ public:
 
 		filterWindowCoefficents.resize(windowSize);
 
-<<<<<<< HEAD
 		for (unsigned i = 0; i < freqCount; i++) {
 			absFrequencies.emplace_back(startFrequency + i * frequencyResolution);
-=======
-		if (logger->level() <= SPDLOG_LEVEL_DEBUG) {
-#ifdef DFT_MEM_DUMP
-			//origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
-			//windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
-			//ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
-#endif
-			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
-			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
-			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
-			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
->>>>>>> dft: ifdef for full mem dump of dft
 		}
 
 		generateDftMatrix();
@@ -974,6 +961,7 @@ public:
 	/**
 	 * This function prepares the selected window coefficents
 	 */
+<<<<<<< HEAD
 	void calculateWindow(enum WindowType windowTypeIn)
 	{
 		switch (windowTypeIn) {
@@ -1060,6 +1048,8 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 	/**
 	 * This function calculates the discrete furie transform of the input signal
 	 */
+=======
+>>>>>>> dft: change memory layout for dft results to provide one vector per signal
 	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, std::vector<std::complex<double>> &results, unsigned ringBufferPos)
 	{
 		/* RingBuffer size needs to be equal to windowSize
@@ -1091,6 +1081,7 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 
 #endif
 
+		for (unsigned i = 0; i < windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
 #ifdef DFT_MEM_DUMP
@@ -1107,12 +1098,20 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
 					if (j < (windowSize))
+<<<<<<< HEAD
 						results[i] += tmpSmpWindow[j] * matrix[i][j];
+=======
+						results[i] += tmpSmpWindow[j] * dftMatrix[i][j];
+>>>>>>> dft: change memory layout for dft results to provide one vector per signal
 					else
 						results[i] += 0;
 				}
 				else if (padding == PaddingType::SIG_REPEAT) /* Repeat samples */
+<<<<<<< HEAD
 					results[i] += tmpSmpWindow[j % windowSize] * matrix[i][j];
+=======
+					results[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
+>>>>>>> dft: change memory layout for dft results to provide one vector per signal
 			}
 		}
 	}
