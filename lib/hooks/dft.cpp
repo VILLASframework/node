@@ -372,6 +372,8 @@ public:
 				}
 
 				if (freqEstType == FreqEstimationType::QUADRATIC) {
+					if (maxPos < 1 || maxPos >= freqCount - 1)
+						logger->warn("Maximum frequency bin lies on window boundary. Using non-estimated results!");
 					else {
 						Point a = { absDftFreqs[maxPos - 1], absDftResults[i][maxPos - 1] };
 						Point b = { absDftFreqs[maxPos + 0], absDftResults[i][maxPos + 0] };
