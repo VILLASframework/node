@@ -138,7 +138,9 @@ int path_init(struct vpath *p)
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->timeout) Task(CLOCK_MONOTONIC);
 
-	p->logger = logging.get("path");
+	static int path_id;
+	auto logger_name = fmt::format("path:{}", path_id++);
+	p->logger = logging.get(logger_name);
 
 	uuid_clear(p->uuid);
 
