@@ -24,6 +24,7 @@
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/list.h>
+#include <villas/utils.hpp>
 #include <villas/sample.h>
 
 using namespace villas;
@@ -143,7 +144,7 @@ int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
 		return cnt;
 
 	for (current = 0; current < cnt; current++) {
-		sample *smp = smps[current];
+		struct sample *smp = smps[current];
 
 		for (size_t i = 0; i < vlist_length(hs); i++) {
 			Hook *h = (Hook *) vlist_at(hs, i);
@@ -165,11 +166,12 @@ int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
 			}
 		}
 
-		smps[processed++] = smp;
+stop:	SWAP(smps[processed], smps[current]);
+		processed++;
 skip: {}
 	}
 
-stop:	return processed;
+		return processed;
 }
 
 void hook_list_periodic(struct vlist *hs)
