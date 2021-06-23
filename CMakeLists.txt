@@ -82,6 +82,7 @@ endif()
 # Check packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(OpenMP)
 find_package(Opal)
 find_package(IBVerbs)
 find_package(RDMACM)
@@ -141,6 +142,7 @@ cmake_dependent_option(WITH_HOOKS           "Build with support for processing h
 cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         ON "LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_API             "Build with remote control API"                         ON "" OFF)
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" ON "LIBCONFIG_FOUND" OFF)
+cmake_dependent_option(WITH_OPENMP          "Build with support for OpenMP for parallel hooks"      ON "OPENMP_FOUND" OFF)
 cmake_dependent_option(WITH_SRC             "Build executables"                                     ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "XIL_FOUND" OFF)
 cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
@@ -240,6 +242,7 @@ add_feature_info(PLUGINS                WITH_PLUGINS                "Build plugi
 add_feature_info(CLIENTS                WITH_CLIENTS                "Build client applications")
 add_feature_info(GRAPHVIZ               WITH_GRAPHVIZ               "Build with Graphviz support")
 add_feature_info(LUA                    WITH_LUA                    "Build with Lua support")
+add_feature_info(OPENMP                 WITH_OPENMP                 "Build with OpenMP support")
 add_feature_info(DOC                    WITH_DOC                    "Build documentation")
 
 add_feature_info(NODE_AMQP              WITH_NODE_AMQP              "Build with amqp node-type")

@@ -50,6 +50,10 @@ if(WITH_LUA)
     list(APPEND HOOK_SRC lua.cpp)
 endif()
 
+if(WITH_OPENMP)
+    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+endif()
+
 add_library(hooks STATIC ${HOOK_SRC})
 target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(hooks PUBLIC ${LIBRARIES})
