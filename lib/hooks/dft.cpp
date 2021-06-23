@@ -340,7 +340,6 @@ public:
 
 		if (runDft) {
 			lastDftCal = smp->ts.origin;
-			for (unsigned i = 0; i < signalIndex.size(); i++) {
 
 			// Debugging for pps signal this should only be temporary
 				if (ppsSigSync) {
