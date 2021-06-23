@@ -38,7 +38,6 @@
 /* Uncomment to enable dumper of memory windows */
 //#define DFT_MEM_DUMP
 
-
 namespace villas {
 namespace node {
 
@@ -863,6 +862,7 @@ public:
 						currentResult.frequency = estimate.x;
 						currentResult.amplitude = estimate.y;
 					}
+				}
 				}
 
 				if (windowSize < smpMemPos) {
