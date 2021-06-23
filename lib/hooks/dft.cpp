@@ -331,7 +331,7 @@ public:
 		bool runDft = false;
 		if (syncDft) {
 			struct timespec timeDiff = time_diff(&lastDftCal, &smp->ts.origin);
-			if (timeDiff.tv_sec > 0)
+			if ((timeDiff.tv_sec*1e9+timeDiff.tv_nsec) >  (1e9/dftRate))
 				runDft = true;
 
 			//if (lastDftCal.tv_sec != smp->ts.origin.tv_sec)
