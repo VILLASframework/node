@@ -52,7 +52,7 @@ int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 	if (ret)
 		return ret;
 
-	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize);
+	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 40 * ps->node->in.vectorize);
 
 	if (ps->node->_vt->pool_size)
 		pool_size = ps->node->_vt->pool_size;
@@ -179,6 +179,10 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 		muxed_smps[i] = i == 0
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
+		if (!muxed_smps[i]) {
+			p->logger->error("Pool underrun in path {}", path_name(p));
+			return -1;
+		}
 
 		if (p->original_sequence_no) {
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
