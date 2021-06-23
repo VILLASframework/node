@@ -227,8 +227,21 @@ public:
 
 		filterWindowCoefficents.resize(windowSize);
 
+<<<<<<< HEAD
 		for (unsigned i = 0; i < freqCount; i++) {
 			absFrequencies.emplace_back(startFrequency + i * frequencyResolution);
+=======
+		if (logger->level() <= SPDLOG_LEVEL_DEBUG) {
+#ifdef DFT_MEM_DUMP
+			//origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
+			//windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
+			//ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
+#endif
+			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
+			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
+			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
+			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
+>>>>>>> dft: ifdef for full mem dump of dft
 		}
 
 		generateDftMatrix();
@@ -929,6 +942,7 @@ public:
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
 #ifdef DFT_MEM_DUMP
+<<<<<<< HEAD
 		if (dumperEnable)
 			origSigSync.writeDataBinary(windowSize, tmpSmpWindow);
 #endif
@@ -1066,6 +1080,25 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 #ifdef DFT_MEM_DUMP
 		if (dumperEnable)
 			windowdSigSync.writeDataBinary(windowSize, tmpSmpWindow);
+#endif
+=======
+
+		if (origSigSync)
+			origSigSync->writeData(windowSize, tmpSmpWindow);
+
+		if (dftCalcCount > 1 && phasorAmplitude)
+			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
+
+#endif
+
+			tmpSmpWindow[i] *= filterWindowCoefficents[i];
+
+#ifdef DFT_MEM_DUMP
+
+		if (windowdSigSync)
+			windowdSigSync->writeData(windowSize, tmpSmpWindow);
+>>>>>>> dft: ifdef for full mem dump of dft
+
 #endif
 
 		for (unsigned i = 0; i < freqCount; i++) {
