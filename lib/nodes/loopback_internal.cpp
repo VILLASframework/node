@@ -70,10 +70,8 @@ int loopback_internal_read(struct vnode *n, struct sample * const smps[], unsign
 
 	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
 
-	for (int i = 0; i < avail; i++) {
-		sample_copy(smps[i], cpys[i]);
-		sample_decref(cpys[i]);
-	}
+	sample_copy_many(smps, cpys, avail);
+	sample_decref_many(cpys, avail);
 
 	return avail;
 }
