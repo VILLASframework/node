@@ -11,7 +11,6 @@
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -831,6 +830,9 @@ public:
 				ppsSigSync.writeDataBinary(windowSize, tmpPPSWindow);
 #endif
 
+				ppsSigSync->writeData(windowSize, tmpPPSWindow);	
+			}
+		
 			#pragma omp parallel for
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
 				Phasor currentResult = {0,0,0,0};
@@ -1076,7 +1078,7 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 =======
 
 		if (origSigSync)
-			origSigSync->writeData(windowSize, tmpSmpWindow);
+		 	origSigSync->writeData(windowSize, tmpSmpWindow);
 
 		if (dftCalcCount > 1 && phasorAmplitude)
 			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
@@ -1089,8 +1091,12 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 #ifdef DFT_MEM_DUMP
 
 		if (windowdSigSync)
+<<<<<<< HEAD
 			windowdSigSync->writeData(windowSize, tmpSmpWindow);
 >>>>>>> dft: ifdef for full mem dump of dft
+=======
+		 	windowdSigSync->writeData(windowSize, tmpSmpWindow);
+>>>>>>> dft: code cleanup
 
 #endif
 
@@ -1194,7 +1200,7 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 	 * In particular equation 10
 	 */
 	Point quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin)
-		{
+	{
 		// Frequency estimation
 		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
 		double y_Fmax = startFreqency + maxBinEst * frequencyResolution; // convert bin to frequency
