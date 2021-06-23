@@ -140,8 +140,11 @@ public:
 		format = format_type_lookup("villas.human");
 
 		if (logger->level() <= SPDLOG_LEVEL_DEBUG) {
-			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
-			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
+#ifdef DFT_MEM_DUMP
+			//origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
+			//windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
+			//ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
+#endif
 			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
 			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
 			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
@@ -423,17 +426,24 @@ public:
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
+#ifdef DFT_MEM_DUMP
+
 		if (origSigSync)
 			origSigSync->writeDataBinary(windowSize, tmpSmpWindow);
 
-		//if (dftCalcCnt > 1 && phasorAmplitude)
-		//	phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
+		if (dftCalcCount > 1 && phasorAmplitude)
+			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
 
-		for (unsigned i = 0; i< windowSize; i++)
+#endif
+
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
+
+#ifdef DFT_MEM_DUMP
 
 		if (windowdSigSync)
 			windowdSigSync->writeDataBinary(windowSize, tmpSmpWindow);
+
+#endif
 
 		for (unsigned i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
