@@ -383,9 +383,13 @@ public:
 					maxA = estimate.y;
 				}
 
+<<<<<<< HEAD
 				if (dftCalcCnt > 1) {
 					if (phasorFreq)
 						phasorFreq->writeDataBinary(1, &maxF);
+=======
+				if (windowSize < smpMemPos) {
+>>>>>>> dft: make sure the dft mem is fully initalized
 
 					smp->data[i * 4 + 0].f = maxF; /* Frequency */
 					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
@@ -398,8 +402,10 @@ public:
 						phasorAmplitude->writeData(1, &(smp->data[i * 4 + 1].f));
 				}
 			}
-			dftCalcCnt++;
-			smp->length = signalIndex.size() * 4;
+
+			smp->length = windowSize < smpMemPos ? signalIndex.size() * 4 : 0;
+
+			dftCalcCount++;
 		}
 
 		if ((smp->sequence - lastSequence) > 1)
@@ -407,7 +413,7 @@ public:
 
 		lastSequence = smp->sequence;
 
-		if (runDft)
+		if(runDft && windowSize < smpMemPos)
 			return Reason::OK;
 
 		return Reason::SKIP_SAMPLE;
