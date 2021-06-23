@@ -333,24 +333,21 @@ public:
 			struct timespec timeDiff = time_diff(&lastDftCal, &smp->ts.origin);
 			if ((timeDiff.tv_sec*1e9+timeDiff.tv_nsec) >  (1e9/dftRate))
 				runDft = true;
-
-			//if (lastDftCal.tv_sec != smp->ts.origin.tv_sec)
-			//	runDft = true;
 		}
 
 		if (runDft) {
 			lastDftCal = smp->ts.origin;
 
 			// Debugging for pps signal this should only be temporary
-				if (ppsSigSync) {
-					double tmpPPSWindow[windowSize];
+			if (ppsSigSync) {
+				double tmpPPSWindow[windowSize];
 
-					for (unsigned i = 0; i< windowSize; i++)
-						tmpPPSWindow[i] = ppsMemory[(i + smpMemPos) % windowSize];
+				for (unsigned i = 0; i< windowSize; i++)
+					tmpPPSWindow[i] = ppsMemory[(i + smpMemPos) % windowSize];
 
-					ppsSigSync->writeData(windowSize, tmpPPSWindow);	
-				}
-
+				ppsSigSync->writeData(windowSize, tmpPPSWindow);	
+			}
+		
 			#pragma omp parallel for
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
 
@@ -382,18 +379,12 @@ public:
 						
 						Point estimate = quadraticEstimation(a, b, c, maxPos);
 
-					maxF = estimate.x;
-					maxA = estimate.y;
-				}
+						maxF = estimate.x;
+						maxA = estimate.y;
+					}
 				}
 
-<<<<<<< HEAD
-				if (dftCalcCnt > 1) {
-					if (phasorFreq)
-						phasorFreq->writeDataBinary(1, &maxF);
-=======
 				if (windowSize < smpMemPos) {
->>>>>>> dft: make sure the dft mem is fully initalized
 
 					smp->data[i * 4 + 0].f = maxF; /* Frequency */
 					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
@@ -408,10 +399,10 @@ public:
 				if (phasorFreq)
 					phasorFreq->writeData(1, &(smp->data[0 * 4 + 0].f));
 
-					if (phasorPhase)
+				if (phasorPhase)
 					phasorPhase->writeData(1, &(smp->data[0 * 4 + 2].f));
 
-					if (phasorAmplitude)
+				if (phasorAmplitude)
 					phasorAmplitude->writeData(1, &(smp->data[0 * 4 + 1].f));				
 			}
 
@@ -463,7 +454,7 @@ public:
 #ifdef DFT_MEM_DUMP
 
 		if (origSigSync)
-			origSigSync->writeDataBinary(windowSize, tmpSmpWindow);
+		 	origSigSync->writeData(windowSize, tmpSmpWindow);
 
 		if (dftCalcCount > 1 && phasorAmplitude)
 			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
@@ -476,7 +467,7 @@ public:
 #ifdef DFT_MEM_DUMP
 
 		if (windowdSigSync)
-			windowdSigSync->writeDataBinary(windowSize, tmpSmpWindow);
+		 	windowdSigSync->writeData(windowSize, tmpSmpWindow);
 
 #endif
 
@@ -548,7 +539,7 @@ public:
 	 * In particular equation 10
 	 */
 	Point quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin)
-		{
+	{
 		// Frequency estimation
 		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
 		double y_Fmax = startFreqency + maxBinEst * frequencyResolution; // convert bin to frequency
