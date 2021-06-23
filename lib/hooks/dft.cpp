@@ -78,9 +78,9 @@ protected:
 	std::vector<std::vector<double>> smpMemory;
 	std::vector<double> ppsMemory;//this is just temporary for debugging
 	std::vector<std::vector<std::complex<double>>> dftMatrix;
-	std::vector<std::complex<double>> dftResults;
+	std::vector<std::vector<std::complex<double>>> dftResults;
 	std::vector<double> filterWindowCoefficents;
-	std::vector<double> absDftResults;
+	std::vector<std::vector<double>> absDftResults;
 	std::vector<double> absDftFreqs;
 
 	uint64_t dftCalcCnt;
@@ -155,9 +155,6 @@ public:
 	virtual void prepare()
 	{
 		signal_list_clear(&signals);
-
-		/* Initialize sample memory */
-		smpMemory.clear();
 		for (unsigned i = 0; i < signalIndex.size(); i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
@@ -178,10 +175,15 @@ public:
 			vlist_push(&signals, phaseSig);
 			vlist_push(&signals, rocofSig);
 
-			smpMemory.emplace_back(std::vector<double>(windowSize, 0.0));
+			
 		}
 
-		//temporary ppsMemory
+		/* Initialize sample memory */
+		smpMemory.clear();
+		for (unsigned i = 0; i < signalIndex.size(); i++)
+			smpMemory.emplace_back(windowSize, 0.0);
+
+		/* Initialize temporary ppsMemory */
 		ppsMemory.clear();
 		ppsMemory.resize(windowSize, 0.0);
 
@@ -195,13 +197,18 @@ public:
 		for (unsigned i = 0; i < freqCount; i++)
 			dftMatrix.emplace_back(windowSize * windowMultiplier, 0.0);
 
-		dftResults.resize(freqCount);
-		filterWindowCoefficents.resize(windowSize);
-		absDftResults.resize(freqCount);
-		absDftFreqs.resize(freqCount);
+		/* Initalize dft results matrix */
+		dftResults.clear();
+		for (unsigned i = 0; i < signalIndex.size(); i++){
+			dftResults.emplace_back(freqCount, 0.0);
+			absDftResults.emplace_back(freqCount, 0.0);
+		}
 
-		for (unsigned i = 0; i < absDftFreqs.size(); i++)
-			absDftFreqs[i] = startFreqency + i * frequencyResolution;
+		filterWindowCoefficents.resize(windowSize);
+
+		for (unsigned i = 0; i < freqCount; i++) {
+			absDftFreqs.emplace_back(startFreqency + i * frequencyResolution);
+		}
 
 		generateDftMatrix();
 		calculateWindow(windowType);
@@ -345,23 +352,33 @@ public:
 				}
 				//debugging for pps signal this should only be temporary
 
-				calculateDft(PaddingType::ZERO, smpMemory[i], smpMemPos);
+
+				calculateDft(PaddingType::ZERO, smpMemory[i], dftResults[i], smpMemPos);
+
 				double maxF = 0;
 				double maxA = 0;
 				int maxPos = 0;
 
-				for (unsigned i = 0; i<freqCount; i++) {
-					absDftResults[i] = abs(dftResults[i]) * 2 / (windowSize * windowCorretionFactor * ((paddingType == PaddingType::ZERO)?1:windowMultiplier));
-					if (maxA < absDftResults[i]) {
-						maxF = absDftFreqs[i];
-						maxA = absDftResults[i];
-						maxPos = i;
+				for (unsigned j = 0; j < freqCount; j++) {
+					int multiplier = paddingType == PaddingType::ZERO
+						? 1
+						: windowMultiplier;
+					absDftResults[i][j] = abs(dftResults[i][j]) * 2 / (windowSize * windowCorretionFactor * multiplier);
+					if (maxA < absDftResults[i][j]) {
+						maxF = absDftFreqs[j];
+						maxA = absDftResults[i][j];
+						maxPos = j;
 					}
 				}
 
 				if (freqEstType == FreqEstimationType::QUADRATIC) {
-					Point estimate = quadraticEstimation(absDftFreqs[maxPos - 1], absDftFreqs[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos - 1] , absDftResults[maxPos] , absDftResults[maxPos + 1], maxPos);
-					logger->info("1: {};{}  2: {};{} 3: {};{} estimate: {}:{} ", absDftFreqs[maxPos - 1], absDftResults[maxPos - 1], absDftFreqs[maxPos], absDftResults[maxPos], absDftFreqs[maxPos + 1], absDftResults[maxPos + 1], estimate.x, estimate.y);
+					else {
+						Point a = { absDftFreqs[maxPos - 1], absDftResults[i][maxPos - 1] };
+						Point b = { absDftFreqs[maxPos + 0], absDftResults[i][maxPos + 0] };
+						Point c = { absDftFreqs[maxPos + 1], absDftResults[i][maxPos + 1] };
+						
+						Point estimate = quadraticEstimation(a, b, c, maxPos);
+
 					maxF = estimate.x;
 					maxA = estimate.y;
 				}
@@ -370,9 +387,9 @@ public:
 					if (phasorFreq)
 						phasorFreq->writeDataBinary(1, &maxF);
 
-					smp->data[i * 4].f = maxF; /* Frequency */
+					smp->data[i * 4 + 0].f = maxF; /* Frequency */
 					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
-					smp->data[i * 4 + 2].f = atan2(dftResults[maxPos].imag(), dftResults[maxPos].real()); /* Phase */
+					smp->data[i * 4 + 2].f = atan2(dftResults[i][maxPos].imag(), dftResults[i][maxPos].real()); /* Phase */
 					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
 					if (phasorPhase)
@@ -417,7 +434,7 @@ public:
 	/**
 	 * This function calculates the discrete furie transform of the input signal 
 	 */
-	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, unsigned ringBufferPos)
+	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, std::vector<std::complex<double>> &results, unsigned ringBufferPos)
 	{
 		/* RingBuffer size needs to be equal to windowSize
 		 * prepare sample window The following parts can be combined */
@@ -436,6 +453,7 @@ public:
 
 #endif
 
+		for (unsigned i = 0; i < windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
 #ifdef DFT_MEM_DUMP
@@ -446,16 +464,17 @@ public:
 #endif
 
 		for (unsigned i = 0; i < freqCount; i++) {
-			dftResults[i] = 0;
+			results[i] = 0;
+
 			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
 					if (j < (windowSize))
-						dftResults[i] += tmpSmpWindow[j] * dftMatrix[i][j];
+						results[i] += tmpSmpWindow[j] * dftMatrix[i][j];
 					else
-						dftResults[i] += 0;
+						results[i] += 0;
 				}
 				else if (padding == PaddingType::SIG_REPEAT) /* Repeat samples */
-					dftResults[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
+					results[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
 			}
 		}
 	}
