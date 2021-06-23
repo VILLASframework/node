@@ -141,14 +141,14 @@ public:
 
 		if (logger->level() <= SPDLOG_LEVEL_DEBUG) {
 #ifdef DFT_MEM_DUMP
-			//origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
-			//windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
-			//ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
+			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
+			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
+			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
 #endif
 			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
 			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
 			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
-			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
+			
 		}
 	}
 
