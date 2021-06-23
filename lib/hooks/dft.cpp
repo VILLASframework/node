@@ -384,6 +384,7 @@ public:
 					maxF = estimate.x;
 					maxA = estimate.y;
 				}
+				}
 
 <<<<<<< HEAD
 				if (dftCalcCnt > 1) {
@@ -398,11 +399,19 @@ public:
 					smp->data[i * 4 + 2].f = atan2(dftResults[i][maxPos].imag(), dftResults[i][maxPos].real()); /* Phase */
 					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
-					if (phasorPhase)
-						phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
-					if (phasorAmplitude)
-						phasorAmplitude->writeData(1, &(smp->data[i * 4 + 1].f));
 				}
+			}
+
+			//the following is a debug output and currently only for channel 0
+			if (windowSize < smpMemPos){ 
+				if (phasorFreq)
+					phasorFreq->writeData(1, &(smp->data[0 * 4 + 0].f));
+
+					if (phasorPhase)
+					phasorPhase->writeData(1, &(smp->data[0 * 4 + 2].f));
+
+					if (phasorAmplitude)
+					phasorAmplitude->writeData(1, &(smp->data[0 * 4 + 1].f));				
 			}
 
 			smp->length = windowSize < smpMemPos ? signalIndex.size() * 4 : 0;
