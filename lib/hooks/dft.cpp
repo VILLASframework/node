@@ -83,7 +83,7 @@ protected:
 	std::vector<std::vector<double>> absDftResults;
 	std::vector<double> absDftFreqs;
 
-	uint64_t dftCalcCnt;
+	uint64_t dftCalcCount;
 	unsigned sampleRate;
 	double startFreqency;
 	double endFreqency;
@@ -118,7 +118,7 @@ public:
 		filterWindowCoefficents(),
 		absDftResults(),
 		absDftFreqs(),
-		dftCalcCnt(0),
+		dftCalcCount(0),
 		sampleRate(0),
 		startFreqency(0),
 		endFreqency(0),
@@ -188,7 +188,7 @@ public:
 		ppsMemory.resize(windowSize, 0.0);
 
 		/* Calculate how much zero padding ist needed for a needed resolution */
-		windowMultiplier = ceil(((double)sampleRate / windowSize) / frequencyResolution);
+		windowMultiplier = ceil(((double) sampleRate / windowSize) / frequencyResolution);
 
 		freqCount = ceil((endFreqency - startFreqency) / frequencyResolution) + 1;
 
@@ -322,10 +322,9 @@ public:
 		for (unsigned i = 0; i < signalIndex.size(); i++)
 			smpMemory[i][smpMemPos % windowSize] = smp->data[signalIndex[i]].f;
 
-		//debugging for pps signal this should only be temporary
+		// Debugging for pps signal this should only be temporary
 		if (ppsSigSync)
 			ppsMemory[smpMemPos % windowSize] = smp->data[ppsIndex].f;
-		//debugging for pps signal this should only be temporary
 
 		smpMemPos++;
 
@@ -343,11 +342,13 @@ public:
 			lastDftCal = smp->ts.origin;
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
 
-				//debugging for pps signal this should only be temporary
+			// Debugging for pps signal this should only be temporary
 				if (ppsSigSync) {
 					double tmpPPSWindow[windowSize];
+
 					for (unsigned i = 0; i< windowSize; i++)
 						tmpPPSWindow[i] = ppsMemory[(i + smpMemPos) % windowSize];
+
 					ppsSigSync->writeData(windowSize, tmpPPSWindow);	
 				}
 				//debugging for pps signal this should only be temporary
@@ -357,7 +358,7 @@ public:
 
 				double maxF = 0;
 				double maxA = 0;
-				int maxPos = 0;
+				unsigned maxPos = 0;
 
 				for (unsigned j = 0; j < freqCount; j++) {
 					int multiplier = paddingType == PaddingType::ZERO
@@ -419,7 +420,7 @@ public:
 			dftCalcCount++;
 		}
 
-		if ((smp->sequence - lastSequence) > 1)
+		if (smp->sequence - lastSequence > 1)
 			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
@@ -429,7 +430,6 @@ public:
 
 		return Reason::SKIP_SAMPLE;
 	}
-
 
 	/**
 	 * This function generates the furie coeffients for the calculateDft function
