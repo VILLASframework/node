@@ -60,7 +60,6 @@ protected:
 		NONE,
 		QUADRATIC
 	};
-	
 
 	struct Point {
 		double x;
