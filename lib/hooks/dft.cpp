@@ -351,8 +351,9 @@ public:
 
 					ppsSigSync->writeData(windowSize, tmpPPSWindow);	
 				}
-				//debugging for pps signal this should only be temporary
 
+			#pragma omp parallel for
+			for (unsigned i = 0; i < signalIndex.size(); i++) {
 
 				calculateDft(PaddingType::ZERO, smpMemory[i], dftResults[i], smpMemPos);
 
