@@ -169,7 +169,6 @@ public:
 		phasorFreq(dumperPrefix + "phasorFreq")
 	{ }
 
-
 	virtual void prepare()
 	{
 		signal_list_clear(&signals);
