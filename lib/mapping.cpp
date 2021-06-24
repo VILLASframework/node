@@ -281,7 +281,7 @@ int mapping_entry_prepare(struct mapping_entry *me, NodeList &nodes)
 
 		if (me->data.first) {
 			if (me->node)
-				first = vlist_lookup_index<struct signal>(&me->node->in.signals, me->data.first);
+				first = vlist_lookup_index<struct signal>(node_input_signals(me->node), me->data.first);
 
 			if (first < 0) {
 				char *endptr;
@@ -299,7 +299,7 @@ int mapping_entry_prepare(struct mapping_entry *me, NodeList &nodes)
 
 		if (me->data.last) {
 			if (me->node)
-				last = vlist_lookup_index<struct signal>(&me->node->in.signals, me->data.last);
+				last = vlist_lookup_index<struct signal>(node_input_signals(me->node), me->data.last);
 
 			if (last < 0) {
 				char *endptr;
@@ -398,8 +398,8 @@ int mapping_entry_to_str(const struct mapping_entry *me, unsigned index, char **
 			break;
 
 		case MappingType::DATA:
-			if (me->node && index < vlist_length(&me->node->in.signals)) {
-				struct signal *s = (struct signal *) vlist_at(&me->node->in.signals, index);
+			if (me->node && index < vlist_length(node_input_signals(me->node))) {
+				struct signal *s = (struct signal *) vlist_at(node_input_signals(me->node), index);
 
 				strcatf(str, "data[%s]", s->name);
 			}
