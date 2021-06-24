@@ -204,6 +204,8 @@ void hook_list_stop(struct vlist *hs)
 struct vlist * hook_list_get_signals(struct vlist *hs)
 {
 	Hook *h = (Hook *) vlist_last(hs);
+	if (!h)
+		return nullptr;
 
 	return h->getSignals();
 }

@@ -817,16 +817,11 @@ bool path_is_reversed(const struct vpath *p)
 struct vlist * path_output_signals(struct vpath *p)
 {
 #ifdef WITH_HOOKS
-	if (vlist_length(&p->hooks) > 0) {
-		Hook *last_hook = (Hook *) vlist_last(&p->hooks);
+	if (vlist_length(&p->hooks) > 0)
+		return hook_list_get_signals(&p->hooks);
+#endif /* WITH_HOOKS */
 
-		return last_hook->getSignals();
-	}
-	else
-		return &p->signals;
-#else
 	return &p->signals;
-#endif
 }
 
 json_t * path_to_json(struct vpath *p)
