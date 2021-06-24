@@ -345,12 +345,6 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 			return ret;
 	}
 
-	/* Prepare pool */
-	pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
-	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(&p->signals)), pool_mt);
-	if (ret)
-		return ret;
-
 	/* Autodetect whether to use original sequence numbers or not */
 	if (p->original_sequence_no == -1)
 		p->original_sequence_no = vlist_length(&p->sources) == 1;
@@ -373,11 +367,18 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 	}
 
 #ifdef WITH_HOOKS
+	/* Prepare path hooks */
 	int m = p->builtin ? (int) Hook::Flags::PATH | (int) Hook::Flags::BUILTIN : 0;
 
 	/* Add internal hooks if they are not already in the list */
 	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
 #endif /* WITH_HOOKS */
+
+	/* Prepare pool */
+	pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
+	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(path_output_signals(p))), pool_mt);
+	if (ret)
+		return ret;
 
 	p->logger->info("Prepared path {} with {} output signals", path_name(p), vlist_length(path_output_signals(p)));
 	signal_list_dump(p->logger, path_output_signals(p));
@@ -588,11 +589,12 @@ int path_start(struct vpath *p)
 			break;
 	}
 
-	p->logger->info("Starting path {}: #signals={}, #hooks={}, #sources={}, "
+	p->logger->info("Starting path {}: #signals={}({}), #hooks={}, #sources={}, "
 	                "#destinations={}, mode={}, poll={}, mask={:b}, rate={}, "
 	                "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
 		path_name(p),
 		vlist_length(&p->signals),
+		vlist_length(path_output_signals(p)),
 		vlist_length(&p->hooks),
 		vlist_length(&p->sources),
 		vlist_length(&p->destinations),

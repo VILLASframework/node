@@ -544,10 +544,11 @@ char * node_name_long(struct vnode *n)
 		char uuid[37];
 		uuid_unparse(n->uuid, uuid);
 
-		strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
+		strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu(%zu), #out.signals=%zu(%zu), #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
 			node_name(n), uuid,
-			vlist_length(&n->in.signals), vlist_length(&n->out.signals),
-			vlist_length(&n->in.hooks),   vlist_length(&n->out.hooks),
+			vlist_length(&n->in.signals),  vlist_length(node_input_signals(n)),
+			vlist_length(&n->out.signals), vlist_length(node_output_signals(n)),
+			vlist_length(&n->in.hooks),    vlist_length(&n->out.hooks),
 			n->in.vectorize, n->out.vectorize
 		);
 
