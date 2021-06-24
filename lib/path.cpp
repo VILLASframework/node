@@ -812,11 +812,6 @@ bool path_is_reversed(const struct vpath *p)
 	return p->reverse;
 }
 
-struct vlist * path_signals(struct vpath *p)
-{
-	return &p->signals;
-}
-
 struct vlist * path_output_signals(struct vpath *p)
 {
 #ifdef WITH_HOOKS
