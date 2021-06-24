@@ -212,11 +212,11 @@ struct vnode_type {
 	 * The messages have to be stored in a circular buffer / array m.
 	 * So the indexes will wrap around after len.
 	 *
-	 * @param n		    A pointer to the node object.
+	 * @param n		A pointer to the node object.
 	 * @param smps		An array of pointers to memory blocks where samples read from.
 	 * @param cnt		The number of samples that are allocated by the calling function.
 	 * @param release	The number of samples that should be released after write is called
-	 * @return		    The number of messages actually sent.
+	 * @return		The number of messages actually sent.
 	 */
 	int (*write)(struct vnode *n, struct sample * const smps[], unsigned cnt);
 
