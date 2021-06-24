@@ -410,6 +410,3 @@ static void register_plugin() {
 
 	node_types->push_back(&p);
 }
-
-
-
