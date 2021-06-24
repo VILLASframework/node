@@ -372,7 +372,7 @@ int websocket_start(struct vnode *n)
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUE_LENGTH, SAMPLE_LENGTH(DEFAULT_WEBSOCKET_SAMPLE_LENGTH));
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUE_LENGTH, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
 	if (ret)
 		return ret;
 

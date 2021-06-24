@@ -389,7 +389,7 @@ int ethercat_init(struct vnode *n)
 	new (&w->thread) std::thread();
 	new (&w->task) Task(CLOCK_REALTIME);
 
-	ret = pool_init(&w->pool, DEFAULT_ETHERCAT_QUEUE_LENGTH, SAMPLE_LENGTH(DEFAULT_ETHERCAT_SAMPLE_LENGTH));
+	ret = pool_init(&w->pool, DEFAULT_ETHERCAT_QUEUE_LENGTH, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
 	if (ret)
 		return ret;
 

@@ -51,7 +51,6 @@ extern "C" {
 }
 
 #define DEFAULT_ETHERCAT_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
-#define DEFAULT_ETHERCAT_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH
 
 /** Internal data per ethercat node */
 struct ethercat {

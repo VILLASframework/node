@@ -40,7 +40,6 @@
 struct vnode;
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
-#define DEFAULT_WEBSOCKET_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH
 
 /* Forward declaration */
 struct lws;
