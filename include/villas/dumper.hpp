@@ -45,7 +45,6 @@ public:
 
 	int openSocket();
 	int closeSocket();
-	
 
 	void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
 	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
