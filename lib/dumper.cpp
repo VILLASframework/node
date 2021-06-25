@@ -119,3 +119,4 @@ void Dumper::writeDataCSV(unsigned len, double *yData, double *xData)
 		}
 	}
 }
+
