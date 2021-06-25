@@ -46,7 +46,8 @@ public:
 	int openSocket();
 	int closeSocket();
 
-	void writeData(unsigned len, double *yData, double *xData = nullptr);
+	void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
+	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
 };
 
 } /* namespace node */

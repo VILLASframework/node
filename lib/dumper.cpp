@@ -74,7 +74,32 @@ int Dumper::closeSocket()
 	return 0;
 }
 
-void Dumper::writeData(unsigned len, double *yData, double *xData)
+void Dumper::writeDataBinary(unsigned len, double *yData, double *xData){
+
+	if (yData == nullptr)
+		return;
+
+	unsigned dataLen = len * sizeof(yData[0]);
+	long unsigned int bytesWritten = write(socketFd, &dataLen, sizeof(dataLen));
+	if(bytesWritten != sizeof(len)) {
+		logger->warn("Could not send all content to socket {}", socketName);
+		warningCounter++;
+	}
+
+	bytesWritten = write(socketFd, "d000", 4);
+	if(bytesWritten != 4) {
+		logger->warn("Could not send all content to socket {}", socketName);
+		warningCounter++;
+	}
+
+	bytesWritten =  write(socketFd, yData, dataLen );
+	if (bytesWritten != dataLen && (!supressRepeatedWarning || warningCounter <1 )) {
+		logger->warn("Could not send all content to socket {}", socketName);
+		warningCounter++;
+	}
+}
+
+void Dumper::writeDataCSV(unsigned len, double *yData, double *xData)
 {
 	for (unsigned i = 0; i<len; i++) {
 		std::stringstream ss;
