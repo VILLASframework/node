@@ -67,9 +67,9 @@ static void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, co
 
 static void kafka_message_cb(void *ctx, const rd_kafka_message_t *msg)
 {
-	int ret, cnt = n->in.vectorize;
 	struct vnode *n = (struct vnode *) ctx;
 	struct kafka *k = (struct kafka *) n->_vd;
+	int ret, cnt = n->in.vectorize;
 	struct sample *smps[cnt];
 
 	n->logger->debug("Received a message of {} bytes from broker {}", msg->len, k->server);

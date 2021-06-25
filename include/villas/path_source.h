@@ -43,7 +43,7 @@ enum PathSourceType {
 };
 
 struct vpath_source {
-	Logger logger;
+	villas::Logger logger;
 
 	struct vnode *node;
 	struct vpath *path;

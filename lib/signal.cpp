@@ -228,7 +228,7 @@ int signal_parse(struct signal *s, json_t *json)
 		signal_data_set(&s->init, s->type, 0);
 
 	if (en >= 0)
-		s->enabled == en != 0;
+		s->enabled = en != 0;
 
 	return 0;
 }

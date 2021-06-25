@@ -200,9 +200,11 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 				case MappingTimestampType::RECEIVED:
 					ts = &original->ts.received;
 					break;
+
 				case MappingTimestampType::ORIGIN:
 					ts = &original->ts.origin;
 					break;
+
 				default:
 					return -1;
 			}
@@ -228,11 +230,9 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 			break;
 
 		case MappingType::DATA:
-			for (unsigned j = me->data.offset,
-				 i = me->offset;
-			         j < MIN(original->length, (unsigned) (me->data.offset + me->length));
-				 j++,
-				 i++)
+			for (unsigned j = me->data.offset,  i = me->offset;
+			     j < MIN(original->length, (unsigned) (me->data.offset + me->length));
+			     j++, i++)
 			{
 				if (j >= original->length)
 					remapped->data[i].f = -1;
