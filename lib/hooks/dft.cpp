@@ -305,7 +305,7 @@ public:
 
 				if (dftCalcCnt > 1) {
 					if (phasorFreq)
-						phasorFreq->writeData(1, &maxF);
+						phasorFreq->writeDataBinary(1, &maxF);
 
 					smp->data[i * 4].f = maxF; /* Frequency */
 					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
@@ -313,7 +313,7 @@ public:
 					smp->data[i * 4 + 3].f = 0; /* RoCof */
 
 					if (phasorPhase)
-						phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
+						phasorPhase->writeDataBinary(1, &(smp->data[i * 4 + 2].f));
 				}
 			}
 			dftCalcCnt++;
@@ -354,16 +354,16 @@ public:
 			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
 
 		if (origSigSync)
-			origSigSync->writeData(windowSize, tmpSmpWindow);
+			origSigSync->writeDataBinary(windowSize, tmpSmpWindow);
 
 		if (dftCalcCnt > 1 && phasorAmplitude)
-			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
+			phasorAmplitude->writeDataBinary(1, &tmpSmpWindow[windowSize - 1]);
 
 		for (unsigned i = 0; i< windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
 
 		if (windowdSigSync)
-			windowdSigSync->writeData(windowSize, tmpSmpWindow);
+			windowdSigSync->writeDataBinary(windowSize, tmpSmpWindow);
 
 		for (unsigned i = 0; i < freqCount; i++) {
 			dftResults[i] = 0;
