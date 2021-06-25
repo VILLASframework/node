@@ -62,10 +62,8 @@ struct vpath {
 
 	uuid_t uuid;
 
-	struct {
-		int nfds;
-		struct pollfd *pfds;
-	} reader;
+	std::vector<struct pollfd> poll_fds;
+	std::vector<struct vpath_source *> poll_pss;
 
 	struct pool pool;
 	struct sample *last_sample;

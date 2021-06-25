@@ -30,7 +30,6 @@
 #include <map>
 
 #include <unistd.h>
-#include <poll.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
@@ -91,18 +90,19 @@ static void * path_run_poll(void *arg)
 	struct vpath *p = (struct vpath *) arg;
 
 	while (p->state == State::STARTED) {
-		ret = poll(p->reader.pfds, p->reader.nfds, -1);
+		ret = poll(p->poll_fds.data(), p->poll_fds.size(), -1);
 		if (ret < 0)
 			throw SystemError("Failed to poll");
 
 		p->logger->debug("Path {} returned from poll(2)", path_name(p));
 
-		for (int i = 0; i < p->reader.nfds; i++) {
-			struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
+		for (unsigned i = 0; i < p->poll_fds.size(); i++) {
+			struct pollfd      &pfd = p->poll_fds[i];
+			struct vpath_source *ps = p->poll_pss[i];
 
-			if (p->reader.pfds[i].revents & POLLIN) {
+			if (pfd.revents & POLLIN) {
 				/* Timeout: re-enqueue the last sample */
-				if (p->reader.pfds[i].fd == p->timeout.getFD()) {
+				if (pfd.fd == p->timeout.getFD()) {
 					p->timeout.wait();
 
 					p->last_sample->sequence = p->last_sequence++;
@@ -129,6 +129,8 @@ int path_init(struct vpath *p)
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->timeout) Task(CLOCK_MONOTONIC);
+	new (&p->poll_fds) std::vector<struct pollfd>;
+	new (&p->poll_pss) std::vector<struct path_source *>;
 
 	p->logger = logging.get("path");
 
@@ -157,9 +159,7 @@ int path_init(struct vpath *p)
 #endif /* WITH_HOOKS */
 
 	p->_name = nullptr;
-
-	p->reader.pfds = nullptr;
-	p->reader.nfds = 0;
+	p->last_sample = nullptr;
 
 	/* Default values */
 	p->mode = PathMode::ANY;
@@ -180,31 +180,24 @@ int path_init(struct vpath *p)
 
 static int path_prepare_poll(struct vpath *p)
 {
-	int fds[16], n = 0, m;
-
-	if (p->reader.pfds)
-		delete[] p->reader.pfds;
-
-	p->reader.pfds = nullptr;
-	p->reader.nfds = 0;
-
 	for (unsigned i = 0; i < vlist_length(&p->sources); i++) {
 		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
 
-		m = node_poll_fds(ps->node, fds);
+		int fds[16];
+		int m = node_poll_fds(ps->node, fds);
 		if (m <= 0)
 			throw RuntimeError("Failed to get file descriptor for node {}", node_name(ps->node));
-
-		p->reader.nfds += m;
-		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
 
 		for (int i = 0; i < m; i++) {
 			if (fds[i] < 0)
 				throw RuntimeError("Failed to get file descriptor for node {}", node_name(ps->node));
 
-			/* This slot is only used if it is not masked */
-			p->reader.pfds[n].events = POLLIN;
-			p->reader.pfds[n++].fd = fds[i];
+			p->poll_fds.push_back({
+				.fd = fds[i],
+				.events = POLLIN
+			});
+
+			p->poll_pss.push_back(ps);
 		}
 	}
 
@@ -212,15 +205,16 @@ static int path_prepare_poll(struct vpath *p)
 	if (p->rate > 0) {
 		p->timeout.setRate(p->rate);
 
-		p->reader.nfds++;
-		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
-
-		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
-		p->reader.pfds[p->reader.nfds-1].fd = p->timeout.getFD();
-		if (p->reader.pfds[p->reader.nfds-1].fd < 0) {
+		int fd = p->timeout.getFD();
+		if (fd < 0) {
 			p->logger->warn("Failed to get file descriptor for timer of path {}", path_name(p));
 			return -1;
 		}
+
+		p->poll_fds.push_back({
+			.fd = fd,
+			.events = POLLIN
+		});
 	}
 
 	return 0;
@@ -729,11 +723,15 @@ int path_destroy(struct vpath *p)
 
 	using bs = std::bitset<MAX_SAMPLE_LENGTH>;
 	using lg = std::shared_ptr<spdlog::logger>;
+	using vpfd = std::vector<struct pollfd>;
+	using vps = std::vector<struct vpath_source *>;
 
 	p->received.~bs();
 	p->mask.~bs();
 	p->logger.~lg();
 	p->timeout.~Task();
+	p->poll_fds.~vpfd();
+	p->poll_pss.~vps();
 
 	p->state = State::DESTROYED;
 
