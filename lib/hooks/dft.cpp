@@ -28,7 +28,6 @@
 #include <cinttypes>
 #include <complex>
 #include <vector>
-#include <villas/timing.h>
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
@@ -44,12 +43,12 @@ namespace node {
 class DftHook : public Hook {
 
 protected:
-	enum class PaddingType {
+	enum PaddingType {
 		ZERO,
 		SIG_REPEAT
 	};
 
-	enum class WindowType {
+	enum WindowType {
 		NONE,
 		FLATTOP,
 		HANN,
@@ -128,7 +127,6 @@ public:
 		Hook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
-		freqEstType(FreqEstimationType::NONE),
 		smpMemory(),
 #ifdef DFT_MEM_DUMP
 		ppsMemory(),
@@ -622,6 +620,9 @@ public:
 	virtual void prepare()
 	{
 		signal_list_clear(&signals);
+
+		/* Initialize sample memory */
+		smpMemory.clear();
 		for (unsigned i = 0; i < signalIndex.size(); i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
@@ -629,10 +630,10 @@ public:
 			struct signal *rocofSig;
 
 			/* Add signals */
-			freqSig = signal_create("amplitude", "V", SignalType::FLOAT);
-			amplSig = signal_create("phase", "rad", SignalType::FLOAT);
-			phaseSig = signal_create("frequency", "Hz", SignalType::FLOAT);
-			rocofSig = signal_create("rocof", "Hz/s", SignalType::FLOAT);
+			freqSig = signal_create("amplitude", nullptr, SignalType::FLOAT);
+			amplSig = signal_create("phase", nullptr, SignalType::FLOAT);
+			phaseSig = signal_create("frequency", nullptr, SignalType::FLOAT);
+			rocofSig = signal_create("rocof", nullptr, SignalType::FLOAT);
 
 			if (!freqSig || !amplSig || !phaseSig || !rocofSig)
 				throw RuntimeError("Failed to create new signals");
@@ -655,9 +656,11 @@ public:
 #endif
 
 		/* Calculate how much zero padding ist needed for a needed resolution */
-		windowMultiplier = ceil(((double) sampleRate / windowSize) / frequencyResolution);
+		windowMultiplier = ceil(((double)sampleRate / windowSize) / frequencyResolution);
 
 		freqCount = ceil((endFreqency - startFrequency) / frequencyResolution) + 1;
+
+		logger->debug("FreqCount : {}", freqCount);
 
 		/* Initialize matrix of dft coeffients */
 		matrix.clear();
@@ -672,6 +675,8 @@ public:
 		}
 
 		filterWindowCoefficents.resize(windowSize);
+		absDftResults.resize(freqCount);
+		absDftFreqs.resize(freqCount);
 
 		for (unsigned i = 0; i < freqCount; i++) {
 			absFrequencies.emplace_back(startFrequency + i * frequencyResolution);
@@ -713,6 +718,10 @@ public:
 			"signal_index", &jsonChannelList,
 			"pps_index", &ppsIndex
 		);
+
+		dftRate.tv_sec = (int) (1 / dftRateIn);
+		dftRate.tv_nsec = fmod( 1 / dftRateIn, 1) * 1e9;
+
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
 
@@ -779,13 +788,6 @@ public:
 	{
 		assert(state == State::PARSED);
 
-		if (!freqEstimateTypeC) {
-			logger->info("No Frequency estimation type given, assume no none");
-			freqEstType = FreqEstimationType::NONE;
-		}
-		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
-			freqEstType = FreqEstimationType::QUADRATIC;
-
 		if (endFreqency < 0 || endFreqency > sampleRate)
 			throw RuntimeError("End frequency must be smaller than sampleRate {}", sampleRate);
 
@@ -830,8 +832,8 @@ public:
 				ppsSigSync.writeDataBinary(windowSize, tmpPPSWindow);
 #endif
 
-				ppsSigSync->writeData(windowSize, tmpPPSWindow);	
-			}
+				//ppsSigSync->writeDataBinary(windowSize, tmpPPSWindow);	
+			//}
 		
 			#pragma omp parallel for
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
@@ -840,7 +842,9 @@ public:
 				calculateDft(PaddingType::ZERO, smpMemory[i], results[i], smpMemPos);
 
 				unsigned maxPos = 0;
+				double tmpImag[freqCount], tmpReal[freqCount], absVal[freqCount];
 
+				
 				for (unsigned j = 0; j < freqCount; j++) {
 					int multiplier = paddingType == PaddingType::ZERO
 						? 1
@@ -851,7 +855,12 @@ public:
 						currentResult.amplitude = absResults[i][j];
 						maxPos = j;
 					}
+					tmpImag[j] = dftResults[i][maxPos].imag();
+					tmpReal[j] = dftResults[i][maxPos].real();
 				}
+				windowdSigSync->writeDataBinary(freqCount, tmpImag);
+				origSigSync -> writeDataBinary(freqCount, absVal);
+				ppsSigSync->writeDataBinary(freqCount, tmpReal);
 
 				if (freqEstType == FreqEstimationType::QUADRATIC) {
 					if (maxPos < 1 || maxPos >= freqCount - 1)
@@ -868,13 +877,17 @@ public:
 				}
 				}
 
-				if (windowSize < smpMemPos) {
+				if (dftCalcCnt > 1) {
+					if (phasorFreq)
+						phasorFreq->writeData(1, &maxF);
 
 					smp->data[i * 4 + 0].f = currentResult.frequency; /* Frequency */
 					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)); /* Amplitude */
 					smp->data[i * 4 + 2].f = atan2(results[i][maxPos].imag(), results[i][maxPos].real()); /* Phase */
 					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult.frequency) / (double)rate; /* RoCof */
 
+					if (phasorPhase)
+						phasorPhase->writeData(1, &(smp->data[i * 4 + 2].f));
 				}
 
 				lastResult = currentResult;
@@ -893,7 +906,7 @@ public:
 			calcCount++;
 		}
 
-		if (smp->sequence - lastSequence > 1)
+		if ((smp->sequence - lastSequence) > 1)
 			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
@@ -904,9 +917,6 @@ public:
 		return Reason::SKIP_SAMPLE;
 	}
 
-	/**
-	 * This function generates the furie coeffients for the calculateDft function
-	 */
 	void generateDftMatrix()
 	{
 		using namespace std::complex_literals;
@@ -962,6 +972,7 @@ public:
 		}
 	}
 
+<<<<<<< HEAD
 	/**
 	 * This function prepares the selected window coefficents
 	 */
@@ -1055,6 +1066,9 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 =======
 >>>>>>> dft: change memory layout for dft results to provide one vector per signal
 	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, std::vector<std::complex<double>> &results, unsigned ringBufferPos)
+=======
+	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, unsigned ringBufferPos)
+>>>>>>> dft: tmp debug version
 	{
 		/* RingBuffer size needs to be equal to windowSize
 		 * prepare sample window The following parts can be combined */
@@ -1077,12 +1091,8 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 #endif
 =======
 
-		if (origSigSync)
-		 	origSigSync->writeData(windowSize, tmpSmpWindow);
-
-		if (dftCalcCount > 1 && phasorAmplitude)
-			phasorAmplitude->writeData(1, &tmpSmpWindow[windowSize - 1]);
-
+		//if (origSigSync)
+		// 	origSigSync->writeDataBinary(windowSize, tmpSmpWindow);
 #endif
 
 		for (unsigned i = 0; i < windowSize; i++)
@@ -1090,6 +1100,7 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 
 #ifdef DFT_MEM_DUMP
 
+<<<<<<< HEAD
 		if (windowdSigSync)
 <<<<<<< HEAD
 			windowdSigSync->writeData(windowSize, tmpSmpWindow);
@@ -1097,43 +1108,51 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 =======
 		 	windowdSigSync->writeData(windowSize, tmpSmpWindow);
 >>>>>>> dft: code cleanup
+=======
+		//if (windowdSigSync)
+		// 	windowdSigSync->writeDataBinary(windowSize, tmpSmpWindow);
+>>>>>>> dft: tmp debug version
 
 #endif
 
 		for (unsigned i = 0; i < freqCount; i++) {
-			results[i] = 0;
-
+			dftResults[i] = 0;
 			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
 					if (j < (windowSize))
+<<<<<<< HEAD
 <<<<<<< HEAD
 						results[i] += tmpSmpWindow[j] * matrix[i][j];
 =======
 						results[i] += tmpSmpWindow[j] * dftMatrix[i][j];
 >>>>>>> dft: change memory layout for dft results to provide one vector per signal
+=======
+						dftResults[i] += tmpSmpWindow[j] * dftMatrix[i][j];
+>>>>>>> dft: tmp debug version
 					else
-						results[i] += 0;
+						dftResults[i] += 0;
 				}
 				else if (padding == PaddingType::SIG_REPEAT) /* Repeat samples */
+<<<<<<< HEAD
 <<<<<<< HEAD
 					results[i] += tmpSmpWindow[j % windowSize] * matrix[i][j];
 =======
 					results[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
 >>>>>>> dft: change memory layout for dft results to provide one vector per signal
+=======
+					dftResults[i] += tmpSmpWindow[j % windowSize] * dftMatrix[i][j];
+>>>>>>> dft: tmp debug version
 			}
 		}
 	}
 
-	/**
-	 * This function prepares the selected window coefficents
-	 */
 	void calculateWindow(enum WindowType windowTypeIn)
 	{
 		switch (windowTypeIn) {
 			case WindowType::FLATTOP:
 				for (unsigned i = 0; i < windowSize; i++) {
-					filterWindowCoefficents[i] = 0.21557895
-									- 0.41663158  * cos(2 * M_PI * i / (windowSize))
+					filterWindowCoefficents[i] = 	0.21557895
+									- 0.41663158 * cos(2 * M_PI * i / (windowSize))
 									+ 0.277263158 * cos(4 * M_PI * i / (windowSize))
 									- 0.083578947 * cos(6 * M_PI * i / (windowSize))
 									+ 0.006947368 * cos(8 * M_PI * i / (windowSize));
@@ -1185,30 +1204,6 @@ static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 		double f = (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
 		double g = (pow(a.x, 2) * (b.y - c.y) + pow(b.x, 2) * (c.y - a.y) + pow(c.x, 2) * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
 		double h = (pow(a.x, 2) * (b.x * c.y - c.x * b.y) + a.x * (pow(c.x, 2) * b.y - pow(b.x,2) * c.y)+ b.x * c.x * a.y * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-		double i = f * pow(y_Fmax,2) + g * y_Fmax + h;
-
-		return { y_Fmax, i };
-	}
-
-	/**
-	 * This function is calculating the mximum based on a quadratic interpolation
-	 * 
-	 * This function is based on the following paper:
-	 * https://mgasior.web.cern.ch/pap/biw2004.pdf
-	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
-	 * 	 * 
-	 * In particular equation 10
-	 */
-	Point quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin)
-	{
-		// Frequency estimation
-		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
-		double y_Fmax = startFreqency + maxBinEst * frequencyResolution; // convert bin to frequency
-
-		// Amplitude estimation
-		double f = (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
-		double g = (pow(a.x, 2) * (b.y - c.y) + pow(b.x, 2) * (c.y - a.y) + pow(c.x, 2) * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-		double h = (pow(a.x, 2) * (b.x * c.y - c.x * b.y) + a.x * (pow(c.x, 2) * b.y - pow(b.x,2) * c.y)+ b.x * c.x * a.y * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x)); 
 		double i = f * pow(y_Fmax,2) + g * y_Fmax + h;
 
 		return { y_Fmax, i };
