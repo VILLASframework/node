@@ -81,6 +81,20 @@ struct sample * sample_alloc_mem(int capacity)
 	return s;
 }
 
+struct sample * sample_make_mutable(struct sample *s)
+{
+	if (atomic_load(&s->refcnt) <= 1)
+		return s;
+
+	struct sample *o = s;
+
+	s = sample_clone(o);
+
+	sample_decref(o);
+
+	return s;
+}
+
 void sample_free(struct sample *s)
 {
 	struct pool *p = sample_pool(s);

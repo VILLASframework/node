@@ -98,11 +98,17 @@ struct sample {
 /** Get the address of the pool to which the sample belongs. */
 #define sample_pool(s) ((s)->pool_off == SAMPLE_NON_POOL ? nullptr : (struct pool *) ((char *) (s) + (s)->pool_off))
 
+/** Allocate a new sample from pool \p p */
 struct sample * sample_alloc(struct pool *p);
 
+/** Allocate a new sample from the heap. */
 struct sample * sample_alloc_mem(int capacity);
 
+/** Allocate a new sample from the same pool as \p smp and copy its content */
 struct sample * sample_clone(struct sample *smp);
+
+/** Clone the sample if there is already more than one owner (refcnt > 1). */
+struct sample * sample_make_mutable(struct sample *s);
 
 void sample_free(struct sample *s);
 
@@ -120,6 +126,7 @@ int sample_incref(struct sample *s);
 /** Decrease reference count and release memory if last reference was held. */
 int sample_decref(struct sample *s);
 
+/** Copy the contents of a sample to another sample. */
 int sample_copy(struct sample *dst, const struct sample *src);
 
 /** Dump all details about a sample to debug log */
