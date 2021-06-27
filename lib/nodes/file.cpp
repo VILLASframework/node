@@ -321,7 +321,7 @@ int file_start(struct vnode *n)
 	rewind(f->stream_in);
 
 	/* Fast-forward */
-	struct sample *smp = sample_alloc_mem(vlist_length(&n->in.signals));
+	struct sample *smp = sample_alloc_heap(vlist_length(&n->in.signals));
 	for (unsigned i = 0; i < f->skip_lines; i++)
 		f->formatter->scan(f->stream_in, smp);
 

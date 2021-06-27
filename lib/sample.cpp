@@ -62,7 +62,7 @@ struct sample * sample_alloc(struct pool *p)
 	return s;
 }
 
-struct sample * sample_alloc_mem(int capacity)
+struct sample * sample_alloc_heap(int capacity)
 {
 	size_t sz = SAMPLE_LENGTH(capacity);
 

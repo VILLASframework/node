@@ -102,7 +102,7 @@ struct sample {
 struct sample * sample_alloc(struct pool *p);
 
 /** Allocate a new sample from the heap. */
-struct sample * sample_alloc_mem(int capacity);
+struct sample * sample_alloc_heap(int capacity);
 
 /** Allocate a new sample from the same pool as \p smp and copy its content */
 struct sample * sample_clone(struct sample *smp);

@@ -143,7 +143,7 @@ protected:
 			dirs[i].formatter->start(dtypes);
 		}
 
-		struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
+		struct sample *smp = sample_alloc_heap(DEFAULT_SAMPLE_LENGTH);
 
 		while (true) {
 			ret = dirs[0].formatter->scan(stdin, smp);
