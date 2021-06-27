@@ -721,3 +721,13 @@ json_t * node_to_json(struct vnode *n)
 
 	return json_node;
 }
+
+int node_read(struct vnode *n, struct sample *smp)
+{
+	return node_read(n, &smp, 1);
+}
+
+int node_write(struct vnode *n, struct sample *smp)
+{
+	return node_write(n, &smp, 1);
+}

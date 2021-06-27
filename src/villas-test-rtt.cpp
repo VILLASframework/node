@@ -206,8 +206,8 @@ check:			if (optarg == endptr)
 		while (!stop && (count < 0 || count--)) {
 			clock_gettime(CLOCK_ID, &send);
 
-			node_write(node, &smp_send, 1); /* Ping */
-			node_read(node,  &smp_recv, 1); /* Pong */
+			node_write(node, smp_send); /* Ping */
+			node_read(node,  smp_recv); /* Pong */
 
 			clock_gettime(CLOCK_ID, &recv);
 
