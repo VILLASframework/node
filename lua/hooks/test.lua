@@ -17,10 +17,7 @@ SampleFlags = {
 	HAS_OFFSET      = 4,      -- "(1 <<  3)"    Include offset (received - origin timestamp) in output.
 	HAS_SEQUENCE    = 8,      -- "(1 <<  4)"    Include sequence number in output.
 	HAS_DATA        = 16,     -- "(1 <<  5)"    Include values in output.
-	HAS_ALL         = 15,     -- "(1 <<  6) -1" Enable all output options.
-
-	IS_FIRST        = 65536,  -- "(1 << 16)"    This sample is the first of a new simulation case
-	IS_LAST         = 131072  -- "(1 << 17)"    This sample is the last of a running simulation case
+	HAS_ALL         = 15      -- "(1 <<  6) -1" Enable all output options.
 }
 
 

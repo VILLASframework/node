@@ -60,7 +60,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -69,8 +69,6 @@ public:
 			if (smp->sequence == 0 && prev->sequence != 0 && prev->sequence < UINT64_MAX - 16) {
 				logger->warn("Simulation from node {} restarted (previous->sequence={}, current->sequence={})",
 					node_name(node), prev->sequence, smp->sequence);
-
-				smp->flags |= (int) SampleFlags::IS_FIRST;
 
 				/* Restart hooks */
 				for (size_t i = 0; i < vlist_length(&node->in.hooks); i++) {
@@ -100,7 +98,7 @@ public:
 /* Register hook */
 static char n[] = "restart";
 static char d[] = "Call restart hooks for current node";
-static HookPlugin<RestartHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;
+static HookPlugin<RestartHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::READ_ONLY, 1> p;
 
 } /* namespace node */
 } /* namespace villas */

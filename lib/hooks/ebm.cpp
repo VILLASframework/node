@@ -96,7 +96,7 @@ public:
 		logger->info("Energy: {}", energy);
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		double P, P_last, dt;
 

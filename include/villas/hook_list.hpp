@@ -65,7 +65,7 @@ int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
 
 int hook_list_add(struct vlist *hs, int mask, struct vpath *p, struct vnode *n);
 
-int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt, bool clone_if_modified = false);
+int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt);
 
 void hook_list_periodic(struct vlist *hs);
 

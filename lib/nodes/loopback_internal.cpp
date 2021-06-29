@@ -80,11 +80,18 @@ int loopback_internal_read(struct vnode *n, struct sample * const smps[], unsign
 
 int loopback_internal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
+	int pushed_cnt;
 	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
 
 	sample_incref_many(smps, cnt);
 
-	return queue_signalled_push_many(&l->queue, (void **) smps, cnt);
+	pushed_cnt = queue_signalled_push_many(&l->queue, (void **) smps, cnt);
+	if (pushed_cnt < (int) cnt) {
+		sample_decref_many(smps + pushed_cnt, cnt - pushed_cnt);
+		n->logger->warn("Queue overrun in node {}", node_name(n));
+	}
+
+	return pushed_cnt;
 }
 
 int loopback_internal_poll_fds(struct vnode *n, int fds[])

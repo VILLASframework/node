@@ -38,7 +38,7 @@ struct vpath;
 struct sample;
 
 enum PathSourceType {
-	MASTER,
+	PRIMARY,
 	SECONDARY
 };
 
@@ -58,7 +58,7 @@ struct vpath_source {
 	struct vlist secondaries;		/**< List of secondary path sources (struct path_sourced). */
 };
 
-int path_source_init_master(struct vpath_source *ps, struct vpath *p, struct vnode *n) __attribute__ ((warn_unused_result));
+int path_source_init_primary(struct vpath_source *ps, struct vpath *p, struct vnode *n) __attribute__ ((warn_unused_result));
 
 int path_source_init_secondary(struct vpath_source *ps, struct vpath *p, struct vnode *n) __attribute__ ((warn_unused_result));
 
@@ -66,6 +66,6 @@ int path_source_destroy(struct vpath_source *ps) __attribute__ ((warn_unused_res
 
 void path_source_check(struct vpath_source *ps);
 
-int path_source_read(struct vpath_source *ps, int i);
+int path_source_read(struct vpath_source *ps);
 
 /** @} */

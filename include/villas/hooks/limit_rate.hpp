@@ -58,7 +58,7 @@ public:
 
 	virtual void parse(json_t *json);
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct sample *smp);
 };
 
 

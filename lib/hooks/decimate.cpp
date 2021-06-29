@@ -56,7 +56,7 @@ void DecimateHook::parse(json_t *json)
 	state = State::PARSED;
 }
 
-Hook::Reason DecimateHook::process(sample *smp)
+Hook::Reason DecimateHook::process(struct sample *smp)
 {
 	assert(state == State::STARTED);
 

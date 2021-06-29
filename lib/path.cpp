@@ -68,7 +68,7 @@ static void * path_run_single(void *arg)
 	while (p->state == State::STARTED) {
 		pthread_testcancel();
 
-		ret = path_source_read(ps, 0);
+		ret = path_source_read(ps);
 		if (ret <= 0)
 			continue;
 
@@ -101,17 +101,17 @@ static void * path_run_poll(void *arg)
 			struct vpath_source *ps = p->poll_pss[i];
 
 			if (pfd.revents & POLLIN) {
+				/* A source is ready to receive samples */
+				if (ps)
+					path_source_read(ps);
 				/* Timeout: re-enqueue the last sample */
-				if (pfd.fd == p->timeout.getFD()) {
+				else {
 					p->timeout.wait();
 
-					p->last_sample->sequence = p->last_sequence++;
+					p->last_sample->sequence = p->last_sequence_no++;
 
 					path_destination_enqueue_all(p, &p->last_sample, 1);
 				}
-				/* A source is ready to receive samples */
-				else
-					path_source_read(ps, i);
 			}
 		}
 
@@ -119,6 +119,29 @@ static void * path_run_poll(void *arg)
 	}
 
 	return nullptr;
+}
+
+static struct sample * path_create_initial_sample(struct vpath *p)
+{
+	struct sample *smp = sample_alloc(&p->pool);
+	if (!smp)
+		return nullptr;
+
+	smp->length = 0;
+	smp->signals = &p->signals;
+	smp->sequence = 0;
+	smp->flags = 0;
+
+	if (smp->length > 0)
+		smp->flags |= (int) SampleFlags::HAS_DATA;
+
+	for (size_t i = 0; i < smp->length; i++) {
+		struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
+
+		smp->data[i] = sig->init;
+	}
+
+	return smp;
 }
 
 int path_init(struct vpath *p)
@@ -215,6 +238,8 @@ static int path_prepare_poll(struct vpath *p)
 			.fd = fd,
 			.events = POLLIN
 		});
+
+		p->poll_pss.push_back(nullptr);
 	}
 
 	return 0;
@@ -263,9 +288,11 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 			bool isSecondary = vlist_length(&n->sources) > 0;
 			ret = isSecondary
 				? path_source_init_secondary(ps, p, n)
-				: path_source_init_master(ps, p, n);
+				: path_source_init_primary(ps, p, n);
 			if (ret)
 				return ret;
+
+			ps->index = vlist_length(&p->sources);
 
 			if (ps->type == PathSourceType::SECONDARY) {
 				nodes.push_back(ps->node);
@@ -274,7 +301,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 
 			if (p->mask_list.empty() || std::find(p->mask_list.begin(), p->mask_list.end(), n) != p->mask_list.end()) {
 				ps->masked = true;
-				p->mask.set(i);
+				p->mask.set(ps->index);
 			}
 
 			vlist_push(&n->sources, ps);
@@ -610,25 +637,14 @@ int path_start(struct vpath *p)
 	hook_list_start(&p->hooks);
 #endif /* WITH_HOOKS */
 
-	p->last_sequence = 0;
+	p->last_sequence_no = 0;
 
 	p->received.reset();
 
-	/* We initialize the intial sample */
-	p->last_sample = sample_alloc(&p->pool);
+	/* Initialize the intial sample */
+	p->last_sample = path_create_initial_sample(p);
 	if (!p->last_sample)
 		return -1;
-
-	p->last_sample->length = 0;
-	p->last_sample->signals = &p->signals;
-	p->last_sample->sequence = 0;
-	p->last_sample->flags = p->last_sample->length > 0 ? (int) SampleFlags::HAS_DATA : 0;
-
-	for (size_t i = 0; i < p->last_sample->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at(p->last_sample->signals, i);
-
-		p->last_sample->data[i] = sig->init;
-	}
 
 	p->state = State::STARTED;
 
@@ -711,15 +727,17 @@ int path_destroy(struct vpath *p)
 	if (ret)
 		return ret;
 
-	if (p->reader.pfds)
-		delete[] p->reader.pfds;
-
 	if (p->_name)
 		free(p->_name);
 
 	ret = pool_destroy(&p->pool);
 	if (ret)
 		return ret;
+
+	if (p->last_sample) {
+		sample_decref(p->last_sample);
+		p->last_sample = nullptr;
+	}
 
 	using bs = std::bitset<MAX_SAMPLE_LENGTH>;
 	using lg = std::shared_ptr<spdlog::logger>;
@@ -856,7 +874,7 @@ json_t * path_to_json(struct vpath *p)
 		"builtin", p->builtin_hooks,
 		"reverse", p->reverse,
 		"original_sequence_no", p->original_sequence_no,
-		"last_sequence", p->last_sequence,
+		"last_sequence_no", p->last_sequence_no,
 		"poll", p->poll,
 		"queuelen", p->queuelen,
 		"signals", json_signals,

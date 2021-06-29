@@ -294,7 +294,7 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		if (signal_index > smp->length)
 			return Hook::Reason::ERROR;

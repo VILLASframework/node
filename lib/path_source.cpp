@@ -36,16 +36,74 @@
 
 using namespace villas;
 
-int path_source_init_master(struct vpath_source *ps, struct vpath *p, struct vnode *n)
+static void path_source_forward(struct vpath_source *ps, struct sample *smps[], unsigned cnt)
+{
+	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
+		auto *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
+
+		int sent;
+
+		sent = node_write(sps->node, smps, cnt);
+		if (sent < 0)
+			continue;
+
+		if ((unsigned) sent < cnt)
+			ps->logger->warn("Partial write to secondary path source {} of path {}", node_name(sps->node), path_name(ps->path));
+	}
+}
+
+static int path_source_mux(struct vpath_source *ps, struct sample *out_smps[], struct sample *in_smps[], unsigned cnt)
+{
+	/* Mux only last sample and discard others */
+	if (ps->path->mode == PathMode::ALL) {
+		in_smps += cnt - 1;
+		cnt = 1;
+	}
+
+	struct sample *last_sample;
+	unsigned i;
+	for (i = 0, last_sample = ps->path->last_sample;
+	     i < cnt;
+	     i++,   last_sample = out_smps[i - 1]) {
+
+		out_smps[i] = sample_clone(last_sample);
+
+		/* Seqeuence number */
+		out_smps[i]->sequence = ps->path->original_sequence_no
+			? in_smps[i]->sequence
+			: ps->path->last_sequence_no++;
+		out_smps[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
+
+		/* Timestamp */
+		out_smps[i]->ts = in_smps[i]->ts;
+		out_smps[i]->flags |= in_smps[i]->flags & (int) SampleFlags::HAS_TS;
+
+		mapping_list_remap(&ps->mappings, out_smps[i], in_smps[i]);
+
+		if (out_smps[i]->length > 0)
+			out_smps[i]->flags |= (int) SampleFlags::HAS_DATA;
+	}
+
+	/* Update last processed sample of path */
+	sample_decref(ps->path->last_sample);
+	sample_incref(last_sample);
+
+	ps->path->last_sample = last_sample;
+
+	return cnt;
+}
+
+int path_source_init_primary(struct vpath_source *ps, struct vpath *p, struct vnode *n)
 {
 	int ret;
 
-	new (&pd->logger) Logger(logging.get("path:in"));
+	new (&ps->logger) Logger(logging.get("path:in"));
 
+	ps->index = -1;
 	ps->node = n;
 	ps->path = p;
 	ps->masked = false;
-	ps->type = PathSourceType::MASTER;
+	ps->type = PathSourceType::PRIMARY;
 
 	ret = vlist_init(&ps->mappings);
 	if (ret)
@@ -72,7 +130,7 @@ int path_source_init_secondary(struct vpath_source *ps, struct vpath *p, struct 
 	int ret;
 	struct vpath_source *mps;
 
-	ret = path_source_init_master(ps, n);
+	ret = path_source_init_primary(ps, p, n);
 	if (ret)
 		return ret;
 
@@ -119,94 +177,87 @@ int path_source_destroy(struct vpath_source *ps)
 	return 0;
 }
 
-int path_source_read(struct vpath_source *ps, int i)
+int path_source_read(struct vpath_source *ps)
 {
-	int ret;
-	int alloc_cnt
-	int read_cnt;
-	int mux_cnt;
-	int allocated_cnt;
-	int toenqueue_cnt;
-	int enqueued_cnt = 0;
+	int cnt = ps->node->in.vectorize;
 
-	struct sample *smps[cnt];
-	struct sample *muxed_smps[cnt];
+	int alloc_cnt;	/**< Number of samples allocated from pool */
+	int read_cnt;	/**< Number of samples read from source node */
+	int mux_cnt;	/**< Number of samples which have been muxed */
+	int enq_cnt;	/**< Number of samples to be enqueued to destinations */
+
+	struct sample *read_smps[cnt];
+	struct sample *mux_smps_buf[cnt];
 	struct sample **mux_smps;
 
-	/* Fill smps[] free sample blocks from the pool */
-	alloc_cnt = sample_alloc_many(&ps->pool, smps, ps->node->in.vectorize);
-	if (smp_cnt != ps->node->in.vectorize)
+	/* Fill read_smps[] free sample blocks from the pool */
+	alloc_cnt = sample_alloc_many(&ps->pool, read_smps, cnt);
+	if (alloc_cnt != cnt)
 		ps->logger->warn("Pool underrun for path source {}", node_name(ps->node));
 
-	/* Read ready samples and store them to blocks pointed by smps[] */
-	read_cnt = node_read(ps->node, smps, alloc_cnt);
-	if (read_cnt == 0)
-		goto out2;
-	else if (read_cnt < 0) {
-		if (ps->node->state == State::STOPPING) {
-			p->state = State::STOPPING;
+	/* Read ready samples and store them to blocks pointed by read_smps[] */
+	read_cnt = node_read(ps->node, read_smps, alloc_cnt);
+	if (read_cnt <= 0) {
+		if (read_cnt < 0) {
+			if (ps->node->state == State::STOPPING)
+				ps->path->state = State::STOPPING;
+			else
+				ps->logger->error("Failed to read samples from node {}", node_name(ps->node));
+		}
 
-			enqueued = -1;
-			goto out2;
-		}
-		else {
-			ps->logger->error("Failed to read samples from node {}", node_name(ps->node));
-			goto out2;
-		}
+		goto out;
 	}
-	else if (read_cnt < allocated)
-		ps->logger->warn("Partial read for path {}: read={}, expected={}", path_name(ps->path), recv, allocated);
+	else if (read_cnt < alloc_cnt)
+		ps->logger->warn("Partial read for path {}: read={}, expected={}", path_name(ps->path), read_cnt, alloc_cnt);
 
 	/* Forward samples to secondary path sources */
 	path_source_forward(ps, read_smps, read_cnt);
 
-	p->received.set(i);
-
-	if (p->mode == PathMode::ANY) { /* Mux all samples */
+	/* Muxing */
+	if (path_is_muxed(ps->path)) {
+		mux_smps = mux_smps_buf;
+		mux_cnt = path_source_mux(ps, mux_smps, read_smps, read_cnt);
+	}
+	else {
 		mux_smps = read_smps;
 		mux_cnt = read_cnt;
 	}
-	else { /* Mux only last sample and discard others */
-		mux_smps = read_smps + read_cnt - 1;
-		mux_cnt = 1;
-	}
-
-	path_source_mux(ps, muxed_smps, mux_smps, mux_cnt);
-
-	ps->logger->debug("Path {} received = {}", path_name(ps->path), p->received.to_ullong());
 
 #ifdef WITH_HOOKS
-	enqueue_cnt = hook_list_process(&p->hooks, muxed_smps, mux_cnt);
-	if (enqueue_cnt == -1) {
+	enq_cnt = hook_list_process(&ps->path->hooks, mux_smps, mux_cnt);
+	if (enq_cnt < 0) {
 		ps->logger->error("An error occured during hook processing. Skipping sample");
-
+		return -1;
 	}
-	else if (enqueue_cnt != mux_cnt) {
-		int skipped = mux_cnt - enqueue_cnt;
+	else if (enq_cnt != mux_cnt) {
+		int skipped = mux_cnt - enq_cnt;
 
 		ps->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, mux_cnt, path_name(ps->path));
 	}
 #else
-	enqueue_cnt = mux_cnt;
+	enq_cnt = mux_cnt;
 #endif
 
-	if (p->mask.test(i)) {
+	ps->path->received.set(ps->index);
+	ps->logger->debug("Path {} received={}", path_name(ps->path), ps->path->received.to_ullong());
+
+	if (ps->path->mask.test(ps->index)) {
 		/* Check if we received an update from all nodes */
-		if ((p->mode == PathMode::ANY) ||
-		    (p->mode == PathMode::ALL && p->mask == p->received)) {
-			path_destination_enqueue_all(p, muxed_smps, toenqueue);
+		if ((ps->path->mode == PathMode::ANY) ||
+		    (ps->path->mode == PathMode::ALL && ps->path->mask == ps->path->received)) {
+			path_destination_enqueue_all(ps->path, mux_smps, enq_cnt);
 
 			/* Reset mask of updated nodes */
-			p->received.reset();
-
-			enqueued = toenqueue;
+			ps->path->received.reset();
 		}
 	}
 
-	sample_decref_many(muxed_smps, mux_cnt);
-out2:	sample_decref_many(smps, alloc_cont);
+	if (path_is_muxed(ps->path))
+		sample_decref_many(mux_smps, mux_cnt);
 
-	return enqueued;
+out:	sample_decref_many(read_smps, alloc_cnt);
+
+	return enq_cnt;
 }
 
 void path_source_check(struct vpath_source *ps)
@@ -216,56 +267,4 @@ void path_source_check(struct vpath_source *ps)
 
 	if (!node_type(ps->node)->read)
 		throw RuntimeError("Node {} is not supported as a source for a path", node_name(ps->node));
-}
-
-void path_source_forward(struct vpath_source *ps, const struct *smps[], unsigned cnt)
-{
-	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
-		auto *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
-
-		int sent;
-
-		sent = node_write(sps->node, smps, cnt);
-		if (sent < cnt)
-			ps->logger->warn("Partial write to secondary path source {} of path {}", node_name(sps->node), path_name(ps->path));
-
-		sample_incref_many(smps, cnt);
-	}
-}
-
-
-void path_source_mux(struct vpath_source *ps, struct *smps_out[], struct sample *smps_in[], unsigned cnt)
-{
-	for (int i = 0; i < cnt; i++) {
-		smps_out[i] = i == 0
-			? sample_clone(p->last_sample)
-			: sample_clone(muxed_smps[i-1]);
-
-		if (p->original_sequence_no) {
-			smps_out[i]->sequence = smps_in[i]->sequence;
-			smps_out[i]->flags |= smps_in[i]->flags & (int) SampleFlags::HAS_SEQUENCE;
-		}
-		else {
-			smps_out[i]->sequence = p->last_sequence++;
-			smps_out[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
-		}
-
-		/* We reset the sample length after each restart of the simulation.
-		 * This is necessary for the test_rtt node to work properly.
-		 */
-		if (smps_in[i]->flags & (int) SampleFlags::IS_FIRST)
-			smps_out[i]->length = 0;
-
-		smps_out[i]->ts = smps_in[i]->ts;
-		smps_out[i]->flags |= smps_in[i]->flags & (int) SampleFlags::HAS_TS;
-
-		ret = mapping_list_remap(&ps->mappings, smps_out[i], smps_in[i]);
-		if (ret)
-			return ret;
-
-		if (smps_out[i]->length > 0)
-			smps_out[i]->flags |= (int) SampleFlags::HAS_DATA;
-	}
-
-	sample_copy(p->last_sample, smps_out[cnt - 1]);
 }

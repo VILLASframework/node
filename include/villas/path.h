@@ -31,6 +31,7 @@
 
 #include <bitset>
 
+#include <poll.h>
 #include <uuid/uuid.h>
 #include <pthread.h>
 #include <jansson.h>
@@ -67,7 +68,7 @@ struct vpath {
 
 	struct pool pool;
 	struct sample *last_sample;
-	int last_sequence;
+	int last_sequence_no;
 
 	struct vlist sources;		/**< List of all incoming nodes (struct vpath_source). */
 	struct vlist destinations;	/**< List of all outgoing nodes (struct vpath_destination). */
@@ -80,10 +81,10 @@ struct vpath {
 	double rate;			/**< A timeout for */
 	bool enabled;			/**< Is this path enabled? */
 	bool muxed;			/**< Is this path muxed? */
-	int affinity;			/**< Thread affinity. */
-	int poll;			/**< Weather or not to use poll(2). */
 	bool reverse;			/**< This path has a matching reverse path. */
 	bool builtin_hooks;		/**< This path should use built-in hooks by default. */
+	int affinity;			/**< Thread affinity. */
+	int poll;			/**< Weather or not to use poll(2). */
 	int original_sequence_no;	/**< Use original source sequence number when multiplexing */
 	unsigned queuelen;		/**< The queue length for each path_destination::queue */
 

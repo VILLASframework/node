@@ -102,7 +102,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual villas::node::Hook::Reason process(sample *smp)
+	virtual villas::node::Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 

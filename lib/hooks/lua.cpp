@@ -745,7 +745,7 @@ LuaHook::periodic()
 }
 
 Hook::Reason
-LuaHook::process(sample *smp)
+LuaHook::process(struct sample *smp)
 {
 	if (!functions.process && !hasExpressions)
 		return Reason::OK;

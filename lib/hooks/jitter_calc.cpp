@@ -71,7 +71,7 @@ public:
 	 * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
 	 * the variance value will overrun the 64bit value.
 	 */
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 

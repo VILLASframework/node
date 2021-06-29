@@ -135,7 +135,7 @@ void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, st
 	}
 }
 
-int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt, bool clone_if_modified)
+int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
 {
 	unsigned processed = 0;
 
@@ -143,19 +143,17 @@ int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt, boo
 		return cnt;
 
 	for (unsigned i = 0; i < cnt; i++) {
-		struct sample *smp, *old_smp;
-
-		if (clone_if_modified) {
-			old_smp = smps[i];
-			smps[i] = sample_clone(old_smp);
-
-			sample_decref(old_smp);
-		}
-
-		smp = smps[i];
+		struct sample *smp = smps[i];
 
 		for (size_t j = 0; j < vlist_length(hs); j++) {
 			Hook *h = (Hook *) vlist_at(hs, j);
+
+			/* Clone the sample if it has multiple owners
+			*
+			* E.g. the sample is enqueued to to multiple outgoing nodes which have mutating out hooks.
+			*/
+			if (!h->isReadOnly())
+				smp = sample_make_mutable(smp);
 
 			auto ret = h->process(smp);
 			smp->signals = h->getSignals();

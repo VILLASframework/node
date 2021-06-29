@@ -40,7 +40,7 @@ class FixHook : public Hook {
 public:
 	using Hook::Hook;
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 

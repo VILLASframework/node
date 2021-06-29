@@ -125,48 +125,55 @@ public:
 
 	virtual void run()
 	{
-		unsigned last_sequenceno = 0;
-		int scanned, sent, allocated, cnt = 0;
+		unsigned last_sequence_no = 0;
+		int scanned_cnt, sent_cnt, alloc_cnt, cnt = 0;
 
 		struct sample *smps[node->out.vectorize];
 
 		while (!stop && !feof(stdin)) {
-			allocated = sample_alloc_many(&pool, smps, node->out.vectorize);
-			if (allocated < 0)
+			alloc_cnt = sample_alloc_many(&pool, smps, node->out.vectorize);
+			if (alloc_cnt < 0)
 				throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
-			else if (allocated < (int) node->out.vectorize)
+			else if (alloc_cnt < (int) node->out.vectorize)
 				logger->warn("Send pool underrun");
 
-			scanned = formatter->scan(stdin, smps, allocated);
-			if (scanned < 0) {
+			scanned_cnt = formatter->scan(stdin, smps, alloc_cnt);
+			if (scanned_cnt < 0) {
 				if (stop)
 					goto leave2;
 
 				logger->warn("Failed to read samples from stdin");
 				continue;
 			}
-			else if (scanned == 0)
+			else if (scanned_cnt == 0)
 				continue;
 
-			/* Fill in missing sequence numbers */
-			for (int i = 0; i < scanned; i++) {
+			/* Fill in missing header fields */
+			struct timespec now = time_now();
+			for (int i = 0; i < scanned_cnt; i++) {
+				if (!(smps[i]->flags & (int) SampleFlags::HAS_TS_ORIGIN)) {
+					smps[i]->ts.origin = now;
+					smps[i]->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
+				}
+
 				if (smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE)
-					last_sequenceno = smps[i]->sequence;
-				else
-					smps[i]->sequence = last_sequenceno++;
+					last_sequence_no = smps[i]->sequence;
+				else {
+					smps[i]->sequence = last_sequence_no++;
+					smps[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
+				}
 			}
 
-			sent = node_write(node, smps, scanned);
+			sent_cnt = node_write(node, smps, scanned_cnt);
 
-			sample_decref_many(smps, scanned);
+			sample_decref_many(smps, alloc_cnt);
 
-			cnt += sent;
+			cnt += sent_cnt;
 			if (limit > 0 && cnt >= limit)
 				goto leave;
 		}
 
-leave2:
-		logger->info("Send thread stopped");
+leave2:		logger->info("Send thread stopped");
 		return;
 
 leave:		if (feof(stdin)) {

@@ -139,7 +139,7 @@ public:
 	virtual void restart();
 
 	/** Called whenever a sample is processed. */
-	virtual Reason process(sample *smp);
+	virtual Reason process(struct sample *smp);
 };
 
 

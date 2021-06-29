@@ -496,7 +496,7 @@ int node_read(struct vnode *n, struct sample * smps[], unsigned cnt)
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct vnode *n, struct sample * smps[], unsigned cnt, bool clone_if_modified)
+int node_write(struct vnode *n, struct sample * smps[], unsigned cnt)
 {
 	int tosend, sent, nsent = 0;
 	unsigned vect;
@@ -510,7 +510,7 @@ int node_write(struct vnode *n, struct sample * smps[], unsigned cnt, bool clone
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_list_process(&n->out.hooks, smps, cnt, clone_if_modified && !n->out.read_only_hooks);
+	cnt = hook_list_process(&n->out.hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
 #endif /* WITH_HOOKS */

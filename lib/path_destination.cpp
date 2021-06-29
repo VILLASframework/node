@@ -66,48 +66,49 @@ int path_destination_destroy(struct vpath_destination *pd)
 
 void path_destination_enqueue(struct vpath_destination *pd, struct sample * const smps[], unsigned cnt)
 {
-	unsigned enqueued;
+	unsigned enq_cnt;
 
-	/* Increase reference counter of these samples as they are now also owned by the queue. */
+	/* Increase reference counter of these samples as they are now also owned by the path destination. */
 	sample_incref_many(smps, cnt);
 
-	enqueued = queue_push_many(&pd->queue, (void **) smps, cnt);
-	if (enqueued != cnt)
+	enq_cnt = queue_push_many(&pd->queue, (void **) smps, cnt);
+	if (enq_cnt != cnt) {
+		sample_decref_many(smps + enq_cnt, cnt - enq_cnt);
 		pd->logger->warn("Queue overrun for path {}", path_name(pd->path));
+	}
 
-	pd->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, node_name(pd->node), path_name(pd->path));
-
+	pd->logger->debug("Enqueued {} samples to destination {} of path {}", enq_cnt, node_name(pd->node), path_name(pd->path));
 }
 
 void path_destination_write(struct vpath_destination *pd)
 {
 	int cnt = pd->node->out.vectorize;
-	int sent;
-	int pulled;
+	int sent_cnt;
+	int pulled_cnt;
 
 	struct sample *smps[cnt];
 
 	/* As long as there are still samples in the queue */
-	while (1) {
-		pulled = queue_pull_many(&pd->queue, (void **) smps, cnt);
-		if (pulled == 0)
+	while (true) {
+		pulled_cnt = queue_pull_many(&pd->queue, (void **) smps, cnt);
+		if (pulled_cnt == 0)
 			break;
-		else if (pulled < cnt)
-			pd->logger->debug("Queue underrun for path {}: pulled={} expected={}", path_name(pd->path), pulled, cnt);
+		else if (pulled_cnt < cnt)
+			pd->logger->debug("Queue underrun for path {}: pulled={} expected={}", path_name(pd->path), pulled_cnt, cnt);
 
-		pd->logger->debug("Pulled {} samples from queue of node {} which is part of path {}", pulled, node_name(pd->node), path_name(pd->path));
+		pd->logger->debug("Pulled {} samples from queue of node {} which is part of path {}", pulled_cnt, node_name(pd->node), path_name(pd->path));
 
-		sent = node_write(pd->node, smps, pulled, true);
-		if (sent < 0) {
-			pd->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node_name(pd->node), sent);
+		sent_cnt = node_write(pd->node, smps, pulled_cnt);
+		if (sent_cnt < 0) {
+			pd->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node_name(pd->node), sent_cnt);
 			return;
 		}
-		else if (sent < pulled)
-			pd->logger->debug("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, pulled);
+		else if (sent_cnt < pulled_cnt)
+			pd->logger->debug("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent_cnt, pulled_cnt);
 
-		int released = sample_decref_many(smps, pulled);
+		int released_cnt = sample_decref_many(smps, pulled_cnt);
 
-		pd->logger->debug("Released {} samples back to memory pool", released);
+		pd->logger->debug("Released {} samples back to memory pool", released_cnt);
 	}
 }
 

@@ -60,7 +60,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		int dist;
 

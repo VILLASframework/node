@@ -51,7 +51,7 @@ public:
 		state = State::CHECKED;
 	}
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct sample *smp);
 };
 
 class StatsReadHook : public Hook {
@@ -89,7 +89,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct sample *smp);
 };
 
 class StatsHook : public Hook {
@@ -170,7 +170,7 @@ public:
 		stats->reset();
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct sample *smp)
 	{
 		// Only call readHook if it hasnt been added to the node's hook list
 		if (!node)
@@ -238,7 +238,7 @@ public:
 	}
 };
 
-Hook::Reason StatsWriteHook::process(sample *smp)
+Hook::Reason StatsWriteHook::process(struct sample *smp)
 {
 	timespec now = time_now();
 
@@ -247,7 +247,7 @@ Hook::Reason StatsWriteHook::process(sample *smp)
 	return Reason::OK;
 }
 
-Hook::Reason StatsReadHook::process(sample *smp)
+Hook::Reason StatsReadHook::process(struct sample *smp)
 {
 	if (last) {
 		if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)

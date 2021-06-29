@@ -68,7 +68,7 @@ void LimitRateHook::parse(json_t *json)
 	state = State::PARSED;
 }
 
-Hook::Reason LimitRateHook::process(sample *smp)
+Hook::Reason LimitRateHook::process(struct sample *smp)
 {
 	assert(state == State::STARTED);
 

@@ -42,8 +42,6 @@ int node_direction_prepare(struct vnode_direction *nd, struct vnode *n)
 	int m = nd->builtin_hooks ? t | (int) Hook::Flags::BUILTIN : 0;
 
 	hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
-
-	nd->read_only_hooks = hook_list_is_read_only(&nd->hooks);
 #endif /* WITH_HOOKS */
 
 	nd->state = State::PREPARED;
@@ -59,7 +57,6 @@ int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vno
 	nd->enabled = true;
 	nd->vectorize = 1;
 	nd->path = nullptr;
-	nd->read_only_hooks = false;
 	nd->builtin_hooks = true;
 
 #ifdef WITH_HOOKS

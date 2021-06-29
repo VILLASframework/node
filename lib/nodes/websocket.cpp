@@ -141,11 +141,13 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	if (c->state != websocket_connection::State::INITIALIZED)
 		return -1;
 
-	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
-	if (pushed < (int) cnt)
-		c->node->logger->warn("Queue overrun in WebSocket connection: {}", websocket_connection_name(c));
+	sample_incref_many(smps, cnt);
 
-	sample_incref_many(smps, pushed);
+	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
+	if (pushed < (int) cnt) {
+		sample_decref_many(smps + pushed, cnt - pushed);
+		c->node->logger->warn("Queue overrun in WebSocket connection: {}", websocket_connection_name(c));
+	}
 
 	c->node->logger->debug("Enqueued {} samples to {}", pushed, websocket_connection_name(c));
 
