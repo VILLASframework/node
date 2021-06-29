@@ -67,7 +67,7 @@ if(APPLE)
 endif()
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
-add_compile_options(-Wall -Werror -fdiagnostics-color=auto)
+add_compile_options(-Wall -Wno-unknown-pragmas -Werror -fdiagnostics-color=auto)
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)

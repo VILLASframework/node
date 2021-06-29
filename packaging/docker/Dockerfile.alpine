@@ -100,7 +100,8 @@ COPY . /villas/
 RUN mkdir -p /villas/build
 WORKDIR /villas/build
 RUN --security=insecure \
-	cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+	cmake -DWITH_OPENMP=OFF \
+		  -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
 	make -j8 install
 
