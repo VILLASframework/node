@@ -37,7 +37,7 @@
 #include <villas/io.h>
 #include <villas/plugin.h>
 
-#define DFT_MEM_DUMP
+//#define DFT_MEM_DUMP
 
 namespace villas {
 namespace node {
@@ -114,6 +114,7 @@ protected:
 
 	double windowCorretionFactor;
 	struct timespec lastDftCal;
+	double nextDftCalc;
 
 	std::vector<int> signalIndex;	/**< A list of signalIndex to do dft on */
 	Phasor lastResult;
@@ -146,6 +147,8 @@ public:
 		lastSequence(0),
 		windowCorretionFactor(0),
 		lastDftCal({0, 0}),
+		nextDftCalc(0.0),
+		signalIndex(),
 		lastResult({0,0,0,0})
 	{
 		logger = logging.get("hook:dft");
@@ -158,6 +161,7 @@ public:
 			windowdSigSync = std::make_shared<Dumper>("/tmp/plot/windowdSigSync");
 			ppsSigSync = std::make_shared<Dumper>("/tmp/plot/ppsSigSync");
 #endif
+			origSigSync = std::make_shared<Dumper>("/tmp/plot/origSigSync");
 			phasorPhase = std::make_shared<Dumper>("/tmp/plot/phasorPhase");
 			phasorAmplitude = std::make_shared<Dumper>("/tmp/plot/phasorAmplitude");
 			phasorFreq = std::make_shared<Dumper>("/tmp/plot/phasorFreq");
@@ -286,6 +290,12 @@ public:
 		else
 			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
 
+		if (!windowSize) {
+			windowSize = (int)(sampleRate * 1 / (double)dftRate);
+			logger->info("Set windows size to {} samples which fits 1/dftRate {}s", windowSize, 1/(double)dftRate);
+			
+		}	
+
 		if (!windowTypeC) {
 			logger->info("No Window type given, assume no windowing");
 			windowType = WindowType::NONE;
@@ -343,25 +353,12 @@ public:
 
 		bool runDft = false;
 		if (syncDft) {
-			//struct timespec timeDiff = time_diff(&lastDftCal, &smp->ts.origin);
+			double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
 
-			//double nextCalc = (lastDftCal.tv_sec + dftRate.tv_sec) * 1e9 + lastDftCal.tv_nsec + dftRate.tv_nsec;
-
-			//double dftRateNSec = dftRate.tv_sec * 1e9 + dftRate.tv_nsec;
-			//double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
-
-			
-
-
-			//if ( nextCalc < (smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec) && fmod( smpNsec, dftRateNSec ) < (110*1e9/(sampleRate)))
-			//	runDft = true;
-
-			if (smp->ts.origin.tv_sec != lastDftCal.tv_sec)
+			if (smpNsec > nextDftCalc) {
 				runDft = true;
-
-			//if ((fmod(smp->ts.origin.tv_sec*1e9 + smp->ts.origin.tv_nsec, 1e9/dftRate) < (1e9/(dftRate+1))) && ((timeDiff.tv_sec*1e9+timeDiff.tv_nsec) > (1e9/dftRate)))
-			//if ((timeDiff.tv_sec*1e9+timeDiff.tv_nsec) > (1e9/dftRate) && )
-			//	runDft = true;
+				nextDftCalc = (( smp->ts.origin.tv_sec ) + ( ((dftCalcCount % dftRate) + 1) / (double)dftRate )) * 1e9;
+			}
 		}
 
 		if (runDft) {
@@ -380,7 +377,7 @@ public:
 			#pragma omp parallel for
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
 				Phasor currentResult = {0,0,0,0};
-
+				
 				calculateDft(PaddingType::ZERO, smpMemory[i], dftResults[i], smpMemPos);
 
 				unsigned maxPos = 0;
@@ -424,7 +421,7 @@ public:
 			}
 
 			//the following is a debug output and currently only for channel 0
-			if (windowSize < smpMemPos){ 
+			if (windowSize * 5 < smpMemPos){ 
 				if (phasorFreq)
 					phasorFreq->writeDataBinary(1, &(smp->data[0 * 4 + 0].f));
 
@@ -432,7 +429,10 @@ public:
 					phasorPhase->writeDataBinary(1, &(smp->data[0 * 4 + 2].f));
 
 				if (phasorAmplitude)
-					phasorAmplitude->writeDataBinary(1, &(smp->data[0 * 4 + 1].f));				
+					phasorAmplitude->writeDataBinary(1, &(smp->data[0 * 4 + 1].f));
+
+				if (origSigSync)
+					origSigSync->writeDataBinary(1, &(smp->data[0 * 4 + 3].f));									
 			}
 
 			smp->length = windowSize < smpMemPos ? signalIndex.size() * 4 : 0;
