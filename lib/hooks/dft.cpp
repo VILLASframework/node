@@ -67,6 +67,13 @@ protected:
 		double y;
 	};
 
+	struct Phasor {
+		double frequency;
+		double amplitude;
+		double phase;
+		double rocof;//rate of change of frequency
+	};
+
 	std::shared_ptr<Dumper> origSigSync;
 	std::shared_ptr<Dumper> windowdSigSync;
 	std::shared_ptr<Dumper> phasorPhase;
@@ -109,6 +116,7 @@ protected:
 	struct timespec lastDftCal;
 
 	std::vector<int> signalIndex;	/**< A list of signalIndex to do dft on */
+	Phasor lastResult;
 
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
@@ -138,7 +146,7 @@ public:
 		lastSequence(0),
 		windowCorretionFactor(0),
 		lastDftCal({0, 0}),
-		signalIndex()
+		lastResult({0,0,0,0})
 	{
 		logger = logging.get("hook:dft");
 
@@ -371,11 +379,10 @@ public:
 		
 			#pragma omp parallel for
 			for (unsigned i = 0; i < signalIndex.size(); i++) {
+				Phasor currentResult = {0,0,0,0};
 
 				calculateDft(PaddingType::ZERO, smpMemory[i], dftResults[i], smpMemPos);
 
-				double maxF = 0;
-				double maxA = 0;
 				unsigned maxPos = 0;
 
 				for (unsigned j = 0; j < freqCount; j++) {
@@ -383,9 +390,9 @@ public:
 						? 1
 						: windowMultiplier;
 					absDftResults[i][j] = abs(dftResults[i][j]) * 2 / (windowSize * windowCorretionFactor * multiplier);
-					if (maxA < absDftResults[i][j]) {
-						maxF = absDftFreqs[j];
-						maxA = absDftResults[i][j];
+					if (currentResult.amplitude < absDftResults[i][j]) {
+						currentResult.frequency = absDftFreqs[j];
+						currentResult.amplitude = absDftResults[i][j];
 						maxPos = j;
 					}
 				}
@@ -399,20 +406,21 @@ public:
 						Point c = { absDftFreqs[maxPos + 1], absDftResults[i][maxPos + 1] };
 						
 						Point estimate = quadraticEstimation(a, b, c, maxPos);
-
-						maxF = estimate.x;
-						maxA = estimate.y;
+						currentResult.frequency = estimate.x;
+						currentResult.amplitude = estimate.y;
 					}
 				}
 
 				if (windowSize < smpMemPos) {
 
-					smp->data[i * 4 + 0].f = maxF; /* Frequency */
-					smp->data[i * 4 + 1].f = (maxA / pow(2, 0.5)); /* Amplitude */
+					smp->data[i * 4 + 0].f = currentResult.frequency; /* Frequency */
+					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)); /* Amplitude */
 					smp->data[i * 4 + 2].f = atan2(dftResults[i][maxPos].imag(), dftResults[i][maxPos].real()); /* Phase */
-					smp->data[i * 4 + 3].f = 0; /* RoCof */
+					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult.frequency) / (double)dftRate; /* RoCof */
 
 				}
+
+				lastResult = currentResult;
 			}
 
 			//the following is a debug output and currently only for channel 0
