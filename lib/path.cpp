@@ -378,7 +378,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 
 	/* Prepare pool */
 	pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
-	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(&p->signals)), pool_mt);
+	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(path_output_signals(p))), pool_mt);
 
 	if (ret)
 		return ret;
