@@ -79,4 +79,6 @@ int node_direction_stop(struct vnode_direction *nd, struct vnode *n);
 
 struct vlist * node_direction_get_signals(struct vnode_direction *nd);
 
+unsigned node_direction_get_signals_max_cnt(struct vnode_direction *nd);
+
 /** @} */

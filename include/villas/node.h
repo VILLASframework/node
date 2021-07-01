@@ -192,6 +192,10 @@ struct vlist * node_output_signals(struct vnode *n);
 
 struct vlist * node_input_signals(struct vnode *n);
 
+unsigned node_input_signals_max_cnt(struct vnode *n);
+
+unsigned node_output_signals_max_cnt(struct vnode *n);
+
 /** Reverse local and remote socket address.
  *
  * @see node_type::reverse

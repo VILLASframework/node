@@ -378,8 +378,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 
 	/* Prepare pool */
 	pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
-	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(path_output_signals(p))), pool_mt);
-
+	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(path_output_signals_max_cnt(p)), pool_mt);
 	if (ret)
 		return ret;
 
@@ -825,6 +824,16 @@ struct vlist * path_output_signals(struct vpath *p)
 #endif /* WITH_HOOKS */
 
 	return &p->signals;
+}
+
+unsigned path_output_signals_max_cnt(struct vpath *p)
+{
+#ifdef WITH_HOOKS
+	if (vlist_length(&p->hooks) > 0)
+		return MAX(vlist_length(&p->signals), hook_list_get_signals_max_cnt(&p->hooks));
+#endif /* WITH_HOOKS */
+
+	return vlist_length(&p->signals);
 }
 
 json_t * path_to_json(struct vpath *p)

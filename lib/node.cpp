@@ -680,6 +680,19 @@ struct vlist * node_output_signals(struct vnode *n)
 	return nullptr;
 }
 
+unsigned node_input_signals_max_cnt(struct vnode *n)
+{
+	return node_direction_get_signals_max_cnt(&n->in);
+}
+
+unsigned node_output_signals_max_cnt(struct vnode *n)
+{
+	if (n->out.path)
+		return path_output_signals_max_cnt(n->out.path);
+
+	return 0;
+}
+
 json_t * node_to_json(struct vnode *n)
 {
 	struct vlist *output_signals;

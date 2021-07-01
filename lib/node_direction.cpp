@@ -26,6 +26,7 @@
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/node.h>
+#include <villas/utils.hpp>
 #include <villas/node_direction.h>
 #include <villas/exceptions.hpp>
 
@@ -215,4 +216,14 @@ struct vlist * node_direction_get_signals(struct vnode_direction *nd)
 #endif /* WITH_HOOKS */
 
 	return &nd->signals;
+}
+
+unsigned node_direction_get_signals_max_cnt(struct vnode_direction *nd)
+{
+#ifdef WITH_HOOKS
+	if (vlist_length(&nd->hooks) > 0)
+		return MAX(vlist_length(&nd->signals), hook_list_get_signals_max_cnt(&nd->hooks));
+#endif /* WITH_HOOKS */
+
+	return vlist_length(&nd->signals);
 }

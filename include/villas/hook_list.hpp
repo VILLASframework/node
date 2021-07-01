@@ -75,4 +75,7 @@ void hook_list_stop(struct vlist *hs);
 
 struct vlist * hook_list_get_signals(struct vlist *hs);
 
+/** Get the maximum number of signals which is used by any of the hooks in the list. */
+unsigned hook_list_get_signals_max_cnt(struct vlist *hs);
+
 json_t * hook_list_to_json(struct vlist *hs);

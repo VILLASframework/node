@@ -132,6 +132,7 @@ skip_add:
 		sigs = h->getSignals();
 
 		auto logger = logging.get("hook");
+		logger->debug("Signal list after hook {}:", i);
 		signal_list_dump(logger, sigs);
 	}
 }
@@ -208,6 +209,23 @@ struct vlist * hook_list_get_signals(struct vlist *hs)
 		return nullptr;
 
 	return h->getSignals();
+}
+
+unsigned hook_list_get_signals_max_cnt(struct vlist *hs)
+{
+	unsigned max_cnt = 0;
+
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		Hook *h = (Hook *) vlist_at(hs, i);
+
+		struct vlist *sigs = h->getSignals();
+		unsigned sigs_cnt = vlist_length(sigs);
+		
+		if (sigs_cnt > max_cnt)
+			max_cnt = sigs_cnt;
+	}
+	
+	return max_cnt;
 }
 
 json_t * hook_list_to_json(struct vlist *hs)
