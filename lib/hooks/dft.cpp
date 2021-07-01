@@ -470,27 +470,22 @@ public:
 		double tmpSmpWindow[windowSize];
 
 		for (unsigned i = 0; i< windowSize; i++)
-			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize];
+			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize] * filterWindowCoefficents[i];;
 
 #ifdef DFT_MEM_DUMP
 		if (dumperEnable)
 			origSigSync.writeDataBinary(windowSize, tmpSmpWindow);
 #endif
 
-		for (unsigned i = 0; i < windowSize; i++)
+		/*for (unsigned i = 0; i < windowSize; i++)
 			tmpSmpWindow[i] *= filterWindowCoefficents[i];
-
-#ifdef DFT_MEM_DUMP
-		if (dumperEnable)
-			windowdSigSync.writeDataBinary(windowSize, tmpSmpWindow);
-#endif
-
+*/
 		for (unsigned i = 0; i < freqCount; i++) {
 			results[i] = 0;
-
+			
 			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
-					if (j < (windowSize))
+					if (j < windowSize)
 						results[i] += tmpSmpWindow[j] * matrix[i][j];
 					else
 						results[i] += 0;
