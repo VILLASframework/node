@@ -72,7 +72,7 @@ protected:
 		double phase;
 		double rocof;	/**< Rate of change of frequency. */
 	};
-
+	Logger logger;
 	enum WindowType windowType;
 	enum PaddingType paddingType;
 	enum FreqEstimationType freqEstType;
@@ -126,6 +126,7 @@ protected:
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
+		logger(logging.get("hook:dft")),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
 		freqEstType(FreqEstimationType::NONE),
@@ -295,7 +296,7 @@ public:
 			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
 
 		windowSize = sampleRate * windowSizeFactor / (double) rate;
-		logger->debug("Set windows size to {} samples which fits 1 / rate {}s", windowSize, 1.0 / rate);
+		logger->debug("Set windows size to {} samples which fits {} / rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
 
 		if (!windowTypeC)
 			logger->info("No Window type given, assume no windowing");
