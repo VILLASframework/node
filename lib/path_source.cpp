@@ -57,7 +57,8 @@ int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 	if (ps->node->_vt->pool_size)
 		pool_size = ps->node->_vt->pool_size;
 
-	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(node_input_signals(ps->node))), node_memory_type(ps->node));
+	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->in.signals)), node_memory_type(ps->node));
+
 	if (ret)
 		return ret;
 
