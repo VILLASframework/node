@@ -79,22 +79,22 @@ void Dumper::writeDataBinary(unsigned len, double *yData, double *xData){
 	if (yData == nullptr)
 		return;
 
-	size_t dataLen = len * sizeof(yData[0]);
+	unsigned dataLen = len * sizeof(yData[0]);
 	ssize_t bytesWritten = write(socketFd, &dataLen, sizeof(dataLen));
 	if ((size_t) bytesWritten != sizeof(len)) {
-		logger->warn("Could not send all content to socket {}", socketName);
+		logger->warn("Could not send all content (Len) to socket {}", socketName);
 		warningCounter++;
 	}
 
 	bytesWritten = write(socketFd, "d000", 4);
 	if (bytesWritten != 4) {
-		logger->warn("Could not send all content to socket {}", socketName);
+		logger->warn("Could not send all content (Type) to socket {}", socketName);
 		warningCounter++;
 	}
 
 	bytesWritten = write(socketFd, yData, dataLen );
 	if (bytesWritten != (ssize_t) dataLen && (!supressRepeatedWarning || warningCounter <1 )) {
-		logger->warn("Could not send all content to socket {}", socketName);
+		logger->warn("Could not send all content (Data) to socket {}", socketName);
 		warningCounter++;
 	}
 }
