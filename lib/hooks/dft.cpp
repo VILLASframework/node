@@ -72,7 +72,7 @@ protected:
 		double phase;
 		double rocof;	/**< Rate of change of frequency. */
 	};
-	Logger logger;
+
 	enum WindowType windowType;
 	enum PaddingType paddingType;
 	enum FreqEstimationType freqEstType;
@@ -126,7 +126,6 @@ protected:
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		logger(logging.get("hook:dft")),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
 		freqEstType(FreqEstimationType::NONE),
@@ -158,7 +157,7 @@ public:
 		signalIndex(),
 		lastResult({0,0,0,0}),
 		dumperPrefix("/tmp/plot/"),
-		dumperEnable(logger->level() <= SPDLOG_LEVEL_DEBUG),
+		dumperEnable(false),
 #ifdef DFT_MEM_DUMP
 		origSigSync(dumperPrefix + "origSigSync"),
 		windowdSigSync(dumperPrefix + "windowdSigSync"),
@@ -172,6 +171,8 @@ public:
 
 	virtual void prepare()
 	{
+		dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
+
 		signal_list_clear(&signals);
 		for (unsigned i = 0; i < signalIndex.size(); i++) {
 			struct signal *freqSig;
@@ -482,7 +483,7 @@ public:
 */
 		for (unsigned i = 0; i < freqCount; i++) {
 			results[i] = 0;
-			
+
 			for (unsigned j = 0; j < windowSize * windowMultiplier; j++) {
 				if (padding == PaddingType::ZERO) {
 					if (j < windowSize)
