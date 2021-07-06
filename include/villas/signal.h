@@ -78,6 +78,8 @@ struct signal * signal_copy(struct signal *s);
 /** Parse signal description. */
 int signal_parse(struct signal *s, json_t *json);
 
+char * signal_print(const struct signal *s, const union signal_data *d = nullptr);
+
 /** Initialize signal from a mapping_entry. */
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 

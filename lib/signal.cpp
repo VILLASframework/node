@@ -245,3 +245,26 @@ json_t * signal_to_json(struct signal *s)
 
 	return json_sig;
 }
+
+char * signal_print(const struct signal *s, const union signal_data *d)
+{
+	char *buf = nullptr;
+
+	if (s->name)
+		strcatf(&buf, " %s", s->name);
+
+	if (s->unit)
+		strcatf(&buf, " [%s]", s->unit);
+
+	strcatf(&buf, "(%s)", signal_type_to_str(s->type));
+
+	if (d) {
+		char val[32];
+
+		signal_data_print_str(d, s->type, val, sizeof(val));
+
+		strcatf(&buf, " = %s", val);
+	}
+
+	return buf;
+}
