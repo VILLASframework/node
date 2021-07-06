@@ -45,10 +45,10 @@ class Hook {
 
 public:
 	enum class Flags {
-		BUILTIN = (1 << 0),   /**< Should we add this hook by default to every path?. */
-		PATH = (1 << 1),      /**< This hook type is used by paths. */
-		NODE_READ = (1 << 2), /**< This hook type is used by nodes. */
-		NODE_WRITE = (1 << 3) /**< This hook type is used by nodes. */
+		BUILTIN = (1 << 0),	/**< Should we add this hook by default to every path?. */
+		PATH = (1 << 1),	/**< This hook type is used by paths. */
+		NODE_READ = (1 << 2),	/**< This hook type is used by nodes. */
+		NODE_WRITE = (1 << 3)	/**< This hook type is used by nodes. */
 	};
 
 	enum class Reason {
@@ -72,7 +72,7 @@ protected:
 
 	struct vlist signals;
 
-	json_t *config; /**< A JSON object containing the configuration of the hook. */
+	json_t *config;			/**< A JSON object containing the configuration of the hook. */
 
 public:
 	Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
@@ -81,12 +81,14 @@ public:
 	~Hook();
 
 	virtual
-	void parse(json_t *c);
+	void parse(json_t *json);
 
 	void prepare(struct vlist *sigs);
 
 	void setLogger(Logger log)
-	{ logger = log; }
+	{
+		logger = log;
+	}
 
 	/** Called whenever a hook is started; before threads are created. */
 	virtual
