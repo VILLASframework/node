@@ -86,8 +86,8 @@ void Hook::parse(json_t *json)
 
 	assert(state != State::STARTED);
 
-	int prio;
-	int en;
+	int prio = -1;
+	int en = -1;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }",
 		"priority", &prio,
@@ -96,11 +96,11 @@ void Hook::parse(json_t *json)
 	if (ret)
 		throw ConfigError(json, err, "node-config-hook");
 
-	if (prio < 0)
-		throw ConfigError(json, "node-config-hook", "Priority must be equal or larger than zero");
+	if (prio >= 0)
+		priority = prio;
 
-	priority = prio;
-	enabled = en;
+	if (en >= 0)
+		enabled = en;
 
 	config = json;
 
@@ -152,6 +152,8 @@ void MultiSignalHook::parse(json_t *json)
 	json_t *json_signals = nullptr;
 	json_t *json_signal = nullptr;
 
+	Hook::parse(json);
+
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o }",
 		"signals", &json_signals,
 		"signal", &json_signal
@@ -167,26 +169,28 @@ void MultiSignalHook::parse(json_t *json)
 			if (!json_is_string(json_signal))
 				throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
 
-			signalNames.push_back(json_string_value(json_signal));
+			const char *name = json_string_value(json_signal);
+
+			signalNames.push_back(name);
 		}
 	}
 	else if (json_signal) {
 		if (!json_is_string(json_signal))
 			throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
 
-		signalNames.push_back(json_string_value(json_signal));
+		const char *name = json_string_value(json_signal);
+
+		signalNames.push_back(name);
 	}
 	else
 		throw ConfigError(json, "node-config-hook-signals", "Missing 'signals' setting");
-
-
-	Hook::parse(json);
 }
 
 
 void MultiSignalHook::prepare()
 {
-	/* Setup mask */
+	Hook::prepare();
+
 	for (const auto &signalName : signalNames) {
 		int index = vlist_lookup_index<struct signal>(&signals, signalName);
 		if (index < 0)
@@ -194,14 +198,12 @@ void MultiSignalHook::prepare()
 
 		signalIndices.push_back(index);
 	}
-
-	Hook::prepare();
 }
 
 void MultiSignalHook::check()
 {
+	Hook::check();
+
 	if (signalNames.size() == 0)
 		throw RuntimeError("At least a single signal must be provided");
-
-	Hook::check();
 }
