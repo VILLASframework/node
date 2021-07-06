@@ -24,175 +24,101 @@
  * @{
  */
 
-#include <cstring>
-#include <cinttypes>
-#include <vector>
-#include <villas/timing.h>
 #include <villas/hook.hpp>
-#include <villas/path.h>
 #include <villas/sample.h>
 
 namespace villas {
 namespace node {
 
-class RMSHook : public Hook {
+class RMSHook : public MultiSignalHook {
 
 protected:
 	std::vector<std::vector<double>> smpMemory;
 
-	uint64_t calcCount;
-	unsigned rate;
+	double accumulator;
 	unsigned windowSize;
-	bool sync;
-	double nextCalc;
-
-	uint64_t smpMemPos;
-	uint64_t lastSequence;
-	struct timespec lastCalc;
-
-	std::vector<int> signalIndex;	/**< A list of signalIndex to do rms on */
+	uint64_t smpMemoryPosition;
 
 public:
 	RMSHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		MultiSignalHook(p, n, fl, prio, en),
 		smpMemory(),
-		calcCount(0),
-		rate(0),
+		accumulator(0.0),
 		windowSize(0),
-		sync(0),
-		nextCalc(0.0),
-		smpMemPos(0),
-		lastSequence(0),
-		lastCalc({0, 0}),
-		signalIndex()
+		smpMemoryPosition(0)
 	{ }
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
-		signal_list_clear(&signals);
-		for (unsigned i = 0; i < signalIndex.size(); i++) {
-			struct signal *amplSig;
+		MultiSignalHook::prepare();
 
-			/* Add signals */
-			amplSig = signal_create("rms", "", SignalType::FLOAT);
+		/* Add signals */
+		for (auto index : signalIndices) {
+			auto *origSig = (struct signal *) vlist_at_safe(&signals, index);
 
-			if (!amplSig)
-				throw RuntimeError("Failed to create new signals");
-
-			vlist_push(&signals, amplSig);
+			/* Check that signal has float type */
+			if (origSig->type != SignalType::FLOAT)
+				throw RuntimeError("The rms hook can only operate on signals of type float!");
 		}
 
 		/* Initialize sample memory */
 		smpMemory.clear();
-		for (unsigned i = 0; i < signalIndex.size(); i++)
-			smpMemory.emplace_back(std::vector<double>(windowSize, 0.0));
+		for (unsigned i = 0; i < signalIndices.size(); i++)
+			smpMemory.emplace_back(windowSize, 0.0);
 
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *cfg)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
 
-		json_t *jsonChannelList = nullptr;
-
 		assert(state != State::STARTED);
 
-		Hook::parse(cfg);
+		MultiSignalHook::parse(json);
 
-		ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b, s?: i, s?: o }",
-			"window_size", &windowSize,
-			"sync", &sync,
-			"rate", &rate,
-			"signal_index", &jsonChannelList
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i }",
+			"window_size", &windowSize
 		);
 		if (ret)
-			throw ConfigError(cfg, err, "node-config-hook-rms");
-
-		if (jsonChannelList != nullptr) {
-			signalIndex.clear();
-			if (jsonChannelList->type == JSON_ARRAY) {
-				size_t i;
-				json_t *jsonValue;
-				json_array_foreach(jsonChannelList, i, jsonValue) {
-					if (!json_is_number(jsonValue))
-						throw ConfigError(jsonValue, "node-config-hook-rms-channel", "Values must be given as array of integer values!");
-
-					auto idx = json_number_value(jsonValue);
-
-					signalIndex.push_back(idx);
-				}
-			}
-			else if (jsonChannelList->type == JSON_INTEGER) {
-				if (!json_is_number(jsonChannelList))
-					throw ConfigError(jsonChannelList, "node-config-hook-rms-channel", "Value must be given as integer value!");
-
-				auto idx = json_number_value(jsonChannelList);
-
-				signalIndex.push_back(idx);
-			}
-			else
-				logger->warn("Could not parse channel list. Please check documentation for syntax");
-		}
-		else
-			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
+			throw ConfigError(json, err, "node-config-hook-rms");
 
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct sample *smp)
+	virtual
+	Hook::Reason process(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 
-		for (unsigned i = 0; i < signalIndex.size(); i++)
-			smpMemory[i][smpMemPos % windowSize] = pow(smp->data[signalIndex[i]].f, 2);
+		unsigned i = 0;
+		for (auto index : signalIndices) {
+			/* Square the new value */
+			double newValue = pow(smp->data[index].f, 2);
 
-		smpMemPos++;
+			/* Append the new value to the history memory */
+			smpMemory[i][smpMemoryPosition % windowSize] = newValue;
 
-		bool runRms = false;
-		if (sync) {
-			double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
+			/* Get the old value from the history */
+			double oldValue = smpMemory[i][(smpMemoryPosition + 1) % windowSize];
 
-			if (smpNsec > nextCalc) {
-				runRms = true;
-				nextCalc = (( smp->ts.origin.tv_sec ) + ( ((calcCount % rate) + 1) / (double)rate )) * 1e9;
-			}
+			/* Update the accumulator */
+			accumulator += newValue;
+			accumulator -= oldValue;
+
+			auto rms = pow(accumulator / windowSize, 0.5);
+
+			smp->data[index].f = rms;
+			i++;
 		}
 
-		if (runRms) {
-			lastCalc = smp->ts.origin;
+		smpMemoryPosition++;
 
-			for (unsigned i = 0; i < signalIndex.size(); i++) {
-				double rms = 0;
-
-				for (unsigned j = 0; j < windowSize; j++)
-					rms += smpMemory[i][j];
-
-				rms = pow(rms / windowSize, 0.5) ;
-
-
-				if (calcCount > 1) {
-					smp->data[i * 4 + 0].f = rms; /* RMS */
-				}
-			}
-
-			smp->length = calcCount > 1 ? signalIndex.size() * 4 : 0;
-
-			calcCount++;
-		}
-
-		if (smp->sequence - lastSequence > 1)
-			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
-
-		lastSequence = smp->sequence;
-
-		return runRms
-			? Reason::OK
-			: Reason::SKIP_SAMPLE;
+		return Reason::OK;
 	}
-
-
 };
 
 /* Register hook */

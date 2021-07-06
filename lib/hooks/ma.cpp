@@ -60,7 +60,7 @@ public:
 
 			/* Check that signal has float type */
 			if (origSig->type != SignalType::FLOAT)
-				throw RuntimeError("The rms hook can only operate on signals of type float!");
+				throw RuntimeError("The ma hook can only operate on signals of type float!");
 		}
 
 		/* Initialize sample memory */
