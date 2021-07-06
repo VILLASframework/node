@@ -175,7 +175,7 @@ public:
 
 	virtual void setRate(double rate, double maxRate = -1) = 0;
 
-	void parse()
+	virtual void parse()
 	{
 		assert(state == State::INITIALIZED);
 
