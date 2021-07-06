@@ -144,8 +144,8 @@ skip_add:
 
 		sigs = h->getSignals();
 
-		auto logger = logging.get("hook");
-		logger->debug("Signal list after hook {}:", i);
+		auto logger = h->getLogger();
+		logger->debug("Signal list after hook #{}:", i);
 		signal_list_dump(logger, sigs);
 	}
 }
