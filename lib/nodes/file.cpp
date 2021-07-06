@@ -269,16 +269,15 @@ int file_start(struct vnode *n)
 
 	free(cpy);
 
-	/* Open file */
-
 	f->formatter->start(&n->in.signals);
+
+	/* Open file */
+	f->stream_out = fopen(f->uri, "a+");
+	if (!f->stream_out)
+		return -1;
 
 	f->stream_in = fopen(f->uri, "r");
 	if (!f->stream_in)
-		return -1;
-
-	f->stream_out = fopen(f->uri, "a+");
-	if (!f->stream_out)
 		return -1;
 
 	if (f->buffer_size_in) {
