@@ -71,10 +71,24 @@ void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, 
 		const char *type;
 		Hook *h;
 		json_error_t err;
+		json_t *json_config;
 
+		switch (json_typeof(json_hook)) {
+			case JSON_STRING:
+				type = json_string_value(json_hook);
+				json_config = json_object();
+				break;
+
+			case JSON_OBJECT:
 		ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
 		if (ret)
 			throw ConfigError(json_hook, err, "node-config-hook", "Failed to parse hook");
+				json_config = json_hook;
+				break;
+
+			default:
+				throw ConfigError(json_hook, "node-config-hook", "Hook must be configured by simple string or object");
+		}
 
 		auto hf = plugin::Registry::lookup<HookFactory>(type);
 		if (!hf)
@@ -84,8 +98,7 @@ void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, 
 			throw ConfigError(json_hook, "node-config-hook", "Hook '{}' not allowed here", type);
 
 		h = hf->make(o, n);
-		h->parse(json_hook);
-		h->check();
+		h->parse(json_config);
 
 		vlist_push(hs, h);
 	}
