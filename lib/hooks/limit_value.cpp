@@ -36,37 +36,20 @@
 namespace villas {
 namespace node {
 
-class LimitValueHook : public Hook {
+class LimitValueHook : public MultiSignalHook {
 
 protected:
 	unsigned offset;
 
 	float min, max;
 
-	std::bitset<MAX_SAMPLE_LENGTH> mask;
-	vlist signal_names;
-
 public:
 	LimitValueHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		MultiSignalHook(p, n, fl, prio, en),
 		offset(0),
-		min(0), max(0)
-	{
-		int ret;
-
-		ret = vlist_init(&signal_names);
-		if (ret)
-			throw RuntimeError("Failed to intialize list");
-
-		state = State::INITIALIZED;
-	}
-
-	virtual ~LimitValueHook()
-	{
-		int ret __attribute__((unused));
-
-		ret = vlist_destroy(&signal_names, nullptr, true);
-	}
+		min(0),
+		max(0)
+	{ }
 
 	virtual void prepare()
 	{
@@ -75,19 +58,7 @@ public:
 
 		assert(state == State::CHECKED);
 
-		/* Setup mask */
-		for (size_t i = 0; i < vlist_length(&signal_names); i++) {
-			char *signal_name = (char *) vlist_at_safe(&signal_names, i);
-
-			int index = vlist_lookup_index<struct signal>(&signals, signal_name);
-			if (index < 0)
-				throw RuntimeError("Failed to find signal {}", signal_name);
-
-			mask.set(index);
-		}
-
-		if (mask.none())
-			throw RuntimeError("Invalid signal mask");
+		MultiSignalHook::prepare();
 
 		/* Add averaged signal */
 		avg_sig = signal_create("average", nullptr, SignalType::FLOAT);
@@ -104,39 +75,18 @@ public:
 	virtual void parse(json_t *json)
 	{
 		int ret;
-		size_t i;
 		json_error_t err;
-		json_t *json_signals, *json_signal;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		MultiSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s: f, s: f, s: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s: f, s: f }",
 			"min", &min,
-			"min", &max,
-			"signals", &json_signals
+			"min", &max
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-average");
-
-		if (!json_is_array(json_signals))
-			throw ConfigError(json_signals, "node-config-hook-average-signals", "Setting 'signals' must be a list of signal names");
-
-		json_array_foreach(json_signals, i, json_signal) {
-			switch (json_typeof(json_signal)) {
-				case JSON_STRING:
-					vlist_push(&signal_names, strdup(json_string_value(json_signal)));
-					break;
-
-				case JSON_INTEGER:
-					mask.set(json_integer_value(json_signal));
-					break;
-
-				default:
-					throw ConfigError(json_signal, "node-config-hook-average-signals", "Invalid value for setting 'signals'");
-			}
-		}
 
 		state = State::PARSED;
 	}
@@ -145,25 +95,22 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		for (unsigned k = 0; k < smp->length; k++) {
-			if (!mask.test(k))
-				continue;
-
-			switch (sample_format(smp, k)) {
+		for (auto index : signalIndices) {
+			switch (sample_format(smp, index)) {
 				case SignalType::INTEGER:
-					if (smp->data[k].i > max)
-						smp->data[k].i = max;
+					if (smp->data[index].i > max)
+						smp->data[index].i = max;
 
-					if (smp->data[k].i < min)
-						smp->data[k].i = min;
+					if (smp->data[index].i < min)
+						smp->data[index].i = min;
 					break;
 
 				case SignalType::FLOAT:
-					if (smp->data[k].f > max)
-						smp->data[k].f = max;
+					if (smp->data[index].f > max)
+						smp->data[index].f = max;
 
-					if (smp->data[k].f < min)
-						smp->data[k].f = min;
+					if (smp->data[index].f < min)
+						smp->data[index].f = min;
 					break;
 
 				case SignalType::INVALID:

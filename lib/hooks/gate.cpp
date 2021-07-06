@@ -36,7 +36,7 @@
 namespace villas {
 namespace node {
 
-class GateHook : public Hook {
+class GateHook : public SingleSignalHook {
 
 protected:
 	enum class Mode {
@@ -46,8 +46,6 @@ protected:
 		FALLING_EDGE
 	} mode;
 
-	std::string signalName;
-	int signalIndex;
 	double threshold;
 	double duration;
 	int samples;
@@ -59,10 +57,8 @@ protected:
 
 public:
 	GateHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		SingleSignalHook(p, n, fl, prio, en),
 		mode(Mode::RISING_EDGE),
-		signalName(),
-		signalIndex(0),
 		threshold(0.5),
 		duration(-1),
 		samples(-1),
@@ -76,16 +72,14 @@ public:
 		int ret;
 
 		json_error_t err;
-		json_t *json_signal;
 
 		const char *mode_str;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		SingleSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: F, s?: F, s?: i, s?: s }",
-			"signal", &json_signal,
+		ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F, s?: i, s?: s }",
 			"threshold", &threshold,
 			"duration", &duration,
 			"samples", &samples,
@@ -105,20 +99,6 @@ public:
 				mode = Mode::FALLING_EDGE;
 		}
 
-		switch (json_typeof(json_signal)) {
-			case JSON_STRING:
-				signalName = json_string_value(json_signal);
-				break;
-
-			case JSON_INTEGER:
-				signalName.clear();
-				signalIndex = json_integer_value(json_signal);
-				break;
-
-			default:
-				throw ConfigError(json_signal, "node-config-hook-cast-signals", "Invalid value for setting 'signal'");
-		}
-
 		state = State::PARSED;
 	}
 
@@ -126,23 +106,13 @@ public:
 	{
 		assert(state == State::CHECKED);
 
-		if (!signalName.empty()) {
-			signalIndex = vlist_lookup_index<struct signal>(&signals, signalName);
-			if (signalIndex < 0)
-				throw RuntimeError("Failed to find signal: {}", signalName);
-		}
-
 		/* Check if signal type is float */
 		auto sig = (struct signal *) vlist_at(&signals, signalIndex);
-		if (!sig)
-			throw RuntimeError("Invalid signal index: {}", signalIndex);
-
 		if (sig->type != SignalType::FLOAT)
 			throw RuntimeError("Gate signal must be of type float");
 
 		state = State::PREPARED;
 	}
-
 
 	virtual Hook::Reason process(sample *smp)
 	{

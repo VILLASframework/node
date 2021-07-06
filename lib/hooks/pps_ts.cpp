@@ -34,47 +34,45 @@
 namespace villas {
 namespace node {
 
-class PpsTsHook : public Hook {
+class PpsTsHook : public SingleSignalHook {
 
 protected:
 	double lastValue;
-	double thresh;
-	unsigned idx;
+	double threshold;
 	uint64_t lastSequence;
 
 	bool isSynced;
 	bool isLocked;
 	struct timespec tsVirt;
 	double timeError;		/**< In seconds */
-	double periodEst;		/**< In seconds */
-	double periodErrComp;		/**< In seconds */
+	double periodEstimate;		/**< In seconds */
+	double periodErrorCompensation;	/**< In seconds */
 	double period;			/**< In seconds */
 	uintmax_t cntEdges;
 	uintmax_t cntSmps;
 	uintmax_t cntSmpsTotal;
-	unsigned horizonComp;
-	unsigned horizonEst;
+	unsigned horizonCompensation;
+	unsigned horizonEstimation;
 	std::vector<uintmax_t> filterWindow;
 
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		SingleSignalHook(p, n, fl, prio, en),
 		lastValue(0),
-		thresh(1.5),
-		idx(0),
+		threshold(1.5),
 		lastSequence(0),
 		isSynced(false),
 		isLocked(false),
 		timeError(0.0),
-		periodEst(0.0),
-		periodErrComp(0.0),
+		periodEstimate(0.0),
+		periodErrorCompensation(0.0),
 		period(0.0),
 		cntEdges(0),
 		cntSmps(0),
 		cntSmpsTotal(0),
-		horizonComp(10),
-		horizonEst(10),
-		filterWindow(horizonEst + 1, 0)
+		horizonCompensation(10),
+		horizonEstimation(10),
+		filterWindow(horizonEstimation + 1, 0)
 	{ }
 
 	virtual void parse(json_t *json)
@@ -87,9 +85,8 @@ public:
 		Hook::parse(json);
 
 		double fSmps = 0;
-		ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: f, s: F}",
-			"signal_index", &idx,
-			"threshold", &thresh,
+		ret = json_unpack_ex(json, &err, 0, "{ s?: f, s: F }",
+			"threshold", &threshold,
 			"expected_smp_rate", &fSmps
 		);
 		if (ret)
@@ -97,7 +94,7 @@ public:
 
 		period = 1.0 / fSmps;
 
-		logger->debug("Parsed config thresh={} signal_index={} nominal_period={}", thresh, idx, period);
+		logger->debug("Parsed config threshold={} signal_index={} nominal_period={}", threshold, signalIndex, period);
 
 		state = State::PARSED;
 	}
@@ -107,10 +104,10 @@ public:
 		assert(state == State::STARTED);
 
 		/* Get value of PPS signal */
-		float value = smp->data[idx].f; // TODO check if it is really float
+		float value = smp->data[signalIndex].f; // TODO check if it is really float
 
 		/* Detect Edge */
-		bool isEdge = lastValue < thresh && value > thresh;
+		bool isEdge = lastValue < threshold && value > threshold;
 
 		lastValue = value;
 
@@ -123,12 +120,12 @@ public:
 
 
 				filterWindow[cntEdges % filterWindow.size()] = cntSmpsTotal;
-				/* Estimated sample period over last 'horizonEst' seconds */
-				unsigned int tmp = cntEdges < filterWindow.size() ? cntEdges : horizonEst;
+				/* Estimated sample period over last 'horizonEstimation' seconds */
+				unsigned int tmp = cntEdges < filterWindow.size() ? cntEdges : horizonEstimation;
 				double cntSmpsAvg = (cntSmpsTotal - filterWindow[(cntEdges - tmp) % filterWindow.size()]) / tmp;
-				periodEst = 1.0 / cntSmpsAvg;
-				periodErrComp = timeError / (cntSmpsAvg * horizonComp);
-				period = periodEst + periodErrComp;
+				periodEstimate = 1.0 / cntSmpsAvg;
+				periodErrorCompensation = timeError / (cntSmpsAvg * horizonCompensation);
+				period = periodEstimate + periodErrorCompensation;
 			}
 			else {
 				tsVirt.tv_sec = time(nullptr);
@@ -140,7 +137,7 @@ public:
 			cntSmps = 0;
 			cntEdges++;
 
-			logger->debug("Time Error is: {} periodEst {} periodErrComp {}", timeError, periodEst, periodErrComp);
+			logger->debug("Time Error is: {} periodEstimate {} periodErrorCompensation {}", timeError, periodEstimate, periodErrorCompensation);
 		}
 
 		cntSmps++;

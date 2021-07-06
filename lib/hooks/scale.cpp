@@ -32,102 +32,62 @@
 namespace villas {
 namespace node {
 
-class ScaleHook : public Hook {
+class ScaleHook : public MultiSignalHook {
 
 protected:
-	char *signal_name;
-	unsigned signal_index;
-
 	double scale;
 	double offset;
 
 public:
 	ScaleHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
-		signal_name(nullptr),
-		signal_index(0),
-		scale(1),
-		offset(0)
+		MultiSignalHook(p, n, fl, prio, en),
+		scale(1.0),
+		offset(0.0)
 	{ }
-
-	virtual void prepare()
-	{
-		assert(state != State::STARTED);
-
-		if (signal_name) {
-			signal_index = vlist_lookup_index<struct signal>(&signals, signal_name);
-			if (signal_index < 0)
-				throw RuntimeError("Failed to find signal: {}", signal_name);
-		}
-
-		state = State::PREPARED;
-	}
-
-	virtual ~ScaleHook()
-	{
-		if (signal_name)
-			free(signal_name);
-	}
 
 	virtual void parse(json_t *json)
 	{
 		int ret;
-		json_t *json_signal;
 		json_error_t err;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		MultiSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F, s: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F }",
 			"scale", &scale,
-			"offset", &offset,
-			"signal", &json_signal
+			"offset", &offset
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-scale");
-
-		switch (json_typeof(json_signal)) {
-			case JSON_STRING:
-				signal_name = strdup(json_string_value(json_signal));
-				break;
-
-			case JSON_INTEGER:
-				signal_name = nullptr;
-				signal_index = json_integer_value(json_signal);
-				break;
-
-			default:
-				throw ConfigError(json_signal, "node-config-hook-scale-signal", "Invalid value for setting 'signal'");
-		}
 
 		state = State::PARSED;
 	}
 
 	virtual Hook::Reason process(struct sample *smp)
 	{
-		unsigned k = signal_index;
+		for (auto index : signalIndices) {
+			assert(index < smp->length);
+			assert(state == State::STARTED);
 
-		assert(k < smp->length);
-		assert(state == State::STARTED);
+			switch (sample_format(smp, index)) {
+				case SignalType::INTEGER:
+					smp->data[index].i *= scale;
+					smp->data[index].i += offset;
+					break;
 
-		switch (sample_format(smp, k)) {
-			case SignalType::INTEGER:
-				smp->data[k].i *= scale;
-				smp->data[k].i += offset;
-				break;
+				case SignalType::FLOAT:
+					smp->data[index].f *= scale;
+					smp->data[index].f += offset;
+					break;
 
-			case SignalType::FLOAT:
-				smp->data[k].f *= scale;
-				smp->data[k].f += offset;
-				break;
+				case SignalType::COMPLEX:
+					smp->data[index].z *= scale;
+					smp->data[index].z += offset;
+					break;
 
-			case SignalType::COMPLEX:
-				smp->data[k].z *= scale;
-				smp->data[k].z += offset;
-				break;
-
-			default: { }
+				default: { }
+			}
 		}
 
 		return Reason::OK;

@@ -33,37 +33,18 @@
 namespace villas {
 namespace node {
 
-class CastHook : public Hook {
+class CastHook : public MultiSignalHook {
 
 protected:
-	unsigned signal_index;
-	char *signal_name;
-
 	enum SignalType new_type;
-	char *new_name;
-	char *new_unit;
+	std::string new_name;
+	std::string new_unit;
 
 public:
 	CastHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
-		signal_index(-1),
-		signal_name(nullptr),
-		new_type(SignalType::INVALID),
-		new_name(nullptr),
-		new_unit(nullptr)
+		MultiSignalHook(p, n, fl, prio, en),
+		new_type(SignalType::INVALID)
 	{ }
-
-	~CastHook()
-	{
-		if (signal_name)
-			free(signal_name);
-
-		if (new_name)
-			free(new_name);
-
-		if (new_unit)
-			free(new_unit);
-	}
 
 	virtual void prepare()
 	{
@@ -71,27 +52,20 @@ public:
 
 		assert(state == State::CHECKED);
 
-		if (signal_name) {
-			signal_index = vlist_lookup_index<struct signal>(&signals, signal_name);
-			if (signal_index < 0)
-				throw RuntimeError("Failed to find signal: {}", signal_name);
+		MultiSignalHook::prepare();
+
+		for (auto index : signalIndices) {
+			orig_sig = (struct signal *) vlist_at_safe(&signals, index);
+
+			auto type = new_type == SignalType::INVALID ? orig_sig->type : new_type;
+			auto name = new_name.empty()                ? orig_sig->name : new_name;
+			auto unit = new_unit.empty()                ? orig_sig->unit : new_unit;
+
+			new_sig = signal_create(name.c_str(), unit.c_str(), type);
+
+			vlist_set(&signals, index, new_sig);
+			signal_decref(orig_sig);
 		}
-
-		char *name, *unit;
-		enum SignalType type;
-
-		orig_sig = (struct signal *) vlist_at_safe(&signals, signal_index);
-		if (!orig_sig)
-			throw RuntimeError("Failed to find signal: {}", signal_name);
-
-		type = new_type != SignalType::INVALID ? new_type : orig_sig->type;
-		name = new_name ? new_name : orig_sig->name;
-		unit = new_unit ? new_unit : orig_sig->unit;
-
-		new_sig = signal_create(name, unit, type);
-
-		vlist_set(&signals, signal_index, new_sig);
-		signal_decref(orig_sig);
 
 		state = State::PREPARED;
 	}
@@ -101,38 +75,22 @@ public:
 		int ret;
 
 		json_error_t err;
-		json_t *json_signal;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		MultiSignalHook::parse(json);
 
 		const char *name = nullptr;
 		const char *unit = nullptr;
 		const char *type = nullptr;
 
-		ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: s, s?: s, s?: s }",
-			"signal", &json_signal,
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s }",
 			"new_type", &type,
 			"new_name", &name,
 			"new_unit", &unit
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-cast");
-
-		switch (json_typeof(json_signal)) {
-			case JSON_STRING:
-				signal_name = strdup(json_string_value(json_signal));
-				break;
-
-			case JSON_INTEGER:
-				signal_name = nullptr;
-				signal_index = json_integer_value(json_signal);
-				break;
-
-			default:
-				throw ConfigError(json_signal, "node-config-hook-cast-signals", "Invalid value for setting 'signal'");
-		}
 
 		if (type) {
 			new_type = signal_type_from_str(type);
@@ -144,10 +102,10 @@ public:
 			new_type = SignalType::INVALID;
 
 		if (name)
-			new_name = strdup(name);
+			new_name = name;
 
 		if (unit)
-			new_unit = strdup(unit);
+			new_unit = unit;
 
 		state = State::PARSED;
 	}
@@ -156,10 +114,12 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		struct signal *orig_sig = (struct signal *) vlist_at(smp->signals, signal_index);
-		struct signal *new_sig  = (struct signal *) vlist_at(&signals,  signal_index);
+		for (auto index : signalIndices) {
+			struct signal *orig_sig = (struct signal *) vlist_at(smp->signals, index);
+			struct signal *new_sig  = (struct signal *) vlist_at(&signals,  index);
 
-		signal_data_cast(&smp->data[signal_index], orig_sig->type, new_sig->type);
+			signal_data_cast(&smp->data[index], orig_sig->type, new_sig->type);
+		}
 
 		return Reason::OK;
 	}

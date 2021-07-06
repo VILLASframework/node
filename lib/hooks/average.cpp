@@ -25,7 +25,6 @@
  */
 
 #include <bitset>
-
 #include <cstring>
 
 #include <villas/hook.hpp>
@@ -36,34 +35,16 @@
 namespace villas {
 namespace node {
 
-class AverageHook : public Hook {
+class AverageHook : public MultiSignalHook {
 
 protected:
 	unsigned offset;
 
-	std::bitset<MAX_SAMPLE_LENGTH> mask;
-	vlist signal_names;
-
 public:
 	AverageHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		MultiSignalHook(p, n, fl, prio, en),
 		offset(0)
-	{
-		int ret;
-
-		ret = vlist_init(&signal_names);
-		if (ret)
-			throw RuntimeError("Failed to intialize list");
-
-		state = State::INITIALIZED;
-	}
-
-	virtual ~AverageHook()
-	{
-		int ret __attribute__((unused));
-
-		ret = vlist_destroy(&signal_names, nullptr, true);
-	}
+	{ }
 
 	virtual void prepare()
 	{
@@ -72,19 +53,7 @@ public:
 
 		assert(state == State::CHECKED);
 
-		/* Setup mask */
-		for (size_t i = 0; i < vlist_length(&signal_names); i++) {
-			char *signal_name = (char *) vlist_at_safe(&signal_names, i);
-
-			int index = vlist_lookup_index<struct signal>(&signals, signal_name);
-			if (index < 0)
-				throw RuntimeError("Failed to find signal {}", signal_name);
-
-			mask.set(index);
-		}
-
-		if (mask.none())
-			throw RuntimeError("Invalid signal mask");
+		MultiSignalHook::prepare();
 
 		/* Add averaged signal */
 		avg_sig = signal_create("average", nullptr, SignalType::FLOAT);
@@ -101,38 +70,17 @@ public:
 	virtual void parse(json_t *json)
 	{
 		int ret;
-		size_t i;
 		json_error_t err;
-		json_t *json_signals, *json_signal;
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		MultiSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s: i, s: o }",
-			"offset", &offset,
-			"signals", &json_signals
+		ret = json_unpack_ex(json, &err, 0, "{ s: i }",
+			"offset", &offset
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-average");
-
-		if (!json_is_array(json_signals))
-			throw ConfigError(json_signals, "node-config-hook-average-signals", "Setting 'signals' must be a list of signal names");
-
-		json_array_foreach(json_signals, i, json_signal) {
-			switch (json_typeof(json_signal)) {
-				case JSON_STRING:
-					vlist_push(&signal_names, strdup(json_string_value(json_signal)));
-					break;
-
-				case JSON_INTEGER:
-					mask.set(json_integer_value(json_signal));
-					break;
-
-				default:
-					throw ConfigError(json_signal, "node-config-hook-average-signals", "Invalid value for setting 'signals'");
-			}
-		}
 
 		state = State::PARSED;
 	}
@@ -144,17 +92,14 @@ public:
 
 		assert(state == State::STARTED);
 
-		for (unsigned k = 0; k < smp->length; k++) {
-			if (!mask.test(k))
-				continue;
-
-			switch (sample_format(smp, k)) {
+		for (unsigned index : signalIndices) {
+			switch (sample_format(smp, index)) {
 				case SignalType::INTEGER:
-					sum += smp->data[k].i;
+					sum += smp->data[index].i;
 					break;
 
 				case SignalType::FLOAT:
-					sum += smp->data[k].f;
+					sum += smp->data[index].f;
 					break;
 
 				case SignalType::INVALID:
