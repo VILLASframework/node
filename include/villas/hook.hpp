@@ -168,6 +168,41 @@ public:
 	}
 };
 
+class SingleSignalHook : public Hook {
+
+protected:
+	unsigned signalIndex;
+	std::string signalName;
+
+public:
+	using Hook::Hook;
+
+	virtual
+	void parse(json_t *json);
+
+	virtual
+	void prepare();
+};
+
+class MultiSignalHook : public Hook {
+
+protected:
+	std::list<unsigned> signalIndices;
+	std::list<std::string> signalNames;
+
+public:
+	using Hook::Hook;
+
+	virtual
+	void parse(json_t *json);
+
+	virtual
+	void prepare();
+
+	virtual
+	void check();
+};
+
 class LimitHook : public Hook {
 
 public:

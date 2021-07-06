@@ -106,3 +106,102 @@ void Hook::parse(json_t *json)
 
 	state = State::PARSED;
 }
+
+void SingleSignalHook::parse(json_t *json)
+{
+	int ret;
+
+	json_error_t err;
+	json_t *json_signal;
+
+	Hook::parse(json);
+
+	ret = json_unpack_ex(json, &err, 0, "{ s: o }",
+		"signal", &json_signal
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-hook");
+
+	if (!json_is_string(json_signal))
+		throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
+
+	signalName = json_string_value(json_signal);
+}
+
+
+void SingleSignalHook::prepare()
+{
+	Hook::prepare();
+
+	/* Setup mask */
+	int index = vlist_lookup_index<struct signal>(&signals, signalName);
+	if (index < 0)
+		throw RuntimeError("Failed to find signal {}", signalName);
+
+	signalIndex = (unsigned) index;
+}
+
+/* Multi Signal Hook */
+
+void MultiSignalHook::parse(json_t *json)
+{
+	int ret;
+	size_t i;
+
+	json_error_t err;
+	json_t *json_signals = nullptr;
+	json_t *json_signal = nullptr;
+
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o }",
+		"signals", &json_signals,
+		"signal", &json_signal
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-hook");
+
+	if (json_signals) {
+		if (!json_is_array(json_signals))
+			throw ConfigError(json_signals, "node-config-hook-signals", "Setting 'signals' must be a list of signal names");
+
+		json_array_foreach(json_signals, i, json_signal) {
+			if (!json_is_string(json_signal))
+				throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
+
+			signalNames.push_back(json_string_value(json_signal));
+		}
+	}
+	else if (json_signal) {
+		if (!json_is_string(json_signal))
+			throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
+
+		signalNames.push_back(json_string_value(json_signal));
+	}
+	else
+		throw ConfigError(json, "node-config-hook-signals", "Missing 'signals' setting");
+
+
+	Hook::parse(json);
+}
+
+
+void MultiSignalHook::prepare()
+{
+	/* Setup mask */
+	for (const auto &signalName : signalNames) {
+		int index = vlist_lookup_index<struct signal>(&signals, signalName);
+		if (index < 0)
+			throw RuntimeError("Failed to find signal {}", signalName);
+
+		signalIndices.push_back(index);
+	}
+
+	Hook::prepare();
+}
+
+void MultiSignalHook::check()
+{
+	if (signalNames.size() == 0)
+		throw RuntimeError("At least a single signal must be provided");
+
+	Hook::check();
+}
