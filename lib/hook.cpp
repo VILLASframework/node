@@ -86,12 +86,21 @@ void Hook::parse(json_t *json)
 
 	assert(state != State::STARTED);
 
+	int prio;
+	int en;
+
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }",
-		"priority", &priority,
-		"enabled", &enabled
+		"priority", &prio,
+		"enabled", &en
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-hook");
+
+	if (prio < 0)
+		throw ConfigError(json, "node-config-hook", "Priority must be equal or larger than zero");
+
+	priority = prio;
+	enabled = en;
 
 	config = json;
 

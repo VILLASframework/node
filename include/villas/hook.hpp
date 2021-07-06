@@ -64,8 +64,8 @@ protected:
 	enum State state;
 
 	int flags;
-	int priority; /**< A priority to change the order of execution within one type of hook. */
-	int enabled;  /**< Is this hook active? */
+	unsigned priority;		/**< A priority to change the order of execution within one type of hook. */
+	bool enabled;			/**< Is this hook active? */
 
 	struct vpath *path;
 	struct vnode *node;
@@ -141,7 +141,7 @@ public:
 		return Reason::OK;
 	};
 
-	int getPriority() const
+	unsigned getPriority() const
 	{
 		return priority;
 	}
@@ -199,7 +199,7 @@ public:
 	virtual Hook * make(struct vpath *p, struct vnode *n) = 0;
 
 	virtual int getFlags() const = 0;
-	virtual int getPriority() const = 0;
+	virtual unsigned getPriority() const = 0;
 
 	virtual
 	std::string
@@ -207,7 +207,7 @@ public:
 	{ return "hook"; }
 };
 
-template <typename T, const char *name, const char *desc, int flags = 0, int prio = 99>
+template <typename T, const char *name, const char *desc, int flags = 0, unsigned prio = 99>
 class HookPlugin : public HookFactory {
 
 public:
@@ -234,7 +234,7 @@ public:
 	getFlags() const
 	{ return flags; }
 
-	virtual int
+	virtual unsigned
 	getPriority() const
 	{ return prio; }
 };
