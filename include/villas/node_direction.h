@@ -69,7 +69,7 @@ int node_direction_destroy(struct vnode_direction *nd, struct vnode *n) __attrib
 
 int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *json);
 
-int node_direction_check(struct vnode_direction *nd, struct vnode *n);
+void node_direction_check(struct vnode_direction *nd, struct vnode *n);
 
 int node_direction_prepare(struct vnode_direction *nd, struct vnode *n);
 

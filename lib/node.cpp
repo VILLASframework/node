@@ -244,13 +244,8 @@ int node_check(struct vnode *n)
 	int ret;
 	assert(n->state != State::DESTROYED);
 
-	ret = node_direction_check(&n->in, n);
-	if (ret)
-		return ret;
-
-	ret = node_direction_check(&n->out, n);
-	if (ret)
-		return ret;
+	node_direction_check(&n->in, n);
+	node_direction_check(&n->out, n);
 
 	ret = node_type(n)->check ? node_type(n)->check(n) : 0;
 	if (ret)

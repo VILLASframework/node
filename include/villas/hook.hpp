@@ -90,6 +90,11 @@ public:
 		logger = log;
 	}
 
+	Logger getLogger()
+	{
+		return logger;
+	}
+
 	/** Called whenever a hook is started; before threads are created. */
 	virtual
 	void start()

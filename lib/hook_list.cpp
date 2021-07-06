@@ -80,9 +80,9 @@ void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, 
 				break;
 
 			case JSON_OBJECT:
-		ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
-		if (ret)
-			throw ConfigError(json_hook, err, "node-config-hook", "Failed to parse hook");
+				ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
+				if (ret)
+					throw ConfigError(json_hook, err, "node-config-hook", "Failed to parse hook");
 				json_config = json_hook;
 				break;
 
@@ -112,6 +112,15 @@ static int hook_cmp_priority(const Hook *a, const Hook *b)
 static int hook_is_enabled(const Hook *h)
 {
 	return h->isEnabled() ? 0 : -1;
+}
+
+void hook_list_check(struct vlist *hs)
+{
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		Hook *h = (Hook *) vlist_at(hs, i);
+
+		h->check();
+	}
 }
 
 void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, struct vnode *n)
@@ -233,11 +242,11 @@ unsigned hook_list_get_signals_max_cnt(struct vlist *hs)
 
 		struct vlist *sigs = h->getSignals();
 		unsigned sigs_cnt = vlist_length(sigs);
-		
+
 		if (sigs_cnt > max_cnt)
 			max_cnt = sigs_cnt;
 	}
-	
+
 	return max_cnt;
 }
 

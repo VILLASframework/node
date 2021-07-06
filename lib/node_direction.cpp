@@ -168,16 +168,18 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *js
 	return 0;
 }
 
-int node_direction_check(struct vnode_direction *nd, struct vnode *n)
+void node_direction_check(struct vnode_direction *nd, struct vnode *n)
 {
 	assert(n->state != State::DESTROYED);
 
 	if (nd->vectorize <= 0)
 		throw RuntimeError("Invalid setting 'vectorize' with value {}. Must be natural number!", nd->vectorize);
 
-	nd->state = State::CHECKED;
+#ifdef WITH_HOOKS
+	hook_list_check(&nd->hooks);
+#endif /* WITH_HOOKS */
 
-	return 0;
+	nd->state = State::CHECKED;
 }
 
 int node_direction_start(struct vnode_direction *nd, struct vnode *n)

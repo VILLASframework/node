@@ -567,6 +567,10 @@ void path_check(struct vpath *p)
 		path_destination_check(ps);
 	}
 
+#ifdef WITH_HOOKS
+	hook_list_check(&p->hooks);
+#endif /* WITH_HOOKS */
+
 	p->state = State::CHECKED;
 }
 

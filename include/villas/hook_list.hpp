@@ -59,6 +59,8 @@ int hook_list_destroy(struct vlist *hs) __attribute__ ((warn_unused_result));
  */
 void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *p, struct vnode *n);
 
+void hook_list_check(struct vlist *hs);
+
 void hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct vpath *p, struct vnode *n);
 
 int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
