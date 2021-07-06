@@ -34,6 +34,9 @@ set(HOOK_SRC
     jitter_calc.cpp
     limit_rate.cpp
     limit_value.cpp
+    ma.cpp
+    pps_ts.cpp
+    print.cpp
     restart.cpp
     rms.cpp
     scale.cpp
@@ -42,8 +45,6 @@ set(HOOK_SRC
     skip_first.cpp
     stats.cpp
     ts.cpp
-    pps_ts.cpp
-    print.cpp
 )
 
 if(WITH_LUA)
