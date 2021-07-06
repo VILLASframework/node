@@ -141,30 +141,65 @@ int signal_list_generate2(struct vlist *list, const char *dt)
 	return 0;
 }
 
+/** Check if two signal names are numbered ascendingly
+ *
+ * E.g. signal3 -> signal4
+ */
+static
+bool signal_name_is_next(const char *a, const char *b)
+{
+	unsigned i;
+	unsigned long na, nb;
+	char *ea, *eb;
+
+	/* Find common prefix */
+	for (i = 0; a[i] && b[i] && a[i] == b[i]; i++);
+
+	na = strtoul(a + i, &ea, 10);
+	nb = strtoul(b + i, &eb, 10);
+
+	return !*ea && !*eb && na + 1 == nb;
+}
+
+static
+bool signal_is_next(const struct signal *a, const struct signal *b)
+{
+	if (a->type != b->type)
+		return false;
+
+	if (a->unit && b->unit && strcmp(a->unit, b->unit))
+		return false;
+
+	return signal_name_is_next(a->name, b->name);
+}
+
 void signal_list_dump(Logger logger, const struct vlist *list, const union signal_data *data, unsigned len)
 {
+	const char *pfx;
+	bool abbrev = false;
+
 	for (size_t i = 0; i < vlist_length(list); i++) {
 		struct signal *sig = (struct signal *) vlist_at(list, i);
 
-		char *buf = strf("    %d:", i);
+		/* Check if this is a sequence of similar signals which can be abbreviated */
+		if (i >= 1 && i < vlist_length(list) - 1) {
+			struct signal *prevSig = (struct signal *) vlist_at(list, i - 1);
 
-		if (sig->name)
-			strcatf(&buf, " %s", sig->name);
-
-		if (sig->unit)
-			strcatf(&buf, " [%s]", sig->unit);
-
-		strcatf(&buf, "(%s)", signal_type_to_str(sig->type));
-
-		if (data && i < len) {
-			char val[32];
-
-			signal_data_print_str(&data[i], sig->type, val, sizeof(val));
-
-			strcatf(&buf, " = %s", val);
+			if (signal_is_next(prevSig, sig)) {
+				abbrev = true;
+				continue;
+			}
 		}
 
-		logger->debug("{}", buf);
+		if (abbrev) {
+			pfx = "...";
+			abbrev = false;
+		}
+		else
+			pfx = "   ";
+
+		char *buf = signal_print(sig, i < len ? &data[i] : nullptr);
+		logger->debug(" {}{:>3}: {}", pfx, i, buf);
 		free(buf);
 	}
 }
