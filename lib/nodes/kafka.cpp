@@ -212,7 +212,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 		throw ConfigError(json, "node-config-node-kafka-protocol", "Invalid security protocol: {}", protocol);
 
 	if (!k->produce && !k->consume)
-		throw ConfigError(json, "node-config-node-kafka", "At least one topic has to be specified for node {}", node_name(n));
+		throw ConfigError(json, "node-config-node-kafka", "At least one topic has to be specified for node {}", *n);
 
 	if (json_ssl) {
 		const char *ca;
@@ -221,7 +221,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 			"ca", &ca
 		);
 		if (ret)
-			throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl", "Failed to parse SSL configuration of node {}", node_name(n));
+			throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl", "Failed to parse SSL configuration of node {}", *n);
 
 		k->ssl.ca = strdup(ca);
 	}
@@ -237,7 +237,7 @@ int kafka_parse(struct vnode *n, json_t *json)
 			"password", &password
 		);
 		if (ret)
-			throw ConfigError(json_sasl, err, "node-config-node-kafka-sasl", "Failed to parse SASL configuration of node {}", node_name(n));
+			throw ConfigError(json_sasl, err, "node-config-node-kafka-sasl", "Failed to parse SASL configuration of node {}", *n);
 
 		k->sasl.mechanism = strdup(mechanism);
 		k->sasl.username = strdup(username);

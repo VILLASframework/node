@@ -68,7 +68,7 @@ public:
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
 			if (smp->sequence == 0 && prev->sequence != 0 && prev->sequence < UINT64_MAX - 16) {
 				logger->warn("Simulation from node {} restarted (previous->sequence={}, current->sequence={})",
-					node_name(node), prev->sequence, smp->sequence);
+					*node, prev->sequence, smp->sequence);
 
 				smp->flags |= (int) SampleFlags::IS_FIRST;
 

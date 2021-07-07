@@ -99,7 +99,7 @@ static void * path_run_poll(void *arg)
 		if (ret < 0)
 			throw SystemError("Failed to poll");
 
-		p->logger->debug("Path {} returned from poll(2)", path_name(p));
+		p->logger->debug("Path {} returned from poll(2)", *p);
 
 		for (int i = 0; i < p->reader.nfds; i++) {
 			struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
@@ -166,8 +166,6 @@ int path_init(struct vpath *p)
 		return ret;
 #endif /* WITH_HOOKS */
 
-	p->_name = nullptr;
-
 	p->reader.pfds = nullptr;
 	p->reader.nfds = 0;
 
@@ -203,14 +201,14 @@ static int path_prepare_poll(struct vpath *p)
 
 		m = node_poll_fds(ps->node, fds);
 		if (m <= 0)
-			throw RuntimeError("Failed to get file descriptor for node {}", node_name(ps->node));
+			throw RuntimeError("Failed to get file descriptor for node {}", *ps->node);
 
 		p->reader.nfds += m;
 		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
 
 		for (int i = 0; i < m; i++) {
 			if (fds[i] < 0)
-				throw RuntimeError("Failed to get file descriptor for node {}", node_name(ps->node));
+				throw RuntimeError("Failed to get file descriptor for node {}", *ps->node);
 
 			/* This slot is only used if it is not masked */
 			p->reader.pfds[n].events = POLLIN;
@@ -228,7 +226,7 @@ static int path_prepare_poll(struct vpath *p)
 		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
 		p->reader.pfds[p->reader.nfds-1].fd = p->timeout.getFD();
 		if (p->reader.pfds[p->reader.nfds-1].fd < 0) {
-			p->logger->warn("Failed to get file descriptor for timer of path {}", path_name(p));
+			p->logger->warn("Failed to get file descriptor for timer of path {}", *p);
 			return -1;
 		}
 	}
@@ -308,7 +306,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 			if (me->type == MappingType::DATA) {
 				sig = (struct signal *) vlist_at_safe(sigs, me->data.offset + j);
 				if (!sig) {
-					p->logger->warn("Failed to create signal description for path {}", path_name(p));
+					p->logger->warn("Failed to create signal description for path {}", *p);
 					continue;
 				}
 
@@ -382,7 +380,7 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 	if (ret)
 		return ret;
 
-	p->logger->info("Prepared path {} with {} output signals", path_name(p), vlist_length(path_output_signals(p)));
+	p->logger->info("Prepared path {} with {} output signals", *p, vlist_length(path_output_signals(p)));
 	signal_list_dump(p->logger, path_output_signals(p));
 
 	p->state = State::PREPARED;
@@ -451,7 +449,7 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	/* Input node(s) */
 	ret = mapping_list_parse(&p->mappings, json_in);
 	if (ret)
-		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", path_name(p));
+		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", *p);
 
 	/* Output node(s) */
 	if (json_out) {
@@ -527,7 +525,7 @@ void path_check(struct vpath *p)
 	assert(p->state != State::DESTROYED);
 
 	if (p->rate < 0)
-		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", path_name(p));
+		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", *p);
 
 	if (p->poll > 0) {
 		if (p->rate <= 0) {
@@ -536,7 +534,7 @@ void path_check(struct vpath *p)
 				struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
 
 				if (!node_type(ps->node)->poll_fds)
-					throw RuntimeError("Node {} can not be used in polling mode with path {}", node_name(ps->node), path_name(p));
+					throw RuntimeError("Node {} can not be used in polling mode with path {}", *ps->node, *p);
 			}
 		}
 	}
@@ -598,7 +596,7 @@ int path_start(struct vpath *p)
 	p->logger->info("Starting path {}: #signals={}({}), #hooks={}, #sources={}, "
 	                "#destinations={}, mode={}, poll={}, mask={:b}, rate={}, "
 	                "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
-		path_name(p),
+		*p,
 		vlist_length(&p->signals),
 		vlist_length(path_output_signals(p)),
 		vlist_length(&p->hooks),
@@ -663,7 +661,7 @@ int path_stop(struct vpath *p)
 	if (p->state != State::STARTED && p->state != State::STOPPING)
 		return 0;
 
-	p->logger->info("Stopping path: {}", path_name(p));
+	p->logger->info("Stopping path: {}", *p);
 
 	if (p->state != State::STOPPING)
 		p->state = State::STOPPING;
@@ -722,9 +720,6 @@ int path_destroy(struct vpath *p)
 	if (p->reader.pfds)
 		delete[] p->reader.pfds;
 
-	if (p->_name)
-		free(p->_name);
-
 	ret = pool_destroy(&p->pool);
 	if (ret)
 		return ret;
@@ -740,31 +735,6 @@ int path_destroy(struct vpath *p)
 	p->state = State::DESTROYED;
 
 	return 0;
-}
-
-const char * path_name(struct vpath *p)
-{
-	if (!p->_name) {
-		strcatf(&p->_name, "[");
-
-		for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-			struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
-
-			strcatf(&p->_name, " %s", node_name_short(ps->node));
-		}
-
-		strcatf(&p->_name, " ] " CLR_MAG("=>") " [");
-
-		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-			strcatf(&p->_name, " %s", node_name_short(pd->node));
-		}
-
-		strcatf(&p->_name, " ]");
-	}
-
-	return p->_name;
 }
 
 bool path_is_simple(const struct vpath *p)

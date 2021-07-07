@@ -27,6 +27,7 @@
 #pragma once
 
 #include <jansson.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <villas/node_list.hpp>
 #include <villas/common.hpp>
@@ -245,6 +246,13 @@ struct vnode_type {
 
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
 	struct memory_type * (*memory_type)(struct vnode *n, struct memory_type *parent);
+
+	/** Custom formatter for spdlog */
+	template<typename OStream>
+	friend OStream &operator<<(OStream &os, const struct vnode_type &vt)
+	{
+		return os << vt.name;
+	}
 };
 
 /** Initialize all registered node type subsystems.

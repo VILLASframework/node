@@ -104,7 +104,7 @@ protected:
 
 		<< "Supported node-types:" << std::endl;
 		for (auto *vt : *node_types)
-			std::cout << " - " << std::left << std::setw(18) << node_type_name(vt) << vt->description << std::endl;
+			std::cout << " - " << std::left << std::setw(18) << *vt << vt->description << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;

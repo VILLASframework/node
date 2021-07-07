@@ -122,11 +122,11 @@ public:
 
 		if (stream == stdout) {
 			if (!prefix.empty())
-				printf("%s", prefix.c_str());
+				std::cout << prefix.c_str();
 			else if (node)
-				printf("Node %s: ", node_name(node));
+				std::cout << "Node " << *node << ": ";
 			else if (path)
-				printf("Path %s: ", path_name(path));
+				std::cout << "Path " << *path << ": ";
 		}
 
 		formatter->print(stream, smp);

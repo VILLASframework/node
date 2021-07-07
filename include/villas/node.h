@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <jansson.h>
 #include <uuid/uuid.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <villas/node_type.h>
 #include <villas/node_list.hpp>
@@ -42,6 +43,7 @@
 #include <villas/common.hpp>
 #include <villas/stats.hpp>
 #include <villas/log.hpp>
+#include <villas/node_type.h>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
   #define WITH_NETEM
@@ -54,6 +56,10 @@
 #endif /* WITH_NETEM */
 
 #define RE_NODE_NAME "[a-z0-9_-]{2,32}"
+
+/* Forward declaration */
+static inline
+struct vnode_type * node_type(const struct vnode *n);
 
 /** The data structure for a node.
  *
@@ -96,6 +102,15 @@ struct vnode {
 	void *_vd;		/**< Virtual data (used by struct vnode::_vt functions) */
 
 	json_t *config;		/**< A JSON object containing the configuration of the node. */
+
+	/** Custom formatter for spdlog */
+	template<typename OStream>
+	friend OStream &operator<<(OStream &os, const struct vnode &n)
+	{
+		os << n.name << "(" << *node_type(&n) << ")";
+
+		return os;
+	}
 };
 
 /** Initialize node with default values */
@@ -211,7 +226,7 @@ int node_poll_fds(struct vnode *n, int fds[]);
 int node_netem_fds(struct vnode *n, int fds[]);
 
 static inline
-struct vnode_type * node_type(struct vnode *n)
+struct vnode_type * node_type(const struct vnode *n)
 {
 	return n->_vt;
 }

@@ -249,7 +249,7 @@ int socket_start(struct vnode *n)
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				throw SystemError("Failed to set type of service (QoS)");
 			else
-				n->logger->debug("Set QoS/TOS IP option to {:#x}", node_name(n), prio);
+				n->logger->debug("Set QoS/TOS IP option to {:#x}", prio);
 			break;
 
 		default:

@@ -54,8 +54,8 @@ int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 
 	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * ps->node->in.vectorize);
 
-	if (ps->node->_vt->pool_size)
-		pool_size = ps->node->_vt->pool_size;
+	if (node_type(ps->node)->pool_size)
+		pool_size = node_type(ps->node)->pool_size;
 
 	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(node_input_signals_max_cnt(ps->node)), node_memory_type(ps->node));
 
@@ -129,7 +129,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 	/* Fill smps[] free sample blocks from the pool */
 	allocated = sample_alloc_many(&ps->pool, read_smps, cnt);
 	if (allocated != cnt)
-		p->logger->warn("Pool underrun for path source {}", node_name(ps->node));
+		p->logger->warn("Pool underrun for path source {}", *ps->node);
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
 	recv = node_read(ps->node, read_smps, allocated);
@@ -145,12 +145,12 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 			goto out2;
 		}
 		else {
-			p->logger->error("Failed to read samples from node {}", node_name(ps->node));
+			p->logger->error("Failed to read samples from node {}", *ps->node);
 			goto out2;
 		}
 	}
 	else if (recv < allocated)
-		p->logger->warn("Partial read for path {}: read={}, expected={}", path_name(p), recv, allocated);
+		p->logger->warn("Partial read for path {}: read={}, expected={}", *p, recv, allocated);
 
 	/* Forward samples to secondary path sources */
 	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
@@ -160,7 +160,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 
 		sent = node_write(sps->node, read_smps, recv);
 		if (sent < recv)
-			p->logger->warn("Partial write to secondary path source {} of path {}", node_name(sps->node), path_name(p));
+			p->logger->warn("Partial write to secondary path source {} of path {}", *sps->node, *p);
 
 		sample_incref_many(read_smps, recv);
 	}
@@ -181,7 +181,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 		if (!muxed_smps[i]) {
-			p->logger->error("Pool underrun in path {}", path_name(p));
+			p->logger->error("Pool underrun in path {}", *p);
 			return -1;
 		}
 
@@ -213,7 +213,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);
 
-	p->logger->debug("Path {} received = {}", path_name(p), p->received.to_ullong());
+	p->logger->debug("Path {} received = {}", *p, p->received.to_ullong());
 
 #ifdef WITH_HOOKS
 	toenqueue = hook_list_process(&p->hooks, muxed_smps, tomux);
@@ -224,7 +224,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 	else if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
-		p->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, path_name(p));
+		p->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, *p);
 	}
 #else
 	toenqueue = tomux;
@@ -252,8 +252,8 @@ out2:	sample_decref_many(read_smps, recv);
 void path_source_check(struct vpath_source *ps)
 {
 	if (!node_is_enabled(ps->node))
-		throw RuntimeError("Source {} is not enabled", node_name(ps->node));
+		throw RuntimeError("Source {} is not enabled", *ps->node);
 
 	if (!node_type(ps->node)->read)
-		throw RuntimeError("Node {} is not supported as a source for a path", node_name(ps->node));
+		throw RuntimeError("Node {} is not supported as a source for a path", *ps->node);
 }

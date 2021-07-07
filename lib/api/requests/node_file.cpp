@@ -47,9 +47,9 @@ public:
 
 		struct vnode_type *vt = node_type_lookup("file");
 
-		if (node->_vt != vt)
+		if (node_type(node) != vt)
 			throw BadRequest("This node is not a file node", "{ s: s }",
-				"type", node->_vt
+				"type", node_type(node)
 			);
 
 		struct file *f = (struct file *) node->_vd;

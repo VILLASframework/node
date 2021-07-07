@@ -242,7 +242,7 @@ int signal_generator_parse(struct vnode *n, json_t *json)
 			break;
 
 		default:
-			throw ConfigError(json_type, "node-config-node-signal", "Invalid setting 'signal' for node {}", node_name(n));
+			throw ConfigError(json_type, "node-config-node-signal", "Invalid setting 'signal' for node {}", *n);
 	}
 
 	for (auto &a : arrays) {

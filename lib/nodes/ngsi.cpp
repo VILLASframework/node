@@ -645,13 +645,13 @@ int ngsi_parse(struct vnode *n, json_t *json)
 	if (json_signals_in) {
 		ret = ngsi_parse_signals(json_signals_in, &i->in.signals, &n->in.signals);
 		if (ret)
-			throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals", "Invalid setting 'in.signals' of node {}", node_name(n));
+			throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals", "Invalid setting 'in.signals' of node {}", *n);
 	}
 
 	if (json_signals_out) {
 		ret = ngsi_parse_signals(json_signals_out, &i->out.signals, &n->out.signals);
 		if (ret)
-			throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals", "Invalid setting 'out.signals' of node {}", node_name(n));
+			throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals", "Invalid setting 'out.signals' of node {}", *n);
 	}
 
 	return 0;
@@ -703,7 +703,7 @@ int ngsi_start(struct vnode *n)
 
 		int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity, n->logger);
 		if (ret)
-			throw RuntimeError("Failed to create NGSI context for node {}", node_name(n));
+			throw RuntimeError("Failed to create NGSI context for node {}", *n);
 
 		json_decref(json_entity);
 	}

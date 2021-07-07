@@ -122,12 +122,12 @@ protected:
 
 		std::cout << "Supported hooks:" << std::endl;
 		for (Plugin *p : Registry::lookup<HookFactory>())
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			std::cout << " - " << *p << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
 		for (Plugin *p : Registry::lookup<FormatFactory>())
-			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+			std::cout << " - " << *p << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Example:" << std::endl

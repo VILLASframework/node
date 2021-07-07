@@ -244,7 +244,7 @@ check:			if (optarg == endptr)
 		// nt == n._vt
 		ret = node_type_start(nt, nullptr);
 		if (ret)
-			throw RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
+			throw RuntimeError("Failed to initialize node type: {}", *nt);
 
 		ret = node_check(&node);
 		if (ret)
@@ -252,7 +252,7 @@ check:			if (optarg == endptr)
 
 		ret = node_prepare(&node);
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(&node), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node, ret);
 
 		/* Try parsing format config as JSON */
 		json_format = json_loads(format.c_str(), 0, &err);
@@ -270,7 +270,7 @@ check:			if (optarg == endptr)
 
 		ret = node_start(&node);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(&node), ret);
+			throw RuntimeError("Failed to start node {}: reason={}", node, ret);
 
 		while (!stop && node.state == State::STARTED) {
 			t = sample_alloc(&pool);

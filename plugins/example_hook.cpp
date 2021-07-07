@@ -33,7 +33,7 @@ public:
 
 	virtual void restart()
 	{
-		logger->info("The path {} restarted!", path_name(path));
+		logger->info("The path {} restarted!", *path);
 	}
 };
 

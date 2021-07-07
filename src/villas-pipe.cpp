@@ -208,7 +208,7 @@ public:
 				if (node->state == State::STOPPING || stop)
 					goto leave2;
 				else
-					logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
+					logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
 			}
 			else {
 				formatter->print(stdout, smps, recv);
@@ -422,10 +422,10 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("Node {} does not exist!", nodestr);
 
-		if (!node->_vt->read && enable_recv)
+		if (!node_type(node)->read && enable_recv)
 			throw RuntimeError("Node {} can not receive data. Consider using send-only mode by using '-s' option", nodestr);
 
-		if (!node->_vt->write && enable_send)
+		if (!node_type(node)->write && enable_send)
 			throw RuntimeError("Node {} can not send data. Consider using receive-only mode by using '-r' option", nodestr);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
@@ -441,7 +441,7 @@ check:			if (optarg == endptr)
 
 		ret = node_type_start(node_type(node), &sn);
 		if (ret)
-			throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", *node_type(node), ret);
 
 		sn.startInterfaces();
 
@@ -451,11 +451,11 @@ check:			if (optarg == endptr)
 
 		ret = node_prepare(node);
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
 
 		ret = node_start(node);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
 
 		PipeReceiveDirection recv_dir(node, formatter, enable_recv, limit_recv);
 		PipeSendDirection send_dir(node, formatter, enable_send, limit_send);
@@ -473,13 +473,13 @@ check:			if (optarg == endptr)
 
 		ret = node_stop(node);
 		if (ret)
-			throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
 
 		sn.stopInterfaces();
 
-		ret = node_type_stop(node->_vt);
+		ret = node_type_stop(node_type(node));
 		if (ret)
-			throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
+			throw RuntimeError("Failed to stop node type {}: reason={}", *node_type(node), ret);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */

@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <spdlog/fmt/ostr.h>
+
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
@@ -50,6 +52,11 @@ struct websocket {
 
 	struct pool pool;
 	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
+};
+
+struct websocket_destination {
+	char *uri;
+	struct lws_client_connect_info info;
 };
 
 /* Internal datastructures */
@@ -81,12 +88,29 @@ struct websocket_connection {
 		villas::Buffer *send;		/**< A buffer for constructing messages before calling lws_write() */
 	} buffers;
 
-	char *_name;
-};
 
-struct websocket_destination {
-	char *uri;
-	struct lws_client_connect_info info;
+	/** Custom formatter for spdlog */
+	template<typename OStream>
+	friend OStream &operator<<(OStream &os, const struct websocket_connection &c)
+	{
+		if (c.wsi) {
+			char name[128];
+			char ip[128];
+
+			lws_get_peer_addresses(c.wsi, lws_get_socket_fd(c.wsi), name, sizeof(name), ip, sizeof(ip));
+
+			os << "remote.ip=" << ip << " remote.name=" << name;
+		}
+		else if (c.mode == websocket_connection::Mode::CLIENT && c.destination != nullptr)
+			os << "dest=" << c.destination->info.address << ":" << c.destination->info.port;
+
+		if (c.node)
+			os << ", node=" << *c.node;
+
+		os << ", mode=" << (c.mode == websocket_connection::Mode::CLIENT ? "client" : "server");
+
+		return os;
+	}
 };
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);

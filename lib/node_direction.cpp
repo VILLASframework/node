@@ -118,7 +118,7 @@ int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *js
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-in");
 
-	if (n->_vt->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
+	if (node_type(n)->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
 		/* Do nothing.. Node-type will provide signals */
 	}
 	else if (json_is_array(json_signals)) {

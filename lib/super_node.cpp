@@ -244,7 +244,7 @@ void SuperNode::check()
 	for (auto *n : nodes) {
 		ret = node_check(n);
 		if (ret)
-			throw RuntimeError("Invalid configuration for node {}", node_name(n));
+			throw RuntimeError("Invalid configuration for node {}", *n);
 	}
 
 	for (auto *p : paths)
@@ -258,9 +258,9 @@ void SuperNode::startNodeTypes()
 	int ret;
 
 	for (auto *n : nodes) {
-		ret = node_type_start(n->_vt, this);
+		ret = node_type_start(node_type(n), this);
 		if (ret)
-			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
+			throw RuntimeError("Failed to start node-type: {}", *node_type(n));
 	}
 }
 
@@ -287,7 +287,7 @@ void SuperNode::startNodes()
 
 		ret = node_start(n);
 		if (ret)
-			throw RuntimeError("Failed to start node: {}", node_name(n));
+			throw RuntimeError("Failed to start node: {}", *n);
 	}
 }
 
@@ -301,7 +301,7 @@ void SuperNode::startPaths()
 
 		ret = path_start(p);
 		if (ret)
-			throw RuntimeError("Failed to start path: {}", path_name(p));
+			throw RuntimeError("Failed to start path: {}", *p);
 	}
 }
 
@@ -315,7 +315,7 @@ void SuperNode::prepareNodes()
 
 		ret = node_prepare(n);
 		if (ret)
-			throw RuntimeError("Failed to prepare node: {}", node_name(n));
+			throw RuntimeError("Failed to prepare node: {}", *n);
 	}
 }
 
@@ -329,7 +329,7 @@ void SuperNode::preparePaths()
 
 		ret = path_prepare(p, nodes);
 		if (ret)
-			throw RuntimeError("Failed to prepare path: {}", path_name(p));
+			throw RuntimeError("Failed to prepare path: {}", *p);
 	}
 }
 
@@ -351,7 +351,7 @@ void SuperNode::prepare()
 	for (auto *n : nodes) {
 		if (vlist_length(&n->sources) == 0 &&
 		    vlist_length(&n->destinations) == 0) {
-			logger->info("Node {} is not used by any path. Disabling...", node_name(n));
+			logger->info("Node {} is not used by any path. Disabling...", *n);
 			n->enabled = false;
 		}
 	}
@@ -391,7 +391,7 @@ void SuperNode::stopPaths()
 	for (auto *p : paths) {
 		ret = path_stop(p);
 		if (ret)
-			throw RuntimeError("Failed to stop path: {}", path_name(p));
+			throw RuntimeError("Failed to stop path: {}", *p);
 	}
 }
 
@@ -402,7 +402,7 @@ void SuperNode::stopNodes()
 	for (auto *n : nodes) {
 		ret = node_stop(n);
 		if (ret)
-			throw RuntimeError("Failed to stop node: {}", node_name(n));
+			throw RuntimeError("Failed to stop node: {}", *n);
 	}
 }
 
@@ -413,7 +413,7 @@ void SuperNode::stopNodeTypes()
 	for (auto *vt : *node_types) {
 		ret = node_type_stop(vt);
 		if (ret)
-			throw RuntimeError("Failed to stop node-type: {}", node_type_name(vt));
+			throw RuntimeError("Failed to stop node-type: {}", *vt);
 	}
 }
 
@@ -541,7 +541,7 @@ graph_t * SuperNode::getGraph()
 		uuid_unparse(n->uuid, uuid_str);
 
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", node_type_name((node_type(n))), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", *node_type(n), uuid_str));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");

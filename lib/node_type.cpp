@@ -40,7 +40,7 @@ int node_type_start(struct vnode_type *vt, villas::node::SuperNode *sn)
 	if (vt->state == State::STARTED)
 		return 0;
 
-	auto logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
+	auto logger = logging.get(fmt::format("node:{}", *vt));
 	logger->info("Initializing node type which is used by {} nodes", vt->instances.size());
 
 	ret = vt->type.start ? vt->type.start(sn) : 0;
@@ -57,7 +57,7 @@ int node_type_stop(struct vnode_type *vt)
 	if (vt->state != State::STARTED)
 		return 0;
 
-	auto logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
+	auto logger = logging.get(fmt::format("node:{}", *vt));
 	logger->info("De-initializing node type");
 
 	ret = vt->type.stop ? vt->type.stop() : 0;

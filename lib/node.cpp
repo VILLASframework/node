@@ -66,7 +66,7 @@ int node_init(struct vnode *n, struct vnode_type *vt)
 	new (&n->stats) stats_ptr();
 	new (&n->logger) Logger();
 
-	n->logger = logging.get(fmt::format("node:{}", node_type_name(vt)));
+	n->logger = logging.get(fmt::format("node:{}", *vt));
 
 	uuid_clear(n->uuid);
 
@@ -554,8 +554,10 @@ char * node_name_long(struct vnode *n)
 			strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
 
-		if (n->out.path)
-			strcatf(&n->_name_long, ", out.path=%s", path_name(n->out.path));
+		if (n->out.path) {
+			auto pn = fmt::format("{}", *n->out.path);
+			strcatf(&n->_name_long, ", out.path=%s", pn.c_str());
+		}
 
 		if (node_type(n)->print) {
 			struct vnode_type *vt = node_type(n);

@@ -34,6 +34,7 @@
 #include <uuid/uuid.h>
 #include <pthread.h>
 #include <jansson.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <villas/list.h>
 #include <villas/queue.h>
@@ -42,6 +43,10 @@
 #include <villas/mapping.h>
 #include <villas/task.hpp>
 #include <villas/node_list.hpp>
+#include <villas/colors.hpp>
+#include <villas/path_destination.h>
+#include <villas/path_source.h>
+#include <villas/node.h>
 
 #include <villas/log.hpp>
 
@@ -89,8 +94,6 @@ struct vpath {
 	int original_sequence_no;	/**< Use original source sequence number when multiplexing */
 	unsigned queuelen;		/**< The queue length for each path_destination::queue */
 
-	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
-
 	pthread_t tid;			/**< The thread id for this path. */
 	json_t *config;			/**< A JSON object containing the configuration of the path. */
 
@@ -100,6 +103,31 @@ struct vpath {
 
 	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of path_sources which are enabled for poll(). */
 	std::bitset<MAX_SAMPLE_LENGTH> received;	/**< A mask of path_sources for which we already received samples. */
+
+	/** Custom formatter for spdlog */
+	template<typename OStream>
+	friend OStream &operator<<(OStream &os, const struct vpath &p)
+	{
+		os << "[";
+
+		for (size_t i = 0; i < vlist_length(&p.sources); i++) {
+			struct vpath_source *ps = (struct vpath_source *) vlist_at(&p.sources, i);
+
+			os << " " << node_name_short(ps->node);
+		}
+
+		os << " ] " CLR_MAG("=>") " [";
+
+		for (size_t i = 0; i < vlist_length(&p.destinations); i++) {
+			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p.destinations, i);
+
+			os << " " << node_name_short(pd->node);
+		}
+
+		os << " ]";
+
+		return os;
+	}
 };
 
 /** Initialize internal data structures. */
@@ -133,15 +161,6 @@ int path_stop(struct vpath *p);
  * @param i A pointer to the path structure.
  */
 int path_destroy(struct vpath *p) __attribute__ ((warn_unused_result));
-
-/** Fills the provided buffer with a string representation of the path.
- *
- * Format: source => [ dest1 dest2 dest3 ]
- *
- * @param p A pointer to the path structure.
- * @return A pointer to a string containing a textual representation of the path.
- */
-const char * path_name(struct vpath *p);
 
 /** Get a list of signals which is emitted by the path. */
 struct vlist * path_output_signals(struct vpath *p);

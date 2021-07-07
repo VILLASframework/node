@@ -259,7 +259,7 @@ int mqtt_parse(struct vnode *n, json_t *json)
 	m->password = password ? strdup(password) : nullptr;
 
 	if (!m->publish && !m->subscribe)
-		throw ConfigError(json, "node-config-node-mqtt", "At least one topic has to be specified for node {}", node_name(n));
+		throw ConfigError(json, "node-config-node-mqtt", "At least one topic has to be specified for node {}", *n);
 
 	if (json_ssl) {
 		m->ssl.enabled = 1;
@@ -278,10 +278,10 @@ int mqtt_parse(struct vnode *n, json_t *json)
 			"keyfile", &keyfile
 		);
 		if (ret)
-			throw ConfigError(json_ssl, err, "node-config-node-mqtt-ssl", "Failed to parse SSL configuration of node {}", node_name(n));
+			throw ConfigError(json_ssl, err, "node-config-node-mqtt-ssl", "Failed to parse SSL configuration of node {}", *n);
 
 		if (m->ssl.enabled && !cafile && !capath)
-			throw ConfigError(json_ssl, "node-config-node-mqtt-ssl", "Either 'ssl.cafile' or 'ssl.capath' settings must be set for node {}.", node_name(n));
+			throw ConfigError(json_ssl, "node-config-node-mqtt-ssl", "Either 'ssl.cafile' or 'ssl.capath' settings must be set for node {}.", *n);
 
 		m->ssl.cafile = cafile ? strdup(cafile) : nullptr;
 		m->ssl.capath = capath ? strdup(capath) : nullptr;

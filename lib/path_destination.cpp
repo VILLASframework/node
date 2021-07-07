@@ -69,19 +69,19 @@ void path_destination_enqueue(struct vpath *p, const struct sample * const smps[
 
 	cloned = sample_clone_many(clones, smps, cnt);
 	if (cloned < cnt)
-		p->logger->warn("Pool underrun in path {}", path_name(p));
+		p->logger->warn("Pool underrun in path {}", *p);
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
 
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
-			p->logger->warn("Queue overrun for path {}", path_name(p));
+			p->logger->warn("Queue overrun for path {}", *p);
 
 		/* Increase reference counter of these samples as they are now also owned by the queue. */
 		sample_incref_many(clones, cloned);
 
-		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, node_name(pd->node), path_name(p));
+		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, *pd->node, *p);
 	}
 
 	sample_decref_many(clones, cloned);
@@ -101,17 +101,17 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 		if (allocated == 0)
 			break;
 		else if (allocated < cnt)
-			p->logger->debug("Queue underrun for path {}: allocated={} expected={}", path_name(p), allocated, cnt);
+			p->logger->debug("Queue underrun for path {}: allocated={} expected={}", *p, allocated, cnt);
 
-		p->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, node_name(pd->node), path_name(p));
+		p->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, *pd->node, *p);
 
 		sent = node_write(pd->node, smps, allocated);
 		if (sent < 0) {
-			p->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node_name(pd->node), sent);
+			p->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, *pd->node, sent);
 			return;
 		}
 		else if (sent < allocated)
-			p->logger->debug("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, allocated);
+			p->logger->debug("Partial write to node {}: written={}, expected={}", *pd->node, sent, allocated);
 
 		int released = sample_decref_many(smps, allocated);
 
@@ -122,8 +122,8 @@ void path_destination_write(struct vpath_destination *pd, struct vpath *p)
 void path_destination_check(struct vpath_destination *pd)
 {
 	if (!node_is_enabled(pd->node))
-		throw RuntimeError("Destination {} is not enabled", node_name(pd->node));
+		throw RuntimeError("Destination {} is not enabled", *pd->node);
 
 	if (!node_type(pd->node)->write)
-		throw RuntimeError("Destiation node {} is not supported as a sink for path ", node_name(pd->node));
+		throw RuntimeError("Destiation node {} is not supported as a sink for path ", *pd->node);
 }

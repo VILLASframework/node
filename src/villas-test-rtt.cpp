@@ -188,17 +188,17 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("There's no node with the name '{}'", nodestr);
 
-		ret = node_type_start(node->_vt, &sn);
+		ret = node_type_start(node_type(node), &sn);
 		if (ret)
-			throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
+			throw RuntimeError("Failed to start node-type {}: reason={}", *node_type(node), ret);
 
 		ret = node_prepare(node);
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
 
 		ret = node_start(node);
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
 
 		/* Print header */
 		fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
@@ -240,11 +240,11 @@ check:			if (optarg == endptr)
 
 		ret = node_stop(node);
 		if (ret)
-			throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
 
-		ret = node_type_stop(node->_vt);
+		ret = node_type_stop(node_type(node));
 		if (ret)
-			throw RuntimeError("Failed to stop node-type {}: reason={}", node_type_name(node->_vt), ret);
+			throw RuntimeError("Failed to stop node-type {}: reason={}", *node_type(node), ret);
 
 		delete smp_send;
 		delete smp_recv;

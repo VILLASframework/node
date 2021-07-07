@@ -49,29 +49,6 @@ static villas::Logger logger = logging.get("websocket");
 /* Forward declarations */
 static struct vnode_type p;
 
-static char * websocket_connection_name(struct websocket_connection *c)
-{
-	if (!c->_name) {
-		if (c->wsi) {
-			char name[128];
-			char ip[128];
-
-			lws_get_peer_addresses(c->wsi, lws_get_socket_fd(c->wsi), name, sizeof(name), ip, sizeof(ip));
-
-			strcatf(&c->_name, "remote.ip=%s, remote.name=%s", ip, name);
-		}
-		else if (c->mode == websocket_connection::Mode::CLIENT && c->destination != nullptr)
-			strcatf(&c->_name, "dest=%s:%d", c->destination->info.address, c->destination->info.port);
-
-		if (c->node)
-			strcatf(&c->_name, ", node=%s", node_name(c->node));
-
-		strcatf(&c->_name, ", mode=%s", c->mode == websocket_connection::Mode::CLIENT ? "client" : "server");
-	}
-
-	return c->_name;
-}
-
 static void websocket_destination_destroy(struct websocket_destination *d)
 {
 	free(d->uri);
@@ -83,8 +60,6 @@ static void websocket_destination_destroy(struct websocket_destination *d)
 static int websocket_connection_init(struct websocket_connection *c)
 {
 	int ret;
-
-	c->_name = nullptr;
 
 	ret = queue_init(&c->queue, DEFAULT_QUEUE_LENGTH);
 	if (ret)
@@ -109,9 +84,6 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 
 	assert(c->state != websocket_connection::State::DESTROYED);
 
-	if (c->_name)
-		free(c->_name);
-
 	/* Return all samples to pool */
 	int avail;
 	struct sample *smp;
@@ -127,7 +99,6 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	delete c->buffers.send;
 
 	c->wsi = nullptr;
-	c->_name = nullptr;
 
 	c->state = websocket_connection::State::DESTROYED;
 
@@ -143,11 +114,11 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
 	if (pushed < (int) cnt)
-		c->node->logger->warn("Queue overrun in WebSocket connection: {}", websocket_connection_name(c));
+		c->node->logger->warn("Queue overrun in WebSocket connection: {}", *c);
 
 	sample_incref_many(smps, pushed);
 
-	c->node->logger->debug("Enqueued {} samples to {}", pushed, websocket_connection_name(c));
+	c->node->logger->debug("Enqueued {} samples to {}", pushed, *c);
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
 	if (c->wsi)
@@ -160,7 +131,7 @@ static void websocket_connection_close(struct websocket_connection *c, struct lw
 {
 	lws_close_reason(wsi, status, (unsigned char *) reason, strlen(reason));
 
-	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", websocket_connection_name(c), status, reason);
+	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", *c, status, reason);
 }
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
@@ -235,7 +206,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			vlist_push(&connections, c);
 
-			c->node->logger->info("Established WebSocket connection: {}", websocket_connection_name(c));
+			c->node->logger->info("Established WebSocket connection: {}", *c);
 
 			break;
 
@@ -247,7 +218,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			return -1;
 
 		case LWS_CALLBACK_CLOSED:
-			c->node->logger->debug("Closed WebSocket connection: {}", websocket_connection_name(c));
+			c->node->logger->debug("Closed WebSocket connection: {}", *c);
 
 			if (c->state != websocket_connection::State::SHUTDOWN) {
 				/** @todo Attempt reconnect here */
@@ -280,7 +251,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (ret < 0)
 					return ret;
 
-				c->node->logger->debug("Send {} samples to connection: {}, bytes={}", pulled, websocket_connection_name(c), ret);
+				c->node->logger->debug("Send {} samples to connection: {}, bytes={}", pulled, *c, ret);
 			}
 
 			if (queue_available(&c->queue) > 0)
@@ -311,15 +282,15 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
-					c->node->logger->warn("Pool underrun for connection: {}", websocket_connection_name(c));
+					c->node->logger->warn("Pool underrun for connection: {}", *c);
 
 				recvd = c->formatter->sscan(c->buffers.recv->data(), c->buffers.recv->size(), nullptr, smps, avail);
 				if (recvd < 0) {
-					c->node->logger->warn("Failed to parse sample data received on connection: {}", websocket_connection_name(c));
+					c->node->logger->warn("Failed to parse sample data received on connection: {}", *c);
 					break;
 				}
 
-				c->node->logger->debug("Received {} samples from connection: {}", recvd, websocket_connection_name(c));
+				c->node->logger->debug("Received {} samples from connection: {}", recvd, *c);
 
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
@@ -329,7 +300,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					c->node->logger->warn("Queue overrun in connection: {}", websocket_connection_name(c));
+					c->node->logger->warn("Queue overrun in connection: {}", *c);
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
