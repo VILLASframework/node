@@ -55,7 +55,7 @@ public:
 
 		/* Add signals */
 		for (auto index : signalIndices) {
-			auto *origSig = (struct signal *) vlist_at_safe(&signals, index);
+			auto *origSig = (struct signal *) vlist_at(&signals, index);
 
 			/* Check that signal has float type */
 			if (origSig->type != SignalType::FLOAT)
