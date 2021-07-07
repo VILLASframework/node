@@ -41,7 +41,7 @@
 namespace villas {
 namespace node {
 
-class DftHook : public Hook {
+class DftHook : public MultiSignalHook {
 
 protected:
 	enum class PaddingType {
@@ -108,7 +108,6 @@ protected:
 	struct timespec lastCalc;
 	double nextCalc;
 
-	std::vector<int> signalIndex;	/**< A list of signalIndex to do dft on */
 	Phasor lastResult;
 
 	std::string dumperPrefix;
@@ -125,7 +124,7 @@ protected:
 
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		MultiSignalHook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
 		freqEstType(FreqEstimationType::NONE),
@@ -154,7 +153,6 @@ public:
 		windowCorrectionFactor(0),
 		lastCalc({0, 0}),
 		nextCalc(0.0),
-		signalIndex(),
 		lastResult({0,0,0,0}),
 		dumperPrefix("/tmp/plot/"),
 		dumperEnable(false),
@@ -174,7 +172,7 @@ public:
 		dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
 
 		signal_list_clear(&signals);
-		for (unsigned i = 0; i < signalIndex.size(); i++) {
+		for (unsigned i = 0; i < signalIndices.size(); i++) {
 			struct signal *freqSig;
 			struct signal *amplSig;
 			struct signal *phaseSig;
@@ -197,7 +195,7 @@ public:
 
 		/* Initialize sample memory */
 		smpMemory.clear();
-		for (unsigned i = 0; i < signalIndex.size(); i++)
+		for (unsigned i = 0; i < signalIndices.size(); i++)
 			smpMemory.emplace_back(windowSize, 0.0);
 
 #ifdef DFT_MEM_DUMP
@@ -218,16 +216,15 @@ public:
 
 		/* Initalize dft results matrix */
 		results.clear();
-		for (unsigned i = 0; i < signalIndex.size(); i++){
+		for (unsigned i = 0; i < signalIndices.size(); i++) {
 			results.emplace_back(freqCount, 0.0);
 			absResults.emplace_back(freqCount, 0.0);
 		}
 
 		filterWindowCoefficents.resize(windowSize);
 
-		for (unsigned i = 0; i < freqCount; i++) {
+		for (unsigned i = 0; i < freqCount; i++)
 			absFrequencies.emplace_back(startFrequency + i * frequencyResolution);
-		}
 
 		generateDftMatrix();
 		calculateWindow(windowType);
@@ -251,7 +248,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: o }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: i }",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -267,34 +264,6 @@ public:
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
-
-		if (jsonChannelList != nullptr) {
-			signalIndex.clear();
-			if (jsonChannelList->type == JSON_ARRAY) {
-				size_t i;
-				json_t *jsonValue;
-				json_array_foreach(jsonChannelList, i, jsonValue) {
-					if (!json_is_number(jsonValue))
-						throw ConfigError(jsonValue, "node-config-hook-dft-channel", "Values must be given as array of integer values!");
-
-					auto idx = json_number_value(jsonValue);
-
-					signalIndex.push_back(idx);
-				}
-			}
-			else if (jsonChannelList->type == JSON_INTEGER) {
-				if (!json_is_number(jsonChannelList))
-					throw ConfigError(jsonChannelList, "node-config-hook-dft-channel", "Value must be given as integer value!");
-
-				auto idx = json_number_value(jsonChannelList);
-
-				signalIndex.push_back(idx);
-			}
-			else
-				throw ConfigError(jsonChannelList, "node-config-hook-dft-signal-index", "Could not parse channel list.");
-		}
-		else
-			throw ConfigError(jsonChannelList, "node-config-node-signal", "No parameter signalIndex given.");
 
 		windowSize = sampleRate * windowSizeFactor / (double) rate;
 		logger->debug("Set windows size to {} samples which fits {} / rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
@@ -344,8 +313,10 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		for (unsigned i = 0; i < signalIndex.size(); i++)
-			smpMemory[i][smpMemPos % windowSize] = smp->data[signalIndex[i]].f;
+		/* Update sample memory */
+		unsigned i = 0;
+		for (auto index : signalIndices)
+			smpMemory[i++][smpMemPos % windowSize] = smp->data[index].f;
 
 #ifdef DFT_MEM_DUMP
 		ppsMemory[smpMemPos % windowSize] = smp->data[ppsIndex].f;
@@ -376,7 +347,7 @@ public:
 #endif
 
 			#pragma omp parallel for
-			for (unsigned i = 0; i < signalIndex.size(); i++) {
+			for (unsigned i = 0; i < signalIndices.size(); i++) {
 				Phasor currentResult = {0,0,0,0};
 
 				calculateDft(PaddingType::ZERO, smpMemory[i], results[i], smpMemPos);
@@ -429,7 +400,7 @@ public:
 				phasorRocof.writeDataBinary(1, &(smp->data[0 * 4 + 3].f));
 			}
 
-			smp->length = windowSize < smpMemPos ? signalIndex.size() * 4 : 0;
+			smp->length = windowSize < smpMemPos ? signalIndices.size() * 4 : 0;
 
 			calcCount++;
 		}
