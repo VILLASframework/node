@@ -4,9 +4,6 @@
 [submodule "thirdparty/udmabuf"]
 	path = thirdparty/udmabuf
 	url = https://github.com/ikwzm/udmabuf
-[submodule "hardware"]
-	path = hardware
-	url = ../fpga-hardware.git
 [submodule "common"]
 	path = common
 	url = ../../common.git
