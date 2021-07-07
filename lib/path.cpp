@@ -828,12 +828,25 @@ struct vlist * path_output_signals(struct vpath *p)
 
 unsigned path_output_signals_max_cnt(struct vpath *p)
 {
+	unsigned max = vlist_length(&p->signals);
+
 #ifdef WITH_HOOKS
-	if (vlist_length(&p->hooks) > 0)
-		return MAX(vlist_length(&p->signals), hook_list_get_signals_max_cnt(&p->hooks));
+	if (vlist_length(&p->hooks) > 0) {
+		unsigned max_hooks = hook_list_get_signals_max_cnt(&p->hooks);
+		if (max_hooks > max)
+			max = max_hooks;
+	}
 #endif /* WITH_HOOKS */
 
-	return vlist_length(&p->signals);
+	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
+		struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
+
+		unsigned max_node = node_output_signals_max_cnt(pd->node);
+		if (max_node > max)
+			max = max_node;
+	}
+
+	return max;
 }
 
 json_t * path_to_json(struct vpath *p)
