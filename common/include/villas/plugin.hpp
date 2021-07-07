@@ -28,6 +28,7 @@
 #include <list>
 #include <string>
 #include <jansson.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <villas/log.hpp>
 #include <villas/common.hpp>
@@ -139,6 +140,13 @@ public:
 	virtual std::string
 	getDescription() const = 0;
 
+	/** Custom formatter for spdlog */
+	template<typename OStream>
+	friend OStream &operator<<(OStream &os, const class Plugin &p)
+	{
+		return os << p.getName();
+	}
+
 protected:
 	std::string path;
 
@@ -160,7 +168,7 @@ Registry::dumpList()
 	for (Plugin *p : *plugins) {
 		T *t = dynamic_cast<T *>(p);
 		if (t)
-			getLogger()->info(" - {}: {}", p->getName(), p->getDescription());
+			getLogger()->info(" - {}: {}", *p, p->getDescription());
 	}
 }
 
