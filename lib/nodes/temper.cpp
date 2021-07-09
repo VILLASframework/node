@@ -67,16 +67,16 @@ void TEMPerDevice::open(bool reset)
 		libusb_reset_device(handle);
 
 	ret = libusb_set_configuration(handle, 0x01);
-	if (ret < 0)
-		throw RuntimeError("Could not set configuration 1");
+	if (ret != LIBUSB_SUCCESS) {
+		throw usb::Error(ret, "Could not set configuration 1");
 
 	ret = libusb_claim_interface(handle, 0x00);
-	if (ret < 0)
-		throw RuntimeError("Could not claim interface. Error: {}", ret);
+	if (ret != LIBUSB_SUCCESS) {
+		throw usb::Error(ret, "Could not claim interface.");
 
 	ret = libusb_claim_interface(handle, 0x01);
-	if (ret < 0)
-		throw RuntimeError("Could not claim interface. Error: {}", ret);
+	if (ret != LIBUSB_SUCCESS) {
+		throw usb::Error(ret, "Could not claim interface.");
 }
 
 void TEMPerDevice::close()
@@ -96,14 +96,14 @@ void TEMPerDevice::read(struct sample *smp)
 	memcpy(question, question_temperature, sizeof(question_temperature));
 
 	ret = libusb_control_transfer(handle, 0x21, 0x09, 0x0200, 0x01, question, 8, timeout);
-	if (ret < 0)
-		throw SystemError("USB control write failed: {}", ret);
+	if (ret != LIBUSB_SUCCESS) {
+		throw usb::Error(ret, "USB control write failed");
 
 	memset(answer, 0, 8);
 
 	ret = libusb_interrupt_transfer(handle, 0x82, answer, 8, &al, timeout);
-	if (al != 8)
-		throw SystemError("USB interrupt read failed: {}", ret);
+	if (ret != LIBUSB_SUCCESS) {
+		throw usb::Error(ret, "USB interrupt read failed");
 
 	decode(answer, temp);
 
@@ -187,8 +187,8 @@ bool TEMPer1Device::match(struct libusb_device *dev)
 {
 	struct libusb_device_descriptor desc;
 	int ret = libusb_get_device_descriptor(dev, &desc);
-	if (ret < 0) {
-		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror((enum libusb_error) ret));
+	if (ret != LIBUSB_SUCCESS) {
+		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror(ret));
 		return false;
 	}
 
@@ -204,20 +204,20 @@ bool TEMPer2Device::match(struct libusb_device *dev)
 
 	struct libusb_device_descriptor desc;
 	ret = libusb_get_device_descriptor(dev, &desc);
-	if (ret < 0) {
-		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror((enum libusb_error) ret));
+	if (ret != LIBUSB_SUCCESS) {
+		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror(ret));
 		return false;
 	}
 
 	ret = libusb_open(dev, &handle);
-	if (ret < 0) {
-		logging.get("node:temper")->warn("Failed to open USB device: {}", libusb_strerror((enum libusb_error) ret));
+	if (ret != LIBUSB_SUCCESS) {
+		logging.get("node:temper")->warn("Failed to open USB device: {}", libusb_strerror(ret));
 		return false;
 	}
 
 	ret = libusb_get_string_descriptor_ascii(handle, desc.iProduct, product, sizeof(product));
-	if (ret < 0) {
-		logging.get("node:temper")->warn("Could not get USB string descriptor: {}", libusb_strerror((enum libusb_error) ret));
+	if (ret != LIBUSB_SUCCESS) {
+		logging.get("node:temper")->warn("Could not get USB string descriptor: {}", libusb_strerror(ret));
 		return false;
 	}
 
@@ -230,8 +230,8 @@ bool TEMPerHUMDevice::match(struct libusb_device *dev)
 {
 	struct libusb_device_descriptor desc;
 	int ret = libusb_get_device_descriptor(dev, &desc);
-	if (ret < 0) {
-		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror((enum libusb_error) ret));
+	if (ret != LIBUSB_SUCCESS) {
+		logging.get("node:temper")->warn("Could not get USB device descriptor: {}", libusb_strerror(ret));
 		return false;
 	}
 
