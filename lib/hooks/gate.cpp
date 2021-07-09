@@ -106,6 +106,8 @@ public:
 	{
 		assert(state == State::CHECKED);
 
+		SingleSignalHook::prepare();
+
 		/* Check if signal type is float */
 		auto sig = (struct signal *) vlist_at(&signals, signalIndex);
 		if (sig->type != SignalType::FLOAT)

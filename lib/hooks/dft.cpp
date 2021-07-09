@@ -173,6 +173,7 @@ public:
 	virtual void prepare()
 	{
 		MultiSignalHook::prepare();
+
 		dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
 
 		signal_list_clear(&signals);
@@ -253,7 +254,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s}",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
