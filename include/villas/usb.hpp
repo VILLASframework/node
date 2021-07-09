@@ -94,22 +94,34 @@ public:
 	{ }
 
 	const struct libusb_device_descriptor & getDescriptor() const
-	{ return desc; }
+	{
+		return desc;
+	}
 
 	int getBus() const
-	{ return libusb_get_bus_number(device); }
+	{
+		return libusb_get_bus_number(device);
+	}
 
 	int getPort() const
-	{ return libusb_get_port_number(device); }
+	{
+		return libusb_get_port_number(device);
+	}
 
 	std::string getManufacturer() const
-	{ return getStringDescriptor(desc.iManufacturer); }
+	{
+		return getStringDescriptor(desc.iManufacturer);
+	}
 
 	std::string getProduct() const
-	{ return getStringDescriptor(desc.iProduct); }
+	{
+		return getStringDescriptor(desc.iProduct);
+	}
 
 	std::string getSerial() const
-	{ return getStringDescriptor(desc.iSerialNumber); }
+	{
+		return getStringDescriptor(desc.iSerialNumber);
+	}
 
 	bool match(const Filter *flt) const;
 };

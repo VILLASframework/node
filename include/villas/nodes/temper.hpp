@@ -62,10 +62,14 @@ public:
 	void close();
 
 	virtual int getNumSensors() const
-	{ return 1; }
+	{
+		return 1;
+	}
 
 	virtual bool hasHumiditySensor() const
-	{ return false; };
+	{
+		return false;
+	};
 
 	void read(struct sample *smp);
 };
@@ -81,7 +85,9 @@ public:
 	static bool match(struct libusb_device *dev);
 
 	static std::string getName()
-	{ return "TEMPer1"; }
+	{
+		return "TEMPer1";
+	}
 };
 
 class TEMPer2Device : public TEMPer1Device {
@@ -95,10 +101,14 @@ public:
 	static bool match(struct libusb_device *dev);
 
 	static std::string getName()
-	{ return "TEMPer2"; }
+	{
+		return "TEMPer2";
+	}
 
 	virtual int getNumSensors() const
-	{ return 2; }
+	{
+		return 2;
+	}
 };
 
 class TEMPerHUMDevice : public TEMPerDevice {
@@ -112,10 +122,14 @@ public:
 	static bool match(struct libusb_device *dev);
 
 	static std::string getName()
-	{ return "TEMPerHUM"; }
+	{
+		return "TEMPerHUM";
+	}
 
 	virtual bool hasHumiditySensor() const
-	{ return true; }
+	{
+		return true;
+	}
 };
 
 struct temper {
