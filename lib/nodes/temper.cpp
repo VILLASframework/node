@@ -54,11 +54,7 @@ TEMPerDevice::TEMPerDevice(struct libusb_device *dev) :
 	scale(1.0),
 	offset(0.0),
 	timeout(5000)
-{
-	int ret = libusb_get_device_descriptor(dev, &desc);
-	if (ret != LIBUSB_SUCCESS)
-		throw RuntimeError("Could not get USB device descriptor: {}", libusb_strerror((enum libusb_error) ret));
-}
+{ }
 
 void TEMPerDevice::open(bool reset)
 {
@@ -87,8 +83,6 @@ void TEMPerDevice::close()
 {
 	libusb_release_interface(handle, 0x00);
 	libusb_release_interface(handle, 0x01);
-
-	libusb_close(handle);
 }
 
 void TEMPerDevice::read(struct sample *smp)

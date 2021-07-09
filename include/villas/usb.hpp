@@ -24,6 +24,7 @@
 #pragma once
 
 #include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 
 #include <libusb-1.0/libusb.h>
 
@@ -87,11 +88,33 @@ protected:
 
 	std::string getStringDescriptor(uint8_t desc_id) const;
 
+	Logger logger;
+
 public:
 	Device(struct libusb_device *dev) :
 		device(dev),
 		handle(nullptr)
-	{ }
+	{
+		int ret = libusb_get_device_descriptor(dev, &desc);
+		if (ret != LIBUSB_SUCCESS)
+			throw Error((enum libusb_error) ret, "Failed to get device descriptor");
+
+		auto ln = fmt::format("usb:dev:{}:{}", libusb_get_bus_number(device), libusb_get_port_number(device));
+		logger = logging.get(ln);
+
+		ret = libusb_open(device, &handle);
+		if (ret < 0)
+			throw Error((enum libusb_error) ret, "Failed to open device");
+
+		libusb_ref_device(device);
+	}
+
+	virtual ~Device()
+	{
+		libusb_close(handle);
+
+		libusb_unref_device(device);
+	}
 
 	const struct libusb_device_descriptor & getDescriptor() const
 	{
