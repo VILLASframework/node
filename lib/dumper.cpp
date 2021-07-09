@@ -76,6 +76,9 @@ int Dumper::closeSocket()
 
 void Dumper::writeDataBinary(unsigned len, double *yData, double *xData){
 
+	if (warningCounter > 10)
+		return;
+
 	if (yData == nullptr)
 		return;
 
