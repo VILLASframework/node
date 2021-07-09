@@ -25,6 +25,7 @@
 #pragma once
 
 #include <string>
+#include <list>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/dist_sink.h>
@@ -49,6 +50,19 @@ public:
 	using DefaultSink = std::shared_ptr<spdlog::sinks::stderr_color_sink_mt>;
 	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
 
+	class Expression {
+	public:
+		std::string name;
+		Level level;
+
+		Expression(const std::string &n, Level lvl) :
+			name(n),
+			level(lvl)
+		{ }
+
+		Expression(json_t *json);
+	};
+
 protected:
 	DistSink sinks;
 	DefaultSink sink;
@@ -57,6 +71,8 @@ protected:
 
 	std::string pattern;		/**< Logging format. */
 	std::string prefix;		/**< Prefix each line with this string. */
+
+	std::list<Expression> expressions;
 
 public:
 

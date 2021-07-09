@@ -23,6 +23,8 @@
 #include <list>
 #include <algorithm>
 
+#include <fnmatch.h>
+
 #include <spdlog/sinks/syslog_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -73,6 +75,11 @@ Logger Log::get(const std::string &name)
 
 		logger->set_level(level);
 		logger->set_pattern(prefix + pattern);
+
+		for (auto &expr : expressions) {
+			if (!fnmatch(expr.name.c_str(), name.c_str(), FNM_EXTMATCH))
+				logger->set_level(expr.level);
+		}
 
 		spdlog::register_logger(logger);
 	}
@@ -125,22 +132,8 @@ void Log::parse(json_t *json)
 
 		size_t i;
 		json_t *json_expression;
-		json_array_foreach(json_expressions, i, json_expression) {
-			const char *name;
-			const char *lvl;
-
-			ret = json_unpack_ex(json_expression, &err, JSON_STRICT, "{ s: s, s: s }",
-				"name", &name,
-				"level", &lvl
-			);
-			if (ret)
-				throw ConfigError(json_expression, err, "node-config-logging-expressions");
-
-			Logger logger = get(name);
-			auto level = spdlog::level::from_str(lvl);
-
-			logger->set_level(level);
-		}
+		json_array_foreach(json_expressions, i, json_expression)
+			expressions.emplace_back(json_expression);
 	}
 }
 
@@ -181,4 +174,24 @@ std::string Log::getLevelName() const
 	auto sv = spdlog::level::to_string_view(level);
 
 	return std::string(sv.data());
+}
+
+Log::Expression::Expression(json_t *json)
+{
+	int ret;
+
+	const char *nme;
+	const char *lvl;
+
+	json_error_t err;
+
+	ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s: s, s: s }",
+		"name", &nme,
+		"level", &lvl
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-logging-expressions");
+
+	level = spdlog::level::from_str(lvl);
+	name = nme;
 }
