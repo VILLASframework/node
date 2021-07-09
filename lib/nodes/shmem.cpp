@@ -154,7 +154,7 @@ int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	sample_copy_many(smps, shared_smps, recv);
 	sample_decref_many(shared_smps, recv);
 
-	/** @todo: signal descriptions are currently not shared between processes */
+	/** @todo signal descriptions are currently not shared between processes */
 	for (int i = 0; i < recv; i++)
 		smps[i]->signals = &n->in.signals;
 

@@ -28,7 +28,7 @@
 
 typedef float flt32_t;
 typedef double flt64_t;
-typedef long double flt128_t; /** @todo: check */
+typedef long double flt128_t; /** @todo check */
 
 using namespace villas;
 using namespace villas::node;

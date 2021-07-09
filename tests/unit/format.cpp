@@ -83,7 +83,7 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 					break;
 
 				case SignalType::COMPLEX: {
-					/** @todo: Port to proper C++ */
+					/** @todo Port to proper C++ */
 					std::complex<float> z = { j * 0.1f, i * 100.0f };
 					memcpy(&data->z, &z, sizeof(data->z));
 					break;

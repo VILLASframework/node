@@ -173,7 +173,7 @@ int exec_stop(struct vnode *n)
 	n->logger->debug("Waiting for sub-process with pid={} to terminate", e->proc->getPid());
 	e->proc->close();
 
-	/** @todo: Check exit code of subprocess? */
+	/** @todo Check exit code of subprocess? */
 	return 0;
 }
 

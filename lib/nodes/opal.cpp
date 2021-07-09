@@ -108,7 +108,7 @@ int opal_type_start(villas::node::SuperNode *sn)
 {
 	int err, noRecvIcons, noSendIcons;
 
-	/* @todo: Port to C++
+	/* @todo Port to C++
 	if (sn->cli.argc != 4)
 		return -1; */
 
@@ -221,7 +221,7 @@ char * opal_print(struct vnode *n)
 {
 	struct opal *o = (struct opal *) n->_vd;
 
-	/** @todo: Print send_params, recv_params */
+	/** @todo Print send_params, recv_params */
 
 	return strf("sendID=%u, recvID=%u, reply=%u",
 		o->sendID, o->recvID, o->reply);

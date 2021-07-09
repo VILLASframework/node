@@ -324,7 +324,7 @@ static int comedi_start_out(struct vnode *n)
 	d->last_debug = time_now();
 
 	/* Allocate buffer for one complete VILLAS sample */
-	/** @todo: maybe increase buffer size according to c->vectorize */
+	/** @todo maybe increase buffer size according to c->vectorize */
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = new char[local_buffer_size];
 	d->bufptr = d->buffer;
@@ -455,7 +455,7 @@ int comedi_start(struct vnode *n)
 		throw RuntimeError("Failed to open device: {}", comedi_strerror(comedi_errno()));
 
 	/* Enable non-blocking syscalls */
-	/** @todo: verify if this works with both input and output, so comment out */
+	/** @todo verify if this works with both input and output, so comment out */
 	//if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
 	//	throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
 
@@ -602,7 +602,7 @@ int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			const size_t bytes_left = bytes_available - bytes_consumed;
 			if (bytes_left > 0) {
 				/* Move leftover bytes to the beginning of buffer */
-				/** @todo: optimize? */
+				/** @todo optimize? */
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 

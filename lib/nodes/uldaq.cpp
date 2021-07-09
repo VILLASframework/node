@@ -558,7 +558,7 @@ int uldaq_stop(struct vnode *n)
 
 	UlError err;
 
-	/* @todo: Fix deadlock */
+	/* @todo Fix deadlock */
 	//pthread_mutex_lock(&u->in.mutex);
 
 	/* Get the current status of the acquisition */

@@ -185,7 +185,7 @@ Web::Web(Api *a) :
 	htdocs(WEB_PATH),
 	api(a)
 {
-	/** @todo: Port to C++: add LLL_DEBUG and others if trace log level is activated */
+	/** @todo Port to C++: add LLL_DEBUG and others if trace log level is activated */
 	lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, lwsLogger);
 }
 

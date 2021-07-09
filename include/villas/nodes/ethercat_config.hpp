@@ -42,7 +42,7 @@
 #define ETHERCAT_PID_FC1100 0x044c0c62
 
 
-/** @todo: Make PDO entry tables configurable */
+/** @todo Make PDO entry tables configurable */
 
 /* Master 0, Slave 3, "EL4038"
  * Vendor ID:       0x00000002
