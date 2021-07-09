@@ -59,7 +59,7 @@ int tsc_init(struct tsc *t)
 		int64_t frequency;
 		size_t lenp = sizeof(frequency);
 
-		/** @todo: machdep.tsc.frequency seems to be a measured frequency (based on local APIC?
+		/** @todo machdep.tsc.frequency seems to be a measured frequency (based on local APIC?
 		 *         We should figure out which frequency is more accurate */
 //		ret = sysctlbyname("hw.cpufrequency", &frequency, &lenp, nullptr, 0);
 		ret = sysctlbyname("machdep.tsc.frequency", &frequency, &lenp, nullptr, 0);
