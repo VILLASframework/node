@@ -113,10 +113,10 @@ public:
 
 	void preparePaths();
 	void prepareNodes();
+	void prepareNodeTypes();
 
 	void startPaths();
 	void startNodes();
-	void startNodeTypes();
 	void startInterfaces();
 
 	void stopPaths();

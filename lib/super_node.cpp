@@ -253,7 +253,7 @@ void SuperNode::check()
 	state = State::CHECKED;
 }
 
-void SuperNode::startNodeTypes()
+void SuperNode::prepareNodeTypes()
 {
 	int ret;
 
@@ -345,6 +345,7 @@ void SuperNode::prepare()
 
 	kernel::rt::init(priority, affinity);
 
+	prepareNodeTypes();
 	prepareNodes();
 	preparePaths();
 
@@ -371,7 +372,6 @@ void SuperNode::start()
 	web.start();
 #endif
 
-	startNodeTypes();
 	startInterfaces();
 	startNodes();
 	startPaths();
