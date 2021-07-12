@@ -180,9 +180,9 @@ public:
 			struct signal *rocofSig;
 
 			/* Add signals */
-			freqSig = signal_create("amplitude", "V", SignalType::FLOAT);
-			amplSig = signal_create("phase", "rad", SignalType::FLOAT);
-			phaseSig = signal_create("frequency", "Hz", SignalType::FLOAT);
+			freqSig = signal_create("frequency", "Hz", SignalType::FLOAT);
+			amplSig = signal_create("amplitude", "V", SignalType::FLOAT);
+			phaseSig = signal_create("phase", "rad", SignalType::FLOAT);
 			rocofSig = signal_create("rocof", "Hz/s", SignalType::FLOAT);
 
 			if (!freqSig || !amplSig || !phaseSig || !rocofSig)
