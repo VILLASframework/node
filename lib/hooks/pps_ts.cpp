@@ -82,7 +82,7 @@ public:
 
 		assert(state != State::STARTED);
 
-		Hook::parse(json);
+		SingleSignalHook::parse(json);
 
 		double fSmps = 0;
 		ret = json_unpack_ex(json, &err, 0, "{ s?: f, s: F }",
