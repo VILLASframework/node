@@ -85,9 +85,12 @@ public:
 		SingleSignalHook::parse(json);
 
 		double fSmps = 0;
-		ret = json_unpack_ex(json, &err, 0, "{ s?: f, s: F }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: f, s: F, s?: i, s?: i }",
 			"threshold", &threshold,
-			"expected_smp_rate", &fSmps
+			"expected_smp_rate", &fSmps,
+			"horizon_estimation", &horizonEstimation,
+			"horizon_compensation", &horizonCompensation
+
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-pps_ts");
@@ -99,7 +102,42 @@ public:
 		state = State::PARSED;
 	}
 
+
 	virtual villas::node::Hook::Reason process(sample *smp)
+	{
+		assert(state == State::STARTED);
+		/* Get value of PPS signal */
+		float value = smp->data[signalIndex].f; // TODO check if it is really float
+		/* Detect Edge */
+		bool isEdge = lastValue < threshold && value > threshold;
+		lastValue = value;
+		if (isEdge) {
+			tsVirt.tv_sec = time(nullptr);
+			tsVirt.tv_nsec = 0;
+			period = 1.0 / cntSmps;
+			cntSmps = 0;
+			cntEdges++;
+		} else {
+			struct timespec tsPeriod = time_from_double(period);
+			tsVirt = time_add(&tsVirt, &tsPeriod);
+		}
+
+		cntSmps++;
+
+		if (cntEdges < 5)
+			return Hook::Reason::SKIP_SAMPLE;
+
+		smp->ts.origin = tsVirt;
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
+
+		if ((smp->sequence - lastSequence) > 1)
+			logger->warn("Samples missed: {} sampled missed", smp->sequence - lastSequence);
+
+		lastSequence = smp->sequence;
+		return Hook::Reason::OK;
+	}	
+
+	virtual villas::node::Hook::Reason process_bak(sample *smp)
 	{
 		assert(state == State::STARTED);
 
