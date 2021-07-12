@@ -169,6 +169,7 @@ public:
 
 	virtual void prepare()
 	{
+		MultiSignalHook::prepare();
 		dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
 
 		signal_list_clear(&signals);
@@ -234,6 +235,7 @@ public:
 
 	virtual void parse(json_t *json)
 	{
+		MultiSignalHook::parse(json);
 		int ret;
 		int windowSizeFactor = 1;
 
@@ -242,7 +244,6 @@ public:
 		const char *freqEstimateTypeC = nullptr;
 
 		json_error_t err;
-		json_t *jsonChannelList = nullptr;
 
 		assert(state != State::STARTED);
 
@@ -259,7 +260,6 @@ public:
 			"padding_type", &paddingTypeC,
 			"freq_estimate_type", &freqEstimateTypeC,
 			"sync", &sync,
-			"signal_index", &jsonChannelList,
 			"pps_index", &ppsIndex
 		);
 		if (ret)
