@@ -161,8 +161,6 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 		sent = node_write(sps->node, read_smps, recv);
 		if (sent < recv)
 			p->logger->warn("Partial write to secondary path source {} of path {}", *sps->node, *p);
-
-		sample_incref_many(read_smps, recv);
 	}
 
 	p->received.set(i);
