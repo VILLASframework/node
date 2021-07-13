@@ -48,16 +48,17 @@ public:
 		Hook(p, n, fl, prio, en),
 		parent(pa)
 	{
-		state = State::CHECKED;
+		/* This hook has no config. We never call parse() for it */
+		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct sample *smp);
 };
 
 class StatsReadHook : public Hook {
 
 protected:
-	sample *last;
+	struct sample *last;
 
 	StatsHook *parent;
 
@@ -67,7 +68,8 @@ public:
 		last(nullptr),
 		parent(pa)
 	{
-		state = State::CHECKED;
+		/* This hook has no config. We never call parse() for it */
+		state = State::PARSED;
 	}
 
 	virtual void start()
@@ -238,7 +240,7 @@ public:
 	}
 };
 
-Hook::Reason StatsWriteHook::process(sample *smp)
+Hook::Reason StatsWriteHook::process(struct sample *smp)
 {
 	timespec now = time_now();
 
@@ -247,7 +249,7 @@ Hook::Reason StatsWriteHook::process(sample *smp)
 	return Reason::OK;
 }
 
-Hook::Reason StatsReadHook::process(sample *smp)
+Hook::Reason StatsReadHook::process(struct sample *smp)
 {
 	if (last) {
 		if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
