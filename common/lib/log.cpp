@@ -77,7 +77,12 @@ Logger Log::get(const std::string &name)
 		logger->set_pattern(prefix + pattern);
 
 		for (auto &expr : expressions) {
-			if (!fnmatch(expr.name.c_str(), name.c_str(), FNM_EXTMATCH))
+			int flags = 0;
+#ifdef FNM_EXTMATCH
+			/* musl-libc doesnt support this flag yet */
+			flags |= FNM_EXTMATCH;
+#endif
+			if (!fnmatch(expr.name.c_str(), name.c_str(), flags))
 				logger->set_level(expr.level);
 		}
 
