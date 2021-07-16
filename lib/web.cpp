@@ -281,6 +281,7 @@ void Web::stop()
 	logger->info("Stopping sub-system");
 
 	running = false;
+	lws_cancel_service(context);
 	thread.join();
 
 	lws_context_destroy(context);
