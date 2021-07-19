@@ -295,6 +295,8 @@ public:
 
 		if (!paddingTypeC)
 			logger->info("No Padding type given, assume no zeropadding");
+		else if (strcmp(paddingTypeC, "zero") == 0)
+			paddingType = PaddingType::ZERO;
 		else if (strcmp(paddingTypeC, "signal_repeat") == 0)
 			paddingType = PaddingType::SIG_REPEAT;
 		else
