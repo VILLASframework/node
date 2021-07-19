@@ -62,6 +62,7 @@ endif()
 list(APPEND FORMAT_SRC
     column.cpp
     iotagent_ul.cpp
+    json_edgeflex.cpp
     json_kafka.cpp
     json_reserve.cpp
     json.cpp
