@@ -122,6 +122,8 @@ protected:
 	Dumper phasorAmplitude;
 	Dumper phasorFreq;
 
+	double angleUnitFactor;
+
 public:
 	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
@@ -164,7 +166,8 @@ public:
 		phasorRocof(dumperPrefix + "phasorRocof"),
 		phasorPhase(dumperPrefix + "phasorPhase"),
 		phasorAmplitude(dumperPrefix + "phasorAmplitude"),
-		phasorFreq(dumperPrefix + "phasorFreq")
+		phasorFreq(dumperPrefix + "phasorFreq"),
+		angleUnitFactor(1)
 	{ }
 
 	virtual void prepare()
@@ -242,6 +245,7 @@ public:
 		const char *paddingTypeC = nullptr;
 		const char *windowTypeC = nullptr;
 		const char *freqEstimateTypeC = nullptr;
+		const char *angleUnitC = nullptr;
 
 		json_error_t err;
 
@@ -249,7 +253,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: i }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i , s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -260,7 +264,8 @@ public:
 			"padding_type", &paddingTypeC,
 			"freq_estimate_type", &freqEstimateTypeC,
 			"sync", &sync,
-			"pps_index", &ppsIndex
+			"pps_index", &ppsIndex,
+			"angle_unit", &angleUnitC
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
@@ -278,6 +283,15 @@ public:
 			windowType = WindowType::HANN;
 		else
 			throw ConfigError(json, "node-config-hook-dft-window-type", "Invalid window type: {}", windowTypeC);
+
+		if (!angleUnitC)
+			logger->info("No angle type given, assume rad");
+		else if (strcmp(angleUnitC, "rad") == 0)
+			angleUnitFactor = 1;
+		else if (strcmp(angleUnitC, "degree") == 0)
+			angleUnitFactor = 180 / M_PI;
+		else
+			throw ConfigError(json, "node-config-hook-dft-angle-unit", "Angle unit {} not recognized", angleUnitC);
 
 		if (!paddingTypeC)
 			logger->info("No Padding type given, assume no zeropadding");
@@ -384,7 +398,7 @@ public:
 
 					smp->data[i * 4 + 0].f = currentResult.frequency; /* Frequency */
 					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)); /* Amplitude */
-					smp->data[i * 4 + 2].f = atan2(results[i][maxPos].imag(), results[i][maxPos].real()); /* Phase */
+					smp->data[i * 4 + 2].f = atan2(results[i][maxPos].imag(), results[i][maxPos].real()) * angleUnitFactor; /* Phase */
 					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult.frequency) / (double)rate; /* RoCof */
 
 				}
