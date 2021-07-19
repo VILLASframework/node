@@ -39,6 +39,7 @@ using namespace villas;
 using namespace villas::node;
 
 Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
+	logger(logging.get("hook")),
 	state(State::INITIALIZED),
 	flags(fl),
 	priority(prio),
