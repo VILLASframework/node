@@ -34,6 +34,8 @@
 #include <sw/redis++/redis++.h>
 #include <spdlog/fmt/ostr.h>
 
+#include <villas/node/config.h>
+
 namespace std {
 
 template<typename _rep, typename ratio>
@@ -50,12 +52,16 @@ struct hash<sw::redis::tls::TlsOptions>
 {
 	std::size_t operator()(const sw::redis::tls::TlsOptions& t) const
 	{
+#ifdef REDISPP_WITH_TLS
 		return hash<bool>()(t.enabled) ^
 		       hash<std::string>()(t.cacert) ^
 		       hash<std::string>()(t.cacertdir) ^
 		       hash<std::string>()(t.cert) ^
 		       hash<std::string>()(t.key) ^
 		       hash<std::string>()(t.sni);
+#else
+		return 0;
+#endif /* REDISPP_WITH_TLS */
 	}
 };
 
@@ -85,12 +91,16 @@ namespace redis {
 
 bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2)
 {
+#ifdef REDISPP_WITH_TLS
 	return o1.enabled == o2.enabled &&
 	       o1.cacert == o2.cacert &&
 	       o1.cacertdir == o2.cacertdir &&
 	       o1.cert == o2.cert &&
 	       o1.key == o2.key &&
 	       o1.sni == o2.sni;
+#else
+	return true;
+#endif /* REDISPP_WITH_TLS */
 }
 
 bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2)
@@ -108,6 +118,7 @@ bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2)
 	       o1.tls == o2.tls;
 }
 
+#ifdef REDISPP_WITH_TLS
 template<typename OStream>
 OStream &operator<<(OStream &os, const tls::TlsOptions &t)
 {
@@ -132,6 +143,7 @@ OStream &operator<<(OStream &os, const tls::TlsOptions &t)
 
 	return os;
 }
+#endif /* REDISPP_WITH_TLS */
 
 template<typename OStream>
 OStream &operator<<(OStream &os, const ConnectionType &t)
@@ -166,8 +178,11 @@ OStream &operator<<(OStream &os, const ConnectionOptions &o)
 
 	os << ", db=" << o.db
 	   << ", user=" << o.user
-	   << ", keepalive=" << (o.keep_alive ? "yes" : "no")
-	   << ", " << o.tls;
+	   << ", keepalive=" << (o.keep_alive ? "yes" : "no");
+
+#ifdef REDISPP_WITH_TLS
+	os << ", " << o.tls;
+#endif
 
 	return os;
 }

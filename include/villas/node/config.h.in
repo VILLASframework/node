@@ -70,3 +70,4 @@
 
 /* Library features */
 #cmakedefine LWS_DEFLATE_FOUND
+#cmakedefine REDISPP_WITH_TLS

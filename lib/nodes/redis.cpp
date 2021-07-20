@@ -34,6 +34,7 @@
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/timing.h>
+#include <villas/node/config.h>
 
 /* Forward declartions */
 static struct vnode_type p;
@@ -356,6 +357,7 @@ int redis_parse(struct vnode *n, json_t *json)
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-redis", "Failed to parse node configuration");
 
+#ifdef REDISPP_WITH_TLS
 	if (json_ssl) {
 		const char *cacert;
 		const char *cacertdir;
@@ -384,6 +386,9 @@ int redis_parse(struct vnode *n, json_t *json)
 		if (host)
 			r->options.tls.sni = host;
 	}
+#else
+	throw ConfigError(json_ssl, "node-config-node-redis-ssl", "This built of the redis++ library does not support SSL");
+#endif /* REDISPP_WITH_TLS */
 
 	/* Mode */
 	if (mode) {

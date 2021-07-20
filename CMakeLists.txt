@@ -131,6 +131,14 @@ if(NOT RE_FOUND)
     pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.6)
 endif()
 
+if (REDISPP_FOUND)
+    file(READ "${REDISPP_INCLUDEDIR}/sw/redis++/tls.h" CONTENTS)
+    if (CONTENTS MATCHES "SEWENEW_REDISPLUSPLUS_TLS_H")
+        set(REDISPP_WITH_TLS ON)
+    endif()
+    unset(CONTENTS)
+endif()
+
 # Check if libwebsockets is build with deflate extension
 if(${CMAKE_VERSION} VERSION_LESS "3.12.4")
     set(LWS_LOCATION "${LIBWEBSOCKETS_LIBRARY_DIRS}/lib${LIBWEBSOCKETS_LIBRARIES}.so")
