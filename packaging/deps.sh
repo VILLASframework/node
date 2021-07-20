@@ -137,7 +137,7 @@ fi
 
 # Build & Install hiredis
 if ! pkg-config "hiredis>1.0.0" && \
-    [ -z "${SKIP_HIREDIS}" ]; then
+    [ -z "${SKIP_HIREDIS}" -a -z "${SKIP_REDIS}" ]; then
     git clone --branch v1.0.0 --depth 1 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
@@ -149,7 +149,7 @@ if ! pkg-config "hiredis>1.0.0" && \
 fi
 
 # Build & Install redis++
-if [ -z "${SKIP_REDISPP}" ]; then
+if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
     git clone --depth 1 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
