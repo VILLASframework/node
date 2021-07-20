@@ -49,10 +49,32 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 	if (json_created)
 		json_object_set_new(json_value, "created", json_created);
 
-	if (json_value == nullptr)
+int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct sample *smp)
+{
+	int ret;
+	json_int_t created = -1;
+
+	if (smp->capacity < 1)
 		return -1;
 
-	*json_smp = json_value;
+	struct signal *sig = (struct signal *) vlist_at_safe(signals, 0);
+	if (!sig)
+		return -1;
+
+	if (sig->type != SignalType::FLOAT)
+		return -1;
+
+	ret = json_unpack(json_smp, "{ s: f, s?: I }",
+		"value", &smp->data[0].f,
+		"created", &created
+	);
+	if (ret)
+		return ret;
+
+	if (created >= 0) {
+		smp->ts.origin = time_from_double(created / 1e3);
+		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
+	}
 
 	return 0;
 }

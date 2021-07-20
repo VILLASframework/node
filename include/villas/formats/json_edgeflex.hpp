@@ -31,7 +31,8 @@ class JsonEdgeflexFormat : public JsonFormat {
 
 protected:
 	int packSample(json_t **j, const struct sample *smp);
-	
+	int unpackSample(json_t *json_smp, struct sample *smp);
+
 public:
 	using JsonFormat::JsonFormat;
 };
