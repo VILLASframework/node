@@ -67,8 +67,10 @@ RUN apt-get update && \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \
 		libre-dev:${ARCH} \
-		liblua5.3-dev:${ARCH} \
-		libhiredis-dev:${ARCH}
+		liblua5.3-dev:${ARCH}
+
+		# hiredis on Debian comes without SSL support. We built it ourself
+		# libhiredis-dev:${ARCH}
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \

@@ -63,8 +63,10 @@ RUN apt-get update && \
 		libusb-1.0-0-dev \
 		libfmt-dev \
 		libspdlog-dev \
-		liblua5.3-dev \
-		libhiredis-dev
+		liblua5.3-dev
+
+		# hiredis on Debian comes without SSL support. We built it ourself
+		# libhiredis-dev:${ARCH}
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
