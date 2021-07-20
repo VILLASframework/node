@@ -81,7 +81,6 @@ ADD packaging/deps.sh /
 
 # Disabling a few dependencies due to incompatability with musl-libc:
 #   https://github.com/creytiv/re/issues/256
-#   https://github.com/mz-automation/libiec61850/issues/279
 
 RUN --security=insecure \
 	export SKIP_CRITERION=1; \

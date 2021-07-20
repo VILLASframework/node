@@ -61,38 +61,6 @@ if [ -z "${SKIP_ETHERLAB}" ]; then
     popd
 fi
 
-# Build & Install Fmtlib
-if ! pkg-config "fmt >= 6.1.2" && \
-    [ -z "${SKIP_FMTLIB}" ]; then
-    git clone --branch 6.1.2 --depth 1 --recursive https://github.com/fmtlib/fmt.git
-    mkdir -p fmt/build
-    pushd fmt/build
-    cmake -DBUILD_SHARED_LIBS=1 \
-        ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp fmt/build/*.rpm rpms
-    fi
-    popd
-fi
-
-# Build & Install spdlog
-if ! pkg-config "spdlog >= 1.8.2" && \
-    [ -z "${SKIP_SPDLOG}" ]; then
-    git clone --branch v1.8.2 --depth 1 --recursive https://github.com/gabime/spdlog.git
-    mkdir -p spdlog/build
-    pushd spdlog/build
-    cmake -DSPDLOG_FMT_EXTERNAL=ON \
-          -DSPDLOG_BUILD_BENCH=OFF \
-          -DSPDLOG_BUILD_SHARED=ON \
-          ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp spdlog/build/*.rpm rpms
-    fi
-    popd
-fi
-
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.3.1" && \
     [ -z "${SKIP_LIBIEC61850}" ]; then
@@ -104,21 +72,6 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
     if [ -n "${PACKAGE}" ]; then
         cp libiec61850/build/*.rpm rpms
     fi
-    popd
-fi
-
-# Build & Install libwebsockets
-if ! pkg-config "libwebsockets >= 2.3.0" && \
-    [ -z "${SKIP_WEBSOCKETS}" ]; then
-    git clone --branch v4.0-stable --depth 1 https://libwebsockets.org/repo/libwebsockets
-    mkdir -p libwebsockets/build
-    pushd libwebsockets/build
-    cmake -DLWS_WITH_IPV6=ON \
-          -DLWS_WITHOUT_TESTAPPS=ON \
-          -DLWS_WITHOUT_EXTENSIONS=OFF \
-          -DLWS_WITH_SERVER_STATUS=ON \
-          ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
@@ -135,32 +88,6 @@ if ! pkg-config "rdkafka>=1.5.0" && \
     popd
 fi
 
-# Build & Install hiredis
-if ! pkg-config "hiredis>1.0.0" && \
-    [ -z "${SKIP_HIREDIS}" -a -z "${SKIP_REDIS}" ]; then
-    git clone --branch v1.0.0 --depth 1 https://github.com/redis/hiredis.git
-    mkdir -p hiredis/build
-    pushd hiredis/build
-    cmake -DDISABLE_TESTS=ON \
-          -DENABLE_SSL=ON \
-          ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    popd
-fi
-
-# Build & Install redis++
-if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
-    git clone --depth 1 https://github.com/sewenew/redis-plus-plus.git
-    mkdir -p redis-plus-plus/build
-    pushd redis-plus-plus/build
-    cmake -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
-          -DREDIS_PLUS_PLUS_USE_TLS=ON \
-          -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
-          ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
-    make ${MAKE_OPTS} ${TARGET}
-    popd
-fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.0.0" && \
@@ -234,6 +161,82 @@ if ! pkg-config "libxil >= 1.0.0" && \
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     fi
+    popd
+fi
+
+# Build & Install hiredis
+if ! pkg-config "hiredis>1.0.0" && \
+    [ -z "${SKIP_HIREDIS}" -a -z "${SKIP_REDIS}" ]; then
+    git clone --branch v1.0.0 --depth 1 https://github.com/redis/hiredis.git
+    mkdir -p hiredis/build
+    pushd hiredis/build
+    cmake -DDISABLE_TESTS=ON \
+          -DENABLE_SSL=ON \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    popd
+fi
+
+# Build & Install redis++
+if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
+    git clone --branch 1.2.3 --depth 1 https://github.com/sewenew/redis-plus-plus.git
+    mkdir -p redis-plus-plus/build
+    pushd redis-plus-plus/build
+
+    # Somehow redis++ fails to find the hiredis include path on Debian multiarch builds
+    REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I/usr/local/include"
+
+    cmake -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
+          -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
+          ${REDISPP_CMAKE_OPTS} ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET} VERBOSE=1
+    popd
+fi
+
+# Build & Install Fmtlib
+if ! pkg-config "fmt >= 6.1.2" && \
+    [ -z "${SKIP_FMTLIB}" ]; then
+    git clone --branch 6.1.2 --depth 1 --recursive https://github.com/fmtlib/fmt.git
+    mkdir -p fmt/build
+    pushd fmt/build
+    cmake -DBUILD_SHARED_LIBS=1 \
+        ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp fmt/build/*.rpm rpms
+    fi
+    popd
+fi
+
+# Build & Install spdlog
+if ! pkg-config "spdlog >= 1.8.2" && \
+    [ -z "${SKIP_SPDLOG}" ]; then
+    git clone --branch v1.8.2 --depth 1 --recursive https://github.com/gabime/spdlog.git
+    mkdir -p spdlog/build
+    pushd spdlog/build
+    cmake -DSPDLOG_FMT_EXTERNAL=ON \
+          -DSPDLOG_BUILD_BENCH=OFF \
+          -DSPDLOG_BUILD_SHARED=ON \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp spdlog/build/*.rpm rpms
+    fi
+    popd
+fi
+
+# Build & Install libwebsockets
+if ! pkg-config "libwebsockets >= 2.3.0" && \
+    [ -z "${SKIP_WEBSOCKETS}" ]; then
+    git clone --branch v4.0-stable --depth 1 https://libwebsockets.org/repo/libwebsockets
+    mkdir -p libwebsockets/build
+    pushd libwebsockets/build
+    cmake -DLWS_WITH_IPV6=ON \
+          -DLWS_WITHOUT_TESTAPPS=ON \
+          -DLWS_WITHOUT_EXTENSIONS=OFF \
+          -DLWS_WITH_SERVER_STATUS=ON \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
