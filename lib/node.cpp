@@ -263,7 +263,7 @@ int node_start(struct vnode *n)
 	assert(n->state == State::PREPARED);
 	assert(node_type(n)->state == State::STARTED);
 
-	n->logger->info("Starting node");
+	n->logger->info("Starting node {}", node_name_long(n));
 
 	ret = node_direction_start(&n->in, n);
 	if (ret)
@@ -541,8 +541,10 @@ char * node_name_long(struct vnode *n)
 
 		strcatf(&n->_name_long, "%s: uuid=%s, #in.signals=%zu(%zu), #out.signals=%zu(%zu), #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
 			node_name(n), uuid,
-			vlist_length(&n->in.signals),  vlist_length(node_input_signals(n)),
-			vlist_length(&n->out.signals), vlist_length(node_output_signals(n)),
+			vlist_length(&n->in.signals),
+			node_input_signals(n) ? vlist_length(node_input_signals(n)) : 0,
+			vlist_length(&n->out.signals),
+			node_output_signals(n) ? vlist_length(node_output_signals(n)) : 0,
 			vlist_length(&n->in.hooks),    vlist_length(&n->out.hooks),
 			n->in.vectorize, n->out.vectorize
 		);
