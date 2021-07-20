@@ -42,6 +42,8 @@ protected:
 		HORIZON,
 	} mode;
 
+	uint64_t lastSequence;
+
 	double lastValue;
 	double threshold;
 
@@ -63,6 +65,7 @@ public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		SingleSignalHook(p, n, fl, prio, en),
 		mode(Mode::SIMPLE),
+		lastSequence(0),
 		lastValue(0),
 		threshold(1.5),
 		isSynced(false),
