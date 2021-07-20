@@ -8,7 +8,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   DOCKER_PLATFORMS: amd64 armv6 armv7 arm64
-  MAKE_OPTS: "-j16"
+  MAKE_OPTS: "-j"
 
 stages:
 - prepare
@@ -71,18 +71,20 @@ build:source:
     matrix:
     - DISTRO: [ fedora, fedora-minimal, debian, debian-armhf, debian-arm64 ]
     - DISTRO: fedora-minimal
-      CMAKE_OPTS: -DWITH_GRAPHVIZ=OFF
-                  -DWITH_HOOKS=OFF
-                  -DWITH_WEB=OFF
-                  -DWITH_API=OFF
-                  -DWITH_CONFIG=OFF
-                  -DWITH_SRC=OFF
-                  -DWITH_TOOLS=OFF
-                  -DWITH_TESTS=OFF
-                  -DWITH_PLUGINS=OFF
+      CMAKE_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
+                  -DWITH_CONFIG=OFF
                   -DWITH_DOC=OFF
                   -DWITH_FPGA=OFF
+                  -DWITH_GRAPHVIZ=OFF
+                  -DWITH_HOOKS=OFF
+                  -DWITH_LUA=OFF
+                  -DWITH_OPENMP=OFF
+                  -DWITH_PLUGINS=OFF
+                  -DWITH_SRC=OFF
+                  -DWITH_TESTS=OFF
+                  -DWITH_TOOLS=OFF
+                  -DWITH_WEB=OFF
     - DISTRO: centos
       CMAKE: cmake3
       CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake

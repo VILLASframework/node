@@ -8,6 +8,8 @@ TRIPLET=${TRIPLET:-x86_64-linux-gnu}
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
 CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
+MAKE_OPTS+="-j"
+
 git config --global http.postBuffer 524288000
 git config --global core.compression 0
 
@@ -38,7 +40,7 @@ if ! pkg-config "criterion >= 2.3.1" && \
     pushd Criterion/build
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     fi
     popd
 fi
@@ -50,7 +52,7 @@ if [ -z "${SKIP_ETHERLAB}" ]; then
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     else
         wget https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
         cp ethercat-1.5.2.tar.bz2 ~/rpmbuild/SOURCES
@@ -67,7 +69,7 @@ if ! pkg-config "fmt >= 6.1.2" && \
     pushd fmt/build
     cmake -DBUILD_SHARED_LIBS=1 \
         ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp fmt/build/*.rpm rpms
     fi
@@ -84,7 +86,7 @@ if ! pkg-config "spdlog >= 1.8.2" && \
           -DSPDLOG_BUILD_BENCH=OFF \
           -DSPDLOG_BUILD_SHARED=ON \
           ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp spdlog/build/*.rpm rpms
     fi
@@ -98,7 +100,7 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp libiec61850/build/*.rpm rpms
     fi
@@ -116,7 +118,7 @@ if ! pkg-config "libwebsockets >= 2.3.0" && \
           -DLWS_WITHOUT_EXTENSIONS=OFF \
           -DLWS_WITH_SERVER_STATUS=ON \
           ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
@@ -129,7 +131,7 @@ if ! pkg-config "rdkafka>=1.5.0" && \
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
           -DRDKAFKA_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
@@ -142,7 +144,7 @@ if ! pkg-config "hiredis>1.0.0" && \
     cmake -DDISABLE_TESTS=ON \
           -DENABLE_SSL=ON \
           ${CMAKE_OPTS} ..
-    make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
@@ -156,6 +158,7 @@ if [ -z "${SKIP_REDISPP}" ]; then
           -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
           ${CMAKE_OPTS} ..
     make -j$(nproc) ${TARGET}
+    make ${MAKE_OPTS} ${TARGET}
     popd
 fi
 
@@ -167,7 +170,7 @@ if ! pkg-config "libuldaq >= 1.0.0" && \
     autoreconf -i
     ./configure --enable-examples=no ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     else
         make dist
         cp fedora/uldaq_ldconfig.patch libuldaq-1.1.2.tar.gz ~/rpmbuild/SOURCES
@@ -184,7 +187,7 @@ if ! pkg-config "comedilib >= 0.11.0" && \
     ./autogen.sh
     ./configure ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     else
         touch doc/pdf/comedilib.pdf # skip build of PDF which is broken..
         make dist
@@ -200,7 +203,7 @@ if ! pkg-config "libre >= 0.5.6" && \
     git clone --branch v0.6.1 --depth 1 https://github.com/creytiv/re.git
     pushd re
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     else
         tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-0.6.1.tar.gz .
         rpmbuild -ba rpm/re.spec
@@ -216,7 +219,7 @@ if ! pkg-config "nanomsg >= 1.0.0" && \
     pushd nanomsg/build
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     fi
     popd
 fi
@@ -229,7 +232,7 @@ if ! pkg-config "libxil >= 1.0.0" && \
     pushd libxil/build
     cmake ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
-        make -j$(nproc) install
+        make ${MAKE_OPTS} install
     fi
     popd
 fi
