@@ -103,12 +103,14 @@ public:
 
 		period = 1.0 / fSmps;
 
-		if (!strcmp(mode_str, "simple"))
-			mode = Mode::SIMPLE;
-		else if (!strcmp(mode_str, "horizon"))
-			mode = Mode::HORIZON;
-		else
-			throw ConfigError(json, "node-config-hook-pps_ts-mode", "Unsupported mode: {}", mode_str);
+		if (mode_str) {
+			if (!strcmp(mode_str, "simple"))
+				mode = Mode::SIMPLE;
+			else if (!strcmp(mode_str, "horizon"))
+				mode = Mode::HORIZON;
+			else
+				throw ConfigError(json, "node-config-hook-pps_ts-mode", "Unsupported mode: {}", mode_str);
+		}
 
 		state = State::PARSED;
 	}
