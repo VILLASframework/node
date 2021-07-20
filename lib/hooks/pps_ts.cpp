@@ -37,9 +37,13 @@ namespace node {
 class PpsTsHook : public SingleSignalHook {
 
 protected:
+	enum Mode {
+		SIMPLE,
+		HORIZON,
+	} mode;
+
 	double lastValue;
 	double threshold;
-	uint64_t lastSequence;
 
 	bool isSynced;
 	bool isLocked;
@@ -58,9 +62,9 @@ protected:
 public:
 	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		SingleSignalHook(p, n, fl, prio, en),
+		mode(Mode::SIMPLE),
 		lastValue(0),
 		threshold(1.5),
-		lastSequence(0),
 		isSynced(false),
 		isLocked(false),
 		timeError(0.0),
@@ -84,33 +88,54 @@ public:
 
 		SingleSignalHook::parse(json);
 
+		const char *mode_str = nullptr;
+
 		double fSmps = 0;
 		ret = json_unpack_ex(json, &err, 0, "{ s?: f, s: F, s?: i, s?: i }",
+			"mode", &mode,
 			"threshold", &threshold,
 			"expected_smp_rate", &fSmps,
 			"horizon_estimation", &horizonEstimation,
 			"horizon_compensation", &horizonCompensation
-
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-pps_ts");
 
 		period = 1.0 / fSmps;
 
-		logger->debug("Parsed config threshold={} signal_index={} nominal_period={}", threshold, signalIndex, period);
+		if (!strcmp(mode_str, "simple"))
+			mode = Mode::SIMPLE;
+		else if (!strcmp(mode_str, "horizon"))
+			mode = Mode::HORIZON;
+		else
+			throw ConfigError(json, "node-config-hook-pps_ts-mode", "Unsupported mode: {}", mode_str);
 
 		state = State::PARSED;
 	}
 
+	virtual villas::node::Hook::Reason process(struct sample *smp)
+	{
+		switch (mode) {
+			case Mode::SIMPLE:
+				return processSimple(smp);
 
-	virtual villas::node::Hook::Reason process(sample *smp)
+			case Mode::HORIZON:
+				return processHorizon(smp);
+
+			default:
+				return Reason::ERROR;
+		}
+	}
+
+	villas::node::Hook::Reason processSimple(struct sample *smp)
 	{
 		assert(state == State::STARTED);
+
 		/* Get value of PPS signal */
 		float value = smp->data[signalIndex].f; // TODO check if it is really float
+
 		/* Detect Edge */
 		bool isEdge = lastValue < threshold && value > threshold;
-		lastValue = value;
 		if (isEdge) {
 			tsVirt.tv_sec = time(nullptr);
 			tsVirt.tv_nsec = 0;
@@ -122,6 +147,7 @@ public:
 			tsVirt = time_add(&tsVirt, &tsPeriod);
 		}
 
+		lastValue = value;
 		cntSmps++;
 
 		if (cntEdges < 5)
@@ -135,9 +161,9 @@ public:
 
 		lastSequence = smp->sequence;
 		return Hook::Reason::OK;
-	}	
+	}
 
-	virtual villas::node::Hook::Reason process_bak(sample *smp)
+	villas::node::Hook::Reason processHorizon(struct sample *smp)
 	{
 		assert(state == State::STARTED);
 
