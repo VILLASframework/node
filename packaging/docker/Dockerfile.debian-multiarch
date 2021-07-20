@@ -66,6 +66,7 @@ RUN apt-get update && \
 		libcomedi-dev:${ARCH} \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \
+		libusb-1.0-0-dev:${ARCH} \
 		libre-dev:${ARCH} \
 		liblua5.3-dev:${ARCH} \
 		libhiredis-dev:${ARCH}
@@ -106,8 +107,7 @@ ENV TRIPLET=${TRIPLET}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
-RUN export SKIP_ULDAQ=1; \
-    bash deps.sh
+RUN bash deps.sh
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80

@@ -90,9 +90,9 @@ fi
 
 
 # Build & Install uldaq
-if ! pkg-config "libuldaq >= 1.0.0" && \
+if ! pkg-config "libuldaq >= 1.2.0" && \
     [ -z "${SKIP_ULDAQ}" ]; then
-    git clone --branch rpmbuild --depth 1 https://github.com/stv0g/uldaq
+    git clone --branch v1.2.0 --depth 1 https://github.com/mccdaq/uldaq
     pushd uldaq
     autoreconf -i
     ./configure --enable-examples=no ${CONFIGURE_OPTS}
