@@ -38,7 +38,7 @@
 
 /* Forward declartions */
 static struct vnode_type p;
-static void redis_on_message(struct vnode *n, std::string channel, std::string msg);
+static void redis_on_message(struct vnode *n, const std::string &channel, const std::string &msg);
 
 using namespace villas;
 using namespace villas::node;
@@ -55,7 +55,7 @@ RedisConnection::RedisConnection(const ConnectionOptions &opts) :
 	/* Enable keyspace notifications */
 	context.command("config", "set", "notify-keyspace-events", "K$h");
 
-	subscriber.on_message([this](std::string channel, std::string msg) {
+	subscriber.on_message([this](const std::string &channel, const std::string &msg) {
 		onMessage(channel, msg);
 	});
 
@@ -84,7 +84,7 @@ RedisConnection * RedisConnection::get(const ConnectionOptions &opts)
 	return conn;
 }
 
-void RedisConnection::onMessage(std::string channel, std::string msg)
+void RedisConnection::onMessage(const std::string &channel, const std::string &msg)
 {
 	auto itp = subscriberMap.equal_range(channel);
 	for (auto it = itp.first; it != itp.second; ++it) {
@@ -218,7 +218,7 @@ static int redis_get(struct vnode *n, struct sample * const smps[], unsigned cnt
 	}
 }
 
-static void redis_on_message(struct vnode *n, std::string channel, std::string msg)
+static void redis_on_message(struct vnode *n, const std::string &channel, const std::string &msg)
 {
 	struct redis *r = (struct redis *) n->_vd;
 

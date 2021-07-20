@@ -64,7 +64,7 @@ protected:
 	std::thread thread;
 	std::atomic<enum State> state;
 
-	void onMessage(std::string channel, std::string msg);
+	void onMessage(const std::string &channel, const std::string &msg);
 
 	void loop();
 
