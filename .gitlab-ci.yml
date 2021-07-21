@@ -8,7 +8,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   DOCKER_PLATFORMS: amd64 armv6 armv7 arm64
-  MAKE_OPTS: "-j"
+  MAKE_OPTS: "-j16"
 
 stages:
 - prepare
