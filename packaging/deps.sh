@@ -8,7 +8,8 @@ TRIPLET=${TRIPLET:-x86_64-linux-gnu}
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
 CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
-MAKE_OPTS+="-j"
+MAKE_THREADS=${MAKE_THREADS:-$(nproc)}
+MAKE_OPTS+="-j${MAKE_THREADS}"
 
 git config --global http.postBuffer 524288000
 git config --global core.compression 0
@@ -248,6 +249,6 @@ popd
 rm -rf ${DIR}
 
 # Update linker cache
-if [ -z "${PACKAGE}" ]; then
+if [ -z "${PACKAGE}" -a -z "${SKIP_LDCONFIG}" ]; then
     ldconfig
 fi
