@@ -50,8 +50,11 @@ int loopback_internal_prepare(struct vnode *n)
 	ret = signal_list_copy(&n->in.signals, &l->source->in.signals);
 	if (ret)
 		return -1;
-
+#ifdef HAS_EVENTFD
 	return queue_signalled_init(&l->queue, l->queuelen, memory_default, QueueSignalledMode::EVENTFD);
+#else
+	return queue_signalled_init(&l->queue, l->queuelen, memory_default, QueueSignalledMode::AUTO);
+#endif
 }
 
 int loopback_internal_destroy(struct vnode *n)
