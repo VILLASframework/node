@@ -1,7 +1,7 @@
 /** LWS-releated functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,7 +22,7 @@
 
 #include <cstring>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/web.hpp>
 #include <villas/api.hpp>
@@ -34,7 +34,7 @@ using namespace villas;
 using namespace villas::node;
 
 /* Forward declarations */
-lws_callback_function websocket_protocol_cb;
+lws_callback_function villas::node::websocket_protocol_cb;
 
 /** List of libwebsockets protocols. */
 lws_protocols protocols[] = {
@@ -69,7 +69,7 @@ lws_protocols protocols[] = {
 static lws_http_mount mounts[] = {
 #ifdef WITH_API
 	{
-		.mount_next =		&mounts[1],	/* linked-list "next" */
+		.mount_next =		nullptr,	/* linked-list "next" */
 		.mountpoint =		"/api/v2",	/* mountpoint URL */
 		.origin =		"http-api",	/* protocol */
 		.def =			nullptr,
@@ -85,26 +85,8 @@ static lws_http_mount mounts[] = {
 		.cache_intermediaries =	0,
 		.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
 		.mountpoint_len =	7		/* char count */
-	},
-#endif /* WITH_API */
-	{
-		.mount_next =		nullptr,
-		.mountpoint =		"/",
-		.origin =		nullptr,
-		.def =			"/index.html",
-		.protocol =		nullptr,
-		.cgienv =		nullptr,
-		.extra_mimetypes =	nullptr,
-		.interpret =		nullptr,
-		.cgi_timeout =		0,
-		.cache_max_age =	0,
-		.auth_mask =		0,
-		.cache_reusable =	0,
-		.cache_revalidate =	0,
-		.cache_intermediaries = 0,
-		.origin_protocol =	LWSMPRO_FILE,
-		.mountpoint_len =	1
 	}
+#endif /* WITH_API */
 };
 
 /** List of libwebsockets extensions. */
@@ -179,15 +161,13 @@ int Web::lwsLogLevel(Log::Level lvl) {
 
 void Web::worker()
 {
-	lws *wsi;
-
 	logger->info("Started worker");
 
 	while (running) {
 		lws_service(context, 0);
 
 		while (!writables.empty()) {
-			wsi = writables.pop();
+			auto *wsi = writables.pop();
 
 			lws_callback_on_writable(wsi);
 		}
@@ -202,7 +182,6 @@ Web::Web(Api *a) :
 	context(nullptr),
 	vhost(nullptr),
 	port(getuid() > 0 ? 8080 : 80),
-	htdocs(WEB_PATH),
 	api(a)
 {
 	lws_set_log_level(lwsLogLevel(logging.getLevel()), lwsLogger);
@@ -213,13 +192,11 @@ int Web::parse(json_t *json)
 	int ret, enabled = 1;
 	const char *cert = nullptr;
 	const char *pkey = nullptr;
-	const char *htd = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s?: s, s?: s, s?: i, s?: b }",
 		"ssl_cert", &cert,
 		"ssl_private_key", &pkey,
-		"htdocs", &htd,
 		"port", &port,
 		"enabled", &enabled
 	);
@@ -231,9 +208,6 @@ int Web::parse(json_t *json)
 
 	if (pkey)
 		ssl_private_key = pkey;
-
-	if (htd)
-		htdocs = htd;
 
 	if (!enabled)
 		port = CONTEXT_PORT_NO_LISTEN;
@@ -252,7 +226,9 @@ void Web::start()
 
 	ctx_info.port = port;
 	ctx_info.protocols = protocols;
+#ifndef LWS_WITHOUT_EXTENSIONS
 	ctx_info.extensions = extensions;
+#endif
 	ctx_info.ssl_cert_filepath = ssl_cert.empty() ? nullptr : ssl_cert.c_str();
 	ctx_info.ssl_private_key_filepath = ssl_private_key.empty() ? nullptr : ssl_private_key.c_str();
 	ctx_info.gid = -1;
@@ -262,13 +238,10 @@ void Web::start()
 #if LWS_LIBRARY_VERSION_NUMBER <= 3000000
 	/* See: https://github.com/warmcat/libwebsockets/issues/1249 */
 	ctx_info.max_http_header_pool = 1024;
- #endif
+#endif
 	ctx_info.mounts = mounts;
 
-	logger->info("Starting sub-system: htdocs={}", htdocs);
-
-	/* update web root of mount point */
-	mounts[ARRAY_LEN(mounts)-1].origin = htdocs.c_str();
+	logger->info("Starting sub-system");
 
 	context = lws_create_context(&ctx_info);
 	if (context == nullptr)
@@ -280,7 +253,7 @@ void Web::start()
 			break;
 
 		ctx_info.port++;
-		logger->warn("WebSocket: failed to setup vhost. Trying another port: {}", ctx_info.port);
+		logger->warn("Failed to setup vhost. Trying another port: {}", ctx_info.port);
 	}
 
 	if (vhost == nullptr)

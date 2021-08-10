@@ -1,7 +1,7 @@
 /** JSON serializtion of sample data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/compat.hpp>
-#include <villas/signal.h>
+#include <villas/signal.hpp>
 #include <villas/formats/json.hpp>
 #include <villas/exceptions.hpp>
 
@@ -52,7 +52,7 @@ enum SignalType JsonFormat::detect(const json_t *val)
 	}
 }
 
-json_t * JsonFormat::packTimestamps(const struct sample *smp)
+json_t * JsonFormat::packTimestamps(const struct Sample *smp)
 {
 	json_t *json_ts = json_object();
 
@@ -75,7 +75,7 @@ json_t * JsonFormat::packTimestamps(const struct sample *smp)
 	return json_ts;
 }
 
-int JsonFormat::unpackTimestamps(json_t *json_ts, struct sample *smp)
+int JsonFormat::unpackTimestamps(json_t *json_ts, struct Sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -106,7 +106,7 @@ int JsonFormat::unpackTimestamps(json_t *json_ts, struct sample *smp)
 	return 0;
 }
 
-int JsonFormat::packSample(json_t **json_smp, const struct sample *smp)
+int JsonFormat::packSample(json_t **json_smp, const struct Sample *smp)
 {
 	json_t *json_root;
 	json_error_t err;
@@ -125,11 +125,11 @@ int JsonFormat::packSample(json_t **json_smp, const struct sample *smp)
 		json_t *json_data = json_array();
 
 		for (unsigned i = 0; i < smp->length; i++) {
-			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+			auto sig = smp->signals->getByIndex(i);
 			if (!sig)
 				return -1;
 
-			json_t *json_value = signal_data_to_json(&smp->data[i], sig->type);
+			json_t *json_value = smp->data[i].toJson(sig->type);
 
 			json_array_append_new(json_data, json_value);
 		}
@@ -142,7 +142,7 @@ int JsonFormat::packSample(json_t **json_smp, const struct sample *smp)
 	return 0;
 }
 
-int JsonFormat::packSamples(json_t **json_smps, const struct sample * const smps[], unsigned cnt)
+int JsonFormat::packSamples(json_t **json_smps, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_root = json_array();
@@ -162,7 +162,7 @@ int JsonFormat::packSamples(json_t **json_smps, const struct sample * const smps
 	return cnt;
 }
 
-int JsonFormat::unpackSample(json_t *json_smp, struct sample *smp)
+int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -200,16 +200,16 @@ int JsonFormat::unpackSample(json_t *json_smp, struct sample *smp)
 		if (i >= smp->capacity)
 			break;
 
-		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		auto sig = smp->signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
 		enum SignalType fmt = detect(json_value);
 		if (sig->type != fmt)
 			throw RuntimeError("Received invalid data type in JSON payload: Received {}, expected {} for signal {} (index {}).",
-				signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
+				signalTypeToString(fmt), signalTypeToString(sig->type), sig->name, i);
 
-		ret = signal_data_parse_json(&smp->data[i], sig->type, json_value);
+		ret = smp->data[i].parseJson(sig->type, json_value);
 		if (ret)
 			return -3;
 
@@ -222,7 +222,7 @@ int JsonFormat::unpackSample(json_t *json_smp, struct sample *smp)
 	return 0;
 }
 
-int JsonFormat::unpackSamples(json_t *json_smps, struct sample * const smps[], unsigned cnt)
+int JsonFormat::unpackSamples(json_t *json_smps, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smp;
@@ -243,7 +243,7 @@ int JsonFormat::unpackSamples(json_t *json_smps, struct sample * const smps[], u
 	return i;
 }
 
-int JsonFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int JsonFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -263,7 +263,7 @@ int JsonFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sampl
 	return ret;
 }
 
-int JsonFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int JsonFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -286,7 +286,7 @@ int JsonFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample
 	return ret;
 }
 
-int JsonFormat::print(FILE *f, const struct sample * const smps[], unsigned cnt)
+int JsonFormat::print(FILE *f, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
@@ -309,7 +309,7 @@ int JsonFormat::print(FILE *f, const struct sample * const smps[], unsigned cnt)
 	return i;
 }
 
-int JsonFormat::scan(FILE *f, struct sample * const smps[], unsigned cnt)
+int JsonFormat::scan(FILE *f, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;

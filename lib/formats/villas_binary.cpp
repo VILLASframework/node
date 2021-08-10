@@ -1,7 +1,7 @@
 /** Message related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,22 +26,22 @@
 #include <villas/formats/villas_binary.hpp>
 #include <villas/formats/msg.hpp>
 #include <villas/formats/msg_format.hpp>
-#include <villas/sample.h>
 #include <villas/exceptions.hpp>
+#include <villas/sample.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
-int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i = 0;
 	char *ptr = buf;
 
 	for (i = 0; i < cnt; i++) {
-		struct msg *msg = (struct msg *) ptr;
-		const struct sample *smp = smps[i];
+		struct Message *msg = (struct Message *) ptr;
+		const struct Sample *smp = smps[i];
 
 		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
@@ -65,7 +65,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const stru
 	return i;
 }
 
-int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	int ret, values;
 	unsigned i, j;
@@ -76,8 +76,8 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
 
 	for (i = 0, j = 0; i < cnt; i++) {
-		struct msg *msg = (struct msg *) ptr;
-		struct sample *smp = smps[j];
+		struct Message *msg = (struct Message *) ptr;
+		struct Sample *smp = smps[j];
 
 		smp->signals = signals;
 
@@ -86,7 +86,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 			break;
 
 		/* Check if header is still in buffer bounaries */
-		if (ptr + sizeof(struct msg) > buf + len)
+		if (ptr + sizeof(struct Message) > buf + len)
 			return -2; /* Invalid msg received */
 
 		values = web ? msg->length : ntohs(msg->length);

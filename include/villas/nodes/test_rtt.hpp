@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,22 +21,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup test-rtt Node-type for testing Round-trip Time.
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/format.hpp>
 #include <villas/task.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
+class NodeCompat;
+struct Sample;
+
 struct test_rtt;
-struct vnode;
-struct sample;
 
 struct test_rtt_case {
 	double rate;
@@ -46,12 +44,12 @@ struct test_rtt_case {
 	char *filename;
 	char *filename_formatted;
 
-	struct vnode *node;
+	NodeCompat *node;
 };
 
 struct test_rtt {
 	struct Task task;		/**< The periodic task for test_rtt_read() */
-	villas::node::Format *formatter;/**< The format of the output file */
+	Format *formatter;/**< The format of the output file */
 	FILE *stream;
 
 	double cooldown;		/**< Number of seconds to wait beween tests. */
@@ -59,28 +57,31 @@ struct test_rtt {
 	int current;			/**< Index of current test in test_rtt::cases */
 	int counter;
 
-	struct vlist cases;		/**< List of test cases */
+	struct List cases;		/**< List of test cases */
 
 	char *output;			/**< The directory where we place the results. */
 	char *prefix;			/**< An optional prefix in the filename. */
 };
 
-/** @see node_type::print */
-char * test_rtt_print(struct vnode *n);
+char * test_rtt_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int test_rtt_parse(struct vnode *n, json_t *json);
+int test_rtt_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int test_rtt_start(struct vnode *n);
+int test_rtt_prepare(NodeCompat *n);
 
-/** @see node_type::stop */
-int test_rtt_stop(struct vnode *n);
+int test_rtt_init(NodeCompat *n);
 
-/** @see node_type::read */
-int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int test_rtt_destroy(NodeCompat *n);
 
-/** @see node_type::write */
-int test_rtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int test_rtt_start(NodeCompat *n);
 
-/** @} */
+int test_rtt_stop(NodeCompat *n);
+
+int test_rtt_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int test_rtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int test_rtt_poll_fds(NodeCompat *n, int fds[]);
+
+} /* namespace node */
+} /* namespace villas */

@@ -1,7 +1,7 @@
 /** Infiniband memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,33 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <rdma/rdma_cma.h>
+#include <infiniband/verbs.h>
 
 #include <villas/nodes/infiniband.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/memory/ib.h>
 #include <villas/exceptions.hpp>
+#include <villas/node_compat.hpp>
 
 using namespace villas;
 using namespace villas::utils;
+using namespace villas::node;
+using namespace villas::node::memory;
 
-struct ibv_mr * memory_ib_get_mr(void *ptr)
+struct ibv_mr * villas::node::memory::ib_get_mr(void *ptr)
 {
-	struct memory_allocation *ma;
-	struct ibv_mr *mr;
+	auto *ma = get_allocation(ptr);
 
-	ma = memory_get_allocation(ptr);
-	mr = ma->ib.mr;
-
-	return mr;
+	return ma->ib.mr;
 }
 
-static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, struct memory_type *m)
+static
+struct Allocation * ib_alloc(size_t len, size_t alignment, struct Type *m)
 {
-	struct memory_ib *mi = (struct memory_ib *) m->_vd;
+	auto *mi = (struct IB *) m->_vd;
 
-	auto *ma = new struct memory_allocation;
+	auto *ma = new struct Allocation;
 	if (!ma)
 		throw MemoryAllocationError();
 
@@ -72,10 +72,11 @@ static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, 
 	return ma;
 }
 
-static int memory_ib_free(struct memory_allocation *ma, struct memory_type *m)
+static
+int ib_free(struct Allocation *ma, struct Type *m)
 {
 	int ret;
-	struct memory_ib *mi = (struct memory_ib *) m->_vd;
+	auto *mi = (struct IB *) m->_vd;
 
 	ibv_dereg_mr(ma->ib.mr);
 
@@ -86,20 +87,20 @@ static int memory_ib_free(struct memory_allocation *ma, struct memory_type *m)
 	return 0;
 }
 
-struct memory_type * memory_ib(struct vnode *n, struct memory_type *parent)
+struct Type * villas::node::memory::ib(NodeCompat *n, struct Type *parent)
 {
-	struct infiniband *i = (struct infiniband *) n->_vd;
-	struct memory_type *mt = (struct memory_type *) malloc(sizeof(struct memory_type));
+	auto *i = n->getData<struct infiniband>();
+	auto *mt = (struct Type *) malloc(sizeof(struct Type));
 
 	mt->name = "ib";
 	mt->flags = 0;
-	mt->alloc = memory_ib_alloc;
-	mt->free = memory_ib_free;
+	mt->alloc = ib_alloc;
+	mt->free = ib_free;
 	mt->alignment = 1;
 
-	mt->_vd = malloc(sizeof(struct memory_ib));
+	mt->_vd = malloc(sizeof(struct IB));
 
-	struct memory_ib *mi = (struct memory_ib *) mt->_vd;
+	auto *mi = (struct memory::IB *) mt->_vd;
 
 	mi->pd = i->ctx.pd;
 	mi->parent = parent;

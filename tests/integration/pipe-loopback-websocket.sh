@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,23 +22,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
+echo "Test is broken"
 exit 99
 
-CONFIG_FILE=$(mktemp)
-CONFIG_FILE2=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"nodes" : {
-		"node1" : {
-			"type" : "websocket",
+	"nodes": {
+		"node1": {
+			"type": "websocket",
 
-			"destinations" : [
+			"destinations": [
 				"ws://127.0.0.1:8080/node2.protobuf"
 			]
 		}
@@ -46,34 +52,27 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-cat > ${CONFIG_FILE2} << EOF
+cat > config2.json << EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	},
-	"nodes" : {
-		"node2" : {
-			"type" : "websocket"
+	"nodes": {
+		"node2": {
+			"type": "websocket"
 		}
 	}
 }
 EOF
 
-# Generate test data
-villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
-villas pipe -r -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &
+villas pipe -r -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee output.dat &
 
 sleep 1
 
-villas pipe -s ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
+villas pipe -s config.json node1 < <(sleep 1; cat input.dat)
 
 wait $!
 
-# Compare data
-villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${CONFIG_FILE2}
-
-exit ${RC}
+villas compare input.dat output.dat

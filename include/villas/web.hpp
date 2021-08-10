@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -52,7 +52,6 @@ protected:
 	Queue<lws *> writables;		/**< Queue of WSIs for which we will call lws_callback_on_writable() */
 
 	int port;			/**< Port of the build in HTTP / WebSocket server. */
-	std::string htdocs;		/**< The root directory for files served via HTTP. */
 	std::string ssl_cert;		/**< Path to the SSL certitifcate for HTTPS / WSS. */
 	std::string ssl_private_key;	/**< Path to the SSL private key for HTTPS / WSS. */
 

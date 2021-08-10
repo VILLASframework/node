@@ -2,7 +2,7 @@
  *
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,21 +21,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup can CAN bus Node Type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <jansson.h>
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
-union signal_data;
+class NodeCompat;
+union SignalData;
 
 struct can_signal {
 	uint32_t id;
@@ -52,42 +49,32 @@ struct can {
 
 	/* States */
 	int socket;
-	union signal_data *sample_buf;
+	union SignalData *sample_buf;
 	size_t sample_buf_num;
 	struct timespec start_time;
 };
 
-/** @see node_type::init */
-int can_init(struct vnode *n);
+int can_init(NodeCompat *n);
 
-/** @see node_type::destroy */
-int can_destroy(struct vnode *n);
+int can_destroy(NodeCompat *n);
 
-/** @see node_type::parse */
-int can_parse(struct vnode *n, json_t *json);
+int can_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * can_print(struct vnode *n);
+char * can_print(NodeCompat *n);
 
-/** @see node_type::check */
-int can_check();
+int can_check(NodeCompat *n);
 
-/** @see node_type::prepare */
-int can_prepare();
+int can_prepare(NodeCompat *n);
 
-/** @see node_type::start */
-int can_start(struct vnode *n);
+int can_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int can_stop(struct vnode *n);
+int can_stop(NodeCompat *n);
 
-/** @see node_type::write */
-int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int can_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::read */
-int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int can_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::poll_fds */
-int can_poll_fds(struct vnode *n, int fds[]);
+int can_poll_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

@@ -2,7 +2,7 @@
 /** Configuration file parsing.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,10 +31,10 @@
 #include <iostream>
 #include <iomanip>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
-#include <villas/config.hpp>
+#include <villas/config_class.hpp>
 #include <villas/boxes.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/config_helper.hpp>
@@ -59,19 +59,24 @@ Config::Config(const std::string &u) :
 
 Config::~Config()
 {
-	if (root)
-		json_decref(root);
+	json_decref(root);
 }
 
 json_t * Config::load(std::FILE *f, bool resolveInc, bool resolveEnvVars)
 {
 	json_t *root = decode(f);
 
-	if (resolveInc)
+	if (resolveInc) {
+		json_t *root_old = root;
 		root = expandIncludes(root);
+		json_decref(root_old);
+	}
 
-	if (resolveEnvVars)
+	if (resolveEnvVars) {
+		json_t *root_old = root;
 		root = expandEnvVars(root);
+		json_decref(root_old);
+	}
 
 	return root;
 }
@@ -139,10 +144,7 @@ std::list<std::string> Config::getIncludeDirectories(FILE *f) const
 
 	std::list<std::string> dirs;
 
-	dir = getcwd(buf, sizeof(buf));
-	if (dir != nullptr)
-		dirs.push_back(dir);
-
+	// Adding directory of base configuration file
 	fd = fileno(f);
 	if (fd < 0)
 		throw SystemError("Failed to get file descriptor");
@@ -157,6 +159,11 @@ std::list<std::string> Config::getIncludeDirectories(FILE *f) const
 			dirs.push_back(dir);
 		}
 	}
+
+	// Adding current working directory
+	dir = getcwd(buf, sizeof(buf));
+	if (dir != nullptr)
+		dirs.push_back(dir);
 
 	return dirs;
 }
@@ -255,7 +262,7 @@ json_t * Config::libconfigDecode(FILE *f)
 
 	/* Setup libconfig include path. */
 #if (LIBCONFIG_VER_MAJOR > 1) || ((LIBCONFIG_VER_MAJOR == 1) && (LIBCONFIG_VER_MINOR >= 7))
-	config_set_hook (&cfg, this);
+	config_set_hook(&cfg, this);
 
 	config_set_include_func(&cfg, includeFuncStub);
 #else
@@ -323,7 +330,7 @@ json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
 			return new_root;
 
 		default:
-			return root;
+			return json_incref(root);
 	};
 }
 
@@ -346,7 +353,7 @@ json_t * Config::expandIncludes(json_t *in)
 		static const std::string kw = "@include ";
 
 		if (text.find(kw) != 0)
-			return str;
+			return json_incref(str);
 		else {
 			std::string pattern = text.substr(kw.size());
 

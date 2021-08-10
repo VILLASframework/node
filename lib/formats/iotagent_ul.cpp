@@ -3,7 +3,7 @@
  * See: https://fiware-iotagent-ul.readthedocs.io/en/latest/usermanual/index.html
  *
  * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,33 +24,30 @@
 
 #include <cstring>
 
-#include <villas/sample.h>
-#include <villas/node.h>
-#include <villas/signal.h>
+#include <villas/sample.hpp>
+#include <villas/node.hpp>
+#include <villas/signal.hpp>
 #include <villas/compat.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/formats/iotagent_ul.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
-int IotAgentUltraLightFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int IotAgentUltraLightFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	size_t printed = 0;
-	struct signal *sig;
-	const struct sample *smp = smps[0];
+	const struct Sample *smp = smps[0];
 
 	for (unsigned i = 0; (i < smp->length) && (printed < len); i++) {
-		sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		auto sig = smp->signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
-		if (sig->name)
-			printed += snprintf(buf + printed, len - printed, "%s|%f|", sig->name, smp->data[i].f);
+		if (!sig->name.empty())
+			printed += snprintf(buf + printed, len - printed, "%s|%f|", sig->name.c_str(), smp->data[i].f);
 		else {
-			char name[32];
-			snprintf(name, 32, "signal_%u", i);
-			printed += snprintf(buf + printed, len - printed, "%s|%f|", name, smp->data[i].f);
+			printed += snprintf(buf + printed, len - printed, "signal_%u|%f|", i, smp->data[i].f);
 		}
 	}
 
@@ -60,7 +57,7 @@ int IotAgentUltraLightFormat::sprint(char *buf, size_t len, size_t *wbytes, cons
 	return 0;
 }
 
-int IotAgentUltraLightFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int IotAgentUltraLightFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	return -1;
 }

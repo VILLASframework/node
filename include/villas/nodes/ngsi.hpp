@@ -8,7 +8,7 @@
  * @see http://technical.openmobilealliance.org/Technical/Release_Program/docs/NGSI/V1_0-20120529-A/OMA-TS-NGSI_Context_Management-V1_0-20120529-A.pdf
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,22 +27,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup ngsi FIRWARE NGSI 9/10 RESTful HTTP API
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <curl/curl.h>
 #include <jansson.h>
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/task.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct ngsi {
 	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
@@ -63,41 +60,34 @@ struct ngsi {
 
 	struct {
 		CURL *curl;		/**< libcurl: handle */
-		struct vlist signals;	/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
+		struct List signals;	/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
 	} in, out;
 };
 
-/** Initialize global NGSI settings and maps shared memory regions.
- *
- * @see node_type::type_start
- */
-int ngsi_type_start(villas::node::SuperNode *sn);
 
-/** Free global NGSI settings and unmaps shared memory regions.
- *
- * @see node_type::type_stop
- */
+int ngsi_type_start(SuperNode *sn);
+
 int ngsi_type_stop();
 
-/** @see node_type::parse */
-int ngsi_parse(struct vnode *n, json_t *json);
+int ngsi_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * ngsi_print(struct vnode *n);
+char * ngsi_print(NodeCompat *n);
 
-/** @see node_type::start */
-int ngsi_start(struct vnode *n);
+int ngsi_init(NodeCompat *n);
 
-/** @see node_type::stop */
-int ngsi_stop(struct vnode *n);
+int ngsi_destroy(NodeCompat *n);
 
-/** @see node_type::reverse */
-int ngsi_reverse(struct vnode *n);
+int ngsi_start(NodeCompat *n);
 
-/** @see node_type::read */
-int ngsi_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int ngsi_stop(NodeCompat *n);
 
-/** @see node_type::write */
-int ngsi_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int ngsi_reverse(NodeCompat *n);
 
-/** @} */
+int ngsi_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int ngsi_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int ngsi_poll_fds(NodeCompat *n, int fds[]);
+
+} /* namespace node */
+} /* namespace villas */

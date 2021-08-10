@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,20 +21,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup opal OPAL-RT Async Process node type
- * @{
- */
-
 #pragma once
 
 #include <pthread.h>
 
-#include <villas/sample.h>
+#include <villas/sample.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 extern "C" {
 	#include <OpalGenAsyncParamCtrl.h>
@@ -52,39 +49,23 @@ struct opal {
 	Opal_RecvAsyncParam recvParams;
 };
 
-/** Initialize global OPAL settings and maps shared memory regions.
- *
- * @see node_type::type_start
- */
-int opal_type_start(villas::node::SuperNode *sn);
+int opal_type_start(SuperNode *sn);
 
 int opal_register_region(int argc, char *argv[]);
 
-/** Free global OPAL settings and unmaps shared memory regions.
- *
- * @see node_type::type_stop
- */
 int opal_type_stop();
 
-/** @see node_type::parse */
-int opal_parse(struct vnode *n, json_t *json);
+int opal_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * opal_print(struct vnode *n);
+char * opal_print(NodeCompat *n);
 
-/** Print global settings of the OPAL node type. */
-int opal_print_global();
+int opal_start(NodeCompat *n);
 
-/** @see node_type::start */
-int opal_start(struct vnode *n);
+int opal_stop(NodeCompat *n);
 
-/** @see node_type::stop */
-int opal_stop(struct vnode *n);
+int opal_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::read */
-int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int opal_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::write */
-int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
-
-/** @} */
+} /* namespace node */
+} /* namespace villas */

@@ -3,7 +3,7 @@
 # Test protobuf serialization with Python client
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,21 +22,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
+echo "Test is broken"
 exit 99
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 LAYER="unix"
 FORMAT="protobuf"
 
 NUM_SAMPLES=${NUM_SAMPLES:-20}
 NUM_VALUES=${NUM_VALUES:-5}
-
-# Generate test data
-villas signal -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n random > ${INPUT_FILE}
 
 case ${LAYER} in
 	unix)
@@ -50,19 +54,19 @@ case ${LAYER} in
 		;;
 esac
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"nodes" : {
-		"py-client" : {
-			"type" : "socket",
+	"nodes": {
+		"py-client": {
+			"type": "socket",
 			"layer": "${LAYER}",
-			"format" : "${FORMAT}",
+			"format": "${FORMAT}",
 
-			"in" : {
-				"address" : "${LOCAL}"
+			"in": {
+				"address": "${LOCAL}"
 			},
-			"out" : {
-				"address" : "${REMOTE}"
+			"out": {
+				"address": "${REMOTE}"
 			}
 		}
 	}
@@ -73,7 +77,6 @@ export PYTHONPATH=${BUILDDIR}/python:${SRCDIR}/python
 
 # Start Python client in background
 python3 ${SRCDIR}/clients/python/client.py unix &
-CPID=$!
 
 # Wait for client to be ready
 if [ "${LAYER}" = "unix" ]; then
@@ -84,15 +87,11 @@ fi
 
 sleep 1
 
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} py-client > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n random > input.dat
 
-kill ${CPID}
-wait ${CPID}
+villas pipe -l ${NUM_SAMPLES} config.json py-client > output.dat < input.dat
 
-# Compare data
-villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+kill %%
+wait %%
 
-rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
-
-exit ${RC}
+villas compare ${CMPFLAGS} input.dat output.dat

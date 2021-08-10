@@ -27,12 +27,17 @@
 using namespace villas;
 using namespace villas::usb;
 
-static struct libusb_context *context = nullptr;
-static int context_users = 0;
+static
+struct libusb_context *context = nullptr;
 
-static Logger logger;
+static
+int context_users = 0;
 
-static enum libusb_log_level spdlog_to_libusb_log_level(Log::Level lvl)
+static
+Logger logger;
+
+static
+enum libusb_log_level spdlog_to_libusb_log_level(Log::Level lvl)
 {
 	switch (lvl) {
 		case Log::Level::trace:
@@ -56,7 +61,8 @@ static enum libusb_log_level spdlog_to_libusb_log_level(Log::Level lvl)
 	}
 }
 
-static Log::Level libusb_to_spdlog_log_level(enum libusb_log_level lvl)
+static
+Log::Level libusb_to_spdlog_log_level(enum libusb_log_level lvl)
 {
 	switch (lvl) {
 		case LIBUSB_LOG_LEVEL_ERROR:
@@ -77,7 +83,8 @@ static Log::Level libusb_to_spdlog_log_level(enum libusb_log_level lvl)
 	}
 }
 
-static void log_cb(struct libusb_context *ctx, enum libusb_log_level lvl, const char *str)
+static
+void log_cb(struct libusb_context *ctx, enum libusb_log_level lvl, const char *str)
 {
 	auto level = libusb_to_spdlog_log_level(lvl);
 

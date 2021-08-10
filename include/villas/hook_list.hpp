@@ -4,7 +4,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,61 +23,60 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @addtogroup hooks User-defined hook functions
- * @ingroup path
- * @{
- *********************************************************************************/
-
 #pragma once
 
 #include <jansson.h>
 
+#include <villas/hook.hpp>
+
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vlist;
-struct sample;
-struct vpath;
-struct vnode;
+class Node;
+class Path;
+struct Sample;
 
-int hook_list_init(struct vlist *hs) __attribute__ ((warn_unused_result));
+class HookList : public std::list<Hook::Ptr> {
 
-int hook_list_destroy(struct vlist *hs) __attribute__ ((warn_unused_result));
+public:
+	HookList()
+	{ }
 
-/** Parses an object of hooks
- *
- * Example:
- *
- * {
- *    stats = {
- *       output = "stdout"
- *    },
- *    skip_first = {
- *       seconds = 10
- *    },
- *    hooks = [ "print" ]
- * }
- */
-void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *p, struct vnode *n);
+	/** Parses an object of hooks
+	 *
+	 * Example:
+	 *
+	 * {
+	 *    stats = {
+	 *       output = "stdout"
+	 *    },
+	 *    skip_first = {
+	 *       seconds = 10
+	 *    },
+	 *    hooks = [ "print" ]
+	 * }
+	 */
+	void parse(json_t *json, int mask, Path *p, Node *n);
 
-void hook_list_check(struct vlist *hs);
+	void check();
 
-void hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct vpath *p, struct vnode *n);
+	void prepare(SignalList::Ptr sigs, int mask, Path *p, Node *n);
 
-int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
+	int process(struct Sample *smps[], unsigned cnt);
+	void periodic();
+	void start();
+	void stop();
 
-int hook_list_add(struct vlist *hs, int mask, struct vpath *p, struct vnode *n);
+	void dump(villas::Logger logger, std::string subject) const;
 
-int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt);
+	SignalList::Ptr getSignals() const;
 
-void hook_list_periodic(struct vlist *hs);
+	/** Get the maximum number of signals which is used by any of the hooks in the list. */
+	unsigned getSignalsMaxCount() const;
 
-void hook_list_start(struct vlist *hs);
+	json_t * toJson() const;
+};
 
-void hook_list_stop(struct vlist *hs);
-
-struct vlist * hook_list_get_signals(struct vlist *hs);
-
-/** Get the maximum number of signals which is used by any of the hooks in the list. */
-unsigned hook_list_get_signals_max_cnt(struct vlist *hs);
-
-json_t * hook_list_to_json(struct vlist *hs);
+} /* namespace node */
+} /* namespace villas */

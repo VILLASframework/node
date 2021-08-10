@@ -1,7 +1,7 @@
 /** Node type: ZeroMQ
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,7 +27,7 @@
   #include <zmq_utils.h>
 #endif
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/zeromq.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
@@ -44,7 +44,8 @@ static void *context;
  * by reference, if not null, and event number by value.
  *
  * @returnval  -1 In case of error. */
-static int get_monitor_event(void *monitor, int *value, char **address)
+static
+int get_monitor_event(void *monitor, int *value, char **address)
 {
 	/* First frame in message contains event number and value */
 	zmq_msg_t msg;
@@ -77,27 +78,27 @@ static int get_monitor_event(void *monitor, int *value, char **address)
 	return event;
 }
 
-int zeromq_reverse(struct vnode *n)
+int villas::node::zeromq_reverse(NodeCompat *n)
 {
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
-	if (vlist_length(&z->out.endpoints) != 1 ||
-	    vlist_length(&z->in.endpoints) != 1)
+	if (list_length(&z->out.endpoints) != 1 ||
+	    list_length(&z->in.endpoints) != 1)
 		return -1;
 
-	char *subscriber = (char *) vlist_first(&z->in.endpoints);
-	char *publisher =  (char *) vlist_first(&z->out.endpoints);
+	char *subscriber = (char *) list_first(&z->in.endpoints);
+	char *publisher =  (char *) list_first(&z->out.endpoints);
 
-	vlist_set(&z->in.endpoints, 0, publisher);
-	vlist_set(&z->out.endpoints, 0, subscriber);
+	list_set(&z->in.endpoints, 0, publisher);
+	list_set(&z->out.endpoints, 0, subscriber);
 
 	return 0;
 }
 
-int zeromq_init(struct vnode *n)
+int villas::node::zeromq_init(NodeCompat *n)
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	z->out.bind = 1;
 	z->in.bind = 0;
@@ -108,18 +109,21 @@ int zeromq_init(struct vnode *n)
 	z->in.pending = 0;
 	z->out.pending = 0;
 
-	ret = vlist_init(&z->in.endpoints);
+	ret = list_init(&z->in.endpoints);
 	if (ret)
 		return ret;
 
-	ret = vlist_init(&z->out.endpoints);
+	ret = list_init(&z->out.endpoints);
 	if (ret)
 		return ret;
+
+	z->formatter = nullptr;
 
 	return 0;
 }
 
-int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
+static
+int zeromq_parse_endpoints(json_t *json_ep, struct List *epl)
 {
 	json_t *json_val;
 	size_t i;
@@ -132,13 +136,13 @@ int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
 				if (!ep)
 					throw ConfigError(json_val, "node-config-node-publish", "All 'publish' settings must be strings");
 
-				vlist_push(epl, strdup(ep));
+				list_push(epl, strdup(ep));
 			}
 			break;
 
 		case JSON_STRING:
 			ep = json_string_value(json_ep);
-			vlist_push(epl, strdup(ep));
+			list_push(epl, strdup(ep));
 			break;
 
 		default:
@@ -148,9 +152,9 @@ int zeromq_parse_endpoints(json_t *json_ep, struct vlist *epl)
 	return 0;
 }
 
-int zeromq_parse(struct vnode *n, json_t *json)
+int villas::node::zeromq_parse(NodeCompat *n, json_t *json)
 {
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	int ret;
 	const char *type = nullptr;
@@ -184,6 +188,8 @@ int zeromq_parse(struct vnode *n, json_t *json)
 	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
 	/* Format */
+	if (z->formatter)
+		delete z->formatter;
 	z->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.binary");
@@ -237,15 +243,15 @@ int zeromq_parse(struct vnode *n, json_t *json)
 			z->pattern = zeromq::Pattern::RADIODISH;
 #endif
 		else
-			throw ConfigError(json, "node-config-node-zeromq-type", "Invalid type for ZeroMQ node: {}", node_name_short(n));
+			throw ConfigError(json, "node-config-node-zeromq-type", "Invalid type for ZeroMQ node: {}", n->getNameShort());
 	}
 
 	return 0;
 }
 
-char * zeromq_print(struct vnode *n)
+char * villas::node::zeromq_print(NodeCompat *n)
 {
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	char *buf = nullptr;
 	const char *pattern = nullptr;
@@ -270,16 +276,16 @@ char * zeromq_print(struct vnode *n)
 		z->out.bind ? "yes" : "no"
 	);
 
-	for (size_t i = 0; i < vlist_length(&z->in.endpoints); i++) {
-		char *ep = (char *) vlist_at(&z->in.endpoints, i);
+	for (size_t i = 0; i < list_length(&z->in.endpoints); i++) {
+		char *ep = (char *) list_at(&z->in.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
 
 	strcatf(&buf, "], out.publish=[ ");
 
-	for (size_t i = 0; i < vlist_length(&z->out.endpoints); i++) {
-		char *ep = (char *) vlist_at(&z->out.endpoints, i);
+	for (size_t i = 0; i < list_length(&z->out.endpoints); i++) {
+		char *ep = (char *) list_at(&z->out.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -295,37 +301,37 @@ char * zeromq_print(struct vnode *n)
 	return buf;
 }
 
-int zeromq_check(struct vnode *n)
+int villas::node::zeromq_check(NodeCompat *n)
 {
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
-	if (vlist_length(&z->in.endpoints) == 0 &&
-	    vlist_length(&z->out.endpoints) == 0)
+	if (list_length(&z->in.endpoints) == 0 &&
+	    list_length(&z->out.endpoints) == 0)
 		return -1;
 
 	return 0;
 }
 
-int zeromq_type_start(villas::node::SuperNode *sn)
+int villas::node::zeromq_type_start(villas::node::SuperNode *sn)
 {
 	context = zmq_ctx_new();
 
 	return context == nullptr;
 }
 
-int zeromq_type_stop()
+int villas::node::zeromq_type_stop()
 {
 	return zmq_ctx_term(context);
 }
 
-int zeromq_start(struct vnode *n)
+int villas::node::zeromq_start(NodeCompat *n)
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	struct zeromq::Dir* dirs[] = { &z->out, &z->in };
 
-	z->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	z->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
@@ -429,8 +435,8 @@ int zeromq_start(struct vnode *n)
 			goto fail;
 
 		/* Connect / bind sockets to endpoints */
-		for (size_t i = 0; i < vlist_length(&d->endpoints); i++) {
-			char *ep = (char *) vlist_at(&d->endpoints, i);
+		for (size_t i = 0; i < list_length(&d->endpoints); i++) {
+			char *ep = (char *) list_at(&d->endpoints, i);
 
 			if (d->bind) {
 				ret = zmq_bind(d->socket, ep);
@@ -475,10 +481,10 @@ fail:
 	return ret;
 }
 
-int zeromq_stop(struct vnode *n)
+int villas::node::zeromq_stop(NodeCompat *n)
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	struct zeromq::Dir* dirs[] = { &z->out, &z->in };
 
@@ -492,15 +498,13 @@ int zeromq_stop(struct vnode *n)
 			return ret;
 	}
 
-	delete z->formatter;
-
 	return 0;
 }
 
-int zeromq_destroy(struct vnode *n)
+int villas::node::zeromq_destroy(NodeCompat *n)
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	if (z->in.filter)
 		free(z->in.filter);
@@ -508,17 +512,20 @@ int zeromq_destroy(struct vnode *n)
 	if (z->out.filter)
 		free(z->out.filter);
 
-	ret = vlist_destroy(&z->out.endpoints, nullptr, true);
+	ret = list_destroy(&z->out.endpoints, nullptr, true);
 	if (ret)
 		return ret;
+
+	if (z->formatter)
+		delete z->formatter;
 
 	return 0;
 }
 
-int zeromq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::zeromq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int recv, ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	zmq_msg_t m;
 
@@ -551,10 +558,10 @@ int zeromq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return recv;
 }
 
-int zeromq_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::zeromq_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	size_t wbytes;
 	zmq_msg_t m;
@@ -601,10 +608,10 @@ fail:
 	return ret;
 }
 
-int zeromq_poll_fds(struct vnode *n, int fds[])
+int villas::node::zeromq_poll_fds(NodeCompat *n, int fds[])
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	int fd;
 	size_t len = sizeof(fd);
@@ -618,10 +625,10 @@ int zeromq_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-int zeromq_netem_fds(struct vnode *n, int fds[])
+int villas::node::zeromq_netem_fds(NodeCompat *n, int fds[])
 {
 	int ret;
-	struct zeromq *z = (struct zeromq *) n->_vd;
+	auto *z = n->getData<struct zeromq>();
 
 	int fd;
 	size_t len = sizeof(fd);
@@ -635,7 +642,7 @@ int zeromq_netem_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -658,8 +665,5 @@ static void register_plugin() {
 	p.poll_fds	= zeromq_poll_fds;
 	p.netem_fds	= zeromq_netem_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

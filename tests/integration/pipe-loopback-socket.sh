@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,30 +22,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-THEORIES=$(mktemp)
+if [[ "${EUID}" -ne 0 ]]; then
+	echo "Test requires root permissions"
+	exit 99
+fi
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 NUM_VALUES=${NUM_VALUES:-4}
 FORMAT=${FORMAT:-villas.binary}
-
-# Generate test data
-villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+VECTORIZES="1 10"
 
 for LAYER in udp ip eth unix; do
-	
-VECTORIZES="1"
-
-# The raw format does not support vectors
-if villas_format_supports_vectorize ${FORMAT}; then
-	VECTORIZES="${VECTORIZES} 10"
-fi
-
 for VECTORIZE in ${VECTORIZES}; do
 
 case ${LAYER} in
@@ -71,24 +69,24 @@ case ${LAYER} in
 		;;
 esac
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"nodes" : {
-		"node1" : {
-			"type" : "socket",
+	"nodes": {
+		"node1": {
+			"type": "socket",
 			
-			"vectorize" : ${VECTORIZE},
-			"format" : "${FORMAT}",
-			"layer" : "${LAYER}",
+			"vectorize": ${VECTORIZE},
+			"format": "${FORMAT}",
+			"layer": "${LAYER}",
 
-			"out" : {
-				"address" : "${REMOTE}"
+			"out": {
+				"address": "${REMOTE}"
 			},
-			"in" : {
-				"address" : "${LOCAL}",
-				"signals" : {
-					"count" : ${NUM_VALUES},
-					"type" : "float"
+			"in": {
+				"address": "${LOCAL}",
+				"signals": {
+					"count": ${NUM_VALUES},
+					"type": "float"
 				}
 			}
 		}
@@ -96,34 +94,10 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > input.dat
 
-# Ignore timestamp and seqeunce no if in raw format 
-if ! villas_format_supports_header $FORMAT; then
-	CMPFLAGS=-ts
-fi
+villas pipe -l ${NUM_SAMPLES} config.json node1 < input.dat > output.dat
 
-# Compare data
-villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, vectorize=${VECTORIZE}"
-	echo "Config:"
-	cat ${CONFIG_FILE}
-	echo
-	echo "Input:"
-	cat ${INPUT_FILE}
-	echo
-	echo "Output:"
-	cat ${OUTPUT_FILE}
-	exit ${RC}
-else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, vectorize=${VECTORIZE}"
-fi
+villas compare ${CMPFLAGS} input.dat output.dat
 
 done; done
-
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
-
-exit ${RC}

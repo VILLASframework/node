@@ -3,7 +3,7 @@
 # Integration test for print hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,21 +22,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-OUTPUT_FILE1=$(mktemp)
-OUTPUT_FILE2=$(mktemp)
-INPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
-# Prepare some test data
-villas signal -v 1 -r 10 -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -v 1 -r 10 -l ${NUM_SAMPLES} -n random > input.dat
 
-villas hook -o format=villas.human -o output=${OUTPUT_FILE1} print > ${OUTPUT_FILE2} < ${INPUT_FILE}
+villas hook -o format=villas.human -o output=output1.dat print > output2.dat < input.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}
-RC=$?
-
-rm -f ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}
-
-exit ${RC}
+if [ -s output1.dat -a -s output2.dat ]; then
+    villas compare output1.dat output2.dat input.dat
+else
+    exit -1
+fi

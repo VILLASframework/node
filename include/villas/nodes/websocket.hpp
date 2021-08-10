@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,37 +21,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup websockets WebSockets node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <spdlog/fmt/ostr.h>
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/buffer.hpp>
 #include <villas/format.hpp>
-#include <villas/node/config.h>
-
-/* Forward declarations */
-struct vnode;
-
-#define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
+#include <villas/node.hpp>
+#include <villas/node/config.hpp>
 
 /* Forward declaration */
 struct lws;
 
+namespace villas {
+namespace node {
+
+/* Forward declarations */
+class NodeCompat;
+
+#define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
+
 /** Internal data per websocket node */
 struct websocket {
-	struct vlist destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
+	struct List destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 
-	struct pool pool;
-	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
+	struct Pool pool;
+	struct CQueueSignalled queue;		/**< For samples which are received from WebSockets */
 };
 
 struct websocket_destination {
@@ -77,9 +75,9 @@ struct websocket_connection {
 	} mode;
 
 	struct lws *wsi;
-	struct vnode *node;
-	villas::node::Format *formatter;
-	struct queue queue;			/**< For samples which are sent to the Websocket */
+	NodeCompat *node;
+	Format *formatter;
+	struct CQueue queue;			/**< For samples which are sent to the Websocket */
 
 	struct websocket_destination *destination;
 
@@ -114,25 +112,25 @@ struct websocket_connection {
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-/** @see node_type::type_start */
-int websocket_type_start(villas::node::SuperNode *sn);
+int websocket_type_start(SuperNode *sn);
 
-/** @see node_type::type_stop */
 int websocket_type_stop();
 
-/** @see node_type::start */
-int websocket_start(struct vnode *n);
+int websocket_parse(NodeCompat *n, json_t *j);
 
-/** @see node_type::stop */
-int websocket_stop(struct vnode *n);
+char * websocket_print(NodeCompat *n);
 
-/** @see node_type::stop */
-int websocket_destroy(struct vnode *n);
+int websocket_start(NodeCompat *n);
 
-/** @see node_type::read */
-int websocket_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int websocket_stop(NodeCompat *n);
 
-/** @see node_type::write */
-int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int websocket_destroy(NodeCompat *n);
 
-/** @} */
+int websocket_poll_fds(NodeCompat *n, int fds[]);
+
+int websocket_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int websocket_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

@@ -1,7 +1,7 @@
 /** Node type: IEC 61850-9-2 (Sampled Values)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,9 +24,9 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
-#include <villas/signal.h>
+#include <villas/signal.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
@@ -64,12 +64,13 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 };
 
 /** Each network interface needs a separate receiver */
-static struct vlist receivers;
+static struct List receivers;
 static pthread_t thread;
 static EthernetHandleSet hset;
 static int users = 0;
 
-static void * iec61850_thread(void *ctx)
+static
+void * iec61850_thread(void *ctx)
 {
 	int ret;
 
@@ -78,8 +79,8 @@ static void * iec61850_thread(void *ctx)
 		if (ret < 0)
 			continue;
 
-		for (unsigned i = 0; i < vlist_length(&receivers); i++) {
-			struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
+		for (unsigned i = 0; i < list_length(&receivers); i++) {
+			struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
 
 			switch (r->type) {
 				case iec61850_receiver::Type::GOOSE:	GooseReceiver_tick(r->goose); break;
@@ -91,7 +92,7 @@ static void * iec61850_thread(void *ctx)
 	return nullptr;
 }
 
-const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
+const struct iec61850_type_descriptor * villas::node::iec61850_lookup_type(const char *name)
 {
 	for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {
 		if (!strcmp(name, type_descriptors[i].name))
@@ -101,15 +102,14 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
 	return nullptr;
 }
 
-int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals)
+int villas::node::iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals)
 {
 	int ret, total_size = 0;
 	const char *iec_type;
 	const struct iec61850_type_descriptor *td;
-	struct signal *sig;
 	json_error_t err;
 
-	ret = vlist_init(signals);
+	ret = list_init(signals);
 	if (ret)
 		return ret;
 
@@ -126,7 +126,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 				if (!node_signals)
 					return -1;
 
-				sig = (struct signal *) vlist_at(node_signals, i);
+				auto sig = node_signals->getByIndex(i);
 				if (!sig)
 					return -1;
 
@@ -152,7 +152,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 			if (!td)
 				return -1;
 
-			vlist_push(signals, (void *) td);
+			list_push(signals, (void *) td);
 
 			total_size += td->size;
 		}
@@ -166,8 +166,8 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 		if (!td)
 			return -1;
 
-		for (unsigned i = 0; i < vlist_length(node_signals); i++) {
-			vlist_push(signals, (void *) td);
+		for (unsigned i = 0; i < node_signals->size(); i++) {
+			list_push(signals, (void *) td);
 
 			total_size += td->size;
 		}
@@ -176,7 +176,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 	return total_size;
 }
 
-int iec61850_type_start(villas::node::SuperNode *sn)
+int villas::node::iec61850_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
@@ -184,7 +184,7 @@ int iec61850_type_start(villas::node::SuperNode *sn)
 	if (users > 0)
 		return 0;
 
-	ret = vlist_init(&receivers);
+	ret = list_init(&receivers);
 	if (ret)
 		return ret;
 
@@ -197,15 +197,15 @@ int iec61850_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int iec61850_type_stop()
+int villas::node::iec61850_type_stop()
 {
 	int ret;
 
 	if (--users > 0)
 		return 0;
 
-	for (unsigned i = 0; i < vlist_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
+	for (unsigned i = 0; i < list_length(&receivers); i++) {
+		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
 
 		iec61850_receiver_stop(r);
 	}
@@ -220,14 +220,14 @@ int iec61850_type_stop()
 
 	EthernetHandleSet_destroy(hset);
 
-	ret = vlist_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
+	ret = list_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-int iec61850_receiver_start(struct iec61850_receiver *r)
+int villas::node::iec61850_receiver_start(struct iec61850_receiver *r)
 {
 	switch (r->type) {
 		case iec61850_receiver::Type::GOOSE:
@@ -244,7 +244,7 @@ int iec61850_receiver_start(struct iec61850_receiver *r)
 	return 0;
 }
 
-int iec61850_receiver_stop(struct iec61850_receiver *r)
+int villas::node::iec61850_receiver_stop(struct iec61850_receiver *r)
 {
 	EthernetHandleSet_removeSocket(hset, r->socket);
 
@@ -261,7 +261,7 @@ int iec61850_receiver_stop(struct iec61850_receiver *r)
 	return 0;
 }
 
-int iec61850_receiver_destroy(struct iec61850_receiver *r)
+int villas::node::iec61850_receiver_destroy(struct iec61850_receiver *r)
 {
 	switch (r->type) {
 		case iec61850_receiver::Type::GOOSE:
@@ -278,10 +278,10 @@ int iec61850_receiver_destroy(struct iec61850_receiver *r)
 	return 0;
 }
 
-struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf)
+struct iec61850_receiver * villas::node::iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf)
 {
-	for (unsigned i = 0; i < vlist_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
+	for (unsigned i = 0; i < list_length(&receivers); i++) {
+		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
 
 		if (r->type == t && strcmp(r->interface, intf) == 0)
 			return r;
@@ -290,7 +290,7 @@ struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type
 	return nullptr;
 }
 
-struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf)
+struct iec61850_receiver * villas::node::iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf)
 {
 	struct iec61850_receiver *r;
 
@@ -318,7 +318,7 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type
 
 		iec61850_receiver_start(r);
 
-		vlist_push(&receivers, r);
+		list_push(&receivers, r);
 	}
 
 	return r;

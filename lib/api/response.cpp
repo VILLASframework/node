@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,6 +23,7 @@
 
 #include <villas/api/response.hpp>
 #include <villas/api/request.hpp>
+#include <villas/config.hpp>
 
 using namespace villas::node::api;
 
@@ -41,8 +42,7 @@ Response::Response(Session *s, int c, const std::string &ct, const Buffer &b) :
 	}
 { }
 
-int
-Response::writeBody(struct lws *wsi)
+int Response::writeBody(struct lws *wsi)
 {
 	int ret;
 
@@ -53,8 +53,7 @@ Response::writeBody(struct lws *wsi)
 	return 1;
 }
 
-int
-Response::writeHeaders(struct lws *wsi)
+int Response::writeHeaders(struct lws *wsi)
 {
 	int ret;
 	uint8_t headerBuffer[2048], *p = headerBuffer, *end = &headerBuffer[sizeof(headerBuffer) - 1];
@@ -94,8 +93,7 @@ JsonResponse::~JsonResponse()
 		json_decref(response);
 }
 
-void
-JsonResponse::encodeBody()
+void JsonResponse::encodeBody()
 {
 	buffer.encode(response, JSON_INDENT(4));
 }

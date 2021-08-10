@@ -1,7 +1,7 @@
 /** Print hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,17 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cstdio>
 #include <cstring>
 
-#include <villas/node.h>
+#include <villas/node.hpp>
 #include <villas/hook.hpp>
-#include <villas/path.h>
-#include <villas/sample.h>
+#include <villas/path.hpp>
+#include <villas/sample.hpp>
 #include <villas/format.hpp>
 
 namespace villas {
@@ -39,97 +35,108 @@ namespace node {
 class PrintHook : public Hook {
 
 protected:
-	Format *formatter;
-	FILE *stream;
+	Format::Ptr formatter;
 
 	std::string prefix;
-	std::string uri;
+	std::string output_path;
+
+	FILE *output;
 
 public:
-	PrintHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	PrintHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		formatter(nullptr),
-		stream(nullptr)
+		output(nullptr)
 	{ }
 
-	virtual ~PrintHook()
+	virtual
+	void start()
 	{
-		if (formatter)
-			delete formatter;
-	}
+		assert(state == State::PREPARED ||
+		       state == State::STOPPED);
 
-	virtual void start()
-	{
-		assert(state == State::PREPARED || state == State::STOPPED);
+		if (!output_path.empty()) {
+			output = fopen(output_path.c_str(), "w+");
+			if (!output)
+				throw SystemError("Failed to open file");
+		}
 
-		formatter->start(&signals);
-
-		stream = !uri.empty() ? fopen(uri.c_str(), "a+") : stdout;
-		if (!stream)
-			throw SystemError("Failed to open IO");
+		formatter->start(signals);
 
 		state = State::STARTED;
 	}
 
-	virtual void stop()
-	{
-		assert(state == State::STARTED);
-
-		if (stream != stdout)
-			fclose(stream);
-
-		state = State::STOPPED;
+	virtual
+	void stop() {
+		if (output)
+			fclose(output);
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
-		const char *p = nullptr, *u = nullptr;
+		const char *p = nullptr;
+		const char *o = nullptr;
 		int ret;
 		json_error_t err;
 		json_t *json_format = nullptr;
 
-		assert(state != State::STARTED);
+		assert(state == State::INITIALIZED ||
+		       state == State::CHECKED ||
+		       state == State::PARSED);
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: o }",
-			"output", &u,
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: o, s?: s }",
 			"prefix", &p,
-			"format", &json_format
+			"format", &json_format,
+			"output", &o
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-print");
 
+		if (p && o) {
+			throw ConfigError(json, "node-config-hook-print", "Prefix and output settings are exclusive.");
+		}
+
 		if (p)
 			prefix = p;
 
-		if (u)
-			uri = u;
+		if (o)
+			output_path = o;
 
 		/* Format */
-		formatter = json_format
+		auto *fmt = json_format
 				? FormatFactory::make(json_format)
 				: FormatFactory::make("villas.human");
+
+		formatter = Format::Ptr(fmt);
 		if (!formatter)
 			throw ConfigError(json_format, "node-config-hook-print-format", "Invalid format configuration");
 
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
-		if (stream == stdout) {
-			if (!prefix.empty())
-				std::cout << prefix.c_str();
-			else if (node)
-				std::cout << "Node " << *node << ": ";
-			else if (path)
-				std::cout << "Path " << *path << ": ";
-		}
+		if (!output) {
+			char buf[1024];
+			size_t wbytes;
 
-		formatter->print(stream, smp);
+			formatter->sprint(buf, sizeof(buf), &wbytes, smp);
+
+			if (wbytes > 0 && buf[wbytes-1] == '\n')
+				buf[wbytes-1] = 0;
+
+			if (node)
+				logger->info("{}{} {}", prefix, *node, buf);
+			else if (path)
+				logger->info("{}{} {}", prefix, *path, buf);
+		}
+		else
+			formatter->print(output, smp);
 
 		return Reason::OK;
 	}
@@ -137,11 +144,9 @@ public:
 
 /* Register hook */
 static char n[] = "print";
-static char d[] = "Print the message to stdout";
+static char d[] = "Print the message to stdout or a file";
 static HookPlugin<PrintHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */
 

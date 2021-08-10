@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -115,9 +115,6 @@ public:
 
 	virtual
 	std::string toString();
-
-	void setLogger(Logger log)
-	{ logger = log; }
 };
 
 class RequestFactory : public plugin::Plugin {
@@ -135,9 +132,17 @@ public:
 	Request * create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
 
 	virtual
+	void init(Request *r)
+	{
+		r->logger = getLogger();
+	}
+
+	virtual
 	std::string
 	getType() const
-	{ return "api:request"; }
+	{
+		return "api:request";
+	}
 };
 
 template<typename T, const char *name, const char *re, const char *desc>
@@ -157,7 +162,7 @@ public:
 	{
 		auto *r = new T(s);
 
-		r->setLogger(getLogger());
+		init(r);
 
 		return r;
 	}

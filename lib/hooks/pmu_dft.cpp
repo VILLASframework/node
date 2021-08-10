@@ -1,7 +1,7 @@
 /** DFT hook.
  *
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,21 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cstring>
 #include <cinttypes>
 #include <complex>
 #include <vector>
 #include <sstream>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
-#include <villas/path.h>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 /* Uncomment to enable dumper of memory windows */
 //#define DFT_MEM_DUMP
@@ -127,7 +122,7 @@ protected:
 	double angleUnitFactor;
 
 public:
-	PmuDftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	PmuDftHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
@@ -179,31 +174,30 @@ public:
 
 		dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
 
-		signal_list_clear(&signals);
+		signals->clear();
 		for (unsigned i = 0; i < signalIndices.size(); i++) {
-			struct signal *freqSig;
-			struct signal *amplSig;
-			struct signal *phaseSig;
-			struct signal *rocofSig;
-
 			/* Add signals */
-			std::stringstream ss_freq, ss_ampl, ss_phase, ss_rocof;
-			ss_freq << "frequency" << (channelNameEnable)?signalNames[i]:"";
-			freqSig = signal_create(ss_freq.str().c_str(), "Hz", SignalType::FLOAT);
-			ss_ampl << "amplitude" << (channelNameEnable)?signalNames[i]:"";
-			amplSig = signal_create(ss_ampl.str().c_str(), "V", SignalType::FLOAT);
-			ss_phase << "phase" << (channelNameEnable)?signalNames[i]:"";
-			phaseSig = signal_create(ss_phase.str().c_str(), "rad", SignalType::FLOAT);
-			ss_rocof << "rocof" << (channelNameEnable)?signalNames[i]:"";
-			rocofSig = signal_create(ss_rocof.str().c_str(), "Hz/s", SignalType::FLOAT);
+			auto freqSig = std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
+			auto amplSig = std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
+			auto phaseSig = std::make_shared<Signal>("phase", "rad", SignalType::FLOAT);
+			auto rocofSig = std::make_shared<Signal>("rocof", "Hz/s", SignalType::FLOAT);
 
 			if (!freqSig || !amplSig || !phaseSig || !rocofSig)
 				throw RuntimeError("Failed to create new signals");
 
-			vlist_push(&signals, freqSig);
-			vlist_push(&signals, amplSig);
-			vlist_push(&signals, phaseSig);
-			vlist_push(&signals, rocofSig);
+			if (channelNameEnable) {
+				auto suffix = fmt::format("_{}", signalNames[i]);
+
+				freqSig->name += suffix;
+				amplSig->name += suffix;
+				phaseSig->name += suffix;
+				rocofSig->name += suffix;
+			}
+
+			signals->push_back(freqSig);
+			signals->push_back(amplSig);
+			signals->push_back(phaseSig);
+			signals->push_back(rocofSig);
 		}
 
 		/* Initialize sample memory */
@@ -335,7 +329,7 @@ public:
 		state = State::CHECKED;
 	}
 
-	virtual Hook::Reason process(struct sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -468,7 +462,7 @@ public:
 		double tmpSmpWindow[windowSize];
 
 		for (unsigned i = 0; i< windowSize; i++)
-			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize] * filterWindowCoefficents[i];;
+			tmpSmpWindow[i] = ringBuffer[(i + ringBufferPos) % windowSize] * filterWindowCoefficents[i];
 
 #ifdef DFT_MEM_DUMP
 		if (dumperEnable)
@@ -568,5 +562,3 @@ static HookPlugin<PmuDftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::F
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

@@ -3,7 +3,7 @@
 # Integration Infiniband test using villas node.
 #
 # @author Dennis Potter <dennis@dennispotter.eu>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,181 +22,152 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+set -e
+
 # Check if tools are present
-if ! command -v lspci; then
-    echo "'lspci' tool is missing"
-    exit 99
+if ! command -v lspci > /dev/null; then
+	echo "lspci tool is missing"
+	exit 99
 fi
 
 # Check if user is superuser. SU is used for namespace
-if [[ "$EUID" -ne 0 ]]; then
-    echo "Please run as root"
-    exit 99
+if [[ "${EUID}" -ne 0 ]]; then
+	echo "Please run as root"
+	exit 99
 fi
 
 # Check if Infiniband card is present
 if [[ ! $(lspci | grep Infiniband) ]]; then
-    echo "Did not find any Infiniband cards in system"
-    exit 99
+	echo "Did not find any Infiniband cards in system"
+	exit 99
 fi
 
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-CONFIG_FILE=$(mktemp /tmp/ib-configuration-XXXX.conf)
-CONFIG_FILE_TARGET=$(mktemp /tmp/ib-configuration-target-XXXX.conf)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
-RC=0
-
-# Generate test data for RC, UC, and UD test
-villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Set config file with a MODE flag
-cat > ${CONFIG_FILE} <<EOF
-logging = {
-    level = 0,
-    facilities = "ib",
-},
-
-http = {
-    enabled = false,
-},
-
-nodes = {
-    results = {
-        type = "file",
-        uri = "${OUTPUT_FILE}",
-    },
-
-    ib_node_source = {
-        type = "infiniband",
-
-        rdma_port_space = "MODE",
-        
-        in = {
-            address = "10.0.0.2:1337",
-
-            max_wrs = 8192,
-            cq_size = 8192,
-
-            poll_mode = "BUSY",
-            buffer_subtraction = 128,
-        },
-        out = {
-            address = "10.0.0.1:1337",
-            resolution_timeout = 1000,
-            
-            max_wrs = 8192,
-            cq_size = 256,
-
-            send_inline = true,
-            max_inline_data = 60,
-
-            use_fallback = true,
-        }
-    
-    }
-
-    ib_node_target = {
-        type = "infiniband",
-
-        rdma_port_space = "MODE",
-        
-        in = {
-            address = "10.0.0.1:1337",
-
-            max_wrs = 8192,
-            cq_size = 8192,
-
-            poll_mode = "BUSY",
-            buffer_subtraction = 128,
-        }
-    }
+cat > config.json <<EOF
+{
+	"logging": {
+		"level": 0,
+		"facilities": "ib"
+	},
+	"http": {
+		"enabled": false
+	},
+	"nodes": {
+		"results": {
+			"type": "file",
+			"uri": "output.dat"
+		},
+		"ib_node_source": {
+			"type": "infiniband",
+			"rdma_port_space": "MODE",
+			"in": {
+				"address": "10.0.0.2:1337",
+				"max_wrs": 8192,
+				"cq_size": 8192,
+				"poll_mode": "BUSY",
+				"buffer_subtraction": 128
+			},
+			"out": {
+				"address": "10.0.0.1:1337",
+				"resolution_timeout": 1000,
+				"max_wrs": 8192,
+				"cq_size": 256,
+				"send_inline": true,
+				"max_inline_data": 60,
+				"use_fallback": true
+			}
+		},
+		"ib_node_target": {
+			"type": "infiniband",
+			"rdma_port_space": "MODE",
+			"in": {
+				"address": "10.0.0.1:1337",
+				"max_wrs": 8192,
+				"cq_size": 8192,
+				"poll_mode": "BUSY",
+				"buffer_subtraction": 128
+			}
+		}
+	}
 }
 EOF
 
 # Set target config file, which is the same for both runs
-cat > ${CONFIG_FILE_TARGET} <<EOF
-@include "${CONFIG_FILE//\/tmp\/}"
+cat > target.json <<EOF
+{
+	"@include": "config.json",
 
-paths = (
-    {
-        in = "ib_node_target",
-        out = "results"
-    }
-)
+	"paths": [
+		{
+			"in": "ib_node_target",
+			"out": "results"
+		}
+    ]
+}
 EOF
+
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
 # Declare modes
 MODES=("RC" "UC" "UD")
 
 # Run through modes
-for MODE in "${MODES[@]}"
-do
+for MODE in "${MODES[@]}"; do
 
-    echo "#############################"
-    echo "#############################"
-    echo "##       START ${MODE}         ##"
-    echo "#############################"
-    echo "#############################"
+	echo "#############################"
+	echo "#############################"
+	echo "##       START ${MODE}     ##"
+	echo "#############################"
+	echo "#############################"
 
-	sed -i -e 's/MODE/'${MODE}'/g' ${CONFIG_FILE} 
+	sed -i -e 's/MODE/'${MODE}'/g' config.json 
 
-    # Start receiving node
-    villas node ${CONFIG_FILE_TARGET} &
-    node_proc=$!
-    
-    # Wait for node to complete init
-    sleep 1
-    
-    # Preprare fifo
-    DATAFIFO=/tmp/datafifo
-    if [[ ! -p ${DATAFIFO} ]]; then
-        mkfifo ${DATAFIFO}
-    fi
-    
-    # Start sending pipe
-    ip netns exec namespace0 villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
-    node_pipe=$!
-    
-    # Keep pipe alive
-    sleep 5 >${DATAFIFO} &
-    
-    # Wait for pipe to connect to node
-    sleep 3
-    
-    # Write data to pipe
-    cat ${INPUT_FILE} >${DATAFIFO} &
-    
-    # Wait for node to handle samples
-    sleep 2
-    
-    # Stop node
-    kill $node_pipe 
-    kill $node_proc
-    
-    # Compare data
-    villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-    RC=$?
+	# Start receiving node
+	villas node target.json &
+	PID_PROC=$!
+	
+	# Wait for node to complete init
+	sleep 1
+	
+	# Preprare fifo
+	FIFO=$(mktemp -p ${DIR} -t)
+	if [[ ! -p ${FIFO} ]]; then
+		mkfifo ${FIFO}
+	fi
+	
+	# Start sending pipe
+	ip netns exec namespace0 \
+    villas pipe -l ${NUM_SAMPLES} config.json ib_node_source >output.dat <${FIFO} & 
+	PID_PIPE=$!
+	
+	# Keep pipe alive
+	sleep 5 >${FIFO} &
+	
+	# Wait for pipe to connect to node
+	sleep 3
+	
+	# Write data to pipe
+	cat input.dat >${FIFO} &
+	
+	# Wait for node to handle samples
+	sleep 2
+	
+	# Stop node
+	kill ${PID_PIPE} 
+	kill ${PID_PROC}
+	
+	villas compare input.dat output.dat
 
-    # Exit, if an error occurs
-    if [[ $RC != 0 ]]; then
-        rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
-    
-        exit ${RC}
-    fi
-
-    echo "#############################"
-    echo "#############################"
-    echo "##       STOP  $MODE         ##"
-    echo "#############################"
-    echo "#############################"
-    echo ""
-
-	sed -i -e 's/'${MODE}'/MODE/g' ${CONFIG_FILE} 
+	sed -i -e 's/'${MODE}'/MODE/g' config.json 
 done
-
-rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
-
-exit ${RC}

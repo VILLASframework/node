@@ -1,7 +1,7 @@
 /** RMS hook.
  *
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,12 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <villas/hook.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -40,7 +36,7 @@ protected:
 	uint64_t smpMemoryPosition;
 
 public:
-	RMSHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	RMSHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		smpMemory(),
 		windowSize(0),
@@ -54,7 +50,7 @@ public:
 
 		/* Add signals */
 		for (auto index : signalIndices) {
-			auto *origSig = (struct signal *) vlist_at(&signals, index);
+			auto origSig = signals->getByIndex(index);
 
 			/* Check that signal has float type */
 			if (origSig->type != SignalType::FLOAT)
@@ -91,7 +87,7 @@ public:
 	}
 
 	virtual
-	Hook::Reason process(struct sample *smp)
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -129,5 +125,3 @@ static HookPlugin<RMSHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flag
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,11 +23,19 @@
 
 #pragma once
 
-#include <villas/node.h>
+#include <villas/node.hpp>
 
-struct memory_ib {
+namespace villas {
+namespace node {
+namespace memory {
+
+struct IB {
 	struct ibv_pd *pd;
-	struct memory_type *parent;
+	struct Type *parent;
 };
 
-struct ibv_mr * memory_ib_get_mr(void *ptr);
+struct ibv_mr * ib_get_mr(void *ptr);
+
+} /* namespace memory */
+} /* namespace node */
+} /* namespace villas */

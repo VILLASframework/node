@@ -3,7 +3,7 @@
 # Integration test for remote API
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,45 +22,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-BASE_CONF=$(mktemp)
-LOCAL_CONF=$(mktemp)
-FETCHED_CONF=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat <<EOF > ${BASE_CONF}
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+
+cat > base.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	}
 }
 EOF
 
-cat <<EOF > ${LOCAL_CONF}
+cat > local.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	},
-	"nodes" : {
-		"node1" : {
+	"nodes": {
+		"node1": {
 			"type"   : "socket",
-			"format" : "csv",
+			"format": "csv",
 			
-			"in" : {
+			"in": {
 				"address"  : "*:12000"
 			},
-			"out" : {
-				"address" : "127.0.0.1:12001"
+			"out": {
+				"address": "127.0.0.1:12001"
 			}
 		}
 	},
-	"paths" : [
+	"paths": [
 		{
-			"in" : "node1",
-			"out" : "node1",
-			"hooks" : [
-				{ "type" : "print" }
+			"in": "node1",
+			"out": "node1",
+			"hooks": [
+				{ "type": "print" }
 			]
 		}
 	]
@@ -68,28 +73,23 @@ cat <<EOF > ${LOCAL_CONF}
 EOF
 
 # Start with base configuration
-villas node ${BASE_CONF} &
-PID=$!
+villas node base.json &
 
 # Wait for node to complete init
 sleep 1
 
 # Restart with configuration
-curl -sX POST --data '{ "config": "'${LOCAL_CONF}'" }' http://localhost:8080/api/v2/restart
+curl -sX POST --data '{ "config": "local.json" }' http://localhost:8080/api/v2/restart
 
 # Wait for node to complete init
 sleep 2
 
 # Fetch config via API
-curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/config > fetched.json
 
 # Shutdown VILLASnode
-kill ${PID}
+kill %%
+wait %%
 
 # Compare local config with the fetched one
-diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
-RC=$?
-
-rm -f ${LOCAL_CONF} ${FETCHED_CONF} ${BASE_CONF}
-
-exit ${RC}
+diff -u <(jq -S . < fetched.json) <(jq -S . < local.json)

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,50 +21,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup shmem_node Shared memory node type
- * @{
- */
-
 #pragma once
 
-#include <villas/memory.h>
-#include <villas/pool.h>
+#include <villas/node/memory.hpp>
+#include <villas/pool.hpp>
 #include <villas/queue.h>
-#include <villas/node/config.h>
-#include <villas/shmem.h>
+#include <villas/node/config.hpp>
+#include <villas/shmem.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
-/** Node-type for shared memory communication.
- * @see node_type
- */
 struct shmem {
 	const char* out_name;   	/**< Name of the shm object for the output queue. */
 	const char* in_name;    	/**< Name of the shm object for the input queue. */
-	struct shmem_conf conf; 	/**< Interface configuration struct. */
+	struct ShmemConfig conf; 	/**< Interface configuration struct. */
 	char **exec;            	/**< External program to execute on start. */
-	struct shmem_int intf;  	/**< Shmem interface */
+	struct ShmemInterface intf;  	/**< Shmem interface */
 };
 
-/** @see node_type::print */
-char * shmem_print(struct vnode *n);
+char * shmem_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int shmem_parse(struct vnode *n, json_t *json);
+int shmem_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int shmem_start(struct vnode *n);
+int shmem_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int shmem_stop(struct vnode *n);
+int shmem_stop(NodeCompat *n);
 
-/** @see node_type::read */
-int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int shmem_init(NodeCompat *n);
 
-/** @see node_type::write */
-int shmem_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int shmem_prepare(NodeCompat *n);
 
-/** @} */
+int shmem_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int shmem_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

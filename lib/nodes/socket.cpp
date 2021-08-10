@@ -1,7 +1,7 @@
 /** The socket node-type for Layer 2, 3, 4 BSD-style sockets
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,10 +26,10 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/queue.h>
 #include <villas/compat.hpp>
 #include <villas/super_node.hpp>
@@ -43,20 +43,22 @@
   #include <villas/kernel/nl.hpp>
 #endif /* WITH_NETEM */
 
-/* Forward declartions */
-static struct vnode_type p;
-
 using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::kernel;
 
-int socket_type_start(villas::node::SuperNode *sn)
+/* Forward declartions */
+static NodeCompatType p;
+static NodeCompatFactory ncp(&p);
+
+int villas::node::socket_type_start(villas::node::SuperNode *sn)
 {
 #ifdef WITH_NETEM
 	/* Gather list of used network interfaces */
-	for (auto *n : p.instances) {
-		struct socket *s = (struct socket *) n->_vd;
+	for (auto *n : ncp.instances) {
+		auto *nc = dynamic_cast<NodeCompat *>(n);
+		auto *s = nc->getData<struct Socket>();
 
 		if (s->layer == SocketLayer::UNIX)
 			continue;
@@ -71,9 +73,28 @@ int socket_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-char * socket_print(struct vnode *n)
+int villas::node::socket_init(NodeCompat *n)
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
+
+	s->formatter = nullptr;
+
+	return 0;
+}
+
+int villas::node::socket_destroy(NodeCompat *n)
+{
+	auto *s = n->getData<struct Socket>();
+
+	if (s->formatter)
+		delete s->formatter;
+
+	return 0;
+}
+
+char * villas::node::socket_print(NodeCompat *n)
+{
+	auto *s = n->getData<struct Socket>();
 	const char *layer = nullptr;
 	char *buf;
 
@@ -120,9 +141,9 @@ char * socket_print(struct vnode *n)
 	return buf;
 }
 
-int socket_check(struct vnode *n)
+int villas::node::socket_check(NodeCompat *n)
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	/* Some checks on the addresses */
 	if (s->layer != SocketLayer::UNIX) {
@@ -156,13 +177,13 @@ int socket_check(struct vnode *n)
 	return 0;
 }
 
-int socket_start(struct vnode *n)
+int villas::node::socket_start(NodeCompat *n)
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 	int ret;
 
 	/* Initialize IO */
-	s->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	s->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Create socket */
 	switch (s->layer) {
@@ -278,9 +299,9 @@ int socket_start(struct vnode *n)
 	return 0;
 }
 
-int socket_reverse(struct vnode *n)
+int villas::node::socket_reverse(NodeCompat *n)
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 	union sockaddr_union tmp;
 
 	tmp = s->in.saddr;
@@ -290,10 +311,10 @@ int socket_reverse(struct vnode *n)
 	return 0;
 }
 
-int socket_stop(struct vnode *n)
+int villas::node::socket_stop(NodeCompat *n)
 {
 	int ret;
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
@@ -307,17 +328,16 @@ int socket_stop(struct vnode *n)
 			return ret;
 	}
 
-	delete s->formatter;
 	delete[] s->in.buf;
 	delete[] s->out.buf;
 
 	return 0;
 }
 
-int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::socket_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	char *ptr;
 	ssize_t bytes;
@@ -328,8 +348,12 @@ int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	/* Receive next sample */
 	bytes = recvfrom(s->sd, s->in.buf, s->in.buflen, 0, &src.sa, &srclen);
-	if (bytes < 0)
+	if (bytes < 0) {
+		if (errno == EINTR)
+			return -1;
+
 		throw SystemError("Failed recvfrom()");
+	}
 	else if (bytes == 0)
 		return 0;
 
@@ -372,9 +396,9 @@ int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return ret;
 }
 
-int socket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::socket_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	int ret;
 	ssize_t bytes;
@@ -444,10 +468,10 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out
 	return cnt;
 }
 
-int socket_parse(struct vnode *n, json_t *json)
+int villas::node::socket_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	const char *local, *remote;
 	const char *layer = nullptr;
@@ -474,6 +498,8 @@ int socket_parse(struct vnode *n, json_t *json)
 		throw ConfigError(json, err, "node-config-node-socket");
 
 	/* Format */
+	if (s->formatter)
+		delete s->formatter;
 	s->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.binary");
@@ -537,9 +563,9 @@ int socket_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int socket_fds(struct vnode *n, int fds[])
+int villas::node::socket_fds(NodeCompat *n, int fds[])
 {
-	struct socket *s = (struct socket *) n->_vd;
+	auto *s = n->getData<struct Socket>();
 
 	fds[0] = s->sd;
 
@@ -555,9 +581,11 @@ static void register_plugin() {
 	p.description	= "BSD network sockets for Ethernet / IP / UDP";
 #endif
 	p.vectorize	= 0;
-	p.size		= sizeof(struct socket);
+	p.size		= sizeof(struct Socket);
 	p.type.start	= socket_type_start;
 	p.reverse	= socket_reverse;
+	p.init		= socket_init;
+	p.destroy	= socket_destroy;
 	p.parse		= socket_parse;
 	p.print		= socket_print;
 	p.check		= socket_check;
@@ -567,9 +595,4 @@ static void register_plugin() {
 	p.write		= socket_write;
 	p.poll_fds	= socket_fds;
 	p.netem_fds	= socket_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
 }

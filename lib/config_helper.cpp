@@ -1,7 +1,7 @@
 /** Helpers for configuration parsers.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,13 +25,14 @@
 
 #include <cstring>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/config_helper.hpp>
 #include <villas/utils.hpp>
 
 #ifdef WITH_CONFIG
 
-static int json_to_config_type(int type)
+static
+int json_to_config_type(int type)
 {
 	switch (type) {
 		case JSON_OBJECT:
@@ -58,7 +59,7 @@ static int json_to_config_type(int type)
 	return -1;
 }
 
-json_t * config_to_json(config_setting_t *cfg)
+json_t * villas::node::config_to_json(config_setting_t *cfg)
 {
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_INT:
@@ -80,8 +81,10 @@ json_t * config_to_json(config_setting_t *cfg)
 		case CONFIG_TYPE_LIST: {
 			json_t *json = json_array();
 
-			for (int i = 0; i < config_setting_length(cfg); i++)
-				json_array_append_new(json, config_to_json(config_setting_get_elem(cfg, i)));
+			for (int i = 0; i < config_setting_length(cfg); i++) {
+				auto *elm = config_setting_get_elem(cfg, i);
+				json_array_append_new(json, config_to_json(elm));
+			}
 
 			return json;
 		}
@@ -90,9 +93,10 @@ json_t * config_to_json(config_setting_t *cfg)
 			json_t *json = json_object();
 
 			for (int i = 0; i < config_setting_length(cfg); i++) {
+				auto *elm = config_setting_get_elem(cfg, i);
 				json_object_set_new(json,
-					config_setting_name(config_setting_get_elem(cfg, i)),
-					config_to_json(config_setting_get_elem(cfg, i))
+					config_setting_name(elm),
+					config_to_json(elm)
 				);
 			}
 
@@ -104,7 +108,7 @@ json_t * config_to_json(config_setting_t *cfg)
 	}
 }
 
-int json_to_config(json_t *json, config_setting_t *parent)
+int villas::node::json_to_config(json_t *json, config_setting_t *parent)
 {
 	config_setting_t *cfg;
 	int ret, type;
@@ -168,7 +172,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 }
 #endif /* WITH_CONFIG */
 
-void json_object_extend_key_value_token(json_t *obj, const char *key, const char *value)
+void villas::node::json_object_extend_key_value_token(json_t *obj, const char *key, const char *value)
 {
 	char *str = strdup(value);
 	const char *delim = ",";
@@ -185,7 +189,7 @@ void json_object_extend_key_value_token(json_t *obj, const char *key, const char
 	free(str);
 }
 
-void json_object_extend_key_value(json_t *obj, const char *key, const char *value)
+void villas::node::json_object_extend_key_value(json_t *obj, const char *key, const char *value)
 {
 	char *end, *cpy, *key1, *key2, *lasts;
 
@@ -268,7 +272,7 @@ success:
 		json_object_set(subobj, key1, add);
 }
 
-json_t * json_load_cli(int argc, const char *argv[])
+json_t * villas::node::json_load_cli(int argc, const char *argv[])
 {
 	const char *opt;
 	const char *key = nullptr;
@@ -319,7 +323,7 @@ json_t * json_load_cli(int argc, const char *argv[])
 	return json;
 }
 
-int json_object_extend(json_t *obj, json_t *merge)
+int villas::node::json_object_extend(json_t *obj, json_t *merge)
 {
 	const char *key;
 	int ret;
@@ -342,7 +346,7 @@ int json_object_extend(json_t *obj, json_t *merge)
 	return 0;
 }
 
-int json_object_extend_str(json_t *obj, const char *str)
+int villas::node::json_object_extend_str(json_t *obj, const char *str)
 {
 	char *key, *value, *cpy, *lasts;
 

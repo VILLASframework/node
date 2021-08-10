@@ -1,7 +1,7 @@
 /** Node type: infiniband
  *
  * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,22 +25,23 @@
 #include <cinttypes>
 #include <netdb.h>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
+#include <villas/node/config.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/infiniband.hpp>
 #include <villas/utils.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/memory/ib.h>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static int ib_disconnect(struct vnode *n)
+static
+int ib_disconnect(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)];
 	int wcs;
 
@@ -55,14 +56,14 @@ static int ib_disconnect(struct vnode *n)
 		ib->conn.available_recv_wrs -= wcs;
 
 		for (int j = 0; j < wcs; j++)
-			sample_decref((struct sample *) (intptr_t) (wc[j].wr_id));
+			sample_decref((struct Sample *) (intptr_t) (wc[j].wr_id));
 	}
 
 	/* Send Queue */
 	while ((wcs = ibv_poll_cq(ib->ctx.send_cq, ib->send_cq_size, wc)))
 		for (int j = 0; j < wcs; j++)
 			if (wc[j].wr_id > 0)
-				sample_decref((struct sample *) (intptr_t) (wc[j].wr_id));
+				sample_decref((struct Sample *) (intptr_t) (wc[j].wr_id));
 
 	/* Destroy QP */
 	rdma_destroy_qp(ib->ctx.id);
@@ -72,9 +73,10 @@ static int ib_disconnect(struct vnode *n)
 	return ib->stopThreads;
 }
 
-static void ib_build_ibv(struct vnode *n)
+static
+void ib_build_ibv(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	n->logger->debug("Starting to build IBV components");
@@ -108,9 +110,10 @@ static void ib_build_ibv(struct vnode *n)
 		n->logger->info("Maximum inline size is set to {} byte", ib->qp_init.cap.max_inline_data);
 }
 
-static int ib_addr_resolved(struct vnode *n)
+static
+int ib_addr_resolved(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	n->logger->debug("Successfully resolved address");
@@ -126,9 +129,10 @@ static int ib_addr_resolved(struct vnode *n)
 	return 0;
 }
 
-static int ib_route_resolved(struct vnode *n)
+static
+int ib_route_resolved(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	struct rdma_conn_param cm_params;
@@ -144,9 +148,10 @@ static int ib_route_resolved(struct vnode *n)
 	return 0;
 }
 
-static int ib_connect_request(struct vnode *n, struct rdma_cm_id *id)
+static
+int ib_connect_request(NodeCompat *n, struct rdma_cm_id *id)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	n->logger->debug("Received a connection request!");
@@ -167,18 +172,18 @@ static int ib_connect_request(struct vnode *n, struct rdma_cm_id *id)
 	return 0;
 }
 
-int ib_reverse(struct vnode *n)
+int villas::node::ib_reverse(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 
 	SWAP(ib->conn.src_addr, ib->conn.dst_addr);
 
 	return 0;
 }
 
-int ib_parse(struct vnode *n, json_t *json)
+int villas::node::ib_parse(NodeCompat *n, json_t *json)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 
 	throw ConfigError(json, "The infiniband node-type is currently broken!");
 
@@ -346,9 +351,9 @@ int ib_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int ib_check(struct vnode *n)
+int villas::node::ib_check(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 
 	/* Check if read substraction makes sense */
 	if (ib->conn.buffer_subtraction <  2 * n->in.vectorize)
@@ -397,19 +402,20 @@ int ib_check(struct vnode *n)
 	return 0;
 }
 
-char * ib_print(struct vnode *n)
+char * villas::node::ib_print(NodeCompat *n)
 {
 	return 0;
 }
 
-int ib_destroy(struct vnode *n)
+int villas::node::ib_destroy(NodeCompat *n)
 {
 	return 0;
 }
 
-static void ib_create_bind_id(struct vnode *n)
+static
+void ib_create_bind_id(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	/* Create rdma_cm_id
@@ -467,9 +473,10 @@ static void ib_create_bind_id(struct vnode *n)
 	ib->ctx.listen_id = ib->ctx.id;
 }
 
-static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
+static
+void ib_continue_as_listen(NodeCompat *n, struct rdma_cm_event *event)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	if (ib->conn.use_fallback)
@@ -478,7 +485,7 @@ static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
 		throw RuntimeError("Cannot establish a connection with remote host! If you want that {} tries to "
 			"continue as listening node in such cases, set use_fallback = true in the configuration");
 
-	n->state = State::STARTED;
+	n->setState(State::STARTED);
 
 	/* Acknowledge event */
 	rdma_ack_cm_event(event);
@@ -500,17 +507,18 @@ static void ib_continue_as_listen(struct vnode *n, struct rdma_cm_event *event)
 	n->logger->info("Use listening mode");
 }
 
+static
 void * ib_rdma_cm_event_thread(void *ctx)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *n = (NodeCompat *) ctx;
+	auto *ib = n->getData<struct infiniband>();
 	struct rdma_cm_event *event;
 	int ret = 0;
 
 	n->logger->debug("Started rdma_cm_event thread");
 
 	/* Wait until node is completely started */
-	while (n->state != State::STARTED);
+	while (n->getState() != State::STARTED);
 
 	/* Monitor event channel */
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
@@ -553,9 +561,9 @@ void * ib_rdma_cm_event_thread(void *ctx)
 				 * with rdma_connect.
 				 */
 				if (ib->conn.port_space == RDMA_PS_UDP && !ib->is_source)
-					n->state = State::CONNECTED;
+					n->setState(State::CONNECTED);
 				else
-					n->state = State::PENDING_CONNECT;
+					n->setState(State::PENDING_CONNECT);
 
 				break;
 
@@ -580,14 +588,14 @@ void * ib_rdma_cm_event_thread(void *ctx)
 					ib->conn.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ud.ah_attr);
 				}
 
-				n->state = State::CONNECTED;
+				n->setState(State::CONNECTED);
 
 				n->logger->info("Connection established");
 
 				break;
 
 			case RDMA_CM_EVENT_DISCONNECTED:
-				n->state = State::STARTED;
+				n->setState(State::STARTED);
 
 				ret = ib_disconnect(n);
 
@@ -612,9 +620,9 @@ void * ib_rdma_cm_event_thread(void *ctx)
 	return nullptr;
 }
 
-int ib_start(struct vnode *n)
+int villas::node::ib_start(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	n->logger->debug("Started ib_start");
@@ -676,9 +684,9 @@ int ib_start(struct vnode *n)
 	return 0;
 }
 
-int ib_stop(struct vnode *n)
+int villas::node::ib_stop(NodeCompat *n)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	int ret;
 
 	n->logger->debug("Called ib_stop");
@@ -689,7 +697,7 @@ int ib_stop(struct vnode *n)
 	 * Will flush all outstanding WRs to the Completion Queue and
 	 * will call RDMA_CM_EVENT_DISCONNECTED if that is done.
 	 */
-	if (n->state == State::CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
+	if (n->getState() == State::CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
@@ -729,9 +737,9 @@ int ib_stop(struct vnode *n)
 	return 0;
 }
 
-int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	struct ibv_wc wc[cnt];
 	struct ibv_recv_wr wr[cnt], *bad_wr = nullptr;
     	struct ibv_sge sge[cnt][ib->qp_init.cap.max_recv_sge];
@@ -741,7 +749,7 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	n->logger->debug("ib_read is called");
 
-	if (n->state == State::CONNECTED || n->state == State::PENDING_CONNECT) {
+	if (n->getState() == State::CONNECTED || n->getState() == State::PENDING_CONNECT) {
 
 		max_wr_post = cnt;
 
@@ -749,13 +757,13 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		 * If we've already posted enough receive WRs, try to pull cnt
 		 */
 		if (ib->conn.available_recv_wrs >= (ib->qp_init.cap.max_recv_wr - ib->conn.buffer_subtraction) ) {
-			for (int i = 0;; i++) {
+			for (int i = 0; ; i++) {
 				if (i % CHK_PER_ITER == CHK_PER_ITER - 1) pthread_testcancel();
 
 				/* If IB node disconnects or if it is still in State::PENDING_CONNECT, ib_read
 				 * should return immediately if this condition holds
 				 */
-				if (n->state != State::CONNECTED) return 0;
+				if (n->getState() != State::CONNECTED) return 0;
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
 				if (wcs) {
@@ -785,7 +793,7 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		}
 
 		/* Get Memory Region */
-		mr = memory_ib_get_mr(pool_buffer(sample_pool(smps[0])));
+		mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (int i = 0; i < max_wr_post; i++) {
 			int j = 0;
@@ -860,21 +868,21 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
 
 			// TODO: fix release logic
-			// smps[j] = (struct sample *) (wc[j].wr_id);
+			// smps[j] = (struct Sample *) (wc[j].wr_id);
 
 			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
 			smps[j]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_TS_RECEIVED | (int) SampleFlags::HAS_SEQUENCE;
-			smps[j]->signals = &n->in.signals;
+			smps[j]->signals = n->getInputSignals(false);
 		}
 
 	}
 	return read_values;
 }
 
-int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct infiniband *ib = (struct infiniband *) n->_vd;
+	auto *ib = n->getData<struct infiniband>();
 	struct ibv_send_wr wr[cnt], *bad_wr = nullptr;
 	struct ibv_sge sge[cnt][ib->qp_init.cap.max_recv_sge];
 	struct ibv_wc wc[cnt];
@@ -885,14 +893,14 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	n->logger->debug("ib_write is called");
 
-	if (n->state == State::CONNECTED) {
+	if (n->getState() == State::CONNECTED) {
 		// TODO: fix release logic
 		// *release = 0;
 
 		/* First, write */
 
 		/* Get Memory Region */
-		mr = memory_ib_get_mr(pool_buffer(sample_pool(smps[0])));
+		mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (sent = 0; sent < cnt; sent++) {
 			int j = 0;
@@ -998,7 +1006,7 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 					wc[i].status);
 
 			// TODO: fix release logic
-			// smps[*release] = (struct sample *) (wc[i].wr_id);
+			// smps[*release] = (struct Sample *) (wc[i].wr_id);
 			// (*release)++;
 		}
 
@@ -1009,7 +1017,7 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return sent;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -1028,10 +1036,7 @@ static void register_plugin() {
 	p.read		= ib_read;
 	p.write		= ib_write;
 	p.reverse	= ib_reverse;
-	p.memory_type	= memory_ib;
+	p.memory_type	= memory::ib;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

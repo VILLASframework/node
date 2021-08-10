@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,9 +19,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @addtogroup tools Test and debug tools
- * @{
  *********************************************************************************/
 
 #include <iostream>
@@ -31,12 +28,13 @@
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/format.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/node/config.h>
-#include <villas/memory.h>
+#include <villas/node/config.hpp>
+#include <villas/node/memory.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
 namespace villas {
 namespace node {
@@ -51,7 +49,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
@@ -143,7 +141,7 @@ protected:
 			dirs[i].formatter->start(dtypes);
 		}
 
-		struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
+		struct Sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
 
 		while (true) {
 			ret = dirs[0].formatter->scan(stdin, smp);
@@ -172,5 +170,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-/** @} */

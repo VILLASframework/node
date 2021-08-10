@@ -3,7 +3,7 @@
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,19 +22,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup rtp rtp node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <pthread.h>
 
 #include <fstream>
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/log.hpp>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
@@ -42,13 +36,17 @@
 #include <villas/hooks/decimate.hpp>
 #include <villas/dsp/pid.hpp>
 
-/* Forward declarations */
-struct vnode;
-
 extern "C" {
 	#include <re/re_sa.h>
 	#include <re/re_rtp.h>
 }
+
+namespace villas {
+namespace node {
+
+/* Forward declarations */
+class NodeCompat;
+class SuperNode;
 
 /** The maximum length of a packet which contains rtp data. */
 #define RTP_INITIAL_BUFFER_LEN 1500
@@ -68,7 +66,7 @@ struct rtp {
 		struct sa saddr_rtcp;	/**< Local/Remote address of the RTCP socket */
 	} in, out;
 
-	villas::node::Format *formatter;
+	Format *formatter;
 
 	struct {
 		int enabled;
@@ -82,41 +80,49 @@ struct rtp {
 
 		enum RTPHookType rate_hook_type;
 
-		villas::node::LimitHook *rate_hook;
-		villas::dsp::PID rate_pid;
+		LimitHook::Ptr rate_hook;
+		dsp::PID rate_pid;
 
 		/* PID parameters for rate controller */
 		double Kp, Ki, Kd;
 		double rate_min;
 
 		double rate;
-		double rate_last;
 		double rate_source;		/**< Sample rate of source */
 
 		std::ofstream *log;
 		char *log_filename;
 	} aimd;				/** AIMD state */
 
-	struct queue_signalled recv_queue;
+	struct CQueueSignalled recv_queue;
 	struct mbuf *send_mb;
 };
 
-/** @see node_type::print */
-char * rtp_print(struct vnode *n);
+char * rtp_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int rtp_parse(struct vnode *n, json_t *json);
+int rtp_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int rtp_start(struct vnode *n);
+int rtp_init(NodeCompat *n);
 
-/** @see node_type::stop */
-int rtp_stop(struct vnode *n);
+int rtp_destroy(NodeCompat *n);
 
-/** @see node_type::read */
-int rtp_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int rtp_reverse(NodeCompat *n);
 
-/** @see node_type::write */
-int rtp_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int rtp_type_start(SuperNode *sn);
 
-/** @} */
+int rtp_type_stop();
+
+int rtp_start(NodeCompat *n);
+
+int rtp_stop(NodeCompat *n);
+
+int rtp_netem_fds(NodeCompat *n, int fds[]);
+
+int rtp_poll_fds(NodeCompat *n, int fds[]);
+
+int rtp_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int rtp_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

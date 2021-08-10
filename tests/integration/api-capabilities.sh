@@ -3,7 +3,7 @@
 # Integration test for remote API
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -24,33 +24,33 @@
 
 set -e
 
-CONFIG_FILE=$(mktemp)
-FETCHED_CONF=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat > ${CONFIG_FILE} <<EOF
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > config.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	}
 }
 EOF
 
 # Start without a configuration
-villas node ${CONFIG_FILE} &
-PID=$!
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1
 
 # Fetch capabilities
-curl -s http://localhost:8080/api/v2/capabilities > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/capabilities > fetched.json
 
-kill $PID
-wait
+kill %%
+wait %%
 
-jq -e '.apis | index( "capabilities" ) != null' < ${FETCHED_CONF}
-RC=$?
-
-rm ${FETCHED_CONF} ${CONFIG_FILE}
-
-exit ${RC}
+jq -e '.apis | index( "capabilities" ) != null' < fetched.json

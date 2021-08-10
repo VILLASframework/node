@@ -21,12 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup redis BSD redis Node Type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <atomic>
@@ -35,13 +29,16 @@
 
 #include <sw/redis++/redis++.h>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
-#include <villas/timing.h>
+#include <villas/node/config.hpp>
+#include <villas/node.hpp>
+#include <villas/timing.hpp>
 #include <villas/format.hpp>
 #include <villas/task.hpp>
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
+
+namespace villas {
+namespace node {
 
 enum class RedisMode {
 	KEY,
@@ -68,7 +65,7 @@ protected:
 
 	void loop();
 
-	std::unordered_multimap<std::string, struct vnode *> subscriberMap;
+	std::unordered_multimap<std::string, NodeCompat *> subscriberMap;
 
 	sw::redis::Subscriber subscriber;
 
@@ -84,8 +81,8 @@ public:
 	void start();
 	void stop();
 
-	void subscribe(struct vnode *n, const std::string &channel);
-	void unsubscribe(struct vnode *n, const std::string &channel);
+	void subscribe(NodeCompat *n, const std::string &channel);
+	void unsubscribe(NodeCompat *n, const std::string &channel);
 };
 
 struct redis {
@@ -102,55 +99,41 @@ struct redis {
 	struct Task task;		/**< Timer for periodic events. */
 	double rate;			/**< Rate for polling key updates if keyspace notifications are disabled. */
 
-	villas::node::Format *formatter;
+	Format *formatter;
 
-	struct pool pool;
-	struct queue_signalled queue;
+	struct Pool pool;
+	struct CQueueSignalled queue;
 };
 
-/** @see node_type::init */
-int redis_init(struct vnode *n);
+int redis_init(NodeCompat *n);
 
-/** @see node_type::destroy */
-int redis_destroy(struct vnode *n);
+int redis_destroy(NodeCompat *n);
 
-/** @see node_type::parse */
-int redis_parse(struct vnode *n, json_t *json);
+int redis_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * redis_print(struct vnode *n);
+char * redis_print(NodeCompat *n);
 
-/** @see node_type::check */
-int redis_check();
+int redis_check(NodeCompat *n);
 
-/** @see node_type::prepare */
-int redis_prepare();
+int redis_prepare(NodeCompat *n);
 
-/** @see node_type::start */
-int redis_start(struct vnode *n);
+int redis_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int redis_stop(struct vnode *n);
+int redis_stop(NodeCompat *n);
 
-/** @see node_type::pause */
-int redis_pause(struct vnode *n);
+int redis_pause(NodeCompat *n);
 
-/** @see node_type::resume */
-int redis_resume(struct vnode *n);
+int redis_resume(NodeCompat *n);
 
-/** @see node_type::write */
-int redis_write(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int redis_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::read */
-int redis_read(struct vnode *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int redis_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::reverse */
-int redis_reverse(struct vnode *n);
+int redis_reverse(NodeCompat *n);
 
-/** @see node_type::poll_fds */
-int redis_poll_fds(struct vnode *n, int fds[]);
+int redis_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::netem_fds */
-int redis_netem_fds(struct vnode *n, int fds[]);
+int redis_netem_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

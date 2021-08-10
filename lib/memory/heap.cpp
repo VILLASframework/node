@@ -1,7 +1,7 @@
 /** Heap memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,17 +23,20 @@
 #include <cstdlib>
 
 #include <villas/utils.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node::memory;
 
-static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment, struct memory_type *m)
+static
+struct Allocation * heap_alloc(size_t len, size_t alignment, struct Type *m)
 {
 	int ret;
 
-	auto *ma = new struct memory_allocation;
+	auto *ma = new struct Allocation;
 	if (!ma)
 		throw MemoryAllocationError();
 
@@ -53,18 +56,19 @@ static struct memory_allocation * memory_heap_alloc(size_t len, size_t alignment
 	return ma;
 }
 
-static int memory_heap_free(struct memory_allocation *ma, struct memory_type *m)
+static
+int heap_free(struct Allocation *ma, struct Type *m)
 {
-	free(ma->address);
+	::free(ma->address);
 
 	return 0;
 }
 
 /* List of available memory types */
-struct memory_type memory_heap = {
+struct Type villas::node::memory::heap = {
 	.name = "heap",
-	.flags = (int) MemoryFlags::HEAP,
+	.flags = (int) Flags::HEAP,
 	.alignment = 1,
-	.alloc = memory_heap_alloc,
-	.free = memory_heap_free
+	.alloc = heap_alloc,
+	.free = heap_free
 };

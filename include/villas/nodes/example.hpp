@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,20 +21,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup example Example node-type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/format.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct example {
     /* Settings */
@@ -47,55 +44,39 @@ struct example {
     struct timespec start_time;
 };
 
-/** @see node_vtable::type_start */
-int example_type_start(villas::node::SuperNode *sn);
+int example_type_start(SuperNode *sn);
 
-/** @see node_type::type_stop */
 int example_type_stop();
 
-/** @see node_type::init */
-int example_init(struct vnode *n);
+int example_init(NodeCompat *n);
 
-/** @see node_type::destroy */
-int example_destroy(struct vnode *n);
+int example_destroy(NodeCompat *n);
 
-/** @see node_type::parse */
-int example_parse(struct vnode *n, json_t *json);
+int example_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * example_print(struct vnode *n);
+char * example_print(NodeCompat *n);
 
-/** @see node_type::check */
-int example_check();
+int example_check(NodeCompat *n);
 
-/** @see node_type::prepare */
-int example_prepare();
+int example_prepare(NodeCompat *n);
 
-/** @see node_type::start */
-int example_start(struct vnode *n);
+int example_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int example_stop(struct vnode *n);
+int example_stop(NodeCompat *n);
 
-/** @see node_type::pause */
-int example_pause(struct vnode *n);
+int example_pause(NodeCompat *n);
 
-/** @see node_type::resume */
-int example_resume(struct vnode *n);
+int example_resume(NodeCompat *n);
 
-/** @see node_type::write */
-int example_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int example_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::read */
-int example_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int example_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::reverse */
-int example_reverse(struct vnode *n);
+int example_reverse(NodeCompat *n);
 
-/** @see node_type::poll_fds */
-int example_poll_fds(struct vnode *n, int fds[]);
+int example_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::netem_fds */
-int example_netem_fds(struct vnode *n, int fds[]);
+int example_netem_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

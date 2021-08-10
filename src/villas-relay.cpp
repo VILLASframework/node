@@ -1,7 +1,7 @@
 /** Simple WebSocket relay facilitating client-to-client connections.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,9 +31,9 @@
 #include <jansson.h>
 #include <unistd.h>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/compat.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
 #include <villas/uuid.hpp>
@@ -241,7 +241,7 @@ Relay::Relay(int argc, char *argv[]) :
 	/* Default UUID is derived from hostname */
 	uuid::generateFromString(uuid, hname);
 
-	ret = memory_init(0);
+	ret = memory::init(0);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory");
 
@@ -473,7 +473,9 @@ int Relay::main() {
 	ctx_info.gid = -1;
 	ctx_info.uid = -1;
 	ctx_info.protocols = protocols.data();
+#ifndef LWS_WITHOUT_EXTENSIONS
 	ctx_info.extensions = extensions.data();
+#endif
 	ctx_info.port = port;
 	ctx_info.mounts = &mount;
 	ctx_info.user = (void *) this;

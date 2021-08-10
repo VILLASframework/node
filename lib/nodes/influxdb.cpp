@@ -1,7 +1,7 @@
 /** Node-type for InfluxDB.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,12 +26,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <villas/signal.h>
-#include <villas/sample.h>
-#include <villas/node/config.h>
-#include <villas/node.h>
+#include <villas/signal.hpp>
+#include <villas/sample.hpp>
+#include <villas/node/config.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/influxdb.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
@@ -39,9 +39,9 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int influxdb_parse(struct vnode *n, json_t *json)
+int villas::node::influxdb_parse(NodeCompat *n, json_t *json)
 {
-	struct influxdb *i = (struct influxdb *) n->_vd;
+	auto *i = n->getData<struct influxdb>();
 
 	json_error_t err;
 	int ret;
@@ -70,10 +70,10 @@ int influxdb_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int influxdb_open(struct vnode *n)
+int villas::node::influxdb_open(NodeCompat *n)
 {
 	int ret;
-	struct influxdb *i = (struct influxdb *) n->_vd;
+	auto *i = n->getData<struct influxdb>();
 
 	struct addrinfo hints, *servinfo, *p;
 
@@ -105,9 +105,9 @@ int influxdb_open(struct vnode *n)
 	return p ? 0 : -1;
 }
 
-int influxdb_close(struct vnode *n)
+int villas::node::influxdb_close(NodeCompat *n)
 {
-	struct influxdb *i = (struct influxdb *) n->_vd;
+	auto *i = n->getData<struct influxdb>();
 
 	close(i->sd);
 
@@ -121,23 +121,25 @@ int influxdb_close(struct vnode *n)
 	return 0;
 }
 
-int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::influxdb_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct influxdb *i = (struct influxdb *) n->_vd;
+	auto *i = n->getData<struct influxdb>();
+
+	char *buf = strf("");
 	ssize_t sentlen, buflen;
 
-	auto *buf = strf("");
-
 	for (unsigned k = 0; k < cnt; k++) {
-		const struct sample *smp = smps[k];
+		const struct Sample *smp = smps[k];
 
 		/* Key */
 		strcatf(&buf, "%s", i->key);
 
 		/* Fields */
 		for (unsigned j = 0; j < smp->length; j++) {
-			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
-			const union signal_data *data = &smp->data[j];
+			const auto *data = &smp->data[j];
+			auto sig = smp->signals->getByIndex(j);
+			if (!sig)
+				return -1;
 
 			if (
 				sig->type != SignalType::BOOLEAN &&
@@ -150,25 +152,14 @@ int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			}
 
 			strcatf(&buf, "%c", j == 0 ? ' ' : ',');
-
-			sig = (struct signal *) vlist_at(smp->signals, j);
-			if (!sig)
-				return -1;
-
-			char name[32];
-			if (sig->name)
-				strncpy(name, sig->name, sizeof(name)-1);
-			else
-				snprintf(name, sizeof(name), "value%u", j);
-
 			if (sig->type == SignalType::COMPLEX) {
 				strcatf(&buf, "%s_re=%f, %s_im=%f",
-					name, std::real(data->z),
-					name, std::imag(data->z)
+					sig->name.c_str(), std::real(data->z),
+					sig->name.c_str(), std::imag(data->z)
 				);
 			}
 			else {
-				strcatf(&buf, "%s=", name);
+				strcatf(&buf, "%s=", sig->name.c_str());
 
 				switch (sig->type) {
 					case SignalType::BOOLEAN:
@@ -205,9 +196,9 @@ int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-char * influxdb_print(struct vnode *n)
+char * villas::node::influxdb_print(NodeCompat *n)
 {
-	struct influxdb *i = (struct influxdb *) n->_vd;
+	auto *i = n->getData<struct influxdb>();
 	char *buf = nullptr;
 
 	strcatf(&buf, "host=%s, port=%s, key=%s", i->host, i->port, i->key);
@@ -215,7 +206,7 @@ char * influxdb_print(struct vnode *n)
 	return buf;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -229,8 +220,5 @@ static void register_plugin() {
 	p.stop		= influxdb_close;
 	p.write		= influxdb_write;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

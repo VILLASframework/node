@@ -2,7 +2,7 @@
 /** Node type: Node-type for testing Round-trip Time.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,24 +27,25 @@
 #include <linux/limits.h>
 
 #include <villas/format.hpp>
-#include <villas/sample.h>
-#include <villas/node.h>
+#include <villas/sample.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/utils.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/test_rtt.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static struct vnode_type p;
+static NodeCompatType p;
 
-static int test_rtt_case_start(struct vnode *n, int id)
+static
+int test_rtt_case_start(NodeCompat *n, int id)
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
-	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
+	auto *t = n->getData<struct test_rtt>();
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, id);
 
 	n->logger->info("Starting case #{}: filename={}, rate={}, values={}, limit={}", t->current, c->filename_formatted, c->rate, c->values, c->limit);
 
@@ -62,10 +63,11 @@ static int test_rtt_case_start(struct vnode *n, int id)
 	return 0;
 }
 
-static int test_rtt_case_stop(struct vnode *n, int id)
+static
+int test_rtt_case_stop(NodeCompat *n, int id)
 {
 	int ret;
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	/* Stop timer */
 	t->task.stop();
@@ -79,7 +81,8 @@ static int test_rtt_case_stop(struct vnode *n, int id)
 	return 0;
 }
 
-static int test_rtt_case_destroy(struct test_rtt_case *c)
+static
+int test_rtt_case_destroy(struct test_rtt_case *c)
 {
 	if (c->filename)
 		free(c->filename);
@@ -90,11 +93,10 @@ static int test_rtt_case_destroy(struct test_rtt_case *c)
 	return 0;
 }
 
-int test_rtt_prepare(struct vnode *n)
+int villas::node::test_rtt_prepare(NodeCompat *n)
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
-	int ret;
 	unsigned max_values = 0;
 
 	/* Take current for time for test case prefix */
@@ -102,8 +104,8 @@ int test_rtt_prepare(struct vnode *n)
 	struct tm tm;
 	gmtime_r(&ts, &tm);
 
-	for (size_t i = 0; i < vlist_length(&t->cases); i++) {
-		struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, i);
+	for (size_t i = 0; i < list_length(&t->cases); i++) {
+		struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, i);
 
 		if (c->values > max_values)
 			max_values = c->values;
@@ -115,20 +117,18 @@ int test_rtt_prepare(struct vnode *n)
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
 
-	ret = signal_list_generate(&n->in.signals, max_values, SignalType::FLOAT);
-	if (ret)
-		return ret;
+	n->in.signals = std::make_shared<SignalList>(max_values, SignalType::FLOAT);
 
 	return 0;
 }
 
-int test_rtt_parse(struct vnode *n, json_t *json)
+int villas::node::test_rtt_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	const char *output = ".";
-	const char *prefix = node_name_short(n);
+	const char *prefix = nullptr;
 
 	std::vector<int> rates;
 	std::vector<int> values;
@@ -141,7 +141,7 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	t->cooldown = 0;
 
 	/* Generate list of test cases */
-	ret = vlist_init(&t->cases);
+	ret = list_init(&t->cases);
 	if (ret)
 		return ret;
 
@@ -156,7 +156,7 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 		throw ConfigError(json, err, "node-config-node-test-rtt");
 
 	t->output = strdup(output);
-	t->prefix = strdup(prefix);
+	t->prefix = strdup(prefix ? prefix : n->getNameShort().c_str());
 
 	/* Initialize IO module */
 	if (!json_format)
@@ -166,7 +166,7 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	if (!t->formatter)
 		throw ConfigError(json, "node-config-node-test-rtt-format", "Invalid value for setting 'format'");
 
-	/* Construct vlist of test cases */
+	/* Construct List of test cases */
 	if (!json_is_array(json_cases))
 		throw ConfigError(json_cases, "node-config-node-test-rtt-format", "The 'cases' setting must be an array.");
 
@@ -239,7 +239,7 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 
 				c->filename = strf("%s/%s_values%d_rate%.0f.log", t->output, t->prefix, c->values, c->rate);
 
-				vlist_push(&t->cases, c);
+				list_push(&t->cases, c);
 			}
 		}
 	}
@@ -247,21 +247,23 @@ int test_rtt_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int test_rtt_init(struct vnode *n)
+int villas::node::test_rtt_init(NodeCompat *n)
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	new (&t->task) Task(CLOCK_MONOTONIC);
+
+	t->formatter = nullptr;
 
 	return 0;
 }
 
-int test_rtt_destroy(struct vnode *n)
+int villas::node::test_rtt_destroy(NodeCompat *n)
 {
 	int ret;
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
-	ret = vlist_destroy(&t->cases, (dtor_cb_t) test_rtt_case_destroy, true);
+	ret = list_destroy(&t->cases, (dtor_cb_t) test_rtt_case_destroy, true);
 	if (ret)
 		return ret;
 
@@ -273,22 +275,25 @@ int test_rtt_destroy(struct vnode *n)
 	if (t->prefix)
 		free(t->prefix);
 
+	if (t->formatter)
+		delete t->formatter;
+
 	return 0;
 }
 
-char * test_rtt_print(struct vnode *n)
+char * villas::node::test_rtt_print(NodeCompat *n)
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
-	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, vlist_length(&t->cases));
+	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, list_length(&t->cases));
 }
 
-int test_rtt_start(struct vnode *n)
+int villas::node::test_rtt_start(NodeCompat *n)
 {
 	int ret;
 	struct stat st;
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
-	struct test_rtt_case *c = (struct test_rtt_case *) vlist_first(&t->cases);
+	auto *t = n->getData<struct test_rtt>();
+	struct test_rtt_case *c = (struct test_rtt_case *) list_first(&t->cases);
 
 	/* Create folder for results if not present */
 	ret = stat(t->output, &st);
@@ -298,7 +303,7 @@ int test_rtt_start(struct vnode *n)
 			throw SystemError("Failed to create output directory: {}", t->output);
 	}
 
-	t->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_DATA);
+	t->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_DATA);
 
 	t->task.setRate(c->rate);
 
@@ -308,10 +313,10 @@ int test_rtt_start(struct vnode *n)
 	return 0;
 }
 
-int test_rtt_stop(struct vnode *n)
+int villas::node::test_rtt_stop(NodeCompat *n)
 {
 	int ret;
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	if (t->counter >= 0) {
 		ret = test_rtt_case_stop(n, t->current);
@@ -324,13 +329,13 @@ int test_rtt_stop(struct vnode *n)
 	return 0;
 }
 
-int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::test_rtt_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
 	uint64_t steps;
 
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	/* Handle start/stop of new cases */
 	if (t->counter == -1) {
@@ -345,10 +350,10 @@ int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			t->current++;
 		}
 
-		if ((unsigned) t->current >= vlist_length(&t->cases)) {
+		if ((unsigned) t->current >= list_length(&t->cases)) {
 			n->logger->info("This was the last case.");
 
-			n->state = State::STOPPING;
+			n->setState(State::STOPPING);
 
 			return -1;
 		}
@@ -359,7 +364,7 @@ int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		}
 	}
 
-	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	/* Wait */
 	steps = t->task.wait();
@@ -387,7 +392,7 @@ int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			smps[i]->sequence = t->counter;
 			smps[i]->ts.origin = now;
 			smps[i]->flags = (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
-			smps[i]->signals = &n->in.signals;
+			smps[i]->signals = n->getInputSignals(false);
 
 			t->counter++;
 		}
@@ -396,14 +401,14 @@ int test_rtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	}
 }
 
-int test_rtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::test_rtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	if (t->current < 0)
 		return 0;
 
-	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	unsigned i;
 	for (i = 0; i < cnt; i++) {
@@ -418,9 +423,9 @@ int test_rtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return i;
 }
 
-int test_rtt_poll_fds(struct vnode *n, int fds[])
+int villas::node::test_rtt_poll_fds(NodeCompat *n, int fds[])
 {
-	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	auto *t = n->getData<struct test_rtt>();
 
 	fds[0] = t->task.getFD();
 
@@ -432,7 +437,7 @@ static void register_plugin() {
 	p.name		= "test_rtt";
 	p.description	= "Test round-trip time with loopback";
 	p.vectorize	= 0;
-	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.flags		= (int) NodeFactory::Flags::PROVIDES_SIGNALS;
 	p.size		= sizeof(struct test_rtt);
 	p.parse		= test_rtt_parse;
 	p.prepare	= test_rtt_prepare;
@@ -444,8 +449,5 @@ static void register_plugin() {
 	p.read		= test_rtt_read;
 	p.write		= test_rtt_write;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

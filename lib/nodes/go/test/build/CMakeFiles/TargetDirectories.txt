@@ -1,0 +1,6 @@
+/global/projects/villas/node/lib/nodes/go/test/build/CMakeFiles/rebuild_cache.dir
+/global/projects/villas/node/lib/nodes/go/test/build/CMakeFiles/test.dir
+/global/projects/villas/node/lib/nodes/go/test/build/CMakeFiles/edit_cache.dir
+/global/projects/villas/node/lib/nodes/go/test/build/go/CMakeFiles/rebuild_cache.dir
+/global/projects/villas/node/lib/nodes/go/test/build/go/CMakeFiles/shim_go.dir
+/global/projects/villas/node/lib/nodes/go/test/build/go/CMakeFiles/edit_cache.dir

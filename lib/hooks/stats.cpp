@@ -1,7 +1,7 @@
 /** Statistic hooks.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,18 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <memory>
 
 #include <villas/common.hpp>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/stats.hpp>
-#include <villas/node.h>
-#include <villas/timing.h>
+#include <villas/node.hpp>
+#include <villas/timing.hpp>
 
 namespace villas {
 namespace node {
@@ -44,7 +40,7 @@ protected:
 	StatsHook *parent;
 
 public:
-	StatsWriteHook(StatsHook *pa, struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	StatsWriteHook(StatsHook *pa, Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		parent(pa)
 	{
@@ -52,18 +48,18 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct sample *smp);
+	virtual Hook::Reason process(struct Sample *smp);
 };
 
 class StatsReadHook : public Hook {
 
 protected:
-	struct sample *last;
+	struct Sample *last;
 
 	StatsHook *parent;
 
 public:
-	StatsReadHook(StatsHook *pa, struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	StatsReadHook(StatsHook *pa, Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		last(nullptr),
 		parent(pa)
@@ -91,7 +87,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct Sample *smp);
 };
 
 class StatsHook : public Hook {
@@ -100,8 +96,8 @@ class StatsHook : public Hook {
 	friend StatsWriteHook;
 
 protected:
-	StatsReadHook *readHook;
-	StatsWriteHook *writeHook;
+	std::shared_ptr<StatsReadHook> readHook;
+	std::shared_ptr<StatsWriteHook> writeHook;
 
 	enum Stats::Format format;
 	int verbose;
@@ -115,7 +111,7 @@ protected:
 
 public:
 
-	StatsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	StatsHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		format(Stats::Format::HUMAN),
 		verbose(0),
@@ -124,16 +120,16 @@ public:
 		output(nullptr),
 		uri()
 	{
-		readHook = new StatsReadHook(this, p, n, fl, prio, en);
-		writeHook = new StatsWriteHook(this, p, n, fl, prio, en);
+		readHook = std::make_shared<StatsReadHook>(this, p, n, fl, prio, en);
+		writeHook = std::make_shared<StatsWriteHook>(this, p, n, fl, prio, en);
 
 		if (!readHook || !writeHook)
 			throw MemoryAllocationError();
 
 		/* Add child hooks */
 		if (node) {
-			vlist_push(&node->in.hooks, (void *) readHook);
-			vlist_push(&node->out.hooks, (void *) writeHook);
+			node->in.hooks.push_back(readHook);
+			node->out.hooks.push_back(writeHook);
 		}
 	}
 
@@ -172,7 +168,7 @@ public:
 		stats->reset();
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		// Only call readHook if it hasnt been added to the node's hook list
 		if (!node)
@@ -230,17 +226,14 @@ public:
 
 		stats = std::make_shared<villas::Stats>(buckets, warmup);
 
-		/* Register statistic object to node.
-		*
-		* This allows the node code to update statistics. */
 		if (node)
-			node->stats = stats;
+			node->setStats(stats);
 
 		state = State::PREPARED;
 	}
 };
 
-Hook::Reason StatsWriteHook::process(struct sample *smp)
+Hook::Reason StatsWriteHook::process(struct Sample *smp)
 {
 	timespec now = time_now();
 
@@ -249,7 +242,7 @@ Hook::Reason StatsWriteHook::process(struct sample *smp)
 	return Reason::OK;
 }
 
-Hook::Reason StatsReadHook::process(struct sample *smp)
+Hook::Reason StatsReadHook::process(struct Sample *smp)
 {
 	if (last) {
 		if (smp->flags & last->flags & (int) SampleFlags::HAS_TS_RECEIVED)
@@ -287,6 +280,4 @@ static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */
 

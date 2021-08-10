@@ -1,7 +1,7 @@
 /** Various functions to work with socket addresses
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,7 +25,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 
-#include <villas/socket_addr.h>
+#include <villas/socket_addr.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
@@ -34,12 +34,13 @@
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
-char * socket_print_addr(struct sockaddr *saddr)
+char * villas::node::socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
-	char *buf = new char[64];
+	char *buf = new char[256];
 	if (!buf)
 		throw MemoryAllocationError();
 
@@ -61,7 +62,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			break;
 #endif /* WITH_SOCKET_LAYER_ETH */
 		case AF_UNIX:
-			strcatf(&buf, "%s", sa->sun.sun_path);
+			snprintf(buf, 256, "%s", sa->sun.sun_path);
 			break;
 
 		default:
@@ -92,7 +93,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 	return buf;
 }
 
-int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLayer layer, int flags)
+int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLayer layer, int flags)
 {
 	/** @todo Add support for IPv6 */
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
@@ -194,7 +195,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLa
 	return ret;
 }
 
-int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
+int villas::node::socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 {
 #define CMP(a, b) if (a != b) return a < b ? -1 : 1
 

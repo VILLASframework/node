@@ -1,0 +1,1 @@
+/usr/bin/cc -rdynamic CMakeFiles/test.dir/test.c.o -o test  go/test.so -lpthread 

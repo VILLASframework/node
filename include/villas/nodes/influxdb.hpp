@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,46 +21,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup influxdb InfluxDB node-type
- * @{
- */
-
 #pragma once
 
-#include <villas/list.h>
+#include <villas/list.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
-struct sample;
+class NodeCompat;
+struct Sample;
 
-/** Node-type for signal generation.
- * @see node_type
- */
 struct influxdb {
 	char *host;
 	char *port;
 	char *key;
 
-	struct vlist fields;
+	struct List fields;
 
 	int sd;
 };
 
-/** @see node_type::print */
-char * influxdb_print(struct vnode *n);
+char * influxdb_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int influxdb_parse(struct vnode *n, json_t *json);
+int influxdb_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int influxdb_open(struct vnode *n);
+int influxdb_open(NodeCompat *n);
 
-/** @see node_type::stop */
-int influxdb_close(struct vnode *n);
+int influxdb_close(NodeCompat *n);
 
-/** @see node_type::write */
-int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int influxdb_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

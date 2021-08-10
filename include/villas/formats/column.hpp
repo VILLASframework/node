@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,17 +27,17 @@
 
 #include <villas/formats/line.hpp>
 
-/* Forward declarations. */
-struct sample;
-
 namespace villas {
 namespace node {
+
+/* Forward declarations. */
+struct Sample;
 
 class ColumnLineFormat : public LineFormat {
 
 protected:
-	virtual size_t sprintLine(char *buf, size_t len, const struct sample *smp);
-	virtual size_t sscanLine(const char *buf, size_t len, struct sample *smp);
+	virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
+	virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
 
 	char separator;		/**< Column separator */
 
@@ -48,7 +48,7 @@ public:
 	{ }
 
 	virtual
-	void header(FILE *f, const struct vlist *sigs);
+	void header(FILE *f, const SignalList::Ptr sigs);
 
 	virtual
 	void parse(json_t *json);

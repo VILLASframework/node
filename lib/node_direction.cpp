@@ -2,7 +2,7 @@
 /** Node direction
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,211 +21,179 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
-#include <villas/node.h>
+#include <villas/node.hpp>
 #include <villas/utils.hpp>
-#include <villas/node_direction.h>
+#include <villas/node_direction.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/node_compat_type.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int node_direction_prepare(struct vnode_direction *nd, struct vnode *n)
-{
-	assert(nd->state == State::CHECKED);
+NodeDirection::NodeDirection(enum NodeDirection::Direction dir, Node *n) :
+	direction(dir),
+	path(nullptr),
+	node(n),
+	enabled(1),
+	builtin(1),
+	vectorize(1),
+	config(nullptr)
+{ }
 
-#ifdef WITH_HOOKS
-	int t = nd->direction == NodeDir::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
-	int m = nd->builtin ? t | (int) Hook::Flags::BUILTIN : 0;
-
-	hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
-#endif /* WITH_HOOKS */
-
-	nd->state = State::PREPARED;
-
-	return 0;
-}
-
-int node_direction_init(struct vnode_direction *nd, enum NodeDir dir, struct vnode *n)
+int NodeDirection::parse(json_t *json)
 {
 	int ret;
-
-	nd->direction = dir;
-	nd->enabled = 1;
-	nd->vectorize = 1;
-	nd->builtin = 1;
-	nd->path = nullptr;
-
-#ifdef WITH_HOOKS
-	ret = hook_list_init(&nd->hooks);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
-	ret = signal_list_init(&nd->signals);
-	if (ret)
-		return ret;
-
-	nd->state = State::INITIALIZED;
-
-	return 0;
-}
-
-int node_direction_destroy(struct vnode_direction *nd, struct vnode *n)
-{
-	int ret = 0;
-
-	assert(nd->state != State::DESTROYED && nd->state != State::STARTED);
-
-#ifdef WITH_HOOKS
-	ret = hook_list_destroy(&nd->hooks);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
-	ret = signal_list_destroy(&nd->signals);
-	if (ret)
-		return ret;
-
-	nd->state = State::DESTROYED;
-
-	return 0;
-}
-
-int node_direction_parse(struct vnode_direction *nd, struct vnode *n, json_t *json)
-{
-	int ret;
-
-	assert(nd->state == State::INITIALIZED);
 
 	json_error_t err;
 	json_t *json_hooks = nullptr;
 	json_t *json_signals = nullptr;
 
-	nd->config = json;
+	config = json;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
 		"hooks", &json_hooks,
 		"signals", &json_signals,
-		"vectorize", &nd->vectorize,
-		"builtin", &nd->builtin,
-		"enabled", &nd->enabled
+		"vectorize", &vectorize,
+		"builtin", &builtin,
+		"enabled", &enabled
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-in");
 
-	if (node_type(n)->flags & (int) NodeFlags::PROVIDES_SIGNALS) {
+	if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::PROVIDES_SIGNALS) {
 		/* Do nothing.. Node-type will provide signals */
+		signals = std::make_shared<SignalList>();
+		if (!signals)
+			throw MemoryAllocationError();
 	}
-	else if (json_is_array(json_signals)) {
-		ret = signal_list_parse(&nd->signals, json_signals);
+	else if (json_is_object(json_signals) || json_is_array(json_signals)) {
+		signals = std::make_shared<SignalList>();
+		if (!signals)
+			throw MemoryAllocationError();
+
+		if (json_is_object(json_signals)) {
+			json_t *json_name, *json_signal = json_signals;
+			int count;
+
+			ret = json_unpack_ex(json_signal, &err, 0, "{ s: i }",
+				"count", &count
+			);
+			if  (ret)
+				throw ConfigError(json_signals, "node-config-node-signals", "Invalid signal definition");
+
+			json_signals = json_array();
+			for (int i = 0; i < count; i++) {
+				json_t *json_signal_copy = json_copy(json_signal);
+
+				json_object_del(json_signal, "count");
+
+				// Append signal index
+				json_name = json_object_get(json_signal_copy, "name");
+				if (json_name) {
+					const char *name = json_string_value(json_name);
+					char *name_new;
+
+					asprintf(&name_new, "%s%d", name, i);
+
+					json_string_set(json_name, name_new);
+				}
+
+				json_array_append_new(json_signals, json_signal_copy);
+			}
+			json_object_set_new(json, "signals", json_signals);
+		}
+
+		ret = signals->parse(json_signals);
 		if (ret)
 			throw ConfigError(json_signals, "node-config-node-signals", "Failed to parse signal definition");
 	}
 	else if (json_is_string(json_signals)) {
 		const char *dt = json_string_value(json_signals);
 
-		ret = signal_list_generate2(&nd->signals, dt);
-		if (ret)
+		signals = std::make_shared<SignalList>(dt);
+		if (signals)
 			return ret;
 	}
 	else {
-		int count = DEFAULT_SAMPLE_LENGTH;
-		const char *type_str = "float";
-
-		if (json_is_object(json_signals)) {
-			ret = json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
-				"count", &count,
-				"type", &type_str
-			);
-			if  (ret)
-				throw ConfigError(json_signals, "node-config-node-signals", "Invalid signal definition");
-		}
-
-		enum SignalType type = signal_type_from_str(type_str);
-		if (type == SignalType::INVALID)
-			throw ConfigError(json_signals, "node-config-node-signals", "Invalid signal type {}", type_str);
-
-		ret = signal_list_generate(&nd->signals, count, type);
-		if (ret)
+		signals = std::make_shared<SignalList>(DEFAULT_SAMPLE_LENGTH, SignalType::FLOAT);
+		if (signals)
 			return ret;
 	}
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		int m = nd->direction == NodeDir::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
+		int m = direction == NodeDirection::Direction::OUT
+			? (int) Hook::Flags::NODE_WRITE
+			: (int) Hook::Flags::NODE_READ;
 
-		hook_list_parse(&nd->hooks, json_hooks, m, nullptr, n);
+		hooks.parse(json_hooks, m, nullptr, node);
 	}
 #endif /* WITH_HOOKS */
 
-	nd->state = State::PARSED;
+	return 0;
+}
+
+void NodeDirection::check()
+{
+	if (vectorize <= 0)
+		throw RuntimeError("Invalid setting 'vectorize' with value {}. Must be natural number!", vectorize);
+
+#ifdef WITH_HOOKS
+	hooks.check();
+#endif /* WITH_HOOKS */
+}
+
+int NodeDirection::prepare()
+{
+#ifdef WITH_HOOKS
+	int t = direction == NodeDirection::Direction::OUT ? (int) Hook::Flags::NODE_WRITE : (int) Hook::Flags::NODE_READ;
+	int m = builtin ? t | (int) Hook::Flags::BUILTIN : 0;
+
+	hooks.prepare(signals, m, nullptr, node);
+#endif /* WITH_HOOKS */
 
 	return 0;
 }
 
-void node_direction_check(struct vnode_direction *nd, struct vnode *n)
+int NodeDirection::start()
 {
-	assert(n->state != State::DESTROYED);
-
-	if (nd->vectorize <= 0)
-		throw RuntimeError("Invalid setting 'vectorize' with value {}. Must be natural number!", nd->vectorize);
-
 #ifdef WITH_HOOKS
-	hook_list_check(&nd->hooks);
+	hooks.start();
 #endif /* WITH_HOOKS */
-
-	nd->state = State::CHECKED;
-}
-
-int node_direction_start(struct vnode_direction *nd, struct vnode *n)
-{
-	assert(nd->state == State::PREPARED);
-
-#ifdef WITH_HOOKS
-	hook_list_start(&nd->hooks);
-#endif /* WITH_HOOKS */
-
-	nd->state = State::STARTED;
 
 	return 0;
 }
 
-int node_direction_stop(struct vnode_direction *nd, struct vnode *n)
+int NodeDirection::stop()
 {
-	assert(nd->state == State::STARTED);
-
 #ifdef WITH_HOOKS
-	hook_list_stop(&nd->hooks);
+	hooks.stop();
 #endif /* WITH_HOOKS */
-
-	nd->state = State::STOPPED;
 
 	return 0;
 }
 
-struct vlist * node_direction_get_signals(struct vnode_direction *nd)
+SignalList::Ptr NodeDirection::getSignals(int after_hooks) const
 {
-	assert(nd->state == State::PREPARED);
-
 #ifdef WITH_HOOKS
-	if (vlist_length(&nd->hooks) > 0)
-		return hook_list_get_signals(&nd->hooks);
+	if (after_hooks && hooks.size() > 0)
+		return hooks.getSignals();
 #endif /* WITH_HOOKS */
 
-	return &nd->signals;
+	return signals;
 }
 
-unsigned node_direction_get_signals_max_cnt(struct vnode_direction *nd)
+unsigned NodeDirection::getSignalsMaxCount() const
 {
 #ifdef WITH_HOOKS
-	if (vlist_length(&nd->hooks) > 0)
-		return MAX(vlist_length(&nd->signals), hook_list_get_signals_max_cnt(&nd->hooks));
+	if (hooks.size() > 0)
+		return MAX(signals->size(), hooks.getSignalsMaxCount());
 #endif /* WITH_HOOKS */
 
-	return vlist_length(&nd->signals);
+	return signals->size();
 }

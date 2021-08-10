@@ -1,7 +1,7 @@
 /** The API ressource for start/stop/pause/resume paths.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,7 +22,7 @@
 
 #include <jansson.h>
 
-#include <villas/path.h>
+#include <villas/path.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
@@ -34,7 +34,7 @@ namespace villas {
 namespace node {
 namespace api {
 
-template<int (*A)(struct vpath *)>
+template<auto func>
 class PathActionRequest : public PathRequest  {
 
 public:
@@ -48,7 +48,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Path endpoints do not accept any body data");
 
-		A(path);
+		(path->*func)();
 
 		return new Response(session, HTTP_STATUS_OK);
 	}
@@ -59,12 +59,12 @@ public:
 static char n1[] = "path/start";
 static char r1[] = "/path/(" RE_UUID ")/start";
 static char d1[] = "start a path";
-static RequestPlugin<PathActionRequest<path_start>, n1, r1, d1> p1;
+static RequestPlugin<PathActionRequest<&Path::start>, n1, r1, d1> p1;
 
 static char n2[] = "path/stop";
 static char r2[] = "/path/(" RE_UUID ")/stop";
 static char d2[] = "stop a path";
-static RequestPlugin<PathActionRequest<path_stop>, n2, r2, d2> p2;
+static RequestPlugin<PathActionRequest<&Path::stop>, n2, r2, d2> p2;
 
 
 } /* namespace api */

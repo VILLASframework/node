@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,21 +21,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup amqp amqp node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <amqp.h>
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/format.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct amqp_ssl_info {
 	int verify_peer;
@@ -58,25 +55,26 @@ struct amqp {
 	amqp_connection_state_t producer;
 	amqp_connection_state_t consumer;
 
-	villas::node::Format *formatter;
+	Format *formatter;
 };
 
-/** @see node_type::print */
-char * amqp_print(struct vnode *n);
+char * amqp_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int amqp_parse(struct vnode *n, json_t *json);
+int amqp_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int amqp_start(struct vnode *n);
+int amqp_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int amqp_stop(struct vnode *n);
+int amqp_init(NodeCompat *n);
 
-/** @see node_type::read */
-int amqp_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int amqp_destroy(NodeCompat *n);
 
-/** @see node_type::write */
-int amqp_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int amqp_poll_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+int amqp_stop(NodeCompat *n);
+
+int amqp_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int amqp_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

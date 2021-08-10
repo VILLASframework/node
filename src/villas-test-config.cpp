@@ -1,7 +1,7 @@
 /** Main routine.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include <villas/tool.hpp>
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/log.hpp>
 #include <villas/version.hpp>
 #include <villas/utils.hpp>
@@ -48,7 +48,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 	}
@@ -111,11 +111,11 @@ protected:
 
 		sn.parse(uri);
 
-		if (check)
-			sn.check();
+		// if (check)
+		// 	sn.check();
 
-		if (dump)
-			json_dumpf(sn.getConfig(), stdout, JSON_INDENT(2));
+		// if (dump)
+		// 	json_dumpf(sn.getConfig(), stdout, JSON_INDENT(2));
 
 		return 0;
 	}

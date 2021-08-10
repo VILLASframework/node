@@ -1,7 +1,7 @@
 /** Node-type for subprocess node-types.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,56 +21,67 @@
  *********************************************************************************/
 
 #include <string>
+#include <unistd.h>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
+#include <villas/node/config.hpp>
 #include <villas/nodes/exec.hpp>
 #include <villas/utils.hpp>
 #include <villas/node/exceptions.hpp>
+#include <villas/format.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int exec_parse(struct vnode *n, json_t *json)
+ExecNode::~ExecNode()
 {
-	struct exec *e = (struct exec *) n->_vd;
+	if (stream_in)
+		fclose(stream_in);
+
+	if (stream_out)
+		fclose(stream_out);
+}
+
+int ExecNode::parse(json_t *json, const uuid_t sn_uuid)
+{
+	int ret = Node::parse(json, sn_uuid);
+	if (ret)
+		return ret;
 
 	json_error_t err;
-	int ret, flush = 1;
+	int f = 1, s = -1;
 
 	json_t *json_exec;
 	json_t *json_env = nullptr;
 	json_t *json_format = nullptr;
 
 	const char *wd = nullptr;
-	int shell = -1;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: o, s?: b, s?: s }",
 		"exec", &json_exec,
 		"format", &json_format,
-		"flush", &flush,
+		"flush", &f,
 		"environment", &json_env,
-		"shell", &shell,
+		"shell", &s,
 		"working_directory", &wd
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-exec");
 
-	e->flush = flush;
-	e->shell = shell < 0 ? json_is_string(json_exec) : shell;
+	flush = f != 0;
+	shell = s < 0 ? json_is_string(json_exec) : s != 0;
 
-	e->arguments.clear();
-	e->environment.clear();
+	arguments.clear();
+	environment.clear();
 
 	if (json_is_string(json_exec)) {
-		if (shell == 0)
+		if (!shell)
 			throw ConfigError(json_exec, "node-config-node-exec-shell", "The exec setting must be an array if shell mode is disabled.");
 
-		e->command = json_string_value(json_exec);
+		command = json_string_value(json_exec);
 	}
 	else if (json_is_array(json_exec)) {
-		if (shell == 1)
+		if (shell)
 			throw ConfigError(json_exec, "node-config-node-exec-shell", "The exec setting must be a string if shell mode is enabled.");
 
 		if (json_array_size(json_exec) < 1)
@@ -83,9 +94,9 @@ int exec_parse(struct vnode *n, json_t *json)
 				throw ConfigError(json_arg, "node-config-node-exec-exec", "All arguments must be of string type");
 
 			if (i == 0)
-				e->command = json_string_value(json_arg);
+				command = json_string_value(json_arg);
 
-			e->arguments.push_back(json_string_value(json_arg));
+			arguments.push_back(json_string_value(json_arg));
 		}
 	}
 
@@ -98,172 +109,118 @@ int exec_parse(struct vnode *n, json_t *json)
 			if (!json_is_string(json_value))
 				throw ConfigError(json_value, "node-config-node-exec-environment", "Environment variables must be of string type");
 
-			e->environment[key] = json_string_value(json_value);
+			environment[key] = json_string_value(json_value);
 		}
 	}
 
 	/* Format */
-	e->formatter = json_format
+	auto *fmt = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.human");
-	if (!e->formatter)
+
+	formatter = Format::Ptr(fmt);
+	if (!formatter)
 		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format configuration");
 
-	// if (!(e->format->flags & (int) Flags::NEWLINES))
-	// 	throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
+	state = State::PARSED;
 
 	return 0;
 }
 
-int exec_prepare(struct vnode *n)
+int ExecNode::prepare()
 {
-	struct exec *e = (struct exec *) n->_vd;
+	assert(state == State::CHECKED);
 
 	/* Initialize IO */
-	e->formatter->start(&n->in.signals);
+	formatter->start(getInputSignals(false));
 
+	return Node::prepare();
+}
+
+int ExecNode::start()
+{
 	/* Start subprocess */
-	e->proc = std::make_unique<Popen>(e->command, e->arguments, e->environment, e->working_dir, e->shell);
-	n->logger->debug("Started sub-process with pid={}", e->proc->getPid());
+	proc = std::make_unique<Popen>(command, arguments, environment, working_dir, shell);
+	logger->debug("Started sub-process with pid={}", proc->getPid());
+
+	stream_in = fdopen(proc->getFdIn(), "r");
+	if (!stream_in)
+		return -1;
+
+	stream_out = fdopen(proc->getFdOut(), "w");
+	if (!stream_out)
+		return -1;
+
+	int ret = Node::start();
+	if (!ret)
+		state = State::STARTED;
 
 	return 0;
 }
 
-int exec_init(struct vnode *n)
+int ExecNode::stop()
 {
-	struct exec *e = (struct exec *) n->_vd;
-
-	new (&e->proc) std::unique_ptr<Popen>();
-	new (&e->working_dir) std::string();
-	new (&e->command) std::string();
-	new (&e->arguments) Popen::arg_list();
-	new (&e->environment) Popen::env_map();
-
-	return 0;
-}
-
-int exec_destroy(struct vnode *n)
-{
-	struct exec *e = (struct exec *) n->_vd;
-
-	delete e->formatter;
-
-	using uptr = std::unique_ptr<Popen>;
-	using str = std::string;
-	using al = Popen::arg_list;
-	using em = Popen::env_map;
-
-	e->proc.~uptr();
-	e->working_dir.~str();
-	e->command.~str();
-	e->arguments.~al();
-	e->environment.~em();
-
-	return 0;
-}
-
-int exec_stop(struct vnode *n)
-{
-	struct exec *e = (struct exec *) n->_vd;
+	int ret = Node::stop();
+	if (ret)
+		return ret;
 
 	/* Stop subprocess */
-	n->logger->debug("Killing sub-process with pid={}", e->proc->getPid());
-	e->proc->kill(SIGINT);
+	logger->debug("Killing sub-process with pid={}", proc->getPid());
+	proc->kill(SIGINT);
 
-	n->logger->debug("Waiting for sub-process with pid={} to terminate", e->proc->getPid());
-	e->proc->close();
+	logger->debug("Waiting for sub-process with pid={} to terminate", proc->getPid());
+	proc->close();
 
 	/** @todo Check exit code of subprocess? */
 	return 0;
 }
 
-int exec_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int ExecNode::_read(struct Sample * smps[], unsigned cnt)
 {
-	struct exec *e = (struct exec *) n->_vd;
-
-	size_t rbytes;
-	int avail;
-	std::string line;
-
-	std::getline(e->proc->cin(), line);
-
-	avail = e->formatter->sscan(line.c_str(), line.length(), &rbytes, smps, cnt);
-	if (rbytes - 1 != line.length())
-		return -1;
-
-	return avail;
+	return formatter->scan(stream_in, smps, cnt);
 }
 
-int exec_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int ExecNode::_write(struct Sample * smps[], unsigned cnt)
 {
-	struct exec *e = (struct exec *) n->_vd;
-
-	size_t wbytes;
 	int ret;
-	char *line = new char[1024];
-	if (!line)
-		throw MemoryAllocationError();
 
-	ret = e->formatter->sprint(line, 1024, &wbytes, smps, cnt);
+	ret = formatter->print(stream_out, smps, cnt);
 	if (ret < 0)
 		return ret;
 
-	e->proc->cout() << line;
-
-	if (e->flush)
-		e->proc->cout().flush();
-
-	delete[] line;
+	if (flush)
+		fflush(stream_out);
 
 	return cnt;
 }
 
-char * exec_print(struct vnode *n)
+const std::string & ExecNode::getDetails()
 {
-	struct exec *e = (struct exec *) n->_vd;
-	char *buf = nullptr;
+	std::string wd = working_dir;
+	if (wd.empty()) {
+		char buf[128];
+		wd = getcwd(buf, sizeof(buf));
+	}
 
-	strcatf(&buf, "exec=%s, shell=%s, flush=%s, #environment=%zu, #arguments=%zu, working_dir=%s",
-		e->command.c_str(),
-		e->shell ? "yes" : "no",
-		e->flush ? "yes" : "no",
-		e->environment.size(),
-		e->arguments.size(),
-		e->working_dir.c_str()
-	);
+	if (details.empty()) {
+		details = fmt::format("exec={}, shell={}, flush={}, #environment={}, #arguments={}, working_dir={}",
+			command,
+			shell ? "yes" : "no",
+			flush ? "yes" : "no",
+			environment.size(),
+			arguments.size(),
+			wd
+		);
+	}
 
-	return buf;
+	return details;
 }
 
-int exec_poll_fds(struct vnode *n, int fds[])
+std::vector<int> ExecNode::getPollFDs()
 {
-	struct exec *e = (struct exec *) n->_vd;
-
-	fds[0] = e->proc->getFd();
-
-	return 1;
+	return { proc->getFdIn() };
 }
 
-static struct vnode_type p;
-
-__attribute__((constructor(110)))
-static void register_plugin() {
-	p.name		= "exec";
-	p.description	= "run subprocesses with stdin/stdout communication";
-	p.vectorize	= 0;
-	p.size		= sizeof(struct exec);
-	p.parse		= exec_parse;
-	p.print		= exec_print;
-	p.prepare	= exec_prepare;
-	p.init		= exec_init;
-	p.destroy	= exec_destroy;
-	p.stop		= exec_stop;
-	p.read		= exec_read;
-	p.write		= exec_write;
-	p.poll_fds	= exec_poll_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
-}
+static char n[] = "exec";
+static char d[] = "run subprocesses with stdin/stdout communication";
+static NodePlugin<ExecNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL> p;

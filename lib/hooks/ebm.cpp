@@ -1,7 +1,7 @@
 /** Energy-based Metric hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,15 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <vector>
 
 #include <villas/hook.hpp>
-#include <villas/sample.h>
-#include <villas/timing.h>
+#include <villas/sample.hpp>
+#include <villas/timing.hpp>
 
 namespace villas {
 namespace node {
@@ -40,7 +36,7 @@ protected:
 
 	double energy;
 
-	sample *last;
+	struct Sample *last;
 
 public:
 	using Hook::Hook;
@@ -96,7 +92,7 @@ public:
 		logger->info("Energy: {}", energy);
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		double P, P_last, dt;
 
@@ -130,5 +126,3 @@ static HookPlugin<EBMHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NO
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

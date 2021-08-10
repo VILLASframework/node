@@ -1,7 +1,7 @@
 /** Signal meta data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,251 +20,134 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/signal.h>
+#include <villas/signal.hpp>
 #include <villas/utils.hpp>
-#include <villas/mapping.h>
 #include <villas/exceptions.hpp>
 
-#include <villas/signal_type.h>
-#include <villas/signal_data.h>
+#include <villas/signal_type.hpp>
+#include <villas/signal_data.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
-int signal_init(struct signal *s)
-{
-	s->enabled = true;
+Signal::Signal(const std::string &n, const std::string &u, enum SignalType t) :
+	name(n),
+	unit(u),
+	init(SignalData::nan()),
+	type(t)
+{ }
 
-	s->name = nullptr;
-	s->unit = nullptr;
-	s->type = SignalType::INVALID;
-	s->init = signal_data::nan();
-
-	s->refcnt = ATOMIC_VAR_INIT(1);
-
-	return 0;
-}
-
-int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index)
-{
-	int ret;
-
-	ret = signal_init(s);
-	if (ret)
-		return ret;
-
-	ret = mapping_entry_to_str(me, index, &s->name);
-	if (ret)
-		return ret;
-
-	switch (me->type) {
-		case MappingType::STATS:
-			s->type = Stats::types[me->stats.type].signal_type;
-			break;
-
-		case MappingType::HEADER:
-			switch (me->header.type) {
-				case MappingHeaderType::LENGTH:
-				case MappingHeaderType::SEQUENCE:
-					s->type = SignalType::INTEGER;
-					break;
-			}
-			break;
-
-		case MappingType::TIMESTAMP:
-			s->type = SignalType::INTEGER;
-			break;
-
-		case MappingType::DATA:
-			s->type = me->data.signal->type;
-			s->init = me->data.signal->init;
-			s->enabled = me->data.signal->enabled;
-
-			if (me->data.signal->name)
-				s->name = strdup(me->data.signal->name);
-
-			if (me->data.signal->unit)
-				s->name = strdup(me->data.signal->unit);
-			break;
-
-		case MappingType::UNKNOWN:
-			return -1;
-	}
-
-	return 0;
-}
-
-int signal_destroy(struct signal *s)
-{
-	if (s->name)
-		free(s->name);
-
-	if (s->unit)
-		free(s->unit);
-
-	return 0;
-}
-
-struct signal * signal_create(const char *name, const char *unit, enum SignalType fmt)
-{
-	int ret;
-	struct signal *sig;
-
-	sig = new struct signal;
-	if (!sig)
-		throw MemoryAllocationError();
-
-	ret = signal_init(sig);
-	if (ret)
-		return nullptr;
-
-	if (name)
-		sig->name = strdup(name);
-
-	if (unit)
-		sig->unit = strdup(unit);
-
-	sig->type = fmt;
-
-	return sig;
-}
-
-int signal_free(struct signal *s)
-{
-	int ret;
-
-	ret = signal_destroy(s);
-	if (ret)
-		 return ret;
-
-	delete s;
-
-	return 0;
-}
-
-int signal_incref(struct signal *s)
-{
-	return atomic_fetch_add(&s->refcnt, 1) + 1;
-}
-
-int signal_decref(struct signal *s)
-{
-	int prev = atomic_fetch_sub(&s->refcnt, 1);
-
-	/* Did we had the last reference? */
-	if (prev == 1) {
-		int ret = signal_free(s);
-		if (ret)
-			throw RuntimeError("Failed to release sample");
-	}
-
-	return prev - 1;
-}
-
-struct signal * signal_copy(struct signal *s)
-{
-	int ret;
-	struct signal *ns;
-
-	ns = new struct signal;
-	if (!ns)
-		throw MemoryAllocationError();
-
-	ret = signal_init(ns);
-	if (!ret)
-		throw RuntimeError("Failed to initialize signal");
-
-	ns->type = s->type;
-	ns->init = s->init;
-	ns->enabled = s->enabled;
-
-	if (s->name)
-		ns->name = strdup(s->name);
-
-	if (s->unit)
-		ns->name = strdup(s->unit);
-
-	return ns;
-}
-
-int signal_parse(struct signal *s, json_t *json)
+int Signal::parse(json_t *json)
 {
 	int ret;
 	json_error_t err;
 	json_t *json_init = nullptr;
-	const char *name = nullptr;
-	const char *unit = nullptr;
-	const char *type = "float";
+	const char *name_str = nullptr;
+	const char *unit_str = nullptr;
+	const char *type_str = "float";
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: o, s?: b }",
-		"name", &name,
-		"unit", &unit,
-		"type", &type,
-		"init", &json_init,
-		"enabled", &s->enabled
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: o }",
+		"name", &name_str,
+		"unit", &unit_str,
+		"type", &type_str,
+		"init", &json_init
 	);
 	if (ret)
 		return -1;
 
-	if (name)
-		s->name = strdup(name);
+	if (name_str)
+		name = name_str;
 
-	if (unit)
-		s->unit = strdup(unit);
+	if (unit_str)
+		unit = unit_str;
 
-	if (type) {
-		s->type = signal_type_from_str(type);
-		if (s->type == SignalType::INVALID)
+	if (type_str) {
+		type = signalTypeFromString(type_str);
+		if (type == SignalType::INVALID)
 			return -1;
 	}
 
 	if (json_init) {
-		ret = signal_data_parse_json(&s->init, s->type, json_init);
+		ret = init.parseJson(type, json_init);
 		if (ret)
 			return ret;
 	}
 	else
-		signal_data_set(&s->init, s->type, 0);
+		init.set(type, 0);
 
 	return 0;
 }
 
-json_t * signal_to_json(struct signal *s)
+json_t * Signal::toJson() const
 {
-	json_t *json_sig = json_pack("{ s: s, s: b, s: o }",
-		"type", signal_type_to_str(s->type),
-		"enabled", s->enabled,
-		"init", signal_data_to_json(&s->init, s->type)
+	json_t *json_sig = json_pack("{ s: s, s: o }",
+		"type", signalTypeToString(type).c_str(),
+		"init", init.toJson(type)
 	);
 
-	if (s->name)
-		json_object_set(json_sig, "name", json_string(s->name));
+	if (!name.empty())
+		json_object_set(json_sig, "name", json_string(name.c_str()));
 
-	if (s->unit)
-		json_object_set(json_sig, "unit", json_string(s->unit));
+	if (!unit.empty())
+		json_object_set(json_sig, "unit", json_string(unit.c_str()));
 
 	return json_sig;
 }
 
-char * signal_print(const struct signal *s, const union signal_data *d)
+std::string Signal::toString(const union SignalData *d) const
 {
-	char *buf = nullptr;
+	std::stringstream ss;
 
-	if (s->name)
-		strcatf(&buf, " %s", s->name);
+	if (!name.empty())
+		ss << " " << name;
 
-	if (s->unit)
-		strcatf(&buf, " [%s]", s->unit);
+	if (!unit.empty())
+		ss << " [" << unit << "]";
 
-	strcatf(&buf, "(%s)", signal_type_to_str(s->type));
+	ss << "(" << signalTypeToString(type) << ")";
 
-	if (d) {
-		char val[32];
+	if (d)
+		ss << " = " << d->toString(type);
 
-		signal_data_print_str(d, s->type, val, sizeof(val));
+	return ss.str();
+}
 
-		strcatf(&buf, " = %s", val);
+/** Check if two signal names are numbered ascendingly
+ *
+ * E.g. signal3 -> signal4
+ */
+static
+bool isNextName(const std::string &a, const std::string &b)
+{
+	/* Find common prefix */
+	std::string::const_iterator ia, ib;
+	for (ia = a.cbegin(), ib = b.cbegin();
+	     ia != b.cend() && ib != b.cend() && *ia == *ib;
+	     ++ia, ++ib);
+
+	/* Suffixes */
+	auto sa = std::string(ia, a.cend());
+	auto sb = std::string(ib, b.cend());
+
+	try {
+		size_t ea, eb;
+		auto na = std::stoul(sa, &ea, 10);
+		auto nb = std::stoul(sb, &eb, 10);
+
+		return na + 1 == nb;
+	} catch (std::exception &) {
+		return false;
 	}
+}
 
-	return buf;
+bool Signal::isNext(const Signal &sig)
+{
+	if (type != sig.type)
+		return false;
+
+	if (!unit.empty() && !sig.unit.empty() && unit != sig.unit)
+		return false;
+
+	return isNextName(name, sig.name);
 }

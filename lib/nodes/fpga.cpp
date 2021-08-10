@@ -1,7 +1,7 @@
 /** Communicate with VILLASfpga Xilinx FPGA boards
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,45 +27,36 @@
 #include <algorithm>
 #include <jansson.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>
 
-/* Forward declartions */
-static struct vnode_type p;
-
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
+/* Forward declartions */
+static struct NodeCompatType p;
+
 /* Global state */
 static fpga::PCIeCard::List cards;
-static std::map<fpga::ip::Dma, struct fpga *> dmaMap;
+static std::map<fpga::ip::Dma, struct fpga_node *> dmaMap;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 using namespace villas;
+using namespace villas::node;
 
-// static std::shared_ptr<fpga::ip::Dma>
-// fpga_find_dma(const fpga::PCIeCard &card)
-// {
-// 	// for (auto &ip : card.ips) {
-
-// 	// }
-
-// 	return nullptr;
-// }
-
-int fpga_type_start(node::SuperNode *sn)
+int villas::node::fpga_type_start(SuperNode *sn)
 {
 	vfioContainer = kernel::vfio::Container::create();
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
@@ -88,16 +79,16 @@ int fpga_type_start(node::SuperNode *sn)
 	return 0;
 }
 
-int fpga_type_stop()
+int villas::node::fpga_type_stop()
 {
 	vfioContainer.reset(); // TODO: is this the proper way?
 
 	return 0;
 }
 
-int fpga_init(struct vnode *n)
+int villas::node::fpga_init(NodeCompat *n)
 {
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
 	f->coalesce = 0;
 	f->irqFd = -1;
@@ -112,18 +103,19 @@ int fpga_init(struct vnode *n)
 	new (&f->dma) std::shared_ptr<fpga::ip::Node>();
 	new (&f->intf) std::shared_ptr<fpga::ip::Node>();
 
-	// TODO: fixme
-	// new (&f->in.mem) std::shared_ptr<MemoryBlock>();
-	// new (&f->out.mem) std::shared_ptr<MemoryBlock>();
+	new (&f->in.block) std::unique_ptr<MemoryBlock>();
+	new (&f->out.block) std::unique_ptr<MemoryBlock>();
 
 	return 0;
 }
 
-int fpga_destroy(struct vnode *n)
+int villas::node::fpga_destroy(NodeCompat *n)
 {
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
-	using mbptr = MemoryAccessor<uint32_t>;
+	// using maiptr = MemoryAccessor<uint32_t>;
+	// using mafptr = MemoryAccessor<float>;
+	using mbptr = MemoryBlock::Ptr;
 	using cptr = std::shared_ptr<fpga::PCIeCard>;
 	using nptr = std::shared_ptr<fpga::ip::Node>;
 	using dptr = std::shared_ptr<fpga::ip::Dma>;
@@ -138,16 +130,16 @@ int fpga_destroy(struct vnode *n)
 	f->dma.~dptr();
 	f->intf.~nptr();
 
-	f->in.mem.~mbptr();
-	f->out.mem.~mbptr();
+	f->in.block.~mbptr();
+	f->out.block.~mbptr();
 
 	return 0;
 }
 
-int fpga_parse(struct vnode *n, json_t *json)
+int villas::node::fpga_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
 	json_error_t err;
 
@@ -180,9 +172,9 @@ int fpga_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * fpga_print(struct vnode *n)
+char * villas::node::fpga_print(NodeCompat *n)
 {
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
 	return strf("fpga=%s, dma=%s, if=%s, polling=%s, coalesce=%d",
 		f->card->name.c_str(),
@@ -192,18 +184,12 @@ char * fpga_print(struct vnode *n)
 	);
 }
 
-int fpga_check(struct vnode *n)
-{
-	// struct fpga *f = (struct fpga *) n->_vd;
-
-	return 0;
-}
-
-int fpga_prepare(struct vnode *n)
+int villas::node::fpga_prepare(NodeCompat *n)
 {
 	int ret;
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
+	// Select first FPGA card
 	auto it = f->cardName.empty()
 		? cards.begin()
 		: std::find_if(cards.begin(), cards.end(), [f](const fpga::PCIeCard::Ptr &c) {
@@ -211,25 +197,27 @@ int fpga_prepare(struct vnode *n)
 		});
 
 	if (it == cards.end())
-		throw ConfigError(json_object_get(n->config, "fpga"), "node-config-node-fpga-card", "Invalid FPGA card name: {}", f->cardName);
+		throw ConfigError(json_object_get(n->getConfig(), "fpga"), "node-config-node-fpga-card", "Invalid FPGA card name: {}", f->cardName);
 
 	f->card = *it;
 
+	// Select interface IP core
 	auto intf = f->intfName.empty()
 		? f->card->lookupIp(fpga::Vlnv(FPGA_AURORA_VLNV))
 		: f->card->lookupIp(f->intfName);
 	if (!intf)
-		throw ConfigError(n->config, "node-config-node-fpga-interface", "There is no interface IP with the name: {}", f->intfName);
+		throw ConfigError(n->getConfig(), "node-config-node-fpga-interface", "There is no interface IP with the name: {}", f->intfName);
 
 	f->intf = std::dynamic_pointer_cast<fpga::ip::Node>(intf);
 	if (!f->intf)
 		throw RuntimeError("The IP {} is not a interface", *intf);
 
+	// Select DMA IP core
 	auto dma = f->dmaName.empty()
 		? f->card->lookupIp(fpga::Vlnv(FPGA_DMA_VLNV))
 		: f->card->lookupIp(f->dmaName);
 	if (!dma)
-		throw ConfigError(n->config, "node-config-node-fpga-dma", "There is no DMA IP with the name: {}", f->dmaName);
+		throw ConfigError(n->getConfig(), "node-config-node-fpga-dma", "There is no DMA IP with the name: {}", f->dmaName);
 
 	f->dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dma);
 	if (!f->dma)
@@ -241,16 +229,19 @@ int fpga_prepare(struct vnode *n)
 			*(f->intf), *(f->dma)
 		);
 
-	auto &alloc = HostRam::getAllocator();
+	auto &alloc = HostDmaRam::getAllocator();
 
-	f->in.mem  = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
-	f->out.mem = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
+	f->in.block  = std::move(alloc.allocateBlock(0x100 / sizeof(int32_t)));
+	f->out.block = std::move(alloc.allocateBlock(0x100 / sizeof(int32_t)));
 
-	f->in.block  = f->in.mem.getMemoryBlock();
-	f->out.block = f->out.mem.getMemoryBlock();
+	f->in.accessor.i = MemoryAccessor<int32_t>(*f->in.block);
+	f->in.accessor.f = MemoryAccessor<float>(*f->in.block);
 
-	f->dma->makeAccesibleFromVA(f->in.block);
-	f->dma->makeAccesibleFromVA(f->out.block);
+	f->out.accessor.i = MemoryAccessor<int32_t>(*f->out.block);
+	f->out.accessor.f = MemoryAccessor<float>(*f->out.block);
+
+	f->dma->makeAccesibleFromVA(*f->in.block);
+	f->dma->makeAccesibleFromVA(*f->out.block);
 
 	f->dma->dump();
 	f->intf->dump();
@@ -259,52 +250,66 @@ int fpga_prepare(struct vnode *n)
 	return 0;
 }
 
-int fpga_start(struct vnode *n)
-{
-	// struct fpga *f = (struct fpga *) n->_vd;
-
-	return 0;
-}
-
-int fpga_stop(struct vnode *n)
-{
-	//struct fpga *f = (struct fpga *) n->_vd;
-
-	return 0;
-}
-
-int fpga_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::fpga_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	unsigned read;
-	struct fpga *f = (struct fpga *) n->_vd;
-	struct sample *smp = smps[0];
+	auto *f = n->getData<struct fpga_node>();
+	struct Sample *smp = smps[0];
 
 	assert(cnt == 1);
 
-	f->dma->read(f->in.block, f->in.block.getSize()); // TODO: calc size
+	f->dma->read(*f->in.block.get(), f->in.block->getSize()); // TODO: calc size
 	const size_t bytesRead = f->dma->readComplete();
 	read = bytesRead / sizeof(int32_t);
 
-	for (unsigned i = 0; i < MIN(read, smp->capacity); i++)
-		smp->data[i].i = f->in.mem[i];
+	for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
+		auto sig = n->getInputSignals(false)->getByIndex(i);
 
-	smp->signals = &n->in.signals;
+		switch (sig->type) {
+			case SignalType::INTEGER:
+				smp->data[i].i = f->in.accessor.i[i];
+				break;
+
+			case SignalType::FLOAT:
+				smp->data[i].f = f->in.accessor.f[i];
+				break;
+
+			default: {}
+		}
+	}
+
+	smp->signals = n->getInputSignals(false);
+	smp->length = bytesRead / sizeof(uint32_t);
+	smp->flags = (int) SampleFlags::HAS_DATA;
 
 	return read;
 }
 
-int fpga_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::fpga_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int written;
-	struct fpga *f = (struct fpga *) n->_vd;
-	struct sample *smp = smps[0];
+	auto *f = n->getData<struct fpga_node>();
+	struct Sample *smp = smps[0];
 
 	assert(cnt == 1);
 
-	for (unsigned i = 0; i < smps[0]->length; i++)
-		f->out.mem[i] = smps[0]->data[i].i;
+	for (unsigned i = 0; i < smps[0]->length; i++) {
+		auto sig = smp->signals->getByIndex(i);
 
-	bool state = f->dma->write(f->out.block, smp->length * sizeof(int32_t));
+		switch (sig->type) {
+			case SignalType::INTEGER:
+				f->out.accessor.i[i] = smps[0]->data[i].i;
+				break;
+
+			case SignalType::FLOAT:
+				f->out.accessor.f[i] = smps[0]->data[i].f;
+				break;
+
+			default: {}
+		}
+	}
+
+	bool state = f->dma->write(*f->out.block.get(), smp->length * sizeof(int32_t));
 	if (!state)
 		return -1;
 
@@ -313,9 +318,9 @@ int fpga_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return written;
 }
 
-int fpga_poll_fds(struct vnode *n, int fds[])
+int villas::node::fpga_poll_fds(NodeCompat *n, int fds[])
 {
-	struct fpga *f = (struct fpga *) n->_vd;
+	auto *f = n->getData<struct fpga_node>();
 
 	if (f->polling)
 		return 0;
@@ -331,7 +336,7 @@ static void register_plugin() {
 	p.name		= "fpga";
 	p.description	= "Communicate with VILLASfpga Xilinx FPGA boards";
 	p.vectorize	= 1;
-	p.size		= sizeof(struct fpga);
+	p.size		= sizeof(struct fpga_node);
 	p.type.start	= fpga_type_start;
 	p.type.stop	= fpga_type_stop;
 	p.init		= fpga_init;
@@ -339,16 +344,10 @@ static void register_plugin() {
 	p.prepare	= fpga_prepare;
 	p.parse		= fpga_parse;
 	p.print		= fpga_print;
-	p.check		= fpga_check;
-	p.start		= fpga_start;
-	p.stop		= fpga_stop;
 	p.read		= fpga_read;
 	p.write		= fpga_write;
 	p.poll_fds	= fpga_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }
 

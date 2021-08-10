@@ -3,7 +3,7 @@
 # Integration test for skip_first hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,19 +22,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-OUTPUT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 SKIP=50
 
-villas signal -r 1 -l ${NUM_SAMPLES} -n random | \
-villas hook -o samples=${SKIP} skip_first > ${OUTPUT_FILE}
+villas signal -r 1 -l ${NUM_SAMPLES} -n random > input.dat
 
-LINES=$(sed -re '/^#/d' ${OUTPUT_FILE} | wc -l)
+villas hook -o samples=${SKIP} skip_first > output.dat < input.dat
 
-rm ${OUTPUT_FILE}
+LINES=$(sed -re '/^#/d' output.dat | wc -l)
 
 # Test condition
 (( ${LINES} == ${NUM_SAMPLES} - ${SKIP} ))

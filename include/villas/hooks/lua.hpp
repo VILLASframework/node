@@ -36,6 +36,7 @@ namespace node {
 
 /* Forward declarations */
 class LuaHook;
+enum SignalType;
 
 class LuaSignalExpression {
 
@@ -54,7 +55,7 @@ public:
 
 	void parseExpression(const std::string &expr);
 
-	void evaluate(union signal_data *data, enum SignalType type);
+	void evaluate(union SignalData *data, enum SignalType type);
 };
 
 class LuaHook : public Hook {
@@ -68,8 +69,8 @@ protected:
 	std::string script;
 	std::vector<LuaSignalExpression> expressions;
 
-	struct vlist signalsProcessed; /**> Signals as emited by Lua process() function */
-	struct vlist signalsExpressions; /**> Signals as emited by Lua expressions */
+	SignalList::Ptr signalsProcessed; /**> Signals as emited by Lua process() function */
+	SignalList::Ptr signalsExpressions; /**> Signals as emited by Lua expressions */
 
 	lua_State *L;
 	std::mutex mutex;
@@ -118,7 +119,7 @@ protected:
 	}
 
 public:
-	LuaHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
+	LuaHook(Path *p, Node *n, int fl, int prio, bool en = true);
 
 	virtual ~LuaHook();
 
@@ -139,11 +140,9 @@ public:
 	virtual void restart();
 
 	/** Called whenever a sample is processed. */
-	virtual Reason process(sample *smp);
+	virtual Reason process(struct Sample *smp);
 };
 
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

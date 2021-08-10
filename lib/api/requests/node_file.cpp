@@ -1,7 +1,7 @@
 /** The "file" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,6 +25,7 @@
 #include <villas/api/node_request.hpp>
 #include <villas/api/response.hpp>
 
+#include <villas/node_compat.hpp>
 #include <villas/nodes/file.hpp>
 #include <villas/format.hpp>
 
@@ -45,14 +46,15 @@ public:
 		if (body != nullptr)
 			throw BadRequest("File endpoint does not accept any body data");
 
-		struct vnode_type *vt = node_type_lookup("file");
+		NodeFactory *nf = plugin::Registry::lookup<NodeFactory>("file");
 
-		if (node_type(node) != vt)
+		if (node->getFactory() != nf)
 			throw BadRequest("This node is not a file node", "{ s: s }",
-				"type", node_type(node)
+				"type", node->getFactory()->getName()
 			);
 
-		struct file *f = (struct file *) node->_vd;
+		auto *nc = dynamic_cast<NodeCompat *>(node);
+		auto *f = nc->getData<struct file>();
 
 		if (matches[2] == "rewind")
 			rewind(f->stream_in);

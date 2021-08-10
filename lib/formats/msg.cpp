@@ -1,7 +1,7 @@
 /** Message related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,12 +24,15 @@
 
 #include <villas/formats/msg.hpp>
 #include <villas/formats/msg_format.hpp>
-#include <villas/sample.h>
-#include <villas/signal.h>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
 #include <villas/utils.hpp>
-#include <villas/list.h>
+#include <villas/list.hpp>
 
-void msg_ntoh(struct msg *m)
+using namespace villas;
+using namespace villas::node;
+
+void villas::node::msg_ntoh(struct Message *m)
 {
 	msg_hdr_ntoh(m);
 
@@ -37,7 +40,7 @@ void msg_ntoh(struct msg *m)
 		m->data[i].i = ntohl(m->data[i].i);
 }
 
-void msg_hton(struct msg *m)
+void villas::node::msg_hton(struct Message *m)
 {
 	for (int i = 0; i < m->length; i++)
 		m->data[i].i = htonl(m->data[i].i);
@@ -45,7 +48,7 @@ void msg_hton(struct msg *m)
 	msg_hdr_hton(m);
 }
 
-void msg_hdr_hton(struct msg *m)
+void villas::node::msg_hdr_hton(struct Message *m)
 {
 	m->length   = htons(m->length);
 	m->sequence = htonl(m->sequence);
@@ -53,7 +56,7 @@ void msg_hdr_hton(struct msg *m)
 	m->ts.nsec  = htonl(m->ts.nsec);
 }
 
-void msg_hdr_ntoh(struct msg *m)
+void villas::node::msg_hdr_ntoh(struct Message *m)
 {
 	m->length   = ntohs(m->length);
 	m->sequence = ntohl(m->sequence);
@@ -61,7 +64,7 @@ void msg_hdr_ntoh(struct msg *m)
 	m->ts.nsec  = ntohl(m->ts.nsec);
 }
 
-int msg_verify(const struct msg *m)
+int villas::node::msg_verify(const struct Message *m)
 {
 	if      (m->version != MSG_VERSION)
 		return -1;
@@ -73,7 +76,7 @@ int msg_verify(const struct msg *m)
 		return 0;
 }
 
-int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs, uint8_t *source_index)
+int villas::node::msg_to_sample(const struct Message *msg, struct Sample *smp, const SignalList::Ptr sigs, uint8_t *source_index)
 {
 	int ret;
 	unsigned i;
@@ -83,8 +86,8 @@ int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist 
 		return ret;
 
 	unsigned len = MIN(msg->length, smp->capacity);
-	for (i = 0; i < MIN(len, vlist_length(sigs)); i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
+	for (i = 0; i < MIN(len, sigs->size()); i++) {
+		auto sig = sigs->getByIndex(i);
 		if (!sig)
 			return -1;
 
@@ -113,7 +116,7 @@ int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist 
 	return 0;
 }
 
-int msg_from_sample(struct msg *msg_in, const struct sample *smp, const struct vlist *sigs, uint8_t source_index)
+int villas::node::msg_from_sample(struct Message *msg_in, const struct Sample *smp, const SignalList::Ptr sigs, uint8_t source_index)
 {
 	msg_in->type     = MSG_TYPE_DATA;
 	msg_in->version  = MSG_VERSION;
@@ -125,7 +128,7 @@ int msg_from_sample(struct msg *msg_in, const struct sample *smp, const struct v
 	msg_in->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
+		auto sig = sigs->getByIndex(i);
 		if (!sig)
 			return -1;
 

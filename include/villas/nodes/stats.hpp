@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,25 +21,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup stats Sending stats
- * @{
- */
-
 #pragma once
 
 #include <jansson.h>
 
 #include <villas/stats.hpp>
 #include <villas/task.hpp>
-#include <villas/list.h>
+#include <villas/list.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct stats_node_signal {
-	struct vnode *node;
+	Node *node;
 	char *node_str;
 
 	enum villas::Stats::Metric metric;
@@ -51,27 +48,34 @@ struct stats_node {
 
 	struct Task task;
 
-	struct vlist signals; /** List of type struct stats_node_signal */
+	struct List signals; /** List of type struct stats_node_signal */
 };
 
-/** @see node_type::print */
-int stats_node_type_start(villas::node::SuperNode *sn);
+int stats_node_type_start(SuperNode *sn);
 
-/** @see node_type::print */
-char *stats_node_print(struct vnode *n);
+int stats_node_init(NodeCompat *n);
 
-/** @see node_type::parse */
-int stats_node_parse(struct vnode *n, json_t *json);
+int stats_node_destroy(NodeCompat *n);
+
+char *stats_node_print(NodeCompat *n);
+
+int stats_node_parse(NodeCompat *n, json_t *json);
+
+int stats_node_prepare(NodeCompat *n);
+
+int stats_node_start(NodeCompat *n);
+
+int stats_node_stop(NodeCompat *n);
+
+int stats_node_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int stats_node_parse_signal(struct stats_node_signal *s, json_t *json);
 
-/** @see node_type::start */
-int stats_node_start(struct vnode *n);
+int stats_node_signal_destroy(struct stats_node_signal *s);
 
-/** @see node_type::stop */
-int stats_node_stop(struct vnode *n);
+int stats_node_signal_parse(struct stats_node_signal *s, json_t *json);
 
-/** @see node_type::read */
-int stats_node_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int stats_node_poll_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,37 +28,38 @@
 #include <sys/stat.h>
 
 #include <villas/kernel/kernel.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
-#include <villas/shmem.h>
+#include <villas/sample.hpp>
+#include <villas/shmem.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
-size_t shmem_total_size(int queuelen, int samplelen)
+size_t villas::node::shmem_total_size(int queuelen, int samplelen)
 {
 	/* We have the constant const of the memory_type header */
-	return sizeof(struct memory_type)
+	return sizeof(struct memory::Type)
 		/* and the shared struct itself */
-		+ sizeof(struct shmem_shared)
+		+ sizeof(struct ShmemShared)
 		/* the size of the actual queue and the queue for the pool */
-		+ queuelen * (2 * sizeof(struct queue_cell))
+		+ queuelen * (2 * sizeof(struct CQueue_cell))
 		/* the size of the pool */
 		+ queuelen * kernel::getCachelineSize() * CEIL(SAMPLE_LENGTH(samplelen), kernel::getCachelineSize())
 		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
-		+ 4 * sizeof(struct memory_block)
+		+ 4 * sizeof(struct memory::Block)
 		/* and some extra buffer for alignment */
 		+ 1024;
 }
 
-int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, struct shmem_conf *conf)
+int villas::node::shmem_int_open(const char *wname, const char* rname, struct ShmemInterface *shm, struct ShmemConfig *conf)
 {
 	char *cptr;
 	int fd, ret;
 	size_t len;
 	void *base;
-	struct memory_type *manager;
-	struct shmem_shared *shared;
+	struct memory::Type *manager;
+	struct ShmemShared *shared;
 	struct stat stat_buf;
 	sem_t *sem_own, *sem_other;
 
@@ -95,8 +96,8 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 
 	close(fd);
 
-	manager = memory_managed(base, len);
-	shared = (struct shmem_shared *) memory_alloc(sizeof(struct shmem_shared), manager);
+	manager = memory::managed(base, len);
+	shared = (struct ShmemShared *) memory::alloc(sizeof(struct ShmemShared), manager);
 	if (!shared) {
 		errno = ENOMEM;
 		return -5;
@@ -145,8 +146,8 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (base == MAP_FAILED)
 		return -10;
 
-	cptr = (char *) base + sizeof(struct memory_type) + sizeof(struct memory_block);
-	shared = (struct shmem_shared *) cptr;
+	cptr = (char *) base + sizeof(struct memory::Type) + sizeof(struct memory::Block);
+	shared = (struct ShmemShared *) cptr;
 	shm->read.base = base;
 	shm->read.name = rname;
 	shm->read.len = len;
@@ -162,7 +163,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	return 0;
 }
 
-int shmem_int_close(struct shmem_int *shm)
+int villas::node::shmem_int_close(struct ShmemInterface *shm)
 {
 	int ret;
 
@@ -183,7 +184,7 @@ int shmem_int_close(struct shmem_int *shm)
 	return 0;
 }
 
-int shmem_int_read(struct shmem_int *shm, struct sample * const smps[], unsigned cnt)
+int villas::node::shmem_int_read(struct ShmemInterface *shm, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 
@@ -197,7 +198,7 @@ int shmem_int_read(struct shmem_int *shm, struct sample * const smps[], unsigned
 	return ret;
 }
 
-int shmem_int_write(struct shmem_int *shm, const struct sample * const smps[], unsigned cnt)
+int villas::node::shmem_int_write(struct ShmemInterface *shm, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 
@@ -211,7 +212,7 @@ int shmem_int_write(struct shmem_int *shm, const struct sample * const smps[], u
 	return ret;
 }
 
-int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
+int villas::node::shmem_int_alloc(struct ShmemInterface *shm, struct Sample *smps[], unsigned cnt)
 {
 	return sample_alloc_many(&shm->write.shared->pool, smps, cnt);
 }

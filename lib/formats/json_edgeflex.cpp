@@ -1,7 +1,7 @@
 /** JSON serializtion for edgeFlex project.
  *
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,12 +22,12 @@
 
 #include <cstring>
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/formats/json_edgeflex.hpp>
 
 using namespace villas::node;
 
-int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
+int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct Sample *smp)
 {
 	json_t *json_data, *json_value;
 	json_t *json_created = nullptr;
@@ -35,16 +35,15 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 	if (smp->length < 1)
 		return -1;
 
-
 	json_data = json_object();
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		auto sig = smp->signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
-		json_value = signal_data_to_json(&smp->data[i], sig->type);
-		json_object_set(json_data, sig->name, json_value);
+		json_value = smp->data[i].toJson(sig->type);
+		json_object_set(json_data, sig->name.c_str(), json_value);
 	}
 
 	json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
@@ -55,9 +54,9 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 	return 0;
 }
 
-int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct sample *smp)
+int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 {
-	int ret, idx;
+	int ret;
 	const char *key;
 	json_t *json_value, *json_created = nullptr;
 	json_int_t created = -1;
@@ -72,26 +71,20 @@ int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct sample *smp)
 		if (!strcmp(key, "created"))
 			json_created = json_incref(json_value);
 		else {
-			struct signal *sig;
-
-			sig = vlist_lookup_name<struct signal>(signals, key);
-			if (sig) {
-				if (!sig->enabled)
-					continue;
-
-				idx = vlist_index(signals, sig);
-			}
-			else {
+			auto idx = signals->getIndexByName(key);
+			if (idx < 0) {
 				ret = sscanf(key, "signal_%d", &idx);
 				if (ret != 1)
 					continue;
+
+				if (idx < 0)
+					return -1;
 			}
 
-			if (idx < 0)
-				return -1;
+			auto sig = signals->getByIndex(idx);
 
 			if (idx < (int) smp->capacity) {
-				ret = signal_data_parse_json(&smp->data[idx], sig->type, json_value);
+				ret = smp->data[idx].parseJson(sig->type, json_value);
 				if (ret)
 					return ret;
 			}

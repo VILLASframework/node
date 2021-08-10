@@ -1,7 +1,7 @@
 /** The internal datastructure for a sample of simulation data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,49 +24,56 @@
 #include <cmath>
 #include <cinttypes>
 
-#include <villas/pool.h>
-#include <villas/sample.h>
+#include <villas/pool.hpp>
+#include <villas/sample.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/colors.hpp>
-#include <villas/timing.h>
-#include <villas/signal.h>
-#include <villas/list.h>
+#include <villas/timing.hpp>
+#include <villas/signal.hpp>
+#include <villas/list.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
-int sample_init(struct sample *s)
+int villas::node::sample_init(struct Sample *s)
 {
-	struct pool *p = sample_pool(s);
+	struct Pool *p = sample_pool(s);
 
 	s->length = 0;
-	s->capacity = (p->blocksz - sizeof(struct sample)) / sizeof(s->data[0]);
+	s->capacity = (p->blocksz - sizeof(struct Sample)) / sizeof(s->data[0]);
 	s->refcnt = ATOMIC_VAR_INIT(1);
+
+	new (&s->signals) std::shared_ptr<SignalList>;
 
 	return 0;
 }
 
-struct sample * sample_alloc(struct pool *p)
+struct Sample * villas::node::sample_alloc(struct Pool *p)
 {
-	struct sample *s;
+	struct Sample *s;
 
-	s = (struct sample *) pool_get(p);
+	s = (struct Sample *) pool_get(p);
 	if (!s)
 		return nullptr;
 
 	s->pool_off = (char *) p - (char *) s;
 
-	sample_init(s);
+	int ret = sample_init(s);
+	if (ret) {
+		pool_put(p, s);
+		return nullptr;
+	}
 
 	return s;
 }
 
-struct sample * sample_alloc_mem(int capacity)
+struct Sample * villas::node::sample_alloc_mem(int capacity)
 {
 	size_t sz = SAMPLE_LENGTH(capacity);
 
-	auto *s = (struct sample *) new char[sz];
+	auto *s = (struct Sample *) new char[sz];
 	if (!s)
 		throw MemoryAllocationError();
 
@@ -81,9 +88,9 @@ struct sample * sample_alloc_mem(int capacity)
 	return s;
 }
 
-void sample_free(struct sample *s)
+void villas::node::sample_free(struct Sample *s)
 {
-	struct pool *p = sample_pool(s);
+	struct Pool *p = sample_pool(s);
 
 	if (p)
 		pool_put(p, s);
@@ -91,7 +98,7 @@ void sample_free(struct sample *s)
 		delete[] (char *) s;
 }
 
-int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)
+int villas::node::sample_alloc_many(struct Pool *p, struct Sample *smps[], int cnt)
 {
 	int ret;
 
@@ -108,13 +115,13 @@ int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)
 	return ret;
 }
 
-void sample_free_many(struct sample *smps[], int cnt)
+void villas::node::sample_free_many(struct Sample *smps[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
 		sample_free(smps[i]);
 }
 
-int sample_decref_many(struct sample * const smps[], int cnt)
+int villas::node::sample_decref_many(struct Sample * const smps[], int cnt)
 {
 	int released = 0;
 
@@ -126,7 +133,7 @@ int sample_decref_many(struct sample * const smps[], int cnt)
 	return released;
 }
 
-int sample_incref_many(struct sample * const smps[], int cnt)
+int villas::node::sample_incref_many(struct Sample * const smps[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
 		sample_incref(smps[i]);
@@ -134,12 +141,12 @@ int sample_incref_many(struct sample * const smps[], int cnt)
 	return cnt;
 }
 
-int sample_incref(struct sample *s)
+int villas::node::sample_incref(struct Sample *s)
 {
 	return atomic_fetch_add(&s->refcnt, 1) + 1;
 }
 
-int sample_decref(struct sample *s)
+int villas::node::sample_decref(struct Sample *s)
 {
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 
@@ -150,7 +157,7 @@ int sample_decref(struct sample *s)
 	return prev - 1;
 }
 
-int sample_copy(struct sample *dst, const struct sample *src)
+int villas::node::sample_copy(struct Sample *dst, const struct Sample *src)
 {
 	dst->length = MIN(src->length, dst->capacity);
 
@@ -164,10 +171,10 @@ int sample_copy(struct sample *dst, const struct sample *src)
 	return 0;
 }
 
-struct sample * sample_clone(struct sample *orig)
+struct Sample * villas::node::sample_clone(struct Sample *orig)
 {
-	struct sample *clone;
-	struct pool *pool;
+	struct Sample *clone;
+	struct Pool *pool;
 
 	pool = sample_pool(orig);
 	if (!pool)
@@ -182,10 +189,10 @@ struct sample * sample_clone(struct sample *orig)
 	return clone;
 }
 
-int sample_clone_many(struct sample *dsts[], const struct sample * const srcs[], int cnt)
+int villas::node::sample_clone_many(struct Sample *dsts[], const struct Sample * const srcs[], int cnt)
 {
 	int alloced, copied;
-	struct pool *pool;
+	struct Pool *pool;
 
 	if (cnt <= 0)
 		return 0;
@@ -201,7 +208,7 @@ int sample_clone_many(struct sample *dsts[], const struct sample * const srcs[],
 	return copied;
 }
 
-int sample_copy_many(struct sample * const dsts[], const struct sample * const srcs[], int cnt)
+int villas::node::sample_copy_many(struct Sample * const dsts[], const struct Sample * const srcs[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
 		sample_copy(dsts[i], srcs[i]);
@@ -209,7 +216,7 @@ int sample_copy_many(struct sample * const dsts[], const struct sample * const s
 	return cnt;
 }
 
-int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
+int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon, int flags)
 {
 	if ((a->flags & b->flags & flags) != flags) {
 		printf("flags: a=%#x, b=%#x, wanted=%#x\n", a->flags, b->flags, flags);
@@ -281,16 +288,14 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	return 0;
 }
 
-enum SignalType sample_format(const struct sample *s, unsigned idx)
+enum SignalType villas::node::sample_format(const struct Sample *s, unsigned idx)
 {
-	struct signal *sig;
-
-	sig = (struct signal *) vlist_at_safe(s->signals, idx);
+	auto sig = s->signals->getByIndex(idx);
 
 	return sig ? sig->type : SignalType::INVALID;
 }
 
-void sample_dump(Logger logger, struct sample *s)
+void villas::node::sample_dump(Logger logger, struct Sample *s)
 {
 	logger->info("Sample: sequence={}, length={}, capacity={},"
 		"flags={:#x}, #signals={}, "
@@ -299,7 +304,7 @@ void sample_dump(Logger logger, struct sample *s)
 		s->length,
 		s->capacity,
 		s->flags,
-		s->signals ? vlist_length(s->signals) : -1,
+		s->signals ? s->signals->size() : -1,
 		atomic_load(&s->refcnt),
 		s->pool_off);
 
@@ -311,11 +316,11 @@ void sample_dump(Logger logger, struct sample *s)
 
 	if (s->signals) {
 		logger->info("  Signals:");
-		signal_list_dump(logger, s->signals, s->data, s->length);
+		s->signals->dump(logger, s->data, s->length);
 	}
 }
 
-void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len)
+void villas::node::sample_data_insert(struct Sample *smp, const union SignalData *src, size_t offset, size_t len)
 {
 	memmove(&smp->data[offset + len], &smp->data[offset], sizeof(smp->data[0]) * (smp->length - offset));
 	memcpy(&smp->data[offset], src, sizeof(smp->data[0]) * len);
@@ -323,7 +328,7 @@ void sample_data_insert(struct sample *smp, const union signal_data *src, size_t
 	smp->length += len;
 }
 
-void sample_data_remove(struct sample *smp, size_t offset, size_t len)
+void villas::node::sample_data_remove(struct Sample *smp, size_t offset, size_t len)
 {
 	size_t sz = sizeof(smp->data[0]) * len;
 

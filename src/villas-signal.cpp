@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,9 +19,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @addtogroup tools Test and debug tools
- * @{
  **********************************************************************************/
 
 #include <unistd.h>
@@ -36,11 +33,11 @@
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
-#include <villas/sample.h>
-#include <villas/timing.h>
-#include <villas/node.h>
-#include <villas/pool.h>
-#include <villas/nodes/signal_generator.hpp>
+#include <villas/sample.hpp>
+#include <villas/timing.hpp>
+#include <villas/node.hpp>
+#include <villas/pool.hpp>
+#include <villas/nodes/signal.hpp>
 
 using namespace villas;
 
@@ -61,7 +58,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 	}
@@ -69,9 +66,9 @@ public:
 protected:
 	std::atomic<bool> stop;
 
-	struct vnode node;
+	Node *node;
 	Format *formatter;
-	struct pool pool;
+	struct Pool pool;
 
 	std::string format;
 
@@ -110,6 +107,11 @@ protected:
 		double amplitude = 1;
 		double stddev = 0.02;
 		double offset = 0;
+		double phase = 0.0;
+		double pulse_low = 0.0;
+		double pulse_high = 1.0;
+		double pulse_width = 1.0;
+
 		std::string type;
 		int rt = 1;
 		int values = 1;
@@ -118,7 +120,7 @@ protected:
 		/* Parse optional command line arguments */
 		int c;
 		char *endptr;
-		while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hV")) != -1) {
+		while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hVp:")) != -1) {
 			switch (c) {
 				case 'n':
 					rt = 0;
@@ -156,6 +158,22 @@ protected:
 					stddev = strtof(optarg, &endptr);
 					goto check;
 
+				case 'p':
+					phase = strtof(optarg, &endptr);
+					goto check;
+
+				case 'w':
+					pulse_width = strtof(optarg, &endptr);
+					goto check;
+
+				case 'L':
+					pulse_low = strtof(optarg, &endptr);
+					goto check;
+
+				case 'H':
+					pulse_high = strtof(optarg, &endptr);
+					goto check;
+
 				case 'd':
 					logging.setLevel(optarg);
 					break;
@@ -181,17 +199,31 @@ check:			if (optarg == endptr)
 
 		type = argv[optind];
 
-		return json_pack("{ s: s, s: s, s: f, s: f, s: f, s: f, s: f, s: b, s: i, s: i }",
+		json_t *json_signals = json_array();
+
+		for (int i = 0; i < values; i++) {
+			json_t *json_signal = json_pack("{ s: s, s: f, s: f, s: f, s: f, s: f, s: f, s: f, s: f }",
+				"signal", strdup(type.c_str()),
+				"frequency", frequency,
+				"amplitude", amplitude,
+				"stddev", stddev,
+				"offset", offset,
+				"pulse_width", pulse_width,
+				"pulse_low", pulse_low,
+				"pulse_high", pulse_high,
+				"phase", phase
+			);
+
+			json_array_append_new(json_signals, json_signal);
+		}
+
+		return json_pack("{ s: s, s: f, s: b, s: i, s: { s: o } }",
 			"type", "signal",
-			"signal", type.c_str(),
 			"rate", rate,
-			"frequency", frequency,
-			"amplitude", amplitude,
-			"stddev", stddev,
-			"offset", offset,
 			"realtime", rt,
-			"values", values,
-			"limit", limit
+			"limit", limit,
+			"in",
+				"signals", json_signals
 		);
 	}
 
@@ -214,17 +246,12 @@ check:			if (optarg == endptr)
 		int ret;
 		json_t *json, *json_format;
 		json_error_t err;
-		struct vnode_type *nt;
 
-		struct sample *t;
+		struct Sample *t;
 
-		nt = node_type_lookup("signal");
-		if (!nt)
-			throw RuntimeError("Signal generation is not supported.");
-
-		ret = node_init(&node, nt);
-		if (ret)
-			throw RuntimeError("Failed to initialize node");
+		node = NodeFactory::make("signal.v2");
+		if (!node)
+			throw MemoryAllocationError();
 
 		json = parse_cli(argc, argv);
 		if (!json) {
@@ -235,24 +262,23 @@ check:			if (optarg == endptr)
 		uuid_t uuid;
 		uuid_clear(uuid);
 
-		ret = node_parse(&node, json, uuid);
+		ret = node->parse(json, uuid);
 		if (ret) {
 			usage();
 			exit(EXIT_FAILURE);
 		}
 
-		// nt == n._vt
-		ret = node_type_start(nt, nullptr);
+		ret = node->getFactory()->start(nullptr);
 		if (ret)
-			throw RuntimeError("Failed to initialize node type: {}", *nt);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", *node->getFactory(), ret);
 
-		ret = node_check(&node);
+		ret = node->check();
 		if (ret)
 			throw RuntimeError("Failed to verify node configuration");
 
-		ret = node_prepare(&node);
+		ret = node->prepare();
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", node, ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
 
 		/* Try parsing format config as JSON */
 		json_format = json_loads(format.c_str(), 0, &err);
@@ -262,20 +288,20 @@ check:			if (optarg == endptr)
 		if (!formatter)
 			throw RuntimeError("Failed to initialize output");
 
-		formatter->start(&node.in.signals, ~(int) SampleFlags::HAS_OFFSET);
+		formatter->start(node->getInputSignals(), ~(int) SampleFlags::HAS_OFFSET);
 
-		ret = pool_init(&pool, 16, SAMPLE_LENGTH(vlist_length(&node.in.signals)), &memory_heap);
+		ret = pool_init(&pool, 16, SAMPLE_LENGTH(node->getInputSignals()->size()), &memory::heap);
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");
 
-		ret = node_start(&node);
+		ret = node->start();
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", node, ret);
+			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
 
-		while (!stop && node.state == State::STARTED) {
+		while (!stop && node->getState() == State::STARTED) {
 			t = sample_alloc(&pool);
 
-retry:			ret = node_read(&node, &t, 1);
+retry:			ret = node->read(&t, 1);
 			if (ret == 0)
 				goto retry;
 			else if (ret < 0)
@@ -287,14 +313,15 @@ retry:			ret = node_read(&node, &t, 1);
 out:			sample_decref(t);
 		}
 
-		ret = node_stop(&node);
+		ret = node->stop();
 		if (ret)
 			throw RuntimeError("Failed to stop node");
 
-		ret = node_destroy(&node);
+		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to destroy node");
+			throw RuntimeError("Failed to de-intialize node type {}: reason={}", *node->getFactory(), ret);
 
+		delete node;
 		delete formatter;
 
 		ret = pool_destroy(&pool);
@@ -315,5 +342,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-/** @} */

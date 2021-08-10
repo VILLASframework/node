@@ -3,7 +3,7 @@
 # Integration test for remote API
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -24,32 +24,38 @@
 
 set -e
 
-CONFIG_FILE=$(mktemp)
-FETCHED_PATHS=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat > ${CONFIG_FILE} <<EOF
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > config.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	},
-	"nodes" : {
-		"testnode1" : {
-			"type" : "websocket",
-			"dummy" : "value1"
+	"nodes": {
+		"testnode1": {
+			"type": "websocket",
+			"dummy": "value1"
 		},
-		"testnode2" : {
-			"type" : "socket",
-			"dummy" : "value2",
+		"testnode2": {
+			"type": "socket",
+			"dummy": "value2",
 
-			"in" : {
-				"address" : "*:12001",
-				"signals" : [
+			"in": {
+				"address": "*:12001",
+				"signals": [
 					{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
 					{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
 				]
 			},
-			"out" : {
-				"address" : "127.0.0.1:12000"
+			"out": {
+				"address": "127.0.0.1:12000"
 			}
 		}
 	},
@@ -63,21 +69,16 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Start VILLASnode instance with local config
-villas node ${CONFIG_FILE} &
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1
 
 # Fetch config via API
-curl -s http://localhost:8080/api/v2/paths > ${FETCHED_PATHS}
+curl -s http://localhost:8080/api/v2/paths > fetched.json
 
 # Shutdown VILLASnode
 kill $!
 
 # Compare local config with the fetched one
-jq -e '(.[0].in | index("testnode2")) and (.[0].out | index("testnode1")) and (. | length == 1)' ${FETCHED_PATHS} > /dev/null
-RC=$?
-
-rm -f ${CONFIG_FILE} ${FETCHED_PATHS}
-
-exit ${RC}
+jq -e '(.[0].in | index("testnode2")) and (.[0].out | index("testnode1")) and (. | length == 1)' fetched.json > /dev/null

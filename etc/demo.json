@@ -1,7 +1,7 @@
 {
     "hugepages": 0,
     "http": {
-        "htdocs": "/usr/share/villas/node/web"
+        "port": 80
     },
     "nodes": {
         "sig": {

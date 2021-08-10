@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -34,24 +34,27 @@
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
 
 /** The total size in bytes of a message */
-#define MSG_LEN(values)		(sizeof(struct msg) + MSG_DATA_LEN(values))
+#define MSG_LEN(values)		(sizeof(struct Message) + MSG_DATA_LEN(values))
 
 /** The length of \p values values in bytes. */
 #define MSG_DATA_LEN(values)	(sizeof(float) * (values))
 
 /** The offset to the first data value in a message. */
-#define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
+#define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct Message, data))
 
 /** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg, i)  \
 	i.tv_sec  = (msg)->ts.sec;	\
 	i.tv_nsec = (msg)->ts.nsec;
 
+namespace villas {
+namespace node {
+
 /** This message format is used by all clients
  *
  * @diafile msg_format.dia
  **/
-struct msg
+struct Message
 {
 #if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
@@ -81,3 +84,6 @@ struct msg
 		uint32_t i;	/**< Integer values. */
 	} data[];
 } __attribute__((packed));
+
+} /* namespace node */
+} /* namespace villas */

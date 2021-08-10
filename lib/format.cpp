@@ -1,7 +1,7 @@
 /** Reading and writing simulation samples in various formats.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,7 +28,7 @@
 
 #include <villas/format.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;
@@ -38,8 +38,6 @@ using namespace villas::utils;
 Format * FormatFactory::make(json_t *json)
 {
 	std::string type;
-
-	FormatFactory *ff;
 	Format *f;
 
 	if (json_is_string(json)) {
@@ -52,11 +50,10 @@ Format * FormatFactory::make(json_t *json)
 
 		type = json_string_value(json_type);
 
-		ff = plugin::Registry::lookup<FormatFactory>(type);
-		if (!ff)
-			throw ConfigError(json, "Unknown format: {}", type);
+		f = FormatFactory::make(type);
+		if (!f)
+			return nullptr;
 
-		f = ff->make();
 		f->parse(json);
 
 		return f;
@@ -77,7 +74,6 @@ Format * FormatFactory::make(const std::string &format)
 Format::Format(int fl) :
 	flags(fl),
 	real_precision(17),
-	destroy_signals(false),
 	signals(nullptr)
 {
 	in.buflen =
@@ -96,12 +92,9 @@ Format::~Format()
 
 	delete[] in.buffer;
 	delete[] out.buffer;
-
-	if (signals && destroy_signals)
-		ret = vlist_destroy(signals, (dtor_cb_t) signal_decref, false);
 }
 
-void Format::start(struct vlist *sigs, int fl)
+void Format::start(SignalList::Ptr sigs, int fl)
 {
 	flags &= fl;
 
@@ -112,28 +105,16 @@ void Format::start(struct vlist *sigs, int fl)
 
 void Format::start(const std::string &dtypes, int fl)
 {
-	int ret;
-
 	flags |= fl;
 
-	signals = new struct vlist;
+	signals = std::make_shared<SignalList>(dtypes.c_str());
 	if (!signals)
 		throw MemoryAllocationError();
-
-	ret = vlist_init(signals);
-	if (ret)
-		throw RuntimeError("Failed to initialize list");
-
-	ret = signal_list_generate2(signals, dtypes.c_str());
-	if (ret)
-		throw RuntimeError("Failed to generate signal list");
-
-	destroy_signals = true;
 
 	start();
 }
 
-int Format::print(FILE *f, const struct sample * const smps[], unsigned cnt)
+int Format::print(FILE *f, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	size_t wbytes;
@@ -145,7 +126,7 @@ int Format::print(FILE *f, const struct sample * const smps[], unsigned cnt)
 	return ret;
 }
 
-int Format::scan(FILE *f, struct sample * const smps[], unsigned cnt)
+int Format::scan(FILE *f, struct Sample * const smps[], unsigned cnt)
 {
 	size_t bytes, rbytes;
 

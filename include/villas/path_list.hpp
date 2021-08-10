@@ -24,21 +24,24 @@
 #pragma once
 
 #include <uuid/uuid.h>
+#include <jansson.h>
 
 #include <list>
 #include <string>
 
-/* Forward declarations */
-struct vpath;
-
 namespace villas {
 namespace node {
 
-class PathList : public std::list<struct vpath *> {
+/* Forward declarations */
+class Path;
+
+class PathList : public std::list<Path *> {
 
 public:
 	/** Lookup a path from the list based on its UUID */
-	struct vpath * lookup(const uuid_t &uuid);
+	Path * lookup(const uuid_t &uuid) const;
+
+	json_t * toJson() const;
 };
 
 } /* namespace node */

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -33,18 +33,23 @@
 #include <villas/common.hpp>
 #include <villas/hist.hpp>
 #include <villas/table.hpp>
-#include <villas/signal.h>
+#include <villas/signal.hpp>
 #include <villas/log.hpp>
 
-/* Forward declarations */
-struct sample;
-struct vnode;
-
 namespace villas {
+namespace node {
+
+/* Forward declarations */
+struct Sample;
+class Node;
+
+}
 
 class Stats {
 
 public:
+	using Ptr = std::shared_ptr<Stats>;
+
 	enum class Format {
 		HUMAN,
 		JSON,
@@ -89,7 +94,7 @@ protected:
 
 	struct TypeDescription {
 		const char *name;
-		enum SignalType signal_type;
+		enum node::SignalType signal_type;
 	};
 
 	static std::shared_ptr<Table> table;
@@ -120,13 +125,13 @@ public:
 	static
 	void printHeader(enum Format fmt);
 
-	void printPeriodic(FILE *f, enum Format fmt, struct vnode *p) const;
+	void printPeriodic(FILE *f, enum Format fmt, node::Node *n) const;
 
 	void print(FILE *f, enum Format fmt, int verbose) const;
 
-	union signal_data getValue(enum Metric sm, enum Type st) const;
+	union node::SignalData getValue(enum Metric sm, enum Type st) const;
 
-	const villas::Hist & getHistogram(enum Metric sm) const;
+	const Hist & getHistogram(enum Metric sm) const;
 
 	static std::unordered_map<Metric, MetricDescription> metrics;
 	static std::unordered_map<Type, TypeDescription> types;

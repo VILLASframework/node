@@ -1,7 +1,7 @@
 /** Node type: Websockets (libwebsockets)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,9 +28,9 @@
 
 #include <libwebsockets.h>
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/utils.hpp>
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/websocket.hpp>
 #include <villas/super_node.hpp>
 
@@ -41,15 +41,17 @@ using namespace villas::utils;
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
-static struct vlist connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
+static struct List connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 static villas::node::Web *web;
 static villas::Logger logger = logging.get("websocket");
 
 /* Forward declarations */
-static struct vnode_type p;
+static NodeCompatType p;
+static NodeCompatFactory ncp(&p);
 
-static void websocket_destination_destroy(struct websocket_destination *d)
+static
+void websocket_destination_destroy(struct websocket_destination *d)
 {
 	free(d->uri);
 
@@ -57,7 +59,8 @@ static void websocket_destination_destroy(struct websocket_destination *d)
 	free((char *) d->info.address);
 }
 
-static int websocket_connection_init(struct websocket_connection *c)
+static
+int websocket_connection_init(struct websocket_connection *c)
 {
 	int ret;
 
@@ -65,7 +68,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	c->formatter->start(&c->node->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	c->formatter->start(c->node->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	c->buffers.recv = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
 	c->buffers.send = new Buffer(DEFAULT_WEBSOCKET_BUFFER_SIZE);
@@ -78,7 +81,8 @@ static int websocket_connection_init(struct websocket_connection *c)
 	return 0;
 }
 
-static int websocket_connection_destroy(struct websocket_connection *c)
+static
+int websocket_connection_destroy(struct websocket_connection *c)
 {
 	int ret;
 
@@ -86,7 +90,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 
 	/* Return all samples to pool */
 	int avail;
-	struct sample *smp;
+	struct Sample *smp;
 	while ((avail = queue_pull(&c->queue, (void **) &smp)))
 		sample_decref(smp);
 
@@ -105,7 +109,8 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	return 0;
 }
 
-static int websocket_connection_write(struct websocket_connection *c, struct sample * const smps[], unsigned cnt)
+static
+int websocket_connection_write(struct websocket_connection *c, struct Sample * const smps[], unsigned cnt)
 {
 	int pushed;
 
@@ -120,21 +125,22 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	c->node->logger->debug("Enqueued {} samples to {}", pushed, *c);
 
-	/* Client connections which are currently conecting don't have an associate c->wsi yet */
+	/* Client connections which are currently connecting don't have an associate c->wsi yet */
 	if (c->wsi)
 		web->callbackOnWritable(c->wsi);
 
 	return 0;
 }
 
-static void websocket_connection_close(struct websocket_connection *c, struct lws *wsi, enum lws_close_status status, const char *reason)
+static
+void websocket_connection_close(struct websocket_connection *c, struct lws *wsi, enum lws_close_status status, const char *reason)
 {
 	lws_close_reason(wsi, status, (unsigned char *) reason, strlen(reason));
 
 	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", *c, status, reason);
 }
 
-int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	int ret, recvd, pulled, cnt = 128;
 	struct websocket_connection *c = (struct websocket_connection *) user;
@@ -182,7 +188,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					format = (char *) "villas.web";
 
 				/* Search for node whose name matches the URI. */
-				c->node = p.instances.lookup(node);
+				auto *n = ncp.instances.lookup(node);
+				if (!n) {
+					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
+					logger->warn("Failed to find node: {}", node);
+					return -1;
+				}
+
+				c->node = dynamic_cast<NodeCompat *>(n);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					logger->warn("Failed to find node: {}", node);
@@ -204,7 +217,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				return -1;
 			}
 
-			vlist_push(&connections, c);
+			list_push(&connections, c);
 
 			c->node->logger->info("Established WebSocket connection: {}", *c);
 
@@ -225,7 +238,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			if (connections.state == State::INITIALIZED)
-				vlist_remove_all(&connections, c);
+				list_remove_all(&connections, c);
 
 			if (c->state == websocket_connection::State::INITIALIZED)
 				websocket_connection_destroy(c);
@@ -237,7 +250,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
-			struct sample *smps[cnt];
+			struct Sample *smps[cnt];
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
@@ -274,11 +287,11 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			/* We dont try to parse the frame yet, as we have to wait for the remaining fragments */
 			if (lws_is_final_fragment(wsi)) {
 				struct timespec ts_recv = time_now();
-				struct vnode *n = c->node;
+				auto *n = c->node;
 
 				int avail, enqueued;
-				struct websocket *w = (struct websocket *) n->_vd;
-				struct sample *smps[cnt];
+				auto *w = n->getData<struct websocket>();
+				struct Sample *smps[cnt];
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
@@ -323,11 +336,11 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start(villas::node::SuperNode *sn)
+int villas::node::websocket_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
-	ret = vlist_init(&connections);
+	ret = list_init(&connections);
 	if (ret)
 		return ret;
 
@@ -338,12 +351,12 @@ int websocket_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int websocket_start(struct vnode *n)
+int villas::node::websocket_start(NodeCompat *n)
 {
 	int ret;
-	struct websocket *w = (struct websocket *) n->_vd;
+	auto *w = n->getData<struct websocket>();
 
-	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUE_LENGTH, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUE_LENGTH, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
 	if (ret)
 		return ret;
 
@@ -351,9 +364,9 @@ int websocket_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	for (size_t i = 0; i < vlist_length(&w->destinations); i++) {
+	for (size_t i = 0; i < list_length(&w->destinations); i++) {
 		const char *format;
-		auto *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
+		auto *d = (struct websocket_destination *) list_at(&w->destinations, i);
 		auto *c = new struct websocket_connection;
 		if (!c)
 			throw MemoryAllocationError();
@@ -383,13 +396,13 @@ int websocket_start(struct vnode *n)
 	return 0;
 }
 
-int websocket_stop(struct vnode *n)
+int villas::node::websocket_stop(NodeCompat *n)
 {
-	int ret, open_connections = 0;;
-	struct websocket *w = (struct websocket *) n->_vd;
+	int ret, open_connections = 0;
+	auto *w = n->getData<struct websocket>();
 
-	for (size_t i = 0; i < vlist_length(&connections); i++) {
-		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
+	for (size_t i = 0; i < list_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node != n)
 			continue;
@@ -400,8 +413,8 @@ int websocket_stop(struct vnode *n)
 	}
 
 	/* Count open connections belonging to this node */
-	for (size_t i = 0; i < vlist_length(&connections); i++) {
-		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
+	for (size_t i = 0; i < list_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node == n)
 			open_connections++;
@@ -427,24 +440,24 @@ int websocket_stop(struct vnode *n)
 	return 0;
 }
 
-int websocket_destroy(struct vnode *n)
+int villas::node::websocket_destroy(NodeCompat *n)
 {
-	struct websocket *w = (struct websocket *) n->_vd;
+	auto *w = n->getData<struct websocket>();
 	int ret;
 
-	ret = vlist_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-int websocket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::websocket_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int avail;
 
-	struct websocket *w = (struct websocket *) n->_vd;
-	struct sample *cpys[cnt];
+	auto *w = n->getData<struct websocket>();
+	struct Sample *cpys[cnt];
 
 	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
 	if (avail < 0)
@@ -456,12 +469,12 @@ int websocket_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return avail;
 }
 
-int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::websocket_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int avail;
 
-	struct websocket *w = (struct websocket *) n->_vd;
-	struct sample *cpys[cnt];
+	auto *w = n->getData<struct websocket>();
+	struct Sample *cpys[cnt];
 
 	/* Make copies of all samples */
 	avail = sample_alloc_many(&w->pool, cpys, cnt);
@@ -470,8 +483,8 @@ int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	sample_copy_many(cpys, smps, avail);
 
-	for (size_t i = 0; i < vlist_length(&connections); i++) {
-		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
+	for (size_t i = 0; i < list_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node == n)
 			websocket_connection_write(c, cpys, cnt);
@@ -482,9 +495,9 @@ int websocket_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int websocket_parse(struct vnode *n, json_t *json)
+int villas::node::websocket_parse(NodeCompat *n, json_t *json)
 {
-	struct websocket *w = (struct websocket *) n->_vd;
+	auto *w = n->getData<struct websocket>();
 	int ret;
 
 	size_t i;
@@ -492,7 +505,7 @@ int websocket_parse(struct vnode *n, json_t *json)
 	json_t *json_dest;
 	json_error_t err;
 
-	ret = vlist_init(&w->destinations);
+	ret = list_init(&w->destinations);
 	if (ret)
 		return ret;
 
@@ -531,23 +544,23 @@ int websocket_parse(struct vnode *n, json_t *json)
 			d->info.ietf_version_or_minus_one = -1;
 			d->info.protocol = "live";
 
-			vlist_push(&w->destinations, d);
+			list_push(&w->destinations, d);
 		}
 	}
 
 	return 0;
 }
 
-char * websocket_print(struct vnode *n)
+char * villas::node::websocket_print(NodeCompat *n)
 {
-	struct websocket *w = (struct websocket *) n->_vd;
+	auto *w = n->getData<struct websocket>();
 
 	char *buf = nullptr;
 
 	buf = strcatf(&buf, "destinations=[ ");
 
-	for (size_t i = 0; i < vlist_length(&w->destinations); i++) {
-		struct websocket_destination *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
+	for (size_t i = 0; i < list_length(&w->destinations); i++) {
+		struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
 
 		buf = strcatf(&buf, "%s://%s:%d/%s ",
 			d->info.ssl_connection ? "wss" : "ws",
@@ -562,9 +575,9 @@ char * websocket_print(struct vnode *n)
 	return buf;
 }
 
-int websocket_poll_fds(struct vnode *n, int fds[])
+int villas::node::websocket_poll_fds(NodeCompat *n, int fds[])
 {
-	struct websocket *w = (struct websocket *) n->_vd;
+	auto *w = n->getData<struct websocket>();
 
 	fds[0] = queue_signalled_fd(&w->queue);
 
@@ -585,9 +598,5 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.read		= websocket_read;
 	p.write		= websocket_write;
 	p.poll_fds	= websocket_poll_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	p.flags		= (int) NodeFactory::Flags::REQUIRES_WEB;
 }

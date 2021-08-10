@@ -30,7 +30,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/temper.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
@@ -46,7 +46,7 @@ static std::list<TEMPerDevice *> devices;
 static struct libusb_context *context;
 
 /* Forward declartions */
-static struct vnode_type p;
+static NodeCompatType p;
 
 
 TEMPerDevice::TEMPerDevice(struct libusb_device *dev) :
@@ -91,7 +91,7 @@ void TEMPerDevice::close()
 	libusb_close(handle);
 }
 
-void TEMPerDevice::read(struct sample *smp)
+void TEMPerDevice::read(struct Sample *smp)
 {
 	unsigned char answer[8];
 	float temp[2];
@@ -244,7 +244,7 @@ bool TEMPerHUMDevice::match(struct libusb_device *dev)
 	       desc.idVendor  == 0x7402;
 }
 
-int temper_type_start(villas::node::SuperNode *sn)
+int villas::node::temper_type_start(villas::node::SuperNode *sn)
 {
 	context = usb::get_context();
 
@@ -273,16 +273,16 @@ int temper_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int temper_type_stop()
+int villas::node::temper_type_stop()
 {
 	usb::deinit_context(context);
 
 	return 0;
 }
 
-int temper_init(struct vnode *n)
+int villas::node::temper_init(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	t->calibration.scale = 1.0;
 	t->calibration.offset = 0.0;
@@ -297,9 +297,9 @@ int temper_init(struct vnode *n)
 	return 0;
 }
 
-int temper_destroy(struct vnode *n)
+int villas::node::temper_destroy(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	if (t->device)
 		delete t->device;
@@ -307,10 +307,10 @@ int temper_destroy(struct vnode *n)
 	return 0;
 }
 
-int temper_parse(struct vnode *n, json_t *json)
+int villas::node::temper_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	json_error_t err;
 
@@ -328,9 +328,9 @@ int temper_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * temper_print(struct vnode *n)
+char * villas::node::temper_print(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	return strf("product=%s, manufacturer=%s, serial=%s humidity=%s, temperature=%d, usb.vendor_id=%#x, usb.product_id=%#x, calibration.scale=%f, calibration.offset=%f",
 		t->device->getProduct(), t->device->getManufacturer(), t->device->getSerial(),
@@ -343,9 +343,9 @@ char * temper_print(struct vnode *n)
 	);
 }
 
-int temper_prepare(struct vnode *n)
+int villas::node::temper_prepare(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	/* Find matching USB device */
 	t->device = nullptr;
@@ -360,48 +360,48 @@ int temper_prepare(struct vnode *n)
 		throw RuntimeError("No matching TEMPer USB device found!");
 
 	/* Create signal list */
-	assert(vlist_length(&n->in.signals) == 0);
+	assert(n->getInputSignals(false)->size() == 0);
 
 	/* Temperature 1 */
-	auto *sig1 = signal_create(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
-	vlist_push(&n->in.signals, sig1);
+	auto sig1 = std::make_shared<Signal>(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
+	n->in.signals->push_back(sig1);
 
 	/* Temperature 2 */
 	if (t->device->getNumSensors() == 2) {
-		auto *sig2 = signal_create(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
-		vlist_push(&n->in.signals, sig2);
+		auto sig2 = std::make_shared<Signal>(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
+		n->in.signals->push_back(sig2);
 	}
 
 	/* Humidity */
 	if (t->device->hasHumiditySensor()) {
-		auto *sig3 = signal_create("humidity", "%", SignalType::FLOAT);
-		vlist_push(&n->in.signals, sig3);
+		auto sig3 = std::make_shared<Signal>("humidity", "%", SignalType::FLOAT);
+		n->in.signals->push_back(sig3);
 	}
 
 	return 0;
 }
 
-int temper_start(struct vnode *n)
+int villas::node::temper_start(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	t->device->open();
 
 	return 0;
 }
 
-int temper_stop(struct vnode *n)
+int villas::node::temper_stop(NodeCompat *n)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	t->device->close();
 
 	return 0;
 }
 
-int temper_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::temper_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct temper *t = (struct temper *) n->_vd;
+	auto *t = n->getData<struct temper>();
 
 	assert(cnt == 1);
 
@@ -415,7 +415,7 @@ static void register_plugin() {
 	p.name		= "temper";
 	p.description	= "An temper for staring new node-type implementations";
 	p.vectorize	= 1;
-	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS;
+	p.flags		= (int) NodeFactory::Flags::PROVIDES_SIGNALS;
 	p.size		= sizeof(struct temper);
 	p.type.start	= temper_type_start;
 	p.type.stop	= temper_type_stop;
@@ -428,8 +428,5 @@ static void register_plugin() {
 	p.stop		= temper_stop;
 	p.read		= temper_read;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

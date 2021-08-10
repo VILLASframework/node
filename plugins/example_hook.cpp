@@ -1,7 +1,7 @@
 /** A simple example hook function which can be loaded as a plugin.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,7 +21,7 @@
  *********************************************************************************/
 
 #include <villas/hook.hpp>
-#include <villas/path.h>
+#include <villas/path.hpp>
 
 namespace villas {
 namespace node {

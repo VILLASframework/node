@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,31 +21,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup socket BSD Socket Node Type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/node/config.h>
-#include <villas/socket_addr.h>
+#include <villas/node/config.hpp>
+#include <villas/socket_addr.hpp>
 #include <villas/format.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define SOCKET_INITIAL_BUFFER_LEN (64*1024)
 
-struct socket {
+struct Socket {
 	int sd;				/**< The socket descriptor */
 	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
 	enum SocketLayer layer;		/**< The OSI / IP layer which should be used for this socket */
 
-	villas::node::Format *formatter;
+	Format *formatter;
 
 	/* Multicast options */
 	struct multicast {
@@ -63,28 +60,31 @@ struct socket {
 };
 
 
-/** @see node_vtable::type_start */
-int socket_type_start(villas::node::SuperNode *sn);
+int socket_type_start(SuperNode *sn);
 
-/** @see node_type::type_stop */
 int socket_type_stop();
 
-/** @see node_type::start */
-int socket_start(struct vnode *n);
+int socket_init(NodeCompat *n);
 
-/** @see node_type::stop */
-int socket_stop(struct vnode *n);
+int socket_destroy(NodeCompat *n);
 
-/** @see node_type::write */
-int socket_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int socket_start(NodeCompat *n);
 
-/** @see node_type::read */
-int socket_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int socket_check(NodeCompat *n);
 
-/** @see node_type::parse */
-int socket_parse(struct vnode *n, json_t *json);
+int socket_stop(NodeCompat *n);
 
-/** @see node_type::print */
-char * socket_print(struct vnode *n);
+int socket_reverse(NodeCompat *n);
 
-/** @} */
+int socket_fds(NodeCompat *n, int fds[]);
+
+int socket_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int socket_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int socket_parse(NodeCompat *n, json_t *json);
+
+char * socket_print(NodeCompat *n);
+
+} /* namespace node */
+} /* namespace villas */

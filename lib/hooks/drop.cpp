@@ -1,7 +1,7 @@
 /** Drop hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,15 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cinttypes>
 
 #include <villas/hook.hpp>
-#include <villas/node.h>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -36,7 +31,7 @@ namespace node {
 class DropHook : public Hook {
 
 protected:
-	sample *prev;
+	struct Sample *prev;
 
 public:
 	using Hook::Hook;
@@ -60,7 +55,7 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		int dist;
 
@@ -102,5 +97,3 @@ static HookPlugin<DropHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

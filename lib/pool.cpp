@@ -1,7 +1,7 @@
 /** Memory pool for fixed size objects.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,14 +22,14 @@
 
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/pool.h>
-#include <villas/memory.h>
+#include <villas/pool.hpp>
+#include <villas/node/memory.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.hpp>
 
 using namespace villas;
 
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
+int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz, struct memory::Type *m)
 {
 	int ret;
 
@@ -38,7 +38,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
 
-	void *buffer = memory_alloc_aligned(p->len, p->alignment, m);
+	void *buffer = memory::alloc_aligned(p->len, p->alignment, m);
 	if (!buffer)
 		throw MemoryAllocationError();
 
@@ -59,7 +59,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	return 0;
 }
 
-int pool_destroy(struct pool *p)
+int villas::node::pool_destroy(struct Pool *p)
 {
 	int ret;
 
@@ -71,7 +71,7 @@ int pool_destroy(struct pool *p)
 		return ret;
 
 	void *buffer = (char *) p + p->buffer_off;
-	ret = memory_free(buffer);
+	ret = memory::free(buffer);
 	if (ret == 0)
 		p->state = State::DESTROYED;
 

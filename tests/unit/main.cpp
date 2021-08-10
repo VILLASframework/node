@@ -1,7 +1,7 @@
 /** Custom main() for Criterion
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,10 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
+
+using namespace villas::node;
 
 void init_memory()
 {
 	int ret __attribute__((unused));
-	ret = memory_init(DEFAULT_NR_HUGEPAGES);
+	ret = memory::init(DEFAULT_NR_HUGEPAGES);
 }

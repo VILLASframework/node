@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,54 +22,47 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-
-# Generate test data
-villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
-
 FORMAT="protobuf"
 VECTORIZE="10"
+HOST="localhost"
 
-cat > ${CONFIG_FILE} << EOF
+if [ -n "${CI}" ]; then
+	HOST="rabbitmq"
+else
+	HOST="[::1]"
+fi
+
+cat > config.json << EOF
 {
-	"nodes" : {
-		"node1" : {
-			"type" : "amqp",
-			"format" : "${FORMAT}",
-			"vectorize" : ${VECTORIZE},
+	"nodes": {
+		"node1": {
+			"type": "amqp",
+			"format": "${FORMAT}",
+			"vectorize": ${VECTORIZE},
 
-			"uri" : "amqp://localhost",
-			"port" : 5672,
+			"uri": "amqp://guest:guest@${HOST}:5672/%2f",
 
-			"exchange" : "mytestexchange",
-			"routing_key" : "abc",
-		
-			"ssl" : {
-				"verify_hostname" : true,
-				"verify_peer" : true,
-
-				"ca_cert" : "/path/to/ca.crt",
-				"client_cert" : "/path/to/client.crt",
-				"client_key" : "/path/to/client.key"
-			}
+			"exchange": "mytestexchange",
+			"routing_key": "abc"
 		}
 	}
 }
 EOF
 
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
-# Compare data
-villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < input.dat
 
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
-
-exit ${RC}
+villas compare ${CMPFLAGS} input.dat output.dat

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,32 +31,37 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/shmem.h>
-#include <villas/node.h>
+#include <villas/shmem.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/shmem.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int shmem_parse(struct vnode *n, json_t *json)
+int villas::node::shmem_init(NodeCompat *n)
 {
-	struct shmem *shm = (struct shmem *) n->_vd;
+	auto *shm = n->getData<struct shmem>();
+
+	/* Default values */
+	shm->conf.queuelen = -1;
+	shm->conf.samplelen = -1;
+	shm->conf.polling = false;
+	shm->exec = nullptr;
+
+	return 0;
+}
+
+int villas::node::shmem_parse(NodeCompat *n, json_t *json)
+{
+	auto *shm = n->getData<struct shmem>();
 	const char *val, *mode_str = nullptr;
 
 	int ret;
 	json_t *json_exec = nullptr;
 	json_error_t err;
-
-	int len = MAX(vlist_length(&n->in.signals), vlist_length(&n->out.signals));
-
-	/* Default values */
-	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
-	shm->conf.samplelen = len;
-	shm->conf.polling = false;
-	shm->exec = nullptr;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: o, s?: s }",
 		"out",
@@ -103,9 +108,29 @@ int shmem_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int shmem_start(struct vnode *n)
+int villas::node::shmem_prepare(NodeCompat *n)
 {
-	struct shmem *shm = (struct shmem *) n->_vd;
+	auto *shm = n->getData<struct shmem>();
+
+	if (shm->conf.queuelen < 0)
+		shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
+
+	if (shm->conf.samplelen < 0)  {
+		auto input_sigs = n->getInputSignals(false)->size();
+		auto output_sigs = 0U;
+
+		if (n->getOutputSignals(true))
+			output_sigs = n->getOutputSignals(true)->size();
+
+		shm->conf.samplelen = MAX(input_sigs, output_sigs);
+	}
+
+	return 0;
+}
+
+int villas::node::shmem_start(NodeCompat *n)
+{
+	auto *shm = n->getData<struct shmem>();
 	int ret;
 
 	if (shm->exec) {
@@ -123,18 +148,18 @@ int shmem_start(struct vnode *n)
 	return 0;
 }
 
-int shmem_stop(struct vnode *n)
+int villas::node::shmem_stop(NodeCompat *n)
 {
-	struct shmem* shm = (struct shmem *) n->_vd;
+	auto* shm = n->getData<struct shmem>();
 
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::shmem_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct shmem *shm = (struct shmem *) n->_vd;
+	auto *shm = n->getData<struct shmem>();
 	int recv;
-	struct sample *shared_smps[cnt];
+	struct Sample *shared_smps[cnt];
 
 	do {
 		recv = shmem_int_read(&shm->intf, shared_smps, cnt);
@@ -146,7 +171,7 @@ int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 		n->logger->info("Shared memory segment has been closed.");
 
-		n->state = State::STOPPING;
+		n->setState(State::STOPPING);
 
 		return recv;
 	}
@@ -156,15 +181,15 @@ int shmem_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	/** @todo signal descriptions are currently not shared between processes */
 	for (int i = 0; i < recv; i++)
-		smps[i]->signals = &n->in.signals;
+		smps[i]->signals = n->getInputSignals(false);
 
 	return recv;
 }
 
-int shmem_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::shmem_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct shmem *shm = (struct shmem *) n->_vd;
-	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
+	auto *shm = n->getData<struct shmem>();
+	struct Sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, copied;
 
 	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
@@ -182,9 +207,9 @@ int shmem_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return pushed;
 }
 
-char * shmem_print(struct vnode *n)
+char * villas::node::shmem_print(NodeCompat *n)
 {
-	struct shmem *shm = (struct shmem *) n->_vd;
+	auto *shm = n->getData<struct shmem>();
 	char *buf = nullptr;
 
 	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, polling=%s",
@@ -202,7 +227,7 @@ char * shmem_print(struct vnode *n)
 	return buf;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -216,9 +241,8 @@ static void register_plugin() {
 	p.stop		= shmem_stop;
 	p.read		= shmem_read;
 	p.write		= shmem_write;
+	p.prepare	= shmem_prepare;
+	p.init		= shmem_init;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

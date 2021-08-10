@@ -1,7 +1,7 @@
 /** Scale hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,14 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cstring>
 
 #include <villas/hook.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -39,7 +35,7 @@ protected:
 	double offset;
 
 public:
-	ScaleHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	ScaleHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		scale(1.0),
 		offset(0.0)
@@ -64,7 +60,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		for (auto index : signalIndices) {
 			assert(index < smp->length);
@@ -101,5 +97,3 @@ static HookPlugin<ScaleHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

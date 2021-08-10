@@ -1,7 +1,7 @@
 /** Line-based formats
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,7 +26,7 @@
 using namespace villas;
 using namespace villas::node;
 
-int LineFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int LineFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	unsigned i;
 	size_t off = 0;
@@ -40,7 +40,7 @@ int LineFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sampl
 	return i;
 }
 
-int LineFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int LineFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	unsigned i;
 	size_t off = 0;
@@ -77,7 +77,7 @@ int LineFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample
 	return i;
 }
 
-int LineFormat::print(FILE *f, const struct sample * const smps[], unsigned cnt)
+int LineFormat::print(FILE *f, const struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;
@@ -98,7 +98,7 @@ int LineFormat::print(FILE *f, const struct sample * const smps[], unsigned cnt)
 	return i;
 }
 
-int LineFormat::scan(FILE *f, struct sample * const smps[], unsigned cnt)
+int LineFormat::scan(FILE *f, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
 	unsigned i;

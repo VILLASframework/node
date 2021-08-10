@@ -29,25 +29,26 @@
 #include <villas/nodes/redis.hpp>
 #include <villas/nodes/redis_helpers.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/timing.h>
-#include <villas/node/config.h>
-
-/* Forward declartions */
-static struct vnode_type p;
-static void redis_on_message(struct vnode *n, const std::string &channel, const std::string &msg);
+#include <villas/timing.hpp>
+#include <villas/node/config.hpp>
+#include <villas/node_compat.hpp>
+#include <villas/node_compat_type.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
-using namespace sw::redis;
 
-static std::unordered_map<ConnectionOptions, RedisConnection*> connections;
+/* Forward declartions */
+static NodeCompatType p;
+static void redis_on_message(NodeCompat *n, const std::string &channel, const std::string &msg);
 
-RedisConnection::RedisConnection(const ConnectionOptions &opts) :
+static std::unordered_map<sw::redis::ConnectionOptions, RedisConnection*> connections;
+
+RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts) :
 	context(opts),
 	subscriber(context.subscriber()),
 	logger(logging.get("nodes:redis"))
@@ -64,7 +65,7 @@ RedisConnection::RedisConnection(const ConnectionOptions &opts) :
 	state = State::INITIALIZED;
 }
 
-RedisConnection * RedisConnection::get(const ConnectionOptions &opts)
+RedisConnection * RedisConnection::get(const sw::redis::ConnectionOptions &opts)
 {
 	RedisConnection *conn;
 
@@ -74,7 +75,7 @@ RedisConnection * RedisConnection::get(const ConnectionOptions &opts)
 	else {
 		try {
 			conn = new RedisConnection(opts);
-		} catch (IoError &e) {
+		} catch (sw::redis::IoError &e) {
 			throw RuntimeError(e.what());
 		}
 
@@ -88,20 +89,20 @@ void RedisConnection::onMessage(const std::string &channel, const std::string &m
 {
 	auto itp = subscriberMap.equal_range(channel);
 	for (auto it = itp.first; it != itp.second; ++it) {
-		struct vnode *n = it->second;
+		NodeCompat *n = it->second;
 
 		redis_on_message(n, channel, msg);
 	}
 }
 
-void RedisConnection::subscribe(struct vnode *n, const std::string &channel)
+void RedisConnection::subscribe(NodeCompat *n, const std::string &channel)
 {
 	subscriber.subscribe(channel);
 
 	subscriberMap.emplace(channel, n);
 }
 
-void RedisConnection::unsubscribe(struct vnode *n, const std::string &channel)
+void RedisConnection::unsubscribe(NodeCompat *n, const std::string &channel)
 {
 	auto itp = subscriberMap.equal_range(channel);
 	for (auto it = itp.first; it != itp.second; ++it) {
@@ -138,23 +139,24 @@ void RedisConnection::loop()
 		try {
 			subscriber.consume();
 		}
-		catch (const TimeoutError &e) {
+		catch (const sw::redis::TimeoutError &e) {
 			continue;
 		}
-		catch (const ReplyError &e) {
+		catch (const sw::redis::ReplyError &e) {
 			continue;
 		}
-		catch (const Error &e) {
+		catch (const sw::redis::Error &e) {
 			/* Create a new subscriber */
 			subscriber = context.subscriber();
 		}
 	}
 }
 
-static int redis_get(struct vnode *n, struct sample * const smps[], unsigned cnt)
+static
+int redis_get(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	switch (r->mode) {
 		case RedisMode::KEY: {
@@ -173,11 +175,11 @@ static int redis_get(struct vnode *n, struct sample * const smps[], unsigned cnt
 			}
 
 		case RedisMode::HASH: {
-			struct sample *smp = smps[0];
+			struct Sample *smp = smps[0];
 
-			for (unsigned j = 0; j < vlist_length(&n->in.signals); j++) {
-				struct signal *sig = (struct signal *) vlist_at(&n->in.signals, j);
-				union signal_data *data = &smp->data[j];
+			for (unsigned j = 0; j < n->getInputSignals(false)->size(); j++) {
+				auto sig = n->getInputSignals(false)->getByIndex(j);
+				auto *data = &smp->data[j];
 
 				*data = sig->init;
 			}
@@ -190,16 +192,16 @@ static int redis_get(struct vnode *n, struct sample * const smps[], unsigned cnt
 				auto &name = it.first;
 				auto &value = it.second;
 
-				struct signal *sig = vlist_lookup_name<struct signal>(&n->in.signals, name);
+				auto sig = n->getInputSignals(false)->getByName(name);
 				if (!sig)
 					continue;
 
-				auto idx = vlist_index(&n->in.signals, sig);
+				auto idx = n->getInputSignals(false)->getIndexByName(name);
 				if (idx > max_idx)
 					max_idx = idx;
 
 				char *end;
-				ret = signal_data_parse_str(&smp->data[idx], sig->type, value.c_str(), &end);
+				ret = smp->data[idx].parseString(sig->type, value.c_str(), &end);
 				if (ret < 0)
 					continue;
 			}
@@ -218,15 +220,16 @@ static int redis_get(struct vnode *n, struct sample * const smps[], unsigned cnt
 	}
 }
 
-static void redis_on_message(struct vnode *n, const std::string &channel, const std::string &msg)
+static
+void redis_on_message(NodeCompat *n, const std::string &channel, const std::string &msg)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	n->logger->debug("Message: {}: {}", channel, msg);
 
 	int alloc, scanned, pushed;
 	unsigned cnt = n->in.vectorize;
-	struct sample *smps[cnt];
+	struct Sample *smps[cnt];
 
 	alloc = sample_alloc_many(&r->pool, smps, cnt);
 	if (alloc < 0) {
@@ -269,33 +272,34 @@ static void redis_on_message(struct vnode *n, const std::string &channel, const 
 out:	sample_decref_many(smps + pushed, alloc - pushed);
 }
 
-int redis_init(struct vnode *n)
+int villas::node::redis_init(NodeCompat *n)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	r->mode = RedisMode::KEY;
 	r->formatter = nullptr;
 	r->notify = true;
 	r->rate = 1.0;
 
-	new (&r->options) ConnectionOptions;
+	new (&r->options) sw::redis::ConnectionOptions;
 	new (&r->task) Task(CLOCK_REALTIME);
 	new (&r->key) std::string();
 
 	return 0;
 }
 
-int redis_destroy(struct vnode *n)
+int villas::node::redis_destroy(NodeCompat *n)
 {
 	int ret;
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	if (r->formatter)
 		delete r->formatter;
 
 	using string = std::string;
+	using redis_co = sw::redis::ConnectionOptions;
 
-	r->options.~ConnectionOptions();
+	r->options.~redis_co();
 	r->key.~string();
 	r->task.~Task();
 
@@ -310,10 +314,10 @@ int redis_destroy(struct vnode *n)
 	return 0;
 }
 
-int redis_parse(struct vnode *n, json_t *json)
+int villas::node::redis_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	json_error_t err;
 	json_t *json_ssl = nullptr;
@@ -403,6 +407,8 @@ int redis_parse(struct vnode *n, json_t *json)
 	}
 
 	/* Format */
+	if (r->formatter)
+		delete r->formatter;
 	r->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("json");
@@ -419,7 +425,7 @@ int redis_parse(struct vnode *n, json_t *json)
 
 	/* Connection options */
 	if (uri)
-		r->options = ConnectionOptions(uri);
+		r->options = sw::redis::ConnectionOptions(uri);
 
 	if (db >= 0)
 		r->options.db = db;
@@ -448,9 +454,9 @@ int redis_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int redis_check(struct vnode *n)
+int villas::node::redis_check(NodeCompat *n)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	if (!r->options.host.empty() && !r->options.path.empty())
 		return -1;
@@ -461,9 +467,9 @@ int redis_check(struct vnode *n)
 	return 0;
 }
 
-char * redis_print(struct vnode *n)
+char * villas::node::redis_print(NodeCompat *n)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	std::stringstream ss;
 
@@ -479,17 +485,17 @@ char * redis_print(struct vnode *n)
 	return strdup(ss.str().c_str());
 }
 
-int redis_prepare(struct vnode *n)
+int villas::node::redis_prepare(NodeCompat *n)
 {
 	int ret;
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	r->options.type = r->options.path.empty()
-		? ConnectionType::TCP
-		: ConnectionType::UNIX;
+		? sw::redis::ConnectionType::TCP
+		: sw::redis::ConnectionType::UNIX;
 
 	if (r->key.empty())
-		r->key = node_name_short(n);
+		r->key = n->getNameShort();
 
 	ret = queue_signalled_init(&r->queue, 1024);
 	if (ret)
@@ -506,11 +512,11 @@ int redis_prepare(struct vnode *n)
 	return 0;
 }
 
-int redis_start(struct vnode *n)
+int villas::node::redis_start(NodeCompat *n)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
-	r->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	r->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	if (!r->notify)
 		r->task.setRate(r->rate);
@@ -534,9 +540,9 @@ int redis_start(struct vnode *n)
 	return 0;
 }
 
-int redis_stop(struct vnode *n)
+int villas::node::redis_stop(NodeCompat *n)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	r->conn->stop();
 
@@ -560,14 +566,14 @@ int redis_stop(struct vnode *n)
 	return 0;
 }
 
-int redis_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::redis_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	/* Wait for new data */
 	if (r->notify || r->mode == RedisMode::CHANNEL) {
 		int pulled_cnt;
-		struct sample *pulled_smps[cnt];
+		struct Sample *pulled_smps[cnt];
 
 		pulled_cnt = queue_signalled_pull_many(&r->queue, (void **) pulled_smps, cnt);
 
@@ -584,10 +590,10 @@ int redis_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	}
 }
 
-int redis_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::redis_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	switch (r->mode) {
 		case RedisMode::CHANNEL:
@@ -621,18 +627,15 @@ int redis_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 		case RedisMode::HASH: {
 			/* We only update the signals with their latest value here. */
-			struct sample *smp = smps[cnt - 1];
+			struct Sample *smp = smps[cnt - 1];
 
 			std::unordered_map<std::string, std::string> kvs;
 
-			for (unsigned j = 0; j < MIN(vlist_length(smp->signals), smp->length); j++) {
-				struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
-				union signal_data *data = &smp->data[j];
+			for (unsigned j = 0; j < MIN(smp->signals->size(), smp->length); j++) {
+				const auto sig = smp->signals->getByIndex(j);
+				const auto *data = &smp->data[j];
 
-				char val[128];
-				signal_data_print_str(data, sig->type, val, sizeof(val), 16);
-
-				kvs[sig->name] = val;
+				kvs[sig->name] = data->toString(sig->type);
 			}
 
 			r->conn->context.hmset(r->key, kvs.begin(), kvs.end());
@@ -643,9 +646,9 @@ int redis_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int redis_poll_fds(struct vnode *n, int fds[])
+int villas::node::redis_poll_fds(NodeCompat *n, int fds[])
 {
-	struct redis *r = (struct redis *) n->_vd;
+	auto *r = n->getData<struct redis>();
 
 	fds[0] = r->notify
 		? queue_signalled_fd(&r->queue)
@@ -672,8 +675,5 @@ static void register_plugin() {
 	p.write		= redis_write;
 	p.poll_fds	= redis_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

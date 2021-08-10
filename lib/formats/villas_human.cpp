@@ -1,7 +1,7 @@
 /** The internal datastructure for a sample of simulation data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,17 +24,16 @@
 #include <cstring>
 
 #include <villas/utils.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
-#include <villas/signal.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
 #include <villas/formats/villas_human.hpp>
 
 using namespace villas::node;
 
-size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct sample *smp)
+size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct Sample *smp)
 {
 	size_t off = 0;
-	struct signal *sig;
 
 	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
@@ -57,12 +56,12 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct sample 
 
 	if (flags & (int) SampleFlags::HAS_DATA) {
 		for (unsigned i = 0; i < smp->length; i++) {
-			sig = (struct signal *) vlist_at_safe(smp->signals, i);
+			auto sig = smp->signals->getByIndex(i);
 			if (!sig)
 				break;
 
 			off += snprintf(buf + off, len - off, "\t");
-			off += signal_data_print_str(&smp->data[i], sig->type, buf + off, len - off, real_precision);
+			off += smp->data[i].printString(sig->type, buf + off, len - off, real_precision);
 		}
 	}
 
@@ -71,7 +70,7 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct sample 
 	return off;
 }
 
-size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct sample *smp)
+size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct Sample *smp)
 {
 	int ret;
 	char *end;
@@ -136,11 +135,11 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct sample *
 		if (*end == delimiter)
 			goto out;
 
-		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+		auto sig = signals->getByIndex(i);
 		if (!sig)
 			goto out;
 
-		ret = signal_data_parse_str(&smp->data[i], sig->type, ptr, &end);
+		ret = smp->data[i].parseString(sig->type, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 	}
@@ -162,7 +161,7 @@ out:	if (*end == delimiter)
 	return end - buf;
 }
 
-void VILLASHumanFormat::header(FILE *f, const struct vlist *sigs)
+void VILLASHumanFormat::header(FILE *f, const SignalList::Ptr sigs)
 {
 	/* Abort if we are not supposed to, or have already printed the header */
 	if (!print_header || header_printed)
@@ -180,18 +179,18 @@ void VILLASHumanFormat::header(FILE *f, const struct vlist *sigs)
 		fprintf(f, "(sequence)");
 
 	if (flags & (int) SampleFlags::HAS_DATA) {
-		for (unsigned i = 0; i < vlist_length(sigs); i++) {
-			struct signal *sig = (struct signal *) vlist_at_safe(sigs, i);
+		for (unsigned i = 0; i < sigs->size(); i++) {
+			auto sig = sigs->getByIndex(i);
 			if (!sig)
 				break;
 
-			if (sig->name)
-				fprintf(f, "\t%s", sig->name);
+			if (!sig->name.empty())
+				fprintf(f, "\t%s", sig->name.c_str());
 			else
 				fprintf(f, "\tsignal%u", i);
 
-			if (sig->unit)
-				fprintf(f, "[%s]", sig->unit);
+			if (!sig->unit.empty())
+				fprintf(f, "[%s]", sig->unit.c_str());
 		}
 	}
 

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -34,15 +34,15 @@ class VILLASHumanFormat : public LineFormat {
 
 protected:
 	virtual
-	size_t sprintLine(char *buf, size_t len, const struct sample *smp);
+	size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
 	virtual
-	size_t sscanLine(const char *buf, size_t len, struct sample *smp);
+	size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
 
 public:
 	using LineFormat::LineFormat;
 
 	virtual
-	void header(FILE *f, const struct vlist *sigs);
+	void header(FILE *f, const SignalList::Ptr sigs);
 };
 
 } /* namespace node */

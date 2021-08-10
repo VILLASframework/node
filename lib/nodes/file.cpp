@@ -1,7 +1,7 @@
 /** Node type: File
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,10 +27,10 @@
 #include <sys/stat.h>
 #include <cerrno>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/file.hpp>
 #include <villas/utils.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/queue.h>
 #include <villas/format.hpp>
 #include <villas/exceptions.hpp>
@@ -39,7 +39,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static char * file_format_name(const char *format, struct timespec *ts)
+static
+char * file_format_name(const char *format, struct timespec *ts)
 {
 	struct tm tm;
 	char *buf = new char[FILE_MAX_PATHLEN];
@@ -54,7 +55,8 @@ static char * file_format_name(const char *format, struct timespec *ts)
 	return buf;
 }
 
-static struct timespec file_calc_offset(const struct timespec *first, const struct timespec *epoch, enum file::EpochMode mode)
+static
+struct timespec file_calc_offset(const struct timespec *first, const struct timespec *epoch, enum file::EpochMode mode)
 {
 	/* Get current time */
 	struct timespec now = time_now();
@@ -81,9 +83,9 @@ static struct timespec file_calc_offset(const struct timespec *first, const stru
 	}
 }
 
-int file_parse(struct vnode *n, json_t *json)
+int villas::node::file_parse(NodeCompat *n, json_t *json)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	int ret;
 	json_error_t err;
@@ -115,6 +117,8 @@ int file_parse(struct vnode *n, json_t *json)
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
 
 	/* Format */
+	if (f->formatter)
+		delete f->formatter;
 	f->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.human");
@@ -147,14 +151,12 @@ int file_parse(struct vnode *n, json_t *json)
 			throw RuntimeError("Invalid value '{}' for setting 'epoch'", epoch);
 	}
 
-	n->_vd = f;
-
 	return 0;
 }
 
-char * file_print(struct vnode *n)
+char * villas::node::file_print(NodeCompat *n)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 	char *buf = nullptr;
 
 	const char *epoch_str = nullptr;
@@ -236,14 +238,17 @@ char * file_print(struct vnode *n)
 	return buf;
 }
 
-int file_start(struct vnode *n)
+int villas::node::file_start(NodeCompat *n)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	struct timespec now = time_now();
 	int ret;
 
 	/* Prepare file name */
+	if (f->uri)
+		delete[] f->uri;
+
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
 	/* Check if directory exists */
@@ -269,10 +274,10 @@ int file_start(struct vnode *n)
 
 	free(cpy);
 
-	f->formatter->start(&n->in.signals);
+	f->formatter->start(n->getInputSignals(false));
 
 	/* Open file */
-	f->stream_out = fopen(f->uri, "a+");
+	f->stream_out = fopen(f->uri, "w+");
 	if (!f->stream_out)
 		return -1;
 
@@ -303,7 +308,7 @@ int file_start(struct vnode *n)
 			n->logger->warn("Empty file");
 		}
 		else {
-			struct sample smp;
+			struct Sample smp;
 
 			smp.capacity = 0;
 
@@ -320,7 +325,7 @@ int file_start(struct vnode *n)
 	rewind(f->stream_in);
 
 	/* Fast-forward */
-	struct sample *smp = sample_alloc_mem(vlist_length(&n->in.signals));
+	struct Sample *smp = sample_alloc_mem(n->getInputSignals(false)->size());
 	for (unsigned i = 0; i < f->skip_lines; i++)
 		f->formatter->scan(f->stream_in, smp);
 
@@ -329,24 +334,21 @@ int file_start(struct vnode *n)
 	return 0;
 }
 
-int file_stop(struct vnode *n)
+int villas::node::file_stop(NodeCompat *n)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	f->task.stop();
 
 	fclose(f->stream_in);
 	fclose(f->stream_out);
 
-	delete f->formatter;
-	delete f->uri;
-
 	return 0;
 }
 
-int file_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::file_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 	int ret;
 	uint64_t steps;
 
@@ -374,7 +376,7 @@ retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 				case file::EOFBehaviour::STOP:
 					n->logger->info("Reached end-of-file.");
 
-					n->state = State::STOPPING;
+					n->setState(State::STOPPING);
 
 					return -1;
 
@@ -412,10 +414,10 @@ retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 	return cnt;
 }
 
-int file_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::file_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	assert(cnt == 1);
 
@@ -429,9 +431,9 @@ int file_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int file_poll_fds(struct vnode *n, int fds[])
+int villas::node::file_poll_fds(NodeCompat *n, int fds[])
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	if (f->rate) {
 		fds[0] = f->task.getFD();
@@ -447,9 +449,9 @@ int file_poll_fds(struct vnode *n, int fds[])
 	return -1; /** @todo not supported yet */
 }
 
-int file_init(struct vnode *n)
+int villas::node::file_init(NodeCompat *n)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	new (&f->task) Task(CLOCK_REALTIME);
 
@@ -462,19 +464,27 @@ int file_init(struct vnode *n)
 	f->buffer_size_out = 0;
 	f->skip_lines = 0;
 
+	f->formatter = nullptr;
+
 	return 0;
 }
 
-int file_destroy(struct vnode *n)
+int villas::node::file_destroy(NodeCompat *n)
 {
-	struct file *f = (struct file *) n->_vd;
+	auto *f = n->getData<struct file>();
 
 	f->task.~Task();
 
+	if (f->uri)
+		delete[] f->uri;
+
+	if (f->formatter)
+		delete f->formatter;
+
 	return 0;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -492,8 +502,5 @@ static void register_plugin() {
 	p.write		= file_write;
 	p.poll_fds	= file_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

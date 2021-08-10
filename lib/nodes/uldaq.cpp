@@ -3,7 +3,7 @@
  * @file
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,11 +24,11 @@
 
 #include <cstring>
 
-#include <villas/config.h>
-#include <villas/node.h>
+#include <villas/config.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/uldaq.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
@@ -107,7 +107,8 @@ static const struct {
 	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
 
-static AiInputMode uldaq_parse_input_mode(const char *str)
+static
+AiInputMode uldaq_parse_input_mode(const char *str)
 {
 	for (unsigned i = 0; i < ARRAY_LEN(input_modes); i++) {
 		if (!strcmp(input_modes[i].name, str))
@@ -117,7 +118,8 @@ static AiInputMode uldaq_parse_input_mode(const char *str)
 	return (AiInputMode) -1;
 }
 
-static DaqDeviceInterface uldaq_parse_interface_type(const char *str)
+static
+DaqDeviceInterface uldaq_parse_interface_type(const char *str)
 {
 	for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
 		if (!strcmp(interface_types[i].name, str))
@@ -127,7 +129,8 @@ static DaqDeviceInterface uldaq_parse_interface_type(const char *str)
 	return (DaqDeviceInterface) -1;
 }
 
-static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
+static
+const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
 {
 	for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
 		if (interface_types[i].interface == iftype)
@@ -137,7 +140,8 @@ static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
 	return nullptr;
 }
 
-static Range uldaq_parse_range(const char *str)
+static
+Range uldaq_parse_range(const char *str)
 {
 	for (unsigned i = 0; i < ARRAY_LEN(ranges); i++) {
 		if (!strcmp(ranges[i].name, str))
@@ -147,7 +151,8 @@ static Range uldaq_parse_range(const char *str)
 	return (Range) -1;
 }
 
-static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
+static
+DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 	DaqDeviceDescriptor *d = nullptr;
 
 	if (num_devs == 0)
@@ -175,9 +180,10 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 	return nullptr;
 }
 
-static int uldaq_connect(struct vnode *n)
+static
+int uldaq_connect(NodeCompat *n)
 {
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 	UlError err;
 
 	/* Find Matching device */
@@ -213,7 +219,7 @@ static int uldaq_connect(struct vnode *n)
 	return 0;
 }
 
-int uldaq_type_start(villas::node::SuperNode *sn)
+int villas::node::uldaq_type_start(villas::node::SuperNode *sn)
 {
 	UlError err;
 
@@ -233,10 +239,10 @@ int uldaq_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int uldaq_init(struct vnode *n)
+int villas::node::uldaq_init(NodeCompat *n)
 {
 	int ret;
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	u->device_id = nullptr;
 	u->device_interface_type = ANY_IFC;
@@ -257,10 +263,10 @@ int uldaq_init(struct vnode *n)
 	return 0;
 }
 
-int uldaq_destroy(struct vnode *n)
+int villas::node::uldaq_destroy(NodeCompat *n)
 {
 	int ret;
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	if (u->in.queues)
 		delete[] u->in.queues;
@@ -276,10 +282,10 @@ int uldaq_destroy(struct vnode *n)
 	return 0;
 }
 
-int uldaq_parse(struct vnode *n, json_t *json)
+int villas::node::uldaq_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	const char *default_range_str = nullptr;
 	const char *default_input_mode_str = nullptr;
@@ -313,7 +319,7 @@ int uldaq_parse(struct vnode *n, json_t *json)
 	if (u->in.queues)
 		delete[] u->in.queues;
 
-	u->in.channel_count = vlist_length(&n->in.signals);
+	u->in.channel_count = n->getInputSignals(false)->size();
 	u->in.queues = new struct AiQueueElement[u->in.channel_count];
 	if (!u->in.queues)
 		throw MemoryAllocationError();
@@ -361,9 +367,9 @@ int uldaq_parse(struct vnode *n, json_t *json)
 	return ret;
 }
 
-char * uldaq_print(struct vnode *n)
+char * villas::node::uldaq_print(NodeCompat *n)
 {
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	char *buf = nullptr;
 
@@ -386,16 +392,16 @@ char * uldaq_print(struct vnode *n)
 	return buf;
 }
 
-int uldaq_check(struct vnode *n)
+int villas::node::uldaq_check(NodeCompat *n)
 {
 	int ret;
 	long long has_ai, event_types, max_channel, scan_options, num_ranges_se, num_ranges_diff;
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	UlError err;
 
 	if (n->in.vectorize < 100)
-		throw ConfigError(n->config, "node-config-node-vectorize", "Setting 'vectorize' must be larger than 100");
+		throw ConfigError(n->getConfig(), "node-config-node-vectorize", "Setting 'vectorize' must be larger than 100");
 
 	ret = uldaq_connect(n);
 	if (ret)
@@ -449,11 +455,11 @@ int uldaq_check(struct vnode *n)
 	if ((scan_options & u->in.scan_options) != u->in.scan_options)
 		throw RuntimeError("DAQ device does not support required scan options");
 
-	for (size_t i = 0; i < vlist_length(&n->in.signals); i++) {
-		struct signal *s = (struct signal *) vlist_at(&n->in.signals, i);
+	for (size_t i = 0; i < n->getInputSignals(false)->size(); i++) {
+		auto sig = n->getInputSignals(false)->getByIndex(i);
 		AiQueueElement *q = &u->in.queues[i];
 
-		if (s->type != SignalType::FLOAT)
+		if (sig->type != SignalType::FLOAT)
 			throw RuntimeError("Node supports only signals of type = float!");
 
 		switch (q->inputMode) {
@@ -482,10 +488,11 @@ found:		if (q->channel > max_channel)
 	return 0;
 }
 
+static
 void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type, unsigned long long event_data, void *ctx)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *n = (NodeCompat *) ctx;
+	auto *u = n->getData<struct uldaq>();
 
 	pthread_mutex_lock(&u->in.mutex);
 
@@ -500,9 +507,9 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 	pthread_cond_signal(&u->in.cv);
 }
 
-int uldaq_start(struct vnode *n)
+int villas::node::uldaq_start(NodeCompat *n)
 {
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	u->sequence = 0;
 	u->in.buffer_pos = 0;
@@ -520,7 +527,7 @@ int uldaq_start(struct vnode *n)
 	if (ret)
 		return ret;
 
-	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->in.signals));
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, n->getInputSignals(false)->size());
 	if (err != ERR_NO_ERROR)
 		throw RuntimeError("Failed to load input queue to DAQ device");
 
@@ -552,9 +559,9 @@ int uldaq_start(struct vnode *n)
 	return 0;
 }
 
-int uldaq_stop(struct vnode *n)
+int villas::node::uldaq_stop(NodeCompat *n)
 {
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	UlError err;
 
@@ -586,9 +593,9 @@ int uldaq_stop(struct vnode *n)
 	return 0;
 }
 
-int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::uldaq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct uldaq *u = (struct uldaq *) n->_vd;
+	auto *u = n->getData<struct uldaq>();
 
 	pthread_mutex_lock(&u->in.mutex);
 
@@ -602,7 +609,7 @@ int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		pthread_cond_wait(&u->in.cv, &u->in.mutex);
 
 	for (unsigned j = 0; j < cnt; j++) {
-		struct sample *smp = smps[j];
+		struct Sample *smp = smps[j];
 
 		long long scan_index = start_index + j * u->in.channel_count;
 
@@ -613,7 +620,7 @@ int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		}
 
 		smp->length = u->in.channel_count;
-		smp->signals = &n->in.signals;
+		smp->signals = n->getInputSignals(false);
 		smp->sequence = u->sequence++;
 		smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	}
@@ -625,7 +632,7 @@ int uldaq_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -643,8 +650,5 @@ static void register_plugin() {
 	p.stop		= uldaq_stop;
 	p.read		= uldaq_read;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

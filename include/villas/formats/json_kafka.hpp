@@ -1,7 +1,7 @@
 /** JSON serializtion for Kafka schema/payloads.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <villas/signal_type.h>
+#include <villas/signal_type.hpp>
 #include <villas/formats/json.hpp>
 
 namespace villas {
@@ -32,9 +32,9 @@ class JsonKafkaFormat : public JsonFormat {
 
 protected:
 	virtual
-	int packSample(json_t **j, const struct sample *smp);
+	int packSample(json_t **j, const struct Sample *smp);
 	virtual
-	int unpackSample(json_t *json_smp, struct sample *smp);
+	int unpackSample(json_t *json_smp, struct Sample *smp);
 
 	const char * villasToKafkaType(enum SignalType vt);
 

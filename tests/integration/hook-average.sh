@@ -3,7 +3,7 @@
 # Integration test for average hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,11 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+set -e
 
-cat <<EOF > ${INPUT_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > input.dat <<EOF
 1548104309.033621000(0)	0.022245	0.590769	-1.000000	0.597649	0.100588
 1548104309.133998900(1)	0.015339	0.952914	-1.000000	0.196137	0.200966
 1548104309.233542500(2)	0.027500	0.950063	-1.000000	-0.202037	0.300509
@@ -39,7 +46,7 @@ cat <<EOF > ${INPUT_FILE}
 1548104309.934288200(9)	0.060849	0.007885	-1.000000	0.994980	0.001255
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	average	signal0	signal1	signal2	signal3	signal4
 1548104309.033621000(0)	0.062250	0.022245	0.590769	-1.000000	0.597649	0.100588
 1548104309.133998900(1)	0.073071	0.015339	0.952914	-1.000000	0.196137	0.200966
@@ -54,12 +61,6 @@ cat <<EOF > ${EXPECT_FILE}
 EOF
 
 # Average over first and third signal (mask = 0b101 = 5)
-villas hook -o offset=0 -o signals=signal0,signal1,signal2,signal3,signal4 average < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook -o offset=0 -o signals=signal0,signal1,signal2,signal3,signal4 average < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

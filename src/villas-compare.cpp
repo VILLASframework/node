@@ -1,7 +1,7 @@
 /** Compare two data files.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,13 +26,13 @@
 #include <jansson.h>
 
 #include <villas/tool.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/format.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 
 using namespace villas;
 
@@ -47,7 +47,7 @@ public:
 	std::string dtypes;
 	std::string format;
 
-	struct sample *sample;
+	struct Sample *sample;
 
 	Format *formatter;
 
@@ -56,7 +56,7 @@ public:
 	CompareSide(const CompareSide&) = delete;
 	CompareSide & operator=(const CompareSide&) = delete;
 
-	CompareSide(const std::string &pth, const std::string &fmt, const std::string &dt, struct pool *p) :
+	CompareSide(const std::string &pth, const std::string &fmt, const std::string &dt, struct Pool *p) :
 		path(pth),
 		dtypes(dt),
 		format(fmt)
@@ -108,13 +108,13 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 	}
 
 protected:
-	struct pool pool;
+	struct Pool pool;
 
 	double epsilon;
 	std::string format;
@@ -214,7 +214,7 @@ check:			if (optarg == endptr)
 		int ret, rc = 0, line, failed;
 		unsigned eofs;
 
-		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
+		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory::heap);
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");
 

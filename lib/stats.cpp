@@ -1,7 +1,7 @@
 /** Statistic collection.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,12 +24,13 @@
 
 #include <villas/stats.hpp>
 #include <villas/hist.hpp>
-#include <villas/timing.h>
-#include <villas/node.h>
+#include <villas/timing.hpp>
+#include <villas/node.hpp>
 #include <villas/utils.hpp>
-#include <villas/node.h>
+#include <villas/node.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
 
 std::unordered_map<Stats::Metric, Stats::MetricDescription> Stats::metrics = {
@@ -158,13 +159,13 @@ void Stats::setupTable()
 	}
 }
 
-void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
+void Stats::printPeriodic(FILE *f, enum Format fmt, node::Node *n) const
 {
 	switch (fmt) {
 		case Format::HUMAN:
 			setupTable();
 			table->row(11,
-				node_name_short(n),
+				n->getNameShort().c_str(),
 				(uintmax_t)    histograms.at(Metric::OWD).getTotal(),
 				(uintmax_t)    histograms.at(Metric::AGE).getTotal(),
 				(uintmax_t)    histograms.at(Metric::SMPS_REORDERED).getTotal(),
@@ -181,7 +182,7 @@ void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
 
 		case Format::JSON: {
 			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f, s: i }",
-				"node", node_name(n),
+				"node",            n->getNameShort().c_str(),
 				"recv",            histograms.at(Metric::OWD).getTotal(),
 				"sent",            histograms.at(Metric::AGE).getTotal(),
 				"dropped",         histograms.at(Metric::SMPS_REORDERED).getTotal(),
@@ -221,10 +222,10 @@ void Stats::print(FILE *f, enum Format fmt, int verbose) const
 	}
 }
 
-union signal_data Stats::getValue(enum Metric sm, enum Type st) const
+union SignalData Stats::getValue(enum Metric sm, enum Type st) const
 {
 	const Hist &h = histograms.at(sm);
-	union signal_data d;
+	union SignalData d;
 
 	switch (st) {
 		case Type::TOTAL:

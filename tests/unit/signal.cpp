@@ -1,7 +1,7 @@
 /** Unit tests for memory management
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,7 +22,9 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/signal.h>
+#include <villas/signal.hpp>
+
+using namespace villas::node;
 
 extern void init_memory();
 
@@ -30,14 +32,14 @@ extern void init_memory();
 Test(signal_data, parse, .init = init_memory) {
 	int ret;
 	enum SignalType type;
-	union signal_data sd;
+	union SignalData sd;
 	const char *str;
 	char *end;
 
 	str = "1";
 	type = SignalType::INTEGER;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_eq(sd.i, 1);
@@ -45,7 +47,7 @@ Test(signal_data, parse, .init = init_memory) {
 	str = "1.2";
 	type = SignalType::FLOAT;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(sd.f, 1.2, 1e-6);
@@ -53,7 +55,7 @@ Test(signal_data, parse, .init = init_memory) {
 	str = "1";
 	type = SignalType::BOOLEAN;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_eq(sd.b, 1);
@@ -61,7 +63,7 @@ Test(signal_data, parse, .init = init_memory) {
 	str = "1";
 	type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), 1, 1e-6);
@@ -70,7 +72,7 @@ Test(signal_data, parse, .init = init_memory) {
 	str = "-1-3i";
 	type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), -1, 1e-6);
@@ -79,7 +81,7 @@ Test(signal_data, parse, .init = init_memory) {
 	str = "-3i";
 	type = SignalType::COMPLEX;
 
-	ret = signal_data_parse_str(&sd, type, str, &end);
+	ret = sd.parseString(type, str, &end);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(end, str + strlen(str));
 	cr_assert_float_eq(std::real(sd.z), 0, 1e-6);

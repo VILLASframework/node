@@ -1,7 +1,7 @@
 /** Path destination
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,59 +21,52 @@
  *********************************************************************************/
 
 #include <villas/utils.hpp>
-#include <villas/memory.h>
-#include <villas/sample.h>
-#include <villas/node.h>
-#include <villas/path.h>
+#include <villas/node/memory.hpp>
+#include <villas/sample.hpp>
+#include <villas/node.hpp>
+#include <villas/path.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/path_destination.h>
+#include <villas/path_destination.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
-int path_destination_init(struct vpath_destination *pd, struct vnode *n)
+PathDestination::PathDestination(Path *p, Node *n) :
+	node(n),
+	path(p)
 {
-	pd->node = n;
-
-	vlist_push(&n->destinations, pd);
-
-	return 0;
+	queue.state = State::DESTROYED;
 }
 
-int path_destination_prepare(struct vpath_destination *pd, int queuelen)
+PathDestination::~PathDestination()
+{
+	int ret __attribute__((unused));
+
+	ret = queue_destroy(&queue);
+}
+
+int PathDestination::prepare(int queuelen)
 {
 	int ret;
 
-	ret = queue_init(&pd->queue, queuelen);
+	ret = queue_init(&queue, queuelen);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-int path_destination_destroy(struct vpath_destination *pd)
-{
-	int ret;
-
-	ret = queue_destroy(&pd->queue);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-void path_destination_enqueue(struct vpath *p, const struct sample * const smps[], unsigned cnt)
+void PathDestination::enqueueAll(Path *p, const struct Sample * const smps[], unsigned cnt)
 {
 	unsigned enqueued, cloned;
 
-	struct sample *clones[cnt];
+	struct Sample *clones[cnt];
 
 	cloned = sample_clone_many(clones, smps, cnt);
 	if (cloned < cnt)
 		p->logger->warn("Pool underrun in path {}", *p);
 
-	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
+	for (auto pd : p->destinations) {
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
 			p->logger->warn("Queue overrun for path {}", *p);
@@ -87,43 +80,43 @@ void path_destination_enqueue(struct vpath *p, const struct sample * const smps[
 	sample_decref_many(clones, cloned);
 }
 
-void path_destination_write(struct vpath_destination *pd, struct vpath *p)
+void PathDestination::write()
 {
-	int cnt = pd->node->out.vectorize;
+	int cnt = node->out.vectorize;
 	int sent;
 	int allocated;
 
-	struct sample *smps[cnt];
+	struct Sample *smps[cnt];
 
 	/* As long as there are still samples in the queue */
-	while (1) {
-		allocated = queue_pull_many(&pd->queue, (void **) smps, cnt);
+	while (true) {
+		allocated = queue_pull_many(&queue, (void **) smps, cnt);
 		if (allocated == 0)
 			break;
 		else if (allocated < cnt)
-			p->logger->debug("Queue underrun for path {}: allocated={} expected={}", *p, allocated, cnt);
+			path->logger->debug("Queue underrun for path {}: allocated={} expected={}", *path, allocated, cnt);
 
-		p->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, *pd->node, *p);
+		path->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, *node, *path);
 
-		sent = node_write(pd->node, smps, allocated);
+		sent = node->write(smps, allocated);
 		if (sent < 0) {
-			p->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, *pd->node, sent);
+			path->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, *node, sent);
 			return;
 		}
 		else if (sent < allocated)
-			p->logger->debug("Partial write to node {}: written={}, expected={}", *pd->node, sent, allocated);
+			path->logger->debug("Partial write to node {}: written={}, expected={}", *node, sent, allocated);
 
 		int released = sample_decref_many(smps, allocated);
 
-		p->logger->debug("Released {} samples back to memory pool", released);
+		path->logger->debug("Released {} samples back to memory pool", released);
 	}
 }
 
-void path_destination_check(struct vpath_destination *pd)
+void PathDestination::check()
 {
-	if (!node_is_enabled(pd->node))
-		throw RuntimeError("Destination {} is not enabled", *pd->node);
+	if (!node->isEnabled())
+		throw RuntimeError("Destination {} is not enabled", *node);
 
-	if (!node_type(pd->node)->write)
-		throw RuntimeError("Destiation node {} is not supported as a sink for path ", *pd->node);
+	if (!(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_WRITE))
+		throw RuntimeError("Destination node {} is not supported as a sink for path ", *node);
 }

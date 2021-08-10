@@ -3,7 +3,7 @@
 # Integration test for scale hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,12 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
-CONFIG_FILE=$(mktemp)
+set -e
 
-cat <<EOF > ${CONFIG_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > config.json <<EOF
 {
 	"signals": [
 		{ "name": "signal1_positive", "expression": "smp.data.signal1 >= 0", "type": "boolean" },
@@ -39,7 +45,7 @@ cat <<EOF > ${CONFIG_FILE}
 }
 EOF
 
-cat <<EOF > ${INPUT_FILE}
+cat > input.dat <<EOF
 # seconds.nanoseconds(sequence)	random	sine	square	triangle	ramp
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	0.587785	-1.000000	0.600000	0.100000
@@ -53,7 +59,7 @@ cat <<EOF > ${INPUT_FILE}
 1551015509.701653200(9)	0.060849	-0.587785	1.000000	0.600000	0.900000
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	signal1_positive	abs(signal1)	signal4_scaled	sequence	ts_origin
 1551015508.801653200+6.430676e+07(0)	1	0.000000	55.000000	0	1551015508.801653
 1551015508.901653200+6.430676e+07(1)	1	0.587785	65.000000	1	1551015508.901653
@@ -67,16 +73,6 @@ cat <<EOF > ${EXPECT_FILE}
 1551015509.701653200+6.430676e+07(9)	0	0.587785	145.000000	9	1551015509.701653
 EOF
 
-villas hook lua -c ${CONFIG_FILE} < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook lua -c config.json < input.dat > output.dat
 
-cat ${INPUT_FILE}
-echo
-cat ${OUTPUT_FILE}
-
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE} ${CONFIG_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

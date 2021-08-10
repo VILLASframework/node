@@ -1,7 +1,7 @@
 /** Main routine.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -29,15 +29,15 @@
 #include <atomic>
 
 #include <villas/tool.hpp>
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/version.hpp>
 #include <villas/utils.hpp>
 #include <villas/super_node.hpp>
 #include <villas/plugin.hpp>
 #include <villas/api/request.hpp>
-#include <villas/memory.h>
-#include <villas/node.h>
-#include <villas/path.h>
+#include <villas/memory.hpp>
+#include <villas/node.hpp>
+#include <villas/path.hpp>
 #include <villas/api.hpp>
 #include <villas/hook.hpp>
 #include <villas/format.hpp>
@@ -106,25 +106,27 @@ protected:
 #endif /* WITH_NODE_OPAL */
 
 		<< "Supported node-types:" << std::endl;
-		for (auto *vt : *node_types)
-			std::cout << " - " << std::left << std::setw(18) << *vt << vt->description << std::endl;
+		for (auto p : Registry::lookup<NodeFactory>()) {
+			if (!p->isInternal())
+				std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
+		}
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
-		for (Plugin *p : Registry::lookup<FormatFactory>())
+		for (auto p : Registry::lookup<FormatFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 #ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
-		for (Plugin *p : Registry::lookup<HookFactory>())
+		for (auto p : Registry::lookup<HookFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
 #ifdef WITH_API
 		std::cout << "Supported API commands:" << std::endl;
-		for (Plugin *p : Registry::lookup<api::RequestFactory>())
+		for (auto p : Registry::lookup<api::RequestFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_API */
@@ -221,6 +223,4 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-/** @} */
 

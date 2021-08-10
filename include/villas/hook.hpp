@@ -6,7 +6,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,23 +27,29 @@
 
 #pragma once
 
-#include <villas/list.h>
-#include <villas/signal.h>
+#include <villas/list.hpp>
+#include <villas/signal.hpp>
+#include <villas/signal_list.hpp>
 #include <villas/log.hpp>
 #include <villas/plugin.hpp>
 #include <villas/exceptions.hpp>
 
-/* Forward declarations */
-struct vpath;
-struct vnode;
-struct sample;
-
 namespace villas {
 namespace node {
 
+/* Forward declarations */
+class Node;
+class Path;
+struct Sample;
+class HookFactory;
+
 class Hook {
 
+	friend HookFactory;
+
 public:
+	using Ptr = std::shared_ptr<Hook>;
+
 	enum class Flags {
 		BUILTIN = (1 << 0),	/**< Should we add this hook by default to every path?. */
 		PATH = (1 << 1),	/**< This hook type is used by paths. */
@@ -61,34 +67,32 @@ public:
 protected:
 	Logger logger;
 
+	HookFactory *factory;
+
 	enum State state;
 
 	int flags;
 	unsigned priority;		/**< A priority to change the order of execution within one type of hook. */
 	bool enabled;			/**< Is this hook active? */
 
-	struct vpath *path;
-	struct vnode *node;
+	Path *path;
+	Node *node;
 
-	struct vlist signals;
+	SignalList::Ptr signals;
 
 	json_t *config;			/**< A JSON object containing the configuration of the hook. */
 
 public:
-	Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true);
+	Hook(Path *p, Node *n, int fl, int prio, bool en = true);
 
 	virtual
-	~Hook();
+	~Hook()
+	{ }
 
 	virtual
 	void parse(json_t *json);
 
-	void prepare(struct vlist *sigs);
-
-	void setLogger(Logger log)
-	{
-		logger = log;
-	}
+	void prepare(SignalList::Ptr sigs);
 
 	Logger getLogger()
 	{
@@ -123,7 +127,11 @@ public:
 
 	virtual
 	void prepare()
-	{ }
+	{
+		assert(state == State::CHECKED);
+
+		state = State::PREPARED;
+	}
 
 	/** Called periodically. Period is set by global 'stats' option in the configuration file. */
 	virtual
@@ -141,7 +149,7 @@ public:
 
 	/** Called whenever a sample is processed. */
 	virtual
-	Reason process(struct sample *smp)
+	Reason process(struct Sample *smp)
 	{
 		return Reason::OK;
 	};
@@ -157,14 +165,19 @@ public:
 	}
 
 	virtual
-	struct vlist * getSignals()
+	SignalList::Ptr getSignals() const
 	{
-		return &signals;
+		return signals;
 	}
 
 	json_t * getConfig() const
 	{
 		return config;
+	}
+
+	HookFactory * getFactory() const
+	{
+		return factory;
 	}
 
 	bool isEnabled() const
@@ -180,7 +193,7 @@ protected:
 	std::string signalName;
 
 public:
-	SingleSignalHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	SingleSignalHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		signalIndex(0)
 	{ }
@@ -214,6 +227,7 @@ public:
 class LimitHook : public Hook {
 
 public:
+	using Ptr = std::shared_ptr<LimitHook>;
 	using Hook::Hook;
 
 	virtual void setRate(double rate, double maxRate = -1) = 0;
@@ -236,18 +250,30 @@ public:
 
 class HookFactory : public plugin::Plugin {
 
+protected:
+	virtual
+	void init(Hook::Ptr h)
+	{
+		h->logger = getLogger();
+		h->factory = this;
+	}
+
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual Hook * make(struct vpath *p, struct vnode *n) = 0;
-
-	virtual int getFlags() const = 0;
-	virtual unsigned getPriority() const = 0;
+	virtual Hook::Ptr make(Path *p, Node *n) = 0;
 
 	virtual
-	std::string
-	getType() const
-	{ return "hook"; }
+	int getFlags() const = 0;
+
+	virtual
+	unsigned getPriority() const = 0;
+
+	virtual
+	std::string getType() const
+	{
+		return "hook";
+	}
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0, unsigned prio = 99>
@@ -256,30 +282,38 @@ class HookPlugin : public HookFactory {
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook * make(struct vpath *p, struct vnode *n)
+	virtual Hook::Ptr make(Path *p, Node *n)
 	{
-		auto *h = new T(p, n, getFlags(), getPriority());
+		auto h = std::make_shared<T>(p, n, getFlags(), getPriority());
 
-		h->setLogger(getLogger());
+		init(h);
 
 		return h;
 	}
 
-	virtual std::string
-	getName() const
-	{ return name; }
+	virtual
+	std::string getName() const
+	{
+		return name;
+	}
 
-	virtual std::string
-	getDescription() const
-	{ return desc; }
+	virtual
+	std::string getDescription() const
+	{
+		return desc;
+	}
 
-	virtual int
-	getFlags() const
-	{ return flags; }
+	virtual
+	int getFlags() const
+	{
+		return flags;
+	}
 
-	virtual unsigned
-	getPriority() const
-	{ return prio; }
+	virtual
+	unsigned getPriority() const
+	{
+		return prio;
+	}
 };
 
 } /* namespace node */

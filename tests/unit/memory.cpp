@@ -1,7 +1,7 @@
 /** Unit tests for memory management
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,12 +25,14 @@
 
 #include <cerrno>
 
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
+
+using namespace villas::node;
 
 extern void init_memory();
 
@@ -40,29 +42,29 @@ extern void init_memory();
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, PAGESIZE, HUGEPAGESIZE),
 	DataPoints(size_t, 1, 8, PAGESIZE, PAGESIZE),
-	DataPoints(struct memory_type *, &memory_heap, &memory_mmap_hugetlb, &memory_mmap_hugetlb)
+	DataPoints(struct memory::Type *, &memory::heap, &memory::mmap_hugetlb, &memory::mmap_hugetlb)
 };
 
 // cppcheck-suppress unknownMacro
-Theory((size_t len, size_t align, struct memory_type *mt), memory, aligned, .init = init_memory) {
+Theory((size_t len, size_t align, struct memory::Type *mt), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
 
-	if (!utils::isPrivileged() && mt == &memory_mmap_hugetlb)
+	if (!utils::isPrivileged() && mt == &memory::mmap_hugetlb)
 		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
 
-	ptr = memory_alloc_aligned(len, align, mt);
+	ptr = memory::alloc_aligned(len, align, mt);
 	cr_assert_not_null(ptr, "Failed to allocate memory");
 
 	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
 
 #ifndef __APPLE__
-	if (mt == &memory_mmap_hugetlb) {
+	if (mt == &memory::mmap_hugetlb) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE), "Memory at %p is not alligned to %#x byte bounary", ptr, HUGEPAGESIZE);
 	}
 #endif
 
-	ret = memory_free(ptr);
+	ret = memory::free(ptr);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));
 }
 
@@ -72,49 +74,49 @@ Test(memory, manager, .init = init_memory) {
 
 	int ret;
 	void *p, *p1, *p2, *p3;
-	struct memory_type *m;
+	struct memory::Type *m;
 
 	total_size = 1 << 10;
-	max_block = total_size - sizeof(struct memory_type) - sizeof(struct memory_block);
+	max_block = total_size - sizeof(struct memory::Type) - sizeof(struct memory::Block);
 
-	p = memory_alloc(total_size, &memory_heap);
+	p = memory::alloc(total_size, &memory::heap);
 	cr_assert_not_null(p);
 
-	m = memory_managed(p, total_size);
+	m = memory::managed(p, total_size);
 	cr_assert_not_null(m);
 
-	p1 = memory_alloc(16, m);
+	p1 = memory::alloc(16, m);
 	cr_assert_not_null(p1);
 
-	p2 = memory_alloc(32, m);
+	p2 = memory::alloc(32, m);
 	cr_assert_not_null(p2);
 
-	ret = memory_free(p1);
+	ret = memory::free(p1);
 	cr_assert(ret == 0);
 
-	p1 = memory_alloc_aligned(128, 128, m);
+	p1 = memory::alloc_aligned(128, 128, m);
 	cr_assert_not_null(p1);
 	cr_assert(IS_ALIGNED(p1, 128));
 
-	p3 = memory_alloc_aligned(128, 256, m);
+	p3 = memory::alloc_aligned(128, 256, m);
 	cr_assert(p3);
 	cr_assert(IS_ALIGNED(p3, 256));
 
-	ret = memory_free(p2);
+	ret = memory::free(p2);
 	cr_assert(ret == 0);
 
-	ret = memory_free(p1);
+	ret = memory::free(p1);
 	cr_assert(ret == 0);
 
-	ret = memory_free(p3);
+	ret = memory::free(p3);
 	cr_assert(ret == 0);
 
-	p1 = memory_alloc(max_block, m);
+	p1 = memory::alloc(max_block, m);
 	cr_assert_not_null(p1);
 
-	ret = memory_free(p1);
+	ret = memory::free(p1);
 	cr_assert(ret == 0);
 
-	ret = memory_free(p);
+	ret = memory::free(p);
 	cr_assert(ret == 0);
 }

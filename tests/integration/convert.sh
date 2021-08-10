@@ -3,7 +3,7 @@
 # Integration test for villas convert tool
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -24,17 +24,22 @@
 
 set -e
 
-OUTPUT_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 FORMATS="villas.human csv tsv json"
 
-# Generate test data
-villas signal -v5 -n -l20 mixed > ${INPUT_FILE}
+villas signal -v5 -n -l20 mixed > input.dat
 
 for FORMAT in ${FORMATS}; do
-	villas convert -o ${FORMAT} < ${INPUT_FILE} | tee ${TEMP} | \
-	villas convert -i ${FORMAT} > ${OUTPUT_FILE}
+	villas convert -o ${FORMAT} < input.dat | tee ${TEMP} | \
+	villas convert -i ${FORMAT} > output.dat
 
-	villas compare ${INPUT_FILE} ${OUTPUT_FILE}
+	villas compare input.dat output.dat
 done

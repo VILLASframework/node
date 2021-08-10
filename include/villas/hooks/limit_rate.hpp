@@ -1,7 +1,7 @@
 /** Rate-limiting hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,10 +24,6 @@
 
 #include <villas/hook.hpp>
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 namespace villas {
 namespace node {
 
@@ -44,7 +40,7 @@ protected:
 	timespec last;
 
 public:
-	LimitRateHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	LimitRateHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		LimitHook(p, n, fl, prio, en),
 		mode(LIMIT_RATE_LOCAL),
 		deadtime(0),
@@ -58,13 +54,8 @@ public:
 
 	virtual void parse(json_t *json);
 
-	virtual Hook::Reason process(sample *smp);
+	virtual Hook::Reason process(struct Sample *smp);
 };
-
 
 } /* namespace node */
 } /* namespace villas */
-
-/**
- * @}
- */

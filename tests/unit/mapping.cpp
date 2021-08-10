@@ -1,7 +1,7 @@
 /** Unit tests for sample value mapping.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,79 +22,80 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/mapping.h>
-#include <villas/node.h>
-#include <villas/list.h>
+#include <villas/mapping.hpp>
+#include <villas/node.hpp>
+#include <villas/list.hpp>
 #include <villas/utils.hpp>
-#include <villas/signal.h>
+#include <villas/signal.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
 // cppcheck-suppress syntaxError
 Test(mapping, parse_nodes)
 {
 	int ret;
-	struct mapping_entry m;
+	MappingEntry m;
 
-	ret = mapping_entry_parse_str(&m, "apple.ts.origin");
+	ret = m.parseString("apple.ts.origin");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "apple");
-	cr_assert_eq(m.type, MappingType::TIMESTAMP);
-	cr_assert_eq(m.timestamp.type, MappingTimestampType::ORIGIN);
+	cr_assert_str_eq(m.nodeName.c_str(), "apple");
+	cr_assert_eq(m.type, MappingEntry::Type::TIMESTAMP);
+	cr_assert_eq(m.timestamp.type, MappingEntry::TimestampType::ORIGIN);
 
-	ret = mapping_entry_parse_str(&m, "cherry.stats.owd.mean");
+	ret = m.parseString("cherry.stats.owd.mean");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "cherry");
-	cr_assert_eq(m.type, MappingType::STATS);
+	cr_assert_str_eq(m.nodeName.c_str(), "cherry");
+	cr_assert_eq(m.type, MappingEntry::Type::STATS);
 	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
 	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
-	ret = mapping_entry_parse_str(&m, "carrot.data[1-2]");
+	ret = m.parseString("carrot.data[1-2]");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "1");
 	cr_assert_str_eq(m.data.last, "2");
 
-	ret = mapping_entry_parse_str(&m, "carrot");
+	ret = m.parseString("carrot");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_eq(m.data.first, nullptr);
 	cr_assert_eq(m.data.last, nullptr);
 
-	ret = mapping_entry_parse_str(&m, "carrot.data[sole]");
+	ret = m.parseString("carrot.data[sole]");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "sole");
 	cr_assert_eq(m.data.last, nullptr);
 
-	ret = mapping_entry_parse_str(&m, "carrot.sole");
+	ret = m.parseString("carrot.sole");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "sole");
 	cr_assert_eq(m.data.last, nullptr);
 
-	ret = mapping_entry_parse_str(&m, "carrot.data.sole");
+	ret = m.parseString("carrot.data.sole");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "sole");
 	cr_assert_eq(m.data.last, nullptr);
 
-	ret = mapping_entry_parse_str(&m, "carrot.data[sole-mio]");
+	ret = m.parseString("carrot.data[sole-mio]");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "sole");
 	cr_assert_str_eq(m.data.last, "mio");
 
-	ret = mapping_entry_parse_str(&m, "carrot[sole-mio]");
+	ret = m.parseString("carrot[sole-mio]");
 	cr_assert_eq(ret, 0);
-	cr_assert_str_eq(m.node_name, "carrot");
-	cr_assert_eq(m.type, MappingType::DATA);
+	cr_assert_str_eq(m.nodeName.c_str(), "carrot");
+	cr_assert_eq(m.type, MappingEntry::Type::DATA);
 	cr_assert_str_eq(m.data.first, "sole");
 	cr_assert_str_eq(m.data.last, "mio");
 }

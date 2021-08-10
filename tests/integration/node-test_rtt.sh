@@ -3,7 +3,7 @@
 # Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,13 +22,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# We skip this test for now
 echo "Test not yet supported"
 exit 99
 
-CONFIG_FILE=$(mktemp)
+set -e
 
-cat > ${CONFIG_FILE} <<EOF
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+mkdir ./logs
+
+cat > config.json <<EOF
 {
 	"logging": { "level": 2 },
 	"stats": 1,
@@ -36,7 +46,7 @@ cat > ${CONFIG_FILE} <<EOF
 		"test": {
 			"type": "test_rtt",
 			"cooldown": 2,
-			"output" : "${LOGDIR}/test_rtt/",
+			"output": "./logs",
 			"cases": [
 				{
 					"rates": 55.0,
@@ -49,7 +59,7 @@ cat > ${CONFIG_FILE} <<EOF
 					"duration": 5
 				}
 			],
-			"hooks" : [
+			"hooks": [
 				{
 					"type": "stats",
 					"verbose": false
@@ -66,5 +76,4 @@ cat > ${CONFIG_FILE} <<EOF
 }
 EOF
 
-# Start node
-villas node ${CONFIG_FILE}
+villas node config.json

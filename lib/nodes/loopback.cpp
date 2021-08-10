@@ -1,7 +1,7 @@
 /** Node-type for loopback connections.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,39 +22,112 @@
 
 #include <cstring>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
+#include <villas/node/config.hpp>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/loopback.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static struct vnode_type p;
-
-int loopback_init(struct vnode *n)
+LoopbackNode::LoopbackNode(const std::string &name) :
+	Node(name),
+	queuelen(DEFAULT_QUEUE_LENGTH),
+	mode(QueueSignalledMode::AUTO)
 {
-	struct loopback *l = (struct loopback *) n->_vd;
+	queue.queue.state = State::DESTROYED;
+}
 
-	l->mode = QueueSignalledMode::AUTO;
-	l->queuelen = DEFAULT_QUEUE_LENGTH;
+LoopbackNode::~LoopbackNode()
+{
+	int ret __attribute__((unused));
+
+	ret = queue_signalled_destroy(&queue);
+}
+
+int LoopbackNode::prepare()
+{
+	assert(state == State::CHECKED);
+
+	int ret = queue_signalled_init(&queue, queuelen, &memory::mmap, mode);
+	if (ret)
+		throw RuntimeError("Failed to initialize queue");
+
+	state = State::PREPARED;
 
 	return 0;
 }
 
-int loopback_parse(struct vnode *n, json_t *json)
+int LoopbackNode::stop()
 {
-	struct loopback *l = (struct loopback *) n->_vd;
+	int ret;
+
+	ret = queue_signalled_close(&queue);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int LoopbackNode::_read(struct Sample * smps[], unsigned cnt)
+{
+	int avail;
+
+	struct Sample *cpys[cnt];
+
+	avail = queue_signalled_pull_many(&queue, (void **) cpys, cnt);
+
+	sample_copy_many(smps, cpys, avail);
+	sample_decref_many(cpys, avail);
+
+	return avail;
+}
+
+int LoopbackNode::_write(struct Sample * smps[], unsigned cnt)
+{
+	sample_incref_many(smps, cnt);
+
+	int pushed = queue_signalled_push_many(&queue, (void **) smps, cnt);
+	if (pushed < 0) {
+		sample_decref_many(smps, cnt);
+		return pushed;
+	}
+
+	/* Released unpushed samples */
+	if ((unsigned) pushed < cnt) {
+		sample_decref_many(smps + pushed, cnt - pushed);
+		logger->warn("Queue overrun");
+	}
+
+	return pushed;
+}
+
+std::vector<int> LoopbackNode::getPollFDs()
+{
+	return { queue_signalled_fd(&queue) };
+}
+
+const std::string & LoopbackNode::getDetails()
+{
+	if (details.empty()) {
+		details = fmt::format("queuelen={}", queuelen);
+	}
+
+	return details;
+}
+
+int LoopbackNode::parse(json_t *json)
+{
 	const char *mode_str = nullptr;
 
 	json_error_t err;
 	int ret;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
-		"queuelen", &l->queuelen,
+		"queuelen", queuelen,
 		"mode", &mode_str
 	);
 	if (ret)
@@ -62,15 +135,15 @@ int loopback_parse(struct vnode *n, json_t *json)
 
 	if (mode_str) {
 		if (!strcmp(mode_str, "auto"))
-			l->mode = QueueSignalledMode::AUTO;
+			mode = QueueSignalledMode::AUTO;
 #ifdef HAVE_EVENTFD
 		else if (!strcmp(mode_str, "eventfd"))
-			l->mode = QueueSignalledMode::EVENTFD;
+			mode = QueueSignalledMode::EVENTFD;
 #endif
 		else if (!strcmp(mode_str, "pthread"))
-			l->mode = QueueSignalledMode::PTHREAD;
+			mode = QueueSignalledMode::PTHREAD;
 		else if (!strcmp(mode_str, "polling"))
-			l->mode = QueueSignalledMode::POLLING;
+			mode = QueueSignalledMode::POLLING;
 #ifdef __APPLE__
 		else if (!strcmp(mode_str, "pipe"))
 			l->mode = QueueSignalledMode::PIPE;
@@ -82,81 +155,8 @@ int loopback_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-int loopback_prepare(struct vnode *n)
-{
-	struct loopback *l = (struct loopback *) n->_vd;
-
-	return queue_signalled_init(&l->queue, l->queuelen, memory_default, l->mode);
-}
-
-int loopback_destroy(struct vnode *n)
-{
-	struct loopback *l= (struct loopback *) n->_vd;
-
-	return queue_signalled_destroy(&l->queue);
-}
-
-int loopback_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
-{
-	int avail;
-
-	struct loopback *l = (struct loopback *) n->_vd;
-	struct sample *cpys[cnt];
-
-	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
-
-	sample_copy_many(smps, cpys, avail);
-	sample_decref_many(cpys, avail);
-
-	return avail;
-}
-
-int loopback_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
-{
-	struct loopback *l = (struct loopback *) n->_vd;
-
-	sample_incref_many(smps, cnt);
-
-	return queue_signalled_push_many(&l->queue, (void **) smps, cnt);
-}
-
-char * loopback_print(struct vnode *n)
-{
-	struct loopback *l = (struct loopback *) n->_vd;
-	char *buf = nullptr;
-
-	strcatf(&buf, "queuelen=%d", l->queuelen);
-
-	return buf;
-}
-
-int loopback_poll_fds(struct vnode *n, int fds[])
-{
-	struct loopback *l = (struct loopback *) n->_vd;
-
-	fds[0] = queue_signalled_fd(&l->queue);
-
-	return 1;
-}
-
-__attribute__((constructor(110)))
-static void register_plugin() {
-	p.name		= "loopback";
-	p.description	= "Loopback to connect multiple paths";
-	p.vectorize	= 0;
-	p.flags		= 0;
-	p.size		= sizeof(struct loopback);
-	p.parse		= loopback_parse;
-	p.print		= loopback_print;
-	p.prepare	= loopback_prepare;
-	p.init		= loopback_init;
-	p.destroy	= loopback_destroy;
-	p.read		= loopback_read;
-	p.write		= loopback_write;
-	p.poll_fds	= loopback_poll_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
-}
+static char n[] = "loopback";
+static char d[] = "loopback node-type";
+static NodePlugin<LoopbackNode, n, d, (int) NodeFactory::Flags::SUPPORTS_POLL |
+                                      (int) NodeFactory::Flags::SUPPORTS_READ |
+				      (int) NodeFactory::Flags::SUPPORTS_WRITE> nf;

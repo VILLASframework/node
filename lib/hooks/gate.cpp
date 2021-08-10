@@ -1,7 +1,7 @@
 /** Gate hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,18 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cmath>
 #include <string>
 #include <limits>
 
 #include <villas/hook.hpp>
-#include <villas/node.h>
-#include <villas/sample.h>
-#include <villas/timing.h>
+#include <villas/node.hpp>
+#include <villas/sample.hpp>
+#include <villas/timing.hpp>
 
 namespace villas {
 namespace node {
@@ -56,7 +52,7 @@ protected:
 	timespec startTime;
 
 public:
-	GateHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	GateHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		SingleSignalHook(p, n, fl, prio, en),
 		mode(Mode::RISING_EDGE),
 		threshold(0.5),
@@ -109,14 +105,14 @@ public:
 		SingleSignalHook::prepare();
 
 		/* Check if signal type is float */
-		auto sig = (struct signal *) vlist_at(&signals, signalIndex);
+		auto sig = signals->getByIndex(signalIndex);
 		if (sig->type != SignalType::FLOAT)
 			throw RuntimeError("Gate signal must be of type float");
 
 		state = State::PREPARED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -176,5 +172,3 @@ static HookPlugin<GateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Fla
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

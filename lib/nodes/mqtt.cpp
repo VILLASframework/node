@@ -1,7 +1,7 @@
 /** Node type: mqtt
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,9 +21,10 @@
  *********************************************************************************/
 
 #include <cstring>
+#include <mutex>
 #include <mosquitto.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/mqtt.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -33,13 +34,18 @@ using namespace villas::node;
 using namespace villas::utils;
 
 // Each process has a list of clients for which a thread invokes the mosquitto loop
-static struct vlist clients;
+static std::list<mosquitto *> clients;
+static std::mutex clients_lock;
+
 static pthread_t thread;
 static Logger logger;
 
-static void * mosquitto_loop_thread(void *ctx)
+static
+void * mosquitto_loop_thread(void *ctx)
 {
 	int ret;
+
+	auto logger = logging.get("mqtt");
 
 	// Set the cancel type of this thread to async
 	ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
@@ -47,24 +53,23 @@ static void * mosquitto_loop_thread(void *ctx)
 		throw RuntimeError("Unable to set cancel type of MQTT communication thread to asynchronous.");
 
 	while (true) {
-		for (unsigned i = 0; i < vlist_length(&clients); i++) {
-			struct vnode *n = (struct vnode *) vlist_at(&clients, i);
-			struct mqtt *m = (struct mqtt *) n->_vd;
+		std::lock_guard<std::mutex> guard(clients_lock);
 
+		for (auto *client : clients) {
 			// Execute mosquitto loop for this client
-			ret = mosquitto_loop(m->client, 0, 1);
+			ret = mosquitto_loop(client, 0, 1);
 			if (ret) {
-				n->logger->warn("Connection error: {}, attempting reconnect", mosquitto_strerror(ret));
+				logger->warn("Connection error: {}, attempting reconnect", mosquitto_strerror(ret));
 
-				ret = mosquitto_reconnect(m->client);
+				ret = mosquitto_reconnect(client);
 				if (ret != MOSQ_ERR_SUCCESS)
-					n->logger->warn("Reconnection to broker failed: {}", mosquitto_strerror(ret));
+					logger->warn("Reconnection to broker failed: {}", mosquitto_strerror(ret));
 				else
-					n->logger->warn("Successfully reconnected to broker: {}", mosquitto_strerror(ret));
+					logger->warn("Successfully reconnected to broker: {}", mosquitto_strerror(ret));
 
-				ret = mosquitto_loop(m->client, 0, 1);
+				ret = mosquitto_loop(client, 0, 1);
 				if (ret != MOSQ_ERR_SUCCESS)
-					n->logger->warn("Persisting connection error: {}", mosquitto_strerror(ret));
+					logger->warn("Persisting connection error: {}", mosquitto_strerror(ret));
 			}
 		}
 	}
@@ -72,9 +77,10 @@ static void * mosquitto_loop_thread(void *ctx)
 	return nullptr;
 }
 
-static void mqtt_log_cb(struct mosquitto *mosq, void *ctx, int level, const char *str)
+static
+void mqtt_log_cb(struct mosquitto *mosq, void *ctx, int level, const char *str)
 {
-	struct vnode *n = (struct vnode *) ctx;
+	auto *n = (NodeCompat *) ctx;
 
 	switch (level) {
 		case MOSQ_LOG_NONE:
@@ -97,10 +103,11 @@ static void mqtt_log_cb(struct mosquitto *mosq, void *ctx, int level, const char
 	}
 }
 
-static void mqtt_connect_cb(struct mosquitto *mosq, void *ctx, int result)
+static
+void mqtt_connect_cb(struct mosquitto *mosq, void *ctx, int result)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *n = (NodeCompat *) ctx;
+	auto *m = n->getData<struct mqtt>();
 
 	int ret;
 
@@ -115,20 +122,22 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *ctx, int result)
 		n->logger->warn("No subscription as no topic is configured");
 }
 
-static void mqtt_disconnect_cb(struct mosquitto *mosq, void *ctx, int result)
+static
+void mqtt_disconnect_cb(struct mosquitto *mosq, void *ctx, int result)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *n = (NodeCompat *) ctx;
+	auto *m = n->getData<struct mqtt>();
 
 	n->logger->info("Disconnected from broker {}", m->host);
 }
 
-static void mqtt_message_cb(struct mosquitto *mosq, void *ctx, const struct mosquitto_message *msg)
+static
+void mqtt_message_cb(struct mosquitto *mosq, void *ctx, const struct mosquitto_message *msg)
 {
 	int ret;
-	struct vnode *n = (struct vnode *) ctx;
-	struct mqtt *m = (struct mqtt *) n->_vd;
-	struct sample *smps[n->in.vectorize];
+	auto *n = (NodeCompat *) ctx;
+	auto *m = n->getData<struct mqtt>();
+	struct Sample *smps[n->in.vectorize];
 
 	n->logger->debug("Received a message of {} bytes from broker {}", msg->payloadlen, m->host);
 
@@ -156,27 +165,28 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *ctx, const struct mosq
 		n->logger->warn("Failed to enqueue samples");
 }
 
-static void mqtt_subscribe_cb(struct mosquitto *mosq, void *ctx, int mid, int qos_count, const int *granted_qos)
+static
+void mqtt_subscribe_cb(struct mosquitto *mosq, void *ctx, int mid, int qos_count, const int *granted_qos)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *n = (NodeCompat *) ctx;
+	auto *m = n->getData<struct mqtt>();
 
 	n->logger->info("Subscribed to broker {}", m->host);
 }
 
-int mqtt_reverse(struct vnode *n)
+int villas::node::mqtt_reverse(NodeCompat *n)
 {
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	SWAP(m->publish, m->subscribe);
 
 	return 0;
 }
 
-int mqtt_init(struct vnode *n)
+int villas::node::mqtt_init(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	m->client = mosquitto_new(nullptr, true, (void *) n);
 	if (!m->client)
@@ -191,6 +201,8 @@ int mqtt_init(struct vnode *n)
 	mosquitto_disconnect_callback_set(m->client, mqtt_disconnect_cb);
 	mosquitto_message_callback_set(m->client, mqtt_message_cb);
 	mosquitto_subscribe_callback_set(m->client, mqtt_subscribe_cb);
+
+	m->formatter = nullptr;
 
 	/* Default values */
 	m->port = 1883;
@@ -222,10 +234,10 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_parse(struct vnode *n, json_t *json)
+int villas::node::mqtt_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	const char *host;
 	const char *publish = nullptr;
@@ -299,18 +311,21 @@ int mqtt_parse(struct vnode *n, json_t *json)
 	}
 
 	/* Format */
+	if (m->formatter)
+		delete m->formatter;
 	m->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("json");
 	if (!m->formatter)
 		throw ConfigError(json_format, "node-config-node-mqtt-format", "Invalid format configuration");
+
 	return 0;
 }
 
-int mqtt_check(struct vnode *n)
+int villas::node::mqtt_check(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	ret = mosquitto_sub_topic_check(m->subscribe);
 	if (ret != MOSQ_ERR_SUCCESS)
@@ -323,14 +338,14 @@ int mqtt_check(struct vnode *n)
 	return 0;
 }
 
-int mqtt_prepare(struct vnode *n)
+int villas::node::mqtt_prepare(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
-	m->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	m->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
+	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
 	if (ret)
 		return ret;
 
@@ -341,9 +356,9 @@ int mqtt_prepare(struct vnode *n)
 	return 0;
 }
 
-char * mqtt_print(struct vnode *n)
+char * villas::node::mqtt_print(NodeCompat *n)
 {
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	char *buf = nullptr;
 
@@ -367,14 +382,12 @@ char * mqtt_print(struct vnode *n)
 	return buf;
 }
 
-int mqtt_destroy(struct vnode *n)
+int villas::node::mqtt_destroy(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	mosquitto_destroy(m->client);
-
-	delete m->formatter;
 
 	ret = pool_destroy(&m->pool);
 	if (ret)
@@ -386,22 +399,29 @@ int mqtt_destroy(struct vnode *n)
 
 	if (m->publish)
 		free(m->publish);
+
 	if (m->subscribe)
 		free(m->subscribe);
+
 	if (m->password)
 		free(m->password);
+
 	if (m->username)
 		free(m->username);
 
-	free(m->host);
+	if (m->host)
+		free(m->host);
+
+	if (m->formatter)
+		delete m->formatter;
 
 	return 0;
 }
 
-int mqtt_start(struct vnode *n)
+int villas::node::mqtt_start(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	if (m->username && m->password) {
 		ret = mosquitto_username_pw_set(m->client, m->username, m->password);
@@ -429,7 +449,10 @@ int mqtt_start(struct vnode *n)
 
 	// Add client to global list of MQTT clients
 	// so that thread can call mosquitto loop for this client
-	vlist_push(&clients, n);
+	{
+		std::lock_guard<std::mutex> guard(clients_lock);
+		clients.push_back(m->client);
+	}
 
 	return 0;
 
@@ -439,15 +462,18 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_stop(struct vnode *n)
+int villas::node::mqtt_stop(NodeCompat *n)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	// Unregister client from global MQTT client list
 	// so that mosquitto loop is no longer invoked  for this client
 	// important to do that before disconnecting from broker, otherwise, mosquitto thread will attempt to reconnect
-	vlist_remove(&clients, vlist_index(&clients, n));
+	{
+		std::lock_guard<std::mutex> guard(clients_lock);
+		clients.remove(m->client);
+	}
 
 	ret = mosquitto_disconnect(m->client);
 	if (ret != MOSQ_ERR_SUCCESS)
@@ -461,15 +487,11 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_type_start(villas::node::SuperNode *sn)
+int villas::node::mqtt_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
 	logger = logging.get("node:mqtt");
-
-	ret = vlist_init(&clients);
-	if (ret)
-		return ret;
 
 	ret = mosquitto_lib_init();
 	if (ret != MOSQ_ERR_SUCCESS)
@@ -488,7 +510,7 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_type_stop()
+int villas::node::mqtt_type_stop()
 {
 	int ret;
 
@@ -508,12 +530,8 @@ int mqtt_type_stop()
 		goto mosquitto_error;
 
 	// When this is called the list of clients should be empty
-	if (vlist_length(&clients) > 0)
+	if (clients.size() > 0)
 		throw RuntimeError("List of MQTT clients contains elements at time of destruction. Call node_stop for each MQTT node before stopping node type!");
-
-	ret = vlist_destroy(&clients, nullptr, false);
-	if (ret)
-		return ret;
 
 	return 0;
 
@@ -523,11 +541,11 @@ mosquitto_error:
 	return ret;
 }
 
-int mqtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::mqtt_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int pulled;
-	struct mqtt *m = (struct mqtt *) n->_vd;
-	struct sample *smpt[cnt];
+	auto *m = n->getData<struct mqtt>();
+	struct Sample *smpt[cnt];
 
 	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, cnt);
 
@@ -537,10 +555,10 @@ int mqtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return pulled;
 }
 
-int mqtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::mqtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	size_t wbytes;
 
@@ -563,16 +581,16 @@ int mqtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int mqtt_poll_fds(struct vnode *n, int fds[])
+int villas::node::mqtt_poll_fds(NodeCompat *n, int fds[])
 {
-	struct mqtt *m = (struct mqtt *) n->_vd;
+	auto *m = n->getData<struct mqtt>();
 
 	fds[0] = queue_signalled_fd(&m->queue);
 
 	return 1;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -597,8 +615,5 @@ static void register_plugin() {
 	p.reverse	= mqtt_reverse;
 	p.poll_fds	= mqtt_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

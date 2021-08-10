@@ -3,7 +3,7 @@
  * @file
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,23 +22,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup uldaq Read USB analog to digital converters
- * @{
- */
-
 #pragma once
 
 #include <pthread.h>
 
 #include <villas/queue_signalled.h>
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 
 #include <uldaq.h>
 
 #define ULDAQ_MAX_DEV_COUNT 100
 #define ULDAQ_MAX_RANGE_COUNT 8
+
+namespace villas {
+namespace node {
 
 struct uldaq {
 	const char *device_id;
@@ -71,4 +68,24 @@ struct uldaq {
 	} out;
 };
 
-/** @} */
+int uldaq_type_start(SuperNode *sn);
+
+int uldaq_init(NodeCompat *n);
+
+int uldaq_destroy(NodeCompat *n);
+
+int uldaq_parse(NodeCompat *n, json_t *json);
+
+char * uldaq_print(NodeCompat *n);
+
+int uldaq_check(NodeCompat *n);
+
+int uldaq_start(NodeCompat *n);
+
+int uldaq_stop(NodeCompat *n);
+
+int uldaq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+
+} /* namespace node */
+} /* namespace villas */

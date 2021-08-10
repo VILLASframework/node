@@ -7,7 +7,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,10 +25,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
-
-/** @addtogroup kernel Kernel
- * @{
- */
 
 #pragma once
 
@@ -83,5 +79,3 @@ int mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
 } /* namespace tc */
 } /* namespace kernel */
 } /* namespace villas */
-
-/** @} */

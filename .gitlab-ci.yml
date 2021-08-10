@@ -101,9 +101,13 @@ test:cppcheck:
              --error-exitcode=1
              --quiet
              --inline-suppr
-             --enable=warning,performance,portability,information,missingInclude
+             --enable=warning,performance,portability,missingInclude
              --std=c++11
              --suppress=noValidConfiguration
+             -U '_MSC_VER;_WIN32;_M_ARM'
+             -U '_MSC_VER;_WIN32;_M_AMD64;_M_X64'
+             -U '_MSC_FULL_VER;_MSC_VER'
+             -U '_MSC_BUILD;_MSC_VER'
              -I include
              -I common/include
              src/ lib/ tests/unit/ | tee cppcheck.log
@@ -147,9 +151,13 @@ test:integration:
     paths:
     - build/tests/integration/
   services:
-  - eclipse-mosquitto
-  - rabbitmq:3.8
-  - redis
+  - name: eclipse-mosquitto:2.0
+    alias: mosquitto
+    command: [ mosquitto, -c, /mosquitto-no-auth.conf ]
+  - name: rwthacs/rabbitmq
+    alias: rabbitmq
+  - name: redis:6.2
+    alias: redis
   tags:
   - docker
   needs:

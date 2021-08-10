@@ -3,7 +3,7 @@
 # Run integration tests
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -35,12 +35,13 @@ export PATH SRCDIR BUILDDIR LOGDIR
 
 # Default values
 VERBOSE=${VERBOSE:-0}
+FAIL_FAST=${FAIL_FAST:-0}
 FILTER=${FILTER:-'*'}
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-TIMEOUT=${TIMEOUT:-2m}
+TIMEOUT=${TIMEOUT:-1m}
 
 # Parse command line arguments
-while getopts ":f:l:t:v" OPT; do
+while getopts ":f:l:t:vg" OPT; do
 	case ${OPT} in
 		f)
 			FILTER=${OPTARG}
@@ -53,6 +54,9 @@ while getopts ":f:l:t:v" OPT; do
 			;;
 		t)
 			TIMEOUT=${OPTARG}
+			;;
+		g)
+			FAIL_FAST=1
 			;;
 		\?)
 			echo "Invalid option: -${OPTARG}" >&2
@@ -126,6 +130,10 @@ for TEST in ${TESTS}; do
 	esac
 
 	TOTAL=$((${TOTAL} + 1))
+
+	if (( ${RC} != 0 && ${RC} != 99 && ${FAIL_FAST} > 0 )); then
+		break
+	fi
 done
 
 # Show summary

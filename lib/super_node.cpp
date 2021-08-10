@@ -1,7 +1,7 @@
 /** The super node object holding the state of the application.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,17 +25,14 @@
 #include <cstring>
 
 #include <villas/super_node.hpp>
-#include <villas/node.h>
-#include <villas/path.h>
-#include <villas/path_source.h>
-#include <villas/path_destination.h>
+#include <villas/node.hpp>
+#include <villas/path.hpp>
 #include <villas/uuid.hpp>
-#include <villas/list.h>
 #include <villas/hook_list.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/config_helper.hpp>
 #include <villas/log.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/kernel/if.hpp>
@@ -97,7 +94,9 @@ void SuperNode::parse(json_t *root)
 {
 	int ret;
 
-	assert(state != State::STARTED);
+	assert(state == State::PARSED ||
+	       state == State::INITIALIZED ||
+	       state == State::CHECKED);
 
 	const char *uuid_str = nullptr;
 
@@ -147,10 +146,9 @@ void SuperNode::parse(json_t *root)
 		const char *name;
 		json_t *json_node;
 		json_object_foreach(json_nodes, name, json_node) {
-			struct vnode_type *nt;
 			const char *type;
 
-			ret = node_is_valid_name(name);
+			ret = Node::isValidName(name);
 			if (!ret)
 				throw RuntimeError("Invalid name for node: {}", name);
 
@@ -158,21 +156,13 @@ void SuperNode::parse(json_t *root)
 			if (ret)
 				throw ConfigError(root, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
 
-			json_object_set(json_node, "name", json_string(name));
+			json_object_set_new(json_node, "name", json_string(name));
 
-			nt = node_type_lookup(type);
-			if (!nt)
-				throw ConfigError(json_node, "node-config-node-type", "Invalid node type: {}", type);
-
-			auto *n = new struct vnode;
+			auto *n = NodeFactory::make(type);
 			if (!n)
 				throw MemoryAllocationError();
 
-			ret = node_init(n, nt);
-			if (ret)
-				throw RuntimeError("Failed to initialize node");
-
-			ret = node_parse(n, json_node, uuid);
+			ret = n->parse(json_node, uuid);
 			if (ret) {
 				auto config_id = fmt::format("node-config-node-{}", type);
 
@@ -193,23 +183,17 @@ void SuperNode::parse(json_t *root)
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-parse:			auto *p = new vpath;
+parse:			auto *p = new Path();
 			if (!p)
 				throw MemoryAllocationError();
 
-			ret = path_init(p);
-			if (ret)
-				throw RuntimeError("Failed to initialize path");
-
-			ret = path_parse(p, json_path, nodes, uuid);
-			if (ret)
-				throw RuntimeError("Failed to parse path");
+			p->parse(json_path, nodes, uuid);
 
 			paths.push_back(p);
 
-			if (p->reverse) {
+			if (p->isReversed()) {
 				/* Only simple paths can be reversed */
-				ret = path_is_simple(p);
+				ret = p->isSimple();
 				if (!ret)
 					throw RuntimeError("Complex paths can not be reversed!");
 
@@ -238,16 +222,18 @@ void SuperNode::check()
 {
 	int ret;
 
-	assert(state == State::INITIALIZED || state == State::PARSED || state == State::CHECKED);
+	assert(state == State::INITIALIZED ||
+	       state == State::PARSED ||
+	       state == State::CHECKED);
 
 	for (auto *n : nodes) {
-		ret = node_check(n);
+		ret = n->check();
 		if (ret)
 			throw RuntimeError("Invalid configuration for node {}", *n);
 	}
 
 	for (auto *p : paths)
-		path_check(p);
+		p->check();
 
 	state = State::CHECKED;
 }
@@ -257,9 +243,14 @@ void SuperNode::prepareNodeTypes()
 	int ret;
 
 	for (auto *n : nodes) {
-		ret = node_type_start(node_type(n), this);
+		auto *nf = n->getFactory();
+
+		if (nf->getState() == State::STARTED)
+			continue;
+
+		ret = nf->start(this);
 		if (ret)
-			throw RuntimeError("Failed to start node-type: {}", *node_type(n));
+			throw RuntimeError("Failed to start node-type: {}", *n->getFactory());
 	}
 }
 
@@ -281,10 +272,10 @@ void SuperNode::startNodes()
 	int ret;
 
 	for (auto *n : nodes) {
-		if (!node_is_enabled(n))
+		if (!n->isEnabled())
 			continue;
 
-		ret = node_start(n);
+		ret = n->start();
 		if (ret)
 			throw RuntimeError("Failed to start node: {}", *n);
 	}
@@ -292,15 +283,9 @@ void SuperNode::startNodes()
 
 void SuperNode::startPaths()
 {
-	int ret;
-
 	for (auto *p : paths) {
-		if (!path_is_enabled(p))
-			continue;
-
-		ret = path_start(p);
-		if (ret)
-			throw RuntimeError("Failed to start path: {}", *p);
+		if (p->isEnabled())
+			p->start();
 	}
 }
 
@@ -309,10 +294,10 @@ void SuperNode::prepareNodes()
 	int ret;
 
 	for (auto *n : nodes) {
-		if (!node_is_enabled(n))
+		if (!n->isEnabled())
 			continue;
 
-		ret = node_prepare(n);
+		ret = n->prepare();
 		if (ret)
 			throw RuntimeError("Failed to prepare node: {}", *n);
 	}
@@ -320,15 +305,9 @@ void SuperNode::prepareNodes()
 
 void SuperNode::preparePaths()
 {
-	int ret;
-
 	for (auto *p : paths) {
-		if (!path_is_enabled(p))
-			continue;
-
-		ret = path_prepare(p, nodes);
-		if (ret)
-			throw RuntimeError("Failed to prepare path: {}", *p);
+		if (p->isEnabled())
+			p->prepare(nodes);
 	}
 }
 
@@ -338,7 +317,7 @@ void SuperNode::prepare()
 
 	assert(state == State::CHECKED);
 
-	ret = memory_init(hugepages);
+	ret = memory::init(hugepages);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory system");
 
@@ -349,10 +328,10 @@ void SuperNode::prepare()
 	preparePaths();
 
 	for (auto *n : nodes) {
-		if (vlist_length(&n->sources) == 0 &&
-		    vlist_length(&n->destinations) == 0) {
+		if (n->sources.size() == 0 &&
+		    n->destinations.size() == 0) {
 			logger->info("Node {} is not used by any path. Disabling...", *n);
-			n->enabled = false;
+			n->setEnabled(false);
 		}
 	}
 
@@ -385,12 +364,10 @@ void SuperNode::start()
 
 void SuperNode::stopPaths()
 {
-	int ret;
-
 	for (auto *p : paths) {
-		ret = path_stop(p);
-		if (ret)
-			throw RuntimeError("Failed to stop path: {}", *p);
+		if (p->getState() == State::STARTED ||
+		    p->getState() == State::PAUSED)
+			p->stop();
 	}
 }
 
@@ -399,9 +376,13 @@ void SuperNode::stopNodes()
 	int ret;
 
 	for (auto *n : nodes) {
-		ret = node_stop(n);
-		if (ret)
-			throw RuntimeError("Failed to stop node: {}", *n);
+		if (n->getState() == State::STARTED ||
+		    n->getState() == State::PAUSED ||
+		    n->getState() == State::STOPPING) {
+			ret = n->stop();
+			if (ret)
+				throw RuntimeError("Failed to stop node: {}", *n);
+		}
 	}
 }
 
@@ -409,10 +390,15 @@ void SuperNode::stopNodeTypes()
 {
 	int ret;
 
-	for (auto *vt : *node_types) {
-		ret = node_type_stop(vt);
+	for (auto *n : nodes) {
+		auto *nf = n->getFactory();
+
+		if (nf->getState() != State::STARTED)
+			continue;
+
+		ret = nf->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node-type: {}", *vt);
+			throw RuntimeError("Failed to stop node-type: {}", *n->getFactory());
 	}
 }
 
@@ -462,19 +448,17 @@ void SuperNode::run()
 
 SuperNode::~SuperNode()
 {
-	assert(state != State::STARTED);
+	assert(state == State::INITIALIZED ||
+	       state == State::PARSED ||
+	       state == State::CHECKED ||
+	       state == State::STOPPED ||
+	       state == State::PREPARED);
 
-	int ret __attribute__((unused));
-
-	for (auto *p : paths) {
-		ret = path_destroy(p);
+	for (auto *p : paths)
 		delete p;
-	}
 
-	for (auto *n : nodes) {
-		ret = node_destroy(n);
+	for (auto *n : nodes)
 		delete n;
-	}
 }
 
 int SuperNode::periodic()
@@ -482,20 +466,20 @@ int SuperNode::periodic()
 	int started = 0;
 
 	for (auto *p : paths) {
-		if (p->state == State::STARTED) {
+		if (p->getState() == State::STARTED) {
 			started++;
 
 #ifdef WITH_HOOKS
-			hook_list_periodic(&p->hooks);
+			p->hooks.periodic();
 #endif /* WITH_HOOKS */
 		}
 	}
 
 	for (auto *n : nodes) {
-		if (n->state == State::STARTED) {
+		if (n->getState() == State::STARTED) {
 #ifdef WITH_HOOKS
-			hook_list_periodic(&n->in.hooks);
-			hook_list_periodic(&n->out.hooks);
+			n->in.hooks.periodic();
+			n->out.hooks.periodic();
 #endif /* WITH_HOOKS */
 		}
 	}
@@ -510,8 +494,8 @@ int SuperNode::periodic()
 }
 
 #ifdef WITH_GRAPHVIZ
-static void
-set_attr(void *ptr, const std::string &key, const std::string &value, bool html = false) {
+static
+void set_attr(void *ptr, const std::string &key, const std::string &value, bool html = false) {
 	Agraph_t *g = agraphof(ptr);
 
 	char *d = (char *) "";
@@ -522,7 +506,6 @@ set_attr(void *ptr, const std::string &key, const std::string &value, bool html 
 	agsafeset(ptr, k, vd, d);
 }
 
-
 graph_t * SuperNode::getGraph()
 {
 	Agraph_t *g;
@@ -530,17 +513,17 @@ graph_t * SuperNode::getGraph()
 
 	g = agopen((char *) "g", Agdirected, 0);
 
-	std::map<struct vnode *, Agnode_t *> nodeMap;
+	std::map<Node *, Agnode_t *> nodeMap;
 
 	uuid_string_t uuid_str;
 
 	for (auto *n : nodes) {
-		nodeMap[n] = agnode(g, (char *) node_name_short(n), 1);
+		nodeMap[n] = agnode(g, (char *) n->getNameShort().c_str(), 1);
 
-		uuid_unparse(n->uuid, uuid_str);
+		uuid_unparse(n->getUuid(), uuid_str);
 
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", *node_type(n), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", *n->getFactory(), uuid_str));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");
@@ -557,17 +540,11 @@ graph_t * SuperNode::getGraph()
 		set_attr(m, "shape", "box");
 		set_attr(m, "tooltip", fmt::format("uuid={}", uuid_str));
 
-		for (size_t j = 0; j < vlist_length(&p->sources); j++) {
-			auto *ps = (struct vpath_source *) vlist_at(&p->sources, j);
+		for (auto ps : p->sources)
+			agedge(g, nodeMap[ps->getNode()], m, nullptr, 1);
 
-			agedge(g, nodeMap[ps->node], m, nullptr, 1);
-		}
-
-		for (size_t j = 0; j < vlist_length(&p->destinations); j++) {
-			auto *pd = (struct vpath_destination *) vlist_at(&p->destinations, j);
-
-			agedge(g, m, nodeMap[pd->node], nullptr, 1);
-		}
+		for (auto pd : p->destinations)
+			agedge(g, m, nodeMap[pd->getNode()], nullptr, 1);
 	}
 
 	return g;

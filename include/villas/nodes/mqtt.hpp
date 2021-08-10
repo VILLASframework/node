@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,27 +21,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup mqtt mqtt node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/super_node.hpp>
 
 /* Forward declarations */
-struct vnode;
 struct mosquitto;
+
+namespace villas {
+namespace node {
+
+/* Forward declarations */
+class NodeCompat;
 
 struct mqtt {
 	struct mosquitto *client;
-	struct queue_signalled queue;
-	struct pool pool;
+	struct CQueueSignalled queue;
+	struct Pool pool;
 
 	int keepalive;		/**< Keep-alive interval in seconds. Zero for no keepalive. */
 	int port;		/**< Hostname / IP address of the broker. */
@@ -66,40 +65,36 @@ struct mqtt {
 
 	} ssl;
 
-	villas::node::Format *formatter;
+	Format *formatter;
 };
 
-/** @see node_type::reverse */
-int mqtt_reverse(struct vnode *n);
+int mqtt_reverse(NodeCompat *n);
 
-/** @see node_type::print */
-char * mqtt_print(struct vnode *n);
+char * mqtt_print(NodeCompat *n);
 
-/** @see node_type::prepare */
-int mqtt_prepare(struct vnode *n);
+int mqtt_prepare(NodeCompat *n);
 
-/** @see node_type::parse */
-int mqtt_parse(struct vnode *n, json_t *json);
+int mqtt_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int mqtt_start(struct vnode *n);
+int mqtt_check(NodeCompat *n);
 
-/** @see node_type::destroy */
-int mqtt_destroy(struct vnode *n);
+int mqtt_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int mqtt_stop(struct vnode *n);
+int mqtt_init(NodeCompat *n);
 
-/** @see node_type::type_start */
-int mqtt_type_start(villas::node::SuperNode *sn);
+int mqtt_destroy(NodeCompat *n);
 
-/** @see node_type::type_stop */
+int mqtt_stop(NodeCompat *n);
+
+int mqtt_type_start(SuperNode *sn);
+
 int mqtt_type_stop();
 
-/** @see node_type::read */
-int mqtt_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int mqtt_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::write */
-int mqtt_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int mqtt_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @} */
+int mqtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

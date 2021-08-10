@@ -21,12 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup redis BSD redis Node Type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <chrono>
@@ -34,7 +28,7 @@
 #include <sw/redis++/redis++.h>
 #include <spdlog/fmt/ostr.h>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 
 namespace std {
 
@@ -191,23 +185,21 @@ OStream &operator<<(OStream &os, const ConnectionOptions &o)
 } /* namespace sw */
 
 template<typename OStream>
-OStream &operator<<(OStream &os, const enum RedisMode &m)
+OStream &operator<<(OStream &os, const enum villas::node::RedisMode &m)
 {
 	switch (m) {
-		case RedisMode::KEY:
+		case villas::node::RedisMode::KEY:
 			os << "key";
 			break;
 
-		case RedisMode::HASH:
+		case villas::node::RedisMode::HASH:
 			os << "hash";
 			break;
 
-		case RedisMode::CHANNEL:
+		case villas::node::RedisMode::CHANNEL:
 			os << "channel";
 			break;
 	}
 
 	return os;
 }
-
-/** @} */

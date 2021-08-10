@@ -1,7 +1,7 @@
 /** Managed memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -30,25 +30,28 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 
 using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node::memory;
 
-static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignment, struct memory_type *m)
+static
+struct Allocation * managed_alloc(size_t len, size_t alignment, struct Type *m)
 {
 	/* Simple first-fit allocation */
-	struct memory_block *first = (struct memory_block *) m->_vd;
-	struct memory_block *block;
+	struct Block *first = (struct Block *) m->_vd;
+	struct Block *block;
 
 	for (block = first; block != nullptr; block = block->next) {
 		if (block->used)
 			continue;
 
-		char* cptr = (char *) block + sizeof(struct memory_block);
+		char* cptr = (char *) block + sizeof(struct Block);
 		size_t avail = block->length;
 		uintptr_t uptr = (uintptr_t) cptr;
 
@@ -66,13 +69,13 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 		}
 
 		if (avail >= len) {
-			if (gap > sizeof(struct memory_block)) {
+			if (gap > sizeof(struct Block)) {
 				/* The alignment gap is big enough to fit another block.
 				 * The original block descriptor is already at the correct
 				 * position, so we just change its len and create a new block
 				 * descriptor for the actual block we're handling. */
-				block->length = gap - sizeof(struct memory_block);
-				struct memory_block *newblock = (struct memory_block *) (cptr - sizeof(struct memory_block));
+				block->length = gap - sizeof(struct Block);
+				struct Block *newblock = (struct Block *) (cptr - sizeof(struct Block));
 				newblock->prev = block;
 				newblock->next = block->next;
 				block->next = newblock;
@@ -86,9 +89,9 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 				block->length = len + gap;
 			}
 
-			if (avail > len + sizeof(struct memory_block)) {
+			if (avail > len + sizeof(struct Block)) {
 				/* Imperfect fit, so create another block for the remaining part */
-				struct memory_block *newblock = (struct memory_block *) (cptr + len);
+				struct Block *newblock = (struct Block *) (cptr + len);
 				newblock->prev = block;
 				newblock->next = block->next;
 				block->next = newblock;
@@ -97,18 +100,18 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 					newblock->next->prev = newblock;
 
 				newblock->used = false;
-				newblock->length = avail - len - sizeof(struct memory_block);
+				newblock->length = avail - len - sizeof(struct Block);
 			}
 			else {
 				/* If this block was larger than the requested length, but only
-				 * by less than sizeof(struct memory_block), we may have wasted
+				 * by less than sizeof(struct Block), we may have wasted
 				 * memory by previous assignments to block->length. */
 				block->length = avail;
 			}
 
 			block->used = true;
 
-			auto *ma = new struct memory_allocation;
+			auto *ma = new struct Allocation;
 			if (!ma)
 				throw MemoryAllocationError();
 
@@ -126,27 +129,28 @@ static struct memory_allocation * memory_managed_alloc(size_t len, size_t alignm
 	return nullptr;
 }
 
-static int memory_managed_free(struct memory_allocation *ma, struct memory_type *m)
+static
+int managed_free(struct Allocation *ma, struct Type *m)
 {
-	struct memory_block *block = ma->managed.block;
+	struct Block *block = ma->managed.block;
 
 	/* Try to merge it with neighbouring free blocks */
 	if (block->prev && !block->prev->used &&
 	    block->next && !block->next->used) {
 		/* Special case first: both previous and next block are unused */
-		block->prev->length += block->length + block->next->length + 2 * sizeof(struct memory_block);
+		block->prev->length += block->length + block->next->length + 2 * sizeof(struct Block);
 		block->prev->next = block->next->next;
 		if (block->next->next)
 			block->next->next->prev = block->prev;
 	}
 	else if (block->prev && !block->prev->used) {
-		block->prev->length += block->length + sizeof(struct memory_block);
+		block->prev->length += block->length + sizeof(struct Block);
 		block->prev->next = block->next;
 		if (block->next)
 			block->next->prev = block->prev;
 	}
 	else if (block->next && !block->next->used) {
-		block->length += block->next->length + sizeof(struct memory_block);
+		block->length += block->next->length + sizeof(struct Block);
 		block->next = block->next->next;
 		if (block->next)
 			block->next->prev = block;
@@ -159,34 +163,34 @@ static int memory_managed_free(struct memory_allocation *ma, struct memory_type 
 	return 0;
 }
 
-struct memory_type * memory_managed(void *ptr, size_t len)
+struct Type * villas::node::memory::managed(void *ptr, size_t len)
 {
-	struct memory_type *mt = (struct memory_type *) ptr;
-	struct memory_block *mb;
+	struct Type *mt = (struct Type *) ptr;
+	struct Block *mb;
 	char *cptr = (char *) ptr;
 
-	if (len < sizeof(struct memory_type) + sizeof(struct memory_block)) {
+	if (len < sizeof(struct Type) + sizeof(struct Block)) {
 		auto logger = logging.get("memory:managed");
 		logger->info("Passed region is too small");
 		return nullptr;
 	}
 
-	/* Initialize memory_type */
+	/* Initialize type */
 	mt->name  = "managed";
 	mt->flags = 0;
-	mt->alloc = memory_managed_alloc;
-	mt->free  = memory_managed_free;
+	mt->alloc = managed_alloc;
+	mt->free  = managed_free;
 	mt->alignment = 1;
 
-	cptr += ALIGN(sizeof(struct memory_type), sizeof(void *));
+	cptr += ALIGN(sizeof(struct Type), sizeof(void *));
 
 	/* Initialize first free memory block */
-	mb = (struct memory_block *) cptr;
+	mb = (struct Block *) cptr;
 	mb->prev = nullptr;
 	mb->next = nullptr;
 	mb->used = false;
 
-	cptr += ALIGN(sizeof(struct memory_block), sizeof(void *));
+	cptr += ALIGN(sizeof(struct Block), sizeof(void *));
 
 	mb->length = len - (cptr - (char *) ptr);
 

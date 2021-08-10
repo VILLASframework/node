@@ -26,11 +26,11 @@
 #include <iostream>
 #include <atomic>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
-#include <villas/pool.h>
-#include <villas/sample.h>
-#include <villas/shmem.h>
+#include <villas/node/config.hpp>
+#include <villas/node.hpp>
+#include <villas/pool.hpp>
+#include <villas/sample.hpp>
+#include <villas/shmem.hpp>
 #include <villas/colors.hpp>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
@@ -71,8 +71,8 @@ protected:
 	{
 		int ret, readcnt, writecnt, avail;
 
-		struct shmem_int shm;
-		struct shmem_conf conf = {
+		struct ShmemInterface shm;
+		struct ShmemConfig conf = {
 			.polling = 0,
 			.queuelen = DEFAULT_SHMEM_QUEUELEN,
 			.samplelen = DEFAULT_SHMEM_SAMPLELEN
@@ -91,7 +91,7 @@ protected:
 		if (ret < 0)
 			throw RuntimeError("Failed to open shared-memory interface");
 
-		struct sample *insmps[vectorize], *outsmps[vectorize];
+		struct Sample *insmps[vectorize], *outsmps[vectorize];
 
 		while (!stop) {
 			readcnt = shmem_int_read(&shm, insmps, vectorize);

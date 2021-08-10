@@ -1,7 +1,7 @@
 /** Node-type: CAN bus
  *
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -34,24 +34,23 @@
 #include <linux/can/raw.h>
 #include <linux/sockios.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/can.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
-#include <villas/signal.h>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
 #include <villas/exceptions.hpp>
-
-
-/* Forward declarations */
-static struct vnode_type p;
 
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int can_init(struct vnode *n)
+/* Forward declarations */
+static NodeCompatType p;
+
+int villas::node::can_init(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	c->interface_name = nullptr;
 	c->socket = 0;
@@ -63,11 +62,9 @@ int can_init(struct vnode *n)
 	return 0;
 }
 
-int can_destroy(struct vnode *n)
+int villas::node::can_destroy(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
-
-	free(c->interface_name);
+	auto *c = n->getData<struct can>();
 
 	if (c->socket != 0)
 		close(c->socket);
@@ -83,13 +80,13 @@ int can_destroy(struct vnode *n)
 	return 0;
 }
 
-static int can_parse_signal(json_t *json, struct vlist *node_signals, struct can_signal *can_signals, size_t signal_index)
+static
+int can_parse_signal(json_t *json, SignalList::Ptr node_signals, struct can_signal *can_signals, size_t signal_index)
 {
 	const char *name = nullptr;
 	uint64_t can_id = 0;
 	int can_size = 8;
 	int can_offset = 0;
-	struct signal* sig = nullptr;
 	int ret = 1;
 	json_error_t err;
 
@@ -108,8 +105,8 @@ static int can_parse_signal(json_t *json, struct vlist *node_signals, struct can
 	if (can_offset > 8 || can_offset < 0)
 		throw ConfigError(json, "node-config-node-can-can-offset", "can_offset of {} for signal '{}' is invalid. You must satisfy 0 <= can_offset <= 8.", can_offset, name);
 
-	sig = (struct signal*)vlist_at(node_signals, signal_index);
-	if ((!name && !sig->name) || (name && strcmp(name, sig->name) == 0)) {
+	auto sig = node_signals->getByIndex(signal_index);
+	if ((!name && sig->name.empty()) || (name && sig->name == name)) {
 		can_signals[signal_index].id = can_id;
 		can_signals[signal_index].size = can_size;
 		can_signals[signal_index].offset = can_offset;
@@ -122,10 +119,10 @@ static int can_parse_signal(json_t *json, struct vlist *node_signals, struct can
 out:	return ret;
 }
 
-int can_parse(struct vnode *n, json_t *json)
+int villas::node::can_parse(NodeCompat *n, json_t *json)
 {
 	int ret = 1;
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 	size_t i;
 	json_t *json_in_signals;
 	json_t *json_out_signals;
@@ -159,13 +156,13 @@ int can_parse(struct vnode *n, json_t *json)
 		throw MemoryAllocationError();
 
 	json_array_foreach(json_in_signals, i, json_signal) {
-		ret = can_parse_signal(json_signal, &n->in.signals, c->in, i);
+		ret = can_parse_signal(json_signal, n->in.signals, c->in, i);
 		if (ret)
 			throw RuntimeError("at signal {}.",i);
 	}
 
 	json_array_foreach(json_out_signals, i, json_signal) {
-		ret = can_parse_signal(json_signal, &n->out.signals, c->out, i);
+		ret = can_parse_signal(json_signal, n->out.signals, c->out, i);
 		if (ret)
 			throw RuntimeError("at signal {}.", i);
 	}
@@ -175,16 +172,16 @@ int can_parse(struct vnode *n, json_t *json)
 	return ret;
 }
 
-char * can_print(struct vnode *n)
+char * villas::node::can_print(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	return strf("interface_name={}", c->interface_name);
 }
 
-int can_check(struct vnode *n)
+int villas::node::can_check(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	if (c->interface_name == nullptr || strlen(c->interface_name) == 0)
 		throw RuntimeError("Empty interface_name. Please specify the name of the CAN interface!");
@@ -192,22 +189,22 @@ int can_check(struct vnode *n)
 	return 0;
 }
 
-int can_prepare(struct vnode *n)
+int villas::node::can_prepare(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
-	c->sample_buf = (union signal_data*) calloc(vlist_length(&n->in.signals), sizeof(union signal_data));
+	c->sample_buf = (union SignalData*) calloc(n->getInputSignals(false)->size(), sizeof(union SignalData));
 
 	return (c->sample_buf != 0 ? 0 : 1);
 }
 
-int can_start(struct vnode *n)
+int villas::node::can_start(NodeCompat *n)
 {
 	int ret = 1;
 	struct sockaddr_can addr = {0};
 	struct ifreq ifr;
 
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 	c->start_time = time_now();
 
 	c->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -230,9 +227,9 @@ int can_start(struct vnode *n)
 	return 0;
 }
 
-int can_stop(struct vnode *n)
+int villas::node::can_stop(NodeCompat *n)
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	if (c->socket != 0) {
 		close(c->socket);
@@ -242,7 +239,8 @@ int can_stop(struct vnode *n)
 	return 0;
 }
 
-static int can_convert_to_raw(const union signal_data *sig, const struct signal *from, void *to, int size)
+static
+int can_convert_to_raw(const union SignalData *sig, const Signal::Ptr from, void *to, int size)
 {
 	if (size <= 0 || size > 8)
 		throw RuntimeError("Signal size cannot be larger than 8!");
@@ -305,12 +303,13 @@ static int can_convert_to_raw(const union signal_data *sig, const struct signal 
 	}
 
 fail:
-	throw RuntimeError("Unsupported conversion to {} from raw ({}, {})", signal_type_to_str(from->type), to, size);
+	throw RuntimeError("Unsupported conversion to {} from raw ({}, {})", signalTypeToString(from->type), to, size);
 
 	return 1;
 }
 
-int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signal *to)
+static
+int can_conv_from_raw(union SignalData *sig, void *from, int size, Signal::Ptr to)
 {
 	if (size <= 0 || size > 8)
 		throw RuntimeError("Signal size cannot be larger than 8!");
@@ -370,12 +369,12 @@ int can_conv_from_raw(union signal_data* sig, void* from, int size, struct signa
 			goto fail;
 	}
 fail:
-	throw RuntimeError("Unsupported conversion from {} to raw ({}, {})", signal_type_to_str(to->type), from, size);
+	throw RuntimeError("Unsupported conversion from {} to raw ({}, {})", signalTypeToString(to->type), from, size);
 
 	return 1;
 }
 
-int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::can_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret = 0;
 	int nbytes;
@@ -384,7 +383,7 @@ int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	struct timeval tv;
 	bool found_id = false;
 
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
@@ -406,12 +405,12 @@ int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		smps[nread]->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
 	}
 
-	for (size_t i=0; i < vlist_length(&(n->in.signals)); i++) {
+	for (size_t i=0; i < n->getInputSignals(false)->size(); i++) {
 		if (c->in[i].id == frame.can_id) {
 			if (can_conv_from_raw(&c->sample_buf[i],
 				((uint8_t*)&frame.data) + c->in[i].offset,
 				c->in[i].size,
-				(struct signal*) vlist_at(&n->in.signals, i)) != 0) {
+				n->getInputSignals(false)->getByIndex(i)) != 0) {
 				goto out;
 			}
 
@@ -426,9 +425,9 @@ int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	n->logger->debug("Received {} signals", c->sample_buf_num);
 
 	/* Copy signal data to sample only when all signals have been received */
-	if (c->sample_buf_num == vlist_length(&n->in.signals)) {
+	if (c->sample_buf_num == n->getInputSignals(false)->size()) {
 		smps[nread]->length = c->sample_buf_num;
-		memcpy(smps[nread]->data, c->sample_buf, c->sample_buf_num*sizeof(union signal_data));
+		memcpy(smps[nread]->data, c->sample_buf, c->sample_buf_num*sizeof(union SignalData));
 		c->sample_buf_num = 0;
 		smps[nread]->flags |= (int) SampleFlags::HAS_DATA;
 		ret = 1;
@@ -439,26 +438,26 @@ int can_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	}
 
  out:	/* Set signals, because other VILLASnode parts expect us to */
-	smps[nread]->signals = &n->in.signals;
+	smps[nread]->signals = n->getInputSignals(false);
 
 	return ret;
 }
 
-int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::can_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int nbytes;
 	unsigned nwrite;
 	struct can_frame *frame;
 	size_t fsize = 0; /* number of frames in use */
 
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-	frame = (struct can_frame*) calloc(sizeof(struct can_frame), vlist_length(&(n->out.signals)));
+	frame = (struct can_frame*) calloc(sizeof(struct can_frame), n->getOutputSignals()->size());
 
 	for (nwrite=0; nwrite < cnt; nwrite++) {
-		for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
+		for (size_t i=0; i < n->getOutputSignals()->size(); i++) {
 			if (c->out[i].offset != 0) /* frame is shared */
 				continue;
 
@@ -467,14 +466,14 @@ int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 			can_convert_to_raw(
 				&smps[nwrite]->data[i],
-				(struct signal*)vlist_at(&(n->out.signals), i),
+				n->getOutputSignals()->getByIndex(i),
 				&frame[fsize].data,
 				c->out[i].size);
 
 			fsize++;
 		}
 
-		for (size_t i=0; i < vlist_length(&(n->out.signals)); i++) {
+		for (size_t i=0; i < n->getOutputSignals(false)->size(); i++) {
 			if (c->out[i].offset == 0) { /* frame already stored */
 				continue;
 			}
@@ -486,7 +485,7 @@ int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 				frame[j].can_dlc += c->out[i].size;
 				can_convert_to_raw(
 					&smps[nwrite]->data[i],
-					(struct signal*)vlist_at(&(n->out.signals), i),
+					n->getOutputSignals(false)->getByIndex(i),
 					(uint8_t*)&frame[j].data + c->out[i].offset,
 					c->out[i].size);
 				break;
@@ -513,9 +512,9 @@ int can_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return nwrite;
 }
 
-int can_poll_fds(struct vnode *n, int fds[])
+int villas::node::can_poll_fds(NodeCompat *n, int fds[])
 {
-	struct can *c = (struct can *) n->_vd;
+	auto *c = n->getData<struct can>();
 
 	fds[0] = c->socket;
 
@@ -527,6 +526,7 @@ static void register_plugin() {
 	p.name		= "can";
 	p.description	= "Receive CAN messages using the socketCAN driver";
 	p.vectorize	= 0;
+	p.flags		= 0;
 	p.size		= sizeof(struct can);
 	p.init		= can_init;
 	p.destroy	= can_destroy;
@@ -540,8 +540,5 @@ static void register_plugin() {
 	p.write		= can_write;
 	p.poll_fds	= can_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

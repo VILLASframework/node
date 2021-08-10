@@ -21,12 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <villas/hook.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -41,11 +37,11 @@ protected:
 	uint64_t smpMemoryPosition;
 
 public:
-	MovingAverageHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	MovingAverageHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		smpMemory(),
 		accumulator(0.0),
-		windowSize(0),
+		windowSize(10),
 		smpMemoryPosition(0)
 	{ }
 
@@ -56,7 +52,7 @@ public:
 
 		/* Add signals */
 		for (auto index : signalIndices) {
-			auto *origSig = (struct signal *) vlist_at(&signals, index);
+			auto origSig = signals->getByIndex(index);
 
 			/* Check that signal has float type */
 			if (origSig->type != SignalType::FLOAT)
@@ -91,7 +87,7 @@ public:
 	}
 
 	virtual
-	Hook::Reason process(struct sample *smp)
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -127,5 +123,3 @@ static HookPlugin<MovingAverageHook, n, d, (int) Hook::Flags::NODE_READ | (int) 
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

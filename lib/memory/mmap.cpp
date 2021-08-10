@@ -1,7 +1,7 @@
 /** mmap memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -35,21 +35,27 @@
 #endif /* __MACH__ */
 
 #include <villas/kernel/kernel.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 
 using namespace villas;
-using namespace villas;
+using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node::memory;
 
-static size_t pgsz = -1;
-static size_t hugepgsz = -1;
-static Logger logger;
+static
+size_t pgsz = -1;
 
-int memory_mmap_init(int hugepages)
+static
+size_t hugepgsz = -1;
+
+static
+Logger logger;
+
+int villas::node::memory::mmap_init(int hugepages)
 {
 	logger = logging.get("memory:mmap");
 
@@ -60,14 +66,14 @@ int memory_mmap_init(int hugepages)
 	if (hugepages == 0) {
 		logger->warn("Hugepage allocator disabled.");
 
-		memory_default = &memory_mmap;
+		default_type = &mmap;
 		return 0;
 	}
 
 	if (!utils::isPrivileged()) {
 		logger->warn("Running in an unprivileged environment. Hugepages are not used!");
 
-		memory_default = &memory_mmap;
+		default_type = &mmap;
 		return 0;
 	}
 
@@ -94,27 +100,28 @@ int memory_mmap_init(int hugepages)
 		logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
 	}
 
-	memory_default = &memory_mmap_hugetlb;
+	default_type = &mmap_hugetlb;
 #else
 	logger->debug("Hugepages not supported on this system. Falling back to standard mmap() allocator.");
 
-	memory_default = &memory_mmap;
+	default_type = &mmap;
 #endif
 
 	return 0;
 }
 
 /** Allocate memory backed by mmaps with malloc() like interface */
-static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment, struct memory_type *m)
+static
+struct Allocation * mmap_alloc(size_t len, size_t alignment, struct Type *m)
 {
 	int flags, fd;
 	size_t sz;
 
-	auto *ma = new struct memory_allocation;
+	auto *ma = new struct Allocation;
 	if (!ma)
 		throw MemoryAllocationError();
 
-	if (m->flags & (int) MemoryFlags::HUGEPAGE) {
+	if (m->flags & (int) Flags::HUGEPAGE) {
 #ifdef __linux__
 		flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 #else
@@ -143,7 +150,7 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 	ma->alignment = ALIGN(alignment, sz);
 	ma->type = m;
 
-	ma->address = mmap(nullptr, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
+	ma->address = ::mmap(nullptr, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
 		delete ma;
 		return nullptr;
@@ -152,7 +159,8 @@ static struct memory_allocation * memory_mmap_alloc(size_t len, size_t alignment
 	return ma;
 }
 
-static int memory_mmap_free(struct memory_allocation *ma, struct memory_type *m)
+static
+int mmap_free(struct Allocation *ma, struct Type *m)
 {
 	int ret;
 
@@ -163,18 +171,18 @@ static int memory_mmap_free(struct memory_allocation *ma, struct memory_type *m)
 	return 0;
 }
 
-struct memory_type memory_mmap = {
+struct Type memory::mmap = {
 	.name = "mmap",
-	.flags = (int) MemoryFlags::MMAP,
+	.flags = (int) Flags::MMAP,
 	.alignment = 12, /* 4k page */
-	.alloc = memory_mmap_alloc,
-	.free = memory_mmap_free
+	.alloc = mmap_alloc,
+	.free = mmap_free
 };
 
-struct memory_type memory_mmap_hugetlb = {
+struct Type memory::mmap_hugetlb = {
 	.name = "mmap_hugetlb",
-	.flags = (int) MemoryFlags::MMAP | (int) MemoryFlags::HUGEPAGE,
+	.flags = (int) Flags::MMAP | (int) Flags::HUGEPAGE,
 	.alignment = 21, /* 2 MiB hugepage */
-	.alloc = memory_mmap_alloc,
-	.free = memory_mmap_free
+	.alloc = mmap_alloc,
+	.free = mmap_free
 };

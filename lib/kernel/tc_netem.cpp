@@ -3,7 +3,7 @@
  * VILLASnode uses these functions to setup the network emulation feature.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -86,7 +86,7 @@ static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 			if (!json_is_integer(elm))
 				return -1;
 
-			data[idx] = json_integer_value(elm);;
+			data[idx] = json_integer_value(elm);
 		}
 
 		return rtnl_netem_set_delay_distribution_data(qdisc, data, len);

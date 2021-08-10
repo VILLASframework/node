@@ -3,7 +3,7 @@
 # Integration test for remote API
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,20 +22,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
+set -e
 
-CONFIG_FILE=$(mktemp)
-FETCHED_CONF=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat > ${CONFIG_FILE} <<EOF
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > config.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	},
-	"nodes" : {
-		"node1" : {
-			"type" : "loopback"
+	"nodes": {
+		"node1": {
+			"type": "loopback"
 		}
 	}
 }
@@ -44,21 +49,16 @@ EOF
 ID=$(uuidgen)
 
 # Start VILLASnode instance with local config
-villas node ${CONFIG_FILE} &
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1
 
 # Fetch config via API
-curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
+curl -s http://localhost:8080/api/v2/config > fetched.json
 
 # Shutdown VILLASnode
 kill $!
 
 # Compare local config with the fetched one
-diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${CONFIG_FILE})
-RC=$?
-
-rm -f ${FETCHED_CONF} ${CONFIG_FILE}
-
-exit ${RC}
+diff -u <(jq -S . < fetched.json) <(jq -S . < config.json)

@@ -1,7 +1,7 @@
 /** Rate-limiting hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,14 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cstring>
 
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 #include <villas/hooks/limit_rate.hpp>
 
 namespace villas {
@@ -68,7 +64,7 @@ void LimitRateHook::parse(json_t *json)
 	state = State::PARSED;
 }
 
-Hook::Reason LimitRateHook::process(sample *smp)
+Hook::Reason LimitRateHook::process(struct Sample *smp)
 {
 	assert(state == State::STARTED);
 
@@ -102,5 +98,3 @@ static HookPlugin<LimitRateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

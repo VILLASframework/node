@@ -1,7 +1,7 @@
 /** Message paths.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,56 +28,62 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <iterator>
 
 #include <unistd.h>
 #include <poll.h>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/uuid.hpp>
-#include <villas/timing.h>
-#include <villas/pool.h>
+#include <villas/timing.hpp>
+#include <villas/pool.hpp>
 #include <villas/queue.h>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
-#include <villas/memory.h>
-#include <villas/node.h>
-#include <villas/signal.h>
-#include <villas/path.h>
+#include <villas/node/memory.hpp>
+#include <villas/node.hpp>
+#include <villas/signal.hpp>
+#include <villas/path.hpp>
 #include <villas/kernel/rt.hpp>
-#include <villas/path_source.h>
-#include <villas/path_destination.h>
+#include <villas/path_source.hpp>
+#include <villas/path_destination.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
+void * Path::runWrapper(void *arg)
+{
+	auto *p = (Path *) arg;
+
+	return p->poll
+		? p->runPoll()
+		: p->runSingle();
+}
+
 /** Main thread function per path:
  *     read samples from source -> write samples to destinations
  *
- * This is an optimized version of path_run_poll() which is
+ * This is an optimized version of runPoll() which is
  * used for paths which only have a single source.
  * In this case we case save a call to poll() and directly call
- * path_source_read() / node_read().
+ * PathSource::read() / Node::read().
  */
-static void * path_run_single(void *arg)
+void * Path::runSingle()
 {
 	int ret;
-	struct vpath *p = (struct vpath *) arg;
-	struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, 0);
+	auto ps = sources.front();  /* there is only a single source */
 
-	while (p->state == State::STARTED) {
+	while (state == State::STARTED) {
 		pthread_testcancel();
 
-		ret = path_source_read(ps, p, 0);
+		ret = ps->read(0);
 		if (ret <= 0)
 			continue;
 
-		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-			path_destination_write(pd, p);
-		}
+		for (auto pd : destinations)
+			pd->write();
 	}
 
 	return nullptr;
@@ -89,295 +95,264 @@ static void * path_run_single(void *arg)
  * This variant of the path uses poll() to listen on an event from
  * all path sources.
  */
-static void * path_run_poll(void *arg)
+void * Path::runPoll()
 {
-	int ret;
-	struct vpath *p = (struct vpath *) arg;
-
-	while (p->state == State::STARTED) {
-		ret = poll(p->reader.pfds, p->reader.nfds, -1);
+	while (state == State::STARTED) {
+		int ret = ::poll(pfds.data(), pfds.size(), -1);
 		if (ret < 0)
 			throw SystemError("Failed to poll");
 
-		p->logger->debug("Path {} returned from poll(2)", *p);
+		logger->debug("returned from poll(2): ret={}", ret);
 
-		for (int i = 0; i < p->reader.nfds; i++) {
-			struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
+		for (unsigned i = 0; i < pfds.size(); i++) {
+			auto &pfd = pfds[i];
 
-			if (p->reader.pfds[i].revents & POLLIN) {
+			if (pfd.revents & POLLIN) {
 				/* Timeout: re-enqueue the last sample */
-				if (p->reader.pfds[i].fd == p->timeout.getFD()) {
-					p->timeout.wait();
+				if (pfd.fd == timeout.getFD()) {
+					timeout.wait();
 
-					p->last_sample->sequence = p->last_sequence++;
+					last_sample->sequence = last_sequence++;
 
-					path_destination_enqueue(p, &p->last_sample, 1);
+					PathDestination::enqueueAll(this, &last_sample, 1);
 				}
 				/* A source is ready to receive samples */
-				else
-					path_source_read(ps, p, i);
+				else {
+					auto ps = sources[i];
+
+					ps->read(i);
+				}
 			}
 		}
 
-		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-			struct vpath_destination *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-			path_destination_write(pd, p);
-		}
+		for (auto pd : destinations)
+			pd->write();
 	}
 
 	return nullptr;
 }
 
-int path_init(struct vpath *p)
+Path::Path() :
+	state(State::INITIALIZED),
+	mode(Mode::ANY),
+	timeout(CLOCK_MONOTONIC),
+	rate(0), /* Disabled */
+	affinity(0),
+	enabled(true),
+	poll(-1),
+	reversed(false),
+	builtin(true),
+	original_sequence_no(-1),
+	queuelen(DEFAULT_QUEUE_LENGTH),
+	logger(logging.get(fmt::format("path:{}", id++)))
 {
-	int ret;
+	uuid_clear(uuid);
 
-	new (&p->logger) Logger;
-	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
-	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
-	new (&p->timeout) Task(CLOCK_MONOTONIC);
-
-	static int path_id;
-	auto logger_name = fmt::format("path:{}", path_id++);
-	p->logger = logging.get(logger_name);
-
-	uuid_clear(p->uuid);
-
-	ret = vlist_init(&p->destinations);
-	if (ret)
-		return ret;
-
-	ret = vlist_init(&p->sources);
-	if (ret)
-		return ret;
-
-	ret = signal_list_init(&p->signals);
-	if (ret)
-		return ret;
-
-	ret = vlist_init(&p->mappings);
-	if (ret)
-		return ret;
-
-#ifdef WITH_HOOKS
-	ret = hook_list_init(&p->hooks);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
-	p->reader.pfds = nullptr;
-	p->reader.nfds = 0;
-
-	/* Default values */
-	p->mode = PathMode::ANY;
-	p->rate = 0; /* Disabled */
-
-	p->builtin = 1;
-	p->reverse = 0;
-	p->enabled = 1;
-	p->poll = -1;
-	p->queuelen = DEFAULT_QUEUE_LENGTH;
-	p->original_sequence_no = -1;
-	p->affinity = 0;
-
-	p->state = State::INITIALIZED;
-
-	return 0;
+	pool.state = State::DESTROYED;
 }
 
-static int path_prepare_poll(struct vpath *p)
+void Path::startPoll()
 {
-	int fds[16], n = 0, m;
+	pfds.clear();
 
-	if (p->reader.pfds)
-		delete[] p->reader.pfds;
-
-	p->reader.pfds = nullptr;
-	p->reader.nfds = 0;
-
-	for (unsigned i = 0; i < vlist_length(&p->sources); i++) {
-		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
-
-		m = node_poll_fds(ps->node, fds);
-		if (m <= 0)
-			throw RuntimeError("Failed to get file descriptor for node {}", *ps->node);
-
-		p->reader.nfds += m;
-		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
-
-		for (int i = 0; i < m; i++) {
-			if (fds[i] < 0)
-				throw RuntimeError("Failed to get file descriptor for node {}", *ps->node);
+	for (auto ps : sources) {
+		auto fds = ps->getNode()->getPollFDs();
+		for (auto fd : fds) {
+			if (fd < 0)
+				throw RuntimeError("Failed to get file descriptor for node {}", *ps->getNode());
 
 			/* This slot is only used if it is not masked */
-			p->reader.pfds[n].events = POLLIN;
-			p->reader.pfds[n++].fd = fds[i];
+			struct pollfd pfd = {
+				.fd = fd,
+				.events = POLLIN
+			};
+
+			pfds.push_back(pfd);
 		}
 	}
 
 	/* We use the last slot for the timeout timer. */
-	if (p->rate > 0) {
-		p->timeout.setRate(p->rate);
+	if (rate > 0) {
+		timeout.setRate(rate);
 
-		p->reader.nfds++;
-		p->reader.pfds = (struct pollfd *) realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
+		struct pollfd pfd = {
+			.fd = timeout.getFD(),
+			.events = POLLIN
+		};
 
-		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
-		p->reader.pfds[p->reader.nfds-1].fd = p->timeout.getFD();
-		if (p->reader.pfds[p->reader.nfds-1].fd < 0) {
-			p->logger->warn("Failed to get file descriptor for timer of path {}", *p);
-			return -1;
-		}
+		if (pfd.fd < 0)
+			throw RuntimeError("Failed to get file descriptor for timer of path {}", *this);
+
+		pfds.push_back(pfd);
 	}
-
-	return 0;
 }
 
-int path_prepare(struct vpath *p, NodeList &nodes)
+void Path::prepare(NodeList &nodes)
 {
 	int ret;
-	unsigned pool_size = 0;
 
-	struct memory_type *pool_mt = memory_default;
+	struct memory::Type *pool_mt = memory::default_type;
 
-	assert(p->state == State::CHECKED);
+	assert(state == State::CHECKED);
 
-	p->mask.reset();
+	mask.reset();
+	signals = std::make_shared<SignalList>();
 
 	/* Prepare mappings */
-	ret = mapping_list_prepare(&p->mappings, nodes);
+	ret = mappings.prepare(nodes);
 	if (ret)
-		return ret;
-
-	p->muxed = path_is_muxed(p);
+		throw RuntimeError("Failed to prepare mappings of path: {}", *this);
 
 	/* Create path sources */
-	std::map<struct vnode *, struct vpath_source *> pss;
-	for (size_t i = 0; i < vlist_length(&p->mappings); i++) {
-		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&p->mappings, i);
-		struct vnode *n = me->node;
-		struct vpath_source *ps;
+	std::map<Node *, PathSource::Ptr> psm;
+	unsigned i = 0, j = 0;
+	for (auto me : mappings) {
+		Node *n = me->node;
+		PathSource::Ptr ps;
 
-		if (pss.find(n) != pss.end())
+		if (psm.find(n) != psm.end())
 			/* We already have a path source for this mapping entry */
-			ps = pss[n];
+			ps = psm[n];
 		else {
-			/* Create new path source */
-			ps = pss[n] = new struct vpath_source;
-			if (!ps)
-				throw MemoryAllocationError();
-
 			/* Depending on weather the node belonging to this mapping is already
 			 * used by another path or not, we will create a master or secondary
 			 * path source.
 			 * A secondary path source uses an internal loopback node / queue
 			 * to forward samples from on path to another.
 			 */
-			bool isSecondary = vlist_length(&n->sources) > 0;
-			ret = isSecondary
-				? path_source_init_secondary(ps, n)
-				: path_source_init_master(ps, n);
-			if (ret)
-				return ret;
+			bool isSecondary = n->sources.size() > 0;
 
-			if (ps->type == PathSourceType::SECONDARY) {
-				nodes.push_back(ps->node);
-				vlist_push(&ps->node->sources, ps);
+			/* Create new path source */
+			if (isSecondary) {
+				/* Get master path source */
+				auto mps = std::dynamic_pointer_cast<MasterPathSource>(n->sources.front());
+				if (!mps)
+					throw RuntimeError("Failed to find master path source");
+
+				auto sps = std::make_shared<SecondaryPathSource>(this, n, nodes, mps);
+				if (!sps)
+					throw MemoryAllocationError();
+
+				mps->addSecondary(sps);
+
+				ps = sps;
+			}
+			else {
+				ps = std::make_shared<MasterPathSource>(this, n);
+				if (!ps)
+					throw MemoryAllocationError();
 			}
 
-			if (p->mask_list.empty() || std::find(p->mask_list.begin(), p->mask_list.end(), n) != p->mask_list.end()) {
+			if (masked.empty() || std::find(masked.begin(), masked.end(), n) != masked.end()) {
 				ps->masked = true;
-				p->mask.set(i);
+				mask.set(j);
 			}
 
-			vlist_push(&n->sources, ps);
-			vlist_push(&p->sources, ps);
+			/* Get the real node backing this path source
+			 * In case of a secondary path source, its the internal loopback node!
+			 */
+			auto *rn = ps->getNode();
+
+			rn->sources.push_back(ps);
+
+			sources.push_back(ps);
+			j++;
+			psm[n] = ps;
 		}
 
-		struct vlist *sigs = node_input_signals(me->node);
+		SignalList::Ptr sigs = me->node->getInputSignals();
 
 		/* Update signals of path */
 		for (unsigned j = 0; j < (unsigned) me->length; j++) {
-			struct signal *sig;
+			Signal::Ptr sig;
 
 			/* For data mappings we simple refer to the existing
 			 * signal descriptors of the source node. */
-			if (me->type == MappingType::DATA) {
-				sig = (struct signal *) vlist_at_safe(sigs, me->data.offset + j);
+			if (me->type == MappingEntry::Type::DATA) {
+				sig = sigs->getByIndex(me->data.offset + j);
 				if (!sig) {
-					p->logger->warn("Failed to create signal description for path {}", *p);
+					logger->warn("Failed to create signal description for path {}", *this);
 					continue;
 				}
-
-				signal_incref(sig);
 			}
 			/* For other mappings we create new signal descriptors */
 			else {
-				sig = new struct signal;
+				sig = me->toSignal(j);
 				if (!sig)
-					throw MemoryAllocationError();
-
-				ret = signal_init_from_mapping(sig, me, j);
-				if (ret)
-					return -1;
+					throw RuntimeError("Failed to create signal from mapping");
 			}
 
-			vlist_extend(&p->signals, me->offset + j + 1, nullptr);
-			vlist_set(&p->signals, me->offset + j, sig);
+			signals->resize(me->offset + j + 1);
+			(*signals)[me->offset + j] = sig;
 		}
 
-		vlist_push(&ps->mappings, me);
+		ps->mappings.push_back(me);
+		i++;
 	}
 
 	/* Prepare path destinations */
-	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		auto *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
+	int mt_cnt = 0;
+	for (auto pd : destinations) {
+		auto *pd_mt = pd->node->getMemoryType();
+		if (pd_mt != pool_mt) {
+			if (mt_cnt > 0) {
+				throw RuntimeError("Mixed memory types between path destinations");
+			}
 
-		if (node_type(pd->node)->memory_type)
-			pool_mt = node_memory_type(pd->node);
+			pool_mt = pd_mt;
+			mt_cnt++;
+		}
 
-		ret = path_destination_prepare(pd, p->queuelen);
+		ret = pd->prepare(queuelen);
 		if (ret)
-			return ret;
+			throw RuntimeError("Failed to prepare path destination {} of path {}", *pd->node, *this);
 	}
 
 	/* Autodetect whether to use original sequence numbers or not */
-	if (p->original_sequence_no == -1)
-		p->original_sequence_no = vlist_length(&p->sources) == 1;
+	if (original_sequence_no == -1)
+		original_sequence_no = sources.size() == 1;
 
-	/* Prepare poll() */
-	if (p->poll) {
-		ret = path_prepare_poll(p);
-		if (ret)
-			return ret;
+	/* Autodetect whether to use poll() for this path or not */
+	if (poll == -1) {
+		if (rate > 0)
+			poll = 1;
+		else if (sources.size()> 1)
+			poll = 1;
+		else
+			poll = 0;
 	}
 
 #ifdef WITH_HOOKS
 	/* Prepare path hooks */
-	int m = p->builtin ? (int) Hook::Flags::PATH | (int) Hook::Flags::BUILTIN : 0;
+	int m = builtin
+		? (int) Hook::Flags::PATH |
+		  (int) Hook::Flags::BUILTIN
+		: 0;
 
 	/* Add internal hooks if they are not already in the list */
-	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
+	hooks.prepare(signals, m, this, nullptr);
+	hooks.dump(logger, fmt::format("path {}", *this));
 #endif /* WITH_HOOKS */
 
 	/* Prepare pool */
-	pool_size = MAX(1UL, vlist_length(&p->destinations)) * p->queuelen;
-	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(path_output_signals_max_cnt(p)), pool_mt);
+	auto osigs = getOutputSignals();
+	unsigned pool_size = MAX(1UL, destinations.size()) * queuelen;
+
+	ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(osigs->size()), pool_mt);
 	if (ret)
-		return ret;
+		throw RuntimeError("Failed to initialize pool of path: {}", *this);
 
-	p->logger->info("Prepared path {} with {} output signals", *p, vlist_length(path_output_signals(p)));
-	signal_list_dump(p->logger, path_output_signals(p));
+	logger->debug("Prepared path {} with {} output signals:", *this, osigs->size());
+	osigs->dump(logger);
 
-	p->state = State::PREPARED;
+	checkPrepared();
 
-	return 0;
+	state = State::PREPARED;
 }
 
-int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_uuid)
+void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 {
-	int ret;
+	int ret, en = -1, rev = -1;
 
 	json_error_t err;
 	json_t *json_in;
@@ -385,115 +360,94 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	json_t *json_hooks = nullptr;
 	json_t *json_mask = nullptr;
 
-	const char *mode = nullptr;
+	const char *mode_str = nullptr;
 	const char *uuid_str = nullptr;
-
-	struct vlist destinations;
-
-	ret = vlist_init(&destinations);
-	if (ret)
-		return ret;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b, s?: s, s?: i }",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
-		"reverse", &p->reverse,
-		"enabled", &p->enabled,
-		"builtin", &p->builtin,
-		"queuelen", &p->queuelen,
-		"mode", &mode,
-		"poll", &p->poll,
-		"rate", &p->rate,
+		"reverse", &rev,
+		"enabled", &en,
+		"builtin", &builtin,
+		"queuelen", &queuelen,
+		"mode", &mode_str,
+		"poll", &poll,
+		"rate", &rate,
 		"mask", &json_mask,
-		"original_sequence_no", &p->original_sequence_no,
+		"original_sequence_no", &original_sequence_no,
 		"uuid", &uuid_str,
-		"affinity", &p->affinity
+		"affinity", &affinity
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-path", "Failed to parse path configuration");
 
+	if (en >= 0)
+		enabled = en != 0;
+
+	if (rev >= 0)
+		reversed = rev != 0;
+
 	/* Optional settings */
-	if (mode) {
-		if      (!strcmp(mode, "any"))
-			p->mode = PathMode::ANY;
-		else if (!strcmp(mode, "all"))
-			p->mode = PathMode::ALL;
+	if (mode_str) {
+		if      (!strcmp(mode_str, "any"))
+			mode = Mode::ANY;
+		else if (!strcmp(mode_str, "all"))
+			mode = Mode::ALL;
 		else
-			throw ConfigError(json, "node-config-path", "Invalid path mode '{}'", mode);
+			throw ConfigError(json, "node-config-path", "Invalid path mode '{}'", mode_str);
 	}
 
 	/* UUID */
 	if (uuid_str) {
-		ret = uuid_parse(uuid_str, p->uuid);
+		ret = uuid_parse(uuid_str, uuid);
 		if (ret)
 			throw ConfigError(json, "node-config-path-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
 	else
 		/* Generate UUID from hashed config */
-		uuid::generateFromJson(p->uuid, json, sn_uuid);
+		uuid::generateFromJson(uuid, json, sn_uuid);
 
 	/* Input node(s) */
-	ret = mapping_list_parse(&p->mappings, json_in);
+	ret = mappings.parse(json_in);
 	if (ret)
-		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", *p);
+		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", *this);
 
 	/* Output node(s) */
+	NodeList dests;
 	if (json_out) {
-		ret = node_list_parse(&destinations, json_out, nodes);
+		ret = dests.parse(json_out, nodes);
 		if (ret)
 			throw ConfigError(json_out, "node-config-path-out", "Failed to parse output nodes");
 	}
 
-	for (size_t i = 0; i < vlist_length(&destinations); i++) {
-		struct vnode *n = (struct vnode *) vlist_at(&destinations, i);
-
+	for (auto *n : dests) {
 		if (n->out.path)
 			throw ConfigError(json, "node-config-path", "Every node must only be used by a single path as destination");
 
-		n->out.path = p;
+		n->out.path = this;
 
-		auto *pd = new struct vpath_destination;
+		auto pd = std::make_shared<PathDestination>(this, n);
 		if (!pd)
 			throw MemoryAllocationError();
 
-		ret = path_destination_init(pd, n);
-		if (ret)
-			return ret;
-
-		vlist_push(&n->destinations, pd);
-		vlist_push(&p->destinations, pd);
+		n->destinations.push_back(pd);
+		destinations.push_back(pd);
 	}
 
 #ifdef WITH_HOOKS
 	if (json_hooks)
-		hook_list_parse(&p->hooks, json_hooks, (int) Hook::Flags::PATH, p, nullptr);
+		hooks.parse(json_hooks, (int) Hook::Flags::PATH, this, nullptr);
 #endif /* WITH_HOOKS */
 
 	if (json_mask)
-		path_parse_mask(p, json_mask, nodes);
+		parseMask(json_mask, nodes);
 
-	ret = vlist_destroy(&destinations, nullptr, false);
-	if (ret)
-		return ret;
-
-	/* Autodetect whether to use poll() for this path or not */
-	if (p->poll == -1) {
-		if (p->rate > 0)
-			p->poll = 1;
-		else if (vlist_length(&p->sources) > 1)
-			p->poll = 1;
-		else
-			p->poll = 0;
-	}
-
-	p->config = json;
-	p->state = State::PARSED;
-
-	return 0;
+	config = json;
+	state = State::PARSED;
 }
 
-void path_parse_mask(struct vpath *p, json_t *json_mask, villas::node::NodeList &nodes)
+void Path::parseMask(json_t *json_mask, NodeList &nodes)
 {
 	json_t *json_entry;
 	size_t i;
@@ -503,7 +457,7 @@ void path_parse_mask(struct vpath *p, json_t *json_mask, villas::node::NodeList 
 
 	json_array_foreach(json_mask, i, json_entry) {
 		const char *name;
-		struct vnode *node;
+		Node *node;
 
 		name = json_string_value(json_entry);
 		if (!name)
@@ -513,127 +467,126 @@ void path_parse_mask(struct vpath *p, json_t *json_mask, villas::node::NodeList 
 		if (!node)
 			throw ConfigError(json_mask, "node-config-path-mask", "The 'mask' entry '{}' is not a valid node name", name);
 
-		p->mask_list.push_back(node);
+		masked.push_back(node);
 	}
 }
 
-void path_check(struct vpath *p)
+void Path::check()
 {
-	assert(p->state != State::DESTROYED);
+	assert(state != State::DESTROYED);
 
-	if (p->rate < 0)
-		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", *p);
+	if (rate < 0)
+		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", *this);
 
-	if (p->poll > 0) {
-		if (p->rate <= 0) {
-			/* Check that all path sources provide a file descriptor for polling */
-			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-				struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
-
-				if (!node_type(ps->node)->poll_fds)
-					throw RuntimeError("Node {} can not be used in polling mode with path {}", *ps->node, *p);
-			}
-		}
+	if (!IS_POW2(queuelen)) {
+		queuelen = LOG2_CEIL(queuelen);
+		logger->warn("Queue length should always be a power of 2. Adjusting to {}", queuelen);
 	}
-	else {
+
+#ifdef WITH_HOOKS
+	hooks.check();
+#endif /* WITH_HOOKS */
+
+	state = State::CHECKED;
+}
+
+void Path::checkPrepared()
+{
+	if (poll == 0) {
 		/* Check that we do not need to multiplex between multiple sources when polling is disabled */
-		if (vlist_length(&p->sources) > 1)
+		if (sources.size() > 1)
 			throw RuntimeError("Setting 'poll' must be active if the path has more than one source");
 
 		/* Check that we do not use the fixed rate feature when polling is disabled */
-		if (p->rate > 0)
+		if (rate > 0)
 			throw RuntimeError("Setting 'poll' must be activated when used together with setting 'rate'");
 	}
-
-	if (!IS_POW2(p->queuelen)) {
-		p->queuelen = LOG2_CEIL(p->queuelen);
-		p->logger->warn("Queue length should always be a power of 2. Adjusting to {}", p->queuelen);
+	else {
+		if (rate <= 0) {
+			/* Check that all path sources provide a file descriptor for polling if fixed rate is disabled */
+			for (auto ps : sources) {
+				if (!(ps->getNode()->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_POLL))
+					throw RuntimeError("Node {} can not be used in polling mode with path {}", *ps->getNode(), *this);
+			}
+		}
 	}
-
-	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-		struct vpath_source *ps = (struct vpath_source *) vlist_at(&p->sources, i);
-
-		path_source_check(ps);
-	}
-
-	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		struct vpath_destination *ps = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-		path_destination_check(ps);
-	}
-
-#ifdef WITH_HOOKS
-	hook_list_check(&p->hooks);
-#endif /* WITH_HOOKS */
-
-	p->state = State::CHECKED;
 }
 
-int path_start(struct vpath *p)
+void Path::start()
 {
 	int ret;
-	const char *mode;
+	const char *mode_str;
 
-	assert(p->state == State::PREPARED);
+	assert(state == State::PREPARED);
 
-	switch (p->mode) {
-		case PathMode::ANY:
-			mode = "any";
+	switch (mode) {
+		case Mode::ANY:
+			mode_str = "any";
 			break;
 
-		case PathMode::ALL:
-			mode = "all";
+		case Mode::ALL:
+			mode_str = "all";
 			break;
 
 		default:
-			mode = "unknown";
+			mode_str = "unknown";
 			break;
 	}
 
-	p->logger->info("Starting path {}: #signals={}({}), #hooks={}, #sources={}, "
-	                "#destinations={}, mode={}, poll={}, mask={:b}, rate={}, "
+	logger->info("Starting path {}: #signals={}/{}, #hooks={}, #sources={}, "
+	                "#destinations={}, mode={}, poll={}, mask=0b{:b}, rate={}, "
 	                "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
-		*p,
-		vlist_length(&p->signals),
-		vlist_length(path_output_signals(p)),
-		vlist_length(&p->hooks),
-		vlist_length(&p->sources),
-		vlist_length(&p->destinations),
-		mode,
-		p->poll ? "yes" : "no",
-		p->mask.to_ullong(),
-		p->rate,
-		path_is_enabled(p) ? "yes" : "no",
-		path_is_reversed(p) ? "yes" : "no",
-		p->queuelen,
-		p->original_sequence_no ? "yes" : "no"
+		*this,
+		signals->size(),
+		getOutputSignals()->size(),
+		hooks.size(),
+		sources.size(),
+		destinations.size(),
+		mode_str,
+		poll ? "yes" : "no",
+		mask.to_ullong(),
+		rate,
+		isEnabled() ? "yes" : "no",
+		isReversed() ? "yes" : "no",
+		queuelen,
+		original_sequence_no ? "yes" : "no"
 	);
 
 #ifdef WITH_HOOKS
-	hook_list_start(&p->hooks);
+	hooks.start();
 #endif /* WITH_HOOKS */
 
-	p->last_sequence = 0;
+	last_sequence = 0;
 
-	p->received.reset();
+	received.reset();
 
 	/* We initialize the intial sample */
-	p->last_sample = sample_alloc(&p->pool);
-	if (!p->last_sample)
-		return -1;
+	last_sample = sample_alloc(&pool);
+	if (!last_sample)
+		throw MemoryAllocationError();
 
-	p->last_sample->length = 0;
-	p->last_sample->signals = &p->signals;
-	p->last_sample->sequence = 0;
-	p->last_sample->flags = p->last_sample->length > 0 ? (int) SampleFlags::HAS_DATA : 0;
+	last_sample->length = signals->size();
+	last_sample->signals = signals;
 
-	for (size_t i = 0; i < p->last_sample->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at(p->last_sample->signals, i);
+	last_sample->ts.origin = time_now();
+	last_sample->flags = (int) SampleFlags::HAS_TS_ORIGIN;
 
-		p->last_sample->data[i] = sig->init;
+	last_sample->sequence = 0;
+	last_sample->flags |= (int) SampleFlags::HAS_SEQUENCE;
+
+	if (last_sample->length > 0)
+		last_sample->flags |= (int) SampleFlags::HAS_DATA;
+
+	for (size_t i = 0; i < last_sample->length; i++) {
+		auto sig = signals->getByIndex(i);
+
+		last_sample->data[i] = sig->init;
 	}
 
-	p->state = State::STARTED;
+	if (poll > 0)
+		startPoll();
+
+	state = State::STARTED;
 
 	/* Start one thread per path for sending to destinations
 	 *
@@ -641,131 +594,89 @@ int path_start(struct vpath *p)
 	 * does not offer a file descriptor for polling, we will use a special
 	 * thread function.
 	 */
-	ret = pthread_create(&p->tid, nullptr, p->poll ? path_run_poll : path_run_single, p);
+	ret = pthread_create(&tid, nullptr, runWrapper, this);
 	if (ret)
-		return ret;
+		throw RuntimeError("Failed to create path thread");
 
-	if (p->affinity)
-		kernel::rt::setThreadAffinity(p->tid, p->affinity);
-
-	return 0;
+	if (affinity)
+		kernel::rt::setThreadAffinity(tid, affinity);
 }
 
-int path_stop(struct vpath *p)
+void Path::stop()
 {
 	int ret;
 
-	if (p->state != State::STARTED && p->state != State::STOPPING)
-		return 0;
+	if (state != State::STARTED &&
+	    state != State::STOPPING)
+		return;
 
-	p->logger->info("Stopping path: {}", *p);
+	logger->info("Stopping path: {}", *this);
 
-	if (p->state != State::STOPPING)
-		p->state = State::STOPPING;
+	if (state != State::STOPPING)
+		state = State::STOPPING;
 
 	/* Cancel the thread in case is currently in a blocking syscall.
 	 *
 	 * We dont care if the thread has already been terminated.
 	 */
-	ret = pthread_cancel(p->tid);
+	ret = pthread_cancel(tid);
 	if (ret && ret != ESRCH)
-	 	return ret;
+	 	throw RuntimeError("Failed to cancel path thread");
 
-	ret = pthread_join(p->tid, nullptr);
+	ret = pthread_join(tid, nullptr);
 	if (ret)
-		return ret;
+		throw RuntimeError("Failed to join path thread");
 
 #ifdef WITH_HOOKS
-	hook_list_stop(&p->hooks);
+	hooks.stop();
 #endif /* WITH_HOOKS */
 
-	sample_decref(p->last_sample);
+	sample_decref(last_sample);
 
-	p->state = State::STOPPED;
-
-	return 0;
+	state = State::STOPPED;
 }
 
-int path_destroy(struct vpath *p)
+Path::~Path()
 {
-	int ret;
+	int ret __attribute__((unused));
 
-	if (p->state == State::DESTROYED)
-		return 0;
+	assert(state != State::DESTROYED);
 
-#ifdef WITH_HOOKS
-	ret = hook_list_destroy(&p->hooks);
-	if (ret)
-		return ret;
-#endif
-	ret = signal_list_destroy(&p->signals);
-	if (ret)
-		return ret;
-
-	ret = vlist_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
-	if (ret)
-		return ret;
-
-	ret = vlist_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
-	if (ret)
-		return ret;
-
-	ret = vlist_destroy(&p->mappings, (dtor_cb_t) mapping_entry_destroy, true);
-	if (ret)
-		return ret;
-
-	if (p->reader.pfds)
-		delete[] p->reader.pfds;
-
-	ret = pool_destroy(&p->pool);
-	if (ret)
-		return ret;
-
-	using bs = std::bitset<MAX_SAMPLE_LENGTH>;
-	using lg = std::shared_ptr<spdlog::logger>;
-
-	p->received.~bs();
-	p->mask.~bs();
-	p->logger.~lg();
-	p->timeout.~Task();
-
-	p->state = State::DESTROYED;
-
-	return 0;
+	ret = pool_destroy(&pool);
 }
 
-bool path_is_simple(const struct vpath *p)
+bool Path::isSimple() const
 {
 	int ret;
 	const char *in = nullptr, *out = nullptr;
 
 	json_error_t err;
-	ret = json_unpack_ex(p->config, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
+	ret = json_unpack_ex(config, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
 	if (ret)
 		return false;
 
-	ret = node_is_valid_name(in);
+	ret = Node::isValidName(in);
 	if (!ret)
 		return false;
 
-	ret = node_is_valid_name(out);
+	ret = Node::isValidName(out);
 	if (!ret)
 		return false;
 
 	return true;
 }
 
-bool path_is_muxed(const struct vpath *p)
+bool Path::isMuxed() const
 {
-	if (vlist_length(&p->sources) > 0)
+	if (sources.size() > 0)
 		return true;
 
-	if (vlist_length(&p->mappings) > 0)
+	if (mappings.size() > 0)
 		return true;
 
-	struct mapping_entry *me = (struct mapping_entry *) vlist_at_safe(&p->mappings, 0);
+	auto me = mappings.front();
 
-	if (me->type != MappingType::DATA)
+	if (me->type != MappingEntry::Type::DATA)
 		return true;
 
 	if (me->data.offset != 0)
@@ -777,78 +688,64 @@ bool path_is_muxed(const struct vpath *p)
 	return false;
 }
 
-bool path_is_enabled(const struct vpath *p)
-{
-	return p->enabled;
-}
-
-bool path_is_reversed(const struct vpath *p)
-{
-	return p->reverse;
-}
-
-struct vlist * path_output_signals(struct vpath *p)
+SignalList::Ptr Path::getOutputSignals(bool after_hooks)
 {
 #ifdef WITH_HOOKS
-	if (vlist_length(&p->hooks) > 0)
-		return hook_list_get_signals(&p->hooks);
+	if (after_hooks && hooks.size() > 0)
+		return hooks.getSignals();
 #endif /* WITH_HOOKS */
 
-	return &p->signals;
+	return signals;
 }
 
-unsigned path_output_signals_max_cnt(struct vpath *p)
+unsigned Path::getOutputSignalsMaxCount()
 {
 #ifdef WITH_HOOKS
-	if (vlist_length(&p->hooks) > 0)
-		return MAX(vlist_length(&p->signals), hook_list_get_signals_max_cnt(&p->hooks));
+	if (hooks.size() > 0)
+		return MAX(signals->size(), hooks.getSignalsMaxCount());
 #endif /* WITH_HOOKS */
 
-	return vlist_length(&p->signals);
+	return signals->size();
 }
 
-json_t * path_to_json(struct vpath *p)
+json_t * Path::toJson() const
 {
-	char uuid[37];
-	uuid_unparse(p->uuid, uuid);
+	char uuid_str[37];
+	uuid_unparse(uuid, uuid_str);
 
-	json_t *json_signals = signal_list_to_json(&p->signals);
+	json_t *json_signals = signals->toJson();
 #ifdef WITH_HOOKS
-	json_t *json_hooks = hook_list_to_json(&p->hooks);
+	json_t *json_hooks = hooks.toJson();
+#else
+	json_t *json_hooks = json_array();
 #endif /* WITH_HOOKS */
 	json_t *json_sources = json_array();
 	json_t *json_destinations = json_array();
 
-	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
-		struct vpath_source *pd = (struct vpath_source *) vlist_at_safe(&p->sources, i);
+	for (auto ps : sources)
+		json_array_append_new(json_sources, json_string(ps->node->getNameShort().c_str()));
 
-		json_array_append_new(json_sources, json_string(node_name_short(pd->node)));
-	}
-
-	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
-		struct vpath_destination *pd = (struct vpath_destination *) vlist_at_safe(&p->destinations, i);
-
-		json_array_append_new(json_destinations, json_string(node_name_short(pd->node)));
-	}
+	for (auto pd : destinations)
+		json_array_append_new(json_destinations, json_string(pd->node->getNameShort().c_str()));
 
 	json_t *json_path = json_pack("{ s: s, s: s, s: s, s: b, s: b s: b, s: b, s: b, s: b s: i, s: o, s: o, s: o, s: o }",
-		"uuid", uuid,
-		"state", stateToString(p->state).c_str(),
-		"mode", p->mode == PathMode::ANY ? "any" : "all",
-		"enabled", p->enabled,
-		"builtin", p->builtin,
-		"reverse", p->reverse,
-		"original_sequence_no", p->original_sequence_no,
-		"last_sequence", p->last_sequence,
-		"poll", p->poll,
-		"queuelen", p->queuelen,
+		"uuid", uuid_str,
+		"state", stateToString(state).c_str(),
+		"mode", mode == Mode::ANY ? "any" : "all",
+		"enabled", enabled,
+		"builtin", builtin,
+		"reversed", reversed,
+		"original_sequence_no", original_sequence_no,
+		"last_sequence", last_sequence,
+		"poll", poll,
+		"queuelen", queuelen,
 		"signals", json_signals,
-#ifdef WITH_HOOKS
 		"hooks", json_hooks,
-#endif /* WITH_HOOKS */
 		"in", json_sources,
 		"out", json_destinations
 	);
 
 	return json_path;
 }
+
+int villas::node::Path::id = 0;

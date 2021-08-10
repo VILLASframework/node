@@ -19,9 +19,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @addtogroup tools Test and debug tools
- * @{
  *********************************************************************************/
 
 #include <iostream>
@@ -59,7 +56,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
@@ -154,5 +151,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-/** @} */

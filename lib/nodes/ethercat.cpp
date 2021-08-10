@@ -27,14 +27,14 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/ethercat.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
 /* Forward declartions */
-static struct vnode_type p;
+static NodeCompatType p;
 
 /* Constants */
 #define NSEC_PER_SEC (1000000000)
@@ -59,11 +59,12 @@ struct coupler {
 	.sc = nullptr
 };
 
-static void ethercat_cyclic_task(struct vnode *n)
+static
+void ethercat_cyclic_task(NodeCompat *n)
 {
 	int ret;
-	struct sample *smp;
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	struct Sample *smp;
+	auto *w = n->getData<struct ethercat>();
 
 	while (true) {
 		w->task.wait();
@@ -81,7 +82,7 @@ static void ethercat_cyclic_task(struct vnode *n)
 
 		smp->length = MIN(w->in.num_channels, smp->capacity);
 		smp->flags = (int) SampleFlags::HAS_DATA;
-		smp->signals = &n->in.signals;
+		smp->signals = n->getInputSignals(false);
 
 		/* Read process data */
 		for (unsigned i = 0; i < smp->length; i++) {
@@ -111,7 +112,7 @@ static void ethercat_cyclic_task(struct vnode *n)
 	}
 }
 
-int ethercat_type_start(villas::node::SuperNode *sn)
+int villas::node::ethercat_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 	json_error_t err;
@@ -143,7 +144,7 @@ int ethercat_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int ethercat_type_stop()
+int villas::node::ethercat_type_stop()
 {
 	auto logger = logging.get("node:ethercat");
 
@@ -154,9 +155,9 @@ int ethercat_type_stop()
 	return 0;
 }
 
-int ethercat_parse(struct vnode *n, json_t *json)
+int villas::node::ethercat_parse(NodeCompat *n, json_t *json)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	int ret;
 	json_error_t err;
@@ -182,9 +183,9 @@ int ethercat_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * ethercat_print(struct vnode *n)
+char * villas::node::ethercat_print(NodeCompat *n)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 	std::stringstream ss;
 
 	ss << "alias=" << alias;
@@ -194,9 +195,9 @@ char * ethercat_print(struct vnode *n)
 	return strdup(ss.str().c_str());
 }
 
-int ethercat_check(struct vnode *n)
+int villas::node::ethercat_check(NodeCompat *n)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	/* Some parts of the configuration are still hard-coded for this specific setup */
 	if (w->in.product_code != ETHERCAT_PID_EL3008 ||
@@ -211,9 +212,18 @@ int ethercat_check(struct vnode *n)
 	return 0;
 }
 
-int ethercat_prepare(struct vnode *n)
+int villas::node::ethercat_prepare(NodeCompat *n)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	int ret;
+	auto *w = n->getData<struct ethercat>();
+
+	ret = pool_init(&w->pool, DEFAULT_ETHERCAT_QUEUE_LENGTH, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
+	if (ret)
+		return ret;
+
+	ret = queue_signalled_init(&w->queue, DEFAULT_ETHERCAT_QUEUE_LENGTH);
+	if (ret)
+		return ret;
 
 	w->in.offsets = new unsigned[w->in.num_channels];
 	if (!w->in.offsets)
@@ -267,10 +277,10 @@ int ethercat_prepare(struct vnode *n)
 	return 0;
 }
 
-int ethercat_start(struct vnode *n)
+int villas::node::ethercat_start(NodeCompat *n)
 {
 	int ret;
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	/* Configure analog in */
 	w->in.sc = ecrt_master_slave_config(master, alias, w->in.position, w->in.vendor_id, w->in.product_code);
@@ -312,21 +322,26 @@ int ethercat_start(struct vnode *n)
 	return 0;
 }
 
-int ethercat_stop(struct vnode *n)
+int villas::node::ethercat_stop(NodeCompat *n)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	int ret;
+	auto *w = n->getData<struct ethercat>();
 
 	w->thread.join();
+
+	ret = queue_signalled_close(&w->queue);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
-int ethercat_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ethercat_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	int avail;
-	struct sample *cpys[cnt];
+	struct Sample *cpys[cnt];
 
 	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
 	if (avail < 0)
@@ -338,28 +353,27 @@ int ethercat_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return avail;
 }
 
-int ethercat_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ethercat_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	if (cnt < 1)
 		return cnt;
 
-	struct sample *smp = smps[0];
+	struct Sample *smp = smps[0];
 
 	sample_incref(smp);
 
-	struct sample *old = w->send.exchange(smp);
+	struct Sample *old = w->send.exchange(smp);
 	if (old)
 		sample_decref(old);
 
 	return 1;
 }
 
-int ethercat_init(struct vnode *n)
+int villas::node::ethercat_init(NodeCompat *n)
 {
-	int ret;
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	/* Default values */
 	w->rate = 1000;
@@ -385,25 +399,17 @@ int ethercat_init(struct vnode *n)
 	w->domain_regs = nullptr;
 
 	/* Placement new for C++ objects */
-	new (&w->send) std::atomic<struct sample *>();
+	new (&w->send) std::atomic<struct Sample *>();
 	new (&w->thread) std::thread();
 	new (&w->task) Task(CLOCK_REALTIME);
-
-	ret = pool_init(&w->pool, DEFAULT_ETHERCAT_QUEUE_LENGTH, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
-	if (ret)
-		return ret;
-
-	ret = queue_signalled_init(&w->queue, DEFAULT_ETHERCAT_QUEUE_LENGTH);
-	if (ret)
-		return ret;
 
 	return 0;
 }
 
-int ethercat_destroy(struct vnode *n)
+int villas::node::ethercat_destroy(NodeCompat *n)
 {
 	int ret;
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	if (w->domain_regs)
 		delete[] w->domain_regs;
@@ -429,9 +435,9 @@ int ethercat_destroy(struct vnode *n)
 	return 0;
 }
 
-int ethercat_poll_fds(struct vnode *n, int *fds)
+int villas::node::ethercat_poll_fds(NodeCompat *n, int *fds)
 {
-	struct ethercat *w = (struct ethercat *) n->_vd;
+	auto *w = n->getData<struct ethercat>();
 
 	fds[0] = queue_signalled_fd(&w->queue);
 
@@ -458,9 +464,6 @@ static void register_plugin() {
 	p.write		= ethercat_write;
 	p.poll_fds	= ethercat_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }
 

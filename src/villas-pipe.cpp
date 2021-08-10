@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,9 +19,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @addtogroup tools Test and debug tools
- * @{
  *********************************************************************************/
 
 #include <cstdlib>
@@ -33,16 +30,16 @@
 #include <iostream>
 #include <atomic>
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/config_helper.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/colors.hpp>
-#include <villas/node.h>
-#include <villas/timing.h>
-#include <villas/pool.h>
+#include <villas/node.hpp>
+#include <villas/timing.hpp>
+#include <villas/pool.hpp>
 #include <villas/format.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/exceptions.hpp>
@@ -56,8 +53,8 @@ namespace tools {
 class PipeDirection {
 
 protected:
-	struct pool pool;
-	struct vnode *node;
+	struct Pool pool;
+	Node *node;
 	Format *formatter;
 
 	std::thread thread;
@@ -67,7 +64,7 @@ protected:
 	bool enabled;
 	int limit;
 public:
-	PipeDirection(struct vnode *n, Format *fmt, bool en, int lim, const std::string &name) :
+	PipeDirection(Node *n, Format *fmt, bool en, int lim, const std::string &name) :
 		node(n),
 		formatter(fmt),
 		stop(false),
@@ -80,7 +77,7 @@ public:
 		/* Initialize memory */
 		unsigned pool_size = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
 
-		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node));
+		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node->getMemoryType());
 		if (ret < 0)
 			throw RuntimeError("Failed to allocate memory for pool.");
 	}
@@ -92,42 +89,44 @@ public:
 		ret = pool_destroy(&pool);
 	}
 
-	virtual void run()
-	{
-
-	}
+	virtual
+	void run() = 0;
 
 	void startThread()
 	{
 		stop = false;
+
 		if (enabled)
-			thread = std::thread(&villas::node::tools::PipeDirection::run, this);
+			thread = std::thread(&PipeDirection::run, this);
 	}
 
 	void stopThread()
 	{
 		stop = true;
 
-		/* We send a signal to the thread in order to interrupt blocking system calls */
-		pthread_kill(thread.native_handle(), SIGUSR1);
+		if (enabled) {
+			/* We send a signal to the thread in order to interrupt blocking system calls */
+			pthread_kill(thread.native_handle(), SIGUSR1);
 
-		thread.join();
+			thread.join();
+		}
 	}
 };
 
 class PipeSendDirection : public PipeDirection {
 
 public:
-	PipeSendDirection(struct vnode *n, Format *i, bool en = true, int lim = -1) :
+	PipeSendDirection(Node *n, Format *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim, "send")
 	{ }
 
-	virtual void run()
+	virtual
+	void run()
 	{
 		unsigned last_sequenceno = 0;
 		int scanned, sent, allocated, cnt = 0;
 
-		struct sample *smps[node->out.vectorize];
+		struct Sample *smps[node->out.vectorize];
 
 		while (!stop && !feof(stdin)) {
 			allocated = sample_alloc_many(&pool, smps, node->out.vectorize);
@@ -155,7 +154,7 @@ public:
 					smps[i]->sequence = last_sequenceno++;
 			}
 
-			sent = node_write(node, smps, scanned);
+			sent = node->write(smps, scanned);
 
 			sample_decref_many(smps, scanned);
 
@@ -186,14 +185,15 @@ leave:		if (feof(stdin)) {
 class PipeReceiveDirection : public PipeDirection {
 
 public:
-	PipeReceiveDirection(struct vnode *n, Format *i, bool en = true, int lim = -1) :
+	PipeReceiveDirection(Node *n, Format *i, bool en = true, int lim = -1) :
 		PipeDirection(n, i, en, lim, "recv")
 	{ }
 
-	virtual void run()
+	virtual
+	void run()
 	{
 		int recv, cnt = 0, allocated = 0;
-		struct sample *smps[node->in.vectorize];
+		struct Sample *smps[node->in.vectorize];
 
 		while (!stop) {
 			allocated = sample_alloc_many(&pool, smps, node->in.vectorize);
@@ -202,9 +202,9 @@ public:
 			else if (allocated < (int) node->in.vectorize)
 				logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
 
-			recv = node_read(node, smps, allocated);
+			recv = node->read(smps, allocated);
 			if (recv < 0) {
-				if (node->state == State::STOPPING || stop)
+				if (node->getState() == State::STOPPING || stop)
 					goto leave2;
 				else
 					logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
@@ -242,14 +242,14 @@ public:
 		format("villas.human"),
 		dtypes("64f"),
 		config_cli(json_object()),
-		enable_send(true),
-		enable_recv(true),
+		enable_write(true),
+		enable_read(true),
 		limit_send(-1),
 		limit_recv(-1)
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 	}
@@ -274,8 +274,8 @@ protected:
 
 	json_t *config_cli;
 
-	bool enable_send;
-	bool enable_recv;
+	bool enable_write;
+	bool enable_read;
 	int limit_send;
 	int limit_recv;
 
@@ -342,11 +342,11 @@ protected:
 					break;
 
 				case 's':
-					enable_recv = false; // send only
+					enable_read = false; // send only
 					break;
 
 				case 'r':
-					enable_send = false; // receive only
+					enable_write = false; // receive only
 					break;
 
 				case 'l':
@@ -395,7 +395,7 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret;
-		struct vnode *node;
+		Node *node;
 		json_t *json_format;
 		json_error_t err;
 
@@ -405,7 +405,6 @@ check:			if (optarg == endptr)
 			sn.parse(uri);
 		else
 			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
-
 
 		/* Try parsing format config as JSON */
 		json_format = json_loads(format.c_str(), 0, &err);
@@ -421,43 +420,43 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("Node {} does not exist!", nodestr);
 
-		if (!node_type(node)->read && enable_recv)
+		if (enable_read && !(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_READ))
 			throw RuntimeError("Node {} can not receive data. Consider using send-only mode by using '-s' option", nodestr);
 
-		if (!node_type(node)->write && enable_send)
-			throw RuntimeError("Node {} can not send data. Consider using receive-only mode by using '-r' option", nodestr);
+		if (enable_write && !(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_WRITE))
+				throw RuntimeError("Node {} can not send data. Consider using receive-only mode by using '-r' option", nodestr);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */
-		if (node_type(node)->start == websocket_start) {
+		if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::REQUIRES_WEB) {
 			Web *w = sn.getWeb();
 			w->start();
 		}
 #endif /* WITH_NODE_WEBSOCKET */
 
 		if (reverse)
-			node_reverse(node);
+			node->reverse();
 
-		ret = node_type_start(node_type(node), &sn);
+		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to intialize node type {}: reason={}", *node_type(node), ret);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", *node->getFactory(), ret);
 
 		sn.startInterfaces();
 
-		ret = node_check(node);
+		ret = node->check();
 		if (ret)
 			throw RuntimeError("Invalid node configuration");
 
-		ret = node_prepare(node);
+		ret = node->prepare();
 		if (ret)
 			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
 
-		ret = node_start(node);
+		ret = node->start();
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
 
-		PipeReceiveDirection recv_dir(node, formatter, enable_recv, limit_recv);
-		PipeSendDirection send_dir(node, formatter, enable_send, limit_send);
+		PipeReceiveDirection recv_dir(node, formatter, enable_read, limit_recv);
+		PipeSendDirection send_dir(node, formatter, enable_write, limit_send);
 
 		recv_dir.startThread();
 		send_dir.startThread();
@@ -470,20 +469,20 @@ check:			if (optarg == endptr)
 		recv_dir.stopThread();
 		send_dir.stopThread();
 
-		ret = node_stop(node);
+		ret = node->stop();
 		if (ret)
 			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
 
 		sn.stopInterfaces();
 
-		ret = node_type_stop(node_type(node));
+		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node type {}: reason={}", *node_type(node), ret);
+			throw RuntimeError("Failed to stop node type {}: reason={}", *node->getFactory(), ret);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */
-		if (node_type(node)->stop == websocket_stop) {
-			Web *w = sn.getWeb();
+		if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::REQUIRES_WEB) {
+				Web *w = sn.getWeb();
 			w->stop();
 		}
 #endif /* WITH_NODE_WEBSOCKET */
@@ -505,5 +504,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-/** @} */

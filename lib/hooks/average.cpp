@@ -1,7 +1,7 @@
 /** Average hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,17 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <bitset>
 #include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/signal.h>
-#include <villas/sample.h>
+#include <villas/signal.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -41,28 +37,23 @@ protected:
 	unsigned offset;
 
 public:
-	AverageHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	AverageHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		offset(0)
 	{ }
 
 	virtual void prepare()
 	{
-		int ret;
-		struct signal *avg_sig;
-
 		assert(state == State::CHECKED);
 
 		MultiSignalHook::prepare();
 
 		/* Add averaged signal */
-		avg_sig = signal_create("average", nullptr, SignalType::FLOAT);
+		auto avg_sig = std::make_shared<Signal>("average", "", SignalType::FLOAT);
 		if (!avg_sig)
 			throw RuntimeError("Failed to create new signal");
 
-		ret = vlist_insert(&signals, offset, avg_sig);
-		if (ret)
-			throw RuntimeError("Failed to intialize list");
+		signals->insert(signals->begin() + offset, avg_sig);
 
 		state = State::PREPARED;
 	}
@@ -85,7 +76,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		double avg, sum = 0;
 		int n = 0;
@@ -116,7 +107,7 @@ public:
 		if (offset >= smp->length)
 			return Reason::ERROR;
 
-		sample_data_insert(smp, (union signal_data *) &avg, offset, 1);
+		sample_data_insert(smp, (union SignalData *) &avg, offset, 1);
 
 		return Reason::OK;
 	}
@@ -129,5 +120,3 @@ static HookPlugin<AverageHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flag
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

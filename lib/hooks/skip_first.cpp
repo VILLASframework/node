@@ -1,7 +1,7 @@
 /** Skip first hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,13 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <villas/hook.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -102,7 +98,7 @@ public:
 		skip_state = SkipState::STARTED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -147,5 +143,3 @@ static HookPlugin<SkipFirstHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

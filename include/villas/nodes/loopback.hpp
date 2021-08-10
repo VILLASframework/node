@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,46 +21,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup loopback Loopback connections
- * @{
- */
-
 #pragma once
 
+#include <jansson.h>
+
 #include <villas/queue_signalled.h>
-#include <villas/pool.h>
 
-/* Forward declarations */
-struct vnode;
-struct sample;
+namespace villas {
+namespace node {
 
-/** Node-type for signal generation.
- * @see node_type
- */
-struct loopback {
+class LoopbackNode : public Node {
+
+protected:
 	int queuelen;
+	struct CQueueSignalled queue;
 	enum QueueSignalledMode mode;
-	struct queue_signalled queue;
+
+	virtual
+	int _write(struct Sample * smps[], unsigned cnt);
+
+	virtual
+	int _read(struct Sample * smps[], unsigned cnt);
+
+public:
+	LoopbackNode(const std::string &name = "");
+
+	virtual
+	~LoopbackNode();
+
+	virtual
+	int prepare();
+
+	virtual
+	int stop();
+
+	virtual
+	std::vector<int> getPollFDs();
+
+	virtual
+	const std::string & getDetails();
+
+	virtual
+	int parse(json_t *json);
 };
 
-/** @see node_type::print */
-char * loopback_print(struct vnode *n);
-
-/** @see node_type::parse */
-int loopback_parse(struct vnode *n, json_t *json);
-
-/** @see node_type::start */
-int loopback_open(struct vnode *n);
-
-/** @see node_type::stop */
-int loopback_close(struct vnode *n);
-
-/** @see node_type::read */
-int loopback_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
-
-/** @see node_type::write */
-int loopback_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
-
-/** @} */
+} /* namespace node */
+} /* namespace villas */

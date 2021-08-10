@@ -1,7 +1,7 @@
 /** JSON serializtion for edgeFlex project.
  *
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,9 +31,9 @@ class JsonEdgeflexFormat : public JsonFormat {
 
 protected:
 	virtual
-	int packSample(json_t **j, const struct sample *smp);
+	int packSample(json_t **j, const struct Sample *smp);
 	virtual
-	int unpackSample(json_t *json_smp, struct sample *smp);
+	int unpackSample(json_t *json_smp, struct Sample *smp);
 
 public:
 	using JsonFormat::JsonFormat;

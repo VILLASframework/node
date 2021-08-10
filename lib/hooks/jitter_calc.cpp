@@ -1,7 +1,7 @@
 /** Calc jitter, mean and variance of GPS vs NTP TS.
  *
  * @author Umar Farooq <umar.farooq@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,17 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <vector>
 #include <cinttypes>
 #include <cstring>
 
 #include <villas/hook.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 #include <villas/utils.hpp>
 
 #define GPS_NTP_DELAY_WIN_SIZE 16
@@ -52,7 +48,7 @@ protected:
 
 public:
 
-	JitterCalcHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	JitterCalcHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		jitter_val(GPS_NTP_DELAY_WIN_SIZE),
 		delay_series(GPS_NTP_DELAY_WIN_SIZE),
@@ -71,7 +67,7 @@ public:
 	 * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
 	 * the variance value will overrun the 64bit value.
 	 */
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -118,5 +114,3 @@ static HookPlugin<JitterCalcHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hoo
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

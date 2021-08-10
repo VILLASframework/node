@@ -3,7 +3,7 @@
 # Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,77 +22,79 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+	
+	kill -SIGTERM 0 # kill all decendants
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
-cat > ${CONFIG_FILE} <<EOF
+cat > config.json <<EOF
 {
 	"nodes": {
 		"node1": {
 			"type": "socket",
-			"out" : {
-				"address": "127.0.0.1:12001"
-			},
-			"in" : {
+			"in": {
 				"address": "127.0.0.1:12000",
-				"signals" : {
-					"type" : "float",
-					"count" : 1
+				"signals": {
+					"type": "float",
+					"count": 1
 				}
+			},
+			"out": {
+				"address": "127.0.0.1:12001"
 			}
 		},
 		"node2": {
 			"type": "socket",
-			
-			"out" : {
-				"address": "127.0.0.1:12000"
-			},
-			"in" : {
-				"address" : "127.0.0.1:12001",
-				"signals" : {
-					"type" : "float",
-					"count" : 1
+			"in": {
+				"address": "127.0.0.1:12001",
+				"signals": {
+					"type": "float",
+					"count": 1
 				}
+			},
+			"out": {
+				"address": "127.0.0.1:12000"
 			}
 		}
 	},
 	"paths": [
 		{
 			"in": "node1",
-			"out": "node1",
-			"hooks" : [
-				{ "type" : "print" }
-			]
+			"out": "node1"
 		}
 	]
 }
 EOF
 
-# Generate test data
-villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+VILLAS_LOG_PREFIX="[signal] " \
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
-# Start node
-villas node ${CONFIG_FILE} &
+VILLAS_LOG_PREFIX="[node] " \
+villas node config.json &
 
 # Wait for node to complete init
-sleep 1
+sleep 2
 
 # Send / Receive data to node
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < ${INPUT_FILE}
+VILLAS_LOG_PREFIX="[pipe] " \
+villas pipe -l ${NUM_SAMPLES} config.json node2 > output.dat < input.dat
 
 # Wait for node to handle samples
 sleep 1
 
-# Stop node
-kill %1
+kill %%
+wait %%
 
-# Compare data
-villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
-
-exit ${RC}
+# Send / Receive data to node
+VILLAS_LOG_PREFIX="[compare] " \
+villas compare input.dat output.dat

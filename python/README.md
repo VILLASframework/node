@@ -12,7 +12,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/node.h
 
 ## Copyright
 
-2014-2020, Institute for Automation of Complex Power Systems, EONERC  
+2014-2021, Institute for Automation of Complex Power Systems, EONERC  
 
 ## License
 

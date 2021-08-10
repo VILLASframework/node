@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,22 +21,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup temper BSD temper Node Type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/format.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/usb.hpp>
 #include <villas/log.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 class TEMPerDevice : public villas::usb::Device {
 
@@ -67,7 +64,7 @@ public:
 	virtual bool hasHumiditySensor() const
 	{ return false; };
 
-	void read(struct sample *smp);
+	void read(struct Sample *smp);
 };
 
 class TEMPer1Device : public TEMPerDevice {
@@ -129,55 +126,41 @@ struct temper {
 	TEMPerDevice *device;
 };
 
-/** @see node_vtable::type_start */
-int temper_type_start(villas::node::SuperNode *sn);
+int temper_type_start(SuperNode *sn);
 
-/** @see node_type::type_stop */
 int temper_type_stop();
 
-/** @see node_type::init */
-int temper_init(struct vnode *n);
+int temper_init(NodeCompat *n);
 
-/** @see node_type::destroy */
-int temper_destroy(struct vnode *n);
+int temper_prepare(NodeCompat *n);
 
-/** @see node_type::parse */
-int temper_parse(struct vnode *n, json_t *json);
+int temper_destroy(NodeCompat *n);
 
-/** @see node_type::print */
-char * temper_print(struct vnode *n);
+int temper_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::check */
+char * temper_print(NodeCompat *n);
+
 int temper_check();
 
-/** @see node_type::prepare */
 int temper_prepare();
 
-/** @see node_type::start */
-int temper_start(struct vnode *n);
+int temper_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int temper_stop(struct vnode *n);
+int temper_stop(NodeCompat *n);
 
-/** @see node_type::pause */
-int temper_pause(struct vnode *n);
+int temper_pause(NodeCompat *n);
 
-/** @see node_type::resume */
-int temper_resume(struct vnode *n);
+int temper_resume(NodeCompat *n);
 
-/** @see node_type::write */
-int temper_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int temper_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::read */
-int temper_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int temper_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::reverse */
-int temper_reverse(struct vnode *n);
+int temper_reverse(NodeCompat *n);
 
-/** @see node_type::poll_fds */
-int temper_poll_fds(struct vnode *n, int fds[]);
+int temper_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::netem_fds */
-int temper_netem_fds(struct vnode *n, int fds[]);
+int temper_netem_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

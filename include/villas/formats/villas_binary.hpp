@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,12 +27,11 @@
 
 #include <villas/format.hpp>
 
-/* Forward declarations. */
-struct sample;
-struct msg;
-
 namespace villas {
 namespace node {
+
+/* Forward declarations. */
+struct Sample;
 
 class VillasBinaryFormat : public BinaryFormat {
 
@@ -50,9 +49,9 @@ public:
 	{ }
 
 	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
 	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
 
 	virtual
 	void parse(json_t *json);

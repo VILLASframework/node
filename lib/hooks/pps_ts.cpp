@@ -1,7 +1,7 @@
 /** Timestamp hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,16 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cinttypes>
 #include <vector>
 
 #include <villas/hook.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -62,7 +58,7 @@ protected:
 	std::vector<uintmax_t> filterWindow;
 
 public:
-	PpsTsHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	PpsTsHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		SingleSignalHook(p, n, fl, prio, en),
 		mode(Mode::SIMPLE),
 		lastSequence(0),
@@ -118,7 +114,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual villas::node::Hook::Reason process(struct sample *smp)
+	virtual villas::node::Hook::Reason process(struct Sample *smp)
 	{
 		switch (mode) {
 			case Mode::SIMPLE:
@@ -132,7 +128,7 @@ public:
 		}
 	}
 
-	villas::node::Hook::Reason processSimple(struct sample *smp)
+	villas::node::Hook::Reason processSimple(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -168,7 +164,7 @@ public:
 		return Hook::Reason::OK;
 	}
 
-	villas::node::Hook::Reason processHorizon(struct sample *smp)
+	villas::node::Hook::Reason processHorizon(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -238,5 +234,3 @@ static HookPlugin<PpsTsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Fl
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

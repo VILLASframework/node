@@ -3,7 +3,7 @@
 # Integration test for scale hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,16 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
-CONFIG_FILE=$(mktemp)
-SCRIPT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat <<EOF > ${SCRIPT_FILE}
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > script.lua <<EOF
 global_var = 555
 counter = 111
 
@@ -58,9 +60,9 @@ function process(smp)
 end
 EOF
 
-cat <<EOF > ${CONFIG_FILE}
+cat > config.json <<EOF
 {
-	"script": "${SCRIPT_FILE}",
+	"script": "script.lua",
 	"custom": {
 		"variable": 123.456,
 		"list": [1, 2.0, true]
@@ -76,7 +78,7 @@ cat <<EOF > ${CONFIG_FILE}
 }
 EOF
 
-cat <<EOF > ${INPUT_FILE}
+cat > input.dat <<EOF
 # seconds.nanoseconds(sequence)	random	sine	square	triangle	ramp
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	0.587785	-1.000000	0.600000	0.100000
@@ -90,7 +92,7 @@ cat <<EOF > ${INPUT_FILE}
 1551015509.701653200(9)	0.060849	-0.587785	1.000000	0.600000	0.900000
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	global_var	counter	signal1	ts_origin.sec	ts_origin.sec	sequence
 1551015508.801653200+6.430638e+07(0)	555.000000	1.000000	0.000000	1.000000	0.000000	0.000000
 1551015508.901653200+6.430638e+07(1)	555.000000	2.000000	-0.400000	0.600000	0.100000	1.000000
@@ -104,12 +106,6 @@ cat <<EOF > ${EXPECT_FILE}
 1551015509.701653200+6.430638e+07(9)	555.000000	10.000000	1.600000	0.600000	0.900000	9.000000
 EOF
 
-villas hook lua -c ${CONFIG_FILE} < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook lua -c config.json < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE} ${CONFIG_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

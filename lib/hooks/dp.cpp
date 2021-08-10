@@ -1,7 +1,7 @@
 /** Dynamic Phasor Interface Algorithm hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,17 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cmath>
 #include <cstring>
 
 #include <complex>
 
 #include <villas/hook.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/dsp/window.hpp>
 #include <villas/utils.hpp>
 
@@ -117,7 +113,7 @@ protected:
 
 public:
 
-	DPHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	DPHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		signal_name(nullptr),
 		signal_index(0),
@@ -224,17 +220,14 @@ public:
 
 	virtual void prepare()
 	{
-		int ret;
-
 		assert(state == State::CHECKED);
 
 		char *new_sig_name;
-		struct signal *orig_sig, *new_sig;
 
 		assert(state != State::STARTED);
 
 		if (signal_name) {
-			signal_index = vlist_lookup_index<struct signal>(&signals, signal_name);
+			signal_index = signals->getIndexByName(signal_name);
 			if (signal_index < 0)
 				throw RuntimeError("Failed to find signal: {}", signal_name);
 		}
@@ -242,60 +235,48 @@ public:
 		if (inverse) {
 			/* Remove complex-valued coefficient signals */
 			for (int i = 0; i < fharmonics_len; i++) {
-				orig_sig = (struct signal *) vlist_at_safe(&signals, signal_index + i);
+				auto orig_sig = signals->getByIndex(signal_index + i);
 				if (!orig_sig)
-					throw RuntimeError("Failed to find signal");;
+					throw RuntimeError("Failed to find signal");
 
 				if (orig_sig->type != SignalType::COMPLEX)
-					throw RuntimeError("Signal is not complex");;
+					throw RuntimeError("Signal is not complex");
 
-				ret = vlist_remove(&signals, signal_index + i);
-				if (ret)
-					throw RuntimeError("Failed to remove signal from list");;
-
-				signal_decref(orig_sig);
+				signals->erase(signals->begin() + signal_index + i);
 			}
 
 			/* Add new real-valued reconstructed signals */
-			new_sig = signal_create("dp", "idp", SignalType::FLOAT);
+			auto new_sig = std::make_shared<Signal>("dp", "idp", SignalType::FLOAT);
 			if (!new_sig)
-				throw RuntimeError("Failed to create signal");;
+				throw RuntimeError("Failed to create signal");
 
-			ret = vlist_insert(&signals, offset, new_sig);
-			if (ret)
-				throw RuntimeError("Failed to insert signal into list");;
+			signals->insert(signals->begin() + offset, new_sig);
 		}
 		else {
-			orig_sig = (struct signal *) vlist_at_safe(&signals, signal_index);
+			auto orig_sig = signals->getByIndex(signal_index);
 			if (!orig_sig)
-				throw RuntimeError("Failed to find signal");;
+				throw RuntimeError("Failed to find signal");
 
 			if (orig_sig->type != SignalType::FLOAT)
-				throw RuntimeError("Signal is not float");;
+				throw RuntimeError("Signal is not float");
 
-			ret = vlist_remove(&signals, signal_index);
-			if (ret)
-				throw RuntimeError("Failed to remove signal from list");;
+			signals->erase(signals->begin() + signal_index);
 
 			for (int i = 0; i < fharmonics_len; i++) {
 				new_sig_name = strf("%s_harm%d", orig_sig->name, i);
 
-				new_sig = signal_create(new_sig_name, orig_sig->unit, SignalType::COMPLEX);
+				auto new_sig = std::make_shared<Signal>(new_sig_name, orig_sig->unit, SignalType::COMPLEX);
 				if (!new_sig)
-					throw RuntimeError("Failed to create new signal");;
+					throw RuntimeError("Failed to create new signal");
 
-				ret = vlist_insert(&signals, offset + i, new_sig);
-				if (ret)
-					throw RuntimeError("Failed to insert signal into list");;
+				signals->insert(signals->begin() + offset, new_sig);
 			}
-
-			signal_decref(orig_sig);
 		}
 
 		state = State::PREPARED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		if (signal_index >= smp->length)
 			return Hook::Reason::ERROR;
@@ -307,7 +288,7 @@ public:
 			istep(coeffs, &signal);
 
 			sample_data_remove(smp, signal_index, fharmonics_len);
-			sample_data_insert(smp, (union signal_data *) &signal, offset, 1);
+			sample_data_insert(smp, (union SignalData *) &signal, offset, 1);
 		}
 		else {
 			double signal = smp->data[signal_index].f;
@@ -316,7 +297,7 @@ public:
 			step(&signal, coeffs);
 
 			sample_data_remove(smp, signal_index, 1);
-			sample_data_insert(smp, (union signal_data *) coeffs, offset, fharmonics_len);
+			sample_data_insert(smp, (union SignalData *) coeffs, offset, fharmonics_len);
 		}
 
 		time += timestep;
@@ -333,5 +314,3 @@ static HookPlugin<DPHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NOD
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

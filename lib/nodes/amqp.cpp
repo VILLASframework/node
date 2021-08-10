@@ -1,7 +1,7 @@
 /** Node type: nanomsg
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,7 +25,7 @@
 #include <amqp_ssl_socket.h>
 #include <amqp_tcp_socket.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/amqp.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -34,7 +34,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static void amqp_default_ssl_info(struct amqp_ssl_info *s)
+static
+void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {
 	s->verify_peer = 1;
 	s->verify_hostname = 1;
@@ -43,7 +44,8 @@ static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 	s->ca_cert = nullptr;
 }
 
-static amqp_bytes_t amqp_bytes_strdup(const char *str)
+static
+amqp_bytes_t amqp_bytes_strdup(const char *str)
 {
 	size_t len = strlen(str) + 1;
 	amqp_bytes_t buf = amqp_bytes_malloc(len);
@@ -53,7 +55,8 @@ static amqp_bytes_t amqp_bytes_strdup(const char *str)
 	return buf;
 }
 
-static amqp_connection_state_t amqp_connect(struct amqp_connection_info *ci, struct amqp_ssl_info *ssl)
+static
+amqp_connection_state_t amqp_connect(NodeCompat *n, struct amqp_connection_info *ci, struct amqp_ssl_info *ssl)
 {
 	int ret;
 	amqp_rpc_reply_t rep;
@@ -62,63 +65,97 @@ static amqp_connection_state_t amqp_connect(struct amqp_connection_info *ci, str
 
 	conn = amqp_new_connection();
 	if (!conn)
-		return nullptr;
+		throw MemoryAllocationError();
 
 	if (ci->ssl) {
 		sock = amqp_ssl_socket_new(conn);
 		if (!sock)
-			return nullptr;
+			throw MemoryAllocationError();
 
 		amqp_ssl_socket_set_verify_peer(sock, ssl->verify_peer);
 		amqp_ssl_socket_set_verify_hostname(sock, ssl->verify_hostname);
 
-		if (ssl->ca_cert)
-			amqp_ssl_socket_set_cacert(sock, ssl->ca_cert);
+		if (ssl->ca_cert) {
+			ret = amqp_ssl_socket_set_cacert(sock, ssl->ca_cert);
+			if (ret) {
+				n->logger->error("Failed to set CA cert: {}", amqp_error_string2(ret));
+				return nullptr;
+			}
+		}
 
-		if (ssl->client_key && ssl->client_cert)
-			amqp_ssl_socket_set_key(sock, ssl->client_cert, ssl->client_key);
+		if (ssl->client_key && ssl->client_cert) {
+			ret = amqp_ssl_socket_set_key(sock, ssl->client_cert, ssl->client_key);
+			if (ret) {
+				n->logger->error("Failed to set client cert: {}", amqp_error_string2(ret));
+				return nullptr;
+			}
+		}
 	}
 	else {
 		sock = amqp_tcp_socket_new(conn);
 		if (!sock)
-			return nullptr;
+			throw MemoryAllocationError();
 	}
 
 	ret = amqp_socket_open(sock, ci->host, ci->port);
-	if (ret != AMQP_STATUS_OK)
+	if (ret != AMQP_STATUS_OK) {
+		n->logger->error("Failed to open socket: {}", amqp_error_string2(ret));
 		return nullptr;
+	}
 
 	rep = amqp_login(conn, ci->vhost, 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, ci->user, ci->password);
-	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
+	if (rep.reply_type != AMQP_RESPONSE_NORMAL) {
+		n->logger->error("Failed to login");
 		return nullptr;
+	}
 
 	amqp_channel_open(conn, 1);
 	rep = amqp_get_rpc_reply(conn);
-	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
+	if (rep.reply_type != AMQP_RESPONSE_NORMAL) {
+		n->logger->error("Failed to open channel");
 		return nullptr;
+	}
 
 	return conn;
 }
 
-static int amqp_close(amqp_connection_state_t conn)
+static
+int amqp_close(NodeCompat *n, amqp_connection_state_t conn)
 {
 	amqp_rpc_reply_t rep;
 
 	rep = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
+	if (rep.reply_type != AMQP_RESPONSE_NORMAL) {
+		n->logger->error("Failed to close channel");
 		return -1;
+	}
 
 	rep = amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
+	if (rep.reply_type != AMQP_RESPONSE_NORMAL) {
+		n->logger->error("Failed to close connection");
 		return -1;
+	};
 
 	return 0;
 }
 
-int amqp_parse(struct vnode *n, json_t *json)
+int villas::node::amqp_init(NodeCompat *n)
+{
+	auto *a = n->getData<struct amqp>();
+
+	/* Default values */
+	amqp_default_ssl_info(&a->ssl_info);
+	amqp_default_connection_info(&a->connection_info);
+
+	a->formatter = nullptr;
+
+	return 0;
+}
+
+int villas::node::amqp_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
 	int port = 5672;
 	const char *uri = nullptr;
@@ -132,10 +169,6 @@ int amqp_parse(struct vnode *n, json_t *json)
 
 	json_t *json_ssl = nullptr;
 	json_t *json_format = nullptr;
-
-	/* Default values */
-	amqp_default_ssl_info(&a->ssl_info);
-	amqp_default_connection_info(&a->connection_info);
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: i, s: s, s: s, s?: o, s?: o }",
 		"uri", &uri,
@@ -158,7 +191,7 @@ int amqp_parse(struct vnode *n, json_t *json)
 	if (uri)
 		a->uri = strdup(uri);
 	else
-		a->uri = strf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost);
+		a->uri = strf("%s://%s:%s@%s:%d/%s", json_ssl ? "amqps"  : "amqp", username, password, host, port, vhost);
 
 	ret = amqp_parse_url(a->uri, &a->connection_info);
 	if (ret != AMQP_STATUS_OK)
@@ -190,6 +223,8 @@ int amqp_parse(struct vnode *n, json_t *json)
 	}
 
 	/* Format */
+	if (a->formatter)
+		delete a->formatter;
 	a->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("json");
@@ -199,9 +234,9 @@ int amqp_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * amqp_print(struct vnode *n)
+char * villas::node::amqp_print(NodeCompat *n)
 {
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
 	char *buf = nullptr;
 
@@ -235,23 +270,23 @@ char * amqp_print(struct vnode *n)
 	return buf;
 }
 
-int amqp_start(struct vnode *n)
+int villas::node::amqp_start(NodeCompat *n)
 {
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
 	amqp_bytes_t queue;
 	amqp_rpc_reply_t rep;
 	amqp_queue_declare_ok_t *r;
 
-	a->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	a->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Connect producer */
-	a->producer = amqp_connect(&a->connection_info, &a->ssl_info);
+	a->producer = amqp_connect(n, &a->connection_info, &a->ssl_info);
 	if (!a->producer)
 		return -1;
 
 	/* Connect consumer */
-	a->consumer = amqp_connect(&a->connection_info, &a->ssl_info);
+	a->consumer = amqp_connect(n, &a->connection_info, &a->ssl_info);
 	if (!a->consumer)
 		return -1;
 
@@ -288,28 +323,26 @@ int amqp_start(struct vnode *n)
 	return 0;
 }
 
-int amqp_stop(struct vnode *n)
+int villas::node::amqp_stop(NodeCompat *n)
 {
 	int ret;
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
-	ret = amqp_close(a->consumer);
+	ret = amqp_close(n, a->consumer);
 	if (ret)
 		return ret;
 
-	ret = amqp_close(a->producer);
+	ret = amqp_close(n, a->producer);
 	if (ret)
 		return ret;
-
-	delete a->formatter;
 
 	return 0;
 }
 
-int amqp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::amqp_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 	amqp_envelope_t env;
 	amqp_rpc_reply_t rep;
 
@@ -324,10 +357,10 @@ int amqp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return ret;
 }
 
-int amqp_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::amqp_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 	char data[1500];
 	size_t wbytes;
 
@@ -352,9 +385,9 @@ int amqp_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int amqp_poll_fds(struct vnode *n, int fds[])
+int villas::node::amqp_poll_fds(NodeCompat *n, int fds[])
 {
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
 	amqp_socket_t *sock = amqp_get_socket(a->consumer);
 
@@ -363,9 +396,9 @@ int amqp_poll_fds(struct vnode *n, int fds[])
 	return 1;
 }
 
-int amqp_destroy(struct vnode *n)
+int villas::node::amqp_destroy(NodeCompat *n)
 {
-	struct amqp *a = (struct amqp *) n->_vd;
+	auto *a = n->getData<struct amqp>();
 
 	if (a->uri)
 		free(a->uri);
@@ -385,10 +418,13 @@ int amqp_destroy(struct vnode *n)
 	if (a->consumer)
 		amqp_destroy_connection(a->consumer);
 
+	if (a->formatter)
+		delete a->formatter;
+
 	return 0;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -396,6 +432,7 @@ static void register_plugin() {
 	p.description	= "Advanced Message Queueing Protoocl (rabbitmq-c)";
 	p.vectorize	= 0;
 	p.size		= sizeof(struct amqp);
+	p.init		= amqp_init;
 	p.destroy	= amqp_destroy;
 	p.parse		= amqp_parse;
 	p.print		= amqp_print;
@@ -405,8 +442,5 @@ static void register_plugin() {
 	p.write		= amqp_write;
 	p.poll_fds	= amqp_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

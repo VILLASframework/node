@@ -1,7 +1,7 @@
 /** JSON serializtion sample data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -26,28 +26,28 @@
 
 #include <villas/format.hpp>
 
-/* Forward declarations */
-struct sample;
-
 namespace villas {
 namespace node {
+
+/* Forward declarations */
+struct Sample;
 
 class JsonFormat : public Format {
 
 protected:
 	static enum SignalType detect(const json_t *val);
 
-	json_t * packTimestamps(const struct sample *smp);
-	int unpackTimestamps(json_t *json_ts, struct sample *smp);
+	json_t * packTimestamps(const struct Sample *smp);
+	int unpackTimestamps(json_t *json_ts, struct Sample *smp);
 
 	virtual
-	int packSample(json_t **j, const struct sample *smp);
+	int packSample(json_t **j, const struct Sample *smp);
 	virtual
-	int packSamples(json_t **j, const struct sample * const smps[], unsigned cnt);
+	int packSamples(json_t **j, const struct Sample * const smps[], unsigned cnt);
 	virtual
-	int unpackSample(json_t *json_smp, struct sample *smp);
+	int unpackSample(json_t *json_smp, struct Sample *smp);
 	virtual
-	int unpackSamples(json_t *json_smps, struct sample * const smps[], unsigned cnt);
+	int unpackSamples(json_t *json_smps, struct Sample * const smps[], unsigned cnt);
 
 	int dump_flags;
 
@@ -58,14 +58,14 @@ public:
 	{ }
 
 	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
 	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
 
 	virtual
-	int print(FILE *f, const struct sample * const smps[], unsigned cnt);
+	int print(FILE *f, const struct Sample * const smps[], unsigned cnt);
 	virtual
-	int scan(FILE *f, struct sample * const smps[], unsigned cnt);
+	int scan(FILE *f, struct Sample * const smps[], unsigned cnt);
 
 	virtual
 	void parse(json_t *json);

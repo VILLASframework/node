@@ -1,7 +1,7 @@
 /** The API ressource for resetting statistics.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,7 +22,7 @@
 
 #include <jansson.h>
 
-#include <villas/node.h>
+#include <villas/node.hpp>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
@@ -48,10 +48,10 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Stats endpoint does not accept any body data");
 
-		if (node->stats == nullptr)
+		if (node->getStats() == nullptr)
 			throw BadRequest("The statistics collection for this node is not enabled");
 
-		node->stats->reset();
+		node->getStats()->reset();
 
 		return new Response(session, HTTP_STATUS_OK);
 	}

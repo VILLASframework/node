@@ -1,7 +1,7 @@
 /** Decimate hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -19,10 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
-
-/** @addtogroup hooks Hook functions
- * @{
- */
 
 #include <villas/hooks/decimate.hpp>
 
@@ -56,7 +52,7 @@ void DecimateHook::parse(json_t *json)
 	state = State::PARSED;
 }
 
-Hook::Reason DecimateHook::process(sample *smp)
+Hook::Reason DecimateHook::process(struct Sample *smp)
 {
 	assert(state == State::STARTED);
 
@@ -73,5 +69,3 @@ static HookPlugin<DecimateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook:
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

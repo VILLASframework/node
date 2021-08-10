@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2020, Steffen Vogel
+ * @copyright 2014-2021, Steffen Vogel
  * @license BSD 2-Clause License
  *
  * All rights reserved.
@@ -40,24 +40,27 @@
 #include <unistd.h>
 
 #include <villas/common.hpp>
-#include <villas/config.h>
-#include <villas/memory_type.h>
+#include <villas/node/config.hpp>
+#include <villas/node/memory_type.hpp>
+
+namespace villas {
+namespace node {
 
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
-struct queue_cell {
+struct CQueue_cell {
 	std::atomic<size_t> sequence;
 	off_t data_off; /**< Pointer relative to the queue struct */
 };
 
 /** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
-struct queue {
+struct CQueue {
 	std::atomic<enum State> state;
 
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
 	size_t buffer_mask;
-	off_t buffer_off;	/**< Relative pointer to struct queue_cell[] */
+	off_t buffer_off;	/**< Relative pointer to struct CQueue_cell[] */
 
 	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 
@@ -71,28 +74,28 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memory_type *mem = memory_default) __attribute__ ((warn_unused_result));
+int queue_init(struct CQueue *q, size_t size, struct memory::Type *mem = memory::default_type) __attribute__ ((warn_unused_result));
 
 /** Desroy MPMC queue and release memory */
-int queue_destroy(struct queue *q) __attribute__ ((warn_unused_result));
+int queue_destroy(struct CQueue *q) __attribute__ ((warn_unused_result));
 
 /** Return estimation of current queue usage.
  *
  * Note: This is only an estimation and not accurate as long other
  *       threads are performing operations.
  */
-size_t queue_available(struct queue *q);
+size_t queue_available(struct CQueue *q);
 
-int queue_push(struct queue *q, void *ptr);
+int queue_push(struct CQueue *q, void *ptr);
 
-int queue_pull(struct queue *q, void **ptr);
+int queue_pull(struct CQueue *q, void **ptr);
 
 /** Enqueue up to \p cnt pointers of the \p ptr array into the queue.
  *
  * @return The number of pointers actually enqueued.
  *         This number can be smaller then \p cnt in case the queue is filled.
  */
-int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
+int queue_push_many(struct CQueue *q, void *ptr[], size_t cnt);
 
 /** Dequeue up to \p cnt pointers from the queue and place them into the \p ptr array.
  *
@@ -100,7 +103,7 @@ int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
  *         This number can be smaller than \p cnt in case the queue contained less than
  *         \p cnt elements.
  */
-int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
+int queue_pull_many(struct CQueue *q, void *ptr[], size_t cnt);
 
 /** Closes the queue, causing following writes to fail and following reads (after
  * the queue is empty) to fail.
@@ -108,4 +111,7 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
  * @return 0 on success.
  * @return -1 on failure.
  */
-int queue_close(struct queue *q);
+int queue_close(struct CQueue *q);
+
+} /* namespace node */
+} /* namespace villas */

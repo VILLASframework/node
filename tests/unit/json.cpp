@@ -1,7 +1,7 @@
 /** Unit tests for libjansson helpers
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,6 +28,8 @@
 #include <villas/config_helper.hpp>
 
 #include "helpers.hpp"
+
+using namespace villas::node;
 
 struct param {
 	char *argv[32];

@@ -1,7 +1,7 @@
 /** Decimate hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,10 +24,6 @@
 
 #include <villas/hook.hpp>
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 namespace villas {
 namespace node {
 
@@ -40,7 +36,8 @@ protected:
 public:
 	using LimitHook::LimitHook;
 
-	virtual void setRate(double rate, double maxRate = -1)
+	virtual
+	void setRate(double rate, double maxRate = -1)
 	{
 		assert(maxRate > 0);
 
@@ -56,16 +53,16 @@ public:
 		ratio = r;
 	}
 
-	virtual void start();
+	virtual
+	void start();
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 
-	virtual Hook::Reason process(sample *smp);
+	virtual
+	Hook::Reason process(struct Sample *smp);
 };
 
 } /* namespace node */
 } /* namespace villas */
 
-/**
- * @}
- */

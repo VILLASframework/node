@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLAScommon
@@ -26,7 +26,7 @@
 #include <mutex>
 
 #include <villas/log.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
 
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/details/null_mutex.h>

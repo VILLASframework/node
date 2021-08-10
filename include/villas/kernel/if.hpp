@@ -5,7 +5,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup kernel Kernel
- * @{
- */
-
 #pragma once
 
 #include <list>
@@ -42,16 +38,15 @@
 #endif
 
 /* Forward declarations */
-struct vnode;
 struct nl_addr;
 struct rtnl_link;
 struct rtnl_qdisc;
 
 namespace villas {
-
 namespace node {
 
 /* Forward declarations */
+class Node;
 class SuperNode;
 
 }
@@ -69,7 +64,7 @@ protected:
 	int affinity;				/**< IRQ / Core Affinity of this interface. */
 
 	std::list<int> irqs;			/**< List of IRQs of the NIC. */
-	std::list<struct vnode *> nodes;	/**< List of nodes which use this interface. */
+	std::list<node::Node *> nodes;	/**< List of nodes which use this interface. */
 
 	Logger logger;
 
@@ -105,7 +100,7 @@ public:
 	 */
 	static
 	Interface *
-	getEgress(struct sockaddr *sa, villas::node::SuperNode *sn);
+	getEgress(struct sockaddr *sa, node::SuperNode *sn);
 
 	/** Get all IRQs for this interface.
 	 *
@@ -129,7 +124,7 @@ public:
 
 	std::string getName() const;
 
-	void addNode(struct vnode *n)
+	void addNode(node::Node *n)
 	{
 		nodes.push_back(n);
 	}
@@ -137,5 +132,3 @@ public:
 
 } /* namespace kernel */
 } /* namespace villas */
-
-/** @} */

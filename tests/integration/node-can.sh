@@ -3,7 +3,7 @@
 # Integration can test using villas node.
 #
 # @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -26,13 +26,7 @@
 # sudo ip link add dev vcan0 type vcan
 # sudo ip link set vcan0 up
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-CAN_OUT_FILE=$(mktemp)
-
-NUM_SAMPLES=${NUM_SAMPLES:-10}
-NUM_VALUES=${NUM_VALUES:-3}
+set -e
 
 CAN_IF=$(ip link show type vcan | head -n1 | awk '{match($2, /(.*):/,a)}END{print a[1]}')
 
@@ -47,100 +41,103 @@ if [[ ! $(ip link show "${CAN_IF}" up) ]]; then
     exit 99
 fi
 
-cat > ${CONFIG_FILE} << EOF
-nodes = {
-	can_node1 = {
-		type = "can"
-		interface_name = "${CAN_IF}"
-		sample_rate = 500000
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-		in = {
-			signals = (
-				{
-					name = "sigin1",
-					unit = "Volts",
-					type = "float",
-					enabled = true,
-					can_id = 66, 
-					can_size = 4,
-					can_offset = 0
-				},
-				{
-					name = "sigin2",
-					unit = "Volts",
-					type = "float",
-					enabled = true,
-					can_id = 66, 
-					can_size = 4,
-					can_offset = 4
-				},
-				{
-					name = "sigin3",
-					unit = "Volts",
-					type = "float",
-					enabled = true,
-					can_id = 67, 
-					can_size = 8,
-					can_offset = 0
-				}
-			)
-		}
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
-		out = {
-			signals = (
-				{
-					type = "float",
-					can_id = 66, 
-					can_size = 4,
-					can_offset = 0
-				},
-				{
-					type = "float",
-					can_id = 66, 
-					can_size = 4,
-					can_offset = 4
-				},
-				{
-					type = "float",
-					can_id = 67, 
-					can_size = 8,
-					can_offset = 0
-				}
-			)
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+NUM_VALUES=${NUM_VALUES:-3}
+
+cat > config.json << EOF
+{
+	"nodes": {
+		"can_node1": {
+			"type": "can",
+			"interface_name": "${CAN_IF}",
+			"sample_rate": 500000,
+			"in": {
+				"signals": [
+					{
+						"name": "sigin1",
+						"unit": "Volts",
+						"type": "float",
+						"enabled": true,
+						"can_id": 66,
+						"can_size": 4,
+						"can_offset": 0
+					},
+					{
+						"name": "sigin2",
+						"unit": "Volts",
+						"type": "float",
+						"enabled": true,
+						"can_id": 66,
+						"can_size": 4,
+						"can_offset": 4
+					},
+					{
+						"name": "sigin3",
+						"unit": "Volts",
+						"type": "float",
+						"enabled": true,
+						"can_id": 67,
+						"can_size": 8,
+						"can_offset": 0
+					}
+				]
+			},
+			"out": {
+				"signals": [
+					{
+						"type": "float",
+						"can_id": 66,
+						"can_size": 4,
+						"can_offset": 0
+					},
+					{
+						"type": "float",
+						"can_id": 66,
+						"can_size": 4,
+						"can_offset": 4
+					},
+					{
+						"type": "float",
+						"can_id": 67,
+						"can_size": 8,
+						"can_offset": 0
+					}
+				]
+			}
 		}
 	}
 }
 EOF
 
-# Generate test data
-villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > input.dat
 
-# Start node
-villas node ${CONFIG_FILE} &
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1
 
-candump -n ${NUM_SAMPLES} -T 1000 -L ${CAN_IF} | awk '{print $3}' > ${CAN_OUT_FILE} &
-CANDUMP_PID=$!
+candump -n ${NUM_SAMPLES} -T 1000 -L ${CAN_IF} | awk '{print $3}' > can_out.dat &
 
 # Send / Receive data to node
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} can_node1 > ${OUTPUT_FILE} < ${INPUT_FILE} &
+villas pipe -l ${NUM_SAMPLES} config.json can_node1 > output.dat < input.dat &
 
-wait ${CANDUMP_PID}
-cat ${CAN_OUT_FILE} | xargs -I % cansend ${CAN_IF} %
+wait $candump
+
+cat can_out.dat | xargs -I % cansend ${CAN_IF} %
 
 # Wait for node to handle samples
 sleep 1
 
-# Stop node
-kill %1
+kill %villas
+wait %villas
 
-# Compare data
-villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-#rm ${CAN_OUT_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
-rm ${INPUT_FILE} ${OUTPUT_FILE}
-
-exit ${RC}
+villas compare input.dat output.dat

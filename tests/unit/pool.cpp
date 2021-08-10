@@ -1,7 +1,7 @@
 /** Unit tests for memory pool
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,11 +25,13 @@
 
 #include <signal.h>
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 
 using namespace villas;
+
+using namespace villas::node;
 
 extern void init_memory();
 
@@ -37,16 +39,16 @@ struct param {
 	int thread_count;
 	int pool_size;
 	size_t block_size;
-	struct memory_type *mt;
+	struct memory::Type *mt;
 };
 
 ParameterizedTestParameters(pool, basic)
 {
 	static struct param params[] = {
-		{ 1, 4096,    150,  &memory_heap },
-		{ 1, 128,     8,    &memory_mmap },
-		{ 1, 4,       8192, &memory_mmap_hugetlb },
-		{ 1, 1 << 13, 4,    &memory_mmap_hugetlb }
+		{ 1, 4096,    150,  &memory::heap },
+		{ 1, 128,     8,    &memory::mmap },
+		{ 1, 4,       8192, &memory::mmap_hugetlb },
+		{ 1, 1 << 13, 4,    &memory::mmap_hugetlb }
 	};
 
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
@@ -56,16 +58,15 @@ ParameterizedTestParameters(pool, basic)
 ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;
-	struct pool pool;
+	struct Pool pool;
 
 	// some strange LTO stuff is going on here..
-	auto *m  __attribute__((unused)) = &memory_mmap;
+	auto *m  __attribute__((unused)) = &memory::mmap;
 
 	void *ptr, *ptrs[p->pool_size];
 
-	if (!utils::isPrivileged() && p->mt == &memory_mmap_hugetlb) {
+	if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
 		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
-	}
 
 	ret = pool_init(&pool, p->pool_size, p->block_size, p->mt);
 	cr_assert_eq(ret, 0, "Failed to create pool");

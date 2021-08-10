@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,12 +22,11 @@
  *********************************************************************************/
 
 #include <villas/api/path_request.hpp>
-#include <villas/path.h>
+#include <villas/path.hpp>
 
 using namespace villas::node::api;
 
-void
-PathRequest::prepare()
+void PathRequest::prepare()
 {
 	int ret;
 	uuid_t uuid;

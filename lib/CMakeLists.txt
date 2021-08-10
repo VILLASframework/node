@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -47,13 +47,14 @@ set(LIB_SRC
     dumper.cpp
     format.cpp
     mapping.cpp
+    mapping_list.cpp
     memory.cpp
     memory/heap.cpp
     memory/managed.cpp
     memory/mmap.cpp
     node_direction.cpp
-    node_type.cpp
     node.cpp
+    node_compat.cpp
     node_list.cpp
     path_destination.cpp
     path_source.cpp

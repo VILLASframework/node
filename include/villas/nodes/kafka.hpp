@@ -21,26 +21,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup kafka kafka node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <librdkafka/rdkafka.h>
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct kafka {
-	struct queue_signalled queue;
-	struct pool pool;
+	struct CQueueSignalled queue;
+	struct Pool pool;
 
 	double timeout;			/**< Timeout in seconds. */
 	char *server;			/**< Hostname/IP:Port address of the bootstrap server. */
@@ -69,40 +66,34 @@ struct kafka {
 		char *password;		/**< SSL certificate. */
 	} sasl;
 
-	villas::node::Format *formatter;
+	Format *formatter;
 };
 
-/** @see node_type::reverse */
-int kafka_reverse(struct vnode *n);
+int kafka_reverse(NodeCompat *n);
 
-/** @see node_type::print */
-char * kafka_print(struct vnode *n);
+char * kafka_print(NodeCompat *n);
 
-/** @see node_type::prepare */
-int kafka_prepare(struct vnode *n);
+int kafka_init(NodeCompat *n);
 
-/** @see node_type::parse */
-int kafka_parse(struct vnode *n, json_t *json);
+int kafka_prepare(NodeCompat *n);
 
-/** @see node_type::start */
-int kafka_start(struct vnode *n);
+int kafka_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::destroy */
-int kafka_destroy(struct vnode *n);
+int kafka_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int kafka_stop(struct vnode *n);
+int kafka_destroy(NodeCompat *n);
 
-/** @see node_type::type_start */
-int kafka_type_start(villas::node::SuperNode *sn);
+int kafka_stop(NodeCompat *n);
 
-/** @see node_type::type_stop */
+int kafka_type_start(SuperNode *sn);
+
 int kafka_type_stop();
 
-/** @see node_type::read */
-int kafka_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int kafka_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::write */
-int kafka_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int kafka_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @} */
+int kafka_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

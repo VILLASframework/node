@@ -1,7 +1,7 @@
 /** The "path" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,7 +24,7 @@
 #include <uuid/uuid.h>
 
 #include <villas/super_node.hpp>
-#include <villas/path.h>
+#include <villas/path.hpp>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
 #include <villas/api/session.hpp>
@@ -48,7 +48,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Endpoint does not accept any body data");
 
-		return new JsonResponse(session, HTTP_STATUS_OK, path_to_json(path));
+		return new JsonResponse(session, HTTP_STATUS_OK, path->toJson());
 	}
 };
 

@@ -1,7 +1,7 @@
 /** Signal data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,35 +23,37 @@
 #include <cstring>
 #include <cinttypes>
 
-#include <villas/signal_type.h>
-#include <villas/signal_data.h>
+#include <villas/signal_type.hpp>
+#include <villas/signal_data.hpp>
 
-void signal_data_set(union signal_data *data, enum SignalType type, double val)
+using namespace villas::node;
+
+void SignalData::set(enum SignalType type, double val)
 {
 	switch (type) {
 		case SignalType::BOOLEAN:
-			data->b = val;
+			this->b = val;
 			break;
 
 		case SignalType::FLOAT:
-			data->f = val;
+			this->f = val;
 			break;
 
 		case SignalType::INTEGER:
-			data->i = val;
+			this->i = val;
 			break;
 
 		case SignalType::COMPLEX:
-			data->z = val;
+			this->z = val;
 			break;
 
 		case SignalType::INVALID:
-			*data = signal_data::nan();
+			*this = nan();
 			break;
 	}
 }
 
-void signal_data_cast(union signal_data *data, enum SignalType from, enum SignalType to)
+void SignalData::cast(enum SignalType from, enum SignalType to)
 {
 	if (from == to) /* Nothing to do */
 		return;
@@ -63,15 +65,15 @@ void signal_data_cast(union signal_data *data, enum SignalType from, enum Signal
 					break;
 
 				case SignalType::INTEGER:
-					data->b = data->i;
+					this->b = this->i;
 					break;
 
 				case SignalType::FLOAT:
-					data->b = data->f;
+					this->b = this->f;
 					break;
 
 				case SignalType::COMPLEX:
-					data->b = std::real(data->z);
+					this->b = std::real(this->z);
 					break;
 
 				default: { }
@@ -81,18 +83,18 @@ void signal_data_cast(union signal_data *data, enum SignalType from, enum Signal
 		case SignalType::INTEGER:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					data->i = data->b;
+					this->i = this->b;
 					break;
 
 				case SignalType::INTEGER:
 					break;
 
 				case SignalType::FLOAT:
-					data->i = data->f;
+					this->i = this->f;
 					break;
 
 				case SignalType::COMPLEX:
-					data->i = std::real(data->z);
+					this->i = std::real(this->z);
 					break;
 
 				default: { }
@@ -102,18 +104,18 @@ void signal_data_cast(union signal_data *data, enum SignalType from, enum Signal
 		case SignalType::FLOAT:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					data->f = data->b;
+					this->f = this->b;
 					break;
 
 				case SignalType::INTEGER:
-					data->f = data->i;
+					this->f = this->i;
 					break;
 
 				case SignalType::FLOAT:
 					break;
 
 				case SignalType::COMPLEX:
-					data->f = std::real(data->z);
+					this->f = std::real(this->z);
 					break;
 
 				default: { }
@@ -123,15 +125,15 @@ void signal_data_cast(union signal_data *data, enum SignalType from, enum Signal
 		case SignalType::COMPLEX:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					data->z = data->b;
+					this->z = this->b;
 					break;
 
 				case SignalType::INTEGER:
-					data->z = data->i;
+					this->z = this->i;
 					break;
 
 				case SignalType::FLOAT:
-					data->z = data->f;
+					this->z = this->f;
 					break;
 
 				case SignalType::COMPLEX:
@@ -145,19 +147,19 @@ void signal_data_cast(union signal_data *data, enum SignalType from, enum Signal
 	}
 }
 
-int signal_data_parse_str(union signal_data *data, enum SignalType type, const char *ptr, char **end)
+int SignalData::parseString(enum SignalType type, const char *ptr, char **end)
 {
 	switch (type) {
 		case SignalType::FLOAT:
-			data->f = strtod(ptr, end);
+			this->f = strtod(ptr, end);
 			break;
 
 		case SignalType::INTEGER:
-			data->i = strtol(ptr, end, 10);
+			this->i = strtol(ptr, end, 10);
 			break;
 
 		case SignalType::BOOLEAN:
-			data->b = strtol(ptr, end, 10);
+			this->b = strtol(ptr, end, 10);
 			break;
 
 		case SignalType::COMPLEX: {
@@ -186,7 +188,7 @@ int signal_data_parse_str(union signal_data *data, enum SignalType type, const c
 				(*end)++;
 			}
 
-			data->z = std::complex<float>(real, imag);
+			this->z = std::complex<float>(real, imag);
 			break;
 		}
 
@@ -197,21 +199,21 @@ int signal_data_parse_str(union signal_data *data, enum SignalType type, const c
 	return 0;
 }
 
-int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t *json)
+int SignalData::parseJson(enum SignalType type, json_t *json)
 {
 	int ret;
 
 	switch (type) {
 		case SignalType::FLOAT:
-			data->f = json_real_value(json);
+			this->f = json_number_value(json);
 			break;
 
 		case SignalType::INTEGER:
-			data->i = json_integer_value(json);
+			this->i = json_integer_value(json);
 			break;
 
 		case SignalType::BOOLEAN:
-			data->b = json_boolean_value(json);
+			this->b = json_boolean_value(json);
 			break;
 
 		case SignalType::COMPLEX: {
@@ -225,7 +227,7 @@ int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t
 			if (ret)
 				return -2;
 
-			data->z = std::complex<float>(real, imag);
+			this->z = std::complex<float>(real, imag);
 			break;
 		}
 
@@ -236,22 +238,22 @@ int signal_data_parse_json(union signal_data *data, enum SignalType type, json_t
 	return 0;
 }
 
-json_t * signal_data_to_json(const union signal_data *data, enum SignalType type)
+json_t * SignalData::toJson(enum SignalType type) const
 {
 	switch (type) {
 		case SignalType::INTEGER:
-			return json_integer(data->i);
+			return json_integer(this->i);
 
 		case SignalType::FLOAT:
-			return json_real(data->f);
+			return json_real(this->f);
 
 		case SignalType::BOOLEAN:
-			return json_boolean(data->b);
+			return json_boolean(this->b);
 
 		case SignalType::COMPLEX:
 			return json_pack("{ s: f, s: f }",
-				"real", std::real(data->z),
-				"imag", std::imag(data->z)
+				"real", std::real(this->z),
+				"imag", std::imag(this->z)
 			);
 
 		case SignalType::INVALID:
@@ -261,22 +263,31 @@ json_t * signal_data_to_json(const union signal_data *data, enum SignalType type
 	return nullptr;
 }
 
-int signal_data_print_str(const union signal_data *data, enum SignalType type, char *buf, size_t len, int precision)
+int SignalData::printString(enum SignalType type, char *buf, size_t len, int precision) const
 {
 	switch (type) {
 		case SignalType::FLOAT:
-			return snprintf(buf, len, "%.*f", precision, data->f);
+			return snprintf(buf, len, "%.*f", precision, this->f);
 
 		case SignalType::INTEGER:
-			return snprintf(buf, len, "%" PRIi64, data->i);
+			return snprintf(buf, len, "%" PRIi64, this->i);
 
 		case SignalType::BOOLEAN:
-			return snprintf(buf, len, "%u", data->b);
+			return snprintf(buf, len, "%u", this->b);
 
 		case SignalType::COMPLEX:
-			return snprintf(buf, len, "%.*f%+.*fi", precision, std::real(data->z), precision, std::imag(data->z));
+			return snprintf(buf, len, "%.*f%+.*fi", precision, std::real(this->z), precision, std::imag(this->z));
 
 		default:
 			return snprintf(buf, len, "<?>");
 	}
+}
+
+std::string SignalData::toString(enum SignalType type, int precission) const
+{
+	char buf[128];
+
+	printString(type, buf, sizeof(buf), precission);
+
+	return buf;
 }

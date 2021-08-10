@@ -24,7 +24,7 @@
 #include <sys/syslog.h>
 #include <librdkafka/rdkafkacpp.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/kafka.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -34,11 +34,12 @@ using namespace villas::node;
 using namespace villas::utils;
 
 // Each process has a list of clients for which a thread invokes the kafka loop
-static struct vlist clients;
+static struct List clients;
 static pthread_t thread;
 static Logger logger;
 
-static void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, const char *buf)
+static
+void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, const char *buf)
 {
 
 	switch (level) {
@@ -65,12 +66,13 @@ static void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, co
 	}
 }
 
-static void kafka_message_cb(void *ctx, const rd_kafka_message_t *msg)
+static
+void kafka_message_cb(void *ctx, const rd_kafka_message_t *msg)
 {
 	int ret;
-	struct vnode *n = (struct vnode *) ctx;
-	struct kafka *k = (struct kafka *) n->_vd;
-	struct sample *smps[n->in.vectorize];
+	auto *n = (NodeCompat *) ctx;
+	auto *k = n->getData<struct kafka>();
+	struct Sample *smps[n->in.vectorize];
 
 	n->logger->debug("Received a message of {} bytes from broker {}", msg->len, k->server);
 
@@ -98,7 +100,8 @@ static void kafka_message_cb(void *ctx, const rd_kafka_message_t *msg)
 		n->logger->warn("Failed to enqueue samples");
 }
 
-static void * kafka_loop_thread(void *ctx)
+static
+void * kafka_loop_thread(void *ctx)
 {
 	int ret;
 
@@ -108,9 +111,9 @@ static void * kafka_loop_thread(void *ctx)
 		throw RuntimeError("Unable to set cancel type of Kafka communication thread to asynchronous.");
 
 	while (true) {
-		for (unsigned i = 0; i < vlist_length(&clients); i++) {
-			struct vnode *n = (struct vnode *) vlist_at(&clients, i);
-			struct kafka *k = (struct kafka *) n->_vd;
+		for (unsigned i = 0; i < list_length(&clients); i++) {
+			auto *n = (NodeCompat *) list_at(&clients, i);
+			auto *k = n->getData<struct kafka>();
 
 			// Execute kafka loop for this client
 			if (k->consumer.client) {
@@ -126,19 +129,18 @@ static void * kafka_loop_thread(void *ctx)
 	return nullptr;
 }
 
-int kafka_reverse(struct vnode *n)
+int villas::node::kafka_reverse(NodeCompat *n)
 {
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	SWAP(k->produce, k->consume);
 
 	return 0;
 }
 
-int kafka_init(struct vnode *n)
+int villas::node::kafka_init(NodeCompat *n)
 {
-	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	/* Default values */
 	k->server = nullptr;
@@ -159,15 +161,15 @@ int kafka_init(struct vnode *n)
 
 	k->ssl.ca = nullptr;
 
-	ret = 0;
+	k->formatter = nullptr;
 
-	return ret;
+	return 0;
 }
 
-int kafka_parse(struct vnode *n, json_t *json)
+int villas::node::kafka_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	const char *server;
 	const char *produce = nullptr;
@@ -245,22 +247,25 @@ int kafka_parse(struct vnode *n, json_t *json)
 	}
 
 	/* Format */
+	if (k->formatter)
+		delete k->formatter;
 	k->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.binary");
 	if (!k->formatter)
 		throw ConfigError(json_format, "node-config-node-kafka-format", "Invalid format configuration");
+
 	return 0;
 }
 
-int kafka_prepare(struct vnode *n)
+int villas::node::kafka_prepare(NodeCompat *n)
 {
 	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
-	k->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	k->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	ret = pool_init(&k->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
+	ret = pool_init(&k->pool, 1024, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
 	if (ret)
 		return ret;
 
@@ -271,9 +276,9 @@ int kafka_prepare(struct vnode *n)
 	return 0;
 }
 
-char * kafka_print(struct vnode *n)
+char * villas::node::kafka_print(NodeCompat *n)
 {
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	char *buf = nullptr;
 
@@ -293,10 +298,10 @@ char * kafka_print(struct vnode *n)
 	return buf;
 }
 
-int kafka_destroy(struct vnode *n)
+int villas::node::kafka_destroy(NodeCompat *n)
 {
 	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	if (k->producer.client)
 		rd_kafka_destroy(k->producer.client);
@@ -304,7 +309,8 @@ int kafka_destroy(struct vnode *n)
 	if (k->consumer.client)
 		rd_kafka_destroy(k->consumer.client);
 
-	delete k->formatter;
+	if (k->formatter)
+		delete k->formatter;
 
 	ret = pool_destroy(&k->pool);
 	if (ret)
@@ -331,11 +337,11 @@ int kafka_destroy(struct vnode *n)
 	return 0;
 }
 
-int kafka_start(struct vnode *n)
+int villas::node::kafka_start(NodeCompat *n)
 {
 	int ret;
 	char errstr[1024];
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	rd_kafka_conf_t *rdkconf = rd_kafka_conf_new();
 	if (!rdkconf)
@@ -433,7 +439,7 @@ int kafka_start(struct vnode *n)
 
 	// Add client to global list of kafka clients
 	// so that thread can call kafka loop for this client
-	vlist_push(&clients, n);
+	list_push(&clients, n);
 
 	rd_kafka_conf_destroy(rdkconf);
 
@@ -447,10 +453,10 @@ kafka_config_error:
 	return -1;
 }
 
-int kafka_stop(struct vnode *n)
+int villas::node::kafka_stop(NodeCompat *n)
 {
 	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	if (k->producer.client) {
 		ret = rd_kafka_flush(k->producer.client, k->timeout * 1000);
@@ -466,18 +472,22 @@ int kafka_stop(struct vnode *n)
 	// Unregister client from global kafka client list
 	// so that kafka loop is no longer invoked for this client
 	// important to do that before disconnecting from broker, otherwise, kafka thread will attempt to reconnect
-	vlist_remove_all(&clients, n);
+	list_remove_all(&clients, n);
+
+	ret = queue_signalled_close(&k->queue);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
-int kafka_type_start(villas::node::SuperNode *sn)
+int villas::node::kafka_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
 	logger = logging.get("node:kafka");
 
-	ret = vlist_init(&clients);
+	ret = list_init(&clients);
 	if (ret)
 		goto kafka_error;
 
@@ -494,7 +504,7 @@ kafka_error:
 	return ret;
 }
 
-int kafka_type_stop()
+int villas::node::kafka_type_stop()
 {
 	int ret;
 
@@ -510,10 +520,10 @@ int kafka_type_stop()
 		goto kafka_error;
 
 	// When this is called the list of clients should be empty
-	if (vlist_length(&clients) > 0)
+	if (list_length(&clients) > 0)
 		throw RuntimeError("List of kafka clients contains elements at time of destruction. Call node_stop for each kafka node before stopping node type!");
 
-	ret = vlist_destroy(&clients, nullptr, false);
+	ret = list_destroy(&clients, nullptr, false);
 	if (ret)
 		goto kafka_error;
 
@@ -525,11 +535,11 @@ kafka_error:
 	return ret;
 }
 
-int kafka_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::kafka_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int pulled;
-	struct kafka *k = (struct kafka *) n->_vd;
-	struct sample *smpt[cnt];
+	auto *k = n->getData<struct kafka>();
+	struct Sample *smpt[cnt];
 
 	pulled = queue_signalled_pull_many(&k->queue, (void **) smpt, cnt);
 
@@ -539,10 +549,10 @@ int kafka_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return pulled;
 }
 
-int kafka_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::kafka_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	size_t wbytes;
 
@@ -567,16 +577,16 @@ int kafka_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return cnt;
 }
 
-int kafka_poll_fds(struct vnode *n, int fds[])
+int villas::node::kafka_poll_fds(NodeCompat *n, int fds[])
 {
-	struct kafka *k = (struct kafka *) n->_vd;
+	auto *k = n->getData<struct kafka>();
 
 	fds[0] = queue_signalled_fd(&k->queue);
 
 	return 1;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -600,8 +610,5 @@ static void register_plugin() {
 	p.reverse	= kafka_reverse;
 	p.poll_fds	= kafka_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

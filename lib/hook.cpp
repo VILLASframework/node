@@ -1,7 +1,7 @@
 /** Hook-releated functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,13 +23,13 @@
 #include <cstring>
 #include <cmath>
 
-#include <villas/timing.h>
-#include <villas/node/config.h>
+#include <villas/timing.hpp>
+#include <villas/node/config.hpp>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/path.h>
+#include <villas/path.hpp>
 #include <villas/utils.hpp>
-#include <villas/node.h>
+#include <villas/node.hpp>
 
 const char *hook_reasons[] = {
 	"ok", "error", "skip-sample", "stop-processing"
@@ -38,42 +38,25 @@ const char *hook_reasons[] = {
 using namespace villas;
 using namespace villas::node;
 
-Hook::Hook(struct vpath *p, struct vnode *n, int fl, int prio, bool en) :
+Hook::Hook(Path *p, Node *n, int fl, int prio, bool en) :
 	logger(logging.get("hook")),
-	state(State::INITIALIZED),
+	factory(nullptr),
+	state(fl & (int) Hook::Flags::BUILTIN
+		? State::CHECKED
+		: State::INITIALIZED), /* We dont need to parse builtin hooks. */
 	flags(fl),
 	priority(prio),
 	enabled(en),
 	path(p),
 	node(n),
 	config(nullptr)
+{ }
+
+void Hook::prepare(SignalList::Ptr sigs)
 {
-	int ret;
-
-	ret = signal_list_init(&signals);
-	if (ret)
-		throw RuntimeError("Failed to initialize signal list");
-
-	/* We dont need to parse builtin hooks. */
-	state = flags & (int) Hook::Flags::BUILTIN ? State::CHECKED : State::INITIALIZED;
-}
-
-Hook::~Hook()
-{
-	int ret __attribute__((unused));
-
-	ret = signal_list_destroy(&signals);
-}
-
-void Hook::prepare(struct vlist *sigs)
-{
-	int ret;
-
 	assert(state == State::CHECKED);
 
-	ret = signal_list_copy(&signals, sigs);
-	if (ret)
-		throw RuntimeError("Failed to copy signal list");
+	signals = sigs->clone();
 
 	prepare();
 
@@ -124,7 +107,7 @@ void SingleSignalHook::parse(json_t *json)
 		throw ConfigError(json, err, "node-config-hook");
 
 	if (!json_is_string(json_signal))
-		throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signals'");
+		throw ConfigError(json_signal, "node-config-hook-signals", "Invalid value for setting 'signal'");
 
 	signalName = json_string_value(json_signal);
 }
@@ -135,7 +118,7 @@ void SingleSignalHook::prepare()
 	Hook::prepare();
 
 	/* Setup mask */
-	int index = vlist_lookup_index<struct signal>(&signals, signalName);
+	int index = signals->getIndexByName(signalName.c_str());
 	if (index < 0)
 		throw RuntimeError("Failed to find signal {}", signalName);
 
@@ -193,7 +176,7 @@ void MultiSignalHook::prepare()
 	Hook::prepare();
 
 	for (const auto &signalName : signalNames) {
-		int index = vlist_lookup_index<struct signal>(&signals, signalName);
+		int index = signals->getIndexByName(signalName.c_str());
 		if (index < 0)
 			throw RuntimeError("Failed to find signal {}", signalName);
 

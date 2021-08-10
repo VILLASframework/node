@@ -4,7 +4,7 @@
 # Test example configurations
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -29,6 +29,7 @@ CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
 
 for CONFIG in ${CONFIGS}; do
     if [ "$(basename ${CONFIG})" == "opal.conf" ] ||
+       [ "$(basename ${CONFIG})" == "fpga.conf" ] ||
        [ "$(basename ${CONFIG})" == "paths.conf" ] ||
        [ "$(basename ${CONFIG})" == "tricks.json" ] ||
        [ "$(basename ${CONFIG})" == "tricks.conf" ] ||

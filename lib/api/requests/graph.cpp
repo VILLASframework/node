@@ -1,7 +1,7 @@
 /** The "stats" API request.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,7 +24,7 @@ extern "C" {
 	#include <graphviz/gvc.h>
 }
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 

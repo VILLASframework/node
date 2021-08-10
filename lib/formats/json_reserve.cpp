@@ -1,7 +1,7 @@
 /** JSON serializtion for RESERVE project.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,14 +22,14 @@
 
 #include <cstring>
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/formats/json_reserve.hpp>
 
 using namespace villas::node;
 
 #define JSON_RESERVE_INTEGER_TARGET 1
 
-int JsonReserveFormat::packSample(json_t **json_smp, const struct sample *smp)
+int JsonReserveFormat::packSample(json_t **json_smp, const struct Sample *smp)
 {
 	json_error_t err;
 	json_t *json_root;
@@ -49,12 +49,12 @@ int JsonReserveFormat::packSample(json_t **json_smp, const struct sample *smp)
 	json_data = json_array();
 
 	for (unsigned i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		auto sig = smp->signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
-		if (sig->name)
-			json_name = json_string(sig->name);
+		if (!sig->name.empty())
+			json_name = json_string(sig->name.c_str());
 		else {
 			char name[32];
 			snprintf(name, 32, "signal%u", i);
@@ -62,8 +62,8 @@ int JsonReserveFormat::packSample(json_t **json_smp, const struct sample *smp)
 			json_name = json_string(name);
 		}
 
-		if (sig->unit)
-			json_unit = json_string(sig->unit);
+		if (!sig->unit.empty())
+			json_unit = json_string(sig->unit.c_str());
 		else
 			json_unit = nullptr;
 
@@ -114,7 +114,7 @@ int JsonReserveFormat::packSample(json_t **json_smp, const struct sample *smp)
 	return 0;
 }
 
-int JsonReserveFormat::unpackSample(json_t *json_smp, struct sample *smp)
+int JsonReserveFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 {
 	int ret, idx;
 	double created = -1;
@@ -180,15 +180,9 @@ int JsonReserveFormat::unpackSample(json_t *json_smp, struct sample *smp)
 		if (ret)
 			return -1;
 
-		struct signal *sig;
-
-		sig = vlist_lookup_name<struct signal>(signals, name);
-		if (sig) {
-			if (!sig->enabled)
-				continue;
-
-			idx = vlist_index(signals, sig);
-		}
+		auto sig = signals->getByName(name);
+		if (sig)
+			idx = signals->getIndexByName(name);
 		else {
 			ret = sscanf(name, "signal_%d", &idx);
 			if (ret != 1)

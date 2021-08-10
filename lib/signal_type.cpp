@@ -1,7 +1,7 @@
 /** Signal types.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,23 +22,25 @@
 
 #include <cstring>
 
-#include <villas/signal_type.h>
+#include <villas/signal_type.hpp>
 
-enum SignalType signal_type_from_str(const char *str)
+using namespace villas::node;
+
+enum SignalType villas::node::signalTypeFromString(const std::string &str)
 {
-	if      (!strcmp(str, "boolean"))
+	if      (str == "boolean")
 		return SignalType::BOOLEAN;
-	else if (!strcmp(str, "complex"))
+	else if (str == "complex")
 		return SignalType::COMPLEX;
-	else if (!strcmp(str, "float"))
+	else if (str == "float")
 		return SignalType::FLOAT;
-	else if (!strcmp(str, "integer"))
+	else if (str == "integer")
 		return SignalType::INTEGER;
 	else
 		return SignalType::INVALID;
 }
 
-enum SignalType signal_type_from_fmtstr(char c)
+enum SignalType villas::node::signalTypeFromFormatString(char c)
 {
 	switch (c) {
 		case 'f':
@@ -58,7 +60,7 @@ enum SignalType signal_type_from_fmtstr(char c)
 	}
 }
 
-const char * signal_type_to_str(enum SignalType fmt)
+std::string villas::node::signalTypeToString(enum SignalType fmt)
 {
 	switch (fmt) {
 		case SignalType::BOOLEAN:
@@ -80,20 +82,17 @@ const char * signal_type_to_str(enum SignalType fmt)
 	return nullptr;
 }
 
-enum SignalType signal_type_detect(const char *val)
+enum SignalType villas::node::signalTypeDetect(const std::string &val)
 {
-	const char *brk;
 	int len;
 
-	brk = strchr(val, 'i');
-	if (brk)
+	if (val.find('i') != std::string::npos)
 		return SignalType::COMPLEX;
 
-	brk = strchr(val, '.');
-	if (brk)
+	if (val.find(',') != std::string::npos)
 		return SignalType::FLOAT;
 
-	len = strlen(val);
+	len = val.size();
 	if (len == 1 && (val[0] == '1' || val[0] == '0'))
 		return SignalType::BOOLEAN;
 

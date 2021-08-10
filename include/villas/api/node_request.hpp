@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,11 +25,12 @@
 
 #include <villas/api/request.hpp>
 
-/* Forward declarations */
-struct vnode;
-
 namespace villas {
 namespace node {
+
+/* Forward declarations */
+class Node;
+
 namespace api {
 
 class NodeRequest : public Request {
@@ -37,7 +38,7 @@ class NodeRequest : public Request {
 public:
 	using Request::Request;
 
-	struct vnode *node;
+	Node *node;
 
 	virtual void
 	prepare();

@@ -1,7 +1,7 @@
 /** The "paths" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,9 +23,7 @@
 #include <jansson.h>
 
 #include <villas/super_node.hpp>
-#include <villas/path.h>
-#include <villas/path_source.h>
-#include <villas/path_destination.h>
+#include <villas/path.hpp>
 #include <villas/hook.hpp>
 #include <villas/utils.hpp>
 #include <villas/api/session.hpp>
@@ -49,10 +47,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Paths endpoint does not accept any body data");
 
-		json_t *json_paths = json_array();
-
-		for (auto *p : session->getSuperNode()->getPaths())
-			json_array_append_new(json_paths, path_to_json(p));
+		json_t *json_paths = session->getSuperNode()->getPaths().toJson();
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
 	}

@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,15 +22,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-if [ -n "${CI}" ]; then
-  # We skip this test for now in CI
-  echo "Test not yet supported"
-  exit 99
-fi	
+echo "Test is broken"
+exit 99
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 FORMAT="villas.binary"
 VECTORIZE="1"
@@ -38,52 +42,47 @@ VECTORIZE="1"
 RATE=1000
 NUM_SAMPLES=$((10*${RATE}))
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"logging" : {
-		"level" : "debug"
+	"logging": {
+		"level": "debug"
 	},
-	"nodes" : {
-		"node1" : {
-			"type" : "rtp",
+	"nodes": {
+		"node1": {
+			"type": "rtp",
 
-			"format" : "${FORMAT}",
-			"vectorize" : ${VECTORIZE},
+			"format": "${FORMAT}",
+			"vectorize": ${VECTORIZE},
 
-			"rtcp" : {
-				"enabled" : true,
-				"throttle_mode" : "limit_rate"
+			"rtcp": {
+				"enabled": true,
+				"throttle_mode": "limit_rate"
 			},
 
-			"aimd" : {
-				"start_rate" : 1,
-				"a" : 10,
-				"b" : 0.5
+			"aimd": {
+				"start_rate": 1,
+				"a": 10,
+				"b": 0.5
 			},
 
-			"in" : {
-				"address" : "127.0.0.1:12000",
+			"in": {
+				"address": "127.0.0.1:12000",
 
-				"signals" : {
-					"type" : "float",
-					"count" : 5
+				"signals": {
+					"type": "float",
+					"count": 5
 				}
 			},
-			"out" : {
-				"address" : "127.0.0.1:12000"
+			"out": {
+				"address": "127.0.0.1:12000"
 			}
 		}
 	}
 }
 EOF
 
-villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE}
+villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} > input.dat
 
-# Compare data
-villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < intput.dat
 
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
-
-exit ${RC}
+villas compare ${CMPFLAGS} input.dat output.dat

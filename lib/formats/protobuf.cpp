@@ -1,7 +1,7 @@
 /** Protobuf IO format
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/sample.h>
-#include <villas/signal.h>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
 #include <villas/formats/protobuf.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
@@ -49,7 +49,7 @@ enum SignalType ProtobufFormat::detect(const Villas__Node__Value *val)
 	}
 }
 
-int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	unsigned psz;
 
@@ -71,7 +71,7 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct s
 
 		villas__node__sample__init(pb_smp);
 
-		const struct sample *smp = smps[i];
+		const struct Sample *smp = smps[i];
 
 		pb_smp->type = VILLAS__NODE__SAMPLE__TYPE__DATA;
 
@@ -157,7 +157,7 @@ out:
 	return -1;
 }
 
-int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	unsigned i, j;
 	Villas__Node__Message *pb_msg;
@@ -167,7 +167,7 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sa
 		return -1;
 
 	for (i = 0; i < MIN(pb_msg->n_samples, cnt); i++) {
-		struct sample *smp = smps[i];
+		struct Sample *smp = smps[i];
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
 		smp->flags = 0;
@@ -192,13 +192,13 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sa
 
 			enum SignalType fmt = detect(pb_val);
 
-			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, j);
+			auto sig = smp->signals->getByIndex(j);
 			if (!sig)
 				return -1;
 
 			if (sig->type != fmt)
 				throw RuntimeError("Received invalid data type in Protobuf payload: Received {}, expected {} for signal {} (index {}).",
-					signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
+					signalTypeToString(fmt), signalTypeToString(sig->type), sig->name, i);
 
 			switch (sig->type) {
 				case SignalType::FLOAT:

@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -37,7 +37,7 @@ if(WITH_NODE_STATS)
 endif()
 
 if(WITH_NODE_SIGNAL)
-    list(APPEND NODE_SRC signal_generator.cpp)
+    list(APPEND NODE_SRC signal.cpp signal_v1.cpp)
 endif()
 
 if(WITH_NODE_LOOPBACK)

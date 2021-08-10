@@ -1,7 +1,7 @@
 /** Memory allocators.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -32,16 +32,18 @@
 #include <sys/mman.h>
 
 #include <villas/log.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.hpp>
 
 using namespace villas;
+using namespace villas::node;
+using namespace villas::node::memory;
 
-static std::unordered_map<void *, struct memory_allocation *> allocations;
+static std::unordered_map<void *, struct Allocation *> allocations;
 static Logger logger;
 
-int memory_init(int hugepages)
+int villas::node::memory::init(int hugepages)
 {
 	int ret;
 
@@ -49,20 +51,20 @@ int memory_init(int hugepages)
 
 	logger->info("Initialize memory sub-system: #hugepages={}", hugepages);
 
-	ret = memory_mmap_init(hugepages);
+	ret = mmap_init(hugepages);
 	if (ret < 0)
 		return ret;
 
-	size_t lock = kernel::getHugePageSize() * hugepages;
+	size_t lock_sz = kernel::getHugePageSize() * hugepages;
 
-	ret = memory_lock(lock);
+	ret = lock(lock_sz);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-int memory_lock(size_t lock)
+int villas::node::memory::lock(size_t sz)
 {
 	int ret;
 
@@ -80,19 +82,19 @@ int memory_lock(size_t lock)
 	if (ret)
 		return ret;
 
-	if (l.rlim_cur < lock) {
-		if (l.rlim_max < lock) {
+	if (l.rlim_cur < sz) {
+		if (l.rlim_max < sz) {
 			if (getuid() != 0) {
 				logger->warn("Failed to increase ressource limit of locked memory. Please increase manually by running as root:");
-				logger->warn("   $ ulimit -Hl {}", lock);
+				logger->warn("   $ ulimit -Hl {}", sz);
 
 				return 0;
 			}
 
-			l.rlim_max = lock;
+			l.rlim_max = sz;
 		}
 
-		l.rlim_cur = lock;
+		l.rlim_cur = sz;
 
 		ret = setrlimit(RLIMIT_MEMLOCK, &l);
 		if (ret)
@@ -114,14 +116,14 @@ int memory_lock(size_t lock)
 	return 0;
 }
 
-void * memory_alloc(size_t len, struct memory_type *m)
+void * villas::node::memory::alloc(size_t len, struct Type *m)
 {
-	return memory_alloc_aligned(len, sizeof(void *), m);
+	return alloc_aligned(len, sizeof(void *), m);
 }
 
-void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m)
+void * villas::node::memory::alloc_aligned(size_t len, size_t alignment, struct Type *m)
 {
-	struct memory_allocation *ma = m->alloc(len, alignment, m);
+	struct Allocation *ma = m->alloc(len, alignment, m);
 	if (ma == nullptr) {
 		logger->warn("Memory allocation of type {} failed. reason={}", m->name, strerror(errno));
 		return nullptr;
@@ -134,12 +136,12 @@ void * memory_alloc_aligned(size_t len, size_t alignment, struct memory_type *m)
 	return ma->address;
 }
 
-int memory_free(void *ptr)
+int villas::node::memory::free(void *ptr)
 {
 	int ret;
 
 	/* Find corresponding memory allocation entry */
-	struct memory_allocation *ma = allocations[ptr];
+	struct Allocation *ma = allocations[ptr];
 	if (!ma)
 		return -1;
 
@@ -160,9 +162,9 @@ int memory_free(void *ptr)
 	return 0;
 }
 
-struct memory_allocation * memory_get_allocation(void *ptr)
+struct Allocation * villas::node::memory::get_allocation(void *ptr)
 {
 	return allocations[ptr];
 }
 
-struct memory_type *memory_default = nullptr;
+struct Type *villas::node::memory::default_type = nullptr;

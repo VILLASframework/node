@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -39,7 +39,7 @@ extern "C" {
 	#undef ALIGN_MASK
 }
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
@@ -57,11 +57,13 @@ using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::kernel;
 
-static struct vnode_type p;
+static NodeCompatType p;
+static NodeCompatFactory ncp(&p);
 
-static int rtp_aimd(struct vnode *n, double loss_frac)
+static
+int rtp_aimd(NodeCompat *n, double loss_frac)
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	double rate;
 
@@ -88,34 +90,37 @@ static int rtp_aimd(struct vnode *n, double loss_frac)
 	return 0;
 }
 
-int rtp_init(struct vnode *n)
+int villas::node::rtp_init(NodeCompat *n)
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	n->logger = villas::logging.get("node:rtp");
 
 	/* Default values */
-	r->aimd.rate = 1;
-
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
 	r->aimd.Kp = 1;
 	r->aimd.Ki = 0;
 	r->aimd.Kd = 0;
+
+	r->aimd.rate = 1;
 	r->aimd.rate_min = 1;
 	r->aimd.rate_source = 2000;
+
 	r->aimd.log_filename = nullptr;
 	r->aimd.log = nullptr;
 
 	r->rtcp.enabled = false;
 	r->aimd.rate_hook_type = RTPHookType::DISABLED;
 
+	r->formatter = nullptr;
+
 	return 0;
 }
 
-int rtp_reverse(struct vnode *n)
+int villas::node::rtp_reverse(NodeCompat *n)
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	SWAP(r->in.saddr_rtp, r->out.saddr_rtp);
 	SWAP(r->in.saddr_rtcp, r->out.saddr_rtcp);
@@ -123,10 +128,10 @@ int rtp_reverse(struct vnode *n)
 	return 0;
 }
 
-int rtp_parse(struct vnode *n, json_t *json)
+int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 {
 	int ret = 0;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	const char *local, *remote;
 	const char *log = nullptr;
@@ -185,6 +190,8 @@ int rtp_parse(struct vnode *n, json_t *json)
 		r->aimd.log_filename = strdup(log);
 
 	/* Format */
+	if (r->formatter)
+		delete r->formatter;
 	r->formatter = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.binary");
@@ -218,9 +225,9 @@ int rtp_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * rtp_print(struct vnode *n)
+char * villas::node::rtp_print(NodeCompat *n)
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 	char *buf;
 
 	char *local = socket_print_addr((struct sockaddr *) &r->in.saddr_rtp.u);
@@ -260,11 +267,12 @@ char * rtp_print(struct vnode *n)
 	return buf;
 }
 
-static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
+static
+void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
 {
 	int ret;
-	struct vnode *n = (struct vnode *) arg;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *n = (NodeCompat *) arg;
+	auto *r = n->getData<struct rtp>();
 
 	/* source, header not used */
 	(void) src;
@@ -279,10 +287,11 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	}
 }
 
-static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
+static
+void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 {
-	struct vnode *n = (struct vnode *) arg;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *n = (NodeCompat *) arg;
+	auto *r = n->getData<struct rtp>();
 
 	/* source not used */
 	(void) src;
@@ -297,10 +306,11 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 
 			rtp_aimd(n, loss_frac);
 
-			if (n->stats) {
-				n->stats->update(Stats::Metric::RTP_PKTS_LOST, rr->lost);
-				n->stats->update(Stats::Metric::RTP_LOSS_FRACTION, loss_frac);
-				n->stats->update(Stats::Metric::RTP_JITTER, rr->jitter);
+			auto stats = n->getStats();
+			if (stats) {
+				stats->update(Stats::Metric::RTP_PKTS_LOST, rr->lost);
+				stats->update(Stats::Metric::RTP_LOSS_FRACTION, loss_frac);
+				stats->update(Stats::Metric::RTP_JITTER, rr->jitter);
 			}
 
 			n->logger->info("RTCP: rr: num_rrs={}, loss_frac={}, pkts_lost={}, jitter={}", r->rtcp.num_rrs, loss_frac, rr->lost, rr->jitter);
@@ -312,18 +322,18 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	r->rtcp.num_rrs++;
 }
 
-int rtp_start(struct vnode *n)
+int villas::node::rtp_start(NodeCompat *n)
 {
 	int ret;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	/* Initialize queue */
-	ret = queue_signalled_init(&r->recv_queue, 1024, &memory_heap);
+	ret = queue_signalled_init(&r->recv_queue, 1024, &memory::heap);
 	if (ret)
 		return ret;
 
 	/* Initialize IO */
-	r->formatter->start(&n->in.signals, ~(int) SampleFlags::HAS_OFFSET);
+	r->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
 	/* Initialize memory buffer for sending */
 	r->send_mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN);
@@ -339,11 +349,11 @@ int rtp_start(struct vnode *n)
 #ifdef WITH_HOOKS
 		switch (r->aimd.rate_hook_type) {
 			case RTPHookType::DECIMATE:
-				r->aimd.rate_hook = new DecimateHook(nullptr, n, 0, 0);
+				r->aimd.rate_hook = std::make_shared<DecimateHook>(nullptr, n, 0, 0);
 				break;
 
 			case RTPHookType::LIMIT_RATE:
-				r->aimd.rate_hook = new LimitRateHook(nullptr, n, 0, 0);
+				r->aimd.rate_hook = std::make_shared<LimitRateHook>(nullptr, n, 0, 0);
 				break;
 
 			default:
@@ -355,9 +365,9 @@ int rtp_start(struct vnode *n)
 
 		r->aimd.rate_hook->init();
 
-		vlist_push(&n->out.hooks, (void *) r->aimd.rate_hook);
+		n->out.hooks.push_back(r->aimd.rate_hook);
 
-		r->aimd.rate_hook->setRate(r->aimd.rate_last);
+		r->aimd.rate_hook->setRate(r->aimd.rate, r->aimd.rate_source);
 #else
 		throw RuntimeError("Rate limiting is not supported");
 
@@ -377,7 +387,7 @@ int rtp_start(struct vnode *n)
 	if (r->rtcp.enabled) {
 		r->rtcp.num_rrs = 0;
 
-		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
+		rtcp_start(r->rs, n->getNameShort().c_str(), &r->out.saddr_rtcp);
 
 		if (r->aimd.log_filename) {
 			char fn[128];
@@ -402,10 +412,10 @@ int rtp_start(struct vnode *n)
 	return ret;
 }
 
-int rtp_stop(struct vnode *n)
+int villas::node::rtp_stop(NodeCompat *n)
 {
 	int ret;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	mem_deref(r->rs);
 
@@ -422,14 +432,12 @@ int rtp_stop(struct vnode *n)
 	if (r->aimd.log)
 		r->aimd.log->close();
 
-	delete r->formatter;
-
 	return 0;
 }
 
-int rtp_destroy(struct vnode *n)
+int villas::node::rtp_destroy(NodeCompat *n)
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	if (r->aimd.log)
 		delete r->aimd.log;
@@ -437,17 +445,21 @@ int rtp_destroy(struct vnode *n)
 	if (r->aimd.log_filename)
 		free(r->aimd.log_filename);
 
+	if (r->formatter)
+		delete r->formatter;
+
 	return 0;
 }
 
-static void stop_handler(int sig, siginfo_t *si, void *ctx)
+static
+void stop_handler(int sig, siginfo_t *si, void *ctx)
 {
 	re_cancel();
 }
 
 typedef void *(*pthread_start_routine)(void *);
 
-int rtp_type_start(villas::node::SuperNode *sn)
+int villas::node::rtp_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
@@ -471,8 +483,9 @@ int rtp_type_start(villas::node::SuperNode *sn)
 
 #ifdef WITH_NETEM
 	/* Gather list of used network interfaces */
-	for (auto *n : p.instances) {
-		struct rtp *r = (struct rtp *) n->_vd;
+	for (auto *n : ncp.instances) {
+		auto *nc = dynamic_cast<NodeCompat *>(n);
+		auto *r = nc->getData<struct rtp>();
 		Interface *j = Interface::getEgress(&r->out.saddr_rtp.u.sa, sn);
 
 		if (!j)
@@ -485,7 +498,7 @@ int rtp_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int rtp_type_stop()
+int villas::node::rtp_type_stop()
 {
 	int ret;
 
@@ -500,10 +513,10 @@ int rtp_type_stop()
 	return 0;
 }
 
-int rtp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::rtp_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 	struct mbuf *mb;
 
 	/* Get data from queue */
@@ -519,10 +532,10 @@ int rtp_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return ret;
 }
 
-int rtp_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::rtp_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	size_t wbytes;
 	size_t avail;
@@ -555,18 +568,18 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	return cnt;
 }
 
-int rtp_poll_fds(struct vnode *n, int fds[])
+int villas::node::rtp_poll_fds(NodeCompat *n, int fds[])
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	fds[0] = queue_signalled_fd(&r->recv_queue);
 
 	return 1;
 }
 
-int rtp_netem_fds(struct vnode *n, int fds[])
+int villas::node::rtp_netem_fds(NodeCompat *n, int fds[])
 {
-	struct rtp *r = (struct rtp *) n->_vd;
+	auto *r = n->getData<struct rtp>();
 
 	int m = 0;
 	struct udp_sock *rtp = (struct udp_sock *) rtp_sock(r->rs);
@@ -603,9 +616,4 @@ static void register_plugin() {
 	p.reverse	= rtp_reverse;
 	p.poll_fds	= rtp_poll_fds;
 	p.netem_fds	= rtp_netem_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
 }

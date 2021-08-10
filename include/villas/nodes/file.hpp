@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,12 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup file File-IO node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <cstdio>
@@ -34,19 +28,21 @@
 #include <villas/format.hpp>
 #include <villas/task.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 #define FILE_MAX_PATHLEN	512
 
 struct file {
-	villas::node::Format *formatter;
+	Format *formatter;
 	FILE *stream_in;
 	FILE *stream_out;
 
 	char *uri_tmpl;			/**< Format string for file name. */
 	char *uri;			/**< Real file name. */
-	char *mode;			/**< File access mode. */
 
 	unsigned skip_lines;		/**< Skip the first n-th lines/samples of the file. */
 	int flush;			/**< Flush / upload file contents after each write. */
@@ -74,22 +70,23 @@ struct file {
 	struct timespec offset;		/**< An offset between the timestamp in the input file and the current time */
 };
 
-/** @see node_type::print */
-char * file_print(struct vnode *n);
+char * file_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int file_parse(struct vnode *n, json_t *json);
+int file_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int file_start(struct vnode *n);
+int file_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int file_stop(struct vnode *n);
+int file_stop(NodeCompat *n);
 
-/** @see node_type::read */
-int file_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int file_init(NodeCompat *n);
 
-/** @see node_type::write */
-int file_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int file_destroy(NodeCompat *n);
 
-/** @} */
+int file_poll_fds(NodeCompat *n, int fds[]);
+
+int file_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int file_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

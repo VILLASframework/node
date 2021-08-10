@@ -1,7 +1,7 @@
 /** Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,13 +31,13 @@
 #include <openssl/opensslv.h>
 #include <curl/curl.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/ngsi.hpp>
 #include <villas/utils.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/timing.h>
-#include <villas/node/config.h>
+#include <villas/timing.hpp>
+#include <villas/node/config.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -54,6 +54,7 @@ using namespace villas::utils;
 /** This array will store all of the mutexes available to OpenSSL. */
 static pthread_mutex_t *mutex_buf = NULL;
 
+static
 void handle_error(const char *file, int lineno, const char *msg)
 {
 	auto logger = logging.get("curl");
@@ -65,7 +66,8 @@ void handle_error(const char *file, int lineno, const char *msg)
 	/* exit(-1); */
 }
 
-static void curl_ssl_locking_function(int mode, int n, const char *file, int line)
+static
+void curl_ssl_locking_function(int mode, int n, const char *file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 		pthread_mutex_lock(&mutex_buf[n]);
@@ -73,7 +75,8 @@ static void curl_ssl_locking_function(int mode, int n, const char *file, int lin
 		pthread_mutex_unlock(&mutex_buf[n]);
 }
 
-static unsigned long curl_ssl_thread_id_function(void)
+static
+unsigned long curl_ssl_thread_id_function(void)
 {
 	return ((unsigned long) pthread_self());
 }
@@ -135,12 +138,12 @@ public:
 	size_t index;
 	std::list<NgsiMetadata> metadata;
 
-	NgsiAttribute(json_t *json, size_t j, struct signal *s)
+	NgsiAttribute(json_t *json, size_t j, Signal::Ptr s)
 	{
 		parse(json, j, s);
 	}
 
-	void parse(json_t *json, size_t j, struct signal *s)
+	void parse(json_t *json, size_t j, Signal::Ptr s)
 	{
 		int ret;
 
@@ -160,10 +163,10 @@ public:
 
 		/* Copy values from node signal, if 'ngsi_attribute' settings not provided */
 		if (s && !nam)
-			nam = s->name ? s->name : "";
+			nam = !s->name.empty() ? s->name.c_str() : "";
 
 		if (s && !typ)
-			typ = s->unit ? s->unit : "";
+			typ = !s->unit.empty() ? s->unit.c_str() : "";
 
 		name = nam;
 		type = typ;
@@ -182,7 +185,7 @@ public:
 		metadata.emplace_back("index", "integer", fmt::format("{}", j));
 	}
 
-	json_t * build(const struct sample * const smps[], unsigned cnt, int flags)
+	json_t * build(const struct Sample * const smps[], unsigned cnt, int flags)
 	{
 		json_t *json_attribute = json_pack("{ s: s, s: s }",
 			"name", name.c_str(),
@@ -195,24 +198,22 @@ public:
 			json_t *json_value = json_array();
 
 			for (unsigned k = 0; k < cnt; k++) {
-				struct sample *smp = &smps[k];
-
-				union signal_data *sd = &smp->data[index];
-				struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, index);
+				const auto *sig = (Signal *) list_at_safe(smp->signals, index);
+				const auto *smp = &smps[k];
+				const auto *data = &smp->data[index];
 
 				json_array_append_new(json_value, json_pack("[ f, o, i ]",
 					time_to_double(smp->ts.origin),
-					signal_data_to_json(sd, sig->type),
+					data->toJson(sig->type),
 					smp->sequence
 				));
 			}
 #else
-			const struct sample *smp = smps[0];
+			const auto *smp = smps[0];
+			const auto sig = smp->signals->getByIndex(index);
+			const auto *data = &smp->data[index];
 
-			const union signal_data *sd = &smp->data[index];
-			const struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, index);
-
-			json_t *json_value = signal_data_to_json(sd, sig->type);
+			json_t *json_value = data->toJson(sig->type);
 #endif
 
 			json_object_set(json_attribute, "value", json_value);
@@ -241,9 +242,10 @@ struct ngsi_response {
 	size_t len;
 };
 
-static json_t* ngsi_build_entity(struct vnode *n, const struct sample * const smps[], unsigned cnt, int flags)
+static
+json_t* ngsi_build_entity(NodeCompat *n, const struct Sample * const smps[], unsigned cnt, int flags)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	json_t *json_entity = json_pack("{ s: s, s: s, s: b }",
 		"id", i->entity_id,
@@ -255,8 +257,8 @@ static json_t* ngsi_build_entity(struct vnode *n, const struct sample * const sm
 		json_t *json_attrs = json_array();
 
 		if (flags & NGSI_ENTITY_ATTRIBUTES_IN) {
-			for (size_t j = 0; j < vlist_length(&i->in.signals); j++) {
-				auto *attr = (NgsiAttribute *) vlist_at(&i->in.signals, j);
+			for (size_t j = 0; j < list_length(&i->in.signals); j++) {
+				auto *attr = (NgsiAttribute *) list_at(&i->in.signals, j);
 
 				auto *json_attr = attr->build(smps, cnt, flags);
 
@@ -265,8 +267,8 @@ static json_t* ngsi_build_entity(struct vnode *n, const struct sample * const sm
 		}
 
 		if (flags & NGSI_ENTITY_ATTRIBUTES_OUT) {
-			for (size_t j = 0; j < vlist_length(&i->out.signals); j++) {
-				auto *attr = (NgsiAttribute *) vlist_at(&i->out.signals, j);
+			for (size_t j = 0; j < list_length(&i->out.signals); j++) {
+				auto *attr = (NgsiAttribute *) list_at(&i->out.signals, j);
 
 				auto *json_attr = attr->build(smps, cnt, flags);
 
@@ -280,12 +282,13 @@ static json_t* ngsi_build_entity(struct vnode *n, const struct sample * const sm
 	return json_entity;
 }
 
-static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample * const smps[], unsigned cnt)
+static
+int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const smps[], unsigned cnt)
 {
 	int ret, length = 0;
 	const char *id, *name, *type;
 
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	size_t l;
 	json_error_t err;
@@ -321,7 +324,7 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 			return -3;
 
 		/* Check attribute name and type */
-		attr = vlist_lookup_name<NgsiAttribute>(&i->in.signals, name);
+		attr = list_lookup_name<NgsiAttribute>(&i->in.signals, name);
 		if (!attr || attr->type != type)
 			continue; /* skip unknown attributes */
 
@@ -341,7 +344,7 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 
 		size_t k;
 		json_array_foreach(json_value, k, json_tuple) {
-			struct sample *smp = smps[k];
+			struct Sample *smp = smps[k];
 
 			/* Check sample format */
 			if (!json_is_array(json_tuple) || json_array_size(json_tuple) != 3)
@@ -359,8 +362,8 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 
 			smp->ts.origin = tss;
 
-			union signal_data *sd = &smp->data[attr->index];
-			struct signal *sig = (struct signal *) vlist_at_safe(&n->in.signals, attr->index);
+			auto *sd = &smp->data[attr->index];
+			auto *sig = (Signal *) list_at_safe(n->getInputSignals(false), attr->index);
 			if (!sig)
 				return -11;
 
@@ -373,7 +376,7 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 			}
 		}
 #else
-		struct sample *smp = smps[0];
+		struct Sample *smp = smps[0];
 
 		/* Check number of values */
 		if (!json_is_string(json_value))
@@ -381,15 +384,15 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 
 		value = json_string_value(json_value);
 
-		union signal_data *sd = &smp->data[attr->index];
-		struct signal *sig = (struct signal *) vlist_at_safe(&n->in.signals, attr->index);
+		auto *data = &smp->data[attr->index];
+		auto sig = n->getInputSignals(false)->getByIndex(attr->index);
 		if (!sig)
 			return -11;
 
 		if (value[0] == '\0') /* No data on Orion CB? -> Use init value */
-			*sd = sig->init;
+			*data = sig->init;
 		else {
-			signal_data_parse_str(sd, sig->type, value, &end);
+			data->parseString(sig->type, value, &end);
 			if (value == end)
 				return -10;
 		}
@@ -397,10 +400,10 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 	}
 
 	for (unsigned k = 0; k < cnt; k++) {
-		struct sample *smp = smps[k];
+		struct Sample *smp = smps[k];
 
 		smp->length = length;
-		smp->signals = &n->in.signals;
+		smp->signals = n->getInputSignals(false);
 		smp->flags = (int) SampleFlags::HAS_DATA;
 
 #ifdef NGSI_VECTORS
@@ -412,7 +415,8 @@ static int ngsi_parse_entity(struct vnode *n, json_t *json_entity, struct sample
 	return cnt;
 }
 
-static int ngsi_parse_signals(json_t *json_signals, struct vlist *ngsi_signals, struct vlist *node_signals)
+static
+int ngsi_parse_signals(json_t *json_signals, struct List *ngsi_signals, SignalList::Ptr node_signals)
 {
 	size_t j;
 	json_t *json_signal;
@@ -421,19 +425,19 @@ static int ngsi_parse_signals(json_t *json_signals, struct vlist *ngsi_signals, 
 		return -1;
 
 	json_array_foreach(json_signals, j, json_signal) {
-		auto *s = (struct signal *) vlist_at_safe(node_signals, j);
-
+		auto s = node_signals->getByIndex(j);
 		auto *a = new NgsiAttribute(json_signal, j, s);
 		if (!a)
 			throw MemoryAllocationError();
 
-		vlist_push(ngsi_signals, a);
+		list_push(ngsi_signals, a);
 	}
 
 	return 0;
 }
 
-static int ngsi_parse_context_response(json_t *json_response, int *code, char **reason, json_t **json_rentity, Logger logger) {
+static
+int ngsi_parse_context_response(json_t *json_response, int *code, char **reason, json_t **json_rentity, Logger logger) {
 	int ret;
 	char *codestr;
 
@@ -459,7 +463,8 @@ static int ngsi_parse_context_response(json_t *json_response, int *code, char **
 	return ret;
 }
 
-static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, void *userp)
+static
+size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, void *userp)
 {
 	size_t realsize = size * nmemb;
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
@@ -475,7 +480,8 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json_t *json_request, json_t **json_response, Logger logger)
+static
+int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json_t *json_request, json_t **json_response, Logger logger)
 {
 	struct ngsi_response chunk = { 0 };
 	char *post = json_dumps(json_request, JSON_INDENT(4));
@@ -519,7 +525,8 @@ out:	free(post);
 	return ret;
 }
 
-static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *json_entity, json_t **json_rentity, Logger logger)
+static
+int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *json_entity, json_t **json_rentity, Logger logger)
 {
 	int ret, code;
 	char *reason;
@@ -543,7 +550,8 @@ out:	json_decref(json_request);
 	return ret;
 }
 
-static int ngsi_request_context_update(CURL *handle, const char *endpoint, const char *action, json_t *json_entity, Logger logger)
+static
+int ngsi_request_context_update(CURL *handle, const char *endpoint, const char *action, json_t *json_entity, Logger logger)
 {
 	int ret, code;
 	char *reason;
@@ -570,7 +578,7 @@ out:	json_decref(json_request);
 	return ret;
 }
 
-int ngsi_type_start(villas::node::SuperNode *sn)
+int villas::node::ngsi_type_start(villas::node::SuperNode *sn)
 {
 #ifdef CURL_SSL_REQUIRES_LOCKING
 	mutex_buf = new pthread_mutex_t[CRYPTO_num_locks()];
@@ -589,7 +597,7 @@ int ngsi_type_start(villas::node::SuperNode *sn)
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 
-int ngsi_type_stop()
+int villas::node::ngsi_type_stop()
 {
 #ifdef CURL_SSL_REQUIRES_LOCKING
 	if (!mutex_buf)
@@ -609,9 +617,9 @@ int ngsi_type_stop()
 	return 0;
 }
 
-int ngsi_parse(struct vnode *n, json_t *json)
+int villas::node::ngsi_parse(NodeCompat *n, json_t *json)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	int ret;
 	json_error_t err;
@@ -643,13 +651,13 @@ int ngsi_parse(struct vnode *n, json_t *json)
 	i->remove = remove;
 
 	if (json_signals_in) {
-		ret = ngsi_parse_signals(json_signals_in, &i->in.signals, &n->in.signals);
+		ret = ngsi_parse_signals(json_signals_in, &i->in.signals, n->in.signals);
 		if (ret)
 			throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals", "Invalid setting 'in.signals' of node {}", *n);
 	}
 
 	if (json_signals_out) {
-		ret = ngsi_parse_signals(json_signals_out, &i->out.signals, &n->out.signals);
+		ret = ngsi_parse_signals(json_signals_out, &i->out.signals, n->out.signals);
 		if (ret)
 			throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals", "Invalid setting 'out.signals' of node {}", *n);
 	}
@@ -657,17 +665,17 @@ int ngsi_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * ngsi_print(struct vnode *n)
+char * villas::node::ngsi_print(NodeCompat *n)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	return strf("endpoint=%s, timeout=%.3f secs",
 		i->endpoint, i->timeout);
 }
 
-int ngsi_start(struct vnode *n)
+int villas::node::ngsi_start(NodeCompat *n)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	i->in.curl = curl_easy_init();
 	i->out.curl = curl_easy_init();
@@ -711,9 +719,9 @@ int ngsi_start(struct vnode *n)
 	return 0;
 }
 
-int ngsi_stop(struct vnode *n)
+int villas::node::ngsi_stop(NodeCompat *n)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 	int ret;
 
 	i->task.stop();
@@ -732,9 +740,9 @@ int ngsi_stop(struct vnode *n)
 	return ret;
 }
 
-int ngsi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ngsi_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 	int ret;
 
 	if (i->task.wait() == 0)
@@ -757,9 +765,9 @@ out:	json_decref(json_entity);
 	return ret;
 }
 
-int ngsi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::ngsi_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 	int ret;
 
 	json_t *json_entity = ngsi_build_entity(n, smps, cnt, NGSI_ENTITY_ATTRIBUTES_OUT | NGSI_ENTITY_VALUES);
@@ -771,27 +779,27 @@ int ngsi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return ret ? 0 : cnt;
 }
 
-int ngsi_poll_fds(struct vnode *n, int fds[])
+int villas::node::ngsi_poll_fds(NodeCompat *n, int fds[])
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	fds[0] = i->task.getFD();
 
 	return 1;
 }
 
-int ngsi_init(struct vnode *n)
+int villas::node::ngsi_init(NodeCompat *n)
 {
 	int ret;
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 	new (&i->task) Task(CLOCK_REALTIME);
 
-	ret = vlist_init(&i->in.signals);
+	ret = list_init(&i->in.signals);
 	if (ret)
 		return ret;
 
-	ret = vlist_init(&i->out.signals);
+	ret = list_init(&i->out.signals);
 	if (ret)
 		return ret;
 
@@ -804,29 +812,29 @@ int ngsi_init(struct vnode *n)
 	return 0;
 }
 
-int ngsi_destroy(struct vnode *n)
+int villas::node::ngsi_destroy(NodeCompat *n)
 {
 	int ret;
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
 
-	for (size_t j = 0; j < vlist_length(&i->in.signals); j++) {
-		auto *attr = (NgsiAttribute *) vlist_at(&i->in.signals, j);
-
-		delete attr;
-	}
-
-	for (size_t j = 0; j < vlist_length(&i->out.signals); j++) {
-		auto *attr = (NgsiAttribute *) vlist_at(&i->out.signals, j);
+	for (size_t j = 0; j < list_length(&i->in.signals); j++) {
+		auto *attr = (NgsiAttribute *) list_at(&i->in.signals, j);
 
 		delete attr;
 	}
 
-	ret = vlist_destroy(&i->in.signals);
+	for (size_t j = 0; j < list_length(&i->out.signals); j++) {
+		auto *attr = (NgsiAttribute *) list_at(&i->out.signals, j);
+
+		delete attr;
+	}
+
+	ret = list_destroy(&i->in.signals);
 	if (ret)
 		return ret;
 
-	ret = vlist_destroy(&i->out.signals);
+	ret = list_destroy(&i->out.signals);
 	if (ret)
 		return ret;
 
@@ -835,18 +843,18 @@ int ngsi_destroy(struct vnode *n)
 	return 0;
 }
 
-int ngsi_reverse(struct vnode *n)
+int villas::node::ngsi_reverse(NodeCompat *n)
 {
-	struct ngsi *i = (struct ngsi *) n->_vd;
+	auto *i = n->getData<struct ngsi>();
 
-	SWAP(n->in.signals, n->out.signals);
+	n->swapSignals();
 	SWAP(i->in.signals, i->out.signals);
 
 	return 0;
 }
 
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -871,8 +879,5 @@ static void register_plugin() {
 	p.poll_fds	= ngsi_poll_fds;
 	p.reverse	= ngsi_reverse;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

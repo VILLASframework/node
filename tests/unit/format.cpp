@@ -1,7 +1,7 @@
 /** Unit tests for formatters.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -28,10 +28,10 @@
 #include <criterion/parameterized.h>
 
 #include <villas/utils.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
-#include <villas/signal.h>
-#include <villas/pool.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
+#include <villas/pool.hpp>
 #include <villas/format.hpp>
 #include <villas/log.hpp>
 
@@ -57,7 +57,7 @@ public:
 	int bits;
 };
 
-void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt)
+void fill_sample_data(SignalList::Ptr signals, struct Sample *smps[], unsigned cnt)
 {
 	struct timespec delta, now;
 
@@ -65,17 +65,17 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 	delta = time_from_double(50e-6);
 
 	for (unsigned i = 0; i < cnt; i++) {
-		struct sample *smp = smps[i];
+		struct Sample *smp = smps[i];
 
 		smps[i]->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN;
-		smps[i]->length = vlist_length(signals);
+		smps[i]->length = signals->size();
 		smps[i]->sequence = 235 + i;
 		smps[i]->ts.origin = now;
 		smps[i]->signals = signals;
 
-		for (size_t j = 0; j < vlist_length(signals); j++) {
-			struct signal *sig = (struct signal *) vlist_at(signals, j);
-			union signal_data *data = &smp->data[j];
+		for (size_t j = 0; j < signals->size(); j++) {
+			auto sig = signals->getByIndex(j);
+			auto *data = &smp->data[j];
 
 			switch (sig->type) {
 				case SignalType::BOOLEAN:
@@ -105,7 +105,7 @@ void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt
 	}
 }
 
-void cr_assert_eq_sample(struct sample *a, struct sample *b, int flags)
+void cr_assert_eq_sample(struct Sample *a, struct Sample *b, int flags)
 {
 	cr_assert_eq(a->length, b->length, "a->length=%d, b->length=%d", a->length, b->length);
 
@@ -148,7 +148,7 @@ void cr_assert_eq_sample(struct sample *a, struct sample *b, int flags)
 	}
 }
 
-void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int bits)
+void cr_assert_eq_sample_raw(struct Sample *a, struct Sample *b, int flags, int bits)
 {
 	cr_assert_eq(a->length, b->length);
 
@@ -232,18 +232,15 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory)
 
 	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
-	struct pool pool;
+	struct Pool pool;
 	Format *fmt;
-	struct vlist signals;
-	struct sample *smps[p->cnt];
-	struct sample *smpt[p->cnt];
+	struct Sample *smps[p->cnt];
+	struct Sample *smpt[p->cnt];
 
 	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
 	cr_assert_eq(ret, 0);
 
-	ret = vlist_init(&signals);
-	cr_assert_eq(ret, 0);
-	signal_list_generate(&signals, NUM_VALUES, SignalType::FLOAT);
+	auto signals = std::make_shared<SignalList>(NUM_VALUES, SignalType::FLOAT);
 
 	ret = sample_alloc_many(&pool, smps, p->cnt);
 	cr_assert_eq(ret, p->cnt);
@@ -251,7 +248,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory)
 	ret = sample_alloc_many(&pool, smpt, p->cnt);
 	cr_assert_eq(ret, p->cnt);
 
-	fill_sample_data(&signals, smps, p->cnt);
+	fill_sample_data(signals, smps, p->cnt);
 
 	json_t *json_format = json_loads(p->fmt.c_str(), 0, nullptr);
 	cr_assert_not_null(json_format);
@@ -259,7 +256,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory)
 	fmt = FormatFactory::make(json_format);
 	cr_assert_not_null(fmt, "Failed to create formatter of type '%s'", p->fmt.c_str());
 
-	fmt->start(&signals, (int) SampleFlags::HAS_ALL);
+	fmt->start(signals, (int) SampleFlags::HAS_ALL);
 
 	cnt = fmt->sprint(buf, sizeof(buf), &wbytes, smps, p->cnt);
 	cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples", cnt, p->cnt);
@@ -319,11 +316,10 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 
 	logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
-	struct sample *smps[p->cnt];
-	struct sample *smpt[p->cnt];
+	struct Sample *smps[p->cnt];
+	struct Sample *smpt[p->cnt];
 
-	struct pool pool;
-	struct vlist signals;
+	struct Pool pool;
 	Format *fmt;
 
 	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES));
@@ -335,11 +331,9 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 	ret = sample_alloc_many(&pool, smpt, p->cnt);
 	cr_assert_eq(ret, p->cnt);
 
-	ret = vlist_init(&signals);
-	cr_assert_eq(ret, 0);
-	signal_list_generate(&signals, NUM_VALUES, SignalType::FLOAT);
+	auto signals = std::make_shared<SignalList>(NUM_VALUES, SignalType::FLOAT);
 
-	fill_sample_data(&signals, smps, p->cnt);
+	fill_sample_data(signals, smps, p->cnt);
 
 	/* Open a file for testing the formatter */
 	char *fn, dir[64];
@@ -357,7 +351,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 	fmt = FormatFactory::make(json_format);
 	cr_assert_not_null(fmt, "Failed to create formatter of type '%s'", p->fmt.c_str());
 
-	fmt->start(&signals, (int) SampleFlags::HAS_ALL);
+	fmt->start(signals, (int) SampleFlags::HAS_ALL);
 
 	auto *stream = fopen(fn, "w+");
 	cr_assert_not_null(stream);

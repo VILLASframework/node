@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 
 #ifdef WITH_GRAPHVIZ
 extern "C" {
@@ -36,19 +36,19 @@ extern "C" {
 #include <villas/api.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
-#include <villas/config.hpp>
-#include <villas/node.h>
+#include <villas/config_class.hpp>
+#include <villas/node.hpp>
 #include <villas/node_list.hpp>
 #include <villas/path_list.hpp>
 #include <villas/task.hpp>
 #include <villas/common.hpp>
 #include <villas/kernel/if.hpp>
 
-/* Forward declarations */
-struct vnode;
-
 namespace villas {
 namespace node {
+
+/* Forward declarations */
+class Node;
 
 /** Global configuration */
 class SuperNode {
@@ -136,7 +136,7 @@ public:
 		state = st;
 	}
 
-	struct vnode * getNode(const std::string &name)
+	Node * getNode(const std::string &name)
 	{
 		return nodes.lookup(name);
 	}

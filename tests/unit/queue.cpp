@@ -1,7 +1,7 @@
 /** Unit tests for queue
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -32,17 +32,18 @@
 
 #include <villas/utils.hpp>
 #include <villas/queue.h>
-#include <villas/memory.h>
-#include <villas/tsc.h>
+#include <villas/node/memory.hpp>
+#include <villas/tsc.hpp>
 #include <villas/log.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
 extern void init_memory();
 
 #define SIZE	(1 << 10)
 
-static struct queue q;
+static struct CQueue q;
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
@@ -54,9 +55,9 @@ struct param {
 	int thread_count;
 	bool many;
 	int batch_size;
-	struct memory_type *mt;
+	struct memory::Type *mt;
 	volatile int start;
-	struct queue queue;
+	struct CQueue queue;
 };
 
 /** Get thread id as integer
@@ -231,7 +232,7 @@ Test(queue, single_threaded, .init = init_memory)
 	p.queue_size = 1 << 10;
 	p.start = 1; /* we start immeadiatly */
 
-	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
+	ret = queue_init(&p.queue, p.queue_size, &memory::heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	producer(&p);
@@ -253,35 +254,35 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.thread_count = 32,
 			.many = true,
 			.batch_size = 10,
-			.mt = &memory_heap
+			.mt = &memory::heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 100,
-			.mt = &memory_heap
+			.mt = &memory::heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 14,
 			.thread_count = 16,
 			.many = true,
 			.batch_size = 100,
-			.mt = &memory_heap
+			.mt = &memory::heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.many = true,
 			.batch_size = 10,
-			.mt = &memory_heap
+			.mt = &memory::heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 9,
 			.thread_count = 16,
 			.many = false,
 			.batch_size = 10,
-			.mt = &memory_mmap_hugetlb
+			.mt = &memory::mmap_hugetlb
 		}
 	};
 
@@ -291,11 +292,11 @@ ParameterizedTestParameters(queue, multi_threaded)
 ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init = init_memory)
 {
 	int ret, cycpop;
-	struct tsc tsc;
+	struct Tsc tsc;
 
 	Logger logger = logging.get("test:queue:multi_threaded");
 
-	if (!utils::isPrivileged() && p->mt == &memory_mmap_hugetlb)
+	if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
 		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
 
 	pthread_t threads[p->thread_count];
@@ -345,9 +346,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 Test(queue, init_destroy, .init = init_memory)
 {
 	int ret;
-	struct queue q;
+	struct CQueue q;
 
-	ret = queue_init(&q, 1024, &memory_heap);
+	ret = queue_init(&q, 1024, &memory::heap);
 	cr_assert_eq(ret, 0); /* Should succeed */
 
 	ret = queue_destroy(&q);

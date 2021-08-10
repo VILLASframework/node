@@ -2,7 +2,7 @@
  *
  * @file
  * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,22 +21,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/queue_signalled.h>
 
 #ifdef HAS_EVENTFD
   #include <sys/eventfd.h>
 #endif
 
-static void queue_signalled_cleanup(void *p)
+using namespace villas::node;
+
+static
+void queue_signalled_cleanup(void *p)
 {
-	struct queue_signalled *qs = (struct queue_signalled *) p;
+	struct CQueueSignalled *qs = (struct CQueueSignalled *) p;
 
 	if (qs->mode == QueueSignalledMode::PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 }
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, enum QueueSignalledMode mode, int flags)
+int villas::node::queue_signalled_init(struct CQueueSignalled *qs, size_t size, struct memory::Type *mem, enum QueueSignalledMode mode, int flags)
 {
 	int ret;
 
@@ -107,7 +110,7 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_
 	return 0;
 }
 
-int queue_signalled_destroy(struct queue_signalled *qs)
+int villas::node::queue_signalled_destroy(struct CQueueSignalled *qs)
 {
 	int ret;
 
@@ -141,7 +144,7 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 	return 0;
 }
 
-int queue_signalled_push(struct queue_signalled *qs, void *ptr)
+int villas::node::queue_signalled_push(struct CQueueSignalled *qs, void *ptr)
 {
 	int pushed;
 
@@ -180,7 +183,7 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 	return pushed;
 }
 
-int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
+int villas::node::queue_signalled_push_many(struct CQueueSignalled *qs, void *ptr[], size_t cnt)
 {
 	int pushed;
 
@@ -219,7 +222,7 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	return pushed;
 }
 
-int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
+int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr)
 {
 	int pulled = 0;
 
@@ -268,7 +271,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 	return pulled;
 }
 
-int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
+int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs, void *ptr[], size_t cnt)
 {
 	int pulled = 0;
 
@@ -317,7 +320,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	return pulled;
 }
 
-int queue_signalled_close(struct queue_signalled *qs)
+int villas::node::queue_signalled_close(struct CQueueSignalled *qs)
 {
 	int ret;
 
@@ -358,7 +361,7 @@ int queue_signalled_close(struct queue_signalled *qs)
 	return ret;
 }
 
-int queue_signalled_fd(struct queue_signalled *qs)
+int villas::node::queue_signalled_fd(struct CQueueSignalled *qs)
 {
 	switch (qs->mode) {
 #ifdef HAS_EVENTFD

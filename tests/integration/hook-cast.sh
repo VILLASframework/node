@@ -3,7 +3,7 @@
 # Integration test for cast hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,14 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# Test is broken
-exit 99
+set -e
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat <<EOF > ${INPUT_FILE}
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > input.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	58.778500	-1.000000	0.600000	0.100000
@@ -43,7 +47,7 @@ cat <<EOF > ${INPUT_FILE}
 1551015509.701653200(9)	0.060849	-58.778500	1.000000	0.600000	0.900000
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	signal0	test[V]	signal2	signal3	signal4
 1551015508.801653200(0)	0.022245	0	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	58	-1.000000	0.600000	0.100000
@@ -57,12 +61,6 @@ cat <<EOF > ${EXPECT_FILE}
 1551015509.701653200(9)	0.060849	-58	1.000000	0.600000	0.900000
 EOF
 
-villas hook cast -o new_name=test -o new_unit=V -o new_type=integer -o signal=1 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook cast -o new_name=test -o new_unit=V -o new_type=integer -o signal=signal1 < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

@@ -1,7 +1,7 @@
 /** JSON serializtion for Kafka schema/payloads.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/utils.hpp>
 #include <villas/formats/json_kafka.hpp>
 #include <villas/exceptions.hpp>
@@ -47,7 +47,7 @@ const char * JsonKafkaFormat::villasToKafkaType(enum SignalType vt)
 	}
 }
 
-int JsonKafkaFormat::packSample(json_t **json_smp, const struct sample *smp)
+int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp)
 {
 	json_t *json_payload, *json_fields, *json_field, *json_value;
 
@@ -80,9 +80,9 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct sample *smp)
 	}
 
 	/* Include sample data */
-	for (size_t i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
-		struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
-		const union signal_data *data = &smp->data[i];
+	for (size_t i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
+		const auto sig = smp->signals->getByIndex(i);
+		const auto *data = &smp->data[i];
 
 		json_field = json_pack("{ s: s, s: b, s: s }",
 			"type", villasToKafkaType(sig->type),
@@ -90,10 +90,10 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct sample *smp)
 			"field", sig->name
 		);
 
-		json_value = signal_data_to_json(data, sig->type);
+		json_value = data->toJson(sig->type);
 
 		json_array_append_new(json_fields, json_field);
-		json_object_set_new(json_payload, sig->name, json_value);
+		json_object_set_new(json_payload, sig->name.c_str(), json_value);
 	}
 
 	json_object_set_new(json_schema, "fields", json_fields);
@@ -102,14 +102,14 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct sample *smp)
 	*json_smp = json_pack("{ s: o, s: o }",
 		"schema", json_schema,
 		"payload", json_payload
-	);;
+	);
 	if (*json_smp == nullptr)
 		return -1;
 
 	return 0;
 }
 
-int JsonKafkaFormat::unpackSample(json_t *json_smp, struct sample *smp)
+int JsonKafkaFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 {
 	json_t *json_payload, *json_value;
 
@@ -139,14 +139,14 @@ int JsonKafkaFormat::unpackSample(json_t *json_smp, struct sample *smp)
 	}
 
 	/* Unpack signal data */
-	for (size_t i = 0; i < vlist_length(signals); i++) {
-		struct signal *sig = (struct signal *) vlist_at(signals, i);
+	for (size_t i = 0; i < signals->size(); i++) {
+		auto sig = signals->getByIndex(i);
 
-		json_value = json_object_get(json_payload, sig->name);
+		json_value = json_object_get(json_payload, sig->name.c_str());
 		if (!json_value)
 			continue;
 
-		signal_data_parse_json(&smp->data[i], sig->type, json_value);
+		smp->data[i].parseJson(sig->type, json_value);
 		smp->length++;
 	}
 

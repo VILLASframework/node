@@ -38,34 +38,32 @@ json_t * villas::node::getCapabilities()
 	json_t *json_formats = json_array();
 	json_t *json_name;
 
-		for (auto p : plugin::Registry::lookup<api::RequestFactory>()) {
-			json_name = json_string(p->getName().c_str());
+	for (auto p : plugin::Registry::lookup<api::RequestFactory>()) {
+		json_name = json_string(p->getName().c_str());
 
-			json_array_append_new(json_apis, json_name);
-		}
+		json_array_append_new(json_apis, json_name);
+	}
 
-		for (auto p : plugin::Registry::lookup<HookFactory>()) {
-			json_name = json_string(p->getName().c_str());
+	for (auto p : plugin::Registry::lookup<HookFactory>()) {
+		json_name = json_string(p->getName().c_str());
 
-			json_array_append_new(json_hooks, json_name);
-		}
+		json_array_append_new(json_hooks, json_name);
+	}
 
-		for (auto p : plugin::Registry::lookup<FormatFactory>()) {
-			json_name = json_string(p->getName().c_str());
+	for (auto p : plugin::Registry::lookup<FormatFactory>()) {
+		json_name = json_string(p->getName().c_str());
 
-			json_array_append_new(json_formats, json_name);
-		}
+		json_array_append_new(json_formats, json_name);
+	}
 
-#if 0 /* @todo Port to C++ */
-		for (auto f : NodeFactory::lookup()) {
-			json_name = json_string(f->getName().c_str());
+	for (auto f : plugin::Registry::lookup<NodeFactory>()) {
+		if (f->isInternal())
+			continue;
 
-			json_array_append_new(json_nodes, json_name);
-		}
-#else
-		for (auto *vt : *node_types)
-			json_array_append_new(json_nodes, json_string(vt->name));
-#endif
+		json_name = json_string(f->getName().c_str());
+
+		json_array_append_new(json_nodes, json_name);
+	}
 
 	return json_pack("{ s: o, s: o, s: o, s: o }",
 		"hooks", json_hooks,

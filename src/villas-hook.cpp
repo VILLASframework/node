@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,29 +21,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup tools Test and debug tools
- * @{
- */
-
 #include <iostream>
 #include <atomic>
 #include <unistd.h>
 
 #include <villas/tool.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 #include <villas/format.hpp>
 #include <villas/hook.hpp>
 #include <villas/utils.hpp>
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/log.hpp>
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/plugin.hpp>
 #include <villas/config_helper.hpp>
 #include <villas/kernel/rt.hpp>
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/node/exceptions.hpp>
 
 using namespace villas;
@@ -69,7 +64,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
@@ -91,7 +86,7 @@ protected:
 	std::string input_format;
 	std::string dtypes;
 
-	struct pool p;
+	struct Pool p;
 	Format *input;
 	Format *output;
 
@@ -217,7 +212,7 @@ check:			if (optarg == endptr)
 	int main()
 	{
 		int ret, recv, sent;
-		struct sample *smps[cnt];
+		struct Sample *smps[cnt];
 
 		if (cnt < 1)
 			throw RuntimeError("Vectorize option must be greater than 0");
@@ -285,7 +280,7 @@ check:			if (optarg == endptr)
 
 			unsigned send = 0;
 			for (int processed = 0; processed < recv; processed++) {
-				struct sample *smp = smps[processed];
+				struct Sample *smp = smps[processed];
 
 				if (!(smp->flags & (int) SampleFlags::HAS_TS_RECEIVED)){
 					smp->ts.received = now;
@@ -294,8 +289,7 @@ check:			if (optarg == endptr)
 
 				auto ret = h->process(smp);
 				switch (ret) {
-					using Reason = villas::node::Hook::Reason;
-
+					using Reason = node::Hook::Reason;
 					case Reason::ERROR:
 						throw RuntimeError("Failed to process samples");
 
@@ -321,8 +315,6 @@ stop:			sent = output->print(stdout, smps, send);
 		}
 
 		h->stop();
-
-		delete h;
 
 		for (auto &d : descs)
 			delete (*d.formatter);

@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,20 +23,31 @@
 
 #pragma once
 
-#include <villas/list.h>
+#include <memory>
+
+#include <villas/list.hpp>
 #include <villas/plugin.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
+#include <villas/signal_list.hpp>
 
 namespace villas {
 namespace node {
 
+/* Forward declarations */
+class FormatFactory;
+
 class Format {
+
+	friend FormatFactory;
+
+
+public:
+	using Ptr = std::unique_ptr<Format>;
 
 protected:
 
-	int flags;		/**< A set of flags which is automatically used. */
-	int real_precision;	/**< Number of digits used for floatint point numbers */
-	bool destroy_signals;
+	int flags;			/**< A set of flags which is automatically used. */
+	int real_precision;		/**< Number of digits used for floatint point numbers */
 
 	Logger logger;
 
@@ -45,7 +56,7 @@ protected:
 		size_t buflen;
 	} in, out;
 
-	struct vlist *signals;	/**< Signal meta data for parsed samples by Format::scan() */
+	SignalList::Ptr signals;	/**< Signal meta data for parsed samples by Format::scan() */
 
 public:
 	Format(int fl);
@@ -55,18 +66,21 @@ public:
 
 	virtual
 	bool isBinaryPayload()
-	{ return false; }
+	{
+		return false;
+	}
 
-	struct vlist * getSignals() const
-	{ return signals; }
+	const SignalList::Ptr getSignals() const
+	{
+		return signals;
+	}
 
 	int getFlags() const
-	{ return flags; }
+	{
+		return flags;
+	}
 
-	void setLogger(Logger log)
-	{ logger = log; }
-
-	void start(struct vlist *sigs, int fl = (int) SampleFlags::HAS_ALL);
+	void start(const SignalList::Ptr sigs, int fl = (int) SampleFlags::HAS_ALL);
 	void start(const std::string &dtypes, int fl = (int) SampleFlags::HAS_ALL);
 
 	virtual
@@ -77,10 +91,10 @@ public:
 	void parse(json_t *json);
 
 	virtual
-	int print(FILE *f, const struct sample * const smps[], unsigned cnt);
+	int print(FILE *f, const struct Sample * const smps[], unsigned cnt);
 
 	virtual
-	int scan(FILE *f, struct sample * const smps[], unsigned cnt);
+	int scan(FILE *f, struct Sample * const smps[], unsigned cnt);
 
 	/** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
 	 *
@@ -94,7 +108,7 @@ public:
 	 * @retval <0		Something went wrong.
 	 */
 	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt) = 0;
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt) = 0;
 
 	/** Parse samples from the buffer \p buf with a length of \p len bytes.
 	 *
@@ -108,26 +122,26 @@ public:
 	 * @retval <0		Something went wrong.
 	 */
 	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt) = 0;
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt) = 0;
 
 	/* Wrappers for sending a (un)parsing single samples */
 
-	int print(FILE *f, const struct sample *smp)
+	int print(FILE *f, const struct Sample *smp)
 	{
 		return print(f, &smp, 1);
 	}
 
-	int scan(FILE *f, struct sample *smp)
+	int scan(FILE *f, struct Sample *smp)
 	{
 		return scan(f, &smp, 1);
 	}
 
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample *smp)
+	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample *smp)
 	{
 		return sprint(buf, len, wbytes, &smp, 1);
 	}
 
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample *smp)
+	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample *smp)
 	{
 		return sscan(buf, len, rbytes, &smp, 1);
 	}
@@ -157,8 +171,16 @@ public:
 	Format * make(const std::string &format);
 
 	virtual
+	void init(Format *f)
+	{
+		f->logger = getLogger();
+	}
+
+	virtual
 	std::string getType() const
-	{ return "format"; }
+	{
+		return "format";
+	}
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0>
@@ -171,20 +193,22 @@ public:
 	{
 		auto *f = new T(flags);
 
-		f->setLogger(getLogger());
+		init(f);
 
 		return f;
 	}
 
-	/// Get plugin name
-	virtual std::string
-	getName() const
-	{ return name; }
+	virtual
+	std::string getName() const
+	{
+		return name;
+	}
 
-	/// Get plugin description
-	virtual std::string
-	getDescription() const
-	{ return desc; }
+	virtual
+	std::string getDescription() const
+	{
+		return desc;
+	}
 };
 
 } /* namespace node */

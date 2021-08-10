@@ -3,7 +3,7 @@
 # Integration test for limit_rate hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,20 +22,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+set -e
 
-villas signal -r 1000 -l 1000 -n sine > ${INPUT_FILE}
-awk 'NR % 10 == 2' < ${INPUT_FILE} > ${EXPECT_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-villas hook -o rate=100 -o mode=origin limit_rate < ${INPUT_FILE} > ${OUTPUT_FILE}
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
+villas signal -r 1000 -l 1000 -n sine > input.dat
 
-RC=$?
+awk 'NR % 10 == 2' < input.dat > expect.dat
 
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
+villas hook -o rate=100 -o mode=origin limit_rate < input.dat > output.dat
 
-exit ${RC}
+villas compare output.dat expect.dat

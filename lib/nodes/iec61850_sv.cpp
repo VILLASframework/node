@@ -1,7 +1,7 @@
 /** Node type: IEC 61850-9-2 (Sampled Values)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,6 +25,8 @@
 #include <unistd.h>
 
 #include <villas/utils.hpp>
+#include <villas/node_compat.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
@@ -36,11 +38,12 @@ using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
 
-static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
+static
+void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
-	struct vnode *n = (struct vnode *) ctx;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
-	struct sample *smp;
+	auto *n = (NodeCompat *) ctx;
+	auto *i = n->getData<struct iec61850_sv>();
+	struct Sample *smp;
 
 	const char* svid = SVSubscriber_ASDU_getSvId(asdu);
 	int smpcnt       = SVSubscriber_ASDU_getSmpCnt(asdu);
@@ -74,7 +77,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	smp->sequence = smpcnt;
 	smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 	smp->length = 0;
-	smp->signals = &n->in.signals;
+	smp->signals = n->getInputSignals(false);
 
 	if (SVSubscriber_ASDU_hasRefrTm(asdu)) {
 		uint64_t refrtm = SVSubscriber_ASDU_getRefrTmAsMs(asdu);
@@ -85,9 +88,9 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	}
 
 	unsigned offset = 0;
-	for (size_t j = 0; j < vlist_length(&i->in.signals); j++) {
-		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, j);
-		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, j);
+	for (size_t j = 0; j < list_length(&i->in.signals); j++) {
+		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->in.signals, j);
+		auto sig = smp->signals->getByIndex(j);
 		if (!sig)
 			continue;
 
@@ -136,10 +139,10 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	pushed = queue_signalled_push(&i->in.queue, smp);
 }
 
-int iec61850_sv_parse(struct vnode *n, json_t *json)
+int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	const char *dst_address = nullptr;
 	const char *interface = nullptr;
@@ -215,7 +218,7 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 
 		i->out.svid = svid ? strdup(svid) : nullptr;
 
-		ret = iec61850_parse_signals(json_signals, &i->out.signals, &n->out.signals);
+		ret = iec61850_parse_signals(json_signals, &i->out.signals, n->getOutputSignals());
 		if (ret <= 0)
 			throw RuntimeError("Failed to parse setting 'signals'");
 
@@ -232,7 +235,7 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 		if (ret)
 			throw ConfigError(json_in, err, "node-config-node-iec61850-in");
 
-		ret = iec61850_parse_signals(json_signals, &i->in.signals, &n->in.signals);
+		ret = iec61850_parse_signals(json_signals, &i->in.signals, n->getInputSignals(false));
 		if (ret <= 0)
 			throw RuntimeError("Failed to parse setting 'signals'");
 
@@ -242,10 +245,10 @@ int iec61850_sv_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * iec61850_sv_print(struct vnode *n)
+char * villas::node::iec61850_sv_print(NodeCompat *n)
 {
 	char *buf;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	buf = strf("interface=%s, app_id=%#x, dst_address=%s", i->interface, i->app_id, ether_ntoa(&i->dst_address));
 
@@ -256,29 +259,29 @@ char * iec61850_sv_print(struct vnode *n)
 			i->out.vlan_priority,
 			i->out.vlan_id,
 			i->out.confrev,
-			vlist_length(&i->out.signals)
+			n->getOutputSignals()->size()
 		);
 	}
 
 	/* Subscriber part */
 	if (i->in.enabled)
-		strcatf(&buf, ", sub.#fields=%zu", vlist_length(&i->in.signals));
+		strcatf(&buf, ", sub.#fields=%zu", list_length(&i->in.signals));
 
 	return buf;
 }
 
-int iec61850_sv_start(struct vnode *n)
+int villas::node::iec61850_sv_start(NodeCompat *n)
 {
 	int ret;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	/* Initialize publisher */
 	if (i->out.enabled) {
 		i->out.publisher = SVPublisher_create(nullptr, i->interface);
-		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, node_name_short(n), i->out.confrev);
+		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, n->getNameShort().c_str(), i->out.confrev);
 
-		for (unsigned k = 0; k < vlist_length(&i->out.signals); k++) {
-			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
+		for (unsigned k = 0; k < list_length(&i->out.signals); k++) {
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
 
 			switch (td->iec_type) {
 				case IEC61850Type::INT8:
@@ -327,7 +330,7 @@ int iec61850_sv_start(struct vnode *n)
 		SVReceiver_addSubscriber(i->in.receiver, i->in.subscriber);
 
 		/* Initialize pool and queue to pass samples between threads */
-		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)));
+		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
 		if (ret)
 			return ret;
 
@@ -335,9 +338,9 @@ int iec61850_sv_start(struct vnode *n)
 		if (ret)
 			return ret;
 
-		for (unsigned k = 0; k < vlist_length(&i->in.signals); k++) {
-			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
-			struct signal *sig = (struct signal *) vlist_at(&n->in.signals, k);
+		for (unsigned k = 0; k < list_length(&i->in.signals); k++) {
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->in.signals, k);
+			auto sig = n->getInputSignals(false)->getByIndex(k);
 
 			if (sig->type == SignalType::INVALID)
 				sig->type = td->type;
@@ -349,20 +352,25 @@ int iec61850_sv_start(struct vnode *n)
 	return 0;
 }
 
-int iec61850_sv_stop(struct vnode *n)
+int villas::node::iec61850_sv_stop(NodeCompat *n)
 {
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	int ret;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	if (i->in.enabled)
 		SVReceiver_removeSubscriber(i->in.receiver, i->in.subscriber);
 
+	ret = queue_signalled_close(&i->in.queue);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
-int iec61850_sv_destroy(struct vnode *n)
+int villas::node::iec61850_sv_destroy(NodeCompat *n)
 {
 	int ret;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	/* Deinitialize publisher */
 	if (i->out.enabled && i->out.publisher)
@@ -382,11 +390,11 @@ int iec61850_sv_destroy(struct vnode *n)
 	return 0;
 }
 
-int iec61850_sv_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::iec61850_sv_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int pulled;
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
-	struct sample *smpt[cnt];
+	auto *i = n->getData<struct iec61850_sv>();
+	struct Sample *smpt[cnt];
 
 	if (!i->in.enabled)
 		return -1;
@@ -399,17 +407,17 @@ int iec61850_sv_read(struct vnode *n, struct sample * const smps[], unsigned cnt
 	return pulled;
 }
 
-int iec61850_sv_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	if (!i->out.enabled)
 		return -1;
 
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;
-		for (unsigned k = 0; k < MIN(smps[j]->length, vlist_length(&i->out.signals)); k++) {
-			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
+		for (unsigned k = 0; k < MIN(smps[j]->length, list_length(&i->out.signals)); k++) {
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
 
 			int ival = 0;
 			double fval = 0;
@@ -465,16 +473,16 @@ int iec61850_sv_write(struct vnode *n, struct sample * const smps[], unsigned cn
 	return cnt;
 }
 
-int iec61850_sv_poll_fds(struct vnode *n, int fds[])
+int villas::node::iec61850_sv_poll_fds(NodeCompat *n, int fds[])
 {
-	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+	auto *i = n->getData<struct iec61850_sv>();
 
 	fds[0] = queue_signalled_fd(&i->in.queue);
 
 	return 1;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -493,8 +501,5 @@ static void register_plugin() {
 	p.write		= iec61850_sv_write;
 	p.poll_fds	= iec61850_sv_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

@@ -1,7 +1,7 @@
 /** Limit hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,18 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <bitset>
 
 #include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/signal.h>
-#include <villas/sample.h>
+#include <villas/signal.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -44,33 +40,12 @@ protected:
 	float min, max;
 
 public:
-	LimitValueHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	LimitValueHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		offset(0),
 		min(0),
 		max(0)
 	{ }
-
-	virtual void prepare()
-	{
-		int ret;
-		struct signal *avg_sig;
-
-		assert(state == State::CHECKED);
-
-		MultiSignalHook::prepare();
-
-		/* Add averaged signal */
-		avg_sig = signal_create("average", nullptr, SignalType::FLOAT);
-		if (!avg_sig)
-			throw RuntimeError("Failed to create new signal");
-
-		ret = vlist_insert(&signals, offset, avg_sig);
-		if (ret)
-			throw RuntimeError("Failed to intialize list");
-
-		state = State::PREPARED;
-	}
 
 	virtual void parse(json_t *json)
 	{
@@ -91,7 +66,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -125,11 +100,9 @@ public:
 };
 
 /* Register hook */
-static char n[] = "average";
-static char d[] = "Calculate average over some signals";
+static char n[] = "limit_value";
+static char d[] = "Limit signal values";
 static HookPlugin<LimitValueHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

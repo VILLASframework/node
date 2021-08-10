@@ -2,7 +2,7 @@
  *
  * @file
  * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,21 +21,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup infiniband infiniband node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 /* Constants */
 #define META_SIZE 24
@@ -111,28 +108,23 @@ struct infiniband {
 	int is_source;
 };
 
-/** @see node_type::reverse */
-int ib_reverse(struct vnode *n);
+int ib_reverse(NodeCompat *n);
 
-/** @see node_type::print */
-char * ib_print(struct vnode *n);
+char * ib_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int ib_parse(struct vnode *n, json_t *json);
+int ib_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::start */
-int ib_start(struct vnode *n);
+int ib_check(NodeCompat *n);
 
-/** @see node_type::destroy */
-int ib_destroy(struct vnode *n);
+int ib_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int ib_stop(struct vnode *n);
+int ib_destroy(NodeCompat *n);
 
-/** @see node_type::read */
-int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int ib_stop(NodeCompat *n);
 
-/** @see node_type::write */
-int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int ib_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @} */
+int ib_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

@@ -1,0 +1,73 @@
+/** Static server configuration
+ *
+ * This file contains some compiled-in settings.
+ * This settings are not part of the configuration file.
+ *
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
+ * @license GNU General Public License (version 3)
+ *
+ * VILLASnode
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************************/
+
+#pragma once
+
+#include <villas/config.hpp>
+
+/** Default number of values in a sample */
+#define DEFAULT_SAMPLE_LENGTH	64u
+#define DEFAULT_QUEUE_LENGTH	1024u
+#define MAX_SAMPLE_LENGTH	256u
+
+/** Number of hugepages which are requested from the the kernel.
+ * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */
+#define DEFAULT_NR_HUGEPAGES	100
+
+/** Socket priority */
+#define SOCKET_PRIO		7
+
+/* Protocol numbers */
+#define IPPROTO_VILLAS		137
+#define ETH_P_VILLAS		0xBABE
+
+/* Required kernel version */
+#define KERNEL_VERSION_MAJ	3
+#define KERNEL_VERSION_MIN	6
+
+/* Available Features */
+#cmakedefine WITH_WEB
+#cmakedefine WITH_NODE_WEBSOCKET
+#cmakedefine WITH_NODE_OPAL
+#cmakedefine WITH_API
+#cmakedefine WITH_HOOKS
+#cmakedefine WITH_CONFIG
+#cmakedefine WITH_GRAPHVIZ
+#cmakedefine WITH_FPGA
+
+/* OS Headers */
+#cmakedefine HAS_EVENTFD
+#cmakedefine HAS_SEMAPHORE
+
+/* Available Libraries */
+#cmakedefine PROTOBUF_FOUND
+#cmakedefine LIBNL3_ROUTE_FOUND
+#cmakedefine IBVERBS_FOUND
+#cmakedefine LUAJIT_FOUND
+
+/* Library features */
+#cmakedefine LWS_DEFLATE_FOUND
+#cmakedefine REDISPP_WITH_TLS

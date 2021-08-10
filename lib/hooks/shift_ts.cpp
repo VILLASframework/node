@@ -1,7 +1,7 @@
 /** Shift timestamps of samples.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,15 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <cstring>
 
 #include <villas/hook.hpp>
-#include <villas/timing.h>
-#include <villas/sample.h>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -43,7 +39,7 @@ protected:
 	} mode;
 
 public:
-	ShiftTimestampHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	ShiftTimestampHook(Path *p, Node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
 		mode(SHIFT_ORIGIN)
 	{ }
@@ -80,7 +76,7 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(sample *smp)
+	virtual Hook::Reason process(struct Sample *smp)
 	{
 		timespec *ts;
 
@@ -99,7 +95,7 @@ public:
 				return Hook::Reason::ERROR;
 		}
 
-		*ts = time_add(ts, &offset);;
+		*ts = time_add(ts, &offset);
 
 		return Reason::OK;
 	}
@@ -112,5 +108,3 @@ static HookPlugin<ShiftTimestampHook, n, d, (int) Hook::Flags::NODE_READ | (int)
 
 } /* namespace node */
 } /* namespace villas */
-
-/** @} */

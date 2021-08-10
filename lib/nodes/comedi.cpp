@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,7 +27,7 @@
 #include <comedilib.h>
 #include <comedi_errno.h>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/comedi.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -40,7 +40,8 @@ using namespace villas::utils;
 static char* comedi_cmd_trigger_src(unsigned int src, char *buf);
 static void comedi_dump_cmd(Logger logger, comedi_cmd *cmd);
 
-static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t *json)
+static
+int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t *json)
 {
 	int ret;
 
@@ -100,9 +101,10 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	return 0;
 }
 
-static int comedi_start_common(struct vnode *n)
+static
+int comedi_start_common(NodeCompat *n)
 {
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction* directions[2] = { &c->in, &c->out };
 
 	comedi_set_global_oor_behavior(COMEDI_OOR_NAN);
@@ -159,10 +161,11 @@ static int comedi_start_common(struct vnode *n)
 	return 0;
 }
 
-static int comedi_start_in(struct vnode *n)
+static
+int comedi_start_in(NodeCompat *n)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->in;
 
 	/* Try to find first analog input subdevice if not specified in config */
@@ -249,10 +252,11 @@ static int comedi_start_in(struct vnode *n)
 	return 0;
 }
 
-static int comedi_start_out(struct vnode *n)
+static
+int comedi_start_out(NodeCompat *n)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->out;
 
 	/* Try to find first analog output subdevice if not specified in config */
@@ -358,10 +362,11 @@ static int comedi_start_out(struct vnode *n)
 	return 0;
 }
 
-static int comedi_stop_in(struct vnode *n)
+static
+int comedi_stop_in(NodeCompat *n)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->in;
 
 	comedi_cancel(c->dev, d->subdevice);
@@ -373,10 +378,11 @@ static int comedi_stop_in(struct vnode *n)
 	return 0;
 }
 
-static int comedi_stop_out(struct vnode *n)
+static
+int comedi_stop_out(NodeCompat *n)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->out;
 
 	comedi_cancel(c->dev, d->subdevice);
@@ -388,10 +394,10 @@ static int comedi_stop_out(struct vnode *n)
 	return 0;
 }
 
-int comedi_parse(struct vnode *n, json_t *json)
+int villas::node::comedi_parse(NodeCompat *n, json_t *json)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 
 	const char *device;
 
@@ -432,9 +438,9 @@ int comedi_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * comedi_print(struct vnode *n)
+char * villas::node::comedi_print(NodeCompat *n)
 {
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 
 	char *buf = nullptr;
 
@@ -446,9 +452,9 @@ char * comedi_print(struct vnode *n)
 	return buf;
 }
 
-int comedi_start(struct vnode *n)
+int villas::node::comedi_start(NodeCompat *n)
 {
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 
 	c->dev = comedi_open(c->device);
 	if (!c->dev)
@@ -491,10 +497,10 @@ int comedi_start(struct vnode *n)
 	return 0;
 }
 
-int comedi_stop(struct vnode *n)
+int villas::node::comedi_stop(NodeCompat *n)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 
 	if (c->in.enabled)
 		comedi_stop_in(n);
@@ -511,10 +517,10 @@ int comedi_stop(struct vnode *n)
 
 #if COMEDI_USE_READ
 
-int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->in;
 	const size_t villas_sample_size = d->chanlist_len * d->sample_size;
 
@@ -569,7 +575,7 @@ int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			for (size_t i = 0; i < cnt; i++) {
 				d->counter++;
 
-				smps[i]->signals = &n->in.signals;
+				smps[i]->signals = n->getInputSignals(false);
 				smps[i]->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
 				smps[i]->sequence = d->counter / d->chanlist_len;
 
@@ -623,10 +629,10 @@ int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 #else
 
-int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->in;
 
 	const size_t villas_sample_size = d->chanlist_len * d->sample_size;
@@ -801,10 +807,10 @@ int comedi_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 #endif
 
-int comedi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->out;
 
 	if (!d->enabled) {
@@ -859,7 +865,7 @@ int comedi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	size_t villas_samples_written = 0;
 
 	while (villas_samples_written < cnt) {
-		const struct sample *sample = smps[villas_samples_written];
+		const struct Sample *sample = smps[villas_samples_written];
 		if (sample->length != d->chanlist_len)
 			throw RuntimeError("Value count in sample ({}) != configured output channels ({})", sample->length, d->chanlist_len);
 
@@ -921,6 +927,7 @@ int comedi_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return villas_samples_written;
 }
 
+static
 char* comedi_cmd_trigger_src(unsigned int src, char *buf)
 {
 	buf[0] = 0;
@@ -942,6 +949,7 @@ char* comedi_cmd_trigger_src(unsigned int src, char *buf)
 	return buf;
 }
 
+static
 void comedi_dump_cmd(Logger logger, comedi_cmd *cmd)
 {
 	char buf[256];
@@ -965,16 +973,16 @@ void comedi_dump_cmd(Logger logger, comedi_cmd *cmd)
 	logger->debug("stop:       {:-8s} {}", src, cmd->stop_arg);
 }
 
-int comedi_poll_fds(struct vnode *n, int fds[])
+int villas::node::comedi_poll_fds(NodeCompat *n, int fds[])
 {
-	struct comedi *c = (struct comedi *) n->_vd;
+	auto *c = n->getData<struct comedi>();
 
 	fds[0] = comedi_fileno(c->dev);
 
 	return 0;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -990,8 +998,5 @@ static void register_plugin() {
 	p.write		= comedi_write;
 	p.poll_fds	= comedi_poll_fds;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

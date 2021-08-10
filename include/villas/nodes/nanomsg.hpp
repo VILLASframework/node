@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,19 +21,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup nanomsg nanomsg node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/format.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500
@@ -41,28 +38,35 @@ struct vnode;
 struct nanomsg {
 	struct {
 		int socket;
-		struct vlist endpoints;
+		struct List endpoints;
 	} in, out;
 
-	villas::node::Format *formatter;
+	Format *formatter;
 };
 
-/** @see node_type::print */
-char * nanomsg_print(struct vnode *n);
+char * nanomsg_print(NodeCompat *n);
 
-/** @see node_type::parse */
-int nanomsg_parse(struct vnode *n, json_t *json);
+int nanomsg_init(NodeCompat *n);
 
-/** @see node_type::start */
-int nanomsg_start(struct vnode *n);
+int nanomsg_destroy(NodeCompat *n);
 
-/** @see node_type::stop */
-int nanomsg_stop(struct vnode *n);
+int nanomsg_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::read */
-int nanomsg_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int nanomsg_start(NodeCompat *n);
 
-/** @see node_type::write */
-int nanomsg_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int nanomsg_stop(NodeCompat *n);
 
-/** @} */
+int nanomsg_type_stop();
+
+int nanomsg_reverse(NodeCompat *n);
+
+int nanomsg_poll_fds(NodeCompat *n, int fds[]);
+
+int nanomsg_netem_fds(NodeCompat *n, int fds[]);
+
+int nanomsg_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int nanomsg_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

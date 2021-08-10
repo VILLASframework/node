@@ -1,8 +1,8 @@
-/** Node-type for internal loopback connections.
+/** Node type: internal loopback
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,46 +21,74 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup loopback Loopback connections
- * @{
- */
-
 #pragma once
 
+#include <villas/node.hpp>
 #include <villas/queue_signalled.h>
-#include <villas/pool.h>
 
-/* Forward declarations */
-struct vnode;
-struct sample;
+namespace villas {
+namespace node {
 
-/** Node-type for signal generation.
- * @see node_type
- */
-struct loopback_internal {
-	int queuelen;
-	struct queue_signalled queue;
+class InternalLoopbackNode : public Node {
 
-	struct vnode *source;
+protected:
+	unsigned queuelen;
+	struct CQueueSignalled queue;
+
+	Node *source;
+
+	virtual
+	int _write(struct Sample * smps[], unsigned cnt);
+
+	virtual
+	int _read(struct Sample * smps[], unsigned cnt);
+
+public:
+	InternalLoopbackNode(Node *src, unsigned id = 0, unsigned ql = DEFAULT_QUEUE_LENGTH);
+
+	virtual
+	~InternalLoopbackNode();
+
+	virtual
+	std::vector<int> getPollFDs();
+
+	virtual
+	int stop();
 };
 
-/** @see node_type::print */
-char * loopback_internal_print(struct vnode *n);
+class InternalLoopbackNodeFactory : public NodeFactory {
 
-/** @see node_type::start */
-int loopback_internal_start(struct vnode *n);
+public:
+	using NodeFactory::NodeFactory;
 
-/** @see node_type::stop */
-int loopback_internal_stop(struct vnode *n);
+	virtual
+	Node * make()
+	{
+		return nullptr;
+	}
 
-/** @see node_type::read */
-int loopback_internal_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+	virtual
+	int getFlags() const
+	{
+		return (int) NodeFactory::Flags::INTERNAL |
+		       (int) NodeFactory::Flags::PROVIDES_SIGNALS |
+		       (int) NodeFactory::Flags::SUPPORTS_READ |
+		       (int) NodeFactory::Flags::SUPPORTS_WRITE |
+		       (int) NodeFactory::Flags::SUPPORTS_POLL;
+	}
 
-/** @see node_type::write */
-int loopback_internal_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+	virtual
+	std::string getName() const
+	{
+		return "loopback.internal";
+	}
 
-struct vnode * loopback_internal_create(struct vnode *orig);
+	virtual
+	std::string getDescription() const
+	{
+		return "internal loopback node";
+	}
+};
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/global/projects/villas/node/lib/nodes/go/test/test.c
+stdio.h
+-
+test.h
+/global/projects/villas/node/lib/nodes/go/test/test.h
+
+go/test.h
+stddef.h
+-
+

@@ -1,7 +1,7 @@
 /** Path source
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,146 +23,81 @@
 #include <fmt/format.h>
 
 #include <villas/utils.hpp>
-#include <villas/sample.h>
-#include <villas/node.h>
-#include <villas/path.h>
+#include <villas/sample.hpp>
+#include <villas/node.hpp>
+#include <villas/path.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/hook_list.hpp>
 
 #include <villas/nodes/loopback_internal.hpp>
 
-#include <villas/path_destination.h>
-#include <villas/path_source.h>
+#include <villas/path_destination.hpp>
+#include <villas/path_source.hpp>
 
 using namespace villas;
+using namespace villas::node;
 
-int path_source_init_master(struct vpath_source *ps, struct vnode *n)
+PathSource::PathSource(Path *p, Node *n) :
+	node(n),
+	path(p),
+	masked(false)
 {
 	int ret;
 
-	ps->node = n;
-	ps->masked = false;
-	ps->type = PathSourceType::MASTER;
-
-	ret = vlist_init(&ps->mappings);
+	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * node->in.vectorize);
+	ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(node->getInputSignalsMaxCount()), node->getMemoryType());
 	if (ret)
-		return ret;
-
-	ret = vlist_init(&ps->secondaries);
-	if (ret)
-		return ret;
-
-	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * ps->node->in.vectorize);
-
-	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(node_input_signals_max_cnt(ps->node)), node_memory_type(ps->node));
-
-	if (ret)
-		return ret;
-
-	return 0;
+		throw RuntimeError("Failed to initialize pool");
 }
 
-int path_source_init_secondary(struct vpath_source *ps, struct vnode *n)
+PathSource::~PathSource()
 {
-	int ret;
-	struct vpath_source *mps;
+	int ret __attribute__((unused));
 
-	ret = path_source_init_master(ps, n);
-	if (ret)
-		return ret;
-
-	ps->type = PathSourceType::SECONDARY;
-
-	ps->node = loopback_internal_create(n);
-	if (!ps->node)
-		return -1;
-
-	ret = node_check(ps->node);
-	if (ret)
-		return -1;
-
-	ret = node_prepare(ps->node);
-	if (ret)
-		return -1;
-
-	mps = (struct vpath_source *) vlist_at_safe(&n->sources, 0);
-	if (!mps)
-		return -1;
-
-	vlist_push(&mps->secondaries, ps);
-
-	return 0;
+	ret = pool_destroy(&pool);
 }
 
-int path_source_destroy(struct vpath_source *ps)
+int PathSource::read(int i)
 {
-	int ret;
+	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued;
 
-	ret = pool_destroy(&ps->pool);
-	if (ret)
-		return ret;
+	cnt = node->in.vectorize;
 
-	ret = vlist_destroy(&ps->mappings, nullptr, false);
-	if (ret)
-		return ret;
-
-	ret = vlist_destroy(&ps->secondaries, nullptr, false);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
-{
-	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
-
-	cnt = ps->node->in.vectorize;
-
-	struct sample *read_smps[cnt];
-	struct sample *muxed_smps[cnt];
-	struct sample **tomux_smps;
+	struct Sample *read_smps[cnt];
+	struct Sample *muxed_smps[cnt];
+	struct Sample **tomux_smps;
 
 	/* Fill smps[] free sample blocks from the pool */
-	allocated = sample_alloc_many(&ps->pool, read_smps, cnt);
+	allocated = sample_alloc_many(&pool, read_smps, cnt);
 	if (allocated != cnt)
-		p->logger->warn("Pool underrun for path source {}", *ps->node);
+		path->logger->warn("Pool underrun for path source {}", *node);
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
-	recv = node_read(ps->node, read_smps, allocated);
+	recv = node->read(read_smps, allocated);
 	if (recv == 0) {
 		enqueued = 0;
 		goto out2;
 	}
 	else if (recv < 0) {
-		if (ps->node->state == State::STOPPING) {
-			p->state = State::STOPPING;
+		if (node->getState() == State::STOPPING) {
+			path->state = State::STOPPING;
 
 			enqueued = -1;
 			goto out2;
 		}
 		else {
-			p->logger->error("Failed to read samples from node {}", *ps->node);
+			path->logger->error("Failed to read samples from node {}", *node);
+			enqueued = 0;
 			goto out2;
 		}
 	}
 	else if (recv < allocated)
-		p->logger->warn("Partial read for path {}: read={}, expected={}", *p, recv, allocated);
+		path->logger->warn("Partial read for path {}: read={}, expected={}", *path, recv, allocated);
 
-	/* Forward samples to secondary path sources */
-	for (size_t i = 0; i < vlist_length(&ps->secondaries); i++) {
-		auto *sps = (struct vpath_source *) vlist_at(&ps->secondaries, i);
+	/* Let the master path sources forward received samples to their secondaries */
+	writeToSecondaries(read_smps, recv);
 
-		int sent;
-
-		sent = node_write(sps->node, read_smps, recv);
-		if (sent < recv)
-			p->logger->warn("Partial write to secondary path source {} of path {}", *sps->node, *p);
-	}
-
-	p->received.set(i);
-
-	if (p->mode == PathMode::ANY) { /* Mux all samples */
+	if (path->mode == Path::Mode::ANY) { /* Mux all samples */
 		tomux_smps = read_smps;
 		tomux = recv;
 	}
@@ -173,19 +108,19 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 
 	for (int i = 0; i < tomux; i++) {
 		muxed_smps[i] = i == 0
-			? sample_clone(p->last_sample)
+			? sample_clone(path->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 		if (!muxed_smps[i]) {
-			p->logger->error("Pool underrun in path {}", *p);
+			path->logger->error("Pool underrun in path {}", *path);
 			return -1;
 		}
 
-		if (p->original_sequence_no) {
+		if (path->original_sequence_no) {
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
 			muxed_smps[i]->flags |= tomux_smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE;
 		}
 		else {
-			muxed_smps[i]->sequence = p->last_sequence++;
+			muxed_smps[i]->sequence = path->last_sequence++;
 			muxed_smps[i]->flags |= (int) SampleFlags::HAS_SEQUENCE;
 		}
 
@@ -198,7 +133,7 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
 		muxed_smps[i]->flags |= tomux_smps[i]->flags & (int) SampleFlags::HAS_TS;
 
-		ret = mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
+		ret = mappings.remap(muxed_smps[i], tomux_smps[i]);
 		if (ret)
 			return ret;
 
@@ -206,35 +141,44 @@ int path_source_read(struct vpath_source *ps, struct vpath *p, int i)
 			muxed_smps[i]->flags |= (int) SampleFlags::HAS_DATA;
 	}
 
-	sample_copy(p->last_sample, muxed_smps[tomux-1]);
-
-	p->logger->debug("Path {} received = {}", *p, p->received.to_ullong());
+	sample_copy(path->last_sample, muxed_smps[tomux-1]);
 
 #ifdef WITH_HOOKS
-	toenqueue = hook_list_process(&p->hooks, muxed_smps, tomux);
+	toenqueue = path->hooks.process(muxed_smps, tomux);
 	if (toenqueue == -1) {
-		p->logger->error("An error occured during hook processing. Skipping sample");
+		path->logger->error("An error occured during hook processing. Skipping sample");
 
 	}
 	else if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
-		p->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, *p);
+		path->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, *path);
 	}
 #else
 	toenqueue = tomux;
 #endif
 
-	if (p->mask.test(i)) {
-		/* Check if we received an update from all nodes */
-		if ((p->mode == PathMode::ANY) ||
-		    (p->mode == PathMode::ALL && p->mask == p->received)) {
-			path_destination_enqueue(p, muxed_smps, toenqueue);
+	path->received.set(i);
 
-			/* Reset mask of updated nodes */
-			p->received.reset();
+	path->logger->debug("received=0b{:b}, mask=0b{:b}", path->received.to_ullong(), path->mask.to_ullong());
 
+	if (path->mask.test(i)) {
+		/* Enqueue always */
+		if (path->mode == Path::Mode::ANY) {
 			enqueued = toenqueue;
+			PathDestination::enqueueAll(path, muxed_smps, toenqueue);
+		}
+		/* Enqueue only if received == mask bitset */
+		else if (path->mode == Path::Mode::ALL) {
+			if (path->mask == path->received) {
+				PathDestination::enqueueAll(path, muxed_smps, toenqueue);
+
+				path->received.reset();
+
+				enqueued = toenqueue;
+			}
+			else
+				enqueued = 0;
 		}
 	}
 
@@ -244,11 +188,40 @@ out2:	sample_decref_many(read_smps, recv);
 	return enqueued;
 }
 
-void path_source_check(struct vpath_source *ps)
+void PathSource::check()
 {
-	if (!node_is_enabled(ps->node))
-		throw RuntimeError("Source {} is not enabled", *ps->node);
+	if (!node->isEnabled())
+		throw RuntimeError("Source {} is not enabled", *node);
 
-	if (!node_type(ps->node)->read)
-		throw RuntimeError("Node {} is not supported as a source for a path", *ps->node);
+	if (!(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_READ))
+		throw RuntimeError("Node {} is not supported as a source for a path", *node);
+}
+
+MasterPathSource::MasterPathSource(Path *p, Node *n) :
+	PathSource(p, n)
+{ }
+
+void MasterPathSource::writeToSecondaries(struct Sample *smps[], unsigned cnt)
+{
+	for (auto sps : secondaries) {
+		int sent = sps->getNode()->write(smps, cnt);
+		if (sent < 0)
+			throw RuntimeError("Failed to write secondary path source {} of path {}", *sps->getNode(), *path);
+		else if ((unsigned) sent < cnt)
+			path->logger->warn("Partial write to secondary path source {} of path {}", *sps->getNode(), *path);
+	}
+}
+
+SecondaryPathSource::SecondaryPathSource(Path *p, Node *n, NodeList &nodes, PathSource::Ptr m) :
+	PathSource(p, n),
+	master(m)
+{
+	auto mps = std::dynamic_pointer_cast<MasterPathSource>(m);
+
+	node = new InternalLoopbackNode(n, mps->getSecondaries().size(), mps->getPath()->queuelen);
+	if (!node)
+		throw RuntimeError("Failed to create internal loopback");
+
+	/* Register new loopback node in node list of super node */
+	nodes.push_back(node);
 }

@@ -23,25 +23,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup ethercats WebSockets node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <thread>
 
-#include <villas/pool.h>
+#include <villas/pool.hpp>
 #include <villas/task.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/common.hpp>
 #include <villas/format.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
+
+namespace villas {
+namespace node {
 
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
+class SuperNode;
 
 /* Include hard-coded Ethercat Bus configuration */
 #include <villas/nodes/ethercat_config.hpp>
@@ -74,45 +72,39 @@ struct ethercat {
 
 	std::thread thread;			/**< Cyclic task thread */
 	struct Task task;			/**< Periodic timer */
-	struct pool pool;
-	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
+	struct Pool pool;
+	struct CQueueSignalled queue;		/**< For samples which are received from WebSockets */
 
-	std::atomic<struct sample *> send;	/**< Last sample to be sent via EtherCAT */
+	std::atomic<struct Sample *> send;	/**< Last sample to be sent via EtherCAT */
 };
 
 /* Internal datastructures */
 
-/** @see node_type::type_start */
-int ethercat_type_start(struct super_node *sn);
+int ethercat_type_start(SuperNode *sn);
 
-/** @see node_type::type_stop */
 int ethercat_type_stop();
 
-/** @see node_type::init */
-int ethercat_init(struct vnode *n);
+int ethercat_init(NodeCompat *n);
 
-/** @see node_type::destroy */
-int ethercat_destroy(struct vnode *n);
+int ethercat_destroy(NodeCompat *n);
 
-/** @see node_type::parse */
-int ethercat_parse(struct vnode *n, json_t *json);
+int ethercat_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::check */
-int ethercat_check(struct vnode *n);
+int ethercat_check(NodeCompat *n);
 
-/** @see node_type::prepare */
-int ethercat_prepare(struct vnode *n);
+int ethercat_prepare(NodeCompat *n);
 
-/** @see node_type::open */
-int ethercat_start(struct vnode *n);
+int ethercat_start(NodeCompat *n);
 
-/** @see node_type::close */
-int ethercat_stop(struct vnode *n);
+int ethercat_stop(NodeCompat *n);
 
-/** @see node_type::read */
-int ethercat_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int ethercat_poll_fds(NodeCompat *n, int fds[]);
 
-/** @see node_type::write */
-int ethercat_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+char * ethercat_print(NodeCompat *n);
 
-/** @} */
+int ethercat_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+int ethercat_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+
+} /* namespace node */
+} /* namespace villas */

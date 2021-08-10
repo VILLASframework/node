@@ -1,7 +1,7 @@
 /** Hook-releated functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -23,43 +23,14 @@
 #include <villas/plugin.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/utils.hpp>
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
-int hook_list_init(struct vlist *hs)
-{
-	int ret;
-
-	ret = vlist_init(hs);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-static int hook_destroy(Hook *h)
-{
-	delete h;
-
-	return 0;
-}
-
-int hook_list_destroy(struct vlist *hs)
-{
-	int ret;
-
-	ret = vlist_destroy(hs, (dtor_cb_t) hook_destroy, false);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, struct vnode *n)
+void HookList::parse(json_t *json, int mask, Path *o, Node *n)
 {
 	if (!json_is_array(json))
 		throw ConfigError(json, "node-config-hook", "Hooks must be configured as a list of hook objects");
@@ -69,7 +40,7 @@ void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, 
 	json_array_foreach(json, i, json_hook) {
 		int ret;
 		const char *type;
-		Hook *h;
+		Hook::Ptr h;
 		json_error_t err;
 		json_t *json_config;
 
@@ -100,33 +71,18 @@ void hook_list_parse(struct vlist *hs, json_t *json, int mask, struct vpath *o, 
 		h = hf->make(o, n);
 		h->parse(json_config);
 
-		vlist_push(hs, h);
+		push_back(h);
 	}
 }
 
-static int hook_cmp_priority(const Hook *a, const Hook *b)
+void HookList::check()
 {
-	return a->getPriority() - b->getPriority();
-}
-
-static int hook_is_enabled(const Hook *h)
-{
-	return h->isEnabled() ? 0 : -1;
-}
-
-void hook_list_check(struct vlist *hs)
-{
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at(hs, i);
-
+	for (auto h : *this)
 		h->check();
-	}
 }
 
-void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, struct vnode *n)
+void HookList::prepare(SignalList::Ptr signals, int m, Path *p, Node *n)
 {
-	assert(hs->state == State::INITIALIZED);
-
 	if (!m)
 		goto skip_add;
 
@@ -134,44 +90,41 @@ void hook_list_prepare(struct vlist *hs, vlist *sigs, int m, struct vpath *p, st
 	for (auto f : plugin::Registry::lookup<HookFactory>()) {
 		if ((f->getFlags() & m) == m) {
 			auto h = f->make(p, n);
-
-			vlist_push(hs, h);
+			push_back(h);
 		}
 	}
 
 skip_add:
 	/* Remove filters which are not enabled */
-	vlist_filter(hs, (dtor_cb_t) hook_is_enabled);
+	remove_if([](Hook::Ptr h) { return !h->isEnabled(); });
 
 	/* We sort the hooks according to their priority */
-	vlist_sort(hs, (cmp_cb_t) hook_cmp_priority);
+	sort([](const value_type &a, const value_type b) { return a->getPriority() < b->getPriority(); });
 
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at(hs, i);
-
+	unsigned i = 0;
+	auto sigs = signals;
+	for (auto h : *this) {
 		h->prepare(sigs);
 
 		sigs = h->getSignals();
 
 		auto logger = h->getLogger();
-		logger->debug("Signal list after hook #{}:", i);
-		signal_list_dump(logger, sigs);
+		logger->debug("Signal list after hook #{}:", i++);
+		sigs->dump(logger);
 	}
 }
 
-int hook_list_process(struct vlist *hs, struct sample * smps[], unsigned cnt)
+int HookList::process(struct Sample * smps[], unsigned cnt)
 {
 	unsigned current, processed = 0;
 
-	if (vlist_length(hs) == 0)
+	if (size() == 0)
 		return cnt;
 
 	for (current = 0; current < cnt; current++) {
-		struct sample *smp = smps[current];
+		struct Sample *smp = smps[current];
 
-		for (size_t i = 0; i < vlist_length(hs); i++) {
-			Hook *h = (Hook *) vlist_at(hs, i);
-
+		for (auto h : *this) {
 			auto ret = h->process(smp);
 			smp->signals = h->getSignals();
 			switch (ret) {
@@ -197,51 +150,39 @@ skip: {}
 		return processed;
 }
 
-void hook_list_periodic(struct vlist *hs)
+void HookList::periodic()
 {
-	for (size_t j = 0; j < vlist_length(hs); j++) {
-		Hook *h = (Hook *) vlist_at(hs, j);
-
+	for (auto h : *this)
 		h->periodic();
-	}
 }
 
-void hook_list_start(struct vlist *hs)
+void HookList::start()
 {
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at(hs, i);
-
+	for (auto h : *this)
 		h->start();
-	}
 }
 
-void hook_list_stop(struct vlist *hs)
+void HookList::stop()
 {
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at(hs, i);
-
+	for (auto h : *this)
 		h->stop();
-	}
 }
 
-struct vlist * hook_list_get_signals(struct vlist *hs)
+SignalList::Ptr HookList::getSignals() const
 {
-	Hook *h = (Hook *) vlist_last(hs);
+	auto h = back();
 	if (!h)
 		return nullptr;
 
 	return h->getSignals();
 }
 
-unsigned hook_list_get_signals_max_cnt(struct vlist *hs)
+unsigned HookList::getSignalsMaxCount() const
 {
 	unsigned max_cnt = 0;
 
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at(hs, i);
-
-		struct vlist *sigs = h->getSignals();
-		unsigned sigs_cnt = vlist_length(sigs);
+	for (auto h : *this) {
+		unsigned sigs_cnt = h->getSignals()->size();
 
 		if (sigs_cnt > max_cnt)
 			max_cnt = sigs_cnt;
@@ -250,15 +191,21 @@ unsigned hook_list_get_signals_max_cnt(struct vlist *hs)
 	return max_cnt;
 }
 
-json_t * hook_list_to_json(struct vlist *hs)
+json_t * HookList::toJson() const
 {
 	json_t *json_hooks = json_array();
 
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		Hook *h = (Hook *) vlist_at_safe(hs, i);
-
+	for (auto h : *this)
 		json_array_append(json_hooks, h->getConfig());
-	}
 
 	return json_hooks;
+}
+
+void HookList::dump(Logger logger, std::string subject) const
+{
+	logger->debug("Hooks of {}:", subject);
+
+	unsigned i = 0;
+	for (auto h : *this)
+		logger->debug("      {}: {}", i++, h->getFactory()->getName());
 }

@@ -3,7 +3,7 @@
 # Integration test for remote API
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -24,27 +24,33 @@
 
 set -e
 
-CONFIG_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
 
-cat > ${CONFIG_FILE} <<EOF
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+
+cat > config.json <<EOF
 {
-	"http" : {
-		"port" : 8080
+	"http": {
+		"port": 8080
 	}
 }
 EOF
 
 # Start without a configuration
 timeout -s SIGKILL 3 \
-villas node ${CONFIG_FILE} & 
+villas node config.json & 
 
 # Wait for node to complete init
 sleep 1
 
 # Restart with configuration
 curl -sX POST http://localhost:8080/api/v2/shutdown
-
-rm ${CONFIG_FILE}
 
 # Wait returns the return code of villas node
 # which will be 0 (success) in case of normal shutdown

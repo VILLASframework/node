@@ -3,7 +3,7 @@
 # Integration test for scale hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,11 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+set -e
 
-cat <<EOF > ${INPUT_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > input.dat <<EOF
 # seconds.nanoseconds(sequence)	random	sine	square	triangle	ramp
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	0.587785	-1.000000	0.600000	0.100000
@@ -40,7 +47,7 @@ cat <<EOF > ${INPUT_FILE}
 1551015509.701653200(9)	0.060849	-0.587785	1.000000	0.600000	0.900000
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	55.000000
 1551015508.901653200(1)	0.015339	0.587785	-1.000000	0.600000	65.000000
@@ -54,12 +61,6 @@ cat <<EOF > ${EXPECT_FILE}
 1551015509.701653200(9)	0.060849	-0.587785	1.000000	0.600000	145.000000
 EOF
 
-villas hook scale -o scale=100 -o offset=55 -o signal=signal4 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook scale -o scale=100 -o offset=55 -o signal=signal4 < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

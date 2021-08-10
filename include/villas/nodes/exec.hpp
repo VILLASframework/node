@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,53 +21,71 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup exec Execute node-type as a sub-process
- * @{
- */
-
 #pragma once
 
+#include <villas/node.hpp>
 #include <villas/popen.hpp>
 #include <villas/format.hpp>
 
-/* Forward declarations */
-struct vnode;
-struct sample;
+namespace villas {
+namespace node {
 
-/** Node-type for signal generation.
- * @see node_type
- */
-struct exec {
+/* Forward declarations */
+struct Sample;
+
+class ExecNode : public Node {
+
+protected:
 	std::unique_ptr<villas::utils::Popen> proc;
+	std::unique_ptr<Format> formatter;
+
+	FILE *stream_in, *stream_out;
 
 	bool flush;
 	bool shell;
+
 	std::string working_dir;
 	std::string command;
+
 	villas::utils::Popen::arg_list arguments;
 	villas::utils::Popen::env_map environment;
 
-	villas::node::Format *formatter;
+	virtual
+	int _read(struct Sample * smps[], unsigned cnt);
+
+	virtual
+	int _write(struct Sample * smps[], unsigned cnt);
+
+public:
+	ExecNode(const std::string &name = "") :
+		Node(name),
+		stream_in(nullptr),
+		stream_out(nullptr),
+		flush(true),
+		shell(false)
+	{ }
+
+	virtual
+	~ExecNode();
+
+	virtual
+	const std::string & getDetails();
+
+	virtual
+	int start();
+
+	virtual
+	int stop();
+
+	virtual
+	int prepare();
+
+	virtual
+	int parse(json_t *json, const uuid_t sn_uuid);
+
+	virtual
+	std::vector<int> getPollFDs();
 };
 
-/** @see node_type::print */
-char * exec_print(struct vnode *n);
-
-/** @see node_type::parse */
-int exec_parse(struct vnode *n, json_t *json);
-
-/** @see node_type::start */
-int exec_open(struct vnode *n);
-
-/** @see node_type::stop */
-int exec_close(struct vnode *n);
-
-/** @see node_type::read */
-int exec_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
-
-/** @see node_type::write */
-int exec_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
-
-/** @} */
+} /* namespace node */
+} /* namespace villas */

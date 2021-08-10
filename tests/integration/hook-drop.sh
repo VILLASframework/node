@@ -3,7 +3,7 @@
 # Integration test for drop hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,11 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+set -e
 
-cat <<EOF > ${INPUT_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > input.dat <<EOF
 1490500399.776379108(0)	0.000000	0.000000	0.000000	0.000000
 1490500399.876379108(1)	0.587785	0.587785	0.587785	0.587785
 1490500399.976379108(2)	0.951057	0.951057	0.951057	0.951057
@@ -41,7 +48,7 @@ cat <<EOF > ${INPUT_FILE}
 1490500400.676379108(9)	-0.587785	-0.587785	-0.587785	-0.587785
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 1490500399.776379108(0)	0.000000	0.000000	0.000000	0.000000
 1490500399.876379108(1)	0.587785	0.587785	0.587785	0.587785
 1490500399.976379108(2)	0.951057	0.951057	0.951057	0.951057
@@ -52,13 +59,6 @@ cat <<EOF > ${EXPECT_FILE}
 1490500400.676379108(9)	-0.587785	-0.587785	-0.587785	-0.587785
 EOF
 
-villas hook drop < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook drop < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

@@ -1,7 +1,7 @@
 /** API session.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -25,7 +25,7 @@
 #include <libwebsockets.h>
 
 #include <villas/web.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 
 #include <villas/api/session.hpp>
 #include <villas/api/request.hpp>
@@ -178,9 +178,11 @@ void Session::bodyComplete()
 
 int Session::writeable()
 {
+	if (!response)
+		return 0;
+
 	if (!headersSent) {
-		if (response)
-			response->writeHeaders(wsi);
+		response->writeHeaders(wsi);
 
 		/* Now wait, until we can send the body */
 		headersSent = true;

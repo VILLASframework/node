@@ -3,7 +3,7 @@
 # Integration test for gate hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,11 +22,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+set -e
 
-cat <<EOF > ${INPUT_FILE}
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
+
+cat > input.dat <<EOF
 # seconds.nanoseconds(sequence)	random	sine	square	triangle	ramp
 1561591854.277376100(0)	0.022245	-0.136359	1.000000	-0.912920	0.104354
 1561591854.377354600(1)	0.015339	0.135690	-1.000000	0.913350	0.204333
@@ -40,7 +47,7 @@ cat <<EOF > ${INPUT_FILE}
 1561591855.174828300(9)	0.060849	0.056713	-1.000000	0.963876	1.001806
 EOF
 
-cat <<EOF > ${EXPECT_FILE}
+cat > expect.dat <<EOF
 # seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
 1561591854.277376100(0)	0.022245	-0.136359	1.000000	-0.912920	0.104354
 1561591854.475834300(2)	0.027500	-0.088233	1.000000	-0.943756	0.302812
@@ -49,12 +56,6 @@ cat <<EOF > ${EXPECT_FILE}
 1561591855.077804200(8)	0.015231	-0.149670	1.000000	-0.904358	0.904782
 EOF
 
-villas hook gate -o signal=signal2 -o mode=above < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook gate -o signal=signal2 -o mode=above < input.dat > output.dat
 
-# Compare only the data values
-villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
-RC=$?
-
-rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
-
-exit ${RC}
+villas compare output.dat expect.dat

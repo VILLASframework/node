@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,9 +22,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 SIGNAL_COUNT=${SIGNAL_COUNT:-10}
@@ -32,48 +39,29 @@ SIGNAL_COUNT=${SIGNAL_COUNT:-10}
 for MODE in polling pthread; do
 for VECTORIZE in 1 5; do
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"nodes" : {
-		"node1" : {
-			"type" : "shmem",
-			"out" : {
-				"name" : "/villas-test"
+	"nodes": {
+		"node1": {
+			"type": "shmem",
+			"out": {
+				"name": "/villas-test"
 			},
-			"in" : {
-				"name" : "/villas-test"	
+			"in": {
+				"name": "/villas-test"
 			},
-			"queuelen" : 1024,
-			"mode" : "${MODE}",
-			"vectorize" : ${VECTORIZE}
+			"queuelen": 1024,
+			"mode": "${MODE}",
+			"vectorize": ${VECTORIZE}
 		}
 	}
 }
 EOF
 
-# Generate test data
-villas signal -l ${NUM_SAMPLES} -v ${SIGNAL_COUNT} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -v ${SIGNAL_COUNT} -n random > input.dat
 
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < input.dat
 
-# Compare data
-villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: mode=${MODE}, vectorize=${VECTORIZE}, SIGNAL_COUNT=${SIGNAL_COUNT}"
-	cat ${CONFIG_FILE}
-	echo
-	cat ${INPUT_FILE}
-	echo
-	cat ${OUTPUT_FILE}
-	exit ${RC}
-else
-	echo "=========== Sub-test succeeded for: mode=${MODE}, vectorize=${VECTORIZE}, SIGNAL_COUNT=${SIGNAL_COUNT}"
-fi
+villas compare input.dat output.dat
 
 done; done;
-
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
-
-exit ${RC}

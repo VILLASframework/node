@@ -1,7 +1,7 @@
 /** Unit tests for queue_signalled
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -27,8 +27,10 @@
 #include <poll.h>
 
 #include <villas/utils.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
 #include <villas/queue_signalled.h>
+
+using namespace villas::node;
 
 extern void init_memory();
 
@@ -43,7 +45,7 @@ struct param {
 static void * producer(void * ctx)
 {
 	int ret;
-	struct queue_signalled *q = (struct queue_signalled *) ctx;
+	struct CQueueSignalled *q = (struct CQueueSignalled *) ctx;
 
 	for (intptr_t i = 0; i < NUM_ELEM; i++) {
 		ret = queue_signalled_push(q, (void *) i);
@@ -59,7 +61,7 @@ static void * producer(void * ctx)
 static void * consumer(void * ctx)
 {
 	int ret;
-	struct queue_signalled *q = (struct queue_signalled *) ctx;
+	struct CQueueSignalled *q = (struct CQueueSignalled *) ctx;
 
 	void *data[NUM_ELEM];
 
@@ -80,7 +82,7 @@ static void * consumer(void * ctx)
  void * polled_consumer(void *ctx)
 {
 	int ret, fd;
-	struct queue_signalled *q = (struct queue_signalled *) ctx;
+	struct CQueueSignalled *q = (struct CQueueSignalled *) ctx;
 
 	fd = queue_signalled_fd(q);
 	cr_assert_geq(fd, 0);
@@ -132,11 +134,11 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 {
 	int ret;
 	void *r1, *r2;
-	struct queue_signalled q;
+	struct CQueueSignalled q;
 
 	pthread_t t1, t2;
 
-	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_heap, param->mode, param->flags);
+	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory::heap, param->mode, param->flags);
 	cr_assert_eq(ret, 0, "Failed to initialize queue: mode=%d, flags=%#x, ret=%d", (int) param->mode, param->flags, ret);
 
 	ret = pthread_create(&t1, nullptr, producer, &q);

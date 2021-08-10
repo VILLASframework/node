@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,12 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup iec61850_sv IEC 61850-9-2 (Sampled Values) node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <cstdint>
@@ -35,12 +29,15 @@
 #include <libiec61850/sv_subscriber.h>
 
 #include <villas/queue_signalled.h>
-#include <villas/pool.h>
-#include <villas/list.h>
+#include <villas/pool.hpp>
+#include <villas/list.hpp>
 #include <villas/nodes/iec61850.hpp>
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 struct iec61850_sv {
 	char *interface;
@@ -53,10 +50,10 @@ struct iec61850_sv {
 		SVSubscriber subscriber;
 		SVReceiver receiver;
 
-		struct queue_signalled queue;
-		struct pool pool;
+		struct CQueueSignalled queue;
+		struct Pool pool;
 
-		struct vlist signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
 	} in;
 
@@ -74,36 +71,28 @@ struct iec61850_sv {
 		int smprate;
 		int confrev;
 
-		struct vlist signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
 	} out;
 };
 
-/** @see node_type::type_stop */
 int iec61850_sv_type_stop();
 
-/** @see node_type::parse */
-int iec61850_sv_parse(struct vnode *n, json_t *json);
+int iec61850_sv_parse(NodeCompat *n, json_t *json);
 
-/** @see node_type::print */
-char * iec61850_sv_print(struct vnode *n);
+char * iec61850_sv_print(NodeCompat *n);
 
-/** @see node_type::start */
-int iec61850_sv_start(struct vnode *n);
+int iec61850_sv_start(NodeCompat *n);
 
-/** @see node_type::stop */
-int iec61850_sv_stop(struct vnode *n);
+int iec61850_sv_stop(NodeCompat *n);
 
-/** @see node_type::destroy */
-int iec61850_sv_destroy(struct vnode *n);
+int iec61850_sv_destroy(NodeCompat *n);
 
-/** @see node_type::read */
-int iec61850_sv_read(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int iec61850_sv_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::write */
-int iec61850_sv_write(struct vnode *n, struct sample * const smps[], unsigned cnt);
+int iec61850_sv_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-/** @see node_type::fd */
-int iec61850_sv_fd(struct vnode *n);
+int iec61850_sv_poll_fds(NodeCompat *n, int fds[]);
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */

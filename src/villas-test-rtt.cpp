@@ -1,7 +1,7 @@
 /** Measure round-trip time.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -31,15 +31,15 @@
 #include <atomic>
 
 #include <villas/tool.hpp>
-#include <villas/node/config.h>
+#include <villas/node/config.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
-#include <villas/node.h>
+#include <villas/node.hpp>
 #include <villas/utils.hpp>
 #include <villas/hist.hpp>
-#include <villas/timing.h>
-#include <villas/pool.h>
+#include <villas/timing.hpp>
+#include <villas/pool.hpp>
 #include <villas/kernel/rt.hpp>
 
 #define CLOCK_ID	CLOCK_MONOTONIC
@@ -64,7 +64,7 @@ public:
 	{
 		int ret;
 
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		ret = memory::init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 	}
@@ -171,13 +171,13 @@ check:			if (optarg == endptr)
 		Hist hist(hist_buckets, hist_warmup);
 		struct timespec send, recv;
 
-		struct sample *smp_send = (struct sample *) new char[SAMPLE_LENGTH(2)];
-		struct sample *smp_recv = (struct sample *) new char[SAMPLE_LENGTH(2)];
+		struct Sample *smp_send = (struct Sample *) new char[SAMPLE_LENGTH(2)];
+		struct Sample *smp_recv = (struct Sample *) new char[SAMPLE_LENGTH(2)];
 
 		if (!smp_send || !smp_recv)
 			throw MemoryAllocationError();
 
-		struct vnode *node;
+		Node *node;
 
 		if (!uri.empty())
 			sn.parse(uri);
@@ -188,15 +188,15 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("There's no node with the name '{}'", nodestr);
 
-		ret = node_type_start(node_type(node), &sn);
+		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to start node-type {}: reason={}", *node_type(node), ret);
+			throw RuntimeError("Failed to start node-type {}: reason={}", *node->getFactory(), ret);
 
-		ret = node_prepare(node);
+		ret = node->prepare();
 		if (ret)
 			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
 
-		ret = node_start(node);
+		ret = node->start();
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
 
@@ -206,8 +206,8 @@ check:			if (optarg == endptr)
 		while (!stop && (count < 0 || count--)) {
 			clock_gettime(CLOCK_ID, &send);
 
-			node_write(node, &smp_send, 1); /* Ping */
-			node_read(node,  &smp_recv, 1); /* Pong */
+			node->write(&smp_send, 1); /* Ping */
+			node->read(&smp_recv, 1); /* Pong */
 
 			clock_gettime(CLOCK_ID, &recv);
 
@@ -238,13 +238,13 @@ check:			if (optarg == endptr)
 
 		hist.print(logger, true);
 
-		ret = node_stop(node);
+		ret = node->stop();
 		if (ret)
 			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
 
-		ret = node_type_stop(node_type(node));
+		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node-type {}: reason={}", *node_type(node), ret);
+			throw RuntimeError("Failed to stop node-type {}: reason={}", *node->getFactory(), ret);
 
 		delete smp_send;
 		delete smp_recv;

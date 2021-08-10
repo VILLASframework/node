@@ -21,11 +21,11 @@
  */
 
 #include <villas/path_list.hpp>
-#include <villas/path.h>
+#include <villas/path.hpp>
 
 using namespace villas::node;
 
-struct vpath * PathList::lookup(const uuid_t &uuid)
+Path * PathList::lookup(const uuid_t &uuid) const
 {
 	for (auto *p : *this) {
 		if (!uuid_compare(uuid, p->uuid))
@@ -33,4 +33,14 @@ struct vpath * PathList::lookup(const uuid_t &uuid)
 	}
 
 	return nullptr;
+}
+
+json_t * PathList::toJson() const
+{
+	json_t *json_paths = json_array();
+
+	for (auto *p : *this)
+		json_array_append_new(json_paths, p->toJson());
+
+	return json_paths;
 }

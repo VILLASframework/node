@@ -24,24 +24,39 @@
 #pragma once
 
 #include <uuid/uuid.h>
+#include <jansson.h>
 
 #include <list>
 #include <string>
 
-/* Forward declarations */
-struct vnode;
-
 namespace villas {
 namespace node {
 
-class NodeList : public std::list<struct vnode *> {
+/* Forward declarations */
+class Node;
+
+class NodeList : public std::list<Node *> {
 
 public:
 	/** Lookup a node from the list based on its name */
-	struct vnode * lookup(const std::string &name);
+	Node * lookup(const std::string &name);
 
 	/** Lookup a node from the list based on its UUID */
-	struct vnode * lookup(const uuid_t &uuid);
+	Node * lookup(const uuid_t &uuid);
+
+	/** Parse an array or single node and checks if they exist in the "nodes" section.
+	 *
+	 * Examples:
+	 *     out = [ "sintef", "scedu" ]
+	 *     out = "acs"
+	 *
+	 * @param json A JSON array or string. See examples above.
+	 * @param nodes The nodes will be added to this list.
+	 * @param all This list contains all valid nodes.
+	 */
+	int parse(json_t *json, NodeList &all);
+
+	json_t * toJson() const;
 };
 
 } /* namespace node */

@@ -3,7 +3,7 @@
  * This file implements the opal subtype for nodes.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -30,7 +30,7 @@
 #include <cmath>
 #include <vector>
 
-#include <villas/node.h>
+#include <villas/node_compat.hpp>
 #include <villas/nodes/opal.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -103,6 +103,7 @@ extern "C" {
         }
 }
 
+static
 int opal_register_region(int argc, char *argv[])
 {
 	if (argc != 4)
@@ -115,7 +116,7 @@ int opal_register_region(int argc, char *argv[])
 	return 0;
 }
 
-int opal_type_start(villas::node::SuperNode *sn)
+int villas::node::opal_type_start(villas::node::SuperNode *sn)
 {
 	int err, noRecvIcons, noSendIcons;
 
@@ -163,7 +164,7 @@ int opal_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int opal_type_stop()
+int villas::node::opal_type_stop()
 {
 	int err;
 
@@ -183,6 +184,7 @@ int opal_type_stop()
 	return 0;
 }
 
+static
 int opal_print_global()
 {
 	auto logger = logging.get("node:opal");
@@ -207,9 +209,9 @@ int opal_print_global()
 	return 0;
 }
 
-int opal_parse(struct vnode *n, json_t *json)
+int villas::node::opal_parse(NodeCompat *n, json_t *json)
 {
-	struct opal *o = (struct opal *) n->_vd;
+	auto *o = n->getData<struct opal>();
 
 	int ret;
 	json_error_t err;
@@ -225,9 +227,9 @@ int opal_parse(struct vnode *n, json_t *json)
 	return 0;
 }
 
-char * opal_print(struct vnode *n)
+char * villas::node::opal_print(NodeCompat *n)
 {
-	struct opal *o = (struct opal *) n->_vd;
+	auto *o = n->getData<struct opal>();
 
 	/** @todo Print send_params, recv_params */
 
@@ -235,9 +237,9 @@ char * opal_print(struct vnode *n)
 		o->sendID, o->recvID, o->reply);
 }
 
-int opal_start(struct vnode *n)
+int villas::node::opal_start(NodeCompat *n)
 {
-	struct opal *o = (struct opal *) n->_vd;
+	auto *o = n->getData<struct opal>();
 
 	/* Search for valid send and recv ids */
 	int sfound = 0, rfound = 0;
@@ -261,14 +263,14 @@ int opal_start(struct vnode *n)
 	return 0;
 }
 
-int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::opal_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct opal *o = (struct opal *) n->_vd;
+	auto *o = n->getData<struct opal>();
 
 	int state, ret, len;
 	unsigned id;
 
-	struct sample *s = smps[0];
+	struct Sample *s = smps[0];
 
 	double data[s->capacity];
 
@@ -326,11 +328,11 @@ int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return 1;
 }
 
-int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int villas::node::opal_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
-	struct opal *o = (struct opal *) n->_vd;
+	auto *o = n->getData<struct opal>();
 
-	struct sample *s = smps[0];
+	struct Sample *s = smps[0];
 
 	int state;
 	int len;
@@ -359,7 +361,7 @@ int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	return 1;
 }
 
-static struct vnode_type p;
+static NodeCompatType p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
@@ -375,8 +377,5 @@ static void register_plugin() {
 	p.read		= opal_read;
 	p.write		= opal_write;
 
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	static NodeCompatFactory ncp(&p);
 }

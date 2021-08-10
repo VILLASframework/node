@@ -21,17 +21,16 @@
  *********************************************************************************/
 
 #include <villas/formats/value.hpp>
-#include <villas/sample.h>
-#include <villas/signal.h>
+#include <villas/sample.hpp>
+#include <villas/signal.hpp>
 
 using namespace villas::node;
 
-int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	unsigned i;
 	size_t off = 0;
-	struct signal *sig;
-	const struct sample *smp = smps[0];
+	const struct Sample *smp = smps[0];
 
 	assert(cnt == 1);
 	assert(smp->length <= 1);
@@ -39,11 +38,11 @@ int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct samp
 	buf[0] = '\0';
 
 	for (i = 0; i < smp->length; i++) {
-		sig = (struct signal *) vlist_at_safe(smp->signals, i);
+		auto sig = smp->signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
-		off += signal_data_print_str(&smp->data[i], sig->type, buf, len, real_precision);
+		off += smp->data[i].printString(sig->type, buf, len, real_precision);
 		off += snprintf(buf + off, len - off, "\n");
 	}
 
@@ -53,10 +52,10 @@ int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct samp
 	return i;
 }
 
-int ValueFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int ValueFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	unsigned i = 0, ret;
-	struct sample *smp = smps[0];
+	struct Sample *smp = smps[0];
 
 	const char *ptr = buf;
 	char *end;
@@ -66,11 +65,11 @@ int ValueFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sampl
 	printf("Reading: %s", buf);
 
 	if (smp->capacity >= 1) {
-		struct signal *sig = (struct signal *) vlist_at_safe(signals, i);
+		auto sig = signals->getByIndex(i);
 		if (!sig)
 			return -1;
 
-		ret = signal_data_parse_str(&smp->data[i], sig->type, ptr, &end);
+		ret = smp->data[i].parseString(sig->type, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 

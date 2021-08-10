@@ -1,7 +1,7 @@
 /** The "nodes" API ressource.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,7 +24,7 @@
 #include <uuid/uuid.h>
 
 #include <villas/super_node.hpp>
-#include <villas/node.h>
+#include <villas/node.hpp>
 #include <villas/utils.hpp>
 #include <villas/stats.hpp>
 #include <villas/api/session.hpp>
@@ -48,10 +48,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("Nodes endpoint does not accept any body data");
 
-		json_t *json_nodes = json_array();
-
-		for (auto *n : session->getSuperNode()->getNodes())
-			json_array_append_new(json_nodes, node_to_json(n));
+		json_t *json_nodes = session->getSuperNode()->getNodes().toJson();
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_nodes);
 	}

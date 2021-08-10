@@ -3,7 +3,7 @@
 # Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,12 +22,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-CONFIG_FILE=$(mktemp)
-STATS_LOG=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 RATE="33.0"
 
-cat > ${CONFIG_FILE} <<EOF
+cat > config.json <<EOF
 {
 	"nodes": {
 		"stats_1": {
@@ -46,7 +54,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"limit": 100,
 			"signal": "sine",
 			"rate": ${RATE},
-			"in" : {
+			"in": {
 				"hooks": [
 					{ "type": "stats", "verbose": true }
 				]
@@ -56,7 +64,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "file",
 			"format": "json",
 
-			"uri": "${STATS_LOG}"
+			"uri": "stats.json"
 		}
 	},
 	"paths": [
@@ -71,17 +79,9 @@ cat > ${CONFIG_FILE} <<EOF
 }
 EOF
 
-# Start node
-villas node ${CONFIG_FILE} &
-PID=$!
+timeout --preserve-status -k 15s 5s \
+villas node config.json
 
-sleep 5
-kill ${PID}
-wait ${PID}
+[ -s stats.json ] # check that file exists
 
-tail -n1 ${STATS_LOG} | jq -e "(.data[0] - 1/${RATE} | length) < 1e-4 and .data[1] == 99" > /dev/null
-RC=$?
-
-rm ${STATS_LOG} ${CONFIG_FILE}
-
-exit ${RC}
+tail -n1 stats.json | jq -e "(.data[0] - 1/${RATE} | length) < 1e-4 and .data[1] == 99" > /dev/null

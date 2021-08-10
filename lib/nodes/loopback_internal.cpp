@@ -1,7 +1,7 @@
 /** Node-type for internal loopback_internal connections.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,53 +22,68 @@
 
 #include <cstring>
 
-#include <villas/node/config.h>
-#include <villas/node.h>
+#include <villas/node/config.hpp>
 #include <villas/nodes/loopback_internal.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/memory.h>
+#include <villas/node/memory.hpp>
+#include <villas/uuid.hpp>
+#include <villas/colors.hpp>
 
 using namespace villas;
 using namespace villas::node;
 
-static struct vnode_type p;
+static InternalLoopbackNodeFactory nf;
 
-int loopback_internal_init(struct vnode *n)
+InternalLoopbackNode::InternalLoopbackNode(Node *src, unsigned id, unsigned ql) :
+	Node(fmt::format("{}.lo{}", src->getNameShort(), id)),
+	queuelen(ql),
+	source(src)
 {
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
+	int ret = uuid::generateFromString(uuid, fmt::format("lo{}", id), src->getUuid());
+	if (ret)
+		throw RuntimeError("Failed to initialize UUID");
 
-	l->queuelen = DEFAULT_QUEUE_LENGTH;
+	factory = &nf;
+	name_long = fmt::format(CLR_RED("{}") "(" CLR_YEL("{}") ")", name_short, nf.getName());
+
+	auto logger_name = fmt::format("node:{}", getNameShort());
+
+	logger = logging.get(logger_name);
+
+	in.signals = source->getInputSignals(false);
+
+	ret = queue_signalled_init(&queue, queuelen);
+	if (ret)
+		throw RuntimeError("Failed to initialize queue");
+
+	state = State::PREPARED;
+}
+
+InternalLoopbackNode::~InternalLoopbackNode()
+{
+	int ret __attribute__((unused));
+
+	ret = queue_signalled_destroy(&queue);
+}
+
+int InternalLoopbackNode::stop()
+{
+	int ret;
+
+	ret = queue_signalled_close(&queue);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
-int loopback_internal_prepare(struct vnode *n)
-{
-	int ret;
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
-
-	ret = signal_list_copy(&n->in.signals, &l->source->in.signals);
-	if (ret)
-		return -1;
-
-	return queue_signalled_init(&l->queue, l->queuelen, memory_default, QueueSignalledMode::AUTO);
-}
-
-int loopback_internal_destroy(struct vnode *n)
-{
-	struct loopback_internal *l= (struct loopback_internal *) n->_vd;
-
-	return queue_signalled_destroy(&l->queue);
-}
-
-int loopback_internal_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int InternalLoopbackNode::_read(struct Sample * smps[], unsigned cnt)
 {
 	int avail;
 
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
-	struct sample *cpys[cnt];
+	struct Sample *cpys[cnt];
 
-	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
+	avail = queue_signalled_pull_many(&queue, (void **) cpys, cnt);
 
 	sample_copy_many(smps, cpys, avail);
 	sample_decref_many(cpys, avail);
@@ -76,63 +91,26 @@ int loopback_internal_read(struct vnode *n, struct sample * const smps[], unsign
 	return avail;
 }
 
-int loopback_internal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
+int InternalLoopbackNode::_write(struct Sample * smps[], unsigned cnt)
 {
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
-
 	sample_incref_many(smps, cnt);
 
-	return queue_signalled_push_many(&l->queue, (void **) smps, cnt);
+	int pushed = queue_signalled_push_many(&queue, (void **) smps, cnt);
+	if (pushed < 0) {
+		sample_decref_many(smps, cnt);
+		return pushed;
+	}
+
+	/* Released unpushed samples */
+	if ((unsigned) pushed < cnt) {
+		sample_decref_many(smps + pushed, cnt - pushed);
+		logger->warn("Queue overrun");
+	}
+
+	return pushed;
 }
 
-int loopback_internal_poll_fds(struct vnode *n, int fds[])
+std::vector<int> InternalLoopbackNode::getPollFDs()
 {
-	struct loopback_internal *l = (struct loopback_internal *) n->_vd;
-
-	fds[0] = queue_signalled_fd(&l->queue);
-
-	return 1;
-}
-
-struct vnode * loopback_internal_create(struct vnode *orig)
-{
-	int ret;
-	struct vnode *n;
-	struct loopback_internal *l;
-
-	n = new struct vnode;
-	if (!n)
-		throw MemoryAllocationError();
-
-	ret = node_init(n, &p);
-	if (ret)
-		return nullptr;
-
-	l = (struct loopback_internal *) n->_vd;
-
-	l->source = orig;
-
-	asprintf(&n->name, "%s_lo%zu", node_name_short(orig), vlist_length(&orig->sources));
-
-	return n;
-}
-
-__attribute__((constructor(110)))
-static void register_plugin() {
-	p.name		= "loopback_internal";
-	p.description	= "internal loopback to connect multiple paths";
-	p.vectorize	= 0;
-	p.flags		= (int) NodeFlags::PROVIDES_SIGNALS | (int) NodeFlags::INTERNAL;
-	p.size		= sizeof(struct loopback_internal);
-	p.prepare	= loopback_internal_prepare;
-	p.init		= loopback_internal_init;
-	p.destroy	= loopback_internal_destroy;
-	p.read		= loopback_internal_read;
-	p.write		= loopback_internal_write;
-	p.poll_fds	= loopback_internal_poll_fds;
-
-	if (!node_types)
-		node_types = new NodeTypeList();
-
-	node_types->push_back(&p);
+	return { queue_signalled_fd(&queue) };
 }

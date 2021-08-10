@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -21,12 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup iec61850_sv IEC 61850-9-2 (Sampled Values) node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
 #include <cstdint>
@@ -41,16 +35,19 @@
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/sv_subscriber.h>
 
-#include <villas/list.h>
-#include <villas/signal.h>
-#include <villas/super_node.hpp>
+#include <villas/list.hpp>
+#include <villas/signal.hpp>
+#include <villas/signal_list.hpp>
 
 #ifndef CONFIG_GOOSE_DEFAULT_DST_ADDRESS
   #define CONFIG_GOOSE_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01}
 #endif
 
+namespace villas {
+namespace node {
+
 /* Forward declarations */
-struct vnode;
+class NodeCompat;
 
 enum class IEC61850Type {
 	/* According to IEC 61850-7-2 */
@@ -103,15 +100,13 @@ struct iec61850_receiver {
 	};
 };
 
-/** @see node_type::type_start */
 int iec61850_type_start(villas::node::SuperNode *sn);
 
-/** @see node_type::type_stop */
 int iec61850_type_stop();
 
 const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
-int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals);
+int iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals);
 
 struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf);
 
@@ -123,4 +118,7 @@ int iec61850_receiver_stop(struct iec61850_receiver *r);
 
 int iec61850_receiver_destroy(struct iec61850_receiver *r);
 
-/** @} */
+const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
+
+} /* namespace node */
+} /* namespace villas */

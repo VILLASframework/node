@@ -1,7 +1,7 @@
 /** RAW IO format
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/sample.h>
+#include <villas/sample.hpp>
 #include <villas/utils.hpp>
 #include <villas/formats/raw.hpp>
 #include <villas/compat.hpp>
@@ -53,7 +53,7 @@ using namespace villas::node;
 /** Convert integer of varying width to big/little endian byte order */
 #define SWAP_INT_HTOX(o, b, n) (o ? htobe ## b (n) : htole ## b (n))
 
-int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
+int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
 {
 	int o = 0;
 	size_t nlen;
@@ -72,7 +72,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample
 #endif
 
 	for (unsigned i = 0; i < cnt; i++) {
-		const struct sample *smp = smps[i];
+		const struct Sample *smp = smps[i];
 
 		/* First three values are sequence, seconds and nano-seconds timestamps
 		*
@@ -121,7 +121,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample
 
 		for (unsigned j = 0; j < smp->length; j++) {
 			enum SignalType fmt = sample_format(smp, j);
-			const union signal_data *data = &smp->data[j];
+			const union SignalData *data = &smp->data[j];
 
 			/* Check length */
 			nlen = (o + (fmt == SignalType::COMPLEX ? 2 : 1)) * (bits / 8);
@@ -247,7 +247,7 @@ out:	if (wbytes)
 	return cnt;
 }
 
-int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
+int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
 	void *vbuf = (void *) buf; /* Avoid warning about invalid pointer cast */
 
@@ -264,7 +264,7 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample 
 
 	/* The raw format can not encode multiple samples in one buffer
 	 * as there is no support for framing. */
-	struct sample *smp = smps[0];
+	struct Sample *smp = smps[0];
 
 	int o = 0;
 	int nlen = len / (bits / 8);
@@ -327,7 +327,7 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample 
 	unsigned i;
 	for (i = 0; i < smp->capacity && o < nlen; i++) {
 		enum SignalType fmt = sample_format(smp, i);
-		union signal_data *data = &smp->data[i];
+		union SignalData *data = &smp->data[i];
 
 		switch (fmt) {
 			case SignalType::FLOAT:

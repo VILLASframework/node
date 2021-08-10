@@ -3,7 +3,7 @@
 # Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,31 +22,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-CONFIG_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
-cat > ${CONFIG_FILE} << EOF
+cat > config.json << EOF
 {
-	"nodes" : {
-		"node1" : {
-			"type" : "loopback"
+	"nodes": {
+		"node1": {
+			"type": "loopback"
 		}
 	}
 }
 EOF
 
-# Generate test data
-villas signal -v 5 -l ${NUM_SAMPLES} -n mixed > ${INPUT_FILE}
+villas signal -v 5 -l ${NUM_SAMPLES} -n mixed > input.dat
 
-villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < input.dat
 
-# Compare data
-villas compare ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
-
-exit ${RC}
+villas compare input.dat output.dat

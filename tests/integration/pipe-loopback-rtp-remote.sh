@@ -4,7 +4,7 @@
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -23,11 +23,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-if [ -n "${CI}" ]; then
-  # We skip this test for now in CI
-  echo "Test not yet supported"
-  exit 99
-fi
+set -e
+
+echo "Test is broken"
+exit 99
 
 LOCAL_ADDR=137.226.133.195
 REMOTE_ADDR=157.230.251.200
@@ -37,10 +36,14 @@ REMOTE="ssh ${REMOTE_USER}@${REMOTE_ADDR}"
 PATH=/projects/villas/node/build/src:${PATH}
 ${REMOTE} PATH=/projects/villas/node/build/src:${PATH}
 
-CONFIG_FILE_SRC=$(mktemp)
-CONFIG_FILE_DEST=$(mktemp)
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 FORMAT="villas.binary"
 VECTORIZE="1"
@@ -48,35 +51,35 @@ VECTORIZE="1"
 RATE=100
 NUM_SAMPLES=100
 
-cat > ${CONFIG_FILE_SRC} << EOF
+cat > src.json << EOF
 {
-	"logging" : {
-		"level" : "debug"
+	"logging": {
+		"level": "debug"
 	},
-	"nodes" : {
-		"rtp_node" : {
-			"type" : "rtp",
-			"format" : "${FORMAT}",
-			"vectorize" : ${VECTORIZE},
-			"rate" : ${RATE},
-			"rtcp" : {
-				"enabled" : true,
-				"mode" : "aimd",
-				"throttle_mode" : "decimate"
+	"nodes": {
+		"rtp_node": {
+			"type": "rtp",
+			"format": "${FORMAT}",
+			"vectorize": ${VECTORIZE},
+			"rate": ${RATE},
+			"rtcp": {
+				"enabled": true,
+				"mode": "aimd",
+				"throttle_mode": "decimate"
 			},
-			"aimd" : {
-				"a" : 10,
-				"b" : 0.5
+			"aimd": {
+				"a": 10,
+				"b": 0.5
 			},
-			"in" : {
-				"address" : "0.0.0.0:33466",
-				"signals" : {
-					"count" : 5,
-					"type" : "float"
+			"in": {
+				"address": "0.0.0.0:33466",
+				"signals": {
+					"count": 5,
+					"type": "float"
 				}
 			},
-			"out" : {
-				"address" : "${REMOTE_ADDR}:33464"
+			"out": {
+				"address": "${REMOTE_ADDR}:33464"
 			}
 		}
 	}
@@ -85,60 +88,56 @@ EOF
 
 # UDP ports: 33434 - 33534
 
-cat > ${CONFIG_FILE_DEST} << EOF
+cat > dest.json << EOF
 {
-	"logging" : {
-		"level" : "debug"
+	"logging": {
+		"level": "debug"
 	},
-	"nodes" : {
-		"rtp_node" : {
-			"type" : "rtp",
-			"format" : "${FORMAT}",
-			"vectorize" : ${VECTORIZE},
-			"rate" : ${RATE},
+	"nodes": {
+		"rtp_node": {
+			"type": "rtp",
+			"format": "${FORMAT}",
+			"vectorize": ${VECTORIZE},
+			"rate": ${RATE},
 			"rtcp": {
-				"enabled" : true,
-				"mode" : "aimd",
-				"throttle_mode" : "decimate"
+				"enabled": true,
+				"mode": "aimd",
+				"throttle_mode": "decimate"
 			},
-			"aimd" : {
-				"a" : 10,
-				"b" : 0.5
+			"aimd": {
+				"a": 10,
+				"b": 0.5
 			},
-			"in" : {
-				"address" : "0.0.0.0:33464",
-				"signals" : {
-					"count" : 5,
-					"type" : "float"
+			"in": {
+				"address": "0.0.0.0:33464",
+				"signals": {
+					"count": 5,
+					"type": "float"
 				}
 			},
-			"out" : {
-				"address" : "${LOCAL_ADDR}:33466"
+			"out": {
+				"address": "${LOCAL_ADDR}:33466"
 			}
 		}
 	}
 }
 EOF
 
-scp ${CONFIG_FILE_DEST} ${REMOTE_USER}@${REMOTE_ADDR}:${CONFIG_FILE_DEST}
+scp dest.json ${REMOTE_USER}@${REMOTE_ADDR}:${CONFIG_FILE_DEST}
 
-${REMOTE} villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
-PID=$!
+${REMOTE} villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > output.dat &
 
 sleep 1
 
-villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-villas pipe ${CONFIG_FILE_SRC} rtp_node
+villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} > input.dat
 
-scp ${REMOTE_USER}@${REMOTE_ADDR}:${OUTPUT_FILE} ${OUTPUT_FILE}
+villas pipe src.json rtp_node < input.dat
 
-# Compare data
-villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+scp ${REMOTE_USER}@${REMOTE_ADDR}:output.dat output.dat
 
-rm ${INPUT_FILE} ${OUTPUT_FILE} ${CONFIG_FILE_DEST} ${CONFIG_FILE_SRC}
-${REMOTE} rm ${OUTPUT_FILE} ${CONFIG_FILE_DEST}
+villas compare ${CMPFLAGS} input.dat output.dat
 
-kill ${PID}
+${REMOTE} rm -f output.dat ${CONFIG_FILE_DEST}
 
-exit ${RC}
+kill %%
+wait %%

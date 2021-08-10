@@ -3,7 +3,7 @@
 # Integration test for shift_seq hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,20 +22,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-OUTPUT_FILE=$(mktemp)
+set -e
+
+DIR=$(mktemp -d)
+pushd ${DIR}
+
+function finish {
+	popd
+	rm -rf ${DIR}
+}
+trap finish EXIT
 
 OFFSET=100
 
-villas signal -l ${NUM_SAMPLES} -n random | \
-villas hook -o offset=${OFFSET} shift_seq > ${OUTPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
+
+villas hook -o offset=${OFFSET} shift_seq > output.dat < input.dat
 
 # Compare shifted sequence no
 diff -u \
-	<(sed -re '/^#/d;s/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' ${OUTPUT_FILE}) \
+	<(sed -re '/^#/d;s/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' output.dat) \
 	<(seq ${OFFSET} $((${NUM_SAMPLES}+${OFFSET}-1)))
-
-RC=$?
-
-rm -f ${OUTPUT_FILE}
-
-exit ${RC}

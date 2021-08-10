@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+e95f75a28652e6ca21e4beba0a9f3dc4 go/CMakeFiles/shim_go
+fa0c0014583ef68ee4d523d5a4786b76 go/test.so
