@@ -28,7 +28,15 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <filesystem>
+#if __has_include(<filesystem>)
+  #include <filesystem>
+  namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+  #include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#else
+  error "Missing the <filesystem> header."
+#endif
 
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
@@ -36,8 +44,6 @@
 #include <villas/boxes.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/config_helper.hpp>
-
-namespace fs = std::filesystem;
 
 using namespace villas;
 using namespace villas::node;
@@ -123,7 +129,7 @@ json_t * Config::decode(FILE *f)
 	return root;
 }
 
-std::list<std::filesystem::path> Config::getIncludeDirs(FILE *f) const
+std::list<fs::path> Config::getIncludeDirs(FILE *f) const
 {
 	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
 	if (isLocalFile(uri)) {

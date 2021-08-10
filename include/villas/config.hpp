@@ -28,7 +28,15 @@
 
 #include <functional>
 #include <regex>
-#include <filesystem>
+#if __has_include(<filesystem>)
+  #include <filesystem>
+  namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+  #include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#else
+  error "Missing the <filesystem> header."
+#endif
 #include <jansson.h>
 
 #include <villas/node/config.h>
@@ -74,7 +82,7 @@ protected:
 	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
 
 	/** Get the include dirs */
-	std::list<std::filesystem::path> getIncludeDirs(FILE *f) const;
+	std::list<fs::path> getIncludeDirs(FILE *f) const;
 
 public:
 	json_t *root;
