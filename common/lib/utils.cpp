@@ -42,7 +42,7 @@
 #include <jansson.h>
 #include <uuid/uuid.h>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>

@@ -26,7 +26,7 @@
 
 #include <villas/utils.hpp>
 #include <villas/hist.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/table.hpp>
 #include <villas/exceptions.hpp>
 

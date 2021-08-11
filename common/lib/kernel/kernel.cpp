@@ -34,7 +34,7 @@
 
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/kernel/kernel.hpp>
 
 #include <villas/kernel/kernel.hpp>

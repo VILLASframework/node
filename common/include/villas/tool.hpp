@@ -25,7 +25,7 @@
 
 #include <villas/log.hpp>
 #include <villas/colors.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 

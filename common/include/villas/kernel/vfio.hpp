@@ -7,8 +7,6 @@
  * @copyright 2018, Daniel Krebs
  *********************************************************************************/
 
-/** @addtogroup fpga Kernel @{ */
-
 #pragma once
 
 #include <list>
@@ -174,8 +172,6 @@ private:
 	/// All groups bound to this container
 	std::list<std::unique_ptr<Group>> groups;
 };
-
-/** @} */
 
 } /* namespace vfio */
 } /* namespace kernel */

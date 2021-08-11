@@ -21,11 +21,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/tsc.h>
+#include <villas/tsc.hpp>
 
 using namespace villas;
 
-int tsc_init(struct tsc *t)
+int tsc_init(struct Tsc *t)
 {
 	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
 
@@ -73,7 +73,7 @@ int tsc_init(struct tsc *t)
 	return 0;
 }
 
-uint64_t tsc_rate_to_cycles(struct tsc *t, double rate)
+uint64_t tsc_rate_to_cycles(struct Tsc *t, double rate)
 {
 	return t->frequency / rate;
 }

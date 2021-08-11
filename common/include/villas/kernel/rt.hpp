@@ -22,10 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup kernel Kernel
- * @{
- */
-
 #pragma once
 
 #include <pthread.h>
@@ -53,5 +49,3 @@ bool isPreemptible();
 } /* namespace villas */
 } /* namespace kernel */
 } /* namespace rt */
-
-/** @} */

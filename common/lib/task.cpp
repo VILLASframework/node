@@ -26,7 +26,7 @@
 
 #include <villas/utils.hpp>
 #include <villas/task.hpp>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 #include <villas/exceptions.hpp>
 
 using namespace villas;

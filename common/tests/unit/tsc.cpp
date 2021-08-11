@@ -24,16 +24,17 @@
 
 #include <villas/utils.hpp>
 #include <villas/tsc.h>
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 
 #define CNT (1 << 18)
 
+// cppcheck-suppress unknownMacro
 TestSuite(tsc, .description = "Timestamp counters");
 
 Test(tsc, increasing)
 {
 	int ret;
-	struct tsc tsc;
+	struct Tsc tsc;
 	uint64_t *cntrs;
 
 	ret = tsc_init(&tsc);
@@ -56,7 +57,7 @@ Test(tsc, sleep)
 	int ret;
 	double delta, duration = 1;
 	struct timespec start, stop;
-	struct tsc tsc;
+	struct Tsc tsc;
 	uint64_t start_cycles, end_cycles;
 
 	ret = tsc_init(&tsc);

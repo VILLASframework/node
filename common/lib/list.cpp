@@ -28,10 +28,12 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <villas/list.h>
+#include <villas/list.hpp>
 #include <villas/utils.hpp>
 
-int vlist_init(struct vlist *l)
+using namespace villas;
+
+int villas::list_init(struct List *l)
 {
 	pthread_mutex_init(&l->lock, nullptr);
 
@@ -43,14 +45,14 @@ int vlist_init(struct vlist *l)
 	return 0;
 }
 
-int vlist_destroy(struct vlist *l, dtor_cb_t destructor, bool release)
+int villas::list_destroy(struct List *l, dtor_cb_t destructor, bool release)
 {
 	pthread_mutex_lock(&l->lock);
 
 	assert(l->state != State::DESTROYED);
 
-	for (size_t i = 0; i < vlist_length(l); i++) {
-		void *e = vlist_at(l, i);
+	for (size_t i = 0; i < list_length(l); i++) {
+		void *e = list_at(l, i);
 
 		if (destructor)
 			destructor(e);
@@ -71,7 +73,7 @@ int vlist_destroy(struct vlist *l, dtor_cb_t destructor, bool release)
 	return 0;
 }
 
-void vlist_push(struct vlist *l, void *p)
+void villas::list_push(struct List *l, void *p)
 {
 	pthread_mutex_lock(&l->lock);
 
@@ -89,7 +91,7 @@ void vlist_push(struct vlist *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-void vlist_clear(struct vlist *l)
+void villas::list_clear(struct List *l)
 {
 	pthread_mutex_lock(&l->lock);
 
@@ -98,7 +100,7 @@ void vlist_clear(struct vlist *l)
 	pthread_mutex_unlock(&l->lock);
 }
 
-int vlist_remove(struct vlist *l, size_t idx)
+int villas::list_remove(struct List *l, size_t idx)
 {
 	pthread_mutex_lock(&l->lock);
 
@@ -117,7 +119,7 @@ int vlist_remove(struct vlist *l, size_t idx)
 	return 0;
 }
 
-int vlist_insert(struct vlist *l, size_t idx, void *p)
+int villas::list_insert(struct List *l, size_t idx, void *p)
 {
 	size_t i;
 	void *t, *o;
@@ -150,7 +152,7 @@ int vlist_insert(struct vlist *l, size_t idx, void *p)
 	return 0;
 }
 
-void vlist_remove_all(struct vlist *l, void *p)
+void villas::list_remove_all(struct List *l, void *p)
 {
 	int removed = 0;
 
@@ -158,11 +160,11 @@ void vlist_remove_all(struct vlist *l, void *p)
 
 	assert(l->state == State::INITIALIZED);
 
-	for (size_t i = 0; i < vlist_length(l); i++) {
-		if (vlist_at(l, i) == p)
+	for (size_t i = 0; i < list_length(l); i++) {
+		if (list_at(l, i) == p)
 			removed++;
 		else
-			l->array[i - removed] = vlist_at(l, i);
+			l->array[i - removed] = list_at(l, i);
 	}
 
 	l->length -= removed;
@@ -170,14 +172,14 @@ void vlist_remove_all(struct vlist *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-int vlist_contains(struct vlist *l, void *p)
+int villas::list_contains(struct List *l, void *p)
 {
-	return vlist_count(l, [](const void *a, const void *b) {
+	return list_count(l, [](const void *a, const void *b) {
 		return a == b ? 0 : 1;
 	}, p);
 }
 
-int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
+int villas::list_count(struct List *l, cmp_cb_t cmp, void *ctx)
 {
 	int c = 0;
 	void *e;
@@ -186,8 +188,8 @@ int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
 
 	assert(l->state == State::INITIALIZED);
 
-	for (size_t i = 0; i < vlist_length(l); i++) {
-		e = vlist_at(l, i);
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
@@ -197,7 +199,7 @@ int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
 	return c;
 }
 
-void * vlist_search(struct vlist *l, cmp_cb_t cmp, const void *ctx)
+void * villas::list_search(struct List *l, cmp_cb_t cmp, const void *ctx)
 {
 	void *e;
 
@@ -205,8 +207,8 @@ void * vlist_search(struct vlist *l, cmp_cb_t cmp, const void *ctx)
 
 	assert(l->state == State::INITIALIZED);
 
-	for (size_t i = 0; i < vlist_length(l); i++) {
-		e = vlist_at(l, i);
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
 		if (cmp(e, ctx) == 0)
 			goto out;
 	}
@@ -218,7 +220,7 @@ out:	pthread_mutex_unlock(&l->lock);
 	return e;
 }
 
-void vlist_sort(struct vlist *l, cmp_cb_t cmp)
+void villas::list_sort(struct List *l, cmp_cb_t cmp)
 {
 	pthread_mutex_lock(&l->lock);
 
@@ -235,7 +237,7 @@ void vlist_sort(struct vlist *l, cmp_cb_t cmp)
 	pthread_mutex_unlock(&l->lock);
 }
 
-int vlist_set(struct vlist *l, unsigned index, void *value)
+int villas::list_set(struct List *l, unsigned index, void *value)
 {
 	if (index >= l->length)
 		return -1;
@@ -245,7 +247,7 @@ int vlist_set(struct vlist *l, unsigned index, void *value)
 	return 0;
 }
 
-ssize_t vlist_index(struct vlist *l, void *p)
+ssize_t villas::list_index(struct List *l, void *p)
 {
 	void *e;
 	ssize_t f;
@@ -254,8 +256,8 @@ ssize_t vlist_index(struct vlist *l, void *p)
 
 	assert(l->state == State::INITIALIZED);
 
-	for (size_t i = 0; i < vlist_length(l); i++) {
-		e = vlist_at(l, i);
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
 		if (e == p) {
 			f = i;
 			goto found;
@@ -269,19 +271,19 @@ found:	pthread_mutex_unlock(&l->lock);
 	return f;
 }
 
-void vlist_extend(struct vlist *l, size_t len, void *val)
+void villas::list_extend(struct List *l, size_t len, void *val)
 {
-	while (vlist_length(l) < len)
-		vlist_push(l, val);
+	while (list_length(l) < len)
+		list_push(l, val);
 }
 
-void vlist_filter(struct vlist *l, dtor_cb_t cb)
+void villas::list_filter(struct List *l, dtor_cb_t cb)
 {
 	size_t i, j;
 	pthread_mutex_lock(&l->lock);
 
-	for (i  = 0, j = 0; i < vlist_length(l); i++) {
-		void *e = vlist_at(l, i);
+	for (i  = 0, j = 0; i < list_length(l); i++) {
+		void *e = list_at(l, i);
 
 		if (!cb(e))
 			l->array[j++] = e;

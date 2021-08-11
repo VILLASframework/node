@@ -45,7 +45,7 @@
 #define bit_TSC_INVARIANT	(1 << 8)
 #define bit_RDTSCP		(1 << 27)
 
-struct tsc {
+struct Tsc {
 	uint64_t frequency;
 
 	bool rdtscp_supported;
@@ -53,7 +53,7 @@ struct tsc {
 };
 
 __attribute__((unused))
-static uint64_t tsc_now(struct tsc *t)
+static uint64_t tsc_now(struct Tsc *t)
 {
 	uint32_t tsc_aux;
 	return t->rdtscp_supported
@@ -61,6 +61,6 @@ static uint64_t tsc_now(struct tsc *t)
 		: __rdtsc();
 }
 
-int tsc_init(struct tsc *t) __attribute__ ((warn_unused_result));
+int tsc_init(struct Tsc *t) __attribute__ ((warn_unused_result));
 
-uint64_t tsc_rate_to_cycles(struct tsc *t, double rate);
+uint64_t tsc_rate_to_cycles(struct Tsc *t, double rate);
