@@ -29,7 +29,7 @@
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/kernel/pci.hpp>
 
 using namespace villas::kernel::pci;

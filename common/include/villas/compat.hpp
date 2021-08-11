@@ -24,7 +24,7 @@
 
 #include <jansson.h>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 
 #if JANSSON_VERSION_HEX < 0x020A00
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);

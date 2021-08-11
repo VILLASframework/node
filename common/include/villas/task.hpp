@@ -44,7 +44,7 @@
 #endif
 
 #if PERIODIC_TASK_IMPL == RDTSC
-  #include <villas/tsc.h>
+  #include <villas/tsc.hpp>
 #endif
 
 struct Task {
@@ -61,7 +61,7 @@ struct Task {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
 #elif PERIODIC_TASK_IMPL == RDTSC
-	struct tsc tsc;			/**< Initialized by tsc_init(). */
+	struct Tsc tsc;			/**< Initialized by tsc_init(). */
 #endif
 
 	/** Create a new task with the given rate. */

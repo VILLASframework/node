@@ -32,11 +32,7 @@ enum class State {
 	PARSED		= 2,
 	CHECKED		= 3,
 	STARTED		= 4,
-	LOADED		= 4, /* alias for STARTED used by struct plugin */
-	OPENED		= 4, /* alias for STARTED used by IO */
 	STOPPED		= 5,
-	UNLOADED	= 5, /* alias for STARTED used by struct plugin */
-	CLOSED		= 5, /* alias for STARTED used by struct io */
 	PENDING_CONNECT	= 6,
 	CONNECTED	= 7,
 	PAUSED		= 8,

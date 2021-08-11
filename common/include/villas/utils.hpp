@@ -37,7 +37,7 @@
 
 #include <openssl/sha.h>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)

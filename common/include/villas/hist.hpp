@@ -41,7 +41,7 @@ public:
 	using cnt_t = uintmax_t;
 	using idx_t = std::vector<cnt_t>::difference_type;
 
-	/** Initialize struct hist with supplied values and allocate memory for buckets. */
+	/** Initialize struct Hist with supplied values and allocate memory for buckets. */
 	Hist(int buckets = 0, cnt_t warmup = 0);
 
 	/** Reset all counters and values back to zero. */

@@ -42,25 +42,27 @@
 #define LIST_INIT_STATIC(l)					\
 __attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
 	int ret __attribute__((unused));			\
-	ret = vlist_init(l);					\
+	ret = list_init(l);					\
 }								\
 __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 	int ret __attribute__((unused));			\
-	ret = vlist_destroy(l, nullptr, false);			\
+	ret = list_destroy(l, nullptr, false);			\
 }
 
-#define vlist_length(list)		((list)->length)
-#define vlist_at_safe(list, index)	((list)->length > index ? (list)->array[index] : nullptr)
-#define vlist_at(list, index)		((list)->array[index])
+#define list_length(list)		((list)->length)
+#define list_at_safe(list, index)	((list)->length > index ? (list)->array[index] : nullptr)
+#define list_at(list, index)		((list)->array[index])
 
-#define vlist_first(list)		vlist_at(list, 0)
-#define vlist_last(list)		vlist_at(list, (list)->length-1)
+#define list_first(list)		list_at(list, 0)
+#define list_last(list)			list_at(list, (list)->length-1)
+
+namespace villas {
 
 /** Callback to search or sort a list. */
 typedef int (*cmp_cb_t)(const void *, const void *);
 
 /* The list data structure. */
-struct vlist {
+struct List {
 	enum State state;	/**< The state of this list. */
 	void **array;		/**< Array of pointers to list elements */
 	size_t capacity;	/**< Size of list::array in elements */
@@ -72,62 +74,62 @@ struct vlist {
  *
  * @param l A pointer to the list data structure.
  */
-int vlist_init(struct vlist *l) __attribute__ ((warn_unused_result));
+int list_init(struct List *l) __attribute__ ((warn_unused_result));
 
 /** Destroy a list and call destructors for all list elements
  *
- * @param free free() all list members during when calling vlist_destroy()
+ * @param free free() all list members during when calling list_destroy()
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-int vlist_destroy(struct vlist *l, dtor_cb_t dtor = nullptr, bool free = false) __attribute__ ((warn_unused_result));
+int list_destroy(struct List *l, dtor_cb_t dtor = nullptr, bool free = false) __attribute__ ((warn_unused_result));
 
 /** Append an element to the end of the list */
-void vlist_push(struct vlist *l, void *p);
+void list_push(struct List *l, void *p);
 
 /** Clear list */
-void vlist_clear(struct vlist *l);
+void list_clear(struct List *l);
 
 /** Remove all occurences of a list item */
-void vlist_remove_all(struct vlist *l, void *p);
+void list_remove_all(struct List *l, void *p);
 
-int vlist_remove(struct vlist *l, size_t idx);
+int list_remove(struct List *l, size_t idx);
 
-int vlist_insert(struct vlist *l, size_t idx, void *p);
+int list_insert(struct List *l, size_t idx, void *p);
 
 /** Return the first element of the list for which cmp returns zero */
-void * vlist_search(struct vlist *l, cmp_cb_t cmp, const void *ctx);
+void * list_search(struct List *l, cmp_cb_t cmp, const void *ctx);
 
 /** Returns the number of occurences for which cmp returns zero when called on all list elements. */
-int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx);
+int list_count(struct List *l, cmp_cb_t cmp, void *ctx);
 
 /** Return 0 if list contains pointer p */
-int vlist_contains(struct vlist *l, void *p);
+int list_contains(struct List *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
-void vlist_sort(struct vlist *l, cmp_cb_t cmp);
+void list_sort(struct List *l, cmp_cb_t cmp);
 
 /** Set single element in list */
-int vlist_set(struct vlist *l, unsigned index, void *value);
+int list_set(struct List *l, unsigned index, void *value);
 
 /** Return index in list for value.
  *
  * @retval <0 No list entry  matching \p value was found.
  * @retval >=0 Entry \p value was found at returned index.
  */
-ssize_t vlist_index(struct vlist *l, void *value);
+ssize_t list_index(struct List *l, void *value);
 
 /** Extend the list to the given length by filling new slots with given value. */
-void vlist_extend(struct vlist *l, size_t len, void *val);
+void list_extend(struct List *l, size_t len, void *val);
 
 /** Remove all elements for which the callback returns a non-zero return code. */
-void vlist_filter(struct vlist *l, dtor_cb_t cb);
+void list_filter(struct List *l, dtor_cb_t cb);
 
 /** Lookup an element from the list based on a name */
 template<typename T>
-T * vlist_lookup_name(struct vlist *l, const std::string &name)
+T * list_lookup_name(struct List *l, const std::string &name)
 {
-	return (T *) vlist_search(l, [](const void *a, const void *b) -> int {
+	return (T *) list_search(l, [](const void *a, const void *b) -> int {
 		auto *e = reinterpret_cast<const T *>(a);
 		auto *s = reinterpret_cast<const std::string *>(b);
 
@@ -137,9 +139,11 @@ T * vlist_lookup_name(struct vlist *l, const std::string &name)
 
 /** Lookup index of list element based on name */
 template<typename T>
-ssize_t vlist_lookup_index(struct vlist *l, const std::string &name)
+ssize_t list_lookup_index(struct List *l, const std::string &name)
 {
-	auto *f = vlist_lookup_name<T>(l, name);
+	auto *f = list_lookup_name<T>(l, name);
 
-	return f ? vlist_index(l, f) : -1;
+	return f ? list_index(l, f) : -1;
 }
+
+} /* namespace villas */

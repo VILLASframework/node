@@ -24,7 +24,7 @@
 #include <math.h>
 #include <criterion/criterion.h>
 
-#include <villas/timing.h>
+#include <villas/timing.hpp>
 
 // cppcheck-suppress unknownMacro
 TestSuite(timing, .description = "Time measurements");

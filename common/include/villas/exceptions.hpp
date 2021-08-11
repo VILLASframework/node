@@ -32,7 +32,7 @@
 #include <fmt/core.h>
 #include <jansson.h>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 
 namespace villas {
 
