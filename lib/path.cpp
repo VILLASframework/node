@@ -816,7 +816,9 @@ json_t * path_to_json(struct vpath *p)
 	uuid_unparse(p->uuid, uuid);
 
 	json_t *json_signals = signal_list_to_json(&p->signals);
+#ifdef WITH_HOOKS
 	json_t *json_hooks = hook_list_to_json(&p->hooks);
+#endif /* WITH_HOOKS */
 	json_t *json_sources = json_array();
 	json_t *json_destinations = json_array();
 
@@ -844,7 +846,9 @@ json_t * path_to_json(struct vpath *p)
 		"poll", p->poll,
 		"queuelen", p->queuelen,
 		"signals", json_signals,
+#ifdef WITH_HOOKS
 		"hooks", json_hooks,
+#endif /* WITH_HOOKS */
 		"in", json_sources,
 		"out", json_destinations
 	);
