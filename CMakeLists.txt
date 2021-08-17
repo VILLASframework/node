@@ -48,6 +48,19 @@ if(APPLE)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig")
 endif()
 
+# check compiler version
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # require at least gcc 8
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8)
+        message(FATAL_ERROR "GCC version must be at least 8!")
+    endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # require at least clang 7
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7)
+        message(FATAL_ERROR "Clang version must be at least 7!")
+    endif()
+endif()
+
 include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)

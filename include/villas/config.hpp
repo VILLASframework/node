@@ -25,22 +25,14 @@
 
 #include <cstdio>
 #include <unistd.h>
-
 #include <functional>
 #include <regex>
-#if __has_include(<filesystem>)
-  #include <filesystem>
-  namespace fs = std::filesystem;
-#elif __has_include(<experimental/filesystem>)
-  #include <experimental/filesystem>
-  namespace fs = std::experimental::filesystem;
-#else
-  error "Missing the <filesystem> header."
-#endif
+#include <filesystem>
 #include <jansson.h>
-
 #include <villas/node/config.h>
 #include <villas/log.hpp>
+
+namespace fs = std::filesystem;
 
 namespace villas {
 namespace node {

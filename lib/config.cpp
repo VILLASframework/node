@@ -23,21 +23,11 @@
 
 #include <unistd.h>
 #include <libgen.h>
-
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#if __has_include(<filesystem>)
-  #include <filesystem>
-  namespace fs = std::filesystem;
-#elif __has_include(<experimental/filesystem>)
-  #include <experimental/filesystem>
-  namespace fs = std::experimental::filesystem;
-#else
-  error "Missing the <filesystem> header."
-#endif
-
+#include <filesystem>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/config.hpp>
@@ -47,6 +37,7 @@
 
 using namespace villas;
 using namespace villas::node;
+namespace fs = std::filesystem;
 
 Config::Config() :
 	logger(logging.get("config")),
