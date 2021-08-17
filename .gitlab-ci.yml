@@ -179,7 +179,7 @@ test:integration:
     - build/tests/integration/
   services:
   - eclipse-mosquitto
-  - rabbitmq
+  - rabbitmq:3.8
   - redis
   tags:
   - docker
