@@ -32,6 +32,7 @@
 #include <villas/pool.h>
 #include <villas/format.hpp>
 #include <villas/queue_signalled.h>
+#include <villas/super_node.hpp>
 
 /* Forward declarations */
 struct vnode;
