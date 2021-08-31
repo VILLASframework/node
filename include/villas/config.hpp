@@ -25,10 +25,12 @@
 
 #include <cstdio>
 #include <unistd.h>
+#include <jansson.h>
+
 #include <functional>
 #include <regex>
 #include <filesystem>
-#include <jansson.h>
+
 #include <villas/node/config.h>
 #include <villas/log.hpp>
 
