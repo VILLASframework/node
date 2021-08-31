@@ -24,7 +24,6 @@ set(HOOK_SRC
     average.cpp
     cast.cpp
     decimate.cpp
-    dft.cpp
     dp.cpp
     drop.cpp
     dump.cpp
@@ -35,6 +34,7 @@ set(HOOK_SRC
     limit_rate.cpp
     limit_value.cpp
     ma.cpp
+    pmu_dft.cpp
     pps_ts.cpp
     print.cpp
     restart.cpp

@@ -41,7 +41,7 @@
 namespace villas {
 namespace node {
 
-class DftHook : public MultiSignalHook {
+class PmuDftHook : public MultiSignalHook {
 
 protected:
 	enum class PaddingType {
@@ -125,7 +125,7 @@ protected:
 	double angleUnitFactor;
 
 public:
-	DftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+	PmuDftHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
@@ -555,7 +555,7 @@ public:
 /* Register hook */
 static char n[] = "dft";
 static char d[] = "This hook calculates the  dft on a window";
-static HookPlugin<DftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
+static HookPlugin<PmuDftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } /* namespace node */
 } /* namespace villas */
