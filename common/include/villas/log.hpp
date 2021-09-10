@@ -49,6 +49,7 @@ public:
 	using Level = spdlog::level::level_enum;
 	using DefaultSink = std::shared_ptr<spdlog::sinks::stderr_color_sink_mt>;
 	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
+	using Formatter = std::shared_ptr<spdlog::pattern_formatter>;
 
 	class Expression {
 	public:
@@ -66,6 +67,7 @@ public:
 protected:
 	DistSink sinks;
 	DefaultSink sink;
+	Formatter formatter;
 
 	Level level;
 
@@ -85,7 +87,7 @@ public:
 
 	Logger get(const std::string &name);
 
-	void setPattern(const std::string &pattern);
+	void setFormatter(const std::string &pattern);
 	void setLevel(Level lvl);
 	void setLevel(const std::string &lvl);
 

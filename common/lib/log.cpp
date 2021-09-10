@@ -22,6 +22,7 @@
 
 #include <list>
 #include <algorithm>
+#include <map>
 
 #include <fnmatch.h>
 
@@ -37,9 +38,40 @@ using namespace villas;
 /** The global log instance */
 Log villas::logging;
 
+static std::map<spdlog::level::level_enum, std::string> levelNames = {
+		{ spdlog::level::trace,		"trc" },
+		{ spdlog::level::debug,		"dbg" },
+		{ spdlog::level::info,		"info"  },
+		{ spdlog::level::warn,		"warn"  },
+		{ spdlog::level::err,		"err" },
+		{ spdlog::level::critical,	"crit"  },
+		{ spdlog::level::off,		"off"   }
+	};
+
+class CustomLevelFlag : public spdlog::custom_flag_formatter {
+
+public:
+	void format(const spdlog::details::log_msg &msg, const std::tm &, spdlog::memory_buf_t &dest) override
+	{
+		auto lvl = levelNames[msg.level];
+		auto lvlpad = std::string(padinfo_.width_ - lvl.size(), ' ') + lvl;
+		dest.append(lvlpad.data(), lvlpad.data() + lvlpad.size());
+	}
+
+	spdlog::details::padding_info get_padding_info()
+	{
+		return padinfo_;
+	}
+
+	std::unique_ptr<custom_flag_formatter> clone() const override
+	{
+		return spdlog::details::make_unique<CustomLevelFlag>();
+	}
+};
+
 Log::Log(Level lvl) :
 	level(lvl),
-	pattern("%H:%M:%S %^%l%$ %n: %v")
+	pattern("%H:%M:%S %^%-4t%$ %-16n %v")
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
 	if (p)
@@ -48,7 +80,7 @@ Log::Log(Level lvl) :
 	sinks = std::make_shared<DistSink::element_type>();
 
 	setLevel(level);
-	setPattern(pattern);
+	setFormatter(pattern);
 
 	/* Default sink */
 	sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
@@ -74,7 +106,7 @@ Logger Log::get(const std::string &name)
 		logger = std::make_shared<Logger::element_type>(name, sink);
 
 		logger->set_level(level);
-		logger->set_pattern(prefix + pattern);
+		logger->set_formatter(formatter->clone());
 
 		for (auto &expr : expressions) {
 			int flags = 0;
@@ -142,12 +174,16 @@ void Log::parse(json_t *json)
 	}
 }
 
-void Log::setPattern(const std::string &pat)
+void Log::setFormatter(const std::string &pat)
 {
 	pattern = pat;
 
-	spdlog::set_pattern(pattern, spdlog::pattern_time_type::utc);
-	sinks->set_pattern(pattern);
+	formatter = std::make_shared<spdlog::pattern_formatter>(spdlog::pattern_time_type::utc);
+	formatter->add_flag<CustomLevelFlag>('t');
+	formatter->set_pattern(pattern);
+
+	spdlog::set_formatter(formatter->clone());
+	sinks->set_formatter(formatter->clone());
 }
 
 void Log::setLevel(Level lvl)

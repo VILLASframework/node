@@ -108,7 +108,7 @@ protected:
 		std::stringstream ss;
 
 		ss << std::runtime_error::what() << std::endl;
-		ss << " Please consult the user documentation for details: " << std::endl;
+		ss << std::endl << " Please consult the user documentation for details: " << std::endl;
 		ss << "   " << docUri();
 
 		if (error.position >= 0) {
