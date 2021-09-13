@@ -45,10 +45,6 @@ add_library(villas-common SHARED
 	version.cpp
 )
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-	target_link_libraries(villas-common PUBLIC "-lstdc++fs")
-endif()
-
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 	target_sources(villas-common PRIVATE tsc.cpp)
 endif()
