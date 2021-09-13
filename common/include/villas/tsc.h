@@ -29,6 +29,7 @@
 
 #include <cpuid.h>
 #include <cinttypes>
+#include <x86intrin.h>
 
 #ifdef __APPLE__
   #include <sys/types.h>
@@ -51,48 +52,13 @@ struct tsc {
 	bool is_invariant;
 };
 
-/** Get CPU timestep counter */
-__attribute__((unused,always_inline))
-static inline uint64_t rdtscp()
-{
-	uint64_t tsc;
-
-	__asm__ __volatile__(
-		 "rdtscp;"
-		 "shl $32, %%rdx;"
-		 "or %%rdx,%%rax"
-		: "=a" (tsc)
-		:
-		: "%rcx", "%rdx", "memory"
-	);
-
-	return tsc;
-}
-
-__attribute__((unused,always_inline))
-static inline uint64_t rdtsc()
-{
-	uint64_t tsc;
-
-	__asm__ __volatile__(
-		 "lfence;"
-		 "rdtsc;"
-		 "shl $32, %%rdx;"
-		 "or %%rdx,%%rax"
-		: "=a" (tsc)
-		:
-		: "%rcx", "%rdx", "memory"
-	);
-
-	return tsc;
-}
-
 __attribute__((unused))
 static uint64_t tsc_now(struct tsc *t)
 {
+	uint32_t tsc_aux;
 	return t->rdtscp_supported
-		? rdtscp()
-		: rdtsc();
+		? __rdtscp(&tsc_aux)
+		: __rdtsc();
 }
 
 int tsc_init(struct tsc *t) __attribute__ ((warn_unused_result));
