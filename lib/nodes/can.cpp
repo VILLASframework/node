@@ -152,10 +152,10 @@ int can_parse(struct vnode *n, json_t *json)
 	if (!c->in)
 		throw MemoryAllocationError();
 
-	c->out = (struct can_signal*)calloc(
+	c->out = (struct can_signal*) calloc(
 			 json_array_size(json_out_signals),
 			 sizeof(struct can_signal));
-	if (c->out)
+	if (!c->out)
 		throw MemoryAllocationError();
 
 	json_array_foreach(json_in_signals, i, json_signal) {
