@@ -553,7 +553,7 @@ public:
 };
 
 /* Register hook */
-static char n[] = "dft";
+static char n[] = "pmu_dft";
 static char d[] = "This hook calculates the  dft on a window";
 static HookPlugin<PmuDftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
