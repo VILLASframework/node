@@ -332,8 +332,8 @@ static void register_plugin() {
 	p.description	= "Communicate with VILLASfpga Xilinx FPGA boards";
 	p.vectorize	= 1;
 	p.size		= sizeof(struct fpga);
-	p.start	= fpga_type_start;
-	p.stop	= fpga_type_stop;
+	p.type.start	= fpga_type_start;
+	p.type.stop	= fpga_type_stop;
 	p.init		= fpga_init;
 	p.destroy	= fpga_destroy;
 	p.prepare	= fpga_prepare;
