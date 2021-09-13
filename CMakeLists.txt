@@ -184,7 +184,7 @@ cmake_dependent_option(WITH_NODE_EXEC       "Build with exec node-type"         
 cmake_dependent_option(WITH_NODE_FILE       "Build with file node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_FPGA       "Build with fpga node-type"                             ON "WITH_FPGA" OFF)
 cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"                        ON "LIBIEC61850_FOUND" OFF)
-cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "FALSE; IBVerbs_FOUND; RDMACM_FOUND" OFF) # Infiniband node-type is currenly broken
+cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "IBVerbs_FOUND; RDMACM_FOUND" OFF) # Infiniband node-type is currenly broken
 cmake_dependent_option(WITH_NODE_INFLUXDB   "Build with influxdb node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_KAFKA      "Build with kafka node-type"                            ON "RDKAFKA_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_LOOPBACK   "Build with loopback node-type"                         ON "" OFF)

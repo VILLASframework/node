@@ -26,7 +26,9 @@
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/memory/ib.h>
+#include <villas/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 struct ibv_mr * memory_ib_get_mr(void *ptr)
@@ -55,8 +57,10 @@ static struct memory_allocation * memory_ib_alloc(size_t len, size_t alignment, 
 	ma->parent = mi->parent->alloc(len + sizeof(struct ibv_mr *), alignment, mi->parent);
 	ma->address = ma->parent->address;
 
-	if (!mi->pd)
-		error("Protection domain is not registered!");
+	if (!mi->pd) {
+		auto logger = logging.get("memory:ib");
+		logger->error("Protection domain is not registered!");
+	}
 
 	ma->ib.mr = ibv_reg_mr(mi->pd, ma->address, ma->length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 	if (!ma->ib.mr) {

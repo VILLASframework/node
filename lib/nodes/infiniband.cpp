@@ -180,6 +180,8 @@ int ib_parse(struct vnode *n, json_t *json)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
+	throw ConfigError(json, "The infiniband node-type is currently broken!");
+
 	int ret;
 	char *local = nullptr, *remote = nullptr, *lasts;
 	const char *transport_mode = "RC";
@@ -777,7 +779,9 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 		}
 		else {
 			ib->conn.available_recv_wrs += max_wr_post;
-			*release = 0; /* While we fill the receive queue, we always use all samples */
+
+			// TODO: fix release logic
+			// *release = 0; /* While we fill the receive queue, we always use all samples */
 		}
 
 		/* Get Memory Region */
@@ -855,7 +859,8 @@ int ib_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 			 */
 			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
 
-			smps[j] = (struct sample *) (wc[j].wr_id);
+			// TODO: fix release logic
+			// smps[j] = (struct sample *) (wc[j].wr_id);
 
 			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
@@ -881,7 +886,8 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	n->logger->debug("ib_write is called");
 
 	if (n->state == State::CONNECTED) {
-		*release = 0;
+		// TODO: fix release logic
+		// *release = 0;
 
 		/* First, write */
 
@@ -962,39 +968,42 @@ int ib_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 				 * and prepare them to be released
 				 */
 				n->logger->debug("Bad WR occured with ID: {:#x} and S/G address: {:#x}: {}",
-					bad_wr->wr_id, bad_wr->sg_list, ret);
+					bad_wr->wr_id, (void *) bad_wr->sg_list, ret);
 
 				while (1) {
-					smps[*release] = smps[m];
-
-					(*release)++; /* Increment number of samples to be released */
-					sent--; /* Decrement the number of succesfully posted elements */
+					// TODO: fix release logic
+					// smps[*release] = smps[m];
+					// (*release)++; /* Increment number of samples to be released */
+					sent--; /* Decrement the number of successfully posted elements */
 
 					if (++m == cnt) break;
 				}
 			}
 			else if (wr[m].send_flags & IBV_SEND_INLINE) {
-				smps[*release] = smps[m];
-
-				(*release)++;
+				// TODO: fix release logic
+				// smps[*release] = smps[m];
+				// (*release)++;
 			}
 		}
 
-		n->logger->debug("{} samples will be released (before WC)", *release);
+		// TODO: fix release logic
+		// n->logger->debug("{} samples will be released (before WC)", *release);
 
 		/* Try to grab as many CQEs from CQ as there is space in *smps[] */
-		ret = ibv_poll_cq(ib->ctx.send_cq, cnt - *release, wc);
+		// ret = ibv_poll_cq(ib->ctx.send_cq, cnt - *release, wc);
 
 		for (int i = 0; i < ret; i++) {
 			if (wc[i].status != IBV_WC_SUCCESS && wc[i].status != IBV_WC_WR_FLUSH_ERR)
 				n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
 					wc[i].status);
 
-			smps[*release] = (struct sample *) (wc[i].wr_id);
-			(*release)++;
+			// TODO: fix release logic
+			// smps[*release] = (struct sample *) (wc[i].wr_id);
+			// (*release)++;
 		}
 
-		n->logger->debug("{} samples will be released (after WC)", *release);
+		// TODO: fix release logic
+		// n->logger->debug("{} samples will be released (after WC)", *release);
 	}
 
 	return sent;
