@@ -514,21 +514,21 @@ Device::pciEnable()
 {
 	int ret;
 	uint32_t reg;
-	const off_t offset = PCI_COMMAND +
-	                     (static_cast<off_t>(VFIO_PCI_CONFIG_REGION_INDEX) << 40);
+	const off64_t offset = PCI_COMMAND +
+	                     (static_cast<off64_t>(VFIO_PCI_CONFIG_REGION_INDEX) << 40);
 
 	/* Check if this is really a vfio-pci device */
 	if (!(this->info.flags & VFIO_DEVICE_FLAGS_PCI))
 		return false;
 
-	ret = pread(this->fd, &reg, sizeof(reg), offset);
+	ret = pread64(this->fd, &reg, sizeof(reg), offset);
 	if (ret != sizeof(reg))
 		return false;
 
 	/* Enable memory access and PCI bus mastering which is required for DMA */
 	reg |= PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
 
-	ret = pwrite(this->fd, &reg, sizeof(reg), offset);
+	ret = pwrite64(this->fd, &reg, sizeof(reg), offset);
 	if (ret != sizeof(reg))
 		return false;
 
