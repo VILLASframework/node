@@ -46,6 +46,70 @@ if ! pkg-config "criterion >= 2.3.1" && \
     popd
 fi
 
+# Build & Install libjansson
+if ! pkg-config "jansson >= 2.7" && \
+    [ -z "${SKIP_JANSSON}" ]; then
+    git clone --branch v2.14 --depth 1 https://github.com/akheron/jansson
+    pushd jansson
+    autoreconf -i
+    ./configure ${CONFIGURE_OPTS}
+    if [ -z "${PACKAGE}" ]; then
+        make ${MAKE_OPTS} install
+    fi
+    popd
+fi
+
+# Build & Install Lua
+if ! ( pkg-config "lua >= 5.1" || pkg-config "lua54" || pkg-config "lua53" || pkg-config "lua52" || pkg-config "lua51" ) && \
+    [ -z "${SKIP_LUA}" ]; then
+    wget http://www.lua.org/ftp/lua-5.3.6.tar.gz -O - | tar -xz
+    pushd lua-5.3.6
+    if [ -z "${PACKAGE}" ]; then
+        make ${MAKE_OPTS} MYCFLAGS=-fPIC linux install
+    fi
+    popd
+fi
+
+# Build & Install mosquitto
+if ! pkg-config "libmosquitto >= 1.4.15" && \
+    [ -z "${SKIP_LIBIEC61850}" ]; then
+    git clone --branch v2.0.12 --depth 1 https://github.com/eclipse/mosquitto
+    mkdir -p mosquitto/build
+    pushd mosquitto/build
+    cmake -DWITH_BROKER=OFF \
+          -DWITH_CLIENTS=OFF \
+          -DWITH_APPS=OFF \
+          -DDOCUMENTATION=OFF \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    popd
+fi
+
+# Build & Install rabbitmq-c
+if ! pkg-config "librabbitmq >= 0.8.0" && \
+    [ -z "${SKIP_LIBIEC61850}" ]; then
+    git clone --branch v0.11.0 --depth 1 https://github.com/alanxz/rabbitmq-c
+    mkdir -p rabbitmq-c/build
+    pushd rabbitmq-c/build
+    cmake ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    popd
+fi
+
+# Build & Install libzmq
+if ! pkg-config "libzmq >= 2.2.0" && \
+    [ -z "${SKIP_LIBIEC61850}" ]; then
+    git clone --branch v4.3.4 --depth 1 https://github.com/zeromq/libzmq
+    mkdir -p libzmq/build
+    pushd libzmq/build
+    cmake -DWITH_PERF_TOOL=OFF \
+          -DZMQ_BUILD_TESTS=OFF \
+          -DENABLE_CPACK=OFF \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    popd
+fi
+
 # Build & Install EtherLab
 if [ -z "${SKIP_ETHERLAB}" ]; then
     hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
@@ -77,9 +141,9 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
 fi
 
 # Build & Install librdkafka
-if ! pkg-config "rdkafka>=1.5.0" && \
+if ! pkg-config "rdkafka >= 1.5.0" && \
     [ -z "${SKIP_RDKAFKA}" ]; then
-    git clone --branch v1.6.0 --depth 1 https://github.com/edenhill/librdkafka.git
+    git clone --branch v1.6.0 --depth 1 https://github.com/edenhill/librdkafka
     mkdir -p librdkafka/build
     pushd librdkafka/build
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
@@ -89,6 +153,16 @@ if ! pkg-config "rdkafka>=1.5.0" && \
     popd
 fi
 
+# Build & Install Graphviz
+if ! ( pkg-config "libcgraph >= 2.30" && pkg-config "libgvc >= 2.30" ) && \
+    [ -z "${SKIP_RDKAFKA}" ]; then
+    git clone --branch 2.49.0 --depth 1 https://gitlab.com/graphviz/graphviz.git
+    mkdir -p graphviz/build
+    pushd graphviz/build
+    cmake ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} ${TARGET}
+    popd
+fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.2.0" && \
@@ -103,6 +177,35 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
         make dist
         cp fedora/uldaq_ldconfig.patch libuldaq-1.1.2.tar.gz ~/rpmbuild/SOURCES
         rpmbuild -ba fedora/uldaq.spec
+    fi
+    popd
+fi
+
+# Build & Install libnl3
+if ! pkg-config "libuldaq >= 3.2.25" && \
+    [ -z "${SKIP_ULDAQ}" ]; then
+    git clone --branch libnl3_5_0 --depth 1 https://github.com/thom311/libnl
+    pushd libnl
+    autoreconf -i
+    ./configure ${CONFIGURE_OPTS}
+    if [ -z "${PACKAGE}" ]; then
+        make ${MAKE_OPTS} install
+    fi
+    popd
+fi
+
+# Build & Install libconfig
+if ! pkg-config "libconfig >= 1.4.9" && \
+    [ -z "${SKIP_ULDAQ}" ]; then
+    git clone --branch v1.7.3 --depth 1 https://github.com/hyperrealm/libconfig
+    pushd libconfig
+    autoreconf -i
+    ./configure ${CONFIGURE_OPTS} \
+        --disable-tests \
+        --disable-examples \
+        --disable-doc
+    if [ -z "${PACKAGE}" ]; then
+        make ${MAKE_OPTS} install
     fi
     popd
 fi
