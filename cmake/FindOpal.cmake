@@ -24,32 +24,37 @@ find_path(OPAL_INCLUDE_DIR
 	NAMES AsyncApi.h
 	HINTS
 		/usr/opalrt/common/include_target/
+		${PROJECT_SOURCE_DIR}/libopal/include/opal/
+
 )
 
-find_library(OPAL_LIBRARY_ASYNCAPICORE
+find_library(OPAL_LIBRARY
 	NAMES OpalAsyncApiCore
 	HINTS
 		/usr/opalrt/common/lib/
+		${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_IRC
 	NAMES irc
 	HINTS
 		/usr/opalrt/common/lib/
+		${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_OPAL_UTILS
 	NAMES OpalUtils
 	HINTS
-		/usr/opalrt/common/lib/redhawk
+		/usr/opalrt/common/lib/redhawk/
+		${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_OPAL_CORE
 	NAMES OpalCore
 	HINTS
-		/usr/opalrt/common/lib/redhawk
+		/usr/opalrt/common/lib/redhawk/
+		${PROJECT_SOURCE_DIR}/libopal/
 )
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Opal DEFAULT_MSG OPAL_LIBRARY OPAL_INCLUDE_DIR)

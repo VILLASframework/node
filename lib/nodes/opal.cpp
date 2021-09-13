@@ -146,8 +146,9 @@ int opal_type_start(villas::node::SuperNode *sn)
 	if (err != EOK)
 		throw RuntimeError("Failed to get list of recv ids ({})", err);
 
-	info("Started as OPAL Asynchronous process");
-	info("This is VILLASnode %s (built on %s, %s)",
+	auto logger = logging.get("node:opal");
+	logger->info("Started as OPAL Asynchronous process");
+	logger->info("This is VILLASnode %s (built on %s, %s)",
 		PROJECT_BUILD_ID, __DATE__, __TIME__);
 
 	opal_print_global();
@@ -192,7 +193,7 @@ int opal_print_global()
 
 	logger->debug("Control Block Parameters:");
 	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)
-		logger->debug("FloatParam[{}] = {}", i, params.FloatParam[i]);
+		logger->debug("FloatParam[{}] = {}", i, (double) params.FloatParam[i]);
 	for (int i = 0; i < GENASYNC_NB_STRING_PARAM; i++)
 		logger->debug("StringParam[{}] = {}", i, params.StringParam[i]);
 
@@ -286,7 +287,7 @@ int opal_read(struct vnode *n, struct sample * const smps[], unsigned cnt)
 	OpalGetAsyncSendIconDataLength(&len, o->sendID);
 	if ((unsigned) len > s->capacity * sizeof(s->data[0])) {
 		n->logger->warn("Ignoring the last {} of {} values for OPAL (send_id={}).",
-		len / sizeof(double) - s->capacity, len / sizeof(double), o->send_id);
+		len / sizeof(double) - s->capacity, len / sizeof(double), o->sendID);
 
 		len = sizeof(data);
 	}
@@ -340,7 +341,7 @@ int opal_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 
 	/* Get the number of signals to send back to the model */
 	OpalGetAsyncRecvIconDataLength(&len, o->recvID);
-	if (len > sizeof(data))
+	if (len > (int) sizeof(data))
 		n->logger->warn("Node expecting more signals ({}) than values in message ({})", len / sizeof(double), s->length);
 
 	for (unsigned i = 0; i < s->length; i++)
@@ -359,8 +360,8 @@ static void register_plugin() {
 	p.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
 	p.vectorize	= 1;
 	p.size		= sizeof(struct opal);
-	p.start		= opal_type_start;
-	p.stop		= opal_type_stop;
+	p.type.start	= opal_type_start;
+	p.type.stop	= opal_type_stop;
 	p.parse		= opal_parse;
 	p.print		= opal_print;
 	p.start		= opal_start;
