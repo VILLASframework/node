@@ -29,12 +29,9 @@
 
 #include <functional>
 #include <regex>
-#include <filesystem>
 
 #include <villas/node/config.h>
 #include <villas/log.hpp>
-
-namespace fs = std::filesystem;
 
 namespace villas {
 namespace node {
@@ -76,7 +73,7 @@ protected:
 	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
 
 	/** Get the include dirs */
-	std::list<fs::path> getIncludeDirs(FILE *f) const;
+	std::list<std::string> getIncludeDirectories(FILE *f) const;
 
 public:
 	json_t *root;

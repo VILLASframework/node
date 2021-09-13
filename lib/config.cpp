@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <linux/limits.h>
 #include <unistd.h>
 #include <libgen.h>
 
@@ -122,16 +123,34 @@ json_t * Config::decode(FILE *f)
 	return root;
 }
 
-std::list<fs::path> Config::getIncludeDirs(FILE *f) const
+std::list<std::string> Config::getIncludeDirectories(FILE *f) const
 {
-	auto uri = fs::read_symlink(fs::path("/proc/self/fd") / std::to_string(fileno(f)));
-	if (isLocalFile(uri)) {
-		return {
-			uri.parent_path()
-		};
+	int ret, fd;
+	char buf[PATH_MAX];
+	char *dir;
+
+	std::list<std::string> dirs;
+
+	dir = getcwd(buf, sizeof(buf));
+	if (dir != nullptr)
+		dirs.push_back(dir);
+
+	fd = fileno(f);
+	if (fd < 0)
+		throw SystemError("Failed to get file descriptor");
+
+	auto path = fmt::format("/proc/self/fd/{}", fd);
+
+	ret = readlink(path.c_str(), buf, sizeof(buf));
+	if (ret > 0) {
+		buf[ret] = 0;
+		if (isLocalFile(buf)) {
+			dir = dirname(buf);
+			dirs.push_back(dir);
+		}
 	}
-	else
-		return { };
+
+	return dirs;
 }
 
 #ifdef WITH_CONFIG
@@ -145,7 +164,7 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_set_auto_convert(&cfg, 1);
 
 	/* Setup libconfig include path. */
-	auto inclDirs = getIncludeDirs(f);
+	auto inclDirs = getIncludeDirectories(f);
 	if (inclDirs.size() > 0) {
 		logger->info("Setting include dir to: {}", inclDirs.front());
 

@@ -40,10 +40,6 @@ if(UNIX AND NOT APPLE)
     list(APPEND LIBRARIES "rt")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    list(APPEND LIBRARIES "-lstdc++fs")
-endif()
-
 set(LIB_SRC
     config_helper.cpp
     config.cpp

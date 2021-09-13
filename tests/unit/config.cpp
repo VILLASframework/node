@@ -22,13 +22,11 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <criterion/criterion.h>
 
 #include <villas/utils.hpp>
 #include <villas/config.hpp>
 
-namespace fs = std::filesystem;
 using namespace villas::node;
 
 // cppcheck-suppress syntaxError
