@@ -21,12 +21,14 @@
 ###################################################################################
 
 if(OPAL_FOUND)
-    set(ASYNCIP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/models/send_receive)
-
-    set(ASYNCIP_OPTS RTLAB_INTEL_COMPILER=0 PROTOCOL=GTNET_SKT OPAL_LIBS="-lSystem -luuid" OPAL_LIBPATH=-L$(SRCDIR)/thirdparty/libopal/ OPAL_INCPATH=-I$(SRCDIR)/thirdparty/libopal/include/opal)
-    
     # Just call the original Makefile
     add_custom_target(clients-opal
-        COMMAND make -C ${ASYNCIP_PATH} -f Makefile.mk AsyncIP ${ASYNCIP_OPTS}
+        COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/models/send_receive
+                     -f Makefile.mk AsyncIP
+                     RTLAB_INTEL_COMPILER=0
+                     PROTOCOL=VILLAS
+                     OPAL_LIBS="-lSystem -luuid"
+                     OPAL_LIBPATH=-L${OPAL_LIBRARY_DIR}
+                     OPAL_INCPATH=-I${OPAL_INCLUDE_DIR}
     )
 endif()

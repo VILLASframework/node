@@ -161,6 +161,10 @@ else()
 endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
+if(CMAKE_CXX_FLAGS MATCHES "-m32" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i[3456]86")
+    set(IS_32BIT ON)
+endif()
+
 # Build options
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)
 cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         ON "LIBWEBSOCKETS_FOUND" OFF)
@@ -192,7 +196,7 @@ cmake_dependent_option(WITH_NODE_LOOPBACK   "Build with loopback node-type"     
 cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             ON "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          ON "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             ON "" OFF)
-cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             ON "Opal_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             ON "Opal_FOUND; IS_32BIT" OFF)
 cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"                            ON "HIREDIS_FOUND; REDISPP_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              ON "RE_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            ON "HAS_SEMAPHORE; HAS_MMAN" OFF)
