@@ -27,6 +27,10 @@
 #include <unistd.h>
 #include <jansson.h>
 
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+#endif
+
 #include <functional>
 #include <regex>
 
@@ -43,6 +47,8 @@ protected:
 
 	Logger logger;
 
+	std::list<std::string> includeDirectories;
+
 	/** Check if file exists on local system. */
 	static bool isLocalFile(const std::string &uri)
 	{
@@ -55,6 +61,10 @@ protected:
 #ifdef WITH_CONFIG
 	/** Convert libconfig .conf file to libjansson .json file. */
 	json_t * libconfigDecode(FILE *f);
+
+	static const char ** includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error);
+
+	const char ** includeFunc(config_t *cfg, const char *include_dir, const char *path, const char **error);
 #endif /* WITH_CONFIG */
 
 	/** Load configuration from standard input (stdim). */
@@ -63,8 +73,12 @@ protected:
 	/** Load configuration from local file. */
 	FILE * loadFromLocalFile(const std::string &u);
 
+	std::list<std::string> resolveIncludes(const std::string &name);
+
+	void resolveEnvVars(std::string &text);
+
 	/** Resolve custom include directives. */
-	json_t * resolveIncludes(json_t *in);
+	json_t * expandIncludes(json_t *in);
 
 	/** To shell-like subsitution of environment variables in strings. */
 	json_t * expandEnvVars(json_t *in);

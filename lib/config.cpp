@@ -24,13 +24,14 @@
 #include <linux/limits.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <glob.h>
 
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <filesystem>
 
+#include <villas/node/config.h>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/config.hpp>
@@ -38,9 +39,12 @@
 #include <villas/node/exceptions.hpp>
 #include <villas/config_helper.hpp>
 
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+#endif
+
 using namespace villas;
 using namespace villas::node;
-namespace fs = std::filesystem;
 
 Config::Config() :
 	logger(logging.get("config")),
@@ -64,7 +68,7 @@ json_t * Config::load(std::FILE *f, bool resolveInc, bool resolveEnvVars)
 	json_t *root = decode(f);
 
 	if (resolveInc)
-		root = resolveIncludes(root);
+		root = expandIncludes(root);
 
 	if (resolveEnvVars)
 		root = expandEnvVars(root);
@@ -110,6 +114,10 @@ json_t * Config::decode(FILE *f)
 {
 	json_error_t err;
 
+	// Update list of include directories
+	auto incDirs = getIncludeDirectories(f);
+	includeDirectories.insert(includeDirectories.end(), incDirs.begin(), incDirs.end());
+
 	json_t *root = json_loadf(f, 0, &err);
 	if (root == nullptr) {
 #ifdef WITH_CONFIG
@@ -153,6 +161,79 @@ std::list<std::string> Config::getIncludeDirectories(FILE *f) const
 	return dirs;
 }
 
+const char ** Config::includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error)
+{
+	void *ctx = config_get_hook(cfg);
+
+	return reinterpret_cast<Config *>(ctx)->includeFunc(cfg, include_dir, path, error);
+}
+
+std::list<std::string> Config::resolveIncludes(const std::string &n)
+{
+	glob_t gb;
+	int ret, flags = 0;
+
+	memset(&gb, 0, sizeof(gb));
+
+	auto name = n;
+	resolveEnvVars(name);
+
+	for (auto &dir : includeDirectories) {
+		auto pattern = fmt::format("{}/{}", dir, name.c_str());
+
+		ret = glob(pattern.c_str(), flags, nullptr, &gb);
+		if (ret && ret != GLOB_NOMATCH) {
+			gb.gl_pathc = 0;
+
+			goto out;
+		}
+
+		flags |= GLOB_APPEND;
+	}
+
+out:	std::list<std::string> files;
+	for (unsigned i = 0; i < gb.gl_pathc; i++)
+		files.push_back(gb.gl_pathv[i]);
+
+	globfree(&gb);
+
+	return files;
+}
+
+void Config::resolveEnvVars(std::string &text)
+{
+	static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
+
+	std::smatch match;
+	while (std::regex_search(text, match, env_re)) {
+		auto const from = match[0];
+		auto const var_name = match[1].str().c_str();
+		char *var_value = std::getenv(var_name);
+		if (!var_value)
+			throw RuntimeError("Unresolved environment variable: {}", var_name);
+
+		text.replace(from.first - text.begin(), from.second - from.first, var_value);
+
+		logger->debug("Replace env var {} in \"{}\" with value \"{}\"",
+			var_name, text, var_value);
+	}
+}
+
+const char ** Config::includeFunc(config_t *cfg, const char *include_dir, const char *path, const char **error)
+{
+	auto paths = resolveIncludes(path);
+
+	unsigned i = 0;
+	auto files = (const char **) malloc(sizeof(char **) * (paths.size() + 1));
+
+	for (auto &path : paths)
+		files[i++] = strdup(path.c_str());
+
+	files[i] = NULL;
+
+  	return files;
+}
+
 #ifdef WITH_CONFIG
 json_t * Config::libconfigDecode(FILE *f)
 {
@@ -164,17 +245,22 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_set_auto_convert(&cfg, 1);
 
 	/* Setup libconfig include path. */
-	auto inclDirs = getIncludeDirectories(f);
-	if (inclDirs.size() > 0) {
+#if (LIBCONFIG_VER_MAJOR > 1) || ((LIBCONFIG_VER_MAJOR == 1) && (LIBCONFIG_VER_MINOR >= 7))
+	config_set_hook (&cfg, this);
+
+	config_set_include_func(&cfg, includeFuncStub);
+#else
+	if (includeDirectories.size() > 0) {
 		logger->info("Setting include dir to: {}", inclDirs.front());
 
 		config_set_include_dir(&cfg, inclDirs.front().c_str());
 
-		if (inclDirs.size() > 1) {
+		if (includeDirectories.size() > 1) {
 			logger->warn("Ignoring all but the first include directories for libconfig");
 			logger->warn("  libconfig does not support more than a single include dir!");
 		}
 	}
+#endif
 
 	/* Rewind before re-reading */
 	rewind(f);
@@ -234,45 +320,51 @@ json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
 
 json_t * Config::expandEnvVars(json_t *in)
 {
-	static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
-
 	return walkStrings(in, [this](json_t *str) -> json_t * {
 		std::string text = json_string_value(str);
 
-		std::smatch match;
-		while (std::regex_search(text, match, env_re)) {
-			auto const from = match[0];
-			auto const var_name = match[1].str().c_str();
-			char *var_value = std::getenv(var_name);
-			if (!var_value)
-				throw ConfigError(str, "node-config-envvars", "Unresolved environment variable: {}", var_name);
-
-			text.replace(from.first - text.begin(), from.second - from.first, var_value);
-
-			logger->debug("Replace env var {} in \"{}\" with value \"{}\"",
-				var_name, text, var_value);
-		}
+		resolveEnvVars(text);
 
 		return json_string(text.c_str());
 	});
 }
 
-json_t * Config::resolveIncludes(json_t *in)
+json_t * Config::expandIncludes(json_t *in)
 {
 	return walkStrings(in, [this](json_t *str) -> json_t * {
+		int ret;
 		std::string text = json_string_value(str);
 		static const std::string kw = "@include ";
 
 		if (text.find(kw) != 0)
 			return str;
 		else {
-			std::string path = text.substr(kw.size());
+			std::string pattern = text.substr(kw.size());
 
-			json_t *incl = load(path);
-			if (!incl)
-				throw ConfigError(str, "Failed to include config file from {}", path);
+			resolveEnvVars(pattern);
 
-			logger->debug("Included config from: {}", path);
+			json_t *incl = nullptr;
+
+			for (auto &path : resolveIncludes(pattern)) {
+				json_t *other = load(path);
+				if (!other)
+					throw ConfigError(str, "Failed to include config file from {}", path);
+
+				if (!incl)
+					incl = other;
+				else if (json_is_object(incl) && json_is_object(other)) {
+					ret = json_object_update(incl, other);
+					if (ret)
+						throw ConfigError(str, "Can not mix object and array-typed include files");
+				}
+				else if (json_is_array(incl) && json_is_array(other)) {
+					ret = json_array_extend(incl, other);
+					if (ret)
+						throw ConfigError(str, "Can not mix object and array-typed include files");
+				}
+
+				logger->debug("Included config from: {}", path);
+			}
 
 			return incl;
 		}
