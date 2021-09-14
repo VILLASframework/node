@@ -21,7 +21,7 @@
 ###################################################################################
 
 # You can choose between Debian and Ubuntu here
-FROM debian:buster AS dev
+FROM debian:bullseye AS dev
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
