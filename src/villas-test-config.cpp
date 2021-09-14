@@ -43,7 +43,8 @@ class TestConfig : public Tool {
 public:
 	TestConfig(int argc, char *argv[]) :
 		Tool(argc, argv, "test-config"),
-		check(false)
+		check(false),
+		dump(false)
 	{
 		int ret;
 
@@ -56,6 +57,7 @@ protected:
 	std::string uri;
 
 	bool check;
+	bool dump;
 
 	void usage()
 	{
@@ -65,6 +67,7 @@ protected:
 			<< "    -d LVL  set debug level" << std::endl
 			<< "    -V      show version and exit" << std::endl
 			<< "    -c      perform plausability checks on config" << std::endl
+			<< "    -D      dump config in JSON format" << std::endl
 			<< "    -h      show usage and exit" << std::endl << std::endl;
 
 		printCopyright();
@@ -73,10 +76,14 @@ protected:
 	void parse()
 	{
 		int c;
-		while ((c = getopt (argc, argv, "hcV")) != -1) {
+		while ((c = getopt (argc, argv, "hcVD")) != -1) {
 			switch (c) {
 				case 'c':
 					check = true;
+					break;
+
+				case 'D':
+					dump = true;
 					break;
 
 				case 'V':
@@ -106,6 +113,9 @@ protected:
 
 		if (check)
 			sn.check();
+
+		if (dump)
+			json_dumpf(sn.getConfig(), stdout, JSON_INDENT(2));
 
 		return 0;
 	}
