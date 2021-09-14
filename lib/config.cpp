@@ -244,6 +244,8 @@ json_t * Config::expandEnvVars(json_t *in)
 			auto const from = match[0];
 			auto const var_name = match[1].str().c_str();
 			char *var_value = std::getenv(var_name);
+			if (!var_value)
+				throw ConfigError(str, "node-config-envvars", "Unresolved environment variable: {}", var_name);
 
 			text.replace(from.first - text.begin(), from.second - from.first, var_value);
 
