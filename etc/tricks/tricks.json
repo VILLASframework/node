@@ -1,0 +1,6 @@
+{
+  "logging": {
+    "level": "${LEVEL}"
+  },
+  "nodes": "@include ${SUBDIR}/node_*.conf"
+}
