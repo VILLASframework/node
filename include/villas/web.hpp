@@ -99,6 +99,11 @@ public:
 	}
 
 	void callbackOnWritable(struct lws *wsi);
+
+	bool isEnabled()
+	{
+		return port != CONTEXT_PORT_NO_LISTEN;
+	}
 };
 
 } /* namespace node */

@@ -63,7 +63,7 @@ cat > ${CONFIG_FILE} <<EOF
 				{
 					"type": "average",
 					
-					"signals" : [ "random", 1, 2, 3, 4 ],
+					"signals" : [ "random", "sine", "square", "triangle", "ramp" ],
 					"offset": 0
 				},
 				{
@@ -88,7 +88,7 @@ EOF
 villas-node ${CONFIG_FILE}
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
+villas-compare -e 1e-6 ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 cat ${OUTPUT_FILE}

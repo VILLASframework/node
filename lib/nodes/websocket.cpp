@@ -332,7 +332,7 @@ int websocket_type_start(villas::node::SuperNode *sn)
 		return ret;
 
 	web = sn->getWeb();
-	if (web->getState() != State::STARTED)
+	if (!web->isEnabled())
 		return -1;
 
 	return 0;

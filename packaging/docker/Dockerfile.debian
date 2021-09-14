@@ -64,7 +64,7 @@ RUN apt-get update && \
 		libfmt-dev \
 		libspdlog-dev \
 		liblua5.3-dev \
-		libhiredis-dev:${ARCH}
+		libhiredis-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \

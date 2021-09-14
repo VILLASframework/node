@@ -28,7 +28,7 @@ class Node(object):
                                'config at the same time!')
 
         if config_filename:
-            with open(self.config_filename) as f:
+            with open(config_filename) as f:
                 self.config = json.load(f)
         else:
             self.config = config
