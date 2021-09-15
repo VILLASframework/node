@@ -27,15 +27,15 @@
 #include <unistd.h>
 #include <jansson.h>
 
-#ifdef WITH_CONFIG
-  #include <libconfig.h>
-#endif
-
 #include <functional>
 #include <regex>
 
 #include <villas/node/config.h>
 #include <villas/log.hpp>
+
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+#endif
 
 namespace villas {
 namespace node {

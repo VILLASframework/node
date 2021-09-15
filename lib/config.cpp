@@ -253,9 +253,9 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_set_include_func(&cfg, includeFuncStub);
 #else
 	if (includeDirectories.size() > 0) {
-		logger->info("Setting include dir to: {}", inclDirs.front());
+		logger->info("Setting include dir to: {}", includeDirectories.front());
 
-		config_set_include_dir(&cfg, inclDirs.front().c_str());
+		config_set_include_dir(&cfg, includeDirectories.front().c_str());
 
 		if (includeDirectories.size() > 1) {
 			logger->warn("Ignoring all but the first include directories for libconfig");
