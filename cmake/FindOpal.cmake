@@ -20,10 +20,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+set(OPAL_PREFIX /usr/opalrt/common)
+
 find_path(OPAL_INCLUDE_DIR
 	NAMES AsyncApi.h
 	HINTS
-		/usr/opalrt/common/include_target/
+		${OPAL_PREFIX}/include_target/
 		${PROJECT_SOURCE_DIR}/libopal/include/opal/
 
 )
@@ -31,37 +33,37 @@ find_path(OPAL_INCLUDE_DIR
 find_library(OPAL_LIBRARY
 	NAMES OpalAsyncApiCore
 	HINTS
-		/usr/opalrt/common/lib/
+		${OPAL_PREFIX}/lib/
 		${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_IRC
 	NAMES irc
 	HINTS
-		/usr/opalrt/common/lib/
+	${OPAL_PREFIX}/lib/
 		${PROJECT_SOURCE_DIR}/libopal/
 )
 
-find_library(OPAL_LIBRARY_OPAL_UTILS
+find_library(OPAL_LIBRARY_UTILS
 	NAMES OpalUtils
 	HINTS
-		/usr/opalrt/common/lib/redhawk/
+		${OPAL_PREFIX}/lib/redhawk/
+		${OPAL_PREFIX}/lib/redhawk64/
 		${PROJECT_SOURCE_DIR}/libopal/
 )
 
-find_library(OPAL_LIBRARY_OPAL_CORE
+find_library(OPAL_LIBRARY_CORE
 	NAMES OpalCore
 	HINTS
-		/usr/opalrt/common/lib/redhawk/
+		${OPAL_PREFIX}/lib/redhawk/
+		${OPAL_PREFIX}/lib/redhawk64/
 		${PROJECT_SOURCE_DIR}/libopal/
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Opal DEFAULT_MSG OPAL_LIBRARY OPAL_INCLUDE_DIR)
+find_package_handle_standard_args(Opal DEFAULT_MSG OPAL_LIBRARY OPAL_LIBRARY_UTILS OPAL_LIBRARY_CORE OPAL_LIBRARY_IRC OPAL_INCLUDE_DIR)
 
-get_filename_component(OPAL_LIBRARY_DIR ${OPAL_LIBRARY} DIRECTORY)
+mark_as_advanced(OPAL_INCLUDE_DIR OPAL_LIBRARY)
 
-mark_as_advanced(OPAL_INCLUDE_DIR OPAL_LIBRARY_DIR OPAL_LIBRARY)
-
-set(OPAL_LIBRARIES ${OPAL_LIBRARY} ${OPAL_LIBRARY_OPALUTILS} ${OPAL_LIBRARY_OPALCORE} ${OPAL_LIBRARY_IRC} $ENV{OPAL_LIBPATH} $ENV{OPAL_LIBS})
+set(OPAL_LIBRARIES ${OPAL_LIBRARY} ${OPAL_LIBRARY_UTILS} ${OPAL_LIBRARY_CORE} ${OPAL_LIBRARY_IRC} $ENV{OPAL_LIBPATH} $ENV{OPAL_LIBS})
 set(OPAL_INCLUDE_DIRS ${OPAL_INCLUDE_DIR})

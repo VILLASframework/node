@@ -59,6 +59,9 @@ static pthread_mutex_t lock;				/** Big Global Lock for libOpalAsync API */
 using namespace villas;
 using namespace villas::utils;
 
+/** A bunch of symbols which are used by the libOpal libraries
+ * and undefined by GCC. We replace them by GCC variants here.
+ */
 extern "C" {
 	int __xstat(int ver, const char * path, struct stat * stat_buf)
 	{
@@ -93,10 +96,18 @@ extern "C" {
 	{
 		return memcmp(s1, s2, n);
 	}
+
+        void * _intel_fast_memmove(void *s1, const void *s2, size_t n)
+        {
+                return memmove(s1, s2, n);
+        }
 }
 
 int opal_register_region(int argc, char *argv[])
 {
+	if (argc != 4)
+		return -1;
+
 	asyncShmemName = argv[1];
 	asyncShmemSize = atoi(argv[2]);
 	printShmemName = argv[3];
@@ -107,10 +118,6 @@ int opal_register_region(int argc, char *argv[])
 int opal_type_start(villas::node::SuperNode *sn)
 {
 	int err, noRecvIcons, noSendIcons;
-
-	/* @todo Port to C++
-	if (sn->cli.argc != 4)
-		return -1; */
 
 	pthread_mutex_init(&lock, nullptr);
 

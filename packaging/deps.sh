@@ -60,12 +60,18 @@ if ! pkg-config "jansson >= 2.7" && \
 fi
 
 # Build & Install Lua
-if ! ( pkg-config "lua >= 5.1" || pkg-config "lua54" || pkg-config "lua53" || pkg-config "lua52" || pkg-config "lua51" ) && \
-    [ -z "${SKIP_LUA}" ]; then
+if ! ( pkg-config "lua >= 5.1" || \
+       pkg-config "lua54" || \
+       pkg-config "lua53" || \
+       pkg-config "lua52" || \
+       pkg-config "lua51" || \
+       [ -n "${RTLAB_ROOT}" -a -f "/usr/local/include/lua.h" ] \
+     ) && [ -z "${SKIP_LUA}" ]; then
     wget http://www.lua.org/ftp/lua-5.3.6.tar.gz -O - | tar -xz
     pushd lua-5.3.6
     if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} MYCFLAGS=-fPIC linux install
+        make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
+        make ${MAKE_OPTS} MYCFLAGS=-fPIC install
     fi
     popd
 fi
@@ -154,8 +160,9 @@ if ! pkg-config "rdkafka >= 1.5.0" && \
 fi
 
 # Build & Install Graphviz
-if ! ( pkg-config "libcgraph >= 2.30" && pkg-config "libgvc >= 2.30" ) && \
-    [ -z "${SKIP_RDKAFKA}" ]; then
+if ! ( pkg-config "libcgraph >= 2.30" && \
+       pkg-config "libgvc >= 2.30" \
+     ) && [ -z "${SKIP_RDKAFKA}" ]; then
     git clone --branch 2.49.0 --depth 1 https://gitlab.com/graphviz/graphviz.git
     mkdir -p graphviz/build
     pushd graphviz/build
@@ -182,8 +189,9 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
 fi
 
 # Build & Install libnl3
-if ! pkg-config "libuldaq >= 3.2.25" && \
-    [ -z "${SKIP_ULDAQ}" ]; then
+if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
+       pkg-config "libnl-route-3.0 >= 3.2.25" \
+     ) && [ -z "${SKIP_ULDAQ}" ]; then
     git clone --branch libnl3_5_0 --depth 1 https://github.com/thom311/libnl
     pushd libnl
     autoreconf -i
