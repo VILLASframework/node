@@ -161,13 +161,6 @@ std::list<std::string> Config::getIncludeDirectories(FILE *f) const
 	return dirs;
 }
 
-const char ** Config::includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error)
-{
-	void *ctx = config_get_hook(cfg);
-
-	return reinterpret_cast<Config *>(ctx)->includeFunc(cfg, include_dir, path, error);
-}
-
 std::list<std::string> Config::resolveIncludes(const std::string &n)
 {
 	glob_t gb;
@@ -219,6 +212,15 @@ void Config::resolveEnvVars(std::string &text)
 	}
 }
 
+#ifdef WITH_CONFIG
+#if (LIBCONFIG_VER_MAJOR > 1) || ((LIBCONFIG_VER_MAJOR == 1) && (LIBCONFIG_VER_MINOR >= 7))
+const char ** Config::includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error)
+{
+	void *ctx = config_get_hook(cfg);
+
+	return reinterpret_cast<Config *>(ctx)->includeFunc(cfg, include_dir, path, error);
+}
+
 const char ** Config::includeFunc(config_t *cfg, const char *include_dir, const char *path, const char **error)
 {
 	auto paths = resolveIncludes(path);
@@ -233,8 +235,8 @@ const char ** Config::includeFunc(config_t *cfg, const char *include_dir, const 
 
   	return files;
 }
+#endif
 
-#ifdef WITH_CONFIG
 json_t * Config::libconfigDecode(FILE *f)
 {
 	int ret;
