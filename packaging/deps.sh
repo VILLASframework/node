@@ -78,7 +78,7 @@ fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
-    [ -z "${SKIP_LIBIEC61850}" ]; then
+    [ -z "${SKIP_LIBMOSQUITTO}" ]; then
     git clone --branch v2.0.12 --depth 1 https://github.com/eclipse/mosquitto
     mkdir -p mosquitto/build
     pushd mosquitto/build
@@ -93,7 +93,7 @@ fi
 
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.8.0" && \
-    [ -z "${SKIP_LIBIEC61850}" ]; then
+    [ -z "${SKIP_LIBRABBITMQ}" ]; then
     git clone --branch v0.11.0 --depth 1 https://github.com/alanxz/rabbitmq-c
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
@@ -104,7 +104,7 @@ fi
 
 # Build & Install libzmq
 if ! pkg-config "libzmq >= 2.2.0" && \
-    [ -z "${SKIP_LIBIEC61850}" ]; then
+    [ -z "${SKIP_LIBZMQ}" ]; then
     git clone --branch v4.3.4 --depth 1 https://github.com/zeromq/libzmq
     mkdir -p libzmq/build
     pushd libzmq/build

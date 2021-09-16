@@ -70,6 +70,7 @@ RUN apt-get update && \
 		libre-dev:${ARCH} \
 		liblua5.3-dev:${ARCH} \
 		libhiredis-dev:${ARCH}
+
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
