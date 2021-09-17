@@ -148,7 +148,7 @@ RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 		nanomsg@testing; \
 	fi
 
-COPY --from=builder ${PREFIX}} ${PREFIX}}
+COPY --from=builder ${PREFIX} ${PREFIX}
 RUN ldconfig ${PREFIX}/lib ${PREFIX}/lib64
 
 ENV LD_LIBRARY_PATH=${PREFIX}/lib:${PREFIX}/lib64
