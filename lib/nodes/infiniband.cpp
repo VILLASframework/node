@@ -1017,7 +1017,8 @@ static void register_plugin() {
 	p.description	= "Infiniband interface (libibverbs, librdmacm)";
 	p.vectorize	= 0;
 	p.size		= sizeof(struct infiniband);
-	p.pool_size	= 8192;
+	// TODO: fix
+	// p.pool_size	= 8192;
 	p.destroy	= ib_destroy;
 	p.parse		= ib_parse;
 	p.check		= ib_check;
