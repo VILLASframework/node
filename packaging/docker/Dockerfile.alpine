@@ -105,7 +105,7 @@ RUN --security=insecure \
 	cmake -DWITH_OPENMP=OFF \
 		  -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 		  -DCMAKE_PREFIX_PATH=${PREFIX} .. && \
-	make -j8 install
+	make -j$(nproc) install
 
 FROM alpine:${ALPINE_VERSION} AS app
 
