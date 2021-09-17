@@ -40,7 +40,7 @@ RUN dpkg --add-architecture ${ARCH}
 RUN apt-get update && \
 	apt-get install -y \
 		crossbuild-essential-${ARCH} \
-		pkg-config make \
+		pkg-config cmake make \
 		autoconf automake autogen libtool \
 		texinfo git curl tar wget diffutils \
 		flex bison \
@@ -74,13 +74,6 @@ RUN apt-get update && \
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
-
-# Install cmake (version from buster has a bug)
-RUN cd /tmp && \
-    wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.sh && \
-    chmod +x cmake-3.15.3-Linux-x86_64.sh && \
-    ./cmake-3.15.3-Linux-x86_64.sh --skip-license --prefix=/usr && \
-    rm -rf /tmp/*
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
