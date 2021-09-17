@@ -34,7 +34,7 @@ RUN apk update && \
 	apk add gcc g++ \
 		pkgconf cmake make \
 		autoconf automake libtool \
-		git mercurial \
+		git \
 		flex bison \
 		protobuf \
 		file

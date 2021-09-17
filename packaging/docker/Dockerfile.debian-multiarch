@@ -42,7 +42,7 @@ RUN apt-get update && \
 		crossbuild-essential-${ARCH} \
 		pkg-config make \
 		autoconf automake autogen libtool \
-		texinfo git mercurial curl tar wget diffutils \
+		texinfo git curl tar wget diffutils \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler
 

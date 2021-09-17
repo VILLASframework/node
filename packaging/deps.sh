@@ -118,12 +118,12 @@ fi
 
 # Build & Install EtherLab
 if [ -z "${SKIP_ETHERLAB}" ]; then
-    hg clone --branch stable-1.5 http://hg.code.sf.net/p/etherlabmaster/code etherlab
-    pushd etherlab
+   git clone --branch stable-1.5 --depth 1 https://gitlab.com/etherlab.org/ethercat.git
+    pushd ethercat
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
+        make ${MAKE_OPTS} ${TARGET}
     else
         wget https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
         cp ethercat-1.5.2.tar.bz2 ~/rpmbuild/SOURCES
@@ -182,7 +182,7 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
         make ${MAKE_OPTS} install
     else
         make dist
-        cp fedora/uldaq_ldconfig.patch libuldaq-1.1.2.tar.gz ~/rpmbuild/SOURCES
+        cp fedora/uldaq_ldconfig.patch libuldaq-1.2.0.tar.gz ~/rpmbuild/SOURCES
         rpmbuild -ba fedora/uldaq.spec
     fi
     popd
