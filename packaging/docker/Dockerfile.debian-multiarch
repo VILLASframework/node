@@ -21,15 +21,19 @@
 ###################################################################################
 
 # You can choose between Debian and Ubuntu here
-FROM debian:bullseye AS dev
-
-ARG GIT_REV=unknown
-ARG GIT_BRANCH=unknown
-ARG VERSION=unknown
-ARG DISTRO=unknown
-
+ARG DISTRO=debian
+ARG DEBIAN_VERSION=bullseye
 ARG ARCH=armhf
 ARG TRIPLET=arm-linux-gnueabihf
+ARG PLATFORM=linux/arm/v7
+ARG PREFIX=/app
+
+FROM ${DISTRO}:${DEBIAN_VERSION} AS dev
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
+ARG PREFIX
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -46,7 +50,7 @@ RUN apt-get update && \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler
 
-# Dependencies
+# Build-time dependencies
 RUN apt-get update && \
 	apt-get install -y \
 		libssl-dev:${ARCH} \
@@ -55,7 +59,8 @@ RUN apt-get update && \
 		libprotobuf-c-dev:${ARCH} \
 		uuid-dev:${ARCH} \
 		libconfig-dev:${ARCH} \
-		libnl-3-dev libnl-route-3-dev:${ARCH} \
+		libnl-3-dev \
+		libnl-route-3-dev:${ARCH} \
 		libcurl4-openssl-dev:${ARCH} \
 		libjansson-dev:${ARCH} \
 		libzmq3-dev:${ARCH} \
@@ -80,10 +85,12 @@ ADD cmake/toolchains/debian-${ARCH}.cmake /
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
 
 ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
-				-DCMAKE_INSTALL_LIBDIR=/usr/local/lib/${TRIPLET} \
-				-DLWS_INSTALL_LIB_DIR=/usr/local/lib/${TRIPLET}"
+				-DCMAKE_PREFIX_PATH=${PREFIX} \
+				-DCMAKE_INSTALL_PREFIX=${PREFIX} \
+				-DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib/${TRIPLET} \
+				-DLWS_INSTALL_LIB_DIR=${PREFIX}/lib/${TRIPLET}"
 
-ENV CONFIGURE_OPTS="--libdir=/usr/local/lib/${TRIPLET}"
+ENV CONFIGURE_OPTS="--libdir=${PREFIX}/lib/${TRIPLET}"
 
 RUN mkdir -p /usr/local/lib/${TRIPLET}
 
@@ -95,9 +102,7 @@ ENV AS=${TRIPLET}-as
 ENV AR=${TRIPLET}-ar
 ENV RANLIB=${TRIPLET}-ranlib
 
-ENV DISTRO=debian-multiarch
-ENV ARCH=${ARCH}
-ENV TRIPLET=${TRIPLET}
+RUN mkdir ${PREFIX}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
@@ -109,16 +114,67 @@ EXPOSE 443
 
 WORKDIR /villas
 
-FROM dev AS app
+FROM dev AS builder
 
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake .. && \
+			
+RUN cmake .. -DWITH_FPGA=OFF ${CMAKE_OPTS} && \
 	make -j$(nproc) doc && \
-	make -j$(nproc) install && \
+	make -j$(nproc) install
+
+FROM --platform=${PLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS app
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
+ARG PREFIX
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable ${ARCH} architecture
+RUN dpkg --add-architecture ${ARCH}
+
+# Run-time dependencies
+RUN apt-get update && \
+	apt-get install -y \
+		libgomp1:${ARCH} \
+		libprotobuf-c1:${ARCH} \
+		libssl1.1:${ARCH} \
+		libcgraph6:${ARCH} \
+		libcdt5:${ARCH} \
+		libgvc6:${ARCH} \
+		libuuid1:${ARCH} \
+		libconfig9:${ARCH} \
+		libnl-3-200:${ARCH} \
+		libnl-route-3-200:${ARCH} \
+		libcurl4:${ARCH} \
+		libjansson4:${ARCH} \
+		libzmq5:${ARCH} \
+		libnanomsg5:${ARCH} \
+		librabbitmq4:${ARCH} \
+		libmosquitto1:${ARCH} \
+		librdkafka1:${ARCH} \
+		libcomedi0:${ARCH} \
+		libibverbs1:${ARCH} \
+		librdmacm1:${ARCH} \
+		libusb-1.0-0:${ARCH} \
+		libre0:${ARCH} \
+		liblua5.3-0:${ARCH} \
+		libhiredis0.14:${ARCH} && \
+	rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder ${PREFIX} ${PREFIX}
+RUN echo "${PREFIX}/lib" >> /etc/ld.so.conf && \
+	echo "${PREFIX}/lib/${TRIPLET}" >> /etc/ld.so.conf && \
 	ldconfig
+
+ENV PATH=${PREFIX}/bin:${PATH}
+
+# Test if it runs
+RUN villas node -h 2>&1 > /dev/null
 
 ENTRYPOINT ["villas"]
 
@@ -126,9 +182,6 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="GPL-3.0" \
-	org.label-schema.vcs-ref="$GIT_REV" \
-	org.label-schema.vcs-branch="$GIT_BRANCH" \
-	org.label-schema.version="$VERSION" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \

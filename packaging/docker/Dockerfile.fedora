@@ -20,12 +20,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:33 AS dev
+ARG DISTRO=fedora
+ARG FEDORA_VERSION=33
+ARG ARCH=x86_64
+ARG TRIPLET=x86_64-linux-gnu
 
-ARG GIT_REV=unknown
-ARG GIT_BRANCH=unknown
-ARG VERSION=unknown
-ARG DISTRO=unknown
+FROM ${DISTRO}:${FEDORA_VERSION} AS dev
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
 
 # Toolchain
 RUN dnf -y install \
@@ -85,10 +89,6 @@ RUN dnf -y install \
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
 
-ENV DISTRO=fedora
-ENV ARCH=x86_64
-ENV TRIPLET=x86_64-linux-gnu
-
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
@@ -120,9 +120,6 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="GPL-3.0" \
-	org.label-schema.vcs-ref="$GIT_REV" \
-	org.label-schema.vcs-branch="$GIT_BRANCH" \
-	org.label-schema.version="$VERSION" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \

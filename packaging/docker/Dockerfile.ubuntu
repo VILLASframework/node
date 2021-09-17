@@ -21,12 +21,17 @@
 ###################################################################################
 
 # You can choose between Debian and Ubuntu here
-FROM ubuntu:20.04 AS dev
+ARG DISTRO=ubuntu
+ARG UBUNTU_VERSION=20.04
+ARG DISTRO=${DISTRO}
+ARG ARCH=x86_64
+ARG TRIPLET=x86_64-linux-gnu
 
-ARG GIT_REV=unknown
-ARG GIT_BRANCH=unknown
-ARG VERSION=unknown
-ARG DISTRO=unknown
+FROM ${DISTRO}:${UBUNTU_VERSION} AS dev
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -71,10 +76,6 @@ RUN apt-get update && \
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
     echo /usr/local/lib64 >> /etc/ld.so.conf
 
-ENV DISTRO=ubuntu
-ENV ARCH=x86_64
-ENV TRIPLET=x86_64-linux-gnu
-
 # or install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
@@ -102,9 +103,6 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="GPL-3.0" \
-	org.label-schema.vcs-ref="$GIT_REV" \
-	org.label-schema.vcs-branch="$GIT_BRANCH" \
-	org.label-schema.version="$VERSION" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \

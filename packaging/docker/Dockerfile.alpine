@@ -23,11 +23,17 @@
 
 
 ARG ALPINE_VERSION=3.13.1
-FROM alpine:${ALPINE_VERSION} AS dev
-
 ARG DISTRO=alpine
 ARG ARCH=x86_64
 ARG TRIPLET=x86_64-alpine-linux-musl
+ARG PREFIX=/app
+
+FROM alpine:${ALPINE_VERSION} AS dev
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
+ARG PREFIX
 
 # Toolchain
 RUN apk update && \
@@ -75,8 +81,7 @@ RUN echo -e "#!/bin/sh\n" | \
 	chmod +x /usr/bin/udevadm /bin/ldconfig && \
 	mv /sbin/ldconfig /sbin/ldconfig.orig
 
-ENV PREFIX=/app
-RUN mkdir /app
+RUN mkdir ${PREFIX}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
@@ -109,12 +114,14 @@ RUN --security=insecure \
 
 FROM alpine:${ALPINE_VERSION} AS app
 
-ARG DISTRO=alpine
-ARG ARCH=x86_64
-ARG TRIPLET=x86_64-alpine-linux-musl
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
+ARG PREFIX
 
 RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
+# Build-time dependencies
 RUN apk update
 RUN apk add \
 		bash \
@@ -141,26 +148,19 @@ RUN if [ "${ARCH}" != "armv6" -a "${ARCH}" != "armv7" ]; then \
 		nanomsg@testing; \
 	fi
 
-COPY --from=builder /app /app
-RUN ldconfig /app/lib /app/lib64
+COPY --from=builder ${PREFIX}} ${PREFIX}}
+RUN ldconfig ${PREFIX}/lib ${PREFIX}/lib64
 
-ENV LD_LIBRARY_PATH=/app/lib:/app/lib64
-ENV PATH=/app/bin:${PATH}
+ENV LD_LIBRARY_PATH=${PREFIX}/lib:${PREFIX}/lib64
+ENV PATH=${PREFIX}/bin:${PATH}
 
 # Test if it runs
-RUN /app/bin/villas-node -h 2>&1 > /dev/null
-
-ARG GIT_REV=unknown
-ARG GIT_BRANCH=unknown
-ARG VERSION=unknown
+RUN villas node -h 2>&1 > /dev/null
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="GPL-3.0" \
-	org.label-schema.vcs-ref="$GIT_REV" \
-	org.label-schema.vcs-branch="$GIT_BRANCH" \
-	org.label-schema.version="$VERSION" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \

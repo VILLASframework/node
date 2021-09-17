@@ -20,7 +20,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:33 AS dev
+ARG DISTRO=fedora
+ARG FEDORA_VERSION=33
+FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
 # Toolchain
 RUN dnf -y install \
@@ -45,11 +47,12 @@ COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake -DCPACK_GENERATOR=RPM ..
-RUN make -j$(nproc) doc
-RUN make -j$(nproc) package
 
-FROM fedora:33
+RUN cmake -DCPACK_GENERATOR=RPM .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) package
+
+FROM ${DISTRO}:${FEDORA_VERSION} as app
 
 COPY --from=builder /villas/build/*.rpm /tmp/
 RUN dnf -y install /tmp/*.rpm
@@ -67,9 +70,6 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="GPL-3.0" \
-	org.label-schema.vcs-ref="$GIT_REV" \
-	org.label-schema.vcs-branch="$GIT_BRANCH" \
-	org.label-schema.version="$VERSION" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
