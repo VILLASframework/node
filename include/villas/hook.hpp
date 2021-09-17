@@ -180,7 +180,10 @@ protected:
 	std::string signalName;
 
 public:
-	using Hook::Hook;
+	SingleSignalHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
+		Hook(p, n, fl, prio, en),
+		signalIndex(0)
+	{ }
 
 	virtual
 	void parse(json_t *json);

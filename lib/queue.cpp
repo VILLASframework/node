@@ -163,7 +163,7 @@ int queue_push_many(struct queue *q, void *ptr[], size_t cnt)
 	int ret;
 	size_t i;
 
-	for (i = 0; i < cnt; i++) {
+	for (ret = 0, i = 0; i < cnt; i++) {
 		ret = queue_push(q, ptr[i]);
 		if (ret <= 0)
 			break;
@@ -180,7 +180,7 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 	int ret;
 	size_t i;
 
-	for (i = 0; i < cnt; i++) {
+	for (ret = 0, i = 0; i < cnt; i++) {
 		ret = queue_pull(q, &ptr[i]);
 		if (ret <= 0)
 			break;

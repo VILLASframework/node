@@ -54,9 +54,6 @@ int path_source_init_master(struct vpath_source *ps, struct vnode *n)
 
 	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * ps->node->in.vectorize);
 
-	if (node_type(ps->node)->pool_size)
-		pool_size = node_type(ps->node)->pool_size;
-
 	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(node_input_signals_max_cnt(ps->node)), node_memory_type(ps->node));
 
 	if (ret)

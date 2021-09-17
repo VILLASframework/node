@@ -124,9 +124,9 @@ int influxdb_close(struct vnode *n)
 int influxdb_write(struct vnode *n, struct sample * const smps[], unsigned cnt)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
-
-	char *buf = nullptr;
 	ssize_t sentlen, buflen;
+
+	auto *buf = strf("");
 
 	for (unsigned k = 0; k < cnt; k++) {
 		const struct sample *smp = smps[k];

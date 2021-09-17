@@ -105,6 +105,7 @@ protected:
 		/* Reconstruct the original signal */
 		for (int k = 0; k < fharmonics_len; k++) {
 			double freq = fharmonics[k];
+			// cppcheck-suppress objectIndex
 			std::complex<double> coeff = in[k];
 			std::complex<double> om = 2.0i * M_PI * freq * time;
 
@@ -296,7 +297,7 @@ public:
 
 	virtual Hook::Reason process(sample *smp)
 	{
-		if (signal_index > smp->length)
+		if (signal_index >= smp->length)
 			return Hook::Reason::ERROR;
 
 		if (inverse) {

@@ -126,8 +126,7 @@ void TEMPerDevice::read(struct sample *smp)
 
 	smp->flags = 0;
 	smp->length = i;
-	if (smp->length > 0)
-		smp->flags |= (int) SampleFlags::HAS_DATA;
+	smp->flags |= (int) SampleFlags::HAS_DATA;
 }
 
 /* Thanks to https://github.com/edorfaus/TEMPered */

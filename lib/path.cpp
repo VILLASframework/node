@@ -237,7 +237,7 @@ static int path_prepare_poll(struct vpath *p)
 int path_prepare(struct vpath *p, NodeList &nodes)
 {
 	int ret;
-	unsigned pool_size;
+	unsigned pool_size = 0;
 
 	struct memory_type *pool_mt = memory_default;
 
@@ -333,9 +333,6 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 	/* Prepare path destinations */
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		auto *pd = (struct vpath_destination *) vlist_at(&p->destinations, i);
-
-		if (node_type(pd->node)->pool_size > pool_size)
-			pool_size = node_type(pd->node)->pool_size;
 
 		if (node_type(pd->node)->memory_type)
 			pool_mt = node_memory_type(pd->node);
