@@ -70,7 +70,7 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 	return mem;
 }
 
-
+// cppcheck-suppress passedByValue
 LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
                                  size_t memorySize,
                                  size_t internalOffset) :
