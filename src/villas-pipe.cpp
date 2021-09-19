@@ -78,8 +78,7 @@ public:
 		logger = logging.get(loggerName);
 
 		/* Initialize memory */
-		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
-		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : vec;
+		unsigned pool_size = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
 
 		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node));
 		if (ret < 0)
