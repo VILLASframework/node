@@ -65,7 +65,7 @@ int Tool::run()
 			CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
 			CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
-		ret = utils::signals_init(staticHandler, handlerSignals);
+		ret = utils::signalsInit(staticHandler, handlerSignals);
 		if (ret)
 			throw RuntimeError("Failed to initialize signal subsystem");
 

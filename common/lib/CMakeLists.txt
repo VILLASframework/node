@@ -42,6 +42,7 @@ add_library(villas-common SHARED
 	timing.cpp
 	tool.cpp
 	utils.cpp
+	uuid.cpp
 	version.cpp
 )
 

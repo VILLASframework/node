@@ -39,7 +39,6 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
-#include <openssl/md5.h>
 #include <jansson.h>
 #include <uuid/uuid.h>
 
@@ -78,7 +77,7 @@ std::vector<std::string> tokenize(std::string s, std::string delimiter)
 	return tokens;
 }
 
-ssize_t read_random(char *buf, size_t len)
+ssize_t readRandom(char *buf, size_t len)
 {
 	int fd;
 	ssize_t bytes = -1;
@@ -102,7 +101,7 @@ ssize_t read_random(char *buf, size_t len)
 }
 
 /* Setup exit handler */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals, std::list<int> ignoreSignals)
+int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals, std::list<int> ignoreSignals)
 {
 	int ret;
 
@@ -177,14 +176,14 @@ char * decolor(char *str)
 
 void killme(int sig)
 {
-	/* Send only to main thread in case the ID was initilized by signals_init() */
+	/* Send only to main thread in case the ID was initilized by signalsInit() */
 	if (main_thread)
 		pthread_kill(main_thread, sig);
 	else
 		kill(0, sig);
 }
 
-double box_muller(float m, float s)
+double boxMuller(float m, float s)
 {
 	double x1, x2, y1;
 	static double y2;
@@ -357,82 +356,19 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	return 0;
 }
 
-int uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns)
-{
-	int ret;
-	MD5_CTX c;
-
-	ret = MD5_Init(&c);
-	if (!ret)
-		return -1;
-
-	/* Namespace */
-	ret = MD5_Update(&c, (unsigned char *) ns.c_str(), ns.size());
-	if (!ret)
-		return -1;
-
-	/* Data */
-	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
-	if (!ret)
-		return -1;
-
-	ret = MD5_Final((unsigned char *) out, &c);
-	if (!ret)
-		return -1;
-
-	return 0;
-}
-
-int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns)
-{
-	int ret;
-	MD5_CTX c;
-
-	ret = MD5_Init(&c);
-	if (!ret)
-		return -1;
-
-	/* Namespace */
-	ret = MD5_Update(&c, (unsigned char *) ns, 16);
-	if (!ret)
-		return -1;
-
-	/* Data */
-	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
-	if (!ret)
-		return -1;
-
-	ret = MD5_Final((unsigned char *) out, &c);
-	if (!ret)
-		return -1;
-
-	return 0;
-}
-
-int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns)
-{
-	char *str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
-
-	int ret = uuid_generate_from_str(out, str, ns);
-
-	free(str);
-
-	return ret;
-}
-
-bool is_docker()
+bool isDocker()
 {
 	return access("/.dockerenv", F_OK) != -1;
 }
 
-bool is_kubernetes()
+bool isKubernetes()
 {
 	return access("/var/run/secrets/kubernetes.io", F_OK) != -1 ||
 	       getenv("KUBERNETES_SERVICE_HOST") != nullptr;
 }
 
-bool is_container() {
-	return is_docker() || is_kubernetes();
+bool isContainer() {
+	return isDocker() || isKubernetes();
 }
 
 } /* namespace utils */

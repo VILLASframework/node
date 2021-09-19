@@ -41,7 +41,7 @@ Test(utils, box_muller)
 	unsigned iter = 1000000;
 
 	for (unsigned i = 0; i < iter; i++) {
-		n = box_muller(0, 1);
+		n = boxMuller(0, 1);
 
 		if      (n > 2 || n < -2) sigma[2]++;
 		else if (n > 1 || n < -1) sigma[1]++;
@@ -123,7 +123,7 @@ Test(utils, memdup)
 	char orig[1024], *copy;
 	size_t len;
 
-	len = read_random(orig, sizeof(orig));
+	len = readRandom(orig, sizeof(orig));
 	cr_assert_eq(len, sizeof(orig));
 
 	copy = (char *) memdup(orig, sizeof(orig));

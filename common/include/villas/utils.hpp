@@ -36,8 +36,6 @@
 #include <sys/types.h>
 
 #include <openssl/sha.h>
-#include <jansson.h>
-#include <uuid/uuid.h>
 
 #include <villas/config.h>
 
@@ -138,10 +136,10 @@ assertExcept(bool condition, const T &exception)
 }
 
 /** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals = {}, std::list<int> ignoreSignals = { SIGCHLD }) __attribute__ ((warn_unused_result));
+int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals = {}, std::list<int> ignoreSignals = { SIGCHLD }) __attribute__ ((warn_unused_result));
 
 /** Fill buffer with random data */
-ssize_t read_random(char *buf, size_t len);
+ssize_t readRandom(char *buf, size_t len);
 
 /** Remove ANSI control sequences for colored output. */
 char * decolor(char *str);
@@ -152,7 +150,7 @@ char * decolor(char *str);
  * @param s Standard deviation
  * @return Normal variate random variable (Gaussian)
  */
-double box_muller(float m, float s);
+double boxMuller(float m, float s);
 
 /** Double precission uniform random variable */
 double randf();
@@ -201,26 +199,14 @@ size_t strlenp(const char *str);
  */
 int sha1sum(FILE *f, unsigned char *sha1);
 
-/** Generate an UUID by MD5 hashing the provided string */
-int uuid_generate_from_str(uuid_t out, const std::string &data, const std::string &ns = "");
-
-/** Generate an UUID by MD5 hashing the provided string */
-int uuid_generate_from_str(uuid_t out, const std::string &data, const uuid_t ns);
-
-/** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
-void uuid_generate_from_json(uuid_t out, json_t *json, const std::string &ns = "");
-
-/** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
-int uuid_generate_from_json(uuid_t out, json_t *json, const uuid_t ns);
-
 /** Check if process is running inside a Docker container */
-bool is_docker();
+bool isDocker();
 
 /** Check if process is running inside a Kubernetes container */
-bool is_kubernetes();
+bool isKubernetes();
 
 /** Check if process is running inside a containerized environment */
-bool is_container();
+bool isContainer();
 
 namespace base64 {
 
