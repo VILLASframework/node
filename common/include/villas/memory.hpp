@@ -41,6 +41,9 @@ class MemoryBlock {
 public:
 	using deallocator_fn = std::function<void(MemoryBlock*)>;
 
+	using Ptr = std::shared_ptr<MemoryBlock>;
+
+	// cppcheck-suppress passedByValue
 	MemoryBlock(size_t offset, size_t size, MemoryManager::AddressSpaceId addrSpaceId) :
 	    offset(offset), size(size), addrSpaceId(addrSpaceId) {}
 

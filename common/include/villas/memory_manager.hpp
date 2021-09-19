@@ -230,8 +230,8 @@ public:
 	MemoryTranslation
 	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
 
-	MemoryTranslation
-	getTranslationFromProcess(AddressSpaceId foreignAddrSpaceId)
+	// cppcheck-suppress passedByValue
+	MemoryTranslation getTranslationFromProcess(AddressSpaceId foreignAddrSpaceId)
 	{ return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId); }
 
 	static std::string
