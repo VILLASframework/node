@@ -171,17 +171,24 @@ std::list<std::string> Config::resolveIncludes(const std::string &n)
 	auto name = n;
 	resolveEnvVars(name);
 
-	for (auto &dir : includeDirectories) {
-		auto pattern = fmt::format("{}/{}", dir, name.c_str());
-
-		ret = glob(pattern.c_str(), flags, nullptr, &gb);
-		if (ret && ret != GLOB_NOMATCH) {
+	if (name.size() >= 1 && name[0] == '/') {  // absolute path
+		ret = glob(name.c_str(), flags, nullptr, &gb);
+		if (ret && ret != GLOB_NOMATCH)
 			gb.gl_pathc = 0;
+	}
+	else { // relative path
+		for (auto &dir : includeDirectories) {
+			auto pattern = fmt::format("{}/{}", dir, name.c_str());
 
-			goto out;
+			ret = glob(pattern.c_str(), flags, nullptr, &gb);
+			if (ret && ret != GLOB_NOMATCH) {
+				gb.gl_pathc = 0;
+
+				goto out;
+			}
+
+			flags |= GLOB_APPEND;
 		}
-
-		flags |= GLOB_APPEND;
 	}
 
 out:	std::list<std::string> files;
