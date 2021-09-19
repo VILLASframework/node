@@ -36,13 +36,13 @@
 #include <villas/memory.h>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
-#include <villas/utils.hpp>
+#include <villas/uuid.hpp>
 
 #include "villas-relay.hpp"
 
 typedef char uuid_string_t[37];
 
-using namespace villas::utils;
+using namespace villas;
 
 namespace villas {
 namespace node {
@@ -61,7 +61,7 @@ RelaySession::RelaySession(Relay *r, Identifier sid) :
 
 	created = time(nullptr);
 
-	uuid_generate_from_str(uuid, identifier, r->uuid);
+	uuid::generateFromString(uuid, identifier, r->uuid);
 }
 
 RelaySession::~RelaySession()
@@ -236,7 +236,7 @@ Relay::Relay(int argc, char *argv[]) :
 	hostname = hname;
 
 	/* Default UUID is derived from hostname */
-	uuid_generate_from_str(uuid, hname);
+	uuid::generateFromString(uuid, hname);
 
 	ret = memory_init(0);
 	if (ret)

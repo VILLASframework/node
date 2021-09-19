@@ -379,7 +379,7 @@ int signal_generator_read(struct vnode *n, struct sample * const smps[], unsigne
 				break;
 
 			case signal_generator::SignalType::RANDOM:
-				s->last[i] += box_muller(0, s->stddev[i]);
+				s->last[i] += boxMuller(0, s->stddev[i]);
 				t->data[i].f = s->last[i];
 				break;
 

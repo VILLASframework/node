@@ -74,7 +74,13 @@ int memory_mmap_init(int hugepages)
 			if (getuid() == 0) {
 				ret = kernel::setNrHugepages(hugepages);
 				if (ret) {
-					logger->warn("Failed to increase number of reserved hugepages");
+					logger->warn("Failed to increase number of reserved hugepages. Falling back to standard mmap() allocator.");
+
+					if (isContainer()) {
+						logger->warn("Please run the container in the privileged mode:");
+						logger->warn("    $ docker run --privileged ...");
+					}
+
 					memory_default = &memory_mmap;
 				}
 				else {

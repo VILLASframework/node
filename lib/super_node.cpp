@@ -29,7 +29,7 @@
 #include <villas/path.h>
 #include <villas/path_source.h>
 #include <villas/path_destination.h>
-#include <villas/utils.hpp>
+#include <villas/uuid.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.hpp>
 #include <villas/memory.h>
@@ -46,7 +46,6 @@
 
 using namespace villas;
 using namespace villas::node;
-using namespace villas::utils;
 
 typedef char uuid_string_t[37];
 
@@ -78,7 +77,7 @@ SuperNode::SuperNode() :
 		throw SystemError("Failed to determine hostname");
 
 	/* Default UUID is derived from hostname */
-	uuid_generate_from_str(uuid, hname);
+	uuid::generateFromString(uuid, hname);
 
 #ifdef WITH_NETEM
 	kernel::nl::init(); /* Fill link cache */

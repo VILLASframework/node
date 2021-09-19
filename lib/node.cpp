@@ -33,6 +33,7 @@
 #include <villas/node_list.hpp>
 #include <villas/path.h>
 #include <villas/utils.hpp>
+#include <villas/uuid.hpp>
 #include <villas/colors.hpp>
 #include <villas/mapping.h>
 #include <villas/timing.h>
@@ -181,7 +182,7 @@ int node_parse(struct vnode *n, json_t *json, const uuid_t sn_uuid)
 	}
 	else
 		/* Generate UUID from hashed config including node name */
-		uuid_generate_from_json(n->uuid, json, sn_uuid);
+		uuid::generateFromJson(n->uuid, json, sn_uuid);
 
 	if (json_netem) {
 #ifdef WITH_NETEM

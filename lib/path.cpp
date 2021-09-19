@@ -35,6 +35,7 @@
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
+#include <villas/uuid.hpp>
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/queue.h>
@@ -50,7 +51,6 @@
 
 using namespace villas;
 using namespace villas::node;
-using namespace villas::utils;
 
 /** Main thread function per path:
  *     read samples from source -> write samples to destinations
@@ -441,7 +441,7 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	}
 	else
 		/* Generate UUID from hashed config */
-		uuid_generate_from_json(p->uuid, json, sn_uuid);
+		uuid::generateFromJson(p->uuid, json, sn_uuid);
 
 	/* Input node(s) */
 	ret = mapping_list_parse(&p->mappings, json_in);
