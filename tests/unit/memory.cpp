@@ -28,6 +28,9 @@
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
+#include <villas/utils.hpp>
+
+using namespace villas;
 
 extern void init_memory();
 
@@ -44,6 +47,9 @@ TheoryDataPoints(memory, aligned) = {
 Theory((size_t len, size_t align, struct memory_type *mt), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
+
+	if (!utils::isPrivileged() && mt == &memory_mmap_hugetlb)
+		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
 
 	ptr = memory_alloc_aligned(len, align, mt);
 	cr_assert_not_null(ptr, "Failed to allocate memory");

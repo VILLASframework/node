@@ -27,6 +27,9 @@
 
 #include <villas/pool.h>
 #include <villas/utils.hpp>
+#include <villas/log.hpp>
+
+using namespace villas;
 
 extern void init_memory();
 
@@ -40,10 +43,10 @@ struct param {
 ParameterizedTestParameters(pool, basic)
 {
 	static struct param params[] = {
-		{ 1,	4096,	150,	&memory_heap },
-		{ 1,	128,	8,	&memory_mmap_hugetlb },
-		{ 1,	4,	8192,	&memory_mmap_hugetlb },
-		{ 1,	1 << 13, 4,	&memory_mmap_hugetlb }
+		{ 1, 4096,    150,  &memory_heap },
+		{ 1, 128,     8,    &memory_mmap },
+		{ 1, 4,       8192, &memory_mmap_hugetlb },
+		{ 1, 1 << 13, 4,    &memory_mmap_hugetlb }
 	};
 
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
@@ -55,7 +58,14 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 	int ret;
 	struct pool pool;
 
+	// some strange LTO stuff is going on here..
+	auto *m  __attribute__((unused)) = &memory_mmap;
+
 	void *ptr, *ptrs[p->pool_size];
+
+	if (!utils::isPrivileged() && p->mt == &memory_mmap_hugetlb) {
+		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
+	}
 
 	ret = pool_init(&pool, p->pool_size, p->block_size, p->mt);
 	cr_assert_eq(ret, 0, "Failed to create pool");
@@ -81,5 +91,4 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 
 	ret = pool_destroy(&pool);
 	cr_assert_eq(ret, 0, "Failed to destroy pool");
-
 }

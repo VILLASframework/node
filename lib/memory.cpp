@@ -66,8 +66,12 @@ int memory_lock(size_t lock)
 {
 	int ret;
 
-#ifdef __linux__
+	if (!utils::isPrivileged()) {
+		logger->warn("Running in an unprivileged environment. Memory is not locked to RAM!");
+		return 0;
+	}
 
+#ifdef __linux__
 #ifndef __arm__
 	struct rlimit l;
 
@@ -79,7 +83,7 @@ int memory_lock(size_t lock)
 	if (l.rlim_cur < lock) {
 		if (l.rlim_max < lock) {
 			if (getuid() != 0) {
-				logger->warn("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
+				logger->warn("Failed to increase ressource limit of locked memory. Please increase manually by running as root:");
 				logger->warn("   $ ulimit -Hl {}", lock);
 
 				return 0;

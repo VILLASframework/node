@@ -57,53 +57,49 @@ int memory_mmap_init(int hugepages)
 	if (pgsz < 0)
 		return -1;
 
-	if (hugepages > 0) {
-		hugepgsz = kernel::getHugePageSize();
-		if (hugepgsz < 0) {
-			logger->warn("Failed to determine hugepage size.");
+	if (hugepages == 0) {
+		logger->warn("Hugepage allocator disabled.");
 
-			memory_default = &memory_mmap;
-			return 0;
-		}
+		memory_default = &memory_mmap;
+		return 0;
+	}
+
+	if (!utils::isPrivileged()) {
+		logger->warn("Running in an unprivileged environment. Hugepages are not used!");
+
+		memory_default = &memory_mmap;
+		return 0;
+	}
+
+	hugepgsz = kernel::getHugePageSize();
+	if (hugepgsz < 0) {
+		logger->warn("Failed to determine hugepage size.");
+
+		return -1;
+	}
 
 #if defined(__linux__) && defined(__x86_64__)
-		int ret, pagecnt;
+	int ret, pagecnt;
 
-		pagecnt = kernel::getNrHugepages();
-		if (pagecnt < hugepages) {
-			if (getuid() == 0) {
-				ret = kernel::setNrHugepages(hugepages);
-				if (ret) {
-					logger->warn("Failed to increase number of reserved hugepages. Falling back to standard mmap() allocator.");
+	pagecnt = kernel::getNrHugepages();
+	if (pagecnt < hugepages) {
+		ret = kernel::setNrHugepages(hugepages);
+		if (ret) {
+			logger->warn("Failed to reserved hugepages. Please reserve manually by running as root:");
+			logger->warn("   $ echo {} > /proc/sys/vm/nr_hugepages", hugepages);
 
-					if (isContainer()) {
-						logger->warn("Please run the container in the privileged mode:");
-						logger->warn("    $ docker run --privileged ...");
-					}
-
-					memory_default = &memory_mmap;
-				}
-				else {
-					logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
-					memory_default = &memory_mmap_hugetlb;
-				}
-			}
-			else {
-				logger->warn("Failed to reserved hugepages. Please reserve manually by running as root:");
-				logger->warn("   $ echo {} > /proc/sys/vm/nr_hugepages", hugepages);
-				memory_default = &memory_mmap;
-			}
+			return -1;
 		}
-		else
-			memory_default = &memory_mmap_hugetlb;
+
+		logger->debug("Increased number of reserved hugepages from {} to {}", pagecnt, hugepages);
+	}
+
+	memory_default = &memory_mmap_hugetlb;
 #else
-		memory_default = &memory_mmap;
+	logger->debug("Hugepages not supported on this system. Falling back to standard mmap() allocator.");
+
+	memory_default = &memory_mmap;
 #endif
-	}
-	else {
-		logger->warn("Hugepage allocator disabled.");
-		memory_default = &memory_mmap;
-	}
 
 	return 0;
 }

@@ -295,6 +295,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 
 	Logger logger = logging.get("test:queue:multi_threaded");
 
+	if (!utils::isPrivileged() && p->mt == &memory_mmap_hugetlb)
+		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
+
 	pthread_t threads[p->thread_count];
 
 	p->start = 0;
