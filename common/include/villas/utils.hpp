@@ -208,6 +208,9 @@ bool isKubernetes();
 /** Check if process is running inside a containerized environment */
 bool isContainer();
 
+/** Check if the process is running in a privileged environment (has SYS_ADMIN capability). */
+bool isPrivileged();
+
 namespace base64 {
 
 using byte = std::uint8_t;

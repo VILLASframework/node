@@ -371,5 +371,17 @@ bool isContainer() {
 	return isDocker() || isKubernetes();
 }
 
+bool isPrivileged() {
+	// TODO: a cleaner way would be to use libcap here and check for the
+	//       SYS_ADMIN capability.
+	auto *f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
+	if (!f)
+		return false;
+
+	fclose(f);
+
+	return 0;
+}
+
 } /* namespace utils */
 } /* namespace villas */
