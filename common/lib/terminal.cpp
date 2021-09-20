@@ -37,11 +37,11 @@ Terminal::Terminal()
 	window.ws_row = 0;
 	window.ws_col = 0;
 
-	isTty = isatty(fileno(stdin));
+	isTty = isatty(STDERR_FILENO);
+
+	Logger logger = logging.get("terminal");
 
 	if (isTty) {
-		Logger logger = logging.get("terminal");
-
 		struct sigaction sa_resize;
 		sa_resize.sa_flags = SA_SIGINFO;
 		sa_resize.sa_sigaction = resize;
@@ -56,6 +56,8 @@ Terminal::Terminal()
 		ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
 		if (ret)
 			logger->warn("Failed to get terminal dimensions");
+	} else {
+		logger->info("stderr is not associated with a terminal! Using fallback values for window size...");
 	}
 
 	/* Fallback if for some reason we can not determine a prober window size */
@@ -68,13 +70,16 @@ Terminal::Terminal()
 
 void Terminal::resize(int, siginfo_t *, void *)
 {
+	if (!current)
+		current = new Terminal();
+
+	Logger logger = logging.get("terminal");
+
 	int ret;
 
 	ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &current->window);
 	if (ret)
 		throw SystemError("Failed to get terminal dimensions");
-
-	Logger logger = logging.get("terminal");
 
 	logger->debug("New terminal size: {}x{}", current->window.ws_row, current->window.ws_col);
 };
