@@ -214,7 +214,7 @@ pkg:alpine:
   image: docker:20.10
   before_script:
   - mkdir -p ~/.docker/cli-plugins/
-  - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
+  - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64
   - chmod a+x ~/.docker/cli-plugins/docker-buildx
   - docker buildx create --use --name cross-platform-build --buildkitd-flags "--allow-insecure-entitlement security.insecure"
   - docker buildx inspect --bootstrap cross-platform-build
