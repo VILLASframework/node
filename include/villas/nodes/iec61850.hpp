@@ -43,6 +43,11 @@
 
 #include <villas/list.h>
 #include <villas/signal.h>
+#include <villas/super_node.hpp>
+
+#ifndef CONFIG_GOOSE_DEFAULT_DST_ADDRESS
+  #define CONFIG_GOOSE_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01}
+#endif
 
 /* Forward declarations */
 struct vnode;

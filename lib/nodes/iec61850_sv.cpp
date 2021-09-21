@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
-
 #include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 
+#include <villas/utils.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
@@ -52,7 +51,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 
 	sz = SVSubscriber_ASDU_getDataSize(asdu);
 	if (sz < i->in.total_size) {
-		n->node->warn("Received truncated ASDU: size={}, expected={}", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
+		n->logger->warn("Received truncated ASDU: size={}, expected={}", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
 		return;
 	}
 
@@ -483,8 +482,8 @@ static void register_plugin() {
 	p.description	= "IEC 61850-9-2 (Sampled Values)";
 	p.vectorize	= 0;
 	p.size		= sizeof(struct iec61850_sv);
-	p.start	= iec61850_type_start;
-	p.stop	= iec61850_type_stop;
+	p.type.start	= iec61850_type_start;
+	p.type.stop	= iec61850_type_stop;
 	p.destroy	= iec61850_sv_destroy;
 	p.parse		= iec61850_sv_parse;
 	p.print		= iec61850_sv_print;
@@ -499,5 +498,3 @@ static void register_plugin() {
 
 	node_types->push_back(&p);
 }
-
-#endif /* CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT */
