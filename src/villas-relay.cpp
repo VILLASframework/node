@@ -302,18 +302,16 @@ void Relay::loggerCallback(int level, const char *msg)
 int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	int ret;
-	size_t json_len;
-	json_t *json_sessions, *json_body;
 
 	lws_context *ctx = lws_get_context(wsi);
 	void *user_ctx = lws_context_user(ctx);
 
-	Relay           *r = reinterpret_cast<Relay *>(user_ctx);
-
-	unsigned char buf[LWS_PRE + 2048], *start = &buf[LWS_PRE], *end = &buf[sizeof(buf) - LWS_PRE - 1], *p = start;
+	Relay *r = reinterpret_cast<Relay *>(user_ctx);
 
 	switch (reason) {
-		case LWS_CALLBACK_HTTP:
+		case LWS_CALLBACK_HTTP: {
+			unsigned char buf[LWS_PRE + 2048], *start = &buf[LWS_PRE], *end = &buf[sizeof(buf) - LWS_PRE - 1], *p = start;
+
 			if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
 					"application/json",
 					LWS_ILLEGAL_HTTP_CONTENT_LEN, /* no content len */
@@ -327,8 +325,12 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void
 			lws_callback_on_writable(wsi);
 
 			return 0;
+		}
 
-		case LWS_CALLBACK_HTTP_WRITEABLE:
+		case LWS_CALLBACK_HTTP_WRITEABLE: {
+			size_t len;
+			std::vector<char> buf;
+			json_t *json_sessions, *json_body;
 
 			json_sessions = json_array();
 			for (auto it : RelaySession::sessions) {
@@ -350,17 +352,26 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void
 					"port", r->port,
 					"protocol", r->protocol.c_str()
 			);
+			if (!json_body)
+				return -1;
 
-			json_len = json_dumpb(json_body, (char *) buf + LWS_PRE, sizeof(buf) - LWS_PRE, JSON_INDENT(4));
+			len = 1024;
+			do {
+				buf.resize(LWS_PRE + len);
 
-			ret = lws_write(wsi, buf + LWS_PRE, json_len, LWS_WRITE_HTTP_FINAL);
+				len = json_dumpb(json_body, buf.data() + LWS_PRE, buf.size() - LWS_PRE, JSON_INDENT(4));
+				if (len == 0)
+					return -1;
+			} while (len > buf.size() - LWS_PRE);
+
+			ret = lws_write(wsi, (unsigned char *)(buf.data() + LWS_PRE), len, LWS_WRITE_HTTP_FINAL);
 			if (ret < 0)
 				return ret;
 
 			r->logger->info("Handled API request");
 
-			//if (lws_http_transaction_completed(wsi))
-				return -1;
+			return -1;
+		}
 
 		default:
 			break;
