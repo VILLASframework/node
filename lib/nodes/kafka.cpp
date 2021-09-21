@@ -153,7 +153,7 @@ int kafka_init(struct vnode *n)
 	k->producer.client = nullptr;
 	k->producer.topic = nullptr;
 
-	k->sasl.mechanism = nullptr;
+	k->sasl.mechanisms = nullptr;
 	k->sasl.username = nullptr;
 	k->sasl.password = nullptr;
 
@@ -227,19 +227,19 @@ int kafka_parse(struct vnode *n, json_t *json)
 	}
 
 	if (json_sasl) {
-		const char *mechanism;
+		const char *mechanisms;
 		const char *username;
 		const char *password;
 
-		ret = json_unpack_ex(json_ssl, &err, 0, "{ s: s, s: s, s: s }",
-			"mechanism", &mechanism,
+		ret = json_unpack_ex(json_sasl, &err, 0, "{ s: s, s: s, s: s }",
+			"mechanisms", &mechanisms,
 			"username", &username,
 			"password", &password
 		);
 		if (ret)
-			throw ConfigError(json_sasl, err, "node-config-node-kafka-sasl", "Failed to parse SASL configuration of node {}", *n);
+			throw ConfigError(json_sasl, err, "node-config-node-kafka-sasl", "Failed to parse SASL configuration");
 
-		k->sasl.mechanism = strdup(mechanism);
+		k->sasl.mechanisms = strdup(mechanisms);
 		k->sasl.username = strdup(username);
 		k->sasl.password = strdup(password);
 	}
@@ -362,7 +362,7 @@ int kafka_start(struct vnode *n)
 	}
 
 	if (!strcmp(k->protocol, "SASL_PLAINTEXT") || !strcmp(k->protocol, "SASL_SSL")) {
-		ret = rd_kafka_conf_set(rdkconf, "sasl.mechanisms", k->sasl.mechanism, errstr, sizeof(errstr));
+		ret = rd_kafka_conf_set(rdkconf, "sasl.mechanisms", k->sasl.mechanisms, errstr, sizeof(errstr));
 		if (ret != RD_KAFKA_CONF_OK)
 			goto kafka_config_error;
 

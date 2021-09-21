@@ -41,6 +41,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 set(LIB_SRC
+    capabilities.cpp
     config_helper.cpp
     config.cpp
     dumper.cpp

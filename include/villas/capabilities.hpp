@@ -1,4 +1,4 @@
-/** The "capabiltities" API ressource.
+/** Capabilities
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -20,39 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/api/request.hpp>
-#include <villas/api/response.hpp>
-#include <villas/capabilities.hpp>
+#pragma once
+
+#include <jansson.h>
 
 namespace villas {
 namespace node {
-namespace api {
 
-class CapabilitiesRequest : public Request {
+json_t * getCapabilities();
 
-public:
-	using Request::Request;
-
-	virtual Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
-
-		if (body != nullptr)
-			throw BadRequest("Capabilities endpoint does not accept any body data");
-
-		auto *json_capabilities = getCapabilities();
-
-		return new JsonResponse(session, HTTP_STATUS_OK, json_capabilities);
-	}
-};
-
-/* Register API request */
-static char n[] = "capabilities";
-static char r[] = "/capabilities";
-static char d[] = "get capabiltities and details about this VILLASnode instance";
-static RequestPlugin<CapabilitiesRequest, n, r, d> p;
-
-} /* namespace api */
 } /* namespace node */
-} /* namespace villas */
+} /* namepace vilals */

@@ -64,7 +64,7 @@ struct kafka {
 	} ssl;
 
 	struct {
-		char *mechanism;	/**< SASL mechanism. */
+		char *mechanisms;	/**< SASL mechanisms. */
 		char *username;		/**< SSL CA path. */
 		char *password;		/**< SSL certificate. */
 	} sasl;

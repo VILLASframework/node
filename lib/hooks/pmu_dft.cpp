@@ -263,7 +263,7 @@ public:
 			"window_size_factor", &windowSizeFactor,
 			"window_type", &windowTypeC,
 			"padding_type", &paddingTypeC,
-			"freq_estimate_type", &freqEstimateTypeC,
+			"frequency_estimate_type", &freqEstimateTypeC,
 			"sync", &sync,
 			"pps_index", &ppsIndex,
 			"angle_unit", &angleUnitC

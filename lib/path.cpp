@@ -346,16 +346,6 @@ int path_prepare(struct vpath *p, NodeList &nodes)
 	if (p->original_sequence_no == -1)
 		p->original_sequence_no = vlist_length(&p->sources) == 1;
 
-	/* Autodetect whether to use poll() for this path or not */
-	if (p->poll == -1) {
-		if (p->rate > 0)
-			p->poll = 1;
-		else if (vlist_length(&p->sources) > 1)
-			p->poll = 1;
-		else
-			p->poll = 0;
-	}
-
 	/* Prepare poll() */
 	if (p->poll) {
 		ret = path_prepare_poll(p);
@@ -486,6 +476,16 @@ int path_parse(struct vpath *p, json_t *json, NodeList &nodes, const uuid_t sn_u
 	ret = vlist_destroy(&destinations, nullptr, false);
 	if (ret)
 		return ret;
+
+	/* Autodetect whether to use poll() for this path or not */
+	if (p->poll == -1) {
+		if (p->rate > 0)
+			p->poll = 1;
+		else if (vlist_length(&p->sources) > 1)
+			p->poll = 1;
+		else
+			p->poll = 0;
+	}
 
 	p->config = json;
 	p->state = State::PARSED;

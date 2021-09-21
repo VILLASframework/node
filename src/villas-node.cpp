@@ -47,6 +47,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
+#include <villas/capabilities.hpp>
 
 #ifdef WITH_NODE_OPAL
   #include <villas/nodes/opal.hpp>
@@ -71,6 +72,7 @@ protected:
 	SuperNode sn;
 
 	std::string uri;
+	bool showCapabilities = false;
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
 	{
@@ -92,6 +94,7 @@ protected:
 			<< "  OPTIONS is one or more of the following options:" << std::endl
 			<< "    -h      show this usage information" << std::endl
 			<< "    -d LVL  set logging level" << std::endl
+			<< "    -C      show capabilities in JSON format" << std::endl
 			<< "    -V      show the version of the tool" << std::endl << std::endl
 			<< "  CONFIG is the path to an optional configuration file" << std::endl
 			<< "         if omitted, VILLASnode will start without a configuration" << std::endl
@@ -145,7 +148,7 @@ protected:
 
 		/* Parse optional command line arguments */
 		int c;
-		while ((c = getopt(argc, argv, "hVd:")) != -1) {
+		while ((c = getopt(argc, argv, "hCVd:")) != -1) {
 			switch (c) {
 				case 'V':
 					printVersion();
@@ -153,6 +156,10 @@ protected:
 
 				case 'd':
 					logging.setLevel(optarg);
+					break;
+
+				case 'C':
+					showCapabilities = true;
 					break;
 
 				case 'h':
@@ -175,6 +182,20 @@ protected:
 
 	int main()
 	{
+		return showCapabilities
+			? capabilities()
+			: daemon();
+	}
+
+	int capabilities() {
+		auto *json_caps = getCapabilities();
+
+		json_dumpf(json_caps, stdout, JSON_INDENT(4));
+
+		return 0;
+	}
+
+	int daemon() {
 		if (!uri.empty())
 			sn.parse(uri);
 		else

@@ -23,22 +23,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-set -e
+NODE_TYPES=$(villas-node -C | jq -r '.nodes | join(" ")')
+HOOKS_TYPES=$(villas-node -C | jq -r '.["hooks"] | join(" ")')
 
-CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
+CONFIGS=$(find  -name '*.conf' -o -name '*.json')
 
-for CONFIG in ${CONFIGS}; do
-    if [ "$(basename ${CONFIG})" == "opal.conf" ] ||
-       [ "$(basename ${CONFIG})" == "paths.conf" ] ||
-       [ "$(basename ${CONFIG})" == "tricks.json" ] ||
-       [ "$(basename ${CONFIG})" == "tricks.conf" ] ||
-	   [ "$(basename ${CONFIG})" == "vc707_ips.conf" ] ||
-       [ "$(basename ${CONFIG})" == "infiniband.conf" ] ||
-       [ "$(basename ${CONFIG})" == "global.conf" ]; then
-        echo "=== Skipping config: ${CONFIG}"
-        continue
-    fi
+MISSING=0
 
-    echo "=== Testing config: ${CONFIG}"
-    villas-test-config -c ${CONFIG}
+for NODE in ${NODE_TYPES}; do
+	[ ${NODE} == "loopback_internal" ] && continue
+
+	if [ ! -f "${SRCDIR}/etc/examples/nodes/${NODE}.conf" ]; then
+		echo "Missing example config for node-type: ${NODE}"
+		((MISSING++))
+	fi
 done
+
+for HOOK in ${HOOK_TYPES}; do
+	[ ${NODE} == "loopback_internal" ] && continue
+
+	if [ ! -f "${SRCDIR}/etc/examples/hooks/${HOOK}.conf" ]; then
+		echo "Missing example config for hook-type: ${HOOK}"
+		((MISSING++))
+	fi
+done
+
+(( ${MISSING} == 0 ))
