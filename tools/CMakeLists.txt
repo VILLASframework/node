@@ -39,7 +39,7 @@ install(
 )
 
 install(
-    PROGRAMS villas.sh
+    PROGRAMS villas
     COMPONENT bin
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     RENAME villas
