@@ -21,7 +21,7 @@
 ###################################################################################
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=33
+ARG FEDORA_VERSION=34
 ARG ARCH=x86_64
 ARG TRIPLET=x86_64-linux-gnu
 
