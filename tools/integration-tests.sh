@@ -84,7 +84,7 @@ for TEST in ${TESTS}; do
 	TESTNAME=$(basename -s .sh ${TEST})
 
 	# Start time measurement
-	SECONDS=0
+	START=$(date +%s.%N)
 
 	# Run test
 	if (( ${VERBOSE} == 0 )); then
@@ -95,7 +95,8 @@ for TEST in ${TESTS}; do
 		RC=${PIPESTATUS[0]}
 	fi
 
-	TOTAL_SECONDS=${SECONDS}
+	END=$(date +%s.%N)
+	DIFF=$(echo "$END - $START" | bc)
 	
 	# Show full log in case of an error
 	if (( ${VERBOSE} == 0 )); then
@@ -106,7 +107,7 @@ for TEST in ${TESTS}; do
 
 	case $RC in
 		0)
-			echo -e "\e[32m[PASS] \e[39m ${TESTNAME} (ran for ${SECONDS}s)"
+			echo -e "\e[32m[PASS] \e[39m ${TESTNAME} (ran for ${DIFF}s)"
 			PASSED=$((${PASSED} + 1))
 			;;
 		99)
@@ -119,7 +120,7 @@ for TEST in ${TESTS}; do
 			FAILED=$((${FAILED} + 1))
 			;;
 		*)
-			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} (exited with code $RC, ran for ${SECONDS}s)"
+			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} (exited with code $RC, ran for ${DIFF}s)"
 			FAILED=$((${FAILED} + 1))
 			;;
 	esac
