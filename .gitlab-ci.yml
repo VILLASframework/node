@@ -58,7 +58,7 @@ build:source:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
   - mkdir -p build && cd build
-  - ${CMAKE} ${CMAKE_OPTS} ..
+  - cmake ${CMAKE_OPTS} ..
   - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
@@ -68,7 +68,7 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: [ fedora, fedora-minimal, debian, debian-armhf, debian-arm64 ]
+    - DISTRO: [ fedora, fedora-minimal, debian, debian-armhf, debian-arm64, centos, ubuntu ]
     - DISTRO: fedora-minimal
       CMAKE_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
@@ -84,12 +84,7 @@ build:source:
                   -DWITH_TESTS=OFF
                   -DWITH_TOOLS=OFF
                   -DWITH_WEB=OFF
-    - DISTRO: centos
-      CMAKE: cmake3
-      CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
-                  -DCMAKE_PREFIX_PATH=/usr/local
-    - DISTRO: ubuntu
-      CMAKE_OPTS: -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+                  -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
                   -DCMAKE_PREFIX_PATH=/usr/local
   tags:
   - docker
@@ -174,7 +169,7 @@ test:integration:
 # Stage: packaging
 ##############################################################################
 
-pkg:alpine:
+pkg:docker:
   stage: packaging
   image: docker:20.10
   before_script:
@@ -241,10 +236,10 @@ deploy:docker:
   tags:
   - docker
   needs:
-  - job: "pkg:alpine: [linux/amd64, amd64, x86_64-alpine-linux-musl]"
-  - job: "pkg:alpine: [linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
-  - job: "pkg:alpine: [linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
-  - job: "pkg:alpine: [linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
+  - job: "pkg:docker: [alpine, linux/amd64, amd64, x86_64-alpine-linux-musl]"
+  - job: "pkg:docker: [alpine, linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
+  - job: "pkg:docker: [alpine, linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
+  - job: "pkg:docker: [alpine, linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
   - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
 
 # Stage: latest
