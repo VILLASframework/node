@@ -189,29 +189,33 @@ pkg:alpine:
       --pull
       --allow security.insecure
       --output type=docker
-      --target app
+      --target ${TARGET}
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
       --platform ${PLATFORM}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
   - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
-  variables:
-    DISTRO: alpine
   tags:
   - docker
+  variables:
+    TARGET: app
   parallel:
     matrix:
-      - PLATFORM: linux/amd64
+      - DISTRO: alpine
+        PLATFORM: linux/amd64
         ARCH: amd64
         TRIPLET: x86_64-alpine-linux-musl
-      - PLATFORM: linux/arm64/v8
+      - DISTRO: alpine
+        PLATFORM: linux/arm64/v8
         ARCH: arm64
         TRIPLET: aarch64-alpine-linux-musl
-      - PLATFORM: linux/arm/v6
+      - DISTRO: alpine
+        PLATFORM: linux/arm/v6
         ARCH: armv6
         TRIPLET: armv6-alpine-linux-musleabihf
-      - PLATFORM: linux/arm/v7
+      - DISTRO: alpine
+        PLATFORM: linux/arm/v7
         ARCH: armv7
         TRIPLET: armv7-alpine-linux-musleabihf
   needs: []
