@@ -94,21 +94,6 @@ build:source:
   tags:
   - docker
 
-build:docs:
-  stage: build
-  artifacts:
-    name: ${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}
-    paths:
-    - build/doc/
-  script:
-  - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ..
-  - make ${MAKE_OPTS} doc
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
-  tags:
-  - docker
-
-
 # Stage: test
 ##############################################################################
 
@@ -189,26 +174,6 @@ test:integration:
 # Stage: packaging
 ##############################################################################
 
-pkg:rpm:
-  stage: packaging
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  script:
-  - mkdir -p build && cd build
-  - cmake -DWITH_NODE_ETHERCAT=OFF ..
-  - make ${MAKE_OPTS} doc
-  - make ${MAKE_OPTS} package
-  artifacts:
-    expire_in: 1 week
-    name: ${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}
-    paths:
-    - build/*.tar.gz
-    - build/*.rpm
-  needs:
-  - job: "build:source: [fedora]"
-    artifacts: true
-  tags:
-  - docker
-
 pkg:alpine:
   stage: packaging
   image: docker:20.10
@@ -251,25 +216,8 @@ pkg:alpine:
         TRIPLET: armv7-alpine-linux-musleabihf
   needs: []
 
-
 # Stage: deploy
 ##############################################################################
-
-deploy:web:
-  stage: deploy
-  image:
-    name: rclone/rclone:1.50
-    entrypoint: [""]
-  before_script:
-  - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
-  script:
-  - rclone copy build/doc/html fein:villas/doc-dev/${CI_BUILD_REF_NAME}
-  needs:
-  - job: build:docs
-  only:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
-  tags:
-  - docker
 
 deploy:docker:
   stage: deploy
@@ -294,36 +242,6 @@ deploy:docker:
   - job: "pkg:alpine: [linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
   - job: "pkg:alpine: [linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
   - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
-
-.deploy:packages: &deploy_packages
-  stage: deploy
-  image:
-    name: rclone/rclone:1.50
-    entrypoint: [""]
-  before_script:
-  - apk add curl
-  - rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
-  script:
-  - rclone copy --max-depth 1 --include '*.tar.gz' build fein:packages/dist
-  - rclone copy --max-depth 1 --include '*.rpm'    build fein:packages/fedora/${RELEASEVER}/x86_64
-  - curl -L --user ${DEPLOY_USER}:${DEPLOY_PASS} ${DEPLOY_PATH}/hooks/createrepo
-  variables:
-    RELEASEVER: "33"
-  needs:
-  - job: pkg:rpm
-  tags:
-  - docker
-
-deploy:packages:manual:
-  <<: *deploy_packages
-  when: manual
-  except:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
-
-deploy:packages:tags:
-  <<: *deploy_packages
-  only:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 # Stage: latest
 ##############################################################################
