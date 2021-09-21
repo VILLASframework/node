@@ -37,16 +37,7 @@ prepare:docker:
     - DISTRO: fedora
       DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
       DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
-    - DISTRO: debian
-      DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-armhf
-      DOCKER_OPTS: --build-arg ARCH=armhf
-                   --build-arg TRIPLET=arm-linux-gnueabihf
-    - DISTRO: debian
-      DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-debian-arm64
-      DOCKER_OPTS: --build-arg ARCH=arm64
-                   --build-arg TRIPLET=aarch64-linux-gnu
+
   tags:
   - docker
 
@@ -68,7 +59,7 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: [ fedora, fedora-minimal, debian, debian-armhf, debian-arm64, centos, ubuntu ]
+    - DISTRO: [ fedora, fedora-minimal, debian, centos, ubuntu ]
     - DISTRO: fedora-minimal
       CMAKE_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
@@ -213,6 +204,21 @@ pkg:docker:
         PLATFORM: linux/arm/v7
         ARCH: armv7
         TRIPLET: armv7-alpine-linux-musleabihf
+      - DISTRO: debian
+        ARCH: x86_64
+        TRIPLET:  x86_64-linux-gnu
+        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+      - DISTRO: debian
+        ARCH: armhf
+        TRIPLET: arm-linux-gnueabihf
+        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+      - DISTRO: debian
+        ARCH: arm64
+        TRIPLET: aarch64-linux-gnu
+        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+   
   needs: []
 
 # Stage: deploy
