@@ -24,6 +24,7 @@ ARG DISTRO=fedora
 ARG FEDORA_VERSION=34
 ARG ARCH=x86_64
 ARG TRIPLET=x86_64-linux-gnu
+ARG REF=unknown
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
@@ -107,9 +108,9 @@ FROM dev AS app
 
 COPY . /villas/
 
-RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake .. && \
+RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
+	cmake .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
