@@ -108,13 +108,14 @@ protected:
 		std::stringstream ss;
 
 		ss << std::runtime_error::what() << std::endl;
-		ss << std::endl << " Please consult the user documentation for details: " << std::endl;
-		ss << "   " << docUri();
 
 		if (error.position >= 0) {
 			ss << std::endl;
-			ss << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column;
+			ss << " " << error.text << " in " << error.source << ":" << error.line << ":" << error.column << std::endl;
 		}
+
+		ss << std::endl << " Please consult the user documentation for details: " << std::endl;
+		ss << "   " << docUri();
 
 		ss << std::endl;
 
@@ -157,8 +158,6 @@ public:
 		setting(s),
 		error(e)
 	{
-		error.position = -1;
-
 		msg = strdup(getMessage().c_str());
 	}
 
@@ -169,8 +168,6 @@ public:
 		setting(s),
 		error(e)
 	{
-		error.position = -1;
-
 		msg = strdup(getMessage().c_str());
 	}
 
