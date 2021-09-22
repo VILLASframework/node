@@ -74,13 +74,11 @@ Log::Log(Level lvl) :
 	pattern("%H:%M:%S %^%-4t%$ %-16n %v")
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
-	if (p)
-		prefix = p;
 
 	sinks = std::make_shared<DistSink::element_type>();
 
 	setLevel(level);
-	setFormatter(pattern);
+	setFormatter(pattern, p ? p : "");
 
 	/* Default sink */
 	sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
@@ -174,13 +172,14 @@ void Log::parse(json_t *json)
 	}
 }
 
-void Log::setFormatter(const std::string &pat)
+void Log::setFormatter(const std::string &pat, const std::string &pfx)
 {
 	pattern = pat;
+	prefix = pfx;
 
 	formatter = std::make_shared<spdlog::pattern_formatter>(spdlog::pattern_time_type::utc);
 	formatter->add_flag<CustomLevelFlag>('t');
-	formatter->set_pattern(pattern);
+	formatter->set_pattern(prefix + pattern);
 
 	spdlog::set_formatter(formatter->clone());
 	sinks->set_formatter(formatter->clone());

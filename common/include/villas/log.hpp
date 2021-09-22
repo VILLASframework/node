@@ -87,7 +87,7 @@ public:
 
 	Logger get(const std::string &name);
 
-	void setFormatter(const std::string &pattern);
+	void setFormatter(const std::string &pattern, const std::string &pfx = "");
 	void setLevel(Level lvl);
 	void setLevel(const std::string &lvl);
 
