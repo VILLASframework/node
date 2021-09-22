@@ -204,15 +204,18 @@ pkg:docker:
         ARCH: armv7
         TRIPLET: armv7-alpine-linux-musleabihf
       - DISTRO: debian
+        PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET:  x86_64-linux-gnu
         DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
+        PLATFORM: linux/arm/v7
         ARCH: armhf
         TRIPLET: arm-linux-gnueabihf
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
         DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
+        PLATFORM: linux/arm64/v8
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
