@@ -36,6 +36,8 @@ IB_MODES=("RC")
 ######################################
 ######################################
 
+. ${SRCDIR}/tools/villas-helper.sh
+
 # Check if user is superuser. SU is used for namespace
 if [[ "$EUID" -ne 0 ]]; then
     echo "Please run as root"
@@ -91,10 +93,6 @@ fi
 ######################################
 # SET PATHS ##########################
 ######################################
-# Set paths
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 # Declare location of config files
 CONFIG=$(mktemp /tmp/nodetype-benchmark-config-XXXX.conf)
@@ -252,7 +250,7 @@ cat >> ${CONFIG} <<EOF
 EOF
 
                     # Start receiving node
-                    VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
+                    VILLAS_LOG_PREFIX=$(colorize "[target] ") \
                     cset proc --set=real-time-0 --exec ../../build/src/villas-node -- ${CONFIG_TARGET} &
                     target_node_proc=$!
                     
@@ -261,7 +259,7 @@ EOF
                 
                 if [ ! "${NODETYPE}" == "loopback" ]; then 
                     # Start sending pipe
-                    VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
+                    VILLAS_LOG_PREFIX=$(colorize "[source] ") \
                     ${NAMESPACE_CMD} cset proc --set=real-time-1 --exec ../../build/src/villas-node -- ${CONFIG_SOURCE} &
                     source_node_proc=$!
                 fi

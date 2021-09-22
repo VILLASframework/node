@@ -101,7 +101,7 @@ public:
 	Compare(int argc, char *argv[]) :
 		Tool(argc, argv, "test-cmp"),
 		pool(),
-		epsilon(1e-9),
+		epsilon(1e-6),
 		format("villas.human"),
 		dtypes("64f"),
 		flags((int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN)

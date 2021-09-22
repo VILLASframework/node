@@ -45,6 +45,11 @@ function villas_format_supports_header() {
 }
 
 function colorize() {
-	RANDOM=$BASHPID
-	echo -e "\x1b[0;$((31 + $RANDOM % 7))m$1\x1b[0m"
+	RANDOM=${BASHPID}
+	echo -e "\x1b[0;$((31 + ${RANDOM} % 7))m$1\x1b[0m"
+}
+
+function villas() {
+	VILLAS_LOG_PREFIX=${VILLAS_LOG_PREFIX:-$(colorize "[$1-$((${RANDOM} % 100))} ")} \
+	command villas $@
 }
