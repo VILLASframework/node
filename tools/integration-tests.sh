@@ -29,7 +29,7 @@ SRCDIR=${SRCDIR:-$(realpath ${SCRIPTPATH}/..)}
 BUILDDIR=${BUILDDIR:-${SRCDIR}/build}
 
 LOGDIR=${BUILDDIR}/tests/integration
-PATH=${BUILDDIR}/src:${PATH}
+PATH=${BUILDDIR}/src:${SRCDIR}/tools:${PATH}
 
 export PATH SRCDIR BUILDDIR LOGDIR
 

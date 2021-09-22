@@ -219,7 +219,7 @@ pkg:docker:
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
    
   needs: []
 
