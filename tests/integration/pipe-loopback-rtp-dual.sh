@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test for villas-pipe.
+# Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
@@ -28,10 +28,6 @@ if [ -n "${CI}" ]; then
   echo "Test not yet supported"
   exit 99
 fi
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE_SRC=$(mktemp)
 CONFIG_FILE_DEST=$(mktemp)
@@ -114,19 +110,16 @@ cat > ${CONFIG_FILE_DEST} << EOF
 }
 EOF
 
-VILLAS_LOG_PREFIX="[DEST] " \
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 PID=$!
 
 sleep 1
 
-VILLAS_LOG_PREFIX="[SIGN] " \
-villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-VILLAS_LOG_PREFIX="[SRC]  " \
-villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
+villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 
 # Compare data
-villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE_SRC} ${CONFIG_FILE_DEST}

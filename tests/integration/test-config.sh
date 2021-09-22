@@ -40,5 +40,5 @@ for CONFIG in ${CONFIGS}; do
     fi
 
     echo "=== Testing config: ${CONFIG}"
-    villas-test-config -c ${CONFIG}
+    villas test-config -c ${CONFIG}
 done

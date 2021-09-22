@@ -36,16 +36,16 @@ F0=50
 
 OPTS="-o f0=${F0} -o rate=${RATE} -o signal=0 -o harmonics=0,1,3,5,7"
 
-villas-signal sine -v1 -l ${NUM_SAMPLES} -f ${F0} -r ${RATE} -n > ${INPUT_FILE}
+villas signal sine -v1 -l ${NUM_SAMPLES} -f ${F0} -r ${RATE} -n > ${INPUT_FILE}
 
-villas-hook dp -o inverse=false ${OPTS} < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook dp -o inverse=false ${OPTS} < ${INPUT_FILE} > ${OUTPUT_FILE}
 
-villas-hook dp -o inverse=true ${OPTS} < ${OUTPUT_FILE} > ${RECON_FILE}
+villas hook dp -o inverse=true ${OPTS} < ${OUTPUT_FILE} > ${RECON_FILE}
 
 exit 0
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}

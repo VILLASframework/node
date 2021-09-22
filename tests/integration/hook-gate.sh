@@ -49,10 +49,10 @@ cat <<EOF > ${EXPECT_FILE}
 1561591855.077804200(8)	0.015231	-0.149670	1.000000	-0.904358	0.904782
 EOF
 
-villas-hook gate -o signal=signal2 -o mode=above < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook gate -o signal=signal2 -o mode=above < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}

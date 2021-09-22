@@ -26,8 +26,8 @@ OUTPUT_FILE=$(mktemp)
 
 SKIP=50
 
-villas-signal -r 1 -l ${NUM_SAMPLES} -n random | \
-villas-hook -o samples=${SKIP} skip_first > ${OUTPUT_FILE}
+villas signal -r 1 -l ${NUM_SAMPLES} -n random | \
+villas hook -o samples=${SKIP} skip_first > ${OUTPUT_FILE}
 
 LINES=$(sed -re '/^#/d' ${OUTPUT_FILE} | wc -l)
 

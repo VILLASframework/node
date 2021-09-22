@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test for villas-pipe.
+# Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -27,10 +27,6 @@ if [ -n "${CI}" ]; then
   echo "Test not yet supported"
   exit 99
 fi	
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
@@ -81,11 +77,11 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE}
+villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE}
 
 # Compare data
-villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}

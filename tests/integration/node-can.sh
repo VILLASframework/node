@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration can test using villas-node.
+# Integration can test using villas node.
 #
 # @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -25,10 +25,6 @@
 # sudo modprobe vcan
 # sudo ip link add dev vcan0 type vcan
 # sudo ip link set vcan0 up
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
@@ -117,12 +113,10 @@ nodes = {
 EOF
 
 # Generate test data
-VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Start node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE} &
+villas node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
@@ -131,8 +125,7 @@ candump -n ${NUM_SAMPLES} -T 1000 -L ${CAN_IF} | awk '{print $3}' > ${CAN_OUT_FI
 CANDUMP_PID=$!
 
 # Send / Receive data to node
-VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} can_node1 > ${OUTPUT_FILE} < ${INPUT_FILE} &
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} can_node1 > ${OUTPUT_FILE} < ${INPUT_FILE} &
 
 wait ${CANDUMP_PID}
 cat ${CAN_OUT_FILE} | xargs -I % cansend ${CAN_IF} %
@@ -144,7 +137,7 @@ sleep 1
 kill %1
 
 # Compare data
-villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 #rm ${CAN_OUT_FILE} ${INPUT_FILE} ${OUTPUT_FILE}

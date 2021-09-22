@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration Infiniband test using villas-node.
+# Integration Infiniband test using villas node.
 #
 # @author Dennis Potter <dennis@dennispotter.eu>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -41,10 +41,6 @@ if [[ ! $(lspci | grep Infiniband) ]]; then
 fi
 
 
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
-
 CONFIG_FILE=$(mktemp /tmp/ib-configuration-XXXX.conf)
 CONFIG_FILE_TARGET=$(mktemp /tmp/ib-configuration-target-XXXX.conf)
 INPUT_FILE=$(mktemp)
@@ -54,8 +50,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 RC=0
 
 # Generate test data for RC, UC, and UD test
-VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Set config file with a MODE flag
 cat > ${CONFIG_FILE} <<EOF
@@ -149,8 +144,7 @@ do
 	sed -i -e 's/MODE/'${MODE}'/g' ${CONFIG_FILE} 
 
     # Start receiving node
-    VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-    villas-node ${CONFIG_FILE_TARGET} &
+    villas node ${CONFIG_FILE_TARGET} &
     node_proc=$!
     
     # Wait for node to complete init
@@ -163,8 +157,7 @@ do
     fi
     
     # Start sending pipe
-    VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
-    ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
+    ip netns exec namespace0 villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
     node_pipe=$!
     
     # Keep pipe alive
@@ -184,7 +177,7 @@ do
     kill $node_proc
     
     # Compare data
-    villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
+    villas compare ${INPUT_FILE} ${OUTPUT_FILE}
     RC=$?
 
     # Exit, if an error occurs

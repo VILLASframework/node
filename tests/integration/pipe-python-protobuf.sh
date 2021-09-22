@@ -25,11 +25,6 @@
 # Test is broken
 exit 99
 
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-SRCDIR=$(realpath ${SCRIPTPATH}/../..)
-source ${SRCDIR}/tools/villas-helper.sh
-
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
@@ -41,7 +36,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-20}
 NUM_VALUES=${NUM_VALUES:-5}
 
 # Generate test data
-villas-signal -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n random > ${INPUT_FILE}
 
 case ${LAYER} in
 	unix)
@@ -89,13 +84,13 @@ fi
 
 sleep 1
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} py-client > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} py-client > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 kill ${CPID}
 wait ${CPID}
 
 # Compare data
-villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}

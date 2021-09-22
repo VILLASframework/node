@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test for villas-pipe.
+# Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
@@ -36,10 +36,6 @@ REMOTE="ssh ${REMOTE_USER}@${REMOTE_ADDR}"
 
 PATH=/projects/villas/node/build/src:${PATH}
 ${REMOTE} PATH=/projects/villas/node/build/src:${PATH}
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
 
 CONFIG_FILE_SRC=$(mktemp)
 CONFIG_FILE_DEST=$(mktemp)
@@ -126,18 +122,18 @@ EOF
 
 scp ${CONFIG_FILE_DEST} ${REMOTE_USER}@${REMOTE_ADDR}:${CONFIG_FILE_DEST}
 
-${REMOTE} villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
+${REMOTE} villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 PID=$!
 
 sleep 1
 
-villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-	villas-pipe ${CONFIG_FILE_SRC} rtp_node
+villas signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas pipe ${CONFIG_FILE_SRC} rtp_node
 
 scp ${REMOTE_USER}@${REMOTE_ADDR}:${OUTPUT_FILE} ${OUTPUT_FILE}
 
 # Compare data
-villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${INPUT_FILE} ${OUTPUT_FILE} ${CONFIG_FILE_DEST} ${CONFIG_FILE_SRC}

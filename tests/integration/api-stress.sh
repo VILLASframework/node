@@ -28,7 +28,7 @@ SCRIPTPATH=$(dirname ${SCRIPT})
 LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
 
 # Start VILLASnode instance with local config
-villas-node ${LOCAL_CONF} &
+villas node ${LOCAL_CONF} &
 PID=$!
 
 # Wait for node to complete init

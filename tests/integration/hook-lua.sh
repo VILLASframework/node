@@ -67,14 +67,14 @@ cat <<EOF > ${EXPECT_FILE}
 1551015509.701653200+6.430676e+07(9)	0	0.587785	145.000000	9	1551015509.701653
 EOF
 
-villas-hook lua -c ${CONFIG_FILE} < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook lua -c ${CONFIG_FILE} < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 cat ${INPUT_FILE}
 echo
 cat ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-compare -e 1e-6 ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE} ${CONFIG_FILE}

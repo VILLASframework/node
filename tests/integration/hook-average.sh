@@ -54,10 +54,10 @@ cat <<EOF > ${EXPECT_FILE}
 EOF
 
 # Average over first and third signal (mask = 0b101 = 5)
-villas-hook -o offset=0 -o signals=signal0,signal1,signal2,signal3,signal4 average < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook -o offset=0 -o signals=signal0,signal1,signal2,signal3,signal4 average < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-compare -e 1e-6 ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}

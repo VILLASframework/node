@@ -59,7 +59,7 @@ cat <<EOF > ${LOCAL_CONF}
 EOF
 
 # Start with base configuration
-villas-node &
+villas node &
 
 # Wait for node to complete init
 sleep 1

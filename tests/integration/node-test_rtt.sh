@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test using villas-node.
+# Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -25,10 +25,6 @@
 # We skip this test for now
 echo "Test not yet supported"
 exit 99
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 
@@ -71,5 +67,4 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Start node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE}
+villas node ${CONFIG_FILE}

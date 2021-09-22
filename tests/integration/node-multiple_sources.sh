@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test using villas-node.
+# Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -24,10 +24,6 @@
 
 # Test is broken
 exit 99
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 OUTPUT_FILE1=$(mktemp)
@@ -73,8 +69,7 @@ EOF
 villas signal counter -o 100 -v 1 -l 10 -n > ${EXPECT_FILE}
 
 # Start node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE} &
+villas node ${CONFIG_FILE} &
 P1=$!
 
 sleep 2
@@ -83,8 +78,8 @@ kill ${P1}
 wait ${P1}
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE1} ${EXPECT_FILE} && \
-villas-compare ${OUTPUT_FILE2} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE1} ${EXPECT_FILE} && \
+villas compare ${OUTPUT_FILE2} ${EXPECT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${EXPECT_FILE} \

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration test for villas-convert tool
+# Integration test for villas convert tool
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -30,11 +30,11 @@ INPUT_FILE=$(mktemp)
 FORMATS="villas.human csv tsv json"
 
 # Generate test data
-villas-signal -v5 -n -l20 mixed > ${INPUT_FILE}
+villas signal -v5 -n -l20 mixed > ${INPUT_FILE}
 
 for FORMAT in ${FORMATS}; do
-	villas-convert -o ${FORMAT} < ${INPUT_FILE} | tee ${TEMP} | \
-	villas-convert -i ${FORMAT} > ${OUTPUT_FILE}
+	villas convert -o ${FORMAT} < ${INPUT_FILE} | tee ${TEMP} | \
+	villas convert -i ${FORMAT} > ${OUTPUT_FILE}
 
-	villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
+	villas compare ${INPUT_FILE} ${OUTPUT_FILE}
 done

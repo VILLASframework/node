@@ -23,8 +23,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-NODE_TYPES=$(villas-node -C | jq -r '.nodes | join(" ")')
-HOOKS_TYPES=$(villas-node -C | jq -r '.["hooks"] | join(" ")')
+NODE_TYPES=$(villas node -C | jq -r '.nodes | join(" ")')
+HOOKS_TYPES=$(villas node -C | jq -r '.["hooks"] | join(" ")')
 
 CONFIGS=$(find  -name '*.conf' -o -name '*.json')
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Test hooks in villas-node
+# Test hooks in villas node
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -21,10 +21,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
@@ -85,10 +81,10 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Start node
-villas-node ${CONFIG_FILE}
+villas node ${CONFIG_FILE}
 
 # Compare only the data values
-villas-compare -e 1e-6 ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 RC=$?
 
 cat ${OUTPUT_FILE}

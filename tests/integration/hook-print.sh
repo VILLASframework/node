@@ -29,12 +29,12 @@ INPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 # Prepare some test data
-villas-signal -v 1 -r 10 -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -v 1 -r 10 -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
-villas-hook -o format=villas.human -o output=${OUTPUT_FILE1} print > ${OUTPUT_FILE2} < ${INPUT_FILE}
+villas hook -o format=villas.human -o output=${OUTPUT_FILE1} print > ${OUTPUT_FILE2} < ${INPUT_FILE}
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}
+villas compare ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}
 RC=$?
 
 rm -f ${OUTPUT_FILE1} ${OUTPUT_FILE2} ${INPUT_FILE}

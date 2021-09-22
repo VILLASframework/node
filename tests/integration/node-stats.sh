@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test using villas-node.
+# Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -21,10 +21,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 STATS_LOG=$(mktemp)
@@ -76,8 +72,7 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Start node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE} &
+villas node ${CONFIG_FILE} &
 PID=$!
 
 sleep 5

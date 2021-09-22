@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test for villas-pipe.
+# Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -50,12 +50,12 @@ cat > ${CONFIG_FILE} << EOF
 EOF
 
 # Generate test data
-villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
-villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${NODE_FILE}

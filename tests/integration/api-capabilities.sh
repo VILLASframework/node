@@ -27,7 +27,7 @@ set -e
 FETCHED_CONF=$(mktemp)
 
 # Start without a configuration
-villas-node &
+villas node &
 PID=$!
 
 # Wait for node to complete init

@@ -46,10 +46,10 @@ cat <<EOF > ${EXPECT_FILE}
 1490500400.676379108(9)	-0.587785	-0.587785	-0.587785	-0.587785
 EOF
 
-villas-hook -o ratio=3 decimate < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas hook -o ratio=3 decimate < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-villas-compare ${OUTPUT_FILE} ${EXPECT_FILE}
+villas compare ${OUTPUT_FILE} ${EXPECT_FILE}
 
 RC=$?
 

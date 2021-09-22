@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test using villas-node.
+# Integration loopback test using villas node.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -21,10 +21,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
-
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
@@ -76,19 +72,16 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Generate test data
-VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Start node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE} &
+villas node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
 
 # Send / Receive data to node
-VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Wait for node to handle samples
 sleep 1
@@ -97,7 +90,7 @@ sleep 1
 kill %1
 
 # Compare data
-villas-compare ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}

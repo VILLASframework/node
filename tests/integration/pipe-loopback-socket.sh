@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test for villas-pipe.
+# Integration loopback test for villas pipe.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
@@ -22,10 +22,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
-
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
@@ -35,7 +31,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 NUM_VALUES=${NUM_VALUES:-4}
 
 # Generate test data
-villas-signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
+villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 for FORMAT in villas.human gtnet.fake protobuf; do
 for LAYER in udp ip eth unix; do
@@ -97,7 +93,7 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Ignore timestamp and seqeunce no if in raw format 
 if ! villas_format_supports_header $FORMAT; then
@@ -105,7 +101,7 @@ if ! villas_format_supports_header $FORMAT; then
 fi
 
 # Compare data
-villas-compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas compare ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
