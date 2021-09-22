@@ -27,10 +27,10 @@ INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
+SIGNAL_COUNT=${SIGNAL_COUNT:-10}
 
 for MODE in polling pthread; do
-for VECTORIZE in 1 5 25; do
-for SIGNAL_COUNT in 1 10 100; do
+for VECTORIZE in 1 5; do
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -72,7 +72,7 @@ else
 	echo "=========== Sub-test succeeded for: mode=${MODE}, vectorize=${VECTORIZE}, SIGNAL_COUNT=${SIGNAL_COUNT}"
 fi
 
-done; done; done
+done; done;
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 

@@ -29,11 +29,11 @@ THEORIES=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 NUM_VALUES=${NUM_VALUES:-4}
+FORMAT=${FORMAT:-villas.binary}
 
 # Generate test data
 villas signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
-for FORMAT in villas.human gtnet.fake protobuf; do
 for LAYER in udp ip eth unix; do
 	
 VECTORIZES="1"
@@ -119,7 +119,7 @@ else
 	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, vectorize=${VECTORIZE}"
 fi
 
-done; done; done
+done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 
