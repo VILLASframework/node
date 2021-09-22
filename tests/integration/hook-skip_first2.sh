@@ -22,6 +22,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+# Test is broken
+exit 99
+
 OUTPUT_FILE=$(mktemp)
 
 SKIP=50
