@@ -357,8 +357,8 @@ int redis_parse(struct vnode *n, json_t *json)
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-redis", "Failed to parse node configuration");
 
-#ifdef REDISPP_WITH_TLS
 	if (json_ssl) {
+#ifdef REDISPP_WITH_TLS
 		const char *cacert;
 		const char *cacertdir;
 		const char *cert;
@@ -385,10 +385,10 @@ int redis_parse(struct vnode *n, json_t *json)
 
 		if (host)
 			r->options.tls.sni = host;
-	}
 #else
-	throw ConfigError(json_ssl, "node-config-node-redis-ssl", "This built of the redis++ library does not support SSL");
+		throw ConfigError(json_ssl, "node-config-node-redis-ssl", "This built of the redis++ library does not support SSL");
 #endif /* REDISPP_WITH_TLS */
+	}
 
 	/* Mode */
 	if (mode) {

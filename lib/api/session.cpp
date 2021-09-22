@@ -187,8 +187,12 @@ int Session::writeable()
 
 		return 0;
 	}
-	else
-		return response->writeBody(wsi);
+	else {
+		if (response)
+			return response->writeBody(wsi);
+		else
+			return 0;
+	}
 }
 
 int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)

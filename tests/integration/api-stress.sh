@@ -22,10 +22,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-SCRIPT=$(realpath $0)
-SCRIPTPATH=$(dirname ${SCRIPT})
-
-LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
+LOCAL_CONF=${SRCDIR}/etc/loopback.json
 
 # Start VILLASnode instance with local config
 villas node ${LOCAL_CONF} &

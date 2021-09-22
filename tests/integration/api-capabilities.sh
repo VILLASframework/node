@@ -24,10 +24,19 @@
 
 set -e
 
+CONFIG_FILE=$(mktemp)
 FETCHED_CONF=$(mktemp)
 
+cat > ${CONFIG_FILE} <<EOF
+{
+	"http" : {
+		"port" : 8080
+	}
+}
+EOF
+
 # Start without a configuration
-villas node &
+villas node ${CONFIG_FILE} &
 PID=$!
 
 # Wait for node to complete init
@@ -42,6 +51,6 @@ wait
 jq -e '.apis | index( "capabilities" ) != null' < ${FETCHED_CONF}
 RC=$?
 
-rm ${FETCHED_CONF}
+rm ${FETCHED_CONF} ${CONFIG_FILE}
 
 exit ${RC}
