@@ -87,7 +87,7 @@ test:flake8:
   stage: test
   script:
   - flake8 python/
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
   needs:
@@ -107,7 +107,7 @@ test:cppcheck:
              -I include
              -I common/include
              src/ lib/ tests/unit/ | tee cppcheck.log
-  image: ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
   needs:
@@ -137,7 +137,6 @@ test:unit:
 test:integration:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  allow_failure: true
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
@@ -207,12 +206,12 @@ pkg:docker:
       - DISTRO: debian
         ARCH: x86_64
         TRIPLET:  x86_64-linux-gnu
-        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
         ARCH: armhf
         TRIPLET: arm-linux-gnueabihf
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-        DOCKER_IMAGE: ${DOCKER_IMAGE}/debian
+        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
