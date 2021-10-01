@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libwebsockets.h>
 #include <cstring>
 
 #include <villas/node/config.h>
@@ -147,7 +146,7 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
 			logger->warn("{}", msg);
 			break;
 
-		case LLL_NOTICE:
+	case LLL_NOTICE:
 		case LLL_INFO:
 			logger->info("{}", msg);
 			break;
@@ -155,6 +154,27 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
 		default: /* Everything else is debug */
 			logger->debug("{}", msg);
 	}
+}
+
+int Web::lwsLogLevel(Log::Level lvl) {
+	int lwsLvl = 0;
+
+	switch (lvl) {
+		case Log::Level::trace:
+			lwsLvl |= LLL_THREAD | LLL_USER | LLL_LATENCY | LLL_CLIENT | LLL_EXT | LLL_HEADER | LLL_PARSER;
+		case Log::Level::debug:
+			lwsLvl |= LLL_DEBUG | LLL_NOTICE | LLL_INFO;
+		case Log::Level::info:
+		case Log::Level::warn:
+			lwsLvl |= LLL_WARN;
+		case Log::Level::err:
+			lwsLvl |= LLL_ERR;
+		case Log::Level::critical:
+		case Log::Level::off:
+		default: { }
+	}
+
+	return lwsLvl;
 }
 
 void Web::worker()
@@ -185,8 +205,7 @@ Web::Web(Api *a) :
 	htdocs(WEB_PATH),
 	api(a)
 {
-	/** @todo Port to C++: add LLL_DEBUG and others if trace log level is activated */
-	lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, lwsLogger);
+	lws_set_log_level(lwsLogLevel(logging.getLevel()), lwsLogger);
 }
 
 int Web::parse(json_t *json)

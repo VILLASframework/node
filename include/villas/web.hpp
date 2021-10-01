@@ -26,6 +26,7 @@
 #include <atomic>
 #include <thread>
 
+#include <libwebsockets.h>
 #include <jansson.h>
 
 #include <villas/log.hpp>
@@ -61,7 +62,6 @@ protected:
 	Api *api;
 
 	void worker();
-	static void lwsLogger(int level, const char *msg);
 
 public:
 
@@ -73,6 +73,9 @@ public:
 
 	void start();
 	void stop();
+
+	static void lwsLogger(int level, const char *msg);
+	static int lwsLogLevel(Log::Level lvl);
 
 	/** Parse HTTPd and WebSocket related options */
 	int parse(json_t *json);

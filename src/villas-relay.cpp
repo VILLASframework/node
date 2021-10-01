@@ -37,12 +37,14 @@
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
 #include <villas/uuid.hpp>
+#include <villas/web.hpp>
 
 #include "villas-relay.hpp"
 
 typedef char uuid_string_t[37];
 
 using namespace villas;
+using namespace villas::node;
 
 namespace villas {
 namespace node {
@@ -244,7 +246,7 @@ Relay::Relay(int argc, char *argv[]) :
 		throw RuntimeError("Failed to initialize memory");
 
 	/* Initialize logging */
-	lws_set_log_level((1 << LLL_COUNT) - 1, loggerCallback);
+	lws_set_log_level(Web::lwsLogLevel(logging.getLevel()), Web::lwsLogger);
 
 	protocols = {
 		{
@@ -267,37 +269,6 @@ Relay::Relay(int argc, char *argv[]) :
 		},
 		{ nullptr /* terminator */ }
 	};
-}
-
-void Relay::loggerCallback(int level, const char *msg)
-{
-	auto logger = logging.get("lws");
-
-	char *nl = (char *) strchr(msg, '\n');
-	if (nl)
-		*nl = 0;
-
-	/* Decrease severity for some errors. */
-	if (strstr(msg, "Unable to open") == msg)
-		level = LLL_WARN;
-
-	switch (level) {
-		case LLL_ERR:
-			logger->error("{}", msg);
-			break;
-
-		case LLL_WARN:
-			logger->warn( "{}", msg);
-			break;
-
-		case LLL_INFO:
-			logger->info( "{}", msg);
-			break;
-
-		default:
-			logger->debug("{}", msg);
-			break;
-	}
 }
 
 int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
@@ -444,6 +415,7 @@ void Relay::parse()
 		switch (c) {
 			case 'd':
 				logging.setLevel(optarg);
+				lws_set_log_level(Web::lwsLogLevel(logging.getLevel()), Web::lwsLogger);
 				break;
 
 			case 'p':
@@ -478,7 +450,8 @@ void Relay::parse()
 
 		continue;
 
-check:		if (optarg == endptr) {
+check:
+		if (optarg == endptr) {
 			logger->error("Failed to parse parse option argument '-{} {}'", c, optarg);
 			exit(EXIT_FAILURE);
 		}
@@ -558,7 +531,7 @@ const lws_http_mount Relay::mount = {
 	.cache_intermediaries =	0,
 	.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
 	.mountpoint_len =	7, /* char count */
-	.basic_auth_login_file =nullptr,
+	.basic_auth_login_file = nullptr,
 };
 
 } /* namespace tools */
