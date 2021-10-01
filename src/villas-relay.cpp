@@ -173,11 +173,12 @@ json_t * RelayConnection::toJson() const
 
 void RelayConnection::write()
 {
-	int ret;
+	if (outgoingFrames.empty())
+		return;
 
-	std::shared_ptr<Frame> fr = outgoingFrames.front();
+	auto fr = outgoingFrames.front();
 
-	ret = lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
+	int ret = lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
 	if (ret < 0)
 		return;
 
