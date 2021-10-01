@@ -95,11 +95,10 @@ struct websocket_connection {
 	{
 		if (c.wsi) {
 			char name[128];
-			char ip[128];
 
-			lws_get_peer_addresses(c.wsi, lws_get_socket_fd(c.wsi), name, sizeof(name), ip, sizeof(ip));
+			lws_get_peer_simple(c.wsi, name, sizeof(name));
 
-			os << "remote.ip=" << ip << " remote.name=" << name;
+			os << "remote=" << name;
 		}
 		else if (c.mode == websocket_connection::Mode::CLIENT && c.destination != nullptr)
 			os << "dest=" << c.destination->info.address << ":" << c.destination->info.port;
