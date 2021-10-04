@@ -121,7 +121,7 @@ public:
 			"system",
 				"cores_configured", get_nprocs_conf(),
 				"cores", get_nprocs(),
-				"procecces", (json_int_t) sinfo.procs,
+				"processes", (json_int_t) sinfo.procs,
 				"uptime", (json_int_t) sinfo.uptime,
 				"load",
 					f_load * sinfo.loads[0],
