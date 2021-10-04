@@ -98,7 +98,7 @@ public:
 
 		json_error_t err;
 		json_t *json_status = json_pack_ex(&err, 0, "{ s: s, s: s, s: s, s: s, s: s, s: s, s: s, s: f, s: f, s: { s: s, s: I, s: b }, s: { s: s, s: s, s: s, s: s, s: s, s: s}, s: { s: i, s: i, s: I, s: I, s: [ f, f, f ], s: { s: I, s, I, s: I, s: I }, s: { s: I, s: I }, s: { s: I, s: I } } }",
-			"state", state_print(sn->getState()),
+			"state", stateToString(sn->getState()).c_str(),
 			"version", PROJECT_VERSION_STR,
 			"release", PROJECT_RELEASE,
 			"build_id", PROJECT_BUILD_ID,

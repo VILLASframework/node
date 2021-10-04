@@ -833,7 +833,7 @@ json_t * path_to_json(struct vpath *p)
 
 	json_t *json_path = json_pack("{ s: s, s: s, s: s, s: b, s: b s: b, s: b, s: b, s: b s: i, s: o, s: o, s: o, s: o }",
 		"uuid", uuid,
-		"state", state_print(p->state),
+		"state", stateToString(p->state).c_str(),
 		"mode", p->mode == PathMode::ANY ? "any" : "all",
 		"enabled", p->enabled,
 		"builtin", p->builtin,

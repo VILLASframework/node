@@ -713,7 +713,7 @@ json_t * node_to_json(struct vnode *n)
 	json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i, s: o? }, s: { s: i, s: o? } }",
 		"name",		node_name_short(n),
 		"uuid", 	uuid,
-		"state",	state_print(n->state),
+		"state",	stateToString(n->state).c_str(),
 		"affinity",	n->affinity,
 		"in",
 			"vectorize",	n->in.vectorize,
