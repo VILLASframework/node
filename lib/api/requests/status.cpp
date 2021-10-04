@@ -1,4 +1,4 @@
-/** The "stats" API request.
+/** The "status" API request.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2020, Institute for Automation of Complex Power Systems, EONERC
