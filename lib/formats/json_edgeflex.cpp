@@ -53,14 +53,12 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 		json_array_append_new(json_data, json_value);
 	}
 
-	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
-		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
-		json_object_set_new(json_value, "created", json_created);
-	}
-
-	json_root = json_pack_ex(&err, 0, "{ s: o }",
-		"measurement", json_data
+	json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
+	json_root = json_pack_ex(&err, 0, "{ s: o, s : o }",
+		"measurement", json_data, 
+		"created", json_created
 	);
+	
 	if (json_root == nullptr)
 		return -1;
 
