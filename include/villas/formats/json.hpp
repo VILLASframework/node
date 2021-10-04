@@ -40,10 +40,14 @@ protected:
 	json_t * packTimestamps(const struct sample *smp);
 	int unpackTimestamps(json_t *json_ts, struct sample *smp);
 
-	virtual int packSample(json_t **j, const struct sample *smp);
-	virtual int packSamples(json_t **j, const struct sample * const smps[], unsigned cnt);
-	virtual int unpackSample(json_t *json_smp, struct sample *smp);
-	virtual int unpackSamples(json_t *json_smps, struct sample * const smps[], unsigned cnt);
+	virtual
+	int packSample(json_t **j, const struct sample *smp);
+	virtual
+	int packSamples(json_t **j, const struct sample * const smps[], unsigned cnt);
+	virtual
+	int unpackSample(json_t *json_smp, struct sample *smp);
+	virtual
+	int unpackSamples(json_t *json_smps, struct sample * const smps[], unsigned cnt);
 
 	int dump_flags;
 
@@ -53,13 +57,18 @@ public:
 		dump_flags(0)
 	{ }
 
+	virtual
 	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	virtual
 	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
 
+	virtual
 	int print(FILE *f, const struct sample * const smps[], unsigned cnt);
+	virtual
 	int scan(FILE *f, struct sample * const smps[], unsigned cnt);
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 };
 
 } /* namespace node */

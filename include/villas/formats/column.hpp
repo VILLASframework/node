@@ -47,9 +47,11 @@ public:
 		separator(sep)
 	{ }
 
-	virtual void header(FILE *f, const struct vlist *sigs);
+	virtual
+	void header(FILE *f, const struct vlist *sigs);
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 };
 
 template <const char *name, const char *desc, int flags = 0, char delimiter = '\n', char separator = '\t'>
@@ -58,20 +60,25 @@ class ColumnLineFormatPlugin : public FormatFactory {
 public:
 	using FormatFactory::FormatFactory;
 
-	virtual Format * make()
+	virtual
+	Format * make()
 	{
 		return new ColumnLineFormat(flags, delimiter, separator);
 	}
 
 	/// Get plugin name
-	virtual std::string
-	getName() const
-	{ return name; }
+	virtual
+	std::string getName() const
+	{
+		return name;
+	}
 
 	/// Get plugin description
-	virtual std::string
-	getDescription() const
-	{ return desc; }
+	virtual
+	std::string getDescription() const
+	{
+		return desc;
+	}
 };
 
 } /* namespace node */

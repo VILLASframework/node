@@ -64,10 +64,13 @@ public:
 			flags |= (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
+	virtual
 	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	virtual
 	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 };
 
 class GtnetRawFormat : public RawFormat {

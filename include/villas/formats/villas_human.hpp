@@ -33,12 +33,15 @@ namespace node {
 class VILLASHumanFormat : public LineFormat {
 
 protected:
+	virtual
 	size_t sprintLine(char *buf, size_t len, const struct sample *smp);
+	virtual
 	size_t sscanLine(const char *buf, size_t len, struct sample *smp);
 
 public:
 	using LineFormat::LineFormat;
 
+	virtual
 	void header(FILE *f, const struct vlist *sigs);
 };
 

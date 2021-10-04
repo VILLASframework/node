@@ -35,7 +35,9 @@ class ValueFormat : public Format {
 public:
 	using Format::Format;
 
+	virtual
 	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	virtual
 	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
 };
 

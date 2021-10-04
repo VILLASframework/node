@@ -30,7 +30,9 @@ namespace node {
 class JsonEdgeflexFormat : public JsonFormat {
 
 protected:
+	virtual
 	int packSample(json_t **j, const struct sample *smp);
+	virtual
 	int unpackSample(json_t *json_smp, struct sample *smp);
 
 public:
