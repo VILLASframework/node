@@ -23,10 +23,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-NODE_TYPES=$(villas node -C | jq -r '.nodes | join(" ")')
-HOOKS_TYPES=$(villas node -C | jq -r '.["hooks"] | join(" ")')
-
-CONFIGS=$(find  -name '*.conf' -o -name '*.json')
+NODE_TYPES=$(villas node -C 2>/dev/null | jq -r '.nodes | join(" ")')
+HOOK_TYPES=$(villas node -C 2>/dev/null | jq -r '.hooks | join(" ")')
+FORMAT_TYPES=$(villas node -C 2>/dev/null | jq -r '.formats | join(" ")')
 
 MISSING=0
 
@@ -40,10 +39,20 @@ for NODE in ${NODE_TYPES}; do
 done
 
 for HOOK in ${HOOK_TYPES}; do
-	[ ${NODE} == "loopback_internal" ] && continue
+	[ ${HOOK} == "restart" ] || \
+	[ ${HOOK} == "drop" ] || \
+	[ ${HOOK} == "fix" ] && continue
 
 	if [ ! -f "${SRCDIR}/etc/examples/hooks/${HOOK}.conf" ]; then
 		echo "Missing example config for hook-type: ${HOOK}"
+		((MISSING++))
+	fi
+done
+
+for FORMAT in ${FORMAT_TYPES}; do
+	FORMAT=${FORMAT/./-}
+	if [ ! -f "${SRCDIR}/etc/examples/formats/${FORMAT}.conf" ]; then
+		echo "Missing example config for format-type: ${FORMAT}"
 		((MISSING++))
 	fi
 done
