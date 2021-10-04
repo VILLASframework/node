@@ -94,7 +94,7 @@ paths:
                     system:
                       cores_configured: 28
                       cores: 28
-                      procecces: 780
+                      processes: 780
                       uptime: 1379600
                       load:
                       - 1.66259765625
