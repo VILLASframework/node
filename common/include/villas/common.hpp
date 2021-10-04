@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <string>
+
 /* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
 enum class State {
 	DESTROYED	= 0,
@@ -52,4 +54,4 @@ enum class State {
 typedef int (*dtor_cb_t)(void *);
 
 /** Convert state enum to human readable string. */
-const char * state_print(enum State s);
+std::string stateToString(enum State s);
