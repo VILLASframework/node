@@ -141,13 +141,15 @@ void LineFormat::parse(json_t *json)
 	int ret;
 	json_error_t err;
 	const char *delim = nullptr;
+	const char *com = nullptr;
 	int header = -1;
 	int skip = -1;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: b, s?: s }",
 		"delimiter", &delim,
 		"header", &header,
-		"skip_first_line", &skip
+		"skip_first_line", &skip,
+		"comment_prefix", &com
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-format-line", "Failed to parse format configuration");
@@ -157,6 +159,13 @@ void LineFormat::parse(json_t *json)
 			throw ConfigError(json, "node-config-format-line-delimiter", "Line delimiter must be a single character!");
 
 		delimiter = delim[0];
+	}
+
+	if (com) {
+		if (strlen(com) != 1)
+			throw ConfigError(json, "node-config-format-line-comment_prefix", "Comment prefix must be a single character!");
+
+		comment = com[0];
 	}
 
 	if (header >= 0)
