@@ -25,46 +25,37 @@
 
 #include <cstdlib>
 
-const char * state_print(enum State s)
+std::string stateToString(enum State s)
 {
 	switch (s) {
 		case State::DESTROYED:
 			return "destroyed";
-			break;
 
 		case State::INITIALIZED:
 			return "initialized";
-			break;
 
 		case State::PARSED:
 			return "parsed";
-			break;
 
 		case State::CHECKED:
 			return "checked";
-			break;
 
 		case State::STARTED:
 			return "running";
-			break;
 
 		case State::STOPPED:
 			return "stopped";
-			break;
 
 		case State::PENDING_CONNECT:
 			return "pending-connect";
-			break;
 
 		case State::CONNECTED:
 			return "connected";
-			break;
 
 		case State::PAUSED:
 			return "paused";
-			break;
 
 		default:
-			return nullptr;
+			return "";
 	}
 }
