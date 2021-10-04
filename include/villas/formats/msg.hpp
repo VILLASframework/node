@@ -50,7 +50,7 @@ void msg_hdr_ntoh(struct msg *m);
 int msg_verify(const struct msg *m);
 
 /** Copy fields from \p msg into \p smp. */
-int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs);
+int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs, uint8_t *source_index);
 
 /** Copy fields form \p smp into \p msg. */
-int msg_from_sample(struct msg *msg, const struct sample *smp, const struct vlist *sigs);
+int msg_from_sample(struct msg *msg, const struct sample *smp, const struct vlist *sigs, uint8_t source_index);

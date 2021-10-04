@@ -73,7 +73,7 @@ int msg_verify(const struct msg *m)
 		return 0;
 }
 
-int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs)
+int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist *sigs, uint8_t *source_index)
 {
 	int ret;
 	unsigned i;
@@ -107,15 +107,18 @@ int msg_to_sample(const struct msg *msg, struct sample *smp, const struct vlist 
 	smp->sequence = msg->sequence;
 	MSG_TS(msg, smp->ts.origin);
 
+	if (source_index)
+		*source_index = msg->source_index;
+
 	return 0;
 }
 
-int msg_from_sample(struct msg *msg_in, const struct sample *smp, const struct vlist *sigs)
+int msg_from_sample(struct msg *msg_in, const struct sample *smp, const struct vlist *sigs, uint8_t source_index)
 {
 	msg_in->type     = MSG_TYPE_DATA;
 	msg_in->version  = MSG_VERSION;
 	msg_in->reserved1 = 0;
-	msg_in->id = 0;
+	msg_in->source_index = source_index;
 	msg_in->length   = (uint16_t) smp->length;
 	msg_in->sequence = (uint32_t) smp->sequence;
 	msg_in->ts.sec  = smp->ts.origin.tv_sec;

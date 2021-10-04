@@ -27,8 +27,10 @@
 #include <villas/formats/msg.hpp>
 #include <villas/formats/msg_format.hpp>
 #include <villas/sample.h>
+#include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 
+using namespace villas;
 using namespace villas::node;
 
 int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt)
@@ -44,7 +46,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const stru
 		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
 
-		ret = msg_from_sample(msg, smp, smp->signals);
+		ret = msg_from_sample(msg, smp, smp->signals, source_index);
 		if (ret)
 			return ret;
 
@@ -68,6 +70,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 	int ret, values;
 	unsigned i = 0;
 	const char *ptr = buf;
+	uint8_t sid; // source_index
 
 	if (len % 4 != 0)
 		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
@@ -90,7 +93,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 
 		/* Check if remainder of message is in buffer boundaries */
 		if (ptr + MSG_LEN(values) > buf + len)
-			return -3; /*Invalid msg receive */
+			return -3; /* Invalid msg receive */
 
 		if (web) {
 			/** @todo convert from little endian */
@@ -98,9 +101,12 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 		else
 			msg_ntoh(msg);
 
-		ret = msg_to_sample(msg, smp, signals);
+		ret = msg_to_sample(msg, smp, signals, &sid);
 		if (ret)
 			return ret; /* Invalid msg received */
+
+		if (sid != source_index)
+			return -6; // source_index mismatch
 
 		ptr += MSG_LEN(smp->length);
 	}
@@ -109,6 +115,24 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 		*rbytes = ptr - buf;
 
 	return i;
+}
+
+void VillasBinaryFormat::parse(json_t *json)
+{
+	int ret;
+	json_error_t err;
+	int sid = -1;
+
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i }",
+		"source_index", &sid
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-format-villas-binary", "Failed to parse format configuration");
+
+	if (sid >= 0)
+		source_index = sid;
+
+	Format::parse(json);
 }
 
 static VillasBinaryFormatPlugin<false> p1;

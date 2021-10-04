@@ -36,16 +36,24 @@ namespace node {
 
 class VillasBinaryFormat : public BinaryFormat {
 
-public:
+protected:
+	uint8_t source_index;
 	bool web;
 
-	VillasBinaryFormat(int fl, bool w) :
+public:
+	VillasBinaryFormat(int fl, bool w, uint8_t sid = 0) :
 		BinaryFormat(fl),
+		source_index(sid),
 		web(w)
 	{ }
 
+	virtual
 	int sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt);
+	virtual
 	int sprint(char *buf, size_t len, size_t *wbytes, const struct sample * const smps[], unsigned cnt);
+
+	virtual
+	void parse(json_t *json);
 };
 
 
@@ -55,14 +63,15 @@ class VillasBinaryFormatPlugin : public FormatFactory {
 public:
 	using FormatFactory::FormatFactory;
 
-	virtual Format * make()
+	virtual
+	Format * make()
 	{
 		return new VillasBinaryFormat((int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA, web);
 	}
 
 	/// Get plugin name
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		std::stringstream ss;
 
@@ -72,8 +81,8 @@ public:
 	}
 
 	/// Get plugin description
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		std::stringstream ss;
 
