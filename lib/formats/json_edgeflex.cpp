@@ -29,9 +29,6 @@ using namespace villas::node;
 
 int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 {
-	json_error_t err;
-	json_t *json_root;
-	json_t *json_value;
 	json_t *json_data;
 	json_t *json_created = nullptr;
 
@@ -39,30 +36,20 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 		return -1;
 
 
-	json_data = json_array();
+	json_data = json_object();
 
 	for (unsigned i = 0; i < smp->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
 			return -1;
 
-		json_value = json_pack_ex(&err, 0, "{ s: f }",
-			sig->name, smp->data[i].f
-		);
-
-		json_array_append_new(json_data, json_value);
+		json_object_set(json_data, sig->name, json_real(smp->data[i].f));
 	}
 
 	json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
-	json_root = json_pack_ex(&err, 0, "{ s: o, s : o }",
-		"measurement", json_data, 
-		"created", json_created
-	);
-	
-	if (json_root == nullptr)
-		return -1;
+	json_object_set(json_data, "created", json_created);
 
-	*json_smp = json_root;
+	*json_smp = json_data;
 
 	return 0;
 }
