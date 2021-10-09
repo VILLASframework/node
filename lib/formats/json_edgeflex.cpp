@@ -29,7 +29,7 @@ using namespace villas::node;
 
 int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 {
-	json_t *json_data;
+	json_t *json_data, *json_value;
 	json_t *json_created = nullptr;
 
 	if (smp->length < 1)
@@ -43,7 +43,8 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 		if (!sig)
 			return -1;
 
-		json_object_set(json_data, sig->name, json_real(smp->data[i].f));
+		json_value = signal_data_to_json(&smp->data[i], sig->type);
+		json_object_set(json_data, sig->name, json_value);
 	}
 
 	json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
@@ -56,30 +57,59 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp, const struct sample *smp)
 
 int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct sample *smp)
 {
-	int ret;
+	int ret, idx;
+	const char *key;
+	json_t *json_value, *json_created = nullptr;
 	json_int_t created = -1;
 
 	if (smp->capacity < 1)
 		return -1;
 
-	struct signal *sig = (struct signal *) vlist_at_safe(signals, 0);
-	if (!sig)
+	if (json_typeof(json_smp) != JSON_OBJECT)
 		return -1;
 
-	if (sig->type != SignalType::FLOAT)
-		return -1;
+	json_object_foreach(json_smp, key, json_value) {
+		if (!strcmp(key, "created"))
+			json_created = json_incref(json_value);
+		else {
+			struct signal *sig;
 
-	ret = json_unpack(json_smp, "{ s: f, s?: I }",
-		"value", &smp->data[0].f,
-		"created", &created
-	);
-	if (ret)
-		return ret;
+			sig = vlist_lookup_name<struct signal>(signals, key);
+			if (sig) {
+				if (!sig->enabled)
+					continue;
 
-	if (created >= 0) {
-		smp->ts.origin = time_from_double(created / 1e3);
-		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
+				idx = vlist_index(signals, sig);
+			}
+			else {
+				ret = sscanf(key, "signal_%d", &idx);
+				if (ret != 1)
+					continue;
+			}
+
+			if (idx < 0)
+				return -1;
+
+			if (idx < (int) smp->capacity) {
+				ret = signal_data_parse_json(&smp->data[idx], sig->type, json_value);
+				if (ret)
+					return ret;
+			}
+
+			if (idx >= (int) smp->length)
+				smp->length = idx + 1;
+		}
 	}
+
+	if (!json_created || !json_is_number(json_created))
+		return -1;
+
+	created = json_number_value(json_created);
+	smp->ts.origin = time_from_double(created / 1e3);
+
+	smp->flags = (int) SampleFlags::HAS_TS_ORIGIN;
+	if (smp->length > 0)
+		smp->flags |= (int) SampleFlags::HAS_DATA;
 
 	return 0;
 }
