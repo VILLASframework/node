@@ -1,7 +1,7 @@
 ---
 openapi: '3.0.0'
 info:
-  title: VILLASnode
+  title: VILLASnode API
   version: 0.10.0
   description: 'A HTTP/REST API for controlling VILLASnode remotely without the need to restart the daemon.'
   termsOfService: 'https://www.fein-aachen.org/projects/villas-node/'
