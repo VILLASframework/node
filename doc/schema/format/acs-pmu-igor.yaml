@@ -72,16 +72,20 @@ properties:
     items:
       channel:
         type: string
-      
+        description: Name of the monitored bus
+
       magnitude:
         type: number
+        description: Amplitude of the measured signal [V]
       
       phase:
         type: number
+        description: Phase of the measured signal [radian]
       
       frequency:
         type: number
-        description: Frequency in Hertz
+        description: Frequency of the line signal [Hz]
 
       rocof:
         type: number
+        description: Rate of change of frequency [Hz/s]
