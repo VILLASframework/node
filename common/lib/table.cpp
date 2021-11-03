@@ -104,6 +104,7 @@ void Table::header()
 		}
 
 		free(col);
+		free(unit);
 	}
 
 	logger->info("{}", line1);

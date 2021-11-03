@@ -42,55 +42,6 @@ Plugin::~Plugin()
 	Registry::remove(this);
 }
 
-#if 0
-int
-Plugin::parse(json_t *json)
-{
-	const char *path;
-
-	path = json_string_value(json);
-	if (!path)
-		return -1;
-
-	this->path = std::string(path);
-	this->state = State::PARSED;
-
-	return 0;
-}
-
-int
-Plugin::load()
-{
-	assert(this->state == State::PARSED);
-	assert(not this->path.empty());
-
-	this->handle = dlopen(this->path.c_str(), RTLD_NOW);
-
-	if (this->handle == nullptr)
-		return -1;
-
-	this->state = State::LOADED;
-
-	return 0;
-}
-
-int
-Plugin::unload()
-{
-	int ret;
-
-	assert(this->state == State::LOADED);
-
-	ret = dlclose(this->handle);
-	if (ret != 0)
-		return -1;
-
-	this->state = State::UNLOADED;
-
-	return 0;
-}
-#endif
-
 void
 Plugin::dump()
 {

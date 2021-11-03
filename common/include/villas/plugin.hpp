@@ -97,6 +97,11 @@ public:
 				list.push_back(t);
 		}
 
+		/* Sort alphabetically */
+		list.sort([](const T *a, const T *b) {
+			return a->getName() < b->getName();
+		});
+
 		return list;
 	}
 
@@ -105,57 +110,54 @@ public:
 	dumpList();
 };
 
-class Loader {
-
-public:
-	int load(const std::string &path);
-	int unload();
-
-	virtual int parse(json_t *json);
-};
-
 class Plugin {
 
 	friend plugin::Registry;
 
+protected:
+	Logger logger;
+
 public:
 	Plugin();
-	virtual ~Plugin();
+
+	virtual
+	~Plugin();
 
 	// copying a plugin doesn't make sense, so explicitly deny it
 	Plugin(Plugin const&) = delete;
 	void operator=(Plugin const&) = delete;
 
-	virtual void dump();
+	virtual
+	void dump();
 
 	/// Get plugin name
-	virtual std::string
-	getName() const = 0;
+	virtual
+	std::string getName() const = 0;
 
 	/// Get plugin type
-	virtual std::string
-	getType() const = 0;
+	virtual
+	std::string getType() const = 0;
 
 	// Get plugin description
-	virtual std::string
-	getDescription() const = 0;
+	virtual
+	std::string getDescription() const = 0;
+
+	virtual
+	Logger getLogger()
+	{
+		if (!logger) {
+			auto name = fmt::format("{}:{}", getType(), getName());
+			logger = logging.get(name);
+		}
+
+		return logger;
+	}
 
 	/** Custom formatter for spdlog */
 	template<typename OStream>
 	friend OStream &operator<<(OStream &os, const class Plugin &p)
 	{
 		return os << p.getName();
-	}
-
-protected:
-	std::string path;
-
-	virtual
-	Logger
-	getLogger()
-	{
-		auto name = fmt::format("{}:{}", getType(), getName());
-		return logging.get(name);
 	}
 };
 
