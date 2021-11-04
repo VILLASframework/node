@@ -211,7 +211,6 @@ GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 add_subdirectory(common)
 add_subdirectory(etc)
 add_subdirectory(lib)
-add_subdirectory(web)
 add_subdirectory(packaging)
 add_subdirectory(python)
 
