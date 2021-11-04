@@ -7,6 +7,4 @@
 [submodule "packaging/live-iso/fedora-kickstarts"]
 	path = packaging/live-iso/fedora-kickstarts
 	url = https://pagure.io/fedora-kickstarts.git
-[submodule "web/socket/flot"]
-	path = web/socket/flot
-	url = https://github.com/flot/flot.git
+
