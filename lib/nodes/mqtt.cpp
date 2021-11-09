@@ -210,6 +210,9 @@ int mqtt_init(struct vnode *n)
 	m->ssl.capath = nullptr;
 	m->ssl.certfile = nullptr;
 	m->ssl.keyfile = nullptr;
+	m->ssl.cert_reqs = SSL_VERIFY_PEER;
+	m->ssl.tls_version = nullptr;
+	m->ssl.ciphers = nullptr;
 
 	return 0;
 
@@ -268,14 +271,19 @@ int mqtt_parse(struct vnode *n, json_t *json)
 		const char *capath = nullptr;
 		const char *certfile = nullptr;
 		const char *keyfile = nullptr;
+		const char *tls_version = nullptr;
+		const char *ciphers = nullptr;
 
-		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s, s?: s }",
+		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s, s?: s, s?: s, s?: b}",
 			"enabled", &m->ssl.enabled,
 			"insecure", &m->ssl.insecure,
 			"cafile", &cafile,
 			"capath", &capath,
 			"certfile", &certfile,
-			"keyfile", &keyfile
+			"keyfile", &keyfile,
+			"cipher", &ciphers,
+			"verify", &m->ssl.cert_reqs,
+			"tls_version", &tls_version
 		);
 		if (ret)
 			throw ConfigError(json_ssl, err, "node-config-node-mqtt-ssl", "Failed to parse SSL configuration of node {}", *n);
@@ -287,6 +295,7 @@ int mqtt_parse(struct vnode *n, json_t *json)
 		m->ssl.capath = capath ? strdup(capath) : nullptr;
 		m->ssl.certfile = certfile ? strdup(certfile) : nullptr;
 		m->ssl.keyfile = keyfile ? strdup(keyfile) : nullptr;
+		m->ssl.ciphers = ciphers ? strdup(ciphers) : nullptr;
 	}
 
 	/* Format */
@@ -406,6 +415,10 @@ int mqtt_start(struct vnode *n)
 			goto mosquitto_error;
 
 		ret = mosquitto_tls_insecure_set(m->client, m->ssl.insecure);
+		if (ret != MOSQ_ERR_SUCCESS)
+			goto mosquitto_error;
+
+		ret = mosquitto_tls_opts_set(m->client, m->ssl.cert_reqs, m->ssl.tls_version, m->ssl.ciphers);
 		if (ret != MOSQ_ERR_SUCCESS)
 			goto mosquitto_error;
 	}

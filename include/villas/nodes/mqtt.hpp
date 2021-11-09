@@ -54,12 +54,16 @@ struct mqtt {
 	char *subscribe;	/**< Subscribe topic. */
 
 	struct {
-		int enabled;	/**< Enable SSL encrypted connection to broker. */
-		int insecure;	/**< Allow insecure SSL connections. */
-		char *cafile;	/**< SSL CA file. */
-		char *capath;	/**< SSL CA path. */
-		char *certfile;	/**< SSL certificate. */
-		char *keyfile;	/**< SSL private key. */
+		int enabled;	   /**< Enable SSL encrypted connection to broker. */
+		int insecure;	   /**< Allow insecure SSL connections. */
+		char *cafile;	   /**< SSL CA file. */
+		char *capath;	   /**< SSL CA path. */
+		char *certfile;	   /**< SSL certificate. */
+		char *keyfile;	   /**< SSL private key. */
+		int cert_reqs;	   /**< SSL_VERIFY_NONE(0) or SSL_VERIFY_PEER(1) */
+		char *tls_version; /**< SSL tls verion */
+		char *ciphers;      /**< SSL chipher list. */
+
 	} ssl;
 
 	villas::node::Format *formatter;
