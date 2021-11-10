@@ -60,6 +60,7 @@ public:
 		GAP_RECEIVED,		/**< Histogram for inter sample arrival time (as seen by this instance). */
 		OWD,			/**< Histogram for one-way-delay (OWD) of received samples. */
 		AGE,			/**< Processing time of packets within VILLASnode. */
+		SIGNAL_COUNT,		/**< Number of signals per sample. */
 
 		/* RTP metrics */
 		RTP_LOSS_FRACTION,	/**< Fraction lost since last RTP SR/RR. */

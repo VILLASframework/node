@@ -268,6 +268,8 @@ Hook::Reason StatsReadHook::process(struct sample *smp)
 		}
 	}
 
+	parent->stats->update(Stats::Metric::SIGNAL_COUNT, smp->length);
+
 	sample_incref(smp);
 
 	if (last)

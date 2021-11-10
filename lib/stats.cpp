@@ -39,6 +39,7 @@ std::unordered_map<Stats::Metric, Stats::MetricDescription> Stats::metrics = {
 	{ Stats::Metric::GAP_RECEIVED, 		{ "gap_received",	"seconds", "Inter-message arrival time (as received by this instance)" 	}},
 	{ Stats::Metric::OWD, 			{ "owd",		"seconds", "One-way-delay (OWD) of received messages" 			}},
 	{ Stats::Metric::AGE, 			{ "age",		"seconds", "Processing time of packets within the from receive to sent" }},
+	{ Stats::Metric::SIGNAL_COUNT,          { "signal_cnt",         "signals", "Number of signals per sample"                               }},
 	{ Stats::Metric::RTP_LOSS_FRACTION, 	{ "rtp.loss_fraction",	"percent", "Fraction lost since last RTP SR/RR."			}},
 	{ Stats::Metric::RTP_PKTS_LOST, 	{ "rtp.pkts_lost",	"packets", "Cumulative number of packtes lost" 				}},
 	{ Stats::Metric::RTP_JITTER, 		{ "rtp.jitter",		"seconds", "Interarrival jitter" 					}},
@@ -65,7 +66,8 @@ std::vector<TableColumn> Stats::columns = {
 	{ 10, TableColumn::Alignment::RIGHT, "Rate last",	"%lf", "pkt/sec" },
 	{ 10, TableColumn::Alignment::RIGHT, "Rate mean",	"%lf", "pkt/sec" },
 	{ 10, TableColumn::Alignment::RIGHT, "Age mean",	"%lf", "secs"	 },
-	{ 10, TableColumn::Alignment::RIGHT, "Age Max",		"%lf", "sec"	 }
+	{ 10, TableColumn::Alignment::RIGHT, "Age Max",		"%lf", "sec"	 },
+	{ 8,  TableColumn::Alignment::RIGHT, "Signals",         "%ju", "signals" }
 };
 
 enum Stats::Format Stats::lookupFormat(const std::string &str)
@@ -172,12 +174,13 @@ void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
 				(double) 1.0 / histograms.at(Metric::GAP_RECEIVED).getLast(),
 				(double) 1.0 / histograms.at(Metric::GAP_RECEIVED).getMean(),
 				(double)       histograms.at(Metric::AGE).getMean(),
-				(double)       histograms.at(Metric::AGE).getHighest()
+				(double)       histograms.at(Metric::AGE).getHighest(),
+				(uintmax_t)    histograms.at(Metric::SIGNAL_COUNT).getLast()
 			);
 			break;
 
 		case Format::JSON: {
-			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
+			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f, s: i }",
 				"node", node_name(n),
 				"recv",            histograms.at(Metric::OWD).getTotal(),
 				"sent",            histograms.at(Metric::AGE).getTotal(),
@@ -188,7 +191,8 @@ void Stats::printPeriodic(FILE *f, enum Format fmt, struct vnode *n) const
 				"rate_last", 1.0 / histograms.at(Metric::GAP_SAMPLE).getLast(),
 				"rate_mean", 1.0 / histograms.at(Metric::GAP_SAMPLE).getMean(),
 				"age_mean",        histograms.at(Metric::AGE).getMean(),
-				"age_max",         histograms.at(Metric::AGE).getHighest()
+				"age_max",         histograms.at(Metric::AGE).getHighest(),
+				"signals",         histograms.at(Metric::SIGNAL_COUNT).getLast()
 			);
 			json_dumpf(json_stats, f, 0);
 			break;
