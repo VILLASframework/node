@@ -68,16 +68,16 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const stru
 int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct sample * const smps[], unsigned cnt)
 {
 	int ret, values;
-	unsigned i = 0;
+	unsigned i, j;
 	const char *ptr = buf;
 	uint8_t sid; // source_index
 
 	if (len % 4 != 0)
 		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
 
-	for (i = 0; i < cnt; i++) {
+	for (i = 0, j = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
-		struct sample *smp = smps[i];
+		struct sample *smp = smps[j];
 
 		smp->signals = signals;
 
@@ -105,8 +105,11 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 		if (ret)
 			return ret; /* Invalid msg received */
 
-		if (sid != source_index)
-			return -6; // source_index mismatch
+		if (validate_source_index && sid != source_index) {
+			// source index mismatch: we skip this sample
+		}
+		else
+			j++;
 
 		ptr += MSG_LEN(smp->length);
 	}
@@ -114,7 +117,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 	if (rbytes)
 		*rbytes = ptr - buf;
 
-	return i;
+	return j;
 }
 
 void VillasBinaryFormat::parse(json_t *json)
@@ -122,12 +125,17 @@ void VillasBinaryFormat::parse(json_t *json)
 	int ret;
 	json_error_t err;
 	int sid = -1;
+	int vsi = -1;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: i }",
-		"source_index", &sid
+	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: b }",
+		"source_index", &sid,
+		"validate_source_index", &vsi
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-format-villas-binary", "Failed to parse format configuration");
+
+	if (vsi >= 0)
+		validate_source_index = vsi != 0;
 
 	if (sid >= 0)
 		source_index = sid;

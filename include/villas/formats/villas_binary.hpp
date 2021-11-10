@@ -39,12 +39,14 @@ class VillasBinaryFormat : public BinaryFormat {
 protected:
 	uint8_t source_index;
 	bool web;
+	bool validate_source_index;
 
 public:
 	VillasBinaryFormat(int fl, bool w, uint8_t sid = 0) :
 		BinaryFormat(fl),
 		source_index(sid),
-		web(w)
+		web(w),
+		validate_source_index(false)
 	{ }
 
 	virtual
