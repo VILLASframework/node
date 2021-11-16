@@ -214,7 +214,7 @@ add_subdirectory(lib)
 add_subdirectory(packaging)
 add_subdirectory(python)
 
-if(WITH_FPGA)
+if(WITH_FPGA AND EXISTS "${PROJECT_SOURCE_DIR}/fpga/CMakeLists.txt")
     add_subdirectory(fpga)
 endif()
 
