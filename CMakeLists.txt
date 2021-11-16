@@ -155,6 +155,13 @@ else()
 endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
+# Check if VILLASfpga submodule is present
+if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/CMakeLists.txt")
+    set(FOUND_SUBMODULE_FPGA ON)
+else()
+    set(FOUND_SUBMODULE_FPGA OFF)
+endif()
+
 # Build options
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)
 cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         ON "LIBWEBSOCKETS_FOUND" OFF)
@@ -162,7 +169,7 @@ cmake_dependent_option(WITH_API             "Build with remote control API"     
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" ON "LIBCONFIG_FOUND" OFF)
 cmake_dependent_option(WITH_OPENMP          "Build with support for OpenMP for parallel hooks"      ON "OPENMP_FOUND" OFF)
 cmake_dependent_option(WITH_SRC             "Build executables"                                     ON "TOPLEVEL_PROJECT" OFF)
-cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "XIL_FOUND" OFF)
+cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "XIL_FOUND; FOUND_SUBMODULE_FPGA" OFF)
 cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_TESTS           "Run tests"                                             ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
@@ -208,15 +215,15 @@ include(cmake/config/Profiling.cmake)
 # Get version info and buildid from Git
 GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 
+if(WITH_FPGA)
+    add_subdirectory(fpga)
+endif()
+
 add_subdirectory(common)
 add_subdirectory(etc)
 add_subdirectory(lib)
 add_subdirectory(packaging)
 add_subdirectory(python)
-
-if(WITH_FPGA AND EXISTS "${PROJECT_SOURCE_DIR}/fpga/CMakeLists.txt")
-    add_subdirectory(fpga)
-endif()
 
 if(WITH_SRC)
     add_subdirectory(src)
