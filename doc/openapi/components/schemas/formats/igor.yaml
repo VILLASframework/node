@@ -1,0 +1,91 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+title: PMU format used by Igor
+
+example:
+  device: device1
+  timestamp: '2020-05-20T10:27:57.980802+00:00'
+  readings:
+  - channel: BUS1-VA
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-IA
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-VB
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-IB
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-VC
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-IC
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-VN
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+  - channel: BUS1-IN
+    magnitude: 9.171
+    phase: 0.8305
+    frequency: 50.1
+    rocof: 0.11
+
+type: object
+required:
+- device
+- timestamp
+- readings
+
+properties: 
+  device:
+    description: ID for measurement device
+    type: string
+
+  timestamp:
+    description: Timestamp of measurement in ISO 8601 format
+    type: string
+    pattern: '^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$'
+  
+  readings:
+    type: array
+    items:
+      type: object
+      properties: 
+      
+        channel:
+          type: string
+          description: Name of the monitored bus
+
+        magnitude:
+          type: number
+          description: Amplitude of the measured signal [V]
+        
+        phase:
+          type: number
+          description: Phase of the measured signal [radian]
+        
+        frequency:
+          type: number
+          description: Frequency of the line signal [Hz]
+
+        rocof:
+          type: number
+          description: Rate of change of frequency [Hz/s]

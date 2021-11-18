@@ -1,0 +1,12 @@
+post:
+  operationId: stop-node
+  summary: Stop a node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success. The node has been stopped.
+    '404':
+      description: Error. There is no node with the given UUID.

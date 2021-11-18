@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+
+title: Hook
+
+required:
+- type
+  
+properties:
+  type:
+    type: string
+  
+  enabled:
+    type: boolean
+    default: true
+  
+  priority:
+    type: integer
+
+discriminator:
+  propertyName: type
+  mapping:
+    average: hooks/average.yaml
+    cast: hooks/cast.yaml
+    decimate: hooks/decimate.yaml
+    dp: hooks/dp.yaml
+    dump: hooks/dump.yaml
+    ebm: hooks/ebm.yaml
+    fix: hooks/fix.yaml
+    gate: hooks/gate.yaml
+    jitter_calc: hooks/jitter_calc.yaml
+    limit_rate: hooks/limit_rate.yaml
+    limit_value: hooks/limit_value.yaml
+    lua: hooks/lua.yaml
+    ma: hooks/ma.yaml
+    pmu_dft: hooks/pmu_dft.yaml
+    pps_ts: hooks/pps_ts.yaml
+    print: hooks/print.yaml
+    restart: hooks/restart.yaml
+    rms: hooks/rms.yaml
+    scale: hooks/scale.yaml
+    shift_seq: hooks/shift_seq.yaml
+    shift_ts: hooks/shift_ts.yaml
+    skip_first: hooks/skip_first.yaml
+    stats: hooks/stats.yaml
+    ts: hooks/ts.yaml

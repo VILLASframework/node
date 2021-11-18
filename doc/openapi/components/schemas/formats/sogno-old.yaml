@@ -1,0 +1,69 @@
+
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+title: Original PMU sensor data format as used in the SOGNO EU project
+
+type: object
+required:
+- device
+- timestamp
+- component
+- measurand
+- phase
+- data
+
+properties: 
+  device:
+    description: ID for measurement device
+    type: string
+
+  timestamp:
+    description: Timestamp of measurement in ISO 8601 format
+    type: string
+    pattern: '^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$'
+  
+  component:
+    description: ID (uuid) from CIM document
+    type: string
+    format: uuid
+  
+  measurand:
+    type: string
+    enum:
+    - voltmagnitude
+    - voltangle
+    - currmagnitude
+    - currangle
+    - activepower
+    - reactivepower
+    - apparentpower
+    - frequency
+  
+  phase:
+    type: string
+    enum:
+    - A
+    - B
+    - C
+  
+  data:
+    type: number
+    description: |
+      Measurement value as in the following format depending on value of measurand:
+       - voltmagnitude: phase-to-ground RMS value, unit volts
+       - voltangle: unit radian
+       - currmagnitude: RMS value, unit ampere
+       - currangle: unit radian
+       - activepower: single phase power, unit watts
+       - reactivepower: single phase power, unit voltampere reactive
+       - apparentpower: single phase power, unit voltampere
+       - frequency: unit hertz 
+
+example:
+  device: pmu-abc0
+  timestamp: '2021-10-07T10:11:12.1231241+02:00'
+  component: 7a30b61a-2913-11ec-9621-0242ac130002
+  measurand: voltagemagnitude
+  phase: A
+  data: 123124

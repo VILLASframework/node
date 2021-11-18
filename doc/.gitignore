@@ -1,3 +1,9 @@
 html/
 doxygen_sqlite3.db
 warnings.log
+
+# Dir for bundles
+dist
+node_modules
+dist.yaml
+redoc-static.html

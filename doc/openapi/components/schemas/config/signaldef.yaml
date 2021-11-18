@@ -1,0 +1,54 @@
+---
+type: object
+properties:
+  name:
+    type: string
+    title: Signal name
+    description: |
+      A name which describes the signal.
+    example: Bus123_U
+
+  unit:
+    type: string
+    title: Signal unit
+    description:
+      The unit of the signal.
+    example: V
+
+  type:
+    type: string
+    title: Signal data-type
+    description: |
+      The data-type of the signal.
+    default: float
+    enum:
+    - integer
+    - float
+    - boolean
+    - complex
+
+  init:
+    title: Initial signal value.
+    description: |
+      The initial value of the signal.
+
+    oneOf:
+    - type: integer
+    - type: number
+    - type: boolean
+    - type: object
+      required:
+      - real
+      - imag
+      additionalProperties: false
+      properties:
+        real:
+          type: number
+        imag:
+          type: number
+
+  enabled:
+    type: boolean
+    default: true
+    description: |
+      Signals can be disabled which causes them to be ignored.

@@ -1,0 +1,33 @@
+get:
+  operationId: get-node
+
+  summary: Get the information of a specific node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                name: udp_node1
+                uuid: b3df1d73-f483-f16c-5936-4ea48295615c
+                state: running
+                affinity: -1
+                in:
+                  address: '*:12000'
+                  signals:
+                    count: 8
+                    type: float
+                out:
+                  address: '127.0.0.1:12001'
+                type: socket
+                layer: udp
+    '404':
+      description: >-
+        Error. There is no node with the given UUID or the node does not collect
+        statistics.

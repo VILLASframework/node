@@ -1,0 +1,56 @@
+get:
+  operationId: get-status
+  summary: Get the current status of the VILLASnode instance.
+  tags:
+    - super-node
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                state: running
+                version: v0.10.0
+                release: 1.node_uuid_unique_debug.20201015git335440d
+                build_id: v0.10.0-335440d-debug
+                build_date: '20201015'
+                hostname: ernie
+                uuid: c9d64cc7-c6e1-4dd4-8873-126318e9d42c
+                time_now: 1602765814.9240997
+                time_started: 1602765814.3103526
+                timezone:
+                  name: CEST
+                  offset: -3600
+                  dst: true
+                kernel:
+                  sysname: Linux
+                  nodename: ernie
+                  release: 5.6.17-rt10
+                  version: '#5 SMP Fri Jul 10 14:02:33 CEST 2020'
+                  machine: x86_64
+                  domainname: (none)
+                system:
+                  cores_configured: 28
+                  cores: 28
+                  processes: 780
+                  uptime: 1379600
+                  load:
+                    - 1.66259765625
+                    - 1.271484375
+                    - 1.18701171875
+                  ram:
+                    total: 269994606592
+                    free: 262204465152
+                    shared: 44191744
+                    buffer: 130211840
+                  swap:
+                    total: 4294963200
+                    free: 4294963200
+                  highmem:
+                    total: 0
+                    free: 0
+
+    '400':
+      description: Failure

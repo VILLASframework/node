@@ -1,0 +1,139 @@
+get:
+  operationId: get-node-stats
+  summary: Get the statistics of a node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                rtp.jitter:
+                  low: 1.3293196e-316
+                  high: 0
+                  total: 0
+                rtp.pkts_lost:
+                  low: 1.3285797e-316
+                  high: 1.3290532e-316
+                  total: 0
+                rtp.loss_fraction:
+                  low: 3.e-323
+                  high: 1.32907453e-316
+                  total: 0
+                age:
+                  low: 1.3288619e-316
+                  high: 1.32909588e-316
+                  total: 0
+                owd:
+                  low: 3.e-323
+                  high: 3.e-322
+                  total: 144
+                  higher: 0
+                  lower: 0
+                  highest: 0.099986117
+                  lowest: 0.09990915800000001
+                  mean: 0.09998063221527778
+                  variance: 7.736879555478282e-11
+                  stddev: 0.000008795953362472019
+                  buckets:
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                gap_received:
+                  low: 0
+                  high: 1.32743107e-316
+                  total: 144
+                  higher: 0
+                  lower: 0
+                  highest: 0.10000411000000001
+                  lowest: 0.09999650900000001
+                  mean: 0.09999998652777778
+                  variance: 5.701784607620545e-13
+                  stddev: 7.551016228045431e-7
+                  buckets:
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                gap_sent:
+                  low: 1.58e-321
+                  high: 1.3292848e-316
+                  total: 144
+                  higher: 0
+                  lower: 0
+                  highest: 0.10004273400000001
+                  lowest: 0.09926839700000001
+                  mean: 0.09999436691666665
+                  variance: 3.7637473716438304e-9
+                  stddev: 0.00006134938770390321
+                  buckets:
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                reordered:
+                  low: 8.28904606e-315
+                  high: 1.32930615e-316
+                  total: 0
+                skipped:
+                  low: 1.32879865e-316
+                  high: 1.3293275e-316
+                  total: 0
+    '404':
+      description: >-
+        Error. There is no node with the given UUID or the node does not collect
+        statistics.

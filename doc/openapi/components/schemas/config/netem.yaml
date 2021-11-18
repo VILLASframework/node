@@ -1,0 +1,52 @@
+---
+
+type: object
+properties:
+  enabled:
+    type: boolean
+    default: true
+  
+  delay:
+    type: number
+    default: 0
+    description: |
+      Delay packets in microseconds.
+
+  jitter:
+    type: number
+    default: 0
+    title: Jitter
+    description: |
+      Apply a jitter to the packet delay (in microseconds).
+
+  distribution:
+    type: string
+    title: Delay distribution
+    description: |
+      One of the delay distributions supported by the `tc` command (see [tc-netem(8)](https://man7.org/linux/man-pages/man8/tc-netem.8.html)).
+    enum:
+    - uniform
+    - normal
+    - pareto
+    - paretonormal
+
+  loss:
+    type: number
+    default: 0
+    title: Packet Loss Percentage
+    description: |
+      Percentage of packets which will be dropped.
+
+  duplicate:
+    type: number
+    default: 0
+    title: Packet Duplication Percentage
+    description: |
+      Percentage of packets which will be duplicated.
+
+  corrupt:
+    type: number
+    default: 0
+    title: Packet Corruption Percentage
+    description: |
+      Percentage of packets which will be corrupted.

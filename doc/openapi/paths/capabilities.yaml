@@ -1,0 +1,94 @@
+get:
+  operationId: get-capabilities
+
+  summary: Get the capabilities of the VILLASnode instance.
+  tags:
+    - super-node
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                hooks:
+                  - average
+                  - average
+                  - cast
+                  - decimate
+                  - dp
+                  - drop
+                  - dump
+                  - ebm
+                  - fix
+                  - gate
+                  - jitter_calc
+                  - limit_rate
+                  - pps_ts
+                  - print
+                  - restart
+                  - scale
+                  - shift_seq
+                  - shift_ts
+                  - skip_first
+                  - stats
+                  - ts
+                node-types:
+                  - amqp
+                  - can
+                  - ethercat
+                  - example
+                  - exec
+                  - file
+                  - influxdb
+                  - kafka
+                  - loopback
+                  - loopback_internal
+                  - mqtt
+                  - ngsi
+                  - redis
+                  - shmem
+                  - signal
+                  - socket
+                  - stats
+                  - temper
+                  - test_rtt
+                  - websocket
+                  - zeromq
+                apis:
+                  - capabilities
+                  - config
+                  - node
+                  - node/file
+                  - node/pause
+                  - node/restart
+                  - node/resume
+                  - node/start
+                  - node/stats
+                  - node/stats/reset
+                  - node/stop
+                  - nodes
+                  - path
+                  - path/start
+                  - path/stop
+                  - paths
+                  - restart
+                  - shutdown
+                  - status
+                formats:
+                  - csv
+                  - gtnet
+                  - iotagent_ul
+                  - json
+                  - json.kafka
+                  - json.reserve
+                  - raw
+                  - tsv
+                  - value
+                  - villas.binary
+                  - villas.human
+                  - villas.web
+
+    '400':
+      description: Failure

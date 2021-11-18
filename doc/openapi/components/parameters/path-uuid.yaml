@@ -1,0 +1,7 @@
+name: uuid
+description: A globally unique identifier for each path.
+in: path
+required: true
+schema:
+  type: string
+  format: uuid

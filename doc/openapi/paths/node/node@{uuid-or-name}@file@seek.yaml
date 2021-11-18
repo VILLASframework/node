@@ -1,0 +1,27 @@
+post:
+  operationId: seek-file-node
+
+  summary: Rewind the playback file to the beginning.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  requestBody:
+    description: Sample position in file
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - position
+          properties:
+            position:
+              type: integer
+              example: 123
+              description: Skip the first nth samples in the file.
+  responses:
+    '200':
+      description: Success. The read-pointer of the file has been changed.
+    '404':
+      description: Error. There is no node with the given UUID.

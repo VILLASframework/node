@@ -1,0 +1,33 @@
+post:
+  operationId: get-path
+  summary: Get details of a single path.
+  tags:
+    - paths
+  parameters:
+    - $ref: ../../components/parameters/path-uuid.yaml
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                uuid: 251c99af-4b05-9de4-367e-2bb550412e56
+                state: running
+                mode: any
+                enabled: true
+                builtin: true
+                reverse: false
+                original_sequence_no: true
+                last_sequence: false
+                poll: false
+                queuelen: 1024
+                signals: []
+                hooks: []
+                in:
+                  - udp_node1
+                out:
+                  - web_node1
+    '404':
+      description: Error. There is no path with the given UUID.

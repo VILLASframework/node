@@ -1,0 +1,13 @@
+post:
+  operationId: pause-graph
+
+  summary: Pause a node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success. The node has been paused.
+    '404':
+      description: Error. There is no node with the given UUID.

@@ -1,0 +1,43 @@
+---
+title: Signal list
+description: |
+  Each node should define a list of signals which it receives.
+
+  There are three ways to specify the input signals of a node:
+
+oneOf:
+- type: array
+  title: List of signal definition objects
+  items:
+    $ref: signaldef.yaml
+
+- type: object
+  title: Signal definition with `count`
+  allOf:
+  - $ref: signaldef.yaml
+  - type: object
+    required:
+    - count
+    properties:
+      count:
+        type: integer
+        minimum: 1
+        default: 64
+
+- type: string
+  title: Signal format string
+  example: '64f'
+  description: |
+    The easiest way to specify the signals, is by using a format string.
+    The format string consists of one ore more characters which define the type for the signal corresponding to the position of the character in the string.
+
+    | Character | Type                   | Setting for full and list mode |
+    |:---       |:---                    |:---                            |
+    | `f`       | Floating point         | "float"                        |
+    | `b`       | Boolean                | "boolean"                      |
+    | `i`       | Integer                | "integer"                      |
+    | `c`       | Complex Floating point | "complex"                      |
+
+    Optionally, the characters can be prefixed by an integer for easier repetition.
+
+    **Example:** `12f3i` defines 15 signals, of which the first 12 are floating point and the last 3 are integer values.

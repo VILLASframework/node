@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+
+type: object
+
+required:
+- type
+
+properties: 
+  type:
+    type: string
+
+discriminator:
+  propertyName: type
+  mapping:
+    csv: formats/csv.yaml
+    iotagent_ul: formats/iotagent_ul.yaml
+    json: formats/json.yaml
+    json.reserve: formats/json_reserve.yaml
+    json.kafka: formats/json_kafka.yaml
+    json.edgeflex: formats/json_edgeflex.yaml
+    gtnet: formats/gtnet.yaml
+    protobuf: formats/protobuf.yaml
+    raw: formats/raw.yaml
+    tsv: formats/tsv.yaml
+    value: formats/value.yaml
+    villas.binary: formats/villas_binary.yaml
+    villas.human: formats/villas_human.yaml
+    villas.web: formats/villas_web.yaml

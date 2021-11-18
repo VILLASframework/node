@@ -1,0 +1,146 @@
+---
+openapi: 3.0.3
+
+info:
+  title: VILLASnode API
+  version: 0.10.0
+
+  description: >-
+    A HTTP/REST API for controlling VILLASnode remotely without the need to
+    restart the daemon.
+  termsOfService: 'https://www.fein-aachen.org/projects/villas-node/'
+
+  contact:
+    name: Steffen Vogel
+    email: svogel2@eonerc.rwth-aachen.de
+    url: 'https://fein-aachen.org/contact/'
+
+  license:
+    name: GPL-v3
+    url: 'https://www.gnu.org/licenses/gpl-3.0.en.html'
+
+externalDocs:
+  url: 'https://villas.fein-aachen.org/doc/node.html'
+
+servers:
+- url: 'https://villas.k8s.eonerc.rwth-aachen.de/api/v2'
+  description: The production API server in our EONERC OpenStack Kubernetes
+
+- url: 'http://localhost:8080'
+  description: Your local host
+
+tags:
+- name: super-node
+  x-displayName: Super Node
+  description: Global super-node related operations.
+
+- name: nodes
+  x-displayName: Nodes
+  description: Node related operations.
+
+- name: paths
+  x-displayName: Paths
+  description: Path related operations.
+
+- name: config
+  x-displayName: VILLASnode configuration file
+  description: |
+    This section decribes the schema of the VILLASnode configuration file.
+    Please use the `>` to expand the individual sub-sections.
+
+    <SchemaDefinition schemaRef="#/components/schemas/config" />
+
+- name: format-edgeflex
+  x-displayName: Edgeflex Format
+  description: |
+    <SchemaDefinition schemaRef="#/components/schemas/FormatEdgeflex" />
+
+- name: format-igor
+  x-displayName: Igor's Format
+  description: |
+    <SchemaDefinition schemaRef="#/components/schemas/FormatIgor" />
+
+- name: format-sogno
+  x-displayName: SOGNO Format
+  description: |
+    <SchemaDefinition schemaRef="#/components/schemas/FormatSogno" />
+
+- name: format-sogno-old
+  x-displayName: Old SOGNO Format
+  description: |
+    <SchemaDefinition schemaRef="#/components/schemas/FormatSognoOld" />
+
+x-tagGroups:
+- name: VILLASnode APIs
+  tags:
+  - super-node
+  - nodes
+  - paths
+  
+- name: Configuration Files
+  tags:
+  - config
+
+- name: Format Schemas
+  tags:
+  - format-edgeflex
+  - format-igor
+  - format-sogno
+  - format-sogno-old
+
+paths:
+  /status:
+    $ref: paths/status.yaml
+  /capabilities:
+    $ref: paths/capabilities.yaml
+  /config:
+    $ref: paths/config.yaml
+  /restart:
+    $ref: paths/restart.yaml
+  /shutdown:
+    $ref: paths/shutdown.yaml
+  /nodes:
+    $ref: paths/nodes.yaml
+  '/node/{uuid-or-name}':
+    $ref: 'paths/node/node@{uuid-or-name}.yaml'
+  '/node/{uuid-or-name}/stats':
+    $ref: 'paths/node/node@{uuid-or-name}@stats.yaml'
+  '/node/{uuid-or-name}/stats/reset':
+    $ref: 'paths/node/node@{uuid-or-name}@stats@reset.yaml'
+  '/node/{uuid-or-name}/start':
+    $ref: 'paths/node/node@{uuid-or-name}@start.yaml'
+  '/node/{uuid-or-name}/stop':
+    $ref: 'paths/node/node@{uuid-or-name}@stop.yaml'
+  '/node/{uuid-or-name}/pause':
+    $ref: 'paths/node/node@{uuid-or-name}@pause.yaml'
+  '/node/{uuid-or-name}/resume':
+    $ref: 'paths/node/node@{uuid-or-name}@resume.yaml'
+  '/node/{uuid-or-name}/restart':
+    $ref: 'paths/node/node@{uuid-or-name}@restart.yaml'
+  '/node/{uuid-or-name}/file/rewind':
+    $ref: 'paths/node/node@{uuid-or-name}@file@rewind.yaml'
+  '/node/{uuid-or-name}/file/seek':
+    $ref: 'paths/node/node@{uuid-or-name}@file@seek.yaml'
+  /paths:
+    $ref: paths/paths.yaml
+  '/path/{uuid}':
+    $ref: 'paths/path/path@{uuid}.yaml'
+  '/path/{uuid}/start':
+    $ref: 'paths/path/path@{uuid}@start.yaml'
+  '/path/{uuid}/stop':
+    $ref: 'paths/path/path@{uuid}@stop.yaml'
+  '/graph.{format}':
+    $ref: 'paths/graph.{format}.yaml'
+
+components: 
+  schemas: 
+    Config:
+      $ref: components/schemas/config.yaml
+    FormatEdgeflex:
+      $ref: components/schemas/formats/edgeflex.yaml
+    FormatIgor:
+      $ref: components/schemas/formats/igor.yaml
+    FormatSognoOld:
+      $ref: components/schemas/formats/sogno-old.yaml
+    FormatSogno:
+      $ref: components/schemas/formats/sogno.yaml

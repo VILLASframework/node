@@ -1,0 +1,70 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+title: Logging configuration
+properties:
+
+  level:
+    title: The log level
+    description: |
+      This setting expects one of the allowed strings to adjust the logging level.
+      Use this with care! Producing a lot of IO by enabling the debug output might decrease the performance of the server.
+
+    type: string
+    default: info
+    enum:
+    - trace
+    - debug
+    - info
+    - warning
+    - error
+    - critical
+    - 'off'
+
+  file:
+    type: string
+    title: Log file name
+    description: |
+      Write all log messages to a file.
+
+  syslog:
+    type: boolean
+    default: false
+    title: Enable syslog logging
+    description: |
+      If enabled VILLASnode will log to the [system log](https://en.wikipedia.org/wiki/Syslog).
+
+  expressions:
+    title: Logging expressions
+    description: |
+      The logging expression allow for a fine grained control of log levels per individual logger instance.
+      Expressions are provided as a list of logger name pattern and the desired level.
+
+      **Note:** The expressions are evaluated in the order of their appearance in the list.
+
+    type: array
+    items:
+      type: object
+      required:
+      - name
+      - level
+      properties: 
+        name:
+          type: string
+          title: Logger name filter
+          description:
+            The [glob](https://man7.org/linux/man-pages/man7/glob.7.html)-style pattern to match the names of the loggers for which the level should be adjusted.
+        level:
+          type: string
+          title: Log level
+          description: |
+            The level which should be used for the matched loggers.
+          enum:
+            - trace
+            - debug
+            - info
+            - warning
+            - error
+            - critical
+            - 'off'

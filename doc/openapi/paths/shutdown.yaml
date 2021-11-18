@@ -1,0 +1,11 @@
+post:
+  operationId: shutdown
+  summary: Shutdown the VILLASnode instance.
+  tags:
+    - super-node
+  responses:
+    '200':
+      description: Success. The instance has been shut down.
+
+    '400':
+      description: Failure

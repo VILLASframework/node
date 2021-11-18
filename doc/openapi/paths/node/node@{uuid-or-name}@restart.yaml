@@ -1,0 +1,13 @@
+post:
+  operationId: restart-node
+
+  summary: Retart a node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success. The node has been restarted.
+    '404':
+      description: Error. There is no node with the given UUID.

@@ -1,0 +1,75 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+title: PMU format used in SOGNO LF project
+
+example:
+  device: device1
+  timestamp: '2020-05-20T10:27:57.980802+00:00'
+  readings:
+    - component: BUS1
+      measurand: voltmagnitude
+      phase: A
+      data: 123
+    - component: BUS2
+      measurand: voltmagnitude
+      phase: A
+      data: 123
+
+type: object
+required:
+- device
+- timestamp
+- readings
+
+properties: 
+  device:
+    description: ID for measurement device
+    type: string
+
+  timestamp:
+    description: Timestamp of measurement in ISO 8601 format
+    type: string
+    pattern: '^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$'
+  
+  readings:
+    type: array
+    items:
+      type: object
+      properties: 
+        component:
+          description: ID (uuid) from CIM document
+          type: string
+          format: uuid
+        
+        measurand:
+          type: string
+          enum:
+          - voltmagnitude
+          - voltangle
+          - currmagnitude
+          - currangle
+          - activepower
+          - reactivepower
+          - apparentpower
+          - frequency
+        
+        phase:
+          type: string
+          enum:
+          - A
+          - B
+          - C
+        
+        data:
+          type: number
+          description: |
+            Measurement value as in the following format depending on value of measurand:
+             - voltmagnitude: phase-to-ground RMS value, unit volts
+             - voltangle: unit radian
+             - currmagnitude: RMS value, unit ampere
+             - currangle: unit radian
+             - activepower: single phase power, unit watts
+             - reactivepower: single phase power, unit voltampere reactive
+             - apparentpower: single phase power, unit voltampere
+             - frequency: unit hertz 

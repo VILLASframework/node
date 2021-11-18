@@ -1,0 +1,12 @@
+post:
+  operationId: start-path
+  summary: Start a path.
+  tags:
+    - paths
+  parameters:
+    - $ref: ../../components/parameters/path-uuid.yaml
+  responses:
+    '200':
+      description: Success. The path has been started.
+    '404':
+      description: Error. There is no path with the given UUID.

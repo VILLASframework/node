@@ -1,0 +1,71 @@
+get:
+  operationId: get-nodes
+  summary: Get a list of all configure node instances.
+  tags:
+    - nodes
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                - name: udp_node1
+                  uuid: b3df1d73-f483-f16c-5936-4ea48295615c
+                  state: running
+                  affinity: -1
+                  in:
+                    address: '*:12000'
+                    signals:
+                      count: 8
+                      type: float
+                  out:
+                    address: '127.0.0.1:12001'
+                  type: socket
+                  layer: udp
+                - name: web_node1
+                  uuid: 19c84350-c83a-8a3b-224b-43fa591c8998
+                  state: running
+                  affinity: -1
+                  in:
+                    vectorize: 2
+                    signals:
+                      - type: float
+                        enabled: true
+                        name: signal0
+                      - type: float
+                        enabled: true
+                        name: signal1
+                      - type: float
+                        enabled: true
+                        name: signal2
+                      - type: float
+                        enabled: true
+                        name: signal3
+                  out:
+                    vectorize: 2
+                    signals:
+                      - type: float
+                        enabled: true
+                        name: signal0
+                      - type: float
+                        enabled: true
+                        name: signal1
+                      - type: float
+                        enabled: true
+                        name: signal2
+                  type: websocket
+                  vectorize: 2
+                  series:
+                    - label: Random walk
+                      unit: V
+                    - label: Sine
+                      unit: A
+                    - label: Rect
+                      unit: Var
+                    - label: Ramp
+                      unit: °C
+
+    '400':
+      description: Failure

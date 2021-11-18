@@ -1,0 +1,89 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+title: The first anyOf schema
+description: An explanation about the purpose of this instance.
+
+required:
+- in
+
+properties:
+  in:
+    description: |
+      The in settings expects the name of one or more source nodes or mapping expressions.
+
+    oneOf:
+    - type: string
+    - type: array
+      items:
+        type: string
+
+  out:
+    description: |
+      The out setting expects the name of one or more destination nodes. Each sample which is processed by the path will be sent to each of the destination nodes.
+
+    oneOf:
+    - type: string
+    - type: array
+      items:
+        type: string
+  
+  enabled:
+    type: boolean
+    default: true
+    description: |
+      The optional enabled setting can be used to temporarily disable a path.
+
+  reverse:
+    type: boolean
+    default: false
+    description: |
+      By default, the path is unidirectional.
+      Meaning, that it only forwards samples from the source to the destination.
+      Sometimes a bidirectional path is needed. This can be accomplished by setting reverse to true.
+
+  mode:
+    type: string
+    default: any
+    enum:
+    - any
+    - all
+    description: |
+      The mode setting specifies under which condition a path is triggered.
+      A triggered path will multiplex / merge samples from its input nodes and run the configured hook functions on them.
+      Afterwards the processed and merged samples will be send to all output nodes.
+
+      Two modes are currently supported:
+
+      - `any``: The path will trigger the path as soon as any of the masked (see `mask`) input nodes received new samples.
+      - `all``: The path will trigger the path as soon as all input nodes received at least one new sample.
+
+  mask:
+    description: |
+      This setting allows masking the the input nodes which can trigger the path.
+
+      See also `mode` setting.
+
+    type: array
+    items:
+      type: string
+      description: A node-name
+
+  rate:
+    type: number
+    minimum: 0
+    default: 0
+    description: |
+      A non-zero value will periodically trigger the path and resend the last sample again.
+
+      A value of zero will disable this feature.
+
+  original_sequence_no:
+    type: boolean
+    default: false
+    description: |
+      When this flag is set, the original sequence number from the source node will be used when multiplexing the nodes.
+
+  hooks:
+    $ref: hooklist.yaml

@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+properties:
+  port:
+    type: integer
+    default: 80
+    title: Listening port
+    description: |
+      Listening port for HTTP connections.
+
+  ssl_cert:
+    type: string
+    title: SSL Certificate Path
+    description: Path to an SSL certificate
+    example: /etc/ssl/certs/mycert.pem
+
+  ssl_private_key:
+    type: string
+    title: SSL Private Key Path
+    description: Path to an SSL private key
+    example: /etc/ssl/private/mykey.pem

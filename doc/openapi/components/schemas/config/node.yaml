@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+
+title: Node
+
+required:
+- type
+
+properties:
+
+  type:
+    type: string
+    description: |
+      Specifies which protocol should be used by this node.
+
+      For a complete list of supported node-types run `villas node --help`.
+
+      In addition to the node settings described in this section, every node type has its own specific settings
+
+  vectorize:
+    type: integer
+    default: 1
+    description: |
+      This setting allows to send multiple samples in a single message to the destination nodes.
+
+      The value of this setting determines how many samples will be combined into one packet. 
+
+  hooks:
+    $ref: hooklist.yaml
+
+  builtin:
+    type: boolean
+    default: true
+    title: Builtin hook functions
+    description: |
+      By default, each node and paths has a couple of default hooks attached to them. With this setting the attachment of built-in hooks can be disabled.
+
+  in:
+    type: object
+    properties:
+      vectorize:
+        type: integer
+        minimum: 1
+
+      signals:
+        $ref: signallist.yaml
+
+      hooks:
+        $ref: hooklist.yaml
+
+  out:
+    type: object
+    properties:
+
+      vectorize:
+        type: integer
+
+      hooks:
+        $ref: hooklist.yaml
+
+      netem:
+        $ref: netem.yaml
+
+discriminator:
+  propertyName: type
+  mapping:
+    amqp: nodes/amqp.yaml
+    can: nodes/can.yaml
+    comedi: nodes/comedi.yaml
+    ethercat: nodes/ethercat.yaml
+    exec: nodes/exec.yaml
+    file: nodes/file.yaml
+    fpga: nodes/fpga.yaml
+    iec61850-8-1: nodes/iec61850-8-1.yaml
+    iec61850-9-2: nodes/iec61850-9-2.yaml
+    infiniband: nodes/infiniband.yaml
+    influxdb: nodes/influxdb.yaml
+    kafka: nodes/kafka.yaml
+    loopback: nodes/loopback.yaml
+    mqtt: nodes/mqtt.yaml
+    nanomsg: nodes/nanomsg.yaml
+    ngsi: nodes/ngsi.yaml
+    opal: nodes/opal.yaml
+    redis: nodes/redis.yaml
+    rtp: nodes/rtp.yaml
+    shmem: nodes/shmem.yaml
+    signal.v2: nodes/signal_v2.yaml
+    signal: nodes/signal.yaml
+    socket: nodes/socket.yaml
+    stats: nodes/stats.yaml
+    temper: nodes/temper.yaml
+    test_rtt: nodes/test_rtt.yaml
+    uldaq: nodes/uldaq.yaml
+    websocket: nodes/websocket.yaml
+    zeromq: nodes/zeromq.yaml

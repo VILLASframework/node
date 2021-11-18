@@ -1,0 +1,12 @@
+post:
+  operationId: reset-node-stats
+  summary: Reset the statistics counters for a specific node.
+  tags:
+    - nodes
+  parameters:
+    - $ref: ../../components/parameters/node-uuid-name.yaml
+  responses:
+    '200':
+      description: Success. The statistics of the node have been reset.
+    '404':
+      description: Error. There is no node with the given UUID.

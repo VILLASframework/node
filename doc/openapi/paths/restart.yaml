@@ -1,0 +1,36 @@
+post:
+  operationId: restart
+  summary: Restart the VILLASnode instance.
+  tags:
+    - super-node
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            config:
+              oneOf:
+                - type: string
+                  example: 'http://example.com/path/to/config.json'
+                  title: URL
+                  description: |
+                    An optional path or URI to a new configuration file which
+                    should be loaded after restarting the node.
+                    
+                    The file referenced by the URL must be a [VILLASnode configuration file](#tag/config)
+                - $ref: '#/components/schemas/Config'
+  responses:
+    '200':
+      description: Success. The instance has been restarted.
+      content:
+        application/json:
+          examples:
+            example1:
+              value:
+                restarts: 5
+                config: 'http://example.com/path/to/config.json'
+
+    '400':
+      description: Failure

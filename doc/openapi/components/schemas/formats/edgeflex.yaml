@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+title: PMU measurements as used in the EdgeFlex project by Manuel
+description: |
+  VILLASnode does not support deseralization (yet).
+
+type: object
+
+required:
+- created
+
+properties: 
+  created:
+    title: Sampling timestamp
+    description: A timestamps in miliseconds since 1970-01-01 00:00:00
+    type: number
+    minimum: 0
+
+additionalProperties:
+  description: Key-value pairs of measurements
+  anyOf:
+  - type: number
+  - type: integer
+  - type: boolean
+  - type: object
+    description: A complex number represented in real and imaginary components
+    properties: 
+      real:
+        type: number
+      imag:
+        type: number
+
+example:
+- created: 1633791645123
+  signal0: 123.456
+  signal1: true
+  signal2: 1234
+  signal3:
+    real: 1234.4556
+    imag: 23232.12312
+  
