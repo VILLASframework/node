@@ -196,7 +196,7 @@ class MultiSignalHook : public Hook {
 
 protected:
 	std::list<unsigned> signalIndices;
-	std::list<std::string> signalNames;
+	std::vector<std::string> signalNames;
 
 public:
 	using Hook::Hook;

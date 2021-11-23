@@ -68,7 +68,7 @@ public:
 
 			/* Add signals */
 			std::stringstream ss;
-			ss << "rms" << i;
+			ss << "rms_" << signalNames[i];
 			rmsVal = signal_create(ss.str().c_str(), "", SignalType::FLOAT);
 
 			if (!rmsVal)
