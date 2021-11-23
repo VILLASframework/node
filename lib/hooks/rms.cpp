@@ -26,6 +26,7 @@
 
 #include <villas/hook.hpp>
 #include <villas/sample.h>
+#include <sstream>
 
 namespace villas {
 namespace node {
@@ -35,7 +36,7 @@ class RMSHook : public MultiSignalHook {
 protected:
 	std::vector<std::vector<double>> smpMemory;
 
-	double accumulator;
+	std::vector<double> accumulator;
 	unsigned windowSize;
 	uint64_t smpMemoryPosition;
 
@@ -43,7 +44,6 @@ public:
 	RMSHook(struct vpath *p, struct vnode *n, int fl, int prio, bool en = true) :
 		MultiSignalHook(p, n, fl, prio, en),
 		smpMemory(),
-		accumulator(0.0),
 		windowSize(0),
 		smpMemoryPosition(0)
 	{ }
@@ -62,10 +62,26 @@ public:
 				throw RuntimeError("The rms hook can only operate on signals of type float!");
 		}
 
-		/* Initialize sample memory */
+		signal_list_clear(&signals);
+		for (unsigned i = 0; i < signalIndices.size(); i++) {
+			struct signal *rmsVal;
+
+			/* Add signals */
+			std::stringstream ss << "rms" << i;
+			rmsVal = signal_create(ss.str().c_str(), "", SignalType::FLOAT);
+
+			if (!rmsVal)
+				throw RuntimeError("Failed to create new signals");
+
+			vlist_push(&signals, rmsVal);
+		}
+
+		/* Initialize memory for each channel*/
 		smpMemory.clear();
-		for (unsigned i = 0; i < signalIndices.size(); i++)
+		for (unsigned i = 0; i < signalIndices.size(); i++){
+			accumulator.push_back(0.0);
 			smpMemory.emplace_back(windowSize, 0.0);
+		}
 
 		state = State::PREPARED;
 	}
@@ -106,10 +122,10 @@ public:
 			double oldValue = smpMemory[i][(smpMemoryPosition + 1) % windowSize];
 
 			/* Update the accumulator */
-			accumulator += newValue;
-			accumulator -= oldValue;
+			accumulator[index] += newValue;
+			accumulator[index] -= oldValue;
 
-			auto rms = pow(accumulator / windowSize, 0.5);
+			auto rms = pow(accumulator[index] / windowSize, 0.5);
 
 			smp->data[index].f = rms;
 			i++;
