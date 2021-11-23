@@ -67,7 +67,8 @@ public:
 			struct signal *rmsVal;
 
 			/* Add signals */
-			std::stringstream ss << "rms" << i;
+			std::stringstream ss;
+			ss << "rms" << i;
 			rmsVal = signal_create(ss.str().c_str(), "", SignalType::FLOAT);
 
 			if (!rmsVal)
