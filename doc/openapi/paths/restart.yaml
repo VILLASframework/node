@@ -20,7 +20,7 @@ post:
                     should be loaded after restarting the node.
                     
                     The file referenced by the URL must be a [VILLASnode configuration file](#tag/config)
-                - $ref: '#/components/schemas/Config'
+                - $ref: '../openapi.yaml#/components/schemas/Config'
   responses:
     '200':
       description: Success. The instance has been restarted.

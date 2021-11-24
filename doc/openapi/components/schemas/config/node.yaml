@@ -89,7 +89,7 @@ discriminator:
     signal.v2: nodes/signal_v2.yaml
     signal: nodes/signal.yaml
     socket: nodes/socket.yaml
-    stats: nodes/stats.yaml
+    stats: nodes/stats_node.yaml
     temper: nodes/temper.yaml
     test_rtt: nodes/test_rtt.yaml
     uldaq: nodes/uldaq.yaml

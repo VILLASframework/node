@@ -1,7 +1,6 @@
 ---
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
-
 type: object
 
 required:
@@ -10,6 +9,40 @@ required:
 properties: 
   type:
     type: string
+    description: The format-type
+
+  real_precission:
+    type: integer
+    default: 17
+    description: |
+      Output all real numbers with at most n digits of precision. The valid range for this setting is between 0 and 31 (inclusive), and other values result in an undefined behavior.
+
+      By default, the precision is 17, to correctly and losslessly encode all IEEE 754 double precision floating point numbers.
+    
+  ts_origin:
+    type: boolean
+    default: true
+    description: |
+      If set, include the origin timestamp in the output.
+
+  sequence:
+    type: boolean
+    default: true
+    description: |
+      If set, include the sequence number in the output.
+
+  data:
+    type: boolean
+    default: true
+    description: |
+      If set, include the data in the output.
+
+  offset:
+    type: boolean
+    default: true
+    description: |
+      If set, include the offset between origin and received timestamp in the output.
+
 
 discriminator:
   propertyName: type

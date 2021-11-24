@@ -1,10 +1,41 @@
 ---
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
-
 allOf:
 - $ref: ../format.yaml
 - type: object
   properties:
-    delimiter:
-      type: string
+    indent:
+      type: number
+      default: 0
+      description: |
+        Pretty-print the result, using newlines between array and object items, and indenting with n spaces.
+        The valid range for n is between 0 and 31 (inclusive), other values result in an undefined output.
+        If the settings is not used or is 0, no newlines are inserted between array and object items.
+
+    compact:
+      type: boolean
+      default: false
+      description: |
+        This flag enables a compact representation, i.e. sets the separator between array and object items to "," and between object keys and values to ":".
+        Without this flag, the corresponding separators are ", " and ": " for more readable output.
+
+    ensure_ascii:
+      type: boolean
+      default: false
+      description: |
+        If this flag is used, the output is guaranteed to consist only of ASCII characters.
+        This is achieved by escaping all Unicode characters outside the ASCII range.
+    
+    sort_keys:
+      type: boolean
+      default: false
+      description: |
+        If this flag is used, all the objects in output are sorted by key.
+        This is useful e.g. if two JSON texts are diffed or visually compared.
+
+    escape_slash:
+      type: boolean
+      default: false
+      description: 
+        Escape the `/` characters in strings with `\/`.
