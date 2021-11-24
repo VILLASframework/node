@@ -87,11 +87,8 @@ void Popen::open()
 	if (ret)
 		goto clean_inpipe_out;
 
-	input.buffer = std::make_unique<stdio_buf>(outpipe[READ], std::ios_base::in);
-	output.buffer = std::make_unique<stdio_buf>(inpipe[WRITE], std::ios_base::out);
-
-	input.stream  = std::make_unique<std::istream>(input.buffer.get());
-	output.stream = std::make_unique<std::ostream>(output.buffer.get());
+	fd_in = outpipe[READ];
+	fd_out = inpipe[WRITE];
 
 	pid = fork();
 	if (pid == -1)
@@ -180,13 +177,47 @@ int Popen::close()
 		} while (pid == -1 && errno == EINTR);
 	}
 
+	return pid == -1 ? -1 : pstat;
+}
+
+
+PopenStream::PopenStream(const std::string &cmd,
+             const arg_list &args,
+             const env_map &env,
+             const std::string &wd,
+             bool sh) :
+	Popen(cmd, args, env, wd, sh)
+{
+	open();
+}
+
+PopenStream::~PopenStream()
+{
+	close();
+}
+
+void PopenStream::open()
+{
+	Popen::open();
+
+	input.buffer = std::make_unique<stdio_buf>(fd_in, std::ios_base::in);
+	output.buffer = std::make_unique<stdio_buf>(fd_out, std::ios_base::out);
+
+	input.stream  = std::make_unique<std::istream>(input.buffer.get());
+	output.stream = std::make_unique<std::ostream>(output.buffer.get());
+}
+
+int PopenStream::close()
+{
+	int ret = Popen::close();
+
 	input.stream.reset();
 	output.stream.reset();
 
 	input.buffer.reset();
 	output.buffer.reset();
 
-	return pid == -1 ? -1 : pstat;
+	return ret;
 }
 
 } /* namespace utils */

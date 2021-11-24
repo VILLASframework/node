@@ -56,19 +56,14 @@ public:
 	int close();
 	void kill(int signal = SIGINT);
 
-	std::istream &cin()
+	int getFdIn()
 	{
-		return *(input.stream);
+		return fd_in;
 	}
 
-	std::ostream &cout()
+	int getFdOut()
 	{
-		return *(output.stream);
-	}
-
-	int getFd()
-	{
-		return input.buffer->fd();
+		return fd_out;
 	}
 
 	pid_t getPid() const
@@ -83,6 +78,34 @@ protected:
 	env_map environment;
 	bool shell;
 	pid_t pid;
+
+	int fd_in, fd_out;
+};
+
+class PopenStream : public Popen {
+
+public:
+	PopenStream(const std::string &cmd,
+	      const arg_list &args = arg_list(),
+	      const env_map &env = env_map(),
+	      const std::string &wd = std::string(),
+	      bool shell = false);
+	~PopenStream();
+
+	std::istream &cin()
+	{
+		return *(input.stream);
+	}
+
+	std::ostream &cout()
+	{
+		return *(output.stream);
+	}
+
+	void open();
+	int close();
+
+protected:
 
 	struct {
 		std::unique_ptr<std::istream> stream;
@@ -99,7 +122,7 @@ protected:
 } /* namespace villas */
 
 template<typename T>
-std::istream &operator>>(villas::utils::Popen &po, T &value)
+std::istream &operator>>(villas::utils::PopenStream &po, T &value)
 {
 	return *(po.input.stream) >> value;
 }
