@@ -26,7 +26,6 @@
 
 #include <villas/hook.hpp>
 #include <villas/sample.h>
-#include <sstream>
 
 namespace villas {
 namespace node {
@@ -60,21 +59,6 @@ public:
 			/* Check that signal has float type */
 			if (origSig->type != SignalType::FLOAT)
 				throw RuntimeError("The rms hook can only operate on signals of type float!");
-		}
-
-		signal_list_clear(&signals);
-		for (unsigned i = 0; i < signalIndices.size(); i++) {
-			struct signal *rmsVal;
-
-			/* Add signals */
-			std::stringstream ss;
-			ss << "rms_" << signalNames[i];
-			rmsVal = signal_create(ss.str().c_str(), "", SignalType::FLOAT);
-
-			if (!rmsVal)
-				throw RuntimeError("Failed to create new signals");
-
-			vlist_push(&signals, rmsVal);
 		}
 
 		/* Initialize memory for each channel*/

@@ -28,6 +28,7 @@
 #include <cinttypes>
 #include <complex>
 #include <vector>
+#include <sstream>
 #include <villas/timing.h>
 
 #include <villas/dumper.hpp>
@@ -96,8 +97,9 @@ protected:
 	unsigned ppsIndex;
 	unsigned windowSize;
 	unsigned windowMultiplier;	/**< Multiplyer for the window to achieve frequency resolution */
-	unsigned freqCount;		/**< Number of requency bins that are calculated */
+	unsigned freqCount;		    /**< Number of requency bins that are calculated */
 	bool sync;
+	bool channelNameEnable;    /**< Rename the output values with channel name or only descriptive name */
 
 	uint64_t smpMemPos;
 	uint64_t lastSequence;
@@ -150,6 +152,7 @@ public:
 		windowMultiplier(0),
 		freqCount(0),
 		sync(0),
+		channelNameEnable(1),
 		smpMemPos(0),
 		lastSequence(0),
 		windowCorrectionFactor(0),
@@ -184,10 +187,15 @@ public:
 			struct signal *rocofSig;
 
 			/* Add signals */
-			freqSig = signal_create("frequency", "Hz", SignalType::FLOAT);
-			amplSig = signal_create("amplitude", "V", SignalType::FLOAT);
-			phaseSig = signal_create("phase", "rad", SignalType::FLOAT);
-			rocofSig = signal_create("rocof", "Hz/s", SignalType::FLOAT);
+			std::stringstream ss_freq, ss_ampl, ss_phase, ss_rocof;
+			ss_freq << "frequency" << (channelNameEnable)?signalNames[i]:"";
+			freqSig = signal_create(ss_freq.str().c_str(), "Hz", SignalType::FLOAT);
+			ss_ampl << "amplitude" << (channelNameEnable)?signalNames[i]:"";
+			amplSig = signal_create(ss_ampl.str().c_str(), "V", SignalType::FLOAT);
+			ss_phase << "phase" << (channelNameEnable)?signalNames[i]:"";
+			phaseSig = signal_create(ss_phase.str().c_str(), "rad", SignalType::FLOAT);
+			ss_rocof << "rocof" << (channelNameEnable)?signalNames[i]:"";
+			rocofSig = signal_create(ss_rocof.str().c_str(), "Hz/s", SignalType::FLOAT);
 
 			if (!freqSig || !amplSig || !phaseSig || !rocofSig)
 				throw RuntimeError("Failed to create new signals");
@@ -254,7 +262,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s}",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -266,7 +274,8 @@ public:
 			"frequency_estimate_type", &freqEstimateTypeC,
 			"sync", &sync,
 			"pps_index", &ppsIndex,
-			"angle_unit", &angleUnitC
+			"angle_unit", &angleUnitC,
+			"add_channel_name", &channelNameEnable
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
