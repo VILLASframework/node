@@ -380,7 +380,7 @@ bool isPrivileged() {
 
 	fclose(f);
 
-	return 0;
+	return true;
 }
 
 } /* namespace utils */
