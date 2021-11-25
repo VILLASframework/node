@@ -32,7 +32,7 @@ TestSuite(popen, .description = "Bi-directional popen");
 
 Test(popen, no_shell)
 {
-	Popen proc("/usr/bin/tee", {"tee", "test"});
+	PopenStream proc("/usr/bin/tee", {"tee", "test"});
 
 	proc.cout() << "Hello World" << std::endl;
 	proc.cout().flush();
@@ -52,7 +52,7 @@ Test(popen, no_shell)
 
 Test(popen, shell)
 {
-	Popen proc("echo \"Hello World\"", {}, {}, std::string(), true);
+	PopenStream proc("echo \"Hello World\"", {}, {}, std::string(), true);
 
 	std::string str, str2;
 
@@ -67,7 +67,7 @@ Test(popen, shell)
 
 Test(popen, wd)
 {
-	Popen proc("/usr/bin/pwd", {"pwd"}, {}, "/usr/lib");
+	PopenStream proc("/usr/bin/pwd", {"pwd"}, {}, "/usr/lib");
 
 	std::string wd;
 
@@ -81,7 +81,7 @@ Test(popen, wd)
 
 Test(popen, env)
 {
-	Popen proc("echo $MYVAR", {}, {{"MYVAR", "TESTVAL"}}, std::string(), true);
+	PopenStream proc("echo $MYVAR", {}, {{"MYVAR", "TESTVAL"}}, std::string(), true);
 
 	std::string var;
 
