@@ -136,6 +136,15 @@ components:
   schemas: 
     Config:
       $ref: components/schemas/config.yaml
+    
+    TypeField:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+
     FormatEdgeflex:
       $ref: components/schemas/formats/edgeflex.yaml
     FormatIgor:

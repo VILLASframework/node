@@ -1,8 +1,11 @@
 ---
 
+description: |
+  The payload format which is used to encode and decode exchanged messages.
 oneOf:
-- $ref: format.yaml
-- type: string
+- $ref: format_obj.yaml
+- title: Format Name
+  type: string
   enum:
   - csv
   - gtnet

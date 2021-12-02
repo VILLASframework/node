@@ -2,8 +2,8 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
 allOf:
-- $ref: json.yaml
 - type: object
   properties:
     delimiter:
       type: string
+- $ref: json.yaml

@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../format_obj.yaml
+- $ref: value.yaml

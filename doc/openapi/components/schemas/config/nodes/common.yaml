@@ -1,0 +1,50 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+title: Node
+properties:
+
+  vectorize:
+    type: integer
+    default: 1
+    description: |
+      This setting allows to send multiple samples in a single message to the destination nodes.
+
+      The value of this setting determines how many samples will be combined into one packet. 
+
+  hooks:
+    $ref: hooklist.yaml
+
+  builtin:
+    type: boolean
+    default: true
+    title: Builtin hook functions
+    description: |
+      By default, each node and paths has a couple of default hooks attached to them. With this setting the attachment of built-in hooks can be disabled.
+
+  in:
+    type: object
+    properties:
+      vectorize:
+        type: integer
+        minimum: 1
+
+      signals:
+        $ref: signallist.yaml
+
+      hooks:
+        $ref: hooklist.yaml
+
+  out:
+    type: object
+    properties:
+
+      vectorize:
+        type: integer
+
+      hooks:
+        $ref: hooklist.yaml
+
+      netem:
+        $ref: netem.yaml

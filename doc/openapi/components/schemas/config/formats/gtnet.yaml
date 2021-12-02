@@ -3,7 +3,3 @@
 
 allOf:
 - $ref: raw.yaml
-- type: object
-  properties:
-    delimiter:
-      type: string

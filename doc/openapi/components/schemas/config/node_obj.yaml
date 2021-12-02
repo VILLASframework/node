@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+title: Format Object
+required:
+- type
+properties:
+  type:
+    type: string
+    description: |
+      Specifies which protocol should be used by this node.
+
+      For a complete list of supported node-types run `villas node --help`.
+
+      In addition to the node settings described in this section, every node type has its own specific settings
+discriminator:
+  propertyName: type
+  mapping:
+    amqp: nodes/_amqp.yaml
+    can: nodes/_can.yaml
+    comedi: nodes/_comedi.yaml
+    ethercat: nodes/_ethercat.yaml
+    exec: nodes/_exec.yaml
+    file: nodes/_file.yaml
+    fpga: nodes/_fpga.yaml
+    iec61850-8-1: nodes/_iec61850-8-1.yaml
+    iec61850-9-2: nodes/_iec61850-9-2.yaml
+    infiniband: nodes/_infiniband.yaml
+    influxdb: nodes/_influxdb.yaml
+    kafka: nodes/_kafka.yaml
+    loopback: nodes/_loopback.yaml
+    mqtt: nodes/_mqtt.yaml
+    nanomsg: nodes/_nanomsg.yaml
+    ngsi: nodes/_ngsi.yaml
+    opal: nodes/_opal.yaml
+    redis: nodes/_redis.yaml
+    rtp: nodes/_rtp.yaml
+    shmem: nodes/_shmem.yaml
+    signal.v2: nodes/_signal_v2.yaml
+    signal: nodes/_signal.yaml
+    socket: nodes/_socket.yaml
+    stats_node: nodes/_stats_node.yaml
+    temper: nodes/_temper.yaml
+    test_rtt: nodes/_test_rtt.yaml
+    uldaq: nodes/_uldaq.yaml
+    websocket: nodes/_websocket.yaml
+    zeromq: nodes/_zeromq.yaml

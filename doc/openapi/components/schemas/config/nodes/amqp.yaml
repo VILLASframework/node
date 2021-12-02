@@ -1,9 +1,48 @@
 ---
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
+title: Advanced Messaging & Queuing Protocol (AMQP)
 allOf:
-- $ref: ../node.yaml
 - type: object
   properties:
     format:
-      $ref: ../formatspec.yaml
+      $ref: ../format_spec.yaml
+
+    uri:
+      type: string
+      format: uri
+      description: |
+        See also: https://www.rabbitmq.com/uri-spec.html
+
+    exchange:
+      type: string
+      description: |
+        The name of the AMQP exchange the node will publish the messages to.
+
+    routing_key:
+      type: string
+      description: |
+        The routing key of published messages as well as the routing key which is used to bind the subcriber queue.
+
+    ssl:
+      description: |
+        Note: These settings are only used if the `uri` setting is using the `amqps://` schema.
+
+      type: object
+      properties: 
+        verify_hostname:
+          default: true,
+
+        verify_peer:
+          default: true,
+
+        ca_cert:
+          default: "/path/to/ca.crt"
+
+        client_cert:
+          default: "/path/to/client.crt"
+
+        client_key:
+          default: "/path/to/client.key"
+
+- $ref: common.yaml

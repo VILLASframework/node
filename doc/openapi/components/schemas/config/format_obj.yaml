@@ -1,0 +1,24 @@
+type: object
+title: Format Object
+required:
+- type
+properties:
+  type:
+    type: string
+discriminator:
+  propertyName: type
+  mapping:
+    csv: formats/_csv.yaml
+    gtnet: formats/_gtnet.yaml
+    iotagent_ul: formats/_iotagent_ul.yaml
+    json: formats/_json.yaml
+    json.edgeflex: formats/_json_edgeflex.yaml
+    json.kafka: formats/_json_kafka.yaml
+    json.reserve: formats/_json_reserve.yaml
+    protobuf: formats/_protobuf.yaml
+    raw: formats/_raw.yaml
+    tsv: formats/_tsv.yaml
+    value: formats/_value.yaml
+    villas.binary: formats/_villas_binary.yaml
+    villas.human: formats/_villas_human.yaml
+    villas.web: formats/_villas_web.yaml

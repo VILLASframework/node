@@ -11,7 +11,7 @@ allOf:
 
   additionalProperties: false
 
-  properties: 
+  properties:
     nodes:
       type: object
       title: Node list
@@ -19,7 +19,7 @@ allOf:
         A list of nodes to/from which this instance sends/receives sample data.
       additionalProperties:
         x-additionalPropertiesName: node-name
-        $ref: ./config/node.yaml
+        $ref: ./config/node_obj.yaml
 
     paths:
       title: Path list

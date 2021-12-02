@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../node_obj.yaml
+- $ref: signal_v2.yaml

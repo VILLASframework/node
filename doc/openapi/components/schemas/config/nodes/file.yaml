@@ -2,8 +2,31 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
 allOf:
-- $ref: ../node.yaml
 - type: object
   properties:
     format:
-      $ref: ../formatspec.yaml
+      $ref: ../format_spec.yaml
+
+  uri:
+    type: string
+    format: uri
+    description: |
+      Specifies the URI to a file from which is written to or read from depending in which group (`in`or `out`) is used.
+
+      This setting allows to add special paceholders for time and date values.
+      See [strftime(3)](http://man7.org/linux/man-pages/man3/strftime.3.html) for a list of supported placeholder.
+
+      **Example**:
+
+      ```
+      uri = "logs/measurements_%Y-%m-%d_%H-%M-%S.log"
+      ```
+
+      will create a file called:
+
+      ```
+      ./logs/measurements_2015-08-09_22-20-50.log
+      ```
+
+
+- $ref: common.yaml

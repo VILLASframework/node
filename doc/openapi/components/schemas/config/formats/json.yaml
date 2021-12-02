@@ -2,7 +2,6 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
 allOf:
-- $ref: ../format.yaml
 - type: object
   properties:
     indent:
@@ -39,3 +38,4 @@ allOf:
       default: false
       description: 
         Escape the `/` characters in strings with `\/`.
+- $ref: common.yaml

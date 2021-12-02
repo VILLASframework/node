@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../node_obj.yaml
+- $ref: rtp.yaml
