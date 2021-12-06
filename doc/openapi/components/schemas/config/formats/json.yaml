@@ -38,4 +38,4 @@ allOf:
       default: false
       description: 
         Escape the `/` characters in strings with `\/`.
-- $ref: common.yaml
+- $ref: ../format.yaml

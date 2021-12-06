@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../hook.yaml
+- $ref: limit_value.yaml

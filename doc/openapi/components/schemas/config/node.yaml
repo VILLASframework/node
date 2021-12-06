@@ -14,7 +14,7 @@ properties:
       The value of this setting determines how many samples will be combined into one packet. 
 
   hooks:
-    $ref: hooklist.yaml
+    $ref: hook_list.yaml
 
   builtin:
     type: boolean
@@ -34,7 +34,7 @@ properties:
         $ref: signallist.yaml
 
       hooks:
-        $ref: hooklist.yaml
+        $ref: hook_list.yaml
 
   out:
     type: object
@@ -44,7 +44,7 @@ properties:
         type: integer
 
       hooks:
-        $ref: hooklist.yaml
+        $ref: hook_list.yaml
 
       netem:
         $ref: netem.yaml

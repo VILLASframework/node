@@ -45,4 +45,4 @@ allOf:
         client_key:
           default: "/path/to/client.key"
 
-- $ref: common.yaml
+- $ref: ../node.yaml

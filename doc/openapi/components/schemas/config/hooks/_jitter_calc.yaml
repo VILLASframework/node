@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../hook.yaml
+- $ref: jitter_calc.yaml

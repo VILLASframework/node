@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+
+type: object
+title: Format Object
+required:
+- type
+properties:
+  type:
+    type: string
+discriminator:
+  propertyName: type
+  mapping:
+    average: hooks/_average.yaml
+    cast: hooks/_cast.yaml
+    decimate: hooks/_decimate.yaml
+    dp: hooks/_dp.yaml
+    drop: hooks/_drop.yaml
+    dump: hooks/_dump.yaml
+    ebm: hooks/_ebm.yaml
+    fix: hooks/_fix.yaml
+    gate: hooks/_gate.yaml
+    jitter_calc: hooks/_jitter_calc.yaml
+    limit_rate: hooks/_limit_rate.yaml
+    limit_value: hooks/_limit_value.yaml
+    lua: hooks/_lua.yaml
+    ma: hooks/_ma.yaml
+    pmu_dft: hooks/_pmu_dft.yaml
+    pps_ts: hooks/_pps_ts.yaml
+    print: hooks/_print.yaml
+    restart: hooks/_restart.yaml
+    rms: hooks/_rms.yaml
+    scale: hooks/_scale.yaml
+    shift_seq: hooks/_shift_seq.yaml
+    shift_ts: hooks/_shift_ts.yaml
+    skip_first: hooks/_skip_first.yaml
+    stats: hooks/_stats.yaml
+    ts: hooks/_ts.yaml

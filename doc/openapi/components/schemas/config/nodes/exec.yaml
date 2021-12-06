@@ -46,4 +46,4 @@ allOf:
           A object of key/value pairs of environemnt variables which should be passed to the sub-process in addition to the parent environment.
 
 
-- $ref: common.yaml
+- $ref: ../node.yaml

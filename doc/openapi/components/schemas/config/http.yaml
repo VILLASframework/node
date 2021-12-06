@@ -8,16 +8,20 @@ properties:
     default: 80
     title: Listening port
     description: |
-      Listening port for HTTP connections.
+      The TCP port number on which HTTP & WebSocket server.
 
   ssl_cert:
     type: string
     title: SSL Certificate Path
-    description: Path to an SSL certificate
+    description: |
+      The public x509 certificate used for server-side SSL encryption.
+
     example: /etc/ssl/certs/mycert.pem
 
   ssl_private_key:
     type: string
     title: SSL Private Key Path
-    description: Path to an SSL private key
+    description: |
+      The private x509 key used for server-side SSL encryption.
+
     example: /etc/ssl/private/mykey.pem

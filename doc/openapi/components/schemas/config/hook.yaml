@@ -2,16 +2,9 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 
 type: object
-
 title: Hook
 
-required:
-- type
-  
 properties:
-  type:
-    type: string
-  
   enabled:
     type: boolean
     default: true

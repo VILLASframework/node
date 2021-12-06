@@ -7,4 +7,4 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
-- $ref: common.yaml
+- $ref: ../node.yaml

@@ -6,4 +6,4 @@ allOf:
   properties:
     delimiter:
       type: string
-- $ref: common.yaml
+- $ref: ../format.yaml

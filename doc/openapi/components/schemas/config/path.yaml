@@ -86,4 +86,4 @@ properties:
       When this flag is set, the original sequence number from the source node will be used when multiplexing the nodes.
 
   hooks:
-    $ref: hooklist.yaml
+    $ref: hook_list.yaml
