@@ -55,8 +55,8 @@ endif()
 # Check packages
 find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
-find_package(spdlog 1.3.1 REQUIRED)
-find_package(fmt 5.2.0 REQUIRED)
+find_package(spdlog 1.6.0 REQUIRED)
+find_package(fmt 5.3.0 REQUIRED)
 find_package(Criterion)
 
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
