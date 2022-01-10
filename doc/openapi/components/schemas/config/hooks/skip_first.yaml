@@ -1,7 +1,13 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- type: object
+  properties: 
+    samples:
+      type: integer
+      description: The number of samples which should be dropped by this hook after a start or restart of the node/path.
+    seconds:
+      type: number
+      description: The number of seconds for which this hook should initially drop samples after a start or restart of the node/path.

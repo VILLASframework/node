@@ -1,7 +1,33 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: single.yaml
+- type: object
+  required:
+  - f0
+  - harmonics
+  properties:
+    f0:
+      description: The fundamental frequency.
+      example: 50
+      type: number
+    dt:
+      description: The timestep of the input samples. Exclusive with `rate` setting.
+      default: 50e-6
+      type: number
+    rate:
+      type: number
+      description: The rate of the input samples. Exclusive with `dt` setting.
+    harmonics:
+      type: object
+      description: A list of selected harmonics which should be calculated.
+      example: [0, 1, 3, 5 ]
+      items:
+        type: integer
+    inverse:
+      description: Enable the calucation of the inverse transform.
+      type: boolean
+      default: false
+

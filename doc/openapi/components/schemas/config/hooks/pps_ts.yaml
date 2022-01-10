@@ -1,7 +1,27 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: single.yaml
+- type: object
+  required:
+  - expected_smp_rate
+  properties: 
+    mode:
+      type: string
+      enum:
+      - simple
+      - horizon
+      default: simple
+    threshold:
+      type: number
+      default: 1.5
+    expected_smp_rate:
+      type: integer
+    horizon_estimation:
+      type: integer
+      default: 10
+    horizon_compensation:
+      type: integer
+      default: 10

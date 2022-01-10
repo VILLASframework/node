@@ -1,7 +1,17 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: multi.yaml
+- type: object
+  required:
+  - min
+  - max
+  properties: 
+    min:
+      description: The smallest value which will pass through the hook before getting clipped.
+      type: number
+    max:
+      description: The largest value which will pass through the hook before getting clipped.
+      type: number

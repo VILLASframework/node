@@ -1,7 +1,19 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: multi.yaml
+- type: object
+  required:
+  - offset
+  properties:
+    offset:
+      type: integer
+      description: |
+        The signal offset at which the average signal should be inserted.
+
+        **Examples:**
+        - `0` inserts the averaged signal before all other signals in the sample
+        - `1` inserts the averaged signal after the first signal.
+

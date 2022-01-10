@@ -1,8 +1,9 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 description: |
   The payload format which is used to encode and decode exchanged messages.
+example: villas.human
 oneOf:
 - $ref: format_obj.yaml
 - title: Format Name

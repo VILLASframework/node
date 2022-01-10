@@ -1,7 +1,46 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: multi.yaml
+- type: object
+  properties: 
+    sample_rate:
+      type: integer
+    start_freqency:
+      type: number
+    end_freqency:
+      type: number
+    frequency_resolution:
+      type: number
+    dft_rate:
+      type: integer
+    window_size_factor:
+      type: integer
+    window_type:
+      type: string
+      enum:
+      - flattop
+      - hamming
+      - hann
+    padding_type:
+      type: string
+      enum:
+      - zero
+      - signal_repeat
+    frequency_estimate_type:
+      type: string
+      enum:
+      - quadratic
+    sync:
+      type: boolean
+    pps_index:
+      type: integer
+    angle_unit:
+      type: string
+      enum:
+      - rad
+      - degree
+    add_channel_name:
+      type: boolean

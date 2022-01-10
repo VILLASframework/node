@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+type: object
+properties:
+  signal:
+    type: string
+    description: The name of a signal to which this hook should be applied
+    example: busA.V

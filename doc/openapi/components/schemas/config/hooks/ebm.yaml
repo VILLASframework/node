@@ -1,7 +1,22 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- type: object
+  required:
+    - phases
+  properties: 
+    phases:
+      description: Signal indeces for voltage & current values for each phase.
+      example:
+      - [0, 1]
+      - [2, 3]
+      - [4, 5]
+      type: array
+      items:
+        type: array
+        minItems: 2
+        maxItems: 2
+        items:
+          type: integer

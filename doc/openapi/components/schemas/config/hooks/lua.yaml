@@ -1,7 +1,81 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- type: object
+  additionalProperties:
+    description: |
+      The Lua hook will pass the complete hook configuration to the `prepare()` Lua function.
+      So you can add arbitrary settings here which are then consumed by the Lua script.
+
+  properties: 
+    use_names:
+      type: boolean
+      default: true
+      description: Enables or disables the use of signal names in the `process()` Lua function. If disabled, numeric indices will be used.
+
+    script:
+      type: string
+      description: |
+        Provide the path to a Lua script containing functions for the individual hook points.
+        Define some or all of the following functions in your Lua script:
+
+        #### `prepare(cfg)`
+
+        Called during initialization with a Lua table which contains the full hook configuration.
+
+        #### `start()`
+
+        Called when the associated node or path is started
+
+        #### `stop()`
+
+        Called when the associated node or path is stopped
+
+        #### `restart()`
+
+        Called when the associated node or path is restarted.
+        Falls back to `stop()` + `start()` if absent.
+
+        #### `process(smp)`
+
+        Called for each sample which is being processed.
+        The sample is passed as a Lua table with the following fields:
+
+        - `sequence`     The sequence number of the sample.
+        - `flags`        The flags field of the sample.
+        - `ts_origin`    The origin timesamp as a Lua table containing the following keys:
+        | Index | Description |
+        |:--    |:--          |
+        | 0     | seconds     |
+        | 1     | nanoseconds |
+ 
+        - `ts_received`  The receive timestamp a Lua table containing the following keys:
+        | Index | Description |
+        |:--    |:--          |
+        | 0     | seconds     |
+        | 1     | nanoseconds |
+
+        - `data`         The sample data as a Lua table container either numeric indices or the signal names depending on the 'use_names' option of the hook.
+
+        #### `periodic()`
+
+        Called periodicalled with the rate of @ref node-config-stats.
+
+    signals:
+      description: |
+        A definition of signals which this hook will emit.
+        Here a list of signal definitions like @ref node-config-node-signals is excpected.
+      type: array
+      items:
+        allOf:
+        - type: object
+          properties: 
+            expression:
+              type: string
+              example: "math.sqrt(smp.data[0] ^ 2 + smp.data[1] ^ 2)"
+              description: |
+                An arbitrary Lua expression which will be evaluated and used for the value of the signal.
+                Note you can access the current sample using the global Lua variable `smp`.
+        - $ref: ../signaldef.yaml

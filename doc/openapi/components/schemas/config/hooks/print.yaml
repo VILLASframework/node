@@ -1,11 +1,18 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-- $ref: ../hook.yaml
+- $ref: common.yaml
 - type: object
   properties:
+    output:
+      type: string
+      default: '/dev/stdout'
+      description: An optional path to a file to which the samples processed by this hook will be written to.
+    format:
+      $ref: ../format_spec.yaml
     prefix:
       type: string
       default: ''
+      description: An optional prefix which will be prepended to each line written by this hook to the output
   

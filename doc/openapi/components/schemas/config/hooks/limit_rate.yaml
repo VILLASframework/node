@@ -1,7 +1,20 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- type: object
+  required:
+  - rate
+  properties:
+    rate:
+      type: number
+      description: The maximum sample rate in `1/s` before this hook will drop samples.
+    mode:
+      type: string
+      default: local
+      description: Timestamp which should be used for rate estimation.
+      enum:
+      - local
+      - received
+      - origin

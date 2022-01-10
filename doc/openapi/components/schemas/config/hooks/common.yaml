@@ -1,0 +1,17 @@
+---
+
+type: object
+properties:
+  enabled:
+    type: boolean
+    default: true
+    description: An optional field which can be used to disable a hook.
+  
+  priority:
+    type: integer
+    default: 99
+    description: |
+      The priority of this hook which determines the order in which hooks are executed.
+      Hooks with a lwoer priority are executed before ones with a higher priority.
+
+      If no priority is configured, hooks are executed in the order they are configured in the configuration file.

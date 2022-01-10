@@ -14,7 +14,6 @@ get:
               value:
                 hooks:
                   - average
-                  - average
                   - cast
                   - decimate
                   - dp

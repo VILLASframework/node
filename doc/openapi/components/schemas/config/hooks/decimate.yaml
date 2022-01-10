@@ -1,10 +1,14 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-- $ref: ../hook.yaml
+- $ref: common.yaml
 - type: object
+  required:
+    - ratio
   properties:
     ratio:
       type: integer
+      description: The decimation ratio. A value of 4 will skip every, but the 4th sample in a row.
+      example: 4
   

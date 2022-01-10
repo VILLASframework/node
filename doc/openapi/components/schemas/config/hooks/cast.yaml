@@ -1,7 +1,25 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: multi.yaml
+- type: object
+  properties:
+    new_type:
+      type: string
+      enum:
+      - integer
+      - float
+      - boolean
+      - complex
+      description: The type of the casted signal.
+      example: integer
+    new_name:
+      type: string
+      description: The new name of the casted signal. 
+      example: BusA.V
+    new_unit:
+      type: string
+      description: The new unit of the casted signal.
+      example: V

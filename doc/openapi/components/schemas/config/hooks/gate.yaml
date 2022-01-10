@@ -1,7 +1,27 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- $ref: single.yaml
+- type: object
+  properties: 
+    mode:
+      description: The triggering condition at which the gate opens.
+      type: string
+      default: rising_edge
+      enum:
+      - above
+      - below
+      - rising_edge
+      - falling_edge
+    threshold:
+      default: 0.5
+      description: The threshold the signal needs to overcome before the gate opens.
+      type: number
+    duration:
+      description: The number of seconds for which the gate opens when the triggering condition is met. Exclusive with the `samples` setting.
+      type: number
+    samples:
+      description: The number if samples for which the gate opens when the triggering condition is met. Exclusive with the `duration` setting.
+      type: number

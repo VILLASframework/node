@@ -1,7 +1,18 @@
----
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
 
 allOf:
-  - $ref: ../hook.yaml
-  - type: object
-    properties: {}
+- $ref: common.yaml
+- type: object
+  required:
+  - offset
+  properties:
+    mode:
+      type: string
+      enum:
+      - origin
+      - ts_received
+      description: The timestamp field which should be adjusted by the `offset` setting.
+    offset:
+      type: number
+      description: The offset in seconds which is added to the timestamp field of each processed sample.
