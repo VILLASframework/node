@@ -83,7 +83,7 @@ public:
 
 		ret = json_unpack_ex(json, &err, 0, "{ s: f, s: f }",
 			"min", &min,
-			"min", &max
+			"max", &max
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-average");
