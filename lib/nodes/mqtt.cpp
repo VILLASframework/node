@@ -479,6 +479,10 @@ int villas::node::mqtt_stop(NodeCompat *n)
 	if (ret != MOSQ_ERR_SUCCESS)
 		goto mosquitto_error;
 
+	ret = queue_signalled_close(&m->queue);
+	if (ret)
+		return ret;
+
 	return 0;
 
 mosquitto_error:

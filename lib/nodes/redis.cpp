@@ -563,6 +563,10 @@ int villas::node::redis_stop(NodeCompat *n)
 			break;
 	}
 
+	ret = queue_signalled_close(&r->queue);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
