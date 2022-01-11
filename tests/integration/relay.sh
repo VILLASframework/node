@@ -30,6 +30,7 @@ pushd ${DIR}
 function finish {
 	popd
 	rm -rf ${DIR}
+	kill ${PID_RELAY}
 }
 trap finish EXIT
 
@@ -41,14 +42,16 @@ cat > config.json << EOF
 		"relay1": {
 			"type": "websocket",
 
+			"wait_connected": true,
             "destinations": [
                 "http://localhost:8123/node"
             ]
-		}
+		},
 
         "relay2": {
 			"type": "websocket",
 
+			"wait_connected": true,
             "destinations": [
                 "http://localhost:8123/node"
             ]
@@ -57,28 +60,28 @@ cat > config.json << EOF
 }
 EOF
 
+VILLAS_LOG_PREFIX="[signal] " \
 villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
 # Test with loopback
 
+VILLAS_LOG_PREFIX="[relay] " \
 villas relay -l -p 8123 &
+PID_RELAY=$!
 
+VILLAS_LOG_PREFIX="[pipe1] " \
 villas pipe config.json relay1 < input.dat > output.dat
 
+VILLAS_LOG_PREFIX="[compare] " \
 villas compare input.dat output.dat
 
-kill %%
-wait %%
+# VILLAS_LOG_PREFIX="[pipe2-recv] " \
+# villas pipe config.json -r relay2 > output.dat &
 
-rm output.dat
+# sleep 0.1
 
-# Test without loopback
-villas relay -p 8123 &
+# VILLAS_LOG_PREFIX="[pipe2-send] " \
+# villas pipe config.json -s relay1 < input.dat
 
-villas pipe config.json -s relay1 < input.dat &
-villas pipe config.json -r relay2 > output.dat
-
-kill %1 %2
-wait %1 %2
-
-villas compare input.dat output.dat
+# VILLAS_LOG_PREFIX="[compare] " \
+# villas compare input.dat output.dat
