@@ -122,7 +122,7 @@ int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<i
 	sigemptyset(&sa_cb.sa_mask);
 	sigemptyset(&sa_ign.sa_mask);
 
-	cbSignals.insert(cbSignals.begin(), { SIGINT, SIGTERM, SIGUSR1, SIGALRM });
+	cbSignals.insert(cbSignals.begin(), { SIGINT, SIGTERM, SIGUSR1, SIGUSR2, SIGALRM });
 	cbSignals.sort();
 	cbSignals.unique();
 
