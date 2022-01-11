@@ -57,7 +57,7 @@ RelaySession::RelaySession(Relay *r, Identifier sid) :
 	auto loggerName = fmt::format("relay:{}", sid);
 	logger = villas::logging.get(loggerName);
 
-	logger->info("RelaySession created: {}", identifier);
+	logger->info("Session created: {}", identifier);
 
 	sessions[sid] = this;
 
@@ -68,7 +68,7 @@ RelaySession::RelaySession(Relay *r, Identifier sid) :
 
 RelaySession::~RelaySession()
 {
-	logger->info("RelaySession destroyed: {}", identifier);
+	logger->info("Session destroyed: {}", identifier);
 
 	sessions.erase(identifier);
 }
@@ -152,7 +152,7 @@ RelayConnection::RelayConnection(Relay *r, lws *w, bool lo) :
 
 RelayConnection::~RelayConnection()
 {
-	session->logger->info("RelayConnection closed: {} ({})", name, ip);
+	session->logger->info("Connection closed: {} ({})", name, ip);
 
 	session->connections.erase(wsi);
 
