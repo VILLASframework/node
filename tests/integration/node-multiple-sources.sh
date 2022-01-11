@@ -64,6 +64,12 @@ cat > config.json <<EOF
 			{
 				"in": "sig_1",
 				"out": "file_2"
+			},
+			{
+				"in": "sig_1"
+			},
+			{
+				"in": "sig_1"
 			}
 		]
 }
