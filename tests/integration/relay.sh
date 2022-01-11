@@ -22,6 +22,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+echo "Test is broken"
+exit 99
+
 set -e
 
 DIR=$(mktemp -d)
