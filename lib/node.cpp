@@ -75,7 +75,6 @@ Node::Node(const std::string &n) :
 	name_short(n),
 	name_long(),
 	affinity(-1), /* all cores */
-	loopback_count(0),
 	factory(nullptr)
 {
 	uuid_clear(uuid);
