@@ -285,6 +285,10 @@ int villas::node::redis_init(NodeCompat *n)
 	new (&r->task) Task(CLOCK_REALTIME);
 	new (&r->key) std::string();
 
+	/* We need a timeout in order for RedisConnection::loop() to properly
+	 * terminate after the node is stopped */
+	r->options.socket_timeout = std::chrono::milliseconds(500);
+
 	return 0;
 }
 
@@ -445,10 +449,10 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json)
 	if (keepalive >= 0)
 		r->options.keep_alive = keepalive != 0;
 
-	if (socket_timeout >= 0)
+	if (socket_timeout > 0)
 		r->options.socket_timeout = std::chrono::milliseconds((int) (1000 * socket_timeout));
 
-	if (connect_timeout >= 0)
+	if (connect_timeout > 0)
 		r->options.connect_timeout = std::chrono::milliseconds((int) (1000 * connect_timeout));
 
 	return 0;
