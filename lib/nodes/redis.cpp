@@ -140,12 +140,16 @@ void RedisConnection::loop()
 			subscriber.consume();
 		}
 		catch (const sw::redis::TimeoutError &e) {
+			logger->debug("Timeout.");
 			continue;
 		}
 		catch (const sw::redis::ReplyError &e) {
+			logger->error("Error: {}", e.what());
 			continue;
 		}
 		catch (const sw::redis::Error &e) {
+			logger->error("Error: {}. Recreating subscriber", e.what());
+
 			/* Create a new subscriber */
 			subscriber = context.subscriber();
 		}
@@ -177,9 +181,9 @@ int redis_get(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 		case RedisMode::HASH: {
 			struct Sample *smp = smps[0];
 
-			for (unsigned j = 0; j < n->getInputSignals(false)->size(); j++) {
-				auto sig = n->getInputSignals(false)->getByIndex(j);
-				auto *data = &smp->data[j];
+			unsigned j = 0;
+			for (auto sig : *n->getInputSignals(false)) {
+				auto *data = &smp->data[j++];
 
 				*data = sig->init;
 			}
@@ -546,6 +550,7 @@ int villas::node::redis_start(NodeCompat *n)
 
 int villas::node::redis_stop(NodeCompat *n)
 {
+	int ret;
 	auto *r = n->getData<struct redis>();
 
 	r->conn->stop();
@@ -639,7 +644,8 @@ int villas::node::redis_write(NodeCompat *n, struct Sample * const smps[], unsig
 
 			std::unordered_map<std::string, std::string> kvs;
 
-			for (unsigned j = 0; j < MIN(smp->signals->size(), smp->length); j++) {
+			unsigned len = MIN(smp->signals->size(), smp->length);
+			for (unsigned j = 0; j < len; j++) {
 				const auto sig = smp->signals->getByIndex(j);
 				const auto *data = &smp->data[j];
 
