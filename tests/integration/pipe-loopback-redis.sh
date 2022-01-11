@@ -37,14 +37,10 @@ function finish {
 trap finish EXIT
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
-villas signal -l ${NUM_SAMPLES} -n random > input.dat
-
-FORMAT="protobuf"
-VECTORIZE="10"
 HOST="localhost"
 
 if [ -n "${CI}" ]; then
-	HOST="amqp"
+	HOST="redis"
 fi
 
 cat > config.json << EOF
@@ -52,8 +48,8 @@ cat > config.json << EOF
 	"nodes": {
 		"node1": {
 			"type": "redis",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+			"format": "protobuf",
+			"vectorize": 10,
 		
 			"uri": "tcp://${HOST}:6379/0"
 		}
@@ -61,6 +57,8 @@ cat > config.json << EOF
 }
 EOF
 
-villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < input.dat
+villas signal -l ${NUM_SAMPLES} -n random > input.dat
 
-villas compare ${CMPFLAGS} input.dat output.dat
+villas pipe -l ${NUM_SAMPLES} config.json node1 < input.dat > output.dat
+
+villas compare input.dat output.dat
