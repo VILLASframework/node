@@ -48,6 +48,8 @@ class NodeCompat;
 struct websocket {
 	struct List destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 
+	bool wait;				/**< Wait until all destinations are connected. */
+
 	struct Pool pool;
 	struct CQueueSignalled queue;		/**< For samples which are received from WebSockets */
 };
@@ -85,7 +87,6 @@ struct websocket_connection {
 		villas::Buffer *recv;		/**< A buffer for reconstructing fragmented messages. */
 		villas::Buffer *send;		/**< A buffer for constructing messages before calling lws_write() */
 	} buffers;
-
 
 	/** Custom formatter for spdlog */
 	template<typename OStream>
