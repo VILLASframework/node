@@ -67,7 +67,8 @@ struct websocket_connection {
 		CONNECTING,
 		RECONNECTING,
 		ESTABLISHED,
-		SHUTDOWN,
+		CLOSING,
+		CLOSED,
 		ERROR
 	} state;				/**< The current status of this connection. */
 
