@@ -351,6 +351,19 @@ int villas::node::websocket_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
+int villas::node::websocket_init(NodeCompat *n)
+{
+	auto *w = n->getData<struct websocket>();
+
+	w->wait = false;
+
+	int ret = list_init(&w->destinations);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int villas::node::websocket_start(NodeCompat *n)
 {
 	int ret;
@@ -527,9 +540,6 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json)
 	json_error_t err;
 	int wc = -1;
 
-	ret = list_init(&w->destinations);
-	if (ret)
-		return ret;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: b }",
 		"destinations", &json_dests,
@@ -541,6 +551,7 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json)
 	if (wc >= 0)
 		w->wait = wc != 0;
 
+	list_clear(&w->destinations);
 	if (json_dests) {
 		if (!json_is_array(json_dests))
 			throw ConfigError(json_dests, err, "node-config-node-websocket-destinations", "The 'destinations' setting must be an array of URLs");
@@ -618,6 +629,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.vectorize	= 0;
 	p.size		= sizeof(struct websocket);
 	p.type.start	= websocket_type_start;
+	p.init		= websocket_init;
 	p.destroy	= websocket_destroy;
 	p.parse		= websocket_parse;
 	p.print		= websocket_print;

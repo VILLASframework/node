@@ -125,6 +125,8 @@ int websocket_start(NodeCompat *n);
 
 int websocket_stop(NodeCompat *n);
 
+int websocket_init(NodeCompat *n);
+
 int websocket_destroy(NodeCompat *n);
 
 int websocket_poll_fds(NodeCompat *n, int fds[]);
