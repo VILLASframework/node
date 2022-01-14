@@ -48,7 +48,8 @@ public:
 		std::runtime_error(what),
 		err(e)
 	{
-		asprintf(&msg, "%s: %s", std::runtime_error::what(), libusb_strerror(err));
+		int ret __attribute__((unused));
+		ret = asprintf(&msg, "%s: %s", std::runtime_error::what(), libusb_strerror(err));
 	}
 
 	template<typename... Args>

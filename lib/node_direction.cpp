@@ -98,7 +98,8 @@ int NodeDirection::parse(json_t *json)
 					const char *name = json_string_value(json_name);
 					char *name_new;
 
-					asprintf(&name_new, "%s%d", name, i);
+					int ret __attribute__((unused));
+					ret = asprintf(&name_new, "%s%d", name, i);
 
 					json_string_set(json_name, name_new);
 				}

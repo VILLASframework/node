@@ -59,7 +59,7 @@ PathSource::~PathSource()
 
 int PathSource::read(int i)
 {
-	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued;
+	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 
 	cnt = node->in.vectorize;
 
@@ -181,6 +181,8 @@ int PathSource::read(int i)
 				enqueued = 0;
 		}
 	}
+	else
+		enqueued = 0;
 
 	sample_decref_many(muxed_smps, tomux);
 out2:	sample_decref_many(read_smps, recv);

@@ -100,7 +100,7 @@ int villas::node::memory::lock(size_t sz)
 		if (ret)
 			return ret;
 
-		logger->debug("Increased ressource limit of locked memory to {} bytes", lock);
+		logger->debug("Increased ressource limit of locked memory to {} bytes", sz);
 	}
 
 #endif /* __arm__ */
