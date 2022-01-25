@@ -25,19 +25,21 @@ properties:
 
   in:
     type: object
+    title: Input configuration (received by VILLASnode)
     properties:
       vectorize:
         type: integer
         minimum: 1
 
       signals:
-        $ref: signallist.yaml
+        $ref: signal_list.yaml
 
       hooks:
         $ref: hook_list.yaml
 
   out:
     type: object
+    title: Output configuration (sent out by VILLASnode)
     properties:
 
       vectorize:

@@ -2,5 +2,10 @@
 ---
 
 type: array
+title: Hook List
+example:
+- "print"
+- type: limit_rate
+  rate: 1000
 items:
   $ref: hook_spec.yaml

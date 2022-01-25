@@ -8,13 +8,22 @@ description: |
 oneOf:
 - type: array
   title: List of signal definition objects
+  example:
+  - name: tap_position
+    type: integer
+    init: 0
+  - name: voltage
+    type: float
+    unit: V
+    init: 230.0
+
   items:
-    $ref: signaldef.yaml
+    $ref: signal_spec.yaml
 
 - type: object
   title: Signal definition with `count`
   allOf:
-  - $ref: signaldef.yaml
+  - $ref: signal_spec.yaml
   - type: object
     required:
     - count

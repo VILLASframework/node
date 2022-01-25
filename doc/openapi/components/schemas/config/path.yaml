@@ -13,6 +13,8 @@ properties:
     description: |
       The in settings expects the name of one or more source nodes or mapping expressions.
 
+      Checkout the [input mapping section](/docs/node/config/paths#input-mapping) for more details.
+
     oneOf:
     - type: string
     - type: array

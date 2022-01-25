@@ -78,4 +78,4 @@ allOf:
               description: |
                 An arbitrary Lua expression which will be evaluated and used for the value of the signal.
                 Note you can access the current sample using the global Lua variable `smp`.
-        - $ref: ../signaldef.yaml
+        - $ref: ../signal_spec.yaml

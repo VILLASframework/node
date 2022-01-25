@@ -1,5 +1,14 @@
 ---
 
+description: |
+  The netem configuration allows the user to apply network impairments to packets send out by the nodes.
+
+  Please note, that the network emulation feature is currently supported by the following node-types:
+  - [`socket`](/docs/node/nodes/socket)
+  - [`nanomsg`](/docs/node/nodes/nanomsg)
+  - [`zeromq`](/docs/node/nodes/zeromq)
+  - [`rtp`](/docs/node/nodes/rtp)
+
 type: object
 properties:
   enabled:
