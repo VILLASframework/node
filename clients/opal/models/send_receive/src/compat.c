@@ -44,3 +44,8 @@ int _intel_fast_memcmp(const void *s1, const void *s2, size_t n)
 {
 	return memcmp(s1, s2, n);
 }
+
+void * _intel_fast_memmove(void *dest, const void *src, size_t num)
+{
+	return memmove(dest, src, num);
+}
