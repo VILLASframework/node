@@ -339,7 +339,7 @@ if ! pkg-config "spdlog >= 1.8.2" && \
 fi
 
 # Build & Install libwebsockets
-if ! pkg-config "libwebsockets >= 2.3.0" && \
+if ! pkg-config "libwebsockets >= 3.1.0" && \
     [ -z "${SKIP_WEBSOCKETS}" ]; then
     git clone ${GIT_OPTS} --branch v4.0-stable https://libwebsockets.org/repo/libwebsockets
     mkdir -p libwebsockets/build
