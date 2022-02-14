@@ -31,7 +31,7 @@ prepare:docker:
       --target dev .
   parallel:
     matrix:
-    - DISTRO: [ ubuntu, debian, centos ]
+    - DISTRO: [ ubuntu, debian, centos, rocky ]
     - DISTRO: fedora
       DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
     - DISTRO: fedora
@@ -59,7 +59,7 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: [ fedora, fedora-minimal, debian, centos, ubuntu ]
+    - DISTRO: [ fedora, fedora-minimal, debian, centos, rocky, ubuntu ]
     - DISTRO: fedora-minimal
       CMAKE_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF

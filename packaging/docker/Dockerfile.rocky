@@ -1,0 +1,110 @@
+# Rockylinux Dockerfile
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+ARG DISTRO=rockylinux
+ARG ROCKY_VERSION=8
+ARG ARCH=x86_64
+ARG TRIPLET=x86_64-linux-gnu
+
+FROM ${DISTRO}:${ROCKY_VERSION} AS dev
+
+ARG DISTRO
+ARG ARCH
+ARG TRIPLET
+
+USER root
+
+# Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
+RUN dnf -y install epel-release dnf-plugins-core
+RUN dnf config-manager --set-enabled powertools
+
+# Toolchain
+RUN dnf -y install \
+	gcc gcc-c++ \
+	pkgconfig cmake make \
+	autoconf automake autogen libtool \
+	flex bison \
+	texinfo git curl tar \
+	protobuf-compiler protobuf-c-compiler
+
+# Dependencies
+RUN dnf -y install \
+	openssl-devel \
+	graphviz-devel \
+	protobuf-devel \
+	protobuf-c-devel \
+	libuuid-devel \
+	libconfig-devel \
+	libnl3-devel \
+	libcurl-devel \
+	jansson-devel \
+	zeromq-devel \
+	librabbitmq-devel \
+	mosquitto-devel \
+	librdkafka-devel \
+	libibverbs-devel \
+	librdmacm-devel \
+	libusb1-devel \
+	lua-devel \
+	hiredis-devel
+
+# Add local and 64-bit locations to linker paths
+ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+    echo /usr/local/lib64 >> /etc/ld.so.conf
+
+# or install unpackaged dependencies from source
+ADD packaging/deps.sh /
+RUN bash deps.sh
+
+# Workaround for libnl3's search path for netem distributions
+RUN ln -s /usr/lib64/tc /usr/lib/tc
+
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
+WORKDIR /villas
+
+FROM dev AS app
+
+COPY . /villas/
+
+RUN rm -rf /villas/build && mkdir /villas/build
+WORKDIR /villas/build
+RUN cmake .. && \
+	make -j$(nproc) doc && \
+	make -j$(nproc) install && \
+	ldconfig
+
+ENTRYPOINT ["villas"]
+
+LABEL \
+	org.label-schema.schema-version="1.0" \
+	org.label-schema.name="VILLASnode" \
+	org.label-schema.license="GPL-3.0" \
+	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.author.name="Steffen Vogel" \
+	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
+	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
+	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
+	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"

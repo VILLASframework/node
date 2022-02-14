@@ -40,7 +40,7 @@ if ! command tinc --version > /dev/null; then
 			apt-get -y install git autoconf automake build-essential libssl-dev zlib1g-dev liblzo2-dev libreadline-dev libncurses-dev libsystemd-dev texinfo
 			;;
 
-		fedora|centos|redhat)
+		fedora|centos|rocky|redhat)
 			dnf -y install git autoconf automake make gcc openssl-devel zlib-devel lzo-devel readline-devel ncurses-devel systemd-devel texinfo
 			;;
 	esac
