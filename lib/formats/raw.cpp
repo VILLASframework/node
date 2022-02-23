@@ -416,7 +416,7 @@ void RawFormat::parse(json_t *json)
 	int fake_tmp = 0;
 	const char *end = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{  }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: b, s?: i }",
 		"endianess", &end,
 		"fake", &fake_tmp,
 		"bits", &bits
