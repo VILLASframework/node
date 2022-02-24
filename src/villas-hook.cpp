@@ -261,18 +261,14 @@ check:			if (optarg == endptr)
 		h->prepare(input->getSignals());
 		h->start();
 
-		while (!stop) {
+		while (!stop && !feof(stdin)) {
 			ret = sample_alloc_many(&p, smps, cnt);
 			if (ret != cnt)
 				throw RuntimeError("Failed to allocate {} smps from pool", cnt);
 
 			recv = input->scan(stdin, smps, cnt);
-			if (recv < 0) {
-				if (feof(stdin))
-					break;
-
+			if (recv < 0)
 				throw RuntimeError("Failed to read from stdin");
-			}
 
 			timespec now = time_now();
 
