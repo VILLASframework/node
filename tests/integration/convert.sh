@@ -33,7 +33,7 @@ function finish {
 }
 trap finish EXIT
 
-FORMATS="villas.human csv tsv json"
+FORMATS="villas.human csv tsv json opal.asyncip"
 
 villas signal -v5 -n -l20 mixed > input.dat
 

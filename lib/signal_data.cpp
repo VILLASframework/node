@@ -53,98 +53,95 @@ void SignalData::set(enum SignalType type, double val)
 	}
 }
 
-void SignalData::cast(enum SignalType from, enum SignalType to)
+SignalData SignalData::cast(enum SignalType from, enum SignalType to) const
 {
-	if (from == to) /* Nothing to do */
-		return;
+	SignalData n = *this;
 
 	switch (to) {
 		case SignalType::BOOLEAN:
 			switch(from) {
-				case SignalType::BOOLEAN:
-					break;
-
 				case SignalType::INTEGER:
-					this->b = this->i;
+					n.b = this->i;
 					break;
 
 				case SignalType::FLOAT:
-					this->b = this->f;
+					n.b = this->f;
 					break;
 
 				case SignalType::COMPLEX:
-					this->b = std::real(this->z);
+					n.b = std::real(this->z);
 					break;
 
-				default: { }
+				case SignalType::INVALID:
+				case SignalType::BOOLEAN:
+					break;
 			}
 			break;
 
 		case SignalType::INTEGER:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					this->i = this->b;
-					break;
-
-				case SignalType::INTEGER:
+					n.i = this->b;
 					break;
 
 				case SignalType::FLOAT:
-					this->i = this->f;
+					n.i = this->f;
 					break;
 
 				case SignalType::COMPLEX:
-					this->i = std::real(this->z);
+					n.i = std::real(this->z);
 					break;
 
-				default: { }
+				case SignalType::INVALID:
+				case SignalType::INTEGER:
+					break;
 			}
 			break;
 
 		case SignalType::FLOAT:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					this->f = this->b;
+					n.f = this->b;
 					break;
 
 				case SignalType::INTEGER:
-					this->f = this->i;
-					break;
-
-				case SignalType::FLOAT:
+					n.f = this->i;
 					break;
 
 				case SignalType::COMPLEX:
-					this->f = std::real(this->z);
+					n.f = std::real(this->z);
 					break;
 
-				default: { }
+				case SignalType::INVALID:
+				case SignalType::FLOAT:
+					break;
 			}
 			break;
 
 		case SignalType::COMPLEX:
 			switch(from) {
 				case SignalType::BOOLEAN:
-					this->z = this->b;
+					n.z = this->b;
 					break;
 
 				case SignalType::INTEGER:
-					this->z = this->i;
+					n.z = this->i;
 					break;
 
 				case SignalType::FLOAT:
-					this->z = this->f;
+					n.z = this->f;
 					break;
 
+				case SignalType::INVALID:
 				case SignalType::COMPLEX:
 					break;
-
-				default: { }
 			}
 			break;
 
 		default: { }
 	}
+
+	return n;
 }
 
 int SignalData::parseString(enum SignalType type, const char *ptr, char **end)

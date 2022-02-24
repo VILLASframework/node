@@ -164,7 +164,7 @@ void lua_tosignaldata(lua_State *L, union SignalData *data, enum SignalType targ
 			return;
 	}
 
-	data->cast(type, targetType);
+	*data = data->cast(type, targetType);
 }
 
 static

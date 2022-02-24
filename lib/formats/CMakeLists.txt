@@ -68,6 +68,7 @@ list(APPEND FORMAT_SRC
     json.cpp
     line.cpp
     msg.cpp
+    opal_asyncip.cpp
     raw.cpp
     value.cpp
     villas_binary.cpp

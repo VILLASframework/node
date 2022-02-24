@@ -109,7 +109,7 @@ public:
 			auto orig_sig = smp->signals->getByIndex(index);
 			auto new_sig  = signals->getByIndex(index);
 
-			smp->data[index].cast(orig_sig->type, new_sig->type);
+			smp->data[index] = smp->data[index].cast(orig_sig->type, new_sig->type);
 		}
 
 		return Reason::OK;

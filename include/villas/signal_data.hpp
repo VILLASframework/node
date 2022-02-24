@@ -63,7 +63,7 @@ union SignalData {
 	}
 
 	/** Convert signal data from one description/format to another. */
-	void cast(enum SignalType type, enum SignalType to);
+	SignalData cast(enum SignalType type, enum SignalType to) const;
 
 	/** Set data from double */
 	void set(enum SignalType type, double val);
