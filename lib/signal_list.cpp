@@ -121,7 +121,7 @@ void SignalList::dump(Logger logger, const union SignalData *data, unsigned len)
 		else
 			pfx = "   ";
 
-		logger->debug(" {}{:>3}: {}", pfx, i, sig->toString(i < len ? &data[i] : nullptr));
+		logger->info(" {}{:>3}: {}", pfx, i, sig->toString(i < len ? &data[i] : nullptr));
 
 skip:		prevSig = sig;
 		i++;

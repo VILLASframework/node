@@ -343,7 +343,8 @@ void Path::prepare(NodeList &nodes)
 		throw RuntimeError("Failed to initialize pool of path: {}", *this);
 
 	logger->debug("Prepared path {} with {} output signals:", *this, osigs->size());
-	osigs->dump(logger);
+	if (logger->level() <= spdlog::level::debug)
+		osigs->dump(logger);
 
 	checkPrepared();
 

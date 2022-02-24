@@ -110,7 +110,8 @@ skip_add:
 
 		auto logger = h->getLogger();
 		logger->debug("Signal list after hook #{}:", i++);
-		sigs->dump(logger);
+		if (logger->level() <= spdlog::level::debug)
+			sigs->dump(logger);
 	}
 }
 

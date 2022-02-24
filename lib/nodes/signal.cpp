@@ -224,7 +224,8 @@ int SignalNode::prepare()
 		sig = ssig.toSignal(sig);
 	}
 
-	in.signals->dump(logger);
+	if (logger->level() <= spdlog::level::debug)
+		in.signals->dump(logger);
 
 	return Node::prepare();
 }

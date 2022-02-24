@@ -299,7 +299,7 @@ void villas::node::sample_dump(Logger logger, struct Sample *s)
 {
 	logger->info("Sample: sequence={}, length={}, capacity={},"
 		"flags={:#x}, #signals={}, "
-		"refcnt={}, pool_off={}",
+		"refcnt={}, pool_off={:#x}",
 		s->sequence,
 		s->length,
 		s->capacity,
