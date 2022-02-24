@@ -144,15 +144,9 @@ public:
 
 			scanned = formatter->scan(stdin, smps, allocated);
 			if (scanned < 0) {
-				if (feof(stdin))
-					goto leave;
-				else if (stop)
-					goto leave2;
-
-				logger->warn("Failed to read from stdin");
+				if (!stop)
+					logger->warn("Failed to read from stdin");
 			}
-			else if (scanned == 0)
-				continue;
 
 			/* Fill in missing sequence numbers */
 			for (int i = 0; i < scanned; i++) {
@@ -164,23 +158,28 @@ public:
 
 			sent = node->write(smps, scanned);
 
-			sample_decref_many(smps, scanned);
+			sample_decref_many(smps, allocated);
 
 			count += sent;
 			if (limit > 0 && count >= limit)
-				goto leave;
+				goto leave_limit;
+
+			if (feof(stdin))
+				goto leave_eof;
 		}
 
-		goto leave2;
+		goto leave;
+
+leave_eof:
+		logger->info("Reached end-of-file.");
+		raise(SIGUSR1);
+		goto leave;
+
+leave_limit:
+		logger->info("Reached send limit.");
+		raise(SIGUSR1);
 
 leave:
-		if (feof(stdin))
-			logger->info("Reached end-of-file.");
-		else
-			logger->info("Reached send limit.");
-
-		raise(SIGUSR1);
-leave2:
 		logger->debug("Send thread stopped");
 	}
 };
@@ -211,30 +210,31 @@ public:
 
 			recv = node->read(smps, allocated);
 			if (recv < 0) {
-				if (node->getState() == State::STOPPING || stop)
-					goto leave2;
-				else
-					logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
-			}
-			else {
-				formatter->print(stdout, smps, recv);
-
-				count += recv;
-				if (limit > 0 && count >= limit)
+				if (node->getState() == State::STOPPING || stop) {
+					sample_decref_many(smps, allocated);
 					goto leave;
+				}
+
+				logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
 			}
+
+			formatter->print(stdout, smps, recv);
 
 			sample_decref_many(smps, allocated);
+
+			count += recv;
+			if (limit > 0 && count >= limit)
+				goto leave_limit;
 		}
 
-		goto leave2;
-leave:
+		goto leave;
+
+leave_limit:
 		logger->info("Reached receive limit.");
 		raise(SIGUSR1);
-leave2:
-		logger->debug("Receive thread stopped");
 
-		sample_decref_many(smps, allocated);
+leave:
+		logger->debug("Receive thread stopped");
 	}
 };
 

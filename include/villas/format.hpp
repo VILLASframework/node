@@ -64,12 +64,6 @@ public:
 	virtual
 	~Format();
 
-	virtual
-	bool isBinaryPayload()
-	{
-		return false;
-	}
-
 	const SignalList::Ptr getSignals() const
 	{
 		return signals;
@@ -151,9 +145,6 @@ class BinaryFormat : public Format {
 
 public:
 	using Format::Format;
-
-	virtual bool isBinaryPayload()
-	{ return true; }
 };
 
 class FormatFactory : public plugin::Plugin {

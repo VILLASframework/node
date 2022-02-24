@@ -48,7 +48,10 @@ int OpalAsyncIPFormat::sprint(char *buf, size_t len, size_t *wbytes, const struc
 		pl->msg_id = htole32(smp->sequence);
 		pl->msg_len = htole16(smp->length * sizeof(double));
 
-		for (unsigned j = 0; j < smp->length; j++) {
+		if (smp->length > MAXSIZE)
+			logger->warn("Can not sent more then {} signals via opal.asyncip format. We only send the first {}..", MAXSIZE, MAXSIZE);
+
+		for (unsigned j = 0; j < MIN(MAXSIZE, smp->length); j++) {
 			auto sig = smp->signals->getByIndex(j);
 			auto d = smp->data[j];
 
@@ -71,15 +74,11 @@ int OpalAsyncIPFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct
 {
 	unsigned i;
 	auto *ptr = buf;
-	ssize_t slen = len;
 
 	if (len % 8 != 0)
-		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
+		return -1; /* Packet size is invalid: Must be multiple of 8 bytes */
 
-	for (i = 0; i < cnt && ptr - buf + sizeof(struct Payload) < slen; i++) {
-		if (len < 8)
-			return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
-
+	for (i = 0; i < cnt && ptr - buf + sizeof(struct Payload) < len; i++) {
 		auto *pl = (struct Payload *) ptr;
 		auto *smp = smps[i];
 
@@ -89,7 +88,7 @@ int OpalAsyncIPFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct
 
 		smp->sequence = le32toh(pl->msg_id);
 		smp->length = rlen / sizeof(double);
-		smp->flags = (int) SampleFlags::HAS_SEQUENCE;
+		smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA;
 		smp->signals = signals;
 
 		for (unsigned j = 0; j < MIN(smp->length, smp->capacity); j++) {

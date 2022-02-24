@@ -36,7 +36,7 @@ struct Sample;
 class OpalAsyncIPFormat : public BinaryFormat {
 
 protected:
-	const int MAXSIZE = 64;
+	const unsigned MAXSIZE = 64;
 
 	struct Payload {
 		int16_t dev_id;		// (2 bytes) Sender device ID
@@ -71,7 +71,7 @@ public:
 	virtual
 	Format * make()
 	{
-		return new OpalAsyncIPFormat((int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA);
+		return new OpalAsyncIPFormat((int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA);
 	}
 
 	/// Get plugin name

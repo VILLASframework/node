@@ -41,5 +41,10 @@ for FORMAT in ${FORMATS}; do
 	villas convert -o ${FORMAT} < input.dat | tee ${TEMP} | \
 	villas convert -i ${FORMAT} > output.dat
 
-	villas compare input.dat output.dat
+	CMP_FLAGS=""
+	if [ ${FORMAT} = "opal.asyncip" ]; then
+		CMP_FLAGS+=-T
+	fi
+
+	villas compare ${CMP_FLAGS} input.dat output.dat
 done

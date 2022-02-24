@@ -266,7 +266,8 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 				size_t wbytes;
 				c->formatter->sprint(c->buffers.send->data() + LWS_PRE, c->buffers.send->size() - LWS_PRE, &wbytes, smps, pulled);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send->data() + LWS_PRE, wbytes, c->formatter->isBinaryPayload() ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				auto isBinary = dynamic_cast<BinaryFormat*>(c->formatter) != nullptr;
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send->data() + LWS_PRE, wbytes, isBinary ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_decref_many(smps, pulled);
 

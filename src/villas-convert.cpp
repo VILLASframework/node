@@ -28,7 +28,9 @@
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/format.hpp>
+#include <villas/formats/line.hpp>
 #include <villas/sample.hpp>
+#include <villas/pool.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node/memory.hpp>
@@ -141,16 +143,30 @@ protected:
 			dirs[i].formatter->start(dtypes);
 		}
 
-		struct Sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
+		// Line based formats are processed sample-by-sample
+		// while for others, we process them in chunks of 128 samples
+		auto isLine = dynamic_cast<LineFormat *>(dirs[0].formatter) != nullptr;
+		auto cnt = isLine ? 1 : 128;
 
-		while (true) {
-			ret = dirs[0].formatter->scan(stdin, smp);
+		/* Initialize memory */
+		struct Pool pool;
+		ret = pool_init(&pool, cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory::heap);
+		if (ret)
+			throw RuntimeError("Failed to allocate memory for pool.");
+
+		struct Sample *smps[cnt];
+		ret = sample_alloc_many(&pool, smps, cnt);
+		if (ret < 0)
+			throw MemoryAllocationError();
+
+		while (!feof(stdin)) {
+			ret = dirs[0].formatter->scan(stdin, smps, cnt);
 			if (ret == 0)
 				continue;
 			else if (ret < 0)
 				break;
 
-			dirs[1].formatter->print(stdout, smp);
+			dirs[1].formatter->print(stdout, smps, ret);
 		}
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++)

@@ -114,12 +114,14 @@ int LineFormat::scan(FILE *f, struct Sample * const smps[], unsigned cnt)
 		}
 	}
 
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i < cnt && !feof(f); i++) {
 		size_t rbytes;
 		char *ptr;
 
 skip:		bytes = getdelim(&in.buffer, &in.buflen, delimiter, f);
-		if (bytes < 0)
+		if (feof(f))
+			break;
+		else if (bytes < 0)
 			return -1; /* An error or eof occured */
 
 		/* Skip whitespaces, empty and comment lines */

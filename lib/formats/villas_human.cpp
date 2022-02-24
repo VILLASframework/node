@@ -41,7 +41,7 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len, const struct Sample 
 			off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) smp->ts.origin.tv_nsec);
 		}
 		else
-			off += snprintf(buf + off, len - off, "nan.nan");
+			off += snprintf(buf + off, len - off, "0.0");
 	}
 
 	if (flags & (int) SampleFlags::HAS_OFFSET) {
