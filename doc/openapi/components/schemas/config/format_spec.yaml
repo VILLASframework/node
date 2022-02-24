@@ -16,6 +16,7 @@ oneOf:
   - json.edgeflex
   - json.kafka
   - json.reserve
+  - opal.asyncip
   - protobuf
   - raw
   - tsv

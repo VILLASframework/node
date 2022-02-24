@@ -18,6 +18,7 @@ discriminator:
     json.edgeflex: formats/_json_edgeflex.yaml
     json.kafka: formats/_json_kafka.yaml
     json.reserve: formats/_json_reserve.yaml
+    opal.asyncip: formats/_opal_asyncip.yaml
     protobuf: formats/_protobuf.yaml
     raw: formats/_raw.yaml
     tsv: formats/_tsv.yaml

@@ -18,6 +18,12 @@ properties:
     description: |
       If set, include the origin timestamp in the output.
 
+  ts_received:
+    type: boolean
+    default: true
+    description: |
+      If set, include the received timestamp in the output.
+
   sequence:
     type: boolean
     default: true
