@@ -195,7 +195,7 @@ void Log::setLevel(Level lvl)
 
 void Log::setLevel(const std::string &lvl)
 {
-	std::list<std::string> l = SPDLOG_LEVEL_NAMES;
+	auto l = SPDLOG_LEVEL_NAMES;
 
 	auto it = std::find(l.begin(), l.end(), lvl);
 	if (it == l.end())
