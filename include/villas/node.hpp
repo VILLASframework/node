@@ -169,6 +169,11 @@ public:
 	virtual
 	int pause()
 	{
+		if (state != State::STARTED)
+			return -1;
+
+		logger->info("Pausing node");
+
 		return 0;
 	}
 

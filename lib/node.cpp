@@ -346,7 +346,7 @@ int Node::read(struct Sample * smps[], unsigned cnt)
 		logger->debug("Received {} samples of which {} have been skipped", nread, skipped);
 	}
 	else
-		logger->debug( "Received {} samples", nread);
+		logger->debug("Received {} samples", nread);
 
 	return rread;
 #else

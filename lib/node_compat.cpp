@@ -138,10 +138,9 @@ int NodeCompat::pause()
 {
 	int ret;
 
-	if (state != State::STARTED)
-		return -1;
-
-	logger->info("Pausing node");
+	ret = Node::pause();
+	if (ret)
+		return ret;
 
 	ret = _vt->pause
 		? _vt->pause(this)
@@ -156,10 +155,9 @@ int NodeCompat::resume()
 {
 	int ret;
 
-	if (state != State::PAUSED)
-		return -1;
-
-	logger->info("Resuming node");
+	ret = Node::resume();
+	if (ret)
+		return ret;
 
 	ret = _vt->resume
 		? _vt->resume(this)
