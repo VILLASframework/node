@@ -60,6 +60,12 @@ if(WITH_NODE_EXEC)
     list(APPEND NODE_SRC exec.cpp)
 endif()
 
+if(WITH_NODE_GO)
+    add_subdirectory(go)
+    list(APPEND LIBRARIES nodes-go)
+    list(APPEND NODE_SRC go.cpp)
+endif()
+
 # Enable Universal Library for Linux DAQ devices (libuldaq)
 if(WITH_NODE_ULDAQ)
     list(APPEND NODE_SRC uldaq.cpp)
