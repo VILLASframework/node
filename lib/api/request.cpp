@@ -44,7 +44,7 @@ Request * RequestFactory::create(Session *s, const std::string &uri, Session::Me
 {
 	s->logger->info("Lookup request handler for: uri={}", uri);
 
-	for (auto *rf : plugin::Registry::lookup<RequestFactory>()) {
+	for (auto *rf : plugin::registry->lookup<RequestFactory>()) {
 		std::smatch mr;
 		if (not rf->match(uri, mr))
 			continue;

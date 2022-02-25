@@ -61,7 +61,7 @@ void HookList::parse(json_t *json, int mask, Path *o, Node *n)
 				throw ConfigError(json_hook, "node-config-hook", "Hook must be configured by simple string or object");
 		}
 
-		auto hf = plugin::Registry::lookup<HookFactory>(type);
+		auto hf = plugin::registry->lookup<HookFactory>(type);
 		if (!hf)
 			throw ConfigError(json_hook, "node-config-hook", "Unknown hook type '{}'", type);
 
@@ -87,7 +87,7 @@ void HookList::prepare(SignalList::Ptr signals, int m, Path *p, Node *n)
 		goto skip_add;
 
 	/* Add internal hooks if they are not already in the list */
-	for (auto f : plugin::Registry::lookup<HookFactory>()) {
+	for (auto f : plugin::registry->lookup<HookFactory>()) {
 		if ((f->getFlags() & m) == m) {
 			auto h = f->make(p, n);
 			push_back(h);

@@ -62,7 +62,7 @@ int villas::node::fpga_type_start(SuperNode *sn)
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
 	// get the FPGA card plugin
-	auto pcieCardPlugin = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
+	auto pcieCardPlugin = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
 	if (!pcieCardPlugin)
 		throw RuntimeError("No FPGA PCIe plugin found");
 

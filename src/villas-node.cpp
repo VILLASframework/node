@@ -106,27 +106,27 @@ protected:
 #endif /* WITH_NODE_OPAL */
 
 		<< "Supported node-types:" << std::endl;
-		for (auto p : Registry::lookup<NodeFactory>()) {
+		for (auto p : registry->lookup<NodeFactory>()) {
 			if (!p->isInternal())
 				std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		}
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
-		for (auto p : Registry::lookup<FormatFactory>())
+		for (auto p : registry->lookup<FormatFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 #ifdef WITH_HOOKS
 		std::cout << "Supported hooks:" << std::endl;
-		for (auto p : Registry::lookup<HookFactory>())
+		for (auto p : registry->lookup<HookFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
 #ifdef WITH_API
 		std::cout << "Supported API commands:" << std::endl;
-		for (auto p : Registry::lookup<api::RequestFactory>())
+		for (auto p : registry->lookup<api::RequestFactory>())
 			std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		std::cout << std::endl;
 #endif /* WITH_API */

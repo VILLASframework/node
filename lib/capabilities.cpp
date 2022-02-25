@@ -38,25 +38,25 @@ json_t * villas::node::getCapabilities()
 	json_t *json_formats = json_array();
 	json_t *json_name;
 
-	for (auto p : plugin::Registry::lookup<api::RequestFactory>()) {
+	for (auto p : plugin::registry->lookup<api::RequestFactory>()) {
 		json_name = json_string(p->getName().c_str());
 
 		json_array_append_new(json_apis, json_name);
 	}
 
-	for (auto p : plugin::Registry::lookup<HookFactory>()) {
+	for (auto p : plugin::registry->lookup<HookFactory>()) {
 		json_name = json_string(p->getName().c_str());
 
 		json_array_append_new(json_hooks, json_name);
 	}
 
-	for (auto p : plugin::Registry::lookup<FormatFactory>()) {
+	for (auto p : plugin::registry->lookup<FormatFactory>()) {
 		json_name = json_string(p->getName().c_str());
 
 		json_array_append_new(json_formats, json_name);
 	}
 
-	for (auto f : plugin::Registry::lookup<NodeFactory>()) {
+	for (auto f : plugin::registry->lookup<NodeFactory>()) {
 		if (f->isInternal())
 			continue;
 

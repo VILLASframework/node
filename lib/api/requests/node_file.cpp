@@ -46,7 +46,7 @@ public:
 		if (body != nullptr)
 			throw BadRequest("File endpoint does not accept any body data");
 
-		NodeFactory *nf = plugin::Registry::lookup<NodeFactory>("file");
+		NodeFactory *nf = plugin::registry->lookup<NodeFactory>("file");
 
 		if (node->getFactory() != nf)
 			throw BadRequest("This node is not a file node", "{ s: s }",

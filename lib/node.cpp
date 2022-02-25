@@ -542,7 +542,7 @@ Node * NodeFactory::make(json_t *json, uuid_t uuid)
 
 Node * NodeFactory::make(const std::string &type)
 {
-	NodeFactory *nf = plugin::Registry::lookup<NodeFactory>(type);
+	NodeFactory *nf = plugin::registry->lookup<NodeFactory>(type);
 	if (!nf)
 		throw RuntimeError("Unknown node-type: {}", type);
 

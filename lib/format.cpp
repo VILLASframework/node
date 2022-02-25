@@ -64,7 +64,7 @@ Format * FormatFactory::make(json_t *json)
 
 Format * FormatFactory::make(const std::string &format)
 {
-	FormatFactory *ff = plugin::Registry::lookup<FormatFactory>(format);
+	FormatFactory *ff = plugin::registry->lookup<FormatFactory>(format);
 	if (!ff)
 		throw RuntimeError("Unknown format: {}", format);
 

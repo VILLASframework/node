@@ -116,12 +116,12 @@ protected:
 			<< "    -V              show the version of the tool" << std::endl << std::endl;
 
 		std::cout << "Supported hooks:" << std::endl;
-		for (Plugin *p : Registry::lookup<HookFactory>())
+		for (Plugin *p : registry->lookup<HookFactory>())
 			std::cout << " - " << *p << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Supported IO formats:" << std::endl;
-		for (Plugin *p : Registry::lookup<FormatFactory>())
+		for (Plugin *p : registry->lookup<FormatFactory>())
 			std::cout << " - " << *p << ": " << p->getDescription() << std::endl;
 		std::cout << std::endl;
 
@@ -248,7 +248,7 @@ check:			if (optarg == endptr)
 		}
 
 		/* Initialize hook */
-		auto hf = plugin::Registry::lookup<HookFactory>(hook);
+		auto hf = plugin::registry->lookup<HookFactory>(hook);
 		if (!hf)
 			throw RuntimeError("Unknown hook function '{}'", hook);
 
