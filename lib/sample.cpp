@@ -297,7 +297,7 @@ enum SignalType villas::node::sample_format(const struct Sample *s, unsigned idx
 
 void villas::node::sample_dump(Logger logger, struct Sample *s)
 {
-	logger->info("Sample: sequence={}, length={}, capacity={},"
+	logger->info("Sample: sequence={}, length={}, capacity={}, "
 		"flags={:#x}, #signals={}, "
 		"refcnt={}, pool_off={:#x}",
 		s->sequence,
@@ -309,10 +309,10 @@ void villas::node::sample_dump(Logger logger, struct Sample *s)
 		s->pool_off);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-		logger->info("  ts.origin={}.{:09f}", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
+		logger->info("  ts.origin={}.{:09d}", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
 
 	if (s->flags & (int) SampleFlags::HAS_TS_RECEIVED)
-		logger->info("  ts.received={}.{:09f}", s->ts.received.tv_sec, s->ts.received.tv_nsec);
+		logger->info("  ts.received={}.{:09d}", s->ts.received.tv_sec, s->ts.received.tv_nsec);
 
 	if (s->signals) {
 		logger->info("  Signals:");
