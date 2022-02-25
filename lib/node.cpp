@@ -254,7 +254,7 @@ int Node::start()
 #ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
 	if (fwmark >= 0) {
-		for (auto fd : getNetemFDs()) {
+		for (int fd : getNetemFDs()) {
 			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &fwmark, sizeof(fwmark));
 			if (ret)
 				throw RuntimeError("Failed to set FW mark for outgoing packets");
