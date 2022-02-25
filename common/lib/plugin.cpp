@@ -30,21 +30,23 @@
 
 using namespace villas::plugin;
 
-List<> * Registry::plugins;
+Registry * villas::plugin::registry = nullptr;
 
 Plugin::Plugin()
 {
-	Registry::add(this);
+	if (registry == nullptr)
+		registry = new Registry();
+
+	registry->add(this);
 }
 
 Plugin::~Plugin()
 {
-	Registry::remove(this);
+	registry->remove(this);
 }
 
 void
 Plugin::dump()
 {
-	Logger logger = Registry::getLogger();
-	logger->info("Name: '{}' Description: '{}'", getName(), getDescription());
+	getLogger()->info("Name: '{}' Description: '{}'", getName(), getDescription());
 }
