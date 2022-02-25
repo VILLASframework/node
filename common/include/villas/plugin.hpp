@@ -38,60 +38,70 @@ namespace plugin {
 
 /* Forward declarations */
 class Plugin;
+class Registry;
+
+extern Registry *registry;
 
 template<typename T = Plugin>
 using List = std::list<T *>;
 
+class SubRegistry {
+
+public:
+	virtual
+	List<> lookup() = 0;
+};
+
 class Registry {
 
 protected:
-	static List<> *plugins;
+	List<> plugins;
+	List<SubRegistry> registries;
 
 public:
 
-	static Logger
-	getLogger()
+	Logger getLogger()
 	{
 		return logging.get("plugin:registry");
 	}
 
-	static void
-	add(Plugin *p)
+	void add(Plugin *p)
 	{
-		if (plugins == nullptr)
-			plugins = new List<>;
-
-		plugins->push_back(p);
+		plugins.push_back(p);
 	}
 
-	static void
-	remove(Plugin *p)
+	void addSubRegistry(SubRegistry *sr)
 	{
-		plugins->remove(p);
+		registries.push_back(sr);
 	}
 
-	template<typename T = Plugin>
-	static T *
-	lookup(const std::string &name)
+	void remove(Plugin *p)
 	{
-		for (Plugin *p : *plugins) {
-			T *t = dynamic_cast<T *>(p);
-			if (!t || t->getName() != name)
-				continue;
+		plugins.remove(p);
+	}
 
-			return t;
+	/// Get all plugins including sub-registries
+	List<> lookup() {
+		List<> all;
+
+		all.insert(all.end(), plugins.begin(), plugins.end());
+
+		for (auto r : registries) {
+			auto p = r->lookup();
+
+			all.insert(all.end(), p.begin(), p.end());
 		}
 
-		return nullptr;
+		return all;
 	}
 
+	/// Get all plugins of specific type
 	template<typename T = Plugin>
-	static List<T>
-	lookup()
+	List<T> lookup()
 	{
 		List<T> list;
 
-		for (Plugin *p : *plugins) {
+		for (Plugin *p : lookup()) {
 			T *t = dynamic_cast<T *>(p);
 			if (t)
 				list.push_back(t);
@@ -105,9 +115,22 @@ public:
 		return list;
 	}
 
+	/// Get all plugins of specific type and name
 	template<typename T = Plugin>
-	static void
-	dumpList();
+	T * lookup(const std::string &name)
+	{
+		for (T *p : lookup<T>()) {
+			if (p->getName() != name)
+				continue;
+
+			return p;
+		}
+
+		return nullptr;
+	}
+
+	template<typename T = Plugin>
+	void dump();
 };
 
 class Plugin {
@@ -163,11 +186,11 @@ public:
 
 template<typename T = Plugin>
 void
-Registry::dumpList()
+Registry::dump()
 {
 	getLogger()->info("Available plugins:");
 
-	for (Plugin *p : *plugins) {
+	for (Plugin *p : plugins) {
 		T *t = dynamic_cast<T *>(p);
 		if (t)
 			getLogger()->info(" - {}: {}", *p, p->getDescription());
