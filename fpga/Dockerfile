@@ -62,12 +62,13 @@ RUN yum -y install \
 	jansson-devel \
 	openssl-devel \
 	curl-devel \
-	lapack-devel
+	lapack-devel \
+	libuuid-devel
 
 # Build & Install Fmtlib
 RUN git clone --recursive https://github.com/fmtlib/fmt.git /tmp/fmt && \
 	mkdir -p /tmp/fmt/build && cd /tmp/fmt/build && \
-	git checkout 5.2.0 && \
+	git checkout 5.3.0 && \
 	cmake3 -DBUILD_SHARED_LIBS=1 .. && \
 	make -j$(nproc) install && \
 	rm -rf /tmp/fmt
@@ -75,7 +76,7 @@ RUN git clone --recursive https://github.com/fmtlib/fmt.git /tmp/fmt && \
 # Build & Install spdlog
 RUN git clone --recursive https://github.com/gabime/spdlog.git /tmp/spdlog && \
 	mkdir -p /tmp/spdlog/build && cd /tmp/spdlog/build && \
-	git checkout v1.3.1 && \
+	git checkout v1.6.0 && \
 	cmake3 -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_BENCH=OFF .. && \
 	make -j$(nproc) install && \
 	rm -rf /tmp/spdlog
