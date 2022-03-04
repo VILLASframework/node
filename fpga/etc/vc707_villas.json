@@ -13,7 +13,6 @@
   },
   "http": {
     "enabled": true,
-    "htdocs": "/villas/web/socket/",
     "port": 80
   },
   "plugins": [
