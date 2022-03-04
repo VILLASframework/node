@@ -332,7 +332,7 @@ Core::dump()
 CoreFactory*
 CoreFactory::lookup(const Vlnv &vlnv)
 {
-	for (auto &ip : plugin::Registry::lookup<CoreFactory>()) {
+	for (auto &ip : plugin::registry->lookup<CoreFactory>()) {
 		if (ip->getCompatibleVlnv() == vlnv)
 			return ip;
 	}

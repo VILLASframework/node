@@ -141,6 +141,12 @@ public:
 	virtual std::string
 	getDescription() const
 	{ return "Xilinx PCIe FPGA cards"; } 
+
+	virtual
+	std::string getType() const
+	{
+		return "card";
+	}
 };
 
 } /* namespace fpga */

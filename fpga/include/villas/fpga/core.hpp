@@ -55,7 +55,6 @@ class Core;
 class CoreFactory;
 class InterruptController;
 
-
 class IpIdentifier {
 public:
 
@@ -244,6 +243,12 @@ public:
 	/// Returns a running and checked FPGA IP
 	static Core::List
 	make(PCIeCard* card, json_t *json_ips);
+
+	virtual
+	std::string getType() const
+	{
+		return "core";
+	}
 
 protected:
 	Logger

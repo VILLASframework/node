@@ -92,7 +92,7 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	}
 
 	// get the FPGA card plugin
-	auto fpgaCardFactory = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
+	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
 	if (fpgaCardFactory == nullptr) {
 		logger->error("No FPGA plugin found");
 		exit(1);
