@@ -1,7 +1,7 @@
 # Dockerfile for creating VILLAS live images
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2017-2022, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -20,18 +20,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:29
-MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+FROM fedora:35
 
 RUN dnf -y install \
 	git \
 	lorax \
+	rclone \
+	make \
+	wget \
 	lorax-lmc-novirt \
 	lorax-lmc-virt \
-	livecd-tools \
-	openssh-clients
-
-RUN dnf -y install make wget
-
-RUN mkdir -p ~/.ssh
-RUN echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+	livecd-tools
