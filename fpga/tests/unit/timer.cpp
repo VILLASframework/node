@@ -26,7 +26,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/timer.hpp>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include "global.hpp"
 
 // cppcheck-suppress unknownMacro
