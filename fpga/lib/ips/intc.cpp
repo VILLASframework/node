@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <villas/config.h>
+#include <villas/config.hpp>
 #include <villas/plugin.hpp>
 
 #include <villas/kernel/kernel.hpp>
@@ -58,7 +58,7 @@ InterruptController::init()
 	for (int i = 0; i < num_irqs; i++) {
 
 		/* Try pinning to core */
-		int ret = kernel::irq_setaffinity(nos[i], card->affinity, nullptr);
+		int ret = kernel::setIRQAffinity(nos[i], card->affinity, nullptr);
 
 		switch(ret) {
 		case 0:

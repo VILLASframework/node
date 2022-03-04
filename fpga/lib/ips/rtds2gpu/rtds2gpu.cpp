@@ -42,9 +42,9 @@ void Rtds2Gpu::dump(spdlog::level::level_enum logLevel)
 	logger->log(logLevel, "    Frame too short:    {}", (status.frame_too_short ? "yes" : "no"));
 	logger->log(logLevel, "    Frame too long:     {}", (status.frame_too_long ? "yes" : "no"));
 	logger->log(logLevel, "    Frame size invalid: {}", (status.invalid_frame_size ? "yes" : "no"));
-	logger->log(logLevel, "    Last count:         {}", status.last_count);
-	logger->log(logLevel, "    Last seq. number:   {}", status.last_seq_nr);
-	logger->log(logLevel, "    Max. frame size:    {}", status.max_frame_size);
+	logger->log(logLevel, "    Last count:         {}", (int) status.last_count);
+	logger->log(logLevel, "    Last seq. number:   {}", (int) status.last_seq_nr);
+	logger->log(logLevel, "    Max. frame size:    {}", (int) status.max_frame_size);
 }
 
 bool Rtds2Gpu::startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset)
@@ -106,8 +106,8 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 	auto &doorbell = reinterpret_cast<reg_doorbell_t&>(doorbellRegister);
 
 	logger->info("Doorbell register: {:#08x}", doorbell.value);
-	logger->info("  Valid:       {}", (doorbell.is_valid ? "yes" : "no"));
-	logger->info("  Count:       {}", doorbell.count);
-	logger->info("  Seq. number: {}", doorbell.seq_nr);
+	logger->info("  Valid:       {}", doorbell.is_valid ? "yes" : "no");
+	logger->info("  Count:       {}", (int) doorbell.count);
+	logger->info("  Seq. number: {}", (int) doorbell.seq_nr);
 }
 
