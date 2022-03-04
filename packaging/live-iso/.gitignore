@@ -1,1 +1,4 @@
-villas-live.iso
+villas.iso
+build/
+*.log
+
