@@ -1,23 +1,20 @@
 ################################################################################
-# VILLASlive image
+# Kickstart file for VILLAS installation
 ################################################################################
 
 # Configuration
 lang en_US.UTF-8
 keyboard us
 timezone Europe/Berlin
-auth --useshadow --passalgo=sha512
 selinux --disabled
 firewall --disabled
 services --enabled=sshd,NetworkManager,chronyd,sshd,tuned,initial-setup
-network --bootproto=dhcp --device=link --activate
+network --bootproto=dhcp --device=link --activate --hostname=villas
 rootpw --plaintext villas-admin
 shutdown
 
-# make sure that initial-setup runs and lets us do all the configuration bits
-firstboot --reconfig
+bootloader --timeout=1 --append "preempt=full"
 
-bootloader --timeout=1
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 part / --size=8192 --fstype ext4
@@ -26,9 +23,6 @@ part / --size=8192 --fstype ext4
 firstboot --reconfig
 
 # Add repositories
-repo --name=planet-ccrma --install --baseurl=http://ccrma.stanford.edu/planetccrma/mirror/fedora/linux/planetcore/28/$basearch/
-repo --name=fein --install --baseurl=https://packages.fein-aachen.org/fedora/$releasever/$basearch/
-
 repo --name=fedora --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
@@ -50,6 +44,7 @@ glibc-langpack-en
 # remove this in %post
 dracut-config-generic
 -dracut-config-rescue
+dracut-live
 # install tools needed to manage and boot arm systems
 -uboot-images-armv7
 -initial-setup-gui
@@ -68,45 +63,69 @@ kernel
 kernel-modules
 kernel-modules-extra
 
-kernel-rt
-kernel-rt-modules
-kernel-rt-modules-extra
-
 # Some custom packages
 tuned
 tuned-profiles-realtime
 
 # Tools
-jq
-iproute
-nano
-ntp
-lshw
-traceroute
-bind-utils
-curl
-tar
-openssh-clients
-python-pip
-psmisc
-procps-ng
-tmux
-wget
-gcc
+autoconf
+automake
 bash-completion
+bind-utils
+bison
+chrony
+cmake
+curl
+dia
+doxygen
+flex
+gcc
+gcc-c++
+git
+graphviz
+iproute
+jq
+libtool
+lshw
+make
+mercurial
+nano
+ninja-build
+openssh-clients
+pkgconfig
+procps-ng
+protobuf-c-compiler
+protobuf-compiler
+psmisc
+python-pip
+tar
+texinfo
+tmux
+traceroute
+wget
 
-# For building Tinc-VPN
-readline-devel
-zlib-devel
+# Libraries and build-time dependencies of VILLASnode
 openssl-devel
-lzo-devel
-systemd-devel
-
-# VILLASnode
-villas-node
-villas-node-doc
-villas-node-tools
-villas-node-plugins
+protobuf-devel
+protobuf-c-devel
+libuuid-devel
+libconfig-devel
+libnl3-devel
+libcurl-devel
+jansson-devel
+spdlog-devel
+fmt-devel
+libwebsockets-devel
+zeromq-devel
+nanomsg-devel
+librabbitmq-devel
+mosquitto-devel
+libibverbs-devel
+librdmacm-devel
+re-devel
+libusb-devel
+lua-devel
+librdkafka-devel
 
 %end
 
@@ -114,54 +133,65 @@ villas-node-plugins
 # Custom post installer
 %post
 
-# Select tuned profile
+# Install VILLASnode
+mkdir /villas
+git clone https://git.rwth-aachen.de/acs/public/villas/node.git /villas/node
+
+cd /villas/node
+git submodule update --init common
+
+bash ./packaging/deps.sh
+
+mkdir build
+cd build
+
+cmake ..
+make -j$(nproc) install
+
+echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf
+ldconfig
+
+# Select real-time tuned profile
+PROC=$(nproc)
+ISOLATED_CORES=
+if ((PROC > 4)); then
+  ISOLATED_CORES+=$(seq -s, $((PROC/2)) $((PROC-1)))
+fi
+
+echo isolated_cores=${ISOLATED_CORES} >> /etc/tuned/realtime-variables.conf
 tuned-adm profile realtime
 
+# Install patched files
+cd /villas/node/packaging/live-iso
+make patched
+rsync --ignore-errors --archive --verbose /villas/node/packaging/live-iso/build/patched_files/ /
 %end
-
-################################################################################
-# Copy all files to ISO and fix permissions
-%post --nochroot
-
-export
-mount
-
-#set -x
-#
-#rsync --ignore-errors --archive --verbose $BUILDDIR/patched_files/ /mnt/sysimage/
-#
-#chmod 600 /mnt/sysimage/root/.ssh/id_rsa*
-#chmod 755 /mnt/sysimage/usr/local/bin/remote-admin
-#chmod 755 /mnt/sysimage/usr/local/bin/install-tinc
-#chmod 755 /mnt/sysimage/usr/local/bin/tune-realtime
-
-%end
-
 
 # From fedora-disk-base
 %post
 
-releasever=$(rpm -q --qf '%{version}\n' fedora-release)
+# Find the architecture we are on
+arch=$(uname -m)
+ 
+releasever=$(rpm --eval '%{fedora}')
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-primary
+
 echo "Packages within this disk image"
-rpm -qa
-# Note that running rpm recreates the rpm db files which aren't needed or wanted
-rm -f /var/lib/rpm/__db*
+rpm -qa --qf '%{size}\t%{name}-%{version}-%{release}.%{arch}\n' |sort -rn
 
 # remove random seed, the newly installed instance should make it's own
 rm -f /var/lib/systemd/random-seed
 
 # The enp1s0 interface is a left over from the imagefactory install, clean this up
-rm -f /etc/sysconfig/network-scripts/ifcfg-enp1s0
-
+rm -f /etc/NetworkManager/system-connections/*.nmconnection
+ 
 dnf -y remove dracut-config-generic
-
-# Disable network service here, as doing it in the services line
-# fails due to RHBZ #1369794
-/sbin/chkconfig network off
 
 # Remove machine-id on pre generated images
 rm -f /etc/machine-id
 touch /etc/machine-id
+
+# Note that running rpm recreates the rpm db files which aren't needed or wanted
+rm -f /var/lib/rpm/__db*
 
 %end

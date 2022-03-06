@@ -1,11 +1,10 @@
 NAME ?= VILLASlive
-RELEASEVER ?= 29
+RELEASEVER ?= 35
 RELEASEARCH ?= x86_64
 DATE = $(shell date +%Y-%m-%d)
 
-DEPLOY_HOST ?= villas.fein-aachen.org
-DEPLOY_USER ?= acs
-DEPLOY_PATH ?= /var/www/villas/iso/beta/
+DEPLOY_PATH ?= https://files.fein-aachen.org/
+DEPLOY_USER ?= webdav
 
 ifneq ($(CI),)
 	VERSION = $(CI_COMMIT_REF_NAME)
@@ -15,14 +14,12 @@ endif
 
 BASE =       $(NAME)-$(RELEASEARCH)-$(RELEASEVER)
 IMG =        $(BASE)-$(VERSION:v%=%).img
-ISO =        $(BASE)-$(VERSION:v%=%).iso
 IMG_LATEST = $(BASE)-latest.iso
-ISO_LATEST = $(BASE)-latest.iso
+
+BASE_ISO=Fedora-Server-netinst-$(RELEASEARCH)-$(RELEASEVER)-1.2.iso
 
 SRCDIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILDDIR ?= $(SRCDIR)/build
-
-RSYNCOPTS ?= --recursive --ignore-missing-args --copy-links --chown $(DEPLOY_USER):$(DEPLOY_USER)
 
 export BUILDDIR
 
@@ -30,25 +27,29 @@ FILES = $(shell find $(SRCDIR)/files -type f)
 PATCHED_FILES = $(FILES:$(SRCDIR)/files/%=$(BUILDDIR)/patched_files/%)
 
 # Tools
-LMC = livemedia-creator --releasever=$(RELEASEVER) --project=$(NAME) --title=$(NAME)
+LMC = livemedia-creator \
+	--releasever=$(RELEASEVER) \
+	--ram=8192 \
+	--vcpus=16
 
 # Targets
-all: $(BUILDDIR)/$(IMG)
+all: iso
+iso: $(BUILDDIR)/$(ISO)
+
+patched: $(PATCHED_FILES)
 
 clean:
 	rm -rf $(BUILDDIR)
 
-deploy: $(BUILDDIR)/$(IMG)
-	rsync $(RSYNCOPTS) $(BUILDDIR)/$(IMG) ChangeLog $(DEPLOY_USER}@$(DEPLOY_HOST):$(DEPLOY_PATH)
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) ln -s $(DEPLOY_PATH)/$(ISO) $(DEPLOY_PATH)/$(IMG_LATEST)
+deploy: #$(BUILDDIR)/$(ISO)
+	rclone config create fein webdav url ${DEPLOY_PATH} vendor other user ${DEPLOY_USER} pass ${DEPLOY_PASS}
+	rclone config show
+	rclone copy $(BUILDDIR)/$(ISO) fein:villas/iso
 
-$(BUILDDIR)/$(IMG): $(BUILDDIR)/img/villas-live.img
+$(BUILDDIR)/$(ISO): $(BUILDDIR)/iso/villas.iso
 	ln -s $< $@
 
-$(BUILDDIR)/$(ISO): $(BUILDDIR)/iso/villas-live.iso
-	ln -s $< $@
-
-$(BUILDDIR)/iso/%.iso: $(SRCDIR)/%.ks $(PATCHED_FILES)
+$(BUILDDIR)/iso/%.iso: $(SRCDIR)/%.ks /tmp/$(BASE_ISO)
 	# livemedia-creator requires that the resultdir is not present
 	rm -rf $(dir $@)
 
@@ -57,22 +58,17 @@ $(BUILDDIR)/iso/%.iso: $(SRCDIR)/%.ks $(PATCHED_FILES)
 	# that there are some usable /dev/loopX devices.
 	./ensure_loop.sh
 
-	$(LMC) --make-iso --iso-only --iso-name=$(notdir $@) --resultdir=$(dir $@) --ks $<
+	$(LMC) \
+		--make-iso \
+		--iso-only \
+		--iso-name=$(notdir $@) \
+		--iso /tmp/$(BASE_ISO) \
+		--resultdir=$(dir $@) \
+		--kernel-args "inst.ks=file:/villas.ks" \
+		--ks $<
 
-$(BUILDDIR)/img/%.img: $(SRCDIR)/%.ks $(PATCHED_FILES) Fedora-Server-netinst-x86_64-29_Beta-1.5.iso
-	# livemedia-creator requires that the resultdir is not present
-	rm -rf $(dir $@)
-
-	# livemedia-creator uses losetup to mount the image
-	# When used in a Docker container, we must make sure
-	# that there are some usable /dev/loopX devices.
-	./ensure_loop.sh
-
-	$(LMC) --make-disk --resultdir=$(dir $@) --ks $< --iso Fedora-Server-netinst-x86_64-29_Beta-1.5.iso
-
-Fedora-Server-netinst-x86_64-29_Beta-1.5.iso:
-	wget -nv https://download.fedoraproject.org/pub/fedora/linux/releases/test/29_Beta/Server/x86_64/iso/Fedora-Server-netinst-x86_64-29_Beta-1.5.iso
-
+/tmp/$(BASE_ISO):
+	wget -nv -O $@ https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/$(RELEASEVER)/Server/$(RELEASEARCH)/iso/$(BASE_ISO)
 
 $(BUILDDIR)/patched_files/%: $(SRCDIR)/files/%
 	@mkdir -p $(dir $@)
@@ -81,6 +77,6 @@ $(BUILDDIR)/patched_files/%: $(SRCDIR)/files/%
 	    -e "s/§RELEASEARCH§/$(RELEASEARCH)/g" \
 	    -e "s/§DATE§/$(DATE)/g" < $< > $@
 
-.PHONY: all deploy clean deploy
+.PHONY: all deploy clean deploy patched iso
 
 .PRECIOUS: %
