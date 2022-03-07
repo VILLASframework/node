@@ -217,11 +217,19 @@ std::vector<int> NodeCompat::getPollFDs()
 	return {};
 }
 
-int NodeCompat::getNetemFDs(int fds[])
+std::vector<int> NodeCompat::getNetemFDs()
 {
-	return _vt->netem_fds
-		? _vt->netem_fds(this, fds)
-		: -1;
+	if (_vt->netem_fds) {
+		int ret, fds[16];
+
+		ret = _vt->netem_fds(this, fds);
+		if (ret < 0)
+			return {};
+
+		return std::vector<int>(fds, fds+ret);
+	}
+
+	return {};
 }
 
 struct memory::Type * NodeCompat::getMemoryType()

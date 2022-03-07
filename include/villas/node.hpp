@@ -237,9 +237,9 @@ public:
 	}
 
 	virtual
-	int getNetemFDs(int fds[])
+	std::vector<int> getNetemFDs()
 	{
-		return 0;
+		return {};
 	}
 
 	virtual

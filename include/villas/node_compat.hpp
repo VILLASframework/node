@@ -166,7 +166,7 @@ public:
 	 * @return The number of file descriptors which have been put into \p sds.
 	 */
 	virtual
-	int getNetemFDs(int fds[]);
+	std::vector<int> getNetemFDs();
 
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
 	virtual
