@@ -209,7 +209,7 @@ vsample * sample_pack(unsigned seq, struct timespec *ts_origin, struct timespec 
 	smp->length = len;
 	smp->flags = (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN;
 
-	memcpy(smp->data, values, sizeof(double)*len);
+	memcpy((double *) smp->data, values, sizeof(double) * len);
 
 	return (vsample *) smp;
 }
@@ -226,7 +226,7 @@ void sample_unpack(vsample *s, unsigned *seq, struct timespec *ts_origin, struct
 	*flags =smp->flags;
 	*len = smp->length;
 
-	memcpy(values, smp->data, sizeof(double)* *len);
+	memcpy(values, (double *) smp->data, sizeof(double) * *len);
 }
 
 void sample_decref(vsample *smp)
