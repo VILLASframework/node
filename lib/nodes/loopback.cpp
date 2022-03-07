@@ -56,9 +56,7 @@ int LoopbackNode::prepare()
 	if (ret)
 		throw RuntimeError("Failed to initialize queue");
 
-	state = State::PREPARED;
-
-	return 0;
+	return Node::prepare();
 }
 
 int LoopbackNode::stop()
