@@ -54,6 +54,7 @@ set(LIB_SRC
     memory/mmap.cpp
     node_direction.cpp
     node.cpp
+    node_capi.cpp
     node_compat.cpp
     node_list.cpp
     path_destination.cpp
