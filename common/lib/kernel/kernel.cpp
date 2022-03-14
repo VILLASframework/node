@@ -81,7 +81,7 @@ int villas::kernel::getCachelineSize()
 #endif
 }
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__)
 int villas::kernel::getPageSize()
 {
 	return sysconf(_SC_PAGESIZE);
