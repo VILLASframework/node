@@ -381,7 +381,8 @@ public:
 		SUPPORTS_WRITE 		= (1 << 2),
 		REQUIRES_WEB   		= (1 << 3),
 		PROVIDES_SIGNALS	= (1 << 4),
-		INTERNAL		= (1 << 5)
+		INTERNAL		= (1 << 5),
+		HIDDEN			= (1 << 6)
 	};
 
 	NodeList instances;
@@ -432,6 +433,12 @@ public:
 	isInternal() const
 	{
 		return getFlags() & (int) Flags::INTERNAL;
+	}
+
+	bool
+	isHidden() const
+	{
+		return isInternal() || getFlags() & (int) Flags::HIDDEN;
 	}
 
 	virtual

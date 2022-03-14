@@ -274,6 +274,12 @@ public:
 	{
 		return "hook";
 	}
+
+	virtual
+	bool isHidden() const
+	{
+		return false;
+	}
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0, unsigned prio = 99>

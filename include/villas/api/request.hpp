@@ -143,6 +143,12 @@ public:
 	{
 		return "api:request";
 	}
+
+	virtual
+	bool isHidden() const
+	{
+		return false;
+	}
 };
 
 template<typename T, const char *name, const char *re, const char *desc>

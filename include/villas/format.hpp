@@ -172,6 +172,12 @@ public:
 	{
 		return "format";
 	}
+
+	virtual
+	bool isHidden() const
+	{
+		return false;
+	}
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0>
