@@ -102,6 +102,9 @@ RUN ln -s /usr/lib64/tc /usr/lib/tc
 EXPOSE 80
 EXPOSE 443
 
+ENV LC_ALL C.UTF-8 
+ENV LANG C.UTF-8  
+
 WORKDIR /villas
 
 FROM dev AS app

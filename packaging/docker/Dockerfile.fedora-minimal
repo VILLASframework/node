@@ -41,6 +41,9 @@ RUN dnf -y install \
 	fmt-devel \
 	libwebsockets-devel
 
+ENV LC_ALL C.UTF-8 
+ENV LANG C.UTF-8  
+
 FROM dev AS builder
 
 COPY . /villas/
