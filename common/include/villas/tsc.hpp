@@ -31,11 +31,6 @@
 #include <cinttypes>
 #include <x86intrin.h>
 
-#ifdef __APPLE__
-  #include <sys/types.h>
-  #include <sys/sysctl.h>
-#endif
-
 #include <villas/kernel/kernel.hpp>
 
 #ifndef bit_TSC
