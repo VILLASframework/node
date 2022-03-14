@@ -52,7 +52,8 @@ void _go_logger_log(_go_logger l, int level, char *msg)
 
 GoNode::GoNode(uintptr_t n) :
 	Node(),
-	node(n)
+	node(n),
+	formatter(nullptr)
 { }
 
 GoNode::~GoNode()
@@ -143,7 +144,7 @@ int GoNode::stop() {
 	if (ret)
 		return ret;
 
-	return ret;
+	return 0;
 }
 
 int GoNode::pause()
