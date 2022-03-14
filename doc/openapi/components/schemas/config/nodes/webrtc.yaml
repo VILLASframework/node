@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  properties:
+    format:
+      $ref: ../format_spec.yaml
+
+    session:
+      type: string
+      title: Session indentifier
+      description: A unique session identifier which must be shared between two nodes
+
+    server:
+      type: string
+      title: Signaling Server Address
+      description: Address to the websocket signaling server
+      default: wss://ws-signal.villas.k8s.eonerc.rwth-aachen.de
+
+    ice:
+      type: object
+      title: ICE configuration settings
+      properties: 
+        servers:
+          title: ICE Servers
+          description: A list of ICE servers used for connection establishment
+          type: array
+          items:
+            type: object
+            title: ICE Server
+            properties: 
+              urls:
+                type: array
+                items:
+                  type: string
+                  format: uri
+                  title: STUN/TURN URI
+                  description: |
+                    A valid Uniform Resource Identifier (URI) indentifying a STUN or TURN server. 
+
+                    See [RFC7064](https://datatracker.ietf.org/doc/html/rfc7064) and [RFC7065](https://datatracker.ietf.org/doc/html/rfc7065) for details.
+
+              password:
+                type: string
+                description: Password for used authentication against TURN servers.
+              username:
+                type: string
+                description: Username for used authentication against TURN servers.
+
+- $ref: ../node.yaml

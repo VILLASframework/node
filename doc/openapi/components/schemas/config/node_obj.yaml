@@ -46,3 +46,4 @@ discriminator:
     uldaq: nodes/_uldaq.yaml
     websocket: nodes/_websocket.yaml
     zeromq: nodes/_zeromq.yaml
+    webrtc: nodes/_webrtc.yaml
