@@ -1,4 +1,4 @@
-/** Go types for signal configuration.
+/** Common error types
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
@@ -20,18 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-package config
+package errors
 
-const (
-	SignalTypeFloat   = "float"
-	SignalTypeInteger = "integer"
-	SignalTypeBoolean = "boolean"
-	SignalTypeComplex = "complex"
+import (
+	"C"
+)
+import "fmt"
+
+var (
+	ErrEndOfFile = fmt.Errorf("end-of-file")
 )
 
-type Signal struct {
-	Name string  `json:"name,omitempty"`
-	Type string  `json:"type,omitempty"`
-	Unit string  `json:"unit,omitempty"`
-	Init float64 `json:"init,omitempty"`
+func ErrorToInt(e error) int {
+	if e == nil {
+		return 0
+	} else {
+		return -1
+	}
+}
+
+func IntToError(ret int) error {
+	if ret == 0 {
+		return nil
+	} else {
+		return fmt.Errorf("ret=%d", ret)
+	}
 }

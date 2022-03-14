@@ -1,4 +1,3 @@
-
 /** Node-type implemeted in Go language
  *
  * @file
