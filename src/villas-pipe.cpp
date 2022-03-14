@@ -216,9 +216,8 @@ public:
 				}
 
 				logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
-			}
-
-			formatter->print(stdout, smps, recv);
+			} else
+				formatter->print(stdout, smps, recv);
 
 			sample_decref_many(smps, allocated);
 
