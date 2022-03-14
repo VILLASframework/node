@@ -30,6 +30,7 @@ FORMAT_TYPES=$(villas node -C 2>/dev/null | jq -r '.formats | join(" ")')
 MISSING=0
 
 for NODE in ${NODE_TYPES}; do
+	NODE=${NODE/./-}
 	[ ${NODE} == "loopback_internal" ] && continue
 
 	if [ ! -f "${SRCDIR}/etc/examples/nodes/${NODE}.conf" ]; then

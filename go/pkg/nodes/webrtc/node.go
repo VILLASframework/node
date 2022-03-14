@@ -43,11 +43,20 @@ var (
 		WebRTC: webrtc.Configuration{
 			ICEServers: []webrtc.ICEServer{
 				{
-					// URLs: []string{"stun:stun.l.google.com:19302"},
+					URLs: []string{"stun:stun.l.google.com:19302"},
+				},
+				{
 					URLs: []string{
-						"stun:edgy.0l.de:3478",
-						"turn:edgy.0l.de:3478?transport=udp",
-						"turn:edgy.0l.de:3478?transport=tcp",
+						"stun:stun.0l.de",
+					},
+					CredentialType: webrtc.ICECredentialTypePassword,
+					Username:       "villas",
+					Credential:     "villas",
+				},
+				{
+					URLs: []string{
+						"turn:turn.0l.de?transport=udp",
+						"turn:turn.0l.de?transport=tcp",
 					},
 					CredentialType: webrtc.ICECredentialTypePassword,
 					Username:       "villas",
