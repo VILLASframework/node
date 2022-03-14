@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"git.rwth-aachen.de/acs/public/villas/node/go/pkg"
+	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/errors"
 	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/nodes"
 )
 
@@ -13,6 +14,8 @@ type Node struct {
 	nodes.BaseNode
 
 	ticker time.Ticker
+
+	lastSequence uint64
 
 	Config Config
 }
@@ -25,8 +28,9 @@ type Config struct {
 
 func NewNode() nodes.Node {
 	return &Node{
-		BaseNode: nodes.NewBaseNode(),
-		ticker:   *time.NewTicker(1 * time.Second),
+		BaseNode:     nodes.NewBaseNode(),
+		ticker:       *time.NewTicker(1 * time.Second),
+		lastSequence: 0,
 	}
 }
 
@@ -54,10 +58,16 @@ func (n *Node) Start() error {
 
 func (n *Node) Read() ([]byte, error) {
 	select {
-	case <-n.ticker.C:
-		return pkg.GenerateRandomSample().Bytes(), nil
 	case <-n.Stopped:
-		return nil, nil
+		return nil, errors.ErrEndOfFile
+
+	case <-n.ticker.C:
+		n.lastSequence++
+		smp := pkg.GenerateRandomSample()
+		smp.Sequence = n.lastSequence
+		smps := []pkg.Sample{smp}
+
+		return json.Marshal(smps)
 	}
 }
 

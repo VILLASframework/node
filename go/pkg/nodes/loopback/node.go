@@ -47,10 +47,11 @@ func (n *Node) Start() error {
 
 func (n *Node) Read() ([]byte, error) {
 	select {
-	case buf := <-n.channel:
-		return buf, nil
 	case <-n.Stopped:
 		return nil, errors.ErrEndOfFile
+
+	case buf := <-n.channel:
+		return buf, nil
 	}
 }
 
