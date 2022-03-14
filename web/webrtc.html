@@ -217,9 +217,13 @@
                             server: server,
 
                             ice: {
-                                urls: iceUrls,
-                                username: iceUsername,
-                                password: icePassword
+                                servers: [
+                                    {
+                                        urls: iceUrls,
+                                        username: iceUsername,
+                                        password: icePassword
+                                    }
+                                ]
                             }
                         },
                         siggen_1: {
@@ -489,7 +493,7 @@
                 <h4>Invocation</h4>
                 <p> Make sure <code>webrtc.conf</code> is in your current working directory and then run the following command:</p>
                 <pre><code>
-villas signal since -r 5 | villas pipe webrtc.conf webrtc_1
+villas signal sine -r 5 | villas pipe webrtc.conf webrtc_1
 </code></pre>
                 <h5>With Docker</h5>
                 You can also start VILLASnode via <a href="https://docs.docker.com/get-docker/">Docker</a> by running the following command before the commands in the previous section.
