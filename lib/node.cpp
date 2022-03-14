@@ -274,10 +274,14 @@ int Node::stop()
 {
 	int ret;
 
-	if (state != State::STOPPING && state != State::STARTED && state != State::CONNECTED && state != State::PENDING_CONNECT)
+	if (state != State::STOPPING &&
+	    state != State::STARTED &&
+	    state != State::CONNECTED &&
+	    state != State::PENDING_CONNECT)
 		return 0;
 
 	logger->info("Stopping node");
+	setState(State::STOPPING);
 
 	ret = in.stop();
 	if (ret)

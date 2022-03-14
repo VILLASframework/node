@@ -17,3 +17,4 @@ python/dist/
 *.pyc
 
 python/.eggs/
+go/lib/_obj/

@@ -61,6 +61,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     endif()
 endif()
 
+include(FetchContent)
 include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
@@ -107,6 +108,12 @@ endif()
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
 find_program(PROTOBUF_COMPILER NAMES protoc)
 find_program(GO NAMES go)
+
+# Optionally download Go toolchain
+option(DOWNLOAD_GO "Download Go toolchain" ON)
+if(NOT GO AND DOWNLOAD_GO)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/Go.cmake")
+endif()
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
@@ -220,6 +227,10 @@ GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 
 if(WITH_FPGA)
     add_subdirectory(fpga)
+endif()
+
+if(WITH_GO)
+    add_subdirectory(go)
 endif()
 
 add_subdirectory(common)

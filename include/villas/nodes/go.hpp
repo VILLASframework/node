@@ -31,11 +31,14 @@ namespace node {
 /* Forward declarations */
 struct Sample;
 class Format;
+class GoNodeFactory;
 
 class GoNode : public Node {
 
+	friend GoNodeFactory;
+
 protected:
-	void *node;
+	uintptr_t node; // runtime/cgo.Handle
 
 	std::string _details;
 
@@ -48,7 +51,7 @@ protected:
 	int _write(struct Sample * smps[], unsigned cnt);
 
 public:
-	GoNode(void *n);
+	GoNode(uintptr_t n);
 
 	virtual
 	~GoNode();
@@ -84,41 +87,47 @@ public:
 	int resume();
 
 	virtual
-	int restart()
-	{
-		assert(state == State::STARTED);
-
-		logger->info("Restarting node");
-
-		return GoNodeRestart(node);
-	}
+	int restart();
 
 	virtual
-	int reverse()
-	{
-		return GoNodeReverse(node);
-	}
+	int reverse();
 };
 
 class GoNodeFactory : public NodeFactory {
 
 protected:
-	std::string type;
+	std::string name;
+	std::string description;
+	int flags;
 
 public:
-	GoNodeFactory(char *t) :
+	GoNodeFactory(char *n, char *d, int f = 0) :
 		NodeFactory(),
-		type(t)
+		name(n),
+		description(d),
+		flags(f)
 	{ }
 
 	virtual
 	Node * make();
 
 	virtual
-	std::string getName() const;
+	std::string getName() const
+	{
+		return name;
+	}
 
 	virtual
-	std::string getDescription() const;
+	std::string getDescription() const
+	{
+		return description;
+	}
+
+	virtual
+	int getFlags() const
+	{
+		return flags;
+	}
 };
 
 class GoPluginRegistry : public plugin::SubRegistry {

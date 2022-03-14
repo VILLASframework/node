@@ -1,0 +1,85 @@
+package nodes
+
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"git.rwth-aachen.de/acs/public/villas/node/go/pkg"
+	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/nodes"
+)
+
+type Node struct {
+	nodes.BaseNode
+
+	ticker time.Ticker
+
+	Config Config
+}
+
+type Config struct {
+	nodes.NodeConfig
+
+	Value int `json:"value"`
+}
+
+func NewNode() nodes.Node {
+	return &Node{
+		BaseNode: nodes.NewBaseNode(),
+		ticker:   *time.NewTicker(1 * time.Second),
+	}
+}
+
+func (n *Node) Parse(c []byte) error {
+	return json.Unmarshal(c, &n.Config)
+}
+
+func (n *Node) Check() error {
+	return nil
+}
+
+func (n *Node) Prepare() error {
+	return nil
+}
+
+func (n *Node) Start() error {
+	n.Logger.Infof("hello from node")
+	n.Logger.Warnf("hello from node")
+	n.Logger.Errorf("hello from node")
+	n.Logger.Tracef("hello from node")
+	n.Logger.Criticalf("hello from node")
+
+	return n.BaseNode.Start()
+}
+
+func (n *Node) Read() ([]byte, error) {
+	select {
+	case <-n.ticker.C:
+		return pkg.GenerateRandomSample().Bytes(), nil
+	case <-n.Stopped:
+		return nil, nil
+	}
+}
+
+func (n *Node) Write(data []byte) error {
+	n.Logger.Infof("Data: %s", string(data))
+
+	return nil
+}
+
+func (n *Node) PollFDs() ([]int, error) {
+	return []int{}, nil
+}
+
+func (n *Node) NetemFDs() ([]int, error) {
+	return []int{}, nil
+}
+
+func (n *Node) Details() string {
+	return fmt.Sprintf("value=%d", n.Config.Value)
+}
+
+func init() {
+	// Do not forget to import the package in go/lib/main.go!
+	nodes.RegisterNodeType("go.example", "A example node implemented in Go", NewNode, nodes.NodeSupportsRead|nodes.NodeSupportsWrite|nodes.NodeHidden)
+}

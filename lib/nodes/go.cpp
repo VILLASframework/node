@@ -1,3 +1,4 @@
+
 /** Node-type implemeted in Go language
  *
  * @file
@@ -21,19 +22,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <iostream>
-#include <vector>
-
-extern "C" {
-	#include <libnodes-go.h>
-}
-
 #include <villas/nodes/go.hpp>
+#include <villas/plugin.hpp>
 #include <villas/format.hpp>
 
+extern "C" {
+	#include <libvillas-go.h>
+	#include <villas/nodes/go.h>
+}
+
+using namespace villas;
 using namespace villas::node;
 
-GoNode::GoNode(void *n) :
+void _go_register_node_factory(_go_plugin_list pl, char *name, char *desc, int flags)
+{
+	auto *plugins = (villas::plugin::List<> *) pl;
+	plugins->push_back(new villas::node::GoNodeFactory(name, desc, flags));
+}
+
+_go_logger * _go_logger_get(char *name)
+{
+	return (_go_logger *) villas::logging.get(name).get();
+}
+
+void _go_logger_log(_go_logger l, int level, char *msg)
+{
+	auto *log = (spdlog::logger *) l;
+	log->log((spdlog::level::level_enum) level, "{}", msg);
+}
+
+GoNode::GoNode(uintptr_t n) :
 	Node(),
 	node(n)
 { }
@@ -48,6 +66,8 @@ int GoNode::parse(json_t *json, const uuid_t sn_uuid)
 	int ret = Node::parse(json, sn_uuid);
 	if (ret)
 		return ret;
+
+	GoNodeSetLogger(node, _go_logger_log, logger.get());
 
 	json_t *json_format = nullptr;
 	json_error_t err;
@@ -116,13 +136,13 @@ int GoNode::stop() {
 	       state == State::PAUSED ||
 	       state == State::STOPPING);
 
-	ret = GoNodeStop(node);
+	ret = Node::stop();
 	if (ret)
 		return ret;
 
-	ret = Node::stop();
-	if (!ret)
-		state = State::STOPPED;
+	ret = GoNodeStop(node);
+	if (ret)
+		return ret;
 
 	return ret;
 }
@@ -195,17 +215,18 @@ std::vector<int> GoNode::getNetemFDs()
 int GoNode::_read(struct Sample * smps[], unsigned cnt)
 {
 	int ret;
+	char buf[4096];
 	size_t rbytes;
 
-	auto d = GoNodeRead(node);
+	auto d = GoNodeRead(node, buf, 4096);
 	if (d.r1)
 		return d.r1;
 
-	ret = formatter->sscan((const char*) d.r0.data, d.r0.len, &rbytes, smps, cnt);
-	if (ret < 0 || (size_t) d.r0.len != rbytes)
-		logger->warn("Received invalid packet: ret={}, bytes={}, rbytes={}", ret, d.r0.len, rbytes);
-
-	logger->info("Received {} bytes: {}", d.r0.len, (char *) d.r0.data);
+	ret = formatter->sscan(buf, d.r0, &rbytes, smps, cnt);
+	if (ret < 0 || (size_t) d.r0 != rbytes) {
+		logger->warn("Received invalid packet: ret={}, bytes={}, rbytes={}", ret, d.r0, rbytes);
+		return ret;
+	}
 
 	return ret;
 }
@@ -233,9 +254,24 @@ int GoNode::_write(struct Sample * smps[], unsigned cnt)
 	return cnt;
 }
 
+int GoNode::restart()
+{
+	assert(state == State::STARTED);
+
+	logger->info("Restarting node");
+
+	return GoNodeRestart(node);
+}
+
+int GoNode::reverse()
+{
+	return GoNodeReverse(node);
+}
+
+
 Node * GoNodeFactory::make()
 {
-	auto *nt = NewGoNode((char *) type.c_str());
+	auto nt = NewGoNode((char *) name.c_str());
 	if (!nt)
 		return nullptr;
 
@@ -243,17 +279,9 @@ Node * GoNodeFactory::make()
 
 	init(n);
 
+	GoNodeSetLogger(n->node, _go_logger_log, n->logger.get());
+
 	return n;
-}
-
-std::string GoNodeFactory::getName() const
-{
-	return type;
-}
-
-std::string GoNodeFactory::getDescription() const
-{
-	return "Go-based node-type";
 }
 
 GoPluginRegistry::GoPluginRegistry() {
@@ -267,15 +295,7 @@ villas::plugin::List<> GoPluginRegistry::lookup()
 {
 	plugin::List<> plugins;
 
-	auto nt = GoNodeTypes();
-	auto ntl = std::vector<char*>(nt.r1, nt.r1+nt.r0);
-
-	for (auto nt : ntl) {
-		plugins.push_back(new GoNodeFactory(nt));
-		free(nt);
-	}
-
-	free(nt.r1);
+	RegisterGoNodeTypes(_go_register_node_factory, &plugins);
 
 	return plugins;
 }
