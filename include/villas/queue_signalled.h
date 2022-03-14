@@ -37,8 +37,7 @@ enum class QueueSignalledMode {
 	POLLING,
 #ifdef HAS_EVENTFD
 	EVENTFD,
-#elif defined(__APPLE__)
-	PIPE,
+
 #endif
 };
 
@@ -60,8 +59,6 @@ struct CQueueSignalled {
 		} pthread;
 #ifdef __linux__
 		int eventfd;
-#elif defined(__APPLE__)
-		int pipe[2];
 #endif
 	};
 };

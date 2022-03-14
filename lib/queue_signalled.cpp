@@ -56,11 +56,6 @@ int villas::node::queue_signalled_init(struct CQueueSignalled *qs, size_t size, 
 			qs->mode = QueueSignalledMode::PTHREAD;
 #endif
 		}
-#elif defined(__APPLE__)
-		if (flags & (int) QueueSignalledFlags::PROCESS_SHARED)
-			qs->mode = QueueSignalledMode::PTHREAD;
-		else
-			qs->mode = QueueSignalledMode::PIPE;
 #else
 		qs->mode = QueueSignalledMode::PTHREAD;
 #endif
@@ -97,12 +92,6 @@ int villas::node::queue_signalled_init(struct CQueueSignalled *qs, size_t size, 
 		if (qs->eventfd < 0)
 			return -2;
 	}
-#elif defined(__APPLE__)
-	else if (qs->mode == QueueSignalledMode::PIPE) {
-		ret = pipe(qs->pipe);
-		if (ret < 0)
-			return -2;
-	}
 #endif
 	else
 		return -1;
@@ -128,12 +117,6 @@ int villas::node::queue_signalled_destroy(struct CQueueSignalled *qs)
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {
 		ret = close(qs->eventfd);
-		if (ret)
-			return ret;
-	}
-#elif defined(__APPLE__)
-	else if (qs->mode == QueueSignalledMode::PIPE) {
-		ret = close(qs->pipe[0]) + close(qs->pipe[1]);
 		if (ret)
 			return ret;
 	}
@@ -168,14 +151,6 @@ int villas::node::queue_signalled_push(struct CQueueSignalled *qs, void *ptr)
 		if (ret < 0)
 			return ret;
 	}
-#elif defined(__APPLE__)
-	else if (qs->mode == QueueSignalledMode::PIPE) {
-		int ret;
-		uint8_t incr = 1;
-		ret = write(qs->pipe[1], &incr, sizeof(incr));
-		if (ret < 0)
-			return ret;
-	}
 #endif
 	else
 		return -1;
@@ -204,14 +179,6 @@ int villas::node::queue_signalled_push_many(struct CQueueSignalled *qs, void *pt
 		int ret;
 		uint64_t incr = 1;
 		ret = write(qs->eventfd, &incr, sizeof(incr));
-		if (ret < 0)
-			return ret;
-	}
-#elif defined(__APPLE__)
-	else if (qs->mode == QueueSignalledMode::PIPE) {
-		int ret;
-		uint8_t incr = 1;
-		ret = write(qs->pipe[1], &incr, sizeof(incr));
 		if (ret < 0)
 			return ret;
 	}
@@ -246,14 +213,6 @@ int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr)
 				int ret;
 				uint64_t cntr;
 				ret = read(qs->eventfd, &cntr, sizeof(cntr));
-				if (ret < 0)
-					break;
-			}
-#elif defined(__APPLE__)
-			else if (qs->mode == QueueSignalledMode::PIPE) {
-				int ret;
-				uint8_t incr = 1;
-				ret = read(qs->pipe[0], &incr, sizeof(incr));
 				if (ret < 0)
 					break;
 			}
@@ -298,14 +257,6 @@ int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs, void *pt
 				if (ret < 0)
 					break;
 			}
-#elif defined(__APPLE__)
-			else if (qs->mode == QueueSignalledMode::PIPE) {
-				int ret;
-				uint8_t incr = 1;
-				ret = read(qs->pipe[0], &incr, sizeof(incr));
-				if (ret < 0)
-					break;
-			}
 #endif
 			else
 				break;
@@ -345,15 +296,6 @@ int villas::node::queue_signalled_close(struct CQueueSignalled *qs)
 		if (ret < 0)
 			return ret;
 	}
-#elif defined(__APPLE__)
-	else if (qs->mode == QueueSignalledMode::PIPE) {
-		int ret;
-		uint64_t incr = 1;
-
-		ret = write(qs->pipe[1], &incr, sizeof(incr));
-		if (ret < 0)
-			return ret;
-	}
 #endif
 	else
 		return -1;
@@ -367,9 +309,6 @@ int villas::node::queue_signalled_fd(struct CQueueSignalled *qs)
 #ifdef HAS_EVENTFD
 		case QueueSignalledMode::EVENTFD:
 			return qs->eventfd;
-#elif defined(__APPLE__)
-		case QueueSignalledMode::PIPE:
-			return qs->pipe[0];
 #endif
 		default: { }
 	}

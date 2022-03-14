@@ -142,10 +142,6 @@ int LoopbackNode::parse(json_t *json)
 			mode = QueueSignalledMode::PTHREAD;
 		else if (!strcmp(mode_str, "polling"))
 			mode = QueueSignalledMode::POLLING;
-#ifdef __APPLE__
-		else if (!strcmp(mode_str, "pipe"))
-			l->mode = QueueSignalledMode::PIPE;
-#endif /* __APPLE__ */
 		else
 			throw ConfigError(json, "node-config-node-loopback-mode", "Unknown mode '{}'", mode_str);
 	}

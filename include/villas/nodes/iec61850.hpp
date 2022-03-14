@@ -25,11 +25,7 @@
 
 #include <cstdint>
 
-#ifdef __APPLE__
-  #include <net/ethernet.h>
-#else
-  #include <netinet/ether.h>
-#endif
+#include <netinet/ether.h>
 
 #include <libiec61850/hal_ethernet.h>
 #include <libiec61850/goose_receiver.h>

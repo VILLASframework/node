@@ -181,14 +181,8 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json)
 	if (interface)
 		i->interface = strdup(interface);
 
-	if (dst_address) {
-#ifdef __APPLE__
-		struct ether_addr *ether = ether_aton(dst_address);
-		memcpy(&i->dst_address, ether, sizeof(struct ether_addr));
-#else
+	if (dst_address)
 		ether_aton_r(dst_address, &i->dst_address);
-#endif
-	}
 
 	if (json_out) {
 		i->out.enabled = true;

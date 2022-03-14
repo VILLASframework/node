@@ -58,11 +58,9 @@ Theory((size_t len, size_t align, struct memory::Type *mt), memory, aligned, .in
 
 	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
 
-#ifndef __APPLE__
 	if (mt == &memory::mmap_hugetlb) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE), "Memory at %p is not alligned to %#x byte bounary", ptr, HUGEPAGESIZE);
 	}
-#endif
 
 	ret = memory::free(ptr);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));

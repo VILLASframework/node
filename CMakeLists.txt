@@ -44,10 +44,6 @@ else()
     set(TOPLEVEL_PROJECT OFF)
 endif()
 
-if(APPLE)
-    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig")
-endif()
-
 # check compiler version
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # require at least gcc 8
@@ -69,10 +65,6 @@ include(GNUInstallDirs)
 include(GetVersion)
 include(FindSymbol)
 include(CMakeDependentOption)
-
-if(APPLE)
-    add_definitions(-D_DARWIN_C_SOURCE)
-endif()
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
 add_compile_options(-Wall -Wno-unknown-pragmas -Werror -fdiagnostics-color=auto)

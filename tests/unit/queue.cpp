@@ -92,9 +92,6 @@ static void * producer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-#ifdef __APPLE__
-  #define pthread_yield pthread_yield_np
-#endif
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
