@@ -153,6 +153,11 @@ add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
 
+# We need to link with -Bsymbolic in order to use link libvillas
+# with Go code (Cgo)
+# See also: https://stackoverflow.com/a/67299849
+target_link_options(villas PUBLIC "-Wl,-Bsymbolic")
+
 if(APPLE)
     target_link_libraries(villas PRIVATE -Wl,-all_load ${WHOLE_ARCHIVES} -Wl,-noall_load)
 else()

@@ -18,6 +18,7 @@ type Timestamps struct {
 }
 
 type Sample struct {
+	Flags      int        `json:"-"`
 	Timestamps Timestamps `json:"ts"`
 	Sequence   uint64     `json:"sequence"`
 	Data       []float64  `json:"data"`
@@ -42,4 +43,30 @@ func GenerateRandomSample() Sample {
 func (s Sample) Bytes() []byte {
 	b, _ := json.Marshal(s)
 	return b
+}
+
+func (s Sample) Equal(t Sample) bool {
+	if s.Flags != t.Flags {
+		return false
+	}
+
+	if s.Sequence != t.Sequence {
+		return false
+	}
+
+	if s.Timestamps != t.Timestamps {
+		return false
+	}
+
+	if len(s.Data) != len(t.Data) {
+		return false
+	}
+
+	for i, va := range s.Data {
+		if vb := t.Data[i]; va != vb {
+			return false
+		}
+	}
+
+	return true
 }
