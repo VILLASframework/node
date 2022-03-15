@@ -31,7 +31,7 @@ prepare:docker:
       --target dev .
   parallel:
     matrix:
-    - DISTRO: [ ubuntu, debian, centos, rocky ]
+    - DISTRO: [ ubuntu, debian, rocky ]
     - DISTRO: fedora
       DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
     - DISTRO: fedora
@@ -59,7 +59,7 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: [ fedora, fedora-minimal, debian, centos, rocky, ubuntu ]
+    - DISTRO: [ fedora, fedora-minimal, debian, rocky, ubuntu ]
     - DISTRO: fedora-minimal
       CMAKE_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
@@ -195,39 +195,20 @@ pkg:docker:
     TARGET: app
   parallel:
     matrix:
-      - DISTRO: alpine
-        PLATFORM: linux/amd64
-        ARCH: amd64
-        TRIPLET: x86_64-alpine-linux-musl
-      - DISTRO: alpine
-        PLATFORM: linux/arm64/v8
-        ARCH: arm64
-        TRIPLET: aarch64-alpine-linux-musl
-      - DISTRO: alpine
-        PLATFORM: linux/arm/v6
-        ARCH: armv6
-        TRIPLET: armv6-alpine-linux-musleabihf
-      - DISTRO: alpine
-        PLATFORM: linux/arm/v7
-        ARCH: armv7
-        TRIPLET: armv7-alpine-linux-musleabihf
       - DISTRO: debian
         PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET:  x86_64-linux-gnu
-        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
         PLATFORM: linux/arm/v7
         ARCH: armhf
         TRIPLET: arm-linux-gnueabihf
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
       - DISTRO: debian
         PLATFORM: linux/arm64/v8
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-        DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/debian
    
   needs: []
 
@@ -242,20 +223,30 @@ deploy:docker:
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
                            ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
-  - docker manifest push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
+  - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
   - docker
   needs:
-  - job: "pkg:docker: [alpine, linux/amd64, amd64, x86_64-alpine-linux-musl]"
-  - job: "pkg:docker: [alpine, linux/arm64/v8, arm64, aarch64-alpine-linux-musl]"
-  - job: "pkg:docker: [alpine, linux/arm/v6, armv6, armv6-alpine-linux-musleabihf]"
-  - job: "pkg:docker: [alpine, linux/arm/v7, armv7, armv7-alpine-linux-musleabihf]"
+  - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
+  - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
+  - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
+
+deploy:docker-dev:
+  stage: deploy
+  image: docker:20.10
+  variables:
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  before_script:
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+  tags:
+  - docker
+  needs:
   - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
 
 # Stage: latest
@@ -267,26 +258,44 @@ deploy:docker:
   before_script:
   - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker manifest create ${DOCKER_IMAGE}:latest
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-amd64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv6
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armv7
-  - docker manifest push ${DOCKER_IMAGE}:latest
-  - docker tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
+  - docker tag  ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
   - docker push ${DOCKER_IMAGE}/dev:latest
   tags:
   - docker
   needs:
   - job: deploy:docker
 
+.latest:docker-dev:latest: &deploy_latest_docker_dev
+  stage: latest
+  image: docker:20.10
+  before_script:
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+  - docker tag  ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
+  - docker push ${DOCKER_IMAGE}/dev:latest
+  tags:
+  - docker
+  needs:
+  - job: deploy:docker-dev
+
 latest:docker:
   <<: *deploy_latest_docker
   only:
   - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
+latest:docker-dev:
+  <<: *deploy_latest_docker_dev
+  only:
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+
 latest:docker:manual:
   <<: *deploy_latest_docker
+  when: manual
+  except:
+  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+
+latest:docker-dev:manual:
+  <<: *deploy_latest_docker_dev
   when: manual
   except:
   - "/^v\\d+(\\.\\d+)+$/" # Only on version tags

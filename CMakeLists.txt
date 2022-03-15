@@ -99,7 +99,7 @@ endif()
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
 find_program(PROTOBUF_COMPILER NAMES protoc)
-find_program(GO NAMES go)
+find_program(GO NAMES go PATHS /usr/local/go/bin)
 
 # Optionally download Go toolchain
 option(DOWNLOAD_GO "Download Go toolchain" ON)

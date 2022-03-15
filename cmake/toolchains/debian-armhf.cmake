@@ -13,3 +13,5 @@ set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Buildroot 
 
 set(CMAKE_LIBRARY_PATH "/usr/lib/${TRIPLET};/usr/local/lib/${TRIPLET}")
 
+set(GOARCH "arm")
+set(GOARM "7")

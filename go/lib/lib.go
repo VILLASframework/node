@@ -152,7 +152,7 @@ func GoNodeRead(p C.uintptr_t, buf *C.char, sz C.int) (C.int, C.int) {
 	}
 
 	// Create slice which is backed by buf
-	dst := (*[1 << 31]byte)(unsafe.Pointer(buf))[:sz]
+	dst := (*[1 << 30]byte)(unsafe.Pointer(buf))[:sz]
 	lsz := copy(dst, src)
 
 	return C.int(lsz), 0
