@@ -1,4 +1,3 @@
-
 /** Drop hook.
  *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>

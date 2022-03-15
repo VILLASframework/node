@@ -1,4 +1,3 @@
-
 /** Moving average filter.
  *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
