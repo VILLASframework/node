@@ -25,10 +25,9 @@ ARG DISTRO=debian
 ARG DEBIAN_VERSION=bullseye
 ARG ARCH=armhf
 ARG TRIPLET=arm-linux-gnueabihf
-ARG PLATFORM=linux/arm/v7
 ARG PREFIX=/app
 
-FROM ${DISTRO}:${DEBIAN_VERSION} AS dev
+FROM --platform=${BUILDPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS dev
 
 ARG DISTRO
 ARG ARCH
@@ -128,7 +127,7 @@ RUN cmake ${CMAKE_OPTS} .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install
 
-FROM --platform=${PLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS app
+FROM --platform=${TARGETPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS app
 
 ARG DISTRO
 ARG ARCH
