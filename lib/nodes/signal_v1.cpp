@@ -99,7 +99,7 @@ int villas::node::signal_node_init(NodeCompat *n)
 {
 	auto *s = n->getData<struct signal_node>();
 
-	new (&s->task) Task(CLOCK_MONOTONIC);
+	new (&s->task) Task();
 
 	s->rt = 1;
 	s->limit = -1;

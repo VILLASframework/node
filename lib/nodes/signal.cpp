@@ -205,7 +205,7 @@ Signal::Ptr SignalNodeSignal::toSignal(Signal::Ptr tpl) const
 
 SignalNode::SignalNode(const std::string &name) :
 	Node(name),
-	task(CLOCK_MONOTONIC),
+	task(),
 	rt(1),
 	rate(10),
 	monitor_missed(true),

@@ -453,6 +453,8 @@ int villas::node::file_init(NodeCompat *n)
 {
 	auto *f = n->getData<struct file>();
 
+	// We require a real-time clock here as we can sync against the
+	// timestamps in the file.
 	new (&f->task) Task(CLOCK_REALTIME);
 
 	/* Default values */

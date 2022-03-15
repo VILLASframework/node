@@ -401,7 +401,7 @@ int villas::node::ethercat_init(NodeCompat *n)
 	/* Placement new for C++ objects */
 	new (&w->send) std::atomic<struct Sample *>();
 	new (&w->thread) std::thread();
-	new (&w->task) Task(CLOCK_REALTIME);
+	new (&w->task) Task();
 
 	return 0;
 }

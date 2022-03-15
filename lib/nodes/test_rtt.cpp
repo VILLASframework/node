@@ -251,7 +251,7 @@ int villas::node::test_rtt_init(NodeCompat *n)
 {
 	auto *t = n->getData<struct test_rtt>();
 
-	new (&t->task) Task(CLOCK_MONOTONIC);
+	new (&t->task) Task();
 
 	t->formatter = nullptr;
 

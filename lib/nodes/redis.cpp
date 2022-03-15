@@ -286,7 +286,7 @@ int villas::node::redis_init(NodeCompat *n)
 	r->rate = 1.0;
 
 	new (&r->options) sw::redis::ConnectionOptions;
-	new (&r->task) Task(CLOCK_REALTIME);
+	new (&r->task) Task();
 	new (&r->key) std::string();
 
 	/* We need a timeout in order for RedisConnection::loop() to properly
