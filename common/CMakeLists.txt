@@ -1,7 +1,7 @@
 ## CMakeLists.txt
 #
 # @author Daniel Krebs <github@daniel-krebs.net>
-# @copyright 2014-2021, RWTH Institute for Automation of Complex Power Systems (ACS)
+# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLAScommon

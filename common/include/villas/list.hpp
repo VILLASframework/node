@@ -8,7 +8,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
 *
  * VILLAScommon
  *
