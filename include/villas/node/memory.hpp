@@ -33,6 +33,8 @@
 #include <villas/node/config.hpp>
 #include <villas/node/memory_type.hpp>
 
+#define MAX_SAFE_STACK (512 * 1024)
+
 namespace villas {
 namespace node {
 namespace memory {
@@ -72,6 +74,10 @@ struct Allocation {
 int init(int hugepages) __attribute__ ((warn_unused_result));
 
 int lock(size_t lock);
+
+void prefault_heap(size_t sz);
+
+void prefault_stack();
 
 /** Allocate \p len bytes memory of type \p m.
  *
