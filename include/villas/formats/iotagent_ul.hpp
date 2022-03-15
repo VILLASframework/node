@@ -1,7 +1,7 @@
 /** UltraLight format for FISMEP project.
  *
  * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
- * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode

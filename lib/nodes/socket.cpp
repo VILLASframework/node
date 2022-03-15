@@ -1,7 +1,7 @@
 /** The socket node-type for Layer 2, 3, 4 BSD-style sockets
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
