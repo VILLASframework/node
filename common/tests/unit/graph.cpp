@@ -1,6 +1,6 @@
 /** Graph unit test.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2014-2021, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
