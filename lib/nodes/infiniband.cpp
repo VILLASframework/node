@@ -706,7 +706,9 @@ int villas::node::ib_stop(NodeCompat *n)
 		n->logger->debug("Called rdma_disconnect");
 	}
 	else {
-		pthread_cancel(ib->conn.rdma_cm_event_thread);
+		ret = pthread_cancel(ib->conn.rdma_cm_event_thread);
+		if (ret)
+			throw RuntimeError("Failed to cancel thread");
 
 		n->logger->debug("Called pthread_cancel() on communication management thread.");
 	}

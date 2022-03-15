@@ -503,7 +503,10 @@ int villas::node::rtp_type_stop()
 	int ret;
 
 	/* Join worker thread */
-	pthread_kill(re_pthread, SIGUSR1);
+	ret = pthread_kill(re_pthread, SIGUSR1);
+	if (ret)
+		throw RuntimeError("Failed to kill thread");
+
 	ret = pthread_join(re_pthread, nullptr);
 	if (ret)
 		throw RuntimeError("Error joining rtp node type pthread");

@@ -69,19 +69,39 @@ int villas::node::queue_signalled_init(struct CQueueSignalled *qs, size_t size, 
 		pthread_condattr_t  cvattr;
 		pthread_mutexattr_t mtattr;
 
-		pthread_mutexattr_init(&mtattr);
-		pthread_condattr_init(&cvattr);
+		ret = pthread_mutexattr_init(&mtattr);
+		if (ret)
+			return ret;
+
+		ret = pthread_condattr_init(&cvattr);
+		if (ret)
+			return ret;
 
 		if (flags & (int) QueueSignalledFlags::PROCESS_SHARED) {
-			pthread_mutexattr_setpshared(&mtattr, PTHREAD_PROCESS_SHARED);
-			pthread_condattr_setpshared(&cvattr, PTHREAD_PROCESS_SHARED);
+			ret = pthread_mutexattr_setpshared(&mtattr, PTHREAD_PROCESS_SHARED);
+			if (ret)
+				return ret;
+
+			ret = pthread_condattr_setpshared(&cvattr, PTHREAD_PROCESS_SHARED);
+			if (ret)
+				return ret;
 		}
 
-		pthread_mutex_init(&qs->pthread.mutex, &mtattr);
-		pthread_cond_init(&qs->pthread.ready, &cvattr);
+		ret = pthread_mutex_init(&qs->pthread.mutex, &mtattr);
+		if (ret)
+			return ret;
 
-		pthread_mutexattr_destroy(&mtattr);
-		pthread_condattr_destroy(&cvattr);
+		ret = pthread_cond_init(&qs->pthread.ready, &cvattr);
+		if (ret)
+			return ret;
+
+		ret = pthread_mutexattr_destroy(&mtattr);
+		if (ret)
+			return ret;
+
+		ret = pthread_condattr_destroy(&cvattr);
+		if (ret)
+			return ret;
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
 		/* Nothing todo */
