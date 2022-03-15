@@ -10,12 +10,14 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <malloc.h>
 #include <unistd.h>
 
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.hpp>
 #include <villas/node/memory.hpp>
@@ -88,15 +90,19 @@ int villas::node::memory::lock(size_t sz) {
     logger->debug("Increased ressource limit of locked memory to {} bytes", sz);
   }
 
-#endif // __arm__
+#endif /* __arm__ */
+
+  // Disable usage of mmap() for malloc()
+  mallopt(M_MMAP_MAX, 0);
+  mallopt(M_TRIM_THRESHOLD, -1);
+
 #ifdef _POSIX_MEMLOCK
-  // Lock all current and future memory allocations
+  /* Lock all current and future memory allocations */
   ret = mlockall(MCL_CURRENT | MCL_FUTURE);
   if (ret)
     return -1;
-#endif // _POSIX_MEMLOCK
-
-#endif // __linux__
+#endif /* _POSIX_MEMLOCK */
+#endif /* __linux__ */
 
   return 0;
 }
@@ -150,6 +156,27 @@ int villas::node::memory::free(void *ptr) {
 
 struct Allocation *villas::node::memory::get_allocation(void *ptr) {
   return allocations[ptr];
+}
+
+void villas::node::memory::prefault_heap(size_t sz) {
+  auto pgsz = kernel::getPageSize();
+
+  char *dummy = new char[sz];
+  if (!dummy)
+    throw MemoryAllocationError();
+
+  for (size_t i = 0; i < sz; i += pgsz)
+    dummy[i] = 1;
+
+  delete[] dummy;
+}
+
+void villas::node::memory::prefault_stack() {
+  auto pgsz = kernel::getPageSize();
+
+  unsigned char dummy[MAX_SAFE_STACK] __attribute__((unused));
+  for (size_t i = 0; i < MAX_SAFE_STACK; i += pgsz)
+    dummy[i] = 1;
 }
 
 struct Type *villas::node::memory::default_type = nullptr;
