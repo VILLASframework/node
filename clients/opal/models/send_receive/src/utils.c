@@ -1,6 +1,6 @@
 /** Configure scheduler.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @author Mathieu Dubé-Dallaire
  * @copyright 2003, OPAL-RT Technologies inc
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC

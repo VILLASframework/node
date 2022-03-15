@@ -1,7 +1,7 @@
 /** Node type: rtp
  *
  * @file
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)

@@ -1,6 +1,6 @@
 /** The API ressource for start/stop/pause/resume nodes.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *

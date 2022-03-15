@@ -3,7 +3,7 @@
  * Based on Dmitry Vyukov#s Bounded MPMC queue:
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
- * @author Steffen Vogel <post@steffenvogel.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2017 Steffen Vogel
  * @license BSD 2-Clause License
  *

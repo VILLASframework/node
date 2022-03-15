@@ -2,7 +2,7 @@
  *
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @author Divya Laxetti <divya.laxetti@rwth-aachen.de>
  * @copyright 2018-2020, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
