@@ -163,7 +163,7 @@ fi
 # Build & Install Graphviz
 if ! ( pkg-config "libcgraph >= 2.30" && \
        pkg-config "libgvc >= 2.30" \
-     ) && [ -z "${SKIP_RDKAFKA}" ]; then
+     ) && [ -z "${SKIP_GRAPHVIZ}" ]; then
     git clone ${GIT_OPTS} --branch 2.49.0 https://gitlab.com/graphviz/graphviz.git
     mkdir -p graphviz/build
     pushd graphviz/build
@@ -178,7 +178,9 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
     git clone ${GIT_OPTS} --branch v1.2.0 https://github.com/mccdaq/uldaq
     pushd uldaq
     autoreconf -i
-    ./configure --enable-examples=no ${CONFIGURE_OPTS}
+    ./configure \
+        --disable-examples \
+        ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     else
@@ -196,7 +198,9 @@ if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
     git clone ${GIT_OPTS} --branch libnl3_5_0 https://github.com/thom311/libnl
     pushd libnl
     autoreconf -i
-    ./configure ${CONFIGURE_OPTS}
+    ./configure \
+        --enable-cli=no \
+        ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     fi
@@ -225,7 +229,9 @@ if ! pkg-config "comedilib >= 0.11.0" && \
     git clone ${GIT_OPTS} --branch r0_12_0 https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
     ./autogen.sh
-    ./configure ${CONFIGURE_OPTS}
+    ./configure \
+        --disable-docbook \
+        ${CONFIGURE_OPTS}
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     else
@@ -257,7 +263,12 @@ if ! pkg-config "nanomsg >= 1.0.0" && \
     git clone ${GIT_OPTS} --branch 1.1.5 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
-    cmake ${CMAKE_OPTS} ..
+    cmake -DNN_TESTS=OFF \
+          -DNN_TOOLS=OFF \
+          -DNN_STATIC_LIB=OFF \
+          -DNN_ENABLE_DOC=OFF \
+          -DNN_ENABLE_COVERAGE=OFF \
+          ${CMAKE_OPTS} ..
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     fi
@@ -299,7 +310,8 @@ if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
     # Somehow redis++ fails to find the hiredis include path on Debian multiarch builds
     REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I/usr/local/include"
 
-    cmake -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
+    cmake -DREDIS_PLUS_PLUS_BUILD_TEST=OFF \
+          -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
           -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
           ${REDISPP_CMAKE_OPTS} ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} ${TARGET} VERBOSE=1
@@ -313,7 +325,8 @@ if ! pkg-config "fmt >= 6.1.2" && \
     mkdir -p fmt/build
     pushd fmt/build
     cmake -DBUILD_SHARED_LIBS=1 \
-        ${CMAKE_OPTS} ..
+          -DFMT_TEST=OFF \
+          ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} ${TARGET}
     if [ -n "${PACKAGE}" ]; then
         cp fmt/build/*.rpm rpms
@@ -330,6 +343,7 @@ if ! pkg-config "spdlog >= 1.8.2" && \
     cmake -DSPDLOG_FMT_EXTERNAL=ON \
           -DSPDLOG_BUILD_BENCH=OFF \
           -DSPDLOG_BUILD_SHARED=ON \
+          -DSPDLOG_BUILD_TESTS=OFF \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} ${TARGET}
     if [ -n "${PACKAGE}" ]; then
