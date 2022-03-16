@@ -172,6 +172,13 @@ cmake_dependent_option(WITH_GO              "Build with Go"                     
 cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   ON "CGRAPH_FOUND; GVC_FOUND" OFF)
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)
 cmake_dependent_option(WITH_LUA             "Build with Lua"                                        ON "LUA_FOUND" OFF)
+cmake_dependent_option(WITH_OPENMP          "Build with support for OpenMP for parallel hooks"      ON "OPENMP_FOUND" OFF)
+cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_SRC             "Build executables"                                     ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_TESTS           "Run tests"                                             ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
+cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         ON "LIBWEBSOCKETS_FOUND" OFF)
+
 cmake_dependent_option(WITH_NODE_AMQP       "Build with amqp node-type"                             ON "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_CAN        "Build with can node-type"                              ON "" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI     "Build with comedi node-type"                           ON "COMEDILIB_FOUND" OFF)
@@ -201,12 +208,6 @@ cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"     
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            ON "LIBULDAQ_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND" OFF)
-cmake_dependent_option(WITH_OPENMP          "Build with support for OpenMP for parallel hooks"      ON "OPENMP_FOUND" OFF)
-cmake_dependent_option(WITH_PLUGINS         "Build plugins"                                         ON "TOPLEVEL_PROJECT" OFF)
-cmake_dependent_option(WITH_SRC             "Build executables"                                     ON "TOPLEVEL_PROJECT" OFF)
-cmake_dependent_option(WITH_TESTS           "Run tests"                                             ON "TOPLEVEL_PROJECT" OFF)
-cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"                                  ON "TOPLEVEL_PROJECT" OFF)
-cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         ON "LIBWEBSOCKETS_FOUND" OFF)
 
 # Add more build configurations
 include(cmake/config/Debug.cmake)
