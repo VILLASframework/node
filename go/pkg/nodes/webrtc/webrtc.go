@@ -25,6 +25,7 @@ package webrtc
 import (
 	"fmt"
 	"sync"
+	"path"
 
 	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/nodes"
 	"github.com/pion/webrtc/v3"
@@ -55,7 +56,7 @@ type PeerConnection struct {
 
 func NewPeerConnection(config *Config, logger nodes.Logger) (*PeerConnection, error) {
 	u := *config.Server
-	u.Path = "/" + config.Session
+	u.Path = path.Join(u.Path, config.Session)
 	sc, err := NewSignalingClient(&u, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create signaling client: %w", err)

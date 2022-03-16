@@ -38,7 +38,8 @@ var (
 	DefaultConfig = Config{
 		Server: &url.URL{
 			Scheme: "wss",
-			Host:   "wss://ws-signal.villas.k8s.eonerc.rwth-aachen.de",
+			Host:   "villas.k8s.eonerc.rwth-aachen.de",
+			Path:   "/ws/signaling",
 		},
 		WebRTC: webrtc.Configuration{
 			ICEServers: []webrtc.ICEServer{

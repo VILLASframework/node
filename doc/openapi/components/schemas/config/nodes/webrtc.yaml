@@ -16,7 +16,7 @@ allOf:
       type: string
       title: Signaling Server Address
       description: Address to the websocket signaling server
-      default: wss://ws-signal.villas.k8s.eonerc.rwth-aachen.de
+      default: wss://villas.k8s.eonerc.rwth-aachen.de/ws/signaling
 
     ice:
       type: object
