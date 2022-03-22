@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- $ref: common.yaml
+- $ref: multi.yaml
+- type: object
+  properties: 
+    precision:
+      type: number
+      default: 0.0
+      example: 100.5
+      description: The precision to which the singal should be rounded
