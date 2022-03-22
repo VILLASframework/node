@@ -134,6 +134,10 @@ protected:
 	Dumper phasorFreq;
 
 	double angleUnitFactor;
+	double phaseOffset;
+	double frequencyOffset;
+	double amplitudeOffset;
+	double rocofOffset;
 
 public:
 	PmuDftHook(Path *p, Node *n, int fl, int prio, bool en = true) :
@@ -181,7 +185,11 @@ public:
 		phasorPhase(dumperPrefix + "phasorPhase"),
 		phasorAmplitude(dumperPrefix + "phasorAmplitude"),
 		phasorFreq(dumperPrefix + "phasorFreq"),
-		angleUnitFactor(1)
+		angleUnitFactor(1),
+		phaseOffset(0.0),
+		frequencyOffset(0.0),
+		amplitudeOffset(0.0),
+		rocofOffset(0.0)
 	{ }
 
 	virtual void prepare()
@@ -285,7 +293,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b, s?: s}",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -299,7 +307,11 @@ public:
 			"pps_index", &ppsIndex,
 			"angle_unit", &angleUnitC,
 			"add_channel_name", &channelNameEnable,
-			"timestamp", &timeAlignC
+			"timestamp", &timeAlignC,
+			"phase_offset", &phaseOffset,
+			"amplitude_offset", &amplitudeOffset,
+			"frequency_offset", &frequencyOffset,
+			"rocof_offset", &rocofOffset
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
@@ -446,10 +458,10 @@ public:
 
 				if (windowSize < smpMemPos) {
 
-					smp->data[i * 4 + 0].f = currentResult.frequency; /* Frequency */
-					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)); /* Amplitude */
-					smp->data[i * 4 + 2].f = currentResult.phase; /* Phase */
-					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult[i].frequency) * (double)rate; /* ROCOF */;
+					smp->data[i * 4 + 0].f = currentResult.frequency + frequencyOffset; /* Frequency */
+					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)) + amplitudeOffset; /* Amplitude */
+					smp->data[i * 4 + 2].f = currentResult.phase + phaseOffset; /* Phase */
+					smp->data[i * 4 + 3].f = ((currentResult.frequency - lastResult[i].frequency) * (double)rate) + rocofOffset; /* ROCOF */;
 					lastResult[i] = currentResult;
 				}
 			}
