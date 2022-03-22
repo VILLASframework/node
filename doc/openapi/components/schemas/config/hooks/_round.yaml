@@ -1,0 +1,3 @@
+allOf:
+- $ref: common.yaml
+- $ref: round.yaml

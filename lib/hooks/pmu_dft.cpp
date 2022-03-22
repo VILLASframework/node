@@ -107,7 +107,6 @@ protected:
 	unsigned windowSize;
 	unsigned windowMultiplier;	/**< Multiplyer for the window to achieve frequency resolution */
 	unsigned freqCount;		    /**< Number of requency bins that are calculated */
-	bool sync;
 	bool channelNameEnable;    /**< Rename the output values with channel name or only descriptive name */
 
 	uint64_t smpMemPos;
@@ -166,7 +165,6 @@ public:
 		windowSize(0),
 		windowMultiplier(0),
 		freqCount(0),
-		sync(0),
 		channelNameEnable(1),
 		smpMemPos(0),
 		lastSequence(0),
@@ -293,7 +291,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -303,11 +301,10 @@ public:
 			"window_type", &windowTypeC,
 			"padding_type", &paddingTypeC,
 			"frequency_estimate_type", &freqEstimateTypeC,
-			"sync", &sync,
 			"pps_index", &ppsIndex,
 			"angle_unit", &angleUnitC,
 			"add_channel_name", &channelNameEnable,
-			"timestamp", &timeAlignC,
+			"timestamp_align", &timeAlignC,
 			"phase_offset", &phaseOffset,
 			"amplitude_offset", &amplitudeOffset,
 			"frequency_offset", &frequencyOffset,
@@ -317,7 +314,7 @@ public:
 			throw ConfigError(json, err, "node-config-hook-dft");
 
 		windowSize = sampleRate * windowSizeFactor / (double) rate;
-		logger->info("Set windows size to {} samples which fits {} / rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
+		logger->info("Set windows size to {} samples which fits {} times the rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
 
 		if (!windowTypeC)
 			logger->info("No Window type given, assume no windowing");
@@ -399,13 +396,11 @@ public:
 		smpMemPos++;
 
 		bool run = false;
-		if (sync) {
-			double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
+		double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
 
-			if (smpNsec > nextCalc) {
-				run = true;
-				nextCalc = (smp->ts.origin.tv_sec + (((calcCount % rate) + 1) / (double) rate)) * 1e9;
-			}
+		if (smpNsec > nextCalc) {
+			run = true;
+			nextCalc = (smp->ts.origin.tv_sec + (((calcCount % rate) + 1) / (double) rate)) * 1e9;
 		}
 
 		if (run) {
