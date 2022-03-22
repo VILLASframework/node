@@ -39,6 +39,7 @@ set(HOOK_SRC
     print.cpp
     restart.cpp
     rms.cpp
+    round.cpp
     scale.cpp
     shift_seq.cpp
     shift_ts.cpp
