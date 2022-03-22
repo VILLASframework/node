@@ -31,6 +31,7 @@ class DecimateHook : public LimitHook {
 
 protected:
 	int ratio;
+	bool renumber;
 	unsigned counter;
 
 public:

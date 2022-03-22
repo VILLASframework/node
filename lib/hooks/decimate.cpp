@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <villas/hooks/decimate.hpp>
+#include <villas/sample.hpp>
 
 namespace villas {
 namespace node {
@@ -43,8 +44,9 @@ void DecimateHook::parse(json_t *json)
 
 	Hook::parse(json);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: i }",
-		"ratio", &ratio
+	ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: b }",
+		"ratio", &ratio,
+		"renumber", &renumber
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-hook-decimate");
@@ -55,6 +57,9 @@ void DecimateHook::parse(json_t *json)
 Hook::Reason DecimateHook::process(struct Sample *smp)
 {
 	assert(state == State::STARTED);
+
+	if (renumber)
+		smp->sequence /= ratio;
 
 	if (ratio && counter++ % ratio != 0)
 		return Hook::Reason::SKIP_SAMPLE;
