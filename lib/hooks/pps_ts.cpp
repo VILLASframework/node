@@ -55,6 +55,7 @@ protected:
 	uintmax_t cntSmpsTotal;
 	unsigned horizonCompensation;
 	unsigned horizonEstimation;
+	unsigned currentSecond;
 	std::vector<uintmax_t> filterWindow;
 
 public:
@@ -75,6 +76,7 @@ public:
 		cntSmpsTotal(0),
 		horizonCompensation(10),
 		horizonEstimation(10),
+		currentSecond(0),
 		filterWindow(horizonEstimation + 1, 0)
 	{ }
 
@@ -101,6 +103,7 @@ public:
 			throw ConfigError(json, err, "node-config-hook-pps_ts");
 
 		period = 1.0 / fSmps;
+		currentSecond = time(nullptr);
 
 		if (mode_str) {
 			if (!strcmp(mode_str, "simple"))
@@ -138,11 +141,12 @@ public:
 		/* Detect Edge */
 		bool isEdge = lastValue < threshold && value > threshold;
 		if (isEdge) {
-			tsVirt.tv_sec = time(nullptr);
+			tsVirt.tv_sec = currentSecond + 1;
 			tsVirt.tv_nsec = 0;
 			period = 1.0 / cntSmps;
 			cntSmps = 0;
 			cntEdges++;
+			currentSecond = 0;
 		} else {
 			struct timespec tsPeriod = time_from_double(period);
 			tsVirt = time_add(&tsVirt, &tsPeriod);
@@ -150,6 +154,9 @@ public:
 
 		lastValue = value;
 		cntSmps++;
+
+		if (!currentSecond && tsVirt.tv_nsec > 0.5e9)//take the second somewere in the center of the last second to reduce impact of system clock error
+			currentSecond = time(nullptr);
 
 		if (cntEdges < 5)
 			return Hook::Reason::SKIP_SAMPLE;
