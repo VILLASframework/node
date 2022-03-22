@@ -57,9 +57,21 @@ protected:
 		QUADRATIC
 	};
 
+	enum class TimeAlign {
+		LEFT,
+		CENTER,
+		RIGHT,
+	};
+
 	struct Point {
 		double x;
 		double y;
+	};
+
+	struct DftEstimate {
+		double amplitude;
+		double frequency;
+		double phase;
 	};
 
 	struct Phasor {
@@ -72,8 +84,10 @@ protected:
 	enum WindowType windowType;
 	enum PaddingType paddingType;
 	enum FreqEstimationType freqEstType;
+	enum TimeAlign timeAlignType;
 
-	std::vector<std::vector<double>> smpMemory;
+	std::vector<std::vector<double>> smpMemoryData;
+	std::vector<timespec> smpMemoryTs;
 #ifdef DFT_MEM_DUMP
 	std::vector<double> ppsMemory;
 #endif
@@ -105,7 +119,7 @@ protected:
 	struct timespec lastCalc;
 	double nextCalc;
 
-	Phasor lastResult;
+	std::vector<Phasor> lastResult;
 
 	std::string dumperPrefix;
 	bool dumperEnable;
@@ -127,7 +141,9 @@ public:
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
 		freqEstType(FreqEstimationType::NONE),
-		smpMemory(),
+		timeAlignType(TimeAlign::CENTER),
+		smpMemoryData(),
+		smpMemoryTs(),
 #ifdef DFT_MEM_DUMP
 		ppsMemory(),
 #endif
@@ -153,7 +169,7 @@ public:
 		windowCorrectionFactor(0),
 		lastCalc({0, 0}),
 		nextCalc(0.0),
-		lastResult({0,0,0,0}),
+		lastResult(),
 		dumperPrefix("/tmp/plot/"),
 		dumperEnable(false),
 #ifdef DFT_MEM_DUMP
@@ -201,9 +217,21 @@ public:
 		}
 
 		/* Initialize sample memory */
-		smpMemory.clear();
-		for (unsigned i = 0; i < signalIndices.size(); i++)
-			smpMemory.emplace_back(windowSize, 0.0);
+		smpMemoryData.clear();
+		for (unsigned i = 0; i < signalIndices.size(); i++) {
+			smpMemoryData.emplace_back(windowSize, 0.0);
+		}
+
+		smpMemoryTs.clear();
+		for (unsigned i = 0; i < windowSize; i++) {
+			smpMemoryTs.push_back({0});
+		}
+
+		lastResult.clear();
+		for (unsigned i = 0; i < windowSize; i++) {
+			lastResult.push_back({0,0,0,0});
+		}
+		
 
 #ifdef DFT_MEM_DUMP
 		/* Initialize temporary ppsMemory */
@@ -249,6 +277,7 @@ public:
 		const char *windowTypeC = nullptr;
 		const char *freqEstimateTypeC = nullptr;
 		const char *angleUnitC = nullptr;
+		const char *timeAlignC = nullptr;
 
 		json_error_t err;
 
@@ -256,7 +285,7 @@ public:
 
 		Hook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b}",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: b, s?: i, s?: s, s?: b, s?: s}",
 			"sample_rate", &sampleRate,
 			"start_freqency", &startFrequency,
 			"end_freqency", &endFreqency,
@@ -269,13 +298,14 @@ public:
 			"sync", &sync,
 			"pps_index", &ppsIndex,
 			"angle_unit", &angleUnitC,
-			"add_channel_name", &channelNameEnable
+			"add_channel_name", &channelNameEnable,
+			"timestamp", &timeAlignC
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-dft");
 
 		windowSize = sampleRate * windowSizeFactor / (double) rate;
-		logger->debug("Set windows size to {} samples which fits {} / rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
+		logger->info("Set windows size to {} samples which fits {} / rate {}s", windowSize, windowSizeFactor, 1.0 / rate);
 
 		if (!windowTypeC)
 			logger->info("No Window type given, assume no windowing");
@@ -287,6 +317,17 @@ public:
 			windowType = WindowType::HANN;
 		else
 			throw ConfigError(json, "node-config-hook-dft-window-type", "Invalid window type: {}", windowTypeC);
+
+		if (!timeAlignC)
+			logger->info("No timestamp alignment defined. Assume alignment center");
+		else if (strcmp(timeAlignC, "left") == 0)
+			timeAlignType = TimeAlign::LEFT;
+		else if (strcmp(timeAlignC, "center") == 0)
+			timeAlignType = TimeAlign::CENTER;
+		else if (strcmp(timeAlignC, "right") == 0)
+			timeAlignType = TimeAlign::RIGHT;
+		else
+			throw ConfigError(json, "node-config-hook-dft-timestamp-alignment", "Timestamp alignment {} not recognized", timeAlignC);
 
 		if (!angleUnitC)
 			logger->info("No angle type given, assume rad");
@@ -335,8 +376,10 @@ public:
 
 		/* Update sample memory */
 		unsigned i = 0;
-		for (auto index : signalIndices)
-			smpMemory[i++][smpMemPos % windowSize] = smp->data[index].f;
+		for (auto index : signalIndices) {
+			smpMemoryData[i++][smpMemPos % windowSize] = smp->data[index].f;
+		}
+		smpMemoryTs[smpMemPos % windowSize] = smp->ts.origin;
 
 #ifdef DFT_MEM_DUMP
 		ppsMemory[smpMemPos % windowSize] = smp->data[ppsIndex].f;
@@ -370,7 +413,7 @@ public:
 			for (unsigned i = 0; i < signalIndices.size(); i++) {
 				Phasor currentResult = {0,0,0,0};
 
-				calculateDft(PaddingType::ZERO, smpMemory[i], results[i], smpMemPos);
+				calculateDft(PaddingType::ZERO, smpMemoryData[i], results[i], smpMemPos);
 
 				unsigned maxPos = 0;
 
@@ -394,9 +437,10 @@ public:
 						Point b = { absFrequencies[maxPos + 0], absResults[i][maxPos + 0] };
 						Point c = { absFrequencies[maxPos + 1], absResults[i][maxPos + 1] };
 
-						Point estimate = quadraticEstimation(a, b, c, maxPos);
-						currentResult.frequency = estimate.x;
-						currentResult.amplitude = estimate.y;
+						DftEstimate estimate = quadraticEstimation(a, b, c, maxPos, smpMemoryTs[smpMemPos & windowSize]);
+						currentResult.frequency = estimate.frequency;
+						currentResult.amplitude = estimate.amplitude;
+						currentResult.phase = atan2(results[i][maxPos].imag(), results[i][maxPos].real()) * angleUnitFactor;
 					}
 				}
 
@@ -404,12 +448,10 @@ public:
 
 					smp->data[i * 4 + 0].f = currentResult.frequency; /* Frequency */
 					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)); /* Amplitude */
-					smp->data[i * 4 + 2].f = atan2(results[i][maxPos].imag(), results[i][maxPos].real()) * angleUnitFactor; /* Phase */
-					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult.frequency) / (double)rate; /* RoCof */
-
+					smp->data[i * 4 + 2].f = currentResult.phase; /* Phase */
+					smp->data[i * 4 + 3].f = (currentResult.frequency - lastResult[i].frequency) * (double)rate; /* ROCOF */;
+					lastResult[i] = currentResult;
 				}
-
-				lastResult = currentResult;
 			}
 
 			// The following is a debug output and currently only for channel 0
@@ -421,6 +463,18 @@ public:
 			}
 
 			smp->length = windowSize < smpMemPos ? signalIndices.size() * 4 : 0;
+
+			unsigned tsPos = 0;
+			if (timeAlignType == TimeAlign::LEFT)
+				tsPos = (smpMemPos % windowSize);
+			else if (timeAlignType == TimeAlign::RIGHT)
+				tsPos = ((smpMemPos % windowSize) > 0)? (smpMemPos % windowSize) - 1 : windowSize;
+			else if (timeAlignType == TimeAlign::CENTER) {
+				tsPos = ((smpMemPos % windowSize) > (windowSize / 2))?
+					(smpMemPos % windowSize) - (windowSize / 2) : 
+					(smpMemPos % windowSize) + (windowSize / 2);
+			}
+			smp->ts.origin = smpMemoryTs[tsPos];
 
 			calcCount++;
 		}
@@ -534,24 +588,25 @@ public:
 	 * This function is calculating the mximum based on a quadratic interpolation
 	 *
 	 * This function is based on the following paper:
-	 * https://mgasior.web.cern.ch/pap/biw2004.pdf
+	 * https://mgasior.web.cern.ch/pap/biw2004.pdf (equation 10) (freq estimation)
 	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
-	 * 	 *
-	 * In particular equation 10
 	 */
-	Point quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin)
+	DftEstimate quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, timespec startTime)
 	{
 		// Frequency estimation
 		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
-		double y_Fmax = startFrequency + maxBinEst * frequencyResolution; // convert bin to frequency
+		double f_est = startFrequency + maxBinEst * frequencyResolution; // convert bin to frequency
 
 		// Amplitude estimation
 		double f = (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
 		double g = (pow(a.x, 2) * (b.y - c.y) + pow(b.x, 2) * (c.y - a.y) + pow(c.x, 2) * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
 		double h = (pow(a.x, 2) * (b.x * c.y - c.x * b.y) + a.x * (pow(c.x, 2) * b.y - pow(b.x,2) * c.y)+ b.x * c.x * a.y * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-		double i = f * pow(y_Fmax,2) + g * y_Fmax + h;
+		double a_est = f * pow(f_est,2) + g * f_est + h;
 
-		return { y_Fmax, i };
+		//Phase estimation
+        double phase_est = 0.0;//not implemented yet
+
+		return { a_est, f_est , phase_est};
 	}
 };
 
