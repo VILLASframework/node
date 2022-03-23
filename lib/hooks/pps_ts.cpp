@@ -92,7 +92,7 @@ public:
 		const char *mode_str = nullptr;
 
 		double fSmps = 0;
-		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: f, s: F, s?: i, s?: i }",
+		ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: f, s?: F, s?: i, s?: i }",
 			"mode", &mode_str,
 			"threshold", &threshold,
 			"expected_smp_rate", &fSmps,
