@@ -105,5 +105,4 @@ allOf:
       type: number
       default: 0.0
       example: 1.0
-      description: An offset added to the calculated RoCoF.
-      description: "The offset for a calculated rocof. This setting does not really make sense but is available for completeness reasons"
+      description: An offset added to the calculated RoCoF. This setting does not really make sense but is available for completeness reasons"
