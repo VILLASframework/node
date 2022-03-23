@@ -4,7 +4,7 @@
 type: object
 properties: 
 
-  real_precission:
+  real_precision:
     type: integer
     default: 17
     description: |

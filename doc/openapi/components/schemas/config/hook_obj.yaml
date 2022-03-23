@@ -30,6 +30,7 @@ discriminator:
     print: hooks/_print.yaml
     restart: hooks/_restart.yaml
     rms: hooks/_rms.yaml
+    round: hooks/_round.yaml
     scale: hooks/_scale.yaml
     shift_seq: hooks/_shift_seq.yaml
     shift_ts: hooks/_shift_ts.yaml

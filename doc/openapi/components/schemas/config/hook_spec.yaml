@@ -25,6 +25,7 @@ oneOf:
   - print
   - restart
   - rms
+  - round
   - scale
   - shift_seq
   - shift_ts
