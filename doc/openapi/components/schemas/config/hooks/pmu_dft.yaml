@@ -15,52 +15,58 @@ allOf:
     sample_rate:
       type: integer
       default: 0
+      min: 0
       example: 10000
-      description: The precision to which the singal should be rounded
+      description: The sampling rate of the input signal.
     start_freqency:
       type: number
+      min: 0
       example: 49.7
-      description: "The first frequency bin"
+      description: The lowest frequency bin.
     end_freqency:
       type: number
       example: 50.3
-      description: "The last frequency bin"
+      min: 0
+      description: The highest frequency bin.
     frequency_resolution:
       type: number
       example: 0.1
-      description: "The frequency resolution of the dft"
+      min: 0
+      description: The frequency resolution of the DFT.
     dft_rate:
       type: integer
       example: 1
-      description: "Phasor calculations per second. Cannot be lower then 1 phasor/second"
+      min: 1
+      description: The number of phasor calculations performed per second.
     window_size_factor:
       type: integer
       default: 1
-      description: "A factor that increases the automatically calculated window by this amount"
+      description: A factor that increases the automatically determined window size by a multiplicative factor.
     window_type:
       type: string
       enum:
       - flattop
       - hamming
       - hann
+      - none
       default: none
-      description: "The type of windowing"
+      description: The window type.
     padding_type:
       type: string
       enum:
       - zero
       - signal_repeat
       default: none
-      description: "The padding type"
+      description: The padding type.
     frequency_estimate_type:
       type: string
       enum:
       - quadratic
       default: none
-      description: "The estimation type"
+      description: The frequency estimation type.
     pps_index:
       type: integer
-      description: "The index of the PPS singal. This is only needed if dumper is used"
+      description: The signal index of the PPS singal. This is only needed if data dumper is active.
       default: 0
     angle_unit:
       type: string
@@ -68,35 +74,36 @@ allOf:
       - rad
       - degree
       default: rad
-      description: "The representation of the angle"
+      description: The unit of the phase angle.
     add_channel_name:
       type: boolean
       default: false
-      description: "Adds the name of the channel to the phasor property name e.g amplitude_ch1"
+      description: Adds the name of the channel as a suffix to the signal name e.g `amplitude_ch1`.
     timestamp_align:
       enum:
       - left
       - center
       - right
       default: center
-      description: "The timestamp in the window that is used for timestamping the phasor"
+      description: The timestamp aligment in respect to the the window.
     phase_offset:
       type: number
       default: 0.0
       example: 10.0
-      description: "The offset for a calculated phase"
+      description: An offset added to a calculated phase.
     amplitude_offset:
       type: number
       default: 0.0
-      example: 0.2
-      description: "The offset for a calculated amplitude"
+      example: 10.0
+      description: An offset added to the calculated amplitude.
     frequency_offset:
       type: number
       default: 0.0
       exmaple: 0.2
-      description: "The offset for a calculated frequency"
+      description: An offset added to the calculated frequency.
     rocof_offset:
       type: number
       default: 0.0
-      example: 0.0
+      example: 1.0
+      description: An offset added to the calculated RoCoF.
       description: "The offset for a calculated rocof. This setting does not really make sense but is available for completeness reasons"

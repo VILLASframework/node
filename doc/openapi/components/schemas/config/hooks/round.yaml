@@ -7,7 +7,7 @@ allOf:
 - type: object
   properties: 
     precision:
-      type: number
-      default: 0.0
-      example: 100.5
-      description: The precision to which the singal should be rounded
+      type: integer
+      default: 0
+      example: 4
+      description: The number of decimal digits to which the singal is rounded.

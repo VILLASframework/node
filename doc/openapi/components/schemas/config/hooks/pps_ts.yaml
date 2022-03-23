@@ -14,14 +14,14 @@ allOf:
       - simple
       - horizon
       default: simple
-      description: "The sync mode. It is not recommended to use horizon since it is not fully tested"
+      description: "The synchronization mode. The `horizon` mode is currently no recommended to use as it is not fully tested."
     threshold:
       type: number
       default: 1.5
-      description: "The level of the pps signal to trigger on."
+      description: "The signal level threshold of the PPS signal which is used to detect an edge."
     expected_smp_rate:
       type: integer
-      description: "The expected sampling rate. Only important for a faster initialization"
+      description: "The expected sampling rate of the input signal. Only important for a faster initialization."
     horizon_estimation:
       type: integer
       default: 10
