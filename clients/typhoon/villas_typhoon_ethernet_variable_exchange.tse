@@ -1,0 +1,445 @@
+version = 4.2
+
+//
+// Saved by sw version: 2022.1 SP1
+// Save timestamp: 24-Mar-2022 @ 04:26:31 PM
+//
+
+model "villas_typhoon" {
+    configuration {
+        hil_device = "HIL604"
+        hil_configuration_id = 1
+        simulation_method = exact
+        simulation_time_step = auto
+        simulation_discret_scaling = 1.0
+        dsp_timer_periods = 100e-6, 50e-3
+        ss_calc_method = "systematic elimination"
+        enb_pole_shift = True
+        enb_gds_oversampling = True
+        show_modes = False
+        device_ao_limit_enable = False
+        reset_analog_outputs_on_sim_stop = True
+        reset_digital_outputs_on_sim_stop = True
+        vhil_adio_loopback = False
+        cpl_stb = False
+        enb_dep_sw_detect = False
+        code_section = "internal memory"
+        data_section = "internal memory"
+        sys_sp_rate_1 = 0.0001
+        sys_sp_rate_2 = 0.05
+        sys_real_type_precision = "default"
+        user_real_type_precision = "default"
+        sys_cpu_optimization = "high"
+        user_cpu_optimization = "high"
+        user_cpu_part_option = "default"
+        matrix_based_reduction = True
+        cpl_dynamics_analysis = False
+        export_ss_to_pickle = False
+        ground_scope_core = False
+        cce_platform = "generic"
+        cce_use_relative_names = False
+        cce_type_mapping_real = "double"
+        cce_type_mapping_uint = "unsigned int"
+        cce_type_mapping_int = "int"
+        cce_directory = ""
+        cce_custom_type_int = ""
+        cce_custom_type_uint = ""
+        cce_custom_type_real = ""
+        tunable_params = "component defined"
+        sp_compiler_type = "C compiler"
+        sig_stim = "off"
+        export_resource_list = ""
+        export_dependency_list = ""
+        export_out_file = ""
+        export_lock_top_level = True
+        export_encrypt_library = True
+        export_encrypt_resources = True
+    }
+
+    component Subsystem Root {
+        component eth_ve_setup "ETH VE Setup" {
+            eth_port0 = "2"
+            eth_port1 = "2"
+            eth_port10 = "2"
+            eth_port11 = "2"
+            eth_port12 = "2"
+            eth_port13 = "2"
+            eth_port14 = "2"
+            eth_port15 = "2"
+            eth_port2 = "2"
+            eth_port3 = "2"
+            eth_port4 = "2"
+            eth_port5 = "2"
+            eth_port6 = "2"
+            eth_port7 = "2"
+            eth_port8 = "2"
+            eth_port9 = "2"
+            ethernet_port_per_device = "{\'HIL100\': {}, \'HIL104\': {}, \'HIL402\': {}, \'HIL404\': {}, \'HIL602+\': {}, \'HIL603\': {}, \'HIL604\': {\'0\': \'2\', \'1\': \'2\', \'2\': \'2\', \'3\': \'2\', \'4\': \'2\', \'5\': \'2\', \'6\': \'2\', \'7\': \'2\', \'8\': \'2\', \'9\': \'2\', \'10\': \'2\', \'11\': \'2\', \'12\': \'2\', \'13\': \'2\', \'14\': \'2\', \'15\': \'2\'}, \'HIL606\': {}, \'VHIL+\': {}}"
+            ip_addr0 = "192.168.2.11"
+            ip_addr1 = "192.168.2.13"
+            ip_addr2 = "192.168.0.1"
+            ip_addr3 = "192.168.0.1"
+            ip_addr4 = "192.168.0.1"
+            ip_addr5 = "192.168.0.1"
+            ip_addr6 = "192.168.0.1"
+            ip_addr7 = "192.168.0.1"
+            override_device_id = "True"
+        }
+        [
+            position = 7960, 8376
+        ]
+
+        component gen_probe Probe_Receive_Signal0 {
+        }
+        [
+            position = 8256, 7976
+        ]
+
+        component gen_probe Probe_Send_Signal0 {
+        }
+        [
+            position = 7760, 7976
+        ]
+
+        component "core/ETH VE Receive" "ETH VE Receive" {
+            configuration = "[{\'signal_name\': \'signal0\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal1\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'int\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal2\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'uint\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal3\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal4_real\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'4\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal4_imag\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'4\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}]"
+            execution_rate = "er"
+            specify_remote_ip = "True"
+            src_ip = "192.168.2.11"
+        }
+        [
+            position = 8048, 8216
+            size = 120, 144
+        ]
+
+        component "core/ETH VE Send" "ETH VE Send" {
+            configuration = "[{\'signal_name\': \'signal0\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal1\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'int\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal2\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'uint\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal3\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'8\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal4_real\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'4\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}, {\'signal_name\': \'signal4_imag\', \'signal_type\': \'variable\', \'signal_value\': \'From input port\', \'data_type\': \'real\', \'length\': \'4\', \'endianess\': \'little_endian\', \'dimension\': \'inherit\'}]"
+            dest_ip = "192.168.2.13"
+            sample_time = "0.001"
+        }
+        [
+            position = 7872, 8216
+            size = 120, 128
+        ]
+
+        component src_sine "Sinusoidal Source1" {
+        }
+        [
+            position = 7616, 7976
+        ]
+
+        component src_constant Constant2 {
+            signal_type = "int"
+            value = "123"
+        }
+        [
+            position = 7616, 8328
+        ]
+
+        component src_constant Constant3 {
+            value = "456"
+        }
+        [
+            position = 7616, 8040
+        ]
+
+        component src_constant Constant4 {
+        }
+        [
+            position = 7616, 8104
+        ]
+
+        component src_sine "Sinusoidal Source2" {
+            amplitude = "2"
+            phase = "60"
+        }
+        [
+            position = 7616, 8392
+        ]
+
+        component src_sine "Sinusoidal Source3" {
+            amplitude = "3"
+            phase = "120"
+        }
+        [
+            position = 7616, 8456
+        ]
+
+        component gen_probe Probe_Receive_Signal1 {
+        }
+        [
+            position = 8256, 8040
+        ]
+
+        component gen_probe Probe_Receive_Signal2 {
+        }
+        [
+            position = 8256, 8104
+        ]
+
+        component gen_probe Probe_Receive_Signal3 {
+        }
+        [
+            position = 8256, 8328
+        ]
+
+        component gen_probe Probe_Receive_Signal4_Real {
+        }
+        [
+            position = 8256, 8392
+        ]
+
+        component gen_probe Probe_Receive_Signal4_Imag {
+        }
+        [
+            position = 8256, 8456
+        ]
+
+        component gen_probe Probe_Send_Signal1 {
+        }
+        [
+            position = 7760, 8040
+        ]
+
+        component gen_probe Probe_Send_Signal2 {
+        }
+        [
+            position = 7760, 8104
+        ]
+
+        component gen_probe Probe_Send_Signal3 {
+        }
+        [
+            position = 7760, 8328
+        ]
+
+        component gen_probe Probe_Send_Signal4_Real {
+        }
+        [
+            position = 7760, 8392
+        ]
+
+        component gen_probe Probe_Send_Signal4_Imag {
+        }
+        [
+            position = 7760, 8456
+        ]
+
+        junction Junction1 sp
+        [
+            position = 7712, 7976
+        ]
+
+        junction Junction4 sp
+        [
+            position = 7664, 8328
+        ]
+
+        junction Junction5 sp
+        [
+            position = 7688, 8392
+        ]
+
+        junction Junction6 sp
+        [
+            position = 7704, 8456
+        ]
+
+        junction Junction7 sp
+        [
+            position = 7688, 8040
+        ]
+
+        junction Junction8 sp
+        [
+            position = 7664, 8104
+        ]
+
+        connect Probe_Send_Signal0.in Junction1 as Connection213
+        connect Junction1 "Sinusoidal Source1.out" as Connection214
+        connect "ETH VE Send.signal0" Junction1 as Connection215
+        connect Constant2.out Junction4 as Connection222
+        connect Junction4 Probe_Send_Signal3.in as Connection223
+        connect "ETH VE Send.signal3" Junction4 as Connection224
+        connect "ETH VE Receive.signal0" Probe_Receive_Signal0.in as Connection231
+        [
+            breakpoints = 8152, 8176; 8152, 7976
+        ]
+        connect "ETH VE Receive.signal1" Probe_Receive_Signal1.in as Connection232
+        [
+            breakpoints = 8176, 8192; 8176, 8040
+        ]
+        connect "ETH VE Receive.signal2" Probe_Receive_Signal2.in as Connection233
+        [
+            breakpoints = 8200, 8208; 8200, 8104
+        ]
+        connect "ETH VE Receive.signal3" Probe_Receive_Signal3.in as Connection234
+        [
+            breakpoints = 8200, 8224; 8200, 8328
+        ]
+        connect "ETH VE Receive.signal4_real" Probe_Receive_Signal4_Real.in as Connection235
+        [
+            breakpoints = 8176, 8240; 8176, 8392
+        ]
+        connect "ETH VE Receive.signal4_imag" Probe_Receive_Signal4_Imag.in as Connection236
+        [
+            breakpoints = 8152, 8256; 8152, 8456
+        ]
+        connect "ETH VE Send.signal4_real" Junction5 as Connection241
+        [
+            breakpoints = 7688, 8240
+        ]
+        connect Junction5 Probe_Send_Signal4_Real.in as Connection242
+        [
+            breakpoints = 7688, 8392; 7688, 8392
+        ]
+        connect "Sinusoidal Source2.out" Junction5 as Connection243
+        connect "ETH VE Send.signal4_imag" Junction6 as Connection244
+        [
+            breakpoints = 7704, 8256
+        ]
+        connect Junction6 Probe_Send_Signal4_Imag.in as Connection245
+        [
+            breakpoints = 7704, 8456; 7704, 8456
+        ]
+        connect "Sinusoidal Source3.out" Junction6 as Connection246
+        connect Probe_Send_Signal1.in Junction7 as Connection247
+        connect Junction7 "ETH VE Send.signal1" as Connection248
+        [
+            breakpoints = 7688, 8040
+        ]
+        connect Constant3.out Junction7 as Connection249
+        connect Probe_Send_Signal2.in Junction8 as Connection250
+        connect Junction8 "ETH VE Send.signal2" as Connection251
+        [
+            breakpoints = 7664, 8104
+        ]
+        connect Constant4.out Junction8 as Connection252
+    }
+
+    default {
+        eth_ve_setup {
+            mac = "34e6d77d021"
+            override_device_id = "False"
+            ip_addr0 = "192.168.0.1"
+            eth_port0 = ""
+            device_id0 = "0"
+            ip_addr1 = "192.168.0.2"
+            eth_port1 = ""
+            device_id1 = "1"
+            ip_addr2 = "192.168.0.3"
+            eth_port2 = ""
+            device_id2 = "2"
+            ip_addr3 = "192.168.0.4"
+            eth_port3 = ""
+            device_id3 = "3"
+            ip_addr4 = "192.168.0.5"
+            eth_port4 = ""
+            device_id4 = "4"
+            ip_addr5 = "192.168.0.6"
+            eth_port5 = ""
+            device_id5 = "5"
+            ip_addr6 = "192.168.0.7"
+            eth_port6 = ""
+            device_id6 = "6"
+            ip_addr7 = "192.168.0.8"
+            eth_port7 = ""
+            device_id7 = "7"
+            ip_addr8 = "192.168.0.9"
+            eth_port8 = ""
+            device_id8 = "8"
+            ip_addr9 = "192.168.0.10"
+            eth_port9 = ""
+            device_id9 = "9"
+            ip_addr10 = "192.168.0.11"
+            eth_port10 = ""
+            device_id10 = "10"
+            ip_addr11 = "192.168.0.12"
+            eth_port11 = ""
+            device_id11 = "11"
+            ip_addr12 = "192.168.0.13"
+            eth_port12 = ""
+            device_id12 = "12"
+            ip_addr13 = "192.168.0.14"
+            eth_port13 = ""
+            device_id13 = "13"
+            ip_addr14 = "192.168.0.15"
+            eth_port14 = ""
+            device_id14 = "14"
+            ip_addr15 = "192.168.0.16"
+            eth_port15 = ""
+            device_id15 = "15"
+            subnet_mask = "255.255.255.0"
+            execution_rate = "inherit"
+            num_of_variables = "10"
+            ethernet_port_per_device = "{ \"HIL100\": {}, \"HIL104\": {}, \"HIL402\": {}, \"HIL404\": {}, \"HIL602+\": {}, \"HIL603\": {}, \"HIL604\": {}, \"HIL606\": {}, \"VHIL+\": {} }"
+        }
+
+        gen_probe {
+            addr = "0"
+            override_signal_name = "False"
+            signal_name = ""
+            signal_type = "generic"
+            streaming_en = "False"
+            streaming_er_idx = "0"
+            execution_rate = "inherit"
+        }
+
+        src_constant {
+            value = "1"
+            signal_type = "real"
+            execution_rate = "100e-6"
+            _tunable = "False"
+        }
+
+        src_sine {
+            amplitude = "1"
+            dc_offset = "0"
+            frequency = "50"
+            phase = "0"
+            execution_rate = "100e-6"
+            _tunable = "False"
+        }
+
+        "core/ETH VE Receive" {
+            hil_id = "0"
+            number_of_inputs = "1"
+            input_type = "real"
+            protocol = "UDP"
+            endianness = "Little Endian"
+            local_receive_port = "55000"
+            specify_remote_port = "False"
+            remote_connection_port = "55055"
+            specify_remote_ip = "False"
+            src_ip = "192.168.0.1"
+            execution_rate = "100e-6"
+            configuration = ""
+            signal_names_dict = ""
+            generate_configuration = "Generate configuration"
+            _supported_platforms = "[\'hil\']"
+        }
+
+        "core/ETH VE Send" {
+            hil_id = "0"
+            protocol = "UDP"
+            endianness = "Little Endian"
+            specify_local_port = "False"
+            local_send_port = "55055"
+            dest_ip = "192.168.0.1"
+            destination_port = "55000"
+            sample_time = "1e-3"
+            execution_rate = "inherit"
+            number_of_inputs = "1"
+            configuration = ""
+            signal_names_dict = ""
+            generate_configuration = "Generate configuration"
+            _supported_platforms = "[\'hil\']"
+        }
+    }
+
+    CODE model_init
+        # Numpy module is imported as 'np'
+        # Scipy module is imported as 'sp'
+        er = 100e-6
+    ENDCODE
+}
