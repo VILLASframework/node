@@ -4,6 +4,27 @@
 allOf:
 - type: object
   properties:
-    delimiter:
+    bits:
+      type: integer
+      default: 32
+      description: Number of bits per signal. Must be one of 8, 16, 32, 64 or 128.
+
+    endianess:
       type: string
+      description: The endianess of the data.
+      default: little
+      enum:
+      - big
+      - little
+
+    fake:
+      type: boolean
+      description: |
+        Send and interpret the first three signals of each sample as the following header fields:
+        - sequence number
+        - timestamp seconds
+        - timestamp nano-seconds
+
+      default: false
+
 - $ref: ../format.yaml
