@@ -42,7 +42,7 @@ std::unordered_map<Stats::Metric, Stats::MetricDescription> Stats::metrics = {
 	{ Stats::Metric::AGE, 			{ "age",		"seconds", "Processing time of packets within the from receive to sent" }},
 	{ Stats::Metric::SIGNAL_COUNT,          { "signal_cnt",         "signals", "Number of signals per sample"                               }},
 	{ Stats::Metric::RTP_LOSS_FRACTION, 	{ "rtp.loss_fraction",	"percent", "Fraction lost since last RTP SR/RR."			}},
-	{ Stats::Metric::RTP_PKTS_LOST, 	{ "rtp.pkts_lost",	"packets", "Cumulative number of packtes lost" 				}},
+	{ Stats::Metric::RTP_PKTS_LOST, 	{ "rtp.pkts_lost",	"packets", "Cumulative number of packets lost" 				}},
 	{ Stats::Metric::RTP_JITTER, 		{ "rtp.jitter",		"seconds", "Interarrival jitter" 					}},
 };
 
