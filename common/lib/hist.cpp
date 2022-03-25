@@ -37,11 +37,11 @@ namespace villas {
 
 Hist::Hist(int buckets, Hist::cnt_t wu) :
 	resolution(0),
-	high(),
-	low(),
+	high(0),
+	low(0),
 	highest(std::numeric_limits<double>::min()),
 	lowest(std::numeric_limits<double>::max()),
-	last(),
+	last(0),
 	total(0),
 	warmup(wu),
 	higher(0),
