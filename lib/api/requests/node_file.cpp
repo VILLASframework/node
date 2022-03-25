@@ -22,7 +22,7 @@
 
 #include <villas/super_node.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/node_request.hpp>
+#include <villas/api/requests/node.hpp>
 #include <villas/api/response.hpp>
 
 #include <villas/node_compat.hpp>

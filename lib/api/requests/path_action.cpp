@@ -27,7 +27,7 @@
 #include <villas/utils.hpp>
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
-#include <villas/api/path_request.hpp>
+#include <villas/api/requests/path.hpp>
 #include <villas/api/response.hpp>
 
 namespace villas {

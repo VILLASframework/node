@@ -24,9 +24,10 @@
 set(API_SRC
     session.cpp
     request.cpp
-    node_request.cpp
-    path_request.cpp
     response.cpp
+
+    requests/node.cpp
+    requests/path.cpp
 
     requests/status.cpp
     requests/capabiltities.cpp
