@@ -52,9 +52,10 @@ protected:
 		HAMMING
 	};
 
-	enum class FreqEstimationType {
+	enum class EstimationType {
 		NONE,
-		QUADRATIC
+		QUADRATIC,
+		IpDFT
 	};
 
 	enum class TimeAlign {
@@ -65,7 +66,7 @@ protected:
 
 	struct Point {
 		double x;
-		double y;
+		std::complex<double> y;
 	};
 
 	struct DftEstimate {
@@ -83,7 +84,7 @@ protected:
 
 	enum WindowType windowType;
 	enum PaddingType paddingType;
-	enum FreqEstimationType freqEstType;
+	enum EstimationType estType;
 	enum TimeAlign timeAlignType;
 
 	std::vector<std::vector<double>> smpMemoryData;
@@ -143,7 +144,7 @@ public:
 		MultiSignalHook(p, n, fl, prio, en),
 		windowType(WindowType::NONE),
 		paddingType(PaddingType::ZERO),
-		freqEstType(FreqEstimationType::NONE),
+		estType(EstimationType::NONE),
 		timeAlignType(TimeAlign::CENTER),
 		smpMemoryData(),
 		smpMemoryTs(),
@@ -247,6 +248,8 @@ public:
 
 		/* Calculate how much zero padding ist needed for a needed resolution */
 		windowMultiplier = ceil(((double) sampleRate / windowSize) / frequencyResolution);
+		if (windowMultiplier > 1 && estType == EstimationType::IpDFT)
+			throw RuntimeError("Window multiplyer must be 1 if lpdft is used. Change resolution, window_size_factor or frequency range! Current window multiplyer factor is {}", windowMultiplier);
 
 		freqCount = ceil((endFreqency - startFrequency) / frequencyResolution) + 1;
 
@@ -281,7 +284,7 @@ public:
 
 		const char *paddingTypeC = nullptr;
 		const char *windowTypeC = nullptr;
-		const char *freqEstimateTypeC = nullptr;
+		const char *estimateTypeC = nullptr;
 		const char *angleUnitC = nullptr;
 		const char *timeAlignC = nullptr;
 
@@ -300,7 +303,7 @@ public:
 			"window_size_factor", &windowSizeFactor,
 			"window_type", &windowTypeC,
 			"padding_type", &paddingTypeC,
-			"frequency_estimate_type", &freqEstimateTypeC,
+			"estimate_type", &estimateTypeC,
 			"pps_index", &ppsIndex,
 			"angle_unit", &angleUnitC,
 			"add_channel_name", &channelNameEnable,
@@ -356,13 +359,13 @@ public:
 		else
 			throw ConfigError(json, "node-config-hook-dft-padding-type", "Padding type {} not recognized", paddingTypeC);
 
-		if (!freqEstimateTypeC) {
+		if (!estimateTypeC) {
 			logger->info("No Frequency estimation type given, assume no none");
-			freqEstType = FreqEstimationType::NONE;
-		}
-		else if (strcmp(freqEstimateTypeC, "quadratic") == 0)
-			freqEstType = FreqEstimationType::QUADRATIC;
-
+			estType = EstimationType::NONE;
+		} else if (strcmp(estimateTypeC, "quadratic") == 0)
+			estType = EstimationType::QUADRATIC;
+		else if (strcmp(estimateTypeC, "ipdft") == 0)
+			estType = EstimationType::IpDFT;
 		state = State::PARSED;
 	}
 
@@ -420,35 +423,41 @@ public:
 				Phasor currentResult = {0,0,0,0};
 
 				calculateDft(PaddingType::ZERO, smpMemoryData[i], results[i], smpMemPos);
-
+				
 				unsigned maxPos = 0;
-
-				for (unsigned j = 0; j < freqCount; j++) {
-					int multiplier = paddingType == PaddingType::ZERO
-						? 1
-						: windowMultiplier;
-					absResults[i][j] = abs(results[i][j]) * 2 / (windowSize * windowCorrectionFactor * multiplier);
-					if (currentResult.amplitude < absResults[i][j]) {
-						currentResult.frequency = absFrequencies[j];
-						currentResult.amplitude = absResults[i][j];
+				double absAmplitude = 0;
+				
+				for(unsigned j = 0; j < freqCount; j++) {
+					if (absAmplitude < abs(results[i][j])) {
+						absAmplitude = abs(results[i][j]);
 						maxPos = j;
 					}
 				}
 
-				if (freqEstType == FreqEstimationType::QUADRATIC) {
-					if (maxPos < 1 || maxPos >= freqCount - 1)
-						logger->warn("Maximum frequency bin lies on window boundary. Using non-estimated results!");
-					else {
-						Point a = { absFrequencies[maxPos - 1], absResults[i][maxPos - 1] };
-						Point b = { absFrequencies[maxPos + 0], absResults[i][maxPos + 0] };
-						Point c = { absFrequencies[maxPos + 1], absResults[i][maxPos + 1] };
+				int multiplier = paddingType == PaddingType::ZERO
+					? 1
+					: windowMultiplier;
 
-						DftEstimate estimate = quadraticEstimation(a, b, c, maxPos, smpMemoryTs[smpMemPos & windowSize]);
-						currentResult.frequency = estimate.frequency;
-						currentResult.amplitude = estimate.amplitude;
-						currentResult.phase = atan2(results[i][maxPos].imag(), results[i][maxPos].real()) * angleUnitFactor;
-					}
+				DftEstimate dftEstimate = {0};
+
+				if ( (maxPos < 1 || maxPos >= freqCount - 1) && estType != EstimationType::NONE) {
+					logger->warn("Maximum frequency bin lies on window boundary. Using non-estimated results!");
+					dftEstimate = noEstimation({0}, { absFrequencies[maxPos + 0], results[i][maxPos + 0] }, {0}, maxPos, startFrequency, frequencyResolution, multiplier, windowSize, windowCorrectionFactor);
+				} else {
+					Point a = { absFrequencies[maxPos - 1], results[i][maxPos - 1] };
+					Point b = { absFrequencies[maxPos + 0], results[i][maxPos + 0] };
+					Point c = { absFrequencies[maxPos + 1], results[i][maxPos + 1] };
+					
+					if( estType == EstimationType::QUADRATIC )
+						dftEstimate = quadraticEstimation(a, b, c, maxPos, startFrequency, frequencyResolution, multiplier, windowSize, windowCorrectionFactor);
+					else if( estType == EstimationType::IpDFT )
+						dftEstimate = lpdftEstimation(a, b, c, maxPos, startFrequency, frequencyResolution, multiplier, windowSize, windowCorrectionFactor);
+					else
+						dftEstimate = noEstimation({0}, b, {0}, maxPos, startFrequency, frequencyResolution, multiplier, windowSize, windowCorrectionFactor);
 				}
+				currentResult.frequency = dftEstimate.frequency;
+				currentResult.amplitude = dftEstimate.amplitude;
+				currentResult.phase = dftEstimate.phase * angleUnitFactor;//convert phase from rad to deg	
 
 				if (windowSize <= smpMemPos) {
 
@@ -592,6 +601,51 @@ public:
 		windowCorrectionFactor /= windowSize;
 	}
 
+	DftEstimate noEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, double startFrequency, double frequencyResolution, double multiplier, double windowSize, double windowCorrectionFactor)
+	{
+		// Frequency estimation
+		double f_est = startFrequency + maxFBin * frequencyResolution;
+
+		// Amplitude estimation
+		double a_est = abs(b.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
+
+		//Phase estimation
+        double phase_est = atan2(b.y.imag(), b.y.real());
+
+		return { a_est, f_est , phase_est};
+	}
+
+	/**
+	 * This function is calculation the IpDFT based on the following paper:
+	 * 
+	 * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7980868&tag=1
+	 * 
+	 */
+	DftEstimate lpdftEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, double startFrequency, double frequencyResolution, double multiplier, double windowSize, double windowCorrectionFactor)
+	{
+		double delta = 0;
+
+		//paper eq 8
+		if (abs(c.y) > abs(a.y)) {
+			delta = 1. * (2. * abs(c.y) - abs(b.y)) / (abs(b.y) + abs(c.y));
+		} else {
+			delta = -1. * (2. * abs(a.y) - abs(b.y)) / (abs(b.y) + abs(a.y)); 
+		}
+	
+		// Frequency estimation (eq 4)
+		double f_est =  startFrequency + ( (double) maxFBin + delta) * frequencyResolution;
+
+		// Amplitude estimation (eq 9)
+		double a_est = abs(b.y) * abs( (M_PI * delta) / sin( M_PI * delta) ) * abs( pow(delta, 2) - 1);
+		a_est *=  2 / (windowSize * windowCorrectionFactor * multiplier);
+
+
+		//Phase estimation (eq 10)
+        double phase_est = atan2(b.y.imag(), b.y.real()) - M_PI * delta;
+
+		return { a_est, f_est , phase_est};
+	}
+
 	/**
 	 * This function is calculating the mximum based on a quadratic interpolation
 	 *
@@ -599,20 +653,26 @@ public:
 	 * https://mgasior.web.cern.ch/pap/biw2004.pdf (equation 10) (freq estimation)
 	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
 	 */
-	DftEstimate quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, timespec startTime)
+	DftEstimate quadraticEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, double startFrequency, double frequencyResolution, double multiplier, double windowSize, double windowCorrectionFactor)
 	{
+		using namespace std::complex_literals;
+
+		double ay_abs = abs(a.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
+		double by_abs = abs(b.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
+		double cy_abs = abs(c.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
+
 		// Frequency estimation
-		double maxBinEst = (double) maxFBin + (c.y - a.y) / (2 * (2 * b.y - a.y - c.y));
+		double maxBinEst = (double) maxFBin + (cy_abs - ay_abs) / (2 * (2 * by_abs - ay_abs - cy_abs));
 		double f_est = startFrequency + maxBinEst * frequencyResolution; // convert bin to frequency
 
 		// Amplitude estimation
-		double f = (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
-		double g = (pow(a.x, 2) * (b.y - c.y) + pow(b.x, 2) * (c.y - a.y) + pow(c.x, 2) * (a.y - b.y)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-		double h = (pow(a.x, 2) * (b.x * c.y - c.x * b.y) + a.x * (pow(c.x, 2) * b.y - pow(b.x,2) * c.y)+ b.x * c.x * a.y * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
+		double f = (a.x * (by_abs - cy_abs) + b.x * (cy_abs - ay_abs) + c.x * (ay_abs - by_abs)) / ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
+		double g = (pow(a.x, 2) * (by_abs - cy_abs) + pow(b.x, 2) * (cy_abs - ay_abs) + pow(c.x, 2) * (ay_abs - by_abs)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
+		double h = (pow(a.x, 2) * (b.x * cy_abs - c.x * by_abs) + a.x * (pow(c.x, 2) * by_abs - pow(b.x,2) * cy_abs)+ b.x * c.x * ay_abs * (b.x - c.x)) / ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
 		double a_est = f * pow(f_est,2) + g * f_est + h;
 
 		//Phase estimation
-        double phase_est = 0.0;//not implemented yet
+        double phase_est = atan2(b.y.imag(), b.y.real());
 
 		return { a_est, f_est , phase_est};
 	}
