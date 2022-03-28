@@ -23,14 +23,10 @@
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=debian
 ARG DEBIAN_VERSION=bullseye
-ARG ARCH=x86_64
-ARG TRIPLET=x86_64-linux-gnu
 
 FROM ${DISTRO}:${DEBIAN_VERSION} AS dev
 
 ARG DISTRO
-ARG ARCH
-ARG TRIPLET
 
 ENV DEBIAN_FRONTEND=noninteractive
 
