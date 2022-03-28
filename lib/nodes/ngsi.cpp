@@ -177,6 +177,8 @@ public:
 				throw ConfigError(json_metadatas, "node-config-node-ngsi-metadata", "ngsi_metadata must be a list of objects");
 
 			json_t *json_metadata;
+
+			// cppcheck-suppress unknownMacro
 			json_array_foreach(json_metadatas, j, json_metadata)
 				metadata.emplace_back(json_metadata);
 		}

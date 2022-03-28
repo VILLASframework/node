@@ -475,6 +475,7 @@ void LuaHook::parseExpressions(json_t *json_sigs)
 	if (ret)
 		throw ConfigError(json_sigs, "node-config-hook-lua-signals", "Setting 'signals' must be a list of dicts");
 
+	// cppcheck-suppress unknownMacro
 	json_array_foreach(json_sigs, i, json_sig)
 		expressions.emplace_back(L, json_sig);
 
