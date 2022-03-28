@@ -71,17 +71,23 @@ public:
 	void parse(json_t *json)
 	{
 		int ret;
+		int windowSizeIn;
 		json_error_t err;
 
 		assert(state != State::STARTED);
 
 		MultiSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: i }",
-			"window_size", &windowSize
+		ret = json_unpack_ex(json, &err, 0, "{ s: i }",
+			"window_size", &windowSizeIn
 		);
 		if (ret)
 			throw ConfigError(json, err, "node-config-hook-rms");
+
+		if (windowSizeIn < 1)
+			throw ConfigError(json, "node-config-hook-rms", "Window size must be greater 0 but is set to {}", windowSizeIn);
+
+		windowSize = (unsigned)windowSizeIn;
 
 		state = State::PARSED;
 	}
