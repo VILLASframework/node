@@ -196,12 +196,11 @@ public:
 	getProcessAddressSpaceMemoryBlock(const std::string &memoryBlock)
 	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("process", memoryBlock)); }
 
-
 	AddressSpaceId
 	getOrCreateAddressSpace(std::string name);
 
 	void
-	removeAddressSpace(AddressSpaceId addrSpaceId)
+	removeAddressSpace(const AddressSpaceId &addrSpaceId)
 	{ memoryGraph.removeVertex(addrSpaceId); }
 
 	/// Create a default mapping
