@@ -62,7 +62,6 @@ struct mqtt {
 		int cert_reqs;	   /**< SSL_VERIFY_NONE(0) or SSL_VERIFY_PEER(1) */
 		char *tls_version; /**< SSL tls verion */
 		char *ciphers;      /**< SSL chipher list. */
-
 	} ssl;
 
 	Format *formatter;

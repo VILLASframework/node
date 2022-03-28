@@ -3,8 +3,96 @@
 
 allOf:
 - type: object
+  required:
+  - host
   properties:
     format:
       $ref: ../format_spec.yaml
+
+    username:
+      type: string
+      description: The username which is used for authentication with the MQTT broker.
+
+    password:
+      type: string
+      description: The username which is used for authentication with the MQTT broker.
+
+    host:
+      type: string
+      description: The hostname of the MQTT broker.
+      example: example.com
+
+    port:
+      type: integer
+      description: The port number of the MQTT broker.
+      default: 1883
+
+    retain:
+      type: boolean
+      description: Set to true to make the will a retained message.
+      default: false
+
+    keepalive:
+      type: integer
+      default: 5
+      description: The MQTT keepalive value.
+
+    qos:
+      type: integer
+      default: 0
+      description: The quality of service (QoS) to use for the subscription.
+
+    ssl:
+      type: object
+      properties: 
+
+        enabled:
+          type: boolean
+          default: true
+
+        insecure:
+          type: boolean
+
+        cafile:
+          type: string
+          description: Path to a file containing the PEM encoded trusted CA certificate file.
+
+        capath:
+          type: string
+          description: Path to a directory containing the PEM encoded trusted CA certificate files.
+
+        certfile:
+          type: string
+          description: Path to a file containing the PEM encoded certificate file for this client.
+
+        keyfile:
+          type: string
+          description: Path to a file containing the PEM encoded private key for this client.
+
+        cipher:
+          type: string
+          description: A string describing the ciphers available for use. See the `openssl ciphers` tool for more information.
+
+        verify:
+          type: boolean
+          default: true
+          description: |
+            Configure verification of the server hostname in the server certificate. 
+            If value is set to true, it is impossible to guarantee that the host you are connecting to is not impersonating your server.
+            This can be useful in initial server testing, but makes it possible for a malicious third party to impersonate your server through DNS spoofing, for example. 
+            Do not use this function in a real system.
+            Setting value to true makes the connection encryption pointless.
+
+        tls_version:
+          type: string
+          enum:
+          - tlsv1
+          - tlsv1.1
+          - tlsv1.2
+          description: |
+            The version of the SSL/TLS protocol to use as a string.
+            If not set, the default value is used. The default value and the available values depend on the version of openssl that the library was compiled against.
+            For openssl >= 1.0.1, the available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2 as the default.
+            For openssl < 1.0.1, only tlsv1 is available.
 
 - $ref: ../node.yaml

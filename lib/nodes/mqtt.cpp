@@ -233,7 +233,7 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json)
 		const char *tls_version = nullptr;
 		const char *ciphers = nullptr;
 
-		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s, s?: s, s?: s, s?: b}",
+		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s, s?: s, s?: s, s?: b, s?: s }",
 			"enabled", &m->ssl.enabled,
 			"insecure", &m->ssl.insecure,
 			"cafile", &cafile,
