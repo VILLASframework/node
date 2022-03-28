@@ -9,6 +9,20 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    in:
+      type: object
+      properties: 
+        subscribe:
+          type: string
+          description: Topic to which this node subscribes.
+
+    out:
+      type: object
+      properties: 
+        publish:
+          type: string
+          description: Topic to which this node publishes.
+
     username:
       type: string
       description: The username which is used for authentication with the MQTT broker.
