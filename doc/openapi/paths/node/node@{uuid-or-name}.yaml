@@ -11,6 +11,8 @@ get:
       description: Success
       content:
         application/json:
+          schema:
+            $ref: ../../components/schemas/config/node_obj.yaml
           examples:
             example1:
               value:

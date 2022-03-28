@@ -10,6 +10,8 @@ post:
       description: Success
       content:
         application/json:
+          schema:
+            $ref: ../../components/schemas/config/path.yaml
           examples:
             example1:
               value:

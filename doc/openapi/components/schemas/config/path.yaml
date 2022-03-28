@@ -58,8 +58,8 @@ properties:
 
       Two modes are currently supported:
 
-      - `any``: The path will trigger the path as soon as any of the masked (see `mask`) input nodes received new samples.
-      - `all``: The path will trigger the path as soon as all input nodes received at least one new sample.
+      - `any`: The path will trigger the path as soon as any of the masked (see `mask`) input nodes received new samples.
+      - `all`: The path will trigger the path as soon as all input nodes received at least one new sample.
 
   mask:
     description: |

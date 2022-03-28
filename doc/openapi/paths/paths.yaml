@@ -8,6 +8,10 @@ get:
       description: Success
       content:
         application/json:
+          schema:
+              type: array
+              items:
+                $ref: ../components/schemas/config/path.yaml
           examples:
             example1:
               value:

@@ -9,6 +9,10 @@ get:
       content:
         application/json:
           examples:
+            schema:
+              type: array
+              items:
+                $ref: ../components/schemas/config/node_obj.yaml
             example1:
               value:
                 - name: udp_node1

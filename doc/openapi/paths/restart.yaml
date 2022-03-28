@@ -12,15 +12,15 @@ post:
           properties:
             config:
               oneOf:
-                - type: string
-                  example: 'http://example.com/path/to/config.json'
-                  title: URL
-                  description: |
-                    An optional path or URI to a new configuration file which
-                    should be loaded after restarting the node.
-                    
-                    The file referenced by the URL must be a [VILLASnode configuration file](#tag/config)
-                - $ref: '../openapi.yaml#/components/schemas/Config'
+              - type: string
+                example: 'http://example.com/path/to/config.json'
+                title: URL
+                description: |
+                  An optional path or URI to a new configuration file which
+                  should be loaded after restarting the node.
+                  
+                  The file referenced by the URL must be a [VILLASnode configuration file](#tag/config)
+              - $ref: ../components/schemas/config.yaml
   responses:
     '200':
       description: Success. The instance has been restarted.

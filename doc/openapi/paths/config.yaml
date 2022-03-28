@@ -10,7 +10,7 @@ get:
       content:
         application/json:
           schema: 
-            $ref: '../openapi.yaml#/components/schemas/Config'
+            $ref: ../components/schemas/config.yaml
           examples:
             example1:
               value:
