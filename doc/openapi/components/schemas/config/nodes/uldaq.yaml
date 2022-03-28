@@ -3,15 +3,10 @@
 
 allOf:
 - type: object
-  properties:
-    format:
-      $ref: ../format_spec.yaml
-
-- $ref: ../node.yaml
-- type: object
   required:
   - sample_rate
   properties: 
+
     interface_type:
       type: string
       enum:
@@ -20,31 +15,39 @@ allOf:
       - ethernet
       - any
       description: The interface to which the ADC is connected. Check manual for your device.
+
     device_id:
       type: string
       example: 10000
       description: The used device type. If empty it is auto detected.
+
     in:
       type: object
       description: Configuration for the ul201
+
       signals:
         type: object
+
         range:
           type: string
           description: The range for a specific channel. See `range` for allowed values
+
         input_mode:
           type: string
           description: The input mode for a specific channel. See `input_mode` for allowed values
+
         channel:  
           type: integer
           example: 5
           description: The channel input number of the device.
         description: A list of used channels
+
       sample_rate:
         type: integer
         min: 0
         example: 10000
         description: The sampling rate of the input signal.
+
       range:
         type: string
         enum:
@@ -92,6 +95,7 @@ allOf:
         - unipolar-0.01
         - unipolar-0.005
         description: The input range. Check manual for your device.
+
       input_mode:
         type: string
         enum:
@@ -99,3 +103,5 @@ allOf:
         - single-ended
         - pseudo-differential
         description: The sampling type. Check manual for you device
+
+- $ref: ../node.yaml
