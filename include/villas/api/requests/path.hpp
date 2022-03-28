@@ -35,10 +35,11 @@ namespace api {
 
 class PathRequest : public Request {
 
+protected:
+	class Path *path;
+
 public:
 	using Request::Request;
-
-	class Path *path;
 
 	virtual void
 	prepare();

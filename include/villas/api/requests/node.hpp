@@ -35,10 +35,11 @@ namespace api {
 
 class NodeRequest : public Request {
 
+protected:
+	Node *node;
+
 public:
 	using Request::Request;
-
-	Node *node;
 
 	virtual void
 	prepare();
