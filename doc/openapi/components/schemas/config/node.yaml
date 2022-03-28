@@ -45,6 +45,24 @@ properties:
       vectorize:
         type: integer
 
+      signals:
+        type: array
+        title: List of signals send out to this node
+        description: |
+          The outgoing signal list is determined and runtime an must not be provided by the user configuration.
+
+        example:
+        - name: tap_position
+          type: integer
+          init: 0
+        - name: voltage
+          type: float
+          unit: V
+          init: 230.0
+
+        items:
+          $ref: signal_spec.yaml
+
       hooks:
         $ref: hook_list.yaml
 
