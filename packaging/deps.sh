@@ -3,7 +3,8 @@
 set -e
 
 PREFIX=${PREFIX:-/usr/local}
-TRIPLET=${TRIPLET:-x86_64-linux-gnu}
+TRIPLET=${TRIPLET:-$(gcc -dumpmachine)}
+ARCH=${ARCH:-$(uname -m)}
 
 GIT_OPTS+=" --depth=1"
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
