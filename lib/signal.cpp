@@ -81,16 +81,19 @@ int Signal::parse(json_t *json)
 
 json_t * Signal::toJson() const
 {
-	json_t *json_sig = json_pack("{ s: s, s: o }",
-		"type", signalTypeToString(type).c_str(),
-		"init", init.toJson(type)
+	json_t *json_sig = json_pack("{ s: s }",
+		"type", signalTypeToString(type).c_str()
 	);
 
+	auto *json_init = init.toJson(type);
+	if (json_init)
+		json_object_set_new(json_sig, "init", json_init);
+
 	if (!name.empty())
-		json_object_set(json_sig, "name", json_string(name.c_str()));
+		json_object_set_new(json_sig, "name", json_string(name.c_str()));
 
 	if (!unit.empty())
-		json_object_set(json_sig, "unit", json_string(unit.c_str()));
+		json_object_set_new(json_sig, "unit", json_string(unit.c_str()));
 
 	return json_sig;
 }
