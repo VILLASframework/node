@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  additionalProperties: true
+  description: |
+    Additional properties can be retrieved via Rest API call:
+
+		```bash
+    curl http://localhost:80/api/v2/universal/api_node_name/config
+    ```
+- $ref: ../node.yaml
