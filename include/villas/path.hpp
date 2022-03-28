@@ -129,13 +129,13 @@ public:
 
 		os << CLR_MAG("=>");
 
-		if (p.destinations.size() > 1)
+		if (p.destinations.size() != 1)
 			os << " [";
 
 		for (auto pd : p.destinations)
 			os << " " << pd->getNode()->getNameShort();
 
-		if (p.destinations.size() > 1)
+		if (p.destinations.size() != 1)
 			os << " ]";
 
 		return os;

@@ -109,7 +109,7 @@ protected:
 	void worker();
 
 public:
-	/** Initalize the API.
+	/** Initialize the API.
 	 *
 	 * Save references to list of paths / nodes for command execution.
 	 */

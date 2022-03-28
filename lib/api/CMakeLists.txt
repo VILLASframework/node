@@ -28,6 +28,7 @@ set(API_SRC
 
     requests/node.cpp
     requests/path.cpp
+    requests/universal.cpp
 
     requests/status.cpp
     requests/capabiltities.cpp
@@ -43,6 +44,11 @@ set(API_SRC
     requests/paths.cpp
     requests/path_info.cpp
     requests/path_action.cpp
+
+    requests/universal/config.cpp
+    requests/universal/info.cpp
+    requests/universal/signal.cpp
+    requests/universal/signals.cpp
 )
 
 if(WITH_GRAPHVIZ)

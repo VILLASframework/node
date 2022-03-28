@@ -24,6 +24,10 @@ set(NODE_SRC
     loopback_internal.cpp
 )
 
+if(WITH_WEB)
+    list(APPEND NODE_SRC api.cpp)
+endif()
+
 # Enable Golang support
 if(WITH_NODE_GO)
     list(APPEND NODE_SRC go.cpp)
