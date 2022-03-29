@@ -28,7 +28,9 @@ using namespace villas;
 using namespace villas::node;
 
 APINode::APINode(const std::string &name) :
-	Node(name)
+	Node(name),
+	read(),
+	write()
 {
 	int ret;
 	auto dirs = std::vector{&read, &write};
