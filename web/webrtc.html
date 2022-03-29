@@ -118,17 +118,17 @@
             var iceUsername = 'villas';
             var icePassword = 'villas';
             var iceUrls = [
-                'stun:edgy.0l.de:3478',
-                'turn:edgy.0l.de:3478?transport=udp',
-                'turn:edgy.0l.de:3478?transport=tcp'
+                'stun:stun.0l.de:3478',
+                'turn:turn.0l.de:3478?transport=udp',
+                'turn:turn.0l.de:3478?transport=tcp'
             ];
 
             // Functions
 
             // Set things up, connect event listeners, etc.
             function startup() {
-                log = document.getElementById('log'),
-                    logContainer = document.getElementById('log-container')
+                log = document.getElementById('log');
+                logContainer = document.getElementById('log-container');
                 rewireLoggingToElement();
 
                 btnConnect = document.getElementById('connect');
@@ -150,6 +150,14 @@
                 btnConnect.addEventListener('click', connectPeers, false);
                 btnDisconnect.addEventListener('click', disconnectPeers, false);
                 btnSend.addEventListener('click', sendMessage, false);
+
+                let queryParams = new URLSearchParams(window.location.search)
+                let sessionNameQuery = queryParams.get('session_name');
+                let autoConnect = queryParams.get('auto_connect');
+
+                if (sessionNameQuery !== null) {
+                    sessionName = sessionNameQuery;
+                }
 
                 inpServer.onkeyup = (e) => {
                     server = e.target.value;
@@ -183,6 +191,10 @@
                 inpIceUrls.value = iceUrls;
 
                 updateConfig();
+
+                if (autoConnect !== null) {
+                    connectPeers();
+                }
             }
 
             function rewireLoggingToElement() {
@@ -219,15 +231,17 @@
                         const isScrolledToBottom = logContainer.scrollHeight - logContainer.clientHeight <= logContainer.scrollTop + 1;
                         log.appendChild(output);
                         log.innerHTML += '<br>';
-                        if (isScrolledToBottom)
+                        if (isScrolledToBottom) {
                             logContainer.scrollTop = logContainer.scrollHeight - logContainer.clientHeight;
+                        }
 
                         console['old' + name].apply(undefined, arguments);
                     };
                 }
 
-                for (logger of['log', 'debug', 'warn', 'error', 'info'])
+                for (logger of['log', 'debug', 'warn', 'error', 'info']) {
                     fixLoggingFunc(logger);
+                }
             }
 
             function updateConfig() {
@@ -314,16 +328,16 @@
 
             function handleIceCandidate(event) {
                 if (event.candidate == null) {
-                    console.info('Candidate gathering completed')
-                    return
+                    console.info('Candidate gathering completed');
+                    return;
                 }
 
                 console.info('New local ICE Candidate', event.candidate);
 
                 let msg = {
-                    candidate: event
+                    candidate: event.candidate.toJSON()
                 };
-                console.info('Sending signaling message', msg)
+                console.info('Sending signaling message', msg);
                 sc.send(JSON.stringify(msg));
             }
 
