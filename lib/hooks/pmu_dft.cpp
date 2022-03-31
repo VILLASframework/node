@@ -480,16 +480,20 @@ public:
 			smp->length = windowSize < smpMemPos ? signalIndices.size() * 4 : 0;
 
 			unsigned tsPos = 0;
-			if (timeAlignType == TimeAlign::LEFT)
-				tsPos = (smpMemPos % windowSize);
-			else if (timeAlignType == TimeAlign::RIGHT)
-				tsPos = ((smpMemPos % windowSize) > 0)? (smpMemPos % windowSize) - 1 : windowSize;
-			else if (timeAlignType == TimeAlign::CENTER) {
-				tsPos = ((smpMemPos % windowSize) >= (windowSize / 2))?
-					(smpMemPos % windowSize) - (windowSize / 2) : 
-					(smpMemPos % windowSize) + (windowSize / 2);
+			if(smpMemPos >= windowSize) {
+				unsigned tsPos = 0;
+				if (timeAlignType == TimeAlign::RIGHT)
+					tsPos = smpMemPos;
+				else if (timeAlignType == TimeAlign::LEFT)
+					tsPos = smpMemPos - windowSize;
+				else if (timeAlignType == TimeAlign::CENTER) {
+					tsPos = smpMemPos - (windowSize / 2);
+				}
+
+				smp->ts.origin = smpMemoryTs[tsPos % windowSize];
 			}
-			smp->ts.origin = smpMemoryTs[tsPos];
+
+            smp->ts.origin = smpMemoryTs[tsPos % windowSize];
 
 			calcCount++;
 		}
@@ -498,6 +502,10 @@ public:
 			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
+
+        if(smpMemPos >= 2 * windowSize) {//reset smpMemPos if greater than twice the window. Important to handle init
+            smpMemPos = windowSize;
+        }
 
 		smpMemPos++;
 
