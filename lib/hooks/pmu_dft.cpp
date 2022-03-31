@@ -548,9 +548,6 @@ public:
 			origSigSync.writeDataBinary(windowSize, tmpSmpWindow);
 #endif
 
-		/*for (unsigned i = 0; i < windowSize; i++)
-			tmpSmpWindow[i] *= filterWindowCoefficents[i];
-*/
 		for (unsigned i = 0; i < freqCount; i++) {
 			results[i] = 0;
 
