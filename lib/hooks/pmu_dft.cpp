@@ -479,7 +479,6 @@ public:
 
 			smp->length = windowSize < smpMemPos ? signalIndices.size() * 4 : 0;
 
-			unsigned tsPos = 0;
 			if(smpMemPos >= windowSize) {
 				unsigned tsPos = 0;
 				if (timeAlignType == TimeAlign::RIGHT)
@@ -492,8 +491,6 @@ public:
 
 				smp->ts.origin = smpMemoryTs[tsPos % windowSize];
 			}
-
-            smp->ts.origin = smpMemoryTs[tsPos % windowSize];
 
 			calcCount++;
 		}
