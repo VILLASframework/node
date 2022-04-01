@@ -1,0 +1,19 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.195.0/containers/cpp
+{
+	"name": "VILLASnode",
+	"image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev:master",
+	// Uncomment to build the devcontainer locally
+	// "build": {
+	// 	"dockerfile": "../packaging/docker/Dockerfile.fedora",
+	// 	"target": "dev",
+	// 	"context": ".."
+	// },
+	"runArgs": [ "--privileged", "--security-opt", "seccomp=unconfined"],
+
+	"extensions": [
+		"ms-vscode.cpptools",
+		"ms-vscode.cmake-tools",
+		"EditorConfig.EditorConfig"
+	],
+}
