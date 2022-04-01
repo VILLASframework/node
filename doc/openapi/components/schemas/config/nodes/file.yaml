@@ -7,26 +7,113 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
-  uri:
-    type: string
-    format: uri
-    description: |
-      Specifies the URI to a file from which is written to or read from depending in which group (`in`or `out`) is used.
+    uri:
+      type: string
+      format: uri
+      description: |
+        Specifies the URI to a file from which is written to or read from depending in which group (`in`or `out`) is used.
 
-      This setting allows to add special paceholders for time and date values.
-      See [strftime(3)](http://man7.org/linux/man-pages/man3/strftime.3.html) for a list of supported placeholder.
+        This setting allows to add special paceholders for time and date values.
+        See [strftime(3)](http://man7.org/linux/man-pages/man3/strftime.3.html) for a list of supported placeholder.
 
-      **Example**:
+        **Example**:
 
-      ```
-      uri = "logs/measurements_%Y-%m-%d_%H-%M-%S.log"
-      ```
+        ```
+        uri = "logs/measurements_%Y-%m-%d_%H-%M-%S.log"
+        ```
 
-      will create a file called:
+        will create a file called:
 
-      ```
-      ./logs/measurements_2015-08-09_22-20-50.log
-      ```
+        ```
+        ./logs/measurements_2015-08-09_22-20-50.log
+        ```
 
+    in:
+      type: object
+      properties: 
+        epoch:
+          type: number
+
+        epoch_mode:
+          type: string
+          enum:
+          - direct
+          - wait
+          - relative
+          - absolute
+          description: |
+            The *epoch* describes the point in time when the first message will be read from the file.
+            This setting allows to select the behavior of the following `epoch` setting.
+            It can be used to adjust the point in time when the first value should be read.
+
+            The behavior of `epoch` is depending on the value of `epoch_mode`.
+
+            To facilitate the following description of supported `epoch_mode`'s, we will introduce some intermediate variables (timestamps).
+            Those variables will also been displayed during the startup phase of the server to simplify debugging.
+
+            - `epoch` is the value of the `epoch` setting.
+            - `first` is the timestamp of the first message / line in the input file.
+            - `offset` will be added to the timestamps in the file to obtain the real time when the message will be sent.
+            - `start` is the point in time when the first message will be sent (`first + offset`).
+            - `eta` the time to wait until the first message will be send (`start - now`)
+
+            The supported values for `epoch_mode`:
+
+            | `epoch_mode` 	| `offset` 		| `start = first + offset` |
+            | :--		| :--			| :-- |
+            | `direct`  	| `now - first + epoch` 	| `now + epoch` |
+            | `wait`  	| `now + epoch` 		| `now + first` |
+            | `relative` 	| `epoch` 		| `first + epoch` |
+            | `absolute` 	| `epoch - first` 	| `epoch` |
+            | `original` 	| `0` 			| immediately |
+
+          rate:
+            type: number
+            default: 0
+            description: |
+              By default `send_rate` has the value `0` which means that the time between consecutive samples is the same as in the `in` file based on the timestamps in the first column.
+
+              If this setting has a non-zero value, the default behavior is overwritten with a fixed rate.
+
+          eof:
+            type: string
+            default: exit
+            enum:
+            - rewind
+            - wait
+            - exit
+
+            description: |
+              Defines the behavior if the end of file of the input file is reached.
+
+              - `rewind` will rewind the file pointer and restart reading samples from the beginning of the file.
+              - `exit` will terminated the program.
+              - `wait` will periodically test if there are new samples which have been appended to the file.
+
+          buffer_size:
+            type: integer
+            min: 0
+            default: 0
+            description: |
+              Similar to the [`out.buffer_size` setting](#out-buffer_size). This means that the data is loaded into the buffer before it is passed on to the node.
+
+              If `in.buffer_size = 0`, no buffer will be generated.
+
+      out:
+        type: object
+        properties:
+          flush:
+            type: boolean
+            description: |
+              With this setting enabled, the outgoing file is flushed whenever new samples have been written to it.
+
+          buffer_size: 
+            type: integer
+            default: 0
+            min: 0
+            description: |
+              If this is set to a positive value `<X>`, the node will generate a full [stream buffer](https://linux.die.net/man/3/setvbuf) with a size of `<X>` bytes. This means that the data is buffered and not written until the buffer is full or until the node is stopped.
+
+              If `out.buffer_size = 0`, no buffer will be generated.
 
 - $ref: ../node.yaml

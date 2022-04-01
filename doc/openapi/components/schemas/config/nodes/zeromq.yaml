@@ -7,4 +7,51 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    filter:
+      type: string
+      enum:
+      - pubsub
+      - radiodish
+
+    publish:
+      type: string
+      format: uri
+
+    subscribe:
+      oneOf:
+      - type: string
+        format: uri
+      - type: array
+        items:
+          type: string
+          format: uri
+
+    ipv6:
+      type: boolean
+      default: false
+
+    curve:
+      title: CurveZMQ cryptography
+      description: |
+        **Note:** This feature is currently broken.
+
+        You can use the [`villas zmq-keygen`](../usage/villas-zmq-keygen.md) command to create a new keypair for the following configuration options:
+
+      type: object
+      properties: 
+        enabled: 
+          type: boolean
+          description: Whether or not the encryption is enabled.
+
+        public_key:
+          type: string
+          description: |
+            The public key of the server.
+
+        private_key:
+          type: string
+          description: |
+            The private key of the server.
+
+
 - $ref: ../node.yaml

@@ -3,7 +3,5 @@
 
 allOf:
 - type: object
-  properties:
-    format:
-      $ref: ../format_spec.yaml
+  properties: {}
 - $ref: ../node.yaml

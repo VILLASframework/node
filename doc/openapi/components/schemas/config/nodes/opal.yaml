@@ -4,7 +4,13 @@
 allOf:
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    send_id:
+      type: integer
+    
+    recv_id:
+      type: integer
+
+    reply:
+      type: boolean
 
 - $ref: ../node.yaml

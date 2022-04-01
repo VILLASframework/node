@@ -7,4 +7,25 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    destinations:
+      description: |
+        During startup connect to those WebSocket servers as a client.
+
+        Each URI must use the following scheme:
+
+        ```
+        protocol://host:port/nodename
+        ```
+
+        It starts with a protocol which must be one of `ws` (unencrypted) or `wss` (SSL).
+        The host name or IP address is separated by `://`.
+        The optional port number is separated by a colon `:`.
+        The node name is separated by a slash `/`.
+
+      type: array
+      items:
+        type: string
+        format: uri
+        description: A WebSocket URI
+
 - $ref: ../node.yaml

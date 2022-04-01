@@ -7,4 +7,68 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    layer:
+      type: string
+      enum:
+      - udp
+      - ip
+      - eth
+      default: udp
+      description: |
+        Select the network layer which should be used for the socket. Please note that `eth` can only be used locally in a LAN as it contains no routing information for the internet.
+
+    verify_source:
+      type: boolean
+      default: false
+      description: |
+        Check if source address of incoming packets matches the remote address.
+
+    in:
+      type: object
+      required:
+      - address
+      properties:
+        address:
+          type: string
+          description: |
+            The local address and port number this node should listen for incoming packets.
+
+            Use `*` to listen on all interfaces: `local = "*:12000"`.
+
+    out:
+      type: object
+      properties:
+        address:
+          type: string
+          description: |
+            The remote address and port number to which this node will send data.
+
+        netem:
+          $ref: ../netem.yaml
+
+        
+        multicast:
+          type: object
+          properties: 
+            enabled:
+              type: boolean
+              default: true
+              description: |
+                Weather or not multicast group subscription is active.
+
+            group:
+              type: string
+              description: |
+                The multicast group. Must be within 224.0.0.0/4
+
+            ttl:
+              type: integer
+              min: 0
+              description: |
+                The time to live for outgoing multicast packets.
+
+            loop:
+              type: boolean
+
+
 - $ref: ../node.yaml

@@ -7,4 +7,24 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    publish:
+      description: A single endpoint URI or list of URIs on which this node should listen for subscribers.
+      oneOf:
+      - type: string
+        format: uri
+      - type: array
+        items:
+          type: string
+          format: uri
+
+    subscribe:
+      description: A single endpoint URI or list of URIs pointing to which this node should connect to as a subscriber.
+      oneOf:
+      - type: string
+        format: uri
+      - type: array
+        items:
+          type: string
+          format: uri
+
 - $ref: ../node.yaml
