@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  properties:
+    setting1:
+      type: integer
+      min: 0    # Make sure any constraints of the values are checked by ExampleNode::check().
+      max: 100
+      default: 72 # Make sure the default values match ExampleNode::ExampleNode().
+      description: A first setting
+
+    setting2:
+      type: string
+      min: 0
+      max: 10
+      default: something
+      description: Another setting
+
+- $ref: ../node.yaml

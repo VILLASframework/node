@@ -37,8 +37,9 @@ using namespace villas::utils;
 
 ExampleNode::ExampleNode(const std::string &name) :
 	Node(name),
-	setting1(0),
-	setting2(nullptr)
+	setting1(72),
+	setting2("something"),
+	state1(0)
 { }
 
 ExampleNode::~ExampleNode()
