@@ -41,6 +41,7 @@ var (
 			Host:   "villas.k8s.eonerc.rwth-aachen.de",
 			Path:   "/ws/signaling",
 		},
+		Wait: true,
 		WebRTC: webrtc.Configuration{
 			ICEServers: []webrtc.ICEServer{
 				{
@@ -79,6 +80,8 @@ type Config struct {
 	Server  *url.URL
 	Session string
 
+	Wait bool
+
 	WebRTC webrtc.Configuration
 }
 
@@ -93,6 +96,7 @@ func (n *Node) Parse(c []byte) error {
 	var cfg struct {
 		Session *string `json:"session"`
 		Server  *string `json:"server,omitempty"`
+		Wait    *bool   `json:"wait,omitemty"`
 		Ice     *struct {
 			Servers []struct {
 				URLs     []string `json:"urls,omitempty"`
@@ -104,6 +108,10 @@ func (n *Node) Parse(c []byte) error {
 
 	if err := json.Unmarshal(c, &cfg); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	if cfg.Wait != nil {
+		n.Config.Wait = *cfg.Wait
 	}
 
 	if cfg.Session == nil || *cfg.Session == "" {
@@ -153,9 +161,11 @@ func (n *Node) Start() error {
 	n.DataChannelLock.Lock()
 	defer n.DataChannelLock.Unlock()
 
-	n.Logger.Info("Waiting until datachannel is connected...")
-	for n.DataChannel == nil {
-		n.DataChannelConnected.Wait()
+	if n.Config.Wait {
+		n.Logger.Info("Waiting until datachannel is connected...")
+		for n.DataChannel == nil {
+			n.DataChannelConnected.Wait()
+		}
 	}
 
 	return n.BaseNode.Start()

@@ -7,6 +7,12 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    wait:
+      type: boolean
+      default: true
+      description: |
+        Suspend start-up of VILLASnode until the connection with the remote peer has been established.
+
     session:
       type: string
       title: Session indentifier
