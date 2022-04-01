@@ -124,10 +124,7 @@ public:
 	/** Initialize node with default values */
 	Node(const std::string &name = "");
 
-	/** Destroy node by freeing dynamically allocated memory.
-	 *
-	 * @see node_type::destroy
-	 */
+	/** Destroy node by freeing dynamically allocated memory. */
 	virtual
 	~Node();
 
@@ -148,24 +145,15 @@ public:
 	virtual
 	int check();
 
-	/** Start operation of a node.
-	 *
-	 * @see node_type::start
-	 */
+	/** Start operation of a node. */
 	virtual
 	int start();
 
-	/** Stops operation of a node.
-	 *
-	 * @see node_type::stop
-	 */
+	/** Stops operation of a node. */
 	virtual
 	int stop();
 
-	/** Pauses operation of a node.
-	 *
-	 * @see node_type::stop
-	 */
+	/** Pauses operation of a node. */
 	virtual
 	int pause()
 	{
@@ -177,20 +165,14 @@ public:
 		return 0;
 	}
 
-	/** Resumes operation of a node.
-	 *
-	 * @see node_type::stop
-	 */
+	/** Resumes operation of a node. */
 	virtual
 	int resume()
 	{
 		return 0;
 	}
 
-	/** Restarts operation of a node.
-	 *
-	 * @see node_type::stop
-	 */
+	/** Restarts operation of a node. */
 	virtual
 	int restart();
 
@@ -225,34 +207,43 @@ public:
 	 */
 	int write(struct Sample * smps[], unsigned cnt);
 
-	/** Reverse local and remote socket address.
-	 *
-	 * @see node_type::reverse
-	 */
+	/** Reverse local and remote socket address. */
 	virtual
 	int reverse()
 	{
 		return -1;
 	}
 
+	/** Get a list of file descriptors on which the path should poll
+	 *  to detect the availability of new samples which can be read.
+	 */
 	virtual
 	std::vector<int> getPollFDs()
 	{
 		return {};
 	}
 
+	/** Get a list of socket file descriptors which are used by the node
+	 * To perform network IO. We use those to selectively apply network emulation
+	 */
 	virtual
 	std::vector<int> getNetemFDs()
 	{
 		return {};
 	}
 
+	/** Get the memory type which this node-type expects.
+	 *
+	 * This is useful for special node-types like Infiniband, GPUs & FPGAs
+	 * which require DMA-backed memory.
+	 */
 	virtual
 	struct villas::node::memory::Type * getMemoryType()
 	{
 		return villas::node::memory::default_type;
 	}
 
+	/** Get the factory which was used to construct this node. */
 	villas::node::NodeFactory * getFactory() const
 	{
 		return factory;
@@ -260,7 +251,6 @@ public:
 
 	/** Return a pointer to a string which should be used to print this node.
 	 *
-	 * @see Node::name_short
 	 * @param n A pointer to the node structure.
 	 */
 	std::string getNameShort() const
@@ -274,8 +264,10 @@ public:
 		return name_long;
 	}
 
+	/** Get the full name including type and details of the node. */
 	const std::string & getNameFull();
 
+	/** Just get the config details of this node as a string */
 	virtual
 	const std::string & getDetails()
 	{
@@ -285,8 +277,6 @@ public:
 
 	/** Return a pointer to a string which should be used to print this node.
 	 *
-	 * @see Node::name_long
-	 * @see node_type::print
 	 * @param n A pointer to the node structure.
 	 */
 	const std::string & getNameLong();
@@ -298,26 +288,33 @@ public:
 	SignalList::Ptr getOutputSignals(bool after_hooks = true) const;
 	SignalList::Ptr getInputSignals(bool after_hooks = true) const;
 
+	/** Get the number of input signals (received by this node) */
 	unsigned getInputSignalsMaxCount() const;
+
+	/** Get the number of output signals (send out via this node) */
 	unsigned getOutputSignalsMaxCount() const;
 
 	void swapSignals();
 
+	/** Get the node configuration as JSON. */
 	json_t * getConfig()
 	{
 		return config;
 	}
 
+	/** Get the state of this node. */
 	enum State getState() const
 	{
 		return state;
 	}
 
+	/** Set the state of this node. */
 	void setState(enum State s)
 	{
 		state = s;
 	}
 
+	/** Get the UUID of this node. */
 	const uuid_t & getUuid() const
 	{
 		return uuid;

@@ -93,6 +93,9 @@ protected:
 	struct timespec started;		/**< Point in time when this node was started. */
 	unsigned missed_steps;			/**< Total number of missed steps. */
 
+	virtual
+	int _read(struct Sample *smps[], unsigned cnt);
+
 public:
 	SignalNode(const std::string &name = "");
 
@@ -110,9 +113,6 @@ public:
 
 	virtual
 	int prepare();
-
-	virtual
-	int _read(struct Sample *smps[], unsigned cnt);
 
 	virtual
 	std::vector<int> getPollFDs();

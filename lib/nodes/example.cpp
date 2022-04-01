@@ -1,5 +1,8 @@
 /** An example get started with new implementations of new node-types
  *
+ * This example does not do any particulary useful.
+ * It is just a skeleton to get you started with new node-types.
+ *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -32,143 +35,121 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-/* Forward declartions */
-static NodeCompatType p;
+ExampleNode::ExampleNode(const std::string &name) :
+	Node(name),
+	setting1(0),
+	setting2(nullptr)
+{ }
 
-int villas::node::example_type_start(villas::node::SuperNode *sn)
+ExampleNode::~ExampleNode()
+{ }
+
+int ExampleNode::prepare()
 {
-	/* TODO: Add implementation here */
+	state1 = setting1;
+
+	if (setting2 == "double")
+		state1 *= 2;
 
 	return 0;
 }
 
-int villas::node::example_type_stop()
+int ExampleNode::parse(json_t *json, const uuid_t sn_uuid)
 {
-	/* TODO: Add implementation here */
-
-	return 0;
-}
-
-int villas::node::example_init(NodeCompat *n)
-{
-	auto *s = n->getData<struct example>();
-
 	/* TODO: Add implementation here. The following is just an example */
 
-	s->setting1 = 0;
-	s->setting2 = nullptr;
-
-	return 0;
-}
-
-int villas::node::example_destroy(NodeCompat *n)
-{
-	// auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	return 0;
-}
-
-int villas::node::example_parse(NodeCompat *n, json_t *json)
-{
-	int ret;
-	auto *s = n->getData<struct example>();
+	const char *setting2_str = nullptr;
 
 	json_error_t err;
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
-		"setting1", &s->setting1,
-		"setting2", &s->setting2
+	int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
+		"setting1", &setting1,
+		"setting2", &setting2_str
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-example");
 
+	if (setting2_str)
+		setting2 = setting2_str;
+
 	return 0;
 }
 
-char * villas::node::example_print(NodeCompat *n)
+int ExampleNode::check()
 {
-	auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	return strf("setting1=%d, setting2=%s", s->setting1, s->setting2);
-}
-
-int villas::node::example_check(NodeCompat *n)
-{
-	auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	if (s->setting1 > 100 || s->setting1 < 0)
+	if (setting1 > 100 || setting1 < 0)
 		return -1;
 
-	if (!s->setting2 || strlen(s->setting2) > 10)
+	if (setting2.empty() || setting2.size() > 10)
 		return -1;
 
 	return 0;
 }
 
-int villas::node::example_prepare(NodeCompat *n)
+int ExampleNode::start()
 {
-	auto *s = n->getData<struct example>();
+	// TODO add implementation here
 
-	/* TODO: Add implementation here. The following is just an example */
-
-	s->state1 = s->setting1;
-
-	if (strcmp(s->setting2, "double") == 0)
-		s->state1 *= 2;
+	start_time = time_now();
 
 	return 0;
 }
 
-int villas::node::example_start(NodeCompat *n)
+// int ExampleNode::stop()
+// {
+// 	// TODO add implementation here
+// 	return 0;
+// }
+
+// int ExampleNode::pause()
+// {
+// 	// TODO add implementation here
+// 	return 0;
+// }
+
+// int ExampleNode::resume()
+// {
+// 	// TODO add implementation here
+// 	return 0;
+// }
+
+// int ExampleNode::restart()
+// {
+// 	// TODO add implementation here
+// 	return 0;
+// }
+
+// int ExampleNode::reverse()
+// {
+// 	// TODO add implementation here
+// 	return 0;
+// }
+
+// std::vector<int> ExampleNode::getPollFDs()
+// {
+// 	// TODO add implementation here
+// 	return {};
+// }
+
+// std::vector<int> ExampleNode::getNetemFDs()
+// {
+// 	// TODO add implementation here
+// 	return {};
+// }
+
+// struct villas::node::memory::Type * ExampleNode::getMemoryType()
+// {
+//	// TODO add implementation here
+// }
+
+const std::string & ExampleNode::getDetails()
 {
-	auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	s->start_time = time_now();
-
-	return 0;
+	details = fmt::format("setting1={}, setting2={}", setting1, setting2);
+	return details;
 }
 
-int villas::node::example_stop(NodeCompat *n)
-{
-	//auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. */
-
-	return 0;
-}
-
-int villas::node::example_pause(NodeCompat *n)
-{
-	//auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. */
-
-	return 0;
-}
-
-int villas::node::example_resume(NodeCompat *n)
-{
-	//auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. */
-
-	return 0;
-}
-
-int villas::node::example_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
+int ExampleNode::_read(struct Sample *smps[], unsigned cnt)
 {
 	int read;
-	auto *s = n->getData<struct example>();
 	struct timespec now;
 
 	/* TODO: Add implementation here. The following is just an example */
@@ -177,22 +158,21 @@ int villas::node::example_read(NodeCompat *n, struct Sample * const smps[], unsi
 
 	now = time_now();
 
-	smps[0]->data[0].f = time_delta(&now, &s->start_time);
+	smps[0]->data[0].f = time_delta(&now, &start_time);
 
 	/* Dont forget to set other flags in struct Sample::flags
 	 * E.g. for sequence no, timestamps... */
 	smps[0]->flags = (int) SampleFlags::HAS_DATA;
-	smps[0]->signals = n->getInputSignals(false);
+	smps[0]->signals = getInputSignals(false);
 
 	read = 1; /* The number of samples read */
 
 	return read;
 }
 
-int villas::node::example_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
+int ExampleNode::_write(struct Sample *smps[], unsigned cnt)
 {
 	int written;
-	//auto *s = n->getData<struct example>();
 
 	/* TODO: Add implementation here. */
 
@@ -201,56 +181,7 @@ int villas::node::example_write(NodeCompat *n, struct Sample * const smps[], uns
 	return written;
 }
 
-int villas::node::example_reverse(NodeCompat *n)
-{
-	//auto *s = n->getData<struct example>();
 
-	/* TODO: Add implementation here. */
-
-	return 0;
-}
-
-int villas::node::example_poll_fds(NodeCompat *n, int fds[])
-{
-	//auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. */
-
-	return 0; /* The number of file descriptors which have been set in fds */
-}
-
-int villas::node::example_netem_fds(NodeCompat *n, int fds[])
-{
-	//auto *s = n->getData<struct example>();
-
-	/* TODO: Add implementation here. */
-
-	return 0; /* The number of file descriptors which have been set in fds */
-}
-
-__attribute__((constructor(110)))
-static void register_plugin() {
-	p.name			= "example";
-	p.description		= "An example for staring new node-type implementations";
-	p.vectorize	= 0;
-	p.size		= sizeof(struct example);
-	p.type.start	= example_type_start;
-	p.type.stop	= example_type_stop;
-	p.init		= example_init;
-	p.destroy	= example_destroy;
-	p.prepare	= example_prepare;
-	p.parse		= example_parse;
-	p.print		= example_print;
-	p.check		= example_check;
-	p.start		= example_start;
-	p.stop		= example_stop;
-	p.pause		= example_pause;
-	p.resume	= example_resume;
-	p.read		= example_read;
-	p.write		= example_write;
-	p.reverse	= example_reverse;
-	p.poll_fds	= example_poll_fds;
-	p.netem_fds	= example_netem_fds;
-
-	static NodeCompatFactory ncp(&p);
-}
+static char n[] = "example";
+static char d[] = "An example for staring new node-type implementations";
+static NodePlugin<ExampleNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL | (int) NodeFactory::Flags::HIDDEN> p;
