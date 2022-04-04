@@ -424,7 +424,9 @@ const std::string & Node::getNameFull()
 		}
 
 		/* Append node-type specific details */
-		auto details = getDetails();
+		if (details.empty())
+			details = getDetails();
+
 		if (!details.empty())
 			name_full += fmt::format(", {}", details);
 	}

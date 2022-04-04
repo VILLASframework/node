@@ -269,7 +269,7 @@ public:
 
 	/** Just get the config details of this node as a string */
 	virtual
-	const std::string & getDetails()
+	std::string getDetails()
 	{
 		static std::string empty;
 		return empty;

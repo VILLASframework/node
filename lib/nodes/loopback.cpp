@@ -108,7 +108,7 @@ std::vector<int> LoopbackNode::getPollFDs()
 	return { queue_signalled_fd(&queue) };
 }
 
-const std::string & LoopbackNode::getDetails()
+std::string LoopbackNode::getDetails()
 {
 	if (details.empty()) {
 		details = fmt::format("queuelen={}", queuelen);
@@ -153,4 +153,4 @@ static char n[] = "loopback";
 static char d[] = "loopback node-type";
 static NodePlugin<LoopbackNode, n, d, (int) NodeFactory::Flags::SUPPORTS_POLL |
                                       (int) NodeFactory::Flags::SUPPORTS_READ |
-				      (int) NodeFactory::Flags::SUPPORTS_WRITE> nf;
+                                      (int) NodeFactory::Flags::SUPPORTS_WRITE> nf;

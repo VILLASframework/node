@@ -274,15 +274,16 @@ int NodeCompat::stop()
 	return ret;
 }
 
-const std::string & NodeCompat::getDetails()
+std::string NodeCompat::getDetails()
 {
-	if (_vt->print && _details.empty()) {
+	std::string details;
+	if (_vt->print) {
 		auto *d = _vt->print(this);
-		_details = std::string(d);
+		details = d;
 		free(d);
 	}
 
-	return _details;
+	return details;
 }
 
 Node * NodeCompatFactory::make()

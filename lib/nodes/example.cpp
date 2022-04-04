@@ -142,7 +142,7 @@ int ExampleNode::start()
 //	// TODO add implementation here
 // }
 
-const std::string & ExampleNode::getDetails()
+std::string ExampleNode::getDetails()
 {
 	details = fmt::format("setting1={}, setting2={}", setting1, setting2);
 	return details;

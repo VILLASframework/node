@@ -104,7 +104,7 @@ public:
 	// struct villas::node::memory::Type * getMemoryType();
 
 	virtual
-	const std::string & getDetails();
+	std::string getDetails();
 };
 
 

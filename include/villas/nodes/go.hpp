@@ -40,8 +40,6 @@ class GoNode : public Node {
 protected:
 	uintptr_t node; // runtime/cgo.Handle
 
-	std::string _details;
-
 	Format *formatter;
 
 	virtual
@@ -66,7 +64,7 @@ public:
 	std::vector<int> getNetemFDs();
 
 	virtual
-	const std::string & getDetails();
+	std::string getDetails();
 
 	virtual
 	int prepare();

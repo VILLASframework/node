@@ -177,15 +177,13 @@ int GoNode::resume()
 	return ret;
 }
 
-const std::string & GoNode::getDetails()
+std::string GoNode::getDetails()
 {
-	if (_details.empty()) {
-		auto *d = GoNodeDetails(node);
-		_details = std::string(d);
-		free(d);
-	}
+	auto *d = GoNodeDetails(node);
+	std::string details = d;
+	free(d);
 
-	return _details;
+	return details;
 }
 
 std::vector<int> GoNode::getPollFDs()

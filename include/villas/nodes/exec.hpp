@@ -69,7 +69,7 @@ public:
 	~ExecNode();
 
 	virtual
-	const std::string & getDetails();
+	std::string getDetails();
 
 	virtual
 	int start();

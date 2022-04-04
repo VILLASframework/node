@@ -151,11 +151,7 @@ int ExecNode::start()
 	if (!stream_out)
 		return -1;
 
-	int ret = Node::start();
-	if (!ret)
-		state = State::STARTED;
-
-	return 0;
+	return Node::start();
 }
 
 int ExecNode::stop()
@@ -194,7 +190,7 @@ int ExecNode::_write(struct Sample * smps[], unsigned cnt)
 	return cnt;
 }
 
-const std::string & ExecNode::getDetails()
+std::string ExecNode::getDetails()
 {
 	std::string wd = working_dir;
 	if (wd.empty()) {

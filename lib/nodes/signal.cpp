@@ -371,7 +371,7 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt)
 	return 1;
 }
 
-const std::string & SignalNode::getDetails()
+std::string SignalNode::getDetails()
 {
 	if (details.empty()) {
 		details = fmt::format("rt={}, rate={}", rt ? "yes" : "no", rate);

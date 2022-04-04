@@ -46,8 +46,6 @@ protected:
 	struct NodeCompatType *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;			/**< Virtual data (used by struct vnode::_vt functions) */
 
-	std::string _details;
-
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt);
 
@@ -90,7 +88,7 @@ public:
 
 	/** Returns a string with a textual represenation of this node. */
 	virtual
-	const std::string & getDetails();
+	std::string getDetails();
 
 	/** Check the current node configuration for plausability and errors.
 

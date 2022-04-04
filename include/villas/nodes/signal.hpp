@@ -100,7 +100,7 @@ public:
 	SignalNode(const std::string &name = "");
 
 	virtual
-	const std::string & getDetails();
+	std::string getDetails();
 
 	virtual
 	int parse(json_t *json, const uuid_t sn_uuid);
