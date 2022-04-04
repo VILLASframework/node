@@ -28,42 +28,43 @@
 #include <libiec61850/sv_publisher.h>
 #include <libiec61850/sv_subscriber.h>
 
+#include <villas/node.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/pool.hpp>
-#include <villas/list.hpp>
 #include <villas/nodes/iec61850.hpp>
 
 namespace villas {
 namespace node {
+namespace iec61850 {
 
-/* Forward declarations */
-class NodeCompat;
+class SVNode : public Node {
 
-struct iec61850_sv {
-	char *interface;
+protected:
+
+	std::string interface;
 	int app_id;
 	struct ether_addr dst_address;
 
 	struct {
 		bool enabled;
 
-		SVSubscriber subscriber;
-		SVReceiver receiver;
+		::SVSubscriber subscriber;
+		SVReceiver *receiver;
 
 		struct CQueueSignalled queue;
 		struct Pool pool;
 
-		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		std::vector<const TypeDescriptor *> signals;
 		int total_size;
 	} in;
 
 	struct {
 		bool enabled;
 
-		SVPublisher publisher;
-		SVPublisher_ASDU asdu;
+		::SVPublisher publisher;
+		::SVPublisher_ASDU asdu;
 
-		char *svid;
+		std::string svid;
 
 		int vlan_priority;
 		int vlan_id;
@@ -71,28 +72,45 @@ struct iec61850_sv {
 		int smprate;
 		int confrev;
 
-		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		std::vector<const TypeDescriptor *> signals;
 		int total_size;
 	} out;
+
+	virtual
+	int _read(struct Sample * smps[], unsigned cnt);
+
+	virtual
+	int _write(struct Sample * smps[], unsigned cnt);
+
+	static
+	void listenerStatic(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu);
+
+	void listener(SVSubscriber subscriber, SVSubscriber_ASDU asdu);
+
+public:
+	SVNode(const std::string &name = "");
+
+	virtual
+	~SVNode();
+
+	virtual
+	int start();
+
+	virtual
+	int stop();
+
+	virtual
+	std::vector<int> getPollFDs();
+
+	virtual
+	std::string getDetails();
+
+	virtual
+	int parse(json_t *json, const uuid_t sn_uuid);
 };
 
 int iec61850_sv_type_stop();
 
-int iec61850_sv_parse(NodeCompat *n, json_t *json);
-
-char * iec61850_sv_print(NodeCompat *n);
-
-int iec61850_sv_start(NodeCompat *n);
-
-int iec61850_sv_stop(NodeCompat *n);
-
-int iec61850_sv_destroy(NodeCompat *n);
-
-int iec61850_sv_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
-
-int iec61850_sv_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
-
-int iec61850_sv_poll_fds(NodeCompat *n, int fds[]);
-
+} /* namespace iec61850 */
 } /* namespace node */
 } /* namespace villas */

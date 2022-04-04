@@ -41,11 +41,12 @@
 
 namespace villas {
 namespace node {
+namespace iec61850 {
 
-/* Forward declarations */
-class NodeCompat;
+int type_start(villas::node::SuperNode *sn);
+int type_stop();
 
-enum class IEC61850Type {
+enum class Type {
 	/* According to IEC 61850-7-2 */
 	BOOLEAN,
 	INT8,
@@ -71,52 +72,136 @@ enum class IEC61850Type {
 	BITSTRING
 };
 
-struct iec61850_type_descriptor {
-	const char *name;
-	enum IEC61850Type iec_type;
+class TypeDescriptor {
+
+public:
+	std::string name;
+
+	enum Type iec_type;
 	enum SignalType type;
+
 	unsigned size;
+
 	bool publisher;
 	bool subscriber;
+
+	static
+	const TypeDescriptor * lookup(const std::string &name);
+
+	static
+	const TypeDescriptor * parse(json_t *json_signal, Signal::Ptr sig);
 };
 
-struct iec61850_receiver {
-	char *interface;
 
+int parseSignals(json_t *json_signals, std::vector<const TypeDescriptor *> &signals, SignalList::Ptr node_signals);
+
+class BaseReceiver {
+
+protected:
+	std::string interface;
 	EthernetSocket socket;
 
-	enum class Type {
-		GOOSE,
-		SAMPLED_VALUES
-	} type;
+public:
+	BaseReceiver(const std::string &intf);
 
-	union {
-		SVReceiver sv;
-		GooseReceiver goose;
-	};
+	virtual
+	void start();
+
+	virtual
+	void stop();
+
+	virtual
+	bool tick() = 0;
 };
 
-int iec61850_type_start(villas::node::SuperNode *sn);
+template<
+	typename R,
+	typename S,
+	R (*_create)(),
+	void (*_destroy)(R),
+	bool (*_tick)(R),
+	EthernetSocket (*_startThreadless)(R),
+	void (*_stopThreadless)(R),
+	void (*_addSubscriber)(R, S),
+	void (*_removeSubscriber)(R, S),
+	void (*_setInterfaceId)(R, const char*)
+>
+class Receiver : public BaseReceiver {
 
-int iec61850_type_stop();
+protected:
+	R receiver;
 
-const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
+public:
+	Receiver(const std::string &intf) :
+		BaseReceiver(intf),
+		receiver(_create())
+	{
+		_setInterfaceId(receiver, interface.c_str());
+	}
 
-int iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals);
+	virtual
+	~Receiver()
+	{
+		_destroy(receiver);
+	}
 
-const struct iec61850_type_descriptor * iec61850_parse_signal(json_t *json_signal, Signal::Ptr *sig);
+	virtual
+	bool tick()
+	{
+		return _tick(receiver);
+	}
 
-struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf);
+	virtual
+	void start()
+	{
+		socket = _startThreadless(receiver);
+		Receiver::start();
+	}
 
-struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf);
+	virtual
+	void stop()
+	{
+		Receiver::stop();
+		_stopThreadless(receiver);
+	}
 
-int iec61850_receiver_start(struct iec61850_receiver *r);
+	void addSubscriber(S sub)
+	{
+		_addSubscriber(receiver, sub);
+	}
 
-int iec61850_receiver_stop(struct iec61850_receiver *r);
+	void removeSubscriber(S sub)
+	{
+		_removeSubscriber(receiver, sub);
+	}
+};
 
-int iec61850_receiver_destroy(struct iec61850_receiver *r);
+using GooseReceiver = Receiver<
+	::GooseReceiver,
+	::GooseSubscriber,
+	::GooseReceiver_create,
+	::GooseReceiver_destroy,
+	::GooseReceiver_tick,
+	::GooseReceiver_startThreadless,
+	::GooseReceiver_stopThreadless,
+	::GooseReceiver_addSubscriber,
+	::GooseReceiver_removeSubscriber,
+	::GooseReceiver_setInterfaceId
+>;
 
-const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
+using SVReceiver = Receiver<
+	::SVReceiver,
+	::SVSubscriber,
+	::SVReceiver_create,
+	::SVReceiver_destroy,
+	::SVReceiver_tick,
+	::SVReceiver_startThreadless,
+	::SVReceiver_stopThreadless,
+	::SVReceiver_addSubscriber,
+	::SVReceiver_removeSubscriber,
+	::SVReceiver_setInterfaceId
+>;
 
+} /* namespace iec61850 */
 } /* namespace node */
 } /* namespace villas */

@@ -24,6 +24,9 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <map>
+#include <array>
+
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
 #include <villas/signal.hpp>
@@ -38,33 +41,34 @@
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node::iec61850;
 
-const struct iec61850_type_descriptor type_descriptors[] = {
-	/* name,              iec_type,                         type,                 size, supported */
-	{ "boolean",          IEC61850Type::BOOLEAN,		SignalType::BOOLEAN,	 1, false, false },
-	{ "int8",             IEC61850Type::INT8,		SignalType::INTEGER,	 1, false, false },
-	{ "int16",            IEC61850Type::INT16,		SignalType::INTEGER,	 2, false, false },
-	{ "int32",            IEC61850Type::INT32,		SignalType::INTEGER,	 4, false, false },
-	{ "int64",            IEC61850Type::INT64,		SignalType::INTEGER,	 8, false, false },
-	{ "int8u",            IEC61850Type::INT8U,		SignalType::INTEGER,	 1, false, false },
-	{ "int16u",           IEC61850Type::INT16U,		SignalType::INTEGER,	 2, false, false },
-	{ "int32u",           IEC61850Type::INT32U,		SignalType::INTEGER,	 4, false, false },
-	{ "int64u",           IEC61850Type::INT64U,		SignalType::INTEGER,	 8, false, false },
-	{ "float32",          IEC61850Type::FLOAT32,		SignalType::FLOAT,	 4, false, false },
-	{ "float64",          IEC61850Type::FLOAT64,		SignalType::FLOAT,	 8, false, false },
-	{ "enumerated",       IEC61850Type::ENUMERATED,		SignalType::INVALID,	 4, false, false },
-	{ "coded_enum",       IEC61850Type::CODED_ENUM,		SignalType::INVALID,	 4, false, false },
-	{ "octet_string",     IEC61850Type::OCTET_STRING,	SignalType::INVALID,	20, false, false },
-	{ "visible_string",   IEC61850Type::VISIBLE_STRING,	SignalType::INVALID,	35, false, false },
-	{ "objectname",       IEC61850Type::OBJECTNAME,		SignalType::INVALID,	20, false, false },
-	{ "objectreference",  IEC61850Type::OBJECTREFERENCE,	SignalType::INVALID,	20, false, false },
-	{ "timestamp",        IEC61850Type::TIMESTAMP,		SignalType::INVALID,	 8, false, false },
-	{ "entrytime",        IEC61850Type::ENTRYTIME,		SignalType::INVALID,	 6, false, false },
-	{ "bitstring",        IEC61850Type::BITSTRING,		SignalType::INVALID,	 4, false, false }
-};
+const std::array<TypeDescriptor, 20> type_descriptors = {{
+	/* name,              iec_type,                 type,                 size, supported */
+	{ "boolean",          Type::BOOLEAN,		SignalType::BOOLEAN,	 1, false, false },
+	{ "int8",             Type::INT8,		SignalType::INTEGER,	 1, false, false },
+	{ "int16",            Type::INT16,		SignalType::INTEGER,	 2, false, false },
+	{ "int32",            Type::INT32,		SignalType::INTEGER,	 4, false, false },
+	{ "int64",            Type::INT64,		SignalType::INTEGER,	 8, false, false },
+	{ "int8u",            Type::INT8U,		SignalType::INTEGER,	 1, false, false },
+	{ "int16u",           Type::INT16U,		SignalType::INTEGER,	 2, false, false },
+	{ "int32u",           Type::INT32U,		SignalType::INTEGER,	 4, false, false },
+	{ "int64u",           Type::INT64U,		SignalType::INTEGER,	 8, false, false },
+	{ "float32",          Type::FLOAT32,		SignalType::FLOAT,	 4, false, false },
+	{ "float64",          Type::FLOAT64,		SignalType::FLOAT,	 8, false, false },
+	{ "enumerated",       Type::ENUMERATED,		SignalType::INVALID,	 4, false, false },
+	{ "coded_enum",       Type::CODED_ENUM,		SignalType::INVALID,	 4, false, false },
+	{ "octet_string",     Type::OCTET_STRING,	SignalType::INVALID,	20, false, false },
+	{ "visible_string",   Type::VISIBLE_STRING,	SignalType::INVALID,	35, false, false },
+	{ "objectname",       Type::OBJECTNAME,		SignalType::INVALID,	20, false, false },
+	{ "objectreference",  Type::OBJECTREFERENCE,	SignalType::INVALID,	20, false, false },
+	{ "timestamp",        Type::TIMESTAMP,		SignalType::INVALID,	 8, false, false },
+	{ "entrytime",        Type::ENTRYTIME,		SignalType::INVALID,	 6, false, false },
+	{ "bitstring",        Type::BITSTRING,		SignalType::INVALID,	 4, false, false }
+}};
 
 /** Each network interface needs a separate receiver */
-static struct List receivers;
+static std::map<std::string, BaseReceiver *> receivers;
 static pthread_t thread;
 static EthernetHandleSet hset;
 static int users = 0;
@@ -72,37 +76,29 @@ static int users = 0;
 static
 void * iec61850_thread(void *ctx)
 {
-	int ret;
-
-	while (1) {
-		ret = EthernetHandleSet_waitReady(hset, 1000);
+	while (true) {
+		int ret = EthernetHandleSet_waitReady(hset, 1000);
 		if (ret < 0)
 			continue;
 
-		for (unsigned i = 0; i < list_length(&receivers); i++) {
-			struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
-
-			switch (r->type) {
-				case iec61850_receiver::Type::GOOSE:	GooseReceiver_tick(r->goose); break;
-				case iec61850_receiver::Type::SAMPLED_VALUES:	SVReceiver_tick(r->sv); break;
-			}
-		}
+		for (auto it : receivers)
+			it.second->tick();
 	}
 
 	return nullptr;
 }
 
-const struct iec61850_type_descriptor * villas::node::iec61850_lookup_type(const char *name)
+const TypeDescriptor * TypeDescriptor::lookup(const std::string &name)
 {
-	for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {
-		if (!strcmp(name, type_descriptors[i].name))
-			return &type_descriptors[i];
+	for (auto &td : type_descriptors) {
+		if (name == td.name)
+			return &td;
 	}
 
 	return nullptr;
 }
 
-const struct iec61850_type_descriptor * iec61850_parse_signal(json_t *json_signal, Signal::Ptr sig)
+const TypeDescriptor * TypeDescriptor::parse(json_t *json_signal, Signal::Ptr sig)
 {
 	int ret;
 	const char *iec_type;
@@ -115,69 +111,62 @@ const struct iec61850_type_descriptor * iec61850_parse_signal(json_t *json_signa
 
 	/* Try to deduct the IEC 61850 data type from VILLAS signal format */
 	if (!iec_type) {
-		switch (sig->type) {
-			case SignalType::BOOLEAN:
-				iec_type = "boolean";
-				break;
+		if (!sig)
+			iec_type = "float64";
+		else {
+			switch (sig->type) {
+				case SignalType::BOOLEAN:
+					iec_type = "boolean";
+					break;
 
-			case SignalType::FLOAT:
-				iec_type = "float64";
-				break;
+				case SignalType::FLOAT:
+					iec_type = "float64";
+					break;
 
-			case SignalType::INTEGER:
-				iec_type = "int64";
-				break;
+				case SignalType::INTEGER:
+					iec_type = "int64";
+					break;
 
-			default:
-				return NULL;
+				default:
+					return NULL;
+			}
 		}
 	}
 
-	return iec61850_lookup_type(iec_type);
+	return TypeDescriptor::lookup(iec_type);
 }
 
-int villas::node::iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals)
+int villas::node::iec61850::parseSignals(json_t *json_signals, std::vector<const TypeDescriptor*> &signals, SignalList::Ptr node_signals)
 {
-	int ret, total_size = 0;
+	int total_size = 0;
 
-	ret = list_init(signals);
-	if (ret)
-		return ret;
-
-	if (!node_signals)
-		return -1;
+	signals.clear();
 
 	json_t *json_signal;
 	size_t i;
 	json_array_foreach(json_signals, i, json_signal) {
-		const struct iec61850_type_descriptor *td;
-		auto sig = node_signals->getByIndex(i);
-
-		td = iec61850_parse_signal(json_signal, sig);
+		auto sig = node_signals ? node_signals->getByIndex(i) : Signal::Ptr();
+		auto *td = TypeDescriptor::parse(json_signal, sig);
 		if (!td)
 			return -1;
 
-		for (unsigned i = 0; i < node_signals->size(); i++) {
-			list_push(signals, (void *) td);
+		if (sig && td->type != sig->type)
+			throw RuntimeError("Type mismatch for input signal '{}': type={}, iec_type={}", sig->name, signalTypeToString(sig->type), td->name);
 
-			total_size += td->size;
-		}
+		signals.push_back(td);
+		total_size += td->size;
 	}
 
 	return total_size;
 }
 
-int villas::node::iec61850_type_start(villas::node::SuperNode *sn)
+int villas::node::iec61850::type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
 	/* Check if already initialized */
 	if (users > 0)
 		return 0;
-
-	ret = list_init(&receivers);
-	if (ret)
-		return ret;
 
 	hset = EthernetHandleSet_new();
 
@@ -188,18 +177,15 @@ int villas::node::iec61850_type_start(villas::node::SuperNode *sn)
 	return 0;
 }
 
-int villas::node::iec61850_type_stop()
+int villas::node::iec61850::type_stop()
 {
 	int ret;
 
 	if (--users > 0)
 		return 0;
 
-	for (unsigned i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
-
-		iec61850_receiver_stop(r);
-	}
+	for (auto it : receivers)
+		it.second->stop();
 
 	ret = pthread_cancel(thread);
 	if (ret)
@@ -211,106 +197,20 @@ int villas::node::iec61850_type_stop()
 
 	EthernetHandleSet_destroy(hset);
 
-	ret = list_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
-	if (ret)
-		return ret;
-
 	return 0;
 }
 
-int villas::node::iec61850_receiver_start(struct iec61850_receiver *r)
+BaseReceiver::BaseReceiver(const std::string &intf)
 {
-	switch (r->type) {
-		case iec61850_receiver::Type::GOOSE:
-			r->socket = GooseReceiver_startThreadless(r->goose);
-			break;
-
-		case iec61850_receiver::Type::SAMPLED_VALUES:
-			r->socket = SVReceiver_startThreadless(r->sv);
-			break;
-	}
-
-	EthernetHandleSet_addSocket(hset, r->socket);
-
-	return 0;
+	receivers[intf] = this;
 }
 
-int villas::node::iec61850_receiver_stop(struct iec61850_receiver *r)
+void BaseReceiver::start()
 {
-	EthernetHandleSet_removeSocket(hset, r->socket);
-
-	switch (r->type) {
-		case iec61850_receiver::Type::GOOSE:
-			GooseReceiver_stopThreadless(r->goose);
-			break;
-
-		case iec61850_receiver::Type::SAMPLED_VALUES:
-			SVReceiver_stopThreadless(r->sv);
-			break;
-	}
-
-	return 0;
+	EthernetHandleSet_addSocket(hset, socket);
 }
 
-int villas::node::iec61850_receiver_destroy(struct iec61850_receiver *r)
+void BaseReceiver::stop()
 {
-	switch (r->type) {
-		case iec61850_receiver::Type::GOOSE:
-			GooseReceiver_destroy(r->goose);
-			break;
-
-		case iec61850_receiver::Type::SAMPLED_VALUES:
-			SVReceiver_destroy(r->sv);
-			break;
-	}
-
-	free(r->interface);
-
-	return 0;
-}
-
-struct iec61850_receiver * villas::node::iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf)
-{
-	for (unsigned i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
-
-		if (r->type == t && strcmp(r->interface, intf) == 0)
-			return r;
-	}
-
-	return nullptr;
-}
-
-struct iec61850_receiver * villas::node::iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf)
-{
-	struct iec61850_receiver *r;
-
-	/* Check if there is already a SVReceiver for this interface */
-	r = iec61850_receiver_lookup(t, intf);
-	if (!r) {
-		r = new struct iec61850_receiver;
-		if (!r)
-			throw MemoryAllocationError();
-
-		r->interface = strdup(intf);
-		r->type = t;
-
-		switch (r->type) {
-			case iec61850_receiver::Type::GOOSE:
-				r->goose = GooseReceiver_create();
-				GooseReceiver_setInterfaceId(r->goose, r->interface);
-				break;
-
-			case iec61850_receiver::Type::SAMPLED_VALUES:
-				r->sv = SVReceiver_create();
-				SVReceiver_setInterfaceId(r->sv, r->interface);
-				break;
-		}
-
-		iec61850_receiver_start(r);
-
-		list_push(&receivers, r);
-	}
-
-	return r;
+	EthernetHandleSet_removeSocket(hset, socket);
 }
