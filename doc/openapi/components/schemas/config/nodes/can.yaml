@@ -3,5 +3,25 @@
 
 allOf:
 - type: object
-  properties: {}
+  properties:
+    interface_name:
+      type: string
+      description: Name of the Socket CAN interface
+
+    in:
+      type: object
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/can.yaml
+
+    out:
+      type: object
+      properties:
+        signals:
+          type: array
+          items:
+            $$ref: ./signals/can.yaml
+
 - $ref: ../node.yaml

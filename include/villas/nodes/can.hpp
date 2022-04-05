@@ -43,7 +43,6 @@ struct can_signal {
 struct can {
 	/* Settings */
 	char *interface_name;
-	double *sample_rate;
 	struct can_signal *in;
 	struct can_signal *out;
 

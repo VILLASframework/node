@@ -18,9 +18,9 @@ allOf:
 
     ssl_verify:
       type: boolean
+      description: Verify SSL certificate against local trust store.
 
     timeout:
       type: number
-
 
 - $ref: ../node.yaml

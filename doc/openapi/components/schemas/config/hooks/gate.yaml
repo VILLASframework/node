@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: single.yaml
 - type: object
   properties: 
     mode:
@@ -25,3 +23,6 @@ allOf:
     samples:
       description: The number if samples for which the gate opens when the triggering condition is met. Exclusive with the `duration` setting.
       type: number
+
+- $ref: common.yaml
+- $ref: single.yaml

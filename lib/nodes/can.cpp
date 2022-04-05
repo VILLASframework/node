@@ -132,9 +132,8 @@ int villas::node::can_parse(NodeCompat *n, json_t *json)
 	c->in = nullptr;
 	c->out = nullptr;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: F, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o } }",
 		"interface_name", &c->interface_name,
-		"sample_rate", &c->sample_rate,
 		"in",
 			"signals", &json_in_signals,
 		"out",

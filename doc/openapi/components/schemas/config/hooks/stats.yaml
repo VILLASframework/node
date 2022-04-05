@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
 - type: object
   properties: 
     format:
@@ -23,3 +22,5 @@ allOf:
       type: string
       description: The file where you want to write the report to. If omitted, stdout (the terminal) will be used.
       default: '/dev/stdout'
+
+- $ref: common.yaml

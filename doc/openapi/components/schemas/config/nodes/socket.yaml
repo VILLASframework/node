@@ -46,7 +46,6 @@ allOf:
         netem:
           $ref: ../netem.yaml
 
-        
         multicast:
           type: object
           properties: 
@@ -69,6 +68,5 @@ allOf:
 
             loop:
               type: boolean
-
 
 - $ref: ../node.yaml

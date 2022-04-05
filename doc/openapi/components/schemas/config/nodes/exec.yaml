@@ -19,7 +19,7 @@ allOf:
 
       exec:
         description: |
-          The program which should be execed in the sub-process.
+          The program which should be executed in the sub-process.
 
           The option is passed to the system shell for execution.
         
@@ -43,7 +43,6 @@ allOf:
       environment:
         type: object
         description: |
-          A object of key/value pairs of environemnt variables which should be passed to the sub-process in addition to the parent environment.
-
+          A object of key/value pairs of environment variables which should be passed to the sub-process in addition to the parent environment.
 
 - $ref: ../node.yaml

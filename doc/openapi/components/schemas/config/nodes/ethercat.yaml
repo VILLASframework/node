@@ -2,8 +2,39 @@
 ---
 
 allOf:
-- $ref: ../node.yaml
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    rate:
+      type: number
+
+    in:
+      type: object
+      properties:
+        num_channels:
+          type: integer
+
+        range:
+          type: number
+
+        product_code:
+          type: integer
+
+        vendor_id:
+          type: integer
+
+    out:
+      type: object
+      properties:
+        num_channels:
+          type: integer
+
+        range:
+          type: number
+
+        product_code:
+          type: integer
+
+        vendor_id:
+          type: integer
+
+- $ref: ../node.yaml

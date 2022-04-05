@@ -3,7 +3,37 @@
 
 allOf:
 - type: object
+  required:
+  - rate
+  - signals
+
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    subdevice:
+      type: integer
+
+    bufsize:
+      type: integer
+      default: 16
+
+    signals:
+      type: array
+      items:
+        type: object
+        required:
+        - channel
+        - range
+        - aref
+        properties:
+          channel:
+            type: integer
+
+          range:
+            type: integer
+
+          aref:
+            type: integer
+
+    rate:
+      type: integer
+
 - $ref: ../node.yaml

@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: single.yaml
 - type: object
   required:
   - f0
@@ -31,3 +29,5 @@ allOf:
       type: boolean
       default: false
 
+- $ref: common.yaml
+- $ref: single.yaml

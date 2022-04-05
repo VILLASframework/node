@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: multi.yaml
 - type: object
   required:
   - offset
@@ -17,3 +15,5 @@ allOf:
         - `0` inserts the averaged signal before all other signals in the sample
         - `1` inserts the averaged signal after the first signal.
 
+- $ref: common.yaml
+- $ref: multi.yaml

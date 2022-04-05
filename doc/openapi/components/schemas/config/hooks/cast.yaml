@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: multi.yaml
 - type: object
   properties:
     new_type:
@@ -23,3 +21,6 @@ allOf:
       type: string
       description: The new unit of the casted signal.
       example: V
+
+- $ref: common.yaml
+- $ref: multi.yaml

@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
 - type: object
   properties:
     output:
@@ -16,3 +15,4 @@ allOf:
       default: ''
       description: An optional prefix which will be prepended to each line written by this hook to the output
   
+- $ref: common.yaml

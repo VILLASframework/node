@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
 - type: object
   required:
     - ratio
@@ -11,4 +10,5 @@ allOf:
       type: integer
       description: The decimation ratio. A value of 4 will skip every, but the 4th sample in a row.
       example: 4
-  
+
+- $ref: common.yaml

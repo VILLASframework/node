@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
 - type: object
   additionalProperties:
     description: |
@@ -79,3 +78,5 @@ allOf:
                 An arbitrary Lua expression which will be evaluated and used for the value of the signal.
                 Note you can access the current sample using the global Lua variable `smp`.
         - $ref: ../signal_spec.yaml
+
+- $ref: common.yaml

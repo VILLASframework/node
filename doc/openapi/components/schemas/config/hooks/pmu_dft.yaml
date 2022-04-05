@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: multi.yaml
 - type: object
   required:
   - sample_rate
@@ -106,3 +104,6 @@ allOf:
       default: 0.0
       example: 1.0
       description: An offset added to the calculated RoCoF. This setting does not really make sense but is available for completeness reasons"
+
+- $ref: common.yaml
+- $ref: multi.yaml

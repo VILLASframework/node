@@ -60,7 +60,6 @@ allOf:
 
         See: https://redis.io/commands/auth
 
-
     db:
       type: integer
       default: 0
@@ -125,9 +124,5 @@ allOf:
         key:
           type: string
           description: A path to the private key file.
-
-        
-
-
 
 - $ref: ../node.yaml

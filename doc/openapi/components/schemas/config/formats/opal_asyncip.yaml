@@ -6,4 +6,5 @@ allOf:
   properties:
     dev_id:
       type: integer
+
 - $ref: ../format.yaml

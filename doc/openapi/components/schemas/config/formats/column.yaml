@@ -2,8 +2,9 @@
 ---
 
 allOf:
-- $ref: line.yaml
 - type: object
   properties:
     delimiter:
       type: string
+
+- $ref: line.yaml

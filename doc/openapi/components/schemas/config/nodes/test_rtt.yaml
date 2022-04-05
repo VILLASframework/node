@@ -3,8 +3,72 @@
 
 allOf:
 - type: object
+  required:
+  - cases
   properties:
     format:
       $ref: ../format_spec.yaml
 
+    prefix:
+      type: string
+      description: A prefix which is prepended to the output file name of the RTT test result file.
+      example: "test_1"
+
+    output:
+      type: string
+      default: "."
+      description: A directory path at which the RTT test result files be placed.
+
+    cooldown:
+      type: number
+      default: 0.0
+      description: |
+        A cool-down time between consecutive test cases.
+        The node will insert a pause between the tests to avoid any network effects of the previous test-case to influence the upcoming test-case.
+
+    cases:
+      type: object
+      description: |
+        A list of test-case specifications.
+
+        The values from the `rates` and `values` settings of each-test case specification will be used to form a cross-product.
+      properties:
+        rates:
+          description: |
+            A list of sending rates in Hz.
+            The resulting test-case will generate samples at the given rate.
+          example:
+          - 10
+          - 100
+          - 1000
+          - 10000
+          type: array
+          items:
+            type: number
+
+        values:
+          description: |
+            A list of sample length.
+            The resulting test-case will generate samples with the given number of signals.
+          type: array
+          items:
+            type: integer
+          example:
+          - 10
+          - 100
+
+        limit:
+          description: |
+            The resulting test-case will send the number of samples specified by this setting.
+            This setting is exclusive with the `duration` setting.
+          type: integer
+          example: 10000
+
+        duration:
+          description: |
+            The resulting test-case will be stopped after the configured duration in seconds.
+            This setting is exclusive with the `limit` setting.
+          type: number
+          example: 60.0
+      
 - $ref: ../node.yaml

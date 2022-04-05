@@ -10,4 +10,5 @@ allOf:
     ```bash
     curl http://localhost:80/api/v2/universal/api_node_name/config
     ```
+
 - $ref: ../node.yaml

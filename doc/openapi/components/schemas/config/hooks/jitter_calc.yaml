@@ -3,4 +3,3 @@
 
 allOf:
 - $ref: common.yaml
-

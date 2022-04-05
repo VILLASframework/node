@@ -56,7 +56,6 @@ allOf:
       default: 0.0
       description: Tha pase of the signal when the `signal` setting is one of `sine` or `pulse`.
 
-
     pulse_width:
       type: number
       default: 1.0

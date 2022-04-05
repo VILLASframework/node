@@ -53,5 +53,4 @@ allOf:
           description: |
             The private key of the server.
 
-
 - $ref: ../node.yaml

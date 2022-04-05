@@ -4,7 +4,33 @@
 allOf:
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    realtime:
+      type: boolean
+      default: true
+      description: Pace the generation of samples by the `rate` setting.
+
+    limit:
+      type: integer
+      default: 0
+      description: Stop the node after the provided number of samples.
+
+    rate:
+      type: number
+      description: The rate at which the samples are generated if operating in real-time mode (See `realtime` option).
+
+    monitor_missed:
+      type: boolean
+      default: false
+      description: Raise warnings if the signal generator fails to operate in real-time due to missed deadlines.
+
+    in:
+      type: object
+      required:
+      - signals
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/generator.yaml
 
 - $ref: ../node.yaml

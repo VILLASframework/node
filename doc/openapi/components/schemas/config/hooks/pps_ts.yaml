@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: single.yaml
 - type: object
   required:
   - expected_smp_rate
@@ -28,3 +26,6 @@ allOf:
     horizon_compensation:
       type: integer
       default: 10
+
+- $ref: common.yaml
+- $ref: single.yaml

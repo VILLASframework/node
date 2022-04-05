@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: multi.yaml
 - type: object
   required:
   - min
@@ -15,3 +13,6 @@ allOf:
     max:
       description: The largest value which will pass through the hook before getting clipped.
       type: number
+
+- $ref: common.yaml
+- $ref: multi.yaml

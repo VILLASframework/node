@@ -7,6 +7,46 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    rtcp:
+      type: boolean
+      description: Enable Real-time Control Protocol (RTCP)
+
+    aimd:
+      type: object
+      properties: 
+        a:
+          type: number
+          default: 10
+        b:
+          type: number
+          default: 0.5
+        Kp:
+          type: number
+          default: 1.0
+        Ki:
+          type: number
+          default: 0.0
+        Kd:
+          type: number
+          default: 0.0
+        rate_min:
+          type: number
+          default: 1
+        rate_source:
+          type: number
+          default: 2000
+        rate_init:
+          type: number
+        log:
+          type: string
+        hook_type:
+          type: string
+          default: disabled
+          enum:
+          - decimate
+          - limit_rate
+          - disabled
+
     out:
       type: object
       properties: 

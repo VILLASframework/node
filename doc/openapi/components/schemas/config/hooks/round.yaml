@@ -2,8 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
-- $ref: multi.yaml
 - type: object
   properties: 
     precision:
@@ -11,3 +9,6 @@ allOf:
       default: 0
       example: 4
       description: The number of decimal digits to which the singal is rounded.
+
+- $ref: common.yaml
+- $ref: multi.yaml

@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: common.yaml
 - type: object
   required:
   - rate
@@ -18,3 +17,5 @@ allOf:
       - local
       - received
       - origin
+
+- $ref: common.yaml
