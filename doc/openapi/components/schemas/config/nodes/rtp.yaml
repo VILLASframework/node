@@ -7,4 +7,10 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
+    out:
+      type: object
+      properties: 
+        netem:
+          $ref: ../netem.yaml
+
 - $ref: ../node.yaml

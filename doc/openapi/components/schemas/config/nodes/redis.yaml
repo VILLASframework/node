@@ -4,7 +4,130 @@
 allOf:
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    mode:
+      type: string
+      enum:
+      - key
+      - hash
+      - channel
+      default: key
+      description: |
+        - `key`: [Get](https://redis.io/commands/get)/[Set](https://redis.io/commands/set) of [Redis strings](https://redis.io/topics/data-types#strings)
+          - The implementation uses the Redis `MSET` and `MGET` commands.
+        - `hash`: Hashtables using [hash data-type](https://redis.io/topics/data-types#hashes)
+          - The implementation uses the Redis `HMSET` and `HGETALL` commands.
+        - `channel`: [Publish/subscribe](https://redis.io/topics/pubsub)
+          - The implementation uses the Redis `PUBLISH` and `SUBSCRIBE` commands.
+
+    uri:
+      type: string
+      format: uri
+      description: |
+        A Redis connection URI in the form of: `redis://<user>:<password>@<host>:<post>/<db>`.
+
+    host:
+      type: string
+      default: localhost
+      description: |
+        The hostname or IP address of the Redis server.
+
+        You can also connect to Redis server with a URI:
+
+        - `tcp://[[username:]password@]host[:port][/db]`
+        - `unix://[[username:]password@]path-to-unix-domain-socket[/db]`
+
+    port:
+      type: integer
+      description: The port number of the Redis server to connect to.
+      default: 6379
+
+    path:
+      type: string
+      description: A path of a Unix socket which should be used for the connection.
+
+    user:
+      type: string
+      default: default
+      description: |
+        The username which should be used for authentication.
+
+        See: https://redis.io/commands/auth
+
+    password:
+      type: string
+      description: |
+        The password which should be used for authentication.
+
+        See: https://redis.io/commands/auth
+
+
+    db:
+      type: integer
+      default: 0
+      description: |
+        The logical database which should be used by the Redis client.
+
+        See: https://redis.io/commands/select
+
+    timeout:
+      type: object
+      properties: 
+        connect:
+          type: number
+          description: The timeout in seconds for the initial connection establishment.
+
+        socket:
+          type: number
+          description: The timeout in seconds for executing commands against the Redis server.
+
+    keepalive:
+      type: boolean
+      default: false
+      description: Enable periodic keepalive packets. 
+
+    key:
+      type: string
+      default: <node-name>
+      description: The key which this node will use in the Redis keyspace.
+
+    channel:
+      type: string
+      default: <node-name>
+      description: The channel which this node will use when `mode` setting is `channel`.
+
+    notify:
+      type: boolean
+      default: true
+      description: |
+        Use [Redis keyspace notifications](https://redis.io/topics/notifications) to listen for new updates.
+        This setting is only used if setting `mode` is set to `key` or `hash`.
+
+    ssl:
+      type: object
+      properties: 
+        enabled:
+          type: boolean
+          default: true
+          description: If enabled the connection to the Redis server will be encrypted via SSL/TLS.
+
+        cacert:
+          type: string
+          description: A path to a CA certificate file.
+
+        cacertdir:
+          type: string
+          description: A path to a directory containing CA certificates.
+
+        cert:
+          type: string
+          description: A path to a client certificate file.
+
+        key:
+          type: string
+          description: A path to the private key file.
+
+        
+
+
 
 - $ref: ../node.yaml

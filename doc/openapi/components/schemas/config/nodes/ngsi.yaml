@@ -3,8 +3,24 @@
 
 allOf:
 - type: object
+  required:
+  - endpoint
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    endpoint:
+      type: string
+      format: uri
+    
+    entity_id:
+      type: string
+
+    entity_type:
+      type: string
+
+    ssl_verify:
+      type: boolean
+
+    timeout:
+      type: number
+
 
 - $ref: ../node.yaml

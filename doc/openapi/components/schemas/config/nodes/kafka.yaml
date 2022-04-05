@@ -3,8 +3,80 @@
 
 allOf:
 - type: object
+  required:
+  - server
+  - client_id
   properties:
     format:
       $ref: ../format_spec.yaml
+
+    server:
+      type: string
+      description: |
+        The bootstrap server `{ip}:{port}` of the Kafka message brokers cluster.
+
+    protocol:
+      type: string
+      enum:
+      - PLAINTEXT
+      - SASL_PLAINTEXT
+      - SASL_SSL
+      - SSL
+      description: |
+        The [security protocol](https://kafka.apache.org/24/javadoc/org/apache/kafka/common/security/auth/SecurityProtocol.html) which is used for authentication with the Kafka cluster.
+
+    client_id:
+      type: string
+      description: The Kafka client identifier.
+
+    ssl:
+      type: object
+      properties:
+        ca:
+          type: string
+          description: Path to a Certificate Authority (CA) bundle which is used to validate broker server certificate.
+
+    sasl:
+      type: object
+      description: |
+        An object for configuring the SASL authentication against the broker.
+        This setting is used if the `protocol` setting is on of `SASL_PLAINTEXT` or `SASL_SSL`.
+
+      properties:
+        mechanisms:
+          type: string
+
+        username:
+          type: string
+
+        password:
+          type: string
+
+    in:
+      type: object
+      properties:
+        consume:
+          type: string
+          description: The Kafka topic to which this node-type will subscribe for receiving messages.
+
+        group_id:
+          type: string
+          description: The group id of the Kafka client used for receiving messages.
+
+    out:
+      type: object
+      properties:
+        produce:
+          type: string
+          description: The Kafka topic to which this node-type will publish messages.
+    
+    timeout:
+      type: number
+      description: A timeout in seconds for the broker connection.
+      default: 1.0
+
+
+
+
 
 - $ref: ../node.yaml

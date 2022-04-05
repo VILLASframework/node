@@ -4,7 +4,26 @@
 allOf:
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    calibration:
+      type: object
+      properties:
+        scale:
+          type: number
+          default: 1.0
+          description: A scaling factor for calibrating the sensor.
+
+        offset:
+          type: number
+          default: 0.0
+          description: An offset for calibrating the sensor.
+
+    bus:
+      type: integer
+      description: A filter applied to the USB bus number for selecting a specific sensor if multiple are available.
+
+    port:
+      type: integer
+      description: A filter applied to the USB port number for selecting a specific sensor if multiple are available.
+
 
 - $ref: ../node.yaml

@@ -4,7 +4,15 @@
 allOf:
 - type: object
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    server:
+      type: string
+      description: A hostname/port combination of the InfluxDB database server.
+
+    key:
+      type: string
+      description: |
+        The key is the measurement name and any optional tags separated by commas.
+
+        See also: [InfluxDB documentation](https://docs.influxdata.com/influxdb/v0.9/write_protocols/line/#key).
 
 - $ref: ../node.yaml
