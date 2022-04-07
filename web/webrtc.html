@@ -431,11 +431,11 @@
 
             // Handle onmessage events for the receiving channel.
             // These are the data messages sent by the sending channel.
-            function handleDataChannelMessage(event) {
+            async function handleDataChannelMessage(event) {
                 var dec = new TextDecoder();
 
                 var raw = event.data;
-                var msg = dec.decode(raw);
+                var msg = dec.decode(await raw.arrayBuffer());
                 var msgJson = JSON.parse(msg);
 
                 console.info('Received message', msgJson);
