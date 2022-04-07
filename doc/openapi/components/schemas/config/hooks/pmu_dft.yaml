@@ -5,8 +5,8 @@ allOf:
 - type: object
   required:
   - sample_rate
-  - start_freqency
-  - end_freqency
+  - start_frequency
+  - end_frequency
   - frequency_resolution
   - dft_rate
   properties: 
@@ -16,12 +16,12 @@ allOf:
       min: 0
       example: 10000
       description: The sampling rate of the input signal.
-    start_freqency:
+    start_frequency:
       type: number
       min: 0
       example: 49.7
       description: The lowest frequency bin.
-    end_freqency:
+    end_frequency:
       type: number
       example: 50.3
       min: 0
@@ -64,7 +64,7 @@ allOf:
       description: The frequency estimation type.
     pps_index:
       type: integer
-      description: The signal index of the PPS singal. This is only needed if data dumper is active.
+      description: The signal index of the PPS signal. This is only needed if data dumper is active.
       default: 0
     angle_unit:
       type: string
@@ -83,7 +83,7 @@ allOf:
       - center
       - right
       default: center
-      description: The timestamp aligment in respect to the the window.
+      description: The timestamp alignment in respect to the the window.
     phase_offset:
       type: number
       default: 0.0
@@ -97,7 +97,7 @@ allOf:
     frequency_offset:
       type: number
       default: 0.0
-      exmaple: 0.2
+      example: 0.2
       description: An offset added to the calculated frequency.
     rocof_offset:
       type: number

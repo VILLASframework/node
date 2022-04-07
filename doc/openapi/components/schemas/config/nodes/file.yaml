@@ -13,7 +13,7 @@ allOf:
       description: |
         Specifies the URI to a file from which is written to or read from depending in which group (`in`or `out`) is used.
 
-        This setting allows to add special paceholders for time and date values.
+        This setting allows to add special placeholders for time and date values.
         See [strftime(3)](http://man7.org/linux/man-pages/man3/strftime.3.html) for a list of supported placeholder.
 
         **Example**:

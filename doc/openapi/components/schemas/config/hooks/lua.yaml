@@ -44,7 +44,7 @@ allOf:
 
         - `sequence`     The sequence number of the sample.
         - `flags`        The flags field of the sample.
-        - `ts_origin`    The origin timesamp as a Lua table containing the following keys:
+        - `ts_origin`    The origin timestamp as a Lua table containing the following keys:
         | Index | Description |
         |:--    |:--          |
         | 0     | seconds     |
@@ -60,12 +60,12 @@ allOf:
 
         #### `periodic()`
 
-        Called periodicalled with the rate of @ref node-config-stats.
+        Called periodically with the rate of @ref node-config-stats.
 
     signals:
       description: |
         A definition of signals which this hook will emit.
-        Here a list of signal definitions like @ref node-config-node-signals is excpected.
+        Here a list of signal definitions like @ref node-config-node-signals is expected.
       type: array
       items:
         allOf:
