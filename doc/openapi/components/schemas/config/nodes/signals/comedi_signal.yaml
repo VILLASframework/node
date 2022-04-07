@@ -3,15 +3,19 @@
 
 allOf:
 - type: object
+  required:
+  - channel
+  - range
+  - aref
+
   properties:
-    send_id:
-      type: integer
-    
-    recv_id:
+    channel:
       type: integer
 
-    reply:
-      type: boolean
+    range:
+      type: integer
 
-- $ref: ../node_signals.yaml
-- $ref: ../node.yaml
+    aref:
+      type: integer
+
+- $ref: ../../signal.yaml

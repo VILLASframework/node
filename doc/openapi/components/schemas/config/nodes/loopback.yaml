@@ -26,4 +26,5 @@ allOf:
       default: auto
       description: Specify the synchronization mode of the internal queue.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

@@ -11,4 +11,4 @@ allOf:
       type: number
       description: The number of seconds for which this hook should initially drop samples after a start or restart of the node/path.
 
-- $ref: common.yaml
+- $ref: ../hook.yaml

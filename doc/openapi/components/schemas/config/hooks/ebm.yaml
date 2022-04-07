@@ -20,4 +20,4 @@ allOf:
         items:
           type: integer
 
-- $ref: common.yaml
+- $ref: ../hook.yaml

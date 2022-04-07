@@ -20,12 +20,12 @@ oneOf:
     init: 230.0
 
   items:
-    $ref: signal_spec.yaml
+    $ref: ./signal.yaml
 
 - type: object
   title: Signal definition with `count`
   allOf:
-  - $ref: signal_spec.yaml
+  - $ref: ./signal.yaml
   - type: object
     required:
     - count

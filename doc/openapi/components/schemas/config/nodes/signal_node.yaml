@@ -101,4 +101,5 @@ allOf:
         Especially at high rates, it can be beneficial for performance to set this flag to `false`.
         Warnings would namely cause system calls which will slow the node down even more, and thus cause even more missed steps.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

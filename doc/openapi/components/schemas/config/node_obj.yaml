@@ -14,14 +14,16 @@ properties:
       For a complete list of supported node-types run `villas node --help`.
 
       In addition to the node settings described in this section, every node type has its own specific settings
+
 discriminator:
   propertyName: type
   mapping:
-    api: nodes/_api.yaml
     amqp: nodes/_amqp.yaml
+    api: nodes/_api.yaml
     can: nodes/_can.yaml
     comedi: nodes/_comedi.yaml
     ethercat: nodes/_ethercat.yaml
+    example: nodes/_example.yaml
     exec: nodes/_exec.yaml
     file: nodes/_file.yaml
     fpga: nodes/_fpga.yaml
@@ -38,8 +40,8 @@ discriminator:
     redis: nodes/_redis.yaml
     rtp: nodes/_rtp.yaml
     shmem: nodes/_shmem.yaml
-    signal.v2: nodes/_signal_v2.yaml
-    signal: nodes/_signal.yaml
+    signal.v2: nodes/_signal_v2_node.yaml
+    signal: nodes/_signal_node.yaml
     socket: nodes/_socket.yaml
     stats_node: nodes/_stats_node.yaml
     temper: nodes/_temper.yaml

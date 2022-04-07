@@ -1,6 +1,10 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
 ---
 
+description: |
+  Hooks form a pipeline of steps which process, filter or alter sample data.
+example: print
+
 oneOf:
 - $ref: hook_obj.yaml
 - title: Hook Name

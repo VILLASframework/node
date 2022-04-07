@@ -29,5 +29,4 @@ allOf:
       type: boolean
       default: false
 
-- $ref: common.yaml
-- $ref: single.yaml
+- $ref: ../hook_single.yaml

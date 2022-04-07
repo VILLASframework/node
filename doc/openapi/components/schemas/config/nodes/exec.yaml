@@ -45,4 +45,5 @@ allOf:
         description: |
           A object of key/value pairs of environment variables which should be passed to the sub-process in addition to the parent environment.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

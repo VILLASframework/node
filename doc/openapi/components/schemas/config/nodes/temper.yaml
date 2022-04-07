@@ -25,4 +25,5 @@ allOf:
       type: integer
       description: A filter applied to the USB port number for selecting a specific sensor if multiple are available.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

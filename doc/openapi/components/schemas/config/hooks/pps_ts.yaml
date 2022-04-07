@@ -27,5 +27,4 @@ allOf:
       type: integer
       default: 10
 
-- $ref: common.yaml
-- $ref: single.yaml
+- $ref: ../hook_single.yaml

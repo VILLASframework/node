@@ -23,4 +23,5 @@ allOf:
     timeout:
       type: number
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

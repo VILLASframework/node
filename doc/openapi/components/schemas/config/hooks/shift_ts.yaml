@@ -16,4 +16,4 @@ allOf:
       type: number
       description: The offset in seconds which is added to the timestamp field of each processed sample.
 
-- $ref: common.yaml
+- $ref: ../hook.yaml

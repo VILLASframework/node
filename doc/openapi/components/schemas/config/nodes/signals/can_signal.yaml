@@ -4,14 +4,16 @@
 allOf:
 - type: object
   properties:
-    send_id:
+    can_id:
       type: integer
-    
-    recv_id:
+      default: 0
+
+    can_size:
       type: integer
+      default: 8
 
-    reply:
-      type: boolean
+    can_offset:
+      type: integer
+      default: 0
 
-- $ref: ../node_signals.yaml
-- $ref: ../node.yaml
+- $ref: ../../signal.yaml

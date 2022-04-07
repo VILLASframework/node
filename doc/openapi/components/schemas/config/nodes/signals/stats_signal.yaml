@@ -3,9 +3,10 @@
 
 allOf:
 - type: object
+  required:
+  - stats
   properties:
-    format:
-      $ref: ../format_spec.yaml
+    stats:
+      type: string
 
-- $ref: ../node_signals.yaml
-- $ref: ../node.yaml
+- $ref: ../../signal.yaml

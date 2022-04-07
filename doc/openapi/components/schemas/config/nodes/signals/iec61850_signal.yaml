@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  properties:
+    iec_type:
+      type: string
+      enum:
+      - boolean
+      - int8
+      - int16
+      - int32
+      - int64
+      - int8u
+      - int16u
+      - int32u
+      - int64u
+      - float32
+      - float64
+      - enumerated
+      - coded_enum
+      - octet_string
+      - visible_string
+      - objectname
+      - objectreference
+      - timestamp
+      - entrytime
+      - bitstring
+
+- $ref: ../../signal.yaml

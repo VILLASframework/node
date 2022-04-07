@@ -2,12 +2,14 @@
 ---
 
 type: object
-title: Format Object
+title: Hook Object
 required:
 - type
+
 properties:
   type:
     type: string
+
 discriminator:
   propertyName: type
   mapping:

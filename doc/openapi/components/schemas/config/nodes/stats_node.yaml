@@ -10,11 +10,12 @@ allOf:
 
     in:
       type: object
-      required: signals
+      required:
+      - signals
       properties: 
         signals:
           type: array
           items:
-            $ref: ./signals/stats.yaml
+            $ref: ./signals/stats_signal.yaml
 
 - $ref: ../node.yaml

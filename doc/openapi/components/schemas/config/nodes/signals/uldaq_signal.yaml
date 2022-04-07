@@ -1,0 +1,19 @@
+---
+
+allOf:
+- type: object
+  properties:
+    range:
+      type: string
+      description: The range for a specific channel. See `range` for allowed values
+
+    input_mode:
+      type: string
+      description: The input mode for a specific channel. See `input_mode` for allowed values
+
+    channel:  
+      type: integer
+      example: 5
+      description: The channel input number of the device.
+
+- ref: ../../signal.yaml

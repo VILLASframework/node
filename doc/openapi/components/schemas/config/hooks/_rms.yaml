@@ -1,5 +1,5 @@
 allOf:
-- $ref: common.yaml
+- $ref: ../hook_obj.yaml
 - $ref: rms.yaml
 - type: object
   required:

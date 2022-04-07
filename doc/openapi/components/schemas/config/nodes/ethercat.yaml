@@ -37,4 +37,5 @@ allOf:
         vendor_id:
           type: integer
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

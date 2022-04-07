@@ -75,4 +75,5 @@ allOf:
       description: A timeout in seconds for the broker connection.
       default: 1.0
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

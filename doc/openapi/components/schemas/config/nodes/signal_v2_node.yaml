@@ -31,6 +31,6 @@ allOf:
         signals:
           type: array
           items:
-            $ref: ./signals/generator.yaml
+            $ref: ./signals/signal_v2_signal.yaml
 
 - $ref: ../node.yaml

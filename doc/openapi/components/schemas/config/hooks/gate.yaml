@@ -24,5 +24,4 @@ allOf:
       description: The number if samples for which the gate opens when the triggering condition is met. Exclusive with the `duration` setting.
       type: number
 
-- $ref: common.yaml
-- $ref: single.yaml
+- $ref: ../hook_single.yaml

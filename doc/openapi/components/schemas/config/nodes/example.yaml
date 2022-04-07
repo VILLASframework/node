@@ -18,4 +18,5 @@ allOf:
       default: something
       description: Another setting
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

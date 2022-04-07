@@ -2,4 +2,4 @@
 ---
 
 allOf:
-- $ref: common.yaml
+- $ref: ../hook.yaml

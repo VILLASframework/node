@@ -15,5 +15,4 @@ allOf:
       example: 1e3
       description: The gain which is mulitplied to the signal before the offset is added.
 
-- $ref: common.yaml
-- $ref: multi.yaml
+- $ref: ../hook_multi.yaml

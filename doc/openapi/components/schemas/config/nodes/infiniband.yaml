@@ -192,4 +192,5 @@ allOf:
             It turns out that the ideal value in most cases is `out.max_wrs / 2`.
             Hence, usually, it is not necessary to explicitly set this value.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

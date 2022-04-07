@@ -10,4 +10,4 @@ allOf:
       type: integer
       description: The offset which is added to the sequence number of each processed sample.
 
-- $ref: common.yaml
+- $ref: ../hook.yaml

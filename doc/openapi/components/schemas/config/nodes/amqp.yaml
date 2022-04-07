@@ -45,4 +45,5 @@ allOf:
         client_key:
           default: "/path/to/client.key"
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

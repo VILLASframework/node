@@ -11,5 +11,4 @@ allOf:
       default: 0
       minimum: 0
 
-- $ref: common.yaml
-- $ref: multi.yaml
+- $ref: ../hook_multi.yaml

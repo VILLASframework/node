@@ -10,5 +10,4 @@ allOf:
       example: 4
       description: The number of decimal digits to which the singal is rounded.
 
-- $ref: common.yaml
-- $ref: multi.yaml
+- $ref: ../hook_multi.yaml

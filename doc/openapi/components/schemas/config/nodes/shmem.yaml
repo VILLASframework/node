@@ -52,4 +52,5 @@ allOf:
             Must start with a forward slash (/).
             The same name should be passed to the external program somehow in its configuration or command-line arguments.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

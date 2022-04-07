@@ -53,4 +53,11 @@ allOf:
           description: |
             The private key of the server.
 
+    out:
+      type: object
+      properties:
+        netem:
+          $ref: ../netem.yaml
+
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

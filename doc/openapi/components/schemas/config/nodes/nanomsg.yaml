@@ -27,4 +27,11 @@ allOf:
           type: string
           format: uri
 
+    out:
+      type: object
+      properties:
+        netem:
+          $ref: ../netem.yaml
+
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

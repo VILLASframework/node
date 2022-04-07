@@ -54,4 +54,5 @@ allOf:
                 type: string
                 description: Username for used authentication against TURN servers.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

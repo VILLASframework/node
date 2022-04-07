@@ -23,4 +23,4 @@ allOf:
       description: The file where you want to write the report to. If omitted, stdout (the terminal) will be used.
       default: '/dev/stdout'
 
-- $ref: common.yaml
+- $ref: ../hook.yaml

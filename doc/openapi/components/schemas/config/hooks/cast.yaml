@@ -22,5 +22,4 @@ allOf:
       description: The new unit of the casted signal.
       example: V
 
-- $ref: common.yaml
-- $ref: multi.yaml
+- $ref: ../hook_multi.yaml

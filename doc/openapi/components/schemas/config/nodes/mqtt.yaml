@@ -109,4 +109,5 @@ allOf:
             For openssl >= 1.0.1, the available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2 as the default.
             For openssl < 1.0.1, only tlsv1 is available.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

@@ -15,4 +15,5 @@ allOf:
 
         See also: [InfluxDB documentation](https://docs.influxdata.com/influxdb/v0.9/write_protocols/line/#key).
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

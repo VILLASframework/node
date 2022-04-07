@@ -116,4 +116,5 @@ allOf:
 
               If `out.buffer_size = 0`, no buffer will be generated.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

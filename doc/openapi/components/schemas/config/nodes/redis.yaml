@@ -125,4 +125,5 @@ allOf:
           type: string
           description: A path to the private key file.
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

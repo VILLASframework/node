@@ -18,22 +18,10 @@ allOf:
     signals:
       type: array
       items:
-        type: object
-        required:
-        - channel
-        - range
-        - aref
-        properties:
-          channel:
-            type: integer
-
-          range:
-            type: integer
-
-          aref:
-            type: integer
+        $ref: ./signals/comedi_signal.yaml
 
     rate:
       type: integer
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml

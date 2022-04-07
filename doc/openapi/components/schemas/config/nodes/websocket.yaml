@@ -28,4 +28,5 @@ allOf:
         format: uri
         description: A WebSocket URI
 
+- $ref: ../node_signals.yaml
 - $ref: ../node.yaml
