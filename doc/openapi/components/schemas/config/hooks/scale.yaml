@@ -13,6 +13,6 @@ allOf:
       type: number
       default: 1.0
       example: 1e3
-      description: The gain which is mulitplied to the signal before the offset is added.
+      description: The gain which is multiplied to the signal before the offset is added.
 
 - $ref: ../hook_multi.yaml

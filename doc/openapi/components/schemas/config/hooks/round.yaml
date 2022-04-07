@@ -8,6 +8,6 @@ allOf:
       type: integer
       default: 0
       example: 4
-      description: The number of decimal digits to which the singal is rounded.
+      description: The number of decimal digits to which the signal is rounded.
 
 - $ref: ../hook_multi.yaml

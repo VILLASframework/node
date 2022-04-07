@@ -15,7 +15,7 @@ allOf:
 
     session:
       type: string
-      title: Session indentifier
+      title: Session identifier
       description: A unique session identifier which must be shared between two nodes
 
     server:
