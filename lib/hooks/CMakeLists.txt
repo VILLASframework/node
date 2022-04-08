@@ -34,6 +34,7 @@ set(HOOK_SRC
     limit_rate.cpp
     limit_value.cpp
     ma.cpp
+    power.cpp
     pmu_dft.cpp
     pps_ts.cpp
     print.cpp
