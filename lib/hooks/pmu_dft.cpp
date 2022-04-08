@@ -201,7 +201,7 @@ public:
 			/* Add signals */
 			auto freqSig = std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
 			auto amplSig = std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
-			auto phaseSig = std::make_shared<Signal>("phase", "rad", SignalType::FLOAT);
+			auto phaseSig = std::make_shared<Signal>("phase", (angleUnitFactor)?"rad":"deg", SignalType::FLOAT);//angleUnitFactor==1 means rad
 			auto rocofSig = std::make_shared<Signal>("rocof", "Hz/s", SignalType::FLOAT);
 
 			if (!freqSig || !amplSig || !phaseSig || !rocofSig)
@@ -393,7 +393,6 @@ public:
 #ifdef DFT_MEM_DUMP
 		ppsMemory[smpMemPos % windowSize] = smp->data[ppsIndex].f;
 #endif
-		smpMemPos++;
 
 		bool run = false;
 		double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
@@ -451,7 +450,7 @@ public:
 					}
 				}
 
-				if (windowSize < smpMemPos) {
+				if (windowSize <= smpMemPos) {
 
 					smp->data[i * 4 + 0].f = currentResult.frequency + frequencyOffset; /* Frequency */
 					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)) + amplitudeOffset; /* Amplitude */
@@ -477,7 +476,7 @@ public:
 			else if (timeAlignType == TimeAlign::RIGHT)
 				tsPos = ((smpMemPos % windowSize) > 0)? (smpMemPos % windowSize) - 1 : windowSize;
 			else if (timeAlignType == TimeAlign::CENTER) {
-				tsPos = ((smpMemPos % windowSize) > (windowSize / 2))?
+				tsPos = ((smpMemPos % windowSize) >= (windowSize / 2))?
 					(smpMemPos % windowSize) - (windowSize / 2) : 
 					(smpMemPos % windowSize) + (windowSize / 2);
 			}
@@ -490,6 +489,8 @@ public:
 			logger->warn("Calculation is not Realtime. {} sampled missed", smp->sequence - lastSequence);
 
 		lastSequence = smp->sequence;
+
+		smpMemPos++;
 
 		if (run && windowSize < smpMemPos)
 			return Reason::OK;
