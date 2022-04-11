@@ -2,13 +2,14 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.195.0/containers/cpp
 {
 	"name": "VILLASnode",
-	"image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev:master",
+	"image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev-vscode:master",
 	// Uncomment to build the devcontainer locally
 	// "build": {
 	// 	"dockerfile": "../packaging/docker/Dockerfile.fedora",
-	// 	"target": "dev",
+	// 	"target": "dev-vscode",
 	// 	"context": ".."
 	// },
+	"remoteUser": "villas",
 	"runArgs": [ "--privileged", "--security-opt", "seccomp=unconfined"],
 
 	"extensions": [
