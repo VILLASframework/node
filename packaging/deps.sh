@@ -148,6 +148,20 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
     popd
 fi
 
+# Build & Install lib60870 (fork with pkg-config file)
+if ! pkg-config "lib60870 >= 2.3.1" && \
+    [ -z "${SKIP_LIB60870}" ]; then
+    git clone ${GIT_OPTS} --branch pkgconfig https://github.com/PJungkamp/lib60870
+    mkdir -p lib60870/build
+    pushd lib60870/build
+    cmake ${CMAKE_OPTS} ../lib60870-C
+    make ${MAKE_OPTS} ${TARGET}
+    if [ -n "${PACKAGE}" ]; then
+        cp lib60870/build/*.rpm rpms
+    fi
+    popd
+fi
+
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
     [ -z "${SKIP_RDKAFKA}" ]; then
