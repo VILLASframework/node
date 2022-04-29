@@ -66,6 +66,12 @@ if(WITH_NODE_SHMEM)
     list(APPEND NODE_SRC shmem.cpp)
 endif()
 
+# Enable IEC60870 node-types when lib60870 is available
+if(WITH_NODE_IEC60870)
+    list(APPEND NODE_SRC iec60870.cpp)
+    list(APPEND LIBRARIES PkgConfig::LIB60870)
+endif()
+
 # Enable IEC61850 node-types when libiec61850 is available
 if(WITH_NODE_IEC61850)
     list(APPEND NODE_SRC iec61850_sv.cpp iec61850.cpp)
