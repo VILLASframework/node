@@ -32,7 +32,9 @@
 namespace villas {
 namespace dsp {
 
-template<typename T, double a0 = 1.0, double a1 = 0.0, double a2 = 0.0, double a3 = 0.0, double a4 = 0.0>
+
+
+template<typename T>// a0 = 1.0, double a1 = 0.0, double a2 = 0.0, double a3 = 0.0, double a4 = 0.0>
 class CosineWindow : public Window<T> {
 
 public:
@@ -50,7 +52,7 @@ protected:
 	}
 
 public:
-	CosineWindow(size_type len, T i = 0) :
+	CosineWindow(double a0, double a1, double a2, double a3, double a4, size_type len, T i = 0) :
 		Window<T>(len, i),
 		coefficients(len),
 		correctionFactor(0)
@@ -79,19 +81,44 @@ public:
 // From: https://en.wikipedia.org/wiki/Window_function#Cosine-sum_windows
 
 template<typename T>
-using HannWindow = CosineWindow<T, 0.5, 0.5>;
+class HannWindow : public CosineWindow<T> {
+
+public:
+	HannWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(0.5, 0.5, 0., 0., 0., len, i) {}
+};
 
 template<typename T>
-using HammingWindow = CosineWindow<T, 25./46, 1 - 25./46>;
+class HammingWindow : public CosineWindow<T> {
+
+public:
+	HammingWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(25./46, 1 - 25./46, 0., 0., 0., len, i) {}
+};
 
 template<typename T>
-using FlattopWindow = CosineWindow<T, 0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368>; // based on MATLAB coeffs
+class FlattopWindow : public CosineWindow<T> {
+
+public:
+	FlattopWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368, len, i) {}
+};
 
 template<typename T>
-using NuttallWindow = CosineWindow<T, 0.355768, 0.487396, 0.144232, 0.012604>;
+class NuttallWindow : public CosineWindow<T> {
+
+public:
+	NuttallWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(0.355768, 0.487396, 0.144232, 0.012604, 0., len, i) {}
+};
 
 template<typename T>
-using BlackmanWindow = CosineWindow<T, 0.3635819, 0.4891775, 0.1365995, 0.0106411>;
+class BlackmanWindow : public CosineWindow<T> {
+
+public:
+	BlackmanWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(0.3635819, 0.4891775, 0.1365995, 0.0106411, 0., len, i) {}
+};
 
 } /* namespace dsp */
 } /* namespace villas */
