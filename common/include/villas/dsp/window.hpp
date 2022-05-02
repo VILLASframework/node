@@ -23,57 +23,85 @@
 
 #pragma once
 
-#include <villas/utils.hpp>
+#include <ranges>
+#include <deque>
 
 namespace villas {
 namespace dsp {
 
-template<typename T>
-class Window {
+template<typename T, typename Container = std::deque<T>>
+class Window : protected Container {
 
 public:
-	typedef typename std::vector<T>::size_type size_type;
+	using iterator = typename Container::iterator;
+	using size_type = typename Container::size_type;
 
 protected:
-	std::vector<T> data;
 
-	T init;
+	virtual
+	T filter(T in, size_type i) const
+	{
+		return in;
+	}
 
-	size_type steps;
-	size_type mask;
-	size_type pos;
+	class transform_iterator : public Container::const_iterator {
+	protected:
+		const Window *window;
+
+		using base_iterator = typename Container::const_iterator;
+
+	public:
+		transform_iterator(const Window<T> *w) :
+			base_iterator(w->Container::begin()),
+			window(w)
+		{ }
+
+		T operator*()
+		{
+			auto i = (*this) - window->begin();
+			const auto &v = base_iterator::operator*();
+
+			return window->filter(v, i);
+		}
+	};
 
 public:
-	Window(size_type s = 0, T i = 0) :
-		init(i),
-		steps(s)
-	{
-		size_type len = LOG2_CEIL(s);
-
-		/* Allocate memory for circular history buffer */
-		data = std::vector<T>(len, i);
-
-		pos = len;
-		mask = len - 1;
-	}
+	Window(size_type l = 0, T i = 0) :
+		std::deque<T>(l, i)
+	{ }
 
 	T update(T in)
 	{
-		T out = data[(pos - steps) & mask];
+		Container::push_back(in);
 
-		data[pos++ & mask] = in;
+		auto out = (*this)[0];
+
+		Container::pop_front();
 
 		return out;
 	}
 
-	size_type getLength() const
+	// Expose a limited number of functions from deque
+
+	using Container::size;
+	using Container::end;
+
+	transform_iterator begin() const noexcept
 	{
-		return steps;
+		return transform_iterator(this);
 	}
 
-	T operator[](int i) const
+	T operator[](size_type i) const noexcept
 	{
-		return data[(pos + i) & mask];
+		auto v = Container::operator[](i);
+
+		return filter(v, i);
+	}
+
+	virtual
+	T getCorrectionFactor() const
+	{
+		return 1.0;
 	}
 };
 
