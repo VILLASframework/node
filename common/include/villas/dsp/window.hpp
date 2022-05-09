@@ -82,12 +82,6 @@ public:
 
 		return filter(v, i);
 	}
-
-	virtual
-	T getCorrectionFactor() const
-	{
-		return 1.0;
-	}
 };
 
 } /* namespace dsp */
