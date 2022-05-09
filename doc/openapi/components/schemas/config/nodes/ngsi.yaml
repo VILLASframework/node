@@ -12,16 +12,34 @@ allOf:
     
     entity_id:
       type: string
+      description: ID of NGSI entity.
 
     entity_type:
       type: string
+      description: Type of NGSI entity.
 
     ssl_verify:
       type: boolean
       description: Verify SSL certificate against local trust store.
 
     timeout:
+      description: Timeout in seconds for HTTP requests.
       type: number
+      default: 1.0
+
+    rate:
+      description: Polling rate in Hz for requesting entity updates from broker.
+      type: number
+      default: 1.0
+
+    access_token:
+      type: string
+      description: Send 'Auth-Token' header with every HTTP request.
+
+    create:
+      type: boolean
+      default: true
+      description: Create NGSI entities during startup of node.
 
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml
