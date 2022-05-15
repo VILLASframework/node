@@ -27,6 +27,7 @@
 #include <optional>
 #include <cstdint>
 #include <ctime>
+#include <array>
 #include <villas/node/config.hpp>
 #include <villas/node.hpp>
 #include <villas/pool.hpp>
@@ -40,7 +41,7 @@ namespace node {
 namespace iec60870 {
 
 // A supported CS101 information data type
-class ASDUDataType {
+class ASDUData {
 public:
 	enum Type {
 		// MeasuredValueScaled
@@ -75,84 +76,129 @@ public:
 		SHORT_WITH_TIMESTAMP = M_ME_TF_1,
 	};
 
-	// check if ASDU type is supported
-	static std::optional<ASDUDataType> checkASDU(CS101_ASDU const &asdu);
-	// infer appropriate DataType for SignalType
-	static std::optional<ASDUDataType> inferForSignal(SignalType type);
+	struct Sample {
+		SignalData signal_data;
+		QualityDescriptor quality;
+		std::optional<timespec> timestamp;
+	};
+
+	// lookup datatype for config name
+	static std::optional<ASDUData> lookupName(char const* name, bool with_timestamp, int ioa);
+	// lookup datatype for numeric type
+	static std::optional<ASDUData> lookupType(int type, int ioa);
 
 	// does this data include a timestamp
 	bool hasTimestamp() const;
-
-	// get equivalent DataType without timestamp (e.g. for general interrogation response)
-	ASDUDataType withoutTimestamp() const;
-
-	// is DataType convertible to/from SignalType
-	bool isConvertibleFromSignal(SignalType signal_type) const;
-
+	// the IEC104 type
+	ASDUData::Type type() const;
+	// the config file identifier for this type
+	char const* name() const;
+	// get equivalent IEC104 type without timestamp (e.g. for general interrogation response)
+	ASDUData::Type typeWithoutTimestamp() const;
+	// corresponding signal type
+	SignalType signalType() const;
+	// check if ASDU contains this data
+	std::optional<ASDUData::Sample> checkASDU(CS101_ASDU const &asdu) const;
 	// add SignalData to an ASDU
-	void addSignalsToASDU(
-		CS101_ASDU &asdu,
-		int ioa,
-		QualityDescriptor quality,
-		SignalType signal_type,
-		SignalData *signal_data,
-		unsigned signal_count,
-		std::optional<timespec> timestamp
-	) const;
+	void addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const;
 
-	// basic conversions and comparisons
-	ASDUDataType(Type type);
-	operator Type() const;
-	bool operator==(ASDUDataType data_type) const;
-	bool operator!=(ASDUDataType data_type) const;
+	// every value in an ASDU has an associated "information object address" (ioa)
+	int ioa;
 private:
-	Type type;
+	struct Descriptor {
+		ASDUData::Type type;
+		char const *name;
+		bool has_timestamp;
+		ASDUData::Type type_without_timestamp;
+		SignalType signal_type;
+	};
+
+	inline static std::array const descriptors {
+		ASDUData::Descriptor { Type::DOUBLEPOINT,			"double-point",	false,	Type::DOUBLEPOINT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::DOUBLEPOINT_WITH_TIMESTAMP,	"double-point",	true,	Type::DOUBLEPOINT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SINGLEPOINT,			"single-point",	false,	Type::SINGLEPOINT,	SignalType::BOOLEAN },
+		ASDUData::Descriptor { Type::SINGLEPOINT_WITH_TIMESTAMP,	"single-point",	true,	Type::SINGLEPOINT,	SignalType::BOOLEAN },
+		ASDUData::Descriptor { Type::SCALED,				"scaled",	false,	Type::SCALED,		SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SCALED_WITH_TIMESTAMP,		"scaled",	true,	Type::SCALED,		SignalType::INTEGER },
+		ASDUData::Descriptor { Type::NORMALIZED,			"normalized",	false,	Type::NORMALIZED,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::NORMALIZED_WITH_TIMESTAMP,		"normalized",	true,	Type::NORMALIZED,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SHORT,				"short",	false,	Type::SHORT,		SignalType::FLOAT },
+		ASDUData::Descriptor { Type::SHORT_WITH_TIMESTAMP,		"short",	true,	Type::SHORT,		SignalType::FLOAT },
+	};
+
+	ASDUData(ASDUData::Descriptor const &descriptor, int ioa);
+
+	// descriptor within the descriptors table above
+	ASDUData::Descriptor const &descriptor;
 };
 
-class TcpNode : public Node {
+class SlaveNode : public Node {
 protected:
+	bool debug = true;
+
 	struct Server {
+		// slave state
 		bool created = false;
 
+		// config (use explicit defaults)
 		std::string local_address = "0.0.0.0";
 		int local_port = 2404;
 		int low_priority_queue_size = 16;
 		int high_priority_queue_size = 16;
+		int common_address = 1;
 
+		// config (use lib60870 defaults if std::nullopt)
+		std::optional<int> apci_t0 = std::nullopt;
+		std::optional<int> apci_t1 = std::nullopt;
+		std::optional<int> apci_t2 = std::nullopt;
+		std::optional<int> apci_t3 = std::nullopt;
+		std::optional<int> apci_k = std::nullopt;
+		std::optional<int> apci_w = std::nullopt;
+
+		// lib60870
 		CS104_Slave slave;
+		CS101_AppLayerParameters asdu_app_layer_parameters;
 	} server;
 
 	struct Output {
+		// config
 		bool enabled = false;
-		SignalType signal_type = SignalType::INVALID;
-		ASDUDataType asdu_data_type = ASDUDataType::SHORT_WITH_TIMESTAMP;
-		unsigned signal_cnt = 0;
+		std::vector<ASDUData> mapping = {};
 	} out;
 
-	virtual
-	int _read(struct Sample * smps[], unsigned cnt) override;
+	void createSlave() noexcept;
+	void destroySlave() noexcept;
+
+	void startSlave() noexcept(false);
+	void stopSlave() noexcept;
+
+	void debugPrintMessage(IMasterConnection connection, uint8_t* message, int message_size, bool sent) const noexcept;
+	void debugPrintConnection(IMasterConnection connection, CS104_PeerConnectionEvent event) const noexcept;
+
+	bool onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56Time2a new_time) const noexcept;
+	bool onInterrogation(IMasterConnection connection, CS101_ASDU asdu, uint8_t _of_inter) const noexcept;
+	bool onASDU(IMasterConnection connection, CS101_ASDU asdu) const noexcept;
 
 	virtual
 	int _write(struct Sample * smps[], unsigned cnt) override;
 
 public:
-	TcpNode(const std::string &name = "");
+	SlaveNode(const std::string &name = "");
 
 	virtual
-	~TcpNode() override;
-	/*
+	~SlaveNode() override;
+
+	virtual
+	int parse(json_t *json, const uuid_t sn_uuid) override;
+
 	virtual
 	int start() override;
 
 	virtual
 	int stop() override;
 
-	virtual
-	std::string & getDetails() override;
-
-	virtual
-	int parse(json_t *json, const uuid_t sn_uuid) override;
-	*/
+	// virtual
+	// std::string & getDetails() override;
 };
 
 } /* namespace iec60870 */
