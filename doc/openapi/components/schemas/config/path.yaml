@@ -89,3 +89,38 @@ properties:
 
   hooks:
     $ref: hook_list.yaml
+
+  uuid:
+    description: |
+      A globally unique ID which identifies the path for the use via the API.
+
+    type: string
+    format: uuid
+
+  affinity:
+    description: |
+      A mask which pins the execution of this path to a set of CPU cores.
+
+  poll:
+    description: |
+      A boolean flag which enables the poll-based mode for reading samples from multiple path sources.
+
+      **Note:** This is an advanced setting.
+      Most users should use the the default value which will always do the right thing based on the number and type of input nodes for this path.
+
+    type: boolean
+
+  builtin:
+    description: |
+      If enabled, the path will start with a set of default and builtin hook functions.
+
+    type: boolean
+    default: true
+
+  queuelen:
+    description: |
+      The length of the path queue. It limits how many samples can be _in flight_ at any point in time.
+      If you see queue or pool underrun warnings, try to increase this value.
+
+    type: number
+  
