@@ -116,13 +116,13 @@ int NodeDirection::parse(json_t *json)
 		const char *dt = json_string_value(json_signals);
 
 		signals = std::make_shared<SignalList>(dt);
-		if (signals)
-			return ret;
+		if (!signals)
+			return -1;
 	}
 	else {
 		signals = std::make_shared<SignalList>(DEFAULT_SAMPLE_LENGTH, SignalType::FLOAT);
-		if (signals)
-			return ret;
+		if (!signals)
+			return -1;
 	}
 
 #ifdef WITH_HOOKS
