@@ -13,6 +13,20 @@ allOf:
       description: |
         Suspend start-up of VILLASnode until the connection with the remote peer has been established.
 
+    ordered:
+      type: boolean
+      default: false
+      description: |
+        Indicates if data is allowed to be delivered out of order.
+        The default value of false, does not make guarantees that data will be delivered in order.
+
+    max_retransmits:
+      type: integer
+      default: 0
+      description: |
+        Limit the number of times a channel will retransmit data if not successfully delivered.
+        This value may be clamped if it exceeds the maximum value supported.
+
     session:
       type: string
       title: Session identifier

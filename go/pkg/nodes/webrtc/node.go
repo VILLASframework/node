@@ -42,6 +42,8 @@ var (
 			Path:   "/ws/signaling",
 		},
 		Wait: true,
+		MaxRetransmits: 0,
+		Ordered: false,
 		WebRTC: webrtc.Configuration{
 			ICEServers: []webrtc.ICEServer{
 				{
@@ -81,6 +83,8 @@ type Config struct {
 	Session string
 
 	Wait bool
+	MaxRetransmits uint16
+	Ordered bool
 
 	WebRTC webrtc.Configuration
 }
@@ -94,9 +98,11 @@ func NewNode() nodes.Node {
 func (n *Node) Parse(c []byte) error {
 	var err error
 	var cfg struct {
-		Session *string `json:"session"`
-		Server  *string `json:"server,omitempty"`
-		Wait    *bool   `json:"wait,omitemty"`
+		Session        *string `json:"session"`
+		Server         *string `json:"server,omitempty"`
+		Wait           *bool   `json:"wait,omitemty"`
+		MaxRetransmits *uint16 `json:"max_retransmits,omitempty"`
+		Ordered        *bool   `json:"ordered,omitempty"`
 		Ice     *struct {
 			Servers []struct {
 				URLs     []string `json:"urls,omitempty"`
@@ -112,6 +118,14 @@ func (n *Node) Parse(c []byte) error {
 
 	if cfg.Wait != nil {
 		n.Config.Wait = *cfg.Wait
+	}
+
+	if cfg.Ordered != nil {
+		n.Config.Ordered = *cfg.Ordered
+	}
+
+	if cfg.MaxRetransmits != nil {
+		n.Config.MaxRetransmits = *cfg.MaxRetransmits
 	}
 
 	if cfg.Session == nil || *cfg.Session == "" {

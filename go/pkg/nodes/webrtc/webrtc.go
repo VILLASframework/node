@@ -104,7 +104,10 @@ func (pc *PeerConnection) createPeerConnection() (*webrtc.PeerConnection, error)
 }
 
 func (pc *PeerConnection) createDataChannel() (*webrtc.DataChannel, error) {
-	dc, err := pc.CreateDataChannel("villas", nil)
+	dc, err := pc.CreateDataChannel("villas", &webrtc.DataChannelInit{
+		Ordered: &pc.config.Ordered,
+		MaxRetransmits: &pc.config.MaxRetransmits,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create datachannel: %w", err)
 	}
