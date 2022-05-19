@@ -40,40 +40,30 @@ namespace villas {
 namespace node {
 namespace iec60870 {
 
-// A supported CS101 information data type
+/// A supported CS101 information data type
 class ASDUData {
 public:
 	enum Type {
+		// SinglePointInformation
+		SINGLE_POINT = M_SP_NA_1,
+		// SinglePointWithCP56Time2a
+		SINGLE_POINT_WITH_TIMESTAMP = M_SP_TB_1,
+		// DoublePointInformation
+		DOUBLE_POINT = M_DP_NA_1,
+		// DoublePointWithCP56Time2a
+		DOUBLE_POINT_WITH_TIMESTAMP = M_DP_TB_1,
 		// MeasuredValueScaled
-		// 16 bit
-		SCALED = M_ME_NB_1,
-		// MeasuredValueScaled + Timestamp
-		// 16 bit
-		SCALED_WITH_TIMESTAMP = M_ME_TE_1,
-		// SinglePoint
-		// bool
-		SINGLEPOINT = M_SP_NA_1,
-		// SinglePoint + Timestamp
-		// bool + timestamp
-		SINGLEPOINT_WITH_TIMESTAMP = M_SP_TB_1,
-		// DoublePoint
-		// 2 bit enum
-		DOUBLEPOINT = M_DP_NA_1,
-		// DoublePoint + Timestamp
-		// 2 bit enum + timestamp
-		DOUBLEPOINT_WITH_TIMESTAMP = M_DP_TB_1,
+		SCALED_INT = M_ME_NB_1,
+		// MeasuredValueScaledWithCP56Time2a
+		SCALED_INT_WITH_TIMESTAMP = M_ME_TE_1,
 		// MeasuredValueNormalized
-		// 16 bit
-		NORMALIZED = M_ME_NA_1,
-		// MeasuredValueNormalized + Timestamp
-		// 16 bit + timestamp
-		NORMALIZED_WITH_TIMESTAMP = M_ME_TD_1,
+		NORMALIZED_FLOAT = M_ME_NA_1,
+		// MeasuredValueNormalizedWithCP56Time2a
+		NORMALIZED_FLOAT_WITH_TIMESTAMP = M_ME_TD_1,
 		// MeasuredValueShort
-		// float
-		SHORT = M_ME_NC_1,
-		// MeasuredValueShort + Timestamp
-		// float + timestamp
-		SHORT_WITH_TIMESTAMP = M_ME_TF_1,
+		SHORT_FLOAT = M_ME_NC_1,
+		// MeasuredValueShortWithCP56Time2a
+		SHORT_FLOAT_WITH_TIMESTAMP = M_ME_TF_1,
 	};
 
 	struct Sample {
@@ -82,9 +72,11 @@ public:
 		std::optional<timespec> timestamp;
 	};
 
-	// lookup datatype for config name
+	// lookup datatype for config key asdu_type
 	static std::optional<ASDUData> lookupName(char const* name, bool with_timestamp, int ioa);
-	// lookup datatype for numeric type
+	// lookup datatype for config key asdu_type_id
+	static std::optional<ASDUData> lookupTypeId(char const* type_id, int ioa);
+	// lookup datatype for numeric type identifier
 	static std::optional<ASDUData> lookupType(int type, int ioa);
 
 	// does this data include a timestamp
@@ -108,22 +100,23 @@ private:
 	struct Descriptor {
 		ASDUData::Type type;
 		char const *name;
+		char const *type_id;
 		bool has_timestamp;
 		ASDUData::Type type_without_timestamp;
 		SignalType signal_type;
 	};
 
 	inline static std::array const descriptors {
-		ASDUData::Descriptor { Type::DOUBLEPOINT,			"double-point",	false,	Type::DOUBLEPOINT,	SignalType::INTEGER },
-		ASDUData::Descriptor { Type::DOUBLEPOINT_WITH_TIMESTAMP,	"double-point",	true,	Type::DOUBLEPOINT,	SignalType::INTEGER },
-		ASDUData::Descriptor { Type::SINGLEPOINT,			"single-point",	false,	Type::SINGLEPOINT,	SignalType::BOOLEAN },
-		ASDUData::Descriptor { Type::SINGLEPOINT_WITH_TIMESTAMP,	"single-point",	true,	Type::SINGLEPOINT,	SignalType::BOOLEAN },
-		ASDUData::Descriptor { Type::SCALED,				"scaled",	false,	Type::SCALED,		SignalType::INTEGER },
-		ASDUData::Descriptor { Type::SCALED_WITH_TIMESTAMP,		"scaled",	true,	Type::SCALED,		SignalType::INTEGER },
-		ASDUData::Descriptor { Type::NORMALIZED,			"normalized",	false,	Type::NORMALIZED,	SignalType::INTEGER },
-		ASDUData::Descriptor { Type::NORMALIZED_WITH_TIMESTAMP,		"normalized",	true,	Type::NORMALIZED,	SignalType::INTEGER },
-		ASDUData::Descriptor { Type::SHORT,				"short",	false,	Type::SHORT,		SignalType::FLOAT },
-		ASDUData::Descriptor { Type::SHORT_WITH_TIMESTAMP,		"short",	true,	Type::SHORT,		SignalType::FLOAT },
+		ASDUData::Descriptor { Type::SINGLE_POINT,			"single-point",		"M_SP_NA_1",	false,	Type::SINGLE_POINT,	SignalType::BOOLEAN },
+		ASDUData::Descriptor { Type::SINGLE_POINT_WITH_TIMESTAMP,	"single-point",		"M_SP_TB_1",	true,	Type::SINGLE_POINT,	SignalType::BOOLEAN },
+		ASDUData::Descriptor { Type::DOUBLE_POINT,			"double-point",		"M_DP_NA_1",	false,	Type::DOUBLE_POINT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::DOUBLE_POINT_WITH_TIMESTAMP,	"double-point",		"M_DP_TB_1",	true,	Type::DOUBLE_POINT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SCALED_INT,			"scaled-int",		"M_ME_NB_1",	false,	Type::SCALED_INT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SCALED_INT_WITH_TIMESTAMP,		"scaled-int",		"M_ME_TB_1",	true,	Type::SCALED_INT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::NORMALIZED_FLOAT,			"normalized-float",	"M_ME_NA_1",	false,	Type::NORMALIZED_FLOAT,	SignalType::FLOAT },
+		ASDUData::Descriptor { Type::NORMALIZED_FLOAT_WITH_TIMESTAMP,	"normalized-float",	"M_ME_TA_1",	true,	Type::NORMALIZED_FLOAT,	SignalType::FLOAT },
+		ASDUData::Descriptor { Type::SHORT_FLOAT,			"short-float",		"M_ME_NC_1",	false,	Type::SHORT_FLOAT,	SignalType::FLOAT },
+		ASDUData::Descriptor { Type::SHORT_FLOAT_WITH_TIMESTAMP,	"short-float",		"M_ME_TC_1",	true,	Type::SHORT_FLOAT,	SignalType::FLOAT },
 	};
 
 	ASDUData(ASDUData::Descriptor const &descriptor, int ioa);
@@ -143,9 +136,9 @@ protected:
 		// config (use explicit defaults)
 		std::string local_address = "0.0.0.0";
 		int local_port = 2404;
-		int low_priority_queue_size = 16;
-		int high_priority_queue_size = 16;
 		int common_address = 1;
+		int low_priority_queue_size = 100;
+		int high_priority_queue_size = 100;
 
 		// config (use lib60870 defaults if std::nullopt)
 		std::optional<int> apci_t0 = std::nullopt;
@@ -164,6 +157,10 @@ protected:
 		// config
 		bool enabled = false;
 		std::vector<ASDUData> mapping = {};
+		std::vector<ASDUData::Type> asdu_types = {};
+
+		mutable std::mutex last_values_mutex;
+		std::vector<SignalData> last_values = {};
 	} out;
 
 	void createSlave() noexcept;
