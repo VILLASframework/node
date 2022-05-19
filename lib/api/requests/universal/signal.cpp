@@ -65,8 +65,6 @@ public:
 
 		pthread_mutex_unlock(&api_node->write.mutex);
 
-		logger->info("resp: {}", (void *) json_signal);
-
 		return new JsonResponse(session, HTTP_STATUS_OK, json_signal);
 	}
 
@@ -94,7 +92,7 @@ public:
 		double value = 0;
 
 		json_error_t err;
-		ret = json_unpack_ex(body, &err, 0, "{ s: f, s: f }",
+		ret = json_unpack_ex(body, &err, 0, "{ s: F, s: F }",
 			"timestamp", &timestamp,
 			"value", &value
 		);
