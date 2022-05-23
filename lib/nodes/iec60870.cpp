@@ -417,7 +417,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, u
 
 	switch (qoi) {
 	// send initial values for all signals
-	case CS101_COT_INTERROGATED_BY_STATION: {
+	case IEC60870_QOI_STATION: {
 		IMasterConnection_sendACT_CON(connection, asdu, false);
 
 		this->logger->info("received general interrogation");
