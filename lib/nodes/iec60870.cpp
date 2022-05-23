@@ -86,8 +86,7 @@ std::optional<ASDUData> ASDUData::lookupType(int type, int ioa)
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors)) {
-		ASDUData data { *descriptor, ioa };
-		return { data };
+		return ASDUData { *descriptor, ioa };
 	} else {
 		return std::nullopt;
 	}
@@ -216,8 +215,6 @@ void ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 	std::optional<CP56Time2a> timestamp = sample.timestamp.has_value()
 		? std::optional { timespec_to_cp56time2a(sample.timestamp.value()) }
 		: std::nullopt;
-
-	// ToDo: Error if missing timestamp
 
 	InformationObject io;
 	switch (this->descriptor.type) {
@@ -421,7 +418,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, u
 	auto &asdu_types = this->out.asdu_types;
 
 	switch (qoi) {
-	// send initial values for all signals
+	// send last values without timestamps
 	case IEC60870_QOI_STATION: {
 		IMasterConnection_sendACT_CON(connection, asdu, false);
 
