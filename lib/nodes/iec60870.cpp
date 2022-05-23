@@ -684,4 +684,4 @@ int SlaveNode::stop()
 
 static char name[] = "iec60870-5-104-slave";
 static char description[] = "Provide values as protocol slave";
-static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_READ> p;
+static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE> p;
