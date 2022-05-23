@@ -113,6 +113,11 @@ ASDUData::Type ASDUData::typeWithoutTimestamp() const
 	return this->descriptor.type_without_timestamp;
 }
 
+ASDUData ASDUData::withoutTimestamp() const
+{
+	return ASDUData::lookupType(this->typeWithoutTimestamp(), this->ioa).value();
+}
+
 SignalType ASDUData::signalType() const
 {
 	return this->descriptor.signal_type;
@@ -438,10 +443,15 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, u
 			for (unsigned i = 0; i < mapping.size(); i++) {
 				auto asdu_data = mapping[i];
 				auto last_value = last_values[i];
-				auto asdu_data_without_timestamp = ASDUData::lookupType(asdu_data.typeWithoutTimestamp(), asdu_data.ioa).value();
 
 				if (asdu_data.type() == asdu_type)
-					asdu_data_without_timestamp.addSampleToASDU(signal_asdu, ASDUData::Sample { last_value, IEC60870_QUALITY_GOOD, std::nullopt });
+					asdu_data
+						.withoutTimestamp()
+						.addSampleToASDU(signal_asdu, ASDUData::Sample {
+							last_value,
+							IEC60870_QUALITY_GOOD,
+							std::nullopt
+						});
 			}
 
 			assert(CS101_ASDU_getNumberOfElements(signal_asdu) > 0);
@@ -488,10 +498,11 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 					signalTypeToString(sample_format(sample,signal))
 				);
 
-			mapping[signal].addSampleToASDU(
-				asdu,
-				ASDUData::Sample { sample->data[signal], IEC60870_QUALITY_GOOD, timestamp }
-			);
+			mapping[signal].addSampleToASDU(asdu, ASDUData::Sample {
+				sample->data[signal],
+				IEC60870_QUALITY_GOOD,
+				timestamp
+			});
 
 			asdu_elements++;
 		}

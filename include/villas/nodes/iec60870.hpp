@@ -87,6 +87,8 @@ public:
 	char const* name() const;
 	// get equivalent IEC104 type without timestamp (e.g. for general interrogation response)
 	ASDUData::Type typeWithoutTimestamp() const;
+	// get equivalent ASDUData without timestamp (e.g. for general interrogation response)
+	ASDUData withoutTimestamp() const;
 	// corresponding signal type
 	SignalType signalType() const;
 	// check if ASDU contains this data
