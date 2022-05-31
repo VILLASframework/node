@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <ranges>
 #include <deque>
 
 namespace villas {
@@ -52,8 +51,13 @@ protected:
 
 public:
 	Window(size_type l = 0, T i = 0) :
-		std::deque<T>(l, i)
+		Container(l, i)
 	{ }
+
+	T val(size_type pos)
+	{
+		return this->Container::operator[](pos);
+	}
 
 	T update(T in)
 	{

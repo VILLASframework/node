@@ -66,6 +66,14 @@ public:
 // From: https://en.wikipedia.org/wiki/Window_function#Cosine-sum_windows
 
 template<typename T>
+class RectangularWindow : public CosineWindow<T> {
+
+public:
+	RectangularWindow(typename Window<T>::size_type len, T i = 0) :
+		CosineWindow<T>(1, 0., 0., 0., 0., len, i) {}
+};
+
+template<typename T>
 class HannWindow : public CosineWindow<T> {
 
 public:
