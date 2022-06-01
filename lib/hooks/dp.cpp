@@ -58,7 +58,7 @@ protected:
 
 	void step(double *in, std::complex<float> *out)
 	{
-		int N = window.getLength();
+		int N = window.size();
 		__attribute__((unused)) std::complex<double> om_k, corr;
 		double newest = *in;
 		__attribute__((unused)) double oldest = window.update(newest);

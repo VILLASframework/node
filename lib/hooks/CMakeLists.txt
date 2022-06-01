@@ -35,7 +35,9 @@ set(HOOK_SRC
     limit_value.cpp
     ma.cpp
     power.cpp
+    pmu.cpp
     pmu_dft.cpp
+    pmu_ipdft.cpp
     pps_ts.cpp
     print.cpp
     restart.cpp
