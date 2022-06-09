@@ -163,7 +163,7 @@ protected:
 
 		mutable std::mutex last_values_mutex;
 		std::vector<SignalData> last_values = {};
-	} out;
+	} output;
 
 	void createSlave() noexcept;
 	void destroySlave() noexcept;

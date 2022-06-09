@@ -413,9 +413,9 @@ bool SlaveNode::onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56T
 
 bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi) const noexcept
 {
-	auto &mapping = this->out.mapping;
-	auto &last_values = this->out.last_values;
-	auto &asdu_types = this->out.asdu_types;
+	auto &mapping = this->output.mapping;
+	auto &last_values = this->output.last_values;
+	auto &asdu_types = this->output.asdu_types;
 
 	switch (qoi) {
 	// send last values without timestamps
@@ -424,7 +424,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, u
 
 		this->logger->info("received general interrogation");
 
-		auto guard = std::lock_guard { this->out.last_values_mutex };
+		auto guard = std::lock_guard { this->output.last_values_mutex };
 
 		for(auto asdu_type : asdu_types) {
 			auto signal_asdu = CS101_ASDU_create(
@@ -478,7 +478,7 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 {
 	auto fill_asdu = [this] (CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) {
 		int asdu_elements = 0;
-		auto &mapping = this->out.mapping;
+		auto &mapping = this->output.mapping;
 		for (unsigned signal = 0; signal < MIN(sample->length, mapping.size()); signal++) {
 			if (mapping[signal].type() != type) continue;
 
@@ -513,14 +513,14 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 		Sample const *sample = samples[sample_index];
 
 		// update last_values
-		this->out.last_values_mutex.lock();
+		this->output.last_values_mutex.lock();
 		for (unsigned i = 0; i < sample->length; i++) {
-			this->out.last_values[i] = sample->data[i];
+			this->output.last_values[i] = sample->data[i];
 		}
-		this->out.last_values_mutex.unlock();
+		this->output.last_values_mutex.unlock();
 
 		// create one asdu per asdu_type
-		for (auto& asdu_type : this->out.asdu_types) {
+		for (auto& asdu_type : this->output.asdu_types) {
 			CS101_ASDU asdu = CS101_ASDU_create(
 				this->server.asdu_app_layer_parameters,
 				0,
@@ -577,7 +577,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	json_t *signals_json = nullptr;
 	if (out_json) {
-		this->out.enabled = true;
+		this->output.enabled = true;
 		if(json_unpack_ex(out_json, &err, 0, "{ s: o }",
 			"signals", &signals_json
 		))
@@ -617,8 +617,8 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		return *asdu_data;
 	};
 
-	auto &mapping = this->out.mapping;
-	auto &last_values = this->out.last_values;
+	auto &mapping = this->output.mapping;
+	auto &last_values = this->output.last_values;
 	if (signals_json) {
 		json_t *signal_json;
 		size_t i;
@@ -654,7 +654,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		}
 	}
 
-	auto& asdu_types = this->out.asdu_types;
+	auto& asdu_types = this->output.asdu_types;
 	for (auto& asdu_data : mapping) {
 		if (std::find(begin(asdu_types),end(asdu_types),asdu_data.type()) == end(asdu_types))
 			asdu_types.push_back(asdu_data.type());
