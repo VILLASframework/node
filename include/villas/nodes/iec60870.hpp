@@ -139,8 +139,8 @@ protected:
 		std::string local_address = "0.0.0.0";
 		int local_port = 2404;
 		int common_address = 1;
-		int low_priority_queue_size = 100;
-		int high_priority_queue_size = 100;
+		int low_priority_queue = 100;
+		int high_priority_queue = 100;
 
 		// config (use lib60870 defaults if std::nullopt)
 		std::optional<int> apci_t0 = std::nullopt;
@@ -177,6 +177,8 @@ protected:
 	bool onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56Time2a new_time) const noexcept;
 	bool onInterrogation(IMasterConnection connection, CS101_ASDU asdu, uint8_t _of_inter) const noexcept;
 	bool onASDU(IMasterConnection connection, CS101_ASDU asdu) const noexcept;
+
+	unsigned fillASDU(CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) const noexcept(false);
 
 	virtual
 	int _write(struct Sample * smps[], unsigned cnt) override;

@@ -289,7 +289,7 @@ void SlaveNode::createSlave() noexcept
 	this->destroySlave();
 
 	// create the slave object
-	server.slave = CS104_Slave_create(server.low_priority_queue_size,server.high_priority_queue_size);
+	server.slave = CS104_Slave_create(server.low_priority_queue,server.high_priority_queue);
 	CS104_Slave_setServerMode(server.slave, CS104_MODE_CONNECTION_IS_REDUNDANCY_GROUP);
 
 	// configure the slave according to config
@@ -312,7 +312,7 @@ void SlaveNode::createSlave() noexcept
 		return self->onClockSync(connection,asdu,new_time);
 	}, this);
 
-	CS104_Slave_setInterrogationHandler(server.slave, [] (void *tcp_node, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi) {
+	CS104_Slave_setInterrogationHandler(server.slave, [] (void *tcp_node, IMasterConnection connection, CS101_ASDU asdu, QualifierOfInterrogation qoi) {
 		auto self = static_cast<SlaveNode const *> (tcp_node);
 		return self->onInterrogation(connection,asdu,qoi);
 	}, this);
@@ -411,7 +411,7 @@ bool SlaveNode::onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56T
 	return true;
 }
 
-bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi) const noexcept
+bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, QualifierOfInterrogation qoi) const noexcept
 {
 	auto &mapping = this->output.mapping;
 	auto &last_values = this->output.last_values;
@@ -474,41 +474,41 @@ bool SlaveNode::onASDU(IMasterConnection connection, CS101_ASDU asdu) const noex
 	return true;
 }
 
+unsigned SlaveNode::fillASDU(CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) const noexcept(false) {
+	int asdu_elements = 0;
+	auto &mapping = this->output.mapping;
+	for (unsigned signal = 0; signal < MIN(sample->length, mapping.size()); signal++) {
+		if (mapping[signal].type() != type) continue;
+
+		auto timestamp = (sample->flags & (int) SampleFlags::HAS_TS_ORIGIN)
+			? std::optional{ sample->ts.origin }
+			: std::nullopt;
+
+		if (mapping[signal].hasTimestamp() && !timestamp.has_value())
+			throw RuntimeError("Received sample without timestamp for ASDU type with mandatory timestamp");
+
+		if (mapping[signal].signalType() != sample_format(sample,signal))
+			throw RuntimeError("Expected signal type {}, but received {}",
+				signalTypeToString(mapping[signal].signalType()),
+				signalTypeToString(sample_format(sample,signal))
+			);
+
+		mapping[signal].addSampleToASDU(asdu, ASDUData::Sample {
+			sample->data[signal],
+			IEC60870_QUALITY_GOOD,
+			timestamp
+		});
+
+		asdu_elements++;
+	}
+
+	assert(CS101_ASDU_getNumberOfElements(asdu) == asdu_elements);
+
+	return asdu_elements;
+};
+
 int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 {
-	auto fill_asdu = [this] (CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) {
-		int asdu_elements = 0;
-		auto &mapping = this->output.mapping;
-		for (unsigned signal = 0; signal < MIN(sample->length, mapping.size()); signal++) {
-			if (mapping[signal].type() != type) continue;
-
-			auto timestamp = (sample->flags & (int) SampleFlags::HAS_TS_ORIGIN)
-				? std::optional{ sample->ts.origin }
-				: std::nullopt;
-
-			if (mapping[signal].hasTimestamp() && !timestamp.has_value())
-				throw RuntimeError("Received sample without timestamp for ASDU type with mandatory timestamp");
-
-			if (mapping[signal].signalType() != sample_format(sample,signal))
-				throw RuntimeError("Expected signal type {}, but received {}",
-					signalTypeToString(mapping[signal].signalType()),
-					signalTypeToString(sample_format(sample,signal))
-				);
-
-			mapping[signal].addSampleToASDU(asdu, ASDUData::Sample {
-				sample->data[signal],
-				IEC60870_QUALITY_GOOD,
-				timestamp
-			});
-
-			asdu_elements++;
-		}
-
-		assert(CS101_ASDU_getNumberOfElements(asdu) == asdu_elements);
-
-		return asdu_elements;
-	};
-
 	for (unsigned sample_index = 0; sample_index < sample_count; sample_index++) {
 		Sample const *sample = samples[sample_index];
 
@@ -532,7 +532,7 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 			);
 
 			// if data was added to asdu, enqueue it
-			if (fill_asdu(asdu, sample, asdu_type) != 0)
+			if (this->fillASDU(asdu, sample, asdu_type) != 0)
 			        CS104_Slave_enqueueASDU(this->server.slave, asdu);
 
 		        CS101_ASDU_destroy(asdu);
@@ -564,13 +564,15 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	json_t *out_json = nullptr;
 	char const *address = nullptr;
-	if(json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i }",
+	if(json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i }",
 		"out", &out_json,
 		"address", &address,
 		"port", &this->server.local_port,
-		"ca", &this->server.common_address
+		"ca", &this->server.common_address,
+		"low_priority_queue", &this->server.low_priority_queue,
+		"high_priority_queue", &this->server.high_priority_queue
 	))
-		throw ConfigError(json, err, "node-config-node-iec60870-5-104-slave");
+		throw ConfigError(json, err, "node-config-node-iec60870-5-104");
 
 	if (address)
 		this->server.local_address = address;
@@ -581,7 +583,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		if(json_unpack_ex(out_json, &err, 0, "{ s: o }",
 			"signals", &signals_json
 		))
-			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104-slave");
+			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104");
 	}
 
 	auto parse_asdu_data = [&err] (json_t *signal_json) -> ASDUData {
@@ -595,7 +597,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 			"asdu_type_id", &asdu_type_id,
 			"ioa", &ioa
 		))
-			throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104-slave");
+			throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104");
 
 		if (ioa == 0)
 			throw RuntimeError("Found invalid ioa {} in config", ioa);
@@ -679,6 +681,6 @@ int SlaveNode::stop()
 // Plugin
 // ------------------------------------------
 
-static char name[] = "iec60870-5-104-slave";
+static char name[] = "iec60870-5-104";
 static char description[] = "Provide values as protocol slave";
 static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE> p;
