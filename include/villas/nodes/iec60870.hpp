@@ -95,8 +95,8 @@ public:
 	SignalType signalType() const;
 	// check if ASDU contains this data
 	std::optional<ASDUData::Sample> checkASDU(CS101_ASDU const &asdu) const;
-	// add SignalData to an ASDU
-	void addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const;
+	// add SignalData to an ASDU, returns false when sample couldn't be added (insufficient space in ASDU)
+	bool addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const;
 
 	// every value in an ASDU has an associated "information object address" (ioa)
 	int ioa;
@@ -133,9 +133,10 @@ class SlaveNode : public Node {
 protected:
 	bool debug = true;
 
+
 	struct Server {
 		// slave state
-		bool created = false;
+		enum { NONE, STOPPED, READY } state = NONE;
 
 		// config (use explicit defaults)
 		std::string local_address = "0.0.0.0";
@@ -180,7 +181,7 @@ protected:
 	bool onInterrogation(IMasterConnection connection, CS101_ASDU asdu, uint8_t _of_inter) const noexcept;
 	bool onASDU(IMasterConnection connection, CS101_ASDU asdu) const noexcept;
 
-	unsigned fillASDU(CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) const noexcept(false);
+	void sendPeriodicASDUsForSample(Sample const *sample) const noexcept(false);
 
 	virtual
 	int _write(struct Sample *smps[], unsigned cnt) override;
