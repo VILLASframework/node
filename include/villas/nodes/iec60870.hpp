@@ -72,10 +72,12 @@ public:
 		std::optional<timespec> timestamp;
 	};
 
+	// parse the config json
+	static ASDUData parse(json_t *signal_json);
 	// lookup datatype for config key asdu_type
-	static std::optional<ASDUData> lookupName(char const* name, bool with_timestamp, int ioa);
+	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa);
 	// lookup datatype for config key asdu_type_id
-	static std::optional<ASDUData> lookupTypeId(char const* type_id, int ioa);
+	static std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa);
 	// lookup datatype for numeric type identifier
 	static std::optional<ASDUData> lookupType(int type, int ioa);
 
@@ -84,7 +86,7 @@ public:
 	// the IEC104 type
 	ASDUData::Type type() const;
 	// the config file identifier for this type
-	char const* name() const;
+	char const * name() const;
 	// get equivalent IEC104 type without timestamp (e.g. for general interrogation response)
 	ASDUData::Type typeWithoutTimestamp() const;
 	// get equivalent ASDUData without timestamp (e.g. for general interrogation response)
@@ -171,7 +173,7 @@ protected:
 	void startSlave() noexcept(false);
 	void stopSlave() noexcept;
 
-	void debugPrintMessage(IMasterConnection connection, uint8_t* message, int message_size, bool sent) const noexcept;
+	void debugPrintMessage(IMasterConnection connection, uint8_t *message, int message_size, bool sent) const noexcept;
 	void debugPrintConnection(IMasterConnection connection, CS104_PeerConnectionEvent event) const noexcept;
 
 	bool onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56Time2a new_time) const noexcept;
@@ -181,7 +183,7 @@ protected:
 	unsigned fillASDU(CS101_ASDU &asdu, Sample const *sample, ASDUData::Type type) const noexcept(false);
 
 	virtual
-	int _write(struct Sample * smps[], unsigned cnt) override;
+	int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
 	SlaveNode(const std::string &name = "");

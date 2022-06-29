@@ -53,6 +53,43 @@ timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 // ASDUDataType
 // ------------------------------------------
 
+ASDUData ASDUData::parse(json_t *signal_json) {
+	json_error_t err;
+	char const *asdu_type_name = nullptr;
+	int with_timestamp = -1;
+	char const *asdu_type_id = nullptr;
+	int ioa = 0;
+
+	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
+		"asdu_type", &asdu_type_name,
+		"with_timestamp", &with_timestamp,
+		"asdu_type_id", &asdu_type_id,
+		"ioa", &ioa
+	))
+		throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104");
+
+	with_timestamp = with_timestamp != -1 ? with_timestamp != 0 : false;
+
+	if (ioa == 0)
+		throw RuntimeError("Found invalid ioa {} in config", ioa);
+
+	if (	(asdu_type_name && asdu_type_id) ||
+		(!asdu_type_name && !asdu_type_id))
+		throw RuntimeError("Please specify one of asdu_type or asdu_type_id", ioa);
+
+	auto asdu_data = asdu_type_name
+		? ASDUData::lookupName(asdu_type_name, with_timestamp, ioa)
+		: ASDUData::lookupTypeId(asdu_type_id, ioa);
+
+	if (!asdu_data.has_value())
+		throw RuntimeError("Found invalid asdu_type or asdu_type_id");
+
+	if (asdu_type_id && with_timestamp != -1 && asdu_data->hasTimestamp() != with_timestamp)
+		throw RuntimeError("Found mismatch between asdu_type_id {} and with_timestamp {}", asdu_type_id, with_timestamp != 0);
+
+	return *asdu_data;
+};
+
 std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa)
 {
 	auto check = [type_id] (Descriptor descriptor) {
@@ -586,39 +623,6 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104");
 	}
 
-	auto parse_asdu_data = [&err] (json_t *signal_json) -> ASDUData {
-		char const *asdu_type_name = nullptr;
-		int with_timestamp = -1;
-		char const *asdu_type_id = nullptr;
-		int ioa = 0;
-		if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
-			"asdu_type", &asdu_type_name,
-			"with_timestamp", &with_timestamp,
-			"asdu_type_id", &asdu_type_id,
-			"ioa", &ioa
-		))
-			throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104");
-
-		if (ioa == 0)
-			throw RuntimeError("Found invalid ioa {} in config", ioa);
-
-		if (	(asdu_type_name && asdu_type_id) ||
-			(!asdu_type_name && !asdu_type_id))
-			throw RuntimeError("Please specify one of asdu_type or asdu_type_id", ioa);
-
-		auto asdu_data = asdu_type_name
-			? ASDUData::lookupName(asdu_type_name, with_timestamp != -1 ? with_timestamp != 0 : false, ioa)
-			: ASDUData::lookupTypeId(asdu_type_id, ioa);
-
-		if (!asdu_data.has_value())
-			throw RuntimeError("Found invalid asdu_type or asdu_type_id");
-
-		if (asdu_type_id && with_timestamp != -1 && asdu_data->hasTimestamp() != (with_timestamp != 0))
-			throw RuntimeError("Found mismatch between asdu_type_id {} and with_timestamp {}", asdu_type_id, with_timestamp != 0);
-
-		return *asdu_data;
-	};
-
 	auto &mapping = this->output.mapping;
 	auto &last_values = this->output.last_values;
 	if (signals_json) {
@@ -626,7 +630,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		size_t i;
 		json_array_foreach(signals_json, i, signal_json) {
 			auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
-			auto asdu_data = parse_asdu_data(signal_json);
+			auto asdu_data = ASDUData::parse(signal_json);
 			SignalData initial_value;
 			if (signal) {
 				if (signal->type != asdu_data.signalType())
@@ -652,7 +656,6 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 			}
 			mapping.push_back(asdu_data);
 			last_values.push_back(initial_value);
-
 		}
 	}
 
