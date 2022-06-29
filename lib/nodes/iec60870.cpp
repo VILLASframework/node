@@ -380,12 +380,9 @@ void SlaveNode::destroySlave() noexcept
 		return;
 	}
 
-	if (CS104_Slave_isRunning(server.slave)) {
-		CS104_Slave_stop(server.slave);
-	}
+	this->stopSlave();
 
 	CS104_Slave_destroy(server.slave);
-
 	server.created = false;
 }
 
@@ -410,13 +407,17 @@ void SlaveNode::stopSlave() noexcept
 {
 	auto &server = this->server;
 
-	if (!server.created) {
+	if (!server.created || !CS104_Slave_isRunning(server.slave)) {
 		return;
 	}
 
-	if (CS104_Slave_isRunning(server.slave)) {
-		CS104_Slave_stop(server.slave);
+	// wait for all messages to be send
+	while (	(CS104_Slave_getNumberOfQueueEntries(server.slave, NULL) != 0) &&
+		(CS104_Slave_getOpenConnections(server.slave) != 0)) {
+		sleep(1);
 	}
+
+	CS104_Slave_stop(server.slave);
 }
 
 void SlaveNode::debugPrintMessage(IMasterConnection connection, uint8_t* message, int message_size, bool sent) const noexcept
@@ -459,7 +460,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, Q
 	case IEC60870_QOI_STATION: {
 		IMasterConnection_sendACT_CON(connection, asdu, false);
 
-		this->logger->info("received general interrogation");
+		this->logger->debug("received general interrogation");
 
 		auto guard = std::lock_guard { this->output.last_values_mutex };
 
