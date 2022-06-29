@@ -514,7 +514,7 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 
 		// update last_values
 		this->output.last_values_mutex.lock();
-		for (unsigned i = 0; i < sample->length; i++) {
+		for (unsigned i = 0; i < MIN(sample->length, this->output.last_values.size()); i++) {
 			this->output.last_values[i] = sample->data[i];
 		}
 		this->output.last_values_mutex.unlock();
