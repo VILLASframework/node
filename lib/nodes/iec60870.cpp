@@ -327,7 +327,7 @@ void SlaveNode::createSlave() noexcept
 
 	// create the slave object
 	server.slave = CS104_Slave_create(server.low_priority_queue,server.high_priority_queue);
-	CS104_Slave_setServerMode(server.slave, CS104_MODE_CONNECTION_IS_REDUNDANCY_GROUP);
+	CS104_Slave_setServerMode(server.slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
 
 	// configure the slave according to config
 	server.asdu_app_layer_parameters = CS104_Slave_getAppLayerParameters(server.slave);
