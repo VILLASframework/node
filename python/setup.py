@@ -11,7 +11,7 @@ setup(
     author='Steffen Vogel',
     author_email='acs-software@eonerc.rwth-aachen.de',
     description='Python-support for VILLASnode simulation-data gateway',
-    license='GPL-3.0',
+    license='Apache-2.0',
     keywords='simulation power system real-time villas',
     url='https://git.rwth-aachen.de/acs/public/villas/VILLASnode',
     packages=find_namespace_packages(include=['villas.*']),
@@ -21,7 +21,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering',
         'License :: OSI Approved :: '
-        'GNU General Public License v3 or later (GPLv3+)',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',

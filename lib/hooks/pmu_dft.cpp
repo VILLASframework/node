@@ -2,22 +2,7 @@
  *
  * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license GNU General Public License (version 3)
- *
- * VILLASnode
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * @license Apache 2.0
  *********************************************************************************/
 
 #include <cstring>
@@ -238,7 +223,7 @@ public:
 		for (unsigned i = 0; i < windowSize; i++) {
 			lastResult.push_back({0,0,0,0});
 		}
-		
+
 
 #ifdef DFT_MEM_DUMP
 		/* Initialize temporary ppsMemory */
@@ -423,10 +408,10 @@ public:
 				Phasor currentResult = {0,0,0,0};
 
 				calculateDft(PaddingType::ZERO, smpMemoryData[i], results[i], smpMemPos);
-				
+
 				unsigned maxPos = 0;
 				double absAmplitude = 0;
-				
+
 				for(unsigned j = 0; j < freqCount; j++) {
 					if (absAmplitude < abs(results[i][j])) {
 						absAmplitude = abs(results[i][j]);
@@ -447,7 +432,7 @@ public:
 					Point a = { absFrequencies[maxPos - 1], results[i][maxPos - 1] };
 					Point b = { absFrequencies[maxPos + 0], results[i][maxPos + 0] };
 					Point c = { absFrequencies[maxPos + 1], results[i][maxPos + 1] };
-					
+
 					if( estType == EstimationType::QUADRATIC )
 						dftEstimate = quadraticEstimation(a, b, c, maxPos, startFrequency, frequencyResolution, multiplier, windowSize, windowCorrectionFactor);
 					else if( estType == EstimationType::IpDFT )
@@ -457,7 +442,7 @@ public:
 				}
 				currentResult.frequency = dftEstimate.frequency;
 				currentResult.amplitude = dftEstimate.amplitude;
-				currentResult.phase = dftEstimate.phase * angleUnitFactor;//convert phase from rad to deg	
+				currentResult.phase = dftEstimate.phase * angleUnitFactor;//convert phase from rad to deg
 
 				if (windowSize <= smpMemPos) {
 
@@ -619,9 +604,9 @@ public:
 
 	/**
 	 * This function is calculation the IpDFT based on the following paper:
-	 * 
+	 *
 	 * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7980868&tag=1
-	 * 
+	 *
 	 */
 	DftEstimate lpdftEstimation(const Point &a, const Point &b, const Point &c, unsigned maxFBin, double startFrequency, double frequencyResolution, double multiplier, double windowSize, double windowCorrectionFactor)
 	{
@@ -631,9 +616,9 @@ public:
 		if (abs(c.y) > abs(a.y)) {
 			delta = 1. * (2. * abs(c.y) - abs(b.y)) / (abs(b.y) + abs(c.y));
 		} else {
-			delta = -1. * (2. * abs(a.y) - abs(b.y)) / (abs(b.y) + abs(a.y)); 
+			delta = -1. * (2. * abs(a.y) - abs(b.y)) / (abs(b.y) + abs(a.y));
 		}
-	
+
 		// Frequency estimation (eq 4)
 		double f_est =  startFrequency + ( (double) maxFBin + delta) * frequencyResolution;
 

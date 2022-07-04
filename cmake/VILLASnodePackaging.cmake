@@ -2,22 +2,7 @@
 #
 # @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
 # @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license GNU General Public License (version 3)
-#
-# VILLASnode
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# @license Apache 2.0
 ###################################################################################
 
 include(CPackComponent)
@@ -72,7 +57,7 @@ set(CPACK_RPM_BIN_PACKAGE_SUGGESTS "villas-node-tools villas-node-plugins villas
 set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
 set(CPACK_RPM_PACKAGE_RELEASE ${PROJECT_RELEASE})
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
-set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
 set(CPACK_RPM_PACKAGE_URL ${PROJECT_HOMEPAGE_URL})
 set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 

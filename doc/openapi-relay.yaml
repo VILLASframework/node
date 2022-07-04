@@ -10,8 +10,8 @@ info:
     email: svogel2@eonerc.rwth-aachen.de
     url: 'https://fein-aachen.org/contact/'
   license:
-    name: GPL-v3
-    url: 'https://www.gnu.org/licenses/gpl-3.0.en.html'
+    name: Apache-2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
 externalDocs:
   url: 'https://villas.fein-aachen.org/doc/node.html'
 servers:
