@@ -197,16 +197,12 @@ Hook::Reason PmuHook::process(struct Sample *smp)
 				phasorStatus = Status::INVALID;
 		}
 
-		double m = pow(10, floor(log10(phasorRate) + 1));
-		if (phasorRate <= 1) // For less then 1 phasor per second
-			m = pow(10, floor(log10(phasorRate)));
-    		double nextRunDouble = (floor(time_to_double(&smp->ts.origin)*m)/m) + 1.0 / phasorRate;
-		double r = fmod(nextRunDouble, 1 / phasorRate);
-		if( (r > 1 / (4 * phasorRate)) && (r < 3 / (4 * phasorRate)))
-			nextRunDouble += (1.0 / phasorRate) - fmod(nextRunDouble, 1 / phasorRate);
-		nextRun = time_from_double(nextRunDouble);
+		// Align time tag
+		double currentTimeTag = time_to_double(&smp->ts.origin);
+		double alignedTime = currentTimeTag - fmod(currentTimeTag, 1 / phasorRate);
+		nextRun = time_from_double(alignedTime + 1 / phasorRate);
 
-		unsigned tsPos = 0;
+		size_t tsPos = 0;
 		if (timeAlignType == TimeAlign::RIGHT)
 			tsPos = windowSize;
 		else if (timeAlignType == TimeAlign::LEFT)
