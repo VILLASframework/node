@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  properties:
+    asdu_type:
+      type: string
+      enum:
+      - single-point
+      - double-point
+      - scaled-int
+      - normalized-float
+      - short-float
+
+    asdu_type_id:
+      type: string
+      enum:
+      - M_SP_NA_1
+      - M_SP_TB_1
+      - M_DP_NA_1
+      - M_DP_TB_1
+      - M_ME_NB_1
+      - M_ME_TB_1
+      - M_ME_NA_1
+      - M_ME_TA_1
+      - M_ME_NC_1
+      - M_ME_TC_1
+
+    with_timestamp:
+      type: boolean
+      default: false
+
+    ioa:
+      type: number
+      min: 1
+
+- $ref: ../../signal.yaml

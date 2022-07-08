@@ -27,6 +27,7 @@ discriminator:
     exec: nodes/_exec.yaml
     file: nodes/_file.yaml
     fpga: nodes/_fpga.yaml
+    iec60870-5-104: nodes/_iec60870-5-104.yaml
     iec61850-8-1: nodes/_iec61850-8-1.yaml
     iec61850-9-2: nodes/_iec61850-9-2.yaml
     infiniband: nodes/_infiniband.yaml
@@ -40,13 +41,13 @@ discriminator:
     redis: nodes/_redis.yaml
     rtp: nodes/_rtp.yaml
     shmem: nodes/_shmem.yaml
-    signal.v2: nodes/_signal_v2_node.yaml
     signal: nodes/_signal_node.yaml
+    signal.v2: nodes/_signal_v2_node.yaml
     socket: nodes/_socket.yaml
     stats_node: nodes/_stats_node.yaml
     temper: nodes/_temper.yaml
     test_rtt: nodes/_test_rtt.yaml
     uldaq: nodes/_uldaq.yaml
+    webrtc: nodes/_webrtc.yaml
     websocket: nodes/_websocket.yaml
     zeromq: nodes/_zeromq.yaml
-    webrtc: nodes/_webrtc.yaml

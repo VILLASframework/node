@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  properties:
+
+    in:
+      type: object
+      properties: 
+        signals:
+          $ref: ../signal_list.yaml
+
+    out:
+      type: object
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/iec60870_signal.yaml
+    
+    address:
+      description: Hostname or IP address of the IEC 60870 server
+      type: string
+
+    port:
+      description: Port number of the IEC 60870 server
+      type: number
+
+    ca:
+      description: Common Address
+      type: number
+
+    low_priority_queue:
+      type: number
+
+    high_priority_queue:
+      type: number
+
+- $ref: ../node.yaml
