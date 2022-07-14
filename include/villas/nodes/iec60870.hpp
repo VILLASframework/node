@@ -73,13 +73,7 @@ public:
 	};
 
 	// parse the config json
-	static ASDUData parse(json_t *signal_json, std::optional<int> last_ioa);
-	// lookup datatype for config key asdu_type
-	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa);
-	// lookup datatype for config key asdu_type_id
-	static std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa);
-	// lookup datatype for numeric type identifier
-	static std::optional<ASDUData> lookupType(int type, int ioa);
+	static ASDUData parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
 
 	// does this data include a timestamp
 	bool hasTimestamp() const;
@@ -100,6 +94,8 @@ public:
 
 	// every value in an ASDU has an associated "information object address" (ioa)
 	int ioa;
+	// start of the ioa sequence
+	int ioa_sequence_start;
 private:
 	struct Descriptor {
 		ASDUData::Type type;
@@ -123,10 +119,17 @@ private:
 		ASDUData::Descriptor { Type::SHORT_FLOAT_WITH_TIMESTAMP,	"short-float",		"M_ME_TC_1",	true,	Type::SHORT_FLOAT,	SignalType::FLOAT },
 	};
 
-	ASDUData(ASDUData::Descriptor const &descriptor, int ioa);
+	ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start);
+
+	// lookup datatype for config key asdu_type
+	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa, int ioa_sequence_start);
+	// lookup datatype for config key asdu_type_id
+	static std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa, int ioa_sequence_start);
+	// lookup datatype for numeric type identifier
+	static std::optional<ASDUData> lookupType(int type, int ioa, int ioa_sequence_start);
 
 	// descriptor within the descriptors table above
-	ASDUData::Descriptor const &descriptor;
+	ASDUData::Descriptor const *descriptor;
 };
 
 class SlaveNode : public Node {

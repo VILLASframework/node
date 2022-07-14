@@ -50,14 +50,15 @@ timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 	return time;
 }
 
-ASDUData ASDUData::parse(json_t *signal_json, std::optional<int> last_ioa) {
+ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence) {
 	json_error_t err;
 	char const *asdu_type_name = nullptr;
 	int with_timestamp = -1;
 	char const *asdu_type_id = nullptr;
+	std::optional<int> ioa_sequence_start = std::nullopt;
 	int ioa = -1;
 
-	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s?: i }",
+	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
 		"asdu_type", &asdu_type_name,
 		"with_timestamp", &with_timestamp,
 		"asdu_type_id", &asdu_type_id,
@@ -67,11 +68,12 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<int> last_ioa) {
 
 	with_timestamp = with_timestamp != -1 ? with_timestamp != 0 : false;
 
-	if (ioa == -1) {
-		if (last_ioa)
-			ioa = *last_ioa;
-		else
-			throw RuntimeError("Missing ioa for signal", ioa);
+	// increase the ioa if it is found twice to make it a sequence
+	if (	duplicate_ioa_is_sequence &&
+		last_data &&
+		ioa == last_data->ioa_sequence_start) {
+		ioa = last_data->ioa + 1;
+		ioa_sequence_start = last_data->ioa_sequence_start;
 	}
 
 	if (	(asdu_type_name && asdu_type_id) ||
@@ -79,8 +81,8 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<int> last_ioa) {
 		throw RuntimeError("Please specify one of asdu_type or asdu_type_id", ioa);
 
 	auto asdu_data = asdu_type_name
-		? ASDUData::lookupName(asdu_type_name, with_timestamp, ioa)
-		: ASDUData::lookupTypeId(asdu_type_id, ioa);
+		? ASDUData::lookupName(asdu_type_name, with_timestamp, ioa, ioa_sequence_start.value_or(ioa))
+		: ASDUData::lookupTypeId(asdu_type_id, ioa, ioa_sequence_start.value_or(ioa));
 
 	if (!asdu_data.has_value())
 		throw RuntimeError("Found invalid asdu_type or asdu_type_id");
@@ -91,75 +93,75 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<int> last_ioa) {
 	return *asdu_data;
 };
 
-std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa)
+std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa, int ioa_sequence_start)
 {
 	auto check = [type_id] (Descriptor descriptor) {
 		return !strcmp(descriptor.type_id, type_id);
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
-		return ASDUData { *descriptor, ioa };
+		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
 	else
 		return std::nullopt;
 }
 
-std::optional<ASDUData> ASDUData::lookupName(char const *name, bool with_timestamp, int ioa)
+std::optional<ASDUData> ASDUData::lookupName(char const *name, bool with_timestamp, int ioa, int ioa_sequence_start)
 {
 	auto check = [name, with_timestamp] (Descriptor descriptor) {
 		return !strcmp(descriptor.name, name) && descriptor.has_timestamp == with_timestamp;
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
-		return ASDUData { *descriptor, ioa };
+		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
 	else
 		return std::nullopt;
 }
 
-std::optional<ASDUData> ASDUData::lookupType(int type, int ioa)
+std::optional<ASDUData> ASDUData::lookupType(int type, int ioa, int ioa_sequence_start)
 {
 	auto check = [type] (Descriptor descriptor) {
 		return descriptor.type == type;
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
-		return ASDUData { *descriptor, ioa };
+		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
 	else
 		return std::nullopt;
 }
 
 bool ASDUData::hasTimestamp() const
 {
-	return descriptor.has_timestamp;
+	return descriptor->has_timestamp;
 }
 
 ASDUData::Type ASDUData::type() const
 {
-	return descriptor.type;
+	return descriptor->type;
 }
 
 
 char const * ASDUData::name() const {
-	return descriptor.name;
+	return descriptor->name;
 }
 
 ASDUData::Type ASDUData::typeWithoutTimestamp() const
 {
-	return descriptor.type_without_timestamp;
+	return descriptor->type_without_timestamp;
 }
 
 ASDUData ASDUData::withoutTimestamp() const
 {
-	return ASDUData::lookupType(typeWithoutTimestamp(), ioa).value();
+	return ASDUData::lookupType(typeWithoutTimestamp(), ioa, ioa_sequence_start).value();
 }
 
 SignalType ASDUData::signalType() const
 {
-	return descriptor.signal_type;
+	return descriptor->signal_type;
 }
 
 std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) const
 {
-	if (CS101_ASDU_getTypeID(asdu) != static_cast<int> (descriptor.type))
+	if (CS101_ASDU_getTypeID(asdu) != static_cast<int> (descriptor->type))
 		return std::nullopt;
 
 	for (int i = 0; i < CS101_ASDU_getNumberOfElements(asdu); i++) {
@@ -250,7 +252,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 		: std::nullopt;
 
 	InformationObject io;
-	switch (descriptor.type) {
+	switch (descriptor->type) {
 	case ASDUData::SCALED_INT: {
 		auto value = static_cast<int16_t> (sample.signal_data.i & 0xFFFF);
 		auto scaled = MeasuredValueScaled_create(NULL, ioa, value, sample.quality);
@@ -308,7 +310,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 	return successfully_added;
 }
 
-ASDUData::ASDUData(ASDUData::Descriptor const &descriptor, int ioa) : ioa(ioa), descriptor(descriptor)
+ASDUData::ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start) : ioa(ioa), ioa_sequence_start(ioa_sequence_start), descriptor(descriptor)
 {}
 
 void SlaveNode::createSlave() noexcept
@@ -606,10 +608,12 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		server.local_address = address;
 
 	json_t *signals_json = nullptr;
+	int duplicate_ioa_is_sequence = false;
 	if (out_json) {
 		output.enabled = true;
-		if(json_unpack_ex(out_json, &err, 0, "{ s: o }",
-			"signals", &signals_json
+		if(json_unpack_ex(out_json, &err, 0, "{ s: o, s?: b }",
+			"signals", &signals_json,
+			"duplicate_ioa_is_sequence", &duplicate_ioa_is_sequence
 		))
 			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104");
 	}
@@ -617,11 +621,11 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (signals_json) {
 		json_t *signal_json;
 		size_t i;
-		std::optional<int> last_ioa = std::nullopt;
+		std::optional<ASDUData> last_data = std::nullopt;
 		json_array_foreach(signals_json, i, signal_json) {
 			auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
-			auto asdu_data = ASDUData::parse(signal_json, last_ioa);
-			last_ioa = asdu_data.ioa;
+			auto asdu_data = ASDUData::parse(signal_json, last_data, duplicate_ioa_is_sequence);
+			last_data = asdu_data;
 			SignalData initial_value;
 			if (signal) {
 				if (signal->type != asdu_data.signalType())
