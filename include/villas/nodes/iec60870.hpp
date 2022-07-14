@@ -73,7 +73,7 @@ public:
 	};
 
 	// parse the config json
-	static ASDUData parse(json_t *signal_json);
+	static ASDUData parse(json_t *signal_json, std::optional<int> last_ioa);
 	// lookup datatype for config key asdu_type
 	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa);
 	// lookup datatype for config key asdu_type_id
@@ -132,7 +132,6 @@ private:
 class SlaveNode : public Node {
 protected:
 	bool debug = true;
-
 
 	struct Server {
 		// slave state

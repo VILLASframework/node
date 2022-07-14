@@ -50,14 +50,14 @@ timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 	return time;
 }
 
-ASDUData ASDUData::parse(json_t *signal_json) {
+ASDUData ASDUData::parse(json_t *signal_json, std::optional<int> last_ioa) {
 	json_error_t err;
 	char const *asdu_type_name = nullptr;
 	int with_timestamp = -1;
 	char const *asdu_type_id = nullptr;
-	int ioa = 0;
+	int ioa = -1;
 
-	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
+	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s?: i }",
 		"asdu_type", &asdu_type_name,
 		"with_timestamp", &with_timestamp,
 		"asdu_type_id", &asdu_type_id,
@@ -67,8 +67,12 @@ ASDUData ASDUData::parse(json_t *signal_json) {
 
 	with_timestamp = with_timestamp != -1 ? with_timestamp != 0 : false;
 
-	if (ioa == 0)
-		throw RuntimeError("Found invalid ioa {} in config", ioa);
+	if (ioa == -1) {
+		if (last_ioa)
+			ioa = *last_ioa;
+		else
+			throw RuntimeError("Missing ioa for signal", ioa);
+	}
 
 	if (	(asdu_type_name && asdu_type_id) ||
 		(!asdu_type_name && !asdu_type_id))
@@ -613,9 +617,11 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (signals_json) {
 		json_t *signal_json;
 		size_t i;
+		std::optional<int> last_ioa = std::nullopt;
 		json_array_foreach(signals_json, i, signal_json) {
 			auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
-			auto asdu_data = ASDUData::parse(signal_json);
+			auto asdu_data = ASDUData::parse(signal_json, last_ioa);
+			last_ioa = asdu_data.ioa;
 			SignalData initial_value;
 			if (signal) {
 				if (signal->type != asdu_data.signalType())
