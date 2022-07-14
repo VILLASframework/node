@@ -134,8 +134,6 @@ private:
 
 class SlaveNode : public Node {
 protected:
-	bool debug = true;
-
 	struct Server {
 		// slave state
 		enum { NONE, STOPPED, READY } state = NONE;
