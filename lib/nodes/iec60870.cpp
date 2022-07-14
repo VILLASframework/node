@@ -93,11 +93,10 @@ std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa)
 		return !strcmp(descriptor.type_id, type_id);
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
-	if (descriptor != end(descriptors)) {
+	if (descriptor != end(descriptors))
 		return ASDUData { *descriptor, ioa };
-	} else {
+	else
 		return std::nullopt;
-	}
 }
 
 std::optional<ASDUData> ASDUData::lookupName(char const *name, bool with_timestamp, int ioa)
@@ -106,11 +105,10 @@ std::optional<ASDUData> ASDUData::lookupName(char const *name, bool with_timesta
 		return !strcmp(descriptor.name, name) && descriptor.has_timestamp == with_timestamp;
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
-	if (descriptor != end(descriptors)) {
+	if (descriptor != end(descriptors))
 		return ASDUData { *descriptor, ioa };
-	} else {
+	else
 		return std::nullopt;
-	}
 }
 
 std::optional<ASDUData> ASDUData::lookupType(int type, int ioa)
@@ -119,11 +117,10 @@ std::optional<ASDUData> ASDUData::lookupType(int type, int ioa)
 		return descriptor.type == type;
 	};
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
-	if (descriptor != end(descriptors)) {
+	if (descriptor != end(descriptors))
 		return ASDUData { *descriptor, ioa };
-	} else {
+	else
 		return std::nullopt;
-	}
 }
 
 bool ASDUData::hasTimestamp() const
@@ -158,9 +155,8 @@ SignalType ASDUData::signalType() const
 
 std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) const
 {
-	if (CS101_ASDU_getTypeID(asdu) != static_cast<int> (descriptor.type)) {
+	if (CS101_ASDU_getTypeID(asdu) != static_cast<int> (descriptor.type))
 		return std::nullopt;
-	}
 
 	for (int i = 0; i < CS101_ASDU_getNumberOfElements(asdu); i++) {
 		InformationObject io = CS101_ASDU_getElement(asdu, i);
@@ -365,9 +361,8 @@ void SlaveNode::createSlave() noexcept
 
 void SlaveNode::destroySlave() noexcept
 {
-	if (server.state == SlaveNode::Server::NONE) {
+	if (server.state == SlaveNode::Server::NONE)
 		return;
-	}
 
 	stopSlave();
 
@@ -377,26 +372,23 @@ void SlaveNode::destroySlave() noexcept
 
 void SlaveNode::startSlave() noexcept(false)
 {
-	if (server.state == SlaveNode::Server::NONE) {
+	if (server.state == SlaveNode::Server::NONE)
 		createSlave();
-	} else {
+	else
 		stopSlave();
-	}
 
 	server.state = SlaveNode::Server::READY;
 
 	CS104_Slave_start(server.slave);
 
-	if (!CS104_Slave_isRunning(server.slave)) {
+	if (!CS104_Slave_isRunning(server.slave))
 		throw std::runtime_error{"iec60870-5-104 server could not be started"};
-	}
 }
 
 void SlaveNode::stopSlave() noexcept
 {
-	if (server.state != SlaveNode::Server::READY || !CS104_Slave_isRunning(server.slave)) {
+	if (server.state != SlaveNode::Server::READY || !CS104_Slave_isRunning(server.slave))
 		return;
-	}
 
 	server.state = SlaveNode::Server::STOPPED;
 
@@ -404,9 +396,8 @@ void SlaveNode::stopSlave() noexcept
 		logger->info("waiting for last messages in queue");
 	// wait for all messages to be send before really stopping
 	while (	(CS104_Slave_getNumberOfQueueEntries(server.slave, NULL) != 0) &&
-		(CS104_Slave_getOpenConnections(server.slave) != 0)) {
+		(CS104_Slave_getOpenConnections(server.slave) != 0))
 		std::this_thread::sleep_for(100ms);
-	}
 
 	CS104_Slave_stop(server.slave);
 }
@@ -588,10 +579,9 @@ SlaveNode::~SlaveNode()
 
 int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 {
-	{
-		int ret = Node::parse(json, sn_uuid);
-		if (ret) return ret;
-	}
+	int ret = Node::parse(json, sn_uuid);
+	if (ret)
+		return ret;
 
 	json_error_t err;
 	auto signals = getOutputSignals();
@@ -646,9 +636,8 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 				} break;
 				default: assert(!"unreachable");
 				}
-			} else {
+			} else
 				initial_value.f = 0.0;
-			}
 			output.mapping.push_back(asdu_data);
 			output.last_values.push_back(initial_value);
 		}
