@@ -311,7 +311,8 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 }
 
 ASDUData::ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start) : ioa(ioa), ioa_sequence_start(ioa_sequence_start), descriptor(descriptor)
-{}
+{
+}
 
 void SlaveNode::createSlave() noexcept
 {
@@ -576,6 +577,28 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 SlaveNode::SlaveNode(const std::string &name) :
 	Node(name)
 {
+	server.state = SlaveNode::Server::NONE;
+
+	// server config (use explicit defaults)
+	server.local_address = "0.0.0.0";
+	server.local_port = 2404;
+	server.common_address = 1;
+	server.low_priority_queue = 100;
+	server.high_priority_queue = 100;
+
+	// config (use lib60870 defaults if std::nullopt)
+	server.apci_t0 = std::nullopt;
+	server.apci_t1 = std::nullopt;
+	server.apci_t2 = std::nullopt;
+	server.apci_t3 = std::nullopt;
+	server.apci_k = std::nullopt;
+	server.apci_w = std::nullopt;
+
+	// output config
+	output.enabled = false;
+	output.mapping = {};
+	output.asdu_types = {};
+	output.last_values = {};
 }
 
 SlaveNode::~SlaveNode()

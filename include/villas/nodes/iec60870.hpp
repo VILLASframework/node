@@ -136,22 +136,22 @@ class SlaveNode : public Node {
 protected:
 	struct Server {
 		// slave state
-		enum { NONE, STOPPED, READY } state = NONE;
+		enum { NONE, STOPPED, READY } state;
 
 		// config (use explicit defaults)
-		std::string local_address = "0.0.0.0";
-		int local_port = 2404;
-		int common_address = 1;
-		int low_priority_queue = 100;
-		int high_priority_queue = 100;
+		std::string local_address;
+		int local_port;
+		int common_address;
+		int low_priority_queue;
+		int high_priority_queue;
 
 		// config (use lib60870 defaults if std::nullopt)
-		std::optional<int> apci_t0 = std::nullopt;
-		std::optional<int> apci_t1 = std::nullopt;
-		std::optional<int> apci_t2 = std::nullopt;
-		std::optional<int> apci_t3 = std::nullopt;
-		std::optional<int> apci_k = std::nullopt;
-		std::optional<int> apci_w = std::nullopt;
+		std::optional<int> apci_t0;
+		std::optional<int> apci_t1;
+		std::optional<int> apci_t2;
+		std::optional<int> apci_t3;
+		std::optional<int> apci_k;
+		std::optional<int> apci_w;
 
 		// lib60870
 		CS104_Slave slave;
@@ -159,13 +159,12 @@ protected:
 	} server;
 
 	struct Output {
-		// config
 		bool enabled = false;
-		std::vector<ASDUData> mapping = {};
-		std::vector<ASDUData::Type> asdu_types = {};
+		std::vector<ASDUData> mapping;
+		std::vector<ASDUData::Type> asdu_types;
 
 		mutable std::mutex last_values_mutex;
-		std::vector<SignalData> last_values = {};
+		std::vector<SignalData> last_values;
 	} output;
 
 	void createSlave() noexcept;
