@@ -245,7 +245,7 @@ if ! pkg-config "libxil >= 1.0.0" && \
 fi
 
 # Build & Install hiredis
-if ! pkg-config "hiredis>1.0.0" && \
+if ! pkg-config "hiredis >= 1.0.0" && \
     [ -z "${SKIP_HIREDIS}" -a -z "${SKIP_REDIS}" ]; then
     git clone ${GIT_OPTS} --branch v1.0.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
@@ -314,6 +314,22 @@ if ! pkg-config "libwebsockets >= 4.3.0" && \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
+fi
+
+# Build & Install libdatachannel
+if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST && \
+    [ -z "${SKIP_LIBDATACHANNEL}" ]; then
+    git clone ${GIT_OPTS} --branch v0.17.8 https://github.com/paullouisageneau/libdatachannel &&  pushd libdatachannel
+    git submodule update --init --recursive --depth 1
+    mkdir build && pushd build
+
+    cmake -DUSE_NICE=ON \
+          -DNO_MEDIA=ON \
+          -DNO_WEBSOCKET=ON \
+          ${CMAKE_OPTS} ..
+
+    make ${MAKE_OPTS} ${TARGET}
+    popd; popd
 fi
 
 popd
