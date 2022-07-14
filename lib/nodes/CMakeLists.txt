@@ -186,6 +186,12 @@ if(WITH_NODE_REDIS)
 	list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
 endif()
 
+# Enable WebRTC support
+if(WITH_NODE_WEBRTC)
+	list(APPEND NODE_SRC webrtc.cpp)
+	list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

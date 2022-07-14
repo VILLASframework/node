@@ -74,6 +74,7 @@ find_package(RDMACM)
 find_package(spdlog)
 find_package(Etherlab)
 find_package(Lua)
+find_package(LibDataChannel)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -195,6 +196,7 @@ cmake_dependent_option(WITH_NODE_STATS      "Build with stats node-type"        
 cmake_dependent_option(WITH_NODE_TEMPER     "Build with temper node-type"                           ON "LIBUSB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            ON "LIBULDAQ_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"                           ON "LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND;NOT WITHOUT_GPL" OFF)
 
@@ -295,6 +297,7 @@ add_feature_info(NODE_STATS             WITH_NODE_STATS             "Build with 
 add_feature_info(NODE_TEMPER            WITH_NODE_TEMPER            "Build with temper node-type")
 add_feature_info(NODE_TEST_RTT          WITH_NODE_TEST_RTT          "Build with test_rtt node-type")
 add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with uldaq node-type")
+add_feature_info(NODE_WEBRTC            WITH_NODE_WEBRTC            "Build with webrtc node-type")
 add_feature_info(NODE_WEBSOCKET         WITH_NODE_WEBSOCKET         "Build with websocket node-type")
 add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with zeromq node-type")
 
