@@ -86,6 +86,9 @@ find_program(PROTOBUFC_COMPILER NAMES protoc-c)
 find_program(PROTOBUF_COMPILER NAMES protoc)
 find_program(GO NAMES go PATHS /usr/local/go/bin)
 
+# Build without any GPL-code
+option(WITHOUT_GPL "Build VILLASnode without any GPL code" OFF)
+
 # Optionally download Go toolchain
 option(DOWNLOAD_GO "Download Go toolchain" ON)
 if(NOT GO AND DOWNLOAD_GO)
@@ -167,13 +170,13 @@ cmake_dependent_option(WITH_WEB             "Build with internal webserver"     
 cmake_dependent_option(WITH_NODE_AMQP       "Build with amqp node-type"                             ON "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_CAN        "Build with can node-type"                              ON "" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI     "Build with comedi node-type"                           ON "COMEDILIB_FOUND" OFF)
-cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         ON "ETHERLAB_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         ON "ETHERLAB_FOUND;NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_EXAMPLE    "Build with example node-type"                          ON "" OFF)
 cmake_dependent_option(WITH_NODE_EXEC       "Build with exec node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_FILE       "Build with file node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_FPGA       "Build with fpga node-type"                             ON "WITH_FPGA" OFF)
-cmake_dependent_option(WITH_NODE_GO         "Build with Go-based nodes-types"                       ON "WITH_GO" OFF)
-cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"                        ON "LIBIEC61850_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_GO         "Build with Go nodes-types"                             ON "WITH_GO" OFF)
+cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"                        ON "LIBIEC61850_FOUND;NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "IBVerbs_FOUND; RDMACM_FOUND" OFF) # Infiniband node-type is currenly broken
 cmake_dependent_option(WITH_NODE_INFLUXDB   "Build with influxdb node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_KAFKA      "Build with kafka node-type"                            ON "RDKAFKA_FOUND" OFF)
@@ -192,7 +195,7 @@ cmake_dependent_option(WITH_NODE_TEMPER     "Build with temper node-type"       
 cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            ON "LIBULDAQ_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
-cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND;NOT WITHOUT_GPL" OFF)
 
 # Add more build configurations
 include(cmake/config/Debug.cmake)
@@ -264,9 +267,14 @@ add_feature_info(TOOLS                  WITH_TOOLS                  "Build auxil
 add_feature_info(WEB                    WITH_WEB                    "Build with internal webserver")
 
 add_feature_info(NODE_AMQP              WITH_NODE_AMQP              "Build with amqp node-type")
+add_feature_info(NODE_CAN               WITH_NODE_CAN               "Build with can node-type")
 add_feature_info(NODE_COMEDI            WITH_NODE_COMEDI            "Build with comedi node-type")
+add_feature_info(NODE_ETHERCAT          WITH_NODE_ETHERCAT          "Build with ethercat node-type")
+add_feature_info(NODE_EXAMPLE           WITH_NODE_EXAMPLE           "Build with example node-type")
+add_feature_info(NODE_EXEC              WITH_NODE_EXEC              "Build with exec node-type")
 add_feature_info(NODE_FILE              WITH_NODE_FILE              "Build with file node-type")
-add_feature_info(NODE_GO                WITH_NODE_GO                "Build with Go-based nodes-types")
+add_feature_info(NODE_FPGA              WITH_NODE_FPGA              "Build with fpga node-type")
+add_feature_info(NODE_GO                WITH_NODE_GO                "Build with Go node-types")
 add_feature_info(NODE_IEC61850          WITH_NODE_IEC61850          "Build with iec61850 node-types")
 add_feature_info(NODE_INFINIBAND        WITH_NODE_INFINIBAND        "Build with infiniband node-type")
 add_feature_info(NODE_INFLUXDB          WITH_NODE_INFLUXDB          "Build with influxdb node-type")
@@ -279,7 +287,7 @@ add_feature_info(NODE_OPAL              WITH_NODE_OPAL              "Build with 
 add_feature_info(NODE_REDIS             WITH_NODE_REDIS             "Build with redis node-type")
 add_feature_info(NODE_RTP               WITH_NODE_RTP               "Build with rtp node-type")
 add_feature_info(NODE_SHMEM             WITH_NODE_SHMEM             "Build with shmem node-type")
-add_feature_info(NODE_SIGNAL_GENERATOR  WITH_NODE_SIGNAL            "Build with signal node-type")
+add_feature_info(NODE_SIGNAL            WITH_NODE_SIGNAL            "Build with signal node-type")
 add_feature_info(NODE_SOCKET            WITH_NODE_SOCKET            "Build with socket node-type")
 add_feature_info(NODE_STATS             WITH_NODE_STATS             "Build with stats node-type")
 add_feature_info(NODE_TEMPER            WITH_NODE_TEMPER            "Build with temper node-type")
