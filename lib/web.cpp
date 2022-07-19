@@ -7,6 +7,7 @@
 
 #include <cstring>
 
+#include <villas/config.hpp>
 #include <villas/node/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/web.hpp>
@@ -14,6 +15,10 @@
 #include <villas/api/session.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/nodes/websocket.hpp>
+
+#ifdef WITH_NODE_WEBRTC
+  #include <villas/nodes/webrtc/signaling_client.hpp>
+#endif
 
 using namespace villas;
 using namespace villas::node;
@@ -45,8 +50,16 @@ lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_NODE_WEBSOCKET */
+#ifdef WITH_NODE_WEBRTC
 	{
-		.name = nullptr /* terminator */
+		.name = "webrtc-signaling",
+		.callback = webrtc::SignalingClient::protocolCallbackStatic,
+		.per_session_data_size = sizeof(webrtc::SignalingClient),
+		.rx_buffer_size = 0
+	},
+#endif
+	{
+		.name = nullptr,
 	}
 };
 

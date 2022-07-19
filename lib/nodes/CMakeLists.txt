@@ -188,7 +188,7 @@ endif()
 
 # Enable WebRTC support
 if(WITH_NODE_WEBRTC)
-	list(APPEND NODE_SRC webrtc.cpp)
+	list(APPEND NODE_SRC webrtc.cpp webrtc/signaling_client.cpp webrtc/signaling_message.cpp webrtc/peer_connection.cpp)
 	list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
