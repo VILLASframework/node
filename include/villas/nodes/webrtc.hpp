@@ -1,4 +1,4 @@
-/** The WebRTC node-type.
+/** Node-type webrtc.
  *
  * @file
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <rtc/rtc.hpp>
+
+#include <villas/nodes/webrtc/peer_connection.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node.hpp>
 #include <villas/timing.hpp>
@@ -21,6 +24,15 @@ struct Sample;
 class WebRTCNode : public Node {
 
 protected:
+	std::string server;
+	std::string session;
+
+	bool wait;
+	bool ordered;
+	int max_retransmits;
+
+	std::shared_ptr<webrtc::PeerConnection> conn;
+	rtc::Configuration config;
 
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt);
@@ -77,6 +89,47 @@ public:
 
 	virtual
 	const std::string & getDetails();
+};
+
+
+class WebRTCNodeFactory : public NodeFactory {
+
+public:
+	using NodeFactory::NodeFactory;
+
+	virtual
+	Node * make()
+	{
+		auto *n = new WebRTCNode();
+
+		init(n);
+
+		return n;
+	}
+
+	virtual
+	int getFlags() const
+	{
+		return (int) NodeFactory::Flags::SUPPORTS_READ |
+		       (int) NodeFactory::Flags::SUPPORTS_WRITE |
+		       (int) NodeFactory::Flags::SUPPORTS_POLL |
+		       (int) NodeFactory::Flags::REQUIRES_WEB;
+	}
+
+	virtual
+	std::string getName() const
+	{
+		return "webrtc";
+	}
+
+	virtual
+	std::string getDescription() const
+	{
+		return "Web Real-time Communication";
+	}
+
+	virtual
+	int start(SuperNode *sn);
 };
 
 
