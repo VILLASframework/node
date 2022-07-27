@@ -5,6 +5,7 @@
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
+
 #pragma once
 
 #include <string>
@@ -28,26 +29,16 @@ namespace iec60870 {
 class ASDUData {
 public:
 	enum Type {
-		// SinglePointInformation
-		SINGLE_POINT = M_SP_NA_1,
-		// SinglePointWithCP56Time2a
-		SINGLE_POINT_WITH_TIMESTAMP = M_SP_TB_1,
-		// DoublePointInformation
-		DOUBLE_POINT = M_DP_NA_1,
-		// DoublePointWithCP56Time2a
-		DOUBLE_POINT_WITH_TIMESTAMP = M_DP_TB_1,
-		// MeasuredValueScaled
-		SCALED_INT = M_ME_NB_1,
-		// MeasuredValueScaledWithCP56Time2a
-		SCALED_INT_WITH_TIMESTAMP = M_ME_TE_1,
-		// MeasuredValueNormalized
-		NORMALIZED_FLOAT = M_ME_NA_1,
-		// MeasuredValueNormalizedWithCP56Time2a
-		NORMALIZED_FLOAT_WITH_TIMESTAMP = M_ME_TD_1,
-		// MeasuredValueShort
-		SHORT_FLOAT = M_ME_NC_1,
-		// MeasuredValueShortWithCP56Time2a
-		SHORT_FLOAT_WITH_TIMESTAMP = M_ME_TF_1,
+		SINGLE_POINT = M_SP_NA_1,			// SinglePointInformation
+		SINGLE_POINT_WITH_TIMESTAMP = M_SP_TB_1,	// SinglePointWithCP56Time2a
+		DOUBLE_POINT = M_DP_NA_1,			// DoublePointInformation
+		DOUBLE_POINT_WITH_TIMESTAMP = M_DP_TB_1,	// DoublePointWithCP56Time2a
+		SCALED_INT = M_ME_NB_1,				// MeasuredValueScaled
+		SCALED_INT_WITH_TIMESTAMP = M_ME_TE_1,		// MeasuredValueScaledWithCP56Time2a
+		NORMALIZED_FLOAT = M_ME_NA_1,			// MeasuredValueNormalized
+		NORMALIZED_FLOAT_WITH_TIMESTAMP = M_ME_TD_1,	// MeasuredValueNormalizedWithCP56Time2a
+		SHORT_FLOAT = M_ME_NC_1,			// MeasuredValueShort
+		SHORT_FLOAT_WITH_TIMESTAMP = M_ME_TF_1,		// MeasuredValueShortWithCP56Time2a
 	};
 
 	struct Sample {
@@ -56,29 +47,37 @@ public:
 		std::optional<timespec> timestamp;
 	};
 
-	// parse the config json
+	// Parse the config json
 	static ASDUData parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
 
-	// does this data include a timestamp
+	// Does this data include a timestamp
 	bool hasTimestamp() const;
-	// the IEC104 type
+
+	// The IEC104 type
 	ASDUData::Type type() const;
-	// the config file identifier for this type
+
+	// The config file identifier for this type
 	char const * name() const;
-	// get equivalent IEC104 type without timestamp (e.g. for general interrogation response)
+
+	// Get equivalent IEC104 type without timestamp (e.g. for general interrogation response)
 	ASDUData::Type typeWithoutTimestamp() const;
-	// get equivalent ASDUData without timestamp (e.g. for general interrogation response)
+
+	// Get equivalent ASDUData without timestamp (e.g. for general interrogation response)
 	ASDUData withoutTimestamp() const;
-	// corresponding signal type
+
+	// Corresponding signal type
 	SignalType signalType() const;
-	// check if ASDU contains this data
+
+	// Check if ASDU contains this data
 	std::optional<ASDUData::Sample> checkASDU(CS101_ASDU const &asdu) const;
-	// add SignalData to an ASDU, returns false when sample couldn't be added (insufficient space in ASDU)
+
+	// Add SignalData to an ASDU, returns false when sample couldn't be added (insufficient space in ASDU)
 	bool addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const;
 
-	// every value in an ASDU has an associated "information object address" (ioa)
+	// Every value in an ASDU has an associated "information object address" (ioa)
 	int ioa;
-	// start of the ioa sequence
+
+	// Start of the ioa sequence
 	int ioa_sequence_start;
 private:
 	struct Descriptor {
@@ -105,31 +104,33 @@ private:
 
 	ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start);
 
-	// lookup datatype for config key asdu_type
+	// Lookup datatype for config key asdu_type
 	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa, int ioa_sequence_start);
-	// lookup datatype for config key asdu_type_id
+
+	// Lookup datatype for config key asdu_type_id
 	static std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa, int ioa_sequence_start);
-	// lookup datatype for numeric type identifier
+
+	// Lookup datatype for numeric type identifier
 	static std::optional<ASDUData> lookupType(int type, int ioa, int ioa_sequence_start);
 
-	// descriptor within the descriptors table above
+	// Descriptor within the descriptors table above
 	ASDUData::Descriptor const *descriptor;
 };
 
 class SlaveNode : public Node {
 protected:
 	struct Server {
-		// slave state
+		// Slave state
 		enum { NONE, STOPPED, READY } state;
 
-		// config (use explicit defaults)
+		// Config (use explicit defaults)
 		std::string local_address;
 		int local_port;
 		int common_address;
 		int low_priority_queue;
 		int high_priority_queue;
 
-		// config (use lib60870 defaults if std::nullopt)
+		// Config (use lib60870 defaults if std::nullopt)
 		std::optional<int> apci_t0;
 		std::optional<int> apci_t1;
 		std::optional<int> apci_t2;
@@ -137,7 +138,7 @@ protected:
 		std::optional<int> apci_k;
 		std::optional<int> apci_w;
 
-		// lib60870
+		// Lib60870
 		CS104_Slave slave;
 		CS101_AppLayerParameters asdu_app_layer_parameters;
 	} server;
@@ -183,9 +184,6 @@ public:
 
 	virtual
 	int stop() override;
-
-	// virtual
-	// std::string & getDetails() override;
 };
 
 } /* namespace iec60870 */

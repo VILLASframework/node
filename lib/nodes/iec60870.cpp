@@ -4,12 +4,13 @@
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
+
 #include <algorithm>
+
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec60870.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.hpp>
-#include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 
@@ -52,7 +53,7 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data,
 
 	with_timestamp = with_timestamp != -1 ? with_timestamp != 0 : false;
 
-	// increase the ioa if it is found twice to make it a sequence
+	// Increase the ioa if it is found twice to make it a sequence
 	if (	duplicate_ioa_is_sequence &&
 		last_data &&
 		ioa == last_data->ioa_sequence_start) {
@@ -82,6 +83,7 @@ std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa, int
 	auto check = [type_id] (Descriptor descriptor) {
 		return !strcmp(descriptor.type_id, type_id);
 	};
+
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
 		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
@@ -94,6 +96,7 @@ std::optional<ASDUData> ASDUData::lookupName(char const *name, bool with_timesta
 	auto check = [name, with_timestamp] (Descriptor descriptor) {
 		return !strcmp(descriptor.name, name) && descriptor.has_timestamp == with_timestamp;
 	};
+
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
 		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
@@ -106,6 +109,7 @@ std::optional<ASDUData> ASDUData::lookupType(int type, int ioa, int ioa_sequence
 	auto check = [type] (Descriptor descriptor) {
 		return descriptor.type == type;
 	};
+
 	auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
 	if (descriptor != end(descriptors))
 		return ASDUData { &*descriptor, ioa, ioa_sequence_start };
@@ -198,7 +202,8 @@ std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) cons
 				break;
 			}
 
-			default: assert(!"unreachable");
+			default:
+				assert(!"unreachable");
 		}
 
 		std::optional<CP56Time2a> time_cp56;
@@ -233,7 +238,8 @@ std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) cons
 				break;
 			}
 
-			default: time_cp56 = std::nullopt;
+			default:
+				time_cp56 = std::nullopt;
 		}
 
 		InformationObject_destroy(io);
@@ -326,10 +332,13 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 			break;
 		}
 
-		default: assert(!"unreachable");
+		default:
+			assert(!"unreachable");
 	}
+
 	bool successfully_added = CS101_ASDU_addInformationObject(asdu, io);
 	InformationObject_destroy(io);
+
 	return successfully_added;
 }
 
@@ -339,28 +348,39 @@ ASDUData::ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequ
 
 void SlaveNode::createSlave() noexcept
 {
-	// destroy slave id it was already created
+	// Destroy slave id it was already created
 	destroySlave();
 
-	// create the slave object
+	// Create the slave object
 	server.slave = CS104_Slave_create(server.low_priority_queue, server.high_priority_queue);
 	CS104_Slave_setServerMode(server.slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
 
-	// configure the slave according to config
+	// Configure the slave according to config
 	server.asdu_app_layer_parameters = CS104_Slave_getAppLayerParameters(server.slave);
 	CS104_APCIParameters apci_parameters = CS104_Slave_getConnectionParameters(server.slave);
 
-	if (server.apci_t0) apci_parameters->t0 = *server.apci_t0;
-	if (server.apci_t1) apci_parameters->t1 = *server.apci_t1;
-	if (server.apci_t2) apci_parameters->t2 = *server.apci_t2;
-	if (server.apci_t3) apci_parameters->t3 = *server.apci_t3;
-	if (server.apci_k) apci_parameters->k = *server.apci_k;
-	if (server.apci_w) apci_parameters->w = *server.apci_w;
+	if (server.apci_t0)
+		apci_parameters->t0 = *server.apci_t0;
+
+	if (server.apci_t1)
+		apci_parameters->t1 = *server.apci_t1;
+
+	if (server.apci_t2)
+		apci_parameters->t2 = *server.apci_t2;
+
+	if (server.apci_t3)
+		apci_parameters->t3 = *server.apci_t3;
+
+	if (server.apci_k)
+		apci_parameters->k = *server.apci_k;
+
+	if (server.apci_w)
+		apci_parameters->w = *server.apci_w;
 
 	CS104_Slave_setLocalAddress(server.slave, server.local_address.c_str());
 	CS104_Slave_setLocalPort(server.slave, server.local_port);
 
-	// setup callbacks into the class
+	// Setup callbacks into the class
 	CS104_Slave_setClockSyncHandler(server.slave, [] (void *tcp_node, IMasterConnection connection, CS101_ASDU asdu, CP56Time2a new_time) {
 		auto self = static_cast<SlaveNode const *> (tcp_node);
 		return self->onClockSync(connection, asdu, new_time);
@@ -423,8 +443,9 @@ void SlaveNode::stopSlave() noexcept
 	server.state = SlaveNode::Server::STOPPED;
 
 	if (CS104_Slave_getNumberOfQueueEntries(server.slave, NULL) != 0)
-		logger->info("waiting for last messages in queue");
-	// wait for all messages to be send before really stopping
+		logger->info("Waiting for last messages in queue");
+
+	// Wait for all messages to be send before really stopping
 	while (	(CS104_Slave_getNumberOfQueueEntries(server.slave, NULL) != 0) &&
 		(CS104_Slave_getOpenConnections(server.slave) != 0))
 		std::this_thread::sleep_for(100ms);
@@ -434,45 +455,48 @@ void SlaveNode::stopSlave() noexcept
 
 void SlaveNode::debugPrintMessage(IMasterConnection connection, uint8_t* message, int message_size, bool sent) const noexcept
 {
-	/// ToDo: debug print the message bytes as trace
+	/// TODO: debug print the message bytes as trace
 }
 
 void SlaveNode::debugPrintConnection(IMasterConnection connection, CS104_PeerConnectionEvent event) const noexcept
 {
 	switch (event) {
 		case CS104_CON_EVENT_CONNECTION_OPENED:
-			logger->info("client connected");
+			logger->info("Client connected");
 			break;
+
 		case CS104_CON_EVENT_CONNECTION_CLOSED:
-			logger->info("client disconnected");
+			logger->info("Client disconnected");
 			break;
+
 		case CS104_CON_EVENT_ACTIVATED:
-			logger->info("connection activated");
+			logger->info("Connection activated");
 			break;
+
 		case CS104_CON_EVENT_DEACTIVATED:
-			logger->info("connection closed");
+			logger->info("Connection closed");
 			break;
 	}
 }
 
 bool SlaveNode::onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56Time2a new_time) const noexcept
 {
-	logger->warn("received clock sync command (unimplemented)");
+	logger->warn("Received clock sync command (unimplemented)");
 	return true;
 }
 
 bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, QualifierOfInterrogation qoi) const noexcept
 {
 	switch (qoi) {
-		// send last values without timestamps
+		// Send last values without timestamps
 		case IEC60870_QOI_STATION: {
 			IMasterConnection_sendACT_CON(connection, asdu, false);
 
-			logger->debug("received general interrogation");
+			logger->debug("Received general interrogation");
 
 			auto guard = std::lock_guard { output.last_values_mutex };
 
-			for(auto const &asdu_type : output.asdu_types) {
+			for (auto const &asdu_type : output.asdu_types) {
 				for (unsigned i = 0; i < output.mapping.size();) {
 					auto signal_asdu = CS101_ASDU_create(
 						IMasterConnection_getApplicationLayerParameters(connection),
@@ -491,7 +515,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, Q
 						if (asdu_data.type() != asdu_type)
 							continue;
 
-						if(asdu_data.addSampleToASDU(signal_asdu, ASDUData::Sample {
+						if (asdu_data.addSampleToASDU(signal_asdu, ASDUData::Sample {
 							last_value,
 							IEC60870_QUALITY_GOOD,
 							std::nullopt
@@ -509,10 +533,10 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, Q
 			break;
 		}
 
-		// negative acknowledgement
+		// Negative acknowledgement
 		default:
 			IMasterConnection_sendACT_CON(connection, asdu, true);
-			logger->warn("ignoring interrogation type {}", qoi);
+			logger->warn("Ignoring interrogation type {}", qoi);
 	}
 
 	return true;
@@ -520,17 +544,17 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, Q
 
 bool SlaveNode::onASDU(IMasterConnection connection, CS101_ASDU asdu) const noexcept
 {
-	logger->warn("ignoring asdu type {}", CS101_ASDU_getTypeID(asdu));
+	logger->warn("Ignoring ASDU type {}", CS101_ASDU_getTypeID(asdu));
 	return true;
 }
 
 void SlaveNode::sendPeriodicASDUsForSample(Sample const *sample) const noexcept(false)
 {
-	// ASDUs may only carry one type of asdu
+	// ASDUs may only carry one type of ASDU
 	for (auto const &type : output.asdu_types) {
-		// search all occurences of this ASDU type
+		// Search all occurrences of this ASDU type
 		for (unsigned signal = 0; signal < MIN(sample->length, output.mapping.size());) {
-			// create an ASDU for periodic transimission
+			// Create an ASDU for periodic transmission
 			CS101_ASDU asdu = CS101_ASDU_create(
 				server.asdu_app_layer_parameters,
 				0,
@@ -544,7 +568,7 @@ void SlaveNode::sendPeriodicASDUsForSample(Sample const *sample) const noexcept(
 			do {
 				auto &asdu_data = output.mapping[signal];
 
-				// this signal_data does not belong in this ASDU
+				// This signal_data does not belong in this ASDU
 				if (asdu_data.type() != type)
 					continue;
 
@@ -586,13 +610,12 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 	for (unsigned sample_index = 0; sample_index < sample_count; sample_index++) {
 		Sample const *sample = samples[sample_index];
 
-		// update last_values
+		// Update last_values
 		output.last_values_mutex.lock();
-		for (unsigned i = 0; i < MIN(sample->length, output.last_values.size()); i++) {
+		for (unsigned i = 0; i < MIN(sample->length, output.last_values.size()); i++)
 			output.last_values[i] = sample->data[i];
-		}
-		output.last_values_mutex.unlock();
 
+		output.last_values_mutex.unlock();
 		sendPeriodicASDUsForSample(sample);
 	}
 
@@ -604,14 +627,14 @@ SlaveNode::SlaveNode(const std::string &name) :
 {
 	server.state = SlaveNode::Server::NONE;
 
-	// server config (use explicit defaults)
+	// Server config (use explicit defaults)
 	server.local_address = "0.0.0.0";
 	server.local_port = 2404;
 	server.common_address = 1;
 	server.low_priority_queue = 100;
 	server.high_priority_queue = 100;
 
-	// config (use lib60870 defaults if std::nullopt)
+	// Config (use lib60870 defaults if std::nullopt)
 	server.apci_t0 = std::nullopt;
 	server.apci_t1 = std::nullopt;
 	server.apci_t2 = std::nullopt;
@@ -619,7 +642,7 @@ SlaveNode::SlaveNode(const std::string &name) :
 	server.apci_k = std::nullopt;
 	server.apci_w = std::nullopt;
 
-	// output config
+	// Output config
 	output.enabled = false;
 	output.mapping = {};
 	output.asdu_types = {};
@@ -648,7 +671,8 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	int apci_t3 = -1;
 	int apci_k = -1;
 	int apci_w = -1;
-	if(json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
+
+	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
 		"out", &out_json,
 		"address", &address,
 		"port", &server.local_port,
@@ -661,27 +685,42 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		"apci_t3", &apci_t3,
 		"apci_k", &apci_k,
 		"apci_w", &apci_w
-	))
+	);
+	if (ret)
 		throw ConfigError(json, err, "node-config-node-iec60870-5-104");
 
-	if(apci_t0 != -1) server.apci_t0 = apci_t0;
-	if(apci_t1 != -1) server.apci_t1 = apci_t1;
-	if(apci_t2 != -1) server.apci_t2 = apci_t2;
-	if(apci_t3 != -1) server.apci_t3 = apci_t3;
-	if(apci_k != -1) server.apci_k = apci_k;
-	if(apci_w != -1) server.apci_w = apci_w;
+	if (apci_t0 != -1)
+		server.apci_t0 = apci_t0;
+
+	if (apci_t1 != -1)
+		server.apci_t1 = apci_t1;
+
+	if (apci_t2 != -1)
+		server.apci_t2 = apci_t2;
+
+	if (apci_t3 != -1)
+		server.apci_t3 = apci_t3;
+
+	if (apci_k != -1)
+		server.apci_k = apci_k;
+
+	if (apci_w != -1)
+		server.apci_w = apci_w;
 
 	if (address)
 		server.local_address = address;
 
 	json_t *signals_json = nullptr;
 	int duplicate_ioa_is_sequence = false;
+
 	if (out_json) {
 		output.enabled = true;
-		if(json_unpack_ex(out_json, &err, 0, "{ s: o, s?: b }",
+
+		ret = json_unpack_ex(out_json, &err, 0, "{ s: o, s?: b }",
 			"signals", &signals_json,
 			"duplicate_ioa_is_sequence", &duplicate_ioa_is_sequence
-		))
+		);
+		if (ret)
 			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104");
 	}
 
@@ -689,32 +728,41 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 		json_t *signal_json;
 		size_t i;
 		std::optional<ASDUData> last_data = std::nullopt;
+
 		json_array_foreach(signals_json, i, signal_json) {
 			auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
 			auto asdu_data = ASDUData::parse(signal_json, last_data, duplicate_ioa_is_sequence);
 			last_data = asdu_data;
 			SignalData initial_value;
+
 			if (signal) {
-				if (signal->type != asdu_data.signalType())
+				if (signal->type != asdu_data.signalType()) {
 					throw RuntimeError("Type mismatch! Expected type {} for signal {}, but found {}",
 						signalTypeToString(asdu_data.signalType()),
 						signal->name,
 						signalTypeToString(signal->type)
 					);
+				}
+
 				switch (signal->type) {
 					case SignalType::BOOLEAN:
 						initial_value.b = false;
 						break;
+
 					case SignalType::INTEGER:
 						initial_value.i = 0;
 						break;
+
 					case SignalType::FLOAT:
 						initial_value.f = 0;
 						break;
-					default: assert(!"unreachable");
+
+					default:
+						assert(!"unreachable");
 				}
 			} else
 				initial_value.f = 0.0;
+
 			output.mapping.push_back(asdu_data);
 			output.last_values.push_back(initial_value);
 		}
