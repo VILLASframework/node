@@ -779,15 +779,17 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 int SlaveNode::start()
 {
 	startSlave();
+
 	return Node::start();
 }
 
 int SlaveNode::stop()
 {
 	stopSlave();
+
 	return Node::stop();
 }
 
 static char name[] = "iec60870-5-104";
 static char description[] = "Provide values as protocol slave";
-static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE> p;
+static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE, 1> p;
