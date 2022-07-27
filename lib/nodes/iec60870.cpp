@@ -35,14 +35,14 @@ using namespace villas::utils;
 using namespace villas::node::iec60870;
 using namespace std::literals::chrono_literals;
 
-CP56Time2a timespec_to_cp56time2a(timespec time) {
+static CP56Time2a timespec_to_cp56time2a(timespec time) {
 	time_t time_ms =
 		static_cast<time_t> (time.tv_sec) * 1000
 		+ static_cast<time_t> (time.tv_nsec) / 1000000;
 	return CP56Time2a_createFromMsTimestamp(NULL, time_ms);
 }
 
-timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
+static timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 	auto time_ms = CP56Time2a_toMsTimestamp(cp56time2a);
 	timespec time {};
 	time.tv_nsec = time_ms % 1000 * 1000;
@@ -176,60 +176,80 @@ std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) cons
 		QualityDescriptor quality;
 		switch (typeWithoutTimestamp()) {
 			case ASDUData::SCALED_INT: {
-				auto scaled = reinterpret_cast<MeasuredValueScaled> (io);
-				int value = MeasuredValueScaled_getValue(scaled);
-				signal_data.i = static_cast<int64_t> (value);
-				quality = MeasuredValueScaled_getQuality(scaled);
-			} break;
+				auto scaled_int = reinterpret_cast<MeasuredValueScaled> (io);
+				int scaled_int_value = MeasuredValueScaled_getValue(scaled_int);
+				signal_data.i = static_cast<int64_t> (scaled_int_value);
+				quality = MeasuredValueScaled_getQuality(scaled_int);
+				break;
+			}
+
 			case ASDUData::NORMALIZED_FLOAT: {
-				auto normalized = reinterpret_cast<MeasuredValueNormalized> (io);
-				float value = MeasuredValueNormalized_getValue(normalized);
-				signal_data.f = static_cast<double> (value);
-				quality = MeasuredValueNormalized_getQuality(normalized);
-			} break;
+				auto normalized_float = reinterpret_cast<MeasuredValueNormalized> (io);
+				float normalized_float_value = MeasuredValueNormalized_getValue(normalized_float);
+				signal_data.f = static_cast<double> (normalized_float_value);
+				quality = MeasuredValueNormalized_getQuality(normalized_float);
+				break;
+			}
+
 			case ASDUData::DOUBLE_POINT: {
 				auto double_point = reinterpret_cast<DoublePointInformation> (io);
-				DoublePointValue value = DoublePointInformation_getValue(double_point);
-				signal_data.i = static_cast<int64_t> (value);
+				DoublePointValue double_point_value = DoublePointInformation_getValue(double_point);
+				signal_data.i = static_cast<int64_t> (double_point_value);
 				quality = DoublePointInformation_getQuality(double_point);
-			} break;
+				break;
+			}
+
 			case ASDUData::SINGLE_POINT: {
 				auto single_point = reinterpret_cast<SinglePointInformation> (io);
-				bool value = SinglePointInformation_getValue(single_point);
-				signal_data.b = static_cast<bool> (value);
+				bool single_point_value = SinglePointInformation_getValue(single_point);
+				signal_data.b = static_cast<bool> (single_point_value);
 				quality = SinglePointInformation_getQuality(single_point);
-			} break;
+				break;
+			}
+
 			case ASDUData::SHORT_FLOAT: {
-				auto short_value = reinterpret_cast<MeasuredValueShort> (io);
-				float value = MeasuredValueShort_getValue(short_value);
-				signal_data.f = static_cast<double> (value);
-				quality = MeasuredValueShort_getQuality(short_value);
-			} break;
+				auto short_float = reinterpret_cast<MeasuredValueShort> (io);
+				float short_float_value = MeasuredValueShort_getValue(short_float);
+				signal_data.f = static_cast<double> (short_float_value);
+				quality = MeasuredValueShort_getQuality(short_float);
+				break;
+			}
+
 			default: assert(!"unreachable");
 		}
 
 		std::optional<CP56Time2a> time_cp56;
 		switch (type()) {
 			case ASDUData::SCALED_INT_WITH_TIMESTAMP: {
-				auto scaled = reinterpret_cast<MeasuredValueScaledWithCP56Time2a> (io);
-				time_cp56 = MeasuredValueScaledWithCP56Time2a_getTimestamp(scaled);
-			} break;
+				auto scaled_int = reinterpret_cast<MeasuredValueScaledWithCP56Time2a> (io);
+				time_cp56 = MeasuredValueScaledWithCP56Time2a_getTimestamp(scaled_int);
+				break;
+			}
+
 			case ASDUData::NORMALIZED_FLOAT_WITH_TIMESTAMP: {
-				auto normalized = reinterpret_cast<MeasuredValueNormalizedWithCP56Time2a> (io);
-				time_cp56 = MeasuredValueNormalizedWithCP56Time2a_getTimestamp(normalized);
-			} break;
+				auto normalized_float = reinterpret_cast<MeasuredValueNormalizedWithCP56Time2a> (io);
+				time_cp56 = MeasuredValueNormalizedWithCP56Time2a_getTimestamp(normalized_float);
+				break;
+			}
+
 			case ASDUData::DOUBLE_POINT_WITH_TIMESTAMP: {
 				auto double_point = reinterpret_cast<DoublePointWithCP56Time2a> (io);
 				time_cp56 = DoublePointWithCP56Time2a_getTimestamp(double_point);
-			} break;
+				break;
+			}
+
 			case ASDUData::SINGLE_POINT_WITH_TIMESTAMP: {
 				auto single_point = reinterpret_cast<SinglePointWithCP56Time2a> (io);
 				time_cp56 = SinglePointWithCP56Time2a_getTimestamp(single_point);
-			} break;
+				break;
+			}
+
 			case ASDUData::SHORT_FLOAT_WITH_TIMESTAMP: {
-				auto short_value = reinterpret_cast<MeasuredValueShortWithCP56Time2a> (io);
-				time_cp56 = MeasuredValueShortWithCP56Time2a_getTimestamp(short_value);
-			} break;
+				auto short_float = reinterpret_cast<MeasuredValueShortWithCP56Time2a> (io);
+				time_cp56 = MeasuredValueShortWithCP56Time2a_getTimestamp(short_float);
+				break;
+			}
+
 			default: time_cp56 = std::nullopt;
 		}
 
@@ -253,57 +273,77 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 
 	InformationObject io;
 	switch (descriptor->type) {
-	case ASDUData::SCALED_INT: {
-		auto value = static_cast<int16_t> (sample.signal_data.i & 0xFFFF);
-		auto scaled = MeasuredValueScaled_create(NULL, ioa, value, sample.quality);
-		io = reinterpret_cast<InformationObject> (scaled);
-	} break;
-	case ASDUData::NORMALIZED_FLOAT: {
-		auto value = static_cast<float> (sample.signal_data.f);
-		auto normalized = MeasuredValueNormalized_create(NULL, ioa, value, sample.quality);
-		io = reinterpret_cast<InformationObject> (normalized);
-	} break;
-	case ASDUData::DOUBLE_POINT: {
-		auto value = static_cast<DoublePointValue> (sample.signal_data.i & 0x3);
-		auto double_point = DoublePointInformation_create(NULL, ioa, value, sample.quality);
-		io = reinterpret_cast<InformationObject> (double_point);
-	} break;
-	case ASDUData::SINGLE_POINT: {
-		auto value = sample.signal_data.b;
-		auto single_point = SinglePointInformation_create(NULL, ioa, value, sample.quality);
-		io = reinterpret_cast<InformationObject> (single_point);
-	} break;
-	case ASDUData::SHORT_FLOAT: {
-		auto value = static_cast<float> (sample.signal_data.f);
-		auto short_float = MeasuredValueShort_create(NULL, ioa, value, sample.quality);
-		io = reinterpret_cast<InformationObject> (short_float);
-	} break;
-	case ASDUData::SCALED_INT_WITH_TIMESTAMP: {
-		auto value = static_cast<int16_t> (sample.signal_data.i & 0xFFFF);
-		auto scaled = MeasuredValueScaledWithCP56Time2a_create(NULL, ioa, value, sample.quality, timestamp.value());
-		io = reinterpret_cast<InformationObject> (scaled);
-	} break;
-	case ASDUData::NORMALIZED_FLOAT_WITH_TIMESTAMP: {
-		auto value = static_cast<float> (sample.signal_data.f);
-		auto normalized = MeasuredValueNormalizedWithCP56Time2a_create(NULL, ioa, value, sample.quality, timestamp.value());
-		io = reinterpret_cast<InformationObject> (normalized);
-	} break;
-	case ASDUData::DOUBLE_POINT_WITH_TIMESTAMP: {
-		auto value = static_cast<DoublePointValue> (sample.signal_data.i & 0x3);
-		auto double_point = DoublePointWithCP56Time2a_create(NULL, ioa, value, sample.quality, timestamp.value());
-		io = reinterpret_cast<InformationObject> (double_point);
-	} break;
-	case ASDUData::SINGLE_POINT_WITH_TIMESTAMP: {
-		auto value = sample.signal_data.b;
-		auto single_point = SinglePointWithCP56Time2a_create(NULL, ioa, value, sample.quality, timestamp.value());
-		io = reinterpret_cast<InformationObject> (single_point);
-	} break;
-	case ASDUData::SHORT_FLOAT_WITH_TIMESTAMP: {
-		auto value = static_cast<float> (sample.signal_data.f);
-		auto short_float = MeasuredValueShortWithCP56Time2a_create(NULL, ioa, value, sample.quality, timestamp.value());
-		io = reinterpret_cast<InformationObject> (short_float);
-	} break;
-	default: assert(!"unreachable");
+		case ASDUData::SCALED_INT: {
+			auto scaled_int_value = static_cast<int16_t> (sample.signal_data.i & 0xFFFF);
+			auto scaled_int = MeasuredValueScaled_create(NULL, ioa, scaled_int_value, sample.quality);
+			io = reinterpret_cast<InformationObject> (scaled_int);
+			break;
+		}
+
+		case ASDUData::NORMALIZED_FLOAT: {
+			auto normalized_float_value = static_cast<float> (sample.signal_data.f);
+			auto normalized_float = MeasuredValueNormalized_create(NULL, ioa, normalized_float_value, sample.quality);
+			io = reinterpret_cast<InformationObject> (normalized_float);
+			break;
+		}
+
+		case ASDUData::DOUBLE_POINT: {
+			auto double_point_value = static_cast<DoublePointValue> (sample.signal_data.i & 0x3);
+			auto double_point = DoublePointInformation_create(NULL, ioa, double_point_value, sample.quality);
+			io = reinterpret_cast<InformationObject> (double_point);
+			break;
+		}
+
+		case ASDUData::SINGLE_POINT: {
+			auto single_point_value = sample.signal_data.b;
+			auto single_point = SinglePointInformation_create(NULL, ioa, single_point_value, sample.quality);
+			io = reinterpret_cast<InformationObject> (single_point);
+			break;
+		}
+
+		case ASDUData::SHORT_FLOAT: {
+			auto short_float_value = static_cast<float> (sample.signal_data.f);
+			auto short_float = MeasuredValueShort_create(NULL, ioa, short_float_value, sample.quality);
+			io = reinterpret_cast<InformationObject> (short_float);
+			break;
+		}
+
+		case ASDUData::SCALED_INT_WITH_TIMESTAMP: {
+			auto scaled_int_value = static_cast<int16_t> (sample.signal_data.i & 0xFFFF);
+			auto scaled_int = MeasuredValueScaledWithCP56Time2a_create(NULL, ioa, scaled_int_value, sample.quality, timestamp.value());
+			io = reinterpret_cast<InformationObject> (scaled_int);
+			break;
+		}
+
+		case ASDUData::NORMALIZED_FLOAT_WITH_TIMESTAMP: {
+			auto normalized_float_value = static_cast<float> (sample.signal_data.f);
+			auto normalized_float = MeasuredValueNormalizedWithCP56Time2a_create(NULL, ioa, normalized_float_value, sample.quality, timestamp.value());
+			io = reinterpret_cast<InformationObject> (normalized_float);
+			break;
+		}
+
+		case ASDUData::DOUBLE_POINT_WITH_TIMESTAMP: {
+			auto double_point_value = static_cast<DoublePointValue> (sample.signal_data.i & 0x3);
+			auto double_point = DoublePointWithCP56Time2a_create(NULL, ioa, double_point_value, sample.quality, timestamp.value());
+			io = reinterpret_cast<InformationObject> (double_point);
+			break;
+		}
+
+		case ASDUData::SINGLE_POINT_WITH_TIMESTAMP: {
+			auto single_point_value = sample.signal_data.b;
+			auto single_point = SinglePointWithCP56Time2a_create(NULL, ioa, single_point_value, sample.quality, timestamp.value());
+			io = reinterpret_cast<InformationObject> (single_point);
+			break;
+		}
+
+		case ASDUData::SHORT_FLOAT_WITH_TIMESTAMP: {
+			auto short_float_value = static_cast<float> (sample.signal_data.f);
+			auto short_float = MeasuredValueShortWithCP56Time2a_create(NULL, ioa, short_float_value, sample.quality, timestamp.value());
+			io = reinterpret_cast<InformationObject> (short_float);
+			break;
+		}
+
+		default: assert(!"unreachable");
 	}
 	bool successfully_added = CS101_ASDU_addInformationObject(asdu, io);
 	InformationObject_destroy(io);
@@ -417,18 +457,18 @@ void SlaveNode::debugPrintMessage(IMasterConnection connection, uint8_t* message
 void SlaveNode::debugPrintConnection(IMasterConnection connection, CS104_PeerConnectionEvent event) const noexcept
 {
 	switch (event) {
-	case CS104_CON_EVENT_CONNECTION_OPENED: {
-		logger->info("client connected");
-	} break;
-	case CS104_CON_EVENT_CONNECTION_CLOSED: {
-		logger->info("client disconnected");
-	} break;
-	case CS104_CON_EVENT_ACTIVATED: {
-		logger->info("connection activated");
-	} break;
-	case CS104_CON_EVENT_DEACTIVATED: {
-		logger->info("connection closed");
-	} break;
+		case CS104_CON_EVENT_CONNECTION_OPENED:
+			logger->info("client connected");
+			break;
+		case CS104_CON_EVENT_CONNECTION_CLOSED:
+			logger->info("client disconnected");
+			break;
+		case CS104_CON_EVENT_ACTIVATED:
+			logger->info("connection activated");
+			break;
+		case CS104_CON_EVENT_DEACTIVATED:
+			logger->info("connection closed");
+			break;
 	}
 }
 
@@ -441,53 +481,55 @@ bool SlaveNode::onClockSync(IMasterConnection connection, CS101_ASDU asdu, CP56T
 bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, QualifierOfInterrogation qoi) const noexcept
 {
 	switch (qoi) {
-	// send last values without timestamps
-	case IEC60870_QOI_STATION: {
-		IMasterConnection_sendACT_CON(connection, asdu, false);
+		// send last values without timestamps
+		case IEC60870_QOI_STATION: {
+			IMasterConnection_sendACT_CON(connection, asdu, false);
 
-		logger->debug("received general interrogation");
+			logger->debug("received general interrogation");
 
-		auto guard = std::lock_guard { output.last_values_mutex };
+			auto guard = std::lock_guard { output.last_values_mutex };
 
-		for(auto const &asdu_type : output.asdu_types) {
-			for (unsigned i = 0; i < output.mapping.size();) {
-				auto signal_asdu = CS101_ASDU_create(
-					IMasterConnection_getApplicationLayerParameters(connection),
-					false,
-					CS101_COT_INTERROGATED_BY_STATION,
-					0,
-					server.common_address,
-					false,
-					false
-				);
+			for(auto const &asdu_type : output.asdu_types) {
+				for (unsigned i = 0; i < output.mapping.size();) {
+					auto signal_asdu = CS101_ASDU_create(
+						IMasterConnection_getApplicationLayerParameters(connection),
+						false,
+						CS101_COT_INTERROGATED_BY_STATION,
+						0,
+						server.common_address,
+						false,
+						false
+					);
 
-				do {
-					auto asdu_data = output.mapping[i].withoutTimestamp();
-					auto last_value = output.last_values[i];
+					do {
+						auto asdu_data = output.mapping[i].withoutTimestamp();
+						auto last_value = output.last_values[i];
 
-					if (asdu_data.type() != asdu_type)
-						continue;
+						if (asdu_data.type() != asdu_type)
+							continue;
 
-					if(asdu_data.addSampleToASDU(signal_asdu, ASDUData::Sample {
-						last_value,
-						IEC60870_QUALITY_GOOD,
-						std::nullopt
-					}) == false)
-						break;
-				} while (++i < output.mapping.size());
+						if(asdu_data.addSampleToASDU(signal_asdu, ASDUData::Sample {
+							last_value,
+							IEC60870_QUALITY_GOOD,
+							std::nullopt
+						}) == false)
+							break;
+					} while (++i < output.mapping.size());
 
-				IMasterConnection_sendASDU(connection, signal_asdu);
+					IMasterConnection_sendASDU(connection, signal_asdu);
 
-				CS101_ASDU_destroy(signal_asdu);
+					CS101_ASDU_destroy(signal_asdu);
+				}
 			}
+
+			IMasterConnection_sendACT_TERM(connection, asdu);
+			break;
 		}
 
-		IMasterConnection_sendACT_TERM(connection, asdu);
-	} break;
-	// negative acknowledgement
-	default:
-		IMasterConnection_sendACT_CON(connection, asdu, true);
-		logger->warn("ignoring interrogation type {}", qoi);
+		// negative acknowledgement
+		default:
+			IMasterConnection_sendACT_CON(connection, asdu, true);
+			logger->warn("ignoring interrogation type {}", qoi);
 	}
 
 	return true;
@@ -677,16 +719,16 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 						signalTypeToString(signal->type)
 					);
 				switch (signal->type) {
-				case SignalType::BOOLEAN: {
-					initial_value.b = false;
-				} break;
-				case SignalType::INTEGER: {
-					initial_value.i = 0;
-				} break;
-				case SignalType::FLOAT: {
-					initial_value.f = 0;
-				} break;
-				default: assert(!"unreachable");
+					case SignalType::BOOLEAN:
+						initial_value.b = false;
+						break;
+					case SignalType::INTEGER:
+						initial_value.i = 0;
+						break;
+					case SignalType::FLOAT:
+						initial_value.f = 0;
+						break;
+					default: assert(!"unreachable");
 				}
 			} else
 				initial_value.f = 0.0;
