@@ -4,7 +4,7 @@
 allOf:
 - type: object
   properties:
-    asdu_type:
+    asdu_type: human readable names for the supported IEC60870 message types
       type: string
       enum:
       - single-point
@@ -13,7 +13,7 @@ allOf:
       - normalized-float
       - short-float
 
-    asdu_type_id:
+    asdu_type_id: the IEC60870 standard type id
       type: string
       enum:
       - M_SP_NA_1
@@ -27,11 +27,11 @@ allOf:
       - M_ME_NC_1
       - M_ME_TC_1
 
-    with_timestamp:
+    with_timestamp: (only for use with the human readable asdu_type)
       type: boolean
       default: false
 
-    ioa:
+    ioa: The IEC60870 information object address associated with this signal
       type: number
       min: 1
 
