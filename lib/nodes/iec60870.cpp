@@ -123,7 +123,6 @@ ASDUData::Type ASDUData::type() const
 	return descriptor->type;
 }
 
-
 char const * ASDUData::name() const {
 	return descriptor->name;
 }
