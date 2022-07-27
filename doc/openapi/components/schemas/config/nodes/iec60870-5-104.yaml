@@ -5,7 +5,7 @@ allOf:
 - type: object
   properties:
 
-    in: unsupported
+    in:
       type: object
       properties:
         signals:
@@ -14,7 +14,8 @@ allOf:
     out:
       type: object
       properties:
-        duplicate_ioa_is_sequence: Treat consecutive signals with the same IOA as a sequence by assigning subsequent IOAs
+        duplicate_ioa_is_sequence:
+          description: Treat consecutive signals with the same IOA as a sequence by assigning subsequent IOAs.
           type: boolean
           default: false
         signals:
@@ -23,25 +24,27 @@ allOf:
             $ref: ./signals/iec60870_signal.yaml
 
     address:
-      description: Hostname or IP address for the IEC60870 slave to listen on
+      description: Hostname or IP address for the IEC60870 slave to listen on.
       type: string
       default: localhost
 
     port:
-      description: Port number of the IEC60870 slave
+      description: Port number of the IEC60870 slave.
       type: number
       default: 2404
 
     ca:
-      description: Common Address of the IEC60870 slave
+      description: Common Address of the IEC60870 slave.
       type: number
       default: 1
 
-    low_priority_queue: Message queue size for the periodic messages (increase on dropped simulation data messages)
+    low_priority_queue:
+      description: Message queue size for the periodic messages (increase on dropped simulation data messages).
       type: number
       default: 100
 
-    high_priority_queue: Message queue size for interrogation responses (increase on missing signals in interrogation response)
+    high_priority_queue:
+      description: Message queue size for interrogation responses (increase on missing signals in interrogation response).
       type: number
       default: 100
 
