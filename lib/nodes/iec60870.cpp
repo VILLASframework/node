@@ -617,15 +617,34 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	json_t *out_json = nullptr;
 	char const *address = nullptr;
-	if(json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i }",
+	int apci_t0 = -1;
+	int apci_t1 = -1;
+	int apci_t2 = -1;
+	int apci_t3 = -1;
+	int apci_k = -1;
+	int apci_w = -1;
+	if(json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
 		"out", &out_json,
 		"address", &address,
 		"port", &server.local_port,
 		"ca", &server.common_address,
 		"low_priority_queue", &server.low_priority_queue,
-		"high_priority_queue", &server.high_priority_queue
+		"high_priority_queue", &server.high_priority_queue,
+		"apci_t0", &apci_t0,
+		"apci_t1", &apci_t1,
+		"apci_t2", &apci_t2,
+		"apci_t3", &apci_t3,
+		"apci_k", &apci_k,
+		"apci_w", &apci_w
 	))
 		throw ConfigError(json, err, "node-config-node-iec60870-5-104");
+
+	if(apci_t0 != -1) server.apci_t0 = apci_t0;
+	if(apci_t1 != -1) server.apci_t1 = apci_t1;
+	if(apci_t2 != -1) server.apci_t2 = apci_t2;
+	if(apci_t3 != -1) server.apci_t3 = apci_t3;
+	if(apci_k != -1) server.apci_k = apci_k;
+	if(apci_w != -1) server.apci_w = apci_w;
 
 	if (address)
 		server.local_address = address;
