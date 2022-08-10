@@ -51,8 +51,6 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data,
 	))
 		throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104");
 
-	with_timestamp = with_timestamp != -1 ? with_timestamp != 0 : false;
-
 	// Increase the ioa if it is found twice to make it a sequence
 	if (	duplicate_ioa_is_sequence &&
 		last_data &&
@@ -66,7 +64,9 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data,
 		throw RuntimeError("Please specify one of asdu_type or asdu_type_id", ioa);
 
 	auto asdu_data = asdu_type_name
-		? ASDUData::lookupName(asdu_type_name, with_timestamp, ioa, ioa_sequence_start.value_or(ioa))
+		? ASDUData::lookupName(asdu_type_name,
+			with_timestamp != -1 ? with_timestamp != 0 : false,
+			ioa, ioa_sequence_start.value_or(ioa))
 		: ASDUData::lookupTypeId(asdu_type_id, ioa, ioa_sequence_start.value_or(ioa));
 
 	if (!asdu_data.has_value())
@@ -354,6 +354,7 @@ void SlaveNode::createSlave() noexcept
 	// Create the slave object
 	server.slave = CS104_Slave_create(server.low_priority_queue, server.high_priority_queue);
 	CS104_Slave_setServerMode(server.slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
+	CS104_Slave_setMaxOpenConnections(server.slave, 1);
 
 	// Configure the slave according to config
 	server.asdu_app_layer_parameters = CS104_Slave_getAppLayerParameters(server.slave);
@@ -509,21 +510,23 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu, Q
 					);
 
 					do {
-						auto asdu_data = output.mapping[i].withoutTimestamp();
+						auto asdu_data = output.mapping[i];
 						auto last_value = output.last_values[i];
 
 						if (asdu_data.type() != asdu_type)
 							continue;
 
-						if (asdu_data.addSampleToASDU(signal_asdu, ASDUData::Sample {
-							last_value,
-							IEC60870_QUALITY_GOOD,
-							std::nullopt
-						}) == false)
+						if (!asdu_data.withoutTimestamp().addSampleToASDU(signal_asdu,
+							ASDUData::Sample {
+								last_value,
+								IEC60870_QUALITY_GOOD,
+								std::nullopt
+							}))
 							break;
 					} while (++i < output.mapping.size());
 
-					IMasterConnection_sendASDU(connection, signal_asdu);
+					if (CS101_ASDU_getNumberOfElements(asdu) != 0)
+						IMasterConnection_sendASDU(connection, signal_asdu);
 
 					CS101_ASDU_destroy(signal_asdu);
 				}

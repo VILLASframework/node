@@ -95,11 +95,11 @@ private:
 		ASDUData::Descriptor { Type::DOUBLE_POINT,			"double-point",		"M_DP_NA_1",	false,	Type::DOUBLE_POINT,	SignalType::INTEGER },
 		ASDUData::Descriptor { Type::DOUBLE_POINT_WITH_TIMESTAMP,	"double-point",		"M_DP_TB_1",	true,	Type::DOUBLE_POINT,	SignalType::INTEGER },
 		ASDUData::Descriptor { Type::SCALED_INT,			"scaled-int",		"M_ME_NB_1",	false,	Type::SCALED_INT,	SignalType::INTEGER },
-		ASDUData::Descriptor { Type::SCALED_INT_WITH_TIMESTAMP,		"scaled-int",		"M_ME_TB_1",	true,	Type::SCALED_INT,	SignalType::INTEGER },
+		ASDUData::Descriptor { Type::SCALED_INT_WITH_TIMESTAMP,		"scaled-int",		"M_ME_TE_1",	true,	Type::SCALED_INT,	SignalType::INTEGER },
 		ASDUData::Descriptor { Type::NORMALIZED_FLOAT,			"normalized-float",	"M_ME_NA_1",	false,	Type::NORMALIZED_FLOAT,	SignalType::FLOAT },
-		ASDUData::Descriptor { Type::NORMALIZED_FLOAT_WITH_TIMESTAMP,	"normalized-float",	"M_ME_TA_1",	true,	Type::NORMALIZED_FLOAT,	SignalType::FLOAT },
+		ASDUData::Descriptor { Type::NORMALIZED_FLOAT_WITH_TIMESTAMP,	"normalized-float",	"M_ME_TD_1",	true,	Type::NORMALIZED_FLOAT,	SignalType::FLOAT },
 		ASDUData::Descriptor { Type::SHORT_FLOAT,			"short-float",		"M_ME_NC_1",	false,	Type::SHORT_FLOAT,	SignalType::FLOAT },
-		ASDUData::Descriptor { Type::SHORT_FLOAT_WITH_TIMESTAMP,	"short-float",		"M_ME_TC_1",	true,	Type::SHORT_FLOAT,	SignalType::FLOAT },
+		ASDUData::Descriptor { Type::SHORT_FLOAT_WITH_TIMESTAMP,	"short-float",		"M_ME_TF_1",	true,	Type::SHORT_FLOAT,	SignalType::FLOAT },
 	};
 
 	ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start);
