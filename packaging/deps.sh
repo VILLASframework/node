@@ -148,10 +148,10 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
     popd
 fi
 
-# Build & Install lib60870 (fork with pkg-config file)
+# Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
     [ -z "${SKIP_LIB60870}" ]; then
-    git clone ${GIT_OPTS} --branch pkgconfig https://github.com/PJungkamp/lib60870
+    git clone ${GIT_OPTS} https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
     cmake ${CMAKE_OPTS} ../lib60870-C
