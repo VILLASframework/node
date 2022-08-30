@@ -115,7 +115,7 @@ MemoryTranslation
 MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
                               MemoryManager::AddressSpaceId toAddrSpaceId)
 {
-	/* Find a path through the memory graph */
+	// Find a path through the memory graph
 	MemoryGraph::Path path;
 	if (not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
 
@@ -127,10 +127,10 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 		throw std::out_of_range("no translation found");
 	}
 
-	/* Start with an identity mapping */
+	// Start with an identity mapping
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
-	/* Iterate through path and merge all mappings into a single translation */
+	// Iterate through path and merge all mappings into a single translation
 	for (auto &mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		translation += getTranslationFromMapping(*mapping);
@@ -142,7 +142,7 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 bool
 MemoryManager::pathCheck(const MemoryGraph::Path &path)
 {
-	/* Start with an identity mapping */
+	// Start with an identity mapping
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
 	/* Try to add all mappings together to a common translation. If this fails
