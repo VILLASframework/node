@@ -267,7 +267,7 @@ private:
 
 protected:
 	static Logger
-	getStaticLogger() { return villas::logging.get("CoreFactory"); }
+	getStaticLogger() { return villas::logging.get("core:factory"); }
 
 private:
 	static CoreFactory*

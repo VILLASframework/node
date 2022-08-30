@@ -71,7 +71,7 @@ villas::gpu::GpuAllocator::getName() const
 GpuFactory::GpuFactory() :
     Plugin("cuda", "CUDA capable GPUs")
 {
-	logger = villas::logging.get("GpuFactory");
+	logger = villas::logging.get("gpu:factory");
 }
 
 // required to be defined here for PIMPL to compile
@@ -94,7 +94,7 @@ std::string Gpu::getName() const
 	cudaDeviceProp deviceProp;
 	if (cudaGetDeviceProperties(&deviceProp, gpuId) != cudaSuccess) {
 		// logger not yet availabe
-		villas::logging.get("Gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
+		villas::logging.get("gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
 		throw std::exception();
 	}
 

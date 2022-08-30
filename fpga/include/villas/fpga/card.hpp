@@ -132,7 +132,7 @@ public:
 
 	static Logger
 	getStaticLogger()
-	{ return villas::logging.get("PCIeCardFactory"); }
+	{ return villas::logging.get("pcie:card:factory"); }
 
 	virtual std::string
 	getName() const

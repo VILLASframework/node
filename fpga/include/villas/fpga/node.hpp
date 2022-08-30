@@ -63,7 +63,7 @@ public:
 
 class StreamGraph : public graph::DirectedGraph<StreamVertex> {
 public:
-	StreamGraph() : graph::DirectedGraph<StreamVertex>("StreamGraph") {}
+	StreamGraph() : graph::DirectedGraph<StreamVertex>("stream:graph") {}
 
 	std::shared_ptr<StreamVertex>
 	getOrCreateStreamVertex(const std::string &node,
