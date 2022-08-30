@@ -30,6 +30,7 @@
 #include <CLI11.hpp>
 #include <rang.hpp>
 
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
@@ -39,7 +40,7 @@
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
-#include <villas/fpga/ips/aurora.hpp>
+#include <villas/fpga/ips/aurora_xilinx.hpp>
 
 using namespace villas;
 
@@ -48,18 +49,19 @@ static auto logger = villas::logging.get("streamer");
 
 void setupColorHandling()
 {
-	// Nice Control-C
+	// Handle Control-C nicely
 	struct sigaction sigIntHandler;
 	sigIntHandler.sa_handler = [](int){
 		std::cout << std::endl << rang::style::reset << rang::fgB::red;
 		std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
-		std::exit(1); // will call the correct exit func, no unwinding of the stack though
+		std::exit(1); // Will call the correct exit func, no unwinding of the stack though
 	};
+
 	sigemptyset(&sigIntHandler.sa_mask);
 	sigIntHandler.sa_flags = 0;
 	sigaction(SIGINT, &sigIntHandler, nullptr);
 
-	// reset color if exiting not by signal
+	// Reset color if exiting not by signal
 	std::atexit([](){std::cout << rang::style::reset;});
 }
 
@@ -70,135 +72,141 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 
 	auto vfioContainer = kernel::vfio::Container::create();
 
-	/* Parse FPGA configuration */
+	// Parse FPGA configuration
 	FILE* f = fopen(configFile.c_str(), "r");
-	if (!f) {
-		logger->error("Cannot open config file: {}", configFile);
-		exit(1);
-	}
+	if (!f)
+		throw RuntimeError("Cannot open config file: {}", configFile);
 
 	json_t* json = json_loadf(f, 0, nullptr);
 	if (!json) {
 		logger->error("Cannot parse JSON config");
 		fclose(f);
-		exit(1);
+		throw RuntimeError("Cannot parse JSON config");
 	}
 
 	fclose(f);
 
 	json_t* fpgas = json_object_get(json, "fpgas");
-	if (!fpgas) {
+	if (fpgas == nullptr) {
 		logger->error("No section 'fpgas' found in config");
 		exit(1);
 	}
 
-	// get the FPGA card plugin
+	// Get the FPGA card plugin
 	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-	if (!fpgaCardFactory) {
+	if (fpgaCardFactory == nullptr) {
 		logger->error("No FPGA plugin found");
 		exit(1);
 	}
 
-	// create all FPGA card instances using the corresponding plugin
+	// Create all FPGA card instances using the corresponding plugin
 	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
 
+	std::shared_ptr<fpga::PCIeCard> card;
 	for (auto &fpgaCard : cards) {
-		if (fpgaCard->name == fpgaName)
+		if (fpgaCard->name == fpgaName) {
 			return fpgaCard;
+		}
 	}
 
-	logger->error("FPGA card {} not found in config or not working", fpgaName);
+	// Deallocate JSON config
+	json_decref(json);
 
-	// deallocate JSON config
-//	json_decref(json);
+	if (!card)
+		throw RuntimeError("FPGA card {} not found in config or not working", fpgaName);
 
-	return std::shared_ptr<villas::fpga::PCIeCard>();
+	return card;
 }
 
 int main(int argc, char* argv[])
 {
-	/* Command Line Parser */
-
+	// Command Line Parser
 	CLI::App app{"VILLASfpga data streamer"};
 
-	std::string configFile = "../etc/fpga.json";
-	app.add_option("-c,--config", configFile, "Configuration file")
-	        ->check(CLI::ExistingFile);
-
-	std::string fpgaName = "vc707";
-	app.add_option("--fpga", fpgaName, "Which FPGA to use");
-
 	try {
+		std::string configFile;
+		app.add_option("-c,--config", configFile, "Configuration file")
+				->check(CLI::ExistingFile);
+
+		std::string fpgaName = "vc707";
+		app.add_option("--fpga", fpgaName, "Which FPGA to use");
 		app.parse(argc, argv);
-	} catch (const CLI::ParseError &e) {
-		return app.exit(e);
-	}
 
-	/* Logging setup */
-	spdlog::set_level(spdlog::level::debug);
-	setupColorHandling();
+		// Logging setup
+		spdlog::set_level(spdlog::level::debug);
+		setupColorHandling();
 
-	auto card = setupFpgaCard(configFile, fpgaName);
+		if (configFile.empty()) {
+			logger->error("No configuration file provided/ Please use -c/--config argument");
+			return 1;
+		}
 
-	auto aurora = std::dynamic_pointer_cast<fpga::ip::Aurora>
-	            (card->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:aurora_axis:")));
+		auto card = setupFpgaCard(configFile, fpgaName);
 
-	auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
-	          (card->lookupIp("hier_0_axi_dma_axi_dma_0"));
+		auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>
+					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:aurora_8b10b:")));
 
-	if (!aurora) {
+	if (aurora == nullptr) {
 		logger->error("No Aurora interface found on FPGA");
 		return 1;
 	}
 
-	if (!dma) {
+	if (dma == nullptr) {
 		logger->error("No DMA found on FPGA ");
 		return 1;
 	}
 
-	aurora->dump();
+		aurora->dump();
 
-	aurora->connect(aurora->getMasterPort(aurora->masterPort),
-	              dma->getSlavePort(dma->s2mmPort));
+		aurora->connect(aurora->getMasterPort(aurora->masterPort),
+					dma->getSlavePort(dma->s2mmPort));
 
-	dma->connect(dma->getMasterPort(dma->mm2sPort),
-	             aurora->getSlavePort(aurora->slavePort));
+		dma->connect(dma->getMasterPort(dma->mm2sPort),
+					aurora->getSlavePort(aurora->slavePort));
 
-	auto &alloc = villas::HostRam::getAllocator();
-	auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
-	auto block = mem.getMemoryBlock();
-	
-	dma->makeAccesibleFromVA(block);
+		auto &alloc = villas::HostRam::getAllocator();
+		auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
+		auto block = mem.getMemoryBlock();
+
+		dma->makeAccesibleFromVA(block);
 
 	auto &mm = MemoryManager::get();
 	mm.getGraph().dump("graph.dot");
 
-	while (true) {
-		dma->read(block, block.getSize());
-		const size_t bytesRead = dma->readComplete();
-		const size_t valuesRead = bytesRead / sizeof(int32_t);
+		while (true) {
+			dma->read(block, block.getSize());
+			const size_t bytesRead = dma->readComplete();
+			const size_t valuesRead = bytesRead / sizeof(int32_t);
 
-		for (size_t i = 0; i < valuesRead; i++)
-			std::cerr << mem[i] << ";";
-		std::cerr << std::endl;
+			for (size_t i = 0; i < valuesRead; i++) {
+				std::cerr << mem[i] << ";";
+			}
+			std::cerr << std::endl;
 
 		std::string line;
 		std::getline(std::cin, line);
 		auto values = villas::utils::tokenize(line, ";");
 
-		size_t memIdx = 0;
+			size_t memIdx = 0;
 
-		for (auto& value: values) {
-			if (value.empty())
-				continue;
+			for (auto &value: values) {
+				if (value.empty()) continue;
 
-			const int32_t number = std::stoi(value);
-			mem[memIdx++] = number;
+				const int32_t number = std::stoi(value);
+				mem[memIdx++] = number;
+			}
+
+			bool state = dma->write(block, memIdx * sizeof(int32_t));
+			if (!state)
+				logger->error("Failed to write to device");
+#endif
 		}
 
-		bool state = dma->write(block, memIdx * sizeof(int32_t));
-		if (!state)
-			logger->error("Failed to write to device");
+	} catch (const RuntimeError &e) {
+		logger->error("Error: {}", e.what());
+		return -1;
+	} catch (const CLI::ParseError &e) {
+		return app.exit(e);
 	}
 
 	return 0;
