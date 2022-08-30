@@ -9,6 +9,7 @@
 #include <libgen.h>
 #include <cstring>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <linux/limits.h>
 
 #include <villas/log.hpp>
@@ -92,9 +93,11 @@ DeviceList::lookupDevice(const Id &i)
 DeviceList::value_type
 DeviceList::lookupDevice(const Device &d)
 {
-	return *std::find_if(begin(), end(), [d](const DeviceList::value_type &e) {
+	auto dev = std::find_if(begin(), end(), [d](const DeviceList::value_type &e) {
 		return *e == d;
 	});
+
+	return dev == end() ? value_type() : *dev;
 }
 
 Id::Id(const std::string &str) :
@@ -326,6 +329,11 @@ Device::getDriver() const
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/driver", SYSFS_PATH,
 		slot.domain, slot.bus, slot.device, slot.function);
+
+	struct stat st;
+	ret = stat(sysfs, &st);
+	if (ret)
+		return "";
 
 	ret = readlink(sysfs, syml, sizeof(syml));
 	if (ret < 0)
