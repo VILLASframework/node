@@ -88,7 +88,7 @@ Test(fpga, dma, .description = "DMA")
 		          "Destination memory not accessible for DMA");
 
 		/* Get new random data */
-		const size_t lenRandom = utils::read_random(&src, len);
+		const size_t lenRandom = utils::readRandom(&src, len);
 		cr_assert(len == lenRandom, "Failed to get random data");
 
 		/* Start transfer */

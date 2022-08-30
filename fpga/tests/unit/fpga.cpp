@@ -52,7 +52,7 @@ static void init()
 	spdlog::set_level(spdlog::level::debug);
 	spdlog::set_pattern("[%T] [%l] [%n] %v");
 
-	plugin::Registry::dumpList();
+	plugin::registry->dump();
 
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
@@ -73,7 +73,7 @@ static void init()
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
 
 	// get the FPGA card plugin
-	auto fpgaCardFactory = plugin::Registry::lookup<fpga::PCIeCardFactory>("pcie");
+	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
 	cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
 	// create all FPGA card instances using the corresponding plugin

@@ -61,7 +61,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 		/* Get some random data to compare */
 		memset(dst, 0, sizeof(dst));
-		len = utils::read_random((char *) src, sizeof(src));
+		len = utils::readRandom((char *) src, sizeof(src));
 		if (len != sizeof(src)) {
 			logger->error("Failed to get random data");
 			continue;
