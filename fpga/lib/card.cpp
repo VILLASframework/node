@@ -97,6 +97,14 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 			continue;
 		}
 
+		/* Load IPs from a separate json file */
+		if (json_is_string(json_ips)) {
+			auto json_ips_fn = json_string_value(json_ips);
+			json_ips = json_load_file(json_ips_fn, 0, nullptr);
+			if (json_ips == nullptr)
+				throw ConfigError(json_ips, "node-config-fpga-ips", "Failed to load FPGA IP cores from {}", json_ips_fn);
+		}
+
 		if (not json_is_object(json_ips))
 			throw ConfigError(json_ips, "node-config-fpga-ips", "FPGA IP core list must be an object!");
 
