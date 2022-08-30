@@ -61,7 +61,7 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 	if (ret)
 		error("Failed to enable interrupt");
 
-	/* Allocate DMA memory */
+	// Allocate DMA memory
 	ret = dma_alloc(dm, &mem, 2 * (1 << BENCH_DM_EXP_MAX), 0);
 	if (ret)
 		error("Failed to allocate DMA memory");
@@ -70,7 +70,7 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 	if (ret)
 		return -1;
 
-	/* Open file for results */
+	// Open file for results
 	char fn[256];
 	snprintf(fn, sizeof(fn), "results/datamover_%s_%s_%s.dat", dm_name, intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
@@ -80,10 +80,10 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 
 #if BENCH_DM == 1
 		if (exp > 11)
-			break; /* FIFO and Simple DMA are limited to 4kb */
+			break; // FIFO and Simple DMA are limited to 4kb
 #elif BENCH_DM == 3
 		if (exp >= 12)
-			break; /* FIFO and Simple DMA are limited to 4kb */
+			break; // FIFO and Simple DMA are limited to 4kb
 #endif
 
 		read_random(src.base_virt, len);

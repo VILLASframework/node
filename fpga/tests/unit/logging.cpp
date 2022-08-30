@@ -30,7 +30,7 @@
 #include <spdlog/spdlog.h>
 
 extern "C" {
-	/* We override criterions function here */
+	// We override criterions function here
 	void criterion_log_noformat(enum criterion_severity severity, const char *msg);
 	void criterion_plog(enum criterion_logging_level level, const struct criterion_prefix_data *prefix, const char *msg, ...);
 	void criterion_vlog(enum criterion_logging_level level, const char *msg, va_list args);
@@ -45,7 +45,7 @@ static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 {
 	int len = vsnprintf(buf, buflen, msg, args);
 
-	/* Strip new line */
+	// Strip new line
 	char *nl = strchr(buf, '\n');
 	if (nl)
 		*nl = 0;
@@ -56,16 +56,16 @@ static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 void criterion_log_noformat(enum criterion_severity severity, const char *msg)
 {
 	auto logger = villas::logging.get("criterion");
-	
+
 	switch (severity) {
 		case CR_LOG_INFO:
 			logger->info(msg);
 			break;
-		
+
 		case CR_LOG_WARNING:
 			logger->warn(msg);
 			break;
-		
+
 		case CR_LOG_ERROR:
 			logger->error(msg);
 			break;
@@ -75,7 +75,7 @@ void criterion_log_noformat(enum criterion_severity severity, const char *msg)
 void criterion_vlog(enum criterion_logging_level level, const char *msg, va_list args)
 {
 	char formatted_msg[1024];
-	
+
 	if (level < criterion_options.logging_threshold)
 		return;
 
@@ -97,7 +97,7 @@ void criterion_plog(enum criterion_logging_level level, const struct criterion_p
 	va_start(args, msg);
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 	va_end(args);
-	
+
 	auto logger = villas::logging.get("criterion");
 
 	if (strstr(formatted_msg, "Warning"))
@@ -116,7 +116,7 @@ void criterion_plog(enum criterion_logging_level level, const struct criterion_p
 		logger->info("Skip: {}", formatted_msg);
 	else if (!strcmp(prefix->prefix, "PASS"))
 		logger->info("Pass: {}", formatted_msg);
-	else if (!strcmp(prefix->prefix, "FAIL")) 
+	else if (!strcmp(prefix->prefix, "FAIL"))
 		logger->error("Fail: {}", formatted_msg);
 	else if (!strcmp(prefix->prefix, "WARN"))
 		logger->warn(formatted_msg);

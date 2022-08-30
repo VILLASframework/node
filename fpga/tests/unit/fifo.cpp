@@ -42,7 +42,7 @@ Test(fpga, fifo, .description = "FIFO")
 	auto logger = logging.get("unit-test:fifo");
 
 	for (auto &ip : state.cards.front()->ips) {
-		// skip non-fifo IPs
+		// Skip non-fifo IPs
 		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;
 
@@ -59,7 +59,7 @@ Test(fpga, fifo, .description = "FIFO")
 			continue;
 		}
 
-		/* Get some random data to compare */
+		// Get some random data to compare
 		memset(dst, 0, sizeof(dst));
 		len = utils::readRandom((char *) src, sizeof(src));
 		if (len != sizeof(src)) {
@@ -79,7 +79,7 @@ Test(fpga, fifo, .description = "FIFO")
 			continue;
 		}
 
-		/* Compare data */
+		// Compare data
 		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0, "Data not equal");
 
 		logger->info(CLR_GRN("Passed"));

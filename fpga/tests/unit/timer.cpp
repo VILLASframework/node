@@ -36,10 +36,9 @@ Test(fpga, timer, .description = "Timer Counter")
 
 	size_t count = 0;
 	for (auto &ip : state.cards.front()->ips) {
-		// skip non-timer IPs
-		if (*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_timer:")) {
+		// Skip non-timer IPs
+		if (*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_timer:"))
 			continue;
-		}
 
 		logger->info("Testing {}", *ip);
 

@@ -39,7 +39,7 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 	rtds = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
 	hls = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { NULL, "hls", "hls_dft", NULL });
 
-	/* Check if required IP is available on FPGA */
+	// Check if required IP is available on FPGA
 	cr_assert(hls && rtds);
 
 	ret = intc_enable(card->intc, (1 << rtds->irq), 0);
@@ -52,7 +52,7 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 	cr_assert_eq(ret, 0, "Failed to configure switch");
 
 	while (1) {
-		/* Dump RTDS AXI Stream state */
+		// Dump RTDS AXI Stream state
 		rtds_axis_dump(rtds);
 		sleep(1);
 	}

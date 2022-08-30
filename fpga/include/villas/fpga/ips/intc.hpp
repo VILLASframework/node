@@ -68,12 +68,12 @@ private:
 
 
 	struct Interrupt {
-		int eventFd;			/**< Event file descriptor */
-		int number;				/**< Interrupt number from /proc/interrupts */
-		bool polling;			/**< Polled or not */
+		int eventFd;			// Event file descriptor
+		int number;			// Interrupt number from /proc/interrupts
+		bool polling;			// Polled or not
 	};
 
-	int num_irqs;				/**< Number of available MSI vectors */
+	int num_irqs;				// Number of available MSI vectors
 	int efds[maxIrqs];
 	int nos[maxIrqs];
 	bool polling[maxIrqs];

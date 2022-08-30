@@ -32,7 +32,7 @@ union reg_doorbell_t {
 
 template<size_t N, typename T = uint32_t>
 struct Rtds2GpuMemoryBuffer {
-	// this type is only for memory interpretation, it makes no sense to create
+	// This type is only for memory interpretation, it makes no sense to create
 	// an instance so it's forbidden
 	Rtds2GpuMemoryBuffer() = delete;
 

@@ -89,7 +89,7 @@ NodeFactory::configureJson(Core &ip, json_t* json_ip)
 			Node::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
 			                                   connectedVertex->getIdentifier());
 			Node.portsMaster[name_raw] = thisVertex;
-		} else /* slave */ {
+		} else { // Slave
 			Node.portsSlave[name_raw] = thisVertex;
 		}
 	}
@@ -135,20 +135,17 @@ bool Node::connect(const StreamVertex &from, const StreamVertex &to)
 
 	auto nextHopNode = firstHopNode;
 
-	// check if next hop is an internal connection
+	// Check if next hop is an internal connection
 	if (firstHopNode->nodeName == getInstanceName()) {
-
 		if (not connectInternal(from.portName, firstHopNode->portName)) {
 			logger->error("Making internal connection from {} to {} failed",
 			              from, *firstHopNode);
 			return false;
 		}
 
-		// we have to advance to next hop
-		if (++currentEdge == path.end()) {
-			// arrived at the end of path
-			return true;
-		}
+		// We have to advance to next hop
+		if (++currentEdge == path.end())
+			return true; // Arrived at the end of path
 
 		auto secondEdge = streamGraph.getEdge(*currentEdge);
 		auto secondHopNode = streamGraph.getVertex(secondEdge->getVertexTo());

@@ -31,19 +31,19 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/intc.hpp>
 
-// max. size of a DMA transfer in simple mode
+// Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY	0x1000
 
 
 using namespace villas::fpga::ip;
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static DmaFactory factory;
 
 bool
 Dma::init()
 {
-	// if there is a scatter-gather interface, then this instance has it
+	// If there is a scatter-gather interface, then this instance has it
 	hasSG = busMasterInterfaces.count(sgInterface) == 1;
 	logger->info("Scatter-Gather support: {}", hasScatterGather());
 
@@ -55,7 +55,7 @@ Dma::init()
 	xdma_cfg.HasMm2SDRE = 1;
 	xdma_cfg.Mm2SDataWidth = 128;
 	xdma_cfg.HasS2Mm = 1;
-	xdma_cfg.HasS2MmDRE = 1; /* Data Realignment Engine */
+	xdma_cfg.HasS2MmDRE = 1; // Data Realignment Engine
 	xdma_cfg.HasSg = hasScatterGather();
 	xdma_cfg.S2MmDataWidth = 128;
 	xdma_cfg.Mm2sNumChannels = 1;
@@ -77,7 +77,7 @@ Dma::init()
 	else
 		logger->debug("DMA selftest passed");
 
-	/* Map buffer descriptors */
+	// Map buffer descriptors
 	if (hasScatterGather()) {
 		logger->warn("Scatter Gather not yet implemented");
 		return false;
@@ -91,7 +91,7 @@ Dma::init()
 //			return -4;
 	}
 
-	/* Enable completion interrupts for both channels */
+	// Enable completion interrupts for both channels
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
@@ -106,10 +106,10 @@ bool
 Dma::reset()
 {
 	logger->info("DMA resetted");
-	
+
 	XAxiDma_Reset(&xDma);
 
-	// value taken from libxil implementation
+	// Value taken from libxil implementation
 	int timeout = 500;
 
 	while (timeout > 0) {
@@ -153,7 +153,7 @@ Dma::write(const MemoryBlock &mem, size_t len)
 {
 	auto &mm = MemoryManager::get();
 
-	// user has to make sure that memory is accessible, otherwise this will throw
+	// User has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[mm2sInterface],
 	                                     mem.getAddrSpaceId());
 	const void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
@@ -168,7 +168,7 @@ Dma::read(const MemoryBlock &mem, size_t len)
 {
 	auto &mm = MemoryManager::get();
 
-	// user has to make sure that memory is accessible, otherwise this will throw
+	// User has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[s2mmInterface],
 	                                     mem.getAddrSpaceId());
 	void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
@@ -241,27 +241,27 @@ Dma::writeSimple(const void *buf, size_t len)
 
 	const bool dmaToDeviceBusy = XAxiDma_Busy(&xDma, XAXIDMA_DMA_TO_DEVICE);
 
-	/* If the engine is doing a transfer, cannot submit  */
+	// If the engine is doing a transfer, cannot submit
 	if (not dmaChannelHalted and dmaToDeviceBusy) {
 		return false;
 	}
 
-	// set lower 32 bit of source address
+	// Set lower 32 bit of source address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_OFFSET,
 	                 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
-	// if neccessary, set upper 32 bit of source address
+	// If neccessary, set upper 32 bit of source address
 	if (xDma.AddrWidth > 32) {
 		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_MSB_OFFSET,
 		                 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 	}
 
-	// start DMA channel
+	// Start DMA channel
 	auto channelControl = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_CR_OFFSET);
 	channelControl |= XAXIDMA_CR_RUNSTOP_MASK;
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_CR_OFFSET, channelControl);
 
-	// set tail descriptor pointer
+	// Set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
 
@@ -292,26 +292,26 @@ Dma::readSimple(void *buf, size_t len)
 
 	const bool deviceToDmaBusy = XAxiDma_Busy(&xDma, XAXIDMA_DEVICE_TO_DMA);
 
-	/* If the engine is doing a transfer, cannot submit  */
+	// If the engine is doing a transfer, cannot submit
 	if (not dmaChannelHalted and deviceToDmaBusy) {
 		return false;
 	}
 
-	// set lower 32 bit of destination address
+	// Set lower 32 bit of destination address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET,
 	                 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
-	// if neccessary, set upper 32 bit of destination address
+	// If neccessary, set upper 32 bit of destination address
 	if (xDma.AddrWidth > 32)
 		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_MSB_OFFSET,
 		                 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
-	// start DMA channel
+	// Start DMA channel
 	auto channelControl = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_CR_OFFSET);
 	channelControl |= XAXIDMA_CR_RUNSTOP_MASK;
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_CR_OFFSET, channelControl);
 
-	// set tail descriptor pointer
+	// Set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
 	return true;
@@ -351,19 +351,19 @@ Dma::readCompleteSimple()
 bool
 Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 {
-	// only symmetric mapping supported currently
+	// Only symmetric mapping supported currently
 	if (isMemoryBlockAccesible(mem, s2mmInterface) and
 	   isMemoryBlockAccesible(mem, mm2sInterface)) {
 		return true;
 	}
 
-	// try mapping via FPGA-card (VFIO)
+	// Try mapping via FPGA-card (VFIO)
 	if (not card->mapMemoryBlock(mem)) {
 		logger->error("Memory not accessible by DMA");
 		return false;
 	}
 
-	// sanity-check if mapping worked, this shouldn't be neccessary
+	// Sanity-check if mapping worked, this shouldn't be neccessary
 	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
 	    not isMemoryBlockAccesible(mem, mm2sInterface)) {
 		logger->error("Mapping memory via card didn't work, but reported success?!");
@@ -381,10 +381,8 @@ Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface
 
 	try {
 		mm.findPath(getMasterAddrSpaceByInterface(interface), mem.getAddrSpaceId());
-	} catch (const std::out_of_range&) {
-		// not (yet) accessible
-		return false;
-	}
+	} catch (const std::out_of_range&)
+		return false; // Not (yet) accessible
 
 	return true;
 }

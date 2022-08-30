@@ -45,12 +45,12 @@
 namespace villas {
 namespace fpga {
 
-// forward declaration
+// Forward declarations
 class PCIeCard;
 
 namespace ip {
 
-// forward declarations
+// Forward declarations
 class Core;
 class CoreFactory;
 class InterruptController;
@@ -108,29 +108,29 @@ public:
 	using List = std::list<Core::Ptr>;
 
 public:
-	/* Generic management interface for IPs */
+	// Generic management interface for IPs
 
-	/// Runtime setup of IP, should access and initialize hardware
+	// Runtime setup of IP, should access and initialize hardware
 	virtual bool init()
 	{ return true; }
 
-	/// Runtime check of IP, should verify basic functionality
+	// Runtime check of IP, should verify basic functionality
 	virtual bool check() { return true; }
 
-	/// Generic disabling of IP, meaning may depend on IP
+	// Generic disabling of IP, meaning may depend on IP
 	virtual bool stop()  { return true; }
 
-	/// Reset the IP, it should behave like freshly initialized afterwards
+	// Reset the IP, it should behave like freshly initialized afterwards
 	virtual bool reset() { return true; }
 
-	/// Print some debug information about the IP
+	// Print some debug information about the IP
 	virtual void dump();
 
 protected:
-	/// Key-type for accessing maps addressTranslations and slaveAddressSpaces
+	// Key-type for accessing maps addressTranslations and slaveAddressSpaces
 	using MemoryBlockName = std::string;
 
-	/// Each IP can declare via this function which memory blocks it requires
+	// Each IP can declare via this function which memory blocks it requires
 	virtual std::list<MemoryBlockName>
 	getMemoryBlocks() const
 	{ return {}; }
@@ -140,7 +140,7 @@ public:
 	getInstanceName() const
 	{ return id.getName(); }
 
-	/* Operators */
+	// Operators
 
 	bool
 	operator==(const Vlnv &otherVlnv) const
@@ -200,7 +200,7 @@ protected:
 	template<typename T>
 	T readMemory(const std::string &block, uintptr_t address) const
 	{ return *(reinterpret_cast<T*>(getLocalAddr(block, address))); }
-	
+
 	template<typename T>
 	void writeMemory(const std::string &block, uintptr_t address, T value)
 	{ T* ptr = reinterpret_cast<T*>(getLocalAddr(block, address)); *ptr = value; }
@@ -212,25 +212,25 @@ protected:
 		std::string description;
 	};
 
-	/// Specialized logger instance with the IPs name set as category
+	// Specialized logger instance with the IPs name set as category
 	Logger logger;
 
-	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
+	// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
 	PCIeCard* card;
 
-	/// Identifier of this IP with its instance name and VLNV
+	// Identifier of this IP with its instance name and VLNV
 	IpIdentifier id;
 
-	/// All interrupts of this IP with their associated interrupt controller
+	// All interrupts of this IP with their associated interrupt controller
 	std::map<std::string, IrqPort> irqs;
 
-	/// Cached translations from the process address space to each memory block
+	// Cached translations from the process address space to each memory block
 	std::map<MemoryBlockName, MemoryTranslation> addressTranslations;
 
-	/// Lookup for IP's slave address spaces (= memory blocks)
+	// Lookup for IP's slave address spaces (= memory blocks)
 	std::map<MemoryBlockName, MemoryManager::AddressSpaceId> slaveAddressSpaces;
 
-	/// AXI bus master interfaces to access memory somewhere
+	// AXI bus master interfaces to access memory somewhere
 	std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
 };
 
@@ -240,7 +240,7 @@ class CoreFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
 
-	/// Returns a running and checked FPGA IP
+	// Returns a running and checked FPGA IP
 	static Core::List
 	make(PCIeCard* card, json_t *json_ips);
 
@@ -256,10 +256,10 @@ protected:
 	{ return villas::logging.get(getName()); }
 
 private:
-	/// Create a concrete IP instance
+	// Create a concrete IP instance
 	virtual Core* create() = 0;
 
-	/// Configure IP instance from JSON config
+	// Configure IP instance from JSON config
 	virtual bool configureJson(Core& /* ip */, json_t* /* json */)
 	{ return true; }
 

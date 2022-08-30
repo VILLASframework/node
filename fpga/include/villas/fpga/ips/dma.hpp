@@ -43,10 +43,10 @@ public:
 	bool init();
 	bool reset();
 
-	// memory-mapped to stream (MM2S)
+	// Memory-mapped to stream (MM2S)
 	bool write(const MemoryBlock &mem, size_t len);
 
-	// stream to memory-mapped (S2MM)
+	// Stream to memory-mapped (S2MM)
 	bool read(const MemoryBlock &mem, size_t len);
 
 	size_t writeComplete()
@@ -100,7 +100,7 @@ private:
 	static constexpr char s2mmInterrupt[] = "s2mm_introut";
 	static constexpr char s2mmInterface[] = "M_AXI_S2MM";
 
-	// optional Scatter-Gather interface to access descriptors
+	// Optional Scatter-Gather interface to access descriptors
 	static constexpr char sgInterface[] = "M_AXI_SG";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const

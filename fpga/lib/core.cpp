@@ -56,14 +56,14 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	// We only have this logger until we know the factory to build an IP with
 	auto loggerStatic = getStaticLogger();
 
-	std::list<IpIdentifier> allIps;		// all IPs available in config
+	std::list<IpIdentifier> allIps;		// All IPs available in config
 	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
 
 	Core::List configuredIps;	// Successfully configured IPs
 	Core::List initializedIps;	// Initialized, i.e. ready-to-use IPs
 
 
-	// parse all IP instance names and their VLNV into list `allIps`
+	// Parse all IP instance names and their VLNV into list `allIps`
 	const char* ipName;
 	json_t* json_ip;
 	json_object_foreach(json_ips, ipName, json_ip) {
@@ -84,7 +84,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	vlnvInitializationOrder.reverse();
 
 	for (auto &vlnvInitFirst : vlnvInitializationOrder) {
-		// iterate over IPs, if VLNV matches, push to front and remove from list
+		// Iterate over IPs, if VLNV matches, push to front and remove from list
 		for (auto it = allIps.begin(); it != allIps.end(); ++it) {
 			if (vlnvInitFirst == it->getVlnv()) {
 				orderedIps.push_front(*it);
@@ -93,7 +93,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 	}
 
-	// insert all other IPs at the end
+	// Insert all other IPs at the end
 	orderedIps.splice(orderedIps.end(), allIps);
 
 	loggerStatic->debug("IP initialization order:");
@@ -101,11 +101,11 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		loggerStatic->debug("  " CLR_BLD("{}"), id.getName());
 	}
 
-	// configure all IPs
+	// Configure all IPs
 	for (auto &id : orderedIps) {
 		loggerStatic->info("Configuring {}", id);
 
-		// find the appropriate factory that can create the specified VLNV
+		// Find the appropriate factory that can create the specified VLNV
 		// Note:
 		// This is the magic part! Factories automatically register as a
 		// plugin as soon as they are instantiated. If there are multiple
@@ -135,7 +135,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			continue;
 		}
 
-		// setup generic IP type properties
+		// Setup generic IP type properties
 		ip->card = card;
 		ip->id = id;
 		ip->logger = villas::logging.get(id.getName());
@@ -191,18 +191,18 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		if (json_is_object(json_memory_view)) {
 			logger->debug("Parse memory view of {}", *ip);
 
-			// now find all slave address spaces this master can access
+			// Now find all slave address spaces this master can access
 			const char* bus_name;
 			json_t* json_bus;
 			json_object_foreach(json_memory_view, bus_name, json_bus) {
 
-				// this IP has a memory view => it is a bus master somewhere
+				// This IP has a memory view => it is a bus master somewhere
 
-				// assemble name for master address space
+				// Assemble name for master address space
 				const std::string myAddrSpaceName =
 				        MemoryManager::getMasterAddrSpaceName(ip->getInstanceName(),
 				                                              bus_name);
-				// create a master address space
+				// Create a master address space
 				const MemoryManager::AddressSpaceId myAddrSpaceId =
 				        MemoryManager::get().getOrCreateAddressSpace(myAddrSpaceName);
 
@@ -229,14 +229,14 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 						}
 
-						// get or create the slave address space
+						// Get or create the slave address space
 						const std::string slaveAddrSpace =
 						        MemoryManager::getSlaveAddrSpaceName(instance_name, block_name);
 
 						const MemoryManager::AddressSpaceId slaveAddrSpaceId =
 						        MemoryManager::get().getOrCreateAddressSpace(slaveAddrSpace);
 
-						// create a new mapping to the slave address space
+						// Create a new mapping to the slave address space
 						MemoryManager::get().createMapping(static_cast<uintptr_t>(base),
 						                                   0,
 						                                   static_cast<uintptr_t>(size),
@@ -266,23 +266,23 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// the process and cache in the instance, so this has not to be done at
 		// runtime.
 		for (auto &memoryBlock : ip->getMemoryBlocks()) {
-			// construct the global name of this address block
+			// Construct the global name of this address block
 			const auto addrSpaceName =
 			        MemoryManager::getSlaveAddrSpaceName(ip->getInstanceName(),
 			                                             memoryBlock);
 
-			// retrieve its address space identifier
+			// Retrieve its address space identifier
 			const auto addrSpaceId =
 			        MemoryManager::get().findAddressSpace(addrSpaceName);
 
 			// ... and save it in IP
 			ip->slaveAddressSpaces.emplace(memoryBlock, addrSpaceId);
 
-			// get the translation to the address space
+			// Get the translation to the address space
 			const auto &translation =
 			        MemoryManager::get().getTranslationFromProcess(addrSpaceId);
 
-			// cache it in the IP instance only with local name
+			// Cache it in the IP instance only with local name
 			ip->addressTranslations.emplace(memoryBlock, translation);
 		}
 
@@ -296,7 +296,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			continue;
 		}
 
-		// will only be reached if the IP successfully was initialized
+		// Will only be reached if the IP successfully was initialized
 		initializedIps.push_back(std::move(ip));
 	}
 
@@ -340,7 +340,7 @@ CoreFactory::lookup(const Vlnv &vlnv)
 uintptr_t
 Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 {
-	// throws exception if block not present
+	// Throws exception if block not present
 	auto &translation = addressTranslations.at(block);
 
 	return translation.getLocalAddr(address);

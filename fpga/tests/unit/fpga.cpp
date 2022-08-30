@@ -58,7 +58,7 @@ static void init()
 
 	auto vfioContainer = kernel::vfio::Container::create();
 
-	/* Parse FPGA configuration */
+	// Parse FPGA configuration
 	char *fn = getenv("TEST_CONFIG");
 	f = fopen(fn ? fn : TEST_CONFIG, "r");
 	cr_assert_not_null(f, "Cannot open config file");
@@ -72,11 +72,11 @@ static void init()
 	cr_assert_not_null(fpgas, "No section 'fpgas' found in config");
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
 
-	// get the FPGA card plugin
+	// Get the FPGA card plugin
 	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
 	cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
-	// create all FPGA card instances using the corresponding plugin
+	// Create all FPGA card instances using the corresponding plugin
 	state.cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
 
 	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
@@ -86,7 +86,7 @@ static void init()
 
 static void fini()
 {
-	// release all cards
+	// Release all cards
 	state.cards.clear();
 }
 

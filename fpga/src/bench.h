@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-/* Some hard-coded configuration for the FPGA benchmarks */
+// Some hard-coded configuration for the FPGA benchmarks
 #define BENCH_DM		3
 // 1 FIFO
 // 2 DMA SG

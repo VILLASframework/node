@@ -30,7 +30,7 @@ using namespace villas::fpga;
 bool
 Vlnv::operator==(const Vlnv &other) const
 {
-	// if a field is empty, it means wildcard matching everything
+	// If a field is empty, it means wildcard matching everything
 	const bool vendorWildcard	= vendor.empty()	or other.vendor.empty();
 	const bool libraryWildcard	= library.empty()	or other.library.empty();
 	const bool nameWildcard		= name.empty()		or other.name.empty();
@@ -47,14 +47,14 @@ Vlnv::operator==(const Vlnv &other) const
 void
 Vlnv::parseFromString(std::string vlnv)
 {
-	// tokenize by delimiter
+	// Tokenize by delimiter
 	std::stringstream sstream(vlnv);
 	std::getline(sstream, vendor,	delimiter);
 	std::getline(sstream, library,	delimiter);
 	std::getline(sstream, name,		delimiter);
 	std::getline(sstream, version,	delimiter);
 
-	// represent wildcard internally as empty string
+	// Represent wildcard internally as empty string
 	if (vendor	== "*") vendor  = "";
 	if (library	== "*") library = "";
 	if (name		== "*") name    = "";

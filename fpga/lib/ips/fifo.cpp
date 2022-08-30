@@ -34,7 +34,7 @@
 
 using namespace villas::fpga::ip;
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
 static FifoDataFactory factoryData;
 
@@ -44,7 +44,7 @@ bool Fifo::init()
 	XLlFifo_Config fifo_cfg;
 
 	try {
-		// if this throws an exception, then there's no AXI4 data interface
+		// If this throws an exception, then there's no AXI4 data interface
 		fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
 		fifo_cfg.Datainterface = 1;
 	} catch (const std::out_of_range&) {
@@ -84,7 +84,7 @@ size_t Fifo::write(const void *buf, size_t len)
 	if (tdfv < len)
 		return -1;
 
-	// buf has to be re-casted because Xilinx driver doesn't use const
+	// Buf has to be re-casted because Xilinx driver doesn't use const
 	XLlFifo_Write(&xFifo, (void*) buf, len);
 	XLlFifo_TxSetLen(&xFifo, len);
 
@@ -101,11 +101,11 @@ size_t Fifo::read(void *buf, size_t len)
 
 	XLlFifo_IntClear(&xFifo, XLLF_INT_RC_MASK);
 
-	/* Get length of next frame */
+	// Get length of next frame
 	rxlen = XLlFifo_RxGetLen(&xFifo);
 	nextlen = std::min(rxlen, len);
 
-	/* Read from FIFO */
+	// Read from FIFO
 	XLlFifo_Read(&xFifo, buf, nextlen);
 
 	return nextlen;

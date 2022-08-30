@@ -47,7 +47,7 @@
 namespace villas {
 namespace fpga {
 
-/* Forward declarations */
+// Forward declarations
 struct vfio_container;
 class PCIeCardFactory;
 
@@ -74,10 +74,10 @@ public:
 
 	ip::Core::Ptr
 	lookupIp(const std::string &name) const;
-	
+
 	ip::Core::Ptr
 	lookupIp(const Vlnv &vlnv) const;
-	
+
 	ip::Core::Ptr
 	lookupIp(const ip::IpIdentifier &id) const;
 
@@ -86,30 +86,30 @@ public:
 	mapMemoryBlock(const MemoryBlock &block);
 
 private:
-	/// Cache a set of already mapped memory blocks
+	// Cache a set of already mapped memory blocks
 	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
 public:	// TODO: make this private
-	ip::Core::List ips;		///< IPs located on this FPGA card
+	ip::Core::List ips;				// IPs located on this FPGA card
 
-	bool doReset;			/**< Reset VILLASfpga during startup? */
-	int affinity;			/**< Affinity for MSI interrupts */
+	bool doReset;					// Reset VILLASfpga during startup?
+	int affinity;					// Affinity for MSI interrupts
 
-	std::string name;			/**< The name of the FPGA card */
+	std::string name;				// The name of the FPGA card
 
-	std::shared_ptr<kernel::pci::Device> pdev;	/**< PCI device handle */
+	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
 
-	/// The VFIO container that this card is part of
+	// The VFIO container that this card is part of
 	std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
-	/// The VFIO device that represents this card
+	// The VFIO device that represents this card
 	kernel::vfio::Device* vfioDevice;
 
-	/// Slave address space ID to access the PCIe address space from the FPGA
+	// Slave address space ID to access the PCIe address space from the FPGA
 	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
 
-	/// Address space identifier of the master address space of this FPGA card.
-	/// This will be used for address resolution of all IPs on this card.
+	// Address space identifier of the master address space of this FPGA card.
+	// This will be used for address resolution of all IPs on this card.
 	MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
 protected:
@@ -140,7 +140,7 @@ public:
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx PCIe FPGA cards"; } 
+	{ return "Xilinx PCIe FPGA cards"; }
 
 	virtual
 	std::string getType() const

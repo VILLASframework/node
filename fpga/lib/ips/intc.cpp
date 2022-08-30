@@ -33,7 +33,7 @@
 
 using namespace villas::fpga::ip;
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static InterruptControllerFactory factory;
 
 InterruptController::~InterruptController()
@@ -54,15 +54,15 @@ InterruptController::init()
 		return false;
 	}
 
-	/* For each IRQ */
+	// For each IRQ
 	for (int i = 0; i < num_irqs; i++) {
 
-		/* Try pinning to core */
+		// Try pinning to core
 		int ret = kernel::setIRQAffinity(nos[i], card->affinity, nullptr);
 
 		switch(ret) {
 		case 0:
-			// everything is fine
+			// Everything is fine
 			break;
 		case EACCES:
 			logger->warn("No permission to change affinity of VFIO-MSI interrupt, "
@@ -73,14 +73,14 @@ InterruptController::init()
 			return false;
 		}
 
-		/* Setup vector */
+		// Setup vector
 		XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
 	}
 
-	XIntc_Out32(base + XIN_IMR_OFFSET, 0x00000000); /* Use manual acknowlegement for all IRQs */
-	XIntc_Out32(base + XIN_IAR_OFFSET, 0xFFFFFFFF); /* Acknowlege all pending IRQs manually */
-	XIntc_Out32(base + XIN_IMR_OFFSET, 0xFFFFFFFF); /* Use fast acknowlegement for all IRQs */
-	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); /* Disable all IRQs by default */
+	XIntc_Out32(base + XIN_IMR_OFFSET, 0x00000000); // Use manual acknowlegement for all IRQs
+	XIntc_Out32(base + XIN_IAR_OFFSET, 0xFFFFFFFF); // Acknowlege all pending IRQs manually
+	XIntc_Out32(base + XIN_IMR_OFFSET, 0xFFFFFFFF); // Use fast acknowlegement for all IRQs
+	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); // Disable all IRQs by default
 	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
 	logger->debug("enabled interrupts");
@@ -94,11 +94,11 @@ InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool
 {
 	const uintptr_t base = getBaseAddr(registerMemory);
 
-	/* Current state of INTC */
+	// Current state of INTC
 	const uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 	const uint32_t imr = XIntc_In32(base + XIN_IMR_OFFSET);
 
-	/* Clear pending IRQs */
+	// Clear pending IRQs
 	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
 	for (int i = 0; i < num_irqs; i++) {
@@ -145,21 +145,21 @@ InterruptController::waitForInterrupt(int irq)
 		uint32_t isr, mask = 1 << irq;
 
 		do {
-			// poll status register
+			// Poll status register
 			isr = XIntc_In32(base + XIN_ISR_OFFSET);
 			pthread_testcancel();
 		} while ((isr & mask) != mask);
 
-		// acknowledge interrupt
+		// Acknowledge interrupt
 		XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
-		// we can only tell that there has been (at least) one interrupt
+		// We can only tell that there has been (at least) one interrupt
 		return 1;
 	}
 	else {
 		uint64_t count;
 
-		// block until there has been an interrupt, read number of interrupts
+		// Block until there has been an interrupt, read number of interrupts
 		ssize_t ret = read(efds[irq], &count, sizeof(count));
 		if (ret != sizeof(count))
 			return -1;

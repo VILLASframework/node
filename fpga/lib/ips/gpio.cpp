@@ -27,7 +27,7 @@
 using namespace villas::fpga::ip;
 
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static GeneralPurposeIOFactory factory;
 
 bool

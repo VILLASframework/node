@@ -27,7 +27,7 @@
 
 using namespace villas::fpga::ip;
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static EMCFactory factory;
 
 bool
@@ -36,23 +36,21 @@ EMC::init()
 	int ret;
 	const uintptr_t base = getBaseAddr(registerMemory);
 
-#ifdef XPAR_XFL_DEVICE_FAMILY_INTEL
-#if XFL_TO_ASYNCMODE
-		/* Set Flash to Async mode. */
-		if (FLASH_MEM_WIDTH == 1) {
-			WRITE_FLASH_8(FLASH_BASE_ADDRESS + ASYNC_ADDR, 0x60);
-			WRITE_FLASH_8(FLASH_BASE_ADDRESS + ASYNC_ADDR, 0x03);
-		}
-		else if (FLASH_MEM_WIDTH == 2) {
-			WRITE_FLASH_16(FLASH_BASE_ADDRESS + ASYNC_ADDR,
-					INTEL_CMD_CONFIG_REG_SETUP);
-			WRITE_FLASH_16(FLASH_BASE_ADDRESS + ASYNC_ADDR,
-					INTEL_CMD_CONFIG_REG_CONFIRM);
-		}
-#endif
+	const int busWidth = 2;
+
+#if defined(XPAR_XFL_DEVICE_FAMILY_INTEL) && XFL_TO_ASYNCMODE
+	// Set Flash to Async mode.
+	if (busWidth == 1) {
+		WRITE_FLASH_8(base + ASYNC_ADDR, 0x60);
+		WRITE_FLASH_8(base + ASYNC_ADDR, 0x03);
+	}
+	else if (busWidth == 2) {
+		WRITE_FLASH_16(base + ASYNC_ADDR, INTEL_CMD_CONFIG_REG_SETUP);
+		WRITE_FLASH_16(base + ASYNC_ADDR, INTEL_CMD_CONFIG_REG_CONFIRM);
+	}
 #endif
 
-	ret = XFlash_Initialize(&xflash, base, 2, 0);
+	ret = XFlash_Initialize(&xflash, base, busWidth, 0);
 	if (ret != XST_SUCCESS)
 		return false;
 
@@ -64,19 +62,16 @@ EMC::read(uint32_t offset, uint32_t length, uint8_t *data)
 {
 	int ret;
 
-	/*
-	 * Reset the Flash Device. This clears the ret registers and puts
+	/** Reset the Flash Device. This clears the ret registers and puts
 	 * the device in Read mode.
 	 */
 	ret = XFlash_Reset(&xflash);
 	if (ret != XST_SUCCESS)
 		return false;
 
-	/*
-	 * Perform the read operation.
-	 */
+	// Perform the read operation.
 	ret = XFlash_Read(&xflash, offset, length, data);
-	if(ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS)
 		return false;
 
 	return false;
@@ -92,14 +87,14 @@ EMC::flash(uint32_t offset, const std::string &filename)
 	uint8_t *buffer;
 
 	std::ifstream is(filename, std::ios::binary);
-	
-	// get length of file:
+
+	// Get length of file:
 	is.seekg(0, std::ios::end);
 	length = is.tellg();
-	
+
 	is.seekg (0, std::ios::beg);
-	// allocate memory:
-	
+	// Allocate memory:
+
 	buffer = new uint8_t[length];
 	is.read(reinterpret_cast<char *>(buffer), length);
 	is.close();
@@ -111,7 +106,7 @@ EMC::flash(uint32_t offset, const std::string &filename)
 	return result;
 }
 
-/* Based on xilflash_readwrite_example.c */
+// Based on xilflash_readwrite_example.c
 bool
 EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 {
@@ -137,23 +132,23 @@ EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 			return false;
 	}
 
-	/* Perform the Erase operation. */
+	// Perform the Erase operation.
 	ret = XFlash_Erase(&xflash, start, length);
 	if (ret != XST_SUCCESS)
 		return false;
 
-	/* Perform the Write operation. */
+	// Perform the Write operation.
 	ret = XFlash_Write(&xflash, start, length, data);
 	if (ret != XST_SUCCESS)
 		return false;
 
-	/* Perform the read operation. */
+	// Perform the read operation.
 	ret = XFlash_Read(&xflash, start, length, verify_data);
 		if(ret != XST_SUCCESS) {
 			return false;
 	}
 
-	/* Compare the data read against the data Written. */
+	// Compare the data read against the data Written.
 	for (unsigned i = 0; i < length; i++) {
 		if (verify_data[i] != data[i])
 			return false;

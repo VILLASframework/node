@@ -78,7 +78,7 @@ again:	ret = bench->func(c);
 	if (ret)
 		error("Benchmark %s failed", bench->name);
 
-	/* Rerun test with polling */
+	// Rerun test with polling
 	if (intc_flags == 0) {
 		intc_flags |= INTC_POLLING;
 		getchar();

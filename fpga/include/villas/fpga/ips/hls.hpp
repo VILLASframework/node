@@ -66,9 +66,9 @@ public:
 	{ return controlRegister->ap_ready; }
 
 
-	/// Warning: the corresponding bit is cleared on read of the register, so if
-	/// not used correctly, this function may never return true. Only use this
-	/// function if you really know what you are doing!
+	// Warning: the corresponding bit is cleared on read of the register, so if
+	// not used correctly, this function may never return true. Only use this
+	// function if you really know what you are doing!
 	bool isDoneBit() const
 	{ return controlRegister->ap_done; }
 
@@ -84,7 +84,7 @@ private:
 	}
 
 protected:
-	/* Memory block handling */
+	// Memory block handling
 
 	static constexpr const char* registerMemory = "Reg";
 
@@ -93,7 +93,7 @@ protected:
 
 
 public:
-	/* Register definitions */
+	// Register definitions
 
 	static constexpr uintptr_t registerControlAddr			= 0x00;
 	static constexpr uintptr_t registerGlobalIntEnableAddr	= 0x04;

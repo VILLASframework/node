@@ -35,7 +35,7 @@
 #define XSG_MAPLEN		0x1000
 #define XSG_MAGIC		0xDEADBABE
 
-/* Forward declaration */
+// Forward declaration
 struct ip;
 
 enum model_type {
@@ -79,14 +79,14 @@ struct hls_model {
 };
 
 struct model {
-	enum model_type type;		/**< Either HLS or XSG model */
+	enum model_type type;			// Either HLS or XSG model
 
-	struct list parameters;		/**< List of model parameters. */
-	struct list infos;		/**< A list of key / value pairs with model details */
+	struct list parameters;			// List of model parameters.
+	struct list infos;			// A list of key / value pairs with model details
 
 	union {
-		struct xsg_model xsg;	/**< XSG specific model data */
-		struct hls_model hls;	/**< HLS specific model data */
+		struct xsg_model xsg;		// XSG specific model data
+		struct hls_model hls;		// HLS specific model data
 	};
 };
 
@@ -96,35 +96,41 @@ struct model_info {
 };
 
 struct model_parameter {
-	char *name;				/**< Name of the parameter */
+	// Name of the parameter
+	char *name;
 
-	enum model_parameter_direction direction;	/**< Read / Write / Read-write? */
-	enum model_parameter_type type;		/**< Data type. Integers are represented by MODEL_GW_TYPE_(U)FIX with model_gw::binpt == 0 */
+	// Read / Write / Read-write?
+	enum model_parameter_direction direction;
+	// Data type. Integers are represented by MODEL_GW_TYPE_(U)FIX with model_gw::binpt == 0
+	enum model_parameter_type type;
 
-	int binpt;				/**< Binary point for type == MODEL_GW_TYPE_(U)FIX */
-	uintptr_t offset;			/**< Register offset to model::baseaddress */
+	// Binary point for type == MODEL_GW_TYPE_(U)FIX
+	int binpt;
+	// Register offset to model::baseaddress
+	uintptr_t offset;
 
 	union model_parameter_value default_value;
 
-	struct fpga_ip *ip;				/**< A pointer to the model structure to which this parameters belongs to. */
+	// A pointer to the model structure to which this parameters belongs to.
+	struct fpga_ip *ip;
 };
 
-/** Initialize a model */
+// Initialize a model
 int model_init(struct fpga_ip *c);
 
-/** Parse model */
+// Parse model
 int model_parse(struct fpga_ip *c, json_t *cfg);
 
-/** Destroy a model */
+// Destroy a model
 int model_destroy(struct fpga_ip *c);
 
-/** Print detailed information about the model to the screen. */
+// Print detailed information about the model to the screen.
 void model_dump(struct fpga_ip *c);
 
-/** Add a new parameter to the model */
+// Add a new parameter to the model
 void model_parameter_add(struct fpga_ip *c, const char *name, enum model_parameter_direction dir, enum model_parameter_type type);
 
-/** Remove an existing parameter by its name */
+// Remove an existing parameter by its name
 int model_parameter_remove(struct fpga_ip *c, const char *name);
 
 /** Read a model parameter.

@@ -74,7 +74,7 @@ GpuFactory::GpuFactory() :
 	logger = villas::logging.get("gpu:factory");
 }
 
-// required to be defined here for PIMPL to compile
+// Required to be defined here for PIMPL to compile
 Gpu::~Gpu()
 {
 	auto &mm = MemoryManager::get();
@@ -82,7 +82,7 @@ Gpu::~Gpu()
 }
 
 
-// we use PIMPL in order to hide gdrcopy types from the public header
+// We use PIMPL in order to hide gdrcopy types from the public header
 class Gpu::impl {
 public:
 	gdr_t gdr;
@@ -93,7 +93,7 @@ std::string Gpu::getName() const
 {
 	cudaDeviceProp deviceProp;
 	if (cudaGetDeviceProperties(&deviceProp, gpuId) != cudaSuccess) {
-		// logger not yet availabe
+		// Logger not yet availabe
 		villas::logging.get("gpu")->error("Cannot retrieve properties for GPU {}", gpuId);
 		throw std::exception();
 	}
@@ -116,13 +116,13 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 		auto translation = mm.getTranslation(masterPciEAddrSpaceId,
 		                                     mem.getAddrSpaceId());
 		if (translation.getSize() >= mem.getSize())
-			// there is already a sufficient path
+			// There is already a sufficient path
 			logger->debug("Already mapped through another mapping");
 			return true;
-		else 
+		else
 			logger->warn("There's already a mapping, but too small");
 	} catch (const std::out_of_range&) {
-		// not yet reachable, that's okay, proceed
+		// Not yet reachable, that's okay, proceed
 	}
 
 
@@ -131,7 +131,7 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 	MemoryManager::AddressSpaceId mappedBaseAddrSpaceId;
 	try {
 		auto path = mm.findPath(mm.getProcessAddressSpace(), mem.getAddrSpaceId());
-		// first node in path is the mapped memory space whose virtual address
+		// First node in path is the mapped memory space whose virtual address
 		// we need to hand to CUDA
 		mappedBaseAddrSpaceId = path.front();
 	} catch (const std::out_of_range&) {
@@ -139,7 +139,7 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem)
 		return false;
 	}
 
-	// determine the base address of the mapped memory region needed by CUDA
+	// Determine the base address of the mapped memory region needed by CUDA
 	const auto translationProcess = mm.getTranslationFromProcess(mappedBaseAddrSpaceId);
 	const uintptr_t baseAddrForProcess = translationProcess.getLocalAddr(0);
 
@@ -224,10 +224,9 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock &mem)
 
 	try {
 		auto path = mm.findPath(masterPciEAddrSpaceId, mem.getAddrSpaceId());
-		// if first hop is the PCIe bus, we know that memory is off-GPU
-		if (path.front() == mm.getPciAddressSpace()) {
+		// If first hop is the PCIe bus, we know that memory is off-GPU
+		if (path.front() == mm.getPciAddressSpace())
 			throw std::out_of_range("Memory block is outside of this GPU");
-		}
 
 	} catch (const std::out_of_range&) {
 		logger->error("Trying to map non-GPU memory block");
@@ -235,14 +234,15 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock &mem)
 	}
 
 	logger->debug("retrieve complete device pointer from point of view of GPU");
-	// retrieve complete device pointer from point of view of GPU
+
+	// Retrieve complete device pointer from point of view of GPU
 	auto translation = mm.getTranslation(masterPciEAddrSpaceId,
 	                                     mem.getAddrSpaceId());
 	CUdeviceptr devptr = translation.getLocalAddr(0);
 
 	int ret;
 
-	// required to set this flag before mapping
+	// Required to set this flag before mapping
 	unsigned int enable = 1;
 	ret = cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS, devptr);
 	if (ret != CUDA_SUCCESS) {
@@ -285,24 +285,23 @@ bool Gpu::makeAccessibleToPCIeAndVA(const MemoryBlock &mem)
 	logger->debug("offset:           {:#x}", offset);
 	logger->debug("user pointer:     {:#x}", userPtr);
 
-	// mapping to acceses memory block from process
+	// Mapping to acceses memory block from process
 	mm.createMapping(userPtr, 0, info.mapped_size, "GDRcopy",
 	                 mm.getProcessAddressSpace(), mem.getAddrSpaceId());
 
-	// retrieve bus address
+	// Retrieve bus address
 	uint64_t addr[8];
 	ret = gdr_map_dma(pImpl->gdr, mh, 3, 0, 0, addr, 8);
 
-	for (int i = 0; i < ret; i++) {
+	for (int i = 0; i < ret; i++)
 		logger->debug("DMA addr[{}]:      {:#x}", i, addr[i]);
-	}
 
 	if (ret != 1) {
 		logger->error("Only one DMA address per block supported at the moment");
 		return false;
 	}
 
-	// mapping to access memory block from peer devices via PCIe
+	// Mapping to access memory block from peer devices via PCIe
 	mm.createMapping(addr[0], 0, mem.getSize(), "GDRcopyDMA",
 	                 mm.getPciAddressSpace(), mem.getAddrSpaceId());
 
@@ -324,7 +323,7 @@ Gpu::makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem)
 		auto path = mm.findPath(mm.getPciAddressSpace(), mem.getAddrSpaceId());
 		isIoMemory = true;
 	} catch (const std::out_of_range&) {
-		// not reachable via PCI -> not IO memory
+		// Not reachable via PCI -> not IO memory
 	}
 
 	if (isIoMemory) {
@@ -390,7 +389,7 @@ GpuAllocator::allocateBlock(size_t size)
 	void* addr;
 	auto &mm = MemoryManager::get();
 
-	// search for an existing chunk that has enough free memory
+	// Search for an existing chunk that has enough free memory
 	auto chunk = std::find_if(chunks.begin(), chunks.end(), [&](const auto &chunk) {
 		return chunk->getAvailableMemory() >= size;
 	});
@@ -402,9 +401,9 @@ GpuAllocator::allocateBlock(size_t size)
 		return (*chunk)->allocateBlock(size);
 	}
 	else {
-		// allocate a new chunk
+		// Allocate a new chunk
 
-		// rounded-up multiple of GPU page size
+		// Rounded-up multiple of GPU page size
 		const size_t chunkSize = size - (size & (GpuPageSize - 1)) + GpuPageSize;
 		logger->debug("Allocate new chunk of {:#x} bytes", chunkSize);
 
@@ -413,7 +412,7 @@ GpuAllocator::allocateBlock(size_t size)
 			throw std::bad_alloc();
 		}
 
-		// assemble name for this block
+		// Assemble name for this block
 		std::stringstream name;
 		name << std::showbase << std::hex << reinterpret_cast<uintptr_t>(addr);
 
@@ -426,13 +425,13 @@ GpuAllocator::allocateBlock(size_t size)
 
 		insertMemoryBlock(*mem);
 
-		// already make accessible to CPU
+		// Already make accessible to CPU
 		gpu.makeAccessibleToPCIeAndVA(*mem);
 
-		// create a new allocator to manage the chunk and push to chunk list
+		// Create a new allocator to manage the chunk and push to chunk list
 		chunks.push_front(std::make_unique<LinearAllocator>(std::move(mem)));
 
-		// call again, this time there's a large enough chunk
+		// Call again, this time there's a large enough chunk
 		return allocateBlock(size);
 	}
 }

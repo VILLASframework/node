@@ -29,13 +29,13 @@
 
 #include <xilinx/xhls_dft.h>
 
-/* Forward declaration */
+// Forward declaration
 struct ip;
 
 struct dft {
 	XHls_dft inst;
 
-	int period; /* in samples */
+	int period; // in samples
 	int num_harmonics;
 	float *fharmonics;
 	int decimation;

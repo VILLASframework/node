@@ -49,8 +49,8 @@ int fpga_benchmark_memcpy(struct fpga_card *c)
 			start = rdtsc();
 
 			for (int j = 0; j < len / 4; j++)
-//				mapi[j] = j;		// write
-				dummy += mapi[j];	// read
+//				mapi[j] = j;		// Write
+				dummy += mapi[j];	// Read
 
 			end = rdtsc();
 

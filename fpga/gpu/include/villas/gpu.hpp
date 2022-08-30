@@ -51,7 +51,7 @@ public:
 
 	bool makeAccessibleToPCIeAndVA(const MemoryBlock &mem);
 
-	/// Make some memory block accssible for this GPU
+	// Make some memory block accssible for this GPU
 	bool makeAccessibleFromPCIeOrHostRam(const MemoryBlock &mem);
 
 	void memcpySync(const MemoryBlock &src, const MemoryBlock &dst, size_t size);
@@ -69,7 +69,7 @@ private:
 	class impl;
 	std::unique_ptr<impl> pImpl;
 
-	// master, will be used to derived slave addr spaces for allocation
+	// Master, will be used to derived slave addr spaces for allocation
 	MemoryManager::AddressSpaceId masterPciEAddrSpaceId;
 
 	MemoryManager::AddressSpaceId slaveMemoryAddrSpaceId;

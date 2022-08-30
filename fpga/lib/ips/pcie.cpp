@@ -42,30 +42,29 @@ AxiPciExpressBridge::init()
 	// address space we can use for translation -> error
 	card->addrSpaceIdHostToDevice = busMasterInterfaces.at(axiInterface);
 
-	/* Map PCIe BAR0 via VFIO */
+	// Map PCIe BAR0 via VFIO
 	const void* bar0_mapped = card->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
 	if (bar0_mapped == MAP_FAILED) {
 		logger->error("Failed to mmap() BAR0");
 		return false;
 	}
 
-	// determine size of BAR0 region
+	// Determine size of BAR0 region
 	const size_t bar0_size = card->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
 
-	// create a mapping from process address space to the FPGA card via vfio
+	// Create a mapping from process address space to the FPGA card via vfio
 	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
 	                 0, bar0_size, "vfio-h2d",
 	                 mm.getProcessAddressSpace(),
 	                 card->addrSpaceIdHostToDevice);
 
-
-	/* Make PCIe (IOVA) address space available to FPGA via BAR0 */
+	// Make PCIe (IOVA) address space available to FPGA via BAR0
 
 	// IPs that can access this address space will know it via their memory view
 	const auto addrSpaceNameDeviceToHost =
 	        mm.getSlaveAddrSpaceName(getInstanceName(), pcieMemory);
 
-	// save ID in card so we can create mappings later when needed (e.g. when
+	// Save ID in card so we can create mappings later when needed (e.g. when
 	// allocating DMA memory in host RAM)
 	card->addrSpaceIdDeviceToHost =
 	        mm.getOrCreateAddressSpace(addrSpaceNameDeviceToHost);
@@ -82,7 +81,6 @@ AxiPciExpressBridge::init()
 		barName[3] = '0' + region.num;
 		auto pciBar = pcieToAxiTranslations.at(barName);
 
-
 		logger->info("PCI-BAR{}: bus addr={:#x} size={:#x}",
 		             region.num, region.start, region_size);
 		logger->info("PCI-BAR{}: AXI translation offset {:#x}",
@@ -91,7 +89,6 @@ AxiPciExpressBridge::init()
 		mm.createMapping(region.start, pciBar.translation, region_size,
 		                 std::string("PCI-") + barName,
 		                 pciAddrSpaceId, card->addrSpaceIdHostToDevice);
-
 	}
 
 	for (auto& [barName, axiBar] : axiToPcieTranslations) {
@@ -103,7 +100,7 @@ AxiPciExpressBridge::init()
 		auto barXAddrSpaceName = mm.getSlaveAddrSpaceName(getInstanceName(), barName);
 		auto barXAddrSpaceId = mm.getOrCreateAddressSpace(barXAddrSpaceName);
 
-		// base is already incorporated into mapping of each IP by Vivado, so
+		// Base is already incorporated into mapping of each IP by Vivado, so
 		// the mapping src has to be 0
 		mm.createMapping(0, axiBar.translation, axiBar.size,
 		                 std::string("AXI-") + barName,

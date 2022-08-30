@@ -52,12 +52,12 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 	auto gpus = gpuPlugin->make();
 	cr_assert(gpus.size() > 0, "No GPUs found");
 
-	// just get first cpu
+	// Just get first cpu
 	auto &gpu = gpus.front();
 
 	size_t count = 0;
 	for (auto &ip : card->ips) {
-		// skip non-dma IPs
+		// Skip non-dma IPs
 		if (*ip != fpga::Vlnv("xilinx.com:ip:axi_bram_ctrl:"))
 			continue;
 
@@ -70,7 +70,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 
 		size_t len = 4 * (1 << 10);
 
-		/* Allocate memory to use with DMA */
+		// Allocate memory to use with DMA
 
 		auto bram0 = bram->getAllocator().allocate<char>(len);
 		auto bram1 = bram->getAllocator().allocate<char>(len);
@@ -132,7 +132,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		for (auto& [name, memcpyFunc] : memcpyFuncs) {
 			logger->info("Testing {}", name);
 
-			/* Get new random data */
+			// Get new random data
 			const size_t lenRandom = utils::read_random(&src, len);
 			cr_assert(len == lenRandom, "Failed to get random data");
 

@@ -67,19 +67,19 @@ void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
 //	                               getMasterAddrSpaceByInterface(axiInterface),
 //	                               mem.getAddrSpaceId());
 
-//	// set address of memory block in HLS IP
+//	// Set address of memory block in HLS IP
 //	XGpu2Rtds_Set_baseaddr(&xInstance, translationFromIp.getLocalAddr(0));
 
 //	XGpu2Rtds_Set_doorbell_offset(&xInstance, doorbellOffset);
 //	XGpu2Rtds_Set_data_offset(&xInstance, dataOffset);
 //	XGpu2Rtds_Set_frame_size(&xInstance, frameSize);
 
-//	// prepare memory with all zeroes
+//	// Prepare memory with all zeroes
 //	auto translationFromProcess = mm.getTranslationFromProcess(mem.getAddrSpaceId());
 //	auto memory = reinterpret_cast<void*>(translationFromProcess.getLocalAddr(0));
 //	memset(memory, 0, mem.getSize());
 
-//	// start IP
+//	// Start IP
 //	return start();
 //}
 

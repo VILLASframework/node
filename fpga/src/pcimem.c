@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
 	fflush(stdout);
 
-	/* Map one page */
+	// Map one page
 	printf("mmap(%d, %lu, %#x, %#x, %d, %#jx)\n", 0,
 		MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
 		fd, (intmax_t) target);

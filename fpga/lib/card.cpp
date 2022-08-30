@@ -36,7 +36,7 @@
 using namespace villas;
 using namespace villas::fpga;
 
-// instantiate factory to register
+// Instantiate factory to register
 static PCIeCardFactory villas::fpga::PCIeCardFactory;
 
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
@@ -72,20 +72,20 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 
 		auto card = std::unique_ptr<PCIeCard>(create());
 
-		// populate generic properties
+		// Populate generic properties
 		card->name = std::string(card_name);
 		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
 		card->doReset = do_reset != 0;
 
 		kernel::pci::Device filter = defaultFilter;
-		
+
 		if (pci_id)
 			filter.id = kernel::pci::Id(pci_id);
 		if (pci_slot)
 			filter.slot = kernel::pci::Slot(pci_slot);
 
-		/* Search for FPGA card */
+		// Search for FPGA card
 		card->pdev = pci->lookupDevice(filter);
 		if (!card->pdev) {
 			logger->warn("Failed to find PCI device");
@@ -97,7 +97,7 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 			continue;
 		}
 
-		/* Load IPs from a separate json file */
+		// Load IPs from a separate json file
 		if (json_is_string(json_ips)) {
 			auto json_ips_fn = json_string_value(json_ips);
 			json_ips = json_load_file(json_ips_fn, 0, nullptr);
@@ -125,7 +125,7 @@ PCIeCard::~PCIeCard()
 {
 	auto &mm = MemoryManager::get();
 
-	// unmap all memory blocks
+	// Unmap all memory blocks
 	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
 		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
 		                                     mappedMemoryBlock);
@@ -190,7 +190,7 @@ PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 	const auto &addrSpaceId = block.getAddrSpaceId();
 
 	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end())
-		// block already mapped
+		// Block already mapped
 		return true;
 	else
 		logger->debug("Create VFIO mapping for {}", addrSpaceId);
@@ -212,7 +212,7 @@ PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 	                 this->addrSpaceIdDeviceToHost,
 	                 addrSpaceId);
 
-	// remember that this block has already been mapped for later
+	// Remember that this block has already been mapped for later
 	memoryBlocksMapped.insert(addrSpaceId);
 
 	return true;
@@ -226,19 +226,19 @@ PCIeCard::init()
 
 	logger->info("Initializing FPGA card {}", name);
 
-	/* Attach PCIe card to VFIO container */
+	// Attach PCIe card to VFIO container
 	kernel::vfio::Device &device = vfioContainer->attachDevice(*pdev);
 	this->vfioDevice = &device;
 
-	/* Enable memory access and PCI bus mastering for DMA */
+	// Enable memory access and PCI bus mastering for DMA
 	if (not device.pciEnable()) {
 		logger->error("Failed to enable PCI device");
 		return false;
 	}
 
-	/* Reset system? */
+	// Reset system?
 	if (doReset) {
-		/* Reset / detect PCI device */
+		// Reset / detect PCI device
 		if (not vfioDevice->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
 			return false;

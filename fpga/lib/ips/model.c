@@ -56,7 +56,7 @@ static uint32_t model_xsg_map_checksum(uint32_t *map, size_t len)
 	for (int i = 2; i < len-1; i++)
 		chks += map[i];
 
-	return chks; /* moduluo 2^32 because of overflow */
+	return chks; // Moduluo 2^32 because of overflow
 }
 
 static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameters, struct list *infos)
@@ -65,7 +65,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 	int j;
 	struct model_info *i;
 
-	/* Check magic */
+	// Check magic
 	if (map[0] != XSG_MAGIC)
 		error("Invalid magic: %#x", map[0]);
 
@@ -78,7 +78,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 			case XSG_BLOCK_GATEWAY_IN:
 			case XSG_BLOCK_GATEWAY_OUT:
 				if (length < 4)
-					break; /* block is to small to describe a gateway */
+					break; // Block is to small to describe a gateway
 
 				struct model_parameter *e, *p = (struct model_parameter *) alloc(sizeof(struct model_parameter));
 
@@ -122,9 +122,9 @@ static uint32_t model_xsg_map_read_word(uint32_t offset, void *baseaddr)
 	volatile uint32_t *addr = baseaddr + 0x00;
 	volatile uint32_t *data = baseaddr + 0x04;
 
-	*addr = offset; /* Update addr reg */
+	*addr = offset; // Update addr reg
 
-	return *data; /* Read data reg */
+	return *data; // Read data reg
 }
 
 static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
@@ -132,7 +132,7 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 	size_t maplen;
 	uint32_t magic;
 
-	/* Check magic */
+	// Check magic
 	magic = model_xsg_map_read_word(0, baseaddr);
 	if (magic != XSG_MAGIC)
 		return -1;
@@ -141,7 +141,7 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 	if (maplen < 3)
 		return -2;
 
-	/* Read Data */
+	// Read Data
 	int i;
 	for (i = 0; i < MIN(maplen, len); i++)
 		map[i] = model_xsg_map_read_word(i, baseaddr);
@@ -232,7 +232,7 @@ int model_init(struct fpga_ip *c)
 	else
 		ret = 0;
 
-	/* Set default values for parameters */
+	// Set default values for parameters
 	for (size_t i = 0; i < list_length(&m->parameters); i++) {
 		struct model_parameter *p = (struct model_parameter *) list_at(&m->parameters, i);
 

@@ -36,8 +36,8 @@ static AxiStreamSwitchFactory factory;
 
 bool
 AxiStreamSwitch::init()
-{	
-	/* Setup AXI-stream switch */
+{
+	// Setup AXI-stream switch
 	XAxis_Switch_Config sw_cfg;
 	sw_cfg.MaxNumMI = num_ports;
 	sw_cfg.MaxNumSI = num_ports;
@@ -47,17 +47,17 @@ AxiStreamSwitch::init()
 		return false;
 	}
 
-	/* Disable all masters */
+	// Disable all masters
 	XAxisScr_RegUpdateDisable(&xSwitch);
 	XAxisScr_MiPortDisableAll(&xSwitch);
 	XAxisScr_RegUpdateEnable(&xSwitch);
 
 	for (auto& [masterName, masterPort] : portsMaster) {
 
-		// initialize internal mapping
+		// Initialize internal mapping
 		portMapping[masterName] = PORT_DISABLED;
 
-		// each slave port may be internally routed to a master port
+		// Each slave port may be internally routed to a master port
 		for (auto& [slaveName, slavePort] : portsSlave) {
 			(void) slaveName;
 
@@ -73,7 +73,7 @@ bool
 AxiStreamSwitch::connectInternal(const std::string &portSlave,
                                  const std::string &portMaster)
 {
-	// check if slave port exists
+	// Check if slave port exists
 	try {
 		getSlavePort(portSlave);
 	} catch (const std::out_of_range&) {
@@ -81,7 +81,7 @@ AxiStreamSwitch::connectInternal(const std::string &portSlave,
 		return false;
 	}
 
-	// check if master port exists
+	// Check if master port exists
 	try {
 		getMasterPort(portMaster);
 	} catch (const std::out_of_range&) {
@@ -116,7 +116,7 @@ AxiStreamSwitch::connectInternal(const std::string &portSlave,
 		}
 	}
 
-	/* Reconfigure switch */
+	// Reconfigure switch
 	XAxisScr_RegUpdateDisable(&xSwitch);
 	XAxisScr_MiPortEnable(&xSwitch, portNameToNum(portMaster), portNameToNum(portSlave));
 	XAxisScr_RegUpdateEnable(&xSwitch);

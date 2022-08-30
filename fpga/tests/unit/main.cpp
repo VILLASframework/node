@@ -29,7 +29,7 @@
 
 #include <spdlog/spdlog.h>
 
-/** Returns true if there is at least one enabled test in this suite */
+// Returns true if there is at least one enabled test in this suite
 static bool suite_enabled(struct criterion_test_set *tests, const char *name)
 {
 	FOREACH_SET(void *suite_ptr, tests->suites) {
@@ -44,11 +44,11 @@ static bool suite_enabled(struct criterion_test_set *tests, const char *name)
 			}
 		}
 	}
-	
+
 	return false;
 }
 
-/* Limit number of parallel jobs to 1 in case we use the FPGA */
+// Limit number of parallel jobs to 1 in case we use the FPGA
 ReportHook(PRE_ALL)(struct criterion_test_set *tests)
 {
 	if (suite_enabled(tests, "fpga")) {
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	spdlog::set_level(spdlog::level::debug);
 	spdlog::set_pattern("[%T] [%l] [%n] %v");
 
-	/* Run criterion tests */
+	// Run criterion tests
 	auto tests = criterion_initialize();
 
 	ret = criterion_handle_args(argc, argv, true);

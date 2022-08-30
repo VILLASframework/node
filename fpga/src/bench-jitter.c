@@ -60,7 +60,7 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 		if (cnt != 1)
 			warn("fail");
 
-		/* Ackowledge IRQ */
+		// Ackowledge IRQ
 		XTmrCtr_WriteReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET));
 
 		end = rdtsc();

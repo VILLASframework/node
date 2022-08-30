@@ -32,14 +32,14 @@
 
 #include "bench.h"
 
-/* Some hard-coded configuration for the FPGA benchmarks */
+// Some hard-coded configuration for the FPGA benchmarks
 #define BENCH_WARMUP		100
 
-/* Declared in fpga-bench.c */
+// Declared in fpga-bench.c
 extern int intc_flags;
 extern struct utsname uts;
 
-/* LAPACK & BLAS Fortran prototypes */
+// LAPACK & BLAS Fortran prototypes
 extern int dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
 extern int dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
 extern int dgetri_(int *n, double *a, int *lda, int *ipiv, double *work, int *lwork, int *info);
@@ -58,7 +58,7 @@ static int lapack_generate_workload(int N, double *C)
 	double alpha = 1;
 	double beta = 1;
 
-	/* C = A' * A, to get an invertible matrix */
+	// C = A' * A, to get an invertible matrix
 	dgemm_(&transA, &transB, &N, &N, &N, &alpha, A, &N, A, &N, &beta, C, &N);
 
 	free(A);
@@ -105,7 +105,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 
 	intc_enable(c->intc, (1 << (dm->irq + 1  )), intc_flags);
 
-	/* Dump results */
+	// Dump results
 	char fn[256];
 	snprintf(fn, sizeof(fn), "results/overruns_lu_rtds_axis_%s_%s.dat", intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
@@ -142,7 +142,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 
 			dma_read_complete(dm, NULL, NULL);
 
-			/* Send data to rtds */
+			// Send data to rtds
 			data_tx[0] = i;
 			dma_write(dm, mem.base_phys + 0x200, 64 * sizeof(data_tx[0]));
 

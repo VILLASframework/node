@@ -76,7 +76,7 @@ public:
 				return vertex;
 		}
 
-		// vertex not found, create new one
+		// Vertex not found, create new one
 		auto vertex = std::make_shared<StreamVertex>(node, port, isMaster);
 		addVertex(vertex);
 
@@ -109,7 +109,7 @@ public:
 	bool connect(const StreamVertex &from, const StreamVertex &to, bool reverse)
 	{
 		bool ret;
-		
+
 		ret = connect(from, to);
 
 		if (reverse)
@@ -118,16 +118,16 @@ public:
 		return ret;
 	}
 
-	// easy-usage assuming that the slave IP to connect to only has one slave
+	// Easy-usage assuming that the slave IP to connect to only has one slave
 	// port and implements the getDefaultSlavePort() function
 	bool connect(const Node &slaveNode, bool reverse = false)
 	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort(), reverse); }
 
-	// used by easy-usage connect, will throw if not implemented by derived node
+	// Used by easy-usage connect, will throw if not implemented by derived node
 	virtual const StreamVertex&
 	getDefaultSlavePort() const;
 
-	// used by easy-usage connect, will throw if not implemented by derived node
+	// Used by easy-usage connect, will throw if not implemented by derived node
 	virtual const StreamVertex&
 	getDefaultMasterPort() const;
 

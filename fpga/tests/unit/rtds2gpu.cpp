@@ -80,8 +80,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		logger->info("Testing {}", *ip);
 
 
-		/* Collect neccessary IPs */
-
+		// Collect neccessary IPs
 		auto rtds2gpu = std::dynamic_pointer_cast<fpga::ip::Rtds2Gpu>(ip);
 
 		auto axiSwitch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
@@ -106,9 +105,9 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		gpu2rtds->dump(spdlog::level::debug);
 
 
-		/* Allocate and prepare memory */
+		// Allocate and prepare memory
 
-		// allocate space for all samples and doorbell register
+		// Allocate space for all samples and doorbell register
 		auto dmaMemSrc = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
 		auto dmaMemDst = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
 		auto dmaMemDst2 = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
@@ -127,7 +126,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		dumpMem(dataDst2, dmaMemDst2.getMemoryBlock().getSize());
 
 
-		// connect AXI Stream from DMA to Rtds2Gpu IP
+		// Connect AXI Stream from DMA to Rtds2Gpu IP
 		cr_assert(dma->connect(rtds2gpu));
 
 		cr_assert(rtds2gpu.startOnce(dmaMemDst.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4),
@@ -153,7 +152,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		}
 
 
-		// connect AXI Stream from Gpu2Rtds IP to DMA
+		// Connect AXI Stream from Gpu2Rtds IP to DMA
 		cr_assert(gpu2rtds->connect(*dma));
 
 		cr_assert(dma->read(dmaMemDst2.getMemoryBlock(), FRAME_SIZE),
@@ -182,8 +181,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");
 
-	/* Collect neccessary IPs */
-
+	// Collect neccessary IPs
 	auto gpu2rtds = std::dynamic_pointer_cast<fpga::ip::Gpu2Rtds>(
 	                     state.cards.front()->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:")));
 
@@ -224,7 +222,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 			while (not rtds2gpu->doorbellIsValid(*doorbell));
 
 
-			// copy samples to gpu2rtds IP
+			// Copy samples to gpu2rtds IP
 			for (size_t i = 0; i < SAMPLE_COUNT; i++) {
 				gpu2rtds->registerFrames[i] = data[i];
 			}
@@ -254,8 +252,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 {
 	auto logger = logging.get("unit-test:rtds2gpu");
 
-	/* Collect neccessary IPs */
-
+	// Collect neccessary IPs
 	auto gpu2rtds = std::dynamic_pointer_cast<fpga::ip::Gpu2Rtds>(
 	                     state.cards.front()->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:")));
 
@@ -271,14 +268,14 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 	auto gpus = gpuPlugin->make();
 	cr_assert(gpus.size() > 0, "No GPUs found");
 
-	// just get first cpu
+	// Just get first cpu
 	auto &gpu = gpus.front();
 
-	// allocate memory on GPU and make accessible by to PCIe/FPGA
+	// Allocate memory on GPU and make accessible by to PCIe/FPGA
 	auto gpuRam = gpu->getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
 	cr_assert(gpu->makeAccessibleToPCIeAndVA(gpuRam.getMemoryBlock()));
 
-	// make Gpu2Rtds IP register memory on FPGA accessible to GPU
+	// Make Gpu2Rtds IP register memory on FPGA accessible to GPU
 	cr_assert(gpu->makeAccessibleFromPCIeOrHostRam(gpu2rtds->getRegisterMemory()));
 
 	auto tr = gpu->translate(gpuRam.getMemoryBlock());
@@ -310,7 +307,7 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 		cr_assert(rtds.connect(*rtds2gpu));
 		cr_assert(gpu2rtds->connect(rtds));
 
-		// launch once so they are configured
+		// Launch once so they are configured
 		cr_assert(rtds2gpu->startOnce(gpuRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4));
 		cr_assert(gpu2rtds->startOnce(SAMPLE_COUNT));
 
@@ -320,9 +317,6 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 		logger->info("GPU RTT RTDS");
 
 		std::string dummy;
-
-//		logger->info("Press enter to proceed");
-//		std::cin >> dummy;
 
 		gpu_rtds_rtt_start(dataIn, doorbellIn, frameRegister, controlRegister);
 

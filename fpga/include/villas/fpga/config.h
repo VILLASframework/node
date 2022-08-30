@@ -26,7 +26,7 @@
 
 #pragma once
 
-/** PCIe BAR number of VILLASfpga registers */
+// PCIe BAR number of VILLASfpga registers
 #define FPGA_PCI_BAR		0
 #define FPGA_PCI_VID_XILINX	0x10ee
 #define FPGA_PCI_PID_VFPGA	0x7022

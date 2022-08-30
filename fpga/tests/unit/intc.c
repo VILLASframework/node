@@ -40,18 +40,18 @@ Test(fpga, intc, .description = "Interrupt Controller")
 	ret = intc_enable(card->intc, 0xFF00, 0);
 	cr_assert_eq(ret, 0, "Failed to enable interrupt");
 
-	/* Fake IRQs in software by writing to ISR */
+	// Fake IRQs in software by writing to ISR
 	XIntc_Out32((uintptr_t) card->map + card->intc->baseaddr + XIN_ISR_OFFSET, 0xFF00);
 
-	/* Wait for 8 SW triggered IRQs */
+	// Wait for 8 SW triggered IRQs
 	for (int i = 0; i < 8; i++)
 		intc_wait(card->intc, i+8);
 
-	/* Check ISR if all SW IRQs have been deliverd */
+	// Check ISR if all SW IRQs have been deliverd
 	isr = XIntc_In32((uintptr_t) card->map + card->intc->baseaddr + XIN_ISR_OFFSET);
 
 	ret = intc_disable(card->intc, 0xFF00);
 	cr_assert_eq(ret, 0, "Failed to disable interrupt");
 
-	cr_assert_eq(isr & 0xFF00, 0); /* ISR should get cleared by MSI_Grant_signal */
+	cr_assert_eq(isr & 0xFF00, 0); // ISR should get cleared by MSI_Grant_signal
 }

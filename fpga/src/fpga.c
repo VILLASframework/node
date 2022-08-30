@@ -33,7 +33,7 @@
 
 #include <villas/fpga/card.h>
 
-/* Declarations */
+// Declarations
 int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c);
 
 void usage()
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	struct vfio_container vc;
 	struct fpga_card *card;
 
-	/* Parse arguments */
+	// Parse arguments
 	char c, *endptr;
 	while ((c = getopt(argc, argv, "Vh")) != -1) {
 		switch (c) {
@@ -93,7 +93,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		return -1;
 
-	/* Parse FPGA configuration */
+	// Parse FPGA configuration
 	f = fopen(configfile, "r");
 	if (!f)
 		return -1;
@@ -117,7 +117,7 @@ check:		if (optarg == endptr)
 
 	fpga_card_dump(card);
 
-	/* Run benchmarks */
+	// Run benchmarks
 	fpga_benchmarks(argc-optind-1, argv+optind+1, card);
 
 	return 0;

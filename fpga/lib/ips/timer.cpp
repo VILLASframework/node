@@ -33,7 +33,7 @@
 using namespace villas::fpga::ip;
 
 
-// instantiate factory to make available to plugin infrastructure
+// Instantiate factory to make available to plugin infrastructure
 static TimerFactory factory;
 
 bool Timer::init()
@@ -49,7 +49,7 @@ bool Timer::init()
 		return false;
 	}
 
-	// disable so we don't receive any stray interrupts
+	// Disable so we don't receive any stray interrupts
 	irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
 	return true;
