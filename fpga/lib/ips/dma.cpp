@@ -1,7 +1,7 @@
 /** DMA driver
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2018, RWTH Institute for Automation of Complex Power Systems (ACS)
+ * @copyright 2018-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga

@@ -1,0 +1,10 @@
+{
+    "fpgas": {
+      "vc707": {
+      "id": "10ee:7021",
+        "slot": "0000:88:00.0",
+        "do_reset": true,
+        "ips": "etc/vc707-xbar-pcie/vc707-xbar-pcie.json"
+      }
+    }
+}

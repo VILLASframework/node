@@ -1,7 +1,7 @@
 /** FPGA related code for bootstrapping the unit-tests
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2018, Steffen Vogel
+ * @copyright 2018-2022, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga

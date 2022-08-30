@@ -1,9 +1,10 @@
 /** Simple program to read/write from/to a pci device from userspace.
  *
- *  @Copyright 2010, Bill Farrow (bfarrow@beyondelectronics.us)
+ * @copyright 2010, Bill Farrow (bfarrow@beyondelectronics.us)
+ * @copyright 2022, Institute for Automation of Complex Power Systems, EONERC
  *
  *  Based on the devmem2.c code
- *  @copyright 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
+ * @copyright 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
  *
  * VILLASfpga
  *

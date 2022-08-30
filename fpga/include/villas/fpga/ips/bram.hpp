@@ -1,7 +1,7 @@
 /** Block-Raam related helper functions
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2018, Daniel Krebs
+ * @copyright 2018-2022, Daniel Krebs
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
