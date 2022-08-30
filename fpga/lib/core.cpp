@@ -187,11 +187,9 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			}
 		}
 
-
 		json_t* json_memory_view = json_object_get(json_ip, "memory-view");
 		if (json_is_object(json_memory_view)) {
 			logger->debug("Parse memory view of {}", *ip);
-
 
 			// now find all slave address spaces this master can access
 			const char* bus_name;
@@ -209,7 +207,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 				        MemoryManager::get().getOrCreateAddressSpace(myAddrSpaceName);
 
 				ip->busMasterInterfaces[bus_name] = myAddrSpaceId;
-
 
 				const char* instance_name;
 				json_t* json_instance;
@@ -263,6 +260,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	// Start and check IPs now
 	for (auto &ip : configuredIps) {
+		loggerStatic->info("Initializing {}", *ip);
 
 		// Translate all memory blocks that the IP needs to be accessible from
 		// the process and cache in the instance, so this has not to be done at
@@ -287,8 +285,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			// cache it in the IP instance only with local name
 			ip->addressTranslations.emplace(memoryBlock, translation);
 		}
-
-		loggerStatic->info("Initializing {}", *ip);
 
 		if (not ip->init()) {
 			loggerStatic->error("Cannot start IP {}", *ip);

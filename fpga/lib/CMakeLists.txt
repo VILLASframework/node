@@ -36,6 +36,7 @@ set(SOURCES
 	ips/bram.cpp
 	ips/rtds.cpp
 	ips/aurora.cpp
+	ips/aurora_xilinx.cpp
 	ips/gpio.cpp
 
 	ips/rtds2gpu/rtds2gpu.cpp
