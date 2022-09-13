@@ -53,15 +53,15 @@ Dma::init()
 	xdma_cfg.HasStsCntrlStrm = 0;
 	xdma_cfg.HasMm2S = 1;
 	xdma_cfg.HasMm2SDRE = 1;
-	xdma_cfg.Mm2SDataWidth = 128;
+	xdma_cfg.Mm2SDataWidth = 32;
 	xdma_cfg.HasS2Mm = 1;
 	xdma_cfg.HasS2MmDRE = 1; // Data Realignment Engine
-	xdma_cfg.HasSg = hasScatterGather();
-	xdma_cfg.S2MmDataWidth = 128;
+	xdma_cfg.HasSg = 0; //hasScatterGather();
+	xdma_cfg.S2MmDataWidth = 32;
 	xdma_cfg.Mm2sNumChannels = 1;
 	xdma_cfg.S2MmNumChannels = 1;
-	xdma_cfg.Mm2SBurstSize = 64;
-	xdma_cfg.S2MmBurstSize = 64;
+	xdma_cfg.Mm2SBurstSize = 16;
+	xdma_cfg.S2MmBurstSize = 16;
 	xdma_cfg.MicroDmaMode = 0;
 	xdma_cfg.AddrWidth = 32;
 
