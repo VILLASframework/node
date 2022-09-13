@@ -146,15 +146,18 @@ int main(int argc, char* argv[])
 		auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>
 					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:aurora_8b10b:")));
 
-	if (aurora == nullptr) {
-		logger->error("No Aurora interface found on FPGA");
-		return 1;
-	}
+		auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
+					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
 
-	if (dma == nullptr) {
-		logger->error("No DMA found on FPGA ");
-		return 1;
-	}
+		if (aurora == nullptr) {
+			logger->error("No Aurora interface found on FPGA");
+			return 1;
+		}
+
+		if (dma == nullptr) {
+			logger->error("No DMA found on FPGA ");
+			return 1;
+		}
 
 		aurora->dump();
 
@@ -170,8 +173,8 @@ int main(int argc, char* argv[])
 
 		dma->makeAccesibleFromVA(block);
 
-	auto &mm = MemoryManager::get();
-	mm.getGraph().dump("graph.dot");
+		auto &mm = MemoryManager::get();
+		mm.getGraph().dump("graph.dot");
 
 		while (true) {
 			dma->read(block, block.getSize());
@@ -183,9 +186,9 @@ int main(int argc, char* argv[])
 			}
 			std::cerr << std::endl;
 
-		std::string line;
-		std::getline(std::cin, line);
-		auto values = villas::utils::tokenize(line, ";");
+			std::string line;
+			std::getline(std::cin, line);
+			auto values = villas::utils::tokenize(line, ";");
 
 			size_t memIdx = 0;
 
@@ -199,9 +202,7 @@ int main(int argc, char* argv[])
 			bool state = dma->write(block, memIdx * sizeof(int32_t));
 			if (!state)
 				logger->error("Failed to write to device");
-#endif
 		}
-
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
 		return -1;
