@@ -44,11 +44,10 @@ protected:
 	bool polite;
 	bool rollback;
 
-	void createPeerConnection();
-	void rollbackPeerConnection();
-	void createDatachannel();
-
 	void onConnectionCreated();
+	std::shared_ptr<rtc::PeerConnection> rollbackPeerConnection();
+	std::shared_ptr<rtc::PeerConnection> createPeerConnection();
+	std::shared_ptr<rtc::DataChannel> createDatachannel();
 
 	void onLocalDescription(rtc::Description sdp);
 	void onLocalCandidate(rtc::Candidate cand);

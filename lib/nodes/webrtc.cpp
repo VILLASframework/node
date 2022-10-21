@@ -28,11 +28,14 @@ WebRTCNode::WebRTCNode(const std::string &name) :
 	ordered(false),
 	max_retransmits(0)
 {
+	// Default servers
 	config.iceServers = {
-		rtc::IceServer("stun://stun.l.google.com:19302"),
-		rtc::IceServer("stun://villas:villas@stun.0l.de"),
-		rtc::IceServer("turn://villas:villas@turn.0l.de?transport=udp"),
-		rtc::IceServer("turn://villas:villas@turn.0l.de?transport=tcp"),
+		rtc::IceServer("stun://stun.0l.de"),
+		rtc::IceServer("stuns://stun.0l.de:443"),
+		rtc::IceServer("turn://4819941460:villas:BBmD6VmtIcWoKd1FpzB/JuS09es=@turn.0l.de?transport=udp"),
+		rtc::IceServer("turn://4819941460:villas:BBmD6VmtIcWoKd1FpzB/JuS09es=@turn.0l.de?transport=tcp"),
+		rtc::IceServer("turns://4819941460:villas:BBmD6VmtIcWoKd1FpzB/JuS09es=@turn.0l.de:443?transport=udp"),
+		rtc::IceServer("turns://4819941460:villas:BBmD6VmtIcWoKd1FpzB/JuS09es=@turn.0l.de:443?transport=tcp")
 	};
 }
 
@@ -188,36 +191,12 @@ const std::string & WebRTCNode::getDetails()
 
 int WebRTCNode::_read(struct Sample *smps[], unsigned cnt)
 {
-	int read;
-	struct timespec now;
-
-	/* TODO: Add implementation here. The following is just an example */
-
-	assert(cnt >= 1 && smps[0]->capacity >= 1);
-
-	now = time_now();
-
-	// smps[0]->data[0].f = time_delta(&now, &start_time);
-
-	/* Dont forget to set other flags in struct Sample::flags
-	 * E.g. for sequence no, timestamps... */
-	smps[0]->flags = (int) SampleFlags::HAS_DATA;
-	smps[0]->signals = getInputSignals(false);
-
-	read = 1; /* The number of samples read */
-
-	return read;
+	return 0;
 }
 
 int WebRTCNode::_write(struct Sample *smps[], unsigned cnt)
 {
-	int written;
-
-	/* TODO: Add implementation here. */
-
-	written = 0; /* The number of samples written */
-
-	return written;
+	return 0;
 }
 
 int WebRTCNodeFactory::start(SuperNode *sn)

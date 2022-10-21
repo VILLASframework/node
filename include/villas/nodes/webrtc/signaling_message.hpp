@@ -48,15 +48,14 @@ public:
 
 	Type type;
 
-	ControlMessage *control;
-	rtc::Description *description;
-	rtc::Candidate *candidate;
+	std::shared_ptr<ControlMessage> control;
+	std::shared_ptr<rtc::Description> description;
+	std::shared_ptr<rtc::Candidate> candidate;
 	std::string mid;
 
-	SignalingMessage(rtc::Description desc, bool answer = false);
-	SignalingMessage(rtc::Candidate cand);
+	SignalingMessage(const rtc::Description &desc, bool answer = false);
+	SignalingMessage(const rtc::Candidate &cand);
 	SignalingMessage(json_t *j);
-	~SignalingMessage();
 
 	json_t * toJSON() const;
 

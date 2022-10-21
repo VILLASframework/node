@@ -48,6 +48,8 @@ SignalingClient::SignalingClient(const std::string &srv, const std::string &sess
 
 SignalingClient::~SignalingClient()
 {
+	disconnect();
+
 	free(path);
 	free(uri);
 }
@@ -104,6 +106,7 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 		break;
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
+		retry_count = 0;
 		cbConnected();
 		break;
 
@@ -155,7 +158,9 @@ int SignalingClient::writable()
 	char buf[LWS_PRE + 1024];
 	auto len = json_dumpb(jsonMsg, buf+LWS_PRE, 1024, JSON_INDENT(2));
 
-	auto ret = lws_write(wsi, (unsigned char *) buf, len, LWS_WRITE_TEXT);
+	logger->debug("Signaling message send: {}", json_dumps(jsonMsg, 0));
+
+	auto ret = lws_write(wsi, (unsigned char *) buf + LWS_PRE, len, LWS_WRITE_TEXT);
 	if (ret < 0)
 		return ret;
 

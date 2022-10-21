@@ -49,38 +49,58 @@ void PeerConnection::waitForDataChannel()
 	}
 }
 
-void PeerConnection::createPeerConnection()
+std::shared_ptr<rtc::PeerConnection> PeerConnection::createPeerConnection()
 {
+	logger->debug("Creating new peer connection");
+
 	// Setup peer connection
-	conn = std::make_shared<rtc::PeerConnection>(config);
+	auto c = std::make_shared<rtc::PeerConnection>(config);
 
-	conn->onLocalDescription(std::bind(&PeerConnection::onLocalDescription, this, _1));
-	conn->onLocalCandidate(std::bind(&PeerConnection::onLocalCandidate, this, _1));
+	c->onLocalDescription(std::bind(&PeerConnection::onLocalDescription, this, _1));
+	c->onLocalCandidate(std::bind(&PeerConnection::onLocalCandidate, this, _1));
 
-	conn->onDataChannel(std::bind(&PeerConnection::onDataChannel, this, _1));
-	conn->onGatheringStateChange(std::bind(&PeerConnection::onGatheringStateChange, this, _1));
-	conn->onSignalingStateChange(std::bind(&PeerConnection::onSignalingStateChange, this, _1));
-	conn->onStateChange(std::bind(&PeerConnection::onConnectionStateChange, this, _1));
+	c->onDataChannel(std::bind(&PeerConnection::onDataChannel, this, _1));
+	c->onGatheringStateChange(std::bind(&PeerConnection::onGatheringStateChange, this, _1));
+	c->onSignalingStateChange(std::bind(&PeerConnection::onSignalingStateChange, this, _1));
+	c->onStateChange(std::bind(&PeerConnection::onConnectionStateChange, this, _1));
+
+	return c;
 }
 
-void PeerConnection::rollbackPeerConnection()
+std::shared_ptr<rtc::PeerConnection> PeerConnection::rollbackPeerConnection()
 {
+	logger->debug("Rolling-back peer connection");
 
+	rollback = true;
+
+	// Close previous peer connection in before creating a new one
+	// We need to do this as libdatachannel currently does not support rollbacks.
+	conn->close();
+
+	auto c = createPeerConnection();
+
+	rollback = false;
+
+	return c;
 }
 
-void PeerConnection::createDatachannel()
+std::shared_ptr<rtc::DataChannel> PeerConnection::createDatachannel()
 {
+	logger->debug("Creating new data channel");
 
-}
+	auto c = conn->createDataChannel("villas");
 
-void PeerConnection::onConnectionCreated()
-{
-	logger->debug("Connection created");
+	c->onMessage(std::bind(&PeerConnection::onDataChannelMessage, this, _1));
+	c->onOpen(std::bind(&PeerConnection::onDataChannelOpen, this));
+	c->onClosed(std::bind(&PeerConnection::onDataChannelClosed, this));
+	c->onError(std::bind(&PeerConnection::onDataChannelError, this, _1));
+
+	return c;
 }
 
 void PeerConnection::onLocalDescription(rtc::Description sdp)
 {
-	logger->debug("New local description: {}", std::string(sdp));
+	logger->debug("New local description:\n{}", std::string(sdp));
 
 	SignalingMessage msg(sdp);
 
@@ -104,6 +124,41 @@ void PeerConnection::onNegotiationNeeded()
 void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state)
 {
 	logger->debug("Connection State changed: {}", state);
+
+	switch (state) {
+	case rtc::PeerConnection::State::New:
+		logger->info("New peer connection");
+		break;
+
+	case rtc::PeerConnection::State::Connecting:
+		logger->info("Peer connection connecting.");
+		break;
+
+	case rtc::PeerConnection::State::Connected:
+		logger->info("Peer connection connected.");
+		break;
+
+	case rtc::PeerConnection::State::Disconnected:
+	case rtc::PeerConnection::State::Failed:
+		logger->info("Closing peer connection");
+		conn->close();
+
+	case rtc::PeerConnection::State::Closed:
+		if (rollback)
+			return;
+
+		logger->info("Closed peer connection");
+
+		conn = createPeerConnection();
+
+		onConnectionCreated();
+	}
+}
+
+void PeerConnection::onConnectionCreated()
+{
+	if (!first)
+		chan = createDatachannel();
 }
 
 void PeerConnection::onSignalingStateChange(rtc::PeerConnection::SignalingState state)
@@ -119,6 +174,13 @@ void PeerConnection::onGatheringStateChange(rtc::PeerConnection::GatheringState 
 void PeerConnection::onSignalingConnected()
 {
 	logger->debug("Signaling connection established");
+
+	// Create initial peer connection
+	if (!conn) {
+		conn = createPeerConnection();
+
+		onConnectionCreated();
+	}
 }
 
 void PeerConnection::onSignalingDisconnected()
@@ -135,11 +197,49 @@ void PeerConnection::onSignalingMessage(const SignalingMessage &msg)
 {
 	logger->debug("Signaling message received: {}", msg.toString());
 
-	if (msg.type == SignalingMessage::TYPE_ANSWER || msg.type == SignalingMessage::TYPE_OFFER)
-		conn->setRemoteDescription(*msg.description);
+	switch (msg.type) {
+	case SignalingMessage::TYPE_CONTROL:
+		if (msg.control->connections.size() > 2) {
+			logger->error("There are already two peers connected to this session.");
+			return;
+		}
 
-	if (msg.type == SignalingMessage::TYPE_CANDIDATE)
+		// The peer with the smallest connection ID connected first
+		first = true;
+		for (auto c : msg.control->connections) {
+			if (c.id < msg.control->connectionID) {
+				first = false;
+			}
+		}
+
+		polite = first;
+
+		logger->info("New role: polite={}, first={}", polite, first);
+		break;
+
+	case SignalingMessage::TYPE_ANSWER:
+	case SignalingMessage::TYPE_OFFER: {
+		auto readyForOffer = !makingOffer && conn->signalingState() == rtc::PeerConnection::SignalingState::Stable;
+		auto offerCollision = msg.type == SignalingMessage::TYPE_OFFER && !readyForOffer;
+
+		ignoreOffer = !polite && offerCollision;
+		if (ignoreOffer)
+			return;
+
+		if (msg.type == SignalingMessage::TYPE_OFFER && conn->signalingState() != rtc::PeerConnection::SignalingState::Stable) {
+			conn = rollbackPeerConnection();
+
+			onConnectionCreated();
+		}
+
+		conn->setRemoteDescription(*(msg.description));
+
+		break;
+	}
+
+	case SignalingMessage::TYPE_CANDIDATE:
 		conn->addRemoteCandidate(*msg.candidate);
+	}
 }
 
 void PeerConnection::onDataChannel(std::shared_ptr<rtc::DataChannel> dc)

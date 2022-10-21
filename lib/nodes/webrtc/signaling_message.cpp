@@ -91,15 +91,15 @@ json_t * SignalingMessage::toJSON() const
 
 	case TYPE_OFFER:
 	case TYPE_ANSWER:
-		return json_pack("{ s: s, s: o }",
+		return json_pack("{ s: s, s: s }",
 			"type", type == TYPE_OFFER ? "offer" : "answer",
-			"description", std::string(*description).c_str()
+			"description", ((std::string) *description).c_str()
 		);
 
 	case TYPE_CANDIDATE:
-		return json_pack("{ s: s, s: o }",
+		return json_pack("{ s: s, s: s }",
 			"type", "candidate",
-			"candidate", std::string(*candidate).c_str()
+			"candidate", ((std::string) *candidate).c_str()
 		);
 	}
 
@@ -125,26 +125,16 @@ std::string SignalingMessage::toString() const
 	return "";
 }
 
-SignalingMessage::SignalingMessage(rtc::Description desc, bool answer) :
-	type(answer ? TYPE_ANSWER : TYPE_OFFER),
-	description(new rtc::Description(desc))
-{ }
-
-SignalingMessage::SignalingMessage(rtc::Candidate cand) :
-	type(TYPE_CANDIDATE),
-	candidate(new rtc::Candidate(cand))
-{ }
-
-SignalingMessage::~SignalingMessage()
+SignalingMessage::SignalingMessage(const rtc::Description &desc, bool answer) :
+	type(answer ? TYPE_ANSWER : TYPE_OFFER)
 {
-	if (description)
-		delete description;
+	description = std::make_shared<rtc::Description>(desc);
+}
 
-	if (candidate)
-		delete candidate;
-
-	if (control)
-		delete control;
+SignalingMessage::SignalingMessage(const rtc::Candidate &cand) :
+	type(TYPE_CANDIDATE)
+{
+	candidate = std::make_shared<rtc::Candidate>(cand);
 }
 
 SignalingMessage::SignalingMessage(json_t *j) :
@@ -168,18 +158,18 @@ SignalingMessage::SignalingMessage(json_t *j) :
 
 	if      (!strcmp(typ, "offer")) {
 		type = TYPE_OFFER;
-		description = new rtc::Description(desc);
+		description = std::make_shared<rtc::Description>(desc);
 	}
 	else if (!strcmp(typ, "answer")) {
 		type = TYPE_ANSWER;
-		description = new rtc::Description(desc);
+		description = std::make_shared<rtc::Description>(desc);
 	}
 	else if (!strcmp(typ, "candidate")) {
 		type = TYPE_CANDIDATE;
-		candidate = new rtc::Candidate(cand);
+		candidate = std::make_shared<rtc::Candidate>(cand);
 	}
 	else if (!strcmp(typ, "control")) {
 		type = TYPE_CONTROL;
-		control = new ControlMessage(json_control);
+		control = std::make_shared<ControlMessage>(json_control);
 	}
 }
