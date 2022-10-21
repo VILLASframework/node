@@ -38,7 +38,7 @@ static pthread_t main_thread;
 namespace villas {
 namespace utils {
 
-std::vector<std::string> tokenize(std::string s, std::string delimiter)
+std::vector<std::string> tokenize(std::string s, const std::string &delimiter)
 {
 	std::vector<std::string> tokens;
 
@@ -318,7 +318,7 @@ int log2i(long long x) {
 
 int sha1sum(FILE *f, unsigned char *sha1)
 {
-	SHA_CTX c;
+	int ret;
 	char buf[512];
 	ssize_t bytes;
 	long seek;
@@ -326,17 +326,23 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	seek = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	SHA1_Init(&c);
+	EVP_MD_CTX *c = EVP_MD_CTX_new();
+
+	ret = EVP_DigestInit(c, EVP_sha1());
+	if (!ret)
+		return -1;
 
 	bytes = fread(buf, 1, 512, f);
 	while (bytes > 0) {
-		SHA1_Update(&c, buf, bytes);
+		EVP_DigestUpdate(c, buf, bytes);
 		bytes = fread(buf, 1, 512, f);
 	}
 
-	SHA1_Final(sha1, &c);
+	EVP_DigestFinal(c, sha1, nullptr);
 
 	fseek(f, seek, SEEK_SET);
+
+	EVP_MD_CTX_free(c);
 
 	return 0;
 }

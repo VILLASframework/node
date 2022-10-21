@@ -16,7 +16,7 @@
 #
 ###################################################################################
 
-FROM fedora:33
+FROM fedora:36
 
 LABEL \
 	org.label-schema.schema-version="1.0" \

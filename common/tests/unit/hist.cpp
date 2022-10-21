@@ -27,6 +27,6 @@ Test(hist, simple) {
 		h.put(td);
 
 	cr_assert_float_eq(h.getMean(), 5.5, 1e-6, "Mean is %lf", h.getMean());
-	cr_assert_float_eq(h.getVar(), 9.1666, 1e-3,);
+	cr_assert_float_eq(h.getVar(), 9.1666, 1e-3);
 	cr_assert_float_eq(h.getStddev(), 3.027650, 1e-6);
 }

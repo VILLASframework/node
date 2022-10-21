@@ -209,10 +209,10 @@ public:
 	findAddressSpace(const std::string &name);
 
 	std::list<AddressSpaceId>
-	findPath(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
+	findPath(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
 
 	MemoryTranslation
-	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
+	getTranslation(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
 
 	// cppcheck-suppress passedByValue
 	MemoryTranslation getTranslationFromProcess(AddressSpaceId foreignAddrSpaceId)

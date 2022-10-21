@@ -5,7 +5,7 @@
  * @license Apache License 2.0
  *********************************************************************************/
 
-#include <openssl/md5.h>
+#include <openssl/evp.h>
 
 #include <villas/uuid.hpp>
 
@@ -14,25 +14,27 @@ using namespace villas::uuid;
 int villas::uuid::generateFromString(uuid_t out, const std::string &data, const std::string &ns)
 {
 	int ret;
-	MD5_CTX c;
+	EVP_MD_CTX *c = EVP_MD_CTX_new();
 
-	ret = MD5_Init(&c);
+	ret = EVP_DigestInit(c, EVP_md5());
 	if (!ret)
 		return -1;
 
 	/* Namespace */
-	ret = MD5_Update(&c, (unsigned char *) ns.c_str(), ns.size());
+	ret = EVP_DigestUpdate(c, (unsigned char *) ns.c_str(), ns.size());
 	if (!ret)
 		return -1;
 
 	/* Data */
-	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
+	ret = EVP_DigestUpdate(c, (unsigned char *) data.c_str(), data.size());
 	if (!ret)
 		return -1;
 
-	ret = MD5_Final((unsigned char *) out, &c);
+	ret = EVP_DigestFinal(c, (unsigned char *) out, nullptr);
 	if (!ret)
 		return -1;
+
+	EVP_MD_CTX_free(c);
 
 	return 0;
 }
@@ -40,25 +42,27 @@ int villas::uuid::generateFromString(uuid_t out, const std::string &data, const 
 int villas::uuid::generateFromString(uuid_t out, const std::string &data, const uuid_t ns)
 {
 	int ret;
-	MD5_CTX c;
+	EVP_MD_CTX *c = EVP_MD_CTX_new();
 
-	ret = MD5_Init(&c);
+	ret = EVP_DigestInit(c, EVP_md5());
 	if (!ret)
 		return -1;
 
 	/* Namespace */
-	ret = MD5_Update(&c, (unsigned char *) ns, 16);
+	ret = EVP_DigestUpdate(c, (unsigned char *) ns, 16);
 	if (!ret)
 		return -1;
 
 	/* Data */
-	ret = MD5_Update(&c, (unsigned char *) data.c_str(), data.size());
+	ret = EVP_DigestUpdate(c, (unsigned char *) data.c_str(), data.size());
 	if (!ret)
 		return -1;
 
-	ret = MD5_Final((unsigned char *) out, &c);
+	ret = EVP_DigestFinal(c, (unsigned char *) out, nullptr);
 	if (!ret)
 		return -1;
+
+	EVP_MD_CTX_free(c);
 
 	return 0;
 }
