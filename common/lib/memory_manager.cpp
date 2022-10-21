@@ -85,8 +85,8 @@ MemoryManager::findAddressSpace(const std::string &name)
 }
 
 std::list<MemoryManager::AddressSpaceId>
-MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
-                        MemoryManager::AddressSpaceId toAddrSpaceId)
+MemoryManager::findPath(const MemoryManager::AddressSpaceId &fromAddrSpaceId,
+                        const MemoryManager::AddressSpaceId &toAddrSpaceId)
 {
 	std::list<AddressSpaceId> path;
 
@@ -112,8 +112,8 @@ MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
 }
 
 MemoryTranslation
-MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
-                              MemoryManager::AddressSpaceId toAddrSpaceId)
+MemoryManager::getTranslation(const MemoryManager::AddressSpaceId &fromAddrSpaceId,
+                              const MemoryManager::AddressSpaceId &toAddrSpaceId)
 {
 	// Find a path through the memory graph
 	MemoryGraph::Path path;

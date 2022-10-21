@@ -169,7 +169,7 @@ public:
 	}
 };
 
-template<typename T = Plugin>
+template<typename T>
 void
 Registry::dump()
 {

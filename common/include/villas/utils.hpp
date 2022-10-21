@@ -111,7 +111,7 @@ namespace villas {
 namespace utils {
 
 std::vector<std::string>
-tokenize(std::string s, std::string delimiter);
+tokenize(std::string s, const std::string &delimiter);
 
 template<typename T>
 void
