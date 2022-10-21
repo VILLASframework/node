@@ -65,7 +65,8 @@ RUN dnf -y install \
 	librdmacm-devel \
 	libusb-devel \
 	lua-devel \
-	hiredis-devel
+	hiredis-devel \
+	libnice-devel
 
 # Add local and 64-bit locations to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
