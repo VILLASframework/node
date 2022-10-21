@@ -24,13 +24,11 @@ RUN dnf -y install \
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
-	doxygen dia graphviz \
 	openssh-clients \
-	rpmdevtools rpm-build \
 	jq nmap-ncat \
 	iproute iproute-tc \
 	python-pip \
-	valgrind gdb gdb-gdbserver \
+	gdb gdb-gdbserver \
 	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
 	psmisc procps-ng \
