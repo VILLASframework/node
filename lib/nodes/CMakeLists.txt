@@ -13,12 +13,6 @@ if(WITH_WEB)
     list(APPEND NODE_SRC api.cpp)
 endif()
 
-# Enable Golang support
-if(WITH_NODE_GO)
-    list(APPEND NODE_SRC go.cpp)
-    list(APPEND LIBRARIES villas-go)
-endif()
-
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
 endif()
@@ -195,9 +189,3 @@ endif()
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})
-
-if(WITH_NODE_GO)
-    add_dependencies(nodes villas-go-header)
-    target_include_directories(nodes PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../go/lib)
-    target_link_libraries(nodes PUBLIC villas-go)
-endif()
