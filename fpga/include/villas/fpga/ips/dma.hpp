@@ -83,6 +83,9 @@ private:
 	size_t writeCompleteSimple();
 	size_t readCompleteSimple();
 
+	void setupRingRx();
+	void setupRingTx();
+
 public:
 	static constexpr const char* s2mmPort = "S2MM";
 	static constexpr const char* mm2sPort = "MM2S";
@@ -108,6 +111,8 @@ private:
 
 	XAxiDma xDma;
 	bool hasSG;
+
+	MemoryBlock sgRings;
 };
 
 

@@ -25,6 +25,7 @@
 
 #include <xilinx/xaxidma.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
@@ -52,11 +53,11 @@ Dma::init()
 	xdma_cfg.BaseAddr = getBaseAddr(registerMemory);
 	xdma_cfg.HasStsCntrlStrm = 0;
 	xdma_cfg.HasMm2S = 1;
-	xdma_cfg.HasMm2SDRE = 1;
+	xdma_cfg.HasMm2SDRE = 0;
 	xdma_cfg.Mm2SDataWidth = 32;
 	xdma_cfg.HasS2Mm = 1;
-	xdma_cfg.HasS2MmDRE = 1; // Data Realignment Engine
-	xdma_cfg.HasSg = 0; //hasScatterGather();
+	xdma_cfg.HasS2MmDRE = 0;
+	xdma_cfg.HasSg = hasScatterGather();
 	xdma_cfg.S2MmDataWidth = 32;
 	xdma_cfg.Mm2sNumChannels = 1;
 	xdma_cfg.S2MmNumChannels = 1;
@@ -79,16 +80,15 @@ Dma::init()
 
 	// Map buffer descriptors
 	if (hasScatterGather()) {
-		logger->warn("Scatter Gather not yet implemented");
-		return false;
+		auto &alloc = villas::HostRam::getAllocator();
+		auto mem = alloc.allocate<uint8_t>(0x2000);
 
-//		ret = dma_alloc(c, &dma->bd, FPGA_DMA_BD_SIZE, 0);
-//		if (ret)
-//			return -3;
+		sgRings = mem.getMemoryBlock();
 
-//		ret = dma_init_rings(&xDma, &dma->bd);
-//		if (ret)
-//			return -4;
+		makeAccesibleFromVA(sgRings);
+
+		setupRingRx();
+		setupRingTx();
 	}
 
 	// Enable completion interrupts for both channels
@@ -101,6 +101,134 @@ Dma::init()
 	return true;
 }
 
+
+void Dma::setupRingRx()
+{
+	XAxiDma_BdRing *RxRingPtr;
+
+	int Delay = 0;
+	int Coalesce = 1;
+	int Status;
+
+	XAxiDma_Bd BdTemplate;
+	XAxiDma_Bd *BdPtr;
+	XAxiDma_Bd *BdCurPtr;
+
+	u32 BdCount;
+	u32 FreeBdCount;
+	UINTPTR RxBufferPtr;
+	int Index;
+
+	RxRingPtr = XAxiDma_GetRxRing(&xDma);
+
+	/* Disable all RX interrupts before RxBD space setup */
+	XAxiDma_BdRingIntDisable(RxRingPtr, XAXIDMA_IRQ_ALL_MASK);
+
+	/* Set delay and coalescing */
+	XAxiDma_BdRingSetCoalesce(RxRingPtr, Coalesce, Delay);
+
+	/* Setup Rx BD space */
+	BdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, 0x1000);
+
+	Status = XAxiDma_BdRingCreate(RxRingPtr, sgRings., RX_BD_SPACE_BASE, XAXIDMA_BD_MINIMUM_ALIGNMENT, BdCount);
+
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("RX create BD ring failed {}", Status);
+
+	/*
+	 * Setup an all-zero BD as the template for the Rx channel.
+	 */
+	XAxiDma_BdClear(&BdTemplate);
+
+	Status = XAxiDma_BdRingClone(RxRingPtr, &BdTemplate);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("RX clone BD failed {}", Status);
+
+	/* Attach buffers to RxBD ring so we are ready to receive packets */
+
+	FreeBdCount = XAxiDma_BdRingGetFreeCnt(RxRingPtr);
+
+	Status = XAxiDma_BdRingAlloc(RxRingPtr, FreeBdCount, &BdPtr);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("RX alloc BD failed {}", Status);
+
+	BdCurPtr = BdPtr;
+	RxBufferPtr = RX_BUFFER_BASE;
+	for (Index = 0; Index < FreeBdCount; Index++) {
+		Status = XAxiDma_BdSetBufAddr(BdCurPtr, RxBufferPtr);
+
+		if (Status != XST_SUCCESS)
+			throw RuntimeError("Set buffer addr {} on BD {} failed {}", (unsigned int)RxBufferPtr, (UINTPTR)BdCurPtr, Status);
+
+		Status = XAxiDma_BdSetLength(BdCurPtr, MAX_PKT_LEN, RxRingPtr->MaxTransferLen);
+		if (Status != XST_SUCCESS)
+			throw RuntimeError("Rx set length {} on BD {} failed {}", MAX_PKT_LEN, (UINTPTR)BdCurPtr, Status);
+
+		/* Receive BDs do not need to set anything for the control
+		 * The hardware will set the SOF/EOF bits per stream status
+		 */
+		XAxiDma_BdSetCtrl(BdCurPtr, 0);
+		XAxiDma_BdSetId(BdCurPtr, RxBufferPtr);
+
+		RxBufferPtr += MAX_PKT_LEN;
+		BdCurPtr = (XAxiDma_Bd *)XAxiDma_BdRingNext(RxRingPtr, BdCurPtr);
+	}
+
+	/* Clear the receive buffer, so we can verify data
+	 */
+	memset((void *)RX_BUFFER_BASE, 0, MAX_PKT_LEN);
+
+	Status = XAxiDma_BdRingToHw(RxRingPtr, FreeBdCount, BdPtr);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("RX submit hw failed {}", Status);
+
+	/* Start RX DMA channel */
+	Status = XAxiDma_BdRingStart(RxRingPtr);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("RX start hw failed {}", Status);
+}
+
+
+void Dma::setupRingTx()
+{
+	XAxiDma_BdRing *TxRingPtr;
+	XAxiDma_Bd BdTemplate;
+
+	int Delay = 0;
+	int Coalesce = 1;
+
+	int Status;
+	u32 BdCount;
+
+	TxRingPtr = XAxiDma_GetTxRing(&xDma);
+
+	/* Disable all TX interrupts before TxBD space setup */
+	XAxiDma_BdRingIntDisable(TxRingPtr, XAXIDMA_IRQ_ALL_MASK);
+
+	/* Set TX delay and coalesce */
+	XAxiDma_BdRingSetCoalesce(TxRingPtr, Coalesce, Delay);
+
+	/* Setup TxBD space  */
+	BdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, TX_BD_SPACE_HIGH - TX_BD_SPACE_BASE + 1);
+
+	Status = XAxiDma_BdRingCreate(TxRingPtr, TX_BD_SPACE_BASE, TX_BD_SPACE_BASE, XAXIDMA_BD_MINIMUM_ALIGNMENT, BdCount);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("failed create BD ring in txsetup");
+
+	/*
+	 * We create an all-zero BD as the template.
+	 */
+	XAxiDma_BdClear(&BdTemplate);
+
+	Status = XAxiDma_BdRingClone(TxRingPtr, &BdTemplate);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("failed bdring clone in txsetup {}", Status);
+
+	/* Start the TX channel */
+	Status = XAxiDma_BdRingStart(TxRingPtr);
+	if (Status != XST_SUCCESS)
+		throw RuntimeError("failed start bdring txsetup {}", Status);
+}
 
 bool
 Dma::reset()
