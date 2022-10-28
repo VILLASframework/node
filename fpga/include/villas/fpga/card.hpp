@@ -75,6 +75,8 @@ public:
 
 	bool reset()
 	{
+		// TODO: Try via sysfs?
+		// echo 1 > /sys/bus/pci/devices/0000\:88\:00.0/reset
 		return true;
 	}
 

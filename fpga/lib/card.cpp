@@ -127,8 +127,7 @@ PCIeCard::~PCIeCard()
 
 	// Unmap all memory blocks
 	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
-		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
-		                                     mappedMemoryBlock);
+		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, mappedMemoryBlock);
 
 		const uintptr_t iova = translation.getLocalAddr(0);
 		const size_t size = translation.getSize();
