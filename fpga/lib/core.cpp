@@ -76,15 +76,13 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	// Pick out IPs to be initialized first.
 	//
-	// Reverse order of the initialization order list, because we push to the
+	// Reverse walktrough, because we push to the
 	// front of the output list, so that the first element will also be the
 	// first to be initialized.
-	vlnvInitializationOrder.reverse();
-
-	for (auto &vlnvInitFirst : vlnvInitializationOrder) {
+	for (auto viIt = vlnvInitializationOrder.rbegin(); viIt != vlnvInitializationOrder.rend(); ++viIt) {
 		// Iterate over IPs, if VLNV matches, push to front and remove from list
 		for (auto it = allIps.begin(); it != allIps.end(); ++it) {
-			if (vlnvInitFirst == it->getVlnv()) {
+			if (*viIt == it->getVlnv()) {
 				orderedIps.push_front(*it);
 				it = allIps.erase(it);
 			}
