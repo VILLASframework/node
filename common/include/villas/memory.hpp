@@ -33,20 +33,25 @@ public:
 	    offset(offset), size(size), addrSpaceId(addrSpaceId) {}
 
 	MemoryManager::AddressSpaceId getAddrSpaceId() const
-	{ return addrSpaceId; }
+	{
+		return addrSpaceId;
+	}
 
 	size_t getSize() const
-	{ return size; }
+	{
+		return size;
+	}
 
 	size_t getOffset() const
-	{ return offset; }
+	{
+		return offset;
+	}
 
 protected:
 	size_t offset;					///< Offset (or address) inside address space
 	size_t size;					///< Size in bytes of this block
 	MemoryManager::AddressSpaceId addrSpaceId;	///< Identifier in memory graph
 };
-
 
 /**
  * @brief Wrapper for a MemoryBlock to access the underlying memory directly
@@ -68,37 +73,43 @@ public:
 	MemoryAccessor(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem->getAddrSpaceId())),
 	    memoryBlock(std::move(mem))
-	{}
+	{ }
 
 	// just act as an accessor, do not take ownership of MemoryBlock
 	MemoryAccessor(const MemoryBlock &mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId()))
-	{}
+	{ }
 
 	MemoryAccessor(const MemoryTranslation &translation) :
 	    translation(translation)
-	{}
+	{ }
 
-	T & operator*() const {
+	T & operator*() const
+	{
 		return *reinterpret_cast<T*>(translation.getLocalAddr(0));
 	}
 
-	T & operator[](size_t idx) const {
+	T & operator[](size_t idx) const
+	{
 		const size_t offset = sizeof(T) * idx;
 		return *reinterpret_cast<T*>(translation.getLocalAddr(offset));
 	}
 
-	T* operator&() const {
+	T* operator&() const
+	{
 		return reinterpret_cast<T*>(translation.getLocalAddr(0));
 	}
 
-	T* operator->() const {
+	T* operator->() const
+	{
 		return reinterpret_cast<T*>(translation.getLocalAddr(0));
 	}
 
 	const MemoryBlock&
 	getMemoryBlock() const
-	{ if (not memoryBlock) throw std::bad_alloc(); else return *memoryBlock; }
+	{
+		if (not memoryBlock) throw std::bad_alloc(); else return *memoryBlock;
+	}
 
 private:
 	/// cached memory translation for fast access
@@ -196,7 +207,9 @@ protected:
 	}
 
 	MemoryManager::AddressSpaceId getAddrSpaceId() const
-	{ return memoryAddrSpaceId; }
+	{
+		return memoryAddrSpaceId;
+	}
 
 	MemoryBlock::deallocator_fn free;
 	Logger logger;
@@ -208,7 +221,6 @@ private:
 	MemoryManager::AddressSpaceId memoryAddrSpaceId;
 	DerivedAllocator* derivedAlloc;
 };
-
 
 /**
  * @brief Linear memory allocator
@@ -232,10 +244,14 @@ public:
 	}
 
 	size_t getAvailableMemory() const
-	{ return memorySize - nextFreeAddress; }
+	{
+		return memorySize - nextFreeAddress;
+	}
 
 	size_t getSize() const
-	{ return memorySize; }
+	{
+		return memorySize;
+	}
 
 	std::string getName() const;
 
@@ -247,7 +263,9 @@ private:
 	static constexpr size_t alignMask = alignBytes - 1;
 
 	size_t getAlignmentPadding(uintptr_t addr) const
-	{ return (alignBytes - (addr & alignMask)) & alignMask; }
+	{
+		return (alignBytes - (addr & alignMask)) & alignMask;
+	}
 
 	size_t nextFreeAddress;	///< next chunk will be allocated here
 	size_t memorySize;		///< total size of managed memory
@@ -269,7 +287,9 @@ public:
 		HostRamAllocator();
 
 		std::string getName() const
-		{ return "HostRamAlloc"; }
+		{
+			return "HostRamAlloc";
+		}
 
 		std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 		allocateBlock(size_t size);
@@ -277,7 +297,9 @@ public:
 
 	static HostRamAllocator&
 	getAllocator()
-	{ return allocator; }
+	{
+		return allocator;
+	}
 
 private:
 	static HostRamAllocator allocator;
@@ -293,7 +315,9 @@ public:
 		virtual ~HostDmaRamAllocator();
 
 		std::string getName() const
-		{ return getUdmaBufName(num); }
+		{
+			return getUdmaBufName(num);
+		}
 
 	private:
 		int num;
@@ -303,7 +327,8 @@ public:
 	getAllocator(int num = 0);
 
 private:
-	static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
+	static
+	std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
 
 	static std::string
 	getUdmaBufName(int num);
