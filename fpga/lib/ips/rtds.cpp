@@ -24,13 +24,12 @@
 
 #include <villas/utils.hpp>
 
-#include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 
 #define RTDS_HZ				100000000 // 100 MHz
 
-#define RTDS_AXIS_MAX_TX		64		// The amount of values which is supported by the vfpga card
-#define RTDS_AXIS_MAX_RX		64		// The amount of values which is supported by the vfpga card
+#define RTDS_AXIS_MAX_TX		64		// The amount of values which is supported by the VIILASfpga card
+#define RTDS_AXIS_MAX_RX		64		// The amount of values which is supported by the VIILASfpga card
 
 // Register offsets
 #define RTDS_AXIS_SR_OFFSET		0x00		// Status Register (read-only). See RTDS_AXIS_SR_* constant.

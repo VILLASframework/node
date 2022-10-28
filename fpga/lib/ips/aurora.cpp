@@ -24,7 +24,6 @@
 
 #include <villas/utils.hpp>
 
-#include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/aurora.hpp>
 
 // Register offsets
