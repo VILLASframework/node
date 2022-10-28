@@ -88,7 +88,7 @@ public:
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{
-		return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:";
+		return "xilinx.com:module_ref:axi_pcie_intc:";
 	}
 
 	Core* create()
