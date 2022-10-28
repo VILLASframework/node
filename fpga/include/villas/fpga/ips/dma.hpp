@@ -1,6 +1,8 @@
 /** DMA driver
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @copyright 2018-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -123,6 +125,7 @@ private:
 	}
 
 	XAxiDma xDma;
+	XAxiDma_Config xConfig;
 	bool hasSG;
 
 	int delay;
@@ -157,6 +160,9 @@ public:
 	{
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
+
+	virtual bool
+	configureJson(Core& ip, json_t* json) override;
 };
 
 } /* namespace ip */

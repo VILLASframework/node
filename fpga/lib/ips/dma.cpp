@@ -361,17 +361,20 @@ Dma::writeCompleteScatterGather()
 	int ret = XST_FAILURE;
 
 	// Poll until the one BD TX transaction is done.
-	while ((processedBds = XAxiDma_BdRingFromHw(txRing, XAXIDMA_ALL_BDS, &bd)) == 0) {}
+	// TODO: Use IRQs
+	while ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0) {}
 
 	if (bd == nullptr)
 		throw RuntimeError("BD was null");
+
+	auto bytesWritten = XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
 
 	// Free all processed TX BDs for future transmission.
 	ret = XAxiDma_BdRingFree(txRing, processedBds, bd);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to free {} TX BDs {}", processedBds, ret);
 
-	return processedBds;
+	return bytesWritten;
 }
 
 size_t
@@ -382,18 +385,21 @@ Dma::readCompleteScatterGather()
 	auto rxRing = XAxiDma_GetRxRing(&xDma);
 	int ret = XST_FAILURE;
 
-	// Wait until the data has been received by the Rx channel.
-	while ((processedBds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd)) == 0) { }
+	// Wait until the data has been received by the RX channel.
+	// TODO: Use IRQs
+	while ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0) { }
+
+	auto bytesRead = XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
 
 	if (bd == nullptr)
-		throw RuntimeError("BdPtr was null.");
+		throw RuntimeError("Bd was null.");
 
 	// Free all processed RX BDs for future transmission.
 	ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to free {} TX BDs {}.", processedBds, ret);
 
-	return 0;
+	return bytesRead;
 }
 
 bool
@@ -453,9 +459,7 @@ Dma::readSimple(void *buf, size_t len)
 			return false;
 	}
 
-	const bool dmaChannelHalted =
-	        XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK;
-
+	const bool dmaChannelHalted = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK;
 	const bool deviceToDmaBusy = XAxiDma_Busy(&xDma, XAXIDMA_DEVICE_TO_DMA);
 
 	// If the engine is doing a transfer, cannot submit
@@ -463,13 +467,11 @@ Dma::readSimple(void *buf, size_t len)
 		return false;
 
 	// Set lower 32 bit of destination address
-	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET,
-	                 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
+	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET, LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
 	// If neccessary, set upper 32 bit of destination address
 	if (xDma.AddrWidth > 32)
-		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_MSB_OFFSET,
-		                 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
+		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_MSB_OFFSET, UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
 	// Start DMA channel
 	auto channelControl = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_CR_OFFSET);

@@ -145,11 +145,17 @@ int main(int argc, char* argv[])
 
 		auto card = setupFpgaCard(configFile, fpgaName);
 
-		auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>
-					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:aurora_8b10b:")));
-		if (aurora == nullptr) {
-			logger->error("No Aurora interface found on FPGA");
-			return 1;
+		std::vector<fpga::ip::AuroraXilinx::Ptr> aurora_channels;
+		for (int i = 0; i < 4; i++) {
+			auto name = fmt::format("aurora_8b10b_ch{}", i);
+			auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
+			auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>(card->lookupIp(id));
+			if (aurora == nullptr) {
+				logger->error("No Aurora interface found on FPGA");
+				return 1;
+			}
+
+			aurora_channels.push_back(aurora);
 		}
 
 		auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
@@ -159,12 +165,16 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		aurora->dump();
+		for (auto aurora : aurora_channels)
+			aurora->dump();
 
 		// Configure Crossbar switch
-		aurora->connect(aurora->getDefaultMasterPort(), dma->getSlavePort(dma->s2mmPort));
-		dma->connect(dma->getMasterPort(dma->mm2sPort), aurora->getDefaultSlavePort());
-
+#if 1
+		aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), dma->getDefaultSlavePort());
+		dma->connect(dma->getDefaultMasterPort(), aurora_channels[3]->getDefaultSlavePort());
+#else
+		dma->connectLoopback();
+#endif
 		auto &alloc = villas::HostRam::getAllocator();
 		auto mem = alloc.allocate<int32_t>(0x100);
 		auto block = mem.getMemoryBlock();
@@ -175,6 +185,10 @@ int main(int argc, char* argv[])
 		mm.getGraph().dump("graph.dot");
 
 		while (true) {
+			// Setup read transfer
+			dma->read(block, block.getSize());
+
+			// Read values from stdin
 			std::string line;
 			std::getline(std::cin, line);
 			auto values = villas::utils::tokenize(line, ";");
@@ -187,13 +201,17 @@ int main(int argc, char* argv[])
 				mem[i++] = number;
 			}
 
+			// Initiate write transfer
 			bool state = dma->write(block, i * sizeof(int32_t));
 			if (!state)
 				logger->error("Failed to write to device");
 
-			dma->read(block, block.getSize());
-			const size_t bytesRead = dma->readComplete();
-			const size_t valuesRead = bytesRead / sizeof(int32_t);
+			auto bytesWritten = dma->writeComplete();
+			logger->info("Wrote {} bytes", bytesWritten);
+
+			auto bytesRead = dma->readComplete();
+			auto valuesRead = bytesRead / sizeof(int32_t);
+			logger->info("Read {} bytes", bytesRead);
 
 			for (size_t i = 0; i < valuesRead; i++)
 				std::cerr << mem[i] << ";";
