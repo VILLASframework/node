@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <list>
@@ -58,7 +54,6 @@ public:
 	using List = std::list<Ptr>;
 
 	friend PCIeCardFactory;
-
 };
 
 class PCIeCard : public Card {
@@ -67,10 +62,24 @@ public:
 	~PCIeCard();
 
 	bool init();
-	bool stop()  { return true; }
-	bool check() { return true; }
-	bool reset() { return true; }
-	void dump()  { }
+
+	bool stop()
+	{
+		return true;
+	}
+
+	bool check()
+	{
+		return true;
+	}
+
+	bool reset()
+	{
+		return true;
+	}
+
+	void dump()
+	{ }
 
 	ip::Core::Ptr
 	lookupIp(const std::string &name) const;
@@ -80,7 +89,6 @@ public:
 
 	ip::Core::Ptr
 	lookupIp(const ip::IpIdentifier &id) const;
-
 
 	bool
 	mapMemoryBlock(const MemoryBlock &block);
@@ -115,7 +123,9 @@ public:	// TODO: make this private
 protected:
 	Logger
 	getLogger() const
-	{ return villas::logging.get(name); }
+	{
+		return villas::logging.get(name);
+	}
 
 	Logger logger;
 };
@@ -128,19 +138,27 @@ public:
 
 	static PCIeCard*
 	create()
-	{ return new PCIeCard(); }
+	{
+		return new PCIeCard();
+	}
 
 	static Logger
 	getStaticLogger()
-	{ return villas::logging.get("pcie:card:factory"); }
+	{
+		return villas::logging.get("pcie:card:factory");
+	}
 
 	virtual std::string
 	getName() const
-	{ return "pcie"; }
+	{
+		return "pcie";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx PCIe FPGA cards"; }
+	{
+		return "Xilinx PCIe FPGA cards";
+	}
 
 	virtual
 	std::string getType() const
@@ -151,5 +169,3 @@ public:
 
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

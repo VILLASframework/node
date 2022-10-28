@@ -85,7 +85,6 @@ Test(fpga, rtds, .description = "RTDS")
 
 			auto mem = villas::HostRam::getAllocator().allocate<int32_t>(0x100 / sizeof(int32_t));
 
-
 //			auto start = std::chrono::high_resolution_clock::now();
 
 			for (int i = 1; i < 5; i++) {

@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <map>
@@ -57,7 +53,11 @@ private:
 	static constexpr char registerMemory[] = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	struct Path {
 		Core* masterOut;
@@ -69,34 +69,41 @@ private:
 	std::map<std::string, std::string> portMapping;
 };
 
-
 class AxiStreamSwitchFactory : public NodeFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
-	{ return "xilinx.com:ip:axis_switch:"; }
+	{
+		return "xilinx.com:ip:axis_switch:";
+	}
 
 	bool configureJson(Core &ip, json_t *json_ip);
 
 	Core* create()
-	{ return new AxiStreamSwitch; }
+	{
+		return new AxiStreamSwitch;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "AxiStreamSwitch"; }
+	{
+		return "AxiStreamSwitch";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI4-Stream switch"; }
+	{
+		return "Xilinx's AXI4-Stream switch";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return Vlnv(getCompatibleVlnvString()); }
+	{
+		return Vlnv(getCompatibleVlnvString());
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

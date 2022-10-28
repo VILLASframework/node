@@ -33,7 +33,6 @@ HostRam::free(void* addr, size_t length)
 	return munmap(addr, length) == 0;
 }
 
-
 void*
 HostRam::allocate(size_t length, int flags)
 {

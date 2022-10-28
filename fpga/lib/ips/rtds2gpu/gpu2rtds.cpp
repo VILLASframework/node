@@ -83,10 +83,6 @@ void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
 //	return start();
 //}
 
-
-
-
-
 //bool
 //Gpu2Rtds::updateStatus()
 //{

@@ -23,10 +23,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <cstdint>
@@ -39,9 +35,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class Timer : public Core
-{
+class Timer : public Core {
 	friend class TimerFactory;
 public:
 	bool init();
@@ -51,19 +45,29 @@ public:
 	uint32_t remaining();
 
 	inline bool isRunning()
-	{ return remaining() != 0; }
+	{
+		return remaining() != 0;
+	}
 
 	inline bool isFinished()
-	{ return remaining() == 0; }
+	{
+		return remaining() == 0;
+	}
 
 	static constexpr uint32_t
 	getFrequency()
-	{ return FPGA_AXI_HZ; }
+	{
+		return FPGA_AXI_HZ;
+	}
 
 private:
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	static constexpr char irqName[] = "generateout0";
 	static constexpr char registerMemory[] = "Reg";
@@ -71,29 +75,33 @@ private:
 	XTmrCtr xTmr;
 };
 
-
-
 class TimerFactory : public CoreFactory {
 public:
 
 	Core* create()
-	{ return new Timer; }
+	{
+		return new Timer;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Timer"; }
+	{
+		return "Timer";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's programmable timer / counter"; }
+	{
+		return "Xilinx's programmable timer / counter";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_timer:"}; }
+	{
+		return Vlnv("xilinx.com:ip:axi_timer:");
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

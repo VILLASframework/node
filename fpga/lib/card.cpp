@@ -139,7 +139,6 @@ PCIeCard::~PCIeCard()
 	}
 }
 
-
 ip::Core::Ptr
 PCIeCard::lookupIp(const std::string &name) const
 {
@@ -151,7 +150,6 @@ PCIeCard::lookupIp(const std::string &name) const
 
 	return nullptr;
 }
-
 
 ip::Core::Ptr
 PCIeCard::lookupIp(const Vlnv &vlnv) const
@@ -176,7 +174,6 @@ PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 
 	return nullptr;
 }
-
 
 bool
 PCIeCard::mapMemoryBlock(const MemoryBlock &block)
@@ -217,7 +214,6 @@ PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 
 	return true;
 }
-
 
 bool
 PCIeCard::init()

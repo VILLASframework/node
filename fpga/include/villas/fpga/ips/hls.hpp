@@ -7,7 +7,6 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
 class Hls : public virtual Core
 {
 public:
@@ -35,46 +34,61 @@ public:
 	}
 
 	virtual bool isFinished()
-	{ updateRunningStatus(); return !running; }
+	{
+		updateRunningStatus();
 
+		return !running;
+	}
 
 	bool isRunning()
-	{ updateRunningStatus(); return running; }
+	{
+		updateRunningStatus();
 
+		return running;
+	}
 
 	void setAutoRestart(bool enabled) const
-	{ controlRegister->auto_restart = enabled; }
-
+	{
+		controlRegister->auto_restart = enabled;
+	}
 
 	void setGlobalInterrupt(bool enabled) const
-	{ globalIntRegister->globalInterruptEnable = enabled; }
-
+	{
+		globalIntRegister->globalInterruptEnable = enabled;
+	}
 
 	void setReadyInterrupt(bool enabled) const
-	{ ipIntEnableRegister->ap_ready = enabled; }
-
+	{
+		ipIntEnableRegister->ap_ready = enabled;
+	}
 
 	void setDoneInterrupt(bool enabled) const
-	{ ipIntEnableRegister->ap_done = enabled; }
-
+	{
+		ipIntEnableRegister->ap_done = enabled;
+	}
 
 	bool isIdleBit() const
-	{ return controlRegister->ap_idle; }
-
+	{
+		return controlRegister->ap_idle;
+	}
 
 	bool isReadyBit() const
-	{ return controlRegister->ap_ready; }
-
+	{
+		return controlRegister->ap_ready;
+	}
 
 	// Warning: the corresponding bit is cleared on read of the register, so if
 	// not used correctly, this function may never return true. Only use this
 	// function if you really know what you are doing!
 	bool isDoneBit() const
-	{ return controlRegister->ap_done; }
-
+	{
+		return controlRegister->ap_done;
+	}
 
 	bool isAutoRestartBit() const
-	{ return controlRegister->auto_restart; }
+	{
+		return controlRegister->auto_restart;
+	}
 
 private:
 	void updateRunningStatus()
@@ -89,8 +103,11 @@ protected:
 	static constexpr const char* registerMemory = "Reg";
 
 	virtual std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
-
+	{
+		return {
+			registerMemory
+		};
+	}
 
 public:
 	// Register definitions
@@ -135,24 +152,28 @@ protected:
 class HlsFactory : public CoreFactory {
 public:
 
-	static constexpr const char*
-	getCompatibleVlnvString()
-	{ return "acs.eonerc.rwth-aachen.de:hls:"; }
-
 	Core* create()
-	{ return new Hls; }
+	{
+		return new Hls;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "HighLevelSynthesis"; }
+	{
+		return "HighLevelSynthesis";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's HLS IP Cores"; }
+	{
+		return "Xilinx's HLS IP Cores";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return Vlnv(getCompatibleVlnvString()); }
+	{
+		return Vlnv("acs.eonerc.rwth-aachen.de:hls:");
+	}
 };
 
 } /* namespace ip */

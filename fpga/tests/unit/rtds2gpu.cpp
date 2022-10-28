@@ -40,7 +40,6 @@
 
 using namespace villas;
 
-
 static constexpr size_t SAMPLE_SIZE		= 4;
 static constexpr size_t SAMPLE_COUNT	= 1;
 static constexpr size_t FRAME_SIZE		= SAMPLE_COUNT * SAMPLE_SIZE;
@@ -79,7 +78,6 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 
 		logger->info("Testing {}", *ip);
 
-
 		// Collect neccessary IPs
 		auto rtds2gpu = std::dynamic_pointer_cast<fpga::ip::Rtds2Gpu>(ip);
 
@@ -95,7 +93,6 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		auto rtds = std::dynamic_pointer_cast<fpga::ip::Rtds>(
 		                     state.cards.front()->lookupIp(fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
 
-
 		cr_assert_not_null(axiSwitch, "No AXI switch IP found");
 		cr_assert_not_null(dma, "No DMA IP found");
 		cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
@@ -104,14 +101,12 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		rtds2gpu.dump(spdlog::level::debug);
 		gpu2rtds->dump(spdlog::level::debug);
 
-
 		// Allocate and prepare memory
 
 		// Allocate space for all samples and doorbell register
 		auto dmaMemSrc = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
 		auto dmaMemDst = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
 		auto dmaMemDst2 = HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
-
 
 		memset(&dmaMemSrc, 0x11, dmaMemSrc.getMemoryBlock().getSize());
 		memset(&dmaMemDst, 0x55, dmaMemDst.getMemoryBlock().getSize());
@@ -124,7 +119,6 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 		dumpMem(dataSrc, dmaMemSrc.getMemoryBlock().getSize());
 		dumpMem(dataDst, dmaMemDst.getMemoryBlock().getSize());
 		dumpMem(dataDst2, dmaMemDst2.getMemoryBlock().getSize());
-
 
 		// Connect AXI Stream from DMA to Rtds2Gpu IP
 		cr_assert(dma->connect(rtds2gpu));
@@ -146,11 +140,8 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 
 		cr_assert(memcmp(dataSrc, dataDst, FRAME_SIZE) == 0, "Memory not equal");
 
-
-		for (size_t i = 0; i < SAMPLE_COUNT; i++) {
+		for (size_t i = 0; i < SAMPLE_COUNT; i++)
 			gpu2rtds->registerFrames[i] = dmaMemDst[i];
-		}
-
 
 		// Connect AXI Stream from Gpu2Rtds IP to DMA
 		cr_assert(gpu2rtds->connect(*dma));
@@ -210,7 +201,6 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 		cr_assert(rtds.connect(*rtds2gpu));
 		cr_assert(gpu2rtds->connect(rtds));
 
-
 		for (size_t i = 1; i <= 10000; ) {
 			rtds2gpu->doorbellReset(*doorbell);
 			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4);
@@ -220,7 +210,6 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 
 			// Wait by polling (local) doorbell register (= just memory)
 			while (not rtds2gpu->doorbellIsValid(*doorbell));
-
 
 			// Copy samples to gpu2rtds IP
 			for (size_t i = 0; i < SAMPLE_COUNT; i++) {
@@ -283,7 +272,6 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 	auto dataIn		= reinterpret_cast<uint32_t*>(tr.getLocalAddr(DATA_OFFSET * sizeof(uint32_t)));
 	auto doorbellIn	= reinterpret_cast<reg_doorbell_t*>(tr.getLocalAddr(DOORBELL_OFFSET * sizeof(uint32_t)));
 
-
 	auto gpu2rtdsRegisters = gpu->translate(gpu2rtds->getRegisterMemory());
 
 	auto frameRegister		= reinterpret_cast<uint32_t*>(gpu2rtdsRegisters.getLocalAddr(gpu2rtds->registerFrameOffset));
@@ -297,7 +285,6 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 
 		auto &rtds = dynamic_cast<fpga::ip::Rtds&>(*ip);
 		logger->info("Testing {}", rtds);
-
 
 		// TEST: rtds loopback via switch, this should always work and have RTT=1
 		//cr_assert(rtds.connect(rtds));
@@ -339,8 +326,6 @@ Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
 		}
 
 		gpu_rtds_rtt_stop();
-
-
 
 		logger->info(CLR_GRN("Passed"));
 	}

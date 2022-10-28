@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <villas/fpga/node.hpp>
@@ -39,36 +35,44 @@ public:
 
 	const StreamVertex&
 	getDefaultSlavePort() const
-	{ return getSlavePort(slavePort); }
+	{
+		return getSlavePort(slavePort);
+	}
 
 	const StreamVertex&
 	getDefaultMasterPort() const
-	{ return getMasterPort(masterPort); }
+	{
+		return getMasterPort(masterPort);
+	}
 };
-
 
 class AuroraXilinxFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new AuroraXilinx; }
+	{
+		return new AuroraXilinx;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Aurora"; }
+	{
+		return "Aurora";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx Aurora 8B/10B."; }
+	{
+		return "Xilinx Aurora 8B/10B.";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:aurora_8b10b:"}; }
-
+	{
+		return Vlnv("xilinx.com:ip:aurora_8b10b:");
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

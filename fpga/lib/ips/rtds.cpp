@@ -27,7 +27,6 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 
-
 #define RTDS_HZ				100000000 // 100 MHz
 
 #define RTDS_AXIS_MAX_TX		64		// The amount of values which is supported by the vfpga card
@@ -56,7 +55,6 @@
 using namespace villas::fpga::ip;
 
 static RtdsFactory rtdsFactoryInstance;
-
 
 void Rtds::dump()
 {

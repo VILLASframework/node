@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <map>
@@ -45,14 +41,21 @@ namespace ip {
 class StreamVertex : public graph::Vertex {
 public:
 	StreamVertex(const std::string &node, const std::string &port, bool isMaster) :
-	    nodeName(node), portName(port), isMaster(isMaster) {}
+	    nodeName(node),
+	    portName(port),
+	    isMaster(isMaster)
+	{ }
 
 	std::string getName() const
-	{ return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")"; }
+	{
+		return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")";
+	}
 
 	friend std::ostream&
 	operator<< (std::ostream &stream, const StreamVertex &vertex)
-	{ return stream << vertex.getIdentifier() << ": " << vertex.getName(); }
+	{
+		return stream << vertex.getIdentifier() << ": " << vertex.getName();
+	}
 
 public:
 	std::string nodeName;
@@ -60,10 +63,11 @@ public:
 	bool isMaster;
 };
 
-
 class StreamGraph : public graph::DirectedGraph<StreamVertex> {
 public:
-	StreamGraph() : graph::DirectedGraph<StreamVertex>("stream:graph") {}
+	StreamGraph() :
+		graph::DirectedGraph<StreamVertex>("stream:graph")
+	{ }
 
 	std::shared_ptr<StreamVertex>
 	getOrCreateStreamVertex(const std::string &node,
@@ -84,7 +88,6 @@ public:
 	}
 };
 
-
 class Node : public virtual Core {
 public:
 
@@ -99,11 +102,15 @@ public:
 
 	const StreamVertex&
 	getMasterPort(const std::string &name) const
-	{ return *portsMaster.at(name); }
+	{
+		return *portsMaster.at(name);
+	}
 
 	const StreamVertex&
 	getSlavePort(const std::string &name) const
-	{ return *portsSlave.at(name); }
+	{
+		return *portsSlave.at(name);
+	}
 
 	bool connect(const StreamVertex &from, const StreamVertex &to);
 	bool connect(const StreamVertex &from, const StreamVertex &to, bool reverse)
@@ -121,7 +128,9 @@ public:
 	// Easy-usage assuming that the slave IP to connect to only has one slave
 	// port and implements the getDefaultSlavePort() function
 	bool connect(const Node &slaveNode, bool reverse = false)
-	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort(), reverse); }
+	{
+		return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort(), reverse);
+	}
 
 	// Used by easy-usage connect, will throw if not implemented by derived node
 	virtual const StreamVertex&
@@ -133,7 +142,9 @@ public:
 
 	static const StreamGraph&
 	getGraph()
-	{ return streamGraph; }
+	{
+		return streamGraph;
+	}
 
 	bool loopbackPossible() const;
 	bool connectLoopback();
@@ -159,8 +170,6 @@ public:
 
 	virtual bool configureJson(Core &ip, json_t *json_ip);
 };
-
-/** @} */
 
 } /* namespace ip */
 } /* namespace fpga */

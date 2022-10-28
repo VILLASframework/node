@@ -31,13 +31,11 @@
 #include <villas/fpga/ips/fifo.hpp>
 #include <villas/fpga/ips/intc.hpp>
 
-
 using namespace villas::fpga::ip;
 
 // Instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
 static FifoDataFactory factoryData;
-
 
 bool Fifo::init()
 {

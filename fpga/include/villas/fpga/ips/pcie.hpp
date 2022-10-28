@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <xilinx/xaxis_switch.h>
@@ -62,34 +58,41 @@ private:
 	std::map<std::string, PciBar> pcieToAxiTranslations;
 };
 
-
 class AxiPciExpressBridgeFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
-	{ return "xilinx.com:ip:axi_pcie:"; }
+	{
+		return "xilinx.com:ip:axi_pcie:";
+	}
 
 	bool configureJson(Core &ip, json_t *json_ip);
 
 	Core* create()
-	{ return new AxiPciExpressBridge; }
+	{
+		return new AxiPciExpressBridge;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "AxiPciExpressBridge"; }
+	{
+		return "AxiPciExpressBridge";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI-PCIe Bridge"; }
+	{
+		return "Xilinx's AXI-PCIe Bridge";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return Vlnv(getCompatibleVlnvString()); }
+	{
+		return Vlnv(getCompatibleVlnvString());
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

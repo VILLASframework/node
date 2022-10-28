@@ -85,7 +85,6 @@ InterruptController::init()
 
 	logger->debug("enabled interrupts");
 
-
 	return true;
 }
 

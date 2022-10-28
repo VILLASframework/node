@@ -23,9 +23,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
 
 #pragma once
 
@@ -33,14 +30,11 @@
 
 #include <villas/fpga/node.hpp>
 
-
 namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class Fifo : public Node
-{
+class Fifo : public Node {
 public:
 	friend class FifoFactory;
 
@@ -56,58 +50,75 @@ private:
 	static constexpr char irqName[] = "interrupt";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory, axi4Memory }; }
+	{
+		return {
+			registerMemory,
+			axi4Memory
+		};
+	}
 
 	XLlFifo xFifo;
 };
-
-
 
 class FifoFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new Fifo; }
+	{
+		return new Fifo;
+	}
 
 	std::string
 	getName() const
-	{ return "Fifo"; }
+	{
+		return "Fifo";
+	}
 
 	std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 FIFO data mover"; }
+	{
+		return "Xilinx's AXI4 FIFO data mover";
+	}
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_fifo_mm_s:"}; }
+	{
+		return Vlnv("xilinx.com:ip:axi_fifo_mm_s:");
+	}
 };
-
 
 class FifoData : public Node {
 	friend class FifoDataFactory;
 };
 
-
 class FifoDataFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new FifoData; }
+	{
+		return new FifoData;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "FifoData"; }
+	{
+		return "FifoData";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 data stream FIFO"; }
+	{
+		return "Xilinx's AXI4 data stream FIFO";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axis_data_fifo:"}; }
+	{
+		return {
+			"xilinx.com:ip:axis_data_fifo:"
+		};
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

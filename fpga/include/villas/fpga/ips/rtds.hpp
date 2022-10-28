@@ -21,10 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <villas/fpga/node.hpp>
@@ -42,15 +38,23 @@ public:
 	double getDt();
 
 	std::list<std::string> getMemoryBlocks() const
-	{ return { registerMemory }; }
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	const StreamVertex&
 	getDefaultSlavePort() const
-	{ return getSlavePort(slavePort); }
+	{
+		return getSlavePort(slavePort);
+	}
 
 	const StreamVertex&
 	getDefaultMasterPort() const
-	{ return getMasterPort(masterPort); }
+	{
+		return getMasterPort(masterPort);
+	}
 
 private:
 	static constexpr const char registerMemory[] = "reg0";
@@ -59,27 +63,32 @@ private:
 	static constexpr const char* irqCase = "irq_case";
 };
 
-
 class RtdsFactory : public NodeFactory {
 public:
 	Core* create()
-	{ return new Rtds; }
+	{
+		return new Rtds;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "rtds"; }
+	{
+		return "rtds";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "RTDS's AXI4-Stream - GTFPGA interface"; }
+	{
+		return "RTDS's AXI4-Stream - GTFPGA interface";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"acs.eonerc.rwth-aachen.de:user:rtds_axis:"}; }
+	{
+		return Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:");
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

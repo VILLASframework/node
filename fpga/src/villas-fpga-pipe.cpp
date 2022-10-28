@@ -62,7 +62,9 @@ void setupColorHandling()
 	sigaction(SIGINT, &sigIntHandler, nullptr);
 
 	// Reset color if exiting not by signal
-	std::atexit([](){std::cout << rang::style::reset;});
+	std::atexit([](){
+		std::cout << rang::style::reset;
+	});
 }
 
 std::shared_ptr<fpga::PCIeCard>

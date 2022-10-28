@@ -28,7 +28,6 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/pcie.hpp>
 
-
 using namespace villas::fpga::ip;
 
 static AxiPciExpressBridgeFactory factory;
@@ -118,7 +117,10 @@ AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 	auto logger = getLogger();
 	auto &pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
-	for (auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
+	for (auto barType : std::list<std::string>{
+		"axi_bars",
+		"pcie_bars"
+	}) {
 		json_t* json_bars = json_object_get(json_ip, barType.c_str());
 		if (not json_is_object(json_bars)) {
 			return false;

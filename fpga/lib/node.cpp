@@ -84,14 +84,13 @@ NodeFactory::configureJson(Core &ip, json_t* json_ip)
 		                           tokens[1],
 		                           not isMaster);
 
-
 		if (isMaster) {
 			Node::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
 			                                   connectedVertex->getIdentifier());
 			Node.portsMaster[name_raw] = thisVertex;
-		} else { // Slave
-			Node.portsSlave[name_raw] = thisVertex;
 		}
+		else // Slave
+			Node.portsSlave[name_raw] = thisVertex;
 	}
 
 	return true;

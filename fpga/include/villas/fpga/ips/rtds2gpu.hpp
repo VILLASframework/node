@@ -24,7 +24,6 @@ union ControlRegister {
 	};
 };
 
-
 class Rtds2Gpu : public Node, public Hls
 {
 public:
@@ -41,20 +40,29 @@ public:
 	void dumpDoorbell(uint32_t doorbellRegister) const;
 
 	bool doorbellIsValid(const uint32_t &doorbellRegister) const
-	{ return reinterpret_cast<const reg_doorbell_t&>(doorbellRegister).is_valid; }
+	{
+		return reinterpret_cast<const reg_doorbell_t&>(doorbellRegister).is_valid;
+	}
 
 	void doorbellReset(uint32_t &doorbellRegister) const
-	{ doorbellRegister = 0; }
+	{
+		doorbellRegister = 0;
+	}
 
 	static constexpr const char* registerMemory = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
-
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	const StreamVertex&
 	getDefaultSlavePort() const
-	{ return getSlavePort(rtdsInputStreamPort); }
+	{
+		return getSlavePort(rtdsInputStreamPort);
+	}
 
 private:
 	bool updateStatus();
@@ -71,24 +79,31 @@ private:
 	bool started;
 };
 
-
 class Rtds2GpuFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new Rtds2Gpu; }
+	{
+		return new Rtds2Gpu;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Rtds2Gpu"; }
+	{
+		return "Rtds2Gpu";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "HLS RTDS2GPU IP"; }
+	{
+		return "HLS RTDS2GPU IP";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"}; }
+	{
+		return Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:");
+	}
 };
 
 } /* namespace ip */

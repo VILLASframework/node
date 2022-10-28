@@ -11,7 +11,6 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
 class Gpu2Rtds : public Node, public Hls
 {
 public:
@@ -26,11 +25,15 @@ public:
 
 	const StreamVertex&
 	getDefaultMasterPort() const
-	{ return getMasterPort(rtdsOutputStreamPort); }
+	{
+		return getMasterPort(rtdsOutputStreamPort);
+	}
 
 	MemoryBlock
 	getRegisterMemory() const
-	{ return MemoryBlock(0, 1 << 10, getAddressSpaceId(registerMemory)); }
+	{
+		return MemoryBlock(0, 1 << 10, getAddressSpaceId(registerMemory));
+	}
 
 private:
 	bool updateStatus();
@@ -62,24 +65,31 @@ public:
 	bool started;
 };
 
-
 class Gpu2RtdsFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new Gpu2Rtds; }
+	{
+		return new Gpu2Rtds;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Gpu2Rtds"; }
+	{
+		return "Gpu2Rtds";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "HLS Gpu2Rtds IP"; }
+	{
+		return "HLS Gpu2Rtds IP";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"acs.eonerc.rwth-aachen.de:hls:gpu2rtds:"}; }
+	{
+		return Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:");
+	}
 };
 
 } /* namespace ip */

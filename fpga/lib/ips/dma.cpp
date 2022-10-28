@@ -35,7 +35,6 @@
 // Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY	0x1000
 
-
 using namespace villas::fpga::ip;
 
 // Instantiate factory to make available to plugin infrastructure
@@ -100,7 +99,6 @@ Dma::init()
 
 	return true;
 }
-
 
 void Dma::setupRingRx()
 {
@@ -188,7 +186,6 @@ void Dma::setupRingRx()
 		throw RuntimeError("RX start hw failed {}", Status);
 }
 
-
 void Dma::setupRingTx()
 {
 	XAxiDma_BdRing *TxRingPtr;
@@ -250,7 +247,6 @@ Dma::reset()
 	return false;
 }
 
-
 bool
 Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 {
@@ -275,7 +271,6 @@ Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 	return true;
 }
 
-
 bool
 Dma::write(const MemoryBlock &mem, size_t len)
 {
@@ -289,7 +284,6 @@ Dma::write(const MemoryBlock &mem, size_t len)
 	logger->debug("Write to stream from address {:p}", buf);
 	return hasScatterGather() ? writeSG(buf, len) : writeSimple(buf, len);
 }
-
 
 bool
 Dma::read(const MemoryBlock &mem, size_t len)
@@ -305,7 +299,6 @@ Dma::read(const MemoryBlock &mem, size_t len)
 	return hasScatterGather() ? readSG(buf, len) : readSimple(buf, len);
 }
 
-
 bool
 Dma::writeSG(const void* buf, size_t len)
 {
@@ -315,7 +308,6 @@ Dma::writeSG(const void* buf, size_t len)
 
 	return false;
 }
-
 
 bool
 Dma::readSG(void* buf, size_t len)
@@ -327,7 +319,6 @@ Dma::readSG(void* buf, size_t len)
 	return false;
 }
 
-
 size_t
 Dma::writeCompleteSG()
 {
@@ -336,7 +327,6 @@ Dma::writeCompleteSG()
 	return 0;
 }
 
-
 size_t
 Dma::readCompleteSG()
 {
@@ -344,7 +334,6 @@ Dma::readCompleteSG()
 
 	return 0;
 }
-
 
 bool
 Dma::writeSimple(const void *buf, size_t len)
@@ -392,10 +381,8 @@ Dma::writeSimple(const void *buf, size_t len)
 	// Set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
-
 	return true;
 }
-
 
 bool
 Dma::readSimple(void *buf, size_t len)
@@ -445,7 +432,6 @@ Dma::readSimple(void *buf, size_t len)
 	return true;
 }
 
-
 size_t
 Dma::writeCompleteSimple()
 {
@@ -459,7 +445,6 @@ Dma::writeCompleteSimple()
 
 	return bytesWritten;
 }
-
 
 size_t
 Dma::readCompleteSimple()
@@ -475,15 +460,13 @@ Dma::readCompleteSimple()
 	return bytesRead;
 }
 
-
 bool
 Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 {
 	// Only symmetric mapping supported currently
 	if (isMemoryBlockAccesible(mem, s2mmInterface) and
-	   isMemoryBlockAccesible(mem, mm2sInterface)) {
+	   isMemoryBlockAccesible(mem, mm2sInterface))
 		return true;
-	}
 
 	// Try mapping via FPGA-card (VFIO)
 	if (not card->mapMemoryBlock(mem)) {
@@ -500,7 +483,6 @@ Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 
 	return true;
 }
-
 
 bool
 Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface)

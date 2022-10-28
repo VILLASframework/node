@@ -64,7 +64,6 @@
  * handled by Aurora IP, otherwise this bit is ignored.*/
 #define AURORA_AXIS_CR_SEQ_ECHO			(1 << 4)
 
-
 using namespace villas::fpga::ip;
 
 static AuroraFactory auroraFactoryInstance;

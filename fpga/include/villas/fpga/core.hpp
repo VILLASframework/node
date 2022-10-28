@@ -24,10 +24,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <map>
@@ -59,22 +55,32 @@ class IpIdentifier {
 public:
 
 	IpIdentifier(Vlnv vlnv = Vlnv::getWildcard(), std::string name = "") :
-	    vlnv(vlnv), name(name) {}
+	    vlnv(vlnv),
+	    name(name)
+	{ }
 
 	IpIdentifier(std::string vlnvString, std::string name = "") :
-	    vlnv(vlnvString), name(name) {}
+	    vlnv(vlnvString),
+	    name(name)
+	{ }
 
 	const std::string&
 	getName() const
-	{ return name; }
+	{
+		return name;
+	}
 
 	const Vlnv&
 	getVlnv() const
-	{ return vlnv; }
+	{
+		return vlnv;
+	}
 
 	friend std::ostream&
 	operator<< (std::ostream &stream, const IpIdentifier &id)
-	{ return stream << id.name << " vlnv=" << id.vlnv; }
+	{
+		return stream << id.name << " vlnv=" << id.vlnv;
+	}
 
 	bool
 	operator==(const IpIdentifier &otherId) const {
@@ -89,19 +95,23 @@ public:
 
 	bool
 	operator!=(const IpIdentifier &otherId) const
-	{ return !(*this == otherId); }
+	{
+		return !(*this == otherId);
+	}
 
 private:
 	Vlnv vlnv;
 	std::string name;
 };
 
-
 class Core {
 	friend CoreFactory;
 
 public:
-	Core() : card(nullptr) {}
+	Core() :
+		card(nullptr)
+	{ }
+
 	virtual ~Core() = default;
 
 	using Ptr = std::shared_ptr<Core>;
@@ -112,16 +122,27 @@ public:
 
 	// Runtime setup of IP, should access and initialize hardware
 	virtual bool init()
-	{ return true; }
+	{
+		return true;
+	}
 
 	// Runtime check of IP, should verify basic functionality
-	virtual bool check() { return true; }
+	virtual bool check()
+	{
+		return true;
+	}
 
 	// Generic disabling of IP, meaning may depend on IP
-	virtual bool stop()  { return true; }
+	virtual bool stop()
+	{
+		return true;
+	}
 
 	// Reset the IP, it should behave like freshly initialized afterwards
-	virtual bool reset() { return true; }
+	virtual bool reset()
+	{
+		return true;
+	}
 
 	// Print some debug information about the IP
 	virtual void dump();
@@ -133,77 +154,109 @@ protected:
 	// Each IP can declare via this function which memory blocks it requires
 	virtual std::list<MemoryBlockName>
 	getMemoryBlocks() const
-	{ return {}; }
+	{
+		return {};
+	}
 
 public:
 	const std::string&
 	getInstanceName() const
-	{ return id.getName(); }
+	{
+		return id.getName();
+	}
 
 	// Operators
 
 	bool
 	operator==(const Vlnv &otherVlnv) const
-	{ return id.getVlnv() == otherVlnv; }
+	{
+		return id.getVlnv() == otherVlnv;
+	}
 
 	bool
 	operator!=(const Vlnv &otherVlnv) const
-	{ return id.getVlnv() != otherVlnv; }
+	{
+		return id.getVlnv() != otherVlnv;
+	}
 
 	bool
 	operator==(const IpIdentifier &otherId) const
-	{ return this->id == otherId; }
+	{
+		return this->id == otherId;
+	}
 
 	bool
 	operator!=(const IpIdentifier &otherId) const
-	{ return this->id != otherId; }
+	{
+		return this->id != otherId;
+	}
 
 	bool
 	operator==(const std::string &otherName) const
-	{ return getInstanceName() == otherName; }
+	{
+		return getInstanceName() == otherName;
+	}
 
 	bool
 	operator!=(const std::string &otherName) const
-	{ return getInstanceName() != otherName; }
+	{
+		return getInstanceName() != otherName;
+	}
 
 	bool
 	operator==(const Core &otherIp) const
-	{ return this->id == otherIp.id; }
+	{
+		return this->id == otherIp.id;
+	}
 
 	bool
 	operator!=(const Core &otherIp) const
-	{ return this->id != otherIp.id; }
+	{
+		return this->id != otherIp.id;
+	}
 
 	friend std::ostream&
 	operator<< (std::ostream &stream, const Core &ip)
-	{ return stream << ip.id; }
+	{
+		return stream << ip.id;
+	}
 
 protected:
 	uintptr_t
 	getBaseAddr(const MemoryBlockName &block) const
-	{ return getLocalAddr(block, 0); }
+	{
+		return getLocalAddr(block, 0);
+	}
 
 	uintptr_t
 	getLocalAddr(const MemoryBlockName &block, uintptr_t address) const;
 
 	MemoryManager::AddressSpaceId
 	getAddressSpaceId(const MemoryBlockName &block) const
-	{ return slaveAddressSpaces.at(block); }
+	{
+		return slaveAddressSpaces.at(block);
+	}
 
 	InterruptController*
 	getInterruptController(const std::string &interruptName) const;
 
 	MemoryManager::AddressSpaceId
 	getMasterAddrSpaceByInterface(const std::string &masterInterfaceName) const
-	{ return busMasterInterfaces.at(masterInterfaceName); }
+	{
+		return busMasterInterfaces.at(masterInterfaceName);
+	}
 
 	template<typename T>
 	T readMemory(const std::string &block, uintptr_t address) const
-	{ return *(reinterpret_cast<T*>(getLocalAddr(block, address))); }
+	{
+		return *(reinterpret_cast<T*>(getLocalAddr(block, address)));
+	}
 
 	template<typename T>
 	void writeMemory(const std::string &block, uintptr_t address, T value)
-	{ T* ptr = reinterpret_cast<T*>(getLocalAddr(block, address)); *ptr = value; }
+	{
+		T* ptr = reinterpret_cast<T*>(getLocalAddr(block, address)); *ptr = value;
+	}
 
 protected:
 	struct IrqPort {
@@ -234,8 +287,6 @@ protected:
 	std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
 };
 
-
-
 class CoreFactory : public plugin::Plugin {
 public:
 	using plugin::Plugin::Plugin;
@@ -253,7 +304,9 @@ public:
 protected:
 	Logger
 	getLogger() const
-	{ return villas::logging.get(getName()); }
+	{
+		return villas::logging.get(getName());
+	}
 
 private:
 	// Create a concrete IP instance
@@ -261,20 +314,23 @@ private:
 
 	// Configure IP instance from JSON config
 	virtual bool configureJson(Core& /* ip */, json_t* /* json */)
-	{ return true; }
+	{
+		return true;
+	}
 
 	virtual Vlnv getCompatibleVlnv() const = 0;
 
 protected:
 	static Logger
-	getStaticLogger() { return villas::logging.get("core:factory"); }
+	getStaticLogger()
+	{
+		return villas::logging.get("core:factory");
+	}
 
 private:
 	static CoreFactory*
 	lookup(const Vlnv &vlnv);
 };
-
-/** @} */
 
 } /* namespace ip */
 } /* namespace fpga */

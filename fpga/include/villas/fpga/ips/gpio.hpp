@@ -22,10 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <villas/fpga/core.hpp>
@@ -34,9 +30,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class GeneralPurposeIO : public Core
-{
+class GeneralPurposeIO : public Core {
 public:
 
 	bool init();
@@ -46,34 +40,40 @@ private:
 	static constexpr char registerMemory[] = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
+	{
+		return {
+			registerMemory
+		};
+	}
 };
 
 class GeneralPurposeIOFactory : public CoreFactory {
 public:
 
-	static constexpr const char*
-	getCompatibleVlnvString()
-	{ return "xilinx.com:ip:axi_gpio:"; }
-
 	Core* create()
-	{ return new GeneralPurposeIO; }
+	{
+		return new GeneralPurposeIO;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "GeneralPurposeIO"; }
+	{
+		return "GeneralPurposeIO";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 general purpose IO"; }
+	{
+		return "Xilinx's AXI4 general purpose IO";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return Vlnv(getCompatibleVlnvString()); }
+	{
+		return Vlnv("xilinx.com:ip:axi_gpio:");
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

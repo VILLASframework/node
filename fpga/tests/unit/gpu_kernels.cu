@@ -7,8 +7,6 @@
 #include <villas/gpu.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
 
-
-
 __global__ void
 gpu_rtds_rtt_kernel(volatile uint32_t* dataIn, volatile reg_doorbell_t* doorbellIn,
                     volatile uint32_t* dataOut, volatile villas::fpga::ip::ControlRegister* controlRegister,
@@ -61,7 +59,6 @@ void gpu_rtds_rtt_start(volatile uint32_t* dataIn, volatile reg_doorbell_t* door
 		cudaHostRegister(run, sizeof(uint32_t), 0);
 	}
 	printf("run:         %p\n", run);
-
 
 	*run = 1;
 	gpu_rtds_rtt_kernel<<<1, 1>>>(dataIn, doorbellIn, dataOut, controlRegister, run);

@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <xilinx/xaxidma.h>
@@ -50,10 +46,14 @@ public:
 	bool read(const MemoryBlock &mem, size_t len);
 
 	size_t writeComplete()
-	{ return hasScatterGather() ? writeCompleteSG() : writeCompleteSimple(); }
+	{
+		return hasScatterGather() ? writeCompleteSG() : writeCompleteSimple();
+	}
 
 	size_t readComplete()
-	{ return hasScatterGather() ? readCompleteSG() : readCompleteSimple(); }
+	{
+		return hasScatterGather() ? readCompleteSG() : readCompleteSimple();
+	}
 
 	bool memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len);
 
@@ -62,15 +62,21 @@ public:
 
 	inline bool
 	hasScatterGather() const
-	{ return hasSG; }
+	{
+		return hasSG;
+	}
 
 	const StreamVertex&
 	getDefaultSlavePort() const
-	{ return getSlavePort(s2mmPort); }
+	{
+		return getSlavePort(s2mmPort);
+	}
 
 	const StreamVertex&
 	getDefaultMasterPort() const
-	{ return getMasterPort(mm2sPort); }
+	{
+		return getMasterPort(mm2sPort);
+	}
 
 private:
 	bool writeSG(const void* buf, size_t len);
@@ -107,7 +113,11 @@ private:
 	static constexpr char sgInterface[] = "M_AXI_SG";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	XAxiDma xDma;
 	bool hasSG;
@@ -115,29 +125,35 @@ private:
 	MemoryBlock sgRings;
 };
 
-
-
 class DmaFactory : public NodeFactory {
 public:
 
 	Core* create()
-	{ return new Dma; }
+	{
+		return new Dma;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Dma"; }
+	{
+		return "Dma";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 Direct Memory Access Controller"; }
+	{
+		return "Xilinx's AXI4 Direct Memory Access Controller";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_dma:"}; }
+	{
+		return {
+			"xilinx.com:ip:axi_dma:"
+		};
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

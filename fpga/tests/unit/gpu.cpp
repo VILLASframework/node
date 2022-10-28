@@ -96,7 +96,6 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 		gpu->makeAccessibleToPCIeAndVA(gpuMem0.getMemoryBlock());
 		gpu->makeAccessibleToPCIeAndVA(gpuMem1.getMemoryBlock());
 
-
 //		auto &src = bram0;
 //		auto &dst = bram1;
 
@@ -108,7 +107,6 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 
 //		auto &src = gpuMem0;
 		auto &dst = gpuMem1;
-
 
 		std::list<std::pair<std::string, std::function<void()>>> memcpyFuncs = {
 		    {"cudaMemcpy", [&]() {gpu->memcpySync(src.getMemoryBlock(), dst.getMemoryBlock(), len);}},
@@ -146,7 +144,6 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 
 		MemoryManager::getGraph().dump();
 	}
-
 
 	cr_assert(count > 0, "No BRAM found");
 }

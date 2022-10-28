@@ -21,10 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <string>
@@ -39,15 +35,22 @@ public:
 	static constexpr char delimiter	= ':';
 
 	Vlnv() :
-	    vendor(""), library(""), name(""), version("") {}
+	    vendor(""),
+	    library(""),
+	    name(""),
+	    version("")
+	{ }
 
-	Vlnv(std::string s) {
+	Vlnv(std::string s)
+	{
 		parseFromString(s);
 	}
 
 	static Vlnv
 	getWildcard()
-	{ return Vlnv(); }
+	{
+		return Vlnv();
+	}
 
 	std::string
 	toString() const;
@@ -57,7 +60,9 @@ public:
 
 	bool
 	operator!=(const Vlnv &other) const
-	{ return !(*this == other); }
+	{
+		return !(*this == other);
+	}
 
 	friend std::ostream&
 	operator<< (std::ostream &stream, const Vlnv &vlnv)
@@ -65,7 +70,7 @@ public:
 		return stream
 		        << (vlnv.vendor.empty()		? "*" : vlnv.vendor)	<< ":"
 		        << (vlnv.library.empty()	? "*" : vlnv.library)	<< ":"
-		        << (vlnv.name.empty()		? "*" : vlnv.name)		<< ":"
+		        << (vlnv.name.empty()		? "*" : vlnv.name)	<< ":"
 		        << (vlnv.version.empty()	? "*" : vlnv.version);
 	}
 
@@ -81,5 +86,3 @@ private:
 
 } /* namespace fpga */
 } /* namespace villas */
-
-/** _FPGA_VLNV_HPP_ @} */

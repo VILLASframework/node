@@ -22,10 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <xilinx/xintc.h>
@@ -36,9 +32,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class InterruptController : public Core
-{
+class InterruptController : public Core {
 public:
 	using IrqMaskType = uint32_t;
 	static constexpr int maxIrqs = 32;
@@ -49,23 +43,32 @@ public:
 
 	bool enableInterrupt(IrqMaskType mask, bool polling);
 	bool enableInterrupt(IrqPort irq, bool polling)
-	{ return enableInterrupt(1 << irq.num, polling); }
+	{
+		return enableInterrupt(1 << irq.num, polling);
+	}
 
 	bool disableInterrupt(IrqMaskType mask);
 	bool disableInterrupt(IrqPort irq)
-	{ return disableInterrupt(1 << irq.num); }
+	{
+		return disableInterrupt(1 << irq.num);
+	}
 
 	int waitForInterrupt(int irq);
 	int waitForInterrupt(IrqPort irq)
-	{ return waitForInterrupt(irq.num); }
+	{
+		return waitForInterrupt(irq.num);
+	}
 
 private:
 
 	static constexpr char registerMemory[] = "reg0";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
-
+	{
+		return {
+			registerMemory
+		};
+	}
 
 	struct Interrupt {
 		int eventFd;			// Event file descriptor
@@ -79,33 +82,39 @@ private:
 	bool polling[maxIrqs];
 };
 
-
-
 class InterruptControllerFactory : public CoreFactory {
 public:
 
 	static constexpr const char*
 	getCompatibleVlnvString()
-	{ return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"; }
+	{
+		return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:";
+	}
 
 	Core* create()
-	{ return new InterruptController; }
+	{
+		return new InterruptController;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "InterruptController"; }
+	{
+		return "InterruptController";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Xilinx's programmable interrupt controller"; }
+	{
+		return "Xilinx's programmable interrupt controller";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return Vlnv(getCompatibleVlnvString()); }
+	{
+		return Vlnv(getCompatibleVlnvString());
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */

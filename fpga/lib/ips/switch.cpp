@@ -153,7 +153,6 @@ AxiStreamSwitchFactory::configureJson(Core &ip, json_t* json_ip)
 	return true;
 }
 
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

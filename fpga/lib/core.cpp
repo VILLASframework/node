@@ -49,7 +49,6 @@ vlnvInitializationOrder = {
     Vlnv(AxiStreamSwitchFactory::getCompatibleVlnvString()),
 };
 
-
 Core::List
 CoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
@@ -61,7 +60,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	Core::List configuredIps;	// Successfully configured IPs
 	Core::List initializedIps;	// Initialized, i.e. ready-to-use IPs
-
 
 	// Parse all IP instance names and their VLNV into list `allIps`
 	const char* ipName;
@@ -150,7 +148,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			json_t* json_irq;
 			json_object_foreach(json_irqs, irqName, json_irq) {
 				const char* irqEntry = json_string_value(json_irq);
-
 
 				auto tokens = utils::tokenize(irqEntry, ":");
 				if (tokens.size() != 2) {
@@ -300,7 +297,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		initializedIps.push_back(std::move(ip));
 	}
 
-
 	loggerStatic->debug("Initialized IPs:");
 	for (auto &ip : initializedIps) {
 		loggerStatic->debug("  {}", *ip);
@@ -308,7 +304,6 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	return initializedIps;
 }
-
 
 void
 Core::dump()
@@ -324,7 +319,6 @@ Core::dump()
 	}
 }
 
-
 CoreFactory*
 CoreFactory::lookup(const Vlnv &vlnv)
 {
@@ -336,7 +330,6 @@ CoreFactory::lookup(const Vlnv &vlnv)
 	return nullptr;
 }
 
-
 uintptr_t
 Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 {
@@ -345,7 +338,6 @@ Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 
 	return translation.getLocalAddr(address);
 }
-
 
 InterruptController*
 Core::getInterruptController(const std::string &interruptName) const

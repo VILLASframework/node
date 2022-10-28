@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga
- * @{
- */
-
 #pragma once
 
 #include <villas/memory.hpp>
@@ -33,9 +29,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class Bram : public Core
-{
+class Bram : public Core {
 	friend class BramFactory;
 public:
 
@@ -43,18 +37,22 @@ public:
 
 	LinearAllocator&
 	getAllocator()
-	{ return *allocator; }
+	{
+		return *allocator;
+	}
 
 private:
 	static constexpr const char* memoryBlock = "Mem0";
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { memoryBlock }; }
+	{
+		return {
+			memoryBlock
+		};
+	}
 
 	size_t size;
 	std::unique_ptr<LinearAllocator> allocator;
 };
-
-
 
 class BramFactory : public CoreFactory {
 public:
@@ -62,23 +60,29 @@ public:
 	bool configureJson(Core &ip, json_t *json_ip);
 
 	Core* create()
-	{ return new Bram; }
+	{
+		return new Bram;
+	}
 
 	virtual std::string
 	getName() const
-	{ return "Bram"; }
+	{
+		return "Bram";
+	}
 
 	virtual std::string
 	getDescription() const
-	{ return "Block RAM"; }
+	{
+		return "Block RAM";
+	}
 
 	virtual Vlnv
 	getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_bram_ctrl:"}; }
+	{
+		return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
+	}
 };
 
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */
-
-/** @} */
