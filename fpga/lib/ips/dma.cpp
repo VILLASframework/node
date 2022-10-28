@@ -460,28 +460,22 @@ Dma::readCompleteSimple()
 	return bytesRead;
 }
 
-bool
+void
 Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 {
 	// Only symmetric mapping supported currently
 	if (isMemoryBlockAccesible(mem, s2mmInterface) and
 	   isMemoryBlockAccesible(mem, mm2sInterface))
-		return true;
+		return;
 
 	// Try mapping via FPGA-card (VFIO)
-	if (not card->mapMemoryBlock(mem)) {
-		logger->error("Memory not accessible by DMA");
-		return false;
-	}
+	if (not card->mapMemoryBlock(mem))
+		throw RuntimeError("Memory not accessible by DMA");
 
 	// Sanity-check if mapping worked, this shouldn't be neccessary
 	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
-	    not isMemoryBlockAccesible(mem, mm2sInterface)) {
-		logger->error("Mapping memory via card didn't work, but reported success?!");
-		return false;
-	}
-
-	return true;
+	    not isMemoryBlockAccesible(mem, mm2sInterface))
+		throw RuntimeError("Mapping memory via card didn't work, but reported success?!");
 }
 
 bool
