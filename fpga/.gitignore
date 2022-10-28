@@ -5,3 +5,4 @@ build/
 *.o
 *.so
 *.user
+graph.dot
