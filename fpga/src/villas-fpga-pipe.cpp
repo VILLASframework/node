@@ -147,15 +147,13 @@ int main(int argc, char* argv[])
 
 		auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>
 					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:aurora_8b10b:")));
-
-		auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
-					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-
 		if (aurora == nullptr) {
 			logger->error("No Aurora interface found on FPGA");
 			return 1;
 		}
 
+		auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>
+					(card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
 		if (dma == nullptr) {
 			logger->error("No DMA found on FPGA ");
 			return 1;
@@ -163,14 +161,12 @@ int main(int argc, char* argv[])
 
 		aurora->dump();
 
-		aurora->connect(aurora->getMasterPort(aurora->masterPort),
-					dma->getSlavePort(dma->s2mmPort));
-
-		dma->connect(dma->getMasterPort(dma->mm2sPort),
-					aurora->getSlavePort(aurora->slavePort));
+		// Configure Crossbar switch
+		aurora->connect(aurora->getDefaultMasterPort(), dma->getSlavePort(dma->s2mmPort));
+		dma->connect(dma->getMasterPort(dma->mm2sPort), aurora->getDefaultSlavePort());
 
 		auto &alloc = villas::HostRam::getAllocator();
-		auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
+		auto mem = alloc.allocate<int32_t>(0x100);
 		auto block = mem.getMemoryBlock();
 
 		dma->makeAccesibleFromVA(block);
@@ -179,31 +175,29 @@ int main(int argc, char* argv[])
 		mm.getGraph().dump("graph.dot");
 
 		while (true) {
-			dma->read(block, block.getSize());
-			const size_t bytesRead = dma->readComplete();
-			const size_t valuesRead = bytesRead / sizeof(int32_t);
-
-			for (size_t i = 0; i < valuesRead; i++) {
-				std::cerr << mem[i] << ";";
-			}
-			std::cerr << std::endl;
-
 			std::string line;
 			std::getline(std::cin, line);
 			auto values = villas::utils::tokenize(line, ";");
 
-			size_t memIdx = 0;
-
+			size_t i = 0;
 			for (auto &value: values) {
 				if (value.empty()) continue;
 
 				const int32_t number = std::stoi(value);
-				mem[memIdx++] = number;
+				mem[i++] = number;
 			}
 
-			bool state = dma->write(block, memIdx * sizeof(int32_t));
+			bool state = dma->write(block, i * sizeof(int32_t));
 			if (!state)
 				logger->error("Failed to write to device");
+
+			dma->read(block, block.getSize());
+			const size_t bytesRead = dma->readComplete();
+			const size_t valuesRead = bytesRead / sizeof(int32_t);
+
+			for (size_t i = 0; i < valuesRead; i++)
+				std::cerr << mem[i] << ";";
+			std::cerr << std::endl;
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
