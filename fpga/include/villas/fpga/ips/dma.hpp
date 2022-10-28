@@ -47,12 +47,12 @@ public:
 
 	size_t writeComplete()
 	{
-		return hasScatterGather() ? writeCompleteSG() : writeCompleteSimple();
+		return hasScatterGather() ? writeCompleteScatterGather() : writeCompleteSimple();
 	}
 
 	size_t readComplete()
 	{
-		return hasScatterGather() ? readCompleteSG() : readCompleteSimple();
+		return hasScatterGather() ? readCompleteScatterGather() : readCompleteSimple();
 	}
 
 	bool memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len);
@@ -79,18 +79,21 @@ public:
 	}
 
 private:
-	bool writeSG(const void* buf, size_t len);
-	bool readSG(void* buf, size_t len);
-	size_t writeCompleteSG();
-	size_t readCompleteSG();
+	bool writeScatterGather(const void* buf, size_t len);
+	bool readScatterGather(void* buf, size_t len);
+	size_t writeCompleteScatterGather();
+	size_t readCompleteScatterGather();
 
 	bool writeSimple(const void* buf, size_t len);
 	bool readSimple(void* buf, size_t len);
 	size_t writeCompleteSimple();
 	size_t readCompleteSimple();
 
-	void setupRingRx();
-	void setupRingTx();
+	void setupScatterGather();
+	void setupScatterGatherRingRx();
+	void setupScatterGatherRingTx();
+
+	static constexpr size_t ringSize = sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS * 1024;
 
 public:
 	static constexpr const char* s2mmPort = "S2MM";
@@ -122,7 +125,11 @@ private:
 	XAxiDma xDma;
 	bool hasSG;
 
-	MemoryBlock sgRings;
+	int delay;
+	int coalesce;
+
+	MemoryBlock::UniquePtr sgRingTx;
+	MemoryBlock::UniquePtr sgRingRx;
 };
 
 class DmaFactory : public NodeFactory {
@@ -148,9 +155,7 @@ public:
 	virtual Vlnv
 	getCompatibleVlnv() const
 	{
-		return {
-			"xilinx.com:ip:axi_dma:"
-		};
+		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
 };
 

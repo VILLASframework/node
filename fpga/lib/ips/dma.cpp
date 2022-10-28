@@ -43,6 +43,9 @@ static DmaFactory factory;
 bool
 Dma::init()
 {
+	coalesce = 1;
+	delay = 0;
+
 	// If there is a scatter-gather interface, then this instance has it
 	hasSG = busMasterInterfaces.count(sgInterface) == 1;
 	logger->info("Scatter-Gather support: {}", hasScatterGather());
@@ -64,6 +67,7 @@ Dma::init()
 	xdma_cfg.S2MmBurstSize = 16;
 	xdma_cfg.MicroDmaMode = 0;
 	xdma_cfg.AddrWidth = 32;
+	xdma_cfg.SgLengthWidth = 14;
 
 	if (XAxiDma_CfgInitialize(&xDma, &xdma_cfg) != XST_SUCCESS) {
 		logger->error("Cannot initialize Xilinx DMA driver");
@@ -79,15 +83,7 @@ Dma::init()
 
 	// Map buffer descriptors
 	if (hasScatterGather()) {
-		auto &alloc = villas::HostRam::getAllocator();
-		auto mem = alloc.allocate<uint8_t>(0x2000);
-
-		sgRings = mem.getMemoryBlock();
-
-		makeAccesibleFromVA(sgRings);
-
-		setupRingRx();
-		setupRingTx();
+		setupScatterGather();
 	}
 
 	// Enable completion interrupts for both channels
@@ -100,138 +96,105 @@ Dma::init()
 	return true;
 }
 
-void Dma::setupRingRx()
+void Dma::setupScatterGather()
 {
-	XAxiDma_BdRing *RxRingPtr;
-
-	int Delay = 0;
-	int Coalesce = 1;
-	int Status;
-
-	XAxiDma_Bd BdTemplate;
-	XAxiDma_Bd *BdPtr;
-	XAxiDma_Bd *BdCurPtr;
-
-	u32 BdCount;
-	u32 FreeBdCount;
-	UINTPTR RxBufferPtr;
-	int Index;
-
-	RxRingPtr = XAxiDma_GetRxRing(&xDma);
-
-	/* Disable all RX interrupts before RxBD space setup */
-	XAxiDma_BdRingIntDisable(RxRingPtr, XAXIDMA_IRQ_ALL_MASK);
-
-	/* Set delay and coalescing */
-	XAxiDma_BdRingSetCoalesce(RxRingPtr, Coalesce, Delay);
-
-	/* Setup Rx BD space */
-	BdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, 0x1000);
-
-	Status = XAxiDma_BdRingCreate(RxRingPtr, sgRings., RX_BD_SPACE_BASE, XAXIDMA_BD_MINIMUM_ALIGNMENT, BdCount);
-
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("RX create BD ring failed {}", Status);
-
-	/*
-	 * Setup an all-zero BD as the template for the Rx channel.
-	 */
-	XAxiDma_BdClear(&BdTemplate);
-
-	Status = XAxiDma_BdRingClone(RxRingPtr, &BdTemplate);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("RX clone BD failed {}", Status);
-
-	/* Attach buffers to RxBD ring so we are ready to receive packets */
-
-	FreeBdCount = XAxiDma_BdRingGetFreeCnt(RxRingPtr);
-
-	Status = XAxiDma_BdRingAlloc(RxRingPtr, FreeBdCount, &BdPtr);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("RX alloc BD failed {}", Status);
-
-	BdCurPtr = BdPtr;
-	RxBufferPtr = RX_BUFFER_BASE;
-	for (Index = 0; Index < FreeBdCount; Index++) {
-		Status = XAxiDma_BdSetBufAddr(BdCurPtr, RxBufferPtr);
-
-		if (Status != XST_SUCCESS)
-			throw RuntimeError("Set buffer addr {} on BD {} failed {}", (unsigned int)RxBufferPtr, (UINTPTR)BdCurPtr, Status);
-
-		Status = XAxiDma_BdSetLength(BdCurPtr, MAX_PKT_LEN, RxRingPtr->MaxTransferLen);
-		if (Status != XST_SUCCESS)
-			throw RuntimeError("Rx set length {} on BD {} failed {}", MAX_PKT_LEN, (UINTPTR)BdCurPtr, Status);
-
-		/* Receive BDs do not need to set anything for the control
-		 * The hardware will set the SOF/EOF bits per stream status
-		 */
-		XAxiDma_BdSetCtrl(BdCurPtr, 0);
-		XAxiDma_BdSetId(BdCurPtr, RxBufferPtr);
-
-		RxBufferPtr += MAX_PKT_LEN;
-		BdCurPtr = (XAxiDma_Bd *)XAxiDma_BdRingNext(RxRingPtr, BdCurPtr);
-	}
-
-	/* Clear the receive buffer, so we can verify data
-	 */
-	memset((void *)RX_BUFFER_BASE, 0, MAX_PKT_LEN);
-
-	Status = XAxiDma_BdRingToHw(RxRingPtr, FreeBdCount, BdPtr);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("RX submit hw failed {}", Status);
-
-	/* Start RX DMA channel */
-	Status = XAxiDma_BdRingStart(RxRingPtr);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("RX start hw failed {}", Status);
+	setupScatterGatherRingRx();
+	setupScatterGatherRingTx();
 }
 
-void Dma::setupRingTx()
+void Dma::setupScatterGatherRingRx()
 {
-	XAxiDma_BdRing *TxRingPtr;
+	int ret;
+
+	auto *rxRingPtr = XAxiDma_GetRxRing(&xDma);
+
+	// Disable all RX interrupts before RxBD space setup
+	XAxiDma_BdRingIntDisable(rxRingPtr, XAXIDMA_IRQ_ALL_MASK);
+
+	// Set delay and coalescing
+	XAxiDma_BdRingSetCoalesce(rxRingPtr, coalesce, delay);
+
+	// Allocate and map space for BD ring in host RAM
+	auto &alloc = villas::HostRam::getAllocator();
+	sgRingRx = alloc.allocateBlock(ringSize);
+
+	if (not card->mapMemoryBlock(*sgRingRx))
+		throw RuntimeError("Memory not accessible by DMA");
+
+	auto &mm = MemoryManager::get();
+	auto trans = mm.getTranslation(busMasterInterfaces[sgInterface], sgRingRx->getAddrSpaceId());
+	auto physAddr = reinterpret_cast<uintptr_t>(trans.getLocalAddr(0));
+	auto virtAddr = reinterpret_cast<uintptr_t>(mm.getTranslationFromProcess(sgRingRx->getAddrSpaceId()).getLocalAddr(0));
+
+	// Setup Rx BD space
+	auto bdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, sgRingRx->getSize());
+
+	ret = XAxiDma_BdRingCreate(rxRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, bdCount);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to create RX ring: {}", ret);
+
+	// Setup an all-zero BD as the template for the Rx channel.
+	XAxiDma_Bd bdTemplate;
+	XAxiDma_BdClear(&bdTemplate);
+
+	ret = XAxiDma_BdRingClone(rxRingPtr, &bdTemplate);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to clone BD template: {}", ret);
+
+	// Start the RX channel
+	ret = XAxiDma_BdRingStart(rxRingPtr);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to start TX ring: {}", ret);
+}
+
+void Dma::setupScatterGatherRingTx()
+{
+	int ret;
+
+	auto *txRingPtr = XAxiDma_GetTxRing(&xDma);
+
+	// Disable all TX interrupts before TxBD space setup
+	XAxiDma_BdRingIntDisable(txRingPtr, XAXIDMA_IRQ_ALL_MASK);
+
+	// Set TX delay and coalesce
+	XAxiDma_BdRingSetCoalesce(txRingPtr, coalesce, delay);
+
+	// Allocate and map space for BD ring in host RAM
+	auto &alloc = villas::HostRam::getAllocator();
+	sgRingTx = alloc.allocateBlock(ringSize);
+
+	if (not card->mapMemoryBlock(*sgRingTx))
+		throw RuntimeError("Memory not accessible by DMA");
+
+	auto &mm = MemoryManager::get();
+	auto trans = mm.getTranslation(busMasterInterfaces[sgInterface], sgRingTx->getAddrSpaceId());
+	auto physAddr = reinterpret_cast<uintptr_t>(trans.getLocalAddr(0));
+	auto virtAddr = reinterpret_cast<uintptr_t>(mm.getTranslationFromProcess(sgRingTx->getAddrSpaceId()).getLocalAddr(0));
+
+	// Setup TxBD space
+	auto bdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, sgRingTx->getSize());
+
+	ret = XAxiDma_BdRingCreate(txRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, bdCount);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to create TX BD ring: {}", ret);
+
+	// We create an all-zero BD as the template.
 	XAxiDma_Bd BdTemplate;
-
-	int Delay = 0;
-	int Coalesce = 1;
-
-	int Status;
-	u32 BdCount;
-
-	TxRingPtr = XAxiDma_GetTxRing(&xDma);
-
-	/* Disable all TX interrupts before TxBD space setup */
-	XAxiDma_BdRingIntDisable(TxRingPtr, XAXIDMA_IRQ_ALL_MASK);
-
-	/* Set TX delay and coalesce */
-	XAxiDma_BdRingSetCoalesce(TxRingPtr, Coalesce, Delay);
-
-	/* Setup TxBD space  */
-	BdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, TX_BD_SPACE_HIGH - TX_BD_SPACE_BASE + 1);
-
-	Status = XAxiDma_BdRingCreate(TxRingPtr, TX_BD_SPACE_BASE, TX_BD_SPACE_BASE, XAXIDMA_BD_MINIMUM_ALIGNMENT, BdCount);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("failed create BD ring in txsetup");
-
-	/*
-	 * We create an all-zero BD as the template.
-	 */
 	XAxiDma_BdClear(&BdTemplate);
 
-	Status = XAxiDma_BdRingClone(TxRingPtr, &BdTemplate);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("failed bdring clone in txsetup {}", Status);
+	ret = XAxiDma_BdRingClone(txRingPtr, &BdTemplate);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to clone TX ring BD: {}", ret);
 
-	/* Start the TX channel */
-	Status = XAxiDma_BdRingStart(TxRingPtr);
-	if (Status != XST_SUCCESS)
-		throw RuntimeError("failed start bdring txsetup {}", Status);
+	// Start the TX channel
+	ret = XAxiDma_BdRingStart(txRingPtr);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to start TX ring: {}", ret);
 }
 
 bool
 Dma::reset()
 {
-	logger->info("DMA resetted");
-
 	XAxiDma_Reset(&xDma);
 
 	// Value taken from libxil implementation
@@ -243,6 +206,8 @@ Dma::reset()
 
 		timeout--;
 	}
+
+	logger->info("DMA resetted");
 
 	return false;
 }
@@ -274,63 +239,159 @@ Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 bool
 Dma::write(const MemoryBlock &mem, size_t len)
 {
+	if (len == 0)
+		return true;
+
+	if (len > FPGA_DMA_BOUNDARY)
+		return false;
+
 	auto &mm = MemoryManager::get();
 
 	// User has to make sure that memory is accessible, otherwise this will throw
-	auto translation = mm.getTranslation(busMasterInterfaces[mm2sInterface],
-	                                     mem.getAddrSpaceId());
-	const void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
+	auto trans = mm.getTranslation(busMasterInterfaces[mm2sInterface], mem.getAddrSpaceId());
+	const void *buf = reinterpret_cast<void*>(trans.getLocalAddr(0));
+	if (buf == nullptr)
+		throw RuntimeError("Buffer was null");
 
 	logger->debug("Write to stream from address {:p}", buf);
-	return hasScatterGather() ? writeSG(buf, len) : writeSimple(buf, len);
+
+	return hasScatterGather() ? writeScatterGather(buf, len) : writeSimple(buf, len);
 }
 
 bool
 Dma::read(const MemoryBlock &mem, size_t len)
 {
+	if (len == 0)
+		return true;
+
+	if (len > FPGA_DMA_BOUNDARY)
+		return false;
+
 	auto &mm = MemoryManager::get();
 
 	// User has to make sure that memory is accessible, otherwise this will throw
-	auto translation = mm.getTranslation(busMasterInterfaces[s2mmInterface],
-	                                     mem.getAddrSpaceId());
-	void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
+	auto trans = mm.getTranslation(busMasterInterfaces[s2mmInterface], mem.getAddrSpaceId());
+	void *buf = reinterpret_cast<void*>(trans.getLocalAddr(0));
+	if (buf == nullptr)
+		throw RuntimeError("Buffer was null");
 
 	logger->debug("Read from stream and write to address {:p}", buf);
-	return hasScatterGather() ? readSG(buf, len) : readSimple(buf, len);
+
+	return hasScatterGather() ? readScatterGather(buf, len) : readSimple(buf, len);
 }
 
 bool
-Dma::writeSG(const void* buf, size_t len)
+Dma::writeScatterGather(const void* buf, size_t len)
 {
-	(void) buf;
-	(void) len;
-	logger->error("DMA Scatter Gather write not implemented");
+	// buf is address from view of DMA controller
 
-	return false;
+	int ret = XST_FAILURE;
+
+	auto *txRing = XAxiDma_GetTxRing(&xDma);
+	if (txRing == nullptr)
+		throw RuntimeError("TxRing was null.");
+
+	XAxiDma_Bd *bd;
+	ret = XAxiDma_BdRingAlloc(txRing, 1, &bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("BdRingAlloc returned {}.", ret);
+
+	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Setting BdBufAddr to {} returned {}.", buf, ret);
+
+	ret = XAxiDma_BdSetLength(bd, len, txRing->MaxTransferLen);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Setting BdBufLength to {} returned {}.", len, ret);
+
+	// We have a single descriptor so it is both start and end of the list
+	XAxiDma_BdSetCtrl(bd, XAXIDMA_BD_CTRL_TXEOF_MASK | XAXIDMA_BD_CTRL_TXSOF_MASK);
+
+	// TODO: Check if we really need this
+	XAxiDma_BdSetId(bd, (uintptr_t) buf);
+
+	// Give control of BD to HW. We should not access it until transfer is finished.
+	// Failure could also indicate that EOF is not set on last Bd
+	ret = XAxiDma_BdRingToHw(txRing, 1, bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Enqueuing Bd and giving control to HW failed {}", ret);
+
+	return true;
 }
 
 bool
-Dma::readSG(void* buf, size_t len)
+Dma::readScatterGather(void* buf, size_t len)
 {
-	(void) buf;
-	(void) len;
-	logger->error("DMA Scatter Gather read not implemented");
+	int ret = XST_FAILURE;
 
-	return false;
+	auto *rxRing = XAxiDma_GetRxRing(&xDma);
+	if (rxRing == nullptr)
+		throw RuntimeError("RxRing was null.");
+
+	XAxiDma_Bd *bd;
+	ret = XAxiDma_BdRingAlloc(rxRing, 1, &bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to alloc BD in RX ring: {}", ret);
+
+	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t) buf, (uintptr_t) bd, ret);
+
+	ret = XAxiDma_BdSetLength(bd, len, rxRing->MaxTransferLen);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t) bd, ret);
+
+	// Receive BDs do not need to set anything for the control
+	// The hardware will set the SOF/EOF bits per stream status
+	XAxiDma_BdSetCtrl(bd, 0);
+
+	ret = XAxiDma_BdRingToHw(rxRing, 1, bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to submit BD to RX ring: {}", ret);
+
+	return true;
 }
 
 size_t
-Dma::writeCompleteSG()
+Dma::writeCompleteScatterGather()
 {
-	logger->error("DMA Scatter Gather write not implemented");
+	XAxiDma_Bd *bd;
+	size_t processedBds = 0;
+	auto txRing = XAxiDma_GetTxRing(&xDma);
+	int ret = XST_FAILURE;
 
-	return 0;
+	// Poll until the one BD TX transaction is done.
+	while ((processedBds = XAxiDma_BdRingFromHw(txRing, XAXIDMA_ALL_BDS, &bd)) == 0) {}
+
+	if (bd == nullptr)
+		throw RuntimeError("BD was null");
+
+	// Free all processed TX BDs for future transmission.
+	ret = XAxiDma_BdRingFree(txRing, processedBds, bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to free {} TX BDs {}", processedBds, ret);
+
+	return processedBds;
 }
 
 size_t
-Dma::readCompleteSG()
+Dma::readCompleteScatterGather()
 {
-	logger->error("DMA Scatter Gather read not implemented");
+	XAxiDma_Bd *bd;
+	size_t processedBds = 0;
+	auto rxRing = XAxiDma_GetRxRing(&xDma);
+	int ret = XST_FAILURE;
+
+	// Wait until the data has been received by the Rx channel.
+	while ((processedBds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd)) == 0) { }
+
+	if (bd == nullptr)
+		throw RuntimeError("BdPtr was null.");
+
+	// Free all processed RX BDs for future transmission.
+	ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to free {} TX BDs {}.", processedBds, ret);
 
 	return 0;
 }
@@ -340,17 +401,13 @@ Dma::writeSimple(const void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 
-	if ((len == 0) || (len > FPGA_DMA_BOUNDARY))
-		return false;
-
 	if (not ring->HasDRE) {
 		const uint32_t mask = xDma.MicroDmaMode
 		                      ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
 		                      : ring->DataWidth - 1;
 
-		if (reinterpret_cast<uintptr_t>(buf) & mask) {
+		if (reinterpret_cast<uintptr_t>(buf) & mask)
 			return false;
-		}
 	}
 
 	const bool dmaChannelHalted =
@@ -359,19 +416,17 @@ Dma::writeSimple(const void *buf, size_t len)
 	const bool dmaToDeviceBusy = XAxiDma_Busy(&xDma, XAXIDMA_DMA_TO_DEVICE);
 
 	// If the engine is doing a transfer, cannot submit
-	if (not dmaChannelHalted and dmaToDeviceBusy) {
+	if (not dmaChannelHalted and dmaToDeviceBusy)
 		return false;
-	}
 
 	// Set lower 32 bit of source address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_OFFSET,
 	                 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
 	// If neccessary, set upper 32 bit of source address
-	if (xDma.AddrWidth > 32) {
+	if (xDma.AddrWidth > 32)
 		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_MSB_OFFSET,
 		                 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
-	}
 
 	// Start DMA channel
 	auto channelControl = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_CR_OFFSET);
@@ -389,17 +444,13 @@ Dma::readSimple(void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 
-	if ((len == 0) || (len > FPGA_DMA_BOUNDARY))
-		return false;
-
 	if (not ring->HasDRE) {
 		const uint32_t mask = xDma.MicroDmaMode
 		                      ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
 		                      : ring->DataWidth - 1;
 
-		if (reinterpret_cast<uintptr_t>(buf) & mask) {
+		if (reinterpret_cast<uintptr_t>(buf) & mask)
 			return false;
-		}
 	}
 
 	const bool dmaChannelHalted =
@@ -408,9 +459,8 @@ Dma::readSimple(void *buf, size_t len)
 	const bool deviceToDmaBusy = XAxiDma_Busy(&xDma, XAXIDMA_DEVICE_TO_DMA);
 
 	// If the engine is doing a transfer, cannot submit
-	if (not dmaChannelHalted and deviceToDmaBusy) {
+	if (not dmaChannelHalted and deviceToDmaBusy)
 		return false;
-	}
 
 	// Set lower 32 bit of destination address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET,
@@ -499,6 +549,10 @@ Dma::dump()
 
 	logger->info("S2MM_DMACR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_CR_OFFSET));
 	logger->info("S2MM_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_SR_OFFSET));
-	logger->info("S2MM_LENGTH: {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_BUFFLEN_OFFSET));
-}
 
+	if (!hasScatterGather())
+		logger->info("S2MM_LENGTH: {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_BUFFLEN_OFFSET));
+
+	logger->info("MM2S_DMACR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_CR_OFFSET));
+	logger->info("MM2S_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_SR_OFFSET));
+}
