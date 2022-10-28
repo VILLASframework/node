@@ -541,7 +541,6 @@ Device::pciHotReset()
 
 	reset_info->argsz = reset_info_len;
 
-
 	if (ioctl(this->fd, VFIO_DEVICE_GET_PCI_HOT_RESET_INFO, reset_info) != 0) {
 		delete[] reset_info_buf;
 		return false;
@@ -586,7 +585,6 @@ Device::pciHotReset()
 
 	return success;
 }
-
 
 int
 Device::pciMsiInit(int efds[])
