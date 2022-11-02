@@ -90,8 +90,10 @@ Dma::init()
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], true);
-	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], true);
+	// write interrupt
+	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], false);
+	// read interrupt
+	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], false);
 
 	return true;
 }
@@ -355,24 +357,36 @@ Dma::readScatterGather(void* buf, size_t len)
 size_t
 Dma::writeCompleteScatterGather()
 {
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bd = nullptr, *curBd;
 	size_t processedBds = 0;
 	auto txRing = XAxiDma_GetTxRing(&xDma);
 	int ret = XST_FAILURE;
+	size_t bytesWritten = 0;
 
-	// Poll until the one BD TX transaction is done.
-	// TODO: Use IRQs
-	while ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0) {}
+	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0) {
+ 		irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+		processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd);
+	}
 
 	if (bd == nullptr)
-		throw RuntimeError("BD was null");
+		throw RuntimeError("Bd was null.");
 
-	auto bytesWritten = XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
-
-	// Free all processed TX BDs for future transmission.
+	curBd = bd;
+	for (size_t i = 0; i < processedBds; i++) {
+		ret = XAxiDma_BdGetSts(curBd);
+		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+			throw RuntimeError("Bd Status register shows error: {}", ret);
+			break;
+		}
+		bytesWritten += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
+		curBd = (XAxiDma_Bd*)XAxiDma_BdRingNext(txRing, curBd);
+	}
+	
 	ret = XAxiDma_BdRingFree(txRing, processedBds, bd);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		// a comment so i can use curly braces
 		throw RuntimeError("Failed to free {} TX BDs {}", processedBds, ret);
+	}
 
 	return bytesWritten;
 }
@@ -380,19 +394,32 @@ Dma::writeCompleteScatterGather()
 size_t
 Dma::readCompleteScatterGather()
 {
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bd = nullptr, *curBd;
 	size_t processedBds = 0;
 	auto rxRing = XAxiDma_GetRxRing(&xDma);
 	int ret = XST_FAILURE;
+	size_t bytesRead = 0;
 
 	// Wait until the data has been received by the RX channel.
-	// TODO: Use IRQs
-	while ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0) { }
-
-	auto bytesRead = XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
+	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0) {
+ 		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+		processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd);
+	}
 
 	if (bd == nullptr)
 		throw RuntimeError("Bd was null.");
+
+	curBd = bd;
+	for (size_t i = 0; i < processedBds; i++) {
+		ret = XAxiDma_BdGetSts(curBd);
+		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+			throw RuntimeError("Bd Status register shows error: {}", ret);
+			break;
+		}
+		bytesRead += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
+		curBd = (XAxiDma_Bd*)XAxiDma_BdRingNext(rxRing, curBd);
+	}
+	
 
 	// Free all processed RX BDs for future transmission.
 	ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
