@@ -181,13 +181,13 @@ int ExecNode::_write(struct Sample * smps[], unsigned cnt)
 
 const std::string & ExecNode::getDetails()
 {
-	std::string wd = working_dir;
-	if (wd.empty()) {
-		char buf[128];
-		wd = getcwd(buf, sizeof(buf));
-	}
-
 	if (details.empty()) {
+		std::string wd = working_dir;
+		if (wd.empty()) {
+			char buf[128];
+			wd = getcwd(buf, sizeof(buf));
+		}
+
 		details = fmt::format("exec={}, shell={}, flush={}, #environment={}, #arguments={}, working_dir={}",
 			command,
 			shell ? "yes" : "no",
