@@ -20,7 +20,7 @@
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 
-#include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/card.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/vlnv.hpp>
 #include <villas/fpga/ips/dma.hpp>
@@ -30,12 +30,9 @@ using namespace villas::node;
 using namespace villas::fpga;
 using namespace villas::utils;
 
-/* Forward declartions */
-static struct NodeCompatType p;
-
 /* Global state */
 static fpga::Card::List cards;
-static std::map<fpga::ip::Dma, struct fpga *> dmaMap;
+static std::map<fpga::ip::Dma, FpgaNode *> dmaMap;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
@@ -43,8 +40,8 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 using namespace villas;
 using namespace villas::node;
 
-FpgaNode::FpgaNode(struct vnode *n) :
-	Node(n),
+FpgaNode::FpgaNode(const std::string &name) :
+	Node(name),
 	irqFd(-1),
 	coalesce(0),
 	polling(true)
@@ -53,39 +50,11 @@ FpgaNode::FpgaNode(struct vnode *n) :
 FpgaNode::~FpgaNode()
 { }
 
-int FpgaNode::typeStart(node::SuperNode *sn)
+int FpgaNode::parse(json_t *cfg, const uuid_t sn_uuid)
 {
-	vfioContainer = kernel::vfio::Container::create();
-	pciDevices = std::make_shared<kernel::pci::DeviceList>();
-
-	// get the FPGA card plugin
-	auto pcieCardPlugin = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-	if (!pcieCardPlugin)
-		throw RuntimeError("No FPGA PCIe plugin found");
-
-	json_t *json_cfg = sn->getConfig();
-	json_t *json_fpgas = json_object_get(json_cfg, "fpgas");
-	if (!json_fpgas)
-		throw ConfigError(json, "node-config-fpgas", "No section 'fpgas' found in config");
-
-	// create all FPGA card instances using the corresponding plugin
-	auto cards = CardFactory::make(json_fpgas, pciDevices, vfioContainer);
-
-	cards.splice(cards.end(), cards);
-
-	return 0;
-}
-
-int FpgaNode::typeStop()
-{
-	vfioContainer.reset(); // TODO: is this the proper way?
-
-	return 0;
-}
-
-int FpgaNode::parse(json_t *cfg)
-{
-	int ret;
+	int ret = Node::parse(cfg, sn_uuid);
+	if (ret)
+		return ret;
 
 	json_error_t err;
 
@@ -94,7 +63,7 @@ int FpgaNode::parse(json_t *cfg)
 	const char *dma = nullptr;
 	int poll = polling;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
 		"card", &card,
 		"interface", &intf,
 		"dma", &dma,
@@ -102,7 +71,7 @@ int FpgaNode::parse(json_t *cfg)
 		"polling", &polling
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", node_name(node));
+		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", *this);
 
 	if (card)
 		cardName = card;
@@ -118,16 +87,20 @@ int FpgaNode::parse(json_t *cfg)
 	return 0;
 }
 
-char * FpgaNode::print()
+const std::string & FpgaNode::getDetails()
 {
-	auto &cardName = card ? card->name : cardName;
+	if (details.empty()) {
+		auto &name = card ? card->name : cardName;
 
-	return strf("fpga=%s, dma=%s, if=%s, polling=%s, coalesce=%d",
-		cardName.c_str(),
-		dma->getInstanceName().c_str(),
-		polling ? "yes" : "no",
-		coalesce
-	);
+		details = fmt::format("fpga={}, dma={}, if={}, polling={}, coalesce={}",
+			name,
+			dma->getInstanceName(),
+			polling ? "yes" : "no",
+			coalesce
+		);
+	}
+
+	return details;
 }
 
 int FpgaNode::check()
@@ -137,8 +110,6 @@ int FpgaNode::check()
 
 int FpgaNode::prepare()
 {
-	int ret;
-
 	auto it = cardName.empty()
 		? cards.begin()
 		: std::find_if(cards.begin(), cards.end(), [this](const fpga::Card::Ptr &c) {
@@ -146,84 +117,107 @@ int FpgaNode::prepare()
 		});
 
 	if (it == cards.end())
-		throw ConfigError(json_object_get(cfg, "fpga"), "node-config-fpga-card", "Invalid FPGA card name: {}", cardName);
+		throw ConfigError(json_object_get(config, "fpga"), "node-config-fpga-card", "Invalid FPGA card name: {}", cardName);
 
 	card = *it;
 
-	auto intf = intfName.empty()
+	auto intfCore = intfName.empty()
 		? card->lookupIp(fpga::Vlnv(FPGA_AURORA_VLNV))
 		: card->lookupIp(intfName);
-	if (!intf)
-		throw ConfigError(cfg, "node-config-fpga-interface", "There is no interface IP with the name: {}", intfName);
+	if (!intfCore)
+		throw ConfigError(config, "node-config-fpga-interface", "There is no interface IP with the name: {}", intfName);
 
-	intf = std::dynamic_pointer_cast<fpga::ip::Node>(intf);
+	intf = std::dynamic_pointer_cast<fpga::ip::Node>(intfCore);
 	if (!intf)
 		throw RuntimeError("The IP {} is not a interface", *intf);
 
-	auto dma = dmaName.empty()
+	auto dmaCore = dmaName.empty()
 		? card->lookupIp(fpga::Vlnv(FPGA_DMA_VLNV))
 		: card->lookupIp(dmaName);
-	if (!dma)
-		throw ConfigError(cfg, "node-config-fpga-dma", "There is no DMA IP with the name: {}", dmaName);
+	if (!dmaCore)
+		throw ConfigError(config, "node-config-fpga-dma", "There is no DMA IP with the name: {}", dmaName);
 
-	dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dma);
+	dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dmaCore);
 	if (!dma)
 		throw RuntimeError("The IP {} is not a DMA controller", *dma);
 
-	ret = intf->connect(*(dma), true);
+	int ret = intf->connect(*(dma), true);
 	if (ret)
-		throw RuntimeError("Failed to connect: {} -> {}",
-			*(intf), *(dma)
-		);
+		throw RuntimeError("Failed to connect: {} -> {}", *(intf), *(dma));
 
 	auto &alloc = HostDmaRam::getAllocator();
 
-	in.mem  = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
-	out.mem = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
+	auto memRx  = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
+	auto memTx = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
 
-	in.block  = in.mem.getMemoryBlock();
-	out.block = out.mem.getMemoryBlock();
+	blockRx = std::unique_ptr<const MemoryBlock>(&memRx.getMemoryBlock());
+	blockTx = std::unique_ptr<const MemoryBlock>(&memTx.getMemoryBlock());
 
-	dma->makeAccesibleFromVA(in.block);
-	dma->makeAccesibleFromVA(out.block);
+	dma->makeAccesibleFromVA(*blockRx);
+	dma->makeAccesibleFromVA(*blockTx);
+
+	// Show some debugging infos
+	auto &mm = MemoryManager::get();
 
 	dma->dump();
 	intf->dump();
-	MemoryManager::get().getGraph().dump();
+	mm.getGraph().dump();
+
+	return Node::prepare();
+}
+
+int FpgaNode::start()
+{
+	int ret = Node::start();
+	if (!ret)
+		state = State::STARTED;
 
 	return 0;
 }
 
-int FpgaNode::read(struct sample *smps[], unsigned cnt, unsigned *release)
+int FpgaNode::stop()
+{
+	int ret = Node::stop();
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int FpgaNode::_read(Sample *smps[], unsigned cnt)
 {
 	unsigned read;
-		struct sample *smp = smps[0];
+	Sample *smp = smps[0];
 
 	assert(cnt == 1);
 
-	dma->read(in.block, in.block.getSize()); // TODO: calc size
+	dma->read(*blockRx, blockRx->getSize()); // TODO: calc size
 	const size_t bytesRead = dma->readComplete();
 	read = bytesRead / sizeof(int32_t);
 
-	for (unsigned i = 0; i < MIN(read, smp->capacity); i++)
-		smp->data[i].i = in.mem[i];
+	auto mem = MemoryAccessor<uint32_t>(*blockRx);
 
-	smp->signals = &node->in.signals;
+	for (unsigned i = 0; i < MIN(read, smp->capacity); i++)
+		smp->data[i].i = mem[i];
+
+	smp->signals = in.signals;
 
 	return read;
 }
 
-int FpgaNode::write(struct sample *smps[], unsigned cnt, unsigned *release)
+int FpgaNode::_write(Sample *smps[], unsigned cnt)
 {
 	int written;
-		struct sample *smp = smps[0];
+	Sample *smp = smps[0];
 
 	assert(cnt == 1);
 
-	for (unsigned i = 0; i < smps[0]->length; i++)
-		out.mem[i] = smps[0]->data[i].i;
+	auto mem = MemoryAccessor<uint32_t>(*blockTx);
 
-	bool state = dma->write(out.block, smp->length * sizeof(int32_t));
+	for (unsigned i = 0; i < smps[0]->length; i++)
+		mem[i] = smps[0]->data[i].i;
+
+	bool state = dma->write(*blockTx, smp->length * sizeof(int32_t));
 	if (!state)
 		return -1;
 
@@ -232,17 +226,44 @@ int FpgaNode::write(struct sample *smps[], unsigned cnt, unsigned *release)
 	return written;
 }
 
-int FpgaNode::pollFDs(int fds[])
+std::vector<int> FpgaNode::getPollFDs()
 {
-	if (polling)
-		return 0;
-	else {
-		fds[0] = irqFd;
+	std::vector<int> fds;
 
-		return 1; /* The number of file descriptors which have been set in fds */
-	}
+	if (!polling)
+		fds.push_back(irqFd);
+
+	return fds;
 }
 
-static char n[] = "fpga";
-static char d[] = "VILLASfpga";
-static NodePlugin<FpgaNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL> p;
+int FpgaNodeFactory::start(SuperNode *sn)
+{
+	vfioContainer = kernel::vfio::Container::create();
+	pciDevices = std::make_shared<kernel::pci::DeviceList>();
+
+	// get the FPGA card plugin
+	auto pcieCardPlugin = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
+	if (!pcieCardPlugin)
+		throw RuntimeError("No FPGA PCIe plugin found");
+
+	json_t *json_cfg = sn->getConfig();
+	json_t *json_fpgas = json_object_get(json_cfg, "fpgas");
+	if (!json_fpgas)
+		throw ConfigError(json_cfg, "node-config-fpgas", "No section 'fpgas' found in config");
+
+	// create all FPGA card instances using the corresponding plugin
+	auto cards = fpga::PCIeCardFactory::make(json_fpgas, pciDevices, vfioContainer);
+
+	cards.splice(cards.end(), cards);
+
+	return 0;
+}
+
+int FpgaNodeFactory::stop()
+{
+	vfioContainer.reset(); // TODO: is this the proper way?
+
+	return 0;
+}
+
+static FpgaNodeFactory p;
