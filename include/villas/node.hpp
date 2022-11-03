@@ -411,14 +411,12 @@ public:
 		return 0;
 	}
 
-	bool
-	isInternal() const
+	bool isInternal() const
 	{
 		return getFlags() & (int) Flags::INTERNAL;
 	}
 
-	bool
-	isHidden() const
+	bool isHidden() const
 	{
 		return isInternal() || getFlags() & (int) Flags::HIDDEN;
 	}
