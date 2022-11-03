@@ -20,14 +20,8 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
-class NodeCompat;
-
-using namespace villas;
-
 #define FPGA_DMA_VLNV
 #define FPGA_AURORA_VLNV "acs.eonerc.rwth-aachen.de:user:aurora_axis:"
-
 
 class FpgaNode : public Node {
 
@@ -41,49 +35,84 @@ protected:
 	std::shared_ptr<fpga::ip::Dma> dma;
 	std::shared_ptr<fpga::ip::Node> intf;
 
-	struct {
-		struct {
-			MemoryAccessor<int32_t> i;
-			MemoryAccessor<float> f;
-		} accessor;
-		MemoryBlock::Ptr block;
-	} in, out;
+	std::unique_ptr<const MemoryBlock> blockRx;
+	std::unique_ptr<const MemoryBlock> blockTx;
 
 	// Config only
 	std::string cardName;
 	std::string intfName;
 	std::string dmaName;
 
+protected:
+	virtual int
+	_read(Sample *smps[], unsigned cnt);
+
+	virtual int
+	_write(Sample *smps[], unsigned cnt);
+
 public:
-	FpgaNode();
+	FpgaNode(const std::string &name = "");
 	virtual ~FpgaNode();
 
-	static int
-	typeStart(node::SuperNode *sn);
+	virtual
+	int parse(json_t *cfg, const uuid_t sn_uuid);
 
-	static int
-	typeStop();
+	virtual
+	const std::string & getDetails();
 
-	virtual int
-	parse(json_t *cfg);
+	virtual
+	int check();
 
-	virtual char *
-	print();
+	virtual
+	int prepare();
 
-	virtual int
-	check();
+	virtual
+	int start();
 
-	virtual int
-	prepare();
+	virtual
+	int stop();
 
-	virtual int
-	read(struct sample *smps[], unsigned cnt, unsigned *release);
+	virtual
+	std::vector<int> getPollFDs();
+};
 
-	virtual int
-	write(struct sample *smps[], unsigned cnt, unsigned *release);
 
-	virtual int
-	pollFDs(int fds[]);
+class FpgaNodeFactory : public NodeFactory {
+
+public:
+	using NodeFactory::NodeFactory;
+
+	virtual
+	Node * make()
+	{
+		return new FpgaNode;
+	}
+
+	virtual
+	int getFlags() const
+	{
+		return (int) NodeFactory::Flags::SUPPORTS_READ |
+		       (int) NodeFactory::Flags::SUPPORTS_WRITE |
+		       (int) NodeFactory::Flags::SUPPORTS_POLL;
+	}
+
+	virtual
+	std::string getName() const
+	{
+		return "fpga";
+	}
+
+	virtual
+	std::string getDescription() const
+	{
+		return "VILLASfpga";
+	}
+
+	virtual
+	int start(SuperNode *sn);
+
+	virtual
+	int stop();
 };
 
 } /* namespace node */
