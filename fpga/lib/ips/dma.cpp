@@ -47,29 +47,30 @@ bool Dma::init()
 	delay = 0;
 
 	// If there is a scatter-gather interface, then this instance has it
-	hasSG = busMasterInterfaces.count(sgInterface) == 1;
-	logger->info("Scatter-Gather support: {}", hasScatterGather());
+	// hasSG = busMasterInterfaces.count(sgInterface) == 1;
+	if (hasScatterGather())
+		logger->info("Scatter-Gather support: {}", hasScatterGather());
 
-	XAxiDma_Config xdma_cfg;
+	xConfig.BaseAddr = getBaseAddr(registerMemory);
+	if (!configSet) {
+		xConfig.HasStsCntrlStrm = 0;
+		xConfig.HasMm2S = 1;
+		xConfig.HasMm2SDRE = 0;
+		xConfig.Mm2SDataWidth = 32;
+		xConfig.HasS2Mm = 1;
+		xConfig.HasS2MmDRE = 0;
+		xConfig.HasSg = hasScatterGather();
+		xConfig.S2MmDataWidth = 32;
+		xConfig.Mm2sNumChannels = 1;
+		xConfig.S2MmNumChannels = 1;
+		xConfig.Mm2SBurstSize = 16;
+		xConfig.S2MmBurstSize = 16;
+		xConfig.MicroDmaMode = 0;
+		xConfig.AddrWidth = 32;
+		xConfig.SgLengthWidth = 14;
+	}
 
-	xdma_cfg.BaseAddr = getBaseAddr(registerMemory);
-	xdma_cfg.HasStsCntrlStrm = 0;
-	xdma_cfg.HasMm2S = 1;
-	xdma_cfg.HasMm2SDRE = 0;
-	xdma_cfg.Mm2SDataWidth = 32;
-	xdma_cfg.HasS2Mm = 1;
-	xdma_cfg.HasS2MmDRE = 0;
-	xdma_cfg.HasSg = hasScatterGather();
-	xdma_cfg.S2MmDataWidth = 32;
-	xdma_cfg.Mm2sNumChannels = 1;
-	xdma_cfg.S2MmNumChannels = 1;
-	xdma_cfg.Mm2SBurstSize = 16;
-	xdma_cfg.S2MmBurstSize = 16;
-	xdma_cfg.MicroDmaMode = 0;
-	xdma_cfg.AddrWidth = 32;
-	xdma_cfg.SgLengthWidth = 14;
-
-	if (XAxiDma_CfgInitialize(&xDma, &xdma_cfg) != XST_SUCCESS)
+	if (XAxiDma_CfgInitialize(&xDma, &xConfig) != XST_SUCCESS)
 	{
 		logger->error("Cannot initialize Xilinx DMA driver");
 		return false;
@@ -94,9 +95,9 @@ bool Dma::init()
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
 	// write interrupt
-	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], false);
+	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], polling);
 	// read interrupt
-	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], false);
+	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], polling);
 
 	return true;
 }
@@ -605,4 +606,98 @@ void Dma::dump()
 
 	logger->info("MM2S_DMACR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_CR_OFFSET));
 	logger->info("MM2S_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_SR_OFFSET));
+}
+
+bool
+DmaFactory::configureJson(Core& ip, json_t* json)
+{
+	auto &dma = dynamic_cast<Dma&>(ip);
+	enum DmaParameters {
+		HasStsCntrlStrm,
+		HasMm2S,
+		HasMm2SDRE,
+		Mm2SDataWidth,
+		HasS2Mm,
+		HasS2MmDRE,
+		S2MmDataWidth,
+		HasSg,
+		Mm2sNumChannels,
+		S2MmNumChannels,
+		MicroDmaMode,
+		AddrWidth,
+		SgLengthWidth
+	};
+	static const std::map<const char*, DmaParameters> ParaMap = {
+		{"c_sg_include_stscntrl_strm", 	HasStsCntrlStrm},
+		{"c_include_mm2s", 				HasMm2S},
+		{"c_include_mm2s_dre", 			HasMm2SDRE},
+		{"c_m_axi_mm2s_data_width", 	Mm2SDataWidth},
+		{"c_include_s2mm", 				HasS2Mm},
+		{"c_include_s2mm_dre", 			HasS2MmDRE},
+		{"c_m_axi_s2mm_data_width", 	S2MmDataWidth},
+		{"c_include_sg", 				HasSg},
+		{"c_num_mm2s_channels", 		Mm2sNumChannels},
+		{"c_num_s2mm_channels", 		S2MmNumChannels},
+		{"c_micro_dma", 				MicroDmaMode},
+		{"c_addr_width", 				AddrWidth},
+		{"c_sg_length_width", 			SgLengthWidth}
+	};
+
+	json_t* json_params = json_object_get(json, "parameters");
+	if (!json_is_object(json_params)) 
+		return true;
+
+	const char* paramName;
+	json_t* json_param;
+	json_object_foreach(json_params, paramName, json_param) {
+		auto it = ParaMap.find(paramName);
+		if (it == ParaMap.end())
+			continue;
+	
+		switch (it->second) {
+		case HasStsCntrlStrm:
+			dma.xConfig.HasStsCntrlStrm = json_integer_value(json_param);
+			break;
+		case HasMm2S:
+			dma.xConfig.HasMm2S = json_integer_value(json_param);
+			break;
+		case HasMm2SDRE:
+			dma.xConfig.HasMm2SDRE = json_integer_value(json_param);
+			break;
+		case Mm2SDataWidth:
+			dma.xConfig.Mm2SDataWidth = json_integer_value(json_param);
+			break;
+		case HasS2Mm:
+			dma.xConfig.HasS2Mm = json_integer_value(json_param);
+			break;
+		case HasS2MmDRE:
+			dma.xConfig.HasS2MmDRE = json_integer_value(json_param);
+			break;
+		case S2MmDataWidth:
+			dma.xConfig.S2MmDataWidth = json_integer_value(json_param);
+			break;
+		case HasSg:
+			dma.xConfig.HasSg = json_integer_value(json_param);
+			break;
+		case Mm2sNumChannels:
+			dma.xConfig.Mm2sNumChannels = json_integer_value(json_param);
+			break;
+		case S2MmNumChannels:
+			dma.xConfig.S2MmNumChannels = json_integer_value(json_param);
+			break;
+		case MicroDmaMode:
+			dma.xConfig.MicroDmaMode = json_integer_value(json_param);
+			break;
+		case AddrWidth:
+			dma.xConfig.AddrWidth = json_integer_value(json_param);
+			break;
+		case SgLengthWidth:
+			dma.xConfig.SgLengthWidth = json_integer_value(json_param);
+			break;
+		default:
+			break;
+		}		
+	}
+	dma.configSet = true;
+	return true;
 }

@@ -127,6 +127,8 @@ private:
 	XAxiDma xDma;
 	XAxiDma_Config xConfig;
 	bool hasSG;
+	bool configSet = false;
+	bool polling = false;
 
 	int delay;
 	int coalesce;
@@ -161,8 +163,14 @@ public:
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
 
-	//virtual bool
-	//configureJson(Core& ip, json_t* json) override;*/
+	virtual bool
+	configureJson(Core& ip, json_t* json) override;
+
+	virtual void
+	configurePollingMode(Core& ip, PollingMode mode)
+	{
+		dynamic_cast<Dma&>(ip).polling = (mode == POLL);
+	}
 };
 
 } /* namespace ip */

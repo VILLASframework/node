@@ -57,13 +57,15 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 		const char* pci_id   = nullptr;
 		int         do_reset = 0;
 		int         affinity = 0;
+		int 	    polling  = 0;
 
-		int ret = json_unpack(json_card, "{ s: o, s?: i, s?: b, s?: s, s?: s }",
+		int ret = json_unpack(json_card, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: b }",
 		    "ips", &json_ips,
 		    "affinity", &affinity,
 		    "do_reset", &do_reset,
 		    "slot", &pci_slot,
-		    "id", &pci_id);
+		    "id", &pci_id,
+			"polling", &polling);
 
 		if (ret != 0) {
 			logger->warn("Cannot parse JSON config");
@@ -77,6 +79,7 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
 		card->doReset = do_reset != 0;
+		card->polling = (polling != 0);
 
 		kernel::pci::Device filter = defaultFilter;
 

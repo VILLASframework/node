@@ -249,6 +249,9 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 			continue;
 		}
 
+		// Set polling mode
+		CoreFactory->configurePollingMode(*ip, (card->polling ? PollingMode::POLL : PollingMode::IRQ));
+
 		// IP has been configured now
 		configuredIps.push_back(std::move(ip));
 	}

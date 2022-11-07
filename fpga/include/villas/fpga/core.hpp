@@ -302,6 +302,10 @@ public:
 	}
 
 protected:
+	enum PollingMode {
+		POLL,
+		IRQ,
+	};
 	Logger
 	getLogger() const
 	{
@@ -317,6 +321,9 @@ private:
 	{
 		return true;
 	}
+
+	virtual void configurePollingMode(Core& /* ip */, PollingMode /* mode */)
+	{ }
 
 	virtual Vlnv getCompatibleVlnv() const = 0;
 
