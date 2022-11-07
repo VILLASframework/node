@@ -14,9 +14,10 @@
 #include <villas/config.hpp>
 
 /** Default number of values in a sample */
-#define DEFAULT_SAMPLE_LENGTH	64u
-#define DEFAULT_QUEUE_LENGTH	1024u
-#define MAX_SAMPLE_LENGTH	256u
+#define DEFAULT_SAMPLE_LENGTH		64u
+#define DEFAULT_QUEUE_LENGTH		1024u
+#define MAX_SAMPLE_LENGTH		512u
+#define DEFAULT_FORMAT_BUFFER_LENGTH 	4096u
 
 /** Number of hugepages which are requested from the the kernel.
  * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */

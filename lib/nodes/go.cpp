@@ -200,14 +200,14 @@ std::vector<int> GoNode::getNetemFDs()
 int GoNode::_read(struct Sample * smps[], unsigned cnt)
 {
 	int ret;
-	char buf[4096];
+	char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 	size_t rbytes;
 
-	auto d = GoNodeRead(node, buf, 4096);
+	auto d = GoNodeRead(node, data, sizeof(data));
 	if (d.r1)
 		return d.r1;
 
-	ret = formatter->sscan(buf, d.r0, &rbytes, smps, cnt);
+	ret = formatter->sscan(data, d.r0, &rbytes, smps, cnt);
 	if (ret < 0 || (size_t) d.r0 != rbytes) {
 		logger->warn("Received invalid packet: ret={}, bytes={}, rbytes={}", ret, d.r0, rbytes);
 		return ret;
@@ -219,17 +219,17 @@ int GoNode::_read(struct Sample * smps[], unsigned cnt)
 int GoNode::_write(struct Sample * smps[], unsigned cnt)
 {
 	int ret;
-	char buf[4096];
+	char buf[DEFAULT_FORMAT_BUFFER_LENGTH];
 	size_t wbytes;
 
-	ret = formatter->sprint(buf, 4096, &wbytes, smps, cnt);
+	ret = formatter->sprint(buf, DEFAULT_FORMAT_BUFFER_LENGTH, &wbytes, smps, cnt);
 	if (ret < 0)
 		return ret;
 
 	GoSlice slice = {
 		data: buf,
 		len: GoInt(wbytes),
-		cap: 4096
+		cap: DEFAULT_FORMAT_BUFFER_LENGTH
 	};
 
 	ret = GoNodeWrite(node, slice);

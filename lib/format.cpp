@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <cctype>
 
+#include <villas/node/config.hpp>
 #include <villas/format.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.hpp>
@@ -62,7 +63,7 @@ Format::Format(int fl) :
 	signals(nullptr)
 {
 	in.buflen =
-	out.buflen = 4096;
+	out.buflen = DEFAULT_FORMAT_BUFFER_LENGTH;
 
 	in.buffer = new char[in.buflen];
 	out.buffer = new char[out.buflen];
