@@ -551,7 +551,7 @@ int villas::node::zeromq_write(NodeCompat *n, struct Sample * const smps[], unsi
 	size_t wbytes;
 	zmq_msg_t m;
 
-	char data[4096];
+	char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 
 	ret = z->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)

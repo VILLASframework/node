@@ -541,7 +541,7 @@ int villas::node::kafka_write(NodeCompat *n, struct Sample * const smps[], unsig
 
 	size_t wbytes;
 
-	char data[4096];
+	char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 
 	ret = k->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)

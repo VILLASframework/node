@@ -26,6 +26,7 @@ protected:
 	std::string output_path;
 
 	FILE *output;
+	std::vector<char> output_buffer;
 
 public:
 	PrintHook(Path *p, Node *n, int fl, int prio, bool en = true) :
@@ -44,6 +45,8 @@ public:
 			if (!output)
 				throw SystemError("Failed to open file");
 		}
+		else
+			output_buffer = std::vector<char>(DEFAULT_FORMAT_BUFFER_LENGTH);
 
 		formatter->start(signals);
 
@@ -107,10 +110,11 @@ public:
 		assert(state == State::STARTED);
 
 		if (!output) {
-			char buf[1024];
+			char *buf = output_buffer.data();
+			size_t buflen = output_buffer.size();
 			size_t wbytes;
 
-			formatter->sprint(buf, sizeof(buf), &wbytes, smp);
+			formatter->sprint(buf, buflen, &wbytes, smp);
 
 			if (wbytes > 0 && buf[wbytes-1] == '\n')
 				buf[wbytes-1] = 0;
