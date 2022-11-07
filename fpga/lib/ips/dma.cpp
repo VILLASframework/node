@@ -212,7 +212,7 @@ bool Dma::reset()
 		timeout--;
 	}
 
-	logger->info("DMA resetted");
+	logger->info("DMA reset");
 
 	return false;
 }
