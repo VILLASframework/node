@@ -1,6 +1,7 @@
 /** DMA driver
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
+ * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @copyright 2018-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -33,15 +34,14 @@
 #include <villas/fpga/ips/intc.hpp>
 
 // Max. size of a DMA transfer in simple mode
-#define FPGA_DMA_BOUNDARY	0x1000
+#define FPGA_DMA_BOUNDARY 0x1000
 
 using namespace villas::fpga::ip;
 
 // Instantiate factory to make available to plugin infrastructure
 static DmaFactory factory;
 
-bool
-Dma::init()
+bool Dma::init()
 {
 	coalesce = 1;
 	delay = 0;
@@ -69,12 +69,14 @@ Dma::init()
 	xdma_cfg.AddrWidth = 32;
 	xdma_cfg.SgLengthWidth = 14;
 
-	if (XAxiDma_CfgInitialize(&xDma, &xdma_cfg) != XST_SUCCESS) {
+	if (XAxiDma_CfgInitialize(&xDma, &xdma_cfg) != XST_SUCCESS)
+	{
 		logger->error("Cannot initialize Xilinx DMA driver");
 		return false;
 	}
 
-	if (XAxiDma_Selftest(&xDma) != XST_SUCCESS) {
+	if (XAxiDma_Selftest(&xDma) != XST_SUCCESS)
+	{
 		logger->error("DMA selftest failed");
 		return false;
 	}
@@ -82,7 +84,8 @@ Dma::init()
 		logger->debug("DMA selftest passed");
 
 	// Map buffer descriptors
-	if (hasScatterGather()) {
+	if (hasScatterGather())
+	{
 		setupScatterGather();
 	}
 
@@ -194,15 +197,15 @@ void Dma::setupScatterGatherRingTx()
 		throw RuntimeError("Failed to start TX ring: {}", ret);
 }
 
-bool
-Dma::reset()
+bool Dma::reset()
 {
 	XAxiDma_Reset(&xDma);
 
 	// Value taken from libxil implementation
 	int timeout = 500;
 
-	while (timeout > 0) {
+	while (timeout > 0)
+	{
 		if (XAxiDma_ResetIsDone(&xDma))
 			return true;
 
@@ -214,8 +217,7 @@ Dma::reset()
 	return false;
 }
 
-bool
-Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
+bool Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 {
 	if (len == 0)
 		return true;
@@ -238,8 +240,7 @@ Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 	return true;
 }
 
-bool
-Dma::write(const MemoryBlock &mem, size_t len)
+bool Dma::write(const MemoryBlock &mem, size_t len)
 {
 	if (len == 0)
 		return true;
@@ -251,7 +252,7 @@ Dma::write(const MemoryBlock &mem, size_t len)
 
 	// User has to make sure that memory is accessible, otherwise this will throw
 	auto trans = mm.getTranslation(busMasterInterfaces[mm2sInterface], mem.getAddrSpaceId());
-	const void *buf = reinterpret_cast<void*>(trans.getLocalAddr(0));
+	const void *buf = reinterpret_cast<void *>(trans.getLocalAddr(0));
 	if (buf == nullptr)
 		throw RuntimeError("Buffer was null");
 
@@ -260,8 +261,7 @@ Dma::write(const MemoryBlock &mem, size_t len)
 	return hasScatterGather() ? writeScatterGather(buf, len) : writeSimple(buf, len);
 }
 
-bool
-Dma::read(const MemoryBlock &mem, size_t len)
+bool Dma::read(const MemoryBlock &mem, size_t len)
 {
 	if (len == 0)
 		return true;
@@ -273,7 +273,7 @@ Dma::read(const MemoryBlock &mem, size_t len)
 
 	// User has to make sure that memory is accessible, otherwise this will throw
 	auto trans = mm.getTranslation(busMasterInterfaces[s2mmInterface], mem.getAddrSpaceId());
-	void *buf = reinterpret_cast<void*>(trans.getLocalAddr(0));
+	void *buf = reinterpret_cast<void *>(trans.getLocalAddr(0));
 	if (buf == nullptr)
 		throw RuntimeError("Buffer was null");
 
@@ -282,8 +282,7 @@ Dma::read(const MemoryBlock &mem, size_t len)
 	return hasScatterGather() ? readScatterGather(buf, len) : readSimple(buf, len);
 }
 
-bool
-Dma::writeScatterGather(const void* buf, size_t len)
+bool Dma::writeScatterGather(const void *buf, size_t len)
 {
 	// buf is address from view of DMA controller
 
@@ -298,7 +297,7 @@ Dma::writeScatterGather(const void* buf, size_t len)
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("BdRingAlloc returned {}.", ret);
 
-	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
+	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t)buf);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Setting BdBufAddr to {} returned {}.", buf, ret);
 
@@ -310,7 +309,11 @@ Dma::writeScatterGather(const void* buf, size_t len)
 	XAxiDma_BdSetCtrl(bd, XAXIDMA_BD_CTRL_TXEOF_MASK | XAXIDMA_BD_CTRL_TXSOF_MASK);
 
 	// TODO: Check if we really need this
-	XAxiDma_BdSetId(bd, (uintptr_t) buf);
+	XAxiDma_BdSetId(bd, (uintptr_t)buf);
+
+	ret = XAxiDma_BdRingSetCoalesce(txRing, 1, 0);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to set coalesce settings: {}.", ret);
 
 	// Give control of BD to HW. We should not access it until transfer is finished.
 	// Failure could also indicate that EOF is not set on last Bd
@@ -321,8 +324,7 @@ Dma::writeScatterGather(const void* buf, size_t len)
 	return true;
 }
 
-bool
-Dma::readScatterGather(void* buf, size_t len)
+bool Dma::readScatterGather(void *buf, size_t len)
 {
 	int ret = XST_FAILURE;
 
@@ -335,17 +337,21 @@ Dma::readScatterGather(void* buf, size_t len)
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to alloc BD in RX ring: {}", ret);
 
-	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
+	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t)buf);
 	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t) buf, (uintptr_t) bd, ret);
+		throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t)buf, (uintptr_t)bd, ret);
 
 	ret = XAxiDma_BdSetLength(bd, len, rxRing->MaxTransferLen);
 	if (ret != XST_SUCCESS)
-		throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t) bd, ret);
+		throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t)bd, ret);
 
 	// Receive BDs do not need to set anything for the control
 	// The hardware will set the SOF/EOF bits per stream status
 	XAxiDma_BdSetCtrl(bd, 0);
+
+	ret = XAxiDma_BdRingSetCoalesce(rxRing, 1, 0);
+	if (ret != XST_SUCCESS)
+		throw RuntimeError("Failed to set coalesce settings: {}.", ret);
 
 	ret = XAxiDma_BdRingToHw(rxRing, 1, bd);
 	if (ret != XST_SUCCESS)
@@ -363,27 +369,35 @@ Dma::writeCompleteScatterGather()
 	int ret = XST_FAILURE;
 	size_t bytesWritten = 0;
 
-	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0) {
- 		irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0)
+	{
+		auto intrNum = irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+		logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
 		processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd);
 	}
+	// acknowledge the interrupt
+	auto irqStatus = XAxiDma_BdRingGetIrq(txRing);
+	XAxiDma_BdRingAckIrq(txRing, irqStatus);
 
 	if (bd == nullptr)
 		throw RuntimeError("Bd was null.");
 
 	curBd = bd;
-	for (size_t i = 0; i < processedBds; i++) {
+	for (size_t i = 0; i < processedBds; i++)
+	{
 		ret = XAxiDma_BdGetSts(curBd);
-		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK)))
+		{
 			throw RuntimeError("Bd Status register shows error: {}", ret);
 			break;
 		}
 		bytesWritten += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
-		curBd = (XAxiDma_Bd*)XAxiDma_BdRingNext(txRing, curBd);
+		curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(txRing, curBd);
 	}
-	
+
 	ret = XAxiDma_BdRingFree(txRing, processedBds, bd);
-	if (ret != XST_SUCCESS) {
+	if (ret != XST_SUCCESS)
+	{
 		// a comment so i can use curly braces
 		throw RuntimeError("Failed to free {} TX BDs {}", processedBds, ret);
 	}
@@ -401,25 +415,32 @@ Dma::readCompleteScatterGather()
 	size_t bytesRead = 0;
 
 	// Wait until the data has been received by the RX channel.
-	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0) {
- 		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0)
+	{
+		auto intrNum = irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+		logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
+
 		processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd);
 	}
+	// acknowledge the interrupt
+	auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+	XAxiDma_BdRingAckIrq(rxRing, irqStatus);
 
 	if (bd == nullptr)
 		throw RuntimeError("Bd was null.");
 
 	curBd = bd;
-	for (size_t i = 0; i < processedBds; i++) {
+	for (size_t i = 0; i < processedBds; i++)
+	{
 		ret = XAxiDma_BdGetSts(curBd);
-		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK)))
+		{
 			throw RuntimeError("Bd Status register shows error: {}", ret);
 			break;
 		}
 		bytesRead += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
-		curBd = (XAxiDma_Bd*)XAxiDma_BdRingNext(rxRing, curBd);
+		curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(rxRing, curBd);
 	}
-	
 
 	// Free all processed RX BDs for future transmission.
 	ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
@@ -429,22 +450,22 @@ Dma::readCompleteScatterGather()
 	return bytesRead;
 }
 
-bool
-Dma::writeSimple(const void *buf, size_t len)
+bool Dma::writeSimple(const void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 
-	if (not ring->HasDRE) {
+	if (not ring->HasDRE)
+	{
 		const uint32_t mask = xDma.MicroDmaMode
-		                      ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
-		                      : ring->DataWidth - 1;
+								  ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
+								  : ring->DataWidth - 1;
 
 		if (reinterpret_cast<uintptr_t>(buf) & mask)
 			return false;
 	}
 
 	const bool dmaChannelHalted =
-	        XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK;
+		XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK;
 
 	const bool dmaToDeviceBusy = XAxiDma_Busy(&xDma, XAXIDMA_DMA_TO_DEVICE);
 
@@ -454,12 +475,12 @@ Dma::writeSimple(const void *buf, size_t len)
 
 	// Set lower 32 bit of source address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_OFFSET,
-	                 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
+					 LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
 	// If neccessary, set upper 32 bit of source address
 	if (xDma.AddrWidth > 32)
 		XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_MSB_OFFSET,
-		                 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
+						 UPPER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
 
 	// Start DMA channel
 	auto channelControl = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_CR_OFFSET);
@@ -472,15 +493,15 @@ Dma::writeSimple(const void *buf, size_t len)
 	return true;
 }
 
-bool
-Dma::readSimple(void *buf, size_t len)
+bool Dma::readSimple(void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 
-	if (not ring->HasDRE) {
+	if (not ring->HasDRE)
+	{
 		const uint32_t mask = xDma.MicroDmaMode
-		                      ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
-		                      : ring->DataWidth - 1;
+								  ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
+								  : ring->DataWidth - 1;
 
 		if (reinterpret_cast<uintptr_t>(buf) & mask)
 			return false;
@@ -519,7 +540,7 @@ Dma::writeCompleteSimple()
 
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 
-	const XAxiDma_BdRing* ring = XAxiDma_GetTxRing(&xDma);
+	const XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 	const size_t bytesWritten = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
 
 	return bytesWritten;
@@ -533,18 +554,17 @@ Dma::readCompleteSimple()
 
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-	const XAxiDma_BdRing* ring = XAxiDma_GetRxRing(&xDma);
+	const XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 	const size_t bytesRead = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
 
 	return bytesRead;
 }
 
-void
-Dma::makeAccesibleFromVA(const MemoryBlock &mem)
+void Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 {
 	// Only symmetric mapping supported currently
 	if (isMemoryBlockAccesible(mem, s2mmInterface) and
-	   isMemoryBlockAccesible(mem, mm2sInterface))
+		isMemoryBlockAccesible(mem, mm2sInterface))
 		return;
 
 	// Try mapping via FPGA-card (VFIO)
@@ -553,26 +573,27 @@ Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 
 	// Sanity-check if mapping worked, this shouldn't be neccessary
 	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
-	    not isMemoryBlockAccesible(mem, mm2sInterface))
+		not isMemoryBlockAccesible(mem, mm2sInterface))
 		throw RuntimeError("Mapping memory via card didn't work, but reported success?!");
 }
 
-bool
-Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface)
+bool Dma::isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface)
 {
 	auto &mm = MemoryManager::get();
 
-	try {
+	try
+	{
 		mm.findPath(getMasterAddrSpaceByInterface(interface), mem.getAddrSpaceId());
-	} catch (const std::out_of_range&) {
+	}
+	catch (const std::out_of_range &)
+	{
 		return false; // Not (yet) accessible
 	}
 
 	return true;
 }
 
-void
-Dma::dump()
+void Dma::dump()
 {
 	Core::dump();
 

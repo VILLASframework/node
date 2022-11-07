@@ -161,8 +161,8 @@ public:
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
 
-	virtual bool
-	configureJson(Core& ip, json_t* json) override;
+	//virtual bool
+	//configureJson(Core& ip, json_t* json) override;*/
 };
 
 } /* namespace ip */
