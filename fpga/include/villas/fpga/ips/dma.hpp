@@ -28,6 +28,7 @@
 
 #include <villas/memory.hpp>
 #include <villas/fpga/node.hpp>
+#include <villas/exceptions.hpp>
 
 namespace villas {
 namespace fpga {
@@ -65,7 +66,10 @@ public:
 	inline bool
 	hasScatterGather() const
 	{
-		return hasSG;
+		if (!configSet)
+			throw RuntimeError("DMA has not been configured yet");
+
+		return xConfig.HasSg;
 	}
 
 	const StreamVertex&
@@ -126,7 +130,6 @@ private:
 
 	XAxiDma xDma;
 	XAxiDma_Config xConfig;
-	bool hasSG;
 	bool configSet = false;
 	bool polling = false;
 

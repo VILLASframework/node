@@ -26,7 +26,6 @@
 
 #include <xilinx/xaxidma.h>
 
-#include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
