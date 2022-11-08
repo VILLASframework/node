@@ -376,7 +376,10 @@ int
 Device::getIOMMUGroup() const
 {
 	int ret;
-	char *group, link[1024], sysfs[1024];
+	char *group;
+	//readlink does not add a null terminator!
+	char link[1024] = {0};
+	char sysfs[1024];
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/iommu_group", SYSFS_PATH,
 		slot.domain, slot.bus, slot.device, slot.function);
