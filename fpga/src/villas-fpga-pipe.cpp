@@ -41,84 +41,12 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/aurora_xilinx.hpp>
+#include <villas/fpga/fpgaHelper.hpp>
 
 using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("streamer");
-
-void setupColorHandling()
-{
-	// Handle Control-C nicely
-	struct sigaction sigIntHandler;
-	sigIntHandler.sa_handler = [](int){
-		std::cout << std::endl << rang::style::reset << rang::fgB::red;
-		std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
-		std::exit(1); // Will call the correct exit func, no unwinding of the stack though
-	};
-
-	sigemptyset(&sigIntHandler.sa_mask);
-	sigIntHandler.sa_flags = 0;
-	sigaction(SIGINT, &sigIntHandler, nullptr);
-
-	// Reset color if exiting not by signal
-	std::atexit([](){
-		std::cout << rang::style::reset;
-	});
-}
-
-std::shared_ptr<fpga::PCIeCard>
-setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
-{
-	pciDevices = std::make_shared<kernel::pci::DeviceList>();
-
-	auto vfioContainer = kernel::vfio::Container::create();
-
-	// Parse FPGA configuration
-	FILE* f = fopen(configFile.c_str(), "r");
-	if (!f)
-		throw RuntimeError("Cannot open config file: {}", configFile);
-
-	json_t* json = json_loadf(f, 0, nullptr);
-	if (!json) {
-		logger->error("Cannot parse JSON config");
-		fclose(f);
-		throw RuntimeError("Cannot parse JSON config");
-	}
-
-	fclose(f);
-
-	json_t* fpgas = json_object_get(json, "fpgas");
-	if (fpgas == nullptr) {
-		logger->error("No section 'fpgas' found in config");
-		exit(1);
-	}
-
-	// Get the FPGA card plugin
-	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-	if (fpgaCardFactory == nullptr) {
-		logger->error("No FPGA plugin found");
-		exit(1);
-	}
-
-	// Create all FPGA card instances using the corresponding plugin
-	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
-
-	std::shared_ptr<fpga::PCIeCard> card;
-	for (auto &fpgaCard : cards) {
-		if (fpgaCard->name == fpgaName) {
-			return fpgaCard;
-		}
-	}
-
-	// Deallocate JSON config
-	json_decref(json);
-
-	if (!card)
-		throw RuntimeError("FPGA card {} not found in config or not working", fpgaName);
-
-	return card;
-}
 
 int main(int argc, char* argv[])
 {
@@ -136,14 +64,14 @@ int main(int argc, char* argv[])
 
 		// Logging setup
 		spdlog::set_level(spdlog::level::debug);
-		setupColorHandling();
+		fpga::setupColorHandling();
 
 		if (configFile.empty()) {
 			logger->error("No configuration file provided/ Please use -c/--config argument");
 			return 1;
 		}
 
-		auto card = setupFpgaCard(configFile, fpgaName);
+		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
 		std::vector<fpga::ip::AuroraXilinx::Ptr> aurora_channels;
 		for (int i = 0; i < 4; i++) {

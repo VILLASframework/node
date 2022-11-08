@@ -25,6 +25,7 @@ set(SOURCES
 	card.cpp
 	core.cpp
 	node.cpp
+	fpgaHelper.cpp
 
 	ips/timer.cpp
 	ips/switch.cpp
