@@ -594,6 +594,9 @@ void Dma::dump()
 bool
 DmaFactory::configureJson(Core& ip, json_t* json)
 {
+	if (not NodeFactory::configureJson(ip, json))
+		return false;
+
 	auto &dma = dynamic_cast<Dma&>(ip);
 	json_t* json_params = json_object_get(json, "parameters");
 	if (!json_is_object(json_params)) 
