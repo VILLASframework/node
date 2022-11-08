@@ -604,6 +604,8 @@ Device::pciMsiInit(int efds[])
 	auto *irqSet = reinterpret_cast<struct vfio_irq_set*>(irqSetBuf);
 
 	irqSet->argsz = irqSetSize;
+	// DATA_EVENTFD binds the interrupt to the provided eventfd.
+	// SET_ACTION_TRIGGER enables kernel->userspace signalling.
 	irqSet->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
 	irqSet->index = VFIO_PCI_MSI_IRQ_INDEX;
 	irqSet->start = 0;
