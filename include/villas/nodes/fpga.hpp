@@ -85,7 +85,11 @@ public:
 	virtual
 	Node * make()
 	{
-		return new FpgaNode;
+		auto *n = new FpgaNode;
+
+		init(n);
+
+		return n;
 	}
 
 	virtual
