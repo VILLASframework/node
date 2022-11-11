@@ -118,19 +118,20 @@ int main(int argc, char* argv[])
 
 			auto bytesRead = dma->readComplete();
 			//auto valuesRead = bytesRead / sizeof(int32_t);
-			//logger->info("Read {} bytes", bytesRead);
+			logger->info("Read {} bytes", bytesRead);
 
-			/*for (size_t i = 0; i < valuesRead; i++)
-				std::cerr << mem[i] << ";";
-			std::cerr << std::endl;*/
+			//for (size_t i = 0; i < valuesRead; i++)
+			//	std::cerr << std::hex << mem[i] << ";";
+			//std::cerr << std::endl;
 
-			if (bytesRead == 8) {
+			while (bytesRead >= 8) {
 				int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-					 (int64_t)(mem[1] & 0xFFFF0000) << 32 |
+					 (int64_t)(mem[1] & 0xFFFF0000) << 16 |
 					 (int64_t)(mem[0] & 0xFFFF) << 16 |
-					 (int64_t)(mem[0] & 0xFFFF0000);
+					 (int64_t)(mem[0] & 0xFFFF0000) >> 16;
 				double dval = *((double*)(&ival));
-				printf("%e\n", dval);
+				std::cerr << std::hex << ival << "," << dval << std::endl;
+				bytesRead -= 8;
 				//logger->info("Read value: {}", dval);
 			}
 		}
