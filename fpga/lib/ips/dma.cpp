@@ -345,9 +345,10 @@ Dma::writeCompleteScatterGather()
 	int ret = XST_FAILURE;
 	size_t bytesWritten = 0;
 
-	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0) {
-		auto intrNum = irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
-		logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
+	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0)
+	{
+		/*auto intrNum = */irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+		//logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
 		processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd);
 	}
 
@@ -387,9 +388,10 @@ Dma::readCompleteScatterGather()
 	size_t bytesRead = 0;
 
 	// Wait until the data has been received by the RX channel.
-	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0) {
-		auto intrNum = irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
-		logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
+	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0)
+	{
+		/*auto intrNum = */irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+		//logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
 
 		processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd);
 	}
