@@ -49,7 +49,7 @@ if ! pkg-config "criterion >= 2.3.1" && \
 fi
 
 # Build & Install libjansson
-if ! pkg-config "jansson >= 2.7" && \
+if ! pkg-config "jansson >= 2.13" && \
     [ -z "${SKIP_JANSSON}" ]; then
     git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson
     pushd jansson
