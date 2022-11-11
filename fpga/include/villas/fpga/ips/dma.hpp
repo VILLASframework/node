@@ -66,9 +66,6 @@ public:
 	inline bool
 	hasScatterGather() const
 	{
-		if (!configSet)
-			throw RuntimeError("DMA has not been configured yet");
-
 		return xConfig.HasSg;
 	}
 
@@ -130,7 +127,6 @@ private:
 
 	XAxiDma xDma;
 	XAxiDma_Config xConfig;
-	bool configSet = false;
 	bool polling = false;
 
 	int delay;
@@ -170,7 +166,7 @@ public:
 	configureJson(Core& ip, json_t* json) override;
 
 	virtual void
-	configurePollingMode(Core& ip, PollingMode mode)
+	configurePollingMode(Core& ip, PollingMode mode) override
 	{
 		dynamic_cast<Dma&>(ip).polling = (mode == POLL);
 	}
