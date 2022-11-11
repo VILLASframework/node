@@ -104,7 +104,6 @@ public:	// TODO: make this private
 
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts
-	bool polling;					// Poll on interrupts?
 
 	std::string name;				// The name of the FPGA card
 

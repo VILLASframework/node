@@ -293,11 +293,6 @@ public:
 	}
 
 protected:
-	enum PollingMode {
-		POLL,
-		IRQ,
-	};
-
 	Logger getLogger() const
 	{
 		return villas::logging.get(getName());
@@ -311,10 +306,6 @@ protected:
 private:
 	// Create a concrete IP instance
 	virtual Core* create() = 0;
-
-	virtual
-	void configurePollingMode(Core &, PollingMode)
-	{ }
 
 	virtual
 	Vlnv getCompatibleVlnv() const = 0;

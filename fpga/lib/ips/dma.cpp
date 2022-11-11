@@ -641,8 +641,12 @@ void DmaFactory::parse(Core &ip, json_t *cfg)
 	dma.xConfig.AddrWidth = 32;
 	dma.xConfig.SgLengthWidth = 14;
 
+	int polling;
+
 	json_error_t err;
-	int ret = json_unpack_ex(cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i } }",
+	int ret = json_unpack_ex(cfg, &err, 0, "{ s: b, s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i } }",
+		"polling", &polling,
+
 		"parameters",
 			"c_sg_include_stscntrl_strm", 	&dma.xConfig.HasStsCntrlStrm,
 			"c_include_mm2s", 		&dma.xConfig.HasMm2S,
@@ -660,4 +664,6 @@ void DmaFactory::parse(Core &ip, json_t *cfg)
 	);
 	if (ret != 0)
 		throw ConfigError(cfg, err, "", "Failed to parse DMA configuration");
+
+	dma.polling = polling != 0;
 }
