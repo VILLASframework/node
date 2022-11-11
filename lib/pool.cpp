@@ -62,3 +62,24 @@ int villas::node::pool_destroy(struct Pool *p)
 
 	return ret;
 }
+
+ssize_t villas::node::pool_get_many(struct Pool *p, void *blocks[], size_t cnt)
+{
+	return queue_pull_many(&p->queue, blocks, cnt);
+}
+
+ssize_t villas::node::pool_put_many(struct Pool *p, void *blocks[], size_t cnt)
+{
+	return queue_push_many(&p->queue, blocks, cnt);
+}
+
+void * villas::node::pool_get(struct Pool *p)
+{
+	void *ptr;
+	return queue_pull(&p->queue, &ptr) == 1 ? ptr : nullptr;
+}
+
+int villas::node::pool_put(struct Pool *p, void *buf)
+{
+	return queue_push(&p->queue, buf);
+}

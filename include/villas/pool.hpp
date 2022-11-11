@@ -33,7 +33,6 @@ struct Pool {
 	struct CQueue queue; /**< The queue which is used to keep track of free blocks */
 };
 
-#define INLINE static inline __attribute__((unused))
 #define pool_buffer(p) ((char *) (p) + (p)->buffer_off)
 
 /** Initiazlize a pool
@@ -56,29 +55,16 @@ int pool_destroy(struct Pool *p) __attribute__ ((warn_unused_result));
  *         This number can be smaller than the requested \p cnt blocks
  *         in case the pool currently holds less than \p cnt blocks.
  */
-INLINE ssize_t pool_get_many(struct Pool *p, void *blocks[], size_t cnt)
-{
-	return queue_pull_many(&p->queue, blocks, cnt);
-}
+ssize_t pool_get_many(struct Pool *p, void *blocks[], size_t cnt);
 
 /** Push \p cnt values which are giving by the array values to the stack. */
-INLINE ssize_t pool_put_many(struct Pool *p, void *blocks[], size_t cnt)
-{
-	return queue_push_many(&p->queue, blocks, cnt);
-}
+ssize_t pool_put_many(struct Pool *p, void *blocks[], size_t cnt);
 
 /** Get a free memory block from pool. */
-INLINE void * pool_get(struct Pool *p)
-{
-	void *ptr;
-	return queue_pull(&p->queue, &ptr) == 1 ? ptr : nullptr;
-}
+void * pool_get(struct Pool *p);
 
 /** Release a memory block back to the pool. */
-INLINE int pool_put(struct Pool *p, void *buf)
-{
-	return queue_push(&p->queue, buf);
-}
+int pool_put(struct Pool *p, void *buf);
 
 } /* namespace node */
 } /* namespace villas */
