@@ -312,17 +312,17 @@ protected:
 		return villas::logging.get(getName());
 	}
 
+	// Configure IP instance from JSON config
+	virtual
+	void configure(Core &, json_t *)
+	{ }
+
 private:
 	// Create a concrete IP instance
 	virtual Core* create() = 0;
 
-	// Configure IP instance from JSON config
-	virtual bool configureJson(Core& /* ip */, json_t* /* json */)
-	{
-		return true;
-	}
-
-	virtual void configurePollingMode(Core& /* ip */, PollingMode /* mode */)
+	virtual
+	void configurePollingMode(Core &, PollingMode)
 	{ }
 
 	virtual Vlnv getCompatibleVlnv() const = 0;

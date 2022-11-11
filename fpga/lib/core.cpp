@@ -24,6 +24,7 @@
 #include <memory>
 #include <utility>
 
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
 #include <villas/utils.hpp>
@@ -66,10 +67,11 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	json_t* json_ip;
 	json_object_foreach(json_ips, ipName, json_ip) {
 		const char* vlnv;
-		if (json_unpack(json_ip, "{ s: s }", "vlnv", &vlnv) != 0) {
-			loggerStatic->warn("IP {} has no VLNV", ipName);
-			continue;
-		}
+
+		json_error_t err;
+		int ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
+		if (ret != 0)
+			throw ConfigError(json_ip, err, "", "IP {} has no VLNV", ipName);
 
 		allIps.push_back({vlnv, ipName});
 	}
@@ -212,17 +214,16 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 					json_object_foreach(json_instance, block_name, json_block) {
 
 						json_int_t base, high, size;
-						int ret = json_unpack(json_block, "{ s: I, s: I, s: I }",
-						                      "baseaddr", &base,
-						                      "highaddr", &high,
-						                      "size", &size);
-						if (ret != 0) {
-							logger->error("Cannot parse address block {}/{}/{}/{}",
+						json_error_t err;
+						int ret = json_unpack_ex(json_block, &err, 0, "{ s: I, s: I, s: I }",
+						        "baseaddr", &base,
+						        "highaddr", &high,
+						        "size", &size
+						);
+						if (ret != 0)
+							throw ConfigError(json_block, err, "", "Cannot parse address block {}/{}/{}/{}",
 							              ip->getInstanceName(),
 							              bus_name, instance_name, block_name);
-							continue;
-
-						}
 
 						// Get or create the slave address space
 						const std::string slaveAddrSpace =
@@ -244,10 +245,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		if (not CoreFactory->configureJson(*ip, json_ip)) {
-			logger->warn("Cannot configure IP from JSON");
-			continue;
-		}
+		CoreFactory->configure(*ip, json_ip);
 
 		// Set polling mode
 		CoreFactory->configurePollingMode(*ip, (card->polling ? PollingMode::POLL : PollingMode::IRQ));

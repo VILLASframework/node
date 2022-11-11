@@ -26,6 +26,7 @@
 #include <jansson.h>
 #include <xilinx/xaxis_switch.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/fpga/ips/switch.hpp>
 
 namespace villas {
@@ -34,15 +35,9 @@ namespace ip {
 
 static AxiStreamSwitchFactory factory;
 
-bool
-AxiStreamSwitch::init()
+bool AxiStreamSwitch::init()
 {
-	// Setup AXI-stream switch
-	XAxis_Switch_Config sw_cfg;
-	sw_cfg.MaxNumMI = num_ports;
-	sw_cfg.MaxNumSI = num_ports;
-
-	if (XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS) {
+	if (XAxisScr_CfgInitialize(&xSwitch, &xConfig, getBaseAddr(registerMemory)) != XST_SUCCESS) {
 		logger->error("Cannot initialize switch");
 		return false;
 	}
@@ -135,22 +130,26 @@ AxiStreamSwitch::portNameToNum(const std::string &portName)
 	return std::stoi(number);
 }
 
-bool
-AxiStreamSwitchFactory::configureJson(Core &ip, json_t* json_ip)
+void AxiStreamSwitchFactory::configure(Core &ip, json_t *cfg)
 {
-	if (not NodeFactory::configureJson(ip, json_ip))
-		return false;
+	NodeFactory::configure(ip, cfg);
 
 	auto logger = getLogger();
 
 	auto &axiSwitch = dynamic_cast<AxiStreamSwitch&>(ip);
 
-	if (json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
-		logger->error("Cannot parse 'num_ports'");
-		return false;
-	}
+	int num_si, num_mi;
+	json_error_t err;
+	auto ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: i, s: i } }",
+		"parameters",
+			"num_si", &num_si,
+			"num_mi", &num_mi
+	);
+	if (ret != 0)
+		throw ConfigError(cfg, err, "", "Cannot parse switch config");
 
-	return true;
+	axiSwitch.xConfig.MaxNumMI = num_mi;
+	axiSwitch.xConfig.MaxNumSI = num_si;
 }
 
 } /* namespace ip */

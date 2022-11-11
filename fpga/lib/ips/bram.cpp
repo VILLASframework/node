@@ -20,23 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <villas/exceptions.hpp>
 #include <villas/fpga/ips/bram.hpp>
 
 using namespace villas::fpga::ip;
 
 static BramFactory factory;
 
-bool
-BramFactory::configureJson(Core &ip, json_t* json_ip)
+void BramFactory::configure(Core &ip, json_t* cfg)
 {
+	CoreFactory::configure(ip, cfg);
+
 	auto &bram = dynamic_cast<Bram&>(ip);
 
-	if (json_unpack(json_ip, "{ s: i }", "size", &bram.size) != 0) {
-		getLogger()->error("Cannot parse 'size'");
-		return false;
-	}
-
-	return true;
+	json_error_t err;
+	auto ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+		"size", &bram.size
+	);
+	if (ret != 0)
+		throw ConfigError(cfg, err, "", "Cannot parse BRAM config");
 }
 
 bool Bram::init()

@@ -1276,7 +1276,6 @@
         "target": "axi_dma_0:S2MM",
         "name": "M04_AXIS"
       }
-    ],
-    "num_ports": 5
+    ]
   }
 }

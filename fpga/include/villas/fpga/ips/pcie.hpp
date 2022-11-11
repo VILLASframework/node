@@ -67,7 +67,7 @@ public:
 		return "xilinx.com:ip:axi_pcie:";
 	}
 
-	bool configureJson(Core &ip, json_t *json_ip);
+	void configure(Core &ip, json_t *cfg);
 
 	Core* create()
 	{

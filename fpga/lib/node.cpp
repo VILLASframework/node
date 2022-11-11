@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <jansson.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
@@ -35,41 +36,36 @@ using namespace villas::fpga::ip;
 StreamGraph
 Node::streamGraph;
 
-bool
-NodeFactory::configureJson(Core &ip, json_t* json_ip)
+void NodeFactory::configure(Core &ip, json_t *cfg)
 {
+	CoreFactory::configure(ip, cfg);
+
 	auto &Node = dynamic_cast<ip::Node&>(ip);
 	auto logger = getLogger();
 
-	json_t* json_ports = json_object_get(json_ip, "ports");
-	if (not json_is_array(json_ports)) {
-		logger->debug("IP has no ports");
-		return true;
-	}
+	json_t* json_ports = json_object_get(cfg, "ports");
+	if (not json_is_array(json_ports))
+		throw ConfigError(json_ports, "", "IP port list must be an array");
 
 	size_t index;
-	json_t* json_port;
+	json_t *json_port;
 	json_array_foreach(json_ports, index, json_port) {
-		if (not json_is_object(json_port)) {
-			logger->error("Port {} is not an object", index);
-			return false;
-		}
+		if (not json_is_object(json_port))
+			throw ConfigError(json_port, "", "Port {} is not an object", index);
 
 		const char *role_raw, *target_raw, *name_raw;
-		int ret = json_unpack(json_port, "{ s: s, s: s, s: s }",
-		                           "role", &role_raw,
-		                           "target", &target_raw,
-		                           "name", &name_raw);
-		if (ret != 0) {
-			logger->error("Cannot parse port {}", index);
-			return false;
-		}
+
+		json_error_t err;
+		int ret = json_unpack_ex(json_port, &err, 0, "{ s: s, s: s, s: s }",
+		        "role", &role_raw,
+		        "target", &target_raw,
+		        "name", &name_raw);
+		if (ret != 0)
+			throw ConfigError(json_port, err, "", "Cannot parse port {}", index);
 
 		const auto tokens = utils::tokenize(target_raw, ":");
-		if (tokens.size() != 2) {
-			logger->error("Cannot parse 'target' of port {}", index);
-			return false;
-		}
+		if (tokens.size() != 2)
+			throw ConfigError(json_port, err, "", "Cannot parse 'target' of port {}", index);
 
 		const std::string role(role_raw);
 		const bool isMaster = (role == "master" or role == "initiator");
@@ -92,8 +88,6 @@ NodeFactory::configureJson(Core &ip, json_t* json_ip)
 		else // Slave
 			Node.portsSlave[name_raw] = thisVertex;
 	}
-
-	return true;
 }
 
 std::pair<std::string, std::string>

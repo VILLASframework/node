@@ -168,7 +168,8 @@ class NodeFactory : public CoreFactory {
 public:
 	using CoreFactory::CoreFactory;
 
-	virtual bool configureJson(Core &ip, json_t *json_ip);
+	virtual
+	void configure(Core &ip, json_t *cfg);
 };
 
 } /* namespace ip */

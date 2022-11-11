@@ -618,16 +618,11 @@ void Dma::dump()
 	logger->info("MM2S_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_SR_OFFSET));
 }
 
-bool
-DmaFactory::configureJson(Core& ip, json_t* json)
+void DmaFactory::configure(Core &ip, json_t *cfg)
 {
-	if (not NodeFactory::configureJson(ip, json))
-		return false;
+	NodeFactory::configure(ip, cfg);
 
 	auto &dma = dynamic_cast<Dma&>(ip);
-	json_t* json_params = json_object_get(json, "parameters");
-	if (!json_is_object(json_params))
-		return false;
 
 	// Sensible default configuration
 	dma.xConfig.HasStsCntrlStrm = 0;
@@ -646,25 +641,23 @@ DmaFactory::configureJson(Core& ip, json_t* json)
 	dma.xConfig.AddrWidth = 32;
 	dma.xConfig.SgLengthWidth = 14;
 
-	int ret = json_unpack(json_params, "{ s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
-		"c_sg_include_stscntrl_strm", 	&dma.xConfig.HasStsCntrlStrm,
-		"c_include_mm2s", 		&dma.xConfig.HasMm2S,
-		"c_include_mm2s_dre", 		&dma.xConfig.HasMm2SDRE,
-		"c_m_axi_mm2s_data_width", 	&dma.xConfig.Mm2SDataWidth,
-		"c_include_s2mm", 		&dma.xConfig.HasS2Mm,
-		"c_include_s2mm_dre", 		&dma.xConfig.HasS2MmDRE,
-		"c_m_axi_s2mm_data_width", 	&dma.xConfig.S2MmDataWidth,
-		"c_include_sg", 		&dma.xConfig.HasSg,
-		"c_num_mm2s_channels", 		&dma.xConfig.Mm2sNumChannels,
-		"c_num_s2mm_channels", 		&dma.xConfig.S2MmNumChannels,
-		"c_micro_dma", 			&dma.xConfig.MicroDmaMode,
-		"c_addr_width", 		&dma.xConfig.AddrWidth,
-		"c_sg_length_width", 		&dma.xConfig.SgLengthWidth
+	json_error_t err;
+	int ret = json_unpack_ex(cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i } }",
+		"parameters",
+			"c_sg_include_stscntrl_strm", 	&dma.xConfig.HasStsCntrlStrm,
+			"c_include_mm2s", 		&dma.xConfig.HasMm2S,
+			"c_include_mm2s_dre", 		&dma.xConfig.HasMm2SDRE,
+			"c_m_axi_mm2s_data_width", 	&dma.xConfig.Mm2SDataWidth,
+			"c_include_s2mm", 		&dma.xConfig.HasS2Mm,
+			"c_include_s2mm_dre", 		&dma.xConfig.HasS2MmDRE,
+			"c_m_axi_s2mm_data_width", 	&dma.xConfig.S2MmDataWidth,
+			"c_include_sg", 		&dma.xConfig.HasSg,
+			"c_num_mm2s_channels", 		&dma.xConfig.Mm2sNumChannels,
+			"c_num_s2mm_channels", 		&dma.xConfig.S2MmNumChannels,
+			"c_micro_dma", 			&dma.xConfig.MicroDmaMode,
+			"c_addr_width", 		&dma.xConfig.AddrWidth,
+			"c_sg_length_width", 		&dma.xConfig.SgLengthWidth
 	);
-	if (ret != 0) {
-		logger->error("Failed to parse DMA configuration");
-		return false;
-	}
-	dma.configDone = true;
-	return true;
+	if (ret != 0)
+		throw ConfigError(cfg, err, "", "Failed to parse DMA configuration");
 }

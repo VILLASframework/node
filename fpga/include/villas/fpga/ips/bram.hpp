@@ -57,7 +57,7 @@ private:
 class BramFactory : public CoreFactory {
 public:
 
-	bool configureJson(Core &ip, json_t *json_ip);
+	void configure(Core &ip, json_t *cfg);
 
 	Core* create()
 	{

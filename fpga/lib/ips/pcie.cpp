@@ -23,6 +23,7 @@
 #include <limits>
 #include <jansson.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
@@ -111,9 +112,11 @@ AxiPciExpressBridge::init()
 	return true;
 }
 
-bool
-AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
+void
+AxiPciExpressBridgeFactory::configure(Core &ip, json_t *cfg)
 {
+	CoreFactory::configure(ip, cfg);
+
 	auto logger = getLogger();
 	auto &pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
@@ -121,31 +124,29 @@ AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 		"axi_bars",
 		"pcie_bars"
 	}) {
-		json_t* json_bars = json_object_get(json_ip, barType.c_str());
-		if (not json_is_object(json_bars)) {
-			return false;
-		}
+		json_t *json_bars = json_object_get(cfg, barType.c_str());
+		if (not json_is_object(json_bars))
+			throw ConfigError(cfg, "", "Missing BAR config: {}", barType);
 
 		json_t* json_bar;
 		const char* bar_name;
 		json_object_foreach(json_bars, bar_name, json_bar) {
 			unsigned int translation;
-			int ret = json_unpack(json_bar, "{ s: i }", "translation", &translation);
-			if (ret != 0) {
-				logger->error("Cannot parse {}/{}", barType, bar_name);
-				return false;
-			}
+
+			json_error_t err;
+			int ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }", "translation", &translation);
+			if (ret != 0)
+				throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType, bar_name);
 
 			if (barType == "axi_bars") {
 				json_int_t base, high, size;
-				int ret = json_unpack(json_bar, "{ s: I, s: I, s: I }",
-				                      "baseaddr", &base,
-				                      "highaddr", &high,
-				                      "size", &size);
-				if (ret != 0) {
-					logger->error("Cannot parse {}/{}", barType, bar_name);
-					return false;
-				}
+				int ret = json_unpack_ex(json_bar, &err, 0, "{ s: I, s: I, s: I }",
+				        "baseaddr", &base,
+				        "highaddr", &high,
+				        "size", &size
+				);
+				if (ret != 0)
+					throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType, bar_name);
 
 				pcie.axiToPcieTranslations[bar_name] = {
 				    .base = static_cast<uintptr_t>(base),
@@ -158,6 +159,4 @@ AxiPciExpressBridgeFactory::configureJson(Core &ip, json_t* json_ip)
 				};
 		}
 	}
-
-	return true;
 }

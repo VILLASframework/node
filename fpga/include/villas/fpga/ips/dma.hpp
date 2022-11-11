@@ -176,8 +176,8 @@ public:
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
 
-	virtual bool
-	configureJson(Core& ip, json_t* json) override;
+	virtual
+	void configure(Core& ip, json_t* json) override;
 
 	virtual void
 	configurePollingMode(Core& ip, PollingMode mode) override
