@@ -31,6 +31,7 @@
 #include <villas/kernel/vfio_container.hpp>
 
 #include <villas/fpga/core.hpp>
+#include <villas/fpga/node.hpp>
 #include <villas/fpga/card.hpp>
 
 using namespace villas;
@@ -41,8 +42,7 @@ static PCIeCardFactory villas::fpga::PCIeCardFactory;
 
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
-PCIeCard::List
-PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
+PCIeCard::List PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
 {
 	PCIeCard::List cards;
 	auto logger = getStaticLogger();
@@ -53,18 +53,20 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 		logger->info("Found config for FPGA card {}", card_name);
 
 		json_t *json_ips;
+		json_t *json_paths = nullptr;
 		const char *pci_slot = nullptr;
 		const char *pci_id   = nullptr;
 		int do_reset = 0;
 		int affinity = 0;
 
 		json_error_t err;
-		int ret = json_unpack_ex(json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s }",
-			"ips",		&json_ips,
-			"affinity", 	&affinity,
-			"do_reset", 	&do_reset,
-			"slot", 	&pci_slot,
-		    	"id", 		&pci_id
+		int ret = json_unpack_ex(json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: o }",
+			"ips", &json_ips,
+			"affinity", &affinity,
+			"do_reset", &do_reset,
+			"slot", &pci_slot,
+		    	"id", &pci_id,
+			"paths", &json_paths
 		);
 		if (ret != 0)
 			throw ConfigError(json_card, err, "", "Failed to parse card");
@@ -114,6 +116,46 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 		if (not card->check())
 			throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
+		// Additional static paths for AXI-Steram switch
+		if (json_paths != nullptr) {
+			if (not json_is_array(json_paths))
+				throw ConfigError(json_paths, err, "", "Switch path configuration must be an array");
+
+			size_t i;
+			json_t *json_path;
+			json_array_foreach(json_paths, i, json_path) {
+				const char *from, *to;
+				int reverse = 0;
+
+				ret = json_unpack_ex(json_path, &err, 0, "{ s: s, s: s, s?: b }",
+					"from", &from,
+					"to", &to,
+					"reverse", &reverse
+				);
+				if (ret != 0)
+					throw ConfigError(json_path, err, "", "Cannot parse switch path config");
+
+				auto masterIpCore = card->lookupIp(from);
+				if (!masterIpCore)
+					throw ConfigError(json_path, "", "Unknown IP {}", from);
+
+				auto slaveIpCore = card->lookupIp(to);
+				if (!slaveIpCore)
+					throw ConfigError(json_path, "", "Unknown IP {}", to);
+
+				auto masterIpNode = std::dynamic_pointer_cast<ip::Node>(masterIpCore);
+				if (!masterIpNode)
+					throw ConfigError(json_path, "", "IP {} is not a streaming node", from);
+
+				auto slaveIpNode = std::dynamic_pointer_cast<ip::Node>(slaveIpCore);
+				if (!slaveIpNode)
+					throw ConfigError(json_path, "", "IP {} is not a streaming node", to);
+
+				if (not masterIpNode->connect(*slaveIpNode, reverse != 0))
+					throw ConfigError(json_path, "", "Failed to connect node {} to {}", from, to);
+			}
+		}
+
 		cards.push_back(std::move(card));
 	}
 
@@ -137,8 +179,7 @@ PCIeCard::~PCIeCard()
 	}
 }
 
-ip::Core::Ptr
-PCIeCard::lookupIp(const std::string &name) const
+ip::Core::Ptr PCIeCard::lookupIp(const std::string &name) const
 {
 	for (auto &ip : ips) {
 		if (*ip == name) {
@@ -149,8 +190,7 @@ PCIeCard::lookupIp(const std::string &name) const
 	return nullptr;
 }
 
-ip::Core::Ptr
-PCIeCard::lookupIp(const Vlnv &vlnv) const
+ip::Core::Ptr PCIeCard::lookupIp(const Vlnv &vlnv) const
 {
 	for (auto &ip : ips) {
 		if (*ip == vlnv) {
@@ -161,8 +201,7 @@ PCIeCard::lookupIp(const Vlnv &vlnv) const
 	return nullptr;
 }
 
-ip::Core::Ptr
-PCIeCard::lookupIp(const ip::IpIdentifier &id) const
+ip::Core::Ptr PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 {
 	for (auto &ip : ips) {
 		if (*ip == id) {
@@ -173,8 +212,7 @@ PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 	return nullptr;
 }
 
-bool
-PCIeCard::mapMemoryBlock(const MemoryBlock &block)
+bool PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 {
 	if (not vfioContainer->isIommuEnabled()) {
 		logger->warn("VFIO mapping not supported without IOMMU");
@@ -213,8 +251,7 @@ PCIeCard::mapMemoryBlock(const MemoryBlock &block)
 	return true;
 }
 
-bool
-PCIeCard::init()
+bool PCIeCard::init()
 {
 	logger = getLogger();
 
