@@ -61,16 +61,15 @@ target_include_directories(villas-fpga
 	PUBLIC
 		${PROJECT_BINARY_DIR}/include
 		${PROJECT_SOURCE_DIR}/include
-		${XIL_INCLUDE_DIRS}
 		${JANSSON_INCLUDE_DIRS}
 )
 
 target_link_libraries(villas-fpga PUBLIC
-	${XIL_LINK_LIBRARIES}
 	${JANSSON_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS}
 	m
+	xil
 	villas-common
 )
 

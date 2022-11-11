@@ -54,7 +54,6 @@ include(FindPkgConfig)
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
 pkg_check_modules(JANSSON REQUIRED IMPORTED_TARGET jansson)
-pkg_check_modules(XIL REQUIRED IMPORTED_TARGET libxil>=0.1.1)
 
 find_package(Threads)
 find_package(Criterion)
@@ -62,6 +61,7 @@ find_package(Criterion)
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
+add_subdirectory(thirdparty/libxil)
 add_subdirectory(lib)
 add_subdirectory(src)
 
