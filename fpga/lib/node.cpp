@@ -90,8 +90,7 @@ void NodeFactory::configure(Core &ip, json_t *cfg)
 	}
 }
 
-std::pair<std::string, std::string>
-Node::getLoopbackPorts() const
+std::pair<std::string, std::string> Node::getLoopbackPorts() const
 {
 	for (auto& [masterName, masterVertex] : portsMaster) {
 		for (auto& [slaveName, slaveVertex] : portsSlave) {
@@ -157,29 +156,25 @@ bool Node::connect(const StreamVertex &from, const StreamVertex &to)
 	return nextHopNodeIp->connect(*nextHopNode, to);
 }
 
-const StreamVertex&
-Node::getDefaultSlavePort() const
+const StreamVertex& Node::getDefaultSlavePort() const
 {
 	logger->error("No default slave port available");
 	throw std::exception();
 }
 
-const StreamVertex&
-Node::getDefaultMasterPort() const
+const StreamVertex& Node::getDefaultMasterPort() const
 {
 	logger->error("No default master port available");
 	throw std::exception();
 }
 
-bool
-Node::loopbackPossible() const
+bool Node::loopbackPossible() const
 {
 	auto ports = getLoopbackPorts();
 	return (not ports.first.empty()) and (not ports.second.empty());
 }
 
-bool
-Node::connectInternal(const std::string &slavePort,
+bool Node::connectInternal(const std::string &slavePort,
                         const std::string &masterPort)
 {
 	(void) slavePort;
@@ -189,8 +184,7 @@ Node::connectInternal(const std::string &slavePort,
 	return false;
 }
 
-bool
-Node::connectLoopback()
+bool Node::connectLoopback()
 {
 	auto ports = getLoopbackPorts();
 	const auto &portMaster = portsMaster[ports.first];

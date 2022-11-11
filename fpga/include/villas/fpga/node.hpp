@@ -51,8 +51,8 @@ public:
 		return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")";
 	}
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const StreamVertex &vertex)
+	friend
+	std::ostream& operator<< (std::ostream &stream, const StreamVertex &vertex)
 	{
 		return stream << vertex.getIdentifier() << ": " << vertex.getName();
 	}
@@ -69,10 +69,9 @@ public:
 		graph::DirectedGraph<StreamVertex>("stream:graph")
 	{ }
 
-	std::shared_ptr<StreamVertex>
-	getOrCreateStreamVertex(const std::string &node,
-	                        const std::string &port,
-	                        bool isMaster)
+	std::shared_ptr<StreamVertex> getOrCreateStreamVertex(const std::string &node,
+	        const std::string &port,
+	        bool isMaster)
 	{
 		for (auto &vertexEntry : vertices) {
 			auto &vertex = vertexEntry.second;
@@ -100,14 +99,12 @@ public:
 		std::string nodeName;
 	};
 
-	const StreamVertex&
-	getMasterPort(const std::string &name) const
+	const StreamVertex& getMasterPort(const std::string &name) const
 	{
 		return *portsMaster.at(name);
 	}
 
-	const StreamVertex&
-	getSlavePort(const std::string &name) const
+	const StreamVertex& getSlavePort(const std::string &name) const
 	{
 		return *portsSlave.at(name);
 	}
@@ -133,15 +130,15 @@ public:
 	}
 
 	// Used by easy-usage connect, will throw if not implemented by derived node
-	virtual const StreamVertex&
-	getDefaultSlavePort() const;
+	virtual
+	const StreamVertex& getDefaultSlavePort() const;
 
 	// Used by easy-usage connect, will throw if not implemented by derived node
-	virtual const StreamVertex&
-	getDefaultMasterPort() const;
+	virtual
+	const StreamVertex& getDefaultMasterPort() const;
 
-	static const StreamGraph&
-	getGraph()
+	static
+	const StreamGraph& getGraph()
 	{
 		return streamGraph;
 	}
@@ -161,7 +158,8 @@ protected:
 	std::map<std::string, std::shared_ptr<StreamVertex>> portsMaster;
 	std::map<std::string, std::shared_ptr<StreamVertex>> portsSlave;
 
-	static StreamGraph streamGraph;
+	static
+	StreamGraph streamGraph;
 };
 
 class NodeFactory : public CoreFactory {

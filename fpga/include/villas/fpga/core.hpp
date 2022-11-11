@@ -121,127 +121,118 @@ public:
 	// Generic management interface for IPs
 
 	// Runtime setup of IP, should access and initialize hardware
-	virtual bool init()
+	virtual
+	bool init()
 	{
 		return true;
 	}
 
 	// Runtime check of IP, should verify basic functionality
-	virtual bool check()
+	virtual
+	bool check()
 	{
 		return true;
 	}
 
 	// Generic disabling of IP, meaning may depend on IP
-	virtual bool stop()
+	virtual
+	bool stop()
 	{
 		return true;
 	}
 
 	// Reset the IP, it should behave like freshly initialized afterwards
-	virtual bool reset()
+	virtual
+	bool reset()
 	{
 		return true;
 	}
 
 	// Print some debug information about the IP
-	virtual void dump();
+	virtual
+	void dump();
 
 protected:
 	// Key-type for accessing maps addressTranslations and slaveAddressSpaces
 	using MemoryBlockName = std::string;
 
 	// Each IP can declare via this function which memory blocks it requires
-	virtual std::list<MemoryBlockName>
-	getMemoryBlocks() const
+	virtual
+	std::list<MemoryBlockName> getMemoryBlocks() const
 	{
 		return {};
 	}
 
 public:
-	const std::string&
-	getInstanceName() const
+	const std::string& getInstanceName() const
 	{
 		return id.getName();
 	}
 
 	// Operators
 
-	bool
-	operator==(const Vlnv &otherVlnv) const
+	bool operator==(const Vlnv &otherVlnv) const
 	{
 		return id.getVlnv() == otherVlnv;
 	}
 
-	bool
-	operator!=(const Vlnv &otherVlnv) const
+	bool operator!=(const Vlnv &otherVlnv) const
 	{
 		return id.getVlnv() != otherVlnv;
 	}
 
-	bool
-	operator==(const IpIdentifier &otherId) const
+	bool operator==(const IpIdentifier &otherId) const
 	{
 		return this->id == otherId;
 	}
 
-	bool
-	operator!=(const IpIdentifier &otherId) const
+	bool operator!=(const IpIdentifier &otherId) const
 	{
 		return this->id != otherId;
 	}
 
-	bool
-	operator==(const std::string &otherName) const
+	bool operator==(const std::string &otherName) const
 	{
 		return getInstanceName() == otherName;
 	}
 
-	bool
-	operator!=(const std::string &otherName) const
+	bool operator!=(const std::string &otherName) const
 	{
 		return getInstanceName() != otherName;
 	}
 
-	bool
-	operator==(const Core &otherIp) const
+	bool operator==(const Core &otherIp) const
 	{
 		return this->id == otherIp.id;
 	}
 
-	bool
-	operator!=(const Core &otherIp) const
+	bool operator!=(const Core &otherIp) const
 	{
 		return this->id != otherIp.id;
 	}
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const Core &ip)
+	friend
+	std::ostream& operator<< (std::ostream &stream, const Core &ip)
 	{
 		return stream << ip.id;
 	}
 
 protected:
-	uintptr_t
-	getBaseAddr(const MemoryBlockName &block) const
+	uintptr_t getBaseAddr(const MemoryBlockName &block) const
 	{
 		return getLocalAddr(block, 0);
 	}
 
-	uintptr_t
-	getLocalAddr(const MemoryBlockName &block, uintptr_t address) const;
+	uintptr_t getLocalAddr(const MemoryBlockName &block, uintptr_t address) const;
 
-	MemoryManager::AddressSpaceId
-	getAddressSpaceId(const MemoryBlockName &block) const
+	MemoryManager::AddressSpaceId getAddressSpaceId(const MemoryBlockName &block) const
 	{
 		return slaveAddressSpaces.at(block);
 	}
 
-	InterruptController*
-	getInterruptController(const std::string &interruptName) const;
+	InterruptController* getInterruptController(const std::string &interruptName) const;
 
-	MemoryManager::AddressSpaceId
-	getMasterAddrSpaceByInterface(const std::string &masterInterfaceName) const
+	MemoryManager::AddressSpaceId getMasterAddrSpaceByInterface(const std::string &masterInterfaceName) const
 	{
 		return busMasterInterfaces.at(masterInterfaceName);
 	}
@@ -292,8 +283,8 @@ public:
 	using plugin::Plugin::Plugin;
 
 	// Returns a running and checked FPGA IP
-	static Core::List
-	make(PCIeCard* card, json_t *json_ips);
+	static
+	Core::List make(PCIeCard* card, json_t *json_ips);
 
 	virtual
 	std::string getType() const
@@ -306,8 +297,8 @@ protected:
 		POLL,
 		IRQ,
 	};
-	Logger
-	getLogger() const
+
+	Logger getLogger() const
 	{
 		return villas::logging.get(getName());
 	}
@@ -325,18 +316,19 @@ private:
 	void configurePollingMode(Core &, PollingMode)
 	{ }
 
-	virtual Vlnv getCompatibleVlnv() const = 0;
+	virtual
+	Vlnv getCompatibleVlnv() const = 0;
 
 protected:
-	static Logger
-	getStaticLogger()
+	static
+	Logger getStaticLogger()
 	{
 		return villas::logging.get("core:factory");
 	}
 
 private:
-	static CoreFactory*
-	lookup(const Vlnv &vlnv);
+	static
+	CoreFactory* lookup(const Vlnv &vlnv);
 };
 
 } /* namespace ip */

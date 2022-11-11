@@ -64,20 +64,20 @@ public:
 		return new Bram;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return "Bram";
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return "Block RAM";
 	}
 
-	virtual Vlnv
-	getCompatibleVlnv() const
+	virtual
+	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
 	}

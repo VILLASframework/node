@@ -64,20 +64,18 @@ public:
 	void makeAccesibleFromVA(const MemoryBlock &mem);
 	bool makeInaccesibleFromVA(const MemoryBlock &mem);
 
-	inline bool
-	hasScatterGather() const
+	inline
+	bool hasScatterGather() const
 	{
 		return xConfig.HasSg;
 	}
 
-	const StreamVertex&
-	getDefaultSlavePort() const
+	const StreamVertex& getDefaultSlavePort() const
 	{
 		return getSlavePort(s2mmPort);
 	}
 
-	const StreamVertex&
-	getDefaultMasterPort() const
+	const StreamVertex& getDefaultMasterPort() const
 	{
 		return getMasterPort(mm2sPort);
 	}
@@ -158,20 +156,20 @@ public:
 		return new Dma;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return "Dma";
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return "Xilinx's AXI4 Direct Memory Access Controller";
 	}
 
-	virtual Vlnv
-	getCompatibleVlnv() const
+	virtual
+	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}

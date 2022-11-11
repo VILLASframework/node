@@ -64,8 +64,7 @@ bool AxiStreamSwitch::init()
 	return true;
 }
 
-bool
-AxiStreamSwitch::connectInternal(const std::string &portSlave,
+bool AxiStreamSwitch::connectInternal(const std::string &portSlave,
                                  const std::string &portMaster)
 {
 	// Check if slave port exists
@@ -123,8 +122,7 @@ AxiStreamSwitch::connectInternal(const std::string &portSlave,
 	return true;
 }
 
-int
-AxiStreamSwitch::portNameToNum(const std::string &portName)
+int AxiStreamSwitch::portNameToNum(const std::string &portName)
 {
 	const std::string number = portName.substr(1, 2);
 	return std::stoi(number);

@@ -64,16 +64,17 @@ private:
 		Core* slaveIn;
 	};
 
-	int num_ports;
 	XAxis_Switch xSwitch;
+	XAxis_Switch_Config xConfig;
+
 	std::map<std::string, std::string> portMapping;
 };
 
 class AxiStreamSwitchFactory : public NodeFactory {
 public:
 
-	static constexpr const char*
-	getCompatibleVlnvString()
+	static constexpr
+	const char* getCompatibleVlnvString()
 	{
 		return "xilinx.com:ip:axis_switch:";
 	}
@@ -85,20 +86,20 @@ public:
 		return new AxiStreamSwitch;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return "AxiStreamSwitch";
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return "Xilinx's AXI4-Stream switch";
 	}
 
-	virtual Vlnv
-	getCompatibleVlnv() const
+	virtual
+	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv(getCompatibleVlnvString());
 	}

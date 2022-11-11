@@ -61,8 +61,8 @@ private:
 class AxiPciExpressBridgeFactory : public CoreFactory {
 public:
 
-	static constexpr const char*
-	getCompatibleVlnvString()
+	static constexpr
+	const char* getCompatibleVlnvString()
 	{
 		return "xilinx.com:ip:axi_pcie:";
 	}
@@ -74,20 +74,20 @@ public:
 		return new AxiPciExpressBridge;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return "AxiPciExpressBridge";
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return "Xilinx's AXI-PCIe Bridge";
 	}
 
-	virtual Vlnv
-	getCompatibleVlnv() const
+	virtual
+	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv(getCompatibleVlnvString());
 	}
