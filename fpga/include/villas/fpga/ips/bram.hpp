@@ -57,7 +57,7 @@ private:
 class BramFactory : public CoreFactory {
 public:
 
-	void configure(Core &ip, json_t *cfg);
+	void parse(Core &ip, json_t *cfg);
 
 	Core* create()
 	{

@@ -245,7 +245,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		CoreFactory->configure(*ip, json_ip);
+		CoreFactory->parse(*ip, json_ip);
 
 		// Set polling mode
 		CoreFactory->configurePollingMode(*ip, (card->polling ? PollingMode::POLL : PollingMode::IRQ));

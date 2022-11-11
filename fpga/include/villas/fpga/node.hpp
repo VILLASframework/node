@@ -167,7 +167,7 @@ public:
 	using CoreFactory::CoreFactory;
 
 	virtual
-	void configure(Core &ip, json_t *cfg);
+	void parse(Core &ip, json_t *cfg);
 };
 
 } /* namespace ip */

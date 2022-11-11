@@ -175,7 +175,7 @@ public:
 	}
 
 	virtual
-	void configure(Core& ip, json_t* json) override;
+	void parse(Core& ip, json_t* json) override;
 
 	virtual void
 	configurePollingMode(Core& ip, PollingMode mode) override

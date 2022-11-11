@@ -618,9 +618,9 @@ void Dma::dump()
 	logger->info("MM2S_DMASR:  {:x}", XAxiDma_ReadReg(xDma.RegBase, XAXIDMA_TX_OFFSET + XAXIDMA_SR_OFFSET));
 }
 
-void DmaFactory::configure(Core &ip, json_t *cfg)
+void DmaFactory::parse(Core &ip, json_t *cfg)
 {
-	NodeFactory::configure(ip, cfg);
+	NodeFactory::parse(ip, cfg);
 
 	auto &dma = dynamic_cast<Dma&>(ip);
 

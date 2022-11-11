@@ -113,9 +113,9 @@ AxiPciExpressBridge::init()
 }
 
 void
-AxiPciExpressBridgeFactory::configure(Core &ip, json_t *cfg)
+AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg)
 {
-	CoreFactory::configure(ip, cfg);
+	CoreFactory::parse(ip, cfg);
 
 	auto logger = getLogger();
 	auto &pcie = dynamic_cast<AxiPciExpressBridge&>(ip);

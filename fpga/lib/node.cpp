@@ -36,9 +36,9 @@ using namespace villas::fpga::ip;
 StreamGraph
 Node::streamGraph;
 
-void NodeFactory::configure(Core &ip, json_t *cfg)
+void NodeFactory::parse(Core &ip, json_t *cfg)
 {
-	CoreFactory::configure(ip, cfg);
+	CoreFactory::parse(ip, cfg);
 
 	auto &Node = dynamic_cast<ip::Node&>(ip);
 	auto logger = getLogger();

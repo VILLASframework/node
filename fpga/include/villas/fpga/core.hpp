@@ -305,7 +305,7 @@ protected:
 
 	// Configure IP instance from JSON config
 	virtual
-	void configure(Core &, json_t *)
+	void parse(Core &, json_t *)
 	{ }
 
 private:

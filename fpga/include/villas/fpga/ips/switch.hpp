@@ -79,7 +79,7 @@ public:
 		return "xilinx.com:ip:axis_switch:";
 	}
 
-	void configure(Core &ip, json_t *cfg);
+	void parse(Core &ip, json_t *cfg);
 
 	Core* create()
 	{

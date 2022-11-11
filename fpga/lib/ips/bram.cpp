@@ -27,9 +27,9 @@ using namespace villas::fpga::ip;
 
 static BramFactory factory;
 
-void BramFactory::configure(Core &ip, json_t* cfg)
+void BramFactory::parse(Core &ip, json_t* cfg)
 {
-	CoreFactory::configure(ip, cfg);
+	CoreFactory::parse(ip, cfg);
 
 	auto &bram = dynamic_cast<Bram&>(ip);
 

@@ -128,9 +128,9 @@ int AxiStreamSwitch::portNameToNum(const std::string &portName)
 	return std::stoi(number);
 }
 
-void AxiStreamSwitchFactory::configure(Core &ip, json_t *cfg)
+void AxiStreamSwitchFactory::parse(Core &ip, json_t *cfg)
 {
-	NodeFactory::configure(ip, cfg);
+	NodeFactory::parse(ip, cfg);
 
 	auto logger = getLogger();
 
