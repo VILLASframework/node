@@ -37,9 +37,11 @@ public:
 	using IrqMaskType = uint32_t;
 	static constexpr int maxIrqs = 32;
 
+	virtual
 	~InterruptController();
 
-	bool init();
+	virtual
+	bool init() override;
 
 	bool enableInterrupt(IrqMaskType mask, bool polling);
 	bool enableInterrupt(IrqPort irq, bool polling)

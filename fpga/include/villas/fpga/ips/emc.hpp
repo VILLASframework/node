@@ -34,7 +34,8 @@ namespace ip {
 class EMC : public Core {
 public:
 
-	bool init();
+	virtual
+	bool init() override;
 
 	bool flash(uint32_t offset, const std::string &filename);
 	bool flash(uint32_t offset, uint32_t length, uint8_t *data);

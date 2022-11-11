@@ -33,16 +33,18 @@ class Bram : public Core {
 	friend class BramFactory;
 public:
 
-	bool init();
+	virtual
+	bool init() override;
 
-	LinearAllocator&
-	getAllocator()
+	LinearAllocator& getAllocator()
 	{
 		return *allocator;
 	}
 
 private:
-	static constexpr const char* memoryBlock = "Mem0";
+	static constexpr
+	const char* memoryBlock = "Mem0";
+
 	std::list<MemoryBlockName> getMemoryBlocks() const
 	{
 		return {

@@ -10,7 +10,8 @@ namespace ip {
 class Hls : public virtual Core
 {
 public:
-	virtual bool init()
+	virtual
+	bool init() override
 	{
 		auto &registers = addressTranslations.at(registerMemory);
 

@@ -38,7 +38,8 @@ class AxiPciExpressBridge : public Core {
 public:
 	friend class AxiPciExpressBridgeFactory;
 
-	bool init();
+	virtual
+	bool init() override;
 
 private:
 	static constexpr char axiInterface[] = "M_AXI";

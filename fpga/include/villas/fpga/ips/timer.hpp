@@ -38,24 +38,28 @@ namespace ip {
 class Timer : public Core {
 	friend class TimerFactory;
 public:
-	bool init();
+
+	virtual
+	bool init() override;
 
 	bool start(uint32_t ticks);
 	bool wait();
 	uint32_t remaining();
 
-	inline bool isRunning()
+	inline
+	bool isRunning()
 	{
 		return remaining() != 0;
 	}
 
-	inline bool isFinished()
+	inline
+	bool isFinished()
 	{
 		return remaining() == 0;
 	}
 
-	static constexpr uint32_t
-	getFrequency()
+	static constexpr
+	uint32_t getFrequency()
 	{
 		return FPGA_AXI_HZ;
 	}
@@ -83,20 +87,20 @@ public:
 		return new Timer;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return "Timer";
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return "Xilinx's programmable timer / counter";
 	}
 
-	virtual Vlnv
-	getCompatibleVlnv() const
+	virtual
+	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv("xilinx.com:ip:axi_timer:");
 	}

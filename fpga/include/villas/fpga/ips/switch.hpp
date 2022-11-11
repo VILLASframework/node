@@ -40,7 +40,8 @@ class AxiStreamSwitch : public Node {
 public:
 	friend class AxiStreamSwitchFactory;
 
-	bool init();
+	virtual
+	bool init() override;
 
 	bool connectInternal(const std::string &slavePort,
 	                     const std::string &masterPort);
@@ -49,8 +50,11 @@ private:
 	int portNameToNum(const std::string &portName);
 
 private:
-	static constexpr const char* PORT_DISABLED = "DISABLED";
-	static constexpr char registerMemory[] = "Reg";
+	static constexpr
+	const char* PORT_DISABLED = "DISABLED";
+
+	static constexpr
+	char registerMemory[] = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
 	{
@@ -58,11 +62,6 @@ private:
 			registerMemory
 		};
 	}
-
-	struct Path {
-		Core* masterOut;
-		Core* slaveIn;
-	};
 
 	XAxis_Switch xSwitch;
 	XAxis_Switch_Config xConfig;

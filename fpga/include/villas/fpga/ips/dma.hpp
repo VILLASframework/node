@@ -40,8 +40,11 @@ public:
 	friend class DmaFactory;
 
 	~Dma();
-	bool init();
-	bool reset();
+	virtual
+	bool init() override;
+
+	virtual
+	bool reset() override;
 
 	// Memory-mapped to stream (MM2S)
 	bool write(const MemoryBlock &mem, size_t len);
@@ -101,7 +104,8 @@ public:
 
 	bool isMemoryBlockAccesible(const MemoryBlock &mem, const std::string &interface);
 
-	virtual void dump();
+	virtual
+	void dump() override;
 
 private:
 	static constexpr char registerMemory[] = "Reg";

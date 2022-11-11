@@ -29,9 +29,16 @@ class Rtds2Gpu : public Node, public Hls
 public:
 	friend class Rtds2GpuFactory;
 
-	bool init();
+	virtual
+	bool init() override;
 
 	void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
+
+	virtual
+	void dump() override
+	{
+		dump(spdlog::level::info);
+	}
 
 	bool startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset);
 

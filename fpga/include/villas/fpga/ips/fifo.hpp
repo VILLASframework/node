@@ -38,8 +38,11 @@ class Fifo : public Node {
 public:
 	friend class FifoFactory;
 
-	bool init();
-	bool stop();
+	virtual
+	bool init() override;
+
+	virtual
+	bool stop() override;
 
 	size_t write(const void* buf, size_t len);
 	size_t read(void* buf, size_t len);

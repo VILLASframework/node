@@ -33,7 +33,8 @@ namespace ip {
 class GeneralPurposeIO : public Core {
 public:
 
-	bool init();
+	virtual
+	bool init() override;
 
 private:
 

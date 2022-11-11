@@ -16,7 +16,8 @@ class Gpu2Rtds : public Node, public Hls
 public:
 	friend class Gpu2RtdsFactory;
 
-	bool init();
+	virtual
+	bool init() override;
 
 	void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 	bool startOnce(size_t frameSize);

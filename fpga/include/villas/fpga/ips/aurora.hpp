@@ -34,7 +34,8 @@ public:
 	static constexpr const char* masterPort = "m_axis";
 	static constexpr const char* slavePort = "s_axis";
 
-	void dump();
+	virtual
+	void dump() override;
 
 	std::list<std::string> getMemoryBlocks() const
 	{
