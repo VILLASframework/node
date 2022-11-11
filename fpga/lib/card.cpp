@@ -52,11 +52,11 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 	json_object_foreach(json, card_name, json_card) {
 		logger->info("Found config for FPGA card {}", card_name);
 
-		json_t*     json_ips = nullptr;
-		const char* pci_slot = nullptr;
-		const char* pci_id   = nullptr;
-		int         do_reset = 0;
-		int         affinity = 0;
+		json_t *json_ips;
+		const char *pci_slot = nullptr;
+		const char *pci_id   = nullptr;
+		int do_reset = 0;
+		int affinity = 0;
 
 		json_error_t err;
 		int ret = json_unpack_ex(json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s }",
@@ -64,8 +64,8 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 			"affinity", 	&affinity,
 			"do_reset", 	&do_reset,
 			"slot", 	&pci_slot,
-		    	"id", 		&pci_id);
-
+		    	"id", 		&pci_id
+		);
 		if (ret != 0)
 			throw ConfigError(json_card, err, "", "Failed to parse card");
 

@@ -134,7 +134,9 @@ AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg)
 			unsigned int translation;
 
 			json_error_t err;
-			int ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }", "translation", &translation);
+			int ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }",
+				"translation", &translation
+			);
 			if (ret != 0)
 				throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType, bar_name);
 

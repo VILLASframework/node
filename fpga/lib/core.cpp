@@ -69,7 +69,9 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		const char* vlnv;
 
 		json_error_t err;
-		int ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
+		int ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }",
+			"vlnv", &vlnv
+		);
 		if (ret != 0)
 			throw ConfigError(json_ip, err, "", "IP {} has no VLNV", ipName);
 
