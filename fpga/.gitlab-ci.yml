@@ -44,12 +44,13 @@ test:unit:
   tags:
     - docker
   allow_failure: true
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   script: |
     rm -r build && mkdir build && cd build
     cmake ..
-    make -j$(nproc) unit-tests
+    make -j$(nproc) unit-tests-fpga
     if [ "$(who | wc -l)" -eq "0" ]; then
-      tests/fpga-unit-tests --jobs 1 --filter 'fpga/*'
+      tests/unit/unit-tests-fpga --jobs 1 --filter 'fpga/*'
     else
       echo "System is currently used by: $(who)"
       echo "We are skipping the test. Please restart manually."
@@ -72,7 +73,7 @@ test:cppcheck:
                src/
                lib/
                tests/unit/ | tee cppcheck.log
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   dependencies:
     - build:source
   tags:
