@@ -42,12 +42,11 @@ build:source:
 test:unit:
   stage: test
   tags:
-    - villas-fpga
-    - cuda
+    - docker
   allow_failure: true
   script: |
     rm -r build && mkdir build && cd build
-    cmake3 ..
+    cmake ..
     make -j$(nproc) unit-tests
     if [ "$(who | wc -l)" -eq "0" ]; then
       tests/fpga-unit-tests --jobs 1 --filter 'fpga/*'
