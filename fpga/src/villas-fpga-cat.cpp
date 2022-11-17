@@ -125,9 +125,10 @@ int main(int argc, char* argv[])
 			//std::cerr << std::endl;
 
 			for (size_t i = 0; i*4 < bytesRead; i++) {
-				int32_t ival = mem[i++];
-				float dval = *((float*)(&ival));
-				std::cerr << std::hex << ival << "," << dval << std::endl;
+				int32_t ival = mem[i];
+				float fval = *((float*)(&ival));
+				std::cerr << std::hex << ival << ",";
+				std::cerr << fval << std::endl;
 				/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
 					 (int64_t)(mem[1] & 0xFFFF0000) << 16 |
 					 (int64_t)(mem[0] & 0xFFFF) << 16 |
