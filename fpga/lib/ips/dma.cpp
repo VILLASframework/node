@@ -42,11 +42,10 @@ static DmaFactory factory;
 
 bool Dma::init()
 {
-	coalesce = 1;
-	delay = 0;
+	// Check if configJson has been called
+	if (!configDone)
+		throw RuntimeError("DMA device not configured");
 
-	// If there is a scatter-gather interface, then this instance has it
-	// hasSG = busMasterInterfaces.count(sgInterface) == 1;
 	if (hasScatterGather())
 		logger->info("Scatter-Gather support: {}", hasScatterGather());
 
@@ -65,12 +64,14 @@ bool Dma::init()
 		logger->debug("DMA selftest passed");
 
 	// Map buffer descriptors
-	if (hasScatterGather())
+	if (hasScatterGather()) {
+		if (actualRingBdSize < 2*readCoalesce || actualRingBdSize < 2*writeCoalesce) {
+			throw RuntimeError("Ring buffer size is too small for coalesce value");
+		}
 		setupScatterGather();
+	}
 
-	// Enable completion interrupts for both channels
-	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
-	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
+
 
 	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], polling);
 	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], polling);
@@ -94,11 +95,11 @@ void Dma::setupScatterGatherRingRx()
 	XAxiDma_BdRingIntDisable(rxRingPtr, XAXIDMA_IRQ_ALL_MASK);
 
 	// Set delay and coalescing
-	XAxiDma_BdRingSetCoalesce(rxRingPtr, coalesce, delay);
+	XAxiDma_BdRingSetCoalesce(rxRingPtr, readCoalesce, delay);
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingRx = alloc.allocateBlock(ringSize);
+	sgRingRx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
 
 	if (not card->mapMemoryBlock(*sgRingRx))
 		throw RuntimeError("Memory not accessible by DMA");
@@ -109,9 +110,7 @@ void Dma::setupScatterGatherRingRx()
 	auto virtAddr = reinterpret_cast<uintptr_t>(mm.getTranslationFromProcess(sgRingRx->getAddrSpaceId()).getLocalAddr(0));
 
 	// Setup Rx BD space
-	auto bdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, sgRingRx->getSize());
-
-	ret = XAxiDma_BdRingCreate(rxRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, bdCount);
+	ret = XAxiDma_BdRingCreate(rxRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, actualRingBdSize);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to create RX ring: {}", ret);
 
@@ -123,6 +122,8 @@ void Dma::setupScatterGatherRingRx()
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to clone BD template: {}", ret);
 
+	// Enable completion interrupt
+	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 	// Start the RX channel
 	ret = XAxiDma_BdRingStart(rxRingPtr);
 	if (ret != XST_SUCCESS)
@@ -139,11 +140,11 @@ void Dma::setupScatterGatherRingTx()
 	XAxiDma_BdRingIntDisable(txRingPtr, XAXIDMA_IRQ_ALL_MASK);
 
 	// Set TX delay and coalesce
-	XAxiDma_BdRingSetCoalesce(txRingPtr, coalesce, delay);
+	XAxiDma_BdRingSetCoalesce(txRingPtr, writeCoalesce, delay);
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingTx = alloc.allocateBlock(ringSize);
+	sgRingTx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
 
 	if (not card->mapMemoryBlock(*sgRingTx))
 		throw RuntimeError("Memory not accessible by DMA");
@@ -154,9 +155,7 @@ void Dma::setupScatterGatherRingTx()
 	auto virtAddr = reinterpret_cast<uintptr_t>(mm.getTranslationFromProcess(sgRingTx->getAddrSpaceId()).getLocalAddr(0));
 
 	// Setup TxBD space
-	auto bdCount = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, sgRingTx->getSize());
-
-	ret = XAxiDma_BdRingCreate(txRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, bdCount);
+	ret = XAxiDma_BdRingCreate(txRingPtr, physAddr, virtAddr, XAXIDMA_BD_MINIMUM_ALIGNMENT, actualRingBdSize);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to create TX BD ring: {}", ret);
 
@@ -168,6 +167,8 @@ void Dma::setupScatterGatherRingTx()
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to clone TX ring BD: {}", ret);
 
+	// Enable completion interrupt
+	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	// Start the TX channel
 	ret = XAxiDma_BdRingStart(txRingPtr);
 	if (ret != XST_SUCCESS)
@@ -258,6 +259,7 @@ bool Dma::read(const MemoryBlock &mem, size_t len)
 	return hasScatterGather() ? readScatterGather(buf, len) : readSimple(buf, len);
 }
 
+//Write a single message
 bool Dma::writeScatterGather(const void *buf, size_t len)
 {
 	// buf is address from view of DMA controller
@@ -287,10 +289,6 @@ bool Dma::writeScatterGather(const void *buf, size_t len)
 	// TODO: Check if we really need this
 	XAxiDma_BdSetId(bd, (uintptr_t) buf);
 
-	ret = XAxiDma_BdRingSetCoalesce(txRing, 1, 0);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to set coalesce settings: {}.", ret);
-
 	// Give control of BD to HW. We should not access it until transfer is finished.
 	// Failure could also indicate that EOF is not set on last Bd
 	ret = XAxiDma_BdRingToHw(txRing, 1, bd);
@@ -304,32 +302,42 @@ bool Dma::readScatterGather(void *buf, size_t len)
 {
 	int ret = XST_FAILURE;
 
+	if (len < readCoalesce*readMsgSize)
+		throw RuntimeError("Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
+
 	auto *rxRing = XAxiDma_GetRxRing(&xDma);
 	if (rxRing == nullptr)
 		throw RuntimeError("RxRing was null.");
 
 	XAxiDma_Bd *bd;
-	ret = XAxiDma_BdRingAlloc(rxRing, 1, &bd);
+	ret = XAxiDma_BdRingAlloc(rxRing, readCoalesce, &bd);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to alloc BD in RX ring: {}", ret);
 
-	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t) buf, (uintptr_t) bd, ret);
+	auto curBd = bd;
+	char* curBuf = (char*)buf;
+	for (size_t i = 0; i < readCoalesce; i++) {
+		ret = XAxiDma_BdSetBufAddr(curBd, (uintptr_t) curBuf);
+		if (ret != XST_SUCCESS)
+			throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t) buf, (uintptr_t) bd, ret);
 
-	ret = XAxiDma_BdSetLength(bd, len, rxRing->MaxTransferLen);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t) bd, ret);
+		ret = XAxiDma_BdSetLength(curBd, readMsgSize, rxRing->MaxTransferLen);
+		if (ret != XST_SUCCESS)
+			throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t) bd, ret);
 
-	// Receive BDs do not need to set anything for the control
-	// The hardware will set the SOF/EOF bits per stream status
-	XAxiDma_BdSetCtrl(bd, 0);
 
-	ret = XAxiDma_BdRingSetCoalesce(rxRing, 1, 0);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to set coalesce settings: {}.", ret);
+		// Receive BDs do not need to set anything for the control
+		// The hardware will set the SOF/EOF bits per stream status
+		XAxiDma_BdSetCtrl(curBd, 0);
 
-	ret = XAxiDma_BdRingToHw(rxRing, 1, bd);
+		// TODO: Check if we really need this
+		XAxiDma_BdSetId(curBd, (uintptr_t) buf);
+
+		curBuf += readMsgSize;
+		curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(rxRing, curBd);
+	}
+
+	ret = XAxiDma_BdRingToHw(rxRing, readCoalesce, bd);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to submit BD to RX ring: {}", ret);
 
@@ -388,15 +396,38 @@ Dma::readCompleteScatterGather()
 	size_t bytesRead = 0;
 
 	// Wait until the data has been received by the RX channel.
-	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd)) == 0)
+	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) < readCoalesce)
 	{
-		/*auto intrNum = */irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
-		//logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
-
-		processedBds = XAxiDma_BdRingFromHw(rxRing, 1, &bd);
+		if (processedBds != 0) {
+			//Ignore partial batches
+			logger->warn("Ignoring partial batch of {} BDs.", processedBds);
+			ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
+			if (ret != XST_SUCCESS)
+				throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
+		}
+		//auto intrNum =
+		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+		//If we got a partial batch on the first call, we have to receive up to readCoalesce*2
+		//to make sure we get a full batch of readCoalesce messages
+		processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce*2, &bd);
 	}
+	if(processedBds < readCoalesce) {
+		// We got less than we expected. We already tried two times so let's give up.
+		throw RuntimeError("Read only {} BDs, expected {}.", processedBds, readCoalesce);
+	} else if(processedBds > readCoalesce) {
+		// If the first try was a partial batch, we receive two batches on the second try
+		// We ignore the first batch and only process the second one
+		while (processedBds > readCoalesce) {
+			bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(rxRing, bd);
+			processedBds--;
+		}
+		ret = XAxiDma_BdRingFree(rxRing, processedBds-readCoalesce, bd);
+		if (ret != XST_SUCCESS)
+			throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
+	}
+	// At this point we have exactly readCoalesce BDs.
 
-	// Acknowledge the interrupt
+	// Acknowledge the interrupt. Has no effect if no interrupt has occured.
 	auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
 	XAxiDma_BdRingAckIrq(rxRing, irqStatus);
 
@@ -623,6 +654,6 @@ DmaFactory::configureJson(Core& ip, json_t* json)
 		logger->error("Failed to parse DMA configuration");
 		return false;
 	}
-
+	dma.configDone = true;
 	return true;
 }

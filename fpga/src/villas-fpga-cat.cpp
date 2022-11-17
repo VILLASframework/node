@@ -124,14 +124,17 @@ int main(int argc, char* argv[])
 			//	std::cerr << std::hex << mem[i] << ";";
 			//std::cerr << std::endl;
 
-			while (bytesRead >= 8) {
-				int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
+			for (size_t i = 0; i*4 < bytesRead; i++) {
+				int32_t ival = mem[i++];
+				float dval = *((float*)(&ival));
+				std::cerr << std::hex << ival << "," << dval << std::endl;
+				/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
 					 (int64_t)(mem[1] & 0xFFFF0000) << 16 |
 					 (int64_t)(mem[0] & 0xFFFF) << 16 |
 					 (int64_t)(mem[0] & 0xFFFF0000) >> 16;
 				double dval = *((double*)(&ival));
 				std::cerr << std::hex << ival << "," << dval << std::endl;
-				bytesRead -= 8;
+				bytesRead -= 8;*/
 				//logger->info("Read value: {}", dval);
 			}
 		}

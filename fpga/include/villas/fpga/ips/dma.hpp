@@ -96,8 +96,6 @@ private:
 	void setupScatterGatherRingRx();
 	void setupScatterGatherRingTx();
 
-	static constexpr size_t ringSize = sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS * 1024;
-
 public:
 	static constexpr const char* s2mmPort = "S2MM";
 	static constexpr const char* mm2sPort = "MM2S";
@@ -127,11 +125,26 @@ private:
 
 	XAxiDma xDma;
 	XAxiDma_Config xConfig;
+
+
+	bool configDone = false;
+	// use polling to wait for DMA completion or interrupts via efds
 	bool polling = false;
+	// Timeout after which the DMA controller issues in interrupt if no data has been received
+	// Delay is 125 x <delay> x (clock period of SG clock). SG clock is 100 MHz by default.
+	int delay = 0;
+	// Coalesce is the number of messages/BDs to wait for before issuing an interrupt
+	uint32_t writeCoalesce = 1;
+	uint32_t readCoalesce = 4;
 
-	int delay;
-	int coalesce;
+	// (maximum) size of a single message on the read channel in bytes.
+	// The message buffer/BD should have enough room for this many bytes.
+	size_t readMsgSize = 4;
 
+	// When using SG: ringBdSize is the maximum number of BDs usable in the ring
+	// Depending on alignment, the actual number of BDs usable can be smaller
+	static constexpr size_t requestedRingBdSize = 1024;
+	uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSize);
 	MemoryBlock::UniquePtr sgRingTx;
 	MemoryBlock::UniquePtr sgRingRx;
 };
