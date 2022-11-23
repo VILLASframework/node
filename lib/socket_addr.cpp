@@ -25,7 +25,7 @@ using namespace villas::utils;
 char * villas::node::socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
-	char *buf = new char[256];
+	auto *buf = reinterpret_cast<char *>(::malloc(256));
 	if (!buf)
 		throw MemoryAllocationError();
 

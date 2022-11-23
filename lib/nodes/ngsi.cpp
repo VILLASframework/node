@@ -518,7 +518,7 @@ int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *json_
 	char *reason;
 
 	json_t *json_response;
-	json_t *json_request = json_pack("{ s: [ o ] }", "entities", json_entity);
+	json_t *json_request = json_pack("{ s: [ O ] }", "entities", json_entity);
 
 	ret = ngsi_request(handle, endpoint, "queryContext", json_request, &json_response, logger);
 	if (ret) {
@@ -543,7 +543,7 @@ int ngsi_request_context_update(CURL *handle, const char *endpoint, const char *
 	char *reason;
 
 	json_t *json_response;
-	json_t *json_request = json_pack("{ s: s, s: [ o ] }",
+	json_t *json_request = json_pack("{ s: s, s: [ O ] }",
 		"updateAction", action,
 		"contextElements", json_entity
 	);
