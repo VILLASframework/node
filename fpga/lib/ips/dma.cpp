@@ -66,7 +66,8 @@ bool Dma::init()
 	// Map buffer descriptors
 	if (hasScatterGather()) {
 		if (actualRingBdSize < 2*readCoalesce || actualRingBdSize < 2*writeCoalesce) {
-			throw RuntimeError("Ring buffer size is too small for coalesce value");
+			throw RuntimeError("Ring buffer size is too small for coalesce value {} < 2*{}",
+				actualRingBdSize, std::max(readCoalesce, writeCoalesce));
 		}
 		setupScatterGather();
 	}

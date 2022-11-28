@@ -51,7 +51,7 @@ static auto logger = villas::logging.get("cat");
 int main(int argc, char* argv[])
 {
 	// Command Line Parser
-	CLI::App app{"VILLASfpga data output"};
+	CLI::App app{"VILLASfpga xbar select"};
 
 	try {
 		std::string configFile;
@@ -97,55 +97,16 @@ int main(int argc, char* argv[])
 			aurora->dump();
 
 		// Configure Crossbar switch
-#if 1
-		aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), dma->getDefaultSlavePort());
-		dma->connect(dma->getDefaultMasterPort(), aurora_channels[2]->getDefaultSlavePort());
-#else
-		dma->connectLoopback();
-#endif
-		auto &alloc = villas::HostRam::getAllocator();
-		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
-		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};
+		// connect DINO to RTDS
+		//aurora_channels[0]->connect(aurora_channels[0]->getDefaultMasterPort(), aurora_channels[2]->getDefaultSlavePort());
+		//aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), aurora_channels[0]->getDefaultSlavePort());
+		// connect DINO to OPAL-RT
+		//aurora_channels[1]->connect(aurora_channels[1]->getDefaultMasterPort(), aurora_channels[2]->getDefaultSlavePort());
+		//aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), aurora_channels[1]->getDefaultSlavePort());
+		// connect OPAL-RT to RTDS
+		aurora_channels[0]->connect(aurora_channels[0]->getDefaultMasterPort(), aurora_channels[1]->getDefaultSlavePort());
+		aurora_channels[1]->connect(aurora_channels[1]->getDefaultMasterPort(), aurora_channels[0]->getDefaultSlavePort());
 
-		for (auto b : block) {
-			dma->makeAccesibleFromVA(b);
-		}
-
-		auto &mm = MemoryManager::get();
-		mm.getGraph().dump("graph.dot");
-
-		// Setup read transfer
-		dma->read(block[0], block[0].getSize());
-		size_t cur = 0, next = 1;
-		while (true) {
-			dma->read(block[next], block[next].getSize());
-			auto bytesRead = dma->readComplete();
-			// Setup read transfer
-
-			//auto valuesRead = bytesRead / sizeof(int32_t);
-			//logger->info("Read {} bytes", bytesRead);
-
-			//for (size_t i = 0; i < valuesRead; i++)
-			//	std::cerr << std::hex << mem[i] << ";";
-			//std::cerr << std::endl;
-
-			for (size_t i = 0; i*4 < bytesRead; i++) {
-				int32_t ival = mem[cur][i];
-				float fval = *((float*)(&ival));
-				//std::cerr << std::hex << ival << ",";
-				std::cerr << fval << std::endl;
-				/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-					 (int64_t)(mem[1] & 0xFFFF0000) << 16 |
-					 (int64_t)(mem[0] & 0xFFFF) << 16 |
-					 (int64_t)(mem[0] & 0xFFFF0000) >> 16;
-				double dval = *((double*)(&ival));
-				std::cerr << std::hex << ival << "," << dval << std::endl;
-				bytesRead -= 8;*/
-				//logger->info("Read value: {}", dval);
-			}
-			cur = next;
-			next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
-		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
 		return -1;

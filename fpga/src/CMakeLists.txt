@@ -22,11 +22,15 @@
 
 add_executable(villas-fpga-pipe villas-fpga-pipe.cpp)
 add_executable(villas-fpga-cat villas-fpga-cat.cpp)
+add_executable(villas-fpga-xbar-select villas-fpga-xbar-select.cpp)
 
 target_link_libraries(villas-fpga-pipe PUBLIC
 	villas-fpga
 )
 target_link_libraries(villas-fpga-cat PUBLIC
+	villas-fpga
+)
+target_link_libraries(villas-fpga-xbar-select PUBLIC
 	villas-fpga
 )
 
