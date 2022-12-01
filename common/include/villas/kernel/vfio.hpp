@@ -27,20 +27,9 @@ namespace villas {
 namespace kernel {
 
 namespace pci {
-
-/* Forward declarations */
-struct Device;
-
-}
-
 namespace vfio {
 
-/* Forward declarations */
-class Container;
-class Group;
-
 class Device {
-	friend class Container;
 public:
 	Device(const std::string &name, Group &group) :
 		name(name),
@@ -110,6 +99,12 @@ public:
 	static std::unique_ptr<Group>
 	attach(Container &container, int groupIndex);
 
+	std::list<std::unique_ptr<Device>>& getDevices()
+	{ return devices; }
+
+	int getFd()
+	{ return fd; }
+
 private:
 	/// VFIO group file descriptor
 	int fd;
@@ -159,10 +154,12 @@ public:
 	const int &getFd() const
 	{ return fd; }
 
+	std::list<std::unique_ptr<Group>> &getGroups()
+	{ return groups; }
+
 private:
 	Group & getOrAttachGroup(int index);
 
-private:
 	int fd;
 	int version;
 	int extensions;
