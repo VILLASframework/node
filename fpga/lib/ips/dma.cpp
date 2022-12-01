@@ -178,6 +178,8 @@ void Dma::setupScatterGatherRingTx()
 
 bool Dma::reset()
 {
+	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
+	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
 	XAxiDma_Reset(&xDma);
 
 	// Value taken from libxil implementation
@@ -189,10 +191,18 @@ bool Dma::reset()
 
 		timeout--;
 	}
-
-	logger->info("DMA has been resetted");
+	if (timeout == 0) {
+		logger->error("DMA reset timed out");
+	} else {
+		logger->info("DMA has been reset.");
+	}
 
 	return false;
+}
+
+Dma::~Dma()
+{
+	reset();
 }
 
 bool Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
