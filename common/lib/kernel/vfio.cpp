@@ -59,11 +59,27 @@ static const char *vfio_pci_irq_names[] = {
 
 namespace villas {
 
+void panicResetEverything()
+{
+	int ret = 0;
+	for (auto& group : container->getGroups()) {
+		for (auto& device : group->getDevices()) {
+			ret += device->reset();
+
+		}
+		if (group->getFd() > 0) {
+			ret += ioctl(group->getFd(), VFIO_GROUP_UNSET_CONTAINER);
+		}
+	}
+	if (ret > 0)
+		logging.get("kernel:vfio")->error("panic reset return errors.");
+}
 
 Container::Container()
 	: iova_next(0)
 {
 	Logger logger = logging.get("kernel:vfio");
+	spdlog::set_level(spdlog::level::debug);
 
 	static constexpr const char* requiredKernelModules[] = {
 	    "vfio", "vfio_pci", "vfio_iommu_type1"
@@ -107,6 +123,11 @@ Container::Container()
 	logger->debug("Version:    {:#x}", version);
 	logger->debug("Extensions: {:#x}", extensions);
 	logger->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
+
+	container = this;
+	std::atexit([](){
+		panicResetEverything();
+	});
 }
 
 
@@ -417,6 +438,7 @@ Device::~Device()
 	for (auto &region : regions) {
 		regionUnmap(region.index);
 	}
+	reset();
 
 	int ret = close(fd);
 	if (ret != 0) {
@@ -428,6 +450,7 @@ Device::~Device()
 bool
 Device::reset()
 {
+	logging.get("kernel:vfio")->debug("Resetting device.");
 	if (this->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(this->fd, VFIO_DEVICE_RESET) == 0;
 	else
@@ -735,6 +758,7 @@ Group::~Group()
 	if (fd < 0)
 		logger->debug("Destructing group that has not been attached");
 	else {
+		logger->debug("unsetting group container");
 		int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
 		if (ret != 0)
 			logger->error("Cannot unset container for group fd {}", fd);
