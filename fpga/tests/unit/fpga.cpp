@@ -56,7 +56,7 @@ static void init()
 
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-	auto vfioContainer = kernel::vfio::Container::create();
+	auto vfioContainer = kernel::vfio::Container::getInstance();
 
 	// Parse FPGA configuration
 	char *fn = getenv("TEST_CONFIG");

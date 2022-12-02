@@ -35,7 +35,7 @@
 #include <villas/memory.hpp>
 
 #include <villas/kernel/pci.hpp>
-#include <villas/kernel/vfio.hpp>
+#include <villas/kernel/vfio_container.hpp>
 
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
@@ -111,10 +111,10 @@ public:	// TODO: make this private
 	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
 
 	// The VFIO container that this card is part of
-	std::shared_ptr<kernel::vfio::Container> vfioContainer;
+	kernel::vfio::Container* vfioContainer;
 
 	// The VFIO device that represents this card
-	kernel::vfio::Device* vfioDevice;
+	std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
 	// Slave address space ID to access the PCIe address space from the FPGA
 	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
@@ -137,7 +137,7 @@ class PCIeCardFactory : public plugin::Plugin {
 public:
 
 	static Card::List
-	make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
+	make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, kernel::vfio::Container* vc);
 
 	static PCIeCard*
 	create()

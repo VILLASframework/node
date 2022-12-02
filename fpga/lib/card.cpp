@@ -28,7 +28,7 @@
 #include <villas/memory.hpp>
 
 #include <villas/kernel/pci.hpp>
-#include <villas/kernel/vfio.hpp>
+#include <villas/kernel/vfio_container.hpp>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
@@ -42,7 +42,7 @@ static PCIeCardFactory villas::fpga::PCIeCardFactory;
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 PCIeCard::List
-PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
+PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, kernel::vfio::Container* vc)
 {
 	PCIeCard::List cards;
 	auto logger = getStaticLogger();
@@ -76,7 +76,7 @@ PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci
 
 		// Populate generic properties
 		card->name = std::string(card_name);
-		card->vfioContainer = std::move(vc);
+		card->vfioContainer = vc;
 		card->affinity = affinity;
 		card->doReset = do_reset != 0;
 		card->polling = (polling != 0);
@@ -225,11 +225,10 @@ PCIeCard::init()
 	logger->info("Initializing FPGA card {}", name);
 
 	// Attach PCIe card to VFIO container
-	kernel::vfio::Device &device = vfioContainer->attachDevice(*pdev);
-	this->vfioDevice = &device;
+	vfioDevice = vfioContainer->attachDevice(*pdev);
 
 	// Enable memory access and PCI bus mastering for DMA
-	if (not device.pciEnable()) {
+	if (not vfioDevice->pciEnable()) {
 		logger->error("Failed to enable PCI device");
 		return false;
 	}
