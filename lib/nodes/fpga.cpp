@@ -241,7 +241,7 @@ int FpgaNodeFactory::start(SuperNode *sn)
 	vfioContainer = kernel::vfio::Container::create();
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-	// get the FPGA card plugin
+	// Get the FPGA card plugin
 	auto pcieCardPlugin = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
 	if (!pcieCardPlugin)
 		throw RuntimeError("No FPGA PCIe plugin found");
@@ -252,9 +252,9 @@ int FpgaNodeFactory::start(SuperNode *sn)
 		throw ConfigError(json_cfg, "node-config-fpgas", "No section 'fpgas' found in config");
 
 	// create all FPGA card instances using the corresponding plugin
-	auto cards = fpga::PCIeCardFactory::make(json_fpgas, pciDevices, vfioContainer);
+	auto piceCards = fpga::PCIeCardFactory::make(json_fpgas, pciDevices, vfioContainer);
 
-	cards.splice(cards.end(), cards);
+	cards.splice(cards.end(), piceCards);
 
 	return 0;
 }
