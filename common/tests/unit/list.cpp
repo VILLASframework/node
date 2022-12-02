@@ -33,13 +33,13 @@ Test(list, list_search)
 	ret = list_init(&l);
 	cr_assert_eq(ret, 0);
 
-	/* Fill list */
+	// Fill list
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++)
 		list_push(&l, (void *) nouns[i]);
 
 	cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
 
-	/* Declare on stack! */
+	// Declare on stack!
 	char positive[] = "woman";
 	char negative[] = "dinosaurrier";
 

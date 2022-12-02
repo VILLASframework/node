@@ -28,5 +28,5 @@ void generateFromJson(uuid_t out, json_t *json, const std::string &ns = "");
 /** Generate an UUID by MD5 hashing the serialized representation of the provided JSON object */
 int generateFromJson(uuid_t out, json_t *json, const uuid_t ns);
 
-} /* namespace uuid */
-} /* namespace villas */
+} // namespace uuid
+} // namespace villas

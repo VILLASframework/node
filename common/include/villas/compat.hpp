@@ -40,4 +40,4 @@ json_t *json_loadfd(int input, size_t flags, json_error_t *error);
   #define htobe16(x) OSSwapHostToBigInt16(x)
   #define htobe32(x) OSSwapHostToBigInt32(x)
   #define htobe64(x) OSSwapHostToBigInt64(x)
-#endif /* __MACH__ */
+#endif // __MACH__

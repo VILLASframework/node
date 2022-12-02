@@ -45,10 +45,10 @@ __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 
 namespace villas {
 
-/** Callback to search or sort a list. */
+// Callback to search or sort a list.
 typedef int (*cmp_cb_t)(const void *, const void *);
 
-/* The list data structure. */
+// The list data structure.
 struct List {
 	enum State state;	/**< The state of this list. */
 	void **array;		/**< Array of pointers to list elements */
@@ -133,4 +133,4 @@ ssize_t list_lookup_index(struct List *l, const std::string &name)
 	return f ? list_index(l, f) : -1;
 }
 
-} /* namespace villas */
+} // namespace villas

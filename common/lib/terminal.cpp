@@ -37,7 +37,7 @@ Terminal::Terminal()
 		if (ret)
 			throw SystemError("Failed to register signal handler");
 
-		/* Try to get initial terminal dimensions */
+		// Try to get initial terminal dimensions
 		ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
 		if (ret)
 			logger->warn("Failed to get terminal dimensions");
@@ -45,7 +45,7 @@ Terminal::Terminal()
 		logger->info("stderr is not associated with a terminal! Using fallback values for window size...");
 	}
 
-	/* Fallback if for some reason we can not determine a prober window size */
+	// Fallback if for some reason we can not determine a prober window size
 	if (window.ws_col == 0)
 		window.ws_col = 150;
 

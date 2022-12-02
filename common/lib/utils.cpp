@@ -49,11 +49,11 @@ std::vector<std::string> tokenize(std::string s, const std::string &delimiter)
 		const size_t tokenLength = curentPos - lastPos;
 		tokens.push_back(s.substr(lastPos, tokenLength));
 
-		/* Advance in string */
+		// Advance in string
 		lastPos = curentPos + delimiter.length();
 	}
 
-	/* Check if there's a last token behind the last delimiter. */
+	// Check if there's a last token behind the last delimiter.
 	if (lastPos != s.length()) {
 		const size_t lastTokenLength = s.length() - lastPos;
 		tokens.push_back(s.substr(lastPos, lastTokenLength));
@@ -85,7 +85,7 @@ ssize_t readRandom(char *buf, size_t len)
 	return bytes;
 }
 
-/* Setup exit handler */
+// Setup exit handler
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals, std::list<int> ignoreSignals)
 {
 	int ret;
@@ -161,7 +161,7 @@ char * decolor(char *str)
 
 void killme(int sig)
 {
-	/* Send only to main thread in case the ID was initilized by signalsInit() */
+	// Send only to main thread in case the ID was initilized by signalsInit()
 	if (main_thread)
 		pthread_kill(main_thread, sig);
 	else
@@ -174,7 +174,7 @@ double boxMuller(float m, float s)
 	static double y2;
 	static int use_last = 0;
 
-	if (use_last) {		/* use value from previous call */
+	if (use_last) {		// Use value from previous call
 		y1 = y2;
 		use_last = 0;
 	}
@@ -282,14 +282,14 @@ size_t strlenp(const char *str)
 		else if (c[0] == '\b')
 			sz--;
 		else if (c[0] == '\t')
-			sz += 4; /* tab width == 4 */
-		/* CSI sequence */
+			sz += 4; // Tab width == 4
+		// CSI sequence
 		else if (c[0] == '\e' && c[1] == '[') {
 			c += 2;
 			while (*c && *c != 'm')
 				c++;
 		}
-		/* UTF-8 */
+		// UTF-8
 		else if (c[0] >= 0xc2 && c[0] <= 0xdf) {
 			sz++;
 			c += 1;
@@ -374,5 +374,5 @@ bool isPrivileged() {
 	return true;
 }
 
-} /* namespace utils */
-} /* namespace villas */
+} // namespace utils
+} // namespace villas

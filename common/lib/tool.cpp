@@ -54,10 +54,10 @@ int Tool::run()
 		if (ret)
 			throw RuntimeError("Failed to initialize signal subsystem");
 
-		/* Parse command line arguments */
+		// Parse command line arguments
 		parse();
 
-		/* Run tool */
+		// Run tool
 		ret = main();
 
 		logger->info(CLR_GRN("Goodbye!"));

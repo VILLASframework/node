@@ -65,7 +65,7 @@ Log::Log(Level lvl) :
 	setLevel(level);
 	setFormatter(pattern, p ? p : "");
 
-	/* Default sink */
+	// Default sink
 	sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
 
 	sinks->add_sink(sink);
@@ -94,7 +94,7 @@ Logger Log::get(const std::string &name)
 		for (auto &expr : expressions) {
 			int flags = 0;
 #ifdef FNM_EXTMATCH
-			/* musl-libc doesnt support this flag yet */
+			// musl-libc doesnt support this flag yet
 			flags |= FNM_EXTMATCH;
 #endif
 			if (!fnmatch(expr.name.c_str(), name.c_str(), flags))

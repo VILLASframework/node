@@ -39,7 +39,7 @@ void Hist::put(double value)
 {
 	last = value;
 
-	/* Update min/max */
+	// Update min/max
 	if (value > highest)
 		highest = value;
 	if (value < lowest)
@@ -47,7 +47,7 @@ void Hist::put(double value)
 
 	if (data.size()) {
 		if (total < warmup) {
-			/* We are still in warmup phase... Waiting for more samples... */
+			// We are still in warmup phase... Waiting for more samples...
 		}
 		else if (data.size() && total == warmup && warmup != 0) {
 			low  = getMean() - 3 * getStddev();
@@ -55,13 +55,13 @@ void Hist::put(double value)
 			resolution = (high - low) / data.size();
 		}
 		else if (data.size() && (total == warmup) && (warmup == 0)) {
-			// there is no warmup phase
+			// There is no warmup phase
 			// TODO resolution = ?
 		}
 		else {
 			idx_t idx = std::round((value - low) / resolution);
 
-			/* Check bounds and increment */
+			// Check bounds and increment
 			if      (idx >= (idx_t) data.size())
 				higher++;
 			else if (idx < 0)
@@ -73,8 +73,8 @@ void Hist::put(double value)
 
 	total++;
 
-	/* Online / running calculation of variance and mean
-	 *  by Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition */
+	// Online / running calculation of variance and mean
+	//  by Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition
 	if (total == 1) {
 		_m[1] = _m[0] = value;
 		_s[1] = 0.0;
@@ -83,7 +83,7 @@ void Hist::put(double value)
 		_m[0] = _m[1] + (value - _m[1]) / total;
 		_s[0] = _s[1] + (value - _m[1]) * (value - _m[0]);
 
-		/* Set up for next iteration */
+		// Set up for next iteration
 		_m[1] = _m[0];
 		_s[1] = _s[0];
 	}
@@ -144,7 +144,7 @@ void Hist::print(Logger logger, bool details) const
 
 void Hist::plot(Logger logger) const
 {
-	/* Get highest bar */
+	// Get highest bar
 	Hist::cnt_t max = *std::max_element(data.begin(), data.end());
 
 	std::vector<TableColumn> cols = {
@@ -155,7 +155,7 @@ void Hist::plot(Logger logger) const
 
 	Table table = Table(logger, cols);
 
-	/* Print plot */
+	// Print plot
 	table.header();
 
 	for (size_t i = 0; i < data.size(); i++) {
@@ -263,4 +263,4 @@ int Hist::dumpMatlab(FILE *f) const
 	return 0;
 }
 
-} /* namespace villas */
+} // namespace villas

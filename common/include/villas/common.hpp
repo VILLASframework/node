@@ -10,7 +10,7 @@
 
 #include <string>
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
+// Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins)
 enum class State {
 	DESTROYED	= 0,
 	INITIALIZED	= 1,

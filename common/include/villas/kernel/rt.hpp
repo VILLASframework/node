@@ -31,6 +31,6 @@ void setPriority(int priority);
  */
 bool isPreemptible();
 
-} /* namespace villas */
-} /* namespace kernel */
-} /* namespace rt */
+} // namespace villas
+} // namespace kernel
+} // namespace rt

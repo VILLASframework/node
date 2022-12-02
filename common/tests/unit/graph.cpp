@@ -74,7 +74,7 @@ Test(graph, path, .description = "Find path")
 	g.addDefaultEdge(v1id, v2id);
 	g.addDefaultEdge(v2id, v3id);
 
-	// create circular subgraph
+	// Create circular subgraph
 	g.addDefaultEdge(v4id, v5id);
 	g.addDefaultEdge(v5id, v4id);
 	g.addDefaultEdge(v5id, v6id);

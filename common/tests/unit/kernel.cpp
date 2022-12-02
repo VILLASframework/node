@@ -27,7 +27,7 @@ TestSuite(kernel, .description = "Kernel features");
   #error "Unsupported architecture"
 #endif
 
-/* This test is not portable, but we currently support x86 only */
+// This test is not portable, but we currently support x86 only
 Test(kernel, sizes)
 {
 	int sz;
@@ -91,7 +91,7 @@ Test(kernel, frequency)
 	ret = get_cpu_frequency(&freq);
 	cr_assert_eq(ret, 0);
 
-	/* Check for plausability only */
+	// Check for plausability only
 	cr_assert(freq > 1e9 && freq < 5e9);
 }
 #endif

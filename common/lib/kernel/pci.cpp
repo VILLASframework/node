@@ -35,7 +35,7 @@ DeviceList::DeviceList()
 		throw SystemError("Failed to detect PCI devices");
 
 	while ((e = readdir(dp))) {
-		/* Ignore special entries */
+		// Ignore special entries
 		if ((strcmp(e->d_name, ".") == 0) ||
 		    (strcmp(e->d_name, "..") == 0) )
 			continue;
@@ -48,7 +48,7 @@ DeviceList::DeviceList()
 			{ "device", &id.device }
 		};
 
-		/* Read vendor & device id */
+		// Read vendor & device id
 		for (int i = 0; i < 2; i++) {
 			snprintf(path, sizeof(path), "%s/bus/pci/devices/%s/%s", SYSFS_PATH, e->d_name, map[i].s);
 
@@ -63,7 +63,7 @@ DeviceList::DeviceList()
 			fclose(f);
 		}
 
-		/* Get slot id */
+		// Get slot id
 		ret = sscanf(e->d_name, "%4x:%2x:%2x.%u", &slot.domain, &slot.bus, &slot.device, &slot.function);
 		if (ret != 4)
 			throw RuntimeError("Failed to parse PCI slot number: {}", e->d_name);
@@ -280,7 +280,7 @@ Device::getRegions() const
 
 	int reg_num = 0;
 
-	/* Cap to 8 regions, just because we don't know how many may exist. */
+	// Cap to 8 regions, just because we don't know how many may exist.
 	while (reg_num < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
 		unsigned long long tokens[3];
 		char* s = line;
@@ -289,7 +289,7 @@ Device::getRegions() const
 			tokens[i] = strtoull(s, &end, 16);
 			if (s == end) {
 				printf("Error parsing line %d of %s\n", reg_num + 1, sysfs);
-				tokens[0] = tokens[1] = 0; /* Mark invalid */
+				tokens[0] = tokens[1] = 0; // Mark invalid
 				break;
 			}
 			s = end;
@@ -297,11 +297,11 @@ Device::getRegions() const
 
 		free(line);
 
-		/* Required for getline() to allocate a new buffer on the next iteration. */
+		// Required for getline() to allocate a new buffer on the next iteration.
 		line = nullptr;
 		len = 0;
 
-		if (tokens[0] != tokens[1]) { /* This is a valid region */
+		if (tokens[0] != tokens[1]) { // This is a valid region
 			Region region;
 
 			region.num = reg_num;
@@ -348,7 +348,7 @@ Device::attachDriver(const std::string &driver) const
 	FILE *f;
 	char fn[1024];
 
-	/* Add new ID to driver */
+	// Add new ID to driver
 	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/new_id", SYSFS_PATH, driver.c_str());
 	f = fopen(fn, "w");
 	if (!f)
@@ -359,7 +359,7 @@ Device::attachDriver(const std::string &driver) const
 	fprintf(f, "%04x %04x", id.vendor, id.device);
 	fclose(f);
 
-	/* Bind to driver */
+	// Bind to driver
 	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/bind", SYSFS_PATH, driver.c_str());
 	f = fopen(fn, "w");
 	if (!f)
@@ -377,7 +377,7 @@ Device::getIOMMUGroup() const
 {
 	int ret;
 	char *group;
-	// readlink does not add a null terminator!
+	// readlink() does not add a null terminator!
 	char link[1024] = {0};
 	char sysfs[1024];
 

@@ -103,8 +103,8 @@ protected:
 	} output;
 };
 
-} /* namespace utils */
-} /* namespace villas */
+} // namespace utils
+} // namespace villas
 
 template<typename T>
 std::istream &operator>>(villas::utils::PopenStream &po, T &value)

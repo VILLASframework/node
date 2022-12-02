@@ -144,7 +144,7 @@ bool Device::reset()
 	if (this->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(this->fd, VFIO_DEVICE_RESET) == 0;
 	else
-		return false; // not supported by this device
+		return false; // Not supported by this device
 }
 
 void * Device::regionMap(size_t index)

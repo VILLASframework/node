@@ -24,32 +24,32 @@ Test(timing, time_now)
 
 Test(timing, time_diff)
 {
-	struct timespec ts1 = { .tv_sec = 0, .tv_nsec = 1}; /* Value doesnt matter */
-	struct timespec ts2 = { .tv_sec = 1, .tv_nsec = 0}; /* Overflow in nano seconds! */
+	struct timespec ts1 = { .tv_sec = 0, .tv_nsec = 1}; // Value doesnt matter
+	struct timespec ts2 = { .tv_sec = 1, .tv_nsec = 0}; // Overflow in nano seconds!
 
 	struct timespec ts3 = time_diff(&ts1, &ts2);
 
-	/* ts4 == ts2? */
+	// ts4 == ts2?
 	cr_assert_eq(ts3.tv_sec,  0);
 	cr_assert_eq(ts3.tv_nsec, 999999999);
 }
 
 Test(timing, time_add)
 {
-	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 999999999}; /* Value doesnt matter */
-	struct timespec ts2 = { .tv_sec = 1, .tv_nsec =         1}; /* Overflow in nano seconds! */
+	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 999999999}; // Value doesnt matter
+	struct timespec ts2 = { .tv_sec = 1, .tv_nsec =         1}; // Overflow in nano seconds!
 
 	struct timespec ts3 = time_add(&ts1, &ts2);
 
-	/* ts4 == ts2? */
+	// ts4 == ts2?
 	cr_assert_eq(ts3.tv_sec,  3);
 	cr_assert_eq(ts3.tv_nsec, 0);
 }
 
 Test(timing, time_delta)
 {
-	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 123}; /* Value doesnt matter */
-	struct timespec ts2 = { .tv_sec = 5, .tv_nsec = 246}; /* Overflow in nano seconds! */
+	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 123}; // Value doesnt matter
+	struct timespec ts2 = { .tv_sec = 5, .tv_nsec = 246}; // Overflow in nano seconds!
 
 	double delta = time_delta(&ts1, &ts2);
 

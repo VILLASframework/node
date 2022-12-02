@@ -82,6 +82,6 @@ private:
 	Logger log;
 };
 
-} /* namespace vfio */
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace vfio
+} // namespace kernel
+} // namespace villas

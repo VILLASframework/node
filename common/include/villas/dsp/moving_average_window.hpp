@@ -37,5 +37,5 @@ public:
 	}
 };
 
-} /* namespace dsp */
-} /* namespace villas */
+} // namespace dsp
+} // namespace villas

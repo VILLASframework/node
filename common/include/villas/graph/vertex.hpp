@@ -18,17 +18,21 @@ class Vertex {
 public:
 	using Identifier = std::size_t;
 
-	const Identifier&
-	getIdentifier() const
-	{ return id; }
+	const Identifier& getIdentifier() const
+	{
+		return id;
+	}
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const Vertex &vertex)
-	{ return stream << vertex.id; }
+	friend
+	std::ostream& operator<< (std::ostream &stream, const Vertex &vertex)
+	{
+		return stream << vertex.id;
+	}
 
-	bool
-	operator==(const Vertex &other)
-	{ return this->id == other.id; }
+	bool operator==(const Vertex &other)
+	{
+		return this->id == other.id;
+	}
 
 private:
 	Identifier id;
@@ -36,5 +40,5 @@ private:
 	std::list<std::size_t> edges;
 };
 
-} /* namespace graph */
-} /* namespace villas */
+} // namespace graph
+} // namespace villas

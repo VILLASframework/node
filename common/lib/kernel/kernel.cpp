@@ -37,7 +37,7 @@ Version villas::kernel::getVersion()
 
 	std::string rel = uts.release;
 
-	/* Remove release part. E.g. 4.9.93-linuxkit-aufs */
+	// Remove release part. E.g. 4.9.93-linuxkit-aufs
 	auto sep = rel.find('-');
 	auto ver = rel.substr(0, sep - 1);
 
@@ -49,7 +49,7 @@ int villas::kernel::getCachelineSize()
 #if defined(__linux__) && defined(__x86_64__) && defined(__GLIBC__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 #elif defined(__MACH__)
-	  /* Open the command for reading. */
+	// Open the command for reading.
 	FILE *fp = popen("sysctl -n machdep.cpu.cache.linesize", "r");
 	if (fp == nullptr)
 		return -1;
@@ -75,7 +75,7 @@ int villas::kernel::getPageSize()
   #error "Unsupported platform"
 #endif
 
-/* There is no sysconf interface to get the hugepage size */
+// There is no sysconf interface to get the hugepage size
 int villas::kernel::getHugePageSize()
 {
 #ifdef __linux__
@@ -146,12 +146,12 @@ int villas::kernel::loadModule(const char *module)
 
 	pid_t pid = fork();
 	switch (pid) {
-		case -1: /* error */
+		case -1: // Error
 			return -1;
 
-		case 0:  /* child */
+		case 0:  // Child
 			execlp("modprobe", "modprobe", module, (char *) 0);
-			exit(EXIT_FAILURE);   /* exec never returns */
+			exit(EXIT_FAILURE);   // exec() never returns
 
 		default:
 			wait(&ret);
@@ -210,7 +210,7 @@ int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len)
 				if (ret >= 2 && buf)
 					snprintf(buf, len, "%s", value);
 
-				return 0; /* found */
+				return 0; // Found
 			}
 		}
 	} while ((tok = strtok_r(nullptr, " \t", &lasts)));
@@ -218,7 +218,7 @@ int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len)
 out:
 	fclose(f);
 
-	return -1; /* not found or error */
+	return -1; // Not found or error
 }
 
 int villas::kernel::getNrHugepages()
@@ -266,7 +266,7 @@ int villas::kernel::setIRQAffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 
 	f = fopen(fn, "w+");
 	if (!f)
-		return -1; /* IRQ does not exist */
+		return -1; // IRQ does not exist
 
 	if (old)
 		ret = fscanf(f, "%jx", old);
@@ -285,7 +285,7 @@ int villas::kernel::get_cpu_frequency(uint64_t *freq)
 	int ret;
 	FILE *f;
 
-	/* Try to get CPU frequency from cpufreq module */
+	// Try to get CPU frequency from cpufreq module
 	f = fopen(SYSFS_PATH "/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
 	if (!f)
 		goto cpuinfo;
@@ -295,16 +295,16 @@ int villas::kernel::get_cpu_frequency(uint64_t *freq)
 	if (ret != 1)
 		return -1;
 
-	/* cpufreq reports kHz */
+	// cpufreq reports kHz
 	*freq = *freq * 1000;
 
 	return 0;
 
 cpuinfo:
-	/* Try to read CPU frequency from /proc/cpuinfo */
+	// Try to read CPU frequency from /proc/cpuinfo
 	f = fopen(PROCFS_PATH "/cpuinfo", "r");
 	if (!f)
-		return -1; /* We give up here */
+		return -1; // We give up here
 
 	ret = -1;
 	while (getline(&line, &len, f) >= 0) {
@@ -329,7 +329,7 @@ cpuinfo:
 		goto out;
 	}
 
-	/* Frequency is given in MHz */
+	// Frequency is given in MHz
 	*freq = dfreq * 1e6;
 
 out:	fclose(f);
@@ -337,4 +337,4 @@ out:	fclose(f);
 
 	return ret;
 }
-#endif /* __linux__ */
+#endif // __linux__

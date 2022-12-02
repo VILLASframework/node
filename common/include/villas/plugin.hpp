@@ -21,7 +21,7 @@
 namespace villas {
 namespace plugin {
 
-/* Forward declarations */
+// Forward declarations
 class Plugin;
 class Registry;
 
@@ -65,7 +65,7 @@ public:
 		plugins.remove(p);
 	}
 
-	/// Get all plugins including sub-registries
+	// Get all plugins including sub-registries
 	List<> lookup() {
 		List<> all;
 
@@ -80,7 +80,7 @@ public:
 		return all;
 	}
 
-	/// Get all plugins of specific type
+	// Get all plugins of specific type
 	template<typename T = Plugin>
 	List<T> lookup()
 	{
@@ -92,7 +92,7 @@ public:
 				list.push_back(t);
 		}
 
-		/* Sort alphabetically */
+		// Sort alphabetically
 		list.sort([](const T *a, const T *b) {
 			return a->getName() < b->getName();
 		});
@@ -100,7 +100,7 @@ public:
 		return list;
 	}
 
-	/// Get all plugins of specific type and name
+	// Get all plugins of specific type and name
 	template<typename T = Plugin>
 	T * lookup(const std::string &name)
 	{
@@ -131,18 +131,18 @@ public:
 	virtual
 	~Plugin();
 
-	// copying a plugin doesn't make sense, so explicitly deny it
+	// Copying a plugin doesn't make sense, so explicitly deny it
 	Plugin(Plugin const&) = delete;
 	void operator=(Plugin const&) = delete;
 
 	virtual
 	void dump();
 
-	/// Get plugin name
+	// Get plugin name
 	virtual
 	std::string getName() const = 0;
 
-	/// Get plugin type
+	// Get plugin type
 	virtual
 	std::string getType() const = 0;
 
@@ -182,5 +182,5 @@ Registry::dump()
 	}
 }
 
-} /* namespace plugin */
-} /* namespace villas */
+} // namespace plugin
+} // namespace villas

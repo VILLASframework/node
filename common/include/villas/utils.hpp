@@ -41,7 +41,7 @@
 	} while (0)
 #endif
 
-/* CPP stringification */
+// CPP stringification
 #define XSTR(x)		STR(x)
 #define  STR(x)		#x
 
@@ -62,19 +62,19 @@
   y = t;		\
 } while (0)
 
-/** Round-up integer division */
+// Round-up integer division
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))
 
-/** Get nearest up-rounded power of 2 */
+// Get nearest up-rounded power of 2
 #define LOG2_CEIL(x)	(1 << (villas::utils::log2i((x) - 1) + 1))
 
-/** Check if the number is a power of 2 */
+// Check if the number is a power of 2
 #define IS_POW2(x)	(((x) != 0) && !((x) & ((x) - 1)))
 
-/** Calculate the number of elements in an array. */
+// Calculate the number of elements in an array.
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
-/* Return the bigger value */
+// Return the bigger value
 #ifdef MAX
   #undef MAX
 #endif
@@ -82,7 +82,7 @@
 			   __typeof__ (b) _b = (b); \
 			   _a > _b ? _a : _b; })
 
-/* Return the smaller value */
+// Return the smaller value
 #ifdef MIN
   #undef MIN
 #endif
@@ -103,7 +103,7 @@
 
 #define BITS_PER_LONGLONG	(sizeof(long long) * 8)
 
-/* Some helper macros */
+// Some helper macros
 #define BITMASK(h, l)		(((~0ULL) << (l)) & (~0ULL >> (BITS_PER_LONGLONG - 1 - (h))))
 #define BIT(nr)			(1UL << (nr))
 
@@ -204,6 +204,6 @@ using byte = std::uint8_t;
 std::string encode(const std::vector<byte> &input);
 std::vector<byte> decode(const std::string &input);
 
-} /* namespace base64 */
-} /* namespace utils */
-} /* namespace villas */
+} // namespace base64
+} // namespace utils
+} // namespace villas

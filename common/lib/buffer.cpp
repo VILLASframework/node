@@ -19,7 +19,7 @@ json_t * Buffer::decode()
 	if (!j)
 		return nullptr;
 
-	/* Remove decoded JSON document from beginning */
+	// Remove decoded JSON document from beginning
 	erase(begin(), begin() + err.position);
 
 	return j;
@@ -34,7 +34,7 @@ int Buffer::callback(const char *data, size_t len, void *ctx)
 {
 	Buffer *b = static_cast<Buffer *>(ctx);
 
-	/* Append junk of JSON to buffer */
+	// Append junk of JSON to buffer
 	b->insert(b->end(), &data[0], &data[len]);
 
 	return 0;
