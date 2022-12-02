@@ -1,16 +1,16 @@
 # VILLAScommon
 
-[![build status](https://git.rwth-aachen.de/VILLASframework/VILLAScommon/badges/develop/build.svg)](https://git.rwth-aachen.de/acs/VILLAScommon/commits/develop)
+[![build status](https://git.rwth-aachen.de/acs/public/villas/common/badges/master/build.svg)](https://git.rwth-aachen.de/acs/public/villas/common/commits/master)
 
-**TODO:** Write project description
+VILLAScommon is a shared library used by various other C++ components of VILLASframework such as VILLASnode or VILLASfpga.
 
 ## Documentation
 
-User documentation is available here: <https://villas.fein-aachen.org/doc/>
+User documentation is available here: <https://villas.fein-aachen.org/docs/>
 
 ## Copyright
 
-2014-2021, Institute for Automation of Complex Power Systems, EONERC
+2014-2022, Institute for Automation of Complex Power Systems, EONERC
 
 ## License
 
@@ -23,7 +23,7 @@ For other licensing options please consult [Prof. Antonello Monti](mailto:amonti
 [![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
 
 - Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
-- Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
+- Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
 
 [Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)
 [EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)
