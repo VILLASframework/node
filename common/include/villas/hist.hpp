@@ -117,4 +117,4 @@ protected:
 	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };
 
-} /* namespace villas */
+} // namespace villas

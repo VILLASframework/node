@@ -21,7 +21,7 @@
 
 namespace villas {
 
-/* Forward declarations */
+// Forward declarations
 class Log;
 
 using Logger = std::shared_ptr<spdlog::logger>;
@@ -80,4 +80,4 @@ public:
 	std::string getLevelName() const;
 };
 
-} /* namespace villas */
+} // namespace villas

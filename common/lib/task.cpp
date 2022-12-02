@@ -18,7 +18,7 @@ using namespace villas;
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
-#endif /* PERIODIC_TASK_IMPL */
+#endif // PERIODIC_TASK_IMPL
 
 Task::Task(int clk) :
 	clock(clk)
@@ -31,7 +31,7 @@ Task::Task(int clk) :
 	int ret = tsc_init(&tsc);
 	if (ret)
 		return ret;
-#endif /* PERIODIC_TASK_IMPL */
+#endif // PERIODIC_TASK_IMPL
 }
 
 void Task::setTimeout(double to)
@@ -62,8 +62,8 @@ void Task::setNext(const struct timespec *nxt)
 	ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, nullptr);
 	if (ret)
 		throw SystemError("Failed to set timerfd");
-  #endif /* PERIODIC_TASK_IMPL == TIMERFD */
-#endif /* PERIODIC_TASK_IMPL != RDTSC */
+  #endif // PERIODIC_TASK_IMPL == TIMERFD
+#endif // PERIODIC_TASK_IMPL != RDTSC
 }
 
 void Task::setRate(double rate)
@@ -72,7 +72,7 @@ void Task::setRate(double rate)
 	period = tsc_rate_to_cycles(&tsc, rate);
 	next = tsc_now(&tsc) + period;
 #else
-	/* A rate of 0 will disarm the timer */
+	// A rate of 0 will disarm the timer
 	period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
 
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
@@ -93,8 +93,8 @@ void Task::setRate(double rate)
 	ret = timerfd_settime(fd, 0, &its, nullptr);
 	if (ret)
 		throw SystemError("Failed to set timerfd");
-  #endif /* PERIODIC_TASK_IMPL */
-#endif /* PERIODIC_TASK_IMPL == RDTSC */
+  #endif // PERIODIC_TASK_IMPL
+#endif // PERIODIC_TASK_IMPL == RDTSC
 }
 
 Task::~Task()
@@ -175,7 +175,7 @@ void Task::stop()
 	ret = timerfd_settime(fd, 0, &its, nullptr);
 	if (ret)
 		throw SystemError("Failed to disarm timerfd");
-#endif /* PERIODIC_TASK_IMPL == TIMERFD */
+#endif // PERIODIC_TASK_IMPL == TIMERFD
 }
 
 int Task::getFD() const

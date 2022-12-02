@@ -18,7 +18,6 @@ namespace villas {
 namespace dsp {
 
 
-
 template<typename T>// a0 = 1.0, double a1 = 0.0, double a2 = 0.0, double a3 = 0.0, double a4 = 0.0>
 class CosineWindow : public Window<T> {
 
@@ -113,5 +112,5 @@ public:
 		CosineWindow<T>(0.3635819, 0.4891775, 0.1365995, 0.0106411, 0., len, i) {}
 };
 
-} /* namespace dsp */
-} /* namespace villas */
+} // namespace dsp
+} // namespace villas

@@ -38,7 +38,7 @@ protected:
 
 	void flush_() override
 	{
-		/* nothing to do */
+		// Nothing to do
 	}
 };
 
@@ -46,5 +46,5 @@ using OpalSink_mt = OpalSink<std::mutex>;
 using OpalSink_st = OpalSink<spdlog::details::null_mutex>;
 
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

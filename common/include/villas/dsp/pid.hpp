@@ -38,5 +38,5 @@ public:
 	double calculate(double setpoint, double pv);
 };
 
-} /* namespace dsp */
-} /* namespace villas */
+} // namespace dsp
+} // namespace villas

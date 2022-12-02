@@ -28,7 +28,7 @@ int Table::resize(int w)
 	fixed = 0;
 	total = width - columns.size() * 2;
 
-	/* Normalize width */
+	// Normalize width
 	for (unsigned i = 0; i < columns.size(); i++) {
 		if (columns[i].width > 0)
 			norm += columns[i].width;

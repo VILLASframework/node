@@ -41,18 +41,17 @@ public:
 		size(size)
 	{ }
 
-	uintptr_t
-	getLocalAddr(uintptr_t addrInForeignAddrSpace) const;
+	uintptr_t getLocalAddr(uintptr_t addrInForeignAddrSpace) const;
 
-	uintptr_t
-	getForeignAddr(uintptr_t addrInLocalAddrSpace) const;
+	uintptr_t getForeignAddr(uintptr_t addrInLocalAddrSpace) const;
 
-	size_t
-	getSize() const
-	{ return size; }
+	size_t getSize() const
+	{
+		return size;
+	}
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const MemoryTranslation &translation)
+	friend
+	std::ostream& operator<< (std::ostream &stream, const MemoryTranslation &translation)
 	{
 		return stream << std::hex
 		              << "(src=0x"   << translation.src
@@ -61,13 +60,13 @@ public:
 		              << ")";
 	}
 
-	/// Merge two MemoryTranslations together
+	// Merge two MemoryTranslations together
 	MemoryTranslation &operator+=(const MemoryTranslation &other);
 
 private:
-	uintptr_t	src;	///< Base address of local address space
-	uintptr_t	dst;	///< Base address of foreign address space
-	size_t		size;	///< Size of "memory window"
+	uintptr_t	src;	// Base address of local address space
+	uintptr_t	dst;	// Base address of foreign address space
+	size_t		size;	// Size of "memory window"
 };
 
 
@@ -115,10 +114,10 @@ private:
 	 */
 	class Mapping : public graph::Edge {
 	public:
-		std::string	name;	///< Human-readable name
-		uintptr_t	src;	///< Base address in "from" address space
-		uintptr_t	dest;	///< Base address in "to" address space
-		size_t		size;	///< Size of the mapping
+		std::string	name;	// Human-readable name
+		uintptr_t	src;	// Base address in "from" address space
+		uintptr_t	dest;	// Base address in "to" address space
+		size_t		size;	// Size of the mapping
 
 		friend std::ostream&
 		operator<< (std::ostream &stream, const Mapping &mapping)
@@ -143,7 +142,7 @@ private:
 	 */
 	class AddressSpace : public graph::Vertex {
 	public:
-		std::string name;	///< Human-readable name
+		std::string name;	// Human-readable name
 
 		friend std::ostream&
 		operator<< (std::ostream &stream, const AddressSpace &addrSpace)
@@ -153,7 +152,7 @@ private:
 		}
 	};
 
-	/// Memory graph with custom edges and vertices for address resolution
+	// Memory graph with custom edges and vertices for address resolution
 	using MemoryGraph = graph::DirectedGraph<AddressSpace, Mapping>;
 
 public:
@@ -162,92 +161,99 @@ public:
 
 	struct InvalidTranslation : public std::exception {};
 
-	/// Get singleton instance
+	// Get singleton instance
 	static MemoryManager&
 	get();
 
 	MemoryGraph & getGraph()
-	{ return memoryGraph; }
+	{
+		return memoryGraph;
+	}
 
-	AddressSpaceId
-	getProcessAddressSpace()
-	{ return getOrCreateAddressSpace("process"); }
+	AddressSpaceId getProcessAddressSpace()
+	{
+		return getOrCreateAddressSpace("process");
+	}
 
-	AddressSpaceId
-	getPciAddressSpace()
-	{ return getOrCreateAddressSpace("pcie"); }
+	AddressSpaceId getPciAddressSpace()
+	{
+		return getOrCreateAddressSpace("pcie");
+	}
 
-	AddressSpaceId
-	getProcessAddressSpaceMemoryBlock(const std::string &memoryBlock)
-	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("process", memoryBlock)); }
+	AddressSpaceId getProcessAddressSpaceMemoryBlock(const std::string &memoryBlock)
+	{
+		return getOrCreateAddressSpace(getSlaveAddrSpaceName("process", memoryBlock));
+	}
 
-	AddressSpaceId
-	getOrCreateAddressSpace(std::string name);
+	AddressSpaceId getOrCreateAddressSpace(std::string name);
 
-	void
-	removeAddressSpace(const AddressSpaceId &addrSpaceId)
-	{ memoryGraph.removeVertex(addrSpaceId); }
+	void removeAddressSpace(const AddressSpaceId &addrSpaceId)
+	{
+		memoryGraph.removeVertex(addrSpaceId);
+	}
 
-	/// Create a default mapping
-	MappingId
-	createMapping(uintptr_t src, uintptr_t dest, size_t size,
+	// Create a default mapping
+	MappingId createMapping(uintptr_t src, uintptr_t dest, size_t size,
 	              const std::string &name,
 	              AddressSpaceId fromAddrSpace,
 	              AddressSpaceId toAddrSpace);
 
-	/// Add a mapping
-	///
-	/// Can be used to derive from Mapping in order to implement custom
-	/// constructor/destructor.
-	MappingId
-	addMapping(std::shared_ptr<Mapping> mapping,
+	// Add a mapping
+	//
+	// Can be used to derive from Mapping in order to implement custom
+	// constructor/destructor.
+	MappingId addMapping(std::shared_ptr<Mapping> mapping,
 	           AddressSpaceId fromAddrSpace,
 	           AddressSpaceId toAddrSpace);
 
 
-	AddressSpaceId
-	findAddressSpace(const std::string &name);
+	AddressSpaceId findAddressSpace(const std::string &name);
 
-	std::list<AddressSpaceId>
-	findPath(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
+	std::list<AddressSpaceId> findPath(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
 
-	MemoryTranslation
-	getTranslation(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
+	MemoryTranslation getTranslation(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
 
 	// cppcheck-suppress passedByValue
 	MemoryTranslation getTranslationFromProcess(AddressSpaceId foreignAddrSpaceId)
-	{ return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId); }
+	{
+		return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId);
+	}
 
-	static std::string
-	getSlaveAddrSpaceName(const std::string &ipInstance, const std::string &memoryBlock)
-	{ return ipInstance + "/" + memoryBlock; }
+	static
+	std::string getSlaveAddrSpaceName(const std::string &ipInstance, const std::string &memoryBlock)
+	{
+		return ipInstance + "/" + memoryBlock;
+	}
 
-	static std::string
-	getMasterAddrSpaceName(const std::string &ipInstance, const std::string &busInterface)
-	{ return ipInstance + ":" + busInterface; }
+	static
+	std::string getMasterAddrSpaceName(const std::string &ipInstance, const std::string &busInterface)
+	{
+		return ipInstance + ":" + busInterface;
+	}
 
 private:
-	/// Convert a Mapping to MemoryTranslation for calculations
-	static MemoryTranslation
-	getTranslationFromMapping(const Mapping &mapping)
-	{ return MemoryTranslation(mapping.src, mapping.dest, mapping.size); }
+	// Convert a Mapping to MemoryTranslation for calculations
+	static
+	MemoryTranslation getTranslationFromMapping(const Mapping &mapping)
+	{
+		return MemoryTranslation(mapping.src, mapping.dest, mapping.size);
+	}
 
-	bool
-	pathCheck(const MemoryGraph::Path &path);
+	bool pathCheck(const MemoryGraph::Path &path);
 
-	/// Directed graph that stores address spaces and memory mappings
+	// Directed graph that stores address spaces and memory mappings
 	MemoryGraph memoryGraph;
 
-	/// Cache mapping of names to address space ids for fast lookup
+	// Cache mapping of names to address space ids for fast lookup
 	std::map<std::string, AddressSpaceId> addrSpaceLookup;
 
-	/// Logger for universal access in this class
+	// Logger for universal access in this class
 	Logger logger;
 
 	MemoryGraph::check_path_fn pathCheckFunc;
 
-	/// Static pointer to global instance, because this is a singleton
+	// Static pointer to global instance, because this is a singleton
 	static MemoryManager* instance;
 };
 
-} /* namespace villas */
+} // namespace villas

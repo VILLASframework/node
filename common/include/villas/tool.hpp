@@ -55,4 +55,4 @@ public:
 	int run();
 };
 
-} /* namespace villas */
+} // namespace villas

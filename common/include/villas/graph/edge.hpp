@@ -18,19 +18,26 @@ class Edge {
 public:
 	using Identifier = std::size_t;
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const Edge &edge)
-	{ return stream << edge.id; }
+	friend
+	std::ostream& operator<< (std::ostream &stream, const Edge &edge)
+	{
+		return stream << edge.id;
+	}
 
-	bool
-	operator==(const Edge &other)
-	{ return this->id == other.id; }
+	bool operator==(const Edge &other)
+	{
+		return this->id == other.id;
+	}
 
 	Vertex::Identifier getVertexTo() const
-	{ return to; }
+	{
+		return to;
+	}
 
 	Vertex::Identifier getVertexFrom() const
-	{ return from; }
+	{
+		return from;
+	}
 
 private:
 	Identifier id;
@@ -38,5 +45,5 @@ private:
 	Vertex::Identifier to;
 };
 
-} /* namespace graph */
-} /* namespace villas */
+} // namespace graph
+} // namespace villas

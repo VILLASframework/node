@@ -21,11 +21,6 @@ static std::vector<byte> vec(const char *str)
 	return std::vector<byte>((byte *) str, (byte *) str + strlen(str));
 }
 
-// static std::string str(const std::vector<byte> &vec)
-// {
-// 	return std::string((char *) vec.data(), vec.size());
-// }
-
 Test(base64, encoding)
 {
 	cr_assert(encode(vec("pohy0Aiy1ZaVa5aik2yaiy3ifoh3oole")) == "cG9oeTBBaXkxWmFWYTVhaWsyeWFpeTNpZm9oM29vbGU=");

@@ -120,6 +120,6 @@ public:
 	lookupDevice(const Device &f);
 };
 
-} /* namespace pci */
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace pci
+} // namespace kernel
+} // namespace villas

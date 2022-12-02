@@ -80,7 +80,7 @@ void Popen::open()
 		goto clean_outpipe_out;
 
 	if (pid == 0) {
-		/* Prepare arguments */
+		// Prepare arguments
 		if (shell) {
 			argv.push_back((char *) "sh");
 			argv.push_back((char *) "-c");
@@ -94,7 +94,7 @@ void Popen::open()
 			}
 		}
 
-		/* Prepare environment */
+		// Prepare environment
 		for (char **p = environ; *p; p++)
 			envp.push_back(*p);
 
@@ -108,7 +108,7 @@ void Popen::open()
 		argv.push_back(nullptr);
 		envp.push_back(nullptr);
 
-		/* Redirect IO */
+		// Redirect IO
 		::close(outpipe[READ]);
 		::close(inpipe[WRITE]);
 
@@ -122,7 +122,7 @@ void Popen::open()
 			::close(outpipe[WRITE]);
 		}
 
-		/* Change working directory */
+		// Change working directory
 		if (!working_dir.empty()) {
 			int ret;
 
@@ -205,5 +205,5 @@ int PopenStream::close()
 	return ret;
 }
 
-} /* namespace utils */
-} /* namespace villas */
+} // namespace utils
+} // namespace villas

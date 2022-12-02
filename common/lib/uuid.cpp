@@ -20,12 +20,12 @@ int villas::uuid::generateFromString(uuid_t out, const std::string &data, const 
 	if (!ret)
 		return -1;
 
-	/* Namespace */
+	// Namespace
 	ret = EVP_DigestUpdate(c, (unsigned char *) ns.c_str(), ns.size());
 	if (!ret)
 		return -1;
 
-	/* Data */
+	// Data
 	ret = EVP_DigestUpdate(c, (unsigned char *) data.c_str(), data.size());
 	if (!ret)
 		return -1;
@@ -48,12 +48,12 @@ int villas::uuid::generateFromString(uuid_t out, const std::string &data, const 
 	if (!ret)
 		return -1;
 
-	/* Namespace */
+	// Namespace
 	ret = EVP_DigestUpdate(c, (unsigned char *) ns, 16);
 	if (!ret)
 		return -1;
 
-	/* Data */
+	// Data
 	ret = EVP_DigestUpdate(c, (unsigned char *) data.c_str(), data.size());
 	if (!ret)
 		return -1;

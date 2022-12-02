@@ -45,7 +45,7 @@ public:
 		if (vertexId >= vertices.size())
 			throw std::invalid_argument("vertex doesn't exist");
 
-		// cannot use [] operator, because creates non-existing elements
+		// Cannot use [] operator, because creates non-existing elements
 		// at() will throw std::out_of_range if element does not exist
 		return vertices.at(vertexId);
 	}
@@ -70,16 +70,20 @@ public:
 		if (edgeId >= lastEdgeId)
 			throw std::invalid_argument("edge doesn't exist");
 
-		// cannot use [] operator, because creates non-existing elements
+		// Cannot use [] operator, because creates non-existing elements
 		// at() will throw std::out_of_range if element does not exist
 		return edges.at(edgeId);
 	}
 
 	std::size_t getEdgeCount() const
-	{ return edges.size(); }
+	{
+		return edges.size();
+	}
 
 	std::size_t getVertexCount() const
-	{ return vertices.size(); }
+	{
+		return vertices.size();
+	}
 
 	VertexIdentifier addVertex(std::shared_ptr<VertexType> vertex)
 	{
@@ -95,19 +99,19 @@ public:
 	                       VertexIdentifier fromVertexId,
 	                       VertexIdentifier toVertexId)
 	{
-		// allocate edge id
+		// Allocate edge id
 		edge->id = lastEdgeId++;
 
-		// connect it
+		// Connect it
 		edge->from = fromVertexId;
 		edge->to = toVertexId;
 
 		logger->debug("New edge {}: {} -> {}", *edge, edge->from, edge->to);
 
-		// this is a directed graph, so only push edge to starting vertex
+		// This is a directed graph, so only push edge to starting vertex
 		getVertex(edge->from)->edges.push_back(edge->id);
 
-		// add new edge to graph
+		// Add new edge to graph
 		edges[edge->id] = edge;
 
 		return edge->id;
@@ -117,7 +121,7 @@ public:
 	EdgeIdentifier addDefaultEdge(VertexIdentifier fromVertexId,
 	                              VertexIdentifier toVertexId)
 	{
-		// create a new edge
+		// Create a new edge
 		std::shared_ptr<EdgeType> edge(new EdgeType);
 
 		return addEdge(edge, fromVertexId, toVertexId);
@@ -128,7 +132,7 @@ public:
 		auto edge = getEdge(edgeId);
 		auto startVertex = getVertex(edge->from);
 
-		// remove edge only from starting vertex (this is a directed graph)
+		// Remove edge only from starting vertex (this is a directed graph)
 		logger->debug("Remove edge {} from vertex {}", edgeId, edge->from);
 		startVertex->edges.remove(edgeId);
 
@@ -138,7 +142,7 @@ public:
 
 	void removeVertex(VertexIdentifier vertexId)
 	{
-		// delete every edge that start or ends at this vertex
+		// Delete every edge that start or ends at this vertex
 		auto it = edges.begin();
 		while (it != edges.end()) {
 			auto &edgeId = it->first;
@@ -159,7 +163,7 @@ public:
 
 			if ((edge->from == vertexId) or removeEdge) {
 				logger->debug("Remove edge {}", edgeId);
-				// remove edge from global edge list
+				// Remove edge from global edge list
 				it = edges.erase(it);
 			}
 			else
@@ -171,16 +175,18 @@ public:
 		lastVertexId--;
 	}
 
-	const std::list<EdgeIdentifier>&
-	vertexGetEdges(VertexIdentifier vertexId) const
-	{ return getVertex(vertexId)->edges; }
-
+	const std::list<EdgeIdentifier>& vertexGetEdges(VertexIdentifier vertexId) const
+	{
+		return getVertex(vertexId)->edges;
+	}
 
 	using check_path_fn = std::function<bool(const Path&)>;
 
-	static bool
-	checkPath(const Path&)
-	{ return true; }
+	static
+	bool checkPath(const Path&)
+	{
+		return true;
+	}
 
 	bool getPath(VertexIdentifier fromVertexId,
 	             VertexIdentifier toVertexId,
@@ -188,7 +194,7 @@ public:
 	             check_path_fn pathCheckFunc = checkPath)
 	{
 		if (fromVertexId == toVertexId)
-			// arrived at the destination
+			// Arrived at the destination
 			return true;
 		else {
 			auto fromVertex = getVertex(fromVertexId);
@@ -196,7 +202,7 @@ public:
 			for (auto &edgeId : fromVertex->edges) {
 				auto edgeOfFromVertex = getEdge(edgeId);
 
-				// loop detection
+				// Loop detection
 				bool loop = false;
 				for (auto &edgeIdInPath : path) {
 					auto edgeInPath = getEdge(edgeIdInPath);
@@ -211,15 +217,15 @@ public:
 					continue;
 				}
 
-				// remember the path we're investigating to detect loops
+				// Remember the path we're investigating to detect loops
 				path.push_back(edgeId);
 
-				// recursive, depth-first search
+				// Recursive, depth-first search
 				if (getPath(edgeOfFromVertex->to, toVertexId, path, pathCheckFunc) and pathCheckFunc(path))
-					// path found, we're done
+					// Path found, we're done
 					return true;
 				else
-					// tear down path that didn't lead to the destination
+					// Tear down path that didn't lead to the destination
 					path.pop_back();
 			}
 		}
@@ -233,7 +239,7 @@ public:
 		for (auto &v : vertices) {
 			auto &vertex = v.second;
 
-			// format connected vertices into a list
+			// Format connected vertices into a list
 			std::stringstream ssEdges;
 			for (auto &edge : vertex->edges) {
 				ssEdges << getEdge(edge)->to << " ";
@@ -278,5 +284,5 @@ protected:
 	Logger logger;
 };
 
-} /* namespace graph */
-} /* namespace villas */
+} // namespace graph
+} // namespace villas

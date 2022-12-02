@@ -49,9 +49,9 @@ public:
 	}
 
 protected:
-	size_t offset;					///< Offset (or address) inside address space
-	size_t size;					///< Size in bytes of this block
-	MemoryManager::AddressSpaceId addrSpaceId;	///< Identifier in memory graph
+	size_t offset;					// Offset (or address) inside address space
+	size_t size;					// Size in bytes of this block
+	MemoryManager::AddressSpaceId addrSpaceId;	// Identifier in memory graph
 };
 
 /**
@@ -70,13 +70,13 @@ class MemoryAccessor {
 public:
 	using Type = T;
 
-	// take ownership of the MemoryBlock
+	// Take ownership of the MemoryBlock
 	MemoryAccessor(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem->getAddrSpaceId())),
 	    memoryBlock(std::move(mem))
 	{ }
 
-	// just act as an accessor, do not take ownership of MemoryBlock
+	// Just act as an accessor, do not take ownership of MemoryBlock
 	MemoryAccessor(const MemoryBlock &mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId()))
 	{ }
@@ -113,10 +113,10 @@ public:
 	}
 
 private:
-	/// cached memory translation for fast access
+	// Cached memory translation for fast access
 	MemoryTranslation translation;
 
-	/// take the unique pointer in case user wants this class to have ownership
+	// Take the unique pointer in case user wants this class to have ownership
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
 };
 
@@ -131,7 +131,7 @@ private:
 template<typename DerivedAllocator>
 class BaseAllocator {
 public:
-	/// memoryAddrSpaceId: memory that is managed by this allocator
+	// memoryAddrSpaceId: memory that is managed by this allocator
 	BaseAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId) :
 		memoryAddrSpaceId(memoryAddrSpaceId)
 	{
@@ -140,7 +140,7 @@ public:
 		std::string loggerName = fmt::format("memory:", derivedAlloc->getName());
 		logger = logging.get(loggerName);
 
-		// default deallocation callback
+		// Default deallocation callback
 		free = [&](MemoryBlock* mem) {
 			logger->warn("no free callback defined for addr space {}, not freeing",
 			             mem->getAddrSpaceId());
@@ -165,7 +165,7 @@ public:
 	allocate(size_t num)
 	{
 		if (num == 0) {
-			// doesn't make sense to allocate an empty block
+			// Doesn't make sense to allocate an empty block
 			logger->error("Trying to allocate empty memory");
 			throw std::bad_alloc();
 		}
@@ -202,7 +202,7 @@ protected:
 
 	void removeMemoryBlock(const MemoryBlock &mem)
 	{
-		// this will also remove any mapping to and from the memory block
+		// This will also remove any mapping to and from the memory block
 		auto & mm = MemoryManager::get();
 		mm.removeAddressSpace(mem.getAddrSpaceId());
 	}
@@ -215,7 +215,7 @@ protected:
 	MemoryBlock::deallocator_fn free;
 	Logger logger;
 
-	// optional, if allocator should own the memory block
+	// Optional, if allocator should own the memory block
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
 
 private:
@@ -268,10 +268,10 @@ private:
 		return (alignBytes - (addr & alignMask)) & alignMask;
 	}
 
-	size_t nextFreeAddress;	///< next chunk will be allocated here
-	size_t memorySize;		///< total size of managed memory
-	size_t internalOffset;	///< offset in address space (usually 0)
-	size_t allocationCount;	///< Number of individual allocations present
+	size_t nextFreeAddress;	// Next chunk will be allocated here
+	size_t memorySize;	// Total size of managed memory
+	size_t internalOffset;	// Offset in address space (usually 0)
+	size_t allocationCount;	// Number of individual allocations present
 };
 
 
@@ -344,4 +344,4 @@ private:
 	getUdmaBufPhysAddr(int num);
 };
 
-} /* namespace villas */
+} // namespace villas

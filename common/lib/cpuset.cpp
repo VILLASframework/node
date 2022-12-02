@@ -113,4 +113,4 @@ CpuSet::operator std::string ()
 	return ss.str();
 }
 
-#endif /* __linux__ */
+#endif // __linux__

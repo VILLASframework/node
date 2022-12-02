@@ -111,6 +111,6 @@ std::vector<byte> decode(const std::string &input)
 	return decoded;
 }
 
-} /* namespace base64 */
-} /* namespace utils */
-} /* namespace villas */
+} // namespace base64
+} // namespace utils
+} // namespace villas

@@ -64,7 +64,7 @@ void villas::list_push(struct List *l, void *p)
 
 	assert(l->state == State::INITIALIZED);
 
-	/* Resize array if out of capacity */
+	// Resize array if out of capacity
 	if (l->length >= l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
 		l->array = (void **) realloc(l->array, l->capacity * sizeof(void *));
@@ -116,7 +116,7 @@ int villas::list_insert(struct List *l, size_t idx, void *p)
 	if (idx >= l->length)
 		return -1;
 
-	/* Resize array if out of capacity */
+	// Resize array if out of capacity
 	if (l->length + 1 > l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
 		l->array = (void **) realloc(l->array, l->capacity * sizeof(void *));
@@ -198,7 +198,7 @@ void * villas::list_search(struct List *l, cmp_cb_t cmp, const void *ctx)
 			goto out;
 	}
 
-	e = nullptr; /* not found */
+	e = nullptr; // Not found
 
 out:	pthread_mutex_unlock(&l->lock);
 

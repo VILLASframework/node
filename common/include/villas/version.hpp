@@ -26,13 +26,30 @@ public:
 
 	Version(int maj, int min = 0, int pat = 0);
 
-	inline bool operator==(const Version &rhs) { return cmp(*this, rhs) == 0; }
-	inline bool operator!=(const Version &rhs) { return cmp(*this, rhs) != 0; }
-	inline bool operator< (const Version &rhs) { return cmp(*this, rhs) <  0; }
-	inline bool operator> (const Version &rhs) { return cmp(*this, rhs) >  0; }
-	inline bool operator<=(const Version &rhs) { return cmp(*this, rhs) <= 0; }
-	inline bool operator>=(const Version &rhs) { return cmp(*this, rhs) >= 0; }
+	inline bool operator==(const Version &rhs) {
+		return cmp(*this, rhs) == 0;
+	}
+
+	inline bool operator!=(const Version &rhs) {
+		return cmp(*this, rhs) != 0;
+	}
+
+	inline bool operator< (const Version &rhs) {
+		return cmp(*this, rhs) <  0;
+	}
+
+	inline bool operator> (const Version &rhs) {
+		return cmp(*this, rhs) >  0;
+	}
+
+	inline bool operator<=(const Version &rhs) {
+		return cmp(*this, rhs) <= 0;
+	}
+
+	inline bool operator>=(const Version &rhs) {
+		return cmp(*this, rhs) >= 0;
+	}
 };
 
-} /* namespace villas */
-} /* namespace utils */
+} // namespace villas
+} // namespace utils

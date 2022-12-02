@@ -173,7 +173,7 @@ public:
 	}
 };
 
-} /* namespace utils */
-} /* namespace villas */
+} // namespace utils
+} // namespace villas
 
 #endif

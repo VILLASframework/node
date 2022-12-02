@@ -20,7 +20,7 @@
 
 #ifdef __linux__
   using villas::utils::CpuSet;
-#endif /* __linux__ */
+#endif // __linux__
 
 namespace villas {
 namespace kernel {
@@ -36,7 +36,7 @@ void init(int priority, int affinity)
 	int is_rt, is_isol;
 	char isolcpus[255];
 
-	/* Use FIFO scheduler with real time priority */
+	// Use FIFO scheduler with real time priority
 	is_rt = isPreemptible();
 	if (!is_rt)
 		logger->warn("We recommend to use an PREEMPT_RT patched kernel!");
@@ -68,7 +68,7 @@ void init(int priority, int affinity)
 
 	(void) affinity;
 	(void) priority;
-#endif /* __linux__ */
+#endif // __linux__
 }
 
 #ifdef __linux__
@@ -80,7 +80,7 @@ void setProcessAffinity(int affinity)
 
 	Logger logger = logging.get("kernel:rt");
 
-	/* Pin threads to CPUs by setting the affinity */
+	// Pin threads to CPUs by setting the affinity
 	CpuSet cset_pin(affinity);
 
 	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
@@ -127,8 +127,8 @@ bool isPreemptible()
 	return access(SYSFS_PATH "/kernel/realtime", R_OK) == 0;
 }
 
-#endif /* __linux__ */
+#endif // __linux__
 
-} /* namespace villas */
-} /* namespace kernel */
-} /* namespace rt */
+} // namespace villas
+} // namespace kernel
+} // namespace rt

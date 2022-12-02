@@ -21,7 +21,7 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
 	if (!str)
 		return 0;
 
-	len = strlen(str); /* not \0 terminated */
+	len = strlen(str); // Not \0 terminated
 	if (buffer && len <= size)
 		memcpy(buffer, str, len);
 
@@ -54,7 +54,7 @@ static int json_dumpfd_callback(const char *buffer, size_t size, void *data)
 	(void)buffer;
 	(void)size;
 	(void)data;
-#endif /* HAVE_UNISTD_H */
+#endif // HAVE_UNISTD_H
 
 	return -1;
 }
@@ -63,4 +63,4 @@ int json_dumpfd(const json_t *json, int output, size_t flags)
 {
     return json_dump_callback(json, json_dumpfd_callback, (void *) &output, flags);
 }
-#endif /* JANSSON_VERSION_HEX < 0x020A00 */
+#endif // JANSSON_VERSION_HEX < 0x020A00

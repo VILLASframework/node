@@ -30,10 +30,10 @@ public:
 		std::vector<char>(count, 0)
 	{ }
 
-	/** Encode JSON document /p j and append it to the buffer */
+	// Encode JSON document /p j and append it to the buffer
 	int encode(json_t *j, int flags = 0);
 
-	/** Decode JSON document from the beginning of the buffer */
+	// Decode JSON document from the beginning of the buffer
 	json_t * decode();
 
 	void append(const char *data, size_t len)
@@ -42,4 +42,4 @@ public:
 	}
 };
 
-} /* namespace villas */
+} // namespace villas
