@@ -78,7 +78,6 @@ std::shared_ptr<Device> Group::attachDevice(const std::string& name, const kerne
 	return attachDevice(device);
 }
 
-
 bool Group::checkStatus()
 {
 	int ret;

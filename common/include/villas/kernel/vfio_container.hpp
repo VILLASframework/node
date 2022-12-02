@@ -35,7 +35,7 @@ public:
 	{
 		static Container instance;
 		return &instance;
-	};
+	}
 
 	// No copying allowed
 	Container(Container const&) = delete;
@@ -63,7 +63,10 @@ public:
 	bool memoryUnmap(uintptr_t phys, size_t length);
 
 	bool isIommuEnabled() const
-	{ return this->hasIommu; }
+	{
+		return this->hasIommu;
+	}
+
 private:
 	std::shared_ptr<Group> getOrAttachGroup(int index);
 

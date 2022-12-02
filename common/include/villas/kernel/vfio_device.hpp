@@ -36,7 +36,6 @@ namespace vfio {
 class Device {
 public:
 	Device(const std::string &name, int groupFileDescriptor, const kernel::pci::Device *pci_device = nullptr);
-
 	~Device();
 
 	bool reset();
@@ -61,15 +60,21 @@ public:
 	bool pciHotReset();
 
 	int getFileDescriptor() const
-	{ return fd; }
+	{
+		return fd;
+	}
 
 	void dump();
 
 	bool isAttachedToGroup() const
-	{ return attachedToGroup; }
+	{
+		return attachedToGroup;
+	}
 
 	void setAttachedToGroup()
-	{ this->attachedToGroup = true; }
+	{
+		this->attachedToGroup = true;
+	}
 
 private:
 	// Name of the device as listed under
