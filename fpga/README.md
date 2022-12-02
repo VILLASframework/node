@@ -11,10 +11,9 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/fpga.h
 
 ## Copyright
 
-2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-2018-2022 Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
-
+- 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- 2018-2022 Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+- 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
 
 ## License
 
