@@ -1,5 +1,5 @@
 variables:
-  GIT_STRATEGY: fetch
+  GIT_DEPTH: 0
   GIT_SUBMODULE_STRATEGY: recursive
   DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
   DOCKER_IMAGE_DEV: villas/common-dev
