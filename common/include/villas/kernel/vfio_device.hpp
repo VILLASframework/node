@@ -81,6 +81,7 @@ private:
 	int fd;
 
 	bool attachedToGroup;
+	int groupFd;
 
 	struct vfio_device_info info;
 
