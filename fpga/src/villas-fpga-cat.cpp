@@ -72,6 +72,13 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		//FIXME: This must be called before card is intialized, because the card descructor
+		// 	 still accesses the allocated memory. This order ensures that the allocator
+		//       is destroyed AFTER the card.
+		auto &alloc = villas::HostRam::getAllocator();
+		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
+		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};
+
 		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
 		std::vector<fpga::ip::AuroraXilinx::Ptr> aurora_channels;
@@ -104,10 +111,6 @@ int main(int argc, char* argv[])
 #else
 		dma->connectLoopback();
 #endif
-		auto &alloc = villas::HostRam::getAllocator();
-		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
-		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};
-
 		for (auto b : block) {
 			dma->makeAccesibleFromVA(b);
 		}
@@ -152,6 +155,12 @@ int main(int argc, char* argv[])
 		return -1;
 	} catch (const CLI::ParseError &e) {
 		return app.exit(e);
+	} catch (const std::exception &e) {
+		logger->error("Error: {}", e.what());
+		return -1;
+	} catch (...) {
+		logger->error("Unknown error");
+		return -1;
 	}
 
 	return 0;
