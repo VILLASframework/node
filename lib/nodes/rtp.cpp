@@ -15,6 +15,7 @@
 #include <villas/nodes/rtp.hpp>
 
 extern "C" {
+	#include <re/re_net.h>
 	#include <re/re_main.h>
 	#include <re/re_types.h>
 	#include <re/re_mbuf.h>
@@ -546,7 +547,7 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 
 	/* Send dataset */
-	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, r->send_mb);
+	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, 0, r->send_mb);
 	if (ret)
 		throw RuntimeError("Error from rtp_send, reason: {}", ret);
 
@@ -560,22 +561,6 @@ int villas::node::rtp_poll_fds(NodeCompat *n, int fds[])
 	fds[0] = queue_signalled_fd(&r->recv_queue);
 
 	return 1;
-}
-
-int villas::node::rtp_netem_fds(NodeCompat *n, int fds[])
-{
-	auto *r = n->getData<struct rtp>();
-
-	int m = 0;
-	struct udp_sock *rtp = (struct udp_sock *) rtp_sock(r->rs);
-	struct udp_sock *rtcp = (struct udp_sock *) rtcp_sock(r->rs);
-
-	fds[m++] = udp_sock_fd(rtp, AF_INET);
-
-	if (r->rtcp.enabled)
-		fds[m++] = udp_sock_fd(rtcp, AF_INET);
-
-	return m;
 }
 
 __attribute__((constructor(110)))
@@ -600,5 +585,4 @@ static void register_plugin() {
 	p.write		= rtp_write;
 	p.reverse	= rtp_reverse;
 	p.poll_fds	= rtp_poll_fds;
-	p.netem_fds	= rtp_netem_fds;
 }
