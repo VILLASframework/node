@@ -377,7 +377,7 @@ Device::getIOMMUGroup() const
 {
 	int ret;
 	char *group;
-	//readlink does not add a null terminator!
+	// readlink does not add a null terminator!
 	char link[1024] = {0};
 	char sysfs[1024];
 

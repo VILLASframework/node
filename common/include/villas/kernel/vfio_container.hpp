@@ -26,16 +26,18 @@ namespace vfio {
 
 class Container {
 private:
-	//This is a singleton: There can only be one container to rule them all.
+	// This is a singleton: There can only be one container to rule them all.
 	Container();
+
 public:
-	//The Container instance is lazily initialized and correctly destroyed.
+	// The Container instance is lazily initialized and correctly destroyed.
 	static Container* getInstance()
 	{
 		static Container instance;
 		return &instance;
 	};
-	//No copying allowed
+
+	// No copying allowed
 	Container(Container const&) = delete;
 	void operator=(Container const&) = delete;
 
@@ -71,7 +73,7 @@ private:
 	uint64_t iova_next;			/**< Next free IOVA address */
 	bool hasIommu;
 
-	/// All groups bound to this container
+	// All groups bound to this container
 	std::list<std::shared_ptr<Group>> groups;
 
 	Logger log;

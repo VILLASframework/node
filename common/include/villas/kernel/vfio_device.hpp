@@ -41,17 +41,16 @@ public:
 
 	bool reset();
 
-	/** Map a device memory region to the application address space (e.g. PCI BARs) */
+	// Map a device memory region to the application address space (e.g. PCI BARs)
 	void* regionMap(size_t index);
 
-	/** munmap() a region which has been mapped by vfio_map_region() */
+	// munmap() a region which has been mapped by vfio_map_region()
 	bool regionUnmap(size_t index);
 
-	/** Get the size of a device memory region */
+	// Get the size of a device memory region
 	size_t regionGetSize(size_t index);
 
-
-	/** Enable memory accesses and bus mastering for PCI device */
+	// Enable memory accesses and bus mastering for PCI device
 	bool pciEnable();
 
 	int pciMsiInit(int efds[32]);
@@ -73,11 +72,11 @@ public:
 	{ this->attachedToGroup = true; }
 
 private:
-	/// Name of the device as listed under
-	/// /sys/kernel/iommu_groups/[vfio_group::index]/devices/
+	// Name of the device as listed under
+	// /sys/kernel/iommu_groups/[vfio_group::index]/devices/
 	std::string name;
 
-	/// VFIO device file descriptor
+	// VFIO device file descriptor
 	int fd;
 
 	bool attachedToGroup;
@@ -89,7 +88,7 @@ private:
 	std::vector<struct vfio_region_info> regions;
 	std::vector<void*> mappings;
 
-	/**< libpci handle of the device */
+	// libpci handle of the device
 	const kernel::pci::Device *pci_device;
 
 	Logger log;

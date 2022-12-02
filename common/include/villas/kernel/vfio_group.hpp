@@ -48,19 +48,20 @@ public:
 
 	bool checkStatus();
 	void dump();
+
 private:
-	/// VFIO group file descriptor
+	// VFIO group file descriptor
 	int fd;
 
-	/// Index of the IOMMU group as listed under /sys/kernel/iommu_groups/
+	// Index of the IOMMU group as listed under /sys/kernel/iommu_groups/
 	int index;
 
 	bool attachedToContainer;
 
-	/// Status of group
+	// Status of group
 	struct vfio_group_status status;
 
-	/// All devices owned by this group
+	// All devices owned by this group
 	std::list<std::shared_ptr<Device>> devices;
 
 	Logger log;

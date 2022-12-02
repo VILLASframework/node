@@ -56,17 +56,17 @@ Container::Container() :
 			              "Please load manually!", module);
 	}
 
-	/* Open VFIO API */
+	// Open VFIO API
 	fd = open(VFIO_DEV, O_RDWR);
 	if (fd < 0)
 		throw RuntimeError("Failed to open VFIO container");
 
-	/* Check VFIO API version */
+	// Check VFIO API version
 	version = ioctl(fd, VFIO_GET_API_VERSION);
 	if (version < 0 || version != VFIO_API_VERSION)
 		throw RuntimeError("Failed to get VFIO version");
 
-	/* Check available VFIO extensions (IOMMU types) */
+	// Check available VFIO extensions (IOMMU types)
 	extensions = 0;
 	for (unsigned int i = VFIO_TYPE1_IOMMU; i <= VFIO_NOIOMMU_IOMMU; i++) {
 		int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
@@ -93,11 +93,12 @@ Container::Container() :
 
 Container::~Container()
 {
-	/* Release memory and close fds */
+	// Release memory and close fds
 	groups.clear();
 
 	log->debug("Cleaning up container with fd {}", fd);
-	/* Close container */
+
+	// Close container
 	int ret = close(fd);
 	if (ret < 0)
 		log->error("Error closing vfio container fd {}: {}", fd, ret);
@@ -108,7 +109,7 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 	if (group->isAttachedToContainer())
 		throw RuntimeError("Group is already attached to a container");
 
-	/* Claim group ownership */
+	// Claim group ownership
 	int ret = ioctl(group->getFileDescriptor(), VFIO_GROUP_SET_CONTAINER, &fd);
 	if (ret < 0) {
 		log->error("Failed to attach VFIO group {} to container fd {} (error {})",
@@ -116,7 +117,7 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 		throw RuntimeError("Failed to attach VFIO group to container");
 	}
 
-	/* Set IOMMU type */
+	// Set IOMMU type
 	int iommu_type = isIommuEnabled() ? VFIO_TYPE1_IOMMU : VFIO_NOIOMMU_IOMMU;
 
 	ret = ioctl(fd, VFIO_SET_IOMMU, iommu_type);
@@ -132,20 +133,20 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 	else
 		log->debug("Attached new group {} to VFIO container", group->getIndex());
 
-	/* Push to our list */
+	// Push to our list
 	groups.push_back(std::move(group));
 }
 
 std::shared_ptr<Group> Container::getOrAttachGroup(int index)
 {
-	/* Search if group with index already exists */
+	// Search if group with index already exists
 	for (auto &group : groups) {
 		if (group->getIndex() == index) {
 			return group;
 		}
 	}
 
-	/* Group not yet part of this container, so acquire ownership */
+	// Group not yet part of this container, so acquire ownership
 	auto group = std::make_shared<Group>(index, isIommuEnabled());
 	attachGroup(group);
 
@@ -185,17 +186,17 @@ Container::attachDevice(const pci::Device &pdev)
 	char name[32], iommu_state[4];
 	static constexpr const char* kernelDriver = "vfio-pci";
 
-	/* Load PCI bus driver for VFIO */
+	// Load PCI bus driver for VFIO
 	if (kernel::loadModule("vfio_pci"))
 		throw RuntimeError("Failed to load kernel driver: vfio_pci");
 
-	/* Bind PCI card to vfio-pci driver if not already bound */
+	// Bind PCI card to vfio-pci driver if not already bound
 	if (pdev.getDriver() != kernelDriver) {
 		log->debug("Bind PCI card to kernel driver '{}'", kernelDriver);
 		pdev.attachDriver(kernelDriver);
 	}
 
-	/* Get IOMMU group of device */
+	// Get IOMMU group of device
 	int index = isIommuEnabled() ? pdev.getIOMMUGroup() : 0;
 	if (index < 0) {
 		ret = kernel::getCmdlineParam("intel_iommu", iommu_state, sizeof(iommu_state));
@@ -208,7 +209,7 @@ Container::attachDevice(const pci::Device &pdev)
 		throw RuntimeError("Failed to get IOMMU group of device");
 	}
 
-	/* VFIO device name consists of PCI BDF */
+	// VFIO device name consists of PCI BDF
 	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev.slot.domain,
 	         pdev.slot.bus, pdev.slot.device, pdev.slot.function);
 
@@ -217,7 +218,7 @@ Container::attachDevice(const pci::Device &pdev)
 	auto device = group->attachDevice(name, &pdev);
 
 
-	/* Check if this is really a vfio-pci device */
+	// Check if this is really a vfio-pci device
 	if (!device->isVfioPciDevice())
 		throw RuntimeError("Device is not a vfio-pci device");
 
@@ -240,7 +241,7 @@ Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 		length &= ~0xFFF;
 	}
 
-	/* Super stupid allocator */
+	// Super stupid allocator
 	size_t iovaIncrement = 0;
 	if (phys == UINTPTR_MAX) {
 		phys = this->iova_next;
@@ -265,12 +266,11 @@ Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 	log->debug("DMA map size={:#x}, iova={:#x}, vaddr={:#x}",
 	              dmaMap.size, dmaMap.iova, dmaMap.vaddr);
 
-	/* Mapping successful, advance IOVA allocator */
+	// Mapping successful, advance IOVA allocator
 	this->iova_next += iovaIncrement;
 
-	/* We intentionally don't return the actual mapped length, the users are
-	 * only guaranteed to have their demanded memory mapped correctly
-	 */
+	// We intentionally don't return the actual mapped length, the users are
+	// only guaranteed to have their demanded memory mapped correctly
 	return dmaMap.iova;
 }
 
