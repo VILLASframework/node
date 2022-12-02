@@ -63,7 +63,8 @@ int main(int argc, char* argv[])
 		app.parse(argc, argv);
 
 		// Logging setup
-		spdlog::set_level(spdlog::level::debug);
+
+		logging.setLevel(spdlog::level::debug);
 		fpga::setupColorHandling();
 
 		if (configFile.empty()) {
