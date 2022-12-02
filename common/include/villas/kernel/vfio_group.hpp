@@ -28,20 +28,27 @@ namespace vfio {
 class Group {
 public:
 	Group(int index, bool iommuEnabled);
-
 	~Group();
 
 	void setAttachedToContainer()
-	{ attachedToContainer = true; };
+	{
+		attachedToContainer = true;
+	}
 
 	bool isAttachedToContainer()
-	{ return attachedToContainer; };
+	{
+		return attachedToContainer;
+	}
 
 	int getFileDescriptor()
-	{ return fd; };
+	{
+		return fd;
+	}
 
 	int getIndex()
-	{ return index; };
+	{
+		return index;
+	}
 
 	std::shared_ptr<Device> attachDevice(std::shared_ptr<Device> device);
 	std::shared_ptr<Device> attachDevice(const std::string& name, const kernel::pci::Device *pci_device = nullptr);

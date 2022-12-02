@@ -90,7 +90,6 @@ Container::Container() :
 	log->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
 }
 
-
 Container::~Container()
 {
 	// Release memory and close fds
@@ -154,10 +153,7 @@ std::shared_ptr<Group> Container::getOrAttachGroup(int index)
 	return group;
 }
 
-
-
-void
-Container::dump()
+void Container::dump()
 {
 	log->info("File descriptor: {}", fd);
 	log->info("Version: {}", version);
@@ -168,9 +164,7 @@ Container::dump()
 	}
 }
 
-
-std::shared_ptr<Device>
-Container::attachDevice(const std::string& name, int index)
+std::shared_ptr<Device> Container::attachDevice(const std::string& name, int index)
 {
 	auto group = getOrAttachGroup(index);
 	auto device = group->attachDevice(name);
@@ -178,9 +172,7 @@ Container::attachDevice(const std::string& name, int index)
 	return device;
 }
 
-
-std::shared_ptr<Device>
-Container::attachDevice(const pci::Device &pdev)
+std::shared_ptr<Device> Container::attachDevice(const pci::Device &pdev)
 {
 	int ret;
 	char name[32], iommu_state[4];
@@ -226,8 +218,7 @@ Container::attachDevice(const pci::Device &pdev)
 }
 
 
-uintptr_t
-Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
+uintptr_t Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
 	int ret;
 
@@ -274,9 +265,7 @@ Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 	return dmaMap.iova;
 }
 
-
-bool
-Container::memoryUnmap(uintptr_t phys, size_t length)
+bool Container::memoryUnmap(uintptr_t phys, size_t length)
 {
 	int ret;
 

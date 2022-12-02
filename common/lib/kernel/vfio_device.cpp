@@ -138,9 +138,7 @@ Device::~Device()
 	}
 }
 
-
-bool
-Device::reset()
+bool Device::reset()
 {
 	log->debug("Resetting device.");
 	if (this->info.flags & VFIO_DEVICE_FLAGS_RESET)
@@ -149,9 +147,7 @@ Device::reset()
 		return false; // not supported by this device
 }
 
-
-void*
-Device::regionMap(size_t index)
+void * Device::regionMap(size_t index)
 {
 	struct vfio_region_info *r = &regions[index];
 
@@ -171,9 +167,7 @@ Device::regionMap(size_t index)
 	return mappings[index];
 }
 
-
-bool
-Device::regionUnmap(size_t index)
+bool Device::regionUnmap(size_t index)
 {
 	int ret;
 	struct vfio_region_info *r = &regions[index];
@@ -192,9 +186,7 @@ Device::regionUnmap(size_t index)
 	return true;
 }
 
-
-size_t
-Device::regionGetSize(size_t index)
+size_t Device::regionGetSize(size_t index)
 {
 	if (index >= regions.size()) {
 		log->error("Index out of range: {} >= {}", index, regions.size());
@@ -243,8 +235,7 @@ void Device::dump()
 	}
 }
 
-bool
-Device::pciEnable()
+bool Device::pciEnable()
 {
 	int ret;
 	uint32_t reg;
@@ -269,9 +260,7 @@ Device::pciEnable()
 	return true;
 }
 
-
-int
-Device::pciMsiInit(int efds[])
+int Device::pciMsiInit(int efds[])
 {
 	// Check if this is really a vfio-pci device
 	if (not isVfioPciDevice())
@@ -316,9 +305,7 @@ Device::pciMsiInit(int efds[])
 	return irqCount;
 }
 
-
-int
-Device::pciMsiDeinit(int efds[])
+int Device::pciMsiDeinit(int efds[])
 {
 	// Check if this is really a vfio-pci device
 	if (not isVfioPciDevice())
@@ -357,9 +344,7 @@ Device::pciMsiDeinit(int efds[])
 	return irqCount;
 }
 
-
-bool
-Device::pciMsiFind(int nos[])
+bool Device::pciMsiFind(int nos[])
 {
 	int ret, idx, irq;
 	char *end, *col, *last, line[1024], name[13];
@@ -399,9 +384,7 @@ Device::pciMsiFind(int nos[])
 	return true;
 }
 
-
-bool
-Device::isVfioPciDevice() const
+bool Device::isVfioPciDevice() const
 {
 	return info.flags & VFIO_DEVICE_FLAGS_PCI;
 }
