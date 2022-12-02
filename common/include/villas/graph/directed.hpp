@@ -42,7 +42,7 @@ public:
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
 	{
-		if (vertexId >= lastVertexId)
+		if (vertexId >= vertices.size())
 			throw std::invalid_argument("vertex doesn't exist");
 
 		// cannot use [] operator, because creates non-existing elements
@@ -154,6 +154,7 @@ public:
 
 				auto startVertex = getVertex(edge->from);
 				startVertex->edges.remove(edge->id);
+
 			}
 
 			if ((edge->from == vertexId) or removeEdge) {
@@ -167,6 +168,7 @@ public:
 
 		logger->debug("Remove vertex {}", vertexId);
 		vertices.erase(vertexId);
+		lastVertexId--;
 	}
 
 	const std::list<EdgeIdentifier>&

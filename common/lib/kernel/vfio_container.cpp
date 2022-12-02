@@ -93,11 +93,10 @@ Container::Container() :
 
 Container::~Container()
 {
-	log->debug("Clean up container with fd {}", fd);
-
 	/* Release memory and close fds */
 	groups.clear();
 
+	log->debug("Cleaning up container with fd {}", fd);
 	/* Close container */
 	int ret = close(fd);
 	if (ret < 0)

@@ -118,10 +118,10 @@ void Group::dump()
 
 Group::~Group()
 {
-	log->debug("Clean up group {} with fd {}", this->index, this->fd);
-
 	/* Release memory and close fds */
 	devices.clear();
+
+	log->debug("Cleaning up group {} with fd {}", index, fd);
 
 	if (fd < 0)
 		log->debug("Destructing group that has not been attached");
