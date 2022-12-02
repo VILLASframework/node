@@ -18,7 +18,7 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include "vfio_device.hpp"
+#include <villas/kernel/vfio_device.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
