@@ -125,10 +125,13 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 
 Device::~Device()
 {
-	log->debug("Clean up device {} with fd {}", this->name, this->fd);
+	log->debug("Cleaning up device {} with fd {}", this->name, this->fd);
 
 	for (auto &region : regions) {
 		regionUnmap(region.index);
+	}
+	if (isVfioPciDevice()) {
+		pciHotReset();
 	}
 	reset();
 
@@ -412,6 +415,7 @@ bool Device::pciHotReset()
 	if (!isVfioPciDevice())
 		return false;
 
+	log->debug("Performing hot reset.");
 	const size_t reset_info_len = sizeof(struct vfio_pci_hot_reset_info) +
 	                              sizeof(struct vfio_pci_dependent_device) * 64;
 
@@ -461,7 +465,7 @@ bool Device::pciHotReset()
 	delete[] reset_buf;
 
 	if (!success) {
-		log->warn("PCI hot reset failed, maybe not IOMMU available?");
+		log->warn("PCI hot reset failed, maybe no IOMMU available?");
 		return true;
 	}
 
