@@ -41,7 +41,9 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 	target_sources(villas-common PRIVATE
 		kernel/pci.cpp
-		kernel/vfio.cpp
+		kernel/vfio_device.cpp
+		kernel/vfio_group.cpp
+		kernel/vfio_container.cpp
 	)
 endif()
 
