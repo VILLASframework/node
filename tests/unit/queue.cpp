@@ -79,7 +79,7 @@ static void * producer(void *ctx)
 
 	/* Wait for global start signal */
 	while (p->start == 0)
-		pthread_yield();
+		sched_yield();
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
@@ -89,7 +89,7 @@ static void * producer(void *ctx)
 	for (intptr_t count = 0; count < p->iter_count; count++) {
 		do {
 			ret = queue_push(&p->queue, (void *) count);
-			pthread_yield();
+			sched_yield();
 		} while (ret != 1);
 	}
 
@@ -106,7 +106,7 @@ static void * consumer(void *ctx)
 
 	/* Wait for global start signal */
 	while (p->start == 0)
-		pthread_yield();
+		sched_yield();
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
@@ -138,7 +138,7 @@ void * producer_consumer(void *ctx)
 
 	/* Wait for global start signal */
 	while (p->start == 0)
-		pthread_yield();
+		sched_yield();
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
@@ -150,13 +150,13 @@ void * producer_consumer(void *ctx)
 		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr = (void *) (iter * p->batch_size + i);
 			while (!queue_push(&p->queue, ptr))
-				pthread_yield(); /* queue full, let other threads proceed */
+				sched_yield(); /* queue full, let other threads proceed */
 		}
 
 		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr;
 			while (!queue_pull(&p->queue, &ptr))
-				pthread_yield(); /* queue empty, let other threads proceed */
+				sched_yield(); /* queue empty, let other threads proceed */
 		}
 	}
 
@@ -172,7 +172,7 @@ void * producer_consumer_many(void *ctx)
 
 	/* Wait for global start signal */
 	while (p->start == 0)
-		pthread_yield();
+		sched_yield();
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
@@ -190,14 +190,14 @@ void * producer_consumer_many(void *ctx)
 		do {
 			pushed += queue_push_many(&p->queue, &ptrs[pushed], p->batch_size - pushed);
 			if (pushed != p->batch_size)
-				pthread_yield(); /* queue full, let other threads proceed */
+				sched_yield(); /* queue full, let other threads proceed */
 		} while (pushed < p->batch_size);
 
 		int pulled = 0;
 		do {
 			pulled += queue_pull_many(&p->queue, &ptrs[pulled], p->batch_size - pulled);
 			if (pulled != p->batch_size)
-				pthread_yield(); /* queue empty, let other threads proceed */
+				sched_yield(); /* queue empty, let other threads proceed */
 		} while (pulled < p->batch_size);
 	}
 
