@@ -56,6 +56,7 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 		name(name),
 		fd(-1),
 		attachedToGroup(false),
+		groupFd(groupFileDescriptor),
 		info(),
 		irqs(),
 		regions(),
@@ -434,11 +435,6 @@ bool Device::pciHotReset()
 		log->debug("  {:04x}:{:02x}:{:02x}.{:01x}: iommu_group={}",
 		              dd->segment, dd->bus,
 		              PCI_SLOT(dd->devfn), PCI_FUNC(dd->devfn), dd->group_id);
-
-		/*if (static_cast<int>(dd->group_id) != index) {
-			delete[] reset_info_buf;
-			return false;
-		}*/
 	}
 
 	delete[] reset_info_buf;
@@ -453,7 +449,7 @@ bool Device::pciHotReset()
 
 	reset->argsz = reset_len;
 	reset->count = 1;
-	reset->group_fds[0] = fd;
+	reset->group_fds[0] = groupFd;
 
 	int ret = ioctl(fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
 	const bool success = (ret == 0);
