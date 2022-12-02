@@ -21,10 +21,6 @@
 #include <sstream>
 #include <limits>
 
-#include <cstdlib>
-#include <cstring>
-
-#include <cstdint>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
