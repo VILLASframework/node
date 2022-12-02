@@ -83,7 +83,7 @@ bool Group::checkStatus()
 {
 	int ret;
 	if (!attachedToContainer) {
-		log->debug("Group {} is not attached to a container", index);
+		log->error("Group {} is not attached to a container", index);
 		return false;
 	}
 

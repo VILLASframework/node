@@ -46,8 +46,6 @@ Container::Container() :
 	groups(),
 	log(logging.get("kernel:vfio::Container"))
 {
-	spdlog::set_level(spdlog::level::debug);
-
 	static constexpr const char* requiredKernelModules[] = {
 	    "vfio", "vfio_pci", "vfio_iommu_type1"
 	};
@@ -127,6 +125,9 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 		log->error("Failed to set IOMMU type of container: {}", ret);
 		throw RuntimeError("Failed to set IOMMU type of container");
 	}
+
+	group->setAttachedToContainer();
+
 	if (!group->checkStatus())
 		throw RuntimeError("bad VFIO group status for group {}.", group->getIndex());
 	else
