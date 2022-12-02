@@ -84,33 +84,6 @@ private:
 	bool started;
 };
 
-class Rtds2GpuFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new Rtds2Gpu;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "Rtds2Gpu";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "HLS RTDS2GPU IP";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

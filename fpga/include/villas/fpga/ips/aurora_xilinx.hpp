@@ -46,33 +46,6 @@ public:
 	}
 };
 
-class AuroraXilinxFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new AuroraXilinx;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "Aurora";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx Aurora 8B/10B.";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:aurora_8b10b:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

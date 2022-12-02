@@ -53,9 +53,7 @@
 
 using namespace villas::fpga::ip;
 
-static RtdsFactory rtdsFactoryInstance;
-
-void Rtds::dump()
+void RtdsGtfpga::dump()
 {
 	// Check RTDS_Axis registers
 	const uint32_t sr = readMemory<uint32_t>(registerMemory, RTDS_AXIS_SR_OFFSET);
@@ -81,9 +79,13 @@ void Rtds::dump()
 	logger->info("RTDS timestep period:  {:.3f} us", getDt() * 1e6);
 }
 
-double Rtds::getDt()
+double RtdsGtfpga::getDt()
 {
 	const auto dt = readMemory<uint16_t>(registerMemory, RTDS_AXIS_TS_PERIOD_OFFSET);
 	return (dt == 0xFFFF) ? 0.0 : (double) dt / RTDS_HZ;
 }
 
+static char n[] = "rtds_gtfpga";
+static char d[] = "RTDS's AXI4-Stream - GTFPGA interface";
+static char v[] = "acs.eonerc.rwth-aachen.de:user:rtds_axis:";
+static NodePlugin<RtdsGtfpga, n, d, v> f;

@@ -63,63 +63,8 @@ private:
 	XLlFifo xFifo;
 };
 
-class FifoFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new Fifo;
-	}
-
-	std::string
-	getName() const
-	{
-		return "Fifo";
-	}
-
-	std::string
-	getDescription() const
-	{
-		return "Xilinx's AXI4 FIFO data mover";
-	}
-
-	Vlnv getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:axi_fifo_mm_s:");
-	}
-};
-
 class FifoData : public Node {
 	friend class FifoDataFactory;
-};
-
-class FifoDataFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new FifoData;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "FifoData";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx's AXI4 data stream FIFO";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return {
-			"xilinx.com:ip:axis_data_fifo:"
-		};
-	}
 };
 
 } /* namespace ip */

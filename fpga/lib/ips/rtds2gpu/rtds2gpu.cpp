@@ -6,7 +6,6 @@
 #include <villas/fpga/ips/rtds2gpu.hpp>
 
 using namespace villas::fpga::ip;
-static Rtds2GpuFactory factory;
 
 bool Rtds2Gpu::init()
 {
@@ -77,8 +76,7 @@ bool Rtds2Gpu::startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOf
 	return start();
 }
 
-bool
-Rtds2Gpu::updateStatus()
+bool Rtds2Gpu::updateStatus()
 {
 	if (not XRtds2gpu_Get_status_vld(&xInstance))
 		return false;
@@ -88,8 +86,7 @@ Rtds2Gpu::updateStatus()
 	return true;
 }
 
-size_t
-Rtds2Gpu::getMaxFrameSize()
+size_t Rtds2Gpu::getMaxFrameSize()
 {
 	XRtds2gpu_Set_frame_size(&xInstance, 0);
 
@@ -100,8 +97,7 @@ Rtds2Gpu::getMaxFrameSize()
 	return status.max_frame_size;
 }
 
-void
-Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
+void Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 {
 	auto &doorbell = reinterpret_cast<reg_doorbell_t&>(doorbellRegister);
 
@@ -111,3 +107,7 @@ Rtds2Gpu::dumpDoorbell(uint32_t doorbellRegister) const
 	logger->info("  Seq. number: {}", (int) doorbell.seq_nr);
 }
 
+static char n[] = "Rtds2Gpu";
+static char d[] = "HLS RTDS2GPU IP";
+static char v[] = "acs.eonerc.rwth-aachen.de:hls:rtds2gpu:";
+static NodePlugin<Rtds2Gpu, n, d, v> f;

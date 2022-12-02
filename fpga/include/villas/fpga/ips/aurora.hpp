@@ -66,33 +66,6 @@ private:
 	static constexpr const char registerMemory[] = "reg0";
 };
 
-class AuroraFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new Aurora;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "Aurora";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Aurora 8B/10B and additional support modules, like an AXI4-Lite register interface.";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("acs.eonerc.rwth-aachen.de:user:aurora_axis:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

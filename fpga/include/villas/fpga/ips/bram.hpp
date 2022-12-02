@@ -29,8 +29,11 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
+class BramFactory;
+
 class Bram : public Core {
 	friend class BramFactory;
+
 public:
 
 	virtual
@@ -57,19 +60,12 @@ private:
 };
 
 class BramFactory : public CoreFactory {
+
 public:
-
-	void parse(Core &ip, json_t *cfg);
-
-	Core* create()
-	{
-		return new Bram;
-	}
-
 	virtual
 	std::string getName() const
 	{
-		return "Bram";
+		return "bram";
 	}
 
 	virtual
@@ -78,11 +74,22 @@ public:
 		return "Block RAM";
 	}
 
+private:
 	virtual
 	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
 	}
+
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new Bram;
+	};
+
+protected:
+	virtual
+	void parse(Core &, json_t *) override;
 };
 
 } /* namespace ip */

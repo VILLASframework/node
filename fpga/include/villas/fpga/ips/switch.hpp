@@ -69,26 +69,13 @@ private:
 	std::map<std::string, std::string> portMapping;
 };
 
-class AxiStreamSwitchFactory : public NodeFactory {
+class AxiStreamSwitchFactory : NodeFactory {
+
 public:
-
-	static constexpr
-	const char* getCompatibleVlnvString()
-	{
-		return "xilinx.com:ip:axis_switch:";
-	}
-
-	void parse(Core &ip, json_t *cfg);
-
-	Core* create()
-	{
-		return new AxiStreamSwitch;
-	}
-
 	virtual
 	std::string getName() const
 	{
-		return "AxiStreamSwitch";
+		return "switch";
 	}
 
 	virtual
@@ -97,11 +84,22 @@ public:
 		return "Xilinx's AXI4-Stream switch";
 	}
 
+private:
 	virtual
 	Vlnv getCompatibleVlnv() const
 	{
-		return Vlnv(getCompatibleVlnvString());
+		return Vlnv("xilinx.com:ip:axis_switch:");
 	}
+
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new AxiStreamSwitch;
+	};
+
+protected:
+	virtual
+	void parse(Core &, json_t *) override;
 };
 
 } /* namespace ip */

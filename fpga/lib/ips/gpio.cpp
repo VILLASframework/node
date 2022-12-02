@@ -26,14 +26,15 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static GeneralPurposeIOFactory factory;
-
 bool
-GeneralPurposeIO::init()
+Gpio::init()
 {
 	//const uintptr_t base = getBaseAddr(registerMemory);
 
 	return true;
 }
 
+static char n[] = "gpio";
+static char d[] = "Xilinx's AXI4 general purpose IO";
+static char v[] = "xilinx.com:ip:axi_gpio:";
+static CorePlugin<Gpio, n, d, v> f;

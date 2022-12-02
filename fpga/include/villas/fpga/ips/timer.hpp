@@ -79,33 +79,6 @@ private:
 	XTmrCtr xTmr;
 };
 
-class TimerFactory : public CoreFactory {
-public:
-
-	Core* create()
-	{
-		return new Timer;
-	}
-
-	virtual
-	std::string getName() const
-	{
-		return "Timer";
-	}
-
-	virtual
-	std::string getDescription() const
-	{
-		return "Xilinx's programmable timer / counter";
-	}
-
-	virtual
-	Vlnv getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:axi_timer:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

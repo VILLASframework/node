@@ -73,7 +73,7 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 		if (ret != 0)
 			throw ConfigError(json_card, err, "", "Failed to parse card");
 
-		auto card = std::unique_ptr<PCIeCard>(create());
+		auto card = std::unique_ptr<PCIeCard>(make());
 
 		// Populate generic properties
 		card->name = std::string(card_name);

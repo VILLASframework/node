@@ -23,9 +23,8 @@
 #include <villas/exceptions.hpp>
 #include <villas/fpga/ips/bram.hpp>
 
+using namespace villas;
 using namespace villas::fpga::ip;
-
-static BramFactory factory;
 
 void BramFactory::parse(Core &ip, json_t* cfg)
 {
@@ -49,3 +48,4 @@ bool Bram::init()
 	return true;
 }
 
+static BramFactory f;

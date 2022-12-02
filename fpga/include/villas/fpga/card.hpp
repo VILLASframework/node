@@ -136,7 +136,7 @@ public:
 	std::list<std::shared_ptr<PCIeCard>> make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
 
 	static
-	PCIeCard* create()
+	PCIeCard* make()
 	{
 		return new PCIeCard();
 	}

@@ -40,6 +40,7 @@ public:
 	friend class DmaFactory;
 
 	~Dma();
+
 	virtual
 	bool init() override;
 
@@ -151,18 +152,13 @@ private:
 	MemoryBlock::UniquePtr sgRingRx;
 };
 
-class DmaFactory : public NodeFactory {
+class DmaFactory : NodeFactory {
+
 public:
-
-	Core* create()
-	{
-		return new Dma;
-	}
-
 	virtual
 	std::string getName() const
 	{
-		return "Dma";
+		return "dma";
 	}
 
 	virtual
@@ -171,17 +167,25 @@ public:
 		return "Xilinx's AXI4 Direct Memory Access Controller";
 	}
 
+private:
 	virtual
 	Vlnv getCompatibleVlnv() const
 	{
 		return Vlnv("xilinx.com:ip:axi_dma:");
 	}
 
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new Dma;
+	};
+
+protected:
 	virtual
 	void parse(Core& ip, json_t* json) override;
 
-	virtual void
-	configurePollingMode(Core& ip, PollingMode mode) override
+	virtual
+	void configurePollingMode(Core& ip, PollingMode mode) override
 	{
 		dynamic_cast<Dma&>(ip).polling = (mode == POLL);
 	}
