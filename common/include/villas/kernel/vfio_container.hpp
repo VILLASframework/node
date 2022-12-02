@@ -18,7 +18,7 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include "vfio_group.hpp"
+#include <villas/kernel/vfio_group.hpp>
 
 namespace villas {
 namespace kernel {

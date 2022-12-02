@@ -19,7 +19,7 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include "pci.hpp"
+#include <villas/kernel/pci.hpp>
 #include <villas/log.hpp>
 
 #define VFIO_PATH	"/dev/vfio/"
@@ -93,6 +93,7 @@ private:
 
 	Logger log;
 };
+
 } /* namespace vfio */
 } /* namespace kernel */
 } /* namespace villas */
