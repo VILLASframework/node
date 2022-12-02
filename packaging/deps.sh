@@ -259,14 +259,14 @@ if ! pkg-config "comedilib >= 0.11.0" && \
 fi
 
 # Build & Install libre
-if ! pkg-config "libre >= 0.5.6" && \
+if ! pkg-config "libre >= 2.9.0" && \
     [ -z "${SKIP_LIBRE}" ]; then
-    git clone ${GIT_OPTS} --branch v0.6.1 https://github.com/creytiv/re.git
+    git clone ${GIT_OPTS} --branch v2.9.0 https://github.com/baresip/re.git
     pushd re
     if [ -z "${PACKAGE}" ]; then
         make ${MAKE_OPTS} install
     else
-        tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-0.6.1.tar.gz .
+        tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-2.9.0.tar.gz .
         rpmbuild -ba rpm/re.spec
     fi
     popd
