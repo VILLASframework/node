@@ -42,7 +42,7 @@ Group::Group(int index, bool iommuEnabled) :
 	devices(),
 	log(logging.get("kernel:vfio::Group"))
 {
-	/* Open group fd */
+	// Open group fd
 	std::stringstream groupPath;
 	groupPath << VFIO_PATH
 	          << (iommuEnabled ? "" : "noiommu-")
@@ -87,7 +87,7 @@ bool Group::checkStatus()
 		return false;
 	}
 
-	/* Check group viability and features */
+	// Check group viability and features
 	status.argsz = sizeof(status);
 
 	ret = ioctl(fd, VFIO_GROUP_GET_STATUS, &status);
@@ -118,7 +118,7 @@ void Group::dump()
 
 Group::~Group()
 {
-	/* Release memory and close fds */
+	// Release memory and close fds
 	devices.clear();
 
 	log->debug("Cleaning up group {} with fd {}", index, fd);

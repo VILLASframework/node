@@ -33,23 +33,23 @@
 using namespace villas::kernel::vfio;
 
 static const char *vfio_pci_region_names[] = {
-    "PCI_BAR0",		/* VFIO_PCI_BAR0_REGION_INDEX */
-    "PCI_BAR1",		/* VFIO_PCI_BAR1_REGION_INDEX */
-    "PCI_BAR2",		/* VFIO_PCI_BAR2_REGION_INDEX */
-    "PCI_BAR3",		/* VFIO_PCI_BAR3_REGION_INDEX */
-    "PCI_BAR4",		/* VFIO_PCI_BAR4_REGION_INDEX */
-    "PCI_BAR5",		/* VFIO_PCI_BAR5_REGION_INDEX */
-    "PCI_ROM",		/* VFIO_PCI_ROM_REGION_INDEX */
-    "PCI_CONFIG",	/* VFIO_PCI_CONFIG_REGION_INDEX */
-    "PCI_VGA"		/* VFIO_PCI_INTX_IRQ_INDEX */
+    "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX
+    "PCI_BAR1",		// VFIO_PCI_BAR1_REGION_INDEX
+    "PCI_BAR2",		// VFIO_PCI_BAR2_REGION_INDEX
+    "PCI_BAR3",		// VFIO_PCI_BAR3_REGION_INDEX
+    "PCI_BAR4",		// VFIO_PCI_BAR4_REGION_INDEX
+    "PCI_BAR5",		// VFIO_PCI_BAR5_REGION_INDEX
+    "PCI_ROM",		// VFIO_PCI_ROM_REGION_INDEX
+    "PCI_CONFIG",	// VFIO_PCI_CONFIG_REGION_INDEX
+    "PCI_VGA"		// VFIO_PCI_INTX_IRQ_INDEX
 };
 
 static const char *vfio_pci_irq_names[] = {
-    "PCI_INTX",		/* VFIO_PCI_INTX_IRQ_INDEX */
-    "PCI_MSI", 		/* VFIO_PCI_MSI_IRQ_INDEX */
-    "PCI_MSIX",		/* VFIO_PCI_MSIX_IRQ_INDEX */
-    "PCI_ERR", 		/* VFIO_PCI_ERR_IRQ_INDEX */
-    "PCI_REQ"		/* VFIO_PCI_REQ_IRQ_INDEX */
+    "PCI_INTX",		// VFIO_PCI_INTX_IRQ_INDEX
+    "PCI_MSI", 		// VFIO_PCI_MSI_IRQ_INDEX
+    "PCI_MSIX",		// VFIO_PCI_MSIX_IRQ_INDEX
+    "PCI_ERR", 		// VFIO_PCI_ERR_IRQ_INDEX
+    "PCI_REQ"		// VFIO_PCI_REQ_IRQ_INDEX
 };
 
 Device::Device(const std::string &name, int groupFileDescriptor, const kernel::pci::Device *pci_device) :
@@ -67,12 +67,12 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 	if (groupFileDescriptor < 0)
 		throw RuntimeError("Invalid group file descriptor");
 
-	/* Open device fd */
+	// Open device fd
 	fd = ioctl(groupFileDescriptor, VFIO_GROUP_GET_DEVICE_FD, name.c_str());
 	if (fd < 0)
 		throw RuntimeError("Failed to open VFIO device: {}", name.c_str());
 
-	/* Get device info */
+	// Get device info
 	info.argsz = sizeof(info);
 
 	int ret = ioctl(fd, VFIO_DEVICE_GET_INFO, &info);
@@ -82,12 +82,12 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 	log->debug("Device has {} regions", info.num_regions);
 	log->debug("Device has {} IRQs", info.num_irqs);
 
-	/* Reserve slots already so that we can use the []-operator for access */
+	// Reserve slots already so that we can use the []-operator for access
 	irqs.resize(info.num_irqs);
 	regions.resize(info.num_regions);
 	mappings.resize(info.num_regions);
 
-	/* Get device regions */
+	// Get device regions
 	for (size_t i = 0; i < info.num_regions && i < 8; i++) {
 		struct vfio_region_info region;
 		memset(&region, 0, sizeof (region));
@@ -103,7 +103,7 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 	}
 
 
-	/* Get device irqs */
+	// Get device IRQs
 	for (size_t i = 0; i < info.num_irqs; i++) {
 		struct vfio_irq_info irq;
 		memset(&irq, 0, sizeof (irq));
@@ -146,7 +146,7 @@ Device::reset()
 	if (this->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(this->fd, VFIO_DEVICE_RESET) == 0;
 	else
-		return false; /* not supported by this device */
+		return false; // not supported by this device
 }
 
 
@@ -179,7 +179,7 @@ Device::regionUnmap(size_t index)
 	struct vfio_region_info *r = &regions[index];
 
 	if (!mappings[index])
-		return false; /* was not mapped */
+		return false; // Was not mapped
 
 	log->debug("Unmap region {} from device {}", index, name);
 
@@ -251,7 +251,7 @@ Device::pciEnable()
 	const off64_t offset = PCI_COMMAND +
 	                     (static_cast<off64_t>(VFIO_PCI_CONFIG_REGION_INDEX) << 40);
 
-	/* Check if this is really a vfio-pci device */
+	// Check if this is really a vfio-pci device
 	if (!(this->info.flags & VFIO_DEVICE_FLAGS_PCI))
 		return false;
 
@@ -259,7 +259,7 @@ Device::pciEnable()
 	if (ret != sizeof(reg))
 		return false;
 
-	/* Enable memory access and PCI bus mastering which is required for DMA */
+	// Enable memory access and PCI bus mastering which is required for DMA
 	reg |= PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
 
 	ret = pwrite64(this->fd, &reg, sizeof(reg), offset);
@@ -273,7 +273,7 @@ Device::pciEnable()
 int
 Device::pciMsiInit(int efds[])
 {
-	/* Check if this is really a vfio-pci device */
+	// Check if this is really a vfio-pci device
 	if (not isVfioPciDevice())
 		return -1;
 
@@ -295,7 +295,7 @@ Device::pciMsiInit(int efds[])
 	irqSet->start = 0;
 	irqSet->count = irqCount;
 
-	/* Now set the new eventfds */
+	// Now set the new eventfds
 	for (size_t i = 0; i < irqCount; i++) {
 		efds[i] = eventfd(0, 0);
 		if (efds[i] < 0) {
@@ -320,7 +320,7 @@ Device::pciMsiInit(int efds[])
 int
 Device::pciMsiDeinit(int efds[])
 {
-	/* Check if this is really a vfio-pci device */
+	// Check if this is really a vfio-pci device
 	if (not isVfioPciDevice())
 		return -1;
 
@@ -372,16 +372,16 @@ Device::pciMsiFind(int nos[])
 	for (int i = 0; i < 32; i++)
 		nos[i] = -1;
 
-	/* For each line in /proc/interrupts */
+	// For each line in /proc/interrupts
 	while (fgets(line, sizeof(line), f)) {
 		col = strtok(line, " ");
 
-		/* IRQ number is in first column */
+		// IRQ number is in first column
 		irq = strtol(col, &end, 10);
 		if (col == end)
 			continue;
 
-		/* Find last column of line */
+		// Find last column of line
 		do {
 			last = col;
 		} while ((col = strtok(nullptr, " ")));
@@ -408,7 +408,7 @@ Device::isVfioPciDevice() const
 
 bool Device::pciHotReset()
 {
-	/* Check if this is really a vfio-pci device */
+	// Check if this is really a vfio-pci device
 	if (!isVfioPciDevice())
 		return false;
 
