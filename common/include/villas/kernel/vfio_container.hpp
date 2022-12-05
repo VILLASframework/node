@@ -25,19 +25,11 @@ namespace kernel {
 namespace vfio {
 
 class Container {
-private:
-	// This is a singleton: There can only be one container to rule them all.
+public:
 	Container();
 
-public:
-	// The Container instance is lazily initialized and correctly destroyed.
-	static Container* getInstance()
-	{
-		static Container instance;
-		return &instance;
-	}
 
-	// No copying allowed
+	// No copying allowed because we manage the vfio state in constructor and destructors
 	Container(Container const&) = delete;
 	void operator=(Container const&) = delete;
 

@@ -30,6 +30,10 @@ public:
 	Group(int index, bool iommuEnabled);
 	~Group();
 
+	// No copying allowed because we manage the vfio state in constructor and destructors
+	Group(Group const&) = delete;
+	void operator=(Group const&) = delete;
+
 	void setAttachedToContainer()
 	{
 		attachedToContainer = true;
