@@ -38,6 +38,10 @@ public:
 	Device(const std::string &name, int groupFileDescriptor, const kernel::pci::Device *pci_device = nullptr);
 	~Device();
 
+	// No copying allowed because we manage the vfio state in constructor and destructors
+	Device(Device const&) = delete;
+	void operator=(Device const&) = delete;
+
 	bool reset();
 
 	// Map a device memory region to the application address space (e.g. PCI BARs)
