@@ -73,7 +73,7 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 {
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-	auto vfioContainer = kernel::vfio::Container::getInstance();
+	auto vfioContainer = std::make_shared<kernel::vfio::Container>();
 
 	// Parse FPGA configuration
 	FILE* f = fopen(configFile.c_str(), "r");

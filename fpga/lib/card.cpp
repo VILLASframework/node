@@ -42,7 +42,7 @@ static PCIeCardFactory villas::fpga::PCIeCardFactory;
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 PCIeCard::List
-PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, kernel::vfio::Container* vc)
+PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
 {
 	PCIeCard::List cards;
 	auto logger = getStaticLogger();
