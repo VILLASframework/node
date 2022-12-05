@@ -180,6 +180,12 @@ public:
 
 	virtual
 	void parse(Core& ip, json_t* json) override;
+
+	virtual void
+	configurePollingMode(Core& ip, PollingMode mode) override
+	{
+		dynamic_cast<Dma&>(ip).polling = (mode == POLL);
+	}
 };
 
 } /* namespace ip */

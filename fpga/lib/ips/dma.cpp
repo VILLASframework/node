@@ -178,9 +178,14 @@ void Dma::setupScatterGatherRingTx()
 
 bool Dma::reset()
 {
+	if (xDma.RegBase == 0) {
+		return true;
+	}
+
 	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
 	XAxiDma_Reset(&xDma);
+
 
 	// Value taken from libxil implementation
 	int timeout = 500;
@@ -641,12 +646,8 @@ void DmaFactory::parse(Core &ip, json_t *cfg)
 	dma.xConfig.AddrWidth = 32;
 	dma.xConfig.SgLengthWidth = 14;
 
-	int polling;
-
 	json_error_t err;
-	int ret = json_unpack_ex(cfg, &err, 0, "{ s: b, s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i } }",
-		"polling", &polling,
-
+	int ret = json_unpack_ex(cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i } }",
 		"parameters",
 			"c_sg_include_stscntrl_strm", 	&dma.xConfig.HasStsCntrlStrm,
 			"c_include_mm2s", 		&dma.xConfig.HasMm2S,
@@ -665,5 +666,5 @@ void DmaFactory::parse(Core &ip, json_t *cfg)
 	if (ret != 0)
 		throw ConfigError(cfg, err, "", "Failed to parse DMA configuration");
 
-	dma.polling = polling != 0;
+	dma.configDone = true;
 }

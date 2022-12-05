@@ -38,7 +38,7 @@ using namespace villas;
 using namespace villas::fpga;
 
 // Instantiate factory to register
-static PCIeCardFactory villas::fpga::PCIeCardFactory;
+static PCIeCardFactory PCIeCardFactoryInstance;
 
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
@@ -52,22 +52,24 @@ PCIeCard::List PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::
 	json_object_foreach(json, card_name, json_card) {
 		logger->info("Found config for FPGA card {}", card_name);
 
-		json_t *json_ips;
-		json_t *json_paths = nullptr;
-		const char *pci_slot = nullptr;
-		const char *pci_id   = nullptr;
-		int do_reset = 0;
-		int affinity = 0;
+		json_t*     json_ips = nullptr;
+		json_t*     json_paths = nullptr;
+		const char* pci_slot = nullptr;
+		const char* pci_id   = nullptr;
+		int         do_reset = 0;
+		int         affinity = 0;
+		int 	    polling  = 0;
 
 		json_error_t err;
-		int ret = json_unpack_ex(json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: o }",
-			"ips", &json_ips,
-			"affinity", &affinity,
-			"do_reset", &do_reset,
-			"slot", &pci_slot,
-		    	"id", &pci_id,
-			"paths", &json_paths
-		);
+		int ret = json_unpack_ex(json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: b, s?: o }",
+			"ips",		&json_ips,
+			"affinity", 	&affinity,
+			"do_reset", 	&do_reset,
+			"slot", 	&pci_slot,
+		    	"id", 		&pci_id,
+			"polling", 	&polling,
+			"paths", 	&json_paths);
+
 		if (ret != 0)
 			throw ConfigError(json_card, err, "", "Failed to parse card");
 
@@ -78,6 +80,7 @@ PCIeCard::List PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::
 		card->vfioContainer = vc;
 		card->affinity = affinity;
 		card->doReset = do_reset != 0;
+		card->polling = (polling != 0);
 
 		kernel::pci::Device filter = defaultFilter;
 
