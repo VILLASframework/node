@@ -24,6 +24,8 @@ namespace villas {
 namespace kernel {
 namespace vfio {
 
+static constexpr size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR+1;
+
 class Container {
 public:
 	Container();
@@ -64,7 +66,8 @@ private:
 
 	int fd;
 	int version;
-	int extensions;
+
+	std::array<bool, EXTENSION_SIZE> extensions;
 	uint64_t iova_next;			/**< Next free IOVA address */
 	bool hasIommu;
 

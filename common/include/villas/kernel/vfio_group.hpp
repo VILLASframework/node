@@ -25,6 +25,9 @@ namespace villas {
 namespace kernel {
 namespace vfio {
 
+#define VFIO_PATH	"/dev/vfio/"
+#define VFIO_DEV	VFIO_PATH "vfio"
+
 class Group {
 public:
 	Group(int index, bool iommuEnabled);

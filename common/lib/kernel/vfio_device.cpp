@@ -79,8 +79,13 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 	if (ret < 0)
 		throw RuntimeError("Failed to get VFIO device info for: {}", name);
 
-	log->debug("Device has {} regions", info.num_regions);
-	log->debug("Device has {} IRQs", info.num_irqs);
+	log->debug("device info: flags: 0x{:x}, num_regions: {}, num_irqs: {}, cap_offset: 0x{:x}",
+		info.flags, info.num_regions, info.num_irqs, info.cap_offset);
+
+	// device_info.num_region reports always 9 and includes a VGA region, which is only supported on
+	// certain device IDs. So for non-VGA devices VFIO_PCI_CONFIG_REGION_INDEX will be the highest
+	// region index. This is the config space.
+	info.num_regions = VFIO_PCI_CONFIG_REGION_INDEX + 1;
 
 	// Reserve slots already so that we can use the []-operator for access
 	irqs.resize(info.num_irqs);
@@ -97,7 +102,10 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 
 		ret = ioctl(fd, VFIO_DEVICE_GET_REGION_INFO, &region);
 		if (ret < 0)
-			throw RuntimeError("Failed to get region of VFIO device: {}", name);
+			throw RuntimeError("Failed to get region {} of VFIO device: {}", i, name);
+
+        	log->debug("region {} info: flags: 0x{:x}, cap_offset: 0x{:x}, size: 0x{:x}, offset: 0x{:x}",
+               		region.index, region.flags, region.cap_offset, region.size, region.offset);
 
 		regions[i] = region;
 	}
@@ -113,7 +121,12 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 
 		ret = ioctl(fd, VFIO_DEVICE_GET_IRQ_INFO, &irq);
 		if (ret < 0)
-			throw RuntimeError("Failed to get IRQs of VFIO device: {}", name);
+			throw RuntimeError("Failed to get IRQ {} of VFIO device: {}", i, name);
+
+
+		log->debug("irq {} info: flags: 0x{:x}, count: {}",
+			irq.index, irq.flags, irq.count);
+
 
 		irqs[i] = irq;
 	}
