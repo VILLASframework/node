@@ -22,12 +22,6 @@
 #include <villas/kernel/pci.hpp>
 #include <villas/log.hpp>
 
-#define VFIO_PATH	"/dev/vfio/"
-#define VFIO_DEV	VFIO_PATH "vfio"
-
-#ifndef VFIO_NOIOMMU_IOMMU
-  #define VFIO_NOIOMMU_IOMMU 8
-#endif
 
 namespace villas {
 namespace kernel {

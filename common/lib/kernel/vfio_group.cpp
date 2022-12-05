@@ -58,6 +58,8 @@ Group::Group(int index, bool iommuEnabled) :
 	log->debug("VFIO group {} (fd {}) has path {}",
 	              index, fd, groupPath.str());
 
+	checkStatus();
+
 }
 
 std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device)
@@ -81,10 +83,6 @@ std::shared_ptr<Device> Group::attachDevice(const std::string& name, const kerne
 bool Group::checkStatus()
 {
 	int ret;
-	if (!attachedToContainer) {
-		log->error("Group {} is not attached to a container", index);
-		return false;
-	}
 
 	// Check group viability and features
 	status.argsz = sizeof(status);
@@ -99,6 +97,7 @@ bool Group::checkStatus()
 		log->error("VFIO group is not available: bind all devices to the VFIO driver!");
 		return false;
 	}
+	log->debug("VFIO group is {} viable", index);
 	return true;
 }
 

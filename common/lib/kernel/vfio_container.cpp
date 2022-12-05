@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <limits>
+#include <array>
 
 #include <cstdlib>
 #include <cstring>
@@ -36,11 +37,33 @@
 
 using namespace villas::kernel::vfio;
 
+#ifndef VFIO_NOIOMMU_IOMMU
+  #define VFIO_NOIOMMU_IOMMU 8
+#endif
+
+
+static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
+	std::array<std::string, EXTENSION_SIZE> ret;
+	ret[VFIO_TYPE1_IOMMU] = "Type 1";
+	ret[VFIO_SPAPR_TCE_IOMMU] = "SPAPR TCE";
+	ret[VFIO_TYPE1v2_IOMMU] = "Type 1 v2";
+	ret[VFIO_DMA_CC_IOMMU] = "DMA CC";
+	ret[VFIO_EEH] = "EEH";
+	ret[VFIO_TYPE1_NESTING_IOMMU] = "Type 1 Nesting";
+	ret[VFIO_SPAPR_TCE_v2_IOMMU] = "SPAPR TCE v2";
+	ret[VFIO_NOIOMMU_IOMMU] = "No IOMMU";
+	ret[VFIO_UNMAP_ALL] = "Unmap all";
+	ret[VFIO_UPDATE_VADDR] = "Update vaddr";
+	return ret;
+}
+
+static std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR = construct_vfio_extension_str();
+
 
 Container::Container() :
 	fd(-1),
 	version(0),
-	extensions(0),
+	extensions(),
 	iova_next(0),
 	hasIommu(false),
 	groups(),
@@ -51,12 +74,13 @@ Container::Container() :
 	};
 
 	for (const char* module : requiredKernelModules) {
-		if (kernel::loadModule(module) != 0)
+		if (kernel::loadModule(module) != 0) {
 			throw RuntimeError("Kernel module '{}' required but could not be loaded. "
 			              "Please load manually!", module);
+		}
 	}
 
-	// Open VFIO API
+	// Create a VFIO Container
 	fd = open(VFIO_DEV, O_RDWR);
 	if (fd < 0)
 		throw RuntimeError("Failed to open VFIO container");
@@ -64,29 +88,30 @@ Container::Container() :
 	// Check VFIO API version
 	version = ioctl(fd, VFIO_GET_API_VERSION);
 	if (version < 0 || version != VFIO_API_VERSION)
-		throw RuntimeError("Failed to get VFIO version");
+		throw RuntimeError("Unknown API version: {}", version);
 
 	// Check available VFIO extensions (IOMMU types)
-	extensions = 0;
-	for (unsigned int i = VFIO_TYPE1_IOMMU; i <= VFIO_NOIOMMU_IOMMU; i++) {
+	for (unsigned int i = VFIO_TYPE1_IOMMU; i < EXTENSION_SIZE; i++) {
 		int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
-		if (ret < 0)
-			throw RuntimeError("Failed to get VFIO extensions");
-		else if (ret > 0)
-			extensions |= (1 << i);
+		if (ret == 0)
+			extensions[i] = false;
+		else {
+			extensions[i] = true;
+		}
+		log->debug("VFIO extension {} is {} ({})", i, extensions[i] ? "available" : "not available", VFIO_EXTENSION_STR[i]);
 	}
 
-	hasIommu = false;
-
-	if (not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
-		if (not (extensions & (1 << VFIO_TYPE1_IOMMU)))
-			throw RuntimeError("No supported IOMMU extension found");
-		else
-			hasIommu = true;
+	if (extensions[VFIO_TYPE1_IOMMU]) {
+		log->debug("Using VFIO type {} ({})", VFIO_TYPE1_IOMMU, VFIO_EXTENSION_STR[VFIO_TYPE1_IOMMU]);
+		hasIommu = true;
+	} else if (extensions[VFIO_NOIOMMU_IOMMU]) {
+		log->debug("Using VFIO type {} ({})", VFIO_NOIOMMU_IOMMU, VFIO_EXTENSION_STR[VFIO_NOIOMMU_IOMMU]);
+		hasIommu = false;
+	} else {
+		throw RuntimeError("No supported IOMMU type available");
 	}
 
 	log->debug("Version:    {:#x}", version);
-	log->debug("Extensions: {:#x}", extensions);
 	log->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
 }
 
@@ -127,10 +152,7 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 
 	group->setAttachedToContainer();
 
-	if (!group->checkStatus())
-		throw RuntimeError("bad VFIO group status for group {}.", group->getIndex());
-	else
-		log->debug("Attached new group {} to VFIO container", group->getIndex());
+	log->debug("Attached new group {} to VFIO container with fd {}", group->getIndex(), fd);
 
 	// Push to our list
 	groups.push_back(std::move(group));
@@ -157,7 +179,11 @@ void Container::dump()
 {
 	log->info("File descriptor: {}", fd);
 	log->info("Version: {}", version);
-	log->info("Extensions: 0x{:x}", extensions);
+
+	// Check available VFIO extensions (IOMMU types)
+	for (size_t i = 0; i < extensions.size(); i++) {
+		log->debug("VFIO extension {} ({}) is {}", extensions[i], VFIO_EXTENSION_STR[i], extensions[i] ? "available" : "not available");
+	}
 
 	for (auto &group : groups) {
 		group->dump();
