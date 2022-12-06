@@ -1,12 +1,12 @@
-[submodule "lib/gpu/gdrcopy"]
-	path = gpu/thirdparty/gdrcopy
-	url = https://github.com/daniel-k/gdrcopy.git
+[submodule "common"]
+	path = common
+	url = https://github.com/VILLASframework/common.git
+[submodule "thirdparty/libxil"]
+	path = thirdparty/libxil
+	url = https://github.com/VILLASframework/libxil.git
 [submodule "thirdparty/udmabuf"]
 	path = thirdparty/udmabuf
 	url = https://github.com/ikwzm/udmabuf
-[submodule "common"]
-	path = common
-	url = ../../common.git
-[submodule "thirdparty/libxil"]
-	path = thirdparty/libxil
-	url = https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
+[submodule "lib/gpu/gdrcopy"]
+	path = gpu/thirdparty/gdrcopy
+	url = https://github.com/daniel-k/gdrcopy.git
