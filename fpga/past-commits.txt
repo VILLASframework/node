@@ -1,0 +1,21 @@
+I, Niklas Eiling hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: niklas.eiling@eonerc.rwth-aachen.de
+
+b22a741785f38ee5f86d46c287e523ddd8f94a46 update contact and copyright notice
+9f43181c688bac915f6c10a3318c6bedb455b8fb add villas-fpga-xbar-select; improve DMA parameters in ips/dma
+092ccfe8b232a6e41dee7e3a0faba38aff58ab2d fix villas-fpga-cat interpreting floats wrong
+4b8cca9420b7dda0f7d8f9c24bff4a9ab07db0cf clean up and comment ips/dma.cpp
+749406976f595d8f25ab862d44dfa18126b18c86 villas-fpga-cat: fix double value being constructed wrong
+edc36f793afe3152a754b707e3f4531b0172cbfc ips/dma: comment debug outputs to improve villas-fpga-cat performance fix rebase artifacts
+abf63eefa972606f55291b12767fa2fe07711572 add villas-fpga-cat app that outputs a stream of data
+833acb8fab609e71570a62899b78d994b722dfc2 move helper functions from villas-fpga-pipe into separate file
+ceddd1ce96fabcc8d6b14ab5e780d31631ca283f Merge branch 'fix-gitlabyml' into 'master'
+b2746556210784fc06f65858b169816d1e0db748 fix image reference in gitlab.yml
+ca970e8c33c013f7416cc3ee8c1ce9a6482f5c7b migrate dockerfile to rocky9
+75d80447afb10f01dc90b9afa518425f4c25f8b8 ips/dma: fix hasScatterGather using wrong member variable; Throw error used on unconfigured Dma
+8db35907dd306422bcda5ec395a383b04e9c83b7 ips: fix some formatting issues
+a16468c61c83a20bd223a05eeb3187954e35b98d ips/dma: use NodeFactory's configureJson to setup memory graph
+1ae00c1f59413a6c726b7c34d839c56fdc13e281 ips/dma: use json_unpack
+da10c4db59344c9ac1a387cb408d4bc57f36ec46 add card config option "polling" to configure polling mode in IP cores; add json parsing of hwdef to dma IP core to replace hardcoded DMA settings.
+4db2153330af2c830b258152f3badbd4ecc51b61 ip/dma: fix spelling
+a4120eda2d327aa537fa874885c200c858202fcc ips/dma: acknowledge interrupts in DMA controller and correctly set coalescing parameter.
+277858f881499821334f0f27303fea8380b549d6 make dma.cpp use interrupts instead of polling
