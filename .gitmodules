@@ -3,7 +3,7 @@
 	url = ../common.git
 [submodule "fpga"]
 	path = fpga
-	url = ../fpga/fpga.git
+	url = ../fpga.git
 [submodule "packaging/live-iso/fedora-kickstarts"]
 	path = packaging/live-iso/fedora-kickstarts
 	url = https://pagure.io/fedora-kickstarts.git
