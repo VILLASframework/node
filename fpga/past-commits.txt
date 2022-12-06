@@ -19,3 +19,175 @@ da10c4db59344c9ac1a387cb408d4bc57f36ec46 add card config option "polling" to con
 4db2153330af2c830b258152f3badbd4ecc51b61 ip/dma: fix spelling
 a4120eda2d327aa537fa874885c200c858202fcc ips/dma: acknowledge interrupts in DMA controller and correctly set coalescing parameter.
 277858f881499821334f0f27303fea8380b549d6 make dma.cpp use interrupts instead of polling
+
+---
+
+I, Steffen Vogel hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: post@steffenvogel.de, stvogel@eonerc.rwth-aachen.de
+
+e256a94957294714d6bf645fa9c9f17253fa154e Merge branch 'fix-dockerfile' into 'master'
+44fcb85aebeedc531b061d41c847eabbc8cee478 minor code-style fixes
+c8b20ec18863091fe92d1913a329b0d54a03434f move VILLASnode configs to VILLASnode repo
+69f63d9ef61f37628a11f6c4ff62675a2aa2d487 update VILLAScommon submodule
+b13589aa55c0ad4e497daaaf122142b99095b966 add libxil as a submodule
+1e9e46b35a872332d92b16ce6fe276655f8d2fc6 updated VILLAScommon submodule
+f4e7fcdac329600de2a3838ab8d773c3a6910932 core: avoid reversing initialization order list
+15a9ae0806a7618b80f635f1563e90a1c547aa94 dma: first successful test with scatter gather
+9e8c4ef132d005d025a5d960531635a869eba8c1 adapt villas-fpga-pipe to new DMA code
+ecb9fac96fb3bd24d59163c7a9c67f4a98dce019 update IPs config for new bitstream using MSI IRQs
+c1749d052ab96c99d33efa6231c8c30f698120c3 dma: added second version of scatter-gather support
+0b4bc73b0a897a8bbee501f977bfbe661a92ed31 update gitignore
+1ef3952d62cd47177a9527ca6c67a0e3aad430be minor code style and comment fixes
+d6ee75febcc7c41525c0a7722b160383a6988147 dma: throw exception in makeAccesibleFromVA instead of returning bool
+09106c3a9c8b67d8b72a3680263ceab1fbc0780b fix script to reset PCIe card
+dd03a196008cb7276de2bab4289320d12e6b3e97 remove useless includes
+72d92a5223ec4ee95ac25169356894c0bfe92ef2 intc: fix VLNV for Niklas' new bistream
+1a47f70281db2108629777c4d92d731802388fe9 aurora: fix names of AXI-S interfaces
+b91e6d102dc68f491885bc37e925ed9ae3976bc0 fix coding style
+3661b25532e0f10e4a24a66b9e54e743b4f92b65 remove old C code
+a5a2dcf992ce9fa7b3f73a9ba585f010feb1b456 dma: start implementing scatter-gather support
+b4d39159d5b28b59662efbb1a4976ab307af4783 add example config for VILLASnode integration
+ae681cc3073ce90b459428ad5ed0bf06931aa756 remove broken symlink
+afb45d88d15c63d5910de0c0864dc7d7fbffabdd add latest vc707 config
+bfffd71b71a2b21ec88cad766baaa254d13a3273 remove last pieces of hardware submodule
+3ccb99b9ecd5046765041bc4cfa8b1a4f8a02da5 bump libxil version requirement
+3e61b1ef0d2abfe332bc3fa490afe91ec46d19b5 villas-fpga-pipe: whitespaces and syntax fixes
+2ed26572eb202d3fb1f9272ad8263f6c3db524fc adjust DMA IP core to new DMA parameters of Niklas'  bitstream
+3612b9a203d5b679b2e6f5bded9d8a5d435da4c2 update VILLAScommon submodule
+17d03d6d7cc4144ffecc3ce3f7a9efd6fd0cfb05 add missing parentheses
+d887eb56836a0f224606a59b86d8cce6aeb45a09 update year in copyright notices
+bd2844d5400d3a7077c9d1f3ab6af265c8720060 fixes for villas-fpga-pipe
+fbb0a7c8b6f0352b35a1fdb6722caa2fd8355bac cleanup of comments
+0b197052daff92a8b388eaa10b084ac98c40ff6e add new IP core for standard Xilinx Aurora cores
+501f12762503308026c7724fccba2ccbd197bcd7 card: allow loading IPs devicetree from extra file
+033f8ef9fced5b6483dcd300d2be42b232d176a1 update gitignore
+7bdd26371fb2e00158c965f3cb00e069dd8a83ec add VSCode configuration for GDB debugging as root
+ec8dc2c5e44dda0146b8b7fe7664caa7c347f618 harmonize logger names
+02635501d44dfbf31b959141995dea65f3d0adb3 update code to latest common submodule
+f2ef1dfaf2e96c623512e73b78b5db40bdbd5ca6 remove old configs
+7ea5d43b162247c81b2ee6a106dd36807b6a626f update hardware submodule
+16d856753ffb49a3cac4690faf31bc6b55dc1b1c update gitignore
+1202b4edb1d47c77d06488ffd741e88dac4fab1f fix CI
+aabe56f5dcacfc40dba169f5502eb6738031f525 fix format strings
+0a7e12b357fc6b662c35922027a961a9887f8a8b update config include
+b5a9c11a9118d096b25a76d1d7b547d5abb7d861 adapt to new plugin registry
+3ccb25a2118b6ad211255215e08ed30168049b56 remove obsolete htdocs setting
+bda5171c23404deedf2fbfc16b0ccefcc1311698 remove hardware submodule
+66aaf9e062efdedb857968acf50625907ee522c8 Merge branch 'fix-cmake' into 'master'
+8172f3868657cdb1930f9eb9419a68320761a722 cmake: allow linking libxil from non-standard location
+34874fb2ff78ae5a9c02eb4015d4730017a2868d Merge branch 'cppcheck' into 'master'
+e61bb67c91bdd7142dc8ae492bf85ab4b8f6adad ci: add cppcheck
+7e0ca3ecdfb7acb10db79c28ebc8409ba979a9ef remove unused submodules
+6bb3567acddb015f51a44c094f8dd46c321549d3 Merge branch 'fix-codestyle' into 'master'
+c89145731b176b5fcb081bc6d9ffe933ae3a7c9c fix code-style
+e73d84f1d4a3778aef71e025f494f96229620761 emc: add initial code to flash FPGA bitstream via PCIe
+e54aabff4da52c26df8606b88457b60b15008be2 update submodules
+7e1c6bd9898ab1e4a57c472c44d1f5b506bb67d9 emc: add stub IP
+db59fdb5022f4d1192aef5fb0f677ff8d9cf9850 fix naming of factories
+472f66993e0e8a05364958372211ea79fbb245aa update hardware submodule and move hwdef-parse script into hardware repo
+0796f835af6be0235835df581541b5d386ea7453 update libxil submodule
+53ea7b2289b427977c901b88113f5e073be6e3e8 cmake: make unit-tests optional
+21340e7bc56417b9967f5a066f93ac2f99777ab1 Merge branch 'refactoring' into 'master'
+86959cedb3b3bd604e98b1cafdc3fc809d8cd1a1 ci: update CI config
+71c0f8984ce8292462ae5450bb89def54ce0f89c docker: add missing deps
+43f94f4509362539e52802c5e64384ac6f79c490 docker: add mising ssl headers
+2bc1b5c771d372fcee5af067396d7adcd4c4be6f docker: fix location of FEIN e.V. repo
+5b5da9f2cdd44f1ca233a65f649b3ee8644dc7a3 node: add connect() with reverse path
+2fa22b797166046993d9344b658d9c8836bdef1e update VILLAScommon submodule
+692d9721fbb6e9c05c2b68215338ec43eab46839 refactor: more code-style improvements
+01dcab9e493a121d3cea5da61ace5c9070cc33c1 refactor: no namespace scopes in source files
+393c5f3564387dba1af107516320bb69e68d4252 cmake: fixups for inclusion into VILLASnode
+ff07bc3946157422c06628ccf8c5c58be067add3 refactor: no namespace scoeps in source files
+1eb8f5233981732b7c649fad30a87adc5530da16 refactor: whitespaces for references
+1f6a181af64d806df12611ab0c5d0db33aa53cc8 update VILLAScommon submodule
+972377d03dfa8c1f820b0eb5f2fbbb37cdd75255 refactor IpNode and IpCore class names
+8a13d8ad9b5ec4456f49ab4dca2020858bfea1a7 several cleanups and bugfixes
+2affde11e1061d6a7ca978099da9603a7a4a56fc use new getter for graph
+2a62ea92721fb55d2bcbdcdc7ca04b2c3d383d1a pipe: use correct DMA instance
+4ab00cdc4ef8284ae1fb5a32cc811401d7280ce3 harmonize codestyle
+c5cdee6a4517267a4c93c64243ac43a5a9feec0a use new vlnv id for aurora_axis
+111199c5f628914c1044fa5c590d7a7e5ef6b9da use new plugin mechanism
+5f3dd901a566ad087180b59541098bd740ffb9a3 unit-tests: allow FPGA configuration to provided via env var
+183c47d0db4d84f48a33ee0bc571a6b4efc12210 plugin: fix lookup
+a6202d3d56871315c9d52001cf09dd2eb1c662f6 gpio: add new IP for AXI programmable GPIO
+e524ec9be43110237e7e4fcef44bc87363b42698 intc: fix name of register space
+127419d8fa5a4cdd85ee4924a55d0fe6c2eaf0e6 harmonize code-style with VILLAScommon/node
+143b950aaf7948712f927d21d405e0be0dd9c8e9 update to latest VILLAScommon submodule
+506f319014128e5c9a2b0336274edcb42266a558 aurora_axis: add two functions to reset counters and configure loopback mode
+f608e83991b5ca1c558c6b9bf0b10da50e3b3fc4 aurora_axis: dump frame counters
+9fd833cb27a54d60ec2b1a6416cee75e19222c25 aurora_axis: harmonize with HDL changes
+1571a4ef3288b7fa7e615dbbb5ac31d8efcbe8b4 update submodule urls
+981c0eadee39209b287f050f7502ace5e62c1479 add a writeMemory function to IpCore class
+77eee178e652218919735aae5455158ef303fa80 update bitstream configs
+0b589626a0de626240cdb9d7f867159c35209a77 update common submodule
+a2a66c9539f28181b8714fbc64c1bd246c2ddaf5 several fixes for villas-fpga-pipe
+6b893d2fbc35c3f2c259fa85b09eefa0148b988b dma: add dump() method
+8f8bd1af121bfcc7e7529d59beb2a4a1c8de8c4e add note to cite our publication
+09b0a852725cae3bd4fdb1917f5feaf8ddfae05e move gpu module to top level directory
+545d47f030edc20ac75329b4340f0f5ca2fb7ca8 ci: some tweaks to fix unit-tests
+fc7c1e08957064320e163104635a91cd8c71efd0 do not call copy-ctor of villas::HostRamAllocator
+74b3d58781ebb4eef3348a3e0682a1392d9f18d9 fix include paths
+5fc8d527c0b55f4ab214341a21db76a23e5ec052 tests: remove obsolete unit tests which have been moved to VILLAScommon
+a87df1b576586fa244b1aa4418db21a5fe70ea93 Merge branch 'feature/hls-rtds2gpu' into develop
+86fab24844d86c42a21d78a7699986c1aed3bb1f pipe: rename streamer to pipe (closes #19)
+fdf1b64f7120c9b91c4378e86f6f8789aa0dca59 fix gdrcopy submodule
+e51c98223f26deef5dd7f54babaa2215675255e5 gpu: fix include paths and some linker settings
+437380ff773c62334a9876eec37519211720106b move more code to VILLAScommon repo
+4a05d63e02d5775d225d353855c364207f1838b3 ci: use Centos 7 based Docker Image with CUDA dev env from Nvidia
+b165227fe11524efcfe587243f9f0c8a1b0979db ci: use relative path in gitmodules for proper access rights
+db9dd3b6633ee6b5822c7112277fd4b6cf3d661c update common submodule
+fa0b0dcc272c011e7da51d8ef1168e6d5131288a streamer: use new memory api
+a4c1ad57c5fe644cf3fff34ac799ac16c37dfade fix include paths
+3657778896bce9922927e515e6983de6334dbdf1 move common code to VILLAScommon submodule
+5c02b41fab1eb088382b2c869001bbc31f580688 remove some obsolete C code files
+dca0951f4503f8af5a80c1ba8fa9023d0f6caa63 add more copyright / license headers
+30325d42a6662fe86bcedb6c95805f05a7ac677a add Daniel to README
+a0eb211d6ada6b9dde40cb9d8e0494ededac03d9 added submodule to VILLASfpga-hardware repo
+5a6aa1855e03bcd6394f55b5ee9ae57a6c2d3dcd update Fedora version in Dockerfile
+d44c06227760cbf91f2d1d2fd8fc4db36f946bdb add pcimem.c
+bed6dd5e4435f095f2a66835449a6921d9f491a8 update copyright years
+1a05612237d2677ff9a13c8f3bf0cdff1079c28c do not store bitstreams here
+4cbba96972d5764c0a33cfd8ac9299322e7d3cc3 Merge branch 'feature/gpu' into 'develop'
+9439b26ce42c2d60355fa4c1e5200c9b40852f22 Merge branch 'feature/villas-common' into 'develop'
+bbeb017a14387918528c25b445c446759fd94410 Merge branch 'feature/blockram' into 'develop'
+a481afc7f0300e3d98db41f9619d5c5293dcacf3 Merge branch 'feature/packaging' into 'develop'
+ad47e712dcacf553b46666a32a16ed97814a93a0 Merge branch 'develop' into 'feature/packaging'
+48d2f6d7d8f0ca3f450a138259d94a256a0c1848 Merge branch 'feature/dma-and-memory' into 'develop'
+3504340b15d93880b2dbec5e1d078b900af59c72 cpack: fix name of source tarbar
+f545e6ab3316948a5a680e3e008e2c49e9b79893 added pkg-config file and CMake configuration for building RPM packages
+82d92d926026f5fa4228952afb9d2c48c2363043 Merge branch 'feature/memory-manager-rebased' into 'develop'
+487da0794b54664ef40642479ecd94238f0b7eb4 Merge branch 'fix/directed_graph_loop_detection_bug' into 'develop'
+18552b03eb37c13a6ad74ef44b37094f8e0de37d Merge branch 'feature/cpp_warnings' into 'develop'
+1ee36fac3f78f0b2280dd917dd66f9853f8e0f5b Merge branch 'feature/criterion-spdlog' into develop
+ee440f1de2d1294e35034e218ccdb8a224cf0161 Merge branch 'develop' of git.rwth-aachen.de:acs/public/villas/VILLASfpga-code into develop
+fa1348a2e7039f11efed493b03550e246d3d5411 logging: use similar log style in all modules
+e2ab3d43e0d8d05bc20f9ddd9716c9a588749aef tests: override some criteriod_log() functions in order to use spdlog style log output
+c08050d1c51d141077fe916264cef8fdfface0ad tests: some cleanups
+51124b8fd8d64ea7cc8b196d115376a4fb6c1566 tests: readd missing graph test suite
+35fa5afa08c06ed8bc39adcc7ef21071b1bc2f05 tests: automatically detect whether or not we can run tests in parallel
+2de9aa97b23d59fd8372f16a5c515df58f0920c7 tests: moved initialization of FPGA stuff to fpga.cpp
+8f76da0f41e0250e0e6126a417c9555630da0a92 Merge branch 'feature/hw-testing' into feature/cpp (closes #14 and #15)
+5004a8fb971ab3cffff4d781a05cc555a8d06d2d do parallel build
+3f0049567601ab1b1762d5aaf250db4147843850 cleanup build dir before building
+0f8c498b7d15a6d41eeff9b97032fbf479710472 tiny change
+e3b10c1e79855e21ea6d251c5b0501d606500f03 FPGA tests fail if we attempt to run them in parallel
+507f6d77d16f8d35afa9bda9516aeb49039ad436 Merge branch 'feature/non-root' into feature/hw-testing
+3ae1290ddc2e6194f68948dee235cb6243e25c79 add script to configure system for non-root access to FPGA
+8dad0435be9905c80acaccb5a045d9d20ac737f9 vfio: only rebind pci device to VFIO driver if not already bound
+49c7dfb81b6e9e5e6fc5e9bc87cfadff7fe6706d pci: add function to get currently loaded kernel driver
+3495777a7aae14bb2afcf7555bc5fa4352b081e0 install libraries to fix loading of libvillas-fpga.so
+20d0efcf2216b05143ec31061f248b879dd4789a execute FPGA unit on acs-villas
+fcf45a95ca7f9f045725188c1f5da073665aed63 fix wrong tag in gitlab-ci.yml
+499d92db66a95f12c0ebe6b400f545c64259b0cd use official Fedora image as base
+410210c421c834456a525c28f7ef9b9ffd00aabd enable unit tests on CI
+d63d9e83378de00fd84e307b8149b3ca29238970 docker: fix invalid tag name
+b42f181094625fe4e6921fe35438efc7f948fd2f fix path of submodule
+5733c8f02597495b96a99676631f0d09ff61714c fix CI
+3874cadcec0f035055d7ebc089246937a07c507f add LAPACK dependency to Dockerfile
+d3822919261974215e31804d83bd3b32546ea6e1 fix CI
+b1c61eb26ba42a9e8d4fa04aad0b6f687f761109 use https submodules
+cff953d82c6f8872d48e012ad9c1fea53bc99cd0 add missing benchmarks
+e986dc94bf82883c5b96e75feda20d807384c77f added gitignore
+9d31c0058348eed286bcf56c15c3c4da389613e1 added fodler for bitstreams
+8f78034705b0797c5591e33add60330eb8715d91 imported source code from VILLASfpga repo and made it compile
+c8db2e0b54b4436fb663ea2f35de4352495db51b added simple Dockerfile for development
+15bb988510a3d4d896dd583179922760a78081a5 created new repo for VILLASfpga
