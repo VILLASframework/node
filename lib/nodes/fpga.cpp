@@ -220,7 +220,7 @@ std::vector<int> FpgaNode::getPollFDs()
 
 int FpgaNodeFactory::start(SuperNode *sn)
 {
-	vfioContainer = kernel::vfio::Container::create();
+	vfioContainer = std::make_shared<kernel::vfio::Container>();
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
 	// Get the FPGA card plugin
