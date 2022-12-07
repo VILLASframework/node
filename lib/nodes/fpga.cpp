@@ -166,24 +166,6 @@ int FpgaNode::prepare()
 	return Node::prepare();
 }
 
-int FpgaNode::start()
-{
-	int ret = Node::start();
-	if (!ret)
-		state = State::STARTED;
-
-	return 0;
-}
-
-int FpgaNode::stop()
-{
-	int ret = Node::stop();
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
 int FpgaNode::_read(Sample *smps[], unsigned cnt)
 {
 	unsigned read;
