@@ -102,11 +102,13 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 FROM dev AS app
 
+ARG CMAKE_OPTS
+
 COPY . /villas/
 
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
-	cmake .. && \
+	cmake ${CMAKE_OPTS} .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
