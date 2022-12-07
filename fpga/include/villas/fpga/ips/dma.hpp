@@ -39,6 +39,7 @@ class Dma : public Node
 public:
 	friend class DmaFactory;
 
+	virtual
 	~Dma();
 
 	virtual
