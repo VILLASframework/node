@@ -114,9 +114,6 @@ public:
 
 	virtual ~Core() = default;
 
-	using Ptr = std::shared_ptr<Core>;
-	using List = std::list<Core::Ptr>;
-
 public:
 	// Generic management interface for IPs
 
@@ -284,7 +281,7 @@ public:
 
 	// Returns a running and checked FPGA IP
 	static
-	Core::List make(PCIeCard* card, json_t *json_ips);
+	std::list<std::shared_ptr<Core>> make(PCIeCard* card, json_t *json_ips);
 
 	virtual
 	std::string getType() const

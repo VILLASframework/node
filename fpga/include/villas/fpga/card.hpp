@@ -49,10 +49,6 @@ class PCIeCardFactory;
 
 class Card {
 public:
-
-	using Ptr = std::shared_ptr<PCIeCard>;
-	using List = std::list<Ptr>;
-
 	friend PCIeCardFactory;
 };
 
@@ -83,13 +79,13 @@ public:
 	void dump()
 	{ }
 
-	ip::Core::Ptr
+	std::shared_ptr<ip::Core>
 	lookupIp(const std::string &name) const;
 
-	ip::Core::Ptr
+	std::shared_ptr<ip::Core>
 	lookupIp(const Vlnv &vlnv) const;
 
-	ip::Core::Ptr
+	std::shared_ptr<ip::Core>
 	lookupIp(const ip::IpIdentifier &id) const;
 
 	bool
@@ -100,7 +96,7 @@ private:
 	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
 public:	// TODO: make this private
-	ip::Core::List ips;				// IPs located on this FPGA card
+	std::list<std::shared_ptr<ip::Core>> ips;				// IPs located on this FPGA card
 
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts
@@ -136,11 +132,11 @@ protected:
 class PCIeCardFactory : public plugin::Plugin {
 public:
 
-	static Card::List
-	make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
+	static
+	std::list<std::shared_ptr<PCIeCard>> make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
 
-	static PCIeCard*
-	create()
+	static
+	PCIeCard* create()
 	{
 		return new PCIeCard();
 	}

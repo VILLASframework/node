@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 
 		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
-		std::vector<fpga::ip::AuroraXilinx::Ptr> aurora_channels;
+		std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>> aurora_channels;
 		for (int i = 0; i < 4; i++) {
 			auto name = fmt::format("aurora_8b10b_ch{}", i);
 			auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);

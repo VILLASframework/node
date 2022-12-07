@@ -42,9 +42,9 @@ static PCIeCardFactory PCIeCardFactoryInstance;
 
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
-PCIeCard::List PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
+std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
 {
-	PCIeCard::List cards;
+	std::list<std::shared_ptr<PCIeCard>> cards;
 	auto logger = getStaticLogger();
 
 	const char *card_name;
@@ -182,7 +182,7 @@ PCIeCard::~PCIeCard()
 	}
 }
 
-ip::Core::Ptr PCIeCard::lookupIp(const std::string &name) const
+std::shared_ptr<ip::Core> PCIeCard::lookupIp(const std::string &name) const
 {
 	for (auto &ip : ips) {
 		if (*ip == name) {
@@ -193,7 +193,7 @@ ip::Core::Ptr PCIeCard::lookupIp(const std::string &name) const
 	return nullptr;
 }
 
-ip::Core::Ptr PCIeCard::lookupIp(const Vlnv &vlnv) const
+std::shared_ptr<ip::Core> PCIeCard::lookupIp(const Vlnv &vlnv) const
 {
 	for (auto &ip : ips) {
 		if (*ip == vlnv) {
@@ -204,7 +204,7 @@ ip::Core::Ptr PCIeCard::lookupIp(const Vlnv &vlnv) const
 	return nullptr;
 }
 
-ip::Core::Ptr PCIeCard::lookupIp(const ip::IpIdentifier &id) const
+std::shared_ptr<ip::Core> PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 {
 	for (auto &ip : ips) {
 		if (*ip == id) {
