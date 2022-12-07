@@ -67,12 +67,6 @@ public:
 	int prepare();
 
 	virtual
-	int start();
-
-	virtual
-	int stop();
-
-	virtual
 	std::vector<int> getPollFDs();
 };
 
