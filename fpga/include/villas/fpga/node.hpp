@@ -142,8 +142,8 @@ public:
 	bool connectLoopback();
 
 protected:
-	virtual bool
-	connectInternal(const std::string &slavePort,
+	virtual
+	bool connectInternal(const std::string &slavePort,
 	                const std::string &masterPort);
 
 private:

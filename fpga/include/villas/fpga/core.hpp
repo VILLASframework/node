@@ -112,7 +112,8 @@ public:
 		card(nullptr)
 	{ }
 
-	virtual ~Core() = default;
+	virtual
+	~Core() = default;
 
 public:
 	// Generic management interface for IPs
