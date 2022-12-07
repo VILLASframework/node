@@ -1,6 +1,7 @@
 # VILLAScommon
 
-[![build status](https://git.rwth-aachen.de/acs/public/villas/common/badges/master/build.svg)](https://git.rwth-aachen.de/acs/public/villas/common/commits/master)
+[![build status](https://git.rwth-aachen.de/acs/public/villas/common/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/common/-/pipelines/)
+
 
 VILLAScommon is a shared library used by various other C++ components of VILLASframework such as VILLASnode or VILLASfpga.
 
