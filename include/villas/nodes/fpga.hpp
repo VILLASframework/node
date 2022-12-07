@@ -44,15 +44,17 @@ protected:
 	std::string dmaName;
 
 protected:
-	virtual int
-	_read(Sample *smps[], unsigned cnt);
+	virtual
+	int _read(Sample *smps[], unsigned cnt);
 
-	virtual int
-	_write(Sample *smps[], unsigned cnt);
+	virtual
+	int _write(Sample *smps[], unsigned cnt);
 
 public:
 	FpgaNode(const std::string &name = "");
-	virtual ~FpgaNode();
+
+	virtual
+	~FpgaNode();
 
 	virtual
 	int parse(json_t *cfg, const uuid_t sn_uuid);
