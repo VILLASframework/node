@@ -233,7 +233,7 @@ int FpgaNodeFactory::start(SuperNode *sn)
 	if (!json_fpgas)
 		throw ConfigError(json_cfg, "node-config-fpgas", "No section 'fpgas' found in config");
 
-	// create all FPGA card instances using the corresponding plugin
+	// Create all FPGA card instances using the corresponding plugin
 	auto piceCards = fpga::PCIeCardFactory::make(json_fpgas, pciDevices, vfioContainer);
 
 	cards.splice(cards.end(), piceCards);
