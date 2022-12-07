@@ -259,11 +259,4 @@ int FpgaNodeFactory::start(SuperNode *sn)
 	return 0;
 }
 
-int FpgaNodeFactory::stop()
-{
-	vfioContainer.reset(); // TODO: is this the proper way?
-
-	return 0;
-}
-
 static FpgaNodeFactory p;
