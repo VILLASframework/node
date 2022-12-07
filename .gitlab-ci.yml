@@ -1,6 +1,6 @@
 variables:
-  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 0
   DISTRO: fedora # standard distro
   DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
