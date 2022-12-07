@@ -1,7 +1,7 @@
 # <img src="doc/pictures/villas_fpga.png" width=40 /> VILLASfpga
 
-[![build status](https://git.rwth-aachen.de/VILLASframework/VILLASfpga/badges/develop/build.svg)](https://git.rwth-aachen.de/acs/VILLASfpga/commits/develop)
-[![coverage report](https://git.rwth-aachen.de/VILLASframework/VILLASfpga/badges/develop/coverage.svg)](https://git.rwth-aachen.de/acs/VILLASfpga/commits/develop)
+[![build status](https://git.rwth-aachen.de/acs/public/villas/fpga/fpga/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/fpga/fpga/-/pipelines/)
+
 
 **TODO:** Write project description
 
