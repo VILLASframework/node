@@ -114,9 +114,6 @@ public:
 
 	virtual
 	int start(SuperNode *sn);
-
-	virtual
-	int stop();
 };
 
 } /* namespace node */
