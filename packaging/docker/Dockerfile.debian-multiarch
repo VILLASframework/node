@@ -68,7 +68,7 @@ ADD cmake/toolchains/debian-${ARCH}.cmake /
 
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
 
-ENV CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
+ENV CMAKE_EXTRA_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
 				-DCMAKE_PREFIX_PATH=${PREFIX} \
 				-DCMAKE_INSTALL_PREFIX=${PREFIX} \
 				-DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib/${TRIPLET} \
@@ -103,12 +103,14 @@ ENV LANG C.UTF-8
 
 FROM dev AS builder
 
+ARG CMAKE_OPTS
+
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
 			
-RUN cmake ${CMAKE_OPTS} .. && \
+RUN cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install
 

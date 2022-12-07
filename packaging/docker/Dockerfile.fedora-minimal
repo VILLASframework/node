@@ -7,6 +7,7 @@
 
 ARG DISTRO=fedora
 ARG FEDORA_VERSION=34
+
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
 # Toolchain
@@ -31,12 +32,14 @@ ENV LANG C.UTF-8
 
 FROM dev AS builder
 
+ARG CMAKE_OPTS
+
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
 
-RUN cmake -DCPACK_GENERATOR=RPM .. && \
+RUN cmake ${CMAKE_OPTS} -DCPACK_GENERATOR=RPM .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) package
 

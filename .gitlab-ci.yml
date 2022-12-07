@@ -1,6 +1,6 @@
 variables:
-  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 0
   DISTRO: fedora # standard distro
   DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
@@ -8,6 +8,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   MAKE_OPTS: "-j16"
+  CMAKE_OPTS: "-DWITH_FPGA=OFF"
 
 stages:
 - prepare
@@ -49,7 +50,7 @@ build:source:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
   - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ..
+  - cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} ..
   - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
@@ -61,7 +62,7 @@ build:source:
     matrix:
     - DISTRO: [ fedora, fedora-minimal, debian, rocky, ubuntu ]
     - DISTRO: fedora-minimal
-      CMAKE_OPTS: -DWITH_API=OFF
+      CMAKE_EXTRA_OPTS: -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
                   -DWITH_CONFIG=OFF
                   -DWITH_DOC=OFF
@@ -185,6 +186,7 @@ pkg:docker:
       --target ${TARGET}
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
+      --build-arg CMAKE_OPTS="${CMAKE_OPTS}"
       --platform ${PLATFORM}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .

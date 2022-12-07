@@ -70,11 +70,13 @@ ENV LANG C.UTF-8
 
 FROM dev AS app
 
+ARG CMAKE_OPTS
+
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake .. && \
+RUN cmake ${CMAKE_OPTS} .. && \
 	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
