@@ -72,8 +72,8 @@ test:cppcheck:
                gpu/
                src/
                lib/
-               tests/unit/ | tee cppcheck.log
-               -igpu/thirdparty
+               tests/unit/ 
+               -igpu/thirdparty | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   dependencies:
     - build:source
