@@ -54,12 +54,12 @@ class InterruptController;
 class IpIdentifier {
 public:
 
-	IpIdentifier(Vlnv vlnv = Vlnv::getWildcard(), std::string name = "") :
+	IpIdentifier(const Vlnv &vlnv = Vlnv::getWildcard(), const std::string &name = "") :
 	    vlnv(vlnv),
 	    name(name)
 	{ }
 
-	IpIdentifier(std::string vlnvString, std::string name = "") :
+	IpIdentifier(const std::string &vlnvString, const std::string &name = "") :
 	    vlnv(vlnvString),
 	    name(name)
 	{ }
