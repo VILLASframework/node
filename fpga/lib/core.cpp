@@ -50,7 +50,7 @@ vlnvInitializationOrder = {
     Vlnv(AxiStreamSwitchFactory::getCompatibleVlnvString()),
 };
 
-Core::List
+std::list<std::shared_ptr<Core>>
 CoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
 	// We only have this logger until we know the factory to build an IP with
@@ -59,8 +59,8 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	std::list<IpIdentifier> allIps;		// All IPs available in config
 	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
 
-	Core::List configuredIps;	// Successfully configured IPs
-	Core::List initializedIps;	// Initialized, i.e. ready-to-use IPs
+	std::list<std::shared_ptr<Core>> configuredIps;	// Successfully configured IPs
+	std::list<std::shared_ptr<Core>> initializedIps;	// Initialized, i.e. ready-to-use IPs
 
 	// Parse all IP instance names and their VLNV into list `allIps`
 	const char* ipName;
