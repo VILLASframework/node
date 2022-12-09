@@ -41,7 +41,7 @@ public:
 	    version("")
 	{ }
 
-	Vlnv(std::string s)
+	Vlnv(const std::string &s)
 	{
 		parseFromString(s);
 	}
