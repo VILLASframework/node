@@ -183,6 +183,7 @@ virtual
 	}
 
 private:
+	// Get a VLNV identifier for which this IP / Node type can be used.
 	virtual
 	Vlnv getCompatibleVlnv() const
 	{
@@ -193,7 +194,7 @@ private:
 	Core* make() const
 	{
 		return new T;
-	};
+	}
 };
 
 } /* namespace ip */

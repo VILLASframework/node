@@ -46,12 +46,12 @@ Test(fpga, rtds, .description = "RTDS")
 {
 	auto logger = villas::logging.get("unit-test:rtds");
 
-	std::list<villas::fpga::ip::Rtds*> rtdsIps;
+	std::list<villas::fpga::ip::RtdsGtfpga*> rtdsIps;
 	std::list<villas::fpga::ip::Dma*> dmaIps;
 
 	for (auto &ip : state.cards.front()->ips) {
 		if (*ip == villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
-			auto rtds = reinterpret_cast<villas::fpga::ip::Rtds*>(ip.get());
+			auto rtds = reinterpret_cast<villas::fpga::ip::RtdsGtfpga*>(ip.get());
 			rtdsIps.push_back(rtds);
 		}
 
