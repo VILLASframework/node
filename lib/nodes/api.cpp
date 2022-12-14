@@ -1,16 +1,20 @@
-/** Node type: Universal Data-exchange API
+/** Node type: Universal Data-exchange API (v2)
  *
+ * @see https://github.com/ERIGrid2/JRA-3.1-api
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
 
 #include <vector>
+
 #include <villas/exceptions.hpp>
+#include <villas/api/universal.hpp>
 #include <villas/nodes/api.hpp>
 
 using namespace villas;
 using namespace villas::node;
+using namespace villas::node::api::universal;
 
 APINode::APINode(const std::string &name) :
 	Node(name),
@@ -53,6 +57,21 @@ int APINode::prepare()
 	return Node::prepare();
 }
 
+int APINode::check()
+{
+	for (auto &ch : read.channels) {
+		if (ch->payload != PayloadType::SAMPLES)
+			return -1;
+	}
+
+	for (auto &ch : write.channels) {
+		if (ch->payload != PayloadType::SAMPLES)
+			return -1;
+	}
+
+	return 0;
+}
+
 int APINode::_read(struct Sample *smps[], unsigned cnt)
 {
 	assert(cnt == 1);
@@ -73,6 +92,34 @@ int APINode::_write(struct Sample *smps[], unsigned cnt)
 	pthread_cond_signal(&write.cv);
 
 	return 1;
+}
+
+int APINode::parse(json_t *json, const uuid_t sn_uuid)
+{
+	int ret = Node::parse(json, sn_uuid);
+	if (ret)
+		return ret;
+
+	json_t *json_signals_in = nullptr;
+	json_t *json_signals_out = nullptr;
+
+	json_error_t err;
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o }, s?: { s?: o } }",
+		"in",
+			"signals", &json_signals_in,
+		"out",
+			"signals", &json_signals_out
+	);
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-api");
+
+	if (json_signals_in)
+		read.channels.parse(json_signals_in, false, true);
+
+	if (json_signals_out)
+		write.channels.parse(json_signals_out, true, false);
+
+	return 0;
 }
 
 static char n[] = "api";

@@ -14,11 +14,11 @@ namespace node {
 namespace api {
 namespace universal {
 
-class SignalRequest : public UniversalRequest {
+class ChannelRequest : public UniversalRequest {
 public:
 	using UniversalRequest::UniversalRequest;
 
-	Response * executeGet(const std::string &signalName)
+	Response * executeGet(const std::string &signalName, PayloadType payload)
 	{
 		if (body != nullptr)
 			throw BadRequest("This endpoint does not accept any body data");
@@ -38,9 +38,17 @@ public:
 		}
 
 		auto sig = smp->signals->getByIndex(idx);
-		auto *json_signal = json_pack("{ s: f, s: o }",
+		auto ch = api_node->write.channels.at(idx);
+
+		if (payload != ch->payload)
+			throw BadRequest("Mismatching payload type");
+
+		auto *json_signal = json_pack("{ s: f, s: o, s: s, s: s, s: s }",
 			"timestamp", time_to_double(&smp->ts.origin),
-			"value", smp->data[idx].toJson(sig->type)
+			"value", smp->data[idx].toJson(sig->type),
+			"validity", "unknown",
+			"source", "unknown",
+			"timesource", "unknown"
 		);
 
 		if (smp->length <= (unsigned) idx)
@@ -53,7 +61,7 @@ public:
 		return new JsonResponse(session, HTTP_STATUS_OK, json_signal);
 	}
 
-	Response * executePut(const std::string &signalName)
+	Response * executePut(const std::string &signalName, PayloadType payload)
 	{
 		int ret;
 
@@ -72,22 +80,46 @@ public:
 		}
 
 		auto sig = smp->signals->getByIndex(idx);
+		auto ch = api_node->read.channels.at(idx);
+
+		if (payload != ch->payload)
+			throw BadRequest("Mismatching payload type");
 
 		double timestamp = 0;
-		double value = 0;
+		json_t *json_value;
+		const char *validity = nullptr;
+		const char *source = nullptr;
+		const char *timesource = nullptr;
 
 		json_error_t err;
-		ret = json_unpack_ex(body, &err, 0, "{ s: F, s: F }",
+		ret = json_unpack_ex(body, &err, 0, "{ s: F, s: o, s?: s, s?: s, s?: s }",
 			"timestamp", &timestamp,
-			"value", &value
+			"value", &json_value,
+			"validity", &validity,
+			"timesource", &timesource,
+			"source", &source
 		);
 		if (ret) {
 			pthread_mutex_unlock(&api_node->read.mutex);
 			throw BadRequest("Malformed body: {}", err.text);
 		}
 
+		if (validity)
+			logger->warn("Attribute 'validity' is not supported by VILLASnode");
+
+		if (source)
+			logger->warn("Attribute 'source' is not supported by VILLASnode");
+
+		if (timesource)
+			logger->warn("Attribute 'timesource' is not supported by VILLASnode");
+
+		ret = smp->data[idx].parseJson(sig->type, json_value);
+		if (ret) {
+			pthread_mutex_unlock(&api_node->read.mutex);
+			throw BadRequest("Malformed value");
+		}
+
 		smp->ts.origin = time_from_double(timestamp);
-		smp->data[idx].f = value;
 
 		pthread_cond_signal(&api_node->read.cv);
 		pthread_mutex_unlock(&api_node->read.mutex);
@@ -98,12 +130,21 @@ public:
 	virtual Response * execute()
 	{
 		auto const &signalName = matches[2];
+		auto const &subResource = matches[3];
+
+		PayloadType payload;
+		if (subResource == "event")
+			payload = PayloadType::EVENTS;
+		else if (subResource == "sample")
+			payload = PayloadType::EVENTS;
+		else
+			throw BadRequest("Unsupported sub-resource: {}", subResource);
 
 		switch (method) {
 		case Session::Method::GET:
-			return executeGet(signalName);
+			return executeGet(signalName, payload);
 		case Session::Method::PUT:
-			return executePut(signalName);
+			return executePut(signalName, payload);
 		default:
 			throw InvalidMethod(this);
 		}
@@ -111,10 +152,10 @@ public:
 };
 
 /* Register API requests */
-static char n[] = "universal/signal";
-static char r[] = "/universal/(" RE_NODE_NAME ")/signal/([a-z0-9_-]+)/state";
-static char d[] = "get or set signal of universal data-exchange API";
-static RequestPlugin<SignalRequest, n, r, d> p;
+static char n[] = "universal/channel/sample";
+static char r[] = "/universal/(" RE_NODE_NAME ")/channel/([a-z0-9_-]+)/(sample|event)";
+static char d[] = "retrieve or send samples via universal data-exchange API";
+static RequestPlugin<ChannelRequest, n, r, d> p;
 
 } /* namespace universal */
 } /* namespace api */
