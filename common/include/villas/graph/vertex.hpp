@@ -35,7 +35,7 @@ public:
 	}
 
 private:
-	Identifier id;
+	Identifier id = 0;
 	// HACK: how to resolve this circular type dependency?
 	std::list<std::size_t> edges;
 };
