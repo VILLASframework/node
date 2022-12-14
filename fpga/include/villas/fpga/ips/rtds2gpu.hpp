@@ -56,8 +56,6 @@ public:
 		doorbellRegister = 0;
 	}
 
-	static constexpr const char* registerMemory = "Reg";
-
 	std::list<MemoryBlockName> getMemoryBlocks() const
 	{
 		return {
