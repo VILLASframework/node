@@ -1,6 +1,6 @@
 /** CGo interface for VILLASnode logger
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -11,6 +11,7 @@ package main
 // #include <villas/nodes/go.h>
 // void bridge_go_logger_log(_go_logger_log_cb cb, _go_logger l, int level, char *msg);
 import "C"
+
 import (
 	"fmt"
 	"os"
@@ -104,6 +105,7 @@ func (l *VillasLogger) Panic(msg string) {
 	fmt.Println("Paniced")
 	os.Exit(-1)
 }
+
 func (l *VillasLogger) Panicf(format string, args ...interface{}) {
 	l.Criticalf(format, args...)
 	fmt.Println("Paniced")

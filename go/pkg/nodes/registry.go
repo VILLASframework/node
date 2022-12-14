@@ -1,15 +1,13 @@
 /** Node-type registry.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
 
 package nodes
 
-var (
-	goNodeTypes = map[string]NodeType{}
-)
+var goNodeTypes = map[string]NodeType{}
 
 type NodeType struct {
 	Constructor NodeConstructor

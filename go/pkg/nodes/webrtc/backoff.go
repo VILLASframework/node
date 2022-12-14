@@ -1,6 +1,6 @@
 /** Exponential backoffs for reconnect timing.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -9,14 +9,12 @@ package webrtc
 
 import "time"
 
-var (
-	DefaultExponentialBackoff = ExponentialBackoff{
-		Factor:   1.5,
-		Maximum:  1 * time.Minute,
-		Initial:  1 * time.Second,
-		Duration: 1 * time.Second,
-	}
-)
+var DefaultExponentialBackoff = ExponentialBackoff{
+	Factor:   1.5,
+	Maximum:  1 * time.Minute,
+	Initial:  1 * time.Second,
+	Duration: 1 * time.Second,
+}
 
 type ExponentialBackoff struct {
 	Factor  float32

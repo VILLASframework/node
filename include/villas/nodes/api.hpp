@@ -2,7 +2,7 @@
  *
  * @see https://github.com/ERIGrid2/JRA-3.1-api
  * @file
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/

@@ -1,7 +1,7 @@
 # CMakeLists.txt.
 #
 # @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-# @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+# @author Steffen Vogel <post@steffenvogel.de>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license Apache 2.0
 ###################################################################################

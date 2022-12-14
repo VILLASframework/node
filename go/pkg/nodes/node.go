@@ -1,6 +1,6 @@
 /** Node interface.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -51,9 +51,7 @@ type Node interface {
 type NodeConfig struct {
 	Type string `json:"type"`
 
-	In struct {
-	} `json:"in"`
+	In struct{} `json:"in"`
 
-	Out struct {
-	} `json:"out"`
+	Out struct{} `json:"out"`
 }

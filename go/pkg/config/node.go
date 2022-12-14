@@ -1,6 +1,6 @@
 /** Go types for node configuration.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -12,8 +12,7 @@ type Node struct {
 	Type string `json:"type"`
 }
 
-type NodeDir struct {
-}
+type NodeDir struct{}
 
 type NodeLoopbackIn struct {
 	NodeDir

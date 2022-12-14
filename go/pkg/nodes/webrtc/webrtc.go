@@ -1,6 +1,6 @@
 /** WebRTC peer connection handling.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -9,8 +9,8 @@ package webrtc
 
 import (
 	"fmt"
-	"sync"
 	"path"
+	"sync"
 
 	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/nodes"
 	"github.com/pion/webrtc/v3"
@@ -90,7 +90,7 @@ func (pc *PeerConnection) createPeerConnection() (*webrtc.PeerConnection, error)
 
 func (pc *PeerConnection) createDataChannel() (*webrtc.DataChannel, error) {
 	dc, err := pc.CreateDataChannel("villas", &webrtc.DataChannelInit{
-		Ordered: &pc.config.Ordered,
+		Ordered:        &pc.config.Ordered,
 		MaxRetransmits: &pc.config.MaxRetransmits,
 	})
 	if err != nil {

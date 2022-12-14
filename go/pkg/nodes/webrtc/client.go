@@ -1,6 +1,6 @@
 /** Websocket signaling channel for WebRTC.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -135,7 +135,6 @@ func (c *SignalingClient) read() {
 		msg := &SignalingMessage{}
 		if err := c.Conn.ReadJSON(msg); err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-
 			} else {
 				c.logger.Errorf("Failed to read: %s", err)
 			}
