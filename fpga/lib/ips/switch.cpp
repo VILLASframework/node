@@ -2,7 +2,7 @@
  *
  * These functions present a simpler interface to Xilinx' AXI Stream switch driver (XAxis_Switch_*)
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017-2022, Steffen Vogel
  * @license GNU General Public License (version 3)

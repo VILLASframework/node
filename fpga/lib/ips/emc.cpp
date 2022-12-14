@@ -1,6 +1,6 @@
 /** AXI External Memory Controller (EMC)
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2017-2020, Steffen Vogel
  * @license GNU General Public License (version 3)
  *

@@ -4,7 +4,7 @@
  * This settings are not part of the configuration file.
  *
  * @file
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2017-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *

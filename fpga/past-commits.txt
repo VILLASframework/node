@@ -22,7 +22,7 @@ a4120eda2d327aa537fa874885c200c858202fcc ips/dma: acknowledge interrupts in DMA 
 
 ---
 
-I, Steffen Vogel hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: post@steffenvogel.de, stvogel@eonerc.rwth-aachen.de
+I, Steffen Vogel hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: post@steffenvogel.de, post@steffenvogel.de
 
 e256a94957294714d6bf645fa9c9f17253fa154e Merge branch 'fix-dockerfile' into 'master'
 44fcb85aebeedc531b061d41c847eabbc8cee478 minor code-style fixes

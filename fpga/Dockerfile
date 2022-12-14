@@ -8,7 +8,7 @@
 # by running:
 #   make docker
 #
-# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @author Steffen Vogel <post@steffenvogel.de>
 # @copyright 2017-2022, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
@@ -36,7 +36,7 @@ LABEL \
 	org.label-schema.license="GPL-3.0" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
-	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.author.email="post@steffenvogel.de" \
 	org.label-schema.description="A image containing all build-time dependencies for VILLASfpga based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASfpga" \

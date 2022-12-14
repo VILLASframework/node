@@ -1,7 +1,7 @@
 /** DMA driver
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @copyright 2018-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
