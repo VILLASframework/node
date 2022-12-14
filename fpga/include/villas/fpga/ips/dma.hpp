@@ -43,7 +43,6 @@ public:
 	virtual
 	bool init() override;
 
-	virtual
 	bool reset() override;
 
 	// Memory-mapped to stream (MM2S)
