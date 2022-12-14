@@ -2,7 +2,7 @@
  *
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2022, Niklas Eiling
  * @copyright 2014-2021, Steffen Vogel

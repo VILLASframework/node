@@ -1,6 +1,6 @@
 /** Common entry point for all villas command line tools.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
  *********************************************************************************/
@@ -22,7 +22,7 @@ void Tool::printCopyright()
 	std::cout << PROJECT_NAME " " << CLR_BLU(PROJECT_BUILD_ID)
 		<< " (built on " CLR_MAG(__DATE__) " " CLR_MAG(__TIME__) ")" << std::endl
 		<< " Copyright 2014-2021, Institute for Automation of Complex Power Systems, EONERC" << std::endl
-		<< " Steffen Vogel <svogel2@eonerc.rwth-aachen.de>" << std::endl;
+		<< " Steffen Vogel <post@steffenvogel.de>" << std::endl;
 }
 
 void Tool::printVersion()

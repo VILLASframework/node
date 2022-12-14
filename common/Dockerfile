@@ -8,7 +8,7 @@
 # by running:
 #   make docker
 #
-# @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+# @author Steffen Vogel <post@steffenvogel.de>
 # @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
 # @license Apache License 2.0
 #
@@ -24,7 +24,7 @@ LABEL \
 	org.label-schema.license="Apache-2.0" \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
-	org.label-schema.author.email="svogel2@eonerc.rwth-aachen.de" \
+	org.label-schema.author.email="post@steffenvogel.de" \
 	org.label-schema.description="A library for shared code across VILLAS C/C++ projects" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASfpga" \
