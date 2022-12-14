@@ -1,6 +1,6 @@
 /** Virtual Function IO wrapper around kernel API
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
