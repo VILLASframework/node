@@ -2,14 +2,26 @@
 ---
 
 allOf:
-- type: object
-  additionalProperties: true
-  description: |
-    Additional properties can be retrieved via Rest API call:
-
-    ```bash
-    curl http://localhost:80/api/v2/universal/api_node_name/config
-    ```
-
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml
+- type: object
+  properties:
+    in:
+      type: object
+      required:
+      - signals
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/api_signal.yaml
+
+    out:
+      type: object
+      required:
+      - signals
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/api_signal.yaml

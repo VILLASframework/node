@@ -6,6 +6,8 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#pragma once
+
 #include <uuid/uuid.h>
 
 #include <villas/api/request.hpp>

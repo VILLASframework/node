@@ -6,6 +6,8 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#pragma once
+
 #include <villas/nodes/api.hpp>
 #include <villas/api/requests/node.hpp>
 

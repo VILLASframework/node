@@ -187,14 +187,23 @@ int SignalData::parseJson(enum SignalType type, json_t *json)
 
 	switch (type) {
 		case SignalType::FLOAT:
+			if (!json_is_number(json))
+				return -1;
+
 			this->f = json_number_value(json);
 			break;
 
 		case SignalType::INTEGER:
+			if (!json_is_integer(json))
+				return -1;
+
 			this->i = json_integer_value(json);
 			break;
 
 		case SignalType::BOOLEAN:
+			if (!json_is_boolean(json))
+				return -1;
+
 			this->b = json_boolean_value(json);
 			break;
 
@@ -207,14 +216,14 @@ int SignalData::parseJson(enum SignalType type, json_t *json)
 				"imag", &imag
 			);
 			if (ret)
-				return -2;
+				return -1;
 
 			this->z = std::complex<float>(real, imag);
 			break;
 		}
 
 		case SignalType::INVALID:
-			return -1;
+			return -2;
 	}
 
 	return 0;

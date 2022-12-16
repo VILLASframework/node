@@ -10,6 +10,7 @@
 
 using namespace villas::node;
 using namespace villas::node::api;
+using namespace villas::node::api::universal;
 
 void UniversalRequest::prepare()
 {

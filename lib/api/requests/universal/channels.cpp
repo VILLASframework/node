@@ -5,6 +5,7 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#include <villas/utils.hpp>
 #include <villas/api/requests/universal.hpp>
 #include <villas/api/response.hpp>
 
@@ -26,26 +27,19 @@ public:
 			throw BadRequest("This endpoint does not accept any body data");
 
 		auto *json_sigs = json_array();
-		for (auto const &sig : *node->getOutputSignals()) {
-			auto *json_sig = json_pack("{ s: s, s: s, s: b, s: b, s: o }",
-				"id", fmt::format("out/{}", sig->name).c_str(),
-				"source", node->getNameShort().c_str(),
-				"readable", true,
-				"writable", false,
-				"value", json_null()
-			);
+
+		for (size_t i = 0; i < MIN(api_node->getOutputSignals()->size(), api_node->write.channels.size()); i++) {
+			auto sig = api_node->getOutputSignals()->at(i);
+			auto ch = api_node->write.channels.at(i);
+			auto *json_sig = ch->toJson(sig);
 
 			json_array_append(json_sigs, json_sig);
 		}
 
-		for (auto const &sig : *node->getInputSignals()) {
-			auto *json_sig = json_pack("{ s: s, s: s, s: b, s: b, s: o }",
-				"id", fmt::format("in/{}", sig->name).c_str(),
-				"source", node->getNameShort().c_str(),
-				"readable", false,
-				"writable", true,
-				"value", json_null()
-			);
+		for (size_t i = 0; i < MIN(api_node->getInputSignals()->size(), api_node->read.channels.size()); i++) {
+			auto sig = api_node->getInputSignals()->at(i);
+			auto ch = api_node->read.channels.at(i);
+			auto *json_sig = ch->toJson(sig);
 
 			json_array_append(json_sigs, json_sig);
 		}
@@ -55,9 +49,9 @@ public:
 };
 
 /* Register API requests */
-static char n[] = "universal/signals";
-static char r[] = "/universal/(" RE_NODE_NAME ")/signals";
-static char d[] = "get signals of universal data-exchange API node";
+static char n[] = "universal/channels";
+static char r[] = "/universal/(" RE_NODE_NAME ")/channels";
+static char d[] = "get channels of universal data-exchange API node";
 static RequestPlugin<SignalsRequest, n, r, d> p;
 
 } /* namespace universal */

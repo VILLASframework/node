@@ -14,7 +14,7 @@ namespace node {
 namespace api {
 namespace universal {
 
-class ConfigRequest : public UniversalRequest {
+class StatusRequest : public UniversalRequest {
 public:
 	using UniversalRequest::UniversalRequest;
 
@@ -26,15 +26,20 @@ public:
 		if (body != nullptr)
 			throw BadRequest("This endpoint does not accept any body data");
 
-		return new JsonResponse(session, HTTP_STATUS_OK, node->getConfig());
+		auto *json_response = json_pack("{ s: s }",
+			// TODO: Add connectivity check or heuristic here.
+			"connected", "unknown"
+		);
+
+		return new JsonResponse(session, HTTP_STATUS_OK, json_response);
 	}
 };
 
 /* Register API requests */
-static char n[] = "universal/config";
-static char r[] = "/universal/(" RE_NODE_NAME ")/config";
-static char d[] = "get configuration of universal data-exchange API";
-static RequestPlugin<ConfigRequest, n, r, d> p;
+static char n[] = "universal/status";
+static char r[] = "/universal/(" RE_NODE_NAME ")/status";
+static char d[] = "get status of universal data-exchange API";
+static RequestPlugin<StatusRequest, n, r, d> p;
 
 } /* namespace universal */
 } /* namespace api */
