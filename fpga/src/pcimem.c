@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 	printf("PCI Memory mapped to address %p.\n", map_base);
 	fflush(stdout);
 
-	virt_addr = map_base + (target & MAP_MASK);
+	virt_addr = (uint8_t*) map_base + (target & MAP_MASK);
 
 	switch(access_type) {
 		case 'b':
