@@ -12,7 +12,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/fpga.h
 ## Copyright
 
 - 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- 2018-2022 Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+- 2018-2022 Steffen Vogel <post@steffenvogel.de>
 - 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
 
 ## License
@@ -46,7 +46,7 @@ For other licensing options please consult [Prof. Antonello Monti](mailto:amonti
 [![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
 
 - Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+- Steffen Vogel <post@steffenvogel.de>
 - Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
 
 [Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)

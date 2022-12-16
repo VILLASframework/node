@@ -3,7 +3,7 @@
  * This class represents a module within the FPGA.
  *
  * @file
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
