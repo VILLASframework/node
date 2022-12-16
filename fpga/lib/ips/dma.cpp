@@ -207,7 +207,7 @@ bool Dma::reset()
 
 Dma::~Dma()
 {
-	reset();
+	Dma::reset();
 }
 
 bool Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
