@@ -16,4 +16,4 @@ allOf:
       example: 5
       description: The channel input number of the device.
 
-- ref: ../../signal.yaml
+- $ref: ../../signal.yaml

@@ -2,7 +2,6 @@
 ---
 
 allOf:
-- $ref: ../node_signals.yaml
 - $ref: ../node.yaml
 - type: object
   properties:
