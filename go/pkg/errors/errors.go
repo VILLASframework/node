@@ -1,6 +1,6 @@
 /** Common error types
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -12,9 +12,7 @@ import (
 )
 import "fmt"
 
-var (
-	ErrEndOfFile = fmt.Errorf("end-of-file")
-)
+var ErrEndOfFile = fmt.Errorf("end-of-file")
 
 func ErrorToInt(e error) int {
 	if e == nil {

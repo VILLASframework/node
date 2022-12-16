@@ -1,6 +1,6 @@
 /** WebRTC node-type.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -19,42 +19,40 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
-var (
-	DefaultConfig = Config{
-		Server: &url.URL{
-			Scheme: "wss",
-			Host:   "villas.k8s.eonerc.rwth-aachen.de",
-			Path:   "/ws/signaling",
-		},
-		Wait: true,
-		MaxRetransmits: 0,
-		Ordered: false,
-		WebRTC: webrtc.Configuration{
-			ICEServers: []webrtc.ICEServer{
-				{
-					URLs: []string{"stun:stun.l.google.com:19302"},
+var DefaultConfig = Config{
+	Server: &url.URL{
+		Scheme: "wss",
+		Host:   "villas.k8s.eonerc.rwth-aachen.de",
+		Path:   "/ws/signaling",
+	},
+	Wait:           true,
+	MaxRetransmits: 0,
+	Ordered:        false,
+	WebRTC: webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{"stun:stun.l.google.com:19302"},
+			},
+			{
+				URLs: []string{
+					"stun:stun.0l.de",
 				},
-				{
-					URLs: []string{
-						"stun:stun.0l.de",
-					},
-					CredentialType: webrtc.ICECredentialTypePassword,
-					Username:       "villas",
-					Credential:     "villas",
+				CredentialType: webrtc.ICECredentialTypePassword,
+				Username:       "villas",
+				Credential:     "villas",
+			},
+			{
+				URLs: []string{
+					"turn:turn.0l.de?transport=udp",
+					"turn:turn.0l.de?transport=tcp",
 				},
-				{
-					URLs: []string{
-						"turn:turn.0l.de?transport=udp",
-						"turn:turn.0l.de?transport=tcp",
-					},
-					CredentialType: webrtc.ICECredentialTypePassword,
-					Username:       "villas",
-					Credential:     "villas",
-				},
+				CredentialType: webrtc.ICECredentialTypePassword,
+				Username:       "villas",
+				Credential:     "villas",
 			},
 		},
-	}
-)
+	},
+}
 
 type Node struct {
 	nodes.BaseNode
@@ -67,9 +65,9 @@ type Config struct {
 	Server  *url.URL
 	Session string
 
-	Wait bool
+	Wait           bool
 	MaxRetransmits uint16
-	Ordered bool
+	Ordered        bool
 
 	WebRTC webrtc.Configuration
 }
@@ -88,7 +86,7 @@ func (n *Node) Parse(c []byte) error {
 		Wait           *bool   `json:"wait,omitemty"`
 		MaxRetransmits *uint16 `json:"max_retransmits,omitempty"`
 		Ordered        *bool   `json:"ordered,omitempty"`
-		Ice     *struct {
+		Ice            *struct {
 			Servers []struct {
 				URLs     []string `json:"urls,omitempty"`
 				Username *string  `json:"username,omitempty"`

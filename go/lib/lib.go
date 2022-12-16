@@ -1,6 +1,6 @@
 /** CGo interface for writing node-types in Go
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -42,7 +42,7 @@ func RegisterGoNodeTypes(cb C._go_register_node_factory_cb, pl C._go_plugin_list
 
 //export NewGoNode
 func NewGoNode(t *C.char) C.uintptr_t {
-	var nodeTypes = nodes.NodeTypes()
+	nodeTypes := nodes.NodeTypes()
 
 	typ, ok := nodeTypes[C.GoString(t)]
 	if !ok {

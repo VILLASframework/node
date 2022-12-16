@@ -1,6 +1,6 @@
 /** Wrapper for using libvillas in Go applications.
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache 2.0
  *********************************************************************************/
@@ -10,6 +10,7 @@ package node
 // #cgo LDFLAGS: -lvillas
 // #include <villas/node.h>
 import "C"
+
 import (
 	"encoding/json"
 	"fmt"
@@ -22,8 +23,10 @@ import (
 	"git.rwth-aachen.de/acs/public/villas/node/go/pkg/errors"
 )
 
-const MAX_SIGNALS = 64
-const NUM_HUGEPAGES = 100
+const (
+	MAX_SIGNALS   = 64
+	NUM_HUGEPAGES = 100
+)
 
 type Node struct {
 	inst *C.vnode
@@ -80,7 +83,7 @@ func (n *Node) Reverse() error {
 }
 
 func (n *Node) Read(cnt int) []Sample {
-	var csmps = make([]*C.vsample, cnt)
+	csmps := make([]*C.vsample, cnt)
 
 	for i := 0; i < cnt; i++ {
 		csmps[i] = C.sample_alloc(MAX_SIGNALS)
@@ -88,7 +91,7 @@ func (n *Node) Read(cnt int) []Sample {
 
 	read := int(C.node_read(n.inst, (**C.vsample)(unsafe.Pointer(&csmps[0])), C.uint(cnt)))
 
-	var smps = make([]Sample, read)
+	smps := make([]Sample, read)
 	for i := 0; i < read; i++ {
 		smps[i].FromC(csmps[i])
 		C.sample_decref(csmps[i])
@@ -99,7 +102,7 @@ func (n *Node) Read(cnt int) []Sample {
 
 func (n *Node) Write(smps []Sample) int {
 	cnt := len(smps)
-	var csmps = make([]*C.vsample, cnt)
+	csmps := make([]*C.vsample, cnt)
 
 	for i := 0; i < cnt; i++ {
 		csmps[i] = smps[i].ToC()
@@ -112,7 +115,7 @@ func (n *Node) PollFDs() []int {
 	var cfds [16]C.int
 	cnt := int(C.node_poll_fds(n.inst, (*C.int)(unsafe.Pointer(&cfds))))
 
-	var fds = make([]int, cnt)
+	fds := make([]int, cnt)
 	for i := 0; i < cnt; i++ {
 		fds[i] = int(cfds[i])
 	}
@@ -124,7 +127,7 @@ func (n *Node) NetemFDs() []int {
 	var cfds [16]C.int
 	cnt := int(C.node_netem_fds(n.inst, (*C.int)(unsafe.Pointer(&cfds))))
 
-	var fds = make([]int, cnt)
+	fds := make([]int, cnt)
 	for i := 0; i < cnt; i++ {
 		fds[i] = int(cfds[i])
 	}
