@@ -12,6 +12,7 @@
 #include <cstdint>
 
 #include <list>
+#include <villas/log.hpp>
 
 namespace villas {
 namespace kernel {
@@ -69,15 +70,18 @@ class Device {
 public:
 	Device(Id i, Slot s) :
 		id(i),
-		slot(s)
+		slot(s),
+		log(logging.get("kernel:pci"))
 	{ }
 
 	Device(Id i) :
-		id(i)
+		id(i),
+		log(logging.get("kernel:pci"))
 	{ }
 
 	Device(Slot s) :
-		slot(s)
+		slot(s),
+		log(logging.get("kernel:pci"))
 	{ }
 
 	bool
@@ -98,8 +102,26 @@ public:
 	std::list<Region>
 	getRegions() const;
 
+	/** Write 32-bit BAR value from to the PCI configuration space */
+	bool writeBar(uint32_t new_bar);
+
+	/** If BAR values in config space and in the kernel do not match, rewrite
+	 * the BAR value of the kernel to PCIe config space.
+	 */
+	bool rewriteBar();
+
+	/** Read 32-bit BAR value from the PCI configuration space */
+	bool readBar(uint32_t &bar) const;
+
+	/** Read 32-bit BAR value from the devices resource file. This is what the kernel
+	 * thinks the BAR should be.
+	 */
+	bool readHostBar(uint32_t &bar) const;
+
 	Id id;
 	Slot slot;
+private:
+	villas::Logger log;
 };
 
 class DeviceList : public std::list<std::shared_ptr<Device>> {

@@ -198,7 +198,7 @@ std::shared_ptr<Device> Container::attachDevice(const std::string& name, int ind
 	return device;
 }
 
-std::shared_ptr<Device> Container::attachDevice(const pci::Device &pdev)
+std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev)
 {
 	int ret;
 	char name[32], iommu_state[4];
@@ -212,6 +212,11 @@ std::shared_ptr<Device> Container::attachDevice(const pci::Device &pdev)
 	if (pdev.getDriver() != kernelDriver) {
 		log->debug("Bind PCI card to kernel driver '{}'", kernelDriver);
 		pdev.attachDriver(kernelDriver);
+	}
+	if (!pdev.rewriteBar()) {
+		log->error("BAR of device is in inconsistent state. Rewriting the BAR "
+				   "failed. Please remove, rescan and reset the device and try again.");
+		throw RuntimeError("Failed to rewrite BAR of device");
 	}
 
 	// Get IOMMU group of device
@@ -309,6 +314,7 @@ bool Container::memoryUnmap(uintptr_t phys, size_t length)
 		log->error("Failed to unmap DMA mapping");
 		return false;
 	}
+	log->debug("DMA unmap size={:#x}, iova={:#x}", dmaUnmap.size, dmaUnmap.iova);
 
 	return true;
 }
