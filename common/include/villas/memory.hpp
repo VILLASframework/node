@@ -76,6 +76,12 @@ public:
 	    memoryBlock(std::move(mem))
 	{ }
 
+	// Take ownership of the MemoryBlock
+	MemoryAccessor(std::shared_ptr<MemoryBlock> mem) :
+	    translation(MemoryManager::get().getTranslationFromProcess(mem->getAddrSpaceId())),
+	    memoryBlock(std::move(mem))
+	{ }
+
 	// Just act as an accessor, do not take ownership of MemoryBlock
 	MemoryAccessor(const MemoryBlock &mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId()))
@@ -106,10 +112,10 @@ public:
 		return reinterpret_cast<T*>(translation.getLocalAddr(0));
 	}
 
-	const MemoryBlock&
+	const std::shared_ptr<MemoryBlock>
 	getMemoryBlock() const
 	{
-		if (not memoryBlock) throw std::bad_alloc(); else return *memoryBlock;
+		if (not memoryBlock) throw std::bad_alloc(); else return memoryBlock;
 	}
 
 private:
@@ -117,7 +123,7 @@ private:
 	MemoryTranslation translation;
 
 	// Take the unique pointer in case user wants this class to have ownership
-	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
+	std::shared_ptr<MemoryBlock> memoryBlock;
 };
 
 /**
