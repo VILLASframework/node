@@ -113,13 +113,12 @@ EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 	int ret = XST_FAILURE;
 	uint32_t start = offset;
 
-	uint8_t *verify_data = new uint8_t[length];
-
 	/* Reset the Flash Device. This clears the ret registers and puts
 	 * the device in Read mode. */
 	ret = XFlash_Reset(&xflash);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS){
 		return false;
+	}
 
 	/* Perform an unlock operation before the erase operation for the Intel
 	 * Flash. The erase operation will result in an error if the block is
@@ -128,30 +127,37 @@ EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 	    (xflash.CommandSet == XFL_CMDSET_INTEL_EXTENDED) ||
 	    (xflash.CommandSet == XFL_CMDSET_INTEL_G18)) {
 		ret = XFlash_Unlock(&xflash, offset, 0);
-		if(ret != XST_SUCCESS)
+		if(ret != XST_SUCCESS){
 			return false;
+		}
 	}
 
 	// Perform the Erase operation.
 	ret = XFlash_Erase(&xflash, start, length);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS){;
 		return false;
+	}
 
 	// Perform the Write operation.
 	ret = XFlash_Write(&xflash, start, length, data);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS){
 		return false;
+	}
 
 	// Perform the read operation.
+	uint8_t *verify_data = new uint8_t[length];
 	ret = XFlash_Read(&xflash, start, length, verify_data);
 		if(ret != XST_SUCCESS) {
+			delete[] verify_data;
 			return false;
 	}
 
 	// Compare the data read against the data Written.
 	for (unsigned i = 0; i < length; i++) {
-		if (verify_data[i] != data[i])
+		if (verify_data[i] != data[i]){
+			delete[] verify_data;
 			return false;
+		}
 	}
 
 	delete[] verify_data;

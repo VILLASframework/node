@@ -75,14 +75,14 @@ int main(int argc, char **argv) {
 		PRINT_ERROR;
 
 	printf("%s opened.\n", filename);
-	printf("Target offset is %#jx, page size is %lu\n", (intmax_t) target, sysconf(_SC_PAGE_SIZE));
+	printf("Target offset is %#jx, page size is %lu\n", (uintmax_t) target, sysconf(_SC_PAGE_SIZE));
 
 	fflush(stdout);
 
 	// Map one page
 	printf("mmap(%d, %lu, %#x, %#x, %d, %#jx)\n", 0,
 		MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
-		fd, (intmax_t) target);
+		fd, (uintmax_t) target);
 
 	map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK);
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 	printf("PCI Memory mapped to address %p.\n", map_base);
 	fflush(stdout);
 
-	virt_addr = map_base + (target & MAP_MASK);
+	virt_addr = (uint8_t*) map_base + (target & MAP_MASK);
 
 	switch(access_type) {
 		case 'b':
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 			exit(2);
 	}
 
-	printf("Value at offset %#jx (%p): %#x\n", (intmax_t) target, virt_addr, read_result);
+	printf("Value at offset %#jx (%p): %#x\n", (uintmax_t) target, virt_addr, read_result);
 	fflush(stdout);
 
 	if (argc > 4) {

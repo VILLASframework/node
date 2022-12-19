@@ -72,7 +72,9 @@ test:cppcheck:
                gpu/
                src/
                lib/
-               tests/unit/ | tee cppcheck.log
+               tests/unit/ 
+               --suppress=unmatchedSuppression
+               -igpu/thirdparty | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   dependencies:
     - build:source

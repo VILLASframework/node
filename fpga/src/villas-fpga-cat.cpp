@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 
 			for (size_t i = 0; i*4 < bytesRead; i++) {
 				int32_t ival = mem[cur][i];
-				float fval = *((float*)(&ival));
+				float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
 				//std::cerr << std::hex << ival << ",";
 				std::cerr << fval << std::endl;
 				/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
