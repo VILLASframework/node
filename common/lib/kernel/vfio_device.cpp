@@ -173,6 +173,7 @@ void * Device::regionMap(size_t index)
 	flags |= MAP_SHARED | MAP_32BIT;
 #endif
 
+	log->debug("Mapping region {} of size 0x{:x} with flags 0x{:x}", index, r->size, flags);
 	mappings[index] = mmap(nullptr, r->size,
 	                       PROT_READ | PROT_WRITE,
 	                       flags, fd, r->offset);
