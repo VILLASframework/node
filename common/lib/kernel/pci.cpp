@@ -393,7 +393,14 @@ bool Device::attachDriver(const std::string &driver) const
 bool Device::readHostBar(uint32_t &bar) const
 {
 	unsigned long long start, end, size, flags;
-	FILE *file = fopen("/sys/bus/pci/devices/0000:88:00.0/resource", "r");
+	char *path = NULL;
+	if (asprintf(&path, "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource", SYSFS_PATH,
+				 slot.domain, slot.bus, slot.device, slot.function) == -1)
+	{
+		log->error("could not allocate memory for path");
+		return false;
+	}
+	FILE *file = fopen(path, "r");
 	if (!file)
 	{
 		log->error("error opening resource file");
