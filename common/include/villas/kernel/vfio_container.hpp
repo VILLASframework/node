@@ -51,13 +51,12 @@ public:
 	std::shared_ptr<Device> attachDevice(const std::string& name, int groupIndex);
 	std::shared_ptr<Device> attachDevice(pci::Device &pdev);
 
-	/**
-	 * @brief Map VM to an IOVA, which is accessible by devices in the container
-	 * @param virt		virtual address of memory
-	 * @param phys		IOVA where to map @p virt, -1 to use VFIO internal allocator
-	 * @param length	size of memory region in bytes
-	 * @return		IOVA address, UINTPTR_MAX on failure
-	 */
+	// Map VM to an IOVA, which is accessible by devices in the container
+	//
+	// @param virt		virtual address of memory
+	// @param phys		IOVA where to map @p virt, -1 to use VFIO internal allocator
+	// @param length	size of memory region in bytes
+	// @return		IOVA address, UINTPTR_MAX on failure
 	uintptr_t memoryMap(uintptr_t virt, uintptr_t phys, size_t length);
 
 	/** munmap() a region which has been mapped by vfio_map_region() */
@@ -75,7 +74,7 @@ private:
 	int version;
 
 	std::array<bool, EXTENSION_SIZE> extensions;
-	uint64_t iova_next;			/**< Next free IOVA address */
+	uint64_t iova_next;			// Next free IOVA address
 	bool hasIommu;
 
 	// All groups bound to this container

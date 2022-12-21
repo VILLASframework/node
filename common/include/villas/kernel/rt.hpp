@@ -22,13 +22,12 @@ void setThreadAffinity(pthread_t thread, int affinity);
 
 void setPriority(int priority);
 
-/** Checks for realtime (PREEMPT_RT) patched kernel.
- *
- * See https://rt.wiki.kernel.org
- *
- * @retval true Kernel is patched.
- * @retval false Kernel is not patched.
- */
+// Checks for realtime (PREEMPT_RT) patched kernel.
+//
+// See https://rt.wiki.kernel.org
+//
+// @retval true Kernel is patched.
+// @retval false Kernel is not patched.
 bool isPreemptible();
 
 } // namespace villas

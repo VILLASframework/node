@@ -98,11 +98,9 @@ Container::Container() :
 	// Check available VFIO extensions (IOMMU types)
 	for (unsigned int i = VFIO_TYPE1_IOMMU; i < EXTENSION_SIZE; i++) {
 		int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
-		if (ret == 0)
-			extensions[i] = false;
-		else {
-			extensions[i] = true;
-		}
+
+		extensions[i] = ret != 0;
+
 		log->debug("VFIO extension {} is {} ({})", i, extensions[i] ? "available" : "not available", VFIO_EXTENSION_STR[i]);
 	}
 
@@ -112,9 +110,8 @@ Container::Container() :
 	} else if (extensions[VFIO_NOIOMMU_IOMMU]) {
 		log->debug("Using VFIO type {} ({})", VFIO_NOIOMMU_IOMMU, VFIO_EXTENSION_STR[VFIO_NOIOMMU_IOMMU]);
 		hasIommu = false;
-	} else {
+	} else
 		throw RuntimeError("No supported IOMMU type available");
-	}
 
 	log->debug("Version:    {:#x}", version);
 	log->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
@@ -140,20 +137,16 @@ void Container::attachGroup(std::shared_ptr<Group> group)
 
 	// Claim group ownership
 	int ret = ioctl(group->getFileDescriptor(), VFIO_GROUP_SET_CONTAINER, &fd);
-	if (ret < 0) {
-		log->error("Failed to attach VFIO group {} to container fd {} (error {})",
-		              group->getIndex(), fd, ret);
-		throw RuntimeError("Failed to attach VFIO group to container");
-	}
+	if (ret < 0)
+		throw SystemError("Failed to attach VFIO group {} to container fd {}",
+			group->getIndex(), fd);
 
 	// Set IOMMU type
 	int iommu_type = isIommuEnabled() ? VFIO_TYPE1_IOMMU : VFIO_NOIOMMU_IOMMU;
 
 	ret = ioctl(fd, VFIO_SET_IOMMU, iommu_type);
-	if (ret < 0) {
-		log->error("Failed to set IOMMU type of container: {}", ret);
-		throw RuntimeError("Failed to set IOMMU type of container");
-	}
+	if (ret < 0)
+		throw SystemError("Failed to set IOMMU type of container");
 
 	group->setAttachedToContainer();
 
@@ -167,15 +160,13 @@ std::shared_ptr<Group> Container::getOrAttachGroup(int index)
 {
 	// Search if group with index already exists
 	for (auto &group : groups) {
-		if (group->getIndex() == index) {
+		if (group->getIndex() == index)
 			return group;
-		}
 	}
 
 	// Group not yet part of this container, so acquire ownership
 	auto group = std::make_shared<Group>(index, isIommuEnabled());
 	attachGroup(group);
-
 
 	return group;
 }
@@ -186,13 +177,11 @@ void Container::dump()
 	log->info("Version: {}", version);
 
 	// Check available VFIO extensions (IOMMU types)
-	for (size_t i = 0; i < extensions.size(); i++) {
+	for (size_t i = 0; i < extensions.size(); i++)
 		log->debug("VFIO extension {} ({}) is {}", extensions[i], VFIO_EXTENSION_STR[i], extensions[i] ? "available" : "not available");
-	}
 
-	for (auto &group : groups) {
+	for (auto &group : groups)
 		group->dump();
-	}
 }
 
 std::shared_ptr<Device> Container::attachDevice(const std::string& name, int index)
@@ -225,14 +214,14 @@ std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev)
 	}
 
 	// Get IOMMU group of device
-	int index = isIommuEnabled() ? pdev.getIOMMUGroup() : 0;
+	int index = isIommuEnabled() ? pdev.getIommuGroup() : 0;
 	if (index < 0) {
 		ret = kernel::getCmdlineParam("intel_iommu", iommu_state, sizeof(iommu_state));
 		if (ret != 0 || strcmp("on", iommu_state) != 0)
 			log->warn("Kernel booted without command line parameter "
-					"'intel_iommu' set to 'on'. Please check documentation "
-					"(https://villas.fein-aachen.org/doc/fpga-setup.html) "
-					"for help with troubleshooting.");
+			          "'intel_iommu' set to 'on'. Please check documentation "
+			          "(https://villas.fein-aachen.org/doc/fpga-setup.html) "
+			          "for help with troubleshooting.");
 
 		throw RuntimeError("Failed to get IOMMU group of device");
 	}
@@ -245,14 +234,12 @@ std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev)
 	auto group = getOrAttachGroup(index);
 	auto device = group->attachDevice(name, &pdev);
 
-
 	// Check if this is really a vfio-pci device
 	if (!device->isVfioPciDevice())
 		throw RuntimeError("Device is not a vfio-pci device");
 
 	return device;
 }
-
 
 uintptr_t Container::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
@@ -323,4 +310,3 @@ bool Container::memoryUnmap(uintptr_t phys, size_t length)
 
 	return true;
 }
-
