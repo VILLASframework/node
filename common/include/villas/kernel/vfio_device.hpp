@@ -22,7 +22,6 @@
 #include <villas/kernel/pci.hpp>
 #include <villas/log.hpp>
 
-
 namespace villas {
 namespace kernel {
 namespace vfio {

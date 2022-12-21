@@ -31,8 +31,7 @@ public:
 		class_code(cc)
 	{ }
 
-	bool
-	operator==(const Id &i);
+	bool operator==(const Id &i);
 
 	unsigned int vendor;
 	unsigned int device;
@@ -50,8 +49,7 @@ public:
 		function(fcn)
 	{ }
 
-	bool
-	operator==(const Slot &s);
+	bool operator==(const Slot &s);
 
 	unsigned int domain;
 	unsigned int bus;
@@ -87,35 +85,29 @@ public:
 	bool
 	operator==(const Device &other);
 
-	/** Get currently loaded driver for device */
-	std::string
-	getDriver() const;
+	// Get currently loaded driver for device.
+	std::string getDriver() const;
 
-	/** Bind a new LKM to the PCI device */
-	bool
-	attachDriver(const std::string &driver) const;
+	// Bind a new LKM to the PCI device.
+	bool attachDriver(const std::string &driver) const;
 
-	/** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
-	int
-	getIOMMUGroup() const;
+	// Return the IOMMU group of this PCI device or -1 if the device is not in a group.
+	int getIommuGroup() const;
 
-	std::list<Region>
-	getRegions() const;
+	std::list<Region> getRegions() const;
 
-	/** Write 32-bit BAR value from to the PCI configuration space */
+	// Write 32-bit BAR value from to the PCI configuration space
 	bool writeBar(uint32_t new_bar);
 
-	/** If BAR values in config space and in the kernel do not match, rewrite
-	 * the BAR value of the kernel to PCIe config space.
-	 */
+	// If BAR values in config space and in the kernel do not match, rewrite
+	// the BAR value of the kernel to PCIe config space.
 	bool rewriteBar();
 
-	/** Read 32-bit BAR value from the PCI configuration space */
+	// Read 32-bit BAR value from the PCI configuration space.
 	bool readBar(uint32_t &bar) const;
 
-	/** Read 32-bit BAR value from the devices resource file. This is what the kernel
-	 * thinks the BAR should be.
-	 */
+	// Read 32-bit BAR value from the devices resource file. This is what the kernel
+	// thinks the BAR should be.
 	bool readHostBar(uint32_t &bar) const;
 
 	Id id;
@@ -126,20 +118,16 @@ private:
 
 class DeviceList : public std::list<std::shared_ptr<Device>> {
 public:
-	/** Initialize Linux PCI handle.
-	 *
-	 * This search for all available PCI devices under /sys/bus/pci
-	 */
+	// Initialize Linux PCI handle.
+	//
+	// This search for all available PCI devices under /sys/bus/pci
 	DeviceList();
 
-	DeviceList::value_type
-	lookupDevice(const Slot &s);
+	DeviceList::value_type lookupDevice(const Slot &s);
 
-	DeviceList::value_type
-	lookupDevice(const Id &i);
+	DeviceList::value_type lookupDevice(const Id &i);
 
-	DeviceList::value_type
-	lookupDevice(const Device &f);
+	DeviceList::value_type lookupDevice(const Device &f);
 };
 
 } // namespace pci
