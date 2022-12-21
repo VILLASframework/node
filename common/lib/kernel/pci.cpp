@@ -362,124 +362,64 @@ bool Device::attachDriver(const std::string &driver) const
 	return true;
 }
 
-
-bool Device::readHostBar(uint32_t &bar) const
+uint32_t Device::readHostBar(unsigned bar) const
 {
-	unsigned long long start, end, size, flags;
+	auto file = openSysFs("resource", std::ios_base::in);
 
-	char *path = NULL;
-	if (asprintf(&path, "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource", SYSFS_PATH,
-				 slot.domain, slot.bus, slot.device, slot.function) == -1) {
-		log->error("could not allocate memory for path");
-		return false;
-	}
+	std::string line;
 
-	FILE *file = fopen(path, "r");
-	if (!file) {
-		log->error("error opening resource file");
-		return false;
-	}
+	unsigned i;
+	for (i = 0; i <= bar && !file.eof(); i++)
+		std::getline(file, line);
 
-	if (fscanf(file, "%llx %llx %llx", &start, &end, &flags) != 3) {
-		log->error("error reading resource file");
-		fclose(file);
-		return false;
-	}
+	if (i != bar && file.eof())
+		throw RuntimeError("Failed to read resource file");
+
+	unsigned long long start, end, flags;
+	std::istringstream(line) >> std::hex >> start >> end >> flags;
 
 	if (end > start)
-		size = end - start + 1;
-	else {
-		log->error("error reading bar size");
-		fclose(file);
-		return false;
-	}
+		throw SystemError("Invalid BAR: start={}, end={}", start, end);
 
-	log->debug("Start: {:#x}, end: {:#x}, size: {:#x}, flags: {:#x}", start, end, size, flags);
+	log->debug("Host BAR: start={:#x}, end={:#x}, flags={:#x}", start, end, flags);
 
-	fclose(file);
-	bar = start;
-
-	return true;
+	return start;
 }
 
-bool Device::rewriteBar()
+void Device::rewriteBar(unsigned bar)
 {
-	uint32_t hostbar, configbar;
-	if (!readHostBar(hostbar)) {
-		log->error("Error reading host bar");
-		return false;
-	}
+	auto hostBar = readHostBar(bar);
+	auto configBar = readBar(bar);
 
-	if (!readBar(configbar)) {
-		log->error("Error reading config bar");
-		return false;
-	}
-	log->debug("Host BAR: {:#x}, configbar: {:#x}", hostbar, configbar);
+	log->debug("Host BAR: {:#x}, configbar: {:#x}", hostBar, configBar);
 
-	if (hostbar == configbar) {
+	if (hostBar == configBar) {
 		log->debug("BAR is already correct");
-		return true;
-	} else {
-		log->debug("BAR is incorrect, rewriting");
-		return writeBar(hostbar);
+		return;
 	}
+
+	log->debug("BAR is incorrect, rewriting");
+
+	writeBar(hostBar, bar);
 }
 
-bool Device::readBar(uint32_t &bar) const
+uint32_t Device::readBar(unsigned bar) const
 {
-	off_t pos = PCI_BASE_ADDRESS_0;
-	uint32_t read_buf;
-	char *path = NULL;
-	if (asprintf(&path, "%s/bus/pci/devices/%04x:%02x:%02x.%x/config", SYSFS_PATH,
-				 slot.domain, slot.bus, slot.device, slot.function) == -1) {
-		log->error("could not allocate memory for path");
-		return false;
-	}
+	uint32_t addr;
+	auto file = openSysFs("config", std::ios_base::in);
 
-	int fd = open(path, O_RDWR);
-	if (fd < 0) {
-		log->error("could not open config space");
-		return false;
-	}
+	file.seekg(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * bar);
+	file.read(reinterpret_cast<char *>(&addr), sizeof(addr));
 
-	if (pread(fd, &read_buf, sizeof(read_buf), pos) != sizeof(read_buf)) {
-		log->error("error reading from {:#x}", pos);
-		close(fd);
-		return false;
-	}
-
-	bar = read_buf;
-	close(fd);
-
-	return true;
+	return addr;
 }
 
-bool Device::writeBar(uint32_t new_bar)
+void Device::writeBar(uint32_t addr, unsigned bar)
 {
-	uint32_t write_buf = new_bar;
-	off_t pos = PCI_BASE_ADDRESS_0;
-	char *path = NULL;
+	auto file = openSysFs("config", std::ios_base::out);
 
-	if (asprintf(&path, "%s/bus/pci/devices/%04x:%02x:%02x.%x/config", SYSFS_PATH,
-				 slot.domain, slot.bus, slot.device, slot.function) == -1) {
-		log->error("could not allocate memory for path");
-		return false;
-	}
-
-	int fd = open(path, O_RDWR);
-	if (fd < 0) {
-		log->error("could not open config space");
-		return false;
-	}
-
-	if (pwrite(fd, &write_buf, sizeof(write_buf), pos) != sizeof(write_buf)) {
-		log->error("error writing to {:#x}", pos);
-		close(fd);
-		return false;
-	}
-
-	close(fd);
-	return true;
+	file.seekp(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * bar);
+	file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
 int Device::getIommuGroup() const
@@ -501,4 +441,17 @@ int Device::getIommuGroup() const
 	group = basename(link);
 
 	return atoi(group);
+}
+
+std::fstream Device::openSysFs(const std::string subPath, std::ios_base::openmode mode) const
+{
+	std::fstream file;
+
+	auto sysFsFilename = fmt::format("{}/bus/pci/devices/{:04x}:{:02x}:{:02x}.{:x}/{}", SYSFS_PATH,
+		slot.domain, slot.bus, slot.device, slot.function, subPath);
+
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	file.open(sysFsFilename, mode);
+
+	return file;
 }

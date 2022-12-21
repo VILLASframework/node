@@ -207,10 +207,12 @@ std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev)
 		log->debug("Bind PCI card to kernel driver '{}'", kernelDriver);
 		pdev.attachDriver(kernelDriver);
 	}
-	if (!pdev.rewriteBar()) {
-		log->error("BAR of device is in inconsistent state. Rewriting the BAR "
-				   "failed. Please remove, rescan and reset the device and try again.");
-		throw RuntimeError("Failed to rewrite BAR of device");
+
+	try {
+		pdev.rewriteBar();
+	} catch (std::exception &e) {
+		throw RuntimeError("BAR of device is in inconsistent state. Rewriting the BAR "
+		           "failed. Please remove, rescan and reset the device and try again.");
 	}
 
 	// Get IOMMU group of device
