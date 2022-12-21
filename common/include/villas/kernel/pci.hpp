@@ -8,10 +8,12 @@
 
 #pragma once
 
+#include <list>
+#include <fstream>
+
 #include <cstddef>
 #include <cstdint>
 
-#include <list>
 #include <villas/log.hpp>
 
 namespace villas {
@@ -97,23 +99,26 @@ public:
 	std::list<Region> getRegions() const;
 
 	// Write 32-bit BAR value from to the PCI configuration space
-	bool writeBar(uint32_t new_bar);
+	void writeBar(uint32_t addr, unsigned bar = 0);
 
 	// If BAR values in config space and in the kernel do not match, rewrite
 	// the BAR value of the kernel to PCIe config space.
-	bool rewriteBar();
+	void rewriteBar(unsigned bar = 0);
 
 	// Read 32-bit BAR value from the PCI configuration space.
-	bool readBar(uint32_t &bar) const;
+	uint32_t readBar(unsigned bar = 0) const;
 
 	// Read 32-bit BAR value from the devices resource file. This is what the kernel
 	// thinks the BAR should be.
-	bool readHostBar(uint32_t &bar) const;
+	uint32_t readHostBar(unsigned bar = 0) const;
 
 	Id id;
 	Slot slot;
 private:
 	villas::Logger log;
+
+protected:
+	std::fstream openSysFs(const std::string subPath, std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out) const;
 };
 
 class DeviceList : public std::list<std::shared_ptr<Device>> {
