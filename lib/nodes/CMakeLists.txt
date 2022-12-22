@@ -35,6 +35,10 @@ if(WITH_NODE_SIGNAL)
     list(APPEND NODE_SRC signal.cpp signal_v1.cpp)
 endif()
 
+if(WITH_NODE_SMU)
+    list(APPEND NODE_SRC smu.cpp)
+endif()
+
 if(WITH_NODE_LOOPBACK)
     list(APPEND NODE_SRC loopback.cpp)
 endif()

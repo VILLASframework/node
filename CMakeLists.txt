@@ -293,6 +293,7 @@ add_feature_info(NODE_SHMEM             WITH_NODE_SHMEM             "Build with 
 add_feature_info(NODE_SIGNAL            WITH_NODE_SIGNAL            "Build with signal node-type")
 add_feature_info(NODE_SOCKET            WITH_NODE_SOCKET            "Build with socket node-type")
 add_feature_info(NODE_STATS             WITH_NODE_STATS             "Build with stats node-type")
+add_feature_info(NODE_SMU               WITH_NODE_SMU             "Build with smu node-type")
 add_feature_info(NODE_TEMPER            WITH_NODE_TEMPER            "Build with temper node-type")
 add_feature_info(NODE_TEST_RTT          WITH_NODE_TEST_RTT          "Build with test_rtt node-type")
 add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with uldaq node-type")
