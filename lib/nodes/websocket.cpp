@@ -14,6 +14,7 @@
 #include <libwebsockets.h>
 
 #include <villas/timing.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/utils.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/websocket.hpp>
@@ -333,6 +334,9 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 int villas::node::websocket_type_start(villas::node::SuperNode *sn)
 {
+	if (sn == nullptr)
+		throw RuntimeError("WebSocket node-type requires super-node");
+
 	web = sn->getWeb();
 	if (!web->isEnabled())
 		return -1;
