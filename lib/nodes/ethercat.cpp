@@ -102,6 +102,9 @@ int villas::node::ethercat_type_start(villas::node::SuperNode *sn)
 	int ret;
 	json_error_t err;
 
+	if (sn == nullptr)
+		throw RuntimeError("EtherCAT node-type requires super-node");
+
 	json_t *json = sn->getConfig();
 	if (json) {
 		ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?:i, s?: { s?: { s?: i, s?: i, s?: i } } }",

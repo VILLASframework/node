@@ -577,7 +577,8 @@ int villas::node::ngsi_type_start(villas::node::SuperNode *sn)
 	CRYPTO_set_id_callback(curl_ssl_thread_id_function);
 	CRYPTO_set_locking_callback(curl_ssl_locking_function);
 
-	sn->getLogger()->info("Setup libcurl/openssl locking primitives");
+	auto logger = logging.get("curl");
+	logger->info("Setup libcurl/openssl locking primitives");
 #endif /* CURL_SSL_REQUIRES_LOCKING */
 
 	return curl_global_init(CURL_GLOBAL_ALL);

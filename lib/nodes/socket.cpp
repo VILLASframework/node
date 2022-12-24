@@ -40,18 +40,20 @@ static NodeCompatFactory ncp(&p);
 int villas::node::socket_type_start(villas::node::SuperNode *sn)
 {
 #ifdef WITH_NETEM
-	/* Gather list of used network interfaces */
-	for (auto *n : ncp.instances) {
-		auto *nc = dynamic_cast<NodeCompat *>(n);
-		auto *s = nc->getData<struct Socket>();
+	if (sn != nullptr) {
+		// Gather list of used network interfaces
+		for (auto *n : ncp.instances) {
+			auto *nc = dynamic_cast<NodeCompat *>(n);
+			auto *s = nc->getData<struct Socket>();
 
-		if (s->layer == SocketLayer::UNIX)
-			continue;
+			if (s->layer == SocketLayer::UNIX)
+				continue;
 
-		/* Determine outgoing interface */
-		Interface *j = Interface::getEgress((struct sockaddr *) &s->out.saddr, sn);
+			/* Determine outgoing interface */
+			Interface *j = Interface::getEgress((struct sockaddr *) &s->out.saddr, sn);
 
-		j->addNode(n);
+			j->addNode(n);
+		}
 	}
 #endif /* WITH_NETEM */
 
