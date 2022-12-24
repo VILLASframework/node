@@ -9,6 +9,7 @@
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/stats.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
@@ -71,6 +72,9 @@ invalid_format:
 
 int villas::node::stats_node_type_start(villas::node::SuperNode *sn)
 {
+	if (sn == nullptr)
+		throw RuntimeError("Stats node-type requires super-node");
+
 	nodes = sn->getNodes();
 
 	return 0;

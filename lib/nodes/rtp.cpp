@@ -467,16 +467,18 @@ int villas::node::rtp_type_start(villas::node::SuperNode *sn)
 		return ret;
 
 #ifdef WITH_NETEM
-	/* Gather list of used network interfaces */
-	for (auto *n : ncp.instances) {
-		auto *nc = dynamic_cast<NodeCompat *>(n);
-		auto *r = nc->getData<struct rtp>();
-		Interface *j = Interface::getEgress(&r->out.saddr_rtp.u.sa, sn);
+	if (sn != nullptr) {
+		// Gather list of used network interfaces
+		for (auto *n : ncp.instances) {
+			auto *nc = dynamic_cast<NodeCompat *>(n);
+			auto *r = nc->getData<struct rtp>();
+			Interface *j = Interface::getEgress(&r->out.saddr_rtp.u.sa, sn);
 
-		if (!j)
-			throw RuntimeError("Failed to find egress interface");
+			if (!j)
+				throw RuntimeError("Failed to find egress interface");
 
-		j->addNode(n);
+			j->addNode(n);
+		}
 	}
 #endif /* WITH_NETEM */
 
