@@ -167,6 +167,9 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 
 PCIeCard::~PCIeCard()
 {
+	// Ensure IP destructors are called before memory is unmapped
+	ips.clear();
+
 	auto &mm = MemoryManager::get();
 
 	// Unmap all memory blocks
