@@ -205,6 +205,12 @@ bool Dma::reset()
 
 Dma::~Dma()
 {
+	// Unmap memory in our ownership, MemoryBlock gets deleted and removed from
+	// graph by this destructor as well.
+	if (hasScatterGather()) {
+		card->unmapMemoryBlock(*sgRingTx);
+		card->unmapMemoryBlock(*sgRingRx);
+	}
 	Dma::reset();
 }
 

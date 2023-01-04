@@ -88,8 +88,8 @@ public:
 	std::shared_ptr<ip::Core>
 	lookupIp(const ip::IpIdentifier &id) const;
 
-	bool
-	mapMemoryBlock(const MemoryBlock &block);
+	bool mapMemoryBlock(const MemoryBlock &block);
+	bool unmapMemoryBlock(const MemoryBlock &block);
 
 private:
 	// Cache a set of already mapped memory blocks
