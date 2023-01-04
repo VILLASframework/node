@@ -1,7 +1,9 @@
 /** Streaming data from STDIN/OUT to FPGA.
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
+ * @author Niklas Eiling <niklas.eiling@rwth-aachen.de>
  * @copyright 2017-2022, Steffen Vogel
+ * @copyright 2022-2023, Niklas Eiling
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
@@ -48,6 +50,8 @@ using namespace villas;
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("cat");
 
+
+
 int main(int argc, char* argv[])
 {
 	// Command Line Parser
@@ -60,6 +64,11 @@ int main(int argc, char* argv[])
 
 		std::string fpgaName = "vc707";
 		app.add_option("--fpga", fpgaName, "Which FPGA to use");
+		std::string connectStr = "";
+		app.add_option("-x,--connect", connectStr, "Connect a FPGA port with another or stdin/stdout");
+		bool noDma = false;
+		app.add_flag("--no-dma", noDma, "Do not setup DMA, only setup FPGA and Crossbar links");
+
 		app.parse(argc, argv);
 
 		// Logging setup
@@ -105,50 +114,48 @@ int main(int argc, char* argv[])
 			aurora->dump();
 
 		// Configure Crossbar switch
-#if 1
-		aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), dma->getDefaultSlavePort());
-		dma->connect(dma->getDefaultMasterPort(), aurora_channels[2]->getDefaultSlavePort());
-#else
-		dma->connectLoopback();
-#endif
-		for (auto b : block) {
-			dma->makeAccesibleFromVA(b);
-		}
+		fpga::configCrossBarUsingConnectString(connectStr, dma, aurora_channels);
 
-		auto &mm = MemoryManager::get();
-		mm.getGraph().dump("graph.dot");
-
-		// Setup read transfer
-		dma->read(block[0], block[0].getSize());
-		size_t cur = 0, next = 1;
-		while (true) {
-			dma->read(block[next], block[next].getSize());
-			auto bytesRead = dma->readComplete();
-			// Setup read transfer
-
-			//auto valuesRead = bytesRead / sizeof(int32_t);
-			//logger->info("Read {} bytes", bytesRead);
-
-			//for (size_t i = 0; i < valuesRead; i++)
-			//	std::cerr << std::hex << mem[i] << ";";
-			//std::cerr << std::endl;
-
-			for (size_t i = 0; i*4 < bytesRead; i++) {
-				int32_t ival = mem[cur][i];
-				float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
-				//std::cerr << std::hex << ival << ",";
-				std::cerr << fval << std::endl;
-				/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-					 (int64_t)(mem[1] & 0xFFFF0000) << 16 |
-					 (int64_t)(mem[0] & 0xFFFF) << 16 |
-					 (int64_t)(mem[0] & 0xFFFF0000) >> 16;
-				double dval = *((double*)(&ival));
-				std::cerr << std::hex << ival << "," << dval << std::endl;
-				bytesRead -= 8;*/
-				//logger->info("Read value: {}", dval);
+		if (!noDma) {
+			for (auto b : block) {
+				dma->makeAccesibleFromVA(b);
 			}
-			cur = next;
-			next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
+
+			auto &mm = MemoryManager::get();
+			mm.getGraph().dump("graph.dot");
+
+			// Setup read transfer
+			dma->read(block[0], block[0].getSize());
+			size_t cur = 0, next = 1;
+			while (true) {
+				dma->read(block[next], block[next].getSize());
+				auto bytesRead = dma->readComplete();
+				// Setup read transfer
+
+				//auto valuesRead = bytesRead / sizeof(int32_t);
+				//logger->info("Read {} bytes", bytesRead);
+
+				//for (size_t i = 0; i < valuesRead; i++)
+				//	std::cerr << std::hex << mem[i] << ";";
+				//std::cerr << std::endl;
+
+				for (size_t i = 0; i*4 < bytesRead; i++) {
+					int32_t ival = mem[cur][i];
+					float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
+					//std::cerr << std::hex << ival << ",";
+					std::cerr << fval << std::endl;
+					/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
+						(int64_t)(mem[1] & 0xFFFF0000) << 16 |
+						(int64_t)(mem[0] & 0xFFFF) << 16 |
+						(int64_t)(mem[0] & 0xFFFF0000) >> 16;
+					double dval = *((double*)(&ival));
+					std::cerr << std::hex << ival << "," << dval << std::endl;
+					bytesRead -= 8;*/
+					//logger->info("Read value: {}", dval);
+				}
+				cur = next;
+				next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
+			}
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());

@@ -32,6 +32,10 @@ namespace fpga {
 std::shared_ptr<fpga::PCIeCard>
 setupFpgaCard(const std::string &configFile, const std::string &fpgaName);
 
+void configCrossBarUsingConnectString(std::string connectString,
+	std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels);
+
 void setupColorHandling();
 
 } /* namespace fpga */
