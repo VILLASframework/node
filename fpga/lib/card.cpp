@@ -226,7 +226,6 @@ bool PCIeCard::unmapMemoryBlock(const MemoryBlock &block)
 
 	auto &mm = MemoryManager::get();
 
-	// Unmap all memory blocks
 	auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, block.getAddrSpaceId());
 
 	const uintptr_t iova = translation.getLocalAddr(0);
