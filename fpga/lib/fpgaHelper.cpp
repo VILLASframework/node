@@ -26,6 +26,7 @@
 #include <string>
 #include <algorithm>
 #include <jansson.h>
+#include <regex>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
@@ -47,6 +48,64 @@ using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("streamer");
+
+const std::shared_ptr<villas::fpga::ip::Node> portStringToStreamVertex(std::string &str,
+	std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels)
+{
+	if (str == "stdin" || str == "stdout") {
+		 return dma;
+	} else {
+		int port = std::stoi(str);
+
+		if (port > 7 || port < 0)
+			throw std::runtime_error("Invalid port number");
+
+		return aurora_channels[port];
+	}
+}
+// parses a string lik "1->2" or "1<->stdout" and configures the crossbar
+void fpga::configCrossBarUsingConnectString(std::string connectString,
+	std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels)
+{
+	bool bidirectional = false;
+	bool invert = false;
+
+	if (connectString.empty())
+		return;
+
+	if (connectString == "loopback") {
+		logger->info("Connecting loopback");
+		// is this working?
+		dma->connectLoopback();
+	}
+
+	static std::regex re("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
+	std::smatch match;
+
+	if (!std::regex_match(connectString, match, re)) {
+		logger->error("Invalid connect string: {}", connectString);
+		throw std::runtime_error("Invalid connect string");
+	}
+	if (match[2] == "<->") {
+		bidirectional = true;
+	} else if(match[2] == "<-") {
+		invert = true;
+	}
+
+	std::string srcStr = (invert ? match[3] : match[1]);
+	std::string dstStr = (invert ? match[1] : match[3]);
+	logger->info("Connect string {}: Connecting {} to {}, {}directional",
+		connectString, srcStr, dstStr,
+		(bidirectional ? "bi" : "uni"));
+	auto src = portStringToStreamVertex(srcStr, dma, aurora_channels);
+	auto dest = portStringToStreamVertex(dstStr, dma, aurora_channels);
+	src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
+	if (bidirectional) {
+		dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
+	}
+}
 
 void fpga::setupColorHandling()
 {

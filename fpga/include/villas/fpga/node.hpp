@@ -94,11 +94,6 @@ public:
 
 	friend class NodeFactory;
 
-	struct StreamPort {
-		int portNumber;
-		std::string nodeName;
-	};
-
 	const StreamVertex& getMasterPort(const std::string &name) const
 	{
 		return *portsMaster.at(name);

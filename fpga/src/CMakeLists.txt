@@ -20,18 +20,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-add_executable(villas-fpga-pipe villas-fpga-pipe.cpp)
-add_executable(villas-fpga-cat villas-fpga-cat.cpp)
-add_executable(villas-fpga-xbar-select villas-fpga-xbar-select.cpp)
+add_executable(villas-fpga-ctrl villas-fpga-ctrl.cpp)
 
-target_link_libraries(villas-fpga-pipe PUBLIC
-	villas-fpga
-)
-target_link_libraries(villas-fpga-cat PUBLIC
-	villas-fpga
-)
-target_link_libraries(villas-fpga-xbar-select PUBLIC
+target_link_libraries(villas-fpga-ctrl PUBLIC
 	villas-fpga
 )
 
 add_executable(pcimem pcimem.c)
+
+configure_file(villas-fpga-cat.sh villas-fpga-cat.sh COPYONLY)
+configure_file(villas-fpga-xbar-select.sh villas-fpga-xbar-select.sh COPYONLY)

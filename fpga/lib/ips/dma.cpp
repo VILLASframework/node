@@ -191,22 +191,26 @@ bool Dma::reset()
 	int timeout = 500;
 
 	while (timeout > 0) {
-		if (XAxiDma_ResetIsDone(&xDma))
+		if (XAxiDma_ResetIsDone(&xDma)) {
+			logger->info("DMA has been reset.");
 			return true;
+		}
 
 		timeout--;
 	}
-	if (timeout == 0) {
-		logger->error("DMA reset timed out");
-	} else {
-		logger->info("DMA has been reset.");
-	}
+	logger->error("DMA reset timed out");
 
 	return false;
 }
 
 Dma::~Dma()
 {
+	// Unmap memory in our ownership, MemoryBlock gets deleted and removed from
+	// graph by this destructor as well.
+	if (hasScatterGather()) {
+		card->unmapMemoryBlock(*sgRingTx);
+		card->unmapMemoryBlock(*sgRingRx);
+	}
 	Dma::reset();
 }
 

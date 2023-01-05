@@ -167,6 +167,9 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 
 PCIeCard::~PCIeCard()
 {
+	// Ensure IP destructors are called before memory is unmapped
+	ips.clear();
+
 	auto &mm = MemoryManager::get();
 
 	// Unmap all memory blocks
@@ -213,6 +216,28 @@ std::shared_ptr<ip::Core> PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 	}
 
 	return nullptr;
+}
+
+bool PCIeCard::unmapMemoryBlock(const MemoryBlock &block)
+{
+	if (memoryBlocksMapped.find(block.getAddrSpaceId()) == memoryBlocksMapped.end()) {
+		throw std::runtime_error("Block " + std::to_string(block.getAddrSpaceId()) + " is not mapped but was requested to be unmapped.");
+	}
+
+	auto &mm = MemoryManager::get();
+
+	auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, block.getAddrSpaceId());
+
+	const uintptr_t iova = translation.getLocalAddr(0);
+	const size_t size = translation.getSize();
+
+	logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
+			block.getAddrSpaceId(), iova, size);
+	vfioContainer->memoryUnmap(iova, size);
+
+	memoryBlocksMapped.erase(block.getAddrSpaceId());
+
+	return true;
 }
 
 bool PCIeCard::mapMemoryBlock(const MemoryBlock &block)
