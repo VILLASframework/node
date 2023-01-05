@@ -50,7 +50,7 @@ public:
 
 	bool memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len);
 
-	void makeAccesibleFromVA(const MemoryBlock &mem);
+	void makeAccesibleFromVA(std::shared_ptr<MemoryBlock> mem);
 	bool makeInaccesibleFromVA(const MemoryBlock &mem);
 
 	inline
@@ -134,8 +134,8 @@ private:
 	// Depending on alignment, the actual number of BDs usable can be smaller
 	static constexpr size_t requestedRingBdSize = 2048;
 	uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSize);
-	MemoryBlock::UniquePtr sgRingTx;
-	MemoryBlock::UniquePtr sgRingRx;
+	std::shared_ptr<MemoryBlock> sgRingTx;
+	std::shared_ptr<MemoryBlock> sgRingRx;
 };
 
 class DmaFactory : NodeFactory {

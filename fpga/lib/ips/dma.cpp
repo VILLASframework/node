@@ -84,7 +84,7 @@ void Dma::setupScatterGatherRingRx()
 	auto &alloc = villas::HostRam::getAllocator();
 	sgRingRx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
 
-	if (not card->mapMemoryBlock(*sgRingRx))
+	if (not card->mapMemoryBlock(sgRingRx))
 		throw RuntimeError("Memory not accessible by DMA");
 
 	auto &mm = MemoryManager::get();
@@ -129,7 +129,7 @@ void Dma::setupScatterGatherRingTx()
 	auto &alloc = villas::HostRam::getAllocator();
 	sgRingTx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
 
-	if (not card->mapMemoryBlock(*sgRingTx))
+	if (not card->mapMemoryBlock(sgRingTx))
 		throw RuntimeError("Memory not accessible by DMA");
 
 	auto &mm = MemoryManager::get();
@@ -564,11 +564,11 @@ Dma::readCompleteSimple()
 	return bytesRead;
 }
 
-void Dma::makeAccesibleFromVA(const MemoryBlock &mem)
+void Dma::makeAccesibleFromVA(std::shared_ptr<MemoryBlock> mem)
 {
 	// Only symmetric mapping supported currently
-	if (isMemoryBlockAccesible(mem, s2mmInterface) and
-		isMemoryBlockAccesible(mem, mm2sInterface))
+	if (isMemoryBlockAccesible(*mem, s2mmInterface) and
+		isMemoryBlockAccesible(*mem, mm2sInterface))
 		return;
 
 	// Try mapping via FPGA-card (VFIO)
@@ -576,8 +576,8 @@ void Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 		throw RuntimeError("Memory not accessible by DMA");
 
 	// Sanity-check if mapping worked, this shouldn't be neccessary
-	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
-		not isMemoryBlockAccesible(mem, mm2sInterface))
+	if (not isMemoryBlockAccesible(*mem, s2mmInterface) or
+		not isMemoryBlockAccesible(*mem, mm2sInterface))
 		throw RuntimeError("Mapping memory via card didn't work, but reported success?!");
 }
 

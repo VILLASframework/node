@@ -63,12 +63,15 @@ Test(fpga, dma, .description = "DMA")
 		auto dst = bram->getAllocator().allocate<char>(len);
 #else
 		// ... only works with IOMMU enabled currently
-		auto src = HostRam::getAllocator().allocate<char>(len);
-		auto dst = HostRam::getAllocator().allocate<char>(len);
+		auto &alloc = villas::HostRam::getAllocator();
+		const std::shared_ptr<villas::MemoryBlock> srcBlock = alloc.allocateBlock(len);
+		const std::shared_ptr<villas::MemoryBlock> dstBlock = alloc.allocateBlock(len);
+		villas::MemoryAccessor<char> src(*srcBlock);
+		villas::MemoryAccessor<char> dst(*dstBlock);
 #endif
 		// Make sure memory is accessible for DMA
-		dma->makeAccesibleFromVA(src.getMemoryBlock());
-		dma->makeAccesibleFromVA(dst.getMemoryBlock());
+		dma->makeAccesibleFromVA(srcBlock);
+		dma->makeAccesibleFromVA(dstBlock);
 
 		// Get new random data
 		const size_t lenRandom = utils::readRandom(&src, len);

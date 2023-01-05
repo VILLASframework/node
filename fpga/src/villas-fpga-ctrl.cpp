@@ -36,6 +36,56 @@ static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("ctrl");
 
 
+void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma)
+{
+	auto &alloc = villas::HostRam::getAllocator();
+
+	const std::shared_ptr<villas::MemoryBlock> block[] = {
+		alloc.allocateBlock(0x200 * sizeof(uint32_t)),
+		alloc.allocateBlock(0x200 * sizeof(uint32_t))
+	};
+	villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+
+	for (auto b : block) {
+		dma->makeAccesibleFromVA(b);
+	}
+
+	auto &mm = MemoryManager::get();
+	mm.getGraph().dump("graph.dot");
+
+	// Setup read transfer
+	dma->read(*block[0], block[0]->getSize());
+	size_t cur = 0, next = 1;
+	while (true) {
+		dma->read(*block[next], block[next]->getSize());
+		auto bytesRead = dma->readComplete();
+		// Setup read transfer
+
+		//auto valuesRead = bytesRead / sizeof(int32_t);
+		//logger->info("Read {} bytes", bytesRead);
+
+		//for (size_t i = 0; i < valuesRead; i++)
+		//	std::cerr << std::hex << mem[i] << ";";
+		//std::cerr << std::endl;
+
+		for (size_t i = 0; i*4 < bytesRead; i++) {
+			int32_t ival = mem[cur][i];
+			float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
+			//std::cerr << std::hex << ival << ",";
+			std::cerr << fval << std::endl;
+			/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
+				(int64_t)(mem[1] & 0xFFFF0000) << 16 |
+				(int64_t)(mem[0] & 0xFFFF) << 16 |
+				(int64_t)(mem[0] & 0xFFFF0000) >> 16;
+			double dval = *((double*)(&ival));
+			std::cerr << std::hex << ival << "," << dval << std::endl;
+			bytesRead -= 8;*/
+			//logger->info("Read value: {}", dval);
+		}
+		cur = next;
+		next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -66,12 +116,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		// This must be called before card is intialized, because the card descructor
-		// still accesses the allocated memory. This order ensures that the allocator
-		// is destroyed AFTER the card.
-		auto &alloc = villas::HostRam::getAllocator();
-		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
-		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};
+
 
 		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
@@ -103,45 +148,7 @@ int main(int argc, char* argv[])
 		parsedConnectString.configCrossBar(dma, aurora_channels);
 
 		if (!noDma) {
-			for (auto b : block) {
-				dma->makeAccesibleFromVA(b);
-			}
-
-			auto &mm = MemoryManager::get();
-			mm.getGraph().dump("graph.dot");
-
-			// Setup read transfer
-			dma->read(block[0], block[0].getSize());
-			size_t cur = 0, next = 1;
-			while (true) {
-				dma->read(block[next], block[next].getSize());
-				auto bytesRead = dma->readComplete();
-				// Setup read transfer
-
-				//auto valuesRead = bytesRead / sizeof(int32_t);
-				//logger->info("Read {} bytes", bytesRead);
-
-				//for (size_t i = 0; i < valuesRead; i++)
-				//	std::cerr << std::hex << mem[i] << ";";
-				//std::cerr << std::endl;
-
-				for (size_t i = 0; i*4 < bytesRead; i++) {
-					int32_t ival = mem[cur][i];
-					float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
-					//std::cerr << std::hex << ival << ",";
-					std::cerr << fval << std::endl;
-					/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-						(int64_t)(mem[1] & 0xFFFF0000) << 16 |
-						(int64_t)(mem[0] & 0xFFFF) << 16 |
-						(int64_t)(mem[0] & 0xFFFF0000) >> 16;
-					double dval = *((double*)(&ival));
-					std::cerr << std::hex << ival << "," << dval << std::endl;
-					bytesRead -= 8;*/
-					//logger->info("Read value: {}", dval);
-				}
-				cur = next;
-				next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
-			}
+			readFromDmaToStdOut(std::move(dma));
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
