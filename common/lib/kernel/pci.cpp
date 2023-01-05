@@ -21,6 +21,8 @@
 
 using namespace villas::kernel::pci;
 
+#define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
+
 DeviceList::DeviceList()
 {
 	struct dirent *e;
@@ -408,7 +410,7 @@ uint32_t Device::readBar(unsigned barNum) const
 	uint32_t addr;
 	auto file = openSysFs("config", std::ios_base::in);
 
-	file.seekg(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * barNum);
+	file.seekg(PCI_BASE_ADDRESS_N(barNum));
 	file.read(reinterpret_cast<char *>(&addr), sizeof(addr));
 
 	return addr;
@@ -418,7 +420,7 @@ void Device::writeBar(uint32_t addr, unsigned barNum)
 {
 	auto file = openSysFs("config", std::ios_base::out);
 
-	file.seekp(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * barNum);
+	file.seekp(PCI_BASE_ADDRESS_N(barNum));
 	file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
