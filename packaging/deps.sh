@@ -264,7 +264,7 @@ if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
     pushd redis-plus-plus/build
 
     # Somehow redis++ fails to find the hiredis include path on Debian multiarch builds
-    REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I/usr/local/include"
+    REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I${PREFIX}/include"
 
     cmake -DREDIS_PLUS_PLUS_BUILD_TEST=OFF \
           -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
