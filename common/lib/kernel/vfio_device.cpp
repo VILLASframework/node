@@ -79,8 +79,8 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 	if (ret < 0)
 		throw RuntimeError("Failed to get VFIO device info for: {}", name);
 
-	log->debug("device info: flags: 0x{:x}, num_regions: {}, num_irqs: {}, cap_offset: 0x{:x}",
-		info.flags, info.num_regions, info.num_irqs, info.cap_offset);
+	log->debug("device info: flags: 0x{:x}, num_regions: {}, num_irqs: {}",
+		info.flags, info.num_regions, info.num_irqs);
 
 	// device_info.num_region reports always 9 and includes a VGA region, which is only supported on
 	// certain device IDs. So for non-VGA devices VFIO_PCI_CONFIG_REGION_INDEX will be the highest
@@ -109,7 +109,6 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 
 		regions[i] = region;
 	}
-
 
 	// Get device IRQs
 	for (size_t i = 0; i < info.num_irqs; i++) {
