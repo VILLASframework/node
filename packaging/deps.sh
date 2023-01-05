@@ -98,7 +98,8 @@ if ! pkg-config "libzmq >= 2.2.0" && \
 fi
 
 # Build & Install EtherLab
-if [ -z "${SKIP_ETHERLAB}" ]; then
+if ! pkg-config "libethercat >= 1.5.2" && \
+    [ -z "${SKIP_ETHERLAB}" ]; then
    git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
