@@ -99,7 +99,8 @@ int main(int argc, char* argv[])
 			aurora->dump();
 
 		// Configure Crossbar switch
-		fpga::configCrossBarUsingConnectString(connectStr, dma, aurora_channels);
+		const fpga::ConnectString parsedConnectString(connectStr);
+		parsedConnectString.configCrossBar(dma, aurora_channels);
 
 		if (!noDma) {
 			for (auto b : block) {
