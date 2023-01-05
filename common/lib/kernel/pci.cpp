@@ -362,17 +362,17 @@ bool Device::attachDriver(const std::string &driver) const
 	return true;
 }
 
-uint32_t Device::readHostBar(unsigned bar) const
+uint32_t Device::readHostBar(unsigned barNum) const
 {
 	auto file = openSysFs("resource", std::ios_base::in);
 
 	std::string line;
 
 	unsigned i;
-	for (i = 0; i <= bar && !file.eof(); i++)
+	for (i = 0; i <= barNum && !file.eof(); i++)
 		std::getline(file, line);
 
-	if (i != bar && file.eof())
+	if (i != barNum && file.eof())
 		throw RuntimeError("Failed to read resource file");
 
 	unsigned long long start, end, flags;
@@ -381,15 +381,15 @@ uint32_t Device::readHostBar(unsigned bar) const
 	if (end > start)
 		throw SystemError("Invalid BAR: start={}, end={}", start, end);
 
-	log->debug("Host BAR: start={:#x}, end={:#x}, flags={:#x}", start, end, flags);
+	log->debug("Host BAR: start={:#x}, end={:#x}, size={:#x}, flags={:#x}", start, end, end - start, flags);
 
 	return start;
 }
 
-void Device::rewriteBar(unsigned bar)
+void Device::rewriteBar(unsigned barNum)
 {
-	auto hostBar = readHostBar(bar);
-	auto configBar = readBar(bar);
+	auto hostBar = readHostBar(barNum);
+	auto configBar = readBar(barNum);
 
 	log->debug("Host BAR: {:#x}, configbar: {:#x}", hostBar, configBar);
 
@@ -400,25 +400,25 @@ void Device::rewriteBar(unsigned bar)
 
 	log->debug("BAR is incorrect, rewriting");
 
-	writeBar(hostBar, bar);
+	writeBar(hostBar, barNum);
 }
 
-uint32_t Device::readBar(unsigned bar) const
+uint32_t Device::readBar(unsigned barNum) const
 {
 	uint32_t addr;
 	auto file = openSysFs("config", std::ios_base::in);
 
-	file.seekg(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * bar);
+	file.seekg(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * barNum);
 	file.read(reinterpret_cast<char *>(&addr), sizeof(addr));
 
 	return addr;
 }
 
-void Device::writeBar(uint32_t addr, unsigned bar)
+void Device::writeBar(uint32_t addr, unsigned barNum)
 {
 	auto file = openSysFs("config", std::ios_base::out);
 
-	file.seekp(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * bar);
+	file.seekp(PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * barNum);
 	file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
