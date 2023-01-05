@@ -24,7 +24,14 @@ namespace villas {
 namespace kernel {
 namespace vfio {
 
+// Backwards compatability with older kernels
+#ifdef VFIO_UPDATE_VADDR
 static constexpr size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR+1;
+#elif defined(VFIO_UNMAP_ALL)
+static constexpr size_t EXTENSION_SIZE = VFIO_UNMAP_ALL+1;
+#else
+static constexpr size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU+1;
+#endif
 
 class Container {
 public:

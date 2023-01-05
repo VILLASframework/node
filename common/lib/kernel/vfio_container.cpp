@@ -52,8 +52,13 @@ static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
 	ret[VFIO_TYPE1_NESTING_IOMMU] = "Type 1 Nesting";
 	ret[VFIO_SPAPR_TCE_v2_IOMMU] = "SPAPR TCE v2";
 	ret[VFIO_NOIOMMU_IOMMU] = "No IOMMU";
+// Backwards compatability with older kernels
+#ifdef VFIO_UNMAP_ALL
 	ret[VFIO_UNMAP_ALL] = "Unmap all";
+#endif
+#ifdef VFIO_UPDATE_VADDR
 	ret[VFIO_UPDATE_VADDR] = "Update vaddr";
+#endif
 	return ret;
 }
 
