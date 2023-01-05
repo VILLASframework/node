@@ -15,4 +15,4 @@
 
 CWD=$(dirname -- "$0")
 
-${CWD}/villas-fpga-cat -c ${CWD}/../../etc/fpgas.json --connect "2<->stdout"
+${CWD}/villas-fpga-ctrl -c ${CWD}/../../etc/fpgas.json --connect "2<->stdout"

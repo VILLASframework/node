@@ -16,4 +16,4 @@
 CWD=$(dirname -- "$0")
 
 # currently connects RTDS and OPAL-RT
-${CWD}/villas-fpga-cat -c ${CWD}/../../etc/fpgas.json --connect "0<->1" --no-dma
+${CWD}/villas-fpga-ctrl -c ${CWD}/../../etc/fpgas.json --connect "0<->1" --no-dma
