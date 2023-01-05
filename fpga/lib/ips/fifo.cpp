@@ -33,10 +33,6 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static FifoFactory factory;
-static FifoDataFactory factoryData;
-
 bool Fifo::init()
 {
 	XLlFifo_Config fifo_cfg;
@@ -109,3 +105,12 @@ size_t Fifo::read(void *buf, size_t len)
 	return nextlen;
 }
 
+static char n1[] = "fifo";
+static char d1[] = "Xilinx's AXI4 FIFO data mover";
+static char v1[] = "xilinx.com:ip:axi_fifo_mm_s:";
+static NodePlugin<Fifo, n1, d1, v1> p1;
+
+static char n2[] = "fifo_data";
+static char d2[] = "Xilinx's AXI4 data stream FIFO";
+static char v2[] = "xilinx.com:ip:axis_data_fifo:";
+static NodePlugin<FifoData, n2, d2, v2> p2;

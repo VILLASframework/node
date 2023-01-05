@@ -33,9 +33,6 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static InterruptControllerFactory factory;
-
 InterruptController::~InterruptController()
 {
 	card->vfioDevice->pciMsiDeinit(this->efds);
@@ -167,3 +164,7 @@ InterruptController::waitForInterrupt(int irq)
 	}
 }
 
+static char n[] = "intc";
+static char d[] = "Xilinx's programmable interrupt controller";
+static char v[] = "xilinx.com:module_ref:axi_pcie_intc:";
+static CorePlugin<InterruptController, n, d, v> f;

@@ -37,9 +37,6 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static DmaFactory factory;
-
 bool Dma::init()
 {
 	// Check if configJson has been called
@@ -672,3 +669,5 @@ void DmaFactory::parse(Core &ip, json_t *cfg)
 
 	dma.configDone = true;
 }
+
+static DmaFactory f;

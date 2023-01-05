@@ -27,18 +27,19 @@ set(SOURCES
 	node.cpp
 	fpgaHelper.cpp
 
-	ips/timer.cpp
-	ips/switch.cpp
+	ips/aurora_xilinx.cpp
+	ips/aurora.cpp
+	ips/bram.cpp
+	ips/dino.cpp
+	ips/dma.cpp
 	ips/emc.cpp
 	ips/fifo.cpp
+	ips/gpio.cpp
 	ips/intc.cpp
 	ips/pcie.cpp
-	ips/dma.cpp
-	ips/bram.cpp
 	ips/rtds.cpp
-	ips/aurora.cpp
-	ips/aurora_xilinx.cpp
-	ips/gpio.cpp
+	ips/switch.cpp
+	ips/timer.cpp
 
 	ips/rtds2gpu/rtds2gpu.cpp
 	ips/rtds2gpu/xrtds2gpu.c

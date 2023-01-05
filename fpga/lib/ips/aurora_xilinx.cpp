@@ -28,4 +28,7 @@
 
 using namespace villas::fpga::ip;
 
-static AuroraXilinxFactory auroraFactoryInstance;
+static char n[] = "aurora_xilinx";
+static char d[] = "Xilinx Aurora 8B/10B.";
+static char v[] = "xilinx.com:ip:aurora_8b10b:";
+static NodePlugin<AuroraXilinx, n, d, v> f;

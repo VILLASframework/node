@@ -27,11 +27,7 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static EMCFactory factory;
-
-bool
-EMC::init()
+bool EMC::init()
 {
 	int ret;
 	const uintptr_t base = getBaseAddr(registerMemory);
@@ -57,8 +53,7 @@ EMC::init()
 	return XFlash_IsReady(&xflash);
 }
 
-bool
-EMC::read(uint32_t offset, uint32_t length, uint8_t *data)
+bool EMC::read(uint32_t offset, uint32_t length, uint8_t *data)
 {
 	int ret;
 
@@ -79,8 +74,7 @@ EMC::read(uint32_t offset, uint32_t length, uint8_t *data)
 
 // objcopy -I ihex -O binary somefile.mcs somefile.bin
 
-bool
-EMC::flash(uint32_t offset, const std::string &filename)
+bool EMC::flash(uint32_t offset, const std::string &filename)
 {
 	bool result;
 	uint32_t length;
@@ -107,8 +101,7 @@ EMC::flash(uint32_t offset, const std::string &filename)
 }
 
 // Based on xilflash_readwrite_example.c
-bool
-EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
+bool EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 {
 	int ret = XST_FAILURE;
 	uint32_t start = offset;
@@ -164,3 +157,8 @@ EMC::flash(uint32_t offset, uint32_t length, uint8_t *data)
 
 	return true;
 }
+
+static char n[] = "emc";
+static char d[] = "Xilinx's AXI External Memory Controller";
+static char v[] = "xilinx.com:ip:axi_emc:";
+static CorePlugin<EMC, n, d, v> f;

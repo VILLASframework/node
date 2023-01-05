@@ -1,8 +1,7 @@
-/** AXI External Memory Controller (EMC)
+/** Driver for wrapper around standard Xilinx Aurora (xilinx.com:ip:aurora_8b10b)
  *
- * @file
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2017-2020, Steffen Vogel
+ * @copyright 2017-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
@@ -21,41 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <cstdint>
 
-#include <xilinx/xilflash.h>
+#include <villas/utils.hpp>
 
-#include <villas/fpga/core.hpp>
+#include <villas/fpga/ips/dino.hpp>
 
-namespace villas {
-namespace fpga {
-namespace ip {
+using namespace villas::fpga::ip;
 
-class EMC : public Core {
-public:
-
-	virtual
-	bool init() override;
-
-	bool flash(uint32_t offset, const std::string &filename);
-	bool flash(uint32_t offset, uint32_t length, uint8_t *data);
-
-	bool read(uint32_t offset, uint32_t length, uint8_t *data);
-
-private:
-
-	XFlash xflash;
-
-	static constexpr char registerMemory[] = "Reg";
-
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			registerMemory
-		};
-	}
-};
-
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+static char n[] = "dino";
+static char d[] = "Analog and Digital IO";
+static char v[] = "xilinx.com:module_ref:dino:";
+static NodePlugin<Dino, n, d, v> f;

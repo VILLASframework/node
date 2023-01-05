@@ -33,8 +33,7 @@
 
 using namespace villas::fpga::ip;
 
-StreamGraph
-Node::streamGraph;
+StreamGraph Node::streamGraph;
 
 void NodeFactory::parse(Core &ip, json_t *cfg)
 {

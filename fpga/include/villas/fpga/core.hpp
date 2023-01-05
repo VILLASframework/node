@@ -112,7 +112,8 @@ public:
 		card(nullptr)
 	{ }
 
-	virtual ~Core() = default;
+	virtual
+	~Core() = default;
 
 public:
 	// Generic management interface for IPs
@@ -305,18 +306,6 @@ protected:
 	void parse(Core &, json_t *)
 	{ }
 
-private:
-	// Create a concrete IP instance
-	virtual Core* create() = 0;
-
-	virtual
-	void configurePollingMode(Core &, PollingMode)
-	{ }
-
-	virtual
-	Vlnv getCompatibleVlnv() const = 0;
-
-protected:
 	static
 	Logger getStaticLogger()
 	{
@@ -324,8 +313,49 @@ protected:
 	}
 
 private:
+	virtual
+	void configurePollingMode(Core &, PollingMode)
+	{ }
+
+	virtual
+	Vlnv getCompatibleVlnv() const = 0;
+
+	// Create a concrete IP instance
+	virtual
+	Core* make() const = 0;
+
 	static
 	CoreFactory* lookup(const Vlnv &vlnv);
+};
+
+template<typename T, const char *name, const char *desc, const char *vlnv>
+class CorePlugin : public CoreFactory {
+
+public:
+virtual
+	std::string getName() const
+	{
+		return name;
+	}
+
+	virtual
+	std::string getDescription() const
+	{
+		return desc;
+	}
+
+private:
+	virtual
+	Vlnv getCompatibleVlnv() const
+	{
+		return Vlnv(vlnv);
+	}
+
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new T;
+	};
 };
 
 } /* namespace ip */

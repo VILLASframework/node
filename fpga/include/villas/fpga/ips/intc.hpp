@@ -84,39 +84,6 @@ private:
 	bool polling[maxIrqs];
 };
 
-class InterruptControllerFactory : public CoreFactory {
-public:
-
-	static constexpr const char*
-	getCompatibleVlnvString()
-	{
-		return "xilinx.com:module_ref:axi_pcie_intc:";
-	}
-
-	Core* create()
-	{
-		return new InterruptController;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "InterruptController";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx's programmable interrupt controller";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv(getCompatibleVlnvString());
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

@@ -59,26 +59,13 @@ private:
 	std::map<std::string, PciBar> pcieToAxiTranslations;
 };
 
-class AxiPciExpressBridgeFactory : public CoreFactory {
+class AxiPciExpressBridgeFactory : CoreFactory {
+
 public:
-
-	static constexpr
-	const char* getCompatibleVlnvString()
-	{
-		return "xilinx.com:ip:axi_pcie:";
-	}
-
-	void parse(Core &ip, json_t *cfg);
-
-	Core* create()
-	{
-		return new AxiPciExpressBridge;
-	}
-
 	virtual
 	std::string getName() const
 	{
-		return "AxiPciExpressBridge";
+		return "pcie";
 	}
 
 	virtual
@@ -87,11 +74,22 @@ public:
 		return "Xilinx's AXI-PCIe Bridge";
 	}
 
+private:
 	virtual
 	Vlnv getCompatibleVlnv() const
 	{
-		return Vlnv(getCompatibleVlnvString());
+		return Vlnv("xilinx.com:ip:axi_pcie:");
 	}
+
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new AxiPciExpressBridge;
+	};
+
+protected:
+	virtual
+	void parse(Core &, json_t *) override;
 };
 
 } /* namespace ip */

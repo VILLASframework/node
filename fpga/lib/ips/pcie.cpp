@@ -31,8 +31,6 @@
 
 using namespace villas::fpga::ip;
 
-static AxiPciExpressBridgeFactory factory;
-
 bool
 AxiPciExpressBridge::init()
 {
@@ -162,3 +160,5 @@ AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg)
 		}
 	}
 }
+
+static AxiPciExpressBridgeFactory p;

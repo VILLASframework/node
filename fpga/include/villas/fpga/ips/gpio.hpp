@@ -30,7 +30,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-class GeneralPurposeIO : public Core {
+class Gpio : public Core {
 public:
 
 	virtual
@@ -45,33 +45,6 @@ private:
 		return {
 			registerMemory
 		};
-	}
-};
-
-class GeneralPurposeIOFactory : public CoreFactory {
-public:
-
-	Core* create()
-	{
-		return new GeneralPurposeIO;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "GeneralPurposeIO";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx's AXI4 general purpose IO";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:axi_gpio:");
 	}
 };
 

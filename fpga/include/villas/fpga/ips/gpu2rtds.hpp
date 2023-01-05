@@ -66,33 +66,6 @@ public:
 	bool started;
 };
 
-class Gpu2RtdsFactory : public NodeFactory {
-public:
-
-	Core* create()
-	{
-		return new Gpu2Rtds;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "Gpu2Rtds";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "HLS Gpu2Rtds IP";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

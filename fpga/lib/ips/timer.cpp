@@ -32,9 +32,6 @@
 
 using namespace villas::fpga::ip;
 
-// Instantiate factory to make available to plugin infrastructure
-static TimerFactory factory;
-
 bool Timer::init()
 {
 	XTmrCtr_Config xtmr_cfg;
@@ -77,3 +74,8 @@ uint32_t Timer::remaining()
 {
 	return XTmrCtr_GetValue(&xTmr, 0);
 }
+
+static char n[] = "timer";
+static char d[] = "Xilinx's programmable timer / counter";
+static char v[] = "xilinx.com:ip:axi_timer:";
+static CorePlugin<Timer, n, d, v> f;

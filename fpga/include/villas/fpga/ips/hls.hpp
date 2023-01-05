@@ -150,33 +150,6 @@ protected:
 	bool running;
 };
 
-class HlsFactory : public CoreFactory {
-public:
-
-	Core* create()
-	{
-		return new Hls;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "HighLevelSynthesis";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx's HLS IP Cores";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("acs.eonerc.rwth-aachen.de:hls:");
-	}
-};
-
 } /* namespace ip */
 } /* namespace fpga */
 } /* namespace villas */

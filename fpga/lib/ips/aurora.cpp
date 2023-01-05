@@ -65,8 +65,6 @@
 
 using namespace villas::fpga::ip;
 
-static AuroraFactory auroraFactoryInstance;
-
 void Aurora::dump()
 {
 	// Check Aurora AXI4 registers
@@ -112,3 +110,8 @@ void Aurora::resetFrameCounters()
 
 	writeMemory<uint32_t>(registerMemory, AURORA_AXIS_CR_OFFSET, cr);
 }
+
+static char n[] = "aurora";
+static char d[] = "Aurora 8B/10B and additional support modules, like an AXI4-Lite register interface.";
+static char v[] = "acs.eonerc.rwth-aachen.de:user:aurora_axis:";
+static NodePlugin<Aurora, n, d, v> f;

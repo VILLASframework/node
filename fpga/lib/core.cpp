@@ -45,13 +45,12 @@ using namespace villas::fpga::ip;
 // first.
 static std::list<Vlnv>
 vlnvInitializationOrder = {
-    Vlnv(AxiPciExpressBridgeFactory::getCompatibleVlnvString()),
-    Vlnv(InterruptControllerFactory::getCompatibleVlnvString()),
-    Vlnv(AxiStreamSwitchFactory::getCompatibleVlnvString()),
+    Vlnv("xilinx.com:ip:axi_pcie:"),
+    Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
+    Vlnv("xilinx.com:ip:axis_switch:"),
 };
 
-std::list<std::shared_ptr<Core>>
-CoreFactory::make(PCIeCard* card, json_t *json_ips)
+std::list<std::shared_ptr<Core>> CoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
 	// We only have this logger until we know the factory to build an IP with
 	auto loggerStatic = getStaticLogger();
@@ -110,16 +109,15 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// This is the magic part! Factories automatically register as a
 		// plugin as soon as they are instantiated. If there are multiple
 		// candidates, the first suitable factory will be used.
-		CoreFactory* CoreFactory = lookup(id.getVlnv());
-
-		if (CoreFactory == nullptr) {
+		auto* f = lookup(id.getVlnv());
+		if (f == nullptr) {
 			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
 		}
 		else
-			loggerStatic->debug("Using {} for IP {}", CoreFactory->getName(), id.getVlnv());
+			loggerStatic->debug("Using {} for IP {}", f->getName(), id.getVlnv());
 
-		auto logger = CoreFactory->getLogger();
+		auto logger = f->getLogger();
 
 		// Create new IP instance. Since this function is virtual, it will
 		// construct the right, specialized type without knowing it here
@@ -127,11 +125,10 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// If something goes wrong with initialization, the shared_ptr will
 		// take care to desctruct the Core again as it is not pushed to
 		// the list and will run out of scope.
-		auto ip = std::unique_ptr<Core>(CoreFactory->create());
+		auto ip = std::unique_ptr<Core>(f->make());
 
 		if (ip == nullptr) {
-			logger->warn("Cannot create an instance of {}",
-			             CoreFactory->getName());
+			logger->warn("Cannot create an instance of {}", f->getName());
 			continue;
 		}
 
@@ -247,10 +244,10 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		CoreFactory->parse(*ip, json_ip);
+		f->parse(*ip, json_ip);
 
 		// Set polling mode
-		CoreFactory->configurePollingMode(*ip, (card->polling ? PollingMode::POLL : PollingMode::IRQ));
+		f->configurePollingMode(*ip, (card->polling ? PollingMode::POLL : PollingMode::IRQ));
 
 		// IP has been configured now
 		configuredIps.push_back(std::move(ip));
@@ -306,8 +303,7 @@ CoreFactory::make(PCIeCard* card, json_t *json_ips)
 	return initializedIps;
 }
 
-void
-Core::dump()
+void Core::dump()
 {
 	logger->info("IP: {}", *this);
 	for (auto& [num, irq] : irqs) {
@@ -320,8 +316,7 @@ Core::dump()
 	}
 }
 
-CoreFactory*
-CoreFactory::lookup(const Vlnv &vlnv)
+CoreFactory* CoreFactory::lookup(const Vlnv &vlnv)
 {
 	for (auto &ip : plugin::registry->lookup<CoreFactory>()) {
 		if (ip->getCompatibleVlnv() == vlnv)
@@ -331,8 +326,7 @@ CoreFactory::lookup(const Vlnv &vlnv)
 	return nullptr;
 }
 
-uintptr_t
-Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
+uintptr_t Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 {
 	// Throws exception if block not present
 	auto &translation = addressTranslations.at(block);
@@ -340,8 +334,7 @@ Core::getLocalAddr(const MemoryBlockName &block, uintptr_t address) const
 	return translation.getLocalAddr(address);
 }
 
-InterruptController*
-Core::getInterruptController(const std::string &interruptName) const
+InterruptController* Core::getInterruptController(const std::string &interruptName) const
 {
 	try {
 		const IrqPort irq = irqs.at(interruptName);

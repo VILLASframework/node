@@ -1,8 +1,8 @@
-/** AXI External Memory Controller (EMC)
+/** Driver for wrapper around Dino
  *
  * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2017-2020, Steffen Vogel
+ * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @copyright 2020-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
@@ -23,36 +23,25 @@
 
 #pragma once
 
-#include <xilinx/xilflash.h>
-
-#include <villas/fpga/core.hpp>
+#include <villas/fpga/node.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class EMC : public Core {
+class Dino : public Node {
 public:
+	static constexpr const char* masterPort = "m_axis";
+	static constexpr const char* slavePort = "s_axis";
 
-	virtual
-	bool init() override;
-
-	bool flash(uint32_t offset, const std::string &filename);
-	bool flash(uint32_t offset, uint32_t length, uint8_t *data);
-
-	bool read(uint32_t offset, uint32_t length, uint8_t *data);
-
-private:
-
-	XFlash xflash;
-
-	static constexpr char registerMemory[] = "Reg";
-
-	std::list<MemoryBlockName> getMemoryBlocks() const
+	const StreamVertex& getDefaultSlavePort() const
 	{
-		return {
-			registerMemory
-		};
+		return getSlavePort(slavePort);
+	}
+
+	const StreamVertex& getDefaultMasterPort() const
+	{
+		return getMasterPort(masterPort);
 	}
 };
 

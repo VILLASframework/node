@@ -29,7 +29,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-class Rtds : public Node {
+class RtdsGtfpga : public Node {
 public:
 	static constexpr const char* masterPort = "m_axis";
 	static constexpr const char* slavePort = "s_axis";
@@ -63,32 +63,6 @@ private:
 	static constexpr const char* irqTs = "irq_ts";
 	static constexpr const char* irqOverflow = "irq_overflow";
 	static constexpr const char* irqCase = "irq_case";
-};
-
-class RtdsFactory : public NodeFactory {
-public:
-	Core* create()
-	{
-		return new Rtds;
-	}
-
-	virtual std::string
-	getName() const
-	{
-		return "rtds";
-	}
-
-	virtual std::string
-	getDescription() const
-	{
-		return "RTDS's AXI4-Stream - GTFPGA interface";
-	}
-
-	virtual Vlnv
-	getCompatibleVlnv() const
-	{
-		return Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:");
-	}
 };
 
 } /* namespace ip */

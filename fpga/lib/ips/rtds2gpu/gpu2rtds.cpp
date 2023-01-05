@@ -7,8 +7,6 @@
 
 using namespace villas::fpga::ip;
 
-static Gpu2RtdsFactory factory;
-
 bool Gpu2Rtds::init()
 {
 	Hls::init();
@@ -125,3 +123,7 @@ Gpu2Rtds::getMaxFrameSize()
 //	logger->info("  Seq. number: {}", (int) doorbell.seq_nr);
 //}
 
+static char n[] = "gpu2rtds";
+static char d[] = "HLS Gpu2Rtds IP";
+static char v[] = "acs.eonerc.rwth-aachen.de:hls:gpu2rtds:";
+static NodePlugin<Gpu2Rtds, n, d, v> p;

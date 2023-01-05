@@ -33,8 +33,6 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-static AxiStreamSwitchFactory factory;
-
 bool AxiStreamSwitch::init()
 {
 	if (XAxisScr_CfgInitialize(&xSwitch, &xConfig, getBaseAddr(registerMemory)) != XST_SUCCESS) {
@@ -149,6 +147,8 @@ void AxiStreamSwitchFactory::parse(Core &ip, json_t *cfg)
 	axiSwitch.xConfig.MaxNumMI = num_mi;
 	axiSwitch.xConfig.MaxNumSI = num_si;
 }
+
+static AxiStreamSwitchFactory f;
 
 } /* namespace ip */
 } /* namespace fpga */

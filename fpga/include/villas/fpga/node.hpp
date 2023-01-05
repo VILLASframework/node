@@ -142,8 +142,8 @@ public:
 	bool connectLoopback();
 
 protected:
-	virtual bool
-	connectInternal(const std::string &slavePort,
+	virtual
+	bool connectInternal(const std::string &slavePort,
 	                const std::string &masterPort);
 
 private:
@@ -162,7 +162,39 @@ public:
 	using CoreFactory::CoreFactory;
 
 	virtual
-	void parse(Core &ip, json_t *cfg);
+	void parse(Core &, json_t *);
+};
+
+
+template<typename T, const char *name, const char *desc, const char *vlnv>
+class NodePlugin : public NodeFactory {
+
+public:
+virtual
+	std::string getName() const
+	{
+		return name;
+	}
+
+	virtual
+	std::string getDescription() const
+	{
+		return desc;
+	}
+
+private:
+	// Get a VLNV identifier for which this IP / Node type can be used.
+	virtual
+	Vlnv getCompatibleVlnv() const
+	{
+		return Vlnv(vlnv);
+	}
+
+	// Create a concrete IP instance
+	Core* make() const
+	{
+		return new T;
+	}
 };
 
 } /* namespace ip */
