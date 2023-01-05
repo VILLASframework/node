@@ -33,7 +33,7 @@
 using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static auto logger = villas::logging.get("cat");
+static auto logger = villas::logging.get("ctrl");
 
 
 
@@ -66,9 +66,9 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		//FIXME: This must be called before card is intialized, because the card descructor
-		// 	 still accesses the allocated memory. This order ensures that the allocator
-		//       is destroyed AFTER the card.
+		// This must be called before card is intialized, because the card descructor
+		// still accesses the allocated memory. This order ensures that the allocator
+		// is destroyed AFTER the card.
 		auto &alloc = villas::HostRam::getAllocator();
 		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
 		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};

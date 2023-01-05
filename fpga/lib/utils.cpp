@@ -50,6 +50,7 @@ const std::shared_ptr<villas::fpga::ip::Node> portStringToStreamVertex(std::stri
 		return aurora_channels[port];
 	}
 }
+
 // parses a string lik "1->2" or "1<->stdout" and configures the crossbar
 void fpga::configCrossBarUsingConnectString(std::string connectString,
 	std::shared_ptr<villas::fpga::ip::Dma> dma,
