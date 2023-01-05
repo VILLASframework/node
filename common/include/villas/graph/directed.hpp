@@ -42,9 +42,6 @@ public:
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
 	{
-		if (vertexId >= vertices.size())
-			throw std::invalid_argument("vertex doesn't exist");
-
 		// Cannot use [] operator, because creates non-existing elements
 		// at() will throw std::out_of_range if element does not exist
 		return vertices.at(vertexId);
