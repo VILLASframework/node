@@ -63,7 +63,7 @@ void fpga::ConnectString::parseString(std::string& connectString)
 		return;
 	}
 
-	std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
+	static const std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
 	std::smatch match;
 
 	if (!std::regex_match(connectString, match, regex) || match.size() != 4) {
