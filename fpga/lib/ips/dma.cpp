@@ -82,7 +82,7 @@ void Dma::setupScatterGatherRingRx()
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingRx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
+	sgRingRx = alloc.allocateBlock(requestedRingBdSizeMemory);
 
 	if (not card->mapMemoryBlock(sgRingRx))
 		throw RuntimeError("Memory not accessible by DMA");
@@ -127,7 +127,7 @@ void Dma::setupScatterGatherRingTx()
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingTx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
+	sgRingTx = alloc.allocateBlock(requestedRingBdSizeMemory);
 
 	if (not card->mapMemoryBlock(sgRingTx))
 		throw RuntimeError("Memory not accessible by DMA");
@@ -255,8 +255,6 @@ bool Dma::read(const MemoryBlock &mem, size_t len)
 	void *buf = reinterpret_cast<void *>(trans.getLocalAddr(0));
 	if (buf == nullptr)
 		throw RuntimeError("Buffer was null");
-
-	logger->debug("Read from stream and write to address {:p}", buf);
 
 	return hasScatterGather() ? readScatterGather(buf, len) : readSimple(buf, len);
 }
@@ -396,42 +394,26 @@ Dma::readCompleteScatterGather()
 	auto rxRing = XAxiDma_GetRxRing(&xDma);
 	int ret = XST_FAILURE;
 	size_t bytesRead = 0;
+	static size_t errcnt = 32;
+
+	//auto intrNum =
+	irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
 
 	// Wait until the data has been received by the RX channel.
 	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) < readCoalesce)
 	{
-		if (processedBds != 0) {
-			//Ignore partial batches
-			logger->warn("Ignoring partial batch of {} BDs.", processedBds);
-			ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
-			if (ret != XST_SUCCESS)
-				throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
+		logger->warn("Got partial batch of {}/{} BDs.", processedBds, readCoalesce);
+		if(errcnt-- == 0) {
+			throw RuntimeError("too many partial batches");
 		}
-		//auto intrNum =
-		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
-		//If we got a partial batch on the first call, we have to receive up to readCoalesce*2
-		//to make sure we get a full batch of readCoalesce messages
-		processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce*2, &bd);
 	}
-	if(processedBds < readCoalesce) {
-		// We got less than we expected. We already tried two times so let's give up.
-		throw RuntimeError("Read only {} BDs, expected {}.", processedBds, readCoalesce);
-	} else if(processedBds > readCoalesce) {
-		// If the first try was a partial batch, we receive two batches on the second try
-		// We ignore the first batch and only process the second one
-		while (processedBds > readCoalesce) {
-			bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(rxRing, bd);
-			processedBds--;
-		}
-		ret = XAxiDma_BdRingFree(rxRing, processedBds-readCoalesce, bd);
-		if (ret != XST_SUCCESS)
-			throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
-	}
-	// At this point we have exactly readCoalesce BDs.
 
 	// Acknowledge the interrupt. Has no effect if no interrupt has occured.
 	auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
 	XAxiDma_BdRingAckIrq(rxRing, irqStatus);
+
+	if (processedBds == 0)
+		return 0;
 
 	if (bd == nullptr)
 		throw RuntimeError("Bd was null.");

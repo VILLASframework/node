@@ -53,37 +53,38 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma)
 	auto &mm = MemoryManager::get();
 	mm.getGraph().dump("graph.dot");
 
+
+	size_t cur = 0, next = 1;
+	std::ios::sync_with_stdio(false);
+	size_t samplecnt = 0;
+	static const char outputfmt[] = "%05zd: %7f\n";
+	static const size_t outputfmtSize = 16;
+	char outputbuf[16][outputfmtSize] = {0};
+	size_t bytesRead;
+
 	// Setup read transfer
 	dma->read(*block[0], block[0]->getSize());
-	size_t cur = 0, next = 1;
+
 	while (true) {
+		//logger->debug("Read from stream and write to address {:p}", *block[next]);
 		dma->read(*block[next], block[next]->getSize());
-		auto bytesRead = dma->readComplete();
-		// Setup read transfer
-
-		//auto valuesRead = bytesRead / sizeof(int32_t);
-		//logger->info("Read {} bytes", bytesRead);
-
-		//for (size_t i = 0; i < valuesRead; i++)
-		//	std::cerr << std::hex << mem[i] << ";";
-		//std::cerr << std::endl;
+		bytesRead = dma->readComplete();
 
 		for (size_t i = 0; i*4 < bytesRead; i++) {
 			int32_t ival = mem[cur][i];
 			float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
 			//std::cerr << std::hex << ival << ",";
-			std::cerr << fval << std::endl;
-			/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-				(int64_t)(mem[1] & 0xFFFF0000) << 16 |
-				(int64_t)(mem[0] & 0xFFFF) << 16 |
-				(int64_t)(mem[0] & 0xFFFF0000) >> 16;
-			double dval = *((double*)(&ival));
-			std::cerr << std::hex << ival << "," << dval << std::endl;
-			bytesRead -= 8;*/
-			//logger->info("Read value: {}", dval);
+			//std::cout << samplecnt++ << ": " << fval << '\n';
+			if (std::snprintf(outputbuf[i], outputfmtSize+1, outputfmt, (samplecnt++%100000), fval) > (int)outputfmtSize) {
+				throw RuntimeError("Output buffer too small");
+			}
 		}
+		for (size_t i = 0; i < sizeof(outputbuf)/sizeof(outputbuf[0])-bytesRead/4; i++) {
+			outputbuf[i][0] = '\0';
+		}
+		std::cout << *outputbuf << std::flush;
 		cur = next;
-		next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
+		next = (next + 1) % (sizeof(mem) / sizeof(mem[0]));
 	}
 }
 
