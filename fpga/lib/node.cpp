@@ -1,7 +1,7 @@
 /** An IP node.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

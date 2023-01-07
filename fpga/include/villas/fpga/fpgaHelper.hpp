@@ -2,7 +2,8 @@
  *
  * @file
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2022, Steffen Vogel, Niklas Eiling
+ * SPDX-FileCopyrightText: 2022 Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

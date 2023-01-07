@@ -26,5 +26,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## License
 
-SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
 SPDX-License-Identifier: Apache-2.0

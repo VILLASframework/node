@@ -1,7 +1,7 @@
 #!/bin/bash
 # 
 # Author: Niklas Eiling <niklas.eiling@rwth-aachen.de>
-# SPDX-FileCopyrightText: 2023, Institute for Automation of Complex Power Systems, EONERC
+# SPDX-FileCopyrightText: 2023 Institute for Automation of Complex Power Systems, EONERC
 # SPDX-License-Identifier: Apache-2.0
 ##################################################################################
 

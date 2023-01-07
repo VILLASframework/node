@@ -1,7 +1,7 @@
 /** Main Unit Test entry point.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2017-2022, Steffen Vogel
+ * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

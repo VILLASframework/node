@@ -19,7 +19,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/fpga.h
 
 This project is released under the terms of the [Apache 2.0](LICENSE) license:
 
-SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
 SPDX-License-Identifier: Apache-2.0
 
 We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:

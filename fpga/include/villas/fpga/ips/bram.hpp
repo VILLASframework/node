@@ -1,7 +1,7 @@
 /** Block-Raam related helper functions
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2018-2022, Daniel Krebs
+ * SPDX-FileCopyrightText: 2018 Daniel Krebs <github@daniel-krebs.net>
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

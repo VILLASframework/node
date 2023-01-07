@@ -2,7 +2,7 @@
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2018-2022, Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, EONERC
  * SPDX-License-Identifier: Apache-2.0
  ******************************************************************************/
 

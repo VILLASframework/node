@@ -2,7 +2,8 @@
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2018-2022, Steffen Vogel, Daniel Krebs
+ * SPDX-FileCopyrightText: 2018 Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2018 Daniel Krebs <github@daniel-krebs.net>
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

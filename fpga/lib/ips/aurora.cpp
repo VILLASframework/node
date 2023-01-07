@@ -1,7 +1,7 @@
 /** Driver for wrapper around Aurora (acs.eonerc.rwth-aachen.de:user:aurora)
  *
  * Author: Hatim Kanchwala <hatim@hatimak.me>
- * SPDX-FileCopyrightText: 2020-2022, Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2020 Institute for Automation of Complex Power Systems, EONERC
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

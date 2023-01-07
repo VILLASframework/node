@@ -1,7 +1,7 @@
 /** Streaming data from STDIN/OUT to FPGA.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017-2022, Steffen Vogel
+ * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 

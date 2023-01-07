@@ -5,7 +5,7 @@
 #  CRITERION_INCLUDE_DIRS - The Criterion include directories
 #  CRITERION_LIBRARIES - The libraries needed to use Criterion
 #
-# SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
 # SPDX-License-Identifier: WTFPL
 ##############################################################################
 
