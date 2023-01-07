@@ -2,7 +2,6 @@
  *
  * These functions present a simpler interface to Xilinx' AXI Stream switch driver (XAxis_Switch_*)
  *
- * @file
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>

@@ -1,6 +1,5 @@
 /** Helper function for directly using VILLASfpga outside of VILLASnode
  *
- * @file
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2022 Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
