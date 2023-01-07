@@ -10,9 +10,21 @@ variables:
   DOCKER_IMAGE_DEV: villas/fpga-dev
 
 stages:
-  - prepare
-  - build
-  - test
+- lint
+- prepare
+- build
+- test
+
+# Stage: lint
+##############################################################################
+
+reuse:
+  stage: lint
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+  - reuse lint
 
 # Stage: prepare
 ##############################################################################
@@ -21,9 +33,9 @@ stages:
 docker-dev:
   stage: prepare
   script:
-    - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+  - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
   tags:
-    - docker
+  - docker
 
 # Stage: build
 ##############################################################################
@@ -31,15 +43,15 @@ docker-dev:
 build:source:
   stage: build
   script:
-    - mkdir build && cd build && cmake3 .. && make -j8
+  - mkdir build && cd build && cmake3 .. && make -j8
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
-      - build/
+    - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
-    - docker
+  - docker
 
 # Stage: test
 ##############################################################################
@@ -47,7 +59,7 @@ build:source:
 test:unit:
   stage: test
   tags:
-    - docker
+  - docker
   allow_failure: true
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   script: |
@@ -64,7 +76,7 @@ test:unit:
 test:cppcheck:
   stage: test
   script:
-    - cppcheck -j $(nproc)
+  - cppcheck -j $(nproc)
                --max-configs=32
                --error-exitcode=1
                --quiet
@@ -82,11 +94,11 @@ test:cppcheck:
                -igpu/thirdparty | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   dependencies:
-    - build:source
+  - build:source
   tags:
-    - docker
+  - docker
   artifacts:
     when: on_failure
     paths:
-      - cppcheck.log
+    - cppcheck.log
     expose_as: cppcheck
