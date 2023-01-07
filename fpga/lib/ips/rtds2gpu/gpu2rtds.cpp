@@ -1,3 +1,10 @@
+/** GPU2RTDS IP core
+ *
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: Daniel Krebs
+ * SPDX-License-Identifier: Apache-2.0
+ *********************************************************************************/
+
 #include <unistd.h>
 #include <cstring>
 

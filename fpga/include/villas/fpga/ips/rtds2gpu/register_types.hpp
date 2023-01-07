@@ -1,3 +1,11 @@
+/** GPU2RTDS register types
+ *
+ * @file
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: Daniel Krebs
+ * SPDX-License-Identifier: Apache-2.0
+ *********************************************************************************/
+
 #pragma once
 
 #include <stdint.h>

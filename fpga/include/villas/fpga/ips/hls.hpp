@@ -1,3 +1,11 @@
+/** HLS IP core
+ *
+ * @file
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2017-2020, Steffen Vogel
+ * SPDX-License-Identifier: Apache-2.0
+ *********************************************************************************/
+
 #pragma once
 
 #include <villas/memory.hpp>

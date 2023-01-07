@@ -1,3 +1,6 @@
+SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+SPDX-License-Identifier: Apache-2.0
+
 I, Niklas Eiling hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: niklas.eiling@eonerc.rwth-aachen.de
 
 b22a741785f38ee5f86d46c287e523ddd8f94a46 update contact and copyright notice

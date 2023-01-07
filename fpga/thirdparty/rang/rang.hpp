@@ -1,3 +1,12 @@
+/** A Minimal, Header only Modern c++ library for terminal goodies
+ *
+ * See: https://github.com/agauniyal/rang
+ *
+ * SPDX-FileCopyrightText: 2022 Abhinav Gauniyal
+ * SPDX-License-Identifier: Unlicense
+ *********************************************************************************/
+
+
 #ifndef RANG_DOT_HPP
 #define RANG_DOT_HPP
 

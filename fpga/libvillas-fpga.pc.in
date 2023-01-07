@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022, Institute for Automation of Complex Power Systems, EONERC
+# SPDX-License-Identifier: Apache-2.0
+
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
 includedir=${prefix}/include

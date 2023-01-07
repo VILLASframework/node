@@ -1,3 +1,10 @@
+/** GPU CUDA kernel
+ *
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: Daniel Krebs
+ * SPDX-License-Identifier: Apache-2.0
+ *********************************************************************************/
+
 #include <cstdint>
 #include <cstdio>
 
