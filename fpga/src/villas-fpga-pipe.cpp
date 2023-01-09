@@ -26,7 +26,7 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/aurora_xilinx.hpp>
-#include <villas/fpga/fpgaHelper.hpp>
+#include <villas/fpga/utils.hpp>
 
 using namespace villas;
 

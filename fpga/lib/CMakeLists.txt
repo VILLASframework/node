@@ -10,7 +10,7 @@ set(SOURCES
 	card.cpp
 	core.cpp
 	node.cpp
-	fpgaHelper.cpp
+	utils.cpp
 
 	ips/aurora_xilinx.cpp
 	ips/aurora.cpp
