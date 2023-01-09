@@ -9,6 +9,7 @@
 #pragma once
 
 #include <villas/node/config.hpp>
+#include <villas/node.hpp>
 #include <villas/format.hpp>
 #include <villas/timing.hpp>
 
@@ -19,15 +20,12 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
-class NodeCompat;
-
-using namespace villas;
-
 #define FPGA_DMA_VLNV
 #define FPGA_AURORA_VLNV "acs.eonerc.rwth-aachen.de:user:aurora_axis:"
 
-struct fpga_node {
+class FpgaNode : public Node {
+
+protected:
 	int irqFd;
 	int coalesce;
 	bool polling;
@@ -37,41 +35,82 @@ struct fpga_node {
 	std::shared_ptr<fpga::ip::Dma> dma;
 	std::shared_ptr<fpga::ip::Node> intf;
 
-	struct {
-		struct {
-			MemoryAccessor<int32_t> i;
-			MemoryAccessor<float> f;
-		} accessor;
-		MemoryBlock::Ptr block;
-	} in, out;
+	std::unique_ptr<const MemoryBlock> blockRx;
+	std::unique_ptr<const MemoryBlock> blockTx;
 
 	// Config only
 	std::string cardName;
 	std::string intfName;
 	std::string dmaName;
+
+protected:
+	virtual
+	int _read(Sample *smps[], unsigned cnt);
+
+	virtual
+	int _write(Sample *smps[], unsigned cnt);
+
+public:
+	FpgaNode(const std::string &name = "");
+
+	virtual
+	~FpgaNode();
+
+	virtual
+	int parse(json_t *cfg, const uuid_t sn_uuid);
+
+	virtual
+	const std::string & getDetails();
+
+	virtual
+	int check();
+
+	virtual
+	int prepare();
+
+	virtual
+	std::vector<int> getPollFDs();
 };
 
-int fpga_type_start(SuperNode *sn);
 
-int fpga_type_stop();
+class FpgaNodeFactory : public NodeFactory {
 
-int fpga_init(NodeCompat *n);
+public:
+	using NodeFactory::NodeFactory;
 
-int fpga_destroy(NodeCompat *n);
+	virtual
+	Node * make()
+	{
+		auto *n = new FpgaNode;
 
-int fpga_parse(NodeCompat *n, json_t *json);
+		init(n);
 
-char * fpga_print(NodeCompat *n);
+		return n;
+	}
 
-int fpga_check(NodeCompat *n);
+	virtual
+	int getFlags() const
+	{
+		return (int) NodeFactory::Flags::SUPPORTS_READ |
+		       (int) NodeFactory::Flags::SUPPORTS_WRITE |
+		       (int) NodeFactory::Flags::SUPPORTS_POLL;
+	}
 
-int fpga_prepare(NodeCompat *n);
+	virtual
+	std::string getName() const
+	{
+		return "fpga";
+	}
 
-int fpga_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+	virtual
+	std::string getDescription() const
+	{
+		return "VILLASfpga";
+	}
 
-int fpga_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
-
-int fpga_poll_fds(NodeCompat *n, int fds[]);
+	virtual
+	int start(SuperNode *sn);
+};
 
 } /* namespace node */
 } /* namespace villas */

@@ -16,21 +16,6 @@ MAKE_OPTS+="--jobs=${MAKE_THREADS}"
 git config --global http.postBuffer 524288000
 git config --global core.compression 0
 
-if [ -n "${PACKAGE}" ]; then
-    TARGET="package"
-    CMAKE_OPTS+=" -DCPACK_GENERATOR=RPM"
-
-    # Prepare rpmbuild dir
-    mkdir -p ~/rpmbuild/SOURCES
-    mkdir -p rpms
-
-    dnf -y install \
-        xmlto \
-        systemd-devel
-else
-    TARGET="install"
-fi
-
 DIR=$(mktemp -d)
 pushd ${DIR}
 
@@ -42,22 +27,18 @@ if ! pkg-config "criterion >= 2.3.1" && \
     mkdir -p Criterion/build
     pushd Criterion/build
     cmake ${CMAKE_OPTS} ..
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
 # Build & Install libjansson
-if ! pkg-config "jansson >= 2.7" && \
+if ! pkg-config "jansson >= 2.13" && \
     [ -z "${SKIP_JANSSON}" ]; then
     git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson
     pushd jansson
     autoreconf -i
     ./configure ${CONFIGURE_OPTS}
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -71,10 +52,8 @@ if ! ( pkg-config "lua >= 5.1" || \
      ) && [ -z "${SKIP_LUA}" ]; then
     wget http://www.lua.org/ftp/lua-5.3.6.tar.gz -O - | tar -xz
     pushd lua-5.3.6
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
-        make ${MAKE_OPTS} MYCFLAGS=-fPIC install
-    fi
+    make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
+    make ${MAKE_OPTS} MYCFLAGS=-fPIC install
     popd
 fi
 
@@ -89,7 +68,7 @@ if ! pkg-config "libmosquitto >= 1.4.15" && \
           -DWITH_APPS=OFF \
           -DDOCUMENTATION=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -100,7 +79,7 @@ if ! pkg-config "librabbitmq >= 0.8.0" && \
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -114,7 +93,7 @@ if ! pkg-config "libzmq >= 2.2.0" && \
           -DZMQ_BUILD_TESTS=OFF \
           -DENABLE_CPACK=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -124,13 +103,7 @@ if [ -z "${SKIP_ETHERLAB}" ]; then
     pushd ethercat
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} ${TARGET}
-    else
-        wget https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
-        cp ethercat-1.5.2.tar.bz2 ~/rpmbuild/SOURCES
-        rpmbuild -ba ethercat.spec
-    fi
+     make ${MAKE_OPTS} install
     popd
 fi
 
@@ -141,10 +114,7 @@ if ! pkg-config "libiec61850 >= 1.3.1" && \
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp libiec61850/build/*.rpm rpms
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -155,10 +125,7 @@ if ! pkg-config "lib60870 >= 2.3.1" && \
     mkdir -p lib60870/build
     pushd lib60870/build
     cmake ${CMAKE_OPTS} ../lib60870-C
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp lib60870/build/*.rpm rpms
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -171,7 +138,7 @@ if ! pkg-config "rdkafka >= 1.5.0" && \
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
           -DRDKAFKA_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -183,7 +150,7 @@ if ! ( pkg-config "libcgraph >= 2.30" && \
     mkdir -p graphviz/build
     pushd graphviz/build
     cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -196,13 +163,7 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
     ./configure \
         --disable-examples \
         ${CONFIGURE_OPTS}
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    else
-        make dist
-        cp fedora/uldaq_ldconfig.patch libuldaq-1.2.0.tar.gz ~/rpmbuild/SOURCES
-        rpmbuild -ba fedora/uldaq.spec
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -216,9 +177,7 @@ if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
     ./configure \
         --enable-cli=no \
         ${CONFIGURE_OPTS}
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -232,9 +191,7 @@ if ! pkg-config "libconfig >= 1.4.9" && \
         --disable-tests \
         --disable-examples \
         --disable-doc
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -247,28 +204,16 @@ if ! pkg-config "comedilib >= 0.11.0" && \
     ./configure \
         --disable-docbook \
         ${CONFIGURE_OPTS}
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    else
-        touch doc/pdf/comedilib.pdf # skip build of PDF which is broken..
-        make dist
-        cp comedilib-0.12.0.tar.gz ~/rpmbuild/SOURCES
-        rpmbuild -ba comedilib.spec
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
 # Build & Install libre
-if ! pkg-config "libre >= 0.5.6" && \
+if ! pkg-config "libre >= 2.9.0" && \
     [ -z "${SKIP_LIBRE}" ]; then
-    git clone ${GIT_OPTS} --branch v0.6.1 https://github.com/creytiv/re.git
+    git clone ${GIT_OPTS} --branch v2.9.0 https://github.com/baresip/re.git
     pushd re
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    else
-        tar --transform 's|^\.|re-0.6.1|' -czvf ~/rpmbuild/SOURCES/re-0.6.1.tar.gz .
-        rpmbuild -ba rpm/re.spec
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -284,9 +229,7 @@ if ! pkg-config "nanomsg >= 1.0.0" && \
           -DNN_ENABLE_DOC=OFF \
           -DNN_ENABLE_COVERAGE=OFF \
           ${CMAKE_OPTS} ..
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -297,9 +240,7 @@ if ! pkg-config "libxil >= 1.0.0" && \
     mkdir -p libxil/build
     pushd libxil/build
     cmake ${CMAKE_OPTS} ..
-    if [ -z "${PACKAGE}" ]; then
-        make ${MAKE_OPTS} install
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -312,7 +253,7 @@ if ! pkg-config "hiredis>1.0.0" && \
     cmake -DDISABLE_TESTS=ON \
           -DENABLE_SSL=ON \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -329,7 +270,7 @@ if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
           -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
           -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
           ${REDISPP_CMAKE_OPTS} ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET} VERBOSE=1
+    make ${MAKE_OPTS} install VERBOSE=1
     popd
 fi
 
@@ -342,10 +283,7 @@ if ! pkg-config "fmt >= 6.1.2" && \
     cmake -DBUILD_SHARED_LIBS=1 \
           -DFMT_TEST=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp fmt/build/*.rpm rpms
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -360,10 +298,7 @@ if ! pkg-config "spdlog >= 1.8.2" && \
           -DSPDLOG_BUILD_SHARED=ON \
           -DSPDLOG_BUILD_TESTS=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
-    if [ -n "${PACKAGE}" ]; then
-        cp spdlog/build/*.rpm rpms
-    fi
+    make ${MAKE_OPTS} install
     popd
 fi
 
@@ -378,18 +313,14 @@ if ! pkg-config "libwebsockets >= 3.1.0" && \
           -DLWS_WITHOUT_EXTENSIONS=OFF \
           -DLWS_WITH_SERVER_STATUS=ON \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} ${TARGET}
+    make ${MAKE_OPTS} install
     popd
-fi
-
-if [ -n "${PACKAGE}" ]; then
-    cp ~/rpmbuild/RPMS/x86_64/*.rpm rpms
 fi
 
 popd
 rm -rf ${DIR}
 
 # Update linker cache
-if [ -z "${PACKAGE}" -a -z "${SKIP_LDCONFIG}" ]; then
+if [ -z "${SKIP_LDCONFIG}" ]; then
     ldconfig
 fi

@@ -411,14 +411,12 @@ public:
 		return 0;
 	}
 
-	bool
-	isInternal() const
+	bool isInternal() const
 	{
 		return getFlags() & (int) Flags::INTERNAL;
 	}
 
-	bool
-	isHidden() const
+	bool isHidden() const
 	{
 		return isInternal() || getFlags() & (int) Flags::HIDDEN;
 	}
@@ -461,14 +459,14 @@ public:
 		return vectorize;
 	}
 
-	virtual std::string
-	getName() const
+	virtual
+	std::string getName() const
 	{
 		return name;
 	}
 
-	virtual std::string
-	getDescription() const
+	virtual
+	std::string getDescription() const
 	{
 		return desc;
 	}

@@ -353,7 +353,7 @@ json_t * Config::expandIncludes(json_t *in)
 				if (!incl)
 					incl = other;
 				else if (json_is_object(incl) && json_is_object(other)) {
-					ret = json_object_update(incl, other);
+					ret = json_object_update_recursive(incl, other);
 					if (ret)
 						throw ConfigError(str, "Can not mix object and array-typed include files");
 				}
