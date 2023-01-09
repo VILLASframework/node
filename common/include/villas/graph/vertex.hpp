@@ -18,13 +18,17 @@ class Vertex {
 public:
 	using Identifier = std::size_t;
 
+	Vertex() :
+		id(0)
+	{ }
+
 	const Identifier& getIdentifier() const
 	{
 		return id;
 	}
 
 	friend
-	std::ostream& operator<< (std::ostream &stream, const Vertex &vertex)
+	std::ostream& operator<<(std::ostream &stream, const Vertex &vertex)
 	{
 		return stream << vertex.id;
 	}
@@ -35,7 +39,7 @@ public:
 	}
 
 private:
-	Identifier id = 0;
+	Identifier id;
 	// HACK: how to resolve this circular type dependency?
 	std::list<std::size_t> edges;
 };
