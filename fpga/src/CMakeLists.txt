@@ -12,6 +12,3 @@ target_link_libraries(villas-fpga-ctrl PUBLIC
 )
 
 add_executable(pcimem pcimem.c)
-
-configure_file(villas-fpga-cat.sh villas-fpga-cat.sh COPYONLY)
-configure_file(villas-fpga-xbar-select.sh villas-fpga-xbar-select.sh COPYONLY)
