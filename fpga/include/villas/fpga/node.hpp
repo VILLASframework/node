@@ -25,6 +25,7 @@ namespace ip {
 class StreamVertex : public graph::Vertex {
 public:
 	StreamVertex(const std::string &node, const std::string &port, bool isMaster) :
+	    graph::Vertex(),
 	    nodeName(node),
 	    portName(port),
 	    isMaster(isMaster)
