@@ -24,3 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Sourcecode import from VILLASnode project:  
   http://git.rwth-aachen.de/VILLASframework/VILLASnode
 
+## License
+
+SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+SPDX-License-Identifier: Apache-2.0

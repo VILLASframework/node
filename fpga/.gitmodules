@@ -1,3 +1,8 @@
+# Git submodule list
+#
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-License-Identifier: Apache-2.0
+
 [submodule "common"]
 	path = common
 	url = https://github.com/VILLASframework/common.git

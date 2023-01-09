@@ -1,23 +1,8 @@
 ## CMakeLists.txt
 #
-# @author Daniel Krebs <github@daniel-krebs.net>
-# @copyright 2018-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license GNU General Public License (version 3)
-#
-# VILLASfpga
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Author: Daniel Krebs <github@daniel-krebs.net>
+# SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-License-Identifier: Apache-2.0
 ##############################################################################
  
 cmake_minimum_required(VERSION 3.5)
@@ -91,7 +76,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libvillas-fpga.pc" DESTINATION "${CMA
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
 set(CPACK_PACKAGE_VENDOR ${PROJECT_VENDOR})
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSES/Apache-2.0.txt")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 
 set(CPACK_PACKAGE_NAME "villas-fpga")
@@ -106,7 +91,7 @@ set(CPACK_SOURCE_IGNORE_FILES "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
 set(CPACK_RPM_PACKAGE_RELEASE ${PROJECT_RELEASE})
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
-set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
 set(CPACK_RPM_PACKAGE_URL ${PROJECT_URL})
 set(CPACK_RPM_PACKAGE_REQUIRES "libxil")
 set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")

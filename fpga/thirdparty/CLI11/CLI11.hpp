@@ -1,12 +1,14 @@
+/** CLI11 is a command line parser for C++11.
+ *
+ * This file was generated using MakeSingleHeader.py in CLI11/scripts from: v1.4.0
+ * This has the complete CLI library in one file.
+ * See https://github.com/CLIUtils/CLI11 for details
+ *
+ * SPDX-FileCopyrightText: 2017 University of Cincinnati, developed by Henry Schreiner under NSF AWARD 141473
+ * SPDX-License-Identifier: BSD-3-Clause
+ *********************************************************************************/
+
 #pragma once
-
-// Distributed under the 3-Clause BSD License.  See accompanying
-// file LICENSE or https://github.com/CLIUtils/CLI11 for details.
-
-// This file was generated using MakeSingleHeader.py in CLI11/scripts
-// from: v1.4.0
-
-// This has the complete CLI library in one file.
 
 #include <sys/stat.h>
 #include <deque>

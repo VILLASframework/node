@@ -1,12 +1,13 @@
-# This file is licensed under the WTFPL version 2 -- you can see the full
-# license over at http://www.wtfpl.net/txt/copying/
-#
-# - Try to find Criterion
+# Try to find Criterion
 #
 # Once done this will define
 #  CRITERION_FOUND - System has Criterion
 #  CRITERION_INCLUDE_DIRS - The Criterion include directories
 #  CRITERION_LIBRARIES - The libraries needed to use Criterion
+#
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-License-Identifier: WTFPL
+##############################################################################
 
 find_package(PkgConfig)
 
