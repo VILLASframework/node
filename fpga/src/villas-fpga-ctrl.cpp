@@ -36,7 +36,8 @@ static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("ctrl");
 
 
-void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma)
+void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::unique_ptr<fpga::BufferedSampleFormatter> formatter)
 {
 	auto &alloc = villas::HostRam::getAllocator();
 
@@ -56,33 +57,24 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma)
 
 	size_t cur = 0, next = 1;
 	std::ios::sync_with_stdio(false);
-	size_t samplecnt = 0;
-	static const char outputfmt[] = "%05zd: %7f\n";
-	static const size_t outputfmtSize = 16;
-	char outputbuf[16][outputfmtSize] = {0};
 	size_t bytesRead;
 
 	// Setup read transfer
 	dma->read(*block[0], block[0]->getSize());
 
 	while (true) {
-		//logger->debug("Read from stream and write to address {:p}", *block[next]);
+		logger->trace("Read from stream and write to address {}:{:p}", block[next]->getAddrSpaceId(), block[next]->getOffset());
+		// We could use the number of interrupts to determine if we missed a chunk of data
 		dma->read(*block[next], block[next]->getSize());
 		bytesRead = dma->readComplete();
 
 		for (size_t i = 0; i*4 < bytesRead; i++) {
 			int32_t ival = mem[cur][i];
 			float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
-			//std::cerr << std::hex << ival << ",";
-			//std::cout << samplecnt++ << ": " << fval << '\n';
-			if (std::snprintf(outputbuf[i], outputfmtSize+1, outputfmt, (samplecnt++%100000), fval) > (int)outputfmtSize) {
-				throw RuntimeError("Output buffer too small");
-			}
+			formatter->format(fval);
 		}
-		for (size_t i = 0; i < sizeof(outputbuf)/sizeof(outputbuf[0])-bytesRead/4; i++) {
-			outputbuf[i][0] = '\0';
-		}
-		std::cout << *outputbuf << std::flush;
+		formatter->output(std::cout);
+
 		cur = next;
 		next = (next + 1) % (sizeof(mem) / sizeof(mem[0]));
 	}
@@ -104,6 +96,8 @@ int main(int argc, char* argv[])
 		app.add_option("-x,--connect", connectStr, "Connect a FPGA port with another or stdin/stdout");
 		bool noDma = false;
 		app.add_flag("--no-dma", noDma, "Do not setup DMA, only setup FPGA and Crossbar links");
+		std::string outputFormat = "short";
+		app.add_option("--output-format", outputFormat, "Output format (short, long)");
 
 		app.parse(argc, argv);
 
@@ -116,8 +110,6 @@ int main(int argc, char* argv[])
 			logger->error("No configuration file provided/ Please use -c/--config argument");
 			return 1;
 		}
-
-
 
 		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
@@ -149,7 +141,8 @@ int main(int argc, char* argv[])
 		parsedConnectString.configCrossBar(dma, aurora_channels);
 
 		if (!noDma) {
-			readFromDmaToStdOut(std::move(dma));
+			auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
+			readFromDmaToStdOut(std::move(dma), std::move(formatter));
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
