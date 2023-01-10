@@ -199,7 +199,7 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json)
 		throw ConfigError(json, "node-config-node-kafka-protocol", "Invalid security protocol: {}", protocol);
 
 	if (!k->produce && !k->consume)
-		throw ConfigError(json, "node-config-node-kafka", "At least one topic has to be specified for node {}", *n);
+		throw ConfigError(json, "node-config-node-kafka", "At least one topic has to be specified for node {}", n->getName());
 
 	if (json_ssl) {
 		const char *ca;
@@ -208,7 +208,7 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json)
 			"ca", &ca
 		);
 		if (ret)
-			throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl", "Failed to parse SSL configuration of node {}", *n);
+			throw ConfigError(json_ssl, err, "node-config-node-kafka-ssl", "Failed to parse SSL configuration of node {}", n->getName());
 
 		k->ssl.ca = strdup(ca);
 	}
