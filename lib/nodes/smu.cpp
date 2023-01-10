@@ -18,6 +18,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
+static int test = 0;
+
 SMUNode::SMUNode(const std::string &name) :
 	mem_pos(0),
 	daq_cfg_default({FS_10kSPS, FB_10FPS, MODE_FREERUN, SYNC_PPS})
@@ -162,7 +164,6 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 {
 
 	//mem_pos = (info->si_value.sival_int);
-    int test = 5;
     test ++;
 
 	/* Signal uldaq_read() about new data */
@@ -171,11 +172,9 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 
 void SMUNode::data_available_signal(int, siginfo_t *info, void*)
 {
-
+    
 	//mem_pos = (info->si_value.sival_int);
-    int test = 5;
     test ++;
-
 	/* Signal uldaq_read() about new data */
 	//pthread_cond_signal(&u->in.cv);
 }
