@@ -508,7 +508,7 @@ graph_t * SuperNode::getGraph()
 		uuid_unparse(n->getUuid(), uuid_str);
 
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", *n->getFactory(), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", (n->getFactory())->getName(), uuid_str));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");

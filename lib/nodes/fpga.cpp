@@ -71,7 +71,7 @@ int FpgaNode::parse(json_t *cfg, const uuid_t sn_uuid)
 		"polling", &polling
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", *this);
+		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", this->getName());
 
 	if (card)
 		cardName = card;
