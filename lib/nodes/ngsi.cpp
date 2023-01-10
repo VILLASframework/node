@@ -640,13 +640,13 @@ int villas::node::ngsi_parse(NodeCompat *n, json_t *json)
 	if (json_signals_in) {
 		ret = ngsi_parse_signals(json_signals_in, &i->in.signals, n->in.signals);
 		if (ret)
-			throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals", "Invalid setting 'in.signals' of node {}", *n);
+			throw ConfigError(json_signals_in, "node-config-node-ngsi-in-signals", "Invalid setting 'in.signals' of node {}", n->getName());
 	}
 
 	if (json_signals_out) {
 		ret = ngsi_parse_signals(json_signals_out, &i->out.signals, n->out.signals);
 		if (ret)
-			throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals", "Invalid setting 'out.signals' of node {}", *n);
+			throw ConfigError(json_signals_out, "node-config-node-ngsi-out-signals", "Invalid setting 'out.signals' of node {}", n->getName());
 	}
 
 	return 0;
@@ -698,7 +698,7 @@ int villas::node::ngsi_start(NodeCompat *n)
 
 		int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND", json_entity, n->logger);
 		if (ret)
-			throw RuntimeError("Failed to create NGSI context for node {}", *n);
+			throw RuntimeError("Failed to create NGSI context for node {}", n->getName());
 
 		json_decref(json_entity);
 	}

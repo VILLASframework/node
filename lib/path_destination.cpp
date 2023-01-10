@@ -49,17 +49,17 @@ void PathDestination::enqueueAll(Path *p, const struct Sample * const smps[], un
 
 	cloned = sample_clone_many(clones, smps, cnt);
 	if (cloned < cnt)
-		p->logger->warn("Pool underrun in path {}", *p);
+		p->logger->warn("Pool underrun in path {}", p->toString());
 
 	for (auto pd : p->destinations) {
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
-			p->logger->warn("Queue overrun for path {}", *p);
+			p->logger->warn("Queue overrun for path {}", p->toString());
 
 		/* Increase reference counter of these samples as they are now also owned by the queue. */
 		sample_incref_many(clones, cloned);
 
-		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, *pd->node, *p);
+		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, pd->node->getName(), p->toString());
 	}
 
 	sample_decref_many(clones, cloned);
@@ -79,17 +79,17 @@ void PathDestination::write()
 		if (allocated == 0)
 			break;
 		else if (allocated < cnt)
-			path->logger->debug("Queue underrun for path {}: allocated={} expected={}", *path, allocated, cnt);
+			path->logger->debug("Queue underrun for path {}: allocated={} expected={}", path->toString(), allocated, cnt);
 
-		path->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, *node, *path);
+		path->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, node->getName(), path->toString());
 
 		sent = node->write(smps, allocated);
 		if (sent < 0) {
-			path->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, *node, sent);
+			path->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node->getName(), sent);
 			return;
 		}
 		else if (sent < allocated)
-			path->logger->debug("Partial write to node {}: written={}, expected={}", *node, sent, allocated);
+			path->logger->debug("Partial write to node {}: written={}, expected={}", node->getName(), sent, allocated);
 
 		int released = sample_decref_many(smps, allocated);
 
@@ -100,8 +100,8 @@ void PathDestination::write()
 void PathDestination::check()
 {
 	if (!node->isEnabled())
-		throw RuntimeError("Destination {} is not enabled", *node);
+		throw RuntimeError("Destination {} is not enabled", node->getName());
 
 	if (!(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_WRITE))
-		throw RuntimeError("Destination node {} is not supported as a sink for path ", *node);
+		throw RuntimeError("Destination node {} is not supported as a sink for path ", node->getName());
 }

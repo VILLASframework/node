@@ -120,9 +120,9 @@ public:
 				buf[wbytes-1] = 0;
 
 			if (node)
-				logger->info("{}{} {}", prefix, *node, buf);
+				logger->info("{}{} {}", prefix, node->getName(), buf);
 			else if (path)
-				logger->info("{}{} {}", prefix, *path, buf);
+				logger->info("{}{} {}", prefix, path->toString(), buf);
 		}
 		else
 			formatter->print(output, smp);

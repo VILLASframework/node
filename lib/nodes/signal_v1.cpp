@@ -244,7 +244,7 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json)
 			break;
 
 		default:
-			throw ConfigError(json_type, "node-config-node-signal", "Invalid setting 'signal' for node {}", *n);
+			throw ConfigError(json_type, "node-config-node-signal", "Invalid setting 'signal' for node {}", n->getName());
 	}
 
 	for (auto &a : arrays) {

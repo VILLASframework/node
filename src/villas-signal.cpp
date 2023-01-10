@@ -255,7 +255,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->start(nullptr);
 		if (ret)
-			throw RuntimeError("Failed to intialize node type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", (node->getFactory())->getName(), ret);
 
 		ret = node->check();
 		if (ret)
@@ -263,7 +263,7 @@ check:			if (optarg == endptr)
 
 		ret = node->prepare();
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node->getName(), ret);
 
 		/* Try parsing format config as JSON */
 		json_format = json_loads(format.c_str(), 0, &err);
@@ -281,7 +281,7 @@ check:			if (optarg == endptr)
 
 		ret = node->start();
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to start node {}: reason={}", node->getName(), ret);
 
 		while (!stop && node->getState() == State::STARTED) {
 			t = sample_alloc(&pool);
@@ -304,7 +304,7 @@ out:			sample_decref(t);
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to de-intialize node type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to de-intialize node type {}: reason={}", (node->getFactory())->getName(), ret);
 
 		delete node;
 		delete formatter;
