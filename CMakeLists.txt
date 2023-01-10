@@ -8,6 +8,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 project(villas-node
+    DESCRIPTION "VILLASnode"
     LANGUAGES C CXX
 )
 
@@ -300,15 +301,19 @@ add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with 
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
-    message(STATUS "${FEATURES}")
     message(STATUS "Building ${CMAKE_PROJECT_DESCRIPTION}:")
-    message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
-    message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
-    message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
-    message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
-    message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
-    message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
-    message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
+    message(STATUS "${FEATURES}")
+
+    if(FOUND_GIT_VERSION)
+        message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
+        message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
+        message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
+        message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
+        message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
+        message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
+        message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
+    endif()
+
     message(STATUS "  ARCH:            ${CMAKE_SYSTEM_PROCESSOR}")
     message(STATUS "  OS:              ${CMAKE_SYSTEM_NAME}")
 endif()
