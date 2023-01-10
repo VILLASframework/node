@@ -290,7 +290,7 @@ void Path::prepare(NodeList &nodes)
 
 		ret = pd->prepare(queuelen);
 		if (ret)
-			throw RuntimeError("Failed to prepare path destination {} of path {}", (pd->node)->getName(), this->toString());
+			throw RuntimeError("Failed to prepare path destination {} of path {}", pd->node->getName(), this->toString());
 	}
 
 	/* Autodetect whether to use original sequence numbers or not */
