@@ -5,17 +5,18 @@
 # @license Apache 2.0
 ###################################################################################
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.14)
 
 project(villas-node
+    VERSION 0.0.0
     DESCRIPTION "VILLASnode"
+    HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
 )
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
 set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
-set(PROJECT_HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/")
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
