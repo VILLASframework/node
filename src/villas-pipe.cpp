@@ -452,7 +452,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to intialize node type {}: reason={}", (node->getFactory())->getName(), ret);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", node->getFactory()->getName(), ret);
 
 		sn.startInterfaces();
 

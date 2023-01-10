@@ -304,7 +304,7 @@ out:			sample_decref(t);
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to de-intialize node type {}: reason={}", (node->getFactory())->getName(), ret);
+			throw RuntimeError("Failed to de-intialize node type {}: reason={}", node->getFactory()->getName(), ret);
 
 		delete node;
 		delete formatter;

@@ -175,7 +175,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to start node-type {}: reason={}", (node->getFactory())->getName(), ret);
+			throw RuntimeError("Failed to start node-type {}: reason={}", node->getFactory()->getName(), ret);
 
 		ret = node->prepare();
 		if (ret)
@@ -229,7 +229,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node-type {}: reason={}", (node->getFactory())->getName(), ret);
+			throw RuntimeError("Failed to stop node-type {}: reason={}", node->getFactory()->getName(), ret);
 
 		delete smp_send;
 		delete smp_recv;
