@@ -175,15 +175,15 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to start node-type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to start node-type {}: reason={}", node->getFactory()->getName(), ret);
 
 		ret = node->prepare();
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node->getName(), ret);
 
 		ret = node->start();
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to start node {}: reason={}", node->getName(), ret);
 
 		/* Print header */
 		fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
@@ -225,11 +225,11 @@ check:			if (optarg == endptr)
 
 		ret = node->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to stop node {}: reason={}", node->getName(), ret);
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node-type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to stop node-type {}: reason={}", node->getFactory()->getName(), ret);
 
 		delete smp_send;
 		delete smp_recv;

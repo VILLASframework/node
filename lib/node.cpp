@@ -405,7 +405,7 @@ const std::string & Node::getNameFull()
 				getOutputSignals(false) ? getOutputSignals(false)->size() : 0,
 				getOutputSignals()      ? getOutputSignals()->size()      : 0);
 
-			name_full += fmt::format(", out.path={}", *out.path);
+			name_full += fmt::format(", out.path={}", out.path->toString());
 		}
 
 		/* Append node-type specific details */
