@@ -167,6 +167,7 @@ public:
 	{
 		return os << p.getName();
 	}
+
 };
 
 template<typename T>
@@ -178,7 +179,7 @@ Registry::dump()
 	for (Plugin *p : plugins) {
 		T *t = dynamic_cast<T *>(p);
 		if (t)
-			getLogger()->info(" - {}: {}", *p, p->getDescription());
+			getLogger()->info(" - {}: {}", p->getName(), p->getDescription());
 	}
 }
 

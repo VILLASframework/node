@@ -86,7 +86,7 @@ public:
 	{
 		vertex->id = lastVertexId++;
 
-		logger->debug("New vertex: {}", *vertex);
+		logger->debug("New vertex: {}", vertex->toString());
 		vertices[vertex->id] = vertex;
 
 		return vertex->id;
@@ -103,7 +103,7 @@ public:
 		edge->from = fromVertexId;
 		edge->to = toVertexId;
 
-		logger->debug("New edge {}: {} -> {}", *edge, edge->from, edge->to);
+		logger->debug("New edge {}: {} -> {}", edge->toString(), edge->from, edge->to);
 
 		// This is a directed graph, so only push edge to starting vertex
 		getVertex(edge->from)->edges.push_back(edge->id);
@@ -242,7 +242,7 @@ public:
 				ssEdges << getEdge(edge)->to << " ";
 			}
 
-			logger->info("  {} connected to: {}", *vertex, ssEdges.str());
+			logger->info("  {} connected to: {}", vertex->toString(), ssEdges.str());
 		}
 
 		std::fstream s(fileName, s.out | s.trunc);
@@ -254,7 +254,7 @@ public:
 		for (auto &e : edges) {
 			auto &edge = e.second;
 
-			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
+			logger->info("  {}: {} -> {}", edge->toString(), edge->from, edge->to);
 			if (s.is_open()) {
 				auto from = getVertex(edge->from);
 				auto to = getVertex(edge->to);

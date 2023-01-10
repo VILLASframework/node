@@ -98,7 +98,7 @@ MemoryManager::findPath(const MemoryManager::AddressSpaceId &fromAddrSpaceId,
 	if (not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
 
 		logger->debug("No translation found from ({}) to ({})",
-		              *fromAddrSpace, *toAddrSpace);
+		              fromAddrSpace->toString(), toAddrSpace->toString());
 
 		throw std::out_of_range("no translation found");
 	}
@@ -122,7 +122,7 @@ MemoryManager::getTranslation(const MemoryManager::AddressSpaceId &fromAddrSpace
 		auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
 		auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
 		logger->debug("No translation found from ({}) to ({})",
-		              *fromAddrSpace, *toAddrSpace);
+		              fromAddrSpace->toString(), toAddrSpace->toString());
 
 		throw std::out_of_range("no translation found");
 	}
