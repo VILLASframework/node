@@ -18,7 +18,7 @@ public:
 
 	virtual void restart()
 	{
-		logger->info("The path {} restarted!", *path);
+		logger->info("The path {} restarted!", path->toString());
 	}
 };
 

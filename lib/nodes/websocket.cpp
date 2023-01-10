@@ -106,11 +106,11 @@ int websocket_connection_write(struct websocket_connection *c, struct Sample * c
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
 	if (pushed < (int) cnt)
-		c->node->logger->warn("Queue overrun in WebSocket connection: {}", *c);
+		c->node->logger->warn("Queue overrun in WebSocket connection: {}", c->toString());
 
 	sample_incref_many(smps, pushed);
 
-	c->node->logger->debug("Enqueued {} samples to {}", pushed, *c);
+	c->node->logger->debug("Enqueued {} samples to {}", pushed, c->toString());
 
 	/* Client connections which are currently connecting don't have an associate c->wsi yet */
 	if (c->wsi)
@@ -126,7 +126,7 @@ void websocket_connection_close(struct websocket_connection *c, struct lws *wsi,
 {
 	lws_close_reason(wsi, status, (unsigned char *) reason, strlen(reason));
 
-	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", *c, status, reason);
+	c->node->logger->debug("Closing WebSocket connection with {}: status={}, reason={}", c->toString(), status, reason);
 
 	c->state = websocket_connection::State::CLOSED;
 }
@@ -205,7 +205,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 			c->wsi = wsi;
 			c->state = websocket_connection::State::ESTABLISHED;
-			c->node->logger->info("Established WebSocket connection: {}", *c);
+			c->node->logger->info("Established WebSocket connection: {}", c->toString());
 
 			{
 				std::lock_guard guard(connections_lock);
@@ -223,7 +223,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 		case LWS_CALLBACK_CLOSED:
 			c->state = websocket_connection::State::CLOSED;
-			c->node->logger->debug("Closed WebSocket connection: {}", *c);
+			c->node->logger->debug("Closed WebSocket connection: {}", c->toString());
 
 			if (c->state != websocket_connection::State::CLOSING) {
 				/** @todo Attempt reconnect here */
@@ -260,7 +260,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 				if (ret < 0)
 					return ret;
 
-				c->node->logger->debug("Send {} samples to connection: {}, bytes={}", pulled, *c, ret);
+				c->node->logger->debug("Send {} samples to connection: {}, bytes={}", pulled, c->toString(), ret);
 			}
 
 			if (queue_available(&c->queue) > 0)
@@ -291,15 +291,15 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
-					c->node->logger->warn("Pool underrun for connection: {}", *c);
+					c->node->logger->warn("Pool underrun for connection: {}", c->toString());
 
 				recvd = c->formatter->sscan(c->buffers.recv->data(), c->buffers.recv->size(), nullptr, smps, avail);
 				if (recvd < 0) {
-					c->node->logger->warn("Failed to parse sample data received on connection: {}", *c);
+					c->node->logger->warn("Failed to parse sample data received on connection: {}", c->toString());
 					break;
 				}
 
-				c->node->logger->debug("Received {} samples from connection: {}", recvd, *c);
+				c->node->logger->debug("Received {} samples from connection: {}", recvd, c->toString());
 
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
@@ -309,7 +309,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					c->node->logger->warn("Queue overrun in connection: {}", *c);
+					c->node->logger->warn("Queue overrun in connection: {}", c->toString());
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
