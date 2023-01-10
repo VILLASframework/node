@@ -55,7 +55,7 @@ int PathSource::read(int i)
 	/* Fill smps[] free sample blocks from the pool */
 	allocated = sample_alloc_many(&pool, read_smps, cnt);
 	if (allocated != cnt)
-		path->logger->warn("Pool underrun for path source {}", *node);
+		path->logger->warn("Pool underrun for path source {}", node->getName());
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
 	recv = node->read(read_smps, allocated);
@@ -71,13 +71,13 @@ int PathSource::read(int i)
 			goto out2;
 		}
 		else {
-			path->logger->error("Failed to read samples from node {}", *node);
+			path->logger->error("Failed to read samples from node {}", node->getName());
 			enqueued = 0;
 			goto out2;
 		}
 	}
 	else if (recv < allocated)
-		path->logger->warn("Partial read for path {}: read={}, expected={}", *path, recv, allocated);
+		path->logger->warn("Partial read for path {}: read={}, expected={}", path->toString(), recv, allocated);
 
 	/* Let the master path sources forward received samples to their secondaries */
 	writeToSecondaries(read_smps, recv);
@@ -96,7 +96,7 @@ int PathSource::read(int i)
 			? sample_clone(path->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 		if (!muxed_smps[i]) {
-			path->logger->error("Pool underrun in path {}", *path);
+			path->logger->error("Pool underrun in path {}", path->toString());
 			return -1;
 		}
 
@@ -137,7 +137,7 @@ int PathSource::read(int i)
 	else if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
-		path->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, *path);
+		path->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, path->toString());
 	}
 #else
 	toenqueue = tomux;
@@ -178,10 +178,10 @@ out2:	sample_decref_many(read_smps, recv);
 void PathSource::check()
 {
 	if (!node->isEnabled())
-		throw RuntimeError("Source {} is not enabled", *node);
+		throw RuntimeError("Source {} is not enabled", node->getName());
 
 	if (!(node->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_READ))
-		throw RuntimeError("Node {} is not supported as a source for a path", *node);
+		throw RuntimeError("Node {} is not supported as a source for a path", node->getName());
 }
 
 MasterPathSource::MasterPathSource(Path *p, Node *n) :
@@ -193,9 +193,9 @@ void MasterPathSource::writeToSecondaries(struct Sample *smps[], unsigned cnt)
 	for (auto sps : secondaries) {
 		int sent = sps->getNode()->write(smps, cnt);
 		if (sent < 0)
-			throw RuntimeError("Failed to write secondary path source {} of path {}", *sps->getNode(), *path);
+			throw RuntimeError("Failed to write secondary path source {} of path {}", (sps->getNode())->getName(), path->toString());
 		else if ((unsigned) sent < cnt)
-			path->logger->warn("Partial write to secondary path source {} of path {}", *sps->getNode(), *path);
+			path->logger->warn("Partial write to secondary path source {} of path {}", (sps->getNode())->getName(), path->toString());
 	}
 }
 
