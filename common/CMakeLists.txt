@@ -8,16 +8,18 @@
 #
 ##############################################################################
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.14)
 
 project(villas-common
+    VERSION 0.0.0
+    DESCRIPTION "VILLAScommon"
+    HOMEPAGE_URL "https://git.rwth-aachen.de/acs/public/villas/VILLAScommon"
     LANGUAGES C CXX
 )
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
 set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
-set(PROJECT_HOMEPAGE_URL "https://git.rwth-aachen.de/acs/public/villas/VILLAScommon")
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(TOPLEVEL_PROJECT ON)
