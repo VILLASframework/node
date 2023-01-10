@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.14)
 project(villas-common
     VERSION 0.0.0
     DESCRIPTION "VILLAScommon"
-    HOMEPAGE_URL "https://git.rwth-aachen.de/acs/public/villas/VILLAScommon"
+    HOMEPAGE_URL "https://github.com/VILLASframework/common"
     LANGUAGES C CXX
 )
 
