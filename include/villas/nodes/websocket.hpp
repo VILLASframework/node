@@ -26,7 +26,7 @@ namespace villas {
 namespace node {
 
 /* Forward declarations */
-// class NodeCompat;
+class NodeCompat;
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 
@@ -97,7 +97,8 @@ struct websocket_connection {
 		return os;
 	}
 
-	std::string toString() {
+	std::string toString()
+	{
 		std::stringstream ss;
 		ss << *this;
 		return ss.str();
