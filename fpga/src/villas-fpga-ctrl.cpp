@@ -51,9 +51,6 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 		dma->makeAccesibleFromVA(b);
 	}
 
-	auto &mm = MemoryManager::get();
-	mm.getGraph().dump("graph.dot");
-
 
 	size_t cur = 0, next = 1;
 	std::ios::sync_with_stdio(false);
@@ -98,7 +95,10 @@ int main(int argc, char* argv[])
 		app.add_flag("--no-dma", noDma, "Do not setup DMA, only setup FPGA and Crossbar links");
 		std::string outputFormat = "short";
 		app.add_option("--output-format", outputFormat, "Output format (short, long)");
-
+		bool dumpGraph = false;
+		app.add_flag("--dump-graph", dumpGraph, "Dumps the graph of memory regions into \"graph.dot\"");
+		bool dumpAuroraChannels = true;
+		app.add_flag("--dump-aurora", dumpAuroraChannels, "Dumps the detected Aurora channels.");
 		app.parse(argc, argv);
 
 		// Logging setup
@@ -133,16 +133,24 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		for (auto aurora : aurora_channels)
-			aurora->dump();
+		if (dumpGraph) {
+			auto &mm = MemoryManager::get();
+			mm.getGraph().dump("graph.dot");
+		}
 
+		if (dumpAuroraChannels) {
+			for (auto aurora : aurora_channels)
+				aurora->dump();
+		}
 		// Configure Crossbar switch
 		const fpga::ConnectString parsedConnectString(connectStr);
 		parsedConnectString.configCrossBar(dma, aurora_channels);
 
-		if (!noDma) {
+		if (!noDma && parsedConnectString.isDstStdout()) {
 			auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
 			readFromDmaToStdOut(std::move(dma), std::move(formatter));
+		} else if (!noDma && parsedConnectString.isSrcStdin()) {
+
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());

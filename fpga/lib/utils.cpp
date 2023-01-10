@@ -105,7 +105,7 @@ int fpga::ConnectString::portStringToInt(std::string &str) const
 }
 
 
-// parses a string lik "1->2" or "1<->stdout" and configures the crossbar
+// parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
 void fpga::ConnectString::configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
 	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels) const
 {
