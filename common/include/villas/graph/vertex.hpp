@@ -38,6 +38,12 @@ public:
 		return this->id == other.id;
 	}
 
+	std::string toString() {
+		std::stringstream ss;
+		ss << *this;
+		return ss.str();
+	}
+
 private:
 	Identifier id;
 	// HACK: how to resolve this circular type dependency?

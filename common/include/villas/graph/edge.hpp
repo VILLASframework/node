@@ -39,6 +39,12 @@ public:
 		return from;
 	}
 
+	std::string toString() {
+		std::stringstream ss;
+		ss << *this;
+		return ss.str();
+	}
+
 private:
 	Identifier id;
 	Vertex::Identifier from;
