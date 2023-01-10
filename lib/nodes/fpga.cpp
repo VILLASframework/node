@@ -129,7 +129,7 @@ int FpgaNode::prepare()
 
 	intf = std::dynamic_pointer_cast<fpga::ip::Node>(intfCore);
 	if (!intf)
-		throw RuntimeError("The IP {} is not a interface", *intf);
+		throw RuntimeError("The IP {} is not a interface", *intfCore);
 
 	auto dmaCore = dmaName.empty()
 		? card->lookupIp(fpga::Vlnv(FPGA_DMA_VLNV))
@@ -139,7 +139,7 @@ int FpgaNode::prepare()
 
 	dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dmaCore);
 	if (!dma)
-		throw RuntimeError("The IP {} is not a DMA controller", *dma);
+		throw RuntimeError("The IP {} is not a DMA controller", *dmaCore);
 
 	int ret = intf->connect(*(dma), true);
 	if (ret)
