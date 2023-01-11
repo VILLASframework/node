@@ -25,9 +25,6 @@ struct lws;
 namespace villas {
 namespace node {
 
-/* Forward declarations */
-class NodeCompat;
-
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 
 /** Internal data per websocket node */
