@@ -126,9 +126,6 @@ test:cppcheck:
 test:unit:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  variables:
-    LD_PRELOAD: /usr/lib64/libSegFault.so
-    SEGFAULT_SIGNALS: all
   script:
   - mkdir -p build && cd build
   - cmake ${CMAKE_OPTS} ..
