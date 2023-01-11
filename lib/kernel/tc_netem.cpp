@@ -116,7 +116,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json)
 
 	if (json_delay_distribution) {
 		if (set_delay_distribution(ne, json_delay_distribution))
-			throw ConfigError(json_delay_distribution, "Invalid delay distribution in netem config");
+			throw ConfigError(json_delay_distribution, "node-config-netem-distrobution", "Invalid delay distribution in netem config");
 	}
 
 	if (json_delay_correlation) {

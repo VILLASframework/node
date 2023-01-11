@@ -6,7 +6,7 @@
 ###################################################################################
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=34
+ARG FEDORA_VERSION=36
 ARG REF=unknown
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
@@ -28,7 +28,7 @@ RUN dnf -y install \
 	openssh-clients \
 	rpmdevtools rpm-build \
 	jq nmap-ncat \
-	iproute \
+	iproute iproute-tc \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
 	cppcheck \
