@@ -28,7 +28,7 @@ RUN dnf -y install \
 	openssh-clients \
 	rpmdevtools rpm-build \
 	jq nmap-ncat \
-	iproute \
+	iproute iproute-tc \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
 	cppcheck \
