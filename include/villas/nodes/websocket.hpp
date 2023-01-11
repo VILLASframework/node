@@ -17,15 +17,13 @@
 #include <villas/format.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
+#include <villas/node_compat.hpp>
 
 /* Forward declaration */
 struct lws;
 
 namespace villas {
 namespace node {
-
-/* Forward declarations */
-class NodeCompat;
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 
@@ -89,11 +87,18 @@ struct websocket_connection {
 			os << "dest=" << c.destination->info.address << ":" << c.destination->info.port;
 
 		if (c.node)
-			os << ", node=" << *c.node;
+			os << ", node=" << c.node->getName();
 
 		os << ", mode=" << (c.mode == websocket_connection::Mode::CLIENT ? "client" : "server");
 
 		return os;
+	}
+
+	std::string toString()
+	{
+		std::stringstream ss;
+		ss << *this;
+		return ss.str();
 	}
 };
 

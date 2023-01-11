@@ -200,7 +200,7 @@ public:
 					goto leave;
 				}
 
-				logger->warn("Failed to receive samples from node {}: reason={}", *node, recv);
+				logger->warn("Failed to receive samples from node {}: reason={}", node->getName(), recv);
 			} else
 				formatter->print(stdout, smps, recv);
 
@@ -452,7 +452,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->start(&sn);
 		if (ret)
-			throw RuntimeError("Failed to intialize node type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to intialize node type {}: reason={}", node->getFactory()->getName(), ret);
 
 		sn.startInterfaces();
 
@@ -462,11 +462,11 @@ check:			if (optarg == endptr)
 
 		ret = node->prepare();
 		if (ret)
-			throw RuntimeError("Failed to prepare node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to prepare node {}: reason={}", node->getName(), ret);
 
 		ret = node->start();
 		if (ret)
-			throw RuntimeError("Failed to start node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to start node {}: reason={}", node->getName(), ret);
 
 		recv.dir = std::make_unique<PipeReceiveDirection>(node, formatter, recv.enabled, recv.limit);
 		send.dir = std::make_unique<PipeSendDirection>(node, formatter, send.enabled, send.limit);
@@ -484,7 +484,7 @@ check:			if (optarg == endptr)
 		 * Node::read() call and allow it to be joined(). */
 		ret = node->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node {}: reason={}", *node, ret);
+			throw RuntimeError("Failed to stop node {}: reason={}", node->getName(), ret);
 
 		recv.dir->stopThread();
 		send.dir->stopThread();
@@ -493,7 +493,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node type {}: reason={}", *node->getFactory(), ret);
+			throw RuntimeError("Failed to stop node type {}: reason={}", node->getFactory()->getName(), ret);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */

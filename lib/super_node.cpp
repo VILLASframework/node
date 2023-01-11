@@ -214,7 +214,7 @@ void SuperNode::check()
 	for (auto *n : nodes) {
 		ret = n->check();
 		if (ret)
-			throw RuntimeError("Invalid configuration for node {}", *n);
+			throw RuntimeError("Invalid configuration for node {}", n->getName());
 	}
 
 	for (auto *p : paths)
@@ -235,7 +235,7 @@ void SuperNode::prepareNodeTypes()
 
 		ret = nf->start(this);
 		if (ret)
-			throw RuntimeError("Failed to start node-type: {}", *n->getFactory());
+			throw RuntimeError("Failed to start node-type: {}", n->getFactory()->getName());
 	}
 }
 
@@ -262,7 +262,7 @@ void SuperNode::startNodes()
 
 		ret = n->start();
 		if (ret)
-			throw RuntimeError("Failed to start node: {}", *n);
+			throw RuntimeError("Failed to start node: {}", n->getName());
 	}
 }
 
@@ -284,7 +284,7 @@ void SuperNode::prepareNodes()
 
 		ret = n->prepare();
 		if (ret)
-			throw RuntimeError("Failed to prepare node: {}", *n);
+			throw RuntimeError("Failed to prepare node: {}", n->getName());
 	}
 }
 
@@ -315,7 +315,7 @@ void SuperNode::prepare()
 	for (auto *n : nodes) {
 		if (n->sources.size() == 0 &&
 		    n->destinations.size() == 0) {
-			logger->info("Node {} is not used by any path. Disabling...", *n);
+			logger->info("Node {} is not used by any path. Disabling...", n->getName());
 			n->setEnabled(false);
 		}
 	}
@@ -366,7 +366,7 @@ void SuperNode::stopNodes()
 		    n->getState() == State::STOPPING) {
 			ret = n->stop();
 			if (ret)
-				throw RuntimeError("Failed to stop node: {}", *n);
+				throw RuntimeError("Failed to stop node: {}", n->getName());
 		}
 	}
 }
@@ -383,7 +383,7 @@ void SuperNode::stopNodeTypes()
 
 		ret = nf->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node-type: {}", *n->getFactory());
+			throw RuntimeError("Failed to stop node-type: {}", n->getFactory()->getName());
 	}
 }
 
@@ -508,7 +508,7 @@ graph_t * SuperNode::getGraph()
 		uuid_unparse(n->getUuid(), uuid_str);
 
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", *n->getFactory(), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", n->getFactory()->getName(), uuid_str));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");

@@ -126,6 +126,13 @@ public:
 		return os;
 	}
 
+	std::string toString()
+	{
+		std::stringstream ss;
+		ss << *this;
+		return ss.str();
+	}
+
 	Path();
 	~Path();
 

@@ -144,7 +144,7 @@ void Path::startPoll()
 		auto fds = ps->getNode()->getPollFDs();
 		for (auto fd : fds) {
 			if (fd < 0)
-				throw RuntimeError("Failed to get file descriptor for node {}", *ps->getNode());
+				throw RuntimeError("Failed to get file descriptor for node {}", ps->getNode()->getName());
 
 			/* This slot is only used if it is not masked */
 			struct pollfd pfd = {
@@ -166,7 +166,7 @@ void Path::startPoll()
 		};
 
 		if (pfd.fd < 0)
-			throw RuntimeError("Failed to get file descriptor for timer of path {}", *this);
+			throw RuntimeError("Failed to get file descriptor for timer of path {}", this->toString());
 
 		pfds.push_back(pfd);
 	}
@@ -186,7 +186,7 @@ void Path::prepare(NodeList &nodes)
 	/* Prepare mappings */
 	ret = mappings.prepare(nodes);
 	if (ret)
-		throw RuntimeError("Failed to prepare mappings of path: {}", *this);
+		throw RuntimeError("Failed to prepare mappings of path: {}", this->toString());
 
 	/* Create path sources */
 	std::map<Node *, PathSource::Ptr> psm;
@@ -256,7 +256,7 @@ void Path::prepare(NodeList &nodes)
 			if (me->type == MappingEntry::Type::DATA) {
 				sig = sigs->getByIndex(me->data.offset + j);
 				if (!sig) {
-					logger->warn("Failed to create signal description for path {}", *this);
+					logger->warn("Failed to create signal description for path {}", this->toString());
 					continue;
 				}
 			}
@@ -290,7 +290,7 @@ void Path::prepare(NodeList &nodes)
 
 		ret = pd->prepare(queuelen);
 		if (ret)
-			throw RuntimeError("Failed to prepare path destination {} of path {}", *pd->node, *this);
+			throw RuntimeError("Failed to prepare path destination {} of path {}", pd->node->getName(), this->toString());
 	}
 
 	/* Autodetect whether to use original sequence numbers or not */
@@ -316,7 +316,7 @@ void Path::prepare(NodeList &nodes)
 
 	/* Add internal hooks if they are not already in the list */
 	hooks.prepare(signals, m, this, nullptr);
-	hooks.dump(logger, fmt::format("path {}", *this));
+	hooks.dump(logger, fmt::format("path {}", this->toString()));
 #endif /* WITH_HOOKS */
 
 	/* Prepare pool */
@@ -325,9 +325,9 @@ void Path::prepare(NodeList &nodes)
 
 	ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(osigs->size()), pool_mt);
 	if (ret)
-		throw RuntimeError("Failed to initialize pool of path: {}", *this);
+		throw RuntimeError("Failed to initialize pool of path: {}", this->toString());
 
-	logger->debug("Prepared path {} with {} output signals:", *this, osigs->size());
+	logger->debug("Prepared path {} with {} output signals:", this->toString(), osigs->size());
 	if (logger->level() <= spdlog::level::debug)
 		osigs->dump(logger);
 
@@ -397,7 +397,7 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 	/* Input node(s) */
 	ret = mappings.parse(json_in);
 	if (ret)
-		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", *this);
+		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", this->toString());
 
 	/* Output node(s) */
 	NodeList dests;
@@ -462,7 +462,7 @@ void Path::check()
 	assert(state != State::DESTROYED);
 
 	if (rate < 0)
-		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", *this);
+		throw RuntimeError("Setting 'rate' of path {} must be a positive number.", this->toString());
 
 	if (!IS_POW2(queuelen)) {
 		queuelen = LOG2_CEIL(queuelen);
@@ -492,7 +492,7 @@ void Path::checkPrepared()
 			/* Check that all path sources provide a file descriptor for polling if fixed rate is disabled */
 			for (auto ps : sources) {
 				if (!(ps->getNode()->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_POLL))
-					throw RuntimeError("Node {} can not be used in polling mode with path {}", *ps->getNode(), *this);
+					throw RuntimeError("Node {} can not be used in polling mode with path {}", ps->getNode()->getName(), this->toString());
 			}
 		}
 	}
@@ -522,7 +522,7 @@ void Path::start()
 	logger->info("Starting path {}: #signals={}/{}, #hooks={}, #sources={}, "
 	                "#destinations={}, mode={}, poll={}, mask=0b{:b}, rate={}, "
 	                "enabled={}, reversed={}, queuelen={}, original_sequence_no={}",
-		*this,
+		this->toString(),
 		signals->size(),
 		getOutputSignals()->size(),
 		hooks.size(),
@@ -596,7 +596,7 @@ void Path::stop()
 	    state != State::STOPPING)
 		return;
 
-	logger->info("Stopping path: {}", *this);
+	logger->info("Stopping path: {}", this->toString());
 
 	if (state != State::STOPPING)
 		state = State::STOPPING;
