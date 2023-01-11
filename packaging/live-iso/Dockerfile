@@ -5,7 +5,7 @@
 # @license Apache 2.0
 ###################################################################################
 
-FROM fedora:35
+FROM fedora:36
 
 RUN dnf -y install \
 	git \
