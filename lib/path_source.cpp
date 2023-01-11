@@ -193,9 +193,9 @@ void MasterPathSource::writeToSecondaries(struct Sample *smps[], unsigned cnt)
 	for (auto sps : secondaries) {
 		int sent = sps->getNode()->write(smps, cnt);
 		if (sent < 0)
-			throw RuntimeError("Failed to write secondary path source {} of path {}", (sps->getNode())->getName(), path->toString());
+			throw RuntimeError("Failed to write secondary path source {} of path {}", sps->getNode()->getName(), path->toString());
 		else if ((unsigned) sent < cnt)
-			path->logger->warn("Partial write to secondary path source {} of path {}", (sps->getNode())->getName(), path->toString());
+			path->logger->warn("Partial write to secondary path source {} of path {}", sps->getNode()->getName(), path->toString());
 	}
 }
 

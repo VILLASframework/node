@@ -493,7 +493,7 @@ check:			if (optarg == endptr)
 
 		ret = node->getFactory()->stop();
 		if (ret)
-			throw RuntimeError("Failed to stop node type {}: reason={}", (node->getFactory())->getName(), ret);
+			throw RuntimeError("Failed to stop node type {}: reason={}", node->getFactory()->getName(), ret);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */

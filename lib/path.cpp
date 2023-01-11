@@ -144,7 +144,7 @@ void Path::startPoll()
 		auto fds = ps->getNode()->getPollFDs();
 		for (auto fd : fds) {
 			if (fd < 0)
-				throw RuntimeError("Failed to get file descriptor for node {}", (ps->getNode())->getName());
+				throw RuntimeError("Failed to get file descriptor for node {}", ps->getNode()->getName());
 
 			/* This slot is only used if it is not masked */
 			struct pollfd pfd = {
@@ -492,7 +492,7 @@ void Path::checkPrepared()
 			/* Check that all path sources provide a file descriptor for polling if fixed rate is disabled */
 			for (auto ps : sources) {
 				if (!(ps->getNode()->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_POLL))
-					throw RuntimeError("Node {} can not be used in polling mode with path {}", (ps->getNode())->getName(), this->toString());
+					throw RuntimeError("Node {} can not be used in polling mode with path {}", ps->getNode()->getName(), this->toString());
 			}
 		}
 	}
