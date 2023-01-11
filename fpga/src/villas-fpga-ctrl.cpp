@@ -54,7 +54,6 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 
 	size_t cur = 0, next = 1;
 	std::ios::sync_with_stdio(false);
-	size_t bytesRead;
 
 	// Setup read transfer
 	dma->read(*block[0], block[0]->getSize());
@@ -63,9 +62,16 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 		logger->trace("Read from stream and write to address {}:{:p}", block[next]->getAddrSpaceId(), block[next]->getOffset());
 		// We could use the number of interrupts to determine if we missed a chunk of data
 		dma->read(*block[next], block[next]->getSize());
-		bytesRead = dma->readComplete();
+		auto c = dma->readComplete();
 
-		for (size_t i = 0; i*4 < bytesRead; i++) {
+		if (c.interrupts > 1) {
+			logger->warn("Missed {} interrupts", c.interrupts - 1);
+		}
+
+		logger->trace("bytes: {}, intrs: {}, bds: {}",
+			c.bytes, c.interrupts, c.bds);
+
+		for (size_t i = 0; i*4 < c.bytes; i++) {
 			int32_t ival = mem[cur][i];
 			float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
 			formatter->format(fval);

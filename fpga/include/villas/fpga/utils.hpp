@@ -107,7 +107,7 @@ public:
 		if (std::snprintf(nextBufPos(), formatStringSize+1, formatString, sampleCnt, value) > (int)formatStringSize) {
 			throw RuntimeError("Output buffer too small");
 		}
-		sampleCnt = (sampleCnt+1)%100000;
+		sampleCnt = (sampleCnt+1) % 100000;
 	}
 
 protected:
@@ -116,7 +116,10 @@ protected:
 	size_t sampleCnt;
 };
 
-std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(const std::string &format, size_t bufSizeInSamples)
+
+std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(
+	const std::string &format,
+	size_t bufSizeInSamples)
 {
 	if (format == "long") {
 		return std::make_unique<BufferedSampleFormatterLong>(bufSizeInSamples);
