@@ -51,7 +51,6 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 		dma->makeAccesibleFromVA(b);
 	}
 
-
 	size_t cur = 0, next = 1;
 	std::ios::sync_with_stdio(false);
 
