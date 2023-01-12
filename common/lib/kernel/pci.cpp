@@ -378,7 +378,8 @@ uint32_t Device::readHostBar(unsigned barNum) const
 		throw RuntimeError("Failed to read resource file");
 
 	unsigned long long start, end, flags;
-	std::istringstream(line) >> std::hex >> start >> end >> flags;
+	if (std::sscanf(line.c_str(), "%llx %llx %llx", &start, &end, &flags) != 3)
+		throw SystemError("Failed to parse BAR line");
 
 	if (end > start)
 		throw SystemError("Invalid BAR: start={}, end={}", start, end);
