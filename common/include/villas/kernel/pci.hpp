@@ -118,7 +118,7 @@ private:
 	villas::Logger log;
 
 protected:
-	std::fstream openSysFs(const std::string subPath, std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out) const;
+	std::fstream openSysFs(const std::string &subPath, std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out) const;
 };
 
 class DeviceList : public std::list<std::shared_ptr<Device>> {

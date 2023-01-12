@@ -446,7 +446,7 @@ int Device::getIommuGroup() const
 	return atoi(group);
 }
 
-std::fstream Device::openSysFs(const std::string subPath, std::ios_base::openmode mode) const
+std::fstream Device::openSysFs(const std::string &subPath, std::ios_base::openmode mode) const
 {
 	std::fstream file;
 
