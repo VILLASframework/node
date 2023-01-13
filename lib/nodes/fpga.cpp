@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <memory>
+
 #include <jansson.h>
 
 #include <villas/node_compat.hpp>
@@ -31,7 +33,7 @@ using namespace villas::fpga;
 using namespace villas::utils;
 
 /* Global state */
-static fpga::Card::List cards;
+static std::list<std::shared_ptr<fpga::PCIeCard>> cards;
 static std::map<fpga::ip::Dma, FpgaNode *> dmaMap;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
@@ -112,7 +114,7 @@ int FpgaNode::prepare()
 {
 	auto it = cardName.empty()
 		? cards.begin()
-		: std::find_if(cards.begin(), cards.end(), [this](const fpga::Card::Ptr &c) {
+		: std::find_if(cards.begin(), cards.end(), [this](std::shared_ptr<fpga::PCIeCard> c) {
 			return c->name == cardName;
 		});
 
