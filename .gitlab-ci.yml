@@ -8,7 +8,6 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   MAKE_OPTS: "-j16"
-  CMAKE_OPTS: "-DWITH_FPGA=OFF"
 
 stages:
 - prepare
