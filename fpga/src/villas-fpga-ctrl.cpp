@@ -13,6 +13,7 @@
 #include <string>
 #include <algorithm>
 #include <jansson.h>
+#include <thread>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
@@ -151,11 +152,19 @@ int main(int argc, char* argv[])
 		const fpga::ConnectString parsedConnectString(connectStr);
 		parsedConnectString.configCrossBar(dma, aurora_channels);
 
+		std::unique_ptr<std::thread> stdInThread = nullptr;
 		if (!noDma && parsedConnectString.isDstStdout()) {
 			auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
-			readFromDmaToStdOut(std::move(dma), std::move(formatter));
-		} else if (!noDma && parsedConnectString.isSrcStdin()) {
+			// We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
+			// in this thread anymore
+			stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma, std::move(formatter));
+		}
+		if (!noDma && parsedConnectString.isSrcStdin()) {
 
+		}
+
+		if (stdInThread) {
+			stdInThread->join();
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
