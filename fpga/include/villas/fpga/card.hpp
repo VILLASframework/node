@@ -8,7 +8,13 @@
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
  
+namespace villas {
+namespace fpga {
+
 class Card {
 public:
 	
 };
+
+} /* namespace fpga */
+} /* namespace villas */
