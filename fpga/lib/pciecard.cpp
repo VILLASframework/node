@@ -1,4 +1,4 @@
-/** FPGA card.
+/** FPGA pciecard.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
