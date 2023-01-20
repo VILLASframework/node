@@ -7,6 +7,7 @@
  * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
+#pragma once
  
 namespace villas {
 namespace fpga {
