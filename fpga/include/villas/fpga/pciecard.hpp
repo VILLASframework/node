@@ -76,11 +76,8 @@ private:
 	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
 public:	// TODO: make this private
-	std::list<std::shared_ptr<ip::Core>> ips;				// IPs located on this FPGA card
-
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts
-	bool polling;					// Poll on interrupts?
 
 	std::string name;				// The name of the FPGA card
 
@@ -88,9 +85,6 @@ public:	// TODO: make this private
 
 	// The VFIO container that this card is part of
 	std::shared_ptr<kernel::vfio::Container> vfioContainer;
-
-	// The VFIO device that represents this card
-	std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
 	// Slave address space ID to access the PCIe address space from the FPGA
 	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
@@ -105,8 +99,6 @@ protected:
 	{
 		return villas::logging.get(name);
 	}
-
-	Logger logger;
 };
 
 class PCIeCardFactory : public plugin::Plugin {
