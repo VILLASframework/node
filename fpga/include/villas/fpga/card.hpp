@@ -4,17 +4,60 @@
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power
+ *Systems, EONERC SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 #pragma once
- 
-namespace villas {
-namespace fpga {
 
-class Card {
-public:
-	
+#include <set>
+
+#include <villas/fpga/core.hpp>
+#include <villas/kernel/vfio_container.hpp>
+
+namespace villas
+{
+namespace fpga
+{
+
+class Card
+{
+    public:
+        bool polling;
+        std::shared_ptr<kernel::vfio::Device> vfioDevice;
+
+        // Slave address space ID to access the PCIe address space from the
+        // FPGA
+        MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
+
+        // Address space identifier of the master address space of this FPGA
+        // card. This will be used for address resolution of all IPs on this
+        // card.
+        MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
+
+        std::list<std::shared_ptr<ip::Core> > ips;
+
+        virtual ~Card();
+
+        std::shared_ptr<ip::Core> lookupIp(const std::string &name) const;
+        std::shared_ptr<ip::Core> lookupIp(const Vlnv &vlnv) const;
+        std::shared_ptr<ip::Core> lookupIp(const ip::IpIdentifier &id) const;
+
+        bool mapMemoryBlock(const MemoryBlock &block);
+        bool unmapMemoryBlock(const MemoryBlock &block);
+
+    private:
+        // Cache a set of already mapped memory blocks
+        std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
+
+        std::shared_ptr<kernel::vfio::Container> vfioContainer;
+
+    protected:
+        // Logger getLogger() const
+        // {
+        //         return villas::logging.get(name);
+        // }
+
+        Logger logger;
 };
 
 } /* namespace fpga */
