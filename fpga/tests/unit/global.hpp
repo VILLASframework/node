@@ -9,7 +9,7 @@
 
 #include <cstdlib>
 
-#include <villas/fpga/pciecard.hpp>
+#include <villas/fpga/pcie_card.hpp>
 
 class FpgaState {
 public:

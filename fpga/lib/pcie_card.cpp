@@ -17,7 +17,7 @@
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
-#include <villas/fpga/pciecard.hpp>
+#include <villas/fpga/pcie_card.hpp>
 
 using namespace villas;
 using namespace villas::fpga;

@@ -8,7 +8,7 @@
 set(SOURCES
 	vlnv.cpp
 	card.cpp
-	pciecard.cpp
+	pcie_card.cpp
 	core.cpp
 	node.cpp
 	utils.cpp

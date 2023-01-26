@@ -14,8 +14,8 @@
 #include <villas/kernel/kernel.hpp>
 
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/pciecard.hpp>
 #include <villas/fpga/ips/intc.hpp>
+#include <villas/fpga/pcie_card.hpp>
 
 using namespace villas::fpga::ip;
 
