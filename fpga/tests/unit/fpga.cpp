@@ -9,7 +9,7 @@
 
 #include <villas/utils.hpp>
 #include <villas/fpga/core.hpp>
-#include <villas/fpga/card.hpp>
+#include <villas/fpga/pciecard.hpp>
 #include <villas/fpga/vlnv.hpp>
 
 #include "global.hpp"

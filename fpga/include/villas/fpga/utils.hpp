@@ -9,7 +9,7 @@
 #pragma once
 
 #include <string>
-#include <villas/fpga/card.hpp>
+#include <villas/fpga/pciecard.hpp>
 
 namespace villas {
 namespace fpga {

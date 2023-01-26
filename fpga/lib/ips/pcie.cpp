@@ -12,6 +12,7 @@
 #include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
+#include <villas/fpga/pciecard.hpp>
 #include <villas/fpga/ips/pcie.hpp>
 
 using namespace villas::fpga::ip;
@@ -54,7 +55,7 @@ AxiPciExpressBridge::init()
 
 	auto pciAddrSpaceId = mm.getPciAddressSpace();
 
-	auto regions = card->pdev->getRegions();
+	auto regions = dynamic_cast<PCIeCard*>(card)->pdev->getRegions();
 
 	int i = 0;
 	for (auto region : regions) {
