@@ -152,22 +152,7 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 
 PCIeCard::~PCIeCard()
 {
-	// Ensure IP destructors are called before memory is unmapped
-	ips.clear();
-
-	auto &mm = MemoryManager::get();
-
-	// Unmap all memory blocks
-	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
-		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, mappedMemoryBlock);
-
-		const uintptr_t iova = translation.getLocalAddr(0);
-		const size_t size = translation.getSize();
-
-		logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-		              mappedMemoryBlock, iova, size);
-		vfioContainer->memoryUnmap(iova, size);
-	}
+	
 }
 
 std::shared_ptr<ip::Core> PCIeCard::lookupIp(const std::string &name) const
