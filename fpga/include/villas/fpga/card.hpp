@@ -1,11 +1,11 @@
-/** FPGA card
+/** FPGA pciecard
  *
  * This class represents a FPGA device.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power
- *Systems, EONERC SPDX-License-Identifier: Apache-2.0
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 #pragma once
 
@@ -14,14 +14,12 @@
 #include <villas/fpga/core.hpp>
 #include <villas/kernel/vfio_container.hpp>
 
-namespace villas
-{
-namespace fpga
-{
+namespace villas {
+namespace fpga {
 
 class Card
 {
-    public:
+public:
         bool polling;
         std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
@@ -45,13 +43,13 @@ class Card
         bool mapMemoryBlock(const MemoryBlock &block);
         bool unmapMemoryBlock(const MemoryBlock &block);
 
-    private:
+private:
         // Cache a set of already mapped memory blocks
         std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
         std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
-    protected:
+protected:
         // Logger getLogger() const
         // {
         //         return villas::logging.get(name);
