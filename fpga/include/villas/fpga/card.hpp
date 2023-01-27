@@ -1,4 +1,4 @@
-/** FPGA pciecard
+/** FPGA card
  *
  * This class represents a FPGA device.
  *
