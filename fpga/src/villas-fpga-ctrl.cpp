@@ -36,6 +36,55 @@ using namespace villas;
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("ctrl");
 
+void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma)
+{
+	auto &alloc = villas::HostRam::getAllocator();
+
+	const std::shared_ptr<villas::MemoryBlock> block[] = {
+		alloc.allocateBlock(0x200 * sizeof(uint32_t)),
+		alloc.allocateBlock(0x200 * sizeof(uint32_t))
+	};
+	villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+
+	for (auto b : block) {
+		dma->makeAccesibleFromVA(b);
+	}
+
+	size_t cur = 0, next = 1;
+	std::ios::sync_with_stdio(false);
+	std::string line;
+	bool firstXfer = true;
+
+	while(true) {
+		// Read values from stdin
+
+		std::getline(std::cin, line);
+		auto values = villas::utils::tokenize(line, ";");
+
+		size_t i = 0;
+		for (auto &value: values) {
+			if (value.empty()) continue;
+
+			const float number = std::stof(value);
+			mem[cur][i++] = number;
+		}
+
+		// Initiate write transfer
+		bool state = dma->write(*block[cur], i * sizeof(float));
+		if (!state)
+			logger->error("Failed to write to device");
+
+		if (!firstXfer) {
+			auto bytesWritten = dma->writeComplete();
+			logger->debug("Wrote {} bytes", bytesWritten.bytes);
+		} else {
+			firstXfer = false;
+		}
+
+		cur = next;
+		next = (next + 1) % (sizeof(mem) / sizeof(mem[0]));
+	}
+}
 
 void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 	std::unique_ptr<fpga::BufferedSampleFormatter> formatter)
@@ -160,7 +209,7 @@ int main(int argc, char* argv[])
 			stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma, std::move(formatter));
 		}
 		if (!noDma && parsedConnectString.isSrcStdin()) {
-
+			writeToDmaFromStdIn(dma);
 		}
 
 		if (stdInThread) {
