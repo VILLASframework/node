@@ -42,18 +42,11 @@ public:
 
         bool mapMemoryBlock(const MemoryBlock &block);
         bool unmapMemoryBlock(const MemoryBlock &block);
-
-private:
-        // Cache a set of already mapped memory blocks
-        std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
-
-        std::shared_ptr<kernel::vfio::Container> vfioContainer;
+	std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 protected:
-        // Logger getLogger() const
-        // {
-        //         return villas::logging.get(name);
-        // }
+	// Cache a set of already mapped memory blocks
+        std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
 
         Logger logger;
 };

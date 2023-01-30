@@ -83,9 +83,6 @@ public:	// TODO: make this private
 
 	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
 
-	// The VFIO container that this card is part of
-	std::shared_ptr<kernel::vfio::Container> vfioContainer;
-
 	// Slave address space ID to access the PCIe address space from the FPGA
 	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
 
