@@ -35,7 +35,7 @@ vlnvInitializationOrder = {
     Vlnv("xilinx.com:ip:axis_switch:"),
 };
 
-std::list<std::shared_ptr<Core>> CoreFactory::make(PCIeCard* card, json_t *json_ips)
+std::list<std::shared_ptr<Core>> CoreFactory::make(Card* card, json_t *json_ips)
 {
 	// We only have this logger until we know the factory to build an IP with
 	auto loggerStatic = getStaticLogger();

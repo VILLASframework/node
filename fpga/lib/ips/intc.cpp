@@ -15,6 +15,7 @@
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/intc.hpp>
+#include <villas/fpga/pcie_card.hpp>
 
 using namespace villas::fpga::ip;
 
@@ -40,7 +41,8 @@ InterruptController::init()
 	for (int i = 0; i < num_irqs; i++) {
 
 		// Try pinning to core
-		int ret = kernel::setIRQAffinity(nos[i], card->affinity, nullptr);
+		PCIeCard* pciecard = dynamic_cast<PCIeCard*>(card);
+		int ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
 
 		switch(ret) {
 		case 0:

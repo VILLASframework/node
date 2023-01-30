@@ -7,10 +7,10 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/utils.hpp>
 #include <villas/fpga/core.hpp>
-#include <villas/fpga/card.hpp>
+#include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/vlnv.hpp>
+#include <villas/utils.hpp>
 
 #include "global.hpp"
 
