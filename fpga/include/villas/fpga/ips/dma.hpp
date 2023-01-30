@@ -38,19 +38,26 @@ public:
 	// Stream to memory-mapped (S2MM)
 	bool read(const MemoryBlock &mem, size_t len);
 
-	size_t writeComplete()
+	struct Completion {
+		Completion() : bytes(0), bds(0), interrupts(0) { }
+		size_t bytes;		// Number of bytes transferred
+		size_t bds;		// Number of buffer descriptors used (only for scatter-gather)
+		size_t interrupts;	// Number of interrupts received since last call (only if interrupts enabled)
+	};
+
+	Completion writeComplete()
 	{
 		return hasScatterGather() ? writeCompleteScatterGather() : writeCompleteSimple();
 	}
 
-	size_t readComplete()
+	Completion readComplete()
 	{
 		return hasScatterGather() ? readCompleteScatterGather() : readCompleteSimple();
 	}
 
 	bool memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len);
 
-	void makeAccesibleFromVA(const MemoryBlock &mem);
+	void makeAccesibleFromVA(std::shared_ptr<MemoryBlock> mem);
 	bool makeInaccesibleFromVA(const MemoryBlock &mem);
 
 	inline
@@ -69,22 +76,6 @@ public:
 		return getMasterPort(mm2sPort);
 	}
 
-private:
-	bool writeScatterGather(const void* buf, size_t len);
-	bool readScatterGather(void* buf, size_t len);
-	size_t writeCompleteScatterGather();
-	size_t readCompleteScatterGather();
-
-	bool writeSimple(const void* buf, size_t len);
-	bool readSimple(void* buf, size_t len);
-	size_t writeCompleteSimple();
-	size_t readCompleteSimple();
-
-	void setupScatterGather();
-	void setupScatterGatherRingRx();
-	void setupScatterGatherRingTx();
-
-public:
 	static constexpr const char* s2mmPort = "S2MM";
 	static constexpr const char* mm2sPort = "MM2S";
 
@@ -92,8 +83,21 @@ public:
 
 	virtual
 	void dump() override;
-
 private:
+	bool writeScatterGather(const void* buf, size_t len);
+	bool readScatterGather(void* buf, size_t len);
+	Completion writeCompleteScatterGather();
+	Completion readCompleteScatterGather();
+
+	bool writeSimple(const void* buf, size_t len);
+	bool readSimple(void* buf, size_t len);
+	Completion writeCompleteSimple();
+	Completion readCompleteSimple();
+
+	void setupScatterGather();
+	void setupScatterGatherRingRx();
+	void setupScatterGatherRingTx();
+
 	static constexpr char registerMemory[] = "Reg";
 
 	static constexpr char mm2sInterrupt[] = "mm2s_introut";
@@ -115,6 +119,7 @@ private:
 	XAxiDma xDma;
 	XAxiDma_Config xConfig;
 
+	std::mutex hwLock;
 
 	bool configDone = false;
 	// use polling to wait for DMA completion or interrupts via efds
@@ -133,9 +138,10 @@ private:
 	// When using SG: ringBdSize is the maximum number of BDs usable in the ring
 	// Depending on alignment, the actual number of BDs usable can be smaller
 	static constexpr size_t requestedRingBdSize = 2048;
-	uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSize);
-	MemoryBlock::UniquePtr sgRingTx;
-	MemoryBlock::UniquePtr sgRingRx;
+	static constexpr size_t requestedRingBdSizeMemory = requestedRingBdSize * sizeof(XAxiDma_Bd);
+	uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
+	std::shared_ptr<MemoryBlock> sgRingTx;
+	std::shared_ptr<MemoryBlock> sgRingRx;
 };
 
 class DmaFactory : NodeFactory {

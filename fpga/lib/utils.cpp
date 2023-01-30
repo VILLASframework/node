@@ -35,45 +35,42 @@ using namespace villas;
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("streamer");
 
-const std::shared_ptr<villas::fpga::ip::Node> portStringToStreamVertex(std::string &str,
-	std::shared_ptr<villas::fpga::ip::Dma> dma,
-	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels)
+fpga::ConnectString::ConnectString(std::string& connectString, int maxPortNum) :
+	log(villas::logging.get("ConnectString")),
+	maxPortNum(maxPortNum),
+	bidirectional(false),
+	invert(false),
+	srcAsInt(-1),
+	dstAsInt(-1),
+	srcIsStdin(false),
+	dstIsStdout(false),
+	dmaLoopback(false)
 {
-	if (str == "stdin" || str == "stdout") {
-		 return dma;
-	} else {
-		int port = std::stoi(str);
-
-		if (port > 7 || port < 0)
-			throw std::runtime_error("Invalid port number");
-
-		return aurora_channels[port];
-	}
+	parseString(connectString);
 }
-// parses a string lik "1->2" or "1<->stdout" and configures the crossbar
-void fpga::configCrossBarUsingConnectString(std::string connectString,
-	std::shared_ptr<villas::fpga::ip::Dma> dma,
-	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels)
-{
-	bool bidirectional = false;
-	bool invert = false;
 
+void fpga::ConnectString::parseString(std::string& connectString)
+{
 	if (connectString.empty())
 		return;
 
 	if (connectString == "loopback") {
 		logger->info("Connecting loopback");
-		// is this working?
-		dma->connectLoopback();
+		srcIsStdin = true;
+		dstIsStdout = true;
+		bidirectional = true;
+		dmaLoopback = true;
+		return;
 	}
 
-	static std::regex re("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
+	static const std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
 	std::smatch match;
 
-	if (!std::regex_match(connectString, match, re)) {
+	if (!std::regex_match(connectString, match, regex) || match.size() != 4) {
 		logger->error("Invalid connect string: {}", connectString);
 		throw std::runtime_error("Invalid connect string");
 	}
+
 	if (match[2] == "<->") {
 		bidirectional = true;
 	} else if(match[2] == "<-") {
@@ -82,11 +79,61 @@ void fpga::configCrossBarUsingConnectString(std::string connectString,
 
 	std::string srcStr = (invert ? match[3] : match[1]);
 	std::string dstStr = (invert ? match[1] : match[3]);
-	logger->info("Connect string {}: Connecting {} to {}, {}directional",
-		connectString, srcStr, dstStr,
+
+	srcAsInt = portStringToInt(srcStr);
+	dstAsInt = portStringToInt(dstStr);
+	if (srcAsInt == -1) {
+		srcIsStdin = true;
+	}
+	if (dstAsInt == -1) {
+		dstIsStdout = true;
+	}
+}
+
+int fpga::ConnectString::portStringToInt(std::string &str) const
+{
+	if (str == "stdin" || str == "stdout") {
+		return -1;
+	} else {
+		const int port = std::stoi(str);
+
+		if (port > maxPortNum || port < 0)
+			throw std::runtime_error("Invalid port number");
+
+		return port;
+	}
+}
+
+
+// parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
+void fpga::ConnectString::configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels) const
+{
+	if (dmaLoopback) {
+		log->info("Configuring DMA loopback");
+		dma->connectLoopback();
+		return;
+	}
+
+	log->info("Connecting {} to {}, {}directional",
+		(srcAsInt==-1 ? "stdin" : std::to_string(srcAsInt)),
+		(dstAsInt==-1 ? "stdout" : std::to_string(dstAsInt)),
 		(bidirectional ? "bi" : "uni"));
-	auto src = portStringToStreamVertex(srcStr, dma, aurora_channels);
-	auto dest = portStringToStreamVertex(dstStr, dma, aurora_channels);
+
+	std::shared_ptr<fpga::ip::Node> src;
+	std::shared_ptr<fpga::ip::Node> dest;
+	if (srcIsStdin) {
+		src = dma;
+	} else {
+		src = aurora_channels[srcAsInt];
+	}
+
+	if (dstIsStdout) {
+		dest = dma;
+	} else {
+		dest = aurora_channels[dstAsInt];
+	}
+
 	src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
 	if (bidirectional) {
 		dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());

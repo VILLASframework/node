@@ -71,10 +71,6 @@ public:
 	bool mapMemoryBlock(const MemoryBlock &block);
 	bool unmapMemoryBlock(const MemoryBlock &block);
 
-private:
-	// Cache a set of already mapped memory blocks
-	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
-
 public:	// TODO: make this private
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts

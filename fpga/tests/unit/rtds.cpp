@@ -81,7 +81,7 @@ Test(fpga, rtds, .description = "RTDS")
 				          "Failed to initiate DMA read");
 
 //				logger->info("Wait read");
-				const size_t bytesRead = dma->readComplete();
+				const size_t bytesRead = dma->readComplete().bytes;
 				cr_assert(bytesRead > 0,
 				          "Failed to complete DMA read");
 

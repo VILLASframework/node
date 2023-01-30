@@ -36,17 +36,17 @@ public:
 
         virtual ~Card();
 
+        bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block);
+        bool unmapMemoryBlock(const MemoryBlock &block);
+	std::shared_ptr<kernel::vfio::Container> vfioContainer;
+
         std::shared_ptr<ip::Core> lookupIp(const std::string &name) const;
         std::shared_ptr<ip::Core> lookupIp(const Vlnv &vlnv) const;
         std::shared_ptr<ip::Core> lookupIp(const ip::IpIdentifier &id) const;
 
-        bool mapMemoryBlock(const MemoryBlock &block);
-        bool unmapMemoryBlock(const MemoryBlock &block);
-	std::shared_ptr<kernel::vfio::Container> vfioContainer;
-
 protected:
-	// Cache a set of already mapped memory blocks
-        std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
+	// Keep a map of already mapped memory blocks
+	std::map<MemoryManager::AddressSpaceId, std::shared_ptr<MemoryBlock>> memoryBlocksMapped;
 
         Logger logger;
 };

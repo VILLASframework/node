@@ -33,6 +33,7 @@ bool Dma::init()
 
 	xConfig.BaseAddr = getBaseAddr(registerMemory);
 
+	hwLock.lock();
 	if (XAxiDma_CfgInitialize(&xDma, &xConfig) != XST_SUCCESS) {
 		logger->error("Cannot initialize Xilinx DMA driver");
 		return false;
@@ -45,6 +46,7 @@ bool Dma::init()
 	else
 		logger->debug("DMA selftest passed");
 
+	hwLock.unlock();
 	// Map buffer descriptors
 	if (hasScatterGather()) {
 		if (actualRingBdSize < 2*readCoalesce || actualRingBdSize < 2*writeCoalesce) {
@@ -53,8 +55,6 @@ bool Dma::init()
 		}
 		setupScatterGather();
 	}
-
-
 
 	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], polling);
 	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], polling);
@@ -72,6 +72,7 @@ void Dma::setupScatterGatherRingRx()
 {
 	int ret;
 
+	hwLock.lock();
 	auto *rxRingPtr = XAxiDma_GetRxRing(&xDma);
 
 	// Disable all RX interrupts before RxBD space setup
@@ -82,9 +83,9 @@ void Dma::setupScatterGatherRingRx()
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingRx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
+	sgRingRx = alloc.allocateBlock(requestedRingBdSizeMemory);
 
-	if (not card->mapMemoryBlock(*sgRingRx))
+	if (not card->mapMemoryBlock(sgRingRx))
 		throw RuntimeError("Memory not accessible by DMA");
 
 	auto &mm = MemoryManager::get();
@@ -111,12 +112,15 @@ void Dma::setupScatterGatherRingRx()
 	ret = XAxiDma_BdRingStart(rxRingPtr);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to start TX ring: {}", ret);
+
+	hwLock.unlock();
 }
 
 void Dma::setupScatterGatherRingTx()
 {
 	int ret;
 
+	hwLock.lock();
 	auto *txRingPtr = XAxiDma_GetTxRing(&xDma);
 
 	// Disable all TX interrupts before TxBD space setup
@@ -127,9 +131,9 @@ void Dma::setupScatterGatherRingTx()
 
 	// Allocate and map space for BD ring in host RAM
 	auto &alloc = villas::HostRam::getAllocator();
-	sgRingTx = alloc.allocateBlock(requestedRingBdSize * sizeof(uint16_t) * XAXIDMA_BD_NUM_WORDS);
+	sgRingTx = alloc.allocateBlock(requestedRingBdSizeMemory);
 
-	if (not card->mapMemoryBlock(*sgRingTx))
+	if (not card->mapMemoryBlock(sgRingTx))
 		throw RuntimeError("Memory not accessible by DMA");
 
 	auto &mm = MemoryManager::get();
@@ -156,6 +160,7 @@ void Dma::setupScatterGatherRingTx()
 	ret = XAxiDma_BdRingStart(txRingPtr);
 	if (ret != XST_SUCCESS)
 		throw RuntimeError("Failed to start TX ring: {}", ret);
+	hwLock.unlock();
 }
 
 bool Dma::reset()
@@ -164,8 +169,10 @@ bool Dma::reset()
 		return true;
 	}
 
+	hwLock.lock();
 	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
+
 	XAxiDma_Reset(&xDma);
 
 
@@ -180,6 +187,7 @@ bool Dma::reset()
 
 		timeout--;
 	}
+	hwLock.unlock();
 	logger->error("DMA reset timed out");
 
 	return false;
@@ -210,10 +218,10 @@ bool Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
 	if (this->write(src, len) == 0)
 		return false;
 
-	if (not this->writeComplete())
+	if (not this->writeComplete().bds)
 		return false;
 
-	if (not this->readComplete())
+	if (not this->readComplete().bds)
 		return false;
 
 	return true;
@@ -256,8 +264,6 @@ bool Dma::read(const MemoryBlock &mem, size_t len)
 	if (buf == nullptr)
 		throw RuntimeError("Buffer was null");
 
-	logger->debug("Read from stream and write to address {:p}", buf);
-
 	return hasScatterGather() ? readScatterGather(buf, len) : readSimple(buf, len);
 }
 
@@ -267,23 +273,31 @@ bool Dma::writeScatterGather(const void *buf, size_t len)
 	// buf is address from view of DMA controller
 
 	int ret = XST_FAILURE;
-
+	hwLock.lock();
 	auto *txRing = XAxiDma_GetTxRing(&xDma);
-	if (txRing == nullptr)
+	if (txRing == nullptr) {
+		hwLock.unlock();
 		throw RuntimeError("TxRing was null.");
+	}
 
 	XAxiDma_Bd *bd;
 	ret = XAxiDma_BdRingAlloc(txRing, 1, &bd);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("BdRingAlloc returned {}.", ret);
+	}
 
 	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("Setting BdBufAddr to {} returned {}.", buf, ret);
+	}
 
 	ret = XAxiDma_BdSetLength(bd, len, txRing->MaxTransferLen);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("Setting BdBufLength to {} returned {}.", len, ret);
+	}
 
 	// We have a single descriptor so it is both start and end of the list
 	XAxiDma_BdSetCtrl(bd, XAXIDMA_BD_CTRL_TXEOF_MASK | XAXIDMA_BD_CTRL_TXSOF_MASK);
@@ -294,8 +308,12 @@ bool Dma::writeScatterGather(const void *buf, size_t len)
 	// Give control of BD to HW. We should not access it until transfer is finished.
 	// Failure could also indicate that EOF is not set on last Bd
 	ret = XAxiDma_BdRingToHw(txRing, 1, bd);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("Enqueuing Bd and giving control to HW failed {}", ret);
+	}
+
+	hwLock.unlock();
 
 	return true;
 }
@@ -307,25 +325,34 @@ bool Dma::readScatterGather(void *buf, size_t len)
 	if (len < readCoalesce*readMsgSize)
 		throw RuntimeError("Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
 
+	hwLock.lock();
 	auto *rxRing = XAxiDma_GetRxRing(&xDma);
-	if (rxRing == nullptr)
+	if (rxRing == nullptr) {
+		hwLock.unlock();
 		throw RuntimeError("RxRing was null.");
+	}
 
 	XAxiDma_Bd *bd;
 	ret = XAxiDma_BdRingAlloc(rxRing, readCoalesce, &bd);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("Failed to alloc BD in RX ring: {}", ret);
+	}
 
 	auto curBd = bd;
 	char* curBuf = (char*)buf;
 	for (size_t i = 0; i < readCoalesce; i++) {
 		ret = XAxiDma_BdSetBufAddr(curBd, (uintptr_t) curBuf);
-		if (ret != XST_SUCCESS)
+		if (ret != XST_SUCCESS) {
+			hwLock.unlock();
 			throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}", (uintptr_t) buf, (uintptr_t) bd, ret);
+		}
 
 		ret = XAxiDma_BdSetLength(curBd, readMsgSize, rxRing->MaxTransferLen);
-		if (ret != XST_SUCCESS)
+		if (ret != XST_SUCCESS) {
+			hwLock.unlock();
 			throw RuntimeError("Rx set length {} on BD {:x} failed {}", len, (uintptr_t) bd, ret);
+		}
 
 
 		// Receive BDs do not need to set anything for the control
@@ -340,124 +367,136 @@ bool Dma::readScatterGather(void *buf, size_t len)
 	}
 
 	ret = XAxiDma_BdRingToHw(rxRing, readCoalesce, bd);
-	if (ret != XST_SUCCESS)
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
 		throw RuntimeError("Failed to submit BD to RX ring: {}", ret);
+	}
 
+	hwLock.unlock();
 	return true;
 }
 
-size_t
-Dma::writeCompleteScatterGather()
+Dma::Completion Dma::writeCompleteScatterGather()
 {
+	Completion c;
 	XAxiDma_Bd *bd = nullptr, *curBd;
-	size_t processedBds = 0;
 	auto txRing = XAxiDma_GetTxRing(&xDma);
 	int ret = XST_FAILURE;
-	size_t bytesWritten = 0;
+	static size_t errcnt = 32;
 
-	if ((processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd)) == 0)
+	c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+
+	hwLock.lock();
+	if ((c.bds = XAxiDma_BdRingFromHw(txRing, writeCoalesce, &bd)) < writeCoalesce)
 	{
-		/*auto intrNum = */irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
-		//logger->info("Got {} interrupts (id: {}) from write channel", intrNum, irqs[mm2sInterrupt].num);
-		processedBds = XAxiDma_BdRingFromHw(txRing, 1, &bd);
+		logger->warn("Send partial batch of {}/{} BDs.", c.bds, writeCoalesce);
+		if(errcnt-- == 0) {
+			hwLock.unlock();
+			throw RuntimeError("too many partial batches");
+		}
 	}
 
 	// Acknowledge the interrupt
 	auto irqStatus = XAxiDma_BdRingGetIrq(txRing);
 	XAxiDma_BdRingAckIrq(txRing, irqStatus);
 
-	if (bd == nullptr)
+	if (c.bds == 0) {
+		c.bytes = 0;
+		hwLock.unlock();
+		return c;
+	}
+
+	if (bd == nullptr) {
+		hwLock.unlock();
 		throw RuntimeError("Bd was null.");
+	}
 
 	curBd = bd;
-	for (size_t i = 0; i < processedBds; i++) {
+	for (size_t i = 0; i < c.bds; i++) {
 		ret = XAxiDma_BdGetSts(curBd);
 		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+			hwLock.unlock();
 			throw RuntimeError("Bd Status register shows error: {}", ret);
 			break;
 		}
 
-		bytesWritten += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
+		c.bytes += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
 		curBd = (XAxiDma_Bd *) XAxiDma_BdRingNext(txRing, curBd);
 	}
 
-	ret = XAxiDma_BdRingFree(txRing, processedBds, bd);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to free {} TX BDs {}", processedBds, ret);
+	ret = XAxiDma_BdRingFree(txRing, c.bds, bd);
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
+		throw RuntimeError("Failed to free {} TX BDs {}", c.bds, ret);
+	}
 
-	return bytesWritten;
+	hwLock.unlock();
+	return c;
 }
 
-size_t
-Dma::readCompleteScatterGather()
+Dma::Completion Dma::readCompleteScatterGather()
 {
+	Completion c;
 	XAxiDma_Bd *bd = nullptr, *curBd;
-	size_t processedBds = 0;
 	auto rxRing = XAxiDma_GetRxRing(&xDma);
 	int ret = XST_FAILURE;
-	size_t bytesRead = 0;
+	static size_t errcnt = 32;
 
+	c.interrupts = irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+
+	hwLock.lock();
 	// Wait until the data has been received by the RX channel.
-	if ((processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) < readCoalesce)
+	if ((c.bds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) < readCoalesce)
 	{
-		if (processedBds != 0) {
-			//Ignore partial batches
-			logger->warn("Ignoring partial batch of {} BDs.", processedBds);
-			ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
-			if (ret != XST_SUCCESS)
-				throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
+		logger->warn("Got partial batch of {}/{} BDs.", c.bds, readCoalesce);
+		if(errcnt-- == 0) {
+			hwLock.unlock();
+			throw RuntimeError("too many partial batches");
 		}
-		//auto intrNum =
-		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
-		//If we got a partial batch on the first call, we have to receive up to readCoalesce*2
-		//to make sure we get a full batch of readCoalesce messages
-		processedBds = XAxiDma_BdRingFromHw(rxRing, readCoalesce*2, &bd);
 	}
-	if(processedBds < readCoalesce) {
-		// We got less than we expected. We already tried two times so let's give up.
-		throw RuntimeError("Read only {} BDs, expected {}.", processedBds, readCoalesce);
-	} else if(processedBds > readCoalesce) {
-		// If the first try was a partial batch, we receive two batches on the second try
-		// We ignore the first batch and only process the second one
-		while (processedBds > readCoalesce) {
-			bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(rxRing, bd);
-			processedBds--;
-		}
-		ret = XAxiDma_BdRingFree(rxRing, processedBds-readCoalesce, bd);
-		if (ret != XST_SUCCESS)
-			throw RuntimeError("Failed to free {} RX BDs {}", processedBds, ret);
-	}
-	// At this point we have exactly readCoalesce BDs.
 
 	// Acknowledge the interrupt. Has no effect if no interrupt has occured.
 	auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
 	XAxiDma_BdRingAckIrq(rxRing, irqStatus);
 
-	if (bd == nullptr)
+	if (c.bds == 0) {
+		c.bytes = 0;
+		hwLock.unlock();
+		return c;
+	}
+
+	if (bd == nullptr) {
+		hwLock.unlock();
 		throw RuntimeError("Bd was null.");
+	}
 
 	curBd = bd;
-	for (size_t i = 0; i < processedBds; i++) {
+	for (size_t i = 0; i < c.bds; i++) {
 		ret = XAxiDma_BdGetSts(curBd);
 		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+			hwLock.unlock();
 			throw RuntimeError("Bd Status register shows error: {}", ret);
 			break;
 		}
 
-		bytesRead += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
+		c.bytes += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
 		curBd = (XAxiDma_Bd *) XAxiDma_BdRingNext(rxRing, curBd);
 	}
 
 	// Free all processed RX BDs for future transmission.
-	ret = XAxiDma_BdRingFree(rxRing, processedBds, bd);
-	if (ret != XST_SUCCESS)
-		throw RuntimeError("Failed to free {} TX BDs {}.", processedBds, ret);
+	ret = XAxiDma_BdRingFree(rxRing, c.bds, bd);
+	if (ret != XST_SUCCESS) {
+		hwLock.unlock();
+		throw RuntimeError("Failed to free {} TX BDs {}.", c.bds, ret);
+	}
 
-	return bytesRead;
+	hwLock.unlock();
+	return c;
 }
 
 bool Dma::writeSimple(const void *buf, size_t len)
 {
+	hwLock.lock();
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 
 	if (not ring->HasDRE) {
@@ -465,8 +504,10 @@ bool Dma::writeSimple(const void *buf, size_t len)
 			? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
 			: ring->DataWidth - 1;
 
-		if (reinterpret_cast<uintptr_t>(buf) & mask)
+		if (reinterpret_cast<uintptr_t>(buf) & mask) {
+			hwLock.unlock();
 			return false;
+		}
 	}
 
 	const bool dmaChannelHalted =
@@ -475,8 +516,10 @@ bool Dma::writeSimple(const void *buf, size_t len)
 	const bool dmaToDeviceBusy = XAxiDma_Busy(&xDma, XAXIDMA_DMA_TO_DEVICE);
 
 	// If the engine is doing a transfer, cannot submit
-	if (not dmaChannelHalted and dmaToDeviceBusy)
+	if (not dmaChannelHalted and dmaToDeviceBusy) {
+		hwLock.unlock();
 		return false;
+	}
 
 	// Set lower 32 bit of source address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_SRCADDR_OFFSET,
@@ -494,12 +537,13 @@ bool Dma::writeSimple(const void *buf, size_t len)
 
 	// Set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
-
+	hwLock.unlock();
 	return true;
 }
 
 bool Dma::readSimple(void *buf, size_t len)
 {
+	hwLock.lock();
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 
 	if (not ring->HasDRE) {
@@ -507,16 +551,20 @@ bool Dma::readSimple(void *buf, size_t len)
 			? XAXIDMA_MICROMODE_MIN_BUF_ALIGN
 			: ring->DataWidth - 1;
 
-		if (reinterpret_cast<uintptr_t>(buf) & mask)
+		if (reinterpret_cast<uintptr_t>(buf) & mask) {
+			hwLock.unlock();
 			return false;
+		}
 	}
 
 	const bool dmaChannelHalted = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK;
 	const bool deviceToDmaBusy = XAxiDma_Busy(&xDma, XAXIDMA_DEVICE_TO_DMA);
 
 	// If the engine is doing a transfer, cannot submit
-	if (not dmaChannelHalted and deviceToDmaBusy)
+	if (not dmaChannelHalted and deviceToDmaBusy) {
+		hwLock.unlock();
 		return false;
+	}
 
 	// Set lower 32 bit of destination address
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET, LOWER_32_BITS(reinterpret_cast<uintptr_t>(buf)));
@@ -533,42 +581,48 @@ bool Dma::readSimple(void *buf, size_t len)
 	// Set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
+	hwLock.unlock();
 	return true;
 }
 
-size_t
-Dma::writeCompleteSimple()
+Dma::Completion Dma::writeCompleteSimple()
 {
+	Completion c;
 	while (!(XAxiDma_IntrGetIrq(&xDma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
-		irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt]);
+		c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt]);
 
+	hwLock.lock();
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 
 	const XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 	const size_t bytesWritten = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
-
-	return bytesWritten;
+	hwLock.unlock();
+	c.bytes = bytesWritten;
+	return c;
 }
 
-size_t
-Dma::readCompleteSimple()
+Dma::Completion Dma::readCompleteSimple()
 {
+	Completion c;
 	while (!(XAxiDma_IntrGetIrq(&xDma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK))
-		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt]);
+		c.interrupts = irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt]);
 
+	hwLock.lock();
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
 	const XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 	const size_t bytesRead = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
+	hwLock.unlock();
 
-	return bytesRead;
+	c.bytes = bytesRead;
+	return c;
 }
 
-void Dma::makeAccesibleFromVA(const MemoryBlock &mem)
+void Dma::makeAccesibleFromVA(std::shared_ptr<MemoryBlock> mem)
 {
 	// Only symmetric mapping supported currently
-	if (isMemoryBlockAccesible(mem, s2mmInterface) and
-		isMemoryBlockAccesible(mem, mm2sInterface))
+	if (isMemoryBlockAccesible(*mem, s2mmInterface) and
+		isMemoryBlockAccesible(*mem, mm2sInterface))
 		return;
 
 	// Try mapping via FPGA-card (VFIO)
@@ -576,8 +630,8 @@ void Dma::makeAccesibleFromVA(const MemoryBlock &mem)
 		throw RuntimeError("Memory not accessible by DMA");
 
 	// Sanity-check if mapping worked, this shouldn't be neccessary
-	if (not isMemoryBlockAccesible(mem, s2mmInterface) or
-		not isMemoryBlockAccesible(mem, mm2sInterface))
+	if (not isMemoryBlockAccesible(*mem, s2mmInterface) or
+		not isMemoryBlockAccesible(*mem, mm2sInterface))
 		throw RuntimeError("Mapping memory via card didn't work, but reported success?!");
 }
 

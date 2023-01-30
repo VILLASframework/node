@@ -22,13 +22,13 @@ Card::~Card()
 
 	// Unmap all memory blocks
 	for (auto &mappedMemoryBlock : memoryBlocksMapped) {
-		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, mappedMemoryBlock);
+		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, mappedMemoryBlock.first);
 
 		const uintptr_t iova = translation.getLocalAddr(0);
 		const size_t size = translation.getSize();
 
 		logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-		              mappedMemoryBlock, iova, size);
+		              mappedMemoryBlock.first, iova, size);
 		vfioContainer->memoryUnmap(iova, size);
 	}
 }
@@ -57,82 +57,73 @@ std::shared_ptr<ip::Core> Card::lookupIp(const Vlnv &vlnv) const
 
 std::shared_ptr<ip::Core> Card::lookupIp(const ip::IpIdentifier &id) const
 {
-        for(auto &ip : ips) {
-                if(*ip == id) {
-                        return ip;
-                }
-        }
+	for (auto &ip : ips) {
+		if (*ip == id) {
+			return ip;
+		}
+	}
 
-        return nullptr;
+	return nullptr;
 }
 
-bool Card::unmapMemoryBlock(const MemoryBlock &block)
+bool Card::unmapMemoryBlock(const MemoryBlock& block)
 {
-        if(memoryBlocksMapped.find(block.getAddrSpaceId())
-           == memoryBlocksMapped.end()) {
-                throw std::runtime_error(
-                    "Block " + std::to_string(block.getAddrSpaceId())
-                    + " is not mapped but was requested to be unmapped.");
-        }
+	if (memoryBlocksMapped.find(block.getAddrSpaceId()) == memoryBlocksMapped.end()) {
+		throw std::runtime_error("Block " + std::to_string(block.getAddrSpaceId()) + " is not mapped but was requested to be unmapped.");
+	}
 
-        auto &mm = MemoryManager::get();
+	auto &mm = MemoryManager::get();
 
-        auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
-                                             block.getAddrSpaceId());
+	auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, block.getAddrSpaceId());
 
-        const uintptr_t iova = translation.getLocalAddr(0);
-        const size_t size = translation.getSize();
+	const uintptr_t iova = translation.getLocalAddr(0);
+	const size_t size = translation.getSize();
 
-        logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-                      block.getAddrSpaceId(),
-                      iova,
-                      size);
-        vfioContainer->memoryUnmap(iova, size);
+	logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
+			block.getAddrSpaceId(), iova, size);
+	vfioContainer->memoryUnmap(iova, size);
 
-        memoryBlocksMapped.erase(block.getAddrSpaceId());
+	memoryBlocksMapped.erase(block.getAddrSpaceId());
 
-        return true;
+	return true;
 }
 
-bool Card::mapMemoryBlock(const MemoryBlock &block)
+
+bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block)
 {
-        if(not vfioContainer->isIommuEnabled()) {
-                logger->warn("VFIO mapping not supported without IOMMU");
-                return false;
-        }
+	if (not vfioContainer->isIommuEnabled()) {
+		logger->warn("VFIO mapping not supported without IOMMU");
+		return false;
+	}
 
-        auto &mm = MemoryManager::get();
-        const auto &addrSpaceId = block.getAddrSpaceId();
+	auto &mm = MemoryManager::get();
+	const auto &addrSpaceId = block->getAddrSpaceId();
 
-        if(memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end())
-                // Block already mapped
-                return true;
-        else
-                logger->debug("Create VFIO mapping for {}", addrSpaceId);
+	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end())
+		// Block already mapped
+		return true;
+	else
+		logger->debug("Create VFIO mapping for {}", addrSpaceId);
 
-        auto translationFromProcess
-            = mm.getTranslationFromProcess(addrSpaceId);
-        uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
-        uintptr_t iovaAddr = vfioContainer->memoryMap(processBaseAddr,
-                                                      UINTPTR_MAX,
-                                                      block.getSize());
+	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
+	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
+	uintptr_t iovaAddr = vfioContainer->memoryMap(processBaseAddr,
+	                                              UINTPTR_MAX,
+	                                              block->getSize());
 
-        if(iovaAddr == UINTPTR_MAX) {
-                logger->error("Cannot map memory at {:#x} of size {:#x}",
-                              processBaseAddr,
-                              block.getSize());
-                return false;
-        }
+	if (iovaAddr == UINTPTR_MAX) {
+		logger->error("Cannot map memory at {:#x} of size {:#x}",
+		              processBaseAddr, block->getSize());
+		return false;
+	}
 
-        mm.createMapping(iovaAddr,
-                         0,
-                         block.getSize(),
-                         "VFIO-D2H",
-                         this->addrSpaceIdDeviceToHost,
-                         addrSpaceId);
+	mm.createMapping(iovaAddr, 0, block->getSize(),
+	                 "VFIO-D2H",
+	                 this->addrSpaceIdDeviceToHost,
+	                 addrSpaceId);
 
-        // Remember that this block has already been mapped for later
-        memoryBlocksMapped.insert(addrSpaceId);
+	// Remember that this block has already been mapped for later
+	memoryBlocksMapped.insert({addrSpaceId, block});
 
         return true;
 }

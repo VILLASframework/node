@@ -13,6 +13,7 @@
 #include <string>
 #include <algorithm>
 #include <jansson.h>
+#include <thread>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
@@ -33,9 +34,103 @@
 using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static auto logger = villas::logging.get("cat");
+static auto logger = villas::logging.get("ctrl");
 
+void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma)
+{
+	auto &alloc = villas::HostRam::getAllocator();
 
+	const std::shared_ptr<villas::MemoryBlock> block[] = {
+		alloc.allocateBlock(0x200 * sizeof(uint32_t)),
+		alloc.allocateBlock(0x200 * sizeof(uint32_t))
+	};
+	villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+
+	for (auto b : block) {
+		dma->makeAccesibleFromVA(b);
+	}
+
+	size_t cur = 0, next = 1;
+	std::ios::sync_with_stdio(false);
+	std::string line;
+	bool firstXfer = true;
+
+	while(true) {
+		// Read values from stdin
+
+		std::getline(std::cin, line);
+		auto values = villas::utils::tokenize(line, ";");
+
+		size_t i = 0;
+		for (auto &value: values) {
+			if (value.empty()) continue;
+
+			const float number = std::stof(value);
+			mem[cur][i++] = number;
+		}
+
+		// Initiate write transfer
+		bool state = dma->write(*block[cur], i * sizeof(float));
+		if (!state)
+			logger->error("Failed to write to device");
+
+		if (!firstXfer) {
+			auto bytesWritten = dma->writeComplete();
+			logger->debug("Wrote {} bytes", bytesWritten.bytes);
+		} else {
+			firstXfer = false;
+		}
+
+		cur = next;
+		next = (next + 1) % (sizeof(mem) / sizeof(mem[0]));
+	}
+}
+
+void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
+	std::unique_ptr<fpga::BufferedSampleFormatter> formatter)
+{
+	auto &alloc = villas::HostRam::getAllocator();
+
+	const std::shared_ptr<villas::MemoryBlock> block[] = {
+		alloc.allocateBlock(0x200 * sizeof(uint32_t)),
+		alloc.allocateBlock(0x200 * sizeof(uint32_t))
+	};
+	villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+
+	for (auto b : block) {
+		dma->makeAccesibleFromVA(b);
+	}
+
+	size_t cur = 0, next = 1;
+	std::ios::sync_with_stdio(false);
+
+	// Setup read transfer
+	dma->read(*block[0], block[0]->getSize());
+
+	while (true) {
+		logger->trace("Read from stream and write to address {}:{:p}", block[next]->getAddrSpaceId(), block[next]->getOffset());
+		// We could use the number of interrupts to determine if we missed a chunk of data
+		dma->read(*block[next], block[next]->getSize());
+		auto c = dma->readComplete();
+
+		if (c.interrupts > 1) {
+			logger->warn("Missed {} interrupts", c.interrupts - 1);
+		}
+
+		logger->trace("bytes: {}, intrs: {}, bds: {}",
+			c.bytes, c.interrupts, c.bds);
+
+		for (size_t i = 0; i*4 < c.bytes; i++) {
+			int32_t ival = mem[cur][i];
+			float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
+			formatter->format(fval);
+		}
+		formatter->output(std::cout);
+
+		cur = next;
+		next = (next + 1) % (sizeof(mem) / sizeof(mem[0]));
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -53,7 +148,12 @@ int main(int argc, char* argv[])
 		app.add_option("-x,--connect", connectStr, "Connect a FPGA port with another or stdin/stdout");
 		bool noDma = false;
 		app.add_flag("--no-dma", noDma, "Do not setup DMA, only setup FPGA and Crossbar links");
-
+		std::string outputFormat = "short";
+		app.add_option("--output-format", outputFormat, "Output format (short, long)");
+		bool dumpGraph = false;
+		app.add_flag("--dump-graph", dumpGraph, "Dumps the graph of memory regions into \"graph.dot\"");
+		bool dumpAuroraChannels = true;
+		app.add_flag("--dump-aurora", dumpAuroraChannels, "Dumps the detected Aurora channels.");
 		app.parse(argc, argv);
 
 		// Logging setup
@@ -65,13 +165,6 @@ int main(int argc, char* argv[])
 			logger->error("No configuration file provided/ Please use -c/--config argument");
 			return 1;
 		}
-
-		//FIXME: This must be called before card is intialized, because the card descructor
-		// 	 still accesses the allocated memory. This order ensures that the allocator
-		//       is destroyed AFTER the card.
-		auto &alloc = villas::HostRam::getAllocator();
-		villas::MemoryAccessor<int32_t> mem[] = {alloc.allocate<int32_t>(0x200), alloc.allocate<int32_t>(0x200)};
-		const villas::MemoryBlock block[] = {mem[0].getMemoryBlock(), mem[1].getMemoryBlock()};
 
 		auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
@@ -95,52 +188,32 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		for (auto aurora : aurora_channels)
-			aurora->dump();
-
-		// Configure Crossbar switch
-		fpga::configCrossBarUsingConnectString(connectStr, dma, aurora_channels);
-
-		if (!noDma) {
-			for (auto b : block) {
-				dma->makeAccesibleFromVA(b);
-			}
-
+		if (dumpGraph) {
 			auto &mm = MemoryManager::get();
 			mm.getGraph().dump("graph.dot");
+		}
 
-			// Setup read transfer
-			dma->read(block[0], block[0].getSize());
-			size_t cur = 0, next = 1;
-			while (true) {
-				dma->read(block[next], block[next].getSize());
-				auto bytesRead = dma->readComplete();
-				// Setup read transfer
+		if (dumpAuroraChannels) {
+			for (auto aurora : aurora_channels)
+				aurora->dump();
+		}
+		// Configure Crossbar switch
+		const fpga::ConnectString parsedConnectString(connectStr);
+		parsedConnectString.configCrossBar(dma, aurora_channels);
 
-				//auto valuesRead = bytesRead / sizeof(int32_t);
-				//logger->info("Read {} bytes", bytesRead);
+		std::unique_ptr<std::thread> stdInThread = nullptr;
+		if (!noDma && parsedConnectString.isDstStdout()) {
+			auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
+			// We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
+			// in this thread anymore
+			stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma, std::move(formatter));
+		}
+		if (!noDma && parsedConnectString.isSrcStdin()) {
+			writeToDmaFromStdIn(dma);
+		}
 
-				//for (size_t i = 0; i < valuesRead; i++)
-				//	std::cerr << std::hex << mem[i] << ";";
-				//std::cerr << std::endl;
-
-				for (size_t i = 0; i*4 < bytesRead; i++) {
-					int32_t ival = mem[cur][i];
-					float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
-					//std::cerr << std::hex << ival << ",";
-					std::cerr << fval << std::endl;
-					/*int64_t ival = (int64_t)(mem[1] & 0xFFFF) << 48 |
-						(int64_t)(mem[1] & 0xFFFF0000) << 16 |
-						(int64_t)(mem[0] & 0xFFFF) << 16 |
-						(int64_t)(mem[0] & 0xFFFF0000) >> 16;
-					double dval = *((double*)(&ival));
-					std::cerr << std::hex << ival << "," << dval << std::endl;
-					bytesRead -= 8;*/
-					//logger->info("Read value: {}", dval);
-				}
-				cur = next;
-				next = (next + 1) % (sizeof(mem)/sizeof(mem[0]));
-			}
+		if (stdInThread) {
+			stdInThread->join();
 		}
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());

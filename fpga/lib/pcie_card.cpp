@@ -152,7 +152,7 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 
 PCIeCard::~PCIeCard()
 {
-	
+
 }
 
 std::shared_ptr<ip::Core> PCIeCard::lookupIp(const std::string &name) const
@@ -186,67 +186,6 @@ std::shared_ptr<ip::Core> PCIeCard::lookupIp(const ip::IpIdentifier &id) const
 	}
 
 	return nullptr;
-}
-
-bool PCIeCard::unmapMemoryBlock(const MemoryBlock &block)
-{
-	if (memoryBlocksMapped.find(block.getAddrSpaceId()) == memoryBlocksMapped.end()) {
-		throw std::runtime_error("Block " + std::to_string(block.getAddrSpaceId()) + " is not mapped but was requested to be unmapped.");
-	}
-
-	auto &mm = MemoryManager::get();
-
-	auto translation = mm.getTranslation(addrSpaceIdDeviceToHost, block.getAddrSpaceId());
-
-	const uintptr_t iova = translation.getLocalAddr(0);
-	const size_t size = translation.getSize();
-
-	logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-			block.getAddrSpaceId(), iova, size);
-	vfioContainer->memoryUnmap(iova, size);
-
-	memoryBlocksMapped.erase(block.getAddrSpaceId());
-
-	return true;
-}
-
-bool PCIeCard::mapMemoryBlock(const MemoryBlock &block)
-{
-	if (not vfioContainer->isIommuEnabled()) {
-		logger->warn("VFIO mapping not supported without IOMMU");
-		return false;
-	}
-
-	auto &mm = MemoryManager::get();
-	const auto &addrSpaceId = block.getAddrSpaceId();
-
-	if (memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end())
-		// Block already mapped
-		return true;
-	else
-		logger->debug("Create VFIO mapping for {}", addrSpaceId);
-
-	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
-	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
-	uintptr_t iovaAddr = vfioContainer->memoryMap(processBaseAddr,
-	                                              UINTPTR_MAX,
-	                                              block.getSize());
-
-	if (iovaAddr == UINTPTR_MAX) {
-		logger->error("Cannot map memory at {:#x} of size {:#x}",
-		              processBaseAddr, block.getSize());
-		return false;
-	}
-
-	mm.createMapping(iovaAddr, 0, block.getSize(),
-	                 "VFIO-D2H",
-	                 this->addrSpaceIdDeviceToHost,
-	                 addrSpaceId);
-
-	// Remember that this block has already been mapped for later
-	memoryBlocksMapped.insert(addrSpaceId);
-
-	return true;
 }
 
 bool PCIeCard::init()

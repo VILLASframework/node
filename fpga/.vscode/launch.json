@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/src/villas-fpga-ctrl",
             "args": [
-                "-c", "${workspaceFolder}/etc/fpgas.json", "--connect", "\"2<->stdout\"", "--no-dma"
+                "-c", "${workspaceFolder}/etc/fpgas.json", "--connect", "\"2<->stdout\""
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
