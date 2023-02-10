@@ -155,39 +155,6 @@ PCIeCard::~PCIeCard()
 
 }
 
-std::shared_ptr<ip::Core> PCIeCard::lookupIp(const std::string &name) const
-{
-	for (auto &ip : ips) {
-		if (*ip == name) {
-			return ip;
-		}
-	}
-
-	return nullptr;
-}
-
-std::shared_ptr<ip::Core> PCIeCard::lookupIp(const Vlnv &vlnv) const
-{
-	for (auto &ip : ips) {
-		if (*ip == vlnv) {
-			return ip;
-		}
-	}
-
-	return nullptr;
-}
-
-std::shared_ptr<ip::Core> PCIeCard::lookupIp(const ip::IpIdentifier &id) const
-{
-	for (auto &ip : ips) {
-		if (*ip == id) {
-			return ip;
-		}
-	}
-
-	return nullptr;
-}
-
 bool PCIeCard::init()
 {
 	logger = getLogger();

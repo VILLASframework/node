@@ -21,6 +21,8 @@ class Card
 {
 public:
         bool polling;
+
+        std::shared_ptr<kernel::vfio::Container> vfioContainer;
         std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
         // Slave address space ID to access the PCIe address space from the
@@ -32,13 +34,12 @@ public:
         // card.
         MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
-        std::list<std::shared_ptr<ip::Core> > ips;
+        std::list<std::shared_ptr<ip::Core>> ips;
 
         virtual ~Card();
 
-        bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block);
-        bool unmapMemoryBlock(const MemoryBlock &block);
-	std::shared_ptr<kernel::vfio::Container> vfioContainer;
+        virtual bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block);
+        virtual bool unmapMemoryBlock(const MemoryBlock &block);
 
         std::shared_ptr<ip::Core> lookupIp(const std::string &name) const;
         std::shared_ptr<ip::Core> lookupIp(const Vlnv &vlnv) const;
