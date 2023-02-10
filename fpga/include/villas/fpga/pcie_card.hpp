@@ -59,18 +59,6 @@ public:
 	void dump()
 	{ }
 
-	std::shared_ptr<ip::Core>
-	lookupIp(const std::string &name) const;
-
-	std::shared_ptr<ip::Core>
-	lookupIp(const Vlnv &vlnv) const;
-
-	std::shared_ptr<ip::Core>
-	lookupIp(const ip::IpIdentifier &id) const;
-
-	bool mapMemoryBlock(const MemoryBlock &block);
-	bool unmapMemoryBlock(const MemoryBlock &block);
-
 public:	// TODO: make this private
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts
@@ -78,13 +66,6 @@ public:	// TODO: make this private
 	std::string name;				// The name of the FPGA card
 
 	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
-
-	// Slave address space ID to access the PCIe address space from the FPGA
-	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
-
-	// Address space identifier of the master address space of this FPGA card.
-	// This will be used for address resolution of all IPs on this card.
-	MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
 protected:
 	Logger
