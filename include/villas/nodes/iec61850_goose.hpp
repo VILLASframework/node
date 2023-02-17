@@ -20,18 +20,33 @@
 #include <villas/signal.hpp>
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/goose_subscriber.h>
+#include <libiec61850/goose_publisher.h>
 
 namespace villas {
 namespace node {
 namespace iec61850 {
 
-// A GooseValue is a SignalData value with attached Metadata for the MmsType and SignalType
-class GooseValue {
+// A GooseSignal is a SignalData value with attached Metadata for the MmsType and SignalType
+class GooseSignal {
 public:
-	struct MetaSize { int value; };
+	union Meta {
+		int size;
+	};
+
+	struct Descriptor {
+		SignalType signal_type;
+		std::string name;
+		std::optional<MmsType> mms_type;
+		Meta default_meta;
+	};
+
+	using Type = Descriptor const *;
 
 	// The config file identifier for this type
-	char const * name() const;
+	std::string const & name() const;
+
+	// The type of this value
+	Type type() const;
 
 	// Corresponding mms type
 	std::optional<MmsType> mmsType() const;
@@ -39,61 +54,52 @@ public:
 	// Corresponding signal type
 	SignalType signalType() const;
 
-	// Create a GooseValue from an MmsValue
-	static GooseValue fromMmsValue(MmsValue *mms_value);
+	// Create a GooseSignal from an MmsValue
+	static std::optional<GooseSignal> fromMmsValue(MmsValue *mms_value);
 
-	// Create a GooseValue from type name and SignalData value
-	static GooseValue fromNameAndValue(char *name, SignalData value);
+	// Create a GooseSignal from type name and SignalData value
+	static GooseSignal fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta = std::nullopt);
 
-	// Create a MmsValue from this GooseValue
+	// Create a MmsValue from this GooseSignal
 	std::optional<MmsValue *> toMmsValue() const;
 
-	// Default/Invalid GooseValue
-	GooseValue();
+	static std::optional<Type> lookupMmsType(int mms_type);
 
-	union Meta {
-		MetaSize size;
-	} meta;
+	static std::optional<Type> lookupMmsTypeName(char const *name);
+
+	GooseSignal();
+
+	GooseSignal(Type type, SignalData value, std::optional<Meta> meta = std::nullopt);
 
 	SignalData signal_data;
-
+	Meta meta;
 private:
-	struct Descriptor {
-		SignalType signal_type;
-		char const *name;
-		std::optional<MmsType> mms_type;
-		Meta default_meta;
-	};
-
 	inline static std::array const descriptors {
 		Descriptor { SignalType::INVALID,	"invalid" },
 
-		/* boolean signals */
+		// Boolean signals
 		Descriptor { SignalType::BOOLEAN,	"boolean",	MmsType::MMS_BOOLEAN },
 
-		/* integer signals */
-		Descriptor { SignalType::INTEGER,	"integer",	MmsType::MMS_INTEGER,	 	MetaSize { 64 } },
-		Descriptor { SignalType::INTEGER,	"unsigned",	MmsType::MMS_UNSIGNED,	 	MetaSize { 32 } },
-		Descriptor { SignalType::INTEGER,	"bit-string",	MmsType::MMS_BIT_STRING,	MetaSize { 32 } },
+		// Integer signals
+		Descriptor { SignalType::INTEGER,	"integer",	MmsType::MMS_INTEGER,	 	{.size = 64 } },
+		Descriptor { SignalType::INTEGER,	"unsigned",	MmsType::MMS_UNSIGNED,	 	{.size = 32 } },
+		Descriptor { SignalType::INTEGER,	"bit-string",	MmsType::MMS_BIT_STRING,	{.size = 32 } },
 
-		/* float signals */
-		Descriptor { SignalType::FLOAT,		"float",	MmsType::MMS_FLOAT,		MetaSize { 64 } },
+		// Float signals
+		Descriptor { SignalType::FLOAT,		"float",	MmsType::MMS_FLOAT,		{.size = 64 } },
 	};
 
-	static MmsValue * newMmsInteger(int64_t i, MetaSize meta);
+	static MmsValue * newMmsInteger(int64_t i, int size);
 
-	static MmsValue * newMmsUnsigned(uint64_t i, MetaSize meta);
+	static MmsValue * newMmsUnsigned(uint64_t i, int size);
 
-	static MmsValue * newMmsFloat(double i, MetaSize meta);
+	static MmsValue * newMmsBitString(uint32_t i, int size);
 
-	static std::optional<Descriptor const *> lookupMmsType(int mms_type);
-
-	static std::optional<Descriptor const *> lookupName(char *name);
-
-	GooseValue(Descriptor const *descriptor, SignalData value);
+	static MmsValue * newMmsFloat(double i, int size);
 
 	// Descriptor within the descriptors table above
 	Descriptor const *descriptor;
+
 };
 
 class GooseNode : public Node {
@@ -106,7 +112,7 @@ protected:
 	struct InputMapping {
 		std::string subscriber;
 		unsigned int index;
-		GooseValue init;
+		GooseSignal dflt;
 	};
 
 	struct SubscriberConfig {
@@ -120,11 +126,10 @@ protected:
 		SubscriberConfig subscriber_config;
 
 		GooseNode *node;
-		std::vector<GooseValue> values;
+		std::vector<GooseSignal> values;
 	};
 
 	struct Input {
-		bool enabled;
 		enum { NONE, STOPPED, READY } state;
 		GooseReceiver receiver;
 		CQueueSignalled queue;
@@ -135,8 +140,35 @@ protected:
 		std::string interface_id;
 		bool with_timestamp;
 		unsigned int queue_length;
-		int signal_count;
 	} input;
+
+	struct OutputData {
+		std::optional<int> signal;
+		GooseSignal default_value;
+	};
+
+	struct PublisherConfig {
+		std::string go_id;
+		std::string go_cb_ref;
+		std::string data_set_ref;
+		std::array<uint8_t, 6> dst_address;
+		uint16_t app_id;
+		uint32_t conf_rev;
+		uint32_t time_allowed_to_live;
+		std::vector<OutputData> data;
+	};
+
+	struct OutputContext {
+		PublisherConfig config;
+
+		GoosePublisher publisher;
+	};
+
+	struct Output {
+		enum { NONE, STOPPED, READY } state;
+		std::vector<OutputContext> contexts;
+		std::string interface_id;
+	} output;
 
 	void createReceiver() noexcept;
 	void destroyReceiver() noexcept;
@@ -144,18 +176,34 @@ protected:
 	void startReceiver() noexcept(false);
 	void stopReceiver() noexcept;
 
+	void createPublishers() noexcept;
+	void destroyPublishers() noexcept;
+
+	void startPublishers() noexcept(false);
+	void stopPublishers() noexcept;
+
 	static void onEvent(GooseSubscriber subscriber, InputEventContext &context) noexcept;
 
 	void addSubscriber(InputEventContext &ctx) noexcept;
 	void pushSample(uint64_t timestamp) noexcept;
 
 	int _parse(json_t *json, json_error_t *err);
+
+	int parseInput(json_t *json, json_error_t *err);
 	int parseSubscriber(json_t *json, json_error_t *err, SubscriberConfig &sc);
 	int parseSubscribers(json_t *json, json_error_t *err, std::map<std::string, InputEventContext> &ctx);
 	int parseInputSignals(json_t *json, json_error_t *err, std::vector<InputMapping> &mappings);
 
+	int parseOutput(json_t *json, json_error_t *err);
+	int parsePublisherData(json_t *json, json_error_t *err, std::vector<OutputData> &data);
+	int parsePublisher(json_t *json, json_error_t *err, PublisherConfig &pc);
+	int parsePublishers(json_t *json, json_error_t *err, std::vector<OutputContext> &ctx);
+
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt) override;
+
+	virtual
+	int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
 	GooseNode(const std::string &name = "");
