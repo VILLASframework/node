@@ -78,6 +78,11 @@ public:
 
 	Level getLevel() const;
 	std::string getLevelName() const;
+
+	void addSink(std::shared_ptr<spdlog::sinks::sink> sink)
+	{
+		sinks->add_sink(sink);
+	}
 };
 
 } // namespace villas
