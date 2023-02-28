@@ -86,7 +86,7 @@ Logger Log::get(const std::string &name)
 	Logger logger = spdlog::get(name);
 
 	if (not logger) {
-		logger = std::make_shared<Logger::element_type>(name, sink);
+		logger = std::make_shared<Logger::element_type>(name, sinks);
 
 		logger->set_level(level);
 		logger->set_formatter(formatter->clone());
