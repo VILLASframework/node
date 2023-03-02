@@ -19,6 +19,7 @@ set(HOOK_SRC
     limit_rate.cpp
     limit_value.cpp
     ma.cpp
+    phase_estimate.cpp
     power.cpp
     pmu.cpp
     pmu_dft.cpp
