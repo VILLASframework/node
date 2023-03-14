@@ -261,7 +261,7 @@ void GooseNode::onEvent(GooseSubscriber subscriber, GooseNode::InputEventContext
 
 	for (unsigned int i = 0; i < MmsValue_getArraySize(mms_values); i++) {
 		auto mms_value = MmsValue_getElement(mms_values, i);
-		auto goose_value = GooseSignal::fromMmsValue(mms_value).value();
+		auto goose_value = GooseSignal::fromMmsValue(mms_value);
 		ctx.values.push_back(goose_value);
 	}
 
@@ -292,15 +292,19 @@ void GooseNode::pushSample(uint64_t timestamp) noexcept
 		auto& mapping = input.mappings[signal];
 		auto& values = input.contexts[mapping.subscriber].values;
 
-		if (mapping.index >= values.size())
-			continue;
-
-		if (mapping.type->mms_type != values[mapping.index].mmsType()) {
-			logger->error("unexpected mms_type for signal {}", sample->signals->getByIndex(signal)->toString());
+		if (mapping.index >= values.size() || !values[mapping.index]) {
+			auto signal_str = sample->signals->getByIndex(signal)->toString();
+			logger->error("tried to access unavailable goose value for signal {}", signal_str);
 			continue;
 		}
 
-		sample->data[signal] = values[mapping.index].signal_data;
+		if (mapping.type->mms_type != values[mapping.index]->mmsType()) {
+			auto signal_str = sample->signals->getByIndex(signal)->toString();
+			logger->error("unexpected mms_type for signal {}", signal_str);
+			continue;
+		}
+
+		sample->data[signal] = values[mapping.index]->signal_data;
 	}
 
 	if (queue_signalled_push(&input.queue, sample) != 1)

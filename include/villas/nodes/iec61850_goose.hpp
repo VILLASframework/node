@@ -124,7 +124,7 @@ protected:
 		SubscriberConfig subscriber_config;
 
 		GooseNode *node;
-		std::vector<GooseSignal> values;
+		std::vector<std::optional<GooseSignal>> values;
 		int last_state_num;
 	};
 
