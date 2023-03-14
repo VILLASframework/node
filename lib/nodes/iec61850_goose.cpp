@@ -37,7 +37,7 @@ static std::optional<std::array<uint8_t, 6>> stringToMac(char *mac_string)
 	return std::optional { mac };
 }
 
-std::optional<MmsType> GooseSignal::mmsType() const
+MmsType GooseSignal::mmsType() const
 {
 	return descriptor->mms_type;
 }
@@ -83,20 +83,18 @@ std::optional<GooseSignal> GooseSignal::fromMmsValue(MmsValue *mms_value)
 	return GooseSignal { descriptor.value(), data };
 }
 
-GooseSignal GooseSignal::fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta)
+std::optional<GooseSignal> GooseSignal::fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta)
 {
 	auto descriptor = lookupMmsTypeName(name);
 
-	if (!descriptor) return {};
+	if (!descriptor) return std::nullopt;
 
 	return GooseSignal { descriptor.value(), value, meta };
 }
 
-std::optional<MmsValue *> GooseSignal::toMmsValue() const
+MmsValue * GooseSignal::toMmsValue() const
 {
-	if (!descriptor->mms_type) return std::nullopt;
-
-	switch (*descriptor->mms_type) {
+	switch (descriptor->mms_type) {
 	case MmsType::MMS_BOOLEAN:
 		return MmsValue_newBoolean(signal_data.b);
 	case MmsType::MMS_INTEGER:
@@ -200,12 +198,6 @@ std::optional<GooseSignal::Type> GooseSignal::lookupMmsTypeName(char const *name
 		return std::nullopt;
 }
 
-GooseSignal::GooseSignal() :
-	signal_data({}),
-	descriptor(&descriptors[0])
-{
-}
-
 GooseSignal::GooseSignal(GooseSignal::Descriptor const *descriptor, SignalData data, std::optional<Meta> meta) :
 	signal_data(data),
 	meta(meta.value_or(descriptor->default_meta)),
@@ -213,14 +205,49 @@ GooseSignal::GooseSignal(GooseSignal::Descriptor const *descriptor, SignalData d
 {
 }
 
+bool iec61850::operator==(GooseSignal &lhs, GooseSignal &rhs) {
+	if (lhs.mmsType() != rhs.mmsType())
+		return false;
+
+	switch (lhs.mmsType()) {
+		case MmsType::MMS_INTEGER:
+		case MmsType::MMS_UNSIGNED:
+		case MmsType::MMS_BIT_STRING:
+		case MmsType::MMS_FLOAT:
+			if (lhs.meta.size != rhs.meta.size)
+				return false;
+			break;
+		default: break;
+	}
+
+	switch (lhs.signalType()) {
+		case SignalType::BOOLEAN:
+			return lhs.signal_data.b == rhs.signal_data.b;
+		case SignalType::INTEGER:
+			return lhs.signal_data.i == rhs.signal_data.i;
+		case SignalType::FLOAT:
+			return lhs.signal_data.f == rhs.signal_data.f;
+		default:
+			return false;
+	}
+}
+
+bool iec61850::operator!=(GooseSignal &lhs, GooseSignal &rhs) {
+	return !(lhs == rhs);
+}
+
 void GooseNode::onEvent(GooseSubscriber subscriber, GooseNode::InputEventContext &ctx) noexcept
 {
 	if (!GooseSubscriber_isValid(subscriber) || GooseSubscriber_needsCommission(subscriber))
 		return;
 
+	int last_state_num = ctx.last_state_num;
+	int state_num = GooseSubscriber_getStNum(subscriber);
+	ctx.last_state_num = state_num;
+
 	if (ctx.subscriber_config.trigger == InputTrigger::CHANGE
 	&& !ctx.values.empty()
-	&& GooseSubscriber_getSqNum(subscriber) != 0)
+	&& state_num == last_state_num)
 		return;
 
 	auto mms_values = GooseSubscriber_getDataSetValues(subscriber);
@@ -230,12 +257,12 @@ void GooseNode::onEvent(GooseSubscriber subscriber, GooseNode::InputEventContext
 		return;
 	}
 
-	ctx.values.resize(MmsValue_getArraySize(mms_values));
+	ctx.values.clear();
 
 	for (unsigned int i = 0; i < MmsValue_getArraySize(mms_values); i++) {
 		auto mms_value = MmsValue_getElement(mms_values, i);
 		auto goose_value = GooseSignal::fromMmsValue(mms_value).value();
-		ctx.values[i] = goose_value;
+		ctx.values.push_back(goose_value);
 	}
 
 	uint64_t timestamp = GooseSubscriber_getTimestamp(subscriber);
@@ -264,12 +291,11 @@ void GooseNode::pushSample(uint64_t timestamp) noexcept
 	for (unsigned int signal = 0; signal < sample->length; signal++) {
 		auto& mapping = input.mappings[signal];
 		auto& values = input.contexts[mapping.subscriber].values;
-		sample->data[signal] = mapping.dflt.signal_data;
 
 		if (mapping.index >= values.size())
 			continue;
 
-		if (mapping.dflt.mmsType() != values[mapping.index].mmsType()) {
+		if (mapping.type->mms_type != values[mapping.index].mmsType()) {
 			logger->error("unexpected mms_type for signal {}", sample->signals->getByIndex(signal)->toString());
 			continue;
 		}
@@ -437,6 +463,23 @@ int GooseNode::_read(Sample *samples[], unsigned sample_count)
 	return available_samples;
 }
 
+static void publish_values(GoosePublisher publisher, std::vector<GooseSignal> &values, bool changed, int burst) {
+	auto data_set = LinkedList_create();
+
+	for (auto &value : values) {
+		LinkedList_add(data_set, value.toMmsValue());
+	}
+
+	if (changed)
+		GoosePublisher_increaseStNum(publisher);
+
+	do {
+		GoosePublisher_publish(publisher, data_set);
+	} while (changed && --burst > 0);
+
+	LinkedList_destroyDeep(data_set, (LinkedListValueDeleteFunction) MmsValue_delete);
+}
+
 int GooseNode::_write(Sample *samples[], unsigned sample_count)
 {
 	if (output.state != Output::READY)
@@ -446,20 +489,25 @@ int GooseNode::_write(Sample *samples[], unsigned sample_count)
 		auto sample = samples[i];
 
 		for (auto &ctx : output.contexts) {
-			auto data_set = LinkedList_create();
+			bool changed = false;
 
-			for (auto &data : ctx.config.data) {
+			for (unsigned int data_index = 0; data_index < ctx.config.data.size(); data_index++) {
+				auto data = ctx.config.data[data_index];
 				auto goose_value = data.default_value;
-				auto signal = data.signal.value_or(-1);
-				if (signal >= 0 && signal < (int) sample->length)
-					goose_value.signal_data = sample->data[signal];
+				auto signal = data.signal;
+				if (signal && *signal < sample->length)
+					goose_value.signal_data = sample->data[*signal];
 
-				LinkedList_add(data_set, goose_value.toMmsValue().value());
+				if (ctx.values.size() <= data_index) {
+					changed = true;
+					ctx.values.push_back(goose_value);
+				} else if (ctx.values[data_index] != goose_value) {
+					changed = true;
+					ctx.values[data_index] = goose_value;
+				}
 			}
 
-			GoosePublisher_increaseStNum(ctx.publisher);
-			GoosePublisher_publish(ctx.publisher, data_set);
-			LinkedList_destroyDeep(data_set, (LinkedListValueDeleteFunction) MmsValue_delete);
+			publish_values(ctx.publisher, ctx.values, changed, ctx.config.burst);
 		}
 
 	}
@@ -625,35 +673,23 @@ int GooseNode::parseInputSignals(json_t *json, json_error_t *err, std::vector<Go
 
 	mappings.clear();
 
-	auto signals = getInputSignals();
-
 	json_array_foreach(json, index, value) {
-		auto signal = signals->getByIndex(index);
-
 		char *mapping_subscriber;
 		unsigned int mapping_index;
-		char *mapping_type;
+		char *mapping_type_name;
 		ret = json_unpack_ex(value, err, 0, "{ s: s, s: i, s: s }",
 			"subscriber", &mapping_subscriber,
 			"index", &mapping_index,
-			"mms_type", &mapping_type
+			"mms_type", &mapping_type_name
 		);
 		if (ret) return ret;
 
-		auto mapping_dflt = GooseSignal::fromNameAndValue(mapping_type, signal->init);
-		if (mapping_dflt.signalType() == SignalType::INVALID)
-			throw RuntimeError("Invalid mms_type {}", mapping_type);
-
-		if (signal->type != mapping_dflt.signalType())
-			throw RuntimeError("Expected signal type {} for mms_type {}, but got {}",
-				signalTypeToString(mapping_dflt.signalType()),
-				mapping_type,
-				signalTypeToString(signal->type));
+		auto mapping_type = GooseSignal::lookupMmsTypeName(mapping_type_name).value();
 
 		mappings.push_back(InputMapping {
 			mapping_subscriber,
 			mapping_index,
-			mapping_dflt
+			mapping_type,
 		});
 	}
 
@@ -713,7 +749,7 @@ int GooseNode::parsePublisherData(json_t *json, json_error_t *err, std::vector<O
 		auto goose_type = GooseSignal::lookupMmsTypeName(mms_type).value();
 		std::optional<GooseSignal::Meta> meta = std::nullopt;
 
-		switch (goose_type->mms_type.value()) {
+		switch (goose_type->mms_type) {
 		case MmsType::MMS_INTEGER:
 			if (integer_size != -1)
 				meta = {.size = integer_size };
@@ -768,8 +804,9 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 	int app_id = 0;
 	int conf_rev = 0;
 	int time_allowed_to_live = 0;
+	int burst = 1;
 	json_t *data_json = nullptr;
-	ret = json_unpack_ex(json, err, 0, "{ s:s, s:s, s:s, s:s, s:i, s:i, s:i, s:o }",
+	ret = json_unpack_ex(json, err, 0, "{ s:s, s:s, s:s, s:s, s:i, s:i, s:i, s?:i, s:o }",
 		"go_id", &go_id,
 		"go_cb_ref", &go_cb_ref,
 		"data_set_ref", &data_set_ref,
@@ -777,6 +814,7 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 		"app_id", &app_id,
 		"conf_rev", &conf_rev,
 		"time_allowed_to_live", &time_allowed_to_live,
+		"burst", &burst,
 		"data", &data_json
 	);
 	if (ret) return ret;
@@ -792,8 +830,9 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 	pc.app_id = app_id;
 	pc.conf_rev = conf_rev;
 	pc.time_allowed_to_live = time_allowed_to_live;
+	pc.burst = burst;
 
-	parsePublisherData(data_json, err, pc.data);
+	ret = parsePublisherData(data_json, err, pc.data);
 	if (ret) return ret;
 
 	return 0;
@@ -827,12 +866,10 @@ int GooseNode::prepare()
 	int ret;
 
 	ret = pool_init(&input.pool, input.queue_length, SAMPLE_LENGTH(getInputSignals(false)->size()));
-	if (ret)
-		return ret;
+	if (ret) return ret;
 
 	ret = queue_signalled_init(&input.queue, input.queue_length);
-	if (ret)
-		return ret;
+	if (ret) return ret;
 
 	return Node::prepare();
 }

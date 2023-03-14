@@ -36,7 +36,7 @@ public:
 	struct Descriptor {
 		SignalType signal_type;
 		std::string name;
-		std::optional<MmsType> mms_type;
+		MmsType mms_type;
 		Meta default_meta;
 	};
 
@@ -49,7 +49,7 @@ public:
 	Type type() const;
 
 	// Corresponding mms type
-	std::optional<MmsType> mmsType() const;
+	MmsType mmsType() const;
 
 	// Corresponding signal type
 	SignalType signalType() const;
@@ -58,16 +58,14 @@ public:
 	static std::optional<GooseSignal> fromMmsValue(MmsValue *mms_value);
 
 	// Create a GooseSignal from type name and SignalData value
-	static GooseSignal fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta = std::nullopt);
+	static std::optional<GooseSignal> fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta = std::nullopt);
 
 	// Create a MmsValue from this GooseSignal
-	std::optional<MmsValue *> toMmsValue() const;
+	MmsValue * toMmsValue() const;
 
 	static std::optional<Type> lookupMmsType(int mms_type);
 
 	static std::optional<Type> lookupMmsTypeName(char const *name);
-
-	GooseSignal();
 
 	GooseSignal(Type type, SignalData value, std::optional<Meta> meta = std::nullopt);
 
@@ -75,8 +73,6 @@ public:
 	Meta meta;
 private:
 	inline static std::array const descriptors {
-		Descriptor { SignalType::INVALID,	"invalid" },
-
 		// Boolean signals
 		Descriptor { SignalType::BOOLEAN,	"boolean",	MmsType::MMS_BOOLEAN },
 
@@ -99,8 +95,10 @@ private:
 
 	// Descriptor within the descriptors table above
 	Descriptor const *descriptor;
-
 };
+
+bool operator==(GooseSignal &lhs, GooseSignal &rhs);
+bool operator!=(GooseSignal &lhs, GooseSignal &rhs);
 
 class GooseNode : public Node {
 protected:
@@ -112,7 +110,7 @@ protected:
 	struct InputMapping {
 		std::string subscriber;
 		unsigned int index;
-		GooseSignal dflt;
+		GooseSignal::Type type;
 	};
 
 	struct SubscriberConfig {
@@ -127,6 +125,7 @@ protected:
 
 		GooseNode *node;
 		std::vector<GooseSignal> values;
+		int last_state_num;
 	};
 
 	struct Input {
@@ -143,7 +142,7 @@ protected:
 	} input;
 
 	struct OutputData {
-		std::optional<int> signal;
+		std::optional<unsigned int> signal;
 		GooseSignal default_value;
 	};
 
@@ -155,11 +154,13 @@ protected:
 		uint16_t app_id;
 		uint32_t conf_rev;
 		uint32_t time_allowed_to_live;
+		int burst;
 		std::vector<OutputData> data;
 	};
 
 	struct OutputContext {
 		PublisherConfig config;
+		std::vector<GooseSignal> values;
 
 		GoosePublisher publisher;
 	};
