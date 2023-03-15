@@ -84,9 +84,11 @@ void fpga::ConnectString::parseString(std::string& connectString)
 	dstAsInt = portStringToInt(dstStr);
 	if (srcAsInt == -1) {
 		srcIsStdin = true;
+		dstIsStdout = bidirectional;
 	}
 	if (dstAsInt == -1) {
 		dstIsStdout = true;
+		srcIsStdin = bidirectional;
 	}
 }
 
