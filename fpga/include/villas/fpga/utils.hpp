@@ -8,6 +8,7 @@
 
 #include <string>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/ips/aurora_xilinx.hpp>
 
 namespace villas {
 namespace fpga {
@@ -25,7 +26,7 @@ public:
 	int portStringToInt(std::string &str) const;
 
 	void configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
-		std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels) const;
+		std::vector<std::shared_ptr<villas::fpga::ip::AuroraXilinx>>& aurora_channels) const;
 
 	bool isBidirectional() const { return bidirectional; };
 	bool isDmaLoopback() const { return dmaLoopback; };
@@ -119,18 +120,7 @@ protected:
 };
 
 
-std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(
-	const std::string &format,
-	size_t bufSizeInSamples)
-{
-	if (format == "long") {
-		return std::make_unique<BufferedSampleFormatterLong>(bufSizeInSamples);
-	} else if (format == "short") {
-		return std::make_unique<BufferedSampleFormatterShort>(bufSizeInSamples);
-	} else {
-		throw RuntimeError("Unknown output format '{}'", format);
-	}
-}
+std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(const std::string &format, size_t bufSizeInSamples);
 
 } /* namespace fpga */
 } /* namespace villas */

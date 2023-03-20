@@ -215,3 +215,15 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	return card;
 }
 
+std::unique_ptr<fpga::BufferedSampleFormatter> fpga::getBufferedSampleFormatter(
+	const std::string &format,
+	size_t bufSizeInSamples)
+{
+	if (format == "long") {
+		return std::make_unique<fpga::BufferedSampleFormatterLong>(bufSizeInSamples);
+	} else if (format == "short") {
+		return std::make_unique<fpga::BufferedSampleFormatterShort>(bufSizeInSamples);
+	} else {
+		throw RuntimeError("Unknown output format '{}'", format);
+	}
+}

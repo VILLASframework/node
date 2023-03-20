@@ -21,7 +21,6 @@
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
-#include <villas/utils.hpp>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
