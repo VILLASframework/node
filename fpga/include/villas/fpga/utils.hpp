@@ -86,14 +86,16 @@ public:
 
 	virtual void format(float value) override
 	{
-		if (std::snprintf(nextBufPos(), formatStringSize+1, formatString, value) > (int)formatStringSize) {
-			throw RuntimeError("Output buffer too small");
+		size_t chars;
+		if ((chars = std::snprintf(nextBufPos(), formatStringSize+1, formatString, value)) > (int)formatStringSize) {
+			throw RuntimeError("Output buffer too small. Expected " + std::to_string(formatStringSize) +
+					   " characters, got " + std::to_string(chars));
 		}
 	}
 
 protected:
-	static constexpr char formatString[] = "%7f\n";
-	static constexpr size_t formatStringSize = 9;
+	static constexpr char formatString[] = "%013.6f\n";
+	static constexpr size_t formatStringSize = 14;
 };
 
 class BufferedSampleFormatterLong : public BufferedSampleFormatter {
@@ -111,8 +113,8 @@ public:
 	}
 
 protected:
-	static constexpr char formatString[] = "%05zd: %7f\n";
-	static constexpr size_t formatStringSize = 16;
+	static constexpr char formatString[] = "%05zd: %013.6f\n";
+	static constexpr size_t formatStringSize = 22;
 	size_t sampleCnt;
 };
 
