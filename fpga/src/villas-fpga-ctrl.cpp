@@ -51,7 +51,7 @@ void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma)
 	}
 
 	size_t cur = 0, next = 1;
-er	//std::ios::sync_with_stdio(false);
+	std::ios::sync_with_stdio(false);
 	std::string line;
 	bool firstXfer = true;
 
