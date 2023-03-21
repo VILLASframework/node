@@ -24,6 +24,7 @@ void villasfpga_destroy(villasfpga_handle handle);
 int villasfpga_alloc(villasfpga_handle handle, villasfpga_memory *mem, size_t size);
 int villasfpga_register(villasfpga_handle handle, villasfpga_memory *mem);
 int villasfpga_free(villasfpga_memory mem);
+void* villasfpga_get_ptr(villasfpga_memory mem);
 
 int villasfpga_read(villasfpga_handle handle, villasfpga_memory mem, size_t size);
 int villasfpga_read_complete(villasfpga_handle handle, size_t *size);

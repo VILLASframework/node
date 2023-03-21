@@ -158,7 +158,7 @@ int villasfpga_read_complete(villasfpga_handle handle, size_t *size)
 {
 	try {
 		auto readComp = handle->dma->readComplete();
-		logger->debug("Wrote {} bytes", readComp.bytes);
+		logger->debug("Read {} bytes", readComp.bytes);
 		*size = readComp.bytes;
 		return 0;
 	} catch (const RuntimeError &e) {
@@ -193,3 +193,9 @@ int villasfpga_write_complete(villasfpga_handle handle, size_t *size)
 		return -1;
 	}
 }
+
+void* villasfpga_get_ptr(villasfpga_memory mem)
+{
+	return (void*)MemoryManager::get().getTranslationFromProcess(mem->block->getAddrSpaceId()).getLocalAddr(0);
+}
+

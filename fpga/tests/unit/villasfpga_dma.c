@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 	int ret;
 	villasfpga_handle vh;
 	villasfpga_memory mem1, mem2;
+	void *mem1ptr, *mem2ptr;
 	char line[1024];
 	float f;
 	size_t size;
@@ -35,6 +36,20 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
+	if ((mem1ptr = villasfpga_get_ptr(mem1)) == NULL) {
+		fprintf(stderr, "Failed to get pointer to DMA memory 1\n");
+		ret = 1;
+		goto out;
+	}
+
+	if ((mem2ptr = villasfpga_get_ptr(mem2)) == NULL) {
+		fprintf(stderr, "Failed to get pointer to DMA memory 2\n");
+		ret = 1;
+		goto out;
+	}
+
+	printf("DMA memory 1: %p, DMA memory 2: %p\n", mem1ptr, mem2ptr);
+
 	while (1) {
 		// Setup read transfer
 		if ((ret = villasfpga_read(vh, mem1, 0x200 * sizeof(uint32_t))) != 0) {
@@ -44,14 +59,12 @@ int main(int argc, char *argv[])
 		}
 
 		printf("Enter a float:\n");
-		if ((ret = sscanf(line, "%f")) != 1) {
+		if ((ret = scanf("%f", mem2ptr)) != 1) {
 			fprintf(stderr, "Failed to parse input: sscanf returned %d\n", ret);
 			ret = 1;
 			goto out;
 		}
-
-		((float*)mem2)[0] = atof(line);
-		printf("Read %f\n", ((float*)mem2)[0]);
+		printf("sending %f (%zu bytes)\n", ((float*)mem2ptr)[0], sizeof(float));
 		// Initiate write transfer
 		if ((ret = villasfpga_write(vh, mem2, sizeof(float))) != 0) {
 			fprintf(stderr, "Failed to initiate write transfer\n");
@@ -64,16 +77,14 @@ int main(int argc, char *argv[])
 			ret = 1;
 			goto out;
 		}
-		printf("Wrote %zu bytes", size);
 
 		if ((ret = villasfpga_read_complete(vh, &size)) != 0) {
 			fprintf(stderr, "Failed to write complete\n");
 			ret = 1;
 			goto out;
 		}
-		printf("Read %zu bytes", size);
 
-		printf("Read %f\n", ((float*)mem1)[0]);
+		printf("Read %f (%zu bytes)\n", ((float*)mem1ptr)[0], size);
 	}
 
 	ret = 0;
