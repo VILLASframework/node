@@ -27,7 +27,10 @@ static PCIeCardFactory PCIeCardFactoryInstance;
 
 static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
-std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc)
+std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json,
+	std::shared_ptr<kernel::pci::DeviceList> pci,
+	std::shared_ptr<kernel::vfio::Container> vc,
+	const std::filesystem::path& searchPath)
 {
 	std::list<std::shared_ptr<PCIeCard>> cards;
 	auto logger = getStaticLogger();
@@ -87,11 +90,19 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json, std::sh
 		}
 
 		// Load IPs from a separate json file
-		if (json_is_string(json_ips)) {
-			auto json_ips_fn = json_string_value(json_ips);
-			json_ips = json_load_file(json_ips_fn, 0, nullptr);
-			if (json_ips == nullptr)
-				throw ConfigError(json_ips, "node-config-fpga-ips", "Failed to load FPGA IP cores from {}", json_ips_fn);
+		if (json_is_string(json_ips) && !searchPath.empty()) {
+			std::filesystem::path json_ips_path = searchPath / json_string_value(json_ips);
+			json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);
+			if (json_ips == nullptr) {
+				logger->debug("FPGA IP cores config not found in {} looking elsewhere...", json_ips_path);
+			}
+		}
+		if (json_is_string(json_ips) && json_ips == nullptr) {
+			json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
+			if (json_ips == nullptr) {
+				logger->debug("FPGA IP cores config not found in {}", json_string_value(json_ips));
+				throw ConfigError(json_ips, "node-config-fpga-ips", "Failed to find FPGA IP cores config");
+			}
 		}
 
 		if (not json_is_object(json_ips))

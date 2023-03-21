@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <jansson.h>
 #include <regex>
+#include <filesystem>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
@@ -168,6 +169,7 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
 	auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+	auto configDir = std::filesystem::path(configFile).parent_path();
 
 	// Parse FPGA configuration
 	FILE* f = fopen(configFile.c_str(), "r");
