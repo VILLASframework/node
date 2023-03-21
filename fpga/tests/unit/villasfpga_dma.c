@@ -1,3 +1,10 @@
+/** Testing the C bindings for the VILLASfpga DMA interface.
+ *
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-License-Identifier: Apache-2.0
+ *********************************************************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
