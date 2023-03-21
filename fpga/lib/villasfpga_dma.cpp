@@ -154,7 +154,7 @@ int villasfpga_read(villasfpga_handle handle, villasfpga_memory mem, size_t size
 	}
 }
 
-int vilalsfpga_read_complete(villasfpga_handle handle, size_t *size)
+int villasfpga_read_complete(villasfpga_handle handle, size_t *size)
 {
 	try {
 		auto readComp = handle->dma->readComplete();
@@ -181,7 +181,7 @@ int villasfpga_write(villasfpga_handle handle, villasfpga_memory mem, size_t siz
 	}
 }
 
-int vilalsfpga_write_complete(villasfpga_handle handle, size_t *size)
+int villasfpga_write_complete(villasfpga_handle handle, size_t *size)
 {
 	try {
 		auto writeComp = handle->dma->writeComplete();
