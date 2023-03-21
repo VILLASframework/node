@@ -83,23 +83,27 @@ int main(int argc, char* argv[])
 
 		// Configure Crossbar switch
 #if 1
-		aurora_channels[2]->connect(aurora_channels[2]->getDefaultMasterPort(), dma->getDefaultSlavePort());
+		aurora_channels[3]->connect(aurora_channels[3]->getDefaultMasterPort(), dma->getDefaultSlavePort());
 		dma->connect(dma->getDefaultMasterPort(), aurora_channels[3]->getDefaultSlavePort());
 #else
 		dma->connectLoopback();
 #endif
 		auto &alloc = villas::HostRam::getAllocator();
-		auto mem = alloc.allocate<int32_t>(0x100);
-		auto block = mem.getMemoryBlock();
+		const std::shared_ptr<villas::MemoryBlock> block[] = {
+			alloc.allocateBlock(0x200 * sizeof(uint32_t)),
+			alloc.allocateBlock(0x200 * sizeof(uint32_t))
+		};
+		villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
 
-		dma->makeAccesibleFromVA(block);
-
+		for (auto b : block) {
+			dma->makeAccesibleFromVA(b);
+		}
 		auto &mm = MemoryManager::get();
 		mm.getGraph().dump("graph.dot");
 
 		while (true) {
 			// Setup read transfer
-			dma->read(block, block.getSize());
+			dma->read(*block[0], block[0]->getSize());
 
 			// Read values from stdin
 			std::string line;
@@ -111,23 +115,23 @@ int main(int argc, char* argv[])
 				if (value.empty()) continue;
 
 				const int32_t number = std::stoi(value);
-				mem[i++] = number;
+				mem[1][i++] = number;
 			}
 
 			// Initiate write transfer
-			bool state = dma->write(block, i * sizeof(int32_t));
+			bool state = dma->write(*block[1], i * sizeof(int32_t));
 			if (!state)
 				logger->error("Failed to write to device");
 
-			auto bytesWritten = dma->writeComplete();
-			logger->info("Wrote {} bytes", bytesWritten);
+			auto writeComp = dma->writeComplete();
+			logger->info("Wrote {} bytes", writeComp.bytes);
 
-			auto bytesRead = dma->readComplete();
-			auto valuesRead = bytesRead / sizeof(int32_t);
-			logger->info("Read {} bytes", bytesRead);
+			auto readComp = dma->readComplete();
+			auto valuesRead = readComp.bytes / sizeof(int32_t);
+			logger->info("Read {} bytes, {} bds, {} interrupts", readComp.bytes, readComp.bds, readComp.interrupts);
 
 			for (size_t i = 0; i < valuesRead; i++)
-				std::cerr << mem[i] << ";";
+				std::cerr << mem[0][i] << ";";
 			std::cerr << std::endl;
 		}
 	} catch (const RuntimeError &e) {

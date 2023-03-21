@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <jansson.h>
 #include <regex>
+#include <filesystem>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
@@ -63,7 +64,7 @@ void fpga::ConnectString::parseString(std::string& connectString)
 		return;
 	}
 
-	static const std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout)");
+	static const std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout|pipe)");
 	std::smatch match;
 
 	if (!std::regex_match(connectString, match, regex) || match.size() != 4) {
@@ -84,15 +85,17 @@ void fpga::ConnectString::parseString(std::string& connectString)
 	dstAsInt = portStringToInt(dstStr);
 	if (srcAsInt == -1) {
 		srcIsStdin = true;
+		dstIsStdout = bidirectional;
 	}
 	if (dstAsInt == -1) {
 		dstIsStdout = true;
+		srcIsStdin = bidirectional;
 	}
 }
 
 int fpga::ConnectString::portStringToInt(std::string &str) const
 {
-	if (str == "stdin" || str == "stdout") {
+	if (str == "stdin" || str == "stdout" || str == "pipe") {
 		return -1;
 	} else {
 		const int port = std::stoi(str);
@@ -166,6 +169,7 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
 	auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+	auto configDir = std::filesystem::path(configFile).parent_path();
 
 	// Parse FPGA configuration
 	FILE* f = fopen(configFile.c_str(), "r");
@@ -195,7 +199,7 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	}
 
 	// Create all FPGA card instances using the corresponding plugin
-	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
+	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer, configDir);
 
 	std::shared_ptr<fpga::PCIeCard> card;
 	for (auto &fpgaCard : cards) {
@@ -213,3 +217,15 @@ fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
 	return card;
 }
 
+std::unique_ptr<fpga::BufferedSampleFormatter> fpga::getBufferedSampleFormatter(
+	const std::string &format,
+	size_t bufSizeInSamples)
+{
+	if (format == "long") {
+		return std::make_unique<fpga::BufferedSampleFormatterLong>(bufSizeInSamples);
+	} else if (format == "short") {
+		return std::make_unique<fpga::BufferedSampleFormatterShort>(bufSizeInSamples);
+	} else {
+		throw RuntimeError("Unknown output format '{}'", format);
+	}
+}

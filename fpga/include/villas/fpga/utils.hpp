@@ -8,6 +8,7 @@
 
 #include <string>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/ips/aurora_xilinx.hpp>
 
 namespace villas {
 namespace fpga {
@@ -25,7 +26,7 @@ public:
 	int portStringToInt(std::string &str) const;
 
 	void configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
-		std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels) const;
+		std::vector<std::shared_ptr<villas::fpga::ip::AuroraXilinx>>& aurora_channels) const;
 
 	bool isBidirectional() const { return bidirectional; };
 	bool isDmaLoopback() const { return dmaLoopback; };
@@ -86,14 +87,16 @@ public:
 
 	virtual void format(float value) override
 	{
-		if (std::snprintf(nextBufPos(), formatStringSize+1, formatString, value) > (int)formatStringSize) {
-			throw RuntimeError("Output buffer too small");
+		size_t chars;
+		if ((chars = std::snprintf(nextBufPos(), formatStringSize+1, formatString, value)) > (int)formatStringSize) {
+			throw RuntimeError("Output buffer too small. Expected " + std::to_string(formatStringSize) +
+					   " characters, got " + std::to_string(chars));
 		}
 	}
 
 protected:
-	static constexpr char formatString[] = "%7f\n";
-	static constexpr size_t formatStringSize = 9;
+	static constexpr char formatString[] = "%013.6f\n";
+	static constexpr size_t formatStringSize = 14;
 };
 
 class BufferedSampleFormatterLong : public BufferedSampleFormatter {
@@ -111,24 +114,13 @@ public:
 	}
 
 protected:
-	static constexpr char formatString[] = "%05zd: %7f\n";
-	static constexpr size_t formatStringSize = 16;
+	static constexpr char formatString[] = "%05zd: %013.6f\n";
+	static constexpr size_t formatStringSize = 22;
 	size_t sampleCnt;
 };
 
 
-std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(
-	const std::string &format,
-	size_t bufSizeInSamples)
-{
-	if (format == "long") {
-		return std::make_unique<BufferedSampleFormatterLong>(bufSizeInSamples);
-	} else if (format == "short") {
-		return std::make_unique<BufferedSampleFormatterShort>(bufSizeInSamples);
-	} else {
-		throw RuntimeError("Unknown output format '{}'", format);
-	}
-}
+std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(const std::string &format, size_t bufSizeInSamples);
 
 } /* namespace fpga */
 } /* namespace villas */

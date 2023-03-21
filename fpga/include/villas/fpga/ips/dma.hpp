@@ -129,7 +129,7 @@ private:
 	int delay = 0;
 	// Coalesce is the number of messages/BDs to wait for before issuing an interrupt
 	uint32_t writeCoalesce = 1;
-	uint32_t readCoalesce = 16;
+	uint32_t readCoalesce = 1;
 
 	// (maximum) size of a single message on the read channel in bytes.
 	// The message buffer/BD should have enough room for this many bytes.

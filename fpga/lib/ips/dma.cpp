@@ -243,7 +243,7 @@ bool Dma::write(const MemoryBlock &mem, size_t len)
 	if (buf == nullptr)
 		throw RuntimeError("Buffer was null");
 
-	logger->debug("Write to stream from address {:p}", buf);
+	logger->trace("Write to stream from address {:p}", buf);
 
 	return hasScatterGather() ? writeScatterGather(buf, len) : writeSimple(buf, len);
 }

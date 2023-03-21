@@ -14,6 +14,7 @@
 #include <set>
 #include <string>
 #include <jansson.h>
+#include <filesystem>
 
 #include <villas/plugin.hpp>
 #include <villas/memory.hpp>
@@ -78,8 +79,10 @@ protected:
 class PCIeCardFactory : public plugin::Plugin {
 public:
 
-	static
-	std::list<std::shared_ptr<PCIeCard>> make(json_t *json, std::shared_ptr<kernel::pci::DeviceList> pci, std::shared_ptr<kernel::vfio::Container> vc);
+	static std::list<std::shared_ptr<PCIeCard>> make(json_t *json,
+		std::shared_ptr<kernel::pci::DeviceList> pci,
+		std::shared_ptr<kernel::vfio::Container> vc,
+		const std::filesystem::path& searchPath = std::filesystem::path());
 
 	static
 	PCIeCard* make()
