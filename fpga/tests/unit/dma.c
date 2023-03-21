@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include <villas/fpga/villasfpga_dma.h>
+#include <villas/fpga/dma.h>
 
 int main(int argc, char *argv[])
 {
@@ -21,7 +21,10 @@ int main(int argc, char *argv[])
 	float f;
 	size_t size;
 
-	if (argc != 2 && argv != NULL) {
+	if (argv == NULL) {
+		return 1;
+	}
+	if (argc != 2 || argv[1] == NULL) {
 		fprintf(stderr, "Usage: %s <config file>\n", argv[0]);
 	}
 
@@ -66,7 +69,7 @@ int main(int argc, char *argv[])
 		}
 
 		printf("Enter a float:\n");
-		if ((ret = scanf("%f", mem2ptr)) != 1) {
+		if ((ret = scanf("%f", (float*)mem2ptr)) != 1) {
 			fprintf(stderr, "Failed to parse input: sscanf returned %d\n", ret);
 			ret = 1;
 			goto out;

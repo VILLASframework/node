@@ -37,7 +37,7 @@ target_link_libraries(unit-tests-fpga PUBLIC
 	${CRITERION_LIBRARIES}
 )
 
-add_executable(villasfpga-dma villasfpga_dma.c)
+add_executable(villasfpga-dma dma.c)
 
 target_include_directories(villasfpga-dma PUBLIC
 	../include

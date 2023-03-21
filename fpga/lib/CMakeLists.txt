@@ -12,7 +12,7 @@ set(SOURCES
 	core.cpp
 	node.cpp
 	utils.cpp
-	villasfpga_dma.cpp
+	dma.cpp
 
 	ips/aurora_xilinx.cpp
 	ips/aurora.cpp

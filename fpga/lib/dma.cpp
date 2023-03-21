@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *********************************************************************************/
 
-#include <villas/fpga/villasfpga_dma.h>
+#include <villas/fpga/dma.h>
 
 #include <csignal>
 #include <iostream>
