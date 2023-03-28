@@ -7,12 +7,15 @@
 
 #pragma once
 
-#include <string>
-#include <optional>
+#include <array>
+#include <mutex>
+#include <condition_variable>
 #include <cstdint>
 #include <ctime>
-#include <array>
 #include <map>
+#include <optional>
+#include <string>
+#include <thread>
 #include <villas/node/config.hpp>
 #include <villas/node.hpp>
 #include <villas/pool.hpp>
@@ -34,8 +37,8 @@ public:
 	};
 
 	struct Descriptor {
-		SignalType signal_type;
 		std::string name;
+		SignalType signal_type;
 		MmsType mms_type;
 		Meta default_meta;
 	};
@@ -73,16 +76,17 @@ public:
 	Meta meta;
 private:
 	inline static std::array const descriptors {
-		// Boolean signals
-		Descriptor { SignalType::BOOLEAN,	"boolean",	MmsType::MMS_BOOLEAN },
-
-		// Integer signals
-		Descriptor { SignalType::INTEGER,	"integer",	MmsType::MMS_INTEGER,	 	{.size = 64 } },
-		Descriptor { SignalType::INTEGER,	"unsigned",	MmsType::MMS_UNSIGNED,	 	{.size = 32 } },
-		Descriptor { SignalType::INTEGER,	"bit-string",	MmsType::MMS_BIT_STRING,	{.size = 32 } },
-
-		// Float signals
-		Descriptor { SignalType::FLOAT,		"float",	MmsType::MMS_FLOAT,		{.size = 64 } },
+		Descriptor { "boolean", 	SignalType::BOOLEAN, 	MmsType::MMS_BOOLEAN },
+		Descriptor { "int8",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size =  8 } },
+		Descriptor { "int16",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size = 16 } },
+		Descriptor { "int32",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size = 32 } },
+		Descriptor { "int64",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size = 64 } },
+		Descriptor { "int8u",		SignalType::INTEGER,	MmsType::MMS_UNSIGNED,		{.size =  8 } },
+		Descriptor { "int16u",		SignalType::INTEGER,	MmsType::MMS_UNSIGNED,		{.size = 16 } },
+		Descriptor { "int32u",		SignalType::INTEGER,	MmsType::MMS_UNSIGNED,		{.size = 32 } },
+		Descriptor { "bitstring",	SignalType::INTEGER,	MmsType::MMS_BIT_STRING,	{.size = 32 } },
+		Descriptor { "float32",		SignalType::FLOAT,	MmsType::MMS_FLOAT,		{.size = 32 } },
+		Descriptor { "float64",		SignalType::FLOAT,	MmsType::MMS_FLOAT,		{.size = 64 } },
 	};
 
 	static MmsValue * newMmsInteger(int64_t i, int size);
@@ -169,6 +173,13 @@ protected:
 		enum { NONE, STOPPED, READY } state;
 		std::vector<OutputContext> contexts;
 		std::string interface_id;
+		int resend_interval;
+
+		std::mutex send_mutex;
+		bool changed;
+		bool resend_thread_stop;
+		std::optional<std::thread> resend_thread;
+		std::condition_variable resend_thread_cv;
 	} output;
 
 	void createReceiver() noexcept;
@@ -187,6 +198,9 @@ protected:
 
 	void addSubscriber(InputEventContext &ctx) noexcept;
 	void pushSample(uint64_t timestamp) noexcept;
+
+	static void publish_values(GoosePublisher publisher, std::vector<GooseSignal> &values, bool changed, int burst = 1) noexcept;
+	static void resend_thread(GooseNode::Output *output) noexcept;
 
 	int _parse(json_t *json, json_error_t *err);
 
