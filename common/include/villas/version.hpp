@@ -40,13 +40,13 @@ public:
 	}
 
 	inline
-	bool operator< (const Version &rhs)
+	bool operator<(const Version &rhs)
 	{
 		return cmp(*this, rhs) <  0;
 	}
 
 	inline
-	bool operator> (const Version &rhs)
+	bool operator>(const Version &rhs)
 	{
 		return cmp(*this, rhs) >  0;
 	}
