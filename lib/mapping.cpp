@@ -313,7 +313,6 @@ std::string MappingEntry::toString(unsigned index) const
 	return ss.str();
 }
 
-
 Signal::Ptr MappingEntry::toSignal(unsigned index) const
 {
 	auto name = toString(index);
