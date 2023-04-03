@@ -168,7 +168,6 @@ void Log::setFormatter(const std::string &pat, const std::string &pfx)
 	formatter->add_flag<CustomLevelFlag>('t');
 	formatter->set_pattern(prefix + pattern);
 
-	spdlog::set_formatter(formatter->clone());
 	sinks->set_formatter(formatter->clone());
 }
 
@@ -176,7 +175,6 @@ void Log::setLevel(Level lvl)
 {
 	level = lvl;
 
-	spdlog::set_level(lvl);
 	sinks->set_level(lvl);
 }
 

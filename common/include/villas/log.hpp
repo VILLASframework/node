@@ -81,7 +81,18 @@ public:
 
 	void addSink(std::shared_ptr<spdlog::sinks::sink> sink)
 	{
+		sink->set_formatter(formatter->clone());
+		sink->set_level(level);
+
 		sinks->add_sink(sink);
+	}
+
+	void replaceStdSink(std::shared_ptr<spdlog::sinks::sink> sink)
+	{
+		sink->set_formatter(formatter->clone());
+		sink->set_level(level);
+
+		sinks->sinks()[0] = sink;
 	}
 };
 
