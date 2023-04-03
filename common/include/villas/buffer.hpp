@@ -19,7 +19,8 @@ namespace villas {
 class Buffer : public std::vector<char> {
 
 protected:
-	static int callback(const char *data, size_t len, void *ctx);
+	static
+	int callback(const char *data, size_t len, void *ctx);
 
 public:
 	Buffer(const char *buf, size_type len) :

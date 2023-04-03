@@ -35,12 +35,11 @@ int setNrHugepages(int nr);
 // @reval <>0 Kernel was not booted with parameter \p key
 int getCmdlineParam(const char *param, char *buf, size_t len);
 
-/** Checks if a kernel module is loaded
- *
- * @param module the name of the module
- * @retval 0 Module is loaded.
- * @reval <>0 Module is not loaded.
- */
+// Checks if a kernel module is loaded
+//
+// @param module the name of the module
+// @retval 0 Module is loaded.
+// @reval <>0 Module is not loaded.
 int isModuleLoaded(const char *module);
 
 // Load kernel module via modprobe

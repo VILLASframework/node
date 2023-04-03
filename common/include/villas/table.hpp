@@ -28,9 +28,9 @@ public:
 	};
 
 protected:
-	int _width;	/**< The real width of this column. Calculated by Table::resize() */
+	int _width;	// The real width of this column. Calculated by Table::resize().
 
-	int width;	/**< Width of the column. */
+	int width;	// Width of the column.
 
 public:
 	TableColumn(int w, enum Alignment a, const std::string &t, const std::string &f, const std::string &u = "") :
@@ -42,9 +42,9 @@ public:
 		align(a)
 	{ }
 
-	std::string title;	/**< The title as shown in the table header. */
-	std::string format;	/**< The format which is used to print the table rows. */
-	std::string unit;	/**< An optional unit which will be shown in the table header. */
+	std::string title;	// The title as shown in the table header.
+	std::string format;	// The format which is used to print the table rows.
+	std::string unit;	// An optional unit which will be shown in the table header.
 
 	enum Alignment align;
 
@@ -72,10 +72,10 @@ public:
 		logger(log)
 	{ }
 
-	/** Print a table header consisting of \p n columns. */
+	// Print a table header consisting of \p n columns.
 	void header();
 
-	/** Print table rows. */
+	// Print table rows.
 	void row(int count, ...);
 
 	int getWidth() const

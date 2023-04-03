@@ -40,21 +40,19 @@ public:
 		zero();
 	}
 
-	/** Parses string with list of CPU ranges.
-	 *
-	 * @param str Human readable representation of the set.
-	 */
+	// Parses string with list of CPU ranges.
+	//
+	// @param str Human readable representation of the set.
 	CpuSet(const std::string &str);
 
 	CpuSet(const char *str);
 
-	/** Convert integer to cpu_set_t.
-	 *
-	 * @param set An integer number which is used as the mask
-	 */
+	// Convert integer to cpu_set_t.
+	//
+	// @param set An integer number which is used as the mask
 	CpuSet(uintmax_t set);
 
-	/** Convert cpu_set_t to an integer. */
+	// Convert cpu_set_t to an integer. */
 	operator uintmax_t();
 
 	operator const cpu_set_t*()
@@ -62,10 +60,9 @@ public:
 		return setp;
 	}
 
-	/** Returns human readable representation of the cpuset.
-	 *
-	 * The output format is a list of CPUs with ranges (for example, "0,1,3-9").
-	 */
+	// Returns human readable representation of the cpuset.
+	//
+	// The output format is a list of CPUs with ranges (for example, "0,1,3-9").
 	operator std::string();
 
 	~CpuSet()

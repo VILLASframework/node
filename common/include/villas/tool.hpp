@@ -26,32 +26,42 @@ protected:
 
 	std::string name;
 
-	static Tool *current_tool;
+	static
+	Tool *current_tool;
 
-	static void staticHandler(int signal, siginfo_t *sinfo, void *ctx);
+	static
+	void staticHandler(int signal, siginfo_t *sinfo, void *ctx);
 
-	virtual void handler(int, siginfo_t *, void *)
+	virtual
+	void handler(int, siginfo_t *, void *)
 	{ }
 
 	std::list<int> handlerSignals;
 
-	static void printCopyright();
-	static void printVersion();
+	static
+	void printCopyright();
+
+	static
+	void printVersion();
 
 public:
 	Tool(int ac, char *av[], const std::string &name, const std::list<int> &sigs = { });
 
-	virtual int main()
+	virtual
+	int main()
 	{
 		return 0;
 	}
 
-	virtual void usage()
+	virtual
+	void usage()
 	{ }
 
-	virtual void parse()
+	virtual
+	void parse()
 	{ }
 
+	virtual
 	int run();
 };
 

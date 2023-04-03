@@ -19,22 +19,18 @@
 
 namespace villas {
 
-/**
- * @brief Translation between a local (master) to a foreign (slave) address space
- *
- * Memory translations can be chained together using the `+=` operator which is
- * used internally by the MemoryManager to compute a translation through
- * multiple hops (memory mappings).
- */
+// Translation between a local (master) to a foreign (slave) address space
+//
+// Memory translations can be chained together using the `+=` operator which is
+// used internally by the MemoryManager to compute a translation through
+// multiple hops (memory mappings).
 class MemoryTranslation {
 public:
 
-	/**
-	 * @brief MemoryTranslation
-	 * @param src	Base address of local address space
-	 * @param dst	Base address of foreign address space
-	 * @param size	Size of "memory window"
-	 */
+	// MemoryTranslation
+	// @param src	Base address of local address space
+	// @param dst	Base address of foreign address space
+	// @param size	Size of "memory window"
 	MemoryTranslation(uintptr_t src, uintptr_t dst, size_t size) :
 		src(src),
 		dst(dst),
@@ -70,15 +66,13 @@ private:
 };
 
 
-/**
- * @brief Global memory manager to resolve addresses across address spaces
- *
- * Every entity in the system has to register its (master) address space and
- * create mappings to other (slave) address spaces that it can access. A
- * directed graph is then constructed which allows to traverse addresses spaces
- * through multiple mappings and resolve addresses through this "tunnel" of
- * memory mappings.
- */
+// Global memory manager to resolve addresses across address spaces
+//
+// Every entity in the system has to register its (master) address space and
+// create mappings to other (slave) address spaces that it can access. A
+// directed graph is then constructed which allows to traverse addresses spaces
+// through multiple mappings and resolve addresses through this "tunnel" of
+// memory mappings.
 class MemoryManager {
 private:
 	// This is a singleton, so private constructor ...
@@ -95,23 +89,21 @@ private:
 	MemoryManager(const MemoryManager&) = delete;
 	MemoryManager &operator=(const MemoryManager&) = delete;
 
-	/**
-	 * @brief Custom edge in memory graph representing a memory mapping
-	 *
-	 * A memory mapping maps from one address space into another and can only be
-	 * traversed in the forward direction which reflects the nature of real
-	 * memory mappings.
-	 *
-	 * Implementation Notes:
-	 * The member #src is the address in the "from" address space, where the
-	 * destination address space is mapped. The member #dest is the address in
-	 * the destination address space, where the mapping points to. Often, #dest
-	 * will be zero for mappings to hardware, but consider the example when
-	 * mapping FPGA to application memory:
-	 * The application allocates a block 1kB at address 0x843001000 in its
-	 * address space. The mapping would then have a #dest address of 0x843001000
-	 * and a #size of 1024.
-	 */
+	// Custom edge in memory graph representing a memory mapping
+	//
+	// A memory mapping maps from one address space into another and can only be
+	// traversed in the forward direction which reflects the nature of real
+	// memory mappings.
+	//
+	// Implementation Notes:
+	// The member #src is the address in the "from" address space, where the
+	// destination address space is mapped. The member #dest is the address in
+	// the destination address space, where the mapping points to. Often, #dest
+	// will be zero for mappings to hardware, but consider the example when
+	// mapping FPGA to application memory:
+	// The application allocates a block 1kB at address 0x843001000 in its
+	// address space. The mapping would then have a #dest address of 0x843001000
+	// and a #size of 1024.
 	class Mapping : public graph::Edge {
 	public:
 		std::string	name;	// Human-readable name
@@ -133,13 +125,11 @@ private:
 	};
 
 
-	/**
-	 * @brief Custom vertex in memory graph representing an address space
-	 *
-	 * Since most information in the memory graph is stored in the edges (memory
-	 * mappings), this is just a small extension to the default vertex. It only
-	 * associates an additional string #name for human-readability.
-	 */
+	// Custom vertex in memory graph representing an address space
+	//
+	// Since most information in the memory graph is stored in the edges (memory
+	// mappings), this is just a small extension to the default vertex. It only
+	// associates an additional string #name for human-readability.
 	class AddressSpace : public graph::Vertex {
 	public:
 		std::string name;	// Human-readable name
@@ -162,8 +152,8 @@ public:
 	struct InvalidTranslation : public std::exception {};
 
 	// Get singleton instance
-	static MemoryManager&
-	get();
+	static
+	MemoryManager& get();
 
 	MemoryGraph & getGraph()
 	{

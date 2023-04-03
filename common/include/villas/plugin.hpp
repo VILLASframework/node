@@ -161,7 +161,7 @@ public:
 		return logger;
 	}
 
-	/** Custom formatter for spdlog */
+	// Custom formatter for spdlog
 	template<typename OStream>
 	friend OStream &operator<<(OStream &os, const class Plugin &p)
 	{

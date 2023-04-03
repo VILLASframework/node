@@ -1,4 +1,3 @@
-
 /** Common code.
  *
  * @author Steffen Vogel <post@steffenvogel.de>

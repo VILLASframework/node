@@ -32,7 +32,7 @@
   #define UNLIKELY(x)	(x)
 #endif
 
-/** Check assertion and exit if failed. */
+// Check assertion and exit if failed.
 #ifndef assert
   #define assert(exp) do { \
 	if (!EXPECT(exp, 0)) \
@@ -121,80 +121,77 @@ assertExcept(bool condition, const T &exception)
 		throw exception;
 }
 
-/** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
+// Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM.
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx), std::list<int> cbSignals = {}, std::list<int> ignoreSignals = { SIGCHLD }) __attribute__ ((warn_unused_result));
 
-/** Fill buffer with random data */
+// Fill buffer with random data.
 ssize_t readRandom(char *buf, size_t len);
 
-/** Remove ANSI control sequences for colored output. */
+// Remove ANSI control sequences for colored output.
 char * decolor(char *str);
 
-/** Normal random variate generator using the Box-Muller method
- *
- * @param m Mean
- * @param s Standard deviation
- * @return Normal variate random variable (Gaussian)
- */
+// Normal random variate generator using the Box-Muller method
+//
+// @param m Mean
+// @param s Standard deviation
+// @return Normal variate random variable (Gaussian)
 double boxMuller(float m, float s);
 
-/** Double precission uniform random variable */
+// Double precission uniform random variable
 double randf();
 
-/** Concat formatted string to an existing string.
- *
- * This function uses realloc() to resize the destination.
- * Please make sure to only on dynamic allocated destionations!!!
- *
- * @param dest A pointer to a malloc() allocated memory region
- * @param fmt A format string like for printf()
- * @param ... Optional parameters like for printf()
- * @retval The the new value of the dest buffer.
- */
+// Concat formatted string to an existing string.
+//
+// This function uses realloc() to resize the destination.
+// Please make sure to only on dynamic allocated destionations!!!
+//
+// @param dest A pointer to a malloc() allocated memory region
+// @param fmt A format string like for printf()
+// @param ... Optional parameters like for printf()
+// @retval The the new value of the dest buffer.
 char * strcatf(char **dest, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
-/** Variadic version of strcatf() */
+// Variadic version of strcatf()
 char * vstrcatf(char **dest, const char *fmt, va_list va)
 	__attribute__ ((format(printf, 2, 0)));
 
 char * strf(const char *fmt, ...);
 char * vstrf(const char *fmt, va_list va);
 
-/** Allocate and copy memory. */
+// Allocate and copy memory.
 void * memdup(const void *src, size_t bytes);
 
-/** Call quit() in the main thread. */
+// Call quit() in the main thread.
 void die();
 
-/** Get log2 of long long integers */
+// Get log2 of long long integers
 int log2i(long long x);
 
-/** Send signal \p sig to main thread. */
+// Send signal \p sig to main thread.
 void killme(int sig);
 
 pid_t spawn(const char *name, char *const argv[]);
 
-/** Determines the string length as printed on the screen (ignores escable sequences). */
+// Determines the string length as printed on the screen (ignores escable sequences).
 size_t strlenp(const char *str);
 
-/** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
- *
- * @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
- * @retval 0 Everything was okay.
- */
+// Calculate SHA1 hash of complete file \p f and place it into \p sha1.
+//
+// @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
+// @retval 0 Everything was okay.
 int sha1sum(FILE *f, unsigned char *sha1);
 
-/** Check if process is running inside a Docker container */
+// Check if process is running inside a Docker container.
 bool isDocker();
 
-/** Check if process is running inside a Kubernetes container */
+// Check if process is running inside a Kubernetes container.
 bool isKubernetes();
 
-/** Check if process is running inside a containerized environment */
+// Check if process is running inside a containerized environment.
 bool isContainer();
 
-/** Check if the process is running in a privileged environment (has SYS_ADMIN capability). */
+// Check if the process is running in a privileged environment (has SYS_ADMIN capability).
 bool isPrivileged();
 
 namespace base64 {

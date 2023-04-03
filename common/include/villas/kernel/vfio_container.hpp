@@ -59,7 +59,7 @@ public:
 	// @return		IOVA address, UINTPTR_MAX on failure
 	uintptr_t memoryMap(uintptr_t virt, uintptr_t phys, size_t length);
 
-	/** munmap() a region which has been mapped by vfio_map_region() */
+	// munmap() a region which has been mapped by vfio_map_region()
 	bool memoryUnmap(uintptr_t phys, size_t length);
 
 	bool isIommuEnabled() const

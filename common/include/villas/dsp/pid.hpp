@@ -24,17 +24,15 @@ protected:
 	double integral;
 
 public:
-	/**
-	 *  Kp -  proportional gain
-	 * Ki -  Integral gain
-	 * Kd -  derivative gain
-	 * dt -  loop interval time
-	 * max - maximum value of manipulated variable
-	 * min - minimum value of manipulated variable
-	 */
+	//  Kp -  proportional gain
+	// Ki -  Integral gain
+	// Kd -  derivative gain
+	// dt -  loop interval time
+	// max - maximum value of manipulated variable
+	// min - minimum value of manipulated variable
 	PID(double _dt, double _max, double _min, double _Kp, double _Kd, double _Ki);
 
-	/** Returns the manipulated variable given a setpoint and current process value */
+	// Returns the manipulated variable given a setpoint and current process value
 	double calculate(double setpoint, double pv);
 };
 

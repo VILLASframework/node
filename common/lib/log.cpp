@@ -20,18 +20,18 @@
 
 using namespace villas;
 
-/** The global log instance */
+// The global log instance
 Log villas::logging;
 
 static std::map<spdlog::level::level_enum, std::string> levelNames = {
-		{ spdlog::level::trace,		"trc" },
-		{ spdlog::level::debug,		"dbg" },
-		{ spdlog::level::info,		"info"  },
-		{ spdlog::level::warn,		"warn"  },
-		{ spdlog::level::err,		"err" },
-		{ spdlog::level::critical,	"crit"  },
-		{ spdlog::level::off,		"off"   }
-	};
+	{ spdlog::level::trace,		"trc" },
+	{ spdlog::level::debug,		"dbg" },
+	{ spdlog::level::info,		"info" },
+	{ spdlog::level::warn,		"warn" },
+	{ spdlog::level::err,		"err" },
+	{ spdlog::level::critical,	"crit" },
+	{ spdlog::level::off,		"off" }
+};
 
 class CustomLevelFlag : public spdlog::custom_flag_formatter {
 
