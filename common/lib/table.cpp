@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <villas/config.hpp>
 #include <villas/utils.hpp>
 #include <villas/table.hpp>
 #include <villas/colors.hpp>
@@ -16,6 +17,12 @@
 
 using namespace villas;
 using namespace villas::utils;
+
+#if !defined(LOG_COLOR_DISABLE)
+  #define ANSI_RESET "\e[0m"
+#else
+  #define ANSI_RESET
+#endif
 
 int Table::resize(int w)
 {
@@ -70,12 +77,12 @@ void Table::header()
 		u = columns[i]._width + strlen(unit) - strlenp(unit);
 
 		if (columns[i].align == TableColumn::Alignment::LEFT) {
-			strcatf(&line1, " %-*.*s\e[0m", w, w, col);
-			strcatf(&line2, " %-*.*s\e[0m", u, u, unit);
+			strcatf(&line1, " %-*.*s" ANSI_RESET, w, w, col);
+			strcatf(&line2, " %-*.*s" ANSI_RESET, u, u, unit);
 		}
 		else {
-			strcatf(&line1, " %*.*s\e[0m", w, w, col);
-			strcatf(&line2, " %*.*s\e[0m", u, u, unit);
+			strcatf(&line1, " %*.*s" ANSI_RESET, w, w, col);
+			strcatf(&line2, " %*.*s" ANSI_RESET, u, u, unit);
 		}
 
 		for (int j = 0; j < columns[i]._width + 2; j++) {
@@ -121,9 +128,9 @@ void Table::row(int count, ...)
 		int w = columns[i]._width + r - l;
 
 		if (columns[i].align == TableColumn::Alignment::LEFT)
-			strcatf(&line, " %-*.*s\e[0m ", w, w, col);
+			strcatf(&line, " %-*.*s " ANSI_RESET, w, w, col);
 		else
-			strcatf(&line, " %*.*s\e[0m ", w, w, col);
+			strcatf(&line, " %*.*s " ANSI_RESET, w, w, col);
 
 		if (i != columns.size() - 1)
 			strcatf(&line, BOX_UD);

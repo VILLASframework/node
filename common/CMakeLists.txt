@@ -58,6 +58,9 @@ if(CRITERION_FOUND AND TOPLEVEL_PROJECT)
     add_subdirectory(tests)
 endif()
 
+# Disable any colored log output
+option(LOG_COLOR_DISABLE "Disable any colored log output" OFF)
+
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.hpp

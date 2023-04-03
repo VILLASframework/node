@@ -8,12 +8,19 @@
 
 #pragma once
 
+#include <villas/config.hpp>
+
 // CPP stringification
 #define XSTR(x)		STR(x)
 #define  STR(x)		#x
 
 // Some color escape codes for pretty log messages
-#define CLR(clr, str)	"\e[" XSTR(clr) "m" str "\e[0m"
+#ifdef LOG_COLOR_DISABLE
+  #define CLR(clr, str) str
+#else
+  #define CLR(clr, str)	"\e[" XSTR(clr) "m" str "\e[0m"
+#endif
+
 #define CLR_GRY(str)	CLR(30, str) // Print str in gray
 #define CLR_RED(str)	CLR(31, str) // Print str in red
 #define CLR_GRN(str)	CLR(32, str) // Print str in green
