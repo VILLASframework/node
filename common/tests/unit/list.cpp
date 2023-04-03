@@ -59,7 +59,8 @@ struct content {
 	int destroyed;
 };
 
-static int dtor(void *ptr)
+static
+int dtor(void *ptr)
 {
 	struct content *elm = (struct content *) ptr;
 

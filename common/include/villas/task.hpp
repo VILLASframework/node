@@ -13,7 +13,7 @@
 
 #include <ctime>
 
-/** We can choose between two periodic task implementations */
+// We can choose between two periodic task implementations
 //#define PERIODIC_TASK_IMPL NANOSLEEP
 #define TIMERFD		1
 #define CLOCK_NANOSLEEP	2
@@ -49,7 +49,7 @@ struct Task {
 	struct Tsc tsc;			// Initialized by tsc_init().
 #endif
 
-	/** Create a new task with the given rate. */
+	// Create a new task with the given rate.
 	Task(int clock = CLOCK_REALTIME);
 
 	~Task();

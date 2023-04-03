@@ -30,20 +30,20 @@
 
 #define HTTP_USER_AGENT		PROJECT_NAME " (" PROJECT_BUILD_ID ")"
 
-/* Hard-coded cache line size */
+// Hard-coded cache line size
 #if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || defined(__aarch64__)
   #define CACHELINE_SIZE 64
 #else
   #error "Unsupported architecture"
 #endif
 
-/* Paths */
+// Paths
 #define PREFIX			"@CMAKE_INSTALL_PREFIX@"
 #define PLUGIN_PATH		"@CMAKE_INSTALL_PREFIX@/share/villas/node/plugins"
 #define SYSFS_PATH		"/sys"
 #define PROCFS_PATH		"/proc"
 
-/** Width of log output in characters */
+// Width of log output in characters
 #define LOG_WIDTH		80
 #define LOG_HEIGHT		25
 

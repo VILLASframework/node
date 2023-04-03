@@ -69,7 +69,8 @@ public:
 		error(e)
 	{ }
 
-	virtual const char * what() const noexcept
+	virtual
+	const char * what() const noexcept
 	{
 		return fmt::format("{}: {} in {}:{}:{}",
 			std::runtime_error::what(),
@@ -81,7 +82,7 @@ public:
 class ConfigError : public std::runtime_error {
 
 protected:
-	/** A setting-id referencing the setting. */
+	// A setting-id referencing the setting.
 	std::string id;
 	json_t *setting;
 	json_error_t error;
@@ -163,7 +164,8 @@ public:
 		return baseUri + id;
 	}
 
-	virtual const char * what() const noexcept
+	virtual
+	const char * what() const noexcept
 	{
 		return msg;
 	}

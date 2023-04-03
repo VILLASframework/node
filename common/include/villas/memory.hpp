@@ -16,12 +16,10 @@
 
 namespace villas {
 
-/**
- * @brief Basic memory block backed by an address space in the memory graph
- *
- * This is a generic representation of a chunk of memory in the system. It can
- * reside anywhere and represent different types of memory.
- */
+// Basic memory block backed by an address space in the memory graph
+//
+// This is a generic representation of a chunk of memory in the system. It can
+// reside anywhere and represent different types of memory.
 class MemoryBlock {
 public:
 	using deallocator_fn = std::function<void(MemoryBlock*)>;
@@ -54,17 +52,15 @@ protected:
 	MemoryManager::AddressSpaceId addrSpaceId;	// Identifier in memory graph
 };
 
-/**
- * @brief Wrapper for a MemoryBlock to access the underlying memory directly
- *
- * The underlying memory block has to be accessible for the current process,
- * that means it has to be mapped accordingly and registered to the global
- * memory graph.
- * Furthermore, this wrapper can be owning the memory block when initialized
- * with a moved unique pointer. Otherwise, it just stores a reference to the
- * memory block and it's the users responsibility to take care that the memory
- * block is valid.
- */
+// Wrapper for a MemoryBlock to access the underlying memory directly
+//
+// The underlying memory block has to be accessible for the current process,
+// that means it has to be mapped accordingly and registered to the global
+// memory graph.
+// Furthermore, this wrapper can be owning the memory block when initialized
+// with a moved unique pointer. Otherwise, it just stores a reference to the
+// memory block and it's the users responsibility to take care that the memory
+// block is valid.
 template<typename T>
 class MemoryAccessor {
 public:
@@ -120,14 +116,12 @@ private:
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
 };
 
-/**
- * @brief Base memory allocator
- *
- * Note the usage of CRTP idiom here to access methods of derived allocators.
- * The concept is explained here at [1].
- *
- * [1] https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
- */
+// Base memory allocator
+//
+// Note the usage of CRTP idiom here to access methods of derived allocators.
+// The concept is explained here at [1].
+//
+// [1] https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
 template<typename DerivedAllocator>
 class BaseAllocator {
 public:
@@ -157,7 +151,9 @@ public:
 		derivedAlloc = nullptr;
 	}
 
-	virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+	virtual
+	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+
 	allocateBlock(size_t size) = 0;
 
 	template<typename T>
@@ -223,15 +219,13 @@ private:
 	DerivedAllocator* derivedAlloc;
 };
 
-/**
- * @brief Linear memory allocator
- *
- * This is the simplest kind of allocator. The idea is to keep a pointer at the
- * first memory address of your memory chunk and move it every time an
- * allocation is done. Due to its simplicity, this allocator doesn't allow
- * specific positions of memory to be freed. Usually, all memory is freed
- * together.
- */
+// Linear memory allocator
+//
+// This is the simplest kind of allocator. The idea is to keep a pointer at the
+// first memory address of your memory chunk and move it every time an
+// allocation is done. Due to its simplicity, this allocator doesn't allow
+// specific positions of memory to be freed. Usually, all memory is freed
+// together.
 class LinearAllocator : public BaseAllocator<LinearAllocator> {
 public:
 	LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
@@ -275,12 +269,10 @@ private:
 };
 
 
-/**
- * @brief Wrapper around mmap() to create villas memory blocks
- *
- * This class simply wraps around mmap() and munmap() to allocate memory in the
- * host memory via the OS.
- */
+// Wrapper around mmap() to create villas memory blocks
+//
+// This class simply wraps around mmap() and munmap() to allocate memory in the
+// host memory via the OS.
 class HostRam {
 public:
 	class HostRamAllocator : public BaseAllocator<HostRamAllocator> {
@@ -313,7 +305,8 @@ public:
 	public:
 		HostDmaRamAllocator(int num);
 
-		virtual ~HostDmaRamAllocator();
+		virtual
+		~HostDmaRamAllocator();
 
 		std::string getName() const
 		{

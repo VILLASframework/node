@@ -28,11 +28,10 @@ enum class State {
 	PREPARED	= 13
 };
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
+// Callback to destroy list elements.
+//
+// @param data A pointer to the data which should be freed.
 typedef int (*dtor_cb_t)(void *);
 
-/** Convert state enum to human readable string. */
+// Convert state enum to human readable string.
 std::string stateToString(enum State s);

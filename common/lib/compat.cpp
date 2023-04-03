@@ -30,7 +30,8 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
 	return len;
 }
 
-static size_t json_loadfd_callback(void *buffer, size_t buflen, void *data)
+static
+size_t json_loadfd_callback(void *buffer, size_t buflen, void *data)
 {
 	int *fd = (int *) data;
 
@@ -43,7 +44,8 @@ json_t *json_loadfd(int input, size_t flags, json_error_t *error)
 }
 
 
-static int json_dumpfd_callback(const char *buffer, size_t size, void *data)
+static
+int json_dumpfd_callback(const char *buffer, size_t size, void *data)
 {
 #ifdef HAVE_UNISTD_H
 	int *dest = (int *)data;

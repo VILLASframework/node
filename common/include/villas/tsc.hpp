@@ -32,8 +32,8 @@ struct Tsc {
 	bool is_invariant;
 };
 
-__attribute__((unused))
-static uint64_t tsc_now(struct Tsc *t)
+__attribute__((unused)) static
+uint64_t tsc_now(struct Tsc *t)
 {
 	uint32_t tsc_aux;
 	return t->rdtscp_supported
