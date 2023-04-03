@@ -216,7 +216,7 @@ void redis_on_message(NodeCompat *n, const std::string &channel, const std::stri
 
 	n->logger->debug("Message: {}: {}", channel, msg);
 
-	int alloc, scanned, pushed;
+	int alloc, scanned, pushed = 0;
 	unsigned cnt = n->in.vectorize;
 	struct Sample *smps[cnt];
 
@@ -247,7 +247,6 @@ void redis_on_message(NodeCompat *n, const std::string &channel, const std::stri
 
 	if (scanned < 0) {
 		n->logger->error("Failed to decode samples");
-		pushed = 0;
 		goto out;
 	}
 
