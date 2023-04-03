@@ -260,7 +260,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 		? std::optional { timespec_to_cp56time2a(sample.timestamp.value()) }
 		: std::nullopt;
 
-	InformationObject io;
+	InformationObject io = nullptr;
 	switch (descriptor->type) {
 		case ASDUData::SCALED_INT: {
 			auto scaled_int_value = static_cast<int16_t>(sample.signal_data.i & 0xFFFF);
@@ -337,6 +337,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 	}
 
 	bool successfully_added = CS101_ASDU_addInformationObject(asdu, io);
+
 	InformationObject_destroy(io);
 
 	return successfully_added;
