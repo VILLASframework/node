@@ -240,7 +240,7 @@ int FpgaNodeFactory::start(SuperNode *sn)
 
 	cards.splice(cards.end(), piceCards);
 
-	return 0;
+	return NodeFactory::start(sn);
 }
 
 static FpgaNodeFactory p;
