@@ -173,7 +173,7 @@ protected:
 		enum { NONE, STOPPED, READY } state;
 		std::vector<OutputContext> contexts;
 		std::string interface_id;
-		int resend_interval;
+		double resend_interval;
 
 		std::mutex send_mutex;
 		bool changed;

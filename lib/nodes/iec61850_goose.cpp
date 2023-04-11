@@ -442,10 +442,8 @@ void GooseNode::startPublishers() noexcept(false)
 	else
 		stopPublishers();
 
-	if (output.resend_interval != 0) {
-		output.resend_thread_stop = false;
-		output.resend_thread = std::thread(resend_thread, &output);
-	}
+	output.resend_thread_stop = false;
+	output.resend_thread = std::thread(resend_thread, &output);
 
 	output.state = Output::READY;
 }
@@ -503,9 +501,11 @@ void GooseNode::publish_values(GoosePublisher publisher, std::vector<GooseSignal
 
 void GooseNode::resend_thread(GooseNode::Output *output) noexcept
 {
-	auto interval = std::chrono::milliseconds(output->resend_interval);
+	using namespace std::chrono;
+
+	auto interval = duration_cast<steady_clock::duration>(duration<double>(output->resend_interval));
 	auto lock = std::unique_lock { output->send_mutex };
-	std::chrono::time_point<std::chrono::steady_clock> next_sample_time;
+	time_point<steady_clock> next_sample_time;
 
 	// wait for the first GooseNode::_write call
 	output->resend_thread_cv.wait(lock);
@@ -513,7 +513,7 @@ void GooseNode::resend_thread(GooseNode::Output *output) noexcept
 	while (!output->resend_thread_stop) {
 		if (output->changed) {
 			output->changed = false;
-			next_sample_time = std::chrono::steady_clock::now() + interval;
+			next_sample_time = steady_clock::now() + interval;
 		}
 
 		auto status = output->resend_thread_cv.wait_until(lock, next_sample_time);
@@ -582,7 +582,7 @@ GooseNode::GooseNode(const std::string &name) :
 	output.state = Output::NONE;
 	output.interface_id = "lo";
 	output.changed = false;
-	output.resend_interval = 1000;
+	output.resend_interval = 1.;
 	output.resend_thread = std::nullopt;
 }
 
@@ -758,12 +758,11 @@ int GooseNode::parseOutput(json_t *json, json_error_t *err)
 	json_t *publishers_json = nullptr;
 	json_t *signals_json = nullptr;
 	char const *interface_id = output.interface_id.c_str();
-	int resend_interval = output.resend_interval;
-	ret = json_unpack_ex(json, err, 0, "{ s:o, s:o, s?:s, s?:i }",
+	ret = json_unpack_ex(json, err, 0, "{ s:o, s:o, s?:s, s?:f }",
 		"publishers", &publishers_json,
 		"signals", &signals_json,
 		"interface", &interface_id,
-		"resend_interval", &resend_interval
+		"resend_interval", &output.resend_interval
 	);
 	if (ret) return ret;
 
@@ -771,7 +770,6 @@ int GooseNode::parseOutput(json_t *json, json_error_t *err)
 	if (ret) return ret;
 
 	output.interface_id = interface_id;
-	output.resend_interval = resend_interval;
 
 	return 0;
 }
