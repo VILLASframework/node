@@ -2,5 +2,84 @@
 ---
 
 allOf:
-
 - $ref: ../node.yaml
+- type: object
+  properties:
+    in:
+      type: object
+      properties:
+        signals:
+          $ref: ./signals/iec61850_goose_subscriber_signal.yaml
+
+        interface:
+          type: string
+
+        with_timestamp:
+          type: boolean
+
+        subscribers:
+          type: object
+          additionalProperties:
+            type: object
+            required:
+            - go_cb_ref
+            properties:
+              go_cb_ref:
+                type: string
+
+              dst_address:
+                type: string
+
+              app_id:
+                type: integer
+
+              trigger:
+                type: string
+                enum:
+                - always
+                - change
+                default: always
+
+    out:
+      type: object
+      properties:
+        signals:
+          $ref: ../signal_list.yaml
+
+        resend_interval:
+          type: number
+          default: 1
+          description: |
+            Time interval for periodic resend of last sample in floating point seconds.
+
+        interface:
+          type: string
+          default: localhost
+          description: |
+            Name of the ethernet interface to send on.
+
+        publishers:
+          type: array
+          items:
+            type: object
+            properties:
+              go_id:
+                type: string
+              go_cb_ref:
+                type: string
+              data_set_ref:
+                type: string
+              dst_address:
+                type: string
+              app_id:
+                type: integer
+              conf_rev:
+                type: integer
+              time_allowed_to_live:
+                type: integer
+              burst:
+                type: integer
+              data:
+                type: array
+                items:
+                  $ref: ./signals/iec61850_goose_publisher_data.yaml

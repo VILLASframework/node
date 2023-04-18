@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- oneOf:
+  - type: object
+    properties:
+      value:
+        oneOf:
+        - type: integer
+        - type: number
+        - type: boolean
+        description: |
+          Constant signal value.
+
+  - type: object
+    required:
+    - signal
+    properties:
+      signal:
+        type: string
+        description: |
+          Name of the input signal for the value.
+
+- $ref: ./iec61850_goose_data.yaml
