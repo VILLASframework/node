@@ -783,7 +783,7 @@ void GooseNode::parsePublisherData(json_t *json, std::vector<OutputData> &data)
 		std::optional<GooseSignal::Meta> meta = std::nullopt;
 
 		if (goose_type->mms_type == MmsType::MMS_BIT_STRING && bitstring_size != -1)
-			meta->size = bitstring_size;
+			meta = {.size = bitstring_size};
 
 		auto signal_data = SignalData {};
 
