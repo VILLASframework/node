@@ -607,78 +607,63 @@ int GooseNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (ret)
 		return ret;
 
-	ret = _parse(json, &err);
-	if (ret)
-		throw ConfigError(json, err, "node-config-node-iec61850-goose");
-
-	return 0;
-}
-
-int GooseNode::_parse(json_t *json, json_error_t *err)
-{
-	int ret;
-
 	json_t *in_json = nullptr;
 	json_t *out_json = nullptr;
-	ret = json_unpack_ex(json, err, 0, "{ s: o, s: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o }",
 		"in", &in_json,
 		"out", &out_json
 	);
-	if (ret) return ret;
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-	ret = parseInput(in_json, err);
-	if (ret) return ret;
-
-	ret = parseOutput(out_json, err);
-	if (ret) return ret;
+	parseInput(in_json);
+	parseOutput(out_json);
 
 	return 0;
 }
 
-int GooseNode::parseInput(json_t *json, json_error_t *err)
+void GooseNode::parseInput(json_t *json)
 {
 	int ret;
+	json_error_t err;
 
 	json_t *subscribers_json = nullptr;
 	json_t *signals_json = nullptr;
 	char const *interface_id = input.interface_id.c_str();
 	int with_timestamp = true;
-	ret = json_unpack_ex(json, err, 0, "{ s: o, s: o, s?: s, s: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o, s?: s, s: b }",
 		"subscribers", &subscribers_json,
 		"signals", &signals_json,
 		"interface", &interface_id,
 		"with_timestamp", &with_timestamp
 	);
-	if (ret) return ret;
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-	ret = parseSubscribers(subscribers_json, err, input.contexts);
-	if (ret) return ret;
-
-	ret = parseInputSignals(signals_json, err, input.mappings);
-	if (ret) return ret;
+	parseSubscribers(subscribers_json, input.contexts);
+	parseInputSignals(signals_json, input.mappings);
 
 	input.interface_id = interface_id;
-
 	input.with_timestamp = with_timestamp;
-
-	return 0;
 }
 
-int GooseNode::parseSubscriber(json_t *json, json_error_t *err, GooseNode::SubscriberConfig &sc)
+void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc)
 {
 	int ret;
+	json_error_t err;
 
 	char *go_cb_ref = nullptr;
 	char *dst_address_str = nullptr;
 	char *trigger = nullptr;
 	int app_id = 0;
-	ret = json_unpack_ex(json, err, 0, "{ s: s, s?: s, s?: s, s?: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: s, s?: i }",
 		"go_cb_ref", &go_cb_ref,
 		"trigger", &trigger,
 		"dst_address", &dst_address_str,
 		"app_id", &app_id
 	);
-	if (ret) return ret;
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
 	sc.go_cb_ref = std::string { go_cb_ref };
 
@@ -698,31 +683,29 @@ int GooseNode::parseSubscriber(json_t *json, json_error_t *err, GooseNode::Subsc
 
 	if (app_id != 0)
 		sc.app_id = static_cast<int16_t>(app_id);
-
-	return 0;
 }
 
-int GooseNode::parseSubscribers(json_t *json, json_error_t *err, std::map<std::string, InputEventContext> &ctx)
+void GooseNode::parseSubscribers(json_t *json, std::map<std::string, InputEventContext> &ctx)
 {
-	int ret;
 	char const* key;
 	json_t* subscriber_json;
+
+	if (!json_is_object(json))
+		throw RuntimeError("subscribers is not an object");
 
 	json_object_foreach(json, key, subscriber_json) {
 		SubscriberConfig sc;
 
-		ret = parseSubscriber(subscriber_json, err, sc);
-		if (ret) return ret;
+		parseSubscriber(subscriber_json, sc);
 
 		ctx[key] = InputEventContext { sc };
 	}
-
-	return 0;
 }
 
-int GooseNode::parseInputSignals(json_t *json, json_error_t *err, std::vector<GooseNode::InputMapping> &mappings)
+void GooseNode::parseInputSignals(json_t *json, std::vector<GooseNode::InputMapping> &mappings)
 {
 	int ret;
+	json_error_t err;
 	int index;
 	json_t *value;
 
@@ -732,12 +715,13 @@ int GooseNode::parseInputSignals(json_t *json, json_error_t *err, std::vector<Go
 		char *mapping_subscriber;
 		unsigned int mapping_index;
 		char *mapping_type_name;
-		ret = json_unpack_ex(value, err, 0, "{ s: s, s: i, s: s }",
+		ret = json_unpack_ex(value, &err, 0, "{ s: s, s: i, s: s }",
 			"subscriber", &mapping_subscriber,
 			"index", &mapping_index,
 			"mms_type", &mapping_type_name
 		);
-		if (ret) return ret;
+		if (ret)
+			throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
 		auto mapping_type = GooseSignal::lookupMmsTypeName(mapping_type_name).value();
 
@@ -747,52 +731,53 @@ int GooseNode::parseInputSignals(json_t *json, json_error_t *err, std::vector<Go
 			mapping_type,
 		});
 	}
-
-	return 0;
 }
 
-int GooseNode::parseOutput(json_t *json, json_error_t *err)
+void GooseNode::parseOutput(json_t *json)
 {
 	int ret;
+	json_error_t err;
 
 	json_t *publishers_json = nullptr;
 	json_t *signals_json = nullptr;
 	char const *interface_id = output.interface_id.c_str();
-	ret = json_unpack_ex(json, err, 0, "{ s:o, s:o, s?:s, s?:f }",
+	ret = json_unpack_ex(json, &err, 0, "{ s:o, s:o, s?:s, s?:f }",
 		"publishers", &publishers_json,
 		"signals", &signals_json,
 		"interface", &interface_id,
 		"resend_interval", &output.resend_interval
 	);
-	if (ret) return ret;
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-	ret = parsePublishers(publishers_json, err, output.contexts);
-	if (ret) return ret;
+	parsePublishers(publishers_json, output.contexts);
 
 	output.interface_id = interface_id;
-
-	return 0;
 }
 
-int GooseNode::parsePublisherData(json_t *json, json_error_t *err, std::vector<OutputData> &data)
+void GooseNode::parsePublisherData(json_t *json, std::vector<OutputData> &data)
 {
 	int ret;
+	json_error_t err;
 	int index;
 	json_t* signal_or_value_json;
 
-	json_array_foreach(json, index, signal_or_value_json) {
+	if (!json_is_array(json))
+		throw RuntimeError("publisher data is not an array");
 
+	json_array_foreach(json, index, signal_or_value_json) {
 		char const *mms_type = nullptr;
 		char const *signal_str = nullptr;
 		json_t *value_json = nullptr;
 		int bitstring_size = -1;
-		ret = json_unpack_ex(signal_or_value_json, err, 0, "{ s:s, s?:s, s?:o, s?:i }",
+		ret = json_unpack_ex(signal_or_value_json, &err, 0, "{ s:s, s?:s, s?:o, s?:i }",
 			"mms_type", &mms_type,
 			"signal", &signal_str,
 			"value", &value_json,
 			"mms_bitstring_size", &bitstring_size
 		);
-		if (ret) return ret;
+		if (ret)
+			throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
 		auto goose_type = GooseSignal::lookupMmsTypeName(mms_type).value();
 		std::optional<GooseSignal::Meta> meta = std::nullopt;
@@ -804,7 +789,8 @@ int GooseNode::parsePublisherData(json_t *json, json_error_t *err, std::vector<O
 
 		if (value_json) {
 			ret = signal_data.parseJson(goose_type->signal_type, value_json);
-			if (ret) return ret;
+			if (ret)
+				throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 		}
 
 		auto signal = std::optional<int> {};
@@ -819,13 +805,12 @@ int GooseNode::parsePublisherData(json_t *json, json_error_t *err, std::vector<O
 
 		data.push_back(value);
 	};
-
-	return 0;
 }
 
-int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &pc)
+void GooseNode::parsePublisher(json_t *json, PublisherConfig &pc)
 {
 	int ret;
+	json_error_t err;
 
 	char *go_id = nullptr;
 	char *go_cb_ref = nullptr;
@@ -836,7 +821,7 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 	int time_allowed_to_live = 0;
 	int burst = 1;
 	json_t *data_json = nullptr;
-	ret = json_unpack_ex(json, err, 0, "{ s:s, s:s, s:s, s:s, s:i, s:i, s:i, s?:i, s:o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s:s, s:s, s:s, s:s, s:i, s:i, s:i, s?:i, s:o }",
 		"go_id", &go_id,
 		"go_cb_ref", &go_cb_ref,
 		"data_set_ref", &data_set_ref,
@@ -847,7 +832,8 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 		"burst", &burst,
 		"data", &data_json
 	);
-	if (ret) return ret;
+	if (ret)
+		throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
 	std::optional dst_address = stringToMac(dst_address_str);
 	if (!dst_address)
@@ -862,28 +848,21 @@ int GooseNode::parsePublisher(json_t *json, json_error_t *err, PublisherConfig &
 	pc.time_allowed_to_live = time_allowed_to_live;
 	pc.burst = burst;
 
-	ret = parsePublisherData(data_json, err, pc.data);
-	if (ret) return ret;
-
-	return 0;
+	parsePublisherData(data_json, pc.data);
 }
 
-int GooseNode::parsePublishers(json_t *json, json_error_t *err, std::vector<OutputContext> &ctx)
+void GooseNode::parsePublishers(json_t *json, std::vector<OutputContext> &ctx)
 {
-	int ret;
 	int index;
 	json_t* publisher_json;
 
 	json_array_foreach(json, index, publisher_json) {
 		PublisherConfig pc;
 
-		ret = parsePublisher(publisher_json, err, pc);
-		if (ret) return ret;
+		parsePublisher(publisher_json, pc);
 
 		ctx.push_back(OutputContext { pc });
 	}
-
-	return 0;
 }
 
 std::vector<int> GooseNode::getPollFDs()

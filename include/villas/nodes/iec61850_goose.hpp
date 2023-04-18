@@ -202,17 +202,15 @@ protected:
 	static void publish_values(GoosePublisher publisher, std::vector<GooseSignal> &values, bool changed, int burst = 1) noexcept;
 	static void resend_thread(GooseNode::Output *output) noexcept;
 
-	int _parse(json_t *json, json_error_t *err);
+	void parseInput(json_t *json);
+	void parseSubscriber(json_t *json, SubscriberConfig &sc);
+	void parseSubscribers(json_t *json, std::map<std::string, InputEventContext> &ctx);
+	void parseInputSignals(json_t *json, std::vector<InputMapping> &mappings);
 
-	int parseInput(json_t *json, json_error_t *err);
-	int parseSubscriber(json_t *json, json_error_t *err, SubscriberConfig &sc);
-	int parseSubscribers(json_t *json, json_error_t *err, std::map<std::string, InputEventContext> &ctx);
-	int parseInputSignals(json_t *json, json_error_t *err, std::vector<InputMapping> &mappings);
-
-	int parseOutput(json_t *json, json_error_t *err);
-	int parsePublisherData(json_t *json, json_error_t *err, std::vector<OutputData> &data);
-	int parsePublisher(json_t *json, json_error_t *err, PublisherConfig &pc);
-	int parsePublishers(json_t *json, json_error_t *err, std::vector<OutputContext> &ctx);
+	void parseOutput(json_t *json);
+	void parsePublisherData(json_t *json, std::vector<OutputData> &data);
+	void parsePublisher(json_t *json, PublisherConfig &pc);
+	void parsePublishers(json_t *json, std::vector<OutputContext> &ctx);
 
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt) override;
