@@ -927,14 +927,6 @@ int GooseNode::stop()
 	return Node::stop();
 }
 
-static char name[] = "iec61850-goose";
-static char description[] = "Subscribe to and publish GOOSE messages";
-static NodePlugin<
-	GooseNode,
-	name,
-	description,
-	(int) NodeFactory::Flags::SUPPORTS_READ
-	| (int) NodeFactory::Flags::SUPPORTS_WRITE
-	| (int) NodeFactory::Flags::SUPPORTS_POLL,
-	1
-> p;
+static char name[] = "iec61850-8-1";
+static char description[] = "IEC 61850-8-1 (GOOSE)";
+static NodePlugin<GooseNode, name, description, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL, 1> p;
