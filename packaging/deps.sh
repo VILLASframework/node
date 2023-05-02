@@ -108,9 +108,9 @@ if [ -z "${SKIP_ETHERLAB}" ]; then
 fi
 
 # Build & Install libiec61850
-if ! pkg-config "libiec61850 >= 1.3.1" && \
+if ! pkg-config "libiec61850 >= 1.5.0" && \
     [ -z "${SKIP_LIBIEC61850}" ]; then
-    git clone ${GIT_OPTS} --branch v1.4 https://github.com/mz-automation/libiec61850
+    git clone ${GIT_OPTS} --branch v1.5 https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake ${CMAKE_OPTS} ..

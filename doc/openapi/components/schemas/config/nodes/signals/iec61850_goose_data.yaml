@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  required:
+  - mms_type
+  properties:
+    mms_type:
+      type: string
+      enum:
+      - boolean
+      - int8
+      - int16
+      - int32
+      - int64
+      - int8u
+      - int16u
+      - int32u
+      - float32
+      - float64
+      - bitstring
+      description: |
+        Expected basic data type in received array.
+
+    mms_bitstring_size:
+      type: integer
+      default: 32
+      description: |
+        Size metadata for mms_type bitstring.

@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  required:
+  - index
+  - subscriber
+  properties:
+    index:
+      type: number
+      description: |
+        Index within the received GOOSE event array.
+
+    subscriber:
+      type: string
+
+- $ref: ./iec61850_goose_data.yaml
+- $ref: ../../signal.yaml
