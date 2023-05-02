@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <chrono>
+
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_goose.hpp>
 #include <villas/utils.hpp>
@@ -14,14 +15,16 @@
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
 
+using namespace std::literals::chrono_literals;
+using namespace std::literals::string_literals;
+
 using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 using namespace villas::node::iec61850;
-using namespace std::literals::chrono_literals;
-using namespace std::literals::string_literals;
 
-static std::optional<std::array<uint8_t, 6>> stringToMac(char *mac_string)
+static
+std::optional<std::array<uint8_t, 6>> stringToMac(char *mac_string)
 {
 	std::array<uint8_t, 6> mac;
 	char *save;
