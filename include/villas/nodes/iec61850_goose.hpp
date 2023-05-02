@@ -16,14 +16,16 @@
 #include <optional>
 #include <string>
 #include <thread>
+
+#include <libiec61850/goose_receiver.h>
+#include <libiec61850/goose_subscriber.h>
+#include <libiec61850/goose_publisher.h>
+
 #include <villas/node/config.hpp>
 #include <villas/node.hpp>
 #include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
 #include <villas/signal.hpp>
-#include <libiec61850/goose_receiver.h>
-#include <libiec61850/goose_subscriber.h>
-#include <libiec61850/goose_publisher.h>
 
 namespace villas {
 namespace node {
@@ -58,24 +60,29 @@ public:
 	SignalType signalType() const;
 
 	// Create a GooseSignal from an MmsValue
-	static std::optional<GooseSignal> fromMmsValue(MmsValue *mms_value);
+	static
+	std::optional<GooseSignal> fromMmsValue(MmsValue *mms_value);
 
 	// Create a GooseSignal from type name and SignalData value
-	static std::optional<GooseSignal> fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta = std::nullopt);
+	static
+	std::optional<GooseSignal> fromNameAndValue(char const *name, SignalData value, std::optional<Meta> meta = std::nullopt);
 
 	// Create a MmsValue from this GooseSignal
 	MmsValue * toMmsValue() const;
 
-	static std::optional<Type> lookupMmsType(int mms_type);
+	static
+	std::optional<Type> lookupMmsType(int mms_type);
 
-	static std::optional<Type> lookupMmsTypeName(char const *name);
+	static
+	std::optional<Type> lookupMmsTypeName(char const *name);
 
 	GooseSignal(Type type, SignalData value, std::optional<Meta> meta = std::nullopt);
 
 	SignalData signal_data;
 	Meta meta;
 private:
-	inline static std::array const descriptors {
+	inline static
+	std::array const descriptors {
 		Descriptor { "boolean", 	SignalType::BOOLEAN, 	MmsType::MMS_BOOLEAN },
 		Descriptor { "int8",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size =  8 } },
 		Descriptor { "int16",		SignalType::INTEGER,	MmsType::MMS_INTEGER,		{.size = 16 } },
@@ -89,13 +96,17 @@ private:
 		Descriptor { "float64",		SignalType::FLOAT,	MmsType::MMS_FLOAT,		{.size = 64 } },
 	};
 
-	static MmsValue * newMmsInteger(int64_t i, int size);
+	static
+	MmsValue * newMmsInteger(int64_t i, int size);
 
-	static MmsValue * newMmsUnsigned(uint64_t i, int size);
+	static
+	MmsValue * newMmsUnsigned(uint64_t i, int size);
 
-	static MmsValue * newMmsBitString(uint32_t i, int size);
+	static
+	MmsValue * newMmsBitString(uint32_t i, int size);
 
-	static MmsValue * newMmsFloat(double i, int size);
+	static
+	MmsValue * newMmsFloat(double i, int size);
 
 	// Descriptor within the descriptors table above
 	Descriptor const *descriptor;
@@ -194,13 +205,16 @@ protected:
 	void startPublishers() noexcept(false);
 	void stopPublishers() noexcept;
 
-	static void onEvent(GooseSubscriber subscriber, InputEventContext &context) noexcept;
+	static
+	void onEvent(GooseSubscriber subscriber, InputEventContext &context) noexcept;
 
 	void addSubscriber(InputEventContext &ctx) noexcept;
 	void pushSample(uint64_t timestamp) noexcept;
 
-	static void publish_values(GoosePublisher publisher, std::vector<GooseSignal> &values, bool changed, int burst = 1) noexcept;
-	static void resend_thread(GooseNode::Output *output) noexcept;
+	static
+	void publish_values(GoosePublisher publisher, std::vector<GooseSignal> &values, bool changed, int burst = 1) noexcept;
+	static
+	void resend_thread(GooseNode::Output *output) noexcept;
 
 	void parseInput(json_t *json);
 	void parseSubscriber(json_t *json, SubscriberConfig &sc);
