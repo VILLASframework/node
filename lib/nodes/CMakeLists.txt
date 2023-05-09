@@ -69,6 +69,7 @@ endif()
 # Enable IEC60870 node-types when lib60870 is available
 if(WITH_NODE_IEC60870)
     list(APPEND NODE_SRC iec60870.cpp)
+    list(APPEND NODE_SRC iec60870_client.cpp)
     list(APPEND LIBRARIES PkgConfig::LIB60870)
 endif()
 
