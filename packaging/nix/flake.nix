@@ -4,8 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
 
-    src = {
-      url = "git+file:.?submodules=1";
+    common = {
+      url = "github:VILLASframework/common?submodules=1";
       flake = false;
     };
 
@@ -43,7 +43,8 @@
         default = villas;
 
         villas-minimal = pkgs.callPackage ./villas.nix {
-          inherit (inputs) src;
+          src = ../..;
+          common = inputs.common;
         };
 
         villas = villas-minimal.override {
