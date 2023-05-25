@@ -40,6 +40,10 @@ if(WITH_NODE_SOCKET)
     list(APPEND NODE_SRC socket.cpp)
 endif()
 
+if(WITH_NODE_C37_118)
+    list(APPEND NODE_SRC c37_118.cpp c37_118/parser.cpp)
+endif()
+
 if(WITH_NODE_FILE)
     list(APPEND NODE_SRC file.cpp)
 endif()
