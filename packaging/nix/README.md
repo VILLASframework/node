@@ -283,7 +283,7 @@ Here is a more complete `flake.nix` containing `devShells` available to
         jq
         bat
       ];
-    }
+    };
   };
 }
 ```

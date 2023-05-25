@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "common": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1680527215,
+        "narHash": "sha256-X62JISWeukC20t30XQbd9q0lf891zim7KqB3aRd0ieA=",
+        "owner": "VILLASframework",
+        "repo": "common",
+        "rev": "d0b6edfe2a93297e0caf218738495686497a3dd6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "VILLASframework",
+        "repo": "common",
+        "type": "github"
+      }
+    },
     "lib60870": {
       "flake": false,
       "locked": {
@@ -36,11 +52,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1683023950,
-        "narHash": "sha256-wG7aeu8o+tbf8VaQMDZYQ3kG3nYjklyKjUENVWPrcYY=",
+        "lastModified": 1685031212,
+        "narHash": "sha256-lYRWOQG/YKNEeY0LPPKl6KphN+iEUWAhlXTx3oJgECA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "826418fc35e4cd6e85a88edd389cb249a7aa9671",
+        "rev": "bfa58af4da4ca3cf3f98092b1425cbb25ff7e341",
         "type": "github"
       },
       "original": {
@@ -51,25 +67,10 @@
     },
     "root": {
       "inputs": {
+        "common": "common",
         "lib60870": "lib60870",
         "libiec61850": "libiec61850",
-        "nixpkgs": "nixpkgs",
-        "src": "src"
-      }
-    },
-    "src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1683025627,
-        "narHash": "sha256-22uKohl9nRAkhPgnOjnXzqOR1FWMpcDNSSNbkUHud5Y=",
-        "submodules": true,
-        "type": "git",
-        "url": "file:."
-      },
-      "original": {
-        "submodules": true,
-        "type": "git",
-        "url": "file:."
+        "nixpkgs": "nixpkgs"
       }
     }
   },

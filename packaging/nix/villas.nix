@@ -1,6 +1,7 @@
 {
   # build dependencies
   cmake,
+  common,
   lib,
   makeWrapper,
   pkg-config,
@@ -61,6 +62,9 @@ stdenv.mkDerivation {
     # 'array-bounds' and 'stringop-overflow' for villas-relay
     "-DCMAKE_CXX_FLAGS_RELEASE=-Wno-error"
   ];
+  preConfigure = ''
+    rm -d common && ln -sf ${common} common
+  '';
   postInstall = ''
     wrapProgram $out/bin/villas \
       --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep]}
