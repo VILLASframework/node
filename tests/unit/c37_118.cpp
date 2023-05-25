@@ -1,0 +1,106 @@
+/* Unit tests for C37.118 parser.
+ *
+ * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <criterion/criterion.h>
+#include <criterion/parameterized.h>
+
+#include <villas/config_helper.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/nodes/c37_118.hpp>
+#include <villas/utils.hpp>
+
+using namespace villas::node::c37_118::parser;
+
+// cppcheck-suppress syntaxError
+ParameterizedTestParameters(c37_118, parser) {
+  static criterion::parameters<criterion::parameters<unsigned char>> params;
+
+  params.push_back( // Config2
+      {0xaa, 0x31, 0x00, 0x86, 0x00, 0xf1, 0x48, 0x93, 0x34, 0x4a, 0x00, 0x19,
+       0x99, 0x9a, 0x00, 0xff, 0xff, 0xff, 0x00, 0x01, 0x42, 0x6c, 0x75, 0x65,
+       0x20, 0x50, 0x4d, 0x55, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+       0x00, 0xf1, 0x00, 0x06, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x56, 0x31,
+       0x4c, 0x50, 0x4d, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+       0x20, 0x20, 0x56, 0x41, 0x4c, 0x50, 0x4d, 0x20, 0x20, 0x20, 0x20, 0x20,
+       0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x56, 0x42, 0x4c, 0x50, 0x4d, 0x20,
+       0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x56, 0x43,
+       0x4c, 0x50, 0x4d, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+       0x20, 0x20, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+       0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x59, 0x00, 0x32,
+       0xc1, 0xe2});
+
+  params.push_back( // Data
+      {0xaa, 0x01, 0x00, 0x36, 0x00, 0xf1, 0x48, 0x93, 0x34, 0x4a, 0x00,
+       0x1e, 0xb8, 0x52, 0x08, 0x00, 0x42, 0xf6, 0x8f, 0x24, 0xc7, 0xc3,
+       0x66, 0x23, 0x43, 0x01, 0x88, 0xcb, 0xc7, 0xc3, 0x63, 0x32, 0xc7,
+       0xa9, 0x56, 0x76, 0x47, 0x42, 0xfe, 0x4b, 0x47, 0xa9, 0x1c, 0xdd,
+       0x47, 0x43, 0xd1, 0x44, 0x00, 0x00, 0x00, 0x00, 0x47, 0xef});
+
+  params.push_back( // Command
+      {0xaa, 0x41, 0x00, 0x12, 0x00, 0xf1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+       0x00, 0x00, 0x00, 0x02, 0xa7, 0x37});
+
+  return params;
+}
+
+ParameterizedTest(criterion::parameters<unsigned char> *param, c37_118,
+                  parser) {
+  auto config = Config{
+      .time_base = 0xffffff,
+      .pmus =
+          {
+              PmuConfig{
+                  .stn = "Blue PMU",
+                  .idcode = 241,
+                  .format = 0x0006,
+                  .phinfo =
+                      {
+                          PhasorInfo{
+                              .chnam = "V1LPM",
+                              .phunit = 1,
+                          },
+                          PhasorInfo{
+                              .chnam = "VALPM",
+                              .phunit = 1,
+                          },
+                          PhasorInfo{
+                              .chnam = "VBLPM",
+                              .phunit = 1,
+                          },
+                          PhasorInfo{
+                              .chnam = "VCLPM",
+                              .phunit = 1,
+                          },
+                      },
+                  .aninfo = {},
+                  .dginfo = {},
+                  .fnom = 1,
+                  .cfgcnt = 89,
+              },
+          },
+      .data_rate = 50,
+  };
+
+  Parser parser{};
+
+  auto frame = parser.deserialize(param->data(), param->size(), &config);
+  cr_assert(frame.has_value());
+  cr_assert(frame->framesize == param->size());
+
+  if (auto *c = std::get_if<Config2>(&frame->message)) {
+    cr_assert((*c)->pmus[0].phinfo.size() == config.pmus[0].phinfo.size());
+    cr_assert((*c)->pmus[0].aninfo.size() == config.pmus[0].aninfo.size());
+    cr_assert((*c)->pmus[0].dginfo.size() == config.pmus[0].dginfo.size());
+  }
+
+  if (auto *d = std::get_if<Data>(&frame->message)) {
+    cr_assert(d->pmus[0].phasor.size() == config.pmus[0].phinfo.size());
+  }
+
+  auto buf = parser.serialize(*frame, &config);
+  cr_assert(std::equal(param->begin(), param->end(), buf.begin(), buf.end()));
+}
