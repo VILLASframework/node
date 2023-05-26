@@ -26,6 +26,7 @@
   withNodeSocket ? withAllNodes,
   # dependencies
   comedilib,
+  coreutils,
   curl,
   czmq,
   gnugrep,
@@ -48,7 +49,7 @@
   protobufc,
   rdkafka,
   rdma-core,
-  spdlog
+  spdlog,
 }:
 stdenv.mkDerivation {
   pname = "villas";
@@ -67,36 +68,36 @@ stdenv.mkDerivation {
   '';
   postInstall = ''
     wrapProgram $out/bin/villas \
-      --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep]}
+      --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep coreutils]}
   '';
   nativeBuildInputs = [
     cmake
     makeWrapper
     pkg-config
   ];
-  buildInputs = [
-    jansson
-    libwebsockets
-    libuuid
-    openssl
-    curl
-    spdlog
-  ]
-    ++ lib.optionals withConfig         [libconfig]
-    ++ lib.optionals withProtobuf       [protobuf protobufc]
-    ++ lib.optionals withNodeComedi     [comedilib]
-    ++ lib.optionals withNodeZeromq     [czmq libsodium]
-    ++ lib.optionals withNodeIec60870   [lib60870]
-    ++ lib.optionals withNodeIec61850   [libiec61850]
-    ++ lib.optionals withNodeSocket     [libnl]
-    ++ lib.optionals withNodeRtp        [libre]
-    ++ lib.optionals withNodeUldaq      [libuldaq]
-    ++ lib.optionals withNodeTemper     [libusb]
-    ++ lib.optionals withNodeMqtt       [mosquitto]
-    ++ lib.optionals withNodeNanomsg    [nanomsg]
-    ++ lib.optionals withNodeKafka      [rdkafka]
-    ++ lib.optionals withNodeInfiniband [rdma-core]
-    ;
+  buildInputs =
+    [
+      jansson
+      libwebsockets
+      libuuid
+      openssl
+      curl
+      spdlog
+    ]
+    ++ lib.optionals withConfig [libconfig]
+    ++ lib.optionals withProtobuf [protobuf protobufc]
+    ++ lib.optionals withNodeComedi [comedilib]
+    ++ lib.optionals withNodeZeromq [czmq libsodium]
+    ++ lib.optionals withNodeIec60870 [lib60870]
+    ++ lib.optionals withNodeIec61850 [libiec61850]
+    ++ lib.optionals withNodeSocket [libnl]
+    ++ lib.optionals withNodeRtp [libre]
+    ++ lib.optionals withNodeUldaq [libuldaq]
+    ++ lib.optionals withNodeTemper [libusb]
+    ++ lib.optionals withNodeMqtt [mosquitto]
+    ++ lib.optionals withNodeNanomsg [nanomsg]
+    ++ lib.optionals withNodeKafka [rdkafka]
+    ++ lib.optionals withNodeInfiniband [rdma-core];
   meta = with lib; {
     description = "a tool connecting real-time power grid simulation equipment";
     homepage = "https://villas.fein-aachen.org/";

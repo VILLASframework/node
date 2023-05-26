@@ -2,7 +2,7 @@
   cmake,
   lib,
   stdenv,
-  src
+  src,
 }:
 stdenv.mkDerivation {
   pname = "lib60870";
