@@ -37,8 +37,9 @@
     );
   in {
     formatter = forSupportedSystems (system: legacyPackages.${system}.alejandra);
-    packages = forSupportedSystems (system:
-      let pkgs = legacyPackages.${system};
+    packages = forSupportedSystems (
+      system: let
+        pkgs = legacyPackages.${system};
       in rec {
         default = villas;
 
@@ -62,22 +63,36 @@
         };
       }
     );
-    devShells = forSupportedSystems (system:
-      let pkgs = legacyPackages.${system};
+    devShells = forSupportedSystems (
+      system: let
+        pkgs = legacyPackages.${system};
+        shellHook = ''
+          [ -z "$PS1" ] || exec $SHELL
+        '';
       in rec {
         default = full;
 
         minimal = pkgs.mkShell {
+          inherit shellHook;
           name = "minimal";
-          shellHook = "exec $SHELL";
-          inputsFrom = [ pkgs.villas-minimal ];
+          inputsFrom = [pkgs.villas-minimal];
         };
 
         full = pkgs.mkShell {
+          inherit shellHook;
           name = "full";
-          shellHook = "exec $SHELL";
-          inputsFrom = [ pkgs.villas ];
+          inputsFrom = [pkgs.villas];
         };
+      }
+    );
+    checks = forSupportedSystems (
+      system: let
+        pkgs = legacyPackages.${system};
+      in {
+        fmt = pkgs.runCommand "check-fmt" {} ''
+          cd ${self}
+          ${pkgs.alejandra}/bin/alejandra --check . 2> $out
+        '';
       }
     );
   };
