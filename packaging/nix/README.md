@@ -56,10 +56,23 @@ You can also install `villas` into your local profile and have it available in
 nix profile install 'github:VILLASframework/node?dir=packaging/nix#villas'
 ```
 
+If you don't want to add it directly into the global path you could add it into
+the flake registry as well.
+
+```shell
+nix registy add 'github:VILLASframework/node?dir=packaging/nix#villas'
+```
+
+This allows you to substitue all references to
+`github:VILLASframework/node?dir=packaging/nix#villas` with a simple `villas`.
+I'll be using the `villas` registry entry in the following sections.
+
 ## Development
 
 You can easily setup a development shell environment for `villas` by using the
 `devShells` provided in the [`flake.nix`] using `nix develop`.
+Try for example these commands in the repository root to create a new shell with
+all required dependecies to build various configurations of `villas`.
 
 ```shell
 # create a shell with all required build dependecies but without most optional ones
@@ -87,6 +100,7 @@ images without worrying about missing dependencies or Copying things inbetween
 nothing else can be done using only a few lines of Nix.
 
 Here we build a docker image containing the `#villas` flake output:
+
 ```shell
 # `docker load` reads OCI images from stdin
 # `nix build --impure --expr` builds a derivation from an impure Nix expression
@@ -94,8 +108,7 @@ Here we build a docker image containing the `#villas` flake output:
 # `--print-out-paths` prints the built image's path to stdout
 docker load < $(nix build --no-link --print-out-paths --impure --expr '
   let
-    ref = "github:VILLASframework/node?dir=packaging/nix";
-    villas = (builtins.getFlake ref).packages.x86_64-linux.villas;
+    villas = (builtins.getFlake "villas").packages.x86_64-linux.villas;
     pkgs = (builtins.getFlake "nixpkgs").legacyPackages.x86_64-linux;
   in
     pkgs.dockerTools.buildImage {
@@ -109,6 +122,40 @@ docker load < $(nix build --no-link --print-out-paths --impure --expr '
 ```
 
 See https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-dockerTools
+
+## Simple cross-compilation to aarch64
+
+The flake currently supports `x86_64-linux` and `aarch64-linux` systems. But
+especially on some weaker `aarch64` target machines, compiling `villas` from
+source is rather cumbersome. This flake has a non-standard `crossPackages`
+flake output. This is currently only useful for cross-compiling from `x86_64`
+to `aarch64`.
+
+```shell
+nix build villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas
+```
+
+If your target has a nix installation you can directly build and copy the
+cross-compiled package using `nix copy`.
+
+```shell
+# build and copy in one
+nix copy villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas --to ssh-ng://target-system
+```
+
+```shell
+# build the cross-compiled package
+nix build villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas
+
+# copy it over
+nix copy $(readlink result) --to ssh-ng://target
+
+# add the cross-compiled package to the target's PATH
+ssh target nix profile add $(readlink result)
+```
+
+Further parameters for port or user of the ssh connection can only be specified
+in the ssh configuration files.
 
 ## Customization
 
@@ -134,11 +181,10 @@ See https://nixos.org/manual/nixpkgs/stable/#chap-overrides
 # `pkgs` is the set of `x86_64-linux` packages provided by the flake
 nix build --impure --expr '
   let
-    ref = "github:VILLASframework/node?dir=packaging/nix";
-    pkgs = (builtins.getFlake ref).packages.x86_64-linux;
+    pkgs = (builtins.getFlake "villas").packages.x86_64-linux;
   in
     pkgs.villas-minimal.override {
-      withConfig = true;
+      withExtraConfig = true;
       withNodeIec60870 = true;
     }
 '
@@ -180,7 +226,8 @@ Here is a basic flake to build upon:
     packages.x86_64-linux = rec {
       default = villas-custom;
       villas-custom = villas-pkgs.villas-minimal.override {
-        withConfig = true;
+        version = "custom";
+        withExtraConfig = true;
         withNodeIec60870 = true;
       };
     };
@@ -228,7 +275,8 @@ typical Nix usage. A more interesting use of Nix would be a custom Nix shell
 environment containing your `villas-custom` and other tools of your choice.
 
 Here is a more complete `flake.nix` containing `devShells` available to
-`nix develop` and an OCI image:
+`nix develop` and an OCI image.
+
 ```nix
 # flake.nix
 {

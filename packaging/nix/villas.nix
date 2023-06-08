@@ -1,72 +1,87 @@
 {
-  # build dependencies
-  cmake,
-  common,
-  lib,
-  makeWrapper,
-  pkg-config,
-  stdenv,
+  # general configuration
   src,
-  # configuration
-  withConfig ? false,
-  withProtobuf ? false,
+  version,
+  withAllExtras ? false,
+  withAllFormats ? false,
+  withAllHooks ? false,
   withAllNodes ? false,
+  withExtraConfig ? withAllExtras,
+  withExtraGraphviz ? false, # unknown type boolean in villas-graph
+  withFormatProtobuf ? withAllFormats,
+  withHookLua ? false, # deprecated functions
+  withNodeAmqp ? false, # deprecated functions
   withNodeComedi ? withAllNodes,
+  withNodeFpga ? false, # spdlog formatting error
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
   withNodeKafka ? withAllNodes,
   withNodeMqtt ? withAllNodes,
-  withNodeRedis ? withAllNodes,
+  withNodeNanomsg ? withAllNodes,
+  withNodeRedis ? false, # spdlog formatting error
+  withNodeRtp ? withAllNodes,
+  withNodeSocket ? withAllNodes,
+  withNodeTemper ? withAllNodes,
   withNodeUldaq ? withAllNodes,
   withNodeZeromq ? withAllNodes,
-  withNodeNanomsg ? withAllNodes,
-  withNodeRtp ? withAllNodes,
-  withNodeTemper ? withAllNodes,
-  withNodeSocket ? withAllNodes,
-  # dependencies
-  comedilib,
+  # minimal dependencies
+  cmake,
+  common,
   coreutils,
+  fpga,
+  graphviz,
+  lib,
+  makeWrapper,
+  pkg-config,
+  stdenv,
+  # optional dependencies
+  comedilib,
   curl,
   czmq,
   gnugrep,
-  graphviz,
   jansson,
   lib60870,
   libconfig,
   libiec61850,
-  libre,
   libnl,
+  libre,
   libsodium,
   libuldaq,
   libusb,
   libuuid,
   libwebsockets,
+  lua,
   mosquitto,
   nanomsg,
   openssl,
-  protobuf,
+  pkgsBuildBuild,
   protobufc,
+  protobufcBuildBuild ? pkgsBuildBuild.protobufc,
+  rabbitmq-c,
   rdkafka,
   rdma-core,
+  redis-plus-plus,
   spdlog,
 }:
 stdenv.mkDerivation {
+  inherit src version;
   pname = "villas";
-  version = "release";
-  src = src;
-  cmakeFlags = [
-    "-DWITH_FPGA=OFF"
-    "-DDOWNLOAD_GO=OFF"
-    "-DCMAKE_BUILD_TYPE=Release"
-    # the default -O3 causes g++ warning false positives on
-    # 'array-bounds' and 'stringop-overflow' for villas-relay
-    "-DCMAKE_CXX_FLAGS_RELEASE=-Wno-error"
-  ];
+  cmakeFlags =
+    [
+      "-DDOWNLOAD_GO=OFF"
+      "-DCMAKE_BUILD_TYPE=Release"
+      "-DCMAKE_CXX_FLAGS_RELEASE=-Wno-error=maybe-uninitialized"
+    ]
+    ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   preConfigure = ''
-    rm -d common && ln -sf ${common} common
+    rm -df common
+    rm -df fpga
+    ln -s ${common} common
+    ${lib.optionalString withNodeFpga "ln -s ${fpga} fpga"}
   '';
   postInstall = ''
+    patchShebangs --build $out/bin/villas
     wrapProgram $out/bin/villas \
       --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep coreutils]}
   '';
@@ -75,6 +90,7 @@ stdenv.mkDerivation {
     makeWrapper
     pkg-config
   ];
+  depsBuildBuild = lib.optionals withFormatProtobuf [protobufcBuildBuild];
   buildInputs =
     [
       jansson
@@ -84,21 +100,26 @@ stdenv.mkDerivation {
       curl
       spdlog
     ]
-    ++ lib.optionals withConfig [libconfig]
-    ++ lib.optionals withProtobuf [protobuf protobufc]
+    ++ lib.optionals withExtraConfig [libconfig]
+    ++ lib.optionals withExtraGraphviz [graphviz]
+    ++ lib.optionals withFormatProtobuf [protobufc]
+    ++ lib.optionals withHookLua [lua]
+    ++ lib.optionals withNodeAmqp [rabbitmq-c]
     ++ lib.optionals withNodeComedi [comedilib]
-    ++ lib.optionals withNodeZeromq [czmq libsodium]
     ++ lib.optionals withNodeIec60870 [lib60870]
     ++ lib.optionals withNodeIec61850 [libiec61850]
-    ++ lib.optionals withNodeSocket [libnl]
-    ++ lib.optionals withNodeRtp [libre]
-    ++ lib.optionals withNodeUldaq [libuldaq]
-    ++ lib.optionals withNodeTemper [libusb]
+    ++ lib.optionals withNodeInfiniband [rdma-core]
+    ++ lib.optionals withNodeKafka [rdkafka]
     ++ lib.optionals withNodeMqtt [mosquitto]
     ++ lib.optionals withNodeNanomsg [nanomsg]
-    ++ lib.optionals withNodeKafka [rdkafka]
-    ++ lib.optionals withNodeInfiniband [rdma-core];
+    ++ lib.optionals withNodeRedis [redis-plus-plus]
+    ++ lib.optionals withNodeRtp [libre]
+    ++ lib.optionals withNodeSocket [libnl]
+    ++ lib.optionals withNodeTemper [libusb]
+    ++ lib.optionals withNodeUldaq [libuldaq]
+    ++ lib.optionals withNodeZeromq [czmq libsodium];
   meta = with lib; {
+    mainProgram = "villas";
     description = "a tool connecting real-time power grid simulation equipment";
     homepage = "https://villas.fein-aachen.org/";
     license = licenses.asl20;

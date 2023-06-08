@@ -16,6 +16,24 @@
         "type": "github"
       }
     },
+    "fpga": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1679417867,
+        "narHash": "sha256-HHIsOnuQOq0Ytd22VMSHpTbecHpcheF1xLkslqxXOsk=",
+        "ref": "refs/heads/master",
+        "rev": "29f81016b2317667a2b21fbcf74ea66986a84c03",
+        "revCount": 530,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/VILLASframework/fpga.git"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/VILLASframework/fpga.git"
+      }
+    },
     "lib60870": {
       "flake": false,
       "locked": {
@@ -68,6 +86,7 @@
     "root": {
       "inputs": {
         "common": "common",
+        "fpga": "fpga",
         "lib60870": "lib60870",
         "libiec61850": "libiec61850",
         "nixpkgs": "nixpkgs"
