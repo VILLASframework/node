@@ -19,6 +19,14 @@
       flake = false;
     };
 
+    libdatachannel = {
+      type = "git";
+      url = "https://github.com/paullouisageneau/libdatachannel.git";
+      ref = "refs/tags/v0.18.4";
+      submodules = true;
+      flake = false;
+    };
+
     libiec61850 = {
       url = "github:mz-automation/libiec61850/v1.5.1";
       flake = false;
@@ -79,6 +87,10 @@
         src = inputs.lib60870;
       };
 
+      libdatachannel = pkgs.callPackage ./libdatachannel.nix {
+        src = inputs.libdatachannel;
+      };
+
       libiec61850 = pkgs.callPackage ./libiec61850.nix {
         src = inputs.libiec61850;
       };
@@ -98,7 +110,7 @@
 
     # standard flake attribute allowing you to add the villas packages to your nixpkgs
     overlays = {
-        default = overlay;
+      default = overlay;
     };
 
     # standard flake attribute for defining developer environments

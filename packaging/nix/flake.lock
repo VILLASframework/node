@@ -51,6 +51,25 @@
         "type": "github"
       }
     },
+    "libdatachannel": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1683797946,
+        "narHash": "sha256-kSK+5gFMG6tq89R1m08gNBKPdwyR/mLEDhWXQ/uk34o=",
+        "ref": "refs/tags/v0.18.4",
+        "rev": "7a5e01071ae635e06f175233abd11d623f09cbb8",
+        "revCount": 2459,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/paullouisageneau/libdatachannel.git"
+      },
+      "original": {
+        "ref": "refs/tags/v0.18.4",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/paullouisageneau/libdatachannel.git"
+      }
+    },
     "libiec61850": {
       "flake": false,
       "locked": {
@@ -88,6 +107,7 @@
         "common": "common",
         "fpga": "fpga",
         "lib60870": "lib60870",
+        "libdatachannel": "libdatachannel",
         "libiec61850": "libiec61850",
         "nixpkgs": "nixpkgs"
       }

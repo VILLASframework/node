@@ -24,6 +24,7 @@
   withNodeSocket ? withAllNodes,
   withNodeTemper ? withAllNodes,
   withNodeUldaq ? withAllNodes,
+  withNodeWebrtc ? withAllNodes,
   withNodeZeromq ? withAllNodes,
   # minimal dependencies
   cmake,
@@ -43,6 +44,7 @@
   jansson,
   lib60870,
   libconfig,
+  libdatachannel,
   libiec61850,
   libnl,
   libre,
@@ -117,6 +119,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeSocket [libnl]
     ++ lib.optionals withNodeTemper [libusb]
     ++ lib.optionals withNodeUldaq [libuldaq]
+    ++ lib.optionals withNodeWebrtc [libdatachannel]
     ++ lib.optionals withNodeZeromq [czmq libsodium];
   meta = with lib; {
     mainProgram = "villas";
