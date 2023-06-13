@@ -3,11 +3,11 @@
     "common": {
       "flake": false,
       "locked": {
-        "lastModified": 1680527215,
-        "narHash": "sha256-X62JISWeukC20t30XQbd9q0lf891zim7KqB3aRd0ieA=",
+        "lastModified": 1686671462,
+        "narHash": "sha256-yvpCp9eZO05lWWz/bYifDlalDTd9WjH84QwFxmsjoHg=",
         "owner": "VILLASframework",
         "repo": "common",
-        "rev": "d0b6edfe2a93297e0caf218738495686497a3dd6",
+        "rev": "d9d4ac76a5403e14f7899dae480781e9cdcf0572",
         "type": "github"
       },
       "original": {
@@ -89,11 +89,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1685031212,
-        "narHash": "sha256-lYRWOQG/YKNEeY0LPPKl6KphN+iEUWAhlXTx3oJgECA=",
+        "lastModified": 1686671746,
+        "narHash": "sha256-cPVdpUv+PzLuF6EFWPwtkT42Y6lomSA3npmW+Yzx878=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "bfa58af4da4ca3cf3f98092b1425cbb25ff7e341",
+        "rev": "4ab538636f64f624c49cef4393d1a0d4ebf12a66",
         "type": "github"
       },
       "original": {
