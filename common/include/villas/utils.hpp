@@ -194,6 +194,14 @@ bool isContainer();
 // Check if the process is running in a privileged environment (has SYS_ADMIN capability).
 bool isPrivileged();
 
+// helper type for std::visit
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
+// explicit deduction guide (not needed as of C++20)
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
 namespace base64 {
 
 using byte = std::uint8_t;
