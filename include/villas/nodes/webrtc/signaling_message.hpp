@@ -10,7 +10,8 @@
 
 #include <string>
 #include <chrono>
-#include <list>
+#include <vector>
+#include <variant>
 
 #include <rtc/rtc.hpp>
 #include <jansson.h>
@@ -29,39 +30,28 @@ struct Connection {
 	json_t * toJSON() const;
 };
 
+struct RelayMessage {
+	std::vector<rtc::IceServer> servers;
+
+	RelayMessage(json_t *j);
+};
+
 struct ControlMessage {
 	int connectionID;
-	std::list<Connection> connections;
+	std::vector<Connection> connections;
 
 	ControlMessage(json_t *j);
 	json_t * toJSON() const;
 };
 
-class SignalingMessage {
+class SignalingMessage : public std::variant<std::monostate, RelayMessage, ControlMessage, rtc::Description, rtc::Candidate> {
 public:
-	enum Type {
-		TYPE_CONTROL,
-		TYPE_OFFER,
-		TYPE_ANSWER,
-		TYPE_CANDIDATE
-	};
-
-	Type type;
-
-	ControlMessage *control;
-	rtc::Description *description;
-	rtc::Candidate *candidate;
-	std::string mid;
-
-	SignalingMessage(rtc::Description desc, bool answer = false);
-	SignalingMessage(rtc::Candidate cand);
+	using variant::variant;
 	SignalingMessage(json_t *j);
-	~SignalingMessage();
-
 	json_t * toJSON() const;
-
 	std::string toString() const;
 };
+
 
 } /* namespace webrtc */
 } /* namespace node */

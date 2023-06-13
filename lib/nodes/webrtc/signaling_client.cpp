@@ -16,20 +16,20 @@ using namespace villas::node::webrtc;
 
 SignalingClient::SignalingClient(const std::string &srv, const std::string &sess, Web *w) :
 	web(w),
+	running(false),
 	logger(logging.get("webrtc:signal"))
 {
 	const char *prot, *a, *p;
 
 	memset(&info, 0, sizeof(info));
 
-	asprintf(&uri, "%s/%s", srv.c_str(), sess.c_str());
+	(void)!asprintf(&uri, "%s/%s", srv.c_str(), sess.c_str());
 
 	int ret = lws_parse_uri(uri, &prot, &a, &info.port, &p);
 	if (ret)
 		throw RuntimeError("Failed to parse WebSocket URI: '{}'", uri);
 
-
-	asprintf(&path, "/%s", p);
+	(void)!asprintf(&path, "/%s", p);
 
 	info.ssl_connection = !strcmp(prot, "https");
 	info.address = a;
@@ -44,25 +44,34 @@ SignalingClient::SignalingClient(const std::string &srv, const std::string &sess
 	info.userdata = this;
 
 	sul_helper.self = this;
+	sul_helper.sul = {};
 }
 
 SignalingClient::~SignalingClient()
 {
+	disconnect();
+
 	free(path);
 	free(uri);
 }
 
 void SignalingClient::connect()
 {
-	info.context = web->getContext();
-	info.vhost = web->getVHost();
+	running = true;
 
-	lws_sul_schedule(info.context, 0, &sul_helper.sul, connectStatic, 1);
+	info.context = web->getContext();
+
+	lws_sul_schedule(info.context, 0, &sul_helper.sul, connectStatic, 1 * LWS_US_PER_SEC);
 }
 
 void SignalingClient::disconnect()
 {
+	running = false;
 	// TODO
+	// wait for connectStatic to exit
+	// close LWS connection
+	if (wsi)
+		lws_callback_on_writable(wsi);
 }
 
 void SignalingClient::connectStatic(struct lws_sorted_usec_list *sul)
@@ -104,6 +113,7 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 		break;
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
+		retry_count = 0;
 		cbConnected();
 		break;
 
@@ -145,19 +155,32 @@ do_retry:
 
 int SignalingClient::writable()
 {
-	// Skip if we have nothing to send
-	if (outgoingMessages.empty())
+	if (!running) {
+		auto reason = "Signaling Client Closing";
+		lws_close_reason(wsi, LWS_CLOSE_STATUS_GOINGAWAY, (unsigned char *) reason, strlen(reason));
 		return 0;
+	}
+
+	// Skip if we have nothing to send
+	if (outgoingMessages.empty()) {
+		return 0;
+	}
 
 	auto msg = outgoingMessages.pop();
 	auto *jsonMsg = msg.toJSON();
 
-	char buf[LWS_PRE + 1024];
-	auto len = json_dumpb(jsonMsg, buf+LWS_PRE, 1024, JSON_INDENT(2));
+	if (!jsonMsg) {
+		return 0;
+	}
 
-	auto ret = lws_write(wsi, (unsigned char *) buf, len, LWS_WRITE_TEXT);
+	char buf[LWS_PRE + 1024];
+	auto len = json_dumpb(jsonMsg, buf + LWS_PRE, 1024, JSON_INDENT(2));
+
+	auto ret = lws_write(wsi, (unsigned char *) buf + LWS_PRE, len, LWS_WRITE_TEXT);
 	if (ret < 0)
 		return ret;
+
+	logger->debug("Signaling message sent: {:.{}}", buf + LWS_PRE, len);
 
 	// Reschedule callback if there are more messages to be send
 	if (!outgoingMessages.empty())
@@ -175,9 +198,9 @@ int SignalingClient::receive(void *in, size_t len)
 		return -1;
 	}
 
-	auto msg = SignalingMessage(json);
+	logger->debug("Signaling message received: {:.{}}", (char *)in, len);
 
-	cbMessage(msg);
+	cbMessage(SignalingMessage { json });
 
 	return 0;
 }

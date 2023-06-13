@@ -34,17 +34,17 @@ protected:
 		SignalingClient *self;
 	} sul_helper;
 
-        uint16_t retry_count;			/**> Count of consequetive retries */
+	uint16_t retry_count;			/**> Count of consecutive retries */
 
 	struct lws *wsi;
-        struct lws_client_connect_info info;
+	struct lws_client_connect_info info;
 
 	/* The retry and backoff policy we want to use for our client connections */
-	static constexpr uint32_t backoff_ms[] = { 1000, 2000, 3000, 4000, 5000 };
+	static constexpr uint32_t backoff_ms[] = { 1<<4, 1<<6, 1<<8, 1<<10, 1<<12, 1<<14, 1<<16 };
 	static constexpr lws_retry_bo_t retry = {
 		.retry_ms_table			= backoff_ms,
 		.retry_ms_table_count		= LWS_ARRAY_SIZE(backoff_ms),
-		.conceal_count			= LWS_ARRAY_SIZE(backoff_ms),
+		.conceal_count			= LWS_ARRAY_SIZE(backoff_ms) + 1,
 
 		.secs_since_valid_ping		= 3,  /* force PINGs after secs idle */
 		.secs_since_valid_hangup	= 10, /* hangup after secs idle */
@@ -52,10 +52,10 @@ protected:
 		.jitter_percent			= 20,
 	};
 
-	std::function<void(const SignalingMessage &)> cbMessage;
+	std::function<void(SignalingMessage)> cbMessage;
 	std::function<void()> cbConnected;
 	std::function<void()> cbDisconnected;
-	std::function<void(const std::string &)> cbError;
+	std::function<void(std::string)> cbError;
 
 	Queue<SignalingMessage> outgoingMessages;
 
@@ -63,6 +63,8 @@ protected:
 
 	char *uri;
 	char *path;
+
+	std::atomic<bool> running;
 
 	Logger logger;
 
@@ -86,7 +88,7 @@ public:
 
 	void sendMessage(const SignalingMessage &msg);
 
-	void onMessage(std::function<void(const SignalingMessage&)> callback)
+	void onMessage(std::function<void(SignalingMessage)> callback)
 	{
 		cbMessage = callback;
 	}
@@ -101,7 +103,7 @@ public:
 		cbDisconnected = callback;
 	}
 
-	void onError(std::function<void(const std::string &)> callback)
+	void onError(std::function<void(std::string)> callback)
 	{
 		cbError = callback;
 	}

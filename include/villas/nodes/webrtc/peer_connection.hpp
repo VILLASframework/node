@@ -21,16 +21,21 @@ namespace webrtc {
 class PeerConnection {
 
 public:
-	PeerConnection(const std::string &server, const std::string &session, const rtc::Configuration &config, Web *w);
+	PeerConnection(const std::string &server, const std::string &session, rtc::Configuration config, Web *w, rtc::DataChannelInit d);
 	~PeerConnection();
 
-	void waitForDataChannel();
+	bool waitForDataChannel(std::chrono::seconds timeout);
+	void onMessage(std::function<void(rtc::binary)> callback);
+	void sendMessage(rtc::binary msg);
 
 	void connect();
+	void disconnect();
 
 protected:
 	Web *web;
-	rtc::Configuration config;
+	std::vector<rtc::IceServer> extraServers;
+	rtc::DataChannelInit dataChannelInit;
+	rtc::Configuration defaultConfig;
 
 	std::shared_ptr<rtc::PeerConnection> conn;
 	std::shared_ptr<rtc::DataChannel> chan;
@@ -38,22 +43,28 @@ protected:
 
 	Logger logger;
 
-	bool makingOffer;
-	bool ignoreOffer;
+	std::mutex mutex;
+
+	std::condition_variable_any startupCondition;
+	bool stopStartup;
+
+	bool warnNotConnected;
+	bool standby;
 	bool first;
-	bool polite;
-	bool rollback;
+	int firstID;
+	int secondID;
 
-	void createPeerConnection();
-	void rollbackPeerConnection();
-	void createDatachannel();
+	std::function<void(rtc::binary)> onMessageCallback;
 
-	void onConnectionCreated();
+	void resetConnection(std::unique_lock<decltype(PeerConnection::mutex)> &lock);
+	void resetConnectionAndStandby(std::unique_lock<decltype(PeerConnection::mutex)> &lock);
+	void notifyStartup();
+
+	void setupPeerConnection(std::shared_ptr<rtc::PeerConnection> = nullptr);
+	void setupDataChannel(std::shared_ptr<rtc::DataChannel> = nullptr);
 
 	void onLocalDescription(rtc::Description sdp);
 	void onLocalCandidate(rtc::Candidate cand);
-
-	void onNegotiationNeeded();
 
 	void onConnectionStateChange(rtc::PeerConnection::State state);
 	void onSignalingStateChange(rtc::PeerConnection::SignalingState state);
@@ -61,14 +72,15 @@ protected:
 
 	void onSignalingConnected();
 	void onSignalingDisconnected();
-	void onSignalingError(const std::string &err);
-	void onSignalingMessage(const SignalingMessage &msg);
+	void onSignalingError(std::string err);
+	void onSignalingMessage(SignalingMessage msg);
 
 	void onDataChannel(std::shared_ptr<rtc::DataChannel> dc);
 	void onDataChannelOpen();
 	void onDataChannelClosed();
 	void onDataChannelError(std::string err);
-	void onDataChannelMessage(rtc::message_variant msg);
+	void onDataChannelMessage(rtc::string msg);
+	void onDataChannelMessage(rtc::binary msg);
 };
 
 } /* namespace webrtc */

@@ -14,6 +14,8 @@
 #include <villas/node/config.hpp>
 #include <villas/node.hpp>
 #include <villas/timing.hpp>
+#include <villas/format.hpp>
+#include <villas/queue_signalled.h>
 
 namespace villas {
 namespace node {
@@ -27,12 +29,14 @@ protected:
 	std::string server;
 	std::string session;
 
-	bool wait;
-	bool ordered;
-	int max_retransmits;
+	int wait_seconds;
+	Format *format;
+	struct CQueueSignalled queue;
+	struct Pool pool;
 
 	std::shared_ptr<webrtc::PeerConnection> conn;
 	rtc::Configuration config;
+	rtc::DataChannelInit dci;
 
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt);
@@ -63,8 +67,8 @@ public:
 	virtual
 	int start();
 
-	// virtual
-	// int stop();
+	virtual
+	int stop();
 
 	// virtual
 	// int pause();
@@ -78,8 +82,8 @@ public:
 	// virtual
 	// int reverse();
 
-	// virtual
-	// std::vector<int> getPollFDs();
+	virtual
+	std::vector<int> getPollFDs();
 
 	// virtual
 	// std::vector<int> getNetemFDs();

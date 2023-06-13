@@ -24,20 +24,18 @@ static villas::node::Web *web;
 WebRTCNode::WebRTCNode(const std::string &name) :
 	Node(name),
 	server("wss://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
-	wait(true),
-	ordered(false),
-	max_retransmits(0)
+	wait_seconds(0),
+	dci({})
 {
-	config.iceServers = {
-		rtc::IceServer("stun://stun.l.google.com:19302"),
-		rtc::IceServer("stun://villas:villas@stun.0l.de"),
-		rtc::IceServer("turn://villas:villas@turn.0l.de?transport=udp"),
-		rtc::IceServer("turn://villas:villas@turn.0l.de?transport=tcp"),
-	};
+	dci.reliability.type = rtc::Reliability::Type::Rexmit;
 }
 
 WebRTCNode::~WebRTCNode()
-{ }
+{
+	int ret = pool_destroy(&pool);
+	if (ret) // TODO log
+		;
+}
 
 int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 {
@@ -47,17 +45,20 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	const char *sess;
 	const char *svr = nullptr;
-	int w = - 1, ord = -1;
-	json_t *json_ice = nullptr;
+	int ord = -1;
+	int &rexmit = dci.reliability.rexmit.emplace<int>(0);
+	json_t *ice_json = nullptr;
+	json_t *fmt_json = nullptr;
 
 	json_error_t err;
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: b, s?: i, s?: b, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s:s, s?s, s?i, s?i, s?b, s?o }",
 		"session", &sess,
 		"server", &svr,
-		"wait", &w,
-		"max_retransmits", &max_retransmits,
+		"wait_seconds", &wait_seconds,
+		"max_retransmits", &rexmit,
 		"ordered", &ord,
-		"ice", &json_ice
+		"ice", &ice_json,
+		"format", &fmt_json
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-webrtc");
@@ -67,16 +68,13 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (svr)
 		server = svr;
 
-	if (w >= 0)
-		wait = w != 0;
+	if (ord)
+		dci.reliability.unordered = !ord;
 
-	if (ord >= 0)
-		ordered = ordered != 0;
-
-	if (json_ice) {
+	if (ice_json) {
 		json_t *json_servers = nullptr;
 
-		ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o }",
+		ret = json_unpack_ex(ice_json, &err, 0, "{ s?: o }",
 			"servers", &json_servers
 		);
 		if (ret)
@@ -101,43 +99,85 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 		}
 	}
 
+	format = fmt_json
+		? FormatFactory::make(fmt_json)
+		: FormatFactory::make("villas.binary");
+
+	assert(format);
+
 	return 0;
 }
 
 int WebRTCNode::check()
 {
-	return 0;
+	return Node::check();
 }
 
 int WebRTCNode::prepare()
 {
-	conn = std::make_shared<webrtc::PeerConnection>(server, session, config, web);
+	int ret = Node::prepare();
+	if (ret)
+		return ret;
 
-	return Node::prepare();
-}
+	format->start(getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-int WebRTCNode::start()
-{
-	conn->connect();
+	conn = std::make_shared<webrtc::PeerConnection>(server, session, config, web, dci);
 
-	if (wait) {
-		logger->info("Wait until datachannel is connected...");
+	ret = pool_init(&pool, 1024, SAMPLE_LENGTH(getInputSignals(false)->size()));
+	if (ret) // TODO log
+		return ret;
 
-		conn->waitForDataChannel();
-	}
+	ret = queue_signalled_init(&queue, 1024);
+	if (ret) // TODO log
+		return ret;
 
-	int ret = Node::start();
-	if (!ret)
-		state = State::STARTED;
+	conn->onMessage([this](rtc::binary msg){
+		int ret;
+		std::vector<Sample *> smps;
+		smps.resize(this->in.vectorize);
+
+		ret = sample_alloc_many(&this->pool, smps.data(), smps.size());
+		if (ret < 0) // TODO log
+			return;
+
+		ret = format->sscan((const char *)msg.data(), msg.size(), nullptr, smps.data(), ret);
+		if (ret < 0) // TODO log
+			return;
+
+		ret = queue_signalled_push_many(&this->queue, (void **) smps.data(), ret);
+		if (ret < 0) // TODO log
+			return;
+
+		this->logger->debug("onMessage(rtc::binary) callback finished pushing {} samples", ret);
+	});
 
 	return 0;
 }
 
-// int WebRTCNode::stop()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+int WebRTCNode::start()
+{
+	int ret = Node::start();
+	if (!ret)
+		state = State::STARTED;
+
+	conn->connect();
+
+	if (wait_seconds > 0) {
+		logger->info("Waiting for datachannel...");
+
+		if (!conn->waitForDataChannel(std::chrono::seconds { wait_seconds })) {
+			throw RuntimeError { "Waiting for datachannel timed out after {} seconds", wait_seconds };
+		}
+	}
+
+	return 0;
+}
+
+int WebRTCNode::stop()
+{
+	conn->disconnect();
+	return Node::stop();
+}
 
 // int WebRTCNode::pause()
 // {
@@ -163,11 +203,10 @@ int WebRTCNode::start()
 // 	return 0;
 // }
 
-// std::vector<int> WebRTCNode::getPollFDs()
-// {
-// 	// TODO add implementation here
-// 	return {};
-// }
+std::vector<int> WebRTCNode::getPollFDs()
+{
+	return { queue_signalled_fd(&queue) };
+}
 
 // std::vector<int> WebRTCNode::getNetemFDs()
 // {
@@ -188,36 +227,31 @@ const std::string & WebRTCNode::getDetails()
 
 int WebRTCNode::_read(struct Sample *smps[], unsigned cnt)
 {
-	int read;
-	struct timespec now;
+	std::vector<Sample *> smpt;
+	smpt.resize(cnt);
 
-	/* TODO: Add implementation here. The following is just an example */
+	int pulled = queue_signalled_pull_many(&queue, (void **) smpt.data(), smpt.size());
 
-	assert(cnt >= 1 && smps[0]->capacity >= 1);
+	sample_copy_many(smps, smpt.data(), pulled);
+	sample_decref_many(smpt.data(), pulled);
 
-	now = time_now();
-
-	// smps[0]->data[0].f = time_delta(&now, &start_time);
-
-	/* Dont forget to set other flags in struct Sample::flags
-	 * E.g. for sequence no, timestamps... */
-	smps[0]->flags = (int) SampleFlags::HAS_DATA;
-	smps[0]->signals = getInputSignals(false);
-
-	read = 1; /* The number of samples read */
-
-	return read;
+	return pulled;
 }
 
 int WebRTCNode::_write(struct Sample *smps[], unsigned cnt)
 {
-	int written;
+	rtc::binary buf;
+	size_t wbytes;
 
-	/* TODO: Add implementation here. */
+	buf.resize(4 * 1024);
+	int ret = format->sprint((char *) buf.data(), buf.size(), &wbytes, smps, cnt);
+	if (ret < 0) // TODO log
+		return ret;
 
-	written = 0; /* The number of samples written */
+	buf.resize(wbytes);
+	conn->sendMessage(buf);
 
-	return written;
+	return ret;
 }
 
 int WebRTCNodeFactory::start(SuperNode *sn)

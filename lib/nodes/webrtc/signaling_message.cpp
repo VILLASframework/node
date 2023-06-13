@@ -5,8 +5,11 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#include <fmt/format.h>
+#include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/signaling_message.hpp>
+#include <algorithm>
 
 using namespace villas;
 using namespace villas::node;
@@ -15,7 +18,7 @@ using namespace villas::node::webrtc;
 
 json_t * Connection::toJSON() const
 {
-	return json_pack("{ s: i, s: s, s: s, s: s }",
+	return json_pack("{ s:i, s:s, s:s, s:s }",
 		"id", id,
 		"remote", remote.c_str(),
 		"user_agent", userAgent.c_str(),
@@ -23,11 +26,11 @@ json_t * Connection::toJSON() const
 	);
 }
 
-Connection::Connection(json_t *j)
+Connection::Connection(json_t *json)
 {
 	const char *rem, *ua, *ts;
 
-	int ret = json_unpack(j, "{ s: i, s: s, s: s, s: s }",
+	int ret = json_unpack(json, "{ s:i, s:s, s:s, s:s }",
 		"id", &id,
 		"remote", &rem,
 		"user_agent", &ua,
@@ -42,6 +45,40 @@ Connection::Connection(json_t *j)
 	// TODO: created
 }
 
+RelayMessage::RelayMessage(json_t *json)
+{
+
+	if (!json_is_array(json))
+		throw RuntimeError("Failed to decode signaling message");
+
+	int ret;
+	char *url;
+	char *user;
+	char *pass;
+	char *realm;
+	char *expires;
+	json_t *server_json;
+	size_t i;
+	json_array_foreach(json, i, server_json) {
+		ret = json_unpack(server_json, "{ s:s, s:s, s:s, s:s, s:s }",
+			"url", &url,
+			"user", &user,
+			"pass", &pass,
+			"realm", &realm,
+			"expires", &expires
+		);
+		if (ret)
+			throw RuntimeError("Failed to decode signaling message");
+
+		auto &server = servers.emplace_back(url);
+		server.username = user;
+		server.password = pass;
+
+		// TODO warn about unsupported realm
+		// TODO log info expires time
+	}
+}
+
 json_t * ControlMessage::toJSON() const
 {
 	json_t *json_connections = json_array();
@@ -49,10 +86,10 @@ json_t * ControlMessage::toJSON() const
 	for (auto &c : connections) {
 		json_t *json_connection = c.toJSON();
 
-		json_array_append(json_connections, json_connection);
+		json_array_append_new(json_connections, json_connection);
 	}
 
-	return json_pack("{ s: i, s: o }",
+	return json_pack("{ s:i, s:o }",
 		"connection_id", connectionID,
 		"connections", json_connections
 	);
@@ -64,7 +101,7 @@ ControlMessage::ControlMessage(json_t *j)
 
 	json_t *json_connections;
 
-	ret = json_unpack(j, "{ s: i, s: o }",
+	ret = json_unpack(j, "{ s:i, s:o }",
 		"connection_id", &connectionID,
 		"connections", &json_connections
 	);
@@ -82,104 +119,88 @@ ControlMessage::ControlMessage(json_t *j)
 
 json_t * SignalingMessage::toJSON() const
 {
-	switch (type) {
-	case TYPE_CONTROL:
-		return json_pack("{ s: s, s: o }",
-			"type", "control",
-			"control", control->toJSON()
-		);
-
-	case TYPE_OFFER:
-	case TYPE_ANSWER:
-		return json_pack("{ s: s, s: o }",
-			"type", type == TYPE_OFFER ? "offer" : "answer",
-			"description", std::string(*description).c_str()
-		);
-
-	case TYPE_CANDIDATE:
-		return json_pack("{ s: s, s: o }",
-			"type", "candidate",
-			"candidate", std::string(*candidate).c_str()
-		);
-	}
-
-	return nullptr;
+	return std::visit(villas::utils::overloaded {
+		[](ControlMessage const &c){
+			return json_pack("{ s:o }", "control", c.toJSON());
+		},
+		[](rtc::Description const &d){
+			return json_pack("{ s:{ s:s, s:s } }", "description",
+				"spd", d.generateSdp().c_str(),
+				"type", d.typeString().c_str()
+			);
+		},
+		[](rtc::Candidate const &c){
+			return json_pack("{ s:{ s:s, s:s } }", "candidate",
+				"spd", c.candidate().c_str(),
+				"mid", c.mid().c_str()
+			);
+		},
+		[](auto &other){
+			return (json_t *) { nullptr };
+		}
+	}, *this);
 }
 
 std::string SignalingMessage::toString() const
 {
-	switch (type) {
-		case TYPE_ANSWER:
-			return fmt::format("type=answer, description={}", std::string(*description));
-
-		case TYPE_OFFER:
-			return fmt::format("type=offer, description={}", std::string(*description));
-
-		case TYPE_CANDIDATE:
-			return fmt::format("type=candidate, candidate={}", std::string(*candidate));
-
-		case TYPE_CONTROL:
-			return fmt::format("type=control, control={}", json_dumps(control->toJSON(), 0));
-	}
-
-	return "";
+	return std::visit(villas::utils::overloaded {
+		[](RelayMessage const &r){
+			return fmt::format("type=relay");
+		},
+		[](ControlMessage const &c){
+			return fmt::format("type=control, control={}", json_dumps(c.toJSON(), 0));
+		},
+		[](rtc::Description const &d){
+			return fmt::format("type=description, type={}, spd=\n{}", d.typeString(), d.generateSdp());
+		},
+		[](rtc::Candidate const &c){
+			return fmt::format("type=candidate, mid={}, spd=\n{}", c.candidate(), c.mid());
+		},
+		[](auto other){
+			return fmt::format("invalid signaling message");
+		}
+	}, *this);
 }
 
-SignalingMessage::SignalingMessage(rtc::Description desc, bool answer) :
-	type(answer ? TYPE_ANSWER : TYPE_OFFER),
-	description(new rtc::Description(desc))
-{ }
-
-SignalingMessage::SignalingMessage(rtc::Candidate cand) :
-	type(TYPE_CANDIDATE),
-	candidate(new rtc::Candidate(cand))
-{ }
-
-SignalingMessage::~SignalingMessage()
+SignalingMessage::SignalingMessage(json_t *json)
 {
-	if (description)
-		delete description;
-
-	if (candidate)
-		delete candidate;
-
-	if (control)
-		delete control;
-}
-
-SignalingMessage::SignalingMessage(json_t *j) :
-	control(nullptr),
-	description(nullptr),
-	candidate(nullptr)
-{
-	json_t *json_control = nullptr;
-	const char *desc = nullptr;
+	// relay message
+	json_t *rlys = nullptr;
+	// control message
+	json_t *ctrl = nullptr;
+	// candidate message
 	const char *cand = nullptr;
+	const char *mid = nullptr;
+	// description message
+	const char *desc = nullptr;
 	const char *typ = nullptr;
 
-	int ret = json_unpack(j, "{ s: s, s?: s, s?: s, s?: o }",
-		"type", &typ,
-		"description", &desc,
-		"candidate", &cand,
-		"control", &json_control
+	int ret = json_unpack(json, "{ s?o, s?o, s?{ s:s, s:s }, s?{ s:s, s:s } }",
+		"servers", &rlys,
+		"control", &ctrl,
+		"candidate",
+			"spd", &cand,
+			"mid", &mid,
+		"description",
+			"spd", &desc,
+			"type", &typ
 	);
-	if (ret)
+
+	// exactly 1 field may be specified
+	const void *fields[] = { ctrl, cand, desc };
+	if (ret || std::count(std::begin(fields), std::end(fields), nullptr) < std::make_signed_t<size_t>(std::size(fields)) - 1)
 		throw RuntimeError("Failed to decode signaling message");
 
-	if      (!strcmp(typ, "offer")) {
-		type = TYPE_OFFER;
-		description = new rtc::Description(desc);
+	if (rlys) {
+		emplace<RelayMessage>(rlys);
 	}
-	else if (!strcmp(typ, "answer")) {
-		type = TYPE_ANSWER;
-		description = new rtc::Description(desc);
+	else if (ctrl) {
+		emplace<ControlMessage>(ctrl);
 	}
-	else if (!strcmp(typ, "candidate")) {
-		type = TYPE_CANDIDATE;
-		candidate = new rtc::Candidate(cand);
+	else if (cand) {
+		emplace<rtc::Candidate>(cand, mid);
 	}
-	else if (!strcmp(typ, "control")) {
-		type = TYPE_CONTROL;
-		control = new ControlMessage(json_control);
+	else if (desc) {
+		emplace<rtc::Description>(desc, typ);
 	}
 }
