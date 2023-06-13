@@ -117,20 +117,19 @@
     devShells = forSupportedSystems (
       system: let
         pkgs = pkgsFor system;
-        shellHook = ''
-          [ -z "$PS1" ] || exec $SHELL
-        '';
+        shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
+        hardeningDisable = ["all"];
       in rec {
         default = full;
 
         minimal = pkgs.mkShell {
-          inherit shellHook;
+          inherit shellHook hardeningDisable;
           name = "minimal";
           inputsFrom = [pkgs.villas-minimal];
         };
 
         full = pkgs.mkShell {
-          inherit shellHook;
+          inherit shellHook hardeningDisable;
           name = "full";
           inputsFrom = [pkgs.villas];
         };
