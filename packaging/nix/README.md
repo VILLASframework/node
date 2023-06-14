@@ -60,7 +60,7 @@ If you don't want to add it directly into the global path you could add it into
 the flake registry as well.
 
 ```shell
-nix registy add 'github:VILLASframework/node?dir=packaging/nix#villas'
+nix registy add villas 'github:VILLASframework/node?dir=packaging/nix'
 ```
 
 This allows you to substitue all references to
