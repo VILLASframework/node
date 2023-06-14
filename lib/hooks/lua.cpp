@@ -71,7 +71,8 @@ public:
 
 		char *buf;
 
-		asprintf(&buf, "Lua: %s: %s", msg, lua_tostring(L, -1));
+		if (asprintf(&buf, "Lua: %s: %s", msg, lua_tostring(L, -1)) < 0)
+			return "Lua: could not format error message";
 
 		return buf;
 	}
