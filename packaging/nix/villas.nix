@@ -7,19 +7,19 @@
   withAllHooks ? false,
   withAllNodes ? false,
   withExtraConfig ? withAllExtras,
-  withExtraGraphviz ? false, # unknown type boolean in villas-graph
+  withExtraGraphviz ? withAllExtras,
   withFormatProtobuf ? withAllFormats,
-  withHookLua ? false, # deprecated functions
-  withNodeAmqp ? false, # deprecated functions
+  withHookLua ? withAllHooks,
+  withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeFpga ? false, # spdlog formatting error
+  withNodeFpga ? false, # submodule commit has warnings and master broke the interface
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
   withNodeKafka ? withAllNodes,
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
-  withNodeRedis ? false, # spdlog formatting error
+  withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
   withNodeTemper ? withAllNodes,
@@ -73,7 +73,6 @@ stdenv.mkDerivation {
     [
       "-DDOWNLOAD_GO=OFF"
       "-DCMAKE_BUILD_TYPE=Release"
-      "-DCMAKE_CXX_FLAGS_RELEASE=-Wno-error=maybe-uninitialized"
     ]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   preConfigure = ''
