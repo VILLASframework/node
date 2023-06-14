@@ -48,7 +48,7 @@ SuperNode::SuperNode() :
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	statsRate(1.0),
-	task(CLOCK_REALTIME),
+	task(),
 	started(time_now())
 {
 	int ret;
