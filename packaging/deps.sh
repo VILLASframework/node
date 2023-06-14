@@ -319,7 +319,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST && \
     [ -z "${SKIP_LIBDATACHANNEL}" ]; then
-    git clone ${GIT_OPTS} --branch v0.17.11 https://github.com/paullouisageneau/libdatachannel &&  pushd libdatachannel
+    git clone ${GIT_OPTS} --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel &&  pushd libdatachannel
     git submodule update --init --recursive --depth 1
     mkdir build && pushd build
 
