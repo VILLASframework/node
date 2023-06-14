@@ -2,7 +2,7 @@
   description = "a tool for connecting real-time power grid simulation equipment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-22.11";
 
     common = {
       url = "github:VILLASframework/common";
