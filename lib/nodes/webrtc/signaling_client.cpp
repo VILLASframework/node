@@ -15,6 +15,7 @@ using namespace villas::node;
 using namespace villas::node::webrtc;
 
 SignalingClient::SignalingClient(const std::string &srv, const std::string &sess, Web *w) :
+	retry_count(0),
 	web(w),
 	running(false),
 	logger(logging.get("webrtc:signal"))

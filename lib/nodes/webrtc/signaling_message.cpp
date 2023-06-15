@@ -113,6 +113,7 @@ ControlMessage::ControlMessage(json_t *j)
 
 	json_t *json_connection;
 	size_t i;
+	// cppcheck-suppress unknownMacro
 	json_array_foreach(json_connections, i, json_connection)
 		connections.emplace_back(json_connection);
 }

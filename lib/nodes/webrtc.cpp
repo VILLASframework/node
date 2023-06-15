@@ -25,6 +25,9 @@ WebRTCNode::WebRTCNode(const std::string &name) :
 	Node(name),
 	server("wss://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
 	wait_seconds(0),
+	format(nullptr),
+	queue({}),
+	pool({}),
 	dci({})
 {
 	dci.reliability.type = rtc::Reliability::Type::Rexmit;
@@ -81,7 +84,7 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 			throw ConfigError(json, err, "node-config-node-webrtc-ice");
 
 		if (json_servers) {
-			config.iceServers.clear();
+			rtcConf.iceServers.clear();
 
 			if (!json_is_array(json_servers))
 				throw ConfigError(json_servers, "node-config-node-webrtc-ice-servers", "ICE Servers must be a an array of server configurations.");
@@ -94,7 +97,7 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 
 				std::string uri = json_string_value(json_server);
 
-				config.iceServers.emplace_back(uri);
+				rtcConf.iceServers.emplace_back(uri);
 			}
 		}
 	}
@@ -121,7 +124,7 @@ int WebRTCNode::prepare()
 
 	format->start(getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	conn = std::make_shared<webrtc::PeerConnection>(server, session, config, web, dci);
+	conn = std::make_shared<webrtc::PeerConnection>(server, session, rtcConf, web, dci);
 
 	ret = pool_init(&pool, 1024, SAMPLE_LENGTH(getInputSignals(false)->size()));
 	if (ret) // TODO log

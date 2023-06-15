@@ -35,7 +35,7 @@ protected:
 	struct Pool pool;
 
 	std::shared_ptr<webrtc::PeerConnection> conn;
-	rtc::Configuration config;
+	rtc::Configuration rtcConf;
 	rtc::DataChannelInit dci;
 
 	virtual
