@@ -13,7 +13,7 @@
 ###################################################################################
 
 # Get a list of all available tools
-SUBTOOLS="node compare pipe hook conf2json convert graph relay signal test-config test-rtt zmq-keygen"
+SUBTOOLS="api node compare pipe hook conf2json convert graph relay signal test-config test-rtt zmq-keygen"
 
 # First argument to wrapper is the tool which should be started
 SUBTOOL=$1
