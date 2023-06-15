@@ -147,7 +147,7 @@ void PeerConnection::onLocalDescription(rtc::Description desc)
 
 	auto lock = std::unique_lock { mutex };
 
-	client->sendMessage(desc);
+	client->sendMessage({ desc });
 }
 
 void PeerConnection::onLocalCandidate(rtc::Candidate cand)
@@ -156,7 +156,7 @@ void PeerConnection::onLocalCandidate(rtc::Candidate cand)
 
 	auto lock = std::unique_lock { mutex };
 
-	client->sendMessage(cand);
+	client->sendMessage({ cand });
 }
 
 void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state)
@@ -327,7 +327,7 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg)
 		[&](auto other){
 			logger->warn("unknown signaling message");
 		}
-	}, msg);
+	}, msg.message);
 }
 
 void PeerConnection::onDataChannel(std::shared_ptr<rtc::DataChannel> dc)

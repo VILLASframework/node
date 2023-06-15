@@ -86,7 +86,7 @@ public:
 	void connect();
 	void disconnect();
 
-	void sendMessage(const SignalingMessage &msg);
+	void sendMessage(SignalingMessage);
 
 	void onMessage(std::function<void(SignalingMessage)> callback)
 	{

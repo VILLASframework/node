@@ -139,7 +139,7 @@ json_t * SignalingMessage::toJSON() const
 		[](auto &other){
 			return (json_t *) { nullptr };
 		}
-	}, *this);
+	}, message);
 }
 
 std::string SignalingMessage::toString() const
@@ -160,11 +160,13 @@ std::string SignalingMessage::toString() const
 		[](auto other){
 			return fmt::format("invalid signaling message");
 		}
-	}, *this);
+	}, message);
 }
 
-SignalingMessage::SignalingMessage(json_t *json)
+SignalingMessage SignalingMessage::fromJSON(json_t *json)
 {
+	auto self = SignalingMessage { std::monostate() };
+
 	// relay message
 	json_t *rlys = nullptr;
 	// control message
@@ -193,15 +195,17 @@ SignalingMessage::SignalingMessage(json_t *json)
 		throw RuntimeError("Failed to decode signaling message");
 
 	if (rlys) {
-		emplace<RelayMessage>(rlys);
+		self.message.emplace<RelayMessage>(rlys);
 	}
 	else if (ctrl) {
-		emplace<ControlMessage>(ctrl);
+		self.message.emplace<ControlMessage>(ctrl);
 	}
 	else if (cand) {
-		emplace<rtc::Candidate>(cand, mid);
+		self.message.emplace<rtc::Candidate>(cand, mid);
 	}
 	else if (desc) {
-		emplace<rtc::Description>(desc, typ);
+		self.message.emplace<rtc::Description>(desc, typ);
 	}
+
+	return self;
 }

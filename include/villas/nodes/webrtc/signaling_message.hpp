@@ -44,10 +44,10 @@ struct ControlMessage {
 	json_t * toJSON() const;
 };
 
-class SignalingMessage : public std::variant<std::monostate, RelayMessage, ControlMessage, rtc::Description, rtc::Candidate> {
-public:
-	using variant::variant;
-	SignalingMessage(json_t *j);
+struct SignalingMessage {
+	std::variant<std::monostate, RelayMessage, ControlMessage, rtc::Description, rtc::Candidate> message;
+
+	static SignalingMessage fromJSON(json_t *j);
 	json_t * toJSON() const;
 	std::string toString() const;
 };

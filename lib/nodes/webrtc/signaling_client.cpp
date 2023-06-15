@@ -206,14 +206,14 @@ int SignalingClient::receive(void *in, size_t len)
 
 	logger->debug("Signaling message received: {:.{}}", (char *)in, len);
 
-	cbMessage(SignalingMessage { json });
+	cbMessage(SignalingMessage::fromJSON(json));
 
 	json_decref(json);
 
 	return 0;
 }
 
-void SignalingClient::sendMessage(const SignalingMessage &msg)
+void SignalingClient::sendMessage(SignalingMessage msg)
 {
 	outgoingMessages.push(msg);
 
