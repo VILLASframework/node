@@ -241,6 +241,7 @@ void redis_on_message(NodeCompat *n, const std::string &channel, const std::stri
 			break;
 
 		default:
+			pushed = 0;
 			goto out;
 	}
 

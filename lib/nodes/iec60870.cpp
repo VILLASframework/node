@@ -333,7 +333,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 		}
 
 		default:
-			assert(!"unreachable");
+			throw RuntimeError { "invalid asdu data type" };
 	}
 
 	bool successfully_added = CS101_ASDU_addInformationObject(asdu, io);

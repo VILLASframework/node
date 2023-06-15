@@ -110,7 +110,7 @@ MmsValue * GooseSignal::toMmsValue() const
 	case MmsType::MMS_FLOAT:
 		return newMmsFloat(signal_data.f, meta.size);
 	default:
-		assert(!"unreachable");
+		throw RuntimeError { "invalid mms type" };
 	}
 }
 
@@ -141,7 +141,7 @@ MmsValue * GooseSignal::newMmsInteger(int64_t i, int size)
 		MmsValue_setInt64(mms_integer, static_cast<int64_t>(i));
 		return mms_integer;
 	default:
-		assert(!"unreachable");
+		throw RuntimeError { "invalid mms integer size" };
 	}
 }
 
@@ -160,7 +160,7 @@ MmsValue * GooseSignal::newMmsUnsigned(uint64_t u, int size)
 		MmsValue_setUint32(mms_unsigned, static_cast<uint32_t>(u));
 		return mms_unsigned;
 	default:
-		assert(!"unreachable");
+		throw RuntimeError { "invalid mms integer size" };
 	}
 }
 
@@ -172,7 +172,7 @@ MmsValue * GooseSignal::newMmsFloat(double d, int size)
 	case 64:
 		return MmsValue_newDouble(d);
 	default:
-		assert(!"unreachable");
+		throw RuntimeError { "invalid mms float size" };
 	}
 }
 
