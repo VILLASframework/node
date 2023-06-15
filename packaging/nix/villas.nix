@@ -33,6 +33,7 @@
   coreutils,
   fpga,
   graphviz,
+  jq,
   lib,
   makeWrapper,
   pkg-config,
@@ -70,7 +71,11 @@
 stdenv.mkDerivation {
   inherit src version;
   pname = "villas";
-  cmakeFlags = []
+  outputs = ["out" "dev"];
+  cmakeFlags =
+    [
+      "-DDOWNLOAD_GO=OFF"
+    ]
     ++ lib.optionals (!withGpl) ["-DWITHOUT_GPL=ON"]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   postPatch = ''
@@ -85,6 +90,8 @@ stdenv.mkDerivation {
   postInstall = ''
     wrapProgram $out/bin/villas \
       --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep coreutils]}
+    wrapProgram $out/bin/villas-api \
+      --set PATH ${lib.makeBinPath [coreutils curl jq]}
   '';
   nativeBuildInputs = [
     cmake
