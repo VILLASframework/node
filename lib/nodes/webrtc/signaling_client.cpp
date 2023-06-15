@@ -19,17 +19,22 @@ SignalingClient::SignalingClient(const std::string &srv, const std::string &sess
 	running(false),
 	logger(logging.get("webrtc:signal"))
 {
+	int ret;
 	const char *prot, *a, *p;
 
 	memset(&info, 0, sizeof(info));
 
-	(void)!asprintf(&uri, "%s/%s", srv.c_str(), sess.c_str());
+	ret = asprintf(&uri, "%s/%s", srv.c_str(), sess.c_str());
+	if (ret < 0)
+		throw RuntimeError { "Could not format signaling server uri" };
 
-	int ret = lws_parse_uri(uri, &prot, &a, &info.port, &p);
+	ret = lws_parse_uri(uri, &prot, &a, &info.port, &p);
 	if (ret)
 		throw RuntimeError("Failed to parse WebSocket URI: '{}'", uri);
 
-	(void)!asprintf(&path, "/%s", p);
+	ret = asprintf(&path, "/%s", p);
+	if (ret < 0)
+		throw RuntimeError { "Could not format signaling client path" };
 
 	info.ssl_connection = !strcmp(prot, "https");
 	info.address = a;
@@ -201,6 +206,8 @@ int SignalingClient::receive(void *in, size_t len)
 	logger->debug("Signaling message received: {:.{}}", (char *)in, len);
 
 	cbMessage(SignalingMessage { json });
+
+	json_decref(json);
 
 	return 0;
 }
