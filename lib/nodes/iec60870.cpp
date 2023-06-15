@@ -203,7 +203,7 @@ std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) cons
 			}
 
 			default:
-				assert(!"unreachable");
+				throw RuntimeError { "unsupported asdu type" };
 		}
 
 		std::optional<CP56Time2a> time_cp56;
@@ -761,7 +761,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 						break;
 
 					default:
-						assert(!"unreachable");
+						throw RuntimeError { "unsupported signal type" };
 				}
 			} else
 				initial_value.f = 0.0;
