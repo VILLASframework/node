@@ -7,7 +7,7 @@
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=debian
-ARG DEBIAN_VERSION=bullseye
+ARG DEBIAN_VERSION=bookworm
 
 FROM ${DISTRO}:${DEBIAN_VERSION} AS dev
 

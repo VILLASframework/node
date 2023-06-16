@@ -77,6 +77,9 @@ find_package(spdlog)
 find_package(Etherlab)
 find_package(Lua)
 
+# For compat between libfmt 8 and 9
+add_compile_definitions(FMT_DEPRECATED_OSTREAM)
+
 # Check for tools
 find_program(PASTE NAMES paste)
 if(NOT PASTE)

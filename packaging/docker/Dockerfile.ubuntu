@@ -7,7 +7,7 @@
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=ubuntu
-ARG UBUNTU_VERSION=20.04
+ARG UBUNTU_VERSION=22.04
 ARG DISTRO=${DISTRO}
 
 FROM ${DISTRO}:${UBUNTU_VERSION} AS dev
