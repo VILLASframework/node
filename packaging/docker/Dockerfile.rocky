@@ -6,7 +6,7 @@
 ###################################################################################
 
 ARG DISTRO=rockylinux
-ARG ROCKY_VERSION=8
+ARG ROCKY_VERSION=9
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
@@ -16,13 +16,13 @@ USER root
 
 # Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
 RUN dnf -y install epel-release dnf-plugins-core
-RUN dnf config-manager --set-enabled powertools
+RUN dnf config-manager --set-enabled crb
 
 # Toolchain
-RUN dnf -y install \
+RUN dnf --allowerasing -y install \
 	gcc gcc-c++ \
 	pkgconfig cmake make \
-	autoconf automake autogen libtool \
+	autoconf automake libtool \
 	flex bison \
 	texinfo git curl tar \
 	protobuf-compiler protobuf-c-compiler
