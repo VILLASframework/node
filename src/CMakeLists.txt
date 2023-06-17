@@ -44,6 +44,8 @@ endif()
 if(WITH_GRAPHVIZ)
     add_executable(villas-graph villas-graph.cpp)
     target_link_libraries(villas-graph PUBLIC villas)
+
+    list(APPEND SRCS villas-graph)
 endif()
 
 if(WITH_WEB)
@@ -64,8 +66,8 @@ endif()
 if(LIBZMQ_FOUND)
     add_executable(villas-zmq-keygen villas-zmq-keygen.cpp)
     target_link_libraries(villas-zmq-keygen PUBLIC villas-common PkgConfig::LIBZMQ)
-    
-    list(APPEND SRC villas-zmq-keygen)
+
+    list(APPEND SRCS villas-zmq-keygen)
 endif()
 
 if(WITH_HOOKS)
