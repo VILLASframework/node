@@ -303,15 +303,14 @@ if ! pkg-config "spdlog >= 1.8.2" && \
 fi
 
 # Build & Install libwebsockets
-if ! pkg-config "libwebsockets >= 3.1.0" && \
+if ! pkg-config "libwebsockets >= 4.3.0" && \
     [ -z "${SKIP_WEBSOCKETS}" ]; then
-    git clone ${GIT_OPTS} --branch v4.0-stable https://libwebsockets.org/repo/libwebsockets
+    git clone ${GIT_OPTS} --branch v4.3-stable https://github.com/warmcat/libwebsockets
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     cmake -DLWS_WITH_IPV6=ON \
           -DLWS_WITHOUT_TESTAPPS=ON \
           -DLWS_WITHOUT_EXTENSIONS=OFF \
-          -DLWS_WITH_SERVER_STATUS=ON \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
