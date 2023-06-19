@@ -72,10 +72,7 @@ stdenv.mkDerivation {
   inherit src version;
   pname = "villas";
   outputs = ["out" "dev"];
-  cmakeFlags =
-    [
-      "-DDOWNLOAD_GO=OFF"
-    ]
+  cmakeFlags = []
     ++ lib.optionals (!withGpl) ["-DWITHOUT_GPL=ON"]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   postPatch = ''
