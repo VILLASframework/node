@@ -1,7 +1,9 @@
 /** WebRTC signaling messages.
  *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2023, OPAL-RT Germany GmbH
  * @license Apache 2.0
  *********************************************************************************/
 
@@ -15,14 +17,13 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-
 json_t * Connection::toJSON() const
 {
 	return json_pack("{ s:i, s:s, s:s, s:s }",
 		"id", id,
 		"remote", remote.c_str(),
 		"user_agent", userAgent.c_str(),
-		"created", "" // TODO
+		"created", "" // TODO: create json timestamp
 	);
 }
 
@@ -74,8 +75,8 @@ RelayMessage::RelayMessage(json_t *json)
 		server.username = user;
 		server.password = pass;
 
-		// TODO warn about unsupported realm
-		// TODO log info expires time
+		// TODO: warn about unsupported realm
+		// TODO: log info about expires time
 	}
 }
 
@@ -167,14 +168,14 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 {
 	auto self = SignalingMessage { std::monostate() };
 
-	// relay message
+	// Relay message
 	json_t *rlys = nullptr;
-	// control message
+	// Control message
 	json_t *ctrl = nullptr;
-	// candidate message
+	// Candidate message
 	const char *cand = nullptr;
 	const char *mid = nullptr;
-	// description message
+	// Description message
 	const char *desc = nullptr;
 	const char *typ = nullptr;
 
@@ -189,7 +190,7 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 			"type", &typ
 	);
 
-	// exactly 1 field may be specified
+	// Exactly 1 field may be specified
 	const void *fields[] = { ctrl, cand, desc };
 	if (ret || std::count(std::begin(fields), std::end(fields), nullptr) < std::make_signed_t<size_t>(std::size(fields)) - 1)
 		throw RuntimeError("Failed to decode signaling message");

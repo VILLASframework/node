@@ -2,7 +2,9 @@
  *
  * @file
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2023, OPAL-RT Germany GmbH
  * @license Apache 2.0
  *********************************************************************************/
 
@@ -137,7 +139,7 @@ void PeerConnection::setupDataChannel(std::shared_ptr<rtc::DataChannel> dc)
 	chan->onClosed([this](){ this->onDataChannelClosed(); });
 	chan->onError([this](auto err){ this->onDataChannelError(std::move(err)); });
 
-	// if this node has it's data channel set up, don't accept any new ones
+	// If this node has it's data channel set up, don't accept any new ones
 	conn->onDataChannel(nullptr);
 }
 

@@ -1,7 +1,9 @@
 /** WebRTC signaling client
  *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2023, OPAL-RT Germany GmbH
  * @license Apache 2.0
  *********************************************************************************/
 
@@ -73,9 +75,9 @@ void SignalingClient::connect()
 void SignalingClient::disconnect()
 {
 	running = false;
-	// TODO
-	// wait for connectStatic to exit
-	// close LWS connection
+	// TODO:
+	// - wait for connectStatic to exit
+	// - close LWS connection
 	if (wsi)
 		lws_callback_on_writable(wsi);
 }

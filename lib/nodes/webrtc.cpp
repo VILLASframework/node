@@ -1,7 +1,9 @@
 /** Node-type: webrtc
  *
  * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2023, OPAL-RT Germany GmbH
  * @license Apache 2.0
  *********************************************************************************/
 
