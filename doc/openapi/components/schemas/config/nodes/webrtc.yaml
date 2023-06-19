@@ -7,11 +7,11 @@ allOf:
     format:
       $ref: ../format_spec.yaml
 
-    wait:
-      type: boolean
-      default: true
+    wait_seconds:
+      type: integer
+      default: 0
       description: |
-        Suspend start-up of VILLASnode until the connection with the remote peer has been established.
+        Suspend start-up of VILLASnode for some seconds until the connection with the remote peer has been established.
 
     ordered:
       type: boolean
@@ -47,26 +47,15 @@ allOf:
           description: A list of ICE servers used for connection establishment
           type: array
           items:
-            type: object
-            title: ICE Server
-            properties: 
-              urls:
-                type: array
-                items:
-                  type: string
-                  format: uri
-                  title: STUN/TURN URI
-                  description: |
-                    A valid Uniform Resource Identifier (URI) indentifying a STUN or TURN server. 
+            type: string
+            format: uri
+            title: STUN & TURN server URI
+            description: |
+              A valid Uniform Resource Identifier (URI) identifying a STUN or TURN server.
 
-                    See [RFC7064](https://datatracker.ietf.org/doc/html/rfc7064) and [RFC7065](https://datatracker.ietf.org/doc/html/rfc7065) for details.
+              See [RFC7064](https://datatracker.ietf.org/doc/html/rfc7064) and [RFC7065](https://datatracker.ietf.org/doc/html/rfc7065) for details.
 
-              password:
-                type: string
-                description: Password for used authentication against TURN servers.
-              username:
-                type: string
-                description: Username for used authentication against TURN servers.
+              As an extension to the URI format specified additional username & password can be specified as shown in the examples
 
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml
