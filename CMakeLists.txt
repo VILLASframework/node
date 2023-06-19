@@ -76,6 +76,10 @@ find_package(RDMACM)
 find_package(spdlog)
 find_package(Etherlab)
 find_package(Lua)
+find_package(LibDataChannel)
+
+# For compat between libfmt 8 and 9
+add_compile_definitions(FMT_DEPRECATED_OSTREAM)
 
 # For compat between libfmt 8 and 9
 add_compile_definitions(FMT_DEPRECATED_OSTREAM)
@@ -89,16 +93,9 @@ endif()
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
 find_program(PROTOBUF_COMPILER NAMES protoc)
-find_program(GO NAMES go PATHS /usr/local/go/bin)
 
 # Build without any GPL-code
 option(WITHOUT_GPL "Build VILLASnode without any GPL code" OFF)
-
-# Optionally download Go toolchain
-option(DOWNLOAD_GO "Download Go toolchain" ON)
-if(NOT GO AND DOWNLOAD_GO)
-    include("${CMAKE_CURRENT_LIST_DIR}/cmake/Go.cmake")
-endif()
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
@@ -161,7 +158,6 @@ cmake_dependent_option(WITH_CLIENTS         "Build client applications"         
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" ON "LIBCONFIG_FOUND" OFF)
 cmake_dependent_option(WITH_DOC             "Build documentation"                                   ON "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     ON "FOUND_SUBMODULE_FPGA" OFF)
-cmake_dependent_option(WITH_GO              "Build with Go"                                         ON "GO" OFF)
 cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   ON "CGRAPH_FOUND; GVC_FOUND" OFF)
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        ON "" OFF)
 cmake_dependent_option(WITH_LUA             "Build with Lua"                                        ON "LUA_FOUND" OFF)
@@ -180,7 +176,6 @@ cmake_dependent_option(WITH_NODE_EXAMPLE    "Build with example node-type"      
 cmake_dependent_option(WITH_NODE_EXEC       "Build with exec node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_FILE       "Build with file node-type"                             ON "" OFF)
 cmake_dependent_option(WITH_NODE_FPGA       "Build with fpga node-type"                             ON "WITH_FPGA" OFF)
-cmake_dependent_option(WITH_NODE_GO         "Build with Go nodes-types"                             ON "WITH_GO" OFF)
 cmake_dependent_option(WITH_NODE_IEC61850   "Build with iec61850 node-types"                        ON "LIBIEC61850_FOUND;NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_IEC60870   "Build with iec60870 node-types"                        ON "LIB60870_FOUND;NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"                       ON "IBVerbs_FOUND; RDMACM_FOUND" OFF) # Infiniband node-type is currenly broken
@@ -200,6 +195,7 @@ cmake_dependent_option(WITH_NODE_STATS      "Build with stats node-type"        
 cmake_dependent_option(WITH_NODE_TEMPER     "Build with temper node-type"                           ON "LIBUSB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"                         ON "" OFF)
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            ON "LIBULDAQ_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"                           ON "LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND;NOT WITHOUT_GPL" OFF)
 
@@ -214,10 +210,6 @@ GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 
 if(WITH_FPGA)
     add_subdirectory(fpga)
-endif()
-
-if(WITH_GO)
-    add_subdirectory(go)
 endif()
 
 add_subdirectory(common)
@@ -261,7 +253,6 @@ add_feature_info(CLIENTS                WITH_CLIENTS                "Build clien
 add_feature_info(CONFIG                 WITH_CONFIG                 "Build with support for libconfig configuration syntax")
 add_feature_info(DOC                    WITH_DOC                    "Build documentation")
 add_feature_info(FPGA                   WITH_FPGA                   "Build with FPGA support")
-add_feature_info(GO                     WITH_GO                     "Build with Go code")
 add_feature_info(GRAPHVIZ               WITH_GRAPHVIZ               "Build with Graphviz support")
 add_feature_info(HOOKS                  WITH_HOOKS                  "Build with support for processing hook plugins")
 add_feature_info(LUA                    WITH_LUA                    "Build with Lua support")
@@ -280,7 +271,6 @@ add_feature_info(NODE_EXAMPLE           WITH_NODE_EXAMPLE           "Build with 
 add_feature_info(NODE_EXEC              WITH_NODE_EXEC              "Build with exec node-type")
 add_feature_info(NODE_FILE              WITH_NODE_FILE              "Build with file node-type")
 add_feature_info(NODE_FPGA              WITH_NODE_FPGA              "Build with fpga node-type")
-add_feature_info(NODE_GO                WITH_NODE_GO                "Build with Go node-types")
 add_feature_info(NODE_IEC61850          WITH_NODE_IEC61850          "Build with iec61850 node-types")
 add_feature_info(NODE_IEC60870          WITH_NODE_IEC60870          "Build with iec60870 node-types")
 add_feature_info(NODE_INFINIBAND        WITH_NODE_INFINIBAND        "Build with infiniband node-type")
@@ -300,6 +290,7 @@ add_feature_info(NODE_STATS             WITH_NODE_STATS             "Build with 
 add_feature_info(NODE_TEMPER            WITH_NODE_TEMPER            "Build with temper node-type")
 add_feature_info(NODE_TEST_RTT          WITH_NODE_TEST_RTT          "Build with test_rtt node-type")
 add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with uldaq node-type")
+add_feature_info(NODE_WEBRTC            WITH_NODE_WEBRTC            "Build with webrtc node-type")
 add_feature_info(NODE_WEBSOCKET         WITH_NODE_WEBSOCKET         "Build with websocket node-type")
 add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with zeromq node-type")
 
