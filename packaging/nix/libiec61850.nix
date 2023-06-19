@@ -8,6 +8,7 @@ stdenv.mkDerivation {
   pname = "libiec61850";
   version = "villas";
   src = src;
+  separateDebugInfo = true;
   nativeBuildInputs = [cmake];
   meta = with lib; {
     description = "open-source library for the IEC 61850 protocols";

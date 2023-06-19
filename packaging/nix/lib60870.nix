@@ -8,6 +8,7 @@ stdenv.mkDerivation {
   pname = "lib60870";
   version = "villas";
   src = src;
+  separateDebugInfo = true;
   nativeBuildInputs = [cmake];
   preConfigure = "cd lib60870-C";
   meta = with lib; {

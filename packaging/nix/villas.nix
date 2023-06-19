@@ -72,6 +72,7 @@ stdenv.mkDerivation {
   inherit src version;
   pname = "villas";
   outputs = ["out" "dev"];
+  separateDebugInfo = true;
   cmakeFlags = []
     ++ lib.optionals (!withGpl) ["-DWITHOUT_GPL=ON"]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
