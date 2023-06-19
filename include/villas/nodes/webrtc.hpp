@@ -49,10 +49,6 @@ protected:
 public:
 	WebRTCNode(const std::string &name = "");
 
-	/* All of the following virtual-declared functions are optional.
-	 * Have a look at node.hpp/node.cpp for the default behaviour.
-	 */
-
 	virtual
 	~WebRTCNode();
 
@@ -62,7 +58,6 @@ public:
 	virtual
 	int parse(json_t *json, const uuid_t sn_uuid);
 
-	/** Validate node configuration. */
 	virtual
 	int check();
 
@@ -72,26 +67,8 @@ public:
 	virtual
 	int stop();
 
-	// virtual
-	// int pause();
-
-	// virtual
-	// int resume();
-
-	// virtual
-	// int restart();
-
-	// virtual
-	// int reverse();
-
 	virtual
 	std::vector<int> getPollFDs();
-
-	// virtual
-	// std::vector<int> getNetemFDs();
-
-	// virtual
-	// struct villas::node::memory::Type * getMemoryType();
 
 	virtual
 	const std::string & getDetails();

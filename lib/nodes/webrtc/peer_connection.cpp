@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <thread>
+#include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <fmt/chrono.h>
 #include <villas/utils.hpp>
@@ -21,6 +22,22 @@ using namespace std::placeholders;
 using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
+
+/*
+ * libdatachannel defines the operator<< overloads required to format
+ * rtc::PeerConnection::State and similar in the global namespace.
+ * But C++ ADL based overload set construction does not find these operators,
+ * if these are invoked in the spdlog/fmt libraries.
+ *
+ * See this issue for a short explaination of ADL errors:
+ * https://github.com/gabime/spdlog/issues/1227#issuecomment-532009129
+ *
+ * Adding the global ::operator<< overload set to the namespace rtc where
+ * the data structures are defined, allows ADL to pick these up in spdlog/fmt.
+ */
+namespace rtc {
+	using ::operator<<;
+}
 
 PeerConnection::PeerConnection(const std::string &server, const std::string &session, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
 	web(w),
@@ -163,7 +180,7 @@ void PeerConnection::onLocalCandidate(rtc::Candidate cand)
 
 void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state)
 {
-	//logger->debug("Connection State changed: {}", state);
+	logger->debug("Connection State changed: {}", state);
 
 	auto lock = std::unique_lock { mutex };
 
@@ -334,13 +351,15 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg)
 
 void PeerConnection::onDataChannel(std::shared_ptr<rtc::DataChannel> dc)
 {
-	/*logger->debug("New data channel: id={}, stream={}, protocol={}, max_msg_size={}, label={}",
-		dc->id(),
-		dc->stream(),
+	logger->debug("New data channel: {}protocol={}, max_msg_size={}, label={}",
+		dc->id() && dc->stream() ? fmt::format("id={}, stream={}, ",
+			*(dc->id()),
+			*(dc->stream())
+ 		) : "",
 		dc->protocol(),
 		dc->maxMessageSize(),
-		dc->label());
-	*/
+		dc->label()
+	);
 
 	auto lock = std::unique_lock { mutex };
 
