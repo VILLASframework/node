@@ -2,6 +2,7 @@
   # general configuration
   src,
   version,
+  withGpl ? true,
   withAllExtras ? false,
   withAllFormats ? false,
   withAllHooks ? false,
@@ -32,6 +33,7 @@
   coreutils,
   fpga,
   graphviz,
+  jq,
   lib,
   makeWrapper,
   pkg-config,
@@ -69,12 +71,14 @@
 stdenv.mkDerivation {
   inherit src version;
   pname = "villas";
-  cmakeFlags =
-    [
-      "-DDOWNLOAD_GO=OFF"
-      "-DCMAKE_BUILD_TYPE=Release"
-    ]
+  outputs = ["out" "dev"];
+  separateDebugInfo = true;
+  cmakeFlags = []
+    ++ lib.optionals (!withGpl) ["-DWITHOUT_GPL=ON"]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
+  postPatch = ''
+    patchShebangs --host ./tools
+  '';
   preConfigure = ''
     rm -df common
     rm -df fpga
@@ -82,9 +86,10 @@ stdenv.mkDerivation {
     ${lib.optionalString withNodeFpga "ln -s ${fpga} fpga"}
   '';
   postInstall = ''
-    patchShebangs --build $out/bin/villas
     wrapProgram $out/bin/villas \
       --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep coreutils]}
+    wrapProgram $out/bin/villas-api \
+      --set PATH ${lib.makeBinPath [coreutils curl jq]}
   '';
   nativeBuildInputs = [
     cmake

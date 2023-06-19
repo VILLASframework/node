@@ -12,6 +12,7 @@ stdenv.mkDerivation {
   pname = "libdatachannel";
   version = "villas";
   src = src;
+  separateDebugInfo = true;
   nativeBuildInputs = [cmake pkg-config];
   buildInputs = [libnice libpcap openssl];
   cmakeFlags = [
