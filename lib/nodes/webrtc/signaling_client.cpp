@@ -114,9 +114,22 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 		goto do_retry;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE:
-		ret = receive(in, len);
-		if (ret)
-			goto do_retry;
+		if (lws_is_first_fragment(wsi))
+			buffer.clear();
+
+		buffer.append((char *) in, len);
+
+		if (lws_is_final_fragment(wsi)) {
+			auto *json = buffer.decode();
+			if (json == nullptr) {
+				logger->error("Failed to decode JSON");
+				goto do_retry;
+			}
+
+			cbMessage(SignalingMessage::fromJSON(json));
+
+			json_decref(json);
+		}
 
 		break;
 
@@ -156,9 +169,9 @@ do_retry:
 	 * retrying at the last backoff delay plus the random jitter amount.
 	 */
 	if (lws_retry_sul_schedule_retry_wsi(wsi, &sul_helper.sul, connectStatic, &retry_count))
-		logger->error("Signaling connection attempts exhaused");
+		logger->error("Signaling connection attempts exhausted");
 
-	return 0;
+	return -1;
 }
 
 int SignalingClient::writable()
@@ -193,24 +206,6 @@ int SignalingClient::writable()
 	// Reschedule callback if there are more messages to be send
 	if (!outgoingMessages.empty())
 		lws_callback_on_writable(wsi);
-
-	return 0;
-}
-
-int SignalingClient::receive(void *in, size_t len)
-{
-	json_error_t err;
-	json_t *json = json_loadb((char *) in, len, 0, &err);
-	if (!json) {
-		logger->error("Failed to decode json: {} at ({}:{})", err.text, err.line, err.column);
-		return -1;
-	}
-
-	logger->debug("Signaling message received: {:.{}}", (char *)in, len);
-
-	cbMessage(SignalingMessage::fromJSON(json));
-
-	json_decref(json);
 
 	return 0;
 }

@@ -16,6 +16,7 @@
 #include <libwebsockets.h>
 
 #include <villas/queue.hpp>
+#include <villas/buffer.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/nodes/webrtc/signaling_message.hpp>
@@ -68,6 +69,8 @@ protected:
 
 	std::atomic<bool> running;
 
+	Buffer buffer; // A buffer for received fragments before JSON decoding.
+
 	Logger logger;
 
 	int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *in, size_t len);
@@ -75,7 +78,6 @@ protected:
 	static
 	void connectStatic(struct lws_sorted_usec_list *sul);
 
-	int receive(void *in, size_t len);
 	int writable();
 
 public:
