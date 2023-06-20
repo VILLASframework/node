@@ -184,45 +184,10 @@ int WebRTCNode::stop()
 	return Node::stop();
 }
 
-// int WebRTCNode::pause()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
-
-// int WebRTCNode::resume()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
-
-// int WebRTCNode::restart()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
-
-// int WebRTCNode::reverse()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
-
 std::vector<int> WebRTCNode::getPollFDs()
 {
 	return { queue_signalled_fd(&queue) };
 }
-
-// std::vector<int> WebRTCNode::getNetemFDs()
-// {
-// 	// TODO add implementation here
-// 	return {};
-// }
-
-// struct villas::node::memory::Type * WebRTCNode::getMemoryType()
-// {
-//	// TODO add implementation here
-// }
 
 const std::string & WebRTCNode::getDetails()
 {
