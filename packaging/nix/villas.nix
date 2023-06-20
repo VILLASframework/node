@@ -13,7 +13,7 @@
   withHookLua ? withAllHooks,
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeFpga ? false, # submodule commit has warnings and master broke the interface
+  withNodeFpga ? withAllNodes,
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -86,6 +86,10 @@ stdenv.mkDerivation {
     ${lib.optionalString withNodeFpga "ln -s ${fpga} fpga"}
   '';
   postInstall = ''
+    if [ -d $out/include/villas/ ] && [ -d $dev/include/villas/ ]; then
+      mv $out/include/villas/* $dev/include/villas/
+      rm -d $out/include/villas
+    fi
     wrapProgram $out/bin/villas \
       --set PATH ${lib.makeBinPath [(placeholder "out") gnugrep coreutils]}
     wrapProgram $out/bin/villas-api \

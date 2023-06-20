@@ -31,6 +31,7 @@ typedef std::string Identifier;
 class Frame : public std::vector<uint8_t> {
 public:
 	Frame() {
+    		reserve(LWS_PRE);
 		/* lws_write() requires LWS_PRE bytes in front of the payload */
 		insert(end(), LWS_PRE, 0);
 	}

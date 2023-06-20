@@ -10,7 +10,10 @@
     };
 
     fpga = {
-      url = "git+https://github.com/VILLASframework/fpga.git?submodules=1";
+      type = "git";
+      url = "https://github.com/VILLASframework/fpga.git";
+      ref = "refs/heads/villas-node";
+      submodules = true;
       flake = false;
     };
 

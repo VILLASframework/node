@@ -19,16 +19,17 @@
     "fpga": {
       "flake": false,
       "locked": {
-        "lastModified": 1679417867,
-        "narHash": "sha256-HHIsOnuQOq0Ytd22VMSHpTbecHpcheF1xLkslqxXOsk=",
-        "ref": "refs/heads/master",
-        "rev": "29f81016b2317667a2b21fbcf74ea66986a84c03",
-        "revCount": 530,
+        "lastModified": 1686871446,
+        "narHash": "sha256-pRFFr72NVge4UgwBvc8gYygnvOHghTSUGI+JtqpRlxo=",
+        "ref": "refs/heads/villas-node",
+        "rev": "ce8612379de62f50a52e172fe8eaee924d5d8822",
+        "revCount": 481,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/VILLASframework/fpga.git"
       },
       "original": {
+        "ref": "refs/heads/villas-node",
         "submodules": true,
         "type": "git",
         "url": "https://github.com/VILLASframework/fpga.git"
