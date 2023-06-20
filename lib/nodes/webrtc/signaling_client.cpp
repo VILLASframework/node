@@ -169,9 +169,9 @@ do_retry:
 	 * retrying at the last backoff delay plus the random jitter amount.
 	 */
 	if (lws_retry_sul_schedule_retry_wsi(wsi, &sul_helper.sul, connectStatic, &retry_count))
-		logger->error("Signaling connection attempts exhaused");
+		logger->error("Signaling connection attempts exhausted");
 
-	return 0;
+	return -1;
 }
 
 int SignalingClient::writable()
