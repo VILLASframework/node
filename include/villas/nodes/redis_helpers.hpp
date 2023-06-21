@@ -188,3 +188,20 @@ OStream &operator<<(OStream &os, const enum villas::node::RedisMode &m)
 
 	return os;
 }
+
+namespace villas {
+namespace node {
+#ifdef REDISPP_WITH_URI
+	sw::redis::ConnectionOptions make_redis_connection_options(char const *uri)
+	{
+		auto u = sw::redis::Uri { uri };
+		return u.connection_options();
+	}
+#else
+	sw::redis::ConnectionOptions make_redis_connection_options(char const *uri)
+	{
+		return sw::redis::ConnectionOptions { uri };
+	}
+#endif
+} // node
+} // villas

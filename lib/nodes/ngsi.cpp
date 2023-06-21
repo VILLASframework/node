@@ -184,9 +184,9 @@ public:
 			json_t *json_value = json_array();
 
 			for (unsigned k = 0; k < cnt; k++) {
-				const auto *sig = (Signal *) list_at_safe(smp->signals, index);
 				const auto *smp = &smps[k];
 				const auto *data = &smp->data[index];
+				auto sig = smp->signals->getByIndex(index);
 
 				json_array_append_new(json_value, json_pack("[ f, o, i ]",
 					time_to_double(smp->ts.origin),
@@ -349,7 +349,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 			smp->ts.origin = tss;
 
 			auto *sd = &smp->data[attr->index];
-			auto *sig = (Signal *) list_at_safe(n->getInputSignals(false), attr->index);
+			auto sig = n->getInputSignals(false)->getByIndex(attr->index);
 			if (!sig)
 				return -11;
 

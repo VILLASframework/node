@@ -87,7 +87,7 @@ void * Path::runPoll()
 		if (ret < 0)
 			throw SystemError("Failed to poll");
 
-		logger->debug("returned from poll(2): ret={}", ret);
+		logger->debug("Returned from poll(2): ret={}", ret);
 
 		for (unsigned i = 0; i < pfds.size(); i++) {
 			auto &pfd = pfds[i];

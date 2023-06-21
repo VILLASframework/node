@@ -13,14 +13,14 @@ CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 MAKE_THREADS=${MAKE_THREADS:-$(nproc)}
 MAKE_OPTS+="--jobs=${MAKE_THREADS}"
 
-git config --global http.postBuffer 524288000
-git config --global core.compression 0
+PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
+export PKG_CONFIG_PATH
 
-DIR=$(mktemp -d)
-pushd ${DIR}
+TMPDIR=$(mktemp -d)
+pushd ${TMPDIR}
 
 # Build & Install Criterion
-if ! pkg-config "criterion >= 2.3.1" && \
+if ! pkg-config "criterion >= 2.4.1" && \
    [ "${ARCH}" == "x86_64" ] && \
    [ -z "${SKIP_CRITERION}" ]; then
     git clone ${GIT_OPTS} --branch v2.3.3 --recursive https://github.com/Snaipe/Criterion
@@ -50,17 +50,17 @@ if ! ( pkg-config "lua >= 5.1" || \
        pkg-config "lua51" || \
        [ -n "${RTLAB_ROOT}" -a -f "/usr/local/include/lua.h" ] \
      ) && [ -z "${SKIP_LUA}" ]; then
-    wget http://www.lua.org/ftp/lua-5.3.6.tar.gz -O - | tar -xz
-    pushd lua-5.3.6
+    wget http://www.lua.org/ftp/lua-5.4.4.tar.gz -O - | tar -xz
+    pushd lua-5.4.4
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
-    make ${MAKE_OPTS} MYCFLAGS=-fPIC install
+    make ${MAKE_OPTS} MYCFLAGS=-fPIC INSTALL_TOP=${PREFIX} install
     popd
 fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
     [ -z "${SKIP_LIBMOSQUITTO}" ]; then
-    git clone ${GIT_OPTS} --branch v2.0.12 https://github.com/eclipse/mosquitto
+    git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto
     mkdir -p mosquitto/build
     pushd mosquitto/build
     cmake -DWITH_BROKER=OFF \
@@ -73,7 +73,7 @@ if ! pkg-config "libmosquitto >= 1.4.15" && \
 fi
 
 # Build & Install rabbitmq-c
-if ! pkg-config "librabbitmq >= 0.8.0" && \
+if ! pkg-config "librabbitmq >= 0.13.0" && \
     [ -z "${SKIP_LIBRABBITMQ}" ]; then
     git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c
     mkdir -p rabbitmq-c/build
@@ -98,7 +98,8 @@ if ! pkg-config "libzmq >= 2.2.0" && \
 fi
 
 # Build & Install EtherLab
-if [ -z "${SKIP_ETHERLAB}" ]; then
+if ! pkg-config "libethercat >= 1.5.2" && \
+    [ -z "${SKIP_ETHERLAB}" ]; then
    git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
@@ -110,10 +111,12 @@ fi
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.5.0" && \
     [ -z "${SKIP_LIBIEC61850}" ]; then
-    git clone ${GIT_OPTS} --branch v1.5 https://github.com/mz-automation/libiec61850
+    git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
-    cmake ${CMAKE_OPTS} ..
+    cmake -DBUILD_EXAMPLES=OFF \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
 fi
@@ -121,10 +124,12 @@ fi
 # Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
     [ -z "${SKIP_LIB60870}" ]; then
-    git clone ${GIT_OPTS} https://github.com/mz-automation/lib60870.git
+    git clone ${GIT_OPTS} --branch v2.3.2 https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
-    cmake ${CMAKE_OPTS} ../lib60870-C
+    cmake -DBUILD_EXAMPLES=OFF \
+          -DBUILD_TESTS=OFF \
+          ${CMAKE_OPTS} ../lib60870-C
     make ${MAKE_OPTS} install
     popd
 fi
@@ -132,11 +137,12 @@ fi
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
     [ -z "${SKIP_RDKAFKA}" ]; then
-    git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/edenhill/librdkafka
+    git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka
     mkdir -p librdkafka/build
     pushd librdkafka/build
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
           -DRDKAFKA_BUILD_EXAMPLES=OFF \
+          -DWITH_CURL=OFF \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
@@ -146,7 +152,7 @@ fi
 if ! ( pkg-config "libcgraph >= 2.30" && \
        pkg-config "libgvc >= 2.30" \
      ) && [ -z "${SKIP_GRAPHVIZ}" ]; then
-    git clone ${GIT_OPTS} --branch 2.49.0 https://gitlab.com/graphviz/graphviz.git
+    git clone ${GIT_OPTS} --branch 2.50.0 https://gitlab.com/graphviz/graphviz.git
     mkdir -p graphviz/build
     pushd graphviz/build
     cmake ${CMAKE_OPTS} ..
@@ -157,7 +163,7 @@ fi
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.2.0" && \
     [ -z "${SKIP_ULDAQ}" ]; then
-    git clone ${GIT_OPTS} --branch v1.2.0 https://github.com/mccdaq/uldaq
+    git clone ${GIT_OPTS} --branch v1.2.1 https://github.com/mccdaq/uldaq
     pushd uldaq
     autoreconf -i
     ./configure \
@@ -171,7 +177,7 @@ fi
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
      ) && [ -z "${SKIP_ULDAQ}" ]; then
-    git clone ${GIT_OPTS} --branch libnl3_5_0 https://github.com/thom311/libnl
+    git clone ${GIT_OPTS} --branch libnl3_7_0 https://github.com/thom311/libnl
     pushd libnl
     autoreconf -i
     ./configure \
@@ -220,7 +226,7 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
     [ -z "${SKIP_NANOMSG}" ]; then
-    git clone ${GIT_OPTS} --branch 1.1.5 https://github.com/nanomsg/nanomsg.git
+    git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake -DNN_TESTS=OFF \
@@ -236,7 +242,7 @@ fi
 # Build & Install libxil
 if ! pkg-config "libxil >= 1.0.0" && \
     [ -z "${SKIP_LIBXIL}" ]; then
-    git clone ${GIT_OPTS} --branch v0.1.0 https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
+    git clone ${GIT_OPTS} --branch master https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
     cmake ${CMAKE_OPTS} ..
@@ -246,8 +252,9 @@ fi
 
 # Build & Install hiredis
 if ! pkg-config "hiredis >= 1.0.0" && \
-    [ -z "${SKIP_HIREDIS}" -a -z "${SKIP_REDIS}" ]; then
-    git clone ${GIT_OPTS} --branch v1.0.0 https://github.com/redis/hiredis.git
+    [ -z "${SKIP_HIREDIS}" ] && \
+    [ -z "${SKIP_REDIS}" ]; then
+    git clone ${GIT_OPTS} --branch v1.1.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
     cmake -DDISABLE_TESTS=ON \
@@ -258,13 +265,15 @@ if ! pkg-config "hiredis >= 1.0.0" && \
 fi
 
 # Build & Install redis++
-if [ -z "${SKIP_REDISPP}" -a -z "${SKIP_REDIS}" ]; then
-    git clone ${GIT_OPTS} --branch 1.2.3 https://github.com/sewenew/redis-plus-plus.git
+if ! pkg-config "redis++ >= 1.2.3" && \
+    [ -z "${SKIP_REDISPP}" ] && \
+    [ -z "${SKIP_REDIS}" ]; then
+    git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
     # Somehow redis++ fails to find the hiredis include path on Debian multiarch builds
-    REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I/usr/local/include"
+    REDISPP_CMAKE_OPTS+="-DCMAKE_CXX_FLAGS=-I${PREFIX}/include"
 
     cmake -DREDIS_PLUS_PLUS_BUILD_TEST=OFF \
           -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
@@ -337,7 +346,7 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
 fi
 
 popd
-rm -rf ${DIR}
+rm -rf ${TMPDIR}
 
 # Update linker cache
 if [ -z "${SKIP_LDCONFIG}" ]; then

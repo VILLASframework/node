@@ -111,7 +111,7 @@ protected:
 				std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		}
 		std::cout << std::endl;
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 #ifdef WITH_API
 		std::cout << "Supported API commands:" << std::endl;
@@ -120,7 +120,7 @@ protected:
 				std::cout << " - " << std::left << std::setw(18) << p->getName() << p->getDescription() << std::endl;
 		}
 		std::cout << std::endl;
-#endif /* WITH_API */
+#endif // WITH_API
 
 		printCopyright();
 	}
@@ -204,9 +204,9 @@ protected:
 	}
 };
 
-} /* namespace tools */
-} /* namespace node */
-} /* namespace villas */
+} // namespace tools
+} // namespace node
+} // namespace villas
 
 int main(int argc, char *argv[])
 {

@@ -22,24 +22,6 @@ namespace api {
 
 class StatusRequest : public Request {
 
-protected:
-
-#ifdef LWS_WITH_SERVER_STATUS
-	json_t * getLwsStatus()
-	{
-		int ret;
-
-		struct lws_context *ctx = lws_get_context(session->wsi);
-		char buf[4096];
-
-		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
-		if (ret <= 0)
-			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to dump LWS context");
-
-		return json_loads(buf, 0, nullptr);
-	}
-#endif /* LWS_WITH_SERVER_STATUS */
-
 public:
 	using Request::Request;
 
@@ -128,10 +110,6 @@ public:
 		);
 		if (!json_status)
 			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to prepare response: {}", err.text);
-
-#ifdef LWS_WITH_SERVER_STATUS
-		json_object_set(json_status, "lws", getLwsStatus());
-#endif /* LWS_WITH_SERVER_STATUS */
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_status);
 	}
