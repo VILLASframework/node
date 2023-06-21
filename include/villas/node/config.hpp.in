@@ -59,3 +59,4 @@
 #cmakedefine LWS_DEFLATE_FOUND
 #cmakedefine REDISPP_WITH_TLS
 #cmakedefine REDISPP_WITH_URI
+#cmakedefine RABBITMQ_C_NEW_INCLUDE_DIR

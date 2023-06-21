@@ -8,7 +8,13 @@
 
 #pragma once
 
+#include <villas/node/config.hpp>
+
+#ifdef RABBITMQ_C_NEW_INCLUDE_DIR
+#include <rabbitmq-c/amqp.h>
+#else
 #include <amqp.h>
+#endif
 
 #include <villas/list.hpp>
 #include <villas/format.hpp>

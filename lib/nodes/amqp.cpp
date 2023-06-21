@@ -7,8 +7,15 @@
 
 #include <cstring>
 
+#include <villas/node/config.hpp>
+
+#ifdef RABBITMQ_C_NEW_INCLUDE_DIR
+#include <rabbitmq-c/ssl_socket.h>
+#include <rabbitmq-c/tcp_socket.h>
+#else
 #include <amqp_ssl_socket.h>
 #include <amqp_tcp_socket.h>
+#endif
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/amqp.hpp>
