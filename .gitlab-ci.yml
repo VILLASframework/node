@@ -7,7 +7,6 @@ variables:
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
-  MAKE_OPTS: "-j16"
   CMAKE_BUILD_OPTS: "--config Release --parallel 16"
 
 stages:
@@ -53,8 +52,8 @@ build:source:
   stage: build
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} ..
-  - cmake --build build ${CMAKE_BUILD_OPTS} 
+  - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}
+  - cmake --build build ${CMAKE_BUILD_OPTS}
   artifacts:
     expire_in: 1 week
     paths:
@@ -130,9 +129,8 @@ test:unit:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ..
-  - make ${MAKE_OPTS} run-unit-tests
+  - cmake -S . -B build ${CMAKE_OPTS}
+  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests
   tags:
   - docker
   needs:
@@ -143,9 +141,8 @@ test:integration:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ..
-  - make ${MAKE_OPTS} run-integration-tests
+  - cmake -S . -B build ${CMAKE_OPTS}
+  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
