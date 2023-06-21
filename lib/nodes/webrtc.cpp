@@ -153,7 +153,7 @@ int WebRTCNode::prepare()
 		if (ret < 0) // TODO log
 			return;
 
-		this->logger->debug("onMessage(rtc::binary) callback finished pushing {} samples", ret);
+		this->logger->trace("onMessage(rtc::binary) callback finished pushing {} samples", ret);
 	});
 
 	return 0;
