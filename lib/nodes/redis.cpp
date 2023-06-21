@@ -418,7 +418,7 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json)
 
 	/* Connection options */
 	if (uri)
-		r->options = sw::redis::ConnectionOptions(uri);
+		r->options = make_redis_connection_options(uri);
 
 	if (db >= 0)
 		r->options.db = db;

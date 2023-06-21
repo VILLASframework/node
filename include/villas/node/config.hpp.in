@@ -58,3 +58,4 @@
 /* Library features */
 #cmakedefine LWS_DEFLATE_FOUND
 #cmakedefine REDISPP_WITH_TLS
+#cmakedefine REDISPP_WITH_URI

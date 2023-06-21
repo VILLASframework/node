@@ -135,6 +135,14 @@ if (REDISPP_FOUND)
         set(REDISPP_WITH_TLS ON)
     endif()
     unset(CONTENTS)
+
+    # Redis++ had a breaking change between 1.3.6 and 1.3.7
+    # Detect this change by checking if the new header exists
+    #
+    # See https://github.com/sewenew/redis-plus-plus/commit/192ebae13583ff0611e2d7666a9c1e98a2a0dc86
+    if (EXISTS "${REDISPP_INCLUDEDIR}/sw/redis++/redis_uri.h")
+        set(REDISPP_WITH_URI ON)
+    endif()
 endif()
 
 # Check if libwebsockets is build with deflate extension
