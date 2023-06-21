@@ -29,7 +29,9 @@ prepare:docker:
   - docker build ${DOCKER_OPTS}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-      --target dev .
+      --target ${TARGET} .
+  variables:
+    TARGET: dev
   parallel:
     matrix:
     - DISTRO: [ ubuntu, debian, rocky ]
@@ -38,7 +40,9 @@ prepare:docker:
     - DISTRO: fedora
       DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
       DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
-
+    - DISTRO: fedora
+      TARGET: dev-vscode
+      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-vscode
   tags:
   - docker
 
@@ -246,6 +250,20 @@ deploy:docker-dev:
   - docker
   needs:
   - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
+
+deploy:docker-dev-vscode:
+  stage: deploy
+  image: docker:20.10
+  variables:
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  before_script:
+  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+  - docker push ${DOCKER_IMAGE}/dev-vscode:${DOCKER_TAG}
+  tags:
+  - docker
+  needs:
+  - job: "prepare:docker: [fedora, dev-vscode, ${DOCKER_IMAGE}/dev-vscode]"
 
 # Stage: latest
 ##############################################################################
