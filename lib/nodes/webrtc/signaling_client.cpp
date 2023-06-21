@@ -120,6 +120,8 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 		buffer.append((char *) in, len);
 
 		if (lws_is_final_fragment(wsi)) {
+			logger->trace("Received signaling message: {:.{}}", buffer.data(), buffer.size());
+
 			auto *json = buffer.decode();
 			if (json == nullptr) {
 				logger->error("Failed to decode JSON");
@@ -194,14 +196,16 @@ int SignalingClient::writable()
 		return 0;
 	}
 
-	char buf[LWS_PRE + 1024];
-	auto len = json_dumpb(jsonMsg, buf + LWS_PRE, 1024, JSON_INDENT(2));
+	char buf[LWS_PRE + 4096];
+	auto len = json_dumpb(jsonMsg, buf + LWS_PRE, 4096, JSON_INDENT(2));
+	if (len > sizeof(buf) - LWS_PRE)
+		return -1;
+
+	logger->trace("Sending signaling message: {:.{}}", buf + LWS_PRE, len);
 
 	auto ret = lws_write(wsi, (unsigned char *) buf + LWS_PRE, len, LWS_WRITE_TEXT);
 	if (ret < 0)
 		return ret;
-
-	logger->debug("Signaling message sent: {:.{}}", buf + LWS_PRE, len);
 
 	// Reschedule callback if there are more messages to be send
 	if (!outgoingMessages.empty())

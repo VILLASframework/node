@@ -25,7 +25,7 @@ static villas::node::Web *web;
 
 WebRTCNode::WebRTCNode(const std::string &name) :
 	Node(name),
-	server("wss://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
+	server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
 	wait_seconds(0),
 	format(nullptr),
 	queue({}),
@@ -153,7 +153,7 @@ int WebRTCNode::prepare()
 		if (ret < 0) // TODO log
 			return;
 
-		this->logger->debug("onMessage(rtc::binary) callback finished pushing {} samples", ret);
+		this->logger->trace("onMessage(rtc::binary) callback finished pushing {} samples", ret);
 	});
 
 	return 0;

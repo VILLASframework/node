@@ -41,9 +41,19 @@ namespace rtc {
 
 PeerConnection::PeerConnection(const std::string &server, const std::string &session, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
 	web(w),
+	extraServers({}),
 	dataChannelInit(d),
 	defaultConfig(cfg),
-	logger(logging.get("webrtc:pc"))
+	conn(nullptr),
+	chan(nullptr),
+	logger(logging.get("webrtc:pc")),
+	stopStartup(false),
+	warnNotConnected(false),
+	standby(true),
+	first(false),
+	firstID(INT_MAX),
+	secondID(INT_MAX),
+	onMessageCallback(nullptr)
 {
 	client = std::make_shared<SignalingClient>(server, session, web);
 	client->onConnected([this](){ this->onSignalingConnected(); });
