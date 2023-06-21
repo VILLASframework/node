@@ -145,6 +145,12 @@ if (REDISPP_FOUND)
     endif()
 endif()
 
+if (RABBITMQ_C_FOUND)
+    if (EXISTS "${RABBITMQ_C_INCLUDEDIR}/rabbitmq-c/amqp.h")
+        set(RABBITMQ_C_NEW_INCLUDE_DIR ON)
+    endif()
+endif()
+
 # Check if libwebsockets is build with deflate extension
 if(${CMAKE_VERSION} VERSION_LESS "3.12.4")
     set(LWS_LOCATION "${LIBWEBSOCKETS_LIBRARY_DIRS}/lib${LIBWEBSOCKETS_LIBRARIES}.so")
