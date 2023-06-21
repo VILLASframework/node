@@ -8,6 +8,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   MAKE_OPTS: "-j16"
+  CMAKE_BUILD_OPTS: "--config Release --parallel 16"
 
 stages:
 - prepare
@@ -48,9 +49,8 @@ build:source:
   stage: build
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - mkdir -p build && cd build
-  - cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} ..
-  - make ${MAKE_OPTS}
+  - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} ..
+  - cmake --build build ${CMAKE_BUILD_OPTS} 
   artifacts:
     expire_in: 1 week
     paths:
