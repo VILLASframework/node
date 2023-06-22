@@ -9,6 +9,7 @@
 #include <list>
 #include <cmath>
 #include <cstring>
+#include <byteswap.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/nodes/smu.hpp>
@@ -18,10 +19,14 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static int test = 0;
+static int readDataAvail = 0;
+static uint mem_pos = 0;
+
+static pthread_mutex_t mutex;
+static pthread_cond_t cv;
+
 
 SMUNode::SMUNode(const std::string &name) :
-	mem_pos(0),
 	daq_cfg_default({FS_10kSPS, FB_10FPS, MODE_FREERUN, SYNC_PPS})
 {
     return;
@@ -42,7 +47,7 @@ int SMUNode::start()
 	int ret = Node::start();
 
 
-    fd = open(SMU_DEV, O_RDWR);
+    fd = ::open(SMU_DEV, O_RDWR);
     if (fd < 0){
     //     /*SMU_LOGE(TAG,"[%1] fail to open the device driver");
     //     smuCFG->error.daq = SMU_ERR_DRV_NOT_FOUND;*/
@@ -55,7 +60,7 @@ int SMUNode::start()
         /*SMU_LOGE(TAG,"[%1] fail to register the driver");
         smuCFG->error.daq = SMU_ERR_DRV_NOT_ASSOC;*/
         logger->warn("fail to register the driver");
-        close(fd);
+        ::close(fd);
         // return;
     }
 
@@ -164,7 +169,7 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 {
 
 	//mem_pos = (info->si_value.sival_int);
-    test ++;
+    readDataAvail ++;
 
 	/* Signal uldaq_read() about new data */
 	//pthread_cond_signal(&u->in.cv);
@@ -173,35 +178,54 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 void SMUNode::data_available_signal(int, siginfo_t *info, void*)
 {
     
-	//mem_pos = (info->si_value.sival_int);
-    test ++;
+	mem_pos = (info->si_value.sival_int);
+    readDataAvail ++;
 	/* Signal uldaq_read() about new data */
-	//pthread_cond_signal(&u->in.cv);
+	pthread_cond_signal(&cv);
 }
 
 
 int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 {
-	struct Sample *t = smps[0];
+	
 
 	struct timespec ts;
 	ts.tv_sec = time(nullptr);
 	ts.tv_nsec = 0;
 
-	assert(cnt == 1);
+    pthread_mutex_lock(&mutex);
 
-	t->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
-	t->ts.origin = ts;
-	t->sequence = sequence++;
-	t->length = 1;
-	t->signals = in.signals;
-	sleep(10);
-	for (unsigned i = 0; i < t->length; i++) {
-		t->data[i].f = 1.0;
+	pthread_cond_wait(&cv, &mutex);
 
-	}
+    //cnt = 1;
 
-	return 1;
+    smu_mcsc_t* p = (smu_mcsc_t*)shared_mem;
+    //uint8_t tmp[1000 * 8 * 2];
+    //memcpy(tmp, &p[mem_pos], 1000 * 8 * 2);
+    for (unsigned j = 0; j < cnt; j++) {//it is always 100 samples per packet
+        struct Sample *t = smps[j];
+
+        for (unsigned i = 0; i < 8; i++) {
+            int16_t data = p[mem_pos].ch[i];
+            //data = (data >> 8) | (data << 8);
+            //t->data[i].f = ((float)data_swaped);
+            t->data[i].f = ((float)data);
+        }
+        mem_pos++;
+        t->data[8].i = mem_pos;
+        t->data[9].i = readDataAvail;
+
+        t->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
+        t->ts.origin = ts;
+        t->sequence = sequence++;
+        t->length = 14;
+        t->signals = in.signals;
+    }
+
+	pthread_mutex_unlock(&mutex);
+
+
+	return cnt;
 }
 
 static char n[] = "smu";

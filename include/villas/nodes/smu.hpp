@@ -193,7 +193,6 @@ class SMUNode : public Node {
 
 private:
 	float counter;
-    uint mem_pos;
     smu_daq_t daq_cfg_default;
     int fd;
     uint8_t* shared_mem;
