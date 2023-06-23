@@ -2,7 +2,7 @@
   description = "a tool for connecting real-time power grid simulation equipment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
 
     common = {
       url = "github:VILLASframework/common";
@@ -55,18 +55,23 @@
     # generate attributes corresponding to all supported combinations of system and crossSystem
     forSupportedCrossSystems = f: forSupportedSystems (system: lib.genAttrs supportedCrossSystems (f system));
 
-    # this overlay can be applied to nixpkgs (see `pkgsFor` below for an example)
-    overlay = final: prev: packagesWith final;
-
     # initialize nixpkgs for the specified `system`
     pkgsFor = system:
       import nixpkgs {
         inherit system;
-        overlays = [overlay];
+        overlays = [self.overlays.default];
       };
 
     # initialize nixpkgs for cross-compiling from `system` to `crossSystem`
-    crossPkgsFor = system: crossSystem: (pkgsFor system).pkgsCross.${crossSystem};
+    crossPkgsFor = system: crossSystem:
+      (import nixpkgs {
+        inherit system;
+        overlays = [
+          self.overlays.default
+          self.overlays.minimal
+        ];
+      })
+      .pkgsCross.${crossSystem};
 
     # build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
@@ -113,7 +118,11 @@
 
     # standard flake attribute allowing you to add the villas packages to your nixpkgs
     overlays = {
-      default = overlay;
+      default = final: prev: packagesWith final;
+      minimal = final: prev: {
+        mosquitto = prev.mosquitto.override {systemd = final.systemdMinimal;};
+        rdma-core = prev.rdma-core.override {udev = final.systemdMinimal;};
+      };
     };
 
     # standard flake attribute for defining developer environments
