@@ -7,7 +7,8 @@ variables:
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
-  CMAKE_BUILD_OPTS: "--config Release --parallel 16"
+  CMAKE_BUILD_OPTS: "--parallel 16"
+  CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
 
 stages:
 - prepare
@@ -64,7 +65,8 @@ build:source:
     matrix:
     - DISTRO: [ fedora, fedora-minimal, debian, rocky, ubuntu ]
     - DISTRO: fedora-minimal
-      CMAKE_EXTRA_OPTS: -DWITH_API=OFF
+      CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+                  -DWITH_API=OFF
                   -DWITH_CLIENTS=OFF
                   -DWITH_CONFIG=OFF
                   -DWITH_DOC=OFF
@@ -183,7 +185,7 @@ pkg:docker:
       --target ${TARGET}
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
-      --build-arg CMAKE_OPTS="${CMAKE_OPTS}"
+      --build-arg CMAKE_OPTS="${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}"
       --platform ${PLATFORM}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .

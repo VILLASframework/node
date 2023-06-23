@@ -69,6 +69,7 @@ ADD cmake/toolchains/debian-${ARCH}.cmake /
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
 
 ENV CMAKE_EXTRA_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
+				-DCMAKE_BUILD_TYPE=Release \
 				-DCMAKE_PREFIX_PATH=${PREFIX} \
 				-DCMAKE_INSTALL_PREFIX=${PREFIX} \
 				-DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib/${TRIPLET} \

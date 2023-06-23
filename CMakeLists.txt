@@ -54,7 +54,7 @@ include(FindSymbol)
 include(CMakeDependentOption)
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
-add_compile_options(-Wall -Wno-unknown-pragmas -Werror -fdiagnostics-color=auto)
+add_compile_options(-Wall -Wno-unknown-pragmas -fdiagnostics-color=auto)
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
@@ -213,11 +213,26 @@ cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"       
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        ON "WITH_WEB; LIBWEBSOCKETS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           ON "LIBZMQ_FOUND;NOT WITHOUT_GPL" OFF)
 
+# set a default for the build type
+if("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 # Add more build configurations
 include(cmake/config/Debug.cmake)
 include(cmake/config/Release.cmake)
 include(cmake/config/Coverage.cmake)
 include(cmake/config/Profiling.cmake)
+
+if(NOT DEFINED VILLAS_COMPILE_WARNING_AS_ERROR)
+    set(VILLAS_COMPILE_WARNING_AS_ERROR ON)
+endif()
+
+if(VILLAS_COMPILE_WARNING_AS_ERROR)
+    add_compile_options(-Werror)
+else()
+    add_compile_options(-Wno-error)
+endif()
 
 # Get version info and buildid from Git
 GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
