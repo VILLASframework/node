@@ -117,7 +117,7 @@ int villas::node::queue_signalled_push(struct CQueueSignalled *qs, void *ptr)
 	int pushed;
 
 	pushed = queue_push(&qs->queue, ptr);
-	if (pushed < 0)
+	if (pushed <= 0)
 		return pushed;
 
 	if (qs->mode == QueueSignalledMode::PTHREAD) {
@@ -148,7 +148,7 @@ int villas::node::queue_signalled_push_many(struct CQueueSignalled *qs, void *pt
 	int pushed;
 
 	pushed = queue_push_many(&qs->queue, ptr, cnt);
-	if (pushed < 0)
+	if (pushed <= 0)
 		return pushed;
 
 	if (qs->mode == QueueSignalledMode::PTHREAD) {
