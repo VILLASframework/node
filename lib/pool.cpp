@@ -17,17 +17,19 @@ using namespace villas;
 int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz, struct memory::Type *m)
 {
 	int ret;
+	auto logger = logging.get("pool");
 
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
 	p->alignment = kernel::getCachelineSize();
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
 
+	logger->debug("New memory pool: alignment={}, blocksz={}, len={}, memory={}", p->alignment, p->blocksz, p->len, m->name);
+
 	void *buffer = memory::alloc_aligned(p->len, p->alignment, m);
 	if (!buffer)
 		throw MemoryAllocationError();
 
-	auto logger = logging.get("pool");
 	logger->debug("Allocated {:#x} bytes for memory pool", p->len);
 
 	p->buffer_off = (char*) buffer - (char*) p;

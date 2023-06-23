@@ -9,6 +9,7 @@
 #include <criterion/parameterized.h>
 
 #include <signal.h>
+#include <vector>
 
 #include <villas/pool.hpp>
 #include <villas/utils.hpp>
@@ -29,14 +30,15 @@ struct param {
 
 ParameterizedTestParameters(pool, basic)
 {
-	static struct param params[] = {
-		{ 1, 4096,    150,  &memory::heap },
-		{ 1, 128,     8,    &memory::mmap },
-		{ 1, 4,       8192, &memory::mmap_hugetlb },
-		{ 1, 1 << 13, 4,    &memory::mmap_hugetlb }
-	};
+	static std::vector<struct param> params;
 
-	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+	params.clear();
+	params.push_back({ 1, 4096,    150,  &memory::heap });
+	params.push_back({ 1, 128,     8,    &memory::mmap });
+	params.push_back({ 1, 4,       8192, &memory::mmap_hugetlb });
+	params.push_back({ 1, 1 << 13, 4,    &memory::mmap_hugetlb });
+
+	return cr_make_param_array(struct param, params.data(), params.size());
 }
 
 // cppcheck-suppress unknownMacro
@@ -44,11 +46,9 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;
 	struct Pool pool;
-
-	// some strange LTO stuff is going on here..
-	auto *m  __attribute__((unused)) = &memory::mmap;
-
 	void *ptr, *ptrs[p->pool_size];
+
+	logging.setLevel("trace");
 
 	if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
 		cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are running in an unprivileged environment.");
