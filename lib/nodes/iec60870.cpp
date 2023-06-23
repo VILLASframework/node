@@ -256,8 +256,11 @@ std::optional<ASDUData::Sample> ASDUData::checkASDU(CS101_ASDU const &asdu) cons
 
 bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 	std::optional<CP56Time2a> timestamp = sample.timestamp.has_value()
-		? std::optional { timespec_to_cp56time2a(sample.timestamp.value()) }
+		? std::optional { timespec_to_cp56time2a(*sample.timestamp) }
 		: std::nullopt;
 
 	InformationObject io = nullptr;
@@ -341,6 +344,7 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu, ASDUData::Sample sample) const
 	InformationObject_destroy(io);
 
 	return successfully_added;
+#pragma GCC diagnostic pop
 }
 
 ASDUData::ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start) : ioa(ioa), ioa_sequence_start(ioa_sequence_start), descriptor(descriptor)
