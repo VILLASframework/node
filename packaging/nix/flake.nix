@@ -122,19 +122,20 @@
         pkgs = pkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
+        packages = with pkgs; [criterion];
       in rec {
         default = full;
 
         minimal = pkgs.mkShell {
-          inherit shellHook hardeningDisable;
+          inherit shellHook hardeningDisable packages;
           name = "minimal";
-          inputsFrom = [pkgs.villas-minimal];
+          inputsFrom = with pkgs; [villas-minimal];
         };
 
         full = pkgs.mkShell {
-          inherit shellHook hardeningDisable;
+          inherit shellHook hardeningDisable packages;
           name = "full";
-          inputsFrom = [pkgs.villas];
+          inputsFrom = with pkgs; [villas];
         };
       }
     );
