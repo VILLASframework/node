@@ -294,15 +294,15 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg)
 		},
 
 		[&](ControlMessage &c){
-			auto const &id = c.connectionID;
+			auto const &id = c.peerID;
 
-			if (c.connections.size() < 2) {
+			if (c.peers.size() < 2) {
 				resetConnectionAndStandby(lock);
 				return;
 			}
 
 			auto fst = INT_MAX, snd = INT_MAX;
-			for (auto &c : c.connections) {
+			for (auto &c : c.peers) {
 				if (c.id < fst) {
 					snd = fst;
 					fst = c.id;

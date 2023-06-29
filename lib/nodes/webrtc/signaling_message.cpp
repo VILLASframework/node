@@ -17,33 +17,42 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-json_t * Connection::toJSON() const
+json_t * Peer::toJSON() const
 {
-	return json_pack("{ s:i, s:s, s:s, s:s }",
+	return json_pack("{ s:i, s:s*, s:s*, s:s* }",
 		"id", id,
-		"remote", remote.c_str(),
-		"user_agent", userAgent.c_str(),
-		"created", "" // TODO: create json timestamp
+		"name", name.empty() ? nullptr : name.c_str(),
+		"remote", remote.empty() ? nullptr : remote.c_str(),
+		"user_agent", userAgent.empty() ? nullptr : userAgent.c_str()
+		// TODO: created, connected
 	);
 }
 
-Connection::Connection(json_t *json)
+Peer::Peer(json_t *json)
 {
-	const char *rem, *ua, *ts;
+	const char *nme = nullptr, *rem = nullptr, *ua = nullptr, *tscreat, *tsconn;
 
-	int ret = json_unpack(json, "{ s:i, s:s, s:s, s:s }",
+	int ret = json_unpack(json, "{ s:i, s?:s, s?:s, s?:s, s?:s, s?: s }",
 		"id", &id,
+		"name", &nme,
 		"remote", &rem,
 		"user_agent", &ua,
-		"created", &ts
+		"created", &tscreat,
+		"connected", &tsconn
 	);
 	if (ret)
 		throw RuntimeError("Failed to decode signaling message");
 
-	remote = rem;
-	userAgent = ua;
+	if (nme)
+		name = nme;
 
-	// TODO: created
+	if (rem)
+		remote = rem;
+
+	if (ua)
+		userAgent = ua;
+
+	// TODO: created, connected
 }
 
 RelayMessage::RelayMessage(json_t *json)
@@ -82,17 +91,17 @@ RelayMessage::RelayMessage(json_t *json)
 
 json_t * ControlMessage::toJSON() const
 {
-	json_t *json_connections = json_array();
+	json_t *json_peers = json_array();
 
-	for (auto &c : connections) {
-		json_t *json_connection = c.toJSON();
+	for (auto &p : peers) {
+		json_t *json_peer = p.toJSON();
 
-		json_array_append_new(json_connections, json_connection);
+		json_array_append_new(json_peers, json_peer);
 	}
 
 	return json_pack("{ s:i, s:o }",
-		"connection_id", connectionID,
-		"connections", json_connections
+		"peer_id", peerID,
+		"peers", json_peers
 	);
 }
 
@@ -100,23 +109,23 @@ ControlMessage::ControlMessage(json_t *j)
 {
 	int ret;
 
-	json_t *json_connections;
+	json_t *json_peers;
 
 	ret = json_unpack(j, "{ s:i, s:o }",
-		"connection_id", &connectionID,
-		"connections", &json_connections
+		"peer_id", &peerID,
+		"peers", &json_peers
 	);
 	if (ret)
 		throw RuntimeError("Failed to decode signaling message");
 
-	if (!json_is_array(json_connections))
+	if (!json_is_array(json_peers))
 		throw RuntimeError("Failed to decode signaling message");
 
-	json_t *json_connection;
+	json_t *json_peer;
 	size_t i;
 	// cppcheck-suppress unknownMacro
-	json_array_foreach(json_connections, i, json_connection)
-		connections.emplace_back(json_connection);
+	json_array_foreach(json_peers, i, json_peer)
+		peers.emplace_back(json_peer);
 }
 
 json_t * SignalingMessage::toJSON() const

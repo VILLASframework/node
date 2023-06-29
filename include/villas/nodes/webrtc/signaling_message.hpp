@@ -22,13 +22,14 @@ namespace villas {
 namespace node {
 namespace webrtc {
 
-struct Connection {
+struct Peer {
 	int id;
+	std::string name;
 	std::string remote;
 	std::string userAgent;
 	std::chrono::time_point<std::chrono::system_clock> created;
 
-	Connection(json_t *j);
+	Peer(json_t *j);
 	json_t * toJSON() const;
 };
 
@@ -39,8 +40,8 @@ struct RelayMessage {
 };
 
 struct ControlMessage {
-	int connectionID;
-	std::vector<Connection> connections;
+	int peerID;
+	std::vector<Peer> peers;
 
 	ControlMessage(json_t *j);
 	json_t * toJSON() const;
