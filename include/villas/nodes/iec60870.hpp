@@ -48,7 +48,7 @@ public:
 	};
 
 	// Parse the config json
-	static ASDUData parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
+	static ASDUData parse(json_t *json_signal, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
 
 	// Does this data include a timestamp
 	bool hasTimestamp() const;

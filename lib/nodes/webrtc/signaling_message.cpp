@@ -67,10 +67,10 @@ RelayMessage::RelayMessage(json_t *json)
 	char *pass;
 	char *realm;
 	char *expires;
-	json_t *server_json;
+	json_t *json_server;
 	size_t i;
-	json_array_foreach(json, i, server_json) {
-		ret = json_unpack(server_json, "{ s:s, s:s, s:s, s:s, s:s }",
+	json_array_foreach(json, i, json_server) {
+		ret = json_unpack(json_server, "{ s:s, s:s, s:s, s:s, s:s }",
 			"url", &url,
 			"user", &user,
 			"pass", &pass,

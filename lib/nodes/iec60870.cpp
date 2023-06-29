@@ -35,7 +35,7 @@ static timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 	return time;
 }
 
-ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence) {
+ASDUData ASDUData::parse(json_t *json_signal, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence) {
 	json_error_t err;
 	char const *asdu_type_name = nullptr;
 	int with_timestamp = -1;
@@ -43,13 +43,13 @@ ASDUData ASDUData::parse(json_t *signal_json, std::optional<ASDUData> last_data,
 	std::optional<int> ioa_sequence_start = std::nullopt;
 	int ioa = -1;
 
-	if (json_unpack_ex(signal_json, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
+	if (json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: b, s?: s, s: i }",
 		"asdu_type", &asdu_type_name,
 		"with_timestamp", &with_timestamp,
 		"asdu_type_id", &asdu_type_id,
 		"ioa", &ioa
 	))
-		throw ConfigError(signal_json, err, "node-config-node-iec60870-5-104");
+		throw ConfigError(json_signal, err, "node-config-node-iec60870-5-104");
 
 	// Increase the ioa if it is found twice to make it a sequence
 	if (	duplicate_ioa_is_sequence &&
@@ -671,7 +671,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	json_error_t err;
 	auto signals = getOutputSignals();
 
-	json_t *out_json = nullptr;
+	json_t *json_out = nullptr;
 	char const *address = nullptr;
 	int apci_t0 = -1;
 	int apci_t1 = -1;
@@ -681,7 +681,7 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	int apci_w = -1;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
-		"out", &out_json,
+		"out", &json_out,
 		"address", &address,
 		"port", &server.local_port,
 		"ca", &server.common_address,
@@ -718,28 +718,28 @@ int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (address)
 		server.local_address = address;
 
-	json_t *signals_json = nullptr;
+	json_t *json_signals = nullptr;
 	int duplicate_ioa_is_sequence = false;
 
-	if (out_json) {
+	if (json_out) {
 		output.enabled = true;
 
-		ret = json_unpack_ex(out_json, &err, 0, "{ s: o, s?: b }",
-			"signals", &signals_json,
+		ret = json_unpack_ex(json_out, &err, 0, "{ s: o, s?: b }",
+			"signals", &json_signals,
 			"duplicate_ioa_is_sequence", &duplicate_ioa_is_sequence
 		);
 		if (ret)
-			throw ConfigError(out_json, err, "node-config-node-iec60870-5-104");
+			throw ConfigError(json_out, err, "node-config-node-iec60870-5-104");
 	}
 
-	if (signals_json) {
-		json_t *signal_json;
+	if (json_signals) {
+		json_t *json_signal;
 		size_t i;
 		std::optional<ASDUData> last_data = std::nullopt;
 
-		json_array_foreach(signals_json, i, signal_json) {
+		json_array_foreach(json_signals, i, json_signal) {
 			auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
-			auto asdu_data = ASDUData::parse(signal_json, last_data, duplicate_ioa_is_sequence);
+			auto asdu_data = ASDUData::parse(json_signal, last_data, duplicate_ioa_is_sequence);
 			last_data = asdu_data;
 			SignalData initial_value;
 

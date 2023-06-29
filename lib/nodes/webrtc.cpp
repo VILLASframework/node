@@ -53,8 +53,8 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 	const char *pr = nullptr;
 	int ord = -1;
 	int &rexmit = dci.reliability.rexmit.emplace<int>(0);
-	json_t *ice_json = nullptr;
-	json_t *fmt_json = nullptr;
+	json_t *json_ice = nullptr;
+	json_t *json_format = nullptr;
 
 	json_error_t err;
 	ret = json_unpack_ex(json, &err, 0, "{ s:s, s?:s, s?s, s?i, s?i, s?b, s?o }",
@@ -64,8 +64,8 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 		"wait_seconds", &wait_seconds,
 		"max_retransmits", &rexmit,
 		"ordered", &ord,
-		"ice", &ice_json,
-		"format", &fmt_json
+		"ice", &json_ice,
+		"format", &json_format
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-webrtc");
@@ -81,10 +81,10 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (ord)
 		dci.reliability.unordered = !ord;
 
-	if (ice_json) {
+	if (json_ice) {
 		json_t *json_servers = nullptr;
 
-		ret = json_unpack_ex(ice_json, &err, 0, "{ s?: o }",
+		ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o }",
 			"servers", &json_servers
 		);
 		if (ret)
@@ -109,8 +109,8 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 		}
 	}
 
-	format = fmt_json
-		? FormatFactory::make(fmt_json)
+	format = json_format
+		? FormatFactory::make(json_format)
 		: FormatFactory::make("villas.binary");
 
 	assert(format);
