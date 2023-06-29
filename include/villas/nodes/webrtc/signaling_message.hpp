@@ -18,6 +18,8 @@
 #include <rtc/rtc.hpp>
 #include <jansson.h>
 
+#include <villas/signal_list.hpp>
+
 namespace villas {
 namespace node {
 namespace webrtc {
@@ -48,7 +50,7 @@ struct ControlMessage {
 };
 
 struct SignalingMessage {
-	std::variant<std::monostate, RelayMessage, ControlMessage, rtc::Description, rtc::Candidate> message;
+	std::variant<std::monostate, RelayMessage, ControlMessage, SignalList, rtc::Description, rtc::Candidate> message;
 
 	static SignalingMessage fromJSON(json_t *j);
 	json_t * toJSON() const;

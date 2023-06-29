@@ -39,13 +39,14 @@ namespace rtc {
 	using ::operator<<;
 }
 
-PeerConnection::PeerConnection(const std::string &server, const std::string &session, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
+PeerConnection::PeerConnection(const std::string &server, const std::string &session,  const std::string &peer, std::shared_ptr<SignalList> signals, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
 	web(w),
 	extraServers({}),
 	dataChannelInit(d),
 	defaultConfig(cfg),
 	conn(nullptr),
 	chan(nullptr),
+	signals(signals),
 	logger(logging.get("webrtc:pc")),
 	stopStartup(false),
 	warnNotConnected(false),
@@ -262,6 +263,10 @@ void PeerConnection::onGatheringStateChange(rtc::PeerConnection::GatheringState 
 void PeerConnection::onSignalingConnected()
 {
 	logger->debug("Signaling connection established");
+
+	auto lock = std::unique_lock { mutex };
+
+	client->sendMessage({ *signals });
 }
 
 void PeerConnection::onSignalingDisconnected()

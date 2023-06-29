@@ -131,7 +131,10 @@ int WebRTCNode::prepare()
 
 	format->start(getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	conn = std::make_shared<webrtc::PeerConnection>(server, session, rtcConf, web, dci);
+	// TODO: Determine output signals reliably
+	auto signals = std::make_shared<SignalList>();
+
+	conn = std::make_shared<webrtc::PeerConnection>(server, session, peer, signals, rtcConf, web, dci);
 
 	ret = pool_init(&pool, 1024, SAMPLE_LENGTH(getInputSignals(false)->size()));
 	if (ret) // TODO log

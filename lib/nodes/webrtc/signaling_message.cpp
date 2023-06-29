@@ -134,6 +134,9 @@ json_t * SignalingMessage::toJSON() const
 		[](ControlMessage const &c){
 			return json_pack("{ s:o }", "control", c.toJSON());
 		},
+		[](SignalList const &s){
+			return json_pack("{ s:o }", "signals", s.toJson());
+		},
 		[](rtc::Description const &d){
 			return json_pack("{ s:{ s:s, s:s } }", "description",
 				"spd", d.generateSdp().c_str(),
@@ -161,6 +164,9 @@ std::string SignalingMessage::toString() const
 		[](ControlMessage const &c){
 			return fmt::format("type=control, control={}", json_dumps(c.toJSON(), 0));
 		},
+		[](SignalList const &s){
+			return fmt::format("type=signal");
+		},
 		[](rtc::Description const &d){
 			return fmt::format("type=description, type={}, spd=\n{}", d.typeString(), d.generateSdp());
 		},
@@ -179,6 +185,8 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 
 	// Relay message
 	json_t *rlys = nullptr;
+	// Signal message
+	json_t *sigs = nullptr;
 	// Control message
 	json_t *ctrl = nullptr;
 	// Candidate message
@@ -188,8 +196,9 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 	const char *desc = nullptr;
 	const char *typ = nullptr;
 
-	int ret = json_unpack(json, "{ s?o, s?o, s?{ s:s, s:s }, s?{ s:s, s:s } }",
+	int ret = json_unpack(json, "{ s?o, s?o, s?o, s?{ s:s, s:s }, s?{ s:s, s:s } }",
 		"servers", &rlys,
+		"signals", &sigs,
 		"control", &ctrl,
 		"candidate",
 			"spd", &cand,
@@ -206,6 +215,9 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 
 	if (rlys) {
 		self.message.emplace<RelayMessage>(rlys);
+	}
+	else if (sigs) {
+		self.message.emplace<SignalList>(sigs);
 	}
 	else if (ctrl) {
 		self.message.emplace<ControlMessage>(ctrl);
