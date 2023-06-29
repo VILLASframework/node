@@ -19,7 +19,7 @@ using namespace villas::node::webrtc;
 
 json_t * Peer::toJson() const
 {
-	return json_pack("{ s:i, s:s*, s:s*, s:s* }",
+	return json_pack("{ s: i, s: s*, s: s*, s: s* }",
 		"id", id,
 		"name", name.empty() ? nullptr : name.c_str(),
 		"remote", remote.empty() ? nullptr : remote.c_str(),
@@ -32,7 +32,7 @@ Peer::Peer(json_t *json)
 {
 	const char *nme = nullptr, *rem = nullptr, *ua = nullptr, *tscreat, *tsconn;
 
-	int ret = json_unpack(json, "{ s:i, s?:s, s?:s, s?:s, s?:s, s?: s }",
+	int ret = json_unpack(json, "{ s: i, s?: s, s?: s, s?: s, s?: s, s?: s }",
 		"id", &id,
 		"name", &nme,
 		"remote", &rem,
@@ -70,7 +70,7 @@ RelayMessage::RelayMessage(json_t *json)
 	json_t *json_server;
 	size_t i;
 	json_array_foreach(json, i, json_server) {
-		ret = json_unpack(json_server, "{ s:s, s:s, s:s, s:s, s:s }",
+		ret = json_unpack(json_server, "{ s: s, s: s, s: s, s: s, s: s }",
 			"url", &url,
 			"user", &user,
 			"pass", &pass,
@@ -99,7 +99,7 @@ json_t * ControlMessage::toJson() const
 		json_array_append_new(json_peers, json_peer);
 	}
 
-	return json_pack("{ s:i, s:o }",
+	return json_pack("{ s: i, s: o }",
 		"peer_id", peerID,
 		"peers", json_peers
 	);
@@ -111,7 +111,7 @@ ControlMessage::ControlMessage(json_t *j)
 
 	json_t *json_peers;
 
-	ret = json_unpack(j, "{ s:i, s:o }",
+	ret = json_unpack(j, "{ s: i, s: o }",
 		"peer_id", &peerID,
 		"peers", &json_peers
 	);
@@ -132,19 +132,19 @@ json_t * SignalingMessage::toJson() const
 {
 	return std::visit(villas::utils::overloaded {
 		[](ControlMessage const &c){
-			return json_pack("{ s:o }", "control", c.toJson());
+			return json_pack("{ s: o }", "control", c.toJson());
 		},
 		[](SignalList const &s){
-			return json_pack("{ s:o }", "signals", s.toJson());
+			return json_pack("{ s: o }", "signals", s.toJson());
 		},
 		[](rtc::Description const &d){
-			return json_pack("{ s:{ s:s, s:s } }", "description",
+			return json_pack("{ s: { s: s, s: s } }", "description",
 				"spd", d.generateSdp().c_str(),
 				"type", d.typeString().c_str()
 			);
 		},
 		[](rtc::Candidate const &c){
-			return json_pack("{ s:{ s:s, s:s } }", "candidate",
+			return json_pack("{ s: { s: s, s: s } }", "candidate",
 				"spd", c.candidate().c_str(),
 				"mid", c.mid().c_str()
 			);
@@ -196,7 +196,7 @@ SignalingMessage SignalingMessage::fromJson(json_t *json)
 	const char *desc = nullptr;
 	const char *typ = nullptr;
 
-	int ret = json_unpack(json, "{ s?o, s?o, s?o, s?{ s:s, s:s }, s?{ s:s, s:s } }",
+	int ret = json_unpack(json, "{ s?: o, s?: o, s?: o, s?: { s: s, s: s }, s?: { s: s, s: s } }",
 		"servers", &rlys,
 		"signals", &sigs,
 		"control", &ctrl,

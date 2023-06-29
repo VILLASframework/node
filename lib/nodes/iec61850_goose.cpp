@@ -744,7 +744,7 @@ void GooseNode::parseOutput(json_t *json)
 	json_t *json_publishers = nullptr;
 	json_t *json_signals = nullptr;
 	char const *interface_id = output.interface_id.c_str();
-	ret = json_unpack_ex(json, &err, 0, "{ s:o, s:o, s?:s, s?:f }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o, s?: s, s?: f }",
 		"publishers", &json_publishers,
 		"signals", &json_signals,
 		"interface", &interface_id,
@@ -773,7 +773,7 @@ void GooseNode::parsePublisherData(json_t *json, std::vector<OutputData> &data)
 		char const *signal_str = nullptr;
 		json_t *json_value = nullptr;
 		int bitstring_size = -1;
-		ret = json_unpack_ex(json_signal_or_value, &err, 0, "{ s:s, s?:s, s?:o, s?:i }",
+		ret = json_unpack_ex(json_signal_or_value, &err, 0, "{ s: s, s?: s, s?: o, s?: i }",
 			"mms_type", &mms_type,
 			"signal", &signal_str,
 			"value", &json_value,
@@ -824,7 +824,7 @@ void GooseNode::parsePublisher(json_t *json, PublisherConfig &pc)
 	int time_allowed_to_live = 0;
 	int burst = 1;
 	json_t *json_data = nullptr;
-	ret = json_unpack_ex(json, &err, 0, "{ s:s, s:s, s:s, s:s, s:i, s:i, s:i, s?:i, s:o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s: s, s: s, s: i, s: i, s: i, s?: i, s: o }",
 		"go_id", &go_id,
 		"go_cb_ref", &go_cb_ref,
 		"data_set_ref", &data_set_ref,
