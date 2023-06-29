@@ -135,7 +135,7 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 				goto do_retry;
 			}
 
-			cbMessage(SignalingMessage::fromJSON(json));
+			cbMessage(SignalingMessage::fromJson(json));
 
 			json_decref(json);
 		}
@@ -197,7 +197,7 @@ int SignalingClient::writable()
 	}
 
 	auto msg = outgoingMessages.pop();
-	auto *jsonMsg = msg.toJSON();
+	auto *jsonMsg = msg.toJson();
 
 	if (!jsonMsg) {
 		return 0;

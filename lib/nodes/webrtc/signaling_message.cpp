@@ -17,7 +17,7 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-json_t * Peer::toJSON() const
+json_t * Peer::toJson() const
 {
 	return json_pack("{ s:i, s:s*, s:s*, s:s* }",
 		"id", id,
@@ -89,12 +89,12 @@ RelayMessage::RelayMessage(json_t *json)
 	}
 }
 
-json_t * ControlMessage::toJSON() const
+json_t * ControlMessage::toJson() const
 {
 	json_t *json_peers = json_array();
 
 	for (auto &p : peers) {
-		json_t *json_peer = p.toJSON();
+		json_t *json_peer = p.toJson();
 
 		json_array_append_new(json_peers, json_peer);
 	}
@@ -128,11 +128,11 @@ ControlMessage::ControlMessage(json_t *j)
 		peers.emplace_back(json_peer);
 }
 
-json_t * SignalingMessage::toJSON() const
+json_t * SignalingMessage::toJson() const
 {
 	return std::visit(villas::utils::overloaded {
 		[](ControlMessage const &c){
-			return json_pack("{ s:o }", "control", c.toJSON());
+			return json_pack("{ s:o }", "control", c.toJson());
 		},
 		[](SignalList const &s){
 			return json_pack("{ s:o }", "signals", s.toJson());
@@ -162,7 +162,7 @@ std::string SignalingMessage::toString() const
 			return fmt::format("type=relay");
 		},
 		[](ControlMessage const &c){
-			return fmt::format("type=control, control={}", json_dumps(c.toJSON(), 0));
+			return fmt::format("type=control, control={}", json_dumps(c.toJson(), 0));
 		},
 		[](SignalList const &s){
 			return fmt::format("type=signal");
@@ -179,7 +179,7 @@ std::string SignalingMessage::toString() const
 	}, message);
 }
 
-SignalingMessage SignalingMessage::fromJSON(json_t *json)
+SignalingMessage SignalingMessage::fromJson(json_t *json)
 {
 	auto self = SignalingMessage { std::monostate() };
 

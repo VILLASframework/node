@@ -32,7 +32,7 @@ struct Peer {
 	std::chrono::time_point<std::chrono::system_clock> created;
 
 	Peer(json_t *j);
-	json_t * toJSON() const;
+	json_t * toJson() const;
 };
 
 struct RelayMessage {
@@ -46,14 +46,14 @@ struct ControlMessage {
 	std::vector<Peer> peers;
 
 	ControlMessage(json_t *j);
-	json_t * toJSON() const;
+	json_t * toJson() const;
 };
 
 struct SignalingMessage {
 	std::variant<std::monostate, RelayMessage, ControlMessage, SignalList, rtc::Description, rtc::Candidate> message;
 
-	static SignalingMessage fromJSON(json_t *j);
-	json_t * toJSON() const;
+	static SignalingMessage fromJson(json_t *j);
+	json_t * toJson() const;
 	std::string toString() const;
 };
 
