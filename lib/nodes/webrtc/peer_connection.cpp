@@ -55,7 +55,7 @@ PeerConnection::PeerConnection(const std::string &server, const std::string &ses
 	secondID(INT_MAX),
 	onMessageCallback(nullptr)
 {
-	client = std::make_shared<SignalingClient>(server, session, web);
+	client = std::make_shared<SignalingClient>(server, session, peer, web);
 	client->onConnected([this](){ this->onSignalingConnected(); });
 	client->onDisconnected([this](){ this->onSignalingDisconnected(); });
 	client->onError([this](auto err){ this->onSignalingError(std::move(err)); });

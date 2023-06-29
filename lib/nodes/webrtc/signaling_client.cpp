@@ -7,16 +7,20 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#include <fmt/format.h>
+
+#include <villas/utils.hpp>
 #include <villas/web.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 #include <villas/nodes/webrtc/signaling_message.hpp>
 
 using namespace villas;
+using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-SignalingClient::SignalingClient(const std::string &srv, const std::string &sess, Web *w) :
+SignalingClient::SignalingClient(const std::string &server, const std::string &session, const std::string &peer, Web *w) :
 	retry_count(0),
 	web(w),
 	running(false),
@@ -27,9 +31,12 @@ SignalingClient::SignalingClient(const std::string &srv, const std::string &sess
 
 	memset(&info, 0, sizeof(info));
 
-	ret = asprintf(&uri, "%s/%s", srv.c_str(), sess.c_str());
+	ret = asprintf(&uri, "%s/%s", server.c_str(), session.c_str());
 	if (ret < 0)
 		throw RuntimeError { "Could not format signaling server uri" };
+
+	if (!peer.empty())
+		strcatf(&uri, "/%s", peer.c_str());
 
 	ret = lws_parse_uri(uri, &prot, &a, &info.port, &p);
 	if (ret)
@@ -120,7 +127,7 @@ int SignalingClient::protocolCallback(struct lws *wsi, enum lws_callback_reasons
 		buffer.append((char *) in, len);
 
 		if (lws_is_final_fragment(wsi)) {
-			logger->trace("Received signaling message: {:.{}}", buffer.data(), buffer.size());
+			logger->trace("Signaling message received: {:.{}}", buffer.data(), buffer.size());
 
 			auto *json = buffer.decode();
 			if (json == nullptr) {
@@ -201,7 +208,7 @@ int SignalingClient::writable()
 	if (len > sizeof(buf) - LWS_PRE)
 		return -1;
 
-	logger->trace("Sending signaling message: {:.{}}", buf + LWS_PRE, len);
+	logger->trace("Signaling message send: {:.{}}", buf + LWS_PRE, len);
 
 	auto ret = lws_write(wsi, (unsigned char *) buf + LWS_PRE, len, LWS_WRITE_TEXT);
 	if (ret < 0)

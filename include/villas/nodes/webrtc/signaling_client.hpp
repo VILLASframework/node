@@ -81,7 +81,7 @@ protected:
 	int writable();
 
 public:
-	SignalingClient(const std::string &server, const std::string &session, Web *w);
+	SignalingClient(const std::string &server, const std::string &session, const std::string &peer, Web *w);
 	~SignalingClient();
 
 	static

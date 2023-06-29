@@ -30,6 +30,7 @@ class WebRTCNode : public Node {
 protected:
 	std::string server;
 	std::string session;
+	std::string peer;
 
 	int wait_seconds;
 	Format *format;

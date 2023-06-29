@@ -50,14 +50,16 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	const char *sess;
 	const char *svr = nullptr;
+	const char *pr = nullptr;
 	int ord = -1;
 	int &rexmit = dci.reliability.rexmit.emplace<int>(0);
 	json_t *ice_json = nullptr;
 	json_t *fmt_json = nullptr;
 
 	json_error_t err;
-	ret = json_unpack_ex(json, &err, 0, "{ s:s, s?s, s?i, s?i, s?b, s?o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s:s, s?:s, s?s, s?i, s?i, s?b, s?o }",
 		"session", &sess,
+		"peer", &pr,
 		"server", &svr,
 		"wait_seconds", &wait_seconds,
 		"max_retransmits", &rexmit,
@@ -72,6 +74,9 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 
 	if (svr)
 		server = svr;
+
+	if (pr)
+		peer = pr;
 
 	if (ord)
 		dci.reliability.unordered = !ord;

@@ -23,7 +23,7 @@ namespace webrtc {
 class PeerConnection {
 
 public:
-	PeerConnection(const std::string &server, const std::string &session, rtc::Configuration config, Web *w, rtc::DataChannelInit d);
+	PeerConnection(const std::string &server, const std::string &session, const std::string &peer, rtc::Configuration config, Web *w, rtc::DataChannelInit d);
 	~PeerConnection();
 
 	bool waitForDataChannel(std::chrono::seconds timeout);
