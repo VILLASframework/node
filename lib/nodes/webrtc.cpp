@@ -27,6 +27,7 @@ static villas::node::Web *web;
 WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
 	Node(id, name),
 	server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
+	peer(uuid::toString(id)),
 	wait_seconds(0),
 	format(nullptr),
 	queue({}),
@@ -34,9 +35,6 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
 	dci({})
 {
 	dci.reliability.type = rtc::Reliability::Type::Rexmit;
-
-	// Initialize signaling peer with node UUID
-	peer = uuid::toString(id);
 }
 
 WebRTCNode::~WebRTCNode()
