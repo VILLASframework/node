@@ -42,8 +42,8 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 using namespace villas;
 using namespace villas::node;
 
-FpgaNode::FpgaNode(const std::string &name) :
-	Node(name),
+FpgaNode::FpgaNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	irqFd(-1),
 	coalesce(0),
 	polling(true)
