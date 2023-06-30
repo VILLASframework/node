@@ -110,7 +110,7 @@ int LoopbackNode::parse(json_t *json)
 	int ret;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
-		"queuelen", queuelen,
+		"queuelen", &queuelen,
 		"mode", &mode_str
 	);
 	if (ret)
