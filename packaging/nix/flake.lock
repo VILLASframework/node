@@ -3,11 +3,11 @@
     "common": {
       "flake": false,
       "locked": {
-        "lastModified": 1686671462,
-        "narHash": "sha256-yvpCp9eZO05lWWz/bYifDlalDTd9WjH84QwFxmsjoHg=",
+        "lastModified": 1688124353,
+        "narHash": "sha256-TPupRVaYV/Rxpj2BHjnEeSXZOVRKhnFtG1fdqLxVWcY=",
         "owner": "VILLASframework",
         "repo": "common",
-        "rev": "d9d4ac76a5403e14f7899dae480781e9cdcf0572",
+        "rev": "120312e938dc298b4dc13792e1acf7510190bbf4",
         "type": "github"
       },
       "original": {
