@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <jansson.h>
 #include <rtc/rtc.hpp>
 
 #include <villas/log.hpp>
@@ -30,6 +31,8 @@ public:
 	bool waitForDataChannel(std::chrono::seconds timeout);
 	void onMessage(std::function<void(rtc::binary)> callback);
 	void sendMessage(rtc::binary msg);
+
+	json_t * readStatus() const;
 
 	void connect();
 	void disconnect();

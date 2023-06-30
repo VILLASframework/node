@@ -47,6 +47,9 @@ protected:
 	virtual
 	int _write(struct Sample *smps[], unsigned cnt);
 
+	virtual
+	json_t * _readStatus() const;
+
 public:
 	WebRTCNode(const uuid_t &id = {}, const std::string &name = "");
 

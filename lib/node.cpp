@@ -463,6 +463,10 @@ json_t * Node::toJson() const
 	if (stats)
 		json_object_set_new(json_node, "stats", stats->toJson());
 
+	auto *status = _readStatus();
+	if (status)
+		json_object_set_new(json_node, "status", status);
+
 	/* Add all additional fields of node here.
 	 * This can be used for metadata */
 	json_object_update(json_node, config);

@@ -106,6 +106,12 @@ protected:
 		return -1;
 	}
 
+	virtual
+	json_t * _readStatus() const
+	{
+		return nullptr;
+	}
+
 public:
 	/** Initialize node with default values */
 	Node(const uuid_t &id = {}, const std::string &name = "");

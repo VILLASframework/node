@@ -10,9 +10,11 @@
 
 #include <chrono>
 #include <thread>
+
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <fmt/chrono.h>
+
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/peer_connection.hpp>
@@ -77,6 +79,31 @@ bool PeerConnection::waitForDataChannel(std::chrono::seconds timeout)
 	auto deadline = std::chrono::steady_clock::now() + timeout;
 
 	return startupCondition.wait_until(lock, deadline, [this](){ return this->stopStartup; });
+}
+
+json_t * PeerConnection::readStatus()
+{
+	auto *json = json_pack("{ s: I, s: I }",
+		"bytes_received", conn->bytesReceived(),
+		"bytes_sent", conn->bytesSent()
+	);
+
+	auto rtt = conn->rtt();
+	if (rtt.has_value()) {
+		auto *json_rtt = json_real(rtt.value().count() / 1e3);
+		json_object_set_new(json, "rtt", json_rtt);
+	}
+
+	rtc::Candidate local, remote;
+	if (conn->getSelectedCandidatePair(&local, &remote)) {
+		auto *json_cp = json_pack("{ s: s, s: s }",
+			"local", std::string(local).c_str(),
+			"remote", std::string(remote).c_str()
+		);
+		json_object_set_new(json, "candidate_pair", json_cp);
+	}
+
+	return json;
 }
 
 void PeerConnection::notifyStartup()
