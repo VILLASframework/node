@@ -696,9 +696,6 @@ unsigned Path::getOutputSignalsMaxCount()
 
 json_t * Path::toJson() const
 {
-	char uuid_str[37];
-	uuid_unparse(uuid, uuid_str);
-
 	json_t *json_signals = signals->toJson();
 #ifdef WITH_HOOKS
 	json_t *json_hooks = hooks.toJson();
@@ -715,7 +712,7 @@ json_t * Path::toJson() const
 		json_array_append_new(json_destinations, json_string(pd->node->getNameShort().c_str()));
 
 	json_t *json_path = json_pack("{ s: s, s: s, s: s, s: b, s: b s: b, s: b, s: b, s: b s: i, s: o, s: o, s: o, s: o }",
-		"uuid", uuid_str,
+		"uuid", uuid::toString(uuid).c_str(),
 		"state", stateToString(state).c_str(),
 		"mode", mode == Mode::ANY ? "any" : "all",
 		"enabled", enabled,

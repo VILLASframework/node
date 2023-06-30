@@ -81,7 +81,7 @@ bool PeerConnection::waitForDataChannel(std::chrono::seconds timeout)
 	return startupCondition.wait_until(lock, deadline, [this](){ return this->stopStartup; });
 }
 
-json_t * PeerConnection::readStatus()
+json_t * PeerConnection::readStatus() const
 {
 	auto *json = json_pack("{ s: I, s: I }",
 		"bytes_received", conn->bytesReceived(),

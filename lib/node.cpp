@@ -364,11 +364,8 @@ int Node::write(struct Sample * smps[], unsigned cnt)
 const std::string & Node::getNameFull()
 {
 	if (name_full.empty()) {
-		char uuid_str[37];
-		uuid_unparse(uuid, uuid_str);
-
 		name_full = fmt::format("{}: uuid={}, #in.signals={}/{}, #in.hooks={}, #out.hooks={}, in.vectorize={}, out.vectorize={}",
-			getName(), uuid_str,
+			getName(), uuid::toString(uuid).c_str(),
 			getInputSignals(false)->size(),
 			getInputSignals(true)->size(),
 			in.hooks.size(), out.hooks.size(),
@@ -438,9 +435,6 @@ json_t * Node::toJson() const
 	json_t *json_signals_in = nullptr;
 	json_t *json_signals_out = nullptr;
 
-	char uuid_str[37];
-	uuid_unparse(uuid, uuid_str);
-
 	json_signals_in = getInputSignals()->toJson();
 
 	auto output_signals = getOutputSignals();
@@ -449,7 +443,7 @@ json_t * Node::toJson() const
 
 	json_node = json_pack("{ s: s, s: s, s: s, s: i, s: { s: i, s: o? }, s: { s: i, s: o? } }",
 		"name",		getNameShort().c_str(),
-		"uuid", 	uuid_str,
+		"uuid", 	uuid::toString(uuid).c_str(),
 		"state",	stateToString(state).c_str(),
 		"affinity",	affinity,
 		"in",

@@ -29,8 +29,6 @@
 using namespace villas;
 using namespace villas::node;
 
-typedef char uuid_string_t[37];
-
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
 	idleStop(-1),
@@ -153,7 +151,7 @@ void SuperNode::parse(json_t *root)
 			}
 			else
 				// Generate UUID from node name and super-node UUID
-				uuid::generateFromString(node_uuid, node_name, uuid);
+				uuid::generateFromString(node_uuid, node_name, uuid::toString(uuid));
 
 			auto *n = NodeFactory::make(node_type, node_uuid, node_name);
 			if (!n)
@@ -162,7 +160,6 @@ void SuperNode::parse(json_t *root)
 			ret = n->parse(json_node);
 			if (ret) {
 				auto config_id = fmt::format("node-config-node-{}", node_type);
-
 				throw ConfigError(json_node, config_id, "Failed to parse configuration of node '{}'", node_name);
 			}
 
@@ -514,15 +511,11 @@ graph_t * SuperNode::getGraph()
 
 	std::map<Node *, Agnode_t *> nodeMap;
 
-	uuid_string_t uuid_str;
-
 	for (auto *n : nodes) {
 		nodeMap[n] = agnode(g, (char *) n->getNameShort().c_str(), 1);
 
-		uuid_unparse(n->getUuid(), uuid_str);
-
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", n->getFactory()->getName(), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", n->getFactory()->getName(), uuid::toString(n->getUuid()).c_str()));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");
@@ -534,10 +527,8 @@ graph_t * SuperNode::getGraph()
 
 		m = agnode(g, (char *) name.c_str(), 1);
 
-		uuid_unparse(p->uuid, uuid_str);
-
 		set_attr(m, "shape", "box");
-		set_attr(m, "tooltip", fmt::format("uuid={}", uuid_str));
+		set_attr(m, "tooltip", fmt::format("uuid={}", uuid::toString(p->getUuid()).c_str()));
 
 		for (auto ps : p->sources)
 			agedge(g, nodeMap[ps->getNode()], m, nullptr, 1);

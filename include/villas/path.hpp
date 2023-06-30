@@ -188,6 +188,12 @@ public:
 		return state;
 	}
 
+	/** Get the UUID of this path. */
+	const uuid_t & getUuid() const
+	{
+		return uuid;
+	}
+
 	json_t * toJson() const;
 };
 

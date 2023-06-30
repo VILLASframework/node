@@ -146,9 +146,9 @@ public:
 		return state;
 	}
 
-	void getUUID(uuid_t out) const
+	const uuid_t & getUuid() const
 	{
-		uuid_copy(out, uuid);
+		return uuid;
 	}
 
 	struct timespec getStartTime() const

@@ -6,15 +6,13 @@
  *********************************************************************************/
 
 #include <time.h>
-#include <uuid/uuid.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
 
+#include <villas/uuid.hpp>
 #include <villas/timing.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
-
-typedef char uuid_string_t[37];
 
 namespace villas {
 namespace node {
@@ -37,14 +35,9 @@ public:
 
 		auto *sn = session->getSuperNode();
 
-		uuid_t uuid;
-		uuid_string_t uuid_str;
 		struct utsname uts;
 		struct sysinfo sinfo;
 		char hname[128];
-
-		sn->getUUID(uuid);
-		uuid_unparse_lower(uuid, uuid_str);
 
 		auto now = time_now();
 		auto started = sn->getStartTime();
@@ -73,7 +66,7 @@ public:
 			"build_id", PROJECT_BUILD_ID,
 			"build_date", PROJECT_BUILD_DATE,
 			"hostname", hname,
-			"uuid", uuid_str,
+			"uuid", uuid::toString(sn->getUuid()).c_str(),
 			"time_now", time_to_double(&now),
 			"time_started", time_to_double(&started),
 			"timezone",

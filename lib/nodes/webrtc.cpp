@@ -11,6 +11,7 @@
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/webrtc.hpp>
+#include <villas/uuid.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.hpp>
 #include <villas/exceptions.hpp>
@@ -35,9 +36,7 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
 	dci.reliability.type = rtc::Reliability::Type::Rexmit;
 
 	// Initialize signaling peer with node UUID
-	char uuid_str[36+1];
-	uuid_unparse(id, uuid_str);
-	peer = uuid_str;
+	peer = uuid::toString(id);
 }
 
 WebRTCNode::~WebRTCNode()
@@ -234,7 +233,7 @@ int WebRTCNode::_write(struct Sample *smps[], unsigned cnt)
 	return ret;
 }
 
-json_t * WebRTCNode::_readStatus()
+json_t * WebRTCNode::_readStatus() const
 {
 	if (!conn)
 		return nullptr;
