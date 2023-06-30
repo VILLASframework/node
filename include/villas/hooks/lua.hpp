@@ -108,7 +108,7 @@ public:
 
 	virtual ~LuaHook();
 
-	virtual void parse(json_t *cfg);
+	virtual void parse(json_t *json);
 
 	virtual void prepare();
 

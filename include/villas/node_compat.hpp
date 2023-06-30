@@ -66,12 +66,12 @@ public:
 	/** Parse node connection details.
 
 	 *
-	 * @param cfg	A JSON object containing the configuration of the node.
+	 * @param json	A JSON object containing the configuration of the node.
 	 * @retval 0 	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
 	virtual
-	int parse(json_t *cfg, const uuid_t sn_uuid);
+	int parse(json_t *json, const uuid_t sn_uuid);
 
 	/** Returns a string with a textual represenation of this node. */
 	virtual

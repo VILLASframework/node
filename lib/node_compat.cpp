@@ -89,14 +89,14 @@ int NodeCompat::prepare()
 	return Node::prepare();
 }
 
-int NodeCompat::parse(json_t *cfg, const uuid_t sn_uuid)
+int NodeCompat::parse(json_t *json, const uuid_t sn_uuid)
 {
-	int ret = Node::parse(cfg, sn_uuid);
+	int ret = Node::parse(json, sn_uuid);
 	if (ret)
 		return ret;
 
 	ret = _vt->parse
-		? _vt->parse(this, cfg)
+		? _vt->parse(this, json)
 		: 0;
 	if (!ret)
 		state = State::PARSED;
