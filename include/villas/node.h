@@ -10,7 +10,6 @@
 
 #include <stdbool.h>
 
-#include <uuid/uuid.h>
 #include <jansson.h>
 
 typedef void *vnode;
