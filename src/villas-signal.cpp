@@ -244,10 +244,7 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		uuid_t uuid;
-		uuid_clear(uuid);
-
-		ret = node->parse(json, uuid);
+		ret = node->parse(json);
 		if (ret) {
 			usage();
 			exit(EXIT_FAILURE);
