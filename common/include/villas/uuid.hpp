@@ -19,7 +19,7 @@ namespace villas {
 namespace uuid {
 
 // Convert a UUID to C++ string
-std::string toString(uuid_t in);
+std::string toString(const uuid_t in);
 
 // Generate an UUID by MD5 hashing the provided string
 int generateFromString(uuid_t out, const std::string &data, const std::string &ns = "");
