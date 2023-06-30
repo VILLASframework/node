@@ -134,11 +134,6 @@ target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
 target_link_libraries(villas PRIVATE -Wl,--whole-archive ${WHOLE_ARCHIVES} -Wl,--no-whole-archive)
 
-# We need to link with -Bsymbolic in order to use link libvillas
-# with Go code (Cgo)
-# See also: https://stackoverflow.com/a/67299849
-# target_link_options(villas PUBLIC "-Wl,-Bsymbolic")
-
 set_target_properties(villas PROPERTIES
     VERSION ${CMAKE_PROJECT_VERSION}
     SOVERSION 1
