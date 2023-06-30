@@ -33,6 +33,11 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
 	dci({})
 {
 	dci.reliability.type = rtc::Reliability::Type::Rexmit;
+
+	// Initialize signaling peer with node UUID
+	char uuid_str[36+1];
+	uuid_unparse(id, uuid_str);
+	peer = uuid_str;
 }
 
 WebRTCNode::~WebRTCNode()

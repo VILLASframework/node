@@ -31,12 +31,9 @@ SignalingClient::SignalingClient(const std::string &server, const std::string &s
 
 	memset(&info, 0, sizeof(info));
 
-	ret = asprintf(&uri, "%s/%s", server.c_str(), session.c_str());
+	ret = asprintf(&uri, "%s/%s/%s", server.c_str(), session.c_str(), peer.c_str());
 	if (ret < 0)
 		throw RuntimeError { "Could not format signaling server uri" };
-
-	if (!peer.empty())
-		strcatf(&uri, "/%s", peer.c_str());
 
 	ret = lws_parse_uri(uri, &prot, &a, &info.port, &p);
 	if (ret)
