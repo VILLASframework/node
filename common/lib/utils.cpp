@@ -25,7 +25,6 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <jansson.h>
-#include <uuid/uuid.h>
 
 #include <villas/config.hpp>
 #include <villas/utils.hpp>
