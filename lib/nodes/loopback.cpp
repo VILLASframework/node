@@ -131,7 +131,7 @@ int LoopbackNode::parse(json_t *json)
 			throw ConfigError(json, "node-config-node-loopback-mode", "Unknown mode '{}'", mode_str);
 	}
 
-	return 0;
+	return Node::parse(json);
 }
 
 static char n[] = "loopback";
