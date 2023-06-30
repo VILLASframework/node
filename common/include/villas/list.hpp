@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <cstring>
 #include <string>
-#include <uuid/uuid.h>
 #include <pthread.h>
 
 #include <villas/common.hpp>

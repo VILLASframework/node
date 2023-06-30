@@ -11,6 +11,13 @@
 
 using namespace villas::uuid;
 
+std::string villas::uuid::toString(const uuid_t in)
+{
+	uuid_string_t str;
+	uuid_unparse_lower(in, str);
+	return str;
+}
+
 int villas::uuid::generateFromString(uuid_t out, const std::string &data, const std::string &ns)
 {
 	int ret;
