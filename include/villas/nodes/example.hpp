@@ -42,7 +42,7 @@ protected:
 	int _write(struct Sample *smps[], unsigned cnt);
 
 public:
-	ExampleNode(const std::string &name = "");
+	ExampleNode(const uuid_t &id = {}, const std::string &name = "");
 
 	/* All of the following virtual-declared functions are optional.
 	 * Have a look at node.hpp/node.cpp for the default behaviour.
@@ -55,7 +55,7 @@ public:
 	int prepare();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	/** Validate node configuration. */
 	virtual

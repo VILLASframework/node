@@ -131,7 +131,7 @@
         pkgs = pkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
-        packages = with pkgs; [bashInteractive criterion];
+        packages = with pkgs; [bashInteractive criterion bc jq];
       in rec {
         default = full;
 

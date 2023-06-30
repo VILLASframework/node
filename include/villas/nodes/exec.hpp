@@ -42,8 +42,8 @@ protected:
 	int _write(struct Sample * smps[], unsigned cnt);
 
 public:
-	ExecNode(const std::string &name = "") :
-		Node(name),
+	ExecNode(const uuid_t &id = {}, const std::string &name = "") :
+		Node(id, name),
 		stream_in(nullptr),
 		stream_out(nullptr),
 		flush(true),
@@ -66,7 +66,7 @@ public:
 	int prepare();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	std::vector<int> getPollFDs();

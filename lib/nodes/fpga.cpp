@@ -42,8 +42,8 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 using namespace villas;
 using namespace villas::node;
 
-FpgaNode::FpgaNode(const std::string &name) :
-	Node(name),
+FpgaNode::FpgaNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	irqFd(-1),
 	coalesce(0),
 	polling(true)
@@ -52,9 +52,9 @@ FpgaNode::FpgaNode(const std::string &name) :
 FpgaNode::~FpgaNode()
 { }
 
-int FpgaNode::parse(json_t *cfg, const uuid_t sn_uuid)
+int FpgaNode::parse(json_t *json)
 {
-	int ret = Node::parse(cfg, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 
@@ -65,7 +65,7 @@ int FpgaNode::parse(json_t *cfg, const uuid_t sn_uuid)
 	const char *dma = nullptr;
 	int poll = polling;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
 		"card", &card,
 		"interface", &intf,
 		"dma", &dma,
@@ -73,7 +73,7 @@ int FpgaNode::parse(json_t *cfg, const uuid_t sn_uuid)
 		"polling", &polling
 	);
 	if (ret)
-		throw ConfigError(cfg, err, "node-config-fpga", "Failed to parse configuration of node {}", this->getName());
+		throw ConfigError(json, err, "node-config-fpga", "Failed to parse configuration of node {}", this->getName());
 
 	if (card)
 		cardName = card;

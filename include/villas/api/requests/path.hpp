@@ -6,8 +6,6 @@
  * @license Apache 2.0
  *********************************************************************************/
 
-#include <uuid.h>
-
 #include <villas/api/request.hpp>
 
 namespace villas {

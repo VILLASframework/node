@@ -11,6 +11,7 @@
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/webrtc.hpp>
+#include <villas/uuid.hpp>
 #include <villas/utils.hpp>
 #include <villas/sample.hpp>
 #include <villas/exceptions.hpp>
@@ -23,9 +24,10 @@ using namespace villas::utils;
 
 static villas::node::Web *web;
 
-WebRTCNode::WebRTCNode(const std::string &name) :
-	Node(name),
+WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
+	peer(uuid::toString(id)),
 	wait_seconds(0),
 	format(nullptr),
 	queue({}),
@@ -42,28 +44,30 @@ WebRTCNode::~WebRTCNode()
 		;
 }
 
-int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
+int WebRTCNode::parse(json_t *json)
 {
-	int ret = Node::parse(json, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 
 	const char *sess;
 	const char *svr = nullptr;
+	const char *pr = nullptr;
 	int ord = -1;
 	int &rexmit = dci.reliability.rexmit.emplace<int>(0);
-	json_t *ice_json = nullptr;
-	json_t *fmt_json = nullptr;
+	json_t *json_ice = nullptr;
+	json_t *json_format = nullptr;
 
 	json_error_t err;
-	ret = json_unpack_ex(json, &err, 0, "{ s:s, s?s, s?i, s?i, s?b, s?o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: s, s?: i, s?: i, s?: b, s?: o }",
 		"session", &sess,
+		"peer", &pr,
 		"server", &svr,
 		"wait_seconds", &wait_seconds,
 		"max_retransmits", &rexmit,
 		"ordered", &ord,
-		"ice", &ice_json,
-		"format", &fmt_json
+		"ice", &json_ice,
+		"format", &json_format
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-webrtc");
@@ -73,13 +77,16 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 	if (svr)
 		server = svr;
 
+	if (pr)
+		peer = pr;
+
 	if (ord)
 		dci.reliability.unordered = !ord;
 
-	if (ice_json) {
+	if (json_ice) {
 		json_t *json_servers = nullptr;
 
-		ret = json_unpack_ex(ice_json, &err, 0, "{ s?: o }",
+		ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o }",
 			"servers", &json_servers
 		);
 		if (ret)
@@ -104,18 +111,13 @@ int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
 		}
 	}
 
-	format = fmt_json
-		? FormatFactory::make(fmt_json)
+	format = json_format
+		? FormatFactory::make(json_format)
 		: FormatFactory::make("villas.binary");
 
 	assert(format);
 
 	return 0;
-}
-
-int WebRTCNode::check()
-{
-	return Node::check();
 }
 
 int WebRTCNode::prepare()
@@ -126,7 +128,10 @@ int WebRTCNode::prepare()
 
 	format->start(getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	conn = std::make_shared<webrtc::PeerConnection>(server, session, rtcConf, web, dci);
+	// TODO: Determine output signals reliably
+	auto signals = std::make_shared<SignalList>();
+
+	conn = std::make_shared<webrtc::PeerConnection>(server, session, peer, signals, rtcConf, web, dci);
 
 	ret = pool_init(&pool, 1024, SAMPLE_LENGTH(getInputSignals(false)->size()));
 	if (ret) // TODO log
@@ -136,6 +141,7 @@ int WebRTCNode::prepare()
 	if (ret) // TODO log
 		return ret;
 
+	// TODO: Move this to a member function
 	conn->onMessage([this](rtc::binary msg){
 		int ret;
 		std::vector<Sample *> smps;
@@ -191,6 +197,7 @@ std::vector<int> WebRTCNode::getPollFDs()
 
 const std::string & WebRTCNode::getDetails()
 {
+	// TODO
 	details = fmt::format("");
 	return details;
 }
@@ -222,6 +229,14 @@ int WebRTCNode::_write(struct Sample *smps[], unsigned cnt)
 	conn->sendMessage(buf);
 
 	return ret;
+}
+
+json_t * WebRTCNode::_readStatus() const
+{
+	if (!conn)
+		return nullptr;
+
+	return conn->readStatus();
 }
 
 int WebRTCNodeFactory::start(SuperNode *sn)

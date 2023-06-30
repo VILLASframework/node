@@ -18,8 +18,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-LoopbackNode::LoopbackNode(const std::string &name) :
-	Node(name),
+LoopbackNode::LoopbackNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	queuelen(DEFAULT_QUEUE_LENGTH),
 	mode(QueueSignalledMode::AUTO)
 {
@@ -110,7 +110,7 @@ int LoopbackNode::parse(json_t *json)
 	int ret;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }",
-		"queuelen", queuelen,
+		"queuelen", &queuelen,
 		"mode", &mode_str
 	);
 	if (ret)
@@ -131,7 +131,7 @@ int LoopbackNode::parse(json_t *json)
 			throw ConfigError(json, "node-config-node-loopback-mode", "Unknown mode '{}'", mode_str);
 	}
 
-	return 0;
+	return Node::parse(json);
 }
 
 static char n[] = "loopback";

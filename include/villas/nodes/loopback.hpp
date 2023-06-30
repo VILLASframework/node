@@ -29,7 +29,7 @@ protected:
 	int _read(struct Sample * smps[], unsigned cnt);
 
 public:
-	LoopbackNode(const std::string &name = "");
+	LoopbackNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~LoopbackNode();

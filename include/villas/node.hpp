@@ -18,6 +18,7 @@
 #include <villas/sample.hpp>
 #include <villas/list.hpp>
 #include <villas/queue.h>
+#include <villas/colors.hpp>
 #include <villas/common.hpp>
 #include <villas/stats.hpp>
 #include <villas/log.hpp>
@@ -105,9 +106,15 @@ protected:
 		return -1;
 	}
 
+	virtual
+	json_t * _readStatus() const
+	{
+		return nullptr;
+	}
+
 public:
 	/** Initialize node with default values */
-	Node(const std::string &name = "");
+	Node(const uuid_t &id = {}, const std::string &name = "");
 
 	/** Destroy node by freeing dynamically allocated memory. */
 	virtual
@@ -124,7 +131,7 @@ public:
 	 * @retval <0 Error. Something went wrong.
 	 */
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	/** Validate node configuration. */
 	virtual
@@ -351,6 +358,8 @@ protected:
 		n->logger = getLogger();
 		n->factory = this;
 
+		n->name_long = fmt::format(CLR_RED("{}") "(" CLR_YEL("{}") ")", n->name_short, getName());
+
 		instances.push_back(n);
 	}
 
@@ -376,13 +385,13 @@ public:
 	}
 
 	virtual
-	Node * make() = 0;
+	Node * make(const uuid_t &id = {}, const std::string &nme = "") = 0;
 
 	static
-	Node * make(json_t *json, uuid_t uuid);
+	Node * make(json_t *json, const uuid_t &id, const std::string &name = "");
 
 	static
-	Node * make(const std::string &type);
+	Node * make(const std::string &type, const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	std::string getType() const
@@ -438,9 +447,9 @@ class NodePlugin : public NodeFactory {
 
 public:
 	virtual
-	Node * make()
+	Node * make(const uuid_t &id = {}, const std::string &nme = "")
 	{
-		T* n = new T();
+		T* n = new T(id, nme);
 
 		init(n);
 

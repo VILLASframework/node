@@ -5,8 +5,7 @@
  * @license Apache 2.0
  *********************************************************************************/
 
-#include <uuid.h>
-
+#include <villas/uuid.hpp>
 #include <villas/api/requests/universal.hpp>
 #include <villas/api/response.hpp>
 #include <villas/node.hpp>
@@ -28,14 +27,9 @@ public:
 		if (body != nullptr)
 			throw BadRequest("This endpoint does not accept any body data");
 
-		auto uid = node->getUuid();
-
-		char uid_str[UUID_STR_LEN];
-		uuid_unparse(uid, uid_str);
-
 		auto *info = json_pack("{ s: s, s: s, s: { s: s, s: s, s: s } }",
 			"id", node->getNameShort().c_str(),
-			"uuid", uid_str,
+			"uuid", uuid::toString(node->getUuid()).c_str(),
 
 			"transport",
 				"type", "villas",

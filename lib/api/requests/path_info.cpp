@@ -6,7 +6,6 @@
  *********************************************************************************/
 
 #include <jansson.h>
-#include <uuid/uuid.h>
 
 #include <villas/super_node.hpp>
 #include <villas/path.hpp>

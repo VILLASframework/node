@@ -48,7 +48,7 @@ public:
 	};
 
 	// Parse the config json
-	static ASDUData parse(json_t *signal_json, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
+	static ASDUData parse(json_t *json_signal, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
 
 	// Does this data include a timestamp
 	bool hasTimestamp() const;
@@ -171,13 +171,13 @@ protected:
 	int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
-	SlaveNode(const std::string &name = "");
+	SlaveNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~SlaveNode() override;
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid) override;
+	int parse(json_t *json) override;
 
 	virtual
 	int start() override;

@@ -10,9 +10,11 @@
 
 #include <chrono>
 #include <thread>
+
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <fmt/chrono.h>
+
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/peer_connection.hpp>
@@ -39,13 +41,14 @@ namespace rtc {
 	using ::operator<<;
 }
 
-PeerConnection::PeerConnection(const std::string &server, const std::string &session, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
+PeerConnection::PeerConnection(const std::string &server, const std::string &session,  const std::string &peer, std::shared_ptr<SignalList> signals, rtc::Configuration cfg, Web *w, rtc::DataChannelInit d) :
 	web(w),
 	extraServers({}),
 	dataChannelInit(d),
 	defaultConfig(cfg),
 	conn(nullptr),
 	chan(nullptr),
+	signals(signals),
 	logger(logging.get("webrtc:pc")),
 	stopStartup(false),
 	warnNotConnected(false),
@@ -55,7 +58,7 @@ PeerConnection::PeerConnection(const std::string &server, const std::string &ses
 	secondID(INT_MAX),
 	onMessageCallback(nullptr)
 {
-	client = std::make_shared<SignalingClient>(server, session, web);
+	client = std::make_shared<SignalingClient>(server, session, peer, web);
 	client->onConnected([this](){ this->onSignalingConnected(); });
 	client->onDisconnected([this](){ this->onSignalingDisconnected(); });
 	client->onError([this](auto err){ this->onSignalingError(std::move(err)); });
@@ -76,6 +79,31 @@ bool PeerConnection::waitForDataChannel(std::chrono::seconds timeout)
 	auto deadline = std::chrono::steady_clock::now() + timeout;
 
 	return startupCondition.wait_until(lock, deadline, [this](){ return this->stopStartup; });
+}
+
+json_t * PeerConnection::readStatus() const
+{
+	auto *json = json_pack("{ s: I, s: I }",
+		"bytes_received", conn->bytesReceived(),
+		"bytes_sent", conn->bytesSent()
+	);
+
+	auto rtt = conn->rtt();
+	if (rtt.has_value()) {
+		auto *json_rtt = json_real(rtt.value().count() / 1e3);
+		json_object_set_new(json, "rtt", json_rtt);
+	}
+
+	rtc::Candidate local, remote;
+	if (conn->getSelectedCandidatePair(&local, &remote)) {
+		auto *json_cp = json_pack("{ s: s, s: s }",
+			"local", std::string(local).c_str(),
+			"remote", std::string(remote).c_str()
+		);
+		json_object_set_new(json, "candidate_pair", json_cp);
+	}
+
+	return json;
 }
 
 void PeerConnection::notifyStartup()
@@ -262,6 +290,10 @@ void PeerConnection::onGatheringStateChange(rtc::PeerConnection::GatheringState 
 void PeerConnection::onSignalingConnected()
 {
 	logger->debug("Signaling connection established");
+
+	auto lock = std::unique_lock { mutex };
+
+	client->sendMessage({ *signals });
 }
 
 void PeerConnection::onSignalingDisconnected()
@@ -294,15 +326,15 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg)
 		},
 
 		[&](ControlMessage &c){
-			auto const &id = c.connectionID;
+			auto const &id = c.peerID;
 
-			if (c.connections.size() < 2) {
+			if (c.peers.size() < 2) {
 				resetConnectionAndStandby(lock);
 				return;
 			}
 
 			auto fst = INT_MAX, snd = INT_MAX;
-			for (auto &c : c.connections) {
+			for (auto &c : c.peers) {
 				if (c.id < fst) {
 					snd = fst;
 					fst = c.id;

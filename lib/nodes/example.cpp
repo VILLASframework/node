@@ -20,8 +20,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-ExampleNode::ExampleNode(const std::string &name) :
-	Node(name),
+ExampleNode::ExampleNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	setting1(72),
 	setting2("something"),
 	state1(0)
@@ -40,7 +40,7 @@ int ExampleNode::prepare()
 	return 0;
 }
 
-int ExampleNode::parse(json_t *json, const uuid_t sn_uuid)
+int ExampleNode::parse(json_t *json)
 {
 	/* TODO: Add implementation here. The following is just an example */
 

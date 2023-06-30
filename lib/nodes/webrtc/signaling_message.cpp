@@ -17,33 +17,42 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-json_t * Connection::toJSON() const
+json_t * Peer::toJson() const
 {
-	return json_pack("{ s:i, s:s, s:s, s:s }",
+	return json_pack("{ s: i, s: s*, s: s*, s: s* }",
 		"id", id,
-		"remote", remote.c_str(),
-		"user_agent", userAgent.c_str(),
-		"created", "" // TODO: create json timestamp
+		"name", name.empty() ? nullptr : name.c_str(),
+		"remote", remote.empty() ? nullptr : remote.c_str(),
+		"user_agent", userAgent.empty() ? nullptr : userAgent.c_str()
+		// TODO: created, connected
 	);
 }
 
-Connection::Connection(json_t *json)
+Peer::Peer(json_t *json)
 {
-	const char *rem, *ua, *ts;
+	const char *nme = nullptr, *rem = nullptr, *ua = nullptr, *tscreat, *tsconn;
 
-	int ret = json_unpack(json, "{ s:i, s:s, s:s, s:s }",
+	int ret = json_unpack(json, "{ s: i, s?: s, s?: s, s?: s, s?: s, s?: s }",
 		"id", &id,
+		"name", &nme,
 		"remote", &rem,
 		"user_agent", &ua,
-		"created", &ts
+		"created", &tscreat,
+		"connected", &tsconn
 	);
 	if (ret)
 		throw RuntimeError("Failed to decode signaling message");
 
-	remote = rem;
-	userAgent = ua;
+	if (nme)
+		name = nme;
 
-	// TODO: created
+	if (rem)
+		remote = rem;
+
+	if (ua)
+		userAgent = ua;
+
+	// TODO: created, connected
 }
 
 RelayMessage::RelayMessage(json_t *json)
@@ -58,10 +67,10 @@ RelayMessage::RelayMessage(json_t *json)
 	char *pass;
 	char *realm;
 	char *expires;
-	json_t *server_json;
+	json_t *json_server;
 	size_t i;
-	json_array_foreach(json, i, server_json) {
-		ret = json_unpack(server_json, "{ s:s, s:s, s:s, s:s, s:s }",
+	json_array_foreach(json, i, json_server) {
+		ret = json_unpack(json_server, "{ s: s, s: s, s: s, s: s, s: s }",
 			"url", &url,
 			"user", &user,
 			"pass", &pass,
@@ -80,19 +89,19 @@ RelayMessage::RelayMessage(json_t *json)
 	}
 }
 
-json_t * ControlMessage::toJSON() const
+json_t * ControlMessage::toJson() const
 {
-	json_t *json_connections = json_array();
+	json_t *json_peers = json_array();
 
-	for (auto &c : connections) {
-		json_t *json_connection = c.toJSON();
+	for (auto &p : peers) {
+		json_t *json_peer = p.toJson();
 
-		json_array_append_new(json_connections, json_connection);
+		json_array_append_new(json_peers, json_peer);
 	}
 
-	return json_pack("{ s:i, s:o }",
-		"connection_id", connectionID,
-		"connections", json_connections
+	return json_pack("{ s: i, s: o }",
+		"peer_id", peerID,
+		"peers", json_peers
 	);
 }
 
@@ -100,39 +109,42 @@ ControlMessage::ControlMessage(json_t *j)
 {
 	int ret;
 
-	json_t *json_connections;
+	json_t *json_peers;
 
-	ret = json_unpack(j, "{ s:i, s:o }",
-		"connection_id", &connectionID,
-		"connections", &json_connections
+	ret = json_unpack(j, "{ s: i, s: o }",
+		"peer_id", &peerID,
+		"peers", &json_peers
 	);
 	if (ret)
 		throw RuntimeError("Failed to decode signaling message");
 
-	if (!json_is_array(json_connections))
+	if (!json_is_array(json_peers))
 		throw RuntimeError("Failed to decode signaling message");
 
-	json_t *json_connection;
+	json_t *json_peer;
 	size_t i;
 	// cppcheck-suppress unknownMacro
-	json_array_foreach(json_connections, i, json_connection)
-		connections.emplace_back(json_connection);
+	json_array_foreach(json_peers, i, json_peer)
+		peers.emplace_back(json_peer);
 }
 
-json_t * SignalingMessage::toJSON() const
+json_t * SignalingMessage::toJson() const
 {
 	return std::visit(villas::utils::overloaded {
 		[](ControlMessage const &c){
-			return json_pack("{ s:o }", "control", c.toJSON());
+			return json_pack("{ s: o }", "control", c.toJson());
+		},
+		[](SignalList const &s){
+			return json_pack("{ s: o }", "signals", s.toJson());
 		},
 		[](rtc::Description const &d){
-			return json_pack("{ s:{ s:s, s:s } }", "description",
+			return json_pack("{ s: { s: s, s: s } }", "description",
 				"spd", d.generateSdp().c_str(),
 				"type", d.typeString().c_str()
 			);
 		},
 		[](rtc::Candidate const &c){
-			return json_pack("{ s:{ s:s, s:s } }", "candidate",
+			return json_pack("{ s: { s: s, s: s } }", "candidate",
 				"spd", c.candidate().c_str(),
 				"mid", c.mid().c_str()
 			);
@@ -150,7 +162,10 @@ std::string SignalingMessage::toString() const
 			return fmt::format("type=relay");
 		},
 		[](ControlMessage const &c){
-			return fmt::format("type=control, control={}", json_dumps(c.toJSON(), 0));
+			return fmt::format("type=control, control={}", json_dumps(c.toJson(), 0));
+		},
+		[](SignalList const &s){
+			return fmt::format("type=signal");
 		},
 		[](rtc::Description const &d){
 			return fmt::format("type=description, type={}, spd=\n{}", d.typeString(), d.generateSdp());
@@ -164,12 +179,14 @@ std::string SignalingMessage::toString() const
 	}, message);
 }
 
-SignalingMessage SignalingMessage::fromJSON(json_t *json)
+SignalingMessage SignalingMessage::fromJson(json_t *json)
 {
 	auto self = SignalingMessage { std::monostate() };
 
 	// Relay message
 	json_t *rlys = nullptr;
+	// Signal message
+	json_t *sigs = nullptr;
 	// Control message
 	json_t *ctrl = nullptr;
 	// Candidate message
@@ -179,8 +196,9 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 	const char *desc = nullptr;
 	const char *typ = nullptr;
 
-	int ret = json_unpack(json, "{ s?o, s?o, s?{ s:s, s:s }, s?{ s:s, s:s } }",
+	int ret = json_unpack(json, "{ s?: o, s?: o, s?: o, s?: { s: s, s: s }, s?: { s: s, s: s } }",
 		"servers", &rlys,
+		"signals", &sigs,
 		"control", &ctrl,
 		"candidate",
 			"spd", &cand,
@@ -197,6 +215,9 @@ SignalingMessage SignalingMessage::fromJSON(json_t *json)
 
 	if (rlys) {
 		self.message.emplace<RelayMessage>(rlys);
+	}
+	else if (sigs) {
+		self.message.emplace<SignalList>(sigs);
 	}
 	else if (ctrl) {
 		self.message.emplace<ControlMessage>(ctrl);

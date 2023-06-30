@@ -16,13 +16,13 @@ extern "C" {
 using namespace villas;
 using namespace villas::node;
 
-vnode * node_new(const char *json_str, const char *sn_uuid_str)
+vnode * node_new(const char *id_str, const char *json_str)
 {
 	json_error_t err;
-	uuid_t sn_uuid;
-	uuid_parse(sn_uuid_str, sn_uuid);
+	uuid_t id;
+	uuid_parse(id_str, id);
 	auto *json = json_loads(json_str, 0, &err);
-	return (vnode *) NodeFactory::make(json, sn_uuid);
+	return (vnode *) NodeFactory::make(json, id);
 }
 
 int node_prepare(vnode *n)

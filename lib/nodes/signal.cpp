@@ -188,8 +188,8 @@ Signal::Ptr SignalNodeSignal::toSignal(Signal::Ptr tpl) const
 	return sig;
 }
 
-SignalNode::SignalNode(const std::string &name) :
-	Node(name),
+SignalNode::SignalNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	task(CLOCK_MONOTONIC),
 	rt(1),
 	rate(10),
@@ -215,9 +215,9 @@ int SignalNode::prepare()
 	return Node::prepare();
 }
 
-int SignalNode::parse(json_t *json, const uuid_t sn_uuid)
+int SignalNode::parse(json_t *json)
 {
-	int r = -1, m = -1, ret = Node::parse(json, sn_uuid);
+	int r = -1, m = -1, ret = Node::parse(json);
 	if (ret)
 		return ret;
 

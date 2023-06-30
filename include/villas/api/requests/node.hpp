@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <uuid/uuid.h>
-
 #include <villas/api/request.hpp>
 
 namespace villas {

@@ -30,6 +30,7 @@ class WebRTCNode : public Node {
 protected:
 	std::string server;
 	std::string session;
+	std::string peer;
 
 	int wait_seconds;
 	Format *format;
@@ -46,8 +47,11 @@ protected:
 	virtual
 	int _write(struct Sample *smps[], unsigned cnt);
 
+	virtual
+	json_t * _readStatus() const;
+
 public:
-	WebRTCNode(const std::string &name = "");
+	WebRTCNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~WebRTCNode();
@@ -56,10 +60,7 @@ public:
 	int prepare();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
-
-	virtual
-	int check();
+	int parse(json_t *json);
 
 	virtual
 	int start();
@@ -81,9 +82,9 @@ public:
 	using NodeFactory::NodeFactory;
 
 	virtual
-	Node * make()
+	Node * make(const uuid_t &id = {}, const std::string &nme = "")
 	{
-		auto *n = new WebRTCNode();
+		auto *n = new WebRTCNode(id, nme);
 
 		init(n);
 

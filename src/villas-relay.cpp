@@ -26,8 +26,6 @@
 
 #include "villas-relay.hpp"
 
-typedef char uuid_string_t[37];
-
 using namespace villas;
 using namespace villas::node;
 
@@ -100,12 +98,9 @@ json_t * RelaySession::toJson() const
 		json_array_append(json_connections, conn->toJson());
 	}
 
-	uuid_string_t uuid_str;
-	uuid_unparse_lower(uuid, uuid_str);
-
 	return json_pack("{ s: s, s: s, s: o, s: I, s: i }",
 		"identifier", identifier.c_str(),
-		"uuid", uuid_str,
+		"uuid", uuid::toString(uuid).c_str(),
 		"connections", json_connections,
 		"created", created,
 		"connects", connects
@@ -296,14 +291,11 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void
 				json_array_append(json_sessions, session->toJson());
 			}
 
-			uuid_string_t uuid_str;
-			uuid_unparse(r->uuid, uuid_str);
-
 			json_body = json_pack("{ s: o, s: s, s: s, s: s, s: { s: b, s: i, s: s } }",
 				"sessions", json_sessions,
 				"version", PROJECT_VERSION_STR,
 				"hostname", r->hostname.c_str(),
-				"uuid", uuid_str,
+				"uuid", uuid::toString(r->uuid).c_str(),
 				"options",
 					"loopback", r->loopback,
 					"port", r->port,

@@ -22,7 +22,7 @@ struct Sample;
 class APINode : public Node {
 
 public:
-	APINode(const std::string &name = "");
+	APINode(const uuid_t &id = {}, const std::string &name = "");
 
 	struct Direction {
 		Sample *sample;
@@ -42,7 +42,7 @@ public:
 
 protected:
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	int _read(struct Sample *smps[], unsigned cnt);

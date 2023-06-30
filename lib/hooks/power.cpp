@@ -178,13 +178,13 @@ public:
 
 		int windowSizeIn = 0; // Size of window in samples
 
-		json_t *pairings_json = nullptr;
+		json_t *json_pairings = nullptr;
 
 		MultiSignalHook::parse(json);
 
 		result = json_unpack_ex(json, &json_error, 0, "{ s: i , s: o, s?: b, s?: b, s?: b, s?: b, s?: b, s? : s, s? : s }",
 			"window_size", &windowSizeIn,
-			"pairings", &pairings_json,
+			"pairings", &json_pairings,
 			"add_channel_name", &channelNameEnable,
 			"active_power", &calcActivePower,
 			"reactive_power", &calcReactivePower,
@@ -223,16 +223,16 @@ public:
 			throw ConfigError(json, "node-config-hook-dft-angle-unit", "Angle unit {} not recognized", angleUnitC);
 
 		// Pairings
-		if (!json_is_array(pairings_json))
-			throw ConfigError(pairings_json, "node-config-hook-power", "Pairings are expected as json array");
+		if (!json_is_array(json_pairings))
+			throw ConfigError(json_pairings, "node-config-hook-power", "Pairings are expected as json array");
 
 		size_t i = 0;
-		json_t *pairings_json_value;
-		json_array_foreach(pairings_json, i, pairings_json_value) {
+		json_t *json_pairings_value;
+		json_array_foreach(json_pairings, i, json_pairings_value) {
 			const char *voltageNameC = nullptr;
 			const char *currentNameC = nullptr;
 
-			json_unpack_ex(pairings_json_value, &json_error, 0, "{ s: s, s: s}",
+			json_unpack_ex(json_pairings_value, &json_error, 0, "{ s: s, s: s}",
 				"voltage", &voltageNameC,
 				"current", &currentNameC
 			);

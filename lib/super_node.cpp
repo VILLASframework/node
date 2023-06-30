@@ -29,8 +29,6 @@
 using namespace villas;
 using namespace villas::node;
 
-typedef char uuid_string_t[37];
-
 SuperNode::SuperNode() :
 	state(State::INITIALIZED),
 	idleStop(-1),
@@ -128,33 +126,42 @@ void SuperNode::parse(json_t *root)
 		if (!json_is_object(json_nodes))
 			throw ConfigError(json_nodes, "node-config-nodes", "Setting 'nodes' must be a group with node name => group mappings.");
 
-		const char *name;
+		const char *node_name;
 		json_t *json_node;
-		json_object_foreach(json_nodes, name, json_node) {
-			const char *type;
+		json_object_foreach(json_nodes, node_name, json_node) {
+			uuid_t node_uuid;
+			const char *node_type;
+			const char *node_uuid_str = nullptr;
 
-			ret = Node::isValidName(name);
+			ret = Node::isValidName(node_name);
 			if (!ret)
-				throw RuntimeError("Invalid name for node: {}", name);
+				throw RuntimeError("Invalid name for node: {}", node_name);
 
-			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
+			ret = json_unpack_ex(json_node, &err, 0, "{ s: s, s?: s }",
+				"type", &node_type,
+				"uuid", &node_uuid_str
+			);
 			if (ret)
-				throw ConfigError(root, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
+				throw ConfigError(root, err, "node-config-node-type", "Failed to parse type of node '{}'", node_name);
 
-			json_object_set_new(json_node, "name", json_string(name));
+			if (node_uuid_str) {
+				ret = uuid_parse(uuid_str, uuid);
+				if (ret)
+					throw ConfigError(json_node, "node-config-node-uuid", "Failed to parse UUID: {}", uuid_str);
+			}
+			else
+				// Generate UUID from node name and super-node UUID
+				uuid::generateFromString(node_uuid, node_name, uuid::toString(uuid));
 
-			auto *n = NodeFactory::make(type);
+			auto *n = NodeFactory::make(node_type, node_uuid, node_name);
 			if (!n)
 				throw MemoryAllocationError();
 
-			ret = n->parse(json_node, uuid);
+			ret = n->parse(json_node);
 			if (ret) {
-				auto config_id = fmt::format("node-config-node-{}", type);
-
-				throw ConfigError(json_node, config_id, "Failed to parse configuration of node '{}'", name);
+				auto config_id = fmt::format("node-config-node-{}", node_type);
+				throw ConfigError(json_node, config_id, "Failed to parse configuration of node '{}'", node_name);
 			}
-
-			json_object_del(json_node, "name");
 
 			nodes.push_back(n);
 		}
@@ -504,15 +511,11 @@ graph_t * SuperNode::getGraph()
 
 	std::map<Node *, Agnode_t *> nodeMap;
 
-	uuid_string_t uuid_str;
-
 	for (auto *n : nodes) {
 		nodeMap[n] = agnode(g, (char *) n->getNameShort().c_str(), 1);
 
-		uuid_unparse(n->getUuid(), uuid_str);
-
 		set_attr(nodeMap[n], "shape", "ellipse");
-		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", n->getFactory()->getName(), uuid_str));
+		set_attr(nodeMap[n], "tooltip", fmt::format("type={}, uuid={}", n->getFactory()->getName(), uuid::toString(n->getUuid()).c_str()));
 		// set_attr(nodeMap[n], "fixedsize", "true");
 		// set_attr(nodeMap[n], "width", "0.15");
 		// set_attr(nodeMap[n], "height", "0.15");
@@ -524,10 +527,8 @@ graph_t * SuperNode::getGraph()
 
 		m = agnode(g, (char *) name.c_str(), 1);
 
-		uuid_unparse(p->uuid, uuid_str);
-
 		set_attr(m, "shape", "box");
-		set_attr(m, "tooltip", fmt::format("uuid={}", uuid_str));
+		set_attr(m, "tooltip", fmt::format("uuid={}", uuid::toString(p->getUuid()).c_str()));
 
 		for (auto ps : p->sources)
 			agedge(g, nodeMap[ps->getNode()], m, nullptr, 1);

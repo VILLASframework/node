@@ -51,13 +51,13 @@ protected:
 	int _write(Sample *smps[], unsigned cnt);
 
 public:
-	FpgaNode(const std::string &name = "");
+	FpgaNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~FpgaNode();
 
 	virtual
-	int parse(json_t *cfg, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	const std::string & getDetails();
@@ -79,9 +79,9 @@ public:
 	using NodeFactory::NodeFactory;
 
 	virtual
-	Node * make()
+	Node * make(const uuid_t &id = {}, const std::string &nme = "")
 	{
-		auto *n = new FpgaNode;
+		auto *n = new FpgaNode(id, nme);
 
 		init(n);
 

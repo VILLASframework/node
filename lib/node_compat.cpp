@@ -12,8 +12,8 @@
 using namespace villas;
 using namespace villas::node;
 
-NodeCompat::NodeCompat(struct NodeCompatType *vt) :
-	Node(),
+NodeCompat::NodeCompat(struct NodeCompatType *vt, const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	_vt(vt)
 {
 	_vd = new char[_vt->size];
@@ -89,14 +89,14 @@ int NodeCompat::prepare()
 	return Node::prepare();
 }
 
-int NodeCompat::parse(json_t *cfg, const uuid_t sn_uuid)
+int NodeCompat::parse(json_t *json)
 {
-	int ret = Node::parse(cfg, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 
 	ret = _vt->parse
-		? _vt->parse(this, cfg)
+		? _vt->parse(this, json)
 		: 0;
 	if (!ret)
 		state = State::PARSED;
@@ -270,9 +270,9 @@ const std::string & NodeCompat::getDetails()
 	return _details;
 }
 
-Node * NodeCompatFactory::make()
+Node * NodeCompatFactory::make(const uuid_t &id, const std::string &name)
 {
-	auto *n = new NodeCompat(_vt);
+	auto *n = new NodeCompat(_vt, id, name);
 
 	init(n);
 

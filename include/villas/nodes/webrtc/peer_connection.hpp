@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include <jansson.h>
 #include <rtc/rtc.hpp>
 
 #include <villas/log.hpp>
 #include <villas/web.hpp>
+#include <villas/signal_list.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 
 namespace villas {
@@ -23,12 +25,14 @@ namespace webrtc {
 class PeerConnection {
 
 public:
-	PeerConnection(const std::string &server, const std::string &session, rtc::Configuration config, Web *w, rtc::DataChannelInit d);
+	PeerConnection(const std::string &server, const std::string &session, const std::string &peer, std::shared_ptr<SignalList> signals, rtc::Configuration config, Web *w, rtc::DataChannelInit d);
 	~PeerConnection();
 
 	bool waitForDataChannel(std::chrono::seconds timeout);
 	void onMessage(std::function<void(rtc::binary)> callback);
 	void sendMessage(rtc::binary msg);
+
+	json_t * readStatus() const;
 
 	void connect();
 	void disconnect();
@@ -42,6 +46,7 @@ protected:
 	std::shared_ptr<rtc::PeerConnection> conn;
 	std::shared_ptr<rtc::DataChannel> chan;
 	std::shared_ptr<SignalingClient> client;
+	std::shared_ptr<SignalList> signals;
 
 	Logger logger;
 

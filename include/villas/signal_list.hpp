@@ -15,6 +15,7 @@
 
 #include <villas/log.hpp>
 #include <villas/signal.hpp>
+#include <villas/exceptions.hpp>
 
 namespace villas {
 namespace node {
@@ -29,6 +30,12 @@ public:
 
 	SignalList(unsigned len, enum SignalType fmt);
 	SignalList(const char *dt);
+	SignalList(json_t *json)
+	{
+		int ret = parse(json);
+		if (ret)
+			throw RuntimeError("Failed to parse signal list");
+	}
 
 	int parse(json_t *json);
 
