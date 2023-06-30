@@ -48,7 +48,7 @@ protected:
 	int _write(struct Sample *smps[], unsigned cnt);
 
 public:
-	WebRTCNode(const std::string &name = "");
+	WebRTCNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~WebRTCNode();
@@ -57,7 +57,7 @@ public:
 	int prepare();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	int check();
@@ -82,9 +82,9 @@ public:
 	using NodeFactory::NodeFactory;
 
 	virtual
-	Node * make()
+	Node * make(const uuid_t &id = {}, const std::string &nme = "")
 	{
-		auto *n = new WebRTCNode();
+		auto *n = new WebRTCNode(id, nme);
 
 		init(n);
 

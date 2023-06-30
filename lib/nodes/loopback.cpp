@@ -18,8 +18,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-LoopbackNode::LoopbackNode(const std::string &name) :
-	Node(name),
+LoopbackNode::LoopbackNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	queuelen(DEFAULT_QUEUE_LENGTH),
 	mode(QueueSignalledMode::AUTO)
 {

@@ -82,13 +82,13 @@ protected:
 	int _read(struct Sample *smps[], unsigned cnt);
 
 public:
-	SignalNode(const std::string &name = "");
+	SignalNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	const std::string & getDetails();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	int start();

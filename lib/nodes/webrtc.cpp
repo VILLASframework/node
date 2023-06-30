@@ -23,8 +23,8 @@ using namespace villas::utils;
 
 static villas::node::Web *web;
 
-WebRTCNode::WebRTCNode(const std::string &name) :
-	Node(name),
+WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
 	wait_seconds(0),
 	format(nullptr),
@@ -42,9 +42,9 @@ WebRTCNode::~WebRTCNode()
 		;
 }
 
-int WebRTCNode::parse(json_t *json, const uuid_t sn_uuid)
+int WebRTCNode::parse(json_t *json)
 {
-	int ret = Node::parse(json, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 

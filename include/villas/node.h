@@ -16,7 +16,7 @@
 typedef void *vnode;
 typedef void *vsample;
 
-vnode * node_new(const char *json_str, const char *sn_uuid_str);
+vnode * node_new(const char *id_str, const char *json_str);
 
 int node_prepare(vnode *n);
 

@@ -27,9 +27,9 @@ ExecNode::~ExecNode()
 		fclose(stream_out);
 }
 
-int ExecNode::parse(json_t *json, const uuid_t sn_uuid)
+int ExecNode::parse(json_t *json)
 {
-	int ret = Node::parse(json, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 

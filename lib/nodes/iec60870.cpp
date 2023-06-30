@@ -630,8 +630,8 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count)
 	return sample_count;
 }
 
-SlaveNode::SlaveNode(const std::string &name) :
-	Node(name)
+SlaveNode::SlaveNode(const uuid_t &id, const std::string &name) :
+	Node(id, name)
 {
 	server.state = SlaveNode::Server::NONE;
 
@@ -662,9 +662,9 @@ SlaveNode::~SlaveNode()
 	destroySlave();
 }
 
-int SlaveNode::parse(json_t *json, const uuid_t sn_uuid)
+int SlaveNode::parse(json_t *json)
 {
-	int ret = Node::parse(json, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 

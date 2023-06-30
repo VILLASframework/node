@@ -233,7 +233,7 @@ protected:
 	int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
-	GooseNode(const std::string &name = "");
+	GooseNode(const uuid_t &id = {}, const std::string &name = "");
 
 	virtual
 	~GooseNode() override;
@@ -242,7 +242,7 @@ public:
 	std::vector<int> getPollFDs() override;
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid) override;
+	int parse(json_t *json) override;
 
 	virtual
 	int prepare() override;

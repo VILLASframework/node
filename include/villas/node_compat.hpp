@@ -43,7 +43,7 @@ public:
 	NodeCompat *node;
 	json_t *cfg;
 
-	NodeCompat(struct NodeCompatType *vt);
+	NodeCompat(struct NodeCompatType *vt, const uuid_t &id, const std::string &name);
 	NodeCompat(const NodeCompat& n);
 
 	NodeCompat& operator=(const NodeCompat& other);
@@ -71,7 +71,7 @@ public:
 	 * @retval <0	Error. Something went wrong.
 	 */
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	/** Returns a string with a textual represenation of this node. */
 	virtual
@@ -170,7 +170,7 @@ public:
 	{ }
 
 	virtual
-	Node * make();
+	Node * make(const uuid_t &id = {}, const std::string &name = "");
 
 	/// Get plugin name
 	virtual

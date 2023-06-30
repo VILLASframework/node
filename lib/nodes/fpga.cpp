@@ -52,7 +52,7 @@ FpgaNode::FpgaNode(const std::string &name) :
 FpgaNode::~FpgaNode()
 { }
 
-int FpgaNode::parse(json_t *json, const uuid_t sn_uuid)
+int FpgaNode::parse(json_t *json)
 {
 	int ret = Node::parse(json);
 	if (ret)

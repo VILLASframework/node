@@ -57,7 +57,7 @@ public:
 	~FpgaNode();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	const std::string & getDetails();

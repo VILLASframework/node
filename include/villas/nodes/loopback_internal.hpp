@@ -47,7 +47,7 @@ public:
 	using NodeFactory::NodeFactory;
 
 	virtual
-	Node * make()
+	Node * make(const uuid_t &id = {}, const std::string &name = "")
 	{
 		return nullptr;
 	}

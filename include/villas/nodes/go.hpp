@@ -42,7 +42,7 @@ public:
 	~GoNode();
 
 	virtual
-	int parse(json_t *json, const uuid_t sn_uuid);
+	int parse(json_t *json);
 
 	virtual
 	std::vector<int> getPollFDs();

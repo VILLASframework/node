@@ -41,7 +41,7 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-Node::Node(const std::string &n) :
+Node::Node(const uuid_t &id, const std::string &name) :
 	logger(logging.get("node")),
 	sequence_init(0),
 	sequence(0),
@@ -57,14 +57,23 @@ Node::Node(const std::string &n) :
 	state(State::INITIALIZED),
 	enabled(true),
 	config(nullptr),
-	name_short(n),
-	name_long(),
+	name_short(name),
 	affinity(-1), /* all cores */
 	factory(nullptr)
 {
-	uuid_clear(uuid);
+	if (uuid_is_null(id)) {
+		uuid_generate_random(uuid);
+	} else {
+		uuid_copy(uuid, id);
+	}
 
-	name_long = fmt::format(CLR_RED("{}"), n);
+	if (!name_short.empty()) {
+		name_long = fmt::format(CLR_RED("{}"), name_short);
+	}
+	else if (name_short.empty()) {
+		name_short = "<none>";
+		name_long = CLR_RED("<none>");
+	}
 }
 
 Node::~Node()
@@ -94,7 +103,7 @@ int Node::prepare()
 	return 0;
 }
 
-int Node::parse(json_t *json, const uuid_t sn_uuid)
+int Node::parse(json_t *json)
 {
 	assert(state == State::INITIALIZED ||
 	       state == State::PARSED ||
@@ -105,12 +114,7 @@ int Node::parse(json_t *json, const uuid_t sn_uuid)
 	json_error_t err;
 	json_t *json_netem = nullptr;
 
-	const char *uuid_str = nullptr;
-	const char *name_str = nullptr;
-
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: b, s?: i }",
-		"name", &name_str,
-		"uuid", &uuid_str,
+	ret = json_unpack_ex(json, &err, 0, "{ s?: b, s?: i }",
 		"enabled", &en,
 		"initial_sequenceno", &init_seq
 	);
@@ -119,9 +123,6 @@ int Node::parse(json_t *json, const uuid_t sn_uuid)
 
 	if (init_seq >= 0)
 		sequence_init = init_seq;
-
-	if (name_str)
-		logger = logging.get(fmt::format("node:{}", name_str));
 
 #ifdef __linux__
 	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
@@ -134,24 +135,6 @@ int Node::parse(json_t *json, const uuid_t sn_uuid)
 #endif /* __linux__ */
 
 	enabled = en;
-
-	if (name_str) {
-		name_short = std::string(name_str);
-		name_long = fmt::format(CLR_RED("{}") "(" CLR_YEL("{}") ")", name_str, factory->getName());
-	}
-	else if (name_short.empty()) {
-		name_short = "<none>";
-		name_long = CLR_RED("<none>");
-	}
-
-	if (uuid_str) {
-		ret = uuid_parse(uuid_str, uuid);
-		if (ret)
-			throw ConfigError(json, "node-config-node-uuid", "Failed to parse UUID: {}", uuid_str);
-	}
-	else
-		/* Generate UUID from hashed config including node name */
-		uuid::generateFromJson(uuid, json, sn_uuid);
 
 	if (json_netem) {
 #ifdef WITH_NETEM
@@ -184,7 +167,6 @@ int Node::parse(json_t *json, const uuid_t sn_uuid)
 		/* Skip if direction is unused */
 		if (!json_dir) {
 			json_dir = json_pack("{ s: b }", "enabled", 0);
-			// json_object_set_new(json, dirs[j].str, json_dir);
 		}
 
 		/* Copy missing fields from main node config to direction config */
@@ -492,45 +474,39 @@ void Node::swapSignals() {
 	SWAP(in.signals, out.signals);
 }
 
-Node * NodeFactory::make(json_t *json, uuid_t uuid)
+Node * NodeFactory::make(json_t *json, const uuid_t &id, const std::string &name)
 {
 	int ret;
 	std::string type;
 	Node *n;
 
-	if (json_is_string(json)) {
-		type = json_string_value(json);
+	if (json_is_object(json))
+		throw ConfigError(json, "node-config-node", "Node configuration must be an object");
 
-		return NodeFactory::make(type);
+	json_t *json_type = json_object_get(json, "type");
+
+	type = json_string_value(json_type);
+
+	n = NodeFactory::make(type, id, name);
+	if (!n)
+		return nullptr;
+
+	ret = n->parse(json);
+	if (ret) {
+		delete n;
+		return nullptr;
 	}
-	else if (json_is_object(json)) {
-		json_t *json_type = json_object_get(json, "type");
 
-		type = json_string_value(json_type);
-
-		n = NodeFactory::make(type);
-		if (!n)
-			return nullptr;
-
-		ret = n->parse(json, uuid);
-		if (ret) {
-			delete n;
-			return nullptr;
-		}
-
-		return n;
-	}
-	else
-		throw ConfigError(json, "node-config-node", "Invalid node config");
+	return n;
 }
 
-Node * NodeFactory::make(const std::string &type)
+Node * NodeFactory::make(const std::string &type, const uuid_t &id, const std::string &name)
 {
 	NodeFactory *nf = plugin::registry->lookup<NodeFactory>(type);
 	if (!nf)
 		throw RuntimeError("Unknown node-type: {}", type);
 
-	return nf->make();
+	return nf->make(id, name);
 }
 
 int NodeFactory::start(SuperNode *sn)

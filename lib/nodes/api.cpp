@@ -16,8 +16,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::api::universal;
 
-APINode::APINode(const std::string &name) :
-	Node(name),
+APINode::APINode(const uuid_t &id, const std::string &name) :
+	Node(id, name),
 	read(),
 	write()
 {
@@ -94,9 +94,9 @@ int APINode::_write(struct Sample *smps[], unsigned cnt)
 	return 1;
 }
 
-int APINode::parse(json_t *json, const uuid_t sn_uuid)
+int APINode::parse(json_t *json)
 {
-	int ret = Node::parse(json, sn_uuid);
+	int ret = Node::parse(json);
 	if (ret)
 		return ret;
 

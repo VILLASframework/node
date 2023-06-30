@@ -572,8 +572,8 @@ int GooseNode::_write(Sample *samples[], unsigned sample_count)
 	return sample_count;
 }
 
-GooseNode::GooseNode(const std::string &name) :
-	Node(name)
+GooseNode::GooseNode(const uuid_t &id, const std::string &name) :
+	Node(id, name)
 {
 	input.state = Input::NONE;
 
@@ -601,12 +601,12 @@ GooseNode::~GooseNode()
 	err = pool_destroy(&input.pool);
 }
 
-int GooseNode::parse(json_t *json, const uuid_t sn_uuid)
+int GooseNode::parse(json_t *json)
 {
 	int ret;
 	json_error_t err;
 
-	ret = Node::parse(json, sn_uuid);
+	ret = Node::parse(json);
 	if (ret)
 		return ret;
 
