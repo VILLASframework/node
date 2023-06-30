@@ -123,11 +123,6 @@ int WebRTCNode::parse(json_t *json)
 	return 0;
 }
 
-int WebRTCNode::check()
-{
-	return Node::check();
-}
-
 int WebRTCNode::prepare()
 {
 	int ret = Node::prepare();
@@ -149,6 +144,7 @@ int WebRTCNode::prepare()
 	if (ret) // TODO log
 		return ret;
 
+	// TODO: Move this to a member function
 	conn->onMessage([this](rtc::binary msg){
 		int ret;
 		std::vector<Sample *> smps;
@@ -204,6 +200,7 @@ std::vector<int> WebRTCNode::getPollFDs()
 
 const std::string & WebRTCNode::getDetails()
 {
+	// TODO
 	details = fmt::format("");
 	return details;
 }
@@ -235,6 +232,14 @@ int WebRTCNode::_write(struct Sample *smps[], unsigned cnt)
 	conn->sendMessage(buf);
 
 	return ret;
+}
+
+json_t * WebRTCNode::_readStatus()
+{
+	if (!conn)
+		return nullptr;
+
+	return conn->readStatus();
 }
 
 int WebRTCNodeFactory::start(SuperNode *sn)

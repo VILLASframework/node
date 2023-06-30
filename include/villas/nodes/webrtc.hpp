@@ -63,9 +63,6 @@ public:
 	int parse(json_t *json);
 
 	virtual
-	int check();
-
-	virtual
 	int start();
 
 	virtual
