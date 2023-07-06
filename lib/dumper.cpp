@@ -20,6 +20,7 @@ using namespace villas::node;
 
 Dumper::Dumper() :
 	active(false),
+	socketFd(0),
 	socketPath(""),
 	supressRepeatedWarning(true),
 	warningCounter(0),
