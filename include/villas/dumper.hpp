@@ -18,19 +18,23 @@ namespace node {
 class Dumper {
 
 protected:
+	bool active;
 	int socketFd;
-	std::string socketName;
+	std::string socketPath;
 	bool supressRepeatedWarning;
 	uint64_t warningCounter;
 	Logger logger;
 
 public:
-	Dumper(const std::string &socketNameIn);
+	Dumper();
 	~Dumper();
 
 	int openSocket();
 	int closeSocket();
+	bool isActive();
+	int setActive();
 
+	int setPath(std::string socketPathIn);
 	void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
 	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
 };
