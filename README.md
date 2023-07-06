@@ -29,11 +29,11 @@ VILLASnode is used in distributed- and co-simulation scenarios and developed for
 
 ## Documentation
 
-User documentation is available here: <https://villas.fein-aachen.org/doc/node.html>
+User documentation is available here: <https://villas.fein-aachen.org/docs/>
 
 ## Copyright
 
-2014-2021, Institute for Automation of Complex Power Systems, EONERC  
+2014-2023, Institute for Automation of Complex Power Systems, EONERC  
 
 ## License
 
