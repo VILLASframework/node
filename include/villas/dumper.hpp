@@ -34,7 +34,7 @@ public:
 	bool isActive();
 	int setActive();
 
-	int setPath(std::string socketPathIn);
+	int setPath(const std::string &socketPathIn);
 	void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
 	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
 };

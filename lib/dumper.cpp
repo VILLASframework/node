@@ -70,7 +70,7 @@ int Dumper::closeSocket()
 	return 0;
 }
 
-int Dumper::setPath(std::string socketPathIn)
+int Dumper::setPath(const std::string &socketPathIn)
 {
 	socketPath = socketPathIn;
 	return 1;
