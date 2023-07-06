@@ -11,6 +11,8 @@
 #include <jansson.h>
 #include <villas/node.hpp>
 #include <villas/queue_signalled.h>
+#include <villas/dumper.hpp>
+
 
 extern "C" {
 
@@ -29,7 +31,7 @@ extern "C" {
 }
 
 
-#define smu_Nch 8
+#define SMU_NCH 8
 
 namespace villas {
 namespace node {
@@ -125,23 +127,13 @@ typedef enum : unsigned short int
     FR_100PPS = 100
 } dsp_rate_t;
 
-/**
- * @brief DSP parameters
- *
- */
-// typedef struct
-// {
-//     dsp_rate_t  rate;               /*!< DSP reporting rate */
-//     QStringList state;              /*!< DSP channels state */
-//     QStringList alias;              /*!< DSP channels alias */
-// } smu_dsp_t;
 
 /**
  * @brief SMU multi-channel sample code
  *
  */
 typedef struct {
-    int16_t ch[smu_Nch];
+    int16_t ch[SMU_NCH];
 } __attribute__((__packed__)) smu_mcsc_t;
 
 /**
@@ -149,7 +141,7 @@ typedef struct {
  *
  */
 typedef struct {
-    float ch[smu_Nch];
+    float ch[SMU_NCH];
 } __attribute__((__packed__)) smu_mcsr_t;
 
 /**
@@ -157,7 +149,7 @@ typedef struct {
  *
  */
 typedef struct {
-    float k[smu_Nch];
+    float k[SMU_NCH];
 } __attribute__((__packed__)) smu_mcsk_t;
 
 
@@ -192,14 +184,24 @@ typedef struct {
 class SMUNode : public Node {
 
 private:
-	float counter;
-    smu_daq_t daq_cfg_default;
+    daq_mode_t mode;
+    daq_rate_t sample_rate;
+    daq_buff_t fps;
+    daq_sync_t sync;
+    smu_daq_t daq_cfg;
+    Dumper dumpers[SMU_NCH];
     int fd;
     uint8_t* shared_mem;
     uint32_t shared_mem_pos;
     uint32_t shared_mem_inc;
     uint32_t shared_mem_dim;
     struct sigaction act;
+
+
+    size_t buffer_size;
+    static size_t mem_pos;
+    static pthread_mutex_t mutex;
+    static pthread_cond_t cv;
 
 protected:
 	virtual
@@ -209,6 +211,9 @@ public:
 	SMUNode(const std::string &name = "");
     static void data_available_signal(int, siginfo_t *info, void*);
     static void sync_signal(int, siginfo_t *info, void*);
+
+	virtual
+	int parse(json_t *json, const uuid_t sn_uuid) override;
 
 	virtual
 	int prepare();
