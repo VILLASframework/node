@@ -112,11 +112,11 @@ protected:
 	Dumper origSigSync;
 	Dumper windowdSigSync;
 	Dumper ppsSigSync;
-#endif
 	Dumper phasorRocof;
 	Dumper phasorPhase;
 	Dumper phasorAmplitude;
 	Dumper phasorFreq;
+#endif
 
 	double angleUnitFactor;
 	double phaseOffset;
@@ -164,11 +164,11 @@ public:
 		origSigSync(dumperPrefix + "origSigSync"),
 		windowdSigSync(dumperPrefix + "windowdSigSync"),
 		ppsSigSync(dumperPrefix + "ppsSigSync"),
-#endif
 		phasorRocof(dumperPrefix + "phasorRocof"),
 		phasorPhase(dumperPrefix + "phasorPhase"),
 		phasorAmplitude(dumperPrefix + "phasorAmplitude"),
 		phasorFreq(dumperPrefix + "phasorFreq"),
+#endif		
 		angleUnitFactor(1),
 		phaseOffset(0.0),
 		frequencyOffset(0.0),
@@ -453,7 +453,7 @@ public:
 					lastResult[i] = currentResult;
 				}
 			}
-
+#ifdef DFT_MEM_DUMP
 			// The following is a debug output and currently only for channel 0
 			if (dumperEnable && windowSize * 5 < smpMemPos){
 				phasorFreq.writeDataBinary(1, &(smp->data[0 * 4 + 0].f));
@@ -461,6 +461,7 @@ public:
 				phasorAmplitude.writeDataBinary(1, &(smp->data[0 * 4 + 1].f));
 				phasorRocof.writeDataBinary(1, &(smp->data[0 * 4 + 3].f));
 			}
+#endif
 
 			smp->length = windowSize < smpMemPos ? signalIndices.size() * 4 : 0;
 
