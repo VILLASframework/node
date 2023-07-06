@@ -30,11 +30,13 @@ Dumper::~Dumper() {
 	closeSocket();
 }
 
-bool Dumper::isActive(){
+bool Dumper::isActive()
+{
 	return active;
 }
 
-int Dumper::setActive() {
+int Dumper::setActive()
+{
 	active = true;
 	return 1;
 }
@@ -67,12 +69,14 @@ int Dumper::closeSocket()
 	return 0;
 }
 
-int Dumper::setPath(std::string socketPathIn) {
+int Dumper::setPath(std::string socketPathIn)
+{
 	socketPath = socketPathIn;
 	return 1;
 }
 
-void Dumper::writeDataBinary(unsigned len, double *yData, double *xData){
+void Dumper::writeDataBinary(unsigned len, double *yData, double *xData)
+{
 
 	if (warningCounter > 10)
 		return;
