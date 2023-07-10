@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# any failed command aborts the script
+# Abort the script on any failed command
 set -e
 
-# using an undefined variable aborts the script
+# Abort the script using on undefined variables
 set -u
 
-# any failing program in a pipe aborts the script
+# Aborts the script on any failing program in a pipe
 set -o pipefail
 
 should_build() {
@@ -14,12 +14,11 @@ should_build() {
     local use="$2"
     local requirement="${3:-optional}"
 
-    case "$requirement" in
+    case "${requirement}" in
         optional) ;;
         required) ;;
         *)
-            printf >&2 "ERROR: %s\n" \
-                "invalid parameter '$2' for should_build. should be one of 'optional' and 'required', default is 'optional'"
+            echo >&2 "Error: invalid parameter '$2' for should_build. should be one of 'optional' and 'required', default is 'optional'"
             exit 1
             ;;
     esac
@@ -27,28 +26,28 @@ should_build() {
     local deps="${@:4}"
 
     if [[ -n "${DEPS_SCAN+x}" ]]; then
-        printf "%s" "$requirement dependendency $id should be installed $use."
-        [[ -n "${deps[*]}" ]] && printf "%s" " transitive dependencies: $deps"
-        printf "\n"
+        echo "${requirement} dependendency ${id} should be installed ${use}."
+        [[ -n "${deps[*]}" ]] && echo " transitive dependencies: ${deps}"
+        echo
         return 1
     fi
 
-    if { [[ "${DEPS_SKIP:-}" == *"$id"* ]] || { [[ -n "${DEPS_INCLUDE+x}" ]] && [[ ! "$DEPS_INCLUDE" == *"$id"* ]]; }; }
+    if { [[ "${DEPS_SKIP:-}" == *"${id}"* ]] || { [[ -n "${DEPS_INCLUDE+x}" ]] && [[ ! "${DEPS_INCLUDE}" == *"${id}"* ]]; }; }
     then
-        printf "%s\n" "Skipping $requirement dependency '$id'"
+        echo "Skipping ${requirement} dependency '${id}'"
         return 1
     fi
 
     if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
-        printf "\n"
-        case "$(read -p "Do you wan't to install '$id' into '$PREFIX'? This is used $use. (y/N)")" in
+        echo
+        case "$(read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N)")" in
             y | Y)
-                printf "%s\n" "Installing '$id'"
+                echo "Installing '${id}'"
                 return 0
                 ;;
 
             *)
-                printf "%s\n" "Skipping '$id'"
+                echo "Skipping '${id}'"
                 return 1
                 ;;
         esac
@@ -57,38 +56,36 @@ should_build() {
     return 0
 }
 
-#
-# build configuration
-#
+## Build configuration
 
-# use shallow git clones to speed up downloads
+# Use shallow git clones to speed up downloads
 GIT_OPTS+=" --depth=1"
 
-# install destination
+# Install destination
 PREFIX=${PREFIX:-/usr/local}
 
-# cross-compile
+# Cross-compile
 TRIPLET=${TRIPLET:-$(gcc -dumpmachine)}
 ARCH=${ARCH:-$(uname -m)}
 
-# cmake
+# CMake
 CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
-# autotools
+# Autotools
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
 
-# make
+# Make
 MAKE_THREADS=${MAKE_THREADS:-$(nproc)}
 MAKE_OPTS+="--jobs=${MAKE_THREADS}"
 
-# pkgconfig
+# pkg-config
 PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-}${PKG_CONFIG_PATH:+:}${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
 export PKG_CONFIG_PATH
 
-# build in a temporary directory
+# Build in a temporary directory
 TMPDIR=$(mktemp -d)
 
-printf "entering %s\n" "${TMPDIR}"
+echo "Entering ${TMPDIR}"
 pushd ${TMPDIR} >/dev/null
 
 # Build & Install Criterion
@@ -131,7 +128,7 @@ fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
-    should_build "mosquitto" "for the MQTT node"; then
+    should_build "mosquitto" "for the MQTT node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto
     mkdir -p mosquitto/build
     pushd mosquitto/build
@@ -157,7 +154,7 @@ fi
 
 # Build & Install libzmq
 if ! pkg-config "libzmq >= 2.2.0" && \
-    should_build "zmq" "for the zeromq node"; then
+    should_build "zmq" "for the zeromq node-type"; then
     git clone ${GIT_OPTS} --branch v4.3.4 https://github.com/zeromq/libzmq
     mkdir -p libzmq/build
     pushd libzmq/build
@@ -171,7 +168,7 @@ fi
 
 # Build & Install EtherLab
 if ! pkg-config "libethercat >= 1.5.2" && \
-    should_build "ethercat" "for the ethercat node"; then
+    should_build "ethercat" "for the ethercat node-type"; then
     git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
@@ -182,7 +179,7 @@ fi
 
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.5.0" && \
-    should_build "iec61850" "for the iec61850 node"; then
+    should_build "iec61850" "for the iec61850 node-type"; then
     git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
@@ -195,7 +192,7 @@ fi
 
 # Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
-    should_build "iec60870" "for the iec60870 node"; then
+    should_build "iec60870" "for the iec60870 node-type"; then
     git clone ${GIT_OPTS} --branch v2.3.2 https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
@@ -208,7 +205,7 @@ fi
 
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
-    should_build "rdkafka" "for the kafka node"; then
+    should_build "rdkafka" "for the kafka node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka
     mkdir -p librdkafka/build
     pushd librdkafka/build
@@ -234,7 +231,7 @@ fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.2.0" && \
-    should_build "uldaq" "for the uldaq node"; then
+    should_build "uldaq" "for the uldaq node-type"; then
     git clone ${GIT_OPTS} --branch v1.2.1 https://github.com/mccdaq/uldaq
     pushd uldaq
     autoreconf -i
@@ -275,7 +272,7 @@ fi
 
 # Build & Install comedilib
 if ! pkg-config "comedilib >= 0.11.0" && \
-    should_build "comedi" "for the comedi node"; then
+    should_build "comedi" "for the comedi node-type"; then
     git clone ${GIT_OPTS} --branch r0_12_0 https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
     ./autogen.sh
@@ -288,7 +285,7 @@ fi
 
 # Build & Install libre
 if ! pkg-config "libre >= 2.9.0" && \
-    should_build "libre" "for the rtp node"; then
+    should_build "libre" "for the rtp node-type"; then
     git clone ${GIT_OPTS} --branch v2.9.0 https://github.com/baresip/re.git
     pushd re
     make ${MAKE_OPTS} install
@@ -297,7 +294,7 @@ fi
 
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
-    should_build "nanomsg" "for the nanomsg node"; then
+    should_build "nanomsg" "for the nanomsg node-type"; then
     git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
@@ -313,7 +310,7 @@ fi
 
 # Build & Install libxil
 if ! pkg-config "libxil >= 1.0.0" && \
-    should_build "libxil" "for the fpga node"; then
+    should_build "libxil" "for the fpga node-type"; then
     git clone ${GIT_OPTS} --branch master https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
@@ -324,7 +321,7 @@ fi
 
 # Build & Install hiredis
 if ! pkg-config "hiredis >= 1.0.0" && \
-    should_build "hiredis" "for the redis node"; then
+    should_build "hiredis" "for the redis node-type"; then
     git clone ${GIT_OPTS} --branch v1.1.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
@@ -337,7 +334,7 @@ fi
 
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
-    should_build "redis++" "for the redis node"; then
+    should_build "redis++" "for the redis node-type"; then
     git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
@@ -397,10 +394,10 @@ fi
 
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
-    should_build "libdatachannel" "for the webrtc node"; then
-    git clone ${GIT_OPTS} --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel && pushd libdatachannel
-    git submodule update --init --recursive --depth 1
-    mkdir build && pushd build
+    should_build "libdatachannel" "for the webrtc node-type"; then
+    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel
+    mkdir -p libdatachannel/build
+    pushd libdatachannel/build
 
     if pkg-config "nice >= 0.1.16"; then
         CMAKE_DATACHANNEL_USE_NICE=-DUSE_NICE=ON
@@ -412,7 +409,7 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
           ${CMAKE_OPTS} ..
 
     make ${MAKE_OPTS} install
-    popd; popd
+    popd
 fi
 
 popd >/dev/null
