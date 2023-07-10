@@ -1,28 +1,97 @@
 #!/bin/bash
 
+# Abort the script on any failed command
 set -e
 
+# Abort the script using on undefined variables
+set -u
+
+# Aborts the script on any failing program in a pipe
+set -o pipefail
+
+should_build() {
+    local id="$1"
+    local use="$2"
+    local requirement="${3:-optional}"
+
+    case "${requirement}" in
+        optional) ;;
+        required) ;;
+        *)
+            echo >&2 "Error: invalid parameter '$2' for should_build. should be one of 'optional' and 'required', default is 'optional'"
+            exit 1
+            ;;
+    esac
+
+    local deps="${@:4}"
+
+    if [[ -n "${DEPS_SCAN+x}" ]]; then
+        echo "${requirement} dependendency ${id} should be installed ${use}."
+        [[ -n "${deps[*]}" ]] && echo " transitive dependencies: ${deps}"
+        echo
+        return 1
+    fi
+
+    if { [[ "${DEPS_SKIP:-}" == *"${id}"* ]] || { [[ -n "${DEPS_INCLUDE+x}" ]] && [[ ! "${DEPS_INCLUDE}" == *"${id}"* ]]; }; }
+    then
+        echo "Skipping ${requirement} dependency '${id}'"
+        return 1
+    fi
+
+    if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
+        echo
+        case "$(read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N)")" in
+            y | Y)
+                echo "Installing '${id}'"
+                return 0
+                ;;
+
+            *)
+                echo "Skipping '${id}'"
+                return 1
+                ;;
+        esac
+    fi
+
+    return 0
+}
+
+## Build configuration
+
+# Use shallow git clones to speed up downloads
+GIT_OPTS+=" --depth=1"
+
+# Install destination
 PREFIX=${PREFIX:-/usr/local}
+
+# Cross-compile
 TRIPLET=${TRIPLET:-$(gcc -dumpmachine)}
 ARCH=${ARCH:-$(uname -m)}
 
-GIT_OPTS+=" --depth=1"
-CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
+# CMake
 CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
+# Autotools
+CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
+
+# Make
 MAKE_THREADS=${MAKE_THREADS:-$(nproc)}
 MAKE_OPTS+="--jobs=${MAKE_THREADS}"
 
-PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
+# pkg-config
+PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-}${PKG_CONFIG_PATH:+:}${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
 export PKG_CONFIG_PATH
 
+# Build in a temporary directory
 TMPDIR=$(mktemp -d)
-pushd ${TMPDIR}
+
+echo "Entering ${TMPDIR}"
+pushd ${TMPDIR} >/dev/null
 
 # Build & Install Criterion
 if ! pkg-config "criterion >= 2.4.1" && \
    [ "${ARCH}" == "x86_64" ] && \
-   [ -z "${SKIP_CRITERION}" ]; then
+   should_build "criterion" "for unit tests"; then
     git clone ${GIT_OPTS} --branch v2.3.3 --recursive https://github.com/Snaipe/Criterion
     mkdir -p Criterion/build
     pushd Criterion/build
@@ -33,7 +102,7 @@ fi
 
 # Build & Install libjansson
 if ! pkg-config "jansson >= 2.13" && \
-    [ -z "${SKIP_JANSSON}" ]; then
+    should_build "jansson" "for configuration parsing" "required"; then
     git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson
     pushd jansson
     autoreconf -i
@@ -48,8 +117,8 @@ if ! ( pkg-config "lua >= 5.1" || \
        pkg-config "lua53" || \
        pkg-config "lua52" || \
        pkg-config "lua51" || \
-       [ -n "${RTLAB_ROOT}" -a -f "/usr/local/include/lua.h" ] \
-     ) && [ -z "${SKIP_LUA}" ]; then
+       { [[ -n "${RTLAB_ROOT:+x}" ]] && [[ -f "/usr/local/include/lua.h" ]]; } \
+     ) && should_build "lua" "for the lua hook"; then
     wget http://www.lua.org/ftp/lua-5.4.4.tar.gz -O - | tar -xz
     pushd lua-5.4.4
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
@@ -59,7 +128,7 @@ fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
-    [ -z "${SKIP_LIBMOSQUITTO}" ]; then
+    should_build "mosquitto" "for the MQTT node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto
     mkdir -p mosquitto/build
     pushd mosquitto/build
@@ -74,7 +143,7 @@ fi
 
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
-    [ -z "${SKIP_LIBRABBITMQ}" ]; then
+    should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
     git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
@@ -85,7 +154,7 @@ fi
 
 # Build & Install libzmq
 if ! pkg-config "libzmq >= 2.2.0" && \
-    [ -z "${SKIP_LIBZMQ}" ]; then
+    should_build "zmq" "for the zeromq node-type"; then
     git clone ${GIT_OPTS} --branch v4.3.4 https://github.com/zeromq/libzmq
     mkdir -p libzmq/build
     pushd libzmq/build
@@ -99,8 +168,8 @@ fi
 
 # Build & Install EtherLab
 if ! pkg-config "libethercat >= 1.5.2" && \
-    [ -z "${SKIP_ETHERLAB}" ]; then
-   git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
+    should_build "ethercat" "for the ethercat node-type"; then
+    git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
@@ -110,7 +179,7 @@ fi
 
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.5.0" && \
-    [ -z "${SKIP_LIBIEC61850}" ]; then
+    should_build "iec61850" "for the iec61850 node-type"; then
     git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850
     mkdir -p libiec61850/build
     pushd libiec61850/build
@@ -123,7 +192,7 @@ fi
 
 # Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
-    [ -z "${SKIP_LIB60870}" ]; then
+    should_build "iec60870" "for the iec60870 node-type"; then
     git clone ${GIT_OPTS} --branch v2.3.2 https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
@@ -136,7 +205,7 @@ fi
 
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
-    [ -z "${SKIP_RDKAFKA}" ]; then
+    should_build "rdkafka" "for the kafka node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka
     mkdir -p librdkafka/build
     pushd librdkafka/build
@@ -151,7 +220,7 @@ fi
 # Build & Install Graphviz
 if ! ( pkg-config "libcgraph >= 2.30" && \
        pkg-config "libgvc >= 2.30" \
-     ) && [ -z "${SKIP_GRAPHVIZ}" ]; then
+     ) && should_build "graphviz" "for villas-graph"; then
     git clone ${GIT_OPTS} --branch 2.50.0 https://gitlab.com/graphviz/graphviz.git
     mkdir -p graphviz/build
     pushd graphviz/build
@@ -162,7 +231,7 @@ fi
 
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.2.0" && \
-    [ -z "${SKIP_ULDAQ}" ]; then
+    should_build "uldaq" "for the uldaq node-type"; then
     git clone ${GIT_OPTS} --branch v1.2.1 https://github.com/mccdaq/uldaq
     pushd uldaq
     autoreconf -i
@@ -176,7 +245,7 @@ fi
 # Build & Install libnl3
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
-     ) && [ -z "${SKIP_ULDAQ}" ]; then
+     ) && should_build "libnl" "for network emulation"; then
     git clone ${GIT_OPTS} --branch libnl3_7_0 https://github.com/thom311/libnl
     pushd libnl
     autoreconf -i
@@ -189,7 +258,7 @@ fi
 
 # Build & Install libconfig
 if ! pkg-config "libconfig >= 1.4.9" && \
-    [ -z "${SKIP_ULDAQ}" ]; then
+    should_build "libconfig" "for libconfig configuration syntax"; then
     git clone ${GIT_OPTS} --branch v1.7.3 https://github.com/hyperrealm/libconfig
     pushd libconfig
     autoreconf -i
@@ -203,7 +272,7 @@ fi
 
 # Build & Install comedilib
 if ! pkg-config "comedilib >= 0.11.0" && \
-    [ -z "${SKIP_COMEDILIB}" ]; then
+    should_build "comedi" "for the comedi node-type"; then
     git clone ${GIT_OPTS} --branch r0_12_0 https://github.com/Linux-Comedi/comedilib.git
     pushd comedilib
     ./autogen.sh
@@ -216,7 +285,7 @@ fi
 
 # Build & Install libre
 if ! pkg-config "libre >= 2.9.0" && \
-    [ -z "${SKIP_LIBRE}" ]; then
+    should_build "libre" "for the rtp node-type"; then
     git clone ${GIT_OPTS} --branch v2.9.0 https://github.com/baresip/re.git
     pushd re
     make ${MAKE_OPTS} install
@@ -225,7 +294,7 @@ fi
 
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
-    [ -z "${SKIP_NANOMSG}" ]; then
+    should_build "nanomsg" "for the nanomsg node-type"; then
     git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
@@ -241,7 +310,7 @@ fi
 
 # Build & Install libxil
 if ! pkg-config "libxil >= 1.0.0" && \
-    [ -z "${SKIP_LIBXIL}" ]; then
+    should_build "libxil" "for the fpga node-type"; then
     git clone ${GIT_OPTS} --branch master https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
@@ -252,8 +321,7 @@ fi
 
 # Build & Install hiredis
 if ! pkg-config "hiredis >= 1.0.0" && \
-    [ -z "${SKIP_HIREDIS}" ] && \
-    [ -z "${SKIP_REDIS}" ]; then
+    should_build "hiredis" "for the redis node-type"; then
     git clone ${GIT_OPTS} --branch v1.1.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
@@ -266,8 +334,7 @@ fi
 
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
-    [ -z "${SKIP_REDISPP}" ] && \
-    [ -z "${SKIP_REDIS}" ]; then
+    should_build "redis++" "for the redis node-type"; then
     git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
@@ -285,7 +352,7 @@ fi
 
 # Build & Install Fmtlib
 if ! pkg-config "fmt >= 6.1.2" && \
-    [ -z "${SKIP_FMTLIB}" ]; then
+    should_build "fmt" "for logging" "required"; then
     git clone ${GIT_OPTS} --branch 6.1.2 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
@@ -298,7 +365,7 @@ fi
 
 # Build & Install spdlog
 if ! pkg-config "spdlog >= 1.8.2" && \
-    [ -z "${SKIP_SPDLOG}" ]; then
+    should_build "spdlog" "for logging" "required"; then
     git clone ${GIT_OPTS} --branch v1.8.2 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
@@ -313,7 +380,7 @@ fi
 
 # Build & Install libwebsockets
 if ! pkg-config "libwebsockets >= 4.3.0" && \
-    [ -z "${SKIP_WEBSOCKETS}" ]; then
+    should_build "libwebsockets" "for the websocket node and VILLASweb" "required"; then
     git clone ${GIT_OPTS} --branch v4.3-stable https://github.com/warmcat/libwebsockets
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
@@ -326,11 +393,11 @@ if ! pkg-config "libwebsockets >= 4.3.0" && \
 fi
 
 # Build & Install libdatachannel
-if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST && \
-    [ -z "${SKIP_LIBDATACHANNEL}" ]; then
-    git clone ${GIT_OPTS} --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel && pushd libdatachannel
-    git submodule update --init --recursive --depth 1
-    mkdir build && pushd build
+if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "libdatachannel" "for the webrtc node-type"; then
+    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel
+    mkdir -p libdatachannel/build
+    pushd libdatachannel/build
 
     if pkg-config "nice >= 0.1.16"; then
         CMAKE_DATACHANNEL_USE_NICE=-DUSE_NICE=ON
@@ -338,17 +405,17 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
 
     cmake -DNO_MEDIA=ON \
           -DNO_WEBSOCKET=ON \
-          ${CMAKE_DATACHANNEL_USE_NICE} \
+          ${CMAKE_DATACHANNEL_USE_NICE-} \
           ${CMAKE_OPTS} ..
 
     make ${MAKE_OPTS} install
-    popd; popd
+    popd
 fi
 
-popd
+popd >/dev/null
 rm -rf ${TMPDIR}
 
 # Update linker cache
-if [ -z "${SKIP_LDCONFIG}" ]; then
+if [ -z "${SKIP_LDCONFIG+x}${DEPS_SCAN+x}" ]; then
     ldconfig
 fi
