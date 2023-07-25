@@ -149,14 +149,13 @@ int FpgaNode::prepare()
 
 	auto &alloc = HostDmaRam::getAllocator();
 
-	auto memRx  = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
-	auto memTx = alloc.allocate<uint32_t>(0x100 / sizeof(int32_t));
+	const std::shared_ptr<villas::MemoryBlock> blockRx = alloc.allocateBlock(0x100 * sizeof(float));
+	const std::shared_ptr<villas::MemoryBlock> blockTx = alloc.allocateBlock(0x100 * sizeof(float));
+	villas::MemoryAccessor<float> memRx = *blockRx;
+	villas::MemoryAccessor<float> memTx = *blockTx;
 
-	blockRx = std::unique_ptr<const MemoryBlock>(&memRx.getMemoryBlock());
-	blockTx = std::unique_ptr<const MemoryBlock>(&memTx.getMemoryBlock());
-
-	dma->makeAccesibleFromVA(*blockRx);
-	dma->makeAccesibleFromVA(*blockTx);
+	dma->makeAccesibleFromVA(blockRx);
+	dma->makeAccesibleFromVA(blockTx);
 
 	// Show some debugging infos
 	auto &mm = MemoryManager::get();
@@ -176,7 +175,7 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt)
 	assert(cnt == 1);
 
 	dma->read(*blockRx, blockRx->getSize()); // TODO: calc size
-	const size_t bytesRead = dma->readComplete();
+	const size_t bytesRead = dma->readComplete().bytes;
 	read = bytesRead / sizeof(int32_t);
 
 	auto mem = MemoryAccessor<uint32_t>(*blockRx);

@@ -14,6 +14,7 @@
 #include <villas/timing.hpp>
 
 #include <villas/fpga/card.hpp>
+#include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/dma.hpp>
 
