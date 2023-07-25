@@ -1,0 +1,23 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @stv0g will be requested for
+# review when someone opens a pull request.
+*       @stv0g
+
+# Order is important; the last matching pattern takes the most
+# precedence. When someone opens a pull request that only
+# modifies the following files, only the following members
+# and not the global owner(s) will be requested for a review.
+
+# FPGA
+fpga                                        @n-eiling
+/lib/nodes/fpga.cpp                         @n-eiling
+/include/villas/nodes/fpga.hpp              @n-eiling
+
+# PMU
+/lib/nodes/libiec61850_goose.cpp            @windrad6
+/include/villas/nodes/libiec61850_goose.hpp @windrad6
+/lib/nodes/uldaq.cpp                        @windrad6
+/include/villas/nodes/uldaq.hpp             @windrad6
+/lib/dumper.cpp                             @windrad6
+/include/villas/dumper.hpp                  @windrad6
