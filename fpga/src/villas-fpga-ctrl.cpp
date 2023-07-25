@@ -150,7 +150,10 @@ void readFromDmaToStdOut(std::shared_ptr<villas::fpga::ip::Dma> dma,
 		try {
 			for (size_t  i = 0; i*4 < c.bytes; i++) {
 				int32_t ival = mem[cur][i];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 				float fval = *((float*)(&ival)); // cppcheck-suppress invalidPointerCast
+#pragma GCC diagnostic pop
 				formatter->format(fval);
 				printf("%#x\n", ival);
 			}
