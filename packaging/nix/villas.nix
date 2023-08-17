@@ -7,17 +7,23 @@
   withAllFormats ? false,
   withAllHooks ? false,
   withAllNodes ? false,
+  # extras
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
+  # formats
   withFormatProtobuf ? withAllFormats,
+  # hooks
   withHookLua ? withAllHooks,
+  # nodes
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
   withNodeFpga ? withAllNodes,
+  withNodeEthercat ? withAllNodes,
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
   withNodeKafka ? withAllNodes,
+  withNodeModbus ? withAllNodes,
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
   withNodeRedis ? withAllNodes,
@@ -42,12 +48,14 @@
   comedilib,
   curl,
   czmq,
+  ethercat,
   gnugrep,
   jansson,
   lib60870,
   libconfig,
   libdatachannel,
   libiec61850,
+  libmodbus,
   libnl,
   libre,
   libsodium,
@@ -73,7 +81,8 @@ stdenv.mkDerivation {
   pname = "villas";
   outputs = ["out" "dev"];
   separateDebugInfo = true;
-  cmakeFlags = []
+  cmakeFlags =
+    []
     ++ lib.optionals (!withGpl) ["-DWITHOUT_GPL=ON"]
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   postPatch = ''
@@ -116,10 +125,12 @@ stdenv.mkDerivation {
     ++ lib.optionals withHookLua [lua]
     ++ lib.optionals withNodeAmqp [rabbitmq-c]
     ++ lib.optionals withNodeComedi [comedilib]
+    ++ lib.optionals withNodeEthercat [ethercat]
     ++ lib.optionals withNodeIec60870 [lib60870]
     ++ lib.optionals withNodeIec61850 [libiec61850]
     ++ lib.optionals withNodeInfiniband [rdma-core]
     ++ lib.optionals withNodeKafka [rdkafka]
+    ++ lib.optionals withNodeModbus [libmodbus]
     ++ lib.optionals withNodeMqtt [mosquitto]
     ++ lib.optionals withNodeNanomsg [nanomsg]
     ++ lib.optionals withNodeRedis [redis-plus-plus]

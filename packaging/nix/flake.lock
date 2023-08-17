@@ -16,20 +16,36 @@
         "type": "github"
       }
     },
+    "ethercat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1689851599,
+        "narHash": "sha256-r829UW4ziY+QUxqjb2j2Bo+xJeUNWn6WiSRK3Gly2Zo=",
+        "owner": "etherlab.org",
+        "repo": "ethercat",
+        "rev": "c8a512ac077f2ab51bb072bfbef1a687f9f1c090",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "etherlab.org",
+        "ref": "stable-1.5",
+        "repo": "ethercat",
+        "type": "gitlab"
+      }
+    },
     "fpga": {
       "flake": false,
       "locked": {
-        "lastModified": 1686871446,
-        "narHash": "sha256-pRFFr72NVge4UgwBvc8gYygnvOHghTSUGI+JtqpRlxo=",
-        "ref": "refs/heads/villas-node",
-        "rev": "ce8612379de62f50a52e172fe8eaee924d5d8822",
-        "revCount": 481,
+        "lastModified": 1690302379,
+        "narHash": "sha256-u2u4CUffhA9jxtuk4HokqlmyDQGNz4+LOEJ5Z9DhedU=",
+        "ref": "refs/heads/master",
+        "rev": "1cac3fafde6ef3098a145f9d5d936a2dc6b7d7c0",
+        "revCount": 532,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/VILLASframework/fpga.git"
       },
       "original": {
-        "ref": "refs/heads/villas-node",
         "submodules": true,
         "type": "git",
         "url": "https://github.com/VILLASframework/fpga.git"
@@ -90,11 +106,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1687354544,
-        "narHash": "sha256-1Xu+QzyA10AiY21i27Zu9bqQAaxXBacNKbGUA9OZy7Y=",
+        "lastModified": 1692254348,
+        "narHash": "sha256-CyRMA7Rap1X65k4p/uoaLXhbnn+PZvwxNHSeLuiQ9ss=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "876181e3ae452cc6186486f6f7300a8a6de237cb",
+        "rev": "5353604b0affde24dcd75e59d0d22342b1758cfb",
         "type": "github"
       },
       "original": {
@@ -107,6 +123,7 @@
     "root": {
       "inputs": {
         "common": "common",
+        "ethercat": "ethercat",
         "fpga": "fpga",
         "lib60870": "lib60870",
         "libdatachannel": "libdatachannel",
