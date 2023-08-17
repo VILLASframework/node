@@ -12,8 +12,12 @@
     fpga = {
       type = "git";
       url = "https://github.com/VILLASframework/fpga.git";
-      ref = "refs/heads/villas-node";
       submodules = true;
+      flake = false;
+    };
+
+    ethercat = {
+      url = "gitlab:etherlab.org/ethercat/stable-1.5";
       flake = false;
     };
 
@@ -71,7 +75,8 @@
           self.overlays.minimal
         ];
       })
-      .pkgsCross.${crossSystem};
+      .pkgsCross
+      .${crossSystem};
 
     # build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
@@ -89,6 +94,10 @@
         withAllFormats = true;
         withAllHooks = true;
         withAllNodes = true;
+      };
+
+      ethercat = pkgs.callPackage ./ethercat.nix {
+        src = inputs.ethercat;
       };
 
       lib60870 = pkgs.callPackage ./lib60870.nix {
@@ -131,7 +140,7 @@
         pkgs = pkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
-        packages = with pkgs; [bashInteractive criterion bc jq];
+        packages = with pkgs; [bashInteractive bc boxfort criterion jq libffi libgit2 pcre];
       in rec {
         default = full;
 
