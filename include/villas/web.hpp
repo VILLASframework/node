@@ -24,9 +24,9 @@ namespace node {
 /* Forward declarations */
 class Api;
 
-class Web {
+class Web final {
 
-protected:
+private:
 	enum State state;
 
 	Logger logger;
@@ -54,6 +54,8 @@ public:
  	 * The web interface is based on the libwebsockets library.
  	 */
 	Web(Api *a = nullptr);
+
+	~Web();
 
 	void start();
 	void stop();

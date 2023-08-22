@@ -33,7 +33,8 @@ Api::Api(SuperNode *sn) :
 
 Api::~Api()
 {
-	assert(state != State::STARTED);
+	if (state == State::STARTED)
+		stop();
 }
 
 void Api::start()
