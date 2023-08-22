@@ -47,6 +47,12 @@
   } @ inputs: let
     inherit (nixpkgs) lib;
 
+    # add separateDebugInfo to a derivation
+    addSeparateDebugInfo = d:
+      d.overrideAttrs {
+        separateDebugInfo = true;
+      };
+
     # supported systems for native compilation
     supportedSystems = ["x86_64-linux" "aarch64-linux"];
 
@@ -63,20 +69,27 @@
     pkgsFor = system:
       import nixpkgs {
         inherit system;
-        overlays = [self.overlays.default];
+        overlays = with self.overlays; [default];
       };
 
     # initialize nixpkgs for cross-compiling from `system` to `crossSystem`
     crossPkgsFor = system: crossSystem:
       (import nixpkgs {
         inherit system;
-        overlays = [
-          self.overlays.default
-          self.overlays.minimal
+        overlays = with self.overlays; [
+          default
+          minimal
         ];
       })
       .pkgsCross
       .${crossSystem};
+
+    # initialize development nixpkgs for the specified `system`
+    devPkgsFor = system:
+      import nixpkgs {
+        inherit system;
+        overlays = with self.overlays; [default debug];
+      };
 
     # build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
@@ -128,6 +141,10 @@
     # standard flake attribute allowing you to add the villas packages to your nixpkgs
     overlays = {
       default = final: prev: packagesWith final;
+      debug = final: prev: {
+        jansson = addSeparateDebugInfo prev.jansson;
+        libmodbus = addSeparateDebugInfo prev.libmodbus;
+      };
       minimal = final: prev: {
         mosquitto = prev.mosquitto.override {systemd = final.systemdMinimal;};
         rdma-core = prev.rdma-core.override {udev = final.systemdMinimal;};
@@ -137,7 +154,7 @@
     # standard flake attribute for defining developer environments
     devShells = forSupportedSystems (
       system: let
-        pkgs = pkgsFor system;
+        pkgs = devPkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
         packages = with pkgs; [bashInteractive bc boxfort criterion jq libffi libgit2 pcre];
