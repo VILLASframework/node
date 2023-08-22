@@ -58,7 +58,8 @@ RUN apt-get update && \
 		libusb-1.0-0-dev:${ARCH} \
 		libre-dev:${ARCH} \
 		liblua5.3-dev:${ARCH} \
-		libhiredis-dev:${ARCH}
+		libhiredis-dev:${ARCH} \
+		libmodbus-dev:${ARCH}
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
@@ -153,7 +154,8 @@ RUN apt-get update && \
 		libusb-1.0-0:${ARCH} \
 		libre0:${ARCH} \
 		liblua5.3-0:${ARCH} \
-		libhiredis0.14:${ARCH} && \
+		libhiredis0.14:${ARCH} \
+		libmodbus5:${ARCH} && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder ${PREFIX} ${PREFIX}

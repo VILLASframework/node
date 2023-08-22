@@ -52,7 +52,8 @@ RUN apt-get update && \
 		libspdlog-dev \
 		liblua5.3-dev \
 		libhiredis-dev \
-		libnice-dev
+		libnice-dev \
+		libmodbus-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
