@@ -79,6 +79,11 @@ if(WITH_NODE_OPAL)
     list(APPEND LIBRARIES ${OPAL_LIBRARIES})
 endif()
 
+if(WITH_NODE_MODBUS)
+    list(APPEND NODE_SRC modbus.cpp)
+    list(APPEND LIBRARIES PkgConfig::MODBUS)
+endif()
+
 # Enable nanomsg node type when libnanomsg is available
 if(WITH_NODE_NANOMSG)
     list(APPEND NODE_SRC nanomsg.cpp)
