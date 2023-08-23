@@ -514,11 +514,12 @@ int ModbusNode::_read(struct Sample *smps[], unsigned cnt)
 
 	for (unsigned int i = 0; i < cnt; ++i) {
 		auto smp = smps[i];
+		smp->length = num_in_signals;
 		smp->flags |= (int) SampleFlags::HAS_DATA;
 
+		assert(smp->length <= smp->capacity);
+
 		for (auto &mapping : in_mappings) {
-			smp->length = num_in_signals;
-			assert(smp->length <= smp->capacity);
 			if (auto ret = readBlock(mapping, smp->data, smp->length))
 				return ret;
 		}
@@ -587,8 +588,9 @@ int ModbusNode::_write(struct Sample *smps[], unsigned cnt)
 	for (unsigned int i = 0; i < cnt; ++i) {
 		auto smp = smps[i];
 
+		assert(smp->length == num_out_signals);
+
 		for (auto &mapping : out_mappings) {
-			assert(smp->length == num_out_signals);
 			if (auto ret = writeBlock(mapping, smp->data, smp->length))
 				return ret;
 		}
