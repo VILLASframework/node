@@ -185,8 +185,9 @@ Web::Web(Api *a) :
 	lws_set_log_level(lwsLogLevel(logging.getLevel()), lwsLogger);
 }
 
-Web::~Web() {
-	if(state == State::STARTED)
+Web::~Web()
+{
+	if (state == State::STARTED)
 		stop();
 }
 
