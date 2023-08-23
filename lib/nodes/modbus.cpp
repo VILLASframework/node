@@ -904,10 +904,28 @@ std::vector<int> ModbusNode::getPollFDs()
 
 const std::string & ModbusNode::getDetails()
 {
-	details = fmt::format("");
+	if (details.empty()) {
+		if (auto tcp = std::get_if<Tcp>(&connection_settings)) {
+			details = fmt::format("transport=tcp, remote={}, port={}", tcp->remote, tcp->port);
+
+			if (tcp->unit)
+				details.append(fmt::format(", unit={}", *tcp->unit));
+		}
+
+		if (auto rtu = std::get_if<Rtu>(&connection_settings)) {
+			details = fmt::format("transport=rtu, device={}, baudrate={}, parity={}, data_bits={}, stop_bits={}, unit={}",
+				rtu->device.c_str(),
+				rtu->baudrate,
+				static_cast<char>(rtu->parity),
+				rtu->data_bits,
+				rtu->stop_bits,
+				rtu->unit);
+		}
+	}
+
 	return details;
 }
 
 static char name[] = "modbus";
-static char description[] = "read and write Modbus registers as a client";
+static char description[] = "Read and write Modbus registers";
 static NodePlugin<ModbusNode, name, description, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL> p;
