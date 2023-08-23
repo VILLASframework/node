@@ -47,7 +47,7 @@
   } @ inputs: let
     inherit (nixpkgs) lib;
 
-    # add separateDebugInfo to a derivation
+    # Add separateDebugInfo to a derivation
     addSeparateDebugInfo = d:
       d.overrideAttrs {
         separateDebugInfo = true;
@@ -72,7 +72,7 @@
         overlays = with self.overlays; [default];
       };
 
-    # initialize nixpkgs for cross-compiling from `system` to `crossSystem`
+    # Initialize nixpkgs for cross-compiling from `system` to `crossSystem`
     crossPkgsFor = system: crossSystem:
       (import nixpkgs {
         inherit system;
@@ -84,14 +84,14 @@
       .pkgsCross
       .${crossSystem};
 
-    # initialize development nixpkgs for the specified `system`
+    # Initialize development nixpkgs for the specified `system`
     devPkgsFor = system:
       import nixpkgs {
         inherit system;
         overlays = with self.overlays; [default debug];
       };
 
-    # build villas and its dependencies for the specified `pkgs`
+    # Build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
       default = villas;
 

@@ -7,14 +7,14 @@
   withAllFormats ? false,
   withAllHooks ? false,
   withAllNodes ? false,
-  # extras
+  # Extra features
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
-  # formats
+  # Format-types
   withFormatProtobuf ? withAllFormats,
-  # hooks
+  # Hook-types
   withHookLua ? withAllHooks,
-  # nodes
+  # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
   withNodeFpga ? withAllNodes,
