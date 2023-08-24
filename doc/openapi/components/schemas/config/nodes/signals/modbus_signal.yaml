@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- type: object
+  required: [type, address]
+  properties:
+
+    address:
+      type: integer
+      description: The modbus register address.
+
+    word_endianess:
+      type: string
+      enum:
+      - big
+      - little
+      description: The ordering of two modbus registers joined together to form a larger number.
+      default: "big"
+
+    byte_endianess:
+      type: string
+      enum:
+      - big
+      - little
+      description: The ordering of the bytes within a modbus register.
+      default: "big"
+
+    scale:
+      type: number
+      description: The scale of the register's value.
+      default: 1.0
+
+    offset:
+      type: number
+      description: The offset of the register's value.
+      default: 0.0
+
+    bit:
+      type: integer
+      description: The bit index within a register.
+      minimum: 0
+      maximum: 15
+
+- $ref: ../../signal.yaml
