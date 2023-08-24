@@ -34,6 +34,7 @@ discriminator:
     influxdb: nodes/_influxdb.yaml
     kafka: nodes/_kafka.yaml
     loopback: nodes/_loopback.yaml
+    modbus: nodes/_modbus.yaml
     mqtt: nodes/_mqtt.yaml
     nanomsg: nodes/_nanomsg.yaml
     ngsi: nodes/_ngsi.yaml
