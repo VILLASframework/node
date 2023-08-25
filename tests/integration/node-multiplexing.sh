@@ -119,4 +119,6 @@ villas node config.json
 
 villas compare output.dat expect_${MODE}.dat
 
+rm output.dat
+
 done
