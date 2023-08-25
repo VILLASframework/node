@@ -188,6 +188,7 @@ cmake_dependent_option(WITH_TOOLS           "Build auxilary tools"              
 cmake_dependent_option(WITH_WEB             "Build with internal webserver"                         "${WITH_DEFAULTS}" "LIBWEBSOCKETS_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP       "Build with amqp node-type"                             "${WITH_DEFAULTS}" "RABBITMQ_C_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_API_CLIENT "Build with api-client node-type"                       "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_CAN        "Build with can node-type"                              "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI     "Build with comedi node-type"                           "${WITH_DEFAULTS}" "COMEDILIB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ETHERCAT   "Build with ethercat node-type"                         "${WITH_DEFAULTS}" "ETHERLAB_FOUND; NOT WITHOUT_GPL" OFF)
@@ -298,6 +299,7 @@ add_feature_info(TOOLS                  WITH_TOOLS                  "Build auxil
 add_feature_info(WEB                    WITH_WEB                    "Build with internal webserver")
 
 add_feature_info(NODE_AMQP              WITH_NODE_AMQP              "Build with amqp node-type")
+add_feature_info(NODE_API_CLIENT        WITH_NODE_API_CLIENT        "Build with api-client node-type")
 add_feature_info(NODE_CAN               WITH_NODE_CAN               "Build with can node-type")
 add_feature_info(NODE_COMEDI            WITH_NODE_COMEDI            "Build with comedi node-type")
 add_feature_info(NODE_ETHERCAT          WITH_NODE_ETHERCAT          "Build with ethercat node-type")

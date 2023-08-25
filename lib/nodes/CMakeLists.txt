@@ -186,6 +186,13 @@ if(WITH_NODE_WEBRTC)
 	list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
+# Enable REST API client support
+if(WITH_NODE_API_CLIENT)
+    list(APPEND NODE_SRC api_client.cpp)
+    list(APPEND INCLUDE_DIRECTORIES ${CURL_INCLUDE_DIRS})
+    list(APPEND LIBRARIES ${CURL_LIBRARIES})
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})
