@@ -40,7 +40,8 @@ should_build() {
 
     if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
         echo
-        case "$(read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N)")" in
+        read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
+        case "${REPLY}" in
             y | Y)
                 echo "Installing '${id}'"
                 return 0
