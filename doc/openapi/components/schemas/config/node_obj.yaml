@@ -20,6 +20,7 @@ discriminator:
   mapping:
     amqp: nodes/_amqp.yaml
     api: nodes/_api.yaml
+    api_client: nodes/_api_client.yaml
     can: nodes/_can.yaml
     comedi: nodes/_comedi.yaml
     ethercat: nodes/_ethercat.yaml

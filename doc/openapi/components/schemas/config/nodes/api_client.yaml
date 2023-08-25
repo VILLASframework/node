@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+---
+
+allOf:
+- $ref: ../node.yaml
+- type: object
+  required:
+  - endpoint
+
+  properties:
+    endpoint:
+      type: string
+      format: uri
+
+    ssl_verify:
+      type: boolean
+      description: Verify SSL certificate against local trust store.
+
+    timeout:
+      description: Timeout in seconds for HTTP requests.
+      type: number
+      default: 1.0
+
+    rate:
+      description: Polling rate in Hz for requesting entity updates from broker.
+      type: number
+      default: 1.0
+
+    access_token:
+      type: string
+      description: Send 'Auth-Token' header with every HTTP request.
+
+    in:
+      type: object
+      required:
+      - signals
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/api_signal.yaml
+
+    out:
+      type: object
+      required:
+      - signals
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: ./signals/api_signal.yaml
