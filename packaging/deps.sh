@@ -88,6 +88,11 @@ MAKE_OPTS+="--jobs=${MAKE_THREADS}"
 PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-}${PKG_CONFIG_PATH:+:}${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
 export PKG_CONFIG_PATH
 
+# IS_OPAL_RTLINUX=$(uname -r | grep -q opalrtlinux && echo true)
+# if [ -n "${IS_OPAL_RTLINUX}" ]; then
+#     GIT_OPTS+=" -c http.sslVerify=false"
+# fi
+
 # Build in a temporary directory
 TMPDIR=$(mktemp -d)
 
@@ -406,6 +411,43 @@ if ! pkg-config "libwebsockets >= 4.3.0" && \
     popd
 fi
 
+# Build & Install libnice
+if ! pkg-config "nice >= 0.1.16" && \
+    should_build "libnice" "for the webrtc node-type"; then
+    git clone ${GIT_OPTS} --branch 0.1.21 https://gitlab.freedesktop.org/libnice/libnice.git
+    mkdir -p libnice/build
+    pushd libnice
+
+    # Create sub-shell to constrain meson venv and ninja PATH to this build
+    (
+        # Install meson
+        if ! command -v meson; then
+            python3 -m venv venv
+            . venv/bin/activate
+
+            # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
+            pip3 install meson==0.61.5
+        fi
+
+        # Install ninja
+        if ! command -v ninja; then
+            wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+            unzip ninja-linux.zip
+            export PATH=${PATH}:.
+        fi
+
+        meson setup \
+            --prefix=${PREFIX} \
+            --cmake-prefix-path=${PREFIX} \
+            --backend=ninja \
+            build
+        meson compile -C build
+        meson install -C build
+    )
+
+    popd
+fi
+
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
@@ -421,7 +463,6 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
           -DNO_WEBSOCKET=ON \
           ${CMAKE_DATACHANNEL_USE_NICE-} \
           ${CMAKE_OPTS} ..
-
     make ${MAKE_OPTS} install
     popd
 fi
