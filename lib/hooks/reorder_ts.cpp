@@ -25,7 +25,8 @@ protected:
 	std::size_t window_size;
 	Sample *buffer;
 
-	void swapSample(Sample *lhs, Sample *rhs) {
+	void swapSample(Sample *lhs, Sample *rhs)
+	{
 		if (buffer) {
 			sample_copy(buffer, lhs);
 			sample_copy(lhs, rhs);
