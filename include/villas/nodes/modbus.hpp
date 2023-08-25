@@ -282,6 +282,9 @@ public:
 	std::vector<int> getPollFDs();
 
 	virtual
+	std::vector<int> getNetemFDs();
+
+	virtual
 	const std::string & getDetails();
 };
 
