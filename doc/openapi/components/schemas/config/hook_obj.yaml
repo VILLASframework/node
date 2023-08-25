@@ -17,6 +17,7 @@ discriminator:
     average: hooks/_average.yaml
     cast: hooks/_cast.yaml
     decimate: hooks/_decimate.yaml
+    digest: hooks/_digest.yaml
     dp: hooks/_dp.yaml
     drop: hooks/_drop.yaml
     dump: hooks/_dump.yaml

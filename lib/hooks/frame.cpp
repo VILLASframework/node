@@ -168,6 +168,8 @@ public:
       : Hook(p, n, fl, prio, en), trigger(Trigger::SEQUENCE), interval(1),
         offset(0), unit{std::nullopt}, last_smp{nullptr, &sample_decref} {}
 
+  virtual ~FrameHook() { (void)last_smp.release(); }
+
   virtual void parse(json_t *json) override {
     Hook::parse(json);
 
