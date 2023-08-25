@@ -904,6 +904,17 @@ std::vector<int> ModbusNode::getPollFDs()
 	return { read_task.getFD() };
 }
 
+std::vector<int> ModbusNode::getNetemFDs()
+{
+	if (modbus_context != nullptr && std::holds_alternative<Tcp>(connection_settings))  {
+		return {
+			modbus_get_socket(modbus_context)
+		};
+	}
+
+	return { };
+}
+
 const std::string & ModbusNode::getDetails()
 {
 	if (details.empty()) {
