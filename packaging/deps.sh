@@ -413,6 +413,18 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     popd
 fi
 
+# Build & Install libmodbus
+if ! pkg-config "libmodbus >= 3.1.0" && \
+    should_build "libmodbus" "for the modbus node-type"; then
+    git clone ${GIT_OPTS} --recursive --branch v3.1.10 https://github.com/stephane/libmodbus.git
+    mkdir -p libmodbus/build
+    pushd libmodbus
+    autoreconf -i
+    ./configure ${CONFIGURE_OPTS}
+    make ${MAKE_OPTS} install
+    popd
+fi
+
 popd >/dev/null
 rm -rf ${TMPDIR}
 
