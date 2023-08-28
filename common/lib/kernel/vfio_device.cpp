@@ -1,4 +1,4 @@
-/** Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API
  *
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <post@steffenvogel.de>
@@ -7,7 +7,7 @@
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #define _DEFAULT_SOURCE
 
@@ -32,7 +32,8 @@
 
 using namespace villas::kernel::vfio;
 
-static const char *vfio_pci_region_names[] = {
+static
+const char *vfio_pci_region_names[] = {
     "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX
     "PCI_BAR1",		// VFIO_PCI_BAR1_REGION_INDEX
     "PCI_BAR2",		// VFIO_PCI_BAR2_REGION_INDEX
@@ -44,7 +45,8 @@ static const char *vfio_pci_region_names[] = {
     "PCI_VGA"		// VFIO_PCI_INTX_IRQ_INDEX
 };
 
-static const char *vfio_pci_irq_names[] = {
+static
+const char *vfio_pci_irq_names[] = {
     "PCI_INTX",		// VFIO_PCI_INTX_IRQ_INDEX
     "PCI_MSI", 		// VFIO_PCI_MSI_IRQ_INDEX
     "PCI_MSIX",		// VFIO_PCI_MSIX_IRQ_INDEX
@@ -122,10 +124,8 @@ Device::Device(const std::string &name, int groupFileDescriptor, const kernel::p
 		if (ret < 0)
 			throw RuntimeError("Failed to get IRQ {} of VFIO device: {}", i, name);
 
-
 		log->debug("irq {} info: flags: 0x{:x}, count: {}",
 			irq.index, irq.flags, irq.count);
-
 
 		irqs[i] = irq;
 	}
@@ -383,7 +383,6 @@ bool Device::pciMsiFind(int nos[])
 		do {
 			last = col;
 		} while ((col = strtok(nullptr, " ")));
-
 
 		ret = sscanf(last, "vfio-msi[%d](%12[0-9:])", &idx, name);
 		if (ret == 2) {

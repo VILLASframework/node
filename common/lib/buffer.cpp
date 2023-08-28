@@ -1,9 +1,9 @@
-/** A simple buffer for encoding streamed JSON messages.
+/* A simple buffer for encoding streamed JSON messages.
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <villas/compat.hpp>
 #include <villas/buffer.hpp>

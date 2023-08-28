@@ -1,10 +1,10 @@
-/** Memory manager.
+/* Memory manager.
  *
  * @file
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -65,7 +65,6 @@ private:
 	size_t		size;	// Size of "memory window"
 };
 
-
 // Global memory manager to resolve addresses across address spaces
 //
 // Every entity in the system has to register its (master) address space and
@@ -123,7 +122,6 @@ private:
 			              << ")";
 		}
 	};
-
 
 	// Custom vertex in memory graph representing an address space
 	//
@@ -196,7 +194,6 @@ public:
 	           AddressSpaceId fromAddrSpace,
 	           AddressSpaceId toAddrSpace);
 
-
 	AddressSpaceId findAddressSpace(const std::string &name);
 
 	std::list<AddressSpaceId> findPath(const AddressSpaceId &fromAddrSpaceId, const AddressSpaceId &toAddrSpaceId);
@@ -243,7 +240,8 @@ private:
 	MemoryGraph::check_path_fn pathCheckFunc;
 
 	// Static pointer to global instance, because this is a singleton
-	static MemoryManager* instance;
+	static
+	MemoryManager* instance;
 };
 
 } // namespace villas

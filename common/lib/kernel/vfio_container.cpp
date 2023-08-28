@@ -1,11 +1,11 @@
-/** Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #define _DEFAULT_SOURCE
 
@@ -41,8 +41,8 @@ using namespace villas::kernel::vfio;
   #define VFIO_NOIOMMU_IOMMU 8
 #endif
 
-
-static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
+static
+std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
 	std::array<std::string, EXTENSION_SIZE> ret;
 	ret[VFIO_TYPE1_IOMMU] = "Type 1";
 	ret[VFIO_SPAPR_TCE_IOMMU] = "SPAPR TCE";
@@ -62,8 +62,8 @@ static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
 	return ret;
 }
 
-static std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR = construct_vfio_extension_str();
-
+static
+std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR = construct_vfio_extension_str();
 
 Container::Container() :
 	fd(-1),
@@ -74,7 +74,8 @@ Container::Container() :
 	groups(),
 	log(logging.get("kernel:vfio::Container"))
 {
-	static constexpr const char* requiredKernelModules[] = {
+	static constexpr
+	const char* requiredKernelModules[] = {
 	    "vfio", "vfio_pci", "vfio_iommu_type1"
 	};
 
@@ -196,7 +197,8 @@ std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev)
 {
 	int ret;
 	char name[32], iommu_state[4];
-	static constexpr const char* kernelDriver = "vfio-pci";
+	static constexpr
+	const char* kernelDriver = "vfio-pci";
 
 	// Load PCI bus driver for VFIO
 	if (kernel::loadModule("vfio_pci"))

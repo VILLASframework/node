@@ -1,9 +1,9 @@
-/** Logging and debugging routines
+/* Logging and debugging routines
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <list>
 #include <algorithm>
@@ -23,7 +23,8 @@ using namespace villas;
 // The global log instance
 Log villas::logging;
 
-static std::map<spdlog::level::level_enum, std::string> levelNames = {
+static
+std::map<spdlog::level::level_enum, std::string> levelNames = {
 	{ spdlog::level::trace,		"trc" },
 	{ spdlog::level::debug,		"dbg" },
 	{ spdlog::level::info,		"info" },

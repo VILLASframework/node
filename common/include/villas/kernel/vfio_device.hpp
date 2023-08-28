@@ -1,4 +1,4 @@
-/** Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API
  *
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
@@ -7,7 +7,7 @@
  * @copyright 2022, Niklas Eiling
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
- *********************************************************************************/
+ */
 
 #pragma once
 

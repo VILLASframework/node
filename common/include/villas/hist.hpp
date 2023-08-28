@@ -1,10 +1,10 @@
-/** Histogram class.
+/* Histogram class.
  *
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -109,7 +109,6 @@ protected:
 
 	cnt_t higher;		// The number of values which are higher than #high.
 	cnt_t lower;		// The number of values which are lower than #low.
-
 
 	std::vector<cnt_t> data; // Bucket counters.
 

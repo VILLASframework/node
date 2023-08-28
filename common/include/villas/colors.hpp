@@ -1,10 +1,10 @@
-/** Various helper functions.
+/* Various helper functions.
  *
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 

@@ -1,9 +1,9 @@
-/** Graph unit test.
+/* Graph unit test.
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2021, Steffen Vogel
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <memory>
 
@@ -95,12 +95,10 @@ Test(graph, path, .description = "Find path")
 	cr_assert(not g.getPath(v1id, v4id, path2));
 	logger->info("  no path found -> ok");
 
-
 	logger->info("Find non-existing path in circular sub-graph");
 	std::list<Graph::EdgeIdentifier> path3;
 	cr_assert(not g.getPath(v4id, v2id, path3));
 	logger->info("  no path found -> ok");
-
 
 	logger->info("Find path in circular graph");
 	std::list<Graph::EdgeIdentifier> path4;

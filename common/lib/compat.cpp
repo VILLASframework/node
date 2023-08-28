@@ -1,9 +1,9 @@
-/** Compatability for different library versions.
+/* Compatability for different library versions.
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <cstring>
 #include <jansson.h>
@@ -42,7 +42,6 @@ json_t *json_loadfd(int input, size_t flags, json_error_t *error)
 {
 	return json_load_callback(json_loadfd_callback, (void *) &input, flags, error);
 }
-
 
 static
 int json_dumpfd_callback(const char *buffer, size_t size, void *data)

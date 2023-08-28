@@ -1,4 +1,4 @@
-/** Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API
  *
  * @file
  * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
@@ -7,7 +7,7 @@
  * @copyright 2022, Niklas Eiling
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -26,17 +26,19 @@ namespace vfio {
 
 // Backwards compatability with older kernels
 #ifdef VFIO_UPDATE_VADDR
-static constexpr size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR+1;
+static constexpr
+size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR+1;
 #elif defined(VFIO_UNMAP_ALL)
-static constexpr size_t EXTENSION_SIZE = VFIO_UNMAP_ALL+1;
+static constexpr
+size_t EXTENSION_SIZE = VFIO_UNMAP_ALL+1;
 #else
-static constexpr size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU+1;
+static constexpr
+size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU+1;
 #endif
 
 class Container {
 public:
 	Container();
-
 
 	// No copying allowed because we manage the vfio state in constructor and destructors
 	Container(Container const&) = delete;

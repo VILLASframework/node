@@ -1,9 +1,9 @@
-/** Base64 encoding/decoding
+/* Base64 encoding/decoding
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <string>
 #include <vector>
@@ -16,8 +16,10 @@ namespace villas {
 namespace utils {
 namespace base64 {
 
-static const char kEncodeLookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const char kPadCharacter = '=';
+static
+const char kEncodeLookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static
+const char kPadCharacter = '=';
 
 std::string encode(const std::vector<byte>& input)
 {

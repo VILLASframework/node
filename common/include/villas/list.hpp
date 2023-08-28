@@ -1,4 +1,4 @@
-/** A generic list implementation.
+/* A generic list implementation.
  *
  * This is a generic implementation of a list which can store void pointers to
  * arbitrary data. The data itself is not stored or managed by the list.
@@ -9,9 +9,9 @@
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-*
+ *
  * VILLAScommon
- * *********************************************************************************/
+ * */
 
 #pragma once
 
@@ -25,14 +25,16 @@
 #define LIST_CHUNKSIZE		16
 
 // Static list initialization
-#define LIST_INIT_STATIC(l)					\
-__attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
-	int ret __attribute__((unused));			\
-	ret = list_init(l);					\
-}								\
-__attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
-	int ret __attribute__((unused));			\
-	ret = list_destroy(l, nullptr, false);			\
+#define LIST_INIT_STATIC(l)			\
+__attribute__((constructor(105))) static	\
+void UNIQUE(__ctor)() {				\
+	int ret __attribute__((unused));	\
+	ret = list_init(l);			\
+}						\
+__attribute__((destructor(105))) static		\
+void UNIQUE(__dtor)() {				\
+	int ret __attribute__((unused));	\
+	ret = list_destroy(l, nullptr, false);	\
 }
 
 #define list_length(list)		((list)->length)

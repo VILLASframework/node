@@ -1,9 +1,9 @@
-/** Run tasks periodically.
+/* Run tasks periodically.
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <unistd.h>
 #include <ctime>
@@ -152,7 +152,6 @@ uint64_t Task::wait()
 	do {
 		now = tsc_now(&tsc);
 	} while (now < next);
-
 
 	for (runs = 0; next < now; runs++)
 		next += period;

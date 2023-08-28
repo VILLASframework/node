@@ -1,9 +1,9 @@
-/** Linux specific real-time optimizations
+/* Linux specific real-time optimizations
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <sched.h>
 #include <unistd.h>

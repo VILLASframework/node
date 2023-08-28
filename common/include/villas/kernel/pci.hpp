@@ -1,10 +1,10 @@
-/** Linux PCI helpers
+/* Linux PCI helpers
  *
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -87,13 +87,13 @@ public:
 	bool
 	operator==(const Device &other);
 
-	// Get currently loaded driver for device.
+	// Get currently loaded driver for device
 	std::string getDriver() const;
 
-	// Bind a new LKM to the PCI device.
+	// Bind a new LKM to the PCI device
 	bool attachDriver(const std::string &driver) const;
 
-	// Return the IOMMU group of this PCI device or -1 if the device is not in a group.
+	// Return the IOMMU group of this PCI device or -1 if the device is not in a group
 	int getIommuGroup() const;
 
 	std::list<Region> getRegions() const;
@@ -102,14 +102,14 @@ public:
 	void writeBar(uint32_t addr, unsigned bar = 0);
 
 	// If BAR values in config space and in the kernel do not match, rewrite
-	// the BAR value of the kernel to PCIe config space.
+	// the BAR value of the kernel to PCIe config space
 	void rewriteBar(unsigned bar = 0);
 
-	// Read 32-bit BAR value from the PCI configuration space.
+	// Read 32-bit BAR value from the PCI configuration space
 	uint32_t readBar(unsigned bar = 0) const;
 
-	// Read 32-bit BAR value from the devices resource file. This is what the kernel
-	// thinks the BAR should be.
+	// Read 32-bit BAR value from the devices resource file.
+	// This is what the kernel thinks the BAR should be.
 	uint32_t readHostBar(unsigned bar = 0) const;
 
 	Id id;
