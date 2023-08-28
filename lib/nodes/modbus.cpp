@@ -35,6 +35,11 @@
  * @license Apache 2.0
  *********************************************************************************/
 
+#include <atomic>
+#include <chrono>
+
+#include <fmt/format.h>
+
 #include <villas/node_compat.hpp>
 #include <villas/nodes/modbus.hpp>
 #include <villas/utils.hpp>
@@ -42,9 +47,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
-#include <fmt/format.h>
-#include <atomic>
-#include <chrono>
+
 
 using namespace villas;
 using namespace villas::node;
