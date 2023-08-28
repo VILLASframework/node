@@ -105,5 +105,5 @@ static char n[] = "ma";
 static char d[] = "A simple moving average filter over a fixed number of past samples";
 static HookPlugin<MovingAverageHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

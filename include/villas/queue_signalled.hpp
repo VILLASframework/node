@@ -43,4 +43,4 @@ public:
 	}
 };
 
-} /* namespace villas */
+} // namespace villas

@@ -220,5 +220,5 @@ public:
 	struct memory::Type * (*memory_type)(NodeCompat *n, struct memory::Type *parent);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -73,5 +73,5 @@ int signal_node_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int signal_node_poll_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

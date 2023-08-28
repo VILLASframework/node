@@ -28,5 +28,5 @@ public:
 	using Format::Format;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

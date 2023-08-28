@@ -187,5 +187,5 @@ public:
 };
 
 } /* namespace iec60870 */
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

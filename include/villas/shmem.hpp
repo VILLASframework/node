@@ -105,5 +105,5 @@ int shmem_int_alloc(struct ShmemInterface *shm, struct Sample *smps[], unsigned 
  * per struct Sample. */
 size_t shmem_total_size(int queuelen, int samplelen);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -102,6 +102,6 @@ public:
 	methodToString(Method meth);
 };
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

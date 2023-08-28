@@ -38,6 +38,6 @@ static char r[] = "/capabilities";
 static char d[] = "get capabiltities and details about this VILLASnode instance";
 static RequestPlugin<CapabilitiesRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

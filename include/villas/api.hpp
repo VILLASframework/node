@@ -73,7 +73,7 @@ public:
 	InvalidMethod(Request *req);
 };
 
-} /* namespace api */
+} // namespace api
 
 /* Forward declarations */
 class SuperNode;
@@ -113,5 +113,5 @@ public:
 	villas::QueueSignalled<api::Session *> pending;	/**< A queue of api_sessions which have pending requests. */
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

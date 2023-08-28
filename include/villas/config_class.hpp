@@ -87,5 +87,5 @@ public:
 	json_t * load(const std::string &u, bool resolveIncludes = true, bool resolveEnvVars = true);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

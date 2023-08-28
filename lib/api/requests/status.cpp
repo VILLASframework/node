@@ -114,7 +114,7 @@ static char r[] = "/status";
 static char d[] = "get status and statistics of web server";
 static RequestPlugin<StatusRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas
 

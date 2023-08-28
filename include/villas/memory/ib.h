@@ -21,6 +21,6 @@ struct IB {
 
 struct ibv_mr * ib_get_mr(void *ptr);
 
-} /* namespace memory */
-} /* namespace node */
-} /* namespace villas */
+} // namespace memory
+} // namespace node
+} // namespace villas

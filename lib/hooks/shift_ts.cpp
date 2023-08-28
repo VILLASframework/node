@@ -91,5 +91,5 @@ static char n[] = "shift_ts";
 static char d[] = "Shift timestamps of samples";
 static HookPlugin<ShiftTimestampHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

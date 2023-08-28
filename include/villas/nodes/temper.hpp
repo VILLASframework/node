@@ -147,5 +147,5 @@ int temper_poll_fds(NodeCompat *n, int fds[]);
 
 int temper_netem_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

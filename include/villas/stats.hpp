@@ -123,4 +123,4 @@ public:
 	static std::vector<TableColumn> columns;
 };
 
-} /* namespace villas */
+} // namespace villas

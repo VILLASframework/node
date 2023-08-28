@@ -65,5 +65,5 @@ union SignalData {
 	std::string toString(enum SignalType type, int precision = 5) const;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

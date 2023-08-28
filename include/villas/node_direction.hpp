@@ -61,5 +61,5 @@ public:
 	unsigned getSignalsMaxCount() const;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

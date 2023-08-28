@@ -44,6 +44,6 @@ static char r[] = "/nodes";
 static char d[] = "retrieve list of all known nodes";
 static RequestPlugin<NodesRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

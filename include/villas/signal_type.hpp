@@ -29,5 +29,5 @@ std::string signalTypeToString(enum SignalType fmt);
 
 enum SignalType signalTypeDetect(const std::string &val);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

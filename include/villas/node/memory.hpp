@@ -71,6 +71,6 @@ int free(void *ptr);
 
 struct Allocation * get_allocation(void *ptr);
 
-} /* namespace memory */
-} /* namespace node */
-} /* namespace villas */
+} // namespace memory
+} // namespace node
+} // namespace villas

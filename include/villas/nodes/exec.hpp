@@ -72,5 +72,5 @@ public:
 	std::vector<int> getPollFDs();
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

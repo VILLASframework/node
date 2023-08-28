@@ -129,5 +129,5 @@ enum SignalType sample_format(const struct Sample *s, unsigned idx);
 void sample_data_insert(struct Sample *smp, const union SignalData *src, size_t offset, size_t len);
 void sample_data_remove(struct Sample *smp, size_t offset, size_t len);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

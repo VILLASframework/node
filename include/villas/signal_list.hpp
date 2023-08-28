@@ -50,5 +50,5 @@ public:
 	Signal::Ptr getByIndex(unsigned idx);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

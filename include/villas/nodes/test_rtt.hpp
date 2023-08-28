@@ -68,5 +68,5 @@ int test_rtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int test_rtt_poll_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

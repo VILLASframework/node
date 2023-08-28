@@ -57,6 +57,6 @@ struct SignalingMessage {
 	std::string toString() const;
 };
 
-} /* namespace webrtc */
-} /* namespace node */
-} /* namespace villas */
+} // namespace webrtc
+} // namespace node
+} // namespace villas

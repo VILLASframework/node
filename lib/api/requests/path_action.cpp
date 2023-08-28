@@ -52,6 +52,6 @@ static char d2[] = "stop a path";
 static RequestPlugin<PathActionRequest<&Path::stop>, n2, r2, d2> p2;
 
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

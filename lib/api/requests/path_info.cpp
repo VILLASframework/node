@@ -42,6 +42,6 @@ static char r[] = "/path/(" RE_UUID ")";
 static char d[] = "retrieve info of a path";
 static RequestPlugin<PathInfoRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

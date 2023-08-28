@@ -113,5 +113,5 @@ int queue_pull_many(struct CQueue *q, void *ptr[], size_t cnt);
  */
 int queue_close(struct CQueue *q);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

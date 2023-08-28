@@ -79,5 +79,5 @@ int iec61850_sv_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 
 int iec61850_sv_poll_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

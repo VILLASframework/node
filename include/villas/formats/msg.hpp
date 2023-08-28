@@ -48,5 +48,5 @@ int msg_to_sample(const struct Message *msg, struct Sample *smp, const SignalLis
 /** Copy fields form \p smp into \p msg. */
 int msg_from_sample(struct Message *msg, const struct Sample *smp, const SignalList::Ptr sigs, uint8_t source_index);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

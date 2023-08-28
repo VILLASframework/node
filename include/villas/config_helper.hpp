@@ -40,5 +40,5 @@ int json_object_extend(json_t *orig, json_t *merge);
 
 json_t * json_load_cli(int argc, const char *argv[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

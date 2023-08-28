@@ -42,5 +42,5 @@ public:
 	virtual Hook::Reason process(struct Sample *smp);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

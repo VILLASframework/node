@@ -154,5 +154,5 @@ static char n[] = "ip-dft-pmu";
 static char d[] = "This hook calculates a phasor based on ipDFT";
 static HookPlugin<IpDftPmuHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

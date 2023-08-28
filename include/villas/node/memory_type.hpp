@@ -53,6 +53,6 @@ struct Type * managed(void *ptr, size_t len);
 
 int mmap_init(int hugepages) __attribute__ ((warn_unused_result));
 
-} /* namespace memory */
-} /* namespace node */
-} /* namespace villas */
+} // namespace memory
+} // namespace node
+} // namespace villas

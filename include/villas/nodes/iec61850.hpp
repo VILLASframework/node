@@ -101,5 +101,5 @@ int iec61850_receiver_destroy(struct iec61850_receiver *r);
 
 const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

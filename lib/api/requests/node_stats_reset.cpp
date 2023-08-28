@@ -48,6 +48,6 @@ static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/stats/reset";
 static char d[] = "reset internal statistics counters";
 static RequestPlugin<StatsRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

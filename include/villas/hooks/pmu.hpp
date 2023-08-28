@@ -84,5 +84,5 @@ public:
 	Phasor estimatePhasor(dsp::CosineWindow<double> *window, Phasor lastPhasor);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

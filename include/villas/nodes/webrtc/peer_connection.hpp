@@ -90,7 +90,7 @@ protected:
 	void onDataChannelMessage(rtc::binary msg);
 };
 
-} /* namespace webrtc */
-} /* namespace node */
-} /* namespace villas */
+} // namespace webrtc
+} // namespace node
+} // namespace villas
 

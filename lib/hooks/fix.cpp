@@ -50,6 +50,6 @@ static char n[] = "fix";
 static char d[] = "Fix received data by adding missing fields";
 static HookPlugin<FixHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
 

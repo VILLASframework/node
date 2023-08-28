@@ -113,7 +113,7 @@ static char r[] = "/graph\\.([a-z]+)";
 static char d[] = "get graph representation of configuration";
 static RequestPlugin<GraphRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas
 

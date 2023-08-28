@@ -70,5 +70,5 @@ struct Message
 	} data[];
 } __attribute__((packed));
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

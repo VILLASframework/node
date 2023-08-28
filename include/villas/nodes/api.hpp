@@ -51,5 +51,5 @@ protected:
 	int _write(struct Sample *smps[], unsigned cnt);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

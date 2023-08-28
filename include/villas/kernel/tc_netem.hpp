@@ -59,6 +59,6 @@ int netem(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent
 
 int netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json);
 
-} /* namespace tc */
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace tc
+} // namespace kernel
+} // namespace villas

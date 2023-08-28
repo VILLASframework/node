@@ -41,6 +41,6 @@ struct nl_sock * init();
 /** Close and free global netlink socket. */
 void shutdown();
 
-} /* namespace nl */
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace nl
+} // namespace kernel
+} // namespace villas

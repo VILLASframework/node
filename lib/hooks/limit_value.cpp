@@ -89,5 +89,5 @@ static char n[] = "limit_value";
 static char d[] = "Limit signal values";
 static HookPlugin<LimitValueHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

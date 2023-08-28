@@ -43,6 +43,6 @@ static char r[] = "/config";
 static char d[] = "get configuration of this VILLASnode instance";
 static RequestPlugin<ConfigRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

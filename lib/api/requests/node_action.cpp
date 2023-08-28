@@ -71,6 +71,6 @@ static char d5[] = "restart a node";
 static RequestPlugin<NodeActionRequest<&Node::restart>, n5, r5, d5> p5;
 
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

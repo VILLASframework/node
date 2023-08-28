@@ -28,5 +28,5 @@ public:
 	int update(const MappingEntry::Ptr me, struct Sample *remapped, const struct Sample *original);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

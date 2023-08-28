@@ -263,6 +263,6 @@ static char n[] = "stats";
 static char d[] = "Collect statistics for the current node";
 static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
 

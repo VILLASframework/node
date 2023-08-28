@@ -71,5 +71,5 @@ int socket_parse_address(const char *str, struct sockaddr *sa, enum SocketLayer 
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

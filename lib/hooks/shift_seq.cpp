@@ -53,5 +53,5 @@ static char n[] = "shift_seq";
 static char d[] = "Shift sequence number of samples";
 static HookPlugin<ShiftSequenceHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
