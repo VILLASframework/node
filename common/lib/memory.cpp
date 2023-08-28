@@ -1,9 +1,9 @@
-/** Memory managment.
+/* Memory managment.
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <sys/mman.h>
 
@@ -92,7 +92,6 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 	};
 }
 
-
 std::string
 LinearAllocator::getName() const
 {
@@ -104,7 +103,6 @@ LinearAllocator::getName() const
 
 	return name.str();
 }
-
 
 std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 LinearAllocator::allocateBlock(size_t size)
@@ -126,7 +124,6 @@ LinearAllocator::allocateBlock(size_t size)
 		// If next free address is outside this block due to padding, cap it
 		nextFreeAddress = std::min(nextFreeAddress, memorySize);
 	}
-
 
 	auto &mm = MemoryManager::get();
 
@@ -153,7 +150,6 @@ LinearAllocator::allocateBlock(size_t size)
 	return mem;
 }
 
-
 HostRam::HostRamAllocator
 HostRam::allocator;
 
@@ -169,7 +165,6 @@ HostRam::HostRamAllocator::HostRamAllocator() :
 		removeMemoryBlock(*mem);
 	};
 }
-
 
 std::map<int, std::unique_ptr<HostDmaRam::HostDmaRamAllocator>>
 HostDmaRam::allocators;

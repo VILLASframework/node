@@ -1,11 +1,11 @@
-/** Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2021, Steffen Vogel
  * @copyright 2018, Daniel Krebs
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #define _DEFAULT_SOURCE
 

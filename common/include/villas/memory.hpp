@@ -1,10 +1,10 @@
-/** Memory management.
+/* Memory management.
  *
  * @file
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -254,8 +254,10 @@ public:
 	allocateBlock(size_t size);
 
 private:
-	static constexpr size_t alignBytes = sizeof(uintptr_t);
-	static constexpr size_t alignMask = alignBytes - 1;
+	static constexpr
+	size_t alignBytes = sizeof(uintptr_t);
+	static constexpr
+	size_t alignMask = alignBytes - 1;
 
 	size_t getAlignmentPadding(uintptr_t addr) const
 	{
@@ -267,7 +269,6 @@ private:
 	size_t internalOffset;	// Offset in address space (usually 0)
 	size_t allocationCount;	// Number of individual allocations present
 };
-
 
 // Wrapper around mmap() to create villas memory blocks
 //
@@ -288,16 +289,16 @@ public:
 		allocateBlock(size_t size);
 	};
 
-	static HostRamAllocator&
-	getAllocator()
+	static
+	HostRamAllocator& getAllocator()
 	{
 		return allocator;
 	}
 
 private:
-	static HostRamAllocator allocator;
+	static
+	HostRamAllocator allocator;
 };
-
 
 class HostDmaRam {
 public:
@@ -317,23 +318,28 @@ public:
 		int num;
 	};
 
-	static HostDmaRamAllocator&
+	static
+	HostDmaRamAllocator&
 	getAllocator(int num = 0);
 
 private:
 	static
 	std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
 
-	static std::string
+	static
+	std::string
 	getUdmaBufName(int num);
 
-	static std::string
+	static
+	std::string
 	getUdmaBufBasePath(int num);
 
-	static size_t
+	static
+	size_t
 	getUdmaBufBufSize(int num);
 
-	static uintptr_t
+	static
+	uintptr_t
 	getUdmaBufPhysAddr(int num);
 };
 

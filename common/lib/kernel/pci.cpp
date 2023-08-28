@@ -1,9 +1,9 @@
-/** Linux PCI helpers
+/* Linux PCI helpers
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <dirent.h>
 #include <libgen.h>

@@ -1,10 +1,10 @@
-/** A sliding/moving window.
+/* A sliding/moving window.
  *
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -16,7 +16,6 @@
 
 namespace villas {
 namespace dsp {
-
 
 template<typename T>// a0 = 1.0, double a1 = 0.0, double a2 = 0.0, double a3 = 0.0, double a4 = 0.0>
 class CosineWindow : public Window<T> {
@@ -53,7 +52,6 @@ public:
 
 		correctionFactor /= len;
 	}
-
 
 	virtual
 	T getCorrectionFactor() const

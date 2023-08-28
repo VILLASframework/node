@@ -1,10 +1,10 @@
-/** A directed graph.
+/* A directed graph.
  *
  * @file
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -21,10 +21,8 @@
 #include <villas/graph/vertex.hpp>
 #include <villas/graph/edge.hpp>
 
-
 namespace villas {
 namespace graph {
-
 
 template<typename VertexType = Vertex, typename EdgeType = Edge>
 class DirectedGraph {
@@ -113,7 +111,6 @@ public:
 
 		return edge->id;
 	}
-
 
 	EdgeIdentifier addDefaultEdge(VertexIdentifier fromVertexId,
 	                              VertexIdentifier toVertexId)

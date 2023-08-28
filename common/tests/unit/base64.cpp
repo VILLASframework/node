@@ -1,9 +1,9 @@
-/** Unit tests for base64 encoding/decoding
+/* Unit tests for base64 encoding/decoding
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <criterion/criterion.h>
 
@@ -16,7 +16,8 @@ using namespace villas::utils::base64;
 // cppcheck-suppress unknownMacro
 TestSuite(base64, .description = "Base64 En/decoder");
 
-static std::vector<byte> vec(const char *str)
+static
+std::vector<byte> vec(const char *str)
 {
 	return std::vector<byte>((byte *) str, (byte *) str + strlen(str));
 }

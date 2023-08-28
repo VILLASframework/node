@@ -1,10 +1,10 @@
-/** Utilities.
+/* Utilities.
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <vector>
 #include <string>
@@ -32,7 +32,8 @@
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 
-static pthread_t main_thread;
+static
+pthread_t main_thread;
 
 namespace villas {
 namespace utils {
@@ -170,8 +171,10 @@ void killme(int sig)
 double boxMuller(float m, float s)
 {
 	double x1, x2, y1;
-	static double y2;
-	static int use_last = 0;
+	static
+	double y2;
+	static
+	int use_last = 0;
 
 	if (use_last) {		// Use value from previous call
 		y1 = y2;

@@ -1,10 +1,10 @@
-/** Terminal handling.
+/* Terminal handling.
  *
  * @file
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -22,7 +22,8 @@ protected:
 
 	bool isTty;
 
-	static class Terminal *current;
+	static
+	class Terminal *current;
 
 public:
 	Terminal();

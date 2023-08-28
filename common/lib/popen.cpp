@@ -1,9 +1,9 @@
-/** Bi-directional popen
+/* Bi-directional popen
  *
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -164,7 +164,6 @@ int Popen::close()
 
 	return pid == -1 ? -1 : pstat;
 }
-
 
 PopenStream::PopenStream(const std::string &cmd,
              const arg_list &args,

@@ -1,11 +1,11 @@
-/** Logging.
+/* Logging.
  *
  * @file
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -26,7 +26,8 @@ class Log;
 
 using Logger = std::shared_ptr<spdlog::logger>;
 
-extern Log logging;
+extern
+Log logging;
 
 class Log {
 

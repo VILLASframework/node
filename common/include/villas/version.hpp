@@ -1,10 +1,10 @@
-/** Version.
+/* Version.
  *
  * @file
  * @author Steffen Vogel <github@daniel-krebs.net>
  * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
  * @license Apache License 2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
