@@ -37,5 +37,5 @@ int influxdb_close(NodeCompat *n);
 
 int influxdb_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

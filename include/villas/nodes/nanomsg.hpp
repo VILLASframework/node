@@ -53,5 +53,5 @@ int nanomsg_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int nanomsg_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

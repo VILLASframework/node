@@ -73,5 +73,5 @@ int file_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int file_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

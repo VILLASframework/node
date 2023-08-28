@@ -113,5 +113,5 @@ public:
 	int start(SuperNode *sn);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -115,5 +115,5 @@ public:
 	}
 };
 
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace kernel
+} // namespace villas

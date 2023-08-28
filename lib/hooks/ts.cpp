@@ -32,5 +32,5 @@ static char n[] = "ts";
 static char d[] = "Overwrite origin timestamp of samples with receive timestamp";
 static HookPlugin<TsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

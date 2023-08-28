@@ -120,5 +120,5 @@ int redis_poll_fds(NodeCompat *n, int fds[]);
 
 int redis_netem_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

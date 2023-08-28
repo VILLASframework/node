@@ -109,5 +109,5 @@ int rtp_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int rtp_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

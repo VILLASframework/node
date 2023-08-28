@@ -113,7 +113,7 @@ public:
 	}
 };
 
-} /* namespace webrtc */
-} /* namespace node */
-} /* namespace villas */
+} // namespace webrtc
+} // namespace node
+} // namespace villas
 

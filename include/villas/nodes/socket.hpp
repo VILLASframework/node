@@ -71,5 +71,5 @@ int socket_parse(NodeCompat *n, json_t *json);
 
 char * socket_print(NodeCompat *n);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

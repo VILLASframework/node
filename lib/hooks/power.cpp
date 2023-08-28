@@ -331,5 +331,5 @@ static char n[] = "power";
 static char d[] = "This hook calculates the Active and Reactive Power for a given signal ";
 static HookPlugin<PowerHook, n, d, (int)Hook::Flags::NODE_READ | (int)Hook::Flags::NODE_WRITE | (int)Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

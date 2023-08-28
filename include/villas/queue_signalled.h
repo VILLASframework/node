@@ -67,5 +67,5 @@ int queue_signalled_close(struct CQueueSignalled *qs) __attribute__ ((warn_unuse
 /** Returns a file descriptor which can be used with poll / select to wait for new data */
 int queue_signalled_fd(struct CQueueSignalled *qs);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

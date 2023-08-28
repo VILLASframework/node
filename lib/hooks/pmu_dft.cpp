@@ -168,7 +168,7 @@ public:
 		phasorPhase(dumperPrefix + "phasorPhase"),
 		phasorAmplitude(dumperPrefix + "phasorAmplitude"),
 		phasorFreq(dumperPrefix + "phasorFreq"),
-#endif		
+#endif
 		angleUnitFactor(1),
 		phaseOffset(0.0),
 		frequencyOffset(0.0),
@@ -671,5 +671,5 @@ static char n[] = "pmu_dft";
 static char d[] = "This hook calculates the  dft on a window";
 static HookPlugin<PmuDftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -124,7 +124,7 @@ static char r[] = "/restart";
 static char d[] = "restart VILLASnode with new configuration";
 static RequestPlugin<RestartRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas
 

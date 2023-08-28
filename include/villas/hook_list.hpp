@@ -64,5 +64,5 @@ public:
 	json_t * toJson() const;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

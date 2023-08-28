@@ -83,5 +83,5 @@ int zeromq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int zeromq_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -63,7 +63,7 @@ struct hash<sw::redis::ConnectionOptions>
 	}
 };
 
-} /* namespace std */
+} // namespace std
 
 namespace sw {
 namespace redis {
@@ -166,8 +166,8 @@ OStream &operator<<(OStream &os, const ConnectionOptions &o)
 	return os;
 }
 
-} /* namespace redis */
-} /* namespace sw */
+} // namespace redis
+} // namespace sw
 
 template<typename OStream>
 OStream &operator<<(OStream &os, const enum villas::node::RedisMode &m)

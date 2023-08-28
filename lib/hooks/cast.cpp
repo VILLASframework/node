@@ -105,6 +105,6 @@ static char n[] = "cast";
 static char d[] = "Cast signals types";
 static HookPlugin<CastHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
 

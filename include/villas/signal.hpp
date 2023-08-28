@@ -50,5 +50,5 @@ public:
 	bool isNext(const Signal &sig);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

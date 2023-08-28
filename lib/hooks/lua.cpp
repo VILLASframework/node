@@ -773,5 +773,5 @@ static char n[] = "lua";
 static char d[] = "Implement hook functions or expressions in Lua";
 static HookPlugin<LuaHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH, 1> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

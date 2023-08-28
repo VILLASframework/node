@@ -136,6 +136,6 @@ static char n[] = "print";
 static char d[] = "Print the message to stdout or a file";
 static HookPlugin<PrintHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
 

@@ -61,6 +61,6 @@ int prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int ba
 */
 int mark(Interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
 
-} /* namespace tc */
-} /* namespace kernel */
-} /* namespace villas */
+} // namespace tc
+} // namespace kernel
+} // namespace villas

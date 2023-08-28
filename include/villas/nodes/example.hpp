@@ -93,5 +93,5 @@ public:
 };
 
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

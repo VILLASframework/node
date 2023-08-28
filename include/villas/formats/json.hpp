@@ -56,5 +56,5 @@ public:
 	void parse(json_t *json);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

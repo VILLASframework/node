@@ -57,5 +57,5 @@ static char n[] = "decimate";
 static char d[] = "Downsamping by integer factor";
 static HookPlugin<DecimateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

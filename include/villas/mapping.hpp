@@ -106,5 +106,5 @@ public:
 	Signal::Ptr toSignal(unsigned index) const;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

@@ -51,7 +51,7 @@ public:
 	void parse(json_t *json, bool readable, bool writable);
 };
 
-} /* namespace universal */
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace universal
+} // namespace api
+} // namespace node
+} // namespace villas

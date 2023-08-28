@@ -62,5 +62,5 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *json);
 
 int stats_node_poll_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

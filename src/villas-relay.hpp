@@ -155,6 +155,6 @@ protected:
 	}
 };
 
-} /* namespace tools */
-} /* namespace node */
-} /* namespace villas */
+} // namespace tools
+} // namespace node
+} // namespace villas

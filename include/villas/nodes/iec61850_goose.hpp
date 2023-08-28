@@ -255,5 +255,5 @@ public:
 };
 
 } /* namespace iec61850 */
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

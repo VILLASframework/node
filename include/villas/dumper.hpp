@@ -39,5 +39,5 @@ public:
 	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

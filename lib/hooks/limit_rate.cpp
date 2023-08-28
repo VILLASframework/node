@@ -81,5 +81,5 @@ static char n[] = "limit_rate";
 static char d[] = "Limit sending rate";
 static HookPlugin<LimitRateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

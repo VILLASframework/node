@@ -66,5 +66,5 @@ void * pool_get(struct Pool *p);
 /** Release a memory block back to the pool. */
 int pool_put(struct Pool *p, void *buf);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

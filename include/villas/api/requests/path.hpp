@@ -28,6 +28,6 @@ public:
 	prepare();
 };
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

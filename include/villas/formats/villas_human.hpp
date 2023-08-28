@@ -30,5 +30,5 @@ public:
 	void header(FILE *f, const SignalList::Ptr sigs);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

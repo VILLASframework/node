@@ -24,5 +24,5 @@ public:
 	using JsonFormat::JsonFormat;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

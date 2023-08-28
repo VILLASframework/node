@@ -202,5 +202,5 @@ public:
 	int stop();
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

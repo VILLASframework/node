@@ -108,5 +108,5 @@ struct libusb_context * get_context();
 
 void detach(struct libusb_device_handle *hdl, int iface);
 
-} /* namespace usb */
-} /* namespace villas */
+} // namespace usb
+} // namespace villas

@@ -224,5 +224,5 @@ static char n[] = "pps_ts";
 static char d[] = "Timestamp samples based GPS PPS signal";
 static HookPlugin<PpsTsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

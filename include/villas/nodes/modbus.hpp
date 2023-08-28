@@ -288,6 +288,6 @@ public:
 	const std::string & getDetails();
 };
 
-} /* namespace modbus */
-} /* namespace node */
-} /* namespace villas */
+} // namespace modbus
+} // namespace node
+} // namespace villas

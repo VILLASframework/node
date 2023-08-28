@@ -40,6 +40,6 @@ static char r[] = "/shutdown";
 static char d[] = "quit VILLASnode";
 static RequestPlugin<ShutdownRequest, n, r, d> p;
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

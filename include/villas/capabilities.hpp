@@ -14,5 +14,5 @@ namespace node {
 
 json_t * getCapabilities();
 
-} /* namespace node */
+} // namespace node
 } /* namepace vilals */

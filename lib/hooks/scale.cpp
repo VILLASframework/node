@@ -80,5 +80,5 @@ static char n[] = "scale";
 static char d[] = "Scale signals by a factor and add offset";
 static HookPlugin<ScaleHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

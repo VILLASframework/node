@@ -247,5 +247,5 @@ static char n[] = "pmu";
 static char d[] = "This hook estimates a phsor";
 static HookPlugin<PmuHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

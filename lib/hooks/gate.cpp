@@ -155,5 +155,5 @@ static char n[] = "gate";
 static char d[] = "Skip samples only if an enable signal is under a specified threshold";
 static HookPlugin<GateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

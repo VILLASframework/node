@@ -55,5 +55,5 @@ public:
 
 using PathDestinationList = std::vector<PathDestination::Ptr>;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

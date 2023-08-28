@@ -72,5 +72,5 @@ static char n[] = "round";
 static char d[] = "Round signals to a set number of digits";
 static HookPlugin<RoundHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

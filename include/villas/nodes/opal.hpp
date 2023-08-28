@@ -52,5 +52,5 @@ int opal_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int opal_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

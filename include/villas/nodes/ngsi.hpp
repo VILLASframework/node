@@ -74,5 +74,5 @@ int ngsi_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int ngsi_poll_fds(NodeCompat *n, int fds[]);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

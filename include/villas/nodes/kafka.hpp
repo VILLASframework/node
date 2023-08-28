@@ -80,5 +80,5 @@ int kafka_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
 int kafka_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
