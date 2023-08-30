@@ -262,7 +262,7 @@ int villas::node::file_start(NodeCompat *n)
 	f->formatter->start(n->getInputSignals(false));
 
 	/* Open file */
-	f->stream_out = fopen(f->uri, "w+");
+	f->stream_out = fopen(f->uri, "a+");
 	if (!f->stream_out)
 		return -1;
 
