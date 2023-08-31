@@ -9,15 +9,15 @@ VILLAScommon is a shared library used by various other C++ components of VILLASf
 
 User documentation is available here: <https://villas.fein-aachen.org/docs/>
 
-## Copyright
-
-- 2014-2022 Steffen Vogel <post@steffenvogel.de>
-
 ## License
 
-This project is released under the terms of the [Apache 2.0 license](COPYING.md).
+This project is released under the terms of the [Apache 2.0 license](LICENSE).
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
+
+- SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+- SPDX-License-Identifier: Apache-2.0
 
 ## Contact
 

@@ -1,8 +1,8 @@
 /* Graph unit test.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2021, Steffen Vogel
- * @license Apache License 2.0
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2021 Steffen Vogel
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <memory>

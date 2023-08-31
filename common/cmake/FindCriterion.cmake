@@ -1,12 +1,12 @@
-# This file is licensed under the WTFPL version 2 -- you can see the full
-# license over at http://www.wtfpl.net/txt/copying/
-#
-# - Try to find Criterion
+# Try to find Criterion
 #
 # Once done this will define
 #  CRITERION_FOUND - System has Criterion
 #  CRITERION_INCLUDE_DIRS - The Criterion include directories
 #  CRITERION_LIBRARIES - The libraries needed to use Criterion
+#
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: WTFPL
 
 find_package(PkgConfig)
 
@@ -19,7 +19,8 @@ set(CRITERION_LIBRARIES ${CRITERION_LIBRARY})
 set(CRITERION_INCLUDE_DIRS ${CRITERION_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIET and REQUIRED arguments and set CRITERION_FOUND to TRUE
+
+# Handle the QUIET and REQUIRED arguments and set CRITERION_FOUND to TRUE
 # if all listed variables are TRUE
 find_package_handle_standard_args(Criterion DEFAULT_MSG
                                   CRITERION_LIBRARY CRITERION_INCLUDE_DIR)

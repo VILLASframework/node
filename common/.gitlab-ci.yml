@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
 variables:
   GIT_DEPTH: 0
   GIT_SUBMODULE_STRATEGY: recursive
@@ -10,7 +13,6 @@ stages:
 - test
 
 # Stage: prepare
-##############################################################################
 
 # Build docker image which is used to build & test VILLAScommon
 docker-dev:
@@ -22,7 +24,6 @@ docker-dev:
   - docker
 
 # Stage: build
-##############################################################################
 
 build:source:
   stage: build
@@ -38,7 +39,7 @@ build:source:
   - docker
 
 # Stage: test
-##############################################################################
+
 
 test:unit:
   stage: test
@@ -74,3 +75,11 @@ test:cppcheck:
     paths:
       - cppcheck.log
     expose_as: cppcheck
+
+test:reuse:
+  stage: test
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+  - reuse lint
