@@ -1,12 +1,12 @@
 /* Virtual Function IO wrapper around kernel API
  *
- * @file
- * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2022, Niklas Eiling
- * @copyright 2014-2021, Steffen Vogel
- * @copyright 2018, Daniel Krebs
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: 2022-2023 Niklas Eiling
+ * SPDX-FileCopyrightText: 2014-2023 Steffen Vogel
+ * SPDX-FileCopyrightText: 2018 Daniel Krebs
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #pragma once
