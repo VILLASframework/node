@@ -1,10 +1,9 @@
-/** Simple WebSocket relay facilitating client-to-client connections.
+/* Simple WebSocket relay facilitating client-to-client connections.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 #include <memory>
@@ -19,7 +18,7 @@ namespace villas {
 namespace node {
 namespace tools {
 
-/* Forward declarations */
+// Forward declarations
 class Relay;
 class RelaySession;
 class RelayConnection;
@@ -32,7 +31,7 @@ class Frame : public std::vector<uint8_t> {
 public:
 	Frame() {
     		reserve(LWS_PRE);
-		/* lws_write() requires LWS_PRE bytes in front of the payload */
+		// lws_write() requires LWS_PRE bytes in front of the payload
 		insert(end(), LWS_PRE, 0);
 	}
 
@@ -61,10 +60,12 @@ protected:
 
 	int connects;
 
-	static std::map<std::string, RelaySession *> sessions;
+	static
+	std::map<std::string, RelaySession *> sessions;
 
 public:
-	static RelaySession * get(Relay *r, lws *wsi);
+	static
+	RelaySession * get(Relay *r, lws *wsi);
 
 	RelaySession(Relay *r, Identifier sid);
 
@@ -116,10 +117,10 @@ public:
 protected:
 	std::atomic<bool> stop;
 
-	/** The libwebsockets server context. */
+	// The libwebsockets server context.
 	lws_context *context;
 
-	/** The libwebsockets vhost. */
+	// The libwebsockets vhost.
 	lws_vhost *vhost;
 
 	bool loopback;
@@ -129,19 +130,24 @@ protected:
 
 	uuid_t uuid;
 
-	/** List of libwebsockets protocols. */
+	// List of libwebsockets protocols.
 	std::vector<lws_protocols> protocols;
 
-	/** List of libwebsockets extensions. */
-	static const std::vector<lws_extension> extensions;
+	// List of libwebsockets extensions.
+	static
+	const std::vector<lws_extension> extensions;
 
-	static const lws_http_mount mount;
+	static
+	const lws_http_mount mount;
 
-	static void loggerCallback(int level, const char *msg);
+	static
+	void loggerCallback(int level, const char *msg);
 
-	static int httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static
+	int httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-	static int protocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static
+	int protocolCallback(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 	void usage();
 

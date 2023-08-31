@@ -1,10 +1,9 @@
-/** Node type: nanomsg
+/* Node type: nanomsg
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -14,10 +13,10 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
-/** The maximum length of a packet which contains stuct msg. */
+// The maximum length of a packet which contains stuct msg.
 #define NANOMSG_MAX_PACKET_LEN 1500
 
 struct nanomsg {

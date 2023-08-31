@@ -1,9 +1,9 @@
-/** The "config" API ressource.
+/* The "config" API ressource.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/super_node.hpp>
 #include <villas/api/session.hpp>
@@ -19,7 +19,8 @@ class ConfigRequest : public Request {
 public:
 	using Request::Request;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		json_t *json = session->getSuperNode()->getConfig();
 
@@ -37,7 +38,7 @@ public:
 	}
 };
 
-/* Register API request */
+// Register API request
 static char n[] = "config";
 static char r[] = "/config";
 static char d[] = "get configuration of this VILLASnode instance";

@@ -1,9 +1,9 @@
-/** JSON serializtion of sample data.
+/* JSON serializtion of sample data.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/sample.hpp>
 #include <villas/compat.hpp>
@@ -30,7 +30,7 @@ enum SignalType JsonFormat::detect(const json_t *val)
 			return SignalType::BOOLEAN;
 
 		case JSON_OBJECT:
-			return SignalType::COMPLEX; /* must be a complex number */
+			return SignalType::COMPLEX; // must be a complex number
 
 		default:
 			return SignalType::INVALID;
@@ -367,6 +367,7 @@ void JsonFormat::parse(json_t *json)
 		dump_flags |= JSON_REAL_PRECISION(real_precision);
 }
 
+// Register format
 static char n[] = "json";
 static char d[] = "Javascript Object Notation";
 static FormatPlugin<JsonFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

@@ -1,12 +1,11 @@
-/** Node compatability layer for C++
+/* Node compatability layer for C++
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-/**
+/*
  * @addtogroup node Node
  * @{
  */
@@ -22,14 +21,14 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompatFactory;
 
 class NodeCompat : public Node {
 
 protected:
-	struct NodeCompatType *_vt;	/**< Virtual functions (C++ OOP style) */
-	void *_vd;			/**< Virtual data (used by struct vnode::_vt functions) */
+	struct NodeCompatType *_vt;	// Virtual functions (C++ OOP style)
+	void *_vd;			// Virtual data (used by struct vnode::_vt functions)
 
 	std::string _details;
 
@@ -63,7 +62,7 @@ public:
 		return _vt;
 	}
 
-	/** Parse node connection details.
+	/* Parse node connection details.
 
 	 *
 	 * @param json	A JSON object containing the configuration of the node.
@@ -73,11 +72,11 @@ public:
 	virtual
 	int parse(json_t *json);
 
-	/** Returns a string with a textual represenation of this node. */
+	// Returns a string with a textual represenation of this node.
 	virtual
 	const std::string & getDetails();
 
-	/** Check the current node configuration for plausability and errors.
+	/* Check the current node configuration for plausability and errors.
 
 	 *
 	 * @retval 0 	Success. Node configuration is good.
@@ -89,7 +88,7 @@ public:
 	virtual
 	int prepare();
 
-	/** Start this node.
+	/* Start this node.
 
 	 *
 	 * @retval 0	Success. Everything went well.
@@ -98,7 +97,7 @@ public:
 	virtual
 	int start();
 
-	/** Stop this node.
+	/* Stop this node.
 
 	 *
 	 * @retval 0	Success. Everything went well.
@@ -107,7 +106,7 @@ public:
 	virtual
 	int stop();
 
-	/** Restart this node.
+	/* Restart this node.
 
 	 *
 	 * @param n	A pointer to the node object.
@@ -117,7 +116,7 @@ public:
 	virtual
 	int restart();
 
-	/** Pause this node.
+	/* Pause this node.
 
 	 *
 	 * @param n	A pointer to the node object.
@@ -127,7 +126,7 @@ public:
 	virtual
 	int pause();
 
-	/** Resume this node.
+	/* Resume this node.
 
 	 *
 	 * @retval 0	Success. Everything went well.
@@ -136,7 +135,7 @@ public:
 	virtual
 	int resume();
 
-	/** Reverse source and destination of a node.
+	/* Reverse source and destination of a node.
 
 	 */
 	virtual
@@ -145,7 +144,7 @@ public:
 	virtual
 	std::vector<int> getPollFDs();
 
-	/** Get list of socket file descriptors for configuring network emulation.
+	/* Get list of socket file descriptors for configuring network emulation.
 
 	 *
 	 * @return The number of file descriptors which have been put into \p sds.
@@ -153,7 +152,7 @@ public:
 	virtual
 	std::vector<int> getNetemFDs();
 
-	/** Return a memory allocator which should be used for sample pools passed to this node. */
+	// Return a memory allocator which should be used for sample pools passed to this node.
 	virtual
 	struct memory::Type * getMemoryType();
 };

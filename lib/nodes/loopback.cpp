@@ -1,9 +1,9 @@
-/** Node-type for loopback connections.
+/* Node-type for loopback connections.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -79,7 +79,7 @@ int LoopbackNode::_write(struct Sample * smps[], unsigned cnt)
 		return pushed;
 	}
 
-	/* Released unpushed samples */
+	// Released unpushed samples
 	if ((unsigned) pushed < cnt) {
 		sample_decref_many(smps + pushed, cnt - pushed);
 		logger->warn("Queue overrun");
@@ -134,6 +134,7 @@ int LoopbackNode::parse(json_t *json)
 	return Node::parse(json);
 }
 
+// Register node
 static char n[] = "loopback";
 static char d[] = "loopback node-type";
 static NodePlugin<LoopbackNode, n, d, (int) NodeFactory::Flags::SUPPORTS_POLL |

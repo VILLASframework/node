@@ -1,12 +1,11 @@
-/** WebRTC signaling client
+/* WebRTC signaling client
  *
- * @file
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
- * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @copyright 2023, OPAL-RT Germany GmbH
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * Author: Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -24,7 +23,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Web;
 
 namespace webrtc {
@@ -33,24 +32,26 @@ class SignalingClient {
 
 protected:
 	struct sul_offsetof_helper {
-		lws_sorted_usec_list_t sul;	/**> Schedule connection retry */
+		lws_sorted_usec_list_t sul;	// Schedule connection retry
 		SignalingClient *self;
 	} sul_helper;
 
-	uint16_t retry_count;			/**> Count of consecutive retries */
+	uint16_t retry_count;			// Count of consecutive retries
 
 	struct lws *wsi;
 	struct lws_client_connect_info info;
 
-	/* The retry and backoff policy we want to use for our client connections */
-	static constexpr uint32_t backoff_ms[] = { 1<<4, 1<<6, 1<<8, 1<<10, 1<<12, 1<<14, 1<<16 };
-	static constexpr lws_retry_bo_t retry = {
+	// The retry and backoff policy we want to use for our client connections
+	static constexpr
+	uint32_t backoff_ms[] = { 1<<4, 1<<6, 1<<8, 1<<10, 1<<12, 1<<14, 1<<16 };
+	static constexpr
+	lws_retry_bo_t retry = {
 		.retry_ms_table			= backoff_ms,
 		.retry_ms_table_count		= LWS_ARRAY_SIZE(backoff_ms),
 		.conceal_count			= LWS_ARRAY_SIZE(backoff_ms) + 1,
 
-		.secs_since_valid_ping		= 3,  /* force PINGs after secs idle */
-		.secs_since_valid_hangup	= 10, /* hangup after secs idle */
+		.secs_since_valid_ping		= 3,  // force PINGs after secs idle
+		.secs_since_valid_hangup	= 10, // hangup after secs idle
 
 		.jitter_percent			= 20,
 	};
@@ -116,4 +117,3 @@ public:
 } // namespace webrtc
 } // namespace node
 } // namespace villas
-

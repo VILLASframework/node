@@ -1,9 +1,9 @@
-/** Drop hook.
+/* Drop hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 
@@ -21,7 +21,8 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED || state == State::STOPPED);
 
@@ -30,7 +31,8 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void stop()
+	virtual
+	void stop()
 	{
 		assert(state == State::STARTED);
 
@@ -40,7 +42,8 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		int dist;
 
@@ -64,7 +67,8 @@ public:
 		return Reason::OK;
 	}
 
-	virtual void restart()
+	virtual
+	void restart()
 	{
 		assert(state == State::STARTED);
 
@@ -75,7 +79,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "drop";
 static char d[] = "Drop messages with reordered sequence numbers";
 static HookPlugin<DropHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 3> p;

@@ -1,9 +1,9 @@
-/** Simple WebSocket relay facilitating client-to-client connections.
+/* Simple WebSocket relay facilitating client-to-client connections.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <map>
@@ -65,7 +65,7 @@ RelaySession * RelaySession::get(Relay *r, lws *wsi)
 	 *   Will select the session with the name 'node_1'
 	 */
 
-	/* Get path of incoming request */
+	// Get path of incoming request
 	lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
 	if (strlen(uri) <= 1)
 		throw InvalidUrlException();
@@ -218,14 +218,14 @@ Relay::Relay(int argc, char *argv[]) :
 
 	hostname = hname;
 
-	/* Default UUID is derived from hostname */
+	// Default UUID is derived from hostname
 	uuid::generateFromString(uuid, hname);
 
 	ret = memory::init(0);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory");
 
-	/* Initialize logging */
+	// Initialize logging
 	lws_set_log_level(Web::lwsLogLevel(logging.getLevel()), Web::lwsLogger);
 
 	protocols = {
@@ -266,14 +266,14 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason, void
 
 			if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
 					"application/json",
-					LWS_ILLEGAL_HTTP_CONTENT_LEN, /* no content len */
+					LWS_ILLEGAL_HTTP_CONTENT_LEN, // no content len
 					&p, end))
 				return 1;
 
 			if (lws_finalize_write_http_header(wsi, start, &p, end))
 				return 1;
 
-			/* Write the body separately */
+			// Write the body separately
 			lws_callback_on_writable(wsi);
 
 			return 0;
@@ -441,7 +441,7 @@ check:
 }
 
 int Relay::main() {
-	/* Start server */
+	// Start server
 	lws_context_creation_info ctx_info = { 0 };
 
 	protocols[2].name = protocol.c_str();
@@ -489,14 +489,14 @@ const std::vector<lws_extension> Relay::extensions = {
 		lws_extension_callback_pm_deflate,
 		"deflate_frame"
 	},
-#endif /* LWS_DEFLATE_FOUND */
+#endif // LWS_DEFLATE_FOUND
 	{ nullptr /* terminator */ }
 };
 
 const lws_http_mount Relay::mount = {
-	.mount_next =		nullptr, /* linked-list "next" */
-	.mountpoint =		"/api/v1", /* mountpoint URL */
-	.origin =		nullptr,	/* protocol */
+	.mount_next =		nullptr, // linked-list "next"
+	.mountpoint =		"/api/v1", // mountpoint URL
+	.origin =		nullptr,	// protocol
 	.def =			nullptr,
 	.protocol =		"http-api",
 	.cgienv =		nullptr,
@@ -508,8 +508,8 @@ const lws_http_mount Relay::mount = {
 	.cache_reusable =	0,
 	.cache_revalidate =	0,
 	.cache_intermediaries =	0,
-	.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
-	.mountpoint_len =	7, /* char count */
+	.origin_protocol =	LWSMPRO_CALLBACK, // dynamic
+	.mountpoint_len =	7, // char count
 	.basic_auth_login_file = nullptr,
 };
 
@@ -523,5 +523,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-
-

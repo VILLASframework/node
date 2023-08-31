@@ -1,9 +1,9 @@
-/** Sample value remapping for mux.
+/* Sample value remapping for mux.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <regex>
 #include <iostream>
@@ -82,7 +82,7 @@ int MappingEntry::parseString(const std::string &str)
 
 		type = Type::HEADER;
 	}
-	/* Only node name given.. We map all data */
+	// Only node name given.. We map all data
 	else if (!nodeName.empty()) {
 		data.first = nullptr;
 		data.last = nullptr;
@@ -211,7 +211,7 @@ int MappingEntry::prepare(NodeList &nodes)
 			}
 		}
 		else {
-			/* Map all signals */
+			// Map all signals
 			data.offset = 0;
 			length = -1;
 			goto end;
@@ -229,7 +229,7 @@ int MappingEntry::prepare(NodeList &nodes)
 			}
 		}
 		else
-			last = first; /* single element: data[5] => data[5-5] */
+			last = first; // single element: data[5] => data[5-5]
 
 		if (last < first)
 			throw RuntimeError("Invalid data range indices for mapping: {} < {}", last, first);

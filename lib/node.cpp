@@ -1,9 +1,9 @@
-/** Nodes.
+/* Nodes.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <regex>
 #include <cstring>
@@ -35,7 +35,7 @@
   #include <villas/kernel/nl.hpp>
   #include <villas/kernel/tc.hpp>
   #include <villas/kernel/tc_netem.hpp>
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 using namespace villas;
 using namespace villas::node;
@@ -49,16 +49,16 @@ Node::Node(const uuid_t &id, const std::string &name) :
 	out(NodeDirection::Direction::OUT, this),
 #ifdef __linux__
 	fwmark(-1),
-#endif /* __linux__ */
+#endif // __linux__
 #ifdef WITH_NETEM
 	tc_qdisc(nullptr),
 	tc_classifier(nullptr),
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 	state(State::INITIALIZED),
 	enabled(true),
 	config(nullptr),
 	name_short(name),
-	affinity(-1), /* all cores */
+	affinity(-1), // all cores
 	factory(nullptr)
 {
 	if (uuid_is_null(id)) {
@@ -81,7 +81,7 @@ Node::~Node()
 #ifdef WITH_NETEM
 	rtnl_qdisc_put(tc_qdisc);
 	rtnl_cls_put(tc_classifier);
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 	factory->instances.remove(this);
 }
@@ -132,7 +132,7 @@ int Node::parse(json_t *json)
 	);
 	if (ret)
 		return ret;
-#endif /* __linux__ */
+#endif // __linux__
 
 	enabled = en;
 
@@ -148,7 +148,7 @@ int Node::parse(json_t *json)
 			kernel::tc::netem_parse(&tc_qdisc, json_netem);
 		else
 			tc_qdisc = nullptr;
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 	}
 
 	struct {
@@ -164,12 +164,12 @@ int Node::parse(json_t *json)
 	for (unsigned j = 0; j < ARRAY_LEN(dirs); j++) {
 		json_t *json_dir = json_object_get(json, dirs[j].str);
 
-		/* Skip if direction is unused */
+		// Skip if direction is unused
 		if (!json_dir) {
 			json_dir = json_pack("{ s: b }", "enabled", 0);
 		}
 
-		/* Copy missing fields from main node config to direction config */
+		// Copy missing fields from main node config to direction config
 		for (unsigned i = 0; i < ARRAY_LEN(fields); i++) {
 			json_t *json_field_dir  = json_object_get(json_dir, fields[i]);
 			json_t *json_field_node = json_object_get(json, fields[i]);
@@ -219,7 +219,7 @@ int Node::start()
 		return ret;
 
 #ifdef __linux__
-	/* Set fwmark for outgoing packets if netem is enabled for this node */
+	// Set fwmark for outgoing packets if netem is enabled for this node
 	if (fwmark >= 0) {
 		for (int fd : getNetemFDs()) {
 			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &fwmark, sizeof(fwmark));
@@ -229,7 +229,7 @@ int Node::start()
 				logger->debug("Set FW mark for socket (sd={}) to {}", fd, fwmark);
 		}
 	}
-#endif /* __linux__ */
+#endif // __linux__
 
 	state = State::STARTED;
 	sequence = sequence_init;
@@ -304,7 +304,7 @@ int Node::read(struct Sample * smps[], unsigned cnt)
 	}
 
 #ifdef WITH_HOOKS
-	/* Run read hooks */
+	// Run read hooks
 	int rread = in.hooks.process(smps, nread);
 	if (rread < 0)
 		return rread;
@@ -324,7 +324,7 @@ int Node::read(struct Sample * smps[], unsigned cnt)
 	logger->debug("Received {} samples", nread);
 
 	return nread;
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 }
 
 int Node::write(struct Sample * smps[], unsigned cnt)
@@ -338,11 +338,11 @@ int Node::write(struct Sample * smps[], unsigned cnt)
 		return -1;
 
 #ifdef WITH_HOOKS
-	/* Run write hooks */
+	// Run write hooks
 	cnt = out.hooks.process(smps, cnt);
 	if (cnt <= 0)
 		return cnt;
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	vect = getFactory()->getVectorize();
 	if (!vect)
@@ -377,7 +377,7 @@ const std::string & Node::getNameFull()
 
 		if (tc_qdisc)
 			name_full += fmt::format(", fwmark={}", fwmark);
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 		if (out.path) {
 			name_full += fmt::format(", #out.signals={}/{}",
@@ -387,7 +387,7 @@ const std::string & Node::getNameFull()
 			name_full += fmt::format(", out.path={}", out.path->toString());
 		}
 
-		/* Append node-type specific details */
+		// Append node-type specific details
 		auto details = getDetails();
 		if (!details.empty())
 			name_full += fmt::format(", {}", details);

@@ -1,9 +1,9 @@
-/** Scale hook.
+/* Scale hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -26,7 +26,8 @@ public:
 		offset(0.0)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -45,7 +46,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		for (auto index : signalIndices) {
 			assert(index < smp->length);
@@ -75,7 +77,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "scale";
 static char d[] = "Scale signals by a factor and add offset";
 static HookPlugin<ScaleHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

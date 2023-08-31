@@ -9,3 +9,8 @@ Detailed information for installation and usage of the UCM is provided in the [u
 ## Author
 
 - Anju Meghwani <meghwani@iitk.ac.in>
+
+## License
+
+- SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-License-Identifier: Apache-2.0

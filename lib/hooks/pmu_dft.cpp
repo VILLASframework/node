@@ -1,9 +1,9 @@
-/** DFT hook.
+/* DFT hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cinttypes>
@@ -16,7 +16,7 @@
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
 
-/* Uncomment to enable dumper of memory windows */
+// Uncomment to enable dumper of memory windows
 //#define DFT_MEM_DUMP
 
 namespace villas {
@@ -64,7 +64,7 @@ protected:
 		double frequency;
 		double amplitude;
 		double phase;
-		double rocof;	/**< Rate of change of frequency. */
+		double rocof;	// Rate of change of frequency.
 	};
 
 	enum WindowType windowType;
@@ -91,9 +91,9 @@ protected:
 	unsigned rate;
 	unsigned ppsIndex;
 	unsigned windowSize;
-	unsigned windowMultiplier;	/**< Multiplyer for the window to achieve frequency resolution */
-	unsigned freqCount;		    /**< Number of requency bins that are calculated */
-	bool channelNameEnable;    /**< Rename the output values with channel name or only descriptive name */
+	unsigned windowMultiplier;	// Multiplyer for the window to achieve frequency resolution
+	unsigned freqCount;		    // Number of requency bins that are calculated
+	bool channelNameEnable;    // Rename the output values with channel name or only descriptive name
 
 	uint64_t smpMemPos;
 	uint64_t lastSequence;
@@ -176,7 +176,8 @@ public:
 		rocofOffset(0.0)
 	{ }
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		MultiSignalHook::prepare();
 
@@ -184,7 +185,7 @@ public:
 
 		signals->clear();
 		for (unsigned i = 0; i < signalIndices.size(); i++) {
-			/* Add signals */
+			// Add signals
 			auto freqSig = std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
 			auto amplSig = std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
 			auto phaseSig = std::make_shared<Signal>("phase", (angleUnitFactor)?"rad":"deg", SignalType::FLOAT);//angleUnitFactor==1 means rad
@@ -208,7 +209,7 @@ public:
 			signals->push_back(rocofSig);
 		}
 
-		/* Initialize sample memory */
+		// Initialize sample memory
 		smpMemoryData.clear();
 		for (unsigned i = 0; i < signalIndices.size(); i++) {
 			smpMemoryData.emplace_back(windowSize, 0.0);
@@ -224,26 +225,25 @@ public:
 			lastResult.push_back({0,0,0,0});
 		}
 
-
 #ifdef DFT_MEM_DUMP
-		/* Initialize temporary ppsMemory */
+		// Initialize temporary ppsMemory
 		ppsMemory.clear();
 		ppsMemory.resize(windowSize, 0.0);
 #endif
 
-		/* Calculate how much zero padding ist needed for a needed resolution */
+		// Calculate how much zero padding ist needed for a needed resolution
 		windowMultiplier = ceil(((double) sampleRate / windowSize) / frequencyResolution);
 		if (windowMultiplier > 1 && estType == EstimationType::IpDFT)
 			throw RuntimeError("Window multiplyer must be 1 if lpdft is used. Change resolution, window_size_factor or frequency range! Current window multiplyer factor is {}", windowMultiplier);
 
 		freqCount = ceil((endFreqency - startFrequency) / frequencyResolution) + 1;
 
-		/* Initialize matrix of dft coeffients */
+		// Initialize matrix of dft coeffients
 		matrix.clear();
 		for (unsigned i = 0; i < freqCount; i++)
 			matrix.emplace_back(windowSize * windowMultiplier, 0.0);
 
-		/* Initalize dft results matrix */
+		// Initalize dft results matrix
 		results.clear();
 		for (unsigned i = 0; i < signalIndices.size(); i++) {
 			results.emplace_back(freqCount, 0.0);
@@ -261,7 +261,8 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		MultiSignalHook::parse(json);
 		int ret;
@@ -354,7 +355,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual void check()
+	virtual
+	void check()
 	{
 		assert(state == State::PARSED);
 
@@ -367,11 +369,12 @@ public:
 		state = State::CHECKED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
-		/* Update sample memory */
+		// Update sample memory
 		unsigned i = 0;
 		for (auto index : signalIndices) {
 			smpMemoryData[i++][smpMemPos % windowSize] = smp->data[index].f;
@@ -446,9 +449,9 @@ public:
 
 				if (windowSize <= smpMemPos) {
 
-					smp->data[i * 4 + 0].f = currentResult.frequency + frequencyOffset; /* Frequency */
-					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)) + amplitudeOffset; /* Amplitude */
-					smp->data[i * 4 + 2].f = currentResult.phase + phaseOffset; /* Phase */
+					smp->data[i * 4 + 0].f = currentResult.frequency + frequencyOffset; // Frequency
+					smp->data[i * 4 + 1].f = (currentResult.amplitude / pow(2, 0.5)) + amplitudeOffset; // Amplitude
+					smp->data[i * 4 + 2].f = currentResult.phase + phaseOffset; // Phase
 					smp->data[i * 4 + 3].f = ((currentResult.frequency - lastResult[i].frequency) * (double)rate) + rocofOffset; /* ROCOF */;
 					lastResult[i] = currentResult;
 				}
@@ -498,7 +501,7 @@ public:
 		return Reason::SKIP_SAMPLE;
 	}
 
-	/**
+	/*
 	 * This function generates the furie coeffients for the calculateDft function
 	 */
 	void generateDftMatrix()
@@ -514,7 +517,7 @@ public:
 		}
 	}
 
-	/**
+	/*
 	 * This function calculates the discrete furie transform of the input signal
 	 */
 	void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer, std::vector<std::complex<double>> &results, unsigned ringBufferPos)
@@ -541,13 +544,13 @@ public:
 					else
 						results[i] += 0;
 				}
-				else if (padding == PaddingType::SIG_REPEAT) /* Repeat samples */
+				else if (padding == PaddingType::SIG_REPEAT) // Repeat samples
 					results[i] += tmpSmpWindow[j % windowSize] * matrix[i][j];
 			}
 		}
 	}
 
-	/**
+	/*
 	 * This function prepares the selected window coefficents
 	 */
 	void calculateWindow(enum WindowType windowTypeIn)
@@ -566,7 +569,7 @@ public:
 
 			case WindowType::HAMMING:
 			case WindowType::HANN: {
-				double a0 = 0.5; /* This is the hann window */
+				double a0 = 0.5; // This is the hann window
 				if (windowTypeIn == WindowType::HAMMING)
 					a0 = 25./46;
 
@@ -603,7 +606,7 @@ public:
 		return { a_est, f_est , phase_est};
 	}
 
-	/**
+	/*
 	 * This function is calculation the IpDFT based on the following paper:
 	 *
 	 * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7980868&tag=1
@@ -627,14 +630,13 @@ public:
 		double a_est = abs(b.y) * abs( (M_PI * delta) / sin( M_PI * delta) ) * abs( pow(delta, 2) - 1);
 		a_est *=  2 / (windowSize * windowCorrectionFactor * multiplier);
 
-
 		//Phase estimation (eq 10)
         double phase_est = atan2(b.y.imag(), b.y.real()) - M_PI * delta;
 
 		return { a_est, f_est , phase_est};
 	}
 
-	/**
+	/*
 	 * This function is calculating the mximum based on a quadratic interpolation
 	 *
 	 * This function is based on the following paper:
@@ -666,7 +668,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "pmu_dft";
 static char d[] = "This hook calculates the  dft on a window";
 static HookPlugin<PmuDftHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

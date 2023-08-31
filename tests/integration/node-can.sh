@@ -2,10 +2,9 @@
 #
 # Integration can test using villas node.
 #
-# @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 # To set up vcan interface use the following commands 
 # sudo modprobe vcan
 # sudo ip link add dev vcan0 type vcan

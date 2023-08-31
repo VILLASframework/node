@@ -1,10 +1,9 @@
-/** Node-type for signal generation.
+/* Node-type for signal generation.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <list>
 #include <cmath>
@@ -304,7 +303,7 @@ int villas::node::signal_node_start(NodeCompat *n)
 	for (unsigned i = 0; i < s->values; i++)
 		s->last[i] = s->offset[i];
 
-	/* Setup task */
+	// Setup task
 	if (s->rt)
 		s->task.setRate(s->rate);
 
@@ -405,9 +404,9 @@ int villas::node::signal_node_read(NodeCompat *n, struct Sample * const smps[], 
 		return -1;
 	}
 
-	/* Throttle output if desired */
+	// Throttle output if desired
 	if (s->rt) {
-		/* Block until 1/p->rate seconds elapsed */
+		// Block until 1/p->rate seconds elapsed
 		steps = s->task.wait();
 		if (steps > 1 && s->monitor_missed) {
 			n->logger->debug("Missed steps: {}", steps-1);
@@ -446,10 +445,11 @@ int villas::node::signal_node_poll_fds(NodeCompat *n, int fds[])
 		return 0;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "signal";
 	p.description	= "Legacy Signal generator";
 	p.vectorize	= 1;
@@ -465,5 +465,6 @@ static void register_plugin() {
 	p.read		= signal_node_read;
 	p.poll_fds	= signal_node_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

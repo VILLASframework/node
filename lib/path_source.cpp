@@ -1,9 +1,9 @@
-/** Path source
+/* Path source
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <fmt/format.h>
 
@@ -52,12 +52,12 @@ int PathSource::read(int i)
 	struct Sample *muxed_smps[cnt];
 	struct Sample **tomux_smps;
 
-	/* Fill smps[] free sample blocks from the pool */
+	// Fill smps[] free sample blocks from the pool
 	allocated = sample_alloc_many(&pool, read_smps, cnt);
 	if (allocated != cnt)
 		path->logger->warn("Pool underrun for path source {}", node->getName());
 
-	/* Read ready samples and store them to blocks pointed by smps[] */
+	// Read ready samples and store them to blocks pointed by smps[]
 	recv = node->read(read_smps, allocated);
 	if (recv == 0) {
 		enqueued = 0;
@@ -79,14 +79,14 @@ int PathSource::read(int i)
 	else if (recv < allocated)
 		path->logger->warn("Partial read for path {}: read={}, expected={}", path->toString(), recv, allocated);
 
-	/* Let the master path sources forward received samples to their secondaries */
+	// Let the master path sources forward received samples to their secondaries
 	writeToSecondaries(read_smps, recv);
 
-	if (path->mode == Path::Mode::ANY) { /* Mux all samples */
+	if (path->mode == Path::Mode::ANY) { // Mux all samples
 		tomux_smps = read_smps;
 		tomux = recv;
 	}
-	else { /* Mux only last sample and discard others */
+	else { // Mux only last sample and discard others
 		tomux_smps = read_smps + recv - 1;
 		tomux = 1;
 	}
@@ -154,12 +154,12 @@ int PathSource::read(int i)
 	path->logger->debug("received=0b{:b}, mask=0b{:b}", path->received.to_ullong(), path->mask.to_ullong());
 
 	if (path->mask.test(i)) {
-		/* Enqueue always */
+		// Enqueue always
 		if (path->mode == Path::Mode::ANY) {
 			enqueued = toenqueue;
 			PathDestination::enqueueAll(path, muxed_smps, toenqueue);
 		}
-		/* Enqueue only if received == mask bitset */
+		// Enqueue only if received == mask bitset
 		else if (path->mode == Path::Mode::ALL) {
 			if (path->mask == path->received) {
 				PathDestination::enqueueAll(path, muxed_smps, toenqueue);
@@ -217,6 +217,6 @@ SecondaryPathSource::SecondaryPathSource(Path *p, Node *n, NodeList &nodes, Path
 	if (!node)
 		throw RuntimeError("Failed to create internal loopback");
 
-	/* Register new loopback node in node list of super node */
+	// Register new loopback node in node list of super node
 	nodes.push_back(node);
 }

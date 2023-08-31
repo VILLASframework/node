@@ -1,9 +1,9 @@
-/** A custom format for OPAL-RTs AsyncIP example
+/* A custom format for OPAL-RTs AsyncIP example
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <endian.h>
 
@@ -61,7 +61,7 @@ int OpalAsyncIPFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct
 	auto *ptr = buf;
 
 	if (len % 8 != 0)
-		return -1; /* Packet size is invalid: Must be multiple of 8 bytes */
+		return -1; // Packet size is invalid: Must be multiple of 8 bytes
 
 	for (i = 0; i < cnt && ptr - buf + sizeof(struct Payload) < len; i++) {
 		auto *pl = (struct Payload *) ptr;
@@ -113,4 +113,5 @@ void OpalAsyncIPFormat::parse(json_t *json)
 	Format::parse(json);
 }
 
-static OpalAsyncIPFormatPlugin p;
+static
+OpalAsyncIPFormatPlugin p;

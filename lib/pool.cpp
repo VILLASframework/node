@@ -1,9 +1,9 @@
-/** Memory pool for fixed size objects.
+/* Memory pool for fixed size objects.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
@@ -19,7 +19,7 @@ int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz, struct m
 	int ret;
 	auto logger = logging.get("pool");
 
-	/* Make sure that we use a block size that is aligned to the size of a cache line */
+	// Make sure that we use a block size that is aligned to the size of a cache line
 	p->alignment = kernel::getCachelineSize();
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;

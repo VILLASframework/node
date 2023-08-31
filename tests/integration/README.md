@@ -18,3 +18,8 @@ Example:
 ```
 $ BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh -f pipe-loopback-socket -v
 ```
+
+<!--
+SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+SPDX-License-Identifier: Apache-2.0
+-->

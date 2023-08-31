@@ -1,9 +1,9 @@
-/** The API ressource for start/stop/pause/resume paths.
+/* The API ressource for start/stop/pause/resume paths.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <jansson.h>
 
@@ -25,7 +25,8 @@ class PathActionRequest : public PathRequest  {
 public:
 	using PathRequest::PathRequest;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		if (method != Session::Method::POST)
 			throw InvalidMethod(this);
@@ -40,7 +41,7 @@ public:
 
 };
 
-/* Register API requests */
+// Register API requests
 static char n1[] = "path/start";
 static char r1[] = "/path/(" RE_UUID ")/start";
 static char d1[] = "start a path";
@@ -50,7 +51,6 @@ static char n2[] = "path/stop";
 static char r2[] = "/path/(" RE_UUID ")/stop";
 static char d2[] = "stop a path";
 static RequestPlugin<PathActionRequest<&Path::stop>, n2, r2, d2> p2;
-
 
 } // namespace api
 } // namespace node

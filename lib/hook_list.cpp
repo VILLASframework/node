@@ -1,9 +1,9 @@
-/** Hook-releated functions.
+/* Hook-releated functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/plugin.hpp>
 #include <villas/hook.hpp>
@@ -71,7 +71,7 @@ void HookList::prepare(SignalList::Ptr signals, int m, Path *p, Node *n)
 	if (!m)
 		goto skip_add;
 
-	/* Add internal hooks if they are not already in the list */
+	// Add internal hooks if they are not already in the list
 	for (auto f : plugin::registry->lookup<HookFactory>()) {
 		if ((f->getFlags() & m) == m) {
 			auto h = f->make(p, n);
@@ -80,10 +80,10 @@ void HookList::prepare(SignalList::Ptr signals, int m, Path *p, Node *n)
 	}
 
 skip_add:
-	/* Remove filters which are not enabled */
+	// Remove filters which are not enabled
 	remove_if([](Hook::Ptr h) { return !h->isEnabled(); });
 
-	/* We sort the hooks according to their priority */
+	// We sort the hooks according to their priority
 	sort([](const value_type &a, const value_type b) { return a->getPriority() < b->getPriority(); });
 
 	unsigned i = 0;

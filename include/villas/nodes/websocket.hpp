@@ -1,10 +1,9 @@
-/** Node type: WebSockets
+/* Node type: WebSockets
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -19,7 +18,7 @@
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 
-/* Forward declaration */
+// Forward declarations
 struct lws;
 
 namespace villas {
@@ -27,14 +26,14 @@ namespace node {
 
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 
-/** Internal data per websocket node */
+// Internal data per websocket node
 struct websocket {
-	struct List destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
+	struct List destinations;		// List of websocket servers connect to in client mode (struct websocket_destination).
 
-	bool wait;				/**< Wait until all destinations are connected. */
+	bool wait;				// Wait until all destinations are connected.
 
 	struct Pool pool;
-	struct CQueueSignalled queue;		/**< For samples which are received from WebSockets */
+	struct CQueueSignalled queue;		// For samples which are received from WebSockets
 };
 
 struct websocket_destination {
@@ -42,7 +41,7 @@ struct websocket_destination {
 	struct lws_client_connect_info info;
 };
 
-/* Internal datastructures */
+// Internal datastructures
 struct websocket_connection {
 	enum State {
 		DESTROYED,
@@ -53,7 +52,7 @@ struct websocket_connection {
 		CLOSING,
 		CLOSED,
 		ERROR
-	} state;				/**< The current status of this connection. */
+	} state;				// The current status of this connection.
 
 	enum class Mode {
 		CLIENT,
@@ -63,16 +62,16 @@ struct websocket_connection {
 	struct lws *wsi;
 	NodeCompat *node;
 	Format *formatter;
-	struct CQueue queue;			/**< For samples which are sent to the Websocket */
+	struct CQueue queue;			// For samples which are sent to the Websocket
 
 	struct websocket_destination *destination;
 
 	struct {
-		villas::Buffer *recv;		/**< A buffer for reconstructing fragmented messages. */
-		villas::Buffer *send;		/**< A buffer for constructing messages before calling lws_write() */
+		villas::Buffer *recv;		// A buffer for reconstructing fragmented messages.
+		villas::Buffer *send;		// A buffer for constructing messages before calling lws_write()
 	} buffers;
 
-	/** Custom formatter for spdlog */
+	// Custom formatter for spdlog
 	template<typename OStream>
 	friend OStream &operator<<(OStream &os, const struct websocket_connection &c)
 	{

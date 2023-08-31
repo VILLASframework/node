@@ -1,9 +1,9 @@
-/** The "restart" API request.
+/* The "restart" API request.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/super_node.hpp>
 #include <villas/log.hpp>
@@ -20,9 +20,11 @@ namespace api {
 class RestartRequest : public Request {
 
 protected:
-	static std::string configUri;
+	static
+	std::string configUri;
 
-	static void handler()
+	static
+	void handler()
 	{
 		int ret;
 		const char *cfg = !configUri.empty()
@@ -46,7 +48,8 @@ protected:
 public:
 	using Request::Request;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		int ret;
 		json_error_t err;
@@ -83,18 +86,18 @@ public:
 			else if (json_config != nullptr)
 				throw BadRequest("Parameter 'config' must be either a URL (string) or a configuration (object)");
 		}
-		else	/* If no config is provided via request, we will use the previous one */
+		else	// If no config is provided via request, we will use the previous one
 			configUri = session->getSuperNode()->getConfigUri();
 
 		logger->info("Restarting to {}", configUri);
 
-		/* Increment API restart counter */
+		// Increment API restart counter
 		char *scnt = getenv("VILLAS_API_RESTART_COUNT");
 		int cnt = scnt ? atoi(scnt) : 0;
 		char buf[32];
 		snprintf(buf, sizeof(buf), "%d", cnt + 1);
 
-		/* We pass some env variables to the new process */
+		// We pass some env variables to the new process
 		setenv("VILLAS_API_RESTART_COUNT", buf, 1);
 
 		auto *json_response = json_pack("{ s: i, s: o }",
@@ -104,12 +107,12 @@ public:
 				    : json_string(configUri.c_str())
 		);
 
-		/* Register exit handler */
+		// Register exit handler
 		ret = atexit(handler);
 		if (ret)
 			throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to restart VILLASnode instance");
 
-		/* Properly terminate current instance */
+		// Properly terminate current instance
 		utils::killme(SIGTERM);
 
 		return new JsonResponse(session, HTTP_STATUS_OK, json_response);
@@ -118,7 +121,7 @@ public:
 
 std::string RestartRequest::configUri;
 
-/* Register API request */
+// Register API request
 static char n[] = "restart";
 static char r[] = "/restart";
 static char d[] = "restart VILLASnode with new configuration";
@@ -127,4 +130,3 @@ static RequestPlugin<RestartRequest, n, r, d> p;
 } // namespace api
 } // namespace node
 } // namespace villas
-

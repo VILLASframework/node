@@ -1,10 +1,9 @@
-/** An temper get started with new implementations of new node-types
+/* An temper get started with new implementations of new node-types
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,13 +16,14 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 class TEMPerDevice : public villas::usb::Device {
 
 protected:
-	constexpr static unsigned char question_temperature[] = { 0x01, 0x80, 0x33, 0x01, 0x00, 0x00, 0x00, 0x00 };
+	constexpr static
+	unsigned char question_temperature[] = { 0x01, 0x80, 0x33, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
 	float scale;
 	float offset;
@@ -32,22 +32,31 @@ protected:
 
 	villas::Logger logger;
 
-	virtual void decode(unsigned char *answer, float *temp) = 0;
+	virtual
+	void decode(unsigned char *answer, float *temp) = 0;
 public:
-	static TEMPerDevice * make(struct libusb_device *desc);
+	static
+	TEMPerDevice * make(struct libusb_device *desc);
 
 	TEMPerDevice(struct libusb_device *dev);
-	virtual ~TEMPerDevice()
+	virtual
+	~TEMPerDevice()
 	{ }
 
 	void open(bool reset = true);
 	void close();
 
-	virtual int getNumSensors() const
-	{ return 1; }
+	virtual
+	int getNumSensors() const
+	{
+		return 1;
+	}
 
-	virtual bool hasHumiditySensor() const
-	{ return false; };
+	virtual
+	bool hasHumiditySensor() const
+	{
+		return false;
+	}
 
 	void read(struct Sample *smp);
 };
@@ -55,49 +64,70 @@ public:
 class TEMPer1Device : public TEMPerDevice {
 
 protected:
-	virtual void decode(unsigned char *answer, float *temp);
+	virtual
+	void decode(unsigned char *answer, float *temp);
 
 	using TEMPerDevice::TEMPerDevice;
 
 public:
-	static bool match(struct libusb_device *dev);
+	static
+	bool match(struct libusb_device *dev);
 
-	static std::string getName()
-	{ return "TEMPer1"; }
+	static
+	std::string getName()
+	{
+		return "TEMPer1";
+	}
 };
 
 class TEMPer2Device : public TEMPer1Device {
 
 protected:
-	virtual void decode(unsigned char *answer, float *temp);
+	virtual
+	void decode(unsigned char *answer, float *temp);
 
 	using TEMPer1Device::TEMPer1Device;
 
 public:
-	static bool match(struct libusb_device *dev);
+	static
+	bool match(struct libusb_device *dev);
 
-	static std::string getName()
-	{ return "TEMPer2"; }
+	static
+	std::string getName()
+	{
+		return "TEMPer2";
+	}
 
-	virtual int getNumSensors() const
-	{ return 2; }
+	virtual
+	int getNumSensors() const
+	{
+		return 2;
+	}
 };
 
 class TEMPerHUMDevice : public TEMPerDevice {
 
 protected:
-	virtual void decode(unsigned char *answer, float *temp);
+	virtual
+	void decode(unsigned char *answer, float *temp);
 
 	using TEMPerDevice::TEMPerDevice;
 
 public:
-	static bool match(struct libusb_device *dev);
+	static
+	bool match(struct libusb_device *dev);
 
-	static std::string getName()
-	{ return "TEMPerHUM"; }
+	static
+	std::string getName()
+	{
+		return "TEMPerHUM";
+	}
 
-	virtual bool hasHumiditySensor() const
-	{ return true; }
+	virtual
+	bool hasHumiditySensor() const
+	{
+		return true;
+	}
 };
 
 struct temper {

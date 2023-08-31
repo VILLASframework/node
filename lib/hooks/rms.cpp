@@ -1,9 +1,9 @@
-/** RMS hook.
+/* RMS hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
@@ -33,11 +33,11 @@ public:
 	{
 		MultiSignalHook::prepare();
 
-		/* Add signals */
+		// Add signals
 		for (auto index : signalIndices) {
 			auto origSig = signals->getByIndex(index);
 
-			/* Check that signal has float type */
+			// Check that signal has float type
 			if (origSig->type != SignalType::FLOAT)
 				throw RuntimeError("The rms hook can only operate on signals of type float!");
 		}
@@ -84,16 +84,16 @@ public:
 
 		unsigned i = 0;
 		for (auto index : signalIndices) {
-			/* Square the new value */
+			// Square the new value
 			double newValue = pow(smp->data[index].f, 2);
 
-			/* Get the old value from the history */
+			// Get the old value from the history
 			double oldValue = smpMemory[i][smpMemoryPosition % windowSize];
 
-			/* Append the new value to the history memory */
+			// Append the new value to the history memory
 			smpMemory[i][smpMemoryPosition % windowSize] = newValue;
 
-			/* Update the accumulator */
+			// Update the accumulator
 			accumulator[index] += newValue;
 			accumulator[index] -= oldValue;
 
@@ -109,7 +109,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "rms";
 static char d[] = "This hook calculates the root-mean-square (RMS) on a window";
 static HookPlugin<RMSHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

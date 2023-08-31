@@ -1,10 +1,9 @@
-/** Node-type for shared memory communication.
+/* Node-type for shared memory communication.
  *
- * @file
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <fcntl.h>
 #include <pthread.h>
@@ -30,7 +29,7 @@ int villas::node::shmem_init(NodeCompat *n)
 {
 	auto *shm = n->getData<struct shmem>();
 
-	/* Default values */
+	// Default values
 	shm->conf.queuelen = -1;
 	shm->conf.samplelen = -1;
 	shm->conf.polling = false;
@@ -164,7 +163,7 @@ int villas::node::shmem_read(NodeCompat *n, struct Sample * const smps[], unsign
 	sample_copy_many(smps, shared_smps, recv);
 	sample_decref_many(shared_smps, recv);
 
-	/** @todo signal descriptions are currently not shared between processes */
+	// @todo signal descriptions are currently not shared between processes
 	for (int i = 0; i < recv; i++)
 		smps[i]->signals = n->getInputSignals(false);
 
@@ -174,7 +173,7 @@ int villas::node::shmem_read(NodeCompat *n, struct Sample * const smps[], unsign
 int villas::node::shmem_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt)
 {
 	auto *shm = n->getData<struct shmem>();
-	struct Sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
+	struct Sample *shared_smps[cnt]; // Samples need to be copied to the shared pool first
 	int avail, pushed, copied;
 
 	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
@@ -212,10 +211,11 @@ char * villas::node::shmem_print(NodeCompat *n)
 	return buf;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "shmem";
 	p.description	= "POSIX shared memory interface with external processes";
 	p.vectorize	= 0;
@@ -229,5 +229,6 @@ static void register_plugin() {
 	p.prepare	= shmem_prepare;
 	p.init		= shmem_init;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

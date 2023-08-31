@@ -1,9 +1,9 @@
-/** ipDFT PMU hook.
+/* ipDFT PMU hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hooks/pmu.hpp>
 
@@ -17,8 +17,8 @@ protected:
 	std::vector<std::vector<std::complex<double>>> dftMatrix;
 	std::vector<std::complex<double>> dftResult;
 
-	unsigned frequencyCount; /* Number of requency bins that are calculated */
-	double estimationRange; /* The range around nominalFreq used for estimation */
+	unsigned frequencyCount; // Number of requency bins that are calculated
+	double estimationRange; // The range around nominalFreq used for estimation
 
 public:
 	IpDftPmuHook(Path *p, Node *n, int fl, int prio, bool en = true):
@@ -38,7 +38,7 @@ public:
 
 		frequencyCount = ceil((endFrequency - startFrequency) / frequencyResolution);
 
-		/* Initialize matrix of dft coeffients */
+		// Initialize matrix of dft coeffients
 		dftMatrix.clear();
 		for (unsigned i = 0; i < frequencyCount; i++)
 			dftMatrix.emplace_back(windowSize, 0.0);
@@ -82,7 +82,7 @@ public:
 	{
 		PmuHook::Phasor phasor = {0};
 
-		/* Calculate DFT */
+		// Calculate DFT
 		for (unsigned i = 0; i < frequencyCount; i++) {
 			dftResult[i] = 0;
 
@@ -90,9 +90,9 @@ public:
 			for (unsigned j = 0; j < size; j++)
 				dftResult[i] += (*window)[j] * dftMatrix[i][j];
 		}
-		/* End calculate DFT */
+		// End calculate DFT
 
-		/* Find max bin */
+		// Find max bin
 		unsigned maxBin = 0;
 		double absAmplitude = 0;
 
@@ -102,7 +102,7 @@ public:
 				maxBin = j;
 			}
 		}
-		/* End find max bin */
+		// End find max bin
 
 		if (maxBin == 0 || maxBin == (frequencyCount - 1)) {
 			logger->warn("Maximum frequency bin lies on window boundary. Using non-estimated results!");
@@ -116,40 +116,40 @@ public:
 			double c = abs(dftResult[ maxBin + 1 ]);
 			double bPhase = atan2(dftResult[maxBin].imag(), dftResult[maxBin].real());
 
-			/* Estimate phasor */
-			/* Based on https://ieeexplore.ieee.org/document/7980868 */
+			// Estimate phasor
+			// Based on https://ieeexplore.ieee.org/document/7980868
 			double delta = 0;
 
-			/* Paper eq 8 */
+			// Paper eq 8
 			if (c > a) {
 				delta = 1. * (2. * c - b) / (b + c);
 			} else {
 				delta = -1. * (2. * a - b) / (b + a);
 			}
 
-			/* Frequency estimation (eq 4) */
+			// Frequency estimation (eq 4)
 			phasor.frequency =  startFrequency + ( (double) maxBin + delta) * frequencyResolution;
 
-			/* Amplitude estimation (eq 9) */
+			// Amplitude estimation (eq 9)
 			phasor.amplitude = b * abs( (M_PI * delta) / sin( M_PI * delta) ) * abs( pow(delta, 2) - 1);
 			phasor.amplitude *=  2 / (windowSize * window->getCorrectionFactor());
 
-			/* Phase estimation (eq 10) */
+			// Phase estimation (eq 10)
 			phasor.phase = bPhase - M_PI * delta;
 
-			/* ROCOF estimation */
+			// ROCOF estimation
 			phasor.rocof = ((phasor.frequency - lastPhasor.frequency) * (double)phasorRate);
-			/* End estimate phasor */
+			// End estimate phasor
 		}
 
-		if (lastPhasor.frequency != 0) /* Check if we already calculated a phasor before */
+		if (lastPhasor.frequency != 0) // Check if we already calculated a phasor before
 			phasor.valid = Status::VALID;
 
 		return phasor;
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "ip-dft-pmu";
 static char d[] = "This hook calculates a phasor based on ipDFT";
 static HookPlugin<IpDftPmuHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

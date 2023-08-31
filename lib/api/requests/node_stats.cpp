@@ -1,9 +1,9 @@
-/** The API ressource for querying statistics.
+/* The API ressource for querying statistics.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <jansson.h>
 
@@ -25,7 +25,8 @@ class StatsRequest : public NodeRequest {
 public:
 	using NodeRequest::NodeRequest;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
@@ -40,7 +41,7 @@ public:
 	}
 };
 
-/* Register API requests */
+// Register API requests
 static char n[] = "node/stats";
 static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/stats";
 static char d[] = "get internal statistics counters";

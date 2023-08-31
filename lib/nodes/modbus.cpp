@@ -1,4 +1,4 @@
-/** A Modbus node-type supporting RTU and TCP transports.
+/* A Modbus node-type supporting RTU and TCP transports.
  *
  * The modbus communication using the libmodbus library is fairly simple.
  *
@@ -30,10 +30,10 @@
  * - The special case in blockDistance makes causes the bit mappings to be grouped
  *   first, before any adjacent registers.
  *
- * @author Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
- * @copyright 2023, OPAL-RT Germany GmbH
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
+ * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/modbus.hpp>
@@ -256,7 +256,6 @@ modbus_addr_t modbus::blockEnd(RegisterMapping const &mapping)
 		return blockEnd(v);
 	}, mapping);
 }
-
 
 modbus_addr_t modbus::mappedRegisters(RegisterMappingSingle const &single)
 {
@@ -928,6 +927,7 @@ const std::string & ModbusNode::getDetails()
 	return details;
 }
 
+// Register node
 static char name[] = "modbus";
 static char description[] = "Read and write Modbus registers";
 static NodePlugin<ModbusNode, name, description, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL> p;

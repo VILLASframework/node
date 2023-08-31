@@ -1,9 +1,9 @@
-/** JSON serializtion for RESERVE project.
+/* JSON serializtion for RESERVE project.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -196,7 +196,7 @@ int JsonReserveFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 	return smp->length > 0 ? 1 : 0;
 }
 
-
+// Register format
 static char n[] = "json.reserve";
 static char d[] = "RESERVE JSON format";
 static FormatPlugin<JsonReserveFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

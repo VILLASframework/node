@@ -1,10 +1,9 @@
-/** Node type: socket
+/* Node type: socket
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -20,7 +19,7 @@
 
   #include <linux/if_packet.h>
   #include <netinet/ether.h>
-#endif /* LIBNL3_ROUTE_FOUND */
+#endif // LIBNL3_ROUTE_FOUND
 
 union sockaddr_union {
 	struct sockaddr sa;
@@ -43,7 +42,7 @@ enum class SocketLayer {
 	UNIX
 };
 
-/** Generate printable socket address depending on the address family
+/* Generate printable socket address depending on the address family
  *
  * A IPv4 address is formatted as dotted decimals followed by the port/protocol number
  * A link layer address is formatted in hexadecimals digits seperated by colons and the inferface name
@@ -53,7 +52,7 @@ enum class SocketLayer {
  */
 char * socket_print_addr(struct sockaddr *saddr);
 
-/** Parse a socket address depending on the address family
+/* Parse a socket address depending on the address family
  *
  * A IPv4 address has the follwing format: [hostname/ip]:[port/protocol]
  * A link layer address has the following format: [mac]%[interface]:[ethertype]

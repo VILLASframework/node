@@ -1,10 +1,9 @@
-/** Node type: ZeroMQ
+/* Node type: ZeroMQ
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -22,7 +21,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 struct Sample;
 
@@ -47,7 +46,7 @@ struct zeromq {
 	} pattern;
 
 	struct Dir {
-		void *socket;	/**< ZeroMQ socket. */
+		void *socket;	// ZeroMQ socket.
 		void *mon_socket;
 		struct List endpoints;
 		char *filter;

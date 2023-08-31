@@ -1,10 +1,9 @@
-/** Convert between samples IO formats
+/* Convert between samples IO formats
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <unistd.h>
@@ -71,7 +70,7 @@ protected:
 
 	void parse()
 	{
-		/* Parse optional command line arguments */
+		// Parse optional command line arguments
 		int c;
 		while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
 			switch (c) {
@@ -117,7 +116,7 @@ protected:
 			json_error_t err;
 			std::string format = dirs[i].format;
 
-			/* Try parsing format config as JSON */
+			// Try parsing format config as JSON
 			json_format = json_loads(format.c_str(), 0, &err);
 			dirs[i].formatter = json_format
 				? FormatFactory::make(json_format)
@@ -133,7 +132,7 @@ protected:
 		auto isLine = dynamic_cast<LineFormat *>(dirs[0].formatter) != nullptr;
 		auto cnt = isLine ? 1 : 128;
 
-		/* Initialize memory */
+		// Initialize memory
 		struct Pool pool;
 		ret = pool_init(&pool, cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory::heap);
 		if (ret)

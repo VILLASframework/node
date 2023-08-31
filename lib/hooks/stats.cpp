@@ -1,9 +1,9 @@
-/** Statistic hooks.
+/* Statistic hooks.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <memory>
 
@@ -29,11 +29,12 @@ public:
 		Hook(p, n, fl, prio, en),
 		parent(pa)
 	{
-		/* This hook has no config. We never call parse() for it */
+		// This hook has no config. We never call parse() for it
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp);
+	virtual
+	Hook::Reason process(struct Sample *smp);
 };
 
 class StatsReadHook : public Hook {
@@ -49,11 +50,12 @@ public:
 		last(nullptr),
 		parent(pa)
 	{
-		/* This hook has no config. We never call parse() for it */
+		// This hook has no config. We never call parse() for it
 		state = State::PARSED;
 	}
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -62,7 +64,8 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void stop()
+	virtual
+	void stop()
 	{
 		assert(state == State::STARTED);
 
@@ -72,7 +75,8 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp);
+	virtual
+	Hook::Reason process(struct Sample *smp);
 };
 
 class StatsHook : public Hook {
@@ -111,7 +115,7 @@ public:
 		if (!readHook || !writeHook)
 			throw MemoryAllocationError();
 
-		/* Add child hooks */
+		// Add child hooks
 		if (node) {
 			node->in.hooks.push_back(readHook);
 			node->out.hooks.push_back(writeHook);
@@ -121,7 +125,8 @@ public:
 	StatsHook & operator=(const StatsHook&) = delete;
 	StatsHook(const StatsHook&) = delete;
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -134,7 +139,8 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void stop()
+	virtual
+	void stop()
 	{
 		assert(state == State::STARTED);
 
@@ -146,14 +152,16 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual void restart()
+	virtual
+	void restart()
 	{
 		assert(state == State::STARTED);
 
 		stats->reset();
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		// Only call readHook if it hasnt been added to the node's hook list
 		if (!node)
@@ -162,14 +170,16 @@ public:
 		return Hook::Reason::OK;
 	}
 
-	virtual void periodic()
+	virtual
+	void periodic()
 	{
 		assert(state == State::STARTED);
 
 		stats->printPeriodic(uri.empty() ? stdout : output, format, node);
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -205,7 +215,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		assert(state == State::CHECKED);
 
@@ -258,11 +269,10 @@ Hook::Reason StatsReadHook::process(struct Sample *smp)
 	return Reason::OK;
 }
 
-/* Register hook */
+// Register hook
 static char n[] = "stats";
 static char d[] = "Collect statistics for the current node";
 static HookPlugin<StatsHook, n, d, (int) Hook::Flags::NODE_READ> p;
 
 } // namespace node
 } // namespace villas
-

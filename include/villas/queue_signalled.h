@@ -1,10 +1,9 @@
-/** Wrapper around queue that uses POSIX CV's for signalling writes.
+/* Wrapper around queue that uses POSIX CV's for signalling writes.
  *
- * @file
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,7 +16,7 @@ namespace villas {
 namespace node {
 
 enum class QueueSignalledMode {
-	AUTO, /**< We will choose the best method available on the platform */
+	AUTO, // We will choose the best method available on the platform
 	PTHREAD,
 	POLLING,
 #ifdef HAS_EVENTFD
@@ -30,17 +29,17 @@ enum class QueueSignalledFlags {
 	PROCESS_SHARED	= (1 << 4)
 };
 
-/** Wrapper around queue that uses POSIX CV's for signalling writes. */
+// Wrapper around queue that uses POSIX CV's for signalling writes.
 struct CQueueSignalled {
-	struct CQueue queue;		/**< Actual underlying queue. */
+	struct CQueue queue;		// Actual underlying queue.
 
 	enum QueueSignalledMode mode;
 	enum QueueSignalledFlags flags;
 
 	union {
 		struct {
-			pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
-			pthread_mutex_t mutex;		/**< Mutex for ready. */
+			pthread_cond_t ready;		// Condition variable to signal writes to the queue.
+			pthread_mutex_t mutex;		// Mutex for ready.
 		} pthread;
 #ifdef __linux__
 		int eventfd;
@@ -64,7 +63,7 @@ int queue_signalled_pull_many(struct CQueueSignalled *qs, void *ptr[], size_t cn
 
 int queue_signalled_close(struct CQueueSignalled *qs) __attribute__ ((warn_unused_result));
 
-/** Returns a file descriptor which can be used with poll / select to wait for new data */
+// Returns a file descriptor which can be used with poll / select to wait for new data
 int queue_signalled_fd(struct CQueueSignalled *qs);
 
 } // namespace node

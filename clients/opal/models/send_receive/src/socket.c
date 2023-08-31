@@ -1,9 +1,9 @@
-/** Helper functions for sockets.
+/* Helper functions for sockets.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <errno.h>
 #include <unistd.h>
@@ -25,7 +25,7 @@
 
 int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 {
-	struct ip_mreq mreq; /* Multicast group structure */
+	struct ip_mreq mreq; // Multicast group structure
 	unsigned char TTL = 1, LOOP = 0;
 	int rc, proto, ret;
 
@@ -39,26 +39,26 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 	OpalPrint("%s: Remote Address : %s\n", PROGNAME, IconCtrlStruct.StringParam[0]);
 	OpalPrint("%s: Remote Port    : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[1]);
 
-	/* Initialize the socket */
+	// Initialize the socket
 	s->sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s->sd < 0) {
 		OpalPrint("%s: ERROR: Could not open socket\n", PROGNAME);
 		return EIO;
 	}
 
-	/* Set the structure for the remote port and address */
+	// Set the structure for the remote port and address
 	memset(&s->send_ad, 0, sizeof(s->send_ad));
 	s->send_ad.sin_family = AF_INET;
 	s->send_ad.sin_addr.s_addr = inet_addr(IconCtrlStruct.StringParam[0]);
 	s->send_ad.sin_port = htons((u_short) IconCtrlStruct.FloatParam[1]);
 
-	/* Set the structure for the local port and address */
+	// Set the structure for the local port and address
 	memset(&s->recv_ad, 0, sizeof(s->recv_ad));
 	s->recv_ad.sin_family = AF_INET;
 	s->recv_ad.sin_addr.s_addr = INADDR_ANY;
 	s->recv_ad.sin_port = htons((u_short) IconCtrlStruct.FloatParam[2]);
 
-	/* Bind local port and address to socket. */
+	// Bind local port and address to socket.
 	ret = bind(s->sd, (struct sockaddr *) &s->recv_ad, sizeof(struct sockaddr_in));
 	if (ret < 0) {
 		OpalPrint("%s: ERROR: Could not bind local port to socket\n", PROGNAME);
@@ -67,7 +67,7 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 	else
 		OpalPrint("%s: Local Port     : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[2]);
 
-	/* If sending to a multicast address */
+	// If sending to a multicast address
 	if ((inet_addr(IconCtrlStruct.StringParam[0]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &TTL, sizeof(TTL));
 		if (ret == -1) {
@@ -84,13 +84,13 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 		OpalPrint("%s: Configured socket for sending to multicast address\n", PROGNAME);
 	}
 
-	/* If receiving from a multicast group, register for it. */
+	// If receiving from a multicast group, register for it.
 	if (inet_addr(IconCtrlStruct.StringParam[1]) > 0) {
 		if ((inet_addr(IconCtrlStruct.StringParam[1]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
 			mreq.imr_multiaddr.s_addr = inet_addr(IconCtrlStruct.StringParam[1]);
 			mreq.imr_interface.s_addr = INADDR_ANY;
 
-			/* Have the multicast socket join the multicast group */
+			// Have the multicast socket join the multicast group
 			ret = setsockopt(s->sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq));
 			if (ret == -1) {
 				OpalPrint("%s: ERROR: Could not join multicast group (%d)\n", PROGNAME, errno);
@@ -134,11 +134,11 @@ int socket_recv(struct socket *s, char *data, int len, double timeout)
 	socklen_t client_ad_size = sizeof(client_ad);
 	fd_set sd_set;
 
-	/* Set the descriptor set for the select() call */
+	// Set the descriptor set for the select() call
 	FD_ZERO(&sd_set);
 	FD_SET(s->sd, &sd_set);
 
-	/* Set the tv structure to the correct timeout value */
+	// Set the tv structure to the correct timeout value
 	tv.tv_sec = (int) timeout;
 	tv.tv_usec = (int) ((timeout - tv.tv_sec) * 1000000);
 
@@ -148,9 +148,9 @@ int socket_recv(struct socket *s, char *data, int len, double timeout)
 	 * a future instance (model load). */
 	ret = select(s->sd + 1, &sd_set, (fd_set *) 0, (fd_set *) 0, &tv);
 	switch (ret) {
-		case -1: /* Error */
+		case -1: // Error
 			return -1;
-		case  0: /* We hit the timeout */
+		case  0: // We hit the timeout
 			return 0;
 		default:
 			if (!(FD_ISSET(s->sd, &sd_set))) {
@@ -161,9 +161,9 @@ int socket_recv(struct socket *s, char *data, int len, double timeout)
 			}
 	}
 
-	/* Clear the data array (in case we receive an incomplete packet) */
+	// Clear the data array (in case we receive an incomplete packet)
 	memset(data, 0, len);
 
-	/* Perform the reception */
+	// Perform the reception
 	return recvfrom(s->sd, data, len, 0, (struct sockaddr *) &client_ad, &client_ad_size);
 }

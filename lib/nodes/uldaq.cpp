@@ -1,11 +1,10 @@
-/** Node-type for uldaq connections.
+/* Node-type for uldaq connections.
  *
- * @file
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -20,10 +19,13 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
-static DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
+static
+unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
+static
+DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
 
-static const struct {
+static
+const struct {
 	const char *name;
 	AiInputMode mode;
 } input_modes[] = {
@@ -32,7 +34,8 @@ static const struct {
 	{ "pseudo-differential", AI_PSEUDO_DIFFERENTIAL }
 };
 
-static const struct {
+static
+const struct {
 	const char *name;
 	DaqDeviceInterface interface;
 } interface_types[] = {
@@ -42,7 +45,8 @@ static const struct {
 	{ "any", ANY_IFC }
 };
 
-static const struct {
+static
+const struct {
 	const char *name;
 	Range range;
 	float min, max;
@@ -171,27 +175,27 @@ int uldaq_connect(NodeCompat *n)
 	auto *u = n->getData<struct uldaq>();
 	UlError err;
 
-	/* Find Matching device */
+	// Find Matching device
 	if (!u->device_descriptor) {
 		u->device_descriptor = uldaq_find_device(u);
 		if (!u->device_descriptor)
 			throw RuntimeError("Unable to find a matching device");
 	}
 
-	/* Get a handle to the DAQ device associated with the first descriptor */
+	// Get a handle to the DAQ device associated with the first descriptor
 	if (!u->device_handle) {
 		u->device_handle = ulCreateDaqDevice(*u->device_descriptor);
 		if (!u->device_handle)
 			throw RuntimeError("Unable to create handle for DAQ device");
 	}
 
-	/* Check if device is already connected */
+	// Check if device is already connected
 	int connected;
 	err = ulIsDaqDeviceConnected(u->device_handle, &connected);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	/* Connect to device */
+	// Connect to device
 	if (!connected) {
 		err = ulConnectDaqDevice(u->device_handle);
 		if (err != ERR_NO_ERROR) {
@@ -208,7 +212,7 @@ int villas::node::uldaq_type_start(villas::node::SuperNode *sn)
 {
 	UlError err;
 
-	/* Get descriptors for all of the available DAQ devices */
+	// Get descriptors for all of the available DAQ devices
 	err = ulGetDaqDeviceInventory(ANY_IFC, descriptors, &num_devs);
 	if (err != ERR_NO_ERROR)
 		throw RuntimeError("Failed to retrieve DAQ device list");
@@ -488,7 +492,7 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 
 	pthread_mutex_unlock(&u->in.mutex);
 
-	/* Signal uldaq_read() about new data */
+	// Signal uldaq_read() about new data
 	pthread_cond_signal(&u->in.cv);
 }
 
@@ -502,7 +506,7 @@ int villas::node::uldaq_start(NodeCompat *n)
 	int ret;
 	UlError err;
 
-	/* Allocate a buffer to receive the data */
+	// Allocate a buffer to receive the data
 	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 50;
 	u->in.buffer = new double[u->in.buffer_len];
 	if (!u->in.buffer)
@@ -516,10 +520,10 @@ int villas::node::uldaq_start(NodeCompat *n)
 	if (err != ERR_NO_ERROR)
 		throw RuntimeError("Failed to load input queue to DAQ device");
 
-	/* Enable the event to be notified every time samples are available */
+	// Enable the event to be notified every time samples are available
 	err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize, uldaq_data_available, n);
 
-	/* Start the acquisition */
+	// Start the acquisition
 	err = ulAInScan(u->device_handle, 0, 0, (AiInputMode) 0, (Range) 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
 	if (err != ERR_NO_ERROR) {
 		char buf[ERR_MSG_LEN];
@@ -527,7 +531,7 @@ int villas::node::uldaq_start(NodeCompat *n)
 		throw RuntimeError("Failed to start acquisition on DAQ device: {}", buf);
 	}
 
-	/* Get the initial status of the acquisition */
+	// Get the initial status of the acquisition
 	err = ulAInScanStatus(u->device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR) {
 		char buf[ERR_MSG_LEN];
@@ -550,15 +554,15 @@ int villas::node::uldaq_stop(NodeCompat *n)
 
 	UlError err;
 
-	/* @todo Fix deadlock */
+	// @todo Fix deadlock
 	//pthread_mutex_lock(&u->in.mutex);
 
-	/* Get the current status of the acquisition */
+	// Get the current status of the acquisition
 	err = ulAInScanStatus(u->device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	/* Stop the acquisition if it is still running */
+	// Stop the acquisition if it is still running
 	if (u->in.status == SS_RUNNING) {
 		err = ulAInScanStop(u->device_handle);
 		if (err != ERR_NO_ERROR)
@@ -589,7 +593,7 @@ int villas::node::uldaq_read(NodeCompat *n, struct Sample * const smps[], unsign
 
 	size_t start_index = u->in.buffer_pos;
 
-	/* Wait for data available condition triggered by event callback */
+	// Wait for data available condition triggered by event callback
 	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentTotalCount)
 		pthread_cond_wait(&u->in.cv, &u->in.mutex);
 
@@ -617,10 +621,11 @@ int villas::node::uldaq_read(NodeCompat *n, struct Sample * const smps[], unsign
 	return cnt;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "uldaq";
 	p.description	= "Measurement Computing DAQ devices like UL201 (libuldaq)";
 	p.vectorize	= 0;
@@ -635,5 +640,6 @@ static void register_plugin() {
 	p.stop		= uldaq_stop;
 	p.read		= uldaq_read;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

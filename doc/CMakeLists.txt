@@ -1,9 +1,8 @@
 # CMakeLists.txt.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 find_package(Doxygen)
 
@@ -37,7 +36,7 @@ if(DOXYGEN_FOUND)
 	set(DOXYGEN_DIAFILE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/figures/)
 
 	doxygen_add_docs(doc
-		README.md CONTRIBUTING.md COPYING.md src/ lib/ tests/ include/ doc/
+		README.md CONTRIBUTING.md LICENSE src/ lib/ tests/ include/ doc/
 		WORKING_DIRECTORY ${PROJECT_DIR}
 	)
 

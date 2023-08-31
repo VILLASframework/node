@@ -1,10 +1,9 @@
-/** Comma-separated values.
+/* Comma-separated values.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -15,16 +14,18 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations. */
+// Forward declarations
 struct Sample;
 
 class ColumnLineFormat : public LineFormat {
 
 protected:
-	virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
-	virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
+	virtual
+	size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
+	virtual
+	size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
 
-	char separator;		/**< Column separator */
+	char separator;		// Column separator
 
 public:
 	ColumnLineFormat(int fl, char delim, char sep) :

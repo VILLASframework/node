@@ -1,11 +1,9 @@
-/** Node C-API
+/* Node C-API
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- **********************************************************************************/
-
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/node.hpp>
 
@@ -183,7 +181,6 @@ unsigned sample_length(vsample *s)
 	auto *smp = (Sample *) s;
 	return smp->length;
 }
-
 
 vsample * sample_pack(unsigned seq, struct timespec *ts_origin, struct timespec *ts_received, unsigned len, double *values)
 {

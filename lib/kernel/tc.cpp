@@ -1,11 +1,11 @@
-/** Traffic control (tc): setup interface queuing desciplines.
+/* Traffic control (tc): setup interface queuing desciplines.
  *
  * VILLASnode uses these functions to setup the network emulation feature.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <netlink/route/cls/fw.h>
 #include <netlink/route/qdisc/prio.h>
@@ -89,6 +89,6 @@ int villas::kernel::tc::reset(Interface *i)
 {
 	struct nl_sock *sock = nl::init();
 
-	/* We restore the default pfifo_fast qdisc, by deleting ours */
+	// We restore the default pfifo_fast qdisc, by deleting ours
 	return rtnl_qdisc_delete(sock, i->tc_qdisc);
 }

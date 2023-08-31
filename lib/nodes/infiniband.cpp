@@ -1,9 +1,9 @@
-/** Node type: infiniband
+/* Node type: infiniband
  *
- * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Dennis Potter <dennis@dennispotter.eu>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cmath>
@@ -34,7 +34,7 @@ int ib_disconnect(NodeCompat *n)
 
 	rdma_disconnect(ib->ctx.id);
 
-	/* If there is anything in the Completion Queue, it should be given back to the framework Receive Queue. */
+	// If there is anything in the Completion Queue, it should be given back to the framework Receive Queue.
 	while (ib->conn.available_recv_wrs) {
 		wcs = ibv_poll_cq(ib->ctx.recv_cq, ib->recv_cq_size, wc);
 
@@ -44,13 +44,13 @@ int ib_disconnect(NodeCompat *n)
 			sample_decref((struct Sample *) (intptr_t) (wc[j].wr_id));
 	}
 
-	/* Send Queue */
+	// Send Queue
 	while ((wcs = ibv_poll_cq(ib->ctx.send_cq, ib->send_cq_size, wc)))
 		for (int j = 0; j < wcs; j++)
 			if (wc[j].wr_id > 0)
 				sample_decref((struct Sample *) (intptr_t) (wc[j].wr_id));
 
-	/* Destroy QP */
+	// Destroy QP
 	rdma_destroy_qp(ib->ctx.id);
 
 	n->logger->debug("Destroyed QP");
@@ -66,7 +66,7 @@ void ib_build_ibv(NodeCompat *n)
 
 	n->logger->debug("Starting to build IBV components");
 
-	/* Create completion queues (No completion channel!) */
+	// Create completion queues (No completion channel!)
 	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->recv_cq_size, nullptr, nullptr, 0);
 	if (!ib->ctx.recv_cq)
 		throw RuntimeError("Could not create receive completion queue");
@@ -79,11 +79,11 @@ void ib_build_ibv(NodeCompat *n)
 
 	n->logger->debug("Created send Completion Queue");
 
-	/* Prepare remaining Queue Pair (QP) attributes */
+	// Prepare remaining Queue Pair (QP) attributes
 	ib->qp_init.send_cq = ib->ctx.send_cq;
 	ib->qp_init.recv_cq = ib->ctx.recv_cq;
 
-	/* Create the actual QP */
+	// Create the actual QP
 	ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
 	if (ret)
 		throw RuntimeError("Failed to create Queue Pair");
@@ -103,10 +103,10 @@ int ib_addr_resolved(NodeCompat *n)
 
 	n->logger->debug("Successfully resolved address");
 
-	/* Build all components from IB Verbs */
+	// Build all components from IB Verbs
 	ib_build_ibv(n);
 
-	/* Resolve address */
+	// Resolve address
 	ret = rdma_resolve_route(ib->ctx.id, ib->conn.timeout);
 	if (ret)
 		throw RuntimeError("Failed to resolve route");
@@ -123,7 +123,7 @@ int ib_route_resolved(NodeCompat *n)
 	struct rdma_conn_param cm_params;
 	memset(&cm_params, 0, sizeof(cm_params));
 
-	/* Send connection request */
+	// Send connection request
 	ret = rdma_connect(ib->ctx.id, &cm_params);
 	if (ret)
 		throw RuntimeError("Failed to connect");
@@ -147,7 +147,7 @@ int ib_connect_request(NodeCompat *n, struct rdma_cm_id *id)
 	struct rdma_conn_param cm_params;
 	memset(&cm_params, 0, sizeof(cm_params));
 
-	/* Accept connection request */
+	// Accept connection request
 	ret = rdma_accept(ib->ctx.id, &cm_params);
 	if (ret)
 		throw RuntimeError("Failed to connect");
@@ -187,7 +187,7 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json)
 	int buffer_subtraction = 16;
 	int use_fallback = 1;
 
-	/* Parse JSON files and copy to local variables */
+	// Parse JSON files and copy to local variables
 	json_t *json_in = nullptr;
 	json_t *json_out = nullptr;
 	json_error_t err;
@@ -199,7 +199,6 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json)
 	);
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-ib");
-
 
 	if (json_in) {
 		ret = json_unpack_ex(json_in, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i}",
@@ -240,19 +239,19 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json)
 		n->logger->debug("Setup as target");
 	}
 
-	/* Set fallback mode */
+	// Set fallback mode
 	ib->conn.use_fallback = use_fallback;
 
-	/* Set vectorize mode. Do not print, since framework will print this information */
+	// Set vectorize mode. Do not print, since framework will print this information
 	n->in.vectorize = vectorize_in;
 	n->out.vectorize = vectorize_out;
 
-	/* Set buffer subtraction */
+	// Set buffer subtraction
 	ib->conn.buffer_subtraction = buffer_subtraction;
 
 	n->logger->debug("Set buffer subtraction to {}", buffer_subtraction);
 
-	/* Translate IP:PORT to a struct addrinfo */
+	// Translate IP:PORT to a struct addrinfo
 	char *ip_adr = strtok_r(local, ":", &lasts);
 	char *port = strtok_r(nullptr, ":", &lasts);
 
@@ -262,7 +261,7 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json)
 
 	n->logger->debug("Translated {}:{} to a struct addrinfo", ip_adr, port);
 
-	/* Translate port space */
+	// Translate port space
 	if (strcmp(transport_mode, "RC") == 0) {
 		ib->conn.port_space = RDMA_PS_TCP;
 		ib->qp_init.qp_type = IBV_QPT_RC;
@@ -285,44 +284,43 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json)
 
 	n->logger->debug("Set transport mode to {}", transport_mode);
 
-	/* Set timeout */
+	// Set timeout
 	ib->conn.timeout = timeout;
 
 	n->logger->debug("Set timeout to {}", timeout);
 
-	/* Set completion queue size */
+	// Set completion queue size
 	ib->recv_cq_size = recv_cq_size;
 	ib->send_cq_size = send_cq_size;
 
 	n->logger->debug("Set Completion Queue size to {} & {} (in & out)",
 		recv_cq_size, send_cq_size);
 
-
-	/* Translate inline mode */
+	// Translate inline mode
 	ib->conn.send_inline = send_inline;
 
 	n->logger->debug("Set send_inline to {}", send_inline);
 
-	/* Set max. send and receive Work Requests */
+	// Set max. send and receive Work Requests
 	ib->qp_init.cap.max_send_wr = max_send_wr;
 	ib->qp_init.cap.max_recv_wr = max_recv_wr;
 
 	n->logger->debug("Set max_send_wr and max_recv_wr to {} and {}, respectively",
 		max_send_wr, max_recv_wr);
 
-	/* Set available receive Work Requests to 0 */
+	// Set available receive Work Requests to 0
 	ib->conn.available_recv_wrs = 0;
 
-	/* Set remaining QP attributes */
+	// Set remaining QP attributes
 	ib->qp_init.cap.max_send_sge = 4;
 	ib->qp_init.cap.max_recv_sge = (ib->conn.port_space == RDMA_PS_UDP) ? 5 : 4;
 
-	/* Set number of bytes to be send inline */
+	// Set number of bytes to be send inline
 	ib->qp_init.cap.max_inline_data = max_inline_data;
 
-	/* If node will send data, set remote address */
+	// If node will send data, set remote address
 	if (ib->is_source) {
-		/* Translate address info */
+		// Translate address info
 		char *ip_adr = strtok_r(remote, ":", &lasts);
 		char *port = strtok_r(nullptr, ":", &lasts);
 
@@ -340,14 +338,14 @@ int villas::node::ib_check(NodeCompat *n)
 {
 	auto *ib = n->getData<struct infiniband>();
 
-	/* Check if read substraction makes sense */
+	// Check if read substraction makes sense
 	if (ib->conn.buffer_subtraction <  2 * n->in.vectorize)
 		throw RuntimeError("The buffer substraction value must be bigger than 2 * in.vectorize");
 
 	if (ib->conn.buffer_subtraction >= ib->qp_init.cap.max_recv_wr - n->in.vectorize)
 		throw RuntimeError("The buffer substraction value cannot be bigger than in.max_wrs - in.vectorize");
 
-	/* Check if the set value is a power of 2, and warn the user if this is not the case */
+	// Check if the set value is a power of 2, and warn the user if this is not the case
 	unsigned max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
 	unsigned max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
 
@@ -355,7 +353,7 @@ int villas::node::ib_check(NodeCompat *n)
 		n->logger->warn("Max nr. of send WRs ({}) is not a power of 2! It will be changed to a power of 2: {}",
 			ib->qp_init.cap.max_send_wr, max_send_pow);
 
-		/* Change it now, because otherwise errors are possible in ib_start(). */
+		// Change it now, because otherwise errors are possible in ib_start().
 		ib->qp_init.cap.max_send_wr = max_send_pow;
 	}
 
@@ -363,11 +361,11 @@ int villas::node::ib_check(NodeCompat *n)
 		n->logger->warn("Max nr. of recv WRs ({}) is not a power of 2! It will be changed to a power of 2: {}",
 			ib->qp_init.cap.max_recv_wr, max_recv_pow);
 
-		/* Change it now, because otherwise errors are possible in ib_start(). */
+		// Change it now, because otherwise errors are possible in ib_start().
 		ib->qp_init.cap.max_recv_wr = max_recv_pow;
 	}
 
-	/* Check maximum size of max_recv_wr and max_send_wr */
+	// Check maximum size of max_recv_wr and max_send_wr
 	if (ib->qp_init.cap.max_send_wr > 8192)
 		n->logger->warn("Max number of send WRs ({}) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
 
@@ -379,7 +377,7 @@ int villas::node::ib_check(NodeCompat *n)
 	if (ib->periodic_signaling == 0)
 		ib->periodic_signaling = ib->qp_init.cap.max_send_wr / 2;
 
-	/* Warn user if he changed the default inline value */
+	// Warn user if he changed the default inline value
 	if (ib->qp_init.cap.max_inline_data != 0)
 		n->logger->warn("You changed the default value of max_inline_data. This might influence the maximum number "
 			"of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
@@ -444,7 +442,7 @@ void ib_create_bind_id(NodeCompat *n)
 
 	n->logger->debug("Created rdma_cm_id");
 
-	/* Bind rdma_cm_id to the HCA */
+	// Bind rdma_cm_id to the HCA
 	ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
 	if (ret)
 		throw RuntimeError("Failed to bind to local device: {}", gai_strerror(ret));
@@ -472,21 +470,21 @@ void ib_continue_as_listen(NodeCompat *n, struct rdma_cm_event *event)
 
 	n->setState(State::STARTED);
 
-	/* Acknowledge event */
+	// Acknowledge event
 	rdma_ack_cm_event(event);
 
-	/* Destroy ID */
+	// Destroy ID
 	rdma_destroy_id(ib->ctx.listen_id);
 
-	/* Create rdma_cm_id and bind to device */
+	// Create rdma_cm_id and bind to device
 	ib_create_bind_id(n);
 
-	/* Listen to id for events */
+	// Listen to id for events
 	ret = rdma_listen(ib->ctx.listen_id, 10);
 	if (ret)
 		throw RuntimeError("Failed to listen to rdma_cm_id");
 
-	/* Node is not a source (and will not send data */
+	// Node is not a source (and will not send data
 	ib->is_source = 0;
 
 	n->logger->info("Use listening mode");
@@ -502,10 +500,10 @@ void * ib_rdma_cm_event_thread(void *ctx)
 
 	n->logger->debug("Started rdma_cm_event thread");
 
-	/* Wait until node is completely started */
+	// Wait until node is completely started
 	while (n->getState() != State::STARTED);
 
-	/* Monitor event channel */
+	// Monitor event channel
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
 		n->logger->debug("Received communication event: {}", rdma_event_str(event->event));
 
@@ -567,7 +565,7 @@ void * ib_rdma_cm_event_thread(void *ctx)
 				break;
 
 			case RDMA_CM_EVENT_ESTABLISHED:
-				/* If the connection is unreliable connectionless, set appropriate variables */
+				// If the connection is unreliable connectionless, set appropriate variables
 				if (ib->conn.port_space == RDMA_PS_UDP) {
 					ib->conn.ud.ud = event->param.ud;
 					ib->conn.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ud.ah_attr);
@@ -612,27 +610,27 @@ int villas::node::ib_start(NodeCompat *n)
 
 	n->logger->debug("Started ib_start");
 
-	/* Create event channel */
+	// Create event channel
 	ib->ctx.ec = rdma_create_event_channel();
 	if (!ib->ctx.ec)
 		throw RuntimeError("Failed to create event channel!");
 
 	n->logger->debug("Created event channel");
 
-	/* Create rdma_cm_id and bind to device */
+	// Create rdma_cm_id and bind to device
 	ib_create_bind_id(n);
 
 	n->logger->debug("Initialized Work Completion Buffer");
 
-	/* Resolve address or listen to rdma_cm_id */
+	// Resolve address or listen to rdma_cm_id
 	if (ib->is_source) {
-		/* Resolve address */
+		// Resolve address
 		ret = rdma_resolve_addr(ib->ctx.id, nullptr, ib->conn.dst_addr->ai_addr, ib->conn.timeout);
 		if (ret)
 			throw RuntimeError("Failed to resolve remote address after {}ms: {}", ib->conn.timeout, gai_strerror(ret));
 	}
 	else {
-		/* Listen on rdma_cm_id for events */
+		// Listen on rdma_cm_id for events
 		ret = rdma_listen(ib->ctx.listen_id, 10);
 		if (ret)
 			throw RuntimeError("Failed to listen to rdma_cm_id");
@@ -640,14 +638,14 @@ int villas::node::ib_start(NodeCompat *n)
 		n->logger->debug("Started to listen to rdma_cm_id");
 	}
 
-	/* Allocate protection domain */
+	// Allocate protection domain
 	ib->ctx.pd = ibv_alloc_pd(ib->ctx.id->verbs);
 	if (!ib->ctx.pd)
 		throw RuntimeError("Could not allocate protection domain");
 
 	n->logger->debug("Allocated Protection Domain");
 
-	/* Allocate space for 40 Byte GHR. We don't use this. */
+	// Allocate space for 40 Byte GHR. We don't use this.
 	if (ib->conn.port_space == RDMA_PS_UDP) {
 		ib->conn.ud.grh_ptr = new char[GRH_SIZE];
 		if (!ib->conn.ud.grh_ptr)
@@ -661,7 +659,7 @@ int villas::node::ib_start(NodeCompat *n)
 	 */
 	n->logger->debug("Starting to monitor events on rdma_cm_id");
 
-	/* Create thread to monitor rdma_cm_event channel */
+	// Create thread to monitor rdma_cm_event channel
 	ret = pthread_create(&ib->conn.rdma_cm_event_thread, nullptr, ib_rdma_cm_event_thread, n);
 	if (ret)
 		throw RuntimeError("Failed to create thread to monitor rdma_cm events: {}", gai_strerror(ret));
@@ -698,22 +696,22 @@ int villas::node::ib_stop(NodeCompat *n)
 
 	n->logger->info("Disconnecting... Waiting for threads to join.");
 
-	/* Wait for event thread to join */
+	// Wait for event thread to join
 	ret = pthread_join(ib->conn.rdma_cm_event_thread, nullptr);
 	if (ret)
 		throw RuntimeError("Error while joining rdma_cm_event_thread: {}", ret);
 
 	n->logger->debug("Joined rdma_cm_event_thread");
 
-	/* Destroy RDMA CM ID */
+	// Destroy RDMA CM ID
 	rdma_destroy_id(ib->ctx.id);
 	n->logger->debug("Destroyed rdma_cm_id");
 
-	/* Dealloc Protection Domain */
+	// Dealloc Protection Domain
 	ibv_dealloc_pd(ib->ctx.pd);
 	n->logger->debug("Destroyed protection domain");
 
-	/* Destroy event channel */
+	// Destroy event channel
 	rdma_destroy_event_channel(ib->ctx.ec);
 	n->logger->debug("Destroyed event channel");
 
@@ -752,13 +750,13 @@ int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned 
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
 				if (wcs) {
-					/* Get time directly after something arrived in Completion Queue */
+					// Get time directly after something arrived in Completion Queue
 					ts_receive = time_now();
 
 					n->logger->debug("Received {} Work Completions", wcs);
 
-					read_values = wcs; /* Value to return */
-					max_wr_post = wcs; /* Make space free in smps[] */
+					read_values = wcs; // Value to return
+					max_wr_post = wcs; // Make space free in smps[]
 
 					break;
 				}
@@ -774,18 +772,18 @@ int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned 
 			ib->conn.available_recv_wrs += max_wr_post;
 
 			// TODO: fix release logic
-			// *release = 0; /* While we fill the receive queue, we always use all samples */
+			// *release = 0; // While we fill the receive queue, we always use all samples
 		}
 
-		/* Get Memory Region */
+		// Get Memory Region
 		mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (int i = 0; i < max_wr_post; i++) {
 			int j = 0;
 
-			/* Prepare receive Scatter/Gather element */
+			// Prepare receive Scatter/Gather element
 
-			/* First 40 byte of UD data are GRH and unused in our case */
+			// First 40 byte of UD data are GRH and unused in our case
 			if (ib->conn.port_space == RDMA_PS_UDP) {
 				sge[i][j].addr = (uint64_t) ib->conn.ud.grh_ptr;
     				sge[i][j].length = GRH_SIZE;
@@ -794,14 +792,14 @@ int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned 
 				j++;
 			}
 
-			/* Sequence */
+			// Sequence
 			sge[i][j].addr = (uint64_t) &smps[i]->sequence;
 			sge[i][j].length = sizeof(smps[i]->sequence);
 			sge[i][j].lkey = mr->lkey;
 
 			j++;
 
-			/* Timespec origin */
+			// Timespec origin
 			sge[i][j].addr = (uint64_t) &smps[i]->ts.origin;
 			sge[i][j].length = sizeof(smps[i]->ts.origin);
 			sge[i][j].lkey = mr->lkey;
@@ -814,7 +812,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned 
 
 			j++;
 
-    			/* Prepare a receive Work Request */
+    			// Prepare a receive Work Request
     			wr[i].wr_id = (uintptr_t) smps[i];
 			wr[i].next = &wr[i+1];
     			wr[i].sg_list = sge[i];
@@ -826,17 +824,17 @@ int villas::node::ib_read(NodeCompat *n, struct Sample * const smps[], unsigned 
 		n->logger->debug("Prepared {} new receive Work Requests", max_wr_post);
 		n->logger->debug("{} receive Work Requests in Receive Queue", ib->conn.available_recv_wrs);
 
-		/* Post list of Work Requests */
+		// Post list of Work Requests
 		ret = ibv_post_recv(ib->ctx.id->qp, &wr[0], &bad_wr);
 		if (ret)
 			throw RuntimeError("Was unable to post receive WR: {}, bad WR ID: {:#x}", ret, bad_wr->wr_id);
 
 		n->logger->debug("Succesfully posted receive Work Requests");
 
-		/* Doesn't start if wcs == 0 */
+		// Doesn't start if wcs == 0
 		for (int j = 0; j < wcs; j++) {
 			if ( !( (wc[j].opcode & IBV_WC_RECV) && wc[j].status == IBV_WC_SUCCESS) ) {
-				/* Drop all values, we don't know where the error occured */
+				// Drop all values, we don't know where the error occured
 				read_values = 0;
 			}
 
@@ -874,7 +872,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 	struct ibv_mr *mr;
 
 	int ret;
-	unsigned sent = 0; /* Used for first loop: prepare work requests to post to send queue */
+	unsigned sent = 0; // Used for first loop: prepare work requests to post to send queue
 
 	n->logger->debug("ib_write is called");
 
@@ -882,38 +880,38 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 		// TODO: fix release logic
 		// *release = 0;
 
-		/* First, write */
+		// First, write
 
-		/* Get Memory Region */
+		// Get Memory Region
 		mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (sent = 0; sent < cnt; sent++) {
 			int j = 0;
 
-			/* Set Scatter/Gather element to data of sample */
+			// Set Scatter/Gather element to data of sample
 
-			/* Sequence */
+			// Sequence
 			sge[sent][j].addr = (uint64_t) &smps[sent]->sequence;
 			sge[sent][j].length = sizeof(smps[sent]->sequence);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;
 
-			/* Timespec origin */
+			// Timespec origin
 			sge[sent][j].addr = (uint64_t) &smps[sent]->ts.origin;
 			sge[sent][j].length = sizeof(smps[sent]->ts.origin);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;
 
-			/* Actual Payload */
+			// Actual Payload
 			sge[sent][j].addr = (uint64_t) &smps[sent]->data;
 			sge[sent][j].length = SAMPLE_DATA_LENGTH(smps[sent]->length);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;
 
-			/* Check if connection is connected or unconnected and set appropriate values */
+			// Check if connection is connected or unconnected and set appropriate values
 			if (ib->conn.port_space == RDMA_PS_UDP) {
 				wr[sent].wr.ud.ah = ib->conn.ud.ah;
 				wr[sent].wr.ud.remote_qkey = ib->conn.ud.ud.qkey;
@@ -932,7 +930,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 
 			n->logger->debug("Sample will be send inline [0/1]: {}", send_inline);
 
-			/* Set Send Work Request */
+			// Set Send Work Request
 			wr[sent].wr_id = (uintptr_t) smps[sent];
 			wr[sent].sg_list = sge[sent];
 			wr[sent].num_sge = j;
@@ -945,7 +943,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 		n->logger->debug("Prepared {} send Work Requests", cnt);
 		wr[cnt-1].next = nullptr;
 
-		/* Send linked list of Work Requests */
+		// Send linked list of Work Requests
 		ret = ibv_post_send(ib->ctx.id->qp, wr, &bad_wr);
 		n->logger->debug("Posted send Work Requests");
 
@@ -966,8 +964,8 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 				while (1) {
 					// TODO: fix release logic
 					// smps[*release] = smps[m];
-					// (*release)++; /* Increment number of samples to be released */
-					sent--; /* Decrement the number of successfully posted elements */
+					// (*release)++; // Increment number of samples to be released
+					sent--; // Decrement the number of successfully posted elements
 
 					if (++m == cnt) break;
 				}
@@ -1002,10 +1000,11 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 	return sent;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "infiniband";
 	p.description	= "Infiniband interface (libibverbs, librdmacm)";
 	p.vectorize	= 0;
@@ -1023,5 +1022,6 @@ static void register_plugin() {
 	p.reverse	= ib_reverse;
 	p.memory_type	= memory::ib;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

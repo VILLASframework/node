@@ -1,9 +1,9 @@
-/** Communicate with VILLASfpga Xilinx FPGA boards
+/* Communicate with VILLASfpga Xilinx FPGA boards
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <csignal>
 #include <iostream>
@@ -32,12 +32,16 @@ using namespace villas::node;
 using namespace villas::fpga;
 using namespace villas::utils;
 
-/* Global state */
-static std::list<std::shared_ptr<fpga::PCIeCard>> cards;
-static std::map<fpga::ip::Dma, FpgaNode *> dmaMap;
+// Global state
+static
+std::list<std::shared_ptr<fpga::PCIeCard>> cards;
+static
+std::map<fpga::ip::Dma, FpgaNode *> dmaMap;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static std::shared_ptr<kernel::vfio::Container> vfioContainer;
+static
+std::shared_ptr<kernel::pci::DeviceList> pciDevices;
+static
+std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 using namespace villas;
 using namespace villas::node;
@@ -204,7 +208,7 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt)
 	if (!state)
 		return -1;
 
-	written = 0; /* The number of samples written */
+	written = 0; // The number of samples written
 
 	return written;
 }

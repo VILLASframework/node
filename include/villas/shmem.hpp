@@ -1,10 +1,9 @@
-/** Shared-memory interface: The interface functions that the external program should use.
+/* Shared-memory interface: The interface functions that the external program should use.
  *
- * @file
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -19,36 +18,36 @@
 namespace villas {
 namespace node {
 
-/** Struct containing all parameters that need to be known when creating a new
+/* Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct ShmemConfig {
-	int polling;			/**< Whether to use polling instead of POSIX CVs */
-	int queuelen;			/**< Size of the queues (in elements) */
-	int samplelen;			/**< Maximum number of data entries in a single sample */
+	int polling;			// Whether to use polling instead of POSIX CVs
+	int queuelen;			// Size of the queues (in elements)
+	int samplelen;			// Maximum number of data entries in a single sample
 };
 
-/** The structure that actually resides in the shared memory. */
+// The structure that actually resides in the shared memory.
 struct ShmemShared {
-	int polling;			/**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
-	struct CQueueSignalled queue;	/**< Queue for samples passed in both directions. */
-	struct Pool pool;		/**< Pool for the samples in the queues. */
+	int polling;			// Whether to use a pthread_cond_t to signal if new samples are written to incoming queue.
+	struct CQueueSignalled queue;	// Queue for samples passed in both directions.
+	struct Pool pool;		// Pool for the samples in the queues.
 };
 
-/** Relevant information for one direction of the interface. */
+// Relevant information for one direction of the interface.
 struct shmem_dir {
-	void *base;			/**< Base address of the region. */
-	const char *name;		/**< Name of the shmem object. */
-	size_t len;			/**< Total size of the region. */
-	struct ShmemShared *shared;	/**< Actually shared datastructure */
+	void *base;			// Base address of the region.
+	const char *name;		// Name of the shmem object.
+	size_t len;			// Total size of the region.
+	struct ShmemShared *shared;	// Actually shared datastructure
 };
 
-/** Main structure representing the shared memory interface. */
+// Main structure representing the shared memory interface.
 struct ShmemInterface {
 	struct shmem_dir read, write;
 	std::atomic<int> readers, writers, closed;
 };
 
-/** Open the shared memory objects and retrieve / initialize the shared data structures.
+/* Open the shared memory objects and retrieve / initialize the shared data structures.
  * Blocks until another process connects by opening the same objects.
  *
  * @param[in] wname Name of the POSIX shared memory object containing the output queue.
@@ -61,7 +60,7 @@ struct ShmemInterface {
  */
 int shmem_int_open(const char* wname, const char* rname, struct ShmemInterface* shm, struct ShmemConfig* conf);
 
-/** Close and destroy the shared memory interface and related structures.
+/* Close and destroy the shared memory interface and related structures.
  *
  * @param shm The shared memory interface.
  * @retval 0 Closing successfull.
@@ -69,7 +68,7 @@ int shmem_int_open(const char* wname, const char* rname, struct ShmemInterface* 
  */
 int shmem_int_close(struct ShmemInterface *shm);
 
-/** Read samples from the interface.
+/* Read samples from the interface.
  *
  * @param shm The shared memory interface.
  * @param smps  An array where the pointers to the samples will be written. The samples
@@ -80,7 +79,7 @@ int shmem_int_close(struct ShmemInterface *shm);
  */
 int shmem_int_read(struct ShmemInterface *shm, struct Sample * const smps[], unsigned cnt);
 
-/** Write samples to the interface.
+/* Write samples to the interface.
  *
  * @param shm The shared memory interface.
  * @param smps The samples to be written. Must be allocated from shm_int_alloc.
@@ -90,7 +89,7 @@ int shmem_int_read(struct ShmemInterface *shm, struct Sample * const smps[], uns
  */
 int shmem_int_write(struct ShmemInterface *shm, const struct Sample * const smps[], unsigned cnt);
 
-/** Allocate samples to be written to the interface.
+/* Allocate samples to be written to the interface.
  *
  * The writing process must not free the samples; only the receiving process should free them using sample_decref after use.
  * @param shm The shared memory interface.
@@ -100,7 +99,7 @@ int shmem_int_write(struct ShmemInterface *shm, const struct Sample * const smps
  */
 int shmem_int_alloc(struct ShmemInterface *shm, struct Sample *smps[], unsigned cnt);
 
-/** Returns the total size of the shared memory region with the given size of
+/* Returns the total size of the shared memory region with the given size of
  * the input/output queues (in elements) and the given number of data elements
  * per struct Sample. */
 size_t shmem_total_size(int queuelen, int samplelen);

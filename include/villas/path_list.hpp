@@ -1,11 +1,9 @@
-/** Node list
+/* Node list
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- **********************************************************************************/
-
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,13 +16,13 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Path;
 
 class PathList : public std::list<Path *> {
 
 public:
-	/** Lookup a path from the list based on its UUID */
+	// Lookup a path from the list based on its UUID
 	Path * lookup(const uuid_t &uuid) const;
 
 	json_t * toJson() const;

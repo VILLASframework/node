@@ -1,9 +1,9 @@
-/** Calc jitter, mean and variance of GPS vs NTP TS.
+/* Calc jitter, mean and variance of GPS vs NTP TS.
  *
- * @author Umar Farooq <umar.farooq@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Umar Farooq <umar.farooq@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 #include <cinttypes>
@@ -44,15 +44,15 @@ public:
 		curr_count(0)
 	{ }
 
-	/**
-	 * Hook to calculate jitter between GTNET-SKT GPS timestamp and Villas node NTP timestamp.
+	/* Hook to calculate jitter between GTNET-SKT GPS timestamp and Villas node NTP timestamp.
 	 *
 	 * Drawbacks: No protection for out of order packets. Default positive delay assumed,
 	 * so GPS timestamp should be earlier than NTP timestamp. If difference b/w NTP and GPS ts
 	 * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
 	 * the variance value will overrun the 64bit value.
 	 */
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -66,12 +66,12 @@ public:
 		curr_delay_us = delay_sec * 1000000 + delay_nsec / 1000;
 
 		delay_mov_sum = delay_mov_sum + curr_delay_us - delay_series[curr_count];
-		moving_avg[curr_count] = delay_mov_sum / GPS_NTP_DELAY_WIN_SIZE; /* Will be valid after GPS_NTP_DELAY_WIN_SIZE initial values */
+		moving_avg[curr_count] = delay_mov_sum / GPS_NTP_DELAY_WIN_SIZE; // Will be valid after GPS_NTP_DELAY_WIN_SIZE initial values
 
 		delay_mov_sum_sqrd = delay_mov_sum_sqrd + (curr_delay_us * curr_delay_us) - (delay_series[curr_count] * delay_series[curr_count]);
 		moving_var[curr_count] = (delay_mov_sum_sqrd - (delay_mov_sum * delay_mov_sum) / GPS_NTP_DELAY_WIN_SIZE) / (GPS_NTP_DELAY_WIN_SIZE - 1);
 
-		delay_series[curr_count] = curr_delay_us; /* Update the last delay value */
+		delay_series[curr_count] = curr_delay_us; // Update the last delay value
 
 		/* Jitter calc formula as used in Wireshark according to RFC3550 (RTP)
 			D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
@@ -92,7 +92,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "jitter_calc";
 static char d[] = "Calc jitter, mean and variance of GPS vs NTP TS";
 static HookPlugin<JitterCalcHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH, 0> p;

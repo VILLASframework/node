@@ -1,10 +1,9 @@
-/** Node-type for signal generation.
+/* Node-type for signal generation.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <list>
 #include <cmath>
@@ -270,7 +269,7 @@ int SignalNode::start()
 	for (auto sig : signals)
 		sig.start();
 
-	/* Setup task */
+	// Setup task
 	if (rt)
 		task.setRate(rate);
 
@@ -339,9 +338,9 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt)
 		return -1;
 	}
 
-	/* Throttle output if desired */
+	// Throttle output if desired
 	if (rt) {
-		/* Block until 1/p->rate seconds elapsed */
+		// Block until 1/p->rate seconds elapsed
 		steps = task.wait();
 		if (steps > 1 && monitor_missed) {
 			logger->debug("Missed steps: {}", steps-1);
@@ -377,6 +376,7 @@ std::vector<int> SignalNode::getPollFDs()
 	return {};
 }
 
+// Register node
 static char n[] = "signal.v2";
 static char d[] = "Signal generator";
 static NodePlugin<SignalNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_POLL> p;

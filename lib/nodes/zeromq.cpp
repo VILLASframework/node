@@ -1,9 +1,9 @@
-/** Node type: ZeroMQ
+/* Node type: ZeroMQ
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <zmq.h>
@@ -23,20 +23,21 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static void *context;
+static
+void *context;
 
-/**  Read one event off the monitor socket; return value and address
+/*  Read one event off the monitor socket; return value and address
  * by reference, if not null, and event number by value.
  *
  * @returnval  -1 In case of error. */
 static
 int get_monitor_event(void *monitor, int *value, char **address)
 {
-	/* First frame in message contains event number and value */
+	// First frame in message contains event number and value
 	zmq_msg_t msg;
 	zmq_msg_init (&msg);
 	if (zmq_msg_recv (&msg, monitor, 0) == -1)
-		return -1; /* Interruped, presumably. */
+		return -1; // Interruped, presumably
 
 	assert(zmq_msg_more (&msg));
 
@@ -45,10 +46,10 @@ int get_monitor_event(void *monitor, int *value, char **address)
 	if (value)
 		*value = *(uint32_t *) (data + 2);
 
-	/* Second frame in message contains event address */
+	// Second frame in message contains event address
 	zmq_msg_init(&msg);
 	if (zmq_msg_recv(&msg, monitor, 0) == -1)
-		return -1; /* Interruped, presumably. */
+		return -1; // Interruped, presumably
 
 	assert(!zmq_msg_more(&msg));
 
@@ -172,7 +173,7 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json)
 	z->in.filter = in_filter ? strdup(in_filter) : nullptr;
 	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
-	/* Format */
+	// Format
 	if (z->formatter)
 		delete z->formatter;
 	z->formatter = json_format
@@ -216,7 +217,7 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json)
 		memcpy(z->curve.server.secret_key, secret_key, 41);
 	}
 
-	/** @todo We should fix this. Its mostly done. */
+	// @todo We should fix this. Its mostly done.
 	if (z->curve.enabled)
 		throw ConfigError(json_curve, "node-config-zeromq-curve", "CurveZMQ support is currently broken");
 
@@ -337,7 +338,7 @@ int villas::node::zeromq_start(NodeCompat *n)
 		goto fail;
 	}
 
-	/* Join group */
+	// Join group
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
 		case zeromq::Pattern::RADIODISH:
@@ -357,7 +358,7 @@ int villas::node::zeromq_start(NodeCompat *n)
 		goto fail;
 
 	if (z->curve.enabled) {
-		/* Publisher has server role */
+		// Publisher has server role
 		ret = zmq_setsockopt(z->out.socket, ZMQ_CURVE_SECRETKEY, z->curve.server.secret_key, 41);
 		if (ret)
 			goto fail;
@@ -371,12 +372,12 @@ int villas::node::zeromq_start(NodeCompat *n)
 		if (ret)
 			goto fail;
 
-		/* Create temporary client keys first */
+		// Create temporary client keys first
 		ret = zmq_curve_keypair(z->curve.client.public_key, z->curve.client.secret_key);
 		if (ret)
 			goto fail;
 
-		/* Subscriber has client role */
+		// Subscriber has client role
 		ret = zmq_setsockopt(z->in.socket, ZMQ_CURVE_SECRETKEY, z->curve.client.secret_key, 41);
 		if (ret)
 			goto fail;
@@ -402,24 +403,24 @@ int villas::node::zeromq_start(NodeCompat *n)
 		if (ret)
 			goto fail;
 
-		/* Monitor events on the server */
+		// Monitor events on the server
 		ret = zmq_socket_monitor(d->socket, mon_ep, ZMQ_EVENT_ALL);
 		if (ret < 0)
 			goto fail;
 
-		/* Create socket for collecting monitor events */
+		// Create socket for collecting monitor events
 		d->mon_socket = zmq_socket(context, ZMQ_PAIR);
 		if (!d->mon_socket) {
 			ret = -1;
 			goto fail;
 		}
 
-		/* Connect it to the inproc endpoints so they'll get events */
+		// Connect it to the inproc endpoints so they'll get events
 		ret = zmq_connect(d->mon_socket, mon_ep);
 		if (ret < 0)
 			goto fail;
 
-		/* Connect / bind sockets to endpoints */
+		// Connect / bind sockets to endpoints
 		for (size_t i = 0; i < list_length(&d->endpoints); i++) {
 			char *ep = (char *) list_at(&d->endpoints, i);
 
@@ -438,7 +439,7 @@ int villas::node::zeromq_start(NodeCompat *n)
 		}
 	}
 
-	/* Wait for all connections to be connected */
+	// Wait for all connections to be connected
 	for (auto d : dirs) {
 		while (d->pending > 0) {
 			int evt = d->bind ? ZMQ_EVENT_LISTENING : ZMQ_EVENT_CONNECTED;
@@ -455,7 +456,7 @@ int villas::node::zeromq_start(NodeCompat *n)
 		return ret == ZMQ_EVENT_HANDSHAKE_SUCCEEDED;
 	}
 	else
-		return 0; /* The handshake events are only emitted for CurveZMQ sessions. */
+		return 0; // The handshake events are only emitted for CurveZMQ sessions
 #else
 	return 0;
 #endif
@@ -521,7 +522,7 @@ int villas::node::zeromq_read(NodeCompat *n, struct Sample * const smps[], unsig
 	if (z->in.filter) {
 		switch (z->pattern) {
 			case zeromq::Pattern::PUBSUB:
-				/* Discard envelope */
+				// Discard envelope
 				zmq_recv(z->in.socket, nullptr, 0, 0);
 				break;
 
@@ -529,7 +530,7 @@ int villas::node::zeromq_read(NodeCompat *n, struct Sample * const smps[], unsig
 		}
 	}
 
-	/* Receive payload */
+	// Receive payload
 	ret = zmq_msg_recv(&m, z->in.socket, 0);
 	if (ret < 0)
 		return ret;
@@ -569,7 +570,7 @@ int villas::node::zeromq_write(NodeCompat *n, struct Sample * const smps[], unsi
 				break;
 #endif
 
-			case zeromq::Pattern::PUBSUB: /* Send envelope */
+			case zeromq::Pattern::PUBSUB: // Send envelope
 				zmq_send(z->out.socket, z->out.filter, strlen(z->out.filter), ZMQ_SNDMORE);
 				break;
 		}
@@ -627,10 +628,11 @@ int villas::node::zeromq_netem_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "zeromq";
 	p.description	= "ZeroMQ Distributed Messaging (libzmq)";
 	p.vectorize	= 0;
@@ -650,5 +652,6 @@ static void register_plugin() {
 	p.poll_fds	= zeromq_poll_fds;
 	p.netem_fds	= zeromq_netem_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

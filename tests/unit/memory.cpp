@@ -1,9 +1,9 @@
-/** Unit tests for memory management
+/* Unit tests for memory management
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <criterion/criterion.h>
 #include <criterion/theories.h>
@@ -19,7 +19,8 @@ using namespace villas;
 
 using namespace villas::node;
 
-extern void init_memory();
+extern
+void init_memory();
 
 #define PAGESIZE (1 << 12)
 #define HUGEPAGESIZE (1 << 21)

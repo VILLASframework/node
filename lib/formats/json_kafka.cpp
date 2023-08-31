@@ -1,9 +1,9 @@
-/** JSON serializtion for Kafka schema/payloads.
+/* JSON serializtion for Kafka schema/payloads.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
@@ -39,7 +39,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp)
 	json_fields = json_array();
 	json_payload = json_object();
 
-	/* Include sample timestamp */
+	// Include sample timestamp
 	if (smp->flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		json_field = json_pack("{ s: s, s: b, s: s }",
 			"type", "int64",
@@ -52,7 +52,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp)
 		json_object_set_new(json_payload, "timestamp", json_integer(ts_origin_ms));
 	}
 
-	/* Include sample sequence no */
+	// Include sample sequence no
 	if (smp->flags & (int) SampleFlags::HAS_SEQUENCE) {
 		json_field = json_pack("{ s: s, s: b, s: s }",
 			"type", "int64",
@@ -64,7 +64,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp)
 		json_object_set_new(json_payload, "sequence", json_integer(smp->sequence));
 	}
 
-	/* Include sample data */
+	// Include sample data
 	for (size_t i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
 		const auto sig = smp->signals->getByIndex(i);
 		const auto *data = &smp->data[i];
@@ -106,7 +106,7 @@ int JsonKafkaFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 	smp->flags = 0;
 	smp->signals = signals;
 
-	/* Unpack timestamp */
+	// Unpack timestamp
 	json_value = json_object_get(json_payload, "timestamp");
 	if (json_value) {
 		uint64_t ts_origin_ms = json_integer_value(json_value);
@@ -115,7 +115,7 @@ int JsonKafkaFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 		smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 	}
 
-	/* Unpack sequence no */
+	// Unpack sequence no
 	json_value = json_object_get(json_payload, "sequence");
 	if (json_value) {
 		smp->sequence = json_integer_value(json_value);
@@ -123,7 +123,7 @@ int JsonKafkaFormat::unpackSample(json_t *json_smp, struct Sample *smp)
 		smp->flags |= (int) SampleFlags::HAS_SEQUENCE;
 	}
 
-	/* Unpack signal data */
+	// Unpack signal data
 	for (size_t i = 0; i < signals->size(); i++) {
 		auto sig = signals->getByIndex(i);
 
@@ -176,6 +176,7 @@ JsonKafkaFormat::JsonKafkaFormat(int fl) :
 	);
 }
 
+// Register format
 static char n[] = "json.kafka";
 static char d[] = "JSON Kafka schema/payload messages";
 static FormatPlugin<JsonKafkaFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

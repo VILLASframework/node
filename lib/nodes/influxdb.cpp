@@ -1,9 +1,9 @@
-/** Node-type for InfluxDB.
+/* Node-type for InfluxDB.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cinttypes>
@@ -70,7 +70,7 @@ int villas::node::influxdb_open(NodeCompat *n)
 	if (ret)
 		throw RuntimeError("Failed to lookup server: {}", gai_strerror(ret));
 
-	/* Loop through all the results and connect to the first we can */
+	// Loop through all the results and connect to the first we can
 	for (p = servinfo; p != nullptr; p = p->ai_next) {
 		i->sd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (i->sd == -1)
@@ -83,7 +83,7 @@ int villas::node::influxdb_open(NodeCompat *n)
 			continue;
 		}
 
-		/* If we get here, we must have connected successfully */
+		// If we get here, we must have connected successfully
 		break;
 	}
 
@@ -116,10 +116,10 @@ int villas::node::influxdb_write(NodeCompat *n, struct Sample * const smps[], un
 	for (unsigned k = 0; k < cnt; k++) {
 		const struct Sample *smp = smps[k];
 
-		/* Key */
+		// Key
 		strcatf(&buf, "%s", i->key);
 
-		/* Fields */
+		// Fields
 		for (unsigned j = 0; j < smp->length; j++) {
 			const auto *data = &smp->data[j];
 			auto sig = smp->signals->getByIndex(j);
@@ -164,7 +164,7 @@ int villas::node::influxdb_write(NodeCompat *n, struct Sample * const smps[], un
 			}
 		}
 
-		/* Timestamp */
+		// Timestamp
 		strcatf(&buf, " %lld%09lld\n", (long long) smp->ts.origin.tv_sec,
 					       (long long) smp->ts.origin.tv_nsec);
 	}
@@ -191,10 +191,11 @@ char * villas::node::influxdb_print(NodeCompat *n)
 	return buf;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "influxdb";
 	p.description	= "Write results to InfluxDB";
 	p.vectorize	= 0;
@@ -205,5 +206,6 @@ static void register_plugin() {
 	p.stop		= influxdb_close;
 	p.write		= influxdb_write;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

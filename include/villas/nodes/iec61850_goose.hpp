@@ -1,9 +1,9 @@
-/** Node type: IEC 61850 - GOOSE
+/* Node type: IEC 61850 - GOOSE
  *
- * @author Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
- * @copyright 2023, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -254,6 +254,6 @@ public:
 	int stop() override;
 };
 
-} /* namespace iec61850 */
+} // namespace iec61850
 } // namespace node
 } // namespace villas

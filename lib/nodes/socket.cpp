@@ -1,9 +1,9 @@
-/** The socket node-type for Layer 2, 3, 4 BSD-style sockets
+/* The socket node-type for Layer 2, 3, 4 BSD-style sockets
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <unistd.h>
 #include <cstring>
@@ -21,21 +21,23 @@
 
 #ifdef WITH_SOCKET_LAYER_ETH
   #include <netinet/ether.h>
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 
 #ifdef WITH_NETEM
   #include <villas/kernel/if.hpp>
   #include <villas/kernel/nl.hpp>
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::kernel;
 
-/* Forward declartions */
-static NodeCompatType p;
-static NodeCompatFactory ncp(&p);
+// Forward declartions
+static
+NodeCompatType p;
+static
+NodeCompatFactory ncp(&p);
 
 int villas::node::socket_type_start(villas::node::SuperNode *sn)
 {
@@ -49,13 +51,13 @@ int villas::node::socket_type_start(villas::node::SuperNode *sn)
 			if (s->layer == SocketLayer::UNIX)
 				continue;
 
-			/* Determine outgoing interface */
+			// Determine outgoing interface
 			Interface *j = Interface::getEgress((struct sockaddr *) &s->out.saddr, sn);
 
 			j->addNode(n);
 		}
 	}
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 	return 0;
 }
@@ -132,7 +134,7 @@ int villas::node::socket_check(NodeCompat *n)
 {
 	auto *s = n->getData<struct Socket>();
 
-	/* Some checks on the addresses */
+	// Some checks on the addresses
 	if (s->layer != SocketLayer::UNIX) {
 		if (s->in.saddr.sa.sa_family != s->out.saddr.sa.sa_family)
 			throw RuntimeError("Address families of local and remote must match!");
@@ -150,7 +152,7 @@ int villas::node::socket_check(NodeCompat *n)
 		if (ntohs(s->in.saddr.sll.sll_protocol) <= 0x5DC)
 			throw RuntimeError("Ethertype must be large than {} or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 
 	if (s->multicast.enabled) {
 		if (s->in.saddr.sa.sa_family != AF_INET)
@@ -169,10 +171,10 @@ int villas::node::socket_start(NodeCompat *n)
 	auto *s = n->getData<struct Socket>();
 	int ret;
 
-	/* Initialize IO */
+	// Initialize IO
 	s->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	/* Create socket */
+	// Create socket
 	switch (s->layer) {
 		case SocketLayer::UDP:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
@@ -186,7 +188,7 @@ int villas::node::socket_start(NodeCompat *n)
 		case SocketLayer::ETH:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, s->in.saddr.sll.sll_protocol);
 			break;
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 
 		case SocketLayer::UNIX:
 			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, 0);
@@ -199,14 +201,14 @@ int villas::node::socket_start(NodeCompat *n)
 	if (s->sd < 0)
 		throw SystemError("Failed to create socket");
 
-	/* Delete Unix domain socket if already existing */
+	// Delete Unix domain socket if already existing
 	if (s->layer == SocketLayer::UNIX) {
 		ret = unlink(s->in.saddr.sun.sun_path);
 		if (ret && errno != ENOENT)
 			return ret;
 	}
 
-	/* Bind socket for receiving */
+	// Bind socket for receiving
 	socklen_t addrlen = 0;
 	switch(s->in.saddr.ss.ss_family) {
 		case AF_INET:
@@ -225,7 +227,7 @@ int villas::node::socket_start(NodeCompat *n)
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 		default:
 			addrlen = sizeof(s->in.saddr);
 	}
@@ -248,7 +250,7 @@ int villas::node::socket_start(NodeCompat *n)
 			throw SystemError("Failed to join multicast group");
 	}
 
-	/* Set socket priority, QoS or TOS IP options */
+	// Set socket priority, QoS or TOS IP options
 	int prio;
 	switch (s->layer) {
 		case SocketLayer::UDP:
@@ -270,7 +272,7 @@ int villas::node::socket_start(NodeCompat *n)
 			break;
 #else
 			{ }
-#endif /* __linux__ */
+#endif // __linux__
 	}
 
 	s->out.buflen = SOCKET_INITIAL_BUFFER_LEN;
@@ -333,7 +335,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample * const smps[], unsig
 	union sockaddr_union src;
 	socklen_t srclen = sizeof(src);
 
-	/* Receive next sample */
+	// Receive next sample
 	bytes = recvfrom(s->sd, s->in.buf, s->in.buflen, 0, &src.sa, &srclen);
 	if (bytes < 0) {
 		if (errno == EINTR)
@@ -346,7 +348,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample * const smps[], unsig
 
 	ptr = s->in.buf;
 
-	/* Strip IP header from packet */
+	// Strip IP header from packet
 	if (s->layer == SocketLayer::IP) {
 		struct ip *iphdr = (struct ip *) ptr;
 
@@ -413,7 +415,7 @@ retry:	ret = s->formatter->sprint(s->out.buf, s->out.buflen, &wbytes, smps, cnt)
 		goto retry;
 	}
 
-	/* Send message */
+	// Send message
 	socklen_t addrlen = 0;
 	switch(s->in.saddr.ss.ss_family) {
 		case AF_INET:
@@ -432,7 +434,7 @@ retry:	ret = s->formatter->sprint(s->out.buf, s->out.buflen, &wbytes, smps, cnt)
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 		default:
 			addrlen = sizeof(s->in.saddr);
 	}
@@ -467,7 +469,7 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json)
 	json_t *json_multicast = nullptr;
 	json_t *json_format = nullptr;
 
-	/* Default values */
+	// Default values
 	s->layer = SocketLayer::UDP;
 	s->verify_source = 0;
 
@@ -484,7 +486,7 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json)
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-socket");
 
-	/* Format */
+	// Format
 	if (s->formatter)
 		delete s->formatter;
 	s->formatter = json_format
@@ -493,14 +495,14 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json)
 	if (!s->formatter)
 		throw ConfigError(json_format, "node-config-node-socket-format", "Invalid format configuration");
 
-	/* IP layer */
+	// IP layer
 	if (layer) {
 		if (!strcmp(layer, "ip"))
 			s->layer = SocketLayer::IP;
 #ifdef WITH_SOCKET_LAYER_ETH
 		else if (!strcmp(layer, "eth"))
 			s->layer = SocketLayer::ETH;
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 		else if (!strcmp(layer, "udp"))
 			s->layer = SocketLayer::UDP;
 		else if (!strcmp(layer, "unix") || !strcmp(layer, "local"))
@@ -520,7 +522,7 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json)
 	if (json_multicast) {
 		const char *group, *interface = nullptr;
 
-		/* Default values */
+		// Default values
 		s->multicast.enabled = true;
 		s->multicast.mreq.imr_interface.s_addr = INADDR_ANY;
 		s->multicast.loop = 0;
@@ -559,8 +561,8 @@ int villas::node::socket_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "socket";
 #ifdef WITH_NETEM
 	p.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3, netem support)";

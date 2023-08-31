@@ -1,11 +1,11 @@
-/** Traffic control (tc): setup network emulation qdisc
+/* Traffic control (tc): setup network emulation qdisc
  *
  * VILLASnode uses these functions to setup the network emulation feature.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <jansson.h>
 #include <cmath>
@@ -24,14 +24,16 @@ using namespace villas;
 using namespace villas::utils;
 using namespace villas::kernel;
 
-static const double max_percent_value = 0xffffffff;
+static
+const double max_percent_value = 0xffffffff;
 
-/**
+/*
  * Set the delay distribution. Latency/jitter must be set before applying.
  * @arg qdisc Netem qdisc.
  * @return 0 on success, error code on failure.
  */
-static int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, short *data, size_t len)
+static
+int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, short *data, size_t len)
 {
 	struct rtnl_netem *netem;
 
@@ -53,8 +55,9 @@ static int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, shor
 	return 0;
 }
 
-/** Customized version of rtnl_netem_set_delay_distribution() of libnl */
-static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
+// Customized version of rtnl_netem_set_delay_distribution() of libnl
+static
+int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 {
 	if (json_is_string(json))
 		return rtnl_netem_set_delay_distribution(qdisc, json_string_value(json));

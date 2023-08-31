@@ -1,11 +1,11 @@
-/** Netlink related functions.
+/* Netlink related functions.
  *
  * VILLASnode uses libnl3 to talk to the Linux kernel to gather networking related information
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 
@@ -18,8 +18,9 @@
 #include <villas/exceptions.hpp>
 #include <villas/kernel/nl.hpp>
 
-/** Singleton for global netlink socket */
-static struct nl_sock *sock = nullptr;
+// Singleton for global netlink socket
+static
+struct nl_sock *sock = nullptr;
 
 using namespace villas;
 using namespace villas::kernel::nl;
@@ -29,7 +30,7 @@ struct nl_sock * villas::kernel::nl::init()
 	int ret;
 
 	if (!sock) {
-		/* Create connection to netlink */
+		// Create connection to netlink
 		sock = nl_socket_alloc();
 		if (!sock)
 			throw MemoryAllocationError();
@@ -38,7 +39,7 @@ struct nl_sock * villas::kernel::nl::init()
 		if (ret)
 			throw RuntimeError("Failed to connect to kernel: {}", nl_geterror(ret));
 
-		/* Fill some caches */
+		// Fill some caches
 		struct nl_cache *cache;
 		ret = rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache);
 		if (ret)
@@ -58,7 +59,8 @@ void villas::kernel::nl::shutdown()
 	sock = nullptr;
 }
 
-static int egress_cb(struct nl_msg *msg, void *arg)
+static
+int egress_cb(struct nl_msg *msg, void *arg)
 {
 	struct rtnl_route **route = (struct rtnl_route **) arg;
 
@@ -76,7 +78,7 @@ int villas::kernel::nl::get_egress(struct nl_addr *addr)
 	struct nl_msg *msg = nlmsg_alloc_simple(RTM_GETROUTE, 0);
 	struct rtnl_route *route = nullptr;
 
-	/* Build message */
+	// Build message
 	struct rtmsg rmsg = {
 		.rtm_family = (unsigned char) nl_addr_get_family(addr),
 		.rtm_dst_len = (unsigned char) nl_addr_get_prefixlen(addr),
@@ -90,20 +92,20 @@ int villas::kernel::nl::get_egress(struct nl_addr *addr)
 	if (ret)
 		goto out;
 
-	/* Send message */
+	// Send message
 	ret = nl_send_auto(sock, msg);
 	if (ret < 0)
 		goto out;
 
-	/* Hook into receive chain */
+	// Hook into receive chain
 	cb = nl_cb_alloc(NL_CB_CUSTOM);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, egress_cb, &route);
 
-	/* Receive message */
+	// Receive message
 	nl_recvmsgs_report(sock, cb);
 	nl_wait_for_ack(sock);
 
-	/* Check result */
+	// Check result
 	if (!route || rtnl_route_get_nnexthops(route) != 1) {
 		ret = -1;
 		goto out2;

@@ -1,9 +1,9 @@
-/** Average hook.
+/* Average hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <bitset>
 #include <cstring>
@@ -27,13 +27,14 @@ public:
 		offset(0)
 	{ }
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		assert(state == State::CHECKED);
 
 		MultiSignalHook::prepare();
 
-		/* Add averaged signal */
+		// Add averaged signal
 		auto avg_sig = std::make_shared<Signal>("average", "", SignalType::FLOAT);
 		if (!avg_sig)
 			throw RuntimeError("Failed to create new signal");
@@ -43,7 +44,8 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -61,7 +63,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		double avg, sum = 0;
 		int n = 0;
@@ -81,7 +84,7 @@ public:
 				case SignalType::INVALID:
 				case SignalType::COMPLEX:
 				case SignalType::BOOLEAN:
-					return Hook::Reason::ERROR; /* not supported */
+					return Hook::Reason::ERROR; // not supported
 			}
 
 			n++;
@@ -98,7 +101,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "average";
 static char d[] = "Calculate average over some signals";
 static HookPlugin<AverageHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

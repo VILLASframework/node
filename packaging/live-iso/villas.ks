@@ -1,6 +1,7 @@
-################################################################################
 # Kickstart file for VILLAS installation
-################################################################################
+#
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 # Configuration
 lang en_US.UTF-8
@@ -27,7 +28,6 @@ repo --name=fedora --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?rep
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
 
-################################################################################
 # Install packages
 %packages
 @core
@@ -129,7 +129,6 @@ librdkafka-devel
 
 %end
 
-################################################################################
 # Custom post installer
 %post
 

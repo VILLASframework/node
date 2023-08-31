@@ -1,9 +1,9 @@
-/** Redis node-type
+/* Redis node-type
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <functional>
 #include <chrono>
@@ -27,18 +27,21 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-/* Forward declartions */
-static NodeCompatType p;
-static void redis_on_message(NodeCompat *n, const std::string &channel, const std::string &msg);
+// Forward declartions
+static
+NodeCompatType p;
+static
+void redis_on_message(NodeCompat *n, const std::string &channel, const std::string &msg);
 
-static std::unordered_map<sw::redis::ConnectionOptions, RedisConnection*> connections;
+static
+std::unordered_map<sw::redis::ConnectionOptions, RedisConnection*> connections;
 
 RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts) :
 	context(opts),
 	subscriber(context.subscriber()),
 	logger(logging.get("nodes:redis"))
 {
-	/* Enable keyspace notifications */
+	// Enable keyspace notifications
 	context.command("config", "set", "notify-keyspace-events", "K$h");
 
 	subscriber.on_message([this](const std::string &channel, const std::string &msg) {
@@ -102,7 +105,7 @@ void RedisConnection::unsubscribe(NodeCompat *n, const std::string &channel)
 void RedisConnection::start()
 {
 	if (state == State::RUNNING)
-		return; /* Already running */
+		return; // Already running
 
 	state = State::RUNNING;
 
@@ -135,7 +138,7 @@ void RedisConnection::loop()
 		catch (const sw::redis::Error &e) {
 			logger->error("Error: {}. Recreating subscriber", e.what());
 
-			/* Create a new subscriber */
+			// Create a new subscriber
 			subscriber = context.subscriber();
 		}
 	}
@@ -384,10 +387,10 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json)
 			r->options.tls.sni = host;
 #else
 		throw ConfigError(json_ssl, "node-config-node-redis-ssl", "This built of the redis++ library does not support SSL");
-#endif /* REDISPP_WITH_TLS */
+#endif // REDISPP_WITH_TLS
 	}
 
-	/* Mode */
+	// Mode
 	if (mode) {
 		if (!strcmp(mode, "key") || !strcmp(mode, "set-get"))
 			r->mode = RedisMode::KEY;
@@ -399,7 +402,7 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json)
 			throw ConfigError(json, "node-config-node-redis-mode", "Invalid Redis mode: {}", mode);
 	}
 
-	/* Format */
+	// Format
 	if (r->formatter)
 		delete r->formatter;
 	r->formatter = json_format
@@ -416,7 +419,7 @@ int villas::node::redis_parse(NodeCompat *n, json_t *json)
 	if (notify >= 0)
 		r->notify = notify != 0;
 
-	/* Connection options */
+	// Connection options
 	if (uri)
 		r->options = make_redis_connection_options(uri);
 
@@ -568,7 +571,7 @@ int villas::node::redis_read(NodeCompat *n, struct Sample * const smps[], unsign
 {
 	auto *r = n->getData<struct redis>();
 
-	/* Wait for new data */
+	// Wait for new data
 	if (r->notify || r->mode == RedisMode::CHANNEL) {
 		int pulled_cnt;
 		struct Sample *pulled_smps[cnt];
@@ -624,7 +627,7 @@ int villas::node::redis_write(NodeCompat *n, struct Sample * const smps[], unsig
 		}
 
 		case RedisMode::HASH: {
-			/* We only update the signals with their latest value here. */
+			// We only update the signals with their latest value here.
 			struct Sample *smp = smps[cnt - 1];
 
 			std::unordered_map<std::string, std::string> kvs;
@@ -656,8 +659,8 @@ int villas::node::redis_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "redis";
 	p.description	= "Redis key-value store";
 	p.vectorize	= 0;
@@ -674,5 +677,6 @@ static void register_plugin() {
 	p.write		= redis_write;
 	p.poll_fds	= redis_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

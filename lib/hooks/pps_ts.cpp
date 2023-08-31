@@ -1,9 +1,9 @@
-/** Timestamp hook.
+/* Timestamp hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 #include <vector>
@@ -31,10 +31,10 @@ protected:
 	bool isSynced;
 	bool isLocked;
 	struct timespec tsVirt;
-	double timeError;		/**< In seconds */
-	double periodEstimate;		/**< In seconds */
-	double periodErrorCompensation;	/**< In seconds */
-	double period;			/**< In seconds */
+	double timeError;		// In seconds
+	double periodEstimate;		// In seconds
+	double periodErrorCompensation;	// In seconds
+	double period;			// In seconds
 	uintmax_t cntEdges;
 	uintmax_t cntSmps;
 	uintmax_t cntSmpsTotal;
@@ -65,7 +65,8 @@ public:
 		filterWindow(horizonEstimation + 1, 0)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -102,7 +103,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual villas::node::Hook::Reason process(struct Sample *smp)
+	virtual
+	villas::node::Hook::Reason process(struct Sample *smp)
 	{
 		switch (mode) {
 			case Mode::SIMPLE:
@@ -120,10 +122,10 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		/* Get value of PPS signal */
+		// Get value of PPS signal
 		float value = smp->data[signalIndex].f; // TODO check if it is really float
 
-		/* Detect Edge */
+		// Detect Edge
 		bool isEdge = lastValue < threshold && value > threshold;
 		if (isEdge) {
 			tsVirt.tv_sec = currentSecond + 1;
@@ -160,10 +162,10 @@ public:
 	{
 		assert(state == State::STARTED);
 
-		/* Get value of PPS signal */
+		// Get value of PPS signal
 		float value = smp->data[signalIndex].f; // TODO check if it is really float
 
-		/* Detect Edge */
+		// Detect Edge
 		bool isEdge = lastValue < threshold && value > threshold;
 
 		lastValue = value;
@@ -175,9 +177,8 @@ public:
 				else
 					timeError -= (tsVirt.tv_nsec / 1.0e9);
 
-
 				filterWindow[cntEdges % filterWindow.size()] = cntSmpsTotal;
-				/* Estimated sample period over last 'horizonEstimation' seconds */
+				// Estimated sample period over last 'horizonEstimation' seconds
 				unsigned int tmp = cntEdges < filterWindow.size() ? cntEdges : horizonEstimation;
 				double cntSmpsAvg = (cntSmpsTotal - filterWindow[(cntEdges - tmp) % filterWindow.size()]) / tmp;
 				periodEstimate = 1.0 / cntSmpsAvg;
@@ -209,7 +210,6 @@ public:
 		struct timespec tsPeriod = time_from_double(period);
 		tsVirt = time_add(&tsVirt, &tsPeriod);
 
-
 		if ((smp->sequence - lastSequence) > 1)
 			logger->warn("Samples missed: {} sampled missed", smp->sequence - lastSequence);
 
@@ -219,7 +219,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "pps_ts";
 static char d[] = "Timestamp samples based GPS PPS signal";
 static HookPlugin<PpsTsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

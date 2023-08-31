@@ -1,9 +1,9 @@
-/** Unit tests for formatters.
+/* Unit tests for formatters.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <stdio.h>
 #include <float.h>
@@ -25,7 +25,8 @@
 using namespace villas;
 using namespace villas::node;
 
-extern void init_memory();
+extern
+void init_memory();
 
 #define NUM_VALUES 10
 
@@ -68,7 +69,7 @@ void fill_sample_data(SignalList::Ptr signals, struct Sample *smps[], unsigned c
 					break;
 
 				case SignalType::COMPLEX: {
-					/** @todo Port to proper C++ */
+					// @todo Port to proper C++
 					std::complex<float> z = { j * 0.1f, i * 100.0f };
 					memcpy(&data->z, &z, sizeof(data->z));
 					break;
@@ -180,7 +181,8 @@ void cr_assert_eq_sample_raw(struct Sample *a, struct Sample *b, int flags, int 
 
 ParameterizedTestParameters(format, lowlevel)
 {
-	static criterion::parameters<Param> params;
+	static
+	criterion::parameters<Param> params;
 
 	params.emplace_back("{ \"type\": \"gtnet\" }",						1, 32);
 	params.emplace_back("{ \"type\": \"gtnet\", \"fake\": true }",				1, 32);
@@ -267,7 +269,8 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory)
 
 ParameterizedTestParameters(format, highlevel)
 {
-	static criterion::parameters<Param> params;
+	static
+	criterion::parameters<Param> params;
 
 	params.emplace_back("{ \"type\": \"gtnet\" }",						1, 32);
 	params.emplace_back("{ \"type\": \"gtnet\", \"fake\": true }",				1, 32);
@@ -320,7 +323,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 
 	fill_sample_data(signals, smps, p->cnt);
 
-	/* Open a file for testing the formatter */
+	// Open a file for testing the formatter
 	char *fn, dir[64];
 	strncpy(dir, "/tmp/villas.XXXXXX", sizeof(dir));
 
@@ -347,7 +350,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory)
 	ret = fflush(stream);
 	cr_assert_eq(ret, 0);
 
-#if 0 /* Show the file contents */
+#if 0 // Show the file contents
 	char cmd[128];
 	if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);

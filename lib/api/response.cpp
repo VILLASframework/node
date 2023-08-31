@@ -1,10 +1,9 @@
-/** API Response.
+/* API Response.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/api/response.hpp>
 #include <villas/api/request.hpp>
@@ -65,7 +64,7 @@ int Response::writeHeaders(struct lws *wsi)
 	if (ret)
 		return 1;
 
-	/* Do we have a body to send? */
+	// Do we have a body to send?
 	if (buffer.size() > 0)
 		lws_callback_on_writable(wsi);
 

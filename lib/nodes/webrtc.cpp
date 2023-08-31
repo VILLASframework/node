@@ -1,11 +1,11 @@
-/** Node-type: webrtc
+/* Node-type: webrtc
  *
- * @author Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
- * @author Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @copyright 2023, OPAL-RT Germany GmbH
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * Author: Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 
@@ -22,7 +22,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static villas::node::Web *web;
+static
+villas::node::Web *web;
 
 WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name) :
 	Node(id, name),
@@ -248,5 +249,5 @@ int WebRTCNodeFactory::start(SuperNode *sn)
 	return 0;
 }
 
-
-static WebRTCNodeFactory p;
+static
+WebRTCNodeFactory p;

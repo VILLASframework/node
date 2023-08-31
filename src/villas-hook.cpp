@@ -1,10 +1,9 @@
-/** Receive messages from server snd print them on stdout.
+/* Receive messages from server snd print them on stdout.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <atomic>
@@ -122,7 +121,7 @@ protected:
 		int ret;
 		std::string file;
 
-		/* Parse optional command line arguments */
+		// Parse optional command line arguments
 		int c;
 		char *endptr;
 		while ((c = getopt(argc, argv, "Vhv:d:f:F:t:o:c:")) != -1) {
@@ -206,7 +205,7 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to initilize memory pool");
 
-		/* Initialize IO */
+		// Initialize IO
 		struct desc {
 			std::string dir;
 			std::string format;
@@ -221,7 +220,7 @@ check:			if (optarg == endptr)
 			json_t *json_format;
 			json_error_t err;
 
-			/* Try parsing format config as JSON */
+			// Try parsing format config as JSON
 			json_format = json_loads(d.format.c_str(), 0, &err);
 			(*d.formatter) = json_format
 				? FormatFactory::make(json_format)
@@ -232,7 +231,7 @@ check:			if (optarg == endptr)
 			(*d.formatter)->start(dtypes, (int) SampleFlags::HAS_ALL);
 		}
 
-		/* Initialize hook */
+		// Initialize hook
 		auto hf = plugin::registry->lookup<HookFactory>(hook);
 		if (!hf)
 			throw RuntimeError("Unknown hook function '{}'", hook);

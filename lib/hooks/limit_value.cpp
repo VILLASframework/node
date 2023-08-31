@@ -1,9 +1,9 @@
-/** Limit hook.
+/* Limit hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <bitset>
 
@@ -32,7 +32,8 @@ public:
 		max(0)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -51,7 +52,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -76,7 +78,7 @@ public:
 				case SignalType::INVALID:
 				case SignalType::COMPLEX:
 				case SignalType::BOOLEAN:
-					return Hook::Reason::ERROR; /* not supported */
+					return Hook::Reason::ERROR; // not supported
 			}
 		}
 
@@ -84,7 +86,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "limit_value";
 static char d[] = "Limit signal values";
 static HookPlugin<LimitValueHook, n , d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

@@ -1,9 +1,9 @@
-/** Path restart hook.
+/* Path restart hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 
@@ -22,7 +22,8 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -31,7 +32,8 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void stop()
+	virtual
+	void stop()
 	{
 		assert(state == State::STARTED);
 
@@ -41,19 +43,20 @@ public:
 		state = State::STOPPED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
 		if (prev) {
-			/* A wrap around of the sequence no should not be treated as a simulation restart */
+			// A wrap around of the sequence no should not be treated as a simulation restart
 			if (smp->sequence == 0 && prev->sequence != 0 && prev->sequence < UINT64_MAX - 16) {
 				logger->warn("Simulation from node {} restarted (previous->sequence={}, current->sequence={})",
 					node->getName(), prev->sequence, smp->sequence);
 
 				smp->flags |= (int) SampleFlags::IS_FIRST;
 
-				/* Restart hooks */
+				// Restart hooks
 				for (auto k : node->in.hooks)
 					k->restart();
 
@@ -72,7 +75,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "restart";
 static char d[] = "Call restart hooks for current node";
 static HookPlugin<RestartHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;

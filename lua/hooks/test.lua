@@ -1,5 +1,8 @@
 -- Install with: luarocks install lunajson luasockets
 
+-- SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+-- SPDX-License-Identifier: Apache-2.0
+
 json = require 'lunajson'
 http = require 'socket.http'
 

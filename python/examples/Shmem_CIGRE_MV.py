@@ -1,6 +1,9 @@
 import time
 from villas.node.node import Node as VILLASnode
 
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 # This could be moved to the DPsim Python code later
 
 

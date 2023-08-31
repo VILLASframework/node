@@ -1,8 +1,9 @@
-/** Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
+/* Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- **********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cstdio>
@@ -27,7 +28,7 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-/* Some global settings */
+// Some global settings
 
 #if OPENSSL_VERSION_NUMBER < 0x010003000L
   // See: https://curl.haxx.se/libcurl/c/opensslthreadlock.html
@@ -35,8 +36,10 @@ using namespace villas::utils;
 #endif
 
 #ifdef CURL_SSL_REQUIRES_LOCKING
-/** This array will store all of the mutexes available to OpenSSL. */
-static pthread_mutex_t *mutex_buf = NULL;
+
+// This array will store all of the mutexes available to OpenSSL.
+static
+pthread_mutex_t *mutex_buf = NULL;
 
 static
 void handle_error(const char *file, int lineno, const char *msg)
@@ -47,7 +50,7 @@ void handle_error(const char *file, int lineno, const char *msg)
 
 	ERR_print_errors_fp(stderr);
 
-	/* exit(-1); */
+	// exit(-1);
 }
 
 static
@@ -64,7 +67,7 @@ unsigned long curl_ssl_thread_id_function(void)
 {
 	return ((unsigned long) pthread_self());
 }
-#endif /* CURL_SSL_REQUIRES_LOCKING */
+#endif // CURL_SSL_REQUIRES_LOCKING
 
 enum NgsiFlags {
 	NGSI_ENTITY_ATTRIBUTES_IN	= (1 << 0),
@@ -145,7 +148,7 @@ public:
 		if (ret)
 			throw ConfigError(json, err, "node-config-node-ngsi", "Failed to parse NGSI attribute");
 
-		/* Copy values from node signal, if 'ngsi_attribute' settings not provided */
+		// Copy values from node signal, if 'ngsi_attribute' settings not provided
 		if (s && !nam)
 			nam = !s->name.empty() ? s->name.c_str() : "";
 
@@ -167,7 +170,7 @@ public:
 				metadata.emplace_back(json_metadata);
 		}
 
-		/* Metadata: index(integer)=j */
+		// Metadata: index(integer)=j
 		metadata.emplace_back("index", "integer", fmt::format("{}", j));
 	}
 
@@ -180,7 +183,7 @@ public:
 
 		if (flags & NGSI_ENTITY_VALUES) {
 #if NGSI_VECTORS
-			/* Build value vector */
+			// Build value vector
 			json_t *json_value = json_array();
 
 			for (unsigned k = 0; k < cnt; k++) {
@@ -205,7 +208,7 @@ public:
 			json_object_set(json_attribute, "value", json_value);
 		}
 
-		if (flags & NGSI_ENTITY_METADATA) { /* Create Metadata for attribute */
+		if (flags & NGSI_ENTITY_METADATA) { // Create Metadata for attribute
 			json_t *json_metadatas = json_array();
 
 			for (auto &meta : metadata) {
@@ -299,7 +302,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 		char *end;
 		const char *value;
 
-		/* Parse JSON */
+		// Parse JSON
 		ret = json_unpack_ex(json_attr, &err, 0, "{ s: s, s: s, s: o, s?: o }",
 			"name", &name,
 			"type", &type,
@@ -309,14 +312,14 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 		if (ret)
 			return -3;
 
-		/* Check attribute name and type */
+		// Check attribute name and type
 		attr = list_lookup_name<NgsiAttribute>(&i->in.signals, name);
 		if (!attr || attr->type != type)
-			continue; /* skip unknown attributes */
+			continue; // skip unknown attributes
 
 		length++;
 
-		/* Check metadata */
+		// Check metadata
 		if (!json_is_array(json_metadata))
 			return -5;
 
@@ -324,7 +327,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 		json_t *json_tuple;
 		const char *ts, *seq;
 
-		/* Check number of values */
+		// Check number of values
 		if (!json_is_array(json_value) || json_array_size(json_value) != cnt)
 			return -6;
 
@@ -332,7 +335,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 		json_array_foreach(json_value, k, json_tuple) {
 			struct Sample *smp = smps[k];
 
-			/* Check sample format */
+			// Check sample format
 			if (!json_is_array(json_tuple) || json_array_size(json_tuple) != 3)
 				return -7;
 
@@ -353,7 +356,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 			if (!sig)
 				return -11;
 
-			if (value[0] == '\0') /* No data on Orion CB? -> Use init value */
+			if (value[0] == '\0') // No data on Orion CB? -> Use init value
 				*sd = sig->init;
 			else {
 				signal_data_parse_str(sd, sig->type, value, &end);
@@ -364,7 +367,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 #else
 		struct Sample *smp = smps[0];
 
-		/* Check number of values */
+		// Check number of values
 		if (!json_is_string(json_value))
 			return -6;
 
@@ -375,7 +378,7 @@ int ngsi_parse_entity(NodeCompat *n, json_t *json_entity, struct Sample * const 
 		if (!sig)
 			return -11;
 
-		if (value[0] == '\0') /* No data on Orion CB? -> Use init value */
+		if (value[0] == '\0') // No data on Orion CB? -> Use init value
 			*data = sig->init;
 		else {
 			data->parseString(sig->type, value, &end);
@@ -456,7 +459,7 @@ size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, void *user
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
 
 	mem->data = (char *) realloc(mem->data, mem->len + realsize + 1);
-	if (mem->data == nullptr) /* out of memory! */
+	if (mem->data == nullptr) // out of memory!
 		throw MemoryAllocationError();
 
 	memcpy(&(mem->data[mem->len]), contents, realsize);
@@ -486,7 +489,7 @@ int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json
 
 	logger->debug("Request to context broker: {}\n{}", url, post);
 
-	/* We don't want to leave the handle in an invalid state */
+	// We don't want to leave the handle in an invalid state
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
 	CURLcode ret = curl_easy_perform(handle);
 	pthread_setcancelstate(old, nullptr);
@@ -579,7 +582,7 @@ int villas::node::ngsi_type_start(villas::node::SuperNode *sn)
 
 	auto logger = logging.get("curl");
 	logger->info("Setup libcurl/openssl locking primitives");
-#endif /* CURL_SSL_REQUIRES_LOCKING */
+#endif // CURL_SSL_REQUIRES_LOCKING
 
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
@@ -597,7 +600,7 @@ int villas::node::ngsi_type_stop()
 		pthread_mutex_destroy(&mutex_buf[i]);
 
 	delete mutex_buf;
-#endif /* CURL_SSL_REQUIRES_LOCKING */
+#endif // CURL_SSL_REQUIRES_LOCKING
 
 	curl_global_cleanup();
 
@@ -674,7 +677,7 @@ int villas::node::ngsi_start(NodeCompat *n)
 		i->headers = curl_slist_append(i->headers, buf);
 	}
 
-	/* Create task */
+	// Create task
 	if (i->timeout > 1 / i->rate)
 		n->logger->warn("Timeout is to large for given rate: {}", i->rate);
 
@@ -692,7 +695,7 @@ int villas::node::ngsi_start(NodeCompat *n)
 		curl_easy_setopt(handles[p], CURLOPT_USERAGENT, HTTP_USER_AGENT);
 	}
 
-	/* Create entity and atributes */
+	// Create entity and atributes
 	if (i->create) {
 		json_t *json_entity = ngsi_build_entity(n, nullptr, 0, NGSI_ENTITY_ATTRIBUTES | NGSI_ENTITY_METADATA);
 
@@ -713,7 +716,7 @@ int villas::node::ngsi_stop(NodeCompat *n)
 
 	i->task.stop();
 
-	/* Delete complete entity (not just attributes) */
+	// Delete complete entity (not just attributes)
 	json_t *json_entity = ngsi_build_entity(n, nullptr, 0, 0);
 
 	ret = ngsi_request_context_update(i->out.curl, i->endpoint, "DELETE", json_entity, n->logger);
@@ -790,11 +793,11 @@ int villas::node::ngsi_init(NodeCompat *n)
 	if (ret)
 		return ret;
 
-	/* Default values */
-	i->access_token = nullptr; /* disabled by default */
-	i->ssl_verify = 1; /* verify by default */
-	i->timeout = 1; /* default value */
-	i->rate = 1; /* default value */
+	// Default values
+	i->access_token = nullptr; // disabled by default
+	i->ssl_verify = 1; // verify by default
+	i->timeout = 1; // default value
+	i->rate = 1; // default value
 
 	return 0;
 }
@@ -803,7 +806,6 @@ int villas::node::ngsi_destroy(NodeCompat *n)
 {
 	int ret;
 	auto *i = n->getData<struct ngsi>();
-
 
 	for (size_t j = 0; j < list_length(&i->in.signals); j++) {
 		auto *attr = (NgsiAttribute *) list_at(&i->in.signals, j);
@@ -840,15 +842,15 @@ int villas::node::ngsi_reverse(NodeCompat *n)
 	return 0;
 }
 
+static
+NodeCompatType p;
 
-static NodeCompatType p;
-
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name			= "ngsi";
 	p.description		= "OMA Next Generation Services Interface 10 (libcurl, libjansson)";
 #ifdef NGSI_VECTORS
-	p.vectorize	= 0, /* unlimited */
+	p.vectorize	= 0, // unlimited
 #else
 	p.vectorize	= 1,
 #endif
@@ -866,5 +868,6 @@ static void register_plugin() {
 	p.poll_fds	= ngsi_poll_fds;
 	p.reverse	= ngsi_reverse;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

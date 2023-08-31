@@ -1,10 +1,9 @@
-/** Wrapper around queue that uses POSIX CV's for signalling writes.
+/* Wrapper around queue that uses POSIX CV's for signalling writes.
  *
- * @file
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/node/config.hpp>
 #include <villas/queue_signalled.h>
@@ -69,7 +68,7 @@ int villas::node::queue_signalled_init(struct CQueueSignalled *qs, size_t size, 
 		pthread_condattr_destroy(&cvattr);
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
-		/* Nothing todo */
+		// Nothing todo
 	}
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {
@@ -97,7 +96,7 @@ int villas::node::queue_signalled_destroy(struct CQueueSignalled *qs)
 		pthread_mutex_destroy(&qs->pthread.mutex);
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
-		/* Nothing todo */
+		// Nothing todo
 	}
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {
@@ -126,7 +125,7 @@ int villas::node::queue_signalled_push(struct CQueueSignalled *qs, void *ptr)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
-		/* Nothing todo */
+		// Nothing todo
 	}
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {
@@ -157,7 +156,7 @@ int villas::node::queue_signalled_push_many(struct CQueueSignalled *qs, void *pt
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
-		/* Nothing todo */
+		// Nothing todo
 	}
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {
@@ -178,7 +177,7 @@ int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr)
 {
 	int pulled = 0;
 
-	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
+	// Make sure that qs->mutex is unlocked if this thread gets cancelled
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
 
 	if (qs->mode == QueueSignalledMode::PTHREAD)
@@ -192,7 +191,7 @@ int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr)
 			if (qs->mode == QueueSignalledMode::PTHREAD)
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
 			else if (qs->mode == QueueSignalledMode::POLLING)
-				continue; /* Try again */
+				continue; // Try again
 #ifdef HAS_EVENTFD
 			else if (qs->mode == QueueSignalledMode::EVENTFD) {
 				int ret;
@@ -219,7 +218,7 @@ int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs, void *pt
 {
 	int pulled = 0;
 
-	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
+	// Make sure that qs->mutex is unlocked if this thread gets cancelled
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
 
 	if (qs->mode == QueueSignalledMode::PTHREAD)
@@ -233,7 +232,7 @@ int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs, void *pt
 			if (qs->mode == QueueSignalledMode::PTHREAD)
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
 			else if (qs->mode == QueueSignalledMode::POLLING)
-				continue; /* Try again */
+				continue; // Try again
 #ifdef HAS_EVENTFD
 			else if (qs->mode == QueueSignalledMode::EVENTFD) {
 				int ret;
@@ -270,7 +269,7 @@ int villas::node::queue_signalled_close(struct CQueueSignalled *qs)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 	}
 	else if (qs->mode == QueueSignalledMode::POLLING) {
-		/* Nothing todo */
+		// Nothing todo
 	}
 #ifdef HAS_EVENTFD
 	else if (qs->mode == QueueSignalledMode::EVENTFD) {

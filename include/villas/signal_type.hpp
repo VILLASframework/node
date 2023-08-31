@@ -1,10 +1,9 @@
-/** Signal type.
+/* Signal type.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -14,11 +13,11 @@ namespace villas {
 namespace node {
 
 enum class SignalType {
-	INVALID	= 0,	/**< Signal type is invalid. */
-	FLOAT	= 1,	/**< See SignalData::f */
-	INTEGER	= 2,	/**< See SignalData::i */
-	BOOLEAN = 3,	/**< See SignalData::b */
-	COMPLEX = 4	/**< See SignalData::z */
+	INVALID	= 0,	// Signal type is invalid.
+	FLOAT	= 1,	// See SignalData::f
+	INTEGER	= 2,	// See SignalData::i
+	BOOLEAN = 3,	// See SignalData::b
+	COMPLEX = 4	// See SignalData::z
 };
 
 enum SignalType signalTypeFromString(const std::string &str);

@@ -1,10 +1,9 @@
-/** Shared-memory interface: The interface functions that the external program should use.
+/* Shared-memory interface: The interface functions that the external program should use.
  *
- * @file
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cerrno>
 #include <fcntl.h>
@@ -23,17 +22,17 @@ using namespace villas::node;
 
 size_t villas::node::shmem_total_size(int queuelen, int samplelen)
 {
-	/* We have the constant const of the memory_type header */
+	// We have the constant const of the memory_type header
 	return sizeof(struct memory::Type)
-		/* and the shared struct itself */
+		// and the shared struct itself
 		+ sizeof(struct ShmemShared)
-		/* the size of the actual queue and the queue for the pool */
+		// the size of the actual queue and the queue for the pool
 		+ queuelen * (2 * sizeof(struct CQueue_cell))
-		/* the size of the pool */
+		// the size of the pool
 		+ queuelen * kernel::getCachelineSize() * CEIL(SAMPLE_LENGTH(samplelen), kernel::getCachelineSize())
-		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
+		// a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool)
 		+ 4 * sizeof(struct memory::Block)
-		/* and some extra buffer for alignment */
+		// and some extra buffer for alignment
 		+ 1024;
 }
 
@@ -48,7 +47,7 @@ int villas::node::shmem_int_open(const char *wname, const char* rname, struct Sh
 	struct stat stat_buf;
 	sem_t *sem_own, *sem_other;
 
-	/* Ensure both semaphores exist */
+	// Ensure both semaphores exist
 	sem_own = sem_open(wname, O_CREAT, 0600, 0);
 	if (sem_own == SEM_FAILED)
 		return -1;
@@ -57,7 +56,7 @@ int villas::node::shmem_int_open(const char *wname, const char* rname, struct Sh
 	if (sem_other == SEM_FAILED)
 		return -2;
 
-	/* Open and initialize the shared region for the output queue */
+	// Open and initialize the shared region for the output queue
 retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (fd < 0) {
 		if (errno == EEXIST) {
@@ -117,7 +116,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	sem_post(sem_own);
 	sem_wait(sem_other);
 
-	/* Open and map the other region */
+	// Open and map the other region
 	fd = shm_open(rname, O_RDWR, 0);
 	if (fd < 0)
 		return -8;
@@ -142,7 +141,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	shm->writers = 0;
 	shm->closed = 0;
 
-	/* Unlink the semaphores; we don't need them anymore */
+	// Unlink the semaphores; we don't need them anymore
 	sem_unlink(wname);
 
 	return 0;

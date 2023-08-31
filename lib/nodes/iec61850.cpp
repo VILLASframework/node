@@ -1,9 +1,9 @@
-/** Node type: IEC 61850-9-2 (Sampled Values)
+/* Node type: IEC 61850-9-2 (Sampled Values)
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <pthread.h>
@@ -25,7 +25,7 @@ using namespace villas::node;
 using namespace villas::utils;
 
 const struct iec61850_type_descriptor type_descriptors[] = {
-	/* name,              iec_type,                         type,                 size, supported */
+	// name,              iec_type,                         type,                 size, supported
 	{ "boolean",          IEC61850Type::BOOLEAN,		SignalType::BOOLEAN,	 1, false, false },
 	{ "int8",             IEC61850Type::INT8,		SignalType::INTEGER,	 1, false, false },
 	{ "int16",            IEC61850Type::INT16,		SignalType::INTEGER,	 2, false, false },
@@ -48,11 +48,15 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 	{ "bitstring",        IEC61850Type::BITSTRING,		SignalType::INVALID,	 4, false, false }
 };
 
-/** Each network interface needs a separate receiver */
-static struct List receivers;
-static pthread_t thread;
-static EthernetHandleSet hset;
-static int users = 0;
+// Each network interface needs a separate receiver
+static
+struct List receivers;
+static
+pthread_t thread;
+static
+EthernetHandleSet hset;
+static
+int users = 0;
 
 static
 void * iec61850_thread(void *ctx)
@@ -106,7 +110,7 @@ int villas::node::iec61850_parse_signals(json_t *json_signals, struct List *sign
 				"iec_type", &iec_type
 			);
 
-			/* Try to deduct the IEC 61850 data type from VILLAS signal format */
+			// Try to deduct the IEC 61850 data type from VILLAS signal format
 			if (!iec_type) {
 				if (!node_signals)
 					return -1;
@@ -165,7 +169,7 @@ int villas::node::iec61850_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
-	/* Check if already initialized */
+	// Check if already initialized
 	if (users > 0)
 		return 0;
 
@@ -279,7 +283,7 @@ struct iec61850_receiver * villas::node::iec61850_receiver_create(enum iec61850_
 {
 	struct iec61850_receiver *r;
 
-	/* Check if there is already a SVReceiver for this interface */
+	// Check if there is already a SVReceiver for this interface
 	r = iec61850_receiver_lookup(t, intf);
 	if (!r) {
 		r = new struct iec61850_receiver;

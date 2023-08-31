@@ -1,9 +1,9 @@
-/** Configuration file parsing.
+/* Configuration file parsing.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <linux/limits.h>
 #include <unistd.h>
@@ -110,11 +110,11 @@ json_t * Config::decode(FILE *f)
 	json_t *root = json_loadf(f, 0, &err);
 	if (root == nullptr) {
 #ifdef WITH_CONFIG
-		/* We try again to parse the config in the legacy format */
+		// We try again to parse the config in the legacy format
 		root = libconfigDecode(f);
 #else
 		throw JanssonParseError(err);
-#endif /* WITH_CONFIG */
+#endif // WITH_CONFIG
 	}
 
 	return root;
@@ -193,7 +193,8 @@ out:	std::list<std::string> files;
 
 void Config::resolveEnvVars(std::string &text)
 {
-	static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
+	static
+	const std::regex env_re{R"--(\$\{([^}]+)\})--"};
 
 	std::smatch match;
 	while (std::regex_search(text, match, env_re)) {
@@ -244,7 +245,7 @@ json_t * Config::libconfigDecode(FILE *f)
 	config_init(&cfg);
 	config_set_auto_convert(&cfg, 1);
 
-	/* Setup libconfig include path. */
+	// Setup libconfig include path
 #if (LIBCONFIG_VER_MAJOR > 1) || ((LIBCONFIG_VER_MAJOR == 1) && (LIBCONFIG_VER_MINOR >= 7))
 	config_set_hook(&cfg, this);
 
@@ -262,7 +263,7 @@ json_t * Config::libconfigDecode(FILE *f)
 	}
 #endif
 
-	/* Rewind before re-reading */
+	// Rewind before re-reading
 	rewind(f);
 
 	ret = config_read(&cfg, f);
@@ -279,7 +280,7 @@ json_t * Config::libconfigDecode(FILE *f)
 
 	return root;
 }
-#endif /* WITH_CONFIG */
+#endif // WITH_CONFIG
 
 json_t * Config::walkStrings(json_t *root, str_walk_fcn_t cb)
 {
@@ -334,7 +335,8 @@ json_t * Config::expandIncludes(json_t *in)
 	return walkStrings(in, [this](json_t *str) -> json_t * {
 		int ret;
 		std::string text = json_string_value(str);
-		static const std::string kw = "@include ";
+		static
+		const std::string kw = "@include ";
 
 		if (text.find(kw) != 0)
 			return json_incref(str);

@@ -1,10 +1,9 @@
-/** Node type: amqp
+/* Node type: amqp
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -22,7 +21,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 struct amqp_ssl_info {
@@ -42,7 +41,7 @@ struct amqp {
 	amqp_bytes_t routing_key;
 	amqp_bytes_t exchange;
 
-	/* We need to create two connection because rabbitmq-c is not thread-safe! */
+	// We need to create two connection because rabbitmq-c is not thread-safe!
 	amqp_connection_state_t producer;
 	amqp_connection_state_t consumer;
 

@@ -1,10 +1,9 @@
-/** Redis node-type helpers
+/* Redis node-type helpers
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -40,7 +39,7 @@ struct hash<sw::redis::tls::TlsOptions>
 		       hash<std::string>()(t.sni);
 #else
 		return 0;
-#endif /* REDISPP_WITH_TLS */
+#endif // REDISPP_WITH_TLS
 	}
 };
 
@@ -79,7 +78,7 @@ bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2)
 	       o1.sni == o2.sni;
 #else
 	return true;
-#endif /* REDISPP_WITH_TLS */
+#endif // REDISPP_WITH_TLS
 }
 
 bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2)
@@ -122,7 +121,7 @@ OStream &operator<<(OStream &os, const tls::TlsOptions &t)
 
 	return os;
 }
-#endif /* REDISPP_WITH_TLS */
+#endif // REDISPP_WITH_TLS
 
 template<typename OStream>
 OStream &operator<<(OStream &os, const ConnectionType &t)

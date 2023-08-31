@@ -1,11 +1,11 @@
-/** Node type: OPAL (AsyncApi)
+/* Node type: OPAL (AsyncApi)
  *
  * This file implements the opal subtype for nodes.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,22 +29,27 @@ extern "C" {
 	#include <OpalGenAsyncParamCtrl.h>
 }
 
+// Private static storage
+static
+std::string asyncShmemName;			// Shared Memory identifiers and size, provided via argv.
+static
+std::string printShmemName;			// Shared Memory identifiers and size, provided via argv.
+static
+size_t asyncShmemSize;				// Shared Memory identifiers and size, provided via argv.
 
-/* Private static storage */
-static std::string asyncShmemName;			/**< Shared Memory identifiers and size, provided via argv. */
-static std::string printShmemName;			/**< Shared Memory identifiers and size, provided via argv. */
-static size_t asyncShmemSize;				/**< Shared Memory identifiers and size, provided via argv. */
+static
+std::vector<unsigned> sendIDs, recvIDs;	// A dynamically allocated array of SendIDs.
 
-static std::vector<unsigned> sendIDs, recvIDs;	/** A dynamically allocated array of SendIDs. */
+static
+Opal_GenAsyncParam_Ctrl params;			// String and Float parameters, provided by the OPAL AsyncProcess block.
 
-static Opal_GenAsyncParam_Ctrl params;			/** String and Float parameters, provided by the OPAL AsyncProcess block. */
-
-static pthread_mutex_t lock;				/** Big Global Lock for libOpalAsync API */
+static
+pthread_mutex_t lock;				// Big Global Lock for libOpalAsync API
 
 using namespace villas;
 using namespace villas::utils;
 
-/** A bunch of symbols which are used by the libOpal libraries
+/* A bunch of symbols which are used by the libOpal libraries
  * and undefined by GCC. We replace them by GCC variants here.
  */
 extern "C" {
@@ -107,12 +112,12 @@ int villas::node::opal_type_start(villas::node::SuperNode *sn)
 
 	pthread_mutex_init(&lock, nullptr);
 
-	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
+	// Enable the OpalPrint function. This prints to the OpalDisplay.
 	err = OpalSystemCtrl_Register((char *) printShmemName.c_str());
 	if (err != EOK)
 		throw RuntimeError("OpalPrint() access not available ({})", err);
 
-	/* Open Share Memory created by the model. */
+	// Open Share Memory created by the model.
 	err = OpalOpenAsyncMem(asyncShmemSize, asyncShmemName.c_str());
 	if (err != EOK)
 		throw RuntimeError("Model shared memory not available ({})", err);
@@ -121,7 +126,7 @@ int villas::node::opal_type_start(villas::node::SuperNode *sn)
 	if (err != EOK)
 		throw RuntimeError("Could not get OPAL controller parameters ({})", err);
 
-	/* Get list of Send and RecvIDs */
+	// Get list of Send and RecvIDs
 	err = OpalGetNbAsyncSendIcon(&noSendIcons);
 	if (err != EOK)
 		throw RuntimeError("Failed to get number of send blocks ({})", err);
@@ -216,7 +221,7 @@ char * villas::node::opal_print(NodeCompat *n)
 {
 	auto *o = n->getData<struct opal>();
 
-	/** @todo Print send_params, recv_params */
+	// @todo Print send_params, recv_params
 
 	return strf("sendID=%u, recvID=%u, reply=%u",
 		o->sendID, o->recvID, o->reply);
@@ -226,7 +231,7 @@ int villas::node::opal_start(NodeCompat *n)
 {
 	auto *o = n->getData<struct opal>();
 
-	/* Search for valid send and recv ids */
+	// Search for valid send and recv ids
 	int sfound = 0, rfound = 0;
 	for (auto i : sendIDs)
 		sfound += i == o->sendID;
@@ -238,7 +243,7 @@ int villas::node::opal_start(NodeCompat *n)
 	if (!rfound)
 		throw RuntimeError("Invalid recv_id '{}'", o->recvID);
 
-	/* Get some more informations and paramters from OPAL-RT */
+	// Get some more informations and paramters from OPAL-RT
 	OpalGetAsyncSendIconMode(&o->mode, o->sendID);
 	OpalGetAsyncSendParameters(&o->sendParams, sizeof(Opal_SendAsyncParam), o->sendID);
 	OpalGetAsyncRecvParameters(&o->recvParams, sizeof(Opal_RecvAsyncParam), o->recvID);
@@ -262,7 +267,7 @@ int villas::node::opal_read(NodeCompat *n, struct Sample * const smps[], unsigne
 	if (cnt != 1)
 		throw RuntimeError("The OPAL-RT node type does not support combining!");
 
-	/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
+	// This call unblocks when the 'Data Ready' line of a send icon is asserted.
 	do {
 		ret = OpalWaitForAsyncSendRequest(&id);
 		if (ret != EOK) {
@@ -270,14 +275,14 @@ int villas::node::opal_read(NodeCompat *n, struct Sample * const smps[], unsigne
 			if ((state == STATE_RESET) || (state == STATE_STOP))
 				throw RuntimeError("OpalGetAsyncModelState(): Model stopped or resetted!");
 
-			return -1; /* @todo correct return value */
+			return -1; // @todo correct return value
 		}
 	} while (id != o->sendID);
 
-	/* No errors encountered yet */
+	// No errors encountered yet
 	OpalSetAsyncSendIconError(0, o->sendID);
 
-	/* Get the size of the data being sent by the unblocking SendID */
+	// Get the size of the data being sent by the unblocking SendID
 	OpalGetAsyncSendIconDataLength(&len, o->sendID);
 	if ((unsigned) len > s->capacity * sizeof(s->data[0])) {
 		n->logger->warn("Ignoring the last {} of {} values for OPAL (send_id={}).",
@@ -286,14 +291,14 @@ int villas::node::opal_read(NodeCompat *n, struct Sample * const smps[], unsigne
 		len = sizeof(data);
 	}
 
-	/* Read data from the model */
+	// Read data from the model
 	OpalGetAsyncSendIconData(data, len, o->sendID);
 
 	s->sequence = htons(o->sequenceNo++);
 	s->length = (unsigned) len / sizeof(double);
 
 	for (unsigned i = 0; i < s->length; i++)
-		s->data[i].f = (float) data[i]; /* OPAL provides double precission */
+		s->data[i].f = (float) data[i]; // OPAL provides double precission
 
 	/* This next call allows the execution of the "asynchronous" process
 	 * to actually be synchronous with the model. To achieve this, you
@@ -330,26 +335,27 @@ int villas::node::opal_write(NodeCompat *n, struct Sample * const smps[], unsign
 	if ((state == STATE_RESET) || (state == STATE_STOP))
 		throw RuntimeError("OpalGetAsyncModelState(): Model stopped or resetted!");
 
-	OpalSetAsyncRecvIconStatus(s->sequence, o->recvID);	/* Set the Status to the message ID */
-	OpalSetAsyncRecvIconError(0, o->recvID);		/* Set the Error to 0 */
+	OpalSetAsyncRecvIconStatus(s->sequence, o->recvID);	// Set the Status to the message ID
+	OpalSetAsyncRecvIconError(0, o->recvID);		// Set the Error to 0
 
-	/* Get the number of signals to send back to the model */
+	// Get the number of signals to send back to the model
 	OpalGetAsyncRecvIconDataLength(&len, o->recvID);
 	if (len > (int) sizeof(data))
 		n->logger->warn("Node expecting more signals ({}) than values in message ({})", len / sizeof(double), s->length);
 
 	for (unsigned i = 0; i < s->length; i++)
-		data[i] = (double) s->data[i].f; /* OPAL expects double precission */
+		data[i] = (double) s->data[i].f; // OPAL expects double precission
 
 	OpalSetAsyncRecvIconData(data, s->length * sizeof(double), o->recvID);
 
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "opal";
 	p.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
 	p.vectorize	= 1;
@@ -362,5 +368,6 @@ static void register_plugin() {
 	p.read		= opal_read;
 	p.write		= opal_write;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

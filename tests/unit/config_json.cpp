@@ -1,9 +1,9 @@
-/** Unit tests libconfig to jansson converters.
+/* Unit tests libconfig to jansson converters.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <criterion/criterion.h>
 
@@ -81,7 +81,7 @@ Test(config, json_to_config)
 	config_setting_t *cfg_root;
 	json_t *json;
 
-	/* For config_write() */
+	// For config_write()
 	FILE *f;
 	char str[1024];
 
@@ -105,4 +105,4 @@ Test(config, json_to_config)
 	json_decref(json);
 }
 
-#endif /* WITH_CONFIG */
+#endif // WITH_CONFIG

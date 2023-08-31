@@ -1,10 +1,9 @@
-/** Receive messages from server snd print them on stdout.
+/* Receive messages from server snd print them on stdout.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 #include <cstring>
@@ -63,7 +62,7 @@ public:
 		auto loggerName = fmt::format("pipe:{}", name);
 		logger = logging.get(loggerName);
 
-		/* Initialize memory */
+		// Initialize memory
 		unsigned pool_size = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
 
 		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node->getMemoryType());
@@ -133,7 +132,7 @@ public:
 					logger->warn("Failed to read from stdin");
 			}
 
-			/* Fill in missing sequence numbers */
+			// Fill in missing sequence numbers
 			for (int i = 0; i < scanned; i++) {
 				if (smps[i]->flags & (int) SampleFlags::HAS_SEQUENCE)
 					last_sequenceno = smps[i]->sequence;
@@ -254,7 +253,7 @@ public:
 protected:
 	std::atomic<bool> stop;
 
-	SuperNode sn; /**< The global configuration */
+	SuperNode sn; // The global configuration
 	Format *formatter;
 
 	int timeout;
@@ -419,7 +418,7 @@ check:			if (optarg == endptr)
 		else
 			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-		/* Try parsing format config as JSON */
+		// Try parsing format config as JSON
 		json_format = json_loads(format.c_str(), 0, &err);
 		formatter = json_format
 				? FormatFactory::make(json_format)
@@ -440,12 +439,12 @@ check:			if (optarg == endptr)
 				throw RuntimeError("Node {} can not send data. Consider using receive-only mode by using '-r' option", nodestr);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
-		/* Only start web subsystem if villas-pipe is used with a websocket node */
+		// Only start web subsystem if villas-pipe is used with a websocket node
 		if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::REQUIRES_WEB) {
 			Web *w = sn.getWeb();
 			w->start();
 		}
-#endif /* WITH_NODE_WEBSOCKET */
+#endif // WITH_NODE_WEBSOCKET
 
 		if (reverse)
 			node->reverse();
@@ -474,7 +473,7 @@ check:			if (optarg == endptr)
 		recv.dir->startThread();
 		send.dir->startThread();
 
-		/* Arm timeout timer */
+		// Arm timeout timer
 		alarm(timeout);
 
 		while (!stop)
@@ -496,19 +495,18 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Failed to stop node type {}: reason={}", node->getFactory()->getName(), ret);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
-		/* Only start web subsystem if villas-pipe is used with a websocket node */
+		// Only start web subsystem if villas-pipe is used with a websocket node
 		if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::REQUIRES_WEB) {
 				Web *w = sn.getWeb();
 			w->stop();
 		}
-#endif /* WITH_NODE_WEBSOCKET */
+#endif // WITH_NODE_WEBSOCKET
 
 		delete formatter;
 
 		return 0;
 	}
 };
-
 
 } // namespace tools
 } // namespace node

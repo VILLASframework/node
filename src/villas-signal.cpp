@@ -1,10 +1,9 @@
-/** Generate random packages on stdout.
+/* Generate random packages on stdout.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- **********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <unistd.h>
 #include <cmath>
@@ -86,7 +85,7 @@ protected:
 
 	json_t * parse_cli(int argc, char *argv[])
 	{
-		/* Default values */
+		// Default values
 		double rate = 10;
 		double frequency = 1;
 		double amplitude = 1;
@@ -102,7 +101,7 @@ protected:
 		int values = 1;
 		int limit = -1;
 
-		/* Parse optional command line arguments */
+		// Parse optional command line arguments
 		int c;
 		char *endptr;
 		while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hVp:")) != -1) {
@@ -262,7 +261,7 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to prepare node {}: reason={}", node->getName(), ret);
 
-		/* Try parsing format config as JSON */
+		// Try parsing format config as JSON
 		json_format = json_loads(format.c_str(), 0, &err);
 		formatter = json_format
 				? FormatFactory::make(json_format)

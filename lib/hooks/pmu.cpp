@@ -1,9 +1,9 @@
-/** PMU hook.
+/* PMU hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hooks/pmu.hpp>
 #include <villas/timing.hpp>
@@ -40,7 +40,7 @@ void PmuHook::prepare()
 
 	signals->clear();
 	for (unsigned i = 0; i < signalIndices.size(); i++) {
-		/* Add signals */
+		// Add signals
 		auto freqSig = std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
 		auto amplSig = std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
 		auto phaseSig = std::make_shared<Signal>("phase", (angleUnitFactor)?"rad":"deg", SignalType::FLOAT);//angleUnitFactor==1 means rad
@@ -166,7 +166,6 @@ void PmuHook::parse(json_t *json)
 	else
 		throw ConfigError(json, "node-config-hook-dft-timestamp-alignment", "Timestamp alignment {} not recognized", timeAlignC);
 
-
 }
 
 Hook::Reason PmuHook::process(struct Sample *smp)
@@ -212,18 +211,18 @@ Hook::Reason PmuHook::process(struct Sample *smp)
 		phasorTimestamp = (*windowsTs)[tsPos];
 	}
 
-	/* Update sample memory */
+	// Update sample memory
 	unsigned i = 0;
 	for (auto index : signalIndices)
 		windows[i++]->update(smp->data[index].f);
 	windowsTs->update(smp->ts.origin);
 
-	/* Make sure to update phasors after window update but estimate them before */
+	// Make sure to update phasors after window update but estimate them before
 	if(run) {
 		for (unsigned i = 0; i < signalIndices.size(); i++) {
-			smp->data[i * 4 + 0].f = lastPhasors[i].frequency + frequencyOffset; /* Frequency */
-			smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) + amplitudeOffset; /* Amplitude */
-			smp->data[i * 4 + 2].f = (lastPhasors[i].phase * 180 / M_PI) + phaseOffset; /* Phase */
+			smp->data[i * 4 + 0].f = lastPhasors[i].frequency + frequencyOffset; // Frequency
+			smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) + amplitudeOffset; // Amplitude
+			smp->data[i * 4 + 2].f = (lastPhasors[i].phase * 180 / M_PI) + phaseOffset; // Phase
 			smp->data[i * 4 + 3].f = lastPhasors[i].rocof + rocofOffset; /* ROCOF */;
 		}
 		smp->ts.origin = phasorTimestamp;
@@ -242,7 +241,7 @@ PmuHook::Phasor PmuHook::estimatePhasor(dsp::CosineWindow<double> *window, Phaso
 	return {0., 0., 0., 0., Status::INVALID};
 }
 
-/* Register hook */
+// Register hook
 static char n[] = "pmu";
 static char d[] = "This hook estimates a phsor";
 static HookPlugin<PmuHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

@@ -1,9 +1,9 @@
-/** Memory allocators.
+/* Memory allocators.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <unordered_map>
 
@@ -25,8 +25,10 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::memory;
 
-static std::unordered_map<void *, struct Allocation *> allocations;
-static Logger logger;
+static
+std::unordered_map<void *, struct Allocation *> allocations;
+static
+Logger logger;
 
 int villas::node::memory::init(int hugepages)
 {
@@ -62,7 +64,7 @@ int villas::node::memory::lock(size_t sz)
 #ifndef __arm__
 	struct rlimit l;
 
-	/* Increase ressource limit for locked memory */
+	// Increase ressource limit for locked memory
 	ret = getrlimit(RLIMIT_MEMLOCK, &l);
 	if (ret)
 		return ret;
@@ -88,15 +90,15 @@ int villas::node::memory::lock(size_t sz)
 		logger->debug("Increased ressource limit of locked memory to {} bytes", sz);
 	}
 
-#endif /* __arm__ */
+#endif // __arm__
 #ifdef _POSIX_MEMLOCK
-	/* Lock all current and future memory allocations */
+	// Lock all current and future memory allocations
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	if (ret)
 		return -1;
-#endif /* _POSIX_MEMLOCK */
+#endif // _POSIX_MEMLOCK
 
-#endif /* __linux__ */
+#endif // __linux__
 
 	return 0;
 }
@@ -125,7 +127,7 @@ int villas::node::memory::free(void *ptr)
 {
 	int ret;
 
-	/* Find corresponding memory allocation entry */
+	// Find corresponding memory allocation entry
 	struct Allocation *ma = allocations[ptr];
 	if (!ma)
 		return -1;
@@ -136,7 +138,7 @@ int villas::node::memory::free(void *ptr)
 	if (ret)
 		return ret;
 
-	/* Remove allocation entry */
+	// Remove allocation entry
 	auto iter = allocations.find(ptr);
 	if (iter == allocations.end())
 		return -1;

@@ -1,10 +1,9 @@
-/** Create a graph representation of the VILLASnode configuration file
+/* Create a graph representation of the VILLASnode configuration file
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 
@@ -23,8 +22,7 @@ struct GVC_s {
 	char *config_path;
 	bool config_found;
 
-	/* gvParseArgs */
-	char **input_filenames;
+	char **input_filenames; // gvParseArgs
 };
 
 namespace villas {
@@ -45,7 +43,7 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
 
-		this->argv[0] = (char *) "neato"; /* Default layout engine */
+		this->argv[0] = (char *) "neato"; // Default layout engine
 
 		gvc = gvContext();
 	}
@@ -84,26 +82,26 @@ protected:
 		configFilename = filenames.front();
 	}
 
-	virtual void handler(int signal, siginfo_t *siginfp, void *)
+	virtual
+	void handler(int signal, siginfo_t *siginfp, void *)
 	{
 #ifndef _WIN32
 		switch (signal) {
 			case SIGINT:
-				/* If interrupted we try to produce a partial rendering before exiting */
+				// If interrupted we try to produce a partial rendering before exiting
 				if (graph)
 					gvRenderJobs(gvc, graph);
 				break;
 
-
 			case SIGUSR1:
-				/* Note that we don't call gvFinalize() so that we don't start event-driven
- 	 			 * devices like -Tgtk or -Txlib */
+				// Note that we don't call gvFinalize() so that we don't start event-driven
+ 	 			// devices like -Tgtk or -Txlib */
 				exit(gvFreeContext(gvc));
 				break;
 
 			default: { }
 		}
-#endif /* _WIN32 */
+#endif // _WIN32
 	}
 
 	int main()
@@ -118,7 +116,7 @@ protected:
 
 		graph = sn.getGraph();
 
-		ret = gvLayoutJobs(gvc, graph);  /* take layout engine from command line */
+		ret = gvLayoutJobs(gvc, graph);  // Take layout engine from command line
 		if (ret)
 			return ret;
 

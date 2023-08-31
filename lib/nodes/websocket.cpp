@@ -1,9 +1,9 @@
-/** Node type: Websockets (libwebsockets)
+/* Node type: Websockets (libwebsockets)
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 #include <cstdlib>
@@ -26,16 +26,22 @@ using namespace villas::utils;
 
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
-/* Private static storage */
-static std::list<struct websocket_connection *> connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
-static std::mutex connections_lock;
+// Private static storage
+static
+std::list<struct websocket_connection *> connections;	// List of active libwebsocket connections which receive samples from all nodes (catch all)
+static
+std::mutex connections_lock;
 
-static villas::node::Web *web;
-static villas::Logger logger = logging.get("websocket");
+static
+villas::node::Web *web;
+static
+villas::Logger logger = logging.get("websocket");
 
-/* Forward declarations */
-static NodeCompatType p;
-static NodeCompatFactory ncp(&p);
+// Forward declarations
+static
+NodeCompatType p;
+static
+NodeCompatFactory ncp(&p);
 
 static
 void websocket_destination_destroy(struct websocket_destination *d)
@@ -75,7 +81,7 @@ int websocket_connection_destroy(struct websocket_connection *c)
 
 	assert(c->state != websocket_connection::State::DESTROYED);
 
-	/* Return all samples to pool */
+	// Return all samples to pool
 	int avail;
 	struct Sample *smp;
 
@@ -112,7 +118,7 @@ int websocket_connection_write(struct websocket_connection *c, struct Sample * c
 
 	c->node->logger->debug("Enqueued {} samples to {}", pushed, c->toString());
 
-	/* Client connections which are currently connecting don't have an associate c->wsi yet */
+	// Client connections which are currently connecting don't have an associate c->wsi yet
 	if (c->wsi)
 		web->callbackOnWritable(c->wsi);
 	else
@@ -151,7 +157,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 				 *   and format 'json'.
 				 */
 
-				/* Get path of incoming request */
+				// Get path of incoming request
 				char *node, *format, *lasts;
 				char uri[64];
 
@@ -173,7 +179,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 				if (!format)
 					format = (char *) "villas.web";
 
-				/* Search for node whose name matches the URI. */
+				// Search for node whose name matches the URI
 				auto *n = ncp.instances.lookup(node);
 				if (!n) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
@@ -226,7 +232,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 			c->node->logger->debug("Closed WebSocket connection: {}", c->toString());
 
 			if (c->state != websocket_connection::State::CLOSING) {
-				/** @todo Attempt reconnect here */
+				// @todo Attempt reconnect here
 			}
 
 			{
@@ -280,7 +286,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 			c->buffers.recv->append((char *) in, len);
 
-			/* We dont try to parse the frame yet, as we have to wait for the remaining fragments */
+			// We dont try to parse the frame yet, as we have to wait for the remaining fragments
 			if (lws_is_final_fragment(wsi)) {
 				struct timespec ts_recv = time_now();
 				auto *n = c->node;
@@ -301,7 +307,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 
 				c->node->logger->debug("Received {} samples from connection: {}", recvd, c->toString());
 
-				/* Set receive timestamp */
+				// Set receive timestamp
 				for (int i = 0; i < recvd; i++) {
 					smps[i]->ts.received = ts_recv;
 					smps[i]->flags |= (int) SampleFlags::HAS_TS_RECEIVED;
@@ -311,7 +317,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 				if (enqueued < recvd)
 					c->node->logger->warn("Queue overrun in connection: {}", c->toString());
 
-				/* Release unused samples back to pool */
+				// Release unused samples back to pool
 				if (enqueued < avail)
 					sample_decref_many(&smps[enqueued], avail - enqueued);
 
@@ -381,7 +387,7 @@ int villas::node::websocket_start(NodeCompat *n)
 
 		format = strchr(d->info.path, '.');
 		if (format)
-			format = format + 1; /* Removes "." */
+			format = format + 1; // Removes "."
 		else
 			format = "villas.web";
 
@@ -399,7 +405,7 @@ int villas::node::websocket_start(NodeCompat *n)
 		lws_client_connect_via_info(&d->info);
 	}
 
-	/* Wait until all destinations are connected */
+	// Wait until all destinations are connected
 	if (w->wait) {
 		unsigned connected = 0, total = list_length(&w->destinations);
 		do {
@@ -505,7 +511,7 @@ int villas::node::websocket_write(NodeCompat *n, struct Sample * const smps[], u
 	auto *w = n->getData<struct websocket>();
 	struct Sample *cpys[cnt];
 
-	/* Make copies of all samples */
+	// Make copies of all samples
 	avail = sample_alloc_many(&w->pool, cpys, cnt);
 	if (avail < (int) cnt)
 		n->logger->warn("Pool underrun: avail={}", avail);
@@ -535,7 +541,6 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json)
 	json_t *json_dest;
 	json_error_t err;
 	int wc = -1;
-
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: b }",
 		"destinations", &json_dests,
@@ -619,7 +624,8 @@ int villas::node::websocket_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+__attribute__((constructor(110))) static
+void UNIQUE(__ctor)() {
 	p.name		= "websocket";
 	p.description	= "Send and receive samples of a WebSocket connection (libwebsockets)";
 	p.vectorize	= 0;

@@ -1,9 +1,9 @@
-/** Comma-separated values.
+/* Comma-separated values.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cctype>
 #include <cinttypes>
@@ -103,7 +103,7 @@ size_t ColumnLineFormat::sscanLine(const char *buf, size_t len, struct Sample *s
 			goto out;
 
 		ret = smp->data[i].parseString(sig->type, ptr, &end);
-		if (ret || end == ptr) /* There are no valid values anymore. */
+		if (ret || end == ptr) // There are no valid values anymore.
 			goto out;
 	}
 
@@ -119,7 +119,7 @@ out:	if (*end == delimiter)
 
 void ColumnLineFormat::header(FILE *f, const SignalList::Ptr sigs)
 {
-	/* Abort if we are not supposed to, or have already printed the header */
+	// Abort if we are not supposed to, or have already printed the header
 	if (!print_header || header_printed)
 		return;
 
@@ -181,7 +181,7 @@ void ColumnLineFormat::parse(json_t *json)
 	LineFormat::parse(json);
 }
 
-
+// Register formats
 static char n1[] = "csv";
 static char d1[] = "Comma-separated values";
 static ColumnLineFormatPlugin<n1, d1, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA, '\n', ','> p1;

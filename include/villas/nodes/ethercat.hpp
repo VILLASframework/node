@@ -1,12 +1,11 @@
-/** Node type: ethercat
+/* Node type: ethercat
  *
- * @file
- * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Divya Laxetti <divya.laxetti@rwth-aachen.de>
- * @copyright 2018-2020, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Divya Laxetti <divya.laxetti@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2018-2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -22,11 +21,11 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 class SuperNode;
 
-/* Include hard-coded Ethercat Bus configuration */
+// Include hard-coded Ethercat Bus configuration
 #include <villas/nodes/ethercat_config.hpp>
 
 extern "C" {
@@ -35,35 +34,35 @@ extern "C" {
 
 #define DEFAULT_ETHERCAT_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 
-/** Internal data per ethercat node */
+// Internal data per ethercat node
 struct ethercat {
-	/* Settings */
+	// Settings
 	double rate;
 
 	struct {
 		unsigned num_channels;
 		double range;
 		unsigned position;
-		unsigned product_code;		/**< Product ID of EtherCAT slave */
-		unsigned vendor_id;		/**< Vendor ID of EtherCAT slave */
+		unsigned product_code;		// Product ID of EtherCAT slave
+		unsigned vendor_id;		// Vendor ID of EtherCAT slave
 
 		ec_slave_config_t *sc;
-		unsigned *offsets;		/**< Offsets for PDO entries */
+		unsigned *offsets;		// Offsets for PDO entries
 	} in, out;
 
 	ec_domain_t *domain;
 	ec_pdo_entry_reg_t *domain_regs;
-	uint8_t *domain_pd;			/**< Process data */
+	uint8_t *domain_pd;			// Process data
 
-	std::thread thread;			/**< Cyclic task thread */
-	struct Task task;			/**< Periodic timer */
+	std::thread thread;			// Cyclic task thread
+	struct Task task;			// Periodic timer
 	struct Pool pool;
-	struct CQueueSignalled queue;		/**< For samples which are received from WebSockets */
+	struct CQueueSignalled queue;		// For samples which are received from WebSockets
 
-	std::atomic<struct Sample *> send;	/**< Last sample to be sent via EtherCAT */
+	std::atomic<struct Sample *> send;	// Last sample to be sent via EtherCAT
 };
 
-/* Internal datastructures */
+// Internal datastructures
 
 int ethercat_type_start(SuperNode *sn);
 

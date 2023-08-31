@@ -1,10 +1,9 @@
-/** Sample value remapping for path source muxing.
+/* Sample value remapping for path source muxing.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -28,7 +27,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 struct Sample;
 class Signal;
@@ -56,15 +55,15 @@ public:
 		RECEIVED
 	};
 
-	Node *node;	/**< The node to which this mapping refers. */
-	enum Type type;		/**< The mapping type. Selects one of the union fields below. */
+	Node *node;	// The node to which this mapping refers.
+	enum Type type;		// The mapping type. Selects one of the union fields below.
 
-	/** The number of values which is covered by this mapping entry.
+	/* The number of values which is covered by this mapping entry.
 	 *
 	 * A value of 0 indicates that all remaining values starting from the offset of a sample should be mapped.
 	 */
 	int length;
-	unsigned offset;		/**< Offset of this mapping entry within sample::data */
+	unsigned offset;		// Offset of this mapping entry within sample::data
 
 	union {
 		struct {
@@ -89,7 +88,7 @@ public:
 		} timestamp;
 	};
 
-	std::string nodeName;	/**< Used for between parse and prepare only. */
+	std::string nodeName;	// Used for between parse and prepare only.
 
 	MappingEntry();
 

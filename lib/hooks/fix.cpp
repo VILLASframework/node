@@ -1,9 +1,9 @@
-/** Drop hook.
+/* Drop hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 
@@ -20,7 +20,8 @@ class FixHook : public Hook {
 public:
 	using Hook::Hook;
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -45,11 +46,10 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "fix";
 static char d[] = "Fix received data by adding missing fields";
 static HookPlugin<FixHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 1> p;
 
 } // namespace node
 } // namespace villas
-

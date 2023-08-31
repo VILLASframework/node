@@ -1,33 +1,19 @@
-/** PCSensor / TEMPer node-type
+/* PCSensor / TEMPer node-type
  *
- * Based on pcsensor.c by Juan Carlos Perez (c) 2011 (cray@isp-sl.com)
- * Based on Temper.c by Robert Kavaler (c) 2009 (relavak.com)
+ * The driver will work with some TEMPer usb devices from RDing (www.PCsensor.com).
+ *
+ * Based on pcsensor.c by Juan Carlos Perez
+ * Based on Temper.c by Robert Kavaler
+ *
+ * SPDX-FileCopyrightText: 2011 Juan Carlos Perez <cray@isp-sl.com>
+ * SPDX-FileCopyrightText: 2009 Robert Kavaler (relavak.com)
+ * SPDX-License-Identifier: BSD-1-Clause
  *
  * All rights reserved.
  *
  * 2011/08/30 Thanks to EdorFaus: bugfix to support negative temperatures
  * 2017/08/30 Improved by K.Cima: changed libusb-0.1 -> libusb-1.0
  *			https://github.com/shakemid/pcsensor
- *
- * Temper driver for linux. This program can be compiled either as a library
- * or as a standalone program (-DUNIT_TEST). The driver will work with some
- * TEMPer usb devices from RDing (www.PCsensor.com).
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *	 * Redistributions of source code must retain the above copyright
- *	   notice, this list of conditions and the following disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY Juan Carlos Perez ''AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL Robert kavaler BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <villas/node_compat.hpp>
@@ -39,15 +25,18 @@ using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
 
-static Logger logger;
+static
+Logger logger;
 
-static std::list<TEMPerDevice *> devices;
+static
+std::list<TEMPerDevice *> devices;
 
-static struct libusb_context *context;
+static
+struct libusb_context *context;
 
-/* Forward declartions */
-static NodeCompatType p;
-
+// Forward declartions
+static
+NodeCompatType p;
 
 TEMPerDevice::TEMPerDevice(struct libusb_device *dev) :
 	usb::Device(dev),
@@ -97,7 +86,7 @@ void TEMPerDevice::read(struct Sample *smp)
 	float temp[2];
 	int i = 0, al, ret;
 
-	/* Read from device */
+	// Read from device
 	unsigned char question[sizeof(question_temperature)];
 	memcpy(question, question_temperature, sizeof(question_temperature));
 
@@ -113,14 +102,14 @@ void TEMPerDevice::read(struct Sample *smp)
 
 	decode(answer, temp);
 
-	/* Temperature 1 */
+	// Temperature 1
 	smp->data[i++].f = temp[0];
 
-	/* Temperature 2 */
+	// Temperature 2
 	if (getNumSensors() == 2)
 		smp->data[i++].f = temp[1];
 
-	/* Humidity */
+	// Humidity
 	if (hasHumiditySensor())
 		smp->data[i++].f = temp[1];
 
@@ -129,7 +118,7 @@ void TEMPerDevice::read(struct Sample *smp)
 	smp->flags |= (int) SampleFlags::HAS_DATA;
 }
 
-/* Thanks to https://github.com/edorfaus/TEMPered */
+// Thanks to https://github.com/edorfaus/TEMPered
 void TEMPer1Device::decode(unsigned char *answer, float *temp)
 {
 	int buf;
@@ -250,7 +239,7 @@ int villas::node::temper_type_start(villas::node::SuperNode *sn)
 
 	logger = logging.get("node:temper");
 
-	/* Enumerate temper devices */
+	// Enumerate temper devices
 	devices.clear();
 	struct libusb_device **devs;
 
@@ -347,7 +336,7 @@ int villas::node::temper_prepare(NodeCompat *n)
 {
 	auto *t = n->getData<struct temper>();
 
-	/* Find matching USB device */
+	// Find matching USB device
 	t->device = nullptr;
 	for (auto *dev : devices) {
 		if (dev->match(&t->filter)) {
@@ -359,20 +348,20 @@ int villas::node::temper_prepare(NodeCompat *n)
 	if (t->device == nullptr)
 		throw RuntimeError("No matching TEMPer USB device found!");
 
-	/* Create signal list */
+	// Create signal list
 	assert(n->getInputSignals(false)->size() == 0);
 
-	/* Temperature 1 */
+	// Temperature 1
 	auto sig1 = std::make_shared<Signal>(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
 	n->in.signals->push_back(sig1);
 
-	/* Temperature 2 */
+	// Temperature 2
 	if (t->device->getNumSensors() == 2) {
 		auto sig2 = std::make_shared<Signal>(t->device->getNumSensors() == 2 ? "temp_int" : "temp", "°C", SignalType::FLOAT);
 		n->in.signals->push_back(sig2);
 	}
 
-	/* Humidity */
+	// Humidity
 	if (t->device->hasHumiditySensor()) {
 		auto sig3 = std::make_shared<Signal>("humidity", "%", SignalType::FLOAT);
 		n->in.signals->push_back(sig3);
@@ -410,8 +399,8 @@ int villas::node::temper_read(NodeCompat *n, struct Sample * const smps[], unsig
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "temper";
 	p.description	= "An temper for staring new node-type implementations";
 	p.vectorize	= 1;
@@ -428,5 +417,6 @@ static void register_plugin() {
 	p.stop		= temper_stop;
 	p.read		= temper_read;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

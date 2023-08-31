@@ -1,9 +1,9 @@
-/** The internal datastructure for a sample of simulation data.
+/* The internal datastructure for a sample of simulation data.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 #include <cstring>
@@ -72,14 +72,14 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct Sample *
 	 * Please note that only the seconds and at least one value are mandatory
 	 */
 
-	/* Mandatory: seconds */
+	// Mandatory: seconds
 	smp->ts.origin.tv_sec = (uint32_t) strtoul(ptr, &end, 10);
 	if (ptr == end || *end == delimiter)
 		return -1;
 
 	smp->flags |= (int) SampleFlags::HAS_TS_ORIGIN;
 
-	/* Optional: nano seconds */
+	// Optional: nano seconds
 	if (*end == '.') {
 		ptr = end + 1;
 
@@ -90,18 +90,18 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct Sample *
 	else
 		smp->ts.origin.tv_nsec = 0;
 
-	/* Optional: offset / delay */
+	// Optional: offset / delay
 	if (*end == '+' || *end == '-') {
 		ptr = end;
 
-		offset = strtof(ptr, &end); /* offset is ignored for now */
+		offset = strtof(ptr, &end); // offset is ignored for now
 		if (ptr != end)
 			smp->flags |= (int) SampleFlags::HAS_OFFSET;
 		else
 			return -4;
 	}
 
-	/* Optional: sequence */
+	// Optional: sequence
 	if (*end == '(') {
 		ptr = end + 1;
 
@@ -125,7 +125,7 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len, struct Sample *
 			goto out;
 
 		ret = smp->data[i].parseString(sig->type, ptr, &end);
-		if (ret || end == ptr) /* There are no valid values anymore. */
+		if (ret || end == ptr) // There are no valid values anymore.
 			goto out;
 	}
 
@@ -148,7 +148,7 @@ out:	if (*end == delimiter)
 
 void VILLASHumanFormat::header(FILE *f, const SignalList::Ptr sigs)
 {
-	/* Abort if we are not supposed to, or have already printed the header */
+	// Abort if we are not supposed to, or have already printed the header
 	if (!print_header || header_printed)
 		return;
 
@@ -184,6 +184,7 @@ void VILLASHumanFormat::header(FILE *f, const SignalList::Ptr sigs)
 	LineFormat::header(f, sigs);
 }
 
+// Register format
 static char n[] = "villas.human";
 static char d[] = "VILLAS human readable format";
 static LineFormatPlugin<VILLASHumanFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA, '\n'> p;

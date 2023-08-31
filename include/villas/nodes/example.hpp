@@ -1,13 +1,12 @@
-/** An example get started with new implementations of new node-types
+/* An example get started with new implementations of new node-types
  *
  * This example does not do any particulary useful.
  * It is just a skeleton to get you started with new node-types.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,20 +17,20 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 
 class ExampleNode : public Node {
 
 protected:
-	/* Place any configuration and per-node state here */
+	// Place any configuration and per-node state here
 
-	/* Settings */
+	// Settings
 	int setting1;
 
 	std::string setting2;
 
-	/* States */
+	// States
 	int state1;
 	struct timespec start_time;
 
@@ -57,7 +56,7 @@ public:
 	virtual
 	int parse(json_t *json);
 
-	/** Validate node configuration. */
+	// Validate node configuration
 	virtual
 	int check();
 
@@ -91,7 +90,6 @@ public:
 	virtual
 	const std::string & getDetails();
 };
-
 
 } // namespace node
 } // namespace villas

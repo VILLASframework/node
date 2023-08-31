@@ -1,9 +1,9 @@
-/** Main routine.
+/* Main routine.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 #include <unistd.h>
@@ -88,7 +88,7 @@ protected:
 			<< "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl
 			<< "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl
 			<< "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
-#endif /* WITH_NODE_OPAL */
+#endif // WITH_NODE_OPAL
 
 		<< "Supported node-types:" << std::endl;
 		for (auto p : registry->lookup<NodeFactory>()) {
@@ -127,7 +127,7 @@ protected:
 
 	void parse()
 	{
-		/* Check arguments */
+		// Check arguments
 #ifdef WITH_NODE_OPAL
 		if (argc != 4) {
 			usage();
@@ -139,7 +139,7 @@ protected:
 		uri = "villas-node.conf";
 #else
 
-		/* Parse optional command line arguments */
+		// Parse optional command line arguments
 		int c;
 		while ((c = getopt(argc, argv, "hCVd:")) != -1) {
 			switch (c) {
@@ -170,7 +170,7 @@ protected:
 			usage();
 			exit(EXIT_FAILURE);
 		}
-#endif /* ENABLE_OPAL_ASYNC */
+#endif // ENABLE_OPAL_ASYNC
 	}
 
 	int main()
@@ -214,4 +214,3 @@ int main(int argc, char *argv[])
 
 	return t.run();
 }
-

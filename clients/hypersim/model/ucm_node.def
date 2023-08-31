@@ -2,6 +2,9 @@
 %% Generated from : ucm_def_file_templ_en.sh Version 1.5
 %% Hypersim (Ucm) : (c) Hydro-Quebec -- 2005
 %%
+%% SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+%% SPDX-License-Identifier: Apache-2.0
+%%
 %% -----------------------------------------------------------------------------
 %% Model : villas -- Fri Jun 15 12:07:11 PDT 2018
 %% -----------------------------------------------------------------------------

@@ -1,10 +1,10 @@
-/** Node type: comedi
+/* Node type: comedi
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cmath>
@@ -21,9 +21,11 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-/* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
-static char* comedi_cmd_trigger_src(unsigned int src, char *buf);
-static void comedi_dump_cmd(Logger logger, comedi_cmd *cmd);
+// Utility functions to dump a comedi_cmd graciously taken from comedilib demo
+static
+char* comedi_cmd_trigger_src(unsigned int src, char *buf);
+static
+void comedi_dump_cmd(Logger logger, comedi_cmd *cmd);
 
 static
 int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t *json)
@@ -33,7 +35,7 @@ int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t 
 	json_t *json_chans;
 	json_error_t err;
 
-	/* Default values */
+	// Default values
 	d->subdevice = -1;
 	d->buffer_size = 16;
 
@@ -49,7 +51,7 @@ int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, json_t 
 	if (!json_is_array(json_chans))
 		return -1;
 
-	/* Convert kilobytes to bytes */
+	// Convert kilobytes to bytes
 	d->buffer_size = d->buffer_size << 10;
 
 	size_t i;
@@ -101,7 +103,7 @@ int comedi_start_common(NodeCompat *n)
 		if (!d->present)
 			continue;
 
-		/* Sanity-check channel config and populate chanspec for later */
+		// Sanity-check channel config and populate chanspec for later
 		for (unsigned i = 0; i < d->chanlist_len; i++) {
 			const unsigned int channel = CR_CHAN(d->chanlist[i]);
 			const int range = CR_RANGE(d->chanlist[i]);
@@ -129,7 +131,7 @@ int comedi_start_common(NodeCompat *n)
 		const int flags = comedi_get_subdevice_flags(c->dev, d->subdevice);
 		d->sample_size = (flags & SDF_LSAMPL) ? sizeof(lsampl_t) : sizeof(sampl_t);
 
-		/* Set buffer size */
+		// Set buffer size
 		comedi_set_buffer_size(c->dev, d->subdevice, d->buffer_size);
 		comedi_set_max_buffer_size(c->dev, d->subdevice, d->buffer_size);
 		ret = comedi_get_buffer_size(c->dev, d->subdevice);
@@ -153,14 +155,14 @@ int comedi_start_in(NodeCompat *n)
 	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->in;
 
-	/* Try to find first analog input subdevice if not specified in config */
+	// Try to find first analog input subdevice if not specified in config
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AI, 0);
 		if (d->subdevice < 0)
 			throw RuntimeError("Cannot find analog input device for node '{}'");
 	}
 	else {
-		/* Check if subdevice is usable */
+		// Check if subdevice is usable
 		ret = comedi_get_subdevice_type(c->dev, d->subdevice);
 		if (ret != COMEDI_SUBD_AI)
 			throw RuntimeError("Input subdevice is not an analog input");
@@ -184,28 +186,28 @@ int comedi_start_in(NodeCompat *n)
 	 * full (TODO: evaluate if this makes sense, leave as reminder) */
 	//cmd.flags = TRIG_WAKE_EOS;
 
-	/* Start right now */
+	// Start right now
 	cmd.start_src = TRIG_NOW;
 
-	/* Trigger scans periodically */
+	// Trigger scans periodically
 	cmd.scan_begin_src = TRIG_TIMER;
 	cmd.scan_begin_arg = 1e9 / d->sample_rate_hz;
 
-	/* Do conversions in serial with 1ns inter-conversion delay */
+	// Do conversions in serial with 1ns inter-conversion delay
 	cmd.convert_src = TRIG_TIMER;
-	cmd.convert_arg = 1;	/* Inter-conversion delay in nanoseconds */
+	cmd.convert_arg = 1;	// Inter-conversion delay in nanoseconds
 
-	/* Terminate scan after each channel has been converted */
+	// Terminate scan after each channel has been converted
 	cmd.scan_end_src = TRIG_COUNT;
 	cmd.scan_end_arg = d->chanlist_len;
 
-	/* Contionous sampling */
+	// Contionous sampling
 	cmd.stop_src = TRIG_NONE;
 
 	cmd.chanlist = d->chanlist;
 	cmd.chanlist_len = d->chanlist_len;
 
-	/* First run might change command, second should return successfully */
+	// First run might change command, second should return successfully
 	ret = comedi_command_test(c->dev, &cmd);
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
@@ -223,7 +225,7 @@ int comedi_start_in(NodeCompat *n)
 	d->running = true;
 
 #if COMEDI_USE_READ
-	/* Be prepared to consume one entire buffer */
+	// Be prepared to consume one entire buffer
 	c->buf = new char[c->in.buffer_size];
 	c->bufptr = c->buf;
 	if (!c->buf)
@@ -244,7 +246,7 @@ int comedi_start_out(NodeCompat *n)
 	auto *c = n->getData<struct comedi>();
 	struct comedi_direction *d = &c->out;
 
-	/* Try to find first analog output subdevice if not specified in config */
+	// Try to find first analog output subdevice if not specified in config
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AO, 0);
 		if (d->subdevice < 0)
@@ -272,7 +274,7 @@ int comedi_start_out(NodeCompat *n)
 
 	cmd.flags = CMDF_WRITE;
 
-	/* Wait for internal trigger, we will have to fill the buffer first */
+	// Wait for internal trigger, we will have to fill the buffer first
 	cmd.start_src = TRIG_INT;
 	cmd.start_arg = 0;
 
@@ -285,14 +287,14 @@ int comedi_start_out(NodeCompat *n)
 	cmd.scan_end_src = TRIG_COUNT;
 	cmd.scan_end_arg = d->chanlist_len;
 
-	/* Continous sampling */
+	// Continous sampling
 	cmd.stop_src = TRIG_NONE;
 	cmd.stop_arg = 0;
 
 	cmd.chanlist = d->chanlist;
 	cmd.chanlist_len = d->chanlist_len;
 
-	/* First run might change command, second should return successfully */
+	// First run might change command, second should return successfully
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
 		throw RuntimeError("Invalid command for input subdevice");
@@ -308,19 +310,19 @@ int comedi_start_out(NodeCompat *n)
 	if (ret < 0)
 		throw RuntimeError("Failed to issue command to input subdevice of node '{}'");
 
-	/* Output will only start after the internal trigger */
+	// Output will only start after the internal trigger
 	d->running = false;
 	d->last_debug = time_now();
 
-	/* Allocate buffer for one complete VILLAS sample */
-	/** @todo maybe increase buffer size according to c->vectorize */
+	// Allocate buffer for one complete VILLAS sample
+	// @todo maybe increase buffer size according to c->vectorize
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = new char[local_buffer_size];
 	d->bufptr = d->buffer;
 	if (!d->buffer)
 		throw MemoryAllocationError();
 
-	/* Initialize local buffer used for write() syscalls */
+	// Initialize local buffer used for write() syscalls
 	for (unsigned channel = 0; channel < d->chanlist_len; channel++) {
 		const unsigned raw = comedi_from_phys(0.0f, d->chanspecs[channel].range, d->chanspecs[channel].maxdata);
 
@@ -332,7 +334,7 @@ int comedi_start_out(NodeCompat *n)
 		d->bufptr += d->sample_size;
 	}
 
-	/* Preload comedi output buffer */
+	// Preload comedi output buffer
 	for (unsigned i = 0; i < d->buffer_size / local_buffer_size; i++) {
 		size_t written = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
 		if (written != local_buffer_size) {
@@ -445,8 +447,8 @@ int villas::node::comedi_start(NodeCompat *n)
 	if (!c->dev)
 		throw RuntimeError("Failed to open device: {}", comedi_strerror(comedi_errno()));
 
-	/* Enable non-blocking syscalls */
-	/** @todo verify if this works with both input and output, so comment out */
+	// Enable non-blocking syscalls
+	// @todo verify if this works with both input and output, so comment out
 	//if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
 	//	throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
 
@@ -528,9 +530,9 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 	ret = select(comedi_fileno(c->dev) + 1, &rdset, nullptr, nullptr, &timeout);
 	if (ret < 0)
 		throw RuntimeError("Failed select()");
-	else if (ret == 0) /* hit timeout */
+	else if (ret == 0) // hit timeout
 		return 0;
-	else if (FD_ISSET(comedi_fileno(c->dev), &rdset)) { /* comedi file descriptor became ready */
+	else if (FD_ISSET(comedi_fileno(c->dev), &rdset)) { // comedi file descriptor became ready
 		const size_t buffer_bytes_free = d->buffer_size - (c->bufptr - c->buf);
 		const size_t bytes_requested = cnt * villas_sample_size;
 
@@ -546,7 +548,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 			return 0;
 		}
 		else {
-			/* Sample handling here */
+			// Sample handling here
 			const size_t bytes_available = ret;
 			const size_t raw_samples_available = bytes_available / d->sample_size;
 			const size_t villas_samples_available = raw_samples_available / d->chanlist_len;
@@ -592,21 +594,21 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 			const size_t bytes_consumed = cnt * villas_sample_size;
 			const size_t bytes_left = bytes_available - bytes_consumed;
 			if (bytes_left > 0) {
-				/* Move leftover bytes to the beginning of buffer */
-				/** @todo optimize? */
+				// Move leftover bytes to the beginning of buffer
+				// @todo optimize?
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 
 			n->logger->info("Consumed {} bytes", bytes_consumed);
 
-			/* Start at the beginning again */
+			// Start at the beginning again
 			c->bufptr = c->buf;
 
 			return cnt;
 		}
 	}
 	else
-		/* unknown file descriptor became ready */
+		// unknown file descriptor became ready
 		n->logger->warn("Unknown file descriptor ready");
 
 	return -1;
@@ -660,7 +662,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 		n->logger->info("front={} back={} bufpos={}", c->front, c->back, c->bufpos);
 
 	if ((c->bufpos + bytes_available) >= d->buffer_size) {
-		/* Let comedi do the wraparound, only consume until end of buffer */
+		// Let comedi do the wraparound, only consume until end of buffer
 		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
 		n->logger->warn("Reducing consumption from {} to {} bytes", ret, bytes_available);
 		n->logger->warn("Only consume {} VILLAS samples b/c of buffer wraparound", villas_sample_count);
@@ -696,7 +698,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 	else
 		n->logger->info("Consume {} bytes", ret);
 
-	/* Align front to whole samples */
+	// Align front to whole samples
 	c->front = c->back + samples_total_bytes;
 
 	for (size_t i = 0; i < cnt; i++) {
@@ -804,7 +806,7 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsi
 	}
 
 	if (!d->running) {
-		/* Output was not yet running, so start now */
+		// Output was not yet running, so start now
 		ret = comedi_internal_trigger(c->dev, d->subdevice, 0);
 		if (ret < 0)
 			throw RuntimeError("Failed to trigger-start output");
@@ -856,7 +858,7 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsi
 
 		d->bufptr = d->buffer;
 
-		/* Move samples from villas into local buffer for comedi */
+		// Move samples from villas into local buffer for comedi
 		for (unsigned si = 0; si < sample->length; si++) {
 			unsigned raw_value = 0;
 
@@ -866,7 +868,7 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsi
 					break;
 
 				case SignalType::INTEGER:
-					/* Treat sample as already raw DAC value */
+					// Treat sample as already raw DAC value
 					raw_value = sample->data[si].i;
 					break;
 
@@ -875,7 +877,7 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsi
 					break;
 
 				case SignalType::COMPLEX:
-					/* We only output the real part */
+					// We only output the real part
 					raw_value = comedi_from_phys(std::real(sample->data[si].z), d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					break;
 
@@ -892,12 +894,12 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample * const smps[], unsi
 			d->bufptr += d->sample_size;
 		}
 
-		/* Try to write one complete villas sample to comedi */
+		// Try to write one complete villas sample to comedi
 		size_t written = write(comedi_fileno(c->dev), d->buffer, villas_sample_size);
 		if (written < 0)
 			throw RuntimeError("write() failed");
 		else if (written == 0)
-			break;	/* Comedi doesn't accept any more samples at the moment */
+			break;	// Comedi doesn't accept any more samples at the moment
 		else if (written == villas_sample_size)
 			villas_samples_written++;
 		else
@@ -967,10 +969,11 @@ int villas::node::comedi_poll_fds(NodeCompat *n, int fds[])
 	return 0;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "comedi";
 	p.description	= "Comedi-compatible DAQ/ADC cards";
 	p.vectorize	= 0;
@@ -983,5 +986,6 @@ static void register_plugin() {
 	p.write		= comedi_write;
 	p.poll_fds	= comedi_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

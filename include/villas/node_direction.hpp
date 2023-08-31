@@ -1,10 +1,9 @@
-/** Node direction
+/* Node direction
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,7 +17,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 class Path;
 
@@ -27,11 +26,11 @@ class NodeDirection {
 
 public:
 	enum class Direction {
-		IN,			/**< VILLASnode is receiving/reading */
-		OUT			/**< VILLASnode is sending/writing */
+		IN,			// VILLASnode is receiving/reading
+		OUT			// VILLASnode is sending/writing
 	} direction;
 
-	/** The path which uses this node as a source/destination.
+	/* The path which uses this node as a source/destination.
 	 *
 	 * Usually every node should be used only by a single path as destination.
 	 * Otherwise samples from different paths would be interleaved.
@@ -40,13 +39,13 @@ public:
 	Node *node;
 
 	int enabled;
-	int builtin;			/**< This node should use built-in hooks by default. */
-	unsigned vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
+	int builtin;			// This node should use built-in hooks by default.
+	unsigned vectorize;		// Number of messages to send / recv at once (scatter / gather)
 
-	HookList hooks;			/**< List of read / write hooks (struct hook). */
-	SignalList::Ptr signals;	/**< Signal description. */
+	HookList hooks;			// List of read / write hooks (struct hook).
+	SignalList::Ptr signals;	// Signal description.
 
-	json_t *config;			/**< A JSON object containing the configuration of the node. */
+	json_t *config;			// A JSON object containing the configuration of the node.
 
 	NodeDirection(enum NodeDirection::Direction dir, Node *n);
 

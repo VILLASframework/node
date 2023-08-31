@@ -1,9 +1,9 @@
-/** Rate-limiting hook.
+/* Rate-limiting hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -15,11 +15,12 @@ namespace node {
 class LimitRateHook : public LimitHook {
 
 protected:
+	// The timestamp which should be used for limiting.
 	enum {
 		LIMIT_RATE_LOCAL,
 		LIMIT_RATE_RECEIVED,
 		LIMIT_RATE_ORIGIN
-	} mode; /**< The timestamp which should be used for limiting. */
+	} mode;
 
 	double deadtime;
 	timespec last;
@@ -32,14 +33,17 @@ public:
 		last({0, 0})
 	{ }
 
-	virtual void setRate(double rate, double maxRate = -1)
+	virtual
+	void setRate(double rate, double maxRate = -1)
 	{
 		deadtime = 1.0 / rate;
 	}
 
-	virtual void parse(json_t *json);
+	virtual
+	void parse(json_t *json);
 
-	virtual Hook::Reason process(struct Sample *smp);
+	virtual
+	Hook::Reason process(struct Sample *smp);
 };
 
 } // namespace node

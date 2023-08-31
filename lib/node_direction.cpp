@@ -1,9 +1,9 @@
-/** Node direction
+/* Node direction
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/config.hpp>
 #include <villas/utils.hpp>
@@ -50,7 +50,7 @@ int NodeDirection::parse(json_t *json)
 		throw ConfigError(json, err, "node-config-node-in");
 
 	if (node->getFactory()->getFlags() & (int) NodeFactory::Flags::PROVIDES_SIGNALS) {
-		/* Do nothing.. Node-type will provide signals */
+		// Do nothing.. Node-type will provide signals
 		signals = std::make_shared<SignalList>();
 		if (!signals)
 			throw MemoryAllocationError();
@@ -118,7 +118,7 @@ int NodeDirection::parse(json_t *json)
 
 		hooks.parse(json_hooks, m, nullptr, node);
 	}
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return 0;
 }
@@ -130,7 +130,7 @@ void NodeDirection::check()
 
 #ifdef WITH_HOOKS
 	hooks.check();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 }
 
 int NodeDirection::prepare()
@@ -140,7 +140,7 @@ int NodeDirection::prepare()
 	int m = builtin ? t | (int) Hook::Flags::BUILTIN : 0;
 
 	hooks.prepare(signals, m, nullptr, node);
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return 0;
 }
@@ -149,7 +149,7 @@ int NodeDirection::start()
 {
 #ifdef WITH_HOOKS
 	hooks.start();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return 0;
 }
@@ -158,7 +158,7 @@ int NodeDirection::stop()
 {
 #ifdef WITH_HOOKS
 	hooks.stop();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return 0;
 }
@@ -168,7 +168,7 @@ SignalList::Ptr NodeDirection::getSignals(int after_hooks) const
 #ifdef WITH_HOOKS
 	if (after_hooks && hooks.size() > 0)
 		return hooks.getSignals();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return signals;
 }
@@ -178,7 +178,7 @@ unsigned NodeDirection::getSignalsMaxCount() const
 #ifdef WITH_HOOKS
 	if (hooks.size() > 0)
 		return MAX(signals->size(), hooks.getSignalsMaxCount());
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return signals->size();
 }

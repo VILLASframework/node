@@ -1,9 +1,9 @@
-/** Node-type: CAN bus
+/* Node-type: CAN bus
  *
- * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 #include <cstdlib>
@@ -30,8 +30,9 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-/* Forward declarations */
-static NodeCompatType p;
+// Forward declarations
+static
+NodeCompatType p;
 
 int villas::node::can_init(NodeCompat *n)
 {
@@ -408,7 +409,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample * const smps[], unsigned
 
 	n->logger->debug("Received {} signals", c->sample_buf_num);
 
-	/* Copy signal data to sample only when all signals have been received */
+	// Copy signal data to sample only when all signals have been received
 	if (c->sample_buf_num == n->getInputSignals(false)->size()) {
 		smps[nread]->length = c->sample_buf_num;
 		memcpy(smps[nread]->data, c->sample_buf, c->sample_buf_num*sizeof(union SignalData));
@@ -421,7 +422,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample * const smps[], unsigned
 		ret = 0;
 	}
 
- out:	/* Set signals, because other VILLASnode parts expect us to */
+ out:	// Set signals, because other VILLASnode parts expect us to
 	smps[nread]->signals = n->getInputSignals(false);
 
 	return ret;
@@ -432,7 +433,7 @@ int villas::node::can_write(NodeCompat *n, struct Sample * const smps[], unsigne
 	int nbytes;
 	unsigned nwrite;
 	struct can_frame *frame;
-	size_t fsize = 0; /* number of frames in use */
+	size_t fsize = 0; // number of frames in use
 
 	auto *c = n->getData<struct can>();
 
@@ -442,7 +443,7 @@ int villas::node::can_write(NodeCompat *n, struct Sample * const smps[], unsigne
 
 	for (nwrite=0; nwrite < cnt; nwrite++) {
 		for (size_t i=0; i < n->getOutputSignals()->size(); i++) {
-			if (c->out[i].offset != 0) /* frame is shared */
+			if (c->out[i].offset != 0) // frame is shared
 				continue;
 
 			frame[fsize].can_dlc = c->out[i].size;
@@ -458,7 +459,7 @@ int villas::node::can_write(NodeCompat *n, struct Sample * const smps[], unsigne
 		}
 
 		for (size_t i=0; i < n->getOutputSignals(false)->size(); i++) {
-			if (c->out[i].offset == 0) { /* frame already stored */
+			if (c->out[i].offset == 0) { // frame already stored
 				continue;
 			}
 
@@ -502,11 +503,11 @@ int villas::node::can_poll_fds(NodeCompat *n, int fds[])
 
 	fds[0] = c->socket;
 
-	return 1; /* The number of file descriptors which have been set in fds */
+	return 1; // The number of file descriptors which have been set in fds
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "can";
 	p.description	= "Receive CAN messages using the socketCAN driver";
 	p.vectorize	= 0;
@@ -524,5 +525,6 @@ static void register_plugin() {
 	p.write		= can_write;
 	p.poll_fds	= can_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

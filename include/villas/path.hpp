@@ -1,10 +1,9 @@
-/** Message paths
+/* Message paths
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -30,16 +29,16 @@
 
 #include <villas/log.hpp>
 
-/* Forward declarations */
+// Forward declarations
 struct pollfd;
 
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 
-/** The datastructure for a path. */
+// The datastructure for a path.
 class Path {
 	friend PathSource;
 	friend SecondaryPathSource;
@@ -54,16 +53,17 @@ protected:
 
 	void startPoll();
 
-	static int id;
+	static
+	int id;
 
 public:
-	enum State state;		/**< Path state. */
+	enum State state;		// Path state.
 
-	/** The register mode determines under which condition the path is triggered. */
+	// The register mode determines under which condition the path is triggered.
 	enum class Mode {
-		ANY,				/**< The path is triggered whenever one of the sources receives samples. */
-		ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
-	} mode;					/**< Determines when this path is triggered. */
+		ANY,				// The path is triggered whenever one of the sources receives samples.
+		ALL				// The path is triggered only after all sources have received at least 1 sample.
+	} mode;					// Determines when this path is triggered.
 
 	uuid_t uuid;
 
@@ -74,32 +74,32 @@ public:
 	int last_sequence;
 
 	NodeList masked;
-	MappingList mappings;			/**< List of all input mappings. */
-	PathSourceList sources;			/**< List of all incoming nodes. */
-	PathDestinationList destinations;	/**< List of all outgoing nodes. */
-	HookList hooks;				/**< List of processing hooks. */
-	SignalList::Ptr signals;		/**< List of signals which this path creates. */
+	MappingList mappings;			// List of all input mappings.
+	PathSourceList sources;			// List of all incoming nodes.
+	PathDestinationList destinations;	// List of all outgoing nodes.
+	HookList hooks;				// List of processing hooks.
+	SignalList::Ptr signals;		// List of signals which this path creates.
 
 	struct Task timeout;
 
-	double rate;			/**< A timeout for */
-	int affinity;			/**< Thread affinity. */
-	bool enabled;			/**< Is this path enabled? */
-	int poll;			/**< Weather or not to use poll(2). */
-	bool reversed;			/**< This path has a matching reverse path. */
-	bool builtin;			/**< This path should use built-in hooks by default. */
-	int original_sequence_no;	/**< Use original source sequence number when multiplexing */
-	unsigned queuelen;		/**< The queue length for each path_destination::queue */
+	double rate;			// A timeout for
+	int affinity;			// Thread affinity.
+	bool enabled;			// Is this path enabled?
+	int poll;			// Weather or not to use poll(2).
+	bool reversed;			// This path has a matching reverse path.
+	bool builtin;			// This path should use built-in hooks by default.
+	int original_sequence_no;	// Use original source sequence number when multiplexing
+	unsigned queuelen;		// The queue length for each path_destination::queue
 
-	pthread_t tid;			/**< The thread id for this path. */
-	json_t *config;			/**< A JSON object containing the configuration of the path. */
+	pthread_t tid;			// The thread id for this path.
+	json_t *config;			// A JSON object containing the configuration of the path.
 
 	Logger logger;
 
-	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of PathSources which are enabled for poll(). */
-	std::bitset<MAX_SAMPLE_LENGTH> received;	/**< A mask of PathSources for which we already received samples. */
+	std::bitset<MAX_SAMPLE_LENGTH> mask;		// A mask of PathSources which are enabled for poll().
+	std::bitset<MAX_SAMPLE_LENGTH> received;	// A mask of PathSources for which we already received samples.
 
-	/** Custom formatter for spdlog */
+	// Custom formatter for spdlog
 	template<typename OStream>
 	friend OStream &operator<<(OStream &os, const Path &p)
 	{
@@ -138,27 +138,27 @@ public:
 
 	void prepare(NodeList &nodes);
 
-	/** Check if path configuration is proper. */
+	// Check if path configuration is proper.
 	void check();
 
-	/** Check prepared path. */
+	// Check prepared path.
 	void checkPrepared();
 
-	/** Start a path.
+	/* Start a path.
 	*
 	* Start a new pthread for receiving/sending messages over this path.
 	*/
 	void start();
 
-	/** Stop a path. */
+	// Stop a path.
 	void stop();
 
-	/** Get a list of signals which is emitted by the path. */
+	// Get a list of signals which is emitted by the path.
 	SignalList::Ptr getOutputSignals(bool after_hooks = true);
 
 	unsigned getOutputSignalsMaxCount();
 
-	/** Parse a single path and add it to the global configuration.
+	/* Parse a single path and add it to the global configuration.
 	*
 	* @param json A JSON object containing the configuration of the path.
 	* @param p Pointer to the allocated memory for this path
@@ -188,7 +188,7 @@ public:
 		return state;
 	}
 
-	/** Get the UUID of this path. */
+	// Get the UUID of this path.
 	const uuid_t & getUuid() const
 	{
 		return uuid;

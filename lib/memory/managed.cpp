@@ -1,9 +1,9 @@
-/** Managed memory allocator.
+/* Managed memory allocator.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 #include <unistd.h>
@@ -28,7 +28,7 @@ using namespace villas::node::memory;
 static
 struct Allocation * managed_alloc(size_t len, size_t alignment, struct Type *m)
 {
-	/* Simple first-fit allocation */
+	// Simple first-fit allocation
 	struct Block *first = (struct Block *) m->_vd;
 	struct Block *block;
 
@@ -47,7 +47,7 @@ struct Allocation * managed_alloc(size_t len, size_t alignment, struct Type *m)
 		if (rem != 0) {
 			gap = alignment - rem;
 			if (gap > avail)
-				continue; /* Next aligned address isn't in this block anymore */
+				continue; // Next aligned address isn't in this block anymore
 
 			cptr += gap;
 			avail -= gap;
@@ -75,7 +75,7 @@ struct Allocation * managed_alloc(size_t len, size_t alignment, struct Type *m)
 			}
 
 			if (avail > len + sizeof(struct Block)) {
-				/* Imperfect fit, so create another block for the remaining part */
+				// Imperfect fit, so create another block for the remaining part
 				struct Block *newblock = (struct Block *) (cptr + len);
 				newblock->prev = block;
 				newblock->next = block->next;
@@ -110,7 +110,7 @@ struct Allocation * managed_alloc(size_t len, size_t alignment, struct Type *m)
 		}
 	}
 
-	/* No suitable block found */
+	// No suitable block found
 	return nullptr;
 }
 
@@ -119,10 +119,10 @@ int managed_free(struct Allocation *ma, struct Type *m)
 {
 	struct Block *block = ma->managed.block;
 
-	/* Try to merge it with neighbouring free blocks */
+	// Try to merge it with neighbouring free blocks
 	if (block->prev && !block->prev->used &&
 	    block->next && !block->next->used) {
-		/* Special case first: both previous and next block are unused */
+		// Special case first: both previous and next block are unused
 		block->prev->length += block->length + block->next->length + 2 * sizeof(struct Block);
 		block->prev->next = block->next->next;
 		if (block->next->next)
@@ -141,7 +141,7 @@ int managed_free(struct Allocation *ma, struct Type *m)
 			block->next->prev = block;
 	}
 	else {
-		/* no neighbouring free block, so just mark it as free */
+		// no neighbouring free block, so just mark it as free
 		block->used = false;
 	}
 
@@ -160,7 +160,7 @@ struct Type * villas::node::memory::managed(void *ptr, size_t len)
 		return nullptr;
 	}
 
-	/* Initialize type */
+	// Initialize type
 	mt->name  = "managed";
 	mt->flags = 0;
 	mt->alloc = managed_alloc;
@@ -169,7 +169,7 @@ struct Type * villas::node::memory::managed(void *ptr, size_t len)
 
 	cptr += ALIGN(sizeof(struct Type), sizeof(void *));
 
-	/* Initialize first free memory block */
+	// Initialize first free memory block
 	mb = (struct Block *) cptr;
 	mb->prev = nullptr;
 	mb->next = nullptr;

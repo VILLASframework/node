@@ -1,9 +1,9 @@
-/** Node type: kafka
+/* Node type: kafka
  *
- * @author Juan Pablo Noreña <jpnorenam@unal.edu.co>
- * @copyright 2021, Universidad Nacional de Colombia
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Juan Pablo Noreña <jpnorenam@unal.edu.co>
+ * SPDX-FileCopyrightText: 2021 Universidad Nacional de Colombia
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <sys/syslog.h>
@@ -19,9 +19,12 @@ using namespace villas::node;
 using namespace villas::utils;
 
 // Each process has a list of clients for which a thread invokes the kafka loop
-static struct List clients;
-static pthread_t thread;
-static Logger logger;
+static
+struct List clients;
+static
+pthread_t thread;
+static
+Logger logger;
 
 static
 void kafka_logger_cb(const rd_kafka_t *rk, int level, const char *fac, const char *buf)
@@ -127,7 +130,7 @@ int villas::node::kafka_init(NodeCompat *n)
 {
 	auto *k = n->getData<struct kafka>();
 
-	/* Default values */
+	// Default values
 	k->server = nullptr;
 	k->protocol = nullptr;
 	k->produce = nullptr;
@@ -231,7 +234,7 @@ int villas::node::kafka_parse(NodeCompat *n, json_t *json)
 		k->sasl.password = strdup(password);
 	}
 
-	/* Format */
+	// Format
 	if (k->formatter)
 		delete k->formatter;
 	k->formatter = json_format
@@ -273,7 +276,7 @@ char * villas::node::kafka_print(NodeCompat *n)
 		k->protocol
 	);
 
-	/* Only show if not default */
+	// Only show if not default
 	if (k->produce)
 		strcatf(&buf, ", out.produce=%s", k->produce);
 
@@ -571,10 +574,11 @@ int villas::node::kafka_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "kafka";
 	p.description	= "Kafka event message streaming (rdkafka)";
 	p.vectorize	= 0;
@@ -595,5 +599,6 @@ static void register_plugin() {
 	p.reverse	= kafka_reverse;
 	p.poll_fds	= kafka_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

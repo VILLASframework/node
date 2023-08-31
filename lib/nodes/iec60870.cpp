@@ -1,9 +1,9 @@
-/** Node type: IEC60870-5-104
+/* Node type: IEC60870-5-104
  *
- * @author Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <algorithm>
 
@@ -20,14 +20,16 @@ using namespace villas::utils;
 using namespace villas::node::iec60870;
 using namespace std::literals::chrono_literals;
 
-static CP56Time2a timespec_to_cp56time2a(timespec time) {
+static
+CP56Time2a timespec_to_cp56time2a(timespec time) {
 	time_t time_ms =
 		static_cast<time_t>(time.tv_sec) * 1000
 		+ static_cast<time_t>(time.tv_nsec) / 1000000;
 	return CP56Time2a_createFromMsTimestamp(NULL, time_ms);
 }
 
-static timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
+static
+timespec cp56time2a_to_timespec(CP56Time2a cp56time2a) {
 	auto time_ms = CP56Time2a_toMsTimestamp(cp56time2a);
 	timespec time {};
 	time.tv_nsec = time_ms % 1000 * 1000;
@@ -798,6 +800,7 @@ int SlaveNode::stop()
 	return Node::stop();
 }
 
+// Register node
 static char name[] = "iec60870-5-104";
 static char description[] = "Provide values as protocol slave";
 static NodePlugin<SlaveNode, name, description, (int) NodeFactory::Flags::SUPPORTS_WRITE, 1> p;

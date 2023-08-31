@@ -1,9 +1,9 @@
-/** Message related functions.
+/* Message related functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <arpa/inet.h>
@@ -36,7 +36,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const stru
 			return ret;
 
 		if (web) {
-			/** @todo convert to little endian */
+			// @todo convert to little endian
 		}
 		else
 			msg_hton(msg);
@@ -58,7 +58,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 	uint8_t sid; // source_index
 
 	if (len % 4 != 0)
-		return -1; /* Packet size is invalid: Must be multiple of 4 bytes */
+		return -1; // Packet size is invalid: Must be multiple of 4 bytes
 
 	for (i = 0, j = 0; i < cnt; i++) {
 		struct Message *msg = (struct Message *) ptr;
@@ -66,29 +66,29 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 
 		smp->signals = signals;
 
-		/* Complete buffer has been parsed */
+		// Complete buffer has been parsed
 		if (ptr == buf + len)
 			break;
 
-		/* Check if header is still in buffer bounaries */
+		// Check if header is still in buffer bounaries
 		if (ptr + sizeof(struct Message) > buf + len)
-			return -2; /* Invalid msg received */
+			return -2; // Invalid msg received
 
 		values = web ? msg->length : ntohs(msg->length);
 
-		/* Check if remainder of message is in buffer boundaries */
+		// Check if remainder of message is in buffer boundaries
 		if (ptr + MSG_LEN(values) > buf + len)
-			return -3; /* Invalid msg receive */
+			return -3; // Invalid msg receive
 
 		if (web) {
-			/** @todo convert from little endian */
+			// @todo convert from little endian
 		}
 		else
 			msg_ntoh(msg);
 
 		ret = msg_to_sample(msg, smp, signals, &sid);
 		if (ret)
-			return ret; /* Invalid msg received */
+			return ret; // Invalid msg received
 
 		if (validate_source_index && sid != source_index) {
 			// source index mismatch: we skip this sample
@@ -128,5 +128,8 @@ void VillasBinaryFormat::parse(json_t *json)
 	Format::parse(json);
 }
 
-static VillasBinaryFormatPlugin<false> p1;
-static VillasBinaryFormatPlugin<true> p2;
+// Register formats
+static
+VillasBinaryFormatPlugin<false> p1;
+static
+VillasBinaryFormatPlugin<true> p2;

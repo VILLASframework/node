@@ -1,10 +1,9 @@
-/** Memory allocators.
+/* Memory allocators.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -14,7 +13,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 namespace memory {
@@ -40,13 +39,17 @@ struct Type {
 	allocator_t alloc;
 	deallocator_t free;
 
-	void *_vd; /**< Virtual data for internal state */
+	void *_vd; // Virtual data for internal state
 };
 
-extern struct Type heap;
-extern struct Type mmap;
-extern struct Type mmap_hugetlb;
-extern struct Type *default_type;
+extern
+struct Type heap;
+extern
+struct Type mmap;
+extern
+struct Type mmap_hugetlb;
+extern
+struct Type *default_type;
 
 struct Type * ib(NodeCompat *n, struct Type *parent);
 struct Type * managed(void *ptr, size_t len);

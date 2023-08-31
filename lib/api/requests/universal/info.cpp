@@ -1,9 +1,9 @@
-/** The Universal Data-exchange API.
+/* The Universal Data-exchange API.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/uuid.hpp>
 #include <villas/api/requests/universal.hpp>
@@ -19,7 +19,8 @@ class InfoRequest : public UniversalRequest {
 public:
 	using UniversalRequest::UniversalRequest;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
@@ -41,7 +42,7 @@ public:
 	}
 };
 
-/* Register API requests */
+// Register API requests
 static char n[] = "universal/info";
 static char r[] = "/universal/(" RE_NODE_NAME ")/info";
 static char d[] = "get infos of universal data-exchange API";

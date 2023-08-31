@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 from setuptools import setup, find_namespace_packages
 from glob import glob
 import sys

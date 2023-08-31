@@ -1,9 +1,9 @@
-/** Line-based formats
+/* Line-based formats
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/formats/line.hpp>
 #include <villas/exceptions.hpp>
@@ -42,7 +42,7 @@ int LineFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample
 	}
 
 	for (i = 0; i < cnt && off < len; i++) {
-		/* Skip comment lines */
+		// Skip comment lines
 		if (buf[off] == comment) {
 			while (off < len) {
 				if (buf[++off] == delimiter)
@@ -93,7 +93,7 @@ int LineFormat::scan(FILE *f, struct Sample * const smps[], unsigned cnt)
 		if (!first_line_skipped) {
 			bytes = getdelim(&in.buffer, &in.buflen, delimiter, f);
 			if (bytes < 0)
-				return -1; /* An error or eof occured */
+				return -1; // An error or eof occured
 
 			first_line_skipped = true;
 		}
@@ -107,9 +107,9 @@ skip:		bytes = getdelim(&in.buffer, &in.buflen, delimiter, f);
 		if (feof(f))
 			break;
 		else if (bytes < 0)
-			return -1; /* An error or eof occured */
+			return -1; // An error or eof occured
 
-		/* Skip whitespaces, empty and comment lines */
+		// Skip whitespaces, empty and comment lines
 		for (ptr = in.buffer; isspace(*ptr); ptr++);
 
 		if (ptr[0] == '\0' || ptr[0] == comment)

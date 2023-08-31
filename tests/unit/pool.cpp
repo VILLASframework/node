@@ -1,9 +1,9 @@
-/** Unit tests for memory pool
+/* Unit tests for memory pool
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
@@ -19,7 +19,8 @@ using namespace villas;
 
 using namespace villas::node;
 
-extern void init_memory();
+extern
+void init_memory();
 
 struct param {
 	int thread_count;
@@ -30,7 +31,8 @@ struct param {
 
 ParameterizedTestParameters(pool, basic)
 {
-	static std::vector<struct param> params;
+	static
+	std::vector<struct param> params;
 
 	params.clear();
 	params.push_back({ 1, 4096,    150,  &memory::heap });
@@ -59,7 +61,7 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 	ptr = pool_get(&pool);
 	cr_assert_neq(ptr, nullptr);
 
-	memset(ptr, 1, p->block_size); /* check that we dont get a seg fault */
+	memset(ptr, 1, p->block_size); // check that we dont get a seg fault
 
 	int i;
 	for (i = 1; i < p->pool_size; i++) {
