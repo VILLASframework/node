@@ -1,9 +1,9 @@
-/** Energy-based Metric hook.
+/* Energy-based Metric hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 
@@ -26,7 +26,8 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 
@@ -60,7 +61,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -70,14 +72,16 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void periodic()
+	virtual
+	void periodic()
 	{
 		assert(state == State::STARTED);
 
 		logger->info("Energy: {}", energy);
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		double P, P_last, dt;
 
@@ -85,7 +89,7 @@ public:
 
 		if (last) {
 			for (auto phase : phases) {
-				/* Trapazoidal rule */
+				// Trapazoidal rule
 				dt = time_delta(&last->ts.origin, &smp->ts.origin);
 
 				P      =  smp->data[phase.first].f *  smp->data[phase.second].f;
@@ -104,7 +108,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "ebm";
 static char d[] = "Energy-based Metric";
 static HookPlugin<EBMHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

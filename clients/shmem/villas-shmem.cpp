@@ -1,12 +1,12 @@
-/** Test "client" for the shared memory interface.
+/* Test "client" for the shared memory interface.
  *
  * Waits on the incoming queue, prints received samples and writes them
  * back to the other queue.
  *
- * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <atomic>

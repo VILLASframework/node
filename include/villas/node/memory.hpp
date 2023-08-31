@@ -1,16 +1,15 @@
-/** Memory allocators.
+/* Memory allocators.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
 #ifdef IBVERBS_FOUND
   #include <infiniband/verbs.h>
-#endif /* IBVERBS_FOUND */
+#endif // IBVERBS_FOUND
 
 #include <cstddef>
 #include <cstdint>
@@ -22,16 +21,16 @@ namespace villas {
 namespace node {
 namespace memory {
 
-/** Descriptor of a memory block. Associated block always starts at
+/* Descriptor of a memory block. Associated block always starts at
  * &m + sizeof(struct Block). */
 struct Block {
 	struct Block *prev;
 	struct Block *next;
-	size_t length; /**< Length of the block; doesn't include the descriptor itself */
+	size_t length; // Length of the block; doesn't include the descriptor itself
 	bool used;
 };
 
-/** @todo Unused for now */
+// @todo Unused for now
 struct Allocation {
 	struct Type *type;
 
@@ -53,12 +52,12 @@ struct Allocation {
 	};
 };
 
-/** Initilialize memory subsystem */
+// Initilialize memory subsystem
 int init(int hugepages) __attribute__ ((warn_unused_result));
 
 int lock(size_t lock);
 
-/** Allocate \p len bytes memory of type \p m.
+/* Allocate \p len bytes memory of type \p m.
  *
  * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.

@@ -1,10 +1,9 @@
-/** Configuration file parsing.
+/* Configuration file parsing.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -34,44 +33,46 @@ protected:
 
 	std::list<std::string> includeDirectories;
 
-	/** Check if file exists on local system. */
-	static bool isLocalFile(const std::string &uri)
+	// Check if file exists on local system.
+	static
+	bool isLocalFile(const std::string &uri)
 	{
 		return access(uri.c_str(), F_OK) != -1;
 	}
 
-	/** Decode configuration file. */
+	// Decode configuration file.
 	json_t * decode(FILE *f);
 
 #ifdef WITH_CONFIG
-	/** Convert libconfig .conf file to libjansson .json file. */
+	// Convert libconfig .conf file to libjansson .json file.
 	json_t * libconfigDecode(FILE *f);
 
-	static const char ** includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error);
+	static
+	const char ** includeFuncStub(config_t *cfg, const char *include_dir, const char *path, const char **error);
 
 	const char ** includeFunc(config_t *cfg, const char *include_dir, const char *path, const char **error);
-#endif /* WITH_CONFIG */
+#endif // WITH_CONFIG
 
-	/** Load configuration from standard input (stdim). */
+	// Load configuration from standard input (stdim).
 	FILE * loadFromStdio();
 
-	/** Load configuration from local file. */
+	// Load configuration from local file.
 	FILE * loadFromLocalFile(const std::string &u);
 
 	std::list<std::string> resolveIncludes(const std::string &name);
 
 	void resolveEnvVars(std::string &text);
 
-	/** Resolve custom include directives. */
+	// Resolve custom include directives.
 	json_t * expandIncludes(json_t *in);
 
-	/** To shell-like subsitution of environment variables in strings. */
+	// To shell-like subsitution of environment variables in strings.
 	json_t * expandEnvVars(json_t *in);
 
-	/** Run a callback function for each string in the config */
+	// Run a callback function for each string in the config
 	json_t * walkStrings(json_t *in, str_walk_fcn_t cb);
 
-	/** Get the include dirs */
+	// Get the include dirs
 	std::list<std::string> getIncludeDirectories(FILE *f) const;
 
 public:

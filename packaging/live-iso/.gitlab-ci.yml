@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
 variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
@@ -12,7 +15,6 @@ stages:
   - build
 
 # Stage: prepare
-##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
 docker:
@@ -27,7 +29,6 @@ docker:
     - trigger
 
 # Stage: build
-##############################################################################
 
 iso:
   stage: build

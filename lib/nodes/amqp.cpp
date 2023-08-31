@@ -1,9 +1,9 @@
-/** Node type: nanomsg
+/* Node type: nanomsg
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -135,7 +135,7 @@ int villas::node::amqp_init(NodeCompat *n)
 {
 	auto *a = n->getData<struct amqp>();
 
-	/* Default values */
+	// Default values
 	amqp_default_ssl_info(&a->ssl_info);
 	amqp_default_connection_info(&a->connection_info);
 
@@ -214,7 +214,7 @@ int villas::node::amqp_parse(NodeCompat *n, json_t *json)
 			a->ssl_info.client_key = strdup(client_key);
 	}
 
-	/* Format */
+	// Format
 	if (a->formatter)
 		delete a->formatter;
 	a->formatter = json_format
@@ -272,23 +272,23 @@ int villas::node::amqp_start(NodeCompat *n)
 
 	a->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	/* Connect producer */
+	// Connect producer
 	a->producer = amqp_connect(n, &a->connection_info, &a->ssl_info);
 	if (!a->producer)
 		return -1;
 
-	/* Connect consumer */
+	// Connect consumer
 	a->consumer = amqp_connect(n, &a->connection_info, &a->ssl_info);
 	if (!a->consumer)
 		return -1;
 
-	/* Declare exchange */
+	// Declare exchange
 	amqp_exchange_declare(a->producer, 1, a->exchange, amqp_cstring_bytes("direct"), 0, 0, 0, 0, amqp_empty_table);
 	rep = amqp_get_rpc_reply(a->consumer);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	/* Declare private queue */
+	// Declare private queue
 	r = amqp_queue_declare(a->consumer, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
 	rep = amqp_get_rpc_reply(a->consumer);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
@@ -298,13 +298,13 @@ int villas::node::amqp_start(NodeCompat *n)
 	if (queue.bytes == nullptr)
 		return -1;
 
-	/* Bind queue to exchange */
+	// Bind queue to exchange
 	amqp_queue_bind(a->consumer, 1, queue, a->exchange, a->routing_key, amqp_empty_table);
 	rep = amqp_get_rpc_reply(a->consumer);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	/* Start consumer */
+	// Start consumer
 	amqp_basic_consume(a->consumer, 1, queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
 	rep = amqp_get_rpc_reply(a->consumer);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
@@ -365,7 +365,7 @@ int villas::node::amqp_write(NodeCompat *n, struct Sample * const smps[], unsign
 		.bytes = data
 	};
 
-	/* Send message */
+	// Send message
 	ret = amqp_basic_publish(a->producer, 1,
 		a->exchange,
 		a->routing_key,
@@ -416,10 +416,11 @@ int villas::node::amqp_destroy(NodeCompat *n)
 	return 0;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "amqp";
 	p.description	= "Advanced Message Queueing Protoocl (rabbitmq-c)";
 	p.vectorize	= 0;
@@ -434,5 +435,6 @@ static void register_plugin() {
 	p.write		= amqp_write;
 	p.poll_fds	= amqp_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

@@ -1,9 +1,9 @@
-/** RAW IO format
+/* RAW IO format
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/sample.hpp>
 #include <villas/utils.hpp>
@@ -13,29 +13,29 @@
 
 typedef float flt32_t;
 typedef double flt64_t;
-typedef long double flt128_t; /** @todo check */
+typedef long double flt128_t; // @todo check
 
 using namespace villas;
 using namespace villas::node;
 
-/** Convert double to host byte order */
+// Convert double to host byte order
 #define SWAP_FLOAT_XTOH(o, b, n) ({					\
 	union { flt ## b ## _t f; uint ## b ## _t i; } x = { .f = n };	\
 	x.i = (o) ? be ## b ## toh(x.i) : le ## b ## toh(x.i);		\
 	x.f;								\
 })
 
-/** Convert double to big/little endian byte order */
+// Convert double to big/little endian byte order
 #define SWAP_FLOAT_HTOX(o, b, n) ({					\
 	union { flt ## b ## _t f; uint ## b ## _t i; } x = { .f = n };	\
 	x.i = (o) ? htobe ## b (x.i) : htole ## b (x.i);		\
 	x.f;								\
 })
 
-/** Convert integer of varying width to host byte order */
+// Convert integer of varying width to host byte order
 #define SWAP_INT_XTOH(o, b, n) (o ? be ## b ## toh(n) : le ## b ## toh(n))
 
-/** Convert integer of varying width to big/little endian byte order */
+// Convert integer of varying width to big/little endian byte order
 #define SWAP_INT_HTOX(o, b, n) (o ? htobe ## b (n) : htole ## b (n))
 
 int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt)
@@ -43,7 +43,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample
 	int o = 0;
 	size_t nlen;
 
-	void *vbuf = (char *) buf;  /* Avoid warning about invalid pointer cast */
+	void *vbuf = (char *) buf;  // Avoid warning about invalid pointer cast
 
 	int8_t     *i8  =  (int8_t *) vbuf;
 	int16_t    *i16 =  (int16_t *) vbuf;
@@ -64,7 +64,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample
 		* These fields are always encoded as integers!
 		*/
 		if (fake) {
-			/* Check length */
+			// Check length
 			nlen = (o + 3) * (bits / 8);
 			if (nlen >= len)
 				goto out;
@@ -108,7 +108,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample
 			enum SignalType fmt = sample_format(smp, j);
 			const union SignalData *data = &smp->data[j];
 
-			/* Check length */
+			// Check length
 			nlen = (o + (fmt == SignalType::COMPLEX ? 2 : 1)) * (bits / 8);
 			if (nlen >= len)
 				goto out;
@@ -118,11 +118,11 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample
 					switch (bits) {
 						case 8:
 							i8 [o++] = -1;
-							break; /* Not supported */
+							break; // Not supported
 
 						case 16:
 							i16[o++] = -1;
-							break; /* Not supported */
+							break; // Not supported
 
 						case 32:
 							f32[o++] = SWAP_FLOAT_HTOX(endianess == Endianess::BIG,  32, (float) data->f);
@@ -193,12 +193,12 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes, const struct Sample
 				case SignalType::COMPLEX:
 					switch (bits) {
 						case  8:
-							i8 [o++]  = -1; /* Not supported */
+							i8 [o++]  = -1; // Not supported
 							i8 [o++]  = -1;
 							break;
 
 						case 16:
-							i16[o++]  = -1; /* Not supported */
+							i16[o++]  = -1; // Not supported
 							i16[o++]  = -1;
 							break;
 
@@ -234,7 +234,7 @@ out:	if (wbytes)
 
 int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt)
 {
-	void *vbuf = (void *) buf; /* Avoid warning about invalid pointer cast */
+	void *vbuf = (void *) buf; // Avoid warning about invalid pointer cast
 
 	int8_t     *i8  =  (int8_t *)  vbuf;
 	int16_t    *i16 =  (int16_t *) vbuf;
@@ -258,11 +258,11 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample 
 		return -1;
 
 	if (len % (bits / 8))
-		return -1; /* Invalid RAW Payload length */
+		return -1; // Invalid RAW Payload length
 
 	if (fake) {
 		if (nlen < o + 3)
-			return -1; /* Received a packet with no fake header. Skipping... */
+			return -1; // Received a packet with no fake header. Skipping...
 
 		switch (bits) {
 			case 8:
@@ -317,8 +317,8 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample 
 		switch (fmt) {
 			case SignalType::FLOAT:
 				switch (bits) {
-					case 8:   data->f = -1; o++; break; /* Not supported */
-					case 16:  data->f = -1; o++; break; /* Not supported */
+					case 8:   data->f = -1; o++; break; // Not supported
+					case 16:  data->f = -1; o++; break; // Not supported
 
 					case 32:  data->f = SWAP_FLOAT_XTOH(endianess == Endianess::BIG, 32, f32[o++]); break;
 					case 64:  data->f = SWAP_FLOAT_XTOH(endianess == Endianess::BIG, 64, f64[o++]); break;
@@ -354,8 +354,8 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample 
 
 			case SignalType::COMPLEX:
 				switch (bits) {
-					case 8:  data->z = std::complex<float>(-1, -1); o += 2; break; /* Not supported */
-					case 16: data->z = std::complex<float>(-1, -1); o += 2; break; /* Not supported */
+					case 8:  data->z = std::complex<float>(-1, -1); o += 2; break; // Not supported
+					case 16: data->z = std::complex<float>(-1, -1); o += 2; break; // Not supported
 
 					case 32: data->z = std::complex<float>(
 								SWAP_FLOAT_XTOH(endianess == Endianess::BIG, 32, f32[o++]),
@@ -378,14 +378,14 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sample 
 				break;
 
 			case SignalType::INVALID:
-				return -1; /* Unsupported format in RAW payload */
+				return -1; // Unsupported format in RAW payload
 		}
 	}
 
 	smp->length = i;
 
 	if (smp->length > smp->capacity)
-		smp->length = smp->capacity; /* Received more values than supported */
+		smp->length = smp->capacity; // Received more values than supported
 
 	if (rbytes)
 		*rbytes = o * (bits / 8);
@@ -433,6 +433,7 @@ void RawFormat::parse(json_t *json)
 	BinaryFormat::parse(json);
 }
 
+// Register formats
 static char n1[] = "raw";
 static char d1[] = "Raw binary data";
 static FormatPlugin<RawFormat, n1, d1, (int) SampleFlags::HAS_DATA> p1;

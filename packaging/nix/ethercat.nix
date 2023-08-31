@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
 {
   autoconf,
   automake,

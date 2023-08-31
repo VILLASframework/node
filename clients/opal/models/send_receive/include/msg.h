@@ -1,17 +1,16 @@
-/** Message related functions
+/* Message related functions
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
-/* Forward declarations. */
+// Forward declarations
 struct msg;
 
-/** Swaps the byte-order of the message.
+/* Swaps the byte-order of the message.
  *
  * Message are always transmitted in network (big endian) byte order.
  *
@@ -25,7 +24,7 @@ void msg_ntoh(struct msg *m);
 
 void msg_hton(struct msg *m);
 
-/** Check the consistency of a message.
+/* Check the consistency of a message.
  *
  * The functions checks the header fields of a message.
  *

@@ -1,9 +1,9 @@
-/** Heap memory allocator.
+/* Heap memory allocator.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 
@@ -49,7 +49,7 @@ int heap_free(struct Allocation *ma, struct Type *m)
 	return 0;
 }
 
-/* List of available memory types */
+// List of available memory types
 struct Type villas::node::memory::heap = {
 	.name = "heap",
 	.flags = (int) Flags::HEAP,

@@ -1,5 +1,10 @@
 # Changelog
 
+<!--
+SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+SPDX-License-Identifier: Apache-2.0
+-->
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)

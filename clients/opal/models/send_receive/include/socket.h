@@ -1,10 +1,9 @@
-/** Helper functions for sockets.
+/* Helper functions for sockets.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef _SOCKET_H_
 #define _SOCKET_H_
@@ -18,9 +17,9 @@
 #define TCP_PROTOCOL	2
 
 struct socket {
-	struct sockaddr_in send_ad;	/* Send address */
-	struct sockaddr_in recv_ad;	/* Receive address */
-	int sd;				/* socket descriptor */
+	struct sockaddr_in send_ad;	// Send address
+	struct sockaddr_in recv_ad;	// Receive address
+	int sd;				// socket descriptor
 };
 
 int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct);
@@ -31,4 +30,4 @@ int socket_recv(struct socket *s, char *data, int len, double timeout);
 
 int socket_close(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct);
 
-#endif /* _SOCKET_H_ */
+#endif // _SOCKET_H_

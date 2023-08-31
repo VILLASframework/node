@@ -1,10 +1,9 @@
-/** Memory allocators.
+/* Memory allocators.
  *
- * @file
- * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Dennis Potter <dennis@dennispotter.eu>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 

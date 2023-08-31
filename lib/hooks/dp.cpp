@@ -1,9 +1,9 @@
-/** Dynamic Phasor Interface Algorithm hook.
+/* Dynamic Phasor Interface Algorithm hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cmath>
 #include <cstring>
@@ -51,21 +51,21 @@ protected:
 		for (int k = 0; k < fharmonics_len; k++) {
 			om_k = 2.0i * M_PI * (double) fharmonics[k] / (double) N;
 
-			/* Correction for stationary phasor */
+			// Correction for stationary phasor
 			corr = std::exp(-om_k * (steps - (N + 1)));
 			//corr = 1;
 
 #if 0
-			/* Recursive update */
+			// Recursive update
 			coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
 
 			out[k] = (2.0 / N) * (coeffs[i] * corr);
 
-			/* DC component */
+			// DC component
 			if (fharmonics[k] == 0)
 				out[k] /= 2.0;
 #else
-			/* Full DFT */
+			// Full DFT
 			std::complex<double> X_k = 0;
 
 			for (int n = 0; n < N; n++) {
@@ -83,7 +83,7 @@ protected:
 	{
 		std::complex<double> value = 0;
 
-		/* Reconstruct the original signal */
+		// Reconstruct the original signal
 		for (int k = 0; k < fharmonics_len; k++) {
 			double freq = fharmonics[k];
 			// cppcheck-suppress objectIndex
@@ -113,9 +113,10 @@ public:
 		fharmonics_len(0)
 	{ }
 
-	virtual ~DPHook()
+	virtual
+	~DPHook()
 	{
-		/* Release memory */
+		// Release memory
 		if (fharmonics)
 			delete fharmonics;
 
@@ -126,7 +127,8 @@ public:
 			free(signal_name);
 	}
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		assert(state == State::PREPARED);
 
@@ -141,7 +143,8 @@ public:
 		state = State::STARTED;
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -203,7 +206,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		assert(state == State::CHECKED);
 
@@ -218,7 +222,7 @@ public:
 		}
 
 		if (inverse) {
-			/* Remove complex-valued coefficient signals */
+			// Remove complex-valued coefficient signals
 			for (int i = 0; i < fharmonics_len; i++) {
 				auto orig_sig = signals->getByIndex(signal_index + i);
 				if (!orig_sig)
@@ -230,7 +234,7 @@ public:
 				signals->erase(signals->begin() + signal_index + i);
 			}
 
-			/* Add new real-valued reconstructed signals */
+			// Add new real-valued reconstructed signals
 			auto new_sig = std::make_shared<Signal>("dp", "idp", SignalType::FLOAT);
 			if (!new_sig)
 				throw RuntimeError("Failed to create signal");
@@ -261,7 +265,8 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		if (signal_index >= smp->length)
 			return Hook::Reason::ERROR;
@@ -292,7 +297,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "dp";
 static char d[] = "Transform to/from dynamic phasor domain";
 static HookPlugin<DPHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

@@ -1,9 +1,9 @@
-/** Signal meta data.
+/* Signal meta data.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/signal.hpp>
 #include <villas/utils.hpp>
@@ -101,20 +101,20 @@ std::string Signal::toString(const union SignalData *d) const
 	return ss.str();
 }
 
-/** Check if two signal names are numbered ascendingly
+/* Check if two signal names are numbered ascendingly
  *
  * E.g. signal3 -> signal4
  */
 static
 bool isNextName(const std::string &a, const std::string &b)
 {
-	/* Find common prefix */
+	// Find common prefix
 	std::string::const_iterator ia, ib;
 	for (ia = a.cbegin(), ib = b.cbegin();
 	     ia != b.cend() && ib != b.cend() && *ia == *ib;
 	     ++ia, ++ib);
 
-	/* Suffixes */
+	// Suffixes
 	auto sa = std::string(ia, a.cend());
 	auto sb = std::string(ib, b.cend());
 

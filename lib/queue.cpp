@@ -1,11 +1,11 @@
-/** Lock-free Multiple-Producer Multiple-consumer (MPMC) queue.
+/* Lock-free Multiple-Producer Multiple-consumer (MPMC) queue.
  *
  * Based on Dmitry Vyukov#s Bounded MPMC queue:
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2017 Steffen Vogel
- * @license BSD 2-Clause License
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2017 Steffen Vogel
+ * SPDX-License-Identifier: BSD-2-Clause
  *
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************************/
+ */
 
 #include <villas/queue.h>
 #include <villas/utils.hpp>
@@ -38,10 +38,10 @@
 
 using namespace villas;
 
-/** Initialize MPMC queue */
+// Initialize MPMC queue
 int villas::node::queue_init(struct CQueue *q, size_t size, struct memory::Type *m)
 {
-	/* Queue size must be 2 exponent */
+	// Queue size must be 2 exponent
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
 		size = LOG2_CEIL(size);

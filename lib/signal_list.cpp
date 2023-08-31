@@ -1,9 +1,9 @@
-/** Signal metadata list.
+/* Signal metadata list.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/signal.hpp>
 #include <villas/signal_type.hpp>
@@ -91,7 +91,7 @@ void SignalList::dump(Logger logger, const union SignalData *data, unsigned len)
 	Signal::Ptr prevSig;
 	unsigned i = 0;
 	for (auto sig : *this) {
-		/* Check if this is a sequence of similar signals which can be abbreviated */
+		// Check if this is a sequence of similar signals which can be abbreviated
 		if (i >= 1 && i < size() - 1) {
 			if (prevSig->isNext(*sig)) {
 				abbrev = true;

@@ -1,10 +1,9 @@
-/** Node-type: CAN bus
+/* Node-type: CAN bus
  *
- * @file
- * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -15,7 +14,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 union SignalData;
 
@@ -26,12 +25,12 @@ struct can_signal {
 };
 
 struct can {
-	/* Settings */
+	// Settings
 	char *interface_name;
 	struct can_signal *in;
 	struct can_signal *out;
 
-	/* States */
+	// States
 	int socket;
 	union SignalData *sample_buf;
 	size_t sample_buf_num;

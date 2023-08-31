@@ -1,10 +1,9 @@
-/** The super node object holding the state of the application.
+/* The super node object holding the state of the application.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -32,10 +31,10 @@ extern "C" {
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 
-/** Global configuration */
+// Global configuration
 class SuperNode {
 
 protected:
@@ -57,40 +56,40 @@ protected:
 	Web web;
 #endif
 
-	int priority;		/**< Process priority (lower is better) */
-	int affinity;		/**< Process affinity of the server and all created threads */
-	int hugepages;		/**< Number of hugepages to reserve. */
-	double statsRate;	/**< Rate at which we display the periodic stats. */
+	int priority;		// Process priority (lower is better)
+	int affinity;		// Process affinity of the server and all created threads
+	int hugepages;		// Number of hugepages to reserve.
+	double statsRate;	// Rate at which we display the periodic stats.
 
-	struct Task task;	/**< Task for periodic stats output */
+	struct Task task;	// Task for periodic stats output
 
-	uuid_t uuid;		/**< A globally unique identifier of the instance */
+	uuid_t uuid;		// A globally unique identifier of the instance
 
-	struct timespec started;	/**< The time at which the instance has been started. */
+	struct timespec started;	// The time at which the instance has been started.
 
-	std::string uri;	/**< URI of configuration */
+	std::string uri;	// URI of configuration
 
-	Config config;		/** The configuration file. */
+	Config config;		// The configuration file.
 
 public:
-	/** Inititalize configuration object before parsing the configuration. */
+	// Inititalize configuration object before parsing the configuration.
 	SuperNode();
 
 	int init();
 
-	/** Wrapper for parse() which loads the config first. */
+	// Wrapper for parse() which loads the config first.
 	void parse(const std::string &name);
 
-	/** Parse super-node configuration.
+	/* Parse super-node configuration.
 	 *
 	 * @param json A libjansson object which contains the configuration.
 	 */
 	void parse(json_t *json);
 
-	/** Check validity of super node configuration. */
+	// Check validity of super node configuration.
 	void check();
 
-	/** Initialize after parsing the configuration file. */
+	// Initialize after parsing the configuration file.
 	void prepare();
 	void start();
 	void stop();
@@ -113,7 +112,7 @@ public:
 	graph_t * getGraph();
 #endif
 
-	/** Run periodic hooks of this super node. */
+	// Run periodic hooks of this super node.
 	int periodic();
 
 	void setState(enum State st)
@@ -190,7 +189,7 @@ public:
 		return logger;
 	}
 
-	/** Destroy configuration object. */
+	// Destroy configuration object.
 	~SuperNode();
 };
 

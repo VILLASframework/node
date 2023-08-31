@@ -1,10 +1,9 @@
-/** REST-API-releated functions.
+/* REST-API-releated functions.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -28,7 +27,7 @@ namespace api {
 
 const int version = 2;
 
-/* Forward declarations */
+// Forward declarations
 class Session;
 class Response;
 class Request;
@@ -75,7 +74,7 @@ public:
 
 } // namespace api
 
-/* Forward declarations */
+// Forward declarations
 class SuperNode;
 
 class Api {
@@ -86,7 +85,7 @@ protected:
 	enum State state;
 
 	std::thread thread;
-	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */
+	std::atomic<bool> running;	// Atomic flag for signalizing thread termination.
 
 	SuperNode *super_node;
 
@@ -94,7 +93,7 @@ protected:
 	void worker();
 
 public:
-	/** Initialize the API.
+	/* Initialize the API.
 	 *
 	 * Save references to list of paths / nodes for command execution.
 	 */
@@ -109,8 +108,8 @@ public:
 		return super_node;
 	}
 
-	std::list<api::Session *> sessions;		/**< List of currently active connections */
-	villas::QueueSignalled<api::Session *> pending;	/**< A queue of api_sessions which have pending requests. */
+	std::list<api::Session *> sessions;		// List of currently active connections
+	villas::QueueSignalled<api::Session *> pending;	// A queue of api_sessions which have pending requests.
 };
 
 } // namespace node

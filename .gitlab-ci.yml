@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 0
@@ -19,7 +22,6 @@ stages:
 - latest
 
 # Stage: prepare
-##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
 prepare:docker:
@@ -47,7 +49,6 @@ prepare:docker:
   - docker
 
 # Stage: build
-##############################################################################
 
 build:source:
   stage: build
@@ -86,7 +87,6 @@ build:source:
   - docker
 
 # Stage: test
-##############################################################################
 
 test:flake8:
   stage: test
@@ -164,8 +164,15 @@ test:integration:
   - job: "build:source: [fedora]"
     artifacts: true
 
+test:reuse:
+  stage: test
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+  - reuse lint
+
 # Stage: packaging
-##############################################################################
 
 pkg:docker:
   stage: packaging
@@ -214,7 +221,6 @@ pkg:docker:
   needs: []
 
 # Stage: deploy
-##############################################################################
 
 deploy:docker:
   stage: deploy
@@ -265,7 +271,7 @@ deploy:docker-dev-vscode:
   - job: "prepare:docker: [fedora, dev-vscode, ${DOCKER_IMAGE}/dev-vscode]"
 
 # Stage: latest
-##############################################################################
+
 
 .latest:docker:latest: &deploy_latest_docker
   stage: latest

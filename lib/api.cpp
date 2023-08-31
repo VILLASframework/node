@@ -1,9 +1,9 @@
-/** REST-API-releated functions.
+/* REST-API-releated functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/api.hpp>
 #include <villas/web.hpp>
@@ -64,7 +64,7 @@ void Api::stop()
 	}
 
 	running = false;
-	pending.push(nullptr); /* unblock thread */
+	pending.push(nullptr); // unblock thread
 	thread.join();
 
 	state = State::STOPPED;
@@ -74,11 +74,11 @@ void Api::worker()
 {
 	logger->info("Started worker");
 
-	/* Process pending requests */
+	// Process pending requests
 	while (running) {
 		Session *s = pending.pop();
 		if (s) {
-			/* Check that the session is still alive */
+			// Check that the session is still alive
 			auto it = std::find(sessions.begin(), sessions.end(), s);
 			if (it != sessions.end())
 				s->execute();

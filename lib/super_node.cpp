@@ -1,9 +1,9 @@
-/** The super node object holding the state of the application.
+/* The super node object holding the state of the application.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <algorithm>
 #include <cstdlib>
@@ -56,12 +56,12 @@ SuperNode::SuperNode() :
 	if (ret)
 		throw SystemError("Failed to determine hostname");
 
-	/* Default UUID is derived from hostname */
+	// Default UUID is derived from hostname
 	uuid::generateFromString(uuid, hname);
 
 #ifdef WITH_NETEM
-	kernel::nl::init(); /* Fill link cache */
-#endif /* WITH_NETEM */
+	kernel::nl::init(); // Fill link cache
+#endif // WITH_NETEM
 
 	logger = logging.get("super_node");
 }
@@ -116,12 +116,12 @@ void SuperNode::parse(json_t *root)
 #ifdef WITH_WEB
 	if (json_http)
 		web.parse(json_http);
-#endif /* WITH_WEB */
+#endif // WITH_WEB
 
 	if (json_logging)
 		logging.parse(json_logging);
 
-	/* Parse nodes */
+	// Parse nodes
 	if (json_nodes) {
 		if (!json_is_object(json_nodes))
 			throw ConfigError(json_nodes, "node-config-nodes", "Setting 'nodes' must be a group with node name => group mappings.");
@@ -167,7 +167,7 @@ void SuperNode::parse(json_t *root)
 		}
 	}
 
-	/* Parse paths */
+	// Parse paths
 	if (json_paths) {
 		if (!json_is_array(json_paths))
 			logger->warn("Setting 'paths' must be a list of objects");
@@ -184,12 +184,12 @@ parse:			auto *p = new Path();
 			paths.push_back(p);
 
 			if (p->isReversed()) {
-				/* Only simple paths can be reversed */
+				// Only simple paths can be reversed
 				ret = p->isSimple();
 				if (!ret)
 					throw RuntimeError("Complex paths can not be reversed!");
 
-				/* Parse a second time with in/out reversed */
+				// Parse a second time with in/out reversed
 				json_path = json_copy(json_path);
 
 				json_t *json_in = json_object_get(json_path, "in");
@@ -256,7 +256,7 @@ void SuperNode::startInterfaces()
 		if (ret)
 			throw RuntimeError("Failed to start network interface: {}", i->getName());
 	}
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 }
 
 void SuperNode::startNodes()
@@ -408,7 +408,7 @@ void SuperNode::stopInterfaces()
 		if (ret)
 			throw RuntimeError("Failed to stop interface: {}", i->getName());
 	}
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 }
 
 void SuperNode::stop()
@@ -467,7 +467,7 @@ int SuperNode::periodic()
 
 #ifdef WITH_HOOKS
 			p->hooks.periodic();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 		}
 	}
 
@@ -476,7 +476,7 @@ int SuperNode::periodic()
 #ifdef WITH_HOOKS
 			n->in.hooks.periodic();
 			n->out.hooks.periodic();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 		}
 	}
 
@@ -540,4 +540,4 @@ graph_t * SuperNode::getGraph()
 	return g;
 
 }
-#endif /* WITH_GRAPHVIZ */
+#endif // WITH_GRAPHVIZ

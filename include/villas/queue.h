@@ -1,11 +1,11 @@
-/** Lock-free Multiple-Producer Multiple-consumer (MPMC) queue.
+/* Lock-free Multiple-Producer Multiple-consumer (MPMC) queue.
  *
  * Based on Dmitry Vyukov#s Bounded MPMC queue:
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2021, Steffen Vogel
- * @license BSD 2-Clause License
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2021 Steffen Vogel
+ * SPDX-License-Identifier: BSD-2-Clause
  *
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -50,36 +50,36 @@ typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct CQueue_cell {
 	std::atomic<size_t> sequence;
-	off_t data_off; /**< Pointer relative to the queue struct */
+	off_t data_off; // Pointer relative to the queue struct
 };
 
-/** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
+// A lock-free multiple-producer, multiple-consumer (MPMC) queue.
 struct CQueue {
 	std::atomic<enum State> state;
 
-	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
+	cacheline_pad_t _pad0;	// Shared area: all threads read
 
 	size_t buffer_mask;
-	off_t buffer_off;	/**< Relative pointer to struct CQueue_cell[] */
+	off_t buffer_off;	// Relative pointer to struct CQueue_cell[]
 
-	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
+	cacheline_pad_t	_pad1;	// Producer area: only producers read & write
 
-	std::atomic<size_t>	tail;	/**< Queue tail pointer */
+	std::atomic<size_t>	tail;	// Queue tail pointer
 
-	cacheline_pad_t	_pad2;	/**< Consumer area: only consumers read & write */
+	cacheline_pad_t	_pad2;	// Consumer area: only consumers read & write
 
-	std::atomic<size_t>	head;	/**< Queue head pointer */
+	std::atomic<size_t>	head;	// Queue head pointer
 
-	cacheline_pad_t	_pad3;	/**< @todo Why needed? */
+	cacheline_pad_t	_pad3;	// @todo Why needed?
 };
 
-/** Initialize MPMC queue */
+// Initialize MPMC queue
 int queue_init(struct CQueue *q, size_t size, struct memory::Type *mem = memory::default_type) __attribute__ ((warn_unused_result));
 
-/** Desroy MPMC queue and release memory */
+// Desroy MPMC queue and release memory
 int queue_destroy(struct CQueue *q) __attribute__ ((warn_unused_result));
 
-/** Return estimation of current queue usage.
+/* Return estimation of current queue usage.
  *
  * Note: This is only an estimation and not accurate as long other
  *       threads are performing operations.
@@ -90,14 +90,14 @@ int queue_push(struct CQueue *q, void *ptr);
 
 int queue_pull(struct CQueue *q, void **ptr);
 
-/** Enqueue up to \p cnt pointers of the \p ptr array into the queue.
+/* Enqueue up to \p cnt pointers of the \p ptr array into the queue.
  *
  * @return The number of pointers actually enqueued.
  *         This number can be smaller then \p cnt in case the queue is filled.
  */
 int queue_push_many(struct CQueue *q, void *ptr[], size_t cnt);
 
-/** Dequeue up to \p cnt pointers from the queue and place them into the \p ptr array.
+/* Dequeue up to \p cnt pointers from the queue and place them into the \p ptr array.
  *
  * @return The number of pointers actually dequeued.
  *         This number can be smaller than \p cnt in case the queue contained less than
@@ -105,7 +105,7 @@ int queue_push_many(struct CQueue *q, void *ptr[], size_t cnt);
  */
 int queue_pull_many(struct CQueue *q, void *ptr[], size_t cnt);
 
-/** Closes the queue, causing following writes to fail and following reads (after
+/* Closes the queue, causing following writes to fail and following reads (after
  * the queue is empty) to fail.
  *
  * @return 0 on success.

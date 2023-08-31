@@ -1,10 +1,10 @@
-/** Node type: Real-time Protocol (RTP)
+/* Node type: Real-time Protocol (RTP)
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Marvin Klimke <marvin.klimke@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cinttypes>
 #include <pthread.h>
@@ -34,17 +34,20 @@ extern "C" {
 
 #ifdef WITH_NETEM
   #include <villas/kernel/if.hpp>
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
-static pthread_t re_pthread;
+static
+pthread_t re_pthread;
 
 using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
 using namespace villas::kernel;
 
-static NodeCompatType p;
-static NodeCompatFactory ncp(&p);
+static
+NodeCompatType p;
+static
+NodeCompatFactory ncp(&p);
 
 static
 int rtp_aimd(NodeCompat *n, double loss_frac)
@@ -82,7 +85,7 @@ int villas::node::rtp_init(NodeCompat *n)
 
 	n->logger = villas::logging.get("node:rtp");
 
-	/* Default values */
+	// Default values
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
 	r->aimd.Kp = 1;
@@ -140,7 +143,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 	if (ret)
 		throw ConfigError(json, err, "node-config-node-rtp");
 
-	/* AIMD */
+	// AIMD
 	if (json_aimd) {
 		ret = json_unpack_ex(json_aimd, &err, 0, "{ s?: F, s?: F, s?: F, s?: F, s?: F, s?: F, s?: F, s?: F, s?: s, s?: s }",
 			"a", &r->aimd.a,
@@ -157,7 +160,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 		if (ret)
 			throw ConfigError(json_aimd, err, "node-config-node-rtp-aimd");
 
-		/* AIMD Hook type */
+		// AIMD Hook type
 		if (!r->rtcp.enabled)
 			r->aimd.rate_hook_type = RTPHookType::DISABLED;
 		else if (hook_type) {
@@ -175,7 +178,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 	if (log)
 		r->aimd.log_filename = strdup(log);
 
-	/* Format */
+	// Format
 	if (r->formatter)
 		delete r->formatter;
 	r->formatter = json_format
@@ -184,29 +187,29 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 	if (!r->formatter)
 		throw ConfigError(json_format, "node-config-node-rtp-format", "Invalid format configuration");
 
-	/* Remote address */
+	// Remote address
 	ret = sa_decode(&r->out.saddr_rtp, remote, strlen(remote));
 	if (ret)
 		throw RuntimeError("Failed to resolve remote address '{}': {}", remote, strerror(ret));
 
-	/* Assign even port number to RTP socket, next odd number to RTCP socket */
+	// Assign even port number to RTP socket, next odd number to RTCP socket
 	port = sa_port(&r->out.saddr_rtp) & ~1;
 	sa_set_sa(&r->out.saddr_rtcp, &r->out.saddr_rtp.u.sa);
 	sa_set_port(&r->out.saddr_rtp, port);
 	sa_set_port(&r->out.saddr_rtcp, port+1);
 
-	/* Local address */
+	// Local address
 	ret = sa_decode(&r->in.saddr_rtp, local, strlen(local));
 	if (ret)
 		throw RuntimeError("Failed to resolve local address '{}': {}", local, strerror(ret));
 
-	/* Assign even port number to RTP socket, next odd number to RTCP socket */
+	// Assign even port number to RTP socket, next odd number to RTCP socket
 	port = sa_port(&r->in.saddr_rtp) & ~1;
 	sa_set_sa(&r->in.saddr_rtcp, &r->in.saddr_rtp.u.sa);
 	sa_set_port(&r->in.saddr_rtp, port);
 	sa_set_port(&r->in.saddr_rtcp, port+1);
 
-	/** @todo parse * in addresses */
+	/* @todo parse * in addresses */
 
 	return 0;
 }
@@ -260,7 +263,7 @@ void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf
 	auto *n = (NodeCompat *) arg;
 	auto *r = n->getData<struct rtp>();
 
-	/* source, header not used */
+	// source, header not used
 	(void) src;
 	(void) hdr;
 
@@ -279,7 +282,7 @@ void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	auto *n = (NodeCompat *) arg;
 	auto *r = n->getData<struct rtp>();
 
-	/* source not used */
+	// source not used
 	(void) src;
 
 	n->logger->debug("RTCP: recv {}", rtcp_type_name((enum rtcp_type) msg->hdr.pt));
@@ -313,15 +316,15 @@ int villas::node::rtp_start(NodeCompat *n)
 	int ret;
 	auto *r = n->getData<struct rtp>();
 
-	/* Initialize queue */
+	// Initialize queue
 	ret = queue_signalled_init(&r->recv_queue, 1024, &memory::heap);
 	if (ret)
 		return ret;
 
-	/* Initialize IO */
+	// Initialize IO
 	r->formatter->start(n->getInputSignals(false), ~(int) SampleFlags::HAS_OFFSET);
 
-	/* Initialize memory buffer for sending */
+	// Initialize memory buffer for sending
 	r->send_mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN);
 	if (!r->send_mb)
 		return -1;
@@ -330,7 +333,7 @@ int villas::node::rtp_start(NodeCompat *n)
 	if (ret)
 		return -1;
 
-	/* Initialize AIMD hook */
+	// Initialize AIMD hook
 	if (r->aimd.rate_hook_type != RTPHookType::DISABLED) {
 #ifdef WITH_HOOKS
 		switch (r->aimd.rate_hook_type) {
@@ -365,11 +368,11 @@ int villas::node::rtp_start(NodeCompat *n)
 
 	r->aimd.rate_pid = villas::dsp::PID(dt, r->aimd.rate_source, r->aimd.rate_min, r->aimd.Kp, r->aimd.Ki, r->aimd.Kd);
 
-	/* Initialize RTP socket */
+	// Initialize RTP socket
 	uint16_t port = sa_port(&r->in.saddr_rtp) & ~1;
 	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
-	/* Start RTCP session */
+	// Start RTCP session
 	if (r->rtcp.enabled) {
 		r->rtcp.num_rrs = 0;
 
@@ -381,7 +384,7 @@ int villas::node::rtp_start(NodeCompat *n)
 			time_t ts = time(nullptr);
 			struct tm tm;
 
-			/* Convert time */
+			// Convert time
 			gmtime_r(&ts, &tm);
 			strftime(fn, sizeof(fn), r->aimd.log_filename, &tm);
 
@@ -449,12 +452,12 @@ int villas::node::rtp_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
-	/* Initialize library */
+	// Initialize library
 	ret = libre_init();
 	if (ret)
 		throw RuntimeError("Error initializing libre");
 
-	/* Add worker thread */
+	// Add worker thread
 	ret = pthread_create(&re_pthread, nullptr, (pthread_start_routine) re_main, nullptr);
 	if (ret)
 		throw RuntimeError("Error creating rtp node type pthread");
@@ -481,7 +484,7 @@ int villas::node::rtp_type_start(villas::node::SuperNode *sn)
 			j->addNode(n);
 		}
 	}
-#endif /* WITH_NETEM */
+#endif // WITH_NETEM
 
 	return 0;
 }
@@ -490,7 +493,7 @@ int villas::node::rtp_type_stop()
 {
 	int ret;
 
-	/* Join worker thread */
+	// Join worker thread
 	pthread_kill(re_pthread, SIGUSR1);
 	ret = pthread_join(re_pthread, nullptr);
 	if (ret)
@@ -507,12 +510,12 @@ int villas::node::rtp_read(NodeCompat *n, struct Sample * const smps[], unsigned
 	auto *r = n->getData<struct rtp>();
 	struct mbuf *mb;
 
-	/* Get data from queue */
+	// Get data from queue
 	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
 	if (ret < 0)
 		throw RuntimeError("Failed to pull from queue");
 
-	/* Unpack data */
+	// Unpack data
 	ret = r->formatter->sscan((char *) mb->buf + mb->pos, mbuf_get_left(mb), nullptr, smps, cnt);
 
 	mem_deref(mb);
@@ -548,7 +551,7 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 
 	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 
-	/* Send dataset */
+	// Send dataset
 	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, 0, r->send_mb);
 	if (ret)
 		throw RuntimeError("Error from rtp_send, reason: {}", ret);
@@ -565,8 +568,8 @@ int villas::node::rtp_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name			= "rtp";
 #ifdef WITH_NETEM
 	p.description		= "real-time transport protocol (libre, libnl3 netem support)";

@@ -1,12 +1,11 @@
-/** Main routine of AsyncIP.
+/* Main routine of AsyncIP.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-/* Standard ANSI C headers needed for this program */
+// Standard ANSI C headers needed for this program
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -24,7 +23,7 @@
 #include "OpalPrint.h"
 #include "AsyncApi.h"
 
-/* This is the message format */
+// This is the message format
 #include "config.h"
 #include "socket.h"
 #include "utils.h"
@@ -40,15 +39,16 @@
 #define ASYNC_SHMEM_SIZE	atoi(argv[2])
 #define PRINT_SHMEM_NAME	argv[3]
 
-/* Global Variables */
+// Global Variables
 struct socket skt;
 
-static void * SendToIPPort(void *arg)
+static
+void * SendToIPPort(void *arg)
 {
 	unsigned int ModelState, SendID, Sequence = 0;
 	int nbSend = 0, ret, cnt, len;
 
-	/* Data from OPAL-RT model */
+	// Data from OPAL-RT model
 	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
@@ -69,7 +69,7 @@ static void * SendToIPPort(void *arg)
 	}
 
 	do {
-		/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
+		// This call unblocks when the 'Data Ready' line of a send icon is asserted.
 		ret = OpalWaitForAsyncSendRequest(&SendID);
 		if (ret != EOK) {
 			ModelState = OpalGetAsyncModelState();
@@ -81,10 +81,10 @@ static void * SendToIPPort(void *arg)
 			continue;
 		}
 
-		/* No errors encountered yet */
+		// No errors encountered yet
 		OpalSetAsyncSendIconError(0, SendID);
 
-		/* Get the size of the data being sent by the unblocking SendID */
+		// Get the size of the data being sent by the unblocking SendID
 		OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
 		cnt = mdldata_size / sizeof(double);
 		if (cnt > MAX_VALUES) {
@@ -93,11 +93,11 @@ static void * SendToIPPort(void *arg)
 			cnt = MAX_VALUES;
 		}
 
-		/* Read data from the model */
+		// Read data from the model
 		OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 
 #if PROTOCOL == VILLAS
-		/* Get current time */
+		// Get current time
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
 
@@ -128,7 +128,7 @@ static void * SendToIPPort(void *arg)
   #error Unknown protocol
 #endif
 
-		/* Perform the actual write to the ip port */
+		// Perform the actual write to the ip port
 		ret = socket_send(&skt, (char *) msg, len);
 		if (ret < 0)
 			OpalSetAsyncSendIconError(errno, SendID);
@@ -153,12 +153,13 @@ static void * SendToIPPort(void *arg)
 	return NULL;
 }
 
-static void * RecvFromIPPort(void *arg)
+static
+void * RecvFromIPPort(void *arg)
 {
 	unsigned int ModelState, RecvID;
 	int nbRecv = 0, ret, cnt;
 
-	/* Data from OPAL-RT model */
+	// Data from OPAL-RT model
 	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
@@ -180,7 +181,7 @@ static void * RecvFromIPPort(void *arg)
 		return NULL;
 	}
 
-	/* Get list of RecvIds */
+	// Get list of RecvIds
 	unsigned int RecvIDs[nbRecv];
 	ret = OpalGetAsyncRecvIDList(RecvIDs, sizeof(RecvIDs));
 	if (ret != EOK) {
@@ -189,14 +190,14 @@ static void * RecvFromIPPort(void *arg)
 	}
 
 	do {
-		/* Receive message */
+		// Receive message
 		ret  = socket_recv(&skt, (char *) msg, sizeof(buf), 1.0);
 		if (ret < 1) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
-				if (ret ==  0) /* timeout, so we continue silently */
+				if (ret ==  0) // timeout, so we continue silently
 					OpalPrint("%s: Timeout while waiting for data\n", PROGNAME, errno);
-				if (ret == -1) /* a more serious error, so we print it */
+				if (ret == -1) // a more serious error, so we print it
 					OpalPrint("%s: Error %d while waiting for data\n", PROGNAME, errno);
 
 				continue;
@@ -211,7 +212,7 @@ static void * RecvFromIPPort(void *arg)
 #else
   #error Unknown protocol
 #endif
-		/* Check if this RecvID exists */
+		// Check if this RecvID exists
 		for (int i = 0; i < nbRecv; i++) {
 			if (RecvIDs[i] == RecvID)
 				goto found;
@@ -220,7 +221,7 @@ static void * RecvFromIPPort(void *arg)
 		OpalPrint("%s: Received message with non-existent RecvID=%d. Changing to RecvID=%d...\n", PROGNAME, RecvID, RecvIDs[0]);
 		RecvID = RecvIDs[0];
 
-found:		/* Get the number of signals to send back to the model */
+found:		// Get the number of signals to send back to the model
 		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 		cnt = mdldata_size / sizeof(double);
 		if (cnt > MAX_VALUES) {
@@ -246,8 +247,8 @@ found:		/* Get the number of signals to send back to the model */
 		for (int i = 0; i < msg->length; i++)
 			mdldata[i] = (double) msg->data[i].f;
 
-		/* Update OPAL model */
-		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	/* Set the Status to the message ID */
+		// Update OPAL model
+		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	// Set the Status to the message ID
 #elif PROTOCOL == GTNET_SKT
 		uint32_t *imsg = (uint32_t *) msg;
 		for (int i = 0; i < cnt; i++) {
@@ -258,7 +259,7 @@ found:		/* Get the number of signals to send back to the model */
   #error Unknown protocol
 #endif
 
-		OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
+		OpalSetAsyncRecvIconError(0, RecvID);			// Set the Error to 0
 
 		OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
 
@@ -282,20 +283,20 @@ int main(int argc, char *argv[])
 
 	OpalPrint("%s: This is %s client version %s\n", PROGNAME, PROGNAME, VERSION);
 
-	/* Check for the proper arguments to the program */
+	// Check for the proper arguments to the program
 	if (argc < 4) {
 		printf("Invalid Arguments: 1-AsyncShmemName 2-AsyncShmemSize 3-PrintShmemName\n");
 		exit(0);
 	}
 
-	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
+	// Enable the OpalPrint function. This prints to the OpalDisplay.
 	ret = OpalSystemCtrl_Register(PRINT_SHMEM_NAME);
 	if (ret != EOK) {
 		printf("%s: ERROR: OpalPrint() access not available\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
 
-	/* Open Share Memory created by the model. */
+	// Open Share Memory created by the model.
 	ret = OpalOpenAsyncMem(ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Model shared memory not available\n", PROGNAME);
@@ -314,14 +315,14 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	/* Initialize socket */
+	// Initialize socket
 	ret = socket_init(&skt, IconCtrlStruct);
 	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Failed to create socket.\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
 
-	/* Start send/receive threads */
+	// Start send/receive threads
 	ret = pthread_create(&tid_send, NULL, SendToIPPort, NULL);
 	if (ret < 0)
 		OpalPrint("%s: ERROR: Could not create thread (SendToIPPort), errno %d\n", PROGNAME, errno);
@@ -330,7 +331,7 @@ int main(int argc, char *argv[])
 	if (ret < 0)
 		OpalPrint("%s: ERROR: Could not create thread (RecvFromIPPort), errno %d\n", PROGNAME, errno);
 
-	/* Wait for both threads to finish */
+	// Wait for both threads to finish
 	ret = pthread_join(tid_send, NULL);
 	if (ret)
 		OpalPrint("%s: ERROR: pthread_join (SendToIPPort), errno %d\n", PROGNAME, ret);
@@ -339,7 +340,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		OpalPrint("%s: ERROR: pthread_join (RecvFromIPPort), errno %d\n", PROGNAME, ret);
 
-	/* Close the ip port and shared memories */
+	// Close the ip port and shared memories
 	socket_close(&skt, IconCtrlStruct);
 
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);

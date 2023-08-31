@@ -1,10 +1,9 @@
-/** Redis node-type
+/* Redis node-type
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -79,10 +78,10 @@ struct redis {
 
 	std::string key;
 
-	bool notify;			/**< Use Redis Keyspace notifications to listen for updates. */
+	bool notify;			// Use Redis Keyspace notifications to listen for updates.
 
-	struct Task task;		/**< Timer for periodic events. */
-	double rate;			/**< Rate for polling key updates if keyspace notifications are disabled. */
+	struct Task task;		// Timer for periodic events.
+	double rate;			// Rate for polling key updates if keyspace notifications are disabled.
 
 	Format *formatter;
 

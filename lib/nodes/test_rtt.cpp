@@ -1,9 +1,9 @@
-/** Node type: Node-type for testing Round-trip Time.
+/* Node type: Node-type for testing Round-trip Time.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 #include <cstring>
@@ -23,7 +23,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
 static
 int test_rtt_case_start(NodeCompat *n, int id)
@@ -33,12 +34,12 @@ int test_rtt_case_start(NodeCompat *n, int id)
 
 	n->logger->info("Starting case #{}: filename={}, rate={}, values={}, limit={}", t->current, c->filename_formatted, c->rate, c->values, c->limit);
 
-	/* Open file */
+	// Open file
 	t->stream = fopen(c->filename_formatted, "a+");
 	if (!t->stream)
 		return -1;
 
-	/* Start timer. */
+	// Start timer
 	t->task.setRate(c->rate);
 
 	t->counter = 0;
@@ -53,7 +54,7 @@ int test_rtt_case_stop(NodeCompat *n, int id)
 	int ret;
 	auto *t = n->getData<struct test_rtt>();
 
-	/* Stop timer */
+	// Stop timer
 	t->task.stop();
 
 	ret = fclose(t->stream);
@@ -83,7 +84,7 @@ int villas::node::test_rtt_prepare(NodeCompat *n)
 
 	unsigned max_values = 0;
 
-	/* Take current for time for test case prefix */
+	// Take current for time for test case prefix
 	time_t ts = time(nullptr);
 	struct tm tm;
 	gmtime_r(&ts, &tm);
@@ -124,7 +125,7 @@ int villas::node::test_rtt_parse(NodeCompat *n, json_t *json)
 
 	t->cooldown = 0;
 
-	/* Generate list of test cases */
+	// Generate list of test cases
 	ret = list_init(&t->cases);
 	if (ret)
 		return ret;
@@ -142,7 +143,7 @@ int villas::node::test_rtt_parse(NodeCompat *n, json_t *json)
 	t->output = strdup(output);
 	t->prefix = strdup(prefix ? prefix : n->getNameShort().c_str());
 
-	/* Initialize IO module */
+	// Initialize IO module
 	if (!json_format)
 		json_format = json_string("villas.binary");
 
@@ -150,13 +151,13 @@ int villas::node::test_rtt_parse(NodeCompat *n, json_t *json)
 	if (!t->formatter)
 		throw ConfigError(json, "node-config-node-test-rtt-format", "Invalid value for setting 'format'");
 
-	/* Construct List of test cases */
+	// Construct List of test cases
 	if (!json_is_array(json_cases))
 		throw ConfigError(json_cases, "node-config-node-test-rtt-format", "The 'cases' setting must be an array.");
 
 	json_array_foreach(json_cases, i, json_case) {
 		int limit = -1;
-		double duration = -1; /* in secs */
+		double duration = -1; // in secs
 
 		ret = json_unpack_ex(json_case, &err, 0, "{ s: o, s: o, s?: i, s?: F }",
 			"rates", &json_rates,
@@ -219,7 +220,7 @@ int villas::node::test_rtt_parse(NodeCompat *n, json_t *json)
 				else if (duration > 0)
 					c->limit = duration * c->rate;
 				else
-					c->limit = 1000; /* default value */
+					c->limit = 1000; // default value
 
 				c->filename = strf("%s/%s_values%d_rate%.0f.log", t->output, t->prefix, c->values, c->rate);
 
@@ -279,7 +280,7 @@ int villas::node::test_rtt_start(NodeCompat *n)
 	auto *t = n->getData<struct test_rtt>();
 	struct test_rtt_case *c = (struct test_rtt_case *) list_first(&t->cases);
 
-	/* Create folder for results if not present */
+	// Create folder for results if not present
 	ret = stat(t->output, &st);
 	if (ret || !S_ISDIR(st.st_mode)) {
 		ret = mkdir(t->output, 0777);
@@ -321,7 +322,7 @@ int villas::node::test_rtt_read(NodeCompat *n, struct Sample * const smps[], uns
 
 	auto *t = n->getData<struct test_rtt>();
 
-	/* Handle start/stop of new cases */
+	// Handle start/stop of new cases
 	if (t->counter == -1) {
 		if (t->current < 0) {
 			t->current = 0;
@@ -350,7 +351,7 @@ int villas::node::test_rtt_read(NodeCompat *n, struct Sample * const smps[], uns
 
 	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
-	/* Wait */
+	// Wait
 	steps = t->task.wait();
 	if (steps > 1)
 		n->logger->warn("Skipped {} steps", steps - 1);
@@ -370,7 +371,7 @@ int villas::node::test_rtt_read(NodeCompat *n, struct Sample * const smps[], uns
 	else {
 		struct timespec now = time_now();
 
-		/* Prepare samples */
+		// Prepare samples
 		for (i = 0; i < cnt; i++) {
 			smps[i]->length = c->values;
 			smps[i]->sequence = t->counter;
@@ -416,8 +417,8 @@ int villas::node::test_rtt_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "test_rtt";
 	p.description	= "Test round-trip time with loopback";
 	p.vectorize	= 0;
@@ -433,5 +434,6 @@ static void register_plugin() {
 	p.read		= test_rtt_read;
 	p.write		= test_rtt_write;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

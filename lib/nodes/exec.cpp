@@ -1,9 +1,9 @@
-/** Node-type for subprocess node-types.
+/* Node-type for subprocess node-types.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <string>
 #include <unistd.h>
@@ -86,7 +86,7 @@ int ExecNode::parse(json_t *json)
 	}
 
 	if (json_env) {
-		/* obj is a JSON object */
+		// obj is a JSON object
 		const char *key;
 		json_t *json_value;
 
@@ -98,7 +98,7 @@ int ExecNode::parse(json_t *json)
 		}
 	}
 
-	/* Format */
+	// Format
 	auto *fmt = json_format
 			? FormatFactory::make(json_format)
 			: FormatFactory::make("villas.human");
@@ -116,7 +116,7 @@ int ExecNode::prepare()
 {
 	assert(state == State::CHECKED);
 
-	/* Initialize IO */
+	// Initialize IO
 	formatter->start(getInputSignals(false));
 
 	return Node::prepare();
@@ -124,7 +124,7 @@ int ExecNode::prepare()
 
 int ExecNode::start()
 {
-	/* Start subprocess */
+	// Start subprocess
 	proc = std::make_unique<Popen>(command, arguments, environment, working_dir, shell);
 	logger->debug("Started sub-process with pid={}", proc->getPid());
 
@@ -149,14 +149,14 @@ int ExecNode::stop()
 	if (ret)
 		return ret;
 
-	/* Stop subprocess */
+	// Stop subprocess
 	logger->debug("Killing sub-process with pid={}", proc->getPid());
 	proc->kill(SIGINT);
 
 	logger->debug("Waiting for sub-process with pid={} to terminate", proc->getPid());
 	proc->close();
 
-	/** @todo Check exit code of subprocess? */
+	// @todo Check exit code of subprocess?
 	return 0;
 }
 
@@ -206,6 +206,7 @@ std::vector<int> ExecNode::getPollFDs()
 	return { proc->getFdIn() };
 }
 
+// Register node
 static char n[] = "exec";
 static char d[] = "run subprocesses with stdin/stdout communication";
 static NodePlugin<ExecNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL> p;

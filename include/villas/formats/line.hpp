@@ -1,10 +1,9 @@
-/** Line-based formats
+/* Line-based formats
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -16,14 +15,16 @@ namespace node {
 class LineFormat : public Format {
 
 protected:
-	virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp) = 0;
-	virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp) = 0;
+	virtual
+	size_t sprintLine(char *buf, size_t len, const struct Sample *smp) = 0;
+	virtual
+	size_t sscanLine(const char *buf, size_t len, struct Sample *smp) = 0;
 
-	char delimiter;		/**< Newline delimiter. */
-	char comment;		/**< Prefix for comment lines. */
+	char delimiter;		// Newline delimiter.
+	char comment;		// Prefix for comment lines.
 
-	bool skip_first_line;	/**< While reading, the first line is skipped (header) */
-	bool print_header;	/**< Before any data, a header line is printed */
+	bool skip_first_line;	// While reading, the first line is skipped (header)
+	bool print_header;	// Before any data, a header line is printed
 
 	bool first_line_skipped;
 	bool header_printed;
@@ -39,7 +40,7 @@ public:
 		header_printed(false)
 	{ }
 
-	/** Print a header. */
+	// Print a header
 	virtual
 	void header(FILE *f, const SignalList::Ptr sigs)
 	{

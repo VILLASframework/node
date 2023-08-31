@@ -1,9 +1,9 @@
-/** Unit tests for queue
+/* Unit tests for queue
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -24,14 +24,17 @@
 using namespace villas;
 using namespace villas::node;
 
-extern void init_memory();
+extern
+void init_memory();
 
 #define SIZE	(1 << 10)
 
-static struct CQueue q;
+static
+struct CQueue q;
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
-static pthread_barrier_t barrier;
+static
+pthread_barrier_t barrier;
 #endif
 
 struct param {
@@ -45,7 +48,7 @@ struct param {
 	struct CQueue queue;
 };
 
-/** Get thread id as integer
+/* Get thread id as integer
  * In contrast to pthread_t which is an opaque type */
 #ifdef __linux__
   #include <sys/syscall.h>
@@ -63,13 +66,15 @@ uint64_t thread_get_id()
 	return -1;
 }
 
-/** Sleep, do nothing */
-__attribute__((always_inline)) static inline void nop()
+// Sleep, do nothing
+__attribute__((always_inline)) static inline
+void nop()
 {
 	__asm__("rep nop;");
 }
 
-static void * producer(void *ctx)
+static
+void * producer(void *ctx)
 {
 	int ret;
 	struct param *p = (struct param *) ctx;
@@ -77,15 +82,15 @@ static void * producer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	/* Wait for global start signal */
+	// Wait for global start signal
 	while (p->start == 0)
 		sched_yield();
 
-	/* Wait for a random time */
+	// Wait for a random time
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
-	/* Enqueue */
+	// Enqueue
 	for (intptr_t count = 0; count < p->iter_count; count++) {
 		do {
 			ret = queue_push(&p->queue, (void *) count);
@@ -96,7 +101,8 @@ static void * producer(void *ctx)
 	return nullptr;
 }
 
-static void * consumer(void *ctx)
+static
+void * consumer(void *ctx)
 {
 	int ret;
 	struct param *p = (struct param *) ctx;
@@ -104,15 +110,15 @@ static void * consumer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	/* Wait for global start signal */
+	// Wait for global start signal
 	while (p->start == 0)
 		sched_yield();
 
-	/* Wait for a random time */
+	// Wait for a random time
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
-	/* Dequeue */
+	// Dequeue
 	for (intptr_t count = 0; count < p->iter_count; count++) {
 		intptr_t ptr;
 
@@ -136,11 +142,11 @@ void * producer_consumer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	/* Wait for global start signal */
+	// Wait for global start signal
 	while (p->start == 0)
 		sched_yield();
 
-	/* Wait for a random time */
+	// Wait for a random time
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
@@ -150,13 +156,13 @@ void * producer_consumer(void *ctx)
 		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr = (void *) (iter * p->batch_size + i);
 			while (!queue_push(&p->queue, ptr))
-				sched_yield(); /* queue full, let other threads proceed */
+				sched_yield(); // queue full, let other threads proceed
 		}
 
 		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr;
 			while (!queue_pull(&p->queue, &ptr))
-				sched_yield(); /* queue empty, let other threads proceed */
+				sched_yield(); // queue empty, let other threads proceed
 		}
 	}
 
@@ -170,11 +176,11 @@ void * producer_consumer_many(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	/* Wait for global start signal */
+	// Wait for global start signal
 	while (p->start == 0)
 		sched_yield();
 
-	/* Wait for a random time */
+	// Wait for a random time
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
@@ -190,20 +196,20 @@ void * producer_consumer_many(void *ctx)
 		do {
 			pushed += queue_push_many(&p->queue, &ptrs[pushed], p->batch_size - pushed);
 			if (pushed != p->batch_size)
-				sched_yield(); /* queue full, let other threads proceed */
+				sched_yield(); // queue full, let other threads proceed
 		} while (pushed < p->batch_size);
 
 		int pulled = 0;
 		do {
 			pulled += queue_pull_many(&p->queue, &ptrs[pulled], p->batch_size - pulled);
 			if (pulled != p->batch_size)
-				sched_yield(); /* queue empty, let other threads proceed */
+				sched_yield(); // queue empty, let other threads proceed
 		} while (pulled < p->batch_size);
 	}
 
 	return 0;
 }
-#endif /* _POSIX_BARRIERS */
+#endif // _POSIX_BARRIERS
 
 Test(queue, single_threaded, .init = init_memory)
 {
@@ -212,7 +218,7 @@ Test(queue, single_threaded, .init = init_memory)
 
 	p.iter_count = 1 << 8;
 	p.queue_size = 1 << 10;
-	p.start = 1; /* we start immeadiatly */
+	p.start = 1; // we start immeadiatly
 
 	ret = queue_init(&p.queue, p.queue_size, &memory::heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
@@ -229,7 +235,8 @@ Test(queue, single_threaded, .init = init_memory)
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 ParameterizedTestParameters(queue, multi_threaded)
 {
-	static struct param params[] = {
+	static
+	struct param params[] = {
 		{
 			.iter_count = 1 << 12,
 			.queue_size = 1 << 9,
@@ -323,7 +330,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	ret = pthread_barrier_destroy(&barrier);
 	cr_assert_eq(ret, 0, "Failed to destroy barrier");
 }
-#endif /* _POSIX_BARRIERS */
+#endif // _POSIX_BARRIERS
 
 Test(queue, init_destroy, .init = init_memory)
 {
@@ -331,8 +338,8 @@ Test(queue, init_destroy, .init = init_memory)
 	struct CQueue q;
 
 	ret = queue_init(&q, 1024, &memory::heap);
-	cr_assert_eq(ret, 0); /* Should succeed */
+	cr_assert_eq(ret, 0); // Should succeed
 
 	ret = queue_destroy(&q);
-	cr_assert_eq(ret, 0); /* Should succeed */
+	cr_assert_eq(ret, 0); // Should succeed
 }

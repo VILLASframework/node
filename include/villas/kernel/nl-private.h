@@ -1,3 +1,13 @@
+/* Netlink Types (Private)
+ *
+ * Copied from: https://github.com/tgraf/libnl/blob/master/include/netlink-private/types.h
+ *
+ * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+ * SPDX-FileCopyrightText: 2003-2013 Thomas Graf <tgraf@suug.ch>
+ * SPDX-FileCopyrightText: 2013 Sassano Systems LLC <joe@sassanosystems.com>
+ */
+
 #pragma once
 
 #ifdef __cplusplus

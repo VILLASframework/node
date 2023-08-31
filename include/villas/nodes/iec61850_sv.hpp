@@ -1,10 +1,9 @@
-/** Node type: IEC 61850-9-2 (Sampled Values)
+/* Node type: IEC 61850-9-2 (Sampled Values)
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -21,7 +20,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 struct iec61850_sv {
@@ -38,7 +37,7 @@ struct iec61850_sv {
 		struct CQueueSignalled queue;
 		struct Pool pool;
 
-		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct List signals;		// Mappings of type struct iec61850_type_descriptor
 		int total_size;
 	} in;
 
@@ -56,7 +55,7 @@ struct iec61850_sv {
 		int smprate;
 		int confrev;
 
-		struct List signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct List signals;		// Mappings of type struct iec61850_type_descriptor
 		int total_size;
 	} out;
 };

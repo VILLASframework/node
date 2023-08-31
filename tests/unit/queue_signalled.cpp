@@ -1,9 +1,9 @@
-/** Unit tests for queue_signalled
+/* Unit tests for queue_signalled
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
@@ -17,7 +17,8 @@
 
 using namespace villas::node;
 
-extern void init_memory();
+extern
+void init_memory();
 
 #define NUM_ELEM 1000
 
@@ -27,7 +28,8 @@ struct param {
 	bool polled;
 };
 
-static void * producer(void * ctx)
+static
+void * producer(void * ctx)
 {
 	int ret;
 	struct CQueueSignalled *q = (struct CQueueSignalled *) ctx;
@@ -35,15 +37,16 @@ static void * producer(void * ctx)
 	for (intptr_t i = 0; i < NUM_ELEM; i++) {
 		ret = queue_signalled_push(q, (void *) i);
 		if (ret != 1)
-			return (void *) 1; /* Indicates an error to the parent thread */
+			return (void *) 1; // Indicates an error to the parent thread
 
-		usleep(0.1e-3 * 1e6); /* 1 ms */
+		usleep(0.1e-3 * 1e6); // 1 ms
 	}
 
 	return nullptr;
 }
 
-static void * consumer(void * ctx)
+static
+void * consumer(void * ctx)
 {
 	int ret;
 	struct CQueueSignalled *q = (struct CQueueSignalled *) ctx;
@@ -53,11 +56,11 @@ static void * consumer(void * ctx)
 	for (intptr_t i = 0; i < NUM_ELEM;) {
 		ret = queue_signalled_pull_many(q, data, ARRAY_LEN(data));
 		if (ret <= 0)
-			return (void *) 1; /* Indicates an error to the parent thread */
+			return (void *) 1; // Indicates an error to the parent thread
 
 		for (intptr_t j = 0; j < ret; j++, i++) {
 			if ((intptr_t) data[j] != i)
-				return (void *) 2; /* Indicates an error to the parent thread */
+				return (void *) 2; // Indicates an error to the parent thread
 		}
 	}
 
@@ -84,14 +87,13 @@ again:		ret = poll(&pfd, 1, -1);
 		else if (ret == 0)
 			goto again;
 
-
 		void *p;
 		ret = queue_signalled_pull(q, &p);
 		if (ret != 1)
-			return (void *) 1; /* Indicates an error to the parent thread */
+			return (void *) 1; // Indicates an error to the parent thread
 
 		if ((intptr_t) p != i)
-			return (void *) 2; /* Indicates an error to the parent thread */
+			return (void *) 2; // Indicates an error to the parent thread
 	}
 
 	return nullptr;
@@ -99,7 +101,8 @@ again:		ret = poll(&pfd, 1, -1);
 
 ParameterizedTestParameters(queue_signalled, simple)
 {
-	static struct param params[] = {
+	static
+	struct param params[] = {
 		{ QueueSignalledMode::AUTO,    0, false },
 		{ QueueSignalledMode::PTHREAD, 0, false },
 		{ QueueSignalledMode::PTHREAD, 0, false },

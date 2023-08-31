@@ -1,10 +1,9 @@
-/** Statistic collection.
+/* Statistic collection.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -24,7 +23,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 class Node;
 
@@ -42,20 +41,20 @@ public:
 	};
 
 	enum class Metric {
-		SMPS_SKIPPED,		/**< Counter for skipped samples due to hooks. */
-		SMPS_REORDERED,		/**< Counter for reordered samples. */
+		SMPS_SKIPPED,		// Counter for skipped samples due to hooks.
+		SMPS_REORDERED,		// Counter for reordered samples.
 
-		/* Timings */
-		GAP_SAMPLE,		/**< Histogram for inter sample timestamps (as sent by remote). */
-		GAP_RECEIVED,		/**< Histogram for inter sample arrival time (as seen by this instance). */
-		OWD,			/**< Histogram for one-way-delay (OWD) of received samples. */
-		AGE,			/**< Processing time of packets within VILLASnode. */
-		SIGNAL_COUNT,		/**< Number of signals per sample. */
+		// Timings
+		GAP_SAMPLE,		// Histogram for inter sample timestamps (as sent by remote).
+		GAP_RECEIVED,		// Histogram for inter sample arrival time (as seen by this instance).
+		OWD,			// Histogram for one-way-delay (OWD) of received samples.
+		AGE,			// Processing time of packets within VILLASnode.
+		SIGNAL_COUNT,		// Number of signals per sample.
 
-		/* RTP metrics */
-		RTP_LOSS_FRACTION,	/**< Fraction lost since last RTP SR/RR. */
-		RTP_PKTS_LOST,		/**< Cumul. no. pkts lost. */
-		RTP_JITTER		/**< Interarrival jitter. */
+		// RTP metrics
+		RTP_LOSS_FRACTION,	// Fraction lost since last RTP SR/RR.
+		RTP_PKTS_LOST,		// Cumul. no. pkts lost.
+		RTP_JITTER		// Interarrival jitter.
 	};
 
 	enum class Type {
@@ -82,9 +81,11 @@ protected:
 		enum node::SignalType signal_type;
 	};
 
-	static std::shared_ptr<Table> table;
+	static
+	std::shared_ptr<Table> table;
 
-	static void setupTable();
+	static
+	void setupTable();
 
 	Logger logger;
 
@@ -118,9 +119,12 @@ public:
 
 	const Hist & getHistogram(enum Metric sm) const;
 
-	static std::unordered_map<Metric, MetricDescription> metrics;
-	static std::unordered_map<Type, TypeDescription> types;
-	static std::vector<TableColumn> columns;
+	static
+	std::unordered_map<Metric, MetricDescription> metrics;
+	static
+	std::unordered_map<Type, TypeDescription> types;
+	static
+	std::vector<TableColumn> columns;
 };
 
 } // namespace villas

@@ -1,9 +1,9 @@
-/** Message paths.
+/* Message paths.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdint>
 #include <cstring>
@@ -47,7 +47,7 @@ void * Path::runWrapper(void *arg)
 		: p->runSingle();
 }
 
-/** Main thread function per path:
+/* Main thread function per path:
  *     read samples from source -> write samples to destinations
  *
  * This is an optimized version of runPoll() which is
@@ -58,7 +58,7 @@ void * Path::runWrapper(void *arg)
 void * Path::runSingle()
 {
 	int ret;
-	auto ps = sources.front();  /* there is only a single source */
+	auto ps = sources.front();  // there is only a single source
 
 	while (state == State::STARTED) {
 		pthread_testcancel();
@@ -74,7 +74,7 @@ void * Path::runSingle()
 	return nullptr;
 }
 
-/** Main thread function per path:
+/* Main thread function per path:
  *     read samples from source -> write samples to destinations
  *
  * This variant of the path uses poll() to listen on an event from
@@ -93,7 +93,7 @@ void * Path::runPoll()
 			auto &pfd = pfds[i];
 
 			if (pfd.revents & POLLIN) {
-				/* Timeout: re-enqueue the last sample */
+				// Timeout: re-enqueue the last sample
 				if (pfd.fd == timeout.getFD()) {
 					timeout.wait();
 
@@ -101,7 +101,7 @@ void * Path::runPoll()
 
 					PathDestination::enqueueAll(this, &last_sample, 1);
 				}
-				/* A source is ready to receive samples */
+				// A source is ready to receive samples
 				else {
 					auto ps = sources[i];
 
@@ -121,7 +121,7 @@ Path::Path() :
 	state(State::INITIALIZED),
 	mode(Mode::ANY),
 	timeout(CLOCK_MONOTONIC),
-	rate(0), /* Disabled */
+	rate(0), // Disabled
 	affinity(0),
 	enabled(true),
 	poll(-1),
@@ -146,7 +146,7 @@ void Path::startPoll()
 			if (fd < 0)
 				throw RuntimeError("Failed to get file descriptor for node {}", ps->getNode()->getName());
 
-			/* This slot is only used if it is not masked */
+			// This slot is only used if it is not masked
 			struct pollfd pfd = {
 				.fd = fd,
 				.events = POLLIN
@@ -156,7 +156,7 @@ void Path::startPoll()
 		}
 	}
 
-	/* We use the last slot for the timeout timer. */
+	// We use the last slot for the timeout timer
 	if (rate > 0) {
 		timeout.setRate(rate);
 
@@ -183,12 +183,12 @@ void Path::prepare(NodeList &nodes)
 	mask.reset();
 	signals = std::make_shared<SignalList>();
 
-	/* Prepare mappings */
+	// Prepare mappings
 	ret = mappings.prepare(nodes);
 	if (ret)
 		throw RuntimeError("Failed to prepare mappings of path: {}", this->toString());
 
-	/* Create path sources */
+	// Create path sources
 	std::map<Node *, PathSource::Ptr> psm;
 	unsigned i = 0, j = 0;
 	for (auto me : mappings) {
@@ -196,7 +196,7 @@ void Path::prepare(NodeList &nodes)
 		PathSource::Ptr ps;
 
 		if (psm.find(n) != psm.end())
-			/* We already have a path source for this mapping entry */
+			// We already have a path source for this mapping entry
 			ps = psm[n];
 		else {
 			/* Depending on weather the node belonging to this mapping is already
@@ -207,9 +207,9 @@ void Path::prepare(NodeList &nodes)
 			 */
 			bool isSecondary = n->sources.size() > 0;
 
-			/* Create new path source */
+			// Create new path source
 			if (isSecondary) {
-				/* Get master path source */
+				// Get master path source
 				auto mps = std::dynamic_pointer_cast<MasterPathSource>(n->sources.front());
 				if (!mps)
 					throw RuntimeError("Failed to find master path source");
@@ -247,7 +247,7 @@ void Path::prepare(NodeList &nodes)
 
 		SignalList::Ptr sigs = me->node->getInputSignals();
 
-		/* Update signals of path */
+		// Update signals of path
 		for (unsigned j = 0; j < (unsigned) me->length; j++) {
 			Signal::Ptr sig;
 
@@ -260,7 +260,7 @@ void Path::prepare(NodeList &nodes)
 					continue;
 				}
 			}
-			/* For other mappings we create new signal descriptors */
+			// For other mappings we create new signal descriptors
 			else {
 				sig = me->toSignal(j);
 				if (!sig)
@@ -275,7 +275,7 @@ void Path::prepare(NodeList &nodes)
 		i++;
 	}
 
-	/* Prepare path destinations */
+	// Prepare path destinations
 	int mt_cnt = 0;
 	for (auto pd : destinations) {
 		auto *pd_mt = pd->node->getMemoryType();
@@ -293,11 +293,11 @@ void Path::prepare(NodeList &nodes)
 			throw RuntimeError("Failed to prepare path destination {} of path {}", pd->node->getName(), this->toString());
 	}
 
-	/* Autodetect whether to use original sequence numbers or not */
+	// Autodetect whether to use original sequence numbers or not
 	if (original_sequence_no == -1)
 		original_sequence_no = sources.size() == 1;
 
-	/* Autodetect whether to use poll() for this path or not */
+	// Autodetect whether to use poll() for this path or not
 	if (poll == -1) {
 		if (rate > 0)
 			poll = 1;
@@ -308,18 +308,18 @@ void Path::prepare(NodeList &nodes)
 	}
 
 #ifdef WITH_HOOKS
-	/* Prepare path hooks */
+	// Prepare path hooks
 	int m = builtin
 		? (int) Hook::Flags::PATH |
 		  (int) Hook::Flags::BUILTIN
 		: 0;
 
-	/* Add internal hooks if they are not already in the list */
+	// Add internal hooks if they are not already in the list
 	hooks.prepare(signals, m, this, nullptr);
 	hooks.dump(logger, fmt::format("path {}", this->toString()));
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
-	/* Prepare pool */
+	// Prepare pool
 	auto osigs = getOutputSignals();
 	unsigned pool_size = MAX(1UL, destinations.size()) * queuelen;
 
@@ -374,7 +374,7 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 	if (rev >= 0)
 		reversed = rev != 0;
 
-	/* Optional settings */
+	// Optional settings
 	if (mode_str) {
 		if      (!strcmp(mode_str, "any"))
 			mode = Mode::ANY;
@@ -384,22 +384,22 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 			throw ConfigError(json, "node-config-path", "Invalid path mode '{}'", mode_str);
 	}
 
-	/* UUID */
+	// UUID
 	if (uuid_str) {
 		ret = uuid_parse(uuid_str, uuid);
 		if (ret)
 			throw ConfigError(json, "node-config-path-uuid", "Failed to parse UUID: {}", uuid_str);
 	}
 	else
-		/* Generate UUID from hashed config */
+		// Generate UUID from hashed config
 		uuid::generateFromJson(uuid, json, sn_uuid);
 
-	/* Input node(s) */
+	// Input node(s)
 	ret = mappings.parse(json_in);
 	if (ret)
 		throw ConfigError(json_in, "node-config-path-in", "Failed to parse input mapping of path {}", this->toString());
 
-	/* Output node(s) */
+	// Output node(s)
 	NodeList dests;
 	if (json_out) {
 		ret = dests.parse(json_out, nodes);
@@ -424,7 +424,7 @@ void Path::parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid)
 #ifdef WITH_HOOKS
 	if (json_hooks)
 		hooks.parse(json_hooks, (int) Hook::Flags::PATH, this, nullptr);
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	if (json_mask)
 		parseMask(json_mask, nodes);
@@ -471,7 +471,7 @@ void Path::check()
 
 #ifdef WITH_HOOKS
 	hooks.check();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	state = State::CHECKED;
 }
@@ -479,17 +479,17 @@ void Path::check()
 void Path::checkPrepared()
 {
 	if (poll == 0) {
-		/* Check that we do not need to multiplex between multiple sources when polling is disabled */
+		// Check that we do not need to multiplex between multiple sources when polling is disabled
 		if (sources.size() > 1)
 			throw RuntimeError("Setting 'poll' must be active if the path has more than one source");
 
-		/* Check that we do not use the fixed rate feature when polling is disabled */
+		// Check that we do not use the fixed rate feature when polling is disabled
 		if (rate > 0)
 			throw RuntimeError("Setting 'poll' must be activated when used together with setting 'rate'");
 	}
 	else {
 		if (rate <= 0) {
-			/* Check that all path sources provide a file descriptor for polling if fixed rate is disabled */
+			// Check that all path sources provide a file descriptor for polling if fixed rate is disabled
 			for (auto ps : sources) {
 				if (!(ps->getNode()->getFactory()->getFlags() & (int) NodeFactory::Flags::SUPPORTS_POLL))
 					throw RuntimeError("Node {} can not be used in polling mode with path {}", ps->getNode()->getName(), this->toString());
@@ -540,13 +540,13 @@ void Path::start()
 
 #ifdef WITH_HOOKS
 	hooks.start();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	last_sequence = 0;
 
 	received.reset();
 
-	/* We initialize the intial sample */
+	// We initialize the intial sample
 	last_sample = sample_alloc(&pool);
 	if (!last_sample)
 		throw MemoryAllocationError();
@@ -615,7 +615,7 @@ void Path::stop()
 
 #ifdef WITH_HOOKS
 	hooks.stop();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	sample_decref(last_sample);
 
@@ -679,7 +679,7 @@ SignalList::Ptr Path::getOutputSignals(bool after_hooks)
 #ifdef WITH_HOOKS
 	if (after_hooks && hooks.size() > 0)
 		return hooks.getSignals();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return signals;
 }
@@ -689,7 +689,7 @@ unsigned Path::getOutputSignalsMaxCount()
 #ifdef WITH_HOOKS
 	if (hooks.size() > 0)
 		return MAX(signals->size(), hooks.getSignalsMaxCount());
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 
 	return signals->size();
 }
@@ -701,7 +701,7 @@ json_t * Path::toJson() const
 	json_t *json_hooks = hooks.toJson();
 #else
 	json_t *json_hooks = json_array();
-#endif /* WITH_HOOKS */
+#endif // WITH_HOOKS
 	json_t *json_sources = json_array();
 	json_t *json_destinations = json_array();
 

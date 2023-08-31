@@ -1,9 +1,9 @@
-/** Node type: mqtt
+/* Node type: mqtt
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <mutex>
 #include <algorithm>
@@ -141,11 +141,11 @@ int villas::node::mqtt_init(NodeCompat *n)
 
 	m->formatter = nullptr;
 
-	/* Default values */
+	// Default values
 	m->port = 1883;
 	m->qos = 0;
 	m->retain = 0;
-	m->keepalive = 5; /* 5 second, minimum required for libmosquitto */
+	m->keepalive = 5; // 5 second, minimum required for libmosquitto
 
 	m->host = nullptr;
 	m->username = nullptr;
@@ -242,7 +242,7 @@ int villas::node::mqtt_parse(NodeCompat *n, json_t *json)
 		m->ssl.ciphers = ciphers ? strdup(ciphers) : nullptr;
 	}
 
-	/* Format */
+	// Format
 	if (m->formatter)
 		delete m->formatter;
 	m->formatter = json_format
@@ -301,7 +301,7 @@ char * villas::node::mqtt_print(NodeCompat *n)
 		m->ssl.enabled ? "yes" : "no"
 	);
 
-	/* Only show if not default */
+	// Only show if not default
 	if (m->username)
 		strcatf(&buf, ", username=%s", m->username);
 
@@ -499,10 +499,11 @@ int villas::node::mqtt_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "mqtt";
 	p.description	= "Message Queuing Telemetry Transport (libmosquitto)";
 	p.vectorize	= 0;
@@ -524,5 +525,6 @@ static void register_plugin() {
 	p.reverse	= mqtt_reverse;
 	p.poll_fds	= mqtt_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

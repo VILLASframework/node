@@ -1,14 +1,13 @@
-/** Hook functions
+/* Hook functions
  *
  * Every node or path can register hook functions which is called for every
  * processed sample. This can be used to debug the data flow, get statistics
  * or alter the sample contents.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -22,7 +21,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 class Path;
 struct Sample;
@@ -36,10 +35,10 @@ public:
 	using Ptr = std::shared_ptr<Hook>;
 
 	enum class Flags {
-		BUILTIN = (1 << 0),	/**< Should we add this hook by default to every path?. */
-		PATH = (1 << 1),	/**< This hook type is used by paths. */
-		NODE_READ = (1 << 2),	/**< This hook type is used by nodes. */
-		NODE_WRITE = (1 << 3)	/**< This hook type is used by nodes. */
+		BUILTIN = (1 << 0),	// Should we add this hook by default to every path?.
+		PATH = (1 << 1),	// This hook type is used by paths.
+		NODE_READ = (1 << 2),	// This hook type is used by nodes.
+		NODE_WRITE = (1 << 3)	// This hook type is used by nodes.
 	};
 
 	enum class Reason {
@@ -57,15 +56,15 @@ protected:
 	enum State state;
 
 	int flags;
-	unsigned priority;		/**< A priority to change the order of execution within one type of hook. */
-	bool enabled;			/**< Is this hook active? */
+	unsigned priority;		// A priority to change the order of execution within one type of hook.
+	bool enabled;			// Is this hook active?
 
 	Path *path;
 	Node *node;
 
 	SignalList::Ptr signals;
 
-	json_t *config;			/**< A JSON object containing the configuration of the hook. */
+	json_t *config;			// A JSON object containing the configuration of the hook.
 
 public:
 	Hook(Path *p, Node *n, int fl, int prio, bool en = true);
@@ -84,7 +83,7 @@ public:
 		return logger;
 	}
 
-	/** Called whenever a hook is started; before threads are created. */
+	// Called whenever a hook is started; before threads are created.
 	virtual
 	void start()
 	{
@@ -93,7 +92,7 @@ public:
 		state = State::STARTED;
 	}
 
-	/** Called whenever a hook is stopped; after threads are destoyed. */
+	// Called whenever a hook is stopped; after threads are destoyed.
 	virtual
 	void stop()
 	{
@@ -118,21 +117,21 @@ public:
 		state = State::PREPARED;
 	}
 
-	/** Called periodically. Period is set by global 'stats' option in the configuration file. */
+	// Called periodically. Period is set by global 'stats' option in the configuration file.
 	virtual
 	void periodic()
 	{
 		assert(state == State::STARTED);
 	}
 
-	/** Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
+	// Called whenever a new simulation case is started. This is detected by a sequence no equal to zero.
 	virtual
 	void restart()
 	{
 		assert(state == State::STARTED);
 	}
 
-	/** Called whenever a sample is processed. */
+	// Called whenever a sample is processed.
 	virtual
 	Reason process(struct Sample *smp)
 	{
@@ -215,9 +214,11 @@ public:
 	using Ptr = std::shared_ptr<LimitHook>;
 	using Hook::Hook;
 
-	virtual void setRate(double rate, double maxRate = -1) = 0;
+	virtual
+	void setRate(double rate, double maxRate = -1) = 0;
 
-	virtual void parse()
+	virtual
+	void parse()
 	{
 		assert(state == State::INITIALIZED);
 
@@ -246,7 +247,8 @@ protected:
 public:
 	using plugin::Plugin::Plugin;
 
-	virtual Hook::Ptr make(Path *p, Node *n) = 0;
+	virtual
+	Hook::Ptr make(Path *p, Node *n) = 0;
 
 	virtual
 	int getFlags() const = 0;
@@ -273,7 +275,8 @@ class HookPlugin : public HookFactory {
 public:
 	using HookFactory::HookFactory;
 
-	virtual Hook::Ptr make(Path *p, Node *n)
+	virtual
+	Hook::Ptr make(Path *p, Node *n)
 	{
 		auto h = std::make_shared<T>(p, n, getFlags(), getPriority());
 

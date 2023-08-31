@@ -1,9 +1,9 @@
-/** The "file" API ressource.
+/* The "file" API ressource.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/super_node.hpp>
 #include <villas/api/session.hpp>
@@ -23,7 +23,8 @@ class FileRequest : public NodeRequest {
 public:
 	using NodeRequest::NodeRequest;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		if (method != Session::Method::GET && method != Session::Method::POST)
 			throw InvalidMethod(this);
@@ -48,7 +49,7 @@ public:
 	}
 };
 
-/* Register API request */
+// Register API request
 static char n[] = "node/file";
 static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/file(?:/([^/]+))?";
 static char d[] = "control instances of 'file' node-type";

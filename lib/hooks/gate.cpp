@@ -1,9 +1,9 @@
-/** Gate hook.
+/* Gate hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cmath>
 #include <string>
@@ -48,7 +48,8 @@ public:
 		startSequence(0)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 
@@ -83,13 +84,14 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		assert(state == State::CHECKED);
 
 		SingleSignalHook::prepare();
 
-		/* Check if signal type is float */
+		// Check if signal type is float
 		auto sig = signals->getByIndex(signalIndex);
 		if (sig->type != SignalType::FLOAT)
 			throw RuntimeError("Gate signal must be of type float");
@@ -97,7 +99,8 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -150,7 +153,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "gate";
 static char d[] = "Skip samples only if an enable signal is under a specified threshold";
 static HookPlugin<GateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;

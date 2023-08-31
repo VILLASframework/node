@@ -1,9 +1,9 @@
-/** Various functions to work with socket addresses
+/* Various functions to work with socket addresses
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- **********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <netdb.h>
 #include <cstdlib>
@@ -16,7 +16,7 @@
 
 #ifdef WITH_SOCKET_LAYER_ETH
   #include <villas/kernel/nl.hpp>
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 
 using namespace villas;
 using namespace villas::node;
@@ -29,7 +29,7 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 	if (!buf)
 		throw MemoryAllocationError();
 
-	/* Address */
+	// Address
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
 			inet_ntop(AF_INET6, &sa->sin6.sin6_addr, buf, 64);
@@ -45,7 +45,7 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 			for (int i = 1; i < sa->sll.sll_halen; i++)
 				strcatf(&buf, ":%02x", sa->sll.sll_addr[i]);
 			break;
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 		case AF_UNIX:
 			snprintf(buf, 256, "%s", sa->sun.sun_path);
 			break;
@@ -54,7 +54,7 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 			throw RuntimeError("Unknown address family: '{}'", sa->sa.sa_family);
 	}
 
-	/* Port  / Interface */
+	// Port  / Interface
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
 		case AF_INET:
@@ -72,7 +72,7 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
 		}
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 	}
 
 	return buf;
@@ -80,13 +80,13 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 
 int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLayer layer, int flags)
 {
-	/** @todo Add support for IPv6 */
+	// @todo Add support for IPv6
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
 
 	char *copy = strdup(addr);
 	int ret;
 
-	if (layer == SocketLayer::UNIX) { /* Format: "/path/to/socket" */
+	if (layer == SocketLayer::UNIX) { // Format: "/path/to/socket"
 		sa->sun.sun_family = AF_UNIX;
 
 		if (strlen(addr) > sizeof(sa->sun.sun_path) - 1)
@@ -97,21 +97,21 @@ int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr,
 		ret = 0;
 	}
 #ifdef WITH_SOCKET_LAYER_ETH
-	else if (layer == SocketLayer::ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
-		/* Split string */
+	else if (layer == SocketLayer::ETH) { // Format: "ab:cd:ef:12:34:56%ifname:protocol"
+		// Split string
 		char *lasts;
 		char *node = strtok_r(copy, "%", &lasts);
 		char *ifname = strtok_r(nullptr, ":", &lasts);
 		char *proto = strtok_r(nullptr, "\0", &lasts);
 
-		/* Parse link layer (MAC) address */
+		// Parse link layer (MAC) address
 		struct ether_addr *mac = ether_aton(node);
 		if (!mac)
 			throw RuntimeError("Failed to parse MAC address: {}", node);
 
 		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, ETHER_ADDR_LEN);
 
-		/* Get interface index from name */
+		// Get interface index from name
 		kernel::nl::init();
 
 		struct nl_cache *cache = nl_cache_mngt_require("route/link");
@@ -126,14 +126,14 @@ int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr,
 
 		ret = 0;
 	}
-#endif /* WITH_SOCKET_LAYER_ETH */
-	else {	/* Format: "192.168.0.10:12001" */
+#endif // WITH_SOCKET_LAYER_ETH
+	else {	// Format: "192.168.0.10:12001"
 		struct addrinfo hint = {
 			.ai_flags = flags,
 			.ai_family = AF_UNSPEC
 		};
 
-		/* Split string */
+		// Split string
 		char *lasts;
 		char *node = strtok_r(copy, ":", &lasts);
 		char *service = strtok_r(nullptr, "\0", &lasts);
@@ -160,12 +160,12 @@ int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr,
 				throw RuntimeError("Invalid address type");
 		}
 
-		/* Lookup address */
+		// Lookup address
 		struct addrinfo *result;
 		ret = getaddrinfo(node, (layer == SocketLayer::IP) ? nullptr : service, &hint, &result);
 		if (!ret) {
 			if (layer == SocketLayer::IP) {
-				/* We mis-use the sin_port field to store the IP protocol number on RAW sockets */
+				// We mis-use the sin_port field to store the IP protocol number on RAW sockets
 				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
 				sin->sin_port = htons(result->ai_protocol);
 			}
@@ -215,7 +215,7 @@ int villas::node::socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
 			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, xu->sll.sll_halen);
-#endif /* WITH_SOCKET_LAYER_ETH */
+#endif // WITH_SOCKET_LAYER_ETH
 
 		default:
 			return -1;

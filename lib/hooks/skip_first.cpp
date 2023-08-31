@@ -1,9 +1,9 @@
-/** Skip first hook.
+/* Skip first hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hook.hpp>
 #include <villas/timing.hpp>
@@ -16,9 +16,9 @@ class SkipFirstHook : public Hook {
 
 protected:
 	enum class SkipState {
-		STARTED,	/**< Path just started. First sample not received yet. */
-		SKIPPING,	/**< First sample received. Skipping samples now. */
-		NORMAL		/**< All samples skipped. Normal operation. */
+		STARTED,	// Path just started. First sample not received yet.
+		SKIPPING,	// First sample received. Skipping samples now.
+		NORMAL		// All samples skipped. Normal operation.
 	} skip_state;
 
 	enum class Mode {
@@ -29,7 +29,7 @@ protected:
 	union {
 		struct {
 			timespec until;
-			timespec wait;	/**< Absolute point in time from where we accept samples. */
+			timespec wait;	// Absolute point in time from where we accept samples.
 		} seconds;
 
 		struct {
@@ -41,7 +41,8 @@ protected:
 public:
 	using Hook::Hook;
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		double s;
 
@@ -72,22 +73,25 @@ public:
 		throw ConfigError(json, err, "node-config-hook-skip_first");
 	}
 
-	virtual void start()
+	virtual
+	void start()
 	{
 		skip_state = SkipState::STARTED;
 		state = State::STARTED;
 	}
 
-	virtual void restart()
+	virtual
+	void restart()
 	{
 		skip_state = SkipState::STARTED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
-		/* Remember sequence no or timestamp of first sample. */
+		// Remember sequence no or timestamp of first sample.
 		if (skip_state == SkipState::STARTED) {
 			switch (mode) {
 				case Mode::SAMPLES:
@@ -121,7 +125,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "skip_first";
 static char d[] = "Skip the first samples";
 static HookPlugin<SkipFirstHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

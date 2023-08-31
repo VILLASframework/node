@@ -1,9 +1,9 @@
-/** Round hook.
+/* Round hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -24,7 +24,8 @@ public:
 		precision(1)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 		json_error_t err;
@@ -42,7 +43,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		for (auto index : signalIndices) {
 			assert(index < smp->length);
@@ -67,7 +69,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "round";
 static char d[] = "Round signals to a set number of digits";
 static HookPlugin<RoundHook, n, d, (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE> p;

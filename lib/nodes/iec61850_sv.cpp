@@ -1,9 +1,9 @@
-/** Node type: IEC 61850-9-2 (Sampled Values)
+/* Node type: IEC 61850-9-2 (Sampled Values)
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <pthread.h>
@@ -139,11 +139,11 @@ int villas::node::iec61850_sv_parse(NodeCompat *n, json_t *json)
 	json_t *json_signals = nullptr;
 	json_error_t err;
 
-	/* Default values */
+	// Default values
 	i->out.enabled = false;
 	i->in.enabled = false;
-	i->out.smpmod = -1; /* do not set smpmod */
-	i->out.smprate = -1; /* do not set smpmod */
+	i->out.smpmod = -1; // do not set smpmod
+	i->out.smprate = -1; // do not set smpmod
 	i->out.confrev = 1;
 	i->out.vlan_priority = CONFIG_SV_DEFAULT_PRIORITY;
 	i->out.vlan_id = CONFIG_SV_DEFAULT_VLAN_ID;
@@ -231,7 +231,7 @@ char * villas::node::iec61850_sv_print(NodeCompat *n)
 
 	buf = strf("interface=%s, app_id=%#x, dst_address=%s", i->interface, i->app_id, ether_ntoa(&i->dst_address));
 
-	/* Publisher part */
+	// Publisher part
 	if (i->out.enabled) {
 		strcatf(&buf, ", pub.svid=%s, pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, pub.#fields=%zu",
 			i->out.svid,
@@ -242,7 +242,7 @@ char * villas::node::iec61850_sv_print(NodeCompat *n)
 		);
 	}
 
-	/* Subscriber part */
+	// Subscriber part
 	if (i->in.enabled)
 		strcatf(&buf, ", sub.#fields=%zu", list_length(&i->in.signals));
 
@@ -254,7 +254,7 @@ int villas::node::iec61850_sv_start(NodeCompat *n)
 	int ret;
 	auto *i = n->getData<struct iec61850_sv>();
 
-	/* Initialize publisher */
+	// Initialize publisher
 	if (i->out.enabled) {
 		i->out.publisher = SVPublisher_create(nullptr, i->interface);
 		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, n->getNameShort().c_str(), i->out.confrev);
@@ -291,24 +291,24 @@ int villas::node::iec61850_sv_start(NodeCompat *n)
 //		if (s->out.smprate >= 0)
 //			SV_ASDU_setSmpRate(i->out.asdu, i->out.smprate);
 
-		/* Start publisher */
+		// Start publisher
 		SVPublisher_setupComplete(i->out.publisher);
 	}
 
-	/* Start subscriber */
+	// Start subscriber
 	if (i->in.enabled) {
 		struct iec61850_receiver *r = iec61850_receiver_create(iec61850_receiver::Type::SAMPLED_VALUES, i->interface);
 
 		i->in.receiver = r->sv;
 		i->in.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
 
-		/* Install a callback handler for the subscriber */
+		// Install a callback handler for the subscriber
 		SVSubscriber_setListener(i->in.subscriber, iec61850_sv_listener, n);
 
-		/* Connect the subscriber to the receiver */
+		// Connect the subscriber to the receiver
 		SVReceiver_addSubscriber(i->in.receiver, i->in.subscriber);
 
-		/* Initialize pool and queue to pass samples between threads */
+		// Initialize pool and queue to pass samples between threads
 		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(n->getInputSignals(false)->size()));
 		if (ret)
 			return ret;
@@ -351,11 +351,11 @@ int villas::node::iec61850_sv_destroy(NodeCompat *n)
 	int ret;
 	auto *i = n->getData<struct iec61850_sv>();
 
-	/* Deinitialize publisher */
+	// Deinitialize publisher
 	if (i->out.enabled && i->out.publisher)
 		SVPublisher_destroy(i->out.publisher);
 
-	/* Deinitialise subscriber */
+	// Deinitialise subscriber
 	if (i->in.enabled) {
 		ret = queue_signalled_destroy(&i->in.queue);
 		if (ret)
@@ -461,10 +461,11 @@ int villas::node::iec61850_sv_poll_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "iec61850-9-2";
 	p.description	= "IEC 61850-9-2 (Sampled Values)";
 	p.vectorize	= 0;
@@ -480,5 +481,6 @@ static void register_plugin() {
 	p.write		= iec61850_sv_write;
 	p.poll_fds	= iec61850_sv_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

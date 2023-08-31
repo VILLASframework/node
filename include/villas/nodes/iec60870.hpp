@@ -1,10 +1,9 @@
-/** Node type: IEC60870-5-104
+/* Node type: IEC60870-5-104
  *
- * @file
- * @author Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -48,7 +47,8 @@ public:
 	};
 
 	// Parse the config json
-	static ASDUData parse(json_t *json_signal, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
+	static
+	ASDUData parse(json_t *json_signal, std::optional<ASDUData> last_data, bool duplicate_ioa_is_sequence);
 
 	// Does this data include a timestamp
 	bool hasTimestamp() const;
@@ -89,7 +89,8 @@ private:
 		SignalType signal_type;
 	};
 
-	inline static std::array const descriptors {
+	inline static
+	std::array const descriptors {
 		ASDUData::Descriptor { Type::SINGLE_POINT,			"single-point",		"M_SP_NA_1",	false,	Type::SINGLE_POINT,	SignalType::BOOLEAN },
 		ASDUData::Descriptor { Type::SINGLE_POINT_WITH_TIMESTAMP,	"single-point",		"M_SP_TB_1",	true,	Type::SINGLE_POINT,	SignalType::BOOLEAN },
 		ASDUData::Descriptor { Type::DOUBLE_POINT,			"double-point",		"M_DP_NA_1",	false,	Type::DOUBLE_POINT,	SignalType::INTEGER },
@@ -105,13 +106,16 @@ private:
 	ASDUData(ASDUData::Descriptor const *descriptor, int ioa, int ioa_sequence_start);
 
 	// Lookup datatype for config key asdu_type
-	static std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa, int ioa_sequence_start);
+	static
+	std::optional<ASDUData> lookupName(char const *name, bool with_timestamp, int ioa, int ioa_sequence_start);
 
 	// Lookup datatype for config key asdu_type_id
-	static std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa, int ioa_sequence_start);
+	static
+	std::optional<ASDUData> lookupTypeId(char const *type_id, int ioa, int ioa_sequence_start);
 
 	// Lookup datatype for numeric type identifier
-	static std::optional<ASDUData> lookupType(int type, int ioa, int ioa_sequence_start);
+	static
+	std::optional<ASDUData> lookupType(int type, int ioa, int ioa_sequence_start);
 
 	// Descriptor within the descriptors table above
 	ASDUData::Descriptor const *descriptor;
@@ -186,6 +190,6 @@ public:
 	int stop() override;
 };
 
-} /* namespace iec60870 */
+} // namespace iec60870
 } // namespace node
 } // namespace villas

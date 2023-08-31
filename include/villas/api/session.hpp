@@ -1,10 +1,9 @@
-/** API session.
+/* API session.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,25 +16,25 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class SuperNode;
 class Api;
 class Web;
 
 namespace api {
 
-/* Forward declarations */
+// Forward declarations
 class Request;
 class Response;
 class StatusRequest;
 class RequestFactory;
 
-/** A connection via HTTP REST or WebSockets to issue API requests. */
+// A connection via HTTP REST or WebSockets to issue API requests.
 class Session {
 
 public:
-	friend Request; /**< Requires access to wsi for getting URL args and headers */
-	friend StatusRequest; /**< Requires access to wsi for context status */
+	friend Request; // Requires access to wsi for getting URL args and headers
+	friend StatusRequest; // Requires access to wsi for context status
 	friend RequestFactory;
 
 	enum State {
@@ -93,13 +92,13 @@ public:
 	void execute();
 	void shutdown();
 
-	static int
-	protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+	static
+	int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 	Method getRequestMethod() const;
 
-	static std::string
-	methodToString(Method meth);
+	static
+	std::string methodToString(Method meth);
 };
 
 } // namespace api

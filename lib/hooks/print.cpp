@@ -1,9 +1,9 @@
-/** Print hook.
+/* Print hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 #include <cstring>
@@ -92,7 +92,7 @@ public:
 		if (o)
 			output_path = o;
 
-		/* Format */
+		// Format
 		auto *fmt = json_format
 				? FormatFactory::make(json_format)
 				: FormatFactory::make("villas.human");
@@ -131,11 +131,10 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "print";
 static char d[] = "Print the message to stdout or a file";
 static HookPlugin<PrintHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
 
 } // namespace node
 } // namespace villas
-

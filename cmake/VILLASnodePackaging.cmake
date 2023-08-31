@@ -1,9 +1,8 @@
 # CMakeLists.txt.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 include(CPackComponent)
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
@@ -61,7 +60,7 @@ set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
 set(CPACK_RPM_PACKAGE_URL ${PROJECT_HOMEPAGE_URL})
 set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README  "${PROJECT_SOURCE_DIR}/README.md")
 
 set(CPACK_SOURCE_IGNORE_FILES "build/;\\\\.gitmodules;\\\\.git/;\\\\.vscode;\\\\.editorconfig;\\\\.gitlab-ci.yml;\\\\.(docker|git)ignore;\\\\.DS_Store")

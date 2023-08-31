@@ -1,10 +1,9 @@
-/** Node type: Node-type for testing Round-trip Time.
+/* Node type: Node-type for testing Round-trip Time.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -15,7 +14,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 struct Sample;
 
@@ -24,7 +23,7 @@ struct test_rtt;
 struct test_rtt_case {
 	double rate;
 	unsigned values;
-	unsigned limit;			/**< The number of samples we take per test. */
+	unsigned limit;			// The number of samples we take per test.
 
 	char *filename;
 	char *filename_formatted;
@@ -33,19 +32,19 @@ struct test_rtt_case {
 };
 
 struct test_rtt {
-	struct Task task;		/**< The periodic task for test_rtt_read() */
-	Format *formatter;/**< The format of the output file */
+	struct Task task;		// The periodic task for test_rtt_read()
+	Format *formatter;// The format of the output file
 	FILE *stream;
 
-	double cooldown;		/**< Number of seconds to wait beween tests. */
+	double cooldown;		// Number of seconds to wait beween tests.
 
-	int current;			/**< Index of current test in test_rtt::cases */
+	int current;			// Index of current test in test_rtt::cases
 	int counter;
 
-	struct List cases;		/**< List of test cases */
+	struct List cases;		// List of test cases
 
-	char *output;			/**< The directory where we place the results. */
-	char *prefix;			/**< An optional prefix in the filename. */
+	char *output;			// The directory where we place the results.
+	char *prefix;			// An optional prefix in the filename.
 };
 
 char * test_rtt_print(NodeCompat *n);

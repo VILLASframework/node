@@ -1,9 +1,9 @@
-/** Interface related functions.
+/* Interface related functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdio>
 #include <cstdlib>
@@ -54,30 +54,30 @@ int Interface::start()
 {
 	logger->info("Starting interface which is used by {} nodes", nodes.size());
 
-	/* Set affinity for network interfaces (skip _loopback_ dev) */
+	// Set affinity for network interfaces (skip _loopback_ dev)
 	if (affinity)
 		setAffinity(affinity);
 
-	/* Assign fwmark's to nodes which have netem options */
+	// Assign fwmark's to nodes which have netem options
 	int ret, fwmark = 0;
 	for (auto *n : nodes) {
 		if (n->tc_qdisc && n->fwmark < 0)
 			n->fwmark = 1 + fwmark++;
 	}
 
-	/* Abort if no node is using netem */
+	// Abort if no node is using netem
 	if (fwmark == 0)
 		return 0;
 
 	if (getuid() != 0)
 		throw RuntimeError("Network emulation requires super-user privileges!");
 
-	/* Replace root qdisc */
+	// Replace root qdisc
 	ret = tc::prio(this, &tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, fwmark);
 	if (ret)
 		throw RuntimeError("Failed to setup priority queuing discipline: {}", nl_geterror(ret));
 
-	/* Create netem qdisks and appropriate filter per netem node */
+	// Create netem qdisks and appropriate filter per netem node
 	for (auto *n : nodes) {
 		if (n->tc_qdisc) {
 			ret = tc::mark(this,  &n->tc_classifier, TC_HANDLE(1, n->fwmark), n->fwmark);
@@ -126,18 +126,18 @@ Interface * Interface::getEgress(struct sockaddr *sa, SuperNode *sn)
 	auto & interfaces = sn->getInterfaces();
 	auto affinity = sn->getAffinity();
 
-	/* Determine outgoing interface */
+	// Determine outgoing interface
 	link = nl::get_egress_link(sa);
 	if (!link)
 		throw RuntimeError("Failed to get interface for socket address '{}'", socket_print_addr(sa));
 
-	/* Search of existing interface with correct ifindex */
+	// Search of existing interface with correct ifindex
 	for (auto *i : interfaces) {
 		if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 			return i;
 	}
 
-	/* If not found, create a new interface */
+	// If not found, create a new interface
 	auto *i = new Interface(link, affinity);
 	if (!i)
 		throw MemoryAllocationError();

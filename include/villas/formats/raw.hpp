@@ -1,10 +1,9 @@
-/** RAW IO format
+/* RAW IO format
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -13,7 +12,7 @@
 
 #include <villas/format.hpp>
 
-/* float128 is currently not yet supported as htole128() functions a missing */
+// float128 is currently not yet supported as htole128() functions a missing
 #if 0 && defined(__GNUC__) && defined(__linux__)
   #define HAS_128BIT
 #endif
@@ -21,7 +20,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 
 class RawFormat : public BinaryFormat {

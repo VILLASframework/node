@@ -1,9 +1,9 @@
-/** Legacy nodes.
+/* Legacy nodes.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/node_compat.hpp>
 #include <villas/node_compat_type.hpp>
@@ -174,7 +174,7 @@ int NodeCompat::_write(struct Sample * smps[], unsigned cnt)
 		: -1;
 }
 
-/** Reverse local and remote socket address.
+/* Reverse local and remote socket address.
  *
  * @see node_type::reverse
  */

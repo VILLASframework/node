@@ -1,9 +1,9 @@
-/** Moving average filter.
+/* Moving average filter.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
@@ -34,16 +34,16 @@ public:
 	{
 		MultiSignalHook::prepare();
 
-		/* Add signals */
+		// Add signals
 		for (auto index : signalIndices) {
 			auto origSig = signals->getByIndex(index);
 
-			/* Check that signal has float type */
+			// Check that signal has float type
 			if (origSig->type != SignalType::FLOAT)
 				throw RuntimeError("The ma hook can only operate on signals of type float!");
 		}
 
-		/* Initialize sample memory */
+		// Initialize sample memory
 		smpMemory.clear();
 		for (unsigned i = 0; i < signalIndices.size(); i++)
 			smpMemory.emplace_back(windowSize, 0.0);
@@ -77,16 +77,16 @@ public:
 
 		unsigned i = 0;
 		for (auto index : signalIndices) {
-			/* The new value */
+			// The new value
 			double newValue = smp->data[index].f;
 
-			/* Append the new value to the history memory */
+			// Append the new value to the history memory
 			smpMemory[i][smpMemoryPosition % windowSize] = newValue;
 
-			/* Get the old value from the history */
+			// Get the old value from the history
 			double oldValue = smpMemory[i][(smpMemoryPosition + 1) % windowSize];
 
-			/* Update the accumulator */
+			// Update the accumulator
 			accumulator += newValue;
 			accumulator -= oldValue;
 
@@ -100,7 +100,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "ma";
 static char d[] = "A simple moving average filter over a fixed number of past samples";
 static HookPlugin<MovingAverageHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;

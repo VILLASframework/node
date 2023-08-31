@@ -1,10 +1,9 @@
-/** Log sink for OPAL-RTs OpalPrint().
+/* Log sink for OPAL-RTs OpalPrint().
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -46,13 +45,12 @@ protected:
 
 	void flush_() override
 	{
-		/* nothing to do */
+		// nothing to do
 	}
 };
 
 using OpalSink_mt = OpalSink<std::mutex>;
 using OpalSink_st = OpalSink<spdlog::details::null_mutex>;
-
 
 } // namespace node
 } // namespace villas

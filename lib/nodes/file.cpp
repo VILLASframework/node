@@ -1,9 +1,9 @@
-/** Node type: File
+/* Node type: File
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <unistd.h>
 #include <cstring>
@@ -32,7 +32,7 @@ char * file_format_name(const char *format, struct timespec *ts)
 	if (!buf)
 		throw MemoryAllocationError();
 
-	/* Convert time */
+	// Convert time
 	gmtime_r(&ts->tv_sec, &tm);
 
 	strftime(buf, FILE_MAX_PATHLEN, format, &tm);
@@ -43,24 +43,24 @@ char * file_format_name(const char *format, struct timespec *ts)
 static
 struct timespec file_calc_offset(const struct timespec *first, const struct timespec *epoch, enum file::EpochMode mode)
 {
-	/* Get current time */
+	// Get current time
 	struct timespec now = time_now();
 	struct timespec offset;
 
-	/* Set offset depending on epoch */
+	// Set offset depending on epoch
 	switch (mode) {
-		case file::EpochMode::DIRECT: /* read first value at now + epoch */
+		case file::EpochMode::DIRECT: // read first value at now + epoch
 			offset = time_diff(first, &now);
 			return time_add(&offset, epoch);
 
-		case file::EpochMode::WAIT: /* read first value at now + first + epoch */
+		case file::EpochMode::WAIT: // read first value at now + first + epoch
 			offset = now;
 			return time_add(&now, epoch);
 
-		case file::EpochMode::RELATIVE: /* read first value at first + epoch */
+		case file::EpochMode::RELATIVE: // read first value at first + epoch
 			return *epoch;
 
-		case file::EpochMode::ABSOLUTE: /* read first value at f->epoch */
+		case file::EpochMode::ABSOLUTE: // read first value at f->epoch
 			return time_diff(first, epoch);
 
 		default:
@@ -101,7 +101,7 @@ int villas::node::file_parse(NodeCompat *n, json_t *json)
 	f->epoch = time_from_double(epoch_flt);
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
 
-	/* Format */
+	// Format
 	if (f->formatter)
 		delete f->formatter;
 	f->formatter = json_format
@@ -230,13 +230,13 @@ int villas::node::file_start(NodeCompat *n)
 	struct timespec now = time_now();
 	int ret;
 
-	/* Prepare file name */
+	// Prepare file name
 	if (f->uri)
 		delete[] f->uri;
 
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
-	/* Check if directory exists */
+	// Check if directory exists
 	struct stat sb;
 	char *cpy = strdup(f->uri);
 	char *dir = dirname(cpy);
@@ -261,7 +261,7 @@ int villas::node::file_start(NodeCompat *n)
 
 	f->formatter->start(n->getInputSignals(false));
 
-	/* Open file */
+	// Open file
 	f->stream_out = fopen(f->uri, "a+");
 	if (!f->stream_out)
 		return -1;
@@ -282,10 +282,10 @@ int villas::node::file_start(NodeCompat *n)
 			return ret;
 	}
 
-	/* Create timer */
+	// Create timer
 	f->task.setRate(f->rate);
 
-	/* Get timestamp of first line */
+	// Get timestamp of first line
 	if (f->epoch_mode != file::EpochMode::ORIGINAL) {
 		rewind(f->stream_in);
 
@@ -309,7 +309,7 @@ int villas::node::file_start(NodeCompat *n)
 
 	rewind(f->stream_in);
 
-	/* Fast-forward */
+	// Fast-forward
 	struct Sample *smp = sample_alloc_mem(n->getInputSignals(false)->size());
 	for (unsigned i = 0; i < f->skip_lines; i++)
 		f->formatter->scan(f->stream_in, smp);
@@ -351,10 +351,10 @@ retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 					goto retry;
 
 				case file::EOFBehaviour::SUSPEND:
-					/* We wait 10ms before fetching again. */
+					// We wait 10ms before fetching again.
 					usleep(100000);
 
-					/* Try to download more data if this is a remote file. */
+					// Try to download more data if this is a remote file.
 					clearerr(f->stream_in);
 					goto retry;
 
@@ -374,7 +374,7 @@ retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 		return 0;
 	}
 
-	/* We dont wait in FILE_EPOCH_ORIGINAL mode */
+	// We dont wait in FILE_EPOCH_ORIGINAL mode
 	if (f->epoch_mode == file::EpochMode::ORIGINAL)
 		return cnt;
 
@@ -390,7 +390,7 @@ retry:	ret = f->formatter->scan(f->stream_in, smps, cnt);
 		steps = f->task.wait();
 	}
 
-	/* Check for overruns */
+	// Check for overruns
 	if      (steps == 0)
 		throw SystemError("Failed to wait for timer");
 	else if (steps != 1)
@@ -431,7 +431,7 @@ int villas::node::file_poll_fds(NodeCompat *n, int fds[])
 		return 1;
 	}
 
-	return -1; /** @todo not supported yet */
+	return -1; // @todo not supported yet
 }
 
 int villas::node::file_init(NodeCompat *n)
@@ -440,7 +440,7 @@ int villas::node::file_init(NodeCompat *n)
 
 	new (&f->task) Task(CLOCK_REALTIME);
 
-	/* Default values */
+	// Default values
 	f->rate = 0;
 	f->eof_mode = file::EOFBehaviour::STOP;
 	f->epoch_mode = file::EpochMode::DIRECT;
@@ -469,10 +469,11 @@ int villas::node::file_destroy(NodeCompat *n)
 	return 0;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "file";
 	p.description	= "support for file log / replay node type";
 	p.vectorize	= 1;
@@ -487,5 +488,6 @@ static void register_plugin() {
 	p.write		= file_write;
 	p.poll_fds	= file_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

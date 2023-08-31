@@ -1,9 +1,9 @@
-/** mmap memory allocator.
+/* mmap memory allocator.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 #include <cerrno>
@@ -14,10 +14,10 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 
-/* Required to allocate hugepages on Apple OS X */
+// Required to allocate hugepages on Apple OS X
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
-#endif /* __MACH__ */
+#endif // __MACH__
 
 #include <villas/kernel/kernel.hpp>
 #include <villas/node/memory.hpp>
@@ -95,7 +95,7 @@ int villas::node::memory::mmap_init(int hugepages)
 	return 0;
 }
 
-/** Allocate memory backed by mmaps with malloc() like interface */
+// Allocate memory backed by mmaps with malloc() like interface
 static
 struct Allocation * mmap_alloc(size_t len, size_t alignment, struct Type *m)
 {
@@ -127,7 +127,7 @@ struct Allocation * mmap_alloc(size_t len, size_t alignment, struct Type *m)
 		sz = pgsz;
 	}
 
-	/** We must make sure that len is a multiple of the page size
+	/* We must make sure that len is a multiple of the page size
 	 *
 	 * See: https://lkml.org/lkml/2014/10/22/925
 	 */
@@ -159,7 +159,7 @@ int mmap_free(struct Allocation *ma, struct Type *m)
 struct Type memory::mmap = {
 	.name = "mmap",
 	.flags = (int) Flags::MMAP,
-	.alignment = 12, /* 4k page */
+	.alignment = 12, // 4k page
 	.alloc = mmap_alloc,
 	.free = mmap_free
 };
@@ -167,7 +167,7 @@ struct Type memory::mmap = {
 struct Type memory::mmap_hugetlb = {
 	.name = "mmap_hugetlb",
 	.flags = (int) Flags::MMAP | (int) Flags::HUGEPAGE,
-	.alignment = 21, /* 2 MiB hugepage */
+	.alignment = 21, // 2 MiB hugepage
 	.alloc = mmap_alloc,
 	.free = mmap_free
 };

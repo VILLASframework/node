@@ -1,10 +1,9 @@
-/** Nodes
+/* Nodes
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,7 +17,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 class Node;
 class SuperNode;
@@ -29,15 +28,15 @@ public:
 	const char *name;
 	const char *description;
 
-	unsigned vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
+	unsigned vectorize;			// Maximal vector length supported by this node type. Zero is unlimited.
 	int flags;
 
-	enum State state;			/**< State of this node-type. */
+	enum State state;			// State of this node-type.
 
-	size_t size;				/**< Size of private data bock. @see node::_vd */
+	size_t size;				// Size of private data bock. @see node::_vd
 
 	struct {
-		/** Global initialization per node type.
+		/* Global initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
 		 * This callback is optional. It will only be called if non-null.
@@ -47,7 +46,7 @@ public:
 		 */
 		int (*start)(SuperNode *sn);
 
-		/** Global de-initialization per node type.
+		/* Global de-initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
 		 * This callback is optional. It will only be called if non-null.
@@ -58,7 +57,7 @@ public:
 		int (*stop)();
 	} type;
 
-	/** Initialize a new node instance.
+	/* Initialize a new node instance.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -67,7 +66,7 @@ public:
 	 */
 	int (*init)(NodeCompat *n);
 
-	/** Free memory of an instance of this type.
+	/* Free memory of an instance of this type.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -75,7 +74,7 @@ public:
 	 */
 	int (*destroy)(NodeCompat *n);
 
-	/** Parse node connection details.
+	/* Parse node connection details.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -86,7 +85,7 @@ public:
 	 */
 	int (*parse)(NodeCompat *n, json_t *json);
 
-	/** Check the current node configuration for plausability and errors.
+	/* Check the current node configuration for plausability and errors.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -98,7 +97,7 @@ public:
 
 	int (*prepare)(NodeCompat *n);
 
-	/** Returns a string with a textual represenation of this node.
+	/* Returns a string with a textual represenation of this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -107,7 +106,7 @@ public:
 	 */
 	char * (*print)(NodeCompat *n);
 
-	/** Start this node.
+	/* Start this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -117,7 +116,7 @@ public:
 	 */
 	int (*start)(NodeCompat *n);
 
-	/** Restart this node.
+	/* Restart this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -127,7 +126,7 @@ public:
 	 */
 	int (*restart)(NodeCompat *n);
 
-	/** Stop this node.
+	/* Stop this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -137,7 +136,7 @@ public:
 	 */
 	int (*stop)(NodeCompat *n);
 
-	/** Pause this node.
+	/* Pause this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -147,7 +146,7 @@ public:
 	 */
 	int (*pause)(NodeCompat *n);
 
-	/** Resume this node.
+	/* Resume this node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -157,7 +156,7 @@ public:
 	 */
 	int (*resume)(NodeCompat *n);
 
-	/** Receive multiple messages at once.
+	/* Receive multiple messages at once.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -175,7 +174,7 @@ public:
 	 */
 	int (*read)(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-	/** Send multiple messages in a single datagram / packet.
+	/* Send multiple messages in a single datagram / packet.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -192,7 +191,7 @@ public:
 	 */
 	int (*write)(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
 
-	/** Reverse source and destination of a node.
+	/* Reverse source and destination of a node.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -200,7 +199,7 @@ public:
 	 */
 	int (*reverse)(NodeCompat *n);
 
-	/** Get list of file descriptors which can be used by poll/select to detect the availability of new data.
+	/* Get list of file descriptors which can be used by poll/select to detect the availability of new data.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -208,7 +207,7 @@ public:
 	 */
 	int (*poll_fds)(NodeCompat *n, int fds[]);
 
-	/** Get list of socket file descriptors for configuring network emulation.
+	/* Get list of socket file descriptors for configuring network emulation.
 	 *
 	 * This callback is optional. It will only be called if non-null.
 	 *
@@ -216,7 +215,7 @@ public:
 	 */
 	int (*netem_fds)(NodeCompat *n, int sds[]);
 
-	/** Return a memory allocator which should be used for sample pools passed to this node. */
+	// Return a memory allocator which should be used for sample pools passed to this node.
 	struct memory::Type * (*memory_type)(NodeCompat *n, struct memory::Type *parent);
 };
 

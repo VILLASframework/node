@@ -1,9 +1,9 @@
-/** Measure round-trip time.
+/* Measure round-trip time.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstdlib>
 #include <cstring>
@@ -62,16 +62,15 @@ protected:
 
 	SuperNode sn;
 
-	/** File descriptor for Matlab results.
+	/* File descriptor for Matlab results.
 	 * This allows you to write Matlab results in a seperate log file:
 	 *
 	 *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
 	 */
 	int fd;
 
-	/**< Amount of messages which should be sent (default: -1 for unlimited) */
+	// Amount of messages which should be sent (default: -1 for unlimited)
 	int count;
-
 
 	Hist::cnt_t hist_warmup;
 	int hist_buckets;
@@ -99,7 +98,7 @@ protected:
 
 	void parse()
 	{
-		/* Parse Arguments */
+		// Parse Arguments
 		int c;
 		char *endptr;
 		while ((c = getopt (argc, argv, "w:hr:f:c:b:Vd:")) != -1) {
@@ -185,14 +184,14 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node->getName(), ret);
 
-		/* Print header */
+		// Print header
 		fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
 		while (!stop && (count < 0 || count--)) {
 			clock_gettime(CLOCK_ID, &send);
 
-			node->write(&smp_send, 1); /* Ping */
-			node->read(&smp_recv, 1); /* Pong */
+			node->write(&smp_send, 1); // Ping
+			node->read(&smp_recv, 1); // Pong
 
 			clock_gettime(CLOCK_ID, &recv);
 

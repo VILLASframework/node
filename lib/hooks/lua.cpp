@@ -1,9 +1,9 @@
-/** Lua expressions hook.
+/* Lua expressions hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 #include <map>
@@ -40,7 +40,8 @@ public:
 		err(e)
 	{ }
 
-	virtual const char * what() const noexcept
+	virtual
+	const char * what() const noexcept
 	{
 		const char *msg;
 		switch (err) {
@@ -121,7 +122,7 @@ bool lua_pushsignaldata(lua_State *L, const union SignalData *data, const Signal
 		case SignalType::COMPLEX:
 		case SignalType::INVALID:
 		default:
-			return false; /* we skip unknown types. Lua will see a nil value in the table */
+			return false; // we skip unknown types. Lua will see a nil value in the table
 	}
 
 	return true;
@@ -361,7 +362,7 @@ json_t * lua_tojson(lua_State *L, int index = -1)
 				}
 				else {
 					const char *key = lua_tostring(L, -2);
-					if (key) /* Skip table entries whose keys are neither string or number! */
+					if (key) // Skip table entries whose keys are neither string or number!
 						json_object_set(json, key, val);
 				}
 				lua_pop(L, 1);
@@ -386,7 +387,7 @@ LuaSignalExpression::LuaSignalExpression(lua_State *l, json_t *json_sig) :
 	json_error_t err;
 	const char *expr;
 
-	/* Parse expression */
+	// Parse expression
 	ret = json_unpack_ex(json_sig, &err, 0, "{ s: s }",
 		"expression", &expr
 	);
@@ -405,7 +406,7 @@ void LuaSignalExpression::prepare()
 
 void LuaSignalExpression::parseExpression(const std::string &expr)
 {
-	/* Release previous expression */
+	// Release previous expression
 	if (cookie)
 		luaL_unref(L, LUA_REGISTRYINDEX, cookie);
 
@@ -532,7 +533,7 @@ void LuaHook::loadScript()
 	int ret;
 
 	if (script.empty())
-		return; /* No script given. */
+		return; // No script given
 
 	ret = luaL_loadfile(L, script.c_str());
 	if (ret)
@@ -588,10 +589,10 @@ void LuaHook::setupEnvironment()
 
 void LuaHook::prepare()
 {
-	/* Load Lua standard libraries */
+	// Load Lua standard libraries
 	luaL_openlibs(L);
 
-	/* Load our Lua script */
+	// Load our Lua script
 	logger->debug("Loading Lua script: {}", script);
 
 	setupEnvironment();
@@ -604,14 +605,14 @@ void LuaHook::prepare()
 	 */
 	needsLocking = functions.periodic > 0;
 
-	/* Prepare Lua process() */
+	// Prepare Lua process()
 	if (functions.process) {
 		/* We currently do not support the alteration of
 		 * signal metadata in process() */
 		signalsProcessed = signals;
 	}
 
-	/* Prepare Lua expressions */
+	// Prepare Lua expressions
 	if (hasExpressions) {
 		for (auto &expr : expressions)
 			expr.prepare();
@@ -721,7 +722,7 @@ Hook::Reason LuaHook::process(struct Sample *smp)
 			? std::unique_lock<std::mutex>(mutex)
 			: std::unique_lock<std::mutex>();
 
-	/* First, run the process() function of the script */
+	// First, run the process() function of the script
 	if (functions.process) {
 		logger->debug("Executing Lua function: process(smp)");
 
@@ -749,7 +750,7 @@ Hook::Reason LuaHook::process(struct Sample *smp)
 	else
 		reason = Reason::OK;
 
-	/* After that evaluate expressions */
+	// After that evaluate expressions
 	if (hasExpressions) {
 		lua_pushsample(L, smp, useNames);
 		lua_setglobal(L, "smp");
@@ -768,7 +769,7 @@ Hook::Reason LuaHook::process(struct Sample *smp)
 	return reason;
 }
 
-/* Register hook */
+// Register hook
 static char n[] = "lua";
 static char d[] = "Implement hook functions or expressions in Lua";
 static HookPlugin<LuaHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH, 1> p;

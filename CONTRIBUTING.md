@@ -174,3 +174,8 @@ Please rebase your work against the `develop` before submitting a merge reqeuest
 ## Make the CI happy :-)
 
 Only branches which pass the CI can be merged.
+
+## License
+
+- SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-License-Identifier: Apache-2.0

@@ -1,12 +1,12 @@
-/** An example get started with new implementations of new node-types
+/* An example get started with new implementations of new node-types
  *
  * This example does not do any particulary useful.
  * It is just a skeleton to get you started with new node-types.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/node_compat.hpp>
 #include <villas/nodes/example.hpp>
@@ -42,7 +42,7 @@ int ExampleNode::prepare()
 
 int ExampleNode::parse(json_t *json)
 {
-	/* TODO: Add implementation here. The following is just an example */
+	// TODO: Add implementation here. The following is just an example
 
 	const char *setting2_str = nullptr;
 
@@ -138,7 +138,7 @@ int ExampleNode::_read(struct Sample *smps[], unsigned cnt)
 	int read;
 	struct timespec now;
 
-	/* TODO: Add implementation here. The following is just an example */
+	// TODO: Add implementation here. The following is just an example
 
 	assert(cnt >= 1 && smps[0]->capacity >= 1);
 
@@ -151,7 +151,7 @@ int ExampleNode::_read(struct Sample *smps[], unsigned cnt)
 	smps[0]->flags = (int) SampleFlags::HAS_DATA;
 	smps[0]->signals = getInputSignals(false);
 
-	read = 1; /* The number of samples read */
+	read = 1; // The number of samples read
 
 	return read;
 }
@@ -160,14 +160,14 @@ int ExampleNode::_write(struct Sample *smps[], unsigned cnt)
 {
 	int written;
 
-	/* TODO: Add implementation here. */
+	// TODO: Add implementation here.
 
-	written = 0; /* The number of samples written */
+	written = 0; // The number of samples written
 
 	return written;
 }
 
-
+// Register node
 static char n[] = "example";
 static char d[] = "An example for staring new node-type implementations";
 static NodePlugin<ExampleNode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL | (int) NodeFactory::Flags::HIDDEN> p;

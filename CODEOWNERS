@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence,
 # @stv0g will be requested for

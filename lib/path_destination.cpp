@@ -1,9 +1,9 @@
-/** Path destination
+/* Path destination
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/utils.hpp>
 #include <villas/node/memory.hpp>
@@ -56,7 +56,7 @@ void PathDestination::enqueueAll(Path *p, const struct Sample * const smps[], un
 		if (enqueued != cnt)
 			p->logger->warn("Queue overrun for path {}", p->toString());
 
-		/* Increase reference counter of these samples as they are now also owned by the queue. */
+		// Increase reference counter of these samples as they are now also owned by the queue
 		sample_incref_many(clones, cloned);
 
 		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, pd->node->getName(), p->toString());
@@ -73,7 +73,7 @@ void PathDestination::write()
 
 	struct Sample *smps[cnt];
 
-	/* As long as there are still samples in the queue */
+	// As long as there are still samples in the queue
 	while (true) {
 		allocated = queue_pull_many(&queue, (void **) smps, cnt);
 		if (allocated == 0)

@@ -1,9 +1,9 @@
-/** JSON serializtion sample data.
+/* JSON serializtion sample data.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -14,13 +14,14 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 
 class JsonFormat : public Format {
 
 protected:
-	static enum SignalType detect(const json_t *val);
+	static
+	enum SignalType detect(const json_t *val);
 
 	json_t * packTimestamps(const struct Sample *smp);
 	int unpackTimestamps(json_t *json_ts, struct Sample *smp);

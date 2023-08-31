@@ -1,5 +1,9 @@
-
 # `villas` as a Nix Flake
+
+<!-- 
+SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+SPDX-License-Identifier: Apache-2.0
+ -->
 
 `VILLASnode` is also packaged as a Nix Flake.
 
@@ -348,3 +352,8 @@ docker load < $(nix build --no-link --print-out-paths .#image)
 
 [`villas.nix`]: ./villas.nix
 [`flake.nix`]: ./flake.nix
+
+## License
+
+- SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+- SPDX-License-Identifier: Apache-2.0

@@ -1,9 +1,9 @@
-/** A Modbus node-type supporting RTU and TCP based transports.
+/* A Modbus node-type supporting RTU and TCP based transports.
  *
- * @author Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
- * @copyright 2023, OPAL-RT Germany GmbH
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
+ * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -65,7 +65,7 @@ struct Tcp {
 	Tcp parse(json_t *json);
 };
 
-// Forward declaration.
+// Forward declarations
 class RegisterMappingSingle;
 
 // A merged block of mappings.

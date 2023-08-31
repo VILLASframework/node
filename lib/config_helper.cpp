@@ -1,9 +1,9 @@
-/** Helpers for configuration parsers.
+/* Helpers for configuration parsers.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <fstream>
@@ -100,7 +100,7 @@ int villas::node::json_to_config(json_t *json, config_setting_t *parent)
 
 	if (config_setting_is_root(parent)) {
 		if (!json_is_object(json))
-			return -1; /* The root must be an object! */
+			return -1; // The root must be an object!
 	}
 
 	switch (json_typeof(json)) {
@@ -155,7 +155,7 @@ int villas::node::json_to_config(json_t *json, config_setting_t *parent)
 
 	return 0;
 }
-#endif /* WITH_CONFIG */
+#endif // WITH_CONFIG
 
 void villas::node::json_object_extend_key_value_token(json_t *obj, const char *key, const char *value)
 {
@@ -183,7 +183,7 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key, co
 
 	json_t *arr, *add, *existing, *subobj;
 
-	/* Is the key pointing to an object? */
+	// Is the key pointing to an object?
 	subobj = obj;
 	cpy = strdup(key);
 
@@ -205,21 +205,21 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key, co
 		key2 = strtok_r(nullptr, ".", &lasts);
  	}
 
-	/* Try to parse as integer */
+	// Try to parse as integer
 	integer = strtol(value, &end, 0);
 	if (*end == 0) {
 		add = json_integer(integer);
 		goto success;
 	}
 
-	/* Try to parse as floating point */
+	// Try to parse as floating point
 	real = strtod(value, &end);
 	if (*end == 0) {
 		add = json_real(real);
 		goto success;
 	}
 
-	/* Try to parse special types */
+	// Try to parse special types
 	if (!strcmp(value, "true")) {
 		add = json_true();
 		goto success;
@@ -235,7 +235,7 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key, co
 		goto success;
 	}
 
-	/* Fallback to string */
+	// Fallback to string
 	add = json_string(value);
 
 success:
@@ -270,15 +270,15 @@ json_t * villas::node::json_load_cli(int argc, const char *argv[])
 	for (int i = 1; i < argc; i++) {
 		opt = argv[i];
 
-		/* Long Option */
+		// Long Option
 		if (opt[0] == '-' && opt[1] == '-') {
-			/* Option without value? Abort. */
+			// Option without value? Abort
 			if (key != nullptr)
 				return nullptr;
 
 			key = opt + 2;
 
-			/* Does this option has the form "--option=value"? */
+			// Does this option has the form "--option=value"?
 			sep = strchr(key, '=');
 			if (sep) {
 				cpy = strdup(key);
@@ -292,9 +292,9 @@ json_t * villas::node::json_load_cli(int argc, const char *argv[])
 				key = nullptr;
 			}
 		}
-		/* Value */
+		// Value
 		else {
-			/* Value without key. Abort. */
+			// Value without key. Abort
 			if (key == nullptr)
 				return nullptr;
 

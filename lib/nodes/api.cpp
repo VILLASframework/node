@@ -1,10 +1,10 @@
-/** Node type: Universal Data-exchange API (v2)
+/* Node type: Universal Data-exchange API (v2)
  *
  * @see https://github.com/ERIGrid2/JRA-3.1-api
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <vector>
 
@@ -122,6 +122,7 @@ int APINode::parse(json_t *json)
 	return 0;
 }
 
+// Register node
 static char n[] = "api";
 static char d[] = "A node providing a HTTP REST interface";
 static NodePlugin<APINode, n , d, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE, 1> p;

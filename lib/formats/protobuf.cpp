@@ -1,9 +1,9 @@
-/** Protobuf IO format
+/* Protobuf IO format
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
@@ -220,6 +220,7 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes, struct Sa
 	return i;
 }
 
+// Register format
 static char n[] = "protobuf";
 static char d[] = "Google Protobuf";
 static FormatPlugin<ProtobufFormat, n, d, (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA> p;

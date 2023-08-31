@@ -1,10 +1,9 @@
-/** Node-type for stats streaming.
+/* Node-type for stats streaming.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,7 +16,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 struct stats_node_signal {
@@ -33,7 +32,7 @@ struct stats_node {
 
 	struct Task task;
 
-	struct List signals; /** List of type struct stats_node_signal */
+	struct List signals; // List of type struct stats_node_signal
 };
 
 int stats_node_type_start(SuperNode *sn);

@@ -1,9 +1,9 @@
-/** RMS hook.
+/* RMS hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
@@ -13,14 +13,12 @@
 namespace villas {
 namespace node {
 
-/**********************************************************************************
- * Concept:
- * Based on RMS Hook
+/* Concept: Based on RMS Hook
  *
  * For each window, calculate integrals for U, I, U*I
  * Formulas from: https://de.wikipedia.org/wiki/Scheinleistung
  * Calculate S and P from these
- ***********************************************************************************/
+ */
 class PowerHook : public MultiSignalHook {
 
 protected:
@@ -55,7 +53,7 @@ protected:
 	bool calcReactivePower;
 	bool caclApparentPower;
 	bool calcCosPhi;
-	bool channelNameEnable;	/**< Rename the output values with channel name or only descriptive name */
+	bool channelNameEnable;	// Rename the output values with channel name or only descriptive name
 	double angleUnitFactor;
 	enum TimeAlign timeAlignType;
 
@@ -76,7 +74,8 @@ public:
 		timeAlignType(TimeAlign::CENTER)
 	{ }
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		MultiSignalHook::prepare();
 
@@ -98,7 +97,7 @@ public:
 		for (auto index : signalIndices) {
 			auto origSig = signals->getByIndex(index);
 
-			/* Check that signal has float type */
+			// Check that signal has float type
 			if (origSig->type != SignalType::FLOAT)
 				throw RuntimeError("The power hook can only operate on signals of type float!");
 		}
@@ -109,7 +108,7 @@ public:
 			if (channelNameEnable)
 				suffix = fmt::format("_{}", signalNames[i]);
 
-			/* Add signals */
+			// Add signals
 			if (calcActivePower) {
 				auto activeSig = std::make_shared<Signal>("active", "W", SignalType::FLOAT);
 				activeSig->name += suffix;
@@ -164,7 +163,8 @@ public:
 	}
 
 	// Read configuration JSON and configure hook accordingly
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		// Ensure hook is not yet running
 		assert(state != State::STARTED);
@@ -244,7 +244,8 @@ public:
 	}
 
 	// This function does the actual processing of the hook when a new sample is passed through.
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -326,7 +327,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "power";
 static char d[] = "This hook calculates the Active and Reactive Power for a given signal ";
 static HookPlugin<PowerHook, n, d, (int)Hook::Flags::NODE_READ | (int)Hook::Flags::NODE_WRITE | (int)Hook::Flags::PATH> p;

@@ -1,9 +1,9 @@
-/** PMU hook.
+/* PMU hook.
  *
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/dsp/window_cosine.hpp>
 #include <villas/hook.hpp>
@@ -13,7 +13,6 @@ namespace villas {
 namespace node {
 
 class PmuHook : public MultiSignalHook {
-
 
 protected:
 	enum class Status {
@@ -25,7 +24,7 @@ protected:
 		double frequency;
 		double amplitude;
 		double phase;
-		double rocof;	/* Rate of change of frequency. */
+		double rocof;	// Rate of change of frequency.
 		Status valid;
 	};
 
@@ -62,7 +61,7 @@ protected:
 	timespec nextRun;
 	bool init;
 	unsigned initSampleCount;
-	/* Correction factors. */
+	// Correction factors.
 	double phaseOffset;
 	double amplitudeOffset;
 	double frequencyOffset;

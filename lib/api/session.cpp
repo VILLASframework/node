@@ -1,9 +1,9 @@
-/** API session.
+/* API session.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <sstream>
 
@@ -132,7 +132,7 @@ void Session::open(void *in, size_t len)
 		else if (len == 0)
 			api->pending.push(this);
 		else {
-			/* This request has a HTTP body. We wait for more data to arrive */
+			// This request has a HTTP body. We wait for more data to arrive
 		}
 	} catch (const Error &e) {
 		response = std::make_unique<ErrorResponse>(this, e);
@@ -169,7 +169,7 @@ int Session::writeable()
 	if (!headersSent) {
 		response->writeHeaders(wsi);
 
-		/* Now wait, until we can send the body */
+		// Now wait, until we can send the body
 		headersSent = true;
 
 		return 0;

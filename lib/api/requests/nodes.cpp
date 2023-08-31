@@ -1,9 +1,9 @@
-/** The "nodes" API ressource.
+/* The "nodes" API ressource.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <jansson.h>
 
@@ -24,7 +24,8 @@ class NodesRequest : public Request {
 public:
 	using Request::Request;
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		if (method != Session::Method::GET)
 			throw InvalidMethod(this);
@@ -38,7 +39,7 @@ public:
 	}
 };
 
-/* Register API request */
+// Register API request
 static char n[] = "nodes";
 static char r[] = "/nodes";
 static char d[] = "retrieve list of all known nodes";

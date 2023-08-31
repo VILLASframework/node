@@ -1,10 +1,9 @@
-/** Node type: kafka
+/* Node type: kafka
  *
- * @file
- * @author Juan Pablo Noreña <jpnorenam@unal.edu.co>
- * @copyright 2021, Universidad Nacional de Colombia
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Juan Pablo Noreña <jpnorenam@unal.edu.co>
+ * SPDX-FileCopyrightText: 2021 Universidad Nacional de Colombia
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,19 +16,19 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
 struct kafka {
 	struct CQueueSignalled queue;
 	struct Pool pool;
 
-	double timeout;			/**< Timeout in seconds. */
-	char *server;			/**< Hostname/IP:Port address of the bootstrap server. */
-	char *protocol;			/**< Security protocol. */
-	char *produce;			/**< Producer topic. */
-	char *consume;			/**< Consumer topic. */
-	char *client_id;		/**< Client ID. */
+	double timeout;			// Timeout in seconds.
+	char *server;			// Hostname/IP:Port address of the bootstrap server.
+	char *protocol;			// Security protocol.
+	char *produce;			// Producer topic.
+	char *consume;			// Consumer topic.
+	char *client_id;		// Client ID.
 
 	struct {
 		rd_kafka_t *client;
@@ -38,17 +37,17 @@ struct kafka {
 
 	struct {
 		rd_kafka_t *client;
-		char *group_id;		/**< Group id. */
+		char *group_id;		// Group id.
 	} consumer;
 
 	struct {
-		char *ca;	/**< SSL CA file. */
+		char *ca;	// SSL CA file.
 	} ssl;
 
 	struct {
-		char *mechanisms;	/**< SASL mechanisms. */
-		char *username;		/**< SSL CA path. */
-		char *password;		/**< SSL certificate. */
+		char *mechanisms;	// SASL mechanisms.
+		char *username;		// SSL CA path.
+		char *password;		// SSL certificate.
 	} sasl;
 
 	Format *formatter;

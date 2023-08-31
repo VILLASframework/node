@@ -1,9 +1,9 @@
-/** Node type: IEC 61850 - GOOSE
+/* Node type: IEC 61850 - GOOSE
  *
- * @author Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
- * @copyright 2023, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <algorithm>
 #include <chrono>
@@ -909,6 +909,7 @@ int GooseNode::stop()
 	return Node::stop();
 }
 
+// Register node
 static char name[] = "iec61850-8-1";
 static char description[] = "IEC 61850-8-1 (GOOSE)";
 static NodePlugin<GooseNode, name, description, (int) NodeFactory::Flags::SUPPORTS_READ | (int) NodeFactory::Flags::SUPPORTS_WRITE | (int) NodeFactory::Flags::SUPPORTS_POLL, 1> p;

@@ -1,9 +1,9 @@
-/** Compare two data files.
+/* Compare two data files.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <unistd.h>
@@ -49,7 +49,7 @@ public:
 		json_t *json_format;
 		json_error_t err;
 
-		/* Try parsing format config as JSON */
+		// Try parsing format config as JSON
 		json_format = json_loads(format.c_str(), 0, &err);
 		formatter = json_format
 			? FormatFactory::make(json_format)
@@ -135,7 +135,7 @@ protected:
 
 	void parse()
 	{
-		/* Parse Arguments */
+		// Parse Arguments
 		int c;
 		char *endptr;
 		while ((c = getopt (argc, argv, "he:vTsf:t:Vd:")) != -1) {
@@ -189,7 +189,7 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		/* Open files */
+		// Open files
 		for (int i = 0; i < argc - optind; i++)
 			filenames.push_back(argv[optind + i]);
 	}
@@ -203,7 +203,7 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to initialize pool");
 
-		/* Open files */
+		// Open files
 		std::vector<CompareSide *> sides;
 		for (auto filename : filenames) {
 			auto *s = new CompareSide(filename, format, dtypes, &pool);
@@ -215,7 +215,7 @@ check:			if (optarg == endptr)
 
 		line = 0;
 		while (true) {
-			/* Read next sample from all files */
+			// Read next sample from all files
 retry:			eofs = 0;
 			for (auto side : sides) {
 				ret = feof(side->stream);
@@ -243,7 +243,7 @@ retry:			eofs = 0;
 			if (failed)
 				goto retry;
 
-			/* We compare all files against the first one */
+			// We compare all files against the first one
 			for (auto side : sides) {
 				ret = sample_cmp(sides[0]->sample, side->sample, epsilon, flags);
 				if (ret) {

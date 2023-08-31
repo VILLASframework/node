@@ -1,9 +1,9 @@
-/** Shift timestamps of samples.
+/* Shift timestamps of samples.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -29,7 +29,8 @@ public:
 		mode(SHIFT_ORIGIN)
 	{ }
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		double o;
 		const char *m = nullptr;
@@ -61,7 +62,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		timespec *ts;
 
@@ -86,7 +88,7 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "shift_ts";
 static char d[] = "Shift timestamps of samples";
 static HookPlugin<ShiftTimestampHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;

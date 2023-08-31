@@ -1,10 +1,9 @@
-/** Message source
+/* Message source
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -17,7 +16,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 class Node;
 class Path;
@@ -36,11 +35,12 @@ protected:
 
 	struct Pool pool;
 
-	MappingList mappings;				/**< List of mappings (struct MappingEntry). */
+	MappingList mappings;				// List of mappings (struct MappingEntry).
 
 public:
 	PathSource(Path *p, Node *n);
-	virtual ~PathSource();
+	virtual
+	~PathSource();
 
 	void check();
 
@@ -79,7 +79,7 @@ using SecondaryPathSourceList = std::vector<SecondaryPathSource::Ptr>;
 class MasterPathSource : public PathSource {
 
 protected:
-	SecondaryPathSourceList secondaries;	/**< List of secondary path sources (PathSource). */
+	SecondaryPathSourceList secondaries;	// List of secondary path sources (PathSource).
 
 public:
 	MasterPathSource(Path *p, Node *n);
@@ -97,7 +97,6 @@ public:
 	virtual
 	void writeToSecondaries(struct Sample *smps[], unsigned cnt);
 };
-
 
 
 } // namespace node

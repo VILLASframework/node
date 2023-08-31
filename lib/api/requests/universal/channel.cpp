@@ -1,9 +1,9 @@
-/** The Universal Data-exchange API.
+/* The Universal Data-exchange API.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <villas/api/requests/universal.hpp>
 #include <villas/api/response.hpp>
@@ -127,7 +127,8 @@ public:
 		return new JsonResponse(session, HTTP_STATUS_OK, json_object());
 	}
 
-	virtual Response * execute()
+	virtual
+	Response * execute()
 	{
 		auto const &signalName = matches[2];
 		auto const &subResource = matches[3];
@@ -151,7 +152,7 @@ public:
 	}
 };
 
-/* Register API requests */
+// Register API requests
 static char n[] = "universal/channel/sample";
 static char r[] = "/universal/(" RE_NODE_NAME ")/channel/([a-z0-9_-]+)/(sample|event)";
 static char d[] = "retrieve or send samples via universal data-exchange API";

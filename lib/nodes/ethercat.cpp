@@ -1,11 +1,11 @@
-/** Node type: Ethercat
+/* Node type: Ethercat
  *
- * @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Divya Laxetti <divya.laxetti@rwth-aachen.de>
- * @copyright 2018-2020, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Divya Laxetti <divya.laxetti@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2018-2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <sstream>
 
@@ -18,18 +18,20 @@
 using namespace villas;
 using namespace villas::node;
 
-/* Forward declartions */
-static NodeCompatType p;
+// Forward declartions
+static
+NodeCompatType p;
 
-/* Constants */
+// Constants
 #define NSEC_PER_SEC (1000000000)
 #define FREQUENCY (NSEC_PER_SEC / PERIOD_NS)
 
-/* Global state and config */
+// Global state and config
 int master_id = 0;
 int alias = 0;
 
-static ec_master_t *master = nullptr;
+static
+ec_master_t *master = nullptr;
 
 struct coupler {
 	int position;
@@ -54,11 +56,11 @@ void ethercat_cyclic_task(NodeCompat *n)
 	while (true) {
 		w->task.wait();
 
-		/* Receive process data */
+		// Receive process data
 		ecrt_master_receive(master);
 		ecrt_domain_process(w->domain);
 
-		/* Receive process data */
+		// Receive process data
 		smp = sample_alloc(&w->pool);
 		if (!smp) {
 			n->logger->warn("Pool underrun");
@@ -69,7 +71,7 @@ void ethercat_cyclic_task(NodeCompat *n)
 		smp->flags = (int) SampleFlags::HAS_DATA;
 		smp->signals = n->getInputSignals(false);
 
-		/* Read process data */
+		// Read process data
 		for (unsigned i = 0; i < smp->length; i++) {
 			int16_t ain_value = EC_READ_S16(w->domain_pd + w->in.offsets[i]);
 
@@ -80,7 +82,7 @@ void ethercat_cyclic_task(NodeCompat *n)
 		if (ret)
 			n->logger->warn("Failed to enqueue samples");
 
-		/* Write process data */
+		// Write process data
 		smp = w->send.exchange(nullptr);
 
 		for (unsigned i = 0; i < w->out.num_channels; i++) {
@@ -124,7 +126,7 @@ int villas::node::ethercat_type_start(villas::node::SuperNode *sn)
 	if (!master)
 		return -1;
 
-	/* Create configuration for bus coupler */
+	// Create configuration for bus coupler
 	coupler.sc = ecrt_master_slave_config(master, alias, coupler.position, coupler.vendor_id, coupler.product_code);
 	if (!coupler.sc)
 		return -1;
@@ -187,7 +189,7 @@ int villas::node::ethercat_check(NodeCompat *n)
 {
 	auto *w = n->getData<struct ethercat>();
 
-	/* Some parts of the configuration are still hard-coded for this specific setup */
+	// Some parts of the configuration are still hard-coded for this specific setup
 	if (w->in.product_code != ETHERCAT_PID_EL3008 ||
 		w->in.vendor_id != ETHERCAT_VID_BECKHOFF ||
 		w->out.product_code != ETHERCAT_PID_EL4038 ||
@@ -227,7 +229,7 @@ int villas::node::ethercat_prepare(NodeCompat *n)
 
 	memset(w->domain_regs, 0, (w->in.num_channels + w->out.num_channels + 1) * sizeof(ec_pdo_entry_reg_t));
 
-	/* Prepare list of domain registers */
+	// Prepare list of domain registers
 	int o = 0;
 	for (unsigned i = 0; i < w->out.num_channels; i++) {
 		w->out.offsets[i] = 0;
@@ -243,7 +245,7 @@ int villas::node::ethercat_prepare(NodeCompat *n)
 		o++;
 	};
 
-	/* Prepare list of domain registers */
+	// Prepare list of domain registers
 	for (unsigned i = 0; i < w->in.num_channels; i++) {
 		w->in.offsets[i] = 0;
 
@@ -270,7 +272,7 @@ int villas::node::ethercat_start(NodeCompat *n)
 	int ret;
 	auto *w = n->getData<struct ethercat>();
 
-	/* Configure analog in */
+	// Configure analog in
 	w->in.sc = ecrt_master_slave_config(master, alias, w->in.position, w->in.vendor_id, w->in.product_code);
 	if (!w->in.sc)
 		throw RuntimeError("Failed to get slave configuration.");
@@ -279,7 +281,7 @@ int villas::node::ethercat_start(NodeCompat *n)
 	if (ret)
 		throw RuntimeError("Failed to configure PDOs.");
 
-	/* Configure analog out */
+	// Configure analog out
 	w->out.sc = ecrt_master_slave_config(master, alias, w->out.position, w->out.vendor_id, w->out.product_code);
 	if (!w->out.sc)
 		throw RuntimeError("Failed to get slave configuration.");
@@ -292,7 +294,7 @@ int villas::node::ethercat_start(NodeCompat *n)
 	if (ret)
 		throw RuntimeError("PDO entry registration failed!");
 
-	/** @todo Check that master is not already active... */
+	// @todo Check that master is not already active...
 	ret = ecrt_master_activate(master);
 	if (ret)
 		return -1;
@@ -301,10 +303,10 @@ int villas::node::ethercat_start(NodeCompat *n)
 	if (!w->domain_pd)
 		return -1;
 
-	/* Start cyclic timer */
+	// Start cyclic timer
 	w->task.setRate(w->rate);
 
-	/* Start cyclic task */
+	// Start cyclic task
 	w->thread = std::thread(ethercat_cyclic_task, n);
 
 	return 0;
@@ -363,7 +365,7 @@ int villas::node::ethercat_init(NodeCompat *n)
 {
 	auto *w = n->getData<struct ethercat>();
 
-	/* Default values */
+	// Default values
 	w->rate = 1000;
 
 	w->in.num_channels = 8;
@@ -386,7 +388,7 @@ int villas::node::ethercat_init(NodeCompat *n)
 	w->domain_pd = nullptr;
 	w->domain_regs = nullptr;
 
-	/* Placement new for C++ objects */
+	// Placement new for C++ objects
 	new (&w->send) std::atomic<struct Sample *>();
 	new (&w->thread) std::thread();
 	new (&w->task) Task(CLOCK_REALTIME);
@@ -418,7 +420,7 @@ int villas::node::ethercat_destroy(NodeCompat *n)
 
 	w->task.~Task();
 
-	/** @todo Destroy domain? */
+	// @todo Destroy domain?
 
 	return 0;
 }
@@ -432,11 +434,11 @@ int villas::node::ethercat_poll_fds(NodeCompat *n, int *fds)
 	return 1;
 }
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "ethercat";
 	p.description	= "Send and receive samples of an ethercat connection";
-	p.vectorize	= 1; /* we only process a single sample per call */
+	p.vectorize	= 1; // we only process a single sample per call
 	p.size		= sizeof(struct ethercat);
 	p.type.start	= ethercat_type_start;
 	p.type.stop	= ethercat_type_stop;
@@ -452,6 +454,6 @@ static void register_plugin() {
 	p.write		= ethercat_write;
 	p.poll_fds	= ethercat_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }
-

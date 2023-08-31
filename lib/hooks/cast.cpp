@@ -1,9 +1,9 @@
-/** Cast hook.
+/* Cast hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -26,7 +26,8 @@ public:
 		new_type(SignalType::INVALID)
 	{ }
 
-	virtual void prepare()
+	virtual
+	void prepare()
 	{
 		assert(state == State::CHECKED);
 
@@ -45,7 +46,8 @@ public:
 		state = State::PREPARED;
 	}
 
-	virtual void parse(json_t *json)
+	virtual
+	void parse(json_t *json)
 	{
 		int ret;
 
@@ -73,7 +75,7 @@ public:
 				throw RuntimeError("Invalid signal type: {}", type);
 		}
 		else
-			/* We use this constant to indicate that we dont want to change the type. */
+			// We use this constant to indicate that we dont want to change the type.
 			new_type = SignalType::INVALID;
 
 		if (name)
@@ -85,7 +87,8 @@ public:
 		state = State::PARSED;
 	}
 
-	virtual Hook::Reason process(struct Sample *smp)
+	virtual
+	Hook::Reason process(struct Sample *smp)
 	{
 		assert(state == State::STARTED);
 
@@ -100,11 +103,10 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "cast";
 static char d[] = "Cast signals types";
 static HookPlugin<CastHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
 
 } // namespace node
 } // namespace villas
-

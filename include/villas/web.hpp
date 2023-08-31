@@ -1,10 +1,9 @@
-/** LWS-releated functions.
+/* LWS-releated functions.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -21,7 +20,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Api;
 
 class Web final {
@@ -31,17 +30,17 @@ private:
 
 	Logger logger;
 
-	lws_context *context;		/**< The libwebsockets server context. */
-	lws_vhost *vhost;		/**< The libwebsockets vhost. */
+	lws_context *context;		// The libwebsockets server context.
+	lws_vhost *vhost;		// The libwebsockets vhost.
 
-	Queue<lws *> writables;		/**< Queue of WSIs for which we will call lws_callback_on_writable() */
+	Queue<lws *> writables;		// Queue of WSIs for which we will call lws_callback_on_writable()
 
-	int port;			/**< Port of the build in HTTP / WebSocket server. */
-	std::string ssl_cert;		/**< Path to the SSL certitifcate for HTTPS / WSS. */
-	std::string ssl_private_key;	/**< Path to the SSL private key for HTTPS / WSS. */
+	int port;			// Port of the build in HTTP / WebSocket server.
+	std::string ssl_cert;		// Path to the SSL certitifcate for HTTPS / WSS.
+	std::string ssl_private_key;	// Path to the SSL private key for HTTPS / WSS.
 
 	std::thread thread;
-	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */
+	std::atomic<bool> running;	// Atomic flag for signalizing thread termination.
 
 	Api *api;
 
@@ -49,7 +48,7 @@ private:
 
 public:
 
-	/** Initialize the web interface.
+	/* Initialize the web interface.
  	 *
  	 * The web interface is based on the libwebsockets library.
  	 */
@@ -60,10 +59,12 @@ public:
 	void start();
 	void stop();
 
-	static void lwsLogger(int level, const char *msg);
-	static int lwsLogLevel(Log::Level lvl);
+	static
+	void lwsLogger(int level, const char *msg);
+	static
+	int lwsLogLevel(Log::Level lvl);
 
-	/** Parse HTTPd and WebSocket related options */
+	// Parse HTTPd and WebSocket related options
 	int parse(json_t *json);
 
 	Api * getApi()
@@ -71,7 +72,7 @@ public:
 		return api;
 	}
 
-	/* for C-compatability */
+	// for C-compatability
 	lws_context * getContext()
 	{
 		return context;

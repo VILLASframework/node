@@ -1,9 +1,9 @@
-/** LWS-releated functions.
+/* LWS-releated functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -23,10 +23,10 @@
 using namespace villas;
 using namespace villas::node;
 
-/* Forward declarations */
+// Forward declarations
 lws_callback_function villas::node::websocket_protocol_cb;
 
-/** List of libwebsockets protocols. */
+// List of libwebsockets protocols.
 lws_protocols protocols[] = {
  	{
  		.name = "http",
@@ -41,7 +41,7 @@ lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(api::Session),
 		.rx_buffer_size = 1024
 	},
-#endif /* WITH_API */
+#endif // WITH_API
 #ifdef WITH_NODE_WEBSOCKET
 	{
 		.name = "live",
@@ -49,7 +49,7 @@ lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif /* WITH_NODE_WEBSOCKET */
+#endif // WITH_NODE_WEBSOCKET
 #ifdef WITH_NODE_WEBRTC
 	{
 		.name = "webrtc-signaling",
@@ -63,13 +63,14 @@ lws_protocols protocols[] = {
 	}
 };
 
-/** List of libwebsockets mounts. */
-static lws_http_mount mounts[] = {
+// List of libwebsockets mounts.
+static
+lws_http_mount mounts[] = {
 #ifdef WITH_API
 	{
-		.mount_next =		nullptr,	/* linked-list "next" */
-		.mountpoint =		"/api/v2",	/* mountpoint URL */
-		.origin =		"http-api",	/* protocol */
+		.mount_next =		nullptr,	// linked-list "next"
+		.mountpoint =		"/api/v2",	// mountpoint URL
+		.origin =		"http-api",	// protocol
 		.def =			nullptr,
 		.protocol =		"http-api",
 		.cgienv =		nullptr,
@@ -81,14 +82,15 @@ static lws_http_mount mounts[] = {
 		.cache_reusable =	0,
 		.cache_revalidate =	0,
 		.cache_intermediaries =	0,
-		.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
-		.mountpoint_len =	7		/* char count */
+		.origin_protocol =	LWSMPRO_CALLBACK, // dynamic
+		.mountpoint_len =	7		// char count
 	}
-#endif /* WITH_API */
+#endif // WITH_API
 };
 
-/** List of libwebsockets extensions. */
-static const lws_extension extensions[] = {
+// List of libwebsockets extensions.
+static
+const lws_extension extensions[] = {
 #ifdef LWS_DEFLATE_FOUND
 	{
 		.name = "permessage-deflate",
@@ -100,7 +102,7 @@ static const lws_extension extensions[] = {
 		.callback = lws_extension_callback_pm_deflate,
 		.client_offer = "deflate_frame"
 	},
-#endif /* LWS_DEFLATE_FOUND */
+#endif // LWS_DEFLATE_FOUND
 	{ nullptr /* terminator */ }
 };
 
@@ -111,7 +113,7 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
 	if (nl)
 		*nl = 0;
 
-	/* Decrease severity for some errors. */
+	// Decrease severity for some errors
 	if (strstr(msg, "Unable to open") == msg)
 		lws_lvl = LLL_WARN;
 
@@ -131,7 +133,7 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
 			logger->info("{}", msg);
 			break;
 
-		default: /* Everything else is debug */
+		default: // Everything else is debug
 			logger->debug("{}", msg);
 	}
 }
@@ -223,7 +225,7 @@ int Web::parse(json_t *json)
 
 void Web::start()
 {
-	/* Start server */
+	// Start server
 	lws_context_creation_info ctx_info;
 
 	memset(&ctx_info, 0, sizeof(ctx_info));
@@ -240,7 +242,7 @@ void Web::start()
 	ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 	ctx_info.user = (void *) this;
 #if LWS_LIBRARY_VERSION_NUMBER <= 3000000
-	/* See: https://github.com/warmcat/libwebsockets/issues/1249 */
+	// See: https://github.com/warmcat/libwebsockets/issues/1249
 	ctx_info.max_http_header_pool = 1024;
 #endif
 	ctx_info.mounts = mounts;
@@ -263,7 +265,7 @@ void Web::start()
 	if (vhost == nullptr)
 		throw RuntimeError("Failed to initialize virtual host");
 
-	/* Start thread */
+	// Start thread
 	running = true;
 	thread = std::thread(&Web::worker, this);
 

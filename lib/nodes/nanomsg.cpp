@@ -1,9 +1,9 @@
-/** Node type: nanomsg
+/* Node type: nanomsg
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
@@ -126,7 +126,7 @@ int villas::node::nanomsg_parse(NodeCompat *n, json_t *json)
 			throw RuntimeError("Invalid type for 'subscribe' setting");
 	}
 
-	/* Format */
+	// Format
 	if (m->formatter)
 		delete m->formatter;
 	m->formatter = json_format
@@ -180,12 +180,12 @@ int villas::node::nanomsg_start(NodeCompat *n)
 	if (ret < 0)
 		throw RuntimeError("Failed to create nanomsg socket: {}", nn_strerror(errno));
 
-	/* Subscribe to all topics */
+	// Subscribe to all topics
 	ret = nn_setsockopt(ret = m->in.socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
 	if (ret < 0)
 		return ret;
 
-	/* Bind publisher to socket */
+	// Bind publisher to socket
 	for (size_t i = 0; i < list_length(&m->out.endpoints); i++) {
 		char *ep = (char *) list_at(&m->out.endpoints, i);
 
@@ -194,7 +194,7 @@ int villas::node::nanomsg_start(NodeCompat *n)
 			throw RuntimeError("Failed to connect nanomsg socket to endpoint {}: {}", ep, nn_strerror(errno));
 	}
 
-	/* Connect subscribers socket */
+	// Connect subscribers socket
 	for (size_t i = 0; i < list_length(&m->in.endpoints); i++) {
 		char *ep = (char *) list_at(&m->in.endpoints, i);
 
@@ -235,7 +235,7 @@ int villas::node::nanomsg_read(NodeCompat *n, struct Sample * const smps[], unsi
 	int bytes;
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	/* Receive payload */
+	// Receive payload
 	bytes = nn_recv(m->in.socket, data, sizeof(data), 0);
 	if (bytes < 0)
 		return -1;
@@ -289,10 +289,11 @@ int villas::node::nanomsg_netem_fds(NodeCompat *n, int fds[])
 	return 1;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "nanomsg";
 	p.description	= "scalability protocols library (libnanomsg)";
 	p.vectorize	= 0;
@@ -310,5 +311,6 @@ static void register_plugin() {
 	p.poll_fds	= nanomsg_poll_fds;
 	p.netem_fds	= nanomsg_netem_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

@@ -1,9 +1,9 @@
-/** Sending statistics to another node.
+/* Sending statistics to another node.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 
@@ -20,7 +20,8 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static NodeList nodes; /** The global list of nodes */
+static
+NodeList nodes; // The global list of nodes
 
 int villas::node::stats_node_signal_destroy(struct stats_node_signal *s)
 {
@@ -86,7 +87,7 @@ int villas::node::stats_node_prepare(NodeCompat *n)
 
 	assert(n->getInputSignals(false)->size() == 0);
 
-	/* Generate signal list */
+	// Generate signal list
 	for (size_t i = 0; i < list_length(&s->signals); i++) {
 		struct stats_node_signal *stats_sig = (struct stats_node_signal *) list_at(&s->signals, i);
 
@@ -241,10 +242,11 @@ int villas::node::stats_node_poll_fds(NodeCompat *n, int fds[])
 	return 0;
 }
 
-static NodeCompatType p;
+static
+NodeCompatType p;
 
-__attribute__((constructor(110)))
-static void register_plugin() {
+__attribute__((constructor(110))) static
+void register_plugin() {
 	p.name		= "stats";
 	p.description	= "Send statistics to another node";
 	p.vectorize	= 1;
@@ -261,5 +263,6 @@ static void register_plugin() {
 	p.read		= stats_node_read;
 	p.poll_fds	= stats_node_poll_fds;
 
-	static NodeCompatFactory ncp(&p);
+	static
+	NodeCompatFactory ncp(&p);
 }

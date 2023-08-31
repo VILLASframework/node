@@ -1,9 +1,9 @@
-/** Hook-releated functions.
+/* Hook-releated functions.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cmath>
@@ -28,7 +28,7 @@ Hook::Hook(Path *p, Node *n, int fl, int prio, bool en) :
 	factory(nullptr),
 	state(fl & (int) Hook::Flags::BUILTIN
 		? State::CHECKED
-		: State::INITIALIZED), /* We dont need to parse builtin hooks. */
+		: State::INITIALIZED), // We dont need to parse builtin hooks
 	flags(fl),
 	priority(prio),
 	enabled(en),
@@ -97,12 +97,11 @@ void SingleSignalHook::parse(json_t *json)
 	signalName = json_string_value(json_signal);
 }
 
-
 void SingleSignalHook::prepare()
 {
 	Hook::prepare();
 
-	/* Setup mask */
+	// Setup mask
 	int index = signals->getIndexByName(signalName.c_str());
 	if (index < 0)
 		throw RuntimeError("Failed to find signal {}", signalName);
@@ -110,7 +109,7 @@ void SingleSignalHook::prepare()
 	signalIndex = (unsigned) index;
 }
 
-/* Multi Signal Hook */
+// Multi Signal Hook
 
 void MultiSignalHook::parse(json_t *json)
 {
@@ -154,7 +153,6 @@ void MultiSignalHook::parse(json_t *json)
 	else
 		throw ConfigError(json, "node-config-hook-signals", "Missing 'signals' setting");
 }
-
 
 void MultiSignalHook::prepare()
 {

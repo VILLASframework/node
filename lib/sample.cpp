@@ -1,9 +1,9 @@
-/** The internal datastructure for a sample of simulation data.
+/* The internal datastructure for a sample of simulation data.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
 #include <cmath>
@@ -135,7 +135,7 @@ int villas::node::sample_decref(struct Sample *s)
 {
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 
-	/* Did we had the last reference? */
+	// Did we had the last reference?
 	if (prev == 1)
 		sample_free(s);
 
@@ -208,7 +208,7 @@ int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
 		return -1;
 	}
 
-	/* Compare sequence no */
+	// Compare sequence no
 	if (flags & (int) SampleFlags::HAS_SEQUENCE) {
 		if (a->sequence != b->sequence) {
 			printf("sequence no: %" PRIu64 " != %" PRIu64 "\n", a->sequence, b->sequence);
@@ -216,7 +216,7 @@ int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
 		}
 	}
 
-	/* Compare timestamp */
+	// Compare timestamp
 	if (flags & (int) SampleFlags::HAS_TS_ORIGIN) {
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
@@ -224,7 +224,7 @@ int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
 		}
 	}
 
-	/* Compare data */
+	// Compare data
 	if (flags & (int) SampleFlags::HAS_DATA) {
 		if (a->length != b->length) {
 			printf("length: %u != %u\n", a->length, b->length);
@@ -232,7 +232,7 @@ int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
 		}
 
 		for (unsigned i = 0; i < a->length; i++) {
-			/* Compare format */
+			// Compare format
 			if (sample_format(a, i) != sample_format(b, i))
 				return 6;
 
