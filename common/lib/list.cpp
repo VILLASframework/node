@@ -1,4 +1,4 @@
-/* A generic linked list
+/* A generic linked list.
  *
  * Linked lists a used for several data structures in the code.
  *

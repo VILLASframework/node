@@ -1,6 +1,6 @@
 /* Utilities.
  *
- * Author: Steffen Vogel <github@daniel-krebs.net>
+ * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0

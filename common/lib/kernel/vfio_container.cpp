@@ -1,4 +1,4 @@
-/* Virtual Function IO wrapper around kernel API
+/* Virtual Function IO wrapper around kernel API.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
