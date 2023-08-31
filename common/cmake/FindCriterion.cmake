@@ -6,7 +6,7 @@
 #  CRITERION_LIBRARIES - The libraries needed to use Criterion
 #
 # SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
-# SPDX-License-Identifier: WTFPL
+# SPDX-License-Identifier: Apache-2.0
 
 find_package(PkgConfig)
 
