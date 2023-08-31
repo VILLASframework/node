@@ -1,4 +1,4 @@
-/* Linux specific real-time optimizations
+/* Linux specific real-time optimizations.
  *
  * @see: https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/application_base
  * Author: Steffen Vogel <post@steffenvogel.de>
