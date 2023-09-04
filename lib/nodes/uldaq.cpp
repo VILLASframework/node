@@ -554,7 +554,7 @@ int villas::node::uldaq_stop(NodeCompat *n)
 
 	UlError err;
 
-	// @todo Fix deadlock
+	// TODO: Fix deadlock
 	//pthread_mutex_lock(&u->in.mutex);
 
 	// Get the current status of the acquisition

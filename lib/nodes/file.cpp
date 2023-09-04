@@ -431,7 +431,7 @@ int villas::node::file_poll_fds(NodeCompat *n, int fds[])
 		return 1;
 	}
 
-	return -1; // @todo not supported yet
+	return -1; // TODO: not supported yet
 }
 
 int villas::node::file_init(NodeCompat *n)

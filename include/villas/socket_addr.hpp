@@ -57,7 +57,7 @@ char * socket_print_addr(struct sockaddr *saddr);
  * A IPv4 address has the follwing format: [hostname/ip]:[port/protocol]
  * A link layer address has the following format: [mac]%[interface]:[ethertype]
  *
- * @todo Add support for autodetection of address type
+ * TODO: Add support for autodetection of address type
  *
  * @param str	A string specifiying the socket address. See description for allowed formats.
  * @param sa	A pointer to the resolved address

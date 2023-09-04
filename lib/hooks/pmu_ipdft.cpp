@@ -106,7 +106,7 @@ public:
 
 		if (maxBin == 0 || maxBin == (frequencyCount - 1)) {
 			logger->warn("Maximum frequency bin lies on window boundary. Using non-estimated results!");
-			//@todo add handling to not forward this phasor!!
+			//TODO: add handling to not forward this phasor!!
 		} else {
 			const double startFrequency = nominalFreq - estimationRange;
 			const double frequencyResolution = (double)sampleRate / windowSize;

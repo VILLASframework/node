@@ -294,7 +294,7 @@ int villas::node::ethercat_start(NodeCompat *n)
 	if (ret)
 		throw RuntimeError("PDO entry registration failed!");
 
-	// @todo Check that master is not already active...
+	// TODO: Check that master is not already active...
 	ret = ecrt_master_activate(master);
 	if (ret)
 		return -1;
@@ -420,7 +420,7 @@ int villas::node::ethercat_destroy(NodeCompat *n)
 
 	w->task.~Task();
 
-	// @todo Destroy domain?
+	// TODO: Destroy domain?
 
 	return 0;
 }
