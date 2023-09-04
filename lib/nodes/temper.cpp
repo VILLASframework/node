@@ -1,4 +1,4 @@
-/* PCSensor / TEMPer node-type
+/* PCSensor / TEMPer node-type.
  *
  * The driver will work with some TEMPer usb devices from RDing (www.PCsensor.com).
  *

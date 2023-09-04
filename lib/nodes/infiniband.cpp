@@ -1,4 +1,4 @@
-/* Node type: infiniband
+/* Node type: infiniband.
  *
  * Author: Dennis Potter <dennis@dennispotter.eu>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

@@ -1,4 +1,4 @@
-/* Node type: Real-time Protocol (RTP)
+/* Node type: Real-time Protocol (RTP).
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Marvin Klimke <marvin.klimke@rwth-aachen.de>

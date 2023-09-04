@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2017 Steffen Vogel
+ * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: BSD-2-Clause
  *
  * All rights reserved.

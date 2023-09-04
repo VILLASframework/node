@@ -1,4 +1,4 @@
-/* Node type: kafka
+/* Node type: kafka.
  *
  * Author: Juan Pablo Noreña <jpnorenam@unal.edu.co>
  * SPDX-FileCopyrightText: 2021 Universidad Nacional de Colombia

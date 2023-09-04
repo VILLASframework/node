@@ -1,4 +1,4 @@
-/* Hook list functions
+/* Hook list functions.
  *
  * This file includes some examples.
  *

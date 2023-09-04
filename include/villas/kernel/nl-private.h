@@ -1,4 +1,4 @@
-/* Netlink Types (Private)
+/* Netlink Types (Private).
  *
  * Copied from: https://github.com/tgraf/libnl/blob/master/include/netlink-private/types.h
  *

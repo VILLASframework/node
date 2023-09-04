@@ -1,4 +1,4 @@
-/* Node type: rtp
+/* Node type: rtp.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Marvin Klimke <marvin.klimke@rwth-aachen.de>

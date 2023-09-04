@@ -1,4 +1,4 @@
-/* Traffic control (tc): setup network emulation qdisc
+/* Traffic control (tc): setup network emulation qdisc.
  *
  * VILLASnode uses these functions to setup the network emulation feature.
  *

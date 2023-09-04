@@ -1,6 +1,6 @@
-/* WebRTC peer connection
+/* WebRTC peer connection.
  *
- * Author: Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH

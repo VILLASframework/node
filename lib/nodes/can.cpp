@@ -1,4 +1,4 @@
-/* Node-type: CAN bus
+/* Node-type: CAN bus.
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

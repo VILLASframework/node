@@ -1,4 +1,4 @@
-/* A custom format for OPAL-RTs AsyncIP example
+/* A custom format for OPAL-RTs AsyncIP example.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

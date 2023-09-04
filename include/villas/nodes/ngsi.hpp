@@ -1,4 +1,4 @@
-/* Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
+/* Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker).
  *
  * This file implements the NGSI context interface. NGSI is RESTful HTTP is specified by
  * the Open Mobile Alliance (OMA).

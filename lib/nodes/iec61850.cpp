@@ -1,4 +1,4 @@
-/* Node type: IEC 61850-9-2 (Sampled Values)
+/* Node type: IEC 61850-9-2 (Sampled Values).
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

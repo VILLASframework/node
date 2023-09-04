@@ -1,4 +1,4 @@
-/* Node type: mqtt
+/* Node type: mqtt.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

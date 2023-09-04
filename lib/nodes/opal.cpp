@@ -1,4 +1,4 @@
-/* Node type: OPAL (AsyncApi)
+/* Node type: OPAL (AsyncApi).
  *
  * This file implements the opal subtype for nodes.
  *
