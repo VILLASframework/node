@@ -1,4 +1,4 @@
-/* Node type: Universal Data-exchange API (v2)
+/* Node type: Universal Data-exchange API (v2).
  *
  * @see https://github.com/ERIGrid2/JRA-3.1-api
  * Author: Steffen Vogel <post@steffenvogel.de>

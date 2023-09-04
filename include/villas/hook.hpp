@@ -1,4 +1,4 @@
-/* Hook functions
+/* Hook functions.
  *
  * Every node or path can register hook functions which is called for every
  * processed sample. This can be used to debug the data flow, get statistics

@@ -1,4 +1,4 @@
-/* Node type: ethercat
+/* Node type: ethercat.
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * Author: Steffen Vogel <post@steffenvogel.de>

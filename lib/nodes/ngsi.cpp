@@ -1,4 +1,4 @@
-/* Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
+/* Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker).
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

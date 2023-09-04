@@ -1,4 +1,4 @@
-/* Interface related functions
+/* Interface related functions.
  *
  * These functions are used to manage a network interface.
  * Most of them make use of Linux-specific APIs.

@@ -1,4 +1,4 @@
-/* Node type: comedi
+/* Node type: comedi.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>

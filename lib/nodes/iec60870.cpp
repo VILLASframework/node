@@ -1,4 +1,4 @@
-/* Node type: IEC60870-5-104
+/* Node type: IEC60870-5-104.
  *
  * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

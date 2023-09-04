@@ -1,4 +1,4 @@
-/* An example get started with new implementations of new node-types
+/* An example get started with new implementations of new node-types.
  *
  * This example does not do any particulary useful.
  * It is just a skeleton to get you started with new node-types.

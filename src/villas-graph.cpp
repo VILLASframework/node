@@ -1,4 +1,4 @@
-/* Create a graph representation of the VILLASnode configuration file
+/* Create a graph representation of the VILLASnode configuration file.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

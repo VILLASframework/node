@@ -1,4 +1,4 @@
-/* Setup interface queuing desciplines for network emulation
+/* Setup interface queuing desciplines for network emulation.
  *
  * We use the firewall mark to apply individual netem qdiscs
  * per node. Every node uses an own BSD socket.

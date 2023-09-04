@@ -1,4 +1,4 @@
-/* Configuration for Ethercat Node-type
+/* Configuration for Ethercat Node-type.
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * Author: Steffen Vogel <post@steffenvogel.de>

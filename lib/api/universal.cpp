@@ -1,6 +1,6 @@
 /* API Response.
  *
- * Author: Steffen Vogel <svogel2@eonerc.rwth-aachen.de>
+ * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */

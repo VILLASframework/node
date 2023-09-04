@@ -1,4 +1,4 @@
-/* Setup network emulation
+/* Setup network emulation.
  *
  * We use the firewall mark to apply individual netem qdiscs
  * per node. Every node uses an own BSD socket.

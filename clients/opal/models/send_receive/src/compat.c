@@ -1,4 +1,4 @@
-/* Compatibility code for GCC
+/* Compatibility code for GCC.
  *
  * OPAL-RT's libSystem.a links against some Intel
  *

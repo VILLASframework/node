@@ -1,4 +1,4 @@
-/* Node type: IEC 61850 - GOOSE
+/* Node type: IEC 61850 - GOOSE.
  *
  * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

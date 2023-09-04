@@ -1,4 +1,4 @@
-/* The socket node-type for Layer 2, 3, 4 BSD-style sockets
+/* The socket node-type for Layer 2, 3, 4 BSD-style sockets.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
