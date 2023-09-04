@@ -232,7 +232,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi, enum lws_callback_reaso
 			c->node->logger->debug("Closed WebSocket connection: {}", c->toString());
 
 			if (c->state != websocket_connection::State::CLOSING) {
-				// @todo Attempt reconnect here
+				// TODO: Attempt reconnect here
 			}
 
 			{

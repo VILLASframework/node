@@ -217,7 +217,7 @@ int villas::node::zeromq_parse(NodeCompat *n, json_t *json)
 		memcpy(z->curve.server.secret_key, secret_key, 41);
 	}
 
-	// @todo We should fix this. Its mostly done.
+	// TODO: We should fix this. Its mostly done.
 	if (z->curve.enabled)
 		throw ConfigError(json_curve, "node-config-zeromq-curve", "CurveZMQ support is currently broken");
 

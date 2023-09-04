@@ -221,7 +221,7 @@ char * villas::node::opal_print(NodeCompat *n)
 {
 	auto *o = n->getData<struct opal>();
 
-	// @todo Print send_params, recv_params
+	// TODO: Print send_params, recv_params
 
 	return strf("sendID=%u, recvID=%u, reply=%u",
 		o->sendID, o->recvID, o->reply);
@@ -275,7 +275,7 @@ int villas::node::opal_read(NodeCompat *n, struct Sample * const smps[], unsigne
 			if ((state == STATE_RESET) || (state == STATE_STOP))
 				throw RuntimeError("OpalGetAsyncModelState(): Model stopped or resetted!");
 
-			return -1; // @todo correct return value
+			return -1; // TODO: correct return value
 		}
 	} while (id != o->sendID);
 

@@ -12,7 +12,7 @@
 // The current version number for the message format
 #define MSG_VERSION		2
 
-// @todo Implement more message types
+// TODO: Implement more message types
 #define MSG_TYPE_DATA		0 // Message contains float / integer values
 #define MSG_TYPE_START		1 // Message marks the beginning of a new simulation case
 #define MSG_TYPE_STOP		2 // Message marks the end of a simulation case
@@ -34,10 +34,7 @@
 namespace villas {
 namespace node {
 
-/* This message format is used by all clients
- *
- * @diafile msg_format.dia
- */
+// This message format is used by all clients
 struct Message
 {
 #if BYTE_ORDER == BIG_ENDIAN

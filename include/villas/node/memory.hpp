@@ -30,7 +30,7 @@ struct Block {
 	bool used;
 };
 
-// @todo Unused for now
+// TODO: Unused for now
 struct Allocation {
 	struct Type *type;
 

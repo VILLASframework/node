@@ -156,7 +156,7 @@ int ExecNode::stop()
 	logger->debug("Waiting for sub-process with pid={} to terminate", proc->getPid());
 	proc->close();
 
-	// @todo Check exit code of subprocess?
+	// TODO: Check exit code of subprocess?
 	return 0;
 }
 

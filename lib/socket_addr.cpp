@@ -80,7 +80,7 @@ char * villas::node::socket_print_addr(struct sockaddr *saddr)
 
 int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr, enum SocketLayer layer, int flags)
 {
-	// @todo Add support for IPv6
+	// TODO: Add support for IPv6
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
 
 	char *copy = strdup(addr);

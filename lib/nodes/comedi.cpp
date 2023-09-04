@@ -315,7 +315,7 @@ int comedi_start_out(NodeCompat *n)
 	d->last_debug = time_now();
 
 	// Allocate buffer for one complete VILLAS sample
-	// @todo maybe increase buffer size according to c->vectorize
+	// TODO: maybe increase buffer size according to c->vectorize
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = new char[local_buffer_size];
 	d->bufptr = d->buffer;
@@ -448,7 +448,7 @@ int villas::node::comedi_start(NodeCompat *n)
 		throw RuntimeError("Failed to open device: {}", comedi_strerror(comedi_errno()));
 
 	// Enable non-blocking syscalls
-	// @todo verify if this works with both input and output, so comment out
+	// TODO: verify if this works with both input and output, so comment out
 	//if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
 	//	throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
 
@@ -595,7 +595,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample * const smps[], unsig
 			const size_t bytes_left = bytes_available - bytes_consumed;
 			if (bytes_left > 0) {
 				// Move leftover bytes to the beginning of buffer
-				// @todo optimize?
+				// TODO: optimize?
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 

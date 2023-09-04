@@ -36,7 +36,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes, const stru
 			return ret;
 
 		if (web) {
-			// @todo convert to little endian
+			// TODO: convert to little endian
 		}
 		else
 			msg_hton(msg);
@@ -81,7 +81,7 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes, struc
 			return -3; // Invalid msg receive
 
 		if (web) {
-			// @todo convert from little endian
+			// TODO: convert from little endian
 		}
 		else
 			msg_ntoh(msg);

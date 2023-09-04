@@ -70,7 +70,7 @@ struct CQueue {
 
 	std::atomic<size_t>	head;	// Queue head pointer
 
-	cacheline_pad_t	_pad3;	// @todo Why needed?
+	cacheline_pad_t	_pad3;	// TODO: Why needed?
 };
 
 // Initialize MPMC queue
