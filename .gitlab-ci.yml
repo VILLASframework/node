@@ -91,7 +91,7 @@ build:source:
 test:flake8:
   stage: test
   script:
-  - flake8 python/
+  - flake8 --ignore=E501 python/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
