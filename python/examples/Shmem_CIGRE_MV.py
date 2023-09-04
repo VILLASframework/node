@@ -27,20 +27,20 @@ def get_dpsim_shmem_interface_signals():
 
 def get_dpsim_shmem_interface_config():
     return {
-            'type': 'shmem',
-            'in': {
-                'name': '/dpsim1-villas',
-                'hooks': [
-                    {
-                        'type': 'stats'
-                    }
-                ],
-                'signals': get_dpsim_shmem_interface_signals()
-            },
-            'out': {
-                'name': '/villas-dpsim1'
-            }
+        'type': 'shmem',
+        'in': {
+            'name': '/dpsim1-villas',
+            'hooks': [
+                {
+                    'type': 'stats'
+                }
+            ],
+            'signals': get_dpsim_shmem_interface_signals()
+        },
+        'out': {
+            'name': '/villas-dpsim1'
         }
+    }
 
 
 def get_villas_config():
