@@ -1,4 +1,4 @@
-/* Wrapper around queue that uses POSIX CV's for signalling writes.
+/* A simple queue protected by mutexes.
  *
  * Author: Georg Martin Reinke <georg.reinke@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
