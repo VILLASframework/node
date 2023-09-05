@@ -3,7 +3,7 @@
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Divya Laxetti <divya.laxetti@rwth-aachen.de>
- * SPDX-FileCopyrightText: 2018-2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-FileCopyrightText: 2018-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 

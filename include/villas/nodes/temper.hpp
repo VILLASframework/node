@@ -1,4 +1,4 @@
-/* An temper get started with new implementations of new node-types.
+/* TEMPer node-type.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University

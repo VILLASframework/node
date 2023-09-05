@@ -5,10 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * @addtogroup node Node
- * @{
- */
 
 #pragma once
 
@@ -144,11 +140,7 @@ public:
 	virtual
 	std::vector<int> getPollFDs();
 
-	/* Get list of socket file descriptors for configuring network emulation.
-
-	 *
-	 * @return The number of file descriptors which have been put into \p sds.
-	 */
+	// Get list of socket file descriptors for configuring network emulation.
 	virtual
 	std::vector<int> getNetemFDs();
 
