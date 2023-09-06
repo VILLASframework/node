@@ -42,7 +42,8 @@ should_build() {
 
     if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
         echo
-        case "$(read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N)")" in
+        read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
+        case "${REPLY}" in
             y | Y)
                 echo "Installing '${id}'"
                 return 0
@@ -94,7 +95,7 @@ pushd ${TMPDIR} >/dev/null
 if ! pkg-config "criterion >= 2.4.1" && \
    [ "${ARCH}" == "x86_64" ] && \
    should_build "criterion" "for unit tests"; then
-    git clone ${GIT_OPTS} --branch v2.3.3 --recursive https://github.com/Snaipe/Criterion
+    git clone ${GIT_OPTS} --branch v2.3.3 --recursive https://github.com/Snaipe/Criterion.git
     mkdir -p Criterion/build
     pushd Criterion/build
     cmake ${CMAKE_OPTS} ..
@@ -105,7 +106,7 @@ fi
 # Build & Install libjansson
 if ! pkg-config "jansson >= 2.13" && \
     should_build "jansson" "for configuration parsing" "required"; then
-    git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson
+    git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson.git
     pushd jansson
     autoreconf -i
     ./configure ${CONFIGURE_OPTS}
@@ -131,7 +132,7 @@ fi
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
     should_build "mosquitto" "for the MQTT node-type"; then
-    git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto
+    git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto.git
     mkdir -p mosquitto/build
     pushd mosquitto/build
     cmake -DWITH_BROKER=OFF \
@@ -146,7 +147,7 @@ fi
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
     should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
-    git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c
+    git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
@@ -157,7 +158,7 @@ fi
 # Build & Install libzmq
 if ! pkg-config "libzmq >= 2.2.0" && \
     should_build "zmq" "for the zeromq node-type"; then
-    git clone ${GIT_OPTS} --branch v4.3.4 https://github.com/zeromq/libzmq
+    git clone ${GIT_OPTS} --branch v4.3.4 https://github.com/zeromq/libzmq.git
     mkdir -p libzmq/build
     pushd libzmq/build
     cmake -DWITH_PERF_TOOL=OFF \
@@ -182,7 +183,7 @@ fi
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.5.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
-    git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850
+    git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850.git
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake -DBUILD_EXAMPLES=OFF \
@@ -208,7 +209,7 @@ fi
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
     should_build "rdkafka" "for the kafka node-type"; then
-    git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka
+    git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka.git
     mkdir -p librdkafka/build
     pushd librdkafka/build
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
@@ -234,7 +235,7 @@ fi
 # Build & Install uldaq
 if ! pkg-config "libuldaq >= 1.2.0" && \
     should_build "uldaq" "for the uldaq node-type"; then
-    git clone ${GIT_OPTS} --branch v1.2.1 https://github.com/mccdaq/uldaq
+    git clone ${GIT_OPTS} --branch v1.2.1 https://github.com/mccdaq/uldaq.git
     pushd uldaq
     autoreconf -i
     ./configure \
@@ -248,7 +249,7 @@ fi
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
      ) && should_build "libnl" "for network emulation"; then
-    git clone ${GIT_OPTS} --branch libnl3_7_0 https://github.com/thom311/libnl
+    git clone ${GIT_OPTS} --branch libnl3_7_0 https://github.com/thom311/libnl.git
     pushd libnl
     autoreconf -i
     ./configure \
@@ -261,7 +262,7 @@ fi
 # Build & Install libconfig
 if ! pkg-config "libconfig >= 1.4.9" && \
     should_build "libconfig" "for libconfig configuration syntax"; then
-    git clone ${GIT_OPTS} --branch v1.7.3 https://github.com/hyperrealm/libconfig
+    git clone ${GIT_OPTS} --branch v1.7.3 https://github.com/hyperrealm/libconfig.git
     pushd libconfig
     autoreconf -i
     ./configure ${CONFIGURE_OPTS} \
@@ -383,7 +384,7 @@ fi
 # Build & Install libwebsockets
 if ! pkg-config "libwebsockets >= 4.3.0" && \
     should_build "libwebsockets" "for the websocket node and VILLASweb" "required"; then
-    git clone ${GIT_OPTS} --branch v4.3-stable https://github.com/warmcat/libwebsockets
+    git clone ${GIT_OPTS} --branch v4.3-stable https://github.com/warmcat/libwebsockets.git
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     cmake -DLWS_WITH_IPV6=ON \
@@ -397,7 +398,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel
+    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel.git
     mkdir -p libdatachannel/build
     pushd libdatachannel/build
 
@@ -410,6 +411,18 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
           ${CMAKE_DATACHANNEL_USE_NICE-} \
           ${CMAKE_OPTS} ..
 
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+# Build & Install libmodbus
+if ! pkg-config "libmodbus >= 3.1.0" && \
+    should_build "libmodbus" "for the modbus node-type"; then
+    git clone ${GIT_OPTS} --recursive --branch v3.1.10 https://github.com/stephane/libmodbus.git
+    mkdir -p libmodbus/build
+    pushd libmodbus
+    autoreconf -i
+    ./configure ${CONFIGURE_OPTS}
     make ${MAKE_OPTS} install
     popd
 fi

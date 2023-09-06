@@ -7,15 +7,6 @@
 
 #pragma once
 
-#include <villas/node/config.hpp>
-#include <villas/node.hpp>
-#include <villas/timing.hpp>
-#include <villas/sample.hpp>
-#include <villas/exceptions.hpp>
-#include <villas/task.hpp>
-
-#include <modbus/modbus.h>
-
 #include <stdint.h>
 #include <bit>
 #include <vector>
@@ -23,6 +14,15 @@
 #include <variant>
 #include <algorithm>
 #include <numeric>
+
+#include <modbus/modbus.h>
+
+#include <villas/node/config.hpp>
+#include <villas/node.hpp>
+#include <villas/timing.hpp>
+#include <villas/sample.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/task.hpp>
 
 namespace villas {
 namespace node {
@@ -280,6 +280,9 @@ public:
 
 	virtual
 	std::vector<int> getPollFDs();
+
+	virtual
+	std::vector<int> getNetemFDs();
 
 	virtual
 	const std::string & getDetails();

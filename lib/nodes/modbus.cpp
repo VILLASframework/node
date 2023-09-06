@@ -35,6 +35,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <atomic>
+#include <chrono>
+
+#include <fmt/format.h>
+
 #include <villas/node_compat.hpp>
 #include <villas/nodes/modbus.hpp>
 #include <villas/utils.hpp>
@@ -42,9 +47,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
-#include <fmt/format.h>
-#include <atomic>
-#include <chrono>
+
 
 using namespace villas;
 using namespace villas::node;
@@ -901,6 +904,17 @@ int ModbusNode::stop()
 std::vector<int> ModbusNode::getPollFDs()
 {
 	return { read_task.getFD() };
+}
+
+std::vector<int> ModbusNode::getNetemFDs()
+{
+	if (modbus_context != nullptr && std::holds_alternative<Tcp>(connection_settings))  {
+		return {
+			modbus_get_socket(modbus_context)
+		};
+	}
+
+	return { };
 }
 
 const std::string & ModbusNode::getDetails()

@@ -31,6 +31,7 @@ discriminator:
     pmu_dft: hooks/_pmu_dft.yaml
     pps_ts: hooks/_pps_ts.yaml
     print: hooks/_print.yaml
+    reorder_ts: hooks/_reorder_ts.yaml
     restart: hooks/_restart.yaml
     rms: hooks/_rms.yaml
     round: hooks/_round.yaml

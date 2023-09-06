@@ -1,0 +1,3 @@
+allOf:
+- $ref: ../hook_obj.yaml
+- $ref: reorder_ts.yaml
