@@ -209,7 +209,7 @@ int villas::node::rtp_parse(NodeCompat *n, json_t *json)
 	sa_set_port(&r->in.saddr_rtp, port);
 	sa_set_port(&r->in.saddr_rtcp, port+1);
 
-	/* TODO: parse * in addresses */
+	// TODO: parse * in addresses
 
 	return 0;
 }

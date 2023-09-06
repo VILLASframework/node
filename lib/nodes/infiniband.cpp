@@ -980,7 +980,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample * const smps[], unsigned
 		// TODO: fix release logic
 		// n->logger->debug("{} samples will be released (before WC)", *release);
 
-		/* Try to grab as many CQEs from CQ as there is space in *smps[] */
+		// Try to grab as many CQEs from CQ as there is space in *smps[]
 		// ret = ibv_poll_cq(ib->ctx.send_cq, cnt - *release, wc);
 
 		for (int i = 0; i < ret; i++) {
