@@ -48,7 +48,7 @@ protected:
 	int affinity;				// IRQ / Core Affinity of this interface.
 
 	std::list<int> irqs;			// List of IRQs of the NIC.
-	std::list<node::Node *> nodes;	        // List of nodes which use this interface.
+	std::list<node::Node *> nodes;		// List of nodes which use this interface.
 
 	Logger logger;
 
