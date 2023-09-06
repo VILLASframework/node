@@ -1,9 +1,9 @@
-/** Reorder samples hook.
+/* Reorder samples hook.
  *
  * @author Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
  * @copyright 2023, OPAL-RT Germany GmbH
  * @license Apache 2.0
- *********************************************************************************/
+ */
 
 #include <cinttypes>
 #include <cstring>
@@ -151,10 +151,10 @@ public:
 	}
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "reorder_ts";
 static char d[] = "Reorder messages by their timestamp";
 static HookPlugin<ReorderTsHook, n, d, (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH | (int) Hook::Flags::NODE_READ, 2> p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas
