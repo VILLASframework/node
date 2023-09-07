@@ -1,8 +1,8 @@
 /* Reorder samples hook.
  *
- * @author Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
- * @copyright 2023, OPAL-RT Germany GmbH
- * @license Apache 2.0
+ * Author: Philipp Jungkamp <philipp.jungkamp@opal-rt.com>
+ * SPDX-FileCopyrightText: 2023, OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <cinttypes>
