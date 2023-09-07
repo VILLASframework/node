@@ -11,8 +11,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <libwebsockets.h>
-
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/websocket.hpp>

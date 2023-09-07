@@ -7,8 +7,9 @@
 
 #include <iostream>
 
-#include <graphviz/gvcommon.h>
 #include <graphviz/types.h>
+
+#include <graphviz/gvcommon.h>
 
 #include <villas/super_node.hpp>
 #include <villas/tool.hpp>

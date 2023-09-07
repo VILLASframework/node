@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <libwebsockets.h>
 #include <spdlog/fmt/ostr.h>
 
 #include <villas/buffer.hpp>

@@ -7,15 +7,15 @@
 
 #pragma once
 
-#ifdef IBVERBS_FOUND
-#include <infiniband/verbs.h>
-#endif // IBVERBS_FOUND
-
 #include <cstddef>
 #include <cstdint>
 
 #include <villas/node/config.hpp>
 #include <villas/node/memory_type.hpp>
+
+#ifdef IBVERBS_FOUND
+#include <infiniband/verbs.h>
+#endif // IBVERBS_FOUND
 
 namespace villas {
 namespace node {
@@ -52,7 +52,7 @@ struct Allocation {
   };
 };
 
-// Initilialize memory subsystem
+// Initialize memory subsystem
 int init(int hugepages) __attribute__((warn_unused_result));
 
 int lock(size_t lock);

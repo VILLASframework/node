@@ -15,6 +15,8 @@
 
 #include <cstdint>
 
+#include <villas/signal_type.hpp>
+
 namespace villas {
 namespace node {
 

@@ -7,14 +7,14 @@
 
 #pragma once
 
-#ifdef WITH_CONFIG
-#include <libconfig.h>
-#endif
-
 #include <jansson.h>
 
 #include <villas/node/config.hpp>
 #include <villas/sample.hpp>
+
+#ifdef WITH_CONFIG
+#include <libconfig.h>
+#endif
 
 namespace villas {
 namespace node {
