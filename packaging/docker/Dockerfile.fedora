@@ -19,7 +19,8 @@ RUN dnf -y install \
 	autoconf automake autogen libtool \
 	texinfo git curl tar \
 	flex bison \
-	protobuf-compiler protobuf-c-compiler
+	protobuf-compiler protobuf-c-compiler \
+	clang-tools-extra
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
