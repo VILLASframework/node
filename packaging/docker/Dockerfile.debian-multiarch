@@ -31,7 +31,8 @@ RUN apt-get update && \
 		autoconf automake autogen libtool \
 		texinfo git curl tar wget diffutils \
 		flex bison \
-		protobuf-compiler protobuf-c-compiler
+		protobuf-compiler protobuf-c-compiler \
+		clang-format clangd
 
 # Build-time dependencies
 RUN apt-get update && \

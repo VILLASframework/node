@@ -24,7 +24,8 @@ RUN dnf --allowerasing -y install \
 	autoconf automake libtool \
 	flex bison \
 	texinfo git curl tar \
-	protobuf-compiler protobuf-c-compiler
+	protobuf-compiler protobuf-c-compiler \
+	clang-tools-extra
 
 # Dependencies
 RUN dnf -y install \
