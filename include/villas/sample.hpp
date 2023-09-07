@@ -49,8 +49,8 @@ enum class SampleFlags {
       HAS_TS_ORIGIN | HAS_TS_RECEIVED, // Include origin timestamp in output.
   HAS_ALL = (1 << 5) - 1,              // Enable all output options.
 
-  IS_FIRST = (1 << 16), // This sample is the first of a new simulation case
-  IS_LAST = (1 << 17)   // This sample is the last of a running simulation case
+  NEW_SIMULATION =
+      (1 << 16), // This sample is the first of a new simulation case
 };
 
 struct Sample {
