@@ -108,7 +108,7 @@ int PathSource::read(int i) {
     /* We reset the sample length after each restart of the simulation.
 		 * This is necessary for the test_rtt node to work properly.
 		 */
-    if (tomux_smps[i]->flags & (int)SampleFlags::IS_FIRST)
+    if (tomux_smps[i]->flags & (int)SampleFlags::NEW_SIMULATION)
       muxed_smps[i]->length = 0;
 
     muxed_smps[i]->ts = tomux_smps[i]->ts;

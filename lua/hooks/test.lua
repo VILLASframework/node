@@ -22,8 +22,7 @@ SampleFlags = {
 	HAS_DATA        = 16,     -- "(1 <<  5)"    Include values in output.
 	HAS_ALL         = 15,     -- "(1 <<  6) -1" Enable all output options.
 
-	IS_FIRST        = 65536,  -- "(1 << 16)"    This sample is the first of a new simulation case
-	IS_LAST         = 131072  -- "(1 << 17)"    This sample is the last of a running simulation case
+	NEW_SIMULATION  = 65536,  -- "(1 << 16)"    This sample is the first of a new simulation case
 }
 
 
@@ -71,7 +70,7 @@ end
 
 
 function process(smp)
-	info("Process test_hook")	
+	info("Process test_hook")
 
 	if smp.sequence == 1 then
 		dump_sample(smp)

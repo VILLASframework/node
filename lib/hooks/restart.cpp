@@ -50,7 +50,7 @@ public:
                      "(previous->sequence={}, current->sequence={})",
                      node->getName(), prev->sequence, smp->sequence);
 
-        smp->flags |= (int)SampleFlags::IS_FIRST;
+        smp->flags |= (int)SampleFlags::NEW_SIMULATION;
 
         // Restart hooks
         for (auto k : node->in.hooks)
