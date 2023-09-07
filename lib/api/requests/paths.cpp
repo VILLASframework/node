@@ -7,13 +7,13 @@
 
 #include <jansson.h>
 
-#include <villas/super_node.hpp>
-#include <villas/path.hpp>
-#include <villas/hook.hpp>
-#include <villas/utils.hpp>
-#include <villas/api/session.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
+#include <villas/hook.hpp>
+#include <villas/path.hpp>
+#include <villas/super_node.hpp>
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace node {
@@ -22,21 +22,19 @@ namespace api {
 class PathsRequest : public Request {
 
 public:
-	using Request::Request;
+  using Request::Request;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::GET)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Paths endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Paths endpoint does not accept any body data");
 
-		json_t *json_paths = session->getSuperNode()->getPaths().toJson();
+    json_t *json_paths = session->getSuperNode()->getPaths().toJson();
 
-		return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
-	}
+    return new JsonResponse(session, HTTP_STATUS_OK, json_paths);
+  }
 };
 
 // Register API request

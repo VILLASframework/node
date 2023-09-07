@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef IBVERBS_FOUND
-  #include <infiniband/verbs.h>
+#include <infiniband/verbs.h>
 #endif // IBVERBS_FOUND
 
 #include <cstddef>
@@ -24,36 +24,36 @@ namespace memory {
 /* Descriptor of a memory block. Associated block always starts at
  * &m + sizeof(struct Block). */
 struct Block {
-	struct Block *prev;
-	struct Block *next;
-	size_t length; // Length of the block; doesn't include the descriptor itself
-	bool used;
+  struct Block *prev;
+  struct Block *next;
+  size_t length; // Length of the block; doesn't include the descriptor itself
+  bool used;
 };
 
 // TODO: Unused for now
 struct Allocation {
-	struct Type *type;
+  struct Type *type;
 
-	struct Allocation *parent;
+  struct Allocation *parent;
 
-	void *address;
-	size_t alignment;
-	size_t length;
+  void *address;
+  size_t alignment;
+  size_t length;
 
-	union {
+  union {
 #ifdef IBVERBS_FOUND
-		struct {
-			struct ibv_mr *mr;
-		} ib;
+    struct {
+      struct ibv_mr *mr;
+    } ib;
 #endif
-		struct {
-			struct Block *block;
-		} managed;
-	};
+    struct {
+      struct Block *block;
+    } managed;
+  };
 };
 
 // Initilialize memory subsystem
-int init(int hugepages) __attribute__ ((warn_unused_result));
+int init(int hugepages) __attribute__((warn_unused_result));
 
 int lock(size_t lock);
 
@@ -62,13 +62,14 @@ int lock(size_t lock);
  * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.
  */
-void * alloc(size_t len, struct Type *m = default_type);
+void *alloc(size_t len, struct Type *m = default_type);
 
-void * alloc_aligned(size_t len, size_t alignment, struct Type *m = default_type);
+void *alloc_aligned(size_t len, size_t alignment,
+                    struct Type *m = default_type);
 
 int free(void *ptr);
 
-struct Allocation * get_allocation(void *ptr);
+struct Allocation *get_allocation(void *ptr);
 
 } // namespace memory
 } // namespace node

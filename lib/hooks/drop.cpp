@@ -16,73 +16,68 @@ namespace node {
 class DropHook : public Hook {
 
 protected:
-	struct Sample *prev;
+  struct Sample *prev;
 
 public:
-	using Hook::Hook;
+  using Hook::Hook;
 
-	virtual
-	void start()
-	{
-		assert(state == State::PREPARED || state == State::STOPPED);
+  virtual void start() {
+    assert(state == State::PREPARED || state == State::STOPPED);
 
-		prev = nullptr;
+    prev = nullptr;
 
-		state = State::STARTED;
-	}
+    state = State::STARTED;
+  }
 
-	virtual
-	void stop()
-	{
-		assert(state == State::STARTED);
+  virtual void stop() {
+    assert(state == State::STARTED);
 
-		if (prev)
-			sample_decref(prev);
+    if (prev)
+      sample_decref(prev);
 
-		state = State::STOPPED;
-	}
+    state = State::STOPPED;
+  }
 
-	virtual
-	Hook::Reason process(struct Sample *smp)
-	{
-		int dist;
+  virtual Hook::Reason process(struct Sample *smp) {
+    int dist;
 
-		assert(state == State::STARTED);
+    assert(state == State::STARTED);
 
-		if (prev) {
-			dist = smp->sequence - (int64_t) prev->sequence;
-			if (dist <= 0) {
-				logger->debug("Dropping reordered sample: sequence={}, distance={}", smp->sequence, dist);
+    if (prev) {
+      dist = smp->sequence - (int64_t)prev->sequence;
+      if (dist <= 0) {
+        logger->debug("Dropping reordered sample: sequence={}, distance={}",
+                      smp->sequence, dist);
 
-				return Hook::Reason::SKIP_SAMPLE;
-			}
-		}
+        return Hook::Reason::SKIP_SAMPLE;
+      }
+    }
 
-		sample_incref(smp);
-		if (prev)
-			sample_decref(prev);
+    sample_incref(smp);
+    if (prev)
+      sample_decref(prev);
 
-		prev = smp;
+    prev = smp;
 
-		return Reason::OK;
-	}
+    return Reason::OK;
+  }
 
-	virtual
-	void restart()
-	{
-		assert(state == State::STARTED);
+  virtual void restart() {
+    assert(state == State::STARTED);
 
-		if (prev) {
-			sample_decref(prev);
-			prev = nullptr;
-		}
-	}
+    if (prev) {
+      sample_decref(prev);
+      prev = nullptr;
+    }
+  }
 };
 
 // Register hook
 static char n[] = "drop";
 static char d[] = "Drop messages with reordered sequence numbers";
-static HookPlugin<DropHook, n, d, (int) Hook::Flags::BUILTIN | (int) Hook::Flags::NODE_READ, 3> p;
+static HookPlugin<DropHook, n, d,
+                  (int)Hook::Flags::BUILTIN | (int)Hook::Flags::NODE_READ, 3>
+    p;
 
 } // namespace node
 } // namespace villas

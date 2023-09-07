@@ -12,8 +12,8 @@
 #include <villas/queue_signalled.h>
 #include <villas/sample.hpp>
 
-#define DEFAULT_SHMEM_QUEUELEN	512u
-#define DEFAULT_SHMEM_SAMPLELEN	64u
+#define DEFAULT_SHMEM_QUEUELEN 512u
+#define DEFAULT_SHMEM_SAMPLELEN 64u
 
 namespace villas {
 namespace node {
@@ -21,30 +21,30 @@ namespace node {
 /* Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct ShmemConfig {
-	int polling;			// Whether to use polling instead of POSIX CVs
-	int queuelen;			// Size of the queues (in elements)
-	int samplelen;			// Maximum number of data entries in a single sample
+  int polling;   // Whether to use polling instead of POSIX CVs
+  int queuelen;  // Size of the queues (in elements)
+  int samplelen; // Maximum number of data entries in a single sample
 };
 
 // The structure that actually resides in the shared memory.
 struct ShmemShared {
-	int polling;			// Whether to use a pthread_cond_t to signal if new samples are written to incoming queue.
-	struct CQueueSignalled queue;	// Queue for samples passed in both directions.
-	struct Pool pool;		// Pool for the samples in the queues.
+  int polling; // Whether to use a pthread_cond_t to signal if new samples are written to incoming queue.
+  struct CQueueSignalled queue; // Queue for samples passed in both directions.
+  struct Pool pool;             // Pool for the samples in the queues.
 };
 
 // Relevant information for one direction of the interface.
 struct shmem_dir {
-	void *base;			// Base address of the region.
-	const char *name;		// Name of the shmem object.
-	size_t len;			// Total size of the region.
-	struct ShmemShared *shared;	// Actually shared datastructure
+  void *base;                 // Base address of the region.
+  const char *name;           // Name of the shmem object.
+  size_t len;                 // Total size of the region.
+  struct ShmemShared *shared; // Actually shared datastructure
 };
 
 // Main structure representing the shared memory interface.
 struct ShmemInterface {
-	struct shmem_dir read, write;
-	std::atomic<int> readers, writers, closed;
+  struct shmem_dir read, write;
+  std::atomic<int> readers, writers, closed;
 };
 
 /* Open the shared memory objects and retrieve / initialize the shared data structures.
@@ -58,7 +58,8 @@ struct ShmemInterface {
  * @retval 0 The objects were opened and initialized successfully.
  * @retval <0 An error occured; errno is set accordingly.
  */
-int shmem_int_open(const char* wname, const char* rname, struct ShmemInterface* shm, struct ShmemConfig* conf);
+int shmem_int_open(const char *wname, const char *rname,
+                   struct ShmemInterface *shm, struct ShmemConfig *conf);
 
 /* Close and destroy the shared memory interface and related structures.
  *
@@ -77,7 +78,8 @@ int shmem_int_close(struct ShmemInterface *shm);
  * @retval >=0 Number of samples that were read. Can be less than cnt (including 0) in case not enough samples were available.
  * @retval -1 The other process closed the interface; no samples can be read anymore.
  */
-int shmem_int_read(struct ShmemInterface *shm, struct Sample * const smps[], unsigned cnt);
+int shmem_int_read(struct ShmemInterface *shm, struct Sample *const smps[],
+                   unsigned cnt);
 
 /* Write samples to the interface.
  *
@@ -87,7 +89,8 @@ int shmem_int_read(struct ShmemInterface *shm, struct Sample * const smps[], uns
  * @retval >=0 Number of samples that were successfully written. Can be less than cnt (including 0) in case of a full queue.
  * @retval -1 The write failed for some reason; no more samples can be written.
  */
-int shmem_int_write(struct ShmemInterface *shm, const struct Sample * const smps[], unsigned cnt);
+int shmem_int_write(struct ShmemInterface *shm,
+                    const struct Sample *const smps[], unsigned cnt);
 
 /* Allocate samples to be written to the interface.
  *
@@ -97,7 +100,8 @@ int shmem_int_write(struct ShmemInterface *shm, const struct Sample * const smps
  * @param cnt Number of samples to allocate.
  * @return Number of samples that were successfully allocated (may be less then cnt).
  */
-int shmem_int_alloc(struct ShmemInterface *shm, struct Sample *smps[], unsigned cnt);
+int shmem_int_alloc(struct ShmemInterface *shm, struct Sample *smps[],
+                    unsigned cnt);
 
 /* Returns the total size of the shared memory region with the given size of
  * the input/output queues (in elements) and the given number of data elements

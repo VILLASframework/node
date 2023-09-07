@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <villas/list.hpp>
 #include <villas/format.hpp>
+#include <villas/list.hpp>
 #include <villas/task.hpp>
 
 namespace villas {
@@ -21,33 +21,33 @@ struct Sample;
 struct test_rtt;
 
 struct test_rtt_case {
-	double rate;
-	unsigned values;
-	unsigned limit;			// The number of samples we take per test.
+  double rate;
+  unsigned values;
+  unsigned limit; // The number of samples we take per test.
 
-	char *filename;
-	char *filename_formatted;
+  char *filename;
+  char *filename_formatted;
 
-	NodeCompat *node;
+  NodeCompat *node;
 };
 
 struct test_rtt {
-	struct Task task;		// The periodic task for test_rtt_read()
-	Format *formatter;// The format of the output file
-	FILE *stream;
+  struct Task task;  // The periodic task for test_rtt_read()
+  Format *formatter; // The format of the output file
+  FILE *stream;
 
-	double cooldown;		// Number of seconds to wait beween tests.
+  double cooldown; // Number of seconds to wait beween tests.
 
-	int current;			// Index of current test in test_rtt::cases
-	int counter;
+  int current; // Index of current test in test_rtt::cases
+  int counter;
 
-	struct List cases;		// List of test cases
+  struct List cases; // List of test cases
 
-	char *output;			// The directory where we place the results.
-	char *prefix;			// An optional prefix in the filename.
+  char *output; // The directory where we place the results.
+  char *prefix; // An optional prefix in the filename.
 };
 
-char * test_rtt_print(NodeCompat *n);
+char *test_rtt_print(NodeCompat *n);
 
 int test_rtt_parse(NodeCompat *n, json_t *json);
 
@@ -61,9 +61,9 @@ int test_rtt_start(NodeCompat *n);
 
 int test_rtt_stop(NodeCompat *n);
 
-int test_rtt_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int test_rtt_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int test_rtt_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int test_rtt_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 int test_rtt_poll_fds(NodeCompat *n, int fds[]);
 

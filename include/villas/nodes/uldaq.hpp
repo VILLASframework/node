@@ -10,8 +10,8 @@
 
 #include <pthread.h>
 
-#include <villas/queue_signalled.h>
 #include <villas/pool.hpp>
+#include <villas/queue_signalled.h>
 
 #include <uldaq.h>
 
@@ -22,34 +22,34 @@ namespace villas {
 namespace node {
 
 struct uldaq {
-	const char *device_id;
+  const char *device_id;
 
-	DaqDeviceHandle device_handle;
-	DaqDeviceDescriptor *device_descriptor;
-	DaqDeviceInterface device_interface_type;
+  DaqDeviceHandle device_handle;
+  DaqDeviceDescriptor *device_descriptor;
+  DaqDeviceInterface device_interface_type;
 
-	uint64_t sequence;
+  uint64_t sequence;
 
-	struct {
-		double sample_rate;
-		double *buffer;
-		size_t buffer_len;
-		size_t buffer_pos;
-		size_t channel_count;
+  struct {
+    double sample_rate;
+    double *buffer;
+    size_t buffer_len;
+    size_t buffer_pos;
+    size_t channel_count;
 
-		ScanOption scan_options;
-		AInScanFlag flags;
-		AiQueueElement *queues;
-		ScanStatus status; // protected by mutex
-		TransferStatus transfer_status; // protected by mutex
+    ScanOption scan_options;
+    AInScanFlag flags;
+    AiQueueElement *queues;
+    ScanStatus status;              // protected by mutex
+    TransferStatus transfer_status; // protected by mutex
 
-		pthread_mutex_t mutex;
-		pthread_cond_t cv;
-	} in;
+    pthread_mutex_t mutex;
+    pthread_cond_t cv;
+  } in;
 
-	struct {
-		// TODO
-	} out;
+  struct {
+    // TODO
+  } out;
 };
 
 int uldaq_type_start(SuperNode *sn);
@@ -60,7 +60,7 @@ int uldaq_destroy(NodeCompat *n);
 
 int uldaq_parse(NodeCompat *n, json_t *json);
 
-char * uldaq_print(NodeCompat *n);
+char *uldaq_print(NodeCompat *n);
 
 int uldaq_check(NodeCompat *n);
 
@@ -68,7 +68,7 @@ int uldaq_start(NodeCompat *n);
 
 int uldaq_stop(NodeCompat *n);
 
-int uldaq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int uldaq_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 } // namespace node
 } // namespace villas

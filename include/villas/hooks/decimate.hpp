@@ -15,38 +15,30 @@ namespace node {
 class DecimateHook : public LimitHook {
 
 protected:
-	int ratio;
-	bool renumber;
-	unsigned counter;
+  int ratio;
+  bool renumber;
+  unsigned counter;
 
 public:
-	using LimitHook::LimitHook;
+  using LimitHook::LimitHook;
 
-	virtual
-	void setRate(double rate, double maxRate = -1)
-	{
-		assert(maxRate > 0);
+  virtual void setRate(double rate, double maxRate = -1) {
+    assert(maxRate > 0);
 
-		int ratio = maxRate / rate;
-		if (ratio == 0)
-			ratio = 1;
+    int ratio = maxRate / rate;
+    if (ratio == 0)
+      ratio = 1;
 
-		setRatio(ratio);
-	}
+    setRatio(ratio);
+  }
 
-	void setRatio(int r)
-	{
-		ratio = r;
-	}
+  void setRatio(int r) { ratio = r; }
 
-	virtual
-	void start();
+  virtual void start();
 
-	virtual
-	void parse(json_t *json);
+  virtual void parse(json_t *json);
 
-	virtual
-	Hook::Reason process(struct Sample *smp);
+  virtual Hook::Reason process(struct Sample *smp);
 };
 
 } // namespace node

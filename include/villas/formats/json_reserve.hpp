@@ -15,13 +15,11 @@ namespace node {
 class JsonReserveFormat : public JsonFormat {
 
 protected:
-	virtual
-	int packSample(json_t **j, const struct Sample *smp);
-	virtual
-	int unpackSample(json_t *json_smp, struct Sample *smp);
+  virtual int packSample(json_t **j, const struct Sample *smp);
+  virtual int unpackSample(json_t *json_smp, struct Sample *smp);
 
 public:
-	using JsonFormat::JsonFormat;
+  using JsonFormat::JsonFormat;
 };
 
 } // namespace node

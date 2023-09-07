@@ -5,10 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/uuid.hpp>
 #include <villas/api/requests/universal.hpp>
 #include <villas/api/response.hpp>
 #include <villas/node.hpp>
+#include <villas/uuid.hpp>
 
 namespace villas {
 namespace node {
@@ -17,29 +17,24 @@ namespace universal {
 
 class InfoRequest : public UniversalRequest {
 public:
-	using UniversalRequest::UniversalRequest;
+  using UniversalRequest::UniversalRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::GET)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("This endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("This endpoint does not accept any body data");
 
-		auto *info = json_pack("{ s: s, s: s, s: { s: s, s: s, s: s } }",
-			"id", node->getNameShort().c_str(),
-			"uuid", uuid::toString(node->getUuid()).c_str(),
+    auto *info = json_pack("{ s: s, s: s, s: { s: s, s: s, s: s } }", "id",
+                           node->getNameShort().c_str(), "uuid",
+                           uuid::toString(node->getUuid()).c_str(),
 
-			"transport",
-				"type", "villas",
-				"version", PROJECT_VERSION,
-				"build", PROJECT_BUILD_ID
-		);
+                           "transport", "type", "villas", "version",
+                           PROJECT_VERSION, "build", PROJECT_BUILD_ID);
 
-		return new JsonResponse(session, HTTP_STATUS_OK, info);
-	}
+    return new JsonResponse(session, HTTP_STATUS_OK, info);
+  }
 };
 
 // Register API requests

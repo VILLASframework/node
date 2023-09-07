@@ -12,38 +12,33 @@
 
 namespace villas {
 
-template<typename T>
-class Queue {
+template <typename T> class Queue {
 
 protected:
-	std::queue<T> queue;
-	std::mutex mtx;
+  std::queue<T> queue;
+  std::mutex mtx;
 
 public:
-	void push(T p)
-	{
-		std::unique_lock<std::mutex> guard(mtx);
+  void push(T p) {
+    std::unique_lock<std::mutex> guard(mtx);
 
-		queue.push(p);
-	}
+    queue.push(p);
+  }
 
-	T pop()
-	{
-		std::unique_lock<std::mutex> guard(mtx);
+  T pop() {
+    std::unique_lock<std::mutex> guard(mtx);
 
-		T res = queue.front();
-		queue.pop();
+    T res = queue.front();
+    queue.pop();
 
-		return res;
-	}
+    return res;
+  }
 
-	bool empty()
-	{
-		std::unique_lock<std::mutex> guard(mtx);
+  bool empty() {
+    std::unique_lock<std::mutex> guard(mtx);
 
-		return queue.empty();
-	}
-
+    return queue.empty();
+  }
 };
 
 } // namespace villas

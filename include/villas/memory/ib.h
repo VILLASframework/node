@@ -14,11 +14,11 @@ namespace node {
 namespace memory {
 
 struct IB {
-	struct ibv_pd *pd;
-	struct Type *parent;
+  struct ibv_pd *pd;
+  struct Type *parent;
 };
 
-struct ibv_mr * ib_get_mr(void *ptr);
+struct ibv_mr *ib_get_mr(void *ptr);
 
 } // namespace memory
 } // namespace node

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <uuid/uuid.h>
 #include <jansson.h>
+#include <uuid/uuid.h>
 
 #include <list>
 #include <string>
@@ -22,10 +22,10 @@ class Path;
 class PathList : public std::list<Path *> {
 
 public:
-	// Lookup a path from the list based on its UUID
-	Path * lookup(const uuid_t &uuid) const;
+  // Lookup a path from the list based on its UUID
+  Path *lookup(const uuid_t &uuid) const;
 
-	json_t * toJson() const;
+  json_t *toJson() const;
 };
 
 } // namespace node

@@ -49,35 +49,37 @@ namespace node {
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct CQueue_cell {
-	std::atomic<size_t> sequence;
-	off_t data_off; // Pointer relative to the queue struct
+  std::atomic<size_t> sequence;
+  off_t data_off; // Pointer relative to the queue struct
 };
 
 // A lock-free multiple-producer, multiple-consumer (MPMC) queue.
 struct CQueue {
-	std::atomic<enum State> state;
+  std::atomic<enum State> state;
 
-	cacheline_pad_t _pad0;	// Shared area: all threads read
+  cacheline_pad_t _pad0; // Shared area: all threads read
 
-	size_t buffer_mask;
-	off_t buffer_off;	// Relative pointer to struct CQueue_cell[]
+  size_t buffer_mask;
+  off_t buffer_off; // Relative pointer to struct CQueue_cell[]
 
-	cacheline_pad_t	_pad1;	// Producer area: only producers read & write
+  cacheline_pad_t _pad1; // Producer area: only producers read & write
 
-	std::atomic<size_t>	tail;	// Queue tail pointer
+  std::atomic<size_t> tail; // Queue tail pointer
 
-	cacheline_pad_t	_pad2;	// Consumer area: only consumers read & write
+  cacheline_pad_t _pad2; // Consumer area: only consumers read & write
 
-	std::atomic<size_t>	head;	// Queue head pointer
+  std::atomic<size_t> head; // Queue head pointer
 
-	cacheline_pad_t	_pad3;	// TODO: Why needed?
+  cacheline_pad_t _pad3; // TODO: Why needed?
 };
 
 // Initialize MPMC queue
-int queue_init(struct CQueue *q, size_t size, struct memory::Type *mem = memory::default_type) __attribute__ ((warn_unused_result));
+int queue_init(struct CQueue *q, size_t size,
+               struct memory::Type *mem = memory::default_type)
+    __attribute__((warn_unused_result));
 
 // Desroy MPMC queue and release memory
-int queue_destroy(struct CQueue *q) __attribute__ ((warn_unused_result));
+int queue_destroy(struct CQueue *q) __attribute__((warn_unused_result));
 
 /* Return estimation of current queue usage.
  *

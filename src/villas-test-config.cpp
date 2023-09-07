@@ -8,13 +8,13 @@
 #include <iostream>
 #include <unistd.h>
 
-#include <villas/tool.hpp>
-#include <villas/node/config.hpp>
 #include <villas/log.hpp>
-#include <villas/version.hpp>
-#include <villas/utils.hpp>
-#include <villas/super_node.hpp>
+#include <villas/node/config.hpp>
 #include <villas/node/exceptions.hpp>
+#include <villas/super_node.hpp>
+#include <villas/tool.hpp>
+#include <villas/utils.hpp>
+#include <villas/version.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -26,93 +26,90 @@ namespace tools {
 class TestConfig : public Tool {
 
 public:
-	TestConfig(int argc, char *argv[]) :
-		Tool(argc, argv, "test-config"),
-		check(false),
-		dump(false)
-	{
-		int ret;
+  TestConfig(int argc, char *argv[])
+      : Tool(argc, argv, "test-config"), check(false), dump(false) {
+    int ret;
 
-		ret = memory::init(DEFAULT_NR_HUGEPAGES);
-		if (ret)
-			throw RuntimeError("Failed to initialize memory");
-	}
+    ret = memory::init(DEFAULT_NR_HUGEPAGES);
+    if (ret)
+      throw RuntimeError("Failed to initialize memory");
+  }
 
 protected:
-	std::string uri;
+  std::string uri;
 
-	bool check;
-	bool dump;
+  bool check;
+  bool dump;
 
-	void usage()
-	{
-		std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
-			<< "  CONFIG is the path to an optional configuration file" << std::endl
-			<< "  OPTIONS is one or more of the following options:" << std::endl
-			<< "    -d LVL  set debug level" << std::endl
-			<< "    -V      show version and exit" << std::endl
-			<< "    -c      perform plausability checks on config" << std::endl
-			<< "    -D      dump config in JSON format" << std::endl
-			<< "    -h      show usage and exit" << std::endl << std::endl;
+  void usage() {
+    std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
+              << "  CONFIG is the path to an optional configuration file"
+              << std::endl
+              << "  OPTIONS is one or more of the following options:"
+              << std::endl
+              << "    -d LVL  set debug level" << std::endl
+              << "    -V      show version and exit" << std::endl
+              << "    -c      perform plausability checks on config"
+              << std::endl
+              << "    -D      dump config in JSON format" << std::endl
+              << "    -h      show usage and exit" << std::endl
+              << std::endl;
 
-		printCopyright();
-	}
+    printCopyright();
+  }
 
-	void parse()
-	{
-		int c;
-		while ((c = getopt (argc, argv, "hcVD")) != -1) {
-			switch (c) {
-				case 'c':
-					check = true;
-					break;
+  void parse() {
+    int c;
+    while ((c = getopt(argc, argv, "hcVD")) != -1) {
+      switch (c) {
+      case 'c':
+        check = true;
+        break;
 
-				case 'D':
-					dump = true;
-					break;
+      case 'D':
+        dump = true;
+        break;
 
-				case 'V':
-					printVersion();
-					exit(EXIT_SUCCESS);
+      case 'V':
+        printVersion();
+        exit(EXIT_SUCCESS);
 
-				case 'h':
-				case '?':
-					usage();
-					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-			}
-		}
+      case 'h':
+      case '?':
+        usage();
+        exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+      }
+    }
 
-		if (argc - optind < 1) {
-			usage();
-			exit(EXIT_FAILURE);
-		}
+    if (argc - optind < 1) {
+      usage();
+      exit(EXIT_FAILURE);
+    }
 
-		uri = argv[optind];
-	}
+    uri = argv[optind];
+  }
 
-	int main()
-	{
-		SuperNode sn;
+  int main() {
+    SuperNode sn;
 
-		sn.parse(uri);
+    sn.parse(uri);
 
-		// if (check)
-		// 	sn.check();
+    // if (check)
+    // 	sn.check();
 
-		// if (dump)
-		// 	json_dumpf(sn.getConfig(), stdout, JSON_INDENT(2));
+    // if (dump)
+    // 	json_dumpf(sn.getConfig(), stdout, JSON_INDENT(2));
 
-		return 0;
-	}
+    return 0;
+  }
 };
 
 } // namespace tools
 } // namespace node
 } // namespace villas
 
-int main(int argc, char *argv[])
-{
-	villas::node::tools::TestConfig t(argc, argv);
+int main(int argc, char *argv[]) {
+  villas::node::tools::TestConfig t(argc, argv);
 
-	return t.run();
+  return t.run();
 }

@@ -9,9 +9,9 @@
 
 #include <jansson.h>
 
-#include <villas/queue.h>
-#include <villas/buffer.hpp>
 #include <villas/api.hpp>
+#include <villas/buffer.hpp>
+#include <villas/queue.h>
 
 namespace villas {
 namespace node {
@@ -33,72 +33,53 @@ class RequestFactory;
 class Session {
 
 public:
-	friend Request; // Requires access to wsi for getting URL args and headers
-	friend StatusRequest; // Requires access to wsi for context status
-	friend RequestFactory;
+  friend Request; // Requires access to wsi for getting URL args and headers
+  friend StatusRequest; // Requires access to wsi for context status
+  friend RequestFactory;
 
-	enum State {
-		ESTABLISHED,
-		SHUTDOWN
-	};
+  enum State { ESTABLISHED, SHUTDOWN };
 
-	enum Version {
-		UNKNOWN_VERSION	= 0,
-		VERSION_1	= 1,
-		VERSION_2	= 2
-	};
+  enum Version { UNKNOWN_VERSION = 0, VERSION_1 = 1, VERSION_2 = 2 };
 
-	enum Method {
-		UNKNOWN,
-		GET,
-		POST,
-		DELETE,
-		OPTIONS,
-		PUT,
-		PATCH
-	};
+  enum Method { UNKNOWN, GET, POST, DELETE, OPTIONS, PUT, PATCH };
 
 protected:
-	enum State state;
-	enum Version version;
+  enum State state;
+  enum Version version;
 
-	lws *wsi;
+  lws *wsi;
 
-	Web *web;
-	Api *api;
+  Web *web;
+  Api *api;
 
-	Logger logger;
+  Logger logger;
 
-	std::unique_ptr<Request>  request;
-	std::unique_ptr<Response> response;
+  std::unique_ptr<Request> request;
+  std::unique_ptr<Response> response;
 
-	bool headersSent;
+  bool headersSent;
 
 public:
-	Session(struct lws *w);
-	~Session();
+  Session(struct lws *w);
+  ~Session();
 
-	std::string getName() const;
+  std::string getName() const;
 
-	SuperNode * getSuperNode() const
-	{
-		return api->getSuperNode();
-	}
+  SuperNode *getSuperNode() const { return api->getSuperNode(); }
 
-	void open(void *in, size_t len);
-	int writeable();
-	void body(void *in, size_t len);
-	void bodyComplete();
-	void execute();
-	void shutdown();
+  void open(void *in, size_t len);
+  int writeable();
+  void body(void *in, size_t len);
+  void bodyComplete();
+  void execute();
+  void shutdown();
 
-	static
-	int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+  static int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
+                              void *user, void *in, size_t len);
 
-	Method getRequestMethod() const;
+  Method getRequestMethod() const;
 
-	static
-	std::string methodToString(Method meth);
+  static std::string methodToString(Method meth);
 };
 
 } // namespace api

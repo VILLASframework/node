@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include <villas/format.hpp>
 #include <villas/node.hpp>
 #include <villas/popen.hpp>
-#include <villas/format.hpp>
 
 namespace villas {
 namespace node {
@@ -20,55 +20,42 @@ struct Sample;
 class ExecNode : public Node {
 
 protected:
-	std::unique_ptr<villas::utils::Popen> proc;
-	std::unique_ptr<Format> formatter;
+  std::unique_ptr<villas::utils::Popen> proc;
+  std::unique_ptr<Format> formatter;
 
-	FILE *stream_in, *stream_out;
+  FILE *stream_in, *stream_out;
 
-	bool flush;
-	bool shell;
+  bool flush;
+  bool shell;
 
-	std::string working_dir;
-	std::string command;
+  std::string working_dir;
+  std::string command;
 
-	villas::utils::Popen::arg_list arguments;
-	villas::utils::Popen::env_map environment;
+  villas::utils::Popen::arg_list arguments;
+  villas::utils::Popen::env_map environment;
 
-	virtual
-	int _read(struct Sample * smps[], unsigned cnt);
+  virtual int _read(struct Sample *smps[], unsigned cnt);
 
-	virtual
-	int _write(struct Sample * smps[], unsigned cnt);
+  virtual int _write(struct Sample *smps[], unsigned cnt);
 
 public:
-	ExecNode(const uuid_t &id = {}, const std::string &name = "") :
-		Node(id, name),
-		stream_in(nullptr),
-		stream_out(nullptr),
-		flush(true),
-		shell(false)
-	{ }
+  ExecNode(const uuid_t &id = {}, const std::string &name = "")
+      : Node(id, name), stream_in(nullptr), stream_out(nullptr), flush(true),
+        shell(false) {}
 
-	virtual
-	~ExecNode();
+  virtual ~ExecNode();
 
-	virtual
-	const std::string & getDetails();
+  virtual const std::string &getDetails();
 
-	virtual
-	int start();
+  virtual int start();
 
-	virtual
-	int stop();
+  virtual int stop();
 
-	virtual
-	int prepare();
+  virtual int prepare();
 
-	virtual
-	int parse(json_t *json);
+  virtual int parse(json_t *json);
 
-	virtual
-	std::vector<int> getPollFDs();
+  virtual std::vector<int> getPollFDs();
 };
 
 } // namespace node

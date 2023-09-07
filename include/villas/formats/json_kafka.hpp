@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <villas/signal_type.hpp>
 #include <villas/formats/json.hpp>
+#include <villas/signal_type.hpp>
 
 namespace villas {
 namespace node {
@@ -16,20 +16,17 @@ namespace node {
 class JsonKafkaFormat : public JsonFormat {
 
 protected:
-	virtual
-	int packSample(json_t **j, const struct Sample *smp);
-	virtual
-	int unpackSample(json_t *json_smp, struct Sample *smp);
+  virtual int packSample(json_t **j, const struct Sample *smp);
+  virtual int unpackSample(json_t *json_smp, struct Sample *smp);
 
-	const char * villasToKafkaType(enum SignalType vt);
+  const char *villasToKafkaType(enum SignalType vt);
 
-	json_t *json_schema;
+  json_t *json_schema;
 
 public:
-	JsonKafkaFormat(int fl);
+  JsonKafkaFormat(int fl);
 
-	virtual
-	void parse(json_t *json);
+  virtual void parse(json_t *json);
 };
 
 } // namespace node

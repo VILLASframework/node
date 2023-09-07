@@ -19,22 +19,22 @@ class NodeCompat;
 union SignalData;
 
 struct can_signal {
-	uint32_t id;
-	int offset;
-	int size;
+  uint32_t id;
+  int offset;
+  int size;
 };
 
 struct can {
-	// Settings
-	char *interface_name;
-	struct can_signal *in;
-	struct can_signal *out;
+  // Settings
+  char *interface_name;
+  struct can_signal *in;
+  struct can_signal *out;
 
-	// States
-	int socket;
-	union SignalData *sample_buf;
-	size_t sample_buf_num;
-	struct timespec start_time;
+  // States
+  int socket;
+  union SignalData *sample_buf;
+  size_t sample_buf_num;
+  struct timespec start_time;
 };
 
 int can_init(NodeCompat *n);
@@ -43,7 +43,7 @@ int can_destroy(NodeCompat *n);
 
 int can_parse(NodeCompat *n, json_t *json);
 
-char * can_print(NodeCompat *n);
+char *can_print(NodeCompat *n);
 
 int can_check(NodeCompat *n);
 
@@ -53,9 +53,9 @@ int can_start(NodeCompat *n);
 
 int can_stop(NodeCompat *n);
 
-int can_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int can_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int can_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int can_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 int can_poll_fds(NodeCompat *n, int fds[]);
 

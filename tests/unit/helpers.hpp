@@ -7,4 +7,4 @@
 
 #pragma once
 
-char * cr_strdup(const char *str);
+char *cr_strdup(const char *str);

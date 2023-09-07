@@ -13,11 +13,11 @@ namespace villas {
 namespace node {
 
 enum class SignalType {
-	INVALID	= 0,	// Signal type is invalid.
-	FLOAT	= 1,	// See SignalData::f
-	INTEGER	= 2,	// See SignalData::i
-	BOOLEAN = 3,	// See SignalData::b
-	COMPLEX = 4	// See SignalData::z
+  INVALID = 0, // Signal type is invalid.
+  FLOAT = 1,   // See SignalData::f
+  INTEGER = 2, // See SignalData::i
+  BOOLEAN = 3, // See SignalData::b
+  COMPLEX = 4  // See SignalData::z
 };
 
 enum SignalType signalTypeFromString(const std::string &str);

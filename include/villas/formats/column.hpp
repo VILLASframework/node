@@ -20,51 +20,36 @@ struct Sample;
 class ColumnLineFormat : public LineFormat {
 
 protected:
-	virtual
-	size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
-	virtual
-	size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
+  virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
+  virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
 
-	char separator;		// Column separator
+  char separator; // Column separator
 
 public:
-	ColumnLineFormat(int fl, char delim, char sep) :
-		LineFormat(fl, delim),
-		separator(sep)
-	{ }
+  ColumnLineFormat(int fl, char delim, char sep)
+      : LineFormat(fl, delim), separator(sep) {}
 
-	virtual
-	void header(FILE *f, const SignalList::Ptr sigs);
+  virtual void header(FILE *f, const SignalList::Ptr sigs);
 
-	virtual
-	void parse(json_t *json);
+  virtual void parse(json_t *json);
 };
 
-template <const char *name, const char *desc, int flags = 0, char delimiter = '\n', char separator = '\t'>
+template <const char *name, const char *desc, int flags = 0,
+          char delimiter = '\n', char separator = '\t'>
 class ColumnLineFormatPlugin : public FormatFactory {
 
 public:
-	using FormatFactory::FormatFactory;
+  using FormatFactory::FormatFactory;
 
-	virtual
-	Format * make()
-	{
-		return new ColumnLineFormat(flags, delimiter, separator);
-	}
+  virtual Format *make() {
+    return new ColumnLineFormat(flags, delimiter, separator);
+  }
 
-	/// Get plugin name
-	virtual
-	std::string getName() const
-	{
-		return name;
-	}
+  /// Get plugin name
+  virtual std::string getName() const { return name; }
 
-	/// Get plugin description
-	virtual
-	std::string getDescription() const
-	{
-		return desc;
-	}
+  /// Get plugin description
+  virtual std::string getDescription() const { return desc; }
 };
 
 } // namespace node

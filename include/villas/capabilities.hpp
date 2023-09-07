@@ -12,7 +12,7 @@
 namespace villas {
 namespace node {
 
-json_t * getCapabilities();
+json_t *getCapabilities();
 
 } // namespace node
-} // namepace vilals
+} // namespace villas

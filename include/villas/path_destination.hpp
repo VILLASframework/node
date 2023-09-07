@@ -21,35 +21,32 @@ struct Sample;
 class PathDestination;
 
 class PathDestination {
-	friend Path;
+  friend Path;
 
 public:
-	using Ptr = std::shared_ptr<PathDestination>;
+  using Ptr = std::shared_ptr<PathDestination>;
 
 protected:
-	Node *node;
-	Path *path;
+  Node *node;
+  Path *path;
 
-	struct CQueue queue;
+  struct CQueue queue;
 
 public:
-	PathDestination(Path *p, Node *n);
+  PathDestination(Path *p, Node *n);
 
-	~PathDestination();
+  ~PathDestination();
 
-	int prepare(int queuelen);
+  int prepare(int queuelen);
 
-	void check();
+  void check();
 
-	static
-	void enqueueAll(class Path *p, const struct Sample * const smps[], unsigned cnt);
+  static void enqueueAll(class Path *p, const struct Sample *const smps[],
+                         unsigned cnt);
 
-	void write();
+  void write();
 
-	Node * getNode() const
-	{
-		return node;
-	}
+  Node *getNode() const { return node; }
 };
 
 using PathDestinationList = std::vector<PathDestination::Ptr>;

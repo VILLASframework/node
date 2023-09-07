@@ -20,13 +20,12 @@ namespace api {
 class NodeRequest : public Request {
 
 protected:
-	Node *node;
+  Node *node;
 
 public:
-	using Request::Request;
+  using Request::Request;
 
-	virtual
-	void prepare();
+  virtual void prepare();
 };
 
 } // namespace api

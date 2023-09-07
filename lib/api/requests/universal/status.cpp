@@ -16,24 +16,22 @@ namespace universal {
 
 class StatusRequest : public UniversalRequest {
 public:
-	using UniversalRequest::UniversalRequest;
+  using UniversalRequest::UniversalRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::GET)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("This endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("This endpoint does not accept any body data");
 
-		auto *json_response = json_pack("{ s: s }",
-			// TODO: Add connectivity check or heuristic here.
-			"connected", "unknown"
-		);
+    auto *json_response =
+        json_pack("{ s: s }",
+                  // TODO: Add connectivity check or heuristic here.
+                  "connected", "unknown");
 
-		return new JsonResponse(session, HTTP_STATUS_OK, json_response);
-	}
+    return new JsonResponse(session, HTTP_STATUS_OK, json_response);
+  }
 };
 
 // Register API requests

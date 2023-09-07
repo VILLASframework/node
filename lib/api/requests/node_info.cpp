@@ -7,13 +7,13 @@
 
 #include <jansson.h>
 
-#include <villas/super_node.hpp>
-#include <villas/node.hpp>
-#include <villas/utils.hpp>
-#include <villas/stats.hpp>
-#include <villas/api/session.hpp>
 #include <villas/api/requests/node.hpp>
 #include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
+#include <villas/node.hpp>
+#include <villas/stats.hpp>
+#include <villas/super_node.hpp>
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace node {
@@ -22,28 +22,26 @@ namespace api {
 class NodeInfoRequest : public NodeRequest {
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::GET)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Nodes endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Nodes endpoint does not accept any body data");
 
-		auto *json_node = node->toJson();
+    auto *json_node = node->toJson();
 
-		auto sigs = node->getOutputSignals();
-		if (sigs) {
-			auto *json_out = json_object_get(json_node, "out");
-			if (json_out)
-				json_object_set_new(json_out, "signals", sigs->toJson());
-		}
+    auto sigs = node->getOutputSignals();
+    if (sigs) {
+      auto *json_out = json_object_get(json_node, "out");
+      if (json_out)
+        json_object_set_new(json_out, "signals", sigs->toJson());
+    }
 
-		return new JsonResponse(session, HTTP_STATUS_OK, json_node);
-	}
+    return new JsonResponse(session, HTTP_STATUS_OK, json_node);
+  }
 };
 
 // Register API request

@@ -18,14 +18,14 @@ struct Sample;
 class IotAgentUltraLightFormat : public Format {
 
 protected:
-	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
+  virtual int sprint(char *buf, size_t len, size_t *wbytes,
+                     const struct Sample *const smps[], unsigned cnt);
 
-	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
+  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
+                    struct Sample *const smps[], unsigned cnt);
 
 public:
-	using Format::Format;
+  using Format::Format;
 };
 
 } // namespace node

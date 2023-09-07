@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include <string>
 #include <chrono>
-#include <vector>
+#include <string>
 #include <variant>
+#include <vector>
 
-#include <rtc/rtc.hpp>
 #include <jansson.h>
+#include <rtc/rtc.hpp>
 
 #include <villas/signal_list.hpp>
 
@@ -24,37 +24,38 @@ namespace node {
 namespace webrtc {
 
 struct Peer {
-	int id;
-	std::string name;
-	std::string remote;
-	std::string userAgent;
-	std::chrono::time_point<std::chrono::system_clock> created;
+  int id;
+  std::string name;
+  std::string remote;
+  std::string userAgent;
+  std::chrono::time_point<std::chrono::system_clock> created;
 
-	Peer(json_t *j);
-	json_t * toJson() const;
+  Peer(json_t *j);
+  json_t *toJson() const;
 };
 
 struct RelayMessage {
-	std::vector<rtc::IceServer> servers;
+  std::vector<rtc::IceServer> servers;
 
-	RelayMessage(json_t *j);
+  RelayMessage(json_t *j);
 };
 
 struct ControlMessage {
-	int peerID;
-	std::vector<Peer> peers;
+  int peerID;
+  std::vector<Peer> peers;
 
-	ControlMessage(json_t *j);
-	json_t * toJson() const;
+  ControlMessage(json_t *j);
+  json_t *toJson() const;
 };
 
 struct SignalingMessage {
-	std::variant<std::monostate, RelayMessage, ControlMessage, SignalList, rtc::Description, rtc::Candidate> message;
+  std::variant<std::monostate, RelayMessage, ControlMessage, SignalList,
+               rtc::Description, rtc::Candidate>
+      message;
 
-	static
-	SignalingMessage fromJson(json_t *j);
-	json_t * toJson() const;
-	std::string toString() const;
+  static SignalingMessage fromJson(json_t *j);
+  json_t *toJson() const;
+  std::string toString() const;
 };
 
 } // namespace webrtc

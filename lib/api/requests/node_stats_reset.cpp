@@ -7,40 +7,39 @@
 
 #include <jansson.h>
 
+#include <villas/api.hpp>
+#include <villas/api/requests/node.hpp>
+#include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
 #include <villas/node.hpp>
 #include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/api.hpp>
-#include <villas/api/session.hpp>
-#include <villas/api/requests/node.hpp>
-#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-class StatsRequest : public NodeRequest  {
+class StatsRequest : public NodeRequest {
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::POST)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::POST)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Stats endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Stats endpoint does not accept any body data");
 
-		if (node->getStats() == nullptr)
-			throw BadRequest("The statistics collection for this node is not enabled");
+    if (node->getStats() == nullptr)
+      throw BadRequest(
+          "The statistics collection for this node is not enabled");
 
-		node->getStats()->reset();
+    node->getStats()->reset();
 
-		return new Response(session, HTTP_STATUS_OK);
-	}
+    return new Response(session, HTTP_STATUS_OK);
+  }
 };
 
 // Register API requests

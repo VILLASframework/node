@@ -11,11 +11,11 @@ using namespace villas::node;
 using namespace villas::node::api;
 using namespace villas::node::api::universal;
 
-void UniversalRequest::prepare()
-{
-	NodeRequest::prepare();
+void UniversalRequest::prepare() {
+  NodeRequest::prepare();
 
-	api_node = dynamic_cast<APINode*>(node);
-	if (!api_node)
-		throw BadRequest("Node {} is not an univeral API node!", node->getNameShort());
+  api_node = dynamic_cast<APINode *>(node);
+  if (!api_node)
+    throw BadRequest("Node {} is not an univeral API node!",
+                     node->getNameShort());
 }

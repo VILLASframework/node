@@ -7,9 +7,9 @@
 
 #include <signal.h>
 
-#include <villas/utils.hpp>
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace node {
@@ -18,21 +18,19 @@ namespace api {
 class ShutdownRequest : public Request {
 
 public:
-	using Request::Request;
+  using Request::Request;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::POST)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::POST)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Shutdown endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Shutdown endpoint does not accept any body data");
 
-		utils::killme(SIGTERM);
+    utils::killme(SIGTERM);
 
-		return new Response(session, HTTP_STATUS_OK);
-	}
+    return new Response(session, HTTP_STATUS_OK);
+  }
 };
 
 // Register API request
