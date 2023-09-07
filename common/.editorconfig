@@ -9,11 +9,11 @@ root = true
 [*]
 end_of_line = lf
 insert_final_newline = true
+trim_trailing_whitespace=true
+charset = utf-8
 
 # Matches multiple files with brace expansion notation
 # Set default charset
 [{include,lib,tests}/**.{c,h,proto,cpp,hpp,h.in,hpp.in}]
-charset = utf-8
-indent_style = tab
-indent_size = 8
-trim_trailing_whitespace=true
+indent_style = space
+indent_size = 2
