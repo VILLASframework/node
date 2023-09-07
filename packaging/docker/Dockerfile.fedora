@@ -108,7 +108,6 @@ COPY . /villas/
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
 	cmake ${CMAKE_OPTS} .. && \
-	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
 
