@@ -12,8 +12,8 @@
 #pragma once
 
 #include <list>
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <linux/vfio.h>
 #include <sys/mman.h>
@@ -25,60 +25,50 @@ namespace villas {
 namespace kernel {
 namespace vfio {
 
-#define VFIO_PATH	"/dev/vfio/"
-#define VFIO_DEV	VFIO_PATH "vfio"
+#define VFIO_PATH "/dev/vfio/"
+#define VFIO_DEV VFIO_PATH "vfio"
 
 class Group {
 public:
-	Group(int index, bool iommuEnabled);
-	~Group();
+  Group(int index, bool iommuEnabled);
+  ~Group();
 
-	// No copying allowed because we manage the vfio state in constructor and destructors
-	Group(Group const&) = delete;
-	void operator=(Group const&) = delete;
+  // No copying allowed because we manage the vfio state in constructor and destructors
+  Group(Group const &) = delete;
+  void operator=(Group const &) = delete;
 
-	void setAttachedToContainer()
-	{
-		attachedToContainer = true;
-	}
+  void setAttachedToContainer() { attachedToContainer = true; }
 
-	bool isAttachedToContainer()
-	{
-		return attachedToContainer;
-	}
+  bool isAttachedToContainer() { return attachedToContainer; }
 
-	int getFileDescriptor()
-	{
-		return fd;
-	}
+  int getFileDescriptor() { return fd; }
 
-	int getIndex()
-	{
-		return index;
-	}
+  int getIndex() { return index; }
 
-	std::shared_ptr<Device> attachDevice(std::shared_ptr<Device> device);
-	std::shared_ptr<Device> attachDevice(const std::string& name, const kernel::pci::Device *pci_device = nullptr);
+  std::shared_ptr<Device> attachDevice(std::shared_ptr<Device> device);
+  std::shared_ptr<Device>
+  attachDevice(const std::string &name,
+               const kernel::pci::Device *pci_device = nullptr);
 
-	bool checkStatus();
-	void dump();
+  bool checkStatus();
+  void dump();
 
 private:
-	// VFIO group file descriptor
-	int fd;
+  // VFIO group file descriptor
+  int fd;
 
-	// Index of the IOMMU group as listed under /sys/kernel/iommu_groups/
-	int index;
+  // Index of the IOMMU group as listed under /sys/kernel/iommu_groups/
+  int index;
 
-	bool attachedToContainer;
+  bool attachedToContainer;
 
-	// Status of group
-	struct vfio_group_status status;
+  // Status of group
+  struct vfio_group_status status;
 
-	// All devices owned by this group
-	std::list<std::shared_ptr<Device>> devices;
+  // All devices owned by this group
+  std::list<std::shared_ptr<Device>> devices;
 
-	Logger log;
+  Logger log;
 };
 
 } // namespace vfio

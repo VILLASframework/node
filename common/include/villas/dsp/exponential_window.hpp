@@ -12,25 +12,20 @@
 namespace villas {
 namespace dsp {
 
-template<typename T>
-class ExponentialWindow {
+template <typename T> class ExponentialWindow {
 
 protected:
-	T a;
-	T last;
+  T a;
+  T last;
 
 public:
-	ExponentialWindow(T _a, T i = 0) :
-		a(a),
-		last(i)
-	{ }
+  ExponentialWindow(T _a, T i = 0) : a(a), last(i) {}
 
-	T update(T in)
-	{
-		last = a * in + (1 - a) * last;
+  T update(T in) {
+    last = a * in + (1 - a) * last;
 
-		return last;
-	}
+    return last;
+  }
 };
 
 } // namespace dsp

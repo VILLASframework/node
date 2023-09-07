@@ -11,43 +11,31 @@ namespace villas {
 namespace graph {
 
 class Edge {
-	template<typename VertexType, typename EdgeType>
-	friend class DirectedGraph;
+  template <typename VertexType, typename EdgeType> friend class DirectedGraph;
 
 public:
-	using Identifier = std::size_t;
+  using Identifier = std::size_t;
 
-	friend
-	std::ostream& operator<< (std::ostream &stream, const Edge &edge)
-	{
-		return stream << edge.id;
-	}
+  friend std::ostream &operator<<(std::ostream &stream, const Edge &edge) {
+    return stream << edge.id;
+  }
 
-	bool operator==(const Edge &other)
-	{
-		return this->id == other.id;
-	}
+  bool operator==(const Edge &other) { return this->id == other.id; }
 
-	Vertex::Identifier getVertexTo() const
-	{
-		return to;
-	}
+  Vertex::Identifier getVertexTo() const { return to; }
 
-	Vertex::Identifier getVertexFrom() const
-	{
-		return from;
-	}
+  Vertex::Identifier getVertexFrom() const { return from; }
 
-	std::string toString() {
-		std::stringstream ss;
-		ss << *this;
-		return ss.str();
-	}
+  std::string toString() {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
+  }
 
 private:
-	Identifier id;
-	Vertex::Identifier from;
-	Vertex::Identifier to;
+  Identifier id;
+  Vertex::Identifier from;
+  Vertex::Identifier to;
 };
 
 } // namespace graph

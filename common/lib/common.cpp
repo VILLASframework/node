@@ -9,37 +9,36 @@
 
 #include <cstdlib>
 
-std::string stateToString(enum State s)
-{
-	switch (s) {
-		case State::DESTROYED:
-			return "destroyed";
+std::string stateToString(enum State s) {
+  switch (s) {
+  case State::DESTROYED:
+    return "destroyed";
 
-		case State::INITIALIZED:
-			return "initialized";
+  case State::INITIALIZED:
+    return "initialized";
 
-		case State::PARSED:
-			return "parsed";
+  case State::PARSED:
+    return "parsed";
 
-		case State::CHECKED:
-			return "checked";
+  case State::CHECKED:
+    return "checked";
 
-		case State::STARTED:
-			return "running";
+  case State::STARTED:
+    return "running";
 
-		case State::STOPPED:
-			return "stopped";
+  case State::STOPPED:
+    return "stopped";
 
-		case State::PENDING_CONNECT:
-			return "pending-connect";
+  case State::PENDING_CONNECT:
+    return "pending-connect";
 
-		case State::CONNECTED:
-			return "connected";
+  case State::CONNECTED:
+    return "connected";
 
-		case State::PAUSED:
-			return "paused";
+  case State::PAUSED:
+    return "paused";
 
-		default:
-			return "";
-	}
+  default:
+    return "";
+  }
 }

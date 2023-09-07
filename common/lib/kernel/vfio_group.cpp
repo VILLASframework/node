@@ -10,127 +10,114 @@
 #define _DEFAULT_SOURCE
 
 #if defined(__arm__) || defined(__aarch64__)
-  #define _LARGEFILE64_SOURCE 1
-  #define _FILE_OFFSET_BITS 64
+#define _LARGEFILE64_SOURCE 1
+#define _FILE_OFFSET_BITS 64
 #endif
 
 #include <algorithm>
-#include <string>
-#include <sstream>
 #include <limits>
+#include <sstream>
+#include <string>
 
 #include <cstdlib>
 #include <cstring>
 
 #include <cstdint>
-#include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/eventfd.h>
 #include <linux/pci_regs.h>
+#include <sys/eventfd.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/kernel/vfio_group.hpp>
 
 using namespace villas::kernel::vfio;
 
-Group::Group(int index, bool iommuEnabled) :
-	fd(-1),
-	index(index),
-	attachedToContainer(false),
-	status(),
-	devices(),
-	log(logging.get("kernel:vfio::Group"))
-{
-	// Open group fd
-	std::stringstream groupPath;
-	groupPath << VFIO_PATH
-	          << (iommuEnabled ? "" : "noiommu-")
-	          << index;
+Group::Group(int index, bool iommuEnabled)
+    : fd(-1), index(index), attachedToContainer(false), status(), devices(),
+      log(logging.get("kernel:vfio::Group")) {
+  // Open group fd
+  std::stringstream groupPath;
+  groupPath << VFIO_PATH << (iommuEnabled ? "" : "noiommu-") << index;
 
-	log->debug("path: {}", groupPath.str().c_str());
-	fd = open(groupPath.str().c_str(), O_RDWR);
-	if (fd < 0) {
-		log->error("Failed to open VFIO group {}", index);
-		throw RuntimeError("Failed to open VFIO group");
-	}
+  log->debug("path: {}", groupPath.str().c_str());
+  fd = open(groupPath.str().c_str(), O_RDWR);
+  if (fd < 0) {
+    log->error("Failed to open VFIO group {}", index);
+    throw RuntimeError("Failed to open VFIO group");
+  }
 
-	log->debug("VFIO group {} (fd {}) has path {}",
-	              index, fd, groupPath.str());
+  log->debug("VFIO group {} (fd {}) has path {}", index, fd, groupPath.str());
 
-	checkStatus();
-
+  checkStatus();
 }
 
-std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device)
-{
-	if (device->isAttachedToGroup())
-		throw RuntimeError("Device is already attached to a group");
+std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device) {
+  if (device->isAttachedToGroup())
+    throw RuntimeError("Device is already attached to a group");
 
-	devices.push_back(device);
+  devices.push_back(device);
 
-	device->setAttachedToGroup();
+  device->setAttachedToGroup();
 
-	return device;
+  return device;
 }
 
-std::shared_ptr<Device> Group::attachDevice(const std::string& name, const kernel::pci::Device *pci_device)
-{
-	auto device = std::make_shared<Device>(name, fd, pci_device);
-	return attachDevice(device);
+std::shared_ptr<Device>
+Group::attachDevice(const std::string &name,
+                    const kernel::pci::Device *pci_device) {
+  auto device = std::make_shared<Device>(name, fd, pci_device);
+  return attachDevice(device);
 }
 
-bool Group::checkStatus()
-{
-	int ret;
+bool Group::checkStatus() {
+  int ret;
 
-	// Check group viability and features
-	status.argsz = sizeof(status);
+  // Check group viability and features
+  status.argsz = sizeof(status);
 
-	ret = ioctl(fd, VFIO_GROUP_GET_STATUS, &status);
-	if (ret < 0) {
-		log->error("Failed to get VFIO group status");
-		return false;
-	}
+  ret = ioctl(fd, VFIO_GROUP_GET_STATUS, &status);
+  if (ret < 0) {
+    log->error("Failed to get VFIO group status");
+    return false;
+  }
 
-	if (!(status.flags & VFIO_GROUP_FLAGS_VIABLE)) {
-		log->error("VFIO group is not available: bind all devices to the VFIO driver!");
-		return false;
-	}
-	log->debug("VFIO group is {} viable", index);
-	return true;
+  if (!(status.flags & VFIO_GROUP_FLAGS_VIABLE)) {
+    log->error(
+        "VFIO group is not available: bind all devices to the VFIO driver!");
+    return false;
+  }
+  log->debug("VFIO group is {} viable", index);
+  return true;
 }
 
-void Group::dump()
-{
-	log->info("VFIO Group {}, viable={}, container={}",
-		index,
-		(status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
-		(status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0
-	);
+void Group::dump() {
+  log->info("VFIO Group {}, viable={}, container={}", index,
+            (status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
+            (status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0);
 
-	for (auto& device : devices) {
-		device->dump();
-	}
+  for (auto &device : devices) {
+    device->dump();
+  }
 }
 
-Group::~Group()
-{
-	// Release memory and close fds
-	devices.clear();
+Group::~Group() {
+  // Release memory and close fds
+  devices.clear();
 
-	log->debug("Cleaning up group {} with fd {}", index, fd);
+  log->debug("Cleaning up group {} with fd {}", index, fd);
 
-	if (fd < 0)
-		log->debug("Destructing group that has not been attached");
-	else {
-		log->debug("unsetting group container");
-		int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
-		if (ret != 0)
-			log->error("Cannot unset container for group fd {}", fd);
+  if (fd < 0)
+    log->debug("Destructing group that has not been attached");
+  else {
+    log->debug("unsetting group container");
+    int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
+    if (ret != 0)
+      log->error("Cannot unset container for group fd {}", fd);
 
-		ret = close(fd);
-		if (ret != 0)
-			log->error("Cannot close group fd {}", fd);
-	}
+    ret = close(fd);
+    if (ret != 0)
+      log->error("Cannot close group fd {}", fd);
+  }
 }

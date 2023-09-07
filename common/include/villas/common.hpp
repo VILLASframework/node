@@ -11,20 +11,20 @@
 
 // Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins)
 enum class State {
-	DESTROYED	= 0,
-	INITIALIZED	= 1,
-	PARSED		= 2,
-	CHECKED		= 3,
-	STARTED		= 4,
-	STOPPED		= 5,
-	PENDING_CONNECT	= 6,
-	CONNECTED	= 7,
-	PAUSED		= 8,
-	STARTING	= 9,
-	STOPPING	= 10,
-	PAUSING		= 11,
-	RESUMING	= 12,
-	PREPARED	= 13
+  DESTROYED = 0,
+  INITIALIZED = 1,
+  PARSED = 2,
+  CHECKED = 3,
+  STARTED = 4,
+  STOPPED = 5,
+  PENDING_CONNECT = 6,
+  CONNECTED = 7,
+  PAUSED = 8,
+  STARTING = 9,
+  STOPPING = 10,
+  PAUSING = 11,
+  RESUMING = 12,
+  PREPARED = 13
 };
 
 // Callback to destroy list elements.
