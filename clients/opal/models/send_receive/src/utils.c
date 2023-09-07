@@ -18,20 +18,19 @@
 #include "config.h"
 #include "utils.h"
 
-int AssignProcToCpu0(void)
-{
-	int ret;
-	cpu_set_t bindSet;
-	
-	CPU_ZERO(&bindSet);
-	CPU_SET(0, &bindSet);
+int AssignProcToCpu0(void) {
+  int ret;
+  cpu_set_t bindSet;
 
-	// Changing process cpu affinity
-	ret = sched_setaffinity(0, sizeof(cpu_set_t), &bindSet);
-	if (ret) {
-		OpalPrint("Unable to bind the process to CPU 0: %d\n", errno);
-		return EINVAL;
-	}
+  CPU_ZERO(&bindSet);
+  CPU_SET(0, &bindSet);
 
-	return 0;
+  // Changing process cpu affinity
+  ret = sched_setaffinity(0, sizeof(cpu_set_t), &bindSet);
+  if (ret) {
+    OpalPrint("Unable to bind the process to CPU 0: %d\n", errno);
+    return EINVAL;
+  }
+
+  return 0;
 }

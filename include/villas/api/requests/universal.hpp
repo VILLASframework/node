@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <villas/nodes/api.hpp>
 #include <villas/api/requests/node.hpp>
+#include <villas/nodes/api.hpp>
 
 namespace villas {
 namespace node {
@@ -21,13 +21,12 @@ namespace api {
 class UniversalRequest : public NodeRequest {
 
 protected:
-	APINode *api_node;
+  APINode *api_node;
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual
-	void prepare();
+  virtual void prepare();
 };
 
 } // namespace api

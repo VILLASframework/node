@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include<villas/signal_list.hpp>
+#include <villas/signal_list.hpp>
 
 namespace villas {
 
@@ -43,10 +43,12 @@ void msg_hdr_ntoh(struct Message *m);
 int msg_verify(const struct Message *m);
 
 // Copy fields from \p msg into \p smp.
-int msg_to_sample(const struct Message *msg, struct Sample *smp, const SignalList::Ptr sigs, uint8_t *source_index);
+int msg_to_sample(const struct Message *msg, struct Sample *smp,
+                  const SignalList::Ptr sigs, uint8_t *source_index);
 
 // Copy fields form \p smp into \p msg.
-int msg_from_sample(struct Message *msg, const struct Sample *smp, const SignalList::Ptr sigs, uint8_t source_index);
+int msg_from_sample(struct Message *msg, const struct Sample *smp,
+                    const SignalList::Ptr sigs, uint8_t source_index);
 
 } // namespace node
 } // namespace villas

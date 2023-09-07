@@ -13,13 +13,13 @@
 #define RT
 #include "OpalGenAsyncParamCtrl.h"
 
-#define UDP_PROTOCOL	1
-#define TCP_PROTOCOL	2
+#define UDP_PROTOCOL 1
+#define TCP_PROTOCOL 2
 
 struct socket {
-	struct sockaddr_in send_ad;	// Send address
-	struct sockaddr_in recv_ad;	// Receive address
-	int sd;				// socket descriptor
+  struct sockaddr_in send_ad; // Send address
+  struct sockaddr_in recv_ad; // Receive address
+  int sd;                     // socket descriptor
 };
 
 int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct);

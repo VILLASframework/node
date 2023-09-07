@@ -9,44 +9,41 @@
 
 #include <mutex>
 
-#include <villas/log.hpp>
 #include <villas/config.hpp>
+#include <villas/log.hpp>
 
-#include <spdlog/sinks/base_sink.h>
 #include <spdlog/details/null_mutex.h>
+#include <spdlog/sinks/base_sink.h>
 
 extern "C" {
-	/* Define RTLAB before including OpalPrint.h for messages to be sent
+/* Define RTLAB before including OpalPrint.h for messages to be sent
 	* to the OpalDisplay. Otherwise stdout will be used. */
-	#define RTLAB
-	#include <OpalPrint.h>
+#define RTLAB
+#include <OpalPrint.h>
 }
 
 namespace villas {
 namespace node {
 
-template<typename Mutex>
-class OpalSink : public spdlog::sinks::base_sink<Mutex>
-{
+template <typename Mutex>
+class OpalSink : public spdlog::sinks::base_sink<Mutex> {
 
 protected:
-	void sink_it_(const spdlog::details::log_msg &msg) override
-	{
+  void sink_it_(const spdlog::details::log_msg &msg) override {
 #ifdef WITH_NODE_OPAL
-		fmt::memory_buffer formatted;
+    fmt::memory_buffer formatted;
 
-		sink::formatter_->format(msg, formatted);
+    sink::formatter_->format(msg, formatted);
 
-		auto str = fmt::to_string(formatted).c_str();
+    auto str = fmt::to_string(formatted).c_str();
 
-		OpalPrint(PROJECT_NAME ": %s\n", str);
+    OpalPrint(PROJECT_NAME ": %s\n", str);
 #endif
-	}
+  }
 
-	void flush_() override
-	{
-		// nothing to do
-	}
+  void flush_() override {
+    // nothing to do
+  }
 };
 
 using OpalSink_mt = OpalSink<std::mutex>;

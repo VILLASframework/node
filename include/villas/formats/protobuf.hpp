@@ -23,15 +23,15 @@ struct Sample;
 class ProtobufFormat : public BinaryFormat {
 
 protected:
-	enum SignalType detect(const Villas__Node__Value *val);
+  enum SignalType detect(const Villas__Node__Value *val);
 
 public:
-	using BinaryFormat::BinaryFormat;
+  using BinaryFormat::BinaryFormat;
 
-	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
-	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
+  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
+                    struct Sample *const smps[], unsigned cnt);
+  virtual int sprint(char *buf, size_t len, size_t *wbytes,
+                     const struct Sample *const smps[], unsigned cnt);
 };
 
 } // namespace node

@@ -9,8 +9,7 @@
 
 using namespace villas::node;
 
-void init_memory()
-{
-	int ret __attribute__((unused));
-	ret = memory::init(DEFAULT_NR_HUGEPAGES);
+void init_memory() {
+  int ret __attribute__((unused));
+  ret = memory::init(DEFAULT_NR_HUGEPAGES);
 }

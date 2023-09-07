@@ -18,19 +18,19 @@ namespace node {
 class NodeCompat;
 
 extern "C" {
-	#include <OpalGenAsyncParamCtrl.h>
+#include <OpalGenAsyncParamCtrl.h>
 }
 
 struct opal {
-	int reply;
-	int mode;
-	int sequenceNo;
+  int reply;
+  int mode;
+  int sequenceNo;
 
-	unsigned sendID;
-	unsigned recvID;
+  unsigned sendID;
+  unsigned recvID;
 
-	Opal_SendAsyncParam sendParams;
-	Opal_RecvAsyncParam recvParams;
+  Opal_SendAsyncParam sendParams;
+  Opal_RecvAsyncParam recvParams;
 };
 
 int opal_type_start(SuperNode *sn);
@@ -41,15 +41,15 @@ int opal_type_stop();
 
 int opal_parse(NodeCompat *n, json_t *json);
 
-char * opal_print(NodeCompat *n);
+char *opal_print(NodeCompat *n);
 
 int opal_start(NodeCompat *n);
 
 int opal_stop(NodeCompat *n);
 
-int opal_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int opal_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int opal_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int opal_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 } // namespace node
 } // namespace villas

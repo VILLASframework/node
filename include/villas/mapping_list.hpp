@@ -18,13 +18,14 @@ namespace node {
 class MappingList : public std::list<MappingEntry::Ptr> {
 
 public:
-	int parse(json_t *json);
+  int parse(json_t *json);
 
-	int prepare(NodeList &nodes);
+  int prepare(NodeList &nodes);
 
-	int remap(struct Sample *remapped, const struct Sample *original) const;
+  int remap(struct Sample *remapped, const struct Sample *original) const;
 
-	int update(const MappingEntry::Ptr me, struct Sample *remapped, const struct Sample *original);
+  int update(const MappingEntry::Ptr me, struct Sample *remapped,
+             const struct Sample *original);
 };
 
 } // namespace node

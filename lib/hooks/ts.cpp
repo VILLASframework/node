@@ -6,8 +6,8 @@
  */
 
 #include <villas/hook.hpp>
-#include <villas/timing.hpp>
 #include <villas/sample.hpp>
+#include <villas/timing.hpp>
 
 namespace villas {
 namespace node {
@@ -15,23 +15,25 @@ namespace node {
 class TsHook : public Hook {
 
 public:
-	using Hook::Hook;
+  using Hook::Hook;
 
-	virtual
-	Hook::Reason process(struct Sample *smp)
-	{
-		assert(state == State::STARTED);
+  virtual Hook::Reason process(struct Sample *smp) {
+    assert(state == State::STARTED);
 
-		smp->ts.origin = smp->ts.received;
+    smp->ts.origin = smp->ts.received;
 
-		return Reason::OK;
-	}
+    return Reason::OK;
+  }
 };
 
 // Register hook
 static char n[] = "ts";
-static char d[] = "Overwrite origin timestamp of samples with receive timestamp";
-static HookPlugin<TsHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::NODE_WRITE | (int) Hook::Flags::PATH> p;
+static char d[] =
+    "Overwrite origin timestamp of samples with receive timestamp";
+static HookPlugin<TsHook, n, d,
+                  (int)Hook::Flags::NODE_READ | (int)Hook::Flags::NODE_WRITE |
+                      (int)Hook::Flags::PATH>
+    p;
 
 } // namespace node
 } // namespace villas

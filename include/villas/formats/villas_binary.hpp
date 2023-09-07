@@ -20,63 +20,56 @@ struct Sample;
 class VillasBinaryFormat : public BinaryFormat {
 
 protected:
-	uint8_t source_index;
-	bool web;
-	bool validate_source_index;
+  uint8_t source_index;
+  bool web;
+  bool validate_source_index;
 
 public:
-	VillasBinaryFormat(int fl, bool w, uint8_t sid = 0) :
-		BinaryFormat(fl),
-		source_index(sid),
-		web(w),
-		validate_source_index(false)
-	{ }
+  VillasBinaryFormat(int fl, bool w, uint8_t sid = 0)
+      : BinaryFormat(fl), source_index(sid), web(w),
+        validate_source_index(false) {}
 
-	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
-	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
+  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
+                    struct Sample *const smps[], unsigned cnt);
+  virtual int sprint(char *buf, size_t len, size_t *wbytes,
+                     const struct Sample *const smps[], unsigned cnt);
 
-	virtual
-	void parse(json_t *json);
+  virtual void parse(json_t *json);
 };
 
-template<bool web = false>
+template <bool web = false>
 class VillasBinaryFormatPlugin : public FormatFactory {
 
 public:
-	using FormatFactory::FormatFactory;
+  using FormatFactory::FormatFactory;
 
-	virtual
-	Format * make()
-	{
-		return new VillasBinaryFormat((int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA, web);
-	}
+  virtual Format *make() {
+    return new VillasBinaryFormat((int)SampleFlags::HAS_TS_ORIGIN |
+                                      (int)SampleFlags::HAS_SEQUENCE |
+                                      (int)SampleFlags::HAS_DATA,
+                                  web);
+  }
 
-	/// Get plugin name
-	virtual
-	std::string getName() const
-	{
-		std::stringstream ss;
+  /// Get plugin name
+  virtual std::string getName() const {
+    std::stringstream ss;
 
-		ss << "villas." << (web ? "web" : "binary");
+    ss << "villas." << (web ? "web" : "binary");
 
-		return ss.str();
-	}
+    return ss.str();
+  }
 
-	/// Get plugin description
-	virtual
-	std::string getDescription() const
-	{
-		std::stringstream ss;
+  /// Get plugin description
+  virtual std::string getDescription() const {
+    std::stringstream ss;
 
-		ss << "VILLAS binary network format";
+    ss << "VILLAS binary network format";
 
-		if (web)
-			ss << " for WebSockets";
+    if (web)
+      ss << " for WebSockets";
 
-		return ss.str();
-	}
+    return ss.str();
+  }
 };
 
 } // namespace node

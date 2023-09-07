@@ -14,46 +14,41 @@ namespace node {
 class ShiftSequenceHook : public Hook {
 
 protected:
-	int offset;
+  int offset;
 
 public:
+  using Hook::Hook;
 
-	using Hook::Hook;
+  virtual void parse(json_t *json) {
+    json_error_t err;
+    int ret;
 
-	virtual
-	void parse(json_t *json)
-	{
-		json_error_t err;
-		int ret;
+    assert(state != State::STARTED);
 
-		assert(state != State::STARTED);
+    Hook::parse(json);
 
-		Hook::parse(json);
+    ret = json_unpack_ex(json, &err, 0, "{ s: i }", "offset", &offset);
+    if (ret)
+      throw ConfigError(json, err, "node-config-hook-shift_seq");
 
-		ret = json_unpack_ex(json, &err, 0, "{ s: i }",
-			"offset", &offset
-		);
-		if (ret)
-			throw ConfigError(json, err, "node-config-hook-shift_seq");
+    state = State::PARSED;
+  }
 
-		state = State::PARSED;
-	}
+  virtual Hook::Reason process(struct Sample *smp) {
+    assert(state == State::STARTED);
 
-	virtual
-	Hook::Reason process(struct Sample *smp)
-	{
-		assert(state == State::STARTED);
+    smp->sequence += offset;
 
-		smp->sequence += offset;
-
-		return Reason::OK;
-	}
+    return Reason::OK;
+  }
 };
 
 // Register hook
 static char n[] = "shift_seq";
 static char d[] = "Shift sequence number of samples";
-static HookPlugin<ShiftSequenceHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
+static HookPlugin<ShiftSequenceHook, n, d,
+                  (int)Hook::Flags::NODE_READ | (int)Hook::Flags::PATH>
+    p;
 
 } // namespace node
 } // namespace villas

@@ -7,38 +7,34 @@
 
 #include <jansson.h>
 
+#include <villas/api.hpp>
+#include <villas/api/requests/path.hpp>
+#include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
 #include <villas/path.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/api.hpp>
-#include <villas/api/session.hpp>
-#include <villas/api/requests/path.hpp>
-#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-template<auto func>
-class PathActionRequest : public PathRequest  {
+template <auto func> class PathActionRequest : public PathRequest {
 
 public:
-	using PathRequest::PathRequest;
+  using PathRequest::PathRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::POST)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::POST)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Path endpoints do not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Path endpoints do not accept any body data");
 
-		(path->*func)();
+    (path->*func)();
 
-		return new Response(session, HTTP_STATUS_OK);
-	}
-
+    return new Response(session, HTTP_STATUS_OK);
+  }
 };
 
 // Register API requests

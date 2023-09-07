@@ -7,42 +7,36 @@
 
 #include <jansson.h>
 
+#include <villas/api.hpp>
+#include <villas/api/requests/node.hpp>
+#include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
 #include <villas/node.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/api.hpp>
-#include <villas/api/session.hpp>
-#include <villas/api/requests/node.hpp>
-#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-template<auto func>
-class NodeActionRequest : public NodeRequest  {
+template <auto func> class NodeActionRequest : public NodeRequest {
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::POST)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::POST)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Node endpoints do not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Node endpoints do not accept any body data");
 
-		int ret = (node->*func)();
-		if (ret)
-			throw BadRequest("Failed to execute action", "{ s: d }",
-				"ret", ret
-			);
+    int ret = (node->*func)();
+    if (ret)
+      throw BadRequest("Failed to execute action", "{ s: d }", "ret", ret);
 
-		return new Response(session, HTTP_STATUS_OK);
-	}
-
+    return new Response(session, HTTP_STATUS_OK);
+  }
 };
 
 // Register API requests

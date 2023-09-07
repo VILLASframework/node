@@ -17,16 +17,13 @@ namespace node {
 class VILLASHumanFormat : public LineFormat {
 
 protected:
-	virtual
-	size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
-	virtual
-	size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
+  virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
+  virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
 
 public:
-	using LineFormat::LineFormat;
+  using LineFormat::LineFormat;
 
-	virtual
-	void header(FILE *f, const SignalList::Ptr sigs);
+  virtual void header(FILE *f, const SignalList::Ptr sigs);
 };
 
 } // namespace node

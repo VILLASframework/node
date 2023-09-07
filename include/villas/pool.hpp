@@ -12,27 +12,28 @@
 #include <cstddef>
 #include <sys/types.h>
 
-#include <villas/queue.h>
 #include <villas/common.hpp>
 #include <villas/node/memory.hpp>
+#include <villas/queue.h>
 
 namespace villas {
 namespace node {
 
 // A thread-safe memory pool
 struct Pool {
-	enum State state;
+  enum State state;
 
-	off_t  buffer_off; // Offset from the struct address to the underlying memory area
+  off_t
+      buffer_off; // Offset from the struct address to the underlying memory area
 
-	size_t len;		// Length of the underlying memory area
-	size_t blocksz;		// Length of a block in bytes
-	size_t alignment;	// Alignment of a block in bytes
+  size_t len;       // Length of the underlying memory area
+  size_t blocksz;   // Length of a block in bytes
+  size_t alignment; // Alignment of a block in bytes
 
-	struct CQueue queue; // The queue which is used to keep track of free blocks
+  struct CQueue queue; // The queue which is used to keep track of free blocks
 };
 
-#define pool_buffer(p) ((char *) (p) + (p)->buffer_off)
+#define pool_buffer(p) ((char *)(p) + (p)->buffer_off)
 
 /* Initiazlize a pool
  *
@@ -43,10 +44,12 @@ struct Pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct Pool *p, size_t cnt, size_t blocksz, struct memory::Type *mem = memory::default_type) __attribute__ ((warn_unused_result));
+int pool_init(struct Pool *p, size_t cnt, size_t blocksz,
+              struct memory::Type *mem = memory::default_type)
+    __attribute__((warn_unused_result));
 
 // Destroy and release memory used by pool.
-int pool_destroy(struct Pool *p) __attribute__ ((warn_unused_result));
+int pool_destroy(struct Pool *p) __attribute__((warn_unused_result));
 
 /* Pop up to \p cnt values from the stack an place them in the array \p blocks.
  *
@@ -60,7 +63,7 @@ ssize_t pool_get_many(struct Pool *p, void *blocks[], size_t cnt);
 ssize_t pool_put_many(struct Pool *p, void *blocks[], size_t cnt);
 
 // Get a free memory block from pool.
-void * pool_get(struct Pool *p);
+void *pool_get(struct Pool *p);
 
 // Release a memory block back to the pool.
 int pool_put(struct Pool *p, void *buf);

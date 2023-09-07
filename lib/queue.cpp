@@ -31,172 +31,175 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <villas/log.hpp>
+#include <villas/node/memory.hpp>
 #include <villas/queue.h>
 #include <villas/utils.hpp>
-#include <villas/node/memory.hpp>
-#include <villas/log.hpp>
 
 using namespace villas;
 
 // Initialize MPMC queue
-int villas::node::queue_init(struct CQueue *q, size_t size, struct memory::Type *m)
-{
-	// Queue size must be 2 exponent
-	if (!IS_POW2(size)) {
-		size_t old_size = size;
-		size = LOG2_CEIL(size);
+int villas::node::queue_init(struct CQueue *q, size_t size,
+                             struct memory::Type *m) {
+  // Queue size must be 2 exponent
+  if (!IS_POW2(size)) {
+    size_t old_size = size;
+    size = LOG2_CEIL(size);
 
-		auto logger = logging.get("queue");
-		logger->warn("A queue size was changed from {} to {}", old_size, size);
-	}
+    auto logger = logging.get("queue");
+    logger->warn("A queue size was changed from {} to {}", old_size, size);
+  }
 
-	q->buffer_mask = size - 1;
-	struct CQueue_cell *buffer = (struct CQueue_cell *) memory::alloc(sizeof(struct CQueue_cell) * size, m);
-	if (!buffer)
-		return -2;
+  q->buffer_mask = size - 1;
+  struct CQueue_cell *buffer =
+      (struct CQueue_cell *)memory::alloc(sizeof(struct CQueue_cell) * size, m);
+  if (!buffer)
+    return -2;
 
-	q->buffer_off = (char *) buffer - (char *) q;
+  q->buffer_off = (char *)buffer - (char *)q;
 
-	for (size_t i = 0; i != size; i += 1)
-		std::atomic_store_explicit(&buffer[i].sequence, i, std::memory_order_relaxed);
+  for (size_t i = 0; i != size; i += 1)
+    std::atomic_store_explicit(&buffer[i].sequence, i,
+                               std::memory_order_relaxed);
 
 #ifndef __arm__
-	std::atomic_store_explicit(&q->tail, 0ul, std::memory_order_relaxed);
-	std::atomic_store_explicit(&q->head, 0ul, std::memory_order_relaxed);
+  std::atomic_store_explicit(&q->tail, 0ul, std::memory_order_relaxed);
+  std::atomic_store_explicit(&q->head, 0ul, std::memory_order_relaxed);
 #else
-	std::atomic_store_explicit(&q->tail, 0u, std::memory_order_relaxed);
-	std::atomic_store_explicit(&q->head, 0u, std::memory_order_relaxed);
+  std::atomic_store_explicit(&q->tail, 0u, std::memory_order_relaxed);
+  std::atomic_store_explicit(&q->head, 0u, std::memory_order_relaxed);
 #endif
 
-	q->state = State::INITIALIZED;
+  q->state = State::INITIALIZED;
 
-	return 0;
+  return 0;
 }
 
-int villas::node::queue_destroy(struct CQueue *q)
-{
-	void *buffer = (char *) q + q->buffer_off;
-	int ret = 0;
+int villas::node::queue_destroy(struct CQueue *q) {
+  void *buffer = (char *)q + q->buffer_off;
+  int ret = 0;
 
-	if (q->state == State::DESTROYED)
-		return 0;
+  if (q->state == State::DESTROYED)
+    return 0;
 
-	ret = memory::free(buffer);
-	if (ret == 0)
-		q->state = State::DESTROYED;
+  ret = memory::free(buffer);
+  if (ret == 0)
+    q->state = State::DESTROYED;
 
-	return ret;
+  return ret;
 }
 
-size_t villas::node::queue_available(struct CQueue *q)
-{
-	return std::atomic_load_explicit(&q->tail, std::memory_order_relaxed) -
-		std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
+size_t villas::node::queue_available(struct CQueue *q) {
+  return std::atomic_load_explicit(&q->tail, std::memory_order_relaxed) -
+         std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
 }
 
-int villas::node::queue_push(struct CQueue *q, void *ptr)
-{
-	struct CQueue_cell *cell, *buffer;
-	size_t pos, seq;
-	intptr_t diff;
+int villas::node::queue_push(struct CQueue *q, void *ptr) {
+  struct CQueue_cell *cell, *buffer;
+  size_t pos, seq;
+  intptr_t diff;
 
-	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == State::STOPPED)
-		return -1;
+  if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) ==
+      State::STOPPED)
+    return -1;
 
-	buffer = (struct CQueue_cell *) ((char *) q + q->buffer_off);
-	pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
-	while (true) {
-		cell = &buffer[pos & q->buffer_mask];
-		seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
-		diff = (intptr_t) seq - (intptr_t) pos;
+  buffer = (struct CQueue_cell *)((char *)q + q->buffer_off);
+  pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
+  while (true) {
+    cell = &buffer[pos & q->buffer_mask];
+    seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
+    diff = (intptr_t)seq - (intptr_t)pos;
 
-		if (diff == 0) {
-			if (std::atomic_compare_exchange_weak_explicit(&q->tail, &pos, pos + 1, std::memory_order_relaxed, std::memory_order_relaxed))
-				break;
-		}
-		else if (diff < 0)
-			return 0;
-		else
-			pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
-	}
+    if (diff == 0) {
+      if (std::atomic_compare_exchange_weak_explicit(&q->tail, &pos, pos + 1,
+                                                     std::memory_order_relaxed,
+                                                     std::memory_order_relaxed))
+        break;
+    } else if (diff < 0)
+      return 0;
+    else
+      pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
+  }
 
-	cell->data_off = (char *) ptr - (char *) q;
-	std::atomic_store_explicit(&cell->sequence, pos + 1, std::memory_order_release);
+  cell->data_off = (char *)ptr - (char *)q;
+  std::atomic_store_explicit(&cell->sequence, pos + 1,
+                             std::memory_order_release);
 
-	return 1;
+  return 1;
 }
 
-int villas::node::queue_pull(struct CQueue *q, void **ptr)
-{
-	struct CQueue_cell *cell, *buffer;
-	size_t pos, seq;
-	intptr_t diff;
+int villas::node::queue_pull(struct CQueue *q, void **ptr) {
+  struct CQueue_cell *cell, *buffer;
+  size_t pos, seq;
+  intptr_t diff;
 
-	if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) == State::STOPPED)
-		return -1;
+  if (std::atomic_load_explicit(&q->state, std::memory_order_relaxed) ==
+      State::STOPPED)
+    return -1;
 
-	buffer = (struct CQueue_cell *) ((char *) q + q->buffer_off);
-	pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
-	while (true) {
-		cell = &buffer[pos & q->buffer_mask];
-		seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
-		diff = (intptr_t) seq - (intptr_t) (pos + 1);
+  buffer = (struct CQueue_cell *)((char *)q + q->buffer_off);
+  pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
+  while (true) {
+    cell = &buffer[pos & q->buffer_mask];
+    seq = std::atomic_load_explicit(&cell->sequence, std::memory_order_acquire);
+    diff = (intptr_t)seq - (intptr_t)(pos + 1);
 
-		if (diff == 0) {
-			if (atomic_compare_exchange_weak_explicit(&q->head, &pos, pos + 1, std::memory_order_relaxed, std::memory_order_relaxed))
-				break;
-		}
-		else if (diff < 0)
-			return 0;
-		else
-			pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
-	}
+    if (diff == 0) {
+      if (atomic_compare_exchange_weak_explicit(&q->head, &pos, pos + 1,
+                                                std::memory_order_relaxed,
+                                                std::memory_order_relaxed))
+        break;
+    } else if (diff < 0)
+      return 0;
+    else
+      pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
+  }
 
-	*ptr = (char *) q + cell->data_off;
-	std::atomic_store_explicit(&cell->sequence, pos + q->buffer_mask + 1, std::memory_order_release);
+  *ptr = (char *)q + cell->data_off;
+  std::atomic_store_explicit(&cell->sequence, pos + q->buffer_mask + 1,
+                             std::memory_order_release);
 
-	return 1;
+  return 1;
 }
 
-int villas::node::queue_push_many(struct CQueue *q, void *ptr[], size_t cnt)
-{
-	int ret;
-	size_t i;
+int villas::node::queue_push_many(struct CQueue *q, void *ptr[], size_t cnt) {
+  int ret;
+  size_t i;
 
-	for (ret = 0, i = 0; i < cnt; i++) {
-		ret = queue_push(q, ptr[i]);
-		if (ret <= 0)
-			break;
-	}
+  for (ret = 0, i = 0; i < cnt; i++) {
+    ret = queue_push(q, ptr[i]);
+    if (ret <= 0)
+      break;
+  }
 
-	if (ret == -1 && i == 0)
-		return -1;
+  if (ret == -1 && i == 0)
+    return -1;
 
-	return i;
+  return i;
 }
 
-int villas::node::queue_pull_many(struct CQueue *q, void *ptr[], size_t cnt)
-{
-	int ret;
-	size_t i;
+int villas::node::queue_pull_many(struct CQueue *q, void *ptr[], size_t cnt) {
+  int ret;
+  size_t i;
 
-	for (ret = 0, i = 0; i < cnt; i++) {
-		ret = queue_pull(q, &ptr[i]);
-		if (ret <= 0)
-			break;
-	}
+  for (ret = 0, i = 0; i < cnt; i++) {
+    ret = queue_pull(q, &ptr[i]);
+    if (ret <= 0)
+      break;
+  }
 
-	if (ret == -1 && i == 0)
-		return -1;
+  if (ret == -1 && i == 0)
+    return -1;
 
-	return i;
+  return i;
 }
 
-int villas::node::queue_close(struct CQueue *q)
-{
-	enum State expected = State::INITIALIZED;
-	if (std::atomic_compare_exchange_weak_explicit(&q->state, &expected, State::STOPPED, std::memory_order_relaxed, std::memory_order_relaxed))
-		return 0;
+int villas::node::queue_close(struct CQueue *q) {
+  enum State expected = State::INITIALIZED;
+  if (std::atomic_compare_exchange_weak_explicit(
+          &q->state, &expected, State::STOPPED, std::memory_order_relaxed,
+          std::memory_order_relaxed))
+    return 0;
 
-	return -1;
+  return -1;
 }

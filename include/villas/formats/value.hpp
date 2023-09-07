@@ -17,12 +17,12 @@ namespace node {
 class ValueFormat : public Format {
 
 public:
-	using Format::Format;
+  using Format::Format;
 
-	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
-	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
+  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
+                    struct Sample *const smps[], unsigned cnt);
+  virtual int sprint(char *buf, size_t len, size_t *wbytes,
+                     const struct Sample *const smps[], unsigned cnt);
 };
 
 } // namespace node

@@ -14,8 +14,8 @@
 
 #include <cstdint>
 
-#include <netlink/route/qdisc.h>
 #include <netlink/route/classifier.h>
+#include <netlink/route/qdisc.h>
 
 #include <jansson.h>
 
@@ -47,7 +47,8 @@ int reset(Interface *i);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
+int prio(Interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t,
+         int bands);
 
 /* Add a new filter based on the netfilter mark.
  *

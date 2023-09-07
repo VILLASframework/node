@@ -18,13 +18,12 @@ namespace api {
 class PathRequest : public Request {
 
 protected:
-	class Path *path;
+  class Path *path;
 
 public:
-	using Request::Request;
+  using Request::Request;
 
-	virtual
-	void prepare();
+  virtual void prepare();
 };
 
 } // namespace api

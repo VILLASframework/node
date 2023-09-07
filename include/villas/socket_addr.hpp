@@ -7,40 +7,35 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 #include <villas/node/config.hpp>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
-  #define WITH_SOCKET_LAYER_ETH
+#define WITH_SOCKET_LAYER_ETH
 
-  #include <linux/if_packet.h>
-  #include <netinet/ether.h>
+#include <linux/if_packet.h>
+#include <netinet/ether.h>
 #endif // LIBNL3_ROUTE_FOUND
 
 union sockaddr_union {
-	struct sockaddr sa;
-	struct sockaddr_storage ss;
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
-	struct sockaddr_un sun;
+  struct sockaddr sa;
+  struct sockaddr_storage ss;
+  struct sockaddr_in sin;
+  struct sockaddr_in6 sin6;
+  struct sockaddr_un sun;
 #ifdef WITH_SOCKET_LAYER_ETH
-	struct sockaddr_ll sll;
+  struct sockaddr_ll sll;
 #endif
 };
 
 namespace villas {
 namespace node {
 
-enum class SocketLayer {
-	ETH,
-	IP,
-	UDP,
-	UNIX
-};
+enum class SocketLayer { ETH, IP, UDP, UNIX };
 
 /* Generate printable socket address depending on the address family
  *
@@ -50,7 +45,7 @@ enum class SocketLayer {
  * @param sa	A pointer to the socket address.
  * @return	The buffer containing the textual representation of the address. The caller is responsible to free() this buffer!
  */
-char * socket_print_addr(struct sockaddr *saddr);
+char *socket_print_addr(struct sockaddr *saddr);
 
 /* Parse a socket address depending on the address family
  *
@@ -66,7 +61,8 @@ char * socket_print_addr(struct sockaddr *saddr);
  * @retval 0	Success. Everything went well.
  * @retval <0	Error. Something went wrong.
  */
-int socket_parse_address(const char *str, struct sockaddr *sa, enum SocketLayer layer, int flags);
+int socket_parse_address(const char *str, struct sockaddr *sa,
+                         enum SocketLayer layer, int flags);
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 

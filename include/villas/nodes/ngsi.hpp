@@ -26,26 +26,28 @@ namespace node {
 class NodeCompat;
 
 struct ngsi {
-	const char *endpoint;		// The NGSI context broker endpoint URL.
-	const char *entity_id;		// The context broker entity id related to this node
-	const char *entity_type;	// The type of the entity
-	const char *access_token;	// An optional authentication token which will be sent as HTTP header.
+  const char *endpoint;    // The NGSI context broker endpoint URL.
+  const char *entity_id;   // The context broker entity id related to this node
+  const char *entity_type; // The type of the entity
+  const char *
+      access_token; // An optional authentication token which will be sent as HTTP header.
 
-	bool create;			// Weather we want to create the context element during startup.
-	bool remove;			// Weather we want to delete the context element during startup.
+  bool create; // Weather we want to create the context element during startup.
+  bool remove; // Weather we want to delete the context element during startup.
 
-	double timeout;			// HTTP timeout in seconds
-	double rate;			// Rate used for polling.
+  double timeout; // HTTP timeout in seconds
+  double rate;    // Rate used for polling.
 
-	struct Task task;		// Timer for periodic events.
-	int ssl_verify;			// Boolean flag whether SSL server certificates should be verified or not.
+  struct Task task; // Timer for periodic events.
+  int ssl_verify; // Boolean flag whether SSL server certificates should be verified or not.
 
-	struct curl_slist *headers;	// List of HTTP request headers for libcurl
+  struct curl_slist *headers; // List of HTTP request headers for libcurl
 
-	struct {
-		CURL *curl;		// libcurl: handle
-		struct List signals;	// A mapping between indices of the VILLASnode samples and the attributes in ngsi::context
-	} in, out;
+  struct {
+    CURL *curl; // libcurl: handle
+    struct List
+        signals; // A mapping between indices of the VILLASnode samples and the attributes in ngsi::context
+  } in, out;
 };
 
 int ngsi_type_start(SuperNode *sn);
@@ -54,7 +56,7 @@ int ngsi_type_stop();
 
 int ngsi_parse(NodeCompat *n, json_t *json);
 
-char * ngsi_print(NodeCompat *n);
+char *ngsi_print(NodeCompat *n);
 
 int ngsi_init(NodeCompat *n);
 
@@ -66,9 +68,9 @@ int ngsi_stop(NodeCompat *n);
 
 int ngsi_reverse(NodeCompat *n);
 
-int ngsi_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int ngsi_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int ngsi_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int ngsi_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 int ngsi_poll_fds(NodeCompat *n, int fds[]);
 

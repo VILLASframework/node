@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <villas/node.hpp>
-#include <villas/api/universal.hpp>
 #include <pthread.h>
+#include <villas/api/universal.hpp>
+#include <villas/node.hpp>
 
 namespace villas {
 namespace node {
@@ -21,33 +21,28 @@ struct Sample;
 class APINode : public Node {
 
 public:
-	APINode(const uuid_t &id = {}, const std::string &name = "");
+  APINode(const uuid_t &id = {}, const std::string &name = "");
 
-	struct Direction {
-		Sample *sample;
-		api::universal::ChannelList channels;
-		pthread_cond_t cv;
-		pthread_mutex_t mutex;
-	};
+  struct Direction {
+    Sample *sample;
+    api::universal::ChannelList channels;
+    pthread_cond_t cv;
+    pthread_mutex_t mutex;
+  };
 
-	// Accessed by api::universal::SignalRequest
-	Direction read, write;
+  // Accessed by api::universal::SignalRequest
+  Direction read, write;
 
-	virtual
-	int prepare();
+  virtual int prepare();
 
-	virtual
-	int check();
+  virtual int check();
 
 protected:
-	virtual
-	int parse(json_t *json);
+  virtual int parse(json_t *json);
 
-	virtual
-	int _read(struct Sample *smps[], unsigned cnt);
+  virtual int _read(struct Sample *smps[], unsigned cnt);
 
-	virtual
-	int _write(struct Sample *smps[], unsigned cnt);
+  virtual int _write(struct Sample *smps[], unsigned cnt);
 };
 
 } // namespace node

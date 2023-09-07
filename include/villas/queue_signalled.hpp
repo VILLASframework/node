@@ -7,39 +7,36 @@
 
 #pragma once
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 #include <villas/queue.hpp>
 
 namespace villas {
 
-template<typename T>
-class QueueSignalled : public Queue<T> {
+template <typename T> class QueueSignalled : public Queue<T> {
 
 private:
-	std::condition_variable cv;
+  std::condition_variable cv;
 
 public:
-	void push(const T &data)
-	{
-		Queue<T>::push(data);
+  void push(const T &data) {
+    Queue<T>::push(data);
 
-		cv.notify_one();
-	}
+    cv.notify_one();
+  }
 
-	T pop()
-	{
-		std::unique_lock<std::mutex> l(Queue<T>::mtx);
+  T pop() {
+    std::unique_lock<std::mutex> l(Queue<T>::mtx);
 
-		while (Queue<T>::queue.empty())
-			cv.wait(l);
+    while (Queue<T>::queue.empty())
+      cv.wait(l);
 
-		T res = Queue<T>::queue.front();
-		Queue<T>::queue.pop();
+    T res = Queue<T>::queue.front();
+    Queue<T>::queue.pop();
 
-		return res;
-	}
+    return res;
+  }
 };
 
 } // namespace villas

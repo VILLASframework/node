@@ -16,27 +16,26 @@ namespace api {
 class CapabilitiesRequest : public Request {
 
 public:
-	using Request::Request;
+  using Request::Request;
 
-	virtual
-	Response * execute()
-	{
-		if (method != Session::Method::GET)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::GET)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Capabilities endpoint does not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Capabilities endpoint does not accept any body data");
 
-		auto *json_capabilities = getCapabilities();
+    auto *json_capabilities = getCapabilities();
 
-		return new JsonResponse(session, HTTP_STATUS_OK, json_capabilities);
-	}
+    return new JsonResponse(session, HTTP_STATUS_OK, json_capabilities);
+  }
 };
 
 // Register API request
 static char n[] = "capabilities";
 static char r[] = "/capabilities";
-static char d[] = "get capabiltities and details about this VILLASnode instance";
+static char d[] =
+    "get capabiltities and details about this VILLASnode instance";
 static RequestPlugin<CapabilitiesRequest, n, r, d> p;
 
 } // namespace api

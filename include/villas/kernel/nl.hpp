@@ -10,8 +10,8 @@
 #include <sys/socket.h>
 
 #include <netlink/netlink.h>
-#include <netlink/route/route.h>
 #include <netlink/route/link.h>
+#include <netlink/route/route.h>
 
 namespace villas {
 namespace kernel {
@@ -32,10 +32,10 @@ int get_egress(struct nl_addr *addr);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-struct rtnl_link * get_egress_link(struct sockaddr *sa);
+struct rtnl_link *get_egress_link(struct sockaddr *sa);
 
 // Get or create global netlink socket.
-struct nl_sock * init();
+struct nl_sock *init();
 
 // Close and free global netlink socket.
 void shutdown();
