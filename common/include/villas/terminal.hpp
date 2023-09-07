@@ -17,37 +17,31 @@ namespace villas {
 class Terminal {
 
 protected:
-	struct winsize window;	// Size of the terminal window.
+  struct winsize window; // Size of the terminal window.
 
-	bool isTty;
+  bool isTty;
 
-	static
-	class Terminal *current;
+  static class Terminal *current;
 
 public:
-	Terminal();
+  Terminal();
 
-	// Signal handler for TIOCGWINSZ
-	static
-	void resize(int signal, siginfo_t *sinfo, void *ctx);
+  // Signal handler for TIOCGWINSZ
+  static void resize(int signal, siginfo_t *sinfo, void *ctx);
 
-	static
-	int getCols()
-	{
-		if (!current)
-			current = new Terminal();
+  static int getCols() {
+    if (!current)
+      current = new Terminal();
 
-		return current->window.ws_col;
-	}
+    return current->window.ws_col;
+  }
 
-	static
-	int getRows()
-	{
-		if (!current)
-			current = new Terminal();
+  static int getRows() {
+    if (!current)
+      current = new Terminal();
 
-		return current->window.ws_row;
-	}
+    return current->window.ws_row;
+  }
 };
 
 } // namespace villas

@@ -5,33 +5,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-#include <string>
-#include <new>
-#include <type_traits>
 #include <dlfcn.h>
+#include <iostream>
+#include <new>
+#include <string>
+#include <type_traits>
 
 #include <villas/plugin.hpp>
 
 using namespace villas::plugin;
 
-Registry * villas::plugin::registry = nullptr;
+Registry *villas::plugin::registry = nullptr;
 
-Plugin::Plugin()
-{
-	if (registry == nullptr)
-		registry = new Registry();
+Plugin::Plugin() {
+  if (registry == nullptr)
+    registry = new Registry();
 
-	registry->add(this);
+  registry->add(this);
 }
 
-Plugin::~Plugin()
-{
-	registry->remove(this);
-}
+Plugin::~Plugin() { registry->remove(this); }
 
-void
-Plugin::dump()
-{
-	getLogger()->info("Name: '{}' Description: '{}'", getName(), getDescription());
+void Plugin::dump() {
+  getLogger()->info("Name: '{}' Description: '{}'", getName(),
+                    getDescription());
 }

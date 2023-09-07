@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <villas/log.hpp>
 #include <villas/colors.hpp>
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 #include <villas/utils.hpp>
 
 namespace villas {
@@ -18,50 +18,36 @@ namespace villas {
 class Tool {
 
 protected:
-	Logger logger;
+  Logger logger;
 
-	int argc;
-	char **argv;
+  int argc;
+  char **argv;
 
-	std::string name;
+  std::string name;
 
-	static
-	Tool *current_tool;
+  static Tool *current_tool;
 
-	static
-	void staticHandler(int signal, siginfo_t *sinfo, void *ctx);
+  static void staticHandler(int signal, siginfo_t *sinfo, void *ctx);
 
-	virtual
-	void handler(int, siginfo_t *, void *)
-	{ }
+  virtual void handler(int, siginfo_t *, void *) {}
 
-	std::list<int> handlerSignals;
+  std::list<int> handlerSignals;
 
-	static
-	void printCopyright();
+  static void printCopyright();
 
-	static
-	void printVersion();
+  static void printVersion();
 
 public:
-	Tool(int ac, char *av[], const std::string &name, const std::list<int> &sigs = { });
+  Tool(int ac, char *av[], const std::string &name,
+       const std::list<int> &sigs = {});
 
-	virtual
-	int main()
-	{
-		return 0;
-	}
+  virtual int main() { return 0; }
 
-	virtual
-	void usage()
-	{ }
+  virtual void usage() {}
 
-	virtual
-	void parse()
-	{ }
+  virtual void parse() {}
 
-	virtual
-	int run();
+  virtual int run();
 };
 
 } // namespace villas

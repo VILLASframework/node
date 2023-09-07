@@ -15,55 +15,56 @@
 // cppcheck-suppress unknownMacro
 TestSuite(task, .description = "Periodic timer tasks");
 
-Test(task, rate, .timeout = 10)
-{
-	int runs = 10;
-	double rate = 5, waited;
-	struct timespec start, end;
-	Task task(CLOCK_MONOTONIC);
+Test(task, rate, .timeout = 10) {
+  int runs = 10;
+  double rate = 5, waited;
+  struct timespec start, end;
+  Task task(CLOCK_MONOTONIC);
 
-	task.setRate(rate);
+  task.setRate(rate);
 
-	int i;
-	for (i = 0; i < runs; i++) {
-		clock_gettime(CLOCK_MONOTONIC, &start);
+  int i;
+  for (i = 0; i < runs; i++) {
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-		task.wait();
+    task.wait();
 
-		clock_gettime(CLOCK_MONOTONIC, &end);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-		waited = time_delta(&start, &end);
+    waited = time_delta(&start, &end);
 
-		if (fabs(waited - 1.0 / rate) > 10e-3)
-			break;
-	}
+    if (fabs(waited - 1.0 / rate) > 10e-3)
+      break;
+  }
 
-	if (i < runs)
-		cr_assert_float_eq(waited, 1.0 / rate, 1e-2, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
+  if (i < runs)
+    cr_assert_float_eq(waited, 1.0 / rate, 1e-2,
+                       "We slept for %f instead of %f secs in round %d", waited,
+                       1.0 / rate, i);
 }
 
-Test(task, wait_until, .timeout = 5)
-{
-	int ret;
-	struct timespec start, end, diff, future;
+Test(task, wait_until, .timeout = 5) {
+  int ret;
+  struct timespec start, end, diff, future;
 
-	Task task(CLOCK_REALTIME);
+  Task task(CLOCK_REALTIME);
 
-	double waitfor = 3.423456789;
+  double waitfor = 3.423456789;
 
-	start = time_now();
-	diff = time_from_double(waitfor);
-	future = time_add(&start, &diff);
+  start = time_now();
+  diff = time_from_double(waitfor);
+  future = time_add(&start, &diff);
 
-	task.setNext(&future);
+  task.setNext(&future);
 
-	ret = task.wait();
+  ret = task.wait();
 
-	end = time_now();
+  end = time_now();
 
-	cr_assert_eq(ret, 1);
+  cr_assert_eq(ret, 1);
 
-	double waited = time_delta(&start, &end);
+  double waited = time_delta(&start, &end);
 
-	cr_assert_float_eq(waited, waitfor, 1e-2, "We slept for %f instead of %f secs", waited, waitfor);
+  cr_assert_float_eq(waited, waitfor, 1e-2,
+                     "We slept for %f instead of %f secs", waited, waitfor);
 }

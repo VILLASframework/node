@@ -11,42 +11,31 @@ namespace villas {
 namespace graph {
 
 class Vertex {
-	template<typename VertexType, typename EdgeType>
-	friend class DirectedGraph;
+  template <typename VertexType, typename EdgeType> friend class DirectedGraph;
 
 public:
-	using Identifier = std::size_t;
+  using Identifier = std::size_t;
 
-	Vertex() :
-		id(0)
-	{ }
+  Vertex() : id(0) {}
 
-	const Identifier& getIdentifier() const
-	{
-		return id;
-	}
+  const Identifier &getIdentifier() const { return id; }
 
-	friend
-	std::ostream& operator<<(std::ostream &stream, const Vertex &vertex)
-	{
-		return stream << vertex.id;
-	}
+  friend std::ostream &operator<<(std::ostream &stream, const Vertex &vertex) {
+    return stream << vertex.id;
+  }
 
-	bool operator==(const Vertex &other)
-	{
-		return this->id == other.id;
-	}
+  bool operator==(const Vertex &other) { return this->id == other.id; }
 
-	std::string toString() {
-		std::stringstream ss;
-		ss << *this;
-		return ss.str();
-	}
+  std::string toString() {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
+  }
 
 private:
-	Identifier id;
-	// HACK: how to resolve this circular type dependency?
-	std::list<std::size_t> edges;
+  Identifier id;
+  // HACK: how to resolve this circular type dependency?
+  std::list<std::size_t> edges;
 };
 
 } // namespace graph

@@ -9,13 +9,13 @@
 #pragma once
 
 #include <iostream>
-#include <list>
-#include <string>
 #include <jansson.h>
+#include <list>
 #include <spdlog/fmt/ostr.h>
+#include <string>
 
-#include <villas/log.hpp>
 #include <villas/common.hpp>
+#include <villas/log.hpp>
 
 namespace villas {
 namespace plugin {
@@ -24,163 +24,129 @@ namespace plugin {
 class Plugin;
 class Registry;
 
-extern
-Registry *registry;
+extern Registry *registry;
 
-template<typename T = Plugin>
-using List = std::list<T *>;
+template <typename T = Plugin> using List = std::list<T *>;
 
 class SubRegistry {
 
 public:
-	virtual
-	List<> lookup() = 0;
+  virtual List<> lookup() = 0;
 };
 
 class Registry {
 
 protected:
-	List<> plugins;
-	List<SubRegistry> registries;
+  List<> plugins;
+  List<SubRegistry> registries;
 
 public:
+  Logger getLogger() { return logging.get("plugin:registry"); }
 
-	Logger getLogger()
-	{
-		return logging.get("plugin:registry");
-	}
+  void add(Plugin *p) { plugins.push_back(p); }
 
-	void add(Plugin *p)
-	{
-		plugins.push_back(p);
-	}
+  void addSubRegistry(SubRegistry *sr) { registries.push_back(sr); }
 
-	void addSubRegistry(SubRegistry *sr)
-	{
-		registries.push_back(sr);
-	}
+  void remove(Plugin *p) { plugins.remove(p); }
 
-	void remove(Plugin *p)
-	{
-		plugins.remove(p);
-	}
+  // Get all plugins including sub-registries
+  List<> lookup() {
+    List<> all;
 
-	// Get all plugins including sub-registries
-	List<> lookup() {
-		List<> all;
+    all.insert(all.end(), plugins.begin(), plugins.end());
 
-		all.insert(all.end(), plugins.begin(), plugins.end());
+    for (auto r : registries) {
+      auto p = r->lookup();
 
-		for (auto r : registries) {
-			auto p = r->lookup();
+      all.insert(all.end(), p.begin(), p.end());
+    }
 
-			all.insert(all.end(), p.begin(), p.end());
-		}
+    return all;
+  }
 
-		return all;
-	}
+  // Get all plugins of specific type
+  template <typename T = Plugin> List<T> lookup() {
+    List<T> list;
 
-	// Get all plugins of specific type
-	template<typename T = Plugin>
-	List<T> lookup()
-	{
-		List<T> list;
+    for (Plugin *p : lookup()) {
+      T *t = dynamic_cast<T *>(p);
+      if (t)
+        list.push_back(t);
+    }
 
-		for (Plugin *p : lookup()) {
-			T *t = dynamic_cast<T *>(p);
-			if (t)
-				list.push_back(t);
-		}
+    // Sort alphabetically
+    list.sort(
+        [](const T *a, const T *b) { return a->getName() < b->getName(); });
 
-		// Sort alphabetically
-		list.sort([](const T *a, const T *b) {
-			return a->getName() < b->getName();
-		});
+    return list;
+  }
 
-		return list;
-	}
+  // Get all plugins of specific type and name
+  template <typename T = Plugin> T *lookup(const std::string &name) {
+    for (T *p : lookup<T>()) {
+      if (p->getName() != name)
+        continue;
 
-	// Get all plugins of specific type and name
-	template<typename T = Plugin>
-	T * lookup(const std::string &name)
-	{
-		for (T *p : lookup<T>()) {
-			if (p->getName() != name)
-				continue;
+      return p;
+    }
 
-			return p;
-		}
+    return nullptr;
+  }
 
-		return nullptr;
-	}
-
-	template<typename T = Plugin>
-	void dump();
+  template <typename T = Plugin> void dump();
 };
 
 class Plugin {
 
-	friend plugin::Registry;
+  friend plugin::Registry;
 
 protected:
-	Logger logger;
+  Logger logger;
 
 public:
-	Plugin();
+  Plugin();
 
-	virtual
-	~Plugin();
+  virtual ~Plugin();
 
-	// Copying a plugin doesn't make sense, so explicitly deny it
-	Plugin(Plugin const&) = delete;
-	void operator=(Plugin const&) = delete;
+  // Copying a plugin doesn't make sense, so explicitly deny it
+  Plugin(Plugin const &) = delete;
+  void operator=(Plugin const &) = delete;
 
-	virtual
-	void dump();
+  virtual void dump();
 
-	// Get plugin name
-	virtual
-	std::string getName() const = 0;
+  // Get plugin name
+  virtual std::string getName() const = 0;
 
-	// Get plugin type
-	virtual
-	std::string getType() const = 0;
+  // Get plugin type
+  virtual std::string getType() const = 0;
 
-	// Get plugin description
-	virtual
-	std::string getDescription() const = 0;
+  // Get plugin description
+  virtual std::string getDescription() const = 0;
 
-	virtual
-	Logger getLogger()
-	{
-		if (!logger) {
-			auto name = fmt::format("{}:{}", getType(), getName());
-			logger = logging.get(name);
-		}
+  virtual Logger getLogger() {
+    if (!logger) {
+      auto name = fmt::format("{}:{}", getType(), getName());
+      logger = logging.get(name);
+    }
 
-		return logger;
-	}
+    return logger;
+  }
 
-	// Custom formatter for spdlog
-	template<typename OStream>
-	friend OStream &operator<<(OStream &os, const class Plugin &p)
-	{
-		return os << p.getName();
-	}
-
+  // Custom formatter for spdlog
+  template <typename OStream>
+  friend OStream &operator<<(OStream &os, const class Plugin &p) {
+    return os << p.getName();
+  }
 };
 
-template<typename T>
-void
-Registry::dump()
-{
-	getLogger()->info("Available plugins:");
+template <typename T> void Registry::dump() {
+  getLogger()->info("Available plugins:");
 
-	for (Plugin *p : plugins) {
-		T *t = dynamic_cast<T *>(p);
-		if (t)
-			getLogger()->info(" - {}: {}", p->getName(), p->getDescription());
-	}
+  for (Plugin *p : plugins) {
+    T *t = dynamic_cast<T *>(p);
+    if (t)
+      getLogger()->info(" - {}: {}", p->getName(), p->getDescription());
+  }
 }
 
 } // namespace plugin

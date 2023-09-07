@@ -13,27 +13,22 @@
 namespace villas {
 namespace dsp {
 
-template<typename T>
-class MovingAverageWindow : public Window<T> {
+template <typename T> class MovingAverageWindow : public Window<T> {
 
 protected:
-	T state;
+  T state;
 
 public:
-	MovingAverageWindow(size_t len, T i = 0) :
-		Window<T>(len, i),
-		state(i)
-	{ }
+  MovingAverageWindow(size_t len, T i = 0) : Window<T>(len, i), state(i) {}
 
-	T update(T in)
-	{
-		T out = Window<T>::update(in);
+  T update(T in) {
+    T out = Window<T>::update(in);
 
-		state += in;
-		state -= out;
+    state += in;
+    state -= out;
 
-		return state / (double) Window<T>::getLength();
-	}
+    return state / (double)Window<T>::getLength();
+  }
 };
 
 } // namespace dsp

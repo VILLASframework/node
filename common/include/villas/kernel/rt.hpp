@@ -29,6 +29,6 @@ void setPriority(int priority);
 // @retval false Kernel is not patched.
 bool isPreemptible();
 
-} // namespace villas
-} // namespace kernel
 } // namespace rt
+} // namespace kernel
+} // namespace villas

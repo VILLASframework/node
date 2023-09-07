@@ -8,13 +8,13 @@
 
 #pragma once
 
-#include <string>
 #include <list>
+#include <string>
 
-#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/dist_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/fmt/ostr.h>
+#include <spdlog/spdlog.h>
 
 #include <jansson.h>
 
@@ -25,75 +25,68 @@ class Log;
 
 using Logger = std::shared_ptr<spdlog::logger>;
 
-extern
-Log logging;
+extern Log logging;
 
 class Log {
 
 public:
-	using Level = spdlog::level::level_enum;
-	using DefaultSink = std::shared_ptr<spdlog::sinks::stderr_color_sink_mt>;
-	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
-	using Formatter = std::shared_ptr<spdlog::pattern_formatter>;
+  using Level = spdlog::level::level_enum;
+  using DefaultSink = std::shared_ptr<spdlog::sinks::stderr_color_sink_mt>;
+  using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
+  using Formatter = std::shared_ptr<spdlog::pattern_formatter>;
 
-	class Expression {
-	public:
-		std::string name;
-		Level level;
+  class Expression {
+  public:
+    std::string name;
+    Level level;
 
-		Expression(const std::string &n, Level lvl) :
-			name(n),
-			level(lvl)
-		{ }
+    Expression(const std::string &n, Level lvl) : name(n), level(lvl) {}
 
-		Expression(json_t *json);
-	};
+    Expression(json_t *json);
+  };
 
 protected:
-	DistSink sinks;
-	DefaultSink sink;
-	Formatter formatter;
+  DistSink sinks;
+  DefaultSink sink;
+  Formatter formatter;
 
-	Level level;
+  Level level;
 
-	std::string pattern;		// Logging format.
-	std::string prefix;		// Prefix each line with this string.
+  std::string pattern; // Logging format.
+  std::string prefix;  // Prefix each line with this string.
 
-	std::list<Expression> expressions;
+  std::list<Expression> expressions;
 
 public:
+  Log(Level level = Level::info);
 
-	Log(Level level = Level::info);
+  // Get the real usable log output width which fits into one line.
+  int getWidth();
 
-	// Get the real usable log output width which fits into one line.
-	int getWidth();
+  void parse(json_t *json);
 
-	void parse(json_t *json);
+  Logger get(const std::string &name);
 
-	Logger get(const std::string &name);
+  void setFormatter(const std::string &pattern, const std::string &pfx = "");
+  void setLevel(Level lvl);
+  void setLevel(const std::string &lvl);
 
-	void setFormatter(const std::string &pattern, const std::string &pfx = "");
-	void setLevel(Level lvl);
-	void setLevel(const std::string &lvl);
+  Level getLevel() const;
+  std::string getLevelName() const;
 
-	Level getLevel() const;
-	std::string getLevelName() const;
+  void addSink(std::shared_ptr<spdlog::sinks::sink> sink) {
+    sink->set_formatter(formatter->clone());
+    sink->set_level(level);
 
-	void addSink(std::shared_ptr<spdlog::sinks::sink> sink)
-	{
-		sink->set_formatter(formatter->clone());
-		sink->set_level(level);
+    sinks->add_sink(sink);
+  }
 
-		sinks->add_sink(sink);
-	}
+  void replaceStdSink(std::shared_ptr<spdlog::sinks::sink> sink) {
+    sink->set_formatter(formatter->clone());
+    sink->set_level(level);
 
-	void replaceStdSink(std::shared_ptr<spdlog::sinks::sink> sink)
-	{
-		sink->set_formatter(formatter->clone());
-		sink->set_level(level);
-
-		sinks->sinks()[0] = sink;
-	}
+    sinks->sinks()[0] = sink;
+  }
 };
 
 } // namespace villas

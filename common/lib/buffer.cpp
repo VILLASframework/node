@@ -5,37 +5,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/compat.hpp>
 #include <villas/buffer.hpp>
+#include <villas/compat.hpp>
 
 using namespace villas;
 
-json_t * Buffer::decode()
-{
-	json_t *j;
-	json_error_t err;
+json_t *Buffer::decode() {
+  json_t *j;
+  json_error_t err;
 
-	j = json_loadb(data(), size(), JSON_DISABLE_EOF_CHECK, &err);
-	if (!j)
-		return nullptr;
+  j = json_loadb(data(), size(), JSON_DISABLE_EOF_CHECK, &err);
+  if (!j)
+    return nullptr;
 
-	// Remove decoded JSON document from beginning
-	erase(begin(), begin() + err.position);
+  // Remove decoded JSON document from beginning
+  erase(begin(), begin() + err.position);
 
-	return j;
+  return j;
 }
 
-int Buffer::encode(json_t *j, int flags)
-{
-	return json_dump_callback(j, callback, this, flags);
+int Buffer::encode(json_t *j, int flags) {
+  return json_dump_callback(j, callback, this, flags);
 }
 
-int Buffer::callback(const char *data, size_t len, void *ctx)
-{
-	Buffer *b = static_cast<Buffer *>(ctx);
+int Buffer::callback(const char *data, size_t len, void *ctx) {
+  Buffer *b = static_cast<Buffer *>(ctx);
 
-	// Append junk of JSON to buffer
-	b->insert(b->end(), &data[0], &data[len]);
+  // Append junk of JSON to buffer
+  b->insert(b->end(), &data[0], &data[len]);
 
-	return 0;
+  return 0;
 }

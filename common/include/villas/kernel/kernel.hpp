@@ -60,7 +60,7 @@ int getHugePageSize();
 int get_cpu_frequency(uint64_t *freq);
 
 // Set SMP affinity of IRQ
-int setIRQAffinity(unsigned irq, uintmax_t aff , uintmax_t *old);
+int setIRQAffinity(unsigned irq, uintmax_t aff, uintmax_t *old);
 
-} // namespace villas
 } // namespace kernel
+} // namespace villas

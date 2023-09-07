@@ -21,7 +21,8 @@ namespace uuid {
 std::string toString(const uuid_t in);
 
 // Generate an UUID by MD5 hashing the provided string
-int generateFromString(uuid_t out, const std::string &data, const std::string &ns = "");
+int generateFromString(uuid_t out, const std::string &data,
+                       const std::string &ns = "");
 
 // Generate an UUID by MD5 hashing the provided string
 int generateFromString(uuid_t out, const std::string &data, const uuid_t ns);

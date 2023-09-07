@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 
 #include <ctime>
 
@@ -16,10 +16,12 @@
 ssize_t time_cmp(const struct timespec *a, const struct timespec *b);
 
 // Get delta between two timespec structs.
-struct timespec time_diff(const struct timespec *start, const struct timespec *end);
+struct timespec time_diff(const struct timespec *start,
+                          const struct timespec *end);
 
 // Get sum of two timespec structs.
-struct timespec time_add(const struct timespec *start, const struct timespec *end);
+struct timespec time_add(const struct timespec *start,
+                         const struct timespec *end);
 
 // Return current time as a struct timespec.
 struct timespec time_now();

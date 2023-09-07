@@ -12,8 +12,8 @@
 #pragma once
 
 #include <list>
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <linux/vfio.h>
 #include <sys/mman.h>
@@ -26,63 +26,57 @@ namespace vfio {
 
 // Backwards compatability with older kernels
 #ifdef VFIO_UPDATE_VADDR
-static constexpr
-size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR+1;
+static constexpr size_t EXTENSION_SIZE = VFIO_UPDATE_VADDR + 1;
 #elif defined(VFIO_UNMAP_ALL)
-static constexpr
-size_t EXTENSION_SIZE = VFIO_UNMAP_ALL+1;
+static constexpr size_t EXTENSION_SIZE = VFIO_UNMAP_ALL + 1;
 #else
-static constexpr
-size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU+1;
+static constexpr size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU + 1;
 #endif
 
 class Container {
 public:
-	Container();
+  Container();
 
-	// No copying allowed because we manage the vfio state in constructor and destructors
-	Container(Container const&) = delete;
-	void operator=(Container const&) = delete;
+  // No copying allowed because we manage the vfio state in constructor and destructors
+  Container(Container const &) = delete;
+  void operator=(Container const &) = delete;
 
-	~Container();
+  ~Container();
 
-	void dump();
+  void dump();
 
-	void attachGroup(std::shared_ptr<Group> group);
+  void attachGroup(std::shared_ptr<Group> group);
 
-	std::shared_ptr<Device> attachDevice(const std::string& name, int groupIndex);
-	std::shared_ptr<Device> attachDevice(pci::Device &pdev);
+  std::shared_ptr<Device> attachDevice(const std::string &name, int groupIndex);
+  std::shared_ptr<Device> attachDevice(pci::Device &pdev);
 
-	// Map VM to an IOVA, which is accessible by devices in the container
-	//
-	// @param virt		virtual address of memory
-	// @param phys		IOVA where to map @p virt, -1 to use VFIO internal allocator
-	// @param length	size of memory region in bytes
-	// @return		IOVA address, UINTPTR_MAX on failure
-	uintptr_t memoryMap(uintptr_t virt, uintptr_t phys, size_t length);
+  // Map VM to an IOVA, which is accessible by devices in the container
+  //
+  // @param virt		virtual address of memory
+  // @param phys		IOVA where to map @p virt, -1 to use VFIO internal allocator
+  // @param length	size of memory region in bytes
+  // @return		IOVA address, UINTPTR_MAX on failure
+  uintptr_t memoryMap(uintptr_t virt, uintptr_t phys, size_t length);
 
-	// munmap() a region which has been mapped by vfio_map_region()
-	bool memoryUnmap(uintptr_t phys, size_t length);
+  // munmap() a region which has been mapped by vfio_map_region()
+  bool memoryUnmap(uintptr_t phys, size_t length);
 
-	bool isIommuEnabled() const
-	{
-		return this->hasIommu;
-	}
+  bool isIommuEnabled() const { return this->hasIommu; }
 
 private:
-	std::shared_ptr<Group> getOrAttachGroup(int index);
+  std::shared_ptr<Group> getOrAttachGroup(int index);
 
-	int fd;
-	int version;
+  int fd;
+  int version;
 
-	std::array<bool, EXTENSION_SIZE> extensions;
-	uint64_t iova_next;			// Next free IOVA address
-	bool hasIommu;
+  std::array<bool, EXTENSION_SIZE> extensions;
+  uint64_t iova_next; // Next free IOVA address
+  bool hasIommu;
 
-	// All groups bound to this container
-	std::list<std::shared_ptr<Group>> groups;
+  // All groups bound to this container
+  std::list<std::shared_ptr<Group>> groups;
 
-	Logger log;
+  Logger log;
 };
 
 } // namespace vfio
