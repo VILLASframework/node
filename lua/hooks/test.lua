@@ -15,14 +15,16 @@ Reason = {
 }
 
 SampleFlags = {
-	HAS_TS_ORIGIN   = 1,      -- "(1 <<  1)"    Include origin timestamp in output.
-	HAS_TS_RECEIVED = 2,      -- "(1 <<  2)"    Include receive timestamp in output.
-	HAS_OFFSET      = 4,      -- "(1 <<  3)"    Include offset (received - origin timestamp) in output.
-	HAS_SEQUENCE    = 8,      -- "(1 <<  4)"    Include sequence number in output.
-	HAS_DATA        = 16,     -- "(1 <<  5)"    Include values in output.
-	HAS_ALL         = 15,     -- "(1 <<  6) -1" Enable all output options.
+	HAS_TS_ORIGIN   = 1,          -- "(1 <<  1)"    Include origin timestamp in output.
+	HAS_TS_RECEIVED = 2,          -- "(1 <<  2)"    Include receive timestamp in output.
+	HAS_OFFSET      = 4,          -- "(1 <<  3)"    Include offset (received - origin timestamp) in output.
+	HAS_SEQUENCE    = 8,          -- "(1 <<  4)"    Include sequence number in output.
+	HAS_DATA        = 16,         -- "(1 <<  5)"    Include values in output.
 
-	NEW_SIMULATION  = 65536,  -- "(1 << 16)"    This sample is the first of a new simulation case
+	NEW_FRAME       = 65536,      -- "(1 << 16)"    This sample is the first of a new simulation case
+	NEW_SIMULATION  = 131072,     -- "(1 << 16)"    This sample is the first of a new simulation case
+
+	ALL             = 2147483647, -- "INT_MAX"      Enable all output options.
 }
 
 
