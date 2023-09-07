@@ -69,7 +69,7 @@ RUN dnf -y install \
 
 # Add local and 64-bit locations to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
-    echo /usr/local/lib64 >> /etc/ld.so.conf
+	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
