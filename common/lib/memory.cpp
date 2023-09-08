@@ -54,9 +54,8 @@ HostRam::HostRamAllocator::allocateBlock(size_t size) {
   return mem;
 }
 
-// cppcheck-suppress passedByValue
 LinearAllocator::LinearAllocator(
-    MemoryManager::AddressSpaceId memoryAddrSpaceId, size_t memorySize,
+    const MemoryManager::AddressSpaceId &memoryAddrSpaceId, size_t memorySize,
     size_t internalOffset)
     : BaseAllocator(memoryAddrSpaceId), nextFreeAddress(0),
       memorySize(memorySize), internalOffset(internalOffset),

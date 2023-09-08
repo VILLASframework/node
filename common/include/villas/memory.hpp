@@ -28,7 +28,7 @@ public:
 
   // cppcheck-suppress passedByValue
   MemoryBlock(size_t offset, size_t size,
-              MemoryManager::AddressSpaceId addrSpaceId)
+              const MemoryManager::AddressSpaceId &addrSpaceId)
       : offset(offset), size(size), addrSpaceId(addrSpaceId) {}
 
   MemoryManager::AddressSpaceId getAddrSpaceId() const { return addrSpaceId; }
@@ -202,7 +202,7 @@ private:
 // together.
 class LinearAllocator : public BaseAllocator<LinearAllocator> {
 public:
-  LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
+  LinearAllocator(const MemoryManager::AddressSpaceId &memoryAddrSpaceId,
                   size_t memorySize, size_t internalOffset = 0);
 
   LinearAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem)
