@@ -74,7 +74,7 @@ Container::Container() :
 	iova_next(0),
 	hasIommu(false),
 	groups(),
-	log(logging.get("kernel:vfio::Container"))
+	log(logging.get("kernel:vfio:container"))
 {
 	for (const char* module : requiredKernelModules) {
 		if (kernel::loadModule(module) != 0) {
