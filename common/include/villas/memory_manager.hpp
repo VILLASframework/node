@@ -184,7 +184,7 @@ public:
 
   // cppcheck-suppress passedByValue
   MemoryTranslation
-  getTranslationFromProcess(AddressSpaceId foreignAddrSpaceId) {
+  getTranslationFromProcess(const AddressSpaceId &foreignAddrSpaceId) {
     return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId);
   }
 
