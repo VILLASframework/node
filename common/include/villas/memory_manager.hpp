@@ -96,25 +96,20 @@ private:
     uintptr_t dest;   // Base address in "to" address space
     size_t size;      // Size of the mapping
 
-		friend std::ostream&
-		operator<< (std::ostream &stream, const Mapping &mapping)
-		{
-			return stream << static_cast<const Edge&>(mapping) << " = "
-			              << mapping.name
-			              << std::hex
-			              << " (src=0x"  << mapping.src
-			              << ", dest=0x" << mapping.dest
-			              << ", size=0x" << mapping.size
-			              << ")";
-		}
+    friend std::ostream &operator<<(std::ostream &stream,
+                                    const Mapping &mapping) {
+      return stream << static_cast<const Edge &>(mapping) << " = "
+                    << mapping.name << std::hex << " (src=0x" << mapping.src
+                    << ", dest=0x" << mapping.dest << ", size=0x"
+                    << mapping.size << ")";
+    }
 
-		std::string toString()
-		{
-			std::stringstream s;
-			s << *this;
-			return s.str();
-		}
-	};
+    std::string toString() {
+      std::stringstream s;
+      s << *this;
+      return s.str();
+    }
+  };
 
   // Custom vertex in memory graph representing an address space
   //

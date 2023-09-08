@@ -75,22 +75,21 @@ Device::Device(const std::string &name, int groupFileDescriptor,
   log->debug("device info: flags: 0x{:x}, num_regions: {}, num_irqs: {}",
              info.flags, info.num_regions, info.num_irqs);
 
-	if (pci_device != 0) {
-		// device_info.num_region reports always 9 and includes a VGA region, which is only supported on
-		// certain device IDs. So for non-VGA devices VFIO_PCI_CONFIG_REGION_INDEX will be the highest
-		// region index. This is the config space.
-		info.num_regions = VFIO_PCI_CONFIG_REGION_INDEX + 1;
-	} else { info.num_regions = 1; }
+  // device_info.num_region reports always 9 and includes a VGA region, which is only supported on
+  // certain device IDs. So for non-VGA devices VFIO_PCI_CONFIG_REGION_INDEX will be the highest
+  // region index. This is the config space.
+  info.num_regions =
+      pci_device != 0 ? VFIO_PCI_CONFIG_REGION_INDEX + 1 : 1;
 
   // Reserve slots already so that we can use the []-operator for access
   irqs.resize(info.num_irqs);
   regions.resize(info.num_regions);
   mappings.resize(info.num_regions);
 
-	// Get device regions
-	for (size_t i = 0; i < info.num_regions; i++) {
-		struct vfio_region_info region;
-		memset(&region, 0, sizeof (region));
+  // Get device regions
+  for (size_t i = 0; i < info.num_regions; i++) {
+    struct vfio_region_info region;
+    memset(&region, 0, sizeof(region));
 
     region.argsz = sizeof(region);
     region.index = i;
@@ -99,8 +98,10 @@ Device::Device(const std::string &name, int groupFileDescriptor,
     if (ret < 0)
       throw RuntimeError("Failed to get region {} of VFIO device: {}", i, name);
 
-		log->debug("region {} info: flags: 0x{:x}, cap_offset: 0x{:x}, size: 0x{:x}, offset: 0x{:x}",
-               		region.index, region.flags, region.cap_offset, region.size, region.offset);
+    log->debug("region {} info: flags: 0x{:x}, cap_offset: 0x{:x}, size: "
+               "0x{:x}, offset: 0x{:x}",
+               region.index, region.flags, region.cap_offset, region.size,
+               region.offset);
 
     regions[i] = region;
   }
