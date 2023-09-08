@@ -1,9 +1,9 @@
-/** API for interacting with the FPGA DMA Controller.
+/* API for interacting with the FPGA DMA Controller.
  *
  * Author: Niklas Eiling <niklas.eiling@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <villas/fpga/dma.h>
 

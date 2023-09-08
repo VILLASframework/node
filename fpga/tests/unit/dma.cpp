@@ -1,9 +1,9 @@
-/** DMA unit test.
+/* DMA unit test.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <criterion/criterion.h>
 

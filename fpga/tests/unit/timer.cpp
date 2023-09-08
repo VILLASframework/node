@@ -1,9 +1,9 @@
-/** Timer/Counter unit test.
+/* Timer/Counter unit test.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <chrono>
 #include <criterion/criterion.h>

@@ -1,10 +1,10 @@
-/** DMA driver
+/* DMA driver
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- ******************************************************************************/
+ */
 
 #include <sstream>
 #include <string>

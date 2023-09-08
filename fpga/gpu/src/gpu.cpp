@@ -1,9 +1,9 @@
-/** GPU managment.
+/* GPU managment.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <cstdio>
 #include <cstdint>

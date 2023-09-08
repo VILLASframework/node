@@ -1,9 +1,9 @@
-/** FPGA related code for bootstrapping the unit-tests
+/* FPGA related code for bootstrapping the unit-tests
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2018 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <criterion/criterion.h>
 

@@ -1,9 +1,11 @@
 # pcimem tool
 
-SPDX-FileCopyrightText: 2010 Bill Farrow <bfarrow@beyondelectronics.us>
-SPDX-FileCopyrightText: 2022 Institute for Automation of Complex Power Systems, EONERC
-SPDX-FileCopyrightText: 2000 Jan-Derk Bakker <J.D.Bakker@its.tudelft.nl>
-SPDX-License-Identifier: GPL-2.0-or-later
+## License
+
+- SPDX-FileCopyrightText: 2010 Bill Farrow <bfarrow@beyondelectronics.us>
+- SPDX-FileCopyrightText: 2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-FileCopyrightText: 2000 Jan-Derk Bakker <J.D.Bakker@its.tudelft.nl>
+- SPDX-License-Identifier: GPL-2.0-or-later
 
 ## Overview
 

@@ -3,9 +3,8 @@
 # Detach and rebind a PCI device to a PCI kernel driver
 #
 # Author: Steffen Vogel <post@steffenvogel.de>
-# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
-##################################################################################
 
 if [ "$#" -ne 2 ]; then
 	echo "usage: $0 BUS:DEV:FNC DRIVER"

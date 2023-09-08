@@ -1,6 +1,6 @@
 # GitLab CI configuration
 #
-# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
 variables:
@@ -10,24 +10,11 @@ variables:
   DOCKER_IMAGE_DEV: villas/fpga-dev
 
 stages:
-- lint
 - prepare
 - build
 - test
 
-# Stage: lint
-##############################################################################
-
-reuse:
-  stage: lint
-  image:
-    name: fsfe/reuse:latest
-    entrypoint: [""]
-  script:
-  - reuse lint
-
 # Stage: prepare
-##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
 docker-dev:
@@ -38,7 +25,6 @@ docker-dev:
   - docker
 
 # Stage: build
-##############################################################################
 
 build:source:
   stage: build
@@ -54,7 +40,6 @@ build:source:
   - docker
 
 # Stage: test
-##############################################################################
 
 test:unit:
   stage: test
@@ -102,3 +87,11 @@ test:cppcheck:
     paths:
     - cppcheck.log
     expose_as: cppcheck
+
+test:reuse:
+  stage: test
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+  - reuse lint

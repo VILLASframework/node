@@ -1,9 +1,9 @@
-/** Global include for tests.
+/* Global include for tests.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 

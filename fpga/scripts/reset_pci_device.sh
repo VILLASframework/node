@@ -3,9 +3,8 @@
 # Reset PCI devices like FPGAs after a reflash
 #
 # Author: Steffen Vogel <post@steffenvogel.de>
-# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+# SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
-##################################################################################
 
 if [ "$#" -ne 1 ]; then
         echo "usage: $0 BUS:DEV.FNC"

@@ -1,9 +1,9 @@
-/** Driver for wrapper around Aurora (acs.eonerc.rwth-aachen.de:user:aurora)
+/* Driver for wrapper around Aurora (acs.eonerc.rwth-aachen.de:user:aurora)
  *
  * Author: Hatim Kanchwala <hatim@hatimak.me>
- * SPDX-FileCopyrightText: 2020 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <cstdint>
 
@@ -37,12 +37,12 @@
 // Sequence number must be handled in software then.
 #define AURORA_AXIS_CR_SEQ_MODE			(1 << 2)
 
-/** 1-bit, assert to strip the received frame of the trailing sequence
+/* 1-bit, assert to strip the received frame of the trailing sequence
  * number. Sequence number mode must be set to handled by Aurora IP,
  * otherwise this bit is ignored. */
 #define AURORA_AXIS_CR_SEQ_STRIP		(1 << 3)
 
-/** 1-bit, assert to use the same sequence number in the outgoing
+/* 1-bit, assert to use the same sequence number in the outgoing
  * NovaCor-bound frames as the sequence number received from the
  * incoming frames from NovaCor. Sequence number mode must be set to
  * handled by Aurora IP, otherwise this bit is ignored.*/

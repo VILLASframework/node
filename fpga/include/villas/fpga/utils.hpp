@@ -1,8 +1,8 @@
-/** Helper function for directly using VILLASfpga outside of VILLASnode
+/* Helper function for directly using VILLASfpga outside of VILLASnode
  * Author: Niklas Eiling <niklas.eiling@rwth-aachen.de>
- * SPDX-FileCopyrightText: 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2022-2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -122,5 +122,5 @@ protected:
 
 std::unique_ptr<BufferedSampleFormatter> getBufferedSampleFormatter(const std::string &format, size_t bufSizeInSamples);
 
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace fpga
+} // namespace villas

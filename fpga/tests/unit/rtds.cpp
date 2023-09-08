@@ -1,11 +1,11 @@
-/** RTDS AXI-Stream RTT unit test.
+/* RTDS AXI-Stream RTT unit test.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2018 Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2018 Daniel Krebs <github@daniel-krebs.net>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <list>
 

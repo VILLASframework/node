@@ -1,4 +1,4 @@
-SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
 SPDX-License-Identifier: Apache-2.0
 
 I, Niklas Eiling hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: niklas.eiling@eonerc.rwth-aachen.de

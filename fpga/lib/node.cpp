@@ -1,9 +1,9 @@
-/** An IP node.
+/* An IP node.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <map>
 #include <stdexcept>

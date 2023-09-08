@@ -1,9 +1,9 @@
-/** Driver for wrapper around standard Xilinx Aurora (xilinx.com:ip:aurora_8b10b)
+/* Driver for wrapper around standard Xilinx Aurora (xilinx.com:ip:aurora_8b10b)
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -31,6 +31,6 @@ public:
 	}
 };
 
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace ip
+} // namespace fpga
+} // namespace villas

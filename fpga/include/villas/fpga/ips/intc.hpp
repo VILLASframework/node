@@ -1,10 +1,10 @@
-/** AXI-PCIe Interrupt controller
+/* AXI-PCIe Interrupt controller
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -68,6 +68,6 @@ private:
 	bool polling[maxIrqs];
 };
 
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace ip
+} // namespace fpga
+} // namespace villas

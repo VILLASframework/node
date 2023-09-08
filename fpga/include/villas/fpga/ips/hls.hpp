@@ -1,9 +1,9 @@
-/** HLS IP core
+/* HLS IP core
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -157,6 +157,6 @@ protected:
 	bool running;
 };
 
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace ip
+} // namespace fpga
+} // namespace villas

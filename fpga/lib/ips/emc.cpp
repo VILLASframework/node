@@ -1,9 +1,9 @@
-/** AXI External Memory Controller (EMC)
+/* AXI External Memory Controller (EMC)
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <iostream>
 
@@ -42,7 +42,7 @@ bool EMC::read(uint32_t offset, uint32_t length, uint8_t *data)
 {
 	int ret;
 
-	/** Reset the Flash Device. This clears the ret registers and puts
+	/* Reset the Flash Device. This clears the ret registers and puts
 	 * the device in Read mode.
 	 */
 	ret = XFlash_Reset(&xflash);

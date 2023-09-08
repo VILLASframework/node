@@ -1,12 +1,13 @@
-/** FPGA card
+/* FPGA card
  *
  * This class represents a FPGA device.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
+
 #pragma once
 
 #include <set>
@@ -52,5 +53,5 @@ protected:
         Logger logger;
 };
 
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace fpga
+} // namespace villas

@@ -1,9 +1,9 @@
-/** AXI-PCIe Interrupt controller
+/* AXI-PCIe Interrupt controller
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <unistd.h>
 #include <errno.h>

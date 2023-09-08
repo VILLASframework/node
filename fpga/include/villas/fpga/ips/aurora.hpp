@@ -1,9 +1,9 @@
-/** Driver for wrapper around Aurora (acs.eonerc.rwth-aachen.de:user:aurora)
+/* Driver for wrapper around Aurora (acs.eonerc.rwth-aachen.de:user:aurora)
  *
  * Author: Hatim Kanchwala <hatim@hatimak.me>
- * SPDX-FileCopyrightText: 2020 Institute for Automation of Complex Power Systems, EONERC
+ * SPDX-FileCopyrightText: 2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -50,6 +50,6 @@ private:
 	static constexpr const char registerMemory[] = "reg0";
 };
 
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace ip
+} // namespace fpga
+} // namespace villas

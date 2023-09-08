@@ -1,9 +1,9 @@
-/** C bindings for VILLASfpga
+/* C bindings for VILLASfpga
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
- ******************************************************************************/
+ */
 
 #ifndef _VILLASFPGA_DMA_H
 #define _VILLASFPGA_DMA_H
@@ -36,4 +36,4 @@ int villasfpga_write_complete(villasfpga_handle handle, size_t *size);
 } // extern "C"
 #endif
 
-#endif /* _VILLASFPGA_DMA_H */
+#endif // _VILLASFPGA_DMA_H

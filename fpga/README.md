@@ -9,20 +9,14 @@ VILLASfpga supports Xilinx FPGAs connected to a Linux system via PCI-Express or 
 
 User documentation is available here: <https://villas.fein-aachen.org/doc/fpga.html>
 
-## Copyright
-
-- 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- 2018-2022 Steffen Vogel <post@steffenvogel.de>
-- 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
-
 ## License
 
 This project is released under the terms of the [Apache 2.0](LICENSE) license:
 
-SPDX-FileCopyrightText: 2022-2023 Niklas Eiling
-SPDX-FileCopyrightText: 2018-2023 Steffen Vogel
-SPDX-FileCopyrightText: 2018 Daniel Krebs
-SPDX-License-Identifier: Apache-2.0
+- SPDX-FileCopyrightText: 2022-2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- SPDX-FileCopyrightText: 2018-2023 Steffen Vogel <post@steffenvogel.de>
+- SPDX-FileCopyrightText: 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
+- SPDX-License-Identifier: Apache-2.0
 
 We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
 

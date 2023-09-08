@@ -1,4 +1,4 @@
-/** AXI Stream interconnect related helper functions
+/* AXI Stream interconnect related helper functions
  *
  * These functions present a simpler interface to Xilinx' AXI Stream switch driver (XAxis_Switch_*)
  *
@@ -6,7 +6,7 @@
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <jansson.h>
 #include <xilinx/xaxis_switch.h>
@@ -135,6 +135,6 @@ void AxiStreamSwitchFactory::parse(Core &ip, json_t *cfg)
 
 static AxiStreamSwitchFactory f;
 
-} /* namespace ip */
-} /* namespace fpga */
-} /* namespace villas */
+} // namespace ip
+} // namespace fpga
+} // namespace villas

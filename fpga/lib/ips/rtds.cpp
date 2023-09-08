@@ -1,9 +1,9 @@
-/** Driver for AXI Stream wrapper around RTDS_InterfaceModule (rtds_axis )
+/* Driver for AXI Stream wrapper around RTDS_InterfaceModule (rtds_axis )
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <cstdint>
 

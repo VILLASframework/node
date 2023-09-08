@@ -1,4 +1,4 @@
-/** Timer related helper functions
+/* Timer related helper functions
  *
  * These functions present a simpler interface to Xilinx' Timer Counter driver (XTmrCtr_*)
  *
@@ -6,7 +6,7 @@
  * Author: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <cstdint>
 

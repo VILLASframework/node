@@ -1,10 +1,10 @@
-/** Helper function for directly using VILLASfpga outside of VILLASnode
+/* Helper function for directly using VILLASfpga outside of VILLASnode
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2022 Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2022 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2022-2023 Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2022-2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
- *********************************************************************************/
+ */
 
 #include <csignal>
 #include <iostream>
