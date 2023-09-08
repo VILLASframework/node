@@ -38,10 +38,10 @@ public:
 
   bool reset();
 
-	std::string getName() { return name; };
+  std::string getName() { return name; };
 
-	// Map a device memory region to the application address space (e.g. PCI BARs)
-	void* regionMap(size_t index);
+  // Map a device memory region to the application address space (e.g. PCI BARs)
+  void *regionMap(size_t index);
 
   // munmap() a region which has been mapped by vfio_map_region()
   bool regionUnmap(size_t index);

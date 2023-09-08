@@ -31,10 +31,8 @@
 #include <unistd.h>
 
 #include <villas/exceptions.hpp>
-#include <villas/log.hpp>
-#include <villas/kernel/vfio.hpp>
-#include <villas/kernel/vfio_container.hpp>
 #include <villas/kernel/kernel.hpp>
+#include <villas/kernel/vfio.hpp>
 #include <villas/kernel/vfio_container.hpp>
 #include <villas/log.hpp>
 
@@ -67,21 +65,16 @@ static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
 static std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR =
     construct_vfio_extension_str();
 
-Container::Container() :
-	fd(-1),
-	version(0),
-	extensions(),
-	iova_next(0),
-	hasIommu(false),
-	groups(),
-	log(logging.get("kernel:vfio:container"))
-{
-	for (const char* module : requiredKernelModules) {
-		if (kernel::loadModule(module) != 0) {
-				throw RuntimeError("Kernel module '{}' required but could not be loaded. "
-						"Please load manually!", module);
-		}
-	}
+Container::Container()
+    : fd(-1), version(0), extensions(), iova_next(0), hasIommu(false), groups(),
+      log(logging.get("kernel:vfio:container")) {
+  for (const char *module : requiredKernelModules) {
+    if (kernel::loadModule(module) != 0) {
+      throw RuntimeError("Kernel module '{}' required but could not be loaded. "
+                         "Please load manually!",
+                         module);
+    }
+  }
 
   // Create a VFIO Container
   fd = open(VFIO_DEV, O_RDWR);
