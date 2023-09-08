@@ -32,6 +32,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
+#include <villas/kernel/vfio.hpp>
 #include <villas/kernel/vfio_container.hpp>
 #include <villas/kernel/kernel.hpp>
 
@@ -74,15 +75,10 @@ Container::Container() :
 	groups(),
 	log(logging.get("kernel:vfio::Container"))
 {
-	static constexpr
-	const char* requiredKernelModules[] = {
-	    "vfio", "vfio_pci", "vfio_iommu_type1"
-	};
-
 	for (const char* module : requiredKernelModules) {
 		if (kernel::loadModule(module) != 0) {
-			throw RuntimeError("Kernel module '{}' required but could not be loaded. "
-			              "Please load manually!", module);
+				throw RuntimeError("Kernel module '{}' required but could not be loaded. "
+						"Please load manually!", module);
 		}
 	}
 
