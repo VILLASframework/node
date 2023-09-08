@@ -13,6 +13,7 @@ set(HOOK_SRC
     dump.cpp
     ebm.cpp
     fix.cpp
+    frame.cpp
     gate.cpp
     jitter_calc.cpp
     limit_rate.cpp
