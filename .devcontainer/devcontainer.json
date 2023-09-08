@@ -19,6 +19,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-vscode.cpptools-extension-pack",
+				"llvm-vs-code-extensions.vscode-clangd",
+				"xaver.clang-format",
 				"EditorConfig.EditorConfig"
 			]
 		}
