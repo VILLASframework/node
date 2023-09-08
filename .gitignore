@@ -10,6 +10,7 @@
 .settings/
 .vscode/
 .direnv/
+.cache/
 
 *.egg-info/
 
