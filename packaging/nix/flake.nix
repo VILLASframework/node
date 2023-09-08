@@ -159,7 +159,7 @@
         pkgs = devPkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
-        packages = with pkgs; [bashInteractive bc boxfort criterion jq libffi libgit2 pcre];
+        packages = with pkgs; [bashInteractive bc boxfort criterion jq libffi libgit2 pcre clang-tools];
       in rec {
         default = full;
 
@@ -184,7 +184,7 @@
       in {
         fmt = pkgs.runCommand "check-fmt" {} ''
           cd ${self}
-          ${pkgs.alejandra}/bin/alejandra --check . 2> $out
+          "${pkgs.alejandra}/bin/alejandra" --check . 2>> $out
         '';
       }
     );
