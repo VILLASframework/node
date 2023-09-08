@@ -16,6 +16,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace villas {
 namespace utils {

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <villas/graph/vertex.hpp>
+
 namespace villas {
 namespace graph {
 
