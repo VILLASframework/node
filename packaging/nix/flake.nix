@@ -159,7 +159,18 @@
         pkgs = devPkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
-        packages = with pkgs; [bashInteractive bc boxfort criterion jq libffi libgit2 pcre clang-tools];
+        packages = with pkgs; [
+          bashInteractive
+          bc
+          boxfort
+          clang-tools
+          criterion
+          jq
+          libffi
+          libgit2
+          pcre
+          reuse
+        ];
       in rec {
         default = full;
 
