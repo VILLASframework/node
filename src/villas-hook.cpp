@@ -218,7 +218,7 @@ protected:
       if (!(*d.formatter))
         throw RuntimeError("Failed to initialize {} IO", d.dir);
 
-      (*d.formatter)->start(dtypes, (int)SampleFlags::HAS_ALL);
+      (*d.formatter)->start(dtypes, (int)SampleFlags::ALL);
     }
 
     // Initialize hook

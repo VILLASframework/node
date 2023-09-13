@@ -64,14 +64,19 @@ private:
     bool changed = false;
 
     if (!last_smp.get() ||
-        (next_smp->flags & (int)SampleFlags::NEW_SIMULATION) ==
-            (int)SampleFlags::NEW_SIMULATION) {
+        (next_smp->flags & (int)SampleFlags::NEW_SIMULATION)) {
       changed = true;
     } else if (trigger == Trigger::SEQUENCE) {
+      if (!(next_smp->flags & (int)SampleFlags::HAS_SEQUENCE))
+        throw RuntimeError{"Missing sequence number."};
+
       auto last_interval = (last_smp->sequence + interval - offset) / interval;
       auto next_interval = (next_smp->sequence + interval - offset) / interval;
       changed = last_interval != next_interval;
-    } else
+    } else {
+      if (!(next_smp->flags & (int)SampleFlags::HAS_TS_ORIGIN))
+        throw RuntimeError{"Missing origin timestamp."};
+
       switch (unit.value()) {
       case Unit::HOURS: {
         auto last_hour = last_smp->ts.origin.tv_sec / 3'600;
@@ -156,6 +161,7 @@ private:
         break;
       }
       }
+    }
 
     if (changed)
       logger->debug("new frame");
