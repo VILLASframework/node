@@ -22,6 +22,9 @@ class JsonFormat : public Format {
 protected:
   static enum SignalType detect(const json_t *val);
 
+  json_t *packFlags(const struct Sample *smp);
+  int unpackFlags(json_t *json_ts, struct Sample *smp);
+
   json_t *packTimestamps(const struct Sample *smp);
   int unpackTimestamps(json_t *json_ts, struct Sample *smp);
 

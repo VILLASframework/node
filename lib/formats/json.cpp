@@ -36,6 +36,56 @@ enum SignalType JsonFormat::detect(const json_t *val) {
   }
 }
 
+json_t *JsonFormat::packFlags(const struct Sample *smp) {
+  json_t *json_flags = json_array();
+
+  if (flags & (int)SampleFlags::NEW_SIMULATION) {
+    if (smp->flags & (int)SampleFlags::NEW_SIMULATION)
+      json_array_append_new(json_flags, json_string("new_simulation"));
+  }
+
+  if (flags & (int)SampleFlags::NEW_FRAME) {
+    if (smp->flags & (int)SampleFlags::NEW_FRAME)
+      json_array_append_new(json_flags, json_string("new_frame"));
+  }
+
+  if (json_array_size(json_flags) == 0) {
+    json_decref(json_flags);
+    return nullptr;
+  }
+
+  return json_flags;
+}
+
+int JsonFormat::unpackFlags(json_t *json_flags, struct Sample *smp) {
+  if (!json_flags)
+    return 0;
+
+  if (!json_is_array(json_flags))
+    throw RuntimeError{"The JSON object flags member is not an array."};
+
+  size_t i;
+  json_t *json_flag;
+  json_array_foreach(json_flags, i, json_flag) {
+    char *flag;
+    json_error_t err;
+    if (auto ret = json_unpack_ex(json_flag, &err, 0, "s", &flag))
+      return ret;
+
+    if (!strcmp(flag, "new_frame"))
+      smp->flags |= (int)SampleFlags::NEW_FRAME;
+    else
+      smp->flags &= ~(int)SampleFlags::NEW_FRAME;
+
+    if (!strcmp(flag, "new_simulation"))
+      smp->flags |= (int)SampleFlags::NEW_SIMULATION;
+    else
+      smp->flags &= ~(int)SampleFlags::NEW_SIMULATION;
+  }
+
+  return 0;
+}
+
 json_t *JsonFormat::packTimestamps(const struct Sample *smp) {
   json_t *json_ts = json_object();
 
@@ -57,6 +107,11 @@ json_t *JsonFormat::packTimestamps(const struct Sample *smp) {
       json_object_set(
           json_ts, "received",
           json_pack(fmt, smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
+  }
+
+  if (json_object_size(json_ts) == 0) {
+    json_decref(json_ts);
+    return nullptr;
   }
 
   return json_ts;
@@ -96,7 +151,8 @@ int JsonFormat::packSample(json_t **json_smp, const struct Sample *smp) {
   json_t *json_root;
   json_error_t err;
 
-  json_root = json_pack_ex(&err, 0, "{ s: o }", "ts", packTimestamps(smp));
+  json_root = json_pack_ex(&err, 0, "{ s: o*, s: o* }", "ts",
+                           packTimestamps(smp), "flags", packFlags(smp));
 
   if (flags & (int)SampleFlags::HAS_SEQUENCE) {
     if (smp->flags & (int)SampleFlags::HAS_SEQUENCE) {
@@ -150,14 +206,15 @@ int JsonFormat::packSamples(json_t **json_smps,
 int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
   int ret;
   json_error_t err;
-  json_t *json_data, *json_value, *json_ts = nullptr;
+  json_t *json_data, *json_value, *json_ts = nullptr, *json_flags = nullptr;
   size_t i;
   int64_t sequence = -1;
 
   smp->signals = signals;
 
-  ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: I, s: o }", "ts",
-                       &json_ts, "sequence", &sequence, "data", &json_data);
+  ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: o, s?: I, s: o }", "ts",
+                       &json_ts, "flags", &json_flags, "sequence", &sequence,
+                       "data", &json_data);
   if (ret)
     return ret;
 
@@ -169,6 +226,10 @@ int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
     if (ret)
       return ret;
   }
+
+  ret = unpackFlags(json_flags, smp);
+  if (ret)
+    return ret;
 
   if (!json_is_array(json_data))
     return -1;
@@ -368,8 +429,9 @@ void JsonFormat::parse(json_t *json) {
 // Register format
 static char n[] = "json";
 static char d[] = "Javascript Object Notation";
-static FormatPlugin<JsonFormat, n, d,
-                    (int)SampleFlags::HAS_TS_ORIGIN |
-                        (int)SampleFlags::HAS_SEQUENCE |
-                        (int)SampleFlags::HAS_DATA>
+static FormatPlugin<
+    JsonFormat, n, d,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME |
+        (int)SampleFlags::NEW_SIMULATION>
     p;
