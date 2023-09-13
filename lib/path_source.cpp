@@ -96,10 +96,14 @@ int PathSource::read(int i) {
       goto read_decref_muxed_smps;
     }
 
+    muxed_smps[i]->flags = tomux_smps[i]->flags;
+
     if (path->original_sequence_no) {
       muxed_smps[i]->sequence = tomux_smps[i]->sequence;
-      muxed_smps[i]->flags |=
-          tomux_smps[i]->flags & (int)SampleFlags::HAS_SEQUENCE;
+      if (tomux_smps[i]->flags & (int)SampleFlags::HAS_SEQUENCE)
+        muxed_smps[i]->flags |= (int)SampleFlags::HAS_SEQUENCE;
+      else
+        muxed_smps[i]->flags &= ~(int)SampleFlags::HAS_SEQUENCE;
     } else {
       muxed_smps[i]->sequence = path->last_sequence++;
       muxed_smps[i]->flags |= (int)SampleFlags::HAS_SEQUENCE;
@@ -112,8 +116,6 @@ int PathSource::read(int i) {
       muxed_smps[i]->length = 0;
 
     muxed_smps[i]->ts = tomux_smps[i]->ts;
-    muxed_smps[i]->flags |= tomux_smps[i]->flags & (int)SampleFlags::HAS_TS;
-
     ret = mappings.remap(muxed_smps[i], tomux_smps[i]);
     if (ret < 0) {
       enqueued = ret;
@@ -123,6 +125,8 @@ int PathSource::read(int i) {
 
     if (muxed_smps[i]->length > 0)
       muxed_smps[i]->flags |= (int)SampleFlags::HAS_DATA;
+    else
+      muxed_smps[i]->flags &= ~(int)SampleFlags::HAS_DATA;
   }
   muxed_initialized = tomux;
 
