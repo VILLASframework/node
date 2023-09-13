@@ -531,15 +531,8 @@ void Path::start() {
 
   last_sample->length = signals->size();
   last_sample->signals = signals;
-
   last_sample->ts.origin = time_now();
-  last_sample->flags = (int)SampleFlags::HAS_TS_ORIGIN;
-
   last_sample->sequence = 0;
-  last_sample->flags |= (int)SampleFlags::HAS_SEQUENCE;
-
-  if (last_sample->length > 0)
-    last_sample->flags |= (int)SampleFlags::HAS_DATA;
 
   for (size_t i = 0; i < last_sample->length; i++) {
     auto sig = signals->getByIndex(i);
