@@ -269,7 +269,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory) {
   cr_assert_not_null(fmt, "Failed to create formatter of type '%s'",
                      p->fmt.c_str());
 
-  fmt->start(signals, (int)SampleFlags::HAS_ALL);
+  fmt->start(signals, (int)SampleFlags::ALL);
 
   cnt = fmt->sprint(buf, sizeof(buf), &wbytes, smps, p->cnt);
   cr_assert_eq(cnt, p->cnt, "Written only %d of %d samples", cnt, p->cnt);
@@ -370,7 +370,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   cr_assert_not_null(fmt, "Failed to create formatter of type '%s'",
                      p->fmt.c_str());
 
-  fmt->start(signals, (int)SampleFlags::HAS_ALL);
+  fmt->start(signals, (int)SampleFlags::ALL);
 
   auto *stream = fopen(fn, "w+");
   cr_assert_not_null(stream);

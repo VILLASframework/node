@@ -50,8 +50,8 @@ public:
 
   int getFlags() const { return flags; }
 
-  void start(const SignalList::Ptr sigs, int fl = (int)SampleFlags::HAS_ALL);
-  void start(const std::string &dtypes, int fl = (int)SampleFlags::HAS_ALL);
+  void start(const SignalList::Ptr sigs, int fl = (int)SampleFlags::ALL);
+  void start(const std::string &dtypes, int fl = (int)SampleFlags::ALL);
 
   virtual void start() {}
 
