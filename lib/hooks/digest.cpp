@@ -131,8 +131,8 @@ class DigestHook : public Hook {
     }
 
     if (smp->flags & (int)SampleFlags::HAS_DATA) {
-      if (signals->size() != smp->length)
-        throw RuntimeError{"Sample length does not match signal list."};
+      if (signals->size() < smp->length)
+        throw RuntimeError{"Sample length longer than signal list."};
 
       for (unsigned int i = 0; i < smp->length; ++i) {
         auto const signal = signals->getByIndex(i);
