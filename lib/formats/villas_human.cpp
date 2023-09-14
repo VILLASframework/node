@@ -5,9 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cassert>
 #include <cinttypes>
 #include <cstring>
 
+#include <openssl/crypto.h>
 #include <villas/formats/villas_human.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
@@ -41,6 +43,11 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len,
       off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
   }
 
+  if (flags & (int)SampleFlags::NEW_FRAME) {
+    if (smp->flags & (int)SampleFlags::NEW_FRAME)
+      off += snprintf(buf + off, len - off, "F");
+  }
+
   if (flags & (int)SampleFlags::HAS_DATA) {
     for (unsigned i = 0; i < smp->length; i++) {
       auto sig = smp->signals->getByIndex(i);
@@ -69,8 +76,8 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len,
   smp->flags = 0;
   smp->signals = signals;
 
-  /* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
-	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?
+  /* Format: Seconds.NanoSeconds+Offset(SequenceNumber)Flags Value1 Value2 ...
+	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?
 	 *
 	 * Please note that only the seconds and at least one value are mandatory
 	 */
@@ -115,6 +122,12 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len,
 
     if (*end == ')')
       end++;
+  }
+
+  // Optional: NEW_FRAME flag
+  if (*end == 'F') {
+    smp->flags |= (int)SampleFlags::NEW_FRAME;
+    end++;
   }
 
   unsigned i;
@@ -189,9 +202,9 @@ void VILLASHumanFormat::header(FILE *f, const SignalList::Ptr sigs) {
 // Register format
 static char n[] = "villas.human";
 static char d[] = "VILLAS human readable format";
-static LineFormatPlugin<VILLASHumanFormat, n, d,
-                        (int)SampleFlags::HAS_TS_ORIGIN |
-                            (int)SampleFlags::HAS_SEQUENCE |
-                            (int)SampleFlags::HAS_DATA,
-                        '\n'>
+static LineFormatPlugin<
+    VILLASHumanFormat, n, d,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME,
+    '\n'>
     p;
