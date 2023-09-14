@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "villas/exceptions.hpp"
 #include <algorithm>
 #include <cinttypes>
 #include <cstring>
@@ -32,6 +33,9 @@ protected:
       sample_copy(rhs, buffer);
     } else {
       buffer = sample_clone(lhs);
+      if (!buffer)
+        throw RuntimeError{"Out of memory."};
+
       sample_copy(lhs, rhs);
       sample_copy(rhs, buffer);
     }
@@ -80,7 +84,11 @@ public:
     assert(smp);
 
     if (window.empty()) {
-      window.push_back(sample_clone(smp));
+      auto new_smp = sample_clone(smp);
+      if (!new_smp)
+        throw RuntimeError{"Out of memory."};
+
+      window.push_back(new_smp);
 
       logger->debug("window.size={}/{}", window.size(), window_size);
 
@@ -104,7 +112,12 @@ public:
           window.push_back(nullptr);
           std::copy_backward(std::next(std::begin(window), i + 1),
                              --std::end(window), std::end(window));
-          window[i + 1] = sample_clone(smp);
+
+          auto new_smp = sample_clone(smp);
+          if (!new_smp)
+            throw RuntimeError{"Out of memory."};
+
+          window[i + 1] = new_smp;
 
           logger->debug("window.size={}/{}", window.size(), window_size);
 
