@@ -284,6 +284,7 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
         }
 
         mem_pos_local++;
+        ts.tv_nsec = 0;
 
         t->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
         t->ts.origin = ts;
