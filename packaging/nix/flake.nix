@@ -97,6 +97,10 @@
     packagesWith = pkgs: rec {
       default = villas;
 
+      villas-python = pkgs.callPackage ./python.nix {
+        src = ../../python;
+      };
+
       villas-minimal = pkgs.callPackage ./villas.nix {
         src = ../..;
         version = "minimal";
