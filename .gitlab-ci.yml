@@ -88,15 +88,17 @@ build:source:
 
 # Stage: test
 
-test:flake8:
+test:python:
   stage: test
   script:
-  - flake8 --ignore=E501 python/
+  - cd python
+  - /venv/bin/black --check .
+  - /venv/bin/mypy .
+  - /venv/bin/flake8 .
+  - /venv/bin/pytest -v .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
-  needs:
-  - job: "build:source: [fedora]"
 
 test:cppcheck:
   stage: test
@@ -217,7 +219,7 @@ pkg:docker:
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-   
+
   needs: []
 
 # Stage: deploy

@@ -27,7 +27,7 @@ RUN dnf -y install \
 	openssh-clients \
 	jq nmap-ncat \
 	iproute iproute-tc \
-	python-pip \
+	python python-devel python-pip \
 	gdb gdb-gdbserver \
 	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
@@ -37,8 +37,7 @@ RUN dnf -y install \
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \
-	protobuf \
-	flake8
+	protobuf
 
 # Dependencies
 RUN dnf -y install \
@@ -79,6 +78,12 @@ RUN ldconfig
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
+COPY ./python /python
+RUN python -m venv /venv && \
+	source /venv/bin/activate && \
+	pip install /python[dev] && \
+	rm -r /python
+
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443
@@ -111,6 +116,8 @@ RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/vil
 	cmake ${CMAKE_OPTS} .. && \
 	make -j$(nproc) install && \
 	ldconfig
+
+WORKDIR /villas
 
 ENTRYPOINT ["villas"]
 
