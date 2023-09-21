@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
 SPDX-License-Identifier: Apache-2.0
 """  # noqa: E501
 from villas.node.sample import Sample, Timestamp, Frame
-from datetime import datetime
+from datetime import datetime, timezone
 from cmath import sqrt
 
 
@@ -21,7 +21,7 @@ def test_timestamp_conversion():
     assert ts.timestamp() == fl
     assert fl_ts == Timestamp.fromtimestamp(fl)
 
-    dt = datetime(1973, 11, 29, 22, 33, 9, 123457)
+    dt = datetime(1973, 11, 29, 21, 33, 9, 123457, tzinfo=timezone.utc)
     dt_ts = Timestamp(123456789, 123457000)
     assert ts.datetime() == dt
     assert dt_ts == Timestamp.fromdatetime(dt)

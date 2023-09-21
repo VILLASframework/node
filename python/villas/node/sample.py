@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 import hashlib
 from ctypes import c_double, c_float, sizeof
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import total_ordering
 from sys import byteorder as native
 from typing import Iterable
@@ -25,6 +25,7 @@ Signal = bool | int | float | complex
 class Timestamp:
     """
     A VILLASnode timestamp. Based on the C struct timespec.
+    These timestamps are always UTC.
     """
 
     seconds: int
@@ -51,7 +52,7 @@ class Timestamp:
         return float(self)
 
     def datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.timestamp())
+        return datetime.fromtimestamp(self.timestamp(), tz=timezone.utc)
 
     def __float__(self):
         return float(self.seconds) + float(self.nanoseconds) * 1e-9
