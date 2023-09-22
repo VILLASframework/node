@@ -243,12 +243,12 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 
     
     ioctl(fd, SMU_IOC_GET_TIME,&sync_signal_mem_pos);
-    sample_time.tv_nsec = sync_signal_mem_pos.tv_nsec;
+    sample_time.tv_nsec = sync_signal_mem_pos.tv_nsec;  //macht nix
     sample_time.tv_sec = sync_signal_mem_pos.tv_sec;
 
     if (sample_time.tv_nsec > 500000000)
          sample_time.tv_sec += 1;
-    sec_cnt = 0;
+    smp_cnt = 0;
     //std::cout << "pps event";
 }
 
@@ -265,7 +265,9 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 {
 	struct timespec ts;
 	ts.tv_sec = sample_time.tv_sec;
-	ts.tv_nsec = sec_cnt * 1e9 / fps;
+	ts.tv_nsec = smp_cnt * 1e9 * 1 / (sample_rate * 1000);   //fps between 1 and 10
+    logger->warn("ts.tv_sec = {}", ts.tv_sec);
+    logger->warn("ts.tv_nsec = {}", ts.tv_nsec);
 
     pthread_mutex_lock(&mutex);
 
@@ -277,9 +279,10 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 
     for (unsigned j = 0; j < cnt; j++) {
         struct Sample *t = smps[j];
-        ts.tv_nsec += 1000 * 1000 * sample_rate;
-
-        for (unsigned i = 0; i < 8; i++) {
+        ts.tv_nsec = smp_cnt * 1e9 * 1 / (2 * 1000); // replacec 2 by fixing sample rate
+        smp_cnt++;
+        
+        for (unsigned i = 0; i < 8; i++) {  //auslagern, Steffen fragen
             int16_t data = p[mem_pos_local].ch[i];
             t->data[i].f = ((double)data);
             if (dumpers[i].isActive())
@@ -287,13 +290,14 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
         }
 
         mem_pos_local++;
-        ts.tv_nsec = 0;
-
+        
         t->flags = (int) SampleFlags::HAS_TS_ORIGIN | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_SEQUENCE;
         t->ts.origin = ts;
         t->sequence = sequence++;
         t->length = 8;
         t->signals = in.signals;
+
+        
     }
 
 	pthread_mutex_unlock(&mutex);
