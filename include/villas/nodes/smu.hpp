@@ -209,7 +209,7 @@ private:
     static inline pthread_cond_t cv;
     static inline timespec64_t sync_signal_mem_pos = {0};
     static inline timespec sample_time ={0};
-    static inline int sec_cnt = 0;
+    static inline int smp_cnt = 0;
 
 protected:
 	virtual
