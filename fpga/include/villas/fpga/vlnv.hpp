@@ -10,6 +10,8 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <fmt/ostream.h>
+#include <villas/config.hpp>
 
 namespace villas {
 namespace fpga {
@@ -70,3 +72,9 @@ private:
 
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::Vlnv>
+    : public fmt::ostream_formatter {};
+#endif

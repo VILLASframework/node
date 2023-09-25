@@ -9,8 +9,9 @@
 
 #pragma once
 
+#include <fmt/ostream.h>
 #include <xilinx/xaxidma.h>
-
+#include <villas/config.hpp>
 #include <villas/memory.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/exceptions.hpp>
@@ -186,3 +187,9 @@ protected:
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::ip::Dma>
+    : public fmt::ostream_formatter {};
+#endif

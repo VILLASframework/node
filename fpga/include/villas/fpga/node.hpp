@@ -13,9 +13,9 @@
 #include <map>
 #include <string>
 #include <jansson.h>
-
+#include <fmt/ostream.h>
+#include <villas/config.hpp>
 #include <villas/fpga/core.hpp>
-
 #include <villas/graph/directed.hpp>
 
 namespace villas {
@@ -185,3 +185,12 @@ private:
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::ip::StreamVertex>
+    : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::fpga::ip::Node>
+    : public fmt::ostream_formatter {};
+#endif

@@ -8,13 +8,11 @@
 #include <string>
 #include <memory>
 #include <utility>
-
+#include <fmt/ostream.h>
 #include <villas/exceptions.hpp>
 #include <villas/memory.hpp>
-
 #include <villas/kernel/pci.hpp>
 #include <villas/kernel/vfio_container.hpp>
-
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
@@ -96,7 +94,7 @@ std::list<std::shared_ptr<PCIeCard>> PCIeCardFactory::make(json_t *json,
 		}
 		if (!searchPath.empty()) {
 			std::filesystem::path json_ips_path = searchPath / json_string_value(json_ips);
-			logger->debug("searching for FPGA IP cors config at {}", json_ips_path);
+			logger->debug("searching for FPGA IP cors config at {}", json_ips_path.string());
 			json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);
 		}
 		if (json_ips == nullptr) {

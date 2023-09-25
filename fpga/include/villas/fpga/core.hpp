@@ -14,12 +14,12 @@
 #include <list>
 #include <memory>
 #include <jansson.h>
-
+#include <fmt/ostream.h>
 #include <villas/log.hpp>
 #include <villas/colors.hpp>
+#include <villas/config.hpp>
 #include <villas/memory.hpp>
 #include <villas/plugin.hpp>
-
 #include <villas/fpga/vlnv.hpp>
 
 namespace villas {
@@ -280,7 +280,7 @@ protected:
 		IRQ,
 	};
 
-	Logger getLogger() const
+	Logger getLogger()
 	{
 		return villas::logging.get(getName());
 	}
@@ -345,3 +345,12 @@ private:
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::ip::IpIdentifier>
+    : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::fpga::ip::Core>
+    : public fmt::ostream_formatter {};
+#endif
