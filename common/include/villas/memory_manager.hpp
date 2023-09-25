@@ -12,7 +12,8 @@
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
-
+#include <fmt/ostream.h>
+#include <villas/config.hpp>
 #include <villas/graph/directed.hpp>
 #include <villas/log.hpp>
 
@@ -222,3 +223,15 @@ private:
 };
 
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::MemoryTranslation>
+    : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::MemoryManager::Mapping>
+    : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::MemoryManager::AddressSpaceId>
+    : public fmt::ostream_formatter {};
+#endif

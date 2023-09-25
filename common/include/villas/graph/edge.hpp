@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <fmt/ostream.h>
+#include <villas/config.hpp>
 #include <villas/graph/vertex.hpp>
 
 namespace villas {
@@ -42,3 +44,9 @@ private:
 
 } // namespace graph
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::graph::Edge>
+    : public fmt::ostream_formatter {};
+#endif

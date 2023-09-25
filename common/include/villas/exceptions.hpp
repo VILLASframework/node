@@ -48,21 +48,17 @@ public:
 class JsonError : public std::runtime_error {
 
 protected:
-  const json_t *setting;
   json_error_t error;
 
 public:
   template <typename... Args>
   JsonError(const json_t *s, const json_error_t &e,
             const std::string &what = std::string(), Args &&...args)
-      : std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
-        setting(s), error(e) {}
-
-  virtual const char *what() const noexcept {
-    return fmt::format("{}: {} in {}:{}:{}", std::runtime_error::what(),
-                       error.text, error.source, error.line, error.column)
-        .c_str();
-  }
+      : std::runtime_error(
+            fmt::format("{}: {} in {}:{}:{}",
+                        fmt::format(what, std::forward<Args>(args)...),
+                        error.text, error.source, error.line, error.column)),
+        error(e) {}
 };
 
 class ConfigError : public std::runtime_error {

@@ -11,10 +11,10 @@
 #include <iostream>
 #include <jansson.h>
 #include <list>
-#include <spdlog/fmt/ostr.h>
 #include <string>
-
+#include <fmt/ostream.h>
 #include <villas/common.hpp>
+#include <villas/config.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
@@ -132,9 +132,7 @@ public:
     return logger;
   }
 
-  // Custom formatter for spdlog
-  template <typename OStream>
-  friend OStream &operator<<(OStream &os, const class Plugin &p) {
+  friend std::ostream &operator<<(std::ostream &os, const class Plugin &p) {
     return os << p.getName();
   }
 };
@@ -151,3 +149,9 @@ template <typename T> void Registry::dump() {
 
 } // namespace plugin
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::plugin::Plugin>
+    : public fmt::ostream_formatter {};
+#endif
