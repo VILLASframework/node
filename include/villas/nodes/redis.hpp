@@ -26,6 +26,25 @@ namespace node {
 
 enum class RedisMode { KEY, HASH, CHANNEL };
 
+inline std::ostream &operator<<(std::ostream &os, const enum villas::node::RedisMode &m) {
+  switch (m) {
+  case villas::node::RedisMode::KEY:
+    os << "key";
+    break;
+
+  case villas::node::RedisMode::HASH:
+    os << "hash";
+    break;
+
+  case villas::node::RedisMode::CHANNEL:
+    os << "channel";
+    break;
+  }
+
+  return os;
+}
+
+
 class RedisConnection {
 
 public:

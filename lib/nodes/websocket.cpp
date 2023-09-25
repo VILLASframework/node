@@ -124,7 +124,7 @@ static void websocket_connection_close(struct websocket_connection *c,
 
   c->node->logger->debug(
       "Closing WebSocket connection with {}: status={}, reason={}",
-      c->toString(), status, reason);
+      c->toString(), (int)status, reason);
 
   c->state = websocket_connection::State::CLOSED;
 }

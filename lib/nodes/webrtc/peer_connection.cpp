@@ -24,22 +24,6 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::webrtc;
 
-/*
- * libdatachannel defines the operator<< overloads required to format
- * rtc::PeerConnection::State and similar in the global namespace.
- * But C++ ADL based overload set construction does not find these operators,
- * if these are invoked in the spdlog/fmt libraries.
- *
- * See this issue for a short explaination of ADL errors:
- * https://github.com/gabime/spdlog/issues/1227#issuecomment-532009129
- *
- * Adding the global ::operator<< overload set to the namespace rtc where
- * the data structures are defined, allows ADL to pick these up in spdlog/fmt.
- */
-namespace rtc {
-using ::operator<<;
-}
-
 PeerConnection::PeerConnection(const std::string &server,
                                const std::string &session,
                                const std::string &peer,

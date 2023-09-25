@@ -9,13 +9,41 @@
 
 #pragma once
 
+#include <fmt/ostream.h>
 #include <jansson.h>
+#include <rtc/peerconnection.hpp>
 #include <rtc/rtc.hpp>
 
 #include <villas/log.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 #include <villas/signal_list.hpp>
 #include <villas/web.hpp>
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+#include <fmt/ostream.h>
+#endif
+
+/*
+ * libdatachannel defines the operator<< overloads required to format
+ * rtc::PeerConnection::State and similar in the global namespace.
+ * But C++ ADL based overload set construction does not find these operators,
+ * if these are invoked in the spdlog/fmt libraries.
+ *
+ * See this issue for a short explaination of ADL errors:
+ * https://github.com/gabime/spdlog/issues/1227#issuecomment-532009129
+ *
+ * Adding the global ::operator<< overload set to the namespace rtc where
+ * the data structures are defined, allows ADL to pick these up in spdlog/fmt.
+ */
+namespace rtc {
+using ::operator<<;
+}
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<rtc::PeerConnection::State>
+    : public fmt::ostream_formatter {};
+#endif
 
 namespace villas {
 namespace node {

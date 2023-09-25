@@ -576,7 +576,7 @@ bool SlaveNode::onInterrogation(IMasterConnection connection, CS101_ASDU asdu,
 
 bool SlaveNode::onASDU(IMasterConnection connection,
                        CS101_ASDU asdu) const noexcept {
-  logger->warn("Ignoring ASDU type {}", CS101_ASDU_getTypeID(asdu));
+  logger->warn("Ignoring ASDU type {}", (int)CS101_ASDU_getTypeID(asdu));
   return true;
 }
 

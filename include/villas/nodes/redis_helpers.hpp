@@ -9,10 +9,13 @@
 
 #include <chrono>
 #include <functional>
-#include <spdlog/fmt/ostr.h>
+#include <sw/redis++/connection.h>
 #include <sw/redis++/redis++.h>
-
 #include <villas/node/config.hpp>
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+#include <fmt/ostream.h>
+#endif
 
 namespace std {
 
@@ -52,7 +55,7 @@ template <> struct hash<sw::redis::ConnectionOptions> {
 namespace sw {
 namespace redis {
 
-bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2) {
+inline bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2) {
 #ifdef REDISPP_WITH_TLS
   return o1.enabled == o2.enabled && o1.cacert == o2.cacert &&
          o1.cacertdir == o2.cacertdir && o1.cert == o2.cert &&
@@ -62,7 +65,7 @@ bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2) {
 #endif // REDISPP_WITH_TLS
 }
 
-bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2) {
+inline bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2) {
   return o1.type == o2.type && o1.host == o2.host && o1.port == o2.port &&
          o1.path == o2.path && o1.user == o2.user &&
          o1.password == o2.password && o1.db == o2.db &&
@@ -72,8 +75,8 @@ bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2) {
 }
 
 #ifdef REDISPP_WITH_TLS
-template <typename OStream>
-OStream &operator<<(OStream &os, const tls::TlsOptions &t) {
+namespace tls {
+std::ostream &operator<<(std::ostream &os, const TlsOptions &t) {
   os << "tls.enabled=" << (t.enabled ? "yes" : "no");
 
   if (t.enabled) {
@@ -95,10 +98,10 @@ OStream &operator<<(OStream &os, const tls::TlsOptions &t) {
 
   return os;
 }
+}
 #endif // REDISPP_WITH_TLS
 
-template <typename OStream>
-OStream &operator<<(OStream &os, const ConnectionType &t) {
+inline std::ostream &operator<<(std::ostream &os, const ConnectionType &t) {
   switch (t) {
   case ConnectionType::TCP:
     os << "tcp";
@@ -112,8 +115,7 @@ OStream &operator<<(OStream &os, const ConnectionType &t) {
   return os;
 }
 
-template <typename OStream>
-OStream &operator<<(OStream &os, const ConnectionOptions &o) {
+inline std::ostream &operator<<(std::ostream &os, const ConnectionOptions &o) {
   os << "type=" << o.type;
 
   switch (o.type) {
@@ -139,36 +141,31 @@ OStream &operator<<(OStream &os, const ConnectionOptions &o) {
 } // namespace redis
 } // namespace sw
 
-template <typename OStream>
-OStream &operator<<(OStream &os, const enum villas::node::RedisMode &m) {
-  switch (m) {
-  case villas::node::RedisMode::KEY:
-    os << "key";
-    break;
-
-  case villas::node::RedisMode::HASH:
-    os << "hash";
-    break;
-
-  case villas::node::RedisMode::CHANNEL:
-    os << "channel";
-    break;
-  }
-
-  return os;
-}
-
 namespace villas {
 namespace node {
 #ifdef REDISPP_WITH_URI
-sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
+inline sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
   auto u = sw::redis::Uri{uri};
   return u.connection_options();
 }
 #else
-sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
+inline sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
   return sw::redis::ConnectionOptions{uri};
 }
 #endif
 } // namespace node
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<sw::redis::ConnectionType>
+    : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<sw::redis::ConnectionOptions>
+    : public fmt::ostream_formatter {};
+#ifdef REDISPP_WITH_TLS
+template <>
+class fmt::formatter<sw::redis::tls::TlsOptions>
+    : public fmt::ostream_formatter {};
+#endif
+#endif

@@ -8,7 +8,6 @@
 #pragma once
 
 #include <libwebsockets.h>
-#include <spdlog/fmt/ostr.h>
 
 #include <villas/buffer.hpp>
 #include <villas/common.hpp>
@@ -18,6 +17,10 @@
 #include <villas/node_compat.hpp>
 #include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+#include <fmt/ostream.h>
+#endif
 
 // Forward declarations
 struct lws;
@@ -75,9 +78,7 @@ struct websocket_connection {
         *send; // A buffer for constructing messages before calling lws_write()
   } buffers;
 
-  // Custom formatter for spdlog
-  template <typename OStream>
-  friend OStream &operator<<(OStream &os,
+  friend std::ostream &operator<<(std::ostream &os,
                              const struct websocket_connection &c) {
     if (c.wsi) {
       char name[128];
@@ -133,3 +134,9 @@ int websocket_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 } // namespace node
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::node::websocket_connection>
+    : public fmt::ostream_formatter {};
+#endif
