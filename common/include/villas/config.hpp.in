@@ -47,3 +47,6 @@
 #define LOG_HEIGHT		25
 
 #cmakedefine LOG_COLOR_DISABLE
+
+// Library Features
+#cmakedefine FMT_LEGACY_OSTREAM_FORMATTER
