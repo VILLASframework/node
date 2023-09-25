@@ -13,7 +13,6 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
-
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/peer_connection.hpp>
 #include <villas/utils.hpp>

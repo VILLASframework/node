@@ -9,19 +9,15 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
 #include <jansson.h>
 #include <rtc/peerconnection.hpp>
 #include <rtc/rtc.hpp>
-
+#include <fmt/ostream.h>
+#include <villas/config.hpp>
 #include <villas/log.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 #include <villas/signal_list.hpp>
 #include <villas/web.hpp>
-
-#ifndef FMT_LEGACY_OSTREAM_FORMATTER
-#include <fmt/ostream.h>
-#endif
 
 /*
  * libdatachannel defines the operator<< overloads required to format

@@ -9,8 +9,8 @@
 
 #include <iostream>
 #include <jansson.h>
+#include <fmt/ostream.h>
 #include <uuid/uuid.h>
-
 #include <villas/colors.hpp>
 #include <villas/common.hpp>
 #include <villas/list.hpp>
@@ -24,10 +24,6 @@
 #include <villas/queue.h>
 #include <villas/sample.hpp>
 #include <villas/stats.hpp>
-
-#ifndef FMT_LEGACY_OSTREAM_FORMATTER
-#include <fmt/ostream.h>
-#endif
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
 #define WITH_NETEM
