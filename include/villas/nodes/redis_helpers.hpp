@@ -9,13 +9,10 @@
 
 #include <chrono>
 #include <functional>
+#include <fmt/ostream.h>
 #include <sw/redis++/connection.h>
 #include <sw/redis++/redis++.h>
 #include <villas/node/config.hpp>
-
-#ifndef FMT_LEGACY_OSTREAM_FORMATTER
-#include <fmt/ostream.h>
-#endif
 
 namespace std {
 

@@ -8,19 +8,16 @@
 #pragma once
 
 #include <libwebsockets.h>
-
+#include <fmt/ostream.h>
 #include <villas/buffer.hpp>
 #include <villas/common.hpp>
+#include <villas/config.hpp>
 #include <villas/format.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
-
-#ifndef FMT_LEGACY_OSTREAM_FORMATTER
-#include <fmt/ostream.h>
-#endif
 
 // Forward declarations
 struct lws;

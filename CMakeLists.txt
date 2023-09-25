@@ -76,12 +76,6 @@ find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
 
-# For compat between libfmt 8 and 9
-add_compile_definitions(FMT_DEPRECATED_OSTREAM)
-
-# For compat between libfmt 8 and 9
-add_compile_definitions(FMT_DEPRECATED_OSTREAM)
-
 # Check for tools
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
