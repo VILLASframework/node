@@ -577,7 +577,7 @@ static void *ib_rdma_cm_event_thread(void *ctx) {
       break;
 
     default:
-      throw RuntimeError("Unknown event occurred: {}", event->event);
+      throw RuntimeError("Unknown event occurred: {}", (int)event->event);
     }
 
     rdma_ack_cm_event(event);
@@ -836,7 +836,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
         n->logger->debug("Received IBV_WC_WR_FLUSH_ERR (ib_read). Ignore it.");
       else if (wc[j].status != IBV_WC_SUCCESS)
         n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
-                        wc[j].status);
+                        (int)wc[j].status);
 
       /* 32 byte of meta data is always transferred. We should substract it.
 			 * Furthermore, in case of an unreliable connection, a 40 byte
@@ -987,7 +987,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
     for (int i = 0; i < ret; i++) {
       if (wc[i].status != IBV_WC_SUCCESS && wc[i].status != IBV_WC_WR_FLUSH_ERR)
         n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
-                        wc[i].status);
+                        (int)wc[i].status);
 
       // TODO: fix release logic
       // smps[*release] = (struct Sample *) (wc[i].wr_id);

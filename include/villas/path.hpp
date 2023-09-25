@@ -11,7 +11,6 @@
 
 #include <jansson.h>
 #include <pthread.h>
-#include <spdlog/fmt/ostr.h>
 #include <uuid/uuid.h>
 
 #include <villas/colors.hpp>
@@ -26,8 +25,11 @@
 #include <villas/queue.h>
 #include <villas/signal_list.hpp>
 #include <villas/task.hpp>
-
 #include <villas/log.hpp>
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+#include <fmt/ostream.h>
+#endif
 
 // Forward declarations
 struct pollfd;
@@ -99,9 +101,7 @@ public:
   std::bitset<MAX_SAMPLE_LENGTH>
       received; // A mask of PathSources for which we already received samples.
 
-  // Custom formatter for spdlog
-  template <typename OStream>
-  friend OStream &operator<<(OStream &os, const Path &p) {
+  friend std::ostream &operator<<(std::ostream &os, const Path &p) {
     if (p.sources.size() > 1)
       os << "[ ";
 
@@ -185,3 +185,9 @@ public:
 
 } // namespace node
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::node::Path>
+    : public fmt::ostream_formatter {};
+#endif

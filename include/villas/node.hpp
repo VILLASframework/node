@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <iostream>
 #include <jansson.h>
-#include <spdlog/fmt/ostr.h>
 #include <uuid/uuid.h>
 
 #include <villas/colors.hpp>
@@ -24,6 +24,10 @@
 #include <villas/queue.h>
 #include <villas/sample.hpp>
 #include <villas/stats.hpp>
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+#include <fmt/ostream.h>
+#endif
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
 #define WITH_NETEM
@@ -260,9 +264,7 @@ public:
 
   void setEnabled(bool en) { enabled = en; }
 
-  // Custom formatter for spdlog
-  template <typename OStream>
-  friend OStream &operator<<(OStream &os, const Node &n) {
+  friend std::ostream &operator<<(std::ostream &os, const Node &n) {
     os << n.getName();
 
     return os;
@@ -317,9 +319,7 @@ public:
 
   virtual std::string getType() const { return "node"; }
 
-  // Custom formatter for spdlog
-  template <typename OStream>
-  friend OStream &operator<<(OStream &os, const NodeFactory &f) {
+  friend std::ostream &operator<<(std::ostream &os, const NodeFactory &f) {
     os << f.getName();
 
     return os;
@@ -366,3 +366,11 @@ public:
 
 } // namespace node
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::node::Node> : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::node::NodeFactory>
+    : public fmt::ostream_formatter {};
+#endif

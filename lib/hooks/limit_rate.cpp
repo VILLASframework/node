@@ -39,7 +39,7 @@ void LimitRateHook::parse(json_t *json) {
       mode = LIMIT_RATE_LOCAL;
     else
       throw ConfigError(json, "node-config-hook-limit_rate-mode",
-                        "Invalid value '{}' for setting 'mode'", mode);
+                        "Invalid value '{}' for setting 'mode'", m);
   }
 
   deadtime = 1.0 / rate;

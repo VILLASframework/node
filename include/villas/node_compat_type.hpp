@@ -8,7 +8,6 @@
 #pragma once
 
 #include <jansson.h>
-#include <spdlog/fmt/ostr.h>
 
 #include <villas/common.hpp>
 #include <villas/log.hpp>
