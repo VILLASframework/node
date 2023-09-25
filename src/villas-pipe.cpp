@@ -51,6 +51,9 @@ protected:
   int count;
 
 public:
+  // TODO: Here seems to be a cppcheck false positive in the CI.
+  //       Try to remove this comment as cppcheck is being updated.
+  // cppcheck-suppress uninitMemberVar
   PipeDirection(Node *n, Format *fmt, bool en, int lim, const std::string &name)
       : node(n), formatter(fmt), stop(false), enabled(en), limit(lim),
         count(0) {
@@ -215,6 +218,9 @@ public:
 class Pipe : public Tool {
 
 public:
+  // TODO: Here seems to be a cppcheck false positive in the CI.
+  //       Try to remove this comment as cppcheck is being updated.
+  // cppcheck-suppress uninitMemberVar
   Pipe(int argc, char *argv[])
       : Tool(argc, argv, "pipe"), stop(false), formatter(), timeout(0),
         reverse(false), format("villas.human"), dtypes("64f"),

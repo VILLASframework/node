@@ -32,6 +32,9 @@ namespace tools {
 class Signal : public Tool {
 
 public:
+  // TODO: Here seems to be a cppcheck false positive in the CI.
+  //       Try to remove this comment as cppcheck is being updated.
+  // cppcheck-suppress uninitMemberVar
   Signal(int argc, char *argv[])
       : Tool(argc, argv, "signal"), stop(false), node(), formatter(nullptr),
         pool(), format("villas.human") {
