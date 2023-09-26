@@ -3,11 +3,11 @@
     "common": {
       "flake": false,
       "locked": {
-        "lastModified": 1695284846,
-        "narHash": "sha256-lAHSjPGKr8JMIjsPGVp7W4FQmkL4OzKZ/fzyi8a+3hk=",
+        "lastModified": 1695740398,
+        "narHash": "sha256-F5ywFXtPx4xyZSKrLJhYp08KWLqocDXb9g2oaTZ+C+M=",
         "owner": "VILLASframework",
         "repo": "common",
-        "rev": "db72389184a5db513c701073d0e02f157ec17ddb",
+        "rev": "cd74015a05d51a0a198dae0f33e3b441d0f77acf",
         "type": "github"
       },
       "original": {
@@ -36,11 +36,11 @@
     "fpga": {
       "flake": false,
       "locked": {
-        "lastModified": 1694165718,
-        "narHash": "sha256-Eymswj0QN1cBxtxtjDiAg4JtxlZB7j9AkW3RwchaNMA=",
+        "lastModified": 1695740431,
+        "narHash": "sha256-4UcupSWLGPRVhFfOWjVobnl9ItQAtTBWruYOSK6OxjA=",
         "ref": "refs/heads/master",
-        "rev": "47553b8c05e7aabdee5f07d0ba985ef1db28dcd4",
-        "revCount": 534,
+        "rev": "662b8d626ca963996c1179283f9ff1acfbb14710",
+        "revCount": 535,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/VILLASframework/fpga.git"
@@ -106,11 +106,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1695628330,
-        "narHash": "sha256-U9ssZ3/Yw3JAq7j0XzCpSbXxtIoC53QmWoXj0wPS47g=",
+        "lastModified": 1695737284,
+        "narHash": "sha256-hOMEqtC1s1XW4dlBWlbq4Y7FyFMdQWyYXB4rHFFKNEI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d35b5bf9c75b72e54dcaf7b24964a794d2ce8edf",
+        "rev": "5f8943db1929bcd4d3ceed9bc12cf70301298cac",
         "type": "github"
       },
       "original": {
