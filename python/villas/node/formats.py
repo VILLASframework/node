@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import Iterable
 
-from villas.node.sample import Sample, Timestamp, Signal
+from villas.node.sample import Sample, Signal, Timestamp
 
 
 class SignalList(list[type]):
