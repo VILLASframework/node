@@ -5,13 +5,11 @@ SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Syst
 SPDX-License-Identifier: Apache-2.0
 """  # noqa: E501
 
-import hashlib
 from ctypes import c_double, c_float, sizeof
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import total_ordering
 from sys import byteorder as native
-from typing import Iterable
 
 assert sizeof(c_float) == 4
 assert sizeof(c_double) == 8
@@ -133,50 +131,3 @@ class Sample:
             ]
             + list(map(signal_to_bytes, self.data))
         )
-
-
-@dataclass
-class Frame(list[Sample]):
-    """
-    A frame VILLASnode of sample indicated by the new_frame flag.
-    """
-
-    def __init__(self, it: Iterable[Sample]):
-        super().__init__(it)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({super().__repr__()})"
-
-    def digest(self, algorithm: str) -> bytes:
-        """
-        A digest for a frame of samples that is comparable to the digest hook.
-        """
-
-        hash = hashlib.new(algorithm)
-
-        for sample in self:
-            hash.update(sample._as_digest_bytes())
-
-        return hash.digest()
-
-    def group(samples: list[Sample]) -> list["Frame"]:
-        """
-        Group samples into Frames according to their new_frame flag.
-        """
-
-        samples.sort()
-
-        if not samples:
-            return []
-
-        frames = []
-        current_frame = Frame([samples[0]])
-        for sample in samples[1:]:
-            if sample.new_frame:
-                frames.append(current_frame)
-                current_frame = Frame([sample])
-            else:
-                current_frame.append(sample)
-        frames.append(current_frame)
-
-        return frames

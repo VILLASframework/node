@@ -3,9 +3,11 @@ Author: Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
 SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
 SPDX-License-Identifier: Apache-2.0
 """  # noqa: E501
-from villas.node.sample import Sample, Timestamp
-from villas.node.formats import SignalList, VillasHuman
+
 from cmath import sqrt
+
+from villas.node.formats import SignalList, VillasHuman
+from villas.node.sample import Sample, Timestamp
 
 
 def test_signal_list_repr():
