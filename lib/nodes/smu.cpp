@@ -248,8 +248,7 @@ void SMUNode::sync_signal(int, siginfo_t *info, void*)
 
     if (sample_time.tv_nsec > 500000000)
          sample_time.tv_sec += 1;
-    smp_cnt = 0;
-    //std::cout << "pps event";
+    //std::cout << "\n\npps event\n\n";
 }
 
 void SMUNode::data_available_signal(int, siginfo_t *info, void*)
@@ -265,10 +264,6 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 {
 	struct timespec ts;
 	ts.tv_sec = sample_time.tv_sec;
-	ts.tv_nsec = smp_cnt * 1e9 * 1 / (sample_rate * 1000);   //fps between 1 and 10
-    logger->warn("ts.tv_sec = {}", ts.tv_sec);
-    logger->warn("ts.tv_nsec = {}", ts.tv_nsec);
-
     pthread_mutex_lock(&mutex);
 
 	pthread_cond_wait(&cv, &mutex);
@@ -279,9 +274,8 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 
     for (unsigned j = 0; j < cnt; j++) {
         struct Sample *t = smps[j];
-        ts.tv_nsec = smp_cnt * 1e9 * 1 / (2 * 1000); // replacec 2 by fixing sample rate
-        smp_cnt++;
-        
+        ts.tv_nsec = mem_pos_local * 1e6 / (sample_rate);//current_sample*1e9* 1/(sample_rate * 1000)
+                
         for (unsigned i = 0; i < 8; i++) {  //auslagern, Steffen fragen
             int16_t data = p[mem_pos_local].ch[i];
             t->data[i].f = ((double)data);
