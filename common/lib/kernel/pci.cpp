@@ -367,11 +367,12 @@ uint32_t Device::readHostBar(unsigned barNum) const {
   if (std::sscanf(line.c_str(), "%llx %llx %llx", &start, &end, &flags) != 3)
     throw SystemError("Failed to parse BAR line");
 
-  if (end > start)
+  if (end <= start) {
     throw SystemError("Invalid BAR: start={}, end={}", start, end);
+  }
 
   log->debug("Host BAR: start={:#x}, end={:#x}, size={:#x}, flags={:#x}", start,
-             end, end - start, flags);
+             end, end - start + 1, flags);
 
   return start;
 }
