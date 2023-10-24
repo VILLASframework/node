@@ -1,7 +1,9 @@
 /* Linux PCI helpers.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-FileCopyrightText: 2022-2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
