@@ -1,7 +1,7 @@
 /* Streaming data from STDIN/OUT to FPGA.
  *
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * Author: Niklas Eiling <niklas.eiling@rwth-aachen.de>
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2017 Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2022-2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
@@ -179,16 +179,23 @@ int main(int argc, char* argv[])
 
 		std::string fpgaName = "vc707";
 		app.add_option("--fpga", fpgaName, "Which FPGA to use");
-		std::string connectStr = "";
-		app.add_option("-x,--connect", connectStr, "Connect a FPGA port with another or stdin/stdout");
-		bool noDma = false;
-		app.add_flag("--no-dma", noDma, "Do not setup DMA, only setup FPGA and Crossbar links");
-		std::string outputFormat = "short";
-		app.add_option("--output-format", outputFormat, "Output format (short, long)");
-		bool dumpGraph = false;
-		app.add_flag("--dump-graph", dumpGraph, "Dumps the graph of memory regions into \"graph.dot\"");
-		bool dumpAuroraChannels = true;
-		app.add_flag("--dump-aurora", dumpAuroraChannels, "Dumps the detected Aurora channels.");
+                std::vector<std::string> connectStr;
+                app.add_option(
+                    "-x,--connect", connectStr,
+                    "Connect a FPGA port with another or stdin/stdout");
+                bool noDma = false;
+                app.add_flag(
+                    "--no-dma", noDma,
+                    "Do not setup DMA, only setup FPGA and Crossbar links");
+                std::string outputFormat = "short";
+                app.add_option("--output-format", outputFormat,
+                               "Output format (short, long)");
+                bool dumpGraph = false;
+                app.add_flag(
+                    "--dump-graph", dumpGraph,
+                    "Dumps the graph of memory regions into \"graph.dot\"");
+                bool dumpAuroraChannels = true;
+                app.add_flag("--dump-aurora", dumpAuroraChannels, "Dumps the detected Aurora channels.");
 		app.parse(argc, argv);
 
 		// Logging setup
@@ -232,36 +239,45 @@ int main(int argc, char* argv[])
 			for (auto aurora : aurora_channels)
 				aurora->dump();
 		}
-		// Configure Crossbar switch
-		const fpga::ConnectString parsedConnectString(connectStr);
-		parsedConnectString.configCrossBar(dma, aurora_channels);
+                bool dstIsStdout = false;
+                bool srcIsStdin = false;
+                // Configure Crossbar switch
+                for (std::string str : connectStr) {
+                  const fpga::ConnectString parsedConnectString(str);
+                  parsedConnectString.configCrossBar(dma, aurora_channels);
+                  dstIsStdout =
+                      dstIsStdout || parsedConnectString.isDstStdout();
+                  srcIsStdin = srcIsStdin || parsedConnectString.isSrcStdin();
+                }
 
-		std::unique_ptr<std::thread> stdInThread = nullptr;
-		if (!noDma && parsedConnectString.isDstStdout()) {
-			auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
-			// We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
-			// in this thread anymore
-			stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma, std::move(formatter));
-		}
-		if (!noDma && parsedConnectString.isSrcStdin()) {
-			writeToDmaFromStdIn(dma);
-		}
+                std::unique_ptr<std::thread> stdInThread = nullptr;
+                if (!noDma && dstIsStdout) {
+                  auto formatter =
+                      fpga::getBufferedSampleFormatter(outputFormat, 16);
+                  // We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
+                  // in this thread anymore
+                  stdInThread = std::make_unique<std::thread>(
+                      readFromDmaToStdOut, dma, std::move(formatter));
+                }
+                if (!noDma && srcIsStdin) {
+                  writeToDmaFromStdIn(dma);
+                }
 
-		if (stdInThread) {
-			stdInThread->join();
-		}
-	} catch (const RuntimeError &e) {
-		logger->error("Error: {}", e.what());
-		return -1;
-	} catch (const CLI::ParseError &e) {
-		return app.exit(e);
-	} catch (const std::exception &e) {
-		logger->error("Error: {}", e.what());
-		return -1;
-	} catch (...) {
-		logger->error("Unknown error");
-		return -1;
-	}
+                if (stdInThread) {
+                  stdInThread->join();
+                }
+        } catch (const RuntimeError &e) {
+          logger->error("Error: {}", e.what());
+          return -1;
+        } catch (const CLI::ParseError &e) {
+          return app.exit(e);
+        } catch (const std::exception &e) {
+          logger->error("Error: {}", e.what());
+          return -1;
+        } catch (...) {
+          logger->error("Unknown error");
+          return -1;
+        }
 
-	return 0;
+        return 0;
 }
