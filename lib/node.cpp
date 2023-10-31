@@ -310,16 +310,17 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
 
 #ifdef WITH_HOOKS
   // Run write hooks
-  cnt = out.hooks.process(smps, cnt);
-  if (cnt <= 0)
-    return cnt;
+  int hook_cnt = out.hooks.process(smps, cnt);
+  if (hook_cnt <= 0)
+    return hook_cnt;
+  cnt = hook_cnt;
 #endif // WITH_HOOKS
 
   vect = getFactory()->getVectorize();
   if (!vect)
     vect = cnt;
 
-  while (cnt - nsent > 0) {
+  while (cnt > static_cast<unsigned>(nsent)) {
     tosend = MIN(cnt - nsent, vect);
     sent = _write(&smps[nsent], tosend);
     if (sent < 0)
