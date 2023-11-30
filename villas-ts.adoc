@@ -1,0 +1,73 @@
+= VILLAS timestamped sample signatures
+
+Considerations for signing Samples send by VILLASnode.
+
+== Basics
+
+The baseline requirement to verify samples from VILLASnode is the ability to create binary digests for a collection of samples.
+This is achieved by the VILLASnode `digest` hook.
+The same digest hook is installed on the sending and receiving VILLASnode instances.
+The digests are then communicated out-of-band to the receiving side.
+The receiving side can then check whether its digests have a counterpart in the sent samples' digests.
+
+== Digest Hook
+
+The digest hook acts on batches of samples and includes all origin timestamps, sequence numbers and signal data.
+The correspondence of a sample to a specific batch is either based on the sequence number or on the origin timestamp.
+Batches are accumulated in realtime during the transmission of samples.
+Two batches can only compare equal if all samples within compare equal.
+They are identified by the last sample included in the batch.
+
+Each time the batch changes a digest is emitted as a single line of ASCII charaters into a text file.
+
+.File format
+----
+{second}-{nanosecond}-{sequence} {algorithm} {digest}
+----
+
+* `{second}`: The second of the last sample's origin timestamp.
+* `{nanosecond}`: The nanosecond of the last sample's origin timestamp.
+* `{sequence}`: The sequence number of the last sample.
+* `{algorithm}`: The algorithm used for the digest.
+* `{digest}`: The hexadecimal form of the binary digest.
+
+
+== TSA
+
+We want to send all digests to a TSA.
+
+What does this allow us to prove::
+Sending a digest upon creation to a TSA allows us to prove that a sample did exist before the time that the TSA received it.
+A samples origin timestamp is required to be created strictly before the time that the TSA signed.
+We can define a tolerance for how much earlier than the signed time a sample may have been created.
+Storing the TSR (timestamp response) next to a sample allows us to prove that this sample has been created at the specified time.
+
+What doesn't it guarantee::
+This does not guarantee that a sample received has been created by a specific sender.
+That would require a signature of another kind.
+
+Points of failure::
+If the private certificate of the TSA is leaked all timestamps could be compromised.
+
+Questions::
+* Should we use multiple TSAs for redundancy?
+
+
+== Substation Signing
+
+All substations sending data have to additionally create signatures for each transmitted digest.
+
+What does this allow us to prove::
+Signing a digest allows us to prove that a samples originate from this substation.
+
+What doesn't it guarantee::
+This does not guarantee anything about the time a sample was created.
+
+Points of failure::
+If the private certificate of a substation is leaked all samples of that substation could be compromised.
+One could retroactively create invalid samples for earlier timestamps.
+
+== Combining Timestamps and Signatures
+
+By combining the signatures from the TSA and the signatures from each substation we can guarantee that a received sample has been created by a specific substation at the claimed time.
+This does allow us to guarantee that in case a substation is compromised and a private key is leaked, that all data created before the leak is still uncompromised.
