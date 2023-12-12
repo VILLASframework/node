@@ -2,6 +2,8 @@
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2018 Steffen Vogel <post@steffenvogel.de>
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,8 +11,8 @@
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
-#include <villas/utils.hpp>
 
 #include "global.hpp"
 
@@ -25,7 +27,7 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
+static kernel::pci::DeviceList *pciDevices;
 
 FpgaState state;
 
@@ -39,12 +41,12 @@ static void init()
 
 	plugin::registry->dump();
 
-	pciDevices = std::make_shared<kernel::pci::DeviceList>();
+        pciDevices = kernel::pci::DeviceList::getInstance();
 
-	auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+        auto vfioContainer = std::make_shared<kernel::vfio::Container>();
 
-	// Parse FPGA configuration
-	char *fn = getenv("TEST_CONFIG");
+        // Parse FPGA configuration
+        char *fn = getenv("TEST_CONFIG");
 	f = fopen(fn ? fn : TEST_CONFIG, "r");
 	cr_assert_not_null(f, "Cannot open config file");
 
@@ -62,11 +64,14 @@ static void init()
 	cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
 	// Create all FPGA card instances using the corresponding plugin
-	state.cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer);
+        auto configDir = std::filesystem::path(fn).parent_path();
+        auto cards = std::list<std::shared_ptr<fpga::Card>>();
+        fpga::createCards(json, cards, configDir);
+        state.cards = cards;
 
-	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
+        cr_assert(state.cards.size() != 0, "No FPGA cards found!");
 
-	json_decref(json);
+        json_decref(json);
 }
 
 static void fini()

@@ -28,7 +28,7 @@ static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XIL
 std::shared_ptr<PCIeCard>
 PCIeCardFactory::make(json_t *json_card, std::string card_name,
                       std::shared_ptr<kernel::vfio::Container> vc,
-		const std::filesystem::path &searchPath) {
+                      const std::filesystem::path &searchPath) {
   auto logger = getStaticLogger();
 
   json_t *json_ips = nullptr;

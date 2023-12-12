@@ -9,12 +9,12 @@
 
 #include <cstdlib>
 
-#include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/card.hpp>
 
 class FpgaState {
 public:
 	// List of all available FPGA cards, only first will be tested at the moment
-	std::list<std::shared_ptr<villas::fpga::PCIeCard>> cards;
+  std::list<std::shared_ptr<villas::fpga::Card>> cards;
 };
 
 // Global state to be shared by unittests
