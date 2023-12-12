@@ -11,6 +11,7 @@
 #include <jansson.h>
 #include <unistd.h>
 
+#include <filesystem>
 #include <functional>
 #include <regex>
 
@@ -32,6 +33,7 @@ protected:
   Logger logger;
 
   std::list<std::string> includeDirectories;
+  std::filesystem::path configPath;
 
   // Check if file exists on local system.
   static bool isLocalFile(const std::string &uri) {
@@ -87,6 +89,8 @@ public:
 
   json_t *load(const std::string &u, bool resolveIncludes = true,
                bool resolveEnvVars = true);
+
+  std::filesystem::path &getConfigPath() { return configPath; }
 };
 
 } // namespace node
