@@ -107,11 +107,16 @@ protected:
 };
 
 class DeviceList : public std::list<std::shared_ptr<Device>> {
-public:
+private:
   // Initialize Linux PCI handle.
   //
   // This search for all available PCI devices under /sys/bus/pci
   DeviceList();
+  DeviceList &operator=(const DeviceList &);
+  static DeviceList *instance;
+
+public:
+  static DeviceList *getInstance();
 
   DeviceList::value_type lookupDevice(const Slot &s);
 

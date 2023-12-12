@@ -60,6 +60,7 @@ public:
   bool pciHotReset();
 
   int getFileDescriptor() const { return fd; }
+  std::vector<int> &getEventfdList() { return eventfdList; }
 
   void dump();
 
@@ -77,6 +78,9 @@ private:
 
   bool attachedToGroup;
   int groupFd;
+
+  // Interrupt eventfds
+  std::vector<int> eventfdList;
 
   struct vfio_device_info info;
 
