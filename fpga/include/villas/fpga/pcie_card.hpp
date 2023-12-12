@@ -64,55 +64,32 @@ public:	// TODO: make this private
 	bool doReset;					// Reset VILLASfpga during startup?
 	int affinity;					// Affinity for MSI interrupts
 
-	std::string name;				// The name of the FPGA card
+        std::shared_ptr<kernel::pci::Device> pdev; // PCI device handle
 
-	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
-
-protected:
-	Logger
-	getLogger() const
-	{
-		return villas::logging.get(name);
-	}
+      protected:
+        Logger getLogger() const { return villas::logging.get(name); }
 };
 
 class PCIeCardFactory : public plugin::Plugin {
 public:
+  static std::shared_ptr<PCIeCard>
+  make(json_t *json, std::string card_name,
+       std::shared_ptr<kernel::vfio::Container> vc,
+       const std::filesystem::path &searchPath);
 
-	static std::list<std::shared_ptr<PCIeCard>> make(json_t *json,
-		std::shared_ptr<kernel::pci::DeviceList> pci,
-		std::shared_ptr<kernel::vfio::Container> vc,
-		const std::filesystem::path& searchPath = std::filesystem::path());
+  static PCIeCard *make() { return new PCIeCard(); }
 
-	static
-	PCIeCard* make()
-	{
-		return new PCIeCard();
-	}
+  static Logger getStaticLogger() {
+    return villas::logging.get("pcie:card:factory");
+  }
 
-	static Logger
-	getStaticLogger()
-	{
-		return villas::logging.get("pcie:card:factory");
-	}
+  virtual std::string getName() const { return "pcie"; }
 
-	virtual std::string
-	getName() const
-	{
-		return "pcie";
-	}
+  virtual std::string getDescription() const {
+    return "Xilinx PCIe FPGA cards";
+  }
 
-	virtual std::string
-	getDescription() const
-	{
-		return "Xilinx PCIe FPGA cards";
-	}
-
-	virtual
-	std::string getType() const
-	{
-		return "card";
-	}
+  virtual std::string getType() const { return "card"; }
 };
 
 } // namespace fpga

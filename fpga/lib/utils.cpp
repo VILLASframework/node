@@ -33,7 +33,6 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static auto logger = villas::logging.get("streamer");
 
 fpga::ConnectString::ConnectString(std::string& connectString, int maxPortNum) :
@@ -64,24 +63,26 @@ void fpga::ConnectString::parseString(std::string& connectString)
 		return;
 	}
 
-	static const std::regex regex("([0-9]+)([<\\->]+)([0-9]+|stdin|stdout|pipe)");
-	std::smatch match;
+        static const std::regex regex(
+            "([0-9]+)([<\\->]+)([0-9]+|stdin|stdout|pipe|dma)");
+        std::smatch match;
 
-	if (!std::regex_match(connectString, match, regex) || match.size() != 4) {
-		logger->error("Invalid connect string: {}", connectString);
-		throw std::runtime_error("Invalid connect string");
-	}
+        if (!std::regex_match(connectString, match, regex) ||
+            match.size() != 4) {
+          logger->error("Invalid connect string: {}", connectString);
+          throw std::runtime_error("Invalid connect string");
+        }
 
-	if (match[2] == "<->") {
-		bidirectional = true;
-	} else if(match[2] == "<-") {
-		invert = true;
-	}
+        if (match[2] == "<->") {
+          bidirectional = true;
+        } else if (match[2] == "<-") {
+          invert = true;
+        }
 
-	std::string srcStr = (invert ? match[3] : match[1]);
-	std::string dstStr = (invert ? match[1] : match[3]);
+        std::string srcStr = (invert ? match[3] : match[1]);
+        std::string dstStr = (invert ? match[1] : match[3]);
 
-	srcAsInt = portStringToInt(srcStr);
+        srcAsInt = portStringToInt(srcStr);
 	dstAsInt = portStringToInt(dstStr);
 	if (srcAsInt == -1) {
 		srcIsStdin = true;
@@ -95,16 +96,16 @@ void fpga::ConnectString::parseString(std::string& connectString)
 
 int fpga::ConnectString::portStringToInt(std::string &str) const
 {
-	if (str == "stdin" || str == "stdout" || str == "pipe") {
-		return -1;
-	} else {
-		const int port = std::stoi(str);
+  if (str == "stdin" || str == "stdout" || str == "pipe" || str == "dma") {
+    return -1;
+  } else {
+    const int port = std::stoi(str);
 
-		if (port > maxPortNum || port < 0)
-			throw std::runtime_error("Invalid port number");
+    if (port > maxPortNum || port < 0)
+      throw std::runtime_error("Invalid port number");
 
-		return port;
-	}
+    return port;
+  }
 }
 
 
@@ -163,58 +164,87 @@ void fpga::setupColorHandling()
 	});
 }
 
-std::shared_ptr<fpga::PCIeCard>
-fpga::setupFpgaCard(const std::string &configFile, const std::string &fpgaName)
-{
-	pciDevices = std::make_shared<kernel::pci::DeviceList>();
+int fpga::createCards(json_t *config,
+                      std::list<std::shared_ptr<fpga::Card>> &cards,
+                      std::filesystem::path &searchPath) {
+  int numFpgas = 0;
+  auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+  auto configDir = std::filesystem::path().parent_path();
 
-	auto vfioContainer = std::make_shared<kernel::vfio::Container>();
-	auto configDir = std::filesystem::path(configFile).parent_path();
+  json_t *fpgas = json_object_get(config, "fpgas");
+  if (fpgas == nullptr) {
+    logger->error("No section 'fpgas' found in config");
+    exit(1);
+  }
 
-	// Parse FPGA configuration
-	FILE* f = fopen(configFile.c_str(), "r");
-	if (!f)
-		throw RuntimeError("Cannot open config file: {}", configFile);
+  const char *card_name;
+  json_t *json_card;
+  json_object_foreach(fpgas, card_name, json_card) {
+    const char *interfaceName;
+    json_error_t err;
+    logger->info("Found config for FPGA card {}", card_name);
+    int ret = json_unpack_ex(json_card, &err, 0, "{s: s}", "interface",
+                             &interfaceName);
+    if (ret) {
+      throw ConfigError(json_card, err, "interface",
+                        "Failed to parse interface name for card {}",
+                        card_name);
+    }
+    std::string interfaceNameStr(interfaceName);
+    if (interfaceNameStr == "pcie") {
+      auto card = fpga::PCIeCardFactory::make(json_card, std::string(card_name),
+                                              vfioContainer, searchPath);
+      if (card) {
+        cards.push_back(std::move(card));
+        numFpgas++;
+      }
+    } else if (interfaceNameStr == "platform") {
+      throw RuntimeError("Platform interface not implemented yet");
+    } else {
+      throw RuntimeError("Unknown interface type {}", interfaceNameStr);
+    }
+  }
+  return numFpgas;
+}
 
-	json_t* json = json_loadf(f, 0, nullptr);
-	if (!json) {
-		logger->error("Cannot parse JSON config");
-		fclose(f);
-		throw RuntimeError("Cannot parse JSON config");
-	}
+std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
+                                                const std::string &fpgaName) {
+  auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+  auto configDir = std::filesystem::path(configFile).parent_path();
 
-	fclose(f);
+  // Parse FPGA configuration
+  FILE *f = fopen(configFile.c_str(), "r");
+  if (!f)
+    throw RuntimeError("Cannot open config file: {}", configFile);
 
-	json_t* fpgas = json_object_get(json, "fpgas");
-	if (fpgas == nullptr) {
-		logger->error("No section 'fpgas' found in config");
-		exit(1);
-	}
+  json_t *json = json_loadf(f, 0, nullptr);
+  if (!json) {
+    logger->error("Cannot parse JSON config");
+    fclose(f);
+    throw RuntimeError("Cannot parse JSON config");
+  }
 
-	// Get the FPGA card plugin
-	auto fpgaCardFactory = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-	if (fpgaCardFactory == nullptr) {
-		logger->error("No FPGA plugin found");
-		exit(1);
-	}
+  fclose(f);
 
-	// Create all FPGA card instances using the corresponding plugin
-	auto cards = fpgaCardFactory->make(fpgas, pciDevices, vfioContainer, configDir);
+  // Create all FPGA card instances using the corresponding plugin
+  auto cards = std::list<std::shared_ptr<fpga::Card>>();
+  createCards(json, cards, configDir);
 
-	std::shared_ptr<fpga::PCIeCard> card;
-	for (auto &fpgaCard : cards) {
-		if (fpgaCard->name == fpgaName) {
-			return fpgaCard;
-		}
-	}
+  std::shared_ptr<fpga::Card> card = nullptr;
+  for (auto &fpgaCard : cards) {
+    if (fpgaCard->name == fpgaName) {
+      card = fpgaCard;
+      break;
+    }
+  }
+  // Deallocate JSON config
+  json_decref(json);
 
-	// Deallocate JSON config
-	json_decref(json);
+  if (!card)
+    throw RuntimeError("FPGA card {} not found in config or not working",
+                       fpgaName);
 
-	if (!card)
-		throw RuntimeError("FPGA card {} not found in config or not working", fpgaName);
-
-	return card;
+  return card;
 }
 
 std::unique_ptr<fpga::BufferedSampleFormatter> fpga::getBufferedSampleFormatter(

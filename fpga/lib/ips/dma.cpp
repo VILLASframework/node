@@ -284,8 +284,8 @@ bool Dma::writeScatterGather(const void *buf, size_t len)
 	ret = XAxiDma_BdRingAlloc(txRing, 1, &bd);
 	if (ret != XST_SUCCESS) {
 		hwLock.unlock();
-		throw RuntimeError("BdRingAlloc returned {}.", ret);
-	}
+                throw RuntimeError("Write: BdRingAlloc returned {}.", ret);
+        }
 
 	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
 	if (ret != XST_SUCCESS) {

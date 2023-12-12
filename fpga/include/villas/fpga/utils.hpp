@@ -13,8 +13,11 @@
 namespace villas {
 namespace fpga {
 
-std::shared_ptr<fpga::PCIeCard>
+std::shared_ptr<fpga::Card>
 setupFpgaCard(const std::string &configFile, const std::string &fpgaName);
+
+int createCards(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
+              std::filesystem::path &searchPath);
 
 void setupColorHandling();
 
