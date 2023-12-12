@@ -1,12 +1,10 @@
 /* Communicate with VILLASfpga Xilinx FPGA boards.
  *
- * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
-#include <csignal>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -16,16 +14,12 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
-#include <villas/node_compat.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 
-#include <villas/fpga/card.hpp>
-#include <villas/fpga/core.hpp>
-#include <villas/fpga/ips/dma.hpp>
-#include <villas/fpga/vlnv.hpp>
+#include <villas/fpga/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -33,19 +27,68 @@ using namespace villas::fpga;
 using namespace villas::utils;
 
 // Global state
-static std::list<std::shared_ptr<fpga::PCIeCard>> cards;
-static std::map<fpga::ip::Dma, FpgaNode *> dmaMap;
+static std::list<std::shared_ptr<fpga::Card>> cards;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
-using namespace villas;
-using namespace villas::node;
-
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), irqFd(-1), coalesce(0), polling(true) {}
+    : Node(id, name), cardName(""), card(), dma(), blockRx(), blockTx() {}
 
 FpgaNode::~FpgaNode() {}
+
+int FpgaNode::prepare() {
+  for (auto &fpgaCard : cards) {
+    if (fpgaCard->name == cardName) {
+      card = fpgaCard;
+      break;
+    }
+  }
+  if (card == nullptr) {
+    throw ConfigError(config, "node-config-fpga",
+                      "There is no FPGA card with the name: {}", cardName);
+  }
+
+  std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>> aurora_channels;
+  for (int i = 0; i < 4; i++) {
+    auto name = fmt::format("aurora_8b10b_ch{}", i);
+    auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
+    auto aurora =
+        std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>(card->lookupIp(id));
+    if (aurora == nullptr) {
+      logger->error("No Aurora interface found on FPGA");
+      return 1;
+    }
+
+    aurora_channels.push_back(aurora);
+  }
+
+  dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+  if (dma == nullptr) {
+    logger->error("No DMA found on FPGA ");
+    return 1;
+  }
+
+  // Configure Crossbar switch
+  for (std::string str : connectStrings) {
+    const fpga::ConnectString parsedConnectString(str);
+    parsedConnectString.configCrossBar(dma, aurora_channels);
+  }
+
+  auto &alloc = HostRam::getAllocator();
+
+  blockRx[0] = alloc.allocateBlock(0x200 * sizeof(float));
+  blockRx[1] = alloc.allocateBlock(0x200 * sizeof(float));
+  blockTx = alloc.allocateBlock(0x200 * sizeof(float));
+  villas::MemoryAccessor<float> memRx[] = {*(blockRx[0]), *(blockRx[1])};
+  villas::MemoryAccessor<float> memTx = *blockTx;
+
+  dma->makeAccesibleFromVA(blockRx[0]);
+  dma->makeAccesibleFromVA(blockRx[1]);
+  dma->makeAccesibleFromVA(blockTx);
+
+  return Node::prepare();
+}
 
 int FpgaNode::parse(json_t *json) {
   int ret = Node::parse(json);
@@ -54,29 +97,28 @@ int FpgaNode::parse(json_t *json) {
 
   json_error_t err;
 
-  const char *card = nullptr;
-  const char *intf = nullptr;
-  const char *dma = nullptr;
-  int poll = polling;
+  const char *jsonCardName = nullptr;
+  json_t *jsonConnectStrings = nullptr;
 
-  ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
-                       "card", &card, "interface", &intf, "dma", &dma,
-                       "coalesce", &coalesce, "polling", &polling);
-  if (ret)
+  ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: o}", "card", &jsonCardName,
+                       "connect", &jsonConnectStrings);
+  if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
                       this->getName());
-
-  if (card)
-    cardName = card;
-
-  if (intf)
-    intfName = intf;
-
-  if (dma)
-    dmaName = dma;
-
-  polling = poll; // cast int to bool
+  }
+  cardName = std::string(jsonCardName);
+  if (jsonConnectStrings != nullptr && json_is_array(jsonConnectStrings)) {
+    for (size_t i = 0; i < json_array_size(jsonConnectStrings); i++) {
+      json_t *jsonConnectString = json_array_get(jsonConnectStrings, i);
+      if (jsonConnectString == nullptr || !json_is_string(jsonConnectString)) {
+        throw ConfigError(jsonConnectString, "node-config-fpga",
+                          "Failed to parse connect string");
+      }
+      connectStrings.push_back(
+          std::string(json_string_value(jsonConnectString)));
+    }
+  }
 
   return 0;
 }
@@ -85,9 +127,13 @@ const std::string &FpgaNode::getDetails() {
   if (details.empty()) {
     auto &name = card ? card->name : cardName;
 
-    details =
-        fmt::format("fpga={}, dma={}, if={}, polling={}, coalesce={}", name,
-                    dma->getInstanceName(), polling ? "yes" : "no", coalesce);
+    const char *const delim = ", ";
+
+    std::ostringstream imploded;
+    std::copy(connectStrings.begin(), connectStrings.end(),
+              std::ostream_iterator<std::string>(imploded, delim));
+
+    details = fmt::format("fpga={}, connect={}", name, imploded.str());
   }
 
   return details;
@@ -95,136 +141,81 @@ const std::string &FpgaNode::getDetails() {
 
 int FpgaNode::check() { return 0; }
 
-int FpgaNode::prepare() {
-  auto it = cardName.empty()
-                ? cards.begin()
-                : std::find_if(cards.begin(), cards.end(),
-                               [this](std::shared_ptr<fpga::PCIeCard> c) {
-                                 return c->name == cardName;
-                               });
-
-  if (it == cards.end())
-    throw ConfigError(json_object_get(config, "fpga"), "node-config-fpga-card",
-                      "Invalid FPGA card name: {}", cardName);
-
-  card = *it;
-
-  auto intfCore = intfName.empty()
-                      ? card->lookupIp(fpga::Vlnv(FPGA_AURORA_VLNV))
-                      : card->lookupIp(intfName);
-  if (!intfCore)
-    throw ConfigError(config, "node-config-fpga-interface",
-                      "There is no interface IP with the name: {}", intfName);
-
-  intf = std::dynamic_pointer_cast<fpga::ip::Node>(intfCore);
-  if (!intf)
-    throw RuntimeError("The IP {} is not a interface", *intfCore);
-
-  auto dmaCore = dmaName.empty() ? card->lookupIp(fpga::Vlnv(FPGA_DMA_VLNV))
-                                 : card->lookupIp(dmaName);
-  if (!dmaCore)
-    throw ConfigError(config, "node-config-fpga-dma",
-                      "There is no DMA IP with the name: {}", dmaName);
-
-  dma = std::dynamic_pointer_cast<fpga::ip::Dma>(dmaCore);
-  if (!dma)
-    throw RuntimeError("The IP {} is not a DMA controller", *dmaCore);
-
-  int ret = intf->connect(*(dma), true);
-  if (ret)
-    throw RuntimeError("Failed to connect: {} -> {}", *(intf), *(dma));
-
-  auto &alloc = HostDmaRam::getAllocator();
-
-  const std::shared_ptr<villas::MemoryBlock> blockRx =
-      alloc.allocateBlock(0x100 * sizeof(float));
-  const std::shared_ptr<villas::MemoryBlock> blockTx =
-      alloc.allocateBlock(0x100 * sizeof(float));
-  villas::MemoryAccessor<float> memRx = *blockRx;
-  villas::MemoryAccessor<float> memTx = *blockTx;
-
-  dma->makeAccesibleFromVA(blockRx);
-  dma->makeAccesibleFromVA(blockTx);
-
-  // Show some debugging infos
-  auto &mm = MemoryManager::get();
-
-  dma->dump();
-  intf->dump();
-  mm.getGraph().dump();
-
-  return Node::prepare();
+int FpgaNode::start() {
+  // enque first read
+  dma->read(*(blockRx[0]), blockRx[0]->getSize());
+  return Node::start();
 }
 
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
+  static size_t cur = 0, next = 1;
   unsigned read;
   Sample *smp = smps[0];
 
   assert(cnt == 1);
 
-  dma->read(*blockRx, blockRx->getSize()); // TODO: calc size
-  const size_t bytesRead = dma->readComplete().bytes;
-  read = bytesRead / sizeof(int32_t);
+  dma->read(*(blockRx[next]), blockRx[next]->getSize()); // TODO: calc size
+  auto c = dma->readComplete();
+  read = c.bytes / sizeof(float);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockRx);
+  if (c.interrupts > 1) {
+    logger->warn("Missed {} interrupts", c.interrupts - 1);
+  }
 
-  for (unsigned i = 0; i < MIN(read, smp->capacity); i++)
-    smp->data[i].i = mem[i];
+  auto mem = MemoryAccessor<float>(*(blockRx[cur]));
+
+  smp->length = 0;
+  for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
+    smp->data[i].f = static_cast<double>(mem[i]);
+    smp->length++;
+  }
+  smp->flags = (int)SampleFlags::HAS_DATA;
 
   smp->signals = in.signals;
+  cur = next;
+  next = (next + 1) % (sizeof(blockRx) / sizeof(blockRx[0]));
 
-  return read;
+  return 1;
 }
 
 int FpgaNode::_write(Sample *smps[], unsigned cnt) {
-  int written;
+  unsigned int written;
   Sample *smp = smps[0];
 
-  assert(cnt == 1);
+  assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
+  auto mem = MemoryAccessor<float>(*blockTx);
 
-  for (unsigned i = 0; i < smps[0]->length; i++)
-    mem[i] = smps[0]->data[i].i;
+  for (unsigned i = 0; i < smps[0]->length; i++) {
+    mem[i] = static_cast<float>(smps[0]->data[i].f);
+  }
 
-  bool state = dma->write(*blockTx, smp->length * sizeof(int32_t));
+  bool state = dma->write(*blockTx, smp->length * sizeof(float));
   if (!state)
     return -1;
 
-  written = 0; // The number of samples written
+  written = dma->writeComplete().bytes /
+            sizeof(float); // The number of samples written
 
-  return written;
+  if (written != smp->length) {
+    logger->warn("Wrote {} samples, but {} were expected", written,
+                 smp->length);
+  }
+
+  return 1;
 }
 
 std::vector<int> FpgaNode::getPollFDs() {
-  std::vector<int> fds;
-
-  if (!polling)
-    fds.push_back(irqFd);
-
-  return fds;
+  return card->vfioDevice->getEventfdList();
 }
 
 int FpgaNodeFactory::start(SuperNode *sn) {
   vfioContainer = std::make_shared<kernel::vfio::Container>();
-  pciDevices = std::make_shared<kernel::pci::DeviceList>();
 
-  // Get the FPGA card plugin
-  auto pcieCardPlugin = plugin::registry->lookup<fpga::PCIeCardFactory>("pcie");
-  if (!pcieCardPlugin)
-    throw RuntimeError("No FPGA PCIe plugin found");
-
-  json_t *json_cfg = sn->getConfig();
-  json_t *json_fpgas = json_object_get(json_cfg, "fpgas");
-  if (!json_fpgas)
-    throw ConfigError(json_cfg, "node-config-fpgas",
-                      "No section 'fpgas' found in config");
-
-  // Create all FPGA card instances using the corresponding plugin
-  auto piceCards =
-      fpga::PCIeCardFactory::make(json_fpgas, pciDevices, vfioContainer);
-
-  cards.splice(cards.end(), piceCards);
+  if (cards.empty()) {
+    std::filesystem::path searchPath = sn->getConfigPath().parent_path();
+    createCards(sn->getConfig(), cards, searchPath);
+  }
 
   return NodeFactory::start(sn);
 }
