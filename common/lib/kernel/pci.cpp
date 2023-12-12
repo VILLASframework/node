@@ -25,6 +25,15 @@ using namespace villas::kernel::pci;
 
 #define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
 
+DeviceList *DeviceList::instance = nullptr;
+
+DeviceList *DeviceList::getInstance() {
+  if (instance == nullptr) {
+    instance = new DeviceList();
+  }
+  return instance;
+};
+
 DeviceList::DeviceList() {
   struct dirent *e;
   DIR *dp;

@@ -277,6 +277,7 @@ int Device::pciMsiInit(int efds[]) {
       delete[] irqSetBuf;
       return -1;
     }
+    eventfdList.push_back(efds[i]);
   }
 
   memcpy(irqSet->data, efds, sizeof(int) * irqCount);
