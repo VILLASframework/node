@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
+HWH File Parser
+
 Author:     Steffen Vogel <post@steffenvogel.de>
 Author:     Daniel Krebs <github@daniel-krebs.net>
 Author:     Hatim Kanchwala <hatim@hatimak.me>
 Author:		Pascal Bauer <pascal.bauer@rwth-aachen.de>
-Copyright:  2017-2022, Institute for Automation of Complex Power Systems, EONERC
-License:    GNU General Public License (version 3)
+SPDX-FileCopyrightText: 2017-2022 Steffen Vogel <post@steffenvogel.de>
+SPDX-FileCopyrightText: 2017-2022 Daniel Krebs <github@daniel-krebs.net>
+SPDX-FileCopyrightText: 2017-2022 Hatim Kanchwala <hatim@hatimak.me>
+SPDX-FileCopyrightText: 2023 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+SPDX-License-Identifier: GPL-3.0-or-later
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
