@@ -22,22 +22,29 @@ class I2c : public Node {
 public:
   friend class I2cFactory;
 
+  I2c();
   virtual ~I2c();
   virtual bool init() override;
   bool reset() override;
-  bool write(std::list<u8> &data);
-  bool read(std::list<u8> &data, size_t max_read);
+  bool write(u8 address, std::vector<u8> &data);
+  bool read(u8 address, std::vector<u8> &data, size_t max_read);
+
+  int transmitIntrs;
+  int receiveIntrs;
+  int statusIntrs;
 
 private:
   static constexpr char registerMemory[] = "Reg";
+  static constexpr char i2cInterrupt[] = "iic2intc_irpt";
 
   XIic xIic;
   XIic_Config xConfig;
 
   std::mutex hwLock;
 
-  bool configDone = false;
-
+  bool configDone;
+  bool polling;
+};
   class I2cFactory : NodeFactory {
 
   public:
@@ -53,16 +60,14 @@ private:
     }
 
     // Create a concrete IP instance
-    Core *make() const { return new Dma; };
+    Core *make() const { return new I2c; };
 
   protected:
     virtual void parse(Core &ip, json_t *json) override;
-
     virtual void configurePollingMode(Core &ip, PollingMode mode) override {
-      dynamic_cast<Dma &>(ip).polling = (mode == POLL);
+      dynamic_cast<I2c &>(ip).polling = (mode == POLL);
     }
   };
-
 } // namespace ip
 } // namespace fpga
 } // namespace villas

@@ -26,6 +26,7 @@ set(SOURCES
 	ips/rtds.cpp
 	ips/switch.cpp
 	ips/timer.cpp
+	ips/i2c.cpp
 
 	ips/rtds2gpu/rtds2gpu.cpp
 	ips/rtds2gpu/xrtds2gpu.c
