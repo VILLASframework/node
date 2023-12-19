@@ -1346,5 +1346,14 @@
         "translation": 0
       }
     }
+  },
+  "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0": {
+    "vlnv": "xilinx.com:module_ref:axi_pcie_intc:1.0",
+    "parameters": {
+      "component_name": "design_1_axi_pcie_intc_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 8192,
+      "c_highaddr": 9215
+    }
   }
 }
