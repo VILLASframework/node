@@ -193,15 +193,18 @@ bool Dma::reset()
 	return false;
 }
 
-Dma::~Dma()
-{
-	// Unmap memory in our ownership, MemoryBlock gets deleted and removed from
-	// graph by this destructor as well.
-	if (hasScatterGather()) {
-		card->unmapMemoryBlock(*sgRingTx);
-		card->unmapMemoryBlock(*sgRingRx);
-	}
-	Dma::reset();
+Dma::~Dma() {
+  // Unmap memory in our ownership, MemoryBlock gets deleted and removed from
+  // graph by this destructor as well.
+  if (hasScatterGather()) {
+    if (sgRingTx) {
+      card->unmapMemoryBlock(*sgRingTx);
+    }
+    if (sgRingRx) {
+      card->unmapMemoryBlock(*sgRingRx);
+    }
+  }
+  Dma::reset();
 }
 
 bool Dma::memcpy(const MemoryBlock &src, const MemoryBlock &dst, size_t len)
