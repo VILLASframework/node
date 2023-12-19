@@ -141,6 +141,7 @@ public:
   static MemoryManager &get();
 
   MemoryGraph &getGraph() { return memoryGraph; }
+  void printGraph();
 
   AddressSpaceId getProcessAddressSpace() {
     return getOrCreateAddressSpace("process");
