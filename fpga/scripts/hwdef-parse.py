@@ -46,6 +46,7 @@ whitelist = [
 	[ 'xilinx.com', 'ip', 'axi_iic' ],
 	[ 'xilinx.com', 'module_ref', 'dinoif_fast' ],
 	[ 'xilinx.com', 'module_ref', 'dinoif_dac' ],
+	[ 'xilinx.com', 'module_ref', 'axi_pcie_intc' ],
 	[ 'xilinx.com', 'hls', 'rtds2gpu' ],
 	[ 'xilinx.com', 'hls', 'mem' ],
 	[ 'acs.eonerc.rwth-aachen.de', 'user', 'axi_pcie_intc' ],
@@ -149,7 +150,7 @@ for module in modules:
 	params = module.find('.//PARAMETERS')
 	if params is not None and instance != "zynq_ultra_ps_e_0": #! Parameters of "zynq" ignored
 		p = ips[instance].setdefault('parameters', {})
-		
+
 		for param in params:
 			name = param.get('NAME').lower()
 			value = param.get('VALUE')
@@ -288,9 +289,9 @@ for bram in brams:
 
 	width = bram.find('.//PARAMETER[@NAME="DATA_WIDTH"]').get('VALUE')
 	depth = bram.find('.//PARAMETER[@NAME="MEM_DEPTH"]').get('VALUE')
-	
+
 	size = int(width) * int(depth) / 8
-	
+
 	if instance in ips:
 		ips[instance]['size'] = int(size)
 
