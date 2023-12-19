@@ -17,7 +17,7 @@ using namespace villas::fpga::ip;
 
 I2c::I2c()
     : Node(), transmitIntrs(0), receiveIntrs(0), statusIntrs(0), xIic(),
-      xConfig(), hwLock(), configDone(false), polling(false) {}
+      xConfig(), hwLock(), configDone(false), initDone(false), polling(false) {}
 
 I2c::~I2c() {}
 
@@ -36,6 +36,11 @@ bool I2c::init() {
   if (!configDone) {
     throw RuntimeError("I2C configuration not done");
   }
+  if (initDone) {
+    logger->warn("I2C already initialized");
+    return true;
+  }
+  xConfig.BaseAddress = getBaseAddr(registerMemory);
   ret = XIic_CfgInitialize(&xIic, &xConfig, xConfig.BaseAddress);
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to initialize I2C");
@@ -55,6 +60,10 @@ bool I2c::reset() { return true; }
 
 bool I2c::write(u8 address, std::vector<u8> &data) {
   int ret;
+
+  if (!initDone) {
+    throw RuntimeError("I2C not initialized");
+  }
 
   ret =
       XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
@@ -98,6 +107,10 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
 
 bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   int ret;
+
+  if (!initDone) {
+    throw RuntimeError("I2C not initialized");
+  }
 
   data.resize(data.size() + max_read);
   u8 *dataPtr = data.data() + data.size() - max_read;
@@ -156,20 +169,22 @@ void I2cFactory::parse(Core &ip, json_t *cfg) {
   char *component_name = nullptr;
 
   json_error_t err;
-  int ret = json_unpack_ex(
-      cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: i, s?: i} }", "parameters",
-      "c_iic_freq", &i2c_frequency, "c_ten_bit_adr", &i2c.xConfig.Has10BitAddr,
-      "c_gpo_width", &i2c.xConfig.GpOutWidth, "component_name", &component_name,
-      "c_baseaddr", &i2c.xConfig.BaseAddress);
+  int ret = json_unpack_ex(cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: s} }",
+                           "parameters", "c_iic_freq", &i2c_frequency,
+                           "c_ten_bit_adr", &i2c.xConfig.Has10BitAddr,
+                           "c_gpo_width", &i2c.xConfig.GpOutWidth,
+                           "component_name", &component_name);
   if (ret != 0) {
-    throw ConfigError(cfg, err, "", "Failed to parse DMA configuration");
+    throw ConfigError(cfg, err, "", "Failed to parse DMA configuration for {}",
+                      ip.getInstanceName());
   }
   if (component_name != nullptr) {
     char last_letter = component_name[strlen(component_name) - 1];
-    if (last_letter > '0' && last_letter <= '9') {
-      i2c.xConfig.DeviceId = atoi(&last_letter);
+    if (last_letter >= '0' && last_letter <= '9') {
+      i2c.xConfig.DeviceId = last_letter - '0';
     } else {
-      throw RuntimeError("Invalid device ID in component name");
+      throw RuntimeError("Invalid device ID in component name {} for {}",
+                         component_name, ip.getInstanceName());
     }
   }
 

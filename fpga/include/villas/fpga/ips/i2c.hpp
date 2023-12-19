@@ -43,7 +43,12 @@ private:
   std::mutex hwLock;
 
   bool configDone;
+  bool initDone;
   bool polling;
+
+  std::list<MemoryBlockName> getMemoryBlocks() const {
+    return {registerMemory};
+  }
 };
   class I2cFactory : NodeFactory {
 
