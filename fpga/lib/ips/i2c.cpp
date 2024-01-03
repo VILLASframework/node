@@ -17,9 +17,10 @@ using namespace villas::fpga::ip;
 
 I2c::I2c()
     : Node(), transmitIntrs(0), receiveIntrs(0), statusIntrs(0), xIic(),
-      xConfig(), hwLock(), configDone(false), initDone(false), polling(false) {}
+      xConfig(), hwLock(), configDone(false), initDone(false), polling(false),
+      switchInstance(nullptr) {}
 
-I2c::~I2c() {}
+I2c::~I2c() { reset(); }
 
 static void SendHandler(I2c *i2c, __attribute__((unused)) int bytesSend) {
   i2c->transmitIntrs++;
@@ -53,10 +54,16 @@ bool I2c::init() {
   irqs[i2cInterrupt].irqController->enableInterrupt(irqs[i2cInterrupt],
                                                     polling);
 
+  initDone = true;
   return true;
 }
 
-bool I2c::reset() { return true; }
+bool I2c::reset() {
+  XIic_Reset(&xIic);
+  irqs[i2cInterrupt].irqController->disableInterrupt(irqs[i2cInterrupt]);
+  initDone = false;
+  return true;
+}
 
 bool I2c::write(u8 address, std::vector<u8> &data) {
   int ret;
@@ -75,7 +82,7 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
   xIic.Stats.TxErrors = 0;
 
   int retries = 10;
-  while (xIic.Stats.TxErrors != 0 && retries > 0) {
+  while (transmitIntrs == 0 && xIic.Stats.TxErrors == 0 && retries > 0) {
     ret = XIic_Start(&xIic);
     if (ret != XST_SUCCESS) {
       throw RuntimeError("Failed to start I2C");
@@ -99,8 +106,9 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to stop I2C");
   }
-  if (retries == 0) {
-    throw RuntimeError("Failed to send I2C data");
+  if (retries == 0 || xIic.Stats.TxErrors != 0) {
+    throw RuntimeError("Failed to send I2C data: {} retries, {} errors",
+                       retries, xIic.Stats.TxErrors);
   }
   return true;
 }
@@ -129,7 +137,7 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   }
 
   int retries = 10;
-  while (xIic.Stats.TxErrors != 0 && retries > 0) {
+  while (receiveIntrs == 0 && retries > 0) {
     ret = XIic_Start(&xIic);
     if (ret != XST_SUCCESS) {
       throw RuntimeError("Failed to start I2C");
@@ -158,6 +166,35 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   }
 
   return XST_SUCCESS;
+}
+
+static const uint8_t CHANNEL_MAP[] = {0x20, 0x80, 0x02, 0x08,
+                                      0x10, 0x40, 0x01, 0x04};
+void I2c::Switch::setChannel(uint8_t channel) {
+  if (channel > sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0])) {
+    throw RuntimeError("Invalid channel number {}", channel);
+  }
+  this->channel = channel;
+  std::vector<u8> data = {CHANNEL_MAP[channel]};
+  i2c->write(address, data);
+}
+
+uint8_t I2c::Switch::getChannel() {
+  std::vector<u8> data(1);
+  i2c->read(address, data, 1);
+  if (readOnce && data[0] != CHANNEL_MAP[channel]) {
+    throw RuntimeError("Invalid channel readback: {:x} != {:x}", data[0],
+                       CHANNEL_MAP[channel]);
+  } else {
+    for (size_t i = 0; i < sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0]); ++i) {
+      if (data[0] == CHANNEL_MAP[i]) {
+        channel = i;
+        break;
+      }
+    }
+    readOnce = true;
+  }
+  return channel;
 }
 
 void I2cFactory::parse(Core &ip, json_t *cfg) {

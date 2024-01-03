@@ -33,6 +33,32 @@ public:
   int receiveIntrs;
   int statusIntrs;
 
+  class Switch {
+  public:
+    Switch(I2c *i2c, uint8_t address)
+        : i2c(i2c), address(address), channel(0), readOnce(false){};
+    Switch(const Switch &other) = delete;
+    Switch &operator=(const Switch &other) = delete;
+    void setChannel(uint8_t channel);
+    uint8_t getChannel();
+    void setAddress(uint8_t address) { this->address = address; }
+    uint8_t getAddress() { return address; }
+
+  private:
+    I2c *i2c;
+    uint8_t address;
+    uint8_t channel;
+    bool readOnce;
+  };
+  Switch &getSwitch(uint8_t address = 0x70) {
+    if (switchInstance == nullptr) {
+      switchInstance = std::make_unique<Switch>(this, address);
+    } else {
+      switchInstance->setAddress(address);
+    }
+    return *switchInstance;
+  }
+
 private:
   static constexpr char registerMemory[] = "Reg";
   static constexpr char i2cInterrupt[] = "iic2intc_irpt";
@@ -45,6 +71,7 @@ private:
   bool configDone;
   bool initDone;
   bool polling;
+  std::unique_ptr<Switch> switchInstance;
 
   std::list<MemoryBlockName> getMemoryBlocks() const {
     return {registerMemory};
