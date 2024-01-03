@@ -54,7 +54,6 @@ target_include_directories(villas-fpga
 )
 
 target_link_libraries(villas-fpga PUBLIC
-	${JANSSON_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS}
 	m
