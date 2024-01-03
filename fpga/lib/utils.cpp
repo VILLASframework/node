@@ -209,7 +209,6 @@ int fpga::createCards(json_t *config,
 
 std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
                                                 const std::string &fpgaName) {
-  auto vfioContainer = std::make_shared<kernel::vfio::Container>();
   auto configDir = std::filesystem::path(configFile).parent_path();
 
   // Parse FPGA configuration
