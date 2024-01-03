@@ -59,6 +59,7 @@ target_link_libraries(villas-fpga PUBLIC
 	m
 	xil
 	villas-common
+	stdc++fs
 )
 
 if(CMAKE_CUDA_COMPILER)
