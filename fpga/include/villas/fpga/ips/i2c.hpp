@@ -76,6 +76,7 @@ private:
   std::list<MemoryBlockName> getMemoryBlocks() const {
     return {registerMemory};
   }
+  void waitForBusNotBusy();
 };
   class I2cFactory : NodeFactory {
 

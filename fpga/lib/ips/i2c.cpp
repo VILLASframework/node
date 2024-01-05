@@ -113,6 +113,22 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
   return true;
 }
 
+void I2c::waitForBusNotBusy() {
+  int retries = 10;
+  uint32_t irqStatus;
+  do {
+    irqs[i2cInterrupt].irqController->waitForInterrupt(irqs[i2cInterrupt].num);
+    irqStatus =
+        XIic_ReadIisr(xIic.BaseAddress) & XIic_ReadIier(xIic.BaseAddress);
+  } while (!(irqStatus & XIIC_INTR_BNB_MASK) && --retries > 0);
+  //Deactivate BusNotBusy interrupt
+  XIic_WriteIier(xIic.BaseAddress,
+                 XIic_ReadIier(xIic.BaseAddress) & ~(XIIC_INTR_BNB_MASK));
+  if (retries == 0) {
+    throw RuntimeError("I2C bus stayed busy after 10 interrupts");
+  }
+}
+
 bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   int ret;
 
@@ -143,11 +159,16 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
       throw RuntimeError("Failed to start I2C");
     }
 
-    ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
-    if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to receive I2C data");
-    }
-    int intrRetries = 10;
+    int intrRetries = 1;
+    do {
+      ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
+      if (ret == XST_IIC_BUS_BUSY) {
+        waitForBusNotBusy();
+      } else if (ret != XST_SUCCESS) {
+        throw RuntimeError("Failed to receive I2C data: code {}", ret);
+      }
+    } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
+    intrRetries = 10;
     while (receiveIntrs == 0 && intrRetries > 0) {
       irqs[i2cInterrupt].irqController->waitForInterrupt(
           irqs[i2cInterrupt].num);
@@ -175,17 +196,23 @@ void I2c::Switch::setChannel(uint8_t channel) {
     throw RuntimeError("Invalid channel number {}", channel);
   }
   this->channel = channel;
+  readOnce = true;
   std::vector<u8> data = {CHANNEL_MAP[channel]};
   i2c->write(address, data);
 }
 
 uint8_t I2c::Switch::getChannel() {
   std::vector<u8> data(1);
-  i2c->read(address, data, 1);
-  if (readOnce && data[0] != CHANNEL_MAP[channel]) {
-    throw RuntimeError("Invalid channel readback: {:x} != {:x}", data[0],
-                       CHANNEL_MAP[channel]);
-  } else {
+  int retries = 10;
+  do {
+    i2c->read(address, data, 1);
+  } while (readOnce && data[0] != CHANNEL_MAP[channel] && --retries >= 0);
+  if (retries == 0) {
+    throw RuntimeError(
+        "Invalid channel readback after 10 retries: {:x} != {:x}", data[0],
+        CHANNEL_MAP[channel]);
+  }
+  if (!readOnce) {
     for (size_t i = 0; i < sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0]); ++i) {
       if (data[0] == CHANNEL_MAP[i]) {
         channel = i;
