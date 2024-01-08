@@ -65,52 +65,57 @@ bool I2c::reset() {
   return true;
 }
 
-bool I2c::write(u8 address, std::vector<u8> &data) {
+void I2c::driverWriteBlocking(u8 *dataPtr, size_t size) {
   int ret;
-
-  if (!initDone) {
-    throw RuntimeError("I2C not initialized");
-  }
-
-  ret =
-      XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
-  if (ret != XST_SUCCESS) {
-    throw RuntimeError("Failed to set I2C address");
-  }
-
+  int intrRetries = 1;
   transmitIntrs = 0;
   xIic.Stats.TxErrors = 0;
-
-  int retries = 10;
-  while (transmitIntrs == 0 && xIic.Stats.TxErrors == 0 && retries > 0) {
-    ret = XIic_Start(&xIic);
-    if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to start I2C");
+  do {
+    ret = XIic_MasterSend(&xIic, dataPtr, size);
+    if (ret == XST_IIC_BUS_BUSY) {
+      waitForBusNotBusy();
+    } else if (ret != XST_SUCCESS) {
+      throw RuntimeError("Failed to send I2C data. code: {}", ret);
     }
+  } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
+  intrRetries = 10;
+  while (transmitIntrs == 0 && intrRetries > 0) {
+    irqs[i2cInterrupt].irqController->waitForInterrupt(irqs[i2cInterrupt].num);
+    XIic_InterruptHandler(&xIic);
+    --intrRetries;
+  }
+  if (intrRetries == 0) {
+    throw RuntimeError(
+        "Failed to send I2C data: No transmit interrupt after 10 tries.");
+  }
+  if (xIic.Stats.TxErrors > 0) {
+    throw RuntimeError("Failed to send I2C data: {} TX errors",
+                       xIic.Stats.TxErrors);
+  }
+}
 
-    ret = XIic_MasterSend(&xIic, data.data(), data.size());
-    if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to send I2C data");
+void I2c::driverReadBlocking(u8 *dataPtr, size_t max_read) {
+  int ret;
+  int intrRetries = 1;
+  receiveIntrs = 0;
+  do {
+    ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
+    if (ret == XST_IIC_BUS_BUSY) {
+      waitForBusNotBusy();
+    } else if (ret != XST_SUCCESS) {
+      throw RuntimeError("Failed to receive I2C data: code {}", ret);
     }
-    int intrRetries = 10;
-    while (transmitIntrs == 0 && intrRetries > 0) {
-      irqs[i2cInterrupt].irqController->waitForInterrupt(
-          irqs[i2cInterrupt].num);
-      XIic_InterruptHandler(&xIic);
-      --intrRetries;
-    }
-    --retries;
+  } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
+  intrRetries = 10;
+  while (receiveIntrs == 0 && intrRetries > 0) {
+    irqs[i2cInterrupt].irqController->waitForInterrupt(irqs[i2cInterrupt].num);
+    XIic_InterruptHandler(&xIic);
+    --intrRetries;
   }
-
-  ret = XIic_Stop(&xIic);
-  if (ret != XST_SUCCESS) {
-    throw RuntimeError("Failed to stop I2C");
+  if (intrRetries == 0) {
+    throw RuntimeError(
+        "Failed to receive I2C data: No receive interrupt after 10 tries.");
   }
-  if (retries == 0 || xIic.Stats.TxErrors != 0) {
-    throw RuntimeError("Failed to send I2C data: {} retries, {} errors",
-                       retries, xIic.Stats.TxErrors);
-  }
-  return true;
 }
 
 void I2c::waitForBusNotBusy() {
@@ -129,6 +134,33 @@ void I2c::waitForBusNotBusy() {
   }
 }
 
+bool I2c::write(u8 address, std::vector<u8> &data) {
+  int ret;
+
+  if (!initDone) {
+    throw RuntimeError("I2C not initialized");
+  }
+
+  ret =
+      XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to set I2C address");
+  }
+
+  ret = XIic_Start(&xIic);
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to start I2C");
+  }
+
+  driverWriteBlocking(data.data(), data.size());
+
+  ret = XIic_Stop(&xIic);
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to stop I2C");
+  }
+  return true;
+}
+
 bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   int ret;
 
@@ -145,40 +177,49 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
     throw RuntimeError("Failed to set I2C address");
   }
 
-  receiveIntrs = 0;
+  ret = XIic_Start(&xIic);
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to start I2C");
+  }
+
+  driverReadBlocking(dataPtr, max_read);
+
+  ret = XIic_Stop(&xIic);
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to stop I2C");
+  }
+
+  return XST_SUCCESS;
+}
+
+bool I2c::readRegister(u8 address, u8 reg, std::vector<u8> &data,
+                       size_t max_read) {
+  int ret;
+
+  if (!initDone) {
+    throw RuntimeError("I2C not initialized");
+  }
+
+  data.resize(data.size() + max_read);
+  u8 *dataPtr = data.data() + data.size() - max_read;
+
+  ret =
+      XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
+  if (ret != XST_SUCCESS) {
+    throw RuntimeError("Failed to set I2C address");
+  }
 
   ret = XIic_Start(&xIic);
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to start I2C");
   }
 
-  int retries = 10;
-  while (receiveIntrs == 0 && retries > 0) {
-    int intrRetries = 1;
-    do {
-      ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
-      if (ret == XST_IIC_BUS_BUSY) {
-        waitForBusNotBusy();
-      } else if (ret != XST_SUCCESS) {
-        throw RuntimeError("Failed to receive I2C data: code {}", ret);
-      }
-    } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
-    intrRetries = 10;
-    while (receiveIntrs == 0 && intrRetries > 0) {
-      irqs[i2cInterrupt].irqController->waitForInterrupt(
-          irqs[i2cInterrupt].num);
-      XIic_InterruptHandler(&xIic);
-      --intrRetries;
-    }
-    --retries;
-  }
+  driverWriteBlocking(&reg, sizeof(reg));
+  driverReadBlocking(dataPtr, max_read);
 
   ret = XIic_Stop(&xIic);
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to stop I2C");
-  }
-  if (retries == 0) {
-    throw RuntimeError("Failed to send I2C data");
   }
 
   return XST_SUCCESS;

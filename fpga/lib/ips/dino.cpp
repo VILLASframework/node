@@ -37,9 +37,8 @@ Dino::IoextPorts Dino::getIoextDir() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  std::vector<u8> data = {I2C_IOEXT_REG_DIR};
-  i2cdev->write(I2C_IOEXT_ADDR, data);
-  i2cdev->read(I2C_IOEXT_ADDR, data, 1);
+  std::vector<u8> data = {0};
+  i2cdev->readRegister(I2C_IOEXT_ADDR, I2C_IOEXT_REG_DIR, data, 1);
   IoextPorts ports;
   ports.raw = data[0];
   return ports;
@@ -49,9 +48,8 @@ Dino::IoextPorts Dino::getIoextOut() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  std::vector<u8> data = {I2C_IOEXT_REG_OUT};
-  i2cdev->write(I2C_IOEXT_ADDR, data);
-  i2cdev->read(I2C_IOEXT_ADDR, data, 1);
+  std::vector<u8> data = {0};
+  i2cdev->readRegister(I2C_IOEXT_ADDR, I2C_IOEXT_REG_OUT, data, 1);
   IoextPorts ports;
   ports.raw = data[0];
   return ports;

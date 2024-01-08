@@ -35,6 +35,7 @@ public:
   virtual bool reset() override;
   bool write(u8 address, std::vector<u8> &data);
   bool read(u8 address, std::vector<u8> &data, size_t max_read);
+  bool readRegister(u8 address, u8 reg, std::vector<u8> &data, size_t max_read);
 
   int transmitIntrs;
   int receiveIntrs;
@@ -84,6 +85,8 @@ private:
     return {registerMemory};
   }
   void waitForBusNotBusy();
+  void driverWriteBlocking(u8 *dataPtr, size_t size);
+  void driverReadBlocking(u8 *dataPtr, size_t max_read);
 };
   class I2cFactory : NodeFactory {
 
