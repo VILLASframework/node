@@ -18,6 +18,13 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
+#define I2C_SWTICH_ADDR 0x70
+#define I2C_SWITCH_CHANNEL_MAP                                                 \
+  { 0x20, 0x80, 0x02, 0x08, 0x10, 0x40, 0x01, 0x04 }
+#define I2C_IOEXT_ADDR 0x20
+#define I2C_IOEXT_REG_DIR 0x03
+#define I2C_IOEXT_REG_OUT 0x01
+#define I2C_EEPROM_ADDR 0x50
 class I2c : public Node {
 public:
   friend class I2cFactory;
@@ -25,7 +32,7 @@ public:
   I2c();
   virtual ~I2c();
   virtual bool init() override;
-  bool reset() override;
+  virtual bool reset() override;
   bool write(u8 address, std::vector<u8> &data);
   bool read(u8 address, std::vector<u8> &data, size_t max_read);
 
@@ -50,7 +57,7 @@ public:
     uint8_t channel;
     bool readOnce;
   };
-  Switch &getSwitch(uint8_t address = 0x70) {
+  Switch &getSwitch(uint8_t address = I2C_SWTICH_ADDR) {
     if (switchInstance == nullptr) {
       switchInstance = std::make_unique<Switch>(this, address);
     } else {

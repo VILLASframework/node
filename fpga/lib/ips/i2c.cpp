@@ -154,11 +154,6 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
 
   int retries = 10;
   while (receiveIntrs == 0 && retries > 0) {
-    ret = XIic_Start(&xIic);
-    if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to start I2C");
-    }
-
     int intrRetries = 1;
     do {
       ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
@@ -189,10 +184,9 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   return XST_SUCCESS;
 }
 
-static const uint8_t CHANNEL_MAP[] = {0x20, 0x80, 0x02, 0x08,
-                                      0x10, 0x40, 0x01, 0x04};
+static const uint8_t CHANNEL_MAP[] = I2C_SWITCH_CHANNEL_MAP;
 void I2c::Switch::setChannel(uint8_t channel) {
-  if (channel > sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0])) {
+  if (channel >= sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0])) {
     throw RuntimeError("Invalid channel number {}", channel);
   }
   this->channel = channel;
