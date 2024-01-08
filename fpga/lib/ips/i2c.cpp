@@ -20,7 +20,7 @@ I2c::I2c()
       xConfig(), hwLock(), configDone(false), initDone(false), polling(false),
       switchInstance(nullptr) {}
 
-I2c::~I2c() { reset(); }
+I2c::~I2c() { I2c::reset(); }
 
 static void SendHandler(I2c *i2c, __attribute__((unused)) int bytesSend) {
   i2c->transmitIntrs++;
