@@ -93,6 +93,7 @@ void DinoAdc::configureHardware() {
                   readback.raw, ioext.raw);
     throw RuntimeError("Failed to set IOEXT direction register");
   }
+  logger->debug("ADC Ioext: Direction register configured to {}", readback);
   ioext.raw = 0;
   ioext.fields.data_dir = true;
   ioext.fields.status_led = true;
@@ -108,7 +109,7 @@ void DinoAdc::configureHardware() {
     throw RuntimeError("Failed to set IOEXT output register");
   }
   i2cdev->getSwitch().unlockChannel();
-  logger->debug("ADC configured: {}", readback);
+  logger->debug("ADC Ioext: Output register configured to {}", readback);
 }
 
 DinoDac::DinoDac() : Dino() {}
@@ -128,6 +129,7 @@ void DinoDac::configureHardware() {
                   readback.raw, ioext.raw);
     throw RuntimeError("Failed to set IOEXT direction register");
   }
+  logger->debug("DAC Ioext: Direction register configured to {}", readback);
   ioext.fields.status_led = true;
   // Default gain is 1. Although not really necessary, let's be explicit here
   ioext.fields.gain_lsb = 0x00 & 0x1;
@@ -140,7 +142,7 @@ void DinoDac::configureHardware() {
     throw RuntimeError("Failed to set IOEXT output register");
   }
   i2cdev->getSwitch().unlockChannel();
-  logger->debug("DAC configured: {}", readback);
+  logger->debug("DAC Ioext: Output register configured to {}", readback);
 }
 
 void DinoDac::setGain(Gain gain) {
