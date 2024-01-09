@@ -9,13 +9,34 @@
 
 #include <villas/utils.hpp>
 
+#include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dino.hpp>
 
 using namespace villas::fpga::ip;
 
-Dino::Dino() : Node(), i2cdev(nullptr), i2c_channel(0) {}
+Dino::Dino() : Node(), i2cdev(nullptr), i2c_channel(0), configDone(false) {}
 
 Dino::~Dino() {}
+
+bool Dino::init() {
+  if (!configDone) {
+    logger->error("Dino configuration not done yet");
+    throw RuntimeError("Dino configuration not done yet");
+  }
+  if (i2cdev == nullptr) {
+    i2cdev = std::dynamic_pointer_cast<fpga::ip::I2c>(
+        card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_iic:")));
+    if (i2cdev == nullptr) {
+      logger->error("No I2C found on FPGA");
+      throw RuntimeError(
+          "Dino requires and I2C device but none was found on FPGA");
+    } else {
+      logger->debug("Found I2C on FPGA");
+    }
+  }
+  configureHardware();
+  return true;
+}
 
 void Dino::setIoextDir(IoextPorts ports) {
   if (i2cdev == nullptr) {
@@ -80,6 +101,10 @@ DinoAdc::DinoAdc() : Dino() {}
 DinoAdc::~DinoAdc() {}
 
 void DinoAdc::configureHardware() {
+  if (!configDone) {
+    logger->error("ADC configuration not done yet");
+    throw RuntimeError("ADC configuration not done yet");
+  }
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
@@ -117,6 +142,10 @@ DinoDac::DinoDac() : Dino() {}
 DinoDac::~DinoDac() {}
 
 void DinoDac::configureHardware() {
+  if (!configDone) {
+    logger->error("DAC configuration not done yet");
+    throw RuntimeError("DAC configuration not done yet");
+  }
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
@@ -169,12 +198,24 @@ Dino::Gain DinoDac::getGain() {
   return ret;
 }
 
-static char n_adc[] = "DINO ADC";
-static char d_adc[] = "DINO analog to digital converter";
-static char v_adc[] = "xilinx.com:module_ref:dinoif_fast:";
-static NodePlugin<DinoAdc, n_adc, d_adc, v_adc> f_adc;
+void DinoFactory::parse(Core &ip, json_t *cfg) {
+  NodeFactory::parse(ip, cfg);
 
-static char n_dac[] = "DINO DAC";
-static char d_dac[] = "DINO digital to analog converter";
-static char v_dac[] = "xilinx.com:module_ref:dinoif_dac:";
-static NodePlugin<DinoDac, n_dac, d_dac, v_dac> f_dac;
+  auto &dino = dynamic_cast<Dino &>(ip);
+  json_error_t err;
+  int i2c_channel;
+  int ret =
+      json_unpack_ex(cfg, &err, 0, "{ s: i }", "i2c_channel", &i2c_channel);
+  if (ret != 0) {
+    throw ConfigError(cfg, err, "", "Failed to parse Dino configuration");
+  }
+  if (i2c_channel < 0 || i2c_channel >= 8) {
+    throw ConfigError(cfg, err, "", "Invalid I2C channel");
+  }
+  dino.i2c_channel = static_cast<uint8_t>(i2c_channel);
+
+  dino.configDone = true;
+}
+
+static DinoAdcFactory fAdc;
+static DinoDacFactory fDac;

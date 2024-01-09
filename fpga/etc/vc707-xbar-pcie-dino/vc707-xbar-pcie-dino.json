@@ -1014,6 +1014,7 @@
   },
   "dino_dinoif_dac_0": {
     "vlnv": "xilinx.com:module_ref:dinoif_dac:1.0",
+    "i2c_channel": 1,
     "parameters": {
       "component_name": "design_1_dinoif_dac_0_0",
       "edk_iptype": "PERIPHERAL"
@@ -1028,6 +1029,7 @@
   },
   "dino_dinoif_fast_0": {
     "vlnv": "xilinx.com:module_ref:dinoif_fast:1.0",
+    "i2c_channel": 0,
     "parameters": {
       "component_name": "design_1_dinoif_fast_0_0",
       "edk_iptype": "PERIPHERAL"

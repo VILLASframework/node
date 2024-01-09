@@ -18,6 +18,7 @@ namespace ip {
 
 class Dino : public Node {
 public:
+  friend class DinoFactory;
   union IoextPorts {
     struct __attribute__((packed)) {
       bool clk_dir : 1;
@@ -52,6 +53,7 @@ public:
 
   Dino();
   virtual ~Dino();
+  virtual bool init() override;
   void setI2c(std::shared_ptr<I2c> i2cdev, uint8_t i2c_channel) {
     this->i2cdev = i2cdev;
     this->i2c_channel = i2c_channel;
@@ -75,6 +77,7 @@ public:
 protected:
   std::shared_ptr<I2c> i2cdev;
   uint8_t i2c_channel;
+  bool configDone;
 
   IoextPorts getIoextDir();
   IoextPorts getIoextOut();
@@ -98,6 +101,41 @@ public:
   Gain getGain();
 };
 
+class DinoFactory : NodeFactory {
+public:
+  virtual std::string getDescription() const { return "Dino Analog I/O"; }
+
+protected:
+  virtual void parse(Core &ip, json_t *json) override;
+};
+
+class DinoAdcFactory : DinoFactory {
+public:
+  virtual std::string getName() const { return "dinoAdc"; }
+
+private:
+  virtual Vlnv getCompatibleVlnv() const {
+    return Vlnv("xilinx.com:module_ref:dinoif_fast:");
+  }
+  Core *make() const { return new DinoAdc; };
+};
+
+class DinoDacFactory : DinoFactory {
+public:
+  virtual std::string getName() const { return "dinoDac"; }
+
+private:
+  virtual Vlnv getCompatibleVlnv() const {
+    return Vlnv("xilinx.com:module_ref:dinoif_dac:");
+  }
+  Core *make() const { return new DinoDac; };
+};
+
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::ip::Dino> : public fmt::ostream_formatter {};
+#endif
