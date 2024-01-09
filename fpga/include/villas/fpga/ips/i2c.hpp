@@ -32,6 +32,7 @@ public:
   I2c();
   virtual ~I2c();
   virtual bool init() override;
+  virtual bool check() override;
   virtual bool reset() override;
   bool write(u8 address, std::vector<u8> &data);
   bool read(u8 address, std::vector<u8> &data, size_t max_read);

@@ -60,6 +60,13 @@ bool I2c::init() {
   return true;
 }
 
+bool I2c::check() {
+  if (!initDone) {
+    throw RuntimeError("I2C not initialized");
+  }
+  return getSwitch().selfTest();
+}
+
 bool I2c::reset() {
   // we cannot lock here because this may be called in a destructor
   XIic_Reset(&xIic);
