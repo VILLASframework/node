@@ -103,7 +103,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
     throw ConfigError(json_ips, "node-config-fpga-ips",
                       "FPGA IP core list must be an object!");
 
-  card->ips = ip::CoreFactory::make(card.get(), json_ips);
+  ip::CoreFactory::make(card.get(), json_ips);
   if (card->ips.empty())
     throw ConfigError(json_ips, "node-config-fpga-ips",
                       "Cannot initialize IPs of FPGA card {}", card_name);

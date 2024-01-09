@@ -33,6 +33,7 @@ static std::list<Vlnv> vlnvInitializationOrder = {
     Vlnv("xilinx.com:ip:axi_pcie:"),
     Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
     Vlnv("xilinx.com:ip:axis_switch:"),
+    Vlnv("xilinx.com:ip:axi_iic:"),
 };
 
 std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
@@ -44,9 +45,11 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   std::list<IpIdentifier> orderedIps; // IPs ordered in initialization order
 
   std::list<std::shared_ptr<Core>> configuredIps; // Successfully configured IPs
-  std::list<std::shared_ptr<Core>>
-      initializedIps; // Initialized, i.e. ready-to-use IPs
 
+  if (!card->ips.empty()) {
+    loggerStatic->error("IP list of card {} already contains IPs.", card->name);
+    throw RuntimeError("IP list of card {} already contains IPs.", card->name);
+  }
   // Parse all IP instance names and their VLNV into list `allIps`
   const char *ipName;
   json_t *json_ip;
@@ -269,15 +272,15 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
     }
 
     // Will only be reached if the IP successfully was initialized
-    initializedIps.push_back(std::move(ip));
+    card->ips.push_back(std::move(ip));
   }
 
   loggerStatic->debug("Initialized IPs:");
-  for (auto &ip : initializedIps) {
+  for (auto &ip : card->ips) {
     loggerStatic->debug("  {}", *ip);
   }
 
-  return initializedIps;
+  return card->ips;
 }
 
 void Core::dump() {
