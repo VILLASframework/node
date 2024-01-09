@@ -43,9 +43,10 @@ public:
 
   class Switch {
   public:
-    Switch(I2c *i2c, uint8_t address)
-        : i2c(i2c), address(address), channel(0), readOnce(false),
-          switchLock(){};
+    Switch(I2c *i2c, uint8_t address,
+           Logger logger = villas::logging.get("i2c"))
+        : i2c(i2c), address(address), channel(0), readOnce(false), switchLock(),
+          logger(logger){};
     Switch(const Switch &other) = delete;
     Switch &operator=(const Switch &other) = delete;
     void setChannel(uint8_t channel);
@@ -57,6 +58,7 @@ public:
     uint8_t getChannel();
     void setAddress(uint8_t address) { this->address = address; }
     uint8_t getAddress() { return address; }
+    bool selfTest();
 
   private:
     I2c *i2c;
@@ -64,10 +66,11 @@ public:
     uint8_t channel;
     bool readOnce;
     std::mutex switchLock;
+    Logger logger;
   };
   Switch &getSwitch(uint8_t address = I2C_SWTICH_ADDR) {
     if (switchInstance == nullptr) {
-      switchInstance = std::make_unique<Switch>(this, address);
+      switchInstance = std::make_unique<Switch>(this, address, logger);
     } else {
       switchInstance->setAddress(address);
     }

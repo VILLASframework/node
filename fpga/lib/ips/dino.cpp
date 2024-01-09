@@ -87,6 +87,12 @@ void DinoAdc::configureHardware() {
   IoextPorts ioext = {.raw = 0};
   ioext.fields.sat_detect = true;
   setIoextDir(ioext);
+  auto readback = getIoextDir();
+  if (readback.raw != ioext.raw) {
+    logger->error("Ioext direction register readback incorrect: {:#x} != {:#x}",
+                  readback.raw, ioext.raw);
+    throw RuntimeError("Failed to set IOEXT direction register");
+  }
   ioext.raw = 0;
   ioext.fields.data_dir = true;
   ioext.fields.status_led = true;
@@ -95,6 +101,12 @@ void DinoAdc::configureHardware() {
   setIoextOut(ioext);
   ioext.fields.n_we = false;
   setIoextOut(ioext);
+  readback = getIoextOut();
+  if (readback.raw != ioext.raw) {
+    logger->error("Ioext output register readback incorrect: {:#x} != {:#x}",
+                  readback.raw, ioext.raw);
+    throw RuntimeError("Failed to set IOEXT output register");
+  }
   i2cdev->getSwitch().unlockChannel();
 }
 
@@ -109,10 +121,24 @@ void DinoDac::configureHardware() {
   i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = {.raw = 0};
   setIoextDir(ioext);
+  auto readback = getIoextDir();
+  if (readback.raw != ioext.raw) {
+    logger->error("Ioext direction register readback incorrect: {:#x} != {:#x}",
+                  readback.raw, ioext.raw);
+    throw RuntimeError("Failed to set IOEXT direction register");
+  }
   ioext.fields.status_led = true;
+  // Default gain is 1. Although not really necessary, let's be explicit here
+  ioext.fields.gain_lsb = 0x00 & 0x1;
+  ioext.fields.gain_msb = 0x00 & 0x2;
   setIoextOut(ioext);
+  readback = getIoextOut();
+  if (readback.raw != ioext.raw) {
+    logger->error("Ioext output register readback incorrect: {:#x} != {:#x}",
+                  readback.raw, ioext.raw);
+    throw RuntimeError("Failed to set IOEXT output register");
+  }
   i2cdev->getSwitch().unlockChannel();
-  setGain(GAIN_1);
 }
 
 void DinoDac::setGain(Gain gain) {

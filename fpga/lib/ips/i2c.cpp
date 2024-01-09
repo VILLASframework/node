@@ -12,6 +12,7 @@
 
 #include <villas/fpga/ips/i2c.hpp>
 #include <villas/fpga/ips/intc.hpp>
+#include <villas/log.hpp>
 
 using namespace villas::fpga::ip;
 
@@ -220,7 +221,7 @@ void I2c::Switch::setChannel(uint8_t channel) {
 }
 
 uint8_t I2c::Switch::getChannel() {
-  std::vector<u8> data(1);
+  std::vector<u8> data;
   int retries = 10;
   do {
     i2c->read(address, data, 1);
@@ -240,6 +241,26 @@ uint8_t I2c::Switch::getChannel() {
     readOnce = true;
   }
   return channel;
+}
+
+bool I2c::Switch::selfTest() {
+  uint8_t readback;
+  logger->debug("I2c::Switch self test. Testing {} channels of device {:#x}",
+                sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0]), address);
+  for (size_t i = 0; i < sizeof(CHANNEL_MAP) / sizeof(CHANNEL_MAP[0]); ++i) {
+    logger->debug("Setting switch to channel {}, data byte {:#x}", i,
+                  CHANNEL_MAP[i]);
+    setAndLockChannel(i);
+    try {
+      readback = getChannel();
+      logger->debug("Readback channel: {}", readback);
+    } catch (const RuntimeError &e) {
+      logger->debug("Encoutered error on readback: {}", e.what());
+      return false;
+    }
+    unlockChannel();
+  }
+  return true;
 }
 
 void I2cFactory::parse(Core &ip, json_t *cfg) {
