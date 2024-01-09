@@ -44,10 +44,16 @@ public:
   class Switch {
   public:
     Switch(I2c *i2c, uint8_t address)
-        : i2c(i2c), address(address), channel(0), readOnce(false){};
+        : i2c(i2c), address(address), channel(0), readOnce(false),
+          switchLock(){};
     Switch(const Switch &other) = delete;
     Switch &operator=(const Switch &other) = delete;
     void setChannel(uint8_t channel);
+    void setAndLockChannel(uint8_t channel) {
+      switchLock.lock();
+      setChannel(channel);
+    }
+    void unlockChannel() { switchLock.unlock(); }
     uint8_t getChannel();
     void setAddress(uint8_t address) { this->address = address; }
     uint8_t getAddress() { return address; }
@@ -57,6 +63,7 @@ public:
     uint8_t address;
     uint8_t channel;
     bool readOnce;
+    std::mutex switchLock;
   };
   Switch &getSwitch(uint8_t address = I2C_SWTICH_ADDR) {
     if (switchInstance == nullptr) {
@@ -84,6 +91,7 @@ private:
   std::list<MemoryBlockName> getMemoryBlocks() const {
     return {registerMemory};
   }
+  // assumes hwLock is locked
   void waitForBusNotBusy();
   void driverWriteBlocking(u8 *dataPtr, size_t size);
   void driverReadBlocking(u8 *dataPtr, size_t max_read);

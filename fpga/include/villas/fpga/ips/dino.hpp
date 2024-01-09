@@ -52,13 +52,15 @@ public:
     return getMasterPort(masterPort);
   }
 
-  IoextPorts getIoextDir();
-  IoextPorts getIoextOut();
+  IoextPorts getIoextDirectionRegister();
+  IoextPorts getIoextOutputRegister();
 
 protected:
   std::shared_ptr<I2c> i2cdev;
   uint8_t i2c_channel;
 
+  IoextPorts getIoextDir();
+  IoextPorts getIoextOut();
   void setIoextDir(IoextPorts ports);
   void setIoextOut(IoextPorts ports);
 };

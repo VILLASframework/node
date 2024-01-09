@@ -37,22 +37,42 @@ Dino::IoextPorts Dino::getIoextDir() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  std::vector<u8> data = {0};
+  std::vector<u8> data;
   i2cdev->readRegister(I2C_IOEXT_ADDR, I2C_IOEXT_REG_DIR, data, 1);
   IoextPorts ports;
   ports.raw = data[0];
   return ports;
 }
 
+Dino::IoextPorts Dino::getIoextDirectionRegister() {
+  if (i2cdev == nullptr) {
+    throw RuntimeError("I2C device not set");
+  }
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
+  auto ret = getIoextDir();
+  i2cdev->getSwitch().unlockChannel();
+  return ret;
+}
+
 Dino::IoextPorts Dino::getIoextOut() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  std::vector<u8> data = {0};
+  std::vector<u8> data;
   i2cdev->readRegister(I2C_IOEXT_ADDR, I2C_IOEXT_REG_OUT, data, 1);
   IoextPorts ports;
   ports.raw = data[0];
   return ports;
+}
+
+Dino::IoextPorts Dino::getIoextOutputRegister() {
+  if (i2cdev == nullptr) {
+    throw RuntimeError("I2C device not set");
+  }
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
+  auto ret = getIoextOut();
+  i2cdev->getSwitch().unlockChannel();
+  return ret;
 }
 
 DinoAdc::DinoAdc() : Dino() {}
@@ -63,7 +83,7 @@ void DinoAdc::configureHardware() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  i2cdev->getSwitch().setChannel(i2c_channel);
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = {.raw = 0};
   ioext.fields.sat_detect = true;
   setIoextDir(ioext);
@@ -75,6 +95,7 @@ void DinoAdc::configureHardware() {
   setIoextOut(ioext);
   ioext.fields.n_we = false;
   setIoextOut(ioext);
+  i2cdev->getSwitch().unlockChannel();
 }
 
 DinoDac::DinoDac() : Dino() {}
@@ -85,11 +106,12 @@ void DinoDac::configureHardware() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  i2cdev->getSwitch().setChannel(i2c_channel);
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = {.raw = 0};
   setIoextDir(ioext);
   ioext.fields.status_led = true;
   setIoextOut(ioext);
+  i2cdev->getSwitch().unlockChannel();
   setGain(GAIN_1);
 }
 
@@ -97,21 +119,24 @@ void DinoDac::setGain(Gain gain) {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  i2cdev->getSwitch().setChannel(i2c_channel);
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = getIoextOut();
   ioext.fields.gain_lsb = gain & 0x1;
   ioext.fields.gain_msb = gain & 0x2;
   setIoextOut(ioext);
+  i2cdev->getSwitch().unlockChannel();
 }
 
 Dino::Gain DinoDac::getGain() {
   if (i2cdev == nullptr) {
     throw RuntimeError("I2C device not set");
   }
-  i2cdev->getSwitch().setChannel(i2c_channel);
+  i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = getIoextOut();
-  return static_cast<Gain>((ioext.fields.gain_msb << 1) |
-                           ioext.fields.gain_lsb);
+  auto ret =
+      static_cast<Gain>((ioext.fields.gain_msb << 1) | ioext.fields.gain_lsb);
+  i2cdev->getSwitch().unlockChannel();
+  return ret;
 }
 
 static char n_adc[] = "DINO ADC";

@@ -42,6 +42,7 @@ bool I2c::init() {
     return true;
   }
   xConfig.BaseAddress = getBaseAddr(registerMemory);
+  hwLock.lock();
   ret = XIic_CfgInitialize(&xIic, &xConfig, xConfig.BaseAddress);
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to initialize I2C");
@@ -53,12 +54,13 @@ bool I2c::init() {
 
   irqs[i2cInterrupt].irqController->enableInterrupt(irqs[i2cInterrupt],
                                                     polling);
-
+  hwLock.unlock();
   initDone = true;
   return true;
 }
 
 bool I2c::reset() {
+  // we cannot lock here because this may be called in a destructor
   XIic_Reset(&xIic);
   irqs[i2cInterrupt].irqController->disableInterrupt(irqs[i2cInterrupt]);
   initDone = false;
@@ -141,6 +143,7 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
     throw RuntimeError("I2C not initialized");
   }
 
+  hwLock.lock();
   ret =
       XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
   if (ret != XST_SUCCESS) {
@@ -158,6 +161,7 @@ bool I2c::write(u8 address, std::vector<u8> &data) {
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to stop I2C");
   }
+  hwLock.unlock();
   return true;
 }
 
@@ -171,6 +175,7 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   data.resize(data.size() + max_read);
   u8 *dataPtr = data.data() + data.size() - max_read;
 
+  hwLock.lock();
   ret =
       XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
   if (ret != XST_SUCCESS) {
@@ -188,41 +193,19 @@ bool I2c::read(u8 address, std::vector<u8> &data, size_t max_read) {
   if (ret != XST_SUCCESS) {
     throw RuntimeError("Failed to stop I2C");
   }
+  hwLock.unlock();
 
   return XST_SUCCESS;
 }
 
 bool I2c::readRegister(u8 address, u8 reg, std::vector<u8> &data,
                        size_t max_read) {
-  int ret;
 
-  if (!initDone) {
-    throw RuntimeError("I2C not initialized");
-  }
-
-  data.resize(data.size() + max_read);
-  u8 *dataPtr = data.data() + data.size() - max_read;
-
-  ret =
-      XIic_SetAddress(&xIic, XII_ADDR_TO_SEND_TYPE, static_cast<int>(address));
-  if (ret != XST_SUCCESS) {
-    throw RuntimeError("Failed to set I2C address");
-  }
-
-  ret = XIic_Start(&xIic);
-  if (ret != XST_SUCCESS) {
-    throw RuntimeError("Failed to start I2C");
-  }
-
-  driverWriteBlocking(&reg, sizeof(reg));
-  driverReadBlocking(dataPtr, max_read);
-
-  ret = XIic_Stop(&xIic);
-  if (ret != XST_SUCCESS) {
-    throw RuntimeError("Failed to stop I2C");
-  }
-
-  return XST_SUCCESS;
+  std::vector<u8> regData = {reg};
+  bool ret;
+  ret = write(address, regData);
+  ret &= read(address, data, max_read);
+  return ret;
 }
 
 static const uint8_t CHANNEL_MAP[] = I2C_SWITCH_CHANNEL_MAP;
