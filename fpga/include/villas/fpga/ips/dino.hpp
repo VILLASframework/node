@@ -30,6 +30,23 @@ public:
       bool gain_msb : 1;
     } fields;
     uint8_t raw;
+
+    friend std::ostream &operator<<(std::ostream &stream,
+                                    const IoextPorts &ports) {
+      return stream << "IoextPorts [clk_dir=" << ports.fields.clk_dir
+                    << ", data_dir=" << ports.fields.data_dir
+                    << ", status_led=" << ports.fields.status_led
+                    << ", n_we=" << ports.fields.n_we
+                    << ", input_zero=" << ports.fields.input_zero
+                    << ", sat_detect=" << ports.fields.sat_detect
+                    << ", gain_lsb=" << ports.fields.gain_lsb
+                    << ", gain_msb=" << ports.fields.gain_msb << "]";
+    }
+    std::string toString() {
+      std::stringstream s;
+      s << *this;
+      return s.str();
+    }
   };
   enum Gain { GAIN_1 = 0, GAIN_2 = 1, GAIN_5 = 2, GAIN_10 = 3 };
 

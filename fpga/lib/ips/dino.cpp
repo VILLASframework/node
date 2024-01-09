@@ -108,6 +108,7 @@ void DinoAdc::configureHardware() {
     throw RuntimeError("Failed to set IOEXT output register");
   }
   i2cdev->getSwitch().unlockChannel();
+  logger->debug("ADC configured: {}", readback);
 }
 
 DinoDac::DinoDac() : Dino() {}
@@ -139,6 +140,7 @@ void DinoDac::configureHardware() {
     throw RuntimeError("Failed to set IOEXT output register");
   }
   i2cdev->getSwitch().unlockChannel();
+  logger->debug("DAC configured: {}", readback);
 }
 
 void DinoDac::setGain(Gain gain) {
