@@ -110,38 +110,38 @@ int fpga::ConnectString::portStringToInt(std::string &str) const
 
 
 // parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
-void fpga::ConnectString::configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
-	std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>>& aurora_channels) const
-{
-	if (dmaLoopback) {
-		log->info("Configuring DMA loopback");
-		dma->connectLoopback();
-		return;
-	}
+void fpga::ConnectString::configCrossBar(
+    std::shared_ptr<villas::fpga::ip::Dma> dma,
+    std::vector<std::shared_ptr<fpga::ip::Node>> &switch_channels) const {
+  if (dmaLoopback) {
+    log->info("Configuring DMA loopback");
+    dma->connectLoopback();
+    return;
+  }
 
-	log->info("Connecting {} to {}, {}directional",
-		(srcAsInt==-1 ? "stdin" : std::to_string(srcAsInt)),
-		(dstAsInt==-1 ? "stdout" : std::to_string(dstAsInt)),
-		(bidirectional ? "bi" : "uni"));
+  log->info("Connecting {} to {}, {}directional",
+            (srcAsInt == -1 ? "stdin" : std::to_string(srcAsInt)),
+            (dstAsInt == -1 ? "stdout" : std::to_string(dstAsInt)),
+            (bidirectional ? "bi" : "uni"));
 
-	std::shared_ptr<fpga::ip::Node> src;
-	std::shared_ptr<fpga::ip::Node> dest;
-	if (srcIsStdin) {
-		src = dma;
-	} else {
-		src = aurora_channels[srcAsInt];
-	}
+  std::shared_ptr<fpga::ip::Node> src;
+  std::shared_ptr<fpga::ip::Node> dest;
+  if (srcIsStdin) {
+    src = dma;
+  } else {
+    src = switch_channels[srcAsInt];
+  }
 
-	if (dstIsStdout) {
-		dest = dma;
-	} else {
-		dest = aurora_channels[dstAsInt];
-	}
+  if (dstIsStdout) {
+    dest = dma;
+  } else {
+    dest = switch_channels[dstAsInt];
+  }
 
-	src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
-	if (bidirectional) {
-		dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
-	}
+  src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
+  if (bidirectional) {
+    dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
+  }
 }
 
 void fpga::setupColorHandling()

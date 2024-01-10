@@ -28,12 +28,12 @@ public:
 
 	void parseString(std::string& connectString);
 	int portStringToInt(std::string &str) const;
+  void configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
+                      std::vector<std::shared_ptr<villas::fpga::ip::Node>>
+                          &switch_channels) const;
 
-	void configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
-		std::vector<std::shared_ptr<villas::fpga::ip::AuroraXilinx>>& aurora_channels) const;
-
-	bool isBidirectional() const { return bidirectional; };
-	bool isDmaLoopback() const { return dmaLoopback; };
+  bool isBidirectional() const { return bidirectional; };
+  bool isDmaLoopback() const { return dmaLoopback; };
 	bool isSrcStdin() const { return srcIsStdin; };
 	bool isDstStdout() const { return dstIsStdout; };
 	int getSrcAsInt() const { return srcAsInt; };

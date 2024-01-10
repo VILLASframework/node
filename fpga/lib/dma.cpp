@@ -55,18 +55,19 @@ villasfpga_handle villasfpga_init(const char *configFile)
 		auto handle = new villasfpga_handle_t;
 		handle->card = fpga::setupFpgaCard(configFile, fpgaName);
 
-		std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>> aurora_channels;
-		for (int i = 0; i < 4; i++) {
+                std::vector<std::shared_ptr<fpga::ip::Node>> switch_channels;
+                for (int i = 0; i < 4; i++) {
 			auto name = fmt::format("aurora_8b10b_ch{}", i);
 			auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
-			auto aurora = std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>(handle->card->lookupIp(id));
-			if (aurora == nullptr) {
+                        auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(
+                            handle->card->lookupIp(id));
+                        if (aurora == nullptr) {
 				logger->error("No Aurora interface found on FPGA");
 				return nullptr;
 			}
 
-			aurora_channels.push_back(aurora);
-		}
+                        switch_channels.push_back(aurora);
+                }
 
 		handle->dma = std::dynamic_pointer_cast<fpga::ip::Dma>
 					(handle->card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
@@ -81,15 +82,16 @@ villasfpga_handle villasfpga_init(const char *configFile)
 		}
 
 		if (dumpAuroraChannels) {
-			for (auto aurora : aurora_channels)
-				aurora->dump();
+                  for (auto aurora : switch_channels)
+                    aurora->dump();
 		}
 
 		// Configure Crossbar switch
 		const fpga::ConnectString parsedConnectString(connectStr);
-		parsedConnectString.configCrossBar(handle->dma, aurora_channels);
+                parsedConnectString.configCrossBar(handle->dma,
+                                                   switch_channels);
 
-		return handle;
+                return handle;
 	} catch (const RuntimeError &e) {
 		logger->error("Error: {}", e.what());
 		return nullptr;

@@ -212,18 +212,18 @@ int main(int argc, char *argv[]) {
 
     auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
-    std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>> aurora_channels;
+    std::vector<std::shared_ptr<fpga::ip::Node>> switch_channels;
     for (int i = 0; i < 4; i++) {
       auto name = fmt::format("aurora_aurora_8b10b_ch{}", i);
       auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
       auto aurora =
-          std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>(card->lookupIp(id));
+          std::dynamic_pointer_cast<fpga::ip::Node>(card->lookupIp(id));
       if (aurora == nullptr) {
         logger->error("No Aurora interface found on FPGA");
         return 1;
       }
 
-      aurora_channels.push_back(aurora);
+      switch_channels.push_back(aurora);
     }
 
     auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (dumpAuroraChannels) {
-      for (auto aurora : aurora_channels)
+      for (auto aurora : switch_channels)
         aurora->dump();
     }
     bool dstIsStdout = false;
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
     // Configure Crossbar switch
     for (std::string str : connectStr) {
       const fpga::ConnectString parsedConnectString(str);
-      parsedConnectString.configCrossBar(dma, aurora_channels);
+      parsedConnectString.configCrossBar(dma, switch_channels);
       dstIsStdout = dstIsStdout || parsedConnectString.isDstStdout();
       srcIsStdin = srcIsStdin || parsedConnectString.isSrcStdin();
     }
