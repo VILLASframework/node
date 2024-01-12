@@ -19,6 +19,7 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 
+#include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/utils.hpp>
 
 using namespace villas;
@@ -48,31 +49,19 @@ int FpgaNode::prepare() {
                       "There is no FPGA card with the name: {}", cardName);
   }
 
-  std::vector<std::shared_ptr<fpga::ip::AuroraXilinx>> aurora_channels;
-  for (int i = 0; i < 4; i++) {
-    auto name = fmt::format("aurora_8b10b_ch{}", i);
-    auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
-    auto aurora =
-        std::dynamic_pointer_cast<fpga::ip::AuroraXilinx>(card->lookupIp(id));
-    if (aurora == nullptr) {
-      logger->error("No Aurora interface found on FPGA");
-      return 1;
-    }
+  auto axisswitch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:ip:axis_switch:")));
 
-    aurora_channels.push_back(aurora);
+  for (auto ports : axisswitch->getMasterPorts()) {
+    logger->info("Port: {}, {}", ports.first, *ports.second);
   }
-
-  dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
-      card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-  if (dma == nullptr) {
-    logger->error("No DMA found on FPGA ");
-    return 1;
+  for (auto ports : axisswitch->getSlavePorts()) {
+    logger->info("Port: {}, {}", ports.first, *ports.second);
   }
-
   // Configure Crossbar switch
   for (std::string str : connectStrings) {
     const fpga::ConnectString parsedConnectString(str);
-    parsedConnectString.configCrossBar(dma, aurora_channels);
+    parsedConnectString.configCrossBar(card);
   }
 
   auto &alloc = HostRam::getAllocator();
