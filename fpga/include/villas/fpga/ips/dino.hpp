@@ -138,4 +138,7 @@ private:
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
 class fmt::formatter<villas::fpga::ip::Dino> : public fmt::ostream_formatter {};
+template <>
+class fmt::formatter<villas::fpga::ip::Dino::IoextPorts>
+    : public fmt::ostream_formatter {};
 #endif
