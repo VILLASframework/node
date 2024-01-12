@@ -29,6 +29,7 @@
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/i2c.hpp>
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
 
@@ -212,60 +213,57 @@ int main(int argc, char *argv[]) {
 
     auto card = fpga::setupFpgaCard(configFile, fpgaName);
 
-    std::vector<std::shared_ptr<fpga::ip::Node>> switch_channels;
-    for (int i = 0; i < 4; i++) {
-      auto name = fmt::format("aurora_aurora_8b10b_ch{}", i);
-      auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
-      auto aurora =
-          std::dynamic_pointer_cast<fpga::ip::Node>(card->lookupIp(id));
-      if (aurora == nullptr) {
-        logger->error("No Aurora interface found on FPGA");
-        return 1;
-      }
-
-      switch_channels.push_back(aurora);
-    }
-
-    auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
-        card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-    if (dma == nullptr) {
-      logger->error("No DMA found on FPGA ");
-      return 1;
-    }
-
     if (dumpGraph) {
       auto &mm = MemoryManager::get();
       mm.getGraph().dump("graph.dot");
     }
 
     if (dumpAuroraChannels) {
-      for (auto aurora : switch_channels)
+      auto aurora_channels = getAuroraChannels(card);
+      for (auto aurora : *aurora_channels)
         aurora->dump();
     }
-    bool dstIsStdout = false;
-    bool srcIsStdin = false;
+    bool writeToStdout = false;
+    bool readFromStdin = false;
     // Configure Crossbar switch
     for (std::string str : connectStr) {
       const fpga::ConnectString parsedConnectString(str);
-      parsedConnectString.configCrossBar(dma, switch_channels);
-      dstIsStdout = dstIsStdout || parsedConnectString.isDstStdout();
-      srcIsStdin = srcIsStdin || parsedConnectString.isSrcStdin();
+      parsedConnectString.configCrossBar(card);
+      if (parsedConnectString.isSrcStdin()) {
+        readFromStdin = true;
+        if (parsedConnectString.isBidirectional()) {
+          writeToStdout = true;
+        }
+      }
+      if (parsedConnectString.isDstStdout()) {
+        writeToStdout = true;
+        if (parsedConnectString.isBidirectional()) {
+          readFromStdin = true;
+        }
+      }
     }
+    if (writeToStdout || readFromStdin) {
+      auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
+          card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+      if (dma == nullptr) {
+        logger->error("No DMA found on FPGA ");
+        throw std::runtime_error("No DMA found on FPGA");
+      }
+      std::unique_ptr<std::thread> stdInThread = nullptr;
+      if (!noDma && writeToStdout) {
+        auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
+        // We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
+        // in this thread anymore
+        stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma,
+                                                    std::move(formatter));
+      }
+      if (!noDma && readFromStdin) {
+        writeToDmaFromStdIn(dma);
+      }
 
-    std::unique_ptr<std::thread> stdInThread = nullptr;
-    if (!noDma && dstIsStdout) {
-      auto formatter = fpga::getBufferedSampleFormatter(outputFormat, 16);
-      // We copy the dma shared ptr but move the fomatter unqiue ptr as we don't need it
-      // in this thread anymore
-      stdInThread = std::make_unique<std::thread>(readFromDmaToStdOut, dma,
-                                                  std::move(formatter));
-    }
-    if (!noDma && srcIsStdin) {
-      writeToDmaFromStdIn(dma);
-    }
-
-    if (stdInThread) {
-      stdInThread->join();
+      if (stdInThread) {
+        stdInThread->join();
+      }
     }
   } catch (const RuntimeError &e) {
     logger->error("Error: {}", e.what());

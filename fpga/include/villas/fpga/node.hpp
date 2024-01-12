@@ -84,10 +84,20 @@ public:
 		return *portsMaster.at(name);
 	}
 
+  const std::map<std::string, std::shared_ptr<StreamVertex>> &getMasterPorts() const
+  {
+    return portsMaster;
+  }
+
 	const StreamVertex& getSlavePort(const std::string &name) const
 	{
 		return *portsSlave.at(name);
 	}
+
+  const std::map<std::string, std::shared_ptr<StreamVertex>> &getSlavePorts() const
+  {
+    return portsSlave;
+  }
 
 	bool connect(const StreamVertex &from, const StreamVertex &to);
 	bool connect(const StreamVertex &from, const StreamVertex &to, bool reverse)

@@ -23,80 +23,106 @@
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
-#include <villas/fpga/core.hpp>
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/vlnv.hpp>
+#include <villas/fpga/core.hpp>
+#include <villas/fpga/ips/aurora_xilinx.hpp>
+#include <villas/fpga/ips/dino.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
-#include <villas/fpga/ips/aurora_xilinx.hpp>
 #include <villas/fpga/utils.hpp>
+#include <villas/fpga/vlnv.hpp>
 
 using namespace villas;
 
 static auto logger = villas::logging.get("streamer");
 
-fpga::ConnectString::ConnectString(std::string& connectString, int maxPortNum) :
-	log(villas::logging.get("ConnectString")),
-	maxPortNum(maxPortNum),
-	bidirectional(false),
-	invert(false),
-	srcAsInt(-1),
-	dstAsInt(-1),
-	srcIsStdin(false),
-	dstIsStdout(false),
-	dmaLoopback(false)
-{
-	parseString(connectString);
+std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
+fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
+  auto aurora_channels =
+      std::make_shared<std::vector<std::shared_ptr<fpga::ip::Node>>>();
+  for (int i = 0; i < 4; i++) {
+    auto name = fmt::format("aurora_aurora_8b10b_ch{}", i);
+    auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
+    auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(card->lookupIp(id));
+    if (aurora == nullptr) {
+      logger->error("No Aurora interface found on FPGA");
+      throw std::runtime_error("No Aurora interface found on FPGA");
+    }
+
+    aurora_channels->push_back(aurora);
+  }
+  return aurora_channels;
+}
+
+fpga::ConnectString::ConnectString(std::string &connectString, int maxPortNum)
+    : log(villas::logging.get("ConnectString")), maxPortNum(maxPortNum),
+      bidirectional(false), invert(false), srcType(ConnectType::LOOPBACK),
+      dstType(ConnectType::LOOPBACK), srcAsInt(-1), dstAsInt(-1) {
+  parseString(connectString);
 }
 
 void fpga::ConnectString::parseString(std::string& connectString)
 {
-	if (connectString.empty())
-		return;
+  if (connectString.empty())
+    return;
 
-	if (connectString == "loopback") {
-		logger->info("Connecting loopback");
-		srcIsStdin = true;
-		dstIsStdout = true;
-		bidirectional = true;
-		dmaLoopback = true;
-		return;
-	}
+  if (connectString == "loopback") {
+    logger->info("Connecting loopback");
+    srcType = ConnectType::LOOPBACK;
+    dstType = ConnectType::LOOPBACK;
+    bidirectional = true;
+    return;
+  }
+  static const std::regex regex("([0-9]+|stdin|stdout|pipe|dma|dino)([<\\->]+)("
+                                "[0-9]+|stdin|stdout|pipe|dma|dino)");
+  std::smatch match;
 
-        static const std::regex regex(
-            "([0-9]+)([<\\->]+)([0-9]+|stdin|stdout|pipe|dma)");
-        std::smatch match;
+  if (!std::regex_match(connectString, match, regex) || match.size() != 4) {
+    logger->error("Invalid connect string: {}", connectString);
+    throw std::runtime_error("Invalid connect string");
+  }
 
-        if (!std::regex_match(connectString, match, regex) ||
-            match.size() != 4) {
-          logger->error("Invalid connect string: {}", connectString);
-          throw std::runtime_error("Invalid connect string");
-        }
+  if (match[2] == "<->") {
+    bidirectional = true;
+  } else if (match[2] == "<-") {
+    invert = true;
+  }
 
-        if (match[2] == "<->") {
-          bidirectional = true;
-        } else if (match[2] == "<-") {
-          invert = true;
-        }
+  std::string srcStr = (invert ? match[3] : match[1]);
+  std::string dstStr = (invert ? match[1] : match[3]);
 
-        std::string srcStr = (invert ? match[3] : match[1]);
-        std::string dstStr = (invert ? match[1] : match[3]);
-
-        srcAsInt = portStringToInt(srcStr);
-	dstAsInt = portStringToInt(dstStr);
-	if (srcAsInt == -1) {
-		srcIsStdin = true;
-		dstIsStdout = bidirectional;
-	}
-	if (dstAsInt == -1) {
-		dstIsStdout = true;
-		srcIsStdin = bidirectional;
-	}
+  srcAsInt = portStringToInt(srcStr);
+  dstAsInt = portStringToInt(dstStr);
+  if (srcAsInt == -1) {
+    if (srcStr == "dino") {
+      srcType = ConnectType::DINO;
+    } else if (srcStr == "dma" || srcStr == "pipe" || srcStr == "stdin" ||
+               srcStr == "stdout") {
+      srcType = ConnectType::DMA;
+    } else {
+      throw std::runtime_error("Invalid source type");
+    }
+  } else {
+    srcType = ConnectType::AURORA;
+  }
+  if (dstAsInt == -1) {
+    if (dstStr == "dino") {
+      dstType = ConnectType::DINO;
+    } else if (dstStr == "dma" || dstStr == "pipe" || dstStr == "stdin" ||
+               dstStr == "stdout") {
+      dstType = ConnectType::DMA;
+    } else {
+      throw std::runtime_error("Invalid destination type");
+    }
+  } else {
+    dstType = ConnectType::AURORA;
+  }
 }
 
 int fpga::ConnectString::portStringToInt(std::string &str) const
 {
-  if (str == "stdin" || str == "stdout" || str == "pipe" || str == "dma") {
+  if (str == "stdin" || str == "stdout" || str == "pipe" || str == "dma" ||
+      str == "dino") {
     return -1;
   } else {
     const int port = std::stoi(str);
@@ -111,35 +137,70 @@ int fpga::ConnectString::portStringToInt(std::string &str) const
 
 // parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
 void fpga::ConnectString::configCrossBar(
-    std::shared_ptr<villas::fpga::ip::Dma> dma,
-    std::vector<std::shared_ptr<fpga::ip::Node>> &switch_channels) const {
-  if (dmaLoopback) {
+    std::shared_ptr<villas::fpga::Card> card) const {
+
+  auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+  if (dma == nullptr) {
+    logger->error("No DMA found on FPGA ");
+    throw std::runtime_error("No DMA found on FPGA");
+  }
+
+  if (isDmaLoopback()) {
     log->info("Configuring DMA loopback");
     dma->connectLoopback();
     return;
   }
 
+  auto aurora_channels = getAuroraChannels(card);
+
+  auto dinoDac = std::dynamic_pointer_cast<fpga::ip::DinoDac>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_dac:")));
+  if (dinoDac == nullptr) {
+    logger->error("No Dino DAC found on FPGA ");
+    throw std::runtime_error("No Dino DAC found on FPGA");
+  }
+
+  auto dinoAdc = std::dynamic_pointer_cast<fpga::ip::DinoAdc>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:")));
+  if (dinoAdc == nullptr) {
+    logger->error("No Dino ADC found on FPGA ");
+    throw std::runtime_error("No Dino ADC found on FPGA");
+  }
+
   log->info("Connecting {} to {}, {}directional",
-            (srcAsInt == -1 ? "stdin" : std::to_string(srcAsInt)),
-            (dstAsInt == -1 ? "stdout" : std::to_string(dstAsInt)),
+            (srcAsInt == -1 ? connectTypeToString(srcType)
+                            : std::to_string(srcAsInt)),
+            (dstAsInt == -1 ? connectTypeToString(dstType)
+                            : std::to_string(dstAsInt)),
             (bidirectional ? "bi" : "uni"));
 
   std::shared_ptr<fpga::ip::Node> src;
   std::shared_ptr<fpga::ip::Node> dest;
-  if (srcIsStdin) {
+  if (srcType == ConnectType::DINO) {
+    src = dinoAdc;
+  } else if (srcType == ConnectType::DMA) {
     src = dma;
   } else {
-    src = switch_channels[srcAsInt];
+    src = (*aurora_channels)[srcAsInt];
   }
 
-  if (dstIsStdout) {
+  if (dstType == ConnectType::DINO) {
+    dest = dinoDac;
+  } else if (dstType == ConnectType::DMA) {
     dest = dma;
   } else {
-    dest = switch_channels[dstAsInt];
+    dest = (*aurora_channels)[dstAsInt];
   }
 
   src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
   if (bidirectional) {
+    if (srcType == ConnectType::DINO) {
+      src = dinoDac;
+    }
+    if (dstType == ConnectType::DINO) {
+      dest = dinoAdc;
+    }
     dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
   }
 }

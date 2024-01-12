@@ -37,71 +37,51 @@ struct villasfpga_memory_t {
 
 villasfpga_handle villasfpga_init(const char *configFile)
 {
-	std::string fpgaName = "vc707";
-	std::string connectStr = "3<->pipe";
-	std::string outputFormat = "short";
-	bool dumpGraph = false;
-	bool dumpAuroraChannels = true;
-	try {
-		// Logging setup
-		logging.setLevel(spdlog::level::debug);
-		fpga::setupColorHandling();
+  std::string fpgaName = "vc707";
+  std::string connectStr = "3<->pipe";
+  std::string outputFormat = "short";
+  bool dumpGraph = false;
+  bool dumpAuroraChannels = true;
+  try {
+    // Logging setup
+    logging.setLevel(spdlog::level::debug);
+    fpga::setupColorHandling();
 
-		if (configFile == nullptr || configFile[0] == '\0') {
-			logger->error("No configuration file provided/ Please use -c/--config argument");
-			return nullptr;
-		}
+    if (configFile == nullptr || configFile[0] == '\0') {
+      logger->error(
+          "No configuration file provided/ Please use -c/--config argument");
+      return nullptr;
+    }
 
-		auto handle = new villasfpga_handle_t;
-		handle->card = fpga::setupFpgaCard(configFile, fpgaName);
+    auto handle = new villasfpga_handle_t;
+    handle->card = fpga::setupFpgaCard(configFile, fpgaName);
 
-                std::vector<std::shared_ptr<fpga::ip::Node>> switch_channels;
-                for (int i = 0; i < 4; i++) {
-			auto name = fmt::format("aurora_8b10b_ch{}", i);
-			auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
-                        auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(
-                            handle->card->lookupIp(id));
-                        if (aurora == nullptr) {
-				logger->error("No Aurora interface found on FPGA");
-				return nullptr;
-			}
+    if (dumpGraph) {
+      auto &mm = MemoryManager::get();
+      mm.getGraph().dump("graph.dot");
+    }
 
-                        switch_channels.push_back(aurora);
-                }
+    if (dumpAuroraChannels) {
+      auto aurora_channels = getAuroraChannels(handle->card);
+      for (auto aurora : *aurora_channels)
+        aurora->dump();
+    }
 
-		handle->dma = std::dynamic_pointer_cast<fpga::ip::Dma>
-					(handle->card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-		if (handle->dma == nullptr) {
-			logger->error("No DMA found on FPGA ");
-			return nullptr;
-		}
+    // Configure Crossbar switch
+    const fpga::ConnectString parsedConnectString(connectStr);
+    parsedConnectString.configCrossBar(handle->card);
 
-		if (dumpGraph) {
-			auto &mm = MemoryManager::get();
-			mm.getGraph().dump("graph.dot");
-		}
-
-		if (dumpAuroraChannels) {
-                  for (auto aurora : switch_channels)
-                    aurora->dump();
-		}
-
-		// Configure Crossbar switch
-		const fpga::ConnectString parsedConnectString(connectStr);
-                parsedConnectString.configCrossBar(handle->dma,
-                                                   switch_channels);
-
-                return handle;
-	} catch (const RuntimeError &e) {
-		logger->error("Error: {}", e.what());
-		return nullptr;
-	} catch (const std::exception &e) {
-		logger->error("Error: {}", e.what());
-		return nullptr;
-	} catch (...) {
-		logger->error("Unknown error");
-		return nullptr;
-	}
+    return handle;
+  } catch (const RuntimeError &e) {
+    logger->error("Error: {}", e.what());
+    return nullptr;
+  } catch (const std::exception &e) {
+    logger->error("Error: {}", e.what());
+    return nullptr;
+  } catch (...) {
+    logger->error("Unknown error");
+    return nullptr;
+  }
 }
 
 void villasfpga_destroy(villasfpga_handle handle)

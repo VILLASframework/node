@@ -20,34 +20,39 @@ setupFpgaCard(const std::string &configFile, const std::string &fpgaName);
 int createCards(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
               std::filesystem::path &searchPath);
 
+std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
+getAuroraChannels(std::shared_ptr<fpga::Card> card);
+
 void setupColorHandling();
 
 class ConnectString {
 public:
-	ConnectString(std::string& connectString, int maxPortNum = 7);
-
-	void parseString(std::string& connectString);
-	int portStringToInt(std::string &str) const;
-  void configCrossBar(std::shared_ptr<villas::fpga::ip::Dma> dma,
-                      std::vector<std::shared_ptr<villas::fpga::ip::Node>>
-                          &switch_channels) const;
-
+  enum class ConnectType { AURORA, DMA, DINO, LOOPBACK };
+  ConnectString(std::string &connectString, int maxPortNum = 7);
+  void parseString(std::string &connectString);
+  int portStringToInt(std::string &str) const;
+  void configCrossBar(std::shared_ptr<villas::fpga::Card> card) const;
   bool isBidirectional() const { return bidirectional; };
-  bool isDmaLoopback() const { return dmaLoopback; };
-	bool isSrcStdin() const { return srcIsStdin; };
-	bool isDstStdout() const { return dstIsStdout; };
-	int getSrcAsInt() const { return srcAsInt; };
-	int getDstAsInt() const { return dstAsInt; };
+  bool isDmaLoopback() const { return srcType == ConnectType::LOOPBACK; };
+  bool isSrcStdin() const { return srcType == ConnectType::DMA; };
+  bool isDstStdout() const { return dstType == ConnectType::DMA; };
+  int getSrcAsInt() const { return srcAsInt; };
+  int getDstAsInt() const { return dstAsInt; };
+  static std::string connectTypeToString(ConnectType type) {
+    static const std::string connectTypeStrings[] = {"aurora", "dma", "dino",
+                                                     "loopback"};
+    return connectTypeStrings[(int)type];
+  }
+
 protected:
-	villas::Logger log;
-	int maxPortNum;
-	bool bidirectional;
-	bool invert;
-	int srcAsInt;
-	int dstAsInt;
-	bool srcIsStdin;
-	bool dstIsStdout;
-	bool dmaLoopback;
+  villas::Logger log;
+  int maxPortNum;
+  bool bidirectional;
+  bool invert;
+  ConnectType srcType;
+  ConnectType dstType;
+  int srcAsInt;
+  int dstAsInt;
 };
 
 class BufferedSampleFormatter {
