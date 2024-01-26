@@ -155,7 +155,8 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
 
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
-    smp->data[i].f = static_cast<double>(mem[i]);
+    smp->data[i].f =
+        static_cast<double>(mem[i]); //TODO: This is the wrong cast!!!
     smp->length++;
   }
   smp->flags = (int)SampleFlags::HAS_DATA;
