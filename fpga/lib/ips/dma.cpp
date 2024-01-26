@@ -381,120 +381,135 @@ bool Dma::readScatterGather(void *buf, size_t len)
 
 Dma::Completion Dma::writeCompleteScatterGather()
 {
-	Completion c;
-	XAxiDma_Bd *bd = nullptr, *curBd;
-	auto txRing = XAxiDma_GetTxRing(&xDma);
-	int ret = XST_FAILURE;
-	static size_t errcnt = 32;
+  Completion c;
+  XAxiDma_Bd *bd = nullptr, *curBd;
+  auto txRing = XAxiDma_GetTxRing(&xDma);
+  int ret = XST_FAILURE;
+  static size_t errcnt = 32;
 
-	c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(irqs[mm2sInterrupt].num);
+  c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
+      irqs[mm2sInterrupt].num);
 
-	hwLock.lock();
-	if ((c.bds = XAxiDma_BdRingFromHw(txRing, writeCoalesce, &bd)) < writeCoalesce)
-	{
-		logger->warn("Send partial batch of {}/{} BDs.", c.bds, writeCoalesce);
-		if(errcnt-- == 0) {
-			hwLock.unlock();
-			throw RuntimeError("too many partial batches");
-		}
-	}
+  hwLock.lock();
+  if ((c.bds = XAxiDma_BdRingFromHw(txRing, writeCoalesce, &bd)) <
+      writeCoalesce) {
+    logger->warn("Send partial batch of {}/{} BDs.", c.bds, writeCoalesce);
+    if (errcnt-- == 0) {
+      hwLock.unlock();
+      throw RuntimeError("too many partial batches");
+    }
+  }
 
-	// Acknowledge the interrupt
-	auto irqStatus = XAxiDma_BdRingGetIrq(txRing);
-	XAxiDma_BdRingAckIrq(txRing, irqStatus);
+  // Acknowledge the interrupt
+  auto irqStatus = XAxiDma_BdRingGetIrq(txRing);
+  XAxiDma_BdRingAckIrq(txRing, irqStatus);
 
-	if (c.bds == 0) {
-		c.bytes = 0;
-		hwLock.unlock();
-		return c;
-	}
+  if (c.bds == 0) {
+    c.bytes = 0;
+    hwLock.unlock();
+    return c;
+  }
 
-	if (bd == nullptr) {
-		hwLock.unlock();
-		throw RuntimeError("Bd was null.");
-	}
+  if (bd == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("Bd was null.");
+  }
 
-	curBd = bd;
-	for (size_t i = 0; i < c.bds; i++) {
-		ret = XAxiDma_BdGetSts(curBd);
-		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
-			hwLock.unlock();
-			throw RuntimeError("Bd Status register shows error: {}", ret);
-			break;
-		}
+  curBd = bd;
+  for (size_t i = 0; i < c.bds; i++) {
+    ret = XAxiDma_BdGetSts(curBd);
+    if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
+        (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+      hwLock.unlock();
+      throw RuntimeError("Bd Status register shows error: {}", ret);
+    }
 
-		c.bytes += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
-		curBd = (XAxiDma_Bd *) XAxiDma_BdRingNext(txRing, curBd);
-	}
+    c.bytes += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
+    curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(txRing, curBd);
+  }
 
-	ret = XAxiDma_BdRingFree(txRing, c.bds, bd);
-	if (ret != XST_SUCCESS) {
-		hwLock.unlock();
-		throw RuntimeError("Failed to free {} TX BDs {}", c.bds, ret);
-	}
+  ret = XAxiDma_BdRingFree(txRing, c.bds, bd);
+  if (ret != XST_SUCCESS) {
+    hwLock.unlock();
+    throw RuntimeError("Failed to free {} TX BDs {}", c.bds, ret);
+  }
 
-	hwLock.unlock();
-	return c;
+  hwLock.unlock();
+  return c;
 }
 
 Dma::Completion Dma::readCompleteScatterGather()
 {
-	Completion c;
-	XAxiDma_Bd *bd = nullptr, *curBd;
-	auto rxRing = XAxiDma_GetRxRing(&xDma);
-	int ret = XST_FAILURE;
-	static size_t errcnt = 32;
+  Completion c;
+  XAxiDma_Bd *bd = nullptr, *curBd;
+  auto rxRing = XAxiDma_GetRxRing(&xDma);
+  int ret = XST_FAILURE;
+  static size_t errcnt = 32;
 
-	c.interrupts = irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt].num);
+  ssize_t intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
+      irqs[s2mmInterrupt].num);
 
-	hwLock.lock();
-	// Wait until the data has been received by the RX channel.
-	if ((c.bds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) < readCoalesce)
-	{
-		logger->warn("Got partial batch of {}/{} BDs.", c.bds, readCoalesce);
-		if(errcnt-- == 0) {
-			hwLock.unlock();
-			throw RuntimeError("too many partial batches");
-		}
-	}
+  if (intrs < 0) {
+    logger->warn("Interrupt error or timeout");
+    c.interrupts = 0;
+    return c;
+  } else {
+    c.interrupts = intrs;
+  }
+  hwLock.lock();
+  auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+  XAxiDma_BdRingAckIrq(rxRing, irqStatus);
+  if (!(irqStatus & XAXIDMA_IRQ_IOC_MASK)) {
+    logger->error("Expected IOC interrupt but IRQ status is: {:#x}", irqStatus);
+    return c;
+  }
+  //   logger->trace("Read IRQ status: {:#x}", irqStatus);
 
-	// Acknowledge the interrupt. Has no effect if no interrupt has occured.
-	auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
-	XAxiDma_BdRingAckIrq(rxRing, irqStatus);
+  // Wait until the data has been received by the RX channel.
+  if ((c.bds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) <
+      readCoalesce) {
+    logger->warn("Got partial batch of {}/{} BDs.", c.bds, readCoalesce);
+    if (errcnt-- == 0) {
+      hwLock.unlock();
+      throw RuntimeError("too many partial batches");
+    }
+  }
 
-	if (c.bds == 0) {
-		c.bytes = 0;
-		hwLock.unlock();
-		return c;
-	}
+  if (c.bds == 0) {
+    c.bytes = 0;
+    hwLock.unlock();
+    return c;
+  }
 
-	if (bd == nullptr) {
-		hwLock.unlock();
-		throw RuntimeError("Bd was null.");
-	}
+  if (bd == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("Bd was null.");
+  }
 
-	curBd = bd;
-	for (size_t i = 0; i < c.bds; i++) {
-		ret = XAxiDma_BdGetSts(curBd);
-		if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) || (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
-			hwLock.unlock();
-			throw RuntimeError("Bd Status register shows error: {}", ret);
-			break;
-		}
+  curBd = bd;
+  for (size_t i = 0; i < c.bds; i++) {
+    // logger->trace("Read BD {}/{}: {:#x}", i, c.bds,
+    //               XAxiDma_BdGetBufAddr(curBd));
+    ret = XAxiDma_BdGetSts(curBd);
+    if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
+        (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
+      hwLock.unlock();
+      throw RuntimeError("Bd Status register shows error: {}", ret);
+    }
 
-		c.bytes += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
-		curBd = (XAxiDma_Bd *) XAxiDma_BdRingNext(rxRing, curBd);
-	}
+    c.bytes += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);
+    curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(rxRing, curBd);
+  }
 
-	// Free all processed RX BDs for future transmission.
-	ret = XAxiDma_BdRingFree(rxRing, c.bds, bd);
-	if (ret != XST_SUCCESS) {
-		hwLock.unlock();
-		throw RuntimeError("Failed to free {} TX BDs {}.", c.bds, ret);
-	}
+  // Free all processed RX BDs for future transmission.
+  ret = XAxiDma_BdRingFree(rxRing, c.bds, bd);
+  if (ret != XST_SUCCESS) {
+    hwLock.unlock();
+    throw RuntimeError("Failed to free {} TX BDs {}.", c.bds, ret);
+  }
 
-	hwLock.unlock();
-	return c;
+  hwLock.unlock();
+  return c;
 }
 
 bool Dma::writeSimple(const void *buf, size_t len)

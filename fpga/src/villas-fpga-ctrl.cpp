@@ -121,6 +121,7 @@ void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {
 void readFromDmaToStdOut(
     std::shared_ptr<villas::fpga::ip::Dma> dma,
     std::unique_ptr<fpga::BufferedSampleFormatter> formatter) {
+
   auto &alloc = villas::HostRam::getAllocator();
 
   const std::shared_ptr<villas::MemoryBlock> block[] = {
@@ -138,19 +139,19 @@ void readFromDmaToStdOut(
   // Setup read transfer
   dma->read(*block[0], block[0]->getSize());
 
+  int cnt = 0;
   while (true) {
-    logger->trace("Read from stream and write to address {}:{:p}",
-                  block[next]->getAddrSpaceId(), block[next]->getOffset());
+    SPDLOG_TRACE("Read from stream and write to address {}:{:#x}",
+                 block[next]->getAddrSpaceId(), block[next]->getOffset());
     // We could use the number of interrupts to determine if we missed a chunk of data
     dma->read(*block[next], block[next]->getSize());
     auto c = dma->readComplete();
 
     if (c.interrupts > 1) {
-      logger->warn("Missed {} interrupts", c.interrupts - 1);
+      SPDLOG_WARN("Missed {} interrupts", c.interrupts - 1);
     }
 
-    logger->debug("bytes: {}, intrs: {}, bds: {}", c.bytes, c.interrupts,
-                  c.bds);
+    SPDLOG_TRACE("bytes: {}, intrs: {}, bds: {}", c.bytes, c.interrupts, c.bds);
     try {
       for (size_t i = 0; i * 4 < c.bytes; i++) {
         int32_t ival = mem[cur][i];
@@ -160,11 +161,11 @@ void readFromDmaToStdOut(
             *((float *)(&ival)); // cppcheck-suppress invalidPointerCast
 #pragma GCC diagnostic pop
         formatter->format(fval);
-        printf("%#x\n", ival);
+        printf("%d: %#x\n", cnt++, ival);
       }
       formatter->output(std::cout);
     } catch (const std::exception &e) {
-      logger->warn("Failed to output data: {}", e.what());
+      SPDLOG_WARN("Failed to output data: {}", e.what());
     }
 
     cur = next;
@@ -202,7 +203,7 @@ int main(int argc, char *argv[]) {
 
     // Logging setup
 
-    logging.setLevel(spdlog::level::debug);
+    logging.setLevel(spdlog::level::trace);
     fpga::setupColorHandling();
 
     if (configFile.empty()) {

@@ -18,32 +18,23 @@ namespace ip {
 
 class InterruptController : public Core {
 public:
-	using IrqMaskType = uint32_t;
-	static constexpr int maxIrqs = 32;
+  using IrqMaskType = uint32_t;
+  static constexpr int maxIrqs = 32;
 
-	virtual
-	~InterruptController();
+  virtual ~InterruptController();
 
-	virtual
-	bool init() override;
+  virtual bool init() override;
 
-	bool enableInterrupt(IrqMaskType mask, bool polling);
-	bool enableInterrupt(IrqPort irq, bool polling)
-	{
-		return enableInterrupt(1 << irq.num, polling);
-	}
+  bool enableInterrupt(IrqMaskType mask, bool polling);
+  bool enableInterrupt(IrqPort irq, bool polling) {
+    return enableInterrupt(1 << irq.num, polling);
+  }
 
-	bool disableInterrupt(IrqMaskType mask);
-	bool disableInterrupt(IrqPort irq)
-	{
-		return disableInterrupt(1 << irq.num);
-	}
+bool disableInterrupt(IrqMaskType mask);
+bool disableInterrupt(IrqPort irq) { return disableInterrupt(1 << irq.num); }
 
-	int waitForInterrupt(int irq);
-	int waitForInterrupt(IrqPort irq)
-	{
-		return waitForInterrupt(irq.num);
-	}
+ssize_t waitForInterrupt(int irq);
+ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
 
 private:
 

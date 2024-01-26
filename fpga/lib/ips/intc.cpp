@@ -117,38 +117,52 @@ InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 	return true;
 }
 
-int
-InterruptController::waitForInterrupt(int irq)
-{
-	assert(irq < maxIrqs);
+ssize_t InterruptController::waitForInterrupt(int irq) {
+  assert(irq < maxIrqs);
 
-	const uintptr_t base = getBaseAddr(registerMemory);
+  const uintptr_t base = getBaseAddr(registerMemory);
 
-	if (this->polling[irq]) {
-		uint32_t isr, mask = 1 << irq;
+  if (this->polling[irq]) {
+    uint32_t isr, mask = 1 << irq;
 
-		do {
-			// Poll status register
-			isr = XIntc_In32(base + XIN_ISR_OFFSET);
-			pthread_testcancel();
-		} while ((isr & mask) != mask);
+    do {
+      // Poll status register
+      isr = XIntc_In32(base + XIN_ISR_OFFSET);
+      pthread_testcancel();
+    } while ((isr & mask) != mask);
 
-		// Acknowledge interrupt
-		XIntc_Out32(base + XIN_IAR_OFFSET, mask);
+    // Acknowledge interrupt
+    XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
-		// We can only tell that there has been (at least) one interrupt
-		return 1;
-	}
-	else {
-		uint64_t count;
+    // We can only tell that there has been (at least) one interrupt
+    return 1;
+  } else {
+    uint64_t count;
+    int sret;
+    fd_set rfds;
+    struct timeval tv = {.tv_sec = 1, .tv_usec = 0};
+    FD_ZERO(&rfds);
+    FD_SET(efds[irq], &rfds);
 
-		// Block until there has been an interrupt, read number of interrupts
-		ssize_t ret = read(efds[irq], &count, sizeof(count));
-		if (ret != sizeof(count))
-			return -1;
+    sret = select(efds[irq] + 1, &rfds, NULL, NULL, &tv);
+    if (sret == -1) {
+      logger->error("select() failed: {}", strerror(errno));
+      return -1;
+    } else if (sret == 0) {
+      logger->warn("timeout waiting for interrupt {}", irq);
+      return -1;
+    }
+    // Block until there has been an interrupt, read number of interrupts
+    ssize_t ret = read(efds[irq], &count, sizeof(count));
+    if (ret != sizeof(count)) {
+      logger->error("Failed to read from eventfd: {}", strerror(errno));
+      return -1;
+    }
 
-		return static_cast<int>(count);
-	}
+    logger->debug("Received {} interrupts on {}", count, irq);
+
+    return count;
+  }
 }
 
 static char n[] = "intc";
