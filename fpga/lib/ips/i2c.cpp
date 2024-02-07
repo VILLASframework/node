@@ -77,24 +77,40 @@ bool I2c::reset() {
 
 void I2c::driverWriteBlocking(u8 *dataPtr, size_t size) {
   int ret;
-  int intrRetries = 1;
+  int intrRetries;
+  int sendRetries = 10;
+  int bbRetries;
   transmitIntrs = 0;
-  xIic.Stats.TxErrors = 0;
-  do {
-    ret = XIic_MasterSend(&xIic, dataPtr, size);
-    if (ret == XST_IIC_BUS_BUSY) {
-      waitForBusNotBusy();
-    } else if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to send I2C data. code: {}", ret);
+  // We retry the entire transmission a few times before giving up.
+  while (transmitIntrs == 0 && sendRetries > 0) {
+    xIic.Stats.TxErrors = 0;
+    bbRetries = 1;
+    intrRetries = 10;
+    // We retry once when the bus is busy.
+    do {
+      ret = XIic_MasterSend(&xIic, dataPtr, size);
+      if (ret == XST_IIC_BUS_BUSY) {
+        waitForBusNotBusy();
+      } else if (ret != XST_SUCCESS) {
+        throw RuntimeError("Failed to send I2C data. code: {}", ret);
+      }
+    } while (ret == XST_IIC_BUS_BUSY && --bbRetries >= 0);
+    // We need to wait for several interrupts as sending the stop condition involves generating
+    // multiple interrupts before the transmission is complete.
+    while (transmitIntrs == 0 && intrRetries > 0) {
+      ssize_t intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
+          irqs[i2cInterrupt].num);
+      if (intrs == -1) {
+        break;
+      }
+      // logger->trace("I2C write interrupt eventfd read: {}, ISR: {}", numIntr,
+      //               irqStatus);
+      XIic_InterruptHandler(&xIic);
+      --intrRetries;
     }
-  } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
-  intrRetries = 10;
-  while (transmitIntrs == 0 && intrRetries > 0) {
-    irqs[i2cInterrupt].irqController->waitForInterrupt(irqs[i2cInterrupt].num);
-    XIic_InterruptHandler(&xIic);
-    --intrRetries;
+    --sendRetries;
   }
-  if (intrRetries == 0) {
+  if (sendRetries == 0) {
     throw RuntimeError(
         "Failed to send I2C data: No transmit interrupt after 10 tries.");
   }
@@ -106,23 +122,33 @@ void I2c::driverWriteBlocking(u8 *dataPtr, size_t size) {
 
 void I2c::driverReadBlocking(u8 *dataPtr, size_t max_read) {
   int ret;
-  int intrRetries = 1;
+  int intrRetries;
+  int readRetries = 10;
+  int bbRetries;
   receiveIntrs = 0;
-  do {
-    ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
-    if (ret == XST_IIC_BUS_BUSY) {
-      waitForBusNotBusy();
-    } else if (ret != XST_SUCCESS) {
-      throw RuntimeError("Failed to receive I2C data: code {}", ret);
+  while (receiveIntrs == 0 && readRetries > 0) {
+    intrRetries = 10;
+    bbRetries = 1;
+    do {
+      ret = XIic_MasterRecv(&xIic, dataPtr, max_read);
+      if (ret == XST_IIC_BUS_BUSY) {
+        waitForBusNotBusy();
+      } else if (ret != XST_SUCCESS) {
+        throw RuntimeError("Failed to receive I2C data: code {}", ret);
+      }
+    } while (ret == XST_IIC_BUS_BUSY && --bbRetries >= 0);
+    while (receiveIntrs == 0 && intrRetries > 0) {
+      ssize_t intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
+          irqs[i2cInterrupt].num);
+      if (intrs == -1) {
+        break;
+      }
+      XIic_InterruptHandler(&xIic);
+      --intrRetries;
     }
-  } while (ret == XST_IIC_BUS_BUSY && --intrRetries >= 0);
-  intrRetries = 10;
-  while (receiveIntrs == 0 && intrRetries > 0) {
-    irqs[i2cInterrupt].irqController->waitForInterrupt(irqs[i2cInterrupt].num);
-    XIic_InterruptHandler(&xIic);
-    --intrRetries;
+    --readRetries;
   }
-  if (intrRetries == 0) {
+  if (readRetries == 0) {
     throw RuntimeError(
         "Failed to receive I2C data: No receive interrupt after 10 tries.");
   }
@@ -136,9 +162,12 @@ void I2c::waitForBusNotBusy() {
     irqStatus =
         XIic_ReadIisr(xIic.BaseAddress) & XIic_ReadIier(xIic.BaseAddress);
   } while (!(irqStatus & XIIC_INTR_BNB_MASK) && --retries > 0);
+  // logger->trace("I2C bus not busy after {} interrupts", 10 - retries);
   //Deactivate BusNotBusy interrupt
   XIic_WriteIier(xIic.BaseAddress,
                  XIic_ReadIier(xIic.BaseAddress) & ~(XIIC_INTR_BNB_MASK));
+  uint32_t clear = XIIC_INTR_BNB_MASK;
+  XIic_WriteIisr(xIic.BaseAddress, clear);
   if (retries == 0) {
     throw RuntimeError("I2C bus stayed busy after 10 interrupts");
   }
