@@ -47,6 +47,31 @@ bool AxiStreamSwitch::init()
 	return true;
 }
 
+void AxiStreamSwitch::printConfig() const {
+  u32 MiPortAddr;
+  u32 RegValue;
+  u8 Enable;
+  logger->info(
+      "Switch configuration: {} Master Interfaces, {} Slave Interfaces",
+      xConfig.MaxNumMI, xConfig.MaxNumSI);
+
+  for (int i = 0; i < xConfig.MaxNumMI; i++) {
+    /* Calculate MI port address to be enabled */
+    MiPortAddr = XAXIS_SCR_MI_MUX_START_OFFSET + 4 * i;
+
+    /* Read MI port data */
+    RegValue = XAxisScr_ReadReg(xSwitch.Config.BaseAddress, MiPortAddr);
+
+    /* Fetch enable bit */
+    Enable = RegValue >> XAXIS_SCR_MI_X_DISABLE_SHIFT;
+
+    /* Fetch SI value */
+    RegValue &= XAXIS_SCR_MI_X_MUX_MASK;
+
+    logger->info("Master Interface {}: {} (enabled: {})", i, RegValue, Enable);
+  }
+}
+
 bool AxiStreamSwitch::connectInternal(const std::string &portSlave,
                                  const std::string &portMaster)
 {
