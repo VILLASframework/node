@@ -120,9 +120,8 @@ InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 ssize_t InterruptController::waitForInterrupt(int irq) {
   assert(irq < maxIrqs);
 
-  const uintptr_t base = getBaseAddr(registerMemory);
-
   if (this->polling[irq]) {
+    const uintptr_t base = getBaseAddr(registerMemory);
     uint32_t isr, mask = 1 << irq;
 
     do {
@@ -150,6 +149,7 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
       return -1;
     } else if (sret == 0) {
       logger->warn("timeout waiting for interrupt {}", irq);
+
       return -1;
     }
     // Block until there has been an interrupt, read number of interrupts
@@ -158,8 +158,6 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
       logger->error("Failed to read from eventfd: {}", strerror(errno));
       return -1;
     }
-
-    logger->debug("Received {} interrupts on {}", count, irq);
 
     return count;
   }
