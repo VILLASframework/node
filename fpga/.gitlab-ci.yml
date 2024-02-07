@@ -6,7 +6,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
-  DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
+  DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE_DEV: villas/fpga-dev
 
 stages:
@@ -20,7 +20,7 @@ stages:
 docker-dev:
   stage: prepare
   script:
-  - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+  - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
   - docker
 
@@ -35,7 +35,7 @@ build:source:
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
     - build/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
 
@@ -46,7 +46,7 @@ test:unit:
   tags:
   - docker
   allow_failure: true
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script: |
     rm -r build && mkdir build && cd build
     cmake ..
@@ -74,10 +74,10 @@ test:cppcheck:
                gpu/
                src/
                lib/
-               tests/unit/ 
+               tests/unit/
                --suppress=unmatchedSuppression
                -igpu/thirdparty | tee cppcheck.log
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   dependencies:
   - build:source
   tags:
@@ -89,6 +89,8 @@ test:cppcheck:
     expose_as: cppcheck
 
 test:reuse:
+  tags:
+  - docker
   stage: test
   image:
     name: fsfe/reuse:latest
