@@ -171,6 +171,8 @@ test:reuse:
   image:
     name: fsfe/reuse:latest
     entrypoint: [""]
+  tags:
+  - docker
   script:
   - reuse lint
 
