@@ -12,7 +12,7 @@ VILLASnode is a client/server application to connect simulation equipment and so
  - LabView,
  - and FPGA models
 
-by using protcols such as:
+by using protocols such as:
 
  - IEEE 802.2 Ethernet / IP / UDP,
  - ZeroMQ & nanomsg,
