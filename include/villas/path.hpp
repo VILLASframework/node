@@ -9,14 +9,15 @@
 
 #include <bitset>
 
+#include <fmt/ostream.h>
 #include <jansson.h>
 #include <pthread.h>
-#include <fmt/ostream.h>
 #include <uuid/uuid.h>
 #include <villas/colors.hpp>
 #include <villas/common.hpp>
 #include <villas/config.hpp>
 #include <villas/list.hpp>
+#include <villas/log.hpp>
 #include <villas/mapping_list.hpp>
 #include <villas/node.hpp>
 #include <villas/node_list.hpp>
@@ -26,7 +27,6 @@
 #include <villas/queue.h>
 #include <villas/signal_list.hpp>
 #include <villas/task.hpp>
-#include <villas/log.hpp>
 
 // Forward declarations
 struct pollfd;
@@ -185,6 +185,5 @@ public:
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::node::Path>
-    : public fmt::ostream_formatter {};
+class fmt::formatter<villas::node::Path> : public fmt::ostream_formatter {};
 #endif

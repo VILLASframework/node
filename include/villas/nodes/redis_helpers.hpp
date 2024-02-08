@@ -8,8 +8,8 @@
 #pragma once
 
 #include <chrono>
-#include <functional>
 #include <fmt/ostream.h>
+#include <functional>
 #include <sw/redis++/connection.h>
 #include <sw/redis++/redis++.h>
 #include <villas/node/config.hpp>
@@ -62,7 +62,8 @@ inline bool operator==(const tls::TlsOptions &o1, const tls::TlsOptions &o2) {
 #endif // REDISPP_WITH_TLS
 }
 
-inline bool operator==(const ConnectionOptions &o1, const ConnectionOptions &o2) {
+inline bool operator==(const ConnectionOptions &o1,
+                       const ConnectionOptions &o2) {
   return o1.type == o2.type && o1.host == o2.host && o1.port == o2.port &&
          o1.path == o2.path && o1.user == o2.user &&
          o1.password == o2.password && o1.db == o2.db &&
@@ -95,7 +96,7 @@ std::ostream &operator<<(std::ostream &os, const TlsOptions &t) {
 
   return os;
 }
-}
+} // namespace tls
 #endif // REDISPP_WITH_TLS
 
 inline std::ostream &operator<<(std::ostream &os, const ConnectionType &t) {
@@ -141,12 +142,14 @@ inline std::ostream &operator<<(std::ostream &os, const ConnectionOptions &o) {
 namespace villas {
 namespace node {
 #ifdef REDISPP_WITH_URI
-inline sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
+inline sw::redis::ConnectionOptions
+make_redis_connection_options(char const *uri) {
   auto u = sw::redis::Uri{uri};
   return u.connection_options();
 }
 #else
-inline sw::redis::ConnectionOptions make_redis_connection_options(char const *uri) {
+inline sw::redis::ConnectionOptions
+make_redis_connection_options(char const *uri) {
   return sw::redis::ConnectionOptions{uri};
 }
 #endif

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <libwebsockets.h>
 #include <fmt/ostream.h>
+#include <libwebsockets.h>
 #include <villas/buffer.hpp>
 #include <villas/common.hpp>
 #include <villas/config.hpp>
@@ -76,7 +76,7 @@ struct websocket_connection {
   } buffers;
 
   friend std::ostream &operator<<(std::ostream &os,
-                             const struct websocket_connection &c) {
+                                  const struct websocket_connection &c) {
     if (c.wsi) {
       char name[128];
 

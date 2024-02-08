@@ -129,7 +129,9 @@ public:
 
   const uuid_t &getUuid() const { return uuid; }
 
-  struct timespec getStartTime() const { return started; }
+  struct timespec getStartTime() const {
+    return started;
+  }
 
 #ifdef WITH_API
   Api *getApi() { return &api; }

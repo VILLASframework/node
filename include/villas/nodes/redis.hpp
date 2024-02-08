@@ -26,7 +26,8 @@ namespace node {
 
 enum class RedisMode { KEY, HASH, CHANNEL };
 
-inline std::ostream &operator<<(std::ostream &os, const enum villas::node::RedisMode &m) {
+inline std::ostream &operator<<(std::ostream &os,
+                                const enum villas::node::RedisMode &m) {
   switch (m) {
   case villas::node::RedisMode::KEY:
     os << "key";
@@ -43,7 +44,6 @@ inline std::ostream &operator<<(std::ostream &os, const enum villas::node::Redis
 
   return os;
 }
-
 
 class RedisConnection {
 
