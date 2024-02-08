@@ -24,9 +24,9 @@ extern "C" {
 /* Define RTLAB before including OpalPrint.h for messages to be sent
 	* to the OpalDisplay. Otherwise stdout will be used. */
 #define RTLAB
-#include <OpalPrint.h>
 #include <AsyncApi.h>
 #include <OpalGenAsyncParamCtrl.h>
+#include <OpalPrint.h>
 }
 
 // Private static storage

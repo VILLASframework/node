@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include <fmt/ostream.h>
 #include <iostream>
 #include <jansson.h>
-#include <fmt/ostream.h>
 #include <uuid/uuid.h>
 #include <villas/colors.hpp>
 #include <villas/common.hpp>
@@ -266,7 +266,7 @@ public:
     return os;
   }
 
-  json_t *toJson() const;
+  virtual json_t *toJson() const;
 
   static bool isValidName(const std::string &name);
 

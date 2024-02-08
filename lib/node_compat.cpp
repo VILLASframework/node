@@ -60,7 +60,7 @@ NodeCompat::~NodeCompat() {
   int ret __attribute__((unused));
   ret = _vt->destroy ? _vt->destroy(this) : 0;
 
-  delete[] (char *)_vd;
+  delete[](char *) _vd;
 }
 
 int NodeCompat::prepare() {

@@ -76,7 +76,7 @@ void villas::node::sample_free(struct Sample *s) {
   if (p)
     pool_put(p, s);
   else
-    delete[] (char *)s;
+    delete[](char *) s;
 }
 
 int villas::node::sample_alloc_many(struct Pool *p, struct Sample *smps[],

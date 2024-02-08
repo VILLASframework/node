@@ -21,8 +21,8 @@
 #include <villas/queue_signalled.h>
 
 extern "C" {
-#include <re/re_sa.h>
 #include <re/re_rtp.h>
+#include <re/re_sa.h>
 }
 
 namespace villas {

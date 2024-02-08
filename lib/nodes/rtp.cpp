@@ -15,12 +15,12 @@
 #include <villas/nodes/rtp.hpp>
 
 extern "C" {
-#include <re/re_net.h>
 #include <re/re_main.h>
-#include <re/re_types.h>
 #include <re/re_mbuf.h>
 #include <re/re_mem.h>
+#include <re/re_net.h>
 #include <re/re_sys.h>
+#include <re/re_types.h>
 #include <re/re_udp.h>
 #undef ALIGN_MASK
 }
