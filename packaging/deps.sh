@@ -65,7 +65,7 @@ should_build() {
 ## Build configuration
 
 # Use shallow git clones to speed up downloads
-GIT_OPTS+=" --depth=1 --config advice.detachedHead=false"
+GIT_OPTS+=" --depth=1 --recurse-submodules --shallow-submodules --config advice.detachedHead=false"
 
 # Install destination
 PREFIX=${PREFIX:-/usr/local}
@@ -433,7 +433,6 @@ if ! pkg-config "nice >= 0.1.16" && \
             python3 -m venv venv
             . venv/bin/activate
             python3 -m pip install --upgrade pip setuptools
-
 
             # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
             pip3 install meson==0.61.5
