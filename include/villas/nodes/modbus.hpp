@@ -8,7 +8,6 @@
 #pragma once
 
 #include <algorithm>
-#include <bit>
 #include <numeric>
 #include <optional>
 #include <stdint.h>
