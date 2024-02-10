@@ -201,6 +201,18 @@ Dma::~Dma() {
   // Unmap memory in our ownership, MemoryBlock gets deleted and removed from
   // graph by this destructor as well.
   if (hasScatterGather()) {
+    // Fix memory leak in upstream Xilinx code
+    auto txRingPtr = XAxiDma_GetTxRing(&xDma);
+    auto rxRingPtr = XAxiDma_GetRxRing(&xDma);
+    if (txRingPtr) {
+      free(txRingPtr->CyclicBd);
+      txRingPtr->CyclicBd = nullptr;
+    }
+    if (rxRingPtr) {
+      free(rxRingPtr->CyclicBd);
+      rxRingPtr->CyclicBd = nullptr;
+    }
+    // unampe SG memory Blocks
     if (sgRingTx) {
       card->unmapMemoryBlock(*sgRingTx);
     }
