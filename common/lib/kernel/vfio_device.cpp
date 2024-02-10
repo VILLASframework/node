@@ -293,6 +293,8 @@ int Device::pciMsiInit(int efds[]) {
 }
 
 int Device::pciMsiDeinit(int efds[]) {
+  logging.get("Device")->debug("Deinitializing MSI interrupts for device {}",
+                               name);
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;
