@@ -21,7 +21,7 @@ I2c::I2c()
       xConfig(), hwLock(), configDone(false), initDone(false), polling(false),
       switchInstance(nullptr) {}
 
-I2c::~I2c() { I2c::reset(); }
+I2c::~I2c() {}
 
 static void SendHandler(I2c *i2c, __attribute__((unused)) int bytesSend) {
   i2c->transmitIntrs++;
@@ -43,6 +43,7 @@ bool I2c::init() {
     return true;
   }
   xConfig.BaseAddress = getBaseAddr(registerMemory);
+  logger->debug("I2C base address: {:#x}", xConfig.BaseAddress);
   hwLock.lock();
   ret = XIic_CfgInitialize(&xIic, &xConfig, xConfig.BaseAddress);
   if (ret != XST_SUCCESS) {
@@ -67,7 +68,10 @@ bool I2c::check() {
   return getSwitch().selfTest();
 }
 
+bool I2c::stop() { return reset(); }
+
 bool I2c::reset() {
+  logger->debug("I2C reset");
   // we cannot lock here because this may be called in a destructor
   XIic_Reset(&xIic);
   irqs[i2cInterrupt].irqController->disableInterrupt(irqs[i2cInterrupt]);

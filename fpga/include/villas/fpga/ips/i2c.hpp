@@ -34,6 +34,7 @@ public:
   virtual bool init() override;
   virtual bool check() override;
   virtual bool reset() override;
+  virtual bool stop() override;
   bool write(u8 address, std::vector<u8> &data);
   bool read(u8 address, std::vector<u8> &data, size_t max_read);
   bool readRegister(u8 address, u8 reg, std::vector<u8> &data, size_t max_read);
