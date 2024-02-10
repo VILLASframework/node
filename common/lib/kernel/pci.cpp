@@ -156,6 +156,7 @@ Id::Id(const std::string &str) : vendor(0), device(0), class_code(0) {
 
     class_code = x;
   }
+  free(tmp);
 }
 
 bool Id::operator==(const Id &i) {
