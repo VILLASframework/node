@@ -47,6 +47,7 @@ whitelist = [
 	[ 'xilinx.com', 'module_ref', 'dinoif_fast' ],
 	[ 'xilinx.com', 'module_ref', 'dinoif_dac' ],
 	[ 'xilinx.com', 'module_ref', 'axi_pcie_intc' ],
+	[ 'xilinx.com', 'module_ref', 'registerif' ],
 	[ 'xilinx.com', 'hls', 'rtds2gpu' ],
 	[ 'xilinx.com', 'hls', 'mem' ],
 	[ 'acs.eonerc.rwth-aachen.de', 'user', 'axi_pcie_intc' ],
@@ -64,7 +65,8 @@ axi_converter_whitelist = [
 	[ 'xilinx.com', 'ip', 'axis_register_slice' ],
 	[ 'xilinx.com', 'ip', 'axis_dwidth_converter' ],
 	[ 'xilinx.com', 'ip', 'axis_register_slice' ],
-	[ 'xilinx.com', 'ip', 'axis_data_fifo' ]
+	[ 'xilinx.com', 'ip', 'axis_data_fifo' ],
+	[ 'xilinx.com', 'ip', 'floating_point' ]
 ]
 
 opponent = {
