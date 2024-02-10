@@ -19,9 +19,10 @@
 
 using namespace villas::fpga::ip;
 
-InterruptController::~InterruptController()
-{
-	card->vfioDevice->pciMsiDeinit(this->efds);
+InterruptController::~InterruptController() {}
+
+bool InterruptController::stop() {
+  return card->vfioDevice->pciMsiDeinit(this->efds) > 0;
 }
 
 bool

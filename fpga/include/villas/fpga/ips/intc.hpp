@@ -24,6 +24,7 @@ public:
   virtual ~InterruptController();
 
   virtual bool init() override;
+  virtual bool stop() override;
 
   bool enableInterrupt(IrqMaskType mask, bool polling);
   bool enableInterrupt(IrqPort irq, bool polling) {
