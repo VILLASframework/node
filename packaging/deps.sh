@@ -62,7 +62,7 @@ should_build() {
 ## Build configuration
 
 # Use shallow git clones to speed up downloads
-GIT_OPTS+=" --depth=1"
+GIT_OPTS+=" --depth=1 --config advice.detachedHead=false"
 
 # Install destination
 PREFIX=${PREFIX:-/usr/local}

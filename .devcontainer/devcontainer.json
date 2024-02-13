@@ -8,13 +8,16 @@
 	"image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev-vscode",
 	// Uncomment to build the devcontainer locally
 	// "build": {
-	// 	"dockerfile": "${workspaceFolder}/packaging/docker/Dockerfile.fedora",
+	// 	"dockerfile": "../packaging/docker/Dockerfile.fedora",
 	// 	"target": "dev-vscode",
 	// 	"context": ".."
 	// },
 	"remoteUser": "villas",
-	"runArgs": [ "--privileged", "--security-opt", "seccomp=unconfined"],
-
+	"runArgs": [
+		"--privileged",
+		"--security-opt",
+		"seccomp=unconfined"
+	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
