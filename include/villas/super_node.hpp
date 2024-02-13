@@ -143,7 +143,7 @@ public:
 
   json_t *getConfig() { return config.root; }
 
-  std::filesystem::path &getConfigPath() { return config.getConfigPath(); }
+  std::string &getConfigPath() { return config.getConfigPath(); }
 
   std::string getConfigUri() const { return uri; }
 

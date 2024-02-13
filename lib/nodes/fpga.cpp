@@ -203,7 +203,7 @@ int FpgaNodeFactory::start(SuperNode *sn) {
   vfioContainer = std::make_shared<kernel::vfio::Container>();
 
   if (cards.empty()) {
-    std::filesystem::path searchPath = sn->getConfigPath().parent_path();
+    std::string searchPath = sn->getConfigPath() + "/..";
     createCards(sn->getConfig(), cards, searchPath);
   }
 
