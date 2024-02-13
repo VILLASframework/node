@@ -13,8 +13,11 @@
 	// 	"context": ".."
 	// },
 	"remoteUser": "villas",
-	"runArgs": [ "--privileged", "--security-opt", "seccomp=unconfined"],
-
+	"runArgs": [
+		"--privileged",
+		"--security-opt",
+		"seccomp=unconfined"
+	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
