@@ -72,7 +72,13 @@ json_t *Config::load(const std::string &u, bool resolveInc,
 
 FILE *Config::loadFromStdio() {
   logger->info("Reading configuration from standard input");
-  configPath = std::filesystem::current_path();
+
+  auto *cwd = new char[PATH_MAX];
+
+  configPath = getcwd(cwd, PATH_MAX);
+
+  delete[] cwd;
+
   return stdin;
 }
 
