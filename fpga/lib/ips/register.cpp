@@ -43,6 +43,7 @@ bool Register::check() {
   }
 
   // This is Dino specific for now - we should possibly move this to Dino in the future
+  setRegister(0, static_cast<uint32_t>(1000)); // set Dino to a rate of 20 kHz
   uint32_t rate = getRegister(0);
   float scale = getRegisterFloat(1);
   float offset = getRegisterFloat(2);
