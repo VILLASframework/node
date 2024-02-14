@@ -83,3 +83,5 @@ test:reuse:
     entrypoint: [""]
   script:
   - reuse lint
+  tags:
+    - docker
