@@ -9,9 +9,6 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-echo "Test is broken"
-exit 99
-
 set -e
 
 DIR=$(mktemp -d)
@@ -25,40 +22,46 @@ trap finish EXIT
 
 cat > config.json <<EOF
 {
-        "nodes": {
-             	"sig_1": {
-             			"type": "signal",
-             			"values": 1,
-             			"signal": "counter",
-             			"offset": 100,
-             			"limit": 10,
-             			"realtime": false
-             	},
-             	"file_1": {
-             			"type": "file",
-             			"uri": "output1.dat"
-             	},
-             	"file_2": {
-             			"type": "file",
-             			"uri": "output2.dat"
-             	}
-        },
-        "paths": [
-             {
-             	"in": "sig_1",
-             	"out": "file_1"
-             },
-             {
-             	"in": "sig_1",
-             	"out": "file_2"
-             },
-             {
-             	"in": "sig_1"
-             },
-             {
-             	"in": "sig_1"
-             }
-        ]
+		"nodes": {
+				"sig_1": {
+						"type": "signal",
+						"values": 1,
+						"signal": "counter",
+						"offset": 100,
+						"limit": 10,
+						"realtime": false
+				},
+				"file_1": {
+						"type": "file",
+						"uri": "output1.dat"
+				},
+				"file_2": {
+						"type": "file",
+						"uri": "output2.dat"
+				}
+		},
+		"paths": [
+			{
+				"in": "sig_1",
+				"out": "file_1",
+            	"hooks": [
+              		{"type": "print"}
+            	]
+			},
+			{
+				"in": "sig_1",
+				"out": "file_2",
+            	"hooks": [
+              		{"type": "print"}
+            	]
+			},
+			{
+				"in": "sig_1"
+			},
+			{
+				"in": "sig_1"
+			}
+		]
 }
 EOF
 
