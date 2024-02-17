@@ -23,13 +23,12 @@ InternalLoopbackNode::InternalLoopbackNode(Node *src, unsigned id, unsigned ql)
     : queuelen(ql), source(src) {
   auto name = fmt::format("{}.lo{}", src->getNameShort(), id);
 
-  uuid_t uuid;
   int ret =
       uuid::generateFromString(uuid, fmt::format("lo{}", id), src->getUuid());
   if (ret)
     throw RuntimeError("Failed to initialize UUID");
 
-  Node(uuid, name);
+  name_short = name;
 
   factory = &nf;
   name_long = fmt::format(CLR_RED("{}") "(" CLR_YEL("{}") ")", name_short,
