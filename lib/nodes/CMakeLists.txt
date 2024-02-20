@@ -1,9 +1,8 @@
 # CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set(NODE_SRC
     loopback_internal.cpp
@@ -77,6 +76,11 @@ if(WITH_NODE_OPAL)
     list(APPEND NODE_SRC opal.cpp)
     list(APPEND INCLUDE_DIRS ${OPAL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${OPAL_LIBRARIES})
+endif()
+
+if(WITH_NODE_MODBUS)
+    list(APPEND NODE_SRC modbus.cpp)
+    list(APPEND LIBRARIES PkgConfig::MODBUS)
 endif()
 
 # Enable nanomsg node type when libnanomsg is available

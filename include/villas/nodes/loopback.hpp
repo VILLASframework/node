@@ -1,10 +1,9 @@
-/** Node-type for loopback connections.
+/* Node-type for loopback connections.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,37 +17,29 @@ namespace node {
 class LoopbackNode : public Node {
 
 protected:
-	int queuelen;
-	struct CQueueSignalled queue;
-	enum QueueSignalledMode mode;
+  int queuelen;
+  struct CQueueSignalled queue;
+  enum QueueSignalledMode mode;
 
-	virtual
-	int _write(struct Sample * smps[], unsigned cnt);
+  virtual int _write(struct Sample *smps[], unsigned cnt);
 
-	virtual
-	int _read(struct Sample * smps[], unsigned cnt);
+  virtual int _read(struct Sample *smps[], unsigned cnt);
 
 public:
-	LoopbackNode(const uuid_t &id = {}, const std::string &name = "");
+  LoopbackNode(const uuid_t &id = {}, const std::string &name = "");
 
-	virtual
-	~LoopbackNode();
+  virtual ~LoopbackNode();
 
-	virtual
-	int prepare();
+  virtual int prepare();
 
-	virtual
-	int stop();
+  virtual int stop();
 
-	virtual
-	std::vector<int> getPollFDs();
+  virtual std::vector<int> getPollFDs();
 
-	virtual
-	const std::string & getDetails();
+  virtual const std::string &getDetails();
 
-	virtual
-	int parse(json_t *json);
+  virtual int parse(json_t *json);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

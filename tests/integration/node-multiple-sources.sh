@@ -5,10 +5,9 @@
 # This test checks if a single node can be used as an input
 # in multiple paths.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 echo "Test is broken"
 exit 99

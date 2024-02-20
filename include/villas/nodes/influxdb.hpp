@@ -1,10 +1,9 @@
-/** Node-type for InfluxDB.
+/* Node-type for InfluxDB.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -13,21 +12,21 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 struct Sample;
 
 struct influxdb {
-	char *host;
-	char *port;
-	char *key;
+  char *host;
+  char *port;
+  char *key;
 
-	struct List fields;
+  struct List fields;
 
-	int sd;
+  int sd;
 };
 
-char * influxdb_print(NodeCompat *n);
+char *influxdb_print(NodeCompat *n);
 
 int influxdb_parse(NodeCompat *n, json_t *json);
 
@@ -35,7 +34,7 @@ int influxdb_open(NodeCompat *n);
 
 int influxdb_close(NodeCompat *n);
 
-int influxdb_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int influxdb_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

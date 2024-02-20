@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 type: object
 title: Hook Object
 required:
@@ -16,6 +17,7 @@ discriminator:
     average: hooks/_average.yaml
     cast: hooks/_cast.yaml
     decimate: hooks/_decimate.yaml
+    digest: hooks/_digest.yaml
     dp: hooks/_dp.yaml
     drop: hooks/_drop.yaml
     dump: hooks/_dump.yaml
@@ -30,6 +32,7 @@ discriminator:
     pmu_dft: hooks/_pmu_dft.yaml
     pps_ts: hooks/_pps_ts.yaml
     print: hooks/_print.yaml
+    reorder_ts: hooks/_reorder_ts.yaml
     restart: hooks/_restart.yaml
     rms: hooks/_rms.yaml
     round: hooks/_round.yaml

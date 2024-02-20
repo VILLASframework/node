@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 0
@@ -19,7 +22,6 @@ stages:
 - latest
 
 # Stage: prepare
-##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
 prepare:docker:
@@ -47,7 +49,6 @@ prepare:docker:
   - docker
 
 # Stage: build
-##############################################################################
 
 build:source:
   stage: build
@@ -86,17 +87,18 @@ build:source:
   - docker
 
 # Stage: test
-##############################################################################
 
-test:flake8:
+test:python:
   stage: test
   script:
-  - flake8 python/
+  - cd python
+  - /venv/bin/black --check .
+  - /venv/bin/mypy .
+  - /venv/bin/flake8 .
+  - /venv/bin/pytest -v .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
-  needs:
-  - job: "build:source: [fedora]"
 
 test:cppcheck:
   stage: test
@@ -164,8 +166,17 @@ test:integration:
   - job: "build:source: [fedora]"
     artifacts: true
 
+test:reuse:
+  stage: test
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  tags:
+  - docker
+  script:
+  - reuse lint
+
 # Stage: packaging
-##############################################################################
 
 pkg:docker:
   stage: packaging
@@ -210,11 +221,10 @@ pkg:docker:
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-   
+
   needs: []
 
 # Stage: deploy
-##############################################################################
 
 deploy:docker:
   stage: deploy
@@ -265,7 +275,7 @@ deploy:docker-dev-vscode:
   - job: "prepare:docker: [fedora, dev-vscode, ${DOCKER_IMAGE}/dev-vscode]"
 
 # Stage: latest
-##############################################################################
+
 
 .latest:docker:latest: &deploy_latest_docker
   stage: latest

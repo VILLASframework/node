@@ -2,6 +2,8 @@
 # Ensure that we have at least two usable loop devices inside our Docker container
 #
 # Source: https://github.com/jpetazzo/dind/issues/19#issuecomment-48859883
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 ensure_loop(){
 	num="$1"

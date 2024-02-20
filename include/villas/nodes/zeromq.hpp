@@ -1,61 +1,62 @@
-/** Node type: ZeroMQ
+/* Node type: ZeroMQ.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
 #include <cstdint>
 #include <jansson.h>
 
-#include <villas/super_node.hpp>
-#include <villas/list.hpp>
 #include <villas/format.hpp>
+#include <villas/list.hpp>
+#include <villas/super_node.hpp>
 
-#if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
-  #define ZMQ_BUILD_DISH 1
+#if ZMQ_BUILD_DRAFT_API &&                                                     \
+    (ZMQ_VERSION_MAJOR > 4 ||                                                  \
+     (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
+#define ZMQ_BUILD_DISH 1
 #endif
 
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 struct Sample;
 
 struct zeromq {
-	int ipv6;
+  int ipv6;
 
-	Format *formatter;
+  Format *formatter;
 
-	struct Curve {
-		int enabled;
-		struct {
-			char public_key[41];
-			char secret_key[41];
-		} server, client;
-	} curve;
+  struct Curve {
+    int enabled;
+    struct {
+      char public_key[41];
+      char secret_key[41];
+    } server, client;
+  } curve;
 
-	enum class Pattern {
-		PUBSUB,
+  enum class Pattern {
+    PUBSUB,
 #ifdef ZMQ_BUILD_DISH
-		RADIODISH
+    RADIODISH
 #endif
-	} pattern;
+  } pattern;
 
-	struct Dir {
-		void *socket;	/**< ZeroMQ socket. */
-		void *mon_socket;
-		struct List endpoints;
-		char *filter;
-		int bind, pending;
-	} in, out;
+  struct Dir {
+    void *socket; // ZeroMQ socket.
+    void *mon_socket;
+    struct List endpoints;
+    char *filter;
+    int bind, pending;
+  } in, out;
 };
 
-char * zeromq_print(NodeCompat *n);
+char *zeromq_print(NodeCompat *n);
 
 int zeromq_parse(NodeCompat *n, json_t *json);
 
@@ -79,9 +80,9 @@ int zeromq_poll_fds(NodeCompat *n, int fds[]);
 
 int zeromq_netem_fds(NodeCompat *n, int fds[]);
 
-int zeromq_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int zeromq_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int zeromq_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int zeromq_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

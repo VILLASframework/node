@@ -2,16 +2,13 @@
 #
 # Integration Infiniband test using villas-node.
 #
-# @author Dennis Potter <dennis@dennispotter.eu>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Dennis Potter <dennis@dennispotter.eu>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
-######################################
-# SETTINGS ###########################
-######################################
+# Settings
 
 # ${NUM_VALUES}, ${RATE_SAMPLES}, and ${IB_MODES} may be a list.
 
@@ -19,10 +16,6 @@ NUM_VALUES=(8)
 RATE_SAMPLES=(10)
 TIME_TO_RUN=5
 IB_MODES=("RC")
-
-######################################
-######################################
-######################################
 
 . ${SRCDIR}/tools/villas-helper.sh
 
@@ -78,9 +71,7 @@ else
 	fi
 fi
 
-######################################
-# SET PATHS ##########################
-######################################
+# SET PATHS
 
 # Declare location of config files
 CONFIG=$(mktemp /tmp/nodetype-benchmark-config-XXXX.conf)
@@ -90,10 +81,7 @@ CONFIG_SOURCE=$(mktemp /tmp/nodetype-benchmark-config-source-XXXX.conf)
 # Initialize counter
 COUNT=0
 
-
-######################################
-# START OF LOOPS THROUGH CONFIGS #####
-######################################
+# START OF LOOPS THROUGH CONFIGS
 
 echo ${CONFIG_FILES[0]}
 echo ${CONFIG_FILES[1]}
@@ -101,9 +89,7 @@ echo ${CONFIG_FILES[1]}
 for NODETYPE in "${NODETYPES[@]}"
 do
 
-	######################################
-	# CREATE PATH CONFIG FILES ###########
-	######################################
+	# CREATE PATH CONFIG FILES
 	
 	# Set target and source config file, which is the same for both runs
 cat > ${CONFIG_SOURCE} <<EOF
@@ -129,9 +115,7 @@ paths = (
 	}
 )
 EOF
-	######################################
-	# SPECIAL TREATMENT FOR SOME NODES ###
-	######################################
+	# SPECIAL TREATMENT FOR SOME NODES
 	
 	# Some nodes require special treatment:
 	#   * loopback node: target_node is identical to source_node
@@ -165,9 +149,7 @@ EOF
 	fi
 
 
-	######################################
-	# RUN THROUGH MODES ##################
-	######################################
+	# RUN THROUGH MODES
 	for IB_MODE in "${IB_MODES[@]}"
 	do
 		LOG_DIR=$(date +%Y%m%d_%H-%M-%S)_benchmark_${NODETYPE}_${IB_MODE}
@@ -179,14 +161,11 @@ EOF
 				NUM_SAMPLE=$((${RATE_SAMPLE} * ${TIME_TO_RUN}))
 				#TIME_TO_RUN=$((${NUM_SAMPLE} / ${RATE_SAMPLE}))
 	
-				echo "########################################################"
-				echo "########################################################"
+				echo "#####"
 				echo "## START ${IB_MODE}"
 				echo "## NUM_VALUES: ${NUM_VALUE}"
 				echo "## RATE_SAMPLES: ${RATE_SAMPLE}"
 				echo "## NUM_SAMPLES: ${NUM_SAMPLE}"
-				echo "########################################################"
-				echo "########################################################"
 	
 				# Set wrapper of config file
 cat > ${CONFIG} <<EOF
@@ -259,9 +238,7 @@ EOF
 				
 				sleep 1
 	
-				echo "########################################################"
 				echo "## STOP ${IB_MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}"
-				echo "########################################################"
 				echo ""
 	
 				((COUNT++))

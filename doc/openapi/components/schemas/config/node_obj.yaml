@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 type: object
 title: Format Object
 required:
@@ -34,6 +35,7 @@ discriminator:
     influxdb: nodes/_influxdb.yaml
     kafka: nodes/_kafka.yaml
     loopback: nodes/_loopback.yaml
+    modbus: nodes/_modbus.yaml
     mqtt: nodes/_mqtt.yaml
     nanomsg: nodes/_nanomsg.yaml
     ngsi: nodes/_ngsi.yaml

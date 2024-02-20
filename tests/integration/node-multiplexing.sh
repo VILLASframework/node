@@ -2,10 +2,9 @@
 #
 # Integration loopback test using villas node.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -118,5 +117,7 @@ EOF
 villas node config.json
 
 villas compare output.dat expect_${MODE}.dat
+
+rm output.dat
 
 done

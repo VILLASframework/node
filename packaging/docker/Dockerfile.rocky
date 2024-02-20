@@ -1,9 +1,8 @@
 # Rockylinux Dockerfile
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=rockylinux
 ARG ROCKY_VERSION=9
@@ -25,7 +24,8 @@ RUN dnf --allowerasing -y install \
 	autoconf automake libtool \
 	flex bison \
 	texinfo git curl tar \
-	protobuf-compiler protobuf-c-compiler
+	protobuf-compiler protobuf-c-compiler \
+	clang-tools-extra
 
 # Dependencies
 RUN dnf -y install \
@@ -47,7 +47,8 @@ RUN dnf -y install \
 	libusb1-devel \
 	lua-devel \
 	hiredis-devel \
-	libnice-devel
+	libnice-devel \
+	libmodbus-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
@@ -78,7 +79,6 @@ COPY . /villas/
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
 RUN cmake ${CMAKE_OPTS} .. && \
-	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
 

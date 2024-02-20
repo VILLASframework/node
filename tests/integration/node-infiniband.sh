@@ -2,10 +2,9 @@
 #
 # Integration Infiniband test using villas node.
 #
-# @author Dennis Potter <dennis@dennispotter.eu>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Dennis Potter <dennis@dennispotter.eu>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -110,11 +109,7 @@ MODES=("RC" "UC" "UD")
 # Run through modes
 for MODE in "${MODES[@]}"; do
 
-	echo "#############################"
-	echo "#############################"
-	echo "##       START ${MODE}     ##"
-	echo "#############################"
-	echo "#############################"
+	echo "## Start ${MODE}"
 
 	sed -i -e 's/MODE/'${MODE}'/g' config.json 
 

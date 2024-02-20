@@ -1,9 +1,8 @@
 # Debian Multiarch Dockerfile
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=debian
@@ -32,7 +31,8 @@ RUN apt-get update && \
 		autoconf automake autogen libtool \
 		texinfo git curl tar wget diffutils \
 		flex bison \
-		protobuf-compiler protobuf-c-compiler
+		protobuf-compiler protobuf-c-compiler \
+		clang-format clangd
 
 # Build-time dependencies
 RUN apt-get update && \
@@ -58,22 +58,23 @@ RUN apt-get update && \
 		libusb-1.0-0-dev:${ARCH} \
 		libre-dev:${ARCH} \
 		liblua5.3-dev:${ARCH} \
-		libhiredis-dev:${ARCH}
+		libhiredis-dev:${ARCH} \
+		libmodbus-dev:${ARCH}
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-    echo /usr/local/lib64 >> /etc/ld.so.conf
+	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
 
 ENV CMAKE_EXTRA_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
-				-DCMAKE_BUILD_TYPE=Release \
-				-DCMAKE_PREFIX_PATH=${PREFIX} \
-				-DCMAKE_INSTALL_PREFIX=${PREFIX} \
-				-DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib/${TRIPLET} \
-				-DLWS_INSTALL_LIB_DIR=${PREFIX}/lib/${TRIPLET}"
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_PREFIX_PATH=${PREFIX} \
+	-DCMAKE_INSTALL_PREFIX=${PREFIX} \
+	-DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib/${TRIPLET} \
+	-DLWS_INSTALL_LIB_DIR=${PREFIX}/lib/${TRIPLET}"
 
 ENV CONFIGURE_OPTS="--libdir=${PREFIX}/lib/${TRIPLET}"
 
@@ -110,9 +111,8 @@ COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-			
+
 RUN cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
-	make -j$(nproc) doc && \
 	make -j$(nproc) install
 
 FROM --platform=${TARGETPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS app
@@ -153,7 +153,8 @@ RUN apt-get update && \
 		libusb-1.0-0:${ARCH} \
 		libre0:${ARCH} \
 		liblua5.3-0:${ARCH} \
-		libhiredis0.14:${ARCH} && \
+		libhiredis0.14:${ARCH} \
+		libmodbus5:${ARCH} && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder ${PREFIX} ${PREFIX}

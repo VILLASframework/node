@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
 {
   description = "a tool for connecting real-time power grid simulation equipment";
 
@@ -12,8 +14,12 @@
     fpga = {
       type = "git";
       url = "https://github.com/VILLASframework/fpga.git";
-      ref = "refs/heads/villas-node";
       submodules = true;
+      flake = false;
+    };
+
+    ethercat = {
+      url = "gitlab:etherlab.org/ethercat/stable-1.5";
       flake = false;
     };
 
@@ -43,6 +49,12 @@
   } @ inputs: let
     inherit (nixpkgs) lib;
 
+    # Add separateDebugInfo to a derivation
+    addSeparateDebugInfo = d:
+      d.overrideAttrs {
+        separateDebugInfo = true;
+      };
+
     # supported systems for native compilation
     supportedSystems = ["x86_64-linux" "aarch64-linux"];
 
@@ -59,23 +71,35 @@
     pkgsFor = system:
       import nixpkgs {
         inherit system;
-        overlays = [self.overlays.default];
+        overlays = with self.overlays; [default];
       };
 
-    # initialize nixpkgs for cross-compiling from `system` to `crossSystem`
+    # Initialize nixpkgs for cross-compiling from `system` to `crossSystem`
     crossPkgsFor = system: crossSystem:
       (import nixpkgs {
         inherit system;
-        overlays = [
-          self.overlays.default
-          self.overlays.minimal
+        overlays = with self.overlays; [
+          default
+          minimal
         ];
       })
-      .pkgsCross.${crossSystem};
+      .pkgsCross
+      .${crossSystem};
 
-    # build villas and its dependencies for the specified `pkgs`
+    # Initialize development nixpkgs for the specified `system`
+    devPkgsFor = system:
+      import nixpkgs {
+        inherit system;
+        overlays = with self.overlays; [default debug];
+      };
+
+    # Build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
       default = villas;
+
+      villas-python = pkgs.callPackage ./python.nix {
+        src = ../../python;
+      };
 
       villas-minimal = pkgs.callPackage ./villas.nix {
         src = ../..;
@@ -89,6 +113,10 @@
         withAllFormats = true;
         withAllHooks = true;
         withAllNodes = true;
+      };
+
+      ethercat = pkgs.callPackage ./ethercat.nix {
+        src = inputs.ethercat;
       };
 
       lib60870 = pkgs.callPackage ./lib60870.nix {
@@ -119,6 +147,10 @@
     # standard flake attribute allowing you to add the villas packages to your nixpkgs
     overlays = {
       default = final: prev: packagesWith final;
+      debug = final: prev: {
+        jansson = addSeparateDebugInfo prev.jansson;
+        libmodbus = addSeparateDebugInfo prev.libmodbus;
+      };
       minimal = final: prev: {
         mosquitto = prev.mosquitto.override {systemd = final.systemdMinimal;};
         rdma-core = prev.rdma-core.override {udev = final.systemdMinimal;};
@@ -128,10 +160,21 @@
     # standard flake attribute for defining developer environments
     devShells = forSupportedSystems (
       system: let
-        pkgs = pkgsFor system;
+        pkgs = devPkgsFor system;
         shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
         hardeningDisable = ["all"];
-        packages = with pkgs; [bashInteractive criterion bc jq];
+        packages = with pkgs; [
+          bashInteractive
+          bc
+          boxfort
+          clang-tools
+          criterion
+          jq
+          libffi
+          libgit2
+          pcre
+          reuse
+        ];
       in rec {
         default = full;
 
@@ -156,7 +199,7 @@
       in {
         fmt = pkgs.runCommand "check-fmt" {} ''
           cd ${self}
-          ${pkgs.alejandra}/bin/alejandra --check . 2> $out
+          "${pkgs.alejandra}/bin/alejandra" --check . 2>> $out
         '';
       }
     );

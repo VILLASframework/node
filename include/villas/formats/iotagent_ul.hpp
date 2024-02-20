@@ -1,9 +1,9 @@
-/** UltraLight format for FISMEP project.
+/* UltraLight format for FISMEP project.
  *
- * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Iris Koester <ikoester@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -12,21 +12,21 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 struct Sample;
 
 class IotAgentUltraLightFormat : public Format {
 
 protected:
-	virtual
-	int sprint(char *buf, size_t len, size_t *wbytes, const struct Sample * const smps[], unsigned cnt);
+  virtual int sprint(char *buf, size_t len, size_t *wbytes,
+                     const struct Sample *const smps[], unsigned cnt);
 
-	virtual
-	int sscan(const char *buf, size_t len, size_t *rbytes, struct Sample * const smps[], unsigned cnt);
+  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
+                    struct Sample *const smps[], unsigned cnt);
 
 public:
-	using Format::Format;
+  using Format::Format;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

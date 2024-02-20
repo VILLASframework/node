@@ -1,184 +1,140 @@
-/** API Request.
+/* API Request.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
-#include <vector>
-#include <regex>
 #include <jansson.h>
+#include <regex>
+#include <vector>
 
-#include <villas/log.hpp>
+#include <villas/api/session.hpp>
 #include <villas/buffer.hpp>
+#include <villas/log.hpp>
 #include <villas/plugin.hpp>
 #include <villas/super_node.hpp>
-#include <villas/api/session.hpp>
 
-#define RE_UUID "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+#define RE_UUID                                                                \
+  "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{"   \
+  "12}"
 
 namespace villas {
 namespace node {
 namespace api {
 
-/* Forward declarations */
+// Forward declarations
 class Session;
 class Response;
 class RequestFactory;
 
 class Request {
 
-	friend Session;
-	friend RequestFactory;
-	friend Response;
+  friend Session;
+  friend RequestFactory;
+  friend Response;
 
 protected:
-	Session *session;
+  Session *session;
 
-	Logger logger;
-	Buffer buffer;
+  Logger logger;
+  Buffer buffer;
 
 public:
-	std::vector<std::string> matches;
-	Session::Method method;
-	unsigned long contentLength;
-	json_t *body;
+  std::vector<std::string> matches;
+  Session::Method method;
+  unsigned long contentLength;
+  json_t *body;
 
-	RequestFactory *factory;
+  RequestFactory *factory;
 
-	Request(Session *s) :
-		session(s),
-		method(Session::Method::UNKNOWN),
-		contentLength(0),
-		body(nullptr),
-		factory(nullptr)
-	{ }
+  Request(Session *s)
+      : session(s), method(Session::Method::UNKNOWN), contentLength(0),
+        body(nullptr), factory(nullptr) {}
 
-	virtual
-	~Request()
-	{
-		if (body)
-			json_decref(body);
-	}
+  virtual ~Request() {
+    if (body)
+      json_decref(body);
+  }
 
-	virtual
-	void prepare()
-	{ }
+  virtual void prepare() {}
 
-	virtual
-	Response * execute() = 0;
+  virtual Response *execute() = 0;
 
-	virtual
-	void decode();
+  virtual void decode();
 
-	const std::string & getMatch(int idx) const
-	{
-		return matches[idx];
-	}
+  const std::string &getMatch(int idx) const { return matches[idx]; }
 
-	std::string getQueryArg(const std::string &arg)
-	{
-		char buf[1024];
-		const char *val;
+  std::string getQueryArg(const std::string &arg) {
+    char buf[1024];
+    const char *val;
 
-		val = lws_get_urlarg_by_name(session->wsi, (arg + "=").c_str(), buf, sizeof(buf));
+    val = lws_get_urlarg_by_name(session->wsi, (arg + "=").c_str(), buf,
+                                 sizeof(buf));
 
-		return val ? std::string(val) : std::string();
-	}
+    return val ? std::string(val) : std::string();
+  }
 
-	std::string getHeader(enum lws_token_indexes hdr)
-	{
-		char buf[1024];
+  std::string getHeader(enum lws_token_indexes hdr) {
+    char buf[1024];
 
-		lws_hdr_copy(session->wsi, buf, sizeof(buf), hdr);
+    lws_hdr_copy(session->wsi, buf, sizeof(buf), hdr);
 
-		return std::string(buf);
-	}
+    return std::string(buf);
+  }
 
-	virtual
-	std::string toString();
+  virtual std::string toString();
 };
 
 class RequestFactory : public plugin::Plugin {
 
 public:
-	using plugin::Plugin::Plugin;
+  using plugin::Plugin::Plugin;
 
-	virtual
-	bool match(const std::string &uri, std::smatch &m) const = 0;
+  virtual bool match(const std::string &uri, std::smatch &m) const = 0;
 
-	virtual
-	Request * make(Session *s) = 0;
+  virtual Request *make(Session *s) = 0;
 
-	static
-	Request * create(Session *s, const std::string &uri, Session::Method meth, unsigned long ct);
+  static Request *create(Session *s, const std::string &uri,
+                         Session::Method meth, unsigned long ct);
 
-	virtual
-	void init(Request *r)
-	{
-		r->logger = getLogger();
-	}
+  virtual void init(Request *r) { r->logger = getLogger(); }
 
-	virtual
-	std::string
-	getType() const
-	{
-		return "api:request";
-	}
+  virtual std::string getType() const { return "api:request"; }
 
-	virtual
-	bool isHidden() const
-	{
-		return false;
-	}
+  virtual bool isHidden() const { return false; }
 };
 
-template<typename T, const char *name, const char *re, const char *desc>
+template <typename T, const char *name, const char *re, const char *desc>
 class RequestPlugin : public RequestFactory {
 
 protected:
-	std::regex regex;
+  std::regex regex;
 
 public:
-	RequestPlugin() :
-		RequestFactory(),
-		regex(re)
-	{ }
+  RequestPlugin() : RequestFactory(), regex(re) {}
 
-	virtual Request *
-	make(Session *s)
-	{
-		auto *r = new T(s);
+  virtual Request *make(Session *s) {
+    auto *r = new T(s);
 
-		init(r);
+    init(r);
 
-		return r;
-	}
+    return r;
+  }
 
-	// Get plugin name
-	virtual std::string
-	getName() const
-	{
-		return name;
-	}
+  // Get plugin name
+  virtual std::string getName() const { return name; }
 
-	// Get plugin description
-	virtual std::string
-	getDescription() const
-	{
-		return desc;
-	}
+  // Get plugin description
+  virtual std::string getDescription() const { return desc; }
 
-	virtual bool
-	match(const std::string &uri, std::smatch &match) const
-	{
-		return std::regex_match(uri, match, regex);
-	}
+  virtual bool match(const std::string &uri, std::smatch &match) const {
+    return std::regex_match(uri, match, regex);
+  }
 };
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

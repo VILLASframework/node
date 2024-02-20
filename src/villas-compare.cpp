@@ -1,23 +1,23 @@
-/** Compare two data files.
+/* Compare two data files.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <iostream>
 #include <unistd.h>
 
 #include <jansson.h>
 
-#include <villas/tool.hpp>
-#include <villas/sample.hpp>
-#include <villas/format.hpp>
-#include <villas/utils.hpp>
-#include <villas/log.hpp>
-#include <villas/pool.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/format.hpp>
+#include <villas/log.hpp>
 #include <villas/node/config.hpp>
+#include <villas/pool.hpp>
+#include <villas/sample.hpp>
+#include <villas/tool.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 
@@ -28,251 +28,250 @@ namespace tools {
 class CompareSide {
 
 public:
-	std::string path;
-	std::string dtypes;
-	std::string format;
+  std::string path;
+  std::string dtypes;
+  std::string format;
 
-	struct Sample *sample;
+  struct Sample *sample;
 
-	Format *formatter;
+  Format *formatter;
 
-	FILE *stream;
+  FILE *stream;
 
-	CompareSide(const CompareSide&) = delete;
-	CompareSide & operator=(const CompareSide&) = delete;
+  CompareSide(const CompareSide &) = delete;
+  CompareSide &operator=(const CompareSide &) = delete;
 
-	CompareSide(const std::string &pth, const std::string &fmt, const std::string &dt, struct Pool *p) :
-		path(pth),
-		dtypes(dt),
-		format(fmt)
-	{
-		json_t *json_format;
-		json_error_t err;
+  CompareSide(const std::string &pth, const std::string &fmt,
+              const std::string &dt, struct Pool *p)
+      : path(pth), dtypes(dt), format(fmt) {
+    json_t *json_format;
+    json_error_t err;
 
-		/* Try parsing format config as JSON */
-		json_format = json_loads(format.c_str(), 0, &err);
-		formatter = json_format
-			? FormatFactory::make(json_format)
-			: FormatFactory::make(format);
-		if (!formatter)
-			throw RuntimeError("Failed to initialize formatter");
+    // Try parsing format config as JSON
+    json_format = json_loads(format.c_str(), 0, &err);
+    formatter = json_format ? FormatFactory::make(json_format)
+                            : FormatFactory::make(format);
+    if (!formatter)
+      throw RuntimeError("Failed to initialize formatter");
 
-		formatter->start(dtypes);
+    formatter->start(dtypes);
 
-		stream = fopen(path.c_str(), "r");
-		if (!stream)
-			throw SystemError("Failed to open file: {}", path);
+    stream = fopen(path.c_str(), "r");
+    if (!stream)
+      throw SystemError("Failed to open file: {}", path);
 
-		sample = sample_alloc(p);
-		if (!sample)
-			throw RuntimeError("Failed to allocate samples");
-	}
+    sample = sample_alloc(p);
+    if (!sample)
+      throw RuntimeError("Failed to allocate samples");
+  }
 
-	~CompareSide() noexcept(false)
-	{
-		int ret __attribute((unused));
+  ~CompareSide() noexcept(false) {
+    int ret __attribute((unused));
 
-		ret = fclose(stream);
+    ret = fclose(stream);
 
-		delete formatter;
+    delete formatter;
 
-		sample_decref(sample);
-	}
+    sample_decref(sample);
+  }
 };
 
 class Compare : public Tool {
 
 public:
-	Compare(int argc, char *argv[]) :
-		Tool(argc, argv, "test-cmp"),
-		pool(),
-		epsilon(1e-6),
-		format("villas.human"),
-		dtypes("64f"),
-		flags((int) SampleFlags::HAS_SEQUENCE | (int) SampleFlags::HAS_DATA | (int) SampleFlags::HAS_TS_ORIGIN)
-	{
-		int ret;
+  Compare(int argc, char *argv[])
+      : Tool(argc, argv, "test-cmp"), pool(), epsilon(1e-6),
+        format("villas.human"), dtypes("64f"),
+        flags((int)SampleFlags::HAS_SEQUENCE | (int)SampleFlags::HAS_DATA |
+              (int)SampleFlags::HAS_TS_ORIGIN) {
+    int ret;
 
-		ret = memory::init(DEFAULT_NR_HUGEPAGES);
-		if (ret)
-			throw RuntimeError("Failed to initialize memory");
-	}
+    ret = memory::init(DEFAULT_NR_HUGEPAGES);
+    if (ret)
+      throw RuntimeError("Failed to initialize memory");
+  }
 
 protected:
-	struct Pool pool;
+  struct Pool pool;
 
-	double epsilon;
-	std::string format;
-	std::string dtypes;
-	int flags;
+  double epsilon;
+  std::string format;
+  std::string dtypes;
+  int flags;
 
-	std::vector<std::string> filenames;
+  std::vector<std::string> filenames;
 
-	void usage()
-	{
-		std::cout << "Usage: villas-compare [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
-			<< "  FILE     a list of files to compare" << std::endl
-			<< "  OPTIONS is one or more of the following options:" << std::endl
-			<< "    -d LVL  adjust the debug level" << std::endl
-			<< "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl
-			<< "    -v      ignore data values" << std::endl
-			<< "    -T      ignore timestamp" << std::endl
-			<< "    -s      ignore sequence no" << std::endl
-			<< "    -f FMT  file format for all files" << std::endl
-			<< "    -t DT   the data-type format string" << std::endl
-			<< "    -h      show this usage information" << std::endl
-			<< "    -V      show the version of the tool" << std::endl << std::endl
-			<< "Return codes:" << std::endl
-			<< "  0   files are equal" << std::endl
-			<< "  1   file length not equal" << std::endl
-			<< "  2   sequence no not equal" << std::endl
-			<< "  3   timestamp not equal" << std::endl
-			<< "  4   number of values is not equal" << std::endl
-			<< "  5   data is not equal" << std::endl << std::endl;
+  void usage() {
+    std::cout << "Usage: villas-compare [OPTIONS] FILE1 FILE2 ... FILEn"
+              << std::endl
+              << "  FILE     a list of files to compare" << std::endl
+              << "  OPTIONS is one or more of the following options:"
+              << std::endl
+              << "    -d LVL  adjust the debug level" << std::endl
+              << "    -e EPS  set epsilon for floating point comparisons to EPS"
+              << std::endl
+              << "    -v      ignore data values" << std::endl
+              << "    -T      ignore timestamp" << std::endl
+              << "    -s      ignore sequence no" << std::endl
+              << "    -f FMT  file format for all files" << std::endl
+              << "    -t DT   the data-type format string" << std::endl
+              << "    -h      show this usage information" << std::endl
+              << "    -V      show the version of the tool" << std::endl
+              << std::endl
+              << "Return codes:" << std::endl
+              << "  0   files are equal" << std::endl
+              << "  1   file length not equal" << std::endl
+              << "  2   sequence no not equal" << std::endl
+              << "  3   timestamp not equal" << std::endl
+              << "  4   number of values is not equal" << std::endl
+              << "  5   data is not equal" << std::endl
+              << std::endl;
 
-		printCopyright();
-	}
+    printCopyright();
+  }
 
-	void parse()
-	{
-		/* Parse Arguments */
-		int c;
-		char *endptr;
-		while ((c = getopt (argc, argv, "he:vTsf:t:Vd:")) != -1) {
-			switch (c) {
-				case 'e':
-					epsilon = strtod(optarg, &endptr);
-					goto check;
+  void parse() {
+    // Parse Arguments
+    int c;
+    char *endptr;
+    while ((c = getopt(argc, argv, "he:vTsf:t:Vd:")) != -1) {
+      switch (c) {
+      case 'e':
+        epsilon = strtod(optarg, &endptr);
+        goto check;
 
-				case 'v':
-					flags &= ~(int) SampleFlags::HAS_DATA;
-					break;
+      case 'v':
+        flags &= ~(int)SampleFlags::HAS_DATA;
+        break;
 
-				case 'T':
-					flags &= ~(int) SampleFlags::HAS_TS_ORIGIN;
-					break;
+      case 'T':
+        flags &= ~(int)SampleFlags::HAS_TS_ORIGIN;
+        break;
 
-				case 's':
-					flags &= ~(int) SampleFlags::HAS_SEQUENCE;
-					break;
+      case 's':
+        flags &= ~(int)SampleFlags::HAS_SEQUENCE;
+        break;
 
-				case 'f':
-					format = optarg;
-					break;
+      case 'f':
+        format = optarg;
+        break;
 
-				case 't':
-					dtypes = optarg;
-					break;
+      case 't':
+        dtypes = optarg;
+        break;
 
-				case 'V':
-					printVersion();
-					exit(EXIT_SUCCESS);
+      case 'V':
+        printVersion();
+        exit(EXIT_SUCCESS);
 
-				case 'd':
-					logging.setLevel(optarg);
-					break;
+      case 'd':
+        logging.setLevel(optarg);
+        break;
 
-				case 'h':
-				case '?':
-					usage();
-					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-			}
+      case 'h':
+      case '?':
+        usage();
+        exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+      }
 
-			continue;
+      continue;
 
-check:			if (optarg == endptr)
-				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
-		}
+    check:
+      if (optarg == endptr)
+        throw RuntimeError("Failed to parse parse option argument '-{} {}'", c,
+                           optarg);
+    }
 
-		if (argc - optind < 2) {
-			usage();
-			exit(EXIT_FAILURE);
-		}
+    if (argc - optind < 2) {
+      usage();
+      exit(EXIT_FAILURE);
+    }
 
-		/* Open files */
-		for (int i = 0; i < argc - optind; i++)
-			filenames.push_back(argv[optind + i]);
-	}
+    // Open files
+    for (int i = 0; i < argc - optind; i++)
+      filenames.push_back(argv[optind + i]);
+  }
 
-	int main()
-	{
-		int ret, rc = 0, line, failed;
-		unsigned eofs;
+  int main() {
+    int ret, rc = 0, line, failed;
+    unsigned eofs;
 
-		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory::heap);
-		if (ret)
-			throw RuntimeError("Failed to initialize pool");
+    ret = pool_init(&pool, filenames.size(),
+                    SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory::heap);
+    if (ret)
+      throw RuntimeError("Failed to initialize pool");
 
-		/* Open files */
-		std::vector<CompareSide *> sides;
-		for (auto filename : filenames) {
-			auto *s = new CompareSide(filename, format, dtypes, &pool);
-			if (!s)
-				throw MemoryAllocationError();
+    // Open files
+    std::vector<CompareSide *> sides;
+    for (auto filename : filenames) {
+      auto *s = new CompareSide(filename, format, dtypes, &pool);
+      if (!s)
+        throw MemoryAllocationError();
 
-			sides.push_back(s);
-		}
+      sides.push_back(s);
+    }
 
-		line = 0;
-		while (true) {
-			/* Read next sample from all files */
-retry:			eofs = 0;
-			for (auto side : sides) {
-				ret = feof(side->stream);
-				if (ret)
-					eofs++;
-			}
+    line = 0;
+    while (true) {
+      // Read next sample from all files
+    retry:
+      eofs = 0;
+      for (auto side : sides) {
+        ret = feof(side->stream);
+        if (ret)
+          eofs++;
+      }
 
-			if (eofs) {
-				if (eofs == sides.size())
-					ret = 0;
-				else {
-					std::cout << "length unequal" << std::endl;
-					rc = 1;
-				}
+      if (eofs) {
+        if (eofs == sides.size())
+          ret = 0;
+        else {
+          std::cout << "length unequal" << std::endl;
+          rc = 1;
+        }
 
-				goto out;
-			}
+        goto out;
+      }
 
-			failed = 0;
-			for (auto side : sides) {
-				ret = side->formatter->scan(side->stream, side->sample);
-				if (ret <= 0)
-					failed++;
-			}
-			if (failed)
-				goto retry;
+      failed = 0;
+      for (auto side : sides) {
+        ret = side->formatter->scan(side->stream, side->sample);
+        if (ret <= 0)
+          failed++;
+      }
+      if (failed)
+        goto retry;
 
-			/* We compare all files against the first one */
-			for (auto side : sides) {
-				ret = sample_cmp(sides[0]->sample, side->sample, epsilon, flags);
-				if (ret) {
-					rc = ret;
-					goto out;
-				}
-			}
+      // We compare all files against the first one
+      for (auto side : sides) {
+        ret = sample_cmp(sides[0]->sample, side->sample, epsilon, flags);
+        if (ret) {
+          rc = ret;
+          goto out;
+        }
+      }
 
-			line++;
-		}
+      line++;
+    }
 
-out:		for (auto side : sides)
-			delete side;
+  out:
+    for (auto side : sides)
+      delete side;
 
-		ret = pool_destroy(&pool);
-		if (ret)
-			throw RuntimeError("Failed to destroy pool");
+    ret = pool_destroy(&pool);
+    if (ret)
+      throw RuntimeError("Failed to destroy pool");
 
-		return rc;
-	}
+    return rc;
+  }
 };
 
-} /* namespace tools */
-} /* namespace node */
-} /* namespace villas */
+} // namespace tools
+} // namespace node
+} // namespace villas
 
-int main(int argc, char *argv[])
-{
-	villas::node::tools::Compare t(argc, argv);
+int main(int argc, char *argv[]) {
+  villas::node::tools::Compare t(argc, argv);
 
-	return t.run();
+  return t.run();
 }

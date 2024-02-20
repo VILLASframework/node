@@ -1,117 +1,91 @@
-/** Communicate with VILLASfpga Xilinx FPGA boards
+/* Communicate with VILLASfpga Xilinx FPGA boards.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
-#include <villas/node/config.hpp>
-#include <villas/node.hpp>
 #include <villas/format.hpp>
+#include <villas/node.hpp>
+#include <villas/node/config.hpp>
 #include <villas/timing.hpp>
 
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/pcie_card.hpp>
-#include <villas/fpga/node.hpp>
 #include <villas/fpga/ips/dma.hpp>
+#include <villas/fpga/node.hpp>
+#include <villas/fpga/pcie_card.hpp>
 
 namespace villas {
 namespace node {
 
-#define FPGA_DMA_VLNV
-#define FPGA_AURORA_VLNV "acs.eonerc.rwth-aachen.de:user:aurora_axis:"
-
 class FpgaNode : public Node {
 
-protected:
-	int irqFd;
-	int coalesce;
-	bool polling;
-
-	std::shared_ptr<fpga::PCIeCard> card;
-
-	std::shared_ptr<fpga::ip::Dma> dma;
-	std::shared_ptr<fpga::ip::Node> intf;
-
-	std::unique_ptr<const MemoryBlock> blockRx;
-	std::unique_ptr<const MemoryBlock> blockTx;
-
-	// Config only
-	std::string cardName;
-	std::string intfName;
-	std::string dmaName;
+  enum InterfaceType { PCIE, PLATFORM };
 
 protected:
-	virtual
-	int _read(Sample *smps[], unsigned cnt);
+  // Settings
+  std::string cardName;
+  std::list<std::string> connectStrings;
 
-	virtual
-	int _write(Sample *smps[], unsigned cnt);
+  // State
+  std::shared_ptr<fpga::Card> card;
+  std::shared_ptr<villas::fpga::ip::Dma> dma;
+  std::shared_ptr<villas::MemoryBlock> blockRx[2];
+  std::shared_ptr<villas::MemoryBlock> blockTx;
+
+  // Non-public methods
+  virtual int _read(Sample *smps[], unsigned cnt) override;
+
+  virtual int _write(Sample *smps[], unsigned cnt) override;
 
 public:
-	FpgaNode(const uuid_t &id = {}, const std::string &name = "");
+  FpgaNode(const uuid_t &id = {}, const std::string &name = "");
 
-	virtual
-	~FpgaNode();
+  virtual ~FpgaNode();
 
-	virtual
-	int parse(json_t *json);
+  virtual int prepare() override;
 
-	virtual
-	const std::string & getDetails();
+  virtual int parse(json_t *json) override;
 
-	virtual
-	int check();
+  virtual int check() override;
 
-	virtual
-	int prepare();
+  virtual int start() override;
 
-	virtual
-	std::vector<int> getPollFDs();
+  virtual std::vector<int> getPollFDs() override;
+
+  virtual const std::string &getDetails() override;
 };
-
 
 class FpgaNodeFactory : public NodeFactory {
 
 public:
-	using NodeFactory::NodeFactory;
+  using NodeFactory::NodeFactory;
 
-	virtual
-	Node * make(const uuid_t &id = {}, const std::string &nme = "")
-	{
-		auto *n = new FpgaNode(id, nme);
+  virtual Node *make(const uuid_t &id = {},
+                     const std::string &nme = "") override {
+    auto *n = new FpgaNode(id, nme);
 
-		init(n);
+    init(n);
 
-		return n;
-	}
+    return n;
+  }
 
-	virtual
-	int getFlags() const
-	{
-		return (int) NodeFactory::Flags::SUPPORTS_READ |
-		       (int) NodeFactory::Flags::SUPPORTS_WRITE |
-		       (int) NodeFactory::Flags::SUPPORTS_POLL;
-	}
+  virtual int getFlags() const override {
+    return (int)NodeFactory::Flags::SUPPORTS_READ |
+           (int)NodeFactory::Flags::SUPPORTS_WRITE |
+           (int)NodeFactory::Flags::SUPPORTS_POLL;
+  }
 
-	virtual
-	std::string getName() const
-	{
-		return "fpga";
-	}
+  virtual std::string getName() const override { return "fpga"; }
 
-	virtual
-	std::string getDescription() const
-	{
-		return "VILLASfpga";
-	}
+  virtual std::string getDescription() const override { return "VILLASfpga"; }
 
-	virtual
-	int start(SuperNode *sn);
+  virtual int start(SuperNode *sn) override;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

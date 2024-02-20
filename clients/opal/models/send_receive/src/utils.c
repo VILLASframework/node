@@ -1,11 +1,11 @@
-/** Configure scheduler.
+/* Configure scheduler.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @author Mathieu Dubé-Dallaire
- * @copyright 2003, OPAL-RT Technologies inc
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * Author: Mathieu Dubé-Dallaire
+ * SPDX-FileCopyrightText: 2003 OPAL-RT Technologies inc
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <errno.h>
 #include <sched.h>
@@ -18,20 +18,19 @@
 #include "config.h"
 #include "utils.h"
 
-int AssignProcToCpu0(void)
-{
-	int ret;
-	cpu_set_t bindSet;
-	
-	CPU_ZERO(&bindSet);
-	CPU_SET(0, &bindSet);
+int AssignProcToCpu0(void) {
+  int ret;
+  cpu_set_t bindSet;
 
-	/* Changing process cpu affinity */
-	ret = sched_setaffinity(0, sizeof(cpu_set_t), &bindSet);
-	if (ret) {
-		OpalPrint("Unable to bind the process to CPU 0: %d\n", errno);
-		return EINVAL;
-	}
+  CPU_ZERO(&bindSet);
+  CPU_SET(0, &bindSet);
 
-	return 0;
+  // Changing process cpu affinity
+  ret = sched_setaffinity(0, sizeof(cpu_set_t), &bindSet);
+  if (ret) {
+    OpalPrint("Unable to bind the process to CPU 0: %d\n", errno);
+    return EINVAL;
+  }
+
+  return 0;
 }

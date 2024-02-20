@@ -1,10 +1,9 @@
 # CMakeLists.txt.
 #
-# @author Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 find_path(ETHERLAB_INCLUDE_DIR
 	NAMES ecrt.h

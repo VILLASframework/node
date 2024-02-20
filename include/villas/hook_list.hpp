@@ -1,13 +1,11 @@
-/** Hook list functions
+/* Hook list functions.
  *
  * This file includes some examples.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- **********************************************************************************/
-
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,7 +16,7 @@
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 class Path;
 struct Sample;
@@ -26,10 +24,9 @@ struct Sample;
 class HookList : public std::list<Hook::Ptr> {
 
 public:
-	HookList()
-	{ }
+  HookList() {}
 
-	/** Parses an object of hooks
+  /* Parses an object of hooks
 	 *
 	 * Example:
 	 *
@@ -43,26 +40,26 @@ public:
 	 *    hooks = [ "print" ]
 	 * }
 	 */
-	void parse(json_t *json, int mask, Path *p, Node *n);
+  void parse(json_t *json, int mask, Path *p, Node *n);
 
-	void check();
+  void check();
 
-	void prepare(SignalList::Ptr sigs, int mask, Path *p, Node *n);
+  void prepare(SignalList::Ptr sigs, int mask, Path *p, Node *n);
 
-	int process(struct Sample *smps[], unsigned cnt);
-	void periodic();
-	void start();
-	void stop();
+  int process(struct Sample *smps[], unsigned cnt);
+  void periodic();
+  void start();
+  void stop();
 
-	void dump(villas::Logger logger, std::string subject) const;
+  void dump(villas::Logger logger, std::string subject) const;
 
-	SignalList::Ptr getSignals() const;
+  SignalList::Ptr getSignals() const;
 
-	/** Get the maximum number of signals which is used by any of the hooks in the list. */
-	unsigned getSignalsMaxCount() const;
+  // Get the maximum number of signals which is used by any of the hooks in the list.
+  unsigned getSignalsMaxCount() const;
 
-	json_t * toJson() const;
+  json_t *toJson() const;
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

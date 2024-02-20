@@ -1,9 +1,8 @@
 # Main CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.14)
 
@@ -73,16 +72,9 @@ find_package(OpenMP)
 find_package(Opal)
 find_package(IBVerbs)
 find_package(RDMACM)
-find_package(spdlog)
 find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
-
-# For compat between libfmt 8 and 9
-add_compile_definitions(FMT_DEPRECATED_OSTREAM)
-
-# For compat between libfmt 8 and 9
-add_compile_definitions(FMT_DEPRECATED_OSTREAM)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -109,6 +101,7 @@ pkg_check_modules(LIBIEC61850 IMPORTED_TARGET libiec61850>=1.5.0)
 pkg_check_modules(LIB60870 IMPORTED_TARGET lib60870>=2.3.1)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
 pkg_check_modules(MOSQUITTO IMPORTED_TARGET libmosquitto>=1.6.9)
+pkg_check_modules(MODBUS IMPORTED_TARGET libmodbus>=3.1.0)
 pkg_check_modules(RDKAFKA IMPORTED_TARGET rdkafka>=1.5.0)
 pkg_check_modules(HIREDIS IMPORTED_TARGET hiredis>=1.0.0)
 pkg_check_modules(REDISPP IMPORTED_TARGET redis++>=1.2.0)
@@ -175,7 +168,6 @@ cmake_dependent_option(WITH_DEFAULTS        "Defaults for non required build opt
 cmake_dependent_option(WITH_API             "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_CLIENTS         "Build client applications"                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" "${WITH_DEFAULTS}" "LIBCONFIG_FOUND" OFF)
-cmake_dependent_option(WITH_DOC             "Build documentation"                                   "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     "${WITH_DEFAULTS}" "FOUND_SUBMODULE_FPGA" OFF)
 cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   "${WITH_DEFAULTS}" "CGRAPH_FOUND; GVC_FOUND" OFF)
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        "${WITH_DEFAULTS}" "" OFF)
@@ -201,6 +193,7 @@ cmake_dependent_option(WITH_NODE_INFINIBAND "Build with infiniband node-type"   
 cmake_dependent_option(WITH_NODE_INFLUXDB   "Build with influxdb node-type"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_KAFKA      "Build with kafka node-type"                            "${WITH_DEFAULTS}" "RDKAFKA_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_LOOPBACK   "Build with loopback node-type"                         "${WITH_DEFAULTS}" "" OFF)
+cmake_dependent_option(WITH_NODE_MODBUS     "Build with modbus node-type"                           "${WITH_DEFAULTS}" "MODBUS_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             "${WITH_DEFAULTS}" "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          "${WITH_DEFAULTS}" "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             "${WITH_DEFAULTS}" "" OFF)
@@ -264,10 +257,6 @@ if(WITH_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
-if(WITH_DOC AND ${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.9.0")
-    add_subdirectory(doc)
-endif()
-
 if(WITH_CLIENTS)
     add_subdirectory(clients)
 endif()
@@ -285,7 +274,6 @@ configure_file(
 add_feature_info(API                    WITH_API                    "Build with remote control API")
 add_feature_info(CLIENTS                WITH_CLIENTS                "Build client applications")
 add_feature_info(CONFIG                 WITH_CONFIG                 "Build with support for libconfig configuration syntax")
-add_feature_info(DOC                    WITH_DOC                    "Build documentation")
 add_feature_info(FPGA                   WITH_FPGA                   "Build with FPGA support")
 add_feature_info(GRAPHVIZ               WITH_GRAPHVIZ               "Build with Graphviz support")
 add_feature_info(HOOKS                  WITH_HOOKS                  "Build with support for processing hook plugins")
@@ -311,6 +299,7 @@ add_feature_info(NODE_INFINIBAND        WITH_NODE_INFINIBAND        "Build with 
 add_feature_info(NODE_INFLUXDB          WITH_NODE_INFLUXDB          "Build with influxdb node-type")
 add_feature_info(NODE_KAFKA             WITH_NODE_KAFKA             "Build with kafka node-type")
 add_feature_info(NODE_LOOPBACK          WITH_NODE_LOOPBACK          "Build with loopback node-type")
+add_feature_info(NODE_MODBUS            WITH_NODE_MODBUS            "Build with modbus node-type")
 add_feature_info(NODE_MQTT              WITH_NODE_MQTT              "Build with mqtt node-type")
 add_feature_info(NODE_NANOMSG           WITH_NODE_NANOMSG           "Build with nanomsg node-type")
 add_feature_info(NODE_NGSI              WITH_NODE_NGSI              "Build with ngsi node-type")

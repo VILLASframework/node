@@ -1,10 +1,9 @@
-/** Dump fields and values in a socket to plot them with villasDump.py.
+/* Dump fields and values in a socket to plot them with villasDump.py.
  *
- * @file
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -18,26 +17,26 @@ namespace node {
 class Dumper {
 
 protected:
-	bool active;
-	int socketFd;
-	std::string socketPath;
-	bool supressRepeatedWarning;
-	uint64_t warningCounter;
-	Logger logger;
+  bool active;
+  int socketFd;
+  std::string socketPath;
+  bool supressRepeatedWarning;
+  uint64_t warningCounter;
+  Logger logger;
 
 public:
-	Dumper();
-	~Dumper();
+  Dumper();
+  ~Dumper();
 
-	int openSocket();
-	int closeSocket();
-	bool isActive();
-	int setActive();
+  int openSocket();
+  int closeSocket();
+  bool isActive();
+  int setActive();
 
-	int setPath(const std::string &socketPathIn);
-	void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
-	void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
+  int setPath(const std::string &socketPathIn);
+  void writeDataCSV(unsigned len, double *yData, double *xData = nullptr);
+  void writeDataBinary(unsigned len, double *yData, double *xData = nullptr);
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

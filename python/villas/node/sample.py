@@ -1,107 +1,133 @@
-import re
-from datetime import datetime
+"""
+Author: Steffen Vogel <post@steffenvogel.de>
+Author: Philipp Jungkamp <Philipp.Jungkamp@opal-rt.com>
+SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+SPDX-License-Identifier: Apache-2.0
+"""  # noqa: E501
+
+from ctypes import c_double, c_float, sizeof
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from functools import total_ordering
+from sys import byteorder as native
+
+assert sizeof(c_float) == 4
+assert sizeof(c_double) == 8
+
+
+Signal = bool | int | float | complex
 
 
 @total_ordering
+@dataclass
 class Timestamp:
-    """Parsing the VILLASnode human-readable timestamp format"""
+    """
+    A VILLASnode timestamp. Based on the C struct timespec.
+    These timestamps are always UTC.
+    """
 
-    def __init__(self, seconds=None, nanoseconds=None,
-                 offset=None, sequence=None):
-        self.seconds = seconds
-        self.nanoseconds = nanoseconds
-        self.offset = offset
-        self.sequence = sequence
+    seconds: int
+    nanoseconds: int = 0
 
-    @classmethod
-    def now(cls, offset=None, sequence=None):
-        n = datetime.utcnow()
-
-        secs = int(n.timestamp())
-        nsecs = 1000 * n.microsecond
-
-        return Timestamp(seconds=secs, nanoseconds=nsecs,
-                         offset=offset, sequence=sequence)
+    def _as_digest_bytes(self):
+        sec = self.seconds.to_bytes(8, "little")
+        nsec = self.nanoseconds.to_bytes(8, "little")
+        return bytes().join([sec, nsec])
 
     @classmethod
-    def parse(cls, ts):
-        m = re.match(r'(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?'
-                     r'(?:e[+-]?\d+)?)?(?:\((\d+)\))?', ts)
+    def fromdatetime(cls, ts: datetime) -> "Timestamp":
+        secs = int(ts.timestamp())
+        nsecs = int(1000 * ts.microsecond)
+        return cls(seconds=secs, nanoseconds=nsecs)
 
-        seconds = int(m.group(1))  # Mandatory
-        nanoseconds = int(m.group(2)) if m.group(2) else None
-        offset = float(m.group(3)) if m.group(3) else None
-        sequence = int(m.group(4)) if m.group(4) else None
+    @classmethod
+    def fromtimestamp(cls, ts: float) -> "Timestamp":
+        secs = int(ts)
+        nsecs = int(1e9 * (ts - float(secs)))
+        return cls(seconds=secs, nanoseconds=nsecs)
 
-        return Timestamp(seconds, nanoseconds, offset, sequence)
+    def timestamp(self) -> float:
+        return float(self)
 
-    def __str__(self):
-        str = "%u" % (self.seconds)
-
-        if self.nanoseconds is not None:
-            str += ".%09u" % self.nanoseconds
-        if self.offset is not None:
-            str += "+%u" % self.offset
-        if self.sequence is not None:
-            str += "(%u)" % self.sequence
-
-        return str
+    def datetime(self) -> datetime:
+        return datetime.fromtimestamp(self.timestamp(), tz=timezone.utc)
 
     def __float__(self):
-        sum = float(self.seconds)
+        return float(self.seconds) + float(self.nanoseconds) * 1e-9
 
-        if self.nanoseconds is not None:
-            sum += self.nanoseconds * 1e-9
-        if self.offset is not None:
-            sum += self.offset
+    def _as_ordered_tuple(self):
+        return (
+            self.seconds,
+            self.nanoseconds,
+        )
 
-        return sum
+    def __eq__(self, other: object):
+        if not isinstance(other, Timestamp):
+            return False
 
-    def __eq__(self, other):
-        return float(self) == float(other)
+        return self._as_ordered_tuple() == other._as_ordered_tuple()
 
-    def __lt__(self, other):
-        return float(self) < float(other)
+    def __lt__(self, other: "Timestamp"):
+        return self._as_ordered_tuple() < other._as_ordered_tuple()
 
 
 @total_ordering
+@dataclass(kw_only=True)
 class Sample:
-    """Parsing a VILLASnode sample from a file (not a UDP package!!)"""
+    """
+    A VILLASnode sample.
+    """
 
-    def __init__(self, ts, values):
-        self.ts = ts
-        self.values = values
+    ts_origin: Timestamp | None = None
+    ts_received: Timestamp | None = None
+    sequence: int | None = None
+    new_frame: bool = False
+    data: list[Signal] = field(default_factory=list)
 
-    @classmethod
-    def parse(cls, line):
-        csv = line.split()
+    def _as_ordered_tuple(self):
+        return (
+            self.ts_origin is not None,
+            self.ts_origin if self.ts_origin is not None else Timestamp(0),
+            self.ts_received is not None,
+            self.ts_received if self.ts_received is not None else Timestamp(0),
+            self.sequence is not None,
+            self.sequence if self.sequence is not None else 0,
+            not self.new_frame,
+            self.data,
+        )
 
-        ts = Timestamp.parse(csv[0])
-        vs = []
+    def __eq__(self, other: object):
+        if not isinstance(other, Sample):
+            return False
 
-        for value in csv[1:]:
-            try:
-                v = float(value)
-            except ValueError:
-                value = value.lower()
-                try:
-                    v = complex(value)
-                except Exception:
-                    if value.endswith('i'):
-                        v = complex(value.replace('i', 'j'))
-                    else:
-                        raise ValueError()
+        return self._as_ordered_tuple() == other._as_ordered_tuple()
 
-            vs.append(v)
+    def __lt__(self, other: "Timestamp"):
+        return self._as_ordered_tuple() < other._as_ordered_tuple()
 
-        return Sample(ts, vs)
+    def _as_digest_bytes(self):
+        def signal_to_bytes(signal):
+            match signal:
+                case bool():
+                    return signal.to_bytes(1, "little")
+                case int():
+                    return signal.to_bytes(8, "little")
+                case float():
+                    i = int.from_bytes(bytes(c_double(signal)), native)
+                    return i.to_bytes(8, "little")
+                case complex():
+                    f_real = signal.real
+                    f_imag = signal.imag
+                    i_real = int.from_bytes(bytes(c_float(f_real)), native)
+                    i_imag = int.from_bytes(bytes(c_float(f_imag)), native)
+                    real = i_real.to_bytes(4, "little")
+                    imag = i_imag.to_bytes(4, "little")
+                    return bytes().join([real, imag])
 
-    def __str__(self):
-        return '%s\t%s' % (self.ts, "\t".join(map(str, self.values)))
-
-    def __eq__(self, other):
-        return self.ts == other.ts
-
-    def __lt__(self, other):
-        return self.ts < other.ts
+        return bytes().join(
+            [
+                self.ts_origin._as_digest_bytes(),
+                self.sequence.to_bytes(8, "little"),
+            ]
+            + list(map(signal_to_bytes, self.data))
+        )

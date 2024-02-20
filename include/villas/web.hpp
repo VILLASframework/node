@@ -1,97 +1,83 @@
-/** LWS-releated functions.
+/* LWS-releated functions.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
 #include <atomic>
 #include <thread>
 
-#include <libwebsockets.h>
 #include <jansson.h>
+#include <libwebsockets.h>
 
-#include <villas/log.hpp>
 #include <villas/common.hpp>
+#include <villas/log.hpp>
 #include <villas/queue.hpp>
 
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Api;
 
-class Web {
+class Web final {
 
-protected:
-	enum State state;
+private:
+  enum State state;
 
-	Logger logger;
+  Logger logger;
 
-	lws_context *context;		/**< The libwebsockets server context. */
-	lws_vhost *vhost;		/**< The libwebsockets vhost. */
+  lws_context *context; // The libwebsockets server context.
+  lws_vhost *vhost;     // The libwebsockets vhost.
 
-	Queue<lws *> writables;		/**< Queue of WSIs for which we will call lws_callback_on_writable() */
+  Queue<lws *>
+      writables; // Queue of WSIs for which we will call lws_callback_on_writable()
 
-	int port;			/**< Port of the build in HTTP / WebSocket server. */
-	std::string ssl_cert;		/**< Path to the SSL certitifcate for HTTPS / WSS. */
-	std::string ssl_private_key;	/**< Path to the SSL private key for HTTPS / WSS. */
+  int port;                    // Port of the build in HTTP / WebSocket server.
+  std::string ssl_cert;        // Path to the SSL certitifcate for HTTPS / WSS.
+  std::string ssl_private_key; // Path to the SSL private key for HTTPS / WSS.
 
-	std::thread thread;
-	std::atomic<bool> running;	/**< Atomic flag for signalizing thread termination. */
+  std::thread thread;
+  std::atomic<bool> running; // Atomic flag for signalizing thread termination.
 
-	Api *api;
+  Api *api;
 
-	void worker();
+  void worker();
 
 public:
-
-	/** Initialize the web interface.
+  /* Initialize the web interface.
  	 *
  	 * The web interface is based on the libwebsockets library.
  	 */
-	Web(Api *a = nullptr);
+  Web(Api *a = nullptr);
 
-	void start();
-	void stop();
+  ~Web();
 
-	static void lwsLogger(int level, const char *msg);
-	static int lwsLogLevel(Log::Level lvl);
+  void start();
+  void stop();
 
-	/** Parse HTTPd and WebSocket related options */
-	int parse(json_t *json);
+  static void lwsLogger(int level, const char *msg);
+  static int lwsLogLevel(Log::Level lvl);
 
-	Api * getApi()
-	{
-		return api;
-	}
+  // Parse HTTPd and WebSocket related options
+  int parse(json_t *json);
 
-	/* for C-compatability */
-	lws_context * getContext()
-	{
-		return context;
-	}
+  Api *getApi() { return api; }
 
-	lws_vhost * getVHost()
-	{
-		return vhost;
-	}
+  // for C-compatability
+  lws_context *getContext() { return context; }
 
-	enum State getState() const
-	{
-		return state;
-	}
+  lws_vhost *getVHost() { return vhost; }
 
-	void callbackOnWritable(struct lws *wsi);
+  enum State getState() const { return state; }
 
-	bool isEnabled()
-	{
-		return port != CONTEXT_PORT_NO_LISTEN;
-	}
+  void callbackOnWritable(struct lws *wsi);
+
+  bool isEnabled() { return port != CONTEXT_PORT_NO_LISTEN; }
 };
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

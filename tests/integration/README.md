@@ -1,6 +1,11 @@
 # Integration Tests
 
-Run tests:
+<!--
+SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+SPDX-License-Identifier: Apache-2.0
+-->
+
+## Run tests
 
 ```
 $ BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh

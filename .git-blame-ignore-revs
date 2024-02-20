@@ -1,0 +1,12 @@
+# Author: Steffen Vogel <steffen.vogel@opal-rt.com>
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+# Introduced clang-format
+aa16979fdde7cd377977c38eaee02062c3908515
+
+# Make project REUSE compliant
+0735eb0f89c976ba8db7abeae7814060fb5dfe3c
+
+# Update Steffens mail address
+7eec1bb75339c60cefe5e9e558d9394e0cceecb6

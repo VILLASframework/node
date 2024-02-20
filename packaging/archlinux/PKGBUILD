@@ -1,5 +1,7 @@
 # $Id$
 # Maintainer: Daniel Krebs <github@daniel-krebs.net>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 pkgname=villas-node
 pkgdesc="Connecting real-time power grid simulation equipment"
 
