@@ -225,11 +225,46 @@ void fpga::setupColorHandling()
 	});
 }
 
+std::shared_ptr<fpga::Card>
+fpga::createCard(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
+                 std::filesystem::path &searchPath,
+                 std::shared_ptr<kernel::vfio::Container> vfioContainer,
+                 std::string card_name) {
+  auto configDir = std::filesystem::path().parent_path();
+
+  const char *interfaceName;
+  json_error_t err;
+  logger->info("Found config for FPGA card {}", card_name);
+  int ret =
+      json_unpack_ex(config, &err, 0, "{s: s}", "interface", &interfaceName);
+  if (ret) {
+    throw ConfigError(config, err, "interface",
+                      "Failed to parse interface name for card {}", card_name);
+  }
+  std::string interfaceNameStr(interfaceName);
+  if (interfaceNameStr == "pcie") {
+    auto card = fpga::PCIeCardFactory::make(config, std::string(card_name),
+                                            vfioContainer, searchPath);
+    if (card) {
+      cards.push_back(card);
+      return card;
+    }
+    return nullptr;
+  } else if (interfaceNameStr == "platform") {
+    throw RuntimeError("Platform interface not implemented yet");
+  } else {
+    throw RuntimeError("Unknown interface type {}", interfaceNameStr);
+  }
+}
+
 int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
-                      std::filesystem::path &searchPath) {
+                      std::filesystem::path &searchPath,
+                      std::shared_ptr<kernel::vfio::Container> vfioContainer) {
   int numFpgas = 0;
-  auto vfioContainer = std::make_shared<kernel::vfio::Container>();
+  if (vfioContainer == nullptr) {
+    vfioContainer = std::make_shared<kernel::vfio::Container>();
+  }
   auto configDir = std::filesystem::path().parent_path();
 
   json_t *fpgas = json_object_get(config, "fpgas");
@@ -241,28 +276,9 @@ int fpga::createCards(json_t *config,
   const char *card_name;
   json_t *json_card;
   json_object_foreach(fpgas, card_name, json_card) {
-    const char *interfaceName;
-    json_error_t err;
-    logger->info("Found config for FPGA card {}", card_name);
-    int ret = json_unpack_ex(json_card, &err, 0, "{s: s}", "interface",
-                             &interfaceName);
-    if (ret) {
-      throw ConfigError(json_card, err, "interface",
-                        "Failed to parse interface name for card {}",
-                        card_name);
-    }
-    std::string interfaceNameStr(interfaceName);
-    if (interfaceNameStr == "pcie") {
-      auto card = fpga::PCIeCardFactory::make(json_card, std::string(card_name),
-                                              vfioContainer, searchPath);
-      if (card) {
-        cards.push_back(std::move(card));
-        numFpgas++;
-      }
-    } else if (interfaceNameStr == "platform") {
-      throw RuntimeError("Platform interface not implemented yet");
-    } else {
-      throw RuntimeError("Unknown interface type {}", interfaceNameStr);
+    if (createCard(json_card, cards, searchPath, vfioContainer, card_name) !=
+        nullptr) {
+      numFpgas++;
     }
   }
   return numFpgas;
