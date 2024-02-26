@@ -226,7 +226,7 @@ void fpga::setupColorHandling()
 }
 
 std::shared_ptr<fpga::Card>
-fpga::createCard(json_t *config, std::filesystem::path &searchPath,
+fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
                  std::shared_ptr<kernel::vfio::Container> vfioContainer,
                  std::string card_name) {
   auto configDir = std::filesystem::path().parent_path();
@@ -257,7 +257,7 @@ fpga::createCard(json_t *config, std::filesystem::path &searchPath,
 
 int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
-                      std::filesystem::path &searchPath,
+                      const std::filesystem::path &searchPath,
                       std::shared_ptr<kernel::vfio::Container> vfioContainer) {
   int numFpgas = 0;
   if (vfioContainer == nullptr) {
@@ -282,6 +282,14 @@ int fpga::createCards(json_t *config,
     }
   }
   return numFpgas;
+}
+
+int fpga::createCards(json_t *config,
+                      std::list<std::shared_ptr<fpga::Card>> &cards,
+                      const std::string &searchPath,
+                      std::shared_ptr<kernel::vfio::Container> vfioContainer) {
+  const auto fsPath = std::filesystem::path(searchPath);
+  return createCards(config, cards, fsPath, vfioContainer);
 }
 
 std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
