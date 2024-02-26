@@ -43,5 +43,4 @@ protected:
 template <>
 class fmt::formatter<villas::fpga::ip::Register>
     : public fmt::ostream_formatter {};
-template <>
 #endif
