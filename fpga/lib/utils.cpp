@@ -226,8 +226,7 @@ void fpga::setupColorHandling()
 }
 
 std::shared_ptr<fpga::Card>
-fpga::createCard(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
-                 std::filesystem::path &searchPath,
+fpga::createCard(json_t *config, std::filesystem::path &searchPath,
                  std::shared_ptr<kernel::vfio::Container> vfioContainer,
                  std::string card_name) {
   auto configDir = std::filesystem::path().parent_path();
@@ -246,7 +245,6 @@ fpga::createCard(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
     auto card = fpga::PCIeCardFactory::make(config, std::string(card_name),
                                             vfioContainer, searchPath);
     if (card) {
-      cards.push_back(card);
       return card;
     }
     return nullptr;
@@ -275,9 +273,11 @@ int fpga::createCards(json_t *config,
 
   const char *card_name;
   json_t *json_card;
+  std::shared_ptr<fpga::Card> card;
   json_object_foreach(fpgas, card_name, json_card) {
-    if (createCard(json_card, cards, searchPath, vfioContainer, card_name) !=
-        nullptr) {
+    card = createCard(json_card, searchPath, vfioContainer, card_name);
+    if (card != nullptr) {
+      cards.push_back(card);
       numFpgas++;
     }
   }

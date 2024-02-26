@@ -18,8 +18,7 @@ std::shared_ptr<fpga::Card>
 setupFpgaCard(const std::string &configFile, const std::string &fpgaName);
 
 std::shared_ptr<fpga::Card>
-createCard(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
-           std::filesystem::path &searchPath,
+createCard(json_t *config, std::filesystem::path &searchPath,
            std::shared_ptr<kernel::vfio::Container> vfioContainer,
            std::string card_name = "anonymous Card");
 int createCards(json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
