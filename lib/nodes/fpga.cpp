@@ -33,20 +33,23 @@ static std::list<std::shared_ptr<fpga::Card>> cards;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), cardName(""), card(), dma(), blockRx(), blockTx() {}
+    : Node(id, name), cardName(""), card(nullptr), dma(), blockRx(), blockTx() {
+}
 
 FpgaNode::~FpgaNode() {}
 
 int FpgaNode::prepare() {
-  for (auto &fpgaCard : cards) {
-    if (fpgaCard->name == cardName) {
-      card = fpgaCard;
-      break;
-    }
-  }
   if (card == nullptr) {
-    throw ConfigError(config, "node-config-fpga",
-                      "There is no FPGA card with the name: {}", cardName);
+    for (auto &fpgaCard : cards) {
+      if (fpgaCard->name == cardName) {
+        card = fpgaCard;
+        break;
+      }
+    }
+    if (card == nullptr) {
+      throw ConfigError(config, "node-config-fpga",
+                        "There is no FPGA card with the name: {}", cardName);
+    }
   }
 
   auto axisswitch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
@@ -64,6 +67,13 @@ int FpgaNode::prepare() {
     parsedConnectString.configCrossBar(card);
   }
 
+  dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
+  if (dma == nullptr) {
+    logger->error("No DMA found on FPGA ");
+    throw std::runtime_error("No DMA found on FPGA");
+  }
+
   auto &alloc = HostRam::getAllocator();
 
   blockRx[0] = alloc.allocateBlock(0x200 * sizeof(float));
@@ -76,27 +86,52 @@ int FpgaNode::prepare() {
   dma->makeAccesibleFromVA(blockRx[1]);
   dma->makeAccesibleFromVA(blockTx);
 
+  MemoryManager::get().printGraph();
+
   return Node::prepare();
 }
 
 int FpgaNode::parse(json_t *json) {
   int ret = Node::parse(json);
-  if (ret)
+  if (ret) {
     return ret;
+  }
 
   json_error_t err;
 
-  const char *jsonCardName = nullptr;
+  json_t *jsonCard = nullptr;
   json_t *jsonConnectStrings = nullptr;
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: o}", "card", &jsonCardName,
+  if (vfioContainer == nullptr) {
+    vfioContainer = std::make_shared<kernel::vfio::Container>();
+  }
+
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o}", "card", &jsonCard,
                        "connect", &jsonConnectStrings);
   if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
                       this->getName());
   }
-  cardName = std::string(jsonCardName);
+  if (json_is_string(jsonCard)) {
+    cardName = std::string(json_string_value(jsonCard));
+  } else if (json_is_object(jsonCard)) {
+    json_t *jsonCardName = json_object_get(jsonCard, "name");
+    if (jsonCardName != nullptr && !json_is_string(jsonCardName)) {
+      cardName = std::string(json_string_value(jsonCardName));
+    } else {
+      cardName = "anonymous Card";
+    }
+    auto searchPath = configPath.parent_path();
+    card = createCard(jsonCard, cards, searchPath, vfioContainer, cardName);
+    if (card == nullptr) {
+      throw ConfigError(jsonCard, "node-config-fpga", "Failed to create card");
+    }
+  } else {
+    throw ConfigError(jsonCard, "node-config-fpga",
+                      "Failed to parse card name");
+  }
+
   if (jsonConnectStrings != nullptr && json_is_array(jsonConnectStrings)) {
     for (size_t i = 0; i < json_array_size(jsonConnectStrings); i++) {
       json_t *jsonConnectString = json_array_get(jsonConnectStrings, i);
@@ -136,6 +171,8 @@ int FpgaNode::start() {
   return Node::start();
 }
 
+struct timeval tv = {0, 0};
+
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
   static size_t cur = 0, next = 1;
   unsigned read;
@@ -145,6 +182,8 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
 
   dma->read(*(blockRx[next]), blockRx[next]->getSize()); // TODO: calc size
   auto c = dma->readComplete();
+  gettimeofday(&tv, NULL);
+
   read = c.bytes / sizeof(float);
 
   if (c.interrupts > 1) {
@@ -155,8 +194,7 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
 
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
-    smp->data[i].f =
-        static_cast<double>(mem[i]); //TODO: This is the wrong cast!!!
+    smp->data[i].f = static_cast<double>(mem[i]);
     smp->length++;
   }
   smp->flags = (int)SampleFlags::HAS_DATA;
@@ -174,15 +212,28 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<float>(*blockTx);
+  auto mem = MemoryAccessor<uint32_t>(*blockTx);
+  float scaled;
 
   for (unsigned i = 0; i < smps[0]->length; i++) {
-    mem[i] = static_cast<float>(smps[0]->data[i].f);
+    scaled = smps[0]->data[i].f;
+    if (scaled > 10.) {
+      scaled = 10.;
+    } else if (scaled < -10.) {
+      scaled = -10.;
+    }
+    mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+    // mem[i] = static_cast<float>(smps[0]->data[i].f);
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));
   if (!state)
     return -1;
+
+  struct timeval tv2;
+  gettimeofday(&tv2, NULL);
+  logger->info("elapsed: {} us",
+               (tv2.tv_sec - tv.tv_sec) * 1000000 + (tv2.tv_usec - tv.tv_usec));
 
   written = dma->writeComplete().bytes /
             sizeof(float); // The number of samples written
@@ -200,7 +251,9 @@ std::vector<int> FpgaNode::getPollFDs() {
 }
 
 int FpgaNodeFactory::start(SuperNode *sn) {
-  vfioContainer = std::make_shared<kernel::vfio::Container>();
+  if (vfioContainer == nullptr) {
+    vfioContainer = std::make_shared<kernel::vfio::Container>();
+  }
 
   if (cards.empty()) {
     std::string searchPath = sn->getConfigPath() + "/..";
