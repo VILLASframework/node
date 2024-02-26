@@ -161,8 +161,8 @@ void DinoDac::configureHardware() {
   logger->debug("DAC Ioext: Direction register configured to {}", readback);
   ioext.fields.status_led = true;
   // Default gain is 1. Although not really necessary, let's be explicit here
-  ioext.fields.gain_lsb = 0x00 & 0x1;
-  ioext.fields.gain_msb = 0x00 & 0x2;
+  ioext.fields.gain_lsb = Gain::GAIN_1 & 0x1;
+  ioext.fields.gain_msb = Gain::GAIN_1 & 0x2;
   setIoextOut(ioext);
   readback = getIoextOut();
   if (readback.raw != ioext.raw) {
