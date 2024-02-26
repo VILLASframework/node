@@ -69,8 +69,11 @@ void Register::setRegister(size_t reg, float value) {
     logger->error("Register index out of range: {}/{}", reg, registerNum);
     throw std::out_of_range("Register index out of range");
   }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
   Xil_Out32(getBaseAddr(registerMemory) + REGISTER_OUT(reg),
             reinterpret_cast<uint32_t &>(value));
+#pragma GCC diagnostic pop
 }
 
 uint32_t Register::getRegister(size_t reg) {
@@ -87,7 +90,10 @@ float Register::getRegisterFloat(size_t reg) {
     throw std::out_of_range("Register index out of range");
   }
   uint32_t value = Xil_In32(getBaseAddr(registerMemory) + REGISTER_OUT(reg));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
   return reinterpret_cast<float &>(value);
+#pragma GCC diagnostic pop
 }
 
 void Register::resetRegister(size_t reg) {
