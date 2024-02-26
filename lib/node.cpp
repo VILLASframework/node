@@ -44,7 +44,7 @@ using namespace villas::utils;
 Node::Node(const uuid_t &id, const std::string &name)
     : logger(logging.get("node")), sequence_init(0), sequence(0),
       in(NodeDirection::Direction::IN, this),
-      out(NodeDirection::Direction::OUT, this),
+      out(NodeDirection::Direction::OUT, this), configPath(),
 #ifdef __linux__
       fwmark(-1),
 #endif // __linux__

@@ -147,6 +147,8 @@ void SuperNode::parse(json_t *root) {
       if (!n)
         throw MemoryAllocationError();
 
+      n->configPath = getConfigPath();
+
       ret = n->parse(json_node);
       if (ret) {
         auto config_id = fmt::format("node-config-node-{}", node_type);
