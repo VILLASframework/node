@@ -55,7 +55,7 @@ bool I2c::init() {
   XIic_SetStatusHandler(&xIic, this, (XIic_StatusHandler)StatusHandler);
 
   irqs[i2cInterrupt].irqController->enableInterrupt(irqs[i2cInterrupt],
-                                                    polling);
+                                                    0); //polling);
   hwLock.unlock();
   initDone = true;
   return true;

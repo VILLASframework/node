@@ -719,6 +719,7 @@ void DmaFactory::parse(Core &ip, json_t *cfg) {
 
   auto &dma = dynamic_cast<Dma &>(ip);
 
+  dma.polling = dma.card->polling;
   // Sensible default configuration
   dma.xConfig.HasStsCntrlStrm = 0;
   dma.xConfig.HasMm2S = 1;

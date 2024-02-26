@@ -5,7 +5,7 @@
         "slot": "0000:88:00.0",
         "do_reset": true,
         "ips": "vc707-xbar-pcie-dino/vc707-xbar-pcie-dino-v2.json",
-        "polling": false,
+        "polling": true,
         "interface": "pcie"
       }
     }
