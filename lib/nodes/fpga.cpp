@@ -123,9 +123,11 @@ int FpgaNode::parse(json_t *json) {
       cardName = "anonymous Card";
     }
     auto searchPath = configPath.parent_path();
-    card = createCard(jsonCard, cards, searchPath, vfioContainer, cardName);
+    card = createCard(jsonCard, searchPath, vfioContainer, cardName);
     if (card == nullptr) {
       throw ConfigError(jsonCard, "node-config-fpga", "Failed to create card");
+    } else {
+      cards.push_back(card);
     }
   } else {
     throw ConfigError(jsonCard, "node-config-fpga",
