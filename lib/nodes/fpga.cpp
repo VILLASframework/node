@@ -173,8 +173,6 @@ int FpgaNode::start() {
   return Node::start();
 }
 
-struct timeval tv = {0, 0};
-
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
   static size_t cur = 0, next = 1;
   unsigned read;
@@ -184,7 +182,6 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
 
   dma->read(*(blockRx[next]), blockRx[next]->getSize()); // TODO: calc size
   auto c = dma->readComplete();
-  gettimeofday(&tv, NULL);
 
   read = c.bytes / sizeof(float);
 
@@ -225,17 +222,11 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt) {
       scaled = -10.;
     }
     mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
-    // mem[i] = static_cast<float>(smps[0]->data[i].f);
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));
   if (!state)
     return -1;
-
-  struct timeval tv2;
-  gettimeofday(&tv2, NULL);
-  logger->info("elapsed: {} us",
-               (tv2.tv_sec - tv.tv_sec) * 1000000 + (tv2.tv_usec - tv.tv_usec));
 
   written = dma->writeComplete().bytes /
             sizeof(float); // The number of samples written
