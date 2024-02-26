@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <filesystem>
 #include <fmt/ostream.h>
 #include <iostream>
 #include <jansson.h>
@@ -66,7 +65,7 @@ public:
   PathSourceList sources; // A list of path sources which reference this node.
   PathDestinationList
       destinations; // A list of path destinations which reference this node.
-  std::filesystem::path configPath;
+  std::string configPath;
 
 #ifdef __linux__
   int fwmark; // Socket mark for netem, routing and filtering
