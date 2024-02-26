@@ -122,7 +122,7 @@ int FpgaNode::parse(json_t *json) {
     } else {
       cardName = "anonymous Card";
     }
-    auto searchPath = configPath.parent_path();
+    auto searchPath = configPath.substr(0, configPath.rfind("/"));
     card = createCard(jsonCard, searchPath, vfioContainer, cardName);
     if (card == nullptr) {
       throw ConfigError(jsonCard, "node-config-fpga", "Failed to create card");
@@ -249,7 +249,8 @@ int FpgaNodeFactory::start(SuperNode *sn) {
   }
 
   if (cards.empty()) {
-    std::string searchPath = sn->getConfigPath() + "/..";
+    auto searchPath =
+        sn->getConfigPath().substr(0, sn->getConfigPath().rfind("/"));
     createCards(sn->getConfig(), cards, searchPath);
   }
 
