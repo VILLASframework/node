@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
 {
-  # general configuration
+  # General configuration
   src,
   version,
   withGpl ? true,
@@ -35,7 +35,7 @@
   withNodeUldaq ? withAllNodes,
   withNodeWebrtc ? withAllNodes,
   withNodeZeromq ? withAllNodes,
-  # minimal dependencies
+  # Minimal dependencies
   cmake,
   common,
   coreutils,
@@ -46,7 +46,7 @@
   makeWrapper,
   pkg-config,
   stdenv,
-  # optional dependencies
+  # Optional dependencies
   comedilib,
   curl,
   czmq,
