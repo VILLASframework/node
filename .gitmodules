@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-[submodule "common"]
-	path = common
-	url = https://github.com/VILLASframework/common.git
 [submodule "fpga"]
 	path = fpga
 	url = https://github.com/VILLASframework/fpga.git
