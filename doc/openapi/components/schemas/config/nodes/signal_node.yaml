@@ -50,8 +50,8 @@ allOf:
     frequency:
       type: number
       description: The frequency of the signal when the `signal` setting is one of `sine`, `square`, `triangle`,`pulse` or `ramp`.
-      default: 1.0 
-      
+      default: 1.0
+
     phase:
       type: number
       default: 0.0

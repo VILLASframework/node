@@ -13,7 +13,7 @@ allOf:
       type: string
       description: The input mode for a specific channel. See `input_mode` for allowed values
 
-    channel:  
+    channel:
       type: integer
       example: 5
       description: The channel input number of the device.

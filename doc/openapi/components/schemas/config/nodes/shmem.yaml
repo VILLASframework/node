@@ -35,7 +35,7 @@ allOf:
 
     in:
       type: object
-      properties: 
+      properties:
         name:
           type: string
           description: |
@@ -45,7 +45,7 @@ allOf:
 
     out:
       type: object
-      properties: 
+      properties:
         name:
           type: string
           description: |

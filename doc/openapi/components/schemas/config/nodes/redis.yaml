@@ -71,7 +71,7 @@ allOf:
 
     timeout:
       type: object
-      properties: 
+      properties:
         connect:
           type: number
           description: The timeout in seconds for the initial connection establishment.
@@ -83,7 +83,7 @@ allOf:
     keepalive:
       type: boolean
       default: false
-      description: Enable periodic keepalive packets. 
+      description: Enable periodic keepalive packets.
 
     key:
       type: string
@@ -104,7 +104,7 @@ allOf:
 
     ssl:
       type: object
-      properties: 
+      properties:
         enabled:
           type: boolean
           default: true

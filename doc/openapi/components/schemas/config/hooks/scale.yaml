@@ -4,7 +4,7 @@
 ---
 allOf:
 - type: object
-  properties: 
+  properties:
     offset:
       type: number
       default: 0.0

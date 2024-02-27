@@ -22,7 +22,7 @@ post:
                 description: |
                   An optional path or URI to a new configuration file which
                   should be loaded after restarting the node.
-                  
+
                   The file referenced by the URL must be a [VILLASnode configuration file](#tag/config)
               - $ref: ../components/schemas/config.yaml
   responses:

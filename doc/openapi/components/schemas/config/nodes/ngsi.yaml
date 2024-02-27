@@ -10,7 +10,7 @@ allOf:
     endpoint:
       type: string
       format: uri
-    
+
     entity_id:
       type: string
       description: ID of NGSI entity.

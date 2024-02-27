@@ -23,7 +23,7 @@ allOf:
           The program which should be executed in the sub-process.
 
           The option is passed to the system shell for execution.
-        
+
         oneOf:
         - type: array
           items:

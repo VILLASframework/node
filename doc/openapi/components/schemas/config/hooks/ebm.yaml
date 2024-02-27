@@ -6,7 +6,7 @@ allOf:
 - type: object
   required:
     - phases
-  properties: 
+  properties:
     phases:
       description: Signal indices for voltage & current values for each phase.
       example:

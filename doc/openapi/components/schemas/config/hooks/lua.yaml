@@ -9,7 +9,7 @@ allOf:
       The Lua hook will pass the complete hook configuration to the `prepare()` Lua function.
       So you can add arbitrary settings here which are then consumed by the Lua script.
 
-  properties: 
+  properties:
     use_names:
       type: boolean
       default: true
@@ -50,7 +50,7 @@ allOf:
         |:--    |:--          |
         | 0     | seconds     |
         | 1     | nanoseconds |
- 
+
         - `ts_received`  The receive timestamp a Lua table containing the following keys:
         | Index | Description |
         |:--    |:--          |
@@ -71,7 +71,7 @@ allOf:
       items:
         allOf:
         - type: object
-          properties: 
+          properties:
             expression:
               type: string
               example: "math.sqrt(smp.data[0] ^ 2 + smp.data[1] ^ 2)"

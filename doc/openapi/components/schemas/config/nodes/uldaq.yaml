@@ -6,7 +6,7 @@ allOf:
 - type: object
   required:
   - sample_rate
-  properties: 
+  properties:
 
     interface_type:
       type: string

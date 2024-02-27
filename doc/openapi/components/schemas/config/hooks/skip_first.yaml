@@ -4,7 +4,7 @@
 ---
 allOf:
 - type: object
-  properties: 
+  properties:
     samples:
       type: integer
       description: The number of samples which should be dropped by this hook after a start or restart of the node/path.
