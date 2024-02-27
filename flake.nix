@@ -49,6 +49,8 @@
   } @ inputs: let
     inherit (nixpkgs) lib;
 
+    nixDir = ./packaging/nix;
+
     # Add separateDebugInfo to a derivation
     addSeparateDebugInfo = d:
       d.overrideAttrs {
@@ -97,12 +99,12 @@
     packagesWith = pkgs: rec {
       default = villas;
 
-      villas-python = pkgs.callPackage ./python.nix {
-        src = ../../python;
+      villas-python = pkgs.callPackage (nixDir + "/python.nix") {
+        src = ./python;
       };
 
-      villas-minimal = pkgs.callPackage ./villas.nix {
-        src = ../..;
+      villas-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
+        src = ./.;
         version = "minimal";
         inherit (inputs) fpga common;
       };
@@ -115,19 +117,19 @@
         withAllNodes = true;
       };
 
-      ethercat = pkgs.callPackage ./ethercat.nix {
+      ethercat = pkgs.callPackage (nixDir + "/ethercat.nix") {
         src = inputs.ethercat;
       };
 
-      lib60870 = pkgs.callPackage ./lib60870.nix {
+      lib60870 = pkgs.callPackage (nixDir + "/lib60870.nix") {
         src = inputs.lib60870;
       };
 
-      libdatachannel = pkgs.callPackage ./libdatachannel.nix {
+      libdatachannel = pkgs.callPackage (nixDir + "/libdatachannel.nix") {
         src = inputs.libdatachannel;
       };
 
-      libiec61850 = pkgs.callPackage ./libiec61850.nix {
+      libiec61850 = pkgs.callPackage (nixDir + "/libiec61850.nix") {
         src = inputs.libiec61850;
       };
     };
