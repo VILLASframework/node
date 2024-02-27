@@ -18,9 +18,9 @@ stdenv.mkDerivation {
   nativeBuildInputs = [cmake pkg-config];
   buildInputs = [libnice libpcap openssl];
   cmakeFlags = [
-    "-DUSE_NICE=ON" # use libnice for better protocol support
-    "-DNO_WEBSOCKET=ON" # villas uses libwebsockets instead
-    "-DNO_MEDIA=ON" # villas does not use media transport features
+    "-DUSE_NICE=ON" # Use libnice for better protocol support
+    "-DNO_WEBSOCKET=ON" # VILLASnode uses libwebsockets instead
+    "-DNO_MEDIA=ON" # VILLASnode does not use media transport features
   ];
   meta = with lib; {
     description = "C/C++ WebRTC network library featuring Data Channels, Media Transport, and WebSockets";
