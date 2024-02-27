@@ -208,5 +208,17 @@
 
     # Standard flake attribute specifying the formatter invoked on `nix fmt`
     formatter = forSupportedSystems (system: (pkgsFor system).alejandra);
+
+    # Standard flake attribute for NixOS modules
+    nixosModules = rec {
+      default = villas;
+
+      villas = {
+        imports = [(nixDir + "/module.nix")];
+        nixpkgs.overlays = [
+          self.overlays.default
+        ];
+      };
+    };
   };
 }
