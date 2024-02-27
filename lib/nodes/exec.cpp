@@ -122,6 +122,10 @@ int ExecNode::prepare() {
 }
 
 int ExecNode::start() {
+  // Pass configuration file and node-name via environemnt
+  environment["VILLAS_NODE_CONFIG"] = configPath;
+  environment["VILLAS_NODE_NAME"] = name_short;
+
   // Start subprocess
   proc = std::make_unique<Popen>(command, arguments, environment, working_dir,
                                  shell);
