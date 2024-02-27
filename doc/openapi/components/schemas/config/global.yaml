@@ -54,7 +54,7 @@ properties:
 
   idle_stop:
     type: boolean
-    default: false
+    default: true
 
   uuid:
     type: string
