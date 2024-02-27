@@ -67,8 +67,6 @@ protected:
 
   struct timespec started; // The time at which the instance has been started.
 
-  std::string uri; // URI of configuration
-
   Config config; // The configuration file.
 
 public:
@@ -143,9 +141,7 @@ public:
 
   json_t *getConfig() { return config.root; }
 
-  std::string &getConfigPath() { return config.getConfigPath(); }
-
-  std::string getConfigUri() const { return uri; }
+  const std::string &getConfigPath() const { return config.getConfigPath(); }
 
   int getAffinity() const { return affinity; }
 
