@@ -13,7 +13,7 @@ get:
       description: Success
       content:
         application/json:
-          schema: 
+          schema:
             $ref: ../components/schemas/config.yaml
           examples:
             example1:

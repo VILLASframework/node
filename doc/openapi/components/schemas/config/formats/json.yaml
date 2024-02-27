@@ -26,7 +26,7 @@ allOf:
       description: |
         If this flag is used, the output is guaranteed to consist only of ASCII characters.
         This is achieved by escaping all Unicode characters outside the ASCII range.
-    
+
     sort_keys:
       type: boolean
       default: false
@@ -37,7 +37,7 @@ allOf:
     escape_slash:
       type: boolean
       default: false
-      description: 
+      description:
         Escape the `/` characters in strings with `\/`.
 
 - $ref: ../format.yaml

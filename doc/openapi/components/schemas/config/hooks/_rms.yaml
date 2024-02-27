@@ -8,7 +8,7 @@ allOf:
 - type: object
   required:
   - window_size
-  properties: 
+  properties:
     window_size:
       type: integer
       min: 1

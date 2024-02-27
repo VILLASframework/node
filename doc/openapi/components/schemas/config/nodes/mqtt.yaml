@@ -12,14 +12,14 @@ allOf:
 
     in:
       type: object
-      properties: 
+      properties:
         subscribe:
           type: string
           description: Topic to which this node subscribes.
 
     out:
       type: object
-      properties: 
+      properties:
         publish:
           type: string
           description: Topic to which this node publishes.
@@ -59,7 +59,7 @@ allOf:
 
     ssl:
       type: object
-      properties: 
+      properties:
 
         enabled:
           type: boolean
@@ -92,9 +92,9 @@ allOf:
           type: boolean
           default: true
           description: |
-            Configure verification of the server hostname in the server certificate. 
+            Configure verification of the server hostname in the server certificate.
             If value is set to true, it is impossible to guarantee that the host you are connecting to is not impersonating your server.
-            This can be useful in initial server testing, but makes it possible for a malicious third party to impersonate your server through DNS spoofing, for example. 
+            This can be useful in initial server testing, but makes it possible for a malicious third party to impersonate your server through DNS spoofing, for example.
             Do not use this function in a real system.
             Setting value to true makes the connection encryption pointless.
 

@@ -55,7 +55,7 @@ required:
 - timestamp
 - readings
 
-properties: 
+properties:
   device:
     description: ID for measurement device
     type: string
@@ -64,13 +64,13 @@ properties:
     description: Timestamp of measurement in ISO 8601 format
     type: string
     pattern: '^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$'
-  
+
   readings:
     type: array
     items:
       type: object
-      properties: 
-      
+      properties:
+
         channel:
           type: string
           description: Name of the monitored bus
@@ -78,11 +78,11 @@ properties:
         magnitude:
           type: number
           description: Amplitude of the measured signal [V]
-        
+
         phase:
           type: number
           description: Phase of the measured signal [radian]
-        
+
         frequency:
           type: number
           description: Frequency of the line signal [Hz]

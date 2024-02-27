@@ -11,7 +11,7 @@ type: object
 required:
 - created
 
-properties: 
+properties:
   created:
     title: Sampling timestamp
     description: A timestamps in miliseconds since 1970-01-01 00:00:00
@@ -26,7 +26,7 @@ additionalProperties:
   - type: boolean
   - type: object
     description: A complex number represented in real and imaginary components
-    properties: 
+    properties:
       real:
         type: number
       imag:
@@ -40,4 +40,3 @@ example:
   signal3:
     real: 1234.4556
     imag: 23232.12312
-  

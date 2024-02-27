@@ -14,7 +14,7 @@ allOf:
 
     aimd:
       type: object
-      properties: 
+      properties:
         a:
           type: number
           default: 10
@@ -50,7 +50,7 @@ allOf:
 
     out:
       type: object
-      properties: 
+      properties:
         netem:
           $ref: ../netem.yaml
 

@@ -16,7 +16,7 @@ properties:
   enabled:
     type: boolean
     default: true
-  
+
   delay:
     type: number
     default: 0

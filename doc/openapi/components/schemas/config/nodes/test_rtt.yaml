@@ -71,5 +71,5 @@ allOf:
             This setting is exclusive with the `limit` setting.
           type: number
           example: 60.0
-      
+
 - $ref: ../node.yaml

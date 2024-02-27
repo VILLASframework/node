@@ -6,7 +6,7 @@ allOf:
 - type: object
   required:
   - expected_smp_rate
-  properties: 
+  properties:
     mode:
       type: string
       enum:

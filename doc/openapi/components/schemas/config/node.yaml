@@ -12,7 +12,7 @@ properties:
     description: |
       This setting allows to send multiple samples in a single message to the destination nodes.
 
-      The value of this setting determines how many samples will be combined into one packet. 
+      The value of this setting determines how many samples will be combined into one packet.
 
   hooks:
     $ref: hook_list.yaml

@@ -50,7 +50,7 @@ properties:
       required:
       - name
       - level
-      properties: 
+      properties:
         name:
           type: string
           title: Logger name filter

@@ -8,7 +8,7 @@ allOf:
     signals:
       type: array
       description: A list of signal names to which this hook should be applied
-      example: 
+      example:
       - busA.V
       - busB.V
       - busC.V

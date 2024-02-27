@@ -37,4 +37,4 @@ allOf:
     logging:
       $ref: config/logging.yaml
 
-- $ref: config/global.yaml 
+- $ref: config/global.yaml

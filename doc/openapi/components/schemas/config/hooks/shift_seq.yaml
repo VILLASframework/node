@@ -6,7 +6,7 @@ allOf:
 - type: object
   required:
   - offset
-  properties: 
+  properties:
     offset:
       type: integer
       description: The offset which is added to the sequence number of each processed sample.

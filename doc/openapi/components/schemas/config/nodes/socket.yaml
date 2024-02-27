@@ -49,7 +49,7 @@ allOf:
 
         multicast:
           type: object
-          properties: 
+          properties:
             enabled:
               type: boolean
               default: true

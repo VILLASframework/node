@@ -39,8 +39,8 @@ allOf:
         You can use the [`villas zmq-keygen`](../usage/villas-zmq-keygen.md) command to create a new keypair for the following configuration options:
 
       type: object
-      properties: 
-        enabled: 
+      properties:
+        enabled:
           type: boolean
           description: Whether or not the encryption is enabled.
 

@@ -7,7 +7,7 @@ allOf:
   required:
   - min
   - max
-  properties: 
+  properties:
     min:
       description: The smallest value which will pass through the hook before getting clipped.
       type: number
