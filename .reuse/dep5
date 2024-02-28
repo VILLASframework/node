@@ -7,6 +7,6 @@ Files: *.vi *.opal *.dft *.sib *.json *.ipynb doc/pictures/* clients/opal/models
 Copyright: 2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University
 License: Apache-2.0
 
-Files: clients/rtds/**/*.txt clients/hypersim/*.ecf etc/labs/lab3.pcap packaging/live-iso/files/etc/* packaging/nix/flake.lock tests/valgrind.supp packaging/archlinux/villas-node.install
+Files: clients/rtds/**/*.txt clients/hypersim/*.ecf etc/labs/lab3.pcap packaging/live-iso/files/etc/* flake.lock tests/valgrind.supp packaging/archlinux/villas-node.install
 Copyright: 2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University
 License: Apache-2.0
