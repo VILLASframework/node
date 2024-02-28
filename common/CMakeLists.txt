@@ -17,12 +17,6 @@ project(villas-common
 set(PROJECT_AUTHOR "Steffen Vogel")
 set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    set(TOPLEVEL_PROJECT ON)
-else()
-    set(TOPLEVEL_PROJECT OFF)
-endif()
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
@@ -31,12 +25,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(FindPkgConfig)
 include(FeatureSummary)
 include(GNUInstallDirs)
-include(GetVersion)
 
-# Get version info and buildid from Git
-if(TOPLEVEL_PROJECT)
-    GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
-endif()
 
 # Check packages
 find_package(OpenSSL 1.0.0 REQUIRED)
@@ -55,9 +44,7 @@ if(fmt_VERSION VERSION_LESS "9.0.0")
 endif()
 
 add_subdirectory(lib)
-if(CRITERION_FOUND AND TOPLEVEL_PROJECT)
-    add_subdirectory(tests)
-endif()
+add_subdirectory(tests)
 
 # Disable any colored log output
 option(LOG_COLOR_DISABLE "Disable any colored log output" OFF)
