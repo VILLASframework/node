@@ -24,3 +24,9 @@ fpga                                        @n-eiling
 /include/villas/nodes/uldaq.hpp             @windrad6
 /lib/dumper.cpp                             @windrad6
 /include/villas/dumper.hpp                  @windrad6
+
+# VFIO related files
+/common/lib/kernel/pci.cpp                  @n-eiling
+/common/lib/kernel/vfi_*.cpp                @n-eiling
+/common/include/villas/kernel/pci.hpp       @n-eiling
+/common/include/villas/kernel/vfio_*.hpp    @n-eiling
