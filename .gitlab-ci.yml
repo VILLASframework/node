@@ -117,7 +117,7 @@ test:cppcheck:
              -U '_MSC_BUILD;_MSC_VER'
              -I include
              -I common/include
-             src/ lib/ tests/unit/ | tee cppcheck.log
+             src/ lib/ common/ tests/unit/ | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker
@@ -134,7 +134,7 @@ test:unit:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
   - cmake -S . -B build ${CMAKE_OPTS}
-  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests
+  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common
   tags:
   - docker
   needs:
