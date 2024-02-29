@@ -262,7 +262,7 @@ int villas::node::redis_init(NodeCompat *n) {
   new (&r->key) std::string();
 
   /* We need a timeout in order for RedisConnection::loop() to properly
-	 * terminate after the node is stopped */
+   * terminate after the node is stopped */
   r->options.socket_timeout = std::chrono::milliseconds(500);
 
   return 0;

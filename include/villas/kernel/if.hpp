@@ -60,50 +60,50 @@ public:
   ~Interface();
 
   /* Start interface.
-	 *
-	 * This setups traffic controls queue discs, network emulation and
-	 * maps interface IRQs according to affinity.
-	 *
-	 * @param i A pointer to the interface structure.
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
-	 */
+   *
+   * This setups traffic controls queue discs, network emulation and
+   * maps interface IRQs according to affinity.
+   *
+   * @param i A pointer to the interface structure.
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   int start();
 
   /* Stop interface
-	 *
-	 * This resets traffic qdiscs ant network emulation
-	 * and maps interface IRQs to all CPUs.
-	 *
-	 * @param i A pointer to the interface structure.
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
-	 */
+   *
+   * This resets traffic qdiscs ant network emulation
+   * and maps interface IRQs to all CPUs.
+   *
+   * @param i A pointer to the interface structure.
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   int stop();
 
   /* Find existing or create new interface instance on which packets for a certain destination
-	 *  will leave the system.
-	 */
+   *  will leave the system.
+   */
   static Interface *getEgress(struct sockaddr *sa, node::SuperNode *sn);
 
   /* Get all IRQs for this interface.
-	 *
-	 * Only MSI IRQs are determined by looking at:
-	 *  /sys/class/net/{ifname}/device/msi_irqs/
-	 *
-	 * @param i A pointer to the interface structure
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
-	 */
+   *
+   * Only MSI IRQs are determined by looking at:
+   *  /sys/class/net/{ifname}/device/msi_irqs/
+   *
+   * @param i A pointer to the interface structure
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   int getIRQs();
 
   /* Change the SMP affinity of NIC interrupts.
-	 *
-	 * @param i A pointer to the interface structure
-	 * @param affinity A mask specifying which cores should handle this interrupt.
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
-	 */
+   *
+   * @param i A pointer to the interface structure
+   * @param affinity A mask specifying which cores should handle this interrupt.
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   int setAffinity(int affinity);
 
   std::string getName() const;

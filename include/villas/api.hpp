@@ -88,9 +88,9 @@ protected:
 
 public:
   /* Initialize the API.
-	 *
-	 * Save references to list of paths / nodes for command execution.
-	 */
+   *
+   * Save references to list of paths / nodes for command execution.
+   */
   Api(SuperNode *sn);
   ~Api();
 

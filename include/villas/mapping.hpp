@@ -50,9 +50,9 @@ public:
   enum Type type; // The mapping type. Selects one of the union fields below.
 
   /* The number of values which is covered by this mapping entry.
-	 *
-	 * A value of 0 indicates that all remaining values starting from the offset of a sample should be mapped.
-	 */
+   *
+   * A value of 0 indicates that all remaining values starting from the offset of a sample should be mapped.
+   */
   int length;
   unsigned offset; // Offset of this mapping entry within sample::data
 

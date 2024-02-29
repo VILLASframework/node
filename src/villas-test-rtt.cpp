@@ -58,10 +58,10 @@ protected:
   SuperNode sn;
 
   /* File descriptor for Matlab results.
-	 * This allows you to write Matlab results in a seperate log file:
-	 *
-	 *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
-	 */
+   * This allows you to write Matlab results in a seperate log file:
+   *
+   *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
+   */
   int fd;
 
   // Amount of messages which should be sent (default: -1 for unlimited)

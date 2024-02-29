@@ -27,19 +27,19 @@ public:
   HookList() {}
 
   /* Parses an object of hooks
-	 *
-	 * Example:
-	 *
-	 * {
-	 *    stats = {
-	 *       output = "stdout"
-	 *    },
-	 *    skip_first = {
-	 *       seconds = 10
-	 *    },
-	 *    hooks = [ "print" ]
-	 * }
-	 */
+   *
+   * Example:
+   *
+   * {
+   *    stats = {
+   *       output = "stdout"
+   *    },
+   *    skip_first = {
+   *       seconds = 10
+   *    },
+   *    hooks = [ "print" ]
+   * }
+   */
   void parse(json_t *json, int mask, Path *p, Node *n);
 
   void check();

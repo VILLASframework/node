@@ -421,7 +421,7 @@ json_t *Node::toJson() const {
     json_object_set_new(json_node, "status", status);
 
   /* Add all additional fields of node here.
-	 * This can be used for metadata */
+   * This can be used for metadata */
   json_object_update(json_node, config);
 
   return json_node;

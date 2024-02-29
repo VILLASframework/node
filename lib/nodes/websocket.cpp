@@ -143,12 +143,12 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
     else {
       c->mode = websocket_connection::Mode::SERVER;
       /* We use the URI to associate this connection to a node
-				 * and choose a protocol.
-				 *
-				 * Example: ws://example.com/node_1.json
-				 *   Will select the node with the name 'node_1'
-				 *   and format 'json'.
-				 */
+         * and choose a protocol.
+         *
+         * Example: ws://example.com/node_1.json
+         *   Will select the node with the name 'node_1'
+         *   and format 'json'.
+         */
 
       // Get path of incoming request
       char *node, *format, *lasts;
