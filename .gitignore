@@ -3,7 +3,6 @@
 
 /build*/
 *~
-*.swp
 .clang_complete
 .project
 .cproject
@@ -12,14 +11,18 @@
 .direnv/
 .cache/
 
+*.swp
+*.pyc
+*.a
+*.o
+*.so
+*.user
 *.egg-info/
 
 python/dist/
+python/.eggs/
 
 # YouCompleteMe
 .ycm_extra_conf.py
 
-*.pyc
-
-python/.eggs/
-go/lib/_obj/
+graph.dot

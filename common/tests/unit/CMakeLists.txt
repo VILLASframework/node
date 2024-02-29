@@ -24,7 +24,7 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 endif()
 
 target_include_directories(unit-tests-common PUBLIC
-	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/common/include
 	${CRITERION_INCLUDE_DIRS}
 )
 

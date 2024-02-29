@@ -4,13 +4,6 @@
 # SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.8)
-
-project(villas-gpu
-	VERSION 1.0
-	DESCRIPTION "VILLASgpu"
-	LANGUAGES C CXX CUDA)
-
 add_subdirectory(thirdparty/gdrcopy)
 
 add_library(villas-gpu

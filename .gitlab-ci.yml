@@ -117,7 +117,16 @@ test:cppcheck:
              -U '_MSC_BUILD;_MSC_VER'
              -I include
              -I common/include
-             src/ lib/ common/ tests/unit/ | tee cppcheck.log
+             src/
+             lib/
+             common/lib/
+             common/tests/unit/
+             tests/unit/
+             fpga/gpu/
+             fpga/src/
+             fpga/lib/
+             fpga/tests/unit/
+            | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker

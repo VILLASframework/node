@@ -4,28 +4,9 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.14)
-
-project(villas-common
-    VERSION 0.0.0
-    DESCRIPTION "VILLAScommon"
-    HOMEPAGE_URL "https://github.com/VILLASframework/common"
-    LANGUAGES C CXX
-)
-
-# Some more project settings
-set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
-
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 include(FindPkgConfig)
 include(FeatureSummary)
 include(GNUInstallDirs)
-
 
 # Check packages
 find_package(OpenSSL 1.0.0 REQUIRED)

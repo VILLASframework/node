@@ -50,7 +50,7 @@ target_compile_definitions(villas-fpga PRIVATE
 target_include_directories(villas-fpga
 	PUBLIC
 		${PROJECT_BINARY_DIR}/include
-		${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/fpga/include
 		${JANSSON_INCLUDE_DIRS}
 )
 

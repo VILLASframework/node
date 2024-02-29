@@ -1,8 +1,0 @@
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: VILLASfpga
-Upstream-Contact: Steffen Vogel <post@steffenvogel.de>
-Source: https://fein-aachen.org/en/projects/villas-fpga/
-
-Files: .vscode/* doc/pictures/* etc/**.json
-Copyright: 2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University
-License: Apache-2.0

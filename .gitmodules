@@ -5,3 +5,12 @@
 	path = packaging/live-iso/fedora-kickstarts
 	url = https://pagure.io/fedora-kickstarts.git
 
+[submodule "fpga/thirdparty/libxil"]
+	path = fpga/thirdparty/libxil
+	url = https://github.com/VILLASframework/libxil.git
+[submodule "fpga/thirdparty/udmabuf"]
+	path = fpga/thirdparty/udmabuf
+	url = https://github.com/ikwzm/udmabuf
+[submodule "fpga/lib/gpu/gdrcopy"]
+	path = fpga/gpu/thirdparty/gdrcopy
+	url = https://github.com/daniel-k/gdrcopy.git
