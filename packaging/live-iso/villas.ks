@@ -171,7 +171,7 @@ rsync --ignore-errors --archive --verbose /villas/node/packaging/live-iso/build/
 
 # Find the architecture we are on
 arch=$(uname -m)
- 
+
 releasever=$(rpm --eval '%{fedora}')
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-primary
 
@@ -183,7 +183,7 @@ rm -f /var/lib/systemd/random-seed
 
 # The enp1s0 interface is a left over from the imagefactory install, clean this up
 rm -f /etc/NetworkManager/system-connections/*.nmconnection
- 
+
 dnf -y remove dracut-config-generic
 
 # Remove machine-id on pre generated images

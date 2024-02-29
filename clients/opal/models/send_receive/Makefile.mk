@@ -41,7 +41,7 @@ ifneq ($(RTLAB_ROOT),)
 endif
 
 CC_OPTS  = -std=c99 -D_GNU_SOURCE -MMD
-LD_OPTS  = 
+LD_OPTS  =
 OBJS     = main.o msg.o utils.o socket.o $(INTEL_OBJS)
 
 ifneq ($(PROTOCOL),)
