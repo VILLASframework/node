@@ -1,12 +1,12 @@
 {
-	"idle_stop" : false,
+  "idle_stop" : false,
 
-	"http" : {
-		"port" : 8080
-	},
-	"nodes" : {
-		"node1" : {
-			"type" : "loopback"
-		}
-	}
+  "http" : {
+    "port" : 8080
+  },
+  "nodes" : {
+    "node1" : {
+      "type" : "loopback"
+    }
+  }
 }
