@@ -26,7 +26,11 @@ Test(buffer, decode) {
   const char *e = "{\"id\": \"5a786626-fbc6-4c04-98c2-48027e68c2fa\"}";
   size_t len = strlen(e);
 
+#pragma GCC diagnostic push
+// Workaround for compiler bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106199
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
   buf.insert(buf.begin(), e, e + len);
+#pragma GCC diagnostic pop
 
   k = json_loads(e, 0, nullptr);
   cr_assert_not_null(k);
