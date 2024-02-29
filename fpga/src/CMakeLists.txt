@@ -7,13 +7,13 @@
 add_executable(villas-fpga-ctrl villas-fpga-ctrl.cpp)
 
 target_link_libraries(villas-fpga-ctrl PUBLIC
-	villas-fpga
+    villas-fpga
 )
 
 add_executable(villas-fpga-pipe villas-fpga-pipe.cpp)
 
 target_link_libraries(villas-fpga-pipe PUBLIC
-	villas-fpga
+    villas-fpga
 )
 
 

@@ -7,32 +7,32 @@
 add_subdirectory(thirdparty/gdrcopy)
 
 add_library(villas-gpu
-	SHARED
-		src/gpu.cpp
-		src/kernels.cu
+    SHARED
+        src/gpu.cpp
+        src/kernels.cu
 )
 
 target_compile_options(villas-gpu PRIVATE -g)
 
 set_source_files_properties(src/gpu.cpp PROPERTIES
-	LANGUAGE CUDA
+    LANGUAGE CUDA
 )
 
 target_include_directories(villas-gpu
-	PRIVATE
-		/opt/cuda/include
+    PRIVATE
+        /opt/cuda/include
 )
 
 target_link_libraries(villas-gpu
-	PUBLIC
-		villas-common
-		gdrapi
-		cuda
+    PUBLIC
+        villas-common
+        gdrapi
+        cuda
 )
 
 target_include_directories(villas-gpu
-	PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/include
-	PRIVATE
-		${CMAKE_CURRENT_LIST_DIR}
+    PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
 )

@@ -180,14 +180,14 @@ endif()
 
 # Enable Redis support
 if(WITH_NODE_REDIS)
-	list(APPEND NODE_SRC redis.cpp)
-	list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
+    list(APPEND NODE_SRC redis.cpp)
+    list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
 endif()
 
 # Enable WebRTC support
 if(WITH_NODE_WEBRTC)
-	list(APPEND NODE_SRC webrtc.cpp webrtc/signaling_client.cpp webrtc/signaling_message.cpp webrtc/peer_connection.cpp)
-	list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
+    list(APPEND NODE_SRC webrtc.cpp webrtc/signaling_client.cpp webrtc/signaling_message.cpp webrtc/peer_connection.cpp)
+    list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
 add_library(nodes STATIC ${NODE_SRC})

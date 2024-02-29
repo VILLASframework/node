@@ -5,10 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 install(
-	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMPONENT bin
-	DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/villas/node
-	FILES_MATCHING
-		PATTERN "*.conf"
-		PATTERN "*.json"
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMPONENT bin
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/villas/node
+    FILES_MATCHING
+        PATTERN "*.conf"
+        PATTERN "*.json"
 )

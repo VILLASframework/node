@@ -9,9 +9,9 @@ include(CheckLanguage)
 check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER)
-	add_subdirectory(gpu)
+    add_subdirectory(gpu)
 else()
-	message("No CUDA support, not building GPU library")
+    message("No CUDA support, not building GPU library")
 endif()
 
 include(FindPkgConfig)
@@ -31,7 +31,7 @@ add_subdirectory(lib)
 add_subdirectory(src)
 
 if(CRITERION_FOUND)
-	add_subdirectory(tests/unit)
+    add_subdirectory(tests/unit)
 endif()
 
 # Project settings

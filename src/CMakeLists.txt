@@ -36,7 +36,7 @@ add_executable(villas-signal villas-signal.cpp)
 target_link_libraries(villas-signal PUBLIC villas)
 
 if(WITH_NODE_OPAL)
-	target_include_directories(villas-node PRIVATE ${OPAL_INCLUDE_DIRS})
+    target_include_directories(villas-node PRIVATE ${OPAL_INCLUDE_DIRS})
     target_link_libraries(villas-node PRIVATE ${OPAL_LIBRARIES})
 endif()
 

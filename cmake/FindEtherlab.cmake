@@ -6,15 +6,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 find_path(ETHERLAB_INCLUDE_DIR
-	NAMES ecrt.h
-	PATHS
-		/opt/etherlab/include
+    NAMES ecrt.h
+    PATHS
+        /opt/etherlab/include
 )
 
 find_library(ETHERLAB_LIBRARY
-	NAMES ethercat
-	PATHS
-		/opt/etherlab/lib
+    NAMES ethercat
+    PATHS
+        /opt/etherlab/lib
 )
 
 include(FindPackageHandleStandardArgs)
