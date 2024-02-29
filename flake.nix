@@ -163,6 +163,7 @@
           libgit2
           pcre
           reuse
+          cppcheck
         ];
       in rec {
         default = full;
