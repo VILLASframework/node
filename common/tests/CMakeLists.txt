@@ -5,4 +5,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # We only have unit tests for now
-add_subdirectory(unit)
+if(CRITERION_FOUND)
+    add_subdirectory(unit)
+endif()
