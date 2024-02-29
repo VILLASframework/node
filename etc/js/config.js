@@ -24,43 +24,43 @@ var global = require(__dirname + '/global.js')
 global.plugins = glob.sync('/usr?(/local)/share/villas/node/plugins/*.so');
 
 global.nodes = {
-	loopback_node : {
-		vectorize : 1,
-		type : "loopback",	// A loopback node will receive exactly the same data which has been sent to it.
-					// The internal implementation is based on queue.
-		queuelen : 10240	// The queue length of the internal queue which buffers the samples.
-	},
-	socket_node : {
-		type : "socket",
+    loopback_node : {
+        vectorize : 1,
+        type : "loopback",	// A loopback node will receive exactly the same data which has been sent to it.
+                    // The internal implementation is based on queue.
+        queuelen : 10240	// The queue length of the internal queue which buffers the samples.
+    },
+    socket_node : {
+        type : "socket",
 
-		local : "*:12000",
-		remote : "127.0.0.1:12000"
-	}
+        local : "*:12000",
+        remote : "127.0.0.1:12000"
+    }
 };
 
 global.paths = [
-	{
-		in : "test_node",
-		out : "socket_node",
-		queuelen : 10000
-	},
-	{
-		in : "socket_node",
-		out : "test_node",
-		queuelen : 10000,
-		hooks : [
-			{
-				type : "stats",
-				warmup : 100,
-				verbose : true,
-				format : "human",
-				output : "./stats.log"
-			},
-			{
-				type : "convert"
-			}
-		]
-	}
+    {
+        in : "test_node",
+        out : "socket_node",
+        queuelen : 10000
+    },
+    {
+        in : "socket_node",
+        out : "test_node",
+        queuelen : 10000,
+        hooks : [
+            {
+                type : "stats",
+                warmup : 100,
+                verbose : true,
+                format : "human",
+                output : "./stats.log"
+            },
+            {
+                type : "convert"
+            }
+        ]
+    }
 ];
 
 // Convert Javascript Object to JSON string
