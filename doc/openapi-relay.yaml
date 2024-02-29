@@ -33,7 +33,7 @@ paths:
           description: Success
           content:
             application/json:
-              examples: 
+              examples:
                 example1:
                   value:
                     sessions:
