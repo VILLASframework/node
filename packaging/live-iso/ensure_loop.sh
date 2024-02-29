@@ -7,20 +7,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ensure_loop(){
-	num="$1"
-	dev="/dev/loop$num"
-	if test -b "$dev"; then
-		echo "$dev is a usable loop device."
-		return 0
-	fi
+    num="$1"
+    dev="/dev/loop$num"
+    if test -b "$dev"; then
+        echo "$dev is a usable loop device."
+        return 0
+    fi
 
-	echo "Attempting to create $dev for docker ..."
-	if ! mknod -m660 $dev b 7 $num; then
-		echo "Failed to create $dev!" 1>&2
-		return 3
-	fi
+    echo "Attempting to create $dev for docker ..."
+    if ! mknod -m660 $dev b 7 $num; then
+        echo "Failed to create $dev!" 1>&2
+        return 3
+    fi
 
-	return 0
+    return 0
 }
 
 LOOP_A=$(losetup -f)

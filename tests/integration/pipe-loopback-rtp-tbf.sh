@@ -16,8 +16,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -30,69 +30,69 @@ NUM_VALUES=5
 
 cat > src.json << EOF
 {
-	"logging": {
-		"level": "info"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"aimd": {
-				"a": 10,
-				"b": 0.75,
-				"start_rate": ${RATE}
-			},
-			"in": {
-				"address": "0.0.0.0:12002",
-				"signals": {
-					"count": ${NUM_VALUES},
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "127.0.0.1:12000",
-				"fwmark": 123
-			}
-		}
-	}
+    "logging": {
+        "level": "info"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "aimd": {
+             	"a": 10,
+             	"b": 0.75,
+             	"start_rate": ${RATE}
+             },
+             "in": {
+             	"address": "0.0.0.0:12002",
+             	"signals": {
+             		"count": ${NUM_VALUES},
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12000",
+             	"fwmark": 123
+             }
+        }
+    }
 }
 EOF
 
 cat > dest.json << EOF
 {
-	"logging": {
-		"level": "info"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"in": {
-				"address": "0.0.0.0:12000",
-				"signals": {
-					"count": ${NUM_VALUES},
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "127.0.0.1:12002"
-			}
-		}
-	}
+    "logging": {
+        "level": "info"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "in": {
+             	"address": "0.0.0.0:12000",
+             	"signals": {
+             		"count": ${NUM_VALUES},
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12002"
+             }
+        }
+    }
 }
 EOF
 

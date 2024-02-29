@@ -13,8 +13,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -41,23 +41,23 @@ exec 5<>${FIFO}
 
 JOBS=""
 for J in $(seq 1 ${RUNS}); do
-	(
-		set -e
-		trap "echo error-trap >> ${FIFO}" ERR
+    (
+        set -e
+        trap "echo error-trap >> ${FIFO}" ERR
 
-		FETCHED_CONF=$(mktemp -p ${DIR})
+        FETCHED_CONF=$(mktemp -p ${DIR})
 
-		curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
-		diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
-		RC=$?
+        curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
+        diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
+        RC=$?
 
-		if [ "$RC" -eq "0" ]; then
-			echo success >&5
-		else
-			echo error >&5
-		fi
-	) &
-	JOBS+=" $!"
+        if [ "$RC" -eq "0" ]; then
+             echo success >&5
+        else
+             echo error >&5
+        fi
+    ) &
+    JOBS+=" $!"
 done
 
 echo "Waiting for jobs to complete: ${JOBS}"
@@ -68,13 +68,13 @@ wait %1
 
 echo "Check return codes"
 for J in $(seq 1 ${RUNS}); do
-	read -t 10 -u 5 STATUS
+    read -t 10 -u 5 STATUS
 
-	if [ "${STATUS}" == "success" ]; then
-		let ++SUCCESS
-	else
-		let ++FAILED
-	fi
+    if [ "${STATUS}" == "success" ]; then
+        let ++SUCCESS
+    else
+        let ++FAILED
+    fi
 done
 
 echo "Success: ${SUCCESS} / ${RUNS}"

@@ -35,9 +35,9 @@ NETEM_REV=$NETEM
 # Tools
 TC=/sbin/tc
 if   [ "$LAYER" -eq "2" ]; then
-	NF=/sbin/ebtables
+    NF=/sbin/ebtables
 elif [ "$LAYER" -eq "3" ]; then
-	NF=/sbin/iptables
+    NF=/sbin/iptables
 fi
 
 # Test permissions
@@ -72,40 +72,40 @@ $TC qdisc  add     dev $DST_IF parent 4000:3 handle 4020 netem $NETEM
 $TC filter add     dev $DST_IF protocol ip handle 123 fw flowid 4000:3
 
 if (( $REVERSE )); then
-	$NF -t nat -I PREROUTING $FILTER_REV -j mark --mark-set 124 --mark-target CONTINUE
-	$NF -t nat -I PREROUTING $FILTER_REV -j dnat --to-dst $SRC --dnat-target CONTINUE
+    $NF -t nat -I PREROUTING $FILTER_REV -j mark --mark-set 124 --mark-target CONTINUE
+    $NF -t nat -I PREROUTING $FILTER_REV -j dnat --to-dst $SRC --dnat-target CONTINUE
 
-	$NF -t nat -I POSTROUTING --mark 123 -j snat --to-src $MY
+    $NF -t nat -I POSTROUTING --mark 123 -j snat --to-src $MY
 
-	# Add classful qdisc to egress (outgoing) network device
-	$TC qdisc  replace dev $SRC_IF root handle 4000 prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
-	$TC qdisc  add     dev $SRC_IF parent 4000:4 handle 4021 netem $NETEM_REV
-	$TC filter add     dev $SRC_IF protocol ip handle 124 fw flowid 4000:4
+    # Add classful qdisc to egress (outgoing) network device
+    $TC qdisc  replace dev $SRC_IF root handle 4000 prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
+    $TC qdisc  add     dev $SRC_IF parent 4000:4 handle 4021 netem $NETEM_REV
+    $TC filter add     dev $SRC_IF protocol ip handle 124 fw flowid 4000:4
 fi
 
 echo -e "Successfully configured network emulation:\n"
 echo -e "Netem Settings for $SRC ($SRC_IF) => $DST ($DST_IF):"
 echo -e "   $NETEM\n"
 if (( $REVERSE )); then
-	echo -e "Netem Settings for $DST ($DST_IF) => $SRC ($SRC_IF):"
-	echo -e "   $NETEM_REV"
+    echo -e "Netem Settings for $DST ($DST_IF) => $SRC ($SRC_IF):"
+    echo -e "   $NETEM_REV"
 fi
 
 # Some debug and status output
 if [ -n $DEBUG ]; then
-	if [ "$SRC_IF" == "$DST_IF" ]; then
-		IFNS="$SRC_IF"
-	else
-		IFNS="$SRC_IF $DST_IF"
-	fi
+    if [ "$SRC_IF" == "$DST_IF" ]; then
+        IFNS="$SRC_IF"
+    else
+        IFNS="$SRC_IF $DST_IF"
+    fi
 
-	for inf in $IFNS; do
-		for cmd in qdisc filter class; do
-			echo -e "\nTC ==> $if: $cmd"
-			tc -d -p $cmd show dev $inf
-		done
-	done
+    for inf in $IFNS; do
+        for cmd in qdisc filter class; do
+             echo -e "\nTC ==> $if: $cmd"
+             tc -d -p $cmd show dev $inf
+        done
+    done
 
-	echo -e "\nTABLES ==>"
-	$NF -t nat -L
+    echo -e "\nTABLES ==>"
+    $NF -t nat -L
 fi

@@ -14,32 +14,32 @@ FORMAT_TYPES=$(villas node -C 2>/dev/null | jq -r '.formats | join(" ")')
 MISSING=0
 
 for NODE in ${NODE_TYPES}; do
-	NODE=${NODE/./-}
-	[ ${NODE} == "loopback_internal" ] && continue
+    NODE=${NODE/./-}
+    [ ${NODE} == "loopback_internal" ] && continue
 
-	if [ ! -f "${SRCDIR}/etc/examples/nodes/${NODE}.conf" ]; then
-		echo "Missing example config for node-type: ${NODE}"
-		((MISSING++))
-	fi
+    if [ ! -f "${SRCDIR}/etc/examples/nodes/${NODE}.conf" ]; then
+        echo "Missing example config for node-type: ${NODE}"
+        ((MISSING++))
+    fi
 done
 
 for HOOK in ${HOOK_TYPES}; do
-	[ ${HOOK} == "restart" ] || \
-	[ ${HOOK} == "drop" ] || \
-	[ ${HOOK} == "fix" ] && continue
+    [ ${HOOK} == "restart" ] || \
+    [ ${HOOK} == "drop" ] || \
+    [ ${HOOK} == "fix" ] && continue
 
-	if [ ! -f "${SRCDIR}/etc/examples/hooks/${HOOK}.conf" ]; then
-		echo "Missing example config for hook-type: ${HOOK}"
-		((MISSING++))
-	fi
+    if [ ! -f "${SRCDIR}/etc/examples/hooks/${HOOK}.conf" ]; then
+        echo "Missing example config for hook-type: ${HOOK}"
+        ((MISSING++))
+    fi
 done
 
 for FORMAT in ${FORMAT_TYPES}; do
-	FORMAT=${FORMAT/./-}
-	if [ ! -f "${SRCDIR}/etc/examples/formats/${FORMAT}.conf" ]; then
-		echo "Missing example config for format-type: ${FORMAT}"
-		((MISSING++))
-	fi
+    FORMAT=${FORMAT/./-}
+    if [ ! -f "${SRCDIR}/etc/examples/formats/${FORMAT}.conf" ]; then
+        echo "Missing example config for format-type: ${FORMAT}"
+        ((MISSING++))
+    fi
 done
 
 (( ${MISSING} == 0 ))

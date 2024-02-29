@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -65,52 +65,52 @@ for MODE in all any; do
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"sig_1": {
-			"type": "signal",
+    "nodes": {
+        "sig_1": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 0.0,
-			"rate": 10.0,
-			"limit": 20
-		},
-		"sig_2": {
-			"type": "signal",
+             "signal": "counter",
+             "values": 1,
+             "offset": 0.0,
+             "rate": 10.0,
+             "limit": 20
+        },
+        "sig_2": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 10.0,
-			"amplitude": 10.0,
-			"rate": 5.0,
-			"limit": 10
-		},
-		"sig_3": {
-			"type": "signal",
+             "signal": "counter",
+             "values": 1,
+             "offset": 10.0,
+             "amplitude": 10.0,
+             "rate": 5.0,
+             "limit": 10
+        },
+        "sig_3": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 100.0,
-			"amplitude": 100.0,
-			"rate": 2.0,
-			"limit": 10
-		},
-		"file_1": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": [
-				"sig_1.data[counter]",
-				"sig_2.data[counter]",
-				"sig_3.data[counter]"
-			],
-			"out": "file_1",
-			"mode": "${MODE}"
-		}
-	]
+             "signal": "counter",
+             "values": 1,
+             "offset": 100.0,
+             "amplitude": 100.0,
+             "rate": 2.0,
+             "limit": 10
+        },
+        "file_1": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": [
+             	"sig_1.data[counter]",
+             	"sig_2.data[counter]",
+             	"sig_3.data[counter]"
+             ],
+             "out": "file_1",
+             "mode": "${MODE}"
+        }
+    ]
 }
 EOF
 

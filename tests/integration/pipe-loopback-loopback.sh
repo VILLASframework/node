@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -21,11 +21,11 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "loopback"
-		}
-	}
+    "nodes": {
+        "node1": {
+             "type": "loopback"
+        }
+    }
 }
 EOF
 

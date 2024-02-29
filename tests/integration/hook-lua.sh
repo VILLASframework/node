@@ -12,20 +12,20 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 cat > config.json <<EOF
 {
-	"signals": [
-		{ "name": "signal1_positive", "expression": "smp.data.signal1 >= 0", "type": "boolean" },
-		{ "name": "abs(signal1)",     "expression": "math.abs(smp.data.signal1)" },
-		{ "name": "signal4_scaled",   "expression": "smp.data.signal4 * 100 + 55" },
-		{ "name": "sequence",         "expression": "smp.sequence", "type": "integer" },
-		{ "name": "ts_origin",        "expression": "smp.ts_origin[0] + smp.ts_origin[1] * 1e-9" }
-	]
+    "signals": [
+        { "name": "signal1_positive", "expression": "smp.data.signal1 >= 0", "type": "boolean" },
+        { "name": "abs(signal1)",     "expression": "math.abs(smp.data.signal1)" },
+        { "name": "signal4_scaled",   "expression": "smp.data.signal4 * 100 + 55" },
+        { "name": "sequence",         "expression": "smp.sequence", "type": "integer" },
+        { "name": "ts_origin",        "expression": "smp.ts_origin[0] + smp.ts_origin[1] * 1e-9" }
+    ]
 }
 EOF
 

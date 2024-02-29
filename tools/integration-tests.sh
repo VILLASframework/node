@@ -26,30 +26,30 @@ TIMEOUT=${TIMEOUT:-1m}
 
 # Parse command line arguments
 while getopts ":f:l:t:vg" OPT; do
-	case ${OPT} in
-		f)
-			FILTER=${OPTARG}
-			;;
-		v)
-			VERBOSE=1
-			;;
-		l)
-			NUM_SAMPLES=${OPTARG}
-			;;
-		t)
-			TIMEOUT=${OPTARG}
-			;;
-		g)
-			FAIL_FAST=1
-			;;
-		\?)
-			echo "Invalid option: -${OPTARG}" >&2
-			;;
-		:)
-			echo "Option -$OPTARG requires an argument." >&2
-			exit 1
-			;;
-	esac
+    case ${OPT} in
+        f)
+             FILTER=${OPTARG}
+             ;;
+        v)
+             VERBOSE=1
+             ;;
+        l)
+             NUM_SAMPLES=${OPTARG}
+             ;;
+        t)
+             TIMEOUT=${OPTARG}
+             ;;
+        g)
+             FAIL_FAST=1
+             ;;
+        \?)
+             echo "Invalid option: -${OPTARG}" >&2
+             ;;
+        :)
+             echo "Option -$OPTARG requires an argument." >&2
+             exit 1
+             ;;
+    esac
 done
 
 export VERBOSE
@@ -69,64 +69,64 @@ TIMEDOUT=0
 echo -e "Starting integration tests for VILLASnode:\n"
 
 for TEST in ${TESTS}; do
-	TESTNAME=$(basename -s .sh ${TEST})
+    TESTNAME=$(basename -s .sh ${TEST})
 
-	# Start time measurement
-	START=$(date +%s.%N)
+    # Start time measurement
+    START=$(date +%s.%N)
 
-	# Run test
-	if (( ${VERBOSE} == 0 )); then
-		timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
-		RC=$?
-	else
-		timeout ${TIMEOUT} ${TEST} | tee ${LOGDIR}/${TESTNAME}.log
-		RC=${PIPESTATUS[0]}
-	fi
+    # Run test
+    if (( ${VERBOSE} == 0 )); then
+        timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
+        RC=$?
+    else
+        timeout ${TIMEOUT} ${TEST} | tee ${LOGDIR}/${TESTNAME}.log
+        RC=${PIPESTATUS[0]}
+    fi
 
-	END=$(date +%s.%N)
-	DIFF=$(echo "$END - $START" | bc)
-	
-	# Show full log in case of an error
-	if (( ${VERBOSE} == 0 )); then
-		if (( $RC != 99 )) && (( $RC != 0 )); then
-			cat ${LOGDIR}/${TESTNAME}.log
-		fi
-	fi
+    END=$(date +%s.%N)
+    DIFF=$(echo "$END - $START" | bc)
 
-	case $RC in
-		0)
-			echo -e "\e[32m[PASS] \e[39m ${TESTNAME} (ran for ${DIFF}s)"
-			PASSED=$((${PASSED} + 1))
-			;;
-		99)
-			echo -e "\e[93m[SKIP] \e[39m ${TESTNAME}: $(head -n1 ${LOGDIR}/${TESTNAME}.log)"
-			SKIPPED=$((${SKIPPED} + 1))
-			;;
-		124)
-			echo -e "\e[33m[TIME] \e[39m ${TESTNAME} (ran for more then ${TIMEOUT})"
-			TIMEDOUT=$((${TIMEDOUT} + 1))
-			FAILED=$((${FAILED} + 1))
-			;;
-		*)
-			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} (exited with code $RC, ran for ${DIFF}s)"
-			FAILED=$((${FAILED} + 1))
-			;;
-	esac
+    # Show full log in case of an error
+    if (( ${VERBOSE} == 0 )); then
+        if (( $RC != 99 )) && (( $RC != 0 )); then
+             cat ${LOGDIR}/${TESTNAME}.log
+        fi
+    fi
 
-	TOTAL=$((${TOTAL} + 1))
+    case $RC in
+        0)
+             echo -e "\e[32m[PASS] \e[39m ${TESTNAME} (ran for ${DIFF}s)"
+             PASSED=$((${PASSED} + 1))
+             ;;
+        99)
+             echo -e "\e[93m[SKIP] \e[39m ${TESTNAME}: $(head -n1 ${LOGDIR}/${TESTNAME}.log)"
+             SKIPPED=$((${SKIPPED} + 1))
+             ;;
+        124)
+             echo -e "\e[33m[TIME] \e[39m ${TESTNAME} (ran for more then ${TIMEOUT})"
+             TIMEDOUT=$((${TIMEDOUT} + 1))
+             FAILED=$((${FAILED} + 1))
+             ;;
+        *)
+             echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} (exited with code $RC, ran for ${DIFF}s)"
+             FAILED=$((${FAILED} + 1))
+             ;;
+    esac
 
-	if (( ${RC} != 0 && ${RC} != 99 && ${FAIL_FAST} > 0 )); then
-		break
-	fi
+    TOTAL=$((${TOTAL} + 1))
+
+    if (( ${RC} != 0 && ${RC} != 99 && ${FAIL_FAST} > 0 )); then
+        break
+    fi
 done
 
 # Show summary
 if (( ${FAILED} > 0 )); then
-	echo -e "\nSummary: ${FAILED} of ${TOTAL} tests failed."
-	echo -e "   Timedout: ${TIMEDOUT}"
-	echo -e "   Skipped: ${SKIPPED}"
-	exit 1
+    echo -e "\nSummary: ${FAILED} of ${TOTAL} tests failed."
+    echo -e "   Timedout: ${TIMEDOUT}"
+    echo -e "   Skipped: ${SKIPPED}"
+    exit 1
 else
-	echo -e "\nSummary: all tests passed!"
-	exit 0
+    echo -e "\nSummary: all tests passed!"
+    exit 0
 fi
