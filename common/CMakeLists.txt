@@ -44,7 +44,9 @@ if(fmt_VERSION VERSION_LESS "9.0.0")
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(tests)
+if(WITH_TESTS)
+    add_subdirectory(tests)
+endif()
 
 # Disable any colored log output
 option(LOG_COLOR_DISABLE "Disable any colored log output" OFF)
@@ -53,22 +55,3 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.hpp
 )
-
-if(TOPLEVEL_PROJECT)
-    feature_summary(WHAT ALL VAR FEATURES)
-    message(STATUS "Building ${CMAKE_PROJECT_DESCRIPTION}:")
-    message(STATUS "${FEATURES}")
-
-    if(FOUND_GIT_VERSION)
-        message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
-        message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
-        message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
-        message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
-        message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
-        message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
-        message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
-    endif()
-
-    message(STATUS "  ARCH:            ${CMAKE_SYSTEM_PROCESSOR}")
-    message(STATUS "  OS:              ${CMAKE_SYSTEM_NAME}")
-endif()
