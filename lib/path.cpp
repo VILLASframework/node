@@ -182,11 +182,11 @@ void Path::prepare(NodeList &nodes) {
       ps = psm[n];
     else {
       /* Depending on weather the node belonging to this mapping is already
-			 * used by another path or not, we will create a master or secondary
-			 * path source.
-			 * A secondary path source uses an internal loopback node / queue
-			 * to forward samples from on path to another.
-			 */
+       * used by another path or not, we will create a master or secondary
+       * path source.
+       * A secondary path source uses an internal loopback node / queue
+       * to forward samples from on path to another.
+       */
       bool isSecondary = n->sources.size() > 0;
 
       // Create new path source
@@ -217,8 +217,8 @@ void Path::prepare(NodeList &nodes) {
       }
 
       /* Get the real node backing this path source
-			 * In case of a secondary path source, its the internal loopback node!
-			 */
+       * In case of a secondary path source, its the internal loopback node!
+       */
       auto *rn = ps->getNode();
 
       rn->sources.push_back(ps);
@@ -235,7 +235,7 @@ void Path::prepare(NodeList &nodes) {
       Signal::Ptr sig;
 
       /* For data mappings we simple refer to the existing
-			 * signal descriptors of the source node. */
+       * signal descriptors of the source node. */
       if (me->type == MappingEntry::Type::DATA) {
         sig = sigs->getByIndex(me->data.offset + j);
         if (!sig) {
@@ -546,11 +546,11 @@ void Path::start() {
   state = State::STARTED;
 
   /* Start one thread per path for sending to destinations
-	 *
-	 * Special case: If the path only has a single source and this source
-	 * does not offer a file descriptor for polling, we will use a special
-	 * thread function.
-	 */
+   *
+   * Special case: If the path only has a single source and this source
+   * does not offer a file descriptor for polling, we will use a special
+   * thread function.
+   */
   ret = pthread_create(&tid, nullptr, runWrapper, this);
   if (ret)
     throw RuntimeError("Failed to create path thread");
@@ -571,9 +571,9 @@ void Path::stop() {
     state = State::STOPPING;
 
   /* Cancel the thread in case is currently in a blocking syscall.
-	 *
-	 * We dont care if the thread has already been terminated.
-	 */
+   *
+   * We dont care if the thread has already been terminated.
+   */
   ret = pthread_cancel(tid);
   if (ret && ret != ESRCH)
     throw RuntimeError("Failed to cancel path thread");

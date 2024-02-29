@@ -75,15 +75,15 @@ struct Sample {
   } ts;
 
   /* The sample signal values.
-	 *
-	 * This variable length array (VLA) extends over the end of struct Sample.
-	 * Make sure that pointers to struct Sample point to memory blocks of adequate size.
-	 * Use the SAMPLE_LENGTH() macro to calculate the required size.
-	 *
-	 * Metadata describing the details of signal values (such as name, unit, data type and more)
-	 * are stored in the struct Sample::signals list. Each entry in this list corresponedents
-	 * to an entry in the struct Sample::data array.
-	 */
+   *
+   * This variable length array (VLA) extends over the end of struct Sample.
+   * Make sure that pointers to struct Sample point to memory blocks of adequate size.
+   * Use the SAMPLE_LENGTH() macro to calculate the required size.
+   *
+   * Metadata describing the details of signal values (such as name, unit, data type and more)
+   * are stored in the struct Sample::signals list. Each entry in this list corresponedents
+   * to an entry in the struct Sample::data array.
+   */
   union SignalData data[];
 };
 

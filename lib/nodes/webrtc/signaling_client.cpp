@@ -90,9 +90,9 @@ void SignalingClient::connectStatic(struct lws_sorted_usec_list *sul) {
 
   if (!lws_client_connect_via_info(&c->info)) {
     /* Failed... schedule a retry... we can't use the _retry_wsi()
-		 * convenience wrapper api here because no valid wsi at this
-		 * point.
-		 */
+     * convenience wrapper api here because no valid wsi at this
+     * point.
+     */
     if (lws_retry_sul_schedule(c->info.context, 0, sul, nullptr, connectStatic,
                                &c->retry_count))
       c->logger->error("Signaling connection attempts exhausted");
@@ -167,14 +167,14 @@ do_retry:
   logger->info("Attempting to reconnect...");
 
   /* Retry the connection to keep it nailed up
-	 *
-	 * For this example, we try to conceal any problem for one set of
-	 * backoff retries and then exit the app.
-	 *
-	 * If you set retry.conceal_count to be larger than the number of
-	 * elements in the backoff table, it will never give up and keep
-	 * retrying at the last backoff delay plus the random jitter amount.
-	 */
+   *
+   * For this example, we try to conceal any problem for one set of
+   * backoff retries and then exit the app.
+   *
+   * If you set retry.conceal_count to be larger than the number of
+   * elements in the backoff table, it will never give up and keep
+   * retrying at the last backoff delay plus the random jitter amount.
+   */
   if (lws_retry_sul_schedule_retry_wsi(wsi, &sul_helper.sul, connectStatic,
                                        &retry_count))
     logger->error("Signaling connection attempts exhausted");

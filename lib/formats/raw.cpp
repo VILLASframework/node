@@ -283,7 +283,7 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes,
 #endif
 
   /* The raw format can not encode multiple samples in one buffer
-	 * as there is no support for framing. */
+   * as there is no support for framing. */
   struct Sample *smp = smps[0];
 
   int o = 0;

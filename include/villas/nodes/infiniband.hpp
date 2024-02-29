@@ -76,7 +76,7 @@ struct infiniband {
     unsigned available_recv_wrs;
 
     /* Fixed number to substract from min. number available
-		 * WRs in receive queue */
+     * WRs in receive queue */
     unsigned buffer_subtraction;
 
     // Unrealiable connectionless data

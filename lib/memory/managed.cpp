@@ -40,7 +40,7 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
     uintptr_t uptr = (uintptr_t)cptr;
 
     /* Check alignment first; leave a gap at start of block to assure
-		 * alignment if necessary */
+     * alignment if necessary */
     uintptr_t rem = uptr % alignment;
     uintptr_t gap = 0;
     if (rem != 0) {
@@ -55,9 +55,9 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
     if (avail >= len) {
       if (gap > sizeof(struct Block)) {
         /* The alignment gap is big enough to fit another block.
-				 * The original block descriptor is already at the correct
-				 * position, so we just change its len and create a new block
-				 * descriptor for the actual block we're handling. */
+         * The original block descriptor is already at the correct
+         * position, so we just change its len and create a new block
+         * descriptor for the actual block we're handling. */
         block->length = gap - sizeof(struct Block);
         struct Block *newblock = (struct Block *)(cptr - sizeof(struct Block));
         newblock->prev = block;
@@ -68,7 +68,7 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
         block = newblock;
       } else {
         /* The gap is too small to fit another block descriptor, so we
-				 * must account for the gap length in the block length. */
+         * must account for the gap length in the block length. */
         block->length = len + gap;
       }
 
@@ -86,8 +86,8 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
         newblock->length = avail - len - sizeof(struct Block);
       } else {
         /* If this block was larger than the requested length, but only
-				 * by less than sizeof(struct Block), we may have wasted
-				 * memory by previous assignments to block->length. */
+         * by less than sizeof(struct Block), we may have wasted
+         * memory by previous assignments to block->length. */
         block->length = avail;
       }
 

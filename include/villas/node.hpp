@@ -115,11 +115,11 @@ public:
   virtual int prepare();
 
   /* Parse settings of a node.
-	 *
-	 * @param json A JSON object containing the configuration of the node.
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
-	 */
+   *
+   * @param json A JSON object containing the configuration of the node.
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   virtual int parse(json_t *json);
 
   // Validate node configuration.
@@ -148,54 +148,54 @@ public:
   virtual int restart();
 
   /* Receive multiple messages at once.
-	 *
-	 * This callback is optional. It will only be called if non-null.
-	 *
-	 * Messages are received with a single recvmsg() syscall by
-	 * using gathering techniques (struct iovec).
-	 * The messages will be stored in a circular buffer / array @p m.
-	 * Indexes used to address @p m will wrap around after len messages.
-	 * Some node-types might only support to receive one message at a time.
-	 *
-	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
-	 * @param cnt		The number of samples that are allocated by the calling function.
-	 * @return		    The number of messages actually received.
-	 */
+   *
+   * This callback is optional. It will only be called if non-null.
+   *
+   * Messages are received with a single recvmsg() syscall by
+   * using gathering techniques (struct iovec).
+   * The messages will be stored in a circular buffer / array @p m.
+   * Indexes used to address @p m will wrap around after len messages.
+   * Some node-types might only support to receive one message at a time.
+   *
+   * @param smps		An array of pointers to memory blocks where the function should store received samples.
+   * @param cnt		The number of samples that are allocated by the calling function.
+   * @return		    The number of messages actually received.
+   */
   int read(struct Sample *smps[], unsigned cnt);
 
   /* Send multiple messages in a single datagram / packet.
-	 *
-	 * This callback is optional. It will only be called if non-null.
-	 *
-	 * Messages are sent with a single sendmsg() syscall by
-	 * using gathering techniques (struct iovec).
-	 * The messages have to be stored in a circular buffer / array m.
-	 * So the indexes will wrap around after len.
-	 *
-	 * @param smps		An array of pointers to memory blocks where samples read from.
-	 * @param cnt		The number of samples that are allocated by the calling function.
-	 * @return		    The number of messages actually sent.
-	 */
+   *
+   * This callback is optional. It will only be called if non-null.
+   *
+   * Messages are sent with a single sendmsg() syscall by
+   * using gathering techniques (struct iovec).
+   * The messages have to be stored in a circular buffer / array m.
+   * So the indexes will wrap around after len.
+   *
+   * @param smps		An array of pointers to memory blocks where samples read from.
+   * @param cnt		The number of samples that are allocated by the calling function.
+   * @return		    The number of messages actually sent.
+   */
   int write(struct Sample *smps[], unsigned cnt);
 
   // Reverse local and remote socket address.
   virtual int reverse() { return -1; }
 
   /* Get a list of file descriptors on which the path should poll
-	 *  to detect the availability of new samples which can be read.
-	 */
+   *  to detect the availability of new samples which can be read.
+   */
   virtual std::vector<int> getPollFDs() { return {}; }
 
   /* Get a list of socket file descriptors which are used by the node
-	 * To perform network IO. We use those to selectively apply network emulation
-	 */
+   * To perform network IO. We use those to selectively apply network emulation
+   */
   virtual std::vector<int> getNetemFDs() { return {}; }
 
   /* Get the memory type which this node-type expects.
-	 *
-	 * This is useful for special node-types like Infiniband, GPUs & FPGAs
-	 * which require DMA-backed memory.
-	 */
+   *
+   * This is useful for special node-types like Infiniband, GPUs & FPGAs
+   * which require DMA-backed memory.
+   */
   virtual struct villas::node::memory::Type *getMemoryType() {
     return villas::node::memory::default_type;
   }
@@ -204,9 +204,9 @@ public:
   villas::node::NodeFactory *getFactory() const { return factory; }
 
   /* Return a pointer to a string which should be used to print this node.
-	 *
-	 * @param n A pointer to the node structure.
-	 */
+   *
+   * @param n A pointer to the node structure.
+   */
   std::string getNameShort() const { return name_short; }
 
   // Return a pointer to a string which should be used to print this node.
@@ -223,15 +223,15 @@ public:
   }
 
   /* Return a pointer to a string which should be used to print this node.
-	 *
-	 * @param n A pointer to the node structure.
-	 */
+   *
+   * @param n A pointer to the node structure.
+   */
   const std::string &getNameLong();
 
   /* Return a list of signals which are sent to this node.
-	 *
-	 * This list is derived from the path which uses the node as destination.
-	 */
+   *
+   * This list is derived from the path which uses the node as destination.
+   */
   SignalList::Ptr getOutputSignals(bool after_hooks = true) const;
   SignalList::Ptr getInputSignals(bool after_hooks = true) const;
 

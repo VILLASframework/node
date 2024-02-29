@@ -45,14 +45,14 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
   }
 
   /* Access to the data requires a priori knowledge of the data set.
-	 * For this example we assume a data set consisting of FLOAT32 values.
-	 * A FLOAT32 value is encoded as 4 bytes. You can find the first FLOAT32
-	 * value at byte position 0, the second value at byte position 4, the third
-	 * value at byte position 8, and so on.
-	 *
-	 * To prevent damages due configuration, please check the length of the
-	 * data block of the SV message before accessing the data.
-	 */
+   * For this example we assume a data set consisting of FLOAT32 values.
+   * A FLOAT32 value is encoded as 4 bytes. You can find the first FLOAT32
+   * value at byte position 0, the second value at byte position 4, the third
+   * value at byte position 8, and so on.
+   *
+   * To prevent damages due configuration, please check the length of the
+   * data block of the SV message before accessing the data.
+   */
 
   smp = sample_alloc(&i->in.pool);
   if (!smp) {

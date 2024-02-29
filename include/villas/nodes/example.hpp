@@ -42,8 +42,8 @@ public:
   ExampleNode(const uuid_t &id = {}, const std::string &name = "");
 
   /* All of the following virtual-declared functions are optional.
-	 * Have a look at node.hpp/node.cpp for the default behaviour.
-	 */
+   * Have a look at node.hpp/node.cpp for the default behaviour.
+   */
 
   virtual ~ExampleNode();
 

@@ -141,7 +141,7 @@ int villas::node::shmem_read(NodeCompat *n, struct Sample *const smps[],
 
   if (recv < 0) {
     /* This can only really mean that the other process has exited, so close
-		 * the interface to make sure the shared memory object is unlinked */
+     * the interface to make sure the shared memory object is unlinked */
 
     n->logger->info("Shared memory segment has been closed.");
 

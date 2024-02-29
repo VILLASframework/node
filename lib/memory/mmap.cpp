@@ -125,9 +125,9 @@ static struct Allocation *mmap_alloc(size_t len, size_t alignment,
   }
 
   /* We must make sure that len is a multiple of the page size
-	 *
-	 * See: https://lkml.org/lkml/2014/10/22/925
-	 */
+   *
+   * See: https://lkml.org/lkml/2014/10/22/925
+   *//
   ma->length = ALIGN(len, sz);
   ma->alignment = ALIGN(alignment, sz);
   ma->type = m;

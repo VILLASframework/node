@@ -116,7 +116,7 @@ retry:
   shm->write.shared = shared;
 
   /* Post own semaphore and wait on the other one, so both processes know that
-	 * both regions are initialized */
+   * both regions are initialized */
   sem_post(sem_own);
   sem_wait(sem_other);
 

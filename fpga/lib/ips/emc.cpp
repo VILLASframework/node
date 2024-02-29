@@ -40,8 +40,8 @@ bool EMC::read(uint32_t offset, uint32_t length, uint8_t *data) {
   int ret;
 
   /* Reset the Flash Device. This clears the ret registers and puts
-	 * the device in Read mode.
-	 */
+   * the device in Read mode.
+   */
   ret = XFlash_Reset(&xflash);
   if (ret != XST_SUCCESS)
     return false;
@@ -87,15 +87,15 @@ bool EMC::flash(uint32_t offset, uint32_t length, uint8_t *data) {
   uint32_t start = offset;
 
   /* Reset the Flash Device. This clears the ret registers and puts
-	 * the device in Read mode. */
+   * the device in Read mode. */
   ret = XFlash_Reset(&xflash);
   if (ret != XST_SUCCESS) {
     return false;
   }
 
   /* Perform an unlock operation before the erase operation for the Intel
-	 * Flash. The erase operation will result in an error if the block is
-	 * locked. */
+   * Flash. The erase operation will result in an error if the block is
+   * locked. */
   if ((xflash.CommandSet == XFL_CMDSET_INTEL_STANDARD) ||
       (xflash.CommandSet == XFL_CMDSET_INTEL_EXTENDED) ||
       (xflash.CommandSet == XFL_CMDSET_INTEL_G18)) {

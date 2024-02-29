@@ -153,9 +153,9 @@ int socket_recv(struct socket *s, char *data, int len, double timeout) {
   tv.tv_usec = (int)((timeout - tv.tv_sec) * 1000000);
 
   /* Wait for a packet. We use select() to have a timeout. This is
-	 * necessary when reseting the model so we don't wait indefinitely
-	 * and prevent the process from exiting and freeing the port for
-	 * a future instance (model load). */
+   * necessary when reseting the model so we don't wait indefinitely
+   * and prevent the process from exiting and freeing the port for
+   * a future instance (model load). */
   ret = select(s->sd + 1, &sd_set, (fd_set *)0, (fd_set *)0, &tv);
   switch (ret) {
   case -1: // Error
@@ -165,7 +165,7 @@ int socket_recv(struct socket *s, char *data, int len, double timeout) {
   default:
     if (!(FD_ISSET(s->sd, &sd_set))) {
       /* We received something, but it's not on "sd". Since sd is the only
-				 * descriptor in the set... */
+       * descriptor in the set... */
       OpalPrint("%s: RecvPacket: God, is that You trying to reach me?\n",
                 PROGNAME);
       return -1;

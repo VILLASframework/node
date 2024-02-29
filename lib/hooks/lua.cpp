@@ -548,15 +548,15 @@ void LuaHook::prepare() {
   lookupFunctions();
 
   /* Check if we need to protect the Lua state with a mutex
-	 * This is the case if we have a periodic callback defined
-	 * As periodic() gets called from the main thread
-	 */
+   * This is the case if we have a periodic callback defined
+   * As periodic() gets called from the main thread
+   */
   needsLocking = functions.periodic > 0;
 
   // Prepare Lua process()
   if (functions.process) {
     /* We currently do not support the alteration of
-		 * signal metadata in process() */
+     * signal metadata in process() */
     signalsProcessed = signals;
   }
 

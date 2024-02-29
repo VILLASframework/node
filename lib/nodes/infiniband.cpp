@@ -362,7 +362,7 @@ int villas::node::ib_check(NodeCompat *n) {
                     ib->qp_init.cap.max_recv_wr);
 
   /* Set periodic signaling
-	 * This is done here, so that it uses the checked max_send_wr value */
+   * This is done here, so that it uses the checked max_send_wr value */
   if (ib->periodic_signaling == 0)
     ib->periodic_signaling = ib->qp_init.cap.max_send_wr / 2;
 
@@ -385,36 +385,36 @@ static void ib_create_bind_id(NodeCompat *n) {
   int ret;
 
   /* Create rdma_cm_id
-	 *
-	 * The unreliable connected mode is officially not supported by the rdma_cm library. Only the Reliable
-	 * Connected mode (RDMA_PS_TCP) and the Unreliable Datagram mode (RDMA_PS_UDP). Although it is not officially
-	 * supported, it is possible to use it with a few small adaptions to the sourcecode. To enable the
-	 * support for UC connections follow the steps below:
-	 *
-	 * 1. git clone https://github.com/linux-rdma/rdma-core
-	 * 2. cd rdma-core
-	 * 2. Edit librdmacm/cma.c and remove the keyword 'static' in front of:
-	 *
-	 *     static int rdma_create_id2(struct rdma_event_channel *channel,
-	 *         struct rdma_cm_id **id, void *context,
-	 *         enum rdma_port_space ps, enum ibv_qp_type qp_type)
-	 *
-	 * 3. Edit librdmacm/rdma_cma.h and add the following two entries to the file:
-	 *
-	 *     #define RDMA_CMA_H_CUSTOM
-	 *
-	 *     int rdma_create_id2(struct rdma_event_channel *channel,
-	 *         struct rdma_cm_id **id, void *context,
-	 *         enum rdma_port_space ps, enum ibv_qp_type qp_type);
-	 *
-	 * 4. Edit librdmacm/librdmacm.map and add a new line with:
-	 *
-	 *     rdma_create_id2
-	 *
-	 * 5. ./build.sh
-	 * 6. cd build && sudo make install
-	 *
-	 */
+   *
+   * The unreliable connected mode is officially not supported by the rdma_cm library. Only the Reliable
+   * Connected mode (RDMA_PS_TCP) and the Unreliable Datagram mode (RDMA_PS_UDP). Although it is not officially
+   * supported, it is possible to use it with a few small adaptions to the sourcecode. To enable the
+   * support for UC connections follow the steps below:
+   *
+   * 1. git clone https://github.com/linux-rdma/rdma-core
+   * 2. cd rdma-core
+   * 2. Edit librdmacm/cma.c and remove the keyword 'static' in front of:
+   *
+   *     static int rdma_create_id2(struct rdma_event_channel *channel,
+   *         struct rdma_cm_id **id, void *context,
+   *         enum rdma_port_space ps, enum ibv_qp_type qp_type)
+   *
+   * 3. Edit librdmacm/rdma_cma.h and add the following two entries to the file:
+   *
+   *     #define RDMA_CMA_H_CUSTOM
+   *
+   *     int rdma_create_id2(struct rdma_event_channel *channel,
+   *         struct rdma_cm_id **id, void *context,
+   *         enum rdma_port_space ps, enum ibv_qp_type qp_type);
+   *
+   * 4. Edit librdmacm/librdmacm.map and add a new line with:
+   *
+   *     rdma_create_id2
+   *
+   * 5. ./build.sh
+   * 6. cd build && sudo make install
+   *
+   */
 #ifdef RDMA_CMA_H_CUSTOM
   ret = rdma_create_id2(ib->ctx.ec, &ib->ctx.id, nullptr, ib->conn.port_space,
                         ib->qp_init.qp_type);
@@ -434,9 +434,9 @@ static void ib_create_bind_id(NodeCompat *n) {
   n->logger->debug("Bound rdma_cm_id to Infiniband device");
 
   /* The ID will be overwritten for the target. If the event type is
-	 * RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
-	 * that communication.
-	 */
+   * RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
+   * that communication.
+   */
   ib->ctx.listen_id = ib->ctx.id;
 }
 
@@ -524,9 +524,9 @@ static void *ib_rdma_cm_event_thread(void *ctx) {
       ret = ib_connect_request(n, event->id);
 
       /* A target UDP node will never really connect. In order to receive data,
-				 * we set it to connected after it answered the connection request
-				 * with rdma_connect.
-				 */
+         * we set it to connected after it answered the connection request
+         * with rdma_connect.
+         */
       if (ib->conn.port_space == RDMA_PS_UDP && !ib->is_source)
         n->setState(State::CONNECTED);
       else
@@ -642,8 +642,8 @@ int villas::node::ib_start(NodeCompat *n) {
   }
 
   /* Several events should occur on the event channel, to make
-	 * sure the nodes are succesfully connected.
-	 */
+   * sure the nodes are succesfully connected.
+   */
   n->logger->debug("Starting to monitor events on rdma_cm_id");
 
   // Create thread to monitor rdma_cm_event channel
@@ -665,9 +665,9 @@ int villas::node::ib_stop(NodeCompat *n) {
   ib->stopThreads = 1;
 
   /* Call RDMA disconnect function
-	 * Will flush all outstanding WRs to the Completion Queue and
-	 * will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	 */
+   * Will flush all outstanding WRs to the Completion Queue and
+   * will call RDMA_CM_EVENT_DISCONNECTED if that is done.
+   */
   if (n->getState() == State::CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
     ret = rdma_disconnect(ib->ctx.id);
 
@@ -727,8 +727,8 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
     max_wr_post = cnt;
 
     /* Poll Completion Queue
-		 * If we've already posted enough receive WRs, try to pull cnt
-		 */
+     * If we've already posted enough receive WRs, try to pull cnt
+     */
     if (ib->conn.available_recv_wrs >=
         (ib->qp_init.cap.max_recv_wr - ib->conn.buffer_subtraction)) {
       for (int i = 0;; i++) {
@@ -736,8 +736,8 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
           pthread_testcancel();
 
         /* If IB node disconnects or if it is still in State::PENDING_CONNECT, ib_read
-				 * should return immediately if this condition holds
-				 */
+         * should return immediately if this condition holds
+         */
         if (n->getState() != State::CONNECTED)
           return 0;
 
@@ -756,10 +756,10 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
       }
 
       /* All samples (wcs * received + unposted) should be released. Let
-			 * *release be equal to allocated.
-			 *
-			 * This is set in the framework, before this function was called.
-			 */
+       * *release be equal to allocated.
+       *
+       * This is set in the framework, before this function was called.
+       */
     } else {
       ib->conn.available_recv_wrs += max_wr_post;
 
@@ -839,9 +839,9 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
                         (int)wc[j].status);
 
       /* 32 byte of meta data is always transferred. We should substract it.
-			 * Furthermore, in case of an unreliable connection, a 40 byte
-			 * global routing header is transferred. This should be substracted as well.
-			 */
+       * Furthermore, in case of an unreliable connection, a 40 byte
+       * global routing header is transferred. This should be substracted as well.
+       */
       int correction =
           (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
 
@@ -916,11 +916,11 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
       }
 
       /* Check if data can be send inline
-			 * 32 byte meta data is always send.
-			 * Once every max_send_wr iterations a signal must be generated. Since we would need
-			 * an additional buffer if we were sending inlines with IBV_SEND_SIGNALED, we prefer
-			 * to send one samples every max_send_wr NOT inline (which thus generates a signal).
-			 */
+       * 32 byte meta data is always send.
+       * Once every max_send_wr iterations a signal must be generated. Since we would need
+       * an additional buffer if we were sending inlines with IBV_SEND_SIGNALED, we prefer
+       * to send one samples every max_send_wr NOT inline (which thus generates a signal).
+       */
       int send_inline =
           ((sge[sent][j - 1].length + META_SIZE) <
            ib->qp_init.cap.max_inline_data) &&
@@ -948,16 +948,16 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
     n->logger->debug("Posted send Work Requests");
 
     /* Reorder list. Place inline and unposted samples to the top
-		 * m will always be equal or smaller than *release
-		 */
+     * m will always be equal or smaller than *release
+     */
     for (unsigned m = 0; m < cnt; m++) {
       /* We can't use wr_id as identifier, since it is 0 for inline
-			 * elements
-			 */
+       * elements
+       */
       if (ret && (wr[m].sg_list == bad_wr->sg_list)) {
         /* The remaining work requests will be bad. Ripple through list
-				 * and prepare them to be released
-				 */
+         * and prepare them to be released
+         */
         n->logger->debug(
             "Bad WR occured with ID: {:#x} and S/G address: {:#x}: {}",
             bad_wr->wr_id, (void *)bad_wr->sg_list, ret);

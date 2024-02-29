@@ -79,9 +79,9 @@ public:
   void parse(const std::string &name);
 
   /* Parse super-node configuration.
-	 *
-	 * @param json A libjansson object which contains the configuration.
-	 */
+   *
+   * @param json A libjansson object which contains the configuration.
+   */
   void parse(json_t *json);
 
   // Check validity of super node configuration.

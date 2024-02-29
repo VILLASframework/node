@@ -360,7 +360,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
   }
 
   /* SOCK_RAW IP sockets to not provide the IP protocol number via recvmsg()
-	 * So we simply set it ourself. */
+   * So we simply set it ourself. */
   if (s->layer == SocketLayer::IP) {
     switch (src.sa.sa_family) {
     case AF_INET:

@@ -47,9 +47,9 @@ Test(fpga, dma, .description = "DMA") {
     size_t len = 4 * (1 << 10);
 
 #if 0
-		// Allocate memory to use with DMA
-		auto src = HostDmaRam::getAllocator().allocate<char>(len);
-		auto dst = HostDmaRam::getAllocator().allocate<char>(len);
+    // Allocate memory to use with DMA
+    auto src = HostDmaRam::getAllocator().allocate<char>(len);
+    auto dst = HostDmaRam::getAllocator().allocate<char>(len);
 #elif 0
     // ... only works with IOMMU enabled currently
 
