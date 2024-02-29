@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
@@ -14,7 +14,7 @@ pushd ${DIR}
 function finish {
 	popd
 	rm -rf ${DIR}
-	
+
 	kill -SIGTERM 0 # kill all decendants
 }
 trap finish EXIT

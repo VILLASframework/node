@@ -103,21 +103,7 @@ test:python:
 test:cppcheck:
   stage: test
   script:
-  - cppcheck -j $(nproc)
-             --max-configs=32
-             --error-exitcode=1
-             --quiet
-             --inline-suppr
-             --enable=warning,performance,portability,missingInclude
-             --std=c++11
-             --suppress=noValidConfiguration
-             -U '_MSC_VER;_WIN32;_M_ARM'
-             -U '_MSC_VER;_WIN32;_M_AMD64;_M_X64'
-             -U '_MSC_FULL_VER;_MSC_VER'
-             -U '_MSC_BUILD;_MSC_VER'
-             -I include
-             -I common/include
-             src/ lib/ common/ tests/unit/ | tee cppcheck.log
+  - ./tools/run-cppcheck.sh | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
   - docker

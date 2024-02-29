@@ -8,11 +8,11 @@
 
 #pragma once
 
+#include <fmt/ostream.h>
 #include <iostream>
 #include <jansson.h>
 #include <list>
 #include <string>
-#include <fmt/ostream.h>
 #include <villas/common.hpp>
 #include <villas/config.hpp>
 #include <villas/log.hpp>
@@ -152,6 +152,5 @@ template <typename T> void Registry::dump() {
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::plugin::Plugin>
-    : public fmt::ostream_formatter {};
+class fmt::formatter<villas::plugin::Plugin> : public fmt::ostream_formatter {};
 #endif

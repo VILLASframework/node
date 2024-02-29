@@ -155,11 +155,11 @@ else()
 endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
-# Check if VILLASfpga submodule is present
-if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/CMakeLists.txt")
-    set(FOUND_SUBMODULE_FPGA ON)
+# Check if submodules for VILLASfpga are present
+if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/thirdparty/libxil/CMakeLists.txt")
+    set(FOUND_FPGA_SUBMODULES ON)
 else()
-    set(FOUND_SUBMODULE_FPGA OFF)
+    set(FOUND_FPGA_SUBMODULES OFF)
 endif()
 
 # Build options
@@ -168,7 +168,7 @@ cmake_dependent_option(WITH_DEFAULTS        "Defaults for non required build opt
 cmake_dependent_option(WITH_API             "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_CLIENTS         "Build client applications"                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" "${WITH_DEFAULTS}" "LIBCONFIG_FOUND" OFF)
-cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     "${WITH_DEFAULTS}" "FOUND_SUBMODULE_FPGA" OFF)
+cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     "${WITH_DEFAULTS}" "FOUND_FPGA_SUBMODULES" OFF)
 cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   "${WITH_DEFAULTS}" "CGRAPH_FOUND; GVC_FOUND" OFF)
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_LUA             "Build with Lua"                                        "${WITH_DEFAULTS}" "LUA_FOUND" OFF)

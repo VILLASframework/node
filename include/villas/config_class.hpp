@@ -90,7 +90,7 @@ public:
   json_t *load(const std::string &u, bool resolveIncludes = true,
                bool resolveEnvVars = true);
 
-  std::string const & getConfigPath() const { return configPath; }
+  std::string const &getConfigPath() const { return configPath; }
 };
 
 } // namespace node

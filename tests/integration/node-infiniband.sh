@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration Infiniband test using villas node.
 #
@@ -111,43 +111,43 @@ for MODE in "${MODES[@]}"; do
 
 	echo "## Start ${MODE}"
 
-	sed -i -e 's/MODE/'${MODE}'/g' config.json 
+	sed -i -e 's/MODE/'${MODE}'/g' config.json
 
 	# Start receiving node
 	villas node target.json &
 	PID_PROC=$!
-	
+
 	# Wait for node to complete init
 	sleep 1
-	
+
 	# Preprare fifo
 	FIFO=$(mktemp -p ${DIR} -t)
 	if [[ ! -p ${FIFO} ]]; then
 		mkfifo ${FIFO}
 	fi
-	
+
 	# Start sending pipe
 	ip netns exec namespace0 \
-    villas pipe -l ${NUM_SAMPLES} config.json ib_node_source >output.dat <${FIFO} & 
+    villas pipe -l ${NUM_SAMPLES} config.json ib_node_source >output.dat <${FIFO} &
 	PID_PIPE=$!
-	
+
 	# Keep pipe alive
 	sleep 5 >${FIFO} &
-	
+
 	# Wait for pipe to connect to node
 	sleep 3
-	
+
 	# Write data to pipe
 	cat input.dat >${FIFO} &
-	
+
 	# Wait for node to handle samples
 	sleep 2
-	
+
 	# Stop node
-	kill ${PID_PIPE} 
+	kill ${PID_PIPE}
 	kill ${PID_PROC}
-	
+
 	villas compare input.dat output.dat
 
-	sed -i -e 's/'${MODE}'/MODE/g' config.json 
+	sed -i -e 's/'${MODE}'/MODE/g' config.json
 done

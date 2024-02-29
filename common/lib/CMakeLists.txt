@@ -49,8 +49,8 @@ endif()
 target_include_directories(villas-common PUBLIC
 	${OPENSSL_INCLUDE_DIR}
 	${CURL_INCLUDE_DIRS}
-	${PROJECT_BINARY_DIR}/include
-	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_BINARY_DIR}/common/include
+	${PROJECT_SOURCE_DIR}/common/include
 )
 
 target_link_libraries(villas-common PUBLIC
@@ -87,7 +87,7 @@ install(
 )
 
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/villas/
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/common/include/villas/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
     COMPONENT devel
     FILES_MATCHING

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Transparent Network Emulation Proxy for Layer 2 & 3
 #

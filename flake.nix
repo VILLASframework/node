@@ -6,18 +6,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
 
-    common = {
-      url = "github:VILLASframework/common";
-      flake = false;
-    };
-
-    fpga = {
-      type = "git";
-      url = "https://github.com/VILLASframework/fpga.git";
-      submodules = true;
-      flake = false;
-    };
-
     ethercat = {
       url = "gitlab:etherlab.org/ethercat/stable-1.5";
       flake = false;
@@ -106,7 +94,6 @@
       villas-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
         src = ./.;
         version = "minimal";
-        inherit (inputs) fpga common;
       };
 
       villas = villas-minimal.override {
@@ -176,6 +163,7 @@
           libgit2
           pcre
           reuse
+          cppcheck
         ];
       in rec {
         default = full;

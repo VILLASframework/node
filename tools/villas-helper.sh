@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Some helper functions for our integration test suite
 #
@@ -8,12 +8,12 @@
 
 function villas_format_supports_vectorize() {
 	local FORMAT=$1
-	
+
 	case ${FORMAT} in
 		raw*) return 1 ;;
 		gtnet*) return 1 ;;
 	esac
-	
+
 	return 0
 }
 
@@ -24,7 +24,7 @@ function villas_format_supports_header() {
 		raw*) return 1 ;;
 		gtnet) return 1 ;;
 	esac
-	
+
 	return 0
 }
 

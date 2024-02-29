@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -28,7 +28,7 @@ cat > config.json << EOF
 
 			"in": {
 				"address": "*:12000",
-				
+
 				"multicast": {
 					"enabled": true,
 

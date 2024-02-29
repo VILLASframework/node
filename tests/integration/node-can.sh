@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration can test using villas node.
 #
 # Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
-# To set up vcan interface use the following commands 
+# To set up vcan interface use the following commands
 # sudo modprobe vcan
 # sudo ip link add dev vcan0 type vcan
 # sudo ip link set vcan0 up

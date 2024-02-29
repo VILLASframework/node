@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -18,7 +18,7 @@ function finish {
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-FORMAT="villas.human"	
+FORMAT="villas.human"
 
 cat > config.json << EOF
 {

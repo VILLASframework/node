@@ -1,21 +1,5 @@
 {
   "nodes": {
-    "common": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1707903631,
-        "narHash": "sha256-zC6uc/lvaURWsQ0m/inmwVkGmJrryq4HpXucnQOghIw=",
-        "owner": "VILLASframework",
-        "repo": "common",
-        "rev": "15e338d2be87d7d4d54ec9735ccd055b2abff084",
-        "type": "github"
-      },
-      "original": {
-        "owner": "VILLASframework",
-        "repo": "common",
-        "type": "github"
-      }
-    },
     "ethercat": {
       "flake": false,
       "locked": {
@@ -31,24 +15,6 @@
         "ref": "stable-1.5",
         "repo": "ethercat",
         "type": "gitlab"
-      }
-    },
-    "fpga": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1708962818,
-        "narHash": "sha256-gau5GKP2n+m+AbaELyqeECg2vjKIgUiHY52LdQmMja4=",
-        "ref": "refs/heads/master",
-        "rev": "b71fdbec7deeea6d178cfe184d4ad7b3da758d4f",
-        "revCount": 598,
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/VILLASframework/fpga.git"
-      },
-      "original": {
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/VILLASframework/fpga.git"
       }
     },
     "lib60870": {
@@ -122,9 +88,7 @@
     },
     "root": {
       "inputs": {
-        "common": "common",
         "ethercat": "ethercat",
-        "fpga": "fpga",
         "lib60870": "lib60870",
         "libdatachannel": "libdatachannel",
         "libiec61850": "libiec61850",
