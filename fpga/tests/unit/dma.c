@@ -17,8 +17,6 @@ int main(int argc, char *argv[])
 	villasfpga_handle vh;
 	villasfpga_memory mem1, mem2;
 	void *mem1ptr, *mem2ptr;
-	char line[1024];
-	float f;
 	size_t size;
 
 	if (argv == NULL) {

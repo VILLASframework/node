@@ -52,3 +52,9 @@ private:
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#ifndef FMT_LEGACY_OSTREAM_FORMATTER
+template <>
+class fmt::formatter<villas::fpga::ip::RtdsGtfpga>
+    : public fmt::ostream_formatter {};
+#endif
