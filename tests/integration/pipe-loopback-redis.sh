@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -34,7 +34,7 @@ cat > config.json << EOF
 			"type": "redis",
 			"format": "protobuf",
 			"vectorize": 10,
-		
+
 			"uri": "tcp://${HOST}:6379/0"
 		}
 	}

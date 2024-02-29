@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration Infiniband test using villas-node.
 #
@@ -90,7 +90,7 @@ for NODETYPE in "${NODETYPES[@]}"
 do
 
 	# CREATE PATH CONFIG FILES
-	
+
 	# Set target and source config file, which is the same for both runs
 cat > ${CONFIG_SOURCE} <<EOF
 @include "${CONFIG//\/tmp\/}"
@@ -116,13 +116,13 @@ paths = (
 )
 EOF
 	# SPECIAL TREATMENT FOR SOME NODES
-	
+
 	# Some nodes require special treatment:
 	#   * loopback node: target_node is identical to source_node
 	#   * infiniband node: one node must be executed in a namespace
-	
+
 	# loopback
-	if [ "${NODETYPE}" == "loopback" ]; then 
+	if [ "${NODETYPE}" == "loopback" ]; then
 cat > ${CONFIG_TARGET} <<EOF
 @include "${CONFIG//\/tmp\/}"
 
@@ -140,9 +140,9 @@ paths = (
 )
 EOF
 	fi
-	
+
 	# infiniband
-	if [ "${NODETYPE}" == "infiniband" ]; then 
+	if [ "${NODETYPE}" == "infiniband" ]; then
 		NAMESPACE_CMD='ip netns exec namespace0'
 	else
 		NAMESPACE_CMD=''
@@ -153,20 +153,20 @@ EOF
 	for IB_MODE in "${IB_MODES[@]}"
 	do
 		LOG_DIR=$(date +%Y%m%d_%H-%M-%S)_benchmark_${NODETYPE}_${IB_MODE}
-	
+
 		for NUM_VALUE in "${NUM_VALUES[@]}"
 		do
 			for RATE_SAMPLE in "${RATE_SAMPLES[@]}"
 			do
 				NUM_SAMPLE=$((${RATE_SAMPLE} * ${TIME_TO_RUN}))
 				#TIME_TO_RUN=$((${NUM_SAMPLE} / ${RATE_SAMPLE}))
-	
+
 				echo "#####"
 				echo "## START ${IB_MODE}"
 				echo "## NUM_VALUES: ${NUM_VALUE}"
 				echo "## RATE_SAMPLES: ${RATE_SAMPLE}"
 				echo "## NUM_SAMPLES: ${NUM_SAMPLE}"
-	
+
 				# Set wrapper of config file
 cat > ${CONFIG} <<EOF
 logging = {
@@ -210,7 +210,7 @@ nodes = {
 	},
 EOF
 
-				cat configs/${NODETYPE}.conf | sed -e "s/\${NUM_VALUE}/${NUM_VALUE}/" -e "s/\${IB_MODE}/${IB_MODE}/" >> ${CONFIG} 
+				cat configs/${NODETYPE}.conf | sed -e "s/\${NUM_VALUE}/${NUM_VALUE}/" -e "s/\${IB_MODE}/${IB_MODE}/" >> ${CONFIG}
 
 cat >> ${CONFIG} <<EOF
 }
@@ -220,39 +220,39 @@ EOF
 				VILLAS_LOG_PREFIX=$(colorize "[target] ") \
 				cset proc --set=real-time-0 --exec ../../build/src/villas-node -- ${CONFIG_TARGET} &
 				target_node_proc=$!
-					
+
 				# Wait for node to complete init
 				sleep 2
-				
-				if [ ! "${NODETYPE}" == "loopback" ]; then 
+
+				if [ ! "${NODETYPE}" == "loopback" ]; then
 					# Start sending pipe
 					VILLAS_LOG_PREFIX=$(colorize "[source] ") \
 					${NAMESPACE_CMD} cset proc --set=real-time-1 --exec ../../build/src/villas-node -- ${CONFIG_SOURCE} &
 					source_node_proc=$!
 				fi
-					
+
 				sleep $((${TIME_TO_RUN} + 5))
-				
+
 				# Stop node
 				kill $target_node_proc
-				
+
 				sleep 1
-	
+
 				echo "## STOP ${IB_MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}"
 				echo ""
-	
+
 				((COUNT++))
-	
+
 				sleep 1
 			done
 		done
-	
+
 		# Since this script will be executed as sudo we should chmod the
 		# log dir 777. Otherwise too many unnecessary 'sudo rm -rf' will be invoked.
 		chmod -R 777 ${LOG_DIR}
 	done
 done
 
-rm ${CONFIG} ${CONFIG_TARGET} ${CONFIG_SOURCE} 
+rm ${CONFIG} ${CONFIG_TARGET} ${CONFIG_SOURCE}
 
 exit 0

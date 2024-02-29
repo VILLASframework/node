@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test hooks in villas node
 #
@@ -49,13 +49,13 @@ cat > config.json <<EOF
 			"hooks": [
 				{
 					"type": "average",
-					
+
 					"signals": [ "random", "sine", "square", "triangle", "ramp" ],
 					"offset": 0
 				},
 				{
 					"type": "skip_first",
-					
+
 					"samples": 5
 				},
 				{

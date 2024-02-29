@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
 # Ensure that we have at least two usable loop devices inside our Docker container
 #
 # Source: https://github.com/jpetazzo/dind/issues/19#issuecomment-48859883

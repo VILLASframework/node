@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Stress test for remote API
 #
@@ -46,11 +46,11 @@ for J in $(seq 1 ${RUNS}); do
 		trap "echo error-trap >> ${FIFO}" ERR
 
 		FETCHED_CONF=$(mktemp -p ${DIR})
-		
+
 		curl -s http://localhost:8080/api/v2/config > ${FETCHED_CONF}
 		diff -u <(jq -S . < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
 		RC=$?
-		
+
 		if [ "$RC" -eq "0" ]; then
 			echo success >&5
 		else
@@ -69,7 +69,7 @@ wait %1
 echo "Check return codes"
 for J in $(seq 1 ${RUNS}); do
 	read -t 10 -u 5 STATUS
-	
+
 	if [ "${STATUS}" == "success" ]; then
 		let ++SUCCESS
 	else

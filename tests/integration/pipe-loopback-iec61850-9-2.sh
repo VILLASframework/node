@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -27,9 +27,9 @@ cat > config.json << EOF
 	"nodes": {
 		"node1": {
 			"type": "iec61850-9-2",
-		
+
 			"interface": "lo",
-		
+
 			"out": {
 				"svid": "1234",
 				"signals": [

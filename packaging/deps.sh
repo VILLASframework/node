@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# A shell script to install various dependencies required by VILLASnode
+#
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 

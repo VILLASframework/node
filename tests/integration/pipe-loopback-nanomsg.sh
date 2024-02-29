@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -19,7 +19,7 @@ trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
-FORMAT="protobuf"	
+FORMAT="protobuf"
 VECTORIZE="10"
 
 cat > config.json << EOF
@@ -27,7 +27,7 @@ cat > config.json << EOF
 	"nodes": {
 		"node1": {
 			"type": "nanomsg",
-			
+
 			"format": "${FORMAT}",
 			"vectorize": ${VECTORIZE},
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
@@ -28,7 +28,7 @@ EOF
 
 # Start without a configuration
 timeout -s SIGKILL 3 \
-villas node config.json & 
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1

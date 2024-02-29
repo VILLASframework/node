@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Wrapper to start tool of the VILLASnode suite
 #
 # This allows you to use VILLASnode tools like this:

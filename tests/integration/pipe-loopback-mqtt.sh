@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -18,7 +18,7 @@ function finish {
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-FORMAT="protobuf"	
+FORMAT="protobuf"
 VECTORIZE="10"
 HOST="localhost"
 
@@ -40,7 +40,7 @@ cat > config.json << EOF
 			"password": "guest",
 			"host": "${HOST}",
 			"port": 1883,
-		
+
 			"out": {
 				"publish": "test-topic"
 			},

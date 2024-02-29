@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
@@ -35,7 +35,7 @@ cat > local.json <<EOF
 		"node1": {
 			"type"   : "socket",
 			"format": "csv",
-			
+
 			"in": {
 				"address"  : "*:12000"
 			},

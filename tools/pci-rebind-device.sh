@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Detach and rebind a PCI device to a PCI kernel driver
 #

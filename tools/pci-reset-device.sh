@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Reset PCI devices like FPGAs after a reflash
 #

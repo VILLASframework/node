@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Run GDB as sudo for VS Code debugger
 # See: .vscode directory

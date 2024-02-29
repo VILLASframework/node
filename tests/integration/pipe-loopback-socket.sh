@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -46,7 +46,7 @@ case ${LAYER} in
 		LOCAL="00:00:00:00:00:00%lo:34997"
 		REMOTE="00:00:00:00:00:00%lo:34997"
 		;;
-		
+
 	unix)
 		LOCAL=$(mktemp)
 		REMOTE=${LOCAL}
@@ -58,7 +58,7 @@ cat > config.json << EOF
 	"nodes": {
 		"node1": {
 			"type": "socket",
-			
+
 			"vectorize": ${VECTORIZE},
 			"format": "${FORMAT}",
 			"layer": "${LAYER}",
