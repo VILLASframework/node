@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -24,26 +24,26 @@ VECTORIZE="10"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "nanomsg",
+    "nodes": {
+        "node1": {
+             "type": "nanomsg",
 
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
 
-			"in": {
-				"endpoints": [ "tcp://127.0.0.1:12000" ],
+             "in": {
+             	"endpoints": [ "tcp://127.0.0.1:12000" ],
 
-				"signals": {
-					"type": "float",
-					"count": 5
-				}
-			},
-			"out": {
-				"endpoints": [ "tcp://127.0.0.1:12000" ]
-			}
-		}
-	}
+             	"signals": {
+             		"type": "float",
+             		"count": 5
+             	}
+             },
+             "out": {
+             	"endpoints": [ "tcp://127.0.0.1:12000" ]
+             }
+        }
+    }
 }
 EOF
 

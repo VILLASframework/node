@@ -12,16 +12,16 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 cat > config.json <<EOF
 {
-	"http": {
-		"port": 8080
-	}
+    "http": {
+        "port": 8080
+    }
 }
 EOF
 

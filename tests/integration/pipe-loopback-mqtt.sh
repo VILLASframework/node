@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -23,32 +23,32 @@ VECTORIZE="10"
 HOST="localhost"
 
 if [ -n "${CI}" ]; then
-	HOST="mosquitto"
+    HOST="mosquitto"
 else
-	HOST="localhost"
+    HOST="localhost"
 fi
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "mqtt",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+    "nodes": {
+        "node1": {
+             "type": "mqtt",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
 
-			"username": "guest",
-			"password": "guest",
-			"host": "${HOST}",
-			"port": 1883,
+             "username": "guest",
+             "password": "guest",
+             "host": "${HOST}",
+             "port": 1883,
 
-			"out": {
-				"publish": "test-topic"
-			},
-			"in": {
-				"subscribe": "test-topic"
-			}
-		}
-	}
+             "out": {
+             	"publish": "test-topic"
+             },
+             "in": {
+             	"subscribe": "test-topic"
+             }
+        }
+    }
 }
 EOF
 

@@ -15,8 +15,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -24,31 +24,31 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "iec61850-9-2",
+    "nodes": {
+        "node1": {
+             "type": "iec61850-9-2",
 
-			"interface": "lo",
+             "interface": "lo",
 
-			"out": {
-				"svid": "1234",
-				"signals": [
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" }
-				]
-			},
-			"in": {
-				"signals": [
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" },
-					{ "iec_type": "float32" }
-				]
-			}
-		}
-	}
+             "out": {
+             	"svid": "1234",
+             	"signals": [
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" }
+             	]
+             },
+             "in": {
+             	"signals": [
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" },
+             		{ "iec_type": "float32" }
+             	]
+             }
+        }
+    }
 }
 EOF
 

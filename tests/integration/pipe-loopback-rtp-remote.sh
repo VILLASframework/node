@@ -24,8 +24,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -37,36 +37,36 @@ NUM_SAMPLES=100
 
 cat > src.json << EOF
 {
-	"logging": {
-		"level": "debug"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"aimd": {
-				"a": 10,
-				"b": 0.5
-			},
-			"in": {
-				"address": "0.0.0.0:33466",
-				"signals": {
-					"count": 5,
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "${REMOTE_ADDR}:33464"
-			}
-		}
-	}
+    "logging": {
+        "level": "debug"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "aimd": {
+             	"a": 10,
+             	"b": 0.5
+             },
+             "in": {
+             	"address": "0.0.0.0:33466",
+             	"signals": {
+             		"count": 5,
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "${REMOTE_ADDR}:33464"
+             }
+        }
+    }
 }
 EOF
 
@@ -74,36 +74,36 @@ EOF
 
 cat > dest.json << EOF
 {
-	"logging": {
-		"level": "debug"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"aimd": {
-				"a": 10,
-				"b": 0.5
-			},
-			"in": {
-				"address": "0.0.0.0:33464",
-				"signals": {
-					"count": 5,
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "${LOCAL_ADDR}:33466"
-			}
-		}
-	}
+    "logging": {
+        "level": "debug"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "aimd": {
+             	"a": 10,
+             	"b": 0.5
+             },
+             "in": {
+             	"address": "0.0.0.0:33464",
+             	"signals": {
+             		"count": 5,
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "${LOCAL_ADDR}:33466"
+             }
+        }
+    }
 }
 EOF
 

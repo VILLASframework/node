@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -21,21 +21,21 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "file",
+    "nodes": {
+        "node1": {
+             "type": "file",
 
-			"uri": "file.dat",
+             "uri": "file.dat",
 
-			"in": {
-				"epoch_mode": "original",
-				"eof": "wait"
-			},
-			"out": {
-				"flush": true
-			}
-		}
-	}
+             "in": {
+             	"epoch_mode": "original",
+             	"eof": "wait"
+             },
+             "out": {
+             	"flush": true
+             }
+        }
+    }
 }
 EOF
 

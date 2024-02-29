@@ -12,21 +12,21 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 cat > config.json <<EOF
 {
-	"http": {
-		"port": 8080
-	},
-	"nodes": {
-		"node1": {
-			"type": "loopback"
-		}
-	}
+    "http": {
+        "port": 8080
+    },
+    "nodes": {
+        "node1": {
+             "type": "loopback"
+        }
+    }
 }
 EOF
 

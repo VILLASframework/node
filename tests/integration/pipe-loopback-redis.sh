@@ -15,8 +15,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 NUM_SAMPLES=${NUM_SAMPLES:-100}
@@ -24,20 +24,20 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 HOST="localhost"
 
 if [ -n "${CI}" ]; then
-	HOST="redis"
+    HOST="redis"
 fi
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "redis",
-			"format": "protobuf",
-			"vectorize": 10,
+    "nodes": {
+        "node1": {
+             "type": "redis",
+             "format": "protobuf",
+             "vectorize": 10,
 
-			"uri": "tcp://${HOST}:6379/0"
-		}
-	}
+             "uri": "tcp://${HOST}:6379/0"
+        }
+    }
 }
 EOF
 

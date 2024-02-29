@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -22,43 +22,43 @@ global_var = 555
 counter = 111
 
 function prepare(cfg)
-	assert(true)
-	assert(cfg.custom.variable - 123.456 < 1e-9)
-	assert(cfg.custom.list[0] == 1)
-	assert(cfg.custom.list[1] - 2.0 < 1e-9)
-	assert(cfg.custom.list[2] == true)
+    assert(true)
+    assert(cfg.custom.variable - 123.456 < 1e-9)
+    assert(cfg.custom.list[0] == 1)
+    assert(cfg.custom.list[1] - 2.0 < 1e-9)
+    assert(cfg.custom.list[2] == true)
 end
 
 function start()
-	counter = 0
+    counter = 0
 end
 
 function process(smp)
-	assert(counter == smp.sequence)
+    assert(counter == smp.sequence)
 
-	counter = counter + 1
+    counter = counter + 1
 
-	smp.data.signal1 = smp.data.signal2 + smp.data.signal3
+    smp.data.signal1 = smp.data.signal2 + smp.data.signal3
 
-	return 0
+    return 0
 end
 EOF
 
 cat > config.json <<EOF
 {
-	"script": "script.lua",
-	"custom": {
-		"variable": 123.456,
-		"list": [1, 2.0, true]
-	},
-	"signals": [
-		{ "name": "global_var",     "expression": "global_var" },
-		{ "name": "counter",        "expression": "counter" },
-		{ "name": "signal1",        "expression": "smp.data.signal1" },
-		{ "name": "ts_origin.sec",  "expression": "smp.ts_origin.sec" },
-		{ "name": "ts_origin.sec",  "expression": "smp.ts_origin.nsec" },
-		{ "name": "sequence",       "expression": "smp.sequence" }
-	]
+    "script": "script.lua",
+    "custom": {
+        "variable": 123.456,
+        "list": [1, 2.0, true]
+    },
+    "signals": [
+        { "name": "global_var",     "expression": "global_var" },
+        { "name": "counter",        "expression": "counter" },
+        { "name": "signal1",        "expression": "smp.data.signal1" },
+        { "name": "ts_origin.sec",  "expression": "smp.ts_origin.sec" },
+        { "name": "ts_origin.sec",  "expression": "smp.ts_origin.nsec" },
+        { "name": "sequence",       "expression": "smp.sequence" }
+    ]
 }
 EOF
 

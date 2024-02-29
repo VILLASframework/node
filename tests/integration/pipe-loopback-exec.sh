@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -22,16 +22,16 @@ FORMAT="villas.human"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "exec",
-			"format": "${FORMAT}",
+    "nodes": {
+        "node1": {
+             "type": "exec",
+             "format": "${FORMAT}",
 
-			"shell": true,
+             "shell": true,
 
-			"exec": "tee /tmp/test"
-		}
-	}
+             "exec": "tee /tmp/test"
+        }
+    }
 }
 EOF
 

@@ -15,8 +15,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -28,35 +28,35 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"node_1": {
-			"type": "socket",
+    "nodes": {
+        "node_1": {
+             "type": "socket",
 
-			"in": {
-				"address": ":12000",
+             "in": {
+             	"address": ":12000",
 
-				"signals": [
-					{ "name": "sig1", "init": 1234.0 },
-					{ "name": "sig2", "init": 5678.0 }
-				]
-			},
-			"out": {
-				"address": "127.0.0.1:12000"
-			}
-		},
-		"file_1": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": "node_1",
-			"out": "file_1",
-			"mode": "all",
-			"rate": 10
-		}
-	]
+             	"signals": [
+             		{ "name": "sig1", "init": 1234.0 },
+             		{ "name": "sig2", "init": 5678.0 }
+             	]
+             },
+             "out": {
+             	"address": "127.0.0.1:12000"
+             }
+        },
+        "file_1": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": "node_1",
+             "out": "file_1",
+             "mode": "all",
+             "rate": 10
+        }
+    ]
 }
 EOF
 
