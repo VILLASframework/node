@@ -17,7 +17,7 @@
 
 extern "C" {
 /* Define RTLAB before including OpalPrint.h for messages to be sent
-	* to the OpalDisplay. Otherwise stdout will be used. */
+ * to the OpalDisplay. Otherwise stdout will be used. */
 #define RTLAB
 #include <OpalPrint.h>
 }

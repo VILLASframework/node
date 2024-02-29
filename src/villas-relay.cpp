@@ -165,7 +165,7 @@ void RelayConnection::read(void *in, size_t len) {
       auto c = p.second;
 
       /* We skip the current connection in order
-				* to avoid receiving our own data */
+       * to avoid receiving our own data */
       if (loopback == false && c == this)
         continue;
 

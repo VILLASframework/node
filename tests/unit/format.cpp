@@ -382,12 +382,12 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   cr_assert_eq(ret, 0);
 
 #if 0 // Show the file contents
-	char cmd[128];
-	if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
-		snprintf(cmd, sizeof(cmd), "cat %s", fn);
-	else
-		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
-	system(cmd);
+  char cmd[128];
+  if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
+    snprintf(cmd, sizeof(cmd), "cat %s", fn);
+  else
+    snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
+  system(cmd);
 #endif
 
   rewind(stream);

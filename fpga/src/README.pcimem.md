@@ -13,10 +13,10 @@ The pcimem application provides a simple method of reading and writing
 to memory registers on a PCI card.
 
 Usage:	./pcimem { sys file } { offset } [ type [ data ] ]
-	sys file: sysfs file for the pci resource to act on
-	offset  : offset into pci memory region to act upon
-	type    : access operation type : [b]yte, [h]alfword, [w]ord
-	data    : data to be written
+  sys file: sysfs file for the pci resource to act on
+  offset  : offset into pci memory region to act upon
+  type    : access operation type : [b]yte, [h]alfword, [w]ord
+  data    : data to be written
 
 ## Platform Support
 

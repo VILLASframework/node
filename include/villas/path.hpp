@@ -140,9 +140,9 @@ public:
   void checkPrepared();
 
   /* Start a path.
-	*
-	* Start a new pthread for receiving/sending messages over this path.
-	*/
+   *
+   * Start a new pthread for receiving/sending messages over this path.
+   */
   void start();
 
   // Stop a path.
@@ -154,13 +154,13 @@ public:
   unsigned getOutputSignalsMaxCount();
 
   /* Parse a single path and add it to the global configuration.
-	*
-	* @param json A JSON object containing the configuration of the path.
-	* @param p Pointer to the allocated memory for this path
-	* @param nodes A linked list of all existing nodes
-	* @retval 0 Success. Everything went well.
-	* @retval <0 Error. Something went wrong.
-	*/
+   *
+   * @param json A JSON object containing the configuration of the path.
+   * @param p Pointer to the allocated memory for this path
+   * @param nodes A linked list of all existing nodes
+   * @retval 0 Success. Everything went well.
+   * @retval <0 Error. Something went wrong.
+   */
   void parse(json_t *json, NodeList &nodes, const uuid_t sn_uuid);
 
   void parseMask(json_t *json_mask, NodeList &nodes);
