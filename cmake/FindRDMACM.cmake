@@ -5,18 +5,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 find_path(RDMACM_INCLUDE_DIR
-	NAMES rdma/rdma_cma.h
+    NAMES rdma/rdma_cma.h
 )
 
 find_library(RDMACM_LIBRARY
-	NAMES rdmacm
+    NAMES rdmacm
 )
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
 # if all listed variables are TRUE
 find_package_handle_standard_args(RDMACM DEFAULT_MSG
-	RDMACM_LIBRARY RDMACM_INCLUDE_DIR)
+    RDMACM_LIBRARY RDMACM_INCLUDE_DIR)
 
 mark_as_advanced(RDMACM_INCLUDE_DIR RDMACM_LIBRARY)
 

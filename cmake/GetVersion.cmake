@@ -40,7 +40,7 @@ function(GetVersion DIR PREFIX)
             "Make sure that the source directory is a Git repo and "
             "contains at least one valid tag like 'v0.1.0'"
         )
-	else()
+    else()
         set(FOUND_GIT_VERSION ON PARENT_SCOPE)
 
         string(REGEX REPLACE "^v([0-9]+\\.[0-9]+\\.[0-9]+)$" "\\1"     VERSION       ${VERSION_STR})
