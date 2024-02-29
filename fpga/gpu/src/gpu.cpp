@@ -46,9 +46,9 @@ std::string villas::gpu::GpuAllocator::getName() const {
   return name.str();
 }
 
-GpuFactory::GpuFactory() : Plugin("cuda", "CUDA capable GPUs") {
-  logger = villas::logging.get("gpu:factory");
-}
+GpuFactory::GpuFactory()
+    : logger(villas::logging.get("gpu:factory")),
+      Plugin("cuda", "CUDA capable GPUs") {}
 
 // Required to be defined here for PIMPL to compile
 Gpu::~Gpu() {
