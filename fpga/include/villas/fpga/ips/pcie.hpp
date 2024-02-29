@@ -20,60 +20,47 @@ namespace ip {
 
 class AxiPciExpressBridge : public Core {
 public:
-	friend class AxiPciExpressBridgeFactory;
+  friend class AxiPciExpressBridgeFactory;
 
-	virtual
-	bool init() override;
+  virtual bool init() override;
 
 private:
-	static constexpr char axiInterface[] = "M_AXI";
-	static constexpr char pcieMemory[] = "BAR0";
+  static constexpr char axiInterface[] = "M_AXI";
+  static constexpr char pcieMemory[] = "BAR0";
 
-	struct AxiBar {
-		uintptr_t base;
-		size_t size;
-		uintptr_t translation;
-	};
+  struct AxiBar {
+    uintptr_t base;
+    size_t size;
+    uintptr_t translation;
+  };
 
-	struct PciBar {
-		uintptr_t translation;
-	};
+  struct PciBar {
+    uintptr_t translation;
+  };
 
-	std::map<std::string, AxiBar> axiToPcieTranslations;
-	std::map<std::string, PciBar> pcieToAxiTranslations;
+  std::map<std::string, AxiBar> axiToPcieTranslations;
+  std::map<std::string, PciBar> pcieToAxiTranslations;
 };
 
 class AxiPciExpressBridgeFactory : CoreFactory {
 
 public:
-	virtual
-	std::string getName() const
-	{
-		return "pcie";
-	}
+  virtual std::string getName() const { return "pcie"; }
 
-	virtual
-	std::string getDescription() const
-	{
-		return "Xilinx's AXI-PCIe Bridge";
-	}
+  virtual std::string getDescription() const {
+    return "Xilinx's AXI-PCIe Bridge";
+  }
 
 private:
-	virtual
-	Vlnv getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:axi_pcie:");
-	}
+  virtual Vlnv getCompatibleVlnv() const {
+    return Vlnv("xilinx.com:ip:axi_pcie:");
+  }
 
-	// Create a concrete IP instance
-	Core* make() const
-	{
-		return new AxiPciExpressBridge;
-	};
+  // Create a concrete IP instance
+  Core *make() const { return new AxiPciExpressBridge; };
 
 protected:
-	virtual
-	void parse(Core &, json_t *) override;
+  virtual void parse(Core &, json_t *) override;
 };
 
 } // namespace ip

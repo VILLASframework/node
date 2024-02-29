@@ -11,10 +11,10 @@
 #pragma once
 
 // PCIe BAR number of VILLASfpga registers
-#define FPGA_PCI_BAR		0
-#define FPGA_PCI_VID_XILINX	0x10ee
-#define FPGA_PCI_PID_VFPGA	0x7022
+#define FPGA_PCI_BAR 0
+#define FPGA_PCI_VID_XILINX 0x10ee
+#define FPGA_PCI_PID_VFPGA 0x7022
 
 /* AXI Bus frequency for all components
  * except RTDS AXI Stream bridge which runs at RTDS_HZ (100 Mhz) */
-#define FPGA_AXI_HZ		125000000 // 125 MHz
+#define FPGA_AXI_HZ 125000000 // 125 MHz

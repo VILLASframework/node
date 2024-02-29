@@ -47,6 +47,5 @@ private:
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::graph::Edge>
-    : public fmt::ostream_formatter {};
+class fmt::formatter<villas::graph::Edge> : public fmt::ostream_formatter {};
 #endif

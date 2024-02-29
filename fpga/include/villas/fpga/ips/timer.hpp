@@ -21,47 +21,30 @@ namespace fpga {
 namespace ip {
 
 class Timer : public Core {
-	friend class TimerFactory;
+  friend class TimerFactory;
+
 public:
+  virtual bool init() override;
 
-	virtual
-	bool init() override;
+  bool start(uint32_t ticks);
+  bool wait();
+  uint32_t remaining();
 
-	bool start(uint32_t ticks);
-	bool wait();
-	uint32_t remaining();
+  inline bool isRunning() { return remaining() != 0; }
 
-	inline
-	bool isRunning()
-	{
-		return remaining() != 0;
-	}
+  inline bool isFinished() { return remaining() == 0; }
 
-	inline
-	bool isFinished()
-	{
-		return remaining() == 0;
-	}
-
-	static constexpr
-	uint32_t getFrequency()
-	{
-		return FPGA_AXI_HZ;
-	}
+  static constexpr uint32_t getFrequency() { return FPGA_AXI_HZ; }
 
 private:
+  std::list<MemoryBlockName> getMemoryBlocks() const {
+    return {registerMemory};
+  }
 
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			registerMemory
-		};
-	}
+  static constexpr char irqName[] = "generateout0";
+  static constexpr char registerMemory[] = "Reg";
 
-	static constexpr char irqName[] = "generateout0";
-	static constexpr char registerMemory[] = "Reg";
-
-	XTmrCtr xTmr;
+  XTmrCtr xTmr;
 };
 
 } // namespace ip

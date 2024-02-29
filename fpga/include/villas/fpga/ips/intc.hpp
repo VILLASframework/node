@@ -31,33 +31,29 @@ public:
     return enableInterrupt(1 << irq.num, polling);
   }
 
-bool disableInterrupt(IrqMaskType mask);
-bool disableInterrupt(IrqPort irq) { return disableInterrupt(1 << irq.num); }
+  bool disableInterrupt(IrqMaskType mask);
+  bool disableInterrupt(IrqPort irq) { return disableInterrupt(1 << irq.num); }
 
-ssize_t waitForInterrupt(int irq);
-ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
+  ssize_t waitForInterrupt(int irq);
+  ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
 
 private:
+  static constexpr char registerMemory[] = "reg0";
 
-	static constexpr char registerMemory[] = "reg0";
+  std::list<MemoryBlockName> getMemoryBlocks() const {
+    return {registerMemory};
+  }
 
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			registerMemory
-		};
-	}
+  struct Interrupt {
+    int eventFd;  // Event file descriptor
+    int number;   // Interrupt number from /proc/interrupts
+    bool polling; // Polled or not
+  };
 
-	struct Interrupt {
-		int eventFd;			// Event file descriptor
-		int number;			// Interrupt number from /proc/interrupts
-		bool polling;			// Polled or not
-	};
-
-	int num_irqs;				// Number of available MSI vectors
-	int efds[maxIrqs];
-	int nos[maxIrqs];
-	bool polling[maxIrqs];
+  int num_irqs; // Number of available MSI vectors
+  int efds[maxIrqs];
+  int nos[maxIrqs];
+  bool polling[maxIrqs];
 };
 
 } // namespace ip

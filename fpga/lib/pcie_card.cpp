@@ -5,17 +5,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <string>
-#include <memory>
-#include <utility>
 #include <fmt/ostream.h>
+#include <memory>
+#include <string>
+#include <utility>
 #include <villas/exceptions.hpp>
-#include <villas/memory.hpp>
-#include <villas/kernel/pci.hpp>
-#include <villas/kernel/vfio_container.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/kernel/pci.hpp>
+#include <villas/kernel/vfio_container.hpp>
+#include <villas/memory.hpp>
 
 using namespace villas;
 using namespace villas::fpga;
@@ -23,7 +23,8 @@ using namespace villas::fpga;
 // Instantiate factory to register
 static PCIeCardFactory PCIeCardFactoryInstance;
 
-static const kernel::pci::Device defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
+static const kernel::pci::Device
+    defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 std::shared_ptr<PCIeCard>
 PCIeCardFactory::make(json_t *json_card, std::string card_name,
@@ -155,39 +156,35 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   return card;
 }
 
-PCIeCard::~PCIeCard()
-{
+PCIeCard::~PCIeCard() {}
 
-}
+bool PCIeCard::init() {
+  logger = getLogger();
 
-bool PCIeCard::init()
-{
-	logger = getLogger();
+  logger->info("Initializing FPGA card {}", name);
 
-	logger->info("Initializing FPGA card {}", name);
+  // Attach PCIe card to VFIO container
+  vfioDevice = vfioContainer->attachDevice(*pdev);
 
-	// Attach PCIe card to VFIO container
-	vfioDevice = vfioContainer->attachDevice(*pdev);
+  // Enable memory access and PCI bus mastering for DMA
+  if (not vfioDevice->pciEnable()) {
+    logger->error("Failed to enable PCI device");
+    return false;
+  }
 
-	// Enable memory access and PCI bus mastering for DMA
-	if (not vfioDevice->pciEnable()) {
-		logger->error("Failed to enable PCI device");
-		return false;
-	}
+  // Reset system?
+  if (doReset) {
+    // Reset / detect PCI device
+    if (not vfioDevice->pciHotReset()) {
+      logger->error("Failed to reset PCI device");
+      return false;
+    }
 
-	// Reset system?
-	if (doReset) {
-		// Reset / detect PCI device
-		if (not vfioDevice->pciHotReset()) {
-			logger->error("Failed to reset PCI device");
-			return false;
-		}
+    if (not reset()) {
+      logger->error("Failed to reset FGPA card");
+      return false;
+    }
+  }
 
-		if (not reset()) {
-			logger->error("Failed to reset FGPA card");
-			return false;
-		}
-	}
-
-	return true;
+  return true;
 }

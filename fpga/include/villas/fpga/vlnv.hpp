@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <iostream>
 #include <fmt/ostream.h>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <villas/config.hpp>
 
 namespace villas {
@@ -18,56 +18,34 @@ namespace fpga {
 
 class Vlnv {
 public:
-	static constexpr char delimiter	= ':';
+  static constexpr char delimiter = ':';
 
-	Vlnv() :
-	    vendor(""),
-	    library(""),
-	    name(""),
-	    version("")
-	{ }
+  Vlnv() : vendor(""), library(""), name(""), version("") {}
 
-	Vlnv(const std::string &s)
-	{
-		parseFromString(s);
-	}
+  Vlnv(const std::string &s) { parseFromString(s); }
 
-	static Vlnv
-	getWildcard()
-	{
-		return Vlnv();
-	}
+  static Vlnv getWildcard() { return Vlnv(); }
 
-	std::string
-	toString() const;
+  std::string toString() const;
 
-	bool
-	operator==(const Vlnv &other) const;
+  bool operator==(const Vlnv &other) const;
 
-	bool
-	operator!=(const Vlnv &other) const
-	{
-		return !(*this == other);
-	}
+  bool operator!=(const Vlnv &other) const { return !(*this == other); }
 
-	friend std::ostream&
-	operator<< (std::ostream &stream, const Vlnv &vlnv)
-	{
-		return stream
-		        << (vlnv.vendor.empty()		? "*" : vlnv.vendor)	<< ":"
-		        << (vlnv.library.empty()	? "*" : vlnv.library)	<< ":"
-		        << (vlnv.name.empty()		? "*" : vlnv.name)	<< ":"
-		        << (vlnv.version.empty()	? "*" : vlnv.version);
-	}
+  friend std::ostream &operator<<(std::ostream &stream, const Vlnv &vlnv) {
+    return stream << (vlnv.vendor.empty() ? "*" : vlnv.vendor) << ":"
+                  << (vlnv.library.empty() ? "*" : vlnv.library) << ":"
+                  << (vlnv.name.empty() ? "*" : vlnv.name) << ":"
+                  << (vlnv.version.empty() ? "*" : vlnv.version);
+  }
 
 private:
-	void
-	parseFromString(std::string vlnv);
+  void parseFromString(std::string vlnv);
 
-	std::string vendor;
-	std::string library;
-	std::string name;
-	std::string version;
+  std::string vendor;
+  std::string library;
+  std::string name;
+  std::string version;
 };
 
 } // namespace fpga
@@ -75,6 +53,5 @@ private:
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::fpga::Vlnv>
-    : public fmt::ostream_formatter {};
+class fmt::formatter<villas::fpga::Vlnv> : public fmt::ostream_formatter {};
 #endif

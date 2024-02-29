@@ -8,7 +8,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #pragma once
 
 #include <xilinx/xllfifo.h>
@@ -21,35 +20,29 @@ namespace ip {
 
 class Fifo : public Node {
 public:
-	friend class FifoFactory;
+  friend class FifoFactory;
 
-	virtual
-	bool init() override;
+  virtual bool init() override;
 
-	virtual
-	bool stop() override;
+  virtual bool stop() override;
 
-	size_t write(const void* buf, size_t len);
-	size_t read(void* buf, size_t len);
+  size_t write(const void *buf, size_t len);
+  size_t read(void *buf, size_t len);
 
 private:
-	static constexpr char registerMemory[] = "Mem0";
-	static constexpr char axi4Memory[] = "Mem1";
-	static constexpr char irqName[] = "interrupt";
+  static constexpr char registerMemory[] = "Mem0";
+  static constexpr char axi4Memory[] = "Mem1";
+  static constexpr char irqName[] = "interrupt";
 
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			registerMemory,
-			axi4Memory
-		};
-	}
+  std::list<MemoryBlockName> getMemoryBlocks() const {
+    return {registerMemory, axi4Memory};
+  }
 
-	XLlFifo xFifo;
+  XLlFifo xFifo;
 };
 
 class FifoData : public Node {
-	friend class FifoDataFactory;
+  friend class FifoDataFactory;
 };
 
 } // namespace ip

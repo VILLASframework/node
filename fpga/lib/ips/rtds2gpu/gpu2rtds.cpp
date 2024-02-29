@@ -5,57 +5,62 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <unistd.h>
 #include <cstring>
+#include <unistd.h>
 
+#include <villas/fpga/ips/gpu2rtds.hpp>
 #include <villas/log.hpp>
 #include <villas/memory_manager.hpp>
-#include <villas/fpga/ips/gpu2rtds.hpp>
 
 using namespace villas::fpga::ip;
 
-bool Gpu2Rtds::init()
-{
-	Hls::init();
+bool Gpu2Rtds::init() {
+  Hls::init();
 
-	auto &registers = addressTranslations.at(registerMemory);
+  auto &registers = addressTranslations.at(registerMemory);
 
-	registerStatus = reinterpret_cast<StatusRegister*>(registers.getLocalAddr(registerStatusOffset));
-	registerStatusCtrl = reinterpret_cast<StatusControlRegister*>(registers.getLocalAddr(registerStatusCtrlOffset));
-	registerFrameSize = reinterpret_cast<uint32_t*>(registers.getLocalAddr(registerFrameSizeOffset));
-	registerFrames = reinterpret_cast<uint32_t*>(registers.getLocalAddr(registerFrameOffset));
+  registerStatus = reinterpret_cast<StatusRegister *>(
+      registers.getLocalAddr(registerStatusOffset));
+  registerStatusCtrl = reinterpret_cast<StatusControlRegister *>(
+      registers.getLocalAddr(registerStatusCtrlOffset));
+  registerFrameSize = reinterpret_cast<uint32_t *>(
+      registers.getLocalAddr(registerFrameSizeOffset));
+  registerFrames =
+      reinterpret_cast<uint32_t *>(registers.getLocalAddr(registerFrameOffset));
 
-	maxFrameSize = getMaxFrameSize();
-	logger->info("Max. frame size supported: {}", maxFrameSize);
+  maxFrameSize = getMaxFrameSize();
+  logger->info("Max. frame size supported: {}", maxFrameSize);
 
-	return true;
+  return true;
 }
 
-bool
-Gpu2Rtds::startOnce(size_t frameSize)
-{
-	*registerFrameSize = frameSize;
+bool Gpu2Rtds::startOnce(size_t frameSize) {
+  *registerFrameSize = frameSize;
 
-	start();
+  start();
 
-	return true;
+  return true;
 }
 
-void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
-{
-	const auto frame_size = *registerFrameSize;
-	auto status = *registerStatus;
+void Gpu2Rtds::dump(spdlog::level::level_enum logLevel) {
+  const auto frame_size = *registerFrameSize;
+  auto status = *registerStatus;
 
-	logger->log(logLevel, "Gpu2Rtds registers:");
-	logger->log(logLevel, "  Frame size (words):       {:#x}", frame_size);
-	logger->log(logLevel, "  Status:                   {:#x}", status.value);
-	logger->log(logLevel, "    Running:            {}", (status.is_running ? "yes" : "no"));
-	logger->log(logLevel, "    Frame too short:    {}", (status.frame_too_short ? "yes" : "no"));
-	logger->log(logLevel, "    Frame too long:     {}", (status.frame_too_long ? "yes" : "no"));
-	logger->log(logLevel, "    Frame size invalid: {}", (status.invalid_frame_size ? "yes" : "no"));
-	logger->log(logLevel, "    Last count:         {}", (int) status.last_count);
-	logger->log(logLevel, "    Last seq. number:   {}", (int) status.last_seq_nr);
-	logger->log(logLevel, "    Max. frame size:    {}", (int) status.max_frame_size);
+  logger->log(logLevel, "Gpu2Rtds registers:");
+  logger->log(logLevel, "  Frame size (words):       {:#x}", frame_size);
+  logger->log(logLevel, "  Status:                   {:#x}", status.value);
+  logger->log(logLevel, "    Running:            {}",
+              (status.is_running ? "yes" : "no"));
+  logger->log(logLevel, "    Frame too short:    {}",
+              (status.frame_too_short ? "yes" : "no"));
+  logger->log(logLevel, "    Frame too long:     {}",
+              (status.frame_too_long ? "yes" : "no"));
+  logger->log(logLevel, "    Frame size invalid: {}",
+              (status.invalid_frame_size ? "yes" : "no"));
+  logger->log(logLevel, "    Last count:         {}", (int)status.last_count);
+  logger->log(logLevel, "    Last seq. number:   {}", (int)status.last_seq_nr);
+  logger->log(logLevel, "    Max. frame size:    {}",
+              (int)status.max_frame_size);
 }
 
 //bool Gpu2Rtds::startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset)
@@ -99,24 +104,24 @@ void Gpu2Rtds::dump(spdlog::level::level_enum logLevel)
 //	return true;
 //}
 
-size_t
-Gpu2Rtds::getMaxFrameSize()
-{
-	*registerFrameSize = 0;
+size_t Gpu2Rtds::getMaxFrameSize() {
+  *registerFrameSize = 0;
 
-	start();
-	while (not isFinished());
+  start();
+  while (not isFinished())
+    ;
 
-	while (not registerStatusCtrl->status_ap_vld);
+  while (not registerStatusCtrl->status_ap_vld)
+    ;
 
-	axilite_reg_status_t status = *registerStatus;
+  axilite_reg_status_t status = *registerStatus;
 
-//	logger->debug("(*registerStatus).max_frame_size: {}", (*registerStatus).max_frame_size);
-//	logger->debug("status.max_frame_size: {}", status.max_frame_size);
+  //	logger->debug("(*registerStatus).max_frame_size: {}", (*registerStatus).max_frame_size);
+  //	logger->debug("status.max_frame_size: {}", status.max_frame_size);
 
-//	assert(status.max_frame_size == (*registerStatus).max_frame_size);
+  //	assert(status.max_frame_size == (*registerStatus).max_frame_size);
 
-	return status.max_frame_size;
+  return status.max_frame_size;
 }
 
 //void

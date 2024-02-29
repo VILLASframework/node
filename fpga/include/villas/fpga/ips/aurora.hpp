@@ -15,39 +15,27 @@ namespace ip {
 
 class Aurora : public Node {
 public:
-	static constexpr const char* masterPort = "m_axis";
-	static constexpr const char* slavePort = "s_axis";
+  static constexpr const char *masterPort = "m_axis";
+  static constexpr const char *slavePort = "s_axis";
 
-	virtual
-	void dump() override;
+  virtual void dump() override;
 
-	std::list<std::string> getMemoryBlocks() const
-	{
-		return {
-			registerMemory
-		};
-	}
+  std::list<std::string> getMemoryBlocks() const { return {registerMemory}; }
 
-	const StreamVertex&
-	getDefaultSlavePort() const
-	{
-		return getSlavePort(slavePort);
-	}
+  const StreamVertex &getDefaultSlavePort() const {
+    return getSlavePort(slavePort);
+  }
 
-	const StreamVertex&
-	getDefaultMasterPort() const
-	{
-		return getMasterPort(masterPort);
-	}
+  const StreamVertex &getDefaultMasterPort() const {
+    return getMasterPort(masterPort);
+  }
 
-	void
-	setLoopback(bool state);
+  void setLoopback(bool state);
 
-	void
-	resetFrameCounters();
+  void resetFrameCounters();
 
 private:
-	static constexpr const char registerMemory[] = "reg0";
+  static constexpr const char registerMemory[] = "reg0";
 };
 
 } // namespace ip

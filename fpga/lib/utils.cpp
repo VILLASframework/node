@@ -6,21 +6,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <csignal>
-#include <iostream>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <csignal>
+#include <filesystem>
+#include <iostream>
 #include <jansson.h>
 #include <regex>
-#include <filesystem>
+#include <string>
+#include <vector>
 
 #include <CLI11.hpp>
 #include <rang.hpp>
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
-#include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
 #include <villas/fpga/card.hpp>
@@ -61,8 +60,7 @@ fpga::ConnectString::ConnectString(std::string &connectString, int maxPortNum)
   parseString(connectString);
 }
 
-void fpga::ConnectString::parseString(std::string& connectString)
-{
+void fpga::ConnectString::parseString(std::string &connectString) {
   if (connectString.empty())
     return;
 
@@ -119,8 +117,7 @@ void fpga::ConnectString::parseString(std::string& connectString)
   }
 }
 
-int fpga::ConnectString::portStringToInt(std::string &str) const
-{
+int fpga::ConnectString::portStringToInt(std::string &str) const {
   if (str == "stdin" || str == "stdout" || str == "pipe" || str == "dma" ||
       str == "dino") {
     return -1;
@@ -133,7 +130,6 @@ int fpga::ConnectString::portStringToInt(std::string &str) const
     return port;
   }
 }
-
 
 // parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
 void fpga::ConnectString::configCrossBar(
@@ -205,24 +201,23 @@ void fpga::ConnectString::configCrossBar(
   }
 }
 
-void fpga::setupColorHandling()
-{
-	// Handle Control-C nicely
-	struct sigaction sigIntHandler;
-	sigIntHandler.sa_handler = [](int){
-		std::cout << std::endl << rang::style::reset << rang::fgB::red;
-		std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
-		std::exit(1); // Will call the correct exit func, no unwinding of the stack though
-	};
+void fpga::setupColorHandling() {
+  // Handle Control-C nicely
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = [](int) {
+    std::cout << std::endl << rang::style::reset << rang::fgB::red;
+    std::cout << "Control-C detected, exiting..." << rang::style::reset
+              << std::endl;
+    std::exit(
+        1); // Will call the correct exit func, no unwinding of the stack though
+  };
 
-	sigemptyset(&sigIntHandler.sa_mask);
-	sigIntHandler.sa_flags = 0;
-	sigaction(SIGINT, &sigIntHandler, nullptr);
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, nullptr);
 
-	// Reset color if exiting not by signal
-	std::atexit([](){
-		std::cout << rang::style::reset;
-	});
+  // Reset color if exiting not by signal
+  std::atexit([]() { std::cout << rang::style::reset; });
 }
 
 std::shared_ptr<fpga::Card>
@@ -331,15 +326,16 @@ std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
   return card;
 }
 
-std::unique_ptr<fpga::BufferedSampleFormatter> fpga::getBufferedSampleFormatter(
-	const std::string &format,
-	size_t bufSizeInSamples)
-{
-	if (format == "long") {
-		return std::make_unique<fpga::BufferedSampleFormatterLong>(bufSizeInSamples);
-	} else if (format == "short") {
-		return std::make_unique<fpga::BufferedSampleFormatterShort>(bufSizeInSamples);
-	} else {
-		throw RuntimeError("Unknown output format '{}'", format);
-	}
+std::unique_ptr<fpga::BufferedSampleFormatter>
+fpga::getBufferedSampleFormatter(const std::string &format,
+                                 size_t bufSizeInSamples) {
+  if (format == "long") {
+    return std::make_unique<fpga::BufferedSampleFormatterLong>(
+        bufSizeInSamples);
+  } else if (format == "short") {
+    return std::make_unique<fpga::BufferedSampleFormatterShort>(
+        bufSizeInSamples);
+  } else {
+    throw RuntimeError("Unknown output format '{}'", format);
+  }
 }

@@ -14,8 +14,8 @@
 namespace villas {
 namespace fpga {
 
-std::shared_ptr<fpga::Card>
-setupFpgaCard(const std::string &configFile, const std::string &fpgaName);
+std::shared_ptr<fpga::Card> setupFpgaCard(const std::string &configFile,
+                                          const std::string &fpgaName);
 
 std::shared_ptr<fpga::Card>
 createCard(json_t *config, const std::filesystem::path &searchPath,
@@ -66,82 +66,77 @@ protected:
   int dstAsInt;
 };
 
-  class BufferedSampleFormatter {
-  public:
-    virtual void format(float value) = 0;
-    virtual void output(std::ostream &out) {
-      out << buf.data() << std::flush;
-      clearBuf();
+class BufferedSampleFormatter {
+public:
+  virtual void format(float value) = 0;
+  virtual void output(std::ostream &out) {
+    out << buf.data() << std::flush;
+    clearBuf();
+  }
+  virtual void clearBuf() {
+    for (size_t i = 0; i < bufSamples && buf[i * bufSampleSize] != '\0'; i++) {
+      buf[i * bufSampleSize] = '\0';
     }
-    virtual void clearBuf() {
-      for (size_t i = 0; i < bufSamples && buf[i * bufSampleSize] != '\0';
-           i++) {
-        buf[i * bufSampleSize] = '\0';
-      }
-      currentBufLoc = 0;
+    currentBufLoc = 0;
+  }
+
+protected:
+  std::vector<char> buf;
+  const size_t bufSamples;
+  const size_t bufSampleSize;
+  size_t currentBufLoc;
+
+  BufferedSampleFormatter(const size_t bufSamples, const size_t bufSampleSize)
+      : buf(bufSamples * bufSampleSize + 1), // Leave room for a final `\0'
+        bufSamples(bufSamples), bufSampleSize(bufSampleSize),
+        currentBufLoc(0){};
+  BufferedSampleFormatter() = delete;
+  BufferedSampleFormatter(const BufferedSampleFormatter &) = delete;
+  virtual char *nextBufPos() { return &buf[(currentBufLoc++) * bufSampleSize]; }
+};
+
+class BufferedSampleFormatterShort : public BufferedSampleFormatter {
+public:
+  BufferedSampleFormatterShort(size_t bufSizeInSamples)
+      : BufferedSampleFormatter(bufSizeInSamples, formatStringSize){};
+
+  virtual void format(float value) override {
+    size_t chars;
+    if ((chars = std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
+                               value)) > (int)formatStringSize) {
+      throw RuntimeError("Output buffer too small. Expected " +
+                         std::to_string(formatStringSize) +
+                         " characters, got " + std::to_string(chars));
     }
+  }
 
-  protected:
-    std::vector<char> buf;
-    const size_t bufSamples;
-    const size_t bufSampleSize;
-    size_t currentBufLoc;
+protected:
+  static constexpr char formatString[] = "%013.6f\n";
+  static constexpr size_t formatStringSize = 14;
+};
 
-    BufferedSampleFormatter(const size_t bufSamples, const size_t bufSampleSize)
-        : buf(bufSamples * bufSampleSize + 1), // Leave room for a final `\0'
-          bufSamples(bufSamples), bufSampleSize(bufSampleSize),
-          currentBufLoc(0){};
-    BufferedSampleFormatter() = delete;
-    BufferedSampleFormatter(const BufferedSampleFormatter &) = delete;
-    virtual char *nextBufPos() {
-      return &buf[(currentBufLoc++) * bufSampleSize];
+class BufferedSampleFormatterLong : public BufferedSampleFormatter {
+public:
+  BufferedSampleFormatterLong(size_t bufSizeInSamples)
+      : BufferedSampleFormatter(bufSizeInSamples, formatStringSize),
+        sampleCnt(0){};
+
+  virtual void format(float value) override {
+    if (std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
+                      sampleCnt, value) > (int)formatStringSize) {
+      throw RuntimeError("Output buffer too small");
     }
-  };
+    sampleCnt = (sampleCnt + 1) % 100000;
+  }
 
-  class BufferedSampleFormatterShort : public BufferedSampleFormatter {
-  public:
-    BufferedSampleFormatterShort(size_t bufSizeInSamples)
-        : BufferedSampleFormatter(bufSizeInSamples, formatStringSize){};
+protected:
+  static constexpr char formatString[] = "%05zd: %013.6f\n";
+  static constexpr size_t formatStringSize = 22;
+  size_t sampleCnt;
+};
 
-    virtual void format(float value) override {
-      size_t chars;
-      if ((chars = std::snprintf(nextBufPos(), formatStringSize + 1,
-                                 formatString, value)) >
-          (int)formatStringSize) {
-        throw RuntimeError("Output buffer too small. Expected " +
-                           std::to_string(formatStringSize) +
-                           " characters, got " + std::to_string(chars));
-      }
-    }
-
-  protected:
-    static constexpr char formatString[] = "%013.6f\n";
-    static constexpr size_t formatStringSize = 14;
-  };
-
-  class BufferedSampleFormatterLong : public BufferedSampleFormatter {
-  public:
-    BufferedSampleFormatterLong(size_t bufSizeInSamples)
-        : BufferedSampleFormatter(bufSizeInSamples, formatStringSize),
-          sampleCnt(0){};
-
-    virtual void format(float value) override {
-      if (std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
-                        sampleCnt, value) > (int)formatStringSize) {
-        throw RuntimeError("Output buffer too small");
-      }
-      sampleCnt = (sampleCnt + 1) % 100000;
-    }
-
-  protected:
-    static constexpr char formatString[] = "%05zd: %013.6f\n";
-    static constexpr size_t formatStringSize = 22;
-    size_t sampleCnt;
-  };
-
-  std::unique_ptr<BufferedSampleFormatter>
-  getBufferedSampleFormatter(const std::string &format,
-                             size_t bufSizeInSamples);
+std::unique_ptr<BufferedSampleFormatter>
+getBufferedSampleFormatter(const std::string &format, size_t bufSizeInSamples);
 
 } // namespace fpga
 } // namespace villas

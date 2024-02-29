@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <villas/memory.hpp>
 #include <villas/fpga/core.hpp>
+#include <villas/memory.hpp>
 
 namespace villas {
 namespace fpga {
@@ -17,64 +17,39 @@ namespace ip {
 class BramFactory;
 
 class Bram : public Core {
-	friend class BramFactory;
+  friend class BramFactory;
 
 public:
+  virtual bool init() override;
 
-	virtual
-	bool init() override;
-
-	LinearAllocator& getAllocator()
-	{
-		return *allocator;
-	}
+  LinearAllocator &getAllocator() { return *allocator; }
 
 private:
-	static constexpr
-	const char* memoryBlock = "Mem0";
+  static constexpr const char *memoryBlock = "Mem0";
 
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			memoryBlock
-		};
-	}
+  std::list<MemoryBlockName> getMemoryBlocks() const { return {memoryBlock}; }
 
-	size_t size;
-	std::unique_ptr<LinearAllocator> allocator;
+  size_t size;
+  std::unique_ptr<LinearAllocator> allocator;
 };
 
 class BramFactory : public CoreFactory {
 
 public:
-	virtual
-	std::string getName() const
-	{
-		return "bram";
-	}
+  virtual std::string getName() const { return "bram"; }
 
-	virtual
-	std::string getDescription() const
-	{
-		return "Block RAM";
-	}
+  virtual std::string getDescription() const { return "Block RAM"; }
 
 private:
-	virtual
-	Vlnv getCompatibleVlnv() const
-	{
-		return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
-	}
+  virtual Vlnv getCompatibleVlnv() const {
+    return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
+  }
 
-	// Create a concrete IP instance
-	Core* make() const
-	{
-		return new Bram;
-	};
+  // Create a concrete IP instance
+  Core *make() const { return new Bram; };
 
 protected:
-	virtual
-	void parse(Core &, json_t *) override;
+  virtual void parse(Core &, json_t *) override;
 };
 
 } // namespace ip

@@ -101,29 +101,27 @@ private:
   void driverWriteBlocking(u8 *dataPtr, size_t size);
   void driverReadBlocking(u8 *dataPtr, size_t max_read);
 };
-  class I2cFactory : NodeFactory {
+class I2cFactory : NodeFactory {
 
-  public:
-    virtual std::string getName() const { return "i2c"; }
+public:
+  virtual std::string getName() const { return "i2c"; }
 
-    virtual std::string getDescription() const {
-      return "Xilinx's AXI4 iic IP";
-    }
+  virtual std::string getDescription() const { return "Xilinx's AXI4 iic IP"; }
 
-  private:
-    virtual Vlnv getCompatibleVlnv() const {
-      return Vlnv("xilinx.com:ip:axi_iic:");
-    }
+private:
+  virtual Vlnv getCompatibleVlnv() const {
+    return Vlnv("xilinx.com:ip:axi_iic:");
+  }
 
-    // Create a concrete IP instance
-    Core *make() const { return new I2c; };
+  // Create a concrete IP instance
+  Core *make() const { return new I2c; };
 
-  protected:
-    virtual void parse(Core &ip, json_t *json) override;
-    virtual void configurePollingMode(Core &ip, PollingMode mode) override {
-      dynamic_cast<I2c &>(ip).polling = (mode == POLL);
-    }
-  };
+protected:
+  virtual void parse(Core &ip, json_t *json) override;
+  virtual void configurePollingMode(Core &ip, PollingMode mode) override {
+    dynamic_cast<I2c &>(ip).polling = (mode == POLL);
+  }
+};
 } // namespace ip
 } // namespace fpga
 } // namespace villas

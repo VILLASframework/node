@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <unistd.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <villas/config.hpp>
 #include <villas/plugin.hpp>
@@ -25,97 +25,96 @@ bool InterruptController::stop() {
   return card->vfioDevice->pciMsiDeinit(this->efds) > 0;
 }
 
-bool
-InterruptController::init()
-{
-	const uintptr_t base = getBaseAddr(registerMemory);
+bool InterruptController::init() {
+  const uintptr_t base = getBaseAddr(registerMemory);
 
-	num_irqs = card->vfioDevice->pciMsiInit(efds);
-	if (num_irqs < 0)
-		return false;
+  num_irqs = card->vfioDevice->pciMsiInit(efds);
+  if (num_irqs < 0)
+    return false;
 
-	if (not card->vfioDevice->pciMsiFind(nos)) {
-		return false;
-	}
+  if (not card->vfioDevice->pciMsiFind(nos)) {
+    return false;
+  }
 
-	// For each IRQ
-	for (int i = 0; i < num_irqs; i++) {
+  // For each IRQ
+  for (int i = 0; i < num_irqs; i++) {
 
-		// Try pinning to core
-		PCIeCard* pciecard = dynamic_cast<PCIeCard*>(card);
-		int ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
+    // Try pinning to core
+    PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
+    int ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
 
-		switch(ret) {
-		case 0:
-			// Everything is fine
-			break;
-		case EACCES:
-			logger->warn("No permission to change affinity of VFIO-MSI interrupt, "
-			             "performance may be degraded!");
-			break;
-		default:
-			logger->error("Failed to change affinity of VFIO-MSI interrupt");
-			return false;
-		}
+    switch (ret) {
+    case 0:
+      // Everything is fine
+      break;
+    case EACCES:
+      logger->warn("No permission to change affinity of VFIO-MSI interrupt, "
+                   "performance may be degraded!");
+      break;
+    default:
+      logger->error("Failed to change affinity of VFIO-MSI interrupt");
+      return false;
+    }
 
-		// Setup vector
-		XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
-	}
+    // Setup vector
+    XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
+  }
 
-	XIntc_Out32(base + XIN_IMR_OFFSET, 0x00000000); // Use manual acknowlegement for all IRQs
-	XIntc_Out32(base + XIN_IAR_OFFSET, 0xFFFFFFFF); // Acknowlege all pending IRQs manually
-	XIntc_Out32(base + XIN_IMR_OFFSET, 0xFFFFFFFF); // Use fast acknowlegement for all IRQs
-	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); // Disable all IRQs by default
-	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
+  XIntc_Out32(base + XIN_IMR_OFFSET,
+              0x00000000); // Use manual acknowlegement for all IRQs
+  XIntc_Out32(base + XIN_IAR_OFFSET,
+              0xFFFFFFFF); // Acknowlege all pending IRQs manually
+  XIntc_Out32(base + XIN_IMR_OFFSET,
+              0xFFFFFFFF); // Use fast acknowlegement for all IRQs
+  XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); // Disable all IRQs by default
+  XIntc_Out32(base + XIN_MER_OFFSET,
+              XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
-	logger->debug("enabled interrupts");
+  logger->debug("enabled interrupts");
 
-	return true;
+  return true;
 }
 
-bool
-InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
-{
-	const uintptr_t base = getBaseAddr(registerMemory);
+bool InterruptController::enableInterrupt(InterruptController::IrqMaskType mask,
+                                          bool polling) {
+  const uintptr_t base = getBaseAddr(registerMemory);
 
-	// Current state of INTC
-	const uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
-	const uint32_t imr = XIntc_In32(base + XIN_IMR_OFFSET);
+  // Current state of INTC
+  const uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
+  const uint32_t imr = XIntc_In32(base + XIN_IMR_OFFSET);
 
-	// Clear pending IRQs
-	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
+  // Clear pending IRQs
+  XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
-	for (int i = 0; i < num_irqs; i++) {
-		if (mask & (1 << i))
-			this->polling[i] = polling;
-	}
+  for (int i = 0; i < num_irqs; i++) {
+    if (mask & (1 << i))
+      this->polling[i] = polling;
+  }
 
-	if (polling) {
-		XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
-		XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
-	}
-	else {
-		XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
-		XIntc_Out32(base + XIN_IMR_OFFSET, imr | mask);
-	}
+  if (polling) {
+    XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
+    XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
+  } else {
+    XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
+    XIntc_Out32(base + XIN_IMR_OFFSET, imr | mask);
+  }
 
-	logger->debug("New ier = {:x}", XIntc_In32(base + XIN_IER_OFFSET));
-	logger->debug("New imr = {:x}", XIntc_In32(base + XIN_IMR_OFFSET));
-	logger->debug("New isr = {:x}", XIntc_In32(base + XIN_ISR_OFFSET));
-	logger->debug("Interupts enabled: mask={:x} polling={:d}", mask, polling);
+  logger->debug("New ier = {:x}", XIntc_In32(base + XIN_IER_OFFSET));
+  logger->debug("New imr = {:x}", XIntc_In32(base + XIN_IMR_OFFSET));
+  logger->debug("New isr = {:x}", XIntc_In32(base + XIN_ISR_OFFSET));
+  logger->debug("Interupts enabled: mask={:x} polling={:d}", mask, polling);
 
-	return true;
+  return true;
 }
 
-bool
-InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
-{
-	const uintptr_t base = getBaseAddr(registerMemory);
-	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
+bool InterruptController::disableInterrupt(
+    InterruptController::IrqMaskType mask) {
+  const uintptr_t base = getBaseAddr(registerMemory);
+  uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 
-	XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
+  XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
 
-	return true;
+  return true;
 }
 
 ssize_t InterruptController::waitForInterrupt(int irq) {

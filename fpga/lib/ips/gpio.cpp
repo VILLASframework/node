@@ -11,12 +11,10 @@
 
 using namespace villas::fpga::ip;
 
-bool
-Gpio::init()
-{
-	//const uintptr_t base = getBaseAddr(registerMemory);
+bool Gpio::init() {
+  //const uintptr_t base = getBaseAddr(registerMemory);
 
-	return true;
+  return true;
 }
 
 static char n[] = "gpio";

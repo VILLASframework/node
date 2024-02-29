@@ -13,7 +13,7 @@
 
 class FpgaState {
 public:
-	// List of all available FPGA cards, only first will be tested at the moment
+  // List of all available FPGA cards, only first will be tested at the moment
   std::list<std::shared_ptr<villas::fpga::Card>> cards;
 };
 

@@ -15,20 +15,16 @@ namespace ip {
 
 class AuroraXilinx : public Node {
 public:
-	static constexpr const char* masterPort = "USER_DATA_M_AXI_RX";
-	static constexpr const char* slavePort = "USER_DATA_S_AXI_TX";
+  static constexpr const char *masterPort = "USER_DATA_M_AXI_RX";
+  static constexpr const char *slavePort = "USER_DATA_S_AXI_TX";
 
-	const StreamVertex&
-	getDefaultSlavePort() const
-	{
-		return getSlavePort(slavePort);
-	}
+  const StreamVertex &getDefaultSlavePort() const {
+    return getSlavePort(slavePort);
+  }
 
-	const StreamVertex&
-	getDefaultMasterPort() const
-	{
-		return getMasterPort(masterPort);
-	}
+  const StreamVertex &getDefaultMasterPort() const {
+    return getMasterPort(masterPort);
+  }
 };
 
 } // namespace ip

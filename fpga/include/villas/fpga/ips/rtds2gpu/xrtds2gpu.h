@@ -14,21 +14,21 @@ extern "C" {
 
 /***************************** Include Files *********************************/
 #ifndef __linux__
-#include "xil_types.h"
 #include "xil_assert.h"
-#include "xstatus.h"
 #include "xil_io.h"
+#include "xil_types.h"
+#include "xstatus.h"
 #else
-#include <stdint.h>
 #include <assert.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <stddef.h>
 #endif
 #include "xrtds2gpu_hw.h"
 
@@ -39,44 +39,45 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 #else
 typedef struct {
-    u16 DeviceId;
-    u32 Ctrl_BaseAddress;
+  u16 DeviceId;
+  u32 Ctrl_BaseAddress;
 } XRtds2gpu_Config;
 #endif
 
 typedef struct {
-    u32 Ctrl_BaseAddress;
-    u32 IsReady;
+  u32 Ctrl_BaseAddress;
+  u32 IsReady;
 } XRtds2gpu;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 #ifndef __linux__
-#define XRtds2gpu_WriteReg(BaseAddress, RegOffset, Data) \
-    Xil_Out32((BaseAddress) + (RegOffset), (u32)(Data))
-#define XRtds2gpu_ReadReg(BaseAddress, RegOffset) \
-    Xil_In32((BaseAddress) + (RegOffset))
+#define XRtds2gpu_WriteReg(BaseAddress, RegOffset, Data)                       \
+  Xil_Out32((BaseAddress) + (RegOffset), (u32)(Data))
+#define XRtds2gpu_ReadReg(BaseAddress, RegOffset)                              \
+  Xil_In32((BaseAddress) + (RegOffset))
 #else
-#define XRtds2gpu_WriteReg(BaseAddress, RegOffset, Data) \
-    *(volatile u32*)((BaseAddress) + (RegOffset)) = (u32)(Data)
-#define XRtds2gpu_ReadReg(BaseAddress, RegOffset) \
-    *(volatile u32*)((BaseAddress) + (RegOffset))
+#define XRtds2gpu_WriteReg(BaseAddress, RegOffset, Data)                       \
+  *(volatile u32 *)((BaseAddress) + (RegOffset)) = (u32)(Data)
+#define XRtds2gpu_ReadReg(BaseAddress, RegOffset)                              \
+  *(volatile u32 *)((BaseAddress) + (RegOffset))
 
-#define Xil_AssertVoid(expr)    assert(expr)
+#define Xil_AssertVoid(expr) assert(expr)
 #define Xil_AssertNonvoid(expr) assert(expr)
 
-#define XST_SUCCESS             0
-#define XST_DEVICE_NOT_FOUND    2
-#define XST_OPEN_DEVICE_FAILED  3
-#define XIL_COMPONENT_IS_READY  1
+#define XST_SUCCESS 0
+#define XST_DEVICE_NOT_FOUND 2
+#define XST_OPEN_DEVICE_FAILED 3
+#define XIL_COMPONENT_IS_READY 1
 #endif
 
 /************************** Function Prototypes *****************************/
 #ifndef __linux__
 int XRtds2gpu_Initialize(XRtds2gpu *InstancePtr, u16 DeviceId);
-XRtds2gpu_Config* XRtds2gpu_LookupConfig(u16 DeviceId);
-int XRtds2gpu_CfgInitialize(XRtds2gpu *InstancePtr, XRtds2gpu_Config *ConfigPtr);
+XRtds2gpu_Config *XRtds2gpu_LookupConfig(u16 DeviceId);
+int XRtds2gpu_CfgInitialize(XRtds2gpu *InstancePtr,
+                            XRtds2gpu_Config *ConfigPtr);
 #else
-int XRtds2gpu_Initialize(XRtds2gpu *InstancePtr, const char* InstanceName);
+int XRtds2gpu_Initialize(XRtds2gpu *InstancePtr, const char *InstanceName);
 int XRtds2gpu_Release(XRtds2gpu *InstancePtr);
 #endif
 

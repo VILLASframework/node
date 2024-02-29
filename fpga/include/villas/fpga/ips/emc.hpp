@@ -17,27 +17,21 @@ namespace ip {
 
 class EMC : public Core {
 public:
+  virtual bool init() override;
 
-	virtual
-	bool init() override;
+  bool flash(uint32_t offset, const std::string &filename);
+  bool flash(uint32_t offset, uint32_t length, uint8_t *data);
 
-	bool flash(uint32_t offset, const std::string &filename);
-	bool flash(uint32_t offset, uint32_t length, uint8_t *data);
-
-	bool read(uint32_t offset, uint32_t length, uint8_t *data);
+  bool read(uint32_t offset, uint32_t length, uint8_t *data);
 
 private:
+  XFlash xflash;
 
-	XFlash xflash;
+  static constexpr char registerMemory[] = "Reg";
 
-	static constexpr char registerMemory[] = "Reg";
-
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{
-		return {
-			registerMemory
-		};
-	}
+  std::list<MemoryBlockName> getMemoryBlocks() const {
+    return {registerMemory};
+  }
 };
 
 } // namespace ip
