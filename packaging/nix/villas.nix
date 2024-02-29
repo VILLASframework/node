@@ -37,9 +37,7 @@
   withNodeZeromq ? withAllNodes,
   # Minimal dependencies
   cmake,
-  common,
   coreutils,
-  fpga,
   graphviz,
   jq,
   lib,
@@ -89,12 +87,6 @@ stdenv.mkDerivation {
     ++ lib.optionals withFormatProtobuf ["-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin"];
   postPatch = ''
     patchShebangs --host ./tools
-  '';
-  preConfigure = ''
-    rm -df common
-    rm -df fpga
-    ln -s ${common} common
-    ${lib.optionalString withNodeFpga "ln -s ${fpga} fpga"}
   '';
   postInstall = ''
     if [ -d $out/include/villas/ ] && [ -d $dev/include/villas/ ]; then
