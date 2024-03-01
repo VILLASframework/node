@@ -262,8 +262,8 @@ int fpga::createCards(json_t *config,
 
   json_t *fpgas = json_object_get(config, "fpgas");
   if (fpgas == nullptr) {
-    logger->error("No section 'fpgas' found in config");
-    exit(1);
+    logger->info("No section 'fpgas' found in config");
+    return 0;
   }
 
   const char *card_name;
@@ -319,9 +319,11 @@ std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
   // Deallocate JSON config
   json_decref(json);
 
-  if (!card)
+  if (!card) {
     throw RuntimeError("FPGA card {} not found in config or not working",
                        fpgaName);
+  }
+
 
   return card;
 }
