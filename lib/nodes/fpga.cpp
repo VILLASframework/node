@@ -251,7 +251,7 @@ int FpgaNodeFactory::start(SuperNode *sn) {
   if (cards.empty()) {
     auto searchPath =
         sn->getConfigPath().substr(0, sn->getConfigPath().rfind("/"));
-    createCards(sn->getConfig(), cards, searchPath);
+    createCards(sn->getConfig(), cards, searchPath, vfioContainer);
   }
 
   return NodeFactory::start(sn);
