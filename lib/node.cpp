@@ -74,7 +74,10 @@ Node::~Node() {
   rtnl_cls_put(tc_classifier);
 #endif // WITH_NETEM
 
-  factory->instances.remove(this);
+  // Internal loopback nodes have no factory
+  // Only attempt removal for factories of other node-types.
+  if (factory != nullptr)
+    factory->instances.remove(this);
 }
 
 int Node::prepare() {
