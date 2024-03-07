@@ -246,15 +246,19 @@ int villas::node::mqtt_check(NodeCompat *n) {
   int ret;
   auto *m = n->getData<struct mqtt>();
 
-  ret = mosquitto_sub_topic_check(m->subscribe);
-  if (ret != MOSQ_ERR_SUCCESS)
-    throw RuntimeError("Invalid subscribe topic: '{}': {}", m->subscribe,
-                       mosquitto_strerror(ret));
+  if (m->subscribe) {
+    ret = mosquitto_sub_topic_check(m->subscribe);
+    if (ret != MOSQ_ERR_SUCCESS)
+      throw RuntimeError("Invalid subscribe topic: '{}': {}", m->subscribe,
+                         mosquitto_strerror(ret));
+  }
 
-  ret = mosquitto_pub_topic_check(m->publish);
-  if (ret != MOSQ_ERR_SUCCESS)
-    throw RuntimeError("Invalid publish topic: '{}': {}", m->publish,
-                       mosquitto_strerror(ret));
+  if (m->publish) {
+    ret = mosquitto_pub_topic_check(m->publish);
+    if (ret != MOSQ_ERR_SUCCESS)
+      throw RuntimeError("Invalid publish topic: '{}': {}", m->publish,
+                         mosquitto_strerror(ret));
+  }
 
   return 0;
 }
