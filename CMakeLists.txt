@@ -75,6 +75,7 @@ find_package(RDMACM)
 find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
+find_package(re)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -117,13 +118,7 @@ pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
-pkg_check_modules(RE IMPORTED_TARGET re>=2.9.0)
-if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET libre>=2.9.0)
-endif()
-if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET re2)
-endif()
+
 
 if (REDISPP_FOUND)
     file(READ "${REDISPP_INCLUDEDIR}/sw/redis++/tls.h" CONTENTS)

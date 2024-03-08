@@ -290,9 +290,9 @@ if ! pkg-config "comedilib >= 0.11.0" && \
 fi
 
 # Build & Install libre
-if ! pkg-config "libre >= 2.9.0" && \
+if ! pkg-config "libre >= 3.6.0" && \
     should_build "libre" "for the rtp node-type"; then
-    git clone ${GIT_OPTS} --branch v2.9.0 https://github.com/baresip/re.git
+    git clone ${GIT_OPTS} --branch v3.6.0 https://github.com/baresip/re.git
     pushd re
     make ${MAKE_OPTS} install
     popd

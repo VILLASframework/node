@@ -143,7 +143,7 @@ endif()
 # Enable RTP node type when libre is available
 if(WITH_NODE_RTP)
     list(APPEND NODE_SRC rtp.cpp)
-    list(APPEND LIBRARIES PkgConfig::RE)
+    list(APPEND LIBRARIES re)
 endif()
 
 # Enable CAN node type
