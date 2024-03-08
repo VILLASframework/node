@@ -56,7 +56,6 @@ RUN apt-get update && \
 		libibverbs-dev:${ARCH} \
 		librdmacm-dev:${ARCH} \
 		libusb-1.0-0-dev:${ARCH} \
-		libre-dev:${ARCH} \
 		liblua5.3-dev:${ARCH} \
 		libhiredis-dev:${ARCH} \
 		libmodbus-dev:${ARCH}
@@ -151,7 +150,6 @@ RUN apt-get update && \
 		libibverbs1:${ARCH} \
 		librdmacm1:${ARCH} \
 		libusb-1.0-0:${ARCH} \
-		libre0:${ARCH} \
 		liblua5.3-0:${ARCH} \
 		libhiredis0.14:${ARCH} \
 		libmodbus5:${ARCH} && \

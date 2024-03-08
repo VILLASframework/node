@@ -16,6 +16,7 @@
 
 extern "C" {
 // clang-format off
+#include <re/re_types.h>
 #include <re/re_net.h>
 #include <re/re_main.h>
 #include <re/re_types.h>

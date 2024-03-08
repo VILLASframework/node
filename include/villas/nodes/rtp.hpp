@@ -21,6 +21,7 @@
 #include <villas/queue_signalled.h>
 
 extern "C" {
+#include <re/re_types.h>
 #include <re/re_rtp.h>
 #include <re/re_sa.h>
 }
