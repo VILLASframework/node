@@ -4,7 +4,7 @@
   description = "VILLASnode is a client/server application to connect simulation equipment and software.";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
     ethercat = {
       url = "gitlab:etherlab.org/ethercat/stable-1.5";
