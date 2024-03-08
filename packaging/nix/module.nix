@@ -17,6 +17,14 @@ in
 
         package = mkPackageOption pkgs "villas" {};
 
+        configPath = mkOption {
+          type = types.nullOr types.path;
+          description = mdDoc ''
+            A path to a VILLASnode configuration file.
+          '';
+          default = null;
+        };
+
         config = mkOption {
           type = types.attrsOf types.anything;
           default = {
@@ -25,7 +33,7 @@ in
             idle_stop = false; # Do not stop daemon because of empty paths
           };
 
-          description = lib.mdDoc ''
+          description = mdDoc ''
             Contents of the VILLASnode configuration file,
             {file}`villas-node.json`.
 
@@ -44,7 +52,9 @@ in
       ];
 
       # configuration file indirection is needed to support reloading
-      environment.etc."villas/node.json".source = villasNodeCfg;
+      environment.etc."villas/node.json" = mkIf (builtins.isNull cfg.configPath) {
+        source = villasNodeCfg;
+      };
 
       systemd.services.villas-node = {
         description = "VILLASnode";
@@ -52,7 +62,12 @@ in
         wantedBy = ["multi-user.target"];
         serviceConfig = {
           Type = "simple";
-          ExecStart = "${lib.getExe cfg.package} node /etc/villas/node.json";
+          ExecStart = let
+            cfgPath =
+              if isNull cfg.configPath
+              then "/etc/villas/node.json"
+              else cfg.configPath;
+          in "${lib.getExe cfg.package} node ${cfgPath}";
         };
       };
     };
