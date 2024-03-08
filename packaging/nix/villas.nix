@@ -19,7 +19,6 @@
   # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeFpga ? withAllNodes,
   withNodeEthercat ? withAllNodes,
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
