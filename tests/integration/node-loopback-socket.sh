@@ -8,7 +8,7 @@
 
 set -e
 
-if [[ "${EUID}" -ne 0 -o -n "${CI}" ]]; then
+if [ "${EUID}" -ne 0 ] || [ -n "${CI}" ]; then
     echo "Test requires root permissions"
     exit 99
 fi

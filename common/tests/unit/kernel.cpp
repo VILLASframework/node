@@ -10,6 +10,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/kernel/kernel.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::kernel;
 
@@ -47,7 +48,7 @@ Test(kernel, sizes) {
 Test(kernel, hugepages) {
   int ret;
 
-  if (getuid() != 0) {
+  if (!villas::utils::isPrivileged()) {
     cr_skip("Super-user permissions required.");
   }
 
