@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <unistd.h>
+
 #include <criterion/criterion.h>
 
 #include <villas/kernel/kernel.hpp>
@@ -44,6 +46,10 @@ Test(kernel, sizes) {
 #ifdef __linux__
 Test(kernel, hugepages) {
   int ret;
+
+  if (getuid() != 0) {
+    cr_skip("Super-user permissions required.");
+  }
 
   ret = setNrHugepages(25);
   cr_assert_eq(ret, 0);
