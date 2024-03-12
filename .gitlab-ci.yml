@@ -159,17 +159,10 @@ pkg:docker:
   stage: packaging
   image: docker:20.10
   before_script:
-    - mkdir -p ~/.docker/cli-plugins/
-    - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64
-    - chmod a+x ~/.docker/cli-plugins/docker-buildx
-    - docker buildx create --use --name cross-platform-build --buildkitd-flags "--allow-insecure-entitlement security.insecure"
-    - docker buildx inspect --bootstrap cross-platform-build
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-    - docker buildx build ${DOCKER_OPTS}
+    - docker build ${DOCKER_OPTS}
       --pull
-      --allow security.insecure
-      --output type=docker
       --target ${TARGET}
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
