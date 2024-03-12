@@ -26,7 +26,6 @@ stages:
 # Build docker image which is used to build & test VILLASnode
 prepare:docker:
   stage: prepare
-  image: docker:20.10
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
@@ -157,10 +156,9 @@ test:reuse:
 
 pkg:docker:
   stage: packaging
-  image: docker:20.10
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - docker run --rm --privileged docker.io/aptman/qus -s -- -p
+    # - docker run --rm --privileged docker.io/aptman/qus -s -- -p
   script:
     - docker build ${DOCKER_OPTS}
       --pull
@@ -182,16 +180,16 @@ pkg:docker:
         PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET: x86_64-linux-gnu
-      - DISTRO: debian
-        PLATFORM: linux/arm/v7
-        ARCH: armhf
-        TRIPLET: arm-linux-gnueabihf
-        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-      - DISTRO: debian
-        PLATFORM: linux/arm64/v8
-        ARCH: arm64
-        TRIPLET: aarch64-linux-gnu
-        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm/v7
+      #   ARCH: armhf
+      #   TRIPLET: arm-linux-gnueabihf
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm64/v8
+      #   ARCH: arm64
+      #   TRIPLET: aarch64-linux-gnu
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
 
   needs: []
 
@@ -199,27 +197,23 @@ pkg:docker:
 
 deploy:docker:
   stage: deploy
-  image: docker:20.10
-  variables:
-    DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
     - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
     - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
     - docker
   needs:
-    - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
-    - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
+    # - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
+    # - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
     - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
 
 deploy:docker-dev:
   stage: deploy
-  image: docker:20.10
   variables:
     DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
@@ -233,7 +227,6 @@ deploy:docker-dev:
 
 deploy:docker-dev-vscode:
   stage: deploy
-  image: docker:20.10
   variables:
     DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
@@ -249,7 +242,6 @@ deploy:docker-dev-vscode:
 
 .latest:docker:latest: &deploy_latest_docker
   stage: latest
-  image: docker:20.10
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
@@ -265,7 +257,6 @@ deploy:docker-dev-vscode:
 
 .latest:docker-dev:latest: &deploy_latest_docker_dev
   stage: latest
-  image: docker:20.10
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
