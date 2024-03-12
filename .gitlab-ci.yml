@@ -160,7 +160,7 @@ pkg:docker:
   image: docker:20.10
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - docker run --rm --privileged aptman/qus -s -- -p
+    - docker run --rm --privileged docker.io/aptman/qus -s -- -p
   script:
     - docker build ${DOCKER_OPTS}
       --pull
