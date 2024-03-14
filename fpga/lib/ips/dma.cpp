@@ -57,11 +57,12 @@ bool Dma::init() {
     setupScatterGather();
   }
 
-  irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt],
-                                                     polling);
-  irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt],
-                                                     polling);
-
+  if (!polling) {
+    irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt],
+                                                       polling);
+    irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt],
+                                                       polling);
+  }
   return true;
 }
 
@@ -341,9 +342,10 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
 bool Dma::readScatterGather(void *buf, size_t len) {
   int ret = XST_FAILURE;
 
-  if (len < readCoalesce * readMsgSize)
+  if (len < readCoalesce * readMsgSize) {
     throw RuntimeError(
         "Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
+  }
 
   hwLock.lock();
   auto *rxRing = XAxiDma_GetRxRing(&xDma);
@@ -404,10 +406,29 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   int ret = XST_FAILURE;
   static size_t errcnt = 32;
 
-  c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
-      irqs[mm2sInterrupt].num);
+  uint32_t irqStatus = 0;
+  if (polling) {
+    hwLock.lock();
+    XAxiDma_Bd *CurBdPtr = txRing->HwHead;
+    volatile uint32_t BdSts;
+    // Poll BD status to avoid accessing PCIe address space
+    do {
+      BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+    } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
+    // At this point, we know that the transmission is complete, but we haven't accessed the
+    // PCIe address space, yet. The subsequent DMA Controller management can be done in a
+    // separate thread to keep latencies in this thread extremly low. We know that we have
+    // received one BD.
+    do {
+      // This takes 1.5 us
+      irqStatus = XAxiDma_BdRingGetIrq(txRing);
+    } while (!(irqStatus & XAXIDMA_IRQ_IOC_MASK));
+  } else {
+    c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
+        irqs[mm2sInterrupt].num);
+    hwLock.lock();
+  }
 
-  hwLock.lock();
   if ((c.bds = XAxiDma_BdRingFromHw(txRing, writeCoalesce, &bd)) <
       writeCoalesce) {
     logger->warn("Send partial batch of {}/{} BDs.", c.bds, writeCoalesce);
@@ -418,7 +439,9 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   }
 
   // Acknowledge the interrupt
-  auto irqStatus = XAxiDma_BdRingGetIrq(txRing);
+  if (!polling) {
+    irqStatus = XAxiDma_BdRingGetIrq(txRing);
+  }
   XAxiDma_BdRingAckIrq(txRing, irqStatus);
 
   if (c.bds == 0) {
@@ -462,8 +485,30 @@ Dma::Completion Dma::readCompleteScatterGather() {
   int ret = XST_FAILURE;
   static size_t errcnt = 32;
 
-  ssize_t intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
-      irqs[s2mmInterrupt].num);
+  ssize_t intrs = 0;
+  uint32_t irqStatus = 0;
+  if (polling) {
+    hwLock.lock();
+    XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
+    volatile uint32_t BdSts;
+    // Poll BD status to avoid accessing PCIe address space
+    do {
+      BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+    } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
+    // At this point, we know that the transmission is complete, but we haven't accessed the
+    // PCIe address space, yet. The subsequent DMA Controller management can be done in a
+    // separate thread to keep latencies in this thread extremly low. We know that we have
+    // received one BD.
+    do {
+      // This takes 1.5 us
+      irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+    } while (!(irqStatus & XAXIDMA_IRQ_IOC_MASK));
+    intrs = 1;
+  } else {
+    intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
+        irqs[s2mmInterrupt].num);
+    hwLock.lock();
+  }
 
   if (intrs < 0) {
     logger->warn("Interrupt error or timeout: {}", intrs);
@@ -471,14 +516,17 @@ Dma::Completion Dma::readCompleteScatterGather() {
     // Free all RX BDs for future transmission.
     int bds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd);
     XAxiDma_BdRingFree(rxRing, bds, bd);
+    hwLock.unlock();
 
     c.interrupts = 0;
     return c;
   } else {
+    hwLock.unlock();
     c.interrupts = intrs;
   }
-  hwLock.lock();
-  auto irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+  if (!polling) {
+    irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+  }
   XAxiDma_BdRingAckIrq(rxRing, irqStatus);
   if (!(irqStatus & XAXIDMA_IRQ_IOC_MASK)) {
     logger->error("Expected IOC interrupt but IRQ status is: {:#x}", irqStatus);

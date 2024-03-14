@@ -169,12 +169,12 @@ int FpgaNode::check() { return 0; }
 
 int FpgaNode::start() {
   // enque first read
-  dma->read(*(blockRx[0]), blockRx[0]->getSize());
+  // dma->read(*(blockRx[0]), blockRx[0]->getSize());
   return Node::start();
 }
 
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
-  static size_t cur = 0, next = 1;
+  static size_t cur = 0, next = 0;
   unsigned read;
   Sample *smp = smps[0];
 
@@ -199,8 +199,8 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
   smp->flags = (int)SampleFlags::HAS_DATA;
 
   smp->signals = in.signals;
-  cur = next;
-  next = (next + 1) % (sizeof(blockRx) / sizeof(blockRx[0]));
+  //cur = next;
+  //next = (next + 1) % (sizeof(blockRx) / sizeof(blockRx[0]));
 
   return 1;
 }
