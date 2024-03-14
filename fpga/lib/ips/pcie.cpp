@@ -22,7 +22,7 @@ bool AxiPciExpressBridge::init() {
 
   // Throw an exception if the is no bus master interface and thus no
   // address space we can use for translation -> error
-  card->addrSpaceIdHostToDevice = busMasterInterfaces.at(axiInterface);
+  card->addrSpaceIdHostToDevice = busMasterInterfaces.at(getAxiInterfaceName());
 
   // Map PCIe BAR0 via VFIO
   const void *bar0_mapped =
@@ -139,3 +139,4 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
 }
 
 static AxiPciExpressBridgeFactory p;
+static XDmaBridgeFactory p2;

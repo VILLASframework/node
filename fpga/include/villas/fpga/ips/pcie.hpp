@@ -24,8 +24,8 @@ public:
 
   virtual bool init() override;
 
-private:
-  static constexpr char axiInterface[] = "M_AXI";
+protected:
+  virtual const char *getAxiInterfaceName() { return "M_AXI"; };
   static constexpr char pcieMemory[] = "BAR0";
 
   struct AxiBar {
@@ -40,6 +40,11 @@ private:
 
   std::map<std::string, AxiBar> axiToPcieTranslations;
   std::map<std::string, PciBar> pcieToAxiTranslations;
+};
+
+class XDmaBridge : public AxiPciExpressBridge {
+protected:
+  virtual const char *getAxiInterfaceName() { return "M_AXI_B"; };
 };
 
 class AxiPciExpressBridgeFactory : CoreFactory {
@@ -61,6 +66,20 @@ private:
 
 protected:
   virtual void parse(Core &, json_t *) override;
+};
+
+class XDmaBridgeFactory : public AxiPciExpressBridgeFactory {
+
+public:
+  virtual std::string getDescription() const {
+    return "Xilinx's XDMA IP configured as AXI-PCIe Bridge";
+  }
+
+private:
+  virtual Vlnv getCompatibleVlnv() const { return Vlnv("xilinx.com:ip:xdma:"); }
+
+  // Create a concrete IP instance
+  Core *make() const { return new XDmaBridge; };
 };
 
 } // namespace ip
