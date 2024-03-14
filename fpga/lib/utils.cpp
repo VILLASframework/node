@@ -44,8 +44,8 @@ fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
     auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
     auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(card->lookupIp(id));
     if (aurora == nullptr) {
-      logger->error("No Aurora interface found on FPGA");
-      throw std::runtime_error("No Aurora interface found on FPGA");
+      logger->warn("No Aurora interface found on FPGA");
+      break;
     }
 
     aurora_channels->push_back(aurora);
@@ -153,15 +153,13 @@ void fpga::ConnectString::configCrossBar(
   auto dinoDac = std::dynamic_pointer_cast<fpga::ip::DinoDac>(
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_dac:")));
   if (dinoDac == nullptr) {
-    logger->error("No Dino DAC found on FPGA ");
-    throw std::runtime_error("No Dino DAC found on FPGA");
+    logger->warn("No Dino DAC found on FPGA ");
   }
 
   auto dinoAdc = std::dynamic_pointer_cast<fpga::ip::DinoAdc>(
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:")));
   if (dinoAdc == nullptr) {
-    logger->error("No Dino ADC found on FPGA ");
-    throw std::runtime_error("No Dino ADC found on FPGA");
+    logger->warn("No Dino ADC found on FPGA ");
   }
 
   log->info("Connecting {} to {}, {}directional",
@@ -173,28 +171,30 @@ void fpga::ConnectString::configCrossBar(
 
   std::shared_ptr<fpga::ip::Node> src;
   std::shared_ptr<fpga::ip::Node> dest;
-  if (srcType == ConnectType::DINO) {
+  if (dinoAdc && srcType == ConnectType::DINO) {
     src = dinoAdc;
-  } else if (srcType == ConnectType::DMA) {
+  } else if (dma && srcType == ConnectType::DMA) {
     src = dma;
-  } else {
+  } else if (aurora_channels->size() > 0) {
     src = (*aurora_channels)[srcAsInt];
+  } else {
+    throw std::runtime_error("No Aurora channels found on FPGA");
   }
 
-  if (dstType == ConnectType::DINO) {
+  if (dinoDac && dstType == ConnectType::DINO) {
     dest = dinoDac;
-  } else if (dstType == ConnectType::DMA) {
+  } else if (dma && dstType == ConnectType::DMA) {
     dest = dma;
-  } else {
+  } else if (aurora_channels->size() > 0) {
     dest = (*aurora_channels)[dstAsInt];
   }
 
   src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
   if (bidirectional) {
-    if (srcType == ConnectType::DINO) {
+    if (dinoDac && srcType == ConnectType::DINO) {
       src = dinoDac;
     }
-    if (dstType == ConnectType::DINO) {
+    if (dinoAdc && dstType == ConnectType::DINO) {
       dest = dinoAdc;
     }
     dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
