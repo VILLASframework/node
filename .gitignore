@@ -18,6 +18,7 @@
 *.so
 *.user
 *.egg-info/
+compile_commands.json
 
 python/dist/
 python/.eggs/
