@@ -43,6 +43,7 @@ whitelist = [
     ["xilinx.com", "ip", "axi_gpio"],
     ["xilinx.com", "ip", "axi_bram_ctrl"],
     ["xilinx.com", "ip", "axi_pcie"],
+    ["xilinx.com", "ip", "xdma"],
     ["xilinx.com", "ip", "axi_iic"],
     ["xilinx.com", "module_ref", "dinoif_fast"],
     ["xilinx.com", "module_ref", "dinoif_dac"],
@@ -322,7 +323,7 @@ for bram in brams:
     if instance in ips:
         ips[instance]["size"] = int(size)
 
-pcies = root.xpath('.//MODULE[@MODTYPE="axi_pcie"]')
+pcies = root.xpath('.//MODULE[@MODTYPE="axi_pcie" or @MODTYPE="xdma"]')
 for pcie in pcies:
     instance = pcie.get("INSTANCE")
     axi_bars = ips[instance].setdefault("axi_bars", {})
@@ -332,8 +333,11 @@ for pcie in pcies:
         ("AXIBAR", "PCIEBAR", axi_bars),
         ("PCIEBAR", "AXIBAR", pcie_bars),
     ):
+        barnum = pcie.find('.//PARAMETER[@NAME="C_{}_NUM"]'.format(from_bar))
+        if barnum == None:
+            barnum = pcie.find('.//PARAMETER[@NAME="{}_NUM"]'.format(from_bar))
         from_bar_num = int(
-            pcie.find('.//PARAMETER[@NAME="C_{}_NUM"]'.format(from_bar)).get("VALUE")
+            barnum.get("VALUE")
         )
 
         for i in range(0, from_bar_num):

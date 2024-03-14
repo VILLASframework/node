@@ -31,6 +31,7 @@ using namespace villas::fpga::ip;
 // first.
 static std::list<Vlnv> vlnvInitializationOrder = {
     Vlnv("xilinx.com:ip:axi_pcie:"),
+    Vlnv("xilinx.com:ip:xdma:"),
     Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
     Vlnv("xilinx.com:ip:axis_switch:"),
     Vlnv("xilinx.com:ip:axi_iic:"),
