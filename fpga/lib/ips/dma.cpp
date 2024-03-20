@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 
+#include <sys/types.h>
 #include <xilinx/xaxidma.h>
 
 #include <villas/memory.hpp>
@@ -48,10 +49,9 @@ bool Dma::init() {
   hwLock.unlock();
   // Map buffer descriptors
   if (hasScatterGather()) {
-    if (actualRingBdSize < 2 * readCoalesce ||
-        actualRingBdSize < 2 * writeCoalesce) {
+    if (actualRingBdSize < readCoalesce || actualRingBdSize < writeCoalesce) {
       throw RuntimeError(
-          "Ring buffer size is too small for coalesce value {} < 2*{}",
+          "Ring buffer size is too small for coalesce value {} < {}",
           actualRingBdSize, std::max(readCoalesce, writeCoalesce));
     }
     setupScatterGather();
@@ -67,11 +67,27 @@ bool Dma::init() {
 }
 
 void Dma::setupScatterGather() {
-  setupScatterGatherRingRx();
-  setupScatterGatherRingTx();
+  // Allocate and map space for BD ring in host RAM
+  auto &alloc = villas::HostRam::getAllocator();
+  sgRing = alloc.allocateBlock(2 * requestedRingBdSizeMemory);
+
+  if (not card->mapMemoryBlock(sgRing))
+    throw RuntimeError("Memory not accessible by DMA");
+
+  auto &mm = MemoryManager::get();
+  auto trans = mm.getTranslation(busMasterInterfaces[sgInterface],
+                                 sgRing->getAddrSpaceId());
+
+  auto physAddr = reinterpret_cast<uintptr_t>(trans.getLocalAddr(0));
+  auto virtAddr = reinterpret_cast<uintptr_t>(
+      mm.getTranslationFromProcess(sgRing->getAddrSpaceId()).getLocalAddr(0));
+  setupScatterGatherRingRx(physAddr, virtAddr);
+
+  setupScatterGatherRingTx(physAddr + requestedRingBdSizeMemory,
+                           virtAddr + requestedRingBdSizeMemory);
 }
 
-void Dma::setupScatterGatherRingRx() {
+void Dma::setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr) {
   int ret;
 
   hwLock.lock();
@@ -82,20 +98,6 @@ void Dma::setupScatterGatherRingRx() {
 
   // Set delay and coalescing
   XAxiDma_BdRingSetCoalesce(rxRingPtr, readCoalesce, delay);
-
-  // Allocate and map space for BD ring in host RAM
-  auto &alloc = villas::HostRam::getAllocator();
-  sgRingRx = alloc.allocateBlock(requestedRingBdSizeMemory);
-
-  if (not card->mapMemoryBlock(sgRingRx))
-    throw RuntimeError("Memory not accessible by DMA");
-
-  auto &mm = MemoryManager::get();
-  auto trans = mm.getTranslation(busMasterInterfaces[sgInterface],
-                                 sgRingRx->getAddrSpaceId());
-  auto physAddr = reinterpret_cast<uintptr_t>(trans.getLocalAddr(0));
-  auto virtAddr = reinterpret_cast<uintptr_t>(
-      mm.getTranslationFromProcess(sgRingRx->getAddrSpaceId()).getLocalAddr(0));
 
   // Setup Rx BD space
   ret = XAxiDma_BdRingCreate(rxRingPtr, physAddr, virtAddr,
@@ -111,6 +113,11 @@ void Dma::setupScatterGatherRingRx() {
   if (ret != XST_SUCCESS)
     throw RuntimeError("Failed to clone BD template: {}", ret);
 
+  if (cyclic) {
+    /* Enable Cyclic DMA mode */
+    XAxiDma_BdRingEnableCyclicDMA(rxRingPtr);
+    XAxiDma_SelectCyclicMode(&xDma, XAXIDMA_DEVICE_TO_DMA, 1);
+  }
   // Enable completion interrupt
   XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
   // Start the RX channel
@@ -121,7 +128,7 @@ void Dma::setupScatterGatherRingRx() {
   hwLock.unlock();
 }
 
-void Dma::setupScatterGatherRingTx() {
+void Dma::setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr) {
   int ret;
 
   hwLock.lock();
@@ -132,20 +139,6 @@ void Dma::setupScatterGatherRingTx() {
 
   // Set TX delay and coalesce
   XAxiDma_BdRingSetCoalesce(txRingPtr, writeCoalesce, delay);
-
-  // Allocate and map space for BD ring in host RAM
-  auto &alloc = villas::HostRam::getAllocator();
-  sgRingTx = alloc.allocateBlock(requestedRingBdSizeMemory);
-
-  if (not card->mapMemoryBlock(sgRingTx))
-    throw RuntimeError("Memory not accessible by DMA");
-
-  auto &mm = MemoryManager::get();
-  auto trans = mm.getTranslation(busMasterInterfaces[sgInterface],
-                                 sgRingTx->getAddrSpaceId());
-  auto physAddr = reinterpret_cast<uintptr_t>(trans.getLocalAddr(0));
-  auto virtAddr = reinterpret_cast<uintptr_t>(
-      mm.getTranslationFromProcess(sgRingTx->getAddrSpaceId()).getLocalAddr(0));
 
   // Setup TxBD space
   ret = XAxiDma_BdRingCreate(txRingPtr, physAddr, virtAddr,
@@ -163,6 +156,7 @@ void Dma::setupScatterGatherRingTx() {
 
   // Enable completion interrupt
   XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
+
   // Start the TX channel
   ret = XAxiDma_BdRingStart(txRingPtr);
   if (ret != XST_SUCCESS)
@@ -214,11 +208,8 @@ Dma::~Dma() {
       rxRingPtr->CyclicBd = nullptr;
     }
     // unampe SG memory Blocks
-    if (sgRingTx) {
-      card->unmapMemoryBlock(*sgRingTx);
-    }
-    if (sgRingRx) {
-      card->unmapMemoryBlock(*sgRingRx);
+    if (sgRing) {
+      card->unmapMemoryBlock(*sgRing);
     }
   }
   Dma::reset();
