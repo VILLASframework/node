@@ -89,8 +89,8 @@ private:
   Completion readCompleteSimple();
 
   void setupScatterGather();
-  void setupScatterGatherRingRx();
-  void setupScatterGatherRingTx();
+  void setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr);
+  void setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr);
 
   static constexpr char registerMemory[] = "Reg";
 
@@ -115,6 +115,7 @@ private:
   bool configDone = false;
   // use polling to wait for DMA completion or interrupts via efds
   bool polling = false;
+  bool cyclic = false;
   // Timeout after which the DMA controller issues in interrupt if no data has been received
   // Delay is 125 x <delay> x (clock period of SG clock). SG clock is 100 MHz by default.
   int delay = 0;
@@ -128,13 +129,12 @@ private:
 
   // When using SG: ringBdSize is the maximum number of BDs usable in the ring
   // Depending on alignment, the actual number of BDs usable can be smaller
-  static constexpr size_t requestedRingBdSize = 2048;
+  static constexpr size_t requestedRingBdSize = 1;
   static constexpr size_t requestedRingBdSizeMemory =
       requestedRingBdSize * sizeof(XAxiDma_Bd);
-  uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(
-      XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
-  std::shared_ptr<MemoryBlock> sgRingTx;
-  std::shared_ptr<MemoryBlock> sgRingRx;
+  uint32_t actualRingBdSize = 1; //XAxiDma_BdRingCntCalc(
+      //XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
+  std::shared_ptr<MemoryBlock> sgRing;
 };
 
 class DmaFactory : NodeFactory {
