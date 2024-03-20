@@ -119,7 +119,9 @@ void Dma::setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr) {
     XAxiDma_SelectCyclicMode(&xDma, XAXIDMA_DEVICE_TO_DMA, 1);
   }
   // Enable completion interrupt
-  XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
+  if (!polling) {
+    XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
+  }
   // Start the RX channel
   ret = XAxiDma_BdRingStart(rxRingPtr);
   if (ret != XST_SUCCESS)
@@ -155,8 +157,9 @@ void Dma::setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr) {
     throw RuntimeError("Failed to clone TX ring BD: {}", ret);
 
   // Enable completion interrupt
-  XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
-
+  if (!polling) {
+    XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
+  }
   // Start the TX channel
   ret = XAxiDma_BdRingStart(txRingPtr);
   if (ret != XST_SUCCESS)
@@ -410,10 +413,6 @@ Dma::Completion Dma::writeCompleteScatterGather() {
     // PCIe address space, yet. The subsequent DMA Controller management can be done in a
     // separate thread to keep latencies in this thread extremly low. We know that we have
     // received one BD.
-    do {
-      // This takes 1.5 us
-      irqStatus = XAxiDma_BdRingGetIrq(txRing);
-    } while (!(irqStatus & XAXIDMA_IRQ_IOC_MASK));
   } else {
     c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
         irqs[mm2sInterrupt].num);
@@ -432,8 +431,8 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   // Acknowledge the interrupt
   if (!polling) {
     irqStatus = XAxiDma_BdRingGetIrq(txRing);
+    XAxiDma_BdRingAckIrq(txRing, irqStatus);
   }
-  XAxiDma_BdRingAckIrq(txRing, irqStatus);
 
   if (c.bds == 0) {
     c.bytes = 0;
@@ -490,10 +489,6 @@ Dma::Completion Dma::readCompleteScatterGather() {
     // PCIe address space, yet. The subsequent DMA Controller management can be done in a
     // separate thread to keep latencies in this thread extremly low. We know that we have
     // received one BD.
-    do {
-      // This takes 1.5 us
-      irqStatus = XAxiDma_BdRingGetIrq(rxRing);
-    } while (!(irqStatus & XAXIDMA_IRQ_IOC_MASK));
     intrs = 1;
   } else {
     intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
@@ -517,13 +512,13 @@ Dma::Completion Dma::readCompleteScatterGather() {
   }
   if (!polling) {
     irqStatus = XAxiDma_BdRingGetIrq(rxRing);
+    XAxiDma_BdRingAckIrq(rxRing, irqStatus);
+    if (!(irqStatus & XAXIDMA_IRQ_IOC_MASK)) {
+      logger->error("Expected IOC interrupt but IRQ status is: {:#x}",
+                    irqStatus);
+      return c;
+    }
   }
-  XAxiDma_BdRingAckIrq(rxRing, irqStatus);
-  if (!(irqStatus & XAXIDMA_IRQ_IOC_MASK)) {
-    logger->error("Expected IOC interrupt but IRQ status is: {:#x}", irqStatus);
-    return c;
-  }
-
   // Wait until the data has been received by the RX channel.
   if ((c.bds = XAxiDma_BdRingFromHw(rxRing, readCoalesce, &bd)) <
       readCoalesce) {
