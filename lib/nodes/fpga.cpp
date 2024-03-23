@@ -5,9 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <atomic>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include <jansson.h>
@@ -33,8 +35,9 @@ static std::list<std::shared_ptr<fpga::Card>> cards;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), cardName(""), card(nullptr), dma(), blockRx(), blockTx() {
-}
+    : Node(id, name), cardName(""), connectStrings(), card(nullptr), dma(),
+      blockRx(), blockTx(), readActive(false), writeActive(false),
+      stopThreads(false), dmaThread() {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -76,19 +79,27 @@ int FpgaNode::prepare() {
 
   auto &alloc = HostRam::getAllocator();
 
-  blockRx[0] = alloc.allocateBlock(0x200 * sizeof(float));
-  blockRx[1] = alloc.allocateBlock(0x200 * sizeof(float));
+  blockRx = alloc.allocateBlock(0x200 * sizeof(float));
   blockTx = alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> memRx[] = {*(blockRx[0]), *(blockRx[1])};
+  villas::MemoryAccessor<float> memRx = *blockRx;
   villas::MemoryAccessor<float> memTx = *blockTx;
 
-  dma->makeAccesibleFromVA(blockRx[0]);
-  dma->makeAccesibleFromVA(blockRx[1]);
+  dma->makeAccesibleFromVA(blockRx);
   dma->makeAccesibleFromVA(blockTx);
 
   MemoryManager::get().printGraph();
 
   return Node::prepare();
+}
+
+int FpgaNode::stop() {
+  if (asyncDmaManagement) {
+    stopThreads = true;
+    if (dmaThread) {
+      dmaThread->join();
+    }
+  }
+  return Node::stop();
 }
 
 int FpgaNode::parse(json_t *json) {
@@ -106,8 +117,9 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o}", "card", &jsonCard,
-                       "connect", &jsonConnectStrings);
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b}", "card",
+                       &jsonCard, "connect", &jsonConnectStrings,
+                       "asyncDmaManagement", &asyncDmaManagement);
   if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
@@ -168,20 +180,49 @@ const std::string &FpgaNode::getDetails() {
 int FpgaNode::check() { return 0; }
 
 int FpgaNode::start() {
-  // enque first read
-  // dma->read(*(blockRx[0]), blockRx[0]->getSize());
+  if (asyncDmaManagement) {
+    dmaThread = std::make_shared<std::thread>(&FpgaNode::dmaMgmtThread, this);
+  }
+  dma->read(*blockRx, blockRx->getSize());
   return Node::start();
 }
 
+int FpgaNode::dmaMgmtThread() {
+  while (readActive) {
+    usleep(1);
+  }
+  while (!stopThreads) {
+    // readActive must be true, writeActive must be false
+    dma->read(*blockRx, blockRx->getSize());
+    readActive = true;
+    while (readActive && !stopThreads) {
+    }
+    while (!writeActive && !stopThreads) {
+    }
+    // readActive must be false, writeActive must be true
+    dma->writeComplete();
+    writeActive = false;
+  }
+
+  return 0;
+}
+
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
-  static size_t cur = 0, next = 0;
   unsigned read;
   Sample *smp = smps[0];
 
   assert(cnt == 1);
 
-  dma->read(*(blockRx[next]), blockRx[next]->getSize()); // TODO: calc size
+  if (asyncDmaManagement) {
+    while (!readActive.load(std::memory_order_relaxed) && !stopThreads)
+      ;
+  } else {
+    // dma->read(*blockRx, blockRx->getSize());
+  }
   auto c = dma->readComplete();
+  if (asyncDmaManagement) {
+    readActive.store(false, std::memory_order_relaxed);
+  }
 
   read = c.bytes / sizeof(float);
 
@@ -189,7 +230,7 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
     logger->warn("Missed {} interrupts", c.interrupts - 1);
   }
 
-  auto mem = MemoryAccessor<float>(*(blockRx[cur]));
+  auto mem = MemoryAccessor<float>(*blockRx);
 
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
@@ -199,18 +240,20 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
   smp->flags = (int)SampleFlags::HAS_DATA;
 
   smp->signals = in.signals;
-  //cur = next;
-  //next = (next + 1) % (sizeof(blockRx) / sizeof(blockRx[0]));
 
   return 1;
 }
 
 int FpgaNode::_write(Sample *smps[], unsigned cnt) {
-  unsigned int written;
+  // unsigned int written;
   Sample *smp = smps[0];
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
+  if (asyncDmaManagement) {
+    while (writeActive.load(std::memory_order_relaxed) && !stopThreads)
+      ;
+  }
   auto mem = MemoryAccessor<uint32_t>(*blockTx);
   float scaled;
 
@@ -225,15 +268,20 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt) {
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));
-  if (!state)
+  if (!state) {
     return -1;
+  }
+  if (asyncDmaManagement) {
+    writeActive.store(true, std::memory_order_relaxed);
+  } else {
+    auto written = dma->writeComplete().bytes /
+                   sizeof(float); // The number of samples written
 
-  written = dma->writeComplete().bytes /
-            sizeof(float); // The number of samples written
-
-  if (written != smp->length) {
-    logger->warn("Wrote {} samples, but {} were expected", written,
-                 smp->length);
+    if (written != smp->length) {
+      logger->warn("Wrote {} samples, but {} were expected", written,
+                   smp->length);
+    }
+    dma->read(*blockRx, blockRx->getSize());
   }
 
   return 1;

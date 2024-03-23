@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <thread>
 #include <villas/format.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -31,16 +32,39 @@ protected:
   std::string cardName;
   std::list<std::string> connectStrings;
 
+  // This setting decouples DMA management from Data processing.
+  // With this setting set to true, the DMA management for both read and
+  // write transactions is performed after the write command has been send
+  // the DMA controller.
+  // This allows us to achieve very low latencies for an application that
+  // waits for data from the FPGA processes it, and finished a time step
+  // by issuing a write to the FPGA.
+  bool lowLatencyMode;
+  // This setting performs synchronization with DMA controller in separate
+  // threads. It requires lowLatencyMode to be set to true.
+  // This may improve latency, because DMA management is completely decoupled
+  // from the data path, or may increase latency because of additional thread
+  // synchronization overhead. Only use after verifying that it improves latency.
+  bool asyncDmaManagement;
+
   // State
   std::shared_ptr<fpga::Card> card;
   std::shared_ptr<villas::fpga::ip::Dma> dma;
-  std::shared_ptr<villas::MemoryBlock> blockRx[2];
+  std::shared_ptr<villas::MemoryBlock> blockRx;
   std::shared_ptr<villas::MemoryBlock> blockTx;
 
   // Non-public methods
+  virtual int asyncRead(Sample *smps[], unsigned cnt);
+  virtual int slowRead(Sample *smps[], unsigned cnt);
   virtual int _read(Sample *smps[], unsigned cnt) override;
-
   virtual int _write(Sample *smps[], unsigned cnt) override;
+
+  // only used if asyncDmaManagement is true
+  volatile std::atomic_bool readActive;
+  volatile std::atomic_bool writeActive;
+  volatile std::atomic_bool stopThreads;
+  std::shared_ptr<std::thread> dmaThread;
+  virtual int dmaMgmtThread();
 
 public:
   FpgaNode(const uuid_t &id = {}, const std::string &name = "");
@@ -54,6 +78,8 @@ public:
   virtual int check() override;
 
   virtual int start() override;
+
+  virtual int stop() override;
 
   virtual std::vector<int> getPollFDs() override;
 
