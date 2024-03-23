@@ -9,6 +9,8 @@
 #include <sstream>
 #include <string>
 
+#include "xilinx/xaxidma_bd.h"
+#include "xilinx/xaxidma_hw.h"
 #include <sys/types.h>
 #include <xilinx/xaxidma.h>
 
@@ -334,7 +336,7 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
 }
 
 bool Dma::readScatterGather(void *buf, size_t len) {
-  int ret = XST_FAILURE;
+  uint32_t ret = XST_FAILURE;
 
   if (len < readCoalesce * readMsgSize) {
     throw RuntimeError(
@@ -397,7 +399,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   Completion c;
   XAxiDma_Bd *bd = nullptr, *curBd;
   auto txRing = XAxiDma_GetTxRing(&xDma);
-  int ret = XST_FAILURE;
+  uint32_t ret = XST_FAILURE;
   static size_t errcnt = 32;
 
   uint32_t irqStatus = 0;
@@ -410,9 +412,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
       BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
     } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
     // At this point, we know that the transmission is complete, but we haven't accessed the
-    // PCIe address space, yet. The subsequent DMA Controller management can be done in a
-    // separate thread to keep latencies in this thread extremly low. We know that we have
-    // received one BD.
+    // PCIe address space, yet. We know that we have received at least one BD.
   } else {
     c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
         irqs[mm2sInterrupt].num);
@@ -451,7 +451,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
     if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
         (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
       hwLock.unlock();
-      throw RuntimeError("Bd Status register shows error: {}", ret);
+      throw RuntimeError("Write: Bd Status register shows error: {:#x}", ret);
     }
 
     c.bytes += XAxiDma_BdGetLength(bd, txRing->MaxTransferLen);
@@ -468,6 +468,25 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   return c;
 }
 
+size_t Dma::pollReadScatterGather(bool lock) {
+  if (lock) {
+    hwLock.lock();
+  }
+  auto rxRing = XAxiDma_GetRxRing(&xDma);
+  XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
+  volatile uint32_t BdSts;
+  // Poll BD status to avoid accessing PCIe address space
+  do {
+    BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+  } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
+  // At this point, we know that the transmission is complete, but we haven't accessed the
+  // PCIe address space, yet. We know that we have received at least one BD.
+  if (lock) {
+    hwLock.unlock();
+  }
+  return XAxiDma_BdGetActualLength(CurBdPtr, XAXIDMA_MCHAN_MAX_TRANSFER_LEN);
+}
+
 Dma::Completion Dma::readCompleteScatterGather() {
   Completion c;
   XAxiDma_Bd *bd = nullptr, *curBd;
@@ -479,16 +498,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
   uint32_t irqStatus = 0;
   if (polling) {
     hwLock.lock();
-    XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
-    volatile uint32_t BdSts;
-    // Poll BD status to avoid accessing PCIe address space
-    do {
-      BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
-    } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
-    // At this point, we know that the transmission is complete, but we haven't accessed the
-    // PCIe address space, yet. The subsequent DMA Controller management can be done in a
-    // separate thread to keep latencies in this thread extremly low. We know that we have
-    // received one BD.
+    pollReadScatterGather(false);
     intrs = 1;
   } else {
     intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
@@ -507,7 +517,6 @@ Dma::Completion Dma::readCompleteScatterGather() {
     c.interrupts = 0;
     return c;
   } else {
-    hwLock.unlock();
     c.interrupts = intrs;
   }
   if (!polling) {
@@ -550,7 +559,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
     if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
         (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
       hwLock.unlock();
-      throw RuntimeError("Bd Status register shows error: {}", ret);
+      throw RuntimeError("Read: Bd Status register shows error: {}", ret);
     }
 
     c.bytes += XAxiDma_BdGetActualLength(bd, rxRing->MaxTransferLen);

@@ -49,6 +49,7 @@ public:
                               : writeCompleteSimple();
   }
 
+  size_t pollReadScatterGather(bool lock);
   Completion readComplete() {
     return hasScatterGather() ? readCompleteScatterGather()
                               : readCompleteSimple();
@@ -61,11 +62,11 @@ public:
 
   inline bool hasScatterGather() const { return xConfig.HasSg; }
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(s2mmPort);
   }
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(mm2sPort);
   }
 
@@ -103,7 +104,7 @@ private:
   // Optional Scatter-Gather interface to access descriptors
   static constexpr char sgInterface[] = "M_AXI_SG";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 
@@ -114,8 +115,8 @@ private:
 
   bool configDone = false;
   // use polling to wait for DMA completion or interrupts via efds
-  bool polling = false;
-  bool cyclic = false;
+  bool polling = false; // polling mode is significantly lower latency
+  bool cyclic = false;  // not fully implemented
   // Timeout after which the DMA controller issues in interrupt if no data has been received
   // Delay is 125 x <delay> x (clock period of SG clock). SG clock is 100 MHz by default.
   int delay = 0;
@@ -140,19 +141,19 @@ private:
 class DmaFactory : NodeFactory {
 
 public:
-  virtual std::string getName() const { return "dma"; }
+  virtual std::string getName() const override { return "dma"; }
 
-  virtual std::string getDescription() const {
+  virtual std::string getDescription() const override {
     return "Xilinx's AXI4 Direct Memory Access Controller";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  virtual Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_dma:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new Dma; };
+  Core *make() const override { return new Dma; };
 
 protected:
   virtual void parse(Core &ip, json_t *json) override;
