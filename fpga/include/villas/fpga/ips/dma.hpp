@@ -49,7 +49,14 @@ public:
                               : writeCompleteSimple();
   }
 
-  size_t pollReadScatterGather(bool lock);
+  bool readScatterGatherPrepare(const MemoryBlock &mem, size_t len);
+  bool readScatterGatherFast();
+  size_t readScatterGatherPoll(bool lock = true);
+
+  bool writeScatterGatherPrepare(const MemoryBlock &mem, size_t len);
+  bool writeScatterGatherFast();
+  size_t writeScatterGatherPoll(bool lock = true);
+
   Completion readComplete() {
     return hasScatterGather() ? readCompleteScatterGather()
                               : readCompleteSimple();
@@ -81,7 +88,9 @@ public:
 private:
   bool writeScatterGather(const void *buf, size_t len);
   bool readScatterGather(void *buf, size_t len);
+  XAxiDma_Bd *writeScatterGatherSetupBd(const void *buf, size_t len);
   Completion writeCompleteScatterGather();
+  XAxiDma_Bd *readScatterGatherSetupBd(void *buf, size_t len);
   Completion readCompleteScatterGather();
 
   bool writeSimple(const void *buf, size_t len);

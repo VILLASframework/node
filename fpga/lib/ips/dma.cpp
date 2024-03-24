@@ -284,12 +284,58 @@ bool Dma::read(const MemoryBlock &mem, size_t len) {
                             : readSimple(buf, len);
 }
 
-//Write a single message
-bool Dma::writeScatterGather(const void *buf, size_t len) {
-  // buf is address from view of DMA controller
-
-  int ret = XST_FAILURE;
+// Reuse existing single BD bypassing BdRingFree, Alloc, ToHw
+bool Dma::writeScatterGatherFast() {
   hwLock.lock();
+  auto *txRing = XAxiDma_GetTxRing(&xDma);
+  if (txRing == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("RxRing was null.");
+  }
+  XAxiDma_Bd *CurBdPtr = txRing->HwHead;
+
+  // Clear the bit we are polling on in complete
+  uint32_t BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+  BdSts &= ~XAXIDMA_BD_STS_COMPLETE_MASK;
+  XAxiDma_BdWrite(CurBdPtr, XAXIDMA_BD_STS_OFFSET, BdSts);
+
+  uintptr_t tdesc = ((uintptr_t)txRing->HwTail +
+                     (txRing->FirstBdPhysAddr - txRing->FirstBdAddr)) &
+                    XAXIDMA_DESC_LSB_MASK;
+  XAxiDma_WriteReg(txRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
+
+  hwLock.unlock();
+  return true;
+}
+
+bool Dma::writeScatterGatherPrepare(const MemoryBlock &mem, size_t len) {
+
+  auto &mm = MemoryManager::get();
+
+  // User has to make sure that memory is accessible, otherwise this will throw
+  auto trans = mm.getTranslation(busMasterInterfaces[mm2sInterface],
+                                 mem.getAddrSpaceId());
+  void *buf = reinterpret_cast<void *>(trans.getLocalAddr(0));
+  if (buf == nullptr) {
+    throw RuntimeError("Buffer was null");
+  }
+  hwLock.lock();
+
+  auto bd = writeScatterGatherSetupBd(buf, len);
+
+  hwLock.unlock();
+
+  return bd != nullptr;
+}
+
+XAxiDma_Bd *Dma::writeScatterGatherSetupBd(const void *buf, size_t len) {
+  uint32_t ret = XST_FAILURE;
+  if (len == 0)
+    return nullptr;
+
+  if (len > FPGA_DMA_BOUNDARY)
+    return nullptr;
+
   auto *txRing = XAxiDma_GetTxRing(&xDma);
   if (txRing == nullptr) {
     hwLock.unlock();
@@ -321,7 +367,22 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
 
   // TODO: Check if we really need this
   XAxiDma_BdSetId(bd, (uintptr_t)buf);
+  return bd;
+}
 
+//Write a single message
+bool Dma::writeScatterGather(const void *buf, size_t len) {
+  // buf is address from view of DMA controller
+
+  int ret = XST_FAILURE;
+  hwLock.lock();
+  auto *txRing = XAxiDma_GetTxRing(&xDma);
+  if (txRing == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("TxRing was null.");
+  }
+
+  XAxiDma_Bd *bd = writeScatterGatherSetupBd(buf, len);
   // Give control of BD to HW. We should not access it until transfer is finished.
   // Failure could also indicate that EOF is not set on last Bd
   ret = XAxiDma_BdRingToHw(txRing, 1, bd);
@@ -335,15 +396,59 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
   return true;
 }
 
-bool Dma::readScatterGather(void *buf, size_t len) {
-  uint32_t ret = XST_FAILURE;
-
-  if (len < readCoalesce * readMsgSize) {
-    throw RuntimeError(
-        "Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
-  }
-
+// Reuse existing single BD bypassing BdRingFree, Alloc, ToHw
+bool Dma::readScatterGatherFast() {
   hwLock.lock();
+  auto *rxRing = XAxiDma_GetRxRing(&xDma);
+  if (rxRing == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("RxRing was null.");
+  }
+  XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
+  // Poll BD status to avoid accessing PCIe address space
+  uint32_t BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+
+  // Clear the bit we are polling on in complete
+  BdSts &= ~XAXIDMA_BD_STS_COMPLETE_MASK;
+  XAxiDma_BdWrite(CurBdPtr, XAXIDMA_BD_STS_OFFSET, BdSts);
+
+  uintptr_t tdesc = ((uintptr_t)rxRing->HwTail +
+                     (rxRing->FirstBdPhysAddr - rxRing->FirstBdAddr)) &
+                    XAXIDMA_DESC_LSB_MASK;
+  XAxiDma_WriteReg(rxRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
+
+  hwLock.unlock();
+  return true;
+}
+
+bool Dma::readScatterGatherPrepare(const MemoryBlock &mem, size_t len) {
+
+  auto &mm = MemoryManager::get();
+
+  // User has to make sure that memory is accessible, otherwise this will throw
+  auto trans = mm.getTranslation(busMasterInterfaces[s2mmInterface],
+                                 mem.getAddrSpaceId());
+  void *buf = reinterpret_cast<void *>(trans.getLocalAddr(0));
+  if (buf == nullptr) {
+    throw RuntimeError("Buffer was null");
+  }
+  hwLock.lock();
+
+  auto bd = readScatterGatherSetupBd(buf, len);
+
+  hwLock.unlock();
+
+  return bd != nullptr;
+}
+
+XAxiDma_Bd *Dma::readScatterGatherSetupBd(void *buf, size_t len) {
+  uint32_t ret = XST_FAILURE;
+  if (len == 0)
+    return nullptr;
+
+  if (len > FPGA_DMA_BOUNDARY)
+    return nullptr;
+
   auto *rxRing = XAxiDma_GetRxRing(&xDma);
   if (rxRing == nullptr) {
     hwLock.unlock();
@@ -384,6 +489,25 @@ bool Dma::readScatterGather(void *buf, size_t len) {
     curBuf += readMsgSize;
     curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(rxRing, curBd);
   }
+  return bd;
+}
+
+bool Dma::readScatterGather(void *buf, size_t len) {
+  uint32_t ret = XST_FAILURE;
+
+  if (len < readCoalesce * readMsgSize) {
+    throw RuntimeError(
+        "Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
+  }
+
+  hwLock.lock();
+  auto *rxRing = XAxiDma_GetRxRing(&xDma);
+  if (rxRing == nullptr) {
+    hwLock.unlock();
+    throw RuntimeError("RxRing was null.");
+  }
+
+  XAxiDma_Bd *bd = readScatterGatherSetupBd(buf, len);
 
   ret = XAxiDma_BdRingToHw(rxRing, readCoalesce, bd);
   if (ret != XST_SUCCESS) {
@@ -393,6 +517,25 @@ bool Dma::readScatterGather(void *buf, size_t len) {
 
   hwLock.unlock();
   return true;
+}
+
+size_t Dma::writeScatterGatherPoll(bool lock) {
+  if (lock) {
+    hwLock.lock();
+  }
+  auto txRing = XAxiDma_GetTxRing(&xDma);
+  XAxiDma_Bd *CurBdPtr = txRing->HwHead;
+  volatile uint32_t BdSts;
+  // Poll BD status to avoid accessing PCIe address space
+  do {
+    BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
+  } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
+  // At this point, we know that the transmission is complete, but we haven't accessed the
+  // PCIe address space, yet. We know that we have received at least one BD.
+  if (lock) {
+    hwLock.unlock();
+  }
+  return XAxiDma_BdGetActualLength(CurBdPtr, XAXIDMA_MCHAN_MAX_TRANSFER_LEN);
 }
 
 Dma::Completion Dma::writeCompleteScatterGather() {
@@ -405,14 +548,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   uint32_t irqStatus = 0;
   if (polling) {
     hwLock.lock();
-    XAxiDma_Bd *CurBdPtr = txRing->HwHead;
-    volatile uint32_t BdSts;
-    // Poll BD status to avoid accessing PCIe address space
-    do {
-      BdSts = XAxiDma_ReadReg((UINTPTR)CurBdPtr, XAXIDMA_BD_STS_OFFSET);
-    } while (!(BdSts & XAXIDMA_BD_STS_COMPLETE_MASK));
-    // At this point, we know that the transmission is complete, but we haven't accessed the
-    // PCIe address space, yet. We know that we have received at least one BD.
+    writeScatterGatherPoll(false);
   } else {
     c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
         irqs[mm2sInterrupt].num);
@@ -468,7 +604,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
   return c;
 }
 
-size_t Dma::pollReadScatterGather(bool lock) {
+size_t Dma::readScatterGatherPoll(bool lock) {
   if (lock) {
     hwLock.lock();
   }
@@ -498,7 +634,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
   uint32_t irqStatus = 0;
   if (polling) {
     hwLock.lock();
-    pollReadScatterGather(false);
+    readScatterGatherPoll(false);
     intrs = 1;
   } else {
     intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
