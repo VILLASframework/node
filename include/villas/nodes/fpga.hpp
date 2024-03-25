@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <thread>
 #include <villas/format.hpp>
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -31,15 +32,31 @@ protected:
   std::string cardName;
   std::list<std::string> connectStrings;
 
+  // This setting improves latency by remove various checks.
+  // Use with caution! Requires read cache in FPGA design!
+  // The common use case in VILLASfpga is that we have exactly
+  // one write for every read and the number of exchanged signals
+  // do not change. If this is the case, we can reuse the buffer
+  // descriptors during reads and write, thus avoidng freeing,
+  // reallocating and setting them up.
+  // We set up the descriptors in start, and in write or read,
+  // we only reset the complete bit in the buffer descriptor and
+  // write to the tdesc register to start the DMA transfer.
+  // Improves read/write latency by approx. 40%.
+  bool lowLatencyMode;
+
   // State
   std::shared_ptr<fpga::Card> card;
   std::shared_ptr<villas::fpga::ip::Dma> dma;
-  std::shared_ptr<villas::MemoryBlock> blockRx[2];
+  std::shared_ptr<villas::MemoryBlock> blockRx;
   std::shared_ptr<villas::MemoryBlock> blockTx;
 
   // Non-public methods
+  virtual int fastRead(Sample *smps[], unsigned cnt);
+  virtual int slowRead(Sample *smps[], unsigned cnt);
   virtual int _read(Sample *smps[], unsigned cnt) override;
-
+  virtual int fastWrite(Sample *smps[], unsigned cnt);
+  virtual int slowWrite(Sample *smps[], unsigned cnt);
   virtual int _write(Sample *smps[], unsigned cnt) override;
 
 public:
@@ -54,6 +71,8 @@ public:
   virtual int check() override;
 
   virtual int start() override;
+
+  virtual int stop() override;
 
   virtual std::vector<int> getPollFDs() override;
 

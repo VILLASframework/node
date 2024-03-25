@@ -49,6 +49,14 @@ public:
                               : writeCompleteSimple();
   }
 
+  bool readScatterGatherPrepare(const MemoryBlock &mem, size_t len);
+  bool readScatterGatherFast();
+  size_t readScatterGatherPoll(bool lock = true);
+
+  bool writeScatterGatherPrepare(const MemoryBlock &mem, size_t len);
+  bool writeScatterGatherFast();
+  size_t writeScatterGatherPoll(bool lock = true);
+
   Completion readComplete() {
     return hasScatterGather() ? readCompleteScatterGather()
                               : readCompleteSimple();
@@ -61,11 +69,11 @@ public:
 
   inline bool hasScatterGather() const { return xConfig.HasSg; }
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(s2mmPort);
   }
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(mm2sPort);
   }
 
@@ -80,7 +88,9 @@ public:
 private:
   bool writeScatterGather(const void *buf, size_t len);
   bool readScatterGather(void *buf, size_t len);
+  XAxiDma_Bd *writeScatterGatherSetupBd(const void *buf, size_t len);
   Completion writeCompleteScatterGather();
+  XAxiDma_Bd *readScatterGatherSetupBd(void *buf, size_t len);
   Completion readCompleteScatterGather();
 
   bool writeSimple(const void *buf, size_t len);
@@ -89,8 +99,8 @@ private:
   Completion readCompleteSimple();
 
   void setupScatterGather();
-  void setupScatterGatherRingRx();
-  void setupScatterGatherRingTx();
+  void setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr);
+  void setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr);
 
   static constexpr char registerMemory[] = "Reg";
 
@@ -103,7 +113,7 @@ private:
   // Optional Scatter-Gather interface to access descriptors
   static constexpr char sgInterface[] = "M_AXI_SG";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 
@@ -114,7 +124,8 @@ private:
 
   bool configDone = false;
   // use polling to wait for DMA completion or interrupts via efds
-  bool polling = false;
+  bool polling = false; // polling mode is significantly lower latency
+  bool cyclic = false;  // not fully implemented
   // Timeout after which the DMA controller issues in interrupt if no data has been received
   // Delay is 125 x <delay> x (clock period of SG clock). SG clock is 100 MHz by default.
   int delay = 0;
@@ -128,31 +139,30 @@ private:
 
   // When using SG: ringBdSize is the maximum number of BDs usable in the ring
   // Depending on alignment, the actual number of BDs usable can be smaller
-  static constexpr size_t requestedRingBdSize = 2048;
+  static constexpr size_t requestedRingBdSize = 1;
   static constexpr size_t requestedRingBdSizeMemory =
       requestedRingBdSize * sizeof(XAxiDma_Bd);
-  uint32_t actualRingBdSize = XAxiDma_BdRingCntCalc(
-      XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
-  std::shared_ptr<MemoryBlock> sgRingTx;
-  std::shared_ptr<MemoryBlock> sgRingRx;
+  uint32_t actualRingBdSize = 1; //XAxiDma_BdRingCntCalc(
+      //XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
+  std::shared_ptr<MemoryBlock> sgRing;
 };
 
 class DmaFactory : NodeFactory {
 
 public:
-  virtual std::string getName() const { return "dma"; }
+  virtual std::string getName() const override { return "dma"; }
 
-  virtual std::string getDescription() const {
+  virtual std::string getDescription() const override {
     return "Xilinx's AXI4 Direct Memory Access Controller";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  virtual Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_dma:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new Dma; };
+  Core *make() const override { return new Dma; };
 
 protected:
   virtual void parse(Core &ip, json_t *json) override;

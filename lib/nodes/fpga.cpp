@@ -5,9 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <atomic>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include <jansson.h>
@@ -33,8 +35,8 @@ static std::list<std::shared_ptr<fpga::Card>> cards;
 static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), cardName(""), card(nullptr), dma(), blockRx(), blockTx() {
-}
+    : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
+      card(nullptr), dma(), blockRx(), blockTx() {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -76,20 +78,20 @@ int FpgaNode::prepare() {
 
   auto &alloc = HostRam::getAllocator();
 
-  blockRx[0] = alloc.allocateBlock(0x200 * sizeof(float));
-  blockRx[1] = alloc.allocateBlock(0x200 * sizeof(float));
+  blockRx = alloc.allocateBlock(0x200 * sizeof(float));
   blockTx = alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> memRx[] = {*(blockRx[0]), *(blockRx[1])};
+  villas::MemoryAccessor<float> memRx = *blockRx;
   villas::MemoryAccessor<float> memTx = *blockTx;
 
-  dma->makeAccesibleFromVA(blockRx[0]);
-  dma->makeAccesibleFromVA(blockRx[1]);
+  dma->makeAccesibleFromVA(blockRx);
   dma->makeAccesibleFromVA(blockTx);
 
   MemoryManager::get().printGraph();
 
   return Node::prepare();
 }
+
+int FpgaNode::stop() { return Node::stop(); }
 
 int FpgaNode::parse(json_t *json) {
   int ret = Node::parse(json);
@@ -106,8 +108,9 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o}", "card", &jsonCard,
-                       "connect", &jsonConnectStrings);
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: b}", "card",
+                       &jsonCard, "connect", &jsonConnectStrings,
+                       "lowLatencyMode", &lowLatencyMode);
   if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
@@ -159,7 +162,8 @@ const std::string &FpgaNode::getDetails() {
     std::copy(connectStrings.begin(), connectStrings.end(),
               std::ostream_iterator<std::string>(imploded, delim));
 
-    details = fmt::format("fpga={}, connect={}", name, imploded.str());
+    details = fmt::format("fpga={}, connect={}, lowLatencyMode={}", name,
+                          imploded.str(), lowLatencyMode);
   }
 
   return details;
@@ -168,19 +172,93 @@ const std::string &FpgaNode::getDetails() {
 int FpgaNode::check() { return 0; }
 
 int FpgaNode::start() {
-  // enque first read
-  // dma->read(*(blockRx[0]), blockRx[0]->getSize());
+  if (getInputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
+    logger->error("Input signals exceed block size.");
+    throw villas ::RuntimeError("Input signals exceed block size.");
+  }
+  if (lowLatencyMode) {
+    dma->readScatterGatherPrepare(*blockRx, blockRx->getSize());
+    if (getInputSignalsMaxCount() != 0) {
+      dma->writeScatterGatherPrepare(*blockTx,
+                                     getInputSignalsMaxCount() * sizeof(float));
+    } else {
+      logger->warn("No input signals defined. Not preparing write buffer - "
+                   "writes will not work.");
+    }
+  }
+
   return Node::start();
 }
 
+int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
+  Sample *smp = smps[0];
+
+  assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
+
+  auto mem = MemoryAccessor<uint32_t>(*blockTx);
+  float scaled;
+
+  for (unsigned i = 0; i < smp->length; i++) {
+    if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
+      scaled = smp->data[i].f;
+      if (scaled > 10.) {
+        scaled = 10.;
+      } else if (scaled < -10.) {
+        scaled = -10.;
+      }
+      mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+    } else {
+      mem[i] = smp->data[i].i;
+    }
+  }
+
+  dma->writeScatterGatherFast();
+  auto written = dma->writeScatterGatherPoll() /
+                 sizeof(float); // The number of samples written
+
+  if (written != smp->length) {
+    logger->warn("Wrote {} samples, but {} were expected", written,
+                 smp->length);
+  }
+
+  return 1;
+}
+
+int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
+  Sample *smp = smps[0];
+  auto mem = MemoryAccessor<float>(*blockRx);
+
+  smp->flags = (int)SampleFlags::HAS_DATA;
+  smp->signals = in.signals;
+
+  dma->readScatterGatherFast();
+  auto read = dma->readScatterGatherPoll(true);
+  // We assume a lot without checking at this point. All for the latency!
+
+  smp->length = 0;
+  for (unsigned i = 0; i < MIN(read / sizeof(float), smp->capacity); i++) {
+    smp->data[i].f = static_cast<double>(mem[i]);
+    smp->length++;
+  }
+
+  return 1;
+}
+
 int FpgaNode::_read(Sample *smps[], unsigned cnt) {
-  static size_t cur = 0, next = 0;
+  if (lowLatencyMode) {
+    return fastRead(smps, cnt);
+  } else {
+    return slowRead(smps, cnt);
+  }
+}
+
+int FpgaNode::slowRead(Sample *smps[], unsigned cnt) {
   unsigned read;
   Sample *smp = smps[0];
 
   assert(cnt == 1);
 
-  dma->read(*(blockRx[next]), blockRx[next]->getSize()); // TODO: calc size
+  dma->read(*blockRx, blockRx->getSize());
   auto c = dma->readComplete();
 
   read = c.bytes / sizeof(float);
@@ -189,7 +267,7 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
     logger->warn("Missed {} interrupts", c.interrupts - 1);
   }
 
-  auto mem = MemoryAccessor<float>(*(blockRx[cur]));
+  auto mem = MemoryAccessor<float>(*blockRx);
 
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
@@ -199,14 +277,20 @@ int FpgaNode::_read(Sample *smps[], unsigned cnt) {
   smp->flags = (int)SampleFlags::HAS_DATA;
 
   smp->signals = in.signals;
-  //cur = next;
-  //next = (next + 1) % (sizeof(blockRx) / sizeof(blockRx[0]));
 
   return 1;
 }
 
 int FpgaNode::_write(Sample *smps[], unsigned cnt) {
-  unsigned int written;
+  if (lowLatencyMode) {
+    return fastWrite(smps, cnt);
+  } else {
+    return slowWrite(smps, cnt);
+  }
+}
+
+int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
+  // unsigned int written;
   Sample *smp = smps[0];
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
@@ -225,11 +309,11 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt) {
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));
-  if (!state)
+  if (!state) {
     return -1;
-
-  written = dma->writeComplete().bytes /
-            sizeof(float); // The number of samples written
+  }
+  auto written = dma->writeComplete().bytes /
+                 sizeof(float); // The number of samples written
 
   if (written != smp->length) {
     logger->warn("Wrote {} samples, but {} were expected", written,
