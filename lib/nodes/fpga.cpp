@@ -197,7 +197,7 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
   float scaled;
 
   for (unsigned i = 0; i < smp->length; i++) {
-      if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
+    if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
       scaled = smp->data[i].f;
       if (scaled > 10.) {
         scaled = 10.;
@@ -205,9 +205,9 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
         scaled = -10.;
       }
       mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
-      } else {
+    } else {
       mem[i] = smp->data[i].i;
-      }
+    }
   }
 
   dma->writeScatterGatherFast();
