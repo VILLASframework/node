@@ -293,7 +293,15 @@ fi
 if ! pkg-config "libre >= 3.6.0" && \
     should_build "libre" "for the rtp node-type"; then
     git clone ${GIT_OPTS} --branch v3.6.0 https://github.com/baresip/re.git
-    pushd re
+    mkdir -p re/build
+    pushd re/build
+    cmake -DUSE_LIBREM=OFF \
+          -DUSE_BFCP=OFF \
+          -DUSE_PCP=OFF \
+          -DUSE_RTMP=OFF \
+          -DUSE_SIP=OFF \
+          -DLIBRE_BUILD_STATIC=OFF  \
+          ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
 fi
