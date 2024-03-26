@@ -23,6 +23,7 @@ classifiers = [
 dependencies = [
     'linuxfd==1.5',
     'requests==2.31.0',
+    'protobuf==4.24.4',
 ]
 optional-dependencies.dev = [
     'black==24.2.0',
@@ -30,7 +31,7 @@ optional-dependencies.dev = [
     'mypy==1.8.0',
     'pytest==8.0.0',
     'types-requests==2.31.0.20240125',
-    'protobuf==4.24.4',
+    'types-protobuf==4.24.0.20240311',
 ]
 
 [project.urls]
@@ -45,3 +46,10 @@ email = 'post@steffenvogel.de'
 [[project.authors]]
 name = 'Philipp Jungkamp'
 email = 'Philipp.Jungkamp@opal-rt.com'
+
+[[tool.mypy.overrides]]
+module = ['google']
+ignore_missing_imports = true
+
+[tool.black]
+extend-exclude = '''.*(\.pyi|_pb2.py)$'''

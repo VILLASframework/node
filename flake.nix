@@ -149,6 +149,12 @@
           name = "full";
           inputsFrom = with pkgs; [villas];
         };
+
+        python = pkgs.mkShell {
+          inherit shellHook hardeningDisable packages;
+          name = "full";
+          inputsFrom = with pkgs; [villas-python];
+        };
       }
     );
 

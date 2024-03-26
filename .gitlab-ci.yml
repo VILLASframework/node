@@ -92,10 +92,10 @@ test:python:
   stage: test
   script:
     - cd python
-    - /venv/bin/black --check .
+    - /venv/bin/pytest --verbose .
+    - /venv/bin/black --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
+    - /venv/bin/flake8 --extend-exclude="*.pyi,*_pb2.py" .
     - /venv/bin/mypy .
-    - /venv/bin/flake8 .
-    - /venv/bin/pytest -v .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
 
 test:cppcheck:
