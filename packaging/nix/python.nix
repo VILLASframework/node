@@ -24,6 +24,8 @@ python3Packages.buildPythonPackage {
     mypy
     pytest
     types-requests
+
+    pytestCheckHook
   ];
 
   postPatch = ''

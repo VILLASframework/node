@@ -10,6 +10,7 @@ from itertools import groupby
 from typing import Iterable
 
 from villas.node.sample import Sample, Signal, Timestamp
+import villas.node.villas_pb2 as pb
 
 
 class SignalList(list[type]):
@@ -239,3 +240,91 @@ class VillasHuman(Format):
 
     def _pack_complex(self, z: complex) -> str:
         return f"{z.real}+{z.imag}i"
+
+
+@dataclass
+class Protobuf(Format):
+    """
+    The protobuf format in Python.
+    """
+
+    def loadb(self, b: bytes) -> list[Sample]:
+        msg = pb.Message()
+        msg.ParseFromString(b)
+
+        return [self.load_sample(sample) for sample in msg.samples]
+
+    def dumpb(self, samples: Iterable[Sample]) -> bytes:
+        msg = pb.Message()
+
+        for sample in samples:
+            msg.samples.append(self.dump_sample(sample))
+
+        return msg.SerializeToString()
+
+    def load_sample(self, pb_sample: pb.Sample) -> Sample:
+        sample = Sample()
+
+        if pb_sample.HasField("ts_origin"):
+            sample.ts_origin = Timestamp(
+                pb_sample.ts_origin.sec, pb_sample.ts_origin.nsec
+            )
+
+        if pb_sample.HasField("ts_received"):
+            sample.ts_received = Timestamp(
+                pb_sample.ts_received.sec, pb_sample.ts_received.nsec
+            )
+
+        if pb_sample.HasField("new_frame"):
+            sample.new_frame = pb_sample.new_frame
+
+        if pb_sample.HasField("sequence"):
+            sample.sequence = pb_sample.sequence
+
+        for value in pb_sample.values:
+            if value.HasField("i"):
+                sample.data.append(value.i)
+            elif value.HasField("f"):
+                sample.data.append(value.f)
+            elif value.HasField("b"):
+                sample.data.append(value.b)
+            elif value.HasField("z"):
+                sample.data.append(complex(value.z.real, value.z.imag))
+            else:
+                raise Exception("Missing value")
+
+        return self._strip_sample(sample)
+
+    def dump_sample(self, sample: Sample) -> pb.Sample:
+        pb_sample = pb.Sample()
+        pb_sample.type = pb.Sample.Type.DATA
+
+        pb_sample.new_frame = sample.new_frame
+
+        if sample.ts_origin:
+            pb_sample.ts_origin.sec = sample.ts_origin.seconds
+            pb_sample.ts_origin.nsec = sample.ts_origin.nanoseconds
+
+        if sample.ts_received:
+            pb_sample.ts_received.sec = sample.ts_received.seconds
+            pb_sample.ts_received.nsec = sample.ts_received.nanoseconds
+
+        if sample.sequence:
+            pb_sample.sequence = sample.sequence
+
+        for value in sample.data:
+            pb_value = pb.Value()
+
+            if isinstance(value, int):
+                pb_value.i = value
+            elif isinstance(value, float):
+                pb_value.f = value
+            elif isinstance(value, bool):
+                pb_value.b = value
+            elif isinstance(value, complex):
+                pb_value.z.real = value.real
+                pb_value.z.imag = value.imag
+
+            pb_sample.values.append(pb_value)
+
+        return pb_sample
