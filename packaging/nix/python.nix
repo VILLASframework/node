@@ -2,16 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 {
   src,
+  pkgs,
   python3Packages,
   villas-minimal,
 }:
 python3Packages.buildPythonPackage {
   name = "villas-python";
-  src = src;
+  src = "${src}/python";
+  format = "pyproject";
   propagatedBuildInputs = with python3Packages; [
     linuxfd
     requests
-    villas-minimal
+    protobuf
+  ];
+  build-system = with python3Packages; [
+    setuptools
   ];
   nativeCheckInputs = with python3Packages; [
     black
@@ -20,4 +25,8 @@ python3Packages.buildPythonPackage {
     pytest
     types-requests
   ];
+
+  postPatch = ''
+    ${pkgs.protobuf}/bin/protoc --proto_path ${src}/lib/formats --python_out=villas/node/ ${src}/lib/formats/villas.proto
+  '';
 }

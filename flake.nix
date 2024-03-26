@@ -70,7 +70,7 @@
       default = villas;
 
       villas-python = pkgs.callPackage (nixDir + "/python.nix") {
-        src = ./python;
+        src = ./.;
       };
 
       villas-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
