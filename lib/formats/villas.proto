@@ -22,9 +22,10 @@ message Sample {
 
   required Type type = 1 [default = DATA];
   optional uint64 sequence = 2; // The sequence number is incremented for consecutive samples.
-  optional Timestamp ts_origin = 4;
-  repeated Value values = 5;
-  optional bool new_frame = 6;
+  optional Timestamp ts_origin = 3;
+  optional Timestamp ts_received = 4;
+  optional bool new_frame = 5;
+  repeated Value values = 100;
 }
 
 message Timestamp {
