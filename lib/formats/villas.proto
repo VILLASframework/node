@@ -10,37 +10,38 @@ syntax = "proto2";
 package villas.node;
 
 message Message {
-	repeated Sample samples = 1;
+  repeated Sample samples = 1;
 }
 
 message Sample {
-	enum Type {
-		DATA = 1;				// Message contains float / integer data values
-		START = 2;				// Message marks the beginning of a new simulation case
-		STOP = 3;				// Message marks the end of a simulation case
-	};
+  enum Type {
+    DATA = 1;				            // Message contains float / integer data values
+    START = 2;			            // Message marks the beginning of a new simulation case
+    STOP = 3;				            // Message marks the end of a simulation case
+  };
 
-	required Type type = 1 [default = DATA];
-	optional uint64 sequence = 2;			// The sequence number is incremented by one for consecutive messages.
-	optional Timestamp timestamp = 4;
-	repeated Value values = 5;
+  required Type type = 1 [default = DATA];
+  optional uint64 sequence = 2; // The sequence number is incremented for consecutive samples.
+  optional Timestamp ts_origin = 4;
+  repeated Value values = 5;
+  optional bool new_frame = 6;
 }
 
 message Timestamp {
-	required uint32 sec = 1;			// Seconds since 1970-01-01 00:00:00
-	required uint32 nsec = 2;			// Nanoseconds of the current second.
+  required uint32 sec = 1;		  // Seconds since 1970-01-01 00:00:00
+  required uint32 nsec = 2;		  // Nanoseconds of the current second.
 }
 
 message Value {
-	oneof value {
-		double f = 1;				// Floating point values.
-		int64 i = 2;				// Integer values.
-		bool b = 3;				// Boolean values.
-		Complex z = 4;				// Complex values.
-	}
+  oneof value {
+    double f = 1;				        // Floating point values.
+    int64 i = 2;				        // Integer values.
+    bool b = 3;				          // Boolean values.
+    Complex z = 4;			        // Complex values.
+  }
 }
 
 message Complex {
-	required float real = 1;			// Real component
-	required float imag = 2;			// Imaginary component
+  required float real = 1;		  // Real component
+  required float imag = 2;		  // Imaginary component
 }
