@@ -4,7 +4,6 @@
   src,
   pkgs,
   python3Packages,
-  villas-minimal,
 }:
 python3Packages.buildPythonPackage {
   name = "villas-python";
@@ -24,11 +23,13 @@ python3Packages.buildPythonPackage {
     mypy
     pytest
     types-requests
+    types-protobuf
+    mypy-protobuf
 
     pytestCheckHook
   ];
 
   postPatch = ''
-    ${pkgs.protobuf}/bin/protoc --proto_path ${src}/lib/formats --python_out=villas/node/ ${src}/lib/formats/villas.proto
+    ${pkgs.protobuf}/bin/protoc --proto_path ${src}/lib/formats --mypy_out=villas/node --python_out=villas/node/ ${src}/lib/formats/villas.proto
   '';
 }
