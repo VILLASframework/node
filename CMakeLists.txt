@@ -194,7 +194,7 @@ cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"      
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             "${WITH_DEFAULTS}" "Opal_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"                            "${WITH_DEFAULTS}" "HIREDIS_FOUND; REDISPP_FOUND" OFF)
-cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "RE_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "re_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            "${WITH_DEFAULTS}" "HAS_SEMAPHORE; HAS_MMAN" OFF)
 cmake_dependent_option(WITH_NODE_SIGNAL     "Build with signal node-type"                           "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_SOCKET     "Build with socket node-type"                           "${WITH_DEFAULTS}" "LIBNL3_ROUTE_FOUND" OFF)
