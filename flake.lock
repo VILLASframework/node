@@ -17,71 +17,18 @@
         "type": "gitlab"
       }
     },
-    "lib60870": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1672404819,
-        "narHash": "sha256-9o+gWQbpCJb+UZzPNmzGqpWD0QbGjg41is/f1POUEQs=",
-        "owner": "mz-automation",
-        "repo": "lib60870",
-        "rev": "53a6b3c1cf3023e51cf81763b1ccf048edcd1c64",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mz-automation",
-        "ref": "v2.3.2",
-        "repo": "lib60870",
-        "type": "github"
-      }
-    },
-    "libdatachannel": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1683797946,
-        "narHash": "sha256-kSK+5gFMG6tq89R1m08gNBKPdwyR/mLEDhWXQ/uk34o=",
-        "ref": "refs/tags/v0.18.4",
-        "rev": "7a5e01071ae635e06f175233abd11d623f09cbb8",
-        "revCount": 2459,
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/paullouisageneau/libdatachannel.git"
-      },
-      "original": {
-        "ref": "refs/tags/v0.18.4",
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/paullouisageneau/libdatachannel.git"
-      }
-    },
-    "libiec61850": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1647022552,
-        "narHash": "sha256-1vT0ry6IJqilpM7g9l7fx+ET+Dyo24WAyWqTyPM9nQw=",
-        "owner": "mz-automation",
-        "repo": "libiec61850",
-        "rev": "210cf30897631fe2006ac50483caf8fd616622a2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mz-automation",
-        "ref": "v1.5.1",
-        "repo": "libiec61850",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1709884566,
-        "narHash": "sha256-NSYJg2sfdO/XS3L8XN/59Zhzn0dqWm7XtVnKI2mHq3w=",
+        "lastModified": 1711370797,
+        "narHash": "sha256-2xu0jVSjuKhN97dqc4bVtvEH52Rwh6+uyI1XCnzoUyI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2be119add7b37dc535da2dd4cba68e2cf8d1517e",
+        "rev": "c726225724e681b3626acc941c6f95d2b0602087",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-23.11",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -89,9 +36,6 @@
     "root": {
       "inputs": {
         "ethercat": "ethercat",
-        "lib60870": "lib60870",
-        "libdatachannel": "libdatachannel",
-        "libiec61850": "libiec61850",
         "nixpkgs": "nixpkgs"
       }
     }
