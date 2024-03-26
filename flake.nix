@@ -4,28 +4,10 @@
   description = "VILLASnode is a client/server application to connect simulation equipment and software.";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     ethercat = {
       url = "gitlab:etherlab.org/ethercat/stable-1.5";
-      flake = false;
-    };
-
-    lib60870 = {
-      url = "github:mz-automation/lib60870/v2.3.2";
-      flake = false;
-    };
-
-    libdatachannel = {
-      type = "git";
-      url = "https://github.com/paullouisageneau/libdatachannel.git";
-      ref = "refs/tags/v0.18.4";
-      submodules = true;
-      flake = false;
-    };
-
-    libiec61850 = {
-      url = "github:mz-automation/libiec61850/v1.5.1";
       flake = false;
     };
   };
@@ -106,18 +88,6 @@
 
       ethercat = pkgs.callPackage (nixDir + "/ethercat.nix") {
         src = inputs.ethercat;
-      };
-
-      lib60870 = pkgs.callPackage (nixDir + "/lib60870.nix") {
-        src = inputs.lib60870;
-      };
-
-      libdatachannel = pkgs.callPackage (nixDir + "/libdatachannel.nix") {
-        src = inputs.libdatachannel;
-      };
-
-      libiec61850 = pkgs.callPackage (nixDir + "/libiec61850.nix") {
-        src = inputs.libiec61850;
       };
     };
   in {
