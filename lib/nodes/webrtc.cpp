@@ -16,6 +16,7 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/uuid.hpp>
+#include <villas/node/config.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -28,7 +29,13 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
       server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
       peer(uuid::toString(id)), wait_seconds(0), format(nullptr), queue({}),
       pool({}), dci({}) {
+
+#if RTC_VERSION < 0x001400
   dci.reliability.type = rtc::Reliability::Type::Rexmit;
+#else
+  dci.reliability.maxRetransmits = 0;
+  dci.reliability.unordered = true;
+#endif
 }
 
 WebRTCNode::~WebRTCNode() {
