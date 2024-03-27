@@ -8,7 +8,6 @@
  */
 
 #include <chrono>
-#include <thread>
 
 #include <fmt/chrono.h>
 #include <fmt/core.h>

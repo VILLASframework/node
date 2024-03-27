@@ -7,9 +7,6 @@
 
 #include <villas/fpga/dma.h>
 
-#include <csignal>
-#include <iostream>
-#include <stdexcept>
 #include <string>
 
 #include <villas/exceptions.hpp>

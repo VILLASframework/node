@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstdio>
-
 #include <linux/if_packet.h>
 
 #include <netlink/route/link.h>

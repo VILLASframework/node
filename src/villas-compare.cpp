@@ -193,7 +193,7 @@ protected:
   }
 
   int main() {
-    int ret, rc = 0, line, failed;
+    int ret, rc = 0, failed;
     unsigned eofs;
 
     ret = pool_init(&pool, filenames.size(),
@@ -211,7 +211,6 @@ protected:
       sides.push_back(s);
     }
 
-    line = 0;
     while (true) {
       // Read next sample from all files
     retry:
@@ -250,8 +249,6 @@ protected:
           goto out;
         }
       }
-
-      line++;
     }
 
   out:

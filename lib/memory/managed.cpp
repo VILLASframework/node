@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cerrno>
 #include <cstdlib>
 #include <strings.h>
 #include <unistd.h>
