@@ -8,7 +8,6 @@
  */
 
 #include <algorithm>
-#include <csignal>
 #include <iostream>
 #include <jansson.h>
 #include <string>

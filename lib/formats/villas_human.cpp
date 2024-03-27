@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cassert>
 #include <cinttypes>
 #include <cstring>
 

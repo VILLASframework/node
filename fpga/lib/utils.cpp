@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
 #include <csignal>
 #include <filesystem>
 #include <iostream>
@@ -15,7 +14,6 @@
 #include <string>
 #include <vector>
 
-#include <CLI11.hpp>
 #include <rang.hpp>
 
 #include <villas/exceptions.hpp>

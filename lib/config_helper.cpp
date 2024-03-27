@@ -5,9 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <fstream>
-#include <iostream>
-
 #include <cstring>
 
 #include <villas/config_helper.hpp>
