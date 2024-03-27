@@ -1306,16 +1306,16 @@ public:
 
 #if __cplusplus <= 201703L
   /// Sets required options \deprecated
-  Option *requires(Option *opt) { return needs(opt); }
+  Option *set_requires(Option *opt) { return needs(opt); }
 
   /// Can find a string if needed \deprecated
-  template <typename T = App> Option *requires(std::string opt_name) {
+  template <typename T = App> Option *set_requires(std::string opt_name) {
     return needs<T>(opt_name);
   }
 
   /// Any number supported, any mix of string and Opt \deprecated
   template <typename A, typename B, typename... ARG>
-  Option *requires(A opt, B opt1, ARG... args) {
+  Option *set_requires(A opt, B opt1, ARG... args) {
     needs(opt);
     return needs(opt1, args...);
   }
