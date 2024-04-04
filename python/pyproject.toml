@@ -21,7 +21,7 @@ classifiers = [
     'Programming Language :: Python :: 3',
 ]
 dependencies = [
-    'linuxfd==1.5',
+    'linuxfd==1.5; platform_system=="Linux"',
     'requests==2.31.0',
     'protobuf==4.24.4',
 ]
