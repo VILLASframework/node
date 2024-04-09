@@ -14,9 +14,7 @@ python3Packages.buildPythonPackage {
     requests
     protobuf
   ];
-  build-system = with python3Packages; [
-    setuptools
-  ];
+  build-system = with python3Packages; [ setuptools ];
   nativeCheckInputs = with python3Packages; [
     black
     flake8
