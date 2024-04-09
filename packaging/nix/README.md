@@ -33,17 +33,17 @@ Try to run `villas node` by typing
 # `nix run` runs an output package provided by a flake
 # `github:VILLASframework/node` is the repository containing the flake
 # `?dir=packaging/nix` indicates that the `flake.nix` resides in this subdirectory
-# `#villas-minimal` chooses the output package you want to run
+# `#villas-node-minimal` chooses the output package you want to run
 # after the `--` follow the arguments to the `villas` tool (e.g. `node -h`)
-nix run 'github:VILLASframework/node?dir=packaging/nix#villas-minimal' -- node -h
+nix run 'github:VILLASframework/node?dir=packaging/nix#villas-node-minimal' -- node -h
 ```
 
 The [`flake.nix`] provides 2 versions of `villas`:
-- `#villas-minimal`: `villas` without most optional dependencies
-- `#villas`: `villas` with most optional dependencies available to Nix
+- `#villas-node-minimal`: `villas` CLI command without most optional dependencies
+- `#villas-node`: `villas` CLI command with most optional dependencies available to Nix
 
-The version chosen by default is `#villas`. Omitting the `#` suffix will
-select the more complete version of `villas`.
+The version chosen by default is `#villas-node`. Omitting the `#` suffix will
+select the more complete version of the `villas` CLI command.
 
 ```shell
 # omit `#` suffix in the flake reference from above
@@ -53,30 +53,30 @@ nix run 'github:VILLASframework/node?dir=packaging/nix' -- node -h
 
 ## Simple Install
 
-You can also install `villas` into your local profile and have it available in
+You can also install the `villas` CLI command into your local profile and have it available in
 `PATH`.
 
 ```shell
-nix profile install 'github:VILLASframework/node?dir=packaging/nix#villas'
+nix profile install 'github:VILLASframework/node?dir=packaging/nix#villas-node'
 ```
 
 If you don't want to add it directly into the global path you could add it into
 the flake registry as well.
 
 ```shell
-nix registy add villas 'github:VILLASframework/node?dir=packaging/nix'
+nix registry add villas-node 'github:VILLASframework/node?dir=packaging/nix'
 ```
 
-This allows you to substitue all references to
-`github:VILLASframework/node?dir=packaging/nix#villas` with a simple `villas`.
+This allows you to substitute all references to
+`github:VILLASframework/node?dir=packaging/nix#villas-node` with a simple `villas-node`.
 I'll be using the `villas` registry entry in the following sections.
 
 ## Development
 
-You can easily setup a development shell environment for `villas` by using the
+You can easily setup a development shell environment for the `villas` CLI command by using the
 `devShells` provided in the [`flake.nix`] using `nix develop`.
 Try for example these commands in the repository root to create a new shell with
-all required dependecies to build various configurations of `villas`.
+all required dependencies to build various configurations of the `villas` CLI command.
 
 ```shell
 # create a shell with all required build dependecies but without most optional ones
@@ -103,7 +103,7 @@ images without worrying about missing dependencies or Copying things inbetween
 `Dockerfile` stages. Copying exactly the application, it's dependencies an
 nothing else can be done using only a few lines of Nix.
 
-Here we build a docker image containing the `#villas` flake output:
+Here we build a docker image containing the `#villas-node` flake output:
 
 ```shell
 # `docker load` reads OCI images from stdin
@@ -112,7 +112,7 @@ Here we build a docker image containing the `#villas` flake output:
 # `--print-out-paths` prints the built image's path to stdout
 docker load < $(nix build --no-link --print-out-paths --impure --expr '
   let
-    villas = (builtins.getFlake "villas").packages.x86_64-linux.villas;
+    villas-node = (builtins.getFlake "villas").packages.x86_64-linux.villas-node;
     pkgs = (builtins.getFlake "nixpkgs").legacyPackages.x86_64-linux;
   in
     pkgs.dockerTools.buildImage {
@@ -120,7 +120,7 @@ docker load < $(nix build --no-link --print-out-paths --impure --expr '
       tag = "nix";
       created = "now";
       copyToRoot = [villas];
-      config.Cmd = ["${villas}/bin/villas" "node" "-h"];
+      config.Cmd = ["${villas-node}/bin/villas" "node" "-h"];
     }
 ')
 ```
@@ -129,11 +129,11 @@ See https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-dockerTools
 
 ## Customization
 
-The [`villas.nix`] file contains the Nix "derivation" used to
-build `villas`. Check the `# customization` options at the top to find out what
-optional things can be enabled.
+The [`villas.nix`] file contains the Nix "derivation" used to build the
+`villas` CLI command. Check the `# customization` options at the top to find
+out what optional things can be enabled.
 
-### Building a customized `villas`
+### Building a customized `villas` CLI command
 
 Using and customizing the villas package requires some knowledge of the Nix
 expression language. And the standard `override` function used extensively in
@@ -153,14 +153,14 @@ nix build --impure --expr '
   let
     pkgs = (builtins.getFlake "villas").packages.x86_64-linux;
   in
-    pkgs.villas-minimal.override {
+    pkgs.villas-node-minimal.override {
       withExtraConfig = true;
       withNodeIec60870 = true;
     }
 '
 ```
 
-Here we override the `#villas-minimal` package to include `libconfig`
+Here we override the `#villas-node-minimal` package to include `libconfig`
 configuration support and enable the `IEC61870-5-104` node.
 
 `nix build` now builds the customized `villas` and produces a `result` symlink
@@ -195,7 +195,7 @@ Here is a basic flake to build upon:
   in {
     packages.x86_64-linux = rec {
       default = villas-custom;
-      villas-custom = villas-pkgs.villas-minimal.override {
+      villas-custom = villas-pkgs.villas-node-minimal.override {
         version = "custom";
         withExtraConfig = true;
         withNodeIec60870 = true;
@@ -240,7 +240,7 @@ nix flake update
 
 ### Extending the flake
 
-Installing `villas` globally using `nix profile install` isn't really the
+Installing the `villas` CLI command globally using `nix profile install` isn't really the
 typical Nix usage. A more interesting use of Nix would be a custom Nix shell
 environment containing your `villas-custom` and other tools of your choice.
 
@@ -279,7 +279,7 @@ Here is a more complete `flake.nix` containing `devShells` available to
       default = villas-custom;
 
       # the customized villas package
-      villas-custom = villas-pkgs.villas-minimal.override {
+      villas-custom = villas-pkgs.villas-node-minimal.override {
         withConfig = true;
         withNodeIec60870 = true;
       };
