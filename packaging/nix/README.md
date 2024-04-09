@@ -46,8 +46,8 @@ The version chosen by default is `#villas-node`. Omitting the `#` suffix will
 select the more complete version of the `villas` CLI command.
 
 ```shell
-# omit `#` suffix in the flake reference from above
-# note the difference supported nodes/formats in help output compared to above
+# Omit `#` suffix in the flake reference from above
+# Note the difference supported nodes/formats in help output compared to above
 nix run 'github:VILLASframework/node?dir=packaging/nix' -- node -h
 ```
 
@@ -93,7 +93,7 @@ nix develop ./packaging/nix
 ## Docker/OCI Images
 
 OCI images created using nix can be as small as the typical `FROM scratch`
-images without worrying about missing dependencies or Copying things inbetween
+images without worrying about missing dependencies or Copying things in between
 `Dockerfile` stages. Copying exactly the application, it's dependencies an
 nothing else can be done using only a few lines of Nix.
 
@@ -139,7 +139,7 @@ See https://nixos.org/manual/nixpkgs/stable/#chap-overrides
 
 ```shell
 # `nix build` builds a derivation
-# `--expr <EXPR>` specifies a Nix expression which evalutes to a "derivation"
+# `--expr <EXPR>` specifies a Nix expression which evaluates to a "derivation"
 # `--impure` allows us to use a flake without specifying the exact git revision in `ref`
 # `ref` is the reference to the `villas` flake we want to use
 # `pkgs` is the set of `x86_64-linux` packages provided by the flake
@@ -216,19 +216,19 @@ The first time you use the flake a `flake.lock` will be created pinning villas
 to an exact git revision so future invocations will be exactly reproducible.
 
 ```shell
-# build custom `villas` and create the `result` symlink
+# Build custom `villas` and create the `result` symlink
 nix build .
 
-# run custom `villas node -h`
+# Run custom `villas node -h`
 nix run . -- node -h
 
-# install villas into default profile
+# Install villas into default profile
 nix profile install .
 
-# create a shell environment where `villas` is available in path
+# Create a shell environment where `villas` is available in path
 nix shell .
 
-# update the `flake.lock` if a newer `villas` is available on github
+# Update the `flake.lock` if a newer `villas` is available on github
 nix flake update
 ```
 
@@ -250,16 +250,16 @@ Here is a more complete `flake.nix` containing `devShells` available to
     # nixpkgs from the `unstable` branch
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # villas from the official repository
+    # VILLASnode from the official repository
     villas.url = "github:VILLASframework/node?dir=packaging/nix";
 
-    # overwrite the `nixpkgs` used by `villas` to our version above
+    # Overwrite the `nixpkgs` used by `villas` to our version above
     #
-    # this will negate the reproducibility of the `villas` flake,
+    # This will negate the reproducibility of the `villas` flake,
     # but allows us to deduplicate the dependencies used in our shell
     # and those in villas.
     #
-    # comment this line if an updated dependency causes a build failure
+    # Comment this line if an updated dependency causes a build failure
     villas.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -272,13 +272,13 @@ Here is a more complete `flake.nix` containing `devShells` available to
       # run/build/install the `villas-custom` package by default
       default = villas-custom;
 
-      # the customized villas package
+      # The customized villas package
       villas-custom = villas-pkgs.villas-node-minimal.override {
         withConfig = true;
         withNodeIec60870 = true;
       };
 
-      # an OCI image containing `villas-custom`
+      # An OCI image containing `villas-custom`
       image = pkgs.dockerTools.buildImage {
         name = "villas";
         tag = "nix";
@@ -303,10 +303,10 @@ Here is a more complete `flake.nix` containing `devShells` available to
 You can use our new features like this:
 
 ```shell
-# run your shell for villas-node
+# Run your shell for villas-node
 nix develop
 
-# load your custom OCI image into docker
+# Load your custom OCI image into docker
 docker load < $(nix build --no-link --print-out-paths .#image)
 ```
 
