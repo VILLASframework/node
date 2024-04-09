@@ -79,13 +79,7 @@ Try for example these commands in the repository root to create a new shell with
 all required dependencies to build various configurations of the `villas` CLI command.
 
 ```shell
-# create a shell with all required build dependecies but without most optional ones
-nix develop ./packaging/nix#minimal
-
-# create a shell with all required build dependecies with most optional ones
-nix develop ./packaging/nix#full
-
-# the default creates the `#full` shell
+# The default creates the `#full` shell
 nix develop ./packaging/nix
 ```
 
