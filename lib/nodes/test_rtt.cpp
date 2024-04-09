@@ -29,8 +29,8 @@ static int test_rtt_case_start(NodeCompat *n, int id) {
   struct test_rtt_case *c = (struct test_rtt_case *)list_at(&t->cases, id);
 
   n->logger->info(
-      "Starting case #{}: filename={}, rate={}, values={}, limit={}",
-      t->current, c->filename_formatted, c->rate, c->values, c->limit);
+      "Starting case #{}/{}: filename={}, rate={}, values={}, limit={}",
+      t->current, list_length(&t->cases), c->filename_formatted, c->rate, c->values, c->limit);
 
   // Open file
   t->stream = fopen(c->filename_formatted, "a+");
