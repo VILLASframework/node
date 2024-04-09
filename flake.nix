@@ -105,12 +105,6 @@
       in rec {
         default = full;
 
-        minimal = pkgs.mkShell {
-          inherit shellHook hardeningDisable packages;
-          name = "minimal";
-          inputsFrom = with pkgs; [villas-minimal];
-        };
-
         full = pkgs.mkShell {
           inherit shellHook hardeningDisable packages;
           name = "full";
