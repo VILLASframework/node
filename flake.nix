@@ -44,18 +44,18 @@
 
     # Build villas and its dependencies for the specified `pkgs`
     packagesWith = pkgs: rec {
-      default = villas;
+      default = villas-node;
 
-      villas-python = pkgs.callPackage (nixDir + "/python.nix") {
+      villas-node-python = pkgs.callPackage (nixDir + "/python.nix") {
         src = ./.;
       };
 
-      villas-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
+      villas-node-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
         src = ./.;
         version = "minimal";
       };
 
-      villas = villas-minimal.override {
+      villas-node = villas-node-minimal.override {
         version = "full";
         withAllExtras = true;
         withAllFormats = true;
@@ -114,13 +114,13 @@
         full = pkgs.mkShell {
           inherit shellHook hardeningDisable packages;
           name = "full";
-          inputsFrom = with pkgs; [villas];
+          inputsFrom = with pkgs; [villas-node];
         };
 
         python = pkgs.mkShell {
           inherit shellHook hardeningDisable;
           name = "python";
-          inputsFrom = with pkgs; [villas-python];
+          inputsFrom = with pkgs; [villas-node-python];
           packages = with pkgs;
             packages
             ++ [

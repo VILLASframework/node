@@ -15,7 +15,7 @@ in
       services.villas.node = {
         enable = mkEnableOption (lib.mdDoc "VILLASnode is a client/server application to connect simulation equipment and software.");
 
-        package = mkPackageOption pkgs "villas" {};
+        package = mkPackageOption pkgs "villas-node" {};
 
         configPath = mkOption {
           type = types.nullOr types.path;
