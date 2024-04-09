@@ -5,11 +5,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
-    ethercat = {
-      url = "gitlab:etherlab.org/ethercat/stable-1.5";
-      flake = false;
-    };
   };
 
   outputs = {
@@ -84,10 +79,6 @@
         withAllFormats = true;
         withAllHooks = true;
         withAllNodes = true;
-      };
-
-      ethercat = pkgs.callPackage (nixDir + "/ethercat.nix") {
-        src = inputs.ethercat;
       };
     };
   in {

@@ -1,29 +1,12 @@
 {
   "nodes": {
-    "ethercat": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1694079333,
-        "narHash": "sha256-6F3zBhnU4CFpiO+Cnbd6ecUuiGH/KUntpPfuSYZ+rAI=",
-        "owner": "etherlab.org",
-        "repo": "ethercat",
-        "rev": "722b2d607c4fc004ebf5204aaede0059c02274f4",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "etherlab.org",
-        "ref": "stable-1.5",
-        "repo": "ethercat",
-        "type": "gitlab"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1711370797,
-        "narHash": "sha256-2xu0jVSjuKhN97dqc4bVtvEH52Rwh6+uyI1XCnzoUyI=",
+        "lastModified": 1712666087,
+        "narHash": "sha256-WwjUkWsjlU8iUImbivlYxNyMB1L5YVqE8QotQdL9jWc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c726225724e681b3626acc941c6f95d2b0602087",
+        "rev": "a76c4553d7e741e17f289224eda135423de0491d",
         "type": "github"
       },
       "original": {
@@ -35,7 +18,6 @@
     },
     "root": {
       "inputs": {
-        "ethercat": "ethercat",
         "nixpkgs": "nixpkgs"
       }
     }
