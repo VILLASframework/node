@@ -7,16 +7,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <functional>
 #include <vector>
 
 #include <villas/exceptions.hpp>
+#include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/webrtc.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/uuid.hpp>
-#include <villas/node/config.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -27,7 +28,7 @@ static villas::node::Web *web;
 WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
     : Node(id, name),
       server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
-      peer(uuid::toString(id)), wait_seconds(0), format(nullptr), queue({}),
+      peer(uuid::toString(id)), wait_seconds(0), formatter(), queue({}),
       pool({}), dci({}) {
 
 #if RTC_VERSION < 0x001400
@@ -40,8 +41,8 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
 
 WebRTCNode::~WebRTCNode() {
   int ret = pool_destroy(&pool);
-  if (ret) // TODO log
-    ;
+  if (ret)
+    logger->error("Failed to destroy pool");
 }
 
 int WebRTCNode::parse(json_t *json) {
@@ -107,10 +108,12 @@ int WebRTCNode::parse(json_t *json) {
     }
   }
 
-  format = json_format ? FormatFactory::make(json_format)
-                       : FormatFactory::make("villas.binary");
-
-  assert(format);
+  auto *fmt = json_format ? FormatFactory::make(json_format)
+                          : FormatFactory::make("villas.binary");
+  formatter = Format::Ptr(fmt);
+  if (!formatter)
+    throw ConfigError(json_format, "node-config-node-webrtc-format",
+                      "Invalid format configuration");
 
   return 0;
 }
@@ -120,44 +123,28 @@ int WebRTCNode::prepare() {
   if (ret)
     return ret;
 
-  format->start(getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
+  formatter->start(getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
 
   // TODO: Determine output signals reliably
-  auto signals = std::make_shared<SignalList>();
+  auto output_signals = std::make_shared<SignalList>();
 
-  conn = std::make_shared<webrtc::PeerConnection>(server, session, peer,
-                                                  signals, rtcConf, web, dci);
+  conn = std::make_shared<webrtc::PeerConnection>(
+      server, session, peer, output_signals, rtcConf, web, dci);
 
   ret = pool_init(&pool, 1024, SAMPLE_LENGTH(getInputSignals(false)->size()));
-  if (ret) // TODO log
+  if (ret) {
+    logger->error("Failed to create pool");
     return ret;
+  }
 
   ret = queue_signalled_init(&queue, 1024);
-  if (ret) // TODO log
+  if (ret) {
+    logger->error("Failed to create queue");
     return ret;
+  }
 
-  // TODO: Move this to a member function
-  conn->onMessage([this](rtc::binary msg) {
-    int ret;
-    std::vector<Sample *> smps;
-    smps.resize(this->in.vectorize);
-
-    ret = sample_alloc_many(&this->pool, smps.data(), smps.size());
-    if (ret < 0) // TODO log
-      return;
-
-    ret = format->sscan((const char *)msg.data(), msg.size(), nullptr,
-                        smps.data(), ret);
-    if (ret < 0) // TODO log
-      return;
-
-    ret = queue_signalled_push_many(&this->queue, (void **)smps.data(), ret);
-    if (ret < 0) // TODO log
-      return;
-
-    this->logger->trace(
-        "onMessage(rtc::binary) callback finished pushing {} samples", ret);
-  });
+  conn->onMessage(
+      std::bind(&WebRTCNode::onMessage, this, std::placeholders::_1));
 
   return 0;
 }
@@ -214,9 +201,12 @@ int WebRTCNode::_write(struct Sample *smps[], unsigned cnt) {
   size_t wbytes;
 
   buf.resize(4 * 1024);
-  int ret = format->sprint((char *)buf.data(), buf.size(), &wbytes, smps, cnt);
-  if (ret < 0) // TODO log
+  int ret =
+      formatter->sprint((char *)buf.data(), buf.size(), &wbytes, smps, cnt);
+  if (ret < 0) {
+    logger->error("Failed to format payload");
     return ret;
+  }
 
   buf.resize(wbytes);
   conn->sendMessage(buf);
@@ -229,6 +219,34 @@ json_t *WebRTCNode::_readStatus() const {
     return nullptr;
 
   return conn->readStatus();
+}
+
+void WebRTCNode::onMessage(rtc::binary msg) {
+  int ret;
+  std::vector<Sample *> smps;
+  smps.resize(in.vectorize);
+
+  ret = sample_alloc_many(&pool, smps.data(), smps.size());
+  if (ret < 0) {
+    logger->error("Failed to allocate samples");
+    return;
+  }
+
+  ret = formatter->sscan((const char *)msg.data(), msg.size(), nullptr,
+                         smps.data(), ret);
+  if (ret < 0) {
+    logger->error("Failed to parse payload");
+    return;
+  }
+
+  ret = queue_signalled_push_many(&queue, (void **)smps.data(), ret);
+  if (ret < 0) {
+    logger->error("Failed to enqueue samples");
+    return;
+  }
+
+  logger->trace("onMessage(rtc::binary) callback finished pushing {} samples",
+                ret);
 }
 
 int WebRTCNodeFactory::start(SuperNode *sn) {

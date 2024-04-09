@@ -8,10 +8,12 @@
  */
 
 #include <chrono>
+#include <functional>
 
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
+#include <rtc/common.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/peer_connection.hpp>
 #include <villas/utils.hpp>
@@ -25,20 +27,23 @@ using namespace villas::node::webrtc;
 PeerConnection::PeerConnection(const std::string &server,
                                const std::string &session,
                                const std::string &peer,
-                               std::shared_ptr<SignalList> signals,
+                               std::shared_ptr<SignalList> out_signals,
                                rtc::Configuration cfg, Web *w,
                                rtc::DataChannelInit d)
     : web(w), extraServers({}), dataChannelInit(d), defaultConfig(cfg),
-      conn(nullptr), chan(nullptr), signals(signals),
+      conn(nullptr), chan(nullptr), out_signals(out_signals),
       logger(logging.get("webrtc:pc")), stopStartup(false),
       warnNotConnected(false), standby(true), first(false), firstID(INT_MAX),
       secondID(INT_MAX), onMessageCallback(nullptr) {
   client = std::make_shared<SignalingClient>(server, session, peer, web);
-  client->onConnected([this]() { this->onSignalingConnected(); });
-  client->onDisconnected([this]() { this->onSignalingDisconnected(); });
-  client->onError([this](auto err) { this->onSignalingError(std::move(err)); });
-  client->onMessage(
-      [this](auto msg) { this->onSignalingMessage(std::move(msg)); });
+
+  client->onConnected(std::bind(&PeerConnection::onSignalingConnected, this));
+  client->onDisconnected(
+      std::bind(&PeerConnection::onSignalingDisconnected, this));
+  client->onError(std::bind(&PeerConnection::onSignalingError, this,
+                            std::placeholders::_1));
+  client->onMessage(std::bind(&PeerConnection::onSignalingMessage, this,
+                              std::placeholders::_1));
 
   auto lock = std::unique_lock{mutex};
   resetConnectionAndStandby(lock);
@@ -135,18 +140,18 @@ void PeerConnection::setupPeerConnection(
                            std::begin(extraServers), std::end(extraServers));
 
   conn = pc ? std::move(pc) : std::make_shared<rtc::PeerConnection>(config);
-  conn->onLocalDescription(
-      [this](auto desc) { this->onLocalDescription(std::move(desc)); });
-  conn->onLocalCandidate(
-      [this](auto cand) { this->onLocalCandidate(std::move(cand)); });
+  conn->onLocalDescription(std::bind(&PeerConnection::onLocalDescription, this,
+                                     std::placeholders::_1));
+  conn->onLocalCandidate(std::bind(&PeerConnection::onLocalCandidate, this,
+                                   std::placeholders::_1));
   conn->onDataChannel(
-      [this](auto channel) { this->onDataChannel(std::move(channel)); });
-  conn->onGatheringStateChange(
-      [this](auto state) { this->onGatheringStateChange(std::move(state)); });
-  conn->onSignalingStateChange(
-      [this](auto state) { this->onSignalingStateChange(std::move(state)); });
-  conn->onStateChange(
-      [this](auto state) { this->onConnectionStateChange(std::move(state)); });
+      std::bind(&PeerConnection::onDataChannel, this, std::placeholders::_1));
+  conn->onGatheringStateChange(std::bind(
+      &PeerConnection::onGatheringStateChange, this, std::placeholders::_1));
+  conn->onSignalingStateChange(std::bind(
+      &PeerConnection::onSignalingStateChange, this, std::placeholders::_1));
+  conn->onStateChange(std::bind(&PeerConnection::onConnectionStateChange, this,
+                                std::placeholders::_1));
 }
 
 void PeerConnection::setupDataChannel(std::shared_ptr<rtc::DataChannel> dc) {
@@ -155,12 +160,14 @@ void PeerConnection::setupDataChannel(std::shared_ptr<rtc::DataChannel> dc) {
   assert(conn);
   chan =
       dc ? std::move(dc) : conn->createDataChannel("villas", dataChannelInit);
+
   chan->onMessage(
       [this](rtc::binary msg) { this->onDataChannelMessage(std::move(msg)); },
       [this](rtc::string msg) { this->onDataChannelMessage(std::move(msg)); });
-  chan->onOpen([this]() { this->onDataChannelOpen(); });
-  chan->onClosed([this]() { this->onDataChannelClosed(); });
-  chan->onError([this](auto err) { this->onDataChannelError(std::move(err)); });
+  chan->onOpen(std::bind(&PeerConnection::onDataChannelOpen, this));
+  chan->onClosed(std::bind(&PeerConnection::onDataChannelClosed, this));
+  chan->onError(std::bind(&PeerConnection::onDataChannelError, this,
+                          std::placeholders::_1));
 
   // If this node has it's data channel set up, don't accept any new ones
   conn->onDataChannel(nullptr);
@@ -251,7 +258,7 @@ void PeerConnection::onSignalingConnected() {
 
   auto lock = std::unique_lock{mutex};
 
-  client->sendMessage({*signals});
+  client->sendMessage({*out_signals});
 }
 
 void PeerConnection::onSignalingDisconnected() {
@@ -343,7 +350,9 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
             conn->addRemoteCandidate(c);
           },
 
-          [&](auto other) { logger->warn("unknown signaling message"); }},
+          [&](auto other) {
+            logger->warn("Signaling message has been skipped");
+          }},
       msg.message);
 }
 
