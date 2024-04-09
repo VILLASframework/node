@@ -51,7 +51,7 @@ in
         }
       ];
 
-      # configuration file indirection is needed to support reloading
+      # Configuration file indirection is needed to support reloading
       environment.etc."villas/node.json" = mkIf (builtins.isNull cfg.configPath) {
         source = villasNodeCfg;
       };
