@@ -134,7 +134,7 @@
       in {
         fmt = pkgs.runCommand "check-fmt" {} ''
           cd ${self}
-          "${pkgs.alejandra}/bin/alejandra" --check . 2>> $out
+          "${pkgs.nixfmt}/bin/nixfmt" --check . 2>> $out
         '';
       }
     );
