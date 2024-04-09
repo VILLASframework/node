@@ -6,8 +6,8 @@ requires = ['setuptools>=61.0']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'villas-python'
-version = '0.10.3'
+name = 'villas-node'
+version = '0.11.1'
 description = 'Python support for the VILLASnode simulation-data gateway'
 readme = 'README.md'
 requires-python = '>=3.10'

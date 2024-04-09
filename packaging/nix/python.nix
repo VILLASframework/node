@@ -6,7 +6,7 @@
   python3Packages,
 }:
 python3Packages.buildPythonPackage {
-  name = "villas-python";
+  name = "villas-node";
   src = "${src}/python";
   format = "pyproject";
   propagatedBuildInputs = with python3Packages; [
