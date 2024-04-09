@@ -79,7 +79,7 @@ void Format::start(SignalList::Ptr sigs, int fl) {
 }
 
 void Format::start(const std::string &dtypes, int fl) {
-  flags |= fl;
+  flags &= fl;
 
   signals = std::make_shared<SignalList>(dtypes.c_str());
   if (!signals)
