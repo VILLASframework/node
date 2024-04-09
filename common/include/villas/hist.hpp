@@ -34,7 +34,7 @@ public:
   // Count a value within its corresponding bucket.
   void put(double value);
 
-  // Calcluate the variance of all counted values.
+  // Calculate the variance of all counted values.
   double getVar() const;
 
   // Calculate the mean average of all counted values.
@@ -43,7 +43,7 @@ public:
   // Calculate the standard derivation of all counted values.
   double getStddev() const;
 
-  // Print all statistical properties of distribution including a graphilcal plot of the histogram.
+  // Print all statistical properties of distribution including a graphical plot of the histogram.
   void print(Logger logger, bool details) const;
 
   // Print ASCII style plot of histogram.
@@ -57,7 +57,7 @@ public:
   // Prints Matlab struct containing all infos to file.
   int dumpMatlab(FILE *f) const;
 
-  // Write the histogram in JSON format to fiel \p f.
+  // Write the histogram in JSON format to file \p f.
   int dumpJson(FILE *f) const;
 
   // Build a libjansson / JSON object of the histogram.
