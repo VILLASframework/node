@@ -151,9 +151,17 @@
         };
 
         python = pkgs.mkShell {
-          inherit shellHook hardeningDisable packages;
-          name = "full";
+          inherit shellHook hardeningDisable;
+          name = "python";
           inputsFrom = with pkgs; [villas-python];
+          packages = with pkgs;
+            packages
+            ++ [
+              (python3.withPackages (python-pkgs: [
+                python-pkgs.build
+                python-pkgs.twine
+              ]))
+            ];
         };
       }
     );
