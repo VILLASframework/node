@@ -11,7 +11,6 @@ set(SRCS
     villas-signal
     villas-compare
     villas-test-config
-    villas-test-rtt
 )
 
 add_executable(villas-node villas-node.cpp)
@@ -19,9 +18,6 @@ target_link_libraries(villas-node PUBLIC villas)
 
 add_executable(villas-test-config villas-test-config.cpp)
 target_link_libraries(villas-test-config PUBLIC villas)
-
-add_executable(villas-test-rtt villas-test-rtt.cpp)
-target_link_libraries(villas-test-rtt PUBLIC villas)
 
 add_executable(villas-compare villas-compare.cpp)
 target_link_libraries(villas-compare PUBLIC villas)
