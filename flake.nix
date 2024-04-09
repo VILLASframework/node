@@ -25,14 +25,8 @@
     # Supported systems for native compilation
     supportedSystems = ["x86_64-linux" "aarch64-linux"];
 
-    # Supported systems to cross compile to
-    supportedCrossSystems = ["aarch64-multiplatform"];
-
     # Generate attributes corresponding to all the supported systems
     forSupportedSystems = lib.genAttrs supportedSystems;
-
-    # Generate attributes corresponding to all supported combinations of system and crossSystem
-    forSupportedCrossSystems = f: forSupportedSystems (system: lib.genAttrs supportedCrossSystems (f system));
 
     # Initialize nixpkgs for the specified `system`
     pkgsFor = system:
@@ -40,18 +34,6 @@
         inherit system;
         overlays = with self.overlays; [default];
       };
-
-    # Initialize nixpkgs for cross-compiling from `system` to `crossSystem`
-    crossPkgsFor = system: crossSystem:
-      (import nixpkgs {
-        inherit system;
-        overlays = with self.overlays; [
-          default
-          minimal
-        ];
-      })
-      .pkgsCross
-      .${crossSystem};
 
     # Initialize development nixpkgs for the specified `system`
     devPkgsFor = system:
@@ -86,12 +68,6 @@
     packages = forSupportedSystems (
       system:
         packagesWith (pkgsFor system)
-    );
-
-    # Non-standard attribute for cross-compilated packages
-    crossPackages = forSupportedCrossSystems (
-      system: crossSystem:
-        packagesWith (crossPkgsFor system crossSystem)
     );
 
     # Standard flake attribute allowing you to add the villas packages to your nixpkgs

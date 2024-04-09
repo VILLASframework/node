@@ -127,40 +127,6 @@ docker load < $(nix build --no-link --print-out-paths --impure --expr '
 
 See https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-dockerTools
 
-## Simple cross-compilation to aarch64
-
-The flake currently supports `x86_64-linux` and `aarch64-linux` systems. But
-especially on some weaker `aarch64` target machines, compiling `villas` from
-source is rather cumbersome. This flake has a non-standard `crossPackages`
-flake output. This is currently only useful for cross-compiling from `x86_64`
-to `aarch64`.
-
-```shell
-nix build villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas
-```
-
-If your target has a nix installation you can directly build and copy the
-cross-compiled package using `nix copy`.
-
-```shell
-# build and copy in one
-nix copy villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas --to ssh-ng://target-system
-```
-
-```shell
-# build the cross-compiled package
-nix build villas#crossPackages.x86_64-linux.aarch64-multiplatform.villas
-
-# copy it over
-nix copy $(readlink result) --to ssh-ng://target
-
-# add the cross-compiled package to the target's PATH
-ssh target nix profile add $(readlink result)
-```
-
-Further parameters for port or user of the ssh connection can only be specified
-in the ssh configuration files.
-
 ## Customization
 
 The [`villas.nix`] file contains the Nix "derivation" used to
