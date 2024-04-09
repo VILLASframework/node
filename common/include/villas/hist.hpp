@@ -44,7 +44,7 @@ public:
   double getStddev() const;
 
   // Print all statistical properties of distribution including a graphical plot of the histogram.
-  void print(Logger logger, bool details) const;
+  void print(Logger logger, bool details, std::string prefix = "") const;
 
   // Print ASCII style plot of histogram.
   void plot(Logger logger) const;
