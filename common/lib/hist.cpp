@@ -128,7 +128,7 @@ void Hist::plot(Logger logger) const {
   std::vector<TableColumn> cols = {
       {-9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g"},
       {-6, TableColumn::Alignment::RIGHT, "Count", "%6ju"},
-      {0, TableColumn::Alignment::LEFT, "Plot", "%s", "occurences"}};
+      {0, TableColumn::Alignment::LEFT, "Plot", "%s", "occurrences"}};
 
   Table table = Table(logger, cols);
 

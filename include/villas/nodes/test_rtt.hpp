@@ -36,7 +36,7 @@ struct test_rtt {
   Format *formatter; // The format of the output file
   FILE *stream;
 
-  double cooldown; // Number of seconds to wait beween tests.
+  double cooldown; // Number of seconds to wait between tests.
 
   int current; // Index of current test in test_rtt::cases
   int counter;
