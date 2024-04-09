@@ -14,8 +14,8 @@
 #include <rtc/peerconnection.hpp>
 #include <rtc/rtc.hpp>
 #include <villas/config.hpp>
-#include <villas/node/config.hpp>
 #include <villas/log.hpp>
+#include <villas/node/config.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 #include <villas/signal_list.hpp>
 #include <villas/web.hpp>
@@ -54,7 +54,8 @@ class PeerConnection {
 
 public:
   PeerConnection(const std::string &server, const std::string &session,
-                 const std::string &peer, std::shared_ptr<SignalList> signals,
+                 const std::string &peer,
+                 std::shared_ptr<SignalList> out_signals,
                  rtc::Configuration config, Web *w, rtc::DataChannelInit d);
   ~PeerConnection();
 
@@ -76,7 +77,7 @@ protected:
   std::shared_ptr<rtc::PeerConnection> conn;
   std::shared_ptr<rtc::DataChannel> chan;
   std::shared_ptr<SignalingClient> client;
-  std::shared_ptr<SignalList> signals;
+  std::shared_ptr<SignalList> out_signals;
 
   Logger logger;
 

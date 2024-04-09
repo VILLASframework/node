@@ -32,13 +32,15 @@ protected:
   std::string peer;
 
   int wait_seconds;
-  Format *format;
+  Format::Ptr formatter;
   struct CQueueSignalled queue;
   struct Pool pool;
 
   std::shared_ptr<webrtc::PeerConnection> conn;
   rtc::Configuration rtcConf;
   rtc::DataChannelInit dci;
+
+  void onMessage(rtc::binary msg);
 
   virtual int _read(struct Sample *smps[], unsigned cnt);
 
