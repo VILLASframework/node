@@ -9,63 +9,78 @@
 
 #include <villas/format.hpp>
 #include <villas/list.hpp>
+#include <villas/node.hpp>
 #include <villas/task.hpp>
 
 namespace villas {
 namespace node {
 
 // Forward declarations
-class NodeCompat;
 struct Sample;
 
-struct test_rtt;
+class TestRTT : public Node {
 
-struct test_rtt_case {
-  double rate;
-  unsigned values;
-  unsigned limit; // The number of samples we take per test.
+protected:
+  class Case {
+    friend TestRTT;
 
-  char *filename;
-  char *filename_formatted;
+  protected:
+    TestRTT *node;
 
-  NodeCompat *node;
-};
+    int id;
+    double rate;
+    unsigned values;
+    unsigned limit; // The number of samples we take per test.
 
-struct test_rtt {
-  struct Task task;  // The periodic task for test_rtt_read()
-  Format *formatter; // The format of the output file
+    std::string filename;
+    std::string filename_formatted;
+
+  public:
+    Case(TestRTT *n, int id, int rate, int values, int limit,
+         std::string filename)
+        : node(n), id(id), rate(rate), values(values), limit(limit),
+          filename(filename){};
+
+    int start();
+    int stop();
+  };
+
+  Task task;             // The periodic task for test_rtt_read()
+  Format::Ptr formatter; // The format of the output file
   FILE *stream;
 
   double cooldown; // Number of seconds to wait between tests.
 
-  int current; // Index of current test in test_rtt::cases
   int counter;
 
-  struct List cases; // List of test cases
+  std::list<Case> cases; // List of test cases
+  std::list<Case>::iterator current_case;
 
-  char *output; // The directory where we place the results.
-  char *prefix; // An optional prefix in the filename.
+  std::string output; // The directory where we place the results.
+  std::string prefix; // An optional prefix in the filename.
+
+  virtual int _read(struct Sample *smps[], unsigned cnt);
+
+  virtual int _write(struct Sample *smps[], unsigned cnt);
+
+public:
+  TestRTT(const uuid_t &id = {}, const std::string &name = "")
+      : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr) {}
+
+  virtual ~TestRTT(){};
+
+  virtual int prepare();
+
+  virtual int parse(json_t *json);
+
+  virtual int start();
+
+  virtual int stop();
+
+  virtual std::vector<int> getPollFDs();
+
+  virtual const std::string &getDetails();
 };
-
-char *test_rtt_print(NodeCompat *n);
-
-int test_rtt_parse(NodeCompat *n, json_t *json);
-
-int test_rtt_prepare(NodeCompat *n);
-
-int test_rtt_init(NodeCompat *n);
-
-int test_rtt_destroy(NodeCompat *n);
-
-int test_rtt_start(NodeCompat *n);
-
-int test_rtt_stop(NodeCompat *n);
-
-int test_rtt_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
-
-int test_rtt_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
-
-int test_rtt_poll_fds(NodeCompat *n, int fds[]);
 
 } // namespace node
 } // namespace villas
