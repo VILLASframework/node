@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
 #include <cmath>
 #include <cstring>
 #include <netdb.h>

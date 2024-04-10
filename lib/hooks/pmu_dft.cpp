@@ -5,10 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
 #include <complex>
 #include <cstring>
-#include <sstream>
 #include <vector>
 #include <villas/timing.hpp>
 

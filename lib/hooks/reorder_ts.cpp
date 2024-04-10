@@ -7,7 +7,6 @@
 
 #include "villas/exceptions.hpp"
 #include <algorithm>
-#include <cinttypes>
 #include <cstring>
 #include <ctime>
 #include <vector>

@@ -6,7 +6,6 @@
  */
 
 #include <cstdlib>
-#include <cstring>
 #include <signal.h>
 #include <unistd.h>
 

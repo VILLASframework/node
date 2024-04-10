@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

@@ -8,8 +8,6 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include <atomic>
-#include <exception>
 #include <iomanip>
 #include <iostream>
 

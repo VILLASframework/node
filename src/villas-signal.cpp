@@ -6,8 +6,6 @@
  */
 
 #include <atomic>
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <unistd.h>
 

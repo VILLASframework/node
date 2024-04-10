@@ -5,10 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <bitset>
-
-#include <cstring>
-
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/sample.hpp>

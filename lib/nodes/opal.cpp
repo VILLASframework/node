@@ -10,10 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <cmath>
 #include <cstdlib>
-#include <vector>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>

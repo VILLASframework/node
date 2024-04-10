@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <cstring>
-#include <list>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>

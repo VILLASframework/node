@@ -5,10 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
 #include <cstring>
+
 #include <mosquitto.h>
-#include <mutex>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>

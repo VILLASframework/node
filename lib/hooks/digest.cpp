@@ -14,7 +14,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 
 #include <fmt/format.h>
 #include <openssl/evp.h>

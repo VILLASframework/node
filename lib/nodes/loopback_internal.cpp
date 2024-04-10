@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstring>
-
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/node/config.hpp>
