@@ -125,7 +125,7 @@ int LoopbackNode::parse(json_t *json) {
 
 // Register node
 static char n[] = "loopback";
-static char d[] = "loopback node-type";
+static char d[] = "Loopback node-type";
 static NodePlugin<LoopbackNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_POLL |
                       (int)NodeFactory::Flags::SUPPORTS_READ |

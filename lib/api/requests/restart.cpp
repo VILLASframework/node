@@ -113,7 +113,7 @@ std::string RestartRequest::configUri;
 // Register API request
 static char n[] = "restart";
 static char r[] = "/restart";
-static char d[] = "restart VILLASnode with new configuration";
+static char d[] = "Restart VILLASnode with new configuration";
 static RequestPlugin<RestartRequest, n, r, d> p;
 
 } // namespace api

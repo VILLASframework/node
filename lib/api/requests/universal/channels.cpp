@@ -54,7 +54,7 @@ public:
 // Register API requests
 static char n[] = "universal/channels";
 static char r[] = "/universal/(" RE_NODE_NAME ")/channels";
-static char d[] = "get channels of universal data-exchange API node";
+static char d[] = "Get channels of universal data-exchange API node";
 static RequestPlugin<SignalsRequest, n, r, d> p;
 
 } // namespace universal

@@ -40,7 +40,7 @@ public:
 // Register API request
 static char n[] = "paths";
 static char r[] = "/paths";
-static char d[] = "retrieve list of all paths with details";
+static char d[] = "Get list of all paths with details";
 static RequestPlugin<PathsRequest, n, r, d> p;
 
 } // namespace api

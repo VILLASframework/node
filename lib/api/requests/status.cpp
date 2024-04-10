@@ -99,7 +99,7 @@ public:
 // Register API request
 static char n[] = "status";
 static char r[] = "/status";
-static char d[] = "get status and statistics of web server";
+static char d[] = "Get status and statistics of web server";
 static RequestPlugin<StatusRequest, n, r, d> p;
 
 } // namespace api

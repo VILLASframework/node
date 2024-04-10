@@ -201,7 +201,7 @@ std::vector<int> ExecNode::getPollFDs() { return {proc->getFdIn()}; }
 
 // Register node
 static char n[] = "exec";
-static char d[] = "run subprocesses with stdin/stdout communication";
+static char d[] = "Run subprocesses with stdin/stdout communication";
 static NodePlugin<ExecNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
                       (int)NodeFactory::Flags::SUPPORTS_WRITE |
