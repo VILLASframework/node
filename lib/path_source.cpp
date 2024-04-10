@@ -150,7 +150,7 @@ int PathSource::read(int i) {
 
   path->received.set(i);
 
-  path->logger->debug("Flags: received=0b{:b}, mask=0b{:b}",
+  path->logger->trace("Source nodes: received=0b{:b}, mask=0b{:b}",
                       path->received.to_ullong(), path->mask.to_ullong());
 
   if (path->mask.test(i)) {
