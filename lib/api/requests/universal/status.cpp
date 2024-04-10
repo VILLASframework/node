@@ -37,7 +37,7 @@ public:
 // Register API requests
 static char n[] = "universal/status";
 static char r[] = "/universal/(" RE_NODE_NAME ")/status";
-static char d[] = "get status of universal data-exchange API";
+static char d[] = "Get status of universal data-exchange API";
 static RequestPlugin<StatusRequest, n, r, d> p;
 
 } // namespace universal

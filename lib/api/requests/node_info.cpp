@@ -47,7 +47,7 @@ public:
 // Register API request
 static char n[] = "node";
 static char r[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")";
-static char d[] = "retrieve info of a node";
+static char d[] = "Get node details";
 static RequestPlugin<NodeInfoRequest, n, r, d> p;
 
 } // namespace api

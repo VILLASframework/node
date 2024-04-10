@@ -38,7 +38,7 @@ public:
 // Register API request
 static char n[] = "path";
 static char r[] = "/path/(" RE_UUID ")";
-static char d[] = "retrieve info of a path";
+static char d[] = "Get path details";
 static RequestPlugin<PathInfoRequest, n, r, d> p;
 
 } // namespace api

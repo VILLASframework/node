@@ -40,7 +40,7 @@ public:
 // Register API request
 static char n[] = "nodes";
 static char r[] = "/nodes";
-static char d[] = "retrieve list of all known nodes";
+static char d[] = "Get list of all known nodes";
 static RequestPlugin<NodesRequest, n, r, d> p;
 
 } // namespace api

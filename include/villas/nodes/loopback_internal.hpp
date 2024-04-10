@@ -56,7 +56,7 @@ public:
   virtual std::string getName() const { return "loopback.internal"; }
 
   virtual std::string getDescription() const {
-    return "internal loopback node";
+    return "Internal loopback node";
   }
 };
 

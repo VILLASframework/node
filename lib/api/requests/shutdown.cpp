@@ -36,7 +36,7 @@ public:
 // Register API request
 static char n[] = "shutdown";
 static char r[] = "/shutdown";
-static char d[] = "quit VILLASnode";
+static char d[] = "Terminate VILLASnode instance";
 static RequestPlugin<ShutdownRequest, n, r, d> p;
 
 } // namespace api

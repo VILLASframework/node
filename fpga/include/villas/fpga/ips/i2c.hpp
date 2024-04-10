@@ -106,7 +106,7 @@ class I2cFactory : NodeFactory {
 public:
   virtual std::string getName() const { return "i2c"; }
 
-  virtual std::string getDescription() const { return "Xilinx's AXI4 iic IP"; }
+  virtual std::string getDescription() const { return "Xilinx's AXI4 IIC IP"; }
 
 private:
   virtual Vlnv getCompatibleVlnv() const {

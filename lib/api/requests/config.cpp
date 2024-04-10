@@ -37,7 +37,7 @@ public:
 // Register API request
 static char n[] = "config";
 static char r[] = "/config";
-static char d[] = "get configuration of this VILLASnode instance";
+static char d[] = "Get the configuration of this VILLASnode instance";
 static RequestPlugin<ConfigRequest, n, r, d> p;
 
 } // namespace api
