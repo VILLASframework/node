@@ -6,7 +6,6 @@
  */
 
 #include <chrono>
-#include <functional>
 #include <unordered_map>
 
 #include <sys/time.h>

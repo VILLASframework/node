@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cmath>
 #include <cstring>
 
 #include <villas/hook.hpp>

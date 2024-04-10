@@ -6,13 +6,9 @@
  */
 
 #include <cerrno>
-#include <cinttypes>
-#include <cstdint>
 #include <cstring>
 
 #include <algorithm>
-#include <iterator>
-#include <list>
 #include <map>
 
 #include <poll.h>
