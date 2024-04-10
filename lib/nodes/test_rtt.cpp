@@ -287,7 +287,7 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
       task.setTimeout(cooldown);
     }
 
-    current_case++;
+    ++current_case;
 
     return 0;
   }
