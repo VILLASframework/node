@@ -48,7 +48,7 @@ prepare:docker:
         TARGET: dev-vscode
         DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-vscode
   tags:
-    - docker
+    - docker-image-builder
 
 # Stage: build
 
