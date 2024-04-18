@@ -188,6 +188,9 @@ int FpgaNode::start() {
   return Node::start();
 }
 
+// We cannot modify the BD here, so writes are fixed length.
+// If fastWrite receives less signals than expected, the previous data
+// will be reused for the remaining signals
 int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
   Sample *smp = smps[0];
 
@@ -222,6 +225,9 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
   return 1;
 }
 
+// Because we cannot modify the BD here, reads are fixed length.
+// However, if we receive less data than expected, we will return only
+// what we have received. fastRead is thus capable of partial reads.
 int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   Sample *smp = smps[0];
   auto mem = MemoryAccessor<float>(*blockRx);

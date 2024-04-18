@@ -139,11 +139,13 @@ private:
 
   // When using SG: ringBdSize is the maximum number of BDs usable in the ring
   // Depending on alignment, the actual number of BDs usable can be smaller
+  // We use a single BD for transfers, because this way we can achieve the best
+  // latency. The AXI read cache in the FPGA also only supports a single BD.
+  // TODO: We could make this configurable in the future.
   static constexpr size_t requestedRingBdSize = 1;
   static constexpr size_t requestedRingBdSizeMemory =
       requestedRingBdSize * sizeof(XAxiDma_Bd);
-  uint32_t actualRingBdSize = 1; //XAxiDma_BdRingCntCalc(
-      //XAXIDMA_BD_MINIMUM_ALIGNMENT, requestedRingBdSizeMemory);
+  uint32_t actualRingBdSize = 1;
   std::shared_ptr<MemoryBlock> sgRing;
 };
 
