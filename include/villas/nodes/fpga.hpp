@@ -32,7 +32,7 @@ protected:
   std::string cardName;
   std::list<std::string> connectStrings;
 
-  // This setting improves latency by remove various checks.
+  // This setting improves latency by removing various checks.
   // Use with caution! Requires read cache in FPGA design!
   // The common use case in VILLASfpga is that we have exactly
   // one write for every read and the number of exchanged signals
