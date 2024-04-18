@@ -370,7 +370,7 @@ XAxiDma_Bd *Dma::writeScatterGatherSetupBd(const void *buf, size_t len) {
   return bd;
 }
 
-//Write a single message
+// Write a single message
 bool Dma::writeScatterGather(const void *buf, size_t len) {
   // buf is address from view of DMA controller
 
