@@ -1,24 +1,23 @@
 /* DMA driver
  *
- * Author: Daniel Krebs <github@daniel-krebs.net>
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2018 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ * SPDX-FileCopyrightText: 2018-2024 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <sstream>
 #include <string>
-
-#include "xilinx/xaxidma_bd.h"
-#include "xilinx/xaxidma_hw.h"
 #include <sys/types.h>
-#include <xilinx/xaxidma.h>
-
-#include <villas/memory.hpp>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/intc.hpp>
+#include <villas/memory.hpp>
+
+#include <xilinx/xaxidma.h>
+#include <xilinx/xaxidma_bd.h>
+#include <xilinx/xaxidma_hw.h>
 
 // Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY 0x1000
@@ -116,7 +115,7 @@ void Dma::setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr) {
     throw RuntimeError("Failed to clone BD template: {}", ret);
 
   if (cyclic) {
-    /* Enable Cyclic DMA mode */
+    // Enable Cyclic DMA mode
     XAxiDma_BdRingEnableCyclicDMA(rxRingPtr);
     XAxiDma_SelectCyclicMode(&xDma, XAXIDMA_DEVICE_TO_DMA, 1);
   }
@@ -212,7 +211,7 @@ Dma::~Dma() {
       free(rxRingPtr->CyclicBd);
       rxRingPtr->CyclicBd = nullptr;
     }
-    // unampe SG memory Blocks
+    // Unmap SG memory Blocks
     if (sgRing) {
       card->unmapMemoryBlock(*sgRing);
     }
