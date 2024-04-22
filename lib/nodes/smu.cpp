@@ -27,7 +27,12 @@ SMUNode::SMUNode(const uuid_t &id, const std::string &name) :
     sample_rate(FS_10kSPS),
     fps(FB_10FPS),
     sync(SYNC_PPS),
-	daq_cfg({sample_rate, fps, mode, sync})
+    daq_cfg({sample_rate, fps, mode, sync}),
+	  shared_mem(nullptr),  // initalization
+    shared_mem_pos(0),    // initalization
+    shared_mem_inc(0),    // initalization
+    shared_mem_dim(0),    // initalization
+    buffer_size(0)
 {
     return;
 }
