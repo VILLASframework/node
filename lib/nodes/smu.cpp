@@ -212,7 +212,7 @@ int SMUNode::start()
         logger->warn("Fail to stop the driver");
 
     // Configure DAQ driver
-    if (::write(fd, &daq_cfg, sizeof(daq_cfg)))
+    if (::write(fd, &daq_cfg, sizeof(daq_cfg.rate)))
         logger->warn("Fail to configure the driver");
 
     // Start DAQ driver
