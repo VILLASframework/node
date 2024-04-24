@@ -89,6 +89,8 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
     logger->debug("searching for FPGA IP cors config at {}",
                   json_ips_path.string());
     json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);
+  } else {
+    json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
   }
   if (json_ips == nullptr) {
     json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
