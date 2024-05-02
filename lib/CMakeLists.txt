@@ -128,10 +128,11 @@ if(WITH_FPGA)
     list(APPEND LIBRARIES villas-fpga)
 endif()
 
+link_directories(/app/lib/aarch64-linux-gnu /usr/lib/aarch64-linux-gnu)
 add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
-target_link_libraries(villas PRIVATE -Wl,-rpath,--whole-archive ${WHOLE_ARCHIVES} -Wl,-rpath,--no-whole-archive)
+target_link_libraries(villas PRIVATE -Wl,--whole-archive ${WHOLE_ARCHIVES} -Wl,--no-whole-archive)
 
 set_target_properties(villas PROPERTIES
     VERSION ${CMAKE_PROJECT_VERSION}
