@@ -77,8 +77,6 @@ ENV CMAKE_EXTRA_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
 
 ENV CONFIGURE_OPTS="--libdir=${PREFIX}/lib/${TRIPLET}"
 
-ENV LD_LIBRARY_PATH=/usr/local/lib
-
 RUN mkdir -p /usr/local/lib/${TRIPLET}
 
 ENV CPP=${TRIPLET}-cpp
