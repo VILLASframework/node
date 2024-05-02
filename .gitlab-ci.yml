@@ -84,7 +84,6 @@ build:source:
           -DWITH_TESTS=OFF
           -DWITH_TOOLS=OFF
           -DWITH_WEB=OFF
-          -DWITH_RTP=OFF
           -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
           -DCMAKE_PREFIX_PATH=/usr/local
 

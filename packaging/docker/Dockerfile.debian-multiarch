@@ -62,7 +62,6 @@ RUN apt-get update && \
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-	ldconfig && \
 	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
@@ -77,6 +76,8 @@ ENV CMAKE_EXTRA_OPTS="-DCMAKE_TOOLCHAIN_FILE=/debian-${ARCH}.cmake \
 	-DLWS_INSTALL_LIB_DIR=${PREFIX}/lib/${TRIPLET}"
 
 ENV CONFIGURE_OPTS="--libdir=${PREFIX}/lib/${TRIPLET}"
+
+ENV LD_LIBRARY_PATH=/usr/local/lib
 
 RUN mkdir -p /usr/local/lib/${TRIPLET}
 
