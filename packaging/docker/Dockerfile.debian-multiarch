@@ -119,7 +119,7 @@ WORKDIR /villas/build
 
 RUN echo "Debug: build started"
 
-RUN cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
+RUN cmake -DCMAKE_INSTALL_RPATH=/app/lib ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
 	make -j$(nproc) install
 
 RUN echo "Debug: build finished"
