@@ -109,13 +109,12 @@ UCM_DESCRIPTION = "An interface the VILLASnode gateway"
 %% BEGIN DOCUMENTATION -- Enter model's documentation after this line...
 
 Full documentation of this model is available at:
-https://villas.fein-aachen.org/doc/node-client-hypersim.html
+https://villas.fein-aachen.org/docs/node/clients/opal_hypersim
 
-Author:
-
-## Author
+## Authors
 
 - Anju Meghwani <meghwani@iitk.ac.in>
+- Louis Birkner <louis.birkner@opal-rt.com>
 
 Anju Meghwani is a Research Establishment Officer at Indian Institute of Kanpur, India and worked in Washington State University, Pullman as visiting scholar in Summer 2018.
 During her visit, she developed an interfacing framework for VILLASnode and HYPERSIM.
@@ -219,8 +218,23 @@ UI-ASSIST is a joint research project between India and the US.
 switchr no int in auto S "Receive Data"
 switchs no int in auto S "Send Data"
 
-datain no double in auto I "Data Input"
-dataout no double out auto O "Data Output"
+datain0 no double in auto I "Data Input 0"
+datain1 no double in auto I "Data Input 1"
+datain2 no double in auto I "Data Input 2"
+datain3 no double in auto I "Data Input 3"
+datain4 no double in auto I "Data Input 4"
+datain5 no double in auto I "Data Input 5"
+datain6 no double in auto I "Data Input 6"
+datain7 no double in auto I "Data Input 7"
+
+dataout0 no double out auto O "Data Output 0"
+dataout1 no double out auto O "Data Output 1"
+dataout2 no double out auto O "Data Output 2"
+dataout3 no double out auto O "Data Output 3"
+dataout4 no double out auto O "Data Output 4"
+dataout5 no double out auto O "Data Output 5"
+dataout6 no double out auto O "Data Output 6"
+dataout7 no double out auto O "Data Output 7"
 
 %% END CONTROL IOS
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -527,7 +541,8 @@ UCM_PREP_LIBRARIES =
 #define REMOTE_ADR		"192.168.1.188"
 
 #define MAX_VALUES		64
-#define NO_SEND_DATA	3
+#define NO_SEND_DATA	8
+#define NO_RECV_DATA	8
 
 /***** User Settings End ******/
 
@@ -716,13 +731,30 @@ struct sockaddr_in rec_addr;
 		msgr->sequence = htonl(msgr->sequence);
 		msgr->ts.sec   = htonl(msgr->ts.sec);
 		msgr->ts.nsec  = htonl(msgr->ts.nsec);
-		msgr->data[0].i = ntohl(msgr->data[0].i);
 
-		dataout = (float) msgr->data[0].f;
+		if (msgr->length >= NO_RECV_DATA) {
+			msgr->data[0].i = ntohl(msgr->data[0].i);
+			msgr->data[1].i = ntohl(msgr->data[1].i);
+			msgr->data[2].i = ntohl(msgr->data[2].i);
+			msgr->data[3].i = ntohl(msgr->data[3].i);
+			msgr->data[4].i = ntohl(msgr->data[4].i);
+			msgr->data[5].i = ntohl(msgr->data[5].i);
+			msgr->data[6].i = ntohl(msgr->data[6].i);
+			msgr->data[7].i = ntohl(msgr->data[7].i);
+
+			dataout0 = (float) msgr->data[0].f;
+			dataout1 = (float) msgr->data[1].f;
+			dataout2 = (float) msgr->data[2].f;
+			dataout3 = (float) msgr->data[3].f;
+			dataout4 = (float) msgr->data[4].f;
+			dataout5 = (float) msgr->data[5].f;
+			dataout6 = (float) msgr->data[6].f;
+			dataout7 = (float) msgr->data[7].f;
+		}
 	}
 
 	/* Sending data */
-	char buf[MSG_LEN(MAX_VALUES)];
+	char buf[MSG_LEN(NO_SEND_DATA)];
 	struct msg *msg = (struct msg *) buf;
 
 	struct timespec now;
@@ -740,8 +772,23 @@ struct sockaddr_in rec_addr;
 		msg->ts.sec = now.tv_sec;
 		msg->ts.nsec = now.tv_nsec;
 
-		msg->data[0].f = datain;
+		msg->data[0].f = datain0;
+		msg->data[1].f = datain1;
+		msg->data[2].f = datain2;
+		msg->data[3].f = datain3;
+		msg->data[3].f = datain3;
+		msg->data[4].f = datain4;
+		msg->data[5].f = datain5;
+		msg->data[6].f = datain6;
+
 		msg->data[0].i = htonl(msg->data[0].i);
+		msg->data[1].i = htonl(msg->data[1].i);
+		msg->data[2].i = htonl(msg->data[2].i);
+		msg->data[3].i = htonl(msg->data[3].i);
+		msg->data[4].i = htonl(msg->data[4].i);
+		msg->data[5].i = htonl(msg->data[5].i);
+		msg->data[6].i = htonl(msg->data[6].i);
+		msg->data[7].i = htonl(msg->data[7].i);
 
 		msg->length   = htons(msg->length);
 		msg->sequence = htonl(msg->sequence);
