@@ -295,21 +295,21 @@ if ! pkg-config "comedilib >= 0.11.0" && \
 fi
 
 # Build & Install libre
-if ! pkg-config "libre >= 3.6.0" && \
-    should_build "libre" "for the rtp node-type"; then
-    git clone ${GIT_OPTS} --branch v3.6.0 https://github.com/baresip/re.git
-    mkdir -p re/build
-    pushd re/build
-    cmake -DUSE_LIBREM=OFF \
-          -DUSE_BFCP=OFF \
-          -DUSE_PCP=OFF \
-          -DUSE_RTMP=OFF \
-          -DUSE_SIP=OFF \
-          -DLIBRE_BUILD_STATIC=OFF  \
-          ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
-    popd
-fi
+# if ! pkg-config "libre >= 3.6.0" && \
+#     should_build "libre" "for the rtp node-type"; then
+#     git clone ${GIT_OPTS} --branch v3.6.0 https://github.com/baresip/re.git
+#     mkdir -p re/build
+#     pushd re/build
+#     cmake -DUSE_LIBREM=OFF \
+#           -DUSE_BFCP=OFF \
+#           -DUSE_PCP=OFF \
+#           -DUSE_RTMP=OFF \
+#           -DUSE_SIP=OFF \
+#           -DLIBRE_BUILD_STATIC=OFF  \
+#           ${CMAKE_OPTS} ..
+#     make ${MAKE_OPTS} install
+#     popd
+# fi
 
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
