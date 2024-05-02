@@ -20,6 +20,8 @@ ARG PREFIX
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/app/lib/aarch64-linux-gnu
+
 # Enable ${ARCH} architecture
 RUN dpkg --add-architecture ${ARCH}
 
