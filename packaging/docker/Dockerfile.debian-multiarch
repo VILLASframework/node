@@ -9,8 +9,7 @@ ARG DISTRO=debian
 ARG DEBIAN_VERSION=bullseye
 ARG ARCH=armhf
 ARG TRIPLET=arm-linux-gnueabihf
-# ARG PREFIX=/app
-ARG PREFIX=/usr/lib
+ARG PREFIX=/app
 
 FROM --platform=${BUILDPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS dev
 
