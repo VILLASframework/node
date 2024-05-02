@@ -9,7 +9,8 @@ ARG DISTRO=debian
 ARG DEBIAN_VERSION=bullseye
 ARG ARCH=armhf
 ARG TRIPLET=arm-linux-gnueabihf
-ARG PREFIX=/app
+# ARG PREFIX=/app
+ARG PREFIX=/usr/lib
 
 FROM --platform=${BUILDPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS dev
 
@@ -119,7 +120,7 @@ WORKDIR /villas/build
 
 RUN echo "Debug: build started"
 
-RUN cmake -DCMAKE_INSTALL_RPATH=/app/lib/aarch64-linux-gnu ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
+RUN cmake ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS} .. && \
 	make -j$(nproc) install
 
 RUN echo "Debug: build finished"
