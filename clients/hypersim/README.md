@@ -4,11 +4,12 @@ This directory contains a HYPERSIM user code model (UCM) for interfacing the HYP
 
 ## Documentation
 
-Detailed information for installation and usage of the UCM is provided in the [user documentation](https://villas.fein-aachen.org/doc/node-client-hypersim.html).
+Detailed information for installation and usage of the UCM is provided in the [user documentation](https://villas.fein-aachen.org/docs/node/clients/opal_hypersim).
 
-## Author
+## Authors
 
 - Anju Meghwani <meghwani@iitk.ac.in>
+- Louis Birkner <louis.birkner@opal-rt.com>
 
 ## License
 
