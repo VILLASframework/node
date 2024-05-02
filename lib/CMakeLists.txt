@@ -128,7 +128,6 @@ if(WITH_FPGA)
     list(APPEND LIBRARIES villas-fpga)
 endif()
 
-link_directories(/app/lib/aarch64-linux-gnu /usr/lib/aarch64-linux-gnu)
 add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
