@@ -86,7 +86,6 @@ build:source:
           -DWITH_WEB=OFF
           -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
           -DCMAKE_PREFIX_PATH=/usr/local
-          -DCMAKE_PREFIX_PATH=/usr/local/lib
 
 build:nix:
   stage: build

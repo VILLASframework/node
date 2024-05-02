@@ -62,6 +62,7 @@ RUN apt-get update && \
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
+	ldconfig && \
 	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
