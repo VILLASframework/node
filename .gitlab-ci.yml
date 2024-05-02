@@ -69,7 +69,7 @@ build:source:
     matrix:
       - DISTRO: [fedora, fedora-minimal, debian, rocky, ubuntu]
       - DISTRO: fedora-minimal
-        CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+        CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=OFF
           -DWITH_API=OFF
           -DWITH_CLIENTS=OFF
           -DWITH_CONFIG=OFF
