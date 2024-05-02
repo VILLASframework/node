@@ -92,7 +92,7 @@ ENV AS=${TRIPLET}-as
 ENV AR=${TRIPLET}-ar
 ENV RANLIB=${TRIPLET}-ranlib
 
-RUN mkdir ${PREFIX}
+# RUN mkdir ${PREFIX}
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
