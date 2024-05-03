@@ -141,7 +141,7 @@ RUN apt-get update && \
 	apt-get install -y \
 		libgomp1:${ARCH} \
 		libprotobuf-c1:${ARCH} \
-		libssl1.1:${ARCH} \
+		libssl3:${ARCH} \
 		libcgraph6:${ARCH} \
 		libcdt5:${ARCH} \
 		# libgvc6:${ARCH} \
