@@ -6,9 +6,9 @@
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=debian
-ARG DEBIAN_VERSION=bullseye
-ARG ARCH=armhf
-ARG TRIPLET=arm-linux-gnueabihf
+ARG DEBIAN_VERSION=bookworm
+ARG ARCH=arm64
+ARG TRIPLET=aarch64-linux-gnu
 ARG PREFIX=/app
 
 FROM --platform=${BUILDPLATFORM} ${DISTRO}:${DEBIAN_VERSION} AS dev
