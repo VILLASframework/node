@@ -68,7 +68,6 @@ build:source:
   parallel:
     matrix:
       - DISTRO: [fedora, fedora-minimal, debian, rocky, ubuntu]
-        CMAKE_EXTRA_OPTS: -DWITH_RTP=OFF
       - DISTRO: fedora-minimal
         CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
           -DWITH_API=OFF
@@ -87,7 +86,6 @@ build:source:
           -DWITH_WEB=OFF
           -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
           -DCMAKE_PREFIX_PATH=/usr/local
-          -DWITH_RTP=OFF
 
 build:nix:
   stage: build
