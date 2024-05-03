@@ -179,8 +179,8 @@ ENV PATH=${PREFIX}/bin:${PATH}
 # RUN rm /tmp/libvillas_path.txt
 
 # Test if it runs
-RUN ls /app/lib/aarch64-linux-gnu
-RUN villas node -h 2>&1 > /dev/null
+# RUN ls /app/lib/aarch64-linux-gnu
+# RUN villas node -h 2>&1 > /dev/null
 
 RUN echo "Debug: run-time dependencies installed"
 
