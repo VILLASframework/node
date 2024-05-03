@@ -172,6 +172,13 @@ RUN echo "${PREFIX}/lib" >> /etc/ld.so.conf && \
 
 ENV PATH=${PREFIX}/bin:${PATH}
 
+# run find -name libvillas.so and store it in variable
+RUN find / -name libvillas.so > /tmp/libvillas_path.txt && \
+    echo "The path to libvillas.so is $(cat /tmp/libvillas_path.txt)" && \
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$(dirname $(cat /tmp/libvillas_path.txt))" > /etc/profile.d/ld_library_path.sh && chmod +x /etc/profile.d/ld_library_path.sh
+RUN rm /tmp/libvillas_path.txt
+RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(cat /tmp/libvillas_path.txt)) && \
+
 # Test if it runs
 RUN villas node -h 2>&1 > /dev/null
 
