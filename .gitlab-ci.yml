@@ -190,7 +190,35 @@ pkg:docker:
       #   ARCH: arm64
       #   TRIPLET: aarch64-linux-gnu
       #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+  needs: []
 
+pkg:dockerarm:
+  stage: packaging
+  before_script:
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    # - docker run --rm --privileged docker.io/aptman/qus -s -- -p
+  script:
+    - docker buildx ${DOCKER_OPTS}
+      --pull
+      --target ${TARGET}
+      --build-arg ARCH=${ARCH}
+      --build-arg TRIPLET=${TRIPLET}
+      --build-arg CMAKE_OPTS="${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}"
+      --platform ${PLATFORM}
+      --file ${DOCKER_FILE}
+      --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
+    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
+  tags:
+    - docker
+  variables:
+    TARGET: app
+  parallel:
+    matrix:
+      - DISTRO: debian
+        PLATFORM: linux/arm64/v8
+        ARCH: arm64
+        TRIPLET: aarch64-linux-gnu
+        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
   needs: []
 
 # Stage: deploy
