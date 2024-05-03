@@ -40,7 +40,7 @@ RUN echo "Debug: ${ARCH} ${TRIPLET} ${PREFIX}"
 RUN apt-get update && \
 	apt-get install -y \
 		libssl-dev:${ARCH} \
-		libgraphviz-dev:${ARCH} \
+		# libgraphviz-dev:${ARCH} \
 		libprotobuf-dev:${ARCH} \
 		libprotobuf-c-dev:${ARCH} \
 		uuid-dev:${ARCH} \
