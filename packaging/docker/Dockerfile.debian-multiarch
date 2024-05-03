@@ -144,7 +144,7 @@ RUN apt-get update && \
 		libssl1.1:${ARCH} \
 		libcgraph6:${ARCH} \
 		libcdt5:${ARCH} \
-		libgvc6:${ARCH} \
+		# libgvc6:${ARCH} \
 		libuuid1:${ARCH} \
 		libconfig9:${ARCH} \
 		libnl-3-200:${ARCH} \
