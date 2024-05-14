@@ -217,7 +217,7 @@ deploy:docker:
   needs:
     # - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
     # - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
-    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
+    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu, docker]"
 
 deploy:docker-dev:
   stage: deploy
