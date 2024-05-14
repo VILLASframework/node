@@ -175,7 +175,7 @@ pkg:docker:
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
   tags:
-    - docker
+    - $TAG
   variables:
     TARGET: app
   parallel:
@@ -184,6 +184,12 @@ pkg:docker:
         PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET: x86_64-linux-gnu
+        TAG: docker
+      - DISTRO: debian
+        PLATFORM: linux/arm64/v8
+        ARCH: arm64
+        TRIPLET: aarch64-linux-gnu
+        TAG: PI5
       # - DISTRO: debian
       #   PLATFORM: linux/arm/v7
       #   ARCH: armhf
