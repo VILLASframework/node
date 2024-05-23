@@ -61,4 +61,4 @@
 #cmakedefine RABBITMQ_C_NEW_INCLUDE_DIR
 
 /* Library versions */
-#define RTC_VERSION ((@LibDataChannel_VERSION_MAJOR@ << 16) | (@LibDataChannel_VERSION_MINOR@ << 8) | (@LibDataChannel_VERSION_PATCH@ << 0))
+#define RTC_VERSION_NUM ((@LibDataChannel_VERSION_MAJOR@ << 16) | (@LibDataChannel_VERSION_MINOR@ << 8) | (@LibDataChannel_VERSION_PATCH@ << 0))
