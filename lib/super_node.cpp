@@ -29,7 +29,7 @@ using namespace villas;
 using namespace villas::node;
 
 SuperNode::SuperNode()
-    : state(State::INITIALIZED), idleStop(-1),
+    : state(State::INITIALIZED), idleStop(false),
 #ifdef WITH_API
       api(this),
 #endif
@@ -80,7 +80,7 @@ void SuperNode::parse(json_t *root) {
 
   json_error_t err;
 
-  idleStop = 1;
+  int stop = -1;
 
   ret =
       json_unpack_ex(root, &err, 0,
@@ -89,10 +89,14 @@ void SuperNode::parse(json_t *root) {
                      "stats", &statsRate, "http", &json_http, "logging",
                      &json_logging, "nodes", &json_nodes, "paths", &json_paths,
                      "hugepages", &hugepages, "affinity", &affinity, "priority",
-                     &priority, "idle_stop", &idleStop, "uuid", &uuid_str);
+                     &priority, "idle_stop", &stop, "uuid", &uuid_str);
   if (ret)
     throw ConfigError(root, err, "node-config",
                       "Unpacking top-level config failed");
+
+  if (stop >= 0) {
+    idleStop = stop > 0;
+  }
 
   if (uuid_str) {
     ret = uuid_parse(uuid_str, uuid);
@@ -455,7 +459,7 @@ int SuperNode::periodic() {
     }
   }
 
-  if (idleStop > 0 && state == State::STARTED && started == 0) {
+  if (idleStop && state == State::STARTED && started == 0) {
     logger->info("No more active paths. Stopping super-node");
 
     return -1;
