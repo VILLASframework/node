@@ -23,7 +23,7 @@ using namespace villas::utils;
 
 int TestRTT::Case::start() {
   node->logger->info(
-      "Starting case #{}/{}: filename={}, rate={}, values={}, limit={}", id,
+      "Starting case #{}/{}: filename={}, rate={}, values={}, limit={}", id+1,
       node->cases.size(), filename_formatted, rate, values, limit);
 
   // Open file
@@ -47,7 +47,7 @@ int TestRTT::Case::stop() {
   if (ret)
     throw SystemError("Failed to close file");
 
-  node->logger->info("Stopping case #{}/{}", id, node->cases.size());
+  node->logger->info("Stopping case #{}/{}", id+1, node->cases.size());
 
   return 0;
 }
