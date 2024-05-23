@@ -34,7 +34,7 @@
  *
  * Since libdatachannel 0.20, operator<< has been moved into the rtc namespace.
  */
-#if RTC_VERSION < 0x001400
+#if RTC_VERSION_NUM < 0x001400
 namespace rtc {
 using ::operator<<;
 }

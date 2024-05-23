@@ -31,7 +31,7 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
       peer(uuid::toString(id)), wait_seconds(0), formatter(), queue({}),
       pool({}), dci({}) {
 
-#if RTC_VERSION < 0x001400
+#if RTC_VERSION_NUM < 0x001400
   dci.reliability.type = rtc::Reliability::Type::Rexmit;
 #else
   dci.reliability.maxRetransmits = 0;
