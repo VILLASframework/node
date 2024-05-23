@@ -51,7 +51,7 @@ protected:
 
   double cooldown; // Number of seconds to wait between tests.
 
-  int counter;
+  unsigned counter;
 
   std::list<Case> cases; // List of test cases
   std::list<Case>::iterator current_case;

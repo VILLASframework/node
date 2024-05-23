@@ -34,8 +34,6 @@ int TestRTT::Case::start() {
   // Start timer
   node->task.setRate(rate);
 
-  node->counter = 0;
-
   return 0;
 }
 
@@ -214,7 +212,7 @@ int TestRTT::start() {
   formatter->start(getInputSignals(false), ~(int)SampleFlags::HAS_DATA);
 
   current_case = cases.begin();
-  counter = -1;
+  counter = 0;
 
   task.setRate(current_case->rate);
 
@@ -228,7 +226,7 @@ int TestRTT::start() {
 int TestRTT::stop() {
   int ret;
 
-  if (counter >= 0 && current_case != cases.end()) {
+  if (counter > 0 && current_case != cases.end()) {
     ret = current_case->stop();
     if (ret)
       return ret;
@@ -238,24 +236,34 @@ int TestRTT::stop() {
 }
 
 int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
+  int ret;
+
   // Wait for next sample or cooldown
   auto steps = task.wait();
   if (steps > 1) {
     logger->warn("Skipped {} steps", steps - 1);
   }
 
-  // Cooldown of last case completed. Terminating..
-  if (current_case == cases.end()) {
-    logger->info("This was the last case.");
+  // Cooldown of case completed..
+  if (counter >= current_case->limit) {
+    ret = current_case->stop();
+    if (ret)
+      return ret;
 
-    setState(State::STOPPING);
+    if (++current_case == cases.end()) {
+      logger->info("This was the last case.");
 
-    return -1;
+      setState(State::STOPPING);
+
+      return -1;
+    }
+
+    counter = 0;
   }
 
   // Handle start/stop of new cases
-  if (counter < 0) {
-    int ret = current_case->start();
+  if (counter == 0) {
+    ret = current_case->start();
     if (ret)
       return ret;
   }
@@ -277,19 +285,13 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
     counter++;
   }
 
-  if ((unsigned)counter >= current_case->limit) {
-    logger->info("Stopping case #{}", current_case->id);
-
-    counter = -1;
-
+  if (counter >= current_case->limit) {
     if (cooldown) {
       logger->info("Entering cooldown phase. Waiting {} seconds...", cooldown);
       task.setTimeout(cooldown);
+    } else {
+      task.setTimeout(0); // Start next case immediately
     }
-
-    ++current_case;
-
-    return 0;
   }
 
   return i;
