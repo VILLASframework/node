@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include <cstdint>
-
 #include <libiec61850/sv_publisher.h>
 #include <libiec61850/sv_subscriber.h>
 
@@ -30,15 +28,16 @@ struct iec61850_sv {
 
   struct {
     bool enabled;
+    bool check_dst_address;
 
     SVSubscriber subscriber;
     SVReceiver receiver;
 
     struct CQueueSignalled queue;
     struct Pool pool;
-
     struct List signals; // Mappings of type struct iec61850_type_descriptor
-    int total_size;
+
+    unsigned total_size;
   } in;
 
   struct {
@@ -47,16 +46,22 @@ struct iec61850_sv {
     SVPublisher publisher;
     SVPublisher_ASDU asdu;
 
-    char *svid;
+    char *sv_id;
 
-    int vlan_priority;
-    int vlan_id;
-    int smpmod;
-    int smprate;
-    int confrev;
+    struct {
+      bool enabled;
+      int priority;
+      int id;
+    } vlan;
+
+    int smp_mod;
+    int smp_synch;
+    int smp_rate;
+    int conf_rev;
 
     struct List signals; // Mappings of type struct iec61850_type_descriptor
-    int total_size;
+
+    unsigned asdu_length;
   } out;
 };
 
@@ -69,6 +74,8 @@ char *iec61850_sv_print(NodeCompat *n);
 int iec61850_sv_start(NodeCompat *n);
 
 int iec61850_sv_stop(NodeCompat *n);
+
+int iec61850_sv_init(NodeCompat *n);
 
 int iec61850_sv_destroy(NodeCompat *n);
 
