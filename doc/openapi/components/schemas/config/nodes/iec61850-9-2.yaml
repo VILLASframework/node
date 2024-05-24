@@ -10,6 +10,10 @@ allOf:
     in:
       type: object
       properties:
+        check_dst_address:
+          type: boolean
+          default: false
+
         signals:
           type: array
           items:
@@ -19,34 +23,50 @@ allOf:
       type: object
       required:
       - signals
-      - svid
+      - sv_id
       properties:
         signals:
           type: array
           items:
             $ref: ./signals/iec61850_signal.yaml
 
-        svid:
+        sv_id:
           type: string
 
-        confrev:
+        conf_rev:
           type: integer
 
-        smpmod:
+        smp_mod:
           type: string
           enum:
           - per_nominal_period
           - samples_per_second
           - seconds_per_sample
 
-        smprate:
+        smp_synch:
+          type: string
+          enum:
+          - not_synchronized
+          - local_clock
+          - global_clock
+
+        smp_rate:
           type: integer
 
-        vlan_id:
-          type: integer
+        vlan:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
 
-        vlan_priority:
-          type: integer
+            id:
+              type: integer
+              default: 0
+
+            priority:
+              type: integer
+              default: 4
 
     interface:
       type: string
@@ -54,8 +74,10 @@ allOf:
 
     app_id:
       type: integer
+      default: 0x4000
 
     dst_address:
       type: string
+      default: 01:0c:cd:01:00:01
 
 - $ref: ../node.yaml
