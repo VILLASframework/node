@@ -8,5 +8,6 @@
 
 TOP_DIR=$(git rev-parse --show-toplevel)
 
-find ${TOP_DIR} -iname "*.cpp" -o -iname "*.hpp" -o -iname "*.h" -o -iname "*.c" | \
+find ${TOP_DIR} \( -iname "*.cpp" -o -iname "*.hpp" -o -iname "*.h" -o -iname "*.c" \) -a \
+                -not \( -path "${TOP_DIR}/fpga/thirdparty/*" -o -path "${TOP_DIR}/build*/*" \) | \
     xargs clang-format --verbose -i
