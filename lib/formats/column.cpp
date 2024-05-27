@@ -137,7 +137,7 @@ void ColumnLineFormat::header(FILE *f, const SignalList::Ptr sigs) {
     return;
 
   if (comment)
-    fprintf(f, "%c", comment);
+    fprintf(f, "%c ", comment);
 
   if (flags & (int)SampleFlags::HAS_TS_ORIGIN)
     fprintf(f, "secs%cnsecs%c", separator, separator);

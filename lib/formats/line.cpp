@@ -163,3 +163,7 @@ void LineFormat::parse(json_t *json) {
 
   Format::parse(json);
 }
+
+void LineFormat::printMetadata(FILE *f, json_t *json) {
+  fprintf(f, "# %s\n", json_dumps(json, 0));
+}
