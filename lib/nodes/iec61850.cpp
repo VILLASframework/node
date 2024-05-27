@@ -5,11 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstring>
-#include <libiec61850/goose_receiver.h>
-#include <libiec61850/sv_subscriber.h>
 #include <pthread.h>
 #include <unistd.h>
+
+#include <libiec61850/goose_receiver.h>
+#include <libiec61850/sv_subscriber.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>

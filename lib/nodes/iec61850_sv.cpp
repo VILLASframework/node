@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "villas/sample.hpp"
 #include <cstring>
 #include <libiec61850/sv_publisher.h>
 #include <libiec61850/sv_subscriber.h>
@@ -16,6 +15,9 @@
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_sv.hpp>
+#include <villas/sample.hpp>
+#include <villas/signal_data.hpp>
+#include <villas/signal_type.hpp>
 #include <villas/utils.hpp>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000

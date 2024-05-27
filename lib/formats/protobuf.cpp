@@ -235,9 +235,8 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
 // Register format
 static char n[] = "protobuf";
 static char d[] = "Google Protobuf";
-static FormatPlugin<ProtobufFormat, n, d,
-                    (int)SampleFlags::HAS_TS_ORIGIN |
-                        (int)SampleFlags::HAS_SEQUENCE |
-                        (int)SampleFlags::HAS_DATA |
-                        (int)SampleFlags::NEW_FRAME>
+static FormatPlugin<
+    ProtobufFormat, n, d,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME>
     p;

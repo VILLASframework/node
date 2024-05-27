@@ -37,7 +37,7 @@ protected:
 
   public:
     Case(TestRTT *n, int id, int rate, int values, int limit,
-         const std::string & filename)
+         const std::string &filename)
         : node(n), id(id), rate(rate), values(values), limit(limit),
           filename(filename){};
 
@@ -65,7 +65,8 @@ protected:
 
 public:
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
-      : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr), stream(nullptr), cooldown(0), counter(-1) {}
+      : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
+        stream(nullptr), cooldown(0), counter(-1) {}
 
   virtual ~TestRTT(){};
 

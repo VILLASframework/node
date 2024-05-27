@@ -13,13 +13,12 @@ using namespace villas::node::api;
 
 Response::Response(Session *s, int c, const std::string &ct, const Buffer &b)
     : session(s), logger(logging.get("api:response")), buffer(b), code(c),
-      contentType(ct), headers{
-                           {"Server:", HTTP_USER_AGENT},
-                           {"Access-Control-Allow-Origin:", "*"},
-                           {"Access-Control-Allow-Methods:",
-                            "GET, POST, OPTIONS"},
-                           {"Access-Control-Allow-Headers:", "Content-Type"},
-                           {"Access-Control-Max-Age:", "86400"}} {}
+      contentType(ct),
+      headers{{"Server:", HTTP_USER_AGENT},
+              {"Access-Control-Allow-Origin:", "*"},
+              {"Access-Control-Allow-Methods:", "GET, POST, OPTIONS"},
+              {"Access-Control-Allow-Headers:", "Content-Type"},
+              {"Access-Control-Max-Age:", "86400"}} {}
 
 int Response::writeBody(struct lws *wsi) {
   int ret;
