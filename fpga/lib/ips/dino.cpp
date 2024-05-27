@@ -137,6 +137,26 @@ void DinoAdc::configureHardware() {
   logger->debug("ADC Ioext: Output register configured to {}", readback);
 }
 
+void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
+                                double sampleRate) {
+  // This is Dino specific for now - we should possibly move this to Dino in the future
+  constexpr double dinoClk = 25e6; // Dino is clocked with 25 Mhz
+
+  uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate);
+  double rateError = dinoClk / dinoTimerVal - sampleRate;
+  reg->setRegister(
+      0,
+      dinoTimerVal); // Timer value for generating ADC trigger signal
+  reg->setRegister(1, -0.001615254F); // Scale factor for ADC value
+  reg->setRegister(2, 10.8061F);      // Offset for ADC value
+  uint32_t rate = reg->getRegister(0);
+  float scale = reg->getRegisterFloat(1);
+  float offset = reg->getRegisterFloat(2);
+  logging.get("Dino")->info("Check: Register configuration: Rate: {}, Scale: "
+                            "{}, Offset: {}, Rate-Error: {} Hz",
+                            rate, scale, offset, rateError);
+}
+
 DinoDac::DinoDac() : Dino() {}
 
 DinoDac::~DinoDac() {}

@@ -30,7 +30,7 @@ protected:
   const size_t registerNum = 8;
   const size_t registerSize = 32;
   static constexpr char registerMemory[] = "reg0";
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 };

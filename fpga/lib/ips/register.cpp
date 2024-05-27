@@ -42,19 +42,6 @@ bool Register::check() {
     logger->debug("Register {}: 0x{:08x}", i, getRegister(i));
   }
 
-  // This is Dino specific for now - we should possibly move this to Dino in the future
-  constexpr double dinoClk = 25e9;    // Dino is clocked with 25 Mhz
-  constexpr double sampleRate = 20e6; // We want to achieve a timestep of 50us
-  constexpr uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate);
-  setRegister(0, dinoTimerVal); // Timer value for generating ADC trigger signal
-  setRegister(1, -0.001615254F); // Scale factor for ADC value
-  setRegister(2, 10.8061F);      // Offset for ADC value
-  uint32_t rate = getRegister(0);
-  float scale = getRegisterFloat(1);
-  float offset = getRegisterFloat(2);
-  logger->info("Check: Register configuration: Rate: {}, Scale: {}, Offset: {}",
-               rate, scale, offset);
-
   return true;
 }
 
