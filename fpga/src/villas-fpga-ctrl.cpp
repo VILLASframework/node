@@ -244,6 +244,14 @@ int main(int argc, char *argv[]) {
         }
       }
     }
+    auto reg = std::dynamic_pointer_cast<fpga::ip::Register>(
+        card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:registerif:")));
+
+    if (reg != nullptr &&
+        card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
+      fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
+    }
+
     if (writeToStdout || readFromStdin) {
       auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
           card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));

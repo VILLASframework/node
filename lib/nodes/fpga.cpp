@@ -19,6 +19,8 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 
+#include <villas/fpga/ips/dino.hpp>
+#include <villas/fpga/ips/register.hpp>
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/utils.hpp>
 
@@ -34,7 +36,7 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
     : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
-      card(nullptr), dma(), blockRx(), blockTx() {}
+      timestep(10e-3), card(nullptr), dma(), blockRx(), blockTx() {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -65,6 +67,17 @@ int FpgaNode::prepare() {
   for (std::string str : connectStrings) {
     const fpga::ConnectString parsedConnectString(str);
     parsedConnectString.configCrossBar(card);
+  }
+
+  auto reg = std::dynamic_pointer_cast<fpga::ip::Register>(
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:registerif:")));
+
+  if (reg != nullptr &&
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
+    // constexpr double sampleRate = 20e3; // We want to achieve a timestep of 50us
+    fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
+  } else {
+    logger->warn("No DinoAdc or no Register found on FPGA.");
   }
 
   dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
@@ -106,9 +119,10 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: b}", "card",
-                       &jsonCard, "connect", &jsonConnectStrings,
-                       "lowLatencyMode", &lowLatencyMode);
+  ret =
+      json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: b, s?: f}",
+                     "card", &jsonCard, "connect", &jsonConnectStrings,
+                     "lowLatencyMode", &lowLatencyMode, "timestep", &timestep);
   if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
@@ -167,20 +181,20 @@ const std::string &FpgaNode::getDetails() {
   return details;
 }
 
-int FpgaNode::check() { return 0; }
+int FpgaNode::check() { return Node::check(); }
 
 int FpgaNode::start() {
-  if (getInputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
-    logger->error("Input signals exceed block size.");
-    throw villas ::RuntimeError("Input signals exceed block size.");
+  if (getOutputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
+    logger->error("Output signals exceed block size.");
+    throw villas ::RuntimeError("Output signals exceed block size.");
   }
   if (lowLatencyMode) {
     dma->readScatterGatherPrepare(*blockRx, blockRx->getSize());
-    if (getInputSignalsMaxCount() != 0) {
-      dma->writeScatterGatherPrepare(*blockTx,
-                                     getInputSignalsMaxCount() * sizeof(float));
+    if (getOutputSignalsMaxCount() != 0) {
+      dma->writeScatterGatherPrepare(*blockTx, getOutputSignalsMaxCount() *
+                                                   sizeof(float));
     } else {
-      logger->warn("No input signals defined. Not preparing write buffer - "
+      logger->warn("No output signals defined. Not preparing write buffer - "
                    "writes will not work.");
     }
   }
@@ -212,7 +226,8 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
       mem[i] = smp->data[i].i;
     }
   }
-
+  logger->info("Writing sample: {}, {}, {:#x}", smp->data[0].f,
+               smp->signals->getByIndex(0)->type, mem[0]);
   dma->writeScatterGatherFast();
   auto written = dma->writeScatterGatherPoll() /
                  sizeof(float); // The number of samples written
@@ -242,6 +257,7 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read / sizeof(float), smp->capacity); i++) {
     smp->data[i].f = static_cast<double>(mem[i]);
+    // logger->info("Read sample: {}", smp->data[i].f);
     smp->length++;
   }
 

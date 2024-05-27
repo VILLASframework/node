@@ -45,6 +45,15 @@ protected:
   // Improves read/write latency by approx. 40%.
   bool lowLatencyMode;
 
+  // This sets the requested timestep in the FPGA timestep generation IP.
+  // The value is interpreted as seconds (i.e. 10e-3 is a timestep of 10ms).
+  // It is used to program the Register IP that in turn generates conversions
+  // of DinoAdc. This means that this setting represents the inverse of the
+  // Dino sampling rate.
+  // The setting must be programmed using DinoAdc::setRegisterConfigTimestep,
+  // which FpgaNode does in prepare only if a Register and a DinoAdc is present.
+  double timestep;
+
   // State
   std::shared_ptr<fpga::Card> card;
   std::shared_ptr<villas::fpga::ip::Dma> dma;
