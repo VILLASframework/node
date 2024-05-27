@@ -29,16 +29,34 @@ protected:
 
     int id;
     double rate;
+    double
+        warmup; // Number of seconds to wait between before recording samples.
+    double cooldown; // Number of seconds to wait between tests.
     unsigned values;
-    unsigned limit; // The number of samples we take per test.
+    unsigned missed;
+
+    unsigned limit; // The number of samples we send per test.
+    unsigned sent;
+    unsigned received;
+
+    unsigned limit_warmup; // The number of samples we send during warmup.
+    unsigned sent_warmup;
+    unsigned received_warmup;
+
+    struct timespec started;
+    struct timespec stopped;
 
     std::string filename;
     std::string filename_formatted;
 
+    json_t *getMetadata();
+
   public:
-    Case(TestRTT *n, int id, int rate, int values, int limit,
-         const std::string &filename)
-        : node(n), id(id), rate(rate), values(values), limit(limit),
+    Case(TestRTT *n, int id, int rate, float warmup, float cooldown, int values,
+         int limit, int limit_warmup, const std::string &filename)
+        : node(n), id(id), rate(rate), warmup(warmup), cooldown(cooldown),
+          values(values), missed(0), limit(limit), sent(0), received(0),
+          limit_warmup(limit_warmup), sent_warmup(0), received_warmup(0),
           filename(filename){};
 
     int start();
@@ -49,15 +67,13 @@ protected:
   Format::Ptr formatter; // The format of the output file
   FILE *stream;
 
-  double cooldown; // Number of seconds to wait between tests.
-
-  unsigned counter;
-
   std::list<Case> cases; // List of test cases
-  std::list<Case>::iterator current_case;
+  std::list<Case>::iterator current;
 
   std::string output; // The directory where we place the results.
   std::string prefix; // An optional prefix in the filename.
+
+  bool shutdown;
 
   virtual int _read(struct Sample *smps[], unsigned cnt);
 
@@ -66,7 +82,7 @@ protected:
 public:
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
       : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
-        stream(nullptr), cooldown(0), counter(-1) {}
+        stream(nullptr), shutdown(false) {}
 
   virtual ~TestRTT(){};
 
@@ -81,6 +97,34 @@ public:
   virtual std::vector<int> getPollFDs();
 
   virtual const std::string &getDetails();
+};
+
+class TestRTTNodeFactory : public NodeFactory {
+
+public:
+  using NodeFactory::NodeFactory;
+
+  virtual Node *make(const uuid_t &id = {}, const std::string &nme = "") {
+    auto *n = new TestRTT(id, nme);
+
+    init(n);
+
+    return n;
+  }
+
+  virtual int getFlags() const {
+    return (int)NodeFactory::Flags::SUPPORTS_READ |
+           (int)NodeFactory::Flags::SUPPORTS_WRITE |
+           (int)NodeFactory::Flags::SUPPORTS_POLL;
+  }
+
+  virtual std::string getName() const { return "test_rtt"; }
+
+  virtual std::string getDescription() const {
+    return "Test round-trip time with loopback";
+  }
+
+  virtual int start(SuperNode *sn);
 };
 
 } // namespace node
