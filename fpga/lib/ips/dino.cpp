@@ -139,7 +139,6 @@ void DinoAdc::configureHardware() {
 
 void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                                 double sampleRate) {
-  // This is Dino specific for now - we should possibly move this to Dino in the future
   constexpr double dinoClk = 25e6; // Dino is clocked with 25 Mhz
 
   uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate);
