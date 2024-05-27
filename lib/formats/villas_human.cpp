@@ -32,9 +32,9 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len,
   }
 
   if (flags & (int)SampleFlags::HAS_OFFSET) {
+    auto offset = time_delta(&smp->ts.origin, &smp->ts.received);
     if (smp->flags & (int)SampleFlags::HAS_TS_RECEIVED)
-      off += snprintf(buf + off, len - off, "%+e",
-                      time_delta(&smp->ts.origin, &smp->ts.received));
+      off += snprintf(buf + off, len - off, "%+e", offset);
   }
 
   if (flags & (int)SampleFlags::HAS_SEQUENCE) {
