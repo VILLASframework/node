@@ -101,8 +101,8 @@ void Hist::print(Logger logger, bool details, std::string prefix) const {
   if (total > 0) {
     Hist::cnt_t missed = total - higher - lower;
 
-    logger->info("{}Counted values: {} ({} between {} and {})", prefix, total, missed,
-                 low, high);
+    logger->info("{}Counted values: {} ({} between {} and {})", prefix, total,
+                 missed, low, high);
     logger->info("{}Highest:  {:g}", prefix, highest);
     logger->info("{}Lowest:   {:g}", prefix, lowest);
     logger->info("{}Mu:       {:g}", prefix, getMean());

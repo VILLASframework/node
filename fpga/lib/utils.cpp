@@ -322,7 +322,6 @@ std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
                        fpgaName);
   }
 
-
   return card;
 }
 
