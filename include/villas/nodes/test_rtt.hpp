@@ -33,15 +33,16 @@ protected:
         warmup; // Number of seconds to wait between before recording samples.
     double cooldown; // Number of seconds to wait between tests.
     unsigned values;
-    unsigned missed;
 
     unsigned limit; // The number of samples we send per test.
     unsigned sent;
     unsigned received;
+    unsigned missed;
 
     unsigned limit_warmup; // The number of samples we send during warmup.
     unsigned sent_warmup;
     unsigned received_warmup;
+    unsigned missed_warmup;
 
     struct timespec started;
     struct timespec stopped;
@@ -55,8 +56,8 @@ protected:
     Case(TestRTT *n, int id, int rate, float warmup, float cooldown, int values,
          int limit, int limit_warmup, const std::string &filename)
         : node(n), id(id), rate(rate), warmup(warmup), cooldown(cooldown),
-          values(values), missed(0), limit(limit), sent(0), received(0),
-          limit_warmup(limit_warmup), sent_warmup(0), received_warmup(0),
+          values(values), limit(limit), sent(0), received(0), missed(0),
+          limit_warmup(limit_warmup), sent_warmup(0), received_warmup(0), missed_warmup(0),
           filename(filename){};
 
     int start();

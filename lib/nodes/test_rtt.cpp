@@ -26,7 +26,7 @@ static SuperNode *sn = nullptr;
 
 int TestRTT::Case::start() {
   node->logger->info("Starting case #{}/{}: filename={}, rate={}/s, values={}, "
-                     "limit={}smps, warmup={}s, cooldown={}s",
+                     "limit={}smps, warmup={:.3f}s, cooldown={:.3f}s",
                      id + 1, node->cases.size(), filename_formatted, rate,
                      values, limit, warmup, cooldown);
 
@@ -59,7 +59,7 @@ int TestRTT::Case::stop() {
   if (ret)
     throw SystemError("Failed to close file");
 
-  node->logger->info("Stopping case #{}/{}: sent={}, received={}, duration={:.2}", id + 1, node->cases.size(), sent, received, time_delta(&started, &stopped));
+  node->logger->info("Stopping case #{}/{}: limit={}smps, sent={}smps, received={}smps, missed={}smps, duration={:.3f}s", id + 1, node->cases.size(), limit, sent, received, missed, time_delta(&started, &stopped));
 
   return 0;
 }
@@ -68,15 +68,15 @@ json_t *TestRTT::Case::getMetadata() {
   json_t *json_warmup = nullptr;
 
   if (limit_warmup > 0) {
-    json_warmup = json_pack("{ s: i, s: i, s: i }", "limit", limit_warmup,
-                            "sent", sent_warmup, "received", received_warmup);
+    json_warmup = json_pack("{ s: i, s: i, s: i, s: i }", "limit", limit_warmup,
+                            "sent", sent_warmup, "received", received_warmup, "missed", missed_warmup);
   }
 
   return json_pack(
       "{ s: i, s: f, s: i, s: f, s: f, s: i, s: i, s: i, s: i, s: o* }", "id",
       id, "rate", rate, "values", values, "started", time_to_double(&started),
-      "stopped", time_to_double(&stopped), "missed", missed, "limit", limit,
-      "sent", sent, "received", received, "warmup", json_warmup);
+      "stopped", time_to_double(&stopped), "limit", limit,
+      "sent", sent, "received", received, "missed", missed, "warmup", json_warmup);
 }
 
 int TestRTT::prepare() {
@@ -296,7 +296,11 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
   auto steps = task.wait();
   if (steps > 1) {
     logger->warn("Skipped {} steps", steps - 1);
-    current->missed += steps - 1;
+
+    if (current->sent_warmup < current->limit_warmup)
+      current->missed_warmup += steps - 1;
+    else
+      current->missed += steps - 1;
   }
 
   // Cooldown of case completed..
