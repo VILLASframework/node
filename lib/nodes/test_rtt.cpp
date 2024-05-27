@@ -107,7 +107,7 @@ int TestRTT::parse(json_t *json) {
 
   formatter = Format::Ptr(fmt);
   if (!formatter)
-    throw ConfigError(json_format, "node-config-node-exec-format",
+    throw ConfigError(json_format, "node-config-node-test-rtt-format",
                       "Invalid format configuration");
 
   // Construct List of test cases
