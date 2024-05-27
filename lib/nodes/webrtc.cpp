@@ -81,8 +81,10 @@ int WebRTCNode::parse(json_t *json) {
   if (json_ice) {
     json_t *json_servers = nullptr;
 
-    ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o }", "servers",
-                         &json_servers);
+    int tcp = -1;
+
+    ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o, s?: b }", "servers",
+                         &json_servers, "tcp", &tcp);
     if (ret)
       throw ConfigError(json, err, "node-config-node-webrtc-ice");
 
@@ -105,6 +107,11 @@ int WebRTCNode::parse(json_t *json) {
 
         rtcConf.iceServers.emplace_back(uri);
       }
+
+      if (tcp > 0)
+        rtcConf.enableIceTcp = tcp > 0;
+      else
+        rtcConf.enableIceTcp = true;
     }
   }
 
