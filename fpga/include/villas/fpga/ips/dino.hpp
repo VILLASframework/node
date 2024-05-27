@@ -10,6 +10,7 @@
 #pragma once
 
 #include <villas/fpga/ips/i2c.hpp>
+#include <villas/fpga/ips/register.hpp>
 #include <villas/fpga/node.hpp>
 
 namespace villas {
@@ -63,11 +64,11 @@ public:
   static constexpr const char *masterPort = "M00_AXIS";
   static constexpr const char *slavePort = "S00_AXIS";
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(slavePort);
   }
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(masterPort);
   }
 
@@ -90,6 +91,19 @@ public:
   DinoAdc();
   virtual ~DinoAdc();
   virtual void configureHardware() override;
+
+  /** Set the configuration of the ADC registers
+   *
+   * @param reg Register to set
+   * @param sampleRate Sample rate in Hz. The default is 100 Hz.
+   */
+  static void setRegisterConfig(std::shared_ptr<Register> reg,
+                                double sampleRate = (1 / 10e-3));
+
+  static void setRegisterConfigTimestep(std::shared_ptr<Register> reg,
+                                        double timestep = 10e-3) {
+    setRegisterConfig(reg, 1 / timestep);
+  }
 };
 
 class DinoDac : public Dino {
@@ -103,7 +117,9 @@ public:
 
 class DinoFactory : NodeFactory {
 public:
-  virtual std::string getDescription() const { return "Dino Analog I/O"; }
+  virtual std::string getDescription() const override {
+    return "Dino Analog I/O";
+  }
 
 protected:
   virtual void parse(Core &ip, json_t *json) override;
