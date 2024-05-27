@@ -196,9 +196,11 @@ public:
     assert(state != State::STARTED);
 
     if (signal_name) {
-      signal_index = signals->getIndexByName(signal_name);
-      if (signal_index < 0)
+      int si = signals->getIndexByName(signal_name);
+      if (si < 0) {
         throw RuntimeError("Failed to find signal: {}", signal_name);
+      }
+      signal_index = si;
     }
 
     if (inverse) {
@@ -243,6 +245,24 @@ public:
     }
 
     state = State::PREPARED;
+  }
+
+  virtual void check() {
+    assert(state == State::PARSED);
+
+    if (signal_index < 0)
+      throw RuntimeError("Signal index not set");
+
+    if (fharmonics_len <= 0)
+      throw RuntimeError("No harmonics given");
+
+    if (timestep <= 0)
+      throw RuntimeError("Invalid timestep");
+
+    if (f0 <= 0)
+      throw RuntimeError("Invalid fundamental frequency");
+
+    state = State::CHECKED;
   }
 
   virtual Hook::Reason process(struct Sample *smp) {
