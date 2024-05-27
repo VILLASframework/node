@@ -55,11 +55,15 @@ public:
 
   virtual void start() {}
 
+  virtual void reset() {}
+
   virtual void parse(json_t *json);
 
   virtual int print(FILE *f, const struct Sample *const smps[], unsigned cnt);
 
   virtual int scan(FILE *f, struct Sample *const smps[], unsigned cnt);
+
+  virtual void printMetadata(FILE *f, json_t *json) {}
 
   /* Print \p cnt samples from \p smps into buffer \p buf of length \p len.
    *
