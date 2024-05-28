@@ -202,7 +202,7 @@ void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state) {
   }
 
   case rtc::PeerConnection::State::Connecting: {
-    logger->debug("Peer connection connecting.");
+    logger->debug("Peer connection connecting");
     break;
   }
 
@@ -212,14 +212,14 @@ void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state) {
     if (conn->getSelectedCandidatePair(&local, &remote)) {
       std::stringstream l, r;
       l << local, r << remote;
-      logger->debug("Peer connection connected:\n"
+      logger->info("Peer connection connected:\n"
                     "local: {}\n"
                     "remote: {}\n"
                     "bytes sent: {} / bytes received: {} / rtt: {}\n",
                     l.str(), r.str(), conn->bytesSent(), conn->bytesReceived(),
                     rtt.value_or(decltype(rtt)::value_type{0}));
     } else {
-      logger->debug("Peer connection connected.\n"
+      logger->warn("Peer connection connected.\n"
                     "Could not get candidate pair info.\n");
     }
     break;
