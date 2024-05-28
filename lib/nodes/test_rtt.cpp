@@ -26,9 +26,9 @@ static SuperNode *sn = nullptr;
 
 int TestRTT::Case::start() {
   node->logger->info("Starting case #{}/{}: filename={}, rate={}/s, values={}, "
-                     "limit={}smps, warmup={:.3f}s, cooldown={:.3f}s",
+                     "count={}smps, warmup={:.3f}s, cooldown={:.3f}s",
                      id + 1, node->cases.size(), filename_formatted, rate,
-                     values, limit, warmup, cooldown);
+                     values, count, warmup, cooldown);
 
   // Open file
   node->stream = fopen(filename_formatted.c_str(), "a+");
@@ -59,7 +59,10 @@ int TestRTT::Case::stop() {
   if (ret)
     throw SystemError("Failed to close file");
 
-  node->logger->info("Stopping case #{}/{}: limit={}smps, sent={}smps, received={}smps, missed={}smps, duration={:.3f}s", id + 1, node->cases.size(), limit, sent, received, missed, time_delta(&started, &stopped));
+  node->logger->info("Stopping case #{}/{}: count={}smps, sent={}smps, "
+                     "received={}smps, missed={}smps, duration={:.3f}s",
+                     id + 1, node->cases.size(), count, sent, received, missed,
+                     time_delta(&started, &stopped));
 
   return 0;
 }
@@ -67,16 +70,17 @@ int TestRTT::Case::stop() {
 json_t *TestRTT::Case::getMetadata() {
   json_t *json_warmup = nullptr;
 
-  if (limit_warmup > 0) {
-    json_warmup = json_pack("{ s: i, s: i, s: i, s: i }", "limit", limit_warmup,
-                            "sent", sent_warmup, "received", received_warmup, "missed", missed_warmup);
+  if (count_warmup > 0) {
+    json_warmup = json_pack("{ s: i, s: i, s: i, s: i }", "count", count_warmup,
+                            "sent", sent_warmup, "received", received_warmup,
+                            "missed", missed_warmup);
   }
 
   return json_pack(
       "{ s: i, s: f, s: i, s: f, s: f, s: i, s: i, s: i, s: i, s: o* }", "id",
       id, "rate", rate, "values", values, "started", time_to_double(&started),
-      "stopped", time_to_double(&stopped), "limit", limit,
-      "sent", sent, "received", received, "missed", missed, "warmup", json_warmup);
+      "stopped", time_to_double(&stopped), "count", count, "sent", sent,
+      "received", received, "missed", missed, "warmup", json_warmup);
 }
 
 int TestRTT::prepare() {
@@ -110,6 +114,7 @@ int TestRTT::parse(json_t *json) {
 
   const char *output_str = ".";
   const char *prefix_str = nullptr;
+  const char *mode_str = nullptr;
   double warmup_default = 0;
   double cooldown_default = 0;
   int shutdown_ = -1;
@@ -121,11 +126,11 @@ int TestRTT::parse(json_t *json) {
 
   ret = json_unpack_ex(
       json, &err, 0,
-      "{ s?: s, s?: s, s?: o, s?: F, s?: F, s?: o, s?: o, s: o, s?: b }",
+      "{ s?: s, s?: s, s?: o, s?: F, s?: F, s?: o, s?: o, s: o, s?: b, s?: s }",
       "prefix", &prefix_str, "output", &output_str, "format", &json_format,
       "cooldown", &cooldown_default, "warmup", &warmup_default, "values",
       &json_values_default, "rates", &json_rates_default, "cases", &json_cases,
-      "shutdown", &shutdown_);
+      "shutdown", &shutdown_, "mode", &mode_str);
   if (ret)
     throw ConfigError(json, err, "node-config-node-test-rtt");
 
@@ -134,6 +139,24 @@ int TestRTT::parse(json_t *json) {
 
   if (shutdown_ > 0)
     shutdown = shutdown_ > 0;
+
+  if (mode_str) {
+    if (strcmp(mode_str, "min"))
+      mode = Mode::MIN;
+    else if (strcmp(mode_str, "max"))
+      mode = Mode::MIN;
+    else if (strcmp(mode_str, "stop_after_count"))
+      mode = Mode::STOP_COUNT;
+    else if (strcmp(mode_str, "stop_after_duration"))
+      mode = Mode::STOP_DURATION;
+    else if (strcmp(mode_str, "at_least_count"))
+      mode = Mode::AT_LEAST_COUNT;
+    else if (strcmp(mode_str, "at_least_duration"))
+      mode = Mode::AT_LEAST_DURATION;
+    else
+      throw ConfigError(json, "node-config-node-test-rtt-mode",
+                        "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
+  }
 
   // Formatter
   auto *fmt = json_format ? FormatFactory::make(json_format)
@@ -163,7 +186,7 @@ int TestRTT::parse(json_t *json) {
 
   int id = 0;
   json_array_foreach(json_cases, i, json_case) {
-    int limit = -1;
+    int count = -1;
     double duration = -1;               // in secs
     double cooldown = cooldown_default; // in secs
     double warmup = warmup_default;     // in secs
@@ -174,14 +197,9 @@ int TestRTT::parse(json_t *json) {
     json_t *json_values = json_values_default;
 
     ret = json_unpack_ex(json_case, &err, 0, "{ s?: o, s?: o, s?: i, s?: F }",
-                         "rates", &json_rates, "values", &json_values, "limit",
-                         &limit, "duration", &duration, "warmup", &warmup,
+                         "rates", &json_rates, "values", &json_values, "count",
+                         &count, "duration", &duration, "warmup", &warmup,
                          "cooldown", &cooldown);
-
-    if (limit > 0 && duration > 0)
-      throw ConfigError(
-          json_case, "node-config-node-test-rtt-duration",
-          "The settings 'duration' and 'limit' must be used exclusively");
 
     if (!json_is_array(json_rates) && !json_is_number(json_rates))
       throw ConfigError(
@@ -221,21 +239,49 @@ int TestRTT::parse(json_t *json) {
 
     for (int rate : rates) {
       for (int value : values) {
-        int lim, lim_warmup;
-        if (limit > 0)
-          lim = limit;
-        else if (duration > 0)
-          lim = duration * rate;
-        else
-          lim = 1000; // Default value
+        int count_effective;
+        int count_duration = duration * rate;
+        int count_warmup = warmup * rate;
 
-        lim_warmup = warmup * rate;
+        switch (mode) {
+        case Mode::MIN:
+          count_effective = MIN(count, count_duration);
+          break;
+
+        case Mode::MAX:
+          count_effective = MAX(count, count_duration);
+          break;
+
+        case Mode::STOP_COUNT:
+          count_effective = count_duration;
+          if (count_effective > count)
+            count_effective = count;
+          break;
+
+        case Mode::STOP_DURATION:
+          count_effective = count;
+          if (count_effective > count_duration)
+            count_effective = count_duration;
+          break;
+
+        case Mode::AT_LEAST_COUNT:
+          count_effective = count_duration;
+          if (count_effective < count)
+            count_effective = count;
+          break;
+
+        case Mode::AT_LEAST_DURATION:
+          count_effective = count;
+          if (count_effective < count_duration)
+            count_effective = count_duration;
+          break;
+        }
 
         auto filename = fmt::format("{}/{}_values{}_rate{}.log", output, prefix,
                                     value, rate);
 
-        cases.emplace_back(this, id++, rate, warmup, cooldown, value, lim,
-                           lim_warmup, filename);
+        cases.emplace_back(this, id++, rate, warmup, cooldown, value,
+                           count_effective, count_warmup, filename);
       }
     }
   }
@@ -245,8 +291,8 @@ int TestRTT::parse(json_t *json) {
 
 const std::string &TestRTT::getDetails() {
   if (details.empty()) {
-    details = fmt::format("output={}, prefix={}, #cases={}, shutdown={}", output, prefix,
-                          cases.size(), shutdown);
+    details = fmt::format("output={}, prefix={}, #cases={}, shutdown={}",
+                          output, prefix, cases.size(), shutdown);
   }
 
   return details;
@@ -297,7 +343,7 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
   if (steps > 1) {
     logger->warn("Skipped {} steps", steps - 1);
 
-    if (current->sent_warmup < current->limit_warmup)
+    if (current->sent_warmup < current->count_warmup)
       current->missed_warmup += steps - 1;
     else
       current->missed += steps - 1;
@@ -305,7 +351,7 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
 
   // Cooldown of case completed..
   if (current->sent + current->sent_warmup >=
-      current->limit + current->limit_warmup) {
+      current->count + current->count_warmup) {
     ret = current->stop();
     if (ret)
       return ret;
@@ -328,12 +374,12 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
     if (ret)
       return ret;
 
-    if (current->limit_warmup > 0)
+    if (current->count_warmup > 0)
       logger->info("Starting warmup phase. Sending {} samples...",
-                   current->limit_warmup);
-  } else if (current->sent == current->limit_warmup)
+                   current->count_warmup);
+  } else if (current->sent == current->count_warmup)
     logger->info("Completed warmup phase. Sending {} samples...",
-                 current->limit);
+                 current->count);
 
   auto now = time_now();
 
@@ -349,14 +395,14 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
                  (int)SampleFlags::HAS_TS_ORIGIN;
     smp->signals = getInputSignals(false);
 
-    if (current->sent_warmup < current->limit_warmup)
+    if (current->sent_warmup < current->count_warmup)
       current->sent_warmup++;
     else
       current->sent++;
   }
 
   if (current->sent + current->sent_warmup >=
-      current->limit + current->limit_warmup) {
+      current->count + current->count_warmup) {
     if (current->cooldown > 0) {
       logger->info("Entering cooldown phase. Waiting {} seconds...",
                    current->cooldown);
@@ -384,7 +430,7 @@ int TestRTT::_write(struct Sample *smps[], unsigned cnt) {
       continue;
     }
 
-    if (smp->sequence < current->limit_warmup) {
+    if (smp->sequence < current->count_warmup) {
       // Skip samples from warmup phase
       current->received_warmup++;
       continue;

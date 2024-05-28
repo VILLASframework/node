@@ -34,12 +34,12 @@ protected:
     double cooldown; // Number of seconds to wait between tests.
     unsigned values;
 
-    unsigned limit; // The number of samples we send per test.
+    unsigned count; // The number of samples we send per test.
     unsigned sent;
     unsigned received;
     unsigned missed;
 
-    unsigned limit_warmup; // The number of samples we send during warmup.
+    unsigned count_warmup; // The number of samples we send during warmup.
     unsigned sent_warmup;
     unsigned received_warmup;
     unsigned missed_warmup;
@@ -54,11 +54,11 @@ protected:
 
   public:
     Case(TestRTT *n, int id, int rate, float warmup, float cooldown, int values,
-         int limit, int limit_warmup, const std::string &filename)
+         int count, int count_warmup, const std::string &filename)
         : node(n), id(id), rate(rate), warmup(warmup), cooldown(cooldown),
-          values(values), limit(limit), sent(0), received(0), missed(0),
-          limit_warmup(limit_warmup), sent_warmup(0), received_warmup(0), missed_warmup(0),
-          filename(filename){};
+          values(values), count(count), sent(0), received(0), missed(0),
+          count_warmup(count_warmup), sent_warmup(0), received_warmup(0),
+          missed_warmup(0), filename(filename){};
 
     int start();
     int stop();
@@ -76,6 +76,15 @@ protected:
 
   bool shutdown;
 
+      enum Mode {
+      MIN,
+      MAX,
+      STOP_COUNT,
+      STOP_DURATION,
+      AT_LEAST_COUNT,
+      AT_LEAST_DURATION
+    } mode;
+
   virtual int _read(struct Sample *smps[], unsigned cnt);
 
   virtual int _write(struct Sample *smps[], unsigned cnt);
@@ -83,7 +92,7 @@ protected:
 public:
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
       : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
-        stream(nullptr), shutdown(false) {}
+        stream(nullptr), shutdown(false), mode(Mode::AT_LEAST_COUNT) {}
 
   virtual ~TestRTT(){};
 
