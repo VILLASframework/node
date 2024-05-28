@@ -85,7 +85,7 @@ json_t *TestRTT::Case::getMetadata() {
 }
 
 double TestRTT::Case::getEstimatedDuration() const {
-  return (count_warmup + count) / rate;
+  return (count_warmup + count) / rate + cooldown;
 }
 
 int TestRTT::prepare() {
