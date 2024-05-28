@@ -118,10 +118,10 @@ int FpgaNode::parse(json_t *json) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
 
-  ret =
-      json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: b, s?: f}",
+  ret = json_unpack_ex(json, &err, 0, "{ s: o, s?: o, s?: b, s?: b, s?: f}",
                      "card", &jsonCard, "connect", &jsonConnectStrings,
-                     "lowLatencyMode", &lowLatencyMode, "timestep", &timestep);
+                       "low_latency_mode", &lowLatencyMode, "timestep",
+                       &timestep);
   if (ret) {
     throw ConfigError(json, err, "node-config-fpga",
                       "Failed to parse configuration of node {}",
@@ -225,6 +225,7 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
       mem[i] = smp->data[i].i;
     }
   }
+
   dma->writeScatterGatherFast();
   auto written = dma->writeScatterGatherPoll() /
                  sizeof(float); // The number of samples written
