@@ -77,6 +77,11 @@ protected:
 
   bool shutdown;
 
+  virtual int _read(struct Sample *smps[], unsigned cnt);
+
+  virtual int _write(struct Sample *smps[], unsigned cnt);
+
+public:
   enum Mode {
     UNKNOWN,
     MIN,
@@ -87,11 +92,6 @@ protected:
     AT_LEAST_DURATION
   };
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
-
-public:
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
       : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
         stream(nullptr), shutdown(false) {}
