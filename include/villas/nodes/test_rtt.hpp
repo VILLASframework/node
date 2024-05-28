@@ -62,6 +62,7 @@ protected:
 
     int start();
     int stop();
+    double getEstimatedDuration() const;
   };
 
   Task task;             // The periodic task for test_rtt_read()
@@ -76,14 +77,14 @@ protected:
 
   bool shutdown;
 
-      enum Mode {
-      MIN,
-      MAX,
-      STOP_COUNT,
-      STOP_DURATION,
-      AT_LEAST_COUNT,
-      AT_LEAST_DURATION
-    } mode;
+  enum Mode {
+    MIN,
+    MAX,
+    STOP_COUNT,
+    STOP_DURATION,
+    AT_LEAST_COUNT,
+    AT_LEAST_DURATION
+  } mode;
 
   virtual int _read(struct Sample *smps[], unsigned cnt);
 
@@ -107,6 +108,8 @@ public:
   virtual std::vector<int> getPollFDs();
 
   virtual const std::string &getDetails();
+
+  double getEstimatedDuration() const;
 };
 
 class TestRTTNodeFactory : public NodeFactory {

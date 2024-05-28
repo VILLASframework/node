@@ -83,6 +83,10 @@ json_t *TestRTT::Case::getMetadata() {
       "received", received, "missed", missed, "warmup", json_warmup);
 }
 
+double TestRTT::Case::getEstimatedDuration() const {
+  return (count_warmup + count) * rate;
+}
+
 int TestRTT::prepare() {
   unsigned max_values = 0;
 
@@ -291,8 +295,9 @@ int TestRTT::parse(json_t *json) {
 
 const std::string &TestRTT::getDetails() {
   if (details.empty()) {
-    details = fmt::format("output={}, prefix={}, #cases={}, shutdown={}",
-                          output, prefix, cases.size(), shutdown);
+    details = fmt::format(
+        "output={}, prefix={}, #cases={}, shutdown={}, estimated_duration={}s",
+        output, prefix, cases.size(), shutdown, getEstimatedDuration());
   }
 
   return details;
@@ -444,6 +449,16 @@ int TestRTT::_write(struct Sample *smps[], unsigned cnt) {
 }
 
 std::vector<int> TestRTT::getPollFDs() { return {task.getFD()}; }
+
+double TestRTT : getEstimatedDuration() const {
+  double duration = 0;
+
+  for (auto &c : cases) {
+    duration += c.getEstimatedDuration();
+  }
+
+  return duration;
+}
 
 int TestRTTNodeFactory::start(SuperNode *sn_) {
   sn = sn_;
