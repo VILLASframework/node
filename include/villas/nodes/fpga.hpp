@@ -47,11 +47,14 @@ protected:
 
   // This sets the requested timestep in the FPGA timestep generation IP.
   // The value is interpreted as seconds (i.e. 10e-3 is a timestep of 10ms).
-  // It is used to program the Register IP that in turn generates conversions
-  // of DinoAdc. This means that this setting represents the inverse of the
-  // Dino sampling rate.
-  // The setting must be programmed using DinoAdc::setRegisterConfigTimestep,
-  // which FpgaNode does in prepare only if a Register and a DinoAdc is present.
+  // This does not generate a clock, but a pulse at a configurable interval
+  // that is (mostly) independent from the actual clock. If the FPGA is
+  // coupled with a simulation, this should be the actual time step, i.e.,
+  // we generate the time step signal in FPGA and synchronize our simulator
+  // software to that signal.
+  // This setting is also the inverse of the Dino sampling rate if one is connected.
+  // For this, the setting must be programmed using DinoAdc::setRegisterConfigTimestep,
+  // which FpgaNode does in prepare, but only if a Register and a DinoAdc is present.
   double timestep;
 
   // State
