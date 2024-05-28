@@ -85,7 +85,7 @@ json_t *TestRTT::Case::getMetadata() {
 }
 
 double TestRTT::Case::getEstimatedDuration() const {
-  return (count_warmup + count) * rate;
+  return (count_warmup + count) / rate;
 }
 
 int TestRTT::prepare() {
@@ -410,7 +410,7 @@ int TestRTT::_read(struct Sample *smps[], unsigned cnt) {
     if (current->count_warmup > 0)
       logger->info("Starting warmup phase. Sending {} samples...",
                    current->count_warmup);
-  } else if (current->sent == current->count_warmup)
+  } else if (current->sent + current->sent_warmup == current->count_warmup)
     logger->info("Completed warmup phase. Sending {} samples...",
                  current->count);
 
