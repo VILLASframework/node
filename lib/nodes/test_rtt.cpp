@@ -304,7 +304,8 @@ int TestRTT::parse(json_t *json) {
             count_effective = count_duration;
           break;
 
-        default: {}
+        default: {
+        }
         }
 
         auto filename = fmt::format("{}/{}_values{}_rate{}.log", output, prefix,

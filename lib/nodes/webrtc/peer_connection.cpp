@@ -212,15 +212,12 @@ void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state) {
     if (conn->getSelectedCandidatePair(&local, &remote)) {
       std::stringstream l, r;
       l << local, r << remote;
-      logger->info("Peer connection connected:\n"
-                    "local: {}\n"
-                    "remote: {}\n"
-                    "bytes sent: {} / bytes received: {} / rtt: {}\n",
-                    l.str(), r.str(), conn->bytesSent(), conn->bytesReceived(),
-                    rtt.value_or(decltype(rtt)::value_type{0}));
+      logger->info("Peer connection connected: local={}, remote={}, rtt={}",
+                   l.str(), r.str(),
+                   rtt.value_or(decltype(rtt)::value_type{0}));
     } else {
       logger->warn("Peer connection connected.\n"
-                    "Could not get candidate pair info.\n");
+                   "Could not get candidate pair info.\n");
     }
     break;
   }
@@ -351,7 +348,7 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
           },
 
           [&](auto other) {
-            logger->warn("Signaling message has been skipped");
+            logger->debug("Signaling message has been skipped");
           }},
       msg.message);
 }
@@ -396,7 +393,7 @@ void PeerConnection::onDataChannelError(std::string err) {
 }
 
 void PeerConnection::onDataChannelMessage(rtc::string msg) {
-  logger->info("Received: {}", msg);
+  logger->trace("Received: {}", msg);
 }
 
 void PeerConnection::onDataChannelMessage(rtc::binary msg) {
