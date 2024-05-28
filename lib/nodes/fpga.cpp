@@ -74,8 +74,7 @@ int FpgaNode::prepare() {
 
   if (reg != nullptr &&
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
-    // constexpr double sampleRate = 20e3; // We want to achieve a timestep of 50us
-    fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
+        fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
   } else {
     logger->warn("No DinoAdc or no Register found on FPGA.");
   }
