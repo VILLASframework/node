@@ -128,7 +128,7 @@ static enum TestRTT::Mode parseMode(const char *mode_str) {
   else if (strcmp(mode_str, "at_least_duration"))
     return TestRTT::Mode::AT_LEAST_DURATION;
   else
-    return TestRTT : Mode::UNKNOWN;
+    return TestRTT::Mode::UNKNOWN;
 }
 
 int TestRTT::parse(json_t *json) {
@@ -303,6 +303,8 @@ int TestRTT::parse(json_t *json) {
           if (count_effective < count_duration)
             count_effective = count_duration;
           break;
+
+        default: {}
         }
 
         auto filename = fmt::format("{}/{}_values{}_rate{}.log", output, prefix,
