@@ -69,8 +69,8 @@ protected:
   Format::Ptr formatter; // The format of the output file
   FILE *stream;
 
-  std::list<Case> cases; // List of test cases
-  std::list<Case>::iterator current;
+  std::list<Case> cases;             // List of test cases
+  std::list<Case>::iterator current; // Currently running test case
 
   std::string output; // The directory where we place the results.
   std::string prefix; // An optional prefix in the filename.
@@ -78,13 +78,14 @@ protected:
   bool shutdown;
 
   enum Mode {
+    UNKNOWN,
     MIN,
     MAX,
     STOP_COUNT,
     STOP_DURATION,
     AT_LEAST_COUNT,
     AT_LEAST_DURATION
-  } mode;
+  };
 
   virtual int _read(struct Sample *smps[], unsigned cnt);
 
@@ -93,7 +94,7 @@ protected:
 public:
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
       : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
-        stream(nullptr), shutdown(false), mode(Mode::AT_LEAST_COUNT) {}
+        stream(nullptr), shutdown(false) {}
 
   virtual ~TestRTT(){};
 

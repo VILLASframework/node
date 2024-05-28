@@ -26,9 +26,10 @@ static SuperNode *sn = nullptr;
 
 int TestRTT::Case::start() {
   node->logger->info("Starting case #{}/{}: filename={}, rate={}/s, values={}, "
-                     "count={}smps, warmup={:.3f}s, cooldown={:.3f}s",
+                     "count={}smps, warmup={:.3f}s, cooldown={:.3f}s, "
+                     "estimated_duration={:.3f}s",
                      id + 1, node->cases.size(), filename_formatted, rate,
-                     values, count, warmup, cooldown);
+                     values, count, warmup, cooldown, getEstimatedDuration());
 
   // Open file
   node->stream = fopen(filename_formatted.c_str(), "a+");
@@ -113,12 +114,33 @@ int TestRTT::prepare() {
   return Node::prepare();
 }
 
+static enum TestRTT::Mode parseMode(const char *mode_str) {
+  if (strcmp(mode_str, "min"))
+    return TestRTT::Mode::MIN;
+  else if (strcmp(mode_str, "max"))
+    return TestRTT::Mode::MIN;
+  else if (strcmp(mode_str, "stop_after_count"))
+    return TestRTT::Mode::STOP_COUNT;
+  else if (strcmp(mode_str, "stop_after_duration"))
+    return TestRTT::Mode::STOP_DURATION;
+  else if (strcmp(mode_str, "at_least_count"))
+    return TestRTT::Mode::AT_LEAST_COUNT;
+  else if (strcmp(mode_str, "at_least_duration"))
+    return TestRTT::Mode::AT_LEAST_DURATION;
+  else
+    return TestRTT : Mode::UNKNOWN;
+}
+
 int TestRTT::parse(json_t *json) {
   int ret;
 
   const char *output_str = ".";
   const char *prefix_str = nullptr;
   const char *mode_str = nullptr;
+
+  enum Mode mode_default = Mode::AT_LEAST_COUNT;
+  int count_default = 1000;
+  double duration_default = 300;
   double warmup_default = 0;
   double cooldown_default = 0;
   int shutdown_ = -1;
@@ -128,13 +150,15 @@ int TestRTT::parse(json_t *json) {
   json_t *json_rates_default = nullptr, *json_values_default = nullptr;
   json_error_t err;
 
-  ret = json_unpack_ex(
-      json, &err, 0,
-      "{ s?: s, s?: s, s?: o, s?: F, s?: F, s?: o, s?: o, s: o, s?: b, s?: s }",
-      "prefix", &prefix_str, "output", &output_str, "format", &json_format,
-      "cooldown", &cooldown_default, "warmup", &warmup_default, "values",
-      &json_values_default, "rates", &json_rates_default, "cases", &json_cases,
-      "shutdown", &shutdown_, "mode", &mode_str);
+  ret = json_unpack_ex(json, &err, 0,
+                       "{ s?: s, s?: s, s?: o, s?: F, s?: F, s?: o, s?: o, s: "
+                       "o, s?: b, s?: s, s?: i, s?: F }",
+                       "prefix", &prefix_str, "output", &output_str, "format",
+                       &json_format, "cooldown", &cooldown_default, "warmup",
+                       &warmup_default, "values", &json_values_default, "rates",
+                       &json_rates_default, "cases", &json_cases, "shutdown",
+                       &shutdown_, "mode", &mode_str, "count", &count_default,
+                       "duration", &duration_default);
   if (ret)
     throw ConfigError(json, err, "node-config-node-test-rtt");
 
@@ -145,19 +169,8 @@ int TestRTT::parse(json_t *json) {
     shutdown = shutdown_ > 0;
 
   if (mode_str) {
-    if (strcmp(mode_str, "min"))
-      mode = Mode::MIN;
-    else if (strcmp(mode_str, "max"))
-      mode = Mode::MIN;
-    else if (strcmp(mode_str, "stop_after_count"))
-      mode = Mode::STOP_COUNT;
-    else if (strcmp(mode_str, "stop_after_duration"))
-      mode = Mode::STOP_DURATION;
-    else if (strcmp(mode_str, "at_least_count"))
-      mode = Mode::AT_LEAST_COUNT;
-    else if (strcmp(mode_str, "at_least_duration"))
-      mode = Mode::AT_LEAST_DURATION;
-    else
+    mode_default = parseMode(mode_str);
+    if (mode_default == Mode::UNKNOWN)
       throw ConfigError(json, "node-config-node-test-rtt-mode",
                         "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
   }
@@ -190,20 +203,24 @@ int TestRTT::parse(json_t *json) {
 
   int id = 0;
   json_array_foreach(json_cases, i, json_case) {
-    int count = -1;
-    double duration = -1;               // in secs
+
+    const char *mode_str = nullptr;
+    int count = count_default;          // in no of samples
+    double duration = duration_default; // in secs
     double cooldown = cooldown_default; // in secs
     double warmup = warmup_default;     // in secs
     std::vector<int> rates;
     std::vector<int> values;
 
+    enum Mode mode = mode_default;
+
     json_t *json_rates = json_rates_default;
     json_t *json_values = json_values_default;
 
-    ret = json_unpack_ex(json_case, &err, 0, "{ s?: o, s?: o, s?: i, s?: F }",
-                         "rates", &json_rates, "values", &json_values, "count",
-                         &count, "duration", &duration, "warmup", &warmup,
-                         "cooldown", &cooldown);
+    ret = json_unpack_ex(
+        json_case, &err, 0, "{ s?: o, s?: o, s?: i, s?: F, s?: s }", "rates",
+        &json_rates, "values", &json_values, "count", &count, "duration",
+        &duration, "warmup", &warmup, "cooldown", &cooldown, "mode", &mode_str);
 
     if (!json_is_array(json_rates) && !json_is_number(json_rates))
       throw ConfigError(
@@ -214,6 +231,13 @@ int TestRTT::parse(json_t *json) {
       throw ConfigError(
           json_case, "node-config-node-test-rtt-values",
           "The 'values' setting must be an integer or an array of integers");
+
+    if (mode_str) {
+      mode = parseMode(mode_str);
+      if (mode == Mode::UNKNOWN)
+        throw ConfigError(json, "node-config-node-test-rtt-mode",
+                          "Invalid mode: {}. Must be 'min' or 'max'", mode_str);
+    }
 
     if (json_is_array(json_rates)) {
       size_t j;
@@ -295,9 +319,10 @@ int TestRTT::parse(json_t *json) {
 
 const std::string &TestRTT::getDetails() {
   if (details.empty()) {
-    details = fmt::format(
-        "output={}, prefix={}, #cases={}, shutdown={}, estimated_duration={}s",
-        output, prefix, cases.size(), shutdown, getEstimatedDuration());
+    details = fmt::format("output={}, prefix={}, #cases={}, shutdown={}, "
+                          "estimated_duration={:.3f}s",
+                          output, prefix, cases.size(), shutdown,
+                          getEstimatedDuration());
   }
 
   return details;
@@ -450,7 +475,7 @@ int TestRTT::_write(struct Sample *smps[], unsigned cnt) {
 
 std::vector<int> TestRTT::getPollFDs() { return {task.getFD()}; }
 
-double TestRTT : getEstimatedDuration() const {
+double TestRTT::getEstimatedDuration() const {
   double duration = 0;
 
   for (auto &c : cases) {
