@@ -6,6 +6,11 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
+if [ -n "${CI}" ]; then
+    echo "Test is not supported in CI"
+    exit 99
+fi
+
 set -e
 
 DIR=$(mktemp -d)
