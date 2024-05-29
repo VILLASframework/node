@@ -305,6 +305,8 @@ int TestRTT::parse(json_t *json) {
           break;
 
         default: {
+          count_effective = 0;
+          break;
         }
         }
 
