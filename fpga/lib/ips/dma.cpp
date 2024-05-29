@@ -34,7 +34,8 @@ bool Dma::init() {
 
   xConfig.BaseAddr = getBaseAddr(registerMemory);
 
-  hwLock.lock();
+  hwReadLock.lock();
+  hwWriteLock.lock();
   if (XAxiDma_CfgInitialize(&xDma, &xConfig) != XST_SUCCESS) {
     logger->error("Cannot initialize Xilinx DMA driver");
     return false;
@@ -47,7 +48,8 @@ bool Dma::init() {
     logger->debug("DMA selftest passed");
   }
 
-  hwLock.unlock();
+  hwWriteLock.unlock();
+  hwReadLock.unlock();
   // Map buffer descriptors
   if (hasScatterGather()) {
     if (actualRingBdSize < readCoalesce || actualRingBdSize < writeCoalesce) {
@@ -91,7 +93,7 @@ void Dma::setupScatterGather() {
 void Dma::setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr) {
   int ret;
 
-  hwLock.lock();
+  hwReadLock.lock();
   auto *rxRingPtr = XAxiDma_GetRxRing(&xDma);
 
   // Disable all RX interrupts before RxBD space setup
@@ -128,13 +130,13 @@ void Dma::setupScatterGatherRingRx(uintptr_t physAddr, uintptr_t virtAddr) {
   if (ret != XST_SUCCESS)
     throw RuntimeError("Failed to start TX ring: {}", ret);
 
-  hwLock.unlock();
+  hwReadLock.unlock();
 }
 
 void Dma::setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr) {
   int ret;
 
-  hwLock.lock();
+  hwWriteLock.lock();
   auto *txRingPtr = XAxiDma_GetTxRing(&xDma);
 
   // Disable all TX interrupts before TxBD space setup
@@ -165,7 +167,7 @@ void Dma::setupScatterGatherRingTx(uintptr_t physAddr, uintptr_t virtAddr) {
   ret = XAxiDma_BdRingStart(txRingPtr);
   if (ret != XST_SUCCESS)
     throw RuntimeError("Failed to start TX ring: {}", ret);
-  hwLock.unlock();
+  hwWriteLock.unlock();
 }
 
 bool Dma::reset() {
@@ -173,7 +175,8 @@ bool Dma::reset() {
     return true;
   }
 
-  hwLock.lock();
+  hwReadLock.lock();
+  hwWriteLock.lock();
   XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
   XAxiDma_IntrDisable(&xDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
 
@@ -185,12 +188,15 @@ bool Dma::reset() {
   while (timeout > 0) {
     if (XAxiDma_ResetIsDone(&xDma)) {
       logger->info("DMA has been reset.");
+      hwReadLock.unlock();
+      hwWriteLock.unlock();
       return true;
     }
 
     timeout--;
   }
-  hwLock.unlock();
+  hwReadLock.unlock();
+  hwWriteLock.unlock();
   logger->error("DMA reset timed out");
 
   return false;
@@ -285,10 +291,10 @@ bool Dma::read(const MemoryBlock &mem, size_t len) {
 
 // Reuse existing single BD bypassing BdRingFree, Alloc, ToHw
 bool Dma::writeScatterGatherFast() {
-  hwLock.lock();
+  hwWriteLock.lock();
   auto *txRing = XAxiDma_GetTxRing(&xDma);
   if (txRing == nullptr) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("RxRing was null.");
   }
   XAxiDma_Bd *CurBdPtr = txRing->HwHead;
@@ -303,7 +309,7 @@ bool Dma::writeScatterGatherFast() {
                     XAXIDMA_DESC_LSB_MASK;
   XAxiDma_WriteReg(txRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
 
-  hwLock.unlock();
+  hwWriteLock.unlock();
   return true;
 }
 
@@ -318,11 +324,11 @@ bool Dma::writeScatterGatherPrepare(const MemoryBlock &mem, size_t len) {
   if (buf == nullptr) {
     throw RuntimeError("Buffer was null");
   }
-  hwLock.lock();
+  hwWriteLock.lock();
 
   auto bd = writeScatterGatherSetupBd(buf, len);
 
-  hwLock.unlock();
+  hwWriteLock.unlock();
 
   return bd != nullptr;
 }
@@ -337,26 +343,26 @@ XAxiDma_Bd *Dma::writeScatterGatherSetupBd(const void *buf, size_t len) {
 
   auto *txRing = XAxiDma_GetTxRing(&xDma);
   if (txRing == nullptr) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("TxRing was null.");
   }
 
   XAxiDma_Bd *bd;
   ret = XAxiDma_BdRingAlloc(txRing, 1, &bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Write: BdRingAlloc returned {}.", ret);
   }
 
   ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t)buf);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Setting BdBufAddr to {} returned {}.", buf, ret);
   }
 
   ret = XAxiDma_BdSetLength(bd, len, txRing->MaxTransferLen);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Setting BdBufLength to {} returned {}.", len, ret);
   }
 
@@ -374,10 +380,10 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
   // buf is address from view of DMA controller
 
   int ret = XST_FAILURE;
-  hwLock.lock();
+  hwWriteLock.lock();
   auto *txRing = XAxiDma_GetTxRing(&xDma);
   if (txRing == nullptr) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("TxRing was null.");
   }
 
@@ -386,21 +392,21 @@ bool Dma::writeScatterGather(const void *buf, size_t len) {
   // Failure could also indicate that EOF is not set on last Bd
   ret = XAxiDma_BdRingToHw(txRing, 1, bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Enqueuing Bd and giving control to HW failed {}", ret);
   }
 
-  hwLock.unlock();
+  hwWriteLock.unlock();
 
   return true;
 }
 
 // Reuse existing single BD bypassing BdRingFree, Alloc, ToHw
 bool Dma::readScatterGatherFast() {
-  hwLock.lock();
+  hwReadLock.lock();
   auto *rxRing = XAxiDma_GetRxRing(&xDma);
   if (rxRing == nullptr) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("RxRing was null.");
   }
   XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
@@ -416,7 +422,7 @@ bool Dma::readScatterGatherFast() {
                     XAXIDMA_DESC_LSB_MASK;
   XAxiDma_WriteReg(rxRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
 
-  hwLock.unlock();
+  hwReadLock.unlock();
   return true;
 }
 
@@ -431,11 +437,11 @@ bool Dma::readScatterGatherPrepare(const MemoryBlock &mem, size_t len) {
   if (buf == nullptr) {
     throw RuntimeError("Buffer was null");
   }
-  hwLock.lock();
+  hwReadLock.lock();
 
   auto bd = readScatterGatherSetupBd(buf, len);
 
-  hwLock.unlock();
+  hwReadLock.unlock();
 
   return bd != nullptr;
 }
@@ -450,14 +456,14 @@ XAxiDma_Bd *Dma::readScatterGatherSetupBd(void *buf, size_t len) {
 
   auto *rxRing = XAxiDma_GetRxRing(&xDma);
   if (rxRing == nullptr) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("RxRing was null.");
   }
 
   XAxiDma_Bd *bd;
   ret = XAxiDma_BdRingAlloc(rxRing, readCoalesce, &bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("Failed to alloc BD in RX ring: {}", ret);
   }
 
@@ -466,14 +472,14 @@ XAxiDma_Bd *Dma::readScatterGatherSetupBd(void *buf, size_t len) {
   for (size_t i = 0; i < readCoalesce; i++) {
     ret = XAxiDma_BdSetBufAddr(curBd, (uintptr_t)curBuf);
     if (ret != XST_SUCCESS) {
-      hwLock.unlock();
+      hwReadLock.unlock();
       throw RuntimeError("Failed to set buffer address {:x} on BD {:x}: {}",
                          (uintptr_t)buf, (uintptr_t)bd, ret);
     }
 
     ret = XAxiDma_BdSetLength(curBd, readMsgSize, rxRing->MaxTransferLen);
     if (ret != XST_SUCCESS) {
-      hwLock.unlock();
+      hwReadLock.unlock();
       throw RuntimeError("Rx set length {} on BD {:x} failed {}", len,
                          (uintptr_t)bd, ret);
     }
@@ -499,10 +505,10 @@ bool Dma::readScatterGather(void *buf, size_t len) {
         "Read size is smaller than readCoalesce*msgSize. Cannot setup BDs.");
   }
 
-  hwLock.lock();
+  hwReadLock.lock();
   auto *rxRing = XAxiDma_GetRxRing(&xDma);
   if (rxRing == nullptr) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("RxRing was null.");
   }
 
@@ -510,17 +516,17 @@ bool Dma::readScatterGather(void *buf, size_t len) {
 
   ret = XAxiDma_BdRingToHw(rxRing, readCoalesce, bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("Failed to submit BD to RX ring: {}", ret);
   }
 
-  hwLock.unlock();
+  hwReadLock.unlock();
   return true;
 }
 
 size_t Dma::writeScatterGatherPoll(bool lock) {
   if (lock) {
-    hwLock.lock();
+    hwWriteLock.lock();
   }
   auto txRing = XAxiDma_GetTxRing(&xDma);
   XAxiDma_Bd *CurBdPtr = txRing->HwHead;
@@ -532,7 +538,7 @@ size_t Dma::writeScatterGatherPoll(bool lock) {
   // At this point, we know that the transmission is complete, but we haven't accessed the
   // PCIe address space, yet. We know that we have received at least one BD.
   if (lock) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
   }
   return XAxiDma_BdGetActualLength(CurBdPtr, XAXIDMA_MCHAN_MAX_TRANSFER_LEN);
 }
@@ -546,19 +552,19 @@ Dma::Completion Dma::writeCompleteScatterGather() {
 
   uint32_t irqStatus = 0;
   if (polling) {
-    hwLock.lock();
+    hwWriteLock.lock();
     writeScatterGatherPoll(false);
   } else {
     c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
         irqs[mm2sInterrupt].num);
-    hwLock.lock();
+    hwWriteLock.lock();
   }
 
   if ((c.bds = XAxiDma_BdRingFromHw(txRing, writeCoalesce, &bd)) <
       writeCoalesce) {
     logger->warn("Send partial batch of {}/{} BDs.", c.bds, writeCoalesce);
     if (errcnt-- == 0) {
-      hwLock.unlock();
+      hwWriteLock.unlock();
       throw RuntimeError("too many partial batches");
     }
   }
@@ -571,12 +577,12 @@ Dma::Completion Dma::writeCompleteScatterGather() {
 
   if (c.bds == 0) {
     c.bytes = 0;
-    hwLock.unlock();
+    hwWriteLock.unlock();
     return c;
   }
 
   if (bd == nullptr) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Bd was null.");
   }
 
@@ -585,7 +591,7 @@ Dma::Completion Dma::writeCompleteScatterGather() {
     ret = XAxiDma_BdGetSts(curBd);
     if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
         (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
-      hwLock.unlock();
+      hwWriteLock.unlock();
       throw RuntimeError("Write: Bd Status register shows error: {:#x}", ret);
     }
 
@@ -595,17 +601,17 @@ Dma::Completion Dma::writeCompleteScatterGather() {
 
   ret = XAxiDma_BdRingFree(txRing, c.bds, bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     throw RuntimeError("Failed to free {} TX BDs {}", c.bds, ret);
   }
 
-  hwLock.unlock();
+  hwWriteLock.unlock();
   return c;
 }
 
 size_t Dma::readScatterGatherPoll(bool lock) {
   if (lock) {
-    hwLock.lock();
+    hwReadLock.lock();
   }
   auto rxRing = XAxiDma_GetRxRing(&xDma);
   XAxiDma_Bd *CurBdPtr = rxRing->HwHead;
@@ -617,7 +623,7 @@ size_t Dma::readScatterGatherPoll(bool lock) {
   // At this point, we know that the transmission is complete, but we haven't accessed the
   // PCIe address space, yet. We know that we have received at least one BD.
   if (lock) {
-    hwLock.unlock();
+    hwReadLock.unlock();
   }
   return XAxiDma_BdGetActualLength(CurBdPtr, XAXIDMA_MCHAN_MAX_TRANSFER_LEN);
 }
@@ -632,13 +638,13 @@ Dma::Completion Dma::readCompleteScatterGather() {
   ssize_t intrs = 0;
   uint32_t irqStatus = 0;
   if (polling) {
-    hwLock.lock();
+    hwReadLock.lock();
     readScatterGatherPoll(false);
     intrs = 1;
   } else {
     intrs = irqs[s2mmInterrupt].irqController->waitForInterrupt(
         irqs[s2mmInterrupt].num);
-    hwLock.lock();
+    hwReadLock.lock();
   }
 
   if (intrs < 0) {
@@ -647,7 +653,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
     // Free all RX BDs for future transmission.
     int bds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd);
     XAxiDma_BdRingFree(rxRing, bds, bd);
-    hwLock.unlock();
+    hwReadLock.unlock();
 
     c.interrupts = 0;
     return c;
@@ -668,7 +674,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
       readCoalesce) {
     logger->warn("Got partial batch of {}/{} BDs.", c.bds, readCoalesce);
     if (errcnt-- == 0) {
-      hwLock.unlock();
+      hwReadLock.unlock();
       throw RuntimeError("too many partial batches");
     }
   } else {
@@ -677,12 +683,12 @@ Dma::Completion Dma::readCompleteScatterGather() {
 
   if (c.bds == 0) {
     c.bytes = 0;
-    hwLock.unlock();
+    hwReadLock.unlock();
     return c;
   }
 
   if (bd == nullptr) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("Bd was null.");
   }
 
@@ -693,7 +699,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
     ret = XAxiDma_BdGetSts(curBd);
     if ((ret & XAXIDMA_BD_STS_ALL_ERR_MASK) ||
         (!(ret & XAXIDMA_BD_STS_COMPLETE_MASK))) {
-      hwLock.unlock();
+      hwReadLock.unlock();
       throw RuntimeError("Read: Bd Status register shows error: {}", ret);
     }
 
@@ -704,16 +710,16 @@ Dma::Completion Dma::readCompleteScatterGather() {
   // Free all processed RX BDs for future transmission.
   ret = XAxiDma_BdRingFree(rxRing, c.bds, bd);
   if (ret != XST_SUCCESS) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     throw RuntimeError("Failed to free {} TX BDs {}.", c.bds, ret);
   }
 
-  hwLock.unlock();
+  hwReadLock.unlock();
   return c;
 }
 
 bool Dma::writeSimple(const void *buf, size_t len) {
-  hwLock.lock();
+  hwWriteLock.lock();
   XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 
   if (not ring->HasDRE) {
@@ -721,7 +727,7 @@ bool Dma::writeSimple(const void *buf, size_t len) {
                                             : ring->DataWidth - 1;
 
     if (reinterpret_cast<uintptr_t>(buf) & mask) {
-      hwLock.unlock();
+      hwWriteLock.unlock();
       return false;
     }
   }
@@ -733,7 +739,7 @@ bool Dma::writeSimple(const void *buf, size_t len) {
 
   // If the engine is doing a transfer, cannot submit
   if (not dmaChannelHalted and dmaToDeviceBusy) {
-    hwLock.unlock();
+    hwWriteLock.unlock();
     return false;
   }
 
@@ -753,12 +759,12 @@ bool Dma::writeSimple(const void *buf, size_t len) {
 
   // Set tail descriptor pointer
   XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
-  hwLock.unlock();
+  hwWriteLock.unlock();
   return true;
 }
 
 bool Dma::readSimple(void *buf, size_t len) {
-  hwLock.lock();
+  hwReadLock.lock();
   XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 
   if (not ring->HasDRE) {
@@ -766,7 +772,7 @@ bool Dma::readSimple(void *buf, size_t len) {
                                             : ring->DataWidth - 1;
 
     if (reinterpret_cast<uintptr_t>(buf) & mask) {
-      hwLock.unlock();
+      hwReadLock.unlock();
       return false;
     }
   }
@@ -777,7 +783,7 @@ bool Dma::readSimple(void *buf, size_t len) {
 
   // If the engine is doing a transfer, cannot submit
   if (not dmaChannelHalted and deviceToDmaBusy) {
-    hwLock.unlock();
+    hwReadLock.unlock();
     return false;
   }
 
@@ -798,7 +804,7 @@ bool Dma::readSimple(void *buf, size_t len) {
   // Set tail descriptor pointer
   XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
-  hwLock.unlock();
+  hwReadLock.unlock();
   return true;
 }
 
@@ -809,13 +815,13 @@ Dma::Completion Dma::writeCompleteSimple() {
     c.interrupts = irqs[mm2sInterrupt].irqController->waitForInterrupt(
         irqs[mm2sInterrupt]);
 
-  hwLock.lock();
+  hwWriteLock.lock();
   XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 
   const XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
   const size_t bytesWritten =
       XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
-  hwLock.unlock();
+  hwWriteLock.unlock();
   c.bytes = bytesWritten;
   return c;
 }
@@ -827,13 +833,13 @@ Dma::Completion Dma::readCompleteSimple() {
     c.interrupts = irqs[s2mmInterrupt].irqController->waitForInterrupt(
         irqs[s2mmInterrupt]);
 
-  hwLock.lock();
+  hwReadLock.lock();
   XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
   const XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
   const size_t bytesRead =
       XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
-  hwLock.unlock();
+  hwReadLock.unlock();
 
   c.bytes = bytesRead;
   return c;

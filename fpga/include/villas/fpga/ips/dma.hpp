@@ -122,7 +122,8 @@ private:
   XAxiDma xDma;
   XAxiDma_Config xConfig;
 
-  std::mutex hwLock;
+  std::mutex hwReadLock;
+  std::mutex hwWriteLock;
 
   bool configDone = false;
   // use polling to wait for DMA completion or interrupts via efds
