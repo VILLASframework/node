@@ -65,7 +65,8 @@ for MODE in all any; do
 
 cat > config.json <<EOF
 {
-    "nodes": {
+     "idle_stop": true,
+     "nodes": {
         "sig_1": {
              "type": "signal",
 

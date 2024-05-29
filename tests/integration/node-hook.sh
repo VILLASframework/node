@@ -27,6 +27,7 @@ EOF
 
 cat > config.json <<EOF
 {
+    "idle_stop": true,
     "nodes": {
         "sig": {
              "type": "signal",
