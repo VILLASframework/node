@@ -25,6 +25,7 @@ EOF
 
 cat > config.json <<EOF
 {
+    "idle_stop": true,
     "nodes": {
         "sig_1": {
              "type": "signal.v2",
@@ -58,7 +59,8 @@ cat > config.json <<EOF
         },
         "file_1": {
              "type": "file",
-             "uri": "output.dat"
+             "uri": "output.dat",
+             "in": {"hooks": ["print"]}
         }
     },
     "paths": [
@@ -76,6 +78,6 @@ cat > config.json <<EOF
 }
 EOF
 
-villas node config.json
+villas node -d debug  config.json
 
 villas compare output.dat expect.dat
