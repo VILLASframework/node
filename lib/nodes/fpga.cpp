@@ -341,6 +341,11 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 }
 
 std::vector<int> FpgaNode::getPollFDs() {
+  if (!lowLatencyMode && card && !card->polling) {
+    return card->vfioDevice->getEventfdList();
+  } else {
+    return {};
+  }
   return card->vfioDevice->getEventfdList();
 }
 
