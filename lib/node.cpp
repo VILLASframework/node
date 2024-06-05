@@ -336,12 +336,13 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
 
 const std::string &Node::getNameFull() {
   if (name_full.empty()) {
+    auto is1 = (getInputSignals(false) ? getInputSignals(false)->size() : 0);
+    auto is2 = (getInputSignals(true) ? getInputSignals(true)->size() : 0);
     name_full = fmt::format("{}: uuid={}, #in.signals={}/{}, #in.hooks={}, "
                             "#out.hooks={}, in.vectorize={}, out.vectorize={}",
-                            getName(), uuid::toString(uuid).c_str(),
-                            getInputSignals(false)->size(),
-                            getInputSignals(true)->size(), in.hooks.size(),
-                            out.hooks.size(), in.vectorize, out.vectorize);
+                            getName(), uuid::toString(uuid).c_str(), is1, is2,
+                            in.hooks.size(), out.hooks.size(), in.vectorize,
+                            out.vectorize);
 
 #ifdef WITH_NETEM
     name_full += fmt::format(", out.netem={}", tc_qdisc ? "yes" : "no");
