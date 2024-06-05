@@ -233,7 +233,7 @@ public:
       signals->erase(signals->begin() + signal_index);
 
       for (int i = 0; i < fharmonics_len; i++) {
-        new_sig_name = strf("%s_harm%d", orig_sig->name, i);
+        new_sig_name = strf("%s_harm%d", orig_sig->name.c_str(), i);
 
         auto new_sig = std::make_shared<Signal>(new_sig_name, orig_sig->unit,
                                                 SignalType::COMPLEX);
