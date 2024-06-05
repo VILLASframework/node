@@ -346,7 +346,6 @@ std::vector<int> FpgaNode::getPollFDs() {
   } else {
     return {};
   }
-  return card->vfioDevice->getEventfdList();
 }
 
 int FpgaNodeFactory::start(SuperNode *sn) {
