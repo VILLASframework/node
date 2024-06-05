@@ -191,7 +191,7 @@ public:
   virtual void prepare() {
     assert(state == State::CHECKED);
 
-    char *new_sig_name;
+    std::string new_sig_name;
 
     assert(state != State::STARTED);
 
@@ -233,7 +233,7 @@ public:
       signals->erase(signals->begin() + signal_index);
 
       for (int i = 0; i < fharmonics_len; i++) {
-        new_sig_name = strf("%s_harm%d", orig_sig->name.c_str(), i);
+        new_sig_name = fmt::format("{}_harm{}", orig_sig->name, i);
 
         auto new_sig = std::make_shared<Signal>(new_sig_name, orig_sig->unit,
                                                 SignalType::COMPLEX);
