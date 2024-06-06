@@ -40,7 +40,7 @@ prepare:docker:
     matrix:
       - DISTRO: [ubuntu, debian, rocky]
       - DISTRO: fedora
-        DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
+        DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
       - DISTRO: fedora
         DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
         DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
@@ -54,6 +54,7 @@ prepare:docker:
 
 build:source:
   stage: build
+  needs: ["prepare:docker"]
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
     - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}
@@ -97,6 +98,8 @@ test:python:
     - /venv/bin/flake8 --extend-exclude="*.pyi,*_pb2.py" .
     - /venv/bin/mypy .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  needs:
+    - job: "build:source: [fedora]"
 
 test:cppcheck:
   stage: test
@@ -146,6 +149,7 @@ test:integration:
 
 test:reuse:
   stage: test
+  needs: []
   image:
     name: fsfe/reuse:latest
     entrypoint: [""]
@@ -224,7 +228,7 @@ deploy:docker-dev:
   tags:
     - docker
   needs:
-    - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
+    - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}]"
 
 deploy:docker-dev-vscode:
   stage: deploy
