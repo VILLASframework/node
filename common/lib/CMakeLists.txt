@@ -87,7 +87,7 @@ install(
 )
 
 install(
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/common/include/villas/
+    DIRECTORY ${CMAKE_SOURCE_DIR}/common/include/villas/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
     COMPONENT devel
     FILES_MATCHING
@@ -96,7 +96,7 @@ install(
 )
 
 install(
-    DIRECTORY ${PROJECT_BINARY_DIR}/include/villas/
+    DIRECTORY ${PROJECT_BINARY_DIR}/common/include/villas/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
     COMPONENT devel
     FILES_MATCHING
