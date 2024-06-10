@@ -17,4 +17,9 @@ target_link_libraries(villas-fpga-pipe PUBLIC
 )
 
 
+add_executable(platform platform.cpp)
+target_link_libraries(platform PUBLIC
+	villas-fpga
+)
+
 add_executable(pcimem pcimem.c)
