@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include <vector>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
@@ -172,6 +173,27 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
         logger->debug("IRQ: {} -> {}:{}", irqName, irqControllerName, num);
         ip->irqs[irqName] = {num, intc, ""};
       }
+    } else if (ip->getInstanceName().find("axi_dma_") != std::string::npos) {
+      logger->warn("Dma json does not contain an interrupt Controller. A "
+                   "Platform Interrupt controller will be added");
+
+      // TODO: Order of interrupts is hardcoded and not tested (may be reversed). Available in vfio device irq.id .
+      auto intc = new PlatformInterruptController();
+      intc->id = id;
+      intc->logger = villas::logging.get(id.getName());
+      intc->card = card;
+
+      std::vector<const char *> intc_names = {"s2mm_introut", "mm2s_introut"};
+      int num = 0;
+      for (auto name : intc_names) {
+        std::string irqControllerName = "PlatformInterruptController";
+        logger->debug("IRQ: {} -> {}:{}", std::string(name), irqControllerName,
+                      num);
+        ip->irqs[std::string(name)] = {num, intc, ""};
+        num++;
+      }
+
+      intc->init();
     }
 
     json_t *json_memory_view = json_object_get(json_ip, "memory-view");
