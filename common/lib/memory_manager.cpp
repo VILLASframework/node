@@ -231,14 +231,12 @@ void MemoryManager::printGraph() {
   auto loggerStatic = logger;
 
   loggerStatic->info("####### Vertices ########");
-
   for (unsigned int i = 0; i < memoryGraph.getVertexCount(); i++) {
     auto vertex = memoryGraph.getVertex(i);
     loggerStatic->info(std::to_string(i) + ": " + vertex->name);
   }
 
   loggerStatic->info("####### Edges ########");
-
   for (unsigned int i = 0; i < memoryGraph.getEdgeCount(); i++) {
     auto mapping = memoryGraph.getEdge(i);
     loggerStatic->info("From: " + std::to_string(mapping->getVertexFrom()) +
