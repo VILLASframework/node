@@ -209,7 +209,7 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
+  auto mem = MemoryAccessor<float>(*blockTx);
   float scaled;
 
   for (unsigned i = 0; i < smp->length; i++) {
@@ -312,7 +312,7 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
+  auto mem = MemoryAccessor<float>(*blockTx);
   float scaled;
 
   for (unsigned i = 0; i < smps[0]->length; i++) {
