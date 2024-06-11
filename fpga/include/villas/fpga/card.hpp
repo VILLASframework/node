@@ -21,8 +21,9 @@ namespace fpga {
 class Card {
 public:
   bool polling;
-
-  std::string name; // The name of the FPGA card
+  bool doReset;					// Reset VILLASfpga during startup?
+	int affinity;					// Affinity for MSI interrupts
+	std::string name;			// The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
   std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
