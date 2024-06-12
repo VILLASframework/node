@@ -51,8 +51,8 @@ public:
 
   void dump() {}
 
-public:	// TODO: make this private
-	std::shared_ptr<kernel::pci::Device> pdev;	// PCI device handle
+public:                                      // TODO: make this private
+  std::shared_ptr<kernel::pci::Device> pdev; // PCI device handle
 
 protected:
   Logger getLogger() const { return villas::logging.get(name); }
