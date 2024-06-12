@@ -25,7 +25,7 @@ set(SOURCES
     ips/gpio.cpp
     ips/intc.cpp
     ips/pcie.cpp
-	ips/platform_intc.cpp
+    ips/platform_intc.cpp
     ips/rtds.cpp
     ips/switch.cpp
     ips/timer.cpp
