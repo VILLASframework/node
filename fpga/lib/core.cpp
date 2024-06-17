@@ -56,8 +56,11 @@ std::list<IpIdentifier> CoreFactory::parseVLNV(json_t *json_ips) {
   return allIps;
   }
 
+std::list<IpIdentifier>
+CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
   // Pick out IPs to be initialized first.
-  //
+  std::list<IpIdentifier> orderedIps;
+
   // Reverse walktrough, because we push to the
   // front of the output list, so that the first element will also be the
   // first to be initialized.
@@ -75,11 +78,14 @@ std::list<IpIdentifier> CoreFactory::parseVLNV(json_t *json_ips) {
   // Insert all other IPs at the end
   orderedIps.splice(orderedIps.end(), allIps);
 
+  auto loggerStatic = CoreFactory::getStaticLogger();
   loggerStatic->debug("IP initialization order:");
   for (auto &id : orderedIps) {
     loggerStatic->debug("  " CLR_BLD("{}"), id.getName());
   }
 
+  return orderedIps;
+}
   // Configure all IPs
   for (auto &id : orderedIps) {
     loggerStatic->info("Configuring {}", id);
