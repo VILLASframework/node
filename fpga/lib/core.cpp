@@ -54,7 +54,7 @@ std::list<IpIdentifier> CoreFactory::parseVLNV(json_t *json_ips) {
     allIps.push_back({vlnv, ipName});
   }
   return allIps;
-  }
+}
 
 std::list<IpIdentifier>
 CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
@@ -86,6 +86,7 @@ CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
 
   return orderedIps;
 }
+
 std::list<std::shared_ptr<Core>>
 CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
                           Card *card) {
@@ -241,6 +242,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
   return configuredIps;
 }
+
 void CoreFactory::initIps(std::list<std::shared_ptr<Core>> configuredIps,
                           Card *card) {
   auto loggerStatic = CoreFactory::getStaticLogger();
