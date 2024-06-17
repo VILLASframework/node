@@ -241,6 +241,9 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
   return configuredIps;
 }
+void CoreFactory::initIps(std::list<std::shared_ptr<Core>> configuredIps,
+                          Card *card) {
+  auto loggerStatic = CoreFactory::getStaticLogger();
   // Start and check IPs now
   for (auto &ip : configuredIps) {
     loggerStatic->info("Initializing {}", *ip);
@@ -284,6 +287,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
   for (auto &ip : card->ips) {
     loggerStatic->debug("  {}", *ip);
   }
+}
 
   return card->ips;
 }
