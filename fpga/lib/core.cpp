@@ -37,21 +37,10 @@ static std::list<Vlnv> vlnvInitializationOrder = {
     Vlnv("xilinx.com:ip:axi_iic:"),
 };
 
-std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
-                                                   json_t *json_ips) {
-  // We only have this logger until we know the factory to build an IP with
-  auto loggerStatic = getStaticLogger();
-
-  std::list<IpIdentifier> allIps;     // All IPs available in config
-  std::list<IpIdentifier> orderedIps; // IPs ordered in initialization order
-
-  std::list<std::shared_ptr<Core>> configuredIps; // Successfully configured IPs
-
-  if (!card->ips.empty()) {
-    loggerStatic->error("IP list of card {} already contains IPs.", card->name);
-    throw RuntimeError("IP list of card {} already contains IPs.", card->name);
-  }
+std::list<IpIdentifier> CoreFactory::parseVLNV(json_t *json_ips) {
   // Parse all IP instance names and their VLNV into list `allIps`
+  std::list<IpIdentifier> allIps;
+
   const char *ipName;
   json_t *json_ip;
   json_object_foreach(json_ips, ipName, json_ip) {
@@ -63,6 +52,8 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
       throw ConfigError(json_ip, err, "", "IP {} has no VLNV", ipName);
 
     allIps.push_back({vlnv, ipName});
+  }
+  return allIps;
   }
 
   // Pick out IPs to be initialized first.
