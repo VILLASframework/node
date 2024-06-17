@@ -207,6 +207,8 @@ class CoreFactory : public plugin::Plugin {
 public:
   using plugin::Plugin::Plugin;
 
+  static std::list<IpIdentifier> parseVLNV(json_t *json_ips);
+
   // Returns a running and checked FPGA IP
   static std::list<std::shared_ptr<Core>> make(Card *card, json_t *json_ips);
 
