@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "villas/fpga/ips/switch.hpp"
+#include <villas/fpga/ips/switch.hpp>
 #include <spdlog/common.h>
 #include <villas/fpga/card/platform_card.hpp>
 #include <villas/fpga/card/platform_card_factory.hpp>
