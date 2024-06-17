@@ -4,7 +4,7 @@
             "id": "10ee:7021",
             "slot": "0000:88:00.0",
             "do_reset": true,
-            "ips": "ips.json",
+            "ips": "zcu106-smmu/zcu106-smmu.json",
             "polling": true,
             "devices": ["a0000000.dma", "a0010000.axis_switch"]
         }

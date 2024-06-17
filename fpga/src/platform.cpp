@@ -16,7 +16,7 @@
 int main() {
   logging.setLevel(spdlog::level::trace);
 
-  std::string configFilePath = "../../../etc/fpga/miob/fpgas.json";
+  std::string configFilePath = "../../../etc/fpga/miob.json";
   auto configDir = std::filesystem::path(configFilePath).parent_path();
   std::vector<std::string> modules{"vfio"};
   auto vfioContainer = std::make_shared<kernel::vfio::Container>(modules);
