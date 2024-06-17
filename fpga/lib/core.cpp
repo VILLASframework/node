@@ -289,6 +289,27 @@ void CoreFactory::initIps(std::list<std::shared_ptr<Core>> configuredIps,
   }
 }
 
+std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
+                                                   json_t *json_ips) {
+  // We only have this logger until we know the factory to build an IP with
+  auto loggerStatic = getStaticLogger();
+
+  if (!card->ips.empty()) {
+    loggerStatic->error("IP list of card {} already contains IPs.", card->name);
+    throw RuntimeError("IP list of card {} already contains IPs.", card->name);
+  }
+
+  std::list<IpIdentifier> allIps =
+      parseVLNV(json_ips); // All IPs available in config
+
+  std::list<IpIdentifier> orderedIps =
+      reorderIps(allIps); // IPs ordered in initialization order
+
+  std::list<std::shared_ptr<Core>> configuredIps =
+      configureIps(orderedIps, json_ips, card); // Successfully configured IPs
+
+  (void) initIps(configuredIps, card);
+
   return card->ips;
 }
 
