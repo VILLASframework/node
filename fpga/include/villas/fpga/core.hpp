@@ -209,6 +209,9 @@ public:
 
   static std::list<IpIdentifier> parseVLNV(json_t *json_ips);
   static std::list<IpIdentifier> reorderIps(std::list<IpIdentifier> allIps);
+  static std::list<std::shared_ptr<Core>>
+  configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
+               Card *card);
 
   // Returns a running and checked FPGA IP
   static std::list<std::shared_ptr<Core>> make(Card *card, json_t *json_ips);

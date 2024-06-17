@@ -86,6 +86,11 @@ CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
 
   return orderedIps;
 }
+std::list<std::shared_ptr<Core>>
+CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
+                          Card *card) {
+  std::list<std::shared_ptr<Core>> configuredIps;
+  auto loggerStatic = CoreFactory::getStaticLogger();
   // Configure all IPs
   for (auto &id : orderedIps) {
     loggerStatic->info("Configuring {}", id);
@@ -234,6 +239,8 @@ CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
     configuredIps.push_back(std::move(ip));
   }
 
+  return configuredIps;
+}
   // Start and check IPs now
   for (auto &ip : configuredIps) {
     loggerStatic->info("Initializing {}", *ip);
