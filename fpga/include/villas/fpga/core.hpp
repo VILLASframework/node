@@ -208,6 +208,7 @@ public:
   using plugin::Plugin::Plugin;
 
   static std::list<IpIdentifier> parseVLNV(json_t *json_ips);
+  static std::list<IpIdentifier> reorderIps(std::list<IpIdentifier> allIps);
 
   // Returns a running and checked FPGA IP
   static std::list<std::shared_ptr<Core>> make(Card *card, json_t *json_ips);
