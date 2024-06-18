@@ -37,7 +37,7 @@ static std::list<Vlnv> vlnvInitializationOrder = {
     Vlnv("xilinx.com:ip:axi_iic:"),
 };
 
-std::list<IpIdentifier> CoreFactory::parseVLNV(json_t *json_ips) {
+std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
   // Parse all IP instance names and their VLNV into list `allIps`
   std::list<IpIdentifier> allIps;
 
@@ -302,7 +302,7 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   }
 
   std::list<IpIdentifier> allIps =
-      parseVLNV(json_ips); // All IPs available in config
+      parseIpIdentifier(json_ips); // All IPs available in config
 
   std::list<IpIdentifier> orderedIps =
       reorderIps(allIps); // IPs ordered in initialization order
