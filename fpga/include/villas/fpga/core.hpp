@@ -207,7 +207,7 @@ class CoreFactory : public plugin::Plugin {
 public:
   using plugin::Plugin::Plugin;
 
-  static std::list<IpIdentifier> parseVLNV(json_t *json_ips);
+  static std::list<IpIdentifier> parseIpIdentifier(json_t *json_ips);
   static std::list<IpIdentifier> reorderIps(std::list<IpIdentifier> allIps);
   static std::list<std::shared_ptr<Core>>
   configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
