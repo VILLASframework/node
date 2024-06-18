@@ -40,6 +40,8 @@ public:
 
   virtual ~Card();
 
+  virtual void connectVFIOtoIPS() = 0;
+
   virtual bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block);
   virtual bool unmapMemoryBlock(const MemoryBlock &block);
 

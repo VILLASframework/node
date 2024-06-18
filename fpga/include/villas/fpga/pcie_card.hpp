@@ -37,6 +37,8 @@ class PCIeCard : public Card {
 public:
   ~PCIeCard();
 
+  void connectVFIOtoIPS() override;
+
   bool init();
 
   bool stop() { return true; }

@@ -52,8 +52,6 @@ PlatformCardFactory::make(json_t *json_card, std::string card_name,
   card->doReset = parser.do_reset != 0;
   card->polling = (parser.polling != 0);
 
-  card->connectVFIOtoIPS();
-
   // Load IPs from a separate json file
   if (!json_is_string(json_ips)) {
     logger->debug("FPGA IP cores config item is not a string.");
