@@ -58,7 +58,9 @@ PlatformCard::PlatformCard(
   }
 }
 
-void PlatformCard::connectVFIOtoIPS() {
+void PlatformCard::connectVFIOtoIps(
+    std::list<std::shared_ptr<ip::Core>> configuredIps) {
+
   // TODO: Connect based on memory addr
   auto &mm = MemoryManager::get();
   const size_t ip_mem_size = 65536;
