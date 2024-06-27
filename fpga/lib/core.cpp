@@ -334,7 +334,7 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
 
-  card->connectVFIOtoIPS();
+  card->connectVFIOtoIps(configuredIps);
 
   initIps(configuredIps, card);
 
