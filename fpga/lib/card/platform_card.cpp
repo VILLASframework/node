@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "villas/memory_manager.hpp"
+#include <cstddef>
 #include <villas/fpga/card/platform_card.hpp>
 
 using namespace villas;
@@ -61,8 +63,45 @@ PlatformCard::PlatformCard(
 void PlatformCard::connectVFIOtoIps(
     std::list<std::shared_ptr<ip::Core>> configuredIps) {
 
-  // TODO: Connect based on memory addr
   auto &mm = MemoryManager::get();
+  auto graph = mm.getGraph();
+  for (auto device : devices) {
+    std::string device_addr;
+    std::string device_name;
+
+    std::istringstream iss(device->getName());
+    std::getline(iss, device_addr, '.');
+    std::getline(iss, device_name, '.');
+
+    logger->warn("#####DEVICE Name: {} Addr: {}", device_name, device_addr);
+
+    for (MemoryManager::AddressSpaceId id = 0; id < graph.getVertexCount();
+         id++) {
+      auto vertex = graph.getVertex(id);
+      logger->warn("###Vertex Name: {}", vertex.get()->toString());
+    }
+
+    for (MemoryManager::AddressSpaceId edgeId = 0;
+         edgeId < graph.getEdgeCount(); edgeId++) {
+      auto edge = graph.getEdge(edgeId);
+
+      std::stringstream ss;
+      ss << device_addr;
+
+      size_t _address;
+      ss >> _address;
+
+      if (_address == edge->src) {
+        graph.findVertex(UnaryPredicate p)
+        logger->warn("HEUREKA: {}  |  {}", edge->name, device_name);
+        logger->warn("From: {}  To:  {}",
+                     graph.getVertex(edge->getVertexFrom())->name,
+                     graph.getVertex(edge->getVertexTo())->name);
+      }
+    }
+  }
+
+  // TODO: Connect based on memory addr
   const size_t ip_mem_size = 65536;
   for (auto device : devices) {
     std::string addr;
