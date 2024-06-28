@@ -43,7 +43,7 @@ protected:
 
   void step(double *in, std::complex<float> *out) {
     int N = window.size();
-    __attribute__((unused)) std::complex<double> om_k, corr;
+    std::complex<double> om_k, corr;
     double newest = *in;
     __attribute__((unused)) double oldest = window.update(newest);
 
@@ -122,6 +122,10 @@ public:
       coeffs[i] = 0;
 
     window = dsp::Window<double>((1.0 / f0) / timestep, 0.0);
+    if (window.size() == 0) {
+      throw RuntimeError(
+          "Windows size is 0: f0 * timestep < 1.0 not satisfied");
+    }
 
     state = State::STARTED;
   }
