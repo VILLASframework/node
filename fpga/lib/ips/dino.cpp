@@ -157,9 +157,11 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                    -0.001615254F); // Scale factor for ADC value
   reg->setRegister(dinoRegisterAdcOffset, 10.8061F); // Offset for ADC value
 
+  // reg->setRegister(dinoRegisterDacScale,
+  //                  3276.75F);                     // Scale factor for DAC value
   reg->setRegister(dinoRegisterDacScale,
-                   3276.75F);                     // Scale factor for DAC value
-  reg->setRegister(dinoRegisterDacOffset, 10.0F); // Offset for DAC value
+                   3448.53852516F); // Scale factor for DAC value
+  reg->setRegister(dinoRegisterDacOffset, 32767.5F); // Offset for DAC value
   uint32_t rate = reg->getRegister(dinoRegisterTimer);
   float adcScale = reg->getRegisterFloat(dinoRegisterAdcScale);
   float adcOffset = reg->getRegisterFloat(dinoRegisterAdcOffset);
@@ -168,9 +170,9 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   uint32_t dacExternalTrig = reg->getRegister(dinoRegisterDacExternalTrig);
   uint32_t stsActive = reg->getRegister(dinoRegisterStsActive);
   logging.get("Dino")->info(
-      "Check: Register configuration: Rate: {}, Rate-Error: {} Hz, ADC Scale: "
-      "{}, ADC Offset: {}, DAC Scale: {}, DAC Offset: {}, DAC External Trig: "
-      "{:#x}, STS Active: {:#x}",
+      "Check: Register configuration: TimerThresh: {}, Rate-Error: {} Hz, ADC "
+      "Scale: {}, ADC Offset: {}, DAC Scale: {}, DAC Offset: {}, DAC External "
+      "Trig: {:#x}, STS Active: {:#x}",
       rate, rateError, adcScale, adcOffset, dacScale, dacOffset,
       dacExternalTrig, stsActive);
 }
