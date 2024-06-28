@@ -74,7 +74,7 @@ int FpgaNode::prepare() {
 
   if (reg != nullptr &&
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
-        fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
+    fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, timestep);
   } else {
     logger->warn("No DinoAdc or no Register found on FPGA.");
   }
@@ -209,20 +209,13 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
-  float scaled;
+  auto mem = MemoryAccessor<float>(*blockTx);
 
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
-      scaled = smp->data[i].f;
-      if (scaled > 10.) {
-        scaled = 10.;
-      } else if (scaled < -10.) {
-        scaled = -10.;
-      }
-      mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+      mem[i] = smp->data[i].f;
     } else {
-      mem[i] = smp->data[i].i;
+      mem[i] = static_cast<float>(smp->data[i].i);
     }
   }
 
@@ -312,17 +305,10 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
-  float scaled;
+  auto mem = MemoryAccessor<float>(*blockTx);
 
   for (unsigned i = 0; i < smps[0]->length; i++) {
-    scaled = smps[0]->data[i].f;
-    if (scaled > 10.) {
-      scaled = 10.;
-    } else if (scaled < -10.) {
-      scaled = -10.;
-    }
-    mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+    mem[i] = smps[0]->data[i].f;
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));
