@@ -92,7 +92,7 @@ void PlatformCard::connectVFIOtoIps(
       ss >> _address;
 
       if (_address == edge->src) {
-        graph.findVertex(UnaryPredicate p)
+        //graph.findVertex(UnaryPredicate p)
         logger->warn("HEUREKA: {}  |  {}", edge->name, device_name);
         logger->warn("From: {}  To:  {}",
                      graph.getVertex(edge->getVertexFrom())->name,
