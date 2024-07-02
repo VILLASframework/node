@@ -8,6 +8,8 @@ set(SOURCES
     vlnv.cpp
     card.cpp
     pcie_card.cpp
+    card/platform_card.cpp
+    card/platform_card_factory.cpp
     core.cpp
     node.cpp
     utils.cpp
@@ -23,11 +25,13 @@ set(SOURCES
     ips/gpio.cpp
     ips/intc.cpp
     ips/pcie.cpp
+    ips/platform_intc.cpp
     ips/rtds.cpp
     ips/switch.cpp
     ips/timer.cpp
     ips/i2c.cpp
     ips/register.cpp
+	ips/zynq.cpp
 
     ips/rtds2gpu/rtds2gpu.cpp
     ips/rtds2gpu/xrtds2gpu.c

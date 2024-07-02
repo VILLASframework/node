@@ -1,41 +1,31 @@
-/* FPGA pciecard.
+/* Factory for platform cards
  *
+ * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Daniel Krebs <github@daniel-krebs.net>
+ *
+ * SPDX-FileCopyrightText: 2023-2024 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ * SPDX-FileCopyrightText: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <fmt/ostream.h>
-#include <memory>
-#include <string>
-#include <utility>
-#include <villas/exceptions.hpp>
+#include <filesystem>
+#include <jansson.h>
+#include <villas/fpga/card/card_parser.hpp>
+#include <villas/fpga/card/platform_card_factory.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
-#include <villas/fpga/pcie_card.hpp>
-#include <villas/kernel/kernel.hpp>
-#include <villas/kernel/pci.hpp>
-#include <villas/kernel/vfio_container.hpp>
-#include <villas/memory.hpp>
 
 using namespace villas;
+using namespace villas::kernel;
 using namespace villas::fpga;
 
-// Instantiate factory to register
-static PCIeCardFactory PCIeCardFactoryInstance;
-
-static const kernel::pci::Device
-    defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
-
-std::shared_ptr<PCIeCard>
-PCIeCardFactory::make(json_t *json_card, std::string card_name,
-                      std::shared_ptr<kernel::vfio::Container> vc,
-                      const std::filesystem::path &searchPath) {
-  auto logger = getStaticLogger();
-
-  // make sure the vfio container has the required modules
-  kernel::loadModule("vfio_pcie");
-  kernel::loadModule("vfio_iommu_type1");
+std::shared_ptr<PlatformCard>
+PlatformCardFactory::make(json_t *json_card, std::string card_name,
+                          std::shared_ptr<kernel::vfio::Container> vc,
+                          const std::filesystem::path &searchPath) {
+  auto logger = villas::logging.get("PlatformCardFactory");
 
   json_t *json_ips = nullptr;
   json_t *json_paths = nullptr;
@@ -54,33 +44,13 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   if (ret != 0)
     throw ConfigError(json_card, err, "", "Failed to parse card");
 
-  auto card = std::shared_ptr<PCIeCard>(make());
+  CardParser parser(json_card);
 
-  // Populate generic properties
+  auto card = std::make_shared<fpga::PlatformCard>(vc, parser.device_names);
   card->name = std::string(card_name);
-  card->vfioContainer = vc;
-  card->affinity = affinity;
-  card->doReset = do_reset != 0;
-  card->polling = (polling != 0);
-
-  kernel::pci::Device filter = defaultFilter;
-
-  if (pci_id)
-    filter.id = kernel::pci::Id(pci_id);
-  if (pci_slot)
-    filter.slot = kernel::pci::Slot(pci_slot);
-
-  // Search for FPGA card
-  card->pdev = kernel::pci::DeviceList::getInstance()->lookupDevice(filter);
-  if (!card->pdev) {
-    logger->warn("Failed to find PCI device");
-    return nullptr;
-  }
-
-  if (not card->init()) {
-    logger->warn("Cannot start FPGA card {}", card_name);
-    return nullptr;
-  }
+  card->affinity = parser.affinity;
+  card->doReset = parser.do_reset != 0;
+  card->polling = (parser.polling != 0);
 
   // Load IPs from a separate json file
   if (!json_is_string(json_ips)) {
@@ -94,8 +64,6 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
     logger->debug("searching for FPGA IP cors config at {}",
                   json_ips_path.string());
     json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);
-  } else {
-    json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
   }
   if (json_ips == nullptr) {
     json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
@@ -115,9 +83,6 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   if (card->ips.empty())
     throw ConfigError(json_ips, "node-config-fpga-ips",
                       "Cannot initialize IPs of FPGA card {}", card_name);
-
-  if (not card->check())
-    throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
   // Additional static paths for AXI-Steram switch
   if (json_paths != nullptr) {
@@ -161,42 +126,4 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   // Deallocate JSON config
   json_decref(json_ips);
   return card;
-}
-
-PCIeCard::~PCIeCard() {}
-
-void PCIeCard::connectVFIOtoIps(
-    std::list<std::shared_ptr<ip::Core>> configuredIps) {
-  // TODO: implement
-}
-
-bool PCIeCard::init() {
-  logger = getLogger();
-
-  logger->info("Initializing FPGA card {}", name);
-
-  // Attach PCIe card to VFIO container
-  vfioDevice = vfioContainer->attachDevice(*pdev);
-
-  // Enable memory access and PCI bus mastering for DMA
-  if (not vfioDevice->pciEnable()) {
-    logger->error("Failed to enable PCI device");
-    return false;
-  }
-
-  // Reset system?
-  if (doReset) {
-    // Reset / detect PCI device
-    if (not vfioDevice->pciHotReset()) {
-      logger->error("Failed to reset PCI device");
-      return false;
-    }
-
-    if (not reset()) {
-      logger->error("Failed to reset FGPA card");
-      return false;
-    }
-  }
-
-  return true;
 }
