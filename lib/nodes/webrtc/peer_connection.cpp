@@ -230,7 +230,6 @@ void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state) {
 
   case rtc::PeerConnection::State::Closed: {
     logger->debug("Closed peer connection");
-    resetConnectionAndStandby(lock);
     break;
   }
   }
@@ -287,6 +286,7 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
             auto const &id = c.peerID;
 
             if (c.peers.size() < 2) {
+              logger->debug("Ignoring control message. Not enough peers.");
               resetConnectionAndStandby(lock);
               return;
             }
@@ -300,6 +300,9 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
                 snd = c.id;
               }
             }
+            logger->debug("Received control message: first={}, second={}, I am "
+                          "{}",
+                          fst, snd, id);
 
             standby = (id != fst && id != snd);
 
@@ -309,6 +312,7 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
               return;
             }
 
+            logger->debug("firstID={}, secondID={}", firstID, secondID);
             if (fst == firstID && snd == secondID) {
               logger->debug("Ignoring control message. This connection is "
                             "already being established.");
@@ -321,7 +325,12 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
             firstID = fst;
             secondID = snd;
 
+            logger->debug("After resetConnection: first={}, second={}, I am {}",
+                          fst, snd, first ? "first" : "second");
+
             setupPeerConnection();
+
+            logger->debug("Setup peer connection successful");
 
             if (!first) {
               setupDataChannel();
@@ -341,8 +350,10 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
           },
 
           [&](rtc::Candidate c) {
-            if (standby || !conn)
+            if (standby || !conn){
+              logger->debug("Ignoring candidate message. Not connected.");
               return;
+            }
 
             conn->addRemoteCandidate(c);
           },
