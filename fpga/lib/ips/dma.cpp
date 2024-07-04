@@ -477,7 +477,7 @@ XAxiDma_Bd *Dma::readScatterGatherSetupBd(void *buf, size_t len) {
                          (uintptr_t)buf, (uintptr_t)bd, ret);
     }
 
-    ret = XAxiDma_BdSetLength(curBd, readMsgSize, rxRing->MaxTransferLen);
+    ret = XAxiDma_BdSetLength(curBd, len, rxRing->MaxTransferLen);
     if (ret != XST_SUCCESS) {
       hwReadLock.unlock();
       throw RuntimeError("Rx set length {} on BD {:x} failed {}", len,
@@ -491,7 +491,7 @@ XAxiDma_Bd *Dma::readScatterGatherSetupBd(void *buf, size_t len) {
     // TODO: Check if we really need this
     XAxiDma_BdSetId(curBd, (uintptr_t)buf);
 
-    curBuf += readMsgSize;
+    curBuf += len;
     curBd = (XAxiDma_Bd *)XAxiDma_BdRingNext(rxRing, curBd);
   }
   return bd;
