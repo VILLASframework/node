@@ -183,12 +183,22 @@ const std::string &FpgaNode::getDetails() {
 int FpgaNode::check() { return Node::check(); }
 
 int FpgaNode::start() {
-  if (getOutputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
+  if (getOutputSignalsMaxCount() * sizeof(float) > blockTx->getSize()) {
+    logger->error("Output signals exceed block size.");
+    throw villas ::RuntimeError("Output signals exceed block size.");
+  }
+  if (getInputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
     logger->error("Output signals exceed block size.");
     throw villas ::RuntimeError("Output signals exceed block size.");
   }
   if (lowLatencyMode) {
-    dma->readScatterGatherPrepare(*blockRx, blockRx->getSize());
+    if (getInputSignalsMaxCount() != 0) {
+      dma->readScatterGatherPrepare(*blockRx,
+                                    getInputSignalsMaxCount() * sizeof(float));
+    } else {
+      logger->warn("No input signals defined. Not preparing read buffer - "
+                   "reads will not work.");
+    }
     if (getOutputSignalsMaxCount() != 0) {
       dma->writeScatterGatherPrepare(*blockTx, getOutputSignalsMaxCount() *
                                                    sizeof(float));
@@ -213,7 +223,7 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
-      mem[i] = smp->data[i].f;
+      mem[i] = static_cast<float>(smp->data[i].f);
     } else {
       mem[i] = static_cast<float>(smp->data[i].i);
     }
@@ -236,18 +246,36 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 // what we have received. fastRead is thus capable of partial reads.
 int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   Sample *smp = smps[0];
-  auto mem = MemoryAccessor<float>(*blockRx);
 
   smp->flags = (int)SampleFlags::HAS_DATA;
   smp->signals = in.signals;
 
+  size_t to_read = in.signals->size() * sizeof(uint32_t);
+  size_t read;
+  do {
   dma->readScatterGatherFast();
-  auto read = dma->readScatterGatherPoll(true);
+    read = dma->readScatterGatherPoll(true);
+    if (read < to_read) {
+      logger->warn("Read only {} bytes, but {} were expected", read, to_read);
+    }
+  } while (read < to_read);
+  // when we read less than expected we don't know what we missed so the data is
+  // useless. Thus, we discard what we read and try again.
+
   // We assume a lot without checking at this point. All for the latency!
 
   smp->length = 0;
-  for (unsigned i = 0; i < MIN(read / sizeof(float), smp->capacity); i++) {
+  for (unsigned i = 0; i < MIN(read / sizeof(uint32_t), smp->capacity); i++) {
+    if (in.signals->getByIndex(i)->type == SignalType::INTEGER) {
+      auto mem = MemoryAccessor<uint32_t>(*blockRx);
+      smp->data[i].i = static_cast<int64_t>(mem[i]);
+      logger->info("Reading sample: {}, {}, {:#x}, i: {}", smp->data[i].i,
+                   signalTypeToString(smp->signals->getByIndex(i)->type),
+                   smp->data[i].i, i);
+    } else {
+      auto mem = MemoryAccessor<float>(*blockRx);
     smp->data[i].f = static_cast<double>(mem[i]);
+    }
     smp->length++;
   }
 
