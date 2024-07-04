@@ -311,7 +311,15 @@ void villas::node::sample_data_insert(struct Sample *smp,
 
 void villas::node::sample_data_remove(struct Sample *smp, size_t offset,
                                       size_t len) {
-  size_t sz = sizeof(smp->data[0]) * len;
+  if (offset + len > smp->length) {
+    if (offset > smp->length) {
+      return;
+    } else {
+      len = smp->length - offset;
+    }
+  }
+
+  size_t sz = sizeof(smp->data[0]) * (smp->length - offset - len);
 
   memmove(&smp->data[offset], &smp->data[offset + len], sz);
 
