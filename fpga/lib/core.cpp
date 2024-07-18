@@ -130,6 +130,21 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
     json_t *json_ip = json_object_get(json_ips, id.getName().c_str());
 
+    // parse ip baseadress
+    json_t *json_parameters = json_object_get(json_ip, "parameters");
+    if (!json_is_object(json_parameters)) {
+      logger->debug("Parameters of ip {} are empty.", ip->id.getName());
+    } else {
+      json_int_t c_baseaddr;
+      json_error_t err;
+      int ret = json_unpack_ex(json_parameters, &err, 0, "{ s: I }",
+                               "c_baseaddr", &c_baseaddr);
+      if (ret != 0)
+        throw ConfigError(json_parameters, err, "",
+                          "Cannot parse baseaddress from parameters");
+      ip->baseaddr = c_baseaddr;
+    }
+
     json_t *json_irqs = json_object_get(json_ip, "irqs");
     if (json_is_object(json_irqs)) {
       logger->debug("Parse IRQs of {}", *ip);
