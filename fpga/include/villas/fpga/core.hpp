@@ -107,6 +107,7 @@ protected:
   virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
 
 public:
+  size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
 
   // Operators
@@ -201,6 +202,8 @@ protected:
 
   // AXI bus master interfaces to access memory somewhere
   std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
+
+  size_t baseaddr = 0;
 };
 
 class CoreFactory : public plugin::Plugin {
