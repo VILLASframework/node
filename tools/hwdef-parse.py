@@ -176,6 +176,8 @@ for module in modules:
                 value = int(value, 0)
             except ValueError:
                 pass
+            except TypeError:
+                pass
 
             p[name] = value
 
