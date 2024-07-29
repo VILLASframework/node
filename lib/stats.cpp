@@ -93,7 +93,7 @@ enum Stats::Type Stats::lookupType(const std::string &str) {
   throw std::invalid_argument("Invalid stats type");
 }
 
-Stats::Stats(int buckets, int warmup) : logger(logging.get("stats")) {
+Stats::Stats(int buckets, int warmup) : logger(Log::get("stats")) {
   for (auto m : metrics) {
     histograms.emplace(std::piecewise_construct, std::forward_as_tuple(m.first),
                        std::forward_as_tuple(buckets, warmup));
@@ -133,7 +133,7 @@ void Stats::printHeader(enum Format fmt) {
 
 void Stats::setupTable() {
   if (!table) {
-    auto logger = logging.get("stats");
+    auto logger = Log::get("stats");
     table = std::make_shared<Table>(logger, columns);
   }
 }

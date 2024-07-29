@@ -23,7 +23,7 @@ Terminal::Terminal() {
 
   isTty = isatty(STDERR_FILENO);
 
-  Logger logger = logging.get("terminal");
+  Logger logger = Log::get("terminal");
 
   if (isTty) {
     struct sigaction sa_resize;
@@ -57,7 +57,7 @@ void Terminal::resize(int, siginfo_t *, void *) {
   if (!current)
     current = new Terminal();
 
-  Logger logger = logging.get("terminal");
+  Logger logger = Log::get("terminal");
 
   int ret;
 

@@ -194,7 +194,7 @@ int villas::node::uldaq_type_start(villas::node::SuperNode *sn) {
   if (err != ERR_NO_ERROR)
     throw RuntimeError("Failed to retrieve DAQ device list");
 
-  auto logger = logging.get("node:uldaq");
+  auto logger = Log::get("node:uldaq");
   logger->info("Found {} DAQ devices", num_devs);
   for (unsigned i = 0; i < num_devs; i++) {
     DaqDeviceDescriptor *desc = &descriptors[i];

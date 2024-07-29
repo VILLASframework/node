@@ -41,7 +41,7 @@ protected:
   List<SubRegistry> registries;
 
 public:
-  Logger getLogger() { return logging.get("plugin:registry"); }
+  Logger getLogger() { return Log::get("plugin:registry"); }
 
   void add(Plugin *p) { plugins.push_back(p); }
 
@@ -126,7 +126,7 @@ public:
   virtual Logger getLogger() {
     if (!logger) {
       auto name = fmt::format("{}:{}", getType(), getName());
-      logger = logging.get(name);
+      logger = Log::get(name);
     }
 
     return logger;

@@ -23,7 +23,7 @@ Test(fpga, fifo, .description = "FIFO") {
   char src[255], dst[255];
   size_t count = 0;
 
-  auto logger = logging.get("unit-test:fifo");
+  auto logger = Log::get("unit-test:fifo");
 
   for (auto &ip : state.cards.front()->ips) {
     // Skip non-fifo IPs

@@ -56,7 +56,7 @@ SuperNode::SuperNode()
   kernel::nl::init(); // Fill link cache
 #endif                // WITH_NETEM
 
-  logger = logging.get("super_node");
+  logger = Log::get("super_node");
 }
 
 void SuperNode::parse(const std::string &u) {
@@ -111,7 +111,7 @@ void SuperNode::parse(json_t *root) {
 #endif // WITH_WEB
 
   if (json_logging)
-    logging.parse(json_logging);
+    Log::getInstance().parse(json_logging);
 
   // Parse nodes
   if (json_nodes) {

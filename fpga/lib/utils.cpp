@@ -31,7 +31,7 @@
 
 using namespace villas;
 
-static auto logger = villas::logging.get("streamer");
+static auto logger = villas::Log::get("streamer");
 
 std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
 fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
@@ -52,7 +52,7 @@ fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
 }
 
 fpga::ConnectString::ConnectString(std::string &connectString, int maxPortNum)
-    : log(villas::logging.get("ConnectString")), maxPortNum(maxPortNum),
+    : log(villas::Log::get("ConnectString")), maxPortNum(maxPortNum),
       bidirectional(false), invert(false), srcType(ConnectType::LOOPBACK),
       dstType(ConnectType::LOOPBACK), srcAsInt(-1), dstAsInt(-1) {
   parseString(connectString);

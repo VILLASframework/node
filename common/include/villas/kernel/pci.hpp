@@ -60,11 +60,11 @@ struct Region {
 
 class Device {
 public:
-  Device(Id i, Slot s) : id(i), slot(s), log(logging.get("kernel:pci")) {}
+  Device(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
-  Device(Id i) : id(i), log(logging.get("kernel:pci")) {}
+  Device(Id i) : id(i), log(Log::get("kernel:pci")) {}
 
-  Device(Slot s) : slot(s), log(logging.get("kernel:pci")) {}
+  Device(Slot s) : slot(s), log(Log::get("kernel:pci")) {}
 
   bool operator==(const Device &other);
 

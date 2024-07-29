@@ -37,7 +37,7 @@ int NodeList::parse(json_t *json, NodeList &all) {
   size_t index;
   json_t *elm;
 
-  auto logger = logging.get("node");
+  auto logger = Log::get("node");
 
   switch (json_typeof(json)) {
   case JSON_STRING:

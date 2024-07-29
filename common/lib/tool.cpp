@@ -33,7 +33,7 @@ Tool::Tool(int ac, char *av[], const std::string &nme,
     : argc(ac), argv(av), name(nme), handlerSignals(sigs) {
   current_tool = this;
 
-  logger = logging.get(name);
+  logger = Log::get(name);
 }
 
 int Tool::run() {

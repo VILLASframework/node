@@ -125,7 +125,7 @@ int villas::node::ethercat_type_start(villas::node::SuperNode *sn) {
 }
 
 int villas::node::ethercat_type_stop() {
-  auto logger = logging.get("node:ethercat");
+  auto logger = Log::get("node:ethercat");
 
   logger->info("Releasing EtherCAT master");
 

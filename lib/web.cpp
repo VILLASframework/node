@@ -101,7 +101,7 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
   if (strstr(msg, "Unable to open") == msg)
     lws_lvl = LLL_WARN;
 
-  Logger logger = logging.get("lws");
+  Logger logger = Log::get("lws");
 
   switch (lws_lvl) {
   case LLL_ERR:
@@ -162,9 +162,9 @@ void Web::worker() {
 }
 
 Web::Web(Api *a)
-    : state(State::INITIALIZED), logger(logging.get("web")), context(nullptr),
+    : state(State::INITIALIZED), logger(Log::get("web")), context(nullptr),
       vhost(nullptr), port(getuid() > 0 ? 8080 : 80), api(a) {
-  lws_set_log_level(lwsLogLevel(logging.getLevel()), lwsLogger);
+  lws_set_log_level(lwsLogLevel(Log::getInstance().getLevel()), lwsLogger);
 }
 
 Web::~Web() {

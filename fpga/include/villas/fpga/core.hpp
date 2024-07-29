@@ -228,14 +228,12 @@ protected:
     IRQ,
   };
 
-  Logger getLogger() { return villas::logging.get(getName()); }
+  Logger getLogger() { return villas::Log::get(getName()); }
 
   // Configure IP instance from JSON config
   virtual void parse(Core &, json_t *) {}
 
-  static Logger getStaticLogger() {
-    return villas::logging.get("core:factory");
-  }
+  static Logger getStaticLogger() { return villas::Log::get("core:factory"); }
 
 private:
   virtual void configurePollingMode(Core &, PollingMode) {}

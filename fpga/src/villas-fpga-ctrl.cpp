@@ -35,7 +35,7 @@
 using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static auto logger = villas::logging.get("ctrl");
+static auto logger = villas::Log::get("ctrl");
 
 void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {
   auto &alloc = villas::HostRam::getAllocator();
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 
     // Logging setup
 
-    logging.setLevel(spdlog::level::trace);
+    Log::getInstance().setLevel(spdlog::level::trace);
     logger->set_level(spdlog::level::trace);
     fpga::setupColorHandling();
 

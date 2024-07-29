@@ -145,7 +145,7 @@ struct Type *villas::node::memory::managed(void *ptr, size_t len) {
   char *cptr = (char *)ptr;
 
   if (len < sizeof(struct Type) + sizeof(struct Block)) {
-    auto logger = logging.get("memory:managed");
+    auto logger = Log::get("memory:managed");
     logger->info("Passed region is too small");
     return nullptr;
   }

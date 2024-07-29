@@ -88,7 +88,7 @@ protected:
         break;
 
       case 'd':
-        logging.setLevel(optarg);
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'h':

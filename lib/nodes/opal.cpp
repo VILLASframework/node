@@ -124,7 +124,7 @@ int villas::node::opal_type_start(villas::node::SuperNode *sn) {
   if (err != EOK)
     throw RuntimeError("Failed to get list of recv ids ({})", err);
 
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->info("Started as OPAL Asynchronous process");
   logger->info("This is VILLASnode %s (built on %s, %s)", PROJECT_BUILD_ID,
                __DATE__, __TIME__);
@@ -141,7 +141,7 @@ int villas::node::opal_type_stop() {
   if (err != EOK)
     throw RuntimeError("Failed to close shared memory area ({})", err);
 
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->debug("Closing OPAL shared memory mapping");
 
   err = OpalSystemCtrl_UnRegister((char *)printShmemName.c_str());
@@ -155,7 +155,7 @@ int villas::node::opal_type_stop() {
 }
 
 static int opal_print_global() {
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->debug("Controller ID: {}", params.controllerID);
 
   std::stringstream sss, rss;

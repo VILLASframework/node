@@ -116,7 +116,7 @@ public:
     // CRTP
     derivedAlloc = static_cast<DerivedAllocator *>(this);
     std::string loggerName = fmt::format("memory:", derivedAlloc->getName());
-    logger = logging.get(loggerName);
+    logger = Log::get(loggerName);
 
     // Default deallocation callback
     free = [&](MemoryBlock *mem) {
@@ -249,10 +249,12 @@ public:
     allocateBlock(size_t size);
   };
 
-  static HostRamAllocator &getAllocator() { return allocator; }
-
-private:
-  static HostRamAllocator allocator;
+  static HostRamAllocator &getAllocator() {
+    // This will "leak" memory. Because we don't have a complex destructor it's okay
+    // that this will be cleaned up implicitly on program exit.
+    static auto allocator = new HostRamAllocator();
+    return *allocator;
+  }
 };
 
 class HostDmaRam {

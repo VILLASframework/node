@@ -412,7 +412,7 @@ int villas::node::mqtt_type_start(villas::node::SuperNode *sn) {
   return 0;
 
 mosquitto_error:
-  auto logger = logging.get("node:mqtt");
+  auto logger = Log::get("node:mqtt");
   logger->warn("{}", mosquitto_strerror(ret));
 
   return ret;
@@ -428,7 +428,7 @@ int villas::node::mqtt_type_stop() {
   return 0;
 
 mosquitto_error:
-  auto logger = logging.get("node:mqtt");
+  auto logger = Log::get("node:mqtt");
   logger->warn("{}", mosquitto_strerror(ret));
 
   return ret;

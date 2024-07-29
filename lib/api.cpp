@@ -24,7 +24,7 @@ InvalidMethod::InvalidMethod(Request *req)
                  Session::methodToString(req->method)) {}
 
 Api::Api(SuperNode *sn)
-    : logger(logging.get("api")), state(State::INITIALIZED), super_node(sn) {}
+    : logger(Log::get("api")), state(State::INITIALIZED), super_node(sn) {}
 
 Api::~Api() {
   if (state == State::STARTED)

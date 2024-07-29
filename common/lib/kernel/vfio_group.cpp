@@ -38,7 +38,7 @@ using namespace villas::kernel::vfio;
 
 Group::Group(int index, bool iommuEnabled)
     : fd(-1), index(index), attachedToContainer(false), status(), devices(),
-      log(logging.get("kernel:vfio:group")) {
+      log(Log::get("kernel:vfio:group")) {
   // Open group fd
   std::stringstream groupPath;
   groupPath << VFIO_PATH << (iommuEnabled ? "" : "noiommu-") << index;
