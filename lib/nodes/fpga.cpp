@@ -14,6 +14,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
+#include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
@@ -36,7 +37,8 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
     : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
-      timestep(10e-3), card(nullptr), dma(), blockRx(), blockTx() {}
+      timestep(10e-3), card(nullptr), dma(), blockRx(), accessorRx(nullptr),
+      blockTx(), accessorTx(nullptr) {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -90,8 +92,8 @@ int FpgaNode::prepare() {
 
   blockRx = alloc.allocateBlock(0x200 * sizeof(float));
   blockTx = alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> memRx = *blockRx;
-  villas::MemoryAccessor<float> memTx = *blockTx;
+  accessorRx = std::make_shared<MemoryAccessor<uint32_t>>(*blockRx);
+  accessorTx = std::make_shared<MemoryAccessor<uint32_t>>(*blockTx);
 
   dma->makeAccesibleFromVA(blockRx);
   dma->makeAccesibleFromVA(blockTx);
@@ -219,16 +221,18 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<float>(*blockTx);
-
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
-      mem[i] = static_cast<float>(smp->data[i].f);
+      float f = static_cast<float>(smp->data[i].f);
+      (*accessorTx)[i] = *reinterpret_cast<uint32_t *>(&f);
     } else {
-      mem[i] = static_cast<float>(smp->data[i].i);
+      (*accessorTx)[i] = static_cast<uint32_t>(smp->data[i].i);
     }
   }
 
+  // logger->info("Writing sample: {}, {}, {:#x}", smp->data[0].f,
+  //              signalTypeToString(smp->signals->getByIndex(0)->type),
+  //              smp->data[0].i);
   dma->writeScatterGatherFast();
   auto written = dma->writeScatterGatherPoll() /
                  sizeof(float); // The number of samples written
@@ -253,7 +257,7 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   size_t to_read = in.signals->size() * sizeof(uint32_t);
   size_t read;
   do {
-  dma->readScatterGatherFast();
+    dma->readScatterGatherFast();
     read = dma->readScatterGatherPoll(true);
     if (read < to_read) {
       logger->warn("Read only {} bytes, but {} were expected", read, to_read);
@@ -267,14 +271,10 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read / sizeof(uint32_t), smp->capacity); i++) {
     if (in.signals->getByIndex(i)->type == SignalType::INTEGER) {
-      auto mem = MemoryAccessor<uint32_t>(*blockRx);
-      smp->data[i].i = static_cast<int64_t>(mem[i]);
-      logger->info("Reading sample: {}, {}, {:#x}, i: {}", smp->data[i].i,
-                   signalTypeToString(smp->signals->getByIndex(i)->type),
-                   smp->data[i].i, i);
+      smp->data[i].i = static_cast<int64_t>((*accessorRx)[i]);
     } else {
-      auto mem = MemoryAccessor<float>(*blockRx);
-    smp->data[i].f = static_cast<double>(mem[i]);
+      smp->data[i].f =
+          static_cast<double>(*reinterpret_cast<float *>(&(*accessorRx)[i]));
     }
     smp->length++;
   }
