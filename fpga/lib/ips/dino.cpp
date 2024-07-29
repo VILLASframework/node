@@ -153,12 +153,14 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   reg->setRegister(
       dinoRegisterTimer,
       dinoTimerVal); // Timer value for generating ADC trigger signal
+  // The following are calibration values for the ADC and DAC. Scale
+  // sets an factor to be multiplied with the input value. This is the
+  // raw 16 bit ADC value for the ADC and the float value from VILLAS for
+  // the DAC. Offset is a value to be added to the result of the multiplication.
+  // All values are IEE 754 single precision floating point values.
   reg->setRegister(dinoRegisterAdcScale,
                    -0.001615254F); // Scale factor for ADC value
   reg->setRegister(dinoRegisterAdcOffset, 10.8061F); // Offset for ADC value
-
-  // reg->setRegister(dinoRegisterDacScale,
-  //                  3276.75F);                     // Scale factor for DAC value
   reg->setRegister(dinoRegisterDacScale,
                    3448.53852516F); // Scale factor for DAC value
   reg->setRegister(dinoRegisterDacOffset, 32767.5F); // Offset for DAC value
