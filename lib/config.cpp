@@ -27,7 +27,7 @@
 using namespace villas;
 using namespace villas::node;
 
-Config::Config() : logger(logging.get("config")), root(nullptr) {}
+Config::Config() : logger(Log::get("config")), root(nullptr) {}
 
 Config::Config(const std::string &u) : Config() { root = load(u); }
 

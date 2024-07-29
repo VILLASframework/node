@@ -35,7 +35,7 @@ static std::unordered_map<sw::redis::ConnectionOptions, RedisConnection *>
 
 RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts)
     : context(opts), subscriber(context.subscriber()),
-      logger(logging.get("nodes:redis")) {
+      logger(Log::get("nodes:redis")) {
   // Enable keyspace notifications
   context.command("config", "set", "notify-keyspace-events", "K$h");
 

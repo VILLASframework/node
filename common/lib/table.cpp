@@ -57,8 +57,8 @@ int Table::resize(int w) {
 }
 
 void Table::header() {
-  if (width != logging.getWidth())
-    resize(logging.getWidth());
+  if (width != Log::getInstance().getWidth())
+    resize(Log::getInstance().getWidth());
 
   char *line1 = nullptr;
   char *line2 = nullptr;
@@ -107,8 +107,8 @@ void Table::header() {
 }
 
 void Table::row(int count, ...) {
-  if (width != logging.getWidth()) {
-    resize(logging.getWidth());
+  if (width != Log::getInstance().getWidth()) {
+    resize(Log::getInstance().getWidth());
     header();
   }
 

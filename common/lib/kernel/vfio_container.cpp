@@ -68,7 +68,7 @@ static std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR =
 
 Container::Container(std::vector<std::string> required_modules)
     : fd(-1), version(0), extensions(), iova_next(0), hasIommu(false), groups(),
-      log(logging.get("kernel:vfio:container")) {
+      log(Log::get("kernel:vfio:container")) {
   for (auto module : required_modules) {
     if (kernel::loadModule(module.c_str()) != 0) {
       throw RuntimeError("Kernel module '{}' required but could not be loaded. "

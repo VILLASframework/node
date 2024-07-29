@@ -45,8 +45,7 @@ public:
 
   class Switch {
   public:
-    Switch(I2c *i2c, uint8_t address,
-           Logger logger = villas::logging.get("i2c"))
+    Switch(I2c *i2c, uint8_t address, Logger logger = villas::Log::get("i2c"))
         : i2c(i2c), address(address), channel(0), readOnce(false), switchLock(),
           logger(logger){};
     Switch(const Switch &other) = delete;

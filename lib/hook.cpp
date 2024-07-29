@@ -22,7 +22,7 @@ using namespace villas;
 using namespace villas::node;
 
 Hook::Hook(Path *p, Node *n, int fl, int prio, bool en)
-    : logger(logging.get("hook")), factory(nullptr),
+    : logger(Log::get("hook")), factory(nullptr),
       state(fl & (int)Hook::Flags::BUILTIN
                 ? State::CHECKED
                 : State::INITIALIZED), // We dont need to parse builtin hooks

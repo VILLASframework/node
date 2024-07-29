@@ -52,7 +52,7 @@ static void dumpMem(const uint32_t *addr, size_t len) {
 
 // cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu") {
-  auto logger = logging.get("unit-test:rtds2gpu");
+  auto logger = Log::get("unit-test:rtds2gpu");
 
   for (auto &ip : state.cards.front()->ips) {
     if (*ip != fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
@@ -158,7 +158,7 @@ Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu") {
 
 // cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU") {
-  auto logger = logging.get("unit-test:rtds2gpu");
+  auto logger = Log::get("unit-test:rtds2gpu");
 
   // Collect neccessary IPs
   auto gpu2rtds = std::dynamic_pointer_cast<fpga::ip::Gpu2Rtds>(
@@ -233,7 +233,7 @@ void gpu_rtds_rtt_stop();
 
 // cppcheck-suppress unknownMacro
 Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU") {
-  auto logger = logging.get("unit-test:rtds2gpu");
+  auto logger = Log::get("unit-test:rtds2gpu");
 
   // Collect neccessary IPs
   auto gpu2rtds = std::dynamic_pointer_cast<fpga::ip::Gpu2Rtds>(

@@ -171,7 +171,7 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   float dacOffset = reg->getRegisterFloat(dinoRegisterDacOffset);
   uint32_t dacExternalTrig = reg->getRegister(dinoRegisterDacExternalTrig);
   uint32_t stsActive = reg->getRegister(dinoRegisterStsActive);
-  logging.get("Dino")->info(
+  Log::get("Dino")->info(
       "Check: Register configuration: TimerThresh: {}, Rate-Error: {} Hz, ADC "
       "Scale: {}, ADC Offset: {}, DAC Scale: {}, DAC Offset: {}, DAC External "
       "Trig: {:#x}, STS Active: {:#x}",

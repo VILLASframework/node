@@ -35,7 +35,7 @@ static bool suite_enabled(struct criterion_test_set *tests, const char *name) {
 // Limit number of parallel jobs to 1 in case we use the FPGA
 ReportHook(PRE_ALL)(struct criterion_test_set *tests) {
   if (suite_enabled(tests, "fpga")) {
-    auto logger = villas::logging.get("unittest");
+    auto logger = villas::Log::get("unittest");
 
     logger->info("FPGA tests enabled. Only 1 job is executed in parallel!.");
     criterion_options.jobs = 1;

@@ -119,7 +119,7 @@ int villas::kernel::setModuleParam(const char *module, const char *param,
     throw RuntimeError("Failed set parameter {} for kernel module {} to {}",
                        module, param, value);
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Set parameter {} of kernel module {} to {}", module, param,
                 value);
 
@@ -134,7 +134,7 @@ int villas::kernel::loadModule(const char *module) {
 
   ret = isModuleLoaded(module);
   if (!ret) {
-    auto logger = logging.get("kernel");
+    auto logger = Log::get("kernel");
     logger->debug("Kernel module {} already loaded...", module);
     return 0;
   }
@@ -193,7 +193,7 @@ int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len) {
   do {
     ret = sscanf(tok, "%127[^=]=%127s", key, value);
     if (ret >= 1) {
-      auto logger = logging.get("kernel");
+      auto logger = Log::get("kernel");
       if (ret >= 2)
         logger->debug("Found kernel param: {}={}", key, value);
       else
@@ -220,7 +220,7 @@ int villas::kernel::getNrHugepages() {
 
   f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "r");
   if (!f) {
-    auto logger = logging.get("kernel");
+    auto logger = Log::get("kernel");
     logger->error("Failed to open {}: {}", PROCFS_PATH "/sys/vm/nr_hugepages",
                   strerror(errno));
     return -1;

@@ -143,8 +143,6 @@ LinearAllocator::allocateBlock(size_t size) {
   return mem;
 }
 
-HostRam::HostRamAllocator HostRam::allocator;
-
 HostRam::HostRamAllocator::HostRamAllocator()
     : BaseAllocator(MemoryManager::get().getProcessAddressSpace()) {
   free = [&](MemoryBlock *mem) {
@@ -167,7 +165,7 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num)
           getUdmaBufBufSize(num)),
       num(num) {
   auto &mm = MemoryManager::get();
-  logger = logging.get(getName());
+  logger = Log::get(getName());
 
   if (getSize() == 0) {
     logger->error(

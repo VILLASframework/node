@@ -58,7 +58,7 @@ public:         // TODO: make this private
   std::shared_ptr<kernel::pci::Device> pdev; // PCI device handle
 
 protected:
-  Logger getLogger() const { return villas::logging.get(name); }
+  Logger getLogger() const { return villas::Log::get(name); }
 };
 
 class PCIeCardFactory : public plugin::Plugin {
@@ -71,7 +71,7 @@ public:
   static PCIeCard *make() { return new PCIeCard(); }
 
   static Logger getStaticLogger() {
-    return villas::logging.get("pcie:card:factory");
+    return villas::Log::get("pcie:card:factory");
   }
 
   virtual std::string getName() const { return "pcie"; }

@@ -28,7 +28,7 @@
 using namespace villas;
 
 static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static auto logger = villas::logging.get("streamer");
+static auto logger = villas::Log::get("streamer");
 
 int main(int argc, char *argv[]) {
   // Command Line Parser

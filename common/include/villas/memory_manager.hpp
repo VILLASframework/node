@@ -65,7 +65,7 @@ class MemoryManager {
 private:
   // This is a singleton, so private constructor ...
   MemoryManager()
-      : memoryGraph("memory:graph"), logger(logging.get("memory:manager")) {
+      : memoryGraph("memory:graph"), logger(Log::get("memory:manager")) {
     pathCheckFunc = [&](const MemoryGraph::Path &path) {
       return this->pathCheck(path);
     };

@@ -26,7 +26,7 @@ namespace kernel {
 namespace rt {
 
 void init(int priority, int affinity) {
-  Logger logger = logging.get("kernel:rt");
+  Logger logger = Log::get("kernel:rt");
 
   logger->info("Initialize sub-system");
 
@@ -82,7 +82,7 @@ void setProcessAffinity(int affinity) {
 
   assert(affinity != 0);
 
-  Logger logger = logging.get("kernel:rt");
+  Logger logger = Log::get("kernel:rt");
 
   // Pin threads to CPUs by setting the affinity
   CpuSet cset_pin(affinity);
@@ -101,7 +101,7 @@ void setThreadAffinity(pthread_t thread, int affinity) {
 
   assert(affinity != 0);
 
-  Logger logger = logging.get("kernel:rt");
+  Logger logger = Log::get("kernel:rt");
 
   CpuSet cset_pin(affinity);
 
@@ -119,7 +119,7 @@ void setPriority(int priority) {
   struct sched_param param;
   param.sched_priority = priority;
 
-  Logger logger = logging.get("kernel:rt");
+  Logger logger = Log::get("kernel:rt");
 
   ret = sched_setscheduler(0, SCHED_FIFO, &param);
   if (ret)

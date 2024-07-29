@@ -240,7 +240,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory) {
   char buf[8192];
   size_t wbytes, rbytes;
 
-  Logger logger = logging.get("test:format:lowlevel");
+  Logger logger = Log::get("test:format:lowlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
@@ -330,7 +330,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   int ret, cnt;
   char *retp;
 
-  Logger logger = logging.get("test:format:highlevel");
+  Logger logger = Log::get("test:format:highlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 

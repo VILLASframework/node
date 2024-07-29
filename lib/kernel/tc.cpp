@@ -50,7 +50,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd,
 
   *qd = q;
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Added prio qdisc with {} bands to interface '{}'", bands,
                 rtnl_link_get_name(i->nl_link));
 
@@ -80,7 +80,7 @@ int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls,
 
   *cls = c;
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Added fwmark classifier with mark {} to interface '{}'", mark,
                 rtnl_link_get_name(i->nl_link));
 

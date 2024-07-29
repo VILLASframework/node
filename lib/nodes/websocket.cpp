@@ -29,7 +29,7 @@ static std::list<struct websocket_connection *>
 static std::mutex connections_lock;
 
 static villas::node::Web *web;
-static villas::Logger logger = logging.get("websocket");
+static villas::Logger logger = Log::get("websocket");
 
 // Forward declarations
 static NodeCompatType p;

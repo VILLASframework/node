@@ -87,7 +87,7 @@ int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
                 std::list<int> cbSignals, std::list<int> ignoreSignals) {
   int ret;
 
-  Logger logger = logging.get("signals");
+  Logger logger = Log::get("signals");
 
   logger->info("Initialize subsystem");
 

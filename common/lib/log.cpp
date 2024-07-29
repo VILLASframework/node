@@ -20,9 +20,6 @@
 
 using namespace villas;
 
-// The global log instance
-Log villas::logging;
-
 static std::map<spdlog::level::level_enum, std::string> levelNames = {
     {spdlog::level::trace, "trc"}, {spdlog::level::debug, "dbg"},
     {spdlog::level::info, "info"}, {spdlog::level::warn, "warn"},
@@ -69,7 +66,7 @@ int Log::getWidth() {
   return width;
 }
 
-Logger Log::get(const std::string &name) {
+Logger Log::getNewLogger(const std::string &name) {
   Logger logger = spdlog::get(name);
 
   if (not logger) {

@@ -126,7 +126,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     // Setup generic IP type properties
     ip->card = card;
     ip->id = id;
-    ip->logger = villas::logging.get(id.getName());
+    ip->logger = villas::Log::get(id.getName());
 
     json_t *json_ip = json_object_get(json_ips, id.getName().c_str());
 

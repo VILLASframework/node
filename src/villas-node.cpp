@@ -155,7 +155,7 @@ protected:
         exit(EXIT_SUCCESS);
 
       case 'd':
-        logging.setLevel(optarg);
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'C':
