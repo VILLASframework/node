@@ -135,7 +135,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     if (json_is_object(json_parameters)) {
       json_int_t c_baseaddr = 0;
       int baseaddress_found =
-          json_unpack(json_parameters, "{ s: I }", "c_baseaddr", &c_baseaddr);
+          json_unpack(json_parameters, "{ s?: I }", "c_baseaddr", &c_baseaddr);
       if (baseaddress_found == 0)
         ip->baseaddr = c_baseaddr;
     }
