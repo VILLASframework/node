@@ -47,6 +47,7 @@ public:
   void dump();
 
   void attachGroup(std::shared_ptr<Group> group);
+  std::shared_ptr<Group> getOrAttachGroup(int index);
 
   std::shared_ptr<Device> attachDevice(const std::string &name, int groupIndex);
   std::shared_ptr<Device> attachDevice(pci::Device &pdev);
@@ -65,8 +66,6 @@ public:
   bool isIommuEnabled() const { return this->hasIommu; }
 
 private:
-  std::shared_ptr<Group> getOrAttachGroup(int index);
-
   int fd;
   int version;
 
