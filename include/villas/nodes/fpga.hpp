@@ -15,6 +15,7 @@
 #include <villas/node/config.hpp>
 #include <villas/timing.hpp>
 
+#include <stdint.h>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/node.hpp>
@@ -61,7 +62,9 @@ protected:
   std::shared_ptr<fpga::Card> card;
   std::shared_ptr<villas::fpga::ip::Dma> dma;
   std::shared_ptr<villas::MemoryBlock> blockRx;
+  std::shared_ptr<MemoryAccessor<uint32_t>> accessorRx;
   std::shared_ptr<villas::MemoryBlock> blockTx;
+  std::shared_ptr<MemoryAccessor<uint32_t>> accessorTx;
 
   // Non-public methods
   virtual int fastRead(Sample *smps[], unsigned cnt);
