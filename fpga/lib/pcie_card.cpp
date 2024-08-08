@@ -13,6 +13,7 @@
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/pci.hpp>
 #include <villas/kernel/vfio_container.hpp>
 #include <villas/memory.hpp>
@@ -31,6 +32,10 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
                       std::shared_ptr<kernel::vfio::Container> vc,
                       const std::filesystem::path &searchPath) {
   auto logger = getStaticLogger();
+
+  // make sure the vfio container has the required modules
+  kernel::loadModule("vfio_pcie");
+  kernel::loadModule("vfio_iommu_type1");
 
   json_t *json_ips = nullptr;
   json_t *json_paths = nullptr;
