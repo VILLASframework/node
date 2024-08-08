@@ -35,8 +35,7 @@ static constexpr size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU + 1;
 
 class Container {
 public:
-  Container(std::vector<std::string> required_modules = {"vfio", "vfio_pci",
-                                                         "vfio_iommu_type1"});
+  Container(std::vector<std::string> required_modules = {"vfio"});
 
   // No copying allowed because we manage the vfio state in constructor and destructors
   Container(Container const &) = delete;
