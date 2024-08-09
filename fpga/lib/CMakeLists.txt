@@ -8,10 +8,15 @@ set(SOURCES
     vlnv.cpp
     card.cpp
     pcie_card.cpp
+    platform_card.cpp
     core.cpp
     node.cpp
     utils.cpp
     dma.cpp
+
+    devices/driver.cpp
+    devices/ip_device.cpp
+    devices/utils.cpp
 
     ips/aurora_xilinx.cpp
     ips/aurora.cpp
@@ -28,6 +33,7 @@ set(SOURCES
     ips/timer.cpp
     ips/i2c.cpp
     ips/register.cpp
+	ips/zynq.cpp
 
     ips/rtds2gpu/rtds2gpu.cpp
     ips/rtds2gpu/xrtds2gpu.c

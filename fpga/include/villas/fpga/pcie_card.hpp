@@ -37,6 +37,9 @@ class PCIeCard : public Card {
 public:
   ~PCIeCard();
 
+  void
+  connectVFIOtoIps(std::list<std::shared_ptr<ip::Core>> configuredIps) override;
+
   bool init();
 
   bool stop() { return true; }
@@ -51,10 +54,7 @@ public:
 
   void dump() {}
 
-public:         // TODO: make this private
-  bool doReset; // Reset VILLASfpga during startup?
-  int affinity; // Affinity for MSI interrupts
-
+public:                                      // TODO: make this private
   std::shared_ptr<kernel::pci::Device> pdev; // PCI device handle
 
 protected:
