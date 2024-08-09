@@ -372,10 +372,10 @@ int villas::node::ethercat_init(NodeCompat *n) {
   w->domain_pd = nullptr;
   w->domain_regs = nullptr;
 
-	/* Placement new for C++ objects */
-	new (&w->send) std::atomic<struct Sample *>();
-	new (&w->thread) std::thread();
-	new (&w->task) Task();
+  // Placement new for C++ objects
+  new (&w->send) std::atomic<struct Sample *>();
+  new (&w->thread) std::thread();
+  new (&w->task) Task();
 
   return 0;
 }

@@ -97,12 +97,12 @@ int villas::node::memory::lock(size_t sz) {
   mallopt(M_TRIM_THRESHOLD, -1);
 
 #ifdef _POSIX_MEMLOCK
-  /* Lock all current and future memory allocations */
+  // Lock all current and future memory allocations
   ret = mlockall(MCL_CURRENT | MCL_FUTURE);
   if (ret)
     return -1;
-#endif /* _POSIX_MEMLOCK */
-#endif /* __linux__ */
+#endif // _POSIX_MEMLOCK
+#endif // __linux__
 
   return 0;
 }
