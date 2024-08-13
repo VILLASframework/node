@@ -77,14 +77,9 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
 
   const char *sv_id = SVSubscriber_ASDU_getSvId(asdu);
   int smp_cnt = SVSubscriber_ASDU_getSmpCnt(asdu);
-  int smp_mod = SVSubscriber_ASDU_getSmpMod(asdu);
-  int smp_synch = SVSubscriber_ASDU_getSmpSynch(asdu);
-  int conf_rev = SVSubscriber_ASDU_getConfRev(asdu);
   size_t data_size = (size_t)SVSubscriber_ASDU_getDataSize(asdu);
 
-  n->logger->debug("Received sample: sv_id={}, smp_mod={}, smp_sync={}, "
-                   "smp_cnt={}, conf_rev={}",
-                   sv_id, smp_mod, smp_synch, smp_cnt, conf_rev);
+  n->logger->debug("Received sample: sv_id={}, smp_cnt={}", sv_id, smp_cnt);
 
   smp = sample_alloc(&i->in.pool);
   if (!smp) {
@@ -320,6 +315,7 @@ int villas::node::iec61850_sv_start(NodeCompat *n) {
 
     i->out.publisher =
         SVPublisher_createEx(&comm_params, i->interface, i->out.vlan.enabled);
+    // SVPublisher_create(nullptr, i->interface);
     if (i->out.publisher == nullptr)
       throw RuntimeError("Failed to create SV publisher");
 
@@ -335,8 +331,7 @@ int villas::node::iec61850_sv_start(NodeCompat *n) {
                                  i->interface, i->in.check_dst_address);
 
     i->in.receiver = r->sv;
-    i->in.subscriber =
-        SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
+    i->in.subscriber = SVSubscriber_create(nullptr, i->app_id);
 
     // Install a callback handler for the subscriber
     SVSubscriber_setListener(i->in.subscriber, iec61850_sv_listener, n);
@@ -473,23 +468,21 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
 
     unsigned off = 0;
     for (unsigned k = 0; k < i->out.asdu_length; k++) {
-      struct iec61850_type_descriptor *td =
-          (struct iec61850_type_descriptor *)list_at(&i->out.signals, k);
+      auto *td = (struct iec61850_type_descriptor *)list_at(&i->out.signals, k);
+      auto sig = smp->signals->getByIndex(k);
 
-      int i_val = 0;
-      double f_val = 0;
+      SignalData data;
 
       switch (td->iec_type) {
       case IEC61850Type::INT8:
       case IEC61850Type::INT32:
-        i_val = sample_format(smp, k) == SignalType::FLOAT ? smp->data[k].f
-                                                           : smp->data[k].i;
+      case IEC61850Type::INT64:
+        data = smp->data[k].cast(sig->type, SignalType::INTEGER);
         break;
 
       case IEC61850Type::FLOAT32:
       case IEC61850Type::FLOAT64:
-        f_val = sample_format(smp, k) == SignalType::FLOAT ? smp->data[k].f
-                                                           : smp->data[k].i;
+        data = smp->data[k].cast(sig->type, SignalType::FLOAT);
         break;
 
       default: {
@@ -497,20 +490,28 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
       }
 
       switch (td->iec_type) {
+      case IEC61850Type::BOOLEAN:
+        SVPublisher_ASDU_setINT8(i->out.asdu, off, data.b);
+        break;
+
       case IEC61850Type::INT8:
-        SVPublisher_ASDU_setINT8(i->out.asdu, off, i_val);
+        SVPublisher_ASDU_setINT8(i->out.asdu, off, data.i);
         break;
 
       case IEC61850Type::INT32:
-        SVPublisher_ASDU_setINT32(i->out.asdu, off, i_val);
+        SVPublisher_ASDU_setINT32(i->out.asdu, off, data.i);
+        break;
+
+      case IEC61850Type::INT64:
+        SVPublisher_ASDU_setINT64(i->out.asdu, off, data.i);
         break;
 
       case IEC61850Type::FLOAT32:
-        SVPublisher_ASDU_setFLOAT(i->out.asdu, off, f_val);
+        SVPublisher_ASDU_setFLOAT(i->out.asdu, off, data.f);
         break;
 
       case IEC61850Type::FLOAT64:
-        SVPublisher_ASDU_setFLOAT64(i->out.asdu, off, f_val);
+        SVPublisher_ASDU_setFLOAT64(i->out.asdu, off, data.f);
         break;
 
       default: {
@@ -524,8 +525,7 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
       SVPublisher_ASDU_setSmpCnt(i->out.asdu, smp->sequence);
 
     if (smp->flags & (int)SampleFlags::HAS_TS_ORIGIN) {
-      uint64_t t =
-          smp->ts.origin.tv_sec * 1000000000 + smp->ts.origin.tv_nsec;
+      uint64_t t = smp->ts.origin.tv_sec * 1000000000 + smp->ts.origin.tv_nsec;
 
       SVPublisher_ASDU_setRefrTmNs(i->out.asdu, t);
     }
