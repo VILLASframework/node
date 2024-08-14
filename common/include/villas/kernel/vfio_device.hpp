@@ -29,7 +29,7 @@ namespace vfio {
 class Device {
 public:
   Device(const std::string &name, int groupFileDescriptor,
-         const kernel::pci::Device *pci_device = nullptr);
+         const kernel::pci::PciDevice *pci_device = nullptr);
   ~Device();
 
   // No copying allowed because we manage the vfio state in constructor and destructors
@@ -89,7 +89,7 @@ private:
   std::vector<void *> mappings;
 
   // libpci handle of the device
-  const kernel::pci::Device *pci_device;
+  const kernel::pci::PciDevice *pci_device;
 
   Logger log;
 };

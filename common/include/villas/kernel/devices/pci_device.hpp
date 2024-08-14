@@ -58,15 +58,15 @@ struct Region {
   unsigned long long flags;
 };
 
-class Device {
+class PciDevice {
 public:
-  Device(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
+  PciDevice(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
-  Device(Id i) : id(i), log(Log::get("kernel:pci")) {}
+  PciDevice(Id i) : id(i), log(Log::get("kernel:pci")) {}
 
-  Device(Slot s) : slot(s), log(Log::get("kernel:pci")) {}
+  PciDevice(Slot s) : slot(s), log(Log::get("kernel:pci")) {}
 
-  bool operator==(const Device &other);
+  bool operator==(const PciDevice &other);
 
   // Get currently loaded driver for device
   std::string getDriver() const;
@@ -106,7 +106,7 @@ protected:
                                            std::ios_base::out) const;
 };
 
-class DeviceList : public std::list<std::shared_ptr<Device>> {
+class DeviceList : public std::list<std::shared_ptr<PciDevice>> {
 private:
   // Initialize Linux PCI handle.
   //
@@ -122,7 +122,7 @@ public:
 
   DeviceList::value_type lookupDevice(const Id &i);
 
-  DeviceList::value_type lookupDevice(const Device &f);
+  DeviceList::value_type lookupDevice(const PciDevice &f);
 };
 
 } // namespace pci

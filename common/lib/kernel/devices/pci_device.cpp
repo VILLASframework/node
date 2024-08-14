@@ -82,7 +82,7 @@ DeviceList::DeviceList() {
     if (ret != 4)
       throw RuntimeError("Failed to parse PCI slot number: {}", e->d_name);
 
-    emplace_back(std::make_shared<Device>(id, slot));
+    emplace_back(std::make_shared<PciDevice>(id, slot));
   }
 
   closedir(dp);
@@ -100,7 +100,7 @@ DeviceList::value_type DeviceList::lookupDevice(const Id &i) {
   });
 }
 
-DeviceList::value_type DeviceList::lookupDevice(const Device &d) {
+DeviceList::value_type DeviceList::lookupDevice(const PciDevice &d) {
   auto dev = std::find_if(
       begin(), end(), [d](const DeviceList::value_type &e) { return *e == d; });
 
@@ -247,11 +247,11 @@ bool Slot::operator==(const Slot &s) {
   return true;
 }
 
-bool Device::operator==(const Device &f) {
+bool PciDevice::operator==(const PciDevice &f) {
   return id == f.id && slot == f.slot;
 }
 
-std::list<Region> Device::getRegions() const {
+std::list<Region> PciDevice::getRegions() const {
   FILE *f;
   char sysfs[1024];
 
@@ -311,7 +311,7 @@ std::list<Region> Device::getRegions() const {
   return regions;
 }
 
-std::string Device::getDriver() const {
+std::string PciDevice::getDriver() const {
   int ret;
   char sysfs[1024], syml[1024];
   memset(syml, 0, sizeof(syml));
@@ -331,7 +331,7 @@ std::string Device::getDriver() const {
   return basename(syml);
 }
 
-bool Device::attachDriver(const std::string &driver) const {
+bool PciDevice::attachDriver(const std::string &driver) const {
   FILE *f;
   char fn[1024];
 
@@ -363,7 +363,7 @@ bool Device::attachDriver(const std::string &driver) const {
   return true;
 }
 
-uint32_t Device::readHostBar(unsigned barNum) const {
+uint32_t PciDevice::readHostBar(unsigned barNum) const {
   auto file = openSysFs("resource", std::ios_base::in);
 
   std::string line;
@@ -389,7 +389,7 @@ uint32_t Device::readHostBar(unsigned barNum) const {
   return start;
 }
 
-void Device::rewriteBar(unsigned barNum) {
+void PciDevice::rewriteBar(unsigned barNum) {
   auto hostBar = readHostBar(barNum);
   auto configBar = readBar(barNum);
 
@@ -405,7 +405,7 @@ void Device::rewriteBar(unsigned barNum) {
   writeBar(hostBar, barNum);
 }
 
-uint32_t Device::readBar(unsigned barNum) const {
+uint32_t PciDevice::readBar(unsigned barNum) const {
   uint32_t addr;
   auto file = openSysFs("config", std::ios_base::in);
 
@@ -415,14 +415,14 @@ uint32_t Device::readBar(unsigned barNum) const {
   return addr;
 }
 
-void Device::writeBar(uint32_t addr, unsigned barNum) {
+void PciDevice::writeBar(uint32_t addr, unsigned barNum) {
   auto file = openSysFs("config", std::ios_base::out);
 
   file.seekp(PCI_BASE_ADDRESS_N(barNum));
   file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
-int Device::getIommuGroup() const {
+int PciDevice::getIommuGroup() const {
   int ret;
   char *group;
 
@@ -443,7 +443,7 @@ int Device::getIommuGroup() const {
   return atoi(group);
 }
 
-std::fstream Device::openSysFs(const std::string &subPath,
+std::fstream PciDevice::openSysFs(const std::string &subPath,
                                std::ios_base::openmode mode) const {
   std::fstream file;
 

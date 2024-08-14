@@ -53,7 +53,7 @@ static const char *vfio_pci_irq_names[] = {
 };
 
 Device::Device(const std::string &name, int groupFileDescriptor,
-               const kernel::pci::Device *pci_device)
+               const kernel::pci::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
       info(), irqs(), regions(), mappings(), pci_device(pci_device),
       log(Log::get("kernel:vfio:device")) {
