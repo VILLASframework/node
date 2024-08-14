@@ -19,7 +19,7 @@
 #include <villas/memory.hpp>
 #include <villas/plugin.hpp>
 
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
 #include <villas/kernel/vfio_container.hpp>
 
 #include <villas/fpga/card.hpp>
