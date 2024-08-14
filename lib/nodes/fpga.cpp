@@ -270,6 +270,12 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
 
   smp->length = 0;
   for (unsigned i = 0; i < MIN(read / sizeof(uint32_t), smp->capacity); i++) {
+    if (i >= in.signals->size()) {
+      logger->warn(
+          "Received more data than expected. Maybe the descriptor cache needs "
+          "to be invalidated?. Ignoring the rest of the data.");
+      break;
+    }
     if (in.signals->getByIndex(i)->type == SignalType::INTEGER) {
       smp->data[i].i = static_cast<int64_t>((*accessorRx)[i]);
     } else {
