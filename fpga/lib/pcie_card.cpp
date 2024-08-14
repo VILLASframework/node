@@ -34,7 +34,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   auto logger = getStaticLogger();
 
   // make sure the vfio container has the required modules
-  kernel::loadModule("vfio_pcie");
+  kernel::loadModule("vfio_pci");
   kernel::loadModule("vfio_iommu_type1");
 
   json_t *json_ips = nullptr;
