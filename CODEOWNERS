@@ -35,5 +35,5 @@ fpga                                                @n-eiling
 # VFIO related files
 /common/lib/kernel/pci.cpp                          @n-eiling
 /common/lib/kernel/vfi_*.cpp                        @n-eiling
-/common/include/villas/kernel/devices/pci_device.hpp               @n-eiling
+/common/include/villas/kernel/devices/*             @n-eiling
 /common/include/villas/kernel/vfio_*.hpp            @n-eiling
