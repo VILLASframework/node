@@ -187,7 +187,7 @@ std::shared_ptr<Device> Container::attachDevice(const std::string &name,
   return device;
 }
 
-std::shared_ptr<Device> Container::attachDevice(pci::Device &pdev) {
+std::shared_ptr<Device> Container::attachDevice(pci::PciDevice &pdev) {
   int ret;
   char name[32], iommu_state[4];
   static constexpr const char *kernelDriver = "vfio-pci";

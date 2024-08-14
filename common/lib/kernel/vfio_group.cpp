@@ -68,7 +68,7 @@ std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device) {
 
 std::shared_ptr<Device>
 Group::attachDevice(const std::string &name,
-                    const kernel::pci::Device *pci_device) {
+                    const kernel::pci::PciDevice *pci_device) {
   auto device = std::make_shared<Device>(name, fd, pci_device);
   return attachDevice(device);
 }

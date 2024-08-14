@@ -24,7 +24,7 @@ using namespace villas::fpga;
 // Instantiate factory to register
 static PCIeCardFactory PCIeCardFactoryInstance;
 
-static const kernel::pci::Device
+static const kernel::pci::PciDevice
     defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 std::shared_ptr<PCIeCard>
@@ -63,7 +63,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   card->doReset = do_reset != 0;
   card->polling = (polling != 0);
 
-  kernel::pci::Device filter = defaultFilter;
+  kernel::pci::PciDevice filter = defaultFilter;
 
   if (pci_id)
     filter.id = kernel::pci::Id(pci_id);
