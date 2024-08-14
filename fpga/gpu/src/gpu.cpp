@@ -13,7 +13,7 @@
 #include <memory>
 
 #include <villas/gpu.hpp>
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
 #include <villas/log.hpp>
 #include <villas/memory_manager.hpp>
 

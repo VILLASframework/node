@@ -18,7 +18,7 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::kernel::pci;

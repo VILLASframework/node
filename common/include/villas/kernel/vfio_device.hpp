@@ -19,7 +19,7 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
