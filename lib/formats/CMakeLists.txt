@@ -41,6 +41,15 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
     list(APPEND LIBRARIES
         PkgConfig::PROTOBUFC
     )
+
+    install(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
+        COMPONENT devel
+        FILES_MATCHING
+            PATTERN "*.h"
+            PATTERN "*.hpp"
+    )
 endif()
 
 list(APPEND FORMAT_SRC
