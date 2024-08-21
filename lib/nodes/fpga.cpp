@@ -230,9 +230,9 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
     }
   }
 
-  // logger->info("Writing sample: {}, {}, {:#x}", smp->data[0].f,
-  //              signalTypeToString(smp->signals->getByIndex(0)->type),
-  //              smp->data[0].i);
+  logger->trace("Writing sample: {}, {}, {:#x}", smp->data[0].f,
+                signalTypeToString(smp->signals->getByIndex(0)->type),
+                smp->data[0].i);
   dma->writeScatterGatherFast();
   auto written = dma->writeScatterGatherPoll() /
                  sizeof(float); // The number of samples written
