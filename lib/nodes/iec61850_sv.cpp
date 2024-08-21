@@ -315,7 +315,6 @@ int villas::node::iec61850_sv_start(NodeCompat *n) {
 
     i->out.publisher =
         SVPublisher_createEx(&comm_params, i->interface, i->out.vlan.enabled);
-    // SVPublisher_create(nullptr, i->interface);
     if (i->out.publisher == nullptr)
       throw RuntimeError("Failed to create SV publisher");
 
