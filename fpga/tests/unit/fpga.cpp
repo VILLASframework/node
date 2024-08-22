@@ -27,7 +27,7 @@
 
 using namespace villas;
 
-static kernel::pci::PciDeviceList *pciDevices;
+static kernel::devices::PciDeviceList *pciDevices;
 
 FpgaState state;
 
@@ -40,7 +40,7 @@ static void init() {
 
   plugin::registry->dump();
 
-  pciDevices = kernel::pci::PciDeviceList::getInstance();
+  pciDevices = kernel::devices::PciDeviceList::getInstance();
 
   auto vfioContainer = std::make_shared<kernel::vfio::Container>();
 

@@ -24,8 +24,8 @@ using namespace villas::fpga;
 // Instantiate factory to register
 static PCIeCardFactory PCIeCardFactoryInstance;
 
-static const kernel::pci::PciDevice
-    defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
+static const kernel::devices::PciDevice defaultFilter(
+    (kernel::devices::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 std::shared_ptr<PCIeCard>
 PCIeCardFactory::make(json_t *json_card, std::string card_name,
@@ -63,15 +63,16 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   card->doReset = do_reset != 0;
   card->polling = (polling != 0);
 
-  kernel::pci::PciDevice filter = defaultFilter;
+  kernel::devices::PciDevice filter = defaultFilter;
 
   if (pci_id)
-    filter.id = kernel::pci::Id(pci_id);
+    filter.id = kernel::devices::Id(pci_id);
   if (pci_slot)
-    filter.slot = kernel::pci::Slot(pci_slot);
+    filter.slot = kernel::devices::Slot(pci_slot);
 
   // Search for FPGA card
-  card->pdev = kernel::pci::PciDeviceList::getInstance()->lookupDevice(filter);
+  card->pdev =
+      kernel::devices::PciDeviceList::getInstance()->lookupDevice(filter);
   if (!card->pdev) {
     logger->warn("Failed to find PCI device");
     return nullptr;

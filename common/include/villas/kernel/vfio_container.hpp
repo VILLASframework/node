@@ -49,7 +49,7 @@ public:
   std::shared_ptr<Group> getOrAttachGroup(int index);
 
   std::shared_ptr<Device> attachDevice(const std::string &name, int groupIndex);
-  std::shared_ptr<Device> attachDevice(pci::PciDevice &pdev);
+  std::shared_ptr<Device> attachDevice(devices::PciDevice &pdev);
 
   // Map VM to an IOVA, which is accessible by devices in the container
   //

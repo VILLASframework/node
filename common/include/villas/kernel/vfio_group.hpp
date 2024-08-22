@@ -48,7 +48,7 @@ public:
   std::shared_ptr<Device> attachDevice(std::shared_ptr<Device> device);
   std::shared_ptr<Device>
   attachDevice(const std::string &name,
-               const kernel::pci::PciDevice *pci_device = nullptr);
+               const kernel::devices::PciDevice *pci_device = nullptr);
 
   bool checkStatus();
   void dump();
