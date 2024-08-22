@@ -71,7 +71,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
     filter.slot = kernel::pci::Slot(pci_slot);
 
   // Search for FPGA card
-  card->pdev = kernel::pci::DeviceList::getInstance()->lookupDevice(filter);
+  card->pdev = kernel::pci::PciDeviceList::getInstance()->lookupDevice(filter);
   if (!card->pdev) {
     logger->warn("Failed to find PCI device");
     return nullptr;

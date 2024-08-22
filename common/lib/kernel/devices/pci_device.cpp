@@ -25,16 +25,16 @@ using namespace villas::kernel::pci;
 
 #define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
 
-DeviceList *DeviceList::instance = nullptr;
+PciDeviceList *PciDeviceList::instance = nullptr;
 
-DeviceList *DeviceList::getInstance() {
+PciDeviceList *PciDeviceList::getInstance() {
   if (instance == nullptr) {
-    instance = new DeviceList();
+    instance = new PciDeviceList();
   }
   return instance;
 };
 
-DeviceList::DeviceList() {
+PciDeviceList::PciDeviceList() {
   struct dirent *e;
   DIR *dp;
   FILE *f;
@@ -88,21 +88,22 @@ DeviceList::DeviceList() {
   closedir(dp);
 }
 
-DeviceList::value_type DeviceList::lookupDevice(const Slot &s) {
-  return *std::find_if(begin(), end(), [s](const DeviceList::value_type &d) {
+PciDeviceList::value_type PciDeviceList::lookupDevice(const Slot &s) {
+  return *std::find_if(begin(), end(), [s](const PciDeviceList::value_type &d) {
     return d->slot == s;
   });
 }
 
-DeviceList::value_type DeviceList::lookupDevice(const Id &i) {
-  return *std::find_if(begin(), end(), [i](const DeviceList::value_type &d) {
+PciDeviceList::value_type PciDeviceList::lookupDevice(const Id &i) {
+  return *std::find_if(begin(), end(), [i](const PciDeviceList::value_type &d) {
     return d->id == i;
   });
 }
 
-DeviceList::value_type DeviceList::lookupDevice(const PciDevice &d) {
-  auto dev = std::find_if(
-      begin(), end(), [d](const DeviceList::value_type &e) { return *e == d; });
+PciDeviceList::value_type PciDeviceList::lookupDevice(const PciDevice &d) {
+  auto dev =
+      std::find_if(begin(), end(),
+                   [d](const PciDeviceList::value_type &e) { return *e == d; });
 
   return dev == end() ? value_type() : *dev;
 }

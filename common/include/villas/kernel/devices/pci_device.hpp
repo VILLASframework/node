@@ -106,23 +106,23 @@ protected:
                                            std::ios_base::out) const;
 };
 
-class DeviceList : public std::list<std::shared_ptr<PciDevice>> {
+class PciDeviceList : public std::list<std::shared_ptr<PciDevice>> {
 private:
   // Initialize Linux PCI handle.
   //
   // This search for all available PCI devices under /sys/bus/pci
-  DeviceList();
-  DeviceList &operator=(const DeviceList &);
-  static DeviceList *instance;
+  PciDeviceList();
+  PciDeviceList &operator=(const PciDeviceList &);
+  static PciDeviceList *instance;
 
 public:
-  static DeviceList *getInstance();
+  static PciDeviceList *getInstance();
 
-  DeviceList::value_type lookupDevice(const Slot &s);
+  PciDeviceList::value_type lookupDevice(const Slot &s);
 
-  DeviceList::value_type lookupDevice(const Id &i);
+  PciDeviceList::value_type lookupDevice(const Id &i);
 
-  DeviceList::value_type lookupDevice(const PciDevice &f);
+  PciDeviceList::value_type lookupDevice(const PciDevice &f);
 };
 
 } // namespace pci
