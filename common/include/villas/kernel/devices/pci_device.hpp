@@ -17,7 +17,7 @@
 
 namespace villas {
 namespace kernel {
-namespace pci {
+namespace devices {
 
 #define PCI_SLOT(devfn) (((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn) ((devfn) & 0x07)
@@ -125,6 +125,6 @@ public:
   PciDeviceList::value_type lookupDevice(const PciDevice &f);
 };
 
-} // namespace pci
+} // namespace devices
 } // namespace kernel
 } // namespace villas

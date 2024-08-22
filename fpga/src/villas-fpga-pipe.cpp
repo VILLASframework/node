@@ -27,7 +27,7 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::PciDeviceList> pciDevices;
+static std::shared_ptr<kernel::devices::PciDeviceList> pciDevices;
 static auto logger = villas::Log::get("streamer");
 
 int main(int argc, char *argv[]) {
