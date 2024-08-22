@@ -34,7 +34,7 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
+static std::shared_ptr<kernel::pci::PciDeviceList> pciDevices;
 static auto logger = villas::Log::get("ctrl");
 
 void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {

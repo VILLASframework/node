@@ -21,7 +21,7 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
+static std::shared_ptr<kernel::pci::PciDeviceList> pciDevices;
 static auto logger = villas::Log::get("villasfpga_dma");
 
 struct villasfpga_handle_t {
