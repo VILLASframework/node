@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <villas/kernel/devices/driver.hpp>
 
 namespace villas {
 namespace kernel {
@@ -17,7 +18,7 @@ namespace devices {
 
 class PlatformDevice;
 
-class PlatformDriver {
+class PlatformDriver : public Driver {
 private:
   static constexpr char BIND_DEFAULT[] = "bind";
   static constexpr char UNBIND_DEFAULT[] = "unbind";
@@ -39,13 +40,12 @@ public:
                  const std::filesystem::path unbind_path)
       : path(path), bind_path(bind_path), unbind_path(unbind_path){};
 
-  std::string name() const;
-  void attach(const PlatformDevice &device) const;
-
-private:
-  void bind(const PlatformDevice &device) const;
-  void unbind(const PlatformDevice &device) const;
-  void override(const PlatformDevice &device) const;
+public:
+  std::string name() const override;
+  void attach(const Device &device) const override;
+  void bind(const Device &device) const override;
+  void unbind(const Device &device) const override;
+  void override(const Device &device) const override;
 };
 
 } // namespace devices
