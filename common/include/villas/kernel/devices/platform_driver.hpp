@@ -17,8 +17,6 @@ namespace villas {
 namespace kernel {
 namespace devices {
 
-class PlatformDevice;
-
 class PlatformDriver : public Driver {
 private:
   static constexpr char BIND_DEFAULT[] = "bind";
