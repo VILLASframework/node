@@ -29,6 +29,14 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
+    add_custom_command(
+        OUTPUT
+        ${CMAKE_BINARY_DIR}/include/villas/formats/villas.pb-c.h
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.h
+            ${CMAKE_BINARY_DIR}/include/villas/formats
+            MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.h)
+
     list(APPEND FORMAT_SRC
         protobuf.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.c
@@ -40,15 +48,6 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
 
     list(APPEND LIBRARIES
         PkgConfig::PROTOBUFC
-    )
-
-    install(
-        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
-        COMPONENT devel
-        FILES_MATCHING
-            PATTERN "*.h"
-            PATTERN "*.hpp"
     )
 endif()
 
