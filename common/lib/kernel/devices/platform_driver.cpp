@@ -18,21 +18,21 @@ std::string PlatformDriver::name() const {
   return path.u8string().substr(pos + 1);
 }
 
-void PlatformDriver::bind(const PlatformDevice &device) const {
+void PlatformDriver::bind(const Device &device) const {
   write_to_file(device.name(), this->bind_path);
 };
 
-void PlatformDriver::unbind(const PlatformDevice &device) const {
+void PlatformDriver::unbind(const Device &device) const {
   write_to_file(device.name(), this->unbind_path);
 };
 
-void PlatformDriver::override(const PlatformDevice &device) const {
+void PlatformDriver::override(const Device &device) const {
   write_to_file(this->name(), device.override_path());
 };
 
-void PlatformDriver::attach(const PlatformDevice &device) const {
+void PlatformDriver::attach(const Device &device) const {
   if (device.driver().has_value()) {
-    device.driver().value().unbind(device);
+    device.driver().value()->unbind(device);
   }
   this->override(device);
   device.probe();
