@@ -70,8 +70,8 @@ public:
 
   bool operator==(const PciDevice &other);
 
-  // Get currently loaded driver for device
-  std::string getDriver() const;
+  // Implement device interface
+  std::optional<std::unique_ptr<Driver>> driver() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
