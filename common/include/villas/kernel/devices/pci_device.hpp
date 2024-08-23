@@ -72,12 +72,11 @@ public:
 
   // Implement device interface
   std::optional<std::unique_ptr<Driver>> driver() const override;
+  std::optional<int> iommu_group() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
 
-  // Return the IOMMU group of this PCI device or -1 if the device is not in a group
-  int getIommuGroup() const;
 
   std::list<Region> getRegions() const;
 
