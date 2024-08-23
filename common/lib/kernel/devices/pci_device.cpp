@@ -462,11 +462,6 @@ std::fstream PciDevice::openSysFs(const std::string &subPath,
 
 // TODO: test
 std::string PciDevice::name() const {
-  int ret;
-  char *group;
-
-  // readlink() does not add a null terminator!
-  char link[1024] = {0};
   char sysfs[1024];
 
   snprintf(sysfs, sizeof(sysfs),
