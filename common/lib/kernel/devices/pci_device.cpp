@@ -18,6 +18,7 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/kernel/devices/generic_driver.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
 #include <villas/utils.hpp>
 
@@ -311,8 +312,7 @@ std::list<Region> PciDevice::getRegions() const {
 
   return regions;
 }
-
-std::string PciDevice::getDriver() const {
+std::optional<std::unique_ptr<Driver>> PciDevice::driver() const {
   int ret;
   char sysfs[1024], syml[1024];
   memset(syml, 0, sizeof(syml));
@@ -323,13 +323,15 @@ std::string PciDevice::getDriver() const {
   struct stat st;
   ret = stat(sysfs, &st);
   if (ret)
-    return "";
+    return std::nullopt;
 
   ret = readlink(sysfs, syml, sizeof(syml));
   if (ret < 0)
     throw SystemError("Failed to follow link: {}", sysfs);
 
-  return basename(syml);
+  auto driver = std::make_optional(std::make_unique<GenericDriver>(
+      "/sys/bus/pci/drivers/" + std::string(basename(syml))));
+  return driver;
 }
 
 bool PciDevice::attachDriver(const std::string &driver) const {
