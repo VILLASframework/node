@@ -15,6 +15,8 @@
 
 #include <villas/log.hpp>
 
+#include <villas/kernel/devices/device.hpp>
+
 namespace villas {
 namespace kernel {
 namespace devices {
@@ -58,7 +60,7 @@ struct Region {
   unsigned long long flags;
 };
 
-class PciDevice {
+class PciDevice : public Device {
 public:
   PciDevice(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
