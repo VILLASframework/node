@@ -425,7 +425,7 @@ void PciDevice::writeBar(uint32_t addr, unsigned barNum) {
   file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
-int PciDevice::getIommuGroup() const {
+std::optional<int> PciDevice::iommu_group() const {
   int ret;
   char *group;
 
@@ -439,11 +439,11 @@ int PciDevice::getIommuGroup() const {
 
   ret = readlink(sysfs, link, sizeof(link));
   if (ret < 0)
-    return -1;
+    return std::nullopt;
 
   group = basename(link);
 
-  return atoi(group);
+  return std::make_optional(atoi(group));
 }
 
 std::fstream PciDevice::openSysFs(const std::string &subPath,
