@@ -12,7 +12,7 @@
 #include <villas/format.hpp>
 
 // Generated message descriptors by protoc
-#include <villas/format/villas.pb-c.h>
+#include <villas/formats/villas.pb-c.h>
 
 namespace villas {
 namespace node {
