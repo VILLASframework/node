@@ -6,11 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/platform_device.hpp>
+#include <villas/kernel/devices/platform_driver.hpp>
+
+#include <villas/kernel/devices/device.hpp>
 #include <villas/kernel/devices/utils.hpp>
 
-using villas::kernel::devices::PlatformDevice,
-    villas::kernel::devices::PlatformDriver;
+using villas::kernel::devices::Device, villas::kernel::devices::PlatformDriver;
 using villas::kernel::devices::utils::write_to_file;
 
 std::string PlatformDriver::name() const {
