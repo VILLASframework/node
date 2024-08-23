@@ -9,6 +9,7 @@
 #pragma once
 
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <villas/kernel/devices/driver.hpp>
 
