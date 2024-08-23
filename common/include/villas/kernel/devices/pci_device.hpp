@@ -73,6 +73,7 @@ public:
   // Implement device interface
   std::optional<std::unique_ptr<Driver>> driver() const override;
   std::optional<int> iommu_group() const override;
+  std::string name() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
