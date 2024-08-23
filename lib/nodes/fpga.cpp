@@ -37,8 +37,9 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
     : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
-      timestep(10e-3), card(nullptr), dma(), blockRx(), accessorRx(nullptr),
-      blockTx(), accessorTx(nullptr) {}
+      timestep(10e-3), card(nullptr), dma(), blockRx(), accessorRxInt(nullptr),
+      accessorRxFloat(nullptr), blockTx(), accessorTxInt(nullptr),
+      accessorTxFloat(nullptr) {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -92,8 +93,10 @@ int FpgaNode::prepare() {
 
   blockRx = alloc.allocateBlock(0x200 * sizeof(float));
   blockTx = alloc.allocateBlock(0x200 * sizeof(float));
-  accessorRx = std::make_shared<MemoryAccessor<uint32_t>>(*blockRx);
-  accessorTx = std::make_shared<MemoryAccessor<uint32_t>>(*blockTx);
+  accessorRxInt = std::make_shared<MemoryAccessor<uint32_t>>(*blockRx);
+  accessorTxInt = std::make_shared<MemoryAccessor<uint32_t>>(*blockTx);
+  accessorRxFloat = std::make_shared<MemoryAccessor<float>>(*blockRx);
+  accessorTxFloat = std::make_shared<MemoryAccessor<float>>(*blockTx);
 
   dma->makeAccesibleFromVA(blockRx);
   dma->makeAccesibleFromVA(blockTx);
@@ -223,10 +226,10 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
-      float f = static_cast<float>(smp->data[i].f);
-      (*accessorTx)[i] = *reinterpret_cast<uint32_t *>(&f);
+      (*accessorTxFloat)[i] = static_cast<float>(smp->data[i].f);
+      ;
     } else {
-      (*accessorTx)[i] = static_cast<uint32_t>(smp->data[i].i);
+      (*accessorTxInt)[i] = static_cast<uint32_t>(smp->data[i].i);
     }
   }
 
@@ -277,10 +280,9 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
       break;
     }
     if (in.signals->getByIndex(i)->type == SignalType::INTEGER) {
-      smp->data[i].i = static_cast<int64_t>((*accessorRx)[i]);
+      smp->data[i].i = static_cast<int64_t>((*accessorRxInt)[i]);
     } else {
-      smp->data[i].f =
-          static_cast<double>(*reinterpret_cast<float *>(&(*accessorRx)[i]));
+      smp->data[i].f = static_cast<double>((*accessorRxFloat)[i]);
     }
     smp->length++;
   }
