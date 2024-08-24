@@ -6,13 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/linux_driver.hpp>
 #include <villas/kernel/devices/platform_device.hpp>
-#include <villas/utils.hpp>
+#include <villas/kernel/devices/generic_driver.hpp>
 
-using villas::kernel::devices::Driver, villas::kernel::devices::LinuxDriver;
+using villas::kernel::devices::Driver, villas::kernel::devices::GenericDriver;
 using villas::kernel::devices::PlatformDevice;
-using villas::utils::write_to_file;
+using villas::kernel::devices::utils::write_to_file;
 
 std::optional<std::unique_ptr<Driver>> PlatformDevice::driver() const {
   std::filesystem::path driver_symlink =
@@ -23,7 +22,7 @@ std::optional<std::unique_ptr<Driver>> PlatformDevice::driver() const {
 
   std::filesystem::path driver_path =
       std::filesystem::canonical(driver_symlink);
-  return std::make_optional(std::make_unique<LinuxDriver>(driver_path));
+  return std::make_optional(std::make_unique<GenericDriver>(driver_path));
 }
 
 std::optional<int> PlatformDevice::iommu_group() const {
@@ -47,4 +46,7 @@ std::filesystem::path PlatformDevice::override_path() const {
   return this->m_override_path;
 }
 
-std::string PlatformDevice::name() const { return this->m_path.filename(); }
+std::string PlatformDevice::name() const {
+  size_t pos = this->m_path.u8string().rfind('/');
+  return this->m_path.u8string().substr(pos + 1);
+}

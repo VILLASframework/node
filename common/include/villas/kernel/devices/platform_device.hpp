@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <villas/kernel/devices/device.hpp>
 #include <villas/kernel/devices/driver.hpp>
+#include <villas/kernel/devices/utils.hpp>
 
 namespace villas {
 namespace kernel {
