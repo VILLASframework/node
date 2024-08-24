@@ -464,9 +464,8 @@ std::fstream PciDevice::openSysFs(const std::string &subPath,
 std::string PciDevice::name() const {
   char sysfs[1024];
 
-  snprintf(sysfs, sizeof(sysfs),
-           "%04x:%02x:%02x.%x",
-           slot.domain, slot.bus, slot.device, slot.function);
+  snprintf(sysfs, sizeof(sysfs), "%04x:%02x:%02x.%x", slot.domain, slot.bus,
+           slot.device, slot.function);
            
   return std::string(sysfs);
 }
