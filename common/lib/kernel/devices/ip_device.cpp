@@ -10,16 +10,15 @@
 #include <regex>
 #include <stdexcept>
 
-#include <villas/exceptions.hpp>
 #include <villas/kernel/devices/ip_device.hpp>
 
 using villas::kernel::devices::IpDevice;
 
 IpDevice IpDevice::from(const std::filesystem::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
-    throw RuntimeError(
-        "Path {} failed validation as IpDevicePath [adress in hex].[name] ",
-        unsafe_path.u8string());
+    throw std::runtime_error(
+        "Path \"" + unsafe_path.u8string() +
+        "\" failed validation as IpDevicePath \"[adress in hex].[name]\". ");
   return IpDevice(unsafe_path);
 }
 
@@ -32,7 +31,7 @@ size_t IpDevice::addr() const {
   size_t pos = name().find('.');
   std::string addr_hex = name().substr(0, pos);
 
-  // Convert from hex-string to number
+  // convert from hex string to number
   std::stringstream ss;
   ss << std::hex << addr_hex;
   size_t addr = 0;
@@ -42,7 +41,9 @@ size_t IpDevice::addr() const {
 }
 
 bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
-  std::string assumed_device_name = unsafe_path.filename();
+  // Split the string at last slash
+  int pos = unsafe_path.u8string().rfind('/');
+  std::string assumed_device_name = unsafe_path.u8string().substr(pos + 1);
 
   // Match format of hexaddr.devicename
   if (!std::regex_match(assumed_device_name,
