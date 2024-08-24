@@ -40,11 +40,11 @@ public:
       : path(path), bind_path(bind_path), unbind_path(unbind_path){};
 
 public:
-  virtual void attach(const Device &device) const = 0;
-  virtual void bind(const Device &device) const = 0;
-  virtual std::string name() const = 0;
-  virtual void override(const Device &device) const = 0;
-  virtual void unbind(const Device &device) const = 0;
+  void attach(const Device &device) const override;
+  void bind(const Device &device) const override;
+  std::string name() const override;
+  void override(const Device &device) const override;
+  void unbind(const Device &device) const override;
 };
 
 } // namespace devices
