@@ -1,7 +1,7 @@
 /* Platform bus based Linux/Unix device.
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
- *
+ * 
  * SPDX-FileCopyrightText: 2023-2024 Pascal Bauer <pascal.bauer@rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
