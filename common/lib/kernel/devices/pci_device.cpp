@@ -20,9 +20,11 @@
 #include <villas/exceptions.hpp>
 #include <villas/kernel/devices/generic_driver.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
+#include <villas/kernel/devices/utils.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::kernel::devices;
+using villas::kernel::devices::utils::write_to_file;
 
 #define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
 
