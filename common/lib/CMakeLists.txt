@@ -15,6 +15,12 @@ add_library(villas-common SHARED
     cpuset.cpp
     dsp/pid.cpp
     hist.cpp
+    
+    kernel/devices/generic_driver.cpp
+    kernel/devices/ip_device.cpp
+    kernel/devices/platform_device.cpp
+    kernel/devices/utils.cpp
+
     kernel/kernel.cpp
     kernel/rt.cpp
     list.cpp
