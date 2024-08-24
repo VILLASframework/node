@@ -466,7 +466,7 @@ std::string PciDevice::name() const {
 
   snprintf(sysfs, sizeof(sysfs), "%04x:%02x:%02x.%x", slot.domain, slot.bus,
            slot.device, slot.function);
-           
+
   return std::string(sysfs);
 }
 
