@@ -478,7 +478,7 @@ std::filesystem::path PciDevice::path() const {
            slot.device, slot.function);
 
   return sysfs;
-};
+}
 
 // TODO: test
 std::filesystem::path PciDevice::override_path() const {
