@@ -62,6 +62,7 @@ struct Region {
 
 class PciDevice : public Device {
 private:
+  static constexpr char PROBE_DEFAULT[] = "/sys/bus/pci/drivers_probe";
   static constexpr char OVERRIDE_DEFAULT[] = "driver_override";
 
 public:
@@ -79,10 +80,10 @@ public:
   std::string name() const override;
   std::filesystem::path override_path() const override;
   std::filesystem::path path() const override;
+  void probe() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
-
 
   std::list<Region> getRegions() const;
 
