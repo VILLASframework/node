@@ -469,3 +469,8 @@ std::string PciDevice::name() const {
            
   return std::string(sysfs);
 }
+// TODO: test
+std::filesystem::path PciDevice::override_path() const {
+
+  return this->path() / OVERRIDE_DEFAULT;
+}
