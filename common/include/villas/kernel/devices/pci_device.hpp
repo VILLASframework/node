@@ -78,6 +78,7 @@ public:
   std::optional<int> iommu_group() const override;
   std::string name() const override;
   std::filesystem::path override_path() const override;
+  std::filesystem::path path() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
