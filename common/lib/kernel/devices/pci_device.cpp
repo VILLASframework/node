@@ -469,6 +469,17 @@ std::string PciDevice::name() const {
            
   return std::string(sysfs);
 }
+
+// TODO: test
+std::filesystem::path PciDevice::path() const {
+  char sysfs[1024];
+
+  snprintf(sysfs, sizeof(sysfs), "%04x:%02x:%02x.%x", slot.domain, slot.bus,
+           slot.device, slot.function);
+
+  return sysfs;
+};
+
 // TODO: test
 std::filesystem::path PciDevice::override_path() const {
 
