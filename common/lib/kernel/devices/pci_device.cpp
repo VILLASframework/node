@@ -485,3 +485,7 @@ std::filesystem::path PciDevice::override_path() const {
 
   return this->path() / OVERRIDE_DEFAULT;
 }
+
+void PciDevice::probe() const {
+  write_to_file(this->name(), this->PROBE_DEFAULT);
+}
