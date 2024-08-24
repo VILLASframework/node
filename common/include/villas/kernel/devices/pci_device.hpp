@@ -61,6 +61,9 @@ struct Region {
 };
 
 class PciDevice : public Device {
+private:
+  static constexpr char OVERRIDE_DEFAULT[] = "driver_override";
+
 public:
   PciDevice(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
@@ -74,6 +77,7 @@ public:
   std::optional<std::unique_ptr<Driver>> driver() const override;
   std::optional<int> iommu_group() const override;
   std::string name() const override;
+  std::filesystem::path override_path() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
