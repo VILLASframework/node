@@ -10,9 +10,6 @@
 
 #pragma once
 
-#include <set>
-#include <string>
-
 #include <villas/fpga/core.hpp>
 #include <villas/kernel/vfio_container.hpp>
 
@@ -22,8 +19,9 @@ namespace fpga {
 class Card {
 public:
   bool polling;
-
-  std::string name; // The name of the FPGA card
+  bool doReset;					// Reset VILLASfpga during startup?
+	int affinity;					// Affinity for MSI interrupts
+	std::string name;			// The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
   std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
@@ -40,6 +38,9 @@ public:
   std::list<std::string> ignored_ip_names;
 
   virtual ~Card();
+
+  virtual void
+  connectVFIOtoIps(std::list<std::shared_ptr<ip::Core>> configuredIps) = 0;
 
   virtual bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block);
   virtual bool unmapMemoryBlock(const MemoryBlock &block);
