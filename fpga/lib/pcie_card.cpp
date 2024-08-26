@@ -176,6 +176,11 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
 
 PCIeCard::~PCIeCard() {}
 
+void PCIeCard::connectVFIOtoIps(
+    std::list<std::shared_ptr<ip::Core>> configuredIps) {
+  // TODO: implement
+}
+
 bool PCIeCard::init() {
   logger = getLogger();
 
