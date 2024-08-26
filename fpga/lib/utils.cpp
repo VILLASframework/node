@@ -26,6 +26,8 @@
 #include <villas/fpga/ips/dino.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/platform_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
 
@@ -233,19 +235,26 @@ fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
     throw ConfigError(config, err, "interface",
                       "Failed to parse interface name for card {}", card_name);
   }
+
   std::string interfaceNameStr(interfaceName);
+  std::shared_ptr<fpga::Card> card = nullptr;
   if (interfaceNameStr == "pcie") {
-    auto card = fpga::PCIeCardFactory::make(config, std::string(card_name),
-                                            vfioContainer, searchPath);
-    if (card) {
-      return card;
-    }
-    return nullptr;
+    card = fpga::PCIeCardFactory::make(config, std::string(card_name),
+                                       vfioContainer, searchPath);
   } else if (interfaceNameStr == "platform") {
-    throw RuntimeError("Platform interface not implemented yet");
+    card = fpga::PlatformCardFactory::make(config, std::string(card_name),
+                                           vfioContainer, searchPath);
+    // TODO: implement variable connection
+    // Configure Axi-Switch for DMA loopback
+    auto axi_switch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
+        card->lookupIp(fpga::Vlnv("xilinx.com:ip:axis_switch:")));
+    axi_switch->connectInternal("S00_AXIS", "M00_AXIS");
+
   } else {
     throw RuntimeError("Unknown interface type {}", interfaceNameStr);
   }
+
+  return card;
 }
 
 int fpga::createCards(json_t *config,
