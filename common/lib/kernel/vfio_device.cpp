@@ -247,6 +247,51 @@ bool Device::pciEnable() {
   return true;
 }
 
+int Device::platformInterruptInit(int efds[]){
+  size_t efd_cnt = 0; // FIXME: efds currently has a fixed size of 32. But we don't check that and there may be more efds.
+  for (auto irq : irqs) {
+    const size_t irqCount = irq.count;
+    const size_t irqSetSize =
+        sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
+
+    auto *irqSetBuf = new char[irqSetSize];
+    if (!irqSetBuf)
+      throw MemoryAllocationError();
+    auto *irqSet = reinterpret_cast<struct vfio_irq_set *>(irqSetBuf);
+
+    irqSet->argsz = irqSetSize;
+    // DATA_EVENTFD binds the interrupt to the provided eventfd.
+    // SET_ACTION_TRIGGER enables kernel->userspace signalling.
+    irqSet->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
+    irqSet->index = irq.index;
+    irqSet->start = 0;
+    irqSet->count = irqCount;
+
+    // Now set the new eventfds
+    for (size_t i = 0; i < irqCount; i++) {
+      efds[efd_cnt+i] = eventfd(0, 0);
+      if (efds[efd_cnt+i] < 0) {
+        delete[] irqSetBuf;
+        return -1;
+      }
+      eventfdList.push_back(efds[efd_cnt+i]);
+    }
+
+    memcpy(irqSet->data, efds+efd_cnt, sizeof(int) * irqCount);
+
+    if (ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
+      delete[] irqSetBuf;
+      return -1;
+    }
+    delete[] irqSetBuf;
+    efd_cnt += irqCount;
+  }
+
+
+  return efd_cnt;
+
+}
+
 int Device::pciMsiInit(int efds[]) {
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
