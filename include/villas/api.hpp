@@ -14,8 +14,6 @@
 #include <list>
 #include <thread>
 
-#include <libwebsockets.h>
-
 #include <villas/common.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
