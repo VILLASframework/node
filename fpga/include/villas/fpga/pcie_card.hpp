@@ -37,6 +37,9 @@ class PCIeCard : public Card {
 public:
   ~PCIeCard();
 
+  void
+  connectVFIOtoIps(std::list<std::shared_ptr<ip::Core>> configuredIps) override;
+
   bool init();
 
   bool stop() { return true; }
