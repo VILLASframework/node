@@ -17,6 +17,7 @@
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/platform_card.hpp>
 #include <villas/kernel/devices/device_ip_matcher.hpp>
+#include <villas/kernel/devices/generic_driver.hpp>
 #include <villas/kernel/devices/ip_device_reader.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/memory_manager.hpp>
@@ -47,8 +48,8 @@ void PlatformCard::connectVFIOtoIps(
       matcher.match();
 
   // Bind device to platform driver
-  auto driver =
-      Driver(std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
+  auto driver = GenericDriver(
+      std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
   for (auto pair : device_ip_pair) {
     auto device = pair.second;
     driver.attach(device);
