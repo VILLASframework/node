@@ -30,6 +30,7 @@ using namespace villas::fpga::ip;
 // same order as they appear in this list, i.e. first here will be initialized
 // first.
 static std::list<Vlnv> vlnvInitializationOrder = {
+    Vlnv("xilinx.com:ip:zynq_ultra_ps_e:"),
     Vlnv("xilinx.com:ip:axi_pcie:"),
     Vlnv("xilinx.com:ip:xdma:"),
     Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
@@ -343,6 +344,8 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
 
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
+
+  card->connectVFIOtoIps(configuredIps);
 
   initIps(configuredIps, card);
 
