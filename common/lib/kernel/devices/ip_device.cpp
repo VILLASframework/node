@@ -41,9 +41,7 @@ size_t IpDevice::addr() const {
 }
 
 bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
-  // Split the string at last slash
-  int pos = unsafe_path.u8string().rfind('/');
-  std::string assumed_device_name = unsafe_path.u8string().substr(pos + 1);
+  std::string assumed_device_name = unsafe_path.filename();
 
   // Match format of hexaddr.devicename
   if (!std::regex_match(assumed_device_name,
