@@ -37,18 +37,18 @@ void PlatformCard::connectVFIOtoIps(
     std::list<std::shared_ptr<ip::Core>> configuredIps) {
 
   // Read devices from Devicetree
-  const std::filesystem::path PLATFORM_DEVICES_DIRECTORY =
-      std::filesystem::path("/sys/bus/platform/devices");
+  const std::filesystem::path PLATFORM_DEVICES_DIRECTORY(
+      "/sys/bus/platform/devices");
   auto dtr = IpDeviceReader(PLATFORM_DEVICES_DIRECTORY);
   std::vector<IpDevice> devices = dtr.devices;
 
   // Match devices and ips
-  auto matcher = DeviceIpMatcher(devices, configuredIps);
+  DeviceIpMatcher matcher(devices, configuredIps);
   std::vector<std::pair<std::shared_ptr<ip::Core>, IpDevice>> device_ip_pair =
       matcher.match();
 
   // Bind device to platform driver
-  auto driver = GenericDriver(
+  GenericDriver driver(
       std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
   for (auto pair : device_ip_pair) {
     auto device = pair.second;
