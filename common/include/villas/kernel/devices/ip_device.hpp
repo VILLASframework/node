@@ -22,7 +22,8 @@ public:
 
 private:
   IpDevice() = delete;
-  IpDevice(const std::filesystem::path valid_path) : PlatformDevice(valid_path){};
+  IpDevice(const std::filesystem::path valid_path)
+      : PlatformDevice(valid_path){};
 
 public:
   size_t addr() const;
