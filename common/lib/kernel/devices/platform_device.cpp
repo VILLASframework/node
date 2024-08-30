@@ -46,7 +46,4 @@ std::filesystem::path PlatformDevice::override_path() const {
   return this->m_override_path;
 }
 
-std::string PlatformDevice::name() const {
-  size_t pos = this->m_path.u8string().rfind('/');
-  return this->m_path.u8string().substr(pos + 1);
-}
+std::string PlatformDevice::name() const { return this->m_path.filename(); }
