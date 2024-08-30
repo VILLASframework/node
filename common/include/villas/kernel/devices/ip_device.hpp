@@ -21,6 +21,7 @@ public:
   static bool is_path_valid(const std::filesystem::path unsafe_path);
 
 private:
+  IpDevice() = delete;
   IpDevice(const std::filesystem::path valid_path) : PlatformDevice(valid_path){};
 
 public:
