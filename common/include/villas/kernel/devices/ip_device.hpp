@@ -17,7 +17,6 @@ namespace devices {
 
 class IpDevice : public PlatformDevice {
 public:
-public:
   static IpDevice from(const std::filesystem::path unsafe_path);
   static bool is_path_valid(const std::filesystem::path unsafe_path);
 
