@@ -29,9 +29,7 @@ std::optional<int> PlatformDevice::iommu_group() const {
   std::filesystem::path symlink =
       std::filesystem::path(this->m_path.u8string() + "/iommu_group");
 
-  std::filesystem::path link;
-  link = std::filesystem::read_symlink(symlink);
-
+  std::filesystem::path link = std::filesystem::read_symlink(symlink);
   std::string delimiter = "iommu_groups/";
   int pos = link.u8string().find(delimiter);
   int iommu_group = std::stoi(link.u8string().substr(pos + delimiter.length()));
