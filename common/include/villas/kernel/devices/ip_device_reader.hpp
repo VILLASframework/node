@@ -20,21 +20,22 @@
 
 class IpDeviceReader {
 public:
-  const std::vector<std::string> devicetree_names;
-  std::vector<villas::kernel::devices::IpDevice> devices;
+  std::vector<villas::kernel::devices::IpDevice>
+  read(std::filesystem::path devices_directory) const {
+    std::vector<villas::kernel::devices::IpDevice> devices;
 
-  IpDeviceReader(std::filesystem::path devices_directory)
-      : devicetree_names(
-            villas::kernel::devices::utils::read_names_in_directory(
-                devices_directory)) {
-    for (auto devicetree_name : this->devicetree_names) {
+    const std::vector<std::string> devicetree_names =
+        villas::kernel::devices::utils::read_names_in_directory(
+            devices_directory);
+    for (auto devicetree_name : devicetree_names) {
       auto path_to_device =
           devices_directory / std::filesystem::path(devicetree_name);
       try {
         auto device = villas::kernel::devices::IpDevice::from(path_to_device);
-        this->devices.push_back(device);
+        devices.push_back(device);
       } catch (std::runtime_error &e) {
       }
     }
+    return devices;
   }
 };
