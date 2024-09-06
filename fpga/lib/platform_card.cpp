@@ -55,9 +55,12 @@ void PlatformCard::connectVFIOtoIps(
     driver.attach(device);
   }
 
-  // VFIO Setup
+  // VFIO Device Setup
+  std::vector<std::pair<std::shared_ptr<ip::Core>,
+                        std::shared_ptr<kernel::vfio::Device>>>
+      vfio_ip_pair;
   for (auto pair : device_ip_pair) {
-    auto device = pair.second;
+    auto [ip, device] = pair;
 
     // Attach group to container
     const int iommu_group = device.iommu_group().value();
@@ -73,6 +76,14 @@ void PlatformCard::connectVFIOtoIps(
 
     // Add as member
     this->vfio_devices.push_back(vfio_device);
+
+    // Add return value
+    vfio_ip_pair.push_back({ip, vfio_device});
+  }
+
+  // Memory Graph
+  for (auto pair : vfio_ip_pair) {
+    auto [ip, vfio_device] = pair;
 
     // Map vfio device memory to process
     const void *mapping = vfio_device->regionMap(0);
@@ -90,7 +101,6 @@ void PlatformCard::connectVFIOtoIps(
                      "process to vfio", srcVertexId, targetVertexId);
     logger->debug("create edge from process to {}", vfio_device->getName());
 
-    auto ip = pair.first;
     // Connect vfio vertex to Reg vertex
     connect(vfio_device->getName(), ip);
   }
