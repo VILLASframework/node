@@ -75,7 +75,7 @@ void PlatformCard::connectVFIOtoIps(
     // Add as member
     this->vfio_devices.push_back(vfio_device);
 
-    // Map vfio device to process
+    // Map vfio device memory to process
     const void *mapping = vfio_device->regionMap(0);
     if (mapping == MAP_FAILED) {
       logger->error("Failed to mmap() device");
