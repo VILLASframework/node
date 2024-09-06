@@ -39,8 +39,8 @@ void PlatformCard::connectVFIOtoIps(
   // Read devices from Devicetree
   const std::filesystem::path PLATFORM_DEVICES_DIRECTORY(
       "/sys/bus/platform/devices");
-  auto dtr = IpDeviceReader(PLATFORM_DEVICES_DIRECTORY);
-  std::vector<IpDevice> devices = dtr.devices;
+  std::vector<IpDevice> devices =
+      IpDeviceReader().read(PLATFORM_DEVICES_DIRECTORY);
 
   // Match devices and ips
   DeviceIpMatcher matcher(devices, configuredIps);
