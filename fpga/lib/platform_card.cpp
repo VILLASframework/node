@@ -61,7 +61,6 @@ void PlatformCard::connectVFIOtoIps(
 
     // Attach group to container
     const int iommu_group = device.iommu_group().value();
-
     auto vfio_group = vfioContainer->getOrAttachGroup(iommu_group);
     logger->debug("Device: {}, Iommu: {}", device.name(), iommu_group);
 
