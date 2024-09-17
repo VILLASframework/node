@@ -17,6 +17,7 @@ set(TEST_SRC
     queue_signalled.cpp
     queue.cpp
     signal.cpp
+    c37_118.cpp
 )
 
 add_executable(unit-tests ${TEST_SRC})
@@ -28,7 +29,7 @@ target_link_libraries(unit-tests PUBLIC
 
 add_custom_target(run-unit-tests
     COMMAND
-        /bin/bash -o pipefail -c \"
+        /usr/bin/env bash -o pipefail -c \"
             $<TARGET_FILE:unit-tests> 2>&1 | c++filt\"
     DEPENDS
         unit-tests
