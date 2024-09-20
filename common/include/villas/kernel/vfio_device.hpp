@@ -68,6 +68,8 @@ public:
 
   void setAttachedToGroup() { this->attachedToGroup = true; }
 
+  int getNumberIrqs() const { return this->info.num_irqs; }
+
 private:
   // Name of the device as listed under
   // /sys/kernel/iommu_groups/[vfio_group::index]/devices/
