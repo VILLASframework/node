@@ -390,3 +390,8 @@ Core::getInterruptController(const std::string &interruptName) const {
     return nullptr;
   }
 }
+
+void Core::addIrq(std::string irqName, int port_num,
+                  InterruptController *intc) {
+  this->irqs[irqName] = {port_num, intc, ""};
+}
