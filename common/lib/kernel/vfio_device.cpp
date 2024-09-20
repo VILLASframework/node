@@ -247,8 +247,9 @@ bool Device::pciEnable() {
   return true;
 }
 
-int Device::platformInterruptInit(int efds[]){
-  size_t efd_cnt = 0; // FIXME: efds currently has a fixed size of 32. But we don't check that and there may be more efds.
+int Device::platformInterruptInit(int efds[]) {
+  size_t efd_cnt =
+      0; // FIXME: efds currently has a fixed size of 32. But we don't check that and there may be more efds.
   for (auto irq : irqs) {
     const size_t irqCount = irq.count;
     const size_t irqSetSize =
@@ -269,15 +270,15 @@ int Device::platformInterruptInit(int efds[]){
 
     // Now set the new eventfds
     for (size_t i = 0; i < irqCount; i++) {
-      efds[efd_cnt+i] = eventfd(0, 0);
-      if (efds[efd_cnt+i] < 0) {
+      efds[efd_cnt + i] = eventfd(0, 0);
+      if (efds[efd_cnt + i] < 0) {
         delete[] irqSetBuf;
         return -1;
       }
-      eventfdList.push_back(efds[efd_cnt+i]);
+      eventfdList.push_back(efds[efd_cnt + i]);
     }
 
-    memcpy(irqSet->data, efds+efd_cnt, sizeof(int) * irqCount);
+    memcpy(irqSet->data, efds + efd_cnt, sizeof(int) * irqCount);
 
     if (ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
       delete[] irqSetBuf;
@@ -287,9 +288,7 @@ int Device::platformInterruptInit(int efds[]){
     efd_cnt += irqCount;
   }
 
-
   return efd_cnt;
-
 }
 
 int Device::pciMsiInit(int efds[]) {
