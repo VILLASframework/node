@@ -82,6 +82,8 @@ public:
   virtual ~Core() = default;
 
 public:
+  void addIrq(std::string irqName, int port_num, InterruptController* intc);
+
   // Generic management interface for IPs
 
   // Runtime setup of IP, should access and initialize hardware
