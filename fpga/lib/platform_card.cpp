@@ -22,6 +22,8 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/memory_manager.hpp>
 
+#include <villas/fpga/ips/platform_intc.hpp>
+
 using namespace villas;
 using namespace villas::fpga;
 using namespace villas::kernel;
@@ -103,6 +105,22 @@ void PlatformCard::connectVFIOtoIps(
 
     // Connect vfio vertex to Reg vertex
     connect(vfio_device->getName(), ip);
+
+    // interrupts
+    if (vfio_device->getNumberIrqs() > 0) {
+      for (int i = 0; i < vfio_device->getNumberIrqs(); i++) {
+        auto intc = new PlatformInterruptController(vfio_device);
+
+        const char *irqName = "iic2intc_irpt";
+        int num = 0;
+        logger->error("Adding Platformintc {}", num);
+        //* dma
+        //* mm2s_introut
+        //* s2mm_introut
+
+        ip->addIrq(irqName, num, intc);
+      }
+    }
   }
 }
 
