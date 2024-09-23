@@ -12,6 +12,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <cassert>
 #include <cstdint>
