@@ -12,6 +12,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <cassert>
 #include <cstdint>
@@ -213,8 +214,7 @@ template <class... Ts> struct overloaded : Ts... {
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 void write_to_file(std::string data, const std::filesystem::path file);
-std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &directory);
+std::vector<std::string> read_names_in_directory(const std::string &name);
 
 namespace base64 {
 

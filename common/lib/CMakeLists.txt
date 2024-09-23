@@ -43,7 +43,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         kernel/devices/ip_device.cpp
         kernel/devices/pci_device.cpp
         kernel/devices/platform_device.cpp
-        kernel/devices/utils.cpp
         kernel/vfio_device.cpp
         kernel/vfio_group.cpp
         kernel/vfio_container.cpp

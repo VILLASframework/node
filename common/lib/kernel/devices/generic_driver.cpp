@@ -9,10 +9,10 @@
 #include <villas/kernel/devices/generic_driver.hpp>
 
 #include <villas/kernel/devices/device.hpp>
-#include <villas/kernel/devices/utils.hpp>
+#include <villas/utils.hpp>
 
 using villas::kernel::devices::Device, villas::kernel::devices::GenericDriver;
-using villas::kernel::devices::utils::write_to_file;
+using villas::utils::write_to_file;
 
 void GenericDriver::attach(const Device &device) const {
   if (device.driver().has_value()) {
