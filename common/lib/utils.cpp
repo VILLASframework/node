@@ -360,7 +360,6 @@ void write_to_file(std::string data, const std::filesystem::path file) {
   std::ofstream outputFile(file.u8string());
 
   if (outputFile.is_open()) {
-    // Write to file
     outputFile << data;
     outputFile.close();
   } else {
