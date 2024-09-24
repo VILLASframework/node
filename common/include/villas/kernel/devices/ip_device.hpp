@@ -1,4 +1,4 @@
-/* Linux/Unix device which represents an IP component of a FPGA.
+/* IpDevice: Linux/Unix device which represents an IP component of a fpga
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
@@ -22,7 +22,7 @@ public:
 
 private:
   IpDevice() = delete;
-  IpDevice(const std::filesystem::path valid_path)
+  IpDevice(const std::filesystem::path valid_path) //! Dont allow unvalidated paths
       : PlatformDevice(valid_path){};
 
 public:

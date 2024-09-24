@@ -1,4 +1,4 @@
-/* Platform bus based Linux/Unix device.
+/* Platform Device: Platform bus based Linux/Unix device.
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
