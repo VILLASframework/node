@@ -1,4 +1,4 @@
-/* Interface for Linux/Unix device drivers
+/* Interface for Linux/Unix devices.
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
