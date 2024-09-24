@@ -31,7 +31,7 @@ size_t IpDevice::addr() const {
   size_t pos = name().find('.');
   std::string addr_hex = name().substr(0, pos);
 
-  // convert from hex string to number
+  // Convert from hex-string to number
   std::stringstream ss;
   ss << std::hex << addr_hex;
   size_t addr = 0;
