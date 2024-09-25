@@ -58,6 +58,28 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
 }
 
 std::list<IpIdentifier>
+CoreFactory::filterIps(std::list<IpIdentifier> allIps,
+                       std::list<std::string> ignored_ip_names) {
+  std::list<IpIdentifier> filteredIps;
+
+  for (auto ip : allIps) {
+    bool on_blocklist = false;
+    for (auto ignored_ip_name : ignored_ip_names) {
+      if (ip.getName() == ignored_ip_name) {
+        on_blocklist = true;
+        CoreFactory::getStaticLogger()->warn("Ignoring Ip {} (explicitly on ignorelist)", ignored_ip_name);
+        break;
+      }
+    }
+
+    if (!on_blocklist)
+      filteredIps.push_back(ip);
+  }
+
+  return filteredIps;
+}
+
+std::list<IpIdentifier>
 CoreFactory::reorderIps(std::list<IpIdentifier> allIps) {
   // Pick out IPs to be initialized first.
   std::list<IpIdentifier> orderedIps;
@@ -315,8 +337,11 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   std::list<IpIdentifier> allIps =
       parseIpIdentifier(json_ips); // All IPs available in config
 
+  std::list<IpIdentifier> filteredIps = filterIps(
+      allIps, card->ignored_ip_names); // Remove ips on ignorelist in .conf
+
   std::list<IpIdentifier> orderedIps =
-      reorderIps(allIps); // IPs ordered in initialization order
+      reorderIps(filteredIps); // IPs ordered in initialization order
 
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
