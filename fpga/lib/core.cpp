@@ -67,7 +67,7 @@ CoreFactory::filterIps(std::list<IpIdentifier> allIps,
     for (auto ignored_ip_name : ignored_ip_names) {
       if (ip.getName() == ignored_ip_name) {
         on_blocklist = true;
-        CoreFactory::getStaticLogger()->warn("Ignoring Ip {} (explicitly on ignorelist)", ignored_ip_name);
+        CoreFactory::getStaticLogger()->warn("Ignoring Ip \"{}\" (explicitly on ignorelist)", ignored_ip_name);
         break;
       }
     }
