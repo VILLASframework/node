@@ -62,17 +62,18 @@ CoreFactory::filterIps(std::list<IpIdentifier> allIps,
                        std::list<std::string> ignored_ip_names) {
   std::list<IpIdentifier> filteredIps;
 
-  std::set<std::string> ignored_ip_set(ignored_ip_names.begin(),
-                                       ignored_ip_names.end());
-  for (const auto &ip : allIps) {
-    const auto &ipName = ip.getName();
-
-    if (ignored_ip_set.find(ipName) != ignored_ip_set.end()) {
-      CoreFactory::getStaticLogger()->info(
-          "Ignoring Ip {} (explicitly on ignorelist)", ipName);
-    } else {
-      filteredIps.push_back(ip);
+  for (auto ip : allIps) {
+    bool on_blocklist = false;
+    for (auto ignored_ip_name : ignored_ip_names) {
+      if (ip.getName() == ignored_ip_name) {
+        on_blocklist = true;
+        CoreFactory::getStaticLogger()->warn("Ignoring Ip {} (explicitly on ignorelist)", ignored_ip_name);
+        break;
+      }
     }
+
+    if (!on_blocklist)
+      filteredIps.push_back(ip);
   }
 
   return filteredIps;
