@@ -10,15 +10,16 @@
 #include <regex>
 #include <stdexcept>
 
+#include <villas/exceptions.hpp>
 #include <villas/kernel/devices/ip_device.hpp>
 
 using villas::kernel::devices::IpDevice;
 
 IpDevice IpDevice::from(const std::filesystem::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
-    throw std::runtime_error(
-        "Path \"" + unsafe_path.u8string() +
-        "\" failed validation as IpDevicePath \"[adress in hex].[name]\". ");
+    throw RuntimeError(
+        "Path {} failed validation as IpDevicePath [adress in hex].[name] ",
+        unsafe_path.u8string());
   return IpDevice(unsafe_path);
 }
 
