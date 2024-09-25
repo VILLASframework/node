@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <villas/fpga/core.hpp>
 #include <villas/kernel/vfio_container.hpp>
 
@@ -24,6 +26,8 @@ public:
 	std::string name;			// The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
   std::shared_ptr<kernel::vfio::Device> vfioDevice;
+
+  std::list<std::string> ignored_ip_names;
 
   // Slave address space ID to access the PCIe address space from the
   // FPGA
