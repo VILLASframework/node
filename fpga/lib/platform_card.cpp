@@ -198,6 +198,7 @@ PlatformCardFactory::make(json_t *json_card, std::string card_name,
   card->affinity = parser.affinity;
   card->doReset = parser.do_reset != 0;
   card->polling = (parser.polling != 0);
+  card->ignored_ip_names = parser.ignored_ip_names;
 
   json_t *json_ips = parser.json_ips;
   json_t *json_paths = parser.json_paths;
