@@ -20,7 +20,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/kernel/devices/generic_driver.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
-#include <villas/kernel/devices/utils.hpp>
+#include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::kernel::devices;
