@@ -25,8 +25,7 @@ public:
     std::vector<villas::kernel::devices::IpDevice> devices;
 
     const std::vector<std::string> devicetree_names =
-        villas::kernel::devices::utils::read_names_in_directory(
-            devices_directory);
+        villas::kernel::utils::read_names_in_directory(devices_directory);
     for (auto devicetree_name : devicetree_names) {
       auto path_to_device =
           devices_directory / std::filesystem::path(devicetree_name);
