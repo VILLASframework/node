@@ -233,4 +233,3 @@ PYBIND11_MODULE(villas_node, m) {
         a[idx] = (vsample *)smp;
       });
 }
-
