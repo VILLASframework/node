@@ -30,6 +30,7 @@ using namespace villas::fpga::ip;
 // same order as they appear in this list, i.e. first here will be initialized
 // first.
 static std::list<Vlnv> vlnvInitializationOrder = {
+    Vlnv("xilinx.com:ip:zynq_ultra_ps_e:"),
     Vlnv("xilinx.com:ip:axi_pcie:"),
     Vlnv("xilinx.com:ip:xdma:"),
     Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
@@ -54,6 +55,28 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
     allIps.push_back({vlnv, ipName});
   }
   return allIps;
+}
+
+std::list<IpIdentifier>
+CoreFactory::filterIps(std::list<IpIdentifier> allIps,
+                       std::list<std::string> ignored_ip_names) {
+  std::list<IpIdentifier> filteredIps;
+
+  for (auto ip : allIps) {
+    bool on_blocklist = false;
+    for (auto ignored_ip_name : ignored_ip_names) {
+      if (ip.getName() == ignored_ip_name) {
+        on_blocklist = true;
+        CoreFactory::getStaticLogger()->warn("Ignoring Ip \"{}\" (explicitly on ignorelist)", ignored_ip_name);
+        break;
+      }
+    }
+
+    if (!on_blocklist)
+      filteredIps.push_back(ip);
+  }
+
+  return filteredIps;
 }
 
 std::list<IpIdentifier>
@@ -314,11 +337,16 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   std::list<IpIdentifier> allIps =
       parseIpIdentifier(json_ips); // All IPs available in config
 
+  std::list<IpIdentifier> filteredIps = filterIps(
+      allIps, card->ignored_ip_names); // Remove ips on ignorelist in .conf
+
   std::list<IpIdentifier> orderedIps =
-      reorderIps(allIps); // IPs ordered in initialization order
+      reorderIps(filteredIps); // IPs ordered in initialization order
 
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
+
+  card->connectVFIOtoIps(configuredIps);
 
   initIps(configuredIps, card);
 
@@ -362,4 +390,9 @@ Core::getInterruptController(const std::string &interruptName) const {
   } catch (const std::out_of_range &) {
     return nullptr;
   }
+}
+
+void Core::addIrq(std::string irqName, int port_num,
+                  InterruptController *intc) {
+  this->irqs[irqName] = {port_num, intc, ""};
 }

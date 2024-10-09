@@ -22,6 +22,7 @@ compile_commands.json
 
 python/dist/
 python/.eggs/
+python/villas/node/villas_pb2.py
 
 # YouCompleteMe
 .ycm_extra_conf.py
