@@ -88,9 +88,12 @@ static int opal_register_region(int argc, char *argv[]) {
 }
 
 int villas::node::opal_type_start(villas::node::SuperNode *sn) {
-  int err, noRecvIcons, noSendIcons;
+  int ret, err, noRecvIcons, noSendIcons;
 
-  pthread_mutex_init(&lock, nullptr);
+  ret = pthread_mutex_init(&lock, nullptr);
+  if (ret) {
+    return ret;
+  }
 
   // Enable the OpalPrint function. This prints to the OpalDisplay.
   err = OpalSystemCtrl_Register((char *)printShmemName.c_str());
@@ -135,7 +138,7 @@ int villas::node::opal_type_start(villas::node::SuperNode *sn) {
 }
 
 int villas::node::opal_type_stop() {
-  int err;
+  int ret, err;
 
   err = OpalCloseAsyncMem(asyncShmemSize, asyncShmemName.c_str());
   if (err != EOK)
@@ -149,7 +152,10 @@ int villas::node::opal_type_stop() {
     throw RuntimeError("Failed to close shared memory for system control ({})",
                        err);
 
-  pthread_mutex_destroy(&lock);
+  ret = pthread_mutex_destroy(&lock);
+  if (ret) {
+    return ret;
+  }
 
   return 0;
 }

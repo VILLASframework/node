@@ -17,6 +17,8 @@
 #include <infiniband/verbs.h>
 #endif // IBVERBS_FOUND
 
+#define MAX_SAFE_STACK (512 * 1024)
+
 namespace villas {
 namespace node {
 namespace memory {
@@ -57,7 +59,11 @@ int init(int hugepages) __attribute__((warn_unused_result));
 
 int lock(size_t lock);
 
-/* Allocate \p len bytes memory of type \p m.
+void prefault_heap(size_t sz);
+
+void prefault_stack();
+
+/** Allocate \p len bytes memory of type \p m.
  *
  * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.
