@@ -369,9 +369,9 @@ void write_to_file(std::string data, const std::filesystem::path file) {
 }
 
 std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &dir_path) {
+read_names_in_directory(const std::filesystem::path &directory) {
   std::vector<std::string> names;
-  for (auto const &dir_entry : std::filesystem::directory_iterator{dir_path}) {
+  for (auto const &dir_entry : std::filesystem::directory_iterator{directory}) {
       names.push_back(dir_entry.path().filename());
   }
   return names;

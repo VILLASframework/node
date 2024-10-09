@@ -213,7 +213,7 @@ template <class... Ts> struct overloaded : Ts... {
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 void write_to_file(std::string data, const std::filesystem::path file);
-std::vector<std::string> read_names_in_directory(const std::string &name);
+std::vector<std::string> read_names_in_directory(const std::filesystem::path &directory);
 
 namespace base64 {
 
