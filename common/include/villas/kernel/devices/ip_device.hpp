@@ -1,4 +1,4 @@
-/* IpDevice: Linux/Unix device which represents an IP component of a fpga
+/* IpDevice: Linux/Unix device which represents an IP component of a FPGA.
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
