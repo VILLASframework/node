@@ -368,20 +368,12 @@ void write_to_file(std::string data, const std::filesystem::path file) {
   }
 }
 
-std::vector<std::string> read_names_in_directory(const std::string &name) {
-  DIR *directory = opendir(name.c_str());
-
-  struct dirent *dp;
+std::vector<std::string>
+read_names_in_directory(const std::filesystem::path &dir_path) {
   std::vector<std::string> names;
-  dp = readdir(directory);
-  while (dp != NULL) {
-    auto name = std::string(dp->d_name);
-    if (name != "." && name != "..") {
-      names.push_back(name);
-    }
-    dp = readdir(directory);
+  for (auto const &dir_entry : std::filesystem::directory_iterator{dir_path}) {
+      names.push_back(dir_entry.path().filename());
   }
-  closedir(directory);
   return names;
 }
 
