@@ -25,8 +25,7 @@ bool Zynq::init() {
   // Save ID in card so we can create mappings later when needed (e.g. when
   // allocating DMA memory in host RAM)
   card->addrSpaceIdDeviceToHost =
-      mm.getOrCreateAddressSpace("zynq_ultra_ps_e_0/HPC0_DDR_LOW");
-
+      mm.getOrCreateAddressSpace("zynq_zynq_ultra_ps_e_0/HPC0_DDR_LOW");
   return true;
 }
 
