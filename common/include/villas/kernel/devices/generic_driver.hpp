@@ -1,4 +1,4 @@
-/* GenericDriver - Works for standard Linux drivers
+/* Implementation of driver interface for Linux/Unix based operation system drivers.
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
@@ -17,7 +17,7 @@ namespace villas {
 namespace kernel {
 namespace devices {
 
-class GenericDriver : public Driver {
+class LinuxDriver : public Driver {
 private:
   static constexpr char BIND_DEFAULT[] = "bind";
   static constexpr char UNBIND_DEFAULT[] = "unbind";
@@ -30,13 +30,13 @@ private:
   const std::filesystem::path unbind_path;
 
 public:
-  GenericDriver(const std::filesystem::path path)
-      : GenericDriver(path, path / std::filesystem::path(BIND_DEFAULT),
-                      path / std::filesystem::path(UNBIND_DEFAULT)){};
+  LinuxDriver(const std::filesystem::path path)
+      : LinuxDriver(path, path / std::filesystem::path(BIND_DEFAULT),
+                    path / std::filesystem::path(UNBIND_DEFAULT)){};
 
-  GenericDriver(const std::filesystem::path path,
-                const std::filesystem::path bind_path,
-                const std::filesystem::path unbind_path)
+  LinuxDriver(const std::filesystem::path path,
+              const std::filesystem::path bind_path,
+              const std::filesystem::path unbind_path)
       : path(path), bind_path(bind_path), unbind_path(unbind_path){};
 
 public:
