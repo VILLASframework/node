@@ -18,9 +18,8 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/kernel/devices/generic_driver.hpp>
+#include <villas/kernel/devices/linux_driver.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
-#include <villas/utils.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::kernel::devices;
@@ -331,7 +330,7 @@ std::optional<std::unique_ptr<Driver>> PciDevice::driver() const {
   if (ret < 0)
     throw SystemError("Failed to follow link: {}", sysfs);
 
-  auto driver = std::make_optional(std::make_unique<GenericDriver>(
+  auto driver = std::make_optional(std::make_unique<LinuxDriver>(
       "/sys/bus/pci/drivers/" + std::string(basename(syml))));
   return driver;
 }
