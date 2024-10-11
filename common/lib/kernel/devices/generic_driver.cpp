@@ -1,4 +1,4 @@
-/* GenericDriver
+/* LinuxDriver
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
@@ -11,10 +11,10 @@
 #include <villas/kernel/devices/device.hpp>
 #include <villas/utils.hpp>
 
-using villas::kernel::devices::Device, villas::kernel::devices::GenericDriver;
+using villas::kernel::devices::Device, villas::kernel::devices::LinuxDriver;
 using villas::utils::write_to_file;
 
-void GenericDriver::attach(const Device &device) const {
+void LinuxDriver::attach(const Device &device) const {
   if (device.driver().has_value()) {
     device.driver().value()->unbind(device);
   }
@@ -22,19 +22,19 @@ void GenericDriver::attach(const Device &device) const {
   device.probe();
 }
 
-void GenericDriver::bind(const Device &device) const {
+void LinuxDriver::bind(const Device &device) const {
   write_to_file(device.name(), this->bind_path);
 }
 
-std::string GenericDriver::name() const {
+std::string LinuxDriver::name() const {
   size_t pos = path.u8string().rfind('/');
   return path.u8string().substr(pos + 1);
 }
 
-void GenericDriver::override(const Device &device) const {
+void LinuxDriver::override(const Device &device) const {
   write_to_file(this->name(), device.override_path());
 }
 
-void GenericDriver::unbind(const Device &device) const {
+void LinuxDriver::unbind(const Device &device) const {
   write_to_file(device.name(), this->unbind_path);
 }
