@@ -39,8 +39,8 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_sources(villas-common PRIVATE
-        kernel/devices/generic_driver.cpp
         kernel/devices/ip_device.cpp
+        kernel/devices/linux_driver.cpp
         kernel/devices/pci_device.cpp
         kernel/devices/platform_device.cpp
         kernel/vfio_device.cpp
