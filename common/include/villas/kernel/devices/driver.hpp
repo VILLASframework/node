@@ -1,4 +1,5 @@
-/* Interface for device drivers. OS/platform independend.
+/* Interface for device drivers. OS/platform independend. 
+ * Implemented for Linux/Unix drivers in linux_driver.hpp
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
