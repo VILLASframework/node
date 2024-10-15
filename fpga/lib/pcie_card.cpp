@@ -13,8 +13,8 @@
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
-#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio_container.hpp>
 #include <villas/memory.hpp>
 
