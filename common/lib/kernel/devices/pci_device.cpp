@@ -445,7 +445,7 @@ int PciDevice::getIommuGroup() const {
 }
 
 std::fstream PciDevice::openSysFs(const std::string &subPath,
-                               std::ios_base::openmode mode) const {
+                                  std::ios_base::openmode mode) const {
   std::fstream file;
 
   auto sysFsFilename =
