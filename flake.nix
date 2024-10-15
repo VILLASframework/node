@@ -63,6 +63,33 @@
           withAllHooks = true;
           withAllNodes = true;
         };
+
+        clang-include-graph = pkgs.callPackage ({
+          fetchFromGitHub,
+          cmake,
+          boost,
+          pkg-config,
+          clangStdenv,
+          llvmPackages,
+        }: clangStdenv.mkDerivation {
+          pname = "clang-include-graph";
+          version = "0.1.1-unstable-2024-09-23";
+          src = fetchFromGitHub {
+            owner = "bkryza";
+            repo = "clang-include-graph";
+            rev = "7d3ddc826a668c7cebde5ee6070545ed9d1e2ca8";
+            hash = "sha256-v6jVCFhe8ZrMOFNVWOt46e8sy8QqKg5pXIE8pD0fwBQ=";
+          };
+          nativeBuildInputs = [
+            cmake
+            pkg-config
+            llvmPackages.llvm
+          ];
+          buildInputs = [
+            boost
+            llvmPackages.libclang
+          ];
+        }) {};
       };
     in
     {
@@ -101,6 +128,7 @@
             pcre
             reuse
             cppcheck
+            clang-include-graph
           ];
         in
         rec {
