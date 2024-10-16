@@ -18,21 +18,16 @@
 #include <villas/queue_signalled.h>
 #include <villas/task.hpp>
 
-namespace villas {
-namespace node {
+// Include hard-coded Ethercat Bus configuration
+#include <villas/nodes/ethercat_config.hpp>
+
+#define DEFAULT_ETHERCAT_QUEUE_LENGTH (DEFAULT_QUEUE_LENGTH * 64)
+
+namespace villas::node {
 
 // Forward declarations
 class NodeCompat;
 class SuperNode;
-
-// Include hard-coded Ethercat Bus configuration
-#include <villas/nodes/ethercat_config.hpp>
-
-extern "C" {
-#include <ecrt.h>
-}
-
-#define DEFAULT_ETHERCAT_QUEUE_LENGTH (DEFAULT_QUEUE_LENGTH * 64)
 
 // Internal data per ethercat node
 struct ethercat {
@@ -91,5 +86,4 @@ int ethercat_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 int ethercat_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-} // namespace node
-} // namespace villas
+} // namespace villas::node
