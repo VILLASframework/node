@@ -11,8 +11,8 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
-#include <villas/nodes/ethercat.hpp>
 #include <villas/super_node.hpp>
+#include <villas/nodes/ethercat.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;

@@ -95,6 +95,7 @@
             boxfort
             clang-tools
             criterion
+            gdb
             jq
             libffi
             libgit2
