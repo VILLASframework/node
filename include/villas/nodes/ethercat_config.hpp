@@ -25,6 +25,8 @@
 #define ETHERCAT_PID_EL3008 0x0bc03052
 #define ETHERCAT_PID_FC1100 0x044c0c62
 
+namespace villas::node {
+
 // TODO: Make PDO entry tables configurable
 
 /* Master 0, Slave 3, "EL4038"
@@ -168,3 +170,5 @@ static ec_sync_info_t slave_4_syncs[] = {
     {2, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
     {3, EC_DIR_INPUT, 8, slave_4_pdos + 0, EC_WD_DISABLE},
     {0xff}};
+
+} // namespace villas::node
