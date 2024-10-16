@@ -82,6 +82,8 @@ public:
   virtual ~Core() = default;
 
 public:
+  void addIrq(std::string irqName, int port_num, InterruptController* intc);
+
   // Generic management interface for IPs
 
   // Runtime setup of IP, should access and initialize hardware
@@ -211,6 +213,9 @@ public:
   using plugin::Plugin::Plugin;
 
   static std::list<IpIdentifier> parseIpIdentifier(json_t *json_ips);
+  static std::list<IpIdentifier>
+  filterIps(std::list<IpIdentifier> allIps,
+            std::list<std::string> ignored_ip_names);
   static std::list<IpIdentifier> reorderIps(std::list<IpIdentifier> allIps);
   static std::list<std::shared_ptr<Core>>
   configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
