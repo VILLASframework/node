@@ -11,6 +11,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <cassert>
 #include <cstdint>
@@ -210,6 +211,9 @@ template <class... Ts> struct overloaded : Ts... {
 
 // explicit deduction guide (not needed as of C++20)
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+void write_to_file(std::string data, const std::filesystem::path file);
+std::vector<std::string> read_names_in_directory(const std::filesystem::path &directory);
 
 namespace base64 {
 
