@@ -5,9 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
+
+#include <libiec61850/goose_receiver.h>
+#include <libiec61850/sv_subscriber.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
@@ -283,9 +285,8 @@ villas::node::iec61850_receiver_lookup(enum iec61850_receiver::Type t,
   return nullptr;
 }
 
-struct iec61850_receiver *
-villas::node::iec61850_receiver_create(enum iec61850_receiver::Type t,
-                                       const char *intf) {
+struct iec61850_receiver *villas::node::iec61850_receiver_create(
+    enum iec61850_receiver::Type t, const char *intf, bool check_dst_address) {
   struct iec61850_receiver *r;
 
   // Check if there is already a SVReceiver for this interface
@@ -307,6 +308,8 @@ villas::node::iec61850_receiver_create(enum iec61850_receiver::Type t,
     case iec61850_receiver::Type::SAMPLED_VALUES:
       r->sv = SVReceiver_create();
       SVReceiver_setInterfaceId(r->sv, r->interface);
+      if (check_dst_address)
+        SVReceiver_enableDestAddrCheck(r->sv);
       break;
     }
 

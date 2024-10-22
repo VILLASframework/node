@@ -6,13 +6,9 @@
  */
 
 #include <cerrno>
-#include <cinttypes>
-#include <cstdint>
 #include <cstring>
 
 #include <algorithm>
-#include <iterator>
-#include <list>
 #include <map>
 
 #include <poll.h>
@@ -117,7 +113,7 @@ Path::Path()
       rate(0), // Disabled
       affinity(0), enabled(true), poll(-1), reversed(false), builtin(true),
       original_sequence_no(-1), queuelen(DEFAULT_QUEUE_LENGTH),
-      logger(logging.get(fmt::format("path:{}", id++))) {
+      logger(Log::get(fmt::format("path:{}", id++))) {
   uuid_clear(uuid);
 
   pool.state = State::DESTROYED;
@@ -182,11 +178,11 @@ void Path::prepare(NodeList &nodes) {
       ps = psm[n];
     else {
       /* Depending on weather the node belonging to this mapping is already
-			 * used by another path or not, we will create a master or secondary
-			 * path source.
-			 * A secondary path source uses an internal loopback node / queue
-			 * to forward samples from on path to another.
-			 */
+       * used by another path or not, we will create a master or secondary
+       * path source.
+       * A secondary path source uses an internal loopback node / queue
+       * to forward samples from on path to another.
+       */
       bool isSecondary = n->sources.size() > 0;
 
       // Create new path source
@@ -217,8 +213,8 @@ void Path::prepare(NodeList &nodes) {
       }
 
       /* Get the real node backing this path source
-			 * In case of a secondary path source, its the internal loopback node!
-			 */
+       * In case of a secondary path source, its the internal loopback node!
+       */
       auto *rn = ps->getNode();
 
       rn->sources.push_back(ps);
@@ -235,7 +231,7 @@ void Path::prepare(NodeList &nodes) {
       Signal::Ptr sig;
 
       /* For data mappings we simple refer to the existing
-			 * signal descriptors of the source node. */
+       * signal descriptors of the source node. */
       if (me->type == MappingEntry::Type::DATA) {
         sig = sigs->getByIndex(me->data.offset + j);
         if (!sig) {
@@ -524,12 +520,12 @@ void Path::start() {
 
   received.reset();
 
-  // We initialize the intial sample
+  // We initialize the initial sample
   last_sample = sample_alloc(&pool);
   if (!last_sample)
     throw MemoryAllocationError();
 
-  last_sample->length = signals->size();
+  last_sample->length = 0;
   last_sample->signals = signals;
   last_sample->ts.origin = time_now();
   last_sample->sequence = 0;
@@ -546,11 +542,11 @@ void Path::start() {
   state = State::STARTED;
 
   /* Start one thread per path for sending to destinations
-	 *
-	 * Special case: If the path only has a single source and this source
-	 * does not offer a file descriptor for polling, we will use a special
-	 * thread function.
-	 */
+   *
+   * Special case: If the path only has a single source and this source
+   * does not offer a file descriptor for polling, we will use a special
+   * thread function.
+   */
   ret = pthread_create(&tid, nullptr, runWrapper, this);
   if (ret)
     throw RuntimeError("Failed to create path thread");
@@ -571,9 +567,9 @@ void Path::stop() {
     state = State::STOPPING;
 
   /* Cancel the thread in case is currently in a blocking syscall.
-	 *
-	 * We dont care if the thread has already been terminated.
-	 */
+   *
+   * We dont care if the thread has already been terminated.
+   */
   ret = pthread_cancel(tid);
   if (ret && ret != ESRCH)
     throw RuntimeError("Failed to cancel path thread");

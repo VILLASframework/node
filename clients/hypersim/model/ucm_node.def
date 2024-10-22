@@ -109,13 +109,12 @@ UCM_DESCRIPTION = "An interface the VILLASnode gateway"
 %% BEGIN DOCUMENTATION -- Enter model's documentation after this line...
 
 Full documentation of this model is available at:
-https://villas.fein-aachen.org/doc/node-client-hypersim.html
+https://villas.fein-aachen.org/docs/node/clients/opal_hypersim
 
-Author:
-
-## Author
+## Authors
 
 - Anju Meghwani <meghwani@iitk.ac.in>
+- Louis Birkner <louis.birkner@opal-rt.com>
 
 Anju Meghwani is a Research Establishment Officer at Indian Institute of Kanpur, India and worked in Washington State University, Pullman as visiting scholar in Summer 2018.
 During her visit, she developed an interfacing framework for VILLASnode and HYPERSIM.
@@ -161,7 +160,7 @@ UI-ASSIST is a joint research project between India and the US.
 %%      Min         :  Minimum value allowed.
 %%      Max         :  Maximum value allowed.
 %%      Flags       :  Ored values of flags definitions or '-'.
-%%                     Available values : 
+%%                     Available values :
 %%                       NOT_SIMUL_MOD : Cannot be modified during simulation.
 %%      Description :  Short description of parameter (BETWEEN DOUBLE QUOTES)
 %%
@@ -193,7 +192,7 @@ UI-ASSIST is a joint research project between India and the US.
 %%      Fields descriptions:
 %%
 %%      Name           :  Connector's unique identifier (tag).
-%%             
+%%
 %%      Units          :  Signal's units.
 %%                        Text field: use the official SI symbols.
 %%                        Enter a "-" when not used
@@ -219,8 +218,23 @@ UI-ASSIST is a joint research project between India and the US.
 switchr no int in auto S "Receive Data"
 switchs no int in auto S "Send Data"
 
-datain no double in auto I "Data Input" 
-dataout no double out auto O "Data Output"
+datain0 no double in auto I "Data Input 0"
+datain1 no double in auto I "Data Input 1"
+datain2 no double in auto I "Data Input 2"
+datain3 no double in auto I "Data Input 3"
+datain4 no double in auto I "Data Input 4"
+datain5 no double in auto I "Data Input 5"
+datain6 no double in auto I "Data Input 6"
+datain7 no double in auto I "Data Input 7"
+
+dataout0 no double out auto O "Data Output 0"
+dataout1 no double out auto O "Data Output 1"
+dataout2 no double out auto O "Data Output 2"
+dataout3 no double out auto O "Data Output 3"
+dataout4 no double out auto O "Data Output 4"
+dataout5 no double out auto O "Data Output 5"
+dataout6 no double out auto O "Data Output 6"
+dataout7 no double out auto O "Data Output 7"
 
 %% END CONTROL IOS
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -236,7 +250,7 @@ dataout no double out auto O "Data Output"
 %%      Fields descriptions:
 %%
 %%      Name           :  Node's unique identifier.
-%%             
+%%
 %%      Phases         :  Number of phases.
 %%                        Text field: Enter a number (1, 3) or
 %%                                    0 for dynamic number of phases.
@@ -401,13 +415,13 @@ dataout no double out auto O "Data Output"
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN PREPARATORY INCLUDES PATHS LIST -- Modify the following list...
 
-UCM_PREP_INCLUDES_PATHS = 
+UCM_PREP_INCLUDES_PATHS =
 
 %% END PREPARATORY INCLUDES PATHS LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 %%
 %%     8.5- Required dependency libraries pathnames list.
-%%          
+%%
 %%          Enter the pathnames of your dependency libraries
 %%          separated by spaces after "=".
 %%          Put an "\" at end of line to continue list on next line.
@@ -437,7 +451,7 @@ UCM_PREP_INCLUDES_PATHS =
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN PREPARATORY DEPENDANT LIBRARIES LIST -- Modify the following list...
 
-UCM_PREP_DEP_LIBS_PATHNAMES = 
+UCM_PREP_DEP_LIBS_PATHNAMES =
 
 %% END PREPARATORY DEPENDANT LIBRARIES LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -452,7 +466,7 @@ UCM_PREP_DEP_LIBS_PATHNAMES =
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN PREPARATORY LIBRARIES LIST -- Modify the following list...
 
-UCM_PREP_LIBRARIES = 
+UCM_PREP_LIBRARIES =
 
 %% END PREPARATORY LIBRARIES LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -527,7 +541,8 @@ UCM_PREP_LIBRARIES =
 #define REMOTE_ADR		"192.168.1.188"
 
 #define MAX_VALUES		64
-#define NO_SEND_DATA	3
+#define NO_SEND_DATA	8
+#define NO_RECV_DATA	8
 
 /***** User Settings End ******/
 
@@ -630,9 +645,9 @@ struct sockaddr_in rec_addr;
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION INITIALIZATION FUNCTION CODE -- Enter code ->...
-	
+
 	int ret;
-	unsigned int yes = 1; 
+	unsigned int yes = 1;
 
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
@@ -643,7 +658,7 @@ struct sockaddr_in rec_addr;
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    
+
 	memset(&rec_addr, 0, sizeof(rec_addr));
 	rec_addr.sin_family = AF_INET; // IPv4
     rec_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -654,12 +669,12 @@ struct sockaddr_in rec_addr;
     send_addr.sin_addr.s_addr = inet_addr(REMOTE_ADR);
     send_addr.sin_port = htons(PORT);
 
-	if (bind(sockfd, (struct sockaddr*)&rec_addr, sizeof(struct sockaddr_in)) < 0) 
+	if (bind(sockfd, (struct sockaddr*)&rec_addr, sizeof(struct sockaddr_in)) < 0)
 		fprintf(stdout,"ERROR DETECTED !!! There is a problem in binding");
 
-	if (connect(sockfds, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in)) < 0) 
+	if (connect(sockfds, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in)) < 0)
 		fprintf(stdout,"ERROR DETECTED !!! There is a problem in connecting");
-	
+
 #if 0
 	// Join a multicast group
 	struct ip_mreq mreq;
@@ -687,7 +702,7 @@ struct sockaddr_in rec_addr;
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN BEFORE VOLTAGE CALCULATION CODE -- Enter code ->...
 
-	
+
 %% END BEFORE VOLTAGE CALCULATION CODE
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 %%
@@ -696,9 +711,9 @@ struct sockaddr_in rec_addr;
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN AFTER VOLTAGE CALCULATION -- Enter code ->...
-	
+
 	int ret;
-	
+
 	/* Receiving data */
 	char bufr[MSG_LEN(MAX_VALUES)];
 	struct msg *msgr = (struct msg *) bufr;
@@ -706,23 +721,40 @@ struct sockaddr_in rec_addr;
 	struct sockaddr_in cli_addr;
 	int cli_addrlen = sizeof(cli_addr);
 
-	if (switchr == 1) {	
+	if (switchr == 1) {
 		memset(&cli_addr, 0, sizeof(cli_addr));
 		memset((char *) msgr, 0, sizeof(bufr));
-		
+
 		ret = recvfrom(sockfd, (char *) msgr, sizeof(bufr), 0, (struct sockaddr *) &cli_addr, &cli_addrlen);
-		
+
 		msgr->length   = htons(msgr->length);
 		msgr->sequence = htonl(msgr->sequence);
 		msgr->ts.sec   = htonl(msgr->ts.sec);
 		msgr->ts.nsec  = htonl(msgr->ts.nsec);
-		msgr->data[0].i = ntohl(msgr->data[0].i);
-		
-		dataout = (float) msgr->data[0].f;
+
+		if (msgr->length >= NO_RECV_DATA) {
+			msgr->data[0].i = ntohl(msgr->data[0].i);
+			msgr->data[1].i = ntohl(msgr->data[1].i);
+			msgr->data[2].i = ntohl(msgr->data[2].i);
+			msgr->data[3].i = ntohl(msgr->data[3].i);
+			msgr->data[4].i = ntohl(msgr->data[4].i);
+			msgr->data[5].i = ntohl(msgr->data[5].i);
+			msgr->data[6].i = ntohl(msgr->data[6].i);
+			msgr->data[7].i = ntohl(msgr->data[7].i);
+
+			dataout0 = (float) msgr->data[0].f;
+			dataout1 = (float) msgr->data[1].f;
+			dataout2 = (float) msgr->data[2].f;
+			dataout3 = (float) msgr->data[3].f;
+			dataout4 = (float) msgr->data[4].f;
+			dataout5 = (float) msgr->data[5].f;
+			dataout6 = (float) msgr->data[6].f;
+			dataout7 = (float) msgr->data[7].f;
+		}
 	}
 
 	/* Sending data */
-	char buf[MSG_LEN(MAX_VALUES)];
+	char buf[MSG_LEN(NO_SEND_DATA)];
 	struct msg *msg = (struct msg *) buf;
 
 	struct timespec now;
@@ -740,14 +772,29 @@ struct sockaddr_in rec_addr;
 		msg->ts.sec = now.tv_sec;
 		msg->ts.nsec = now.tv_nsec;
 
-		msg->data[0].f = datain;		
+		msg->data[0].f = datain0;
+		msg->data[1].f = datain1;
+		msg->data[2].f = datain2;
+		msg->data[3].f = datain3;
+		msg->data[3].f = datain3;
+		msg->data[4].f = datain4;
+		msg->data[5].f = datain5;
+		msg->data[6].f = datain6;
+
 		msg->data[0].i = htonl(msg->data[0].i);
+		msg->data[1].i = htonl(msg->data[1].i);
+		msg->data[2].i = htonl(msg->data[2].i);
+		msg->data[3].i = htonl(msg->data[3].i);
+		msg->data[4].i = htonl(msg->data[4].i);
+		msg->data[5].i = htonl(msg->data[5].i);
+		msg->data[6].i = htonl(msg->data[6].i);
+		msg->data[7].i = htonl(msg->data[7].i);
 
 		msg->length   = htons(msg->length);
 		msg->sequence = htonl(msg->sequence);
 		msg->ts.sec   = htonl(msg->ts.sec);
 		msg->ts.nsec  = htonl(msg->ts.nsec);
-		
+
 		ret = sendto(sockfds, (char *) msg, MSG_LEN(NO_SEND_DATA), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
 	}
 
@@ -761,7 +808,7 @@ struct sockaddr_in rec_addr;
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION INCLUDES PATHS LIST -- Modify the following list...
 
-UCM_SIMULATION_INCLUDES_PATHS = 
+UCM_SIMULATION_INCLUDES_PATHS =
 
 %% END SIMULATION INCLUDES PATHS LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -776,7 +823,7 @@ UCM_SIMULATION_INCLUDES_PATHS =
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION DEP LIBS LIST -- Modify the following list...
 
-UCM_SIMULATION_DEP_LIBS_PATHNAMES = 
+UCM_SIMULATION_DEP_LIBS_PATHNAMES =
 
 %% END SIMULATION DEP LIBS LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -788,20 +835,20 @@ UCM_SIMULATION_DEP_LIBS_PATHNAMES =
 %%
 %%          ARCHITECTURE DEPENDANT PATHS: See NOTE in section 8.5
 %%
-%%          UCM_SIMULATION_LIBRARIES_<ARCH>: use for compiler dependant librairies 
+%%          UCM_SIMULATION_LIBRARIES_<ARCH>: use for compiler dependant librairies
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION LIBRARIES LIST -- Modify the following list...
 
-UCM_SIMULATION_LIBRARIES = 
-UCM_SIMULATION_LIBRARIES_WINDOWS = 
-UCM_SIMULATION_LIBRARIES_LINUX_RHEL5_32 =  
-UCM_SIMULATION_LIBRARIES_LINUX_RHEL6_64 = 
-UCM_SIMULATION_LIBRARIES_LINUX_SLES9_ia64 = 
-UCM_SIMULATION_LIBRARIES_LINUX_SLES10_ia64 = 
-UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP1_x86_64 = 
-UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP3_x86_64 = 
-UCM_SIMULATION_LIBRARIES_LINUX_SLES12SP1_x86_64 = 
+UCM_SIMULATION_LIBRARIES =
+UCM_SIMULATION_LIBRARIES_WINDOWS =
+UCM_SIMULATION_LIBRARIES_LINUX_RHEL5_32 =
+UCM_SIMULATION_LIBRARIES_LINUX_RHEL6_64 =
+UCM_SIMULATION_LIBRARIES_LINUX_SLES9_ia64 =
+UCM_SIMULATION_LIBRARIES_LINUX_SLES10_ia64 =
+UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP1_x86_64 =
+UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP3_x86_64 =
+UCM_SIMULATION_LIBRARIES_LINUX_SLES12SP1_x86_64 =
 
 %% END SIMULATION LIBRARIES LIST
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

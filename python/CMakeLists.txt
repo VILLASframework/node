@@ -9,7 +9,7 @@ if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
         OUTPUT
             villas_pb2.py
         COMMAND ${PROTOBUF_COMPILER}
-            --python_out=${CMAKE_CURRENT_BINARY_DIR}
+            --python_out=${CMAKE_CURRENT_SOURCE_DIR}/villas/node
             villas.proto
         MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/lib/formats/villas.proto
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/formats

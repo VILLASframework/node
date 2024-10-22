@@ -20,8 +20,7 @@
 #include <villas/signal_list.hpp>
 
 #ifndef CONFIG_GOOSE_DEFAULT_DST_ADDRESS
-#define CONFIG_GOOSE_DEFAULT_DST_ADDRESS                                       \
-  { 0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01 }
+#define CONFIG_GOOSE_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01}
 #endif
 
 namespace villas {
@@ -91,7 +90,8 @@ struct iec61850_receiver *
 iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf);
 
 struct iec61850_receiver *
-iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf);
+iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf,
+                         bool check_dst_address);
 
 int iec61850_receiver_start(struct iec61850_receiver *r);
 

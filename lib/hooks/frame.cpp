@@ -5,15 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
-#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <jansson.h>
 #include <limits>
 #include <memory>
 #include <optional>
-#include <tuple>
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>

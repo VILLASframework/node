@@ -49,11 +49,11 @@ public:
 
   /* Parse node connection details.
 
-	 *
-	 * @param json	A JSON object containing the configuration of the node.
-	 * @retval 0 	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @param json	A JSON object containing the configuration of the node.
+   * @retval 0 	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int parse(json_t *json);
 
   // Returns a string with a textual represenation of this node.
@@ -61,59 +61,59 @@ public:
 
   /* Check the current node configuration for plausability and errors.
 
-	 *
-	 * @retval 0 	Success. Node configuration is good.
-	 * @retval <0	Error. The node configuration is bogus.
-	 */
+   *
+   * @retval 0 	Success. Node configuration is good.
+   * @retval <0	Error. The node configuration is bogus.
+   */
   virtual int check();
 
   virtual int prepare();
 
   /* Start this node.
 
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @retval 0	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int start();
 
   /* Stop this node.
 
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @retval 0	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int stop();
 
   /* Restart this node.
 
-	 *
-	 * @param n	A pointer to the node object.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @param n	A pointer to the node object.
+   * @retval 0	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int restart();
 
   /* Pause this node.
 
-	 *
-	 * @param n	A pointer to the node object.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @param n	A pointer to the node object.
+   * @retval 0	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int pause();
 
   /* Resume this node.
 
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
+   *
+   * @retval 0	Success. Everything went well.
+   * @retval <0	Error. Something went wrong.
+   */
   virtual int resume();
 
   /* Reverse source and destination of a node.
 
-	 */
+   */
   virtual int reverse();
 
   virtual std::vector<int> getPollFDs();

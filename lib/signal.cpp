@@ -7,10 +7,9 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/signal.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/signal_data.hpp>
 #include <villas/signal_type.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;

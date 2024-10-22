@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstring>
-
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/node/config.hpp>
@@ -37,7 +35,7 @@ InternalLoopbackNode::InternalLoopbackNode(Node *src, unsigned id, unsigned ql)
 
   auto logger_name = fmt::format("node:{}", getNameShort());
 
-  logger = logging.get(logger_name);
+  logger = Log::get(logger_name);
 
   in.signals = source->getInputSignals(false);
 

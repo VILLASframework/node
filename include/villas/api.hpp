@@ -14,8 +14,6 @@
 #include <list>
 #include <thread>
 
-#include <libwebsockets.h>
-
 #include <villas/common.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
@@ -88,9 +86,9 @@ protected:
 
 public:
   /* Initialize the API.
-	 *
-	 * Save references to list of paths / nodes for command execution.
-	 */
+   *
+   * Save references to list of paths / nodes for command execution.
+   */
   Api(SuperNode *sn);
   ~Api();
 

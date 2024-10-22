@@ -79,7 +79,7 @@ x-tagGroups:
   - super-node
   - nodes
   - paths
-  
+
 - name: Configuration Files
   tags:
   - config
@@ -135,11 +135,11 @@ paths:
   '/graph.{format}':
     $ref: 'paths/graph.{format}.yaml'
 
-components: 
-  schemas: 
+components:
+  schemas:
     Config:
       $ref: components/schemas/config.yaml
-    
+
     TypeField:
       type: object
       required:

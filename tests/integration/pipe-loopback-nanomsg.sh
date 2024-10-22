@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,38 +12,38 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
-FORMAT="protobuf"	
+FORMAT="protobuf"
 VECTORIZE="10"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "nanomsg",
-			
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+    "nodes": {
+        "node1": {
+             "type": "nanomsg",
 
-			"in": {
-				"endpoints": [ "tcp://127.0.0.1:12000" ],
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
 
-				"signals": {
-					"type": "float",
-					"count": 5
-				}
-			},
-			"out": {
-				"endpoints": [ "tcp://127.0.0.1:12000" ]
-			}
-		}
-	}
+             "in": {
+             	"endpoints": [ "tcp://127.0.0.1:12000" ],
+
+             	"signals": {
+             		"type": "float",
+             		"count": 5
+             	}
+             },
+             "out": {
+             	"endpoints": [ "tcp://127.0.0.1:12000" ]
+             }
+        }
+    }
 }
 EOF
 

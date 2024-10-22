@@ -10,3 +10,12 @@ aa16979fdde7cd377977c38eaee02062c3908515
 
 # Update Steffens mail address
 7eec1bb75339c60cefe5e9e558d9394e0cceecb6
+
+# Introduced clang-format in common/
+5324b788bdd93b3e142a9f53b931dbfc8c3ed39d
+
+# Make project REUSE compliant in common/
+b1e8cd81da9a3e3d27db27d49d265afc53e0ce4d
+
+# Update Steffens mail address in common/
+6427fae1e4ca0467e09688d56cec0dcd7d5e600d

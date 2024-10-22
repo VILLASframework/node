@@ -7,41 +7,41 @@
 set(OPAL_PREFIX /usr/opalrt/common)
 
 find_path(OPAL_INCLUDE_DIR
-	NAMES AsyncApi.h
-	HINTS
-		${OPAL_PREFIX}/include_target/
-		${PROJECT_SOURCE_DIR}/libopal/include/opal/
+    NAMES AsyncApi.h
+    HINTS
+        ${OPAL_PREFIX}/include_target/
+        ${PROJECT_SOURCE_DIR}/libopal/include/opal/
 
 )
 
 find_library(OPAL_LIBRARY
-	NAMES OpalAsyncApiCore
-	HINTS
-		${OPAL_PREFIX}/lib/
-		${PROJECT_SOURCE_DIR}/libopal/
+    NAMES OpalAsyncApiCore
+    HINTS
+        ${OPAL_PREFIX}/lib/
+        ${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_IRC
-	NAMES irc
-	HINTS
-	${OPAL_PREFIX}/lib/
-		${PROJECT_SOURCE_DIR}/libopal/
+    NAMES irc
+    HINTS
+    ${OPAL_PREFIX}/lib/
+        ${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_UTILS
-	NAMES OpalUtils
-	HINTS
-		${OPAL_PREFIX}/lib/redhawk/
-		${OPAL_PREFIX}/lib/redhawk64/
-		${PROJECT_SOURCE_DIR}/libopal/
+    NAMES OpalUtils
+    HINTS
+        ${OPAL_PREFIX}/lib/redhawk/
+        ${OPAL_PREFIX}/lib/redhawk64/
+        ${PROJECT_SOURCE_DIR}/libopal/
 )
 
 find_library(OPAL_LIBRARY_CORE
-	NAMES OpalCore
-	HINTS
-		${OPAL_PREFIX}/lib/redhawk/
-		${OPAL_PREFIX}/lib/redhawk64/
-		${PROJECT_SOURCE_DIR}/libopal/
+    NAMES OpalCore
+    HINTS
+        ${OPAL_PREFIX}/lib/redhawk/
+        ${OPAL_PREFIX}/lib/redhawk64/
+        ${PROJECT_SOURCE_DIR}/libopal/
 )
 
 include(FindPackageHandleStandardArgs)

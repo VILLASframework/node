@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cassert>
 #include <cinttypes>
 #include <cstring>
 
@@ -33,9 +32,9 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len,
   }
 
   if (flags & (int)SampleFlags::HAS_OFFSET) {
+    auto offset = time_delta(&smp->ts.origin, &smp->ts.received);
     if (smp->flags & (int)SampleFlags::HAS_TS_RECEIVED)
-      off += snprintf(buf + off, len - off, "%+e",
-                      time_delta(&smp->ts.origin, &smp->ts.received));
+      off += snprintf(buf + off, len - off, "%+e", offset);
   }
 
   if (flags & (int)SampleFlags::HAS_SEQUENCE) {
@@ -77,10 +76,10 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len,
   smp->signals = signals;
 
   /* Format: Seconds.NanoSeconds+Offset(SequenceNumber)Flags Value1 Value2 ...
-	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?
-	 *
-	 * Please note that only the seconds and at least one value are mandatory
-	 */
+   * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?
+   *
+   * Please note that only the seconds and at least one value are mandatory
+   */
 
   // Mandatory: seconds
   smp->ts.origin.tv_sec = (uint32_t)strtoul(ptr, &end, 10);
@@ -205,6 +204,7 @@ static char d[] = "VILLAS human readable format";
 static LineFormatPlugin<
     VILLASHumanFormat, n, d,
     (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
-        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME,
+        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME |
+        (int)SampleFlags::HAS_OFFSET,
     '\n'>
     p;

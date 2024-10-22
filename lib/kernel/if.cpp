@@ -32,7 +32,7 @@ using namespace villas::kernel;
 
 Interface::Interface(struct rtnl_link *link, int aff)
     : nl_link(link), tc_qdisc(nullptr), affinity(aff) {
-  logger = logging.get(fmt::format("kernel:if:{}", getName()));
+  logger = Log::get(fmt::format("kernel:if:{}", getName()));
 
   int n = getIRQs();
   if (n)
@@ -118,7 +118,7 @@ std::string Interface::getName() const {
 Interface *Interface::getEgress(struct sockaddr *sa, SuperNode *sn) {
   struct rtnl_link *link;
 
-  Logger logger = logging.get("kernel:if");
+  Logger logger = Log::get("kernel:if");
 
   auto &interfaces = sn->getInterfaces();
   auto affinity = sn->getAffinity();

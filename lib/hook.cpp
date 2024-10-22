@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cmath>
 #include <cstring>
 
 #include <villas/hook.hpp>
@@ -13,6 +12,7 @@
 #include <villas/node/config.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/path.hpp>
+#include <villas/signal_list.hpp>
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
 
@@ -22,12 +22,12 @@ using namespace villas;
 using namespace villas::node;
 
 Hook::Hook(Path *p, Node *n, int fl, int prio, bool en)
-    : logger(logging.get("hook")), factory(nullptr),
+    : logger(Log::get("hook")), factory(nullptr),
       state(fl & (int)Hook::Flags::BUILTIN
                 ? State::CHECKED
                 : State::INITIALIZED), // We dont need to parse builtin hooks
       flags(fl), priority(prio), enabled(en), path(p), node(n),
-      config(nullptr) {}
+      signals(std::make_shared<SignalList>()), config(nullptr) {}
 
 void Hook::prepare(SignalList::Ptr sigs) {
   assert(state == State::CHECKED);

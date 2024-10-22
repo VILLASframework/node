@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,43 +12,43 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-FORMAT="protobuf"	
+FORMAT="protobuf"
 VECTORIZE="10"
 HOST="localhost"
 
 if [ -n "${CI}" ]; then
-	HOST="mosquitto"
+    HOST="mosquitto"
 else
-	HOST="localhost"
+    HOST="localhost"
 fi
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "mqtt",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+    "nodes": {
+        "node1": {
+             "type": "mqtt",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
 
-			"username": "guest",
-			"password": "guest",
-			"host": "${HOST}",
-			"port": 1883,
-		
-			"out": {
-				"publish": "test-topic"
-			},
-			"in": {
-				"subscribe": "test-topic"
-			}
-		}
-	}
+             "username": "guest",
+             "password": "guest",
+             "host": "${HOST}",
+             "port": 1883,
+
+             "out": {
+             	"publish": "test-topic"
+             },
+             "in": {
+             	"subscribe": "test-topic"
+             }
+        }
+    }
 }
 EOF
 

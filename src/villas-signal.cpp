@@ -6,8 +6,6 @@
  */
 
 #include <atomic>
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <unistd.h>
 
@@ -161,7 +159,7 @@ protected:
         goto check;
 
       case 'd':
-        logging.setLevel(optarg);
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'V':

@@ -13,7 +13,7 @@ allOf:
       type: object
       required:
       - signals
-      properties: 
+      properties:
         signals:
           type: array
           items:

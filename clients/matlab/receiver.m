@@ -32,9 +32,9 @@ disp('Receiving data');
 while i < num_samples
     % Wait for connection
     % Read data from the socket
-    
+
     [ dat, count ] = fread(t, num_values, 'float32');
-    
+
     data(:,i) = dat;
     i = i + 1;
 end

@@ -70,7 +70,7 @@ allOf:
         produce:
           type: string
           description: The Kafka topic to which this node-type will publish messages.
-    
+
     timeout:
       type: number
       description: A timeout in seconds for the broker connection.

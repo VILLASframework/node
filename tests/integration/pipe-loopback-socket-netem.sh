@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -7,13 +7,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 if ! modprobe -aqn sch_prio sch_netem cls_fw; then
-	echo "Netem / TC kernel modules are missing"
-	exit 99
+    echo "Netem / TC kernel modules are missing"
+    exit 99
 fi
 
 if [[ "${EUID}" -ne 0 ]]; then
-	echo "Test requires root permissions"
-	exit 99
+    echo "Test requires root permissions"
+    exit 99
 fi
 
 set -e
@@ -22,8 +22,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -31,25 +31,25 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type"   : "socket",
-			"format": "protobuf",
+    "nodes": {
+        "node1": {
+             "type"   : "socket",
+             "format": "protobuf",
 
-			"in": {
-				"address": "*:12000"
-			},
-			"out": {
-				"address": "127.0.0.1:12000",
-				"netem": {
-					"enabled": true,
-					"delay": 100000,
-					"jitter": 30000,
-					"loss": 20
-				}
-			}
-		}
-	}
+             "in": {
+             	"address": "*:12000"
+             },
+             "out": {
+             	"address": "127.0.0.1:12000",
+             	"netem": {
+             		"enabled": true,
+             		"delay": 100000,
+             		"jitter": 30000,
+             		"loss": 20
+             	}
+             }
+        }
+    }
 }
 EOF
 

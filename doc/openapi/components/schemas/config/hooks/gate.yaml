@@ -4,7 +4,7 @@
 ---
 allOf:
 - type: object
-  properties: 
+  properties:
     mode:
       description: The triggering condition at which the gate opens.
       type: string

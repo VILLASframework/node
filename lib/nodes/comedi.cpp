@@ -180,7 +180,7 @@ static int comedi_start_in(NodeCompat *n) {
   cmd.subdev = d->subdevice;
 
   /* Make card send interrupts after every sample, not only when fifo is half
-	 * full (TODO: evaluate if this makes sense, leave as reminder) */
+   * full (TODO: evaluate if this makes sense, leave as reminder) */
   //cmd.flags = TRIG_WAKE_EOS;
 
   // Start right now

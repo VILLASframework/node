@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,26 +12,26 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-FORMAT="villas.human"	
+FORMAT="villas.human"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "exec",
-			"format": "${FORMAT}",
+    "nodes": {
+        "node1": {
+             "type": "exec",
+             "format": "${FORMAT}",
 
-			"shell": true,
+             "shell": true,
 
-			"exec": "tee /tmp/test"
-		}
-	}
+             "exec": "tee /tmp/test"
+        }
+    }
 }
 EOF
 

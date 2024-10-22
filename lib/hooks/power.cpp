@@ -8,8 +8,6 @@
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
 
-#include <iostream>
-
 namespace villas {
 namespace node {
 

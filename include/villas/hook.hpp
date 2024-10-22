@@ -160,14 +160,14 @@ public:
 
   virtual void setRate(double rate, double maxRate = -1) = 0;
 
-  virtual void parse() {
+  virtual void parse(json_t *json) {
     assert(state == State::INITIALIZED);
 
     state = State::PARSED;
   }
 
   void init() {
-    parse();
+    parse(nullptr);
     check();
     prepare();
     start();

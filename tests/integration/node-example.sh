@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test for the example node-type
 #
@@ -15,8 +15,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -30,23 +30,23 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"example_node1": {
-			"type": "example",
+    "nodes": {
+        "example_node1": {
+             "type": "example",
 
-			"setting1": 66
-		},
-		"file": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": "example_node1",
-			"out": "file",
-		}
-	]
+             "setting1": 66
+        },
+        "file": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": "example_node1",
+             "out": "file",
+        }
+    ]
 }
 EOF
 

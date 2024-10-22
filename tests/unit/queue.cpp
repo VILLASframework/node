@@ -260,7 +260,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
   int ret, cycpop;
   struct Tsc tsc;
 
-  Logger logger = logging.get("test:queue:multi_threaded");
+  Logger logger = Log::get("test:queue:multi_threaded");
 
   if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
     cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are "

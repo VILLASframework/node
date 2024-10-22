@@ -40,7 +40,7 @@ class SuperNode {
 protected:
   enum State state;
 
-  int idleStop;
+  bool idleStop;
 
   Logger logger;
 
@@ -67,8 +67,6 @@ protected:
 
   struct timespec started; // The time at which the instance has been started.
 
-  std::string uri; // URI of configuration
-
   Config config; // The configuration file.
 
 public:
@@ -81,9 +79,9 @@ public:
   void parse(const std::string &name);
 
   /* Parse super-node configuration.
-	 *
-	 * @param json A libjansson object which contains the configuration.
-	 */
+   *
+   * @param json A libjansson object which contains the configuration.
+   */
   void parse(json_t *json);
 
   // Check validity of super node configuration.
@@ -129,9 +127,7 @@ public:
 
   const uuid_t &getUuid() const { return uuid; }
 
-  struct timespec getStartTime() const {
-    return started;
-  }
+  struct timespec getStartTime() const { return started; }
 
 #ifdef WITH_API
   Api *getApi() { return &api; }
@@ -143,9 +139,7 @@ public:
 
   json_t *getConfig() { return config.root; }
 
-  std::filesystem::path &getConfigPath() { return config.getConfigPath(); }
-
-  std::string getConfigUri() const { return uri; }
+  const std::string &getConfigPath() const { return config.getConfigPath(); }
 
   int getAffinity() const { return affinity; }
 

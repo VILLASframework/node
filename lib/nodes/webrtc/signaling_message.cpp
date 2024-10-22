@@ -146,7 +146,7 @@ std::string SignalingMessage::toString() const {
             return fmt::format("type=candidate, mid={}, spd=\n{}",
                                c.candidate(), c.mid());
           },
-          [](auto other) { return fmt::format("invalid signaling message"); }},
+          [](auto other) { return fmt::format("<invalid>"); }},
       message);
 }
 

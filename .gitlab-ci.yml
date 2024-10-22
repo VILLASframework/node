@@ -14,115 +14,100 @@ variables:
   CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
 
 stages:
-- prepare
-- build
-- test
-- packaging
-- deploy
-- latest
+  - prepare
+  - build
+  - test
+  - packaging
+  - deploy
+  - latest
 
 # Stage: prepare
 
 # Build docker image which is used to build & test VILLASnode
 prepare:docker:
   stage: prepare
-  image: docker:20.10
+  before_script:
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker build ${DOCKER_OPTS}
+    - docker build ${DOCKER_OPTS}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
       --target ${TARGET} .
+    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   variables:
     TARGET: dev
   parallel:
     matrix:
-    - DISTRO: [ ubuntu, debian, rocky ]
-    - DISTRO: fedora
-      DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}
-    - DISTRO: fedora
-      DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
-      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
-    - DISTRO: fedora
-      TARGET: dev-vscode
-      DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-vscode
+      - DISTRO: [ubuntu, debian, rocky]
+      - DISTRO: fedora
+        DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+      - DISTRO: fedora
+        DOCKER_FILE: packaging/docker/Dockerfile.fedora-minimal
+        DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-fedora-minimal
+      - DISTRO: fedora
+        TARGET: dev-vscode
+        DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-vscode
   tags:
-  - docker
+    - docker-image-builder
 
 # Stage: build
 
 build:source:
   stage: build
+  needs: ["prepare:docker"]
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}
-  - cmake --build build ${CMAKE_BUILD_OPTS}
+    - cmake -S . -B build ${CMAKE_OPTS} ${CMAKE_EXTRA_OPTS}
+    - cmake --build build ${CMAKE_BUILD_OPTS}
   artifacts:
     expire_in: 1 week
     paths:
-    - build/
+      - build/
   variables:
     CMAKE: cmake
   parallel:
     matrix:
-    - DISTRO: [ fedora, fedora-minimal, debian, rocky, ubuntu ]
-    - DISTRO: fedora-minimal
-      CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
-                  -DWITH_API=OFF
-                  -DWITH_CLIENTS=OFF
-                  -DWITH_CONFIG=OFF
-                  -DWITH_DOC=OFF
-                  -DWITH_FPGA=OFF
-                  -DWITH_GRAPHVIZ=OFF
-                  -DWITH_HOOKS=OFF
-                  -DWITH_LUA=OFF
-                  -DWITH_OPENMP=OFF
-                  -DWITH_PLUGINS=OFF
-                  -DWITH_SRC=OFF
-                  -DWITH_TESTS=OFF
-                  -DWITH_TOOLS=OFF
-                  -DWITH_WEB=OFF
-                  -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
-                  -DCMAKE_PREFIX_PATH=/usr/local
-  tags:
-  - docker
+      - DISTRO: [fedora, fedora-minimal, debian, rocky, ubuntu]
+      - DISTRO: fedora-minimal
+        CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+          -DWITH_API=OFF
+          -DWITH_CLIENTS=OFF
+          -DWITH_CONFIG=OFF
+          -DWITH_DOC=OFF
+          -DWITH_FPGA=OFF
+          -DWITH_GRAPHVIZ=OFF
+          -DWITH_HOOKS=OFF
+          -DWITH_LUA=OFF
+          -DWITH_OPENMP=OFF
+          -DWITH_PLUGINS=OFF
+          -DWITH_SRC=OFF
+          -DWITH_TESTS=OFF
+          -DWITH_TOOLS=OFF
+          -DWITH_WEB=OFF
+          -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+          -DCMAKE_PREFIX_PATH=/usr/local
 
 # Stage: test
 
 test:python:
   stage: test
   script:
-  - cd python
-  - /venv/bin/black --check .
-  - /venv/bin/mypy .
-  - /venv/bin/flake8 .
-  - /venv/bin/pytest -v .
+    - cd python
+    - /venv/bin/pytest --verbose .
+    - /venv/bin/black --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
+    - /venv/bin/flake8 --extend-exclude="*.pyi,*_pb2.py" .
+    - /venv/bin/mypy .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-  - docker
+  needs:
+    - job: "build:source: [fedora]"
 
 test:cppcheck:
   stage: test
   script:
-  - cppcheck -j $(nproc)
-             --max-configs=32
-             --error-exitcode=1
-             --quiet
-             --inline-suppr
-             --enable=warning,performance,portability,missingInclude
-             --std=c++11
-             --suppress=noValidConfiguration
-             -U '_MSC_VER;_WIN32;_M_ARM'
-             -U '_MSC_VER;_WIN32;_M_AMD64;_M_X64'
-             -U '_MSC_FULL_VER;_MSC_VER'
-             -U '_MSC_BUILD;_MSC_VER'
-             -I include
-             -I common/include
-             src/ lib/ tests/unit/ | tee cppcheck.log
+    - ./tools/run-cppcheck.sh | tee cppcheck.log
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-  - docker
   needs:
-  - job: "build:source: [fedora]"
+    - job: "build:source: [fedora]"
   artifacts:
     when: on_failure
     paths:
@@ -133,66 +118,54 @@ test:unit:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - cmake -S . -B build ${CMAKE_OPTS}
-  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests
-  tags:
-  - docker
+    - cmake -S . -B build ${CMAKE_OPTS}
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common
   needs:
-  - job: "build:source: [fedora]"
-    artifacts: true
+    - job: "build:source: [fedora]"
+      artifacts: true
 
 test:integration:
   stage: test
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
-  - cmake -S . -B build ${CMAKE_OPTS}
-  - cmake --build build ${CMAKE_BUILD_OPTS} --target run-integration-tests
+    - cmake -S . -B build ${CMAKE_OPTS}
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
     paths:
-    - build/tests/integration/
+      - build/tests/integration/
   services:
-  - name: eclipse-mosquitto:2.0
-    alias: mosquitto
-    command: [ mosquitto, -c, /mosquitto-no-auth.conf ]
-  - name: rwthacs/rabbitmq
-    alias: rabbitmq
-  - name: redis:6.2
-    alias: redis
-  tags:
-  - docker
+    - name: eclipse-mosquitto:2.0
+      alias: mosquitto
+      command: [mosquitto, -c, /mosquitto-no-auth.conf]
+    - name: rwthacs/rabbitmq
+      alias: rabbitmq
+    - name: redis:6.2
+      alias: redis
   needs:
-  - job: "build:source: [fedora]"
-    artifacts: true
+    - job: "build:source: [fedora]"
+      artifacts: true
 
 test:reuse:
   stage: test
+  needs: []
   image:
     name: fsfe/reuse:latest
     entrypoint: [""]
-  tags:
-  - docker
   script:
-  - reuse lint
+    - reuse lint
 
 # Stage: packaging
 
 pkg:docker:
   stage: packaging
-  image: docker:20.10
   before_script:
-  - mkdir -p ~/.docker/cli-plugins/
-  - wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64
-  - chmod a+x ~/.docker/cli-plugins/docker-buildx
-  - docker buildx create --use --name cross-platform-build --buildkitd-flags "--allow-insecure-entitlement security.insecure"
-  - docker buildx inspect --bootstrap cross-platform-build
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    # - docker run --rm --privileged docker.io/aptman/qus -s -- -p
   script:
-  - docker buildx build ${DOCKER_OPTS}
+    - docker build ${DOCKER_OPTS}
       --pull
-      --allow security.insecure
-      --output type=docker
       --target ${TARGET}
       --build-arg ARCH=${ARCH}
       --build-arg TRIPLET=${TRIPLET}
@@ -200,9 +173,9 @@ pkg:docker:
       --platform ${PLATFORM}
       --file ${DOCKER_FILE}
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
-  - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
+    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
   tags:
-  - docker
+    - docker
   variables:
     TARGET: app
   parallel:
@@ -210,17 +183,17 @@ pkg:docker:
       - DISTRO: debian
         PLATFORM: linux/amd64
         ARCH: x86_64
-        TRIPLET:  x86_64-linux-gnu
-      - DISTRO: debian
-        PLATFORM: linux/arm/v7
-        ARCH: armhf
-        TRIPLET: arm-linux-gnueabihf
-        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-      - DISTRO: debian
-        PLATFORM: linux/arm64/v8
-        ARCH: arm64
-        TRIPLET: aarch64-linux-gnu
-        DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+        TRIPLET: x86_64-linux-gnu
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm/v7
+      #   ARCH: armhf
+      #   TRIPLET: arm-linux-gnueabihf
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm64/v8
+      #   ARCH: arm64
+      #   TRIPLET: aarch64-linux-gnu
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
 
   needs: []
 
@@ -228,102 +201,95 @@ pkg:docker:
 
 deploy:docker:
   stage: deploy
-  image: docker:20.10
-  variables:
-    DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
-  - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker manifest rm ${DOCKER_IMAGE}:${DOCKER_TAG} || true
+    - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
+      ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
+    - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
-  - docker
+    - docker
   needs:
-  - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
-  - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
-  - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
+    # - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
+    # - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
+    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
 
 deploy:docker-dev:
   stage: deploy
-  image: docker:20.10
   variables:
     DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
   tags:
-  - docker
+    - docker
   needs:
-  - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${CI_COMMIT_REF_NAME}]"
+    - job: "prepare:docker: [fedora, --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}]"
 
 deploy:docker-dev-vscode:
   stage: deploy
-  image: docker:20.10
   variables:
     DOCKER_CLI_EXPERIMENTAL: enabled
   before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker push ${DOCKER_IMAGE}/dev-vscode:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE}/dev-vscode:${DOCKER_TAG}
   tags:
-  - docker
+    - docker
   needs:
-  - job: "prepare:docker: [fedora, dev-vscode, ${DOCKER_IMAGE}/dev-vscode]"
+    - job: "prepare:docker: [fedora, dev-vscode, ${DOCKER_IMAGE}/dev-vscode]"
 
 # Stage: latest
 
-
 .latest:docker:latest: &deploy_latest_docker
   stage: latest
-  image: docker:20.10
   before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker manifest create ${DOCKER_IMAGE}:latest
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-                           ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
-  - docker manifest push   ${DOCKER_IMAGE}:latest
+    - docker manifest create ${DOCKER_IMAGE}:latest
+      ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
+      ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+      ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
+    - docker manifest push   ${DOCKER_IMAGE}:latest
   tags:
-  - docker
+    - docker
   needs:
-  - job: deploy:docker
+    - job: deploy:docker
 
 .latest:docker-dev:latest: &deploy_latest_docker_dev
   stage: latest
-  image: docker:20.10
   before_script:
-  - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
-  - docker tag  ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
-  - docker push ${DOCKER_IMAGE}/dev:latest
+    - docker tag  ${DOCKER_IMAGE}/dev:${DOCKER_TAG} ${DOCKER_IMAGE}/dev:latest
+    - docker push ${DOCKER_IMAGE}/dev:latest
   tags:
-  - docker
+    - docker
   needs:
-  - job: deploy:docker-dev
+    - job: deploy:docker-dev
 
 latest:docker:
   <<: *deploy_latest_docker
   only:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 latest:docker-dev:
   <<: *deploy_latest_docker_dev
   only:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 latest:docker:manual:
   <<: *deploy_latest_docker
   when: manual
   except:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
 
 latest:docker-dev:manual:
   <<: *deploy_latest_docker_dev
   when: manual
   except:
-  - "/^v\\d+(\\.\\d+)+$/" # Only on version tags
+    - "/^v\\d+(\\.\\d+)+$/" # Only on version tags

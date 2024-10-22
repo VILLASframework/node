@@ -138,15 +138,15 @@ static void *SendToIPPort(void *arg) {
       OpalSetAsyncSendIconError(0, SendID);
 
     /* This next call allows the execution of the "asynchronous" process
-		 * to actually be synchronous with the model. To achieve this, you
-		 * should set the "Sending Mode" in the Async_Send block to
-		 * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
-		 * the model to wait for this process to call this
-		* OpalAsyncSendRequestDone function before continuing. */
+     * to actually be synchronous with the model. To achieve this, you
+     * should set the "Sending Mode" in the Async_Send block to
+     * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
+     * the model to wait for this process to call this
+     * OpalAsyncSendRequestDone function before continuing. */
     OpalAsyncSendRequestDone(SendID);
 
     /* Before continuing, we make sure that the real-time model
-		 * has not been stopped. If it has, we quit. */
+     * has not been stopped. If it has, we quit. */
     ModelState = OpalGetAsyncModelState();
   } while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
 
@@ -271,7 +271,7 @@ static void *RecvFromIPPort(void *arg) {
     OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
 
     /* Before continuing, we make sure that the real-time model
-		 * has not been stopped. If it has, we quit. */
+     * has not been stopped. If it has, we quit. */
     ModelState = OpalGetAsyncModelState();
   } while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
 
@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
   AssignProcToCpu0();
 
   /* Get IP Controler Parameters (ie: ip address, port number...) and
-	 * initialize the device on the QNX node. */
+   * initialize the device on the QNX node. */
   memset(&IconCtrlStruct, 0, sizeof(IconCtrlStruct));
 
   ret = OpalGetAsyncCtrlParameters(&IconCtrlStruct, sizeof(IconCtrlStruct));

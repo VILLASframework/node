@@ -75,6 +75,7 @@ find_package(RDMACM)
 find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
+find_package(re)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -117,13 +118,7 @@ pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
-pkg_check_modules(RE IMPORTED_TARGET re>=2.9.0)
-if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET libre>=2.9.0)
-endif()
-if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET re2)
-endif()
+
 
 if (REDISPP_FOUND)
     file(READ "${REDISPP_INCLUDEDIR}/sw/redis++/tls.h" CONTENTS)
@@ -155,11 +150,11 @@ else()
 endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
-# Check if VILLASfpga submodule is present
-if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/CMakeLists.txt")
-    set(FOUND_SUBMODULE_FPGA ON)
+# Check if submodules for VILLASfpga are present
+if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/thirdparty/libxil/CMakeLists.txt")
+    set(FOUND_FPGA_SUBMODULES ON)
 else()
-    set(FOUND_SUBMODULE_FPGA OFF)
+    set(FOUND_FPGA_SUBMODULES OFF)
 endif()
 
 # Build options
@@ -168,7 +163,7 @@ cmake_dependent_option(WITH_DEFAULTS        "Defaults for non required build opt
 cmake_dependent_option(WITH_API             "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_CLIENTS         "Build client applications"                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CONFIG          "Build with support for libconfig configuration syntax" "${WITH_DEFAULTS}" "LIBCONFIG_FOUND" OFF)
-cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     "${WITH_DEFAULTS}" "FOUND_SUBMODULE_FPGA" OFF)
+cmake_dependent_option(WITH_FPGA            "Build with support for VILLASfpga"                     "${WITH_DEFAULTS}" "FOUND_FPGA_SUBMODULES" OFF)
 cmake_dependent_option(WITH_GRAPHVIZ        "Build with Graphviz"                                   "${WITH_DEFAULTS}" "CGRAPH_FOUND; GVC_FOUND" OFF)
 cmake_dependent_option(WITH_HOOKS           "Build with support for processing hook plugins"        "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_LUA             "Build with Lua"                                        "${WITH_DEFAULTS}" "LUA_FOUND" OFF)
@@ -199,7 +194,7 @@ cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"      
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_OPAL       "Build with opal node-type"                             "${WITH_DEFAULTS}" "Opal_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"                            "${WITH_DEFAULTS}" "HIREDIS_FOUND; REDISPP_FOUND" OFF)
-cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "RE_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "re_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            "${WITH_DEFAULTS}" "HAS_SEMAPHORE; HAS_MMAN" OFF)
 cmake_dependent_option(WITH_NODE_SIGNAL     "Build with signal node-type"                           "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_SOCKET     "Build with socket node-type"                           "${WITH_DEFAULTS}" "LIBNL3_ROUTE_FOUND" OFF)

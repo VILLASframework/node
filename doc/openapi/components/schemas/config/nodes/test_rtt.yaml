@@ -58,7 +58,7 @@ allOf:
           - 10
           - 100
 
-        limit:
+        count:
           description: |
             The resulting test-case will send the number of samples specified by this setting.
             This setting is exclusive with the `duration` setting.
@@ -71,5 +71,15 @@ allOf:
             This setting is exclusive with the `limit` setting.
           type: number
           example: 60.0
-      
+
+        mode:
+          type: string
+          enum:
+            - min
+            - max
+            - at_least_count
+            - at_least_duration
+            - stop_after_count
+            - stop_after_duration
+
 - $ref: ../node.yaml

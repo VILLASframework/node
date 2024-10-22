@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for shift_seq hook.
 #
@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -25,5 +25,5 @@ villas hook -o offset=${OFFSET} shift_seq > output.dat < input.dat
 
 # Compare shifted sequence no
 diff -u \
-	<(sed -re '/^#/d;s/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' output.dat) \
-	<(seq ${OFFSET} $((${NUM_SAMPLES}+${OFFSET}-1)))
+    <(sed -re '/^#/d;s/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' output.dat) \
+    <(seq ${OFFSET} $((${NUM_SAMPLES}+${OFFSET}-1)))

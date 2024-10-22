@@ -110,8 +110,8 @@ int PathSource::read(int i) {
     }
 
     /* We reset the sample length after each restart of the simulation.
-		 * This is necessary for the test_rtt node to work properly.
-		 */
+     * This is necessary for the test_rtt node to work properly.
+     */
     if (tomux_smps[i]->flags & (int)SampleFlags::NEW_SIMULATION)
       muxed_smps[i]->length = 0;
 
@@ -136,7 +136,7 @@ int PathSource::read(int i) {
   toenqueue = path->hooks.process(muxed_smps, tomux);
   if (toenqueue == -1) {
     path->logger->error(
-        "An error occured during hook processing. Skipping sample");
+        "An error occurred during hook processing. Skipping sample");
 
   } else if (toenqueue != tomux) {
     int skipped = tomux - toenqueue;
@@ -150,7 +150,7 @@ int PathSource::read(int i) {
 
   path->received.set(i);
 
-  path->logger->debug("received=0b{:b}, mask=0b{:b}",
+  path->logger->trace("Source nodes: received=0b{:b}, mask=0b{:b}",
                       path->received.to_ullong(), path->mask.to_ullong());
 
   if (path->mask.test(i)) {

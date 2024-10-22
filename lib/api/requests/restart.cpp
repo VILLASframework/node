@@ -28,7 +28,7 @@ protected:
 
     const char *argv[] = {"villas-node", cfg, nullptr};
 
-    Logger logger = logging.get("api:restart");
+    Logger logger = Log::get("api:restart");
 
     if (cfg)
       logger->info("Restarting instance: config={}", cfg);
@@ -78,7 +78,7 @@ public:
         throw BadRequest("Parameter 'config' must be either a URL (string) or "
                          "a configuration (object)");
     } else // If no config is provided via request, we will use the previous one
-      configUri = session->getSuperNode()->getConfigUri();
+      configUri = session->getSuperNode()->getConfigPath();
 
     logger->info("Restarting to {}", configUri);
 
@@ -113,7 +113,7 @@ std::string RestartRequest::configUri;
 // Register API request
 static char n[] = "restart";
 static char r[] = "/restart";
-static char d[] = "restart VILLASnode with new configuration";
+static char d[] = "Restart VILLASnode with new configuration";
 static RequestPlugin<RestartRequest, n, r, d> p;
 
 } // namespace api

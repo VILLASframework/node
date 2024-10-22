@@ -1,5 +1,5 @@
 
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test example configurations
 #
@@ -17,7 +17,7 @@ for CONFIG in ${CONFIGS}; do
        [ "$(basename ${CONFIG})" == "paths.conf" ] ||
        [ "$(basename ${CONFIG})" == "tricks.json" ] ||
        [ "$(basename ${CONFIG})" == "tricks.conf" ] ||
-	   [ "$(basename ${CONFIG})" == "vc707_ips.conf" ] ||
+       [ "$(basename ${CONFIG})" == "vc707_ips.conf" ] ||
        [ "$(basename ${CONFIG})" == "infiniband.conf" ] ||
        [ "$(basename ${CONFIG})" == "global.conf" ]; then
         echo "=== Skipping config: ${CONFIG}"

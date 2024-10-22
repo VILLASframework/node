@@ -10,9 +10,6 @@
 #include <linux/limits.h>
 #include <unistd.h>
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <string>
 
 #include <villas/boxes.hpp>
@@ -30,7 +27,7 @@
 using namespace villas;
 using namespace villas::node;
 
-Config::Config() : logger(logging.get("config")), root(nullptr) {}
+Config::Config() : logger(Log::get("config")), root(nullptr) {}
 
 Config::Config(const std::string &u) : Config() { root = load(u); }
 
@@ -72,7 +69,13 @@ json_t *Config::load(const std::string &u, bool resolveInc,
 
 FILE *Config::loadFromStdio() {
   logger->info("Reading configuration from standard input");
-  configPath = std::filesystem::current_path();
+
+  auto *cwd = new char[PATH_MAX];
+
+  configPath = getcwd(cwd, PATH_MAX);
+
+  delete[] cwd;
+
   return stdin;
 }
 

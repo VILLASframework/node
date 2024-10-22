@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -23,25 +23,25 @@ VECTORIZE="10"
 HOST="localhost"
 
 if [ -n "${CI}" ]; then
-	HOST="rabbitmq"
+    HOST="rabbitmq"
 else
-	HOST="[::1]"
+    HOST="[::1]"
 fi
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "amqp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
+    "nodes": {
+        "node1": {
+             "type": "amqp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
 
-			"uri": "amqp://guest:guest@${HOST}:5672/%2f",
+             "uri": "amqp://guest:guest@${HOST}:5672/%2f",
 
-			"exchange": "mytestexchange",
-			"routing_key": "abc"
-		}
-	}
+             "exchange": "mytestexchange",
+             "routing_key": "abc"
+        }
+    }
 }
 EOF
 

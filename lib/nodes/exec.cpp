@@ -122,6 +122,10 @@ int ExecNode::prepare() {
 }
 
 int ExecNode::start() {
+  // Pass configuration file and node-name via environemnt
+  environment["VILLAS_NODE_CONFIG"] = configPath;
+  environment["VILLAS_NODE_NAME"] = name_short;
+
   // Start subprocess
   proc = std::make_unique<Popen>(command, arguments, environment, working_dir,
                                  shell);
@@ -197,7 +201,7 @@ std::vector<int> ExecNode::getPollFDs() { return {proc->getFdIn()}; }
 
 // Register node
 static char n[] = "exec";
-static char d[] = "run subprocesses with stdin/stdout communication";
+static char d[] = "Run subprocesses with stdin/stdout communication";
 static NodePlugin<ExecNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
                       (int)NodeFactory::Flags::SUPPORTS_WRITE |

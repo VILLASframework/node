@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
@@ -8,14 +8,19 @@
 
 set -e
 
+if [ "${EUID}" -ne 0 ] || [ -n "${CI}" ]; then
+    echo "Test requires root permissions"
+    exit 99
+fi
+
 DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
-	
-	kill -SIGTERM 0 # kill all decendants
+    popd
+    rm -rf ${DIR}
+
+    kill -SIGTERM 0 # kill all decendants
 }
 trap finish EXIT
 
@@ -23,40 +28,40 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "socket",
-			"in": {
-				"address": "127.0.0.1:12000",
-				"signals": {
-					"type": "float",
-					"count": 1
-				}
-			},
-			"out": {
-				"address": "127.0.0.1:12001"
-			}
-		},
-		"node2": {
-			"type": "socket",
-			"in": {
-				"address": "127.0.0.1:12001",
-				"signals": {
-					"type": "float",
-					"count": 1
-				}
-			},
-			"out": {
-				"address": "127.0.0.1:12000"
-			}
-		}
-	},
-	"paths": [
-		{
-			"in": "node1",
-			"out": "node1"
-		}
-	]
+    "nodes": {
+        "node1": {
+             "type": "socket",
+             "in": {
+             	"address": "127.0.0.1:12000",
+             	"signals": {
+             		"type": "float",
+             		"count": 1
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12001"
+             }
+        },
+        "node2": {
+             "type": "socket",
+             "in": {
+             	"address": "127.0.0.1:12001",
+             	"signals": {
+             		"type": "float",
+             		"count": 1
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12000"
+             }
+        }
+    },
+    "paths": [
+        {
+             "in": "node1",
+             "out": "node1"
+        }
+    ]
 }
 EOF
 

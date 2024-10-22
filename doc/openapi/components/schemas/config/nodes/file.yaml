@@ -31,7 +31,7 @@ allOf:
 
     in:
       type: object
-      properties: 
+      properties:
         epoch:
           type: number
 
@@ -108,7 +108,7 @@ allOf:
             description: |
               With this setting enabled, the outgoing file is flushed whenever new samples have been written to it.
 
-          buffer_size: 
+          buffer_size:
             type: integer
             default: 0
             min: 0

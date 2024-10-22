@@ -5,10 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
 #include <cstring>
+
 #include <mosquitto.h>
-#include <mutex>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
@@ -246,15 +245,19 @@ int villas::node::mqtt_check(NodeCompat *n) {
   int ret;
   auto *m = n->getData<struct mqtt>();
 
-  ret = mosquitto_sub_topic_check(m->subscribe);
-  if (ret != MOSQ_ERR_SUCCESS)
-    throw RuntimeError("Invalid subscribe topic: '{}': {}", m->subscribe,
-                       mosquitto_strerror(ret));
+  if (m->subscribe) {
+    ret = mosquitto_sub_topic_check(m->subscribe);
+    if (ret != MOSQ_ERR_SUCCESS)
+      throw RuntimeError("Invalid subscribe topic: '{}': {}", m->subscribe,
+                         mosquitto_strerror(ret));
+  }
 
-  ret = mosquitto_pub_topic_check(m->publish);
-  if (ret != MOSQ_ERR_SUCCESS)
-    throw RuntimeError("Invalid publish topic: '{}': {}", m->publish,
-                       mosquitto_strerror(ret));
+  if (m->publish) {
+    ret = mosquitto_pub_topic_check(m->publish);
+    if (ret != MOSQ_ERR_SUCCESS)
+      throw RuntimeError("Invalid publish topic: '{}': {}", m->publish,
+                         mosquitto_strerror(ret));
+  }
 
   return 0;
 }
@@ -409,7 +412,7 @@ int villas::node::mqtt_type_start(villas::node::SuperNode *sn) {
   return 0;
 
 mosquitto_error:
-  auto logger = logging.get("node:mqtt");
+  auto logger = Log::get("node:mqtt");
   logger->warn("{}", mosquitto_strerror(ret));
 
   return ret;
@@ -425,7 +428,7 @@ int villas::node::mqtt_type_stop() {
   return 0;
 
 mosquitto_error:
-  auto logger = logging.get("node:mqtt");
+  auto logger = Log::get("node:mqtt");
   logger->warn("{}", mosquitto_strerror(ret));
 
   return ret;

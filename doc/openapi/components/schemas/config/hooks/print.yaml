@@ -15,5 +15,5 @@ allOf:
       type: string
       default: ''
       description: An optional prefix which will be prepended to each line written by this hook to the output
-  
+
 - $ref: ../hook.yaml

@@ -9,63 +9,137 @@
 
 #include <villas/format.hpp>
 #include <villas/list.hpp>
+#include <villas/node.hpp>
 #include <villas/task.hpp>
 
 namespace villas {
 namespace node {
 
 // Forward declarations
-class NodeCompat;
 struct Sample;
 
-struct test_rtt;
+class TestRTT : public Node {
 
-struct test_rtt_case {
-  double rate;
-  unsigned values;
-  unsigned limit; // The number of samples we take per test.
+protected:
+  class Case {
+    friend TestRTT;
 
-  char *filename;
-  char *filename_formatted;
+  protected:
+    TestRTT *node;
 
-  NodeCompat *node;
-};
+    int id;
+    double rate;
+    double
+        warmup; // Number of seconds to wait between before recording samples.
+    double cooldown; // Number of seconds to wait between tests.
+    unsigned values;
 
-struct test_rtt {
-  struct Task task;  // The periodic task for test_rtt_read()
-  Format *formatter; // The format of the output file
+    unsigned count; // The number of samples we send per test.
+    unsigned sent;
+    unsigned received;
+    unsigned missed;
+
+    unsigned count_warmup; // The number of samples we send during warmup.
+    unsigned sent_warmup;
+    unsigned received_warmup;
+    unsigned missed_warmup;
+
+    struct timespec started;
+    struct timespec stopped;
+
+    std::string filename;
+    std::string filename_formatted;
+
+    json_t *getMetadata();
+
+  public:
+    Case(TestRTT *n, int id, int rate, float warmup, float cooldown, int values,
+         int count, int count_warmup, const std::string &filename)
+        : node(n), id(id), rate(rate), warmup(warmup), cooldown(cooldown),
+          values(values), count(count), sent(0), received(0), missed(0),
+          count_warmup(count_warmup), sent_warmup(0), received_warmup(0),
+          missed_warmup(0), filename(filename) {};
+
+    int start();
+    int stop();
+    double getEstimatedDuration() const;
+  };
+
+  Task task;             // The periodic task for test_rtt_read()
+  Format::Ptr formatter; // The format of the output file
   FILE *stream;
 
-  double cooldown; // Number of seconds to wait beween tests.
+  std::list<Case> cases;             // List of test cases
+  std::list<Case>::iterator current; // Currently running test case
 
-  int current; // Index of current test in test_rtt::cases
-  int counter;
+  std::string output; // The directory where we place the results.
+  std::string prefix; // An optional prefix in the filename.
 
-  struct List cases; // List of test cases
+  bool shutdown;
 
-  char *output; // The directory where we place the results.
-  char *prefix; // An optional prefix in the filename.
+  virtual int _read(struct Sample *smps[], unsigned cnt);
+
+  virtual int _write(struct Sample *smps[], unsigned cnt);
+
+public:
+  enum Mode {
+    UNKNOWN,
+    MIN,
+    MAX,
+    STOP_COUNT,
+    STOP_DURATION,
+    AT_LEAST_COUNT,
+    AT_LEAST_DURATION
+  };
+
+  TestRTT(const uuid_t &id = {}, const std::string &name = "")
+      : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
+        stream(nullptr), shutdown(false) {}
+
+  virtual ~TestRTT() {};
+
+  virtual int prepare();
+
+  virtual int parse(json_t *json);
+
+  virtual int start();
+
+  virtual int stop();
+
+  virtual std::vector<int> getPollFDs();
+
+  virtual const std::string &getDetails();
+
+  double getEstimatedDuration() const;
 };
 
-char *test_rtt_print(NodeCompat *n);
+class TestRTTNodeFactory : public NodeFactory {
 
-int test_rtt_parse(NodeCompat *n, json_t *json);
+public:
+  using NodeFactory::NodeFactory;
 
-int test_rtt_prepare(NodeCompat *n);
+  virtual Node *make(const uuid_t &id = {}, const std::string &nme = "") {
+    auto *n = new TestRTT(id, nme);
 
-int test_rtt_init(NodeCompat *n);
+    init(n);
 
-int test_rtt_destroy(NodeCompat *n);
+    return n;
+  }
 
-int test_rtt_start(NodeCompat *n);
+  virtual int getFlags() const {
+    return (int)NodeFactory::Flags::SUPPORTS_READ |
+           (int)NodeFactory::Flags::SUPPORTS_WRITE |
+           (int)NodeFactory::Flags::SUPPORTS_POLL;
+  }
 
-int test_rtt_stop(NodeCompat *n);
+  virtual std::string getName() const { return "test_rtt"; }
 
-int test_rtt_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
+  virtual std::string getDescription() const {
+    return "Test round-trip time with loopback";
+  }
 
-int test_rtt_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
-
-int test_rtt_poll_fds(NodeCompat *n, int fds[]);
+  virtual int start(SuperNode *sn);
+};
 
 } // namespace node
 } // namespace villas

@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-[submodule "common"]
-	path = common
-	url = https://github.com/VILLASframework/common.git
-[submodule "fpga"]
-	path = fpga
-	url = https://github.com/VILLASframework/fpga.git
 [submodule "packaging/live-iso/fedora-kickstarts"]
 	path = packaging/live-iso/fedora-kickstarts
 	url = https://pagure.io/fedora-kickstarts.git
 
+[submodule "fpga/thirdparty/libxil"]
+	path = fpga/thirdparty/libxil
+	url = https://github.com/VILLASframework/libxil.git
+[submodule "fpga/thirdparty/udmabuf"]
+	path = fpga/thirdparty/udmabuf
+	url = https://github.com/ikwzm/udmabuf
+[submodule "fpga/lib/gpu/gdrcopy"]
+	path = fpga/gpu/thirdparty/gdrcopy
+	url = https://github.com/daniel-k/gdrcopy.git

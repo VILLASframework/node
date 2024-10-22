@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
@@ -14,8 +14,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -25,57 +25,59 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"sig_1": {
-			"type": "signal.v2",
+    "idle_stop": true,
+    "nodes": {
+        "sig_1": {
+             "type": "signal.v2",
 
-			"limit": 1,
+             "limit": 1,
 
-			"initial_sequenceno": 99,
+             "initial_sequenceno": 99,
 
-			"in": {
-				"signals": [
-					{ "name": "const1", "signal": "constant", "amplitude": 1 },
-					{ "name": "const2", "signal": "constant", "amplitude": 2 },
-					{ "name": "const3", "signal": "constant", "amplitude": 3 }
-				]
-			}
-		},
-		"sig_2": {
-			"type": "signal.v2",
+             "in": {
+             	"signals": [
+             		{ "name": "const1", "signal": "constant", "amplitude": 1 },
+             		{ "name": "const2", "signal": "constant", "amplitude": 2 },
+             		{ "name": "const3", "signal": "constant", "amplitude": 3 }
+             	]
+             }
+        },
+        "sig_2": {
+             "type": "signal.v2",
 
-			"limit": 1,
+             "limit": 1,
 
-			"initial_sequenceno": 123,
+             "initial_sequenceno": 123,
 
-			"in": {
-				"signals": [
-					{ "name": "const1", "signal": "constant", "amplitude": 11 },
-					{ "name": "const2", "signal": "constant", "amplitude": 12 },
-					{ "name": "const3", "signal": "constant", "amplitude": 13 }
-				]
-			}
-		},
-		"file_1": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": [
-				"sig_1.hdr.sequence",
-				"sig_2.hdr.sequence",
-				"sig_1.data[const3]",
-				"sig_2.data[const2]"
-			],
-			"out": "file_1",
-			"mode": "all"
-		}
-	]
+             "in": {
+             	"signals": [
+             		{ "name": "const1", "signal": "constant", "amplitude": 11 },
+             		{ "name": "const2", "signal": "constant", "amplitude": 12 },
+             		{ "name": "const3", "signal": "constant", "amplitude": 13 }
+             	]
+             }
+        },
+        "file_1": {
+             "type": "file",
+             "uri": "output.dat",
+             "in": {"hooks": ["print"]}
+        }
+    },
+    "paths": [
+        {
+             "in": [
+             	"sig_1.hdr.sequence",
+             	"sig_2.hdr.sequence",
+             	"sig_1.data[const3]",
+             	"sig_2.data[const2]"
+             ],
+             "out": "file_1",
+             "mode": "all"
+        }
+    ]
 }
 EOF
 
-villas node config.json
+villas node -d debug  config.json
 
 villas compare output.dat expect.dat

@@ -46,7 +46,7 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory) {
   struct Pool pool;
   void *ptr, *ptrs[p->pool_size];
 
-  logging.setLevel("trace");
+  Log::getInstance().setLevel("trace");
 
   if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
     cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are "

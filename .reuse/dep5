@@ -3,10 +3,6 @@ Upstream-Name: VILLASnode
 Upstream-Contact: Steffen Vogel <post@steffenvogel.de>
 Source: https://fein-aachen.org/en/projects/villas-node/
 
-Files: *.vi *.opal *.dft *.sib *.json *.ipynb doc/pictures/* clients/opal/models/send_receive/eonerc_logo.png doc/favicon.png
-Copyright: 2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University
-License: Apache-2.0
-
-Files: clients/rtds/**/*.txt clients/hypersim/*.ecf etc/labs/lab3.pcap packaging/live-iso/files/etc/* packaging/nix/flake.lock tests/valgrind.supp packaging/archlinux/villas-node.install
+Files: *.vi *.opal *.dft *.sib *.json *.ipynb *_pb2.py doc/pictures/* doc/favicon.png clients/opal/models/send_receive/eonerc_logo.png clients/rtds/**/*.txt clients/hypersim/*.ecf etc/labs/lab3.pcap packaging/live-iso/files/etc/* flake.lock tests/valgrind.supp packaging/archlinux/villas-node.install
 Copyright: 2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University
 License: Apache-2.0

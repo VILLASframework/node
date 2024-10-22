@@ -8,8 +8,6 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include <atomic>
-#include <exception>
 #include <iomanip>
 #include <iostream>
 
@@ -157,7 +155,7 @@ protected:
         exit(EXIT_SUCCESS);
 
       case 'd':
-        logging.setLevel(optarg);
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'C':

@@ -449,7 +449,7 @@ int villas::node::kafka_stop(NodeCompat *n) {
                        rd_kafka_err2str((rd_kafka_resp_err_t)ret));
 
     /* If the output queue is still not empty there is an issue
-		 * with producing messages to the clusters. */
+     * with producing messages to the clusters. */
     if (rd_kafka_outq_len(k->producer.client) > 0)
       n->logger->warn("{} message(s) were not delivered",
                       rd_kafka_outq_len(k->producer.client));
@@ -470,7 +470,7 @@ int villas::node::kafka_stop(NodeCompat *n) {
 int villas::node::kafka_type_start(villas::node::SuperNode *sn) {
   int ret;
 
-  logger = logging.get("node:kafka");
+  logger = Log::get("node:kafka");
 
   ret = list_init(&clients);
   if (ret)

@@ -38,6 +38,10 @@ public:
     header_printed = true;
   }
 
+  virtual void reset() { header_printed = false; }
+
+  virtual void printMetadata(FILE *f, json_t *json);
+
   virtual int sprint(char *buf, size_t len, size_t *wbytes,
                      const struct Sample *const smps[], unsigned cnt);
   virtual int sscan(const char *buf, size_t len, size_t *rbytes,

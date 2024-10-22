@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Wrapper to start tool of the VILLASnode suite
 #
 # This allows you to use VILLASnode tools like this:
@@ -12,7 +12,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Get a list of all available tools
-SUBTOOLS="api node compare pipe hook conf2json convert graph relay signal test-config test-rtt zmq-keygen"
+SUBTOOLS="api node compare pipe hook conf2json convert graph relay signal test-config zmq-keygen"
 
 # First argument to wrapper is the tool which should be started
 SUBTOOL=$1
@@ -22,17 +22,17 @@ ARGS=${@:2}
 
 # Check if tool is available
 if ! echo ${SUBTOOLS} | grep -wqFe "${SUBTOOL}"; then
-	echo "Usage: villas [-h | --help | TOOL]"
-	echo "  TOOL     is one of ${SUBTOOLS}"
-	echo
-	echo "For detailed documentation, please see: 'villas node'"
-	echo "  http://villas.fein-aachen.org/doc/"
-	echo
+    echo "Usage: villas [-h | --help | TOOL]"
+    echo "  TOOL     is one of ${SUBTOOLS}"
+    echo
+    echo "For detailed documentation, please see: 'villas node'"
+    echo "  http://villas.fein-aachen.org/doc/"
+    echo
 
-	# Show VILLASnode copyright and contact info
-	villas-node -h | tail -n3
-	echo "-h" "--help" | grep -wqFe "${SUBTOOL}"
-	exit $?
+    # Show VILLASnode copyright and contact info
+    villas-node -h | tail -n3
+    echo "-h" "--help" | grep -wqFe "${SUBTOOL}"
+    exit $?
 fi
 
 exec villas-${SUBTOOL} ${ARGS}

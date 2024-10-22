@@ -6,7 +6,6 @@
  */
 
 #include <chrono>
-#include <functional>
 #include <unordered_map>
 
 #include <sys/time.h>
@@ -36,7 +35,7 @@ static std::unordered_map<sw::redis::ConnectionOptions, RedisConnection *>
 
 RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts)
     : context(opts), subscriber(context.subscriber()),
-      logger(logging.get("nodes:redis")) {
+      logger(Log::get("nodes:redis")) {
   // Enable keyspace notifications
   context.command("config", "set", "notify-keyspace-events", "K$h");
 
@@ -262,7 +261,7 @@ int villas::node::redis_init(NodeCompat *n) {
   new (&r->key) std::string();
 
   /* We need a timeout in order for RedisConnection::loop() to properly
-	 * terminate after the node is stopped */
+   * terminate after the node is stopped */
   r->options.socket_timeout = std::chrono::milliseconds(500);
 
   return 0;

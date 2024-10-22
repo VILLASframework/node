@@ -11,7 +11,6 @@ set(SRCS
     villas-signal
     villas-compare
     villas-test-config
-    villas-test-rtt
 )
 
 add_executable(villas-node villas-node.cpp)
@@ -19,9 +18,6 @@ target_link_libraries(villas-node PUBLIC villas)
 
 add_executable(villas-test-config villas-test-config.cpp)
 target_link_libraries(villas-test-config PUBLIC villas)
-
-add_executable(villas-test-rtt villas-test-rtt.cpp)
-target_link_libraries(villas-test-rtt PUBLIC villas)
 
 add_executable(villas-compare villas-compare.cpp)
 target_link_libraries(villas-compare PUBLIC villas)
@@ -36,7 +32,7 @@ add_executable(villas-signal villas-signal.cpp)
 target_link_libraries(villas-signal PUBLIC villas)
 
 if(WITH_NODE_OPAL)
-	target_include_directories(villas-node PRIVATE ${OPAL_INCLUDE_DIRS})
+    target_include_directories(villas-node PRIVATE ${OPAL_INCLUDE_DIRS})
     target_link_libraries(villas-node PRIVATE ${OPAL_LIBRARIES})
 endif()
 

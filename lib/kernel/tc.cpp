@@ -33,7 +33,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd,
     throw RuntimeError("Failed to load kernel module: sch_prio ({})", ret);
 
   /* This is the default priomap used by the tc-prio qdisc
-	 * We will use the first 'bands' bands internally */
+   * We will use the first 'bands' bands internally */
   uint8_t map[] = QDISC_PRIO_DEFAULT_PRIOMAP;
   for (unsigned i = 0; i < ARRAY_LEN(map); i++)
     map[i] += bands;
@@ -50,7 +50,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd,
 
   *qd = q;
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Added prio qdisc with {} bands to interface '{}'", bands,
                 rtnl_link_get_name(i->nl_link));
 
@@ -80,7 +80,7 @@ int villas::kernel::tc::mark(Interface *i, struct rtnl_cls **cls,
 
   *cls = c;
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Added fwmark classifier with mark {} to interface '{}'", mark,
                 rtnl_link_get_name(i->nl_link));
 

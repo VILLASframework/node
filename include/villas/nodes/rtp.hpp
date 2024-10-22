@@ -21,8 +21,11 @@
 #include <villas/queue_signalled.h>
 
 extern "C" {
-#include <re/re_rtp.h>
+// clang-format off
+#include <re/re_types.h>
 #include <re/re_sa.h>
+#include <re/re_rtp.h>
+// clang-format on
 }
 
 namespace villas {

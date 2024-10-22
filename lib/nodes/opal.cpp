@@ -7,13 +7,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstdlib>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <cmath>
-#include <cstdlib>
-#include <vector>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
@@ -127,7 +124,7 @@ int villas::node::opal_type_start(villas::node::SuperNode *sn) {
   if (err != EOK)
     throw RuntimeError("Failed to get list of recv ids ({})", err);
 
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->info("Started as OPAL Asynchronous process");
   logger->info("This is VILLASnode %s (built on %s, %s)", PROJECT_BUILD_ID,
                __DATE__, __TIME__);
@@ -144,7 +141,7 @@ int villas::node::opal_type_stop() {
   if (err != EOK)
     throw RuntimeError("Failed to close shared memory area ({})", err);
 
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->debug("Closing OPAL shared memory mapping");
 
   err = OpalSystemCtrl_UnRegister((char *)printShmemName.c_str());
@@ -158,7 +155,7 @@ int villas::node::opal_type_stop() {
 }
 
 static int opal_print_global() {
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   logger->debug("Controller ID: {}", params.controllerID);
 
   std::stringstream sss, rss;
@@ -279,16 +276,16 @@ int villas::node::opal_read(NodeCompat *n, struct Sample *const smps[],
     s->data[i].f = (float)data[i]; // OPAL provides double precission
 
   /* This next call allows the execution of the "asynchronous" process
-	 * to actually be synchronous with the model. To achieve this, you
-	 * should set the "Sending Mode" in the Async_Send block to
-	 * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
-	 * the model to wait for this process to call this
-	 * OpalAsyncSendRequestDone function before continuing. */
+   * to actually be synchronous with the model. To achieve this, you
+   * should set the "Sending Mode" in the Async_Send block to
+   * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
+   * the model to wait for this process to call this
+   * OpalAsyncSendRequestDone function before continuing. */
   if (o->reply)
     OpalAsyncSendRequestDone(o->sendID);
 
   /* Before continuing, we make sure that the real-time model
-	 * has not been stopped. If it has, we quit. */
+   * has not been stopped. If it has, we quit. */
   state = OpalGetAsyncModelState();
   if ((state == STATE_RESET) || (state == STATE_STOP))
     throw RuntimeError("OpalGetAsyncModelState(): Model stopped or resetted!");

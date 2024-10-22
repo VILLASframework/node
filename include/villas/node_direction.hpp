@@ -31,10 +31,10 @@ public:
   } direction;
 
   /* The path which uses this node as a source/destination.
-	 *
-	 * Usually every node should be used only by a single path as destination.
-	 * Otherwise samples from different paths would be interleaved.
-	 */
+   *
+   * Usually every node should be used only by a single path as destination.
+   * Otherwise samples from different paths would be interleaved.
+   */
   Path *path;
   Node *node;
 

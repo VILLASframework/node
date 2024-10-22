@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
@@ -12,47 +12,47 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 
 cat > base.json <<EOF
 {
-	"http": {
-		"port": 8080
-	}
+    "http": {
+        "port": 8080
+    }
 }
 EOF
 
 cat > local.json <<EOF
 {
-	"http": {
-		"port": 8080
-	},
-	"nodes": {
-		"node1": {
-			"type"   : "socket",
-			"format": "csv",
-			
-			"in": {
-				"address"  : "*:12000"
-			},
-			"out": {
-				"address": "127.0.0.1:12001"
-			}
-		}
-	},
-	"paths": [
-		{
-			"in": "node1",
-			"out": "node1",
-			"hooks": [
-				{ "type": "print" }
-			]
-		}
-	]
+    "http": {
+        "port": 8080
+    },
+    "nodes": {
+        "node1": {
+             "type"   : "socket",
+             "format": "csv",
+
+             "in": {
+             	"address"  : "*:12000"
+             },
+             "out": {
+             	"address": "127.0.0.1:12001"
+             }
+        }
+    },
+    "paths": [
+        {
+             "in": "node1",
+             "out": "node1",
+             "hooks": [
+             	{ "type": "print" }
+             ]
+        }
+    ]
 }
 EOF
 

@@ -147,7 +147,7 @@ public:
 static char n[] = "universal/channel/sample";
 static char r[] =
     "/universal/(" RE_NODE_NAME ")/channel/([a-z0-9_-]+)/(sample|event)";
-static char d[] = "retrieve or send samples via universal data-exchange API";
+static char d[] = "Retrieve or send samples via universal data-exchange API";
 static RequestPlugin<ChannelRequest, n, r, d> p;
 
 } // namespace universal

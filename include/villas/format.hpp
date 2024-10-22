@@ -55,37 +55,41 @@ public:
 
   virtual void start() {}
 
+  virtual void reset() {}
+
   virtual void parse(json_t *json);
 
   virtual int print(FILE *f, const struct Sample *const smps[], unsigned cnt);
 
   virtual int scan(FILE *f, struct Sample *const smps[], unsigned cnt);
 
+  virtual void printMetadata(FILE *f, json_t *json) {}
+
   /* Print \p cnt samples from \p smps into buffer \p buf of length \p len.
-	 *
-	 * @param buf[out]	The buffer which should be filled with serialized data.
-	 * @param len[in]	The length of the buffer \p buf.
-	 * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if nullptr.
-	 * @param smps[in]	The array of pointers to samples.
-	 * @param cnt[in]	The number of pointers in the array \p smps.
-	 *
-	 * @retval >=0		The number of samples from \p smps which have been written into \p buf.
-	 * @retval <0		Something went wrong.
-	 */
+   *
+   * @param buf[out]	The buffer which should be filled with serialized data.
+   * @param len[in]	The length of the buffer \p buf.
+   * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if nullptr.
+   * @param smps[in]	The array of pointers to samples.
+   * @param cnt[in]	The number of pointers in the array \p smps.
+   *
+   * @retval >=0		The number of samples from \p smps which have been written into \p buf.
+   * @retval <0		Something went wrong.
+   */
   virtual int sprint(char *buf, size_t len, size_t *wbytes,
                      const struct Sample *const smps[], unsigned cnt) = 0;
 
   /* Parse samples from the buffer \p buf with a length of \p len bytes.
-	 *
-	 * @param buf[in]	The buffer of data which should be parsed / de-serialized.
-	 * @param len[in]	The length of the buffer \p buf.
-	 * @param rbytes[out]	The number of bytes which have been read from \p buf.
-	 * @param smps[out]	The array of pointers to samples.
-	 * @param cnt[in]	The number of pointers in the array \p smps.
-	 *
-	 * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
-	 * @retval <0		Something went wrong.
-	 */
+   *
+   * @param buf[in]	The buffer of data which should be parsed / de-serialized.
+   * @param len[in]	The length of the buffer \p buf.
+   * @param rbytes[out]	The number of bytes which have been read from \p buf.
+   * @param smps[out]	The array of pointers to samples.
+   * @param cnt[in]	The number of pointers in the array \p smps.
+   *
+   * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
+   * @retval <0		Something went wrong.
+   */
   virtual int sscan(const char *buf, size_t len, size_t *rbytes,
                     struct Sample *const smps[], unsigned cnt) = 0;
 

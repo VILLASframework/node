@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cerrno>
 #include <cstdlib>
 #include <unistd.h>
 
@@ -37,7 +36,7 @@ static size_t hugepgsz = -1;
 static Logger logger;
 
 int villas::node::memory::mmap_init(int hugepages) {
-  logger = logging.get("memory:mmap");
+  logger = Log::get("memory:mmap");
 
   pgsz = kernel::getPageSize();
   if (pgsz < 0)
@@ -125,9 +124,9 @@ static struct Allocation *mmap_alloc(size_t len, size_t alignment,
   }
 
   /* We must make sure that len is a multiple of the page size
-	 *
-	 * See: https://lkml.org/lkml/2014/10/22/925
-	 */
+   *
+   * See: https://lkml.org/lkml/2014/10/22/925
+   */
   ma->length = ALIGN(len, sz);
   ma->alignment = ALIGN(alignment, sz);
   ma->type = m;

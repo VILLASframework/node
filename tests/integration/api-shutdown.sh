@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
@@ -12,23 +12,23 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 
 cat > config.json <<EOF
 {
-	"http": {
-		"port": 8080
-	}
+    "http": {
+        "port": 8080
+    }
 }
 EOF
 
 # Start without a configuration
 timeout -s SIGKILL 3 \
-villas node config.json & 
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1

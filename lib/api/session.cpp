@@ -21,7 +21,7 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Session::Session(lws *w)
-    : version(Version::VERSION_2), wsi(w), logger(logging.get("api:session")) {
+    : version(Version::VERSION_2), wsi(w), logger(Log::get("api:session")) {
   lws_context *ctx = lws_get_context(wsi);
   void *user_ctx = lws_context_user(ctx);
 
@@ -119,13 +119,13 @@ void Session::open(void *in, size_t len) {
         RequestFactory::create(this, uri, method, len));
 
     /* This is an OPTIONS request.
-		 *
-		 *  We immediatly send headers and close the connection
-		 *  without waiting for a POST body */
+     *
+     *  We immediatly send headers and close the connection
+     *  without waiting for a POST body */
     if (method == Method::OPTIONS)
       lws_callback_on_writable(wsi);
     /* This request has no body.
-		 * We can reply immediatly */
+     * We can reply immediatly */
     else if (len == 0)
       api->pending.push(this);
     else {
@@ -217,10 +217,10 @@ int Session::protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
     ret = s->writeable();
 
     /*
-			 * HTTP/1.0 no keepalive: close network connection
-			 * HTTP/1.1 or HTTP1.0 + KA: wait / process next transaction
-			 * HTTP/2: stream ended, parent connection remains up
-			 */
+       * HTTP/1.0 no keepalive: close network connection
+       * HTTP/1.1 or HTTP1.0 + KA: wait / process next transaction
+       * HTTP/2: stream ended, parent connection remains up
+       */
     if (ret) {
       if (lws_http_transaction_completed(wsi))
         return -1;

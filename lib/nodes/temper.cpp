@@ -168,7 +168,7 @@ bool TEMPer1Device::match(struct libusb_device *dev) {
   struct libusb_device_descriptor desc;
   int ret = libusb_get_device_descriptor(dev, &desc);
   if (ret < 0) {
-    logging.get("node:temper")
+    Log::get("node:temper")
         ->warn("Could not get USB device descriptor: {}",
                libusb_strerror((enum libusb_error)ret));
     return false;
@@ -185,7 +185,7 @@ bool TEMPer2Device::match(struct libusb_device *dev) {
   struct libusb_device_descriptor desc;
   ret = libusb_get_device_descriptor(dev, &desc);
   if (ret < 0) {
-    logging.get("node:temper")
+    Log::get("node:temper")
         ->warn("Could not get USB device descriptor: {}",
                libusb_strerror((enum libusb_error)ret));
     return false;
@@ -193,7 +193,7 @@ bool TEMPer2Device::match(struct libusb_device *dev) {
 
   ret = libusb_open(dev, &handle);
   if (ret < 0) {
-    logging.get("node:temper")
+    Log::get("node:temper")
         ->warn("Failed to open USB device: {}",
                libusb_strerror((enum libusb_error)ret));
     return false;
@@ -202,7 +202,7 @@ bool TEMPer2Device::match(struct libusb_device *dev) {
   ret = libusb_get_string_descriptor_ascii(handle, desc.iProduct, product,
                                            sizeof(product));
   if (ret < 0) {
-    logging.get("node:temper")
+    Log::get("node:temper")
         ->warn("Could not get USB string descriptor: {}",
                libusb_strerror((enum libusb_error)ret));
     return false;
@@ -217,7 +217,7 @@ bool TEMPerHUMDevice::match(struct libusb_device *dev) {
   struct libusb_device_descriptor desc;
   int ret = libusb_get_device_descriptor(dev, &desc);
   if (ret < 0) {
-    logging.get("node:temper")
+    Log::get("node:temper")
         ->warn("Could not get USB device descriptor: {}",
                libusb_strerror((enum libusb_error)ret));
     return false;
@@ -229,7 +229,7 @@ bool TEMPerHUMDevice::match(struct libusb_device *dev) {
 int villas::node::temper_type_start(villas::node::SuperNode *sn) {
   context = usb::get_context();
 
-  logger = logging.get("node:temper");
+  logger = Log::get("node:temper");
 
   // Enumerate temper devices
   devices.clear();

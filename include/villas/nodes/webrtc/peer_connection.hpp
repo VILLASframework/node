@@ -15,6 +15,7 @@
 #include <rtc/rtc.hpp>
 #include <villas/config.hpp>
 #include <villas/log.hpp>
+#include <villas/node/config.hpp>
 #include <villas/nodes/webrtc/signaling_client.hpp>
 #include <villas/signal_list.hpp>
 #include <villas/web.hpp>
@@ -25,15 +26,19 @@
  * But C++ ADL based overload set construction does not find these operators,
  * if these are invoked in the spdlog/fmt libraries.
  *
- * See this issue for a short explaination of ADL errors:
+ * See this issue for a short explanation of ADL errors:
  * https://github.com/gabime/spdlog/issues/1227#issuecomment-532009129
  *
  * Adding the global ::operator<< overload set to the namespace rtc where
  * the data structures are defined, allows ADL to pick these up in spdlog/fmt.
+ *
+ * Since libdatachannel 0.20, operator<< has been moved into the rtc namespace.
  */
+#if RTC_VERSION_NUM < 0x001400
 namespace rtc {
 using ::operator<<;
 }
+#endif
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
@@ -49,7 +54,8 @@ class PeerConnection {
 
 public:
   PeerConnection(const std::string &server, const std::string &session,
-                 const std::string &peer, std::shared_ptr<SignalList> signals,
+                 const std::string &peer,
+                 std::shared_ptr<SignalList> out_signals,
                  rtc::Configuration config, Web *w, rtc::DataChannelInit d);
   ~PeerConnection();
 
@@ -71,7 +77,7 @@ protected:
   std::shared_ptr<rtc::PeerConnection> conn;
   std::shared_ptr<rtc::DataChannel> chan;
   std::shared_ptr<SignalingClient> client;
-  std::shared_ptr<SignalList> signals;
+  std::shared_ptr<SignalList> out_signals;
 
   Logger logger;
 

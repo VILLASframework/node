@@ -30,7 +30,7 @@ allOf:
         Note: These settings are only used if the `uri` setting is using the `amqps://` schema.
 
       type: object
-      properties: 
+      properties:
         verify_hostname:
           default: true,
 

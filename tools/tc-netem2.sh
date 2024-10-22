@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Transparent Network Emulation Proxy for Layer 2 & 3
 #
@@ -37,9 +37,9 @@ MARK=$RANDOM
 # Tools
 TC=/sbin/tc
 if   [ "$LAYER" -eq "2" ]; then
-	NF=/sbin/ebtables
+    NF=/sbin/ebtables
 elif [ "$LAYER" -eq "3" ]; then
-	NF=/sbin/iptables
+    NF=/sbin/iptables
 fi
 
 # Test permissions
@@ -82,24 +82,24 @@ echo -e "Successfully configured network emulation:"
 echo -e "Netem Settings for $SRC ($SRC_IF) => $DST ($DST_IF):"
 echo -e "   $NETEM"
 if (( $REVERSE )); then
-	echo -e "Netem Settings for $DST ($DST_IF) => $SRC ($SRC_IF):"
-	echo -e "   $NETEM_REV"
+    echo -e "Netem Settings for $DST ($DST_IF) => $SRC ($SRC_IF):"
+    echo -e "   $NETEM_REV"
 fi
 
 if [ -n $DEBUG ]; then
-	if [ "$SRC_IF" == "$DST_IF" ]; then
-		IFNS="$SRC_IF"
-	else
-		IFNS="$SRC_IF $DST_IF"
-	fi
+    if [ "$SRC_IF" == "$DST_IF" ]; then
+        IFNS="$SRC_IF"
+    else
+        IFNS="$SRC_IF $DST_IF"
+    fi
 
-	for inf in $IFNS; do
-		for cmd in qdisc filter class; do
-			echo -e "\nTC ==> $if: $cmd"
-			tc -d -p $cmd show dev $inf
-		done
-	done
+    for inf in $IFNS; do
+        for cmd in qdisc filter class; do
+             echo -e "\nTC ==> $if: $cmd"
+             tc -d -p $cmd show dev $inf
+        done
+    done
 
-	echo -e "\nTABLES ==>"
-	$NF -t nat -L
+    echo -e "\nTABLES ==>"
+    $NF -t nat -L
 fi

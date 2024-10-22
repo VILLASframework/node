@@ -5,10 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
 #include <complex>
 #include <cstring>
-#include <sstream>
 #include <vector>
 #include <villas/timing.hpp>
 
@@ -495,8 +493,8 @@ public:
   }
 
   /*
-	 * This function generates the furie coeffients for the calculateDft function
-	 */
+   * This function generates the furie coeffients for the calculateDft function
+   */
   void generateDftMatrix() {
     using namespace std::complex_literals;
 
@@ -510,13 +508,13 @@ public:
   }
 
   /*
-	 * This function calculates the discrete furie transform of the input signal
-	 */
+   * This function calculates the discrete furie transform of the input signal
+   */
   void calculateDft(enum PaddingType padding, std::vector<double> &ringBuffer,
                     std::vector<std::complex<double>> &results,
                     unsigned ringBufferPos) {
     /* RingBuffer size needs to be equal to windowSize
-		 * prepare sample window The following parts can be combined */
+     * prepare sample window The following parts can be combined */
     double tmpSmpWindow[windowSize];
 
     for (unsigned i = 0; i < windowSize; i++)
@@ -544,8 +542,8 @@ public:
   }
 
   /*
-	 * This function prepares the selected window coefficents
-	 */
+   * This function prepares the selected window coefficents
+   */
   void calculateWindow(enum WindowType windowTypeIn) {
     switch (windowTypeIn) {
     case WindowType::FLATTOP:
@@ -603,11 +601,11 @@ public:
   }
 
   /*
-	 * This function is calculation the IpDFT based on the following paper:
-	 *
-	 * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7980868&tag=1
-	 *
-	 */
+   * This function is calculation the IpDFT based on the following paper:
+   *
+   * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7980868&tag=1
+   *
+   */
   DftEstimate lpdftEstimation(const Point &a, const Point &b, const Point &c,
                               unsigned maxFBin, double startFrequency,
                               double frequencyResolution, double multiplier,
@@ -638,12 +636,12 @@ public:
   }
 
   /*
-	 * This function is calculating the mximum based on a quadratic interpolation
-	 *
-	 * This function is based on the following paper:
-	 * https://mgasior.web.cern.ch/pap/biw2004.pdf (equation 10) (freq estimation)
-	 * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
-	 */
+   * This function is calculating the mximum based on a quadratic interpolation
+   *
+   * This function is based on the following paper:
+   * https://mgasior.web.cern.ch/pap/biw2004.pdf (equation 10) (freq estimation)
+   * https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
+   */
   DftEstimate quadraticEstimation(const Point &a, const Point &b,
                                   const Point &c, unsigned maxFBin,
                                   double startFrequency,

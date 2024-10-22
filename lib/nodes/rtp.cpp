@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
 #include <cstring>
 #include <ctime>
 #include <pthread.h>
@@ -16,14 +15,10 @@
 
 extern "C" {
 // clang-format off
-#include <re/re_net.h>
 #include <re/re_main.h>
-#include <re/re_types.h>
 #include <re/re_mbuf.h>
 #include <re/re_mem.h>
-#include <re/re_sys.h>
-#include <re/re_udp.h>
-// clang-format off
+// clang-format on
 #undef ALIGN_MASK
 }
 
@@ -81,7 +76,7 @@ static int rtp_aimd(NodeCompat *n, double loss_frac) {
 int villas::node::rtp_init(NodeCompat *n) {
   auto *r = n->getData<struct rtp>();
 
-  n->logger = villas::logging.get("node:rtp");
+  n->logger = villas::Log::get("node:rtp");
 
   // Default values
   r->aimd.a = 10;

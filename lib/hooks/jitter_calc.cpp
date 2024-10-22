@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cinttypes>
-#include <cstring>
 #include <vector>
 
 #include <villas/hook.hpp>
@@ -39,12 +37,12 @@ public:
         delay_mov_sum(0), delay_mov_sum_sqrd(0), curr_count(0) {}
 
   /* Hook to calculate jitter between GTNET-SKT GPS timestamp and Villas node NTP timestamp.
-	 *
-	 * Drawbacks: No protection for out of order packets. Default positive delay assumed,
-	 * so GPS timestamp should be earlier than NTP timestamp. If difference b/w NTP and GPS ts
-	 * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
-	 * the variance value will overrun the 64bit value.
-	 */
+   *
+   * Drawbacks: No protection for out of order packets. Default positive delay assumed,
+   * so GPS timestamp should be earlier than NTP timestamp. If difference b/w NTP and GPS ts
+   * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
+   * the variance value will overrun the 64bit value.
+   */
   virtual Hook::Reason process(struct Sample *smp) {
     assert(state == State::STARTED);
 

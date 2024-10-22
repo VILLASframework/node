@@ -133,7 +133,7 @@ int ExampleNode::_read(struct Sample *smps[], unsigned cnt) {
   smps[0]->data[0].f = time_delta(&now, &start_time);
 
   /* Dont forget to set other flags in struct Sample::flags
-	 * E.g. for sequence no, timestamps... */
+   * E.g. for sequence no, timestamps... */
   smps[0]->flags = (int)SampleFlags::HAS_DATA;
   smps[0]->signals = getInputSignals(false);
 

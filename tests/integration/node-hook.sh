@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test hooks in villas node
 #
@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -27,47 +27,48 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"sig": {
-			"type": "signal",
+    "idle_stop": true,
+    "nodes": {
+        "sig": {
+             "type": "signal",
 
-			"signal": "mixed",
-			"realtime": false,
-			"limit": 10,
-			"rate": 100,
-			"values": 5
-		},
-		"file": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": "sig",
-			"out": "file",
-			"hooks": [
-				{
-					"type": "average",
-					
-					"signals": [ "random", "sine", "square", "triangle", "ramp" ],
-					"offset": 0
-				},
-				{
-					"type": "skip_first",
-					
-					"samples": 5
-				},
-				{
-					"type": "scale",
+             "signal": "mixed",
+             "realtime": false,
+             "limit": 10,
+             "rate": 100,
+             "values": 5
+        },
+        "file": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": "sig",
+             "out": "file",
+             "hooks": [
+             	{
+             		"type": "average",
 
-					"scale": 10,
-					"offset": 5,
-					"signal": "average"
-				}
-			]
-		}
-	]
+             		"signals": [ "random", "sine", "square", "triangle", "ramp" ],
+             		"offset": 0
+             	},
+             	{
+             		"type": "skip_first",
+
+             		"samples": 5
+             	},
+             	{
+             		"type": "scale",
+
+             		"scale": 10,
+             		"offset": 5,
+             		"signal": "average"
+             	}
+             ]
+        }
+    ]
 }
 EOF
 

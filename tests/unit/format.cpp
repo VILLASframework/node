@@ -240,7 +240,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory) {
   char buf[8192];
   size_t wbytes, rbytes;
 
-  Logger logger = logging.get("test:format:lowlevel");
+  Logger logger = Log::get("test:format:lowlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
@@ -330,7 +330,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   int ret, cnt;
   char *retp;
 
-  Logger logger = logging.get("test:format:highlevel");
+  Logger logger = Log::get("test:format:highlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
@@ -382,12 +382,12 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   cr_assert_eq(ret, 0);
 
 #if 0 // Show the file contents
-	char cmd[128];
-	if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
-		snprintf(cmd, sizeof(cmd), "cat %s", fn);
-	else
-		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
-	system(cmd);
+  char cmd[128];
+  if (p->fmt == "csv" || p->fmt == "json" || p->fmt == "villas.human")
+    snprintf(cmd, sizeof(cmd), "cat %s", fn);
+  else
+    snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
+  system(cmd);
 #endif
 
   rewind(stream);

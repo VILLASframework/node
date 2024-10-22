@@ -11,9 +11,12 @@
 #include <villas/signal.hpp>
 #include <villas/utils.hpp>
 
+// Generated message descriptors by protoc
+#include <villas/formats/villas.pb-c.h>
+
 using namespace villas::node;
 
-enum SignalType ProtobufFormat::detect(const Villas__Node__Value *val) {
+static enum SignalType detect(const Villas__Node__Value *val) {
   switch (val->value_case) {
   case VILLAS__NODE__VALUE__VALUE_F:
     return SignalType::FLOAT;
@@ -66,20 +69,25 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
     }
 
     if (flags & smp->flags & (int)SampleFlags::HAS_TS_ORIGIN) {
-      pb_smp->timestamp = new Villas__Node__Timestamp;
-      if (!pb_smp->timestamp)
+      pb_smp->ts_origin = new Villas__Node__Timestamp;
+      if (!pb_smp->ts_origin)
         throw MemoryAllocationError();
 
-      villas__node__timestamp__init(pb_smp->timestamp);
+      villas__node__timestamp__init(pb_smp->ts_origin);
 
-      pb_smp->timestamp->sec = smp->ts.origin.tv_sec;
-      pb_smp->timestamp->nsec = smp->ts.origin.tv_nsec;
+      pb_smp->ts_origin->sec = smp->ts.origin.tv_sec;
+      pb_smp->ts_origin->nsec = smp->ts.origin.tv_nsec;
     }
 
     pb_smp->n_values = smp->length;
     pb_smp->values = new Villas__Node__Value *[pb_smp->n_values];
     if (!pb_smp->values)
       throw MemoryAllocationError();
+
+    if (smp->flags & (int)SampleFlags::NEW_FRAME) {
+      pb_smp->has_new_frame = 1;
+      pb_smp->new_frame = 1;
+    }
 
     for (unsigned j = 0; j < pb_smp->n_values; j++) {
       Villas__Node__Value *pb_val = pb_smp->values[j] = new Villas__Node__Value;
@@ -161,15 +169,19 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
     if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA)
       throw RuntimeError("Parsed non supported message type. Skipping");
 
+    if (pb_smp->has_new_frame && pb_smp->new_frame) {
+      smp->flags |= (int)SampleFlags::NEW_FRAME;
+    }
+
     if (pb_smp->has_sequence) {
       smp->flags |= (int)SampleFlags::HAS_SEQUENCE;
       smp->sequence = pb_smp->sequence;
     }
 
-    if (pb_smp->timestamp) {
+    if (pb_smp->ts_origin) {
       smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;
-      smp->ts.origin.tv_sec = pb_smp->timestamp->sec;
-      smp->ts.origin.tv_nsec = pb_smp->timestamp->nsec;
+      smp->ts.origin.tv_sec = pb_smp->ts_origin->sec;
+      smp->ts.origin.tv_nsec = pb_smp->ts_origin->nsec;
     }
 
     for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
@@ -226,8 +238,8 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
 // Register format
 static char n[] = "protobuf";
 static char d[] = "Google Protobuf";
-static FormatPlugin<ProtobufFormat, n, d,
-                    (int)SampleFlags::HAS_TS_ORIGIN |
-                        (int)SampleFlags::HAS_SEQUENCE |
-                        (int)SampleFlags::HAS_DATA>
+static FormatPlugin<
+    ProtobufFormat, n, d,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_DATA | (int)SampleFlags::NEW_FRAME>
     p;

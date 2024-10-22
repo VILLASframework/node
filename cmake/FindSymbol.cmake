@@ -5,16 +5,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function(FindSymbol LIBRARY SYMBOL FOUND)
-	find_program(OBJDUMP_EXECUTABLE NAMES objdump)
+    find_program(OBJDUMP_EXECUTABLE NAMES objdump)
 
-	execute_process(
-		COMMAND /bin/sh -c "${OBJDUMP_EXECUTABLE} -T ${LIBRARY} | grep ${SYMBOL} | wc -l"
-		OUTPUT_VARIABLE OUTPUT
-	)
+    execute_process(
+        COMMAND /bin/sh -c "${OBJDUMP_EXECUTABLE} -T ${LIBRARY} | grep ${SYMBOL} | wc -l"
+        OUTPUT_VARIABLE OUTPUT
+    )
 
-	if(OUTPUT GREATER 0)
-		set(${FOUND} "${SYMBOL}" PARENT_SCOPE)
-	else()
-		set(${FOUND} "${SYMBOL}-NOTFOUND" PARENT_SCOPE)
-	endif()
+    if(OUTPUT GREATER 0)
+        set(${FOUND} "${SYMBOL}" PARENT_SCOPE)
+    else()
+        set(${FOUND} "${SYMBOL}-NOTFOUND" PARENT_SCOPE)
+    endif()
 endfunction()

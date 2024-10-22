@@ -1,0 +1,12 @@
+{
+  "fpgas": {
+    "alveo": {
+      "id": "10ee:9041",
+      "slot": "0000:5e:00.0",
+      "do_reset": true,
+      "ips": "alveo-xbar-pcie/alveo-xbar-pcie.json",
+      "polling": true,
+      "interface": "pcie"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
@@ -16,36 +16,36 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 cat > config.json <<EOF
 {
-		"nodes": {
-				"sig_1": {
-						"type": "signal",
-						"values": 1,
-						"signal": "counter",
-						"offset": 100,
-						"limit": 10
-				},
-				"file_1": {
-						"type": "file",
-						"uri": "output1.dat"
-				}
-		},
-		"paths": [
-			{
-				"in": "sig_1",
-				"out": "file_1"
-			},
-			{
-				"in": "sig_1",
-				"out": "file_1"
-			}
-		]
+        "nodes": {
+             	"sig_1": {
+             			"type": "signal",
+             			"values": 1,
+             			"signal": "counter",
+             			"offset": 100,
+             			"limit": 10
+             	},
+             	"file_1": {
+             			"type": "file",
+             			"uri": "output1.dat"
+             	}
+        },
+        "paths": [
+             {
+             	"in": "sig_1",
+             	"out": "file_1"
+             },
+             {
+             	"in": "sig_1",
+             	"out": "file_1"
+             }
+        ]
 }
 EOF
 

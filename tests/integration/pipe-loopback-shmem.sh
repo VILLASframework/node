@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -25,20 +25,20 @@ for VECTORIZE in 1 5; do
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "shmem",
-			"out": {
-				"name": "/villas-test"
-			},
-			"in": {
-				"name": "/villas-test"
-			},
-			"queuelen": 1024,
-			"mode": "${MODE}",
-			"vectorize": ${VECTORIZE}
-		}
-	}
+    "nodes": {
+        "node1": {
+             "type": "shmem",
+             "out": {
+             	"name": "/villas-test"
+             },
+             "in": {
+             	"name": "/villas-test"
+             },
+             "queuelen": 1024,
+             "mode": "${MODE}",
+             "vectorize": ${VECTORIZE}
+        }
+    }
 }
 EOF
 

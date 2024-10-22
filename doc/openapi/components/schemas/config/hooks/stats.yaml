@@ -4,7 +4,7 @@
 ---
 allOf:
 - type: object
-  properties: 
+  properties:
     format:
       $ref: ../format_spec.yaml
     buckets:

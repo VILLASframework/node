@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstring>
-
 #include <villas/hist.hpp>
 #include <villas/node.hpp>
 #include <villas/stats.hpp>
@@ -95,7 +93,7 @@ enum Stats::Type Stats::lookupType(const std::string &str) {
   throw std::invalid_argument("Invalid stats type");
 }
 
-Stats::Stats(int buckets, int warmup) : logger(logging.get("stats")) {
+Stats::Stats(int buckets, int warmup) : logger(Log::get("stats")) {
   for (auto m : metrics) {
     histograms.emplace(std::piecewise_construct, std::forward_as_tuple(m.first),
                        std::forward_as_tuple(buckets, warmup));
@@ -135,7 +133,7 @@ void Stats::printHeader(enum Format fmt) {
 
 void Stats::setupTable() {
   if (!table) {
-    auto logger = logging.get("stats");
+    auto logger = Log::get("stats");
     table = std::make_shared<Table>(logger, columns);
   }
 }
@@ -188,7 +186,7 @@ void Stats::print(FILE *f, enum Format fmt, int verbose) const {
   case Format::HUMAN:
     for (auto m : metrics) {
       logger->info("{}: {}", m.second.name, m.second.desc);
-      histograms.at(m.first).print(logger, verbose);
+      histograms.at(m.first).print(logger, verbose, "  ");
     }
     break;
 

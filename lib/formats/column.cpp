@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cctype>
 #include <cinttypes>
 #include <cstring>
 
@@ -22,33 +21,43 @@ size_t ColumnLineFormat::sprintLine(char *buf, size_t len,
                                     const struct Sample *smp) {
   size_t off = 0;
 
-  if (smp->flags & (int)SampleFlags::HAS_TS_ORIGIN)
-    off += snprintf(buf + off, len - off, "%lld%c%09lld",
-                    (long long)smp->ts.origin.tv_sec, separator,
-                    (long long)smp->ts.origin.tv_nsec);
-  else
-    off += snprintf(buf + off, len - off, "nan%cnan", separator);
+  if (flags & (int)SampleFlags::HAS_TS_ORIGIN) {
+    if (smp->flags & (int)SampleFlags::HAS_TS_ORIGIN)
+      off += snprintf(buf + off, len - off, "%lld%c%09lld",
+                      (long long)smp->ts.origin.tv_sec, separator,
+                      (long long)smp->ts.origin.tv_nsec);
+    else
+      off += snprintf(buf + off, len - off, "nan%cnan", separator);
+  }
 
-  if (smp->flags & (int)SampleFlags::HAS_TS_RECEIVED)
-    off += snprintf(buf + off, len - off, "%c%.09f", separator,
-                    time_delta(&smp->ts.origin, &smp->ts.received));
-  else
-    off += snprintf(buf + off, len - off, "%cnan", separator);
+  if (flags & (int)SampleFlags::HAS_OFFSET) {
+    if (smp->flags & (int)SampleFlags::HAS_TS_RECEIVED) {
+      auto offset = time_delta(&smp->ts.origin, &smp->ts.received);
+      off += snprintf(buf + off, len - off, "%c%.09f", separator, offset);
+    } else
+      off += snprintf(buf + off, len - off, "%cnan", separator);
+  }
 
-  if (smp->flags & (int)SampleFlags::HAS_SEQUENCE)
-    off +=
-        snprintf(buf + off, len - off, "%c%" PRIu64, separator, smp->sequence);
-  else
-    off += snprintf(buf + off, len - off, "%cnan", separator);
+  if (flags & (int)SampleFlags::HAS_SEQUENCE) {
+    if (smp->flags & (int)SampleFlags::HAS_SEQUENCE)
+      off += snprintf(buf + off, len - off, "%c%" PRIu64, separator,
+                      smp->sequence);
+    else
+      off += snprintf(buf + off, len - off, "%cnan", separator);
+  }
 
-  for (unsigned i = 0; i < smp->length; i++) {
-    auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      break;
+  if (flags & (int)SampleFlags::HAS_DATA) {
+    if (smp->flags & (int)SampleFlags::HAS_DATA) {
+      for (unsigned i = 0; i < smp->length; i++) {
+        auto sig = smp->signals->getByIndex(i);
+        if (!sig)
+          break;
 
-    off += snprintf(buf + off, len - off, "%c", separator);
-    off += smp->data[i].printString(sig->type, buf + off, len - off,
-                                    real_precision);
+        off += snprintf(buf + off, len - off, "%c", separator);
+        off += smp->data[i].printString(sig->type, buf + off, len - off,
+                                        real_precision);
+      }
+    }
   }
 
   off += snprintf(buf + off, len - off, "%c", delimiter);
@@ -128,7 +137,7 @@ void ColumnLineFormat::header(FILE *f, const SignalList::Ptr sigs) {
     return;
 
   if (comment)
-    fprintf(f, "%c", comment);
+    fprintf(f, "%c ", comment);
 
   if (flags & (int)SampleFlags::HAS_TS_ORIGIN)
     fprintf(f, "secs%cnsecs%c", separator, separator);
@@ -187,18 +196,18 @@ void ColumnLineFormat::parse(json_t *json) {
 // Register formats
 static char n1[] = "csv";
 static char d1[] = "Comma-separated values";
-static ColumnLineFormatPlugin<n1, d1,
-                              (int)SampleFlags::HAS_TS_ORIGIN |
-                                  (int)SampleFlags::HAS_SEQUENCE |
-                                  (int)SampleFlags::HAS_DATA,
-                              '\n', ','>
+static ColumnLineFormatPlugin<
+    n1, d1,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_OFFSET | (int)SampleFlags::HAS_DATA,
+    '\n', ','>
     p1;
 
 static char n2[] = "tsv";
 static char d2[] = "Tabulator-separated values";
-static ColumnLineFormatPlugin<n2, d2,
-                              (int)SampleFlags::HAS_TS_ORIGIN |
-                                  (int)SampleFlags::HAS_SEQUENCE |
-                                  (int)SampleFlags::HAS_DATA,
-                              '\n', '\t'>
+static ColumnLineFormatPlugin<
+    n2, d2,
+    (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE |
+        (int)SampleFlags::HAS_OFFSET | (int)SampleFlags::HAS_DATA,
+    '\n', '\t'>
     p2;

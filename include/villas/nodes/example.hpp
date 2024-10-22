@@ -42,8 +42,8 @@ public:
   ExampleNode(const uuid_t &id = {}, const std::string &name = "");
 
   /* All of the following virtual-declared functions are optional.
-	 * Have a look at node.hpp/node.cpp for the default behaviour.
-	 */
+   * Have a look at node.hpp/node.cpp for the default behaviour.
+   */
 
   virtual ~ExampleNode();
 
@@ -51,34 +51,25 @@ public:
 
   virtual int parse(json_t *json);
 
-  // Validate node configuration
   virtual int check();
 
   virtual int start();
 
-  // virtual
-  // int stop();
+  // virtual int stop();
 
-  // virtual
-  // int pause();
+  // virtual int pause();
 
-  // virtual
-  // int resume();
+  // virtual int resume();
 
-  // virtual
-  // int restart();
+  // virtual int restart();
 
-  // virtual
-  // int reverse();
+  // virtual int reverse();
 
-  // virtual
-  // std::vector<int> getPollFDs();
+  // virtual std::vector<int> getPollFDs();
 
-  // virtual
-  // std::vector<int> getNetemFDs();
+  // virtual std::vector<int> getNetemFDs();
 
-  // virtual
-  // struct villas::node::memory::Type * getMemoryType();
+  // virtual struct villas::node::memory::Type *getMemoryType();
 
   virtual const std::string &getDetails();
 };

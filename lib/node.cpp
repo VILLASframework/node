@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cctype>
-#include <cstring>
 #include <openssl/md5.h>
 #include <regex>
 
@@ -42,9 +40,9 @@ using namespace villas::node;
 using namespace villas::utils;
 
 Node::Node(const uuid_t &id, const std::string &name)
-    : logger(logging.get("node")), sequence_init(0), sequence(0),
+    : logger(Log::get("node")), sequence_init(0), sequence(0),
       in(NodeDirection::Direction::IN, this),
-      out(NodeDirection::Direction::OUT, this),
+      out(NodeDirection::Direction::OUT, this), configPath(),
 #ifdef __linux__
       fwmark(-1),
 #endif // __linux__
@@ -74,7 +72,10 @@ Node::~Node() {
   rtnl_cls_put(tc_classifier);
 #endif // WITH_NETEM
 
-  factory->instances.remove(this);
+  // Internal loopback nodes have no factory
+  // Only attempt removal for factories of other node-types.
+  if (factory != nullptr)
+    factory->instances.remove(this);
 }
 
 int Node::prepare() {
@@ -335,12 +336,13 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
 
 const std::string &Node::getNameFull() {
   if (name_full.empty()) {
+    auto is1 = getInputSignals(false) ? getInputSignals(false)->size() : 0;
+    auto is2 = getInputSignals(true) ? getInputSignals(true)->size() : 0;
     name_full = fmt::format("{}: uuid={}, #in.signals={}/{}, #in.hooks={}, "
                             "#out.hooks={}, in.vectorize={}, out.vectorize={}",
-                            getName(), uuid::toString(uuid).c_str(),
-                            getInputSignals(false)->size(),
-                            getInputSignals(true)->size(), in.hooks.size(),
-                            out.hooks.size(), in.vectorize, out.vectorize);
+                            getName(), uuid::toString(uuid).c_str(), is1, is2,
+                            in.hooks.size(), out.hooks.size(), in.vectorize,
+                            out.vectorize);
 
 #ifdef WITH_NETEM
     name_full += fmt::format(", out.netem={}", tc_qdisc ? "yes" : "no");
@@ -421,7 +423,7 @@ json_t *Node::toJson() const {
     json_object_set_new(json_node, "status", status);
 
   /* Add all additional fields of node here.
-	 * This can be used for metadata */
+   * This can be used for metadata */
   json_object_update(json_node, config);
 
   return json_node;

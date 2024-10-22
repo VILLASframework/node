@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
@@ -12,37 +12,37 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
-	
+
 VECTORIZE="10"
 FORMAT="protobuf"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "zeromq",
+    "nodes": {
+        "node1": {
+             "type": "zeromq",
 
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"pattern": "pubsub",
-			"out": {
-				"publish": "tcp://127.0.0.1:12000"
-			},
-			"in": {
-				"subscribe": "tcp://127.0.0.1:12000",
-				"signals": {
-					"type": "float",
-					"count": 5
-				}
-			}
-		}
-	}
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "pattern": "pubsub",
+             "out": {
+             	"publish": "tcp://127.0.0.1:12000"
+             },
+             "in": {
+             	"subscribe": "tcp://127.0.0.1:12000",
+             	"signals": {
+             		"type": "float",
+             		"count": 5
+             	}
+             }
+        }
+    }
 }
 EOF
 
