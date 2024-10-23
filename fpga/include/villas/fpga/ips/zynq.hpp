@@ -31,12 +31,6 @@ private:
     uintptr_t translation;
   };
 
-  struct PciBar {
-    uintptr_t translation;
-  };
-
-  std::map<std::string, AxiBar> axiToPcieTranslations;
-  std::map<std::string, PciBar> pcieToAxiTranslations;
 };
 
 class ZynqFactory : CoreFactory {
