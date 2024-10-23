@@ -17,7 +17,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <fcntl.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -349,6 +353,28 @@ bool isPrivileged() {
   fclose(f);
 
   return true;
+}
+
+void write_to_file(std::string data, const std::filesystem::path file) {
+  villas::Log::get("Filewriter")->debug("{} > {}", data, file.u8string());
+  std::ofstream outputFile(file.u8string());
+
+  if (outputFile.is_open()) {
+    outputFile << data;
+    outputFile.close();
+  } else {
+    throw std::filesystem::filesystem_error("Cannot open outputfile",
+                                            std::error_code());
+  }
+}
+
+std::vector<std::string>
+read_names_in_directory(const std::filesystem::path &directory) {
+  std::vector<std::string> names;
+  for (auto const &dir_entry : std::filesystem::directory_iterator{directory}) {
+      names.push_back(dir_entry.path().filename());
+  }
+  return names;
 }
 
 } // namespace utils
