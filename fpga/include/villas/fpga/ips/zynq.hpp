@@ -24,13 +24,6 @@ public:
 private:
   static constexpr char axiInterface[] = "M_AXI";
   static constexpr char pcieMemory[] = "BAR0";
-
-  struct AxiBar {
-    uintptr_t base;
-    size_t size;
-    uintptr_t translation;
-  };
-
 };
 
 class ZynqFactory : CoreFactory {
