@@ -32,7 +32,7 @@ public:
   virtual std::string getName() const { return "Zynq"; }
 
   virtual std::string getDescription() const {
-    return "Custom platform vfio connector";
+    return "Zynq based fpga";
   }
 
 private:
