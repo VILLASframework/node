@@ -20,10 +20,6 @@ public:
   friend class ZynqFactory;
 
   virtual bool init() override;
-
-private:
-  static constexpr char axiInterface[] = "M_AXI";
-  static constexpr char pcieMemory[] = "BAR0";
 };
 
 class ZynqFactory : CoreFactory {
