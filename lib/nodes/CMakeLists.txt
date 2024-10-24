@@ -71,13 +71,6 @@ if(WITH_NODE_IEC61850)
     list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
 endif()
 
-# Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-if(WITH_NODE_OPAL)
-    list(APPEND NODE_SRC opal.cpp)
-    list(APPEND INCLUDE_DIRS ${OPAL_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${OPAL_LIBRARIES})
-endif()
-
 if(WITH_NODE_MODBUS)
     list(APPEND NODE_SRC modbus.cpp)
     list(APPEND LIBRARIES PkgConfig::MODBUS)

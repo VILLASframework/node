@@ -32,10 +32,6 @@
 #include <villas/version.hpp>
 #include <villas/web.hpp>
 
-#ifdef WITH_NODE_OPAL
-#include <villas/nodes/opal.hpp>
-#endif
-
 using namespace villas;
 using namespace villas::node;
 using namespace villas::plugin;
@@ -83,16 +79,6 @@ protected:
         << "         and wait for provisioning over the web interface."
         << std::endl
         << std::endl
-#ifdef WITH_NODE_OPAL
-        << "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE "
-           "OPAL_PRINT_SHMEM_NAME"
-        << std::endl
-        << "  This type of invocation is used by OPAL-RT Asynchronous "
-           "processes."
-        << std::endl
-        << "  See in the RT-LAB User Guide for more information." << std::endl
-        << std::endl
-#endif // WITH_NODE_OPAL
 
         << "Supported node-types:" << std::endl;
     for (auto p : registry->lookup<NodeFactory>()) {
@@ -134,18 +120,6 @@ protected:
   }
 
   void parse() {
-    // Check arguments
-#ifdef WITH_NODE_OPAL
-    if (argc != 4) {
-      usage();
-      exit(EXIT_FAILURE);
-    }
-
-    opal_register_region(argc, argv);
-
-    uri = "villas-node.conf";
-#else
-
     // Parse optional command line arguments
     int c;
     while ((c = getopt(argc, argv, "hCVd:")) != -1) {
@@ -177,7 +151,6 @@ protected:
       usage();
       exit(EXIT_FAILURE);
     }
-#endif // ENABLE_OPAL_ASYNC
   }
 
   int main() { return showCapabilities ? capabilities() : daemon(); }
