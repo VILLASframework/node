@@ -17,7 +17,7 @@
 
 namespace villas {
 namespace kernel {
-namespace pci {
+namespace devices {
 
 #define PCI_SLOT(devfn) (((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn) ((devfn) & 0x07)
@@ -58,15 +58,15 @@ struct Region {
   unsigned long long flags;
 };
 
-class Device {
+class PciDevice {
 public:
-  Device(Id i, Slot s) : id(i), slot(s), log(logging.get("kernel:pci")) {}
+  PciDevice(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
-  Device(Id i) : id(i), log(logging.get("kernel:pci")) {}
+  PciDevice(Id i) : id(i), log(Log::get("kernel:pci")) {}
 
-  Device(Slot s) : slot(s), log(logging.get("kernel:pci")) {}
+  PciDevice(Slot s) : slot(s), log(Log::get("kernel:pci")) {}
 
-  bool operator==(const Device &other);
+  bool operator==(const PciDevice &other);
 
   // Get currently loaded driver for device
   std::string getDriver() const;
@@ -106,25 +106,25 @@ protected:
                                            std::ios_base::out) const;
 };
 
-class DeviceList : public std::list<std::shared_ptr<Device>> {
+class PciDeviceList : public std::list<std::shared_ptr<PciDevice>> {
 private:
   // Initialize Linux PCI handle.
   //
   // This search for all available PCI devices under /sys/bus/pci
-  DeviceList();
-  DeviceList &operator=(const DeviceList &);
-  static DeviceList *instance;
+  PciDeviceList();
+  PciDeviceList &operator=(const PciDeviceList &);
+  static PciDeviceList *instance;
 
 public:
-  static DeviceList *getInstance();
+  static PciDeviceList *getInstance();
 
-  DeviceList::value_type lookupDevice(const Slot &s);
+  PciDeviceList::value_type lookupDevice(const Slot &s);
 
-  DeviceList::value_type lookupDevice(const Id &i);
+  PciDeviceList::value_type lookupDevice(const Id &i);
 
-  DeviceList::value_type lookupDevice(const Device &f);
+  PciDeviceList::value_type lookupDevice(const PciDevice &f);
 };
 
-} // namespace pci
+} // namespace devices
 } // namespace kernel
 } // namespace villas

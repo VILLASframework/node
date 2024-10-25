@@ -21,8 +21,8 @@
 
 using namespace villas;
 
-static std::shared_ptr<kernel::pci::DeviceList> pciDevices;
-static auto logger = villas::logging.get("villasfpga_dma");
+static std::shared_ptr<kernel::devices::PciDeviceList> pciDevices;
+static auto logger = villas::Log::get("villasfpga_dma");
 
 struct villasfpga_handle_t {
   std::shared_ptr<villas::fpga::Card> card;
@@ -40,7 +40,7 @@ villasfpga_handle villasfpga_init(const char *configFile) {
   bool dumpAuroraChannels = true;
   try {
     // Logging setup
-    logging.setLevel(spdlog::level::debug);
+    Log::getInstance().setLevel(spdlog::level::debug);
     fpga::setupColorHandling();
 
     if (configFile == nullptr || configFile[0] == '\0') {

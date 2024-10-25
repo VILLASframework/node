@@ -14,6 +14,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>
+#include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
@@ -36,7 +37,9 @@ static std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
 FpgaNode::FpgaNode(const uuid_t &id, const std::string &name)
     : Node(id, name), cardName(""), connectStrings(), lowLatencyMode(false),
-      timestep(10e-3), card(nullptr), dma(), blockRx(), blockTx() {}
+      timestep(10e-3), card(nullptr), dma(), blockRx(), accessorRxInt(nullptr),
+      accessorRxFloat(nullptr), blockTx(), accessorTxInt(nullptr),
+      accessorTxFloat(nullptr) {}
 
 FpgaNode::~FpgaNode() {}
 
@@ -74,7 +77,7 @@ int FpgaNode::prepare() {
 
   if (reg != nullptr &&
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
-        fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
+    fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, timestep);
   } else {
     logger->warn("No DinoAdc or no Register found on FPGA.");
   }
@@ -90,8 +93,10 @@ int FpgaNode::prepare() {
 
   blockRx = alloc.allocateBlock(0x200 * sizeof(float));
   blockTx = alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> memRx = *blockRx;
-  villas::MemoryAccessor<float> memTx = *blockTx;
+  accessorRxInt = std::make_shared<MemoryAccessor<uint32_t>>(*blockRx);
+  accessorTxInt = std::make_shared<MemoryAccessor<uint32_t>>(*blockTx);
+  accessorRxFloat = std::make_shared<MemoryAccessor<float>>(*blockRx);
+  accessorTxFloat = std::make_shared<MemoryAccessor<float>>(*blockTx);
 
   dma->makeAccesibleFromVA(blockRx);
   dma->makeAccesibleFromVA(blockTx);
@@ -183,12 +188,22 @@ const std::string &FpgaNode::getDetails() {
 int FpgaNode::check() { return Node::check(); }
 
 int FpgaNode::start() {
-  if (getOutputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
+  if (getOutputSignalsMaxCount() * sizeof(float) > blockTx->getSize()) {
+    logger->error("Output signals exceed block size.");
+    throw villas ::RuntimeError("Output signals exceed block size.");
+  }
+  if (getInputSignalsMaxCount() * sizeof(float) > blockRx->getSize()) {
     logger->error("Output signals exceed block size.");
     throw villas ::RuntimeError("Output signals exceed block size.");
   }
   if (lowLatencyMode) {
-    dma->readScatterGatherPrepare(*blockRx, blockRx->getSize());
+    if (getInputSignalsMaxCount() != 0) {
+      dma->readScatterGatherPrepare(*blockRx,
+                                    getInputSignalsMaxCount() * sizeof(float));
+    } else {
+      logger->warn("No input signals defined. Not preparing read buffer - "
+                   "reads will not work.");
+    }
     if (getOutputSignalsMaxCount() != 0) {
       dma->writeScatterGatherPrepare(*blockTx, getOutputSignalsMaxCount() *
                                                    sizeof(float));
@@ -209,23 +224,18 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
-  float scaled;
-
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
-      scaled = smp->data[i].f;
-      if (scaled > 10.) {
-        scaled = 10.;
-      } else if (scaled < -10.) {
-        scaled = -10.;
-      }
-      mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+      (*accessorTxFloat)[i] = static_cast<float>(smp->data[i].f);
+      ;
     } else {
-      mem[i] = smp->data[i].i;
+      (*accessorTxInt)[i] = static_cast<uint32_t>(smp->data[i].i);
     }
   }
 
+  logger->trace("Writing sample: {}, {}, {:#x}", smp->data[0].f,
+                signalTypeToString(smp->signals->getByIndex(0)->type),
+                smp->data[0].i);
   dma->writeScatterGatherFast();
   auto written = dma->writeScatterGatherPoll() /
                  sizeof(float); // The number of samples written
@@ -243,18 +253,37 @@ int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
 // what we have received. fastRead is thus capable of partial reads.
 int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   Sample *smp = smps[0];
-  auto mem = MemoryAccessor<float>(*blockRx);
 
   smp->flags = (int)SampleFlags::HAS_DATA;
   smp->signals = in.signals;
 
-  dma->readScatterGatherFast();
-  auto read = dma->readScatterGatherPoll(true);
+  size_t to_read = in.signals->size() * sizeof(uint32_t);
+  size_t read;
+  do {
+    dma->readScatterGatherFast();
+    read = dma->readScatterGatherPoll(true);
+    if (read < to_read) {
+      logger->warn("Read only {} bytes, but {} were expected", read, to_read);
+    }
+  } while (read < to_read);
+  // when we read less than expected we don't know what we missed so the data is
+  // useless. Thus, we discard what we read and try again.
+
   // We assume a lot without checking at this point. All for the latency!
 
   smp->length = 0;
-  for (unsigned i = 0; i < MIN(read / sizeof(float), smp->capacity); i++) {
-    smp->data[i].f = static_cast<double>(mem[i]);
+  for (unsigned i = 0; i < MIN(read / sizeof(uint32_t), smp->capacity); i++) {
+    if (i >= in.signals->size()) {
+      logger->warn(
+          "Received more data than expected. Maybe the descriptor cache needs "
+          "to be invalidated?. Ignoring the rest of the data.");
+      break;
+    }
+    if (in.signals->getByIndex(i)->type == SignalType::INTEGER) {
+      smp->data[i].i = static_cast<int64_t>((*accessorRxInt)[i]);
+    } else {
+      smp->data[i].f = static_cast<double>((*accessorRxFloat)[i]);
+    }
     smp->length++;
   }
 
@@ -312,17 +341,10 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
 
-  auto mem = MemoryAccessor<uint32_t>(*blockTx);
-  float scaled;
+  auto mem = MemoryAccessor<float>(*blockTx);
 
   for (unsigned i = 0; i < smps[0]->length; i++) {
-    scaled = smps[0]->data[i].f;
-    if (scaled > 10.) {
-      scaled = 10.;
-    } else if (scaled < -10.) {
-      scaled = -10.;
-    }
-    mem[i] = (scaled + 10.) * ((float)0xFFFF / 20.);
+    mem[i] = smps[0]->data[i].f;
   }
 
   bool state = dma->write(*blockTx, smp->length * sizeof(float));

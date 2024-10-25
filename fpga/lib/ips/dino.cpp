@@ -1,7 +1,7 @@
 /* Driver for wrapper around standard Xilinx Aurora (xilinx.com:ip:aurora_8b10b)
  *
- * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023-2024 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -141,23 +141,42 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                                 double sampleRate) {
   constexpr double dinoClk = 25e6; // Dino is clocked with 25 Mhz
   constexpr size_t dinoRegisterTimer = 0;
-  constexpr size_t dinoRegisterScale = 1;
-  constexpr size_t dinoRegisterOffset = 2;
+  constexpr size_t dinoRegisterAdcScale = 1;
+  constexpr size_t dinoRegisterAdcOffset = 2;
+  constexpr size_t dinoRegisterDacExternalTrig = 4;
+  constexpr size_t dinoRegisterStsActive = 5;
+  constexpr size_t dinoRegisterDacScale = 6;
+  constexpr size_t dinoRegisterDacOffset = 7;
 
   uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate);
   double rateError = dinoClk / dinoTimerVal - sampleRate;
   reg->setRegister(
       dinoRegisterTimer,
       dinoTimerVal); // Timer value for generating ADC trigger signal
-  reg->setRegister(dinoRegisterScale,
-                   -0.001615254F);                // Scale factor for ADC value
-  reg->setRegister(dinoRegisterOffset, 10.8061F); // Offset for ADC value
-  uint32_t rate = reg->getRegister(0);
-  float scale = reg->getRegisterFloat(1);
-  float offset = reg->getRegisterFloat(2);
-  logging.get("Dino")->info("Check: Register configuration: Rate: {}, Scale: "
-                            "{}, Offset: {}, Rate-Error: {} Hz",
-                            rate, scale, offset, rateError);
+  // The following are calibration values for the ADC and DAC. Scale
+  // sets an factor to be multiplied with the input value. This is the
+  // raw 16 bit ADC value for the ADC and the float value from VILLAS for
+  // the DAC. Offset is a value to be added to the result of the multiplication.
+  // All values are IEE 754 single precision floating point values.
+  reg->setRegister(dinoRegisterAdcScale,
+                   -0.001615254F); // Scale factor for ADC value
+  reg->setRegister(dinoRegisterAdcOffset, 10.8061F); // Offset for ADC value
+  reg->setRegister(dinoRegisterDacScale,
+                   3448.53852516F); // Scale factor for DAC value
+  reg->setRegister(dinoRegisterDacOffset, 32767.5F); // Offset for DAC value
+  uint32_t rate = reg->getRegister(dinoRegisterTimer);
+  float adcScale = reg->getRegisterFloat(dinoRegisterAdcScale);
+  float adcOffset = reg->getRegisterFloat(dinoRegisterAdcOffset);
+  float dacScale = reg->getRegisterFloat(dinoRegisterDacScale);
+  float dacOffset = reg->getRegisterFloat(dinoRegisterDacOffset);
+  uint32_t dacExternalTrig = reg->getRegister(dinoRegisterDacExternalTrig);
+  uint32_t stsActive = reg->getRegister(dinoRegisterStsActive);
+  Log::get("Dino")->info(
+      "Check: Register configuration: TimerThresh: {}, Rate-Error: {} Hz, ADC "
+      "Scale: {}, ADC Offset: {}, DAC Scale: {}, DAC Offset: {}, DAC External "
+      "Trig: {:#x}, STS Active: {:#x}",
+      rate, rateError, adcScale, adcOffset, dacScale, dacOffset,
+      dacExternalTrig, stsActive);
 }
 
 DinoDac::DinoDac() : Dino() {}

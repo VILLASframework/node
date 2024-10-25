@@ -18,7 +18,7 @@ using namespace villas;
 TestSuite(graph, .description = "Graph library");
 
 Test(graph, basic, .description = "DirectedGraph") {
-  Logger logger = logging.get("test:graph:basic");
+  Logger logger = Log::get("test:graph:basic");
   villas::graph::DirectedGraph<> g("test:graph:basic");
 
   logger->info("Testing basic graph construction and modification");
@@ -48,7 +48,7 @@ Test(graph, basic, .description = "DirectedGraph") {
 }
 
 Test(graph, path, .description = "Find path") {
-  Logger logger = logging.get("test:graph:path");
+  Logger logger = Log::get("test:graph:path");
   logger->info("Testing path finding algorithm");
 
   using Graph = villas::graph::DirectedGraph<>;
@@ -109,7 +109,7 @@ Test(graph, path, .description = "Find path") {
 }
 
 Test(graph, memory_manager, .description = "Global Memory Manager") {
-  Logger logger = logging.get("test:graph:mm");
+  Logger logger = Log::get("test:graph:mm");
   auto &mm = villas::MemoryManager::get();
 
   logger->info("Create address spaces");

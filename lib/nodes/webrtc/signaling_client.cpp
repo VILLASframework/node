@@ -24,7 +24,7 @@ SignalingClient::SignalingClient(const std::string &server,
                                  const std::string &session,
                                  const std::string &peer, Web *w)
     : retry_count(0), web(w), running(false),
-      logger(logging.get("webrtc:signal")) {
+      logger(Log::get("webrtc:signal")) {
   int ret;
   const char *prot, *a, *p;
 

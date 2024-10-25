@@ -36,7 +36,7 @@ static size_t hugepgsz = -1;
 static Logger logger;
 
 int villas::node::memory::mmap_init(int hugepages) {
-  logger = logging.get("memory:mmap");
+  logger = Log::get("memory:mmap");
 
   pgsz = kernel::getPageSize();
   if (pgsz < 0)

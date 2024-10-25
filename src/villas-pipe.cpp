@@ -57,7 +57,7 @@ public:
       : node(n), formatter(fmt), stop(false), enabled(en), limit(lim),
         count(0) {
     auto loggerName = fmt::format("pipe:{}", name);
-    logger = logging.get(loggerName);
+    logger = Log::get(loggerName);
 
     // Initialize memory
     unsigned pool_size =
@@ -372,7 +372,7 @@ protected:
         break;
 
       case 'd':
-        logging.setLevel(optarg);
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'h':
@@ -404,7 +404,7 @@ protected:
     json_t *json_format;
     json_error_t err;
 
-    logger->info("Logging level: {}", logging.getLevelName());
+    logger->info("Logging level: {}", Log::getInstance().getLevelName());
 
     if (!uri.empty())
       sn.parse(uri);

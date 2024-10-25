@@ -46,7 +46,7 @@ int villas::node::queue_init(struct CQueue *q, size_t size,
     size_t old_size = size;
     size = LOG2_CEIL(size);
 
-    auto logger = logging.get("queue");
+    auto logger = Log::get("queue");
     logger->warn("A queue size was changed from {} to {}", old_size, size);
   }
 

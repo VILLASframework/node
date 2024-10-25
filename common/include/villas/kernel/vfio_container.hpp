@@ -35,8 +35,7 @@ static constexpr size_t EXTENSION_SIZE = VFIO_NOIOMMU_IOMMU + 1;
 
 class Container {
 public:
-  Container(std::vector<std::string> required_modules = {"vfio", "vfio_pci",
-                                                         "vfio_iommu_type1"});
+  Container(std::vector<std::string> required_modules = {"vfio"});
 
   // No copying allowed because we manage the vfio state in constructor and destructors
   Container(Container const &) = delete;
@@ -47,9 +46,10 @@ public:
   void dump();
 
   void attachGroup(std::shared_ptr<Group> group);
+  std::shared_ptr<Group> getOrAttachGroup(int index);
 
   std::shared_ptr<Device> attachDevice(const std::string &name, int groupIndex);
-  std::shared_ptr<Device> attachDevice(pci::Device &pdev);
+  std::shared_ptr<Device> attachDevice(devices::PciDevice &pdev);
 
   // Map VM to an IOVA, which is accessible by devices in the container
   //
@@ -65,8 +65,6 @@ public:
   bool isIommuEnabled() const { return this->hasIommu; }
 
 private:
-  std::shared_ptr<Group> getOrAttachGroup(int index);
-
   int fd;
   int version;
 

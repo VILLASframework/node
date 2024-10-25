@@ -28,7 +28,7 @@ protected:
 
     const char *argv[] = {"villas-node", cfg, nullptr};
 
-    Logger logger = logging.get("api:restart");
+    Logger logger = Log::get("api:restart");
 
     if (cfg)
       logger->info("Restarting instance: config={}", cfg);

@@ -38,7 +38,7 @@ using namespace villas::kernel::vfio;
 
 Group::Group(int index, bool iommuEnabled)
     : fd(-1), index(index), attachedToContainer(false), status(), devices(),
-      log(logging.get("kernel:vfio:group")) {
+      log(Log::get("kernel:vfio:group")) {
   // Open group fd
   std::stringstream groupPath;
   groupPath << VFIO_PATH << (iommuEnabled ? "" : "noiommu-") << index;
@@ -68,7 +68,7 @@ std::shared_ptr<Device> Group::attachDevice(std::shared_ptr<Device> device) {
 
 std::shared_ptr<Device>
 Group::attachDevice(const std::string &name,
-                    const kernel::pci::Device *pci_device) {
+                    const kernel::devices::PciDevice *pci_device) {
   auto device = std::make_shared<Device>(name, fd, pci_device);
   return attachDevice(device);
 }

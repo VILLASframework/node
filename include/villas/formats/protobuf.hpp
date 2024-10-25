@@ -7,12 +7,7 @@
 
 #pragma once
 
-#include <cstdlib>
-
 #include <villas/format.hpp>
-
-// Generated message descriptors by protoc
-#include <villas.pb-c.h>
 
 namespace villas {
 namespace node {
@@ -21,9 +16,6 @@ namespace node {
 struct Sample;
 
 class ProtobufFormat : public BinaryFormat {
-
-protected:
-  enum SignalType detect(const Villas__Node__Value *val);
 
 public:
   using BinaryFormat::BinaryFormat;

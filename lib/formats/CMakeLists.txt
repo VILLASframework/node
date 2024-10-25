@@ -25,6 +25,9 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
         COMMAND ${PROTOBUFC_COMPILER}
             --c_out=${CMAKE_CURRENT_BINARY_DIR}
             villas.proto
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.h
+            ${CMAKE_BINARY_DIR}/include/villas/formats/villas.pb-c.h
         MAIN_DEPENDENCY villas.proto
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )

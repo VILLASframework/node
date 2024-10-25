@@ -12,7 +12,7 @@
 using namespace villas::node::api;
 
 Response::Response(Session *s, int c, const std::string &ct, const Buffer &b)
-    : session(s), logger(logging.get("api:response")), buffer(b), code(c),
+    : session(s), logger(Log::get("api:response")), buffer(b), code(c),
       contentType(ct),
       headers{{"Server:", HTTP_USER_AGENT},
               {"Access-Control-Allow-Origin:", "*"},

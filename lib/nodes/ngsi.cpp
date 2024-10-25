@@ -41,7 +41,7 @@ using namespace villas::utils;
 static pthread_mutex_t *mutex_buf = NULL;
 
 static void handle_error(const char *file, int lineno, const char *msg) {
-  auto logger = logging.get("curl");
+  auto logger = Log::get("curl");
 
   logger->error("** {}:{} {}", file, lineno, msg);
 
@@ -550,7 +550,7 @@ int villas::node::ngsi_type_start(villas::node::SuperNode *sn) {
   CRYPTO_set_id_callback(curl_ssl_thread_id_function);
   CRYPTO_set_locking_callback(curl_ssl_locking_function);
 
-  auto logger = logging.get("curl");
+  auto logger = Log::get("curl");
   logger->info("Setup libcurl/openssl locking primitives");
 #endif // CURL_SSL_REQUIRES_LOCKING
 

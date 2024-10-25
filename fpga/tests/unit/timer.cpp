@@ -16,7 +16,7 @@
 
 // cppcheck-suppress unknownMacro
 Test(fpga, timer, .description = "Timer Counter") {
-  auto logger = villas::logging.get("unit-test:timer");
+  auto logger = villas::Log::get("unit-test:timer");
 
   size_t count = 0;
   for (auto &ip : state.cards.front()->ips) {

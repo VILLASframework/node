@@ -36,7 +36,7 @@ namespace tools {
 RelaySession::RelaySession(Relay *r, Identifier sid)
     : identifier(sid), connects(0) {
   auto loggerName = fmt::format("relay:{}", sid);
-  logger = villas::logging.get(loggerName);
+  logger = villas::Log::get(loggerName);
 
   logger->info("Session created: {}", identifier);
 
@@ -76,7 +76,7 @@ RelaySession *RelaySession::get(Relay *r, lws *wsi) {
 
     return rs;
   } else {
-    auto logger = logging.get("villas-relay");
+    auto logger = Log::get("villas-relay");
     logger->info("Found existing session: {}", sid);
 
     return it->second;
@@ -198,7 +198,8 @@ Relay::Relay(int argc, char *argv[])
     throw RuntimeError("Failed to initialize memory");
 
   // Initialize logging
-  lws_set_log_level(Web::lwsLogLevel(logging.getLevel()), Web::lwsLogger);
+  lws_set_log_level(Web::lwsLogLevel(Log::getInstance().getLevel()),
+                    Web::lwsLogger);
 
   protocols = {{.name = "http",
                 .callback = lws_callback_http_dummy,
@@ -354,8 +355,9 @@ void Relay::parse() {
   while ((c = getopt(argc, argv, "hVp:P:ld:u:")) != -1) {
     switch (c) {
     case 'd':
-      logging.setLevel(optarg);
-      lws_set_log_level(Web::lwsLogLevel(logging.getLevel()), Web::lwsLogger);
+      Log::getInstance().setLevel(optarg);
+      lws_set_log_level(Web::lwsLogLevel(Log::getInstance().getLevel()),
+                        Web::lwsLogger);
       break;
 
     case 'p':
@@ -422,7 +424,7 @@ int Relay::main() {
   ctx_info.mounts = &mount;
   ctx_info.user = (void *)this;
 
-  auto lwsLogger = logging.get("lws");
+  auto lwsLogger = Log::get("lws");
 
   context = lws_create_context(&ctx_info);
   if (context == nullptr) {

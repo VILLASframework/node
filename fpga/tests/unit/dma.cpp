@@ -20,7 +20,7 @@ using namespace villas;
 
 // cppcheck-suppress unknownMacro
 Test(fpga, dma, .description = "DMA") {
-  auto logger = logging.get("unit-test:dma");
+  auto logger = Log::get("unit-test:dma");
 
   std::list<std::shared_ptr<fpga::ip::Dma>> dmaIps;
 

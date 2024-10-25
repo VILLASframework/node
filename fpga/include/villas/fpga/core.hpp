@@ -107,6 +107,7 @@ protected:
   virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
 
 public:
+  size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
 
   // Operators
@@ -201,6 +202,8 @@ protected:
 
   // AXI bus master interfaces to access memory somewhere
   std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
+
+  size_t baseaddr = 0;
 };
 
 class CoreFactory : public plugin::Plugin {
@@ -225,14 +228,12 @@ protected:
     IRQ,
   };
 
-  Logger getLogger() { return villas::logging.get(getName()); }
+  Logger getLogger() { return villas::Log::get(getName()); }
 
   // Configure IP instance from JSON config
   virtual void parse(Core &, json_t *) {}
 
-  static Logger getStaticLogger() {
-    return villas::logging.get("core:factory");
-  }
+  static Logger getStaticLogger() { return villas::Log::get("core:factory"); }
 
 private:
   virtual void configurePollingMode(Core &, PollingMode) {}

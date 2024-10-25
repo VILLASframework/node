@@ -32,7 +32,7 @@ PeerConnection::PeerConnection(const std::string &server,
                                rtc::DataChannelInit d)
     : web(w), extraServers({}), dataChannelInit(d), defaultConfig(cfg),
       conn(nullptr), chan(nullptr), out_signals(out_signals),
-      logger(logging.get("webrtc:pc")), stopStartup(false),
+      logger(Log::get("webrtc:pc")), stopStartup(false),
       warnNotConnected(false), standby(true), first(false), firstID(INT_MAX),
       secondID(INT_MAX), onMessageCallback(nullptr) {
   client = std::make_shared<SignalingClient>(server, session, peer, web);

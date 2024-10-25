@@ -42,7 +42,7 @@ static struct Allocation *ib_alloc(size_t len, size_t alignment,
   ma->address = ma->parent->address;
 
   if (!mi->pd) {
-    auto logger = logging.get("memory:ib");
+    auto logger = Log::get("memory:ib");
     logger->error("Protection domain is not registered!");
   }
 

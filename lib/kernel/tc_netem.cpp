@@ -277,7 +277,7 @@ int villas::kernel::tc::netem(Interface *i, struct rtnl_qdisc **qd,
 
   *qd = q;
 
-  auto logger = logging.get("kernel");
+  auto logger = Log::get("kernel");
   logger->debug("Added netem qdisc to interface '{}'",
                 rtnl_link_get_name(i->nl_link));
 

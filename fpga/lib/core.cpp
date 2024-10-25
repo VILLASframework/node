@@ -126,9 +126,19 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     // Setup generic IP type properties
     ip->card = card;
     ip->id = id;
-    ip->logger = villas::logging.get(id.getName());
+    ip->logger = villas::Log::get(id.getName());
 
     json_t *json_ip = json_object_get(json_ips, id.getName().c_str());
+
+    // parse ip baseadress
+    json_t *json_parameters = json_object_get(json_ip, "parameters");
+    if (json_is_object(json_parameters)) {
+      json_int_t c_baseaddr = 0;
+      int baseaddress_found =
+          json_unpack(json_parameters, "{ s?: I }", "c_baseaddr", &c_baseaddr);
+      if (baseaddress_found == 0)
+        ip->baseaddr = c_baseaddr;
+    }
 
     json_t *json_irqs = json_object_get(json_ip, "irqs");
     if (json_is_object(json_irqs)) {

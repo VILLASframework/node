@@ -78,7 +78,7 @@ struct libusb_context *villas::usb::init() {
   int ret;
   struct libusb_context *ctx;
 
-  logger = logging.get("usb");
+  logger = Log::get("usb");
 
   ret = libusb_init(&ctx);
   if (ret)

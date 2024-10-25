@@ -470,7 +470,7 @@ int villas::node::kafka_stop(NodeCompat *n) {
 int villas::node::kafka_type_start(villas::node::SuperNode *sn) {
   int ret;
 
-  logger = logging.get("node:kafka");
+  logger = Log::get("node:kafka");
 
   ret = list_init(&clients);
   if (ret)

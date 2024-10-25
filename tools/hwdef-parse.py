@@ -46,6 +46,7 @@ whitelist = [
     ["xilinx.com", "ip", "xdma"],
     ["xilinx.com", "ip", "axi_iic"],
     ["xilinx.com", "module_ref", "dinoif_fast"],
+    ["xilinx.com", "module_ref", "dinoif_fast_nologic"],
     ["xilinx.com", "module_ref", "dinoif_dac"],
     ["xilinx.com", "module_ref", "axi_pcie_intc"],
     ["xilinx.com", "module_ref", "registerif"],
@@ -174,6 +175,8 @@ for module in modules:
             try:
                 value = int(value, 0)
             except ValueError:
+                pass
+            except TypeError:
                 pass
 
             p[name] = value

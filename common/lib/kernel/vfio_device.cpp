@@ -53,10 +53,10 @@ static const char *vfio_pci_irq_names[] = {
 };
 
 Device::Device(const std::string &name, int groupFileDescriptor,
-               const kernel::pci::Device *pci_device)
+               const kernel::devices::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
       info(), irqs(), regions(), mappings(), pci_device(pci_device),
-      log(logging.get("kernel:vfio:device")) {
+      log(Log::get("kernel:vfio:device")) {
   if (groupFileDescriptor < 0)
     throw RuntimeError("Invalid group file descriptor");
 
@@ -293,8 +293,8 @@ int Device::pciMsiInit(int efds[]) {
 }
 
 int Device::pciMsiDeinit(int efds[]) {
-  logging.get("Device")->debug("Deinitializing MSI interrupts for device {}",
-                               name);
+  Log::get("Device")->debug("Deinitializing MSI interrupts for device {}",
+                            name);
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;

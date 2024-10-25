@@ -76,7 +76,7 @@ static int rtp_aimd(NodeCompat *n, double loss_frac) {
 int villas::node::rtp_init(NodeCompat *n) {
   auto *r = n->getData<struct rtp>();
 
-  n->logger = villas::logging.get("node:rtp");
+  n->logger = villas::Log::get("node:rtp");
 
   // Default values
   r->aimd.a = 10;

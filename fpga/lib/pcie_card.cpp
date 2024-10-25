@@ -13,7 +13,8 @@
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
+#include <villas/kernel/kernel.hpp>
 #include <villas/kernel/vfio_container.hpp>
 #include <villas/memory.hpp>
 
@@ -23,14 +24,18 @@ using namespace villas::fpga;
 // Instantiate factory to register
 static PCIeCardFactory PCIeCardFactoryInstance;
 
-static const kernel::pci::Device
-    defaultFilter((kernel::pci::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
+static const kernel::devices::PciDevice defaultFilter(
+    (kernel::devices::Id(FPGA_PCI_VID_XILINX, FPGA_PCI_PID_VFPGA)));
 
 std::shared_ptr<PCIeCard>
 PCIeCardFactory::make(json_t *json_card, std::string card_name,
                       std::shared_ptr<kernel::vfio::Container> vc,
                       const std::filesystem::path &searchPath) {
   auto logger = getStaticLogger();
+
+  // make sure the vfio container has the required modules
+  kernel::loadModule("vfio_pci");
+  kernel::loadModule("vfio_iommu_type1");
 
   json_t *json_ips = nullptr;
   json_t *json_paths = nullptr;
@@ -58,15 +63,16 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   card->doReset = do_reset != 0;
   card->polling = (polling != 0);
 
-  kernel::pci::Device filter = defaultFilter;
+  kernel::devices::PciDevice filter = defaultFilter;
 
   if (pci_id)
-    filter.id = kernel::pci::Id(pci_id);
+    filter.id = kernel::devices::Id(pci_id);
   if (pci_slot)
-    filter.slot = kernel::pci::Slot(pci_slot);
+    filter.slot = kernel::devices::Slot(pci_slot);
 
   // Search for FPGA card
-  card->pdev = kernel::pci::DeviceList::getInstance()->lookupDevice(filter);
+  card->pdev =
+      kernel::devices::PciDeviceList::getInstance()->lookupDevice(filter);
   if (!card->pdev) {
     logger->warn("Failed to find PCI device");
     return nullptr;

@@ -31,7 +31,7 @@ static Logger logger;
 int villas::node::memory::init(int hugepages) {
   int ret;
 
-  logger = logging.get("memory");
+  logger = Log::get("memory");
 
   logger->info("Initialize memory sub-system: #hugepages={}", hugepages);
 

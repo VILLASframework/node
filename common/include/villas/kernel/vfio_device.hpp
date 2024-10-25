@@ -19,7 +19,7 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#include <villas/kernel/pci.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
 #include <villas/log.hpp>
 
 namespace villas {
@@ -29,7 +29,7 @@ namespace vfio {
 class Device {
 public:
   Device(const std::string &name, int groupFileDescriptor,
-         const kernel::pci::Device *pci_device = nullptr);
+         const kernel::devices::PciDevice *pci_device = nullptr);
   ~Device();
 
   // No copying allowed because we manage the vfio state in constructor and destructors
@@ -68,6 +68,8 @@ public:
 
   void setAttachedToGroup() { this->attachedToGroup = true; }
 
+  int getNumberIrqs() const { return this->info.num_irqs; }
+
 private:
   // Name of the device as listed under
   // /sys/kernel/iommu_groups/[vfio_group::index]/devices/
@@ -89,7 +91,7 @@ private:
   std::vector<void *> mappings;
 
   // libpci handle of the device
-  const kernel::pci::Device *pci_device;
+  const kernel::devices::PciDevice *pci_device;
 
   Logger log;
 };

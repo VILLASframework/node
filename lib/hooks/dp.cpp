@@ -27,7 +27,6 @@ protected:
   char *signal_name;
   unsigned signal_index;
 
-  int offset;
   int inverse;
 
   double f0;
@@ -43,7 +42,7 @@ protected:
 
   void step(double *in, std::complex<float> *out) {
     int N = window.size();
-    __attribute__((unused)) std::complex<double> om_k, corr;
+    std::complex<double> om_k, corr;
     double newest = *in;
     __attribute__((unused)) double oldest = window.update(newest);
 
@@ -97,8 +96,8 @@ protected:
 public:
   DPHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), signal_name(nullptr), signal_index(0),
-        offset(0), inverse(0), f0(50.0), timestep(50e-6), time(), steps(0),
-        coeffs(), fharmonics(), fharmonics_len(0) {}
+        inverse(0), f0(50.0), timestep(50e-6), time(), steps(0), coeffs(),
+        fharmonics(), fharmonics_len(0) {}
 
   virtual ~DPHook() {
     // Release memory
@@ -122,6 +121,10 @@ public:
       coeffs[i] = 0;
 
     window = dsp::Window<double>((1.0 / f0) / timestep, 0.0);
+    if (window.size() == 0) {
+      throw RuntimeError(
+          "Windows size is 0: f0 * timestep < 1.0 not satisfied");
+    }
 
     state = State::STARTED;
   }
@@ -221,7 +224,7 @@ public:
       if (!new_sig)
         throw RuntimeError("Failed to create signal");
 
-      signals->insert(signals->begin() + offset, new_sig);
+      signals->insert(signals->begin() + signal_index, new_sig);
     } else {
       auto orig_sig = signals->getByIndex(signal_index);
       if (!orig_sig)
@@ -240,7 +243,7 @@ public:
         if (!new_sig)
           throw RuntimeError("Failed to create new signal");
 
-        signals->insert(signals->begin() + offset, new_sig);
+        signals->insert(signals->begin() + signal_index, new_sig);
       }
     }
 
@@ -277,7 +280,7 @@ public:
       istep(coeffs, &signal);
 
       sample_data_remove(smp, signal_index, fharmonics_len);
-      sample_data_insert(smp, (union SignalData *)&signal, offset, 1);
+      sample_data_insert(smp, (union SignalData *)&signal, signal_index, 1);
     } else {
       double signal = smp->data[signal_index].f;
       std::complex<float> coeffs[fharmonics_len];
@@ -285,7 +288,7 @@ public:
       step(&signal, coeffs);
 
       sample_data_remove(smp, signal_index, 1);
-      sample_data_insert(smp, (union SignalData *)coeffs, offset,
+      sample_data_insert(smp, (union SignalData *)coeffs, signal_index,
                          fharmonics_len);
     }
 

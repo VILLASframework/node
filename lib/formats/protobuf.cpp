@@ -11,9 +11,12 @@
 #include <villas/signal.hpp>
 #include <villas/utils.hpp>
 
+// Generated message descriptors by protoc
+#include <villas/formats/villas.pb-c.h>
+
 using namespace villas::node;
 
-enum SignalType ProtobufFormat::detect(const Villas__Node__Value *val) {
+static enum SignalType detect(const Villas__Node__Value *val) {
   switch (val->value_case) {
   case VILLAS__NODE__VALUE__VALUE_F:
     return SignalType::FLOAT;

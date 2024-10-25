@@ -21,7 +21,7 @@ using namespace villas::node;
 using namespace villas::node::api;
 
 Session::Session(lws *w)
-    : version(Version::VERSION_2), wsi(w), logger(logging.get("api:session")) {
+    : version(Version::VERSION_2), wsi(w), logger(Log::get("api:session")) {
   lws_context *ctx = lws_get_context(wsi);
   void *user_ctx = lws_context_user(ctx);
 

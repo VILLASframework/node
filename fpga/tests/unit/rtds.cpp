@@ -29,7 +29,7 @@ using namespace villas::fpga::ip;
 
 // cppcheck-suppress unknownMacro
 Test(fpga, rtds, .description = "RTDS") {
-  auto logger = villas::logging.get("unit-test:rtds");
+  auto logger = villas::Log::get("unit-test:rtds");
 
   std::list<villas::fpga::ip::RtdsGtfpga *> rtdsIps;
   std::list<villas::fpga::ip::Dma *> dmaIps;

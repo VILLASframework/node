@@ -113,7 +113,7 @@ Path::Path()
       rate(0), // Disabled
       affinity(0), enabled(true), poll(-1), reversed(false), builtin(true),
       original_sequence_no(-1), queuelen(DEFAULT_QUEUE_LENGTH),
-      logger(logging.get(fmt::format("path:{}", id++))) {
+      logger(Log::get(fmt::format("path:{}", id++))) {
   uuid_clear(uuid);
 
   pool.state = State::DESTROYED;

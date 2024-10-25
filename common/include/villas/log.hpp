@@ -20,12 +20,7 @@
 namespace villas {
 
 // Forward declarations
-class Log;
-
 using Logger = std::shared_ptr<spdlog::logger>;
-
-extern Log logging;
-
 class Log {
 
 public:
@@ -64,7 +59,19 @@ public:
 
   void parse(json_t *json);
 
-  Logger get(const std::string &name);
+  static Log &getInstance() {
+    // This will "leak" memory. Because we don't have a complex destructor it's okay
+    // that this will be cleaned up implicitly on program exit.
+    static auto log = new Log();
+    return *log;
+  };
+
+  Logger getNewLogger(const std::string &name);
+
+  static Logger get(const std::string &name) {
+    static auto &log = getInstance();
+    return log.getNewLogger(name);
+  }
 
   void setFormatter(const std::string &pattern, const std::string &pfx = "");
   void setLevel(Level lvl);
