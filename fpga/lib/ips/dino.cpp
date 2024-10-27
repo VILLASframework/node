@@ -165,15 +165,11 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   // the DAC. Offset is a value to be added to the result of the multiplication.
   // All values are IEE 754 single precision floating point values.
   // Calibration for ADC filter with C=330pF and R=2,2kOhm
+  // FIXME: These values should be read from the FPGA or configured via the configuration file.
   reg->setRegister(dinoRegisterAdcScale,
                    0.0016874999385349976F); // Scale factor for ADC value
   reg->setRegister(dinoRegisterAdcOffset,
                    -11.365293957141239F); // Offset for ADC value
-  // Calibration for ADC filter with C=10nF and R=51Ohm
-  // reg->setRegister(dinoRegisterAdcScale,
-  //                  0.0016106590470092842F); // Scale factor for ADC value
-  // reg->setRegister(dinoRegisterAdcOffset,
-  //                  -10.854544688476798F); // Offset for ADC value
   reg->setRegister(dinoRegisterDacScale,
                    3204.7355379027363F); // Scale factor for DAC value
   reg->setRegister(dinoRegisterDacOffset,
