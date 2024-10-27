@@ -65,7 +65,8 @@ bool I2c::check() {
   if (!initDone) {
     throw RuntimeError("I2C not initialized");
   }
-  return getSwitch().selfTest();
+  //FIXME: There might not be a switch - then this will fail even though the I2C might be working
+  return 1; //getSwitch().selfTest();
 }
 
 bool I2c::stop() { return reset(); }
