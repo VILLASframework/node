@@ -44,6 +44,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   int do_reset = 0;
   int affinity = 0;
   int polling = 0;
+  json_t *ignored_ips_array = nullptr;
 
   json_error_t err;
   int ret = json_unpack_ex(
@@ -62,6 +63,13 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   card->affinity = affinity;
   card->doReset = do_reset != 0;
   card->polling = (polling != 0);
+
+  // Parse ignored ip names to list
+  size_t index;
+  json_t *value;
+  json_array_foreach(ignored_ips_array, index, value) {
+    card->ignored_ip_names.push_back(json_string_value(value));
+  }
 
   kernel::devices::PciDevice filter = defaultFilter;
 
