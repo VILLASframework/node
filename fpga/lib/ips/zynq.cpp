@@ -26,6 +26,8 @@ bool Zynq::init() {
   // allocating DMA memory in host RAM)
   card->addrSpaceIdDeviceToHost =
       mm.getOrCreateAddressSpace(getInstanceName() + "/HPC0_DDR_LOW");
+      // TODO: Use BusMasterInterfaces
+      // TODO: Multiple addressSpaces
   return true;
 }
 
