@@ -11,6 +11,7 @@
 #pragma once
 
 #include <set>
+#include <string>
 
 #include <villas/fpga/core.hpp>
 #include <villas/kernel/vfio_container.hpp>
@@ -36,6 +37,7 @@ public:
   MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
   std::list<std::shared_ptr<ip::Core>> ips;
+  std::list<std::string> ignored_ip_names;
 
   virtual ~Card();
 
