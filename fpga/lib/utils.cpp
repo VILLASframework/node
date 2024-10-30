@@ -246,9 +246,9 @@ fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
                                            vfioContainer, searchPath);
     // TODO: implement variable connection
     // Configure Axi-Switch for DMA loopback
-    auto axi_switch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
-        card->lookupIp(fpga::Vlnv("xilinx.com:ip:axis_switch:")));
-    axi_switch->connectInternal("S00_AXIS", "M00_AXIS");
+    //auto axi_switch = std::dynamic_pointer_cast<fpga::ip::AxiStreamSwitch>(
+    //    card->lookupIp(fpga::Vlnv("xilinx.com:ip:axis_switch:")));
+    //axi_switch->connectInternal("S00_AXIS", "M00_AXIS");
 
   } else {
     throw RuntimeError("Unknown interface type {}", interfaceNameStr);
