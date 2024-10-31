@@ -91,7 +91,18 @@ build:nix:
   stage: build
   image: nixos/nix
   needs: []
+
+  artifacts:
+    when: on_success
+    access: all
+    expire_in: "1 year"
+    paths:
+      - artifacts/villas
+
   before_script:
+    - | # Create artifacts directory
+      mkdir artifacts
+
     - | # Configure Nix
       echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
 
@@ -103,6 +114,8 @@ build:nix:
 
   script:
     - nix build --print-build-logs .
+    - nix bundle --out-link villas .
+    - cp -L villas artifacts/villas
 
   # after_script:
   #   - | # Push whole store to cache
