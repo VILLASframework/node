@@ -67,11 +67,10 @@ CoreFactory::filterIps(std::list<IpIdentifier> allIps,
     const auto &ipName = ip.getName();
 
     if (ignored_ip_set.find(ipName) != ignored_ip_set.end()) {
-      CoreFactory::getStaticLogger()->warn(
+      CoreFactory::getStaticLogger()->info(
           "Ignoring Ip {} (explicitly on ignorelist)", ipName);
     } else {
-      filteredIps.push_back(
-          ip); // Or use `filteredIps.emplace_back(std::move(ip));` if moving is preferred.
+      filteredIps.push_back(ip);
     }
   }
 
