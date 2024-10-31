@@ -22,7 +22,8 @@ public:
 
 private:
   IpDevice() = delete;
-  IpDevice(const std::filesystem::path valid_path) //! Dont allow unvalidated paths
+  IpDevice(
+      const std::filesystem::path valid_path) //! Dont allow unvalidated paths
       : PlatformDevice(valid_path){};
 
 public:
