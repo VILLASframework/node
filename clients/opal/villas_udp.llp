@@ -1,23 +1,31 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen
+University
 SPDX-License-Identifier: Apache-2.0
 -->
 <Project>
     <General>
         <att_name>villas_udp</att_name>
         <att_description>This is a project!</att_description>
-        <att_ip_address>134.130.169.120:25251</att_ip_address>
-        <att_hashcode>7CA55C76-B20E-414C-93F2-A1858B0095F3</att_hashcode>
+        <att_ip_address>10.208.16.93:25251</att_ip_address>
+        <att_hashcode>1D336193-6957-4E55-B7F9-1E9E09E9BE58</att_hashcode>
         <att_autosave>ON</att_autosave>
-        <att_filename>C:\Users\svo\workspace\villas\node\clients\opal\villas_udp.llp</att_filename>
+        <att_project_locked>0</att_project_locked>
+        <att_filename>C:\Git\external\villas\node\clients\opal\villas_udp.llp</att_filename>
     </General>
+    <Optionals>
+        <att_donotask_loadcfg_at_prjopen>0</att_donotask_loadcfg_at_prjopen>
+        <att_matlab_compile_outprocess>OFF</att_matlab_compile_outprocess>
+        <att_donotremind_labviewdeprecated>FALSE</att_donotremind_labviewdeprecated>
+    </Optionals>
     <Models>
         <Model>
             <Path>
                 <Relative>models/send_receive/send_receive.mdl</Relative>
-                <Absolute>C:/Users/svo/workspace/villas/node/clients/opal/models/send_receive/send_receive.mdl</Absolute>
-                <UNC>C:/Users/svo/workspace/villas/node/clients/opal/models/send_receive/send_receive.mdl</UNC>
+                <Absolute>
+                    C:/Git/external/villas/node/clients/opal/models/send_receive/send_receive.mdl</Absolute>
+                <UNC>C:/Git/external/villas/node/clients/opal/models/send_receive/send_receive.mdl</UNC>
             </Path>
         </Model>
     </Models>
