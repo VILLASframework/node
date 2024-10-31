@@ -87,6 +87,28 @@ build:source:
           -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
           -DCMAKE_PREFIX_PATH=/usr/local
 
+build:nix:
+  stage: build
+  image: nixos/nix
+  before_script:
+    - | # Configure Nix
+      echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
+
+    # - | # Configure Attic
+    #   nix shell nixpgks#attic-client
+
+    #   attic login nulll https://cache.0l.de ${ATTIC_TOKEN}
+    #   attic use "nulll:villas"
+
+  script:
+    - nix build --print-build-logs .
+
+  # after_script:
+  #   - | # Push whole store to cache
+  #     nix shell nixpgks#attic-client
+
+  #     attic push /nix/store/*
+
 # Stage: test
 
 test:python:
