@@ -90,10 +90,7 @@ build:source:
 build:nix:
   stage: build
   image: nixos/nix
-  cache:
-    - key: nix-store
-      paths:
-        - /nix
+  needs: []
   before_script:
     - | # Configure Nix
       echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
