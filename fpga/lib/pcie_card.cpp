@@ -48,9 +48,10 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
 
   json_error_t err;
   int ret = json_unpack_ex(
-      json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: b, s?: o }",
+      json_card, &err, 0, "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: b, s?: o, s?: o}",
       "ips", &json_ips, "affinity", &affinity, "do_reset", &do_reset, "slot",
-      &pci_slot, "id", &pci_id, "polling", &polling, "paths", &json_paths);
+      &pci_slot, "id", &pci_id, "polling", &polling, "paths", &json_paths,
+      "ignore_ips", &ignored_ips_array);
 
   if (ret != 0)
     throw ConfigError(json_card, err, "", "Failed to parse card");
