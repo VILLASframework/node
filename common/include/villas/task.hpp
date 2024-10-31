@@ -45,7 +45,7 @@ struct Task {
 #if PERIODIC_TASK_IMPL == TIMERFD
   int fd; // The timerfd_create(2) file descriptior.
 #elif PERIODIC_TASK_IMPL == RDTSC
-  struct Tsc tsc; // Initialized by tsc_init().
+  struct Tsc tsc;         // Initialized by tsc_init().
 #endif
 
   // Create a new task with the given rate.
