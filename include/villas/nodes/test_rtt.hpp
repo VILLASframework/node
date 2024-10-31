@@ -93,8 +93,8 @@ public:
   };
 
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
-      : Node(id, name), task(CLOCK_MONOTONIC), formatter(nullptr),
-        stream(nullptr), shutdown(false) {}
+      : Node(id, name), task(), formatter(nullptr), stream(nullptr),
+        shutdown(false) {}
 
   virtual ~TestRTT(){};
 
