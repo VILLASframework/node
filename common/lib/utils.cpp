@@ -372,7 +372,7 @@ std::vector<std::string>
 read_names_in_directory(const std::filesystem::path &directory) {
   std::vector<std::string> names;
   for (auto const &dir_entry : std::filesystem::directory_iterator{directory}) {
-      names.push_back(dir_entry.path().filename());
+    names.push_back(dir_entry.path().filename());
   }
   return names;
 }

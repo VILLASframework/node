@@ -20,7 +20,7 @@ namespace kernel {
 namespace devices {
 
 #define PCI_SLOT(devfn) (((devfn) >> 3) & 0x1f)
-#define PCI_FUNC(devfn) ((devfn) & 0x07)
+#define PCI_FUNC(devfn) ((devfn)&0x07)
 
 class Id {
 public:
