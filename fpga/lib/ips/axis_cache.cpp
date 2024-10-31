@@ -17,7 +17,10 @@ using namespace villas::fpga::ip;
 
 AxisCache::AxisCache() : Node() {}
 
-bool AxisCache::init() { return true; }
+bool AxisCache::init() {
+  invalidate();
+  return true;
+}
 
 bool AxisCache::check() {
 
@@ -45,6 +48,11 @@ bool AxisCache::check() {
   }
 
   return true;
+}
+
+void AxisCache::invalidate() {
+  setRegister(0, 1U << 31);
+  logger->info("invalidated AXIS cache.");
 }
 
 void AxisCache::setRegister(size_t reg, uint32_t value) {
