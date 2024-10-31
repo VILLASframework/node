@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <vector>
 #include <string>
 
 #include <villas/fpga/core.hpp>
@@ -51,6 +52,7 @@ public:
   std::shared_ptr<ip::Core> lookupIp(const std::string &name) const;
   std::shared_ptr<ip::Core> lookupIp(const Vlnv &vlnv) const;
   std::shared_ptr<ip::Core> lookupIp(const ip::IpIdentifier &id) const;
+  std::vector<std::shared_ptr<ip::Core>> lookupIps(const Vlnv &vlnv) const;
 
 protected:
   // Keep a map of already mapped memory blocks
