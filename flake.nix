@@ -94,7 +94,6 @@
         system:
         let
           pkgs = devPkgsFor system;
-          shellHook = ''[ -z "$PS1" ] || exec "$SHELL"'';
           hardeningDisable = [ "all" ];
           packages = with pkgs; [
             bashInteractive
@@ -114,13 +113,13 @@
           default = full;
 
           full = pkgs.mkShell {
-            inherit shellHook hardeningDisable packages;
+            inherit hardeningDisable packages;
             name = "full";
             inputsFrom = with pkgs; [ villas-node ];
           };
 
           python = pkgs.mkShell {
-            inherit shellHook hardeningDisable;
+            inherit hardeningDisable;
             name = "python";
             inputsFrom = with pkgs; [ villas-node-python ];
             packages =
