@@ -256,9 +256,9 @@ int villas::node::redis_init(NodeCompat *n) {
   r->notify = true;
   r->rate = 1.0;
 
-	new (&r->options) sw::redis::ConnectionOptions;
-	new (&r->task) Task();
-	new (&r->key) std::string();
+  new (&r->options) sw::redis::ConnectionOptions;
+  new (&r->task) Task();
+  new (&r->key) std::string();
 
   /* We need a timeout in order for RedisConnection::loop() to properly
    * terminate after the node is stopped */

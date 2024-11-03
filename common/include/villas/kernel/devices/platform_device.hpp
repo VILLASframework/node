@@ -29,13 +29,13 @@ private:
 public:
   PlatformDevice(const std::filesystem::path path)
       : PlatformDevice(path, std::filesystem::path(PROBE_DEFAULT),
-                       path / std::filesystem::path(OVERRIDE_DEFAULT)){};
+                       path / std::filesystem::path(OVERRIDE_DEFAULT)) {};
 
   PlatformDevice(const std::filesystem::path path,
                  const std::filesystem::path probe_path,
                  const std::filesystem::path override_path)
       : m_path(path), m_probe_path(probe_path),
-        m_override_path(override_path){};
+        m_override_path(override_path) {};
 
   // Implement device interface
   std::optional<std::unique_ptr<Driver>> driver() const override;
