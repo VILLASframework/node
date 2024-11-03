@@ -63,6 +63,13 @@
           withAllHooks = true;
           withAllNodes = true;
         };
+
+        dockerImage = pkgs.dockerTools.buildLayeredImage {
+          name = "villas-node";
+          tag = "latest-nix";
+          contents = [ villas-node ];
+          config.ENTRYPOINT = "/bin/villas";
+        };
       };
     in
     {

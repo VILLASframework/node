@@ -114,8 +114,22 @@ build:nix:
 
   script:
     - nix build --print-build-logs .
-    - nix bundle --out-link villas .
-    - cp -L villas artifacts/villas
+
+    - | # Build ARX bundle
+      nix bundle --out-link villas .
+      cp -L villas artifacts/villas
+
+    - | # Build Docker image
+      nix run nixpkgs#skopeo -- login \
+        --username ${CI_REGISTRY_USER} \
+        --password ${CI_REGISTRY_PASSWORD} \
+        ${CI_REGISTRY}
+
+      nix build '.#dockerImage'
+
+      nix run nixpkgs#skopeo -- copy --insecure-policy \
+        "docker-archive:./result" \
+        "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix"
 
   # after_script:
   #   - | # Push whole store to cache
