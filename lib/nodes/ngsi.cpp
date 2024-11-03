@@ -752,7 +752,7 @@ int villas::node::ngsi_init(NodeCompat *n) {
   int ret;
   auto *i = n->getData<struct ngsi>();
 
-	new (&i->task) Task();
+  new (&i->task) Task();
 
   ret = list_init(&i->in.signals);
   if (ret)

@@ -78,7 +78,7 @@ static const char *signal_node_type_str(enum signal_node::SignalType type) {
 int villas::node::signal_node_init(NodeCompat *n) {
   auto *s = n->getData<struct signal_node>();
 
-	new (&s->task) Task();
+  new (&s->task) Task();
 
   s->rt = 1;
   s->limit = -1;
