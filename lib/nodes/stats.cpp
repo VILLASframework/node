@@ -137,7 +137,7 @@ int villas::node::stats_node_init(NodeCompat *n) {
   int ret;
   auto *s = n->getData<struct stats_node>();
 
-	new (&s->task) Task();
+  new (&s->task) Task();
 
   ret = list_init(&s->signals);
   if (ret)

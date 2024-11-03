@@ -20,8 +20,7 @@
 #include <villas/signal_list.hpp>
 
 #ifndef CONFIG_GOOSE_DEFAULT_DST_ADDRESS
-#define CONFIG_GOOSE_DEFAULT_DST_ADDRESS                                       \
-  { 0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01 }
+#define CONFIG_GOOSE_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x01, 0x00, 0x01}
 #endif
 
 namespace villas {

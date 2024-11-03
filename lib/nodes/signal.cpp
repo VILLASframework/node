@@ -175,8 +175,8 @@ Signal::Ptr SignalNodeSignal::toSignal(Signal::Ptr tpl) const {
 }
 
 SignalNode::SignalNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), task(), rt(1), rate(10),
-      monitor_missed(true), limit(-1), missed_steps(0) {}
+    : Node(id, name), task(), rt(1), rate(10), monitor_missed(true), limit(-1),
+      missed_steps(0) {}
 
 int SignalNode::prepare() {
   assert(state == State::CHECKED);
