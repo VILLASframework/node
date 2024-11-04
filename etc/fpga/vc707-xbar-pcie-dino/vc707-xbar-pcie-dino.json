@@ -229,7 +229,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -367,7 +367,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -505,7 +505,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -913,8 +913,8 @@
       "m15_s15_connectivity": 1,
       "component_name": "design_1_xbar_0",
       "edk_iptype": "PERIPHERAL",
-      "c_baseaddr": 0,
-      "c_highaddr": 1023
+      "c_baseaddr": 4096,
+      "c_highaddr": 5119
     },
     "ports": [
       {
@@ -969,7 +969,7 @@
       },
       {
         "role": "slave",
-        "target": "dino_dinoif_fast_0:M00_AXIS",
+        "target": "dino_dinoif_fast_nologic_0:M00_AXIS",
         "name": "S05_AXIS"
       },
       {
@@ -1027,11 +1027,11 @@
       }
     ]
   },
-  "dino_dinoif_fast_0": {
+  "dino_dinoif_fast_nologic_0": {
     "vlnv": "xilinx.com:module_ref:dinoif_fast:1.0",
     "i2c_channel": 0,
     "parameters": {
-      "component_name": "design_1_dinoif_fast_0_0",
+      "component_name": "design_1_dinoif_fast_nologic_0_0",
       "edk_iptype": "PERIPHERAL"
     },
     "ports": [
@@ -1041,6 +1041,18 @@
         "name": "M00_AXIS"
       }
     ]
+  },
+  "dino_registerif_0": {
+    "vlnv": "xilinx.com:module_ref:registerif:1.0",
+    "parameters": {
+      "c_axi_data_width": 32,
+      "c_axi_addr_width": 32,
+      "reg_addr_width": 10,
+      "component_name": "design_1_registerif_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 20480,
+      "c_highaddr": 21503
+    }
   },
   "dma_pcie_axi_dma_0": {
     "vlnv": "xilinx.com:ip:axi_dma:7.1",
@@ -1130,6 +1142,29 @@
       "s2mm_introut": "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0:1"
     }
   },
+  "dma_pcie_axi_read_cache_0": {
+    "vlnv": "xilinx.com:module_ref:axi_read_cache:1.0",
+    "parameters": {
+      "c_axi_data_width": 32,
+      "c_axi_addr_width": 32,
+      "word_num": 16,
+      "component_name": "design_1_axi_read_cache_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 24576,
+      "c_highaddr": 25599
+    },
+    "memory-view": {
+      "M_AXI": {
+        "dma_pcie_pcie_axi_pcie_0": {
+          "BAR0": {
+            "baseaddr": 0,
+            "highaddr": 4294967295,
+            "size": 4294967296
+          }
+        }
+      }
+    }
+  },
   "dma_pcie_pcie_axi_pcie_0": {
     "vlnv": "xilinx.com:ip:axi_pcie:2.9",
     "parameters": {
@@ -1158,7 +1193,7 @@
       "c_interrupt_pin": 0,
       "c_comp_timeout": 0,
       "c_include_rc": 0,
-      "c_s_axi_supports_narrow_burst": 0,
+      "c_s_axi_supports_narrow_burst": 1,
       "c_include_baroffset_reg": 1,
       "c_axibar_num": 1,
       "c_axibar2pciebar_0": 0,
@@ -1281,7 +1316,7 @@
       "s_axi_data_width": 64,
       "m_axi_addr_width": 32,
       "m_axi_data_width": 64,
-      "s_axi_supports_narrow_burst": "false",
+      "s_axi_supports_narrow_burst": "true",
       "bar_64bit": "false",
       "xlnx_ref_board": "VC707",
       "pcie_blk_locn": "X1Y0",
@@ -1330,6 +1365,20 @@
           "Reg": {
             "baseaddr": 16384,
             "highaddr": 17407,
+            "size": 1024
+          }
+        },
+        "dino_registerif_0": {
+          "reg0": {
+            "baseaddr": 20480,
+            "highaddr": 21503,
+            "size": 1024
+          }
+        },
+        "dma_pcie_axi_read_cache_0": {
+          "reg0": {
+            "baseaddr": 24576,
+            "highaddr": 25599,
             "size": 1024
           }
         }
