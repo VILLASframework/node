@@ -140,7 +140,9 @@ void DinoAdc::configureHardware() {
 void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                                 double sampleRate) {
   constexpr double dinoClk = 25e6; // Dino is clocked with 25 Mhz
-  // constexpr double dinoDacDelay = 828e-9; // Delay for DAC to settle
+  // From the data sheets we can assume an analog delay of 828e-9s
+  // However this will eat into our computation time, so it should be
+  // configurable. Let's assume 0 until we implement this.
   constexpr double dinoDacDelay = 0; // Delay for DAC to settle
   constexpr size_t dinoRegisterTimer = 0;
   constexpr size_t dinoRegisterAdcScale = 1;
@@ -155,9 +157,8 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate) - 1;
   uint32_t dinoDacDelayCycles = static_cast<uint32_t>(dinoClk * dinoDacDelay);
   double rateError = dinoClk / (dinoTimerVal + 1) - sampleRate;
-  reg->setRegister(
-      dinoRegisterTimer,
-      dinoTimerVal); // Timer value for generating ADC trigger signal
+  // Timer value for generating ADC trigger signal
+  reg->setRegister(dinoRegisterTimer, dinoTimerVal);
 
   // The following are calibration values for the ADC and DAC. Scale
   // sets an factor to be multiplied with the input value. This is the
