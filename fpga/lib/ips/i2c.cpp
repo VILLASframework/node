@@ -65,8 +65,12 @@ bool I2c::check() {
   if (!initDone) {
     throw RuntimeError("I2C not initialized");
   }
-  //FIXME: There might not be a switch - then this will fail even though the I2C might be working
-  return 1; //getSwitch().selfTest();
+  // Note: While testing the I2C switch here would be great, there might not be a switch connected
+  // Then a call to getSwitch().selfTest() will fail even though the I2C might be working.
+  // The only reliable thing to do is to assume there is nothing connected to the I2C bus and
+  // always return true.
+  // In the future we might check the FMC EEPROM to determine whether the FMC is connected.
+  return 1;
 }
 
 bool I2c::stop() { return reset(); }
