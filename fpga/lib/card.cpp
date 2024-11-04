@@ -67,13 +67,13 @@ std::shared_ptr<ip::Core> Card::lookupIp(const ip::IpIdentifier &id) const {
 }
 
 std::vector<std::shared_ptr<ip::Core>> Card::lookupIps(const Vlnv &vlnv) const {
-  std::vector<std::shared_ptr<ip::Core>> ips;
-  for (auto &ip : ips) {
+  std::vector<std::shared_ptr<ip::Core>> lookup_ips;
+  for (std::shared_ptr<ip::Core> ip : ips) {
     if (*ip == vlnv) {
-      ips.push_back(ip);
+      lookup_ips.push_back(ip);
     }
   }
-  return ips;
+  return lookup_ips;
 }
 
 bool Card::unmapMemoryBlock(const MemoryBlock &block) {
