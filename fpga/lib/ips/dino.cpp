@@ -157,6 +157,7 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate) - 1;
   uint32_t dinoDacDelayCycles = static_cast<uint32_t>(dinoClk * dinoDacDelay);
   double rateError = dinoClk / (dinoTimerVal + 1) - sampleRate;
+
   // Timer value for generating ADC trigger signal
   reg->setRegister(dinoRegisterTimer, dinoTimerVal);
 
@@ -166,7 +167,7 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   // the DAC. Offset is a value to be added to the result of the multiplication.
   // All values are IEE 754 single precision floating point values.
   // Calibration for ADC filter with C=330pF and R=2,2kOhm
-  // FIXME: These values should be read from the FPGA or configured via the configuration file.
+  // TODO: These values should be read from the FPGA or configured via the configuration file.
   reg->setRegister(dinoRegisterAdcScale,
                    0.0016874999385349976F); // Scale factor for ADC value
   reg->setRegister(dinoRegisterAdcOffset,
@@ -177,12 +178,14 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                    32772.159015058445F); // Offset for DAC value
   reg->setRegister(dinoRegisterDacExternalTrig,
                    (uint32_t)0x0); // External trigger for DAC
+
   if (dinoTimerVal > dinoDacDelayCycles) {
     reg->setRegister(dinoRegisterTimerPreThresh,
                      dinoTimerVal - dinoDacDelayCycles);
   } else {
     reg->setRegister(dinoRegisterTimerPreThresh, dinoTimerVal);
   }
+
   uint32_t rate = reg->getRegister(dinoRegisterTimer);
   float adcScale = reg->getRegisterFloat(dinoRegisterAdcScale);
   float adcOffset = reg->getRegisterFloat(dinoRegisterAdcOffset);
