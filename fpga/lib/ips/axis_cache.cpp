@@ -43,7 +43,6 @@ bool AxisCache::check() {
     }
   }
 
-  // Reset Registers
   resetAllRegisters();
 
   for (size_t i = 0; i < registerNum; i++) {
