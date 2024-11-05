@@ -1,4 +1,6 @@
-/* Driver for AXI Stream read cache. This module is used to lower latency of
+/* Driver for AXI Stream read cache.
+ *
+ * This module is used to lower latency of
  * a DMA Scatter Gather engine's descriptor fetching. The driver allows for
  * invalidating the cache.
  *
@@ -27,7 +29,8 @@ bool AxisCache::check() {
   logger->debug("Checking register interface: Base address: 0x{:08x}",
                 getBaseAddr(registerMemory));
   uint32_t buf;
-  // we shouldn't change the rate register, because this can lead to hardware fault, so start at 1
+
+  // We should not change the rate register, because this can lead to hardware fault, so start at 1
   for (size_t i = 1; i < registerNum; i++) {
     setRegister(i, static_cast<uint32_t>(0x00FF00FF));
   }
