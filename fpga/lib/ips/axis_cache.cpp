@@ -36,7 +36,10 @@ bool AxisCache::check() {
   }
 
   for (size_t i = 1; i < registerNum; i++) {
-    buf = getRegister(i);
+    if (!getRegister(i, buf)) {
+      logger->error("Failed to read register {}", i);
+      return false;
+    }
     if (buf != 0x00FF00FF) {
       logger->error("Register {}: 0x{:08x} != 0x{:08x}", i, buf, i);
       return false;
@@ -46,7 +49,11 @@ bool AxisCache::check() {
   resetAllRegisters();
 
   for (size_t i = 0; i < registerNum; i++) {
-    logger->debug("Register {}: 0x{:08x}", i, getRegister(i));
+    if (!getRegister(i, buf)) {
+      logger->error("Failed to read register {}", i);
+      return false;
+    }
+    logger->debug("Register {}: 0x{:08x}", i, buf);
   }
 
   return true;
@@ -57,28 +64,32 @@ void AxisCache::invalidate() {
   logger->info("invalidated AXIS cache.");
 }
 
-void AxisCache::setRegister(size_t reg, uint32_t value) {
+bool AxisCache::setRegister(size_t reg, uint32_t value) {
   if (reg >= registerNum) {
     logger->error("Register index out of range: {}/{}", reg, registerNum);
-    throw std::out_of_range("Register index out of range");
+    return false;
   }
   Xil_Out32(getBaseAddr(registerMemory) + REGISTER_OUT(reg), value);
+  return true;
 }
 
-uint32_t AxisCache::getRegister(size_t reg) {
+bool AxisCache::getRegister(size_t reg, uint32_t &value) {
   if (reg >= registerNum) {
     logger->error("Register index out of range: {}/{}", reg, registerNum);
-    throw std::out_of_range("Register index out of range");
+    return false;
   }
-  return Xil_In32(getBaseAddr(registerMemory) + REGISTER_OUT(reg));
+  value = Xil_In32(getBaseAddr(registerMemory) + REGISTER_OUT(reg));
+  return true;
 }
 
-void AxisCache::resetRegister(size_t reg) { setRegister(reg, 0); }
+bool AxisCache::resetRegister(size_t reg) { return setRegister(reg, 0); }
 
-void AxisCache::resetAllRegisters() {
+bool AxisCache::resetAllRegisters() {
+  bool result = true;
   for (size_t i = 1; i < registerNum; i++) {
-    resetRegister(i);
+    result &= resetRegister(i);
   }
+  return result;
 }
 
 AxisCache::~AxisCache() {}
