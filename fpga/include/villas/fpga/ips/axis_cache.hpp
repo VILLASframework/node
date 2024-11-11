@@ -30,10 +30,10 @@ protected:
   std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
-  void setRegister(size_t reg, uint32_t value);
-  uint32_t getRegister(size_t reg);
-  void resetRegister(size_t reg);
-  void resetAllRegisters();
+  bool setRegister(size_t reg, uint32_t value);
+  bool getRegister(size_t reg, uint32_t &value);
+  bool resetRegister(size_t reg);
+  bool resetAllRegisters();
 };
 
 } // namespace ip
