@@ -27,8 +27,6 @@ public:
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
   std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
-  std::list<std::string> ignored_ip_names;
-
   // Slave address space ID to access the PCIe address space from the
   // FPGA
   MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
