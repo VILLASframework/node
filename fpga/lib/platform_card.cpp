@@ -112,7 +112,7 @@ void PlatformCard::connectVFIOtoIps(
         auto intc = new PlatformInterruptController(vfio_device);
 
         const char *irqName = "iic2intc_irpt";
-        int num = 0;
+        int num = i;
         logger->error("Adding Platformintc {}", num);
         //* dma
         //* mm2s_introut
