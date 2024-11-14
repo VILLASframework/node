@@ -393,5 +393,5 @@ Core::getInterruptController(const std::string &interruptName) const {
 
 void Core::addIrq(std::string irqName, int port_num,
                   InterruptController *intc) {
-  this->irqs[irqName] = {port_num, intc, ""};
+  this->irqs[irqName] = {port_num, intc, "Custom Interrupt"};
 }
