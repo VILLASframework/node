@@ -131,6 +131,7 @@ void PlatformCard::connect(std::string device_name,
 
   size_t srcVertexId = mm.getOrCreateAddressSpace(device_name);
 
+  // TODO: This is really bad!
   std::string taget_address_space_name =
       ip->getInstanceName() + "/Reg"; //? TODO: Reg neded?
   size_t targetVertexId;
@@ -172,10 +173,6 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H",
                    this->addrSpaceIdDeviceToHost, addrSpaceId);
 
-  // TODO: Determine zynq name
-  auto space = mm.findAddressSpace("zynq_zynq_ultra_ps_e_0/HPC1_DDR_LOW");
-  mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H", space,
-                   addrSpaceId);
 
   // Remember that this block has already been mapped for later
   memoryBlocksMapped.insert({addrSpaceId, block});
