@@ -109,6 +109,7 @@ protected:
   virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
 
 public:
+  IpIdentifier getId() const { return this->id; };
   size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
 
