@@ -1,4 +1,4 @@
-/* Device Tree Reader for IpDevices
+/* Devicetree reader for IpDevices
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
