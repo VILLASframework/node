@@ -33,7 +33,7 @@
 
 using namespace villas;
 
-static auto logger = villas::Log::get("streamer");
+static auto logger = villas::Log::get("utils");
 
 std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
 fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
