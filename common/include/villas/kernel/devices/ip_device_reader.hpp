@@ -8,11 +8,8 @@
 
 #pragma once
 
-#include <dirent.h>
 #include <stdexcept>
-#include <sys/types.h>
 #include <vector>
-
 #include <filesystem>
 
 #include <villas/kernel/devices/ip_device.hpp>
