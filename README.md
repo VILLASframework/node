@@ -36,6 +36,11 @@ User documentation is available here: <https://villas.fein-aachen.org/docs/>
 - [MIOB](https://github.com/RWTH-ACS/miob)
 - [DINO](https://github.com/RWTH-ACS/dino)
 
+## Contributing
+
+All contributions are welcome!
+If you want to contribute to VILLASnode, please visit the [contribution guidelines](https://villas.fein-aachen.org/docs/node/development/contributing/) in our documentation.
+
 ## License
 
 This project is released under the terms of the [Apache 2.0 license](LICENSE).
