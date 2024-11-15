@@ -1,0 +1,11 @@
+{
+  "fpgas": {
+    "zcu106": {
+      "do_reset": true,
+      "ips": "zcu106_aurora_dino/zcu106-dino.json",
+      "polling": true,
+      "interface": "platform",
+      "ignore_ips": ["axi_iic_0"]
+    }
+  }
+}
