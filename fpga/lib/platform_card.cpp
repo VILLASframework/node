@@ -131,11 +131,7 @@ void PlatformCard::connect(std::string device_name,
 
   size_t srcVertexId = mm.getOrCreateAddressSpace(device_name);
 
-  // TODO: This is really bad!
-  std::string taget_address_space_name =
-      ip->getInstanceName() + "/Reg"; //? TODO: Reg neded?
-  size_t targetVertexId;
-  targetVertexId = mm.getOrCreateAddressSpace(taget_address_space_name);
+  size_t targetVertexId = mm.getOrCreateAddressSpace(ip->getAddressSpaceName());
 
   mm.createMapping(0, 0, ip_mem_size, "vfio to ip", srcVertexId,
                    targetVertexId);

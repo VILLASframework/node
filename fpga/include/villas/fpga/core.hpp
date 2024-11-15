@@ -111,6 +111,7 @@ protected:
 public:
   size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
+  const std::string getAddressSpaceName() const {return getInstanceName() + "/" + getMemoryBlocks().front();}
 
   // Operators
 
