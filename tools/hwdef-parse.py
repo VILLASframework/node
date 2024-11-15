@@ -47,6 +47,7 @@ whitelist = [
     ["xilinx.com", "ip", "axi_iic"],
     ["xilinx.com", "module_ref", "dinoif_fast"],
     ["xilinx.com", "module_ref", "dinoif_fast_nologic"],
+    ["xilinx.com", "module_ref", "dinoif_adc"],
     ["xilinx.com", "module_ref", "dinoif_dac"],
     ["xilinx.com", "module_ref", "axi_pcie_intc"],
     ["xilinx.com", "module_ref", "registerif"],
