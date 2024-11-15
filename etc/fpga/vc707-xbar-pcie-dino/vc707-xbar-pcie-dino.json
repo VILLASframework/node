@@ -969,7 +969,7 @@
       },
       {
         "role": "slave",
-        "target": "dino_dinoif_fast_nologic_0:M00_AXIS",
+        "target": "dino_dinoif_adc_0:M00_AXIS",
         "name": "S05_AXIS"
       },
       {
@@ -1016,6 +1016,21 @@
     "vlnv": "xilinx.com:module_ref:dinoif_dac:1.0",
     "i2c_channel": 1,
     "parameters": {
+      "component_name": "design_1_dinoif_adc_0_0",
+      "edk_iptype": "PERIPHERAL"
+    },
+    "ports": [
+      {
+        "role": "master",
+        "target": "crossbar_axis_interconnect_0_xbar:S05_AXIS",
+        "name": "M00_AXIS"
+      }
+    ]
+  },
+  "dino_dinoif_fast_nologic_0": {
+    "vlnv": "xilinx.com:module_ref:dinoif_fast:1.0",
+    "i2c_channel": 0,
+    "parameters": {
       "component_name": "design_1_dinoif_dac_0_0",
       "edk_iptype": "PERIPHERAL"
     },
@@ -1024,21 +1039,6 @@
         "role": "slave",
         "target": "crossbar_axis_interconnect_0_xbar:M05_AXIS",
         "name": "S00_AXIS"
-      }
-    ]
-  },
-  "dino_dinoif_fast_nologic_0": {
-    "vlnv": "xilinx.com:module_ref:dinoif_fast:1.0",
-    "i2c_channel": 0,
-    "parameters": {
-      "component_name": "design_1_dinoif_fast_nologic_0_0",
-      "edk_iptype": "PERIPHERAL"
-    },
-    "ports": [
-      {
-        "role": "master",
-        "target": "crossbar_axis_interconnect_0_xbar:S05_AXIS",
-        "name": "M00_AXIS"
       }
     ]
   },
