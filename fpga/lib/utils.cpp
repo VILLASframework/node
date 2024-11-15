@@ -130,20 +130,20 @@ int fpga::ConnectString::portStringToInt(std::string &str) const {
 }
 
 // parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
-void fpga::ConnectString::configCrossBar(
+bool fpga::ConnectString::configCrossBar(
     std::shared_ptr<villas::fpga::Card> card) const {
 
   auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
       card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
   if (dma == nullptr) {
     logger->error("No DMA found on FPGA ");
-    throw std::runtime_error("No DMA found on FPGA");
+    return false;
   }
 
   if (isDmaLoopback()) {
     log->info("Configuring DMA loopback");
     dma->connectLoopback();
-    return;
+    return true;
   }
 
   auto aurora_channels = getAuroraChannels(card);
@@ -176,7 +176,12 @@ void fpga::ConnectString::configCrossBar(
   } else if (aurora_channels->size() > 0) {
     src = (*aurora_channels)[srcAsInt];
   } else {
-    throw std::runtime_error("No Aurora channels found on FPGA");
+    logger->error("No Aurora channels found on FPGA");
+    return false;
+  }
+  if (!src) {
+    logger->error("Source does not exist");
+    return false;
   }
 
   if (dinoDac && dstType == ConnectType::DINO) {
@@ -185,6 +190,13 @@ void fpga::ConnectString::configCrossBar(
     dest = dma;
   } else if (aurora_channels->size() > 0) {
     dest = (*aurora_channels)[dstAsInt];
+  } else {
+    logger->error("No Aurora channels found on FPGA");
+    return false;
+  }
+  if (!dest) {
+    logger->error("Destination does not exist");
+    return false;
   }
 
   src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
