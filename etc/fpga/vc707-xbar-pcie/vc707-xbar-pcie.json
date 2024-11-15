@@ -969,7 +969,7 @@
       },
       {
         "role": "slave",
-        "target": "dino_dinoif_fast_nologic_0:M00_AXIS",
+        "target": "dino_dinoif_adc_0:M00_AXIS",
         "name": "S05_AXIS"
       },
       {
