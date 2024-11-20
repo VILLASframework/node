@@ -28,8 +28,8 @@ bool Dino::init() {
         card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_iic:")));
     if (i2cdev == nullptr) {
       logger->error("No I2C found on FPGA");
-      throw RuntimeError(
-          "Dino requires and I2C device but none was found on FPGA");
+      // throw RuntimeError(
+      //     "Dino requires and I2C device but none was found on FPGA");
     } else {
       logger->debug("Found I2C on FPGA");
     }
@@ -106,7 +106,8 @@ void DinoAdc::configureHardware() {
     throw RuntimeError("ADC configuration not done yet");
   }
   if (i2cdev == nullptr) {
-    throw RuntimeError("I2C device not set");
+    //throw RuntimeError("I2C device not set");
+    return;
   }
   i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = {.raw = 0};
@@ -189,7 +190,8 @@ void DinoDac::configureHardware() {
     throw RuntimeError("DAC configuration not done yet");
   }
   if (i2cdev == nullptr) {
-    throw RuntimeError("I2C device not set");
+    //throw RuntimeError("I2C device not set");
+    return;
   }
   i2cdev->getSwitch().setAndLockChannel(i2c_channel);
   IoextPorts ioext = {.raw = 0};
