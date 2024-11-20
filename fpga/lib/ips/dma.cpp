@@ -48,6 +48,8 @@ bool Dma::init() {
     logger->debug("DMA selftest passed");
   }
 
+  MemoryManager::get().printGraph();
+
   hwWriteLock.unlock();
   hwReadLock.unlock();
   // Map buffer descriptors
