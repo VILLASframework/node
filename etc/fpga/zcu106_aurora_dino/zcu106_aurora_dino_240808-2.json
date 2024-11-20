@@ -2,7 +2,7 @@
   "aurora_aurora_8b10b_0": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
-      "component_name": "design_1_aurora_8b10b_0_1",
+      "component_name": "design_1_aurora_8b10b_0_2",
       "channel_enable": "X0Y10",
       "c_refclk_loc_p": "W10",
       "c_refclk_loc_n": "W9",
@@ -91,7 +91,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 1,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 1,
@@ -536,22 +536,22 @@
         "name": "M02_AXIS"
       },
       {
-        "role": "initiator",
+        "role": "master",
         "target": "axis_interconnect_0_xbar:S03_AXIS",
-        "name": "S03_AXIS"
+        "name": "M03_AXIS"
       },
       {
-        "role": "target",
-        "target": "axis_interconnect_0_xbar:S03_AXIS",
-        "name": "S03_AXIS"
-      },
-      {
-        "role": "target",
+        "role": "slave",
         "target": "axis_interconnect_0_xbar:M03_AXIS",
         "name": "S03_AXIS"
       },
       {
-        "role": "initiator",
+        "role": "slave",
+        "target": "axis_interconnect_0_xbar:M03_AXIS",
+        "name": "S03_AXIS"
+      },
+      {
+        "role": "master",
         "target": "axis_interconnect_0_xbar:S03_AXIS",
         "name": "M03_AXIS"
       }
@@ -643,25 +643,6 @@
       "c_highaddr": 2684420095
     },
     "memory-view": {
-      "M_AXI_SG": {
-        "zynq_zynq_ultra_ps_e_0": {
-          "HPC1_DDR_LOW": {
-            "baseaddr": 0,
-            "highaddr": 2147483647,
-            "size": 2147483648
-          },
-          "HPC1_DDR_HIGH": {
-            "baseaddr": 34359738368,
-            "highaddr": 68719476735,
-            "size": 34359738368
-          },
-          "HPC1_QSPI": {
-            "baseaddr": 1152921507828072448,
-            "highaddr": 1152921508364943359,
-            "size": 536870912
-          }
-        }
-      },
       "M_AXI_MM2S": {
         "zynq_zynq_ultra_ps_e_0": {
           "HPC0_DDR_LOW": {
@@ -673,11 +654,6 @@
             "baseaddr": 34359738368,
             "highaddr": 68719476735,
             "size": 34359738368
-          },
-          "HPC0_QSPI": {
-            "baseaddr": 1152921507828072448,
-            "highaddr": 1152921508364943359,
-            "size": 536870912
           }
         }
       },
@@ -692,11 +668,6 @@
             "baseaddr": 34359738368,
             "highaddr": 68719476735,
             "size": 34359738368
-          },
-          "HPC0_QSPI": {
-            "baseaddr": 1152921507828072448,
-            "highaddr": 1152921508364943359,
-            "size": 536870912
           }
         }
       }
@@ -713,6 +684,34 @@
         "name": "S2MM"
       }
     ]
+  },
+  "zynq_axi_read_cache_0": {
+    "vlnv": "xilinx.com:module_ref:axi_read_cache:1.0",
+    "parameters": {
+      "c_axi_data_width": 32,
+      "c_axi_addr_width": 64,
+      "word_num": 16,
+      "component_name": "design_1_axi_read_cache_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 2684616704,
+      "c_highaddr": 2684682239
+    },
+    "memory-view": {
+      "M_AXI": {
+        "zynq_zynq_ultra_ps_e_0": {
+          "HPC1_DDR_LOW": {
+            "baseaddr": 0,
+            "highaddr": 2147483647,
+            "size": 2147483648
+          },
+          "HPC1_DDR_HIGH": {
+            "baseaddr": 34359738368,
+            "highaddr": 68719476735,
+            "size": 34359738368
+          }
+        }
+      }
+    }
   },
   "zynq_zynq_ultra_ps_e_0": {
     "vlnv": "xilinx.com:ip:zynq_ultra_ps_e:3.3",
@@ -2433,8 +2432,8 @@
       "psu_sd1_internal_bus_width": 8,
       "component_name": "design_1_zynq_ultra_ps_e_0_1",
       "edk_iptype": "PERIPHERAL",
-      "c_baseaddr": 1152921507828072448,
-      "c_highaddr": 1152921508364943359
+      "c_baseaddr": 34359738368,
+      "c_highaddr": 68719476735
     },
     "memory-view": {
       "M_AXI_HPM0_FPD": {
@@ -2453,7 +2452,7 @@
           }
         },
         "dino_registerif_0": {
-          "reg0": {
+          "Reg": {
             "baseaddr": 2684485632,
             "highaddr": 2684551167,
             "size": 65536
@@ -2463,6 +2462,13 @@
           "Reg": {
             "baseaddr": 2684551168,
             "highaddr": 2684616703,
+            "size": 65536
+          }
+        },
+        "zynq_axi_read_cache_0": {
+          "Reg": {
+            "baseaddr": 2684616704,
+            "highaddr": 2684682239,
             "size": 65536
           }
         }
