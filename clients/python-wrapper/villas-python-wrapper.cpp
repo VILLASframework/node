@@ -4,213 +4,231 @@
 #include <villas/node.h>
 #include <villas/node.hpp>
 #include <villas/sample.hpp>
+extern "C" {
+  #include <villas/node.h>
+}
 
 namespace py = pybind11;
+
+class Array {
+  public:
+    Array(unsigned int len) {
+      smps = new vsample *[len]();
+      this->len = len;
+    }
+    ~Array() {
+      for(unsigned int i = 0; i < len; ++i) {
+        sample_decref(smps[i]);
+        smps[i] = nullptr;
+      }
+      delete[] smps;
+    }
+
+    vsample * &operator[](unsigned int idx) {
+      return smps[idx];
+    }
+
+    vsample * &operator[](unsigned int idx) const {
+      return smps[idx];
+    }
+
+    vsample ** get_smps() {
+      return smps;
+    }
+
+    unsigned int size() const {
+      return len;
+    }
+
+  private:
+    vsample **smps;
+    unsigned int len;
+};
 
 //pybind11 can not deal with (void **) as function input parameters,
 //therefore we have to cast a simple (void *) pointer to the corresponding type
 //
-//thus:
-//convenience functions for dealing with:
-//
-//(vnode *)
-villas::node::Node *node_cast(void *p){
-  vnode *n = static_cast<vnode *>(p);
-  auto *nc = reinterpret_cast<villas::node::Node *>(n);
-  return nc;
-}
-//
-//(vsample *)
-villas::node::Sample *sample_cast(void *p){
-  vsample *smp = static_cast<vsample *>(p);
-  auto *smpc = reinterpret_cast<villas::node::Sample *>(smp);
-  return smpc;
-}
-//
-//(vsample **)
-villas::node::Sample **samples_cast(void *pp){
-  vsample **smps = static_cast<vsample **>(pp);
-  auto **smpsc = reinterpret_cast<villas::node::Sample **>(smps);
-  return smpsc;
-}
-
 //wrapper bindings, sorted alphabetically
 // @param villas_node   Name of the module to be bound
 // @param m             Access variable for modifying the module code
 //
-PYBIND11_MODULE(villas-python-wrapper, m) {
-  m.def("memory_init", [](int hugepages) -> int {
-        return villas::node::memory::init(hugepages);
+PYBIND11_MODULE(villas_node, m) {
+  m.def("memory_init", &memory_init);
+
+  m.def("node_check", [](void *n) -> int {
+        return node_check((vnode *)n);
       });
 
-  m.def("node_check", [](void *p) -> int {
-        return node_cast(p)->check();
+  m.def("node_destroy", [](void *n) -> int {
+        return node_destroy((vnode *)n);
       });
 
-  m.def("node_destroy", [](void *p) -> int {
-        node_cast(p)->~Node();
-        return 0;
-      });
-
-  m.def("node_details", [](void *p) -> const char * {
-        return node_cast(p)->getDetails().c_str();
+  m.def("node_details", [](void *n) -> const char * {
+        return node_details((vnode *)n);
       },
       py::return_value_policy::copy);
 
-  m.def("node_input_signals_max_cnt", [](void *p) -> unsigned {
-        return node_cast(p)->getInputSignalsMaxCount();
+  m.def("node_input_signals_max_cnt", [](void *n) -> unsigned {
+        return node_input_signals_max_cnt((vnode *)n);
       });
 
-  m.def("node_is_enabled", [](void *p) -> int {
-        return node_cast(p)->isEnabled();
+  m.def("node_is_enabled", [](void *n) -> bool {
+        return node_is_enabled((const vnode*)n);
       });
 
   m.def("node_is_valid_name", [](const char *name) -> bool {
-        return villas::node::Node::isValidName(name);
+        return node_is_valid_name(name);
       });
 
-  m.def("node_name", [](void *p) -> const char * {
-        return node_cast(p)->getName().c_str();
+  m.def("node_name", [](void *n) -> const char * {
+        return node_name((vnode *)n);
       },
       py::return_value_policy::copy);
 
-  m.def("node_name_full", [](void *p) -> const char * {
-        return node_cast(p)->getNameFull().c_str();
+  m.def("node_name_full", [](void *n) -> const char * {
+        return node_name_full((vnode *)n);
       },
       py::return_value_policy::copy);
 
-  m.def("node_name_short", [](void *p) -> const char * {
-        return node_cast(p)->getNameShort().c_str();
+  m.def("node_name_short", [](void *n) -> const char * {
+        return node_name_short((vnode *)n);
       },
       py::return_value_policy::copy);
 
-  m.def("node_netem_fds", [](void *p, int fds[]) -> int {
-        villas::node::Node *nc = node_cast(p);
-        auto l = nc->getNetemFDs();
-
-        for (unsigned i = 0; i < l.size() && i < 16; i++){
-          fds[i] = l[i];
-        }
-
-        return l.size();
+  m.def("node_netem_fds", [](void *n, int fds[]) -> int {
+        return node_netem_fds((vnode *)n, fds);
       });
 
   m.def("node_new", [](const char *id_str, const char *json_str) -> vnode * {
         json_error_t err;
         uuid_t id;
+
         uuid_parse(id_str, id);
         auto *json = json_loads(json_str, 0, &err);
-        return (vnode *)villas::node::NodeFactory::make(json, id);
+
+        void *it = json_object_iter(json);
+        json_t *inner = json_object_iter_value(it);
+
+        if (json_is_object(inner)) { // create node with name
+          return (vnode *)villas::node::NodeFactory::make(json_object_iter_value(it), id, json_object_iter_key(it));
+        }
+        else { // create node without name
+          const char* capi_str = json_dumps(json_object_iter_value(it), 0);
+          return node_new(id_str, capi_str);
+        }
       },
       py::return_value_policy::reference);
 
-  m.def("node_output_signals_max_cnt", [](void *p) -> unsigned {
-        return node_cast(p)->getOutputSignalsMaxCount();
+  m.def("node_output_signals_max_cnt", [](void *n) -> unsigned {
+        return node_output_signals_max_cnt((vnode *)n);
       });
 
-  m.def("node_pause", [](void *p) -> int {
-        return node_cast(p)->pause();
+  m.def("node_pause", [](void *n) -> int {
+        return node_pause((vnode *)n);
       });
 
-  m.def("node_poll_fds", [](void *p, int fds[]) -> int {
-        villas::node::Node *nc = node_cast(p);
-        auto l = nc->getPollFDs();
-
-        for (unsigned i = 0; i < l.size() && i < 16; i++){
-          fds[i] = l[i];
-        }
-
-        return l.size();
+  m.def("node_poll_fds", [](void *n, int fds[]) -> int {
+        return node_poll_fds((vnode *)n, fds);
       });
 
-  m.def("node_prepare", [](void *p) -> int {
-        return node_cast(p)->prepare();
+  m.def("node_prepare", [](void *n) -> int {
+        return node_prepare((vsample *)n);
       });
 
-  m.def("node_read", [](void *p, void *pp, unsigned cnt) -> int {
-        return node_cast(p)->read(samples_cast(pp), cnt);
+  m.def("node_read", [](void *n, Array &a, unsigned cnt) -> int {
+        return node_read((vnode *)n, a.get_smps(), cnt);
       });
 
-  m.def("node_restart", [](void *p) -> int {
-        return node_cast(p)->restart();
+  m.def("node_restart", [](void *n) -> int {
+        return node_restart((vnode *)n);
       });
 
-  m.def("node_resume", [](void *p) -> int {
-        return node_cast(p)->resume();
+  m.def("node_resume", [](void *n) -> int {
+        return node_resume((vnode *)n);
       });
 
-  m.def("node_reverse", [](void *p) -> int {
-        return node_cast(p)->reverse();
+  m.def("node_reverse", [](void *n) -> int {
+        return node_reverse((vnode *)n);
       });
 
-  m.def("node_start", [](void *p) -> int {
-        return node_cast(p)->start();
+  m.def("node_start", [](void *n) -> int {
+        return node_start((vnode *)n);
       });
 
-  m.def("node_stop", [](void *p) -> int {
-        return node_cast(p)->stop();
+  m.def("node_stop", [](void *n) -> int {
+        return node_stop((vnode *)n);
       });
 
-  m.def("node_to_json", [](void *p) -> json_t * {
-        return node_cast(p)->toJson();
+  m.def("node_to_json", [](void *n) -> py::str {
+        auto json = reinterpret_cast<villas::node::Node *>(n)->toJson();
+        char* json_str = json_dumps(json, 0);
+        auto py_str = py::str(json_str);
+
+        json_decref(json);
+        free(json_str);
+
+        return py_str;
+      });
+
+  m.def("node_to_json_str", [](void *n) -> py::str {
+        auto json = reinterpret_cast<villas::node::Node *>(n)->toJson();
+        char* json_str = json_dumps(json, 0);
+        auto py_str = py::str(json_str);
+
+        json_decref(json);
+        free(json_str);
+
+        return py_str;
+      });
+
+  m.def("node_write", [](void *n, Array &a, unsigned cnt) -> int {
+        return node_write((vnode *)n, a.get_smps(), cnt);
+      });
+
+  m.def("smps_array", [](unsigned int len) -> Array* {
+        return new Array(len);
       },
-      py::return_value_policy::copy);
+      py::return_value_policy::take_ownership);
 
-  m.def("node_to_json_str", [](void *p) -> const char * {
-        auto json = node_cast(p)->toJson();
-        return json_dumps(json, 0);
-      },
-      py::return_value_policy::copy);
-
-  m.def("node_write", [](void *p, void *pp, unsigned cnt) -> int {
-        return node_cast(p)->write(samples_cast(pp), cnt);
+  m.def("sample_alloc", [](unsigned int len) -> vsample * {
+        return sample_alloc(len);
       });
-
-  m.def("sample_alloc", [](unsigned len) -> vsample * {
-        return (vsample *)villas::node::sample_alloc_mem(len);
-      }, py::return_value_policy::reference);
 
   // Decrease reference count and release memory if last reference was held.
-  m.def("sample_decref", [](void *p) -> void {
-        villas::node::sample_decref(sample_cast(p));
+  m.def("sample_decref", [](void *smps) -> void {
+        auto smp = (vsample **)smps;
+        sample_decref(*smp);
       });
 
-  m.def("sample_length", [](void *p) -> unsigned {
-        return sample_cast(p)->length;
+  m.def("sample_length", [](void *smp) -> unsigned {
+        return sample_length((vsample *)smp);
       });
 
-  m.def("sample_pack", [](unsigned seq, struct timespec *ts_origin,
-                          struct timespec *ts_received, unsigned len,
-                          double *values) -> vsample * {
-        auto *smp = villas::node::sample_alloc_mem(len);
+  m.def("sample_pack", &sample_pack, py::return_value_policy::reference);
 
-        smp->sequence = seq;
-        smp->ts.origin = *ts_origin;
-        smp->ts.received = *ts_received;
-        smp->length = len;
-        smp->flags = (int)villas::node::SampleFlags::HAS_SEQUENCE | (int)villas::node::SampleFlags::HAS_DATA |
-                    (int)villas::node::SampleFlags::HAS_TS_ORIGIN;
-
-        memcpy((double *)smp->data, values, sizeof(double) * len);
-
-        return (vsample *)smp;
-      }, py::return_value_policy::reference);
-
-  m.def("sample_unpack", [](void *p, unsigned *seq, struct timespec *ts_origin,
+  m.def("sample_unpack", [](void *smp, unsigned *seq, struct timespec *ts_origin,
                             struct timespec *ts_received, int *flags, unsigned *len,
                             double *values) -> void {
-        auto *smp = sample_cast(p);
-
-        *seq = smp->sequence;
-
-        *ts_origin = smp->ts.origin;
-        *ts_received = smp->ts.received;
-
-        *flags = smp->flags;
-        *len = smp->length;
-
-        memcpy(values, (double *)smp->data, sizeof(double) * *len);
+        return sample_unpack((vsample *)smp, seq, ts_origin, ts_received, flags, len, values);
       },
       py::return_value_policy::reference);
+
+  py::class_<Array>(m, "SamplesArray")
+    .def(py::init<unsigned int>(), py::arg("len"))
+    .def("__getitem__", [](Array &a, unsigned int idx) {
+        if (idx >= a.size()) {
+          throw py::index_error("Index out of bounds");
+        }
+        return a[idx];
+      })
+    .def("__setitem__", [](Array &a, unsigned int idx, void *smp) {
+        if (idx >= a.size()) {
+          throw py::index_error("Index out of bounds");
+        }
+        if (a[idx]) {
+          sample_decref(a[idx]);
+        }
+        a[idx] = (vsample *)smp;
+      });
 }
 
