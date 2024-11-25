@@ -85,6 +85,12 @@ static const struct {
               {"unipolar-0.01", UNIPT01VOLTS, 0.0, +0.01},
               {"unipolar-0.005", UNIPT005VOLTS, 0.0, +0.005}};
 
+static const struct {
+  const char *name;
+  ScanOption clock_source;
+} clock_sources[] = {{"internal", (ScanOption)( 0 << 4)},
+                    {"external", SO_EXTCLOCK}};
+
 static AiInputMode uldaq_parse_input_mode(const char *str) {
   for (unsigned i = 0; i < ARRAY_LEN(input_modes); i++) {
     if (!strcmp(input_modes[i].name, str))
@@ -119,6 +125,15 @@ static Range uldaq_parse_range(const char *str) {
   }
 
   return (Range)-1;
+}
+
+static ScanOption uldaq_parse_clock_source(const char *str) {
+  for (unsigned i = 0; i < ARRAY_LEN(clock_sources); i++) {
+    if (!strcmp(clock_sources[i].name, str))
+      return clock_sources[i].clock_source;
+  }
+
+  return (ScanOption)( 0 << 4);
 }
 
 static DaqDeviceDescriptor *uldaq_find_device(struct uldaq *u) {
@@ -254,6 +269,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   const char *default_range_str = nullptr;
   const char *default_input_mode_str = nullptr;
   const char *interface_type = nullptr;
+  const char *sample_clock_source = nullptr;
 
   size_t i;
   json_t *json_signals;
@@ -261,10 +277,12 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   json_error_t err;
 
   ret = json_unpack_ex(
-      json, &err, 0, "{ s?: s, s?: s, s: { s: o, s: F, s?: s, s?: s } }",
+      json, &err, 0,
+      "{ s?: s, s?: s, s: { s: o, s: F, s?: s, s?: s, s?: s } }",
       "interface_type", &interface_type, "device_id", &u->device_id, "in",
       "signals", &json_signals, "sample_rate", &u->in.sample_rate, "range",
-      &default_range_str, "input_mode", &default_input_mode_str);
+      &default_range_str, "input_mode", &default_input_mode_str,
+      "sample_clock_source", &sample_clock_source);
   if (ret)
     throw ConfigError(json, err, "node-config-node-uldaq");
 
@@ -275,6 +293,15 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
                         "Invalid interface type: {}", interface_type);
 
     u->device_interface_type = (DaqDeviceInterface)iftype;
+  }
+
+  if (sample_clock_source) {
+    int clksrc = uldaq_parse_clock_source(sample_clock_source);
+    if(clksrc < 0) {
+      throw ConfigError(json, "node-config-node-uldaq-clock_source",
+                        "Invalid clock source type: {}", sample_clock_source);
+    }
+    u->in.scan_options = (ScanOption) (u->in.scan_options | clksrc);
   }
 
   if (u->in.queues)
