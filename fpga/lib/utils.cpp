@@ -155,7 +155,7 @@ bool fpga::ConnectString::configCrossBar(
   }
 
   auto dinoAdc = std::dynamic_pointer_cast<fpga::ip::DinoAdc>(
-      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:")));
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_adc:")));
   if (dinoAdc == nullptr) {
     logger->warn("No Dino ADC found on FPGA ");
   }
@@ -209,6 +209,7 @@ bool fpga::ConnectString::configCrossBar(
     }
     dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
   }
+  return true;
 }
 
 void fpga::setupColorHandling() {
