@@ -164,6 +164,9 @@
       "edk_iptype": "PERIPHERAL",
       "c_baseaddr": 2684551168,
       "c_highaddr": 2684616703
+    },
+    "irqs": {
+      "iic2intc_irpt": "zynq_zynq_ultra_ps_e_0:2"
     }
   },
   "axis_interconnect_0_xbar": {
@@ -683,7 +686,11 @@
         "target": "axis_interconnect_0_xbar:M00_AXIS",
         "name": "S2MM"
       }
-    ]
+    ],
+    "irqs": {
+      "mm2s_introut": "zynq_zynq_ultra_ps_e_0:0",
+      "s2mm_introut": "zynq_zynq_ultra_ps_e_0:1"
+    }
   },
   "zynq_axi_read_cache_0": {
     "vlnv": "xilinx.com:module_ref:axi_read_cache:1.0",
