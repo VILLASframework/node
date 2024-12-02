@@ -69,7 +69,10 @@ int FpgaNode::prepare() {
   // Configure Crossbar switch
   for (std::string str : connectStrings) {
     const fpga::ConnectString parsedConnectString(str);
-    parsedConnectString.configCrossBar(card);
+    if (!parsedConnectString.configCrossBar(card)) {
+      logger->error("Failed to configure crossbar");
+      return -1;
+    }
   }
 
   auto reg = std::dynamic_pointer_cast<fpga::ip::Register>(

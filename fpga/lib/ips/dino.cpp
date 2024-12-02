@@ -140,6 +140,10 @@ void DinoAdc::configureHardware() {
 void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
                                 double sampleRate) {
   constexpr double dinoClk = 25e6; // Dino is clocked with 25 Mhz
+  // From the data sheets we can assume an analog delay of 828e-9s
+  // However this will eat into our computation time, so it should be
+  // configurable. Let's assume 0 until we implement this.
+  constexpr double dinoDacDelay = 0; // Delay for DAC to settle
   constexpr size_t dinoRegisterTimer = 0;
   constexpr size_t dinoRegisterAdcScale = 1;
   constexpr size_t dinoRegisterAdcOffset = 2;
@@ -147,23 +151,41 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   constexpr size_t dinoRegisterStsActive = 5;
   constexpr size_t dinoRegisterDacScale = 6;
   constexpr size_t dinoRegisterDacOffset = 7;
+  constexpr size_t dinoRegisterTimerPreThresh = 8;
 
-  uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate);
-  double rateError = dinoClk / dinoTimerVal - sampleRate;
-  reg->setRegister(
-      dinoRegisterTimer,
-      dinoTimerVal); // Timer value for generating ADC trigger signal
+  // -1 because the timer counts from 0 to the value set in the register. Should really be fixed in hardware.
+  uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate) - 1;
+  uint32_t dinoDacDelayCycles = static_cast<uint32_t>(dinoClk * dinoDacDelay);
+  double rateError = dinoClk / (dinoTimerVal + 1) - sampleRate;
+
+  // Timer value for generating ADC trigger signal
+  reg->setRegister(dinoRegisterTimer, dinoTimerVal);
+
   // The following are calibration values for the ADC and DAC. Scale
   // sets an factor to be multiplied with the input value. This is the
   // raw 16 bit ADC value for the ADC and the float value from VILLAS for
   // the DAC. Offset is a value to be added to the result of the multiplication.
   // All values are IEE 754 single precision floating point values.
+  // Calibration for ADC filter with C=330pF and R=2,2kOhm
+  // TODO: These values should be read from the FPGA or configured via the configuration file.
   reg->setRegister(dinoRegisterAdcScale,
-                   -0.001615254F); // Scale factor for ADC value
-  reg->setRegister(dinoRegisterAdcOffset, 10.8061F); // Offset for ADC value
+                   0.0016874999385349976F); // Scale factor for ADC value
+  reg->setRegister(dinoRegisterAdcOffset,
+                   -11.365293957141239F); // Offset for ADC value
   reg->setRegister(dinoRegisterDacScale,
-                   3448.53852516F); // Scale factor for DAC value
-  reg->setRegister(dinoRegisterDacOffset, 32767.5F); // Offset for DAC value
+                   3204.7355379027363F); // Scale factor for DAC value
+  reg->setRegister(dinoRegisterDacOffset,
+                   32772.159015058445F); // Offset for DAC value
+  reg->setRegister(dinoRegisterDacExternalTrig,
+                   (uint32_t)0x0); // External trigger for DAC
+
+  if (dinoTimerVal > dinoDacDelayCycles) {
+    reg->setRegister(dinoRegisterTimerPreThresh,
+                     dinoTimerVal - dinoDacDelayCycles);
+  } else {
+    reg->setRegister(dinoRegisterTimerPreThresh, dinoTimerVal);
+  }
+
   uint32_t rate = reg->getRegister(dinoRegisterTimer);
   float adcScale = reg->getRegisterFloat(dinoRegisterAdcScale);
   float adcOffset = reg->getRegisterFloat(dinoRegisterAdcOffset);
@@ -171,12 +193,13 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   float dacOffset = reg->getRegisterFloat(dinoRegisterDacOffset);
   uint32_t dacExternalTrig = reg->getRegister(dinoRegisterDacExternalTrig);
   uint32_t stsActive = reg->getRegister(dinoRegisterStsActive);
+  uint32_t ratePreThresh = reg->getRegister(dinoRegisterTimerPreThresh);
   Log::get("Dino")->info(
       "Check: Register configuration: TimerThresh: {}, Rate-Error: {} Hz, ADC "
       "Scale: {}, ADC Offset: {}, DAC Scale: {}, DAC Offset: {}, DAC External "
-      "Trig: {:#x}, STS Active: {:#x}",
+      "Trig: {:#x}, STS Active: {:#x}, TimerPreThresh: {}",
       rate, rateError, adcScale, adcOffset, dacScale, dacOffset,
-      dacExternalTrig, stsActive);
+      dacExternalTrig, stsActive, ratePreThresh);
 }
 
 DinoDac::DinoDac() : Dino() {}

@@ -6,10 +6,12 @@ Author:     Steffen Vogel <post@steffenvogel.de>
 Author:     Daniel Krebs <github@daniel-krebs.net>
 Author:     Hatim Kanchwala <hatim@hatimak.me>
 Author:		Pascal Bauer <pascal.bauer@rwth-aachen.de>
+Author:     Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de
 SPDX-FileCopyrightText: 2017-2022 Steffen Vogel <post@steffenvogel.de>
 SPDX-FileCopyrightText: 2017-2022 Daniel Krebs <github@daniel-krebs.net>
 SPDX-FileCopyrightText: 2017-2022 Hatim Kanchwala <hatim@hatimak.me>
 SPDX-FileCopyrightText: 2023 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+SPDX-FileCopyrightText: 2024 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 
 This program is free software: you can redistribute it and/or modify
@@ -47,9 +49,11 @@ whitelist = [
     ["xilinx.com", "ip", "axi_iic"],
     ["xilinx.com", "module_ref", "dinoif_fast"],
     ["xilinx.com", "module_ref", "dinoif_fast_nologic"],
+    ["xilinx.com", "module_ref", "dinoif_adc"],
     ["xilinx.com", "module_ref", "dinoif_dac"],
     ["xilinx.com", "module_ref", "axi_pcie_intc"],
     ["xilinx.com", "module_ref", "registerif"],
+    ["xilinx.com", "module_ref", "axi_read_cache"],
     ["xilinx.com", "hls", "rtds2gpu"],
     ["xilinx.com", "hls", "mem"],
     ["acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc"],
@@ -69,6 +73,7 @@ axi_converter_whitelist = [
     ["xilinx.com", "ip", "axis_register_slice"],
     ["xilinx.com", "ip", "axis_data_fifo"],
     ["xilinx.com", "ip", "floating_point"],
+    ["xilinx.com", "module_ref", "prepend_seqnum"],
 ]
 
 opponent = {
@@ -253,14 +258,26 @@ for busif in busifs:
 ips[switch.get("INSTANCE")]["num_ports"] = int(switch_ports / 2)
 
 # find interrupt assignments
-intc = root.find('.//MODULE[@MODTYPE="axi_pcie_intc"]')
-if intc is not None:
-    intr = intc.xpath('.//PORT[@NAME="intr" and @DIR="I"]')[0]
-    concat = root.xpath(
-        './/MODULE[@MODTYPE="xlconcat" and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(
-            intr.get("SIGNAME")
-        )
-    )[0]
+
+
+
+# find interrupt assignments
+intr_controllers = []
+intr_signals = []
+
+intc_pcie = root.findall('.//MODULE[@MODTYPE="axi_pcie_intc"]')
+intc_zynq = root.findall('.//MODULE[@MODTYPE="zynq_ultra_ps_e"]')
+
+intr_controllers += intc_pcie
+for intc in intc_pcie:
+    intr_signals.append(intc.xpath('.//PORT[@NAME="intr" and @DIR="I"]')[0].get("SIGNAME"))
+
+intr_controllers += intc_zynq
+for intc in intc_zynq:
+    intr_signals.append(intc.xpath('.//PORT[@NAME="pl_ps_irq0" and @DIR="I"]')[0].get("SIGNAME"))
+
+for intc, intr in zip(intr_controllers, intr_signals):
+    concat = root.xpath('.//MODULE[@MODTYPE="xlconcat" and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(intr))[0]
     ports = concat.xpath('.//PORT[@DIR="I"]')
 
     for port in ports:

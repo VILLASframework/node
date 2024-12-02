@@ -65,7 +65,10 @@ villasfpga_handle villasfpga_init(const char *configFile) {
 
     // Configure Crossbar switch
     const fpga::ConnectString parsedConnectString(connectStr);
-    parsedConnectString.configCrossBar(handle->card);
+    if (!parsedConnectString.configCrossBar(handle->card)) {
+      logger->error("Failed to configure crossbar");
+      return nullptr;
+    }
 
     return handle;
   } catch (const RuntimeError &e) {

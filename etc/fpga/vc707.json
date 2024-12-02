@@ -2,9 +2,9 @@
   "fpgas": {
     "vc707": {
       "id": "10ee:7021",
-      "slot": "0000:88:00.0",
+      "slot": "0000:89:00.0",
       "do_reset": true,
-      "ips": "vc707-xbar-pcie-dino/vc707-xbar-pcie-dino-v2.json",
+      "ips": "vc707-xbar-pcie/vc707-xbar-pcie.json",
       "polling": true,
       "interface": "pcie"
     }

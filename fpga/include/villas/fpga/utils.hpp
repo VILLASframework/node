@@ -42,7 +42,7 @@ public:
   ConnectString(std::string &connectString, int maxPortNum = 7);
   void parseString(std::string &connectString);
   int portStringToInt(std::string &str) const;
-  void configCrossBar(std::shared_ptr<villas::fpga::Card> card) const;
+  bool configCrossBar(std::shared_ptr<villas::fpga::Card> card) const;
   bool isBidirectional() const { return bidirectional; };
   bool isDmaLoopback() const { return srcType == ConnectType::LOOPBACK; };
   bool isSrcStdin() const { return srcType == ConnectType::DMA; };

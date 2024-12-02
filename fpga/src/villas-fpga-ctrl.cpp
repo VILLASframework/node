@@ -186,7 +186,10 @@ int main(int argc, char *argv[]) {
     // Configure Crossbar switch
     for (std::string str : connectStr) {
       const fpga::ConnectString parsedConnectString(str);
-      parsedConnectString.configCrossBar(card);
+      if (!parsedConnectString.configCrossBar(card)) {
+        logger->error("Failed to configure crossbar");
+        return -1;
+      }
       if (parsedConnectString.isSrcStdin()) {
         readFromStdin = true;
         if (parsedConnectString.isBidirectional()) {
