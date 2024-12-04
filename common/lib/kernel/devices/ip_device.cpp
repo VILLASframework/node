@@ -12,6 +12,7 @@
 
 #include <villas/exceptions.hpp>
 #include <villas/kernel/devices/ip_device.hpp>
+#include <villas/utils.hpp>
 
 using villas::kernel::devices::IpDevice;
 
@@ -52,3 +53,22 @@ bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
 
   return true;
 }
+
+std::vector<villas::kernel::devices::IpDevice>
+IpDevice::from_directory(std::filesystem::path devices_directory) {
+    std::vector<villas::kernel::devices::IpDevice> devices;
+
+    const std::vector<std::string> devicetree_names =
+        villas::utils::read_names_in_directory(devices_directory);
+
+    for (auto devicetree_name : devicetree_names) {
+      auto path_to_device =
+          devices_directory / std::filesystem::path(devicetree_name);
+      try {
+        auto device = villas::kernel::devices::IpDevice::from(path_to_device);
+        devices.push_back(device);
+      } catch (std::runtime_error &e) {
+      }
+    }
+    return devices;
+  }
