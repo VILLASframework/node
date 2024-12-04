@@ -1,5 +1,5 @@
 /* Matcher for IP devices in an OS devicetree and ips on a fpga board.
- * Matching based on adress prefix in device name and ip memoryaddress
+ * Matching based on address prefix in device name and ip memory address
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
