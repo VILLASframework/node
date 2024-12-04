@@ -108,9 +108,9 @@ void PlatformCard::connectVFIOtoIps(
 
     // interrupts
     if (vfio_device->getNumberIrqs() > 0) {
-      for (int i = 0; i < vfio_device->getNumberIrqs(); i++) {
-        auto intc = new PlatformInterruptController(vfio_device);
+      auto intc = new PlatformInterruptController(vfio_device);
 
+      for (int i = 0; i < vfio_device->getNumberIrqs(); i++) {
         const char *irqName = "iic2intc_irpt";
         int num = i;
         logger->error("Adding Platformintc {}", num);
