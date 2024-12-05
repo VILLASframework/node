@@ -1,5 +1,5 @@
 {
-  "aurora_aurora_8b10b_0": {
+  "aurora_aurora_8b10b_ch0": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
       "component_name": "design_1_aurora_8b10b_0_2",
@@ -520,7 +520,7 @@
       },
       {
         "role": "slave",
-        "target": "dino_dinoif_fast_nologic_0:M00_AXIS",
+        "target": "dino_dinoif_adc_0:M00_AXIS",
         "name": "S01_AXIS"
       },
       {
@@ -530,12 +530,12 @@
       },
       {
         "role": "slave",
-        "target": "aurora_aurora_8b10b_0:USER_DATA_M_AXI_RX",
+        "target": "aurora_aurora_8b10b_ch0:USER_DATA_M_AXI_RX",
         "name": "S02_AXIS"
       },
       {
         "role": "master",
-        "target": "aurora_aurora_8b10b_0:USER_DATA_S_AXI_TX",
+        "target": "aurora_aurora_8b10b_ch0:USER_DATA_S_AXI_TX",
         "name": "M02_AXIS"
       },
       {
@@ -561,6 +561,21 @@
     ],
     "num_ports": 4
   },
+  "dino_dinoif_adc_0": {
+    "vlnv": "xilinx.com:module_ref:dinoif_adc:1.0",
+    "i2c_channel": 0,
+    "parameters": {
+      "component_name": "design_1_dinoif_adc_0_0",
+      "edk_iptype": "PERIPHERAL"
+    },
+    "ports": [
+      {
+        "role": "master",
+        "target": "axis_interconnect_0_xbar:S01_AXIS",
+        "name": "M00_AXIS"
+      }
+    ]
+  },
   "dino_dinoif_dac_0": {
     "vlnv": "xilinx.com:module_ref:dinoif_dac:1.0",
     "i2c_channel": 1,
@@ -573,21 +588,6 @@
         "role": "slave",
         "target": "axis_interconnect_0_xbar:M01_AXIS",
         "name": "S00_AXIS"
-      }
-    ]
-  },
-  "dino_dinoif_fast_nologic_0": {
-    "vlnv": "xilinx.com:module_ref:dinoif_fast_nologic:1.0",
-    "i2c_channel": 0,
-    "parameters": {
-      "component_name": "design_1_dinoif_fast_nologic_0_0",
-      "edk_iptype": "PERIPHERAL"
-    },
-    "ports": [
-      {
-        "role": "master",
-        "target": "axis_interconnect_0_xbar:S01_AXIS",
-        "name": "M00_AXIS"
       }
     ]
   },
@@ -2459,7 +2459,7 @@
           }
         },
         "dino_registerif_0": {
-          "Reg": {
+          "reg0": {
             "baseaddr": 2684485632,
             "highaddr": 2684551167,
             "size": 65536
@@ -2473,7 +2473,7 @@
           }
         },
         "zynq_axi_read_cache_0": {
-          "Reg": {
+          "reg0": {
             "baseaddr": 2684616704,
             "highaddr": 2684682239,
             "size": 65536
