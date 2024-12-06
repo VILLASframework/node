@@ -88,7 +88,7 @@ static const struct {
 static const struct {
   const char *name;
   ScanOption clock_source;
-} clock_sources[] = {{"internal", (ScanOption)( 0 << 4)},
+} clock_sources[] = {{"internal", (ScanOption)(0 << 4)},
                     {"external", SO_EXTCLOCK}};
 
 static AiInputMode uldaq_parse_input_mode(const char *str) {
@@ -133,7 +133,7 @@ static ScanOption uldaq_parse_clock_source(const char *str) {
       return clock_sources[i].clock_source;
   }
 
-  return (ScanOption)( 0 << 4);
+  return (ScanOption)(0 << 4);
 }
 
 static DaqDeviceDescriptor *uldaq_find_device(struct uldaq *u) {
@@ -297,7 +297,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
 
   if (sample_clock_source) {
     int clksrc = uldaq_parse_clock_source(sample_clock_source);
-    if(clksrc < 0) {
+    if (clksrc < 0) {
       throw ConfigError(json, "node-config-node-uldaq-clock_source",
                         "Invalid clock source type: {}", sample_clock_source);
     }
