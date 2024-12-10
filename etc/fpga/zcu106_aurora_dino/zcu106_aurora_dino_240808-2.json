@@ -2459,7 +2459,7 @@
           }
         },
         "dino_registerif_0": {
-          "reg0": {
+          "Reg": {
             "baseaddr": 2684485632,
             "highaddr": 2684551167,
             "size": 65536
