@@ -194,7 +194,7 @@ void fpga::ConnectString::configCrossBar(
     }
     dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
   }
-  return true;
+  //´return true;
 }
 
 void fpga::setupColorHandling() {
