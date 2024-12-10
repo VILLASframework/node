@@ -30,6 +30,9 @@ bool Dino::init() {
       logger->error("No I2C found on FPGA");
       // throw RuntimeError(
       //     "Dino requires and I2C device but none was found on FPGA");
+      auto &mm = MemoryManager::get();
+      mm.printGraph();
+      return true;
     } else {
       logger->debug("Found I2C on FPGA");
     }
