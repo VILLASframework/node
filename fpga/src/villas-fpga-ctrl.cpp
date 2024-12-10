@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
         card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:registerif:")));
 
     if (reg != nullptr &&
-        card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
+        card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_adc:"))) {
       fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, 10e-3);
     }
 
