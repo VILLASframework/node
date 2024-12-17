@@ -10,12 +10,13 @@
 #include <xilinx/xaxis_switch.h>
 
 #include <villas/fpga/node.hpp>
+#include <villas/fpga/ips/platform_intc.hpp>
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-class Zynq : public Core {
+class Zynq : public PlatformInterruptController {
 public:
   friend class ZynqFactory;
 
