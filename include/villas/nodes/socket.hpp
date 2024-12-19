@@ -22,6 +22,7 @@ class NodeCompat;
 
 struct Socket {
   int sd; // The socket descriptor
+  int clt_sd; // TCP client socket descriptor
   int verify_source; // Verify the source address of incoming packets against socket::remote.
 
   enum SocketLayer
