@@ -25,9 +25,10 @@ bool Zynq::init() {
   // Save ID in card so we can create mappings later when needed (e.g. when
   // allocating DMA memory in host RAM)
   card->addrSpaceIdDeviceToHost =
-      mm.getOrCreateAddressSpace(getInstanceName() + "/HPC0_DDR_LOW");
-      // TODO: Use BusMasterInterfaces
-      // TODO: Multiple addressSpaces
+      mm.findAddressSpace(getInstanceName() + "/HPC0_DDR_LOW");
+
+  // TODO: Use BusMasterInterfaces
+  // TODO: Multiple addressSpaces
   return true;
 }
 
