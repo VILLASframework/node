@@ -102,8 +102,11 @@ char *villas::node::socket_print(NodeCompat *n) {
     break;
 
   case SocketLayer::TCP_SERVER:
+    layer = "tcp-server";
+    break;
+
   case SocketLayer::TCP_CLIENT:
-    layer = "tcp";
+    layer = "tcp-client";
     break;
   }
 
@@ -247,10 +250,10 @@ int villas::node::socket_start(NodeCompat *n) {
   }
 
   if (s->layer == SocketLayer::TCP_CLIENT) {
-    //Attempt to connect to TCP server
+    // Attempt to connect to TCP server.
     int retries = 0;
     while (retries < MAX_CONNECTION_RETRIES) {
-      n->logger->info("Attempting({}) to connect to server..", retries + 1);
+      n->logger->info("Attempting to connect to server: attempt={}...", retries + 1);
       ret = connect(s->sd, (struct sockaddr *)&s->out.saddr, addrlen);
       if (ret == 0) {
         break;
@@ -274,10 +277,10 @@ int villas::node::socket_start(NodeCompat *n) {
     }
   }
 
-  //TCP Server listen for client connection
+  // TCP Server listen for client connection.
   if (s->layer == SocketLayer::TCP_SERVER) {
     listen(s->sd, 5);
-    //Accept client connection and get client socket descriptor
+    // Accept client connection and get client socket descriptor.
     s->clt_sd = accept(s->sd, nullptr, nullptr);
     if (s->clt_sd < 0) {
       throw SystemError("Failed to accept connection");
@@ -365,7 +368,7 @@ int villas::node::socket_stop(NodeCompat *n) {
   }
 
   if (s->sd >= 0) {
-    //Close client socket descriptor
+    // Close client socket descriptor.
     if (s->layer == SocketLayer::TCP_SERVER)
       close(s->clt_sd);
 
@@ -396,10 +399,10 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
   // Receive next sample
 
   if (s->layer == SocketLayer::TCP_CLIENT) {
-    //Receive data from server
+    // Receive data from server.
     bytes = recv(s->sd, s->in.buf, s->in.buflen, 0);
   } else if (s->layer == SocketLayer::TCP_SERVER) {
-    //Receive data from client
+    // Receive data from client.
     bytes = recv(s->clt_sd, s->in.buf, s->in.buflen, 0);
   } else {
     bytes = recvfrom(s->sd, s->in.buf, s->in.buflen, 0, &src.sa, &srclen);
@@ -510,10 +513,10 @@ retry:
 
 retry2:
   if (s->layer == SocketLayer::TCP_CLIENT) {
-    //Send data to TCP server
+    // Send data to TCP server.
     bytes = send(s->sd, s->out.buf, wbytes, 0);
   } else if (s->layer == SocketLayer::TCP_SERVER) {
-    //Send data to TCP client
+    // Send data to TCP client.
     bytes = send(s->clt_sd, s->out.buf, wbytes, 0);
   } else {
     bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *)&s->out.saddr,
@@ -578,9 +581,9 @@ int villas::node::socket_parse(NodeCompat *n, json_t *json) {
       s->layer = SocketLayer::UDP;
     else if (!strcmp(layer, "unix") || !strcmp(layer, "local"))
       s->layer = SocketLayer::UNIX;
-    else if (!strcmp(layer, "tcp_client"))
+    else if (!strcmp(layer, "tcp-client"))
       s->layer = SocketLayer::TCP_CLIENT;
-    else if (!strcmp(layer, "tcp_server"))
+    else if (!strcmp(layer, "tcp-server"))
       s->layer = SocketLayer::TCP_SERVER;
     else
       throw SystemError("Invalid layer '{}'", layer);
