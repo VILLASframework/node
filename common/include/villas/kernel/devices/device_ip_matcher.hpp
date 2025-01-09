@@ -23,7 +23,7 @@ public:
 
   std::vector<std::pair<std::shared_ptr<villas::fpga::ip::Core>,
                         villas::kernel::devices::IpDevice>>
-  match() const {
+  pairs() const {
     std::vector<std::pair<std::shared_ptr<villas::fpga::ip::Core>,
                           villas::kernel::devices::IpDevice>>
         pairs;

@@ -47,7 +47,7 @@ void PlatformCard::connectVFIOtoIps(
   // Match devices and ips
   DeviceIpMatcher matcher(devices, configuredIps);
   std::vector<std::pair<std::shared_ptr<ip::Core>, IpDevice>> device_ip_pair =
-      matcher.match();
+      matcher.pairs();
 
   // Bind device to platform driver
   LinuxDriver driver(
