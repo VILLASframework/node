@@ -105,22 +105,6 @@ void PlatformCard::connectVFIOtoIps(
 
     // Connect vfio vertex to Reg vertex
     connect(vfio_device->getName(), ip);
-
-    // interrupts
-    // if (vfio_device->getNumberIrqs() > 0) {
-    //   auto intc = new PlatformInterruptController(vfio_device);
-
-    //   for (int i = 0; i < vfio_device->getNumberIrqs(); i++) {
-    //     const char *irqName = "iic2intc_irpt";
-    //     int num = i;
-    //     logger->error("Adding Platformintc {}", num);
-    //     //* dma
-    //     //* mm2s_introut
-    //     //* s2mm_introut
-
-    //     ip->addIrq(irqName, num, intc);
-    //   }
-    // }
   }
 }
 
