@@ -14,6 +14,8 @@ allOf:
       - udp
       - ip
       - eth
+      - tcp-client
+      - tcp-server
       default: udp
       description: |
         Select the network layer which should be used for the socket. Please note that `eth` can only be used locally in a LAN as it contains no routing information for the internet.
