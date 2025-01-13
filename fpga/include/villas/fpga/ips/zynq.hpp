@@ -16,7 +16,7 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-class Zynq : public PlatformInterruptController {
+class Zynq : public Core {
 public:
   friend class ZynqFactory;
 
