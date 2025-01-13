@@ -8,14 +8,14 @@ find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 message(STATUS "Found Python version: ${Python_VERSION}")
 message(STATUS "Python major version: ${Python_VERSION_MAJOR}")
 message(STATUS "Python minor version: ${Python_VERSION_MINOR}")
-message(STATUS "Python so install directory: /usr/bin/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/lib-dynload")
+message(STATUS "Python .so install directory: /usr/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/lib-dynload")
 
-pybind11_add_module(villas-python-wrapper villas-python-wrapper.cpp)
-target_link_libraries(villas-python-wrapper PUBLIC villas)
+pybind11_add_module(villas_node villas-python-wrapper.cpp)
+target_link_libraries(villas_node PUBLIC villas)
 
 install(
-  TARGETS villas-python-wrapper
-  COMPONENT bin
+  TARGETS villas_node
+  COMPONENT lib
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION /usr/bin/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/lib-dynload
+  LIBRARY DESTINATION /usr/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/lib-dynload
 )
