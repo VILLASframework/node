@@ -1,7 +1,6 @@
 #include <jansson.h>
 #include <pybind11/pybind11.h>
 #include <uuid/uuid.h>
-#include <villas/node.h>
 #include <villas/node.hpp>
 #include <villas/sample.hpp>
 extern "C" {
@@ -113,8 +112,11 @@ PYBIND11_MODULE(villas_node, m) {
           return (vnode *)villas::node::NodeFactory::make(json_object_iter_value(it), id, json_object_iter_key(it));
         }
         else { // create node without name
-          const char* capi_str = json_dumps(json_object_iter_value(it), 0);
-          return node_new(id_str, capi_str);
+          char* capi_str = json_dumps(json, 0);
+          auto ret = node_new(id_str, capi_str);
+
+          free(capi_str);
+          return ret;
         }
       },
       py::return_value_policy::reference);
