@@ -36,4 +36,29 @@ public:
     }
     return pairs;
   }
+
+  villas::kernel::devices::IpDevice
+  match(std::shared_ptr<villas::fpga::ip::Core>) {
+    for (auto device : devices) {
+      for (auto ip : ips) {
+        if (ip->getBaseaddr() == device.addr()) {
+          return device;
+        }
+      }
+    }
+    throw(std::runtime_error("No matching device found"));
+  };
+
+  std::shared_ptr<villas::fpga::ip::Core>
+  match(villas::kernel::devices::IpDevice) {
+    for (auto device : devices) {
+      for (auto ip : ips) {
+        if (ip->getBaseaddr() == device.addr()) {
+          return ip;
+        }
+      }
+    }
+    throw(std::runtime_error("No matching ip found"));
+  };
+
 };
