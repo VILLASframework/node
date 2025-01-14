@@ -195,7 +195,7 @@ cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"        
 cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "re_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            "${WITH_DEFAULTS}" "HAS_SEMAPHORE; HAS_MMAN" OFF)
 cmake_dependent_option(WITH_NODE_SIGNAL     "Build with signal node-type"                           "${WITH_DEFAULTS}" "" OFF)
-cmake_dependent_option(WITH_NODE_SMU        "Build with smu node-type"                              ON "" OFF)
+cmake_dependent_option(WITH_NODE_SMU        "Build with smu node-type"                              "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_SOCKET     "Build with socket node-type"                           "${WITH_DEFAULTS}" "LIBNL3_ROUTE_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_STATS      "Build with stats node-type"                            "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_TEMPER     "Build with temper node-type"                           "${WITH_DEFAULTS}" "LIBUSB_FOUND" OFF)

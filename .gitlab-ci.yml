@@ -12,7 +12,6 @@ variables:
   DOCKER_CLI_EXPERIMENTAL: enabled
   CMAKE_BUILD_OPTS: "--parallel 16"
   CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
-  # CMAKE_OPTS: "-DWITH_NODE_RTP=OFF" # needs to be removed
 
 stages:
   - prepare
@@ -234,12 +233,17 @@ pkg:docker:
         PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET: x86_64-linux-gnu
-        TAG: docker
-      - DISTRO: debian
-        PLATFORM: linux/arm64/v8
-        ARCH: arm64
-        TRIPLET: aarch64-linux-gnu
-        TAG: pi5
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm/v7
+      #   ARCH: armhf
+      #   TRIPLET: arm-linux-gnueabihf
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+      # - DISTRO: debian
+      #   PLATFORM: linux/arm64/v8
+      #   ARCH: arm64
+      #   TRIPLET: aarch64-linux-gnu
+      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
+
   needs: []
 
 # Stage: deploy
@@ -252,13 +256,15 @@ deploy:docker:
     - docker manifest rm ${DOCKER_IMAGE}:${DOCKER_TAG} || true
     - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
+    # ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
     - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
     - docker
   needs:
-    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu, docker]"
-    - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, pi5]"
+    # - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
+    # - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
+    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
 
 deploy:docker-dev:
   stage: deploy
