@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 allOf:
 - type: object
   properties:
@@ -41,7 +42,7 @@ allOf:
     ice:
       type: object
       title: ICE configuration settings
-      properties: 
+      properties:
         servers:
           title: ICE Servers
           description: A list of ICE servers used for connection establishment

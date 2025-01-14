@@ -1,14 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
 # This test checks if a single node can be used as an input
 # in multiple paths.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 echo "Test is broken"
 exit 99
@@ -19,47 +18,47 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 cat > config.json <<EOF
 {
-		"nodes": {
-				"sig_1": {
-						"type": "signal",
-						"values": 1,
-						"signal": "counter",
-						"offset": 100,
-						"limit": 10,
-						"realtime": false
-				},
-				"file_1": {
-						"type": "file",
-						"uri": "output1.dat"
-				},
-				"file_2": {
-						"type": "file",
-						"uri": "output2.dat"
-				}
-		},
-		"paths": [
-			{
-				"in": "sig_1",
-				"out": "file_1"
-			},
-			{
-				"in": "sig_1",
-				"out": "file_2"
-			},
-			{
-				"in": "sig_1"
-			},
-			{
-				"in": "sig_1"
-			}
-		]
+        "nodes": {
+             	"sig_1": {
+             			"type": "signal",
+             			"values": 1,
+             			"signal": "counter",
+             			"offset": 100,
+             			"limit": 10,
+             			"realtime": false
+             	},
+             	"file_1": {
+             			"type": "file",
+             			"uri": "output1.dat"
+             	},
+             	"file_2": {
+             			"type": "file",
+             			"uri": "output2.dat"
+             	}
+        },
+        "paths": [
+             {
+             	"in": "sig_1",
+             	"out": "file_1"
+             },
+             {
+             	"in": "sig_1",
+             	"out": "file_2"
+             },
+             {
+             	"in": "sig_1"
+             },
+             {
+             	"in": "sig_1"
+             }
+        ]
 }
 EOF
 

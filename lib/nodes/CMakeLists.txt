@@ -1,9 +1,8 @@
 # CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set(NODE_SRC
     loopback_internal.cpp
@@ -76,11 +75,9 @@ if(WITH_NODE_IEC61850)
     list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
 endif()
 
-# Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-if(WITH_NODE_OPAL)
-    list(APPEND NODE_SRC opal.cpp)
-    list(APPEND INCLUDE_DIRS ${OPAL_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${OPAL_LIBRARIES})
+if(WITH_NODE_MODBUS)
+    list(APPEND NODE_SRC modbus.cpp)
+    list(APPEND LIBRARIES PkgConfig::MODBUS)
 endif()
 
 # Enable nanomsg node type when libnanomsg is available
@@ -143,7 +140,7 @@ endif()
 # Enable RTP node type when libre is available
 if(WITH_NODE_RTP)
     list(APPEND NODE_SRC rtp.cpp)
-    list(APPEND LIBRARIES PkgConfig::RE)
+    list(APPEND LIBRARIES re)
 endif()
 
 # Enable CAN node type
@@ -180,14 +177,14 @@ endif()
 
 # Enable Redis support
 if(WITH_NODE_REDIS)
-	list(APPEND NODE_SRC redis.cpp)
-	list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
+    list(APPEND NODE_SRC redis.cpp)
+    list(APPEND LIBRARIES PkgConfig::HIREDIS PkgConfig::REDISPP)
 endif()
 
 # Enable WebRTC support
 if(WITH_NODE_WEBRTC)
-	list(APPEND NODE_SRC webrtc.cpp webrtc/signaling_client.cpp webrtc/signaling_message.cpp webrtc/peer_connection.cpp)
-	list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
+    list(APPEND NODE_SRC webrtc.cpp webrtc/signaling_client.cpp webrtc/signaling_message.cpp webrtc/peer_connection.cpp)
+    list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
 add_library(nodes STATIC ${NODE_SRC})

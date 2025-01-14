@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -13,26 +12,26 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-FORMAT="villas.human"	
+FORMAT="villas.human"
 
 cat > config.json << EOF
 {
-	"nodes": {
-		"node1": {
-			"type": "exec",
-			"format": "${FORMAT}",
+    "nodes": {
+        "node1": {
+             "type": "exec",
+             "format": "${FORMAT}",
 
-			"shell": true,
+             "shell": true,
 
-			"exec": "tee /tmp/test"
-		}
-	}
+             "exec": "tee /tmp/test"
+        }
+    }
 }
 EOF
 

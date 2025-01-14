@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -13,23 +12,23 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 
 cat > config.json <<EOF
 {
-	"http": {
-		"port": 8080
-	}
+    "http": {
+        "port": 8080
+    }
 }
 EOF
 
 # Start without a configuration
 timeout -s SIGKILL 3 \
-villas node config.json & 
+villas node config.json &
 
 # Wait for node to complete init
 sleep 1

@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 allOf:
 - type: object
   properties:
@@ -30,7 +31,7 @@ allOf:
 
     in:
       type: object
-      properties: 
+      properties:
         epoch:
           type: number
 
@@ -107,7 +108,7 @@ allOf:
             description: |
               With this setting enabled, the outgoing file is flushed whenever new samples have been written to it.
 
-          buffer_size: 
+          buffer_size:
             type: integer
             default: 0
             min: 0

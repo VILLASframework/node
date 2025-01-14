@@ -1,19 +1,20 @@
 # CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set(HOOK_SRC
     average.cpp
     cast.cpp
     decimate.cpp
+    digest.cpp
     dp.cpp
     drop.cpp
     dump.cpp
     ebm.cpp
     fix.cpp
+    frame.cpp
     gate.cpp
     jitter_calc.cpp
     limit_rate.cpp
@@ -25,6 +26,7 @@ set(HOOK_SRC
     pmu_ipdft.cpp
     pps_ts.cpp
     print.cpp
+    reorder_ts.cpp
     restart.cpp
     rms.cpp
     round.cpp

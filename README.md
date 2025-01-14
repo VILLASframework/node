@@ -12,7 +12,7 @@ VILLASnode is a client/server application to connect simulation equipment and so
  - LabView,
  - and FPGA models
 
-by using protcols such as:
+by using protocols such as:
 
  - IEEE 802.2 Ethernet / IP / UDP,
  - ZeroMQ & nanomsg,
@@ -29,15 +29,21 @@ VILLASnode is used in distributed- and co-simulation scenarios and developed for
 
 ## Documentation
 
-User documentation is available here: <https://villas.fein-aachen.org/doc/node.html>
+User documentation is available here: <https://villas.fein-aachen.org/docs/>
 
-## Copyright
+## Related Projects
 
-2014-2021, Institute for Automation of Complex Power Systems, EONERC  
+- [MIOB](https://github.com/RWTH-ACS/miob)
+- [DINO](https://github.com/RWTH-ACS/dino)
+
+## Contributing
+
+All contributions are welcome!
+If you want to contribute to VILLASnode, please visit the [contribution guidelines](https://villas.fein-aachen.org/docs/node/development/contributing/) in our documentation.
 
 ## License
 
-This project is released under the terms of the [Apache 2.0 license](COPYING.md).
+This project is released under the terms of the [Apache 2.0 license](LICENSE).
 
 We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
 
@@ -46,13 +52,22 @@ We kindly ask all academic publications employing components of VILLASframework 
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
 
+- SPDX-FileCopyrightText: 2014-2024 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-FileCopyrightText: 2023-2024 OPAL-RT Germany GmbH
+- SPDX-FileCopyrightText: 2022-2024 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- SPDX-FileCopyrightText: 2018-2024 Steffen Vogel <post@steffenvogel.de>
+- SPDX-FileCopyrightText: 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
+- SPDX-License-Identifier: Apache-2.0
+
 ## Contact
 
 [![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
 
 - Steffen Vogel <post@steffenvogel.de>
-- Marija Stevic <mstevic@eonerc.rwth-aachen.de>
+- Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- Felix Wege <fwege@eonerc.rwth-aachen.de>
+- Alexandra Bach <alexandra.bach@eonerc.rwth-aachen.de>
 
-[Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)  
-[EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)  
-[RWTH University Aachen, Germany](http://www.rwth-aachen.de)  
+[Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)
+[EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)
+[RWTH University Aachen, Germany](http://www.rwth-aachen.de)

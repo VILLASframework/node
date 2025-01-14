@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    trigger:
+      description: The trigger for new frames.
+      type: string
+      default: sequence
+      enum:
+      - sequence
+      - timestamp
+
+    unit:
+      description: The type of a timestamp trigger.
+      type: string
+      enum:
+      - milliseconds
+      - seconds
+      - minutes
+      - hours
+
+    interval:
+      description: The interval in which frames are annotated.
+      type: number
+      default: 1
+
+    offset:
+      description: An offset in the interval for the annotation of new frames.
+      type: number
+      default: 0
+
+- $ref: ../hook.yaml
+

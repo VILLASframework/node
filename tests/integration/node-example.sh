@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test for the example node-type
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -16,8 +15,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -31,23 +30,23 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"example_node1": {
-			"type": "example",
+    "nodes": {
+        "example_node1": {
+             "type": "example",
 
-			"setting1": 66
-		},
-		"file": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": "example_node1",
-			"out": "file",
-		}
-	]
+             "setting1": 66
+        },
+        "file": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": "example_node1",
+             "out": "file",
+        }
+    ]
 }
 EOF
 

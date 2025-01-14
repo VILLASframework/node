@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 type: object
 title: Node
 properties:
@@ -11,7 +12,7 @@ properties:
     description: |
       This setting allows to send multiple samples in a single message to the destination nodes.
 
-      The value of this setting determines how many samples will be combined into one packet. 
+      The value of this setting determines how many samples will be combined into one packet.
 
   hooks:
     $ref: hook_list.yaml

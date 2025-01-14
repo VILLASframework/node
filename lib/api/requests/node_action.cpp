@@ -1,50 +1,45 @@
-/** The API ressource for start/stop/pause/resume nodes.
+/* The API ressource for start/stop/pause/resume nodes.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <jansson.h>
 
+#include <villas/api.hpp>
+#include <villas/api/requests/node.hpp>
+#include <villas/api/response.hpp>
+#include <villas/api/session.hpp>
 #include <villas/node.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/api.hpp>
-#include <villas/api/session.hpp>
-#include <villas/api/requests/node.hpp>
-#include <villas/api/response.hpp>
 
 namespace villas {
 namespace node {
 namespace api {
 
-template<auto func>
-class NodeActionRequest : public NodeRequest  {
+template <auto func> class NodeActionRequest : public NodeRequest {
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual Response * execute()
-	{
-		if (method != Session::Method::POST)
-			throw InvalidMethod(this);
+  virtual Response *execute() {
+    if (method != Session::Method::POST)
+      throw InvalidMethod(this);
 
-		if (body != nullptr)
-			throw BadRequest("Node endpoints do not accept any body data");
+    if (body != nullptr)
+      throw BadRequest("Node endpoints do not accept any body data");
 
-		int ret = (node->*func)();
-		if (ret)
-			throw BadRequest("Failed to execute action", "{ s: d }",
-				"ret", ret
-			);
+    int ret = (node->*func)();
+    if (ret)
+      throw BadRequest("Failed to execute action", "{ s: d }", "ret", ret);
 
-		return new Response(session, HTTP_STATUS_OK);
-	}
-
+    return new Response(session, HTTP_STATUS_OK);
+  }
 };
 
-/* Register API requests */
+// Register API requests
 static char n1[] = "node/start";
 static char r1[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/start";
 static char d1[] = "start a node";
@@ -70,7 +65,6 @@ static char r5[] = "/node/(" RE_NODE_NAME "|" RE_UUID ")/restart";
 static char d5[] = "restart a node";
 static RequestPlugin<NodeActionRequest<&Node::restart>, n5, r5, d5> p5;
 
-
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

@@ -1,35 +1,34 @@
-/** Node type: nanomsg
+/* Node type: nanomsg.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
-#include <villas/list.hpp>
 #include <villas/format.hpp>
+#include <villas/list.hpp>
 
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class NodeCompat;
 
-/** The maximum length of a packet which contains stuct msg. */
+// The maximum length of a packet which contains stuct msg.
 #define NANOMSG_MAX_PACKET_LEN 1500
 
 struct nanomsg {
-	struct {
-		int socket;
-		struct List endpoints;
-	} in, out;
+  struct {
+    int socket;
+    struct List endpoints;
+  } in, out;
 
-	Format *formatter;
+  Format *formatter;
 };
 
-char * nanomsg_print(NodeCompat *n);
+char *nanomsg_print(NodeCompat *n);
 
 int nanomsg_init(NodeCompat *n);
 
@@ -49,9 +48,9 @@ int nanomsg_poll_fds(NodeCompat *n, int fds[]);
 
 int nanomsg_netem_fds(NodeCompat *n, int fds[]);
 
-int nanomsg_read(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int nanomsg_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int nanomsg_write(NodeCompat *n, struct Sample * const smps[], unsigned cnt);
+int nanomsg_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

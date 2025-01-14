@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 allOf:
 - type: object
   required:
@@ -49,8 +50,8 @@ allOf:
     frequency:
       type: number
       description: The frequency of the signal when the `signal` setting is one of `sine`, `square`, `triangle`,`pulse` or `ramp`.
-      default: 1.0 
-      
+      default: 1.0
+
     phase:
       type: number
       default: 0.0

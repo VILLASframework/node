@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test using villas node.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -13,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -26,13 +25,13 @@ cat > expect_all.dat <<EOF
 EOF
 
 cat > expect_any.dat <<EOF
-1637846509.292258908(0) 0.00000000000000000     nan     nan
-1637846509.392250279(1) 1.00000000000000000     nan     nan
-1637846509.392340108(2) 1.00000000000000000     10.00000000000000000    nan
-1637846509.492248409(3) 2.00000000000000000     10.00000000000000000    nan
-1637846509.592247486(4) 3.00000000000000000     10.00000000000000000    nan
-1637846509.592325514(5) 3.00000000000000000     20.00000000000000000    nan
-1637846509.692247962(6) 4.00000000000000000     20.00000000000000000    nan
+1637846509.292258908(0) 0.00000000000000000
+1637846509.392250279(1) 1.00000000000000000
+1637846509.392340108(2) 1.00000000000000000     10.00000000000000000
+1637846509.492248409(3) 2.00000000000000000     10.00000000000000000
+1637846509.592247486(4) 3.00000000000000000     10.00000000000000000
+1637846509.592325514(5) 3.00000000000000000     20.00000000000000000
+1637846509.692247962(6) 4.00000000000000000     20.00000000000000000
 1637846509.692366850(7) 4.00000000000000000     20.00000000000000000    100.00000000000000000
 1637846509.792249190(8) 5.00000000000000000     20.00000000000000000    100.00000000000000000
 1637846509.792325438(9) 5.00000000000000000     30.00000000000000000    100.00000000000000000
@@ -66,57 +65,60 @@ for MODE in all any; do
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"sig_1": {
-			"type": "signal",
+     "idle_stop": true,
+     "nodes": {
+        "sig_1": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 0.0,
-			"rate": 10.0,
-			"limit": 20
-		},
-		"sig_2": {
-			"type": "signal",
+             "signal": "counter",
+             "values": 1,
+             "offset": 0.0,
+             "rate": 10.0,
+             "limit": 20
+        },
+        "sig_2": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 10.0,
-			"amplitude": 10.0,
-			"rate": 5.0,
-			"limit": 10
-		},
-		"sig_3": {
-			"type": "signal",
+             "signal": "counter",
+             "values": 1,
+             "offset": 10.0,
+             "amplitude": 10.0,
+             "rate": 5.0,
+             "limit": 10
+        },
+        "sig_3": {
+             "type": "signal",
 
-			"signal": "counter",
-			"values": 1,
-			"offset": 100.0,
-			"amplitude": 100.0,
-			"rate": 2.0,
-			"limit": 10
-		},
-		"file_1": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": [
-				"sig_1.data[counter]",
-				"sig_2.data[counter]",
-				"sig_3.data[counter]"
-			],
-			"out": "file_1",
-			"mode": "${MODE}"
-		}
-	]
+             "signal": "counter",
+             "values": 1,
+             "offset": 100.0,
+             "amplitude": 100.0,
+             "rate": 2.0,
+             "limit": 10
+        },
+        "file_1": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": [
+             	"sig_1.data[counter]",
+             	"sig_2.data[counter]",
+             	"sig_3.data[counter]"
+             ],
+             "out": "file_1",
+             "mode": "${MODE}"
+        }
+    ]
 }
 EOF
 
 villas node config.json
 
 villas compare output.dat expect_${MODE}.dat
+
+rm output.dat
 
 done

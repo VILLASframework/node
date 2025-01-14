@@ -1,9 +1,9 @@
 % Simple MATLAB code to receive VILLAS UDP samples
 %
-% @author Megha Gupta <meghagupta1191@gmail.com>
-% @author Steffen Vogel <post@steffenvogel.de>
-% @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-% @license Apache 2.0
+% Author: Megha Gupta <meghagupta1191@gmail.com>
+% Author: Steffen Vogel <post@steffenvogel.de>
+% SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+% SPDX-License-Identifier: Apache-2.0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 close all;
@@ -32,9 +32,9 @@ disp('Receiving data');
 while i < num_samples
     % Wait for connection
     % Read data from the socket
-    
+
     [ dat, count ] = fread(t, num_values, 'float32');
-    
+
     data(:,i) = dat;
     i = i + 1;
 end

@@ -1,6 +1,7 @@
-################################################################################
 # Kickstart file for VILLAS installation
-################################################################################
+#
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 # Configuration
 lang en_US.UTF-8
@@ -27,7 +28,6 @@ repo --name=fedora --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?rep
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
 
-################################################################################
 # Install packages
 %packages
 @core
@@ -129,7 +129,6 @@ librdkafka-devel
 
 %end
 
-################################################################################
 # Custom post installer
 %post
 
@@ -172,7 +171,7 @@ rsync --ignore-errors --archive --verbose /villas/node/packaging/live-iso/build/
 
 # Find the architecture we are on
 arch=$(uname -m)
- 
+
 releasever=$(rpm --eval '%{fedora}')
 rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-primary
 
@@ -184,7 +183,7 @@ rm -f /var/lib/systemd/random-seed
 
 # The enp1s0 interface is a left over from the imagefactory install, clean this up
 rm -f /etc/NetworkManager/system-connections/*.nmconnection
- 
+
 dnf -y remove dracut-config-generic
 
 # Remove machine-id on pre generated images

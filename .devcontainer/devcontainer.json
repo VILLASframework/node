@@ -1,23 +1,28 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.195.0/containers/cpp
 {
-	"name": "VILLASnode",
-	"image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev-vscode",
-	// Uncomment to build the devcontainer locally
-	// "build": {
-	// 	"dockerfile": "${workspaceFolder}/packaging/docker/Dockerfile.fedora",
-	// 	"target": "dev-vscode",
-	// 	"context": ".."
-	// },
-	"remoteUser": "villas",
-	"runArgs": [ "--privileged", "--security-opt", "seccomp=unconfined"],
-
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-vscode.cpptools-extension-pack",
-				"EditorConfig.EditorConfig"
-			]
-		}
-	}
+  "name": "VILLASnode",
+  "image": "registry.git.rwth-aachen.de/acs/public/villas/node/dev-vscode",
+  // Uncomment to build the devcontainer locally
+  // "build": {
+  // 	"dockerfile": "../packaging/docker/Dockerfile.fedora",
+  // 	"target": "dev-vscode",
+  // 	"context": ".."
+  // },
+  "remoteUser": "villas",
+  "runArgs": [
+    "--privileged",
+    "--security-opt",
+    "seccomp=unconfined"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "xaver.clang-format",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  }
 }

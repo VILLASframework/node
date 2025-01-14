@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test hooks in villas node
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -13,8 +12,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -28,47 +27,48 @@ EOF
 
 cat > config.json <<EOF
 {
-	"nodes": {
-		"sig": {
-			"type": "signal",
+    "idle_stop": true,
+    "nodes": {
+        "sig": {
+             "type": "signal",
 
-			"signal": "mixed",
-			"realtime": false,
-			"limit": 10,
-			"rate": 100,
-			"values": 5
-		},
-		"file": {
-			"type": "file",
-			"uri": "output.dat"
-		}
-	},
-	"paths": [
-		{
-			"in": "sig",
-			"out": "file",
-			"hooks": [
-				{
-					"type": "average",
-					
-					"signals": [ "random", "sine", "square", "triangle", "ramp" ],
-					"offset": 0
-				},
-				{
-					"type": "skip_first",
-					
-					"samples": 5
-				},
-				{
-					"type": "scale",
+             "signal": "mixed",
+             "realtime": false,
+             "limit": 10,
+             "rate": 100,
+             "values": 5
+        },
+        "file": {
+             "type": "file",
+             "uri": "output.dat"
+        }
+    },
+    "paths": [
+        {
+             "in": "sig",
+             "out": "file",
+             "hooks": [
+             	{
+             		"type": "average",
 
-					"scale": 10,
-					"offset": 5,
-					"signal": "average"
-				}
-			]
-		}
-	]
+             		"signals": [ "random", "sine", "square", "triangle", "ramp" ],
+             		"offset": 0
+             	},
+             	{
+             		"type": "skip_first",
+
+             		"samples": 5
+             	},
+             	{
+             		"type": "scale",
+
+             		"scale": 10,
+             		"offset": 5,
+             		"signal": "average"
+             	}
+             ]
+        }
+    ]
 }
 EOF
 

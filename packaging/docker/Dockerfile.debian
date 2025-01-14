@@ -1,9 +1,8 @@
 # Debian Dockerfile
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=debian
@@ -23,7 +22,8 @@ RUN apt-get update && \
 		autoconf automake autogen libtool \
 		texinfo git curl tar wget diffutils \
 		flex bison \
-		protobuf-compiler protobuf-c-compiler
+		protobuf-compiler protobuf-c-compiler \
+		clang-format clangd
 
 # Dependencies
 RUN apt-get update && \
@@ -50,11 +50,12 @@ RUN apt-get update && \
 		libspdlog-dev \
 		liblua5.3-dev \
 		libhiredis-dev \
-		libnice-dev
+		libnice-dev \
+		libmodbus-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-    echo /usr/local/lib64 >> /etc/ld.so.conf
+	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 # or install unpackaged dependencies from source
 ADD packaging/deps.sh /
@@ -78,7 +79,6 @@ COPY . /villas/
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
 RUN cmake ${CMAKE_OPTS} .. && \
-	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
 

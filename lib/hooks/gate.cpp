@@ -1,13 +1,13 @@
-/** Gate hook.
+/* Gate hook.
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cmath>
-#include <string>
 #include <limits>
+#include <string>
 
 #include <villas/hook.hpp>
 #include <villas/node.hpp>
@@ -20,140 +20,131 @@ namespace node {
 class GateHook : public SingleSignalHook {
 
 protected:
-	enum class Mode {
-		ABOVE,
-		BELOW,
-		RISING_EDGE,
-		FALLING_EDGE
-	} mode;
+  enum class Mode { ABOVE, BELOW, RISING_EDGE, FALLING_EDGE } mode;
 
-	double threshold;
-	double duration;
-	int samples;
-	double previousValue;
+  double threshold;
+  double duration;
+  int samples;
+  double previousValue;
 
-	bool active;
-	uint64_t startSequence;
-	timespec startTime;
+  bool active;
+  uint64_t startSequence;
+  timespec startTime;
 
 public:
-	GateHook(Path *p, Node *n, int fl, int prio, bool en = true) :
-		SingleSignalHook(p, n, fl, prio, en),
-		mode(Mode::RISING_EDGE),
-		threshold(0.5),
-		duration(-1),
-		samples(-1),
-		previousValue(std::numeric_limits<double>::quiet_NaN()),
-		active(false),
-		startSequence(0)
-	{ }
+  GateHook(Path *p, Node *n, int fl, int prio, bool en = true)
+      : SingleSignalHook(p, n, fl, prio, en), mode(Mode::RISING_EDGE),
+        threshold(0.5), duration(-1), samples(-1),
+        previousValue(std::numeric_limits<double>::quiet_NaN()), active(false),
+        startSequence(0) {}
 
-	virtual void parse(json_t *json)
-	{
-		int ret;
+  virtual void parse(json_t *json) {
+    int ret;
 
-		json_error_t err;
+    json_error_t err;
 
-		const char *mode_str;
+    const char *mode_str;
 
-		assert(state != State::STARTED);
+    assert(state != State::STARTED);
 
-		SingleSignalHook::parse(json);
+    SingleSignalHook::parse(json);
 
-		ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F, s?: i, s?: s }",
-			"threshold", &threshold,
-			"duration", &duration,
-			"samples", &samples,
-			"mode", &mode_str
-		);
-		if (ret)
-			throw ConfigError(json, err, "node-config-hook-gate");
+    ret = json_unpack_ex(json, &err, 0, "{ s?: F, s?: F, s?: i, s?: s }",
+                         "threshold", &threshold, "duration", &duration,
+                         "samples", &samples, "mode", &mode_str);
+    if (ret)
+      throw ConfigError(json, err, "node-config-hook-gate");
 
-		if (mode_str) {
-			if      (!strcmp(mode_str, "above"))
-				mode = Mode::ABOVE;
-			else if (!strcmp(mode_str, "below"))
-				mode = Mode::BELOW;
-			else if (!strcmp(mode_str, "rising_edge"))
-				mode = Mode::RISING_EDGE;
-			else if (!strcmp(mode_str, "falling_edge"))
-				mode = Mode::FALLING_EDGE;
-		}
+    if (mode_str) {
+      if (!strcmp(mode_str, "above"))
+        mode = Mode::ABOVE;
+      else if (!strcmp(mode_str, "below"))
+        mode = Mode::BELOW;
+      else if (!strcmp(mode_str, "rising_edge"))
+        mode = Mode::RISING_EDGE;
+      else if (!strcmp(mode_str, "falling_edge"))
+        mode = Mode::FALLING_EDGE;
+    }
 
-		state = State::PARSED;
-	}
+    state = State::PARSED;
+  }
 
-	virtual void prepare()
-	{
-		assert(state == State::CHECKED);
+  virtual void prepare() {
+    assert(state == State::CHECKED);
 
-		SingleSignalHook::prepare();
+    SingleSignalHook::prepare();
 
-		/* Check if signal type is float */
-		auto sig = signals->getByIndex(signalIndex);
-		if (sig->type != SignalType::FLOAT)
-			throw RuntimeError("Gate signal must be of type float");
+    // Check if signal type is float
+    auto sig = signals->getByIndex(signalIndex);
+    if (sig->type != SignalType::FLOAT)
+      throw RuntimeError("Gate signal must be of type float");
 
-		state = State::PREPARED;
-	}
+    state = State::PREPARED;
+  }
 
-	virtual Hook::Reason process(struct Sample *smp)
-	{
-		assert(state == State::STARTED);
+  virtual Hook::Reason process(struct Sample *smp) {
+    assert(state == State::STARTED);
 
-		Hook::Reason reason;
-		double value = smp->data[signalIndex].f;
+    Hook::Reason reason;
+    double value = smp->data[signalIndex].f;
 
-		if (active) {
-			if (duration > 0 && time_delta(&smp->ts.origin, &startTime) < duration)
-				reason = Reason::OK;
-			else if (samples > 0 && smp->sequence - startSequence < (uint64_t) samples)
-				reason = Reason::OK;
-			else {
-				reason = Reason::SKIP_SAMPLE;
-				active = false;
-			}
-		}
+    if (active) {
+      if (duration > 0 && time_delta(&smp->ts.origin, &startTime) < duration)
+        reason = Reason::OK;
+      else if (samples > 0 && smp->sequence - startSequence < (uint64_t)samples)
+        reason = Reason::OK;
+      else {
+        reason = Reason::SKIP_SAMPLE;
+        active = false;
+      }
+    }
 
-		if (!active) {
-			switch (mode) {
-				case Mode::ABOVE:
-					reason = value > threshold ? Reason::OK : Reason::SKIP_SAMPLE;
-					break;
+    if (!active) {
+      switch (mode) {
+      case Mode::ABOVE:
+        reason = value > threshold ? Reason::OK : Reason::SKIP_SAMPLE;
+        break;
 
-				case Mode::BELOW:
-					reason = value < threshold ? Reason::OK : Reason::SKIP_SAMPLE;
-					break;
+      case Mode::BELOW:
+        reason = value < threshold ? Reason::OK : Reason::SKIP_SAMPLE;
+        break;
 
-				case Mode::RISING_EDGE:
-					reason = (!std::isnan(previousValue) && value > previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
-					break;
+      case Mode::RISING_EDGE:
+        reason = (!std::isnan(previousValue) && value > previousValue)
+                     ? Reason::OK
+                     : Reason::SKIP_SAMPLE;
+        break;
 
-				case Mode::FALLING_EDGE:
-					reason = (!std::isnan(previousValue) && value < previousValue) ? Reason::OK : Reason::SKIP_SAMPLE;
-					break;
+      case Mode::FALLING_EDGE:
+        reason = (!std::isnan(previousValue) && value < previousValue)
+                     ? Reason::OK
+                     : Reason::SKIP_SAMPLE;
+        break;
 
-				default:
-					reason = Reason::ERROR;
-			}
+      default:
+        reason = Reason::ERROR;
+      }
 
-			if (reason == Reason::OK) {
-				startTime = smp->ts.origin;
-				startSequence = smp->sequence;
-				active = true;
-			}
-		}
+      if (reason == Reason::OK) {
+        startTime = smp->ts.origin;
+        startSequence = smp->sequence;
+        active = true;
+      }
+    }
 
-		previousValue = value;
+    previousValue = value;
 
-		return reason;
-	}
+    return reason;
+  }
 };
 
-/* Register hook */
+// Register hook
 static char n[] = "gate";
-static char d[] = "Skip samples only if an enable signal is under a specified threshold";
-static HookPlugin<GateHook, n, d, (int) Hook::Flags::NODE_READ | (int) Hook::Flags::PATH> p;
+static char d[] =
+    "Skip samples only if an enable signal is under a specified threshold";
+static HookPlugin<GateHook, n, d,
+                  (int)Hook::Flags::NODE_READ | (int)Hook::Flags::PATH>
+    p;
 
-} /* namespace node */
-} /* namespace villas */
+} // namespace node
+} // namespace villas

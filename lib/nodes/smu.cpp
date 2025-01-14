@@ -1,10 +1,9 @@
-/** Node-type for smu data aquisition.
+ /* Node-type for SMU data acquisition.
  *
- * @file
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <list>
 #include <cmath>
@@ -27,7 +26,12 @@ SMUNode::SMUNode(const uuid_t &id, const std::string &name) :
     sample_rate(FS_10kSPS),
     fps(FB_10FPS),
     sync(SYNC_PPS),
-	daq_cfg({sample_rate, fps, mode, sync})
+    daq_cfg({sample_rate, fps, mode, sync}),
+	  shared_mem(nullptr),  // initalization
+    shared_mem_pos(0),    // initalization
+    shared_mem_inc(0),    // initalization
+    shared_mem_dim(0),    // initalization
+    buffer_size(0)
 {
     return;
 }
@@ -95,7 +99,7 @@ int SMUNode::parse(json_t *json)
             dumpers[idx].setActive();
 
         }
-  
+
     }
 
     if(!modeIn || strcmp(modeIn, "MODE_FREERUN")==0)
@@ -146,8 +150,8 @@ int SMUNode::parse(json_t *json)
     else if (strcmp(sample_rateIn, "FS_200kSPS")==0) {
         sample_rate = FS_200kSPS;
     }
-    
-    
+
+
 
     if (json_is_object(in_json) && json_object_get(in_json, "vectorize")) {
         throw ConfigError(json, "node-config-node-smu", "Vectorize cannot be overwritten for this node type!");
@@ -168,7 +172,7 @@ int SMUNode::start()
     daq_cfg.rate = sample_rate;
     daq_cfg.buff = fps;
     daq_cfg.mode = mode;
-    daq_cfg.sync = sync;  
+    daq_cfg.sync = sync;
 
 
     fd = ::open(SMU_DEV, O_RDWR);
@@ -201,7 +205,7 @@ int SMUNode::start()
     act.sa_sigaction = data_available_signal;
     if (sigaction(SMU_SIG_DATA, &act, nullptr))
         logger->warn("Fail to install ADC handler");
-	
+
     // Update DAQ memory configuration
     shared_mem_pos = 0;
     shared_mem_inc = sizeof(smu_mcsc_t);
@@ -212,7 +216,7 @@ int SMUNode::start()
         logger->warn("Fail to stop the driver");
 
     // Configure DAQ driver
-    if (::write(fd, &daq_cfg, sizeof(daq_cfg)))
+    if (::write(fd, &daq_cfg, sizeof(daq_cfg.rate)))
         logger->warn("Fail to configure the driver");
 
     // Start DAQ driver
@@ -241,14 +245,19 @@ int SMUNode::stop()
 void SMUNode::sync_signal(int, siginfo_t *info, void*)
 {
 
-	//mem_pos = (info->si_value.sival_int);
-	/* Signal uldaq_read() about new data */
-	//pthread_cond_signal(&u->in.cv);
+
+    ioctl(fd, SMU_IOC_GET_TIME,&sync_signal_mem_pos);
+    sample_time.tv_nsec = sync_signal_mem_pos.tv_nsec;  //macht nix
+    sample_time.tv_sec = sync_signal_mem_pos.tv_sec;
+
+    if (sample_time.tv_nsec > 500000000)
+         sample_time.tv_sec += 1;
+    //std::cout << "\n\npps event\n\n";
 }
 
 void SMUNode::data_available_signal(int, siginfo_t *info, void*)
 {
-    
+
 	mem_pos = (info->si_value.sival_int);
 	/* Signal uldaq_read() about new data */
 	pthread_cond_signal(&cv);
@@ -258,21 +267,20 @@ void SMUNode::data_available_signal(int, siginfo_t *info, void*)
 int SMUNode::_read(struct Sample *smps[], unsigned cnt)
 {
 	struct timespec ts;
-	ts.tv_sec = time(nullptr);
-	ts.tv_nsec = 0;
-
+	ts.tv_sec = sample_time.tv_sec;
     pthread_mutex_lock(&mutex);
 
 	pthread_cond_wait(&cv, &mutex);
     size_t mem_pos_local = mem_pos;
 
     smu_mcsc_t* p = (smu_mcsc_t*)shared_mem;
-    
+
 
     for (unsigned j = 0; j < cnt; j++) {
         struct Sample *t = smps[j];
+        ts.tv_nsec = mem_pos_local * 1e6 / (sample_rate);//current_sample*1e9* 1/(sample_rate * 1000)
 
-        for (unsigned i = 0; i < 8; i++) {
+        for (unsigned i = 0; i < 8; i++) {  //auslagern, Steffen fragen
             int16_t data = p[mem_pos_local].ch[i];
             t->data[i].f = ((double)data);
             if (dumpers[i].isActive())
@@ -286,6 +294,8 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt)
         t->sequence = sequence++;
         t->length = 8;
         t->signals = in.signals;
+
+
     }
 
 	pthread_mutex_unlock(&mutex);

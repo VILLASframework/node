@@ -1,12 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration loopback test for villas pipe.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# Author: Marvin Klimke <marvin.klimke@rwth-aachen.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -25,8 +24,8 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
@@ -38,36 +37,36 @@ NUM_SAMPLES=100
 
 cat > src.json << EOF
 {
-	"logging": {
-		"level": "debug"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"aimd": {
-				"a": 10,
-				"b": 0.5
-			},
-			"in": {
-				"address": "0.0.0.0:33466",
-				"signals": {
-					"count": 5,
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "${REMOTE_ADDR}:33464"
-			}
-		}
-	}
+    "logging": {
+        "level": "debug"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "aimd": {
+             	"a": 10,
+             	"b": 0.5
+             },
+             "in": {
+             	"address": "0.0.0.0:33466",
+             	"signals": {
+             		"count": 5,
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "${REMOTE_ADDR}:33464"
+             }
+        }
+    }
 }
 EOF
 
@@ -75,36 +74,36 @@ EOF
 
 cat > dest.json << EOF
 {
-	"logging": {
-		"level": "debug"
-	},
-	"nodes": {
-		"rtp_node": {
-			"type": "rtp",
-			"format": "${FORMAT}",
-			"vectorize": ${VECTORIZE},
-			"rate": ${RATE},
-			"rtcp": {
-				"enabled": true,
-				"mode": "aimd",
-				"throttle_mode": "decimate"
-			},
-			"aimd": {
-				"a": 10,
-				"b": 0.5
-			},
-			"in": {
-				"address": "0.0.0.0:33464",
-				"signals": {
-					"count": 5,
-					"type": "float"
-				}
-			},
-			"out": {
-				"address": "${LOCAL_ADDR}:33466"
-			}
-		}
-	}
+    "logging": {
+        "level": "debug"
+    },
+    "nodes": {
+        "rtp_node": {
+             "type": "rtp",
+             "format": "${FORMAT}",
+             "vectorize": ${VECTORIZE},
+             "rate": ${RATE},
+             "rtcp": {
+             	"enabled": true,
+             	"mode": "aimd",
+             	"throttle_mode": "decimate"
+             },
+             "aimd": {
+             	"a": 10,
+             	"b": 0.5
+             },
+             "in": {
+             	"address": "0.0.0.0:33464",
+             	"signals": {
+             		"count": 5,
+             		"type": "float"
+             	}
+             },
+             "out": {
+             	"address": "${LOCAL_ADDR}:33466"
+             }
+        }
+    }
 }
 EOF
 

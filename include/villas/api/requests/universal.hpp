@@ -1,20 +1,19 @@
-/** Universal Data-exchange API request.
+/* Universal Data-exchange API request.
  *
- * @file
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
-#include <villas/nodes/api.hpp>
 #include <villas/api/requests/node.hpp>
+#include <villas/nodes/api.hpp>
 
 namespace villas {
 namespace node {
 
-/* Forward declarations */
+// Forward declarations
 class Node;
 
 namespace api {
@@ -22,15 +21,14 @@ namespace api {
 class UniversalRequest : public NodeRequest {
 
 protected:
-	APINode *api_node;
+  APINode *api_node;
 
 public:
-	using NodeRequest::NodeRequest;
+  using NodeRequest::NodeRequest;
 
-	virtual void
-	prepare();
+  virtual void prepare();
 };
 
-} /* namespace api */
-} /* namespace node */
-} /* namespace villas */
+} // namespace api
+} // namespace node
+} // namespace villas

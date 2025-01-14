@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Integration test for remote API
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-##################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -13,44 +12,44 @@ DIR=$(mktemp -d)
 pushd ${DIR}
 
 function finish {
-	popd
-	rm -rf ${DIR}
+    popd
+    rm -rf ${DIR}
 }
 trap finish EXIT
 
 
 cat > config.json <<EOF
 {
-	"http": {
-		"port": 8080
-	},
-	"nodes": {
-		"testnode1": {
-			"type": "websocket",
-			"dummy": "value1"
-		},
-		"testnode2": {
-			"type": "socket",
-			"dummy": "value2",
+    "http": {
+        "port": 8080
+    },
+    "nodes": {
+        "testnode1": {
+             "type": "websocket",
+             "dummy": "value1"
+        },
+        "testnode2": {
+             "type": "socket",
+             "dummy": "value2",
 
-			"in": {
-				"address": "*:12001",
-				"signals": [
-					{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
-					{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
-				]
-			},
-			"out": {
-				"address": "127.0.0.1:12000"
-			}
-		}
-	},
-	"paths": [
-		{
-			"in": "testnode2",
-			"out": "testnode1"
-		}
-	]
+             "in": {
+             	"address": "*:12001",
+             	"signals": [
+             		{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
+             		{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
+             	]
+             },
+             "out": {
+             	"address": "127.0.0.1:12000"
+             }
+        }
+    },
+    "paths": [
+        {
+             "in": "testnode2",
+             "out": "testnode1"
+        }
+    ]
 }
 EOF
 

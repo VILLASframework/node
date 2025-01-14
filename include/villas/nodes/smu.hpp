@@ -1,10 +1,9 @@
-/** Node-type for loopback connections.
+ /* Node-type for SMU data acquisition.
  *
- * @file
- * @author Manuel Pitz <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -152,7 +151,10 @@ typedef struct {
     float k[SMU_NCH];
 } __attribute__((__packed__)) smu_mcsk_t;
 
-
+typedef struct {
+    int64_t     tv_sec;
+    long        tv_nsec;
+} __attribute__((__packed__)) timespec64_t;
 /**
  * @brief  IOCTL definitions
  *
@@ -165,8 +167,10 @@ typedef struct {
 #define SMU_IOC_RESET       _IO (SMU_IOC_MAGIC, 1)
 #define SMU_IOC_START       _IO (SMU_IOC_MAGIC, 2)
 #define SMU_IOC_STOP        _IO (SMU_IOC_MAGIC, 3)
-#define SMU_IOC_SET_CONF    _IOW(SMU_IOC_MAGIC, 4, smu_conf_t*)
-#define SMU_IOC_GET_CONF    _IOR(SMU_IOC_MAGIC, 5, smu_conf_t*)
+#define SMU_IOC_GET_TIME    _IOR(SMU_IOC_MAGIC, 4, timespec64_t*)
+#define SMU_IOC_SET_CONF    _IOW(SMU_IOC_MAGIC, 5, smu_conf_t*)
+#define SMU_IOC_GET_CONF    _IOR(SMU_IOC_MAGIC, 6, smu_conf_t*)
+
 
 /**
  * @brief  Signal definitions
@@ -190,7 +194,7 @@ private:
     daq_sync_t sync;
     smu_daq_t daq_cfg;
     Dumper dumpers[SMU_NCH];
-    int fd;
+    static inline int fd;
     uint8_t* shared_mem;
     uint32_t shared_mem_pos;
     uint32_t shared_mem_inc;
@@ -202,6 +206,9 @@ private:
     static inline std::atomic<size_t> mem_pos = 0;
     static inline pthread_mutex_t mutex;
     static inline pthread_cond_t cv;
+    static inline timespec64_t sync_signal_mem_pos = {0};
+    static inline timespec sample_time ={0};
+    static inline int smp_cnt = 0;
 
 protected:
 	virtual

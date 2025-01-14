@@ -1,12 +1,14 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 type: object
 properties:
   enabled:
     type: boolean
     default: true
     description: An optional field which can be used to disable a hook.
-  
+
   priority:
     type: integer
     default: 99

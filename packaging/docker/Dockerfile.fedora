@@ -1,9 +1,8 @@
 # Fedora Dockerfile
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
 ARG FEDORA_VERSION=36
@@ -20,14 +19,15 @@ RUN dnf -y install \
 	autoconf automake autogen libtool \
 	texinfo git curl tar \
 	flex bison \
-	protobuf-compiler protobuf-c-compiler
+	protobuf-compiler protobuf-c-compiler \
+	clang-tools-extra
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
 	openssh-clients \
 	jq nmap-ncat \
 	iproute iproute-tc \
-	python-pip \
+	python python-devel python-pip \
 	gdb gdb-gdbserver \
 	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
@@ -37,8 +37,7 @@ RUN dnf -y install \
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \
-	protobuf \
-	flake8
+	protobuf
 
 # Dependencies
 RUN dnf -y install \
@@ -64,11 +63,12 @@ RUN dnf -y install \
 	libusb-devel \
 	lua-devel \
 	hiredis-devel \
-	libnice-devel
+	libnice-devel \
+	libmodbus-devel
 
 # Add local and 64-bit locations to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
-    echo /usr/local/lib64 >> /etc/ld.so.conf
+	echo /usr/local/lib64 >> /etc/ld.so.conf
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
@@ -77,6 +77,12 @@ RUN ldconfig
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
+
+COPY ./python /python
+RUN python -m venv /venv && \
+	source /venv/bin/activate && \
+	pip install /python[dev] && \
+	rm -r /python
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
@@ -108,9 +114,10 @@ COPY . /villas/
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
 	cmake ${CMAKE_OPTS} .. && \
-	make -j$(nproc) doc && \
 	make -j$(nproc) install && \
 	ldconfig
+
+WORKDIR /villas
 
 ENTRYPOINT ["villas"]
 

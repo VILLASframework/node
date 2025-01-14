@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 ---
-
 allOf:
 - type: object
   properties:
@@ -70,7 +71,7 @@ allOf:
 
     timeout:
       type: object
-      properties: 
+      properties:
         connect:
           type: number
           description: The timeout in seconds for the initial connection establishment.
@@ -82,7 +83,7 @@ allOf:
     keepalive:
       type: boolean
       default: false
-      description: Enable periodic keepalive packets. 
+      description: Enable periodic keepalive packets.
 
     key:
       type: string
@@ -103,7 +104,7 @@ allOf:
 
     ssl:
       type: object
-      properties: 
+      properties:
         enabled:
           type: boolean
           default: true

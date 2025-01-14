@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>villas_udp</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>com.opalrt.rtlab.ui.rtlabnature</nature>
+	</natures>
+</projectDescription>
+<!-- 
+SPDX-FileCopyrightText: 2014-2022 Institute for Automation of Complex Power Systems, EONERC
+SPDX-License-Identifier: Apache-2.0
+-->

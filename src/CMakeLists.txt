@@ -1,9 +1,8 @@
 # CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 set(SRCS
     villas-convert
@@ -12,7 +11,6 @@ set(SRCS
     villas-signal
     villas-compare
     villas-test-config
-    villas-test-rtt
 )
 
 add_executable(villas-node villas-node.cpp)
@@ -20,9 +18,6 @@ target_link_libraries(villas-node PUBLIC villas)
 
 add_executable(villas-test-config villas-test-config.cpp)
 target_link_libraries(villas-test-config PUBLIC villas)
-
-add_executable(villas-test-rtt villas-test-rtt.cpp)
-target_link_libraries(villas-test-rtt PUBLIC villas)
 
 add_executable(villas-compare villas-compare.cpp)
 target_link_libraries(villas-compare PUBLIC villas)
@@ -35,11 +30,6 @@ target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
 
 add_executable(villas-signal villas-signal.cpp)
 target_link_libraries(villas-signal PUBLIC villas)
-
-if(WITH_NODE_OPAL)
-	target_include_directories(villas-node PRIVATE ${OPAL_INCLUDE_DIRS})
-    target_link_libraries(villas-node PRIVATE ${OPAL_LIBRARIES})
-endif()
 
 if(WITH_GRAPHVIZ)
     add_executable(villas-graph villas-graph.cpp)

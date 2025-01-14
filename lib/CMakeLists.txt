@@ -1,9 +1,8 @@
 # CMakeLists.
 #
-# @author Steffen Vogel <post@steffenvogel.de>
-# @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
-# @license Apache 2.0
-###################################################################################
+# Author: Steffen Vogel <post@steffenvogel.de>
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 add_compile_options(-fPIC)
 
@@ -41,7 +40,7 @@ set(LIB_SRC
     path_destination.cpp
     path_source.cpp
     path.cpp
-	path_list.cpp
+    path_list.cpp
     pool.cpp
     queue_signalled.cpp
     queue.cpp
@@ -69,7 +68,7 @@ if(WITH_GRAPHVIZ)
 endif()
 
 if(WITH_LUA)
-	list(APPEND INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+    list(APPEND INCLUDE_DIRS ${LUA_INCLUDE_DIR})
     list(APPEND LIBRARIES ${LUA_LIBRARIES})
 endif()
 
@@ -121,8 +120,8 @@ if(LIBNL3_ROUTE_FOUND)
 endif()
 
 if(LIBUSB_FOUND)
-	list(APPEND LIB_SRC usb.cpp)
-	list(APPEND LIBRARIES PkgConfig::LIBUSB)
+    list(APPEND LIB_SRC usb.cpp)
+    list(APPEND LIBRARIES PkgConfig::LIBUSB)
 endif()
 
 if(WITH_FPGA)
