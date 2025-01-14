@@ -35,6 +35,12 @@ PlatformCard::PlatformCard(
   this->logger = villas::Log::get("PlatformCard");
 }
 
+/*
+void connectIp() {
+  VfioConnector();
+
+} */
+
 void PlatformCard::connectVFIOtoIps(
     std::list<std::shared_ptr<ip::Core>> configuredIps) {
 
@@ -57,35 +63,20 @@ void PlatformCard::connectVFIOtoIps(
     driver.attach(device);
   }
 
-  // VFIO Device Setup
-  std::vector<std::pair<std::shared_ptr<ip::Core>,
-                        std::shared_ptr<kernel::vfio::Device>>>
-      vfio_ip_pair;
+  // VFIO Device and Connection Setup
   for (auto pair : device_ip_pair) {
     auto [ip, device] = pair;
+    auto vfio_connection = VfioConnection::from(device, vfioContainer);
 
-    // Attach group to container
-    const int iommu_group = device.iommu_group().value();
-    auto vfio_group = vfioContainer->getOrAttachGroup(iommu_group);
-    logger->debug("Device: {}, Iommu: {}", device.name(), iommu_group);
-
-    // Open Vfio Device
-    auto vfio_device = std::make_shared<kernel::vfio::Device>(
-        device.name(), vfio_group->getFileDescriptor());
-
-    // Attach device to group
-    vfio_group->attachDevice(vfio_device);
-
-    // Add as member
-    this->vfio_devices.push_back(vfio_device);
-
-    // Add return value
-    vfio_ip_pair.push_back({ip, vfio_device});
+    // Add Connection
+    CoreConnection core_connection(vfio_connection, ip);
+    this->core_connections.push_back(core_connection);
   }
 
   // Memory Graph
-  for (auto pair : vfio_ip_pair) {
-    auto [ip, vfio_device] = pair;
+  for (auto core_connection : this->core_connections) {
+    auto ip = core_connection.ip;
+    auto vfio_device = core_connection.vfio_connection.vfio_device;
 
     // Map vfio device memory to process
     const void *mapping = vfio_device->regionMap(0);
