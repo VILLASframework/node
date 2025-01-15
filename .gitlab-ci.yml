@@ -296,7 +296,6 @@ deploy:docker-dev-vscode:
     - docker manifest create ${DOCKER_IMAGE}:latest
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
       ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
     - docker manifest push   ${DOCKER_IMAGE}:latest
   tags:
     - docker
