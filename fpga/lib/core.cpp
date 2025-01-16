@@ -21,7 +21,9 @@
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/pcie.hpp>
+#include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/platform_card.hpp>
 
 using namespace villas::fpga;
 using namespace villas::fpga::ip;
@@ -183,7 +185,14 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
         for (auto &configuredIp : configuredIps) {
           if (*configuredIp == irqControllerName) {
-            intc = dynamic_cast<InterruptController *>(configuredIp.get());
+            if (irqControllerName.find("zynq") != std::string::npos) {
+              intc = new PlatformInterruptController(configuredIp);
+              intc->card = card;
+              configuredIps.push_back(std::shared_ptr<Core>(intc));
+            } else {
+              //! Assuming there is one parsed ip as intc, which can be reused from the heap
+              intc = dynamic_cast<InterruptController *>(configuredIp.get());
+            }
             break;
           }
         }
@@ -389,9 +398,4 @@ Core::getInterruptController(const std::string &interruptName) const {
   } catch (const std::out_of_range &) {
     return nullptr;
   }
-}
-
-void Core::addIrq(std::string irqName, int port_num,
-                  InterruptController *intc) {
-  this->irqs[irqName] = {port_num, intc, "Custom Interrupt"};
 }
