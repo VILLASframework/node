@@ -251,6 +251,8 @@ int villas::node::socket_start(NodeCompat *n) {
 
   if (s->layer != SocketLayer::TCP_CLIENT)
     ret = bind(s->sd, (struct sockaddr *)&s->in.saddr, addrlen);
+  else
+    ret = 0;
 
   if (ret < 0)
     throw SystemError("Failed to bind socket");
