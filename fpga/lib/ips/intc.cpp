@@ -119,6 +119,7 @@ bool InterruptController::disableInterrupt(
 
 ssize_t InterruptController::waitForInterrupt(int irq) {
   assert(irq < maxIrqs);
+  assert(irq < this->num_irqs);
 
   if (this->polling[irq]) {
     const uintptr_t base = getBaseAddr(registerMemory);

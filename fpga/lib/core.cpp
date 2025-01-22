@@ -140,7 +140,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     // If something goes wrong with initialization, the shared_ptr will
     // take care to desctruct the Core again as it is not pushed to
     // the list and will run out of scope.
-    auto ip = std::unique_ptr<Core>(f->make());
+    auto ip = std::shared_ptr<Core>(f->make());
 
     if (ip == nullptr) {
       logger->warn("Cannot create an instance of {}", f->getName());
@@ -185,22 +185,24 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
         for (auto &configuredIp : configuredIps) {
           if (*configuredIp == irqControllerName) {
-            if (irqControllerName.find("zynq") != std::string::npos) {
-              intc = new PlatformInterruptController(configuredIp);
-              intc->card = card;
-              configuredIps.push_back(std::shared_ptr<Core>(intc));
-            } else {
-              //! Assuming there is one parsed ip as intc, which can be reused from the heap
-              intc = dynamic_cast<InterruptController *>(configuredIp.get());
-            }
+
+            //! Assuming there is one parsed ip as intc, which can be reused from the heap
+            intc = dynamic_cast<InterruptController *>(configuredIp.get());
+
             break;
           }
         }
 
         if (intc == nullptr) {
-          logger->error("Interrupt Controller {} for IRQ {} not found",
-                        irqControllerName, irqName);
-          continue;
+          if (irqControllerName.find("zynq") != std::string::npos) {
+            intc = new PlatformInterruptController(ip);
+            intc->card = card;
+            configuredIps.push_back(std::shared_ptr<Core>(intc));
+          } else {
+            logger->error("Interrupt Controller {} for IRQ {} not found",
+                          irqControllerName, irqName);
+            continue;
+          }
         }
 
         int num;
@@ -211,7 +213,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
           continue;
         }
         logger->debug("IRQ: {} -> {}:{}", irqName, irqControllerName, num);
-        ip->irqs[irqName] = {num, intc, ""};
+        ip->irqs[irqName] = {0, intc, ""};
       }
     }
 
