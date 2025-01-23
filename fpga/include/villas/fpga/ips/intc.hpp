@@ -34,7 +34,7 @@ public:
   bool disableInterrupt(IrqMaskType mask);
   bool disableInterrupt(IrqPort irq) { return disableInterrupt(1 << irq.num); }
 
-  ssize_t waitForInterrupt(int irq);
+  virtual ssize_t waitForInterrupt(int irq);
   ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
 
 protected:
