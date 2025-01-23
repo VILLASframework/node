@@ -85,7 +85,7 @@ public:
     struct vfio_irq_set irqSet = {0};
     irqSet.argsz = sizeof(struct vfio_irq_set);
     irqSet.flags = (VFIO_IRQ_SET_DATA_NONE | VFIO_IRQ_SET_ACTION_UNMASK);
-    irqSet.index = 0; //TODO: Set index
+    irqSet.index = irq; //TODO: Set index
     irqSet.start = 0;
     irqSet.count = 1;
     ret = ioctl(this->vfio_device->getFileDescriptor(), VFIO_DEVICE_SET_IRQS,
