@@ -27,8 +27,5 @@ fpga                                                @n-eiling
 /include/villas/dumper.hpp                          @windrad6
 
 # VFIO related files
-/common/lib/kernel/pci.cpp                          @n-eiling
-/common/lib/kernel/vfio_*.cpp                       @n-eiling
-/common/lib/kernel/devices/*                        @n-eiling
-/common/include/villas/kernel/devices/*             @n-eiling
-/common/include/villas/kernel/vfio_*.hpp            @n-eiling
+/common/lib/kernel                                  @n-eiling
+/common/include/villas/kernel                       @n-eiling
