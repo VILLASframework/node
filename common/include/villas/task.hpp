@@ -12,6 +12,7 @@
 
 #include <ctime>
 
+namespace villas {
 // We can choose between two periodic task implementations
 //#define PERIODIC_TASK_IMPL NANOSLEEP
 #define TIMERFD 1
@@ -70,3 +71,5 @@ struct Task {
   // Note: currently not supported on all platforms.
   int getFD() const;
 };
+
+} // namespace villas
