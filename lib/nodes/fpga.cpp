@@ -1,7 +1,7 @@
 /* Communicate with VILLASfpga Xilinx FPGA boards.
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
- * SPDX-FileCopyrightText: 2023 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023-2025 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
