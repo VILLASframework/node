@@ -64,7 +64,8 @@ RUN dnf -y install \
 	lua-devel \
 	hiredis-devel \
 	libnice-devel \
-	libmodbus-devel
+	libmodbus-devel \
+  pybind11-devel
 
 # Add local and 64-bit locations to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
