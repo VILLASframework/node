@@ -87,3 +87,85 @@ wait %%
 # Send / Receive data to node
 VILLAS_LOG_PREFIX="[compare] " \
 villas compare input.dat output.dat
+
+sleep 1
+
+cat > config.json <<EOF
+{
+    "nodes": {
+        "node1": {
+             "type": "socket",
+             "layer": "tcp-server",
+             "in": {
+             	"address": "127.0.0.1:12002",
+             	"signals": {
+             		"type": "float",
+             		"count": 1
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12003"
+             }
+        },
+        "node2": {
+             "type": "socket",
+             "layer": "tcp-client",
+             "in": {
+             	"address": "127.0.0.1:12003",
+             	"signals": {
+             		"type": "float",
+             		"count": 1
+             	}
+             },
+             "out": {
+             	"address": "127.0.0.1:12002"
+             }
+        },
+        "siggen": {
+             "type": "signal",
+             "signal": "random",
+             "limit": 10
+        }
+    },
+    "paths": [
+        {
+             "in": "siggen",
+             "out": "node2",
+             "hooks": [
+             	{
+             		"type": "print",
+
+             		"output": "input.dat"
+             	}
+             ]
+        },
+        {
+             "in": "node1",
+             "out": "node1"
+        },
+        {
+            "in": "node2",
+            "hooks": [
+             	{
+             		"type": "print",
+
+                    "output": "output.dat"
+             	}
+             ]
+        }
+    ]
+}
+EOF
+
+VILLAS_LOG_PREFIX="[node] " \
+villas node config.json &
+
+# Wait for node to complete init
+sleep 3
+
+kill %%
+wait %%
+
+# Compare data
+VILLAS_LOG_PREFIX="[compare] " \
+villas compare input.dat output.dat
