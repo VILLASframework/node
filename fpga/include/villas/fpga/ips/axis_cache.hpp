@@ -1,4 +1,6 @@
-/* Driver for register interface 'registerif'
+/* Driver for AXI Stream read cache. This module is used to lower latency of
+ * a DMA Scatter Gather engine's descriptor fetching. The driver allows for
+ * invalidating the cache.
  *
  * Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
  * SPDX-FileCopyrightText: 2024 Niklas Eiling
@@ -13,26 +15,25 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
-class Register : public Node {
+class AxisCache : public Node {
 public:
-  Register();
-  virtual ~Register();
+  AxisCache();
+  virtual ~AxisCache();
   virtual bool init() override;
   virtual bool check() override;
-  void setRegister(size_t reg, uint32_t value);
-  void setRegister(size_t reg, float value);
-  uint32_t getRegister(size_t reg);
-  float getRegisterFloat(size_t reg);
-  void resetRegister(size_t reg);
-  void resetAllRegisters();
+  void invalidate();
 
 protected:
-  const size_t registerNum = 9;
+  const size_t registerNum = 1;
   const size_t registerSize = 32;
   static constexpr char registerMemory[] = "reg0";
   std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
+  bool setRegister(size_t reg, uint32_t value);
+  bool getRegister(size_t reg, uint32_t &value);
+  bool resetRegister(size_t reg);
+  bool resetAllRegisters();
 };
 
 } // namespace ip
@@ -41,6 +42,6 @@ protected:
 
 #ifndef FMT_LEGACY_OSTREAM_FORMATTER
 template <>
-class fmt::formatter<villas::fpga::ip::Register>
+class fmt::formatter<villas::fpga::ip::AxisCache>
     : public fmt::ostream_formatter {};
 #endif

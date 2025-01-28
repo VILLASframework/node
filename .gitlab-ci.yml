@@ -292,10 +292,10 @@ deploy:docker-dev-vscode:
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
+    - docker manifest rm ${DOCKER_IMAGE}:latest || true
     - docker manifest create ${DOCKER_IMAGE}:latest
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
       ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
     - docker manifest push   ${DOCKER_IMAGE}:latest
   tags:
     - docker

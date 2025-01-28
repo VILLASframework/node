@@ -1,5 +1,5 @@
 {
-  "aurora_8b10b_ch0": {
+  "aurora_aurora_8b10b_ch0": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
       "component_name": "design_1_aurora_8b10b_0_0",
@@ -127,17 +127,17 @@
     "ports": [
       {
         "role": "master",
-        "target": "axis_interconnect_0_xbar:S00_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:S00_AXIS",
         "name": "USER_DATA_M_AXI_RX"
       },
       {
         "role": "slave",
-        "target": "axis_interconnect_0_xbar:M00_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:M00_AXIS",
         "name": "USER_DATA_S_AXI_TX"
       }
     ]
   },
-  "aurora_8b10b_ch1": {
+  "aurora_aurora_8b10b_ch1": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
       "component_name": "design_1_aurora_8b10b_1_0",
@@ -229,7 +229,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -265,17 +265,17 @@
     "ports": [
       {
         "role": "master",
-        "target": "axis_interconnect_0_xbar:S01_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:S01_AXIS",
         "name": "USER_DATA_M_AXI_RX"
       },
       {
         "role": "slave",
-        "target": "axis_interconnect_0_xbar:M01_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:M01_AXIS",
         "name": "USER_DATA_S_AXI_TX"
       }
     ]
   },
-  "aurora_8b10b_ch2": {
+  "aurora_aurora_8b10b_ch2": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
       "component_name": "design_1_aurora_8b10b_3_0",
@@ -367,7 +367,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -403,17 +403,17 @@
     "ports": [
       {
         "role": "master",
-        "target": "axis_interconnect_0_xbar:S02_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:S02_AXIS",
         "name": "USER_DATA_M_AXI_RX"
       },
       {
         "role": "slave",
-        "target": "axis_interconnect_0_xbar:M02_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:M02_AXIS",
         "name": "USER_DATA_S_AXI_TX"
       }
     ]
   },
-  "aurora_8b10b_ch3": {
+  "aurora_aurora_8b10b_ch3": {
     "vlnv": "xilinx.com:ip:aurora_8b10b:11.1",
     "parameters": {
       "component_name": "design_1_aurora_8b10b_2_0",
@@ -505,7 +505,7 @@
       "c_use_chipscope": "false",
       "c_drp_if": "false",
       "transceivercontrol": "false",
-      "c_use_crc": "false",
+      "c_use_crc": "true",
       "supportlevel": 0,
       "c_use_byteswap": "false",
       "c_cpll_fbdiv": 2,
@@ -541,103 +541,15 @@
     "ports": [
       {
         "role": "master",
-        "target": "axis_interconnect_0_xbar:S03_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:S03_AXIS",
         "name": "USER_DATA_M_AXI_RX"
       },
       {
         "role": "slave",
-        "target": "axis_interconnect_0_xbar:M03_AXIS",
+        "target": "crossbar_axis_interconnect_0_xbar:M03_AXIS",
         "name": "USER_DATA_S_AXI_TX"
       }
     ]
-  },
-  "axi_dma_0": {
-    "vlnv": "xilinx.com:ip:axi_dma:7.1",
-    "parameters": {
-      "c_s_axi_lite_addr_width": 10,
-      "c_s_axi_lite_data_width": 32,
-      "c_dlytmr_resolution": 125,
-      "c_prmry_is_aclk_async": 0,
-      "c_enable_multi_channel": 0,
-      "c_num_mm2s_channels": 1,
-      "c_num_s2mm_channels": 1,
-      "c_include_sg": 1,
-      "c_sg_include_stscntrl_strm": 0,
-      "c_sg_use_stsapp_length": 0,
-      "c_sg_length_width": 14,
-      "c_m_axi_sg_addr_width": 32,
-      "c_m_axi_sg_data_width": 32,
-      "c_m_axis_mm2s_cntrl_tdata_width": 32,
-      "c_s_axis_s2mm_sts_tdata_width": 32,
-      "c_micro_dma": 0,
-      "c_include_mm2s": 1,
-      "c_include_mm2s_sf": 1,
-      "c_mm2s_burst_size": 16,
-      "c_m_axi_mm2s_addr_width": 32,
-      "c_m_axi_mm2s_data_width": 32,
-      "c_m_axis_mm2s_tdata_width": 32,
-      "c_include_mm2s_dre": 0,
-      "c_include_s2mm": 1,
-      "c_include_s2mm_sf": 1,
-      "c_s2mm_burst_size": 16,
-      "c_m_axi_s2mm_addr_width": 32,
-      "c_m_axi_s2mm_data_width": 32,
-      "c_s_axis_s2mm_tdata_width": 32,
-      "c_include_s2mm_dre": 0,
-      "c_increase_throughput": 0,
-      "c_family": "virtex7",
-      "component_name": "design_1_axi_dma_0_0",
-      "c_addr_width": 32,
-      "c_single_interface": 0,
-      "edk_iptype": "PERIPHERAL",
-      "c_baseaddr": 12288,
-      "c_highaddr": 13311
-    },
-    "memory-view": {
-      "M_AXI_SG": {
-        "axi_pcie_0": {
-          "BAR0": {
-            "baseaddr": 0,
-            "highaddr": 4294967295,
-            "size": 4294967296
-          }
-        }
-      },
-      "M_AXI_MM2S": {
-        "axi_pcie_0": {
-          "BAR0": {
-            "baseaddr": 0,
-            "highaddr": 4294967295,
-            "size": 4294967296
-          }
-        }
-      },
-      "M_AXI_S2MM": {
-        "axi_pcie_0": {
-          "BAR0": {
-            "baseaddr": 0,
-            "highaddr": 4294967295,
-            "size": 4294967296
-          }
-        }
-      }
-    },
-    "ports": [
-      {
-        "role": "master",
-        "target": "axis_interconnect_0_xbar:S04_AXIS",
-        "name": "MM2S"
-      },
-      {
-        "role": "slave",
-        "target": "axis_interconnect_0_xbar:M04_AXIS",
-        "name": "S2MM"
-      }
-    ],
-    "irqs": {
-      "mm2s_introut": "axi_pcie_intc_0:0",
-      "s2mm_introut": "axi_pcie_intc_0:1"
-    }
   },
   "axi_gpio_0": {
     "vlnv": "xilinx.com:ip:axi_gpio:2.0",
@@ -666,234 +578,13 @@
       "c_highaddr": 127
     }
   },
-  "axi_pcie_0": {
-    "vlnv": "xilinx.com:ip:axi_pcie:2.9",
-    "parameters": {
-      "c_family": "virtex7",
-      "c_instance": "design_1_axi_pcie_0_1",
-      "c_s_axi_id_width": 2,
-      "c_s_axi_addr_width": 32,
-      "c_s_axi_data_width": 64,
-      "c_m_axi_addr_width": 32,
-      "c_m_axi_data_width": 64,
-      "c_no_of_lanes": 1,
-      "c_max_link_speed": 1,
-      "c_pcie_use_mode": "3.0",
-      "c_device_id": 28705,
-      "c_vendor_id": 4334,
-      "c_class_code": 360448,
-      "c_ref_clk_freq": 0,
-      "c_rev_id": 0,
-      "c_subsystem_id": 7,
-      "c_subsystem_vendor_id": 4334,
-      "c_pcie_cap_slot_implemented": 0,
-      "c_slot_clock_config": "TRUE",
-      "c_msi_decode_enable": "TRUE",
-      "c_int_fifo_depth": 0,
-      "c_num_msi_req": 5,
-      "c_interrupt_pin": 0,
-      "c_comp_timeout": 0,
-      "c_include_rc": 0,
-      "c_s_axi_supports_narrow_burst": 0,
-      "c_include_baroffset_reg": 1,
-      "c_axibar_num": 1,
-      "c_axibar2pciebar_0": 0,
-      "c_axibar2pciebar_1": 0,
-      "c_axibar2pciebar_2": 0,
-      "c_axibar2pciebar_3": 0,
-      "c_axibar2pciebar_4": 0,
-      "c_axibar2pciebar_5": 0,
-      "c_axibar_as_0": 0,
-      "c_axibar_as_1": 0,
-      "c_axibar_as_2": 0,
-      "c_axibar_as_3": 0,
-      "c_axibar_as_4": 0,
-      "c_axibar_as_5": 0,
-      "c_axibar_0": 0,
-      "c_axibar_highaddr_0": 4294967295,
-      "c_axibar_1": 4294967295,
-      "c_axibar_highaddr_1": 0,
-      "c_axibar_2": 4294967295,
-      "c_axibar_highaddr_2": 0,
-      "c_axibar_3": 4294967295,
-      "c_axibar_highaddr_3": 0,
-      "c_axibar_4": 4294967295,
-      "c_axibar_highaddr_4": 0,
-      "c_axibar_5": 4294967295,
-      "c_axibar_highaddr_5": 0,
-      "c_pciebar_num": 1,
-      "c_pciebar_as": 0,
-      "c_pciebar_len_0": 20,
-      "c_pciebar2axibar_0": 0,
-      "c_pciebar2axibar_0_sec": 1,
-      "c_pciebar_len_1": 16,
-      "c_pciebar2axibar_1": 4294967295,
-      "c_pciebar2axibar_1_sec": 1,
-      "c_pciebar_len_2": 16,
-      "c_pciebar2axibar_2": 4294967295,
-      "c_pciebar2axibar_2_sec": 1,
-      "c_pcie_blk_locn": 3,
-      "c_xlnx_ref_board": "VC707",
-      "pcie_ext_clk": "FALSE",
-      "pcie_ext_gt_common": "FALSE",
-      "ext_ch_gt_drp": "FALSE",
-      "shared_logic_in_core": "false",
-      "transceiver_ctrl_status_ports": "FALSE",
-      "ext_pipe_interface": "FALSE",
-      "c_device": "xc7vx485t",
-      "c_speed": -2,
-      "axi_aclk_loopback": "false",
-      "no_slv_err": "false",
-      "c_rp_bar_hide": "FALSE",
-      "enable_jtag_dbg": "false",
-      "c_axibar_chk_slv_err": "false",
-      "reduce_oob_freq": "false",
-      "component_name": "design_1_axi_pcie_0_1",
-      "include_rc": "PCI_Express_Endpoint_device",
-      "ref_clk_freq": "100_MHz",
-      "slot_clock_config": "true",
-      "pcie_use_mode": "GES_and_Production",
-      "no_of_lanes": "X1",
-      "max_link_speed": "5.0_GT/s",
-      "vendor_id": 4334,
-      "device_id": 28705,
-      "rev_id": 0,
-      "subsystem_vendor_id": 4334,
-      "subsystem_id": 7,
-      "enable_class_code": "true",
-      "class_code": 360448,
-      "base_class_menu": "Memory_controller",
-      "sub_class_interface_menu": "Other_memory_controller",
-      "bar0_enabled": "true",
-      "bar1_enabled": "false",
-      "bar2_enabled": "false",
-      "bar0_type": "Memory",
-      "bar1_type": "N/A",
-      "bar2_type": "N/A",
-      "bar0_scale": "Megabytes",
-      "bar1_scale": "N/A",
-      "bar2_scale": "N/A",
-      "bar0_size": 1,
-      "bar1_size": 8,
-      "bar2_size": 8,
-      "pciebar2axibar_0": 0,
-      "pciebar2axibar_1": 4294967295,
-      "pciebar2axibar_2": 4294967295,
-      "pciebar2axibar_1_sec": 1,
-      "pciebar2axibar_0_sec": 1,
-      "pciebar2axibar_2_sec": 1,
-      "interrupt_pin": "false",
-      "msi_decode_enabled": "true",
-      "num_msi_req": 5,
-      "int_fifo_depth": 16,
-      "comp_timeout": "50us",
-      "include_baroffset_reg": "true",
-      "axibar_as_0": "false",
-      "axibar_as_1": "false",
-      "axibar_as_2": "false",
-      "axibar_as_3": "false",
-      "axibar_as_4": "false",
-      "axibar_as_5": "false",
-      "axibar_1": 4294967295,
-      "axibar_2": 4294967295,
-      "axibar_3": 4294967295,
-      "axibar_4": 4294967295,
-      "axibar_5": 4294967295,
-      "axibar_highaddr_1": 0,
-      "axibar_highaddr_2": 0,
-      "axibar_highaddr_3": 0,
-      "axibar_highaddr_4": 0,
-      "axibar_highaddr_5": 0,
-      "axibar2pciebar_0": 0,
-      "axibar2pciebar_1": 0,
-      "axibar2pciebar_2": 0,
-      "axibar2pciebar_3": 0,
-      "axibar2pciebar_4": 0,
-      "axibar2pciebar_5": 0,
-      "baseaddr": 4096,
-      "highaddr": 8191,
-      "s_axi_id_width": 2,
-      "s_axi_addr_width": 32,
-      "s_axi_data_width": 64,
-      "m_axi_addr_width": 32,
-      "m_axi_data_width": 64,
-      "s_axi_supports_narrow_burst": "false",
-      "bar_64bit": "false",
-      "xlnx_ref_board": "VC707",
-      "pcie_blk_locn": "X1Y0",
-      "axibar_num": 1,
-      "en_ext_clk": "false",
-      "en_ext_gt_common": "false",
-      "en_ext_ch_gt_drp": "false",
-      "en_transceiver_status_ports": "false",
-      "en_ext_pipe_interface": "false",
-      "rp_bar_hide": "false",
-      "edk_iptype": "PERIPHERAL",
-      "axibar_0": 0,
-      "axibar_highaddr_0": 4294967295
-    },
-    "memory-view": {
-      "M_AXI": {
-        "axi_gpio_0": {
-          "Reg": {
-            "baseaddr": 0,
-            "highaddr": 127,
-            "size": 128
-          }
-        },
-        "axis_interconnect_0_xbar": {
-          "Reg": {
-            "baseaddr": 4096,
-            "highaddr": 5119,
-            "size": 1024
-          }
-        },
-        "axi_pcie_intc_0": {
-          "reg0": {
-            "baseaddr": 8192,
-            "highaddr": 9215,
-            "size": 1024
-          }
-        },
-        "axi_dma_0": {
-          "Reg": {
-            "baseaddr": 12288,
-            "highaddr": 13311,
-            "size": 1024
-          }
-        }
-      }
-    },
-    "axi_bars": {
-      "BAR0": {
-        "translation": 0,
-        "baseaddr": 0,
-        "highaddr": 4294967295,
-        "size": 4294967296
-      }
-    },
-    "pcie_bars": {
-      "BAR0": {
-        "translation": 0
-      }
-    }
-  },
-  "axi_pcie_intc_0": {
-    "vlnv": "xilinx.com:module_ref:axi_pcie_intc:1.0",
-    "parameters": {
-      "component_name": "design_1_axi_pcie_intc_0_0",
-      "edk_iptype": "PERIPHERAL",
-      "c_baseaddr": 8192,
-      "c_highaddr": 9215
-    }
-  },
-  "axis_interconnect_0_xbar": {
+  "crossbar_axis_interconnect_0_xbar": {
     "vlnv": "xilinx.com:ip:axis_switch:1.1",
     "parameters": {
       "c_family": "virtex7",
-      "c_num_si_slots": 5,
+      "c_num_si_slots": 6,
       "c_log_si_slots": 3,
-      "c_num_mi_slots": 5,
+      "c_num_mi_slots": 6,
       "c_axis_tdata_width": 32,
       "c_axis_tid_width": 1,
       "c_axis_tdest_width": 1,
@@ -906,15 +597,15 @@
       "c_arb_algorithm": 0,
       "c_output_reg": 0,
       "c_decoder_reg": 1,
-      "c_m_axis_connectivity_array": 33554431,
-      "c_m_axis_basetdest_array": 10,
-      "c_m_axis_hightdest_array": 10,
+      "c_m_axis_connectivity_array": 68719476735,
+      "c_m_axis_basetdest_array": 42,
+      "c_m_axis_hightdest_array": 42,
       "c_routing_mode": 1,
       "c_s_axi_ctrl_addr_width": 7,
       "c_s_axi_ctrl_data_width": 32,
       "c_common_clock": 0,
-      "num_si": 5,
-      "num_mi": 5,
+      "num_si": 6,
+      "num_mi": 6,
       "routing_mode": 1,
       "has_tready": 1,
       "tdata_num_bytes": 4,
@@ -1222,60 +913,468 @@
       "m15_s15_connectivity": 1,
       "component_name": "design_1_xbar_0",
       "edk_iptype": "PERIPHERAL",
-      "c_baseaddr": 0,
-      "c_highaddr": 1023
+      "c_baseaddr": 4096,
+      "c_highaddr": 5119
     },
     "ports": [
       {
         "role": "slave",
-        "target": "aurora_8b10b_ch0:USER_DATA_M_AXI_RX",
+        "target": "aurora_aurora_8b10b_ch0:USER_DATA_M_AXI_RX",
         "name": "S00_AXIS"
       },
       {
         "role": "master",
-        "target": "aurora_8b10b_ch0:USER_DATA_S_AXI_TX",
+        "target": "aurora_aurora_8b10b_ch0:USER_DATA_S_AXI_TX",
         "name": "M00_AXIS"
       },
       {
         "role": "slave",
-        "target": "aurora_8b10b_ch1:USER_DATA_M_AXI_RX",
+        "target": "aurora_aurora_8b10b_ch1:USER_DATA_M_AXI_RX",
         "name": "S01_AXIS"
       },
       {
         "role": "master",
-        "target": "aurora_8b10b_ch1:USER_DATA_S_AXI_TX",
+        "target": "aurora_aurora_8b10b_ch1:USER_DATA_S_AXI_TX",
         "name": "M01_AXIS"
       },
       {
         "role": "slave",
-        "target": "aurora_8b10b_ch2:USER_DATA_M_AXI_RX",
+        "target": "aurora_aurora_8b10b_ch2:USER_DATA_M_AXI_RX",
         "name": "S02_AXIS"
       },
       {
         "role": "master",
-        "target": "aurora_8b10b_ch2:USER_DATA_S_AXI_TX",
+        "target": "aurora_aurora_8b10b_ch2:USER_DATA_S_AXI_TX",
         "name": "M02_AXIS"
       },
       {
         "role": "slave",
-        "target": "aurora_8b10b_ch3:USER_DATA_M_AXI_RX",
+        "target": "aurora_aurora_8b10b_ch3:USER_DATA_M_AXI_RX",
         "name": "S03_AXIS"
       },
       {
         "role": "master",
-        "target": "aurora_8b10b_ch3:USER_DATA_S_AXI_TX",
+        "target": "aurora_aurora_8b10b_ch3:USER_DATA_S_AXI_TX",
         "name": "M03_AXIS"
       },
       {
         "role": "slave",
-        "target": "axi_dma_0:MM2S",
+        "target": "dma_pcie_axi_dma_0:MM2S",
         "name": "S04_AXIS"
       },
       {
         "role": "master",
-        "target": "axi_dma_0:S2MM",
+        "target": "dma_pcie_axi_dma_0:S2MM",
         "name": "M04_AXIS"
+      },
+      {
+        "role": "slave",
+        "target": "dino_dinoif_adc_0:M00_AXIS",
+        "name": "S05_AXIS"
+      },
+      {
+        "role": "master",
+        "target": "dino_dinoif_dac_0:S00_AXIS",
+        "name": "M05_AXIS"
       }
-    ]
+    ],
+    "num_ports": 6
+  },
+  "dino_axi_iic_0": {
+    "vlnv": "xilinx.com:ip:axi_iic:2.1",
+    "parameters": {
+      "c_family": "virtex7",
+      "c_s_axi_addr_width": 9,
+      "c_s_axi_data_width": 32,
+      "c_iic_freq": 100000,
+      "c_ten_bit_adr": 0,
+      "c_gpo_width": 1,
+      "c_s_axi_aclk_freq_hz": 125000000,
+      "c_scl_inertial_delay": 0,
+      "c_sda_inertial_delay": 0,
+      "c_sda_level": 1,
+      "c_smbus_pmbus_host": 0,
+      "c_disable_setup_violation_check": 0,
+      "c_static_timing_reg_width": 0,
+      "c_timing_reg_width": 32,
+      "c_default_value": 0,
+      "component_name": "design_1_axi_iic_0_0",
+      "ten_bit_adr": "7_bit",
+      "axi_aclk_freq_mhz": "125.0",
+      "iic_freq_khz": 100,
+      "use_board_flow": "false",
+      "iic_board_interface": "Custom",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 16384,
+      "c_highaddr": 17407
+    },
+    "irqs": {
+      "iic2intc_irpt": "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0:2"
+    }
+  },
+  "dino_registerif_0": {
+    "vlnv": "xilinx.com:module_ref:registerif:1.0",
+    "parameters": {
+      "c_axi_data_width": 32,
+      "c_axi_addr_width": 32,
+      "reg_addr_width": 10,
+      "component_name": "design_1_registerif_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 20480,
+      "c_highaddr": 21503
+    }
+  },
+  "dma_pcie_axi_dma_0": {
+    "vlnv": "xilinx.com:ip:axi_dma:7.1",
+    "parameters": {
+      "c_s_axi_lite_addr_width": 10,
+      "c_s_axi_lite_data_width": 32,
+      "c_dlytmr_resolution": 125,
+      "c_prmry_is_aclk_async": 0,
+      "c_enable_multi_channel": 0,
+      "c_num_mm2s_channels": 1,
+      "c_num_s2mm_channels": 1,
+      "c_include_sg": 1,
+      "c_sg_include_stscntrl_strm": 0,
+      "c_sg_use_stsapp_length": 0,
+      "c_sg_length_width": 14,
+      "c_m_axi_sg_addr_width": 32,
+      "c_m_axi_sg_data_width": 32,
+      "c_m_axis_mm2s_cntrl_tdata_width": 32,
+      "c_s_axis_s2mm_sts_tdata_width": 32,
+      "c_micro_dma": 0,
+      "c_include_mm2s": 1,
+      "c_include_mm2s_sf": 1,
+      "c_mm2s_burst_size": 16,
+      "c_m_axi_mm2s_addr_width": 32,
+      "c_m_axi_mm2s_data_width": 32,
+      "c_m_axis_mm2s_tdata_width": 32,
+      "c_include_mm2s_dre": 0,
+      "c_include_s2mm": 1,
+      "c_include_s2mm_sf": 1,
+      "c_s2mm_burst_size": 16,
+      "c_m_axi_s2mm_addr_width": 32,
+      "c_m_axi_s2mm_data_width": 32,
+      "c_s_axis_s2mm_tdata_width": 32,
+      "c_include_s2mm_dre": 0,
+      "c_increase_throughput": 0,
+      "c_family": "virtex7",
+      "component_name": "design_1_axi_dma_0_0",
+      "c_addr_width": 32,
+      "c_single_interface": 0,
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 12288,
+      "c_highaddr": 13311
+    },
+    "memory-view": {
+      "M_AXI_SG": {
+        "dma_pcie_pcie_axi_pcie_0": {
+          "BAR0": {
+            "baseaddr": 0,
+            "highaddr": 4294967295,
+            "size": 4294967296
+          }
+        }
+      },
+      "M_AXI_MM2S": {
+        "dma_pcie_pcie_axi_pcie_0": {
+          "BAR0": {
+            "baseaddr": 0,
+            "highaddr": 4294967295,
+            "size": 4294967296
+          }
+        }
+      },
+      "M_AXI_S2MM": {
+        "dma_pcie_pcie_axi_pcie_0": {
+          "BAR0": {
+            "baseaddr": 0,
+            "highaddr": 4294967295,
+            "size": 4294967296
+          }
+        }
+      }
+    },
+    "ports": [
+      {
+        "role": "master",
+        "target": "crossbar_axis_interconnect_0_xbar:S04_AXIS",
+        "name": "MM2S"
+      },
+      {
+        "role": "slave",
+        "target": "crossbar_axis_interconnect_0_xbar:M04_AXIS",
+        "name": "S2MM"
+      }
+    ],
+    "irqs": {
+      "mm2s_introut": "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0:0",
+      "s2mm_introut": "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0:1"
+    }
+  },
+  "dma_pcie_axi_read_cache_0": {
+    "vlnv": "xilinx.com:module_ref:axi_read_cache:1.0",
+    "parameters": {
+      "c_axi_data_width": 32,
+      "c_axi_addr_width": 32,
+      "word_num": 16,
+      "component_name": "design_1_axi_read_cache_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 24576,
+      "c_highaddr": 25599
+    },
+    "memory-view": {
+      "M_AXI": {
+        "dma_pcie_pcie_axi_pcie_0": {
+          "BAR0": {
+            "baseaddr": 0,
+            "highaddr": 4294967295,
+            "size": 4294967296
+          }
+        }
+      }
+    }
+  },
+  "dma_pcie_pcie_axi_pcie_0": {
+    "vlnv": "xilinx.com:ip:axi_pcie:2.9",
+    "parameters": {
+      "c_family": "virtex7",
+      "c_instance": "design_1_axi_pcie_0_1",
+      "c_s_axi_id_width": 2,
+      "c_s_axi_addr_width": 32,
+      "c_s_axi_data_width": 64,
+      "c_m_axi_addr_width": 32,
+      "c_m_axi_data_width": 64,
+      "c_no_of_lanes": 1,
+      "c_max_link_speed": 1,
+      "c_pcie_use_mode": "3.0",
+      "c_device_id": 28705,
+      "c_vendor_id": 4334,
+      "c_class_code": 360448,
+      "c_ref_clk_freq": 0,
+      "c_rev_id": 0,
+      "c_subsystem_id": 7,
+      "c_subsystem_vendor_id": 4334,
+      "c_pcie_cap_slot_implemented": 0,
+      "c_slot_clock_config": "TRUE",
+      "c_msi_decode_enable": "TRUE",
+      "c_int_fifo_depth": 0,
+      "c_num_msi_req": 4,
+      "c_interrupt_pin": 0,
+      "c_comp_timeout": 0,
+      "c_include_rc": 0,
+      "c_s_axi_supports_narrow_burst": 1,
+      "c_include_baroffset_reg": 1,
+      "c_axibar_num": 1,
+      "c_axibar2pciebar_0": 0,
+      "c_axibar2pciebar_1": 0,
+      "c_axibar2pciebar_2": 0,
+      "c_axibar2pciebar_3": 0,
+      "c_axibar2pciebar_4": 0,
+      "c_axibar2pciebar_5": 0,
+      "c_axibar_as_0": 0,
+      "c_axibar_as_1": 0,
+      "c_axibar_as_2": 0,
+      "c_axibar_as_3": 0,
+      "c_axibar_as_4": 0,
+      "c_axibar_as_5": 0,
+      "c_axibar_0": 0,
+      "c_axibar_highaddr_0": 4294967295,
+      "c_axibar_1": 4294967295,
+      "c_axibar_highaddr_1": 0,
+      "c_axibar_2": 4294967295,
+      "c_axibar_highaddr_2": 0,
+      "c_axibar_3": 4294967295,
+      "c_axibar_highaddr_3": 0,
+      "c_axibar_4": 4294967295,
+      "c_axibar_highaddr_4": 0,
+      "c_axibar_5": 4294967295,
+      "c_axibar_highaddr_5": 0,
+      "c_pciebar_num": 1,
+      "c_pciebar_as": 0,
+      "c_pciebar_len_0": 20,
+      "c_pciebar2axibar_0": 0,
+      "c_pciebar2axibar_0_sec": 1,
+      "c_pciebar_len_1": 16,
+      "c_pciebar2axibar_1": 4294967295,
+      "c_pciebar2axibar_1_sec": 1,
+      "c_pciebar_len_2": 16,
+      "c_pciebar2axibar_2": 4294967295,
+      "c_pciebar2axibar_2_sec": 1,
+      "c_pcie_blk_locn": 3,
+      "c_xlnx_ref_board": "VC707",
+      "pcie_ext_clk": "FALSE",
+      "pcie_ext_gt_common": "FALSE",
+      "ext_ch_gt_drp": "FALSE",
+      "shared_logic_in_core": "false",
+      "transceiver_ctrl_status_ports": "FALSE",
+      "ext_pipe_interface": "FALSE",
+      "c_device": "xc7vx485t",
+      "c_speed": -2,
+      "axi_aclk_loopback": "false",
+      "no_slv_err": "false",
+      "c_rp_bar_hide": "FALSE",
+      "enable_jtag_dbg": "false",
+      "c_axibar_chk_slv_err": "false",
+      "reduce_oob_freq": "false",
+      "component_name": "design_1_axi_pcie_0_1",
+      "include_rc": "PCI_Express_Endpoint_device",
+      "ref_clk_freq": "100_MHz",
+      "slot_clock_config": "true",
+      "pcie_use_mode": "GES_and_Production",
+      "no_of_lanes": "X1",
+      "max_link_speed": "5.0_GT/s",
+      "vendor_id": 4334,
+      "device_id": 28705,
+      "rev_id": 0,
+      "subsystem_vendor_id": 4334,
+      "subsystem_id": 7,
+      "enable_class_code": "true",
+      "class_code": 360448,
+      "base_class_menu": "Memory_controller",
+      "sub_class_interface_menu": "Other_memory_controller",
+      "bar0_enabled": "true",
+      "bar1_enabled": "false",
+      "bar2_enabled": "false",
+      "bar0_type": "Memory",
+      "bar1_type": "N/A",
+      "bar2_type": "N/A",
+      "bar0_scale": "Megabytes",
+      "bar1_scale": "N/A",
+      "bar2_scale": "N/A",
+      "bar0_size": 1,
+      "bar1_size": 8,
+      "bar2_size": 8,
+      "pciebar2axibar_0": 0,
+      "pciebar2axibar_1": 4294967295,
+      "pciebar2axibar_2": 4294967295,
+      "pciebar2axibar_1_sec": 1,
+      "pciebar2axibar_0_sec": 1,
+      "pciebar2axibar_2_sec": 1,
+      "interrupt_pin": "false",
+      "msi_decode_enabled": "true",
+      "num_msi_req": 4,
+      "int_fifo_depth": 16,
+      "comp_timeout": "50us",
+      "include_baroffset_reg": "true",
+      "axibar_as_0": "false",
+      "axibar_as_1": "false",
+      "axibar_as_2": "false",
+      "axibar_as_3": "false",
+      "axibar_as_4": "false",
+      "axibar_as_5": "false",
+      "axibar_1": 4294967295,
+      "axibar_2": 4294967295,
+      "axibar_3": 4294967295,
+      "axibar_4": 4294967295,
+      "axibar_5": 4294967295,
+      "axibar_highaddr_1": 0,
+      "axibar_highaddr_2": 0,
+      "axibar_highaddr_3": 0,
+      "axibar_highaddr_4": 0,
+      "axibar_highaddr_5": 0,
+      "axibar2pciebar_0": 0,
+      "axibar2pciebar_1": 0,
+      "axibar2pciebar_2": 0,
+      "axibar2pciebar_3": 0,
+      "axibar2pciebar_4": 0,
+      "axibar2pciebar_5": 0,
+      "baseaddr": 4096,
+      "highaddr": 8191,
+      "s_axi_id_width": 2,
+      "s_axi_addr_width": 32,
+      "s_axi_data_width": 64,
+      "m_axi_addr_width": 32,
+      "m_axi_data_width": 64,
+      "s_axi_supports_narrow_burst": "true",
+      "bar_64bit": "false",
+      "xlnx_ref_board": "VC707",
+      "pcie_blk_locn": "X1Y0",
+      "axibar_num": 1,
+      "en_ext_clk": "false",
+      "en_ext_gt_common": "false",
+      "en_ext_ch_gt_drp": "false",
+      "en_transceiver_status_ports": "false",
+      "en_ext_pipe_interface": "false",
+      "rp_bar_hide": "false",
+      "edk_iptype": "PERIPHERAL",
+      "axibar_0": 0,
+      "axibar_highaddr_0": 4294967295
+    },
+    "memory-view": {
+      "M_AXI": {
+        "axi_gpio_0": {
+          "Reg": {
+            "baseaddr": 0,
+            "highaddr": 127,
+            "size": 128
+          }
+        },
+        "crossbar_axis_interconnect_0_xbar": {
+          "Reg": {
+            "baseaddr": 4096,
+            "highaddr": 5119,
+            "size": 1024
+          }
+        },
+        "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0": {
+          "reg0": {
+            "baseaddr": 8192,
+            "highaddr": 9215,
+            "size": 1024
+          }
+        },
+        "dma_pcie_axi_dma_0": {
+          "Reg": {
+            "baseaddr": 12288,
+            "highaddr": 13311,
+            "size": 1024
+          }
+        },
+        "dino_axi_iic_0": {
+          "Reg": {
+            "baseaddr": 16384,
+            "highaddr": 17407,
+            "size": 1024
+          }
+        },
+        "dino_registerif_0": {
+          "reg0": {
+            "baseaddr": 20480,
+            "highaddr": 21503,
+            "size": 1024
+          }
+        },
+        "dma_pcie_axi_read_cache_0": {
+          "reg0": {
+            "baseaddr": 24576,
+            "highaddr": 25599,
+            "size": 1024
+          }
+        }
+      }
+    },
+    "axi_bars": {
+      "BAR0": {
+        "translation": 0,
+        "baseaddr": 0,
+        "highaddr": 4294967295,
+        "size": 4294967296
+      }
+    },
+    "pcie_bars": {
+      "BAR0": {
+        "translation": 0
+      }
+    }
+  },
+  "dma_pcie_pcie_pcie_interrupts_axi_pcie_intc_0": {
+    "vlnv": "xilinx.com:module_ref:axi_pcie_intc:1.0",
+    "parameters": {
+      "component_name": "design_1_axi_pcie_intc_0_0",
+      "edk_iptype": "PERIPHERAL",
+      "c_baseaddr": 8192,
+      "c_highaddr": 9215
+    }
   }
 }
