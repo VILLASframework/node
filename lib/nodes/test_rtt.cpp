@@ -471,6 +471,7 @@ int TestRTT::_write(struct Sample *smps[], unsigned cnt) {
       continue;
     }
 
+    smp->ts.received = time.now();
     formatter->print(stream, smps[i]);
     current->received++;
   }
