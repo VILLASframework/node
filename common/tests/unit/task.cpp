@@ -12,6 +12,8 @@
 #include <villas/task.hpp>
 #include <villas/timing.hpp>
 
+using namespace villas;
+
 // cppcheck-suppress unknownMacro
 TestSuite(task, .description = "Periodic timer tasks");
 
