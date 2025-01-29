@@ -24,7 +24,7 @@ struct Socket {
   int sd; // The socket descriptor
   int clt_sd; // TCP client socket descriptor
   int verify_source; // Verify the source address of incoming packets against socket::remote.
-  bool tcp_connect = false; // TCP connection status bit
+  bool tcp_connected = false; // TCP connection status bit
 
   enum SocketLayer
       layer; // The OSI / IP layer which should be used for this socket
@@ -69,8 +69,6 @@ int socket_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 int socket_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 int socket_parse(NodeCompat *n, json_t *json);
-
-void socket_tcp_connection(NodeCompat *n, Socket *s);
 
 char *socket_print(NodeCompat *n);
 
