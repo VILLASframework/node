@@ -49,6 +49,8 @@ public:
   // Get the size of a device memory region
   size_t regionGetSize(size_t index);
 
+  int platformInterruptInit(int efds[32]);
+
   // Enable memory accesses and bus mastering for PCI device
   bool pciEnable();
 
