@@ -339,10 +339,16 @@ int villas::node::socket_stop(NodeCompat *n) {
 
   if (s->sd >= 0) {
     // Close client socket descriptor.
-    if (s->layer == SocketLayer::TCP_SERVER)
+    if (s->layer == SocketLayer::TCP_SERVER) {
       close(s->clt_sd);
+      if (ret)
+        throw SystemError("Failed to close TCP client socket descriptor");
+    }
 
     ret = close(s->sd);
+
+    //Reset socket descriptor
+    s->sd = -1;
 
     if (ret)
       return ret;
@@ -352,6 +358,47 @@ int villas::node::socket_stop(NodeCompat *n) {
   delete[] s->out.buf;
 
   return 0;
+}
+
+static void socket_tcp_connection(NodeCompat *n, Socket *s) {
+  int ret;
+  if (s->layer == SocketLayer::TCP_CLIENT) {
+    if (s->sd >= 0) {
+      ret = close(s->sd);
+      if (ret < 0)
+        throw SystemError("Failed to close socket descriptor");
+    }
+    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
+    if (s->sd < 0)
+      throw SystemError("Failed to create socket");
+    // Attempt to connect to TCP server.
+    int retries = 0;
+    while (retries < MAX_CONNECTION_RETRIES) {
+      n->logger->info("Attempting to connect to TCP server: attempt={}...", retries + 1);
+      ret = connect(s->sd, (struct sockaddr *)&s->out.saddr, sizeof(s->in.saddr));
+      if (ret == 0) {
+        s->tcp_connected = true;
+        break;
+      } else {
+        retries++;
+        if (retries < MAX_CONNECTION_RETRIES) {
+          sleep(RETRIES_DELAY);
+        }
+      }
+    }
+    if (ret < 0)
+      throw SystemError("Failed to conenct to TCP server");
+  } else if (s->layer == SocketLayer::TCP_SERVER) {
+    ret = listen(s->sd, 5);
+    if (ret < 0)
+       throw SystemError("Failed to listen for TCP client connection");
+    // Accept client connection and get client socket descriptor.
+    s->clt_sd = accept(s->sd, nullptr, nullptr);
+    if (s->clt_sd < 0) {
+      throw SystemError("Failed to accept TCP client connection");
+    }
+    s->tcp_connected = true;
+  }
 }
 
 int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
@@ -370,14 +417,14 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
 
   if (s->layer == SocketLayer::TCP_CLIENT) {
     // Receive data from server.
-    if (!s->tcp_connect)
-      villas::node::socket_tcp_connection(n, s);
+    if (!s->tcp_connected)
+      socket_tcp_connection(n, s);
 
     bytes = recv(s->sd, s->in.buf, s->in.buflen, 0);
   } else if (s->layer == SocketLayer::TCP_SERVER) {
     // Receive data from client.
-    if (!s->tcp_connect)
-      villas::node::socket_tcp_connection(n, s);
+    if (!s->tcp_connected)
+      socket_tcp_connection(n, s);
 
     bytes = recv(s->clt_sd, s->in.buf, s->in.buflen, 0);
   } else {
@@ -391,7 +438,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
     throw SystemError("Failed recvfrom()");
   } else if (bytes == 0) {
     if (s->layer == SocketLayer::TCP_CLIENT || s->layer == SocketLayer::TCP_SERVER)
-      s->tcp_connect = false;
+      s->tcp_connected = false;
 
     return 0;
   }
@@ -434,39 +481,6 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
                     bytes, rbytes);
 
   return ret;
-}
-
-void villas::node::socket_tcp_connection(NodeCompat *n, Socket *s) {
-  int ret;
-  if (s->layer == SocketLayer::TCP_CLIENT) {
-    close(s->sd);
-    s->sd = socket(s->in.saddr.sa.sa_family, SOCK_STREAM, 0);
-    // Attemp to connect to TCP server.
-    int retries = 0;
-    while (retries < MAX_CONNECTION_RETRIES) {
-      n->logger->info("Attempting to connect to server: attempt={}...", retries + 1);
-      ret = connect(s->sd, (struct sockaddr *)&s->out.saddr, sizeof(s->in.saddr));
-      if (ret == 0) {
-        s->tcp_connect = true;
-        break;
-      } else {
-        retries++;
-        if (retries < MAX_CONNECTION_RETRIES) {
-          sleep(RETRIES_DELAY);
-        }
-      }
-    }
-    if (ret < 0)
-      throw SystemError("Failed to conenct to TCP server");
-  } else if (s->layer == SocketLayer::TCP_SERVER) {
-    listen(s->sd, 5);
-    // Accept client connection and get client socket descriptor.
-    s->clt_sd = accept(s->sd, nullptr, nullptr);
-    if (s->clt_sd < 0) {
-      throw SystemError("Failed to accept connection");
-    }
-    s->tcp_connect = true;
-  }
 }
 
 int villas::node::socket_write(NodeCompat *n, struct Sample *const smps[],
