@@ -88,8 +88,6 @@ wait %%
 VILLAS_LOG_PREFIX="[compare] " \
 villas compare input.dat output.dat
 
-sleep 1
-
 cat > config.json <<EOF
 {
     "nodes": {
