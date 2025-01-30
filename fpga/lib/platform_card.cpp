@@ -104,12 +104,12 @@ void PlatformCard::connect(std::string device_name,
   auto &mm = MemoryManager::get();
   const size_t ip_mem_size = 65536;
 
-  size_t srcVertexId = mm.getOrCreateAddressSpace(device_name);
+  size_t srcVertexId = mm.findAddressSpace(device_name);
 
   std::string taget_address_space_name =
       ip->getInstanceName() + "/Reg"; //? TODO: Reg neded?
   size_t targetVertexId;
-  targetVertexId = mm.getOrCreateAddressSpace(taget_address_space_name);
+  targetVertexId = mm.findAddressSpace(taget_address_space_name);
 
   mm.createMapping(0, 0, ip_mem_size, "vfio to ip", srcVertexId,
                    targetVertexId);
@@ -148,7 +148,7 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
                    this->addrSpaceIdDeviceToHost, addrSpaceId);
 
   // TODO: Fix with multiple addr. space in zynq
-  auto space = mm.findAddressSpace("zynq_zynq_ultra_ps_e_0/HPC1_DDR_LOW");
+  auto space = mm.findAddressSpace("zynq_zynq_ultra_ps_e_0:M_AXI_HPM0_FPD");
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H", space,
                    addrSpaceId);
 
