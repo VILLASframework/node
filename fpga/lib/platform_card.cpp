@@ -109,8 +109,7 @@ void PlatformCard::connect(std::string device_name,
     size_t srcVertexId = mm.findAddressSpace(device_name);
 
     std::string taget_address_space_name =
-        ip->getInstanceName() + "/" + memory_block; //? TODO: Reg neded?
-    logger->critical(ip->getInstanceName() + memory_block);
+        ip->getInstanceName() + "/" + memory_block;
     size_t targetVertexId;
     targetVertexId = mm.findAddressSpace(taget_address_space_name);
 
