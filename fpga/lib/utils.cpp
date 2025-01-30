@@ -37,11 +37,17 @@ static auto logger = villas::Log::get("streamer");
 
 std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>>
 fpga::getAuroraChannels(std::shared_ptr<fpga::Card> card) {
-  auto channels = card->lookupIps(std::string("xilinx.com:ip:aurora_8b10b:"));
-  std::shared_ptr<std::vector<std::shared_ptr<fpga::ip::Node>>> aurora_channels;
+  auto aurora_channels =
+      std::make_shared<std::vector<std::shared_ptr<fpga::ip::Node>>>();
+  for (int i = 0; i < 4; i++) {
+    auto name = fmt::format("aurora_aurora_8b10b_ch{}", i);
+    auto id = fpga::ip::IpIdentifier("xilinx.com:ip:aurora_8b10b:", name);
+    auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(card->lookupIp(id));
+    if (aurora == nullptr) {
+      logger->warn("No Aurora interface found on FPGA");
+      break;
+    }
 
-  for (auto channel : channels) {
-    auto aurora = std::dynamic_pointer_cast<fpga::ip::Node>(channel);
     aurora_channels->push_back(aurora);
   }
 
