@@ -340,7 +340,7 @@ int villas::node::socket_stop(NodeCompat *n) {
   if (s->sd >= 0) {
     // Close client socket descriptor.
     if (s->layer == SocketLayer::TCP_SERVER) {
-      close(s->clt_sd);
+      ret = close(s->clt_sd);
       if (ret)
         throw SystemError("Failed to close TCP client socket descriptor");
     }
