@@ -147,7 +147,7 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H",
                    this->addrSpaceIdDeviceToHost, addrSpaceId);
 
-  // TODO: Determine zynq name
+  // TODO: Fix with multiple addr. space in zynq
   auto space = mm.findAddressSpace("zynq_zynq_ultra_ps_e_0/HPC1_DDR_LOW");
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H", space,
                    addrSpaceId);
