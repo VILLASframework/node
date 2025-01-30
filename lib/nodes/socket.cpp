@@ -347,7 +347,7 @@ int villas::node::socket_stop(NodeCompat *n) {
 
     ret = close(s->sd);
 
-    //Reset socket descriptor
+    // Reset socket descriptor.
     s->sd = -1;
 
     if (ret)
