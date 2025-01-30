@@ -101,21 +101,26 @@ void PlatformCard::connectVFIOtoIps(
 
 void PlatformCard::connect(std::string device_name,
                            std::shared_ptr<ip::Core> ip) {
-  auto &mm = MemoryManager::get();
-  const size_t ip_mem_size = 65536;
 
-  size_t srcVertexId = mm.findAddressSpace(device_name);
+  for (std::string memory_block : ip->getMemoryBlocks()) {
+    auto &mm = MemoryManager::get();
+    const size_t ip_mem_size = 65536;
 
-  std::string taget_address_space_name =
-      ip->getInstanceName() + "/Reg"; //? TODO: Reg neded?
-  size_t targetVertexId;
-  targetVertexId = mm.findAddressSpace(taget_address_space_name);
+    size_t srcVertexId = mm.findAddressSpace(device_name);
 
-  mm.createMapping(0, 0, ip_mem_size, "vfio to ip", srcVertexId,
-                   targetVertexId);
+    std::string taget_address_space_name =
+        ip->getInstanceName() + "/" + memory_block; //? TODO: Reg neded?
+    logger->critical(ip->getInstanceName() + memory_block);
+    size_t targetVertexId;
+    targetVertexId = mm.findAddressSpace(taget_address_space_name);
 
-  logger->debug("Connect {} and {}", mm.getGraph().getVertex(srcVertexId)->name,
-                mm.getGraph().getVertex(targetVertexId)->name);
+    mm.createMapping(0, 0, ip_mem_size, "vfio to ip", srcVertexId,
+                     targetVertexId);
+
+    logger->debug("Connect {} and {}",
+                  mm.getGraph().getVertex(srcVertexId)->name,
+                  mm.getGraph().getVertex(targetVertexId)->name);
+  }
 }
 
 bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
@@ -148,7 +153,8 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
                    this->addrSpaceIdDeviceToHost, addrSpaceId);
 
   // TODO: Fix with multiple addr. space in zynq
-  auto space = mm.findAddressSpace("zynq_zynq_ultra_ps_e_0:M_AXI_HPM0_FPD");
+  auto space = mm.findAddressSpace(
+      "zynq_zynq_ultra_ps_e_0:M_AXI_HPM0_FPD"); // TODO: Remove hardcoded name
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H", space,
                    addrSpaceId);
 
