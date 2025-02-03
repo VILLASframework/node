@@ -7,9 +7,8 @@
 
 #include <villas/tsc.hpp>
 
-using namespace villas;
-
 int tsc_init(struct Tsc *t) {
+#if defined(__x86_64__) || defined(__i386__)
   uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
 
   // Check if TSC is supported
@@ -32,15 +31,25 @@ int tsc_init(struct Tsc *t) {
   if (ecx != 0)
     t->frequency = ecx * ebx / eax;
   else {
-    int ret;
 #ifdef __linux__
-    ret = kernel::get_cpu_frequency(&t->frequency);
+    int ret = kernel::get_cpu_frequency(&t->frequency);
     if (ret)
       return ret;
 #endif
   }
-
-  return 0;
+#elif defined(__aarch64__)
+  // Read counter frequency from system register
+  uint64_t cntfrq;
+  asm volatile("mrs %0, cntfrq_el0" : "=r"(cntfrq));
+  t->frequency = cntfrq;
+#else
+#ifdef __linux__
+  int ret = kernel::get_cpu_frequency(&t->frequency);
+  if (ret)
+    return ret;
+#endif
+#endif
+  return (int)(t->frequency);
 }
 
 uint64_t tsc_rate_to_cycles(struct Tsc *t, double rate) {

@@ -33,10 +33,6 @@ add_library(villas-common SHARED
     version.cpp
 )
 
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    target_sources(villas-common PRIVATE tsc.cpp)
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_sources(villas-common PRIVATE
         kernel/devices/ip_device.cpp
@@ -46,6 +42,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         kernel/vfio_device.cpp
         kernel/vfio_group.cpp
         kernel/vfio_container.cpp
+        tsc.cpp
     )
 endif()
 
