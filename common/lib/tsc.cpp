@@ -52,7 +52,10 @@ int tsc_init(struct Tsc *t) {
     return ret;
 #endif
 #endif
-  return (int)(t->frequency);
+  if (t->frequency)
+    return 0; // Frequency determined with success
+  else
+    return -1;
 }
 
 uint64_t tsc_rate_to_cycles(struct Tsc *t, double rate) {
