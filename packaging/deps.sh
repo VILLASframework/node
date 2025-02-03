@@ -354,7 +354,7 @@ fi
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
     should_build "redis++" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
+    git clone ${GIT_OPTS} --branch 1.3.8 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
@@ -424,6 +424,8 @@ if ! pkg-config "nice >= 0.1.16" && \
         if ! command -v meson; then
             python3 -m venv venv
             . venv/bin/activate
+            python3 -m pip install --upgrade pip setuptools
+
 
             # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
             pip3 install meson==0.61.5
