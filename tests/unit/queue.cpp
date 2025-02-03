@@ -62,8 +62,14 @@ uint64_t thread_get_id() {
   return -1;
 }
 
-// Sleep, do nothing
-__attribute__((always_inline)) static inline void nop() { __asm__("rep nop;"); }
+// Sleep, do nothing (Architecture-Specific)
+__attribute__((always_inline)) static inline void nop() {
+#if defined(__aarch64__)
+  __asm__ volatile("yield"); /// ARM equivalent of rep nop.
+#else
+  __asm__ volatile("rep nop"); /// x86 and most other architectures use rep nop.
+#endif
+}
 
 static void *producer(void *ctx) {
   int ret;
