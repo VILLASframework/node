@@ -5,7 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <villas/kernel/kernel.hpp>
 #include <villas/tsc.hpp>
+
+using namespace villas;
 
 int tsc_init(struct Tsc *t) {
 #if defined(__x86_64__) || defined(__i386__)
