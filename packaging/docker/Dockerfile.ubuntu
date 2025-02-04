@@ -6,7 +6,7 @@
 
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=ubuntu
-ARG UBUNTU_VERSION=22.04
+ARG UBUNTU_VERSION=24.04
 ARG DISTRO=${DISTRO}
 
 FROM ${DISTRO}:${UBUNTU_VERSION} AS dev
@@ -24,7 +24,10 @@ RUN apt-get update && \
 		texinfo git curl tar wget diffutils \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler \
-		clang-format clangd
+		clang-format clangd \
+		python3-venv \
+		ninja-build mercurial \
+		xmlto udev
 
 # Dependencies
 RUN apt-get update && \
@@ -53,7 +56,10 @@ RUN apt-get update && \
 		liblua5.3-dev \
 		libhiredis-dev \
 		libnice-dev \
-		libmodbus-dev
+		libmodbus-dev \
+		libre2-dev \
+		libglib2.0-0 libglib2.0-dev \
+		libcriterion-dev
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
@@ -93,7 +99,7 @@ LABEL \
 	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="post@steffenvogel.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
+	org.label-schema.description="An image containing all build-time dependencies for VILLASnode based on Ubuntu" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
