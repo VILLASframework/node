@@ -205,6 +205,7 @@ void *producer_consumer_many(void *ctx) {
 }
 #endif // _POSIX_BARRIERS
 
+// cppcheck-suppress unknownMacro
 Test(queue, single_threaded, .init = init_memory) {
   int ret;
   struct param p;
@@ -226,6 +227,7 @@ Test(queue, single_threaded, .init = init_memory) {
 }
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
+// cppcheck-suppress unknownMacro
 ParameterizedTestParameters(queue, multi_threaded) {
   static struct param params[] = {{.iter_count = 1 << 12,
                                    .queue_size = 1 << 9,
@@ -261,6 +263,7 @@ ParameterizedTestParameters(queue, multi_threaded) {
   return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
+// cppcheck-suppress unknownMacro
 ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
                   .init = init_memory) {
   int ret, cycpop;
@@ -319,6 +322,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
 }
 #endif // _POSIX_BARRIERS
 
+// cppcheck-suppress unknownMacro
 Test(queue, init_destroy, .init = init_memory) {
   int ret;
   struct CQueue q;
