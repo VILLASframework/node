@@ -40,11 +40,6 @@ int tsc_init(struct Tsc *t) {
       return ret;
 #endif
   }
-#elif defined(__aarch64__)
-  // Read counter frequency from system register
-  uint64_t cntfrq;
-  asm volatile("mrs %0, cntfrq_el0" : "=r"(cntfrq));
-  t->frequency = cntfrq;
 #else
 #ifdef __linux__
   int ret = kernel::get_cpu_frequency(&t->frequency);
