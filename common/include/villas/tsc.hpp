@@ -32,7 +32,7 @@
 #endif
 
 #ifndef CLOCK_MONOTONIC_RAW
-#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC // Fallback for macOS/BSD
+#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC // Fallback for Darwin/BSD
 #endif
 
 #endif
@@ -51,7 +51,7 @@ __attribute__((unused)) static uint64_t tsc_now(struct Tsc *t) {
   return t->rdtscp_supported ? __rdtscp(&tsc_aux) : __rdtsc();
 }
 #else
-// Fallback for CLOCK_MONOTONIC_RAW (linux/BSD/mac specific)
+// Fallback for CLOCK_MONOTONIC_RAW (Linux/Darwin/BSD specific)
 __attribute__((unused)) static uint64_t tsc_now(struct Tsc *t) {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
