@@ -49,7 +49,7 @@ void PlatformCard::connectVFIOtoIps(
   std::vector<std::pair<std::shared_ptr<ip::Core>, IpDevice>> device_ip_pair =
       matcher.pairs();
 
-  // Bind device to platform driver
+  // Bind devices to platform driver
   LinuxDriver driver(
       std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
   for (auto [ip, device] : device_ip_pair) {
