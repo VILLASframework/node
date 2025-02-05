@@ -35,12 +35,6 @@ PlatformCard::PlatformCard(
   this->logger = villas::Log::get("PlatformCard");
 }
 
-/*
-void connectIp() {
-  VfioConnector();
-
-} */
-
 void PlatformCard::connectVFIOtoIps(
     std::list<std::shared_ptr<ip::Core>> configuredIps) {
 
@@ -58,14 +52,12 @@ void PlatformCard::connectVFIOtoIps(
   // Bind device to platform driver
   LinuxDriver driver(
       std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
-  for (auto pair : device_ip_pair) {
-    auto device = pair.second;
+  for (auto [ip, device] : device_ip_pair) {
     driver.attach(device);
   }
 
   // VFIO Device and Connection Setup
-  for (auto pair : device_ip_pair) {
-    auto [ip, device] = pair;
+  for (auto [ip, device] : device_ip_pair) {
     auto vfio_connection = VfioConnection::from(device, vfioContainer);
 
     // Add Connection
