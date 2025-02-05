@@ -356,7 +356,11 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
 
-  card->connectVFIOtoIps(configuredIps);
+  // If Platform connect vfio
+  auto platform_card = dynamic_cast<PlatformCard *>(card);
+  if (platform_card != nullptr) { 
+    platform_card->connectVFIOtoIps(configuredIps);
+  }
 
   initIps(configuredIps, card);
 
