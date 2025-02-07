@@ -10,8 +10,8 @@
 
 #include <memory>
 
-#include <villas/kernel/vfio_device.hpp>
 #include <villas/kernel/devices/linux_driver.hpp>
+#include <villas/kernel/vfio_device.hpp>
 
 namespace villas {
 namespace kernel {
@@ -25,11 +25,11 @@ public:
 private:
   DeviceConnection(std::shared_ptr<kernel::vfio::Device> vfio_device)
       : logger(villas::Log::get("DeviceConnection")),
-        vfio_device(vfio_device){};
+        vfio_device(vfio_device) {};
 
 public:
   static DeviceConnection
-  from(const villas::kernel::devices::Device& device,
+  from(const villas::kernel::devices::Device &device,
        std::shared_ptr<kernel::vfio::Container> vfio_container) {
     auto logger = villas::Log::get("Builder: DeviceConnection");
 
