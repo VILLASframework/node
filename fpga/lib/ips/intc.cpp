@@ -6,6 +6,7 @@
  */
 
 #include <errno.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <villas/config.hpp>
@@ -21,26 +22,31 @@ using namespace villas::fpga::ip;
 
 InterruptController::~InterruptController() {}
 
+//TODO stop for platform
 bool InterruptController::stop() {
-  return card->vfioDevice->pciMsiDeinit(this->efds) > 0;
+  return card->vfioDevice->pciMsiDeinit(irq_vectors[0].eventFds) > 0;
 }
 
 bool InterruptController::init() {
   const uintptr_t base = getBaseAddr(registerMemory);
-
-  num_irqs = card->vfioDevice->pciMsiInit(efds);
-  if (num_irqs < 0)
+  kernel::vfio::Device::IrqVectorInfo irq_vector = {0};
+  irq_vector.numFds = card->vfioDevice->pciMsiInit(irq_vector.eventFds);
+  irq_vector.automask = true;
+  irq_vectors.push_back(irq_vector);
+  if (irq_vector.numFds < 0)
     return false;
 
   if (not card->vfioDevice->pciMsiFind(nos)) {
     return false;
   }
+  PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
+  vfio_device = pciecard->vfioDevice;
 
   // For each IRQ
-  for (int i = 0; i < num_irqs; i++) {
+  for (size_t i = 0; i < irq_vector.numFds; i++) {
 
     // Try pinning to core
-    PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
+
     int ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
 
     switch (ret) {
@@ -86,7 +92,7 @@ bool InterruptController::enableInterrupt(InterruptController::IrqMaskType mask,
   // Clear pending IRQs
   XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
-  for (int i = 0; i < num_irqs; i++) {
+  for (size_t i = 0; i < irq_vectors[0].numFds; i++) {
     if (mask & (1 << i))
       this->polling[i] = polling;
   }
@@ -141,9 +147,9 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
     fd_set rfds;
     struct timeval tv = {.tv_sec = 1, .tv_usec = 0};
     FD_ZERO(&rfds);
-    FD_SET(efds[irq], &rfds);
+    FD_SET(irq_vectors[0].eventFds[irq], &rfds);
 
-    sret = select(efds[irq] + 1, &rfds, NULL, NULL, &tv);
+    sret = select(irq_vectors[0].eventFds[irq] + 1, &rfds, NULL, NULL, &tv);
     if (sret == -1) {
       logger->error("select() failed: {}", strerror(errno));
       return -1;
@@ -152,11 +158,23 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
 
       return -1;
     }
-    // Block until there has been an interrupt, read number of interrupts
-    ssize_t ret = read(efds[irq], &count, sizeof(count));
+    // Block until there has been an interrupt, read number of interruptsvfio_device
+    ssize_t ret = read(irq_vectors[0].eventFds[irq], &count, sizeof(count));
     if (ret != sizeof(count)) {
-      logger->error("Failed to read from eventfd: {}", strerror(errno));
-      return -1;
+
+      if (!irq_vectors[0].automask) {
+        struct vfio_irq_set irqSet = {0};
+        irqSet.argsz = sizeof(struct vfio_irq_set);
+        irqSet.flags = (VFIO_IRQ_SET_DATA_NONE | VFIO_IRQ_SET_ACTION_UNMASK);
+        irqSet.index = irq;
+        irqSet.start = 0;
+        irqSet.count = 1;
+        int ret = ioctl(this->vfio_device->getFileDescriptor(),
+                        VFIO_DEVICE_SET_IRQS, &irqSet);
+        if (ret < 0) {
+          logger->error("Failed to unmask IRQ {}", 0);
+        }
+      }
     }
 
     return count;
