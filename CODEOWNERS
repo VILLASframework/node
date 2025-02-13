@@ -1,6 +1,12 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @stv0g will be requested for
+# review when someone opens a pull request.
+*       @stv0g @n-eiling
+
 # Order is important; the last matching pattern takes the most
 # precedence. When someone opens a pull request that only
 # modifies the following files, only the following members
