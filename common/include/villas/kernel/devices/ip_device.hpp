@@ -24,11 +24,14 @@ private:
   IpDevice() = delete;
   IpDevice(
       const std::filesystem::path valid_path) //! Dont allow unvalidated paths
-      : PlatformDevice(valid_path) {};
+      : PlatformDevice(valid_path){};
 
 public:
   size_t addr() const;
   std::string ip_name() const;
+
+  static std::vector<villas::kernel::devices::IpDevice>
+  from_directory(std::filesystem::path devices_directory);
 };
 
 } // namespace devices

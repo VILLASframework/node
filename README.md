@@ -52,10 +52,10 @@ We kindly ask all academic publications employing components of VILLASframework 
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
 
-- SPDX-FileCopyrightText: 2014-2024 Institute for Automation of Complex Power Systems, RWTH Aachen University
-- SPDX-FileCopyrightText: 2023-2024 OPAL-RT Germany GmbH
-- SPDX-FileCopyrightText: 2022-2024 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- SPDX-FileCopyrightText: 2018-2024 Steffen Vogel <post@steffenvogel.de>
+- SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+- SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
+- SPDX-FileCopyrightText: 2022-2025 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- SPDX-FileCopyrightText: 2018-2025 Steffen Vogel <post@steffenvogel.de>
 - SPDX-FileCopyrightText: 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
 - SPDX-License-Identifier: Apache-2.0
 

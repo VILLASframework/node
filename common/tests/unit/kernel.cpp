@@ -17,20 +17,18 @@ using namespace villas::kernel;
 // cppcheck-suppress unknownMacro
 TestSuite(kernel, .description = "Kernel features");
 
-#if defined(__x86_64__) || defined(__i386__)
 #define PAGESIZE (1 << 12)
 #define CACHELINESIZE 64
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__aarch64__)
 #define HUGEPAGESIZE (1 << 21)
 #elif defined(__i386__)
 #define HUGEPAGESIZE (1 << 22)
-#endif
 #else
 #error "Unsupported architecture"
 #endif
 
-// This test is not portable, but we currently support x86 only
+// This test is not portable.
 Test(kernel, sizes) {
   int sz;
 

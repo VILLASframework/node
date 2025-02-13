@@ -103,12 +103,12 @@ protected:
   // Key-type for accessing maps addressTranslations and slaveAddressSpaces
   using MemoryBlockName = std::string;
 
-  // Each IP can declare via this function which memory blocks it requires
-  virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
-
 public:
   size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
+
+  // Each IP can declare via this function which memory blocks it requires
+  virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
 
   // Operators
 
