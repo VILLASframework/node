@@ -45,7 +45,7 @@ DeviceConnection DeviceConnection::from(const villas::kernel::devices::Device &d
   return DeviceConnection(vfio_device);
 }
 
-void DeviceConnection::add_to_memorygraph() const {
+void DeviceConnection::addToMemorygraph() const {
   // Map vfio device memory to process
   const void *mapping = this->vfio_device->regionMap(0);
   if (mapping == MAP_FAILED) {
