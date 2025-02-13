@@ -21,16 +21,17 @@ DeviceConnection::DeviceConnection(
     std::shared_ptr<kernel::vfio::Device> vfio_device)
     : logger(villas::Log::get("DeviceConnection")), vfio_device(vfio_device) {};
 
-DeviceConnection DeviceConnection::from(const villas::kernel::devices::Device &device,
-     std::shared_ptr<kernel::vfio::Container> vfio_container) {
+DeviceConnection DeviceConnection::from(
+    const villas::kernel::devices::Device &device,
+    std::shared_ptr<kernel::vfio::Container> vfio_container) {
   auto logger = villas::Log::get("Builder: DeviceConnection");
 
-  // Bind to driver
+  // Bind the devicetree device to vfio driver
   LinuxDriver driver(
       std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
   driver.attach(device);
 
-  // Attach group to container
+  // Attach vfio container to the iommu group
   const int iommu_group = device.iommu_group().value();
   auto vfio_group = vfio_container->getOrAttachGroup(iommu_group);
   logger->debug("Device: {}, Iommu: {}", device.name(), iommu_group);
