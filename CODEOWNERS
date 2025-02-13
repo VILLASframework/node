@@ -5,7 +5,7 @@
 # the repo. Unless a later match takes precedence,
 # @stv0g will be requested for
 # review when someone opens a pull request.
-*       @stv0g
+*       @stv0g @n-eiling
 
 # Order is important; the last matching pattern takes the most
 # precedence. When someone opens a pull request that only
@@ -33,7 +33,5 @@ fpga                                                @n-eiling
 /include/villas/dumper.hpp                          @windrad6
 
 # VFIO related files
-/common/lib/kernel/pci.cpp                          @n-eiling
-/common/lib/kernel/vfi_*.cpp                        @n-eiling
-/common/include/villas/kernel/devices/*             @n-eiling
-/common/include/villas/kernel/vfio_*.hpp            @n-eiling
+/common/lib/kernel                                  @n-eiling
+/common/include/villas/kernel                       @n-eiling
