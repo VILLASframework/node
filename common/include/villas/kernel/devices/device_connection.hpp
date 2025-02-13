@@ -31,7 +31,7 @@ public:
   from(const villas::kernel::devices::Device &device,
        std::shared_ptr<kernel::vfio::Container> vfio_container);
 
-  void add_to_memorygraph() const;
+  void addToMemorygraph() const;
 };
 
 } // namespace devices
