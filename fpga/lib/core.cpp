@@ -21,7 +21,9 @@
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/pcie.hpp>
+#include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/platform_card.hpp>
 
 using namespace villas::fpga;
 using namespace villas::fpga::ip;
@@ -30,6 +32,7 @@ using namespace villas::fpga::ip;
 // same order as they appear in this list, i.e. first here will be initialized
 // first.
 static std::list<Vlnv> vlnvInitializationOrder = {
+    Vlnv("xilinx.com:ip:zynq_ultra_ps_e:"),
     Vlnv("xilinx.com:ip:axi_pcie:"),
     Vlnv("xilinx.com:ip:xdma:"),
     Vlnv("xilinx.com:module_ref:axi_pcie_intc:"),
@@ -137,7 +140,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     // If something goes wrong with initialization, the shared_ptr will
     // take care to desctruct the Core again as it is not pushed to
     // the list and will run out of scope.
-    auto ip = std::unique_ptr<Core>(f->make());
+    auto ip = std::shared_ptr<Core>(f->make());
 
     if (ip == nullptr) {
       logger->warn("Cannot create an instance of {}", f->getName());
@@ -182,15 +185,24 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
         for (auto &configuredIp : configuredIps) {
           if (*configuredIp == irqControllerName) {
+
+            //! Assuming there is one parsed ip as intc, which can be reused from the heap
             intc = dynamic_cast<InterruptController *>(configuredIp.get());
+
             break;
           }
         }
 
         if (intc == nullptr) {
-          logger->error("Interrupt Controller {} for IRQ {} not found",
-                        irqControllerName, irqName);
-          continue;
+          if (irqControllerName.find("zynq") != std::string::npos) {
+            intc = new PlatformInterruptController(ip);
+            intc->card = card;
+            configuredIps.push_back(std::shared_ptr<Core>(intc));
+          } else {
+            logger->error("Interrupt Controller {} for IRQ {} not found",
+                          irqControllerName, irqName);
+            continue;
+          }
         }
 
         int num;
@@ -201,7 +213,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
           continue;
         }
         logger->debug("IRQ: {} -> {}:{}", irqName, irqControllerName, num);
-        ip->irqs[irqName] = {num, intc, ""};
+        ip->irqs[irqName] = {0, intc, ""};
       }
     }
 
@@ -343,6 +355,12 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
 
   std::list<std::shared_ptr<Core>> configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
+
+  // If Platform connect vfio
+  auto platform_card = dynamic_cast<PlatformCard *>(card);
+  if (platform_card != nullptr) { 
+    platform_card->connectVFIOtoIps(configuredIps);
+  }
 
   initIps(configuredIps, card);
 
