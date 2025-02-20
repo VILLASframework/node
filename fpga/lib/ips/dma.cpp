@@ -25,6 +25,7 @@
 using namespace villas::fpga::ip;
 
 bool Dma::init() {
+  MemoryManager::get().printGraph();
   // Check if configJson has been called
   if (!configDone)
     throw RuntimeError("DMA device not configured");

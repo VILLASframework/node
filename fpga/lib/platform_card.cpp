@@ -1,110 +1,50 @@
-/* FPGA card
+/* Platform based card
  *
- * This class represents a FPGA device.
- *
+ * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  * Author: Steffen Vogel <post@steffenvogel.de>
  * Author: Daniel Krebs <github@daniel-krebs.net>
- * SPDX-FileCopyrightText: 2017 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ *
+ * SPDX-FileCopyrightText: 2023-2024 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ * SPDX-FileCopyrightText: Steffen Vogel <post@steffenvogel.de>
+ * SPDX-FileCopyrightText: Daniel Krebs <github@daniel-krebs.net>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/exceptions.hpp>
-#include <villas/fpga/card.hpp>
+#include <jansson.h>
+#include <string>
+#include <villas/fpga/card_parser.hpp>
+#include <villas/fpga/core.hpp>
+#include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/node.hpp>
+#include <villas/fpga/platform_card.hpp>
+#include <villas/kernel/kernel.hpp>
+#include <villas/memory_manager.hpp>
 
 using namespace villas;
 using namespace villas::fpga;
+using namespace villas::kernel;
+using namespace villas::kernel::devices;
 
-Card::~Card() {
-  for (auto ip = ips.rbegin(); ip != ips.rend(); ++ip) {
-    (*ip)->stop();
-  }
-  // Ensure IP destructors are called before memory is unmapped
-  ips.clear();
-
-  auto &mm = MemoryManager::get();
-
-  // Unmap all memory blocks
-  for (auto &mappedMemoryBlock : memoryBlocksMapped) {
-    auto translation =
-        mm.getTranslation(addrSpaceIdDeviceToHost, mappedMemoryBlock.first);
-
-    const uintptr_t iova = translation.getLocalAddr(0);
-    const size_t size = translation.getSize();
-
-    logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-                  mappedMemoryBlock.first, iova, size);
-    vfioContainer->memoryUnmap(iova, size);
-  }
+PlatformCard::PlatformCard(
+    std::shared_ptr<kernel::vfio::Container> vfioContainer) {
+  this->vfioContainer = vfioContainer;
+  this->logger = villas::Log::get("PlatformCard");
 }
 
-std::shared_ptr<ip::Core> Card::lookupIp(const std::string &name) const {
-  for (auto &ip : ips) {
-    if (*ip == name) {
-      return ip;
+void PlatformCard::connectVFIOtoIps(
+    std::list<std::shared_ptr<ip::Core>> configuredIps) {
+  for (auto ip : configuredIps) {
+    try {
+      auto core_connection = CoreConnection::from(ip, this->vfioContainer);
+      core_connection.add_to_memorygraph();
+      this->core_connections.push_back(core_connection);
+    } catch (const std::runtime_error &e) {
+      logger->debug("Could not establish connection for {} .", ip->getInstanceName());
     }
   }
-
-  return nullptr;
 }
 
-std::shared_ptr<ip::Core> Card::lookupIp(const Vlnv &vlnv) const {
-  for (auto &ip : ips) {
-    if (*ip == vlnv) {
-      return ip;
-    }
-  }
-
-  return nullptr;
-}
-
-std::shared_ptr<ip::Core> Card::lookupIp(const ip::IpIdentifier &id) const {
-  for (auto &ip : ips) {
-    if (*ip == id) {
-      return ip;
-    }
-  }
-
-  return nullptr;
-}
-
-std::vector<std::shared_ptr<ip::Core>> Card::lookupIps(const Vlnv &vlnv) const {
-  std::vector<std::shared_ptr<ip::Core>> lookup_ips;
-  for (std::shared_ptr<ip::Core> ip : ips) {
-    if (*ip == vlnv) {
-      lookup_ips.push_back(ip);
-    }
-  }
-  return lookup_ips;
-}
-
-bool Card::unmapMemoryBlock(const MemoryBlock &block) {
-  if (memoryBlocksMapped.find(block.getAddrSpaceId()) ==
-      memoryBlocksMapped.end()) {
-    logger->warn(
-        "Block " + std::to_string(block.getAddrSpaceId()) +
-        " is not mapped but was requested to be unmapped.");
-        return false;
-  }
-
-  auto &mm = MemoryManager::get();
-
-  auto translation =
-      mm.getTranslation(addrSpaceIdDeviceToHost, block.getAddrSpaceId());
-
-  const uintptr_t iova = translation.getLocalAddr(0);
-  const size_t size = translation.getSize();
-
-  logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
-                block.getAddrSpaceId(), iova, size);
-  vfioContainer->memoryUnmap(iova, size);
-
-  memoryBlocksMapped.erase(block.getAddrSpaceId());
-
-  return true;
-}
-
-bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
+bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
   if (not vfioContainer->isIommuEnabled()) {
     logger->warn("VFIO mapping not supported without IOMMU");
     return false;
@@ -117,7 +57,7 @@ bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
     // Block already mapped
     return true;
   else
-    logger->debug("Create VFIO mapping for {}", addrSpaceId);
+    logger->debug("Create VFIO-Platform mapping for {}", addrSpaceId);
 
   auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
   uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
@@ -133,15 +73,39 @@ bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
   mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H",
                    this->addrSpaceIdDeviceToHost, addrSpaceId);
 
+  // TODO: Fix with multiple addr. space in zynq
+  auto space = mm.findAddressSpace(
+      "zynq_zynq_ultra_ps_e_0:M_AXI_HPM0_FPD"); // TODO: Remove hardcoded name
+  mm.createMapping(iovaAddr, 0, block->getSize(), "VFIO-D2H", space,
+                   addrSpaceId);
+
   // Remember that this block has already been mapped for later
   memoryBlocksMapped.insert({addrSpaceId, block});
 
   return true;
 }
 
-void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
+std::shared_ptr<PlatformCard>
+PlatformCardFactory::make(json_t *json_card, std::string card_name,
+                          std::shared_ptr<kernel::vfio::Container> vc,
                           const std::filesystem::path &searchPath) {
-  auto logger = getStaticLogger();
+  auto logger = villas::Log::get("PlatformCardFactory");
+
+  // make sure the vfio container has the required modules
+  kernel::loadModule("vfio_platform");
+
+  CardParser parser(json_card);
+
+  auto card = std::make_shared<fpga::PlatformCard>(vc);
+  card->name = std::string(card_name);
+  card->affinity = parser.affinity;
+  card->doReset = parser.do_reset != 0;
+  card->polling = (parser.polling != 0);
+  card->ignored_ip_names = parser.ignored_ip_names;
+
+  json_t *json_ips = parser.json_ips;
+  json_t *json_paths = parser.json_paths;
+  json_error_t err;
 
   // Load IPs from a separate json file
   if (!json_is_string(json_ips)) {
@@ -149,17 +113,13 @@ void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
     throw ConfigError(json_ips, "node-config-fpga-ips",
                       "FPGA IP cores config item is not a string.");
   }
-
   if (!searchPath.empty()) {
     std::filesystem::path json_ips_path =
         searchPath / json_string_value(json_ips);
     logger->debug("searching for FPGA IP cors config at {}",
                   json_ips_path.string());
     json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);
-  } else {
-    json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
   }
-
   if (json_ips == nullptr) {
     json_ips = json_load_file(json_string_value(json_ips), 0, nullptr);
     logger->debug("searching for FPGA IP cors config at {}",
@@ -175,15 +135,11 @@ void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
                       "FPGA IP core list must be an object!");
 
   ip::CoreFactory::make(card.get(), json_ips);
-
   if (card->ips.empty())
     throw ConfigError(json_ips, "node-config-fpga-ips",
-                      "Cannot initialize IPs of FPGA card {}", card->name);
-};
+                      "Cannot initialize IPs of FPGA card {}", card_name);
 
-void CardFactory::loadSwitch(std::shared_ptr<Card> card, json_t *json_paths) {
-  // Additional static paths for AXI-Stream switch
-  json_error_t err;
+  // Additional static paths for AXI-Steram switch
   if (json_paths != nullptr) {
     if (not json_is_array(json_paths))
       throw ConfigError(json_paths, err, "",
@@ -195,8 +151,9 @@ void CardFactory::loadSwitch(std::shared_ptr<Card> card, json_t *json_paths) {
       const char *from, *to;
       int reverse = 0;
 
-      int ret = json_unpack_ex(json_path, &err, 0, "{ s: s, s: s, s?: b }",
-                               "from", &from, "to", &to, "reverse", &reverse);
+      int ret;
+      ret = json_unpack_ex(json_path, &err, 0, "{ s: s, s: s, s?: b }", "from",
+                           &from, "to", &to, "reverse", &reverse);
       if (ret != 0)
         throw ConfigError(json_path, err, "",
                           "Cannot parse switch path config");
@@ -222,4 +179,7 @@ void CardFactory::loadSwitch(std::shared_ptr<Card> card, json_t *json_paths) {
                           from, to);
     }
   }
+  // Deallocate JSON config
+  json_decref(json_ips);
+  return card;
 }

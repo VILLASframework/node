@@ -80,7 +80,7 @@ int FpgaNode::prepare() {
       card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:registerif:")));
 
   if (reg != nullptr &&
-      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:"))) {
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_adc:"))) {
     fpga::ip::DinoAdc::setRegisterConfigTimestep(reg, timestep);
   } else {
     logger->warn("No DinoAdc or no Register found on FPGA.");
