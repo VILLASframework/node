@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <set>
 #include <string>
 
@@ -54,6 +55,15 @@ protected:
       memoryBlocksMapped;
 
   Logger logger;
+};
+
+class CardFactory {
+private:
+  static Logger getStaticLogger() { return villas::Log::get("card:factory"); }
+
+public:
+  static void loadIps(std::shared_ptr<Card> card, json_t *json_ips,
+                      const std::filesystem::path &searchPath);
 };
 
 } // namespace fpga
