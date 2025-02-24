@@ -65,6 +65,7 @@ private:
 public:
   static void loadIps(std::shared_ptr<Card> card, json_t *json_ips,
                       const std::filesystem::path &searchPath);
+  static void loadSwitch(std::shared_ptr<Card> card, json_t *json_paths);
 };
 
 } // namespace fpga
