@@ -81,10 +81,9 @@ std::vector<std::shared_ptr<ip::Core>> Card::lookupIps(const Vlnv &vlnv) const {
 bool Card::unmapMemoryBlock(const MemoryBlock &block) {
   if (memoryBlocksMapped.find(block.getAddrSpaceId()) ==
       memoryBlocksMapped.end()) {
-    logger->warn(
-        "Block " + std::to_string(block.getAddrSpaceId()) +
-        " is not mapped but was requested to be unmapped.");
-        return false;
+    logger->warn("Block " + std::to_string(block.getAddrSpaceId()) +
+                 " is not mapped but was requested to be unmapped.");
+    return false;
   }
 
   auto &mm = MemoryManager::get();
