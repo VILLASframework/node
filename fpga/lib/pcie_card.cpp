@@ -98,7 +98,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   if (not card->check())
     throw RuntimeError("Checking of FPGA card {} failed", card_name);
 
-  // Additional static paths for AXI-Steram switch
+  // Additional static paths for AXI-Stream switch
   if (json_paths != nullptr) {
     if (not json_is_array(json_paths))
       throw ConfigError(json_paths, err, "",
