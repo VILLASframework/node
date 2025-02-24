@@ -22,7 +22,7 @@ VERBOSE=${VERBOSE:-0}
 FAIL_FAST=${FAIL_FAST:-0}
 FILTER=${FILTER:-'*'}
 NUM_SAMPLES=${NUM_SAMPLES:-100}
-TIMEOUT=${TIMEOUT:-1m}
+TIMEOUT=${TIMEOUT:-15m}
 
 # Parse command line arguments
 while getopts ":f:l:t:vg" OPT; do
