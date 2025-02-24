@@ -11,7 +11,6 @@
 #pragma once
 
 #include <filesystem>
-#include <set>
 #include <string>
 
 #include <villas/fpga/core.hpp>
