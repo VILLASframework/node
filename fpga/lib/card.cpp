@@ -68,12 +68,22 @@ std::shared_ptr<ip::Core> Card::lookupIp(const ip::IpIdentifier &id) const {
   return nullptr;
 }
 
+std::vector<std::shared_ptr<ip::Core>> Card::lookupIps(const Vlnv &vlnv) const {
+  std::vector<std::shared_ptr<ip::Core>> lookup_ips;
+  for (std::shared_ptr<ip::Core> ip : ips) {
+    if (*ip == vlnv) {
+      lookup_ips.push_back(ip);
+    }
+  }
+  return lookup_ips;
+}
+
 bool Card::unmapMemoryBlock(const MemoryBlock &block) {
   if (memoryBlocksMapped.find(block.getAddrSpaceId()) ==
       memoryBlocksMapped.end()) {
-    throw std::runtime_error(
-        "Block " + std::to_string(block.getAddrSpaceId()) +
-        " is not mapped but was requested to be unmapped.");
+    logger->warn("Block " + std::to_string(block.getAddrSpaceId()) +
+                 " is not mapped but was requested to be unmapped.");
+    return false;
   }
 
   auto &mm = MemoryManager::get();
