@@ -28,6 +28,12 @@ namespace vfio {
 
 class Device {
 public:
+  struct IrqVectorInfo {
+    int eventFds[32];
+    size_t numFds;
+    bool automask;
+  };
+
   Device(const std::string &name, int groupFileDescriptor,
          const kernel::devices::PciDevice *pci_device = nullptr);
   ~Device();
@@ -49,7 +55,7 @@ public:
   // Get the size of a device memory region
   size_t regionGetSize(size_t index);
 
-  int platformInterruptInit(int efds[32]);
+  std::vector<IrqVectorInfo> initEventFds();
 
   // Enable memory accesses and bus mastering for PCI device
   bool pciEnable();
@@ -88,7 +94,7 @@ private:
 
   struct vfio_device_info info;
 
-  std::vector<struct vfio_irq_info> irqs;
+  std::vector<struct vfio_irq_info> info_irq_vectors;
   std::vector<struct vfio_region_info> regions;
   std::vector<void *> mappings;
 
