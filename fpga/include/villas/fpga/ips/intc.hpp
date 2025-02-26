@@ -53,8 +53,7 @@ private:
     bool polling; // Polled or not
   };
 
-  int num_irqs; // Number of available MSI vectors
-  int efds[maxIrqs];
+  std::vector<kernel::vfio::Device::IrqVectorInfo> irq_vectors;
   int nos[maxIrqs];
   bool polling[maxIrqs];
 };
