@@ -22,17 +22,20 @@ using namespace villas::fpga::ip;
 InterruptController::~InterruptController() {}
 
 bool InterruptController::stop() {
-  return card->vfioDevice->pciMsiDeinit(this->efds) > 0;
+  return this->vfioDevice->pciMsiDeinit(this->efds) > 0;
 }
 
 bool InterruptController::init() {
   const uintptr_t base = getBaseAddr(registerMemory);
 
-  num_irqs = card->vfioDevice->pciMsiInit(efds);
+  PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
+  this->vfioDevice = pciecard->vfioDevice;
+
+  num_irqs = this->vfioDevice->pciMsiInit(efds);
   if (num_irqs < 0)
     return false;
 
-  if (not card->vfioDevice->pciMsiFind(nos)) {
+  if (not this->vfioDevice->pciMsiFind(nos)) {
     return false;
   }
 

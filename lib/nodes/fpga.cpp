@@ -23,6 +23,7 @@
 #include <villas/fpga/ips/dino.hpp>
 #include <villas/fpga/ips/register.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/utils.hpp>
 
 using namespace villas;
@@ -367,7 +368,8 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
 std::vector<int> FpgaNode::getPollFDs() {
   if (!lowLatencyMode && card && !card->polling) {
-    return card->vfioDevice->getEventfdList();
+    std::shared_ptr<PCIeCard> pciecard = std::dynamic_pointer_cast<PCIeCard>(card);
+    return pciecard->vfioDevice->getEventfdList();
   } else {
     return {};
   }
