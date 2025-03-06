@@ -24,9 +24,11 @@ bool AxiPciExpressBridge::init() {
   // address space we can use for translation -> error
   card->addrSpaceIdHostToDevice = busMasterInterfaces.at(getAxiInterfaceName());
 
+  PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
+
   // Map PCIe BAR0 via VFIO
   const void *bar0_mapped =
-      card->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
+      pciecard->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
   if (bar0_mapped == MAP_FAILED) {
     logger->error("Failed to mmap() BAR0");
     return false;
@@ -34,7 +36,7 @@ bool AxiPciExpressBridge::init() {
 
   // Determine size of BAR0 region
   const size_t bar0_size =
-      card->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
+      pciecard->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
 
   // Create a mapping from process address space to the FPGA card via vfio
   mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped), 0, bar0_size,
