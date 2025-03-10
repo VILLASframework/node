@@ -159,7 +159,7 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
       logger->warn("timeout waiting for interrupt {}", irq);
       return -1;
     }
-    // Block until there has been an interrupt, read number of interruptsvfio_device
+    // Block until there has been an interrupt, read number of interrupts
     ssize_t ret = read(irq_vectors[0].eventFds[irq], &count, sizeof(count));
     if (ret != sizeof(count)) {
       logger->error("Read failure on interrupt {}, {}", irq, ret);
