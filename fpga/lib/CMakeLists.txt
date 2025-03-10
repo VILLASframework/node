@@ -29,6 +29,7 @@ set(SOURCES
     ips/i2c.cpp
     ips/register.cpp
     ips/axis_cache.cpp
+	ips/zynq.cpp
 
     ips/rtds2gpu/rtds2gpu.cpp
     ips/rtds2gpu/xrtds2gpu.c
