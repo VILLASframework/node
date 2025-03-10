@@ -29,7 +29,7 @@ public:
 protected:
   const size_t registerNum = 9;
   const size_t registerSize = 32;
-  static constexpr char registerMemory[] = "reg0";
+  static constexpr char registerMemory[] = "Reg";
   std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }

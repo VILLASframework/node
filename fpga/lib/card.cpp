@@ -71,7 +71,7 @@ std::shared_ptr<ip::Core> Card::lookupIp(const ip::IpIdentifier &id) const {
 bool Card::unmapMemoryBlock(const MemoryBlock &block) {
   if (memoryBlocksMapped.find(block.getAddrSpaceId()) ==
       memoryBlocksMapped.end()) {
-    throw std::runtime_error(
+   throw std::runtime_error(
         "Block " + std::to_string(block.getAddrSpaceId()) +
         " is not mapped but was requested to be unmapped.");
   }
