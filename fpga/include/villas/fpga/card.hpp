@@ -22,7 +22,8 @@ namespace fpga {
 class Card {
 public:
   bool polling;
-
+  bool doReset;     // Reset VILLASfpga during startup?
+  int affinity;     // Affinity for MSI interrupts
   std::string name; // The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
@@ -46,6 +47,7 @@ public:
   std::shared_ptr<ip::Core> lookupIp(const std::string &name) const;
   std::shared_ptr<ip::Core> lookupIp(const Vlnv &vlnv) const;
   std::shared_ptr<ip::Core> lookupIp(const ip::IpIdentifier &id) const;
+  std::vector<std::shared_ptr<ip::Core>> lookupIps(const Vlnv &vlnv) const;
 
 protected:
   // Keep a map of already mapped memory blocks
