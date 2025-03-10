@@ -22,7 +22,7 @@ namespace fpga {
 class Card {
 public:
   bool polling;
-
+  bool doReset;     // Reset VILLASfpga during startup?
   std::string name; // The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
 
