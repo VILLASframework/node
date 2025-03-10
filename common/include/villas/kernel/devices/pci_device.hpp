@@ -15,6 +15,8 @@
 
 #include <villas/log.hpp>
 
+#include <villas/kernel/devices/device.hpp>
+
 namespace villas {
 namespace kernel {
 namespace devices {
@@ -58,7 +60,11 @@ struct Region {
   unsigned long long flags;
 };
 
-class PciDevice {
+class PciDevice : public Device {
+private:
+  static constexpr char PROBE_DEFAULT[] = "/sys/bus/pci/drivers_probe";
+  static constexpr char OVERRIDE_DEFAULT[] = "driver_override";
+
 public:
   PciDevice(Id i, Slot s) : id(i), slot(s), log(Log::get("kernel:pci")) {}
 
@@ -68,14 +74,16 @@ public:
 
   bool operator==(const PciDevice &other);
 
-  // Get currently loaded driver for device
-  std::string getDriver() const;
+  // Implement device interface
+  std::optional<std::unique_ptr<Driver>> driver() const override;
+  std::optional<int> iommu_group() const override;
+  std::string name() const override;
+  std::filesystem::path override_path() const override;
+  std::filesystem::path path() const override;
+  void probe() const override;
 
   // Bind a new LKM to the PCI device
   bool attachDriver(const std::string &driver) const;
-
-  // Return the IOMMU group of this PCI device or -1 if the device is not in a group
-  int getIommuGroup() const;
 
   std::list<Region> getRegions() const;
 
