@@ -1,7 +1,7 @@
 /* Zynq VFIO connector node
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
- * SPDX-FileCopyrightText: 2023-2024 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2023-2025 Pascal Bauer <pascal.bauer@rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
