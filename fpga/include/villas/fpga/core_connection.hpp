@@ -57,7 +57,7 @@ public:
   }
 
   void add_to_memorygraph() {
-    device_connection.add_to_memorygraph();
+    device_connection.addToMemorygraph();
 
     for (std::string memory_block : ip->getMemoryBlocks()) {
       auto &mm = MemoryManager::get();
