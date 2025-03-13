@@ -197,7 +197,7 @@ std::shared_ptr<Device> Container::attachDevice(devices::PciDevice &pdev) {
     throw RuntimeError("Failed to load kernel driver: vfio_pci");
 
   // Bind PCI card to vfio-pci driver if not already bound
-  if (pdev.getDriver() != kernelDriver) {
+  if ( !(pdev.driver().has_value()) || pdev.driver().value()->name() != kernelDriver) {
     log->debug("Bind PCI card to kernel driver '{}'", kernelDriver);
     pdev.attachDriver(kernelDriver);
   }
@@ -215,7 +215,7 @@ std::shared_ptr<Device> Container::attachDevice(devices::PciDevice &pdev) {
   }
 
   // Get IOMMU group of device
-  int index = isIommuEnabled() ? pdev.getIommuGroup() : 0;
+  int index = isIommuEnabled() ? pdev.iommu_group().value() : 0;
   if (index < 0) {
     ret = kernel::getCmdlineParam("intel_iommu", iommu_state,
                                   sizeof(iommu_state));
