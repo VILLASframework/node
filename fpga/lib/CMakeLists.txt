@@ -9,6 +9,7 @@ set(SOURCES
     card.cpp
     core_connection.cpp
     pcie_card.cpp
+    platform_card.cpp
     core.cpp
     node.cpp
     utils.cpp
