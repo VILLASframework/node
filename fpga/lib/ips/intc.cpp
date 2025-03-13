@@ -30,15 +30,15 @@ bool InterruptController::init() {
   PCIeCard *pciecard = dynamic_cast<PCIeCard *>(card);
   this->vfioDevice = pciecard->vfioDevice;
 
-  if (not this->vfioDevice->pciMsiFind(nos)) {
-    return false;
-  }
-
   const uintptr_t base = getBaseAddr(registerMemory);
   kernel::vfio::Device::IrqVectorInfo irq_vector = {0};
   irq_vector.numFds = this->vfioDevice->pciMsiInit(irq_vector.eventFds);
   irq_vector.automask = true;
   irq_vectors.push_back(irq_vector);
+
+  if (not this->vfioDevice->pciMsiFind(nos)) {
+    return false;
+  }
 
   if (irq_vector.numFds < 0)
     return false;
