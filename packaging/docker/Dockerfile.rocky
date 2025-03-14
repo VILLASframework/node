@@ -26,7 +26,7 @@ RUN dnf --allowerasing -y install \
 	texinfo git curl tar \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra \
-  python python-devel
+	python python-devel
 
 # Dependencies
 RUN dnf -y install \
@@ -50,7 +50,7 @@ RUN dnf -y install \
 	hiredis-devel \
 	libnice-devel \
 	libmodbus-devel \
-  pybind11-devel
+	pybind11-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
