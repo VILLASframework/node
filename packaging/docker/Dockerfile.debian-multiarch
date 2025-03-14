@@ -59,9 +59,9 @@ RUN apt-get update && \
 		liblua5.3-dev:${ARCH} \
 		libhiredis-dev:${ARCH} \
 		libmodbus-dev:${ARCH} \
-		python3:${ARCH} \
-		python3-dev:${ARCH} \
-		python3-pybind11:${ARCH}
+    python3:${ARCH} \
+    python3-dev:${ARCH} \
+    python3-pybind11:${ARCH}
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \

@@ -65,7 +65,7 @@ RUN dnf -y install \
 	hiredis-devel \
 	libnice-devel \
 	libmodbus-devel \
-	pybind11-devel
+  pybind11-devel
 
 # Add local and 64-bit locations to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf && \

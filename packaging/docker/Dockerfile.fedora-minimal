@@ -18,13 +18,15 @@ RUN dnf -y install \
 
 # Dependencies
 RUN dnf -y install \
+  python python-devel \
 	openssl-devel \
 	libuuid-devel \
 	libcurl-devel \
 	jansson-devel \
 	spdlog-devel \
 	fmt-devel \
-	libwebsockets-devel
+	libwebsockets-devel \
+  pybind11-devel
 
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
