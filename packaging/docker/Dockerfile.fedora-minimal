@@ -25,8 +25,7 @@ RUN dnf -y install \
 	jansson-devel \
 	spdlog-devel \
 	fmt-devel \
-	libwebsockets-devel \
-  pybind11-devel
+	libwebsockets-devel
 
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
