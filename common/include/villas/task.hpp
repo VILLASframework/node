@@ -12,6 +12,7 @@
 
 #include <ctime>
 
+namespace villas {
 // We can choose between two periodic task implementations
 //#define PERIODIC_TASK_IMPL NANOSLEEP
 #define TIMERFD 1
@@ -49,14 +50,14 @@ struct Task {
 #endif
 
   // Create a new task with the given rate.
-  Task(int clock = CLOCK_REALTIME);
+  Task(int clock = CLOCK_MONOTONIC);
 
   ~Task();
 
   // Wait until task elapsed
   //
-  // @retval 0 An error occured. Maybe the task was stopped.
-  // @retval >0 The nummer of runs this task already fired.
+  // @retval 0 An error occurred. Maybe the task was stopped.
+  // @retval >0 The number of runs this task already fired.
   uint64_t wait();
 
   void setNext(const struct timespec *next);
@@ -70,3 +71,5 @@ struct Task {
   // Note: currently not supported on all platforms.
   int getFD() const;
 };
+
+} // namespace villas

@@ -4,7 +4,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 0
-  DISTRO: fedora # standard distro
+  DISTRO: fedora # Standard distribution
   DOCKER_FILE: packaging/docker/Dockerfile.${DISTRO}
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: registry.git.rwth-aachen.de/acs/public/villas/node
@@ -87,6 +87,56 @@ build:source:
           -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
           -DCMAKE_PREFIX_PATH=/usr/local
 
+build:nix:
+  stage: build
+  image: nixos/nix
+  needs: []
+
+  artifacts:
+    when: on_success
+    access: all
+    expire_in: "1 year"
+    paths:
+      - artifacts/villas
+
+  before_script:
+    - | # Create artifacts directory
+      mkdir artifacts
+
+    - | # Configure Nix
+      echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
+
+    # - | # Configure Attic
+    #   nix shell nixpgks#attic-client
+
+    #   attic login nulll https://cache.0l.de ${ATTIC_TOKEN}
+    #   attic use "nulll:villas"
+
+  script:
+    - nix build --print-build-logs .
+
+    - | # Build ARX bundle
+      nix bundle --out-link villas .
+      cp -L villas artifacts/villas
+
+    - | # Build Docker image
+      nix run nixpkgs#skopeo -- login \
+        --username ${CI_REGISTRY_USER} \
+        --password ${CI_REGISTRY_PASSWORD} \
+        ${CI_REGISTRY}
+
+      nix build '.#dockerImage'
+
+      nix run nixpkgs#skopeo -- copy --insecure-policy \
+        "docker-archive:./result" \
+        "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix"
+
+  # after_script:
+  #   - | # Push whole store to cache
+  #     nix shell nixpgks#attic-client
+
+  #     attic push /nix/store/*
+
 # Stage: test
 
 test:python:
@@ -162,7 +212,6 @@ pkg:docker:
   stage: packaging
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    # - docker run --rm --privileged docker.io/aptman/qus -s -- -p
   script:
     - docker build ${DOCKER_OPTS}
       --pull
@@ -175,7 +224,7 @@ pkg:docker:
       --tag ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH} .
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${ARCH}
   tags:
-    - docker
+    - $TAG
   variables:
     TARGET: app
   parallel:
@@ -184,17 +233,12 @@ pkg:docker:
         PLATFORM: linux/amd64
         ARCH: x86_64
         TRIPLET: x86_64-linux-gnu
-      # - DISTRO: debian
-      #   PLATFORM: linux/arm/v7
-      #   ARCH: armhf
-      #   TRIPLET: arm-linux-gnueabihf
-      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-      # - DISTRO: debian
-      #   PLATFORM: linux/arm64/v8
-      #   ARCH: arm64
-      #   TRIPLET: aarch64-linux-gnu
-      #   DOCKER_FILE: packaging/docker/Dockerfile.debian-multiarch
-
+        TAG: docker
+      - DISTRO: debian
+        PLATFORM: linux/arm64/v8
+        ARCH: arm64
+        TRIPLET: aarch64-linux-gnu
+        TAG: pi5
   needs: []
 
 # Stage: deploy
@@ -207,15 +251,13 @@ deploy:docker:
     - docker manifest rm ${DOCKER_IMAGE}:${DOCKER_TAG} || true
     - docker manifest create ${DOCKER_IMAGE}:${DOCKER_TAG}
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
-    # ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-    # ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
+      ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
     - docker manifest push   ${DOCKER_IMAGE}:${DOCKER_TAG}
   tags:
     - docker
   needs:
-    # - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, packaging/docker/Dockerfile.debian-multiarch]"
-    # - job: "pkg:docker: [debian, linux/arm/v7, armhf, arm-linux-gnueabihf, packaging/docker/Dockerfile.debian-multiarch]"
-    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu]"
+    - job: "pkg:docker: [debian, linux/amd64, x86_64, x86_64-linux-gnu, docker]"
+    - job: "pkg:docker: [debian, linux/arm64/v8, arm64, aarch64-linux-gnu, pi5]"
 
 deploy:docker-dev:
   stage: deploy
@@ -250,10 +292,10 @@ deploy:docker-dev-vscode:
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
+    - docker manifest rm ${DOCKER_IMAGE}:latest || true
     - docker manifest create ${DOCKER_IMAGE}:latest
       ${DOCKER_IMAGE}:${DOCKER_TAG}-x86_64
       ${DOCKER_IMAGE}:${DOCKER_TAG}-arm64
-      ${DOCKER_IMAGE}:${DOCKER_TAG}-armhf
     - docker manifest push   ${DOCKER_IMAGE}:latest
   tags:
     - docker

@@ -92,9 +92,10 @@ public:
 // Register hook
 static char n[] = "cast";
 static char d[] = "Cast signals types";
-static HookPlugin<CastHook, n, d,
-                  (int)Hook::Flags::NODE_READ | (int)Hook::Flags::PATH>
-    p;
+static constexpr int flags = (int)Hook::Flags::NODE_READ |
+                             (int)Hook::Flags::NODE_WRITE |
+                             (int)Hook::Flags::PATH;
+static HookPlugin<CastHook, n, d, flags> p;
 
 } // namespace node
 } // namespace villas

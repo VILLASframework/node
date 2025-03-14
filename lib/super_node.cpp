@@ -41,7 +41,7 @@ SuperNode::SuperNode()
 #endif
 #endif
       priority(0), affinity(0), hugepages(DEFAULT_NR_HUGEPAGES), statsRate(1.0),
-      task(CLOCK_REALTIME), started(time_now()) {
+      task(), started(time_now()) {
   int ret;
 
   char hname[128];

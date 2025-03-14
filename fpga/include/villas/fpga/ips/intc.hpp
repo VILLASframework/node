@@ -11,6 +11,7 @@
 #include <xilinx/xintc.h>
 
 #include <villas/fpga/core.hpp>
+#include <villas/kernel/vfio_device.hpp>
 
 namespace villas {
 namespace fpga {
@@ -40,6 +41,8 @@ public:
 private:
   static constexpr char registerMemory[] = "reg0";
 
+  std::shared_ptr<villas::kernel::vfio::Device> vfioDevice = nullptr;
+
   std::list<MemoryBlockName> getMemoryBlocks() const {
     return {registerMemory};
   }
@@ -50,8 +53,7 @@ private:
     bool polling; // Polled or not
   };
 
-  int num_irqs; // Number of available MSI vectors
-  int efds[maxIrqs];
+  std::vector<kernel::vfio::Device::IrqVectorInfo> irq_vectors;
   int nos[maxIrqs];
   bool polling[maxIrqs];
 };

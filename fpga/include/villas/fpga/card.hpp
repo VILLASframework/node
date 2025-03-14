@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include <set>
+#include <filesystem>
+#include <string>
 
 #include <villas/fpga/core.hpp>
 #include <villas/kernel/vfio_container.hpp>
@@ -21,10 +22,9 @@ namespace fpga {
 class Card {
 public:
   bool polling;
-
+  bool doReset;     // Reset VILLASfpga during startup?
   std::string name; // The name of the FPGA card
   std::shared_ptr<kernel::vfio::Container> vfioContainer;
-  std::shared_ptr<kernel::vfio::Device> vfioDevice;
 
   // Slave address space ID to access the PCIe address space from the
   // FPGA
@@ -36,6 +36,7 @@ public:
   MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
   std::list<std::shared_ptr<ip::Core>> ips;
+  std::list<std::string> ignored_ip_names;
 
   virtual ~Card();
 
@@ -52,6 +53,16 @@ protected:
       memoryBlocksMapped;
 
   Logger logger;
+};
+
+class CardFactory {
+private:
+  static Logger getStaticLogger() { return villas::Log::get("card:factory"); }
+
+public:
+  static void loadIps(std::shared_ptr<Card> card, json_t *json_ips,
+                      const std::filesystem::path &searchPath);
+  static void loadSwitch(std::shared_ptr<Card> card, json_t *json_paths);
 };
 
 } // namespace fpga

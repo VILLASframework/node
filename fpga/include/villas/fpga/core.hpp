@@ -103,12 +103,12 @@ protected:
   // Key-type for accessing maps addressTranslations and slaveAddressSpaces
   using MemoryBlockName = std::string;
 
-  // Each IP can declare via this function which memory blocks it requires
-  virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
-
 public:
   size_t getBaseaddr() const { return baseaddr; }
   const std::string &getInstanceName() const { return id.getName(); }
+
+  // Each IP can declare via this function which memory blocks it requires
+  virtual std::list<MemoryBlockName> getMemoryBlocks() const { return {}; }
 
   // Operators
 
@@ -211,6 +211,9 @@ public:
   using plugin::Plugin::Plugin;
 
   static std::list<IpIdentifier> parseIpIdentifier(json_t *json_ips);
+  static std::list<IpIdentifier>
+  filterIps(std::list<IpIdentifier> allIps,
+            std::list<std::string> ignored_ip_names);
   static std::list<IpIdentifier> reorderIps(std::list<IpIdentifier> allIps);
   static std::list<std::shared_ptr<Core>>
   configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
