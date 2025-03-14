@@ -25,7 +25,8 @@ RUN dnf --allowerasing -y install \
 	flex bison \
 	texinfo git curl tar \
 	protobuf-compiler protobuf-c-compiler \
-	clang-tools-extra
+	clang-tools-extra \
+  python python-devel
 
 # Dependencies
 RUN dnf -y install \
@@ -48,7 +49,8 @@ RUN dnf -y install \
 	lua-devel \
 	hiredis-devel \
 	libnice-devel \
-	libmodbus-devel
+	libmodbus-devel \
+	pybind11-devel
 
 # Add local and 64-bit locations to linker paths
 ENV echo /usr/local/lib >> /etc/ld.so.conf && \
