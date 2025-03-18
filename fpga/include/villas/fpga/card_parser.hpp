@@ -1,3 +1,11 @@
+/*  Parser for FPGA Cards
+ *
+ * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ *
+ * SPDX-FileCopyrightText: 2023-2025 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <list>
