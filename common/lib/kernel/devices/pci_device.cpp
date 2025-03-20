@@ -18,10 +18,12 @@
 
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/kernel/devices/linux_driver.hpp>
 #include <villas/kernel/devices/pci_device.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas::kernel::devices;
+using villas::utils::write_to_file;
 
 #define PCI_BASE_ADDRESS_N(n) (PCI_BASE_ADDRESS_0 + sizeof(uint32_t) * (n))
 
@@ -311,8 +313,7 @@ std::list<Region> PciDevice::getRegions() const {
 
   return regions;
 }
-
-std::string PciDevice::getDriver() const {
+std::optional<std::unique_ptr<Driver>> PciDevice::driver() const {
   int ret;
   char sysfs[1024], syml[1024];
   memset(syml, 0, sizeof(syml));
@@ -323,13 +324,15 @@ std::string PciDevice::getDriver() const {
   struct stat st;
   ret = stat(sysfs, &st);
   if (ret)
-    return "";
+    return std::nullopt;
 
   ret = readlink(sysfs, syml, sizeof(syml));
   if (ret < 0)
     throw SystemError("Failed to follow link: {}", sysfs);
 
-  return basename(syml);
+  auto driver = std::make_optional(std::make_unique<LinuxDriver>(
+      "/sys/bus/pci/drivers/" + std::string(basename(syml))));
+  return driver;
 }
 
 bool PciDevice::attachDriver(const std::string &driver) const {
@@ -423,7 +426,7 @@ void PciDevice::writeBar(uint32_t addr, unsigned barNum) {
   file.write(reinterpret_cast<char *>(&addr), sizeof(addr));
 }
 
-int PciDevice::getIommuGroup() const {
+std::optional<int> PciDevice::iommu_group() const {
   int ret;
   char *group;
 
@@ -437,11 +440,11 @@ int PciDevice::getIommuGroup() const {
 
   ret = readlink(sysfs, link, sizeof(link));
   if (ret < 0)
-    return -1;
+    return std::nullopt;
 
   group = basename(link);
 
-  return atoi(group);
+  return std::make_optional(atoi(group));
 }
 
 std::fstream PciDevice::openSysFs(const std::string &subPath,
@@ -456,4 +459,34 @@ std::fstream PciDevice::openSysFs(const std::string &subPath,
   file.open(sysFsFilename, mode);
 
   return file;
+}
+
+// TODO: test
+std::string PciDevice::name() const {
+  char sysfs[1024];
+
+  snprintf(sysfs, sizeof(sysfs), "%04x:%02x:%02x.%x", slot.domain, slot.bus,
+           slot.device, slot.function);
+
+  return std::string(sysfs);
+}
+
+// TODO: test
+std::filesystem::path PciDevice::path() const {
+  char sysfs[1024];
+
+  snprintf(sysfs, sizeof(sysfs), "%04x:%02x:%02x.%x", slot.domain, slot.bus,
+           slot.device, slot.function);
+
+  return sysfs;
+}
+
+// TODO: test
+std::filesystem::path PciDevice::override_path() const {
+
+  return this->path() / OVERRIDE_DEFAULT;
+}
+
+void PciDevice::probe() const {
+  write_to_file(this->name(), this->PROBE_DEFAULT);
 }
