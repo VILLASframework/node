@@ -27,7 +27,7 @@ public:
   virtual bool init() override;
   virtual bool stop() override;
 
-  bool enableInterrupt(IrqMaskType mask, bool polling);
+  virtual bool enableInterrupt(IrqMaskType mask, bool polling);
   bool enableInterrupt(IrqPort irq, bool polling) {
     return enableInterrupt(1 << irq.num, polling);
   }
@@ -38,7 +38,7 @@ public:
   ssize_t waitForInterrupt(int irq);
   ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
 
-private:
+protected:
   static constexpr char registerMemory[] = "reg0";
 
   std::shared_ptr<villas::kernel::vfio::Device> vfioDevice = nullptr;
