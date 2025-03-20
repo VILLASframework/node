@@ -1,4 +1,9 @@
 /* Memorygraph-connection to a fpga ip core.
+ * This class can make the memory of an ip accessible via the memorygraph by:
+ * 1. Finding the corresponding device in the OS-devicetree
+ * 2. Binding/Unbinding the required Drivers
+ * 3. Opening a Vfio-Connection
+ * 4. Adding a vertex and edge to the memorygraph which is connected to process memory
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
