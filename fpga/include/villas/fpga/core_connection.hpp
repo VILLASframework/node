@@ -2,7 +2,7 @@
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
  *
- * SPDX-FileCopyrightText: 2024-25 Pascal Bauer <pascal.bauer@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2024-2025 Pascal Bauer <pascal.bauer@rwth-aachen.de>
  * SPDX-License-Identifier: Apache-2.0
  */
 
