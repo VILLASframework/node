@@ -170,6 +170,7 @@ test:unit:
   script:
     - cmake -S . -B build ${CMAKE_OPTS}
     - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target python-wrapper-tests
   needs:
     - job: "build:source: [fedora]"
       artifacts: true
