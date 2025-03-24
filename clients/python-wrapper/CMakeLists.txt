@@ -1,3 +1,9 @@
+# Python-wrapper CMakeLists.
+#
+# Author: Kevin Vu te Laar <vu.te@rwth-aachen.de>
+# SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
 cmake_minimum_required(VERSION 3.15...3.29)
 project(villas-python-wrapper LANGUAGES CXX)
 

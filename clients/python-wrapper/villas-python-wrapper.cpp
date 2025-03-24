@@ -1,8 +1,16 @@
+/* Python-wrapper.
+ *
+ * Author: Kevin Vu te Laar <vu.te@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <jansson.h>
 #include <pybind11/pybind11.h>
 #include <uuid/uuid.h>
 #include <villas/node.hpp>
 #include <villas/sample.hpp>
+
 extern "C" {
   #include <villas/node.h>
 }
@@ -44,13 +52,13 @@ class Array {
     unsigned int len;
 };
 
-//pybind11 can not deal with (void **) as function input parameters,
-//therefore we have to cast a simple (void *) pointer to the corresponding type
-//
-//wrapper bindings, sorted alphabetically
-// @param villas_node   Name of the module to be bound
-// @param m             Access variable for modifying the module code
-//
+/* pybind11 can not deal with (void **) as function input parameters,
+ * therefore we have to cast a simple (void *) pointer to the corresponding type
+ *
+ * wrapper bindings, sorted alphabetically
+ * @param villas_node   Name of the module to be bound
+ * @param m             Access variable for modifying the module code
+ */
 PYBIND11_MODULE(villas_node, m) {
   m.def("memory_init", &memory_init);
 
