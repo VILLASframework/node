@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15...3.29)
 project(villas-python-wrapper LANGUAGES CXX)
 
 set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 CONFIG OPTIONAL)
+find_package(pybind11 CONFIG)
 
 if(pybind11_FOUND)
   find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
@@ -18,11 +18,12 @@ if(pybind11_FOUND)
   message(STATUS "Python minor version: ${Python_VERSION_MINOR}")
   message(STATUS "Python .so install directory: ${PYTHON_LIB_DYNLOAD_DIR}")
 
-  pybind11_add_module(villas_node villas-python-wrapper.cpp)
-  target_link_libraries(villas_node PUBLIC villas)
+  pybind11_add_module(python-wrapper villas-python-wrapper.cpp)
+  set_target_properties(python-wrapper PROPERTIES OUTPUT_NAME villas_node)
+  target_link_libraries(python-wrapper PUBLIC villas)
 
   install(
-    TARGETS villas_node
+    TARGETS python-wrapper
     COMPONENT lib
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${PYTHON_LIB_DYNLOAD_DIR}
