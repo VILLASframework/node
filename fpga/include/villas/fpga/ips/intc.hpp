@@ -54,8 +54,8 @@ protected:
   };
 
   std::vector<kernel::vfio::Device::IrqVectorInfo> irq_vectors;
-  int nos[maxIrqs];
-  bool polling[maxIrqs];
+  int nos[maxIrqs] = {-1};
+  bool polling[maxIrqs] = {false};
 };
 
 } // namespace ip
