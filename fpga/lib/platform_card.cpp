@@ -90,9 +90,6 @@ PlatformCardFactory::make(json_t *json_card, std::string card_name,
                           const std::filesystem::path &searchPath) {
   auto logger = villas::Log::get("PlatformCardFactory");
 
-  // make sure the vfio container has the required modules
-  kernel::loadModule("vfio_platform");
-
   CardParser parser(json_card);
 
   auto card = std::make_shared<fpga::PlatformCard>(vc);
