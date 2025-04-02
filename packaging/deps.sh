@@ -189,9 +189,9 @@ if ! pkg-config "libethercat >= 1.5.2" && \
 fi
 
 # Build & Install libiec61850
-if ! pkg-config "libiec61850 >= 1.5.0" && \
+if ! pkg-config "libiec61850 >= 1.6.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
-    git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850.git
+    git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake -DBUILD_EXAMPLES=OFF \
