@@ -29,6 +29,7 @@
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
   withNodeOpenDSS ? withAllNodes,
+  withNodeOpalOrchestra ? withAllNodes,
   withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
@@ -71,11 +72,13 @@
   libusb1,
   libuuid,
   libwebsockets,
+  libxml2,
   lua,
   mosquitto,
   nanomsg,
   opendssc,
   openssl,
+  orchestra,
   pcre2,
   pkgsBuildBuild,
   protobuf,
@@ -172,6 +175,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
     ++ lib.optionals withNodeOpenDSS [ opendssc ]
+    ++ lib.optionals withNodeOpalOrchestra [ orchestra libxml2 ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
