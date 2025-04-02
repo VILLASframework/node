@@ -1,6 +1,6 @@
 /* An example get started with new implementations of new node-types.
  *
- * This example does not do any particulary useful.
+ * This example does not do any particularly useful.
  * It is just a skeleton to get you started with new node-types.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
