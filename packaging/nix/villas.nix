@@ -59,7 +59,7 @@
   libre,
   libsodium,
   libuldaq,
-  libusb,
+  libusb1,
   libuuid,
   libwebsockets,
   lua,
@@ -74,6 +74,7 @@
   rdma-core,
   redis-plus-plus,
   spdlog,
+  linuxHeaders,
 }:
 stdenv.mkDerivation {
   inherit src version;
@@ -90,6 +91,7 @@ stdenv.mkDerivation {
   postPatch = ''
     patchShebangs --host ./tools
   '';
+
   postInstall = ''
     if [ -d $out/include/villas/ ] && [ -d $dev/include/villas/ ]; then
       mv $out/include/villas/* $dev/include/villas/
@@ -112,31 +114,29 @@ stdenv.mkDerivation {
         ]
       }
   '';
+
   nativeBuildInputs = [
     cmake
     makeWrapper
     pkg-config
   ];
+
   depsBuildBuild = lib.optionals withFormatProtobuf [ protobufcBuildBuild ];
+
   buildInputs =
     [
-      jansson
       libwebsockets
-      libuuid
       openssl
       curl
       spdlog
     ]
-    ++ lib.optionals withExtraConfig [ libconfig ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
-    ++ lib.optionals withFormatProtobuf [ protobufc ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
     ++ lib.optionals withNodeComedi [ comedilib ]
     ++ lib.optionals withNodeEthercat [ ethercat ]
     ++ lib.optionals withNodeIec60870 [ lib60870 ]
     ++ lib.optionals withNodeIec61850 [ libiec61850 ]
-    ++ lib.optionals withNodeInfiniband [ rdma-core ]
     ++ lib.optionals withNodeKafka [ rdkafka ]
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
@@ -144,17 +144,35 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
-    ++ lib.optionals withNodeTemper [ libusb ]
+    ++ lib.optionals withNodeTemper [ libusb1 ]
     ++ lib.optionals withNodeUldaq [ libuldaq ]
     ++ lib.optionals withNodeWebrtc [ libdatachannel ]
     ++ lib.optionals withNodeZeromq [
       czmq
       libsodium
     ];
-  meta = with lib; {
+
+  propagatedBuildInputs =
+    [
+      libuuid
+      jansson
+    ]
+    ++ lib.optionals withFormatProtobuf [ protobufc ]
+    ++ lib.optionals withNodeInfiniband [ rdma-core ]
+    ++ lib.optionals withExtraConfig [ libconfig ];
+
+  # TODO: Remove once pkgs.linuxHeaders has been upgrade to 6.14
+  preBuild = ''
+    mkdir -p include/linux
+    cp ${linuxHeaders}/include/linux/pkt_cls.h include/linux
+    patch -F10 -u -p1 < ${./reverse-struct-group.patch}
+  '';
+
+  meta = {
     mainProgram = "villas";
     description = "a tool connecting real-time power grid simulation equipment";
     homepage = "https://villas.fein-aachen.org/";
-    license = licenses.asl20;
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ stv0g ];
   };
 }
