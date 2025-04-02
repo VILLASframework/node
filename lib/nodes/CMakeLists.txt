@@ -144,6 +144,12 @@ if(WITH_NODE_CAN)
     list(APPEND NODE_SRC can.cpp)
 endif()
 
+# Enable OPAL-RT Orchestra node-type
+if(WITH_NODE_OPAL_ORCHESTRA)
+    list(APPEND NODE_SRC orchestra.cpp orchestra/ddf.cpp orchestra/signal.cpp orchestra/locks.cpp)
+    list(APPEND LIBRARIES OpalOrchestra LibXml2::LibXml2)
+endif()
+
 # Enable Example node type
 if(WITH_NODE_EXAMPLE)
     list(APPEND NODE_SRC example.cpp)
