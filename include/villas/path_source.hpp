@@ -79,7 +79,7 @@ public:
 
   void addSecondary(SecondaryPathSource::Ptr ps) { secondaries.push_back(ps); }
 
-  SecondaryPathSourceList getSecondaries() { return secondaries; }
+  const SecondaryPathSourceList &getSecondaries() { return secondaries; }
 
   virtual void writeToSecondaries(struct Sample *smps[], unsigned cnt);
 };

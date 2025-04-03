@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2025, OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+*:*/fpga/thirdparty/*
+*:*/villas.pb-c.h
+
+noValidConfiguration
+duplInheritedMember
+normalCheckLevelMaxBranches

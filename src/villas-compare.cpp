@@ -203,7 +203,7 @@ protected:
 
     // Open files
     std::vector<CompareSide *> sides;
-    for (auto filename : filenames) {
+    for (auto const &filename : filenames) {
       auto *s = new CompareSide(filename, format, dtypes, &pool);
       if (!s)
         throw MemoryAllocationError();

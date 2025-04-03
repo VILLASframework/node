@@ -73,6 +73,9 @@ static int ib_free(struct Allocation *ma, struct Type *m) {
 struct Type *villas::node::memory::ib(NodeCompat *n, struct Type *parent) {
   auto *i = n->getData<struct infiniband>();
   auto *mt = (struct Type *)malloc(sizeof(struct Type));
+  if (!mt) {
+    throw MemoryAllocationError();
+  }
 
   mt->name = "ib";
   mt->flags = 0;
@@ -81,6 +84,10 @@ struct Type *villas::node::memory::ib(NodeCompat *n, struct Type *parent) {
   mt->alignment = 1;
 
   mt->_vd = malloc(sizeof(struct IB));
+  if (!mt->_vd) {
+    free(mt);
+    throw MemoryAllocationError();
+  }
 
   auto *mi = (struct memory::IB *)mt->_vd;
 

@@ -131,7 +131,11 @@ Device::~Device() {
     regionUnmap(region.index);
   }
   if (isVfioPciDevice()) {
-    pciHotReset();
+    try {
+      pciHotReset();
+    } catch (const RuntimeError &e) {
+      log->error("PCI reset failed: {}", e.what());
+    }
   }
   reset();
 

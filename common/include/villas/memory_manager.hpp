@@ -157,7 +157,7 @@ public:
         getSlaveAddrSpaceName("process", memoryBlock));
   }
 
-  AddressSpaceId getOrCreateAddressSpace(std::string name);
+  AddressSpaceId getOrCreateAddressSpace(const std::string &name);
 
   void removeAddressSpace(const AddressSpaceId &addrSpaceId) {
     memoryGraph.removeVertex(addrSpaceId);

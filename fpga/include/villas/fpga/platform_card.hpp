@@ -29,7 +29,8 @@ public:
 
   std::vector<CoreConnection> core_connections;
 
-  void connectVFIOtoIps(std::list<std::shared_ptr<ip::Core>> configuredIps);
+  void
+  connectVFIOtoIps(const std::list<std::shared_ptr<ip::Core>> &configuredIps);
   bool mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) override;
 };
 

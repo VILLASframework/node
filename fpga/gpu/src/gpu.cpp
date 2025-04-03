@@ -88,11 +88,12 @@ bool Gpu::registerIoMemory(const MemoryBlock &mem) {
     // overlapping window, so this will fail badly!
     auto translation =
         mm.getTranslation(masterPciEAddrSpaceId, mem.getAddrSpaceId());
-    if (translation.getSize() >= mem.getSize())
+    if (translation.getSize() >= mem.getSize()) {
       // There is already a sufficient path
       logger->debug("Already mapped through another mapping");
-    return true;
-    else logger->warn("There's already a mapping, but too small");
+      return true;
+    } else
+      logger->warn("There's already a mapping, but too small");
   } catch (const std::out_of_range &) {
     // Not yet reachable, that's okay, proceed
   }
