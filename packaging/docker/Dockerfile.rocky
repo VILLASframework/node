@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=rockylinux
-ARG ROCKY_VERSION=9
+ARG ROCKY_VERSION=9.3
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
