@@ -60,8 +60,8 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
 }
 
 std::list<IpIdentifier>
-CoreFactory::filterIps(std::list<IpIdentifier> allIps,
-                       std::list<std::string> ignored_ip_names) {
+CoreFactory::filterIps(const std::list<IpIdentifier> &allIps,
+                       const std::list<std::string> &ignored_ip_names) {
   std::list<IpIdentifier> filteredIps;
 
   std::set<std::string> ignored_ip_set(ignored_ip_names.begin(),

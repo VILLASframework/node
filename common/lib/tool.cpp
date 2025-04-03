@@ -17,6 +17,7 @@ void Tool::staticHandler(int signal, siginfo_t *sinfo, void *ctx) {
 }
 
 void Tool::printCopyright() {
+  // cppcheck-suppress unknownMacro
   std::cout << PROJECT_NAME " " << CLR_BLU(PROJECT_BUILD_ID)
             << " (built on " CLR_MAG(__DATE__) " " CLR_MAG(__TIME__) ")"
             << std::endl
@@ -26,6 +27,7 @@ void Tool::printCopyright() {
             << " Steffen Vogel <post@steffenvogel.de>" << std::endl;
 }
 
+// cppcheck-suppress unknownMacro
 void Tool::printVersion() { std::cout << PROJECT_BUILD_ID << std::endl; }
 
 Tool::Tool(int ac, char *av[], const std::string &nme,

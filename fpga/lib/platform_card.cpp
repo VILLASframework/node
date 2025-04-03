@@ -30,7 +30,7 @@ PlatformCard::PlatformCard(
 }
 
 void PlatformCard::connectVFIOtoIps(
-    std::list<std::shared_ptr<ip::Core>> configuredIps) {
+    const std::list<std::shared_ptr<ip::Core>> &configuredIps) {
   for (auto ip : configuredIps) {
     try {
       auto core_connection = CoreConnection::from(ip, this->vfioContainer);

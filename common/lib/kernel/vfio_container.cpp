@@ -56,6 +56,7 @@ static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
   ret[__VFIO_RESERVED_TYPE1_NESTING_IOMMU] = "Type 1 Nesting";
 #endif
   ret[VFIO_SPAPR_TCE_v2_IOMMU] = "SPAPR TCE v2";
+  // cppcheck-suppress containerOutOfBounds
   ret[VFIO_NOIOMMU_IOMMU] = "No IOMMU";
 // Backwards compatability with older kernels
 #ifdef VFIO_UNMAP_ALL
@@ -70,7 +71,7 @@ static std::array<std::string, EXTENSION_SIZE> construct_vfio_extension_str() {
 static std::array<std::string, EXTENSION_SIZE> VFIO_EXTENSION_STR =
     construct_vfio_extension_str();
 
-Container::Container(std::vector<std::string> required_modules)
+Container::Container(const std::vector<std::string> &required_modules)
     : fd(-1), version(0), extensions(), iova_next(0), hasIommu(false), groups(),
       log(Log::get("kernel:vfio:container")) {
   for (auto module : required_modules) {

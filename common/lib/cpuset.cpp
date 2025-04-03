@@ -24,7 +24,7 @@ CpuSet::CpuSet(uintmax_t iset) : CpuSet() {
 CpuSet::CpuSet(const std::string &str) : CpuSet() {
   size_t endpos, start, end;
 
-  for (auto token : tokenize(str, ",")) {
+  for (auto const &token : tokenize(str, ",")) {
     auto sep = token.find('-');
 
     if (sep == std::string::npos) {

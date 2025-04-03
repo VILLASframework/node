@@ -300,20 +300,20 @@ static int can_conv_from_raw(union SignalData *sig, void *from, int size,
   case SignalType::INTEGER:
     switch (size) {
     case 1:
-      sig->i = (int64_t) * (int8_t *)from;
+      sig->i = (int64_t)*(int8_t *)from;
       return 0;
 
     case 2:
-      sig->i = (int64_t) * (int16_t *)from;
+      sig->i = (int64_t)*(int16_t *)from;
       return 0;
 
     case 3:
-      sig->i = (int64_t) * (int16_t *)from;
-      sig->i += ((int64_t) * ((int8_t *)(from) + 2)) << 16;
+      sig->i = (int64_t)*(int16_t *)from;
+      sig->i += ((int64_t)*((int8_t *)(from) + 2)) << 16;
       return 0;
 
     case 4:
-      sig->i = (int64_t) * (int32_t *)from;
+      sig->i = (int64_t)*(int32_t *)from;
       return 0;
 
     case 8:
@@ -434,6 +434,9 @@ int villas::node::can_write(NodeCompat *n, struct Sample *const smps[],
 
   frame = (struct can_frame *)calloc(sizeof(struct can_frame),
                                      n->getOutputSignals()->size());
+  if (!frame) {
+    throw MemoryAllocationError();
+  }
 
   for (nwrite = 0; nwrite < cnt; nwrite++) {
     for (size_t i = 0; i < n->getOutputSignals()->size(); i++) {

@@ -41,7 +41,8 @@ static pthread_t main_thread;
 namespace villas {
 namespace utils {
 
-std::vector<std::string> tokenize(std::string s, const std::string &delimiter) {
+std::vector<std::string> tokenize(const std::string &s,
+                                  const std::string &delimiter) {
   std::vector<std::string> tokens;
 
   size_t lastPos = 0;
@@ -88,7 +89,7 @@ ssize_t readRandom(char *buf, size_t len) {
 
 // Setup exit handler
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
-                std::list<int> cbSignals, std::list<int> ignoreSignals) {
+                std::list<int> cbSignals, const std::list<int> &ignoreSignals) {
   int ret;
 
   Logger logger = Log::get("signals");

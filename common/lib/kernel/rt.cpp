@@ -42,13 +42,15 @@ void init(int priority, int affinity) {
   if (priority)
     setPriority(priority);
   else
-    logger->warn(
-        "You might want to use the 'priority' setting to increase " PROJECT_NAME
-        "'s process priority");
+
+    logger->warn("You might want to use the 'priority' setting to "
+                 "increase " PROJECT_NAME // cppcheck-suppress unknownMacro
+                 "'s process priority");
 
   if (affinity) {
     is_isol = getCmdlineParam("isolcpus", isolcpus, sizeof(isolcpus));
     if (is_isol)
+      // cppcheck-suppress unknownMacro
       logger->warn("You should reserve some cores for " PROJECT_NAME
                    " (see 'isolcpus')");
     else {
@@ -65,6 +67,7 @@ void init(int priority, int affinity) {
 
     setProcessAffinity(affinity);
   } else
+    // cppcheck-suppress unknownMacro
     logger->warn(
         "You might want to use the 'affinity' setting to pin " PROJECT_NAME
         " to dedicate CPU cores");
