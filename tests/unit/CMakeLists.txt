@@ -35,5 +35,13 @@ add_custom_target(run-unit-tests
     USES_TERMINAL
 )
 
+add_custom_target(run-python-wrapper-tests
+    COMMAND
+        ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/unit/python_wrapper.py
+    DEPENDS
+        python-wrapper
+    USES_TERMINAL
+)
+
 add_dependencies(tests unit-tests)
-add_dependencies(run-tests run-unit-tests)
+add_dependencies(run-tests run-unit-tests run-python-wrapper-tests)
