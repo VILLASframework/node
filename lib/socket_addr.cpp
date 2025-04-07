@@ -89,8 +89,10 @@ int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr,
   if (layer == SocketLayer::UNIX) { // Format: "/path/to/socket"
     sa->sun.sun_family = AF_UNIX;
 
-    if (strlen(addr) > sizeof(sa->sun.sun_path) - 1)
+    if (strlen(addr) > sizeof(sa->sun.sun_path) - 1) {
+      free(copy);
       throw RuntimeError("Length of unix socket path is too long!");
+    }
 
     memcpy(sa->sun.sun_path, addr, strlen(addr) + 1);
 

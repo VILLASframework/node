@@ -81,7 +81,7 @@ ASDUData ASDUData::parse(json_t *json_signal, std::optional<ASDUData> last_data,
 
 std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa,
                                                int ioa_sequence_start) {
-  auto check = [type_id](Descriptor descriptor) {
+  auto check = [type_id](const Descriptor &descriptor) {
     return !strcmp(descriptor.type_id, type_id);
   };
 
@@ -95,7 +95,7 @@ std::optional<ASDUData> ASDUData::lookupTypeId(char const *type_id, int ioa,
 std::optional<ASDUData> ASDUData::lookupName(char const *name,
                                              bool with_timestamp, int ioa,
                                              int ioa_sequence_start) {
-  auto check = [name, with_timestamp](Descriptor descriptor) {
+  auto check = [name, with_timestamp](const Descriptor &descriptor) {
     return !strcmp(descriptor.name, name) &&
            descriptor.has_timestamp == with_timestamp;
   };
@@ -109,7 +109,7 @@ std::optional<ASDUData> ASDUData::lookupName(char const *name,
 
 std::optional<ASDUData> ASDUData::lookupType(int type, int ioa,
                                              int ioa_sequence_start) {
-  auto check = [type](Descriptor descriptor) {
+  auto check = [type](const Descriptor &descriptor) {
     return descriptor.type == type;
   };
 

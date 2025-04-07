@@ -9,8 +9,10 @@
 #include <regex>
 
 #ifdef __linux__
+extern "C" {
 #include <sys/socket.h>
 #include <sys/types.h>
+}
 #endif
 
 #include <villas/colors.hpp>

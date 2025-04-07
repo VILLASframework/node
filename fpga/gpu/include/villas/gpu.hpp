@@ -72,7 +72,7 @@ public:
 
   std::string getName() const;
 
-  std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+  virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
   allocateBlock(size_t size);
 
 private:

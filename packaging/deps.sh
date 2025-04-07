@@ -114,7 +114,7 @@ fi
 # Build & Install libjansson
 if ! pkg-config "jansson >= 2.13" && \
     should_build "jansson" "for configuration parsing" "required"; then
-    git clone ${GIT_OPTS} --branch v2.14 https://github.com/akheron/jansson.git
+    git clone ${GIT_OPTS} --branch v2.14.1 https://github.com/akheron/jansson.git
     pushd jansson
     autoreconf -i
     ./configure ${CONFIGURE_OPTS}
@@ -130,7 +130,7 @@ if ! ( pkg-config "lua >= 5.1" || \
        pkg-config "lua51" || \
        { [[ -n "${RTLAB_ROOT:+x}" ]] && [[ -f "/usr/local/include/lua.h" ]]; } \
      ) && should_build "lua" "for the lua hook"; then
-    wget http://www.lua.org/ftp/lua-5.4.4.tar.gz -O - | tar -xz
+    wget http://www.lua.org/ftp/lua-5.4.7.tar.gz -O - | tar -xz
     pushd lua-5.4.4
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
     make ${MAKE_OPTS} MYCFLAGS=-fPIC INSTALL_TOP=${PREFIX} install
@@ -140,7 +140,7 @@ fi
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
     should_build "mosquitto" "for the MQTT node-type"; then
-    git clone ${GIT_OPTS} --branch v2.0.15 https://github.com/eclipse/mosquitto.git
+    git clone ${GIT_OPTS} --branch v2.0.21 https://github.com/eclipse/mosquitto.git
     mkdir -p mosquitto/build
     pushd mosquitto/build
     cmake -DWITH_BROKER=OFF \
@@ -155,7 +155,7 @@ fi
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
     should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
-    git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c.git
+    git clone ${GIT_OPTS} --branch v0.15.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
@@ -166,7 +166,7 @@ fi
 # Build & Install libzmq
 if ! pkg-config "libzmq >= 2.2.0" && \
     should_build "zmq" "for the zeromq node-type"; then
-    git clone ${GIT_OPTS} --branch v4.3.4 https://github.com/zeromq/libzmq.git
+    git clone ${GIT_OPTS} --branch v4.3.5 https://github.com/zeromq/libzmq.git
     mkdir -p libzmq/build
     pushd libzmq/build
     cmake -DWITH_PERF_TOOL=OFF \
@@ -180,7 +180,7 @@ fi
 # Build & Install EtherLab
 if ! pkg-config "libethercat >= 1.5.2" && \
     should_build "ethercat" "for the ethercat node-type"; then
-    git clone ${GIT_OPTS} --branch stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
+    git clone ${GIT_OPTS} --branch 1.6.3 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
@@ -189,9 +189,9 @@ if ! pkg-config "libethercat >= 1.5.2" && \
 fi
 
 # Build & Install libiec61850
-if ! pkg-config "libiec61850 >= 1.5.0" && \
+if ! pkg-config "libiec61850 >= 1.6.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
-    git clone ${GIT_OPTS} --branch v1.5.1 https://github.com/mz-automation/libiec61850.git
+    git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake -DBUILD_EXAMPLES=OFF \
@@ -204,7 +204,7 @@ fi
 # Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
     should_build "iec60870" "for the iec60870 node-type"; then
-    git clone ${GIT_OPTS} --branch v2.3.2 https://github.com/mz-automation/lib60870.git
+    git clone ${GIT_OPTS} --branch v2.3.4 https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
     cmake -DBUILD_EXAMPLES=OFF \
@@ -217,7 +217,7 @@ fi
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
     should_build "rdkafka" "for the kafka node-type"; then
-    git clone ${GIT_OPTS} --branch v2.0.1 https://github.com/edenhill/librdkafka.git
+    git clone ${GIT_OPTS} --branch v2.8.0 https://github.com/edenhill/librdkafka.git
     mkdir -p librdkafka/build
     pushd librdkafka/build
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
@@ -257,7 +257,7 @@ fi
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
      ) && should_build "libnl" "for network emulation"; then
-    git clone ${GIT_OPTS} --branch libnl3_7_0 https://github.com/thom311/libnl.git
+    git clone ${GIT_OPTS} --branch libnl3_11_0 https://github.com/thom311/libnl.git
     pushd libnl
     autoreconf -i
     ./configure \
@@ -297,7 +297,7 @@ fi
 # Build & Install libre
 if ! pkg-config "libre >= 3.6.0" && \
     should_build "libre" "for the rtp node-type"; then
-    git clone ${GIT_OPTS} --branch v3.6.0 https://github.com/baresip/re.git
+    git clone ${GIT_OPTS} --branch v3.21.0 https://github.com/baresip/re.git
     mkdir -p re/build
     pushd re/build
     cmake -DUSE_LIBREM=OFF \
@@ -314,7 +314,7 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
     should_build "nanomsg" "for the nanomsg node-type"; then
-    git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
+    git clone ${GIT_OPTS} --branch 1.2.1 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake -DNN_TESTS=OFF \
@@ -341,7 +341,7 @@ fi
 # Build & Install hiredis
 if ! pkg-config "hiredis >= 1.0.0" && \
     should_build "hiredis" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch v1.1.0 https://github.com/redis/hiredis.git
+    git clone ${GIT_OPTS} --branch v1.2.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
     cmake -DDISABLE_TESTS=ON \
@@ -354,7 +354,7 @@ fi
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
     should_build "redis++" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch 1.3.8 https://github.com/sewenew/redis-plus-plus.git
+    git clone ${GIT_OPTS} --branch 1.3.14 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
@@ -372,7 +372,7 @@ fi
 # Build & Install Fmtlib
 if ! pkg-config "fmt >= 6.1.2" && \
     should_build "fmt" "for logging" "required"; then
-    git clone ${GIT_OPTS} --branch 6.1.2 --recursive https://github.com/fmtlib/fmt.git
+    git clone ${GIT_OPTS} --branch 11.0.2 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
     cmake -DBUILD_SHARED_LIBS=1 \
@@ -385,7 +385,7 @@ fi
 # Build & Install spdlog
 if ! pkg-config "spdlog >= 1.8.2" && \
     should_build "spdlog" "for logging" "required"; then
-    git clone ${GIT_OPTS} --branch v1.8.2 --recursive https://github.com/gabime/spdlog.git
+    git clone ${GIT_OPTS} --branch v1.15.0 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
     cmake -DSPDLOG_FMT_EXTERNAL=ON \
@@ -400,7 +400,7 @@ fi
 # Build & Install libwebsockets
 if ! pkg-config "libwebsockets >= 4.3.0" && \
     should_build "libwebsockets" "for the websocket node and VILLASweb" "required"; then
-    git clone ${GIT_OPTS} --branch v4.3-stable https://github.com/warmcat/libwebsockets.git
+    git clone ${GIT_OPTS} --branch v4.3.5 https://github.com/warmcat/libwebsockets.git
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     cmake -DLWS_WITH_IPV6=ON \
@@ -414,7 +414,7 @@ fi
 # Build & Install libnice
 if ! pkg-config "nice >= 0.1.16" && \
     should_build "libnice" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --branch 0.1.21 https://gitlab.freedesktop.org/libnice/libnice.git
+    git clone ${GIT_OPTS} --branch 0.1.22 https://gitlab.freedesktop.org/libnice/libnice.git
     mkdir -p libnice/build
     pushd libnice
 
@@ -453,7 +453,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel.git
+    git clone ${GIT_OPTS} --recursive --branch v0.22.6 https://github.com/paullouisageneau/libdatachannel.git
     mkdir -p libdatachannel/build
     pushd libdatachannel/build
 
@@ -472,7 +472,7 @@ fi
 # Build & Install libmodbus
 if ! pkg-config "libmodbus >= 3.1.0" && \
     should_build "libmodbus" "for the modbus node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v3.1.10 https://github.com/stephane/libmodbus.git
+    git clone ${GIT_OPTS} --recursive --branch v3.1.11 https://github.com/stephane/libmodbus.git
     mkdir -p libmodbus/build
     pushd libmodbus
     autoreconf -i

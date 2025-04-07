@@ -72,7 +72,7 @@ void Popen::open() {
       argv.push_back((char *)"-c");
       argv.push_back((char *)command.c_str());
     } else {
-      for (auto arg : arguments) {
+      for (auto const &arg : arguments) {
         auto s = strdup(arg.c_str());
 
         argv.push_back(s);

@@ -121,7 +121,8 @@
 namespace villas {
 namespace utils {
 
-std::vector<std::string> tokenize(std::string s, const std::string &delimiter);
+std::vector<std::string> tokenize(const std::string &s,
+                                  const std::string &delimiter);
 
 template <typename T> void assertExcept(bool condition, const T &exception) {
   if (not condition)
@@ -131,7 +132,7 @@ template <typename T> void assertExcept(bool condition, const T &exception) {
 // Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM.
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
                 std::list<int> cbSignals = {},
-                std::list<int> ignoreSignals = {SIGCHLD})
+                const std::list<int> &ignoreSignals = {SIGCHLD})
     __attribute__((warn_unused_result));
 
 // Fill buffer with random data.

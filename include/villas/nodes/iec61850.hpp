@@ -67,8 +67,6 @@ struct iec61850_type_descriptor {
 struct iec61850_receiver {
   char *interface;
 
-  EthernetSocket socket;
-
   enum class Type { GOOSE, SAMPLED_VALUES } type;
 
   union {
