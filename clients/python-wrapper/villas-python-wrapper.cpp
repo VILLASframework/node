@@ -23,6 +23,9 @@ class Array {
       smps = new vsample *[len]();
       this->len = len;
     }
+    Array(const Array&) = delete;
+    Array& operator= (const Array&) = delete;
+
     ~Array() {
       for(unsigned int i = 0; i < len; ++i) {
         sample_decref(smps[i]);
