@@ -35,6 +35,7 @@ add_custom_target(run-unit-tests
     USES_TERMINAL
 )
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_custom_target(run-python-wrapper-tests
     COMMAND
         ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/unit/python_wrapper.py
