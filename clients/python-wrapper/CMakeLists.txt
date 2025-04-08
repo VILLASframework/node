@@ -11,7 +11,7 @@ set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG)
 
 if(pybind11_FOUND)
-  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
   execute_process(
     COMMAND "${Python3_EXECUTABLE}" -c "import sysconfig; print(sysconfig.get_path('stdlib') + '/lib-dynload')"
