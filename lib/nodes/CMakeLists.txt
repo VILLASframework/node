@@ -152,6 +152,12 @@ if(WITH_NODE_EXAMPLE)
 #    list(APPEND LIBRARIES PkgConfig::EXAMPLELIB)
 endif()
 
+# Enable OpenDSS node type
+if(WITH_NODE_OPENDSS)
+    list(APPEND NODE_SRC opendss.cpp)
+    list(APPEND LIBRARIES ${OPENDSS_LIBRARY})
+endif()
+
 # Enable Ethercat support
 if(WITH_NODE_ETHERCAT)
     list(APPEND NODE_SRC ethercat.cpp)
