@@ -148,8 +148,14 @@ endif()
 if(WITH_NODE_EXAMPLE)
     list(APPEND NODE_SRC example.cpp)
 
-# Add your library dependencies for the new node-type here
-#    list(APPEND LIBRARIES PkgConfig::EXAMPLELIB)
+    # Add your library dependencies for the new node-type here
+    # list(APPEND LIBRARIES PkgConfig::EXAMPLELIB)
+endif()
+
+# Enable OpenDSS node type
+if(WITH_NODE_OPENDSS)
+    list(APPEND NODE_SRC opendss.cpp)
+    list(APPEND LIBRARIES OpenDSSC)
 endif()
 
 # Enable Ethercat support

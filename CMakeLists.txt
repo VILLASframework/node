@@ -75,6 +75,7 @@ find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
+find_package(OpenDSSC)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -203,6 +204,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"        
 cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"                           "${WITH_DEFAULTS}" "WITH_WEB; LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
+cmake_dependent_option(WITH_NODE_OPENDSS    "Build with opendss node-type"                          "${WITH_DEFAULTS}" "OpenDSSC_FOUND" OFF)
 
 # set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -296,6 +298,7 @@ add_feature_info(NODE_MODBUS            WITH_NODE_MODBUS            "Build with 
 add_feature_info(NODE_MQTT              WITH_NODE_MQTT              "Build with mqtt node-type")
 add_feature_info(NODE_NANOMSG           WITH_NODE_NANOMSG           "Build with nanomsg node-type")
 add_feature_info(NODE_NGSI              WITH_NODE_NGSI              "Build with ngsi node-type")
+add_feature_info(NODE_OPENDSS           WITH_NODE_OPENDSS           "Build with opendss node-type")
 add_feature_info(NODE_REDIS             WITH_NODE_REDIS             "Build with redis node-type")
 add_feature_info(NODE_RTP               WITH_NODE_RTP               "Build with rtp node-type")
 add_feature_info(NODE_SHMEM             WITH_NODE_SHMEM             "Build with shmem node-type")
