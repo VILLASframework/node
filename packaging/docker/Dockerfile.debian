@@ -20,7 +20,7 @@ RUN apt-get update && \
 		gcc g++ \
 		pkg-config cmake make \
 		autoconf automake autogen libtool \
-		texinfo git curl tar wget diffutils \
+		texinfo git git-svn curl tar wget diffutils \
 		flex bison \
 		protobuf-compiler protobuf-c-compiler \
 		clang-format clangd

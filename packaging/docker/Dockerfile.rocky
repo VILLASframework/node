@@ -23,7 +23,7 @@ RUN dnf --allowerasing -y install \
 	pkgconfig cmake make \
 	autoconf automake libtool \
 	flex bison \
-	texinfo git curl tar \
+	texinfo git git-svn curl tar \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
 
