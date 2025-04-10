@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    format:
+      $ref: ../format_spec.yaml
+
+    path:
+      file_path: string
+      format: uri
+      description: |
+        Specifies the URI to a OpenDSS file.
+
+    in:
+      type: array
+      item:
+        type: object
+        properties:
+          name:
+            type: string
+            description: |
+              Name of the element.
+          type:
+            type: string
+            enum:
+            - load
+            - generator
+            - isource
+            description: |
+              Type of the element.
+          data:
+            type: string
+            description: |
+              Data to be input. Possible option are depent on element type.
+
+              - load:       kV, kW, kVA, Pf
+              - generator:  kV, kW, kVA, Pf
+              - isource:    Amps, AngleDeg, f
+
+    out:
+      description: |
+        Name of the monitor to be read.
+      type: array
+      items:
+        type: string
+
+- $ref: ../node_signals.yaml
+- $ref: ../node.yaml
