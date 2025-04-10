@@ -16,13 +16,32 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-static NodeCompatType p;
-static NodeCompatFactory ncp(&p);
+OpenDSS::OpenDSS(const uuid_t &id, const std::string &name)
+    : Node(id, name){
 
-std::string cmd_command;
-char* cmd_result;
+  int ret;
 
-static void opendss_parseData(json_t *json, opendss *od, bool in) {
+  ret = pthread_mutex_init(&mutex, nullptr);
+  if (ret)
+    throw RuntimeError("failed to initialize mutex");
+
+  ret = pthread_cond_init(&cv, nullptr);
+  if (ret)
+    throw RuntimeError("failed to initialize mutex");
+
+}
+
+OpenDSS::~OpenDSS() {
+
+  int ret __attribute__((unused));
+
+  ret = pthread_mutex_destroy(&mutex);
+  ret = pthread_cond_destroy(&cv);
+
+}
+
+void OpenDSS::parseData(json_t *json, bool in) {
+
   size_t i;
   json_t *json_data;
   json_error_t err;
@@ -99,18 +118,18 @@ static void opendss_parseData(json_t *json, opendss *od, bool in) {
             break;
         }
       }
-
-      od->dataIn.push_back(ele);
+      dataIn.push_back(ele);
     } else {
-      od->monitor_name.push_back(json_string_value(json_data));
+      monitor_name.push_back(json_string_value(json_data));
     }
   }
 }
 
-int villas::node::opendss_parse(NodeCompat *n, json_t *json) {
+int OpenDSS::parse(json_t *json) {
 
-  int ret;
-  auto *od = n->getData<struct opendss>();
+  int ret = Node::parse(json);
+  if (ret)
+    return ret;
 
   json_error_t err;
   json_t *json_format = nullptr;
@@ -119,7 +138,7 @@ int villas::node::opendss_parse(NodeCompat *n, json_t *json) {
 
   ret = json_unpack_ex(
     json, &err, 0, "{ s?: s, s?: o, s: {s: o}, s: {s: o} }",
-    "file_path", &od->path, "format", &json_format, "in", "list", &json_dataIn, "out", "list", &json_dataOut);
+    "file_path", &path, "format", &json_format, "in", "list", &json_dataIn, "out", "list", &json_dataOut);
 
   if (ret)
     throw ConfigError(json, err, "node-config-node-opendss");
@@ -132,29 +151,32 @@ int villas::node::opendss_parse(NodeCompat *n, json_t *json) {
     throw ConfigError(json_dataIn, "node-config-opendssIn",
                       "DataOut must be configured as a list of name objects");
 
-
-  opendss_parseData(json_dataIn, od, true);
-  opendss_parseData(json_dataOut, od, false);
-
-  if (od->formatter)
-    delete od->formatter;
-  od->formatter = json_format ? FormatFactory::make(json_format)
-                             : FormatFactory::make("villas.human");
-  if (!od->formatter)
-    throw ConfigError(json_format, "node-config-node-socket-format",
-                      "Invalid format configuration");
+  parseData(json_dataIn, true);
+  parseData(json_dataOut, false);
 
   return 0;
 }
 
-static std::unordered_set<std::string> opendss_get_element_name(ElementType type) {
+int OpenDSS::check() {
+
+  int ret;
+  // Start OpenDSS
+  ret = DSSI(3,0);
+
+  if (!ret) {
+    throw SystemError("Failed to start OpenDSS");
+  }
+
+  return 0;
+}
+
+void OpenDSS::getElementName(ElementType type, std::unordered_set<std::string> *set) {
+
   // Get all of the element name for each type and use it to check if the name in the config file is vaild
-  std::cout << "opendss get element name" << std::endl;
   uintptr_t myPtr;
 	int myType;
 	int mySize;
   std::string name;
-  std::unordered_set<std::string> set;
 
 	switch (type) {
     case ElementType::generator:
@@ -175,44 +197,42 @@ static std::unordered_set<std::string> opendss_get_element_name(ElementType type
 		if (*(char*)myPtr != '\0') {
 			name += *(char*)myPtr;
 		} else {
-      set.insert(name);
+      set->insert(name);
 			name = "";
 		}
 		myPtr++;
 	}
 
-  return set;
 }
 
-int villas::node::opendss_prepare(NodeCompat *n) {
-  auto *od = n->getData<struct opendss>();
+int OpenDSS::prepare() {
 
   // Compile OpenDSS file
   cmd_command = "compile \"";
-  cmd_command.append(od->path);
+  cmd_command.append(path);
   cmd_command += "\"";
   cmd_result = DSSPut_Command(cmd_command.data());
 
-  od->load_set = opendss_get_element_name(ElementType::load);
-  od->gen_set = opendss_get_element_name(ElementType::generator);
-  od->monitor_set = opendss_get_element_name(ElementType::monitor);
-  od->isource_set = opendss_get_element_name(ElementType::isource);
+  getElementName(ElementType::load, &load_set);
+  getElementName(ElementType::generator, &gen_set);
+  getElementName(ElementType::monitor, &monitor_set);
+  getElementName(ElementType::isource, &isource_set);
 
-  // Check if the name is valid
-  for (Element ele: od->dataIn) {
+  // Check if element name is valid
+  for (Element ele: dataIn) {
     switch (ele.type) {
       case ElementType::generator:
-        if (od->gen_set.find(ele.name) == od->gen_set.end()) {
+        if (gen_set.find(ele.name) == gen_set.end()) {
           throw SystemError("Invalid generator name '{}'", ele.name);
         }
         break;
       case ElementType::load:
-        if (od->load_set.find(ele.name) == od->load_set.end()) {
+        if (load_set.find(ele.name) == load_set.end()) {
           throw SystemError("Invalid load name '{}'", ele.name);
         }
         break;
       case ElementType::isource:
-        if (od->isource_set.find(ele.name) == od->isource_set.end()) {
+        if (isource_set.find(ele.name) == isource_set.end()) {
           throw SystemError("Invalid isource name '{}'", ele.name);
         }
         break;
@@ -221,58 +241,31 @@ int villas::node::opendss_prepare(NodeCompat *n) {
     }
   }
 
-  for (auto m_name: od->monitor_name) {
-    if (od->monitor_set.find(m_name) == od->monitor_set.end()) {
+  for (auto m_name: monitor_name) {
+    if (monitor_set.find(m_name) == monitor_set.end()) {
       throw SystemError("Invalid monitor name '{}'", m_name);
     }
   }
 
-  return 0;
+  return Node::prepare();
 }
 
-int villas::node::opendss_init(NodeCompat *n) {
-  int ret;
-  auto *od = n->getData<struct opendss>();
-  od->formatter = nullptr;
+int OpenDSS::start() {
 
-  ret = pthread_mutex_init(&od->mutex, nullptr);
-  if (ret)
-    return ret;
+  //Start with writing
+  writing_turn = true;
 
-  ret = pthread_cond_init(&od->cv, nullptr);
-  if (ret)
-    return ret;
-
-  return 0;
+  return Node::start();
 }
 
-int villas::node::opendss_type_start(SuperNode *sn) {
-  int ret;
-  // Start OpenDSS
-  std::cout << "Node type start" << std::endl;
-  ret = DSSI(3,0);
+int OpenDSS::extractMonitorData(struct Sample *const *smps) {
 
-  if (!ret) {
-    throw SystemError("Failed to start OpenDSS");
-  }
-
-  return 0;
-}
-
-int villas::node::opendss_start(NodeCompat *n) {
-  auto *od = n->getData<struct opendss>();
-  od->formatter->start(n->getInputSignals(false), ~(int)SampleFlags::HAS_OFFSET);
-  od->writing_turn = true; // Start with opendss_write
-  return 0;
-}
-
-static int opendss_extractMonitorData(opendss *od, struct Sample *const *smps) {
   // Get the data from the OpenDSS monitor
   uintptr_t myPtr;
   int myType;
   int mySize;
   int data_count = 0;
-  for (auto& Name:od->monitor_name) {
+  for (auto& Name:monitor_name) {
     MonitorsS(2, Name.data());
     MonitorsV(1, &myPtr, &myType, &mySize);
 
@@ -292,55 +285,46 @@ static int opendss_extractMonitorData(opendss *od, struct Sample *const *smps) {
   return data_count;
 }
 
-int villas::node::opendss_read(NodeCompat *n, struct Sample *const *smps, unsigned int cnt) {
-
-  if (n->getState() != State::STARTED) {
-    return -1;
-  }
+int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
 
   int ret = 0;
-  auto *od = n->getData<struct opendss>();
-
   // Wait until writing is done
-  pthread_mutex_lock(&od->mutex);
-  while (od->writing_turn) {
-    pthread_cond_wait(&od->cv, &od->mutex);
+  pthread_mutex_lock(&mutex);
+  while (writing_turn) {
+    pthread_cond_wait(&cv, &mutex);
   }
 
-  smps[0]->ts.origin = od->ts;
+  smps[0]->ts.origin = ts;
   smps[0]->flags = (int)SampleFlags::HAS_DATA | (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_SEQUENCE;
-  smps[0]->signals = n->getInputSignals(false);
+  // smps[0]->signals = n->getInputSignals(false);
   smps[0]->length = 0;
 
   // Solve OpenDSS file
   SolutionI(0, 0);
 
-  smps[0]->length = opendss_extractMonitorData(od, smps);
+  smps[0]->length = extractMonitorData(smps);
   smps[0]->sequence = smps[0]->data[0].f;
 
   ret = 1;
-  od->writing_turn = true;
-  pthread_cond_signal(&od->cv);
-  pthread_mutex_unlock(&od->mutex);
+  writing_turn = true;
+  pthread_cond_signal(&cv);
+  pthread_mutex_unlock(&mutex);
 
   return ret;
-
 }
 
-int villas::node::opendss_write(NodeCompat *n, struct Sample *const *smps, unsigned int cnt) {
-
-  auto *od = n->getData<struct opendss>();
+int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
 
   // Wait until reading is done
-  pthread_mutex_lock(&od->mutex);
-  while (!od->writing_turn) {
-    pthread_cond_wait(&od->cv, &od->mutex);
+  pthread_mutex_lock(&mutex);
+  while (!writing_turn) {
+    pthread_cond_wait(&cv, &mutex);
   }
 
-  od->ts = smps[0]->ts.origin;
+  ts = smps[0]->ts.origin;
   int i = 0;
 
-  for (auto &ele:od->dataIn) {
+  for (auto &ele:dataIn) {
     double (*func)(int, double);
     switch (ele.type) {
       case ElementType::generator:
@@ -365,53 +349,27 @@ int villas::node::opendss_write(NodeCompat *n, struct Sample *const *smps, unsig
     }
   }
 
-  od->writing_turn = false;
-  pthread_cond_signal(&od->cv);
-  pthread_mutex_unlock(&od->mutex);
+  writing_turn = false;
+  pthread_cond_signal(&cv);
+  pthread_mutex_unlock(&mutex);
 
   return cnt;
 }
 
-int villas::node::opendss_stop(NodeCompat *n) {
+int OpenDSS::stop() {
 
   // Close OpenDSS
   cmd_command = "CloseDI";
 	cmd_result = DSSPut_Command(cmd_command.data());
 
-	return 0;
+  return Node::stop();
 }
 
-int villas::node::opendss_destroy(NodeCompat *n) {
-  int ret;
-  auto *od = n->getData<struct opendss>();
-
-  if (od->formatter)
-    delete od->formatter;
-
-  ret = pthread_mutex_destroy(&od->mutex);
-  if (ret)
-    return ret;
-
-  ret = pthread_cond_destroy(&od->cv);
-  if (ret)
-    return ret;
-
-  return 0;
-}
-
-
-__attribute__((constructor(110))) static void register_plugin() {
-  p.name = "opendss";
-  p.description = "OpenDSS simulator node";
-  p.vectorize = 0;
-  p.size = sizeof(struct opendss);
-  p.type.start = opendss_type_start;
-  p.init = opendss_init;
-  p.destroy = opendss_destroy;
-  p.prepare = opendss_prepare;
-  p.parse = opendss_parse;
-  p.start = opendss_start;
-  p.stop = opendss_stop;
-  p.read = opendss_read;
-  p.write = opendss_write;
-}
+// Register node
+static char n[] = "opendss";
+static char d[] = "A node providing interface with OpenDSS";
+static NodePlugin<OpenDSS, n, d,
+                  (int)NodeFactory::Flags::SUPPORTS_READ |
+                      (int)NodeFactory::Flags::SUPPORTS_WRITE,
+                      1>
+    p;
