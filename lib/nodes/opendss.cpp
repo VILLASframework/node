@@ -167,6 +167,9 @@ int OpenDSS::check() {
     throw SystemError("Failed to start OpenDSS");
   }
 
+  // Hide OpenDSS terminal output
+  DSSI(8,0);
+
   return 0;
 }
 
