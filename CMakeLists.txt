@@ -76,6 +76,9 @@ find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
 
+set(OPENDSS_INCLUDE_DIRS "/usr/local/openDSSC/bin/")
+find_library(OPENDSS_LIBRARY NAMES OpenDSSC PATHS ${OPENDSS_INCLUDE_DIRS})
+
 # Check for tools
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
@@ -203,6 +206,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"        
 cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"                           "${WITH_DEFAULTS}" "WITH_WEB; LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
+cmake_dependent_option(WITH_NODE_OPENDSS    "Build with opendss node-type"                          "${WITH_DEFAULTS}" "OPENDSS_LIBRARY" OFF)
 
 # set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -308,6 +312,7 @@ add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with 
 add_feature_info(NODE_WEBRTC            WITH_NODE_WEBRTC            "Build with webrtc node-type")
 add_feature_info(NODE_WEBSOCKET         WITH_NODE_WEBSOCKET         "Build with websocket node-type")
 add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with zeromq node-type")
+add_feature_info(NODE_OPENDSS           WITH_NODE_OPENDSS           "Build with opendss node-type")
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)

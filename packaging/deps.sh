@@ -481,6 +481,17 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
+if ! find /usr/local/ -name "libOpenDSSC.so" | grep -q . &&
+    should_build "OpenDSS" "For OpenDSS node type"; then
+    git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
+    echo "install (TARGETS klusolve_all)" >> OpenDSS-C/CMakeLists.txt
+    mkdir -p OpenDSS-C/build
+    pushd OpenDSS-C/build
+    cmake ${CMAKE_OPTS} -DMyOutputType:STRING=DLL ..
+    make ${MAKE_OPTS} install
+    popd
+fi
+
 popd >/dev/null
 rm -rf ${TMPDIR}
 
