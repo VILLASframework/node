@@ -43,6 +43,8 @@ int SignalList::parse(json_t *json) {
 SignalList::SignalList(unsigned len, enum SignalType typ) {
   char name[32];
 
+  reserve(len);
+
   for (unsigned i = 0; i < len; i++) {
     snprintf(name, sizeof(name), "signal%u", i);
 
