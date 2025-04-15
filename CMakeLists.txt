@@ -236,6 +236,15 @@ else()
     add_compile_options(-Wno-error)
 endif()
 
+if(NOT DEFINED VILLAS_COMPILE_WITH_SANITIZERS)
+    set(VILLAS_COMPILE_WITH_SANITIZERS OFF)
+endif()
+
+if(VILLAS_COMPILE_WITH_SANITIZERS)
+    add_compile_options(-fsanitize=undefined -fsanitize=address)
+    add_link_options(-fsanitize=undefined -fsanitize=address)
+endif()
+
 if(WITH_GHC_FS)
     find_package(ghc_filesystem 1.5.14 REQUIRED)
     include_directories($<TARGET_PROPERTY:ghcFilesystem::ghc_filesystem,INTERFACE_INCLUDE_DIRECTORIES>)
