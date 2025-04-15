@@ -227,6 +227,15 @@ else()
     add_compile_options(-Wno-error)
 endif()
 
+if(NOT DEFINED VILLAS_COMPILE_WITH_SANITIZERS)
+    set(VILLAS_COMPILE_WITH_SANITIZERS OFF)
+endif()
+
+if(VILLAS_COMPILE_WITH_SANITIZERS)
+    add_compile_options(-fsanitize=undefined -fsanitize=address)
+    add_link_options(-fsanitize=undefined -fsanitize=address)
+endif()
+
 # Get version info and buildid from Git
 GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 
