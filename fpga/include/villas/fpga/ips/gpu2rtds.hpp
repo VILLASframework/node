@@ -25,6 +25,9 @@ public:
   virtual bool init() override;
 
   void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
+
+  void dump() override { dump(spdlog::level::info); }
+
   bool startOnce(size_t frameSize);
 
   size_t getMaxFrameSize();
