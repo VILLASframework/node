@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Integration OpenDSS test using villas node.
+# Integration OpenDSS test using VILLASnode.
 #
 # Author: Jitpanu Maneeratpongsuk <jitpanu.maneeratpongsuk@rwth-aachen.de>
-# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-FileCopyrightText: 2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
