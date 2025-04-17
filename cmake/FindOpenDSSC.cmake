@@ -11,7 +11,7 @@ find_path(OPENDSSC_INCLUDE_DIR
 
 find_library(OPENDSSC_LIBRARY_DIR
     NAMES OpenDSSC
-    PATH_SUFFIXES bin/openDSS
+    PATH_SUFFIXES openDSSC/bin
 )
 
 include(FindPackageHandleStandardArgs)
