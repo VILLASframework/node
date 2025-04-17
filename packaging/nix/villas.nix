@@ -27,6 +27,7 @@
   withNodeModbus ? withAllNodes,
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
+  withNodeOpenDSS ? withAllNodes,
   withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
@@ -65,6 +66,7 @@
   lua,
   mosquitto,
   nanomsg,
+  opendssc,
   openssl,
   pkgsBuildBuild,
   protobufc,
@@ -141,6 +143,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
+    ++ lib.optionals withNodeNanomsg [ opendssc ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
