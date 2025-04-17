@@ -33,16 +33,16 @@ protected:
         mode; // Mode is set according to the function mode in OpenDSS
   };
 
-  bool writing_turn;
+  bool writingTurn;
   const char *path;
   timespec ts;
 
-  std::string cmd_command;
-  char *cmd_result;
+  std::string cmdCommand;
+  char *cmdResult;
 
   std::vector<Element> dataIn; // Vector of elements to be written.
-  std::vector<std::string> monitor_name;
-  std::unordered_set<std::string> load_set, gen_set, monitor_set,
+  std::vector<std::string> monitorNames;
+  std::unordered_set<std::string> loads, generators, monitors,
       isource_set; // Set of corresponding element type.
 
   pthread_mutex_t mutex;

@@ -116,7 +116,7 @@ void OpenDSS::parseData(json_t *json, bool in) {
       }
       dataIn.push_back(ele);
     } else {
-      monitor_name.push_back(json_string_value(json_data));
+      monitorNames.push_back(json_string_value(json_data));
     }
   }
 }
@@ -199,24 +199,24 @@ int OpenDSS::prepare() {
   DSSI(8, 0);
 
   // Compile OpenDSS file.
-  cmd_command = fmt::format("compile \"{}\"", path);
-  cmd_result = DSSPut_Command(cmd_command.data());
+  cmdCommand = fmt::format("compile \"{}\"", path);
+  cmdResult = DSSPut_Command(cmdCommand.data());
 
-  getElementName(ElementType::load, &load_set);
-  getElementName(ElementType::generator, &gen_set);
-  getElementName(ElementType::monitor, &monitor_set);
+  getElementName(ElementType::load, &loads);
+  getElementName(ElementType::generator, &generators);
+  getElementName(ElementType::monitor, &monitors);
   getElementName(ElementType::isource, &isource_set);
 
   // Check if element name is valid
   for (Element ele : dataIn) {
     switch (ele.type) {
     case ElementType::generator:
-      if (gen_set.find(ele.name) == gen_set.end()) {
+      if (generators.find(ele.name) == generators.end()) {
         throw SystemError("Invalid generator name '{}'", ele.name);
       }
       break;
     case ElementType::load:
-      if (load_set.find(ele.name) == load_set.end()) {
+      if (loads.find(ele.name) == loads.end()) {
         throw SystemError("Invalid load name '{}'", ele.name);
       }
       break;
@@ -230,8 +230,8 @@ int OpenDSS::prepare() {
     }
   }
 
-  for (auto m_name : monitor_name) {
-    if (monitor_set.find(m_name) == monitor_set.end()) {
+  for (auto m_name : monitorNames) {
+    if (monitors.find(m_name) == monitors.end()) {
       throw SystemError("Invalid monitor name '{}'", m_name);
     }
   }
@@ -241,7 +241,7 @@ int OpenDSS::prepare() {
 
 int OpenDSS::start() {
   // Start with writing.
-  writing_turn = true;
+  writingTurn = true;
 
   return Node::start();
 }
@@ -253,7 +253,7 @@ int OpenDSS::extractMonitorData(struct Sample *const *smps) {
   int mySize;
   int data_count = 0;
 
-  for (auto &Name : monitor_name) {
+  for (auto &Name : monitorNames) {
     MonitorsS(2, Name.data());
     MonitorsV(1, &myPtr, &myType, &mySize);
 
@@ -277,7 +277,7 @@ int OpenDSS::extractMonitorData(struct Sample *const *smps) {
 int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
   // Wait until writing is done.
   pthread_mutex_lock(&mutex);
-  while (writing_turn) {
+  while (writingTurn) {
     pthread_cond_wait(&cv, &mutex);
   }
 
@@ -293,7 +293,7 @@ int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
   smps[0]->length = extractMonitorData(smps);
   smps[0]->sequence = smps[0]->data[0].f;
 
-  writing_turn = true;
+  writingTurn = true;
   pthread_cond_signal(&cv);
   pthread_mutex_unlock(&mutex);
 
@@ -303,7 +303,7 @@ int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
 int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
   // Wait until reading is done.
   pthread_mutex_lock(&mutex);
-  while (!writing_turn) {
+  while (!writingTurn) {
     pthread_cond_wait(&cv, &mutex);
   }
 
@@ -335,7 +335,7 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
     }
   }
 
-  writing_turn = false;
+  writingTurn = false;
   pthread_cond_signal(&cv);
   pthread_mutex_unlock(&mutex);
 
@@ -344,8 +344,8 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
 
 int OpenDSS::stop() {
   // Close OpenDSS.
-  cmd_command = "CloseDI";
-  cmd_result = DSSPut_Command(cmd_command.data());
+  cmdCommand = "CloseDI";
+  cmdResult = DSSPut_Command(cmdCommand.data());
 
   return Node::stop();
 }
