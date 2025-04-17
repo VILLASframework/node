@@ -15,30 +15,6 @@
 #include <villas/node_compat.hpp>
 #include <villas/timing.hpp>
 
-extern "C" {
-  int DSSI(int mode, int arg);
-  char *DSSPut_Command(char *myCmd);
-  int SolutionI(int Parameter, int arg);
-  char *MonitorsS(int mode, char *arg);
-
-  char *DSSLoadsS(int mode, char *arg);
-  double DSSLoadsF(int mode, double arg);
-  void DSSLoadsV(int mode, uintptr_t *myPtr, int *myType, int *mySize);
-
-  char *GeneratorsS(int mode, char *arg);
-  double GeneratorsF(int mode, double arg);
-  void GeneratorsV(int mode, uintptr_t *myPtr, int *myType,
-                            int *mySize);
-
-  char *IsourceS(int mode, char *arg);
-  double IsourceF(int mode, double arg);
-  void IsourceV(int mode, uintptr_t *myPtr, int *myType, int *mySize);
-
-  char *MonitorsS(int mode, char *arg);
-  void MonitorsV(int mode, uintptr_t *myPtr, int *myType, int *mySize);
-  int MonitorsI(int mode, int arg);
-}
-
 namespace villas {
 namespace node {
 

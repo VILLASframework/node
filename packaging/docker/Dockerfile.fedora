@@ -13,8 +13,10 @@ FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 ARG DISTRO
 
 # Toolchain
+# NOTE: gcc-14 is only needed for OpenDSSC
 RUN dnf -y install \
 	gcc gcc-c++ \
+	gcc-14 g++-14 \ 
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar \
