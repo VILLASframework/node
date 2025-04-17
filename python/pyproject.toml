@@ -12,11 +12,10 @@ description = 'Python support for the VILLASnode simulation-data gateway'
 readme = 'README.md'
 requires-python = '>=3.10'
 keywords = ['simulation', 'power', 'system', 'real-time', 'villas']
-license.text = 'Apache-2.0'
+license = 'Apache-2.0'
 classifiers = [
     'Development Status :: 4 - Beta',
     'Topic :: Scientific/Engineering',
-    'License :: OSI Approved :: Apache Software License',
     'Operating System :: POSIX :: Linux',
     'Programming Language :: Python :: 3',
 ]
@@ -53,3 +52,6 @@ ignore_missing_imports = true
 
 [tool.black]
 extend-exclude = '''.*(\.pyi|_pb2.py)$'''
+
+[tool.setuptools.packages.find]
+include = ["villas.node"]
