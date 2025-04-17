@@ -47,7 +47,7 @@ repos:
     rev: "23.3.0"
     hooks:
       - id: black-jupyter
-        exclude: .*_pb2.pyi
+        exclude: .*_pb2.pyi?$
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: "v0.13.0"
