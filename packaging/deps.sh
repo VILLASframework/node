@@ -111,7 +111,7 @@ if ! pkg-config "criterion >= 2.4.1" && \
     popd
 fi
 
-# Build & Install libjansson
+# Build & Install jansson
 if ! pkg-config "jansson >= 2.13" && \
     should_build "jansson" "for configuration parsing" "required"; then
     git clone ${GIT_OPTS} --branch v2.14.1 https://github.com/akheron/jansson.git
@@ -139,7 +139,7 @@ fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
-    should_build "mosquitto" "for the MQTT node-type"; then
+    should_build "mosquitto" "for the mqtt node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.21 https://github.com/eclipse/mosquitto.git
     mkdir -p mosquitto/build
     pushd mosquitto/build
@@ -154,7 +154,7 @@ fi
 
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
-    should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
+    should_build "rabbitmq" "for the amqp node-node and VILLAScontroller"; then
     git clone ${GIT_OPTS} --branch v0.15.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
@@ -253,7 +253,7 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
     popd
 fi
 
-# Build & Install libnl3
+# Build & Install libnl
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
      ) && should_build "libnl" "for network emulation"; then
