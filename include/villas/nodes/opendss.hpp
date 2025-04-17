@@ -33,19 +33,6 @@ protected:
         mode; // Mode is set according to the function mode in OpenDSS
   };
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
-
-  void parseData(json_t *json, bool in);
-
-  void getElementName(ElementType type, std::unordered_set<std::string> *set);
-
-  int extractMonitorData(struct Sample *const *smps);
-
-public:
-  OpenDSS(const uuid_t &id = {}, const std::string &name = "");
-
   bool writing_turn;
   const char *path;
   timespec ts;
@@ -60,6 +47,19 @@ public:
 
   pthread_mutex_t mutex;
   pthread_cond_t cv;
+
+  virtual int _read(struct Sample *smps[], unsigned cnt);
+
+  virtual int _write(struct Sample *smps[], unsigned cnt);
+
+  void parseData(json_t *json, bool in);
+
+  void getElementName(ElementType type, std::unordered_set<std::string> *set);
+
+  int extractMonitorData(struct Sample *const *smps);
+
+public:
+  OpenDSS(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~OpenDSS();
 
