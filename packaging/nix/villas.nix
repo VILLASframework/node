@@ -67,6 +67,8 @@
   nanomsg,
   openssl,
   pkgsBuildBuild,
+  protobuf,
+  protobufBuildBuild ? pkgsBuildBuild.protobuf,
   protobufc,
   protobufcBuildBuild ? pkgsBuildBuild.protobufc,
   rabbitmq-c,
@@ -87,7 +89,7 @@ stdenv.mkDerivation {
   cmakeFlags =
     [ ]
     ++ lib.optionals (!withGpl) [ "-DWITHOUT_GPL=ON" ]
-    ++ lib.optionals withFormatProtobuf [ "-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin" ];
+    ++ lib.optionals withFormatProtobuf [ "-DCMAKE_FIND_ROOT_PATH=${protobufBuildBuild}/bin" ];
   postPatch = ''
     patchShebangs --host ./tools
   '';
@@ -121,7 +123,10 @@ stdenv.mkDerivation {
     pkg-config
   ];
 
-  depsBuildBuild = lib.optionals withFormatProtobuf [ protobufcBuildBuild ];
+  depsBuildBuild = lib.optionals withFormatProtobuf [
+    protobufBuildBuild
+    protobufcBuildBuild
+  ];
 
   buildInputs =
     [
@@ -157,7 +162,10 @@ stdenv.mkDerivation {
       libuuid
       jansson
     ]
-    ++ lib.optionals withFormatProtobuf [ protobufc ]
+    ++ lib.optionals withFormatProtobuf [
+      protobuf
+      protobufc
+    ]
     ++ lib.optionals withNodeInfiniband [ rdma-core ]
     ++ lib.optionals withExtraConfig [ libconfig ];
 
