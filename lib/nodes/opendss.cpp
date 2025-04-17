@@ -47,8 +47,8 @@ void OpenDSS::parseData(json_t *json, bool in) {
       json_t *a_mode = nullptr;
       Element ele;
 
-      int ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }", "name",
-                           &name, "type", &type, "data", &a_mode);
+      int ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }",
+                               "name", &name, "type", &type, "data", &a_mode);
       if (ret)
         throw ConfigError(json, err, "node-config-node-opendss");
 
@@ -158,7 +158,7 @@ void OpenDSS::getElementName(ElementType type,
   // Get all of the element name for each type and use it to check if the name in the config file is vaild.
   uintptr_t myPtr;
   int myType;
-  int mySize;
+  int mySize = 0;
   std::string name;
 
   switch (type) {
@@ -199,7 +199,7 @@ int OpenDSS::prepare() {
 
   // Compile OpenDSS file.
   cmd_command = fmt::format("compile \"{}\"", path);
-  cmd_result = DSSPut_Command(cmd_command.c_str());
+  cmd_result = DSSPut_Command(cmd_command.data());
 
   getElementName(ElementType::load, &load_set);
   getElementName(ElementType::generator, &gen_set);
@@ -253,7 +253,7 @@ int OpenDSS::extractMonitorData(struct Sample *const *smps) {
   int data_count = 0;
 
   for (auto &Name : monitor_name) {
-    MonitorsS(2, Name.c_str());
+    MonitorsS(2, Name.data());
     MonitorsV(1, &myPtr, &myType, &mySize);
 
     int channel = MonitorsI(17, 0);
@@ -314,15 +314,15 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
     switch (ele.type) {
     case ElementType::generator:
       func = GeneratorsF;
-      GeneratorsS(1, ele.name.c_str());
+      GeneratorsS(1, ele.name.data());
       break;
     case ElementType::load:
       func = DSSLoadsF;
-      DSSLoadsS(1, ele.name.c_str());
+      DSSLoadsS(1, ele.name.data());
       break;
     case ElementType::isource:
       func = IsourceF;
-      IsourceS(1, ele.name.c_str());
+      IsourceS(1, ele.name.data());
       break;
     default:
       throw SystemError("Invalid element type");
@@ -344,14 +344,14 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
 int OpenDSS::stop() {
   // Close OpenDSS.
   cmd_command = "CloseDI";
-  cmd_result = DSSPut_Command(cmd_command.c_str());
+  cmd_result = DSSPut_Command(cmd_command.data());
 
   return Node::stop();
 }
 
 // Register node.
 static char n[] = "opendss";
-static char d[] = "A node providing interface with OpenDSS";
+static char d[] = "Interface to OpenDSS, EPRI's Distribution System Simulator";
 static NodePlugin<OpenDSS, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
                       (int)NodeFactory::Flags::SUPPORTS_WRITE,
