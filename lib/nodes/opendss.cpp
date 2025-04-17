@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <fmt/core.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/opendss.hpp>
@@ -17,10 +19,7 @@ using namespace villas::node;
 using namespace villas::utils;
 
 OpenDSS::OpenDSS(const uuid_t &id, const std::string &name) : Node(id, name) {
-
-  int ret;
-
-  ret = pthread_mutex_init(&mutex, nullptr);
+  int ret = pthread_mutex_init(&mutex, nullptr);
   if (ret)
     throw RuntimeError("failed to initialize mutex");
 
@@ -43,12 +42,12 @@ void OpenDSS::parseData(json_t *json, bool in) {
 
   json_array_foreach(json, i, json_data) {
     if (in) {
-      int ret;
       const char *name;
       const char *type;
       json_t *a_mode = nullptr;
       Element ele;
-      ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }", "name",
+
+      int ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }", "name",
                            &name, "type", &type, "data", &a_mode);
       if (ret)
         throw ConfigError(json, err, "node-config-node-opendss");
@@ -189,10 +188,8 @@ void OpenDSS::getElementName(ElementType type,
 }
 
 int OpenDSS::prepare() {
-  int ret;
   // Start OpenDSS.
-  ret = DSSI(3, 0);
-
+  int ret = DSSI(3, 0);
   if (!ret) {
     throw SystemError("Failed to start OpenDSS");
   }
@@ -201,10 +198,8 @@ int OpenDSS::prepare() {
   DSSI(8, 0);
 
   // Compile OpenDSS file.
-  cmd_command = "compile \"";
-  cmd_command.append(path);
-  cmd_command += "\"";
-  cmd_result = DSSPut_Command(cmd_command.data());
+  cmd_command = fmt::format("compile \"{}\"", path);
+  cmd_result = DSSPut_Command(cmd_command.c_str());
 
   getElementName(ElementType::load, &load_set);
   getElementName(ElementType::generator, &gen_set);
@@ -244,7 +239,7 @@ int OpenDSS::prepare() {
 }
 
 int OpenDSS::start() {
-  //Start with writing.
+  // Start with writing.
   writing_turn = true;
 
   return Node::start();
@@ -256,8 +251,9 @@ int OpenDSS::extractMonitorData(struct Sample *const *smps) {
   int myType;
   int mySize;
   int data_count = 0;
+
   for (auto &Name : monitor_name) {
-    MonitorsS(2, Name.data());
+    MonitorsS(2, Name.c_str());
     MonitorsV(1, &myPtr, &myType, &mySize);
 
     int channel = MonitorsI(17, 0);
@@ -273,11 +269,11 @@ int OpenDSS::extractMonitorData(struct Sample *const *smps) {
     }
     data_count += channel;
   }
+
   return data_count;
 }
 
 int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
-  int ret = 0;
   // Wait until writing is done.
   pthread_mutex_lock(&mutex);
   while (writing_turn) {
@@ -288,21 +284,19 @@ int OpenDSS::_read(struct Sample *smps[], unsigned cnt) {
   smps[0]->flags = (int)SampleFlags::HAS_DATA |
                    (int)SampleFlags::HAS_TS_ORIGIN |
                    (int)SampleFlags::HAS_SEQUENCE;
-  // smps[0]->signals = n->getInputSignals(false);
   smps[0]->length = 0;
 
-  // Solve OpenDSS file
+  // Solve OpenDSS file.
   SolutionI(0, 0);
 
   smps[0]->length = extractMonitorData(smps);
   smps[0]->sequence = smps[0]->data[0].f;
 
-  ret = 1;
   writing_turn = true;
   pthread_cond_signal(&cv);
   pthread_mutex_unlock(&mutex);
 
-  return ret;
+  return 1;
 }
 
 int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
@@ -313,22 +307,22 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
   }
 
   ts = smps[0]->ts.origin;
-  int i = 0;
 
+  int i = 0;
   for (auto &ele : dataIn) {
     double (*func)(int, double);
     switch (ele.type) {
     case ElementType::generator:
       func = GeneratorsF;
-      GeneratorsS(1, ele.name.data());
+      GeneratorsS(1, ele.name.c_str());
       break;
     case ElementType::load:
       func = DSSLoadsF;
-      DSSLoadsS(1, ele.name.data());
+      DSSLoadsS(1, ele.name.c_str());
       break;
     case ElementType::isource:
       func = IsourceF;
-      IsourceS(1, ele.name.data());
+      IsourceS(1, ele.name.c_str());
       break;
     default:
       throw SystemError("Invalid element type");
@@ -350,7 +344,7 @@ int OpenDSS::_write(struct Sample *smps[], unsigned cnt) {
 int OpenDSS::stop() {
   // Close OpenDSS.
   cmd_command = "CloseDI";
-  cmd_result = DSSPut_Command(cmd_command.data());
+  cmd_result = DSSPut_Command(cmd_command.c_str());
 
   return Node::stop();
 }

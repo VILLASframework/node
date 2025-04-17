@@ -113,7 +113,7 @@ EOF
 VILLAS_LOG_PREFIX="[node] " \
 villas node config.json &
 
-# # Wait for node to complete init
+# Wait for node to complete init
 sleep 2
 
 kill %%
