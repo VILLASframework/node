@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <OpenDSSCDLL.h>
 #include <fmt/core.h>
 
 #include <villas/exceptions.hpp>

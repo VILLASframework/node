@@ -481,13 +481,20 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
-if ! find /usr/local/ -name "libOpenDSSC.so" | grep -q . &&
-    should_build "opendss" "For opendss node-type"; then
+if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
+    should_build "opendssc" "for the opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
-    echo "install (TARGETS klusolve_all)" >> OpenDSS-C/CMakeLists.txt
+    cat <<-EOF >> OpenDSS-C/CMakeLists.txt
+      file(GLOB_RECURSE HEADERS "*.h")
+      install(FILES \${HEADERS} DESTINATION include/OpenDSSC)
+      install(TARGETS klusolve_all)
+EOF
     mkdir -p OpenDSS-C/build
     pushd OpenDSS-C/build
-    cmake ${CMAKE_OPTS} -DMyOutputType:STRING=DLL ..
+    cmake -DMyOutputType=DLL \
+          -DCMAKE_C_COMPILER=gcc-14 \
+          -DCMAKE_CXX_COMPILER=g++-14 \
+          ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
 fi
