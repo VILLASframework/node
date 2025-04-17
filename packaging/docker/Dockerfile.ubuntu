@@ -61,10 +61,6 @@ RUN apt-get update && \
 		libglib2.0-dev \
 		libcriterion-dev
 
-# Add local and 64-bit locations to linker paths
-ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
-
 # or install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
