@@ -70,6 +70,8 @@
           contents = [ villas-node ];
           config.ENTRYPOINT = "/bin/villas";
         };
+
+        opendssc = pkgs.callPackage (nixDir + "/opendssc.nix") { };
       };
     in
     {
