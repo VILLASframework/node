@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+
 version = 1
 SPDX-PackageName = "VILLASnode"
 SPDX-PackageSupplier = "Steffen Vogel <post@steffenvogel.de>"

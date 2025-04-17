@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=41
+ARG FEDORA_VERSION=42
 ARG REF=unknown
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
@@ -13,11 +13,13 @@ FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 ARG DISTRO
 
 # Toolchain
+# NOTE: gcc-14 is only needed for OpenDSSC
 RUN dnf -y install \
 	gcc gcc-c++ \
+	gcc-14 g++-14 \ 
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
-	texinfo git curl tar \
+	texinfo git awk git-svn curl tar \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
@@ -66,10 +68,6 @@ RUN dnf -y install \
 	libnice-devel \
 	libmodbus-devel
 
-# Add local and 64-bit locations to linker paths
-RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
-
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
 RUN bash deps.sh
@@ -88,8 +86,8 @@ RUN python -m venv /venv && \
 EXPOSE 80
 EXPOSE 443
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 WORKDIR /villas
 
