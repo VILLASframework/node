@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=41
+ARG FEDORA_VERSION=42
 ARG REF=unknown
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
@@ -17,7 +17,7 @@ RUN dnf -y install \
 	gcc gcc-c++ \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
-	texinfo git curl tar \
+	texinfo git awk git-svn curl tar \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
