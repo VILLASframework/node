@@ -60,10 +60,6 @@ RUN apt-get update && \
 		libhiredis-dev:${ARCH} \
 		libmodbus-dev:${ARCH}
 
-# Add local and 64-bit locations to linker paths
-ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
-
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
