@@ -491,9 +491,14 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
 EOF
     mkdir -p OpenDSS-C/build
     pushd OpenDSS-C/build
+    if command -v g++-14 2>&1 >/dev/null; then
+        # OpenDSS rev 4020 is not compatible with GCC 15
+        OPENDSS_CMAKE_OPTS="-DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14"
+    else
+        OPENDSS_CMAKE_OPTS=""
+    fi
     cmake -DMyOutputType=DLL \
-          -DCMAKE_C_COMPILER=gcc-14 \
-          -DCMAKE_CXX_COMPILER=g++-14 \
+          ${OPENDSS_CMAKE_OPTS} \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
