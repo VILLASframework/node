@@ -15,6 +15,7 @@ ARG DISTRO
 # Toolchain
 RUN dnf -y install \
 	gcc gcc-c++ \
+	gcc-14 g++-14 \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar \
@@ -54,7 +55,6 @@ RUN dnf -y install \
 	protobuf-devel \
 	protobuf-c-devel \
 	zeromq-devel \
-	nanomsg-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
 	librdkafka-devel \
@@ -65,6 +65,8 @@ RUN dnf -y install \
 	hiredis-devel \
 	libnice-devel \
 	libmodbus-devel
+	# TODO: v1.2.1 seems broken. Re-enable once new version is available
+	# nanomsg-devel
 
 # Install unpackaged dependencies from source
 ADD packaging/deps.sh /
