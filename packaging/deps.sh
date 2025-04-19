@@ -314,7 +314,8 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
     should_build "nanomsg" "for the nanomsg node-type"; then
-    git clone ${GIT_OPTS} --branch 1.2.1 https://github.com/nanomsg/nanomsg.git
+    # TODO: v1.2.1 seems to be broken: https://github.com/nanomsg/nanomsg/issues/1111
+    git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake -DNN_TESTS=OFF \
