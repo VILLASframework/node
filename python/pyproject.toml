@@ -21,16 +21,16 @@ classifiers = [
 ]
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
-    'requests==2.31.0',
-    'protobuf==4.24.4',
+    'requests==2.32.3',
+    'protobuf==6.30.2',
 ]
 optional-dependencies.dev = [
-    'black==24.2.0',
-    'flake8==7.0.0',
-    'mypy==1.8.0',
-    'pytest==8.0.0',
-    'types-requests==2.31.0.20240125',
-    'types-protobuf==4.24.0.20240311',
+    'black==25.1.0',
+    'flake8==7.2.0',
+    'mypy==1.15.0',
+    'pytest==8.3.5',
+    'types-requests==2.32.0.20250328',
+    'types-protobuf==5.29.1.20250403',
 ]
 
 [project.urls]
