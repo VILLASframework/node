@@ -14,7 +14,6 @@ ARG DISTRO
 
 # Toolchain
 RUN dnf -y install \
-	gcc gcc-c++ \
 	gcc-14 g++-14 \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
@@ -69,6 +68,13 @@ RUN dnf -y install \
 	# nanomsg-devel
 
 # Install unpackaged dependencies from source
+# TODO: We currently need to build with GCC 14 to get OpenDSSC working
+ENV CC=gcc-14
+ENV CXX=g++-14
+
+# Add local library directory to linker paths
+RUN echo /usr/local/lib   >> /etc/ld.so.conf
+
 ADD packaging/deps.sh /
 RUN bash deps.sh
 RUN ldconfig
@@ -111,7 +117,10 @@ COPY . /villas/
 
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
-	cmake ${CMAKE_OPTS} .. && \
+	cmake \
+		-DCMAKE_CXX_COMPILER=g++-14 \
+		-DCMAKE_C_COMPILER=gcc-14 \
+		${CMAKE_OPTS} .. && \
 	make -j$(nproc) install && \
 	ldconfig
 
