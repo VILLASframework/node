@@ -490,6 +490,8 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
       install(FILES \${HEADERS} DESTINATION include/OpenDSSC)
       install(TARGETS klusolve_all)
 EOF
+    sed  -i $'1888i \
+    chdir(StartupDirectory.data());' OpenDSS-C/Common/DSSGlobals.cpp
     mkdir -p OpenDSS-C/build
     pushd OpenDSS-C/build
     if command -v g++-14 2>&1 >/dev/null; then
