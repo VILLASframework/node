@@ -93,6 +93,8 @@ export PKG_CONFIG_PATH
 #     GIT_OPTS+=" -c http.sslVerify=false"
 # fi
 
+SOURCE_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+
 # Build in a temporary directory
 TMPDIR=$(mktemp -d)
 
@@ -485,14 +487,10 @@ fi
 if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
-    cat <<-EOF >> OpenDSS-C/CMakeLists.txt
-      file(GLOB_RECURSE HEADERS "*.h")
-      install(FILES \${HEADERS} DESTINATION include/OpenDSSC)
-      install(TARGETS klusolve_all)
-EOF
-    sed  -i $'1888i \
-    chdir(StartupDirectory.data());' OpenDSS-C/Common/DSSGlobals.cpp
     mkdir -p OpenDSS-C/build
+    pushd OpenDSS-C
+    for i in ${SOURCE_DIR}/patches/*-opendssc-*.patch; do patch --strip=1 --binary < "$i"; done
+    popd
     pushd OpenDSS-C/build
     if command -v g++-14 2>&1 >/dev/null; then
         # OpenDSS rev 4020 is not compatible with GCC 15

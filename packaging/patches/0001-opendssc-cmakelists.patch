@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index acb9b35..86fe53f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -414,3 +414,10 @@ foreach(_tgt ${OPENDSSC_TARGETS})
+ #		>
+ #	)
+ endforeach()
++
++# Install header files
++file(GLOB_RECURSE HEADERS "*.h")
++install(FILES ${HEADERS} DESTINATION include/OpenDSSC)
++
++# Install libklusolve_all shared library
++install(TARGETS klusolve_all)

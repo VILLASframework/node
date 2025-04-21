@@ -23,7 +23,7 @@ RUN dnf --allowerasing -y install \
 	pkgconfig cmake make \
 	autoconf automake libtool \
 	flex bison \
-	texinfo git git-svn curl tar \
+	texinfo git git-svn curl tar patchutils \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
 
@@ -50,9 +50,10 @@ RUN dnf -y install \
 	libnice-devel \
 	libmodbus-devel
 
-# or install unpackaged dependencies from source
-ADD packaging/deps.sh /
-RUN bash deps.sh
+# Install unpackaged dependencies from source
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc

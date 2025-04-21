@@ -86,8 +86,9 @@ ENV RANLIB=${TRIPLET}-ranlib
 RUN mkdir ${PREFIX}
 
 # Install unpackaged dependencies from source
-ADD packaging/deps.sh /
-RUN bash deps.sh
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
