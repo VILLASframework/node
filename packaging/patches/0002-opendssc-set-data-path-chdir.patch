@@ -1,0 +1,12 @@
+diff --git a/Common/DSSGlobals.cpp b/Common/DSSGlobals.cpp
+index 38b9188..4d85e92 100644
+--- a/Common/DSSGlobals.cpp
++++ b/Common/DSSGlobals.cpp
+@@ -1885,6 +1885,7 @@ namespace DSSGlobals
+ 
+       StartupDirectory = GetCurrentDir() + DIRSEP_STR;
+       SetDataPath( GetDefaultDataDirectory() + DIRSEP_STR + ProgramName + DIRSEP_STR );
++      ChDir(StartupDirectory); // Revert ChDir within SetDataPath
+       //DSS_Registry = TIniRegSave.Create( DataDirectory[ActiveActor] + "opendsscmd.ini" );
+       AuxParser[ActiveActor] = new TParser();
+ 

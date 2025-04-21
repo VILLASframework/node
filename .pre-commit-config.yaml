@@ -8,8 +8,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: \.patch$
       - id: end-of-file-fixer
-        exclude: \.svg$
+        exclude: \.(svg|patch)$
       - id: check-ast
       - id: check-xml
       - id: check-yaml

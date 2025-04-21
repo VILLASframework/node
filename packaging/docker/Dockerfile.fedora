@@ -17,7 +17,7 @@ RUN dnf -y install \
 	gcc-14 g++-14 \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
-	texinfo git awk git-svn curl tar \
+	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
@@ -75,8 +75,10 @@ ENV CXX=g++-14
 # Add local library directory to linker paths
 RUN echo /usr/local/lib   >> /etc/ld.so.conf
 
-ADD packaging/deps.sh /
-RUN bash deps.sh
+# Install unpackaged dependencies from source
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
 RUN ldconfig
 
 # Workaround for libnl3's search path for netem distributions

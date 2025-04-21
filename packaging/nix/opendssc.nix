@@ -25,13 +25,11 @@ stdenv.mkDerivation {
 
   enableParallelBuilding = true;
 
-  postPatch = ''
-    cat <<EOF >> CMakeLists.txt
-      file(GLOB_RECURSE HEADERS "*.h")
-      install(FILES \''${HEADERS} DESTINATION include/OpenDSSC)
-      install(TARGETS klusolve_all)
-    EOF
-  '';
+  patchFlags = [ "--binary" "--strip=1" ]; # OpenDSS is using CRLF line endings
+  patches = [
+    ../patches/0001-opendssc-cmakelists.patch
+    ../patches/0002-opendssc-set-data-path-chdir.patch
+  ];
 
   postInstall = ''
     mv $out/openDSSC/bin/*.so $out/lib/

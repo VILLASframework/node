@@ -29,3 +29,9 @@ indent_size = 4
 [*.{nix,json}]
 indent_style = space
 indent_size = 2
+
+[*.patch]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
