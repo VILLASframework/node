@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Run tests
 
-```
-$ BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh
+```shell
+BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh
 ```
 
 There are two options for the test script:
@@ -20,6 +20,6 @@ There are two options for the test script:
 
 Example:
 
-```
-$ BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh -f pipe-loopback-socket -v
+```shell
+BUILDDIR=/VILLASnode/build/ /VILLASnode/tools/integration-tests.sh -f pipe-loopback-socket -v
 ```
