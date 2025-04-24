@@ -692,7 +692,7 @@ Model {
       }
       Name		      "Configuration"
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 326, 217, 1222, 885 ] 
+      ConfigPrmDlgPosition     [ 326, 217, 1222, 885 ]
     }
     PropName		    "ConfigurationSets"
   }
