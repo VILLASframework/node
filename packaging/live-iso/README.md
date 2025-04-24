@@ -4,7 +4,7 @@ This project builds a real-time optimized Fedora version with anaconda/kickstart
 
 ## Documentation
 
-https://villas.fein-aachen.org/docs/liveusb/
+<https://villas.fein-aachen.org/docs/liveusb/>
 
 ## Contact
 
