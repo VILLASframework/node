@@ -1,37 +1,37 @@
 {
-    "hugepages": 0,
-    "http": {
-        "port": 80
+  "hugepages": 0,
+  "http": {
+    "port": 80
+  },
+  "nodes": {
+    "sig": {
+      "type": "signal",
+      "signal": "mixed",
+      "values": 5,
+      "rate": 20
     },
-    "nodes": {
-        "sig": {
-            "type": "signal",
-            "signal": "mixed",
-            "values": 5,
-            "rate": 20
-        },
-        "ws_sig": {
-            "type": "websocket"
-        },
-        "ws_lo": {
-            "type": "websocket"
-        },
-        "lo": {
-            "type": "loopback"
-        }
+    "ws_sig": {
+      "type": "websocket"
     },
-    "paths": [
-        {
-            "in": "sig",
-            "out": "ws_sig"
-        },
-        {
-            "in": "ws_lo",
-            "out": "lo"
-        },
-        {
-            "in": "lo",
-            "out": "ws_lo"
-        }
-    ]
+    "ws_lo": {
+      "type": "websocket"
+    },
+    "lo": {
+      "type": "loopback"
+    }
+  },
+  "paths": [
+    {
+      "in": "sig",
+      "out": "ws_sig"
+    },
+    {
+      "in": "ws_lo",
+      "out": "lo"
+    },
+    {
+      "in": "lo",
+      "out": "ws_lo"
+    }
+  ]
 }
