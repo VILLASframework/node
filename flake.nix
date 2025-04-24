@@ -107,6 +107,8 @@
             pcre
             reuse
             cppcheck
+            pre-commit
+            ruby # for pre-commit markdownlint hook
           ];
         in
         rec {

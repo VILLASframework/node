@@ -139,6 +139,15 @@ build:nix:
 
 # Stage: test
 
+test:pre-commit:
+  needs: []
+  image: python:3.12.10-slim-bookworm
+  before_script:
+    - pip install pre-commit
+  script:
+    - apt-get update && apt-get -y install git ruby
+    - pre-commit run --all-files
+
 test:python:
   stage: test
   script:
