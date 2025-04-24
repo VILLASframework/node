@@ -32,6 +32,6 @@ For other licensing options please consult [Prof. Antonello Monti](mailto:amonti
 - Steffen Vogel <post@steffenvogel.de>
 - Marija Stevic <mstevic@eonerc.rwth-aachen.de>
 
-[Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)  
-[EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)  
-[RWTH University Aachen, Germany](http://www.rwth-aachen.de)  
+[Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)
+[EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)
+[RWTH University Aachen, Germany](http://www.rwth-aachen.de)
