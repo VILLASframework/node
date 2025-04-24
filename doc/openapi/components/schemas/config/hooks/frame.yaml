@@ -33,4 +33,3 @@ allOf:
       default: 0
 
 - $ref: ../hook.yaml
-
