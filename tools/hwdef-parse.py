@@ -260,7 +260,6 @@ ips[switch.get("INSTANCE")]["num_ports"] = int(switch_ports / 2)
 # find interrupt assignments
 
 
-
 # find interrupt assignments
 intr_controllers = []
 intr_signals = []
@@ -270,14 +269,22 @@ intc_zynq = root.findall('.//MODULE[@MODTYPE="zynq_ultra_ps_e"]')
 
 intr_controllers += intc_pcie
 for intc in intc_pcie:
-    intr_signals.append(intc.xpath('.//PORT[@NAME="intr" and @DIR="I"]')[0].get("SIGNAME"))
+    intr_signals.append(
+        intc.xpath('.//PORT[@NAME="intr" and @DIR="I"]')[0].get("SIGNAME")
+    )
 
 intr_controllers += intc_zynq
 for intc in intc_zynq:
-    intr_signals.append(intc.xpath('.//PORT[@NAME="pl_ps_irq0" and @DIR="I"]')[0].get("SIGNAME"))
+    intr_signals.append(
+        intc.xpath('.//PORT[@NAME="pl_ps_irq0" and @DIR="I"]')[0].get("SIGNAME")
+    )
 
 for intc, intr in zip(intr_controllers, intr_signals):
-    concat = root.xpath('.//MODULE[@MODTYPE="xlconcat" and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(intr))[0]
+    concat = root.xpath(
+        './/MODULE[@MODTYPE="xlconcat" and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(
+            intr
+        )
+    )[0]
     ports = concat.xpath('.//PORT[@DIR="I"]')
 
     for port in ports:
@@ -356,9 +363,7 @@ for pcie in pcies:
         barnum = pcie.find('.//PARAMETER[@NAME="C_{}_NUM"]'.format(from_bar))
         if barnum == None:
             barnum = pcie.find('.//PARAMETER[@NAME="{}_NUM"]'.format(from_bar))
-        from_bar_num = int(
-            barnum.get("VALUE")
-        )
+        from_bar_num = int(barnum.get("VALUE"))
 
         for i in range(0, from_bar_num):
             from_bar_to_bar_offset = int(
