@@ -54,14 +54,14 @@ protected:
       //corr = 1;
 
 #if 0
-			// Recursive update
-			coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
+      // Recursive update
+      coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
 
-			out[k] = (2.0 / N) * (coeffs[i] * corr);
+      out[k] = (2.0 / N) * (coeffs[i] * corr);
 
-			// DC component
-			if (fharmonics[k] == 0)
-				out[k] /= 2.0;
+      // DC component
+      if (fharmonics[k] == 0)
+        out[k] /= 2.0;
 #else
       // Full DFT
       std::complex<double> X_k = 0;

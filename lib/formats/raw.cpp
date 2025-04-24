@@ -68,9 +68,9 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes,
     const struct Sample *smp = smps[i];
 
     /* First three values are sequence, seconds and nano-seconds timestamps
-		*
-		* These fields are always encoded as integers!
-		*/
+    *
+    * These fields are always encoded as integers!
+    */
     if (fake) {
       // Check length
       nlen = (o + 3) * (bits / 8);

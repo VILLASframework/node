@@ -49,9 +49,9 @@ private:
 
 public:
   /* Initialize the web interface.
- 	 *
- 	 * The web interface is based on the libwebsockets library.
- 	 */
+   *
+   * The web interface is based on the libwebsockets library.
+   */
   Web(Api *a = nullptr);
 
   ~Web();

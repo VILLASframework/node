@@ -98,7 +98,7 @@ public:
       resp->setHeader("Content-Encoding", "gzip");
 
 #if 0
-		gvFreeRenderData(data);
+    gvFreeRenderData(data);
 #endif
     gvFreeLayout(gvc, graph);
 
