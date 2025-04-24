@@ -13,13 +13,12 @@
 #include <spdlog/common.h>
 #include <string>
 
-
 class JsonParser {
 private:
   inline static auto logger = villas::Log::get("Json Parser");
 
 public:
-  json_t* json;
+  json_t *json;
 
 public:
   JsonParser(json_t *json) : json(json) {}
@@ -39,12 +38,10 @@ public:
     fclose(f);
   }
 
-  ~JsonParser() {
-    json_decref(json);
-  }
+  ~JsonParser() { json_decref(json); }
 
-  json_t* get(const std::string &key) {
-    json_t* result = json_object_get(this->json, key.c_str());
+  json_t *get(const std::string &key) {
+    json_t *result = json_object_get(this->json, key.c_str());
     if (result == nullptr) {
       logger->error("No section {} found in config", key);
       exit(1);

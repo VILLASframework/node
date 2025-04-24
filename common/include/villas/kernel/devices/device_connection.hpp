@@ -10,9 +10,9 @@
 
 #include <memory>
 
-#include <villas/kernel/vfio_device.hpp>
-#include <villas/kernel/vfio_container.hpp>
 #include <villas/kernel/devices/device.hpp>
+#include <villas/kernel/vfio_container.hpp>
+#include <villas/kernel/vfio_device.hpp>
 
 namespace villas {
 namespace kernel {
