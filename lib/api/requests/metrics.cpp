@@ -1,7 +1,7 @@
-/* The "nodes" API ressource.
+/* The Prometheus metrics endpoint.
  *
- * Author: Steffen Vogel <post@steffenvogel.de>
- * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Youssef Nakti <youssef.nakti@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -66,7 +66,7 @@ public:
 // Register API request
 static char n[] = "metrics";
 static char r[] = "/metrics";
-static char d[] = "Get stats of all nodes in desired format";
+static char d[] = "Get Prometheus metrics from all nodes";
 static RequestPlugin<MetricsRequest, n, r, d> p;
 
 } // namespace api
