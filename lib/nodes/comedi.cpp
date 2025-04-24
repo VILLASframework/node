@@ -440,8 +440,8 @@ int villas::node::comedi_start(NodeCompat *n) {
 
   // Enable non-blocking syscalls
   // TODO: verify if this works with both input and output, so comment out
-  //if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
-  //	throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
+  // if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
+  //   throw RuntimeError("Failed to set non-blocking flag in Comedi FD");
 
   comedi_start_common(n);
 
@@ -627,14 +627,14 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
   n->logger->info("Current bufpos={}", c->bufpos);
 
 #if 0
-	if (c->bufpos > (d->buffer_size - villas_sample_size)) {
-		ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
-		if (ret < 0)
-			throw RuntimeError("Canot get offset");
+  if (c->bufpos > (d->buffer_size - villas_sample_size)) {
+    ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
+    if (ret < 0)
+      throw RuntimeError("Canot get offset");
 
-		c->bufpos = ret;
-		n->logger->info("Change bufpos={}", c->bufpos);
-	}
+    c->bufpos = ret;
+    n->logger->info("Change bufpos={}", c->bufpos);
+  }
 #endif
 
   ret = comedi_get_buffer_contents(c->dev, d->subdevice);
@@ -657,30 +657,30 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
                   villas_sample_count, bytes_available, d->chanlist_len);
 
 #if 0
-	if (villas_sample_count == 1)
-		n->logger->info("front={} back={} bufpos={}", c->front, c->back, c->bufpos);
+  if (villas_sample_count == 1)
+    n->logger->info("front={} back={} bufpos={}", c->front, c->back, c->bufpos);
 
-	if ((c->bufpos + bytes_available) >= d->buffer_size) {
-		// Let comedi do the wraparound, only consume until end of buffer
-		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
-		n->logger->warn("Reducing consumption from {} to {} bytes", ret, bytes_available);
-		n->logger->warn("Only consume {} VILLAS samples b/c of buffer wraparound", villas_sample_count);
-	}
+  if ((c->bufpos + bytes_available) >= d->buffer_size) {
+    // Let comedi do the wraparound, only consume until end of buffer
+    villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
+    n->logger->warn("Reducing consumption from {} to {} bytes", ret, bytes_available);
+    n->logger->warn("Only consume {} VILLAS samples b/c of buffer wraparound", villas_sample_count);
+  }
 #endif
 
   if (cnt > villas_sample_count)
     cnt = villas_sample_count;
 
 #if 0
-	if (bytes_available != 0 && bytes_available < villas_sample_size) {
-		n->logger->warn("Cannot consume samples, only {} bytes available, throw away", ret);
+  if (bytes_available != 0 && bytes_available < villas_sample_size) {
+    n->logger->warn("Cannot consume samples, only {} bytes available, throw away", ret);
 
-		ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
-		if (ret != bytes_available)
-			throw RuntimeError("Cannot throw away {} bytes, returned {}", bytes_available, ret);
+    ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
+    if (ret != bytes_available)
+      throw RuntimeError("Cannot throw away {} bytes, returned {}", bytes_available, ret);
 
-		return 0;
-	}
+    return 0;
+  }
 #endif
 
   const size_t samples_total_bytes = cnt * villas_sample_size;
@@ -732,19 +732,19 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
       if (isnan(smps[i]->data[si].f))
         throw RuntimeError("Got nan");
 
-      //			smps[i]->data[si].i = raw;
+      // smps[i]->data[si].i = raw;
 
       c->bufpos += d->sample_size;
       if (c->bufpos >= d->buffer_size) {
         n->logger->warn("Read buffer wraparound");
-        //				c->bufpos = 0;
+        // c->bufpos = 0;
       }
     }
   }
 
-  //	const size_t bytes_consumed = c->front - c->back;
+  // const size_t bytes_consumed = c->front - c->back;
 
-  //	n->logger->info("Advance Comedi buffer by {} bytes", bytes_consumed);
+  // n->logger->info("Advance Comedi buffer by {} bytes", bytes_consumed);
 
   ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
   if (ret < 0) {
@@ -760,38 +760,38 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
   c->bufpos = ret;
 
 #if 0
-	ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
-	if (ret < 0) //!= bytes_consumed)
-		throw RuntimeError("Failed to mark buffer position (ret={}) for input stream", ret);
-//	else if (ret == 0) {
-	else {
-		n->logger->info("Consumed {} bytes", bytes_consumed);
-		n->logger->info("Mark buffer returned {}", ret);
+  ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
+  if (ret < 0) //!= bytes_consumed)
+    throw RuntimeError("Failed to mark buffer position (ret={}) for input stream", ret);
+  // else if (ret == 0) {
+  else {
+    n->logger->info("Consumed {} bytes", bytes_consumed);
+    n->logger->info("Mark buffer returned {}", ret);
 
-		if (ret == 0) {
-			ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
-			n->logger->info("Trying again, mark buffer returned now {}", ret);
-		}
+    if (ret == 0) {
+      ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
+      n->logger->info("Trying again, mark buffer returned now {}", ret);
+    }
 
-		if (ret > 0) {
-			ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
-			if (ret < 0)
-				throw RuntimeError("Failed to get read buffer offset");
+    if (ret > 0) {
+      ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
+      if (ret < 0)
+        throw RuntimeError("Failed to get read buffer offset");
 
-			n->logger->warn("Change bufpos1: {} to {}", c->bufpos, ret);
-			c->bufpos = ret;
-		}
-		else {
-//			n->logger->warn("Change bufpos2: {} to {}", c->bufpos, c->);
-//			c->bufpos += bytes_consumed;
-			n->logger->warn("Keep bufpos={}", c->bufpos);
-		}
+      n->logger->warn("Change bufpos1: {} to {}", c->bufpos, ret);
+      c->bufpos = ret;
+    }
+    else {
+      // n->logger->warn("Change bufpos2: {} to {}", c->bufpos, c->);
+      // c->bufpos += bytes_consumed;
+      n->logger->warn("Keep bufpos={}", c->bufpos);
+    }
 
-//		c->bufpos = 0;
-	}
+    // c->bufpos = 0;
+  }
 #endif
 
-  //	n->logger->info("New bufpos: {}", c->bufpos);
+  // n->logger->info("New bufpos: {}", c->bufpos);
 
   c->back = c->front;
 
