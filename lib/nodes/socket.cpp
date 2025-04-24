@@ -374,8 +374,10 @@ static void socket_tcp_connection(NodeCompat *n, Socket *s) {
     // Attempt to connect to TCP server.
     int retries = 0;
     while (retries < MAX_CONNECTION_RETRIES) {
-      n->logger->info("Attempting to connect to TCP server: attempt={}...", retries + 1);
-      ret = connect(s->sd, (struct sockaddr *)&s->out.saddr, sizeof(s->in.saddr));
+      n->logger->info("Attempting to connect to TCP server: attempt={}...",
+                      retries + 1);
+      ret =
+          connect(s->sd, (struct sockaddr *)&s->out.saddr, sizeof(s->in.saddr));
       if (ret == 0) {
         s->tcp_connected = true;
         break;
@@ -391,7 +393,7 @@ static void socket_tcp_connection(NodeCompat *n, Socket *s) {
   } else if (s->layer == SocketLayer::TCP_SERVER) {
     ret = listen(s->sd, 5);
     if (ret < 0)
-       throw SystemError("Failed to listen for TCP client connection");
+      throw SystemError("Failed to listen for TCP client connection");
     // Accept client connection and get client socket descriptor.
     s->clt_sd = accept(s->sd, nullptr, nullptr);
     if (s->clt_sd < 0) {
@@ -437,7 +439,8 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
 
     throw SystemError("Failed recvfrom()");
   } else if (bytes == 0) {
-    if (s->layer == SocketLayer::TCP_CLIENT || s->layer == SocketLayer::TCP_SERVER)
+    if (s->layer == SocketLayer::TCP_CLIENT ||
+        s->layer == SocketLayer::TCP_SERVER)
       s->tcp_connected = false;
 
     return 0;
@@ -546,8 +549,8 @@ retry2:
     // Send data to TCP client.
     bytes = send(s->clt_sd, s->out.buf, wbytes, 0);
   } else {
-    bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *)&s->out.saddr,
-                 addrlen);
+    bytes = sendto(s->sd, s->out.buf, wbytes, 0,
+                   (struct sockaddr *)&s->out.saddr, addrlen);
   }
 
   if (bytes < 0) {

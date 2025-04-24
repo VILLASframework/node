@@ -368,7 +368,8 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
 std::vector<int> FpgaNode::getPollFDs() {
   if (!lowLatencyMode && card && !card->polling) {
-    std::shared_ptr<PCIeCard> pciecard = std::dynamic_pointer_cast<PCIeCard>(card);
+    std::shared_ptr<PCIeCard> pciecard =
+        std::dynamic_pointer_cast<PCIeCard>(card);
     return pciecard->vfioDevice->getEventfdList();
   } else {
     return {};
