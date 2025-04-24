@@ -58,7 +58,7 @@ protected:
         : node(n), id(id), rate(rate), warmup(warmup), cooldown(cooldown),
           values(values), count(count), sent(0), received(0), missed(0),
           count_warmup(count_warmup), sent_warmup(0), received_warmup(0),
-          missed_warmup(0), filename(filename) {};
+          missed_warmup(0), filename(filename){};
 
     int start();
     int stop();
@@ -96,7 +96,7 @@ public:
       : Node(id, name), task(), formatter(nullptr), stream(nullptr),
         shutdown(false) {}
 
-  virtual ~TestRTT() {};
+  virtual ~TestRTT(){};
 
   virtual int prepare();
 

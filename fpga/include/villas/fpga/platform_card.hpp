@@ -25,7 +25,7 @@ class PlatformCard : public Card {
 public:
   PlatformCard(std::shared_ptr<kernel::vfio::Container> vfioContainer);
 
-  ~PlatformCard() {};
+  ~PlatformCard(){};
 
   std::vector<CoreConnection> core_connections;
 

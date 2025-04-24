@@ -19,7 +19,7 @@ namespace devices {
 
 DeviceConnection::DeviceConnection(
     std::shared_ptr<kernel::vfio::Device> vfio_device)
-    : logger(villas::Log::get("DeviceConnection")), vfio_device(vfio_device) {};
+    : logger(villas::Log::get("DeviceConnection")), vfio_device(vfio_device){};
 
 DeviceConnection DeviceConnection::from(
     const villas::kernel::devices::Device &device,

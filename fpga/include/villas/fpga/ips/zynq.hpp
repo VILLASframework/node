@@ -25,9 +25,7 @@ class ZynqFactory : CoreFactory {
 public:
   virtual std::string getName() const { return "Zynq"; }
 
-  virtual std::string getDescription() const {
-    return "Zynq based fpga";
-  }
+  virtual std::string getDescription() const { return "Zynq based fpga"; }
 
 private:
   virtual Vlnv getCompatibleVlnv() const {

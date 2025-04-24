@@ -61,7 +61,6 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 static struct List receivers;
 static int users = 0;
 
-
 const struct iec61850_type_descriptor *
 villas::node::iec61850_lookup_type(const char *name) {
   for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {

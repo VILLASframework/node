@@ -18,7 +18,7 @@ namespace devices {
 
 class Device {
 public:
-  virtual ~Device() {};
+  virtual ~Device(){};
 
   virtual std::optional<std::unique_ptr<Driver>> driver() const = 0;
   virtual std::optional<int> iommu_group() const = 0;
