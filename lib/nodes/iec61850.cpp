@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <pthread.h>
 #include <unistd.h>
 
 #include <libiec61850/goose_receiver.h>
@@ -60,35 +59,7 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 
 // Each network interface needs a separate receiver
 static struct List receivers;
-static pthread_t thread;
-static EthernetHandleSet hset;
 static int users = 0;
-
-static void *iec61850_thread(void *ctx) {
-  int ret;
-
-  while (1) {
-    ret = EthernetHandleSet_waitReady(hset, 1000);
-    if (ret < 0)
-      continue;
-
-    for (unsigned i = 0; i < list_length(&receivers); i++) {
-      struct iec61850_receiver *r =
-          (struct iec61850_receiver *)list_at(&receivers, i);
-
-      switch (r->type) {
-      case iec61850_receiver::Type::GOOSE:
-        GooseReceiver_tick(r->goose);
-        break;
-      case iec61850_receiver::Type::SAMPLED_VALUES:
-        SVReceiver_tick(r->sv);
-        break;
-      }
-    }
-  }
-
-  return nullptr;
-}
 
 const struct iec61850_type_descriptor *
 villas::node::iec61850_lookup_type(const char *name) {
@@ -184,12 +155,6 @@ int villas::node::iec61850_type_start(villas::node::SuperNode *sn) {
   if (ret)
     return ret;
 
-  hset = EthernetHandleSet_new();
-
-  ret = pthread_create(&thread, nullptr, iec61850_thread, nullptr);
-  if (ret)
-    return ret;
-
   return 0;
 }
 
@@ -206,16 +171,6 @@ int villas::node::iec61850_type_stop() {
     iec61850_receiver_stop(r);
   }
 
-  ret = pthread_cancel(thread);
-  if (ret)
-    return ret;
-
-  ret = pthread_join(thread, nullptr);
-  if (ret)
-    return ret;
-
-  EthernetHandleSet_destroy(hset);
-
   ret = list_destroy(&receivers, (dtor_cb_t)iec61850_receiver_destroy, true);
   if (ret)
     return ret;
@@ -226,22 +181,18 @@ int villas::node::iec61850_type_stop() {
 int villas::node::iec61850_receiver_start(struct iec61850_receiver *r) {
   switch (r->type) {
   case iec61850_receiver::Type::GOOSE:
-    r->socket = GooseReceiver_startThreadless(r->goose);
+    GooseReceiver_start(r->goose);
     break;
 
   case iec61850_receiver::Type::SAMPLED_VALUES:
-    r->socket = SVReceiver_startThreadless(r->sv);
+    SVReceiver_start(r->sv);
     break;
   }
-
-  EthernetHandleSet_addSocket(hset, r->socket);
 
   return 0;
 }
 
 int villas::node::iec61850_receiver_stop(struct iec61850_receiver *r) {
-  EthernetHandleSet_removeSocket(hset, r->socket);
-
   switch (r->type) {
   case iec61850_receiver::Type::GOOSE:
     GooseReceiver_stopThreadless(r->goose);

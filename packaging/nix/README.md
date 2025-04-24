@@ -17,10 +17,12 @@ Using `villas` as a flake thus requires the nix package manager to be installed
 and the `flakes` and `nix-command` features to be enabled.
 
 Documentation:
-- Installation: https://nixos.org/download.html
-- Enable Flakes: https://nixos.wiki/wiki/Flakes#Enable_flakes
+
+- Installation: <https://nixos.org/download.html>
+- Enable Flakes: <https://nixos.wiki/wiki/Flakes#Enable_flakes>
 
 Check if your installation works by running e.g.
+
 ```shell
 nix run nixpkgs#hello
 ```
@@ -39,6 +41,7 @@ nix run 'github:VILLASframework/node?dir=packaging/nix#villas-node-minimal' -- n
 ```
 
 The [`flake.nix`] provides 2 versions of `villas`:
+
 - `#villas-node-minimal`: `villas` CLI command without most optional dependencies
 - `#villas-node`: `villas` CLI command with most optional dependencies available to Nix
 
@@ -119,7 +122,7 @@ docker load < $(nix build --no-link --print-out-paths --impure --expr '
 ')
 ```
 
-See https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-dockerTools
+See <https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-dockerTools>
 
 ## Customization
 
@@ -135,7 +138,7 @@ expression language. And the standard `override` function used extensively in
 dependencies or build options. All of the inputs which can be overridden can be
 found at the top of [`villas.nix`].
 
-See https://nixos.org/manual/nixpkgs/stable/#chap-overrides
+See <https://nixos.org/manual/nixpkgs/stable/#chap-overrides>
 
 ```shell
 # `nix build` builds a derivation
@@ -174,6 +177,7 @@ writing your own flake. A flake is basically a directory containing a
 `flake.nix` in a new directory outside the `villas` source tree.
 
 Here is a basic flake to build upon:
+
 ```nix
 # flake.nix
 {
@@ -200,6 +204,7 @@ Here is a basic flake to build upon:
 ```
 
 The attributes here are fairly simple:
+
 - `description`: short description of the flake
 - `inputs`: attribute set that specifies all dependencies of the flake
 - `outputs`: a Nix function taking `self` and all fetched `inputs` producing

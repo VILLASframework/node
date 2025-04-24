@@ -131,7 +131,7 @@ public:
 
 private:
   virtual Vlnv getCompatibleVlnv() const {
-    return Vlnv("xilinx.com:module_ref:dinoif_fast:");
+    return Vlnv("xilinx.com:module_ref:dinoif_adc:");
   }
   Core *make() const { return new DinoAdc; };
 };

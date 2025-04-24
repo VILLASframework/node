@@ -55,7 +55,7 @@ static const char *vfio_pci_irq_names[] = {
 Device::Device(const std::string &name, int groupFileDescriptor,
                const kernel::devices::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
-      info(), irqs(), regions(), mappings(), pci_device(pci_device),
+      info(), info_irq_vectors(), regions(), mappings(), pci_device(pci_device),
       log(Log::get("kernel:vfio:device")) {
   if (groupFileDescriptor < 0)
     throw RuntimeError("Invalid group file descriptor");
@@ -81,7 +81,7 @@ Device::Device(const std::string &name, int groupFileDescriptor,
   info.num_regions = pci_device != 0 ? VFIO_PCI_CONFIG_REGION_INDEX + 1 : 1;
 
   // Reserve slots already so that we can use the []-operator for access
-  irqs.resize(info.num_irqs);
+  info_irq_vectors.resize(info.num_irqs);
   regions.resize(info.num_regions);
   mappings.resize(info.num_regions);
 
@@ -120,7 +120,7 @@ Device::Device(const std::string &name, int groupFileDescriptor,
     log->debug("irq {} info: flags: 0x{:x}, count: {}", irq.index, irq.flags,
                irq.count);
 
-    irqs[i] = irq;
+    info_irq_vectors[i] = irq;
   }
 }
 
@@ -131,7 +131,11 @@ Device::~Device() {
     regionUnmap(region.index);
   }
   if (isVfioPciDevice()) {
-    pciHotReset();
+    try {
+      pciHotReset();
+    } catch (const RuntimeError &e) {
+      log->error("PCI reset failed: {}", e.what());
+    }
   }
   reset();
 
@@ -212,7 +216,7 @@ void Device::dump() {
   }
 
   for (size_t i = 0; i < info.num_irqs; i++) {
-    struct vfio_irq_info *irq = &irqs[i];
+    struct vfio_irq_info *irq = &info_irq_vectors[i];
 
     if (irq->count > 0) {
       log->info("IRQ {} {}: count={}, flags={}", irq->index,
@@ -247,12 +251,57 @@ bool Device::pciEnable() {
   return true;
 }
 
+std::vector<Device::IrqVectorInfo> Device::initEventFds() {
+  std::vector<Device::IrqVectorInfo> vectors;
+  for (auto info_irq_vector : info_irq_vectors) {
+    Device::IrqVectorInfo irq = {0};
+    const size_t irqCount = info_irq_vector.count;
+    const size_t irqSetSize =
+        sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
+
+    auto *irqSetBuf = new char[irqSetSize];
+    if (!irqSetBuf)
+      throw MemoryAllocationError();
+    auto *irqSet = reinterpret_cast<struct vfio_irq_set *>(irqSetBuf);
+
+    irqSet->argsz = irqSetSize;
+    // DATA_EVENTFD binds the interrupt to the provided eventfd.
+    // SET_ACTION_TRIGGER enables kernel->userspace signalling.
+    irqSet->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
+    irqSet->index = info_irq_vector.index;
+    irqSet->start = 0;
+    irqSet->count = irqCount;
+    irq.automask = info_irq_vector.flags & VFIO_IRQ_INFO_AUTOMASKED;
+    irq.numFds = irqCount;
+    // Now set the new eventfds
+    for (size_t i = 0; i < irqCount; i++) {
+      irq.eventFds[i] = eventfd(0, 0);
+      if (fd < 0) {
+        delete[] irqSetBuf;
+        throw std::runtime_error("Event FD could not be created.");
+      }
+      eventfdList.push_back(fd);
+    }
+
+    memcpy(irqSet->data, irq.eventFds, sizeof(int) * irqCount);
+
+    if (ioctl(fd, VFIO_DEVICE_SET_IRQS, irqSet) != 0) {
+      delete[] irqSetBuf;
+      throw std::runtime_error("failed to set irqs");
+    }
+    delete[] irqSetBuf;
+    vectors.push_back(irq);
+  }
+
+  return vectors;
+}
+
 int Device::pciMsiInit(int efds[]) {
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;
 
-  const size_t irqCount = irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
+  const size_t irqCount = info_irq_vectors[VFIO_PCI_MSI_IRQ_INDEX].count;
   const size_t irqSetSize =
       sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
 
@@ -299,7 +348,7 @@ int Device::pciMsiDeinit(int efds[]) {
   if (not isVfioPciDevice())
     return -1;
 
-  const size_t irqCount = irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
+  const size_t irqCount = info_irq_vectors[VFIO_PCI_MSI_IRQ_INDEX].count;
   const size_t irqSetSize =
       sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
 

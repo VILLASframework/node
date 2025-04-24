@@ -111,9 +111,13 @@ PciDeviceList::value_type PciDeviceList::lookupDevice(const PciDevice &d) {
 Id::Id(const std::string &str) : vendor(0), device(0), class_code(0) {
   char *s, *c, *e;
   char *tmp = strdup(str.c_str());
+  if (!tmp)
+    throw MemoryAllocationError();
 
-  if (!*tmp)
+  if (!*tmp) {
+    free(tmp);
     return;
+  }
 
   s = strchr(tmp, ':');
   if (!s) {
@@ -173,6 +177,10 @@ bool Id::operator==(const Id &i) {
 
 Slot::Slot(const std::string &str) : domain(0), bus(0), device(0), function(0) {
   char *tmp = strdup(str.c_str());
+  if (!tmp) {
+    throw MemoryAllocationError();
+  }
+
   char *colon = strrchr(tmp, ':');
   char *dot = strchr((colon ? colon + 1 : tmp), '.');
   char *mid = tmp;

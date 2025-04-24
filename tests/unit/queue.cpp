@@ -62,8 +62,14 @@ uint64_t thread_get_id() {
   return -1;
 }
 
-// Sleep, do nothing
-__attribute__((always_inline)) static inline void nop() { __asm__("rep nop;"); }
+// Sleep, do nothing (Architecture-Specific)
+__attribute__((always_inline)) static inline void nop() {
+#if defined(__aarch64__)
+  __asm__ volatile("yield"); /// ARM equivalent of rep nop.
+#else
+  __asm__ volatile("rep nop"); /// x86 and most other architectures use rep nop.
+#endif
+}
 
 static void *producer(void *ctx) {
   int ret;
@@ -199,6 +205,7 @@ void *producer_consumer_many(void *ctx) {
 }
 #endif // _POSIX_BARRIERS
 
+// cppcheck-suppress unknownMacro
 Test(queue, single_threaded, .init = init_memory) {
   int ret;
   struct param p;
@@ -220,6 +227,7 @@ Test(queue, single_threaded, .init = init_memory) {
 }
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
+// cppcheck-suppress unknownMacro
 ParameterizedTestParameters(queue, multi_threaded) {
   static struct param params[] = {{.iter_count = 1 << 12,
                                    .queue_size = 1 << 9,
@@ -255,6 +263,7 @@ ParameterizedTestParameters(queue, multi_threaded) {
   return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
+// cppcheck-suppress unknownMacro
 ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
                   .init = init_memory) {
   int ret, cycpop;
@@ -313,6 +322,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
 }
 #endif // _POSIX_BARRIERS
 
+// cppcheck-suppress unknownMacro
 Test(queue, init_destroy, .init = init_memory) {
   int ret;
   struct CQueue q;

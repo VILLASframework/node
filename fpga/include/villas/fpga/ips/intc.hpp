@@ -11,6 +11,7 @@
 #include <xilinx/xintc.h>
 
 #include <villas/fpga/core.hpp>
+#include <villas/kernel/vfio_device.hpp>
 
 namespace villas {
 namespace fpga {
@@ -26,19 +27,25 @@ public:
   virtual bool init() override;
   virtual bool stop() override;
 
-  bool enableInterrupt(IrqMaskType mask, bool polling);
-  bool enableInterrupt(IrqPort irq, bool polling) {
+  virtual bool enableInterrupt(IrqMaskType mask, bool polling);
+  bool enableInterrupt(const IrqPort &irq, bool polling) {
     return enableInterrupt(1 << irq.num, polling);
   }
 
   bool disableInterrupt(IrqMaskType mask);
-  bool disableInterrupt(IrqPort irq) { return disableInterrupt(1 << irq.num); }
+  bool disableInterrupt(const IrqPort &irq) {
+    return disableInterrupt(1 << irq.num);
+  }
 
   ssize_t waitForInterrupt(int irq);
-  ssize_t waitForInterrupt(IrqPort irq) { return waitForInterrupt(irq.num); }
+  ssize_t waitForInterrupt(const IrqPort &irq) {
+    return waitForInterrupt(irq.num);
+  }
 
-private:
+protected:
   static constexpr char registerMemory[] = "reg0";
+
+  std::shared_ptr<villas::kernel::vfio::Device> vfioDevice = nullptr;
 
   std::list<MemoryBlockName> getMemoryBlocks() const {
     return {registerMemory};
@@ -50,10 +57,9 @@ private:
     bool polling; // Polled or not
   };
 
-  int num_irqs; // Number of available MSI vectors
-  int efds[maxIrqs];
-  int nos[maxIrqs];
-  bool polling[maxIrqs];
+  std::vector<kernel::vfio::Device::IrqVectorInfo> irq_vectors;
+  int nos[maxIrqs] = {-1};
+  bool polling[maxIrqs] = {false};
 };
 
 } // namespace ip

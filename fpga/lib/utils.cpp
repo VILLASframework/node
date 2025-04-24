@@ -26,6 +26,7 @@
 #include <villas/fpga/ips/dino.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/fpga/platform_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
 
@@ -130,20 +131,20 @@ int fpga::ConnectString::portStringToInt(std::string &str) const {
 }
 
 // parses a string like "1->2" or "1<->stdout" and configures the crossbar accordingly
-void fpga::ConnectString::configCrossBar(
+bool fpga::ConnectString::configCrossBar(
     std::shared_ptr<villas::fpga::Card> card) const {
 
   auto dma = std::dynamic_pointer_cast<fpga::ip::Dma>(
       card->lookupIp(fpga::Vlnv("xilinx.com:ip:axi_dma:")));
   if (dma == nullptr) {
     logger->error("No DMA found on FPGA ");
-    throw std::runtime_error("No DMA found on FPGA");
+    return false;
   }
 
   if (isDmaLoopback()) {
     log->info("Configuring DMA loopback");
     dma->connectLoopback();
-    return;
+    return true;
   }
 
   auto aurora_channels = getAuroraChannels(card);
@@ -155,7 +156,7 @@ void fpga::ConnectString::configCrossBar(
   }
 
   auto dinoAdc = std::dynamic_pointer_cast<fpga::ip::DinoAdc>(
-      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_fast:")));
+      card->lookupIp(fpga::Vlnv("xilinx.com:module_ref:dinoif_adc:")));
   if (dinoAdc == nullptr) {
     logger->warn("No Dino ADC found on FPGA ");
   }
@@ -176,7 +177,12 @@ void fpga::ConnectString::configCrossBar(
   } else if (aurora_channels->size() > 0) {
     src = (*aurora_channels)[srcAsInt];
   } else {
-    throw std::runtime_error("No Aurora channels found on FPGA");
+    logger->error("No Aurora channels found on FPGA");
+    return false;
+  }
+  if (!src) {
+    logger->error("Source does not exist");
+    return false;
   }
 
   if (dinoDac && dstType == ConnectType::DINO) {
@@ -185,6 +191,13 @@ void fpga::ConnectString::configCrossBar(
     dest = dma;
   } else if (aurora_channels->size() > 0) {
     dest = (*aurora_channels)[dstAsInt];
+  } else {
+    logger->error("No Aurora channels found on FPGA");
+    return false;
+  }
+  if (!dest) {
+    logger->error("Destination does not exist");
+    return false;
   }
 
   src->connect(src->getDefaultMasterPort(), dest->getDefaultSlavePort());
@@ -197,6 +210,7 @@ void fpga::ConnectString::configCrossBar(
     }
     dest->connect(dest->getDefaultMasterPort(), src->getDefaultSlavePort());
   }
+  return true;
 }
 
 void fpga::setupColorHandling() {
@@ -234,18 +248,18 @@ fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
                       "Failed to parse interface name for card {}", card_name);
   }
   std::string interfaceNameStr(interfaceName);
+  std::shared_ptr<fpga::Card> card = nullptr;
   if (interfaceNameStr == "pcie") {
-    auto card = fpga::PCIeCardFactory::make(config, std::string(card_name),
-                                            vfioContainer, searchPath);
-    if (card) {
-      return card;
-    }
-    return nullptr;
+    card = fpga::PCIeCardFactory::make(config, std::string(card_name),
+                                       vfioContainer, searchPath);
   } else if (interfaceNameStr == "platform") {
-    throw RuntimeError("Platform interface not implemented yet");
+    card = fpga::PlatformCardFactory::make(config, std::string(card_name),
+                                           vfioContainer, searchPath);
   } else {
     throw RuntimeError("Unknown interface type {}", interfaceNameStr);
   }
+
+  return card;
 }
 
 int fpga::createCards(json_t *config,

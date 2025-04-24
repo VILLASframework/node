@@ -5,11 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <villas/kernel/kernel.hpp>
 #include <villas/tsc.hpp>
 
 using namespace villas;
 
 int tsc_init(struct Tsc *t) {
+#if defined(__x86_64__) || defined(__i386__)
   uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
 
   // Check if TSC is supported
@@ -32,15 +34,23 @@ int tsc_init(struct Tsc *t) {
   if (ecx != 0)
     t->frequency = ecx * ebx / eax;
   else {
-    int ret;
 #ifdef __linux__
-    ret = kernel::get_cpu_frequency(&t->frequency);
+    int ret = kernel::get_cpu_frequency(&t->frequency);
     if (ret)
       return ret;
 #endif
   }
-
-  return 0;
+#else
+#ifdef __linux__
+  int ret = kernel::get_cpu_frequency(&t->frequency);
+  if (ret)
+    return ret;
+#endif
+#endif
+  if (t->frequency)
+    return 0; // Frequency determined with success
+  else
+    return -1;
 }
 
 uint64_t tsc_rate_to_cycles(struct Tsc *t, double rate) {

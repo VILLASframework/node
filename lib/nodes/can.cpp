@@ -434,6 +434,9 @@ int villas::node::can_write(NodeCompat *n, struct Sample *const smps[],
 
   frame = (struct can_frame *)calloc(sizeof(struct can_frame),
                                      n->getOutputSignals()->size());
+  if (!frame) {
+    throw MemoryAllocationError();
+  }
 
   for (nwrite = 0; nwrite < cnt; nwrite++) {
     for (size_t i = 0; i < n->getOutputSignals()->size(); i++) {

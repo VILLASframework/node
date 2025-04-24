@@ -46,4 +46,3 @@ package() {
 
 	make DESTDIR="$pkgdir" PREFIX=/usr install
 }
-

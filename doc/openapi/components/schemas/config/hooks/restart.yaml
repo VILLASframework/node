@@ -4,4 +4,3 @@
 ---
 allOf:
 - $ref: ../hook.yaml
-

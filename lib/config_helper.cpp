@@ -231,7 +231,7 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key,
 
 success:
   /* Does the key already exist?
- 	* If yes, transform to array. */
+   * If yes, transform to array. */
   existing = json_object_get(subobj, key1);
   if (existing) {
     if (json_is_array(existing))

@@ -31,7 +31,7 @@ MemoryManager &MemoryManager::get() {
 }
 
 MemoryManager::AddressSpaceId
-MemoryManager::getOrCreateAddressSpace(std::string name) {
+MemoryManager::getOrCreateAddressSpace(const std::string &name) {
   try {
     // Try fast lookup
     return addrSpaceLookup.at(name);

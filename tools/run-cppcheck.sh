@@ -2,29 +2,23 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+SOURCE_DIR=${SCRIPT_DIR}/..
+BUILD_DIR=${SOURCE_DIR}/build
+
+# Generate compilation database
+cmake -S ${SOURCE_DIR} -B ${BUILD_DIR} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+touch ${BUILD_DIR}/lib/formats/villas.pb-c.{c,h}
+
 cppcheck -j $(nproc) \
     --max-configs=32 \
+    --platform=unix64 \
     --error-exitcode=1 \
-    --quiet \
     --inline-suppr \
-    --enable=warning,performance,portability,missingInclude \
-    --std=c++11 \
-    --suppress=noValidConfiguration \
-    -U '_MSC_VER;_WIN32;_M_ARM' \
-    -U '_MSC_VER;_WIN32;_M_AMD64;_M_X64' \
-    -U '_MSC_FULL_VER;_MSC_VER' \
-    -U '_MSC_BUILD;_MSC_VER' \
-    -I include \
-    -I common/include \
-    -I fpga/include \
-    -I fpga/gpu/include \
-    src/ \
-    lib/ \
-    common/lib/ \
-    common/tests/unit/ \
-    tests/unit/ \
-    fpga/gpu/src \
-    fpga/gpu/lib \
-    fpga/src/ \
-    fpga/lib/ \
-    fpga/tests/unit/
+    --enable=warning,performance,portability \
+    --suppressions-list=${SCRIPT_DIR}/cppcheck-supressions.txt \
+    --project=${BUILD_DIR}/compile_commands.json \
+    -D '__linux__' \
+    -D '__x86_64__'

@@ -53,7 +53,7 @@
 #ifdef ALIGN
 #undef ALIGN
 #endif
-#define ALIGN(x, a) ALIGN_MASK(x, (uintptr_t)(a) - 1)
+#define ALIGN(x, a) ALIGN_MASK(x, (uintptr_t)(a)-1)
 #define ALIGN_MASK(x, m) (((uintptr_t)(x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t)x)
 
@@ -65,13 +65,13 @@
   } while (0)
 
 // Round-up integer division
-#define CEIL(x, y) (((x) + (y) - 1) / (y))
+#define CEIL(x, y) (((x) + (y)-1) / (y))
 
 // Get nearest up-rounded power of 2
-#define LOG2_CEIL(x) (1 << (villas::utils::log2i((x) - 1) + 1))
+#define LOG2_CEIL(x) (1 << (villas::utils::log2i((x)-1) + 1))
 
 // Check if the number is a power of 2
-#define IS_POW2(x) (((x) != 0) && !((x) & ((x) - 1)))
+#define IS_POW2(x) (((x) != 0) && !((x) & ((x)-1)))
 
 // Calculate the number of elements in an array.
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a)[0])
@@ -121,7 +121,8 @@
 namespace villas {
 namespace utils {
 
-std::vector<std::string> tokenize(std::string s, const std::string &delimiter);
+std::vector<std::string> tokenize(const std::string &s,
+                                  const std::string &delimiter);
 
 template <typename T> void assertExcept(bool condition, const T &exception) {
   if (not condition)
@@ -131,7 +132,7 @@ template <typename T> void assertExcept(bool condition, const T &exception) {
 // Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM.
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
                 std::list<int> cbSignals = {},
-                std::list<int> ignoreSignals = {SIGCHLD})
+                const std::list<int> &ignoreSignals = {SIGCHLD})
     __attribute__((warn_unused_result));
 
 // Fill buffer with random data.

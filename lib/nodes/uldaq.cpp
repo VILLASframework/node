@@ -89,7 +89,7 @@ static const struct {
   const char *name;
   ScanOption clock_source;
 } clock_sources[] = {{"internal", (ScanOption)(0 << 4)},
-                    {"external", SO_EXTCLOCK}};
+                     {"external", SO_EXTCLOCK}};
 
 static AiInputMode uldaq_parse_input_mode(const char *str) {
   for (unsigned i = 0; i < ARRAY_LEN(input_modes); i++) {
@@ -277,8 +277,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   json_error_t err;
 
   ret = json_unpack_ex(
-      json, &err, 0,
-      "{ s?: s, s?: s, s: { s: o, s: F, s?: s, s?: s, s?: s } }",
+      json, &err, 0, "{ s?: s, s?: s, s: { s: o, s: F, s?: s, s?: s, s?: s } }",
       "interface_type", &interface_type, "device_id", &u->device_id, "in",
       "signals", &json_signals, "sample_rate", &u->in.sample_rate, "range",
       &default_range_str, "input_mode", &default_input_mode_str,
@@ -301,7 +300,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
       throw ConfigError(json, "node-config-node-uldaq-clock_source",
                         "Invalid clock source type: {}", sample_clock_source);
     }
-    u->in.scan_options = (ScanOption) (u->in.scan_options | clksrc);
+    u->in.scan_options = (ScanOption)(u->in.scan_options | clksrc);
   }
 
   if (u->in.queues)

@@ -207,7 +207,7 @@ public:
    *
    * @param n A pointer to the node structure.
    */
-  std::string getNameShort() const { return name_short; }
+  const std::string &getNameShort() const { return name_short; }
 
   // Return a pointer to a string which should be used to print this node.
   const std::string &getName() const { return name_long; }

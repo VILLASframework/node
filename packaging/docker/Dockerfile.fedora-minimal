@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=36
+ARG FEDORA_VERSION=41
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 

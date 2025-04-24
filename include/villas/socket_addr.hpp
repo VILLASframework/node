@@ -35,7 +35,7 @@ union sockaddr_union {
 namespace villas {
 namespace node {
 
-enum class SocketLayer { ETH, IP, UDP, UNIX };
+enum class SocketLayer { ETH, IP, UDP, UNIX, TCP_CLIENT, TCP_SERVER };
 
 /* Generate printable socket address depending on the address family
  *
