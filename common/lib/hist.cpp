@@ -154,8 +154,10 @@ std::string Hist::promFormat(std::string metric_name, std::string node_name) con
   std::string base = "#TYPE HISTOGRAM "+metric_name;
   //need this because prometheus understands quantiles 
   int s = data.size();
+  Hist::cnt_t cumsum = 0;
   for(int i=0;i<s;i++){
-    base += "\n"+metric_name+" {node=\""+node_name+"\" le=\""+std::to_string(((double)i+1)/s)+"\"} "+std::to_string(data[i]);
+    cumsum += data[i];
+    base += "\n"+metric_name+" {node=\""+node_name+"\" le=\""+std::to_string(((double)i+1)/s)+"\"} "+std::to_string(cumsum);
   }
   std::string ttl = std::to_string(total);
   base += "\n"+metric_name+" {node=\""+node_name+"\" le=\"+Inf\"} "+ttl;
