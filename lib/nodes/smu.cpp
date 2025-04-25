@@ -247,8 +247,7 @@ int SMUNode::_read(struct Sample *smps[], unsigned cnt) {
 
   for (unsigned j = 0; j < cnt; j++) {
     struct Sample *t = smps[j];
-    ts.tv_nsec = mem_pos_local * 1e6 /
-                 (sample_rate);
+    ts.tv_nsec = mem_pos_local * 1e6 / (sample_rate);
 
     for (unsigned i = 0; i < 8; i++) {
       int16_t data = p[mem_pos_local].ch[i];
