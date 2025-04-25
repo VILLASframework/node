@@ -8,7 +8,7 @@
 #pragma once
 
 #include <vector>
-
+#include<string>
 #include <jansson.h>
 
 #include <villas/log.hpp>
@@ -49,6 +49,7 @@ public:
   // Print ASCII style plot of histogram.
   void plot(Logger logger) const;
 
+  void test();
   // Dump histogram data in Matlab format.
   //
   // @return The string containing the dump. The caller is responsible to free() the buffer.
@@ -60,6 +61,8 @@ public:
   // Write the histogram in JSON format to file \p f.
   int dumpJson(FILE *f) const;
 
+  std::string promFormat(std::string metric_name, std::string node_name) const;
+  
   // Build a libjansson / JSON object of the histogram.
   json_t *toJson() const;
 
