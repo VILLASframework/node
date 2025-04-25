@@ -38,8 +38,7 @@ public:
 
     if (body != nullptr)
       throw BadRequest("Nodes endpoint does not accept any body data");
-
-    
+      
     std::string text_res = "";
     NodeList node_list = session->getSuperNode()->getNodes();
     for(Node* node: node_list){
@@ -47,15 +46,10 @@ public:
       if(!stats)
         continue;
       std::string node_name = node->getNameShort();
-      for(auto& metric:metrics_subset){
-        Hist histogram = stats->getHistogram(metric.first);
-        std::string t =std::to_string(
-          std::chrono::duration_cast<std::chrono::milliseconds >(
-            std::chrono::system_clock::now().time_since_epoch()
-          ).count()
-        );
-        text_res+=metric.second+" {node=\""+node_name+"\" acc=\"last\"} "+std::to_string(histogram.getLast())+" "+t+"\n";
-        text_res+=metric.second+" {node=\""+node_name+"\" acc=\"total\"} "+std::to_string(histogram.getTotal())+" "+t+"\n";
+      for(auto& metric:Stats::metrics){
+        std::string metric_name = metric.second.name;
+        std::replace(metric_name.begin(),metric_name.end(),'.','_');
+        text_res+= stats->getHistogram(metric.first).promFormat(metric_name,node->getNameShort())+"\n";
       }
     }
 

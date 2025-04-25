@@ -150,6 +150,23 @@ void Hist::plot(Logger logger) const {
   }
 }
 
+std::string Hist::promFormat(std::string metric_name, std::string node_name) const{
+  std::string base = "#TYPE HISTOGRAM "+metric_name;
+  //need this because prometheus understands quantiles 
+  int s = data.size();
+  for(int i=0;i<s;i++){
+    base += "\n"+metric_name+" {node=\""+node_name+"\" le=\""+std::to_string(((double)i+1)/s)+"\"} "+std::to_string(data[i]);
+  }
+  std::string ttl = std::to_string(total);
+  base += "\n"+metric_name+" {node=\""+node_name+"\" le=\"+Inf\"} "+ttl;
+  base +="\n"+metric_name+"_count "+" {node=\""+node_name+"\"} "+ttl;
+
+  //next line is problematic because buckets have no associated values ?
+  //base +="\n"+metric_name+"_count "+" {node=\""+node_name+"} "+std::to_string(ttl);
+
+  return base;
+}
+
 char *Hist::dump() const {
   char *buf = new char[128];
   if (!buf)
