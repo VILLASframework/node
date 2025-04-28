@@ -56,14 +56,15 @@ protected:
   Web web;
 #endif
 
-  int priority;     // Process priority (lower is better)
-  int affinity;     // Process affinity of the server and all created threads
+  unsigned seed;    // Random seed for random number generation.
+  int priority;     // Process priority (lower is better).
+  int affinity;     // Process affinity of the server and all created threads.
   int hugepages;    // Number of hugepages to reserve.
   double statsRate; // Rate at which we display the periodic stats.
 
-  struct Task task; // Task for periodic stats output
+  struct Task task; // Task for periodic stats output.
 
-  uuid_t uuid; // A globally unique identifier of the instance
+  uuid_t uuid; // A globally unique identifier of the instance.
 
   struct timespec started; // The time at which the instance has been started.
 
