@@ -40,8 +40,8 @@ SuperNode::SuperNode()
       web(),
 #endif
 #endif
-      priority(0), affinity(0), hugepages(DEFAULT_NR_HUGEPAGES), statsRate(1.0),
-      task(), started(time_now()) {
+      seed(0), priority(0), affinity(0), hugepages(DEFAULT_NR_HUGEPAGES),
+      statsRate(1.0), task(), started(time_now()) {
   int ret;
 
   char hname[128];
@@ -82,14 +82,14 @@ void SuperNode::parse(json_t *root) {
 
   int stop = -1;
 
-  ret =
-      json_unpack_ex(root, &err, 0,
-                     "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: "
-                     "i, s?: b, s?: s }",
-                     "stats", &statsRate, "http", &json_http, "logging",
-                     &json_logging, "nodes", &json_nodes, "paths", &json_paths,
-                     "hugepages", &hugepages, "affinity", &affinity, "priority",
-                     &priority, "idle_stop", &stop, "uuid", &uuid_str);
+  ret = json_unpack_ex(root, &err, 0,
+                       "{ s?: F, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: "
+                       "i, s?: b, s?: s, s?: i }",
+                       "stats", &statsRate, "http", &json_http, "logging",
+                       &json_logging, "nodes", &json_nodes, "paths",
+                       &json_paths, "hugepages", &hugepages, "affinity",
+                       &affinity, "priority", &priority, "idle_stop", &stop,
+                       "uuid", &uuid_str, "seed", &seed);
   if (ret)
     throw ConfigError(root, err, "node-config",
                       "Unpacking top-level config failed");
@@ -327,6 +327,8 @@ void SuperNode::prepare() {
 
 void SuperNode::start() {
   assert(state == State::PREPARED);
+
+  srand(seed);
 
 #ifdef WITH_API
   api.start();
