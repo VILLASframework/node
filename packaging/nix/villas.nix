@@ -87,6 +87,7 @@ stdenv.mkDerivation {
     "out"
     "dev"
   ];
+  enableParallelBuilding = true;
   separateDebugInfo = true;
   cmakeFlags =
     [ ]
