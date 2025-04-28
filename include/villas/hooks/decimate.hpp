@@ -20,7 +20,8 @@ protected:
   unsigned counter;
 
 public:
-  using LimitHook::LimitHook;
+  DecimateHook(Path *p, Node *n, int fl, int prio, bool en = true)
+      : LimitHook(p, n, fl, prio, en), ratio(1), renumber(false), counter(0) {}
 
   virtual void setRate(double rate, double maxRate = -1) {
     assert(maxRate > 0);
