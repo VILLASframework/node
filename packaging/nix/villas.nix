@@ -12,6 +12,7 @@
   # Extra features
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
+  withExtraTesting ? (withAllExtras && system == "x86_64-linux"),
   # Format-types
   withFormatProtobuf ? withAllFormats,
   # Hook-types
@@ -48,6 +49,7 @@
   system,
   # Optional dependencies
   comedilib,
+  criterion,
   curl,
   czmq,
   ethercat,
@@ -57,6 +59,7 @@
   libconfig,
   libdatachannel,
   libiec61850,
+  libgit2,
   libmodbus,
   libnl,
   libre,
@@ -70,6 +73,7 @@
   nanomsg,
   opendssc,
   openssl,
+  pcre2,
   pkgsBuildBuild,
   protobuf,
   protobufBuildBuild ? pkgsBuildBuild.protobuf,
@@ -143,6 +147,7 @@ stdenv.mkDerivation {
       spdlog
       bash
     ]
+    ++ lib.optionals withExtraTesting [ criterion pcre2 libgit2 ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
