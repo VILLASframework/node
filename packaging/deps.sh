@@ -132,7 +132,7 @@ if ! ( pkg-config "lua >= 5.1" || \
        pkg-config "lua51" || \
        { [[ -n "${RTLAB_ROOT:+x}" ]] && [[ -f "/usr/local/include/lua.h" ]]; } \
      ) && should_build "lua" "for the lua hook"; then
-    wget http://www.lua.org/ftp/lua-5.4.7.tar.gz -O - | tar -xz
+    curl -L http://www.lua.org/ftp/lua-5.4.7.tar.gz | tar -xz
     pushd lua-5.4.4
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
     make ${MAKE_OPTS} MYCFLAGS=-fPIC INSTALL_TOP=${PREFIX} install
@@ -196,8 +196,7 @@ if ! pkg-config "libiec61850 >= 1.6.0" && \
     git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
 
     pushd libiec61850/third_party/mbedtls/
-    wget https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz
-    tar xzf v3.6.0.tar.gz
+    curl -L https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz | tar -xz
     popd
 
     mkdir -p libiec61850/build
@@ -442,7 +441,7 @@ if ! pkg-config "nice >= 0.1.16" && \
 
         # Install ninja
         if ! command -v ninja; then
-            wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+            curl -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip > ninja-linux.zip
             unzip ninja-linux.zip
             export PATH=${PATH}:.
         fi
