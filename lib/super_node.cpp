@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <map>
 
 #include <villas/config_helper.hpp>
 #include <villas/hook_list.hpp>

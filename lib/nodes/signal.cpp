@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstring>
 
+#include <utility>
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/signal.hpp>
@@ -78,10 +79,9 @@ std::string SignalNodeSignal::typeToString(enum Type type) {
 
   case Type::PULSE:
     return "pulse";
-
-  default:
-    return nullptr;
   }
+
+  std::unreachable();
 }
 
 void SignalNodeSignal::start() { last = offset; }

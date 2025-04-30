@@ -8,15 +8,13 @@
 #pragma once
 
 #include <cstdio>
-#include <jansson.h>
-#include <unistd.h>
-
-#include <filesystem>
-#include <functional>
-#include <regex>
+#include <type_traits>
 
 #include <villas/log.hpp>
 #include <villas/node/config.hpp>
+
+#include <jansson.h>
+#include <unistd.h>
 
 #ifdef WITH_CONFIG
 #include <libconfig.h>
@@ -28,8 +26,6 @@ namespace node {
 class Config {
 
 protected:
-  using str_walk_fcn_t = std::function<json_t *(json_t *)>;
-
   Logger logger;
 
   std::list<std::string> includeDirectories;
@@ -69,9 +65,6 @@ protected:
 
   // To shell-like subsitution of environment variables in strings.
   json_t *expandEnvVars(json_t *in);
-
-  // Run a callback function for each string in the config
-  json_t *walkStrings(json_t *in, str_walk_fcn_t cb);
 
   // Get the include dirs
   std::list<std::string> getIncludeDirectories(FILE *f) const;

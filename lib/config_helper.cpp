@@ -196,7 +196,10 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key,
     key2 = strtok_r(nullptr, ".", &lasts);
   }
 
+  // TODO: Check for empty value
+
   // Try to parse as integer
+  // TODO: Make locale independent
   integer = strtol(value, &end, 0);
   if (*end == 0) {
     add = json_integer(integer);
@@ -260,7 +263,8 @@ json_t *villas::node::json_load_cli(int argc, const char *argv[]) {
     opt = argv[i];
 
     // Long Option
-    if (opt[0] == '-' && opt[1] == '-') {
+    if (opt[0] == '-' &&
+        opt[1] == '-') { // TODO: Check strlen(opt) before access
       // Option without value? Abort
       if (key != nullptr)
         return nullptr;

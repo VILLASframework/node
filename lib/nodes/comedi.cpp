@@ -156,7 +156,7 @@ static int comedi_start_in(NodeCompat *n) {
   if (d->subdevice < 0) {
     d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AI, 0);
     if (d->subdevice < 0)
-      throw RuntimeError("Cannot find analog input device for node '{}'");
+      throw RuntimeError("Cannot find analog input device");
   } else {
     // Check if subdevice is usable
     ret = comedi_get_subdevice_type(c->dev, d->subdevice);
@@ -303,8 +303,7 @@ static int comedi_start_out(NodeCompat *n) {
 
   ret = comedi_command(c->dev, &cmd);
   if (ret < 0)
-    throw RuntimeError(
-        "Failed to issue command to input subdevice of node '{}'");
+    throw RuntimeError("Failed to issue command to input subdevice");
 
   // Output will only start after the internal trigger
   d->running = false;
@@ -965,19 +964,19 @@ static void comedi_dump_cmd(Logger logger, comedi_cmd *cmd) {
   logger->debug("subdevice:  {}", cmd->subdev);
 
   src = comedi_cmd_trigger_src(cmd->start_src, buf);
-  logger->debug("start:      {:-8s} {}", src, cmd->start_arg);
+  logger->debug("start:      {:8s} {}", src, cmd->start_arg);
 
   src = comedi_cmd_trigger_src(cmd->scan_begin_src, buf);
-  logger->debug("scan_begin: {:-8s} {}", src, cmd->scan_begin_arg);
+  logger->debug("scan_begin: {:8s} {}", src, cmd->scan_begin_arg);
 
   src = comedi_cmd_trigger_src(cmd->convert_src, buf);
-  logger->debug("convert:    {:-8s} {}", src, cmd->convert_arg);
+  logger->debug("convert:    {:8s} {}", src, cmd->convert_arg);
 
   src = comedi_cmd_trigger_src(cmd->scan_end_src, buf);
-  logger->debug("scan_end:   {:-8s} {}", src, cmd->scan_end_arg);
+  logger->debug("scan_end:   {:8s} {}", src, cmd->scan_end_arg);
 
   src = comedi_cmd_trigger_src(cmd->stop_src, buf);
-  logger->debug("stop:       {:-8s} {}", src, cmd->stop_arg);
+  logger->debug("stop:       {:8s} {}", src, cmd->stop_arg);
 }
 
 int villas::node::comedi_poll_fds(NodeCompat *n, int fds[]) {

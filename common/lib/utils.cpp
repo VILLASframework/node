@@ -357,8 +357,8 @@ bool isPrivileged() {
 }
 
 void write_to_file(std::string data, const std::filesystem::path file) {
-  villas::Log::get("Filewriter")->debug("{} > {}", data, file.u8string());
-  std::ofstream outputFile(file.u8string());
+  villas::Log::get("Filewriter")->debug("{} > {}", data, file.string());
+  std::ofstream outputFile(file.string());
 
   if (outputFile.is_open()) {
     outputFile << data;

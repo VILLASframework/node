@@ -240,8 +240,8 @@ int villas::node::temper_type_start(villas::node::SuperNode *sn) {
     auto *dev = TEMPerDevice::make(devs[i]);
 
     logger->debug(
-        "Found Temper device at bus={03d}, port={03d}, vendor_id={04x}, "
-        "product_id={04x}, manufacturer={}, product={}, serial={}",
+        "Found Temper device at bus={:03d}, port={:03d}, vendor_id={:04x}, "
+        "product_id={:04x}, manufacturer={}, product={}, serial={}",
         dev->getBus(), dev->getPort(), dev->getDescriptor().idVendor,
         dev->getDescriptor().idProduct, dev->getManufacturer(),
         dev->getProduct(), dev->getSerial());

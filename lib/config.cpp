@@ -5,11 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <glob.h>
-#include <libgen.h>
-#include <linux/limits.h>
-#include <unistd.h>
-
+#include <regex>
 #include <string>
 
 #include <villas/boxes.hpp>
@@ -20,12 +16,56 @@
 #include <villas/node/exceptions.hpp>
 #include <villas/utils.hpp>
 
+#include <glob.h>
+#include <libgen.h>
+#include <linux/limits.h>
+#include <unistd.h>
+
 #ifdef WITH_CONFIG
 #include <libconfig.h>
 #endif
 
 using namespace villas;
 using namespace villas::node;
+
+// Run a callback function for each string in the config
+template <typename Fn>
+  requires(std::is_invocable_r_v<json_t *, Fn, json_t *>)
+json_t *walkStrings(json_t *root, Fn fn) {
+  const char *key;
+  size_t index;
+  json_t *val, *new_val, *new_root;
+
+  switch (json_typeof(root)) {
+  case JSON_STRING:
+    return fn(root);
+
+  case JSON_OBJECT:
+    new_root = json_object();
+
+    json_object_foreach(root, key, val) {
+      new_val = walkStrings(val, fn);
+
+      json_object_set_new(new_root, key, new_val);
+    }
+
+    return new_root;
+
+  case JSON_ARRAY:
+    new_root = json_array();
+
+    json_array_foreach(root, index, val) {
+      new_val = walkStrings(val, fn);
+
+      json_array_append_new(new_root, new_val);
+    }
+
+    return new_root;
+
+  default:
+    return json_incref(root);
+  };
+}
 
 Config::Config() : logger(Log::get("config")), root(nullptr) {}
 
@@ -274,42 +314,6 @@ json_t *Config::libconfigDecode(FILE *f) {
 }
 #endif // WITH_CONFIG
 
-json_t *Config::walkStrings(json_t *root, str_walk_fcn_t cb) {
-  const char *key;
-  size_t index;
-  json_t *val, *new_val, *new_root;
-
-  switch (json_typeof(root)) {
-  case JSON_STRING:
-    return cb(root);
-
-  case JSON_OBJECT:
-    new_root = json_object();
-
-    json_object_foreach(root, key, val) {
-      new_val = walkStrings(val, cb);
-
-      json_object_set_new(new_root, key, new_val);
-    }
-
-    return new_root;
-
-  case JSON_ARRAY:
-    new_root = json_array();
-
-    json_array_foreach(root, index, val) {
-      new_val = walkStrings(val, cb);
-
-      json_array_append_new(new_root, new_val);
-    }
-
-    return new_root;
-
-  default:
-    return json_incref(root);
-  };
-}
-
 json_t *Config::expandEnvVars(json_t *in) {
   return walkStrings(in, [this](json_t *str) -> json_t * {
     std::string text = json_string_value(str);
@@ -338,7 +342,8 @@ json_t *Config::expandIncludes(json_t *in) {
       for (auto &path : resolveIncludes(pattern)) {
         json_t *other = load(path);
         if (!other)
-          throw ConfigError(str, "Failed to include config file from {}", path);
+          throw ConfigError(str, "TODO: what is the 'id' here?",
+                            "Failed to include config file from {}", path);
 
         if (!incl)
           incl = other;

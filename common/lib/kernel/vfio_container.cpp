@@ -212,11 +212,11 @@ std::shared_ptr<Device> Container::attachDevice(devices::PciDevice &pdev) {
   } catch (std::exception &e) {
 
     throw RuntimeError(
-        e.what() +
-        std::string(
-            "\nBAR of device is in inconsistent state. Rewriting the BAR "
-            "failed. Please remove, rescan and reset the device and "
-            "try again."));
+        "{}\n"
+        "BAR of device is in inconsistent state. Rewriting the BAR "
+        "failed. Please remove, rescan and reset the device and "
+        "try again.",
+        e.what());
   }
 
   // Get IOMMU group of device

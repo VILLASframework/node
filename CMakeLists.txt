@@ -18,8 +18,8 @@ set(PROJECT_AUTHOR "Steffen Vogel")
 set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 
 # Several CMake settings/defaults
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${PROJECT_SOURCE_DIR}/common/cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

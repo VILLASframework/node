@@ -89,7 +89,7 @@ protected:
   BufferedSampleFormatter(const size_t bufSamples, const size_t bufSampleSize)
       : buf(bufSamples * bufSampleSize + 1), // Leave room for a final `\0'
         bufSamples(bufSamples), bufSampleSize(bufSampleSize),
-        currentBufLoc(0){};
+        currentBufLoc(0) {};
   BufferedSampleFormatter() = delete;
   BufferedSampleFormatter(const BufferedSampleFormatter &) = delete;
   virtual char *nextBufPos() { return &buf[(currentBufLoc++) * bufSampleSize]; }
@@ -98,15 +98,15 @@ protected:
 class BufferedSampleFormatterShort : public BufferedSampleFormatter {
 public:
   BufferedSampleFormatterShort(size_t bufSizeInSamples)
-      : BufferedSampleFormatter(bufSizeInSamples, formatStringSize){};
+      : BufferedSampleFormatter(bufSizeInSamples, formatStringSize) {};
 
   virtual void format(float value) override {
     size_t chars;
     if ((chars = std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
                                value)) > (int)formatStringSize) {
-      throw RuntimeError("Output buffer too small. Expected " +
-                         std::to_string(formatStringSize) +
-                         " characters, got " + std::to_string(chars));
+      throw RuntimeError(
+          "Output buffer too small. Expected {} characters, got {}.",
+          formatStringSize, chars);
     }
   }
 
@@ -119,7 +119,7 @@ class BufferedSampleFormatterLong : public BufferedSampleFormatter {
 public:
   BufferedSampleFormatterLong(size_t bufSizeInSamples)
       : BufferedSampleFormatter(bufSizeInSamples, formatStringSize),
-        sampleCnt(0){};
+        sampleCnt(0) {};
 
   virtual void format(float value) override {
     if (std::snprintf(nextBufPos(), formatStringSize + 1, formatString,

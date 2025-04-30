@@ -28,7 +28,7 @@ void LinuxDriver::bind(const Device &device) const {
 
 std::string LinuxDriver::name() const {
   size_t pos = path.u8string().rfind('/');
-  return path.u8string().substr(pos + 1);
+  return path.string().substr(pos + 1);
 }
 
 void LinuxDriver::override(const Device &device) const {
