@@ -7,16 +7,25 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <string_view>
+
+#include <jansson.h>
+#include <libiec61850/goose_publisher.h>
+#include <libiec61850/goose_receiver.h>
+#include <libiec61850/r_session.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/iec61850_goose.hpp>
 #include <villas/sample.hpp>
+#include <villas/signal_type.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 
 using namespace std::literals::chrono_literals;
 using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 using namespace villas;
 using namespace villas::node;
@@ -248,7 +257,8 @@ void GooseNode::onEvent(GooseSubscriber subscriber,
 
   ctx.values.clear();
 
-  for (unsigned int i = 0; i < MmsValue_getArraySize(mms_values); i++) {
+  unsigned int array_size = MmsValue_getArraySize(mms_values);
+  for (unsigned int i = 0; i < array_size; i++) {
     auto mms_value = MmsValue_getElement(mms_values, i);
     auto goose_value = GooseSignal::fromMmsValue(mms_value);
     ctx.values.push_back(goose_value);
@@ -325,116 +335,158 @@ void GooseNode::addSubscriber(GooseNode::InputEventContext &ctx) noexcept {
   GooseReceiver_addSubscriber(input.receiver, subscriber);
 }
 
-void GooseNode::createReceiver() noexcept {
-  destroyReceiver();
+void GooseNode::createReceiver() noexcept(false) {
+  if (!input.interface_id.empty()) {
+    input.receiver = GooseReceiver_create();
 
-  input.receiver = GooseReceiver_create();
+    GooseReceiver_setInterfaceId(input.receiver, input.interface_id.c_str());
+  } else {
+    RSessionError err;
 
-  GooseReceiver_setInterfaceId(input.receiver, input.interface_id.c_str());
+    input.session = RSession_create();
+    if (!input.session)
+      throw RuntimeError{"failed to create R-GOOSE session"};
+
+    err = RSession_setLocalAddress(input.session, input.local_address.c_str(),
+                                   input.local_port);
+    if (err != R_SESSION_ERROR_OK)
+      throw RuntimeError("failed to set local address for R-GOOSE session");
+
+    for (auto &key : keys) {
+      err = RSession_addKey(input.session, key.id, key.data.data(),
+                            key.data.size(), key.security, key.signature);
+      if (err != R_SESSION_ERROR_OK)
+        throw RuntimeError("failed to add key with id {} to R-GOOSE session",
+                           key.id);
+    }
+
+    for (auto const &multicast_group : input.multicast_groups) {
+      err = RSession_addMulticastGroup(input.session, multicast_group.c_str());
+      if (err != R_SESSION_ERROR_OK)
+        throw RuntimeError(
+            "failed to add multicast group {} to R-GOOSE session",
+            multicast_group);
+    }
+
+    input.receiver = GooseReceiver_createRemote(input.session);
+  }
 
   for (auto &pair_key_context : input.contexts)
     addSubscriber(pair_key_context.second);
-
-  input.state = Input::READY;
 }
 
 void GooseNode::destroyReceiver() noexcept {
-  int err __attribute__((unused));
+  if (input.receiver) {
+    stopReceiver();
+    GooseReceiver_destroy(input.receiver);
+    input.receiver = nullptr;
+  }
 
-  if (input.state == Input::NONE)
-    return;
-
-  stopReceiver();
-
-  GooseReceiver_destroy(input.receiver);
-
-  err = queue_signalled_destroy(&input.queue);
-
-  input.state = Input::NONE;
+  if (input.session) {
+    RSession_destroy(input.session);
+    input.session = nullptr;
+  }
 }
 
 void GooseNode::startReceiver() noexcept(false) {
-  if (input.state == Input::NONE)
-    createReceiver();
-  else
-    stopReceiver();
-
   GooseReceiver_start(input.receiver);
 
   if (!GooseReceiver_isRunning(input.receiver))
     throw RuntimeError{"iec61850-GOOSE receiver could not be started"};
-
-  input.state = Input::READY;
 }
 
 void GooseNode::stopReceiver() noexcept {
-  if (input.state == Input::NONE)
-    return;
-
-  input.state = Input::STOPPED;
-
   if (!GooseReceiver_isRunning(input.receiver))
     return;
 
   GooseReceiver_stop(input.receiver);
 }
 
-void GooseNode::createPublishers() noexcept {
-  destroyPublishers();
+void GooseNode::createPublishers() {
+  if (output.interface_id.empty()) {
+    RSessionError err;
+
+    output.session = RSession_create();
+    if (!output.session)
+      throw RuntimeError{"failed to create R-GOOSE session"};
+
+    err = RSession_setLocalAddress(output.session, output.local_address.c_str(),
+                                   output.local_port);
+    if (err != R_SESSION_ERROR_OK)
+      throw RuntimeError("failed to set local address {} for R-GOOSE session",
+                         output.local_address);
+
+    err = RSession_setRemoteAddress(
+        output.session, output.remote_address.c_str(), output.remote_port);
+    if (err != R_SESSION_ERROR_OK)
+      throw RuntimeError("failed to set remote address {} for R-GOOSE session",
+                         output.remote_address);
+
+    for (auto &key : keys) {
+      err = RSession_addKey(output.session, key.id, key.data.data(),
+                            key.data.size(), key.security, key.signature);
+      if (err != R_SESSION_ERROR_OK)
+        throw RuntimeError("failed to add key with id {} to R-GOOSE session",
+                           key.id);
+    }
+
+    RSession_setActiveKey(output.session, output.key_id);
+  }
 
   for (auto &ctx : output.contexts) {
-    auto dst_address = ctx.config.dst_address;
-    auto comm = CommParameters{/* vlanPriority */ 0,
-                               /* vlanId */ 0,
-                               ctx.config.app_id,
-                               {}};
+    if (!output.interface_id.empty()) {
+      auto comm = CommParameters{/* vlanPriority */ 0,
+                                 /* vlanId */ 0,
+                                 ctx.config.app_id,
+                                 {}};
 
-    memcpy(comm.dstAddress, dst_address.data(), dst_address.size());
+      memcpy(comm.dstAddress, ctx.config.dst_address.data(),
+             ctx.config.dst_address.size());
 
-    ctx.publisher =
-        GoosePublisher_createEx(&comm, output.interface_id.c_str(), false);
+      ctx.publisher =
+          GoosePublisher_createEx(&comm, output.interface_id.c_str(), false);
+    } else {
+      ctx.publisher =
+          GoosePublisher_createRemote(output.session, ctx.config.app_id);
+    }
 
-    GoosePublisher_setGoID(ctx.publisher, ctx.config.go_id.data());
+    if (!ctx.config.go_id.empty())
+      GoosePublisher_setGoID(ctx.publisher, ctx.config.go_id.data());
+
     GoosePublisher_setGoCbRef(ctx.publisher, ctx.config.go_cb_ref.data());
     GoosePublisher_setDataSetRef(ctx.publisher, ctx.config.data_set_ref.data());
     GoosePublisher_setConfRev(ctx.publisher, ctx.config.conf_rev);
     GoosePublisher_setTimeAllowedToLive(ctx.publisher,
                                         ctx.config.time_allowed_to_live);
   }
-
-  output.state = Output::READY;
 }
 
 void GooseNode::destroyPublishers() noexcept {
-  int err __attribute__((unused));
+  for (auto &ctx : output.contexts) {
+    if (ctx.publisher) {
+      GoosePublisher_destroy(ctx.publisher);
+      ctx.publisher = nullptr;
+    }
+  }
 
-  if (output.state == Output::NONE)
-    return;
-
-  stopPublishers();
-
-  for (auto &ctx : output.contexts)
-    GoosePublisher_destroy(ctx.publisher);
-
-  output.state = Output::NONE;
+  if (output.session) {
+    RSession_destroy(output.session);
+    output.session = nullptr;
+  }
 }
 
 void GooseNode::startPublishers() noexcept(false) {
-  if (output.state == Output::NONE)
-    createPublishers();
-  else
-    stopPublishers();
-
   output.resend_thread_stop = false;
   output.resend_thread = std::thread(resend_thread, &output);
 
-  output.state = Output::READY;
+  if (output.session) {
+    RSessionError err = RSession_start(output.session);
+    if (err != R_SESSION_ERROR_OK)
+      throw RuntimeError("failed to start R-GOOSE publisher session");
+  }
 }
 
 void GooseNode::stopPublishers() noexcept {
-  if (output.state == Output::NONE)
-    return;
-
   if (output.resend_thread) {
     auto lock = std::unique_lock{output.send_mutex};
     output.resend_thread_stop = true;
@@ -444,16 +496,11 @@ void GooseNode::stopPublishers() noexcept {
     output.resend_thread->join();
     output.resend_thread = std::nullopt;
   }
-
-  output.state = Output::STOPPED;
 }
 
 int GooseNode::_read(Sample *samples[], unsigned sample_count) {
   int available_samples;
   struct Sample *copies[sample_count];
-
-  if (input.state != Input::READY)
-    return 0;
 
   available_samples =
       queue_signalled_pull_many(&input.queue, (void **)copies, sample_count);
@@ -555,15 +602,9 @@ int GooseNode::_write(Sample *samples[], unsigned sample_count) {
 
 GooseNode::GooseNode(const uuid_t &id, const std::string &name)
     : Node(id, name) {
-  input.state = Input::NONE;
-
   input.contexts = {};
   input.mappings = {};
-  input.interface_id = "lo";
   input.queue_length = 1024;
-
-  output.state = Output::NONE;
-  output.interface_id = "lo";
   output.changed = false;
   output.resend_interval = 1.;
   output.resend_thread = std::nullopt;
@@ -588,15 +629,33 @@ int GooseNode::parse(json_t *json) {
   if (ret)
     return ret;
 
+  json_t *json_keys = nullptr;
   json_t *json_in = nullptr;
   json_t *json_out = nullptr;
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o }", "in", &json_in, "out",
-                       &json_out);
+  ret = json_unpack_ex(json, &err, 0,          //
+                       "{ s:?o, s:?o, s:?o }", //
+                       "keys", &json_keys,     //
+                       "in", &json_in,         //
+                       "out", &json_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-  parseInput(json_in);
-  parseOutput(json_out);
+  if (json_keys) {
+    size_t index;
+    json_t *json_key;
+    assert(json_is_array(json_keys));
+    keys.reserve(json_array_size(json_keys));
+    json_array_foreach(json_keys, index, json_key) {
+      assert(json_is_object(json_key));
+      parseSessionKey(json_key);
+    }
+  }
+
+  if (json_in)
+    parseInput(json_in);
+
+  if (json_out)
+    parseOutput(json_out);
 
   return 0;
 }
@@ -607,20 +666,124 @@ void GooseNode::parseInput(json_t *json) {
 
   json_t *json_subscribers = nullptr;
   json_t *json_signals = nullptr;
-  char const *interface_id = input.interface_id.c_str();
+  int routed = false;
+  char const *local_address = "localhost";
+  int local_port = 102;
+  json_t *json_multicast_groups = nullptr;
+  char const *interface_id = "lo";
   int with_timestamp = true;
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o, s?: s, s: b }",
-                       "subscribers", &json_subscribers, "signals",
-                       &json_signals, "interface", &interface_id,
+  ret = json_unpack_ex(json, &err, 0,                                      //
+                       "{ s:o, s:o, s:?b, s:?s, s:?i, s:?o, s:?s, s:?b }", //
+                       "subscribers", &json_subscribers,                   //
+                       "signals", &json_signals,                           //
+                       "routed", &routed,                                  //
+                       "local_address", &local_address,                    //
+                       "local_port", &local_port,                          //
+                       "multicast_groups", &json_multicast_groups,         //
+                       "interface", &interface_id,                         //
                        "with_timestamp", &with_timestamp);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
+  if (routed) {
+    input.local_address = local_address;
+    input.local_port = local_port;
+
+    if (json_multicast_groups) {
+      size_t index;
+      json_t *json_multicast_group;
+      assert(json_is_array(json_multicast_groups));
+      input.multicast_groups.reserve(json_array_size(json_multicast_groups));
+      json_array_foreach(json_multicast_groups, index, json_multicast_group) {
+        assert(json_is_string(json_multicast_group));
+        input.multicast_groups.emplace_back(
+            json_string_value(json_multicast_group));
+      }
+    }
+
+    if (keys.empty())
+      throw RuntimeError{"missing session keys for R-GOOSE"};
+  } else {
+    input.interface_id = interface_id;
+  }
+
   parseSubscribers(json_subscribers, input.contexts);
   parseInputSignals(json_signals, input.mappings);
 
-  input.interface_id = interface_id;
   input.with_timestamp = with_timestamp;
+}
+
+void GooseNode::parseSessionKey(json_t *json) {
+  int ret;
+  json_error_t err;
+
+  int id;
+  char const *security_str;
+  char const *signature_str;
+  char const *data_str = nullptr;
+  char const *data_base64 = nullptr;
+  ret = json_unpack_ex(json, &err, 0,                   //
+                       "{ s:i, s:s, s:s, s:?s, s:?s }", //
+                       "id", &id,                       //
+                       "security", &security_str,       //
+                       "signature", &signature_str,     //
+                       "string", &data_str,             //
+                       "base64", &data_base64);
+  if (ret)
+    throw ConfigError(json, err, "node-config-node-iec61850-8-1");
+
+  RSecurityAlgorithm security;
+  if (security_str == "aes_128_gcm"sv)
+    security = R_SESSION_SEC_ALGO_AES_128_GCM;
+  else if (security_str == "aes_256_gcm"sv)
+    security = R_SESSION_SEC_ALGO_AES_256_GCM;
+  else if (signature_str == "none"sv)
+    security = R_SESSION_SEC_ALGO_NONE;
+  else
+    throw RuntimeError("unknown security algorithm {}", security_str);
+
+  RSignatureAlgorithm signature;
+  if (signature_str == "aes_gmac_64"sv)
+    signature = R_SESSION_SIG_ALGO_AES_GMAC_64;
+  else if (signature_str == "aes_gmac_128"sv)
+    signature = R_SESSION_SIG_ALGO_AES_GMAC_128;
+  else if (signature_str == "hmac_sha256_80"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA256_80;
+  else if (signature_str == "hmac_sha256_128"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA256_128;
+  else if (signature_str == "hmac_sha256_256"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA256_256;
+  else if (signature_str == "hmac_sha3_80"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA3_80;
+  else if (signature_str == "hmac_sha3_128"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA3_128;
+  else if (signature_str == "hmac_sha3_256"sv)
+    signature = R_SESSION_SIG_ALGO_HMAC_SHA3_256;
+  else if (signature_str == "none"sv)
+    signature = R_SESSION_SIG_ALGO_NONE;
+  else
+    throw RuntimeError("unknown signature algorithm {}", signature_str);
+
+  std::vector<uint8_t> data;
+  if (data_str && data_base64)
+    throw RuntimeError(
+        "can't use both 'base64' and 'string' for R-GOOSE key with id {}", id);
+  else if (data_str) {
+    auto data_sv = std::string_view(data_str);
+    data = std::vector<uint8_t>(begin(data_sv), end(data_sv));
+  } else if (data_base64) {
+    data = base64::decode(data_base64);
+  } else {
+    throw RuntimeError(
+        "missing one of 'base64' or 'string' for R-GOOSE key with id {}", id);
+  }
+
+  keys.emplace_back(SessionKey{
+      .id = id,
+      .security = security,
+      .signature = signature,
+      .data = data,
+  });
 }
 
 void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc) {
@@ -631,9 +794,11 @@ void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc) {
   char *dst_address_str = nullptr;
   char *trigger = nullptr;
   int app_id = 0;
-  ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: s, s?: i }",
-                       "go_cb_ref", &go_cb_ref, "trigger", &trigger,
-                       "dst_address", &dst_address_str, "app_id", &app_id);
+  ret = json_unpack_ex(json, &err, 0, "{ s:s, s:?s, s:?s, s:?i }", //
+                       "go_cb_ref", &go_cb_ref,                    //
+                       "trigger", &trigger,                        //
+                       "dst_address", &dst_address_str,            //
+                       "app_id", &app_id);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
@@ -687,14 +852,23 @@ void GooseNode::parseInputSignals(
     char *mapping_subscriber;
     unsigned int mapping_index;
     char *mapping_type_name;
-    ret = json_unpack_ex(value, &err, 0, "{ s: s, s: i, s: s }", "subscriber",
-                         &mapping_subscriber, "index", &mapping_index,
+    ret = json_unpack_ex(value, &err, 0,                    //
+                         "{ s: s, s: i, s: s }",            //
+                         "subscriber", &mapping_subscriber, //
+                         "index", &mapping_index,           //
                          "mms_type", &mapping_type_name);
     if (ret)
       throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
     auto mapping_type =
         GooseSignal::lookupMmsTypeName(mapping_type_name).value();
+
+    auto const &config_type = in.signals->getByIndex(index)->type;
+    if (mapping_type->signal_type != config_type)
+      throw RuntimeError("configured 'type' {} for signal {} "
+                         "does not match the 'mms_type' {}",
+                         signalTypeToString(config_type), index,
+                         mapping_type->name);
 
     mappings.push_back(InputMapping{
         mapping_subscriber,
@@ -709,18 +883,52 @@ void GooseNode::parseOutput(json_t *json) {
   json_error_t err;
 
   json_t *json_publishers = nullptr;
-  json_t *json_signals = nullptr;
-  char const *interface_id = output.interface_id.c_str();
-  ret = json_unpack_ex(json, &err, 0, "{ s: o, s: o, s?: s, s?: f }",
-                       "publishers", &json_publishers, "signals", &json_signals,
-                       "interface", &interface_id, "resend_interval",
-                       &output.resend_interval);
+  int routed = false;
+  char const *local_address = "localhost";
+  int local_port = 0;
+  char const *remote_address = "localhost";
+  int remote_port = 102;
+  int key_id = -1;
+  char const *interface_id = "lo";
+  ret = json_unpack_ex(
+      json, &err, 0,
+      "{ s:o, s:?b, s:?s, s:?i, s:?s, s:?i, s:?i, s:?s, s:?f }", //
+      "publishers", &json_publishers,                            //
+      "routed", &routed,                                         //
+      "local_address", &local_address,                           //
+      "local_port", &local_port,                                 //
+      "remote_address", &remote_address,                         //
+      "remote_port", &remote_port,                               //
+      "key_id", &key_id,                                         //
+      "interface", &interface_id,                                //
+      "resend_interval", &output.resend_interval);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-  parsePublishers(json_publishers, output.contexts);
+  if (!routed) {
+    output.interface_id = interface_id;
+  } else {
+    output.local_address = local_address;
+    output.local_port = local_port;
+    output.remote_address = remote_address;
+    output.remote_port = remote_port;
 
-  output.interface_id = interface_id;
+    if (keys.empty())
+      throw RuntimeError{"missing session 'keys' for R-GOOSE"};
+    else if (keys.size() == 1 && key_id == -1)
+      key_id = keys[0].id;
+    else if (key_id == -1)
+      throw RuntimeError{"missing 'key_id' for R-GOOSE out"};
+    else if (end(keys) !=
+             std::find_if(begin(keys), end(keys), [key_id](auto const &key) {
+               return key.id == key_id;
+             }))
+      throw RuntimeError{"'key_id' does not correspond to any known key"};
+
+    output.key_id = key_id;
+  }
+
+  parsePublishers(json_publishers, output.contexts);
 }
 
 void GooseNode::parsePublisherData(json_t *json,
@@ -739,8 +947,10 @@ void GooseNode::parsePublisherData(json_t *json,
     json_t *json_value = nullptr;
     int bitstring_size = -1;
     ret = json_unpack_ex(json_signal_or_value, &err, 0,
-                         "{ s: s, s?: s, s?: o, s?: i }", "mms_type", &mms_type,
-                         "signal", &signal_str, "value", &json_value,
+                         "{ s: s, s?: s, s?: o, s?: i }", //
+                         "mms_type", &mms_type,           //
+                         "signal", &signal_str,           //
+                         "value", &json_value,            //
                          "mms_bitstring_size", &bitstring_size);
     if (ret)
       throw ConfigError(json, err, "node-config-node-iec61850-8-1");
@@ -785,24 +995,33 @@ void GooseNode::parsePublisher(json_t *json, PublisherConfig &pc) {
   int time_allowed_to_live = 0;
   int burst = 1;
   json_t *json_data = nullptr;
-  ret = json_unpack_ex(
-      json, &err, 0,
-      "{ s: s, s: s, s: s, s: s, s: i, s: i, s: i, s?: i, s: o }", "go_id",
-      &go_id, "go_cb_ref", &go_cb_ref, "data_set_ref", &data_set_ref,
-      "dst_address", &dst_address_str, "app_id", &app_id, "conf_rev", &conf_rev,
-      "time_allowed_to_live", &time_allowed_to_live, "burst", &burst, "data",
-      &json_data);
+  ret = json_unpack_ex(json, &err, 0,
+                       "{ s:?s, s:s, s:s, s:?s, s:i, s:i, s:i, s?:i, s:o }", //
+                       "go_id", &go_id,                                      //
+                       "go_cb_ref", &go_cb_ref,                              //
+                       "data_set_ref", &data_set_ref,                        //
+                       "dst_address", &dst_address_str,                      //
+                       "app_id", &app_id,                                    //
+                       "conf_rev", &conf_rev,                                //
+                       "time_allowed_to_live", &time_allowed_to_live,        //
+                       "burst", &burst,                                      //
+                       "data", &json_data);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-  std::optional dst_address = stringToMac(dst_address_str);
-  if (!dst_address)
-    throw RuntimeError("Invalid dst_address");
+  if (!output.interface_id.empty()) {
+    std::optional dst_address = stringToMac(dst_address_str);
+    if (!dst_address)
+      throw RuntimeError("Invalid dst_address");
 
-  pc.go_id = std::string{go_id};
-  pc.go_cb_ref = std::string{go_cb_ref};
-  pc.data_set_ref = std::string{data_set_ref};
-  pc.dst_address = *dst_address;
+    pc.dst_address = *dst_address;
+  }
+
+  if (go_id)
+    pc.go_id = go_id;
+
+  pc.go_cb_ref = go_cb_ref;
+  pc.data_set_ref = data_set_ref;
   pc.app_id = app_id;
   pc.conf_rev = conf_rev;
   pc.time_allowed_to_live = time_allowed_to_live;
@@ -839,6 +1058,11 @@ int GooseNode::prepare() {
   ret = queue_signalled_init(&input.queue, input.queue_length);
   if (ret)
     return ret;
+
+  if (in.enabled) {
+    createReceiver();
+    createPublishers();
+  }
 
   return Node::prepare();
 }
