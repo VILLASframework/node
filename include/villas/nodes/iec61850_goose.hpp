@@ -20,6 +20,7 @@
 #include <libiec61850/goose_publisher.h>
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/goose_subscriber.h>
+#include <libiec61850/r_session.h>
 
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
@@ -129,6 +130,13 @@ protected:
     ALWAYS,
   };
 
+  struct SessionKey {
+    int id;
+    RSecurityAlgorithm security;
+    RSignatureAlgorithm signature;
+    std::vector<uint8_t> data;
+  };
+
   struct InputMapping {
     std::string subscriber;
     unsigned int index;
@@ -151,14 +159,17 @@ protected:
   };
 
   struct Input {
-    enum { NONE, STOPPED, READY } state;
-    GooseReceiver receiver;
+    RSession session = nullptr;
+    GooseReceiver receiver = nullptr;
     CQueueSignalled queue;
     Pool pool;
 
     std::map<std::string, InputEventContext> contexts;
     std::vector<InputMapping> mappings;
     std::string interface_id;
+    std::string local_address;
+    uint16_t local_port;
+    std::vector<std::string> multicast_groups;
     bool with_timestamp;
     unsigned int queue_length;
   } input;
@@ -184,13 +195,17 @@ protected:
     PublisherConfig config;
     std::vector<GooseSignal> values;
 
-    GoosePublisher publisher;
+    GoosePublisher publisher = nullptr;
   };
 
   struct Output {
-    enum { NONE, STOPPED, READY } state;
     std::vector<OutputContext> contexts;
     std::string interface_id;
+    std::string local_address;
+    uint16_t local_port;
+    std::string remote_address;
+    uint16_t remote_port;
+    int key_id;
     double resend_interval;
 
     std::mutex send_mutex;
@@ -198,15 +213,18 @@ protected:
     bool resend_thread_stop;
     std::optional<std::thread> resend_thread;
     std::condition_variable resend_thread_cv;
+    RSession session = nullptr;
   } output;
 
-  void createReceiver() noexcept;
+  std::vector<SessionKey> keys;
+
+  void createReceiver() noexcept(false);
   void destroyReceiver() noexcept;
 
   void startReceiver() noexcept(false);
   void stopReceiver() noexcept;
 
-  void createPublishers() noexcept;
+  void createPublishers() noexcept(false);
   void destroyPublishers() noexcept;
 
   void startPublishers() noexcept(false);
@@ -224,6 +242,7 @@ protected:
   static void resend_thread(GooseNode::Output *output) noexcept;
 
   void parseInput(json_t *json);
+  void parseSessionKey(json_t *json);
   void parseSubscriber(json_t *json, SubscriberConfig &sc);
   void parseSubscribers(json_t *json,
                         std::map<std::string, InputEventContext> &ctx);
