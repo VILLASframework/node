@@ -4,90 +4,16 @@
 ---
 allOf:
 - type: object
-  anyOf:
-  - required: [transport, remote]
-    properties:
-
-      transport:
-        type: string
-        enum:
-        - tcp
-
-      remote:
-        type: string
-        description: The hostname or IP of the modbus TCP device.
-        example: example.com
-
-      port:
-        type: integer
-        description: The port number of the modbus TCP device.
-        default: 1883
-
-      unit:
-        type: integer
-        description: The addressed unit used for serial communication. This is optional for TCP.
-        minimum: 0
-        maximum: 65535
-        example: 1
-
-  - required: [transport, device, baudrate, parity, data_bits, stop_bits, unit]
-    properties:
-
-      transport:
-        type: string
-        enum:
-        - rtu
-
-      device:
-        type: string
-        description: Path to the serial device file.
-        example: /dev/ttyS0
-
-      baudrate:
-        type: integer
-        description: The baudrate used for serial communication.
-        example: 9600
-
-      parity:
-        type: string
-        enum:
-        - none
-        - even
-        - odd
-        description: The parity used for serial communication.
-        example: none
-
-      data_bits:
-        type: integer
-        description: The data bits used for serial communication.
-        minimum: 5
-        maximum: 8
-        example: 5
-
-      stop_bits:
-        type: integer
-        description: The stop bits used for serial communication.
-        minimum: 1
-        maximum: 2
-        example: 5
-
-      unit:
-        type: integer
-        description: The addressed unit used for serial communication. This is optional for TCP.
-        minimum: 0
-        maximum: 65535
-        example: 1
-
+  requires: [transport]
   properties:
-
     response_timeout:
       type: number
-      description: The timeout in seconds when waiting for responses from a modbus server.
+      description: The timeout in seconds when waiting for responses from a Modbus server.
       example: 1.0
 
     rate:
       type: number
-      description: The rate at which modbus device registers are queried for changes.
+      description: The rate at which Modbus device registers are queried for changes.
       example: 1.0
 
     in:
@@ -105,5 +31,18 @@ allOf:
           type: array
           items:
             $ref: ./signals/modbus_signal.yaml
+
+    transport:
+      type: string
+      description: The transport protocol used for Modbus communication.
+      enum:
+      - tcp
+      - rtu
+
+  discriminator:
+    propertyName: transport
+    mapping:
+      tcp: modbus_tcp.yaml
+      rtu: modbus_rtu.yaml
 
 - $ref: ../node.yaml
