@@ -64,8 +64,8 @@ RUN dnf -y install \
 	hiredis-devel \
 	libnice-devel \
 	libmodbus-devel
-	# TODO: v1.2.1 seems broken. Re-enable once new version is available
-	# nanomsg-devel
+# TODO: v1.2.1 seems broken. Re-enable once new version is available
+# nanomsg-devel
 
 # Install unpackaged dependencies from source
 # TODO: We currently need to build with GCC 14 to get OpenDSSC working
@@ -79,7 +79,8 @@ RUN echo /usr/local/lib   >> /etc/ld.so.conf
 ADD packaging/patches /deps/patches
 ADD packaging/deps.sh /deps
 RUN bash /deps/deps.sh
-RUN ldconfig
+RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
+	ldconfig
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
@@ -120,9 +121,9 @@ COPY . /villas/
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
 	cmake \
-		-DCMAKE_CXX_COMPILER=g++-14 \
-		-DCMAKE_C_COMPILER=gcc-14 \
-		${CMAKE_OPTS} .. && \
+	-DCMAKE_CXX_COMPILER=g++-14 \
+	-DCMAKE_C_COMPILER=gcc-14 \
+	${CMAKE_OPTS} .. && \
 	make -j$(nproc) install && \
 	ldconfig
 
