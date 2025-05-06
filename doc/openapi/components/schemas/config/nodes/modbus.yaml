@@ -42,7 +42,7 @@ allOf:
   discriminator:
     propertyName: transport
     mapping:
-      tcp: modbus_tcp.yaml
-      rtu: modbus_rtu.yaml
+      tcp: ./modbus_tcp.yaml
+      rtu: ./modbus_rtu.yaml
 
 - $ref: ../node.yaml
