@@ -36,15 +36,16 @@
   withNodeWebrtc ? withAllNodes,
   withNodeZeromq ? withAllNodes,
   # Minimal dependencies
+  bash,
   cmake,
   coreutils,
   graphviz,
   jq,
   lib,
   makeWrapper,
-  system,
   pkg-config,
   stdenv,
+  system,
   # Optional dependencies
   comedilib,
   curl,
@@ -103,6 +104,8 @@ stdenv.mkDerivation {
       mv $out/include/villas/* $dev/include/villas/
       rm -d $out/include/villas
     fi
+    patchShebangs --host $out/bin/villas
+    patchShebangs --host $out/bin/villas-api
     wrapProgram $out/bin/villas \
       --set PATH ${
         lib.makeBinPath [
@@ -138,6 +141,7 @@ stdenv.mkDerivation {
       openssl
       curl
       spdlog
+      bash
     ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
