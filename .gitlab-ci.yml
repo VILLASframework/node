@@ -89,53 +89,41 @@ build:source:
 
 build:nix:
   stage: build
-  image: nixos/nix
+  image: docker.nix-community.org/nixpkgs/cachix-flakes
   needs: []
+  variables:
+    CACHIX_CACHE_NAME: villas
+
+  parallel:
+    matrix:
+      - SYSTEM: [x86_64-linux, aarch64-linux]
 
   artifacts:
     when: on_success
     access: all
     expire_in: "1 year"
     paths:
-      - artifacts/villas
+      - artifacts/*
 
   before_script:
-    - | # Create artifacts directory
-      mkdir artifacts
+    - cachix use "$CACHIX_CACHE_NAME"
 
-    - | # Configure Nix
-      echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
+    - | # Create directories
+      mkdir -p artifacts /var/tmp/
 
-    # - | # Configure Attic
-    #   nix shell nixpgks#attic-client
-
-    #   attic login nulll https://cache.0l.de ${ATTIC_TOKEN}
-    #   attic use "nulll:villas"
-
-  script:
-    - nix build --print-build-logs .
-
-    - | # Build ARX bundle
-      nix bundle --out-link villas .
-      cp -L villas artifacts/villas
-
-    - | # Build Docker image
+    - | # Login at Docker registry
       nix run nixpkgs#skopeo -- login \
         --username ${CI_REGISTRY_USER} \
         --password ${CI_REGISTRY_PASSWORD} \
         ${CI_REGISTRY}
 
-      nix build '.#dockerImage'
+  script:
+    - cachix watch-exec $CACHIX_CACHE_NAME -- nix build --print-build-logs ".#villas-node-${SYSTEM}"
+    - cachix watch-exec $CACHIX_CACHE_NAME -- nix bundle --print-build-logs --out-link bundle ".#villas-node-${SYSTEM}"
+    - cachix watch-exec $CACHIX_CACHE_NAME -- nix build --print-build-logs --out-link docker ".#dockerImage-${SYSTEM}"
 
-      nix run nixpkgs#skopeo -- copy --insecure-policy \
-        "docker-archive:./result" \
-        "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix"
-
-  # after_script:
-  #   - | # Push whole store to cache
-  #     nix shell nixpgks#attic-client
-
-  #     attic push /nix/store/*
+    - cp -L bundle artifacts/villas-${SYSTEM}
+    - nix run nixpkgs#skopeo -- --tmpdir=${TMPDIR} --insecure-policy copy "docker-archive:./docker" "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix-${SYSTEM}"
 
 # Stage: test
 
