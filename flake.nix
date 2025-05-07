@@ -3,6 +3,15 @@
 {
   description = "VILLASnode is a client/server application to connect simulation equipment and software.";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://villas.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "villas.cachix.org-1:vCWp9IzwxFT6ovZivQAvn5ZuLST01bpAGXWwlGTZ9fA="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
