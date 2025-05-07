@@ -154,7 +154,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
-    ++ lib.optionals withNodeNanomsg [ opendssc ]
+    ++ lib.optionals withNodeOpenDSS [ opendssc ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
