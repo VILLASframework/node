@@ -34,12 +34,12 @@ protected:
 public:
   OpalAsyncIPFormat(int fl, uint8_t did = 0) : BinaryFormat(fl), dev_id(did) {}
 
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 class OpalAsyncIPFormatPlugin : public FormatFactory {
@@ -47,16 +47,16 @@ class OpalAsyncIPFormatPlugin : public FormatFactory {
 public:
   using FormatFactory::FormatFactory;
 
-  virtual Format *make() {
+  Format *make() override {
     return new OpalAsyncIPFormat((int)SampleFlags::HAS_SEQUENCE |
                                  (int)SampleFlags::HAS_DATA);
   }
 
   /// Get plugin name
-  virtual std::string getName() const { return "opal.asyncip"; }
+  std::string getName() const override { return "opal.asyncip"; }
 
   /// Get plugin description
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "OPAL-RTs AsyncIP example format";
   }
 };
