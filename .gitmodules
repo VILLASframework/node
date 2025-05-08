@@ -1,10 +1,6 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-[submodule "packaging/live-iso/fedora-kickstarts"]
-	path = packaging/live-iso/fedora-kickstarts
-	url = https://pagure.io/fedora-kickstarts.git
-
 [submodule "fpga/thirdparty/libxil"]
 	path = fpga/thirdparty/libxil
 	url = https://github.com/VILLASframework/libxil.git
