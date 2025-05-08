@@ -77,9 +77,8 @@ protected:
 
   bool shutdown;
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   enum Mode {
@@ -98,17 +97,17 @@ public:
 
   virtual ~TestRTT(){};
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int start();
+  int start() override;
 
-  virtual int stop();
+  int stop() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 
   double getEstimatedDuration() const;
 };
@@ -118,7 +117,7 @@ class TestRTTNodeFactory : public NodeFactory {
 public:
   using NodeFactory::NodeFactory;
 
-  virtual Node *make(const uuid_t &id = {}, const std::string &nme = "") {
+  Node *make(const uuid_t &id = {}, const std::string &nme = "") override {
     auto *n = new TestRTT(id, nme);
 
     init(n);
@@ -126,19 +125,19 @@ public:
     return n;
   }
 
-  virtual int getFlags() const {
+  int getFlags() const override {
     return (int)NodeFactory::Flags::SUPPORTS_READ |
            (int)NodeFactory::Flags::SUPPORTS_WRITE |
            (int)NodeFactory::Flags::SUPPORTS_POLL;
   }
 
-  virtual std::string getName() const { return "test_rtt"; }
+  std::string getName() const override { return "test_rtt"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Test round-trip time with loopback";
   }
 
-  virtual int start(SuperNode *sn);
+  int start(SuperNode *sn) override;
 };
 
 } // namespace node

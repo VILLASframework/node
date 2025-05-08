@@ -234,24 +234,23 @@ protected:
   void parsePublisher(json_t *json, PublisherConfig &pc);
   void parsePublishers(json_t *json, std::vector<OutputContext> &ctx);
 
-  virtual int _read(struct Sample *smps[], unsigned cnt) override;
-
-  virtual int _write(struct Sample *smps[], unsigned cnt) override;
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   GooseNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~GooseNode() override;
 
-  virtual std::vector<int> getPollFDs() override;
+  std::vector<int> getPollFDs() override;
 
-  virtual int parse(json_t *json) override;
+  int parse(json_t *json) override;
 
-  virtual int prepare() override;
+  int prepare() override;
 
-  virtual int start() override;
+  int start() override;
 
-  virtual int stop() override;
+  int stop() override;
 };
 
 } // namespace iec61850

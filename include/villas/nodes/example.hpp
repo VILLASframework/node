@@ -34,9 +34,8 @@ protected:
   int state1;
   struct timespec start_time;
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   ExampleNode(const uuid_t &id = {}, const std::string &name = "");
@@ -47,31 +46,31 @@ public:
 
   virtual ~ExampleNode();
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int check();
+  int check() override;
 
-  virtual int start();
+  int start() override;
 
-  // virtual int stop();
+  // int stop() override;
 
-  // virtual int pause();
+  // int pause() override;
 
-  // virtual int resume();
+  // int resume() override;
 
-  // virtual int restart();
+  // int restart() override;
 
-  // virtual int reverse();
+  // int reverse() override;
 
-  // virtual std::vector<int> getPollFDs();
+  // std::vector<int> getPollFDs() override;
 
-  // virtual std::vector<int> getNetemFDs();
+  // std::vector<int> getNetemFDs() override;
 
-  // virtual struct villas::node::memory::Type *getMemoryType();
+  // struct villas::node::memory::Type *getMemoryType() override;
 
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 };
 
 } // namespace node

@@ -21,9 +21,8 @@ protected:
 
   Node *source;
 
-  virtual int _write(struct Sample *smps[], unsigned cnt);
-
-  virtual int _read(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   InternalLoopbackNode(Node *src, unsigned id = 0,
@@ -31,9 +30,9 @@ public:
 
   virtual ~InternalLoopbackNode();
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 
-  virtual int stop();
+  int stop() override;
 };
 
 class InternalLoopbackNodeFactory : public NodeFactory {
@@ -41,11 +40,11 @@ class InternalLoopbackNodeFactory : public NodeFactory {
 public:
   using NodeFactory::NodeFactory;
 
-  virtual Node *make(const uuid_t &id = {}, const std::string &name = "") {
+  Node *make(const uuid_t &id = {}, const std::string &name = "") override {
     return nullptr;
   }
 
-  virtual int getFlags() const {
+  int getFlags() const override {
     return (int)NodeFactory::Flags::INTERNAL |
            (int)NodeFactory::Flags::PROVIDES_SIGNALS |
            (int)NodeFactory::Flags::SUPPORTS_READ |
@@ -53,9 +52,9 @@ public:
            (int)NodeFactory::Flags::SUPPORTS_POLL;
   }
 
-  virtual std::string getName() const { return "loopback.internal"; }
+  std::string getName() const override { return "loopback.internal"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Internal loopback node";
   }
 };
