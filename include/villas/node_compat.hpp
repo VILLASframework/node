@@ -22,8 +22,8 @@ class NodeCompatFactory;
 class NodeCompat : public Node {
 
 protected:
-  struct NodeCompatType *_vt; // Virtual functions (C++ OOP style)
-  void *_vd; // Virtual data (used by struct vnode::_vt functions)
+  NodeCompatType *_vt; // Virtual functions (C++ OOP style)
+  void *_vd;           // Virtual data (used by struct vnode::_vt functions)
 
   std::string _details;
 
@@ -34,8 +34,7 @@ public:
   NodeCompat *node;
   json_t *cfg;
 
-  NodeCompat(struct NodeCompatType *vt, const uuid_t &id,
-             const std::string &name);
+  NodeCompat(NodeCompatType *vt, const uuid_t &id, const std::string &name);
   NodeCompat(const NodeCompat &n);
 
   NodeCompat &operator=(const NodeCompat &other);
@@ -127,10 +126,10 @@ public:
 class NodeCompatFactory : public NodeFactory {
 
 protected:
-  struct NodeCompatType *_vt;
+  NodeCompatType *_vt;
 
 public:
-  NodeCompatFactory(struct NodeCompatType *vt) : NodeFactory(), _vt(vt) {}
+  NodeCompatFactory(NodeCompatType *vt) : NodeFactory(), _vt(vt) {}
 
   Node *make(const uuid_t &id = {}, const std::string &name = "") override;
 

@@ -12,7 +12,7 @@
 using namespace villas;
 using namespace villas::node;
 
-NodeCompat::NodeCompat(struct NodeCompatType *vt, const uuid_t &id,
+NodeCompat::NodeCompat(NodeCompatType *vt, const uuid_t &id,
                        const std::string &name)
     : Node(id, name), _vt(vt) {
   _vd = new char[_vt->size];
