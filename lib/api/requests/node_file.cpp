@@ -23,7 +23,7 @@ class FileRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::GET && method != Session::Method::POST)
       throw InvalidMethod(this);
 

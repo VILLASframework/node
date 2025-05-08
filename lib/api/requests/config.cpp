@@ -19,7 +19,7 @@ class ConfigRequest : public Request {
 public:
   using Request::Request;
 
-  virtual Response *execute() {
+  Response *execute() override {
     json_t *json = session->getSuperNode()->getConfig();
 
     if (method != Session::Method::GET)

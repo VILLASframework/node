@@ -18,7 +18,7 @@ class StatusRequest : public UniversalRequest {
 public:
   using UniversalRequest::UniversalRequest;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::GET)
       throw InvalidMethod(this);
 

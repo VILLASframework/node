@@ -25,7 +25,7 @@ protected:
 public:
   using Request::Request;
 
-  virtual void prepare();
+  void prepare() override;
 };
 
 } // namespace api
