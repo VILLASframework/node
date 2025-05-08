@@ -26,7 +26,7 @@ protected:
 public:
   using NodeRequest::NodeRequest;
 
-  virtual void prepare();
+  void prepare() override;
 };
 
 } // namespace api

@@ -120,7 +120,7 @@ public:
     return new JsonResponse(session, HTTP_STATUS_OK, json_object());
   }
 
-  virtual Response *execute() {
+  Response *execute() override {
     auto const &signalName = matches[2];
     auto const &subResource = matches[3];
 

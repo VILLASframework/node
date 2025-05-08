@@ -24,7 +24,7 @@ template <auto func> class NodeActionRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::POST)
       throw InvalidMethod(this);
 

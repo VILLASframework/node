@@ -24,7 +24,7 @@ class PathsRequest : public Request {
 public:
   using Request::Request;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::GET)
       throw InvalidMethod(this);
 
