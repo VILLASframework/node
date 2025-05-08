@@ -189,8 +189,6 @@ const std::string &FpgaNode::getDetails() {
   return details;
 }
 
-int FpgaNode::check() { return Node::check(); }
-
 int FpgaNode::start() {
   if (getOutputSignalsMaxCount() * sizeof(float) > blockTx->getSize()) {
     logger->error("Output signals exceed block size.");

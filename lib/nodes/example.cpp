@@ -57,7 +57,7 @@ int ExampleNode::check() {
   if (setting2.empty() || setting2.size() > 10)
     return -1;
 
-  return 0;
+  return Node::check();
 }
 
 int ExampleNode::start() {

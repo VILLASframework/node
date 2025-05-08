@@ -64,7 +64,7 @@ int APINode::check() {
       return -1;
   }
 
-  return 0;
+  return Node::check();
 }
 
 int APINode::_read(struct Sample *smps[], unsigned cnt) {
