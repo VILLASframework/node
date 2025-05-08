@@ -9,6 +9,7 @@
 
 #include <jansson.h>
 
+#include <villas/node.hpp>
 #include <villas/queue_signalled.h>
 
 namespace villas {
@@ -21,24 +22,23 @@ protected:
   struct CQueueSignalled queue;
   enum QueueSignalledMode mode;
 
-  virtual int _write(struct Sample *smps[], unsigned cnt);
-
-  virtual int _read(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   LoopbackNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~LoopbackNode();
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int stop();
+  int stop() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 };
 
 } // namespace node

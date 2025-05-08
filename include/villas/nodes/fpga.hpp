@@ -69,31 +69,31 @@ protected:
   std::shared_ptr<MemoryAccessor<float>> accessorTxFloat;
 
   // Non-public methods
-  virtual int fastRead(Sample *smps[], unsigned cnt);
-  virtual int slowRead(Sample *smps[], unsigned cnt);
-  virtual int _read(Sample *smps[], unsigned cnt) override;
-  virtual int fastWrite(Sample *smps[], unsigned cnt);
-  virtual int slowWrite(Sample *smps[], unsigned cnt);
-  virtual int _write(Sample *smps[], unsigned cnt) override;
+  int fastRead(Sample *smps[], unsigned cnt);
+  int slowRead(Sample *smps[], unsigned cnt);
+  int _read(Sample *smps[], unsigned cnt) override;
+  int fastWrite(Sample *smps[], unsigned cnt);
+  int slowWrite(Sample *smps[], unsigned cnt);
+  int _write(Sample *smps[], unsigned cnt) override;
 
 public:
   FpgaNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~FpgaNode();
 
-  virtual int prepare() override;
+  int prepare() override;
 
-  virtual int parse(json_t *json) override;
+  int parse(json_t *json) override;
 
-  virtual int check() override;
+  int check() override;
 
-  virtual int start() override;
+  int start() override;
 
-  virtual int stop() override;
+  int stop() override;
 
-  virtual std::vector<int> getPollFDs() override;
+  std::vector<int> getPollFDs() override;
 
-  virtual const std::string &getDetails() override;
+  const std::string &getDetails() override;
 };
 
 class FpgaNodeFactory : public NodeFactory {
@@ -101,8 +101,7 @@ class FpgaNodeFactory : public NodeFactory {
 public:
   using NodeFactory::NodeFactory;
 
-  virtual Node *make(const uuid_t &id = {},
-                     const std::string &nme = "") override {
+  Node *make(const uuid_t &id = {}, const std::string &nme = "") override {
     auto *n = new FpgaNode(id, nme);
 
     init(n);
@@ -110,17 +109,17 @@ public:
     return n;
   }
 
-  virtual int getFlags() const override {
+  int getFlags() const override {
     return (int)NodeFactory::Flags::SUPPORTS_READ |
            (int)NodeFactory::Flags::SUPPORTS_WRITE |
            (int)NodeFactory::Flags::SUPPORTS_POLL;
   }
 
-  virtual std::string getName() const override { return "fpga"; }
+  std::string getName() const override { return "fpga"; }
 
-  virtual std::string getDescription() const override { return "VILLASfpga"; }
+  std::string getDescription() const override { return "VILLASfpga"; }
 
-  virtual int start(SuperNode *sn) override;
+  int start(SuperNode *sn) override;
 };
 
 } // namespace node

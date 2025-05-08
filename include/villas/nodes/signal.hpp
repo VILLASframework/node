@@ -78,22 +78,22 @@ protected:
   struct timespec started; // Point in time when this node was started.
   unsigned missed_steps;   // Total number of missed steps.
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
 
 public:
   SignalNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int start();
+  int start() override;
 
-  virtual int stop();
+  int stop() override;
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 };
 
 } // namespace node

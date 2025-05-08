@@ -44,7 +44,6 @@ public:
   void close();
 
   virtual int getNumSensors() const { return 1; }
-
   virtual bool hasHumiditySensor() const { return false; }
 
   void read(struct Sample *smp);
