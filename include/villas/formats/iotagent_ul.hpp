@@ -18,11 +18,11 @@ struct Sample;
 class IotAgentUltraLightFormat : public Format {
 
 protected:
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
 
 public:
   using Format::Format;

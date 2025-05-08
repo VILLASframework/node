@@ -40,15 +40,15 @@ protected:
 public:
   JsonFormat(int fl) : Format(fl), dump_flags(0) {}
 
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual int print(FILE *f, const struct Sample *const smps[], unsigned cnt);
-  virtual int scan(FILE *f, struct Sample *const smps[], unsigned cnt);
+  int print(FILE *f, const struct Sample *const smps[], unsigned cnt) override;
+  int scan(FILE *f, struct Sample *const smps[], unsigned cnt) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 } // namespace node
