@@ -19,7 +19,7 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     json_error_t err;
     int ret;
 
@@ -34,7 +34,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     smp->sequence += offset;

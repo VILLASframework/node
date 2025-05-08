@@ -26,7 +26,7 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
 
     size_t i;
@@ -55,7 +55,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED);
 
     energy = 0;
@@ -64,13 +64,13 @@ public:
     state = State::STARTED;
   }
 
-  virtual void periodic() {
+  virtual void periodic() override {
     assert(state == State::STARTED);
 
     logger->info("Energy: {}", energy);
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     double P, P_last, dt;
 
     assert(state == State::STARTED);

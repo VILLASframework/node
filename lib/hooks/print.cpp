@@ -32,7 +32,7 @@ public:
   PrintHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), output(nullptr) {}
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     if (!output_path.empty()) {
@@ -47,12 +47,12 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     if (output)
       fclose(output);
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     const char *p = nullptr;
     const char *o = nullptr;
     int ret;
@@ -92,7 +92,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     if (!output) {

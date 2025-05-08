@@ -23,7 +23,7 @@ public:
   DecimateHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : LimitHook(p, n, fl, prio, en), ratio(1), renumber(false), counter(0) {}
 
-  virtual void setRate(double rate, double maxRate = -1) {
+  void setRate(double rate, double maxRate = -1) override {
     assert(maxRate > 0);
 
     int ratio = maxRate / rate;
@@ -35,11 +35,11 @@ public:
 
   void setRatio(int r) { ratio = r; }
 
-  virtual void start();
+  void start() override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 } // namespace node

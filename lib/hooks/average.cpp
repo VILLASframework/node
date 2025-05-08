@@ -22,7 +22,7 @@ public:
   AverageHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : MultiSignalHook(p, n, fl, prio, en), offset(0) {}
 
-  virtual void prepare() {
+  void prepare() override {
     assert(state == State::CHECKED);
 
     MultiSignalHook::prepare();
@@ -37,7 +37,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
 
@@ -52,7 +52,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     double avg, sum = 0;
     int n = 0;
 
