@@ -856,8 +856,6 @@ int ModbusNode::parse(json_t *json) {
   return 0;
 }
 
-int ModbusNode::check() { return Node::check(); }
-
 int ModbusNode::start() {
   if (modbus_connect(modbus_context) == -1)
     throw RuntimeError{"connection failure: {}", modbus_strerror(errno)};

@@ -159,8 +159,6 @@ int OpenDSS::parse(json_t *json) {
   return 0;
 }
 
-int OpenDSS::check() { return Node::check(); }
-
 void OpenDSS::getElementName(ElementType type,
                              std::unordered_set<std::string> *set) {
   // Get all of the element name for each type and use it to check if the name in the config file is vaild.

@@ -65,8 +65,6 @@ public:
 
   int parse(json_t *json) override;
 
-  int check() override;
-
   int start() override;
 
   int stop() override;
