@@ -26,13 +26,13 @@ public:
       : LimitHook(p, n, fl, prio, en), mode(LIMIT_RATE_LOCAL), deadtime(0),
         last({0, 0}) {}
 
-  virtual void setRate(double rate, double maxRate = -1) {
+  void setRate(double rate, double maxRate = -1) override {
     deadtime = 1.0 / rate;
   }
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 } // namespace node

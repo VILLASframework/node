@@ -25,7 +25,7 @@ public:
       : MultiSignalHook(p, n, fl, prio, en), smpMemory(), accumulator(0.0),
         windowSize(10), smpMemoryPosition(0) {}
 
-  virtual void prepare() {
+  void prepare() override {
     MultiSignalHook::prepare();
 
     // Add signals
@@ -46,7 +46,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
 
@@ -62,7 +62,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     unsigned i = 0;

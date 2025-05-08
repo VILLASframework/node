@@ -38,7 +38,7 @@ public:
         previousValue(std::numeric_limits<double>::quiet_NaN()), active(false),
         startSequence(0) {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
 
     json_error_t err;
@@ -69,7 +69,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void prepare() {
+  void prepare() override {
     assert(state == State::CHECKED);
 
     SingleSignalHook::prepare();
@@ -82,7 +82,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     Hook::Reason reason;

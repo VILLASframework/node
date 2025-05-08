@@ -140,7 +140,7 @@ public:
         amplitudeOffset(0.0), rocofOffset(0.0) {
   }
 
-  virtual void prepare() {
+  void prepare() override {
     MultiSignalHook::prepare();
 
     dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
@@ -232,7 +232,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     MultiSignalHook::parse(json);
     int ret;
     int windowSizeFactor = 1;
@@ -340,7 +340,7 @@ public:
     state = State::CHECKED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     // Update sample memory

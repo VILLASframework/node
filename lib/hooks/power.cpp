@@ -64,7 +64,7 @@ public:
         calcCosPhi(true), channelNameEnable(false), angleUnitFactor(1),
         timeAlignType(TimeAlign::CENTER) {}
 
-  virtual void prepare() {
+  void prepare() override {
     MultiSignalHook::prepare();
 
     for (unsigned i = 0; i < pairingsStr.size(); i++) {
@@ -160,7 +160,7 @@ public:
   }
 
   // Read configuration JSON and configure hook accordingly
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     // Ensure hook is not yet running
     assert(state != State::STARTED);
 
@@ -239,7 +239,7 @@ public:
   }
 
   // This function does the actual processing of the hook when a new sample is passed through.
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     uint sigIndex = 0; //used to set the pos of value in output sampel array
