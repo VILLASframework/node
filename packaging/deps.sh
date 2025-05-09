@@ -194,6 +194,12 @@ fi
 if ! pkg-config "libiec61850 >= 1.6.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
     git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
+
+    pushd libiec61850/third_party/mbedtls/
+    wget https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz
+    tar xzf v3.6.0.tar.gz
+    popd
+
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake -DBUILD_EXAMPLES=OFF \

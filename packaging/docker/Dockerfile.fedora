@@ -17,7 +17,7 @@ RUN dnf -y install \
 	gcc-14 g++-14 \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
-	texinfo git awk git-svn curl tar patchutils \
+	texinfo git awk git-svn curl wget tar patchutils \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
