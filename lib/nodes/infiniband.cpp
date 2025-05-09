@@ -747,7 +747,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
           // Get time directly after something arrived in Completion Queue
           ts_receive = time_now();
 
-          n->logger->debug("Received {} Work Completions", wcs);
+          n->logger->trace("Received {} Work Completions", wcs);
 
           read_values = wcs; // Value to return
           max_wr_post = wcs; // Make space free in smps[]
