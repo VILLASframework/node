@@ -37,6 +37,8 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
   dci.reliability.maxRetransmits = 0;
   dci.reliability.unordered = true;
 #endif
+
+  rtcConf.enableIceTcp = true;
 }
 
 WebRTCNode::~WebRTCNode() {
@@ -110,8 +112,6 @@ int WebRTCNode::parse(json_t *json) {
 
       if (tcp > 0)
         rtcConf.enableIceTcp = tcp > 0;
-      else
-        rtcConf.enableIceTcp = true;
     }
   }
 
