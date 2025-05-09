@@ -19,7 +19,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
 	apt-get install -y \
 	gcc g++ \
-	pkg-config cmake make \
+	pkg-config cmake make meson ninja-build \
 	autoconf automake autogen libtool \
 	texinfo git git-svn curl tar wget diffutils \
 	flex bison \

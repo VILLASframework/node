@@ -106,10 +106,10 @@ if ! pkg-config "criterion >= 2.4.0" && \
    [ "${ARCH}" == "x86_64" ] && \
    should_build "criterion" "for unit tests"; then
     git clone ${GIT_OPTS} --branch v2.4.2 --recursive https://github.com/Snaipe/Criterion.git
-    mkdir -p Criterion/build
-    pushd Criterion/build
-    cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    pushd Criterion
+    meson setup build
+    meson compile -C build
+    meson install -C build
     popd
 fi
 
