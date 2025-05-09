@@ -1,4 +1,4 @@
-/** Static server configuration
+/* Static server configuration
  *
  * This file contains some compiled-in settings.
  * This settings are not part of the configuration file.
@@ -12,28 +12,29 @@
 
 #include <villas/config.hpp>
 
-/** Default number of values in a sample */
-#define DEFAULT_SAMPLE_LENGTH		64u
-#define DEFAULT_QUEUE_LENGTH		1024u
-#define MAX_SAMPLE_LENGTH		512u
-#define DEFAULT_FORMAT_BUFFER_LENGTH 	4096u
+// Default number of values in a sample.
+#define DEFAULT_SAMPLE_LENGTH 64u
+#define DEFAULT_QUEUE_LENGTH 1024u
+#define MAX_SAMPLE_LENGTH 512u
+#define DEFAULT_FORMAT_BUFFER_LENGTH 4096u
 
-/** Number of hugepages which are requested from the the kernel.
- * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */
-#define DEFAULT_NR_HUGEPAGES	100
+/* Number of hugepages which are requested from the the kernel.
+ * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+ */
+#define DEFAULT_NR_HUGEPAGES 100
 
-/** Socket priority */
-#define SOCKET_PRIO		7
+// Socket priority.
+#define SOCKET_PRIO 7
 
-/* Protocol numbers */
-#define IPPROTO_VILLAS		137
-#define ETH_P_VILLAS		0xBABE
+// Protocol numbers.
+#define IPPROTO_VILLAS 137
+#define ETH_P_VILLAS 0xBABE
 
-/* Required kernel version */
-#define KERNEL_VERSION_MAJ	3
-#define KERNEL_VERSION_MIN	6
+// Required kernel version.
+#define KERNEL_VERSION_MAJ 3
+#define KERNEL_VERSION_MIN 6
 
-/* Available Features */
+// Available features.
 #cmakedefine WITH_WEB
 #cmakedefine WITH_NODE_WEBSOCKET
 #cmakedefine WITH_NODE_WEBRTC
@@ -43,21 +44,26 @@
 #cmakedefine WITH_GRAPHVIZ
 #cmakedefine WITH_FPGA
 
-/* OS Headers */
+// OS headers.
 #cmakedefine HAS_EVENTFD
 #cmakedefine HAS_SEMAPHORE
 
-/* Available Libraries */
+// Available libraries.
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
 #cmakedefine IBVERBS_FOUND
 #cmakedefine LUAJIT_FOUND
 
-/* Library features */
+// Library features.
 #cmakedefine LWS_DEFLATE_FOUND
 #cmakedefine REDISPP_WITH_TLS
 #cmakedefine REDISPP_WITH_URI
 #cmakedefine RABBITMQ_C_NEW_INCLUDE_DIR
 
-/* Library versions */
-#define RTC_VERSION_NUM ((@LibDataChannel_VERSION_MAJOR@ << 16) | (@LibDataChannel_VERSION_MINOR@ << 8) | (@LibDataChannel_VERSION_PATCH@ << 0))
+// clang-format off
+// Library versions
+#define RTC_VERSION_NUM \
+  ((@LibDataChannel_VERSION_MAJOR@ << 16) | \
+   (@LibDataChannel_VERSION_MINOR@ << 8) | \
+   (@LibDataChannel_VERSION_PATCH@ << 0))
+// clang-format on

@@ -50,7 +50,7 @@ public:
                                   web);
   }
 
-  /// Get plugin name
+  // Get plugin name
   std::string getName() const override {
     std::stringstream ss;
 
@@ -59,7 +59,7 @@ public:
     return ss.str();
   }
 
-  /// Get plugin description
+  // Get plugin description
   virtual std::string getDescription() const {
     std::stringstream ss;
 

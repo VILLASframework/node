@@ -28,19 +28,19 @@ struct comedi_chanspec {
 };
 
 struct comedi_direction {
-  int subdevice;                     ///< Comedi subdevice
-  int buffer_size;                   ///< Comedi's kernel buffer size in kB
-  int sample_size;                   ///< Size of a single measurement sample
-  int sample_rate_hz;                ///< Sample rate in Hz
-  bool present;                      ///< Config present
-  bool enabled;                      ///< Card is started successfully
-  bool running;                      ///< Card is actively transfering samples
-  struct timespec started;           ///< Timestamp when sampling started
-  struct timespec last_debug;        ///< Timestamp of last debug output
-  size_t counter;                    ///< Number of villas samples transfered
-  struct comedi_chanspec *chanspecs; ///< Range and maxdata config of channels
-  unsigned *chanlist;                ///< Channel list in comedi's packed format
-  size_t chanlist_len;               ///< Number of channels for this direction
+  int subdevice;                     // Comedi subdevice
+  int buffer_size;                   // Comedi's kernel buffer size in kB
+  int sample_size;                   // Size of a single measurement sample
+  int sample_rate_hz;                // Sample rate in Hz
+  bool present;                      // Config present
+  bool enabled;                      // Card is started successfully
+  bool running;                      // Card is actively transfering samples
+  struct timespec started;           // Timestamp when sampling started
+  struct timespec last_debug;        // Timestamp of last debug output
+  size_t counter;                    // Number of villas samples transfered
+  struct comedi_chanspec *chanspecs; // Range and maxdata config of channels
+  unsigned *chanlist;                // Channel list in comedi's packed format
+  size_t chanlist_len;               // Number of channels for this direction
 
   char *buffer;
   char *bufptr;

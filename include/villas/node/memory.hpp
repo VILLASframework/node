@@ -63,7 +63,7 @@ void prefault_heap(size_t sz);
 
 void prefault_stack();
 
-/** Allocate \p len bytes memory of type \p m.
+/* Allocate \p len bytes memory of type \p m.
  *
  * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.
