@@ -400,7 +400,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample *const smps[],
   if (!found_id)
     throw RuntimeError("Did not find signal for can id {}", frame.can_id);
 
-  n->logger->debug("Received {} signals", c->sample_buf_num);
+  n->logger->trace("Received {} signals", c->sample_buf_num);
 
   // Copy signal data to sample only when all signals have been received
   if (c->sample_buf_num == n->getInputSignals(false)->size()) {
