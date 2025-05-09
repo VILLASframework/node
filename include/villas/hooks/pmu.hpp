@@ -58,7 +58,8 @@ protected:
   double frequencyOffset;
   double rocofOffset;
 
-  Phasor estimatePhasor(dsp::CosineWindow<double> *window, Phasor lastPhasor);
+  Phasor estimatePhasor(dsp::CosineWindow<double> *window,
+                        const Phasor &lastPhasor);
 
 public:
   PmuHook(Path *p, Node *n, int fl, int prio, bool en = true);
