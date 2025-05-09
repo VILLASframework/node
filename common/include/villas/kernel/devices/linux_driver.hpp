@@ -32,12 +32,12 @@ private:
 public:
   LinuxDriver(const std::filesystem::path path)
       : LinuxDriver(path, path / std::filesystem::path(BIND_DEFAULT),
-                    path / std::filesystem::path(UNBIND_DEFAULT)){};
+                    path / std::filesystem::path(UNBIND_DEFAULT)) {};
 
   LinuxDriver(const std::filesystem::path path,
               const std::filesystem::path bind_path,
               const std::filesystem::path unbind_path)
-      : path(path), bind_path(bind_path), unbind_path(unbind_path){};
+      : path(path), bind_path(bind_path), unbind_path(unbind_path) {};
 
 public:
   void attach(const Device &device) const override;

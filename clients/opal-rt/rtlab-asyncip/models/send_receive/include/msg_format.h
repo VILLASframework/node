@@ -28,10 +28,11 @@
 
 // Initialize a message with default values
 #define MSG_INIT(len, seq)                                                     \
-  (struct msg) {                                                               \
-    .version = MSG_VERSION, .type = MSG_TYPE_DATA, .length = len,              \
-    .sequence = seq, .id = 0                                                   \
-  }
+  (struct msg){.version = MSG_VERSION,                                         \
+               .type = MSG_TYPE_DATA,                                          \
+               .length = len,                                                  \
+               .sequence = seq,                                                \
+               .id = 0}
 
 // The timestamp of a message in struct timespec format
 #define MSG_TS(msg)                                                            \
