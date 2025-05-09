@@ -20,7 +20,7 @@ set_source_files_properties(src/gpu.cpp PROPERTIES
 
 target_include_directories(villas-gpu
     PRIVATE
-        /opt/cuda/include
+    ${CUDA_INCLUDE_DIRS}
 )
 
 target_link_libraries(villas-gpu

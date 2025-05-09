@@ -6,12 +6,25 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(villas-node
-    VERSION 0.0.0
-    DESCRIPTION "VILLASnode"
-    HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
-    LANGUAGES C CXX
-)
+include(CheckLanguage)
+# Check if CUDA is available
+check_language(CUDA)
+
+if(CMAKE_CUDA_COMPILER)
+    project(villas-node
+        VERSION 0.0.0
+        DESCRIPTION "VILLASnode"
+        HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
+        LANGUAGES C CXX CUDA
+    )
+else()
+    project(villas-node
+        VERSION 0.0.0
+        DESCRIPTION "VILLASnode"
+        HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
+        LANGUAGES C CXX
+    )
+endif()
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
