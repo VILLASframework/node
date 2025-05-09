@@ -185,8 +185,12 @@ std::vector<int> WebRTCNode::getPollFDs() {
 }
 
 const std::string &WebRTCNode::getDetails() {
-  // TODO
-  details = fmt::format("");
+  details = fmt::format("session={}, server={}, peer={}, wait_seconds={}, "
+                        "max_retransmits={}, ordered={}, ice.tcp={}, ",
+                        session, server, peer, wait_seconds,
+                        *dci.reliability.maxRetransmits,
+                        dci.reliability.unordered, rtcConf.enableIceTcp);
+
   return details;
 }
 
