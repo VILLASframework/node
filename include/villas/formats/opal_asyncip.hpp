@@ -52,10 +52,10 @@ public:
                                  (int)SampleFlags::HAS_DATA);
   }
 
-  /// Get plugin name
+  // Get plugin name
   std::string getName() const override { return "opal.asyncip"; }
 
-  /// Get plugin description
+  // Get plugin description
   std::string getDescription() const override {
     return "OPAL-RTs AsyncIP example format";
   }

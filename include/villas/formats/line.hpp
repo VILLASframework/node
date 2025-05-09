@@ -62,10 +62,10 @@ public:
 
   Format *make() override { return new T(flags, delimiter); }
 
-  /// Get plugin name
+  // Get plugin name
   std::string getName() const override { return name; }
 
-  /// Get plugin description
+  // Get plugin description
   std::string getDescription() const override { return desc; }
 };
 

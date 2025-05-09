@@ -24,7 +24,7 @@ namespace villas {
 namespace node {
 namespace iec60870 {
 
-/// A supported CS101 information data type
+// A supported CS101 information data type
 class ASDUData {
 public:
   enum Type {

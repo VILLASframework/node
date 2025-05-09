@@ -491,7 +491,7 @@ void SlaveNode::stopSlave() noexcept {
 void SlaveNode::debugPrintMessage(IMasterConnection connection,
                                   uint8_t *message, int message_size,
                                   bool sent) const noexcept {
-  /// TODO: debug print the message bytes as trace
+  // TODO: debug print the message bytes as trace
 }
 
 void SlaveNode::debugPrintConnection(

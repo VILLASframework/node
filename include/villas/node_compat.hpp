@@ -133,10 +133,10 @@ public:
 
   Node *make(const uuid_t &id = {}, const std::string &name = "") override;
 
-  /// Get plugin name
+  // Get plugin name
   std::string getName() const override { return _vt->name; }
 
-  /// Get plugin description
+  // Get plugin description
   std::string getDescription() const override { return _vt->description; }
 
   int getFlags() const override;
