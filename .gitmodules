@@ -7,6 +7,3 @@
 [submodule "fpga/thirdparty/udmabuf"]
 	path = fpga/thirdparty/udmabuf
 	url = https://github.com/ikwzm/udmabuf
-[submodule "fpga/lib/gpu/gdrcopy"]
-	path = fpga/gpu/thirdparty/gdrcopy
-	url = https://github.com/daniel-k/gdrcopy.git

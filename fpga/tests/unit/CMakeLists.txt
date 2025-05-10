@@ -20,12 +20,6 @@ set(SOURCES
 
 add_executable(unit-tests-fpga ${SOURCES})
 
-if (CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-    target_sources(unit-tests-fpga PRIVATE
-        gpu.cpp rtds2gpu.cpp gpu_kernels.cu)
-endif ()
-
 target_include_directories(unit-tests-fpga PUBLIC
     ../include
     ${CRITERION_INCLUDE_DIRECTORIES}

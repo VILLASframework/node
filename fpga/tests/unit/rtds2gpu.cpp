@@ -18,7 +18,6 @@
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
 #include <villas/fpga/ips/switch.hpp>
-#include <villas/gpu.hpp>
 
 #include "global.hpp"
 
