@@ -484,7 +484,7 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
-if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
+if ! find /usr/local/ -name "libOpenDSSC.so" | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
     mkdir -p OpenDSS-C/build
@@ -502,6 +502,8 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
           ${OPENDSS_CMAKE_OPTS} \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
+    DSSC_PATH=$(find /usr/local/ -name libOpenDSSC.so 2>/dev/null | head -n 1 | xargs dirname)
+    echo "$DSSC_PATH" > /etc/ld.so.conf.d/opendssc.conf
     popd
 fi
 
