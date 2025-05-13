@@ -18,14 +18,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <sstream>
 #include <string>
 
-#include <cstdlib>
-#include <cstring>
-
-#include <cstdint>
 #include <fcntl.h>
 #include <linux/pci_regs.h>
 #include <sys/eventfd.h>

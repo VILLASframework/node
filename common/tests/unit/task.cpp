@@ -6,7 +6,6 @@
  */
 
 #include <criterion/criterion.h>
-
 #include <math.h>
 
 #include <villas/task.hpp>

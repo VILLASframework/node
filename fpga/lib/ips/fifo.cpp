@@ -9,7 +9,6 @@
  */
 
 #include <unistd.h>
-
 #include <xilinx/xllfifo.h>
 #include <xilinx/xstatus.h>
 

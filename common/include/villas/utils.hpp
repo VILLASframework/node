@@ -8,19 +8,18 @@
 
 #pragma once
 
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <list>
 #include <string>
 #include <vector>
 
-#include <cassert>
-#include <cstdint>
-#include <cstdlib>
+#include <openssl/sha.h>
 #include <sched.h>
 #include <signal.h>
 #include <sys/types.h>
-
-#include <openssl/sha.h>
 
 #include <villas/config.hpp>
 

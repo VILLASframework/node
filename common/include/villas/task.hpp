@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <cstdio>
-
 #include <ctime>
 
 namespace villas {

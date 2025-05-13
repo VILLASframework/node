@@ -5,9 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/capabilities.hpp>
-
 #include <villas/api/request.hpp>
+#include <villas/capabilities.hpp>
 #include <villas/format.hpp>
 #include <villas/hook.hpp>
 #include <villas/plugin.hpp>

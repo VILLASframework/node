@@ -7,10 +7,9 @@
 
 #include <cstdint>
 
-#include <villas/utils.hpp>
-
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dino.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::fpga::ip;
 

@@ -10,7 +10,6 @@
 #include <map>
 
 #include <fnmatch.h>
-
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/syslog_sink.h>
 

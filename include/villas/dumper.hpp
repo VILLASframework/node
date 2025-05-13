@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <villas/log.hpp>
-
 #include <string>
+
+#include <villas/log.hpp>
 
 namespace villas {
 namespace node {

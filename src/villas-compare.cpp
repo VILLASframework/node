@@ -6,9 +6,9 @@
  */
 
 #include <iostream>
-#include <unistd.h>
 
 #include <jansson.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>

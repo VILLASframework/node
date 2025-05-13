@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+
 #include <villas/fpga/ips/aurora_xilinx.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/pcie_card.hpp>

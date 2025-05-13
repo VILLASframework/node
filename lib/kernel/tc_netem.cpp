@@ -8,8 +8,8 @@
  */
 
 #include <cmath>
-#include <jansson.h>
 
+#include <jansson.h>
 #include <netlink/route/qdisc/netem.h>
 
 #include <villas/exceptions.hpp>

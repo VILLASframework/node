@@ -14,10 +14,9 @@
 
 #include <cstdint>
 
+#include <jansson.h>
 #include <netlink/route/classifier.h>
 #include <netlink/route/qdisc.h>
-
-#include <jansson.h>
 
 namespace villas {
 namespace kernel {

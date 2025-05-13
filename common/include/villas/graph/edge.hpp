@@ -8,6 +8,7 @@
 #pragma once
 
 #include <fmt/ostream.h>
+
 #include <villas/config.hpp>
 #include <villas/graph/vertex.hpp>
 

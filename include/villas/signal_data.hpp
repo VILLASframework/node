@@ -7,13 +7,12 @@
 
 #pragma once
 
-#include <jansson.h>
-
 #include <complex>
+#include <cstdint>
 #include <limits>
 #include <string>
 
-#include <cstdint>
+#include <jansson.h>
 
 #include <villas/signal_type.hpp>
 

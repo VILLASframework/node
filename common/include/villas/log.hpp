@@ -11,11 +11,10 @@
 #include <list>
 #include <string>
 
+#include <jansson.h>
 #include <spdlog/sinks/dist_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-
-#include <jansson.h>
 
 namespace villas {
 

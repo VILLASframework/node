@@ -9,20 +9,18 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
-#include <sys/types.h>
-#include <sys/wait.h>
-
 #include <villas/config.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
-
-#include <villas/exceptions.hpp>
-#include <villas/kernel/kernel.hpp>
 
 using namespace villas;
 using namespace villas::utils;

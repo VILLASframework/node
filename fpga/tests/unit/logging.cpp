@@ -10,8 +10,8 @@
 
 #include <criterion/logging.h>
 #include <criterion/options.h>
-
 #include <spdlog/spdlog.h>
+
 #include <villas/log.hpp>
 
 extern "C" {

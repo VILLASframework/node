@@ -8,11 +8,11 @@
 #pragma once
 
 #include <cstdint>
-#include <jansson.h>
-
 #include <memory>
 #include <string>
 #include <unordered_map>
+
+#include <jansson.h>
 
 #include <villas/common.hpp>
 #include <villas/hist.hpp>

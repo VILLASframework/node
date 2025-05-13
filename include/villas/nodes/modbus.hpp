@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <numeric>
 #include <optional>
-#include <stdint.h>
 #include <variant>
 #include <vector>
 
 #include <modbus/modbus.h>
+#include <stdint.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node.hpp>

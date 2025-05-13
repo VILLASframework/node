@@ -5,13 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <sys/mman.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <fstream>
 #include <sstream>
+
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include <villas/memory.hpp>
 

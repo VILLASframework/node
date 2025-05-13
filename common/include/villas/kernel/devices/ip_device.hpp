@@ -9,6 +9,8 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
+
 #include <villas/kernel/devices/platform_device.hpp>
 
 namespace villas {

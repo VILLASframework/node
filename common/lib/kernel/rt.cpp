@@ -11,11 +11,10 @@
 #include <villas/config.hpp>
 #include <villas/cpuset.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/log.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
+#include <villas/log.hpp>
+#include <villas/utils.hpp>
 
 #ifdef __linux__
 using villas::utils::CpuSet;

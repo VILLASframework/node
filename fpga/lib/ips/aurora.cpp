@@ -7,9 +7,8 @@
 
 #include <cstdint>
 
-#include <villas/utils.hpp>
-
 #include <villas/fpga/ips/aurora.hpp>
+#include <villas/utils.hpp>
 
 // Register offsets
 #define AURORA_AXIS_SR_OFFSET 0x00 // Status Register (read-only)

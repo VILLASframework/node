@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <villas/exceptions.hpp>
-
 #include <libusb-1.0/libusb.h>
+
+#include <villas/exceptions.hpp>
 
 namespace villas {
 namespace usb {

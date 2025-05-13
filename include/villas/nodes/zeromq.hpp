@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+
 #include <jansson.h>
 
 #include <villas/format.hpp>

@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+
 #include <glob.h>
 #include <libgen.h>
 #include <linux/limits.h>
 #include <unistd.h>
-
-#include <string>
 
 #include <villas/boxes.hpp>
 #include <villas/config_class.hpp>

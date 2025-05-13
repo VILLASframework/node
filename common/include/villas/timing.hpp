@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <cstdio>
-
 #include <ctime>
 
 // Compare two timestamps. Return zero if they are equal.

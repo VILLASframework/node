@@ -5,10 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <fmt/ostream.h>
 #include <memory>
 #include <string>
 #include <utility>
+
+#include <fmt/ostream.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/pcie_card.hpp>

@@ -6,6 +6,7 @@
  */
 
 #include <cstring>
+
 #include <jansson.h>
 #include <unistd.h>
 

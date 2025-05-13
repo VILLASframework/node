@@ -9,12 +9,12 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <fmt/core.h>
 #include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 
+#include <fmt/core.h>
 #include <fmt/format.h>
 #include <openssl/evp.h>
 

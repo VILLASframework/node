@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <jansson.h>
-#include <libwebsockets.h>
-
 #include <atomic>
 #include <list>
 #include <thread>
+
+#include <jansson.h>
+#include <libwebsockets.h>
 
 #include <villas/common.hpp>
 #include <villas/exceptions.hpp>

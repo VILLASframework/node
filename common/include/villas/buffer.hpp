@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include <vector>
-
 #include <cstdlib>
+#include <vector>
 
 #include <jansson.h>
 

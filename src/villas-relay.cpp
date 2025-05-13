@@ -5,13 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <string>
 #include <utility>
-
-#include <cstring>
 
 #include <jansson.h>
 #include <unistd.h>
