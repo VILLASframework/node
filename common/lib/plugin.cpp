@@ -5,11 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <dlfcn.h>
 #include <iostream>
 #include <new>
 #include <string>
 #include <type_traits>
+
+#include <dlfcn.h>
 
 #include <villas/plugin.hpp>
 

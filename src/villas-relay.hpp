@@ -5,14 +5,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <map>
 #include <memory>
+#include <queue>
 #include <vector>
 
+#include <libwebsockets.h>
 #include <uuid/uuid.h>
 
-#include <libwebsockets.h>
-
 #include <villas/log.hpp>
+#include <villas/tool.hpp>
 
 namespace villas {
 namespace node {

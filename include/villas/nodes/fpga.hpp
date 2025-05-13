@@ -10,16 +10,17 @@
 #pragma once
 
 #include <thread>
-#include <villas/format.hpp>
-#include <villas/node.hpp>
-#include <villas/node/config.hpp>
-#include <villas/timing.hpp>
 
 #include <stdint.h>
+
+#include <villas/format.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/node.hpp>
+#include <villas/node/config.hpp>
+#include <villas/timing.hpp>
 
 namespace villas {
 namespace node {

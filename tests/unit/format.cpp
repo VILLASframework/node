@@ -6,11 +6,11 @@
  */
 
 #include <complex>
-#include <float.h>
-#include <stdio.h>
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
+#include <float.h>
+#include <stdio.h>
 
 #include <villas/format.hpp>
 #include <villas/log.hpp>

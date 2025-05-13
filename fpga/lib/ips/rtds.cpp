@@ -7,9 +7,8 @@
 
 #include <cstdint>
 
-#include <villas/utils.hpp>
-
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/utils.hpp>
 
 #define RTDS_HZ 100000000 // 100 MHz
 

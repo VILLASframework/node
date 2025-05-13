@@ -8,16 +8,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
-
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <linux/sockios.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>

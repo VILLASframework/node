@@ -8,11 +8,12 @@
 #pragma once
 
 #include <fmt/ostream.h>
+#include <xilinx/xiic.h>
+
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/fpga/node.hpp>
 #include <villas/memory.hpp>
-#include <xilinx/xiic.h>
 
 namespace villas {
 namespace fpga {

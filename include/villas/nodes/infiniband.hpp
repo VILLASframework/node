@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <netdb.h>
 #include <rdma/rdma_cma.h>
 
 #include <villas/format.hpp>
@@ -28,18 +29,18 @@ class NodeCompat;
 struct infiniband {
   // IBV/RDMA CM structs
   struct context_s {
-    struct rdma_cm_id *listen_id;
-    struct rdma_cm_id *id;
-    struct rdma_event_channel *ec;
+    ::rdma_cm_id *listen_id;
+    ::rdma_cm_id *id;
+    ::rdma_event_channel *ec;
 
-    struct ibv_pd *pd;
-    struct ibv_cq *recv_cq;
-    struct ibv_cq *send_cq;
-    struct ibv_comp_channel *comp_channel;
+    ::ibv_pd *pd;
+    ::ibv_cq *recv_cq;
+    ::ibv_cq *send_cq;
+    ::ibv_comp_channel *comp_channel;
   } ctx;
 
   // Queue Pair init variables
-  struct ibv_qp_init_attr qp_init;
+  ::ibv_qp_init_attr qp_init;
 
   // Size of receive and send completion queue
   int recv_cq_size;
@@ -54,17 +55,17 @@ struct infiniband {
 
   // Connection specific variables
   struct connection_s {
-    struct addrinfo *src_addr;
-    struct addrinfo *dst_addr;
+    ::addrinfo *src_addr;
+    ::addrinfo *dst_addr;
 
     // RDMA_PS_TCP or RDMA_PS_UDP
-    enum rdma_port_space port_space;
+    ::rdma_port_space port_space;
 
     // Timeout for rdma_resolve_route
     int timeout;
 
     // Thread to monitor RDMA CM Event threads
-    pthread_t rdma_cm_event_thread;
+    ::pthread_t rdma_cm_event_thread;
 
     // Bool, should data be send inline if possible?
     int send_inline;
@@ -81,10 +82,10 @@ struct infiniband {
 
     // Unrealiable connectionless data
     struct ud_s {
-      struct rdma_ud_param ud;
-      struct ibv_ah *ah;
+      ::rdma_ud_param ud;
+      ::ibv_ah *ah;
       void *grh_ptr;
-      struct ibv_mr *grh_mr;
+      ::ibv_mr *grh_mr;
     } ud;
 
   } conn;
@@ -97,7 +98,7 @@ int ib_reverse(NodeCompat *n);
 
 char *ib_print(NodeCompat *n);
 
-int ib_parse(NodeCompat *n, json_t *json);
+int ib_parse(NodeCompat *n, ::json_t *json);
 
 int ib_check(NodeCompat *n);
 

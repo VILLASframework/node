@@ -5,16 +5,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <jansson.h>
 #include <map>
 #include <stdexcept>
 
-#include <villas/exceptions.hpp>
-#include <villas/utils.hpp>
+#include <jansson.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/node.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::fpga::ip;
 

@@ -8,16 +8,16 @@
 
 #include <sstream>
 #include <string>
+
 #include <sys/types.h>
+#include <xilinx/xaxidma.h>
+#include <xilinx/xaxidma_bd.h>
+#include <xilinx/xaxidma_hw.h>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/memory.hpp>
-
-#include <xilinx/xaxidma.h>
-#include <xilinx/xaxidma_bd.h>
-#include <xilinx/xaxidma_hw.h>
 
 // Max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY 0x1000

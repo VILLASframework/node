@@ -5,10 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
-
-#include <algorithm>
 #include <map>
 
 #include <poll.h>

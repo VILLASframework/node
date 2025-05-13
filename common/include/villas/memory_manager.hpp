@@ -8,11 +8,13 @@
 #pragma once
 
 #include <cstdint>
-#include <fmt/ostream.h>
 #include <map>
 #include <stdexcept>
 #include <string>
+
+#include <fmt/ostream.h>
 #include <unistd.h>
+
 #include <villas/config.hpp>
 #include <villas/graph/directed.hpp>
 #include <villas/log.hpp>

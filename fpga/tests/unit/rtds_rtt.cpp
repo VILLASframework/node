@@ -8,11 +8,10 @@
 #include <criterion/criterion.h>
 
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/vlnv.hpp>
-
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/vlnv.hpp>
 
 extern struct fpga_card *card;
 

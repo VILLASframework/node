@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include <fstream>
-#include <list>
-
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <list>
 
 #include <villas/log.hpp>
 

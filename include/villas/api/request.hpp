@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include <jansson.h>
 #include <regex>
 #include <vector>
+
+#include <jansson.h>
 
 #include <villas/api/session.hpp>
 #include <villas/buffer.hpp>

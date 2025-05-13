@@ -9,11 +9,10 @@
 #pragma once
 
 #include <pthread.h>
+#include <uldaq.h>
 
 #include <villas/pool.hpp>
 #include <villas/queue_signalled.h>
-
-#include <uldaq.h>
 
 #define ULDAQ_MAX_DEV_COUNT 100
 #define ULDAQ_MAX_RANGE_COUNT 8

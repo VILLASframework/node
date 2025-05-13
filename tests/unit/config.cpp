@@ -5,9 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <criterion/criterion.h>
 #include <cstdio>
 #include <cstdlib>
+
+#include <criterion/criterion.h>
 
 #include <villas/config_class.hpp>
 #include <villas/utils.hpp>

@@ -5,13 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstring>
+#include <sstream>
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
-
-#include <cstring>
-#include <sstream>
 
 #include <villas/dumper.hpp>
 

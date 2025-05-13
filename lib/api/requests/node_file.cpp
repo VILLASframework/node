@@ -8,11 +8,10 @@
 #include <villas/api/requests/node.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
-#include <villas/super_node.hpp>
-
 #include <villas/format.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/file.hpp>
+#include <villas/super_node.hpp>
 
 namespace villas {
 namespace node {

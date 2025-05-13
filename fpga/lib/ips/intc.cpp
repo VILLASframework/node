@@ -10,13 +10,11 @@
 #include <unistd.h>
 
 #include <villas/config.hpp>
-#include <villas/plugin.hpp>
-
-#include <villas/kernel/kernel.hpp>
-
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/pcie_card.hpp>
+#include <villas/kernel/kernel.hpp>
+#include <villas/plugin.hpp>
 
 using namespace villas::fpga::ip;
 

@@ -10,11 +10,13 @@
 #include <array>
 #include <cstdint>
 #include <ctime>
+#include <optional>
+#include <string>
+
 #include <lib60870/cs101_information_objects.h>
 #include <lib60870/cs104_slave.h>
 #include <lib60870/iec60870_common.h>
-#include <optional>
-#include <string>
+
 #include <villas/node.hpp>
 #include <villas/node/config.hpp>
 #include <villas/pool.hpp>

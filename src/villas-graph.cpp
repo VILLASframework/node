@@ -7,9 +7,10 @@
 
 #include <iostream>
 
+// clang-format off
 #include <graphviz/types.h>
-
 #include <graphviz/gvcommon.h>
+// clang-format on
 
 #include <villas/super_node.hpp>
 #include <villas/tool.hpp>

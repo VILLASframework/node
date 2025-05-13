@@ -6,9 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/linux_driver.hpp>
-
 #include <villas/kernel/devices/device.hpp>
+#include <villas/kernel/devices/linux_driver.hpp>
 #include <villas/utils.hpp>
 
 using villas::kernel::devices::Device, villas::kernel::devices::LinuxDriver;

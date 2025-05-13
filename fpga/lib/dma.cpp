@@ -5,19 +5,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/fpga/dma.h>
-
 #include <string>
 
 #include <villas/exceptions.hpp>
-#include <villas/log.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/core.hpp>
+#include <villas/fpga/dma.h>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
+#include <villas/log.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 

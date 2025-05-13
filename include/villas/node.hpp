@@ -7,10 +7,12 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
 #include <iostream>
+
+#include <fmt/ostream.h>
 #include <jansson.h>
 #include <uuid/uuid.h>
+
 #include <villas/colors.hpp>
 #include <villas/common.hpp>
 #include <villas/list.hpp>

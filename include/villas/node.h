@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include <stdbool.h>
-
 #include <jansson.h>
+#include <stdbool.h>
 
 typedef void *vnode;
 typedef void *vsample;

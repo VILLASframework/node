@@ -7,24 +7,23 @@
 
 #include <memory>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 #include <jansson.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/fpga/ips/dino.hpp>
+#include <villas/fpga/ips/register.hpp>
+#include <villas/fpga/ips/switch.hpp>
+#include <villas/fpga/pcie_card.hpp>
+#include <villas/fpga/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-
-#include <villas/fpga/ips/dino.hpp>
-#include <villas/fpga/ips/register.hpp>
-#include <villas/fpga/ips/switch.hpp>
-#include <villas/fpga/pcie_card.hpp>
-#include <villas/fpga/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;

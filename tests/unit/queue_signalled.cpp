@@ -7,7 +7,6 @@
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
-
 #include <poll.h>
 #include <pthread.h>
 

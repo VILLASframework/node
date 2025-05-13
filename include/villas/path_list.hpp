@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <jansson.h>
-#include <uuid/uuid.h>
-
 #include <list>
 #include <string>
+
+#include <jansson.h>
+#include <uuid/uuid.h>
 
 namespace villas {
 namespace node {

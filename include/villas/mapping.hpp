@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include <jansson.h>
 #include <memory>
+
+#include <jansson.h>
 
 #include <villas/common.hpp>
 #include <villas/node_list.hpp>

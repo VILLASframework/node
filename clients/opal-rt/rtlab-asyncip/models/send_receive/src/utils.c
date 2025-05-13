@@ -14,7 +14,6 @@
  * to the OpalDisplay. Otherwise stdout will be used. */
 #define RTLAB
 #include "OpalPrint.h"
-
 #include "config.h"
 #include "utils.h"
 

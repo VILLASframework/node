@@ -9,11 +9,10 @@
 
 #include <cstdint>
 
-#include <netinet/ether.h>
-
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/hal_ethernet.h>
 #include <libiec61850/sv_subscriber.h>
+#include <netinet/ether.h>
 
 #include <villas/list.hpp>
 #include <villas/signal.hpp>

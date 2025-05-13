@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <criterion/criterion.h>
-
 #include <iostream>
+
+#include <criterion/criterion.h>
 
 #include <villas/utils.hpp>
 

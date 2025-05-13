@@ -5,17 +5,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <unordered_map>
-
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <malloc.h>
-#include <unistd.h>
+#include <unordered_map>
 
+#include <malloc.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/kernel/kernel.hpp>

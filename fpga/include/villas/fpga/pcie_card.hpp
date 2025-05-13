@@ -11,20 +11,19 @@
 #pragma once
 
 #include <filesystem>
-#include <jansson.h>
 #include <list>
 #include <set>
 #include <string>
 
-#include <villas/memory.hpp>
-#include <villas/plugin.hpp>
-
-#include <villas/kernel/devices/pci_device.hpp>
-#include <villas/kernel/vfio_container.hpp>
+#include <jansson.h>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
+#include <villas/kernel/vfio_container.hpp>
+#include <villas/memory.hpp>
+#include <villas/plugin.hpp>
 
 namespace villas {
 namespace fpga {
