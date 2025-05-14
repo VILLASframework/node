@@ -44,20 +44,27 @@ GITLAB_URL="https://git.rwth-aachen.de"
 GITLAB_PROJECT="79039"
 GITLAB_BRANCH="master"
 GITLAB_ARTIFACT="artifacts/villas-${ARCH}-${OS}"
-GITLAB_JOB="build:nix: [${ARCH}-${OS}]"
+GITLAB_JOB="pkg:nix:arx: [${ARCH}-${OS}]"
 
 DOWNLOAD_URL="${GITLAB_URL}/api/v4/projects/${GITLAB_PROJECT}/jobs/artifacts/${GITLAB_BRANCH}/raw/${GITLAB_ARTIFACT}"
 
-echo "=== [info]  Downloading VILLASnode binary from ${GITLAB_URL} to ${DOWNLOAD_PATH}"
+echo "=== [info]  Downloading VILLASnode binary"
 
 if $(command -v curl >/dev/null 2>&1); then
-    curl \
+    echo "  from ${DOWNLOAD_URL}?job=${GITLAB_JOB}"
+    echo "  to ${DOWNLOAD_PATH}"
+
+    if ! curl \
+        --fail-with-body \
         --get \
         --location \
         --header "Accept-Encoding: gzip, deflate" \
         --output "${DOWNLOAD_PATH}" \
         --data-urlencode "job=${GITLAB_JOB}" \
-         "${DOWNLOAD_URL}"
+         "${DOWNLOAD_URL}"; then
+        echo "=== [error] curl failed to download VILLASnode binary"
+        exit 1
+    fi
 else
     echo "=== [error] curl is not available. Please install it."
     exit 1
