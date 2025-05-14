@@ -169,8 +169,8 @@ test:unit:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
     - cmake -S . -B build ${CMAKE_OPTS}
-    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common
-    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-python-wrapper-tests
+    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/clients/python-binding
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common run-python-binding-tests
   needs:
     - job: "build:source: [fedora]"
       artifacts: true
