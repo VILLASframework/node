@@ -35,14 +35,13 @@ add_custom_target(run-unit-tests
     USES_TERMINAL
 )
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-add_custom_target(run-python-wrapper-tests
+add_custom_target(run-python-binding-tests
     COMMAND
-        ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/unit/python_wrapper.py
+        python3 ${CMAKE_SOURCE_DIR}/tests/unit/python_binding.py
     DEPENDS
-        python-wrapper
+        python-binding
     USES_TERMINAL
 )
 
 add_dependencies(tests unit-tests)
-add_dependencies(run-tests run-unit-tests run-python-wrapper-tests)
+add_dependencies(run-tests run-unit-tests run-python-binding-tests)
