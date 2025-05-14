@@ -59,7 +59,6 @@ RUN apt-get update && \
 		liblua5.3-dev:${ARCH} \
 		libhiredis-dev:${ARCH} \
 		libmodbus-dev:${ARCH} \
-		python3:${ARCH} \
 		python3-dev:${ARCH} \
 		python3-pybind11:${ARCH}
 
