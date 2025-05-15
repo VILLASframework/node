@@ -7,51 +7,48 @@ SPDX-License-Identifier: Apache-2.0
 ---
 title: 'VILLASnode: Open-source real-time coupling of distributed infrastructures'
 tags:
-
-  - C/C++
-  - Real-time
-  - Distributed experiments
-  - Electrical grid simulation
+- C/C++
+- Real-time
+- Distributed experiments
+- Electrical grid simulation
 
 authors:
-
-  - name: Alexandra Bach
-    orcid: 0009-0005-7385-4642
-    affiliation: 1
-  - name: Leonardo Carreras
-    orcid: 0000-0002-9033-1051
-    affiliation: 1
-  - name: Laura Fuentes Grau
-    orcid: 0009-0004-8997-7009
-  - name: Steffen Vogel
-    orcid: 0000-0003-3384-6750
-    affiliation: "1, 3" # (Multiple affiliations must be quoted)
-  - name: Manuel Pitz
-    orcid: 0000-0002-6252-2029
-    affiliation: 1
-  - name: Niklas Eiling
-    orcid: 0000-0002-7011-9846
-    affiliation: 1
-  - name: Felix Wege
-    orcid: 0000-0001-6602-9875
-    affiliation: 1
-  - name: Andres Acosta
-    orcid: 0000-0003-3066-8354
-    affiliation: 1
-  - name: Iris Köster
-    affiliation: 1
-  - name: Prof. Antonello Monti
-    orcid: 0000-0003-1914-9801
-    affiliation: "1,2"
+- name: Alexandra Bach
+  orcid: 0009-0005-7385-4642
+  affiliation: 1
+- name: Leonardo Carreras
+  orcid: 0000-0002-9033-1051
+  affiliation: 1
+- name: Laura Fuentes Grau
+  orcid: 0009-0004-8997-7009
+- name: Steffen Vogel
+  orcid: 0000-0003-3384-6750
+  affiliation: "1, 3" # (Multiple affiliations must be quoted)
+- name: Manuel Pitz
+  orcid: 0000-0002-6252-2029
+  affiliation: 1
+- name: Niklas Eiling
+  orcid: 0000-0002-7011-9846
+  affiliation: 1
+- name: Felix Wege
+  orcid: 0000-0001-6602-9875
+  affiliation: 1
+- name: Andres Acosta
+  orcid: 0000-0003-3066-8354
+  affiliation: 1
+- name: Iris Köster
+  affiliation: 1
+- name: Prof. Antonello Monti
+  orcid: 0000-0003-1914-9801
+  affiliation: "1,2"
 
 affiliations:
-
- - name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
-   index: 1
- - name: Fraunhofer Institute for Applied Information Technology, Aachen, Germany
-   index: 2
- - name: OPAL-RT Germany GmbH
-   index: 3
+- name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
+  index: 1
+- name: Fraunhofer Institute for Applied Information Technology, Aachen, Germany
+  index: 2
+- name: OPAL-RT Germany GmbH
+  index: 3
 
 date: 15 May 2025
 bibliography: paper.bib
@@ -96,9 +93,9 @@ Lastly, VILLAScontroller is currently under development and aims to automate sim
 - [ERIGrid2.0](https://erigrid2.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 870620.
 - [ENSURE](https://www.kopernikus-projekte.de/projekte/ensure): Federal Ministry of Education and Research supports the project under identification 03SFK1C0-3.
 - [NFDI4Energy](https://nfdi4energy.uol.de/): Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – 501865131.
-- [HYPERRIDE](https://hyperride.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 957788
-- [Erigrid2.0](https://erigrid2.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 870620
-- [AI-EFFECT](https://ai-effect.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172952
-- [EnerTEF](https://enertef.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172887
+- [HYPERRIDE](https://hyperride.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 957788.
+- [Erigrid2.0](https://erigrid2.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 870620.
+- [AI-EFFECT](https://ai-effect.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172952.
+- [EnerTEF](https://enertef.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172887.
 
 # References
