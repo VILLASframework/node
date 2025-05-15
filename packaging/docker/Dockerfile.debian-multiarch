@@ -62,10 +62,6 @@ RUN apt-get update && \
 		python3-dev:${ARCH} \
 		python3-pybind11:${ARCH}
 
-# Add local and 64-bit locations to linker paths
-ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
-
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
 ENV PKG_CONFIG_PATH=/usr/lib/${TRIPLET}/pkgconfig:/usr/local/lib/${TRIPLET}/pkgconfig
@@ -92,8 +88,9 @@ ENV RANLIB=${TRIPLET}-ranlib
 RUN mkdir ${PREFIX}
 
 # Install unpackaged dependencies from source
-ADD packaging/deps.sh /
-RUN bash deps.sh
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
@@ -101,8 +98,8 @@ EXPOSE 443
 
 WORKDIR /villas
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 FROM dev AS builder
 

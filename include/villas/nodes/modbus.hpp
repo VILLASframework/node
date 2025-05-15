@@ -257,8 +257,6 @@ private:
   int readBlock(RegisterMapping const &mapping, SignalData *signals,
                 size_t num_signals);
 
-  virtual int _read(struct Sample *smps[], unsigned int cnt);
-
   int writeMapping(RegisterMappingSingle const &mapping, uint16_t *registers,
                    modbus_addr_t num_registers, SignalData const *signals,
                    unsigned int num_signals);
@@ -271,28 +269,27 @@ private:
   int writeBlock(RegisterMapping const &mapping, SignalData const *signals,
                  size_t num_signals);
 
-  virtual int _write(struct Sample *smps[], unsigned int cnt);
+  int _read(struct Sample *smps[], unsigned int cnt) override;
+  int _write(struct Sample *smps[], unsigned int cnt) override;
 
 public:
   ModbusNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~ModbusNode();
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int check();
+  int start() override;
 
-  virtual int start();
+  int stop() override;
 
-  virtual int stop();
+  std::vector<int> getPollFDs() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getNetemFDs() override;
 
-  virtual std::vector<int> getNetemFDs();
-
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 };
 
 } // namespace modbus

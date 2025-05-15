@@ -1,4 +1,4 @@
-/** Compile time configuration
+/* Compile time configuration
  *
  * This file contains some compiled-in settings.
  * This settings are not part of the configuration file.
@@ -10,43 +10,48 @@
 
 #pragma once
 
-#define PROJECT_VERSION_STR	"@CMAKE_PROJECT_VERSION_STR@"
-#define PROJECT_VERSION		"@CMAKE_PROJECT_VERSION@"
-#define PROJECT_MAJOR_VERSION	 @CMAKE_PROJECT_MAJOR_VERSION@
-#define PROJECT_MINOR_VERSION	 @CMAKE_PROJECT_MINOR_VERSION@
-#define PROJECT_PATCH_VERSION	 @CMAKE_PROJECT_PATCH_VERSION@
-#define PROJECT_RELEASE		"@CMAKE_PROJECT_RELEASE@"
-#define PROJECT_GIT_REV		"@CMAKE_PROJECT_GIT_REV@"
-#define PROJECT_GIT_BRANCH	"@CMAKE_PROJECT_GIT_BRANCH@"
-#define PROJECT_GIT_BRANCH_NORM	"@CMAKE_PROJECT_GIT_BRANCH_NORM@"
-#define PROJECT_VARIANT		"@CMAKE_PROJECT_VARIANT@"
-#define PROJECT_VARIANT_NORM	"@CMAKE_PROJECT_VARIANT_NORM@"
-#define PROJECT_BUILD_ID	"@CMAKE_PROJECT_BUILD_ID@"
-#define PROJECT_BUILD_DATE	"@CMAKE_PROJECT_BUILD_DATE@"
+// clang-format off
 
-#define PROJECT_HOMEPAGE_URL	"@CMAKE_PROJECT_HOMEPAGE_URL@"
-#define PROJECT_NAME		"@CMAKE_PROJECT_DESCRIPTION@"
+#define PROJECT_VERSION_STR "@CMAKE_PROJECT_VERSION_STR@"
+#define PROJECT_VERSION "@CMAKE_PROJECT_VERSION@"
+#define PROJECT_MAJOR_VERSION @CMAKE_PROJECT_MAJOR_VERSION@
+#define PROJECT_MINOR_VERSION @CMAKE_PROJECT_MINOR_VERSION@
+#define PROJECT_PATCH_VERSION @CMAKE_PROJECT_PATCH_VERSION@
+#define PROJECT_RELEASE "@CMAKE_PROJECT_RELEASE@"
+#define PROJECT_GIT_REV "@CMAKE_PROJECT_GIT_REV@"
+#define PROJECT_GIT_BRANCH "@CMAKE_PROJECT_GIT_BRANCH@"
+#define PROJECT_GIT_BRANCH_NORM "@CMAKE_PROJECT_GIT_BRANCH_NORM@"
+#define PROJECT_VARIANT "@CMAKE_PROJECT_VARIANT@"
+#define PROJECT_VARIANT_NORM "@CMAKE_PROJECT_VARIANT_NORM@"
+#define PROJECT_BUILD_ID "@CMAKE_PROJECT_BUILD_ID@"
+#define PROJECT_BUILD_DATE "@CMAKE_PROJECT_BUILD_DATE@"
 
-#define HTTP_USER_AGENT		PROJECT_NAME " (" PROJECT_BUILD_ID ")"
+#define PROJECT_HOMEPAGE_URL "@CMAKE_PROJECT_HOMEPAGE_URL@"
+#define PROJECT_NAME "@CMAKE_PROJECT_DESCRIPTION@"
+
+#define HTTP_USER_AGENT PROJECT_NAME " (" PROJECT_BUILD_ID ")"
 
 // Hard-coded cache line size
-#if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || defined(__aarch64__)
-  #define CACHELINE_SIZE 64
+#if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || \
+    defined(__aarch64__)
+#define CACHELINE_SIZE 64
 #else
-  #error "Unsupported architecture"
+#error "Unsupported architecture"
 #endif
 
 // Paths
-#define PREFIX			"@CMAKE_INSTALL_PREFIX@"
-#define PLUGIN_PATH		"@CMAKE_INSTALL_PREFIX@/share/villas/node/plugins"
-#define SYSFS_PATH		"/sys"
-#define PROCFS_PATH		"/proc"
+#define PREFIX "@CMAKE_INSTALL_PREFIX@"
+#define PLUGIN_PATH "@CMAKE_INSTALL_PREFIX@/share/villas/node/plugins"
+#define SYSFS_PATH "/sys"
+#define PROCFS_PATH "/proc"
 
 // Width of log output in characters
-#define LOG_WIDTH		80
-#define LOG_HEIGHT		25
+#define LOG_WIDTH 80
+#define LOG_HEIGHT 25
 
 #cmakedefine LOG_COLOR_DISABLE
 
-// Library Features
+// Library features
 #cmakedefine FMT_LEGACY_OSTREAM_FORMATTER
+
+// clang-format on

@@ -24,7 +24,7 @@ namespace villas {
 namespace node {
 namespace iec60870 {
 
-/// A supported CS101 information data type
+// A supported CS101 information data type
 class ASDUData {
 public:
   enum Type {
@@ -194,18 +194,18 @@ protected:
 
   void sendPeriodicASDUsForSample(Sample const *sample) const noexcept(false);
 
-  virtual int _write(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   SlaveNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~SlaveNode() override;
 
-  virtual int parse(json_t *json) override;
+  int parse(json_t *json) override;
 
-  virtual int start() override;
+  int start() override;
 
-  virtual int stop() override;
+  int stop() override;
 };
 
 } // namespace iec60870

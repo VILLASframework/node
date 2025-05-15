@@ -40,12 +40,12 @@ public:
       flags |= (int)SampleFlags::HAS_SEQUENCE | (int)SampleFlags::HAS_TS_ORIGIN;
   }
 
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 class GtnetRawFormat : public RawFormat {

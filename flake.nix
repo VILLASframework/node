@@ -3,6 +3,15 @@
 {
   description = "VILLASnode is a client/server application to connect simulation equipment and software.";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://villas.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "villas.cachix.org-1:vCWp9IzwxFT6ovZivQAvn5ZuLST01bpAGXWwlGTZ9fA="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
@@ -70,6 +79,29 @@
           contents = [ villas-node ];
           config.ENTRYPOINT = "/bin/villas";
         };
+
+        # Cross-compiled packages
+
+        villas-node-x86_64-linux = if pkgs.system == "x86_64-linux" then pkgs.villas-node else pkgs.pkgsCross.x86_64-linux.villas-node;
+        villas-node-aarch64-linux = if pkgs.system == "aarch64-linux" then pkgs.villas-node else pkgs.pkgsCross.aarch64-multiplatform.villas-node;
+
+        dockerImage-x86_64-linux = pkgs.dockerTools.buildLayeredImage {
+          name = "villas-node";
+          tag = "latest-nix-x86_64-linux";
+          contents = [ villas-node-x86_64-linux ];
+          config.ENTRYPOINT = "/bin/villas";
+        };
+
+        dockerImage-aarch64-linux = pkgs.dockerTools.buildLayeredImage {
+          name = "villas-node";
+          tag = "latest-nix-aarch64-linux";
+          contents = [ villas-node-aarch64-linux ];
+          config.ENTRYPOINT = "/bin/villas";
+        };
+
+        # Third-party dependencies
+
+        opendssc = pkgs.callPackage (nixDir + "/opendssc.nix") { };
       };
     in
     {
@@ -107,6 +139,8 @@
             pcre
             reuse
             cppcheck
+            pre-commit
+            ruby # for pre-commit markdownlint hook
           ];
         in
         rec {

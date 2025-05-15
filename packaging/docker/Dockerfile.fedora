@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=fedora
-ARG FEDORA_VERSION=41
+ARG FEDORA_VERSION=42
 ARG REF=unknown
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
@@ -14,10 +14,10 @@ ARG DISTRO
 
 # Toolchain
 RUN dnf -y install \
-	gcc gcc-c++ \
+	gcc-14 g++-14 \
 	pkgconfig cmake make \
 	autoconf automake autogen libtool \
-	texinfo git curl tar \
+	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-tools-extra
@@ -54,7 +54,6 @@ RUN dnf -y install \
 	protobuf-devel \
 	protobuf-c-devel \
 	zeromq-devel \
-	nanomsg-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
 	librdkafka-devel \
@@ -66,15 +65,23 @@ RUN dnf -y install \
 	libnice-devel \
 	libmodbus-devel \
 	pybind11-devel
-
-# Add local and 64-bit locations to linker paths
-RUN echo /usr/local/lib   >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
+# TODO: v1.2.1 seems broken. Re-enable once new version is available
+# nanomsg-devel
 
 # Install unpackaged dependencies from source
-ADD packaging/deps.sh /
-RUN bash deps.sh
-RUN ldconfig
+# TODO: We currently need to build with GCC 14 to get OpenDSSC working
+ENV CC=gcc-14
+ENV CXX=g++-14
+
+# Add local library directory to linker paths
+RUN echo /usr/local/lib   >> /etc/ld.so.conf
+
+# Install unpackaged dependencies from source
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
+RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
+	ldconfig
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
@@ -89,8 +96,8 @@ RUN python -m venv /venv && \
 EXPOSE 80
 EXPOSE 443
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 WORKDIR /villas
 
@@ -114,7 +121,10 @@ COPY . /villas/
 
 WORKDIR /villas/build
 RUN --mount=type=cache,id=${DISTRO}-${FEDORA_VERSION}-${ARCH}-${REF},target=/villas/build \
-	cmake ${CMAKE_OPTS} .. && \
+	cmake \
+	-DCMAKE_CXX_COMPILER=g++-14 \
+	-DCMAKE_C_COMPILER=gcc-14 \
+	${CMAKE_OPTS} .. && \
 	make -j$(nproc) install && \
 	ldconfig
 

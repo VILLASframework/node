@@ -93,6 +93,8 @@ export PKG_CONFIG_PATH
 #     GIT_OPTS+=" -c http.sslVerify=false"
 # fi
 
+SOURCE_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+
 # Build in a temporary directory
 TMPDIR=$(mktemp -d)
 
@@ -111,7 +113,7 @@ if ! pkg-config "criterion >= 2.4.1" && \
     popd
 fi
 
-# Build & Install libjansson
+# Build & Install jansson
 if ! pkg-config "jansson >= 2.13" && \
     should_build "jansson" "for configuration parsing" "required"; then
     git clone ${GIT_OPTS} --branch v2.14.1 https://github.com/akheron/jansson.git
@@ -139,7 +141,7 @@ fi
 
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
-    should_build "mosquitto" "for the MQTT node-type"; then
+    should_build "mosquitto" "for the mqtt node-type"; then
     git clone ${GIT_OPTS} --branch v2.0.21 https://github.com/eclipse/mosquitto.git
     mkdir -p mosquitto/build
     pushd mosquitto/build
@@ -154,7 +156,7 @@ fi
 
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
-    should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
+    should_build "rabbitmq" "for the amqp node-node and VILLAScontroller"; then
     git clone ${GIT_OPTS} --branch v0.15.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
@@ -253,7 +255,7 @@ if ! pkg-config "libuldaq >= 1.2.0" && \
     popd
 fi
 
-# Build & Install libnl3
+# Build & Install libnl
 if ! ( pkg-config "libnl-3.0 >= 3.2.25" && \
        pkg-config "libnl-route-3.0 >= 3.2.25" \
      ) && should_build "libnl" "for network emulation"; then
@@ -314,7 +316,8 @@ fi
 # Build & Install nanomsg
 if ! pkg-config "nanomsg >= 1.0.0" && \
     should_build "nanomsg" "for the nanomsg node-type"; then
-    git clone ${GIT_OPTS} --branch 1.2.1 https://github.com/nanomsg/nanomsg.git
+    # TODO: v1.2.1 seems to be broken: https://github.com/nanomsg/nanomsg/issues/1111
+    git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake -DNN_TESTS=OFF \
@@ -477,6 +480,27 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     pushd libmodbus
     autoreconf -i
     ./configure ${CONFIGURE_OPTS}
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
+    should_build "opendss" "For opendss node-type"; then
+    git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
+    mkdir -p OpenDSS-C/build
+    pushd OpenDSS-C
+    for i in ${SOURCE_DIR}/patches/*-opendssc-*.patch; do patch --strip=1 --binary < "$i"; done
+    popd
+    pushd OpenDSS-C/build
+    if command -v g++-14 2>&1 >/dev/null; then
+        # OpenDSS rev 4020 is not compatible with GCC 15
+        OPENDSS_CMAKE_OPTS="-DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14"
+    else
+        OPENDSS_CMAKE_OPTS=""
+    fi
+    cmake -DMyOutputType=DLL \
+          ${OPENDSS_CMAKE_OPTS} \
+          ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd
 fi

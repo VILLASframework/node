@@ -43,7 +43,7 @@ public:
    * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
    * the variance value will overrun the 64bit value.
    */
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     timespec now = time_now();
@@ -70,9 +70,9 @@ public:
     delay_series[curr_count] = curr_delay_us; // Update the last delay value
 
     /* Jitter calc formula as used in Wireshark according to RFC3550 (RTP)
-			D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
-			J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
-		*/
+      D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
+      J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
+    */
     jitter_val[(curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE] =
         jitter_val[curr_count] +
         (labs(curr_delay_us) - jitter_val[curr_count]) / 16;

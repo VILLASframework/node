@@ -12,7 +12,7 @@
 The pcimem application provides a simple method of reading and writing
 to memory registers on a PCI card.
 
-Usage:	./pcimem { sys file } { offset } [ type [ data ] ]
+Usage: ./pcimem { sys file } { offset } [ type [ data ] ]
   sys file: sysfs file for the pci resource to act on
   offset  : offset into pci memory region to act upon
   type    : access operation type : [b]yte, [h]alfword, [w]ord
@@ -32,7 +32,7 @@ bash# ./pcimem /sys/devices/pci0001\:00/0001\:00\:07.0/resource0  0 w
   PCI Memory mapped to address 0x4801f000.
   Value at offset 0x0 (0x4801f000): 0xC0BE0100
 
-## Why do this at all?
+## Why do this at all
 
 When I start working on a new PCI device driver I generally go through a
 discovery phase of reading and writing to certain registers on the PCI card.

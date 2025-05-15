@@ -24,7 +24,7 @@ public:
   ShiftTimestampHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), mode(SHIFT_ORIGIN) {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     double o;
     const char *m = nullptr;
     int ret;
@@ -54,7 +54,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     timespec *ts;
 
     assert(state == State::STARTED);

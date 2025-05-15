@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: Mirror to RWTH GitLab
+
+on:
+  push:
+  delete:
+
+jobs:
+  mirror:
+    name: Mirror
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: yesolutions/mirror-action@master
+      with:
+        REMOTE: https://git.rwth-aachen.de/acs/public/villas/node.git
+        GIT_USERNAME: github
+        GIT_PASSWORD: ${{ secrets.RWTH_GITLAB_TOKEN }}
+        PUSH_ALL_REFS: "false"

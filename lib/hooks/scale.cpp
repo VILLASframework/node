@@ -21,7 +21,7 @@ public:
   ScaleHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : MultiSignalHook(p, n, fl, prio, en), scale(1.0), offset(0.0) {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
 
@@ -37,7 +37,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     for (auto index : signalIndices) {
       assert(index < smp->length);
       assert(state == State::STARTED);

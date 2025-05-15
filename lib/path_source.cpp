@@ -141,7 +141,7 @@ int PathSource::read(int i) {
   } else if (toenqueue != tomux) {
     int skipped = tomux - toenqueue;
 
-    path->logger->debug("Hooks skipped {} out of {} samples for path {}",
+    path->logger->trace("Hooks skipped {} out of {} samples for path {}",
                         skipped, tomux, path->toString());
   }
 #else

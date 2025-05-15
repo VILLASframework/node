@@ -12,6 +12,7 @@ variables:
   DOCKER_CLI_EXPERIMENTAL: enabled
   CMAKE_BUILD_OPTS: "--parallel 16"
   CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
+  CACHIX_CACHE_NAME: villas
 
 stages:
   - prepare
@@ -21,9 +22,41 @@ stages:
   - deploy
   - latest
 
+# Anchors
+
+.nix: &nix
+  image: docker.nix-community.org/nixpkgs/cachix-flakes
+
+  parallel:
+    matrix:
+      - SYSTEM: [x86_64-linux, aarch64-linux]
+
+  before_script:
+    - cachix use "$CACHIX_CACHE_NAME"
+
+.nix_packaging: &nix_packaging
+  <<: *nix
+
+  stage: packaging
+  needs:
+    - job: build:nix
+      parallel:
+        matrix:
+          - SYSTEM: [x86_64-linux, aarch64-linux]
+
+.nix_packaging_artifacts: &nix_packaging_artifacts
+  <<: *nix_packaging
+
+  artifacts:
+    when: on_success
+    access: all
+    expire_in: "1 year"
+    paths:
+      - artifacts/*
+
 # Stage: prepare
 
-# Build docker image which is used to build & test VILLASnode
+# Build Docker image which is used to build & test VILLASnode
 prepare:docker:
   stage: prepare
   before_script:
@@ -88,56 +121,27 @@ build:source:
           -DCMAKE_PREFIX_PATH=/usr/local
 
 build:nix:
+  <<: *nix
+
   stage: build
-  image: nixos/nix
   needs: []
 
-  artifacts:
-    when: on_success
-    access: all
-    expire_in: "1 year"
-    paths:
-      - artifacts/villas
-
-  before_script:
-    - | # Create artifacts directory
-      mkdir artifacts
-
-    - | # Configure Nix
-      echo "experimental-features = flakes nix-command" >> /etc/nix/nix.conf
-
-    # - | # Configure Attic
-    #   nix shell nixpgks#attic-client
-
-    #   attic login nulll https://cache.0l.de ${ATTIC_TOKEN}
-    #   attic use "nulll:villas"
-
   script:
-    - nix build --print-build-logs .
-
-    - | # Build ARX bundle
-      nix bundle --out-link villas .
-      cp -L villas artifacts/villas
-
-    - | # Build Docker image
-      nix run nixpkgs#skopeo -- login \
-        --username ${CI_REGISTRY_USER} \
-        --password ${CI_REGISTRY_PASSWORD} \
-        ${CI_REGISTRY}
-
-      nix build '.#dockerImage'
-
-      nix run nixpkgs#skopeo -- copy --insecure-policy \
-        "docker-archive:./result" \
-        "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix"
-
-  # after_script:
-  #   - | # Push whole store to cache
-  #     nix shell nixpgks#attic-client
-
-  #     attic push /nix/store/*
+    - cachix watch-exec $CACHIX_CACHE_NAME --
+      nix build
+      --print-build-logs
+      ".#villas-node-${SYSTEM}"
 
 # Stage: test
+
+test:pre-commit:
+  needs: []
+  image: python:3.12.10-slim-bookworm
+  before_script:
+    - pip install pre-commit
+  script:
+    - apt-get update && apt-get -y install git ruby
+    - pre-commit run --all-files
 
 test:python:
   stage: test
@@ -211,6 +215,7 @@ test:reuse:
 
 pkg:docker:
   stage: packaging
+  needs: []
   before_script:
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
@@ -240,7 +245,57 @@ pkg:docker:
         ARCH: arm64
         TRIPLET: aarch64-linux-gnu
         TAG: pi5
-  needs: []
+
+pkg:nix:arx:
+  <<: *nix_packaging_artifacts
+
+  script:
+    - cachix watch-exec $CACHIX_CACHE_NAME --
+      nix bundle
+      --print-build-logs
+      --out-link bundle-arx
+      --bundler github:NixOS/bundlers#toArx
+      ".#villas-node-${SYSTEM}"
+
+    - mkdir -p artifacts
+    - cp -L bundle-arx artifacts/villas-${SYSTEM}
+
+pkg:nix:rpm:
+  <<: *nix_packaging_artifacts
+
+  script:
+    - cachix watch-exec $CACHIX_CACHE_NAME --
+      nix bundle
+      --print-build-logs
+      --out-link bundle-rpm
+      --bundler github:NixOS/bundlers#toRPM
+      ".#villas-node-${SYSTEM}"
+
+    - mkdir -p artifacts
+    - cp -L bundle-rpm/*.rpm artifacts/villas-${SYSTEM}.rpm
+
+pkg:nix:docker:
+  <<: *nix_packaging
+
+  script:
+    - mkdir -p /var/tmp/
+    - cachix watch-exec $CACHIX_CACHE_NAME --
+      nix bundle
+      --print-build-logs
+      --out-link bundle-docker
+      --bundler github:NixOS/bundlers#toDockerImage
+      ".#villas-node-${SYSTEM}"
+
+    - nix run nixpkgs#skopeo --
+      login
+      --username ${CI_REGISTRY_USER}
+      --password ${CI_REGISTRY_PASSWORD}
+      ${CI_REGISTRY}
+
+    - nix run nixpkgs#skopeo --
+      --tmpdir=${TMPDIR}
+      --insecure-policy
+      copy "docker-archive:./bundle-docker" "docker://${DOCKER_IMAGE}:${DOCKER_TAG}-nix-${SYSTEM}"
 
 # Stage: deploy
 

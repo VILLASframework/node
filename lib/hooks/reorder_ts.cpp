@@ -44,7 +44,7 @@ public:
   ReorderTsHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), window{}, window_size(16), buffer(nullptr) {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     assert(state != State::STARTED);
 
     json_error_t err;
@@ -56,7 +56,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     window.reserve(window_size);
@@ -64,7 +64,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     assert(state == State::STARTED);
 
     for (auto sample : window)

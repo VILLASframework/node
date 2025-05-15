@@ -20,7 +20,7 @@ class ShutdownRequest : public Request {
 public:
   using Request::Request;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::POST)
       throw InvalidMethod(this);
 

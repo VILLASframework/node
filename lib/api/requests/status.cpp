@@ -23,7 +23,7 @@ class StatusRequest : public Request {
 public:
   using Request::Request;
 
-  virtual Response *execute() {
+  Response *execute() override {
     int ret;
 
     if (method != Session::Method::GET)

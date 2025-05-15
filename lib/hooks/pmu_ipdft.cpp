@@ -77,7 +77,7 @@ public:
   }
 
   PmuHook::Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                 PmuHook::Phasor lastPhasor) {
+                                 const PmuHook::Phasor &lastPhasor) {
     PmuHook::Phasor phasor = {0};
 
     // Calculate DFT

@@ -189,8 +189,6 @@ const std::string &FpgaNode::getDetails() {
   return details;
 }
 
-int FpgaNode::check() { return Node::check(); }
-
 int FpgaNode::start() {
   if (getOutputSignalsMaxCount() * sizeof(float) > blockTx->getSize()) {
     logger->error("Output signals exceed block size.");
@@ -368,7 +366,8 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
 std::vector<int> FpgaNode::getPollFDs() {
   if (!lowLatencyMode && card && !card->polling) {
-    std::shared_ptr<PCIeCard> pciecard = std::dynamic_pointer_cast<PCIeCard>(card);
+    std::shared_ptr<PCIeCard> pciecard =
+        std::dynamic_pointer_cast<PCIeCard>(card);
     return pciecard->vfioDevice->getEventfdList();
   } else {
     return {};

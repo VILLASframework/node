@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [remote]
+
+properties:
+
+  remote:
+    type: string
+    description: The hostname or IP of the Modbus TCP device.
+    example: example.com
+
+  port:
+    type: integer
+    description: The port number of the Modbus TCP device.
+    default: 1883
+
+  unit:
+    type: integer
+    description: The addressed unit used for serial communication. This is optional for TCP.
+    minimum: 0
+    maximum: 65535
+    example: 1

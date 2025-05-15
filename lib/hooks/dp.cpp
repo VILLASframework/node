@@ -54,14 +54,14 @@ protected:
       //corr = 1;
 
 #if 0
-			// Recursive update
-			coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
+      // Recursive update
+      coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
 
-			out[k] = (2.0 / N) * (coeffs[i] * corr);
+      out[k] = (2.0 / N) * (coeffs[i] * corr);
 
-			// DC component
-			if (fharmonics[k] == 0)
-				out[k] /= 2.0;
+      // DC component
+      if (fharmonics[k] == 0)
+        out[k] /= 2.0;
 #else
       // Full DFT
       std::complex<double> X_k = 0;
@@ -111,7 +111,7 @@ public:
       free(signal_name);
   }
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED);
 
     time = 0;
@@ -129,7 +129,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
     json_t *json_harmonics, *json_harmonic, *json_signal;
@@ -191,7 +191,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void prepare() {
+  void prepare() override {
     assert(state == State::CHECKED);
 
     std::string new_sig_name;
@@ -268,7 +268,7 @@ public:
     state = State::CHECKED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     if (signal_index >= smp->length)
       return Hook::Reason::ERROR;
 

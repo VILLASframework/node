@@ -43,11 +43,12 @@ template <size_t N, typename T = uint32_t> struct Rtds2GpuMemoryBuffer {
   //static constexpr size_t doorbellOffset = offsetof(Rtds2GpuMemoryBuffer, doorbell);
   //static constexpr size_t dataOffset = offsetof(Rtds2GpuMemoryBuffer, data);
 
+  T data[N];
+
   // HACK: This might break horribly, let's just hope C++17 will be there soon
   static constexpr size_t dataOffset = 0;
   static constexpr size_t doorbellOffset =
       N * sizeof(Rtds2GpuMemoryBuffer::data);
 
-  T data[N];
   reg_doorbell_t doorbell;
 };

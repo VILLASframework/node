@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [device, baudrate, parity, data_bits, stop_bits, unit]
+
+properties:
+
+  device:
+    type: string
+    description: Path to the serial device file.
+    example: /dev/ttyS0
+
+  baudrate:
+    type: integer
+    description: The baudrate used for serial communication.
+    example: 9600
+
+  parity:
+    type: string
+    enum:
+    - none
+    - even
+    - odd
+    description: The parity used for serial communication.
+    example: none
+
+  data_bits:
+    type: integer
+    description: The data bits used for serial communication.
+    minimum: 5
+    maximum: 8
+    example: 5
+
+  stop_bits:
+    type: integer
+    description: The stop bits used for serial communication.
+    minimum: 1
+    maximum: 2
+    example: 5
+
+  unit:
+    type: integer
+    description: The addressed unit used for serial communication. This is optional for TCP.
+    minimum: 0
+    maximum: 65535
+    example: 1

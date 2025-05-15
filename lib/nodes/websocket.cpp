@@ -271,7 +271,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
       if (ret < 0)
         return ret;
 
-      c->node->logger->debug("Send {} samples to connection: {}, bytes={}",
+      c->node->logger->trace("Sent {} samples to connection: {}, bytes={}",
                              pulled, c->toString(), ret);
     }
 
@@ -317,7 +317,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
         break;
       }
 
-      c->node->logger->debug("Received {} samples from connection: {}", recvd,
+      c->node->logger->trace("Received {} samples from connection: {}", recvd,
                              c->toString());
 
       // Set receive timestamp

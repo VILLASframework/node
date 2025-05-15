@@ -92,7 +92,7 @@ public:
   virtual ~DinoAdc();
   virtual void configureHardware() override;
 
-  /** Set the configuration of the ADC registers
+  /* Set the configuration of the ADC registers
    *
    * @param reg Register to set
    * @param sampleRate Sample rate in Hz. The default is 100 Hz.

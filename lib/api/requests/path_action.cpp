@@ -24,7 +24,7 @@ template <auto func> class PathActionRequest : public PathRequest {
 public:
   using PathRequest::PathRequest;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::POST)
       throw InvalidMethod(this);
 

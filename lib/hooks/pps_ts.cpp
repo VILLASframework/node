@@ -51,7 +51,7 @@ public:
         cntSmpsTotal(0), horizonCompensation(10), horizonEstimation(10),
         currentSecond(0), filterWindow(horizonEstimation + 1, 0) {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
 

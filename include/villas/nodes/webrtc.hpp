@@ -42,28 +42,27 @@ protected:
 
   void onMessage(rtc::binary msg);
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
-  virtual int _write(struct Sample *smps[], unsigned cnt);
-
-  virtual json_t *_readStatus() const;
+  json_t *_readStatus() const override;
 
 public:
   WebRTCNode(const uuid_t &id = {}, const std::string &name = "");
 
   virtual ~WebRTCNode();
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int start();
+  int start() override;
 
-  virtual int stop();
+  int stop() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 };
 
 class WebRTCNodeFactory : public NodeFactory {
@@ -71,7 +70,7 @@ class WebRTCNodeFactory : public NodeFactory {
 public:
   using NodeFactory::NodeFactory;
 
-  virtual Node *make(const uuid_t &id = {}, const std::string &nme = "") {
+  Node *make(const uuid_t &id = {}, const std::string &nme = "") override {
     auto *n = new WebRTCNode(id, nme);
 
     init(n);
@@ -79,20 +78,20 @@ public:
     return n;
   }
 
-  virtual int getFlags() const {
+  int getFlags() const override {
     return (int)NodeFactory::Flags::SUPPORTS_READ |
            (int)NodeFactory::Flags::SUPPORTS_WRITE |
            (int)NodeFactory::Flags::SUPPORTS_POLL |
            (int)NodeFactory::Flags::REQUIRES_WEB;
   }
 
-  virtual std::string getName() const { return "webrtc"; }
+  std::string getName() const override { return "webrtc"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Web Real-time Communication";
   }
 
-  virtual int start(SuperNode *sn);
+  int start(SuperNode *sn) override;
 };
 
 } // namespace node

@@ -12,6 +12,7 @@
   # Extra features
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
+  withExtraTesting ? (withAllExtras && system == "x86_64-linux"),
   # Format-types
   withFormatProtobuf ? withAllFormats,
   # Hook-types
@@ -19,7 +20,7 @@
   # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeEthercat ? withAllNodes,
+  withNodeEthercat ? (withAllNodes && system == "x86_64-linux"),
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -27,6 +28,7 @@
   withNodeModbus ? withAllNodes,
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
+  withNodeOpenDSS ? withAllNodes,
   withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
@@ -35,6 +37,7 @@
   withNodeWebrtc ? withAllNodes,
   withNodeZeromq ? withAllNodes,
   # Minimal dependencies
+  bash,
   cmake,
   coreutils,
   graphviz,
@@ -43,8 +46,10 @@
   makeWrapper,
   pkg-config,
   stdenv,
+  system,
   # Optional dependencies
   comedilib,
+  criterion,
   curl,
   czmq,
   ethercat,
@@ -54,6 +59,7 @@
   libconfig,
   libdatachannel,
   libiec61850,
+  libgit2,
   libmodbus,
   libnl,
   libre,
@@ -65,8 +71,12 @@
   lua,
   mosquitto,
   nanomsg,
+  opendssc,
   openssl,
+  pcre2,
   pkgsBuildBuild,
+  protobuf,
+  protobufBuildBuild ? pkgsBuildBuild.protobuf,
   protobufc,
   protobufcBuildBuild ? pkgsBuildBuild.protobufc,
   rabbitmq-c,
@@ -83,11 +93,12 @@ stdenv.mkDerivation {
     "out"
     "dev"
   ];
+  enableParallelBuilding = true;
   separateDebugInfo = true;
   cmakeFlags =
     [ ]
     ++ lib.optionals (!withGpl) [ "-DWITHOUT_GPL=ON" ]
-    ++ lib.optionals withFormatProtobuf [ "-DCMAKE_FIND_ROOT_PATH=${protobufcBuildBuild}/bin" ];
+    ++ lib.optionals withFormatProtobuf [ "-DCMAKE_FIND_ROOT_PATH=${protobufBuildBuild}/bin" ];
   postPatch = ''
     patchShebangs --host ./tools
   '';
@@ -97,6 +108,8 @@ stdenv.mkDerivation {
       mv $out/include/villas/* $dev/include/villas/
       rm -d $out/include/villas
     fi
+    patchShebangs --host $out/bin/villas
+    patchShebangs --host $out/bin/villas-api
     wrapProgram $out/bin/villas \
       --set PATH ${
         lib.makeBinPath [
@@ -121,7 +134,10 @@ stdenv.mkDerivation {
     pkg-config
   ];
 
-  depsBuildBuild = lib.optionals withFormatProtobuf [ protobufcBuildBuild ];
+  depsBuildBuild = lib.optionals withFormatProtobuf [
+    protobufBuildBuild
+    protobufcBuildBuild
+  ];
 
   buildInputs =
     [
@@ -129,7 +145,9 @@ stdenv.mkDerivation {
       openssl
       curl
       spdlog
+      bash
     ]
+    ++ lib.optionals withExtraTesting [ criterion pcre2 libgit2 ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
@@ -141,6 +159,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
+    ++ lib.optionals withNodeOpenDSS [ opendssc ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
@@ -157,7 +176,10 @@ stdenv.mkDerivation {
       libuuid
       jansson
     ]
-    ++ lib.optionals withFormatProtobuf [ protobufc ]
+    ++ lib.optionals withFormatProtobuf [
+      protobuf
+      protobufc
+    ]
     ++ lib.optionals withNodeInfiniband [ rdma-core ]
     ++ lib.optionals withExtraConfig [ libconfig ];
 

@@ -300,20 +300,20 @@ static int can_conv_from_raw(union SignalData *sig, void *from, int size,
   case SignalType::INTEGER:
     switch (size) {
     case 1:
-      sig->i = (int64_t)*(int8_t *)from;
+      sig->i = (int64_t) * (int8_t *)from;
       return 0;
 
     case 2:
-      sig->i = (int64_t)*(int16_t *)from;
+      sig->i = (int64_t) * (int16_t *)from;
       return 0;
 
     case 3:
-      sig->i = (int64_t)*(int16_t *)from;
-      sig->i += ((int64_t)*((int8_t *)(from) + 2)) << 16;
+      sig->i = (int64_t) * (int16_t *)from;
+      sig->i += ((int64_t) * ((int8_t *)(from) + 2)) << 16;
       return 0;
 
     case 4:
-      sig->i = (int64_t)*(int32_t *)from;
+      sig->i = (int64_t) * (int32_t *)from;
       return 0;
 
     case 8:
@@ -400,7 +400,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample *const smps[],
   if (!found_id)
     throw RuntimeError("Did not find signal for can id {}", frame.can_id);
 
-  n->logger->debug("Received {} signals", c->sample_buf_num);
+  n->logger->trace("Received {} signals", c->sample_buf_num);
 
   // Copy signal data to sample only when all signals have been received
   if (c->sample_buf_num == n->getInputSignals(false)->size()) {

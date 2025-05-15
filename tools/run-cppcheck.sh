@@ -22,4 +22,3 @@ cppcheck -j $(nproc) \
     --project=${BUILD_DIR}/compile_commands.json \
     -D '__linux__' \
     -D '__x86_64__'
-

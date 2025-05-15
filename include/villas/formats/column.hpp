@@ -20,8 +20,8 @@ struct Sample;
 class ColumnLineFormat : public LineFormat {
 
 protected:
-  virtual size_t sprintLine(char *buf, size_t len, const struct Sample *smp);
-  virtual size_t sscanLine(const char *buf, size_t len, struct Sample *smp);
+  size_t sprintLine(char *buf, size_t len, const struct Sample *smp) override;
+  size_t sscanLine(const char *buf, size_t len, struct Sample *smp) override;
 
   char separator; // Column separator
 
@@ -29,9 +29,9 @@ public:
   ColumnLineFormat(int fl, char delim, char sep)
       : LineFormat(fl, delim), separator(sep) {}
 
-  virtual void header(FILE *f, const SignalList::Ptr sigs);
+  void header(FILE *f, const SignalList::Ptr sigs) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 template <const char *name, const char *desc, int flags = 0,
@@ -41,15 +41,15 @@ class ColumnLineFormatPlugin : public FormatFactory {
 public:
   using FormatFactory::FormatFactory;
 
-  virtual Format *make() {
+  Format *make() override {
     return new ColumnLineFormat(flags, delimiter, separator);
   }
 
-  /// Get plugin name
-  virtual std::string getName() const { return name; }
+  // Get plugin name
+  std::string getName() const override { return name; }
 
-  /// Get plugin description
-  virtual std::string getDescription() const { return desc; }
+  // Get plugin description
+  std::string getDescription() const override { return desc; }
 };
 
 } // namespace node

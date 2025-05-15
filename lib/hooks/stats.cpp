@@ -50,7 +50,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED);
 
     last = nullptr;
@@ -58,7 +58,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     assert(state == State::STARTED);
 
     if (last)
@@ -109,7 +109,7 @@ public:
   StatsHook &operator=(const StatsHook &) = delete;
   StatsHook(const StatsHook &) = delete;
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED);
 
     if (!uri.empty()) {
@@ -121,7 +121,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     assert(state == State::STARTED);
 
     stats->print(uri.empty() ? stdout : output, format, verbose);
@@ -138,7 +138,7 @@ public:
     stats->reset();
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     // Only call readHook if it hasnt been added to the node's hook list
     if (!node)
       return readHook->process(smp);
@@ -146,13 +146,13 @@ public:
     return Hook::Reason::OK;
   }
 
-  virtual void periodic() {
+  virtual void periodic() override {
     assert(state == State::STARTED);
 
     stats->printPeriodic(uri.empty() ? stdout : output, format, node);
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
 
@@ -184,7 +184,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void prepare() {
+  void prepare() override {
     assert(state == State::CHECKED);
 
     stats = std::make_shared<villas::Stats>(buckets, warmup);

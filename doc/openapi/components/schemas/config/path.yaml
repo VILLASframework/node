@@ -124,4 +124,3 @@ properties:
       If you see queue or pool underrun warnings, try to increase this value.
 
     type: number
-

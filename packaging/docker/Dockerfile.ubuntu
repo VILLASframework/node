@@ -18,58 +18,57 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Toolchain
 RUN apt-get update && \
 	apt-get install -y \
-		gcc g++ \
-		pkg-config cmake make \
-		autoconf automake autogen libtool \
-		texinfo git curl tar wget diffutils \
-		flex bison \
-		protobuf-compiler protobuf-c-compiler \
-		clang-format clangd \
-		python3-venv \
-		ninja-build mercurial \
-		xmlto udev
+	gcc g++ \
+	pkg-config cmake make \
+	autoconf automake autogen libtool \
+	texinfo git git-svn curl tar wget diffutils \
+	flex bison \
+	protobuf-compiler protobuf-c-compiler \
+	clang-format clangd \
+	python3-venv \
+	ninja-build mercurial \
+	xmlto udev
 
 # Dependencies
 RUN apt-get update && \
 	apt-get install -y \
-		libssl-dev \
-		libgraphviz-dev \
-		libprotobuf-dev \
-		libprotobuf-c-dev \
-		uuid-dev \
-		libconfig-dev \
-		libnl-3-dev libnl-route-3-dev \
-		libcurl4-openssl-dev \
-		libjansson-dev \
-		libzmq3-dev \
-		libnanomsg-dev \
-		librabbitmq-dev \
-		libmosquitto-dev \
-		librdkafka-dev \
-		libcomedi-dev \
-		libibverbs-dev \
-		librdmacm-dev \
-		libusb-1.0-0-dev \
-		libwebsockets-dev \
-		libfmt-dev \
-		libspdlog-dev \
-		liblua5.3-dev \
-		libhiredis-dev \
-		libnice-dev \
-		libmodbus-dev \
-		libre2-dev \
-		libglib2.0-dev \
-		libcriterion-dev \
-		python3-dev \
-		python3-pybind11
+	libssl-dev \
+	libgraphviz-dev \
+	libprotobuf-dev \
+	libprotobuf-c-dev \
+	uuid-dev \
+	libconfig-dev \
+	libnl-3-dev libnl-route-3-dev \
+	libcurl4-openssl-dev \
+	libjansson-dev \
+	libzmq3-dev \
+	libnanomsg-dev \
+	librabbitmq-dev \
+	libmosquitto-dev \
+	librdkafka-dev \
+	libcomedi-dev \
+	libibverbs-dev \
+	librdmacm-dev \
+	libusb-1.0-0-dev \
+	libwebsockets-dev \
+	libfmt-dev \
+	libspdlog-dev \
+	liblua5.3-dev \
+	libhiredis-dev \
+	libnice-dev \
+	libmodbus-dev \
+	libre2-dev \
+	libglib2.0-dev \
+	libcriterion-dev \
+	python3-dev \
+	python3-pybind11
 
-# Add local and 64-bit locations to linker paths
-ENV echo /usr/local/lib >> /etc/ld.so.conf && \
-	echo /usr/local/lib64 >> /etc/ld.so.conf
-
-# or install unpackaged dependencies from source
-ADD packaging/deps.sh /
-RUN bash deps.sh
+# Install unpackaged dependencies from source
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN bash /deps/deps.sh
+RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
+	ldconfig
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
@@ -77,8 +76,8 @@ EXPOSE 443
 
 WORKDIR /villas
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 FROM dev AS app
 

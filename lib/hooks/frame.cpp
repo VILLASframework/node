@@ -173,7 +173,7 @@ public:
 
   virtual ~FrameHook() { (void)last_smp.release(); }
 
-  virtual void parse(json_t *json) override {
+  void parse(json_t *json) override {
     Hook::parse(json);
 
     char *trigger_str = nullptr;

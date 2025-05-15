@@ -237,7 +237,7 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
 }
 
 PmuHook::Phasor PmuHook::estimatePhasor(dsp::CosineWindow<double> *window,
-                                        Phasor lastPhasor) {
+                                        const Phasor &lastPhasor) {
   return {0., 0., 0., 0., Status::INVALID};
 }
 

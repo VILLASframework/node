@@ -51,23 +51,24 @@ protected:
   timespec nextRun;
   bool init;
   unsigned initSampleCount;
+
   // Correction factors.
   double phaseOffset;
   double amplitudeOffset;
   double frequencyOffset;
   double rocofOffset;
 
+  Phasor estimatePhasor(dsp::CosineWindow<double> *window,
+                        const Phasor &lastPhasor);
+
 public:
   PmuHook(Path *p, Node *n, int fl, int prio, bool en = true);
 
-  virtual void prepare();
+  void prepare() override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual Hook::Reason process(struct Sample *smp);
-
-  virtual Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                Phasor lastPhasor);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 } // namespace node

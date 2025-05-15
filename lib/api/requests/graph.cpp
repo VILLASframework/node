@@ -34,7 +34,7 @@ public:
 
   ~GraphRequest() { gvFreeContext(gvc); }
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::GET)
       throw InvalidMethod(this);
 
@@ -98,7 +98,7 @@ public:
       resp->setHeader("Content-Encoding", "gzip");
 
 #if 0
-		gvFreeRenderData(data);
+    gvFreeRenderData(data);
 #endif
     gvFreeLayout(gvc, graph);
 
