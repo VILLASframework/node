@@ -10,8 +10,8 @@ import unittest
 import uuid
 import villas_node as vn
 
-class SimpleWrapperTests(unittest.TestCase):
 
+class SimpleWrapperTests(unittest.TestCase):
     def setUp(self):
         try:
             self.node_uuid = str(uuid.uuid4())
@@ -59,21 +59,24 @@ class SimpleWrapperTests(unittest.TestCase):
     def test_details(self):
         try:
             # remove color codes before checking for equality
-            self.assertEqual("test_node(socket)", re.sub(r'\x1b\[[0-9;]*m', '', vn.node_name(self.test_node)))
+            self.assertEqual(
+                "test_node(socket)",
+                re.sub(r"\x1b\[[0-9;]*m", "", vn.node_name(self.test_node)),
+            )
 
             # node_name_short is bugged
             # self.assertEqual('', vn.node_name_short(self.test_node))
             self.assertEqual(
-                vn.node_name(self.test_node) +
-                ': uuid=' +
-                self.node_uuid +
-                ', #in.signals=1/1, #in.hooks=0, #out.hooks=0, in.vectorize=1, out.vectorize=1, out.netem=no, layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001',
-                vn.node_name_full(self.test_node)
+                vn.node_name(self.test_node)
+                + ": uuid="
+                + self.node_uuid
+                + ", #in.signals=1/1, #in.hooks=0, #out.hooks=0, in.vectorize=1, out.vectorize=1, out.netem=no, layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
+                vn.node_name_full(self.test_node),
             )
 
             self.assertEqual(
-                'layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001',
-                vn.node_details(self.test_node)
+                "layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
+                vn.node_details(self.test_node),
             )
 
             self.assertEqual(1, vn.node_input_signals_max_cnt(self.test_node))
@@ -106,8 +109,14 @@ class SimpleWrapperTests(unittest.TestCase):
             test_node = vn.node_new("", config_copy_str)
 
             self.assertEqual(
-                re.sub(r'^[^:]+: uuid=[0-9a-fA-F-]+, ', '', vn.node_name_full(test_node)),
-                re.sub(r'^[^:]+: uuid=[0-9a-fA-F-]+, ', '', vn.node_name_full(self.test_node))
+                re.sub(
+                    r"^[^:]+: uuid=[0-9a-fA-F-]+, ", "", vn.node_name_full(test_node)
+                ),
+                re.sub(
+                    r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
+                    "",
+                    vn.node_name_full(self.test_node),
+                ),
             )
         except Exception as e:
             self.fail(f" err: {e}")
@@ -127,9 +136,11 @@ class SimpleWrapperTests(unittest.TestCase):
 
             for node in test_nodes.values():
                 if vn.node_check(node):
-                    raise RuntimeError(f"Failed to verify node configuration")
+                    raise RuntimeError("Failed to verify node configuration")
                 if vn.node_prepare(node):
-                    raise RuntimeError(f"Failed to verify {vn.node_name(node)} node configuration")
+                    raise RuntimeError(
+                        f"Failed to verify {vn.node_name(node)} node configuration"
+                    )
                 vn.node_start(node)
 
             # Arrays to store samples
@@ -143,15 +154,25 @@ class SimpleWrapperTests(unittest.TestCase):
                 recv_smpls[i] = vn.sample_alloc(2)
 
                 # Generate signals and send over send_socket
-                self.assertEqual(vn.node_read(test_nodes["signal_generator"], send_smpls, 1), 1)
-                self.assertEqual(vn.node_write(test_nodes["send_socket"], send_smpls, 1), 1)
+                self.assertEqual(
+                    vn.node_read(test_nodes["signal_generator"], send_smpls, 1), 1
+                )
+                self.assertEqual(
+                    vn.node_write(test_nodes["send_socket"], send_smpls, 1), 1
+                )
 
             # read received signals and send them to recv_socket
-            self.assertEqual(vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100)
-            self.assertEqual(vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100)
+            self.assertEqual(
+                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+            )
+            self.assertEqual(
+                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+            )
 
             # confirm rev_socket signals
-            self.assertEqual(vn.node_read(test_nodes["recv_socket"], recv_smpls, 100), 100)
+            self.assertEqual(
+                vn.node_read(test_nodes["recv_socket"], recv_smpls, 100), 100
+            )
 
         except Exception as e:
             self.fail(f" err: {e}")
@@ -164,15 +185,9 @@ test_node_config = {
         "layer": "udp",
         "in": {
             "address": "*:12000",
-            "signals": [{
-                "name": "tap_position",
-                "type": "integer",
-                "init": 0
-            }]
+            "signals": [{"name": "tap_position", "type": "integer", "init": 0}],
         },
-        "out": {
-            "address": "127.0.0.1:12001"
-        }
+        "out": {"address": "127.0.0.1:12001"},
     }
 }
 
@@ -184,27 +199,15 @@ send_recv_test = {
         "in": {
             "address": "127.0.0.1:65532",
             "signals": [
-                {
-                    "name": "voltage",
-                    "type": "float",
-                    "unit": "V"
-                },
-                {
-                    "name": "current",
-                    "type": "float",
-                    "unit": "A"
-                }
-            ]
+                {"name": "voltage", "type": "float", "unit": "V"},
+                {"name": "current", "type": "float", "unit": "A"},
+            ],
         },
         "out": {
             "address": "127.0.0.1:65533",
-            "netem": {
-                "enabled": False
-            },
-            "multicast": {
-                "enabled": False
-            }
-        }
+            "netem": {"enabled": False},
+            "multicast": {"enabled": False},
+        },
     },
     "intmdt_socket": {
         "type": "socket",
@@ -213,27 +216,15 @@ send_recv_test = {
         "in": {
             "address": "127.0.0.1:65533",
             "signals": [
-                {
-                    "name": "voltage",
-                    "type": "float",
-                    "unit": "V"
-                },
-                {
-                    "name": "current",
-                    "type": "float",
-                    "unit": "A"
-                }
-            ]
+                {"name": "voltage", "type": "float", "unit": "V"},
+                {"name": "current", "type": "float", "unit": "A"},
+            ],
         },
         "out": {
             "address": "127.0.0.1:65534",
-            "netem": {
-                "enabled": False
-            },
-            "multicast": {
-                "enabled": False
-            }
-        }
+            "netem": {"enabled": False},
+            "multicast": {"enabled": False},
+        },
     },
     "recv_socket": {
         "type": "socket",
@@ -242,27 +233,15 @@ send_recv_test = {
         "in": {
             "address": "127.0.0.1:65534",
             "signals": [
-                {
-                    "name": "voltage",
-                    "type": "float",
-                    "unit": "V"
-                },
-                {
-                    "name": "current",
-                    "type": "float",
-                    "unit": "A"
-                }
-            ]
+                {"name": "voltage", "type": "float", "unit": "V"},
+                {"name": "current", "type": "float", "unit": "A"},
+            ],
         },
         "out": {
             "address": "127.0.0.1:65535",
-            "netem": {
-                "enabled": False
-            },
-            "multicast": {
-                "enabled": False
-            }
-        }
+            "netem": {"enabled": False},
+            "multicast": {"enabled": False},
+        },
     },
     "signal_generator": {
         "type": "signal.v2",
@@ -276,7 +255,7 @@ send_recv_test = {
                     "phase": 90,
                     "signal": "sine",
                     "type": "float",
-                    "unit": "V"
+                    "unit": "V",
                 },
                 {
                     "amplitude": 1,
@@ -284,18 +263,13 @@ send_recv_test = {
                     "phase": 0,
                     "signal": "sine",
                     "type": "float",
-                    "unit": "A"
-                }
+                    "unit": "A",
+                },
             ],
-            "hooks": [
-                {
-                    "type": "print",
-                    "format": "villas.human"
-                }
-            ]
-        }
-    }
+            "hooks": [{"type": "print", "format": "villas.human"}],
+        },
+    },
 }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
