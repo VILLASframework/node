@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 ---
 title: 'VILLASnode: Open-source real-time coupling of distributed infrastructures'
 tags:
+
 - C/C++
 - Real-time
 - Distributed experiments
 - Electrical grid simulation
 
 authors:
+
 - name: Alexandra Bach
   orcid: 0009-0005-7385-4642
   affiliation: 1
@@ -43,6 +45,7 @@ authors:
   affiliation: "1,2"
 
 affiliations:
+
 - name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
   index: 1
 - name: Fraunhofer Institute for Applied Information Technology, Aachen, Germany
