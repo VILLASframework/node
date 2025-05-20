@@ -22,21 +22,19 @@ class NodeCompatFactory;
 class NodeCompat : public Node {
 
 protected:
-  struct NodeCompatType *_vt; // Virtual functions (C++ OOP style)
-  void *_vd; // Virtual data (used by struct vnode::_vt functions)
+  NodeCompatType *_vt; // Virtual functions (C++ OOP style)
+  void *_vd;           // Virtual data (used by struct vnode::_vt functions)
 
   std::string _details;
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   NodeCompat *node;
   json_t *cfg;
 
-  NodeCompat(struct NodeCompatType *vt, const uuid_t &id,
-             const std::string &name);
+  NodeCompat(NodeCompatType *vt, const uuid_t &id, const std::string &name);
   NodeCompat(const NodeCompat &n);
 
   NodeCompat &operator=(const NodeCompat &other);
@@ -45,7 +43,7 @@ public:
 
   template <typename T> T *getData() { return static_cast<T *>(_vd); }
 
-  virtual NodeCompatType *getType() const { return _vt; }
+  NodeCompatType *getType() const { return _vt; }
 
   /* Parse node connection details.
 
@@ -54,10 +52,10 @@ public:
    * @retval 0 	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
   // Returns a string with a textual represenation of this node.
-  virtual const std::string &getDetails();
+  const std::string &getDetails() override;
 
   /* Check the current node configuration for plausability and errors.
 
@@ -65,9 +63,9 @@ public:
    * @retval 0 	Success. Node configuration is good.
    * @retval <0	Error. The node configuration is bogus.
    */
-  virtual int check();
+  int check() override;
 
-  virtual int prepare();
+  int prepare() override;
 
   /* Start this node.
 
@@ -75,7 +73,7 @@ public:
    * @retval 0	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int start();
+  int start() override;
 
   /* Stop this node.
 
@@ -83,7 +81,7 @@ public:
    * @retval 0	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int stop();
+  int stop() override;
 
   /* Restart this node.
 
@@ -92,7 +90,7 @@ public:
    * @retval 0	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int restart();
+  int restart() override;
 
   /* Pause this node.
 
@@ -101,7 +99,7 @@ public:
    * @retval 0	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int pause();
+  int pause() override;
 
   /* Resume this node.
 
@@ -109,45 +107,45 @@ public:
    * @retval 0	Success. Everything went well.
    * @retval <0	Error. Something went wrong.
    */
-  virtual int resume();
+  int resume() override;
 
   /* Reverse source and destination of a node.
 
    */
-  virtual int reverse();
+  int reverse() override;
 
-  virtual std::vector<int> getPollFDs();
+  std::vector<int> getPollFDs() override;
 
   // Get list of socket file descriptors for configuring network emulation.
-  virtual std::vector<int> getNetemFDs();
+  std::vector<int> getNetemFDs() override;
 
   // Return a memory allocator which should be used for sample pools passed to this node.
-  virtual struct memory::Type *getMemoryType();
+  struct memory::Type *getMemoryType() override;
 };
 
 class NodeCompatFactory : public NodeFactory {
 
 protected:
-  struct NodeCompatType *_vt;
+  NodeCompatType *_vt;
 
 public:
-  NodeCompatFactory(struct NodeCompatType *vt) : NodeFactory(), _vt(vt) {}
+  NodeCompatFactory(NodeCompatType *vt) : NodeFactory(), _vt(vt) {}
 
-  virtual Node *make(const uuid_t &id = {}, const std::string &name = "");
+  Node *make(const uuid_t &id = {}, const std::string &name = "") override;
 
-  /// Get plugin name
-  virtual std::string getName() const { return _vt->name; }
+  // Get plugin name
+  std::string getName() const override { return _vt->name; }
 
-  /// Get plugin description
-  virtual std::string getDescription() const { return _vt->description; }
+  // Get plugin description
+  std::string getDescription() const override { return _vt->description; }
 
-  virtual int getFlags() const;
+  int getFlags() const override;
 
-  virtual int getVectorize() const { return _vt->vectorize; }
+  int getVectorize() const override { return _vt->vectorize; }
 
-  virtual int start(SuperNode *sn);
+  int start(SuperNode *sn) override;
 
-  virtual int stop();
+  int stop() override;
 };
 
 } // namespace node

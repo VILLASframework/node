@@ -9,10 +9,9 @@
 #include <criterion/hooks.h>
 #include <criterion/internal/ordered-set.h>
 #include <criterion/options.h>
+#include <spdlog/spdlog.h>
 
 #include <villas/log.hpp>
-
-#include <spdlog/spdlog.h>
 
 // Returns true if there is at least one enabled test in this suite
 static bool suite_enabled(struct criterion_test_set *tests, const char *name) {

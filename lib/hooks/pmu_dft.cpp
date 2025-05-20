@@ -8,11 +8,11 @@
 #include <complex>
 #include <cstring>
 #include <vector>
-#include <villas/timing.hpp>
 
 #include <villas/dumper.hpp>
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
+#include <villas/timing.hpp>
 
 // Uncomment to enable dumper of memory windows
 //#define DFT_MEM_DUMP
@@ -140,7 +140,7 @@ public:
         amplitudeOffset(0.0), rocofOffset(0.0) {
   }
 
-  virtual void prepare() {
+  void prepare() override {
     MultiSignalHook::prepare();
 
     dumperEnable = logger->level() <= SPDLOG_LEVEL_DEBUG;
@@ -232,7 +232,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     MultiSignalHook::parse(json);
     int ret;
     int windowSizeFactor = 1;
@@ -340,7 +340,7 @@ public:
     state = State::CHECKED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     // Update sample memory

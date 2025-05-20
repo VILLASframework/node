@@ -12,6 +12,7 @@
   # Extra features
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
+  withExtraTesting ? (withAllExtras && system == "x86_64-linux"),
   # Format-types
   withFormatProtobuf ? withAllFormats,
   # Hook-types
@@ -19,7 +20,7 @@
   # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeEthercat ? withAllNodes,
+  withNodeEthercat ? (withAllNodes && system == "x86_64-linux"),
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -36,6 +37,7 @@
   withNodeWebrtc ? withAllNodes,
   withNodeZeromq ? withAllNodes,
   # Minimal dependencies
+  bash,
   cmake,
   coreutils,
   graphviz,
@@ -44,8 +46,10 @@
   makeWrapper,
   pkg-config,
   stdenv,
+  system,
   # Optional dependencies
   comedilib,
+  criterion,
   curl,
   czmq,
   ethercat,
@@ -55,6 +59,7 @@
   libconfig,
   libdatachannel,
   libiec61850,
+  libgit2,
   libmodbus,
   libnl,
   libre,
@@ -68,6 +73,7 @@
   nanomsg,
   opendssc,
   openssl,
+  pcre2,
   pkgsBuildBuild,
   protobuf,
   protobufBuildBuild ? pkgsBuildBuild.protobuf,
@@ -102,6 +108,8 @@ stdenv.mkDerivation {
       mv $out/include/villas/* $dev/include/villas/
       rm -d $out/include/villas
     fi
+    patchShebangs --host $out/bin/villas
+    patchShebangs --host $out/bin/villas-api
     wrapProgram $out/bin/villas \
       --set PATH ${
         lib.makeBinPath [
@@ -137,7 +145,9 @@ stdenv.mkDerivation {
       openssl
       curl
       spdlog
+      bash
     ]
+    ++ lib.optionals withExtraTesting [ criterion pcre2 libgit2 ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
@@ -149,7 +159,7 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
-    ++ lib.optionals withNodeNanomsg [ opendssc ]
+    ++ lib.optionals withNodeOpenDSS [ opendssc ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]

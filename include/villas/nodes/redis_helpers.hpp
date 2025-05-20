@@ -8,10 +8,12 @@
 #pragma once
 
 #include <chrono>
-#include <fmt/ostream.h>
 #include <functional>
+
+#include <fmt/ostream.h>
 #include <sw/redis++/connection.h>
 #include <sw/redis++/redis++.h>
+
 #include <villas/node/config.hpp>
 
 namespace std {

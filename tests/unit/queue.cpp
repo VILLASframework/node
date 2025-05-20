@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <villas/log.hpp>
 #include <villas/node/memory.hpp>
@@ -65,9 +65,9 @@ uint64_t thread_get_id() {
 // Sleep, do nothing (Architecture-Specific)
 __attribute__((always_inline)) static inline void nop() {
 #if defined(__aarch64__)
-  __asm__ volatile("yield"); /// ARM equivalent of rep nop.
+  __asm__ volatile("yield"); // ARM equivalent of rep nop.
 #else
-  __asm__ volatile("rep nop"); /// x86 and most other architectures use rep nop.
+  __asm__ volatile("rep nop"); // x86 and most other architectures use rep nop.
 #endif
 }
 

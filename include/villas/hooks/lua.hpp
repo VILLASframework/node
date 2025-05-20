@@ -107,24 +107,24 @@ public:
 
   virtual ~LuaHook();
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual void prepare();
+  void prepare() override;
 
   // Periodically called by the main thread.
-  virtual void periodic();
+  void periodic() override;
 
   // Called whenever a hook is started; before threads are created.
-  virtual void start();
+  void start() override;
 
   // Called whenever a hook is stopped; after threads are destoyed.
-  virtual void stop();
+  void stop() override;
 
   // Called whenever a new simulation case is started. This is detected by a sequence no equal to zero.
-  virtual void restart();
+  void restart() override;
 
   // Called whenever a sample is processed.
-  virtual Reason process(struct Sample *smp);
+  Reason process(struct Sample *smp) override;
 };
 
 } // namespace node

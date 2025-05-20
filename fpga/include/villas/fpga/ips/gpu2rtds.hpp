@@ -8,11 +8,10 @@
 #pragma once
 
 #include <villas/fpga/ips/hls.hpp>
-#include <villas/fpga/node.hpp>
-#include <villas/memory.hpp>
-
 #include <villas/fpga/ips/rtds2gpu/register_types.hpp>
 #include <villas/fpga/ips/rtds2gpu/xgpu2rtds_hw.h>
+#include <villas/fpga/node.hpp>
+#include <villas/memory.hpp>
 
 namespace villas {
 namespace fpga {

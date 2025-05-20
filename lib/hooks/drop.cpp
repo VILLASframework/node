@@ -19,7 +19,7 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     prev = nullptr;
@@ -27,7 +27,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     assert(state == State::STARTED);
 
     if (prev)
@@ -36,7 +36,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     int dist;
 
     assert(state == State::STARTED);

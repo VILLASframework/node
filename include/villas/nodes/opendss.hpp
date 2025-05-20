@@ -45,9 +45,8 @@ protected:
   pthread_mutex_t mutex;
   pthread_cond_t cv;
 
-  virtual int _read(struct Sample *smps[], unsigned cnt);
-
-  virtual int _write(struct Sample *smps[], unsigned cnt);
+  int _read(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
   void parseData(json_t *json, bool in);
 
@@ -62,15 +61,13 @@ public:
 
   virtual ~OpenDSS();
 
-  virtual int prepare();
+  int prepare() override;
 
-  virtual int parse(json_t *json);
+  int parse(json_t *json) override;
 
-  virtual int check();
+  int start() override;
 
-  virtual int start();
-
-  virtual int stop();
+  int stop() override;
 };
 
 } // namespace node

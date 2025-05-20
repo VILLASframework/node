@@ -67,10 +67,6 @@ target_link_libraries(villas-fpga PUBLIC
     "$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>"
 )
 
-if(CMAKE_CUDA_COMPILER)
-    target_link_libraries(villas-fpga PUBLIC villas-gpu)
-endif()
-
 include(GNUInstallDirs)
 
 install(TARGETS villas-fpga

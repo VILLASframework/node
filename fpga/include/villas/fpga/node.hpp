@@ -10,10 +10,12 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
-#include <jansson.h>
 #include <map>
 #include <string>
+
+#include <fmt/ostream.h>
+#include <jansson.h>
+
 #include <villas/config.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/graph/directed.hpp>

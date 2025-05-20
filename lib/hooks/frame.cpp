@@ -7,10 +7,12 @@
 
 #include <cstdint>
 #include <cstring>
-#include <jansson.h>
 #include <limits>
 #include <memory>
 #include <optional>
+
+#include <jansson.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
@@ -173,7 +175,7 @@ public:
 
   virtual ~FrameHook() { (void)last_smp.release(); }
 
-  virtual void parse(json_t *json) override {
+  void parse(json_t *json) override {
     Hook::parse(json);
 
     char *trigger_str = nullptr;

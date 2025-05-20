@@ -6,6 +6,7 @@
  */
 
 #include <cstring>
+
 #include <librdkafka/rdkafkacpp.h>
 #include <sys/syslog.h>
 

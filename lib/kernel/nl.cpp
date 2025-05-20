@@ -8,7 +8,6 @@
  */
 
 #include <linux/if_packet.h>
-
 #include <netlink/route/link.h>
 #include <netlink/route/route.h>
 

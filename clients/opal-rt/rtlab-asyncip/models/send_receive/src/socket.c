@@ -19,7 +19,6 @@
 #define RTLAB
 #include "AsyncApi.h"
 #include "OpalPrint.h"
-
 #include "config.h"
 #include "socket.h"
 

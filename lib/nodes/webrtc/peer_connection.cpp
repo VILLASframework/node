@@ -14,6 +14,7 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <rtc/common.hpp>
+
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/peer_connection.hpp>
 #include <villas/utils.hpp>
@@ -267,7 +268,7 @@ void PeerConnection::onSignalingDisconnected() {
 }
 
 void PeerConnection::onSignalingError(std::string err) {
-  logger->debug("Signaling connection error: {}", err);
+  logger->error("Signaling connection error: {}", err);
 
   auto lock = std::unique_lock{mutex};
 
@@ -281,12 +282,19 @@ void PeerConnection::onSignalingMessage(SignalingMessage msg) {
 
   std::visit(
       villas::utils::overloaded{
-          [&](RelayMessage &c) { extraServers = std::move(c.servers); },
+          [&](RelayMessage &c) {
+            for (auto &server : c.servers) {
+              logger->debug("Received ICE server: {}", server.hostname);
+            }
+
+            extraServers = std::move(c.servers);
+          },
 
           [&](ControlMessage &c) {
             auto const &id = c.peerID;
 
             if (c.peers.size() < 2) {
+              logger->warn("Not enough peers connected. Waiting for more.");
               resetConnectionAndStandby(lock);
               return;
             }

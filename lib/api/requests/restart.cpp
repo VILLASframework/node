@@ -43,7 +43,7 @@ protected:
 public:
   using Request::Request;
 
-  virtual Response *execute() {
+  Response *execute() override {
     int ret;
     json_error_t err;
 

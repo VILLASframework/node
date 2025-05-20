@@ -8,6 +8,7 @@
  */
 
 #include <criterion/criterion.h>
+#include <spdlog/spdlog.h>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/pcie_card.hpp>
@@ -15,8 +16,6 @@
 #include <villas/fpga/vlnv.hpp>
 
 #include "global.hpp"
-
-#include <spdlog/spdlog.h>
 
 #define FPGA_CARD "vc707"
 #define TEST_CONFIG "../etc/fpga.json"

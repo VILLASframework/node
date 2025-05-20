@@ -6,9 +6,8 @@
  */
 
 #include <cmath>
-#include <cstring>
-
 #include <complex>
+#include <cstring>
 
 #include <villas/dsp/window.hpp>
 #include <villas/hook.hpp>
@@ -111,7 +110,7 @@ public:
       free(signal_name);
   }
 
-  virtual void start() {
+  virtual void start() override {
     assert(state == State::PREPARED);
 
     time = 0;
@@ -129,7 +128,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     int ret;
     json_error_t err;
     json_t *json_harmonics, *json_harmonic, *json_signal;
@@ -191,7 +190,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void prepare() {
+  void prepare() override {
     assert(state == State::CHECKED);
 
     std::string new_sig_name;
@@ -268,7 +267,7 @@ public:
     state = State::CHECKED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     if (signal_index >= smp->length)
       return Hook::Reason::ERROR;
 

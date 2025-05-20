@@ -7,23 +7,21 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <dirent.h>
 
+#include <dirent.h>
 #include <netlink/route/link.h>
 
 #include <villas/cpuset.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/node/config.hpp>
-#include <villas/super_node.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/kernel/if.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/nl.hpp>
 #include <villas/kernel/tc.hpp>
 #include <villas/kernel/tc_netem.hpp>
-
+#include <villas/node/config.hpp>
 #include <villas/nodes/socket.hpp>
+#include <villas/super_node.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;

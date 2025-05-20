@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <arpa/inet.h>
 #include <cstring>
+
+#include <arpa/inet.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/formats/msg.hpp>

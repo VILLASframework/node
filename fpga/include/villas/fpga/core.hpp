@@ -10,11 +10,13 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
-#include <jansson.h>
 #include <list>
 #include <map>
 #include <memory>
+
+#include <fmt/ostream.h>
+#include <jansson.h>
+
 #include <villas/colors.hpp>
 #include <villas/config.hpp>
 #include <villas/fpga/vlnv.hpp>

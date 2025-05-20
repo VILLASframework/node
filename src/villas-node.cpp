@@ -6,10 +6,10 @@
  */
 
 #include <cstdlib>
-#include <unistd.h>
-
 #include <iomanip>
 #include <iostream>
+
+#include <unistd.h>
 
 #include <villas/api.hpp>
 #include <villas/api/request.hpp>

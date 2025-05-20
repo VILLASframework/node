@@ -38,19 +38,19 @@ public:
     header_printed = true;
   }
 
-  virtual void reset() { header_printed = false; }
+  void reset() override { header_printed = false; }
 
-  virtual void printMetadata(FILE *f, json_t *json);
+  void printMetadata(FILE *f, json_t *json) override;
 
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
 
-  virtual int scan(FILE *f, struct Sample *const smps[], unsigned cnt);
-  virtual int print(FILE *f, const struct Sample *const smps[], unsigned cnt);
+  int scan(FILE *f, struct Sample *const smps[], unsigned cnt) override;
+  int print(FILE *f, const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 template <typename T, const char *name, const char *desc, int flags = 0,
@@ -60,13 +60,13 @@ class LineFormatPlugin : public FormatFactory {
 public:
   using FormatFactory::FormatFactory;
 
-  virtual Format *make() { return new T(flags, delimiter); }
+  Format *make() override { return new T(flags, delimiter); }
 
-  /// Get plugin name
-  virtual std::string getName() const { return name; }
+  // Get plugin name
+  std::string getName() const override { return name; }
 
-  /// Get plugin description
-  virtual std::string getDescription() const { return desc; }
+  // Get plugin description
+  std::string getDescription() const override { return desc; }
 };
 
 } // namespace node

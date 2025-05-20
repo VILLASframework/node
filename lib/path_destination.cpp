@@ -54,7 +54,7 @@ void PathDestination::enqueueAll(Path *p, const struct Sample *const smps[],
     // Increase reference counter of these samples as they are now also owned by the queue
     sample_incref_many(clones, cloned);
 
-    p->logger->debug("Enqueued {} samples to destination {} of path {}",
+    p->logger->trace("Enqueued {} samples to destination {} of path {}",
                      enqueued, pd->node->getName(), p->toString());
   }
 
@@ -78,7 +78,7 @@ void PathDestination::write() {
           "Queue underrun for path {}: allocated={} expected={}",
           path->toString(), allocated, cnt);
 
-    path->logger->debug(
+    path->logger->trace(
         "Dequeued {} samples from queue of node {} which is part of path {}",
         allocated, node->getName(), path->toString());
 
@@ -93,7 +93,7 @@ void PathDestination::write() {
 
     int released = sample_decref_many(smps, allocated);
 
-    path->logger->debug("Released {} samples back to memory pool", released);
+    path->logger->trace("Released {} samples back to memory pool", released);
   }
 }
 

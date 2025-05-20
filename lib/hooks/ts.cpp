@@ -17,7 +17,7 @@ class TsHook : public Hook {
 public:
   using Hook::Hook;
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     smp->ts.origin = smp->ts.received;

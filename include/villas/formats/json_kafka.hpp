@@ -16,8 +16,8 @@ namespace node {
 class JsonKafkaFormat : public JsonFormat {
 
 protected:
-  virtual int packSample(json_t **j, const struct Sample *smp);
-  virtual int unpackSample(json_t *json_smp, struct Sample *smp);
+  int packSample(json_t **j, const struct Sample *smp) override;
+  int unpackSample(json_t *json_smp, struct Sample *smp) override;
 
   const char *villasToKafkaType(enum SignalType vt);
 
@@ -26,7 +26,7 @@ protected:
 public:
   JsonKafkaFormat(int fl);
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 } // namespace node

@@ -8,10 +8,11 @@
 
 #pragma once
 
-#include <jansson.h>
 #include <memory>
-#include <spdlog/common.h>
 #include <string>
+
+#include <jansson.h>
+#include <spdlog/common.h>
 
 class JsonParser {
 private:

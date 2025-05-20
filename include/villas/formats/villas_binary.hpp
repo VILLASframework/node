@@ -29,12 +29,12 @@ public:
       : BinaryFormat(fl), source_index(sid), web(w),
         validate_source_index(false) {}
 
-  virtual int sscan(const char *buf, size_t len, size_t *rbytes,
-                    struct Sample *const smps[], unsigned cnt);
-  virtual int sprint(char *buf, size_t len, size_t *wbytes,
-                     const struct Sample *const smps[], unsigned cnt);
+  int sscan(const char *buf, size_t len, size_t *rbytes,
+            struct Sample *const smps[], unsigned cnt) override;
+  int sprint(char *buf, size_t len, size_t *wbytes,
+             const struct Sample *const smps[], unsigned cnt) override;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 };
 
 template <bool web = false>
@@ -43,15 +43,15 @@ class VillasBinaryFormatPlugin : public FormatFactory {
 public:
   using FormatFactory::FormatFactory;
 
-  virtual Format *make() {
+  Format *make() override {
     return new VillasBinaryFormat((int)SampleFlags::HAS_TS_ORIGIN |
                                       (int)SampleFlags::HAS_SEQUENCE |
                                       (int)SampleFlags::HAS_DATA,
                                   web);
   }
 
-  /// Get plugin name
-  virtual std::string getName() const {
+  // Get plugin name
+  std::string getName() const override {
     std::stringstream ss;
 
     ss << "villas." << (web ? "web" : "binary");
@@ -59,7 +59,7 @@ public:
     return ss.str();
   }
 
-  /// Get plugin description
+  // Get plugin description
   virtual std::string getDescription() const {
     std::stringstream ss;
 

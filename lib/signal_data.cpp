@@ -6,8 +6,10 @@
  */
 
 #include <cinttypes>
+#include <complex>
 #include <cstring>
 
+#include <villas/exceptions.hpp>
 #include <villas/signal_data.hpp>
 #include <villas/signal_type.hpp>
 
@@ -16,19 +18,19 @@ using namespace villas::node;
 void SignalData::set(enum SignalType type, double val) {
   switch (type) {
   case SignalType::BOOLEAN:
-    this->b = val;
+    b = val;
     break;
 
   case SignalType::FLOAT:
-    this->f = val;
+    f = val;
     break;
 
   case SignalType::INTEGER:
-    this->i = val;
+    i = val;
     break;
 
   case SignalType::COMPLEX:
-    this->z = val;
+    z = val;
     break;
 
   case SignalType::INVALID:
@@ -38,25 +40,23 @@ void SignalData::set(enum SignalType type, double val) {
 }
 
 SignalData SignalData::cast(enum SignalType from, enum SignalType to) const {
-  SignalData n = *this;
+  if (from == to) {
+    return *this;
+  }
 
   switch (to) {
   case SignalType::BOOLEAN:
     switch (from) {
     case SignalType::INTEGER:
-      n.b = this->i;
-      break;
+      return bool(i);
 
     case SignalType::FLOAT:
-      n.b = this->f;
-      break;
+      return bool(f);
 
     case SignalType::COMPLEX:
-      n.b = std::real(this->z);
-      break;
+      return std::real(z) != 0 && std::imag(z) != 0;
 
-    case SignalType::INVALID:
-    case SignalType::BOOLEAN:
+    default:
       break;
     }
     break;
@@ -64,19 +64,15 @@ SignalData SignalData::cast(enum SignalType from, enum SignalType to) const {
   case SignalType::INTEGER:
     switch (from) {
     case SignalType::BOOLEAN:
-      n.i = this->b;
-      break;
+      return int64_t(b);
 
     case SignalType::FLOAT:
-      n.i = this->f;
-      break;
+      return int64_t(f);
 
     case SignalType::COMPLEX:
-      n.i = std::real(this->z);
-      break;
+      return int64_t(z.real());
 
-    case SignalType::INVALID:
-    case SignalType::INTEGER:
+    default:
       break;
     }
     break;
@@ -84,19 +80,15 @@ SignalData SignalData::cast(enum SignalType from, enum SignalType to) const {
   case SignalType::FLOAT:
     switch (from) {
     case SignalType::BOOLEAN:
-      n.f = this->b;
-      break;
+      return double(b);
 
     case SignalType::INTEGER:
-      n.f = this->i;
-      break;
+      return double(i);
 
     case SignalType::COMPLEX:
-      n.f = std::real(this->z);
-      break;
+      return std::real(z);
 
-    case SignalType::INVALID:
-    case SignalType::FLOAT:
+    default:
       break;
     }
     break;
@@ -104,42 +96,39 @@ SignalData SignalData::cast(enum SignalType from, enum SignalType to) const {
   case SignalType::COMPLEX:
     switch (from) {
     case SignalType::BOOLEAN:
-      n.z = this->b;
-      break;
+      return std::complex<float>(b, 0);
 
     case SignalType::INTEGER:
-      n.z = this->i;
-      break;
+      return std::complex<float>(i, 0);
 
     case SignalType::FLOAT:
-      n.z = this->f;
-      break;
+      return std::complex<float>(f, 0);
 
-    case SignalType::INVALID:
-    case SignalType::COMPLEX:
+    default:
       break;
     }
     break;
 
-  default: {
-  }
+  default:
+    break;
   }
 
-  return n;
+  throw RuntimeError("Failed to cast signal data from {} to {}",
+                     signalTypeToString(from), signalTypeToString(to));
 }
 
 int SignalData::parseString(enum SignalType type, const char *ptr, char **end) {
   switch (type) {
   case SignalType::FLOAT:
-    this->f = strtod(ptr, end);
+    f = strtod(ptr, end);
     break;
 
   case SignalType::INTEGER:
-    this->i = strtol(ptr, end, 10);
+    i = strtol(ptr, end, 10);
     break;
 
   case SignalType::BOOLEAN:
-    this->b = strtol(ptr, end, 10);
+    b = strtol(ptr, end, 10);
     break;
 
   case SignalType::COMPLEX: {
@@ -167,7 +156,7 @@ int SignalData::parseString(enum SignalType type, const char *ptr, char **end) {
       (*end)++;
     }
 
-    this->z = std::complex<float>(real, imag);
+    z = std::complex<float>(real, imag);
     break;
   }
 
@@ -186,21 +175,21 @@ int SignalData::parseJson(enum SignalType type, json_t *json) {
     if (!json_is_number(json))
       return -1;
 
-    this->f = json_number_value(json);
+    f = json_number_value(json);
     break;
 
   case SignalType::INTEGER:
     if (!json_is_integer(json))
       return -1;
 
-    this->i = json_integer_value(json);
+    i = json_integer_value(json);
     break;
 
   case SignalType::BOOLEAN:
     if (!json_is_boolean(json))
       return -1;
 
-    this->b = json_boolean_value(json);
+    b = json_boolean_value(json);
     break;
 
   case SignalType::COMPLEX: {
@@ -212,7 +201,7 @@ int SignalData::parseJson(enum SignalType type, json_t *json) {
     if (ret)
       return -1;
 
-    this->z = std::complex<float>(real, imag);
+    z = std::complex<float>(real, imag);
     break;
   }
 
@@ -226,17 +215,16 @@ int SignalData::parseJson(enum SignalType type, json_t *json) {
 json_t *SignalData::toJson(enum SignalType type) const {
   switch (type) {
   case SignalType::INTEGER:
-    return json_integer(this->i);
+    return json_integer(i);
 
   case SignalType::FLOAT:
-    return json_real(this->f);
+    return json_real(f);
 
   case SignalType::BOOLEAN:
-    return json_boolean(this->b);
+    return json_boolean(b);
 
   case SignalType::COMPLEX:
-    return json_pack("{ s: f, s: f }", "real", std::real(this->z), "imag",
-                     std::imag(this->z));
+    return json_pack("{ s: f, s: f }", "real", z.real(), "imag", z.imag());
 
   case SignalType::INVALID:
     return nullptr;
@@ -249,27 +237,27 @@ int SignalData::printString(enum SignalType type, char *buf, size_t len,
                             int precision) const {
   switch (type) {
   case SignalType::FLOAT:
-    return snprintf(buf, len, "%.*f", precision, this->f);
+    return snprintf(buf, len, "%.*f", precision, f);
 
   case SignalType::INTEGER:
-    return snprintf(buf, len, "%" PRIi64, this->i);
+    return snprintf(buf, len, "%" PRIi64, i);
 
   case SignalType::BOOLEAN:
-    return snprintf(buf, len, "%u", this->b);
+    return snprintf(buf, len, "%u", b);
 
   case SignalType::COMPLEX:
-    return snprintf(buf, len, "%.*f%+.*fi", precision, std::real(this->z),
-                    precision, std::imag(this->z));
+    return snprintf(buf, len, "%.*f%+.*fi", precision, z.real(), precision,
+                    z.imag());
 
   default:
     return snprintf(buf, len, "<?>");
   }
 }
 
-std::string SignalData::toString(enum SignalType type, int precission) const {
+std::string SignalData::toString(enum SignalType type, int precision) const {
   char buf[128];
 
-  printString(type, buf, sizeof(buf), precission);
+  printString(type, buf, sizeof(buf), precision);
 
   return buf;
 }

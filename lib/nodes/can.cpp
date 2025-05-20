@@ -8,16 +8,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
-
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <linux/sockios.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
@@ -400,7 +399,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample *const smps[],
   if (!found_id)
     throw RuntimeError("Did not find signal for can id {}", frame.can_id);
 
-  n->logger->debug("Received {} signals", c->sample_buf_num);
+  n->logger->trace("Received {} signals", c->sample_buf_num);
 
   // Copy signal data to sample only when all signals have been received
   if (c->sample_buf_num == n->getInputSignals(false)->size()) {

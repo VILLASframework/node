@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdint>
+
 #include <xilinx/xtmrctr.h>
 
 #include <villas/fpga/config.h>

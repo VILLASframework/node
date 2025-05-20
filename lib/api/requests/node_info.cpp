@@ -24,7 +24,7 @@ class NodeInfoRequest : public NodeRequest {
 public:
   using NodeRequest::NodeRequest;
 
-  virtual Response *execute() {
+  Response *execute() override {
     if (method != Session::Method::GET)
       throw InvalidMethod(this);
 

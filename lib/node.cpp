@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <openssl/md5.h>
 #include <regex>
+
+#include <openssl/md5.h>
 
 #ifdef __linux__
 extern "C" {
@@ -289,14 +290,14 @@ int Node::read(struct Sample *smps[], unsigned cnt) {
     if (stats != nullptr)
       stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
 
-    logger->debug("Received {} samples of which {} have been skipped", nread,
+    logger->trace("Received {} samples of which {} have been skipped", nread,
                   skipped);
   } else
-    logger->debug("Received {} samples", nread);
+    logger->trace("Received {} samples", nread);
 
   return rread;
 #else
-  logger->debug("Received {} samples", nread);
+  logger->trace("Received {} samples", nread);
 
   return nread;
 #endif // WITH_HOOKS
@@ -330,7 +331,7 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
       return sent;
 
     nsent += sent;
-    logger->debug("Sent {} samples", sent);
+    logger->trace("Sent {} samples", sent);
   }
 
   return nsent;

@@ -7,8 +7,10 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <villas/tool.hpp>
+
 #include <zmq.h>
+
+#include <villas/tool.hpp>
 
 #if ZMQ_VERSION_MAJOR < 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR <= 1)
 #include <zmq_utils.h>

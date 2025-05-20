@@ -7,10 +7,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <linux/if_ether.h>
 #include <netlink/route/cls/fw.h>
 #include <netlink/route/qdisc/prio.h>
-
-#include <linux/if_ether.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/kernel/if.hpp>

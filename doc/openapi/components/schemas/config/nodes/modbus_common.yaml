@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+properties:
+  response_timeout:
+    type: number
+    description: The timeout in seconds when waiting for responses from a Modbus server.
+    example: 1.0
+
+  rate:
+    type: number
+    description: The rate at which Modbus device registers are queried for changes.
+    example: 1.0
+
+  in:
+    type: object
+    properties:
+      signals:
+        type: array
+        items:
+          $ref: ./signals/modbus_signal.yaml
+
+  out:
+    type: object
+    properties:
+      signals:
+        type: array
+        items:
+          $ref: ./signals/modbus_signal.yaml

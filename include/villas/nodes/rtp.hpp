@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <pthread.h>
-
 #include <fstream>
+
+#include <pthread.h>
 
 #include <villas/dsp/pid.hpp>
 #include <villas/format.hpp>

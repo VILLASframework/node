@@ -10,20 +10,18 @@
 #include <utility>
 
 #include <villas/exceptions.hpp>
-#include <villas/log.hpp>
-#include <villas/memory.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/fpga/card.hpp>
-#include <villas/fpga/utils.hpp>
-#include <villas/fpga/vlnv.hpp>
-
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/ips/intc.hpp>
 #include <villas/fpga/ips/pcie.hpp>
 #include <villas/fpga/ips/platform_intc.hpp>
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/platform_card.hpp>
+#include <villas/fpga/utils.hpp>
+#include <villas/fpga/vlnv.hpp>
+#include <villas/log.hpp>
+#include <villas/memory.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::fpga;
 using namespace villas::fpga::ip;

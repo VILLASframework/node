@@ -16,7 +16,7 @@ class DumpHook : public Hook {
 public:
   using Hook::Hook;
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     sample_dump(logger, smp);

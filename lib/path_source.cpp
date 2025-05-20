@@ -10,14 +10,12 @@
 #include <villas/exceptions.hpp>
 #include <villas/hook_list.hpp>
 #include <villas/node.hpp>
-#include <villas/path.hpp>
-#include <villas/sample.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/nodes/loopback_internal.hpp>
-
+#include <villas/path.hpp>
 #include <villas/path_destination.hpp>
 #include <villas/path_source.hpp>
+#include <villas/sample.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -141,7 +139,7 @@ int PathSource::read(int i) {
   } else if (toenqueue != tomux) {
     int skipped = tomux - toenqueue;
 
-    path->logger->debug("Hooks skipped {} out of {} samples for path {}",
+    path->logger->trace("Hooks skipped {} out of {} samples for path {}",
                         skipped, tomux, path->toString());
   }
 #else

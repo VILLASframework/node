@@ -14,8 +14,9 @@
 #pragma once
 
 #include <cstring>
-#include <pthread.h>
 #include <string>
+
+#include <pthread.h>
 #include <sys/types.h>
 
 #include <villas/common.hpp>

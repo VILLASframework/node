@@ -9,12 +9,12 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <fmt/core.h>
 #include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 
+#include <fmt/core.h>
 #include <fmt/format.h>
 #include <openssl/evp.h>
 
@@ -189,7 +189,7 @@ public:
         first_timestamp(std::nullopt), last_sequence(std::nullopt),
         last_timestamp(std::nullopt), md_buffer(), md_string_buffer() {}
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     Hook::parse(json);
 
     char const *uri_str;
@@ -209,7 +209,7 @@ public:
       algorithm = std::string(algorithm_str);
   }
 
-  virtual void prepare() {
+  void prepare() override {
     Hook::prepare();
 
     file = file_ptr(fopen(uri.c_str(), "w"), &FILE_free);
@@ -221,14 +221,14 @@ public:
       throw RuntimeError{"Could not fetch algorithm {}", algorithm};
   }
 
-  virtual void start() {
+  virtual void start() override {
     Hook::start();
 
     if (!EVP_DigestInit_ex(md_ctx.get(), md, NULL))
       throw RuntimeError{"Could not initialize digest"};
   }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(smp);
     assert(state == State::STARTED);
 
@@ -238,7 +238,7 @@ public:
     return Reason::OK;
   }
 
-  virtual void stop() {
+  virtual void stop() override {
     Hook::stop();
 
     first_sequence.reset();

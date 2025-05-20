@@ -19,3 +19,6 @@ b1e8cd81da9a3e3d27db27d49d265afc53e0ce4d
 
 # Update Steffens mail address in common/
 6427fae1e4ca0467e09688d56cec0dcd7d5e600d
+
+# Apply uniform #include style to all files
+817393134850845ea1237621b6b0f41e133f9829

@@ -5,7 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// clang-format off
+// OpenDSS has broken header files that conflict with std::complex
 #include <OpenDSSCDLL.h>
+// clang-format on
+
 #include <fmt/core.h>
 
 #include <villas/exceptions.hpp>
@@ -158,8 +162,6 @@ int OpenDSS::parse(json_t *json) {
 
   return 0;
 }
-
-int OpenDSS::check() { return Node::check(); }
 
 void OpenDSS::getElementName(ElementType type,
                              std::unordered_set<std::string> *set) {

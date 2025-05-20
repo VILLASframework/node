@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+
 #include <jansson.h>
 #include <libconfig.h>
 #include <libgen.h>

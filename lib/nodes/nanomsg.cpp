@@ -6,6 +6,7 @@
  */
 
 #include <cstring>
+
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 

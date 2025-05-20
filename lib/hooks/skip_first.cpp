@@ -38,7 +38,7 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     double s;
 
     int ret;
@@ -68,14 +68,14 @@ public:
     throw ConfigError(json, err, "node-config-hook-skip_first");
   }
 
-  virtual void start() {
+  virtual void start() override {
     skip_state = SkipState::STARTED;
     state = State::STARTED;
   }
 
   virtual void restart() { skip_state = SkipState::STARTED; }
 
-  virtual Hook::Reason process(struct Sample *smp) {
+  Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
     // Remember sequence no or timestamp of first sample.
