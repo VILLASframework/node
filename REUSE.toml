@@ -24,6 +24,7 @@ path = [
     "etc/labs/lab3.pcap",
     "tests/valgrind.supp",
     "packaging/archlinux/villas-node.install",
+    "VILLASnode-modular.png"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University"
