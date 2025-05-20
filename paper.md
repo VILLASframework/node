@@ -70,15 +70,15 @@ The basic data package, common for all node-types, includes timestamped data, co
 Samples may need modification or filtering. VILLASnode supports hooks (h) for this purpose. Hooks are simple callback functions, which are called whenever a message is processed.
 Paths (p) take care of the processing and define the connections and dataflows between nodes.
 Node-types, hooks, and paths need to be initalized in a configuration file which is passed when starting VILLASnode.
-Figure 1 shows an example of an experiment where five different node-types are used, connected by three paths, using three hooks. 
-It includes queues (q) and registers (r). Queues temporarily store data before data is forwarded to registers. Registers provide the possibility to (de-)mulitplex data and to create new samples. 
+Figure 1 shows an example of an experiment where five different node-types are used, connected by three paths, using three hooks.
+It includes queues (q) and registers (r). Queues temporarily store data before data is forwarded to registers. Registers provide the possibility to (de-)mulitplex data and to create new samples.
 
 ![Example of modular exprimental design with nodes, paths, and hooks [@villasnode_docs].](VILLASnode-modular.png)
 
 VILLASnode can be controlled remotely by an Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. This is useful if Python software tools are to be integrated in a distributed experiment.
 In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
-Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems. 
-To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.  
+Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems.
+To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
 
 # Statement of need
 

@@ -7,7 +7,7 @@ SPDX-PackageSupplier = "Steffen Vogel <post@steffenvogel.de>"
 SPDX-PackageDownloadLocation = "https://fein-aachen.org/en/projects/villas-node/"
 
 [[annotations]]
-path = ["**.prefs", "**.vi", "**.opal", "**.dft", "**.sib", "**.json", "**.ipynb", "**_pb2.py", "doc/pictures/**", "doc/favicon.png", "clients/opal-rt/rtlab-asyncip/models/send_receive/eonerc_logo.png", "clients/rtds/**/**.txt", "clients/opal-rt/hypersim-ucm/**.ecf", "etc/labs/lab3.pcap", "packaging/live-iso/files/etc/**", "tests/valgrind.supp", "packaging/archlinux/villas-node.install"]
+path = ["**.prefs", "**.vi", "**.opal", "**.dft", "**.sib", "**.json", "**.ipynb", "**_pb2.py", "doc/pictures/**", "doc/favicon.png", "clients/opal-rt/rtlab-asyncip/models/send_receive/eonerc_logo.png", "clients/rtds/**/**.txt", "clients/opal-rt/hypersim-ucm/**.ecf", "etc/labs/lab3.pcap", "packaging/live-iso/files/etc/**", "tests/valgrind.supp", "packaging/archlinux/villas-node.install", "VILLASnode-modular.png"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University"
 SPDX-License-Identifier = "Apache-2.0"
