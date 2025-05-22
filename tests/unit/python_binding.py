@@ -12,7 +12,6 @@ import villas_node as vn
 
 
 class SimpleWrapperTests(unittest.TestCase):
-
     def setUp(self):
         try:
             self.node_uuid = str(uuid.uuid4())
