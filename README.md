@@ -2,7 +2,7 @@
 
 [![build status](https://git.rwth-aachen.de/acs/public/villas/node/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/node/-/pipelines/)
 
-This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
+This is VILLASnode, a gateway for processing and forwarding simulation data between real-time simulators.
 VILLASnode is a client/server application to connect simulation equipment and software such as:
 
 - OPAL-RT RT-LAB,
