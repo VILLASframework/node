@@ -35,5 +35,13 @@ add_custom_target(run-unit-tests
     USES_TERMINAL
 )
 
+add_custom_target(run-python-binding-tests
+    COMMAND
+        python3 ${CMAKE_SOURCE_DIR}/tests/unit/python_binding.py
+    DEPENDS
+        python-binding
+    USES_TERMINAL
+)
+
 add_dependencies(tests unit-tests)
-add_dependencies(run-tests run-unit-tests)
+add_dependencies(run-tests run-unit-tests run-python-binding-tests)
