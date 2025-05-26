@@ -28,6 +28,11 @@ else
     HOST="localhost"
 fi
 
+mosquitto &
+MOSQUITTO_PID=$!
+echo "Mosquitto started with PID $MOSQUITTO_PID"
+
+
 cat > config.json << EOF
 {
     "nodes": {
@@ -57,3 +62,5 @@ villas signal -l ${NUM_SAMPLES} -n random > input.dat
 villas pipe -l ${NUM_SAMPLES} config.json node1 > output.dat < <(sleep 2; cat input.dat)
 
 villas compare input.dat output.dat
+
+kill $MOSQUITTO_PID
