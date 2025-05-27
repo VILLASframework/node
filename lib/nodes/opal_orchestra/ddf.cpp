@@ -10,9 +10,9 @@ extern "C" {
 #include <RTAPI.h>
 }
 
-#include <villas/nodes/orchestra/ddf.hpp>
-#include <villas/nodes/orchestra/error.hpp>
-#include <villas/nodes/orchestra/signal.hpp>
+#include <villas/nodes/opal_orchestra/ddf.hpp>
+#include <villas/nodes/opal_orchestra/error.hpp>
+#include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 

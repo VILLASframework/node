@@ -12,7 +12,7 @@ extern "C" {
 #include <RTAPI.h>
 }
 
-#include <villas/nodes/orchestra/locks.hpp>
+#include <villas/nodes/opal_orchestra/locks.hpp>
 
 static std::mutex globalLock;
 
