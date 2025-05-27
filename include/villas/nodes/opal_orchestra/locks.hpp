@@ -10,7 +10,7 @@
 
 #include <mutex>
 
-#include <villas/nodes/orchestra/error.hpp>
+#include <villas/nodes/opal_orchestra/error.hpp>
 
 extern "C" {
 #include <RTAPI.h>

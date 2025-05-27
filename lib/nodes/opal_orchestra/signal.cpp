@@ -7,7 +7,7 @@
  */
 
 #include <villas/exceptions.hpp>
-#include <villas/nodes/orchestra/signal.hpp>
+#include <villas/nodes/opal_orchestra/signal.hpp>
 
 using namespace villas;
 using namespace villas::node;
