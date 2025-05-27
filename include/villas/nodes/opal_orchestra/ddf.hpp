@@ -16,7 +16,7 @@
 
 #include <libxml/tree.h>
 
-#include <villas/nodes/orchestra/signal.hpp>
+#include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/signal_list.hpp>

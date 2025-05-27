@@ -21,10 +21,10 @@ extern "C" {
 
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
-#include <villas/nodes/orchestra/ddf.hpp>
-#include <villas/nodes/orchestra/error.hpp>
-#include <villas/nodes/orchestra/locks.hpp>
-#include <villas/nodes/orchestra/signal.hpp>
+#include <villas/nodes/opal_orchestra/ddf.hpp>
+#include <villas/nodes/opal_orchestra/error.hpp>
+#include <villas/nodes/opal_orchestra/locks.hpp>
+#include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal_type.hpp>
 #include <villas/super_node.hpp>
@@ -35,8 +35,8 @@ using namespace villas::node;
 using namespace villas::utils;
 using namespace villas::node::orchestra;
 
-// An OrchestraMapping maps one or more VILLASnode signals to an Orchestra data item.
-class OrchestraMapping {
+// An OpalOrchestraMapping maps one or more VILLASnode signals to an Orchestra data item.
+class OpalOrchestraMapping {
 public:
   DataItem *item;
   std::string path;
@@ -53,7 +53,7 @@ public:
   unsigned int typeSize; // sizeof() of the signal type. See RTSignalType.
   unsigned short length;
 
-  OrchestraMapping(DataItem *item, const std::string &path)
+  OpalOrchestraMapping(DataItem *item, const std::string &path)
       : item(item), path(path), signals(), signalList(), indices() {}
 
   void addSignal(Signal::Ptr signal, int orchestraIdx) {
@@ -226,7 +226,7 @@ protected:
   }
 };
 
-class OrchestraNode : public Node {
+class OpalOrchestraNode : public Node {
 
 protected:
   Task task; // The task which is used to pace the node in asynchronous mode.
@@ -237,8 +237,8 @@ protected:
 
   Domain domain; // The domain to which the node belongs.
 
-  std::map<DataItem *, OrchestraMapping> subscribeMappings;
-  std::map<DataItem *, OrchestraMapping> publishMappings;
+  std::map<DataItem *, OpalOrchestraMapping> subscribeMappings;
+  std::map<DataItem *, OpalOrchestraMapping> publishMappings;
 
   double rate;
   std::optional<std::filesystem::path> dataDefinitionFilename;
@@ -325,15 +325,15 @@ protected:
   }
 
 public:
-  OrchestraNode(const uuid_t &id = {}, const std::string &name = "",
-                unsigned int key = 0)
+  OpalOrchestraNode(const uuid_t &id = {}, const std::string &name = "",
+                    unsigned int key = 0)
       : Node(id, name), task(), connectionKey(key), domain(),
         subscribeMappings(), publishMappings(), connectTimeout(5), flagDelay(0),
         skipWaitToGo(false), dataDefinitionFileOverwrite(false),
         dataDefinitionFileWriteOnly(false) {}
 
   void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
-                    std::map<DataItem *, OrchestraMapping> &mappings) {
+                    std::map<DataItem *, OpalOrchestraMapping> &mappings) {
     if (!json_is_array(json)) {
       throw ConfigError(json, "node-config-node-opal-orchestra-signals",
                         "Signals must be an array");
@@ -373,7 +373,7 @@ public:
         item->type = orchestraType;
         item->defaultValue = defaultValue.f;
 
-        mappings.emplace(item, OrchestraMapping(item, orchestraName));
+        mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
       }
 
       auto &mapping = mappings.at(item);
@@ -641,7 +641,7 @@ public:
   }
 };
 
-class OrchestraNodeFactory : public NodeFactory {
+class OpalOrchestraNodeFactory : public NodeFactory {
 
 public:
   using NodeFactory::NodeFactory;
@@ -655,7 +655,7 @@ public:
       throw RTError(ret, "Failed to create new Orchestra node");
     }
 
-    auto *n = new OrchestraNode(id, nme, connectionKey);
+    auto *n = new OpalOrchestraNode(id, nme, connectionKey);
 
     init(n);
 
@@ -676,4 +676,4 @@ public:
   }
 };
 
-static OrchestraNodeFactory p;
+static OpalOrchestraNodeFactory p;
