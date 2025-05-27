@@ -52,7 +52,13 @@ include(FindSymbol)
 include(CMakeDependentOption)
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
-add_compile_options(-Wall -Wno-unknown-pragmas -fdiagnostics-color=auto)
+add_compile_options(
+    -Wall
+    -Wno-unknown-pragmas
+    -Wno-vla-cxx-extension
+    -Wno-unused-command-line-argument
+    -fdiagnostics-color=auto
+)
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
