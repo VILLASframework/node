@@ -146,7 +146,7 @@ endif()
 
 # Enable OPAL-RT Orchestra node-type
 if(WITH_NODE_OPAL_ORCHESTRA)
-    list(APPEND NODE_SRC orchestra.cpp orchestra/ddf.cpp orchestra/signal.cpp orchestra/locks.cpp)
+    list(APPEND NODE_SRC opal_orchestra.cpp opal_orchestra/ddf.cpp opal_orchestra/signal.cpp opal_orchestra/locks.cpp)
     list(APPEND LIBRARIES OpalOrchestra LibXml2::LibXml2)
 endif()
 
