@@ -34,7 +34,7 @@ class PCIeCardFactory;
 
 class PCIeCard : public Card {
 public:
-  ~PCIeCard();
+  ~PCIeCard() override;
 
   bool init();
 
@@ -73,13 +73,13 @@ public:
     return villas::Log::get("pcie:card:factory");
   }
 
-  virtual std::string getName() const { return "pcie"; }
+  std::string getName() const override { return "pcie"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Xilinx PCIe FPGA cards";
   }
 
-  virtual std::string getType() const { return "card"; }
+  std::string getType() const override { return "card"; }
 };
 
 } // namespace fpga

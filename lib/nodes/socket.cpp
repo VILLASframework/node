@@ -170,7 +170,7 @@ int villas::node::socket_check(NodeCompat *n) {
     if (s->in.saddr.sa.sa_family != AF_INET)
       throw RuntimeError("Multicast is only supported by IPv4");
 
-    uint32_t addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
+    uint32_t const addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
     if ((addr >> 28) != 14)
       throw RuntimeError("Multicast group address must be within 224.0.0.0/4");
   }

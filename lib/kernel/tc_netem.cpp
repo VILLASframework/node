@@ -60,9 +60,9 @@ static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json) {
   else if (json_is_array(json)) {
     json_t *elm;
     size_t idx;
-    size_t len = json_array_size(json);
+    size_t const len = json_array_size(json);
 
-    int16_t *data = new int16_t[len];
+    auto data = std::make_unique<int16_t[]>(len);
     if (!data)
       throw MemoryAllocationError();
 
@@ -73,7 +73,7 @@ static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json) {
       data[idx] = json_integer_value(elm);
     }
 
-    return rtnl_netem_set_delay_distribution_data(qdisc, data, len);
+    return rtnl_netem_set_delay_distribution_data(qdisc, data.get(), len);
   }
 
   return 0;
@@ -118,7 +118,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json) {
   }
 
   if (json_delay_correlation) {
-    double dval = json_number_value(json_delay_correlation);
+    double const dval = json_number_value(json_delay_correlation);
 
     if (!json_is_number(json_delay_correlation) || dval < 0 || dval > 100)
       throw ConfigError(json_delay_correlation,
@@ -164,7 +164,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json) {
   }
 
   if (json_loss) {
-    double dval = json_number_value(json_loss);
+    double const dval = json_number_value(json_loss);
 
     if (!json_is_number(json_loss) || dval < 0 || dval > 100)
       throw ConfigError(json_loss, "Setting 'loss' must be a positive integer "
@@ -177,7 +177,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json) {
   }
 
   if (json_duplicate) {
-    double dval = json_number_value(json_duplicate);
+    double const dval = json_number_value(json_duplicate);
 
     if (!json_is_number(json_duplicate) || dval < 0 || dval > 100)
       throw ConfigError(json_duplicate,
@@ -191,7 +191,7 @@ int villas::kernel::tc::netem_parse(struct rtnl_qdisc **netem, json_t *json) {
   }
 
   if (json_corruption) {
-    double dval = json_number_value(json_corruption);
+    double const dval = json_number_value(json_corruption);
 
     if (!json_is_number(json_corruption) || dval < 0 || dval > 100)
       throw ConfigError(json_corruption,

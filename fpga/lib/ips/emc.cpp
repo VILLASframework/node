@@ -84,7 +84,7 @@ bool EMC::flash(uint32_t offset, const std::string &filename) {
 // Based on xilflash_readwrite_example.c
 bool EMC::flash(uint32_t offset, uint32_t length, uint8_t *data) {
   int ret = XST_FAILURE;
-  uint32_t start = offset;
+  uint32_t const start = offset;
 
   /* Reset the Flash Device. This clears the ret registers and puts
    * the device in Read mode. */

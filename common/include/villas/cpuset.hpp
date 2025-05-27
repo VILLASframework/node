@@ -75,7 +75,7 @@ public:
   size_t size() const { return sz; }
 
   CpuSet operator~() {
-    CpuSet full = UINTMAX_MAX;
+    CpuSet const full = UINTMAX_MAX;
 
     return full ^ *this;
   }

@@ -172,7 +172,7 @@ int villas::node::nanomsg_start(NodeCompat *n) {
                        nn_strerror(errno));
 
   // Subscribe to all topics
-  ret = nn_setsockopt(ret = m->in.socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
+  ret = nn_setsockopt(m->in.socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
   if (ret < 0)
     return ret;
 
@@ -298,5 +298,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.poll_fds = nanomsg_poll_fds;
   p.netem_fds = nanomsg_netem_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

@@ -92,7 +92,7 @@ protected:
   }
 
 public:
-  ~ConfigError() {
+  ~ConfigError() override {
     if (msg)
       free(msg);
   }
@@ -132,12 +132,12 @@ public:
   }
 
   std::string docUri() const {
-    std::string baseUri = "https://villas.fein-aachen.org/doc/jump?";
+    std::string const baseUri = "https://villas.fein-aachen.org/doc/jump?";
 
     return baseUri + id;
   }
 
-  virtual const char *what() const noexcept { return msg; }
+  const char *what() const noexcept override { return msg; }
 };
 
 } // namespace villas

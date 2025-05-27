@@ -60,7 +60,7 @@ public:
   }
 
   // Get plugin description
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     std::stringstream ss;
 
     ss << "VILLAS binary network format";

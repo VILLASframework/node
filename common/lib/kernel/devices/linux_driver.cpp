@@ -26,7 +26,7 @@ void LinuxDriver::bind(const Device &device) const {
 }
 
 std::string LinuxDriver::name() const {
-  size_t pos = path.u8string().rfind('/');
+  size_t const pos = path.u8string().rfind('/');
   return path.u8string().substr(pos + 1);
 }
 

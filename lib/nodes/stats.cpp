@@ -205,7 +205,7 @@ int villas::node::stats_node_read(NodeCompat *n, struct Sample *const smps[],
 
   s->task.wait();
 
-  unsigned len = MIN(list_length(&s->signals), smps[0]->capacity);
+  unsigned const len = MIN(list_length(&s->signals), smps[0]->capacity);
 
   for (size_t i = 0; i < len; i++) {
     struct stats_node_signal *sig =
@@ -252,5 +252,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.read = stats_node_read;
   p.poll_fds = stats_node_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

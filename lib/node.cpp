@@ -140,7 +140,7 @@ int Node::parse(json_t *json) {
 
   struct {
     const char *str;
-    struct NodeDirection *dir;
+    class NodeDirection *dir;
   } dirs[] = {{"in", &in}, {"out", &out}};
 
   const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};
@@ -281,7 +281,7 @@ int Node::read(struct Sample *smps[], unsigned cnt) {
 
 #ifdef WITH_HOOKS
   // Run read hooks
-  int rread = in.hooks.process(smps, nread);
+  int const rread = in.hooks.process(smps, nread);
   if (rread < 0)
     return rread;
 
@@ -314,7 +314,7 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
 
 #ifdef WITH_HOOKS
   // Run write hooks
-  int hook_cnt = out.hooks.process(smps, cnt);
+  int const hook_cnt = out.hooks.process(smps, cnt);
   if (hook_cnt <= 0)
     return hook_cnt;
   cnt = hook_cnt;
@@ -395,7 +395,7 @@ unsigned Node::getOutputSignalsMaxCount() const {
 }
 
 bool Node::isValidName(const std::string &name) {
-  std::regex re(RE_NODE_NAME);
+  std::regex const re(RE_NODE_NAME);
 
   return std::regex_match(name, re);
 }

@@ -39,7 +39,7 @@ public:
 
   NodeCompat &operator=(const NodeCompat &other);
 
-  virtual ~NodeCompat();
+  ~NodeCompat() override;
 
   template <typename T> T *getData() { return static_cast<T *>(_vd); }
 

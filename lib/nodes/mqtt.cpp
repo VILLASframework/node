@@ -507,5 +507,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.reverse = mqtt_reverse;
   p.poll_fds = mqtt_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

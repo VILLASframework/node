@@ -189,7 +189,8 @@ int villas::node::can_start(NodeCompat *n) {
   if (c->socket < 0)
     throw SystemError("Error while opening CAN socket");
 
-  strcpy(ifr.ifr_name, c->interface_name);
+  strncpy(ifr.ifr_name, c->interface_name, IFNAMSIZ);
+  ifr.ifr_name[IFNAMSIZ - 1] = 0;
 
   ret = ioctl(c->socket, SIOCGIFINDEX, &ifr);
   if (ret != 0)
@@ -357,7 +358,7 @@ int villas::node::can_read(NodeCompat *n, struct Sample *const smps[],
                            unsigned cnt) {
   int ret = 0;
   int nbytes;
-  unsigned nread = 0;
+  unsigned const nread = 0;
   struct can_frame frame;
   struct timeval tv;
   bool found_id = false;
@@ -424,18 +425,13 @@ int villas::node::can_write(NodeCompat *n, struct Sample *const smps[],
                             unsigned cnt) {
   int nbytes;
   unsigned nwrite;
-  struct can_frame *frame;
   size_t fsize = 0; // number of frames in use
 
   auto *c = n->getData<struct can>();
 
   assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-  frame = (struct can_frame *)calloc(sizeof(struct can_frame),
-                                     n->getOutputSignals()->size());
-  if (!frame) {
-    throw MemoryAllocationError();
-  }
+  auto frame = std::make_unique<can_frame[]>(n->getOutputSignals()->size());
 
   for (nwrite = 0; nwrite < cnt; nwrite++) {
     for (size_t i = 0; i < n->getOutputSignals()->size(); i++) {
@@ -514,5 +510,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = can_write;
   p.poll_fds = can_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

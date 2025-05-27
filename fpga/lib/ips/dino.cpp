@@ -153,8 +153,9 @@ void DinoAdc::setRegisterConfig(std::shared_ptr<Register> reg,
   constexpr size_t dinoRegisterTimerPreThresh = 8;
 
   // -1 because the timer counts from 0 to the value set in the register. Should really be fixed in hardware.
-  uint32_t dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate) - 1;
-  uint32_t dinoDacDelayCycles = static_cast<uint32_t>(dinoClk * dinoDacDelay);
+  uint32_t const dinoTimerVal = static_cast<uint32_t>(dinoClk / sampleRate) - 1;
+  uint32_t const dinoDacDelayCycles =
+      static_cast<uint32_t>(dinoClk * dinoDacDelay);
   double rateError = dinoClk / (dinoTimerVal + 1) - sampleRate;
 
   // Timer value for generating ADC trigger signal
@@ -255,7 +256,7 @@ Dino::Gain DinoDac::getGain() {
     throw RuntimeError("I2C device not set");
   }
   i2cdev->getSwitch().setAndLockChannel(i2c_channel);
-  IoextPorts ioext = getIoextOut();
+  IoextPorts const ioext = getIoextOut();
   auto ret =
       static_cast<Gain>((ioext.fields.gain_msb << 1) | ioext.fields.gain_lsb);
   i2cdev->getSwitch().unlockChannel();
@@ -268,7 +269,7 @@ void DinoFactory::parse(Core &ip, json_t *cfg) {
   auto &dino = dynamic_cast<Dino &>(ip);
   json_error_t err;
   int i2c_channel;
-  int ret =
+  int const ret =
       json_unpack_ex(cfg, &err, 0, "{ s: i }", "i2c_channel", &i2c_channel);
   if (ret != 0) {
     throw ConfigError(cfg, err, "", "Failed to parse Dino configuration");

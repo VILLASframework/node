@@ -67,7 +67,7 @@ static void ethercat_cyclic_task(NodeCompat *n) {
 
     // Read process data
     for (unsigned i = 0; i < smp->length; i++) {
-      int16_t ain_value = EC_READ_S16(w->domain_pd + w->in.offsets[i]);
+      int16_t const ain_value = EC_READ_S16(w->domain_pd + w->in.offsets[i]);
 
       smp->data[i].f = w->in.range * (float)ain_value / INT16_MAX;
     }
@@ -80,7 +80,7 @@ static void ethercat_cyclic_task(NodeCompat *n) {
     smp = w->send.exchange(nullptr);
 
     for (unsigned i = 0; i < w->out.num_channels; i++) {
-      int16_t aout_value = (smp->data[i].f / w->out.range) * INT16_MAX;
+      int16_t const aout_value = (smp->data[i].f / w->out.range) * INT16_MAX;
 
       EC_WRITE_S16(w->domain_pd + w->out.offsets[i], aout_value);
     }
@@ -435,5 +435,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = ethercat_write;
   p.poll_fds = ethercat_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

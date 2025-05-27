@@ -16,7 +16,7 @@ namespace ip {
 
 class Hls : public virtual Core {
 public:
-  virtual bool init() override {
+  bool init() override {
     auto &registers = addressTranslations.at(registerMemory);
 
     controlRegister = reinterpret_cast<ControlRegister *>(
@@ -91,7 +91,7 @@ protected:
 
   static constexpr const char *registerMemory = "Reg";
 
-  virtual std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 

@@ -93,7 +93,7 @@ int TestRTT::prepare() {
   unsigned max_values = 0;
 
   // Take current for time for test case prefix
-  time_t ts = time(nullptr);
+  time_t const ts = time(nullptr);
   struct tm tm;
   gmtime_r(&ts, &tm);
 
@@ -133,7 +133,7 @@ static enum TestRTT::Mode parseMode(const char *mode_str) {
 }
 
 int TestRTT::parse(json_t *json) {
-  int ret;
+  [[maybe_unused]] int ret;
 
   const char *output_str = ".";
   const char *prefix_str = nullptr;
@@ -218,10 +218,15 @@ int TestRTT::parse(json_t *json) {
     json_t *json_rates = json_rates_default;
     json_t *json_values = json_values_default;
 
-    ret = json_unpack_ex(
-        json_case, &err, 0, "{ s?: o, s?: o, s?: i, s?: F, s?: s }", "rates",
-        &json_rates, "values", &json_values, "count", &count, "duration",
-        &duration, "warmup", &warmup, "cooldown", &cooldown, "mode", &mode_str);
+    ret = json_unpack_ex(json_case, &err, 0,
+                         "{ s?: o, s?: o, s?: i, s?: F, s?: s }", //
+                         "rates", &json_rates,                    //
+                         "values", &json_values,                  //
+                         "count", &count,                         //
+                         "duration", &duration,                   //
+                         "warmup", &warmup,                       //
+                         "cooldown", &cooldown,                   //
+                         "mode", &mode_str);
 
     if (!json_is_array(json_rates) && !json_is_number(json_rates))
       throw ConfigError(
@@ -269,8 +274,8 @@ int TestRTT::parse(json_t *json) {
     for (int rate : rates) {
       for (int value : values) {
         int count_effective;
-        int count_duration = duration * rate;
-        int count_warmup = warmup * rate;
+        int const count_duration = duration * rate;
+        int const count_warmup = warmup * rate;
 
         switch (mode) {
         case Mode::MIN:

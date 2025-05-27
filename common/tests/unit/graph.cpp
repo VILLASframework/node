@@ -19,14 +19,14 @@ using namespace villas;
 TestSuite(graph, .description = "Graph library");
 
 Test(graph, basic, .description = "DirectedGraph") {
-  Logger logger = Log::get("test:graph:basic");
+  Logger const logger = Log::get("test:graph:basic");
   villas::graph::DirectedGraph<> g("test:graph:basic");
 
   logger->info("Testing basic graph construction and modification");
 
-  std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v3(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v1(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v2(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v3(new villas::graph::Vertex);
 
   auto v1id = g.addVertex(v1);
   auto v2id = g.addVertex(v2);
@@ -49,18 +49,18 @@ Test(graph, basic, .description = "DirectedGraph") {
 }
 
 Test(graph, path, .description = "Find path") {
-  Logger logger = Log::get("test:graph:path");
+  Logger const logger = Log::get("test:graph:path");
   logger->info("Testing path finding algorithm");
 
   using Graph = villas::graph::DirectedGraph<>;
   Graph g("test:graph:path");
 
-  std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v3(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v4(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v5(new villas::graph::Vertex);
-  std::shared_ptr<villas::graph::Vertex> v6(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v1(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v2(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v3(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v4(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v5(new villas::graph::Vertex);
+  std::shared_ptr<villas::graph::Vertex> const v6(new villas::graph::Vertex);
 
   auto v1id = g.addVertex(v1);
   auto v2id = g.addVertex(v2);
@@ -110,7 +110,7 @@ Test(graph, path, .description = "Find path") {
 }
 
 Test(graph, memory_manager, .description = "Global Memory Manager") {
-  Logger logger = Log::get("test:graph:mm");
+  Logger const logger = Log::get("test:graph:mm");
   auto &mm = villas::MemoryManager::get();
 
   logger->info("Create address spaces");

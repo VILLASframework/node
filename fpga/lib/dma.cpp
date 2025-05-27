@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <memory>
 #include <string>
 
 #include <villas/exceptions.hpp>
@@ -31,11 +32,11 @@ struct villasfpga_memory_t {
 };
 
 villasfpga_handle villasfpga_init(const char *configFile) {
-  std::string fpgaName = "vc707";
+  std::string const fpgaName = "vc707";
   std::string connectStr = "3<->pipe";
-  std::string outputFormat = "short";
-  bool dumpGraph = false;
-  bool dumpAuroraChannels = true;
+  std::string const outputFormat = "short";
+  bool const dumpGraph = false;
+  bool const dumpAuroraChannels = true;
   try {
     // Logging setup
     Log::getInstance().setLevel(spdlog::level::debug);
@@ -47,7 +48,7 @@ villasfpga_handle villasfpga_init(const char *configFile) {
       return nullptr;
     }
 
-    auto handle = new villasfpga_handle_t;
+    auto handle = std::make_unique<villasfpga_handle_t>();
     handle->card = fpga::setupFpgaCard(configFile, fpgaName);
 
     if (dumpGraph) {
@@ -68,7 +69,7 @@ villasfpga_handle villasfpga_init(const char *configFile) {
       return nullptr;
     }
 
-    return handle;
+    return handle.release();
   } catch (const RuntimeError &e) {
     logger->error("Error: {}", e.what());
     return nullptr;
@@ -81,7 +82,9 @@ villasfpga_handle villasfpga_init(const char *configFile) {
   }
 }
 
-void villasfpga_destroy(villasfpga_handle handle) { delete handle; }
+void villasfpga_destroy(villasfpga_handle handle) {
+  std::unique_ptr<villasfpga_handle_t>{handle};
+}
 
 int villasfpga_alloc(villasfpga_handle handle, villasfpga_memory *mem,
                      size_t size) {

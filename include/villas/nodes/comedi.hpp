@@ -8,6 +8,7 @@
 #pragma once
 
 #include <comedilib.h>
+#include <jansson.h>
 
 #include <villas/list.hpp>
 #include <villas/timing.hpp>

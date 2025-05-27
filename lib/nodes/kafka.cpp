@@ -596,5 +596,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.reverse = kafka_reverse;
   p.poll_fds = kafka_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

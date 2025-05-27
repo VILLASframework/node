@@ -40,7 +40,7 @@ void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {
   auto &alloc = villas::HostRam::getAllocator();
   const std::shared_ptr<villas::MemoryBlock> block =
       alloc.allocateBlock(0x200 * sizeof(float));
-  villas::MemoryAccessor<float> mem = *block;
+  villas::MemoryAccessor<float> const mem = *block;
   dma->makeAccesibleFromVA(block);
 
   logger->info("Please enter values to write to the device, separated by ';'");
@@ -61,7 +61,7 @@ void writeToDmaFromStdIn(std::shared_ptr<villas::fpga::ip::Dma> dma) {
     }
 
     // Initiate write transfer
-    bool state = dma->write(*block, i * sizeof(float));
+    bool const state = dma->write(*block, i * sizeof(float));
     if (!state)
       logger->error("Failed to write to device");
 
@@ -79,7 +79,7 @@ void readFromDmaToStdOut(
   const std::shared_ptr<villas::MemoryBlock> block[] = {
       alloc.allocateBlock(0x200 * sizeof(uint32_t)),
       alloc.allocateBlock(0x200 * sizeof(uint32_t))};
-  villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+  villas::MemoryAccessor<int32_t> const mem[] = {*block[0], *block[1]};
 
   for (auto b : block) {
     dma->makeAccesibleFromVA(b);
@@ -110,7 +110,7 @@ void readFromDmaToStdOut(
         int32_t ival = mem[cur][i];
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-        float fval =
+        float const fval =
             *((float *)(&ival)); // cppcheck-suppress invalidPointerCast
 #pragma GCC diagnostic pop
         formatter->format(fval);

@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <memory>
 
 #include <jansson.h>
 #include <libconfig.h>
@@ -26,14 +27,14 @@ public:
   Config2Json(int argc, char *argv[]) : Tool(argc, argv, "conf2json") {}
 
 protected:
-  void usage() {
+  void usage() override {
     std::cout << "Usage: conf2json input.conf > output.json" << std::endl
               << std::endl;
 
     printCopyright();
   }
 
-  int main() {
+  int main() override {
     int ret;
     config_t cfg;
     config_setting_t *cfg_root;
@@ -44,7 +45,9 @@ protected:
       exit(EXIT_FAILURE);
     }
 
-    FILE *f = fopen(argv[1], "r");
+    auto file_destructor = [](FILE *file) { fclose(file); };
+    auto f = std::unique_ptr<FILE, decltype(file_destructor)>{
+        fopen(argv[1], "r"), file_destructor};
     if (f == nullptr)
       return -1;
 
@@ -54,7 +57,7 @@ protected:
 
     config_set_include_dir(&cfg, confdir);
 
-    ret = config_read(&cfg, f);
+    ret = config_read(&cfg, f.get());
     if (ret != CONFIG_TRUE)
       return -2;
 

@@ -37,7 +37,7 @@ MemoryManager::getOrCreateAddressSpace(const std::string &name) {
     return addrSpaceLookup.at(name);
   } catch (const std::out_of_range &) {
     // Does not yet exist, create
-    std::shared_ptr<AddressSpace> addrSpace(new AddressSpace);
+    std::shared_ptr<AddressSpace> const addrSpace(new AddressSpace);
     addrSpace->name = name;
 
     // Cache it for the next access
@@ -52,7 +52,7 @@ MemoryManager::createMapping(uintptr_t src, uintptr_t dest, size_t size,
                              const std::string &name,
                              MemoryManager::AddressSpaceId fromAddrSpace,
                              MemoryManager::AddressSpaceId toAddrSpace) {
-  std::shared_ptr<Mapping> mapping(new Mapping);
+  std::shared_ptr<Mapping> const mapping(new Mapping);
 
   mapping->name = name;
   mapping->src = src;
@@ -164,7 +164,7 @@ MemoryTranslation::getForeignAddr(uintptr_t addrInLocalAddrSpace) const {
 
 MemoryTranslation &
 MemoryTranslation::operator+=(const MemoryTranslation &other) {
-  Logger logger = Log::get("MemoryTranslation");
+  Logger const logger = Log::get("MemoryTranslation");
 
   // Set level to debug to enable debug output
   logger->set_level(spdlog::level::info);

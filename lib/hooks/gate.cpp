@@ -86,7 +86,7 @@ public:
     assert(state == State::STARTED);
 
     Hook::Reason reason;
-    double value = smp->data[signalIndex].f;
+    double const value = smp->data[signalIndex].f;
 
     if (active) {
       if (duration > 0 && time_delta(&smp->ts.origin, &startTime) < duration)

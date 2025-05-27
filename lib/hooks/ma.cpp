@@ -68,13 +68,14 @@ public:
     unsigned i = 0;
     for (auto index : signalIndices) {
       // The new value
-      double newValue = smp->data[index].f;
+      double const newValue = smp->data[index].f;
 
       // Append the new value to the history memory
       smpMemory[i][smpMemoryPosition % windowSize] = newValue;
 
       // Get the old value from the history
-      double oldValue = smpMemory[i][(smpMemoryPosition + 1) % windowSize];
+      double const oldValue =
+          smpMemory[i][(smpMemoryPosition + 1) % windowSize];
 
       // Update the accumulator
       accumulator += newValue;

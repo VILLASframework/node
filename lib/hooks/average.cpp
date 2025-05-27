@@ -58,7 +58,7 @@ public:
 
     assert(state == State::STARTED);
 
-    for (unsigned index : signalIndices) {
+    for (unsigned const index : signalIndices) {
       switch (sample_format(smp, index)) {
       case SignalType::INTEGER:
         sum += smp->data[index].i;

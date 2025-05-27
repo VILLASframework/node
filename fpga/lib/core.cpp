@@ -48,7 +48,7 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
     const char *vlnv;
 
     json_error_t err;
-    int ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
+    int const ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
     if (ret != 0)
       throw ConfigError(json_ip, err, "", "IP {} has no VLNV", ipName);
 
@@ -156,7 +156,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
     json_t *json_parameters = json_object_get(json_ip, "parameters");
     if (json_is_object(json_parameters)) {
       json_int_t c_baseaddr = 0;
-      int baseaddress_found =
+      int const baseaddress_found =
           json_unpack(json_parameters, "{ s?: I }", "c_baseaddr", &c_baseaddr);
       if (baseaddress_found == 0)
         ip->baseaddr = c_baseaddr;
@@ -247,9 +247,9 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
             json_int_t base, high, size;
             json_error_t err;
-            int ret = json_unpack_ex(json_block, &err, 0,
-                                     "{ s: I, s: I, s: I }", "baseaddr", &base,
-                                     "highaddr", &high, "size", &size);
+            int const ret = json_unpack_ex(
+                json_block, &err, 0, "{ s: I, s: I, s: I }", "baseaddr", &base,
+                "highaddr", &high, "size", &size);
             if (ret != 0)
               throw ConfigError(
                   json_block, err, "", "Cannot parse address block {}/{}/{}/{}",
@@ -343,16 +343,16 @@ std::list<std::shared_ptr<Core>> CoreFactory::make(Card *card,
     throw RuntimeError("IP list of card {} already contains IPs.", card->name);
   }
 
-  std::list<IpIdentifier> allIps =
+  std::list<IpIdentifier> const allIps =
       parseIpIdentifier(json_ips); // All IPs available in config
 
-  std::list<IpIdentifier> filteredIps = filterIps(
+  std::list<IpIdentifier> const filteredIps = filterIps(
       allIps, card->ignored_ip_names); // Remove ips on ignorelist in .conf
 
-  std::list<IpIdentifier> orderedIps =
+  std::list<IpIdentifier> const orderedIps =
       reorderIps(filteredIps); // IPs ordered in initialization order
 
-  std::list<std::shared_ptr<Core>> configuredIps =
+  std::list<std::shared_ptr<Core>> const configuredIps =
       configureIps(orderedIps, json_ips, card); // Successfully configured IPs
 
   /* If Platform then connect the ips via vfio

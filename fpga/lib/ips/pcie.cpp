@@ -115,15 +115,15 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
       unsigned int translation;
 
       json_error_t err;
-      int ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }", "translation",
-                               &translation);
+      int const ret = json_unpack_ex(json_bar, &err, 0, "{ s: i }",
+                                     "translation", &translation);
       if (ret != 0)
         throw ConfigError(json_bar, err, "", "Cannot parse {}/{}", barType,
                           bar_name);
 
       if (barType == "axi_bars") {
         json_int_t base, high, size;
-        int ret =
+        int const ret =
             json_unpack_ex(json_bar, &err, 0, "{ s: I, s: I, s: I }",
                            "baseaddr", &base, "highaddr", &high, "size", &size);
         if (ret != 0)

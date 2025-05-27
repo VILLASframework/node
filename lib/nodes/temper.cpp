@@ -36,7 +36,7 @@ static NodeCompatType p;
 
 TEMPerDevice::TEMPerDevice(struct libusb_device *dev)
     : usb::Device(dev), scale(1.0), offset(0.0), timeout(5000) {
-  int ret = libusb_get_device_descriptor(dev, &desc);
+  int const ret = libusb_get_device_descriptor(dev, &desc);
   if (ret != LIBUSB_SUCCESS)
     throw RuntimeError("Could not get USB device descriptor: {}",
                        libusb_strerror((enum libusb_error)ret));
@@ -166,7 +166,7 @@ TEMPerDevice *TEMPerDevice::make(struct libusb_device *dev) {
 
 bool TEMPer1Device::match(struct libusb_device *dev) {
   struct libusb_device_descriptor desc;
-  int ret = libusb_get_device_descriptor(dev, &desc);
+  int const ret = libusb_get_device_descriptor(dev, &desc);
   if (ret < 0) {
     Log::get("node:temper")
         ->warn("Could not get USB device descriptor: {}",
@@ -215,7 +215,7 @@ bool TEMPer2Device::match(struct libusb_device *dev) {
 
 bool TEMPerHUMDevice::match(struct libusb_device *dev) {
   struct libusb_device_descriptor desc;
-  int ret = libusb_get_device_descriptor(dev, &desc);
+  int const ret = libusb_get_device_descriptor(dev, &desc);
   if (ret < 0) {
     Log::get("node:temper")
         ->warn("Could not get USB device descriptor: {}",
@@ -235,16 +235,19 @@ int villas::node::temper_type_start(villas::node::SuperNode *sn) {
   devices.clear();
   struct libusb_device **devs;
 
-  int cnt = libusb_get_device_list(context, &devs);
+  int const cnt = libusb_get_device_list(context, &devs);
   for (int i = 0; i < cnt; i++) {
     auto *dev = TEMPerDevice::make(devs[i]);
 
+    auto manufacturer = dev->getManufacturer();
+    auto product = dev->getProduct();
+    auto serial = dev->getSerial();
     logger->debug(
         "Found Temper device at bus={03d}, port={03d}, vendor_id={04x}, "
         "product_id={04x}, manufacturer={}, product={}, serial={}",
         dev->getBus(), dev->getPort(), dev->getDescriptor().idVendor,
-        dev->getDescriptor().idProduct, dev->getManufacturer(),
-        dev->getProduct(), dev->getSerial());
+        dev->getDescriptor().idProduct, manufacturer.c_str(), product.c_str(),
+        serial.c_str());
 
     devices.push_back(dev);
   }
@@ -305,11 +308,13 @@ int villas::node::temper_parse(NodeCompat *n, json_t *json) {
 char *villas::node::temper_print(NodeCompat *n) {
   auto *t = n->getData<struct temper>();
 
+  auto product = t->device->getProduct();
+  auto manufacturer = t->device->getManufacturer();
+  auto serial = t->device->getSerial();
   return strf("product=%s, manufacturer=%s, serial=%s humidity=%s, "
               "temperature=%d, usb.vendor_id=%#x, usb.product_id=%#x, "
               "calibration.scale=%f, calibration.offset=%f",
-              t->device->getProduct(), t->device->getManufacturer(),
-              t->device->getSerial(),
+              product.c_str(), manufacturer.c_str(), serial.c_str(),
               t->device->hasHumiditySensor() ? "yes" : "no",
               t->device->getNumSensors(), t->device->getDescriptor().idVendor,
               t->device->getDescriptor().idProduct, t->calibration.scale,
@@ -401,5 +406,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.stop = temper_stop;
   p.read = temper_read;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

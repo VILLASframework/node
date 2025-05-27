@@ -40,10 +40,10 @@ protected:
   dsp::Window<double> window;
 
   void step(double *in, std::complex<float> *out) {
-    int N = window.size();
+    int const N = window.size();
     std::complex<double> om_k, corr;
-    double newest = *in;
-    __attribute__((unused)) double oldest = window.update(newest);
+    double const newest = *in;
+    __attribute__((unused)) double const oldest = window.update(newest);
 
     for (int k = 0; k < fharmonics_len; k++) {
       om_k = 2.0i * M_PI * (double)fharmonics[k] / (double)N;
@@ -66,7 +66,7 @@ protected:
       std::complex<double> X_k = 0;
 
       for (int n = 0; n < N; n++) {
-        double x_n = window[n];
+        double const x_n = window[n];
 
         X_k += x_n * std::exp(om_k * (double)n);
       }
@@ -81,10 +81,10 @@ protected:
 
     // Reconstruct the original signal
     for (int k = 0; k < fharmonics_len; k++) {
-      double freq = fharmonics[k];
+      double const freq = fharmonics[k];
       // cppcheck-suppress objectIndex
-      std::complex<double> coeff = in[k];
-      std::complex<double> om = 2.0i * M_PI * freq * time;
+      std::complex<double> const coeff = in[k];
+      std::complex<double> const om = 2.0i * M_PI * freq * time;
 
       value += coeff * std::exp(om);
     }
@@ -98,7 +98,7 @@ public:
         inverse(0), f0(50.0), timestep(50e-6), time(), steps(0), coeffs(),
         fharmonics(), fharmonics_len(0) {}
 
-  virtual ~DPHook() {
+  ~DPHook() override {
     // Release memory
     if (fharmonics)
       delete fharmonics;
@@ -110,7 +110,7 @@ public:
       free(signal_name);
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     time = 0;
@@ -198,7 +198,7 @@ public:
     assert(state != State::STARTED);
 
     if (signal_name) {
-      int si = signals->getIndexByName(signal_name);
+      int const si = signals->getIndexByName(signal_name);
       if (si < 0) {
         throw RuntimeError("Failed to find signal: {}", signal_name);
       }
@@ -249,7 +249,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void check() {
+  void check() override {
     assert(state == State::PARSED);
 
     if (signal_index < 0)

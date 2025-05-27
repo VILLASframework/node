@@ -50,7 +50,7 @@ protected:
 public:
   WebRTCNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~WebRTCNode();
+  ~WebRTCNode() override;
 
   int prepare() override;
 

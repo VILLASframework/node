@@ -57,14 +57,14 @@ double time_to_double(const struct timespec *ts) {
 }
 
 double time_delta(const struct timespec *start, const struct timespec *end) {
-  struct timespec diff = time_diff(start, end);
+  struct timespec const diff = time_diff(start, end);
 
   return time_to_double(&diff);
 }
 
 ssize_t time_cmp(const struct timespec *a, const struct timespec *b) {
-  ssize_t sd = a->tv_sec - b->tv_sec;
-  ssize_t nsd = a->tv_nsec - b->tv_nsec;
+  ssize_t const sd = a->tv_sec - b->tv_sec;
+  ssize_t const nsd = a->tv_nsec - b->tv_nsec;
 
   return sd != 0 ? sd : nsd;
 }

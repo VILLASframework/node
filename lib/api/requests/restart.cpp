@@ -28,7 +28,7 @@ protected:
 
     const char *argv[] = {"villas-node", cfg, nullptr};
 
-    Logger logger = Log::get("api:restart");
+    Logger const logger = Log::get("api:restart");
 
     if (cfg)
       logger->info("Restarting instance: config={}", cfg);
@@ -63,14 +63,20 @@ public:
         configUri = json_string_value(json_config);
       else if (json_is_object(json_config)) {
         char configUriBuf[] = "villas-node.json.XXXXXX";
-        int configFd = mkstemp(configUriBuf);
+        int const configFd = mkstemp(configUriBuf);
+        if (configFd < 0)
+          throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                      "Failed to create temporary config file");
 
         FILE *configFile = fdopen(configFd, "w+");
+        if (configFile == nullptr)
+          throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                      "Failed to open temporary config file");
 
         ret = json_dumpf(json_config, configFile, JSON_INDENT(4));
         if (ret < 0)
           throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                      "Failed to create temporary config file");
+                      "Failed to write temporary config file");
 
         fclose(configFile);
         configUri = configUriBuf;
@@ -84,7 +90,7 @@ public:
 
     // Increment API restart counter
     char *scnt = getenv("VILLAS_API_RESTART_COUNT");
-    int cnt = scnt ? atoi(scnt) : 0;
+    int const cnt = scnt ? atoi(scnt) : 0;
     char buf[32];
     snprintf(buf, sizeof(buf), "%d", cnt + 1);
 

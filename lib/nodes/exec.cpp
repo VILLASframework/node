@@ -140,7 +140,7 @@ int ExecNode::start() {
   if (!stream_out)
     return -1;
 
-  int ret = Node::start();
+  int const ret = Node::start();
   if (!ret)
     state = State::STARTED;
 
@@ -148,7 +148,7 @@ int ExecNode::start() {
 }
 
 int ExecNode::stop() {
-  int ret = Node::stop();
+  int const ret = Node::stop();
   if (ret)
     return ret;
 

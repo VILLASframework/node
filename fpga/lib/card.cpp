@@ -110,7 +110,7 @@ bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
 
   auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
   uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
-  uintptr_t iovaAddr =
+  uintptr_t const iovaAddr =
       vfioContainer->memoryMap(processBaseAddr, UINTPTR_MAX, block->getSize());
 
   if (iovaAddr == UINTPTR_MAX) {
@@ -140,7 +140,7 @@ void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
   }
 
   if (!searchPath.empty()) {
-    std::filesystem::path json_ips_path =
+    std::filesystem::path const json_ips_path =
         searchPath / json_string_value(json_ips);
     logger->debug("searching for FPGA IP cors config at {}",
                   json_ips_path.string());
@@ -184,8 +184,9 @@ void CardFactory::loadSwitch(std::shared_ptr<Card> card, json_t *json_paths) {
       const char *from, *to;
       int reverse = 0;
 
-      int ret = json_unpack_ex(json_path, &err, 0, "{ s: s, s: s, s?: b }",
-                               "from", &from, "to", &to, "reverse", &reverse);
+      int const ret =
+          json_unpack_ex(json_path, &err, 0, "{ s: s, s: s, s?: b }", "from",
+                         &from, "to", &to, "reverse", &reverse);
       if (ret != 0)
         throw ConfigError(json_path, err, "",
                           "Cannot parse switch path config");

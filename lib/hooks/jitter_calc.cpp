@@ -46,7 +46,7 @@ public:
   Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
-    timespec now = time_now();
+    timespec const now = time_now();
     int64_t delay_sec, delay_nsec, curr_delay_us;
 
     delay_sec = now.tv_sec - smp->ts.origin.tv_sec;

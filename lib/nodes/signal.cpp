@@ -247,7 +247,7 @@ int SignalNode::start() {
   if (rt)
     task.setRate(rate);
 
-  int ret = Node::start();
+  int const ret = Node::start();
   if (!ret)
     state = State::STARTED;
 
@@ -258,7 +258,7 @@ int SignalNode::stop() {
   assert(state == State::STARTED || state == State::PAUSED ||
          state == State::STOPPING);
 
-  int ret = Node::stop();
+  int const ret = Node::stop();
   if (ret)
     return ret;
 
@@ -277,18 +277,19 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt) {
   struct Sample *t = smps[0];
 
   struct timespec ts;
-  uint64_t steps, counter = sequence - sequence_init;
+  uint64_t steps;
+  uint64_t const counter = sequence - sequence_init;
 
   assert(cnt == 1);
 
   if (rt)
     ts = time_now();
   else {
-    struct timespec offset = time_from_double(counter * 1.0 / rate);
+    struct timespec const offset = time_from_double(counter * 1.0 / rate);
     ts = time_add(&started, &offset);
   }
 
-  double running = time_delta(&started, &ts);
+  double const running = time_delta(&started, &ts);
 
   t->flags = (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_DATA |
              (int)SampleFlags::HAS_SEQUENCE;

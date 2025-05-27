@@ -93,7 +93,7 @@ Container::Container(const std::vector<std::string> &required_modules)
 
   // Check available VFIO extensions (IOMMU types)
   for (unsigned int i = VFIO_TYPE1_IOMMU; i < EXTENSION_SIZE; i++) {
-    int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
+    int const ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
 
     extensions[i] = ret != 0;
 
@@ -140,7 +140,8 @@ void Container::attachGroup(std::shared_ptr<Group> group) {
                       group->getIndex(), fd);
 
   // Set IOMMU type
-  int iommu_type = isIommuEnabled() ? VFIO_TYPE1_IOMMU : VFIO_NOIOMMU_IOMMU;
+  int const iommu_type =
+      isIommuEnabled() ? VFIO_TYPE1_IOMMU : VFIO_NOIOMMU_IOMMU;
 
   ret = ioctl(fd, VFIO_SET_IOMMU, iommu_type);
   if (ret < 0)

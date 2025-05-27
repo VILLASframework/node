@@ -122,7 +122,7 @@ Test(list, basics) {
       });
 
   for (size_t j = 0, i = 99; j <= 99; j++, i--) {
-    uintptr_t k = (uintptr_t)list_at(&l, j);
+    uintptr_t const k = (uintptr_t)list_at(&l, j);
     cr_assert_eq(k, i, "Is %zu, expected %zu", k, i);
   }
 

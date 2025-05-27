@@ -32,7 +32,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 class StatsReadHook : public Hook {
@@ -50,7 +50,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     last = nullptr;
@@ -58,7 +58,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     if (last)
@@ -67,7 +67,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 class StatsHook : public Hook {
@@ -109,7 +109,7 @@ public:
   StatsHook &operator=(const StatsHook &) = delete;
   StatsHook(const StatsHook &) = delete;
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     if (!uri.empty()) {
@@ -121,7 +121,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     stats->print(uri.empty() ? stdout : output, format, verbose);
@@ -132,7 +132,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual void restart() {
+  void restart() override {
     assert(state == State::STARTED);
 
     stats->reset();
@@ -146,7 +146,7 @@ public:
     return Hook::Reason::OK;
   }
 
-  virtual void periodic() override {
+  void periodic() override {
     assert(state == State::STARTED);
 
     stats->printPeriodic(uri.empty() ? stdout : output, format, node);
@@ -197,7 +197,7 @@ public:
 };
 
 Hook::Reason StatsWriteHook::process(struct Sample *smp) {
-  timespec now = time_now();
+  timespec const now = time_now();
 
   parent->stats->update(Stats::Metric::AGE,
                         time_delta(&smp->ts.received, &now));
@@ -221,7 +221,7 @@ Hook::Reason StatsReadHook::process(struct Sample *smp) {
                             time_delta(&smp->ts.origin, &smp->ts.received));
 
     if (smp->flags & last->flags & (int)SampleFlags::HAS_SEQUENCE) {
-      int dist = smp->sequence - (int32_t)last->sequence;
+      int const dist = smp->sequence - (int32_t)last->sequence;
       if (dist != 1)
         parent->stats->update(Stats::Metric::SMPS_REORDERED, dist);
     }

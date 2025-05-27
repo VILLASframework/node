@@ -78,10 +78,10 @@ public:
     unsigned i = 0;
     for (auto index : signalIndices) {
       // Square the new value
-      double newValue = pow(smp->data[index].f, 2);
+      double const newValue = pow(smp->data[index].f, 2);
 
       // Get the old value from the history
-      double oldValue = smpMemory[i][smpMemoryPosition % windowSize];
+      double const oldValue = smpMemory[i][smpMemoryPosition % windowSize];
 
       // Append the new value to the history memory
       smpMemory[i][smpMemoryPosition % windowSize] = newValue;

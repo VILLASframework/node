@@ -206,7 +206,7 @@ static int comedi_start_in(NodeCompat *n) {
   cmd.chanlist_len = d->chanlist_len;
 
   // First run might change command, second should return successfully
-  ret = comedi_command_test(c->dev, &cmd);
+  comedi_command_test(c->dev, &cmd);
   ret = comedi_command_test(c->dev, &cmd);
   if (ret < 0)
     throw RuntimeError("Invalid command for input subdevice");
@@ -334,7 +334,8 @@ static int comedi_start_out(NodeCompat *n) {
 
   // Preload comedi output buffer
   for (unsigned i = 0; i < d->buffer_size / local_buffer_size; i++) {
-    size_t written = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
+    size_t const written =
+        write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
     if (written != local_buffer_size) {
       throw RuntimeError("Cannot preload Comedi buffer");
     }
@@ -447,7 +448,7 @@ int villas::node::comedi_start(NodeCompat *n) {
   comedi_start_common(n);
 
   if (c->in.present) {
-    int ret = comedi_start_in(n);
+    int const ret = comedi_start_in(n);
     if (ret)
       return ret;
 
@@ -455,7 +456,7 @@ int villas::node::comedi_start(NodeCompat *n) {
   }
 
   if (c->out.present) {
-    int ret = comedi_start_out(n);
+    int const ret = comedi_start_out(n);
     if (ret)
       return ret;
 
@@ -562,7 +563,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
                          (int)SampleFlags::HAS_SEQUENCE;
         smps[i]->sequence = d->counter / d->chanlist_len;
 
-        struct timespec offset =
+        struct timespec const offset =
             time_from_double(d->counter * 1.0 / d->sample_rate_hz);
         smps[i]->ts.origin = time_add(&d->started, &offset);
 
@@ -846,7 +847,7 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample *const smps[],
     n->logger->warn("Comedi buffer is full");
     return 0;
   } else {
-    struct timespec now = time_now();
+    struct timespec const now = time_now();
     if (time_delta(&d->last_debug, &now) >= 1) {
       n->logger->debug(
           "Comedi write buffer: {} VILLAS samples ({}% of buffer)",
@@ -1004,5 +1005,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = comedi_write;
   p.poll_fds = comedi_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

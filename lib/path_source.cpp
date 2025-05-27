@@ -23,7 +23,7 @@ using namespace villas::node;
 PathSource::PathSource(Path *p, Node *n) : node(n), path(p), masked(false) {
   int ret;
 
-  int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * node->in.vectorize);
+  int const pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * node->in.vectorize);
   ret = pool_init(&pool, pool_size,
                   SAMPLE_LENGTH(node->getInputSignalsMaxCount()),
                   node->getMemoryType());
@@ -193,7 +193,7 @@ MasterPathSource::MasterPathSource(Path *p, Node *n) : PathSource(p, n) {}
 
 void MasterPathSource::writeToSecondaries(struct Sample *smps[], unsigned cnt) {
   for (auto sps : secondaries) {
-    int sent = sps->getNode()->write(smps, cnt);
+    int const sent = sps->getNode()->write(smps, cnt);
     if (sent < 0)
       throw RuntimeError("Failed to write secondary path source {} of path {}",
                          sps->getNode()->getName(), path->toString());

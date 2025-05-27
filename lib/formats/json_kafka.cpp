@@ -42,7 +42,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp) {
     json_field = json_pack("{ s: s, s: b, s: s }", "type", "int64", "optional",
                            false, "field", "timestamp");
 
-    uint64_t ts_origin_ms =
+    uint64_t const ts_origin_ms =
         smp->ts.origin.tv_sec * 1e3 + smp->ts.origin.tv_nsec / 1e6;
     json_array_append_new(json_fields, json_field);
     json_object_set_new(json_payload, "timestamp", json_integer(ts_origin_ms));
@@ -64,7 +64,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp) {
 
     json_field =
         json_pack("{ s: s, s: b, s: s }", "type", villasToKafkaType(sig->type),
-                  "optional", false, "field", sig->name);
+                  "optional", false, "field", sig->name.c_str());
 
     json_value = data->toJson(sig->type);
 
@@ -97,7 +97,7 @@ int JsonKafkaFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
   // Unpack timestamp
   json_value = json_object_get(json_payload, "timestamp");
   if (json_value) {
-    uint64_t ts_origin_ms = json_integer_value(json_value);
+    uint64_t const ts_origin_ms = json_integer_value(json_value);
     smp->ts.origin = time_from_double(ts_origin_ms / 1e3);
 
     smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;

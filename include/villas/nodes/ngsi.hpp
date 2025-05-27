@@ -17,6 +17,7 @@
 #include <jansson.h>
 
 #include <villas/list.hpp>
+#include <villas/super_node.hpp>
 #include <villas/task.hpp>
 
 namespace villas {

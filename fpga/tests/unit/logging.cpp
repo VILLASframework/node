@@ -30,7 +30,7 @@ struct criterion_prefix_data {
 };
 
 static int format_msg(char *buf, size_t buflen, const char *msg, va_list args) {
-  int len = vsnprintf(buf, buflen, msg, args);
+  int const len = vsnprintf(buf, buflen, msg, args);
 
   // Strip new line
   char *nl = strchr(buf, '\n');

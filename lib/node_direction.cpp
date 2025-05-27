@@ -100,9 +100,9 @@ int NodeDirection::parse(json_t *json) {
 
 #ifdef WITH_HOOKS
   if (json_hooks) {
-    int m = direction == NodeDirection::Direction::OUT
-                ? (int)Hook::Flags::NODE_WRITE
-                : (int)Hook::Flags::NODE_READ;
+    int const m = direction == NodeDirection::Direction::OUT
+                      ? (int)Hook::Flags::NODE_WRITE
+                      : (int)Hook::Flags::NODE_READ;
 
     hooks.parse(json_hooks, m, nullptr, node);
   }
@@ -124,10 +124,10 @@ void NodeDirection::check() {
 
 int NodeDirection::prepare() {
 #ifdef WITH_HOOKS
-  int t = direction == NodeDirection::Direction::OUT
-              ? (int)Hook::Flags::NODE_WRITE
-              : (int)Hook::Flags::NODE_READ;
-  int m = builtin ? t | (int)Hook::Flags::BUILTIN : 0;
+  int const t = direction == NodeDirection::Direction::OUT
+                    ? (int)Hook::Flags::NODE_WRITE
+                    : (int)Hook::Flags::NODE_READ;
+  int const m = builtin ? t | (int)Hook::Flags::BUILTIN : 0;
 
   hooks.prepare(signals, m, nullptr, node);
 #endif // WITH_HOOKS

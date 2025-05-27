@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
 #include <criterion/criterion.h>
 
@@ -19,16 +20,18 @@ using namespace villas::node;
 Test(config, env) {
   const char *cfg_f = "test = \"${MY_ENV_VAR}\"\n";
 
-  std::FILE *f = std::tmpfile();
-  std::fputs(cfg_f, f);
-  std::rewind(f);
+  auto file_destructor = [](FILE *file) { std::fclose(file); };
+  auto f = std::unique_ptr<FILE, decltype(file_destructor)>{std::tmpfile(),
+                                                            file_destructor};
+  cr_assert(f);
+
+  std::fputs(cfg_f, f.get());
+  std::rewind(f.get());
 
   auto c = Config();
+  setenv("MY_ENV_VAR", "mobydick", true);
 
-  char env[] = "MY_ENV_VAR=mobydick";
-  putenv(env);
-
-  auto *r = c.load(f);
+  auto *r = c.load(f.get());
   cr_assert_not_null(r);
 
   auto *j = json_object_get(r, "test");
@@ -42,9 +45,10 @@ Test(config, include) {
   const char *cfg_f2 = "magic = 1234\n";
 
   char f2_fn_tpl[] = "/tmp/villas.unit-test.XXXXXX";
-  int f2_fd = mkstemp(f2_fn_tpl);
+  int const f2_fd = mkstemp(f2_fn_tpl);
 
   std::FILE *f2 = fdopen(f2_fd, "w");
+  cr_assert(f2);
   std::fputs(cfg_f2, f2);
   std::rewind(f2);
 
@@ -54,8 +58,8 @@ Test(config, include) {
   std::fputs(cfg_f1.c_str(), f1);
   std::rewind(f1);
 
-  auto env = fmt::format("INCLUDE_FILE={}", f2_fn_tpl).c_str();
-  putenv((char *)env);
+  auto env = fmt::format("INCLUDE_FILE={}", f2_fn_tpl);
+  putenv(env.data());
 
   auto c = Config();
 

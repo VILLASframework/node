@@ -78,6 +78,7 @@ static lws_http_mount mounts[] = {
 #endif // WITH_API
 };
 
+#ifndef LWS_WITHOUT_EXTENSIONS
 // List of libwebsockets extensions.
 static const lws_extension extensions[] = {
 #ifdef LWS_DEFLATE_FOUND
@@ -89,6 +90,7 @@ static const lws_extension extensions[] = {
      .client_offer = "deflate_frame"},
 #endif // LWS_DEFLATE_FOUND
     {nullptr /* terminator */}};
+#endif
 
 void Web::lwsLogger(int lws_lvl, const char *msg) {
   char *nl;
@@ -101,7 +103,7 @@ void Web::lwsLogger(int lws_lvl, const char *msg) {
   if (strstr(msg, "Unable to open") == msg)
     lws_lvl = LLL_WARN;
 
-  Logger logger = Log::get("lws");
+  Logger const logger = Log::get("lws");
 
   switch (lws_lvl) {
   case LLL_ERR:

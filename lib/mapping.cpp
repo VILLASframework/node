@@ -22,7 +22,7 @@ using namespace villas::utils;
 
 int MappingEntry::parseString(const std::string &str) {
   std::smatch mr;
-  std::regex re(RE_MAPPING);
+  std::regex const re(RE_MAPPING);
 
   if (!std::regex_match(str, mr, re))
     goto invalid_format;
@@ -223,7 +223,7 @@ int MappingEntry::prepare(NodeList &nodes) {
   }
 
 end:
-  if (length < 0)
+  if (node != nullptr && length < 0) // TODO: What is this code supposed to do?
     length = node->getInputSignals()->size();
 
   return 0;

@@ -21,7 +21,7 @@ NodeCompat::NodeCompat(NodeCompatType *vt, const uuid_t &id,
 
   memset(_vd, 0, _vt->size);
 
-  int ret = _vt->init ? _vt->init(this) : 0;
+  int const ret = _vt->init ? _vt->init(this) : 0;
   if (ret)
     throw RuntimeError("Failed to initialize node");
 }
@@ -33,7 +33,7 @@ NodeCompat::NodeCompat(const NodeCompat &n) : Node(n) {
 
   memcpy(_vd, n._vd, _vt->size);
 
-  int ret = _vt->init ? _vt->init(this) : 0;
+  int const ret = _vt->init ? _vt->init(this) : 0;
   if (ret)
     throw RuntimeError("Failed to initialize node");
 }
@@ -66,7 +66,7 @@ NodeCompat::~NodeCompat() {
 int NodeCompat::prepare() {
   assert(state == State::CHECKED);
 
-  int ret = _vt->prepare ? _vt->prepare(this) : 0;
+  int const ret = _vt->prepare ? _vt->prepare(this) : 0;
   if (ret)
     return ret;
 
@@ -226,7 +226,7 @@ Node *NodeCompatFactory::make(const uuid_t &id, const std::string &name) {
 int NodeCompatFactory::start(SuperNode *sn) {
   assert(state == State::INITIALIZED);
 
-  int ret = _vt->type.start ? _vt->type.start(sn) : 0;
+  int const ret = _vt->type.start ? _vt->type.start(sn) : 0;
   if (ret)
     return ret;
 
@@ -236,7 +236,7 @@ int NodeCompatFactory::start(SuperNode *sn) {
 int NodeCompatFactory::stop() {
   assert(state == State::STARTED);
 
-  int ret = _vt->type.stop ? _vt->type.stop() : 0;
+  int const ret = _vt->type.stop ? _vt->type.stop() : 0;
   if (ret)
     return ret;
 

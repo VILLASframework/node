@@ -167,7 +167,7 @@ unsigned HookList::getSignalsMaxCount() const {
   unsigned max_cnt = 0;
 
   for (auto h : *this) {
-    unsigned sigs_cnt = h->getSignals()->size();
+    unsigned const sigs_cnt = h->getSignals()->size();
 
     if (sigs_cnt > max_cnt)
       max_cnt = sigs_cnt;

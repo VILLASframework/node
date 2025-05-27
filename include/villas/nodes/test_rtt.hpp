@@ -95,7 +95,7 @@ public:
       : Node(id, name), task(), formatter(nullptr), stream(nullptr),
         shutdown(false) {}
 
-  virtual ~TestRTT(){};
+  ~TestRTT() override{};
 
   int prepare() override;
 

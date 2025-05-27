@@ -34,7 +34,7 @@ public:
     json_error_t err;
     json_t *ignored_ips_array = nullptr;
 
-    int ret = json_unpack_ex(
+    int const ret = json_unpack_ex(
         json_card, &err, 0,
         "{ s: o, s?: i, s?: b, s?: s, s?: s, s?: b, s?: o, s?: o}", "ips",
         &json_ips, "affinity", &affinity, "do_reset", &do_reset, "slot",

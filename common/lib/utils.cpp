@@ -90,7 +90,7 @@ int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
                 std::list<int> cbSignals, const std::list<int> &ignoreSignals) {
   int ret;
 
-  Logger logger = Log::get("signals");
+  Logger const logger = Log::get("signals");
 
   logger->info("Initialize subsystem");
 
@@ -196,8 +196,8 @@ double randf() { return (double)random() / RAND_MAX; }
 
 char *vstrcatf(char **dest, const char *fmt, va_list ap) {
   char *tmp;
-  int n = *dest ? strlen(*dest) : 0;
-  int i = vasprintf(&tmp, fmt, ap);
+  int const n = *dest ? strlen(*dest) : 0;
+  int const i = vasprintf(&tmp, fmt, ap);
 
   *dest = (char *)(realloc(*dest, n + i + 1));
   if (*dest != nullptr)

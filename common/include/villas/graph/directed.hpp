@@ -100,7 +100,7 @@ public:
   EdgeIdentifier addDefaultEdge(VertexIdentifier fromVertexId,
                                 VertexIdentifier toVertexId) {
     // Create a new edge
-    std::shared_ptr<EdgeType> edge(new EdgeType);
+    std::shared_ptr<EdgeType> const edge(new EdgeType);
 
     return addEdge(edge, fromVertexId, toVertexId);
   }

@@ -38,8 +38,8 @@ void Task::setTimeout(double to) {
 
   clock_gettime(clock, &now);
 
-  struct timespec timeout = time_from_double(to);
-  struct timespec next = time_add(&now, &timeout);
+  struct timespec const timeout = time_from_double(to);
+  struct timespec const next = time_add(&now, &timeout);
 
   setNext(&next);
 }
@@ -51,8 +51,8 @@ void Task::setNext(const struct timespec *nxt) {
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   int ret;
-  struct itimerspec its = {.it_interval = (struct timespec){0, 0},
-                           .it_value = next};
+  struct itimerspec const its = {.it_interval = (struct timespec){0, 0},
+                                 .it_value = next};
 
   ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, nullptr);
   if (ret)
@@ -79,7 +79,7 @@ void Task::setRate(double rate) {
   return setNext(&next);
 #elif PERIODIC_TASK_IMPL == TIMERFD
   int ret;
-  struct itimerspec its = {.it_interval = period, .it_value = period};
+  struct itimerspec const its = {.it_interval = period, .it_value = period};
 
   ret = timerfd_settime(fd, 0, &its, nullptr);
   if (ret)
@@ -154,8 +154,8 @@ uint64_t Task::wait() {
 void Task::stop() {
 #if PERIODIC_TASK_IMPL == TIMERFD
   int ret;
-  struct itimerspec its = {.it_interval = (struct timespec){0, 0},
-                           .it_value = (struct timespec){0, 0}};
+  struct itimerspec const its = {.it_interval = (struct timespec){0, 0},
+                                 .it_value = (struct timespec){0, 0}};
 
   ret = timerfd_settime(fd, 0, &its, nullptr);
   if (ret)

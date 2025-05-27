@@ -67,6 +67,11 @@ public:
 
   std::ostream &cout() { return *(output.stream); }
 
+  template <typename T>
+  friend std::istream &operator>>(PopenStream &po, T &value) {
+    return *(po.input.stream) >> value;
+  }
+
   void open();
   int close();
 
@@ -84,8 +89,3 @@ protected:
 
 } // namespace utils
 } // namespace villas
-
-template <typename T>
-std::istream &operator>>(villas::utils::PopenStream &po, T &value) {
-  return *(po.input.stream) >> value;
-}

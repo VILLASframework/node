@@ -29,7 +29,7 @@ bool InterruptController::init() {
   this->vfioDevice = pciecard->vfioDevice;
 
   const uintptr_t base = getBaseAddr(registerMemory);
-  kernel::vfio::Device::IrqVectorInfo irq_vector = {0};
+  kernel::vfio::Device::IrqVectorInfo irq_vector = {{0}};
   irq_vector.numFds = this->vfioDevice->pciMsiInit(irq_vector.eventFds);
   irq_vector.automask = true;
   irq_vectors.push_back(irq_vector);
@@ -45,7 +45,7 @@ bool InterruptController::init() {
   for (size_t i = 0; i < irq_vector.numFds; i++) {
 
     // Try pinning to core
-    int ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
+    int const ret = kernel::setIRQAffinity(nos[i], pciecard->affinity, nullptr);
 
     switch (ret) {
     case 0:
@@ -114,7 +114,7 @@ bool InterruptController::enableInterrupt(InterruptController::IrqMaskType mask,
 bool InterruptController::disableInterrupt(
     InterruptController::IrqMaskType mask) {
   const uintptr_t base = getBaseAddr(registerMemory);
-  uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
+  uint32_t const ier = XIntc_In32(base + XIN_IER_OFFSET);
 
   XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
 
@@ -127,7 +127,8 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
 
   if (this->polling[irq]) {
     const uintptr_t base = getBaseAddr(registerMemory);
-    uint32_t isr, mask = 1 << irq;
+    const uint32_t mask = 1 << irq;
+    uint32_t isr;
 
     do {
       // Poll status register
@@ -171,8 +172,8 @@ ssize_t InterruptController::waitForInterrupt(int irq) {
         irqSet.index = 0;
         irqSet.start = irq;
         irqSet.count = 1;
-        int ret = ioctl(this->vfioDevice->getFileDescriptor(),
-                        VFIO_DEVICE_SET_IRQS, &irqSet);
+        int const ret = ioctl(this->vfioDevice->getFileDescriptor(),
+                              VFIO_DEVICE_SET_IRQS, &irqSet);
         if (ret < 0) {
           logger->error("Failed to unmask IRQ {}", 0);
         }

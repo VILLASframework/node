@@ -40,7 +40,7 @@ int villas::node::memory::init(int hugepages) {
   if (ret < 0)
     return ret;
 
-  size_t lock_sz = kernel::getHugePageSize() * hugepages;
+  size_t const lock_sz = kernel::getHugePageSize() * hugepages;
 
   ret = lock(lock_sz);
   if (ret)

@@ -26,7 +26,7 @@ DeviceConnection DeviceConnection::from(
   auto logger = villas::Log::get("Builder: DeviceConnection");
 
   // Bind the devicetree device to vfio driver
-  LinuxDriver driver(
+  LinuxDriver const driver(
       std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
   driver.attach(device);
 
@@ -55,9 +55,9 @@ void DeviceConnection::addToMemorygraph() const {
 
   // Create memorygraph edge from process to vfio device
   auto &mm = MemoryManager::get();
-  size_t srcVertexId = mm.getProcessAddressSpace();
+  size_t const srcVertexId = mm.getProcessAddressSpace();
   const size_t mem_size = this->vfio_device->regionGetSize(0);
-  size_t targetVertexId =
+  size_t const targetVertexId =
       mm.getOrCreateAddressSpace(this->vfio_device->getName());
   mm.createMapping(reinterpret_cast<uintptr_t>(mapping), 0, mem_size,
                    "process to vfio", srcVertexId, targetVertexId);

@@ -348,13 +348,13 @@ int villas::node::rtp_start(NodeCompat *n) {
 #endif
   }
 
-  double dt = 5.0; // TODO
+  double const dt = 5.0; // TODO
 
   r->aimd.rate_pid = villas::dsp::PID(dt, r->aimd.rate_source, r->aimd.rate_min,
                                       r->aimd.Kp, r->aimd.Ki, r->aimd.Kd);
 
   // Initialize RTP socket
-  uint16_t port = sa_port(&r->in.saddr_rtp) & ~1;
+  uint16_t const port = sa_port(&r->in.saddr_rtp) & ~1;
   ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port + 1,
                    r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
@@ -367,7 +367,7 @@ int villas::node::rtp_start(NodeCompat *n) {
     if (r->aimd.log_filename) {
       char fn[128];
 
-      time_t ts = time(nullptr);
+      time_t const ts = time(nullptr);
       struct tm tm;
 
       // Convert time
@@ -513,7 +513,7 @@ int villas::node::rtp_write(NodeCompat *n, struct Sample *const smps[],
   size_t wbytes;
   size_t avail;
 
-  uint32_t ts = (uint32_t)time(nullptr);
+  uint32_t const ts = (uint32_t)time(nullptr);
 
 retry:
   mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);

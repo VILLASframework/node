@@ -142,13 +142,15 @@ protected:
   static int protocolCallback(lws *wsi, enum lws_callback_reasons reason,
                               void *user, void *in, size_t len);
 
-  void usage();
+  void usage() override;
 
-  void parse();
+  void parse() override;
 
-  int main();
+  int main() override;
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) { stop = true; }
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
+    stop = true;
+  }
 };
 
 } // namespace tools

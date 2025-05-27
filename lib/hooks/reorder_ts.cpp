@@ -10,11 +10,10 @@
 #include <ctime>
 #include <vector>
 
+#include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>
 #include <villas/timing.hpp>
-
-#include "villas/exceptions.hpp"
 
 namespace villas {
 namespace node {
@@ -49,7 +48,7 @@ public:
     assert(state != State::STARTED);
 
     json_error_t err;
-    int ret =
+    int const ret =
         json_unpack_ex(json, &err, 0, "{ s?: i }", "window_size", &window_size);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-reorder-ts");
@@ -57,7 +56,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     window.reserve(window_size);
@@ -65,7 +64,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     for (auto sample : window)
@@ -79,7 +78,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual Hook::Reason process(Sample *smp) {
+  Hook::Reason process(Sample *smp) override {
     assert(state == State::STARTED);
     assert(smp);
 
@@ -134,7 +133,7 @@ public:
     return Hook::Reason::SKIP_SAMPLE;
   }
 
-  virtual void restart() {
+  void restart() override {
     assert(state == State::STARTED);
 
     for (auto sample : window)

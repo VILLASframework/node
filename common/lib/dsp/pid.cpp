@@ -20,18 +20,18 @@ PID::PID(double _dt, double _max, double _min, double _Kp, double _Kd,
 
 double PID::calculate(double setpoint, double pv) {
   // Calculate error
-  double error = setpoint - pv;
+  double const error = setpoint - pv;
 
   // Proportional term
-  double Pout = Kp * error;
+  double const Pout = Kp * error;
 
   // Integral term
   integral += error * dt;
-  double Iout = Ki * integral;
+  double const Iout = Ki * integral;
 
   // Derivative term
-  double derivative = (error - pre_error) / dt;
-  double Dout = Kd * derivative;
+  double const derivative = (error - pre_error) / dt;
+  double const Dout = Kd * derivative;
 
   // Calculate total output
   double output = Pout + Iout + Dout;

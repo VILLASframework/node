@@ -120,9 +120,9 @@ void Table::row(int count, ...) {
   for (unsigned i = 0; i < columns.size(); ++i) {
     char *col = vstrf(columns[i].format.c_str(), args);
 
-    int l = strlenp(col);
-    int r = strlen(col);
-    int w = columns[i]._width + r - l;
+    int const l = strlenp(col);
+    int const r = strlen(col);
+    int const w = columns[i]._width + r - l;
 
     if (columns[i].align == TableColumn::Alignment::LEFT)
       strcatf(&line, " %-*.*s " ANSI_RESET, w, w, col);

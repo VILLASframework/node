@@ -197,7 +197,7 @@ public:
     char const *algorithm_str;
 
     json_error_t err;
-    int ret =
+    int const ret =
         json_unpack_ex(json, &err, 0, "{ s: s, s?: s, s?: s }", "uri", &uri_str,
                        "mode", &mode_str, "algorithm", &algorithm_str);
     if (ret)
@@ -221,7 +221,7 @@ public:
       throw RuntimeError{"Could not fetch algorithm {}", algorithm};
   }
 
-  virtual void start() override {
+  void start() override {
     Hook::start();
 
     if (!EVP_DigestInit_ex(md_ctx.get(), md, NULL))
@@ -238,7 +238,7 @@ public:
     return Reason::OK;
   }
 
-  virtual void stop() override {
+  void stop() override {
     Hook::stop();
 
     first_sequence.reset();

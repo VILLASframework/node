@@ -25,13 +25,13 @@ IpDevice IpDevice::from(const std::filesystem::path unsafe_path) {
 }
 
 std::string IpDevice::ip_name() const {
-  int pos = name().find('.');
+  int const pos = name().find('.');
   return name().substr(pos + 1);
 }
 
 size_t IpDevice::addr() const {
-  size_t pos = name().find('.');
-  std::string addr_hex = name().substr(0, pos);
+  size_t const pos = name().find('.');
+  std::string const addr_hex = name().substr(0, pos);
 
   // Convert from hex-string to number
   std::stringstream ss;
@@ -43,7 +43,7 @@ size_t IpDevice::addr() const {
 }
 
 bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
-  std::string assumed_device_name = unsafe_path.filename();
+  std::string const assumed_device_name = unsafe_path.filename();
 
   // Match format of hexaddr.devicename
   if (!std::regex_match(assumed_device_name,

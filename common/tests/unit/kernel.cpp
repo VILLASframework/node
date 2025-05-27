@@ -66,8 +66,8 @@ Test(kernel, version) {
   using villas::utils::Version;
 
   Version ver = villas::kernel::getVersion();
-  Version ver1 = {100, 5};
-  Version ver2 = {2, 6};
+  Version const ver1 = {100, 5};
+  Version const ver2 = {2, 6};
 
   cr_assert_lt(ver, ver1);
   cr_assert_gt(ver, ver2);

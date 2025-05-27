@@ -31,11 +31,11 @@ public:
   friend class I2cFactory;
 
   I2c();
-  virtual ~I2c();
-  virtual bool init() override;
-  virtual bool check() override;
-  virtual bool reset() override;
-  virtual bool stop() override;
+  ~I2c() override;
+  bool init() override;
+  bool check() override;
+  bool reset() override;
+  bool stop() override;
   bool write(u8 address, std::vector<u8> &data);
   bool read(u8 address, std::vector<u8> &data, size_t max_read);
   bool readRegister(u8 address, u8 reg, std::vector<u8> &data, size_t max_read);
@@ -93,7 +93,7 @@ private:
   bool polling;
   std::unique_ptr<Switch> switchInstance;
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
   // assumes hwLock is locked
@@ -104,21 +104,21 @@ private:
 class I2cFactory : NodeFactory {
 
 public:
-  virtual std::string getName() const { return "i2c"; }
+  std::string getName() const override { return "i2c"; }
 
-  virtual std::string getDescription() const { return "Xilinx's AXI4 IIC IP"; }
+  std::string getDescription() const override { return "Xilinx's AXI4 IIC IP"; }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_iic:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new I2c; };
+  Core *make() const override { return new I2c; };
 
 protected:
-  virtual void parse(Core &ip, json_t *json) override;
-  virtual void configurePollingMode(Core &ip, PollingMode mode) override {
+  void parse(Core &ip, json_t *json) override;
+  void configurePollingMode(Core &ip, PollingMode mode) override {
     dynamic_cast<I2c &>(ip).polling = (mode == POLL);
   }
 };

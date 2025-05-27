@@ -18,11 +18,11 @@ public:
   static constexpr const char *masterPort = "USER_DATA_M_AXI_RX";
   static constexpr const char *slavePort = "USER_DATA_S_AXI_TX";
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(slavePort);
   }
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(masterPort);
   }
 };

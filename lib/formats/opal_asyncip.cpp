@@ -19,7 +19,7 @@ int OpalAsyncIPFormat::sprint(char *buf, size_t len, size_t *wbytes,
                               const struct Sample *const smps[], unsigned cnt) {
   unsigned i;
   auto *ptr = buf;
-  ssize_t slen = len;
+  ssize_t const slen = len;
 
   for (i = 0; i < cnt && ptr - buf < slen; i++) {
     auto *pl = (struct Payload *)ptr;

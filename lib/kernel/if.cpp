@@ -32,7 +32,7 @@ Interface::Interface(struct rtnl_link *link, int aff)
     : nl_link(link), tc_qdisc(nullptr), affinity(aff) {
   logger = Log::get(fmt::format("kernel:if:{}", getName()));
 
-  int n = getIRQs();
+  int const n = getIRQs();
   if (n)
     logger->warn("Did not found any interrupts");
 
@@ -116,7 +116,7 @@ std::string Interface::getName() const {
 Interface *Interface::getEgress(struct sockaddr *sa, SuperNode *sn) {
   struct rtnl_link *link;
 
-  Logger logger = Log::get("kernel:if");
+  Logger const logger = Log::get("kernel:if");
 
   auto &interfaces = sn->getInterfaces();
   auto affinity = sn->getAffinity();
@@ -177,7 +177,7 @@ int Interface::setAffinity(int affinity) {
   CpuSet cset_pin(affinity);
 
   for (int irq : irqs) {
-    std::string filename = fmt::format("/proc/irq/{}/smp_affinity", irq);
+    std::string const filename = fmt::format("/proc/irq/{}/smp_affinity", irq);
 
     file = fopen(filename.c_str(), "w");
     if (file) {

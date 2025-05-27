@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <thread>
-
 #include <stdint.h>
 
 #include <villas/format.hpp>
@@ -80,7 +78,7 @@ protected:
 public:
   FpgaNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~FpgaNode();
+  ~FpgaNode() override;
 
   int prepare() override;
 

@@ -87,7 +87,7 @@ void SingleSignalHook::prepare() {
   Hook::prepare();
 
   // Setup mask
-  int index = signals->getIndexByName(signalName.c_str());
+  int const index = signals->getIndexByName(signalName.c_str());
   if (index < 0)
     throw RuntimeError("Failed to find signal {}", signalName);
 

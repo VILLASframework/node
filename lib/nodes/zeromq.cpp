@@ -40,7 +40,7 @@ static int get_monitor_event(void *monitor, int *value, char **address) {
   assert(zmq_msg_more(&msg));
 
   uint8_t *data = (uint8_t *)zmq_msg_data(&msg);
-  uint16_t event = *(uint16_t *)(data);
+  uint16_t const event = *(uint16_t *)(data);
   if (value)
     *value = *(uint32_t *)(data + 2);
 
@@ -53,7 +53,7 @@ static int get_monitor_event(void *monitor, int *value, char **address) {
 
   if (address) {
     uint8_t *data = (uint8_t *)zmq_msg_data(&msg);
-    size_t size = zmq_msg_size(&msg);
+    size_t const size = zmq_msg_size(&msg);
     *address = (char *)malloc(size + 1);
     memcpy(*address, data, size);
     *address[size] = 0;
@@ -434,7 +434,7 @@ int villas::node::zeromq_start(NodeCompat *n) {
   // Wait for all connections to be connected
   for (auto d : dirs) {
     while (d->pending > 0) {
-      int evt = d->bind ? ZMQ_EVENT_LISTENING : ZMQ_EVENT_CONNECTED;
+      int const evt = d->bind ? ZMQ_EVENT_LISTENING : ZMQ_EVENT_CONNECTED;
 
       ret = get_monitor_event(d->mon_socket, nullptr, nullptr);
       if (ret == evt)
@@ -550,7 +550,7 @@ int villas::node::zeromq_write(NodeCompat *n, struct Sample *const smps[],
   if (ret <= 0)
     return -1;
 
-  ret = zmq_msg_init_size(&m, wbytes);
+  zmq_msg_init_size(&m, wbytes);
 
   if (z->out.filter) {
     switch (z->pattern) {
@@ -641,5 +641,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.poll_fds = zeromq_poll_fds;
   p.netem_fds = zeromq_netem_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

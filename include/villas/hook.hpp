@@ -131,9 +131,9 @@ public:
   SingleSignalHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), signalIndex(0) {}
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual void prepare();
+  void prepare() override;
 };
 
 class MultiSignalHook : public Hook {
@@ -145,11 +145,11 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void parse(json_t *json);
+  void parse(json_t *json) override;
 
-  virtual void prepare();
+  void prepare() override;
 
-  virtual void check();
+  void check() override;
 };
 
 class LimitHook : public Hook {
@@ -160,7 +160,7 @@ public:
 
   virtual void setRate(double rate, double maxRate = -1) = 0;
 
-  virtual void parse(json_t *json) {
+  void parse(json_t *json) override {
     assert(state == State::INITIALIZED);
 
     state = State::PARSED;
@@ -191,7 +191,7 @@ public:
 
   virtual unsigned getPriority() const = 0;
 
-  virtual std::string getType() const { return "hook"; }
+  std::string getType() const override { return "hook"; }
 
   virtual bool isHidden() const { return false; }
 };
@@ -203,7 +203,7 @@ class HookPlugin : public HookFactory {
 public:
   using HookFactory::HookFactory;
 
-  virtual Hook::Ptr make(Path *p, Node *n) {
+  Hook::Ptr make(Path *p, Node *n) override {
     auto h = std::make_shared<T>(p, n, getFlags(), getPriority());
 
     init(h);
@@ -211,13 +211,13 @@ public:
     return h;
   }
 
-  virtual std::string getName() const { return name; }
+  std::string getName() const override { return name; }
 
-  virtual std::string getDescription() const { return desc; }
+  std::string getDescription() const override { return desc; }
 
-  virtual int getFlags() const { return flags; }
+  int getFlags() const override { return flags; }
 
-  virtual unsigned getPriority() const { return prio; }
+  unsigned getPriority() const override { return prio; }
 };
 
 } // namespace node

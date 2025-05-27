@@ -31,9 +31,10 @@ json_t *Peer::toJson() const {
 Peer::Peer(json_t *json) {
   const char *nme = nullptr, *rem = nullptr, *ua = nullptr, *tscreat, *tsconn;
 
-  int ret = json_unpack(json, "{ s: i, s?: s, s?: s, s?: s, s?: s, s?: s }",
-                        "id", &id, "name", &nme, "remote", &rem, "user_agent",
-                        &ua, "created", &tscreat, "connected", &tsconn);
+  int const ret =
+      json_unpack(json, "{ s: i, s?: s, s?: s, s?: s, s?: s, s?: s }", "id",
+                  &id, "name", &nme, "remote", &rem, "user_agent", &ua,
+                  "created", &tscreat, "connected", &tsconn);
   if (ret)
     throw RuntimeError("Failed to decode signaling message");
 
@@ -168,7 +169,7 @@ SignalingMessage SignalingMessage::fromJson(json_t *json) {
   const char *desc = nullptr;
   const char *typ = nullptr;
 
-  int ret = json_unpack(
+  int const ret = json_unpack(
       json, "{ s?: o, s?: o, s?: o, s?: { s: s, s: s }, s?: { s: s, s: s } }",
       "servers", &rlys, "signals", &sigs, "control", &ctrl, "candidate", "spd",
       &cand, "mid", &mid, "description", "spd", &desc, "type", &typ);

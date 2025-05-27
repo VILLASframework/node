@@ -96,7 +96,7 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
 
       villas__node__value__init(pb_val);
 
-      enum SignalType fmt = sample_format(smp, j);
+      enum SignalType const fmt = sample_format(smp, j);
       switch (fmt) {
       case SignalType::FLOAT:
         pb_val->value_case = VILLAS__NODE__VALUE__VALUE_F;
@@ -187,7 +187,7 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
     for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
       Villas__Node__Value *pb_val = pb_smp->values[j];
 
-      enum SignalType fmt = detect(pb_val);
+      enum SignalType const fmt = detect(pb_val);
 
       auto sig = smp->signals->getByIndex(j);
       if (!sig)

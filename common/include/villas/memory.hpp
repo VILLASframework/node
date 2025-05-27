@@ -116,7 +116,8 @@ public:
       : memoryAddrSpaceId(memoryAddrSpaceId) {
     // CRTP
     derivedAlloc = static_cast<DerivedAllocator *>(this);
-    std::string loggerName = fmt::format("memory:", derivedAlloc->getName());
+    std::string const loggerName =
+        fmt::format("memory:", derivedAlloc->getName());
     logger = Log::get(loggerName);
 
     // Default deallocation callback
@@ -136,7 +137,6 @@ public:
   }
 
   virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-
   allocateBlock(size_t size) = 0;
 
   template <typename T> MemoryAccessor<T> allocate(size_t num) {
@@ -152,7 +152,7 @@ public:
     // Check if the allocated memory is really accessible by writing to the
     // allocated memory and reading back. Exponentially increase offset to
     // speed up testing.
-    MemoryAccessor<volatile uint8_t> byteAccessor(*mem);
+    MemoryAccessor<volatile uint8_t> const byteAccessor(*mem);
     size_t idx = 0;
     for (int i = 0; idx < mem->getSize(); i++, idx = (1 << i)) {
       auto val = static_cast<uint8_t>(i);
@@ -165,6 +165,8 @@ public:
 
     return MemoryAccessor<T>(std::move(mem));
   }
+
+  virtual ~BaseAllocator() {}
 
 protected:
   void insertMemoryBlock(const MemoryBlock &mem) {
@@ -217,8 +219,8 @@ public:
 
   std::string getName() const;
 
-  virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-  allocateBlock(size_t size);
+  std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+  allocateBlock(size_t size) override;
 
 private:
   static constexpr size_t alignBytes = sizeof(uintptr_t);
@@ -247,7 +249,7 @@ public:
     std::string getName() const { return "HostRamAlloc"; }
 
     std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-    allocateBlock(size_t size);
+    allocateBlock(size_t size) override;
   };
 
   static HostRamAllocator &getAllocator() {
@@ -264,7 +266,7 @@ public:
   public:
     HostDmaRamAllocator(int num);
 
-    virtual ~HostDmaRamAllocator();
+    ~HostDmaRamAllocator() override;
 
     std::string getName() const { return getUdmaBufName(num); }
 

@@ -78,7 +78,7 @@ int InternalLoopbackNode::_read(struct Sample *smps[], unsigned cnt) {
 int InternalLoopbackNode::_write(struct Sample *smps[], unsigned cnt) {
   sample_incref_many(smps, cnt);
 
-  int pushed = queue_signalled_push_many(&queue, (void **)smps, cnt);
+  int const pushed = queue_signalled_push_many(&queue, (void **)smps, cnt);
   if (pushed < 0) {
     sample_decref_many(smps, cnt);
     return pushed;

@@ -24,6 +24,7 @@ public:
   virtual std::string name() const = 0;
   virtual void override(const Device &device) const = 0;
   virtual void unbind(const Device &device) const = 0;
+  virtual ~Driver() {}
 };
 
 } // namespace devices

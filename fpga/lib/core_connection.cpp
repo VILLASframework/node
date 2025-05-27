@@ -49,15 +49,15 @@ CoreConnection::from(std::shared_ptr<villas::fpga::ip::Core> ip,
 void CoreConnection::add_to_memorygraph() {
   device_connection.addToMemorygraph();
 
-  for (std::string memory_block : ip->getMemoryBlocks()) {
+  for (std::string const &memory_block : ip->getMemoryBlocks()) {
     auto &mm = MemoryManager::get();
     // 16 bit width => 2^16 = 65536
     const size_t ip_mem_size = 65536;
 
-    size_t srcVertexId =
+    size_t const srcVertexId =
         mm.findAddressSpace(device_connection.vfio_device->getName());
 
-    std::string taget_address_space_name =
+    std::string const taget_address_space_name =
         ip->getInstanceName() + "/" + memory_block;
     size_t targetVertexId;
     targetVertexId = mm.findAddressSpace(taget_address_space_name);

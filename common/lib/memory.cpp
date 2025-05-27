@@ -54,8 +54,8 @@ HostRam::HostRamAllocator::allocateBlock(size_t size) {
 }
 
 LinearAllocator::LinearAllocator(
-    const MemoryManager::AddressSpaceId &memoryAddrSpaceId, size_t memorySize,
-    size_t internalOffset)
+    const MemoryManager::AddressSpaceId &memoryAddrSpaceId,
+    [[maybe_unused]] size_t memorySize, [[maybe_unused]] size_t internalOffset)
     : BaseAllocator(memoryAddrSpaceId), nextFreeAddress(0),
       memorySize(memorySize), internalOffset(internalOffset),
       allocationCount(0) {
@@ -63,6 +63,7 @@ LinearAllocator::LinearAllocator(
   if (const size_t paddingBytes = getAlignmentPadding(internalOffset)) {
     assert(paddingBytes < memorySize);
 
+    // TODO: This modifies the parameters, not the members. Is this a bug?
     internalOffset += paddingBytes;
     memorySize -= paddingBytes;
   }
