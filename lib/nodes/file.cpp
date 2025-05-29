@@ -5,10 +5,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "villas/sample.hpp"
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
-
+#include <iostream>
 #include <libgen.h>
+#include <ostream>
+#include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -76,16 +80,17 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   const char *uri_tmpl = nullptr;
   const char *eof = nullptr;
   const char *epoch = nullptr;
+  const char *read_mode = nullptr;
   double epoch_flt = 0;
 
   ret = json_unpack_ex(json, &err, 0,
                        "{ s: s, s?: o, s?: { s?: s, s?: F, s?: s, s?: F, s?: "
-                       "i, s?: i }, s?: { s?: b, s?: i } }",
+                       "i, s?: i, s?: s }, s?: { s?: b, s?: i } }",
                        "uri", &uri_tmpl, "format", &json_format, "in", "eof",
                        &eof, "rate", &f->rate, "epoch_mode", &epoch, "epoch",
                        &epoch_flt, "buffer_size", &f->buffer_size_in, "skip",
                        &f->skip_lines, "out", "flush", &f->flush, "buffer_size",
-                       &f->buffer_size_out);
+                       &f->buffer_size_out, "read_mode", &read_mode);
   if (ret)
     throw ConfigError(json, err, "node-config-node-file");
 
@@ -127,6 +132,11 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
       throw RuntimeError("Invalid value '{}' for setting 'epoch'", epoch);
   }
 
+  if (read_mode) {
+    if (!strcmp(read_mode, "all"))
+      f->read_mode = file::ReadMode::READ_ALL;
+    else f->read_mode = file::ReadMode::RATE_BASED;
+ }
   return 0;
 }
 
@@ -298,11 +308,41 @@ int villas::node::file_start(NodeCompat *n) {
 
   sample_free(smp);
 
+  struct Sample *smp_buffer;
+  n->logger->info("Reading entire file into buffer");
+
+  int retval;
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    while (!feof(f->stream_in)) {
+      smp_buffer = sample_alloc_mem(n->getInputSignals(false)->size());
+      if (!smp_buffer) {
+        n->logger->error("Failed to allocate samples");
+        break;
+      }
+
+      retval = f->formatter->scan(f->stream_in, smp_buffer);
+      if (retval < 0) {
+        sample_free(smp_buffer);
+        break;
+      }
+
+      f->samples.push_back(smp_buffer);
+    }
+
+    n->logger->info("Read {} samples into buffer", f->samples.size());
+    f->read_pos = 0;
+  }
+
   return 0;
 }
 
 int villas::node::file_stop(NodeCompat *n) {
   auto *f = n->getData<struct file>();
+
+  for (auto smp : f->samples) {
+    sample_free(smp);
+  }
+  f->samples.clear();
 
   f->task.stop();
 
@@ -319,6 +359,24 @@ int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
   uint64_t steps;
 
   assert(cnt == 1);
+
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    unsigned read_count = 0;
+
+    while (f->read_pos < f->samples.size() && read_count < cnt) {
+
+      sample_copy(smps[read_count], f->samples[f->read_pos++]);
+      read_count++;
+    }
+
+    if (f->read_pos >= f->samples.size()) {
+      n->logger->info("Reached end of buffer");
+      n->setState(State::STOPPING);
+    }
+
+    return read_count;
+  }
+
 
 retry:
   ret = f->formatter->scan(f->stream_in, smps, cnt);
@@ -428,6 +486,8 @@ int villas::node::file_init(NodeCompat *n) {
   f->buffer_size_in = 0;
   f->buffer_size_out = 0;
   f->skip_lines = 0;
+  f->read_mode = file::ReadMode::RATE_BASED;
+  f->read = false;
 
   f->formatter = nullptr;
 
