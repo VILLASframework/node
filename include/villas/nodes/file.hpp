@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdio>
 
+#include <vector>
 #include <villas/format.hpp>
 #include <villas/task.hpp>
 
@@ -57,6 +59,12 @@ struct file {
   struct timespec epoch; // The epoch timestamp from the configuration.
   struct timespec
       offset; // An offset between the timestamp in the input file and the current time
+
+  std::vector<Sample *> samples;
+  size_t read_pos;
+
+  enum class ReadMode { RATE_BASED, READ_ALL } read_mode;
+  bool read;
 };
 
 char *file_print(NodeCompat *n);
