@@ -1,11 +1,5 @@
-<!--
-Author: Alexandra Bach <alexandra.bach@eonerc.rwth-aachen.de>
-SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
-SPDX-License-Identifier: Apache-2.0
--->
-
 ---
-title: 'VILLASnode: A Open-Source Real-time Multi-protocol Gateway'
+title: 'VILLASnode: An Open-Source Real-time Multi-protocol Gateway'
 tags:
 - C/C++
 - Real-time
@@ -20,6 +14,7 @@ authors:
   affiliation: 1
 - name: Laura Fuentes Grau
   orcid: 0009-0004-8997-7009
+  affiliation: 1
 - name: Steffen Vogel
   orcid: 0000-0003-3384-6750
   affiliation: "1, 3" # (Multiple affiliations must be quoted)
