@@ -25,6 +25,7 @@ path = [
     "tests/valgrind.supp",
     "packaging/archlinux/villas-node.install",
     "VILLASnode_paths.svg",
+    "paper.md",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University"
