@@ -7,14 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 ---
 title: 'VILLASnode: A Open-Source Real-time Multi-protocol Gateway'
 tags:
-
 - C/C++
 - Real-time
 - Distributed experiments
 - Electrical grid simulation
-
 authors:
-
 - name: Alexandra Bach
   orcid: 0009-0005-7385-4642
   affiliation: 1
@@ -43,19 +40,15 @@ authors:
 - name: Prof. Antonello Monti
   orcid: 0000-0003-1914-9801
   affiliation: "1,2"
-
 affiliations:
-
 - name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
   index: 1
 - name: Fraunhofer Institute for Applied Information Technology, Aachen, Germany
   index: 2
 - name: OPAL-RT Germany GmbH
   index: 3
-
 date: 28 May 2025
 bibliography: paper.bib
-
 ---
 
 # Summary
