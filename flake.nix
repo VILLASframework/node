@@ -81,6 +81,10 @@
           withAllNodes = true;
         };
 
+        villas-node-clang = pkgs.villas-node.override {
+          stdenv = pkgs.clangStdenv;
+        };
+
         dockerImage = pkgs.dockerTools.buildLayeredImage {
           name = "villas-node";
           tag = "latest-nix";
@@ -89,7 +93,6 @@
         };
 
         # Cross-compiled packages
-
         villas-node-x86_64-linux =
           if pkgs.system == "x86_64-linux" then pkgs.villas-node else pkgs.pkgsCross.x86_64-linux.villas-node;
         villas-node-aarch64-linux =
@@ -144,7 +147,7 @@
         system:
         let
           pkgs = devPkgsFor system;
-          hardeningDisable = [ "all" ];
+
           packages = with pkgs; [
             bashInteractive
             bc
@@ -161,19 +164,35 @@
             pre-commit
             ruby # for pre-commit markdownlint hook
           ];
+
+          mkShellFor = stdenv: pkg: stdenv.mkDerivation {
+            name = "${pkg.pname}-${stdenv.cc.cc.pname}-devShell";
+
+            # disable all hardening to suppress warnings in debug builds
+            hardeningDisable = [ "all" ];
+
+            # inherit inputs from pkg
+            buildInputs = pkg.buildInputs ++ packages;
+            nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
+            propagatedBuildInputs = pkg.propagatedBuildInputs;
+            propagatedNativeBuildInputs = pkg.propagatedNativeBuildInputs;
+
+            # configure nix-ld for pre-commit
+            env = {
+              NIX_LD = lib.fileContents "${stdenv.cc}/nix-support/dynamic-linker";
+              NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gcc-unwrapped.lib ];
+            };
+          };
         in
         rec {
-          default = full;
+          default = gcc;
 
-          full = pkgs.mkShell {
-            inherit hardeningDisable packages;
-            name = "full";
-            inputsFrom = with pkgs; [ villas-node ];
-          };
+          gcc = mkShellFor pkgs.stdenv pkgs.villas-node;
+          clang = mkShellFor pkgs.clangStdenv pkgs.villas-node;
 
           python = pkgs.mkShell {
-            inherit hardeningDisable;
-            name = "python";
+            name = "villas-python-devShell";
+            hardeningDisable = [ "all" ];
             inputsFrom = with pkgs; [ villas-node-python ];
             packages =
               with pkgs;
