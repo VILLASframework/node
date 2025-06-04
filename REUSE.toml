@@ -26,6 +26,7 @@ path = [
     "packaging/archlinux/villas-node.install",
     "VILLASnode_paths.svg",
     "paper.md",
+    "paper.bib",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University"
