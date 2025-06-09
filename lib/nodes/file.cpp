@@ -89,8 +89,8 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
                        "uri", &uri_tmpl, "format", &json_format, "in", "eof",
                        &eof, "rate", &f->rate, "epoch_mode", &epoch, "epoch",
                        &epoch_flt, "buffer_size", &f->buffer_size_in, "skip",
-                       &f->skip_lines, "out", "flush", &f->flush, "buffer_size",
-                       &f->buffer_size_out, "read_mode", &read_mode);
+                       &f->skip_lines, "read_mode", &read_mode, "out", "flush",
+                       &f->flush, "buffer_size", &f->buffer_size_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-file");
 
@@ -133,10 +133,14 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   }
 
   if (read_mode) {
-    if (!strcmp(read_mode, "all"))
+    if (!strcmp(read_mode, "all")) {
+      n->logger->debug("read mode: all set");
       f->read_mode = file::ReadMode::READ_ALL;
-    else f->read_mode = file::ReadMode::RATE_BASED;
- }
+    } else {
+      f->read_mode = file::ReadMode::RATE_BASED;
+      n->logger->debug("read mode: rate based set");
+    }
+  }
   return 0;
 }
 
@@ -308,11 +312,12 @@ int villas::node::file_start(NodeCompat *n) {
 
   sample_free(smp);
 
-  struct Sample *smp_buffer;
-  n->logger->info("Reading entire file into buffer");
-
-  int retval;
   if (f->read_mode == file::ReadMode::READ_ALL) {
+    n->logger->info("Reading entire file into buffer");
+
+    struct Sample *smp_buffer;
+    int retval;
+
     while (!feof(f->stream_in)) {
       smp_buffer = sample_alloc_mem(n->getInputSignals(false)->size());
       if (!smp_buffer) {
@@ -366,17 +371,20 @@ int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
     while (f->read_pos < f->samples.size() && read_count < cnt) {
 
       sample_copy(smps[read_count], f->samples[f->read_pos++]);
+      smps[read_count]->ts.origin = time_now();
+      n->logger->debug("Time now sec: {} nanosec: {}", time_now().tv_sec,
+                       time_now().tv_nsec);
       read_count++;
     }
 
-    if (f->read_pos >= f->samples.size()) {
+    if (f->read_pos == f->samples.size()) {
       n->logger->info("Reached end of buffer");
       n->setState(State::STOPPING);
+      return -1;
     }
 
     return read_count;
   }
-
 
 retry:
   ret = f->formatter->scan(f->stream_in, smps, cnt);
