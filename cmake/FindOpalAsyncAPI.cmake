@@ -1,7 +1,7 @@
 # CMakeLists.txt
 #
 # Author: Steffen Vogel <steffen.vogel@opal-rt.com>
-# SPDX-FileCopyrightText: 2023-2024 OPAL-RT Germany GmbH
+# SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
 
 set(TARGET_RTLAB_ROOT "/usr/opalrt" CACHE STRING "RT-LAB Root directory")
@@ -24,11 +24,11 @@ if(EXISTS "${TARGET_RTLAB_ROOT}/common/bin/opalmodelmk")
     set(OPAL_LIBRARIES -lOpalCore -lOpalUtils ${OPAL_VARS} -lirc -ldl -pthread -lrt)
     set(OPAL_INCLUDE_DIR ${TARGET_RTLAB_ROOT}/common/include_target)
 
-    add_library(opal INTERFACE)
+    add_library(OpalAsyncApi INTERFACE)
     target_include_directories(opal INTERFACE ${OPAL_INCLUDE_DIR})
     target_link_libraries(opal INTERFACE ${OPAL_LIBRARIES})
 endif()
 
-find_package_handle_standard_args(Opal DEFAULT_MSG OPAL_LIBRARIES OPAL_INCLUDE_DIR)
+find_package_handle_standard_args(OpalAsyncApi DEFAULT_MSG OPAL_LIBRARIES OPAL_INCLUDE_DIR)
 
 mark_as_advanced(OPAL_LIBRARIES OPAL_INCLUDE_DIR)

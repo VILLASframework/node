@@ -1,9 +1,9 @@
-/** Retrieve parameters from OPAL-RTs AsyncApi
+/* Retrieve parameters from OPAL-RTs AsyncApi
  *
- * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2014-2022, Institute for Automation of Complex Power Systems, EONERC
- * @license Apache 2.0
- *********************************************************************************/
+ * Author: Steffen Vogel <steffen.vogel@opal-rt.com>
+ * SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ *
 
 #include <cstring>
 #include <iostream>

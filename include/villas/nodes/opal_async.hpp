@@ -1,7 +1,7 @@
-/* Node type: OPAL-RT Asynchronous Process (libOpalAsync API)
+/* Node type: OPAL-RT Asynchronous Process (libOpalAsyncApi)
  *
  * Author: Steffen Vogel <steffen.vogel@opal-rt.com>
- * SPDX-FileCopyrightText: 2023-2024 OPAL-RT Germany GmbH
+ * SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
  * SPDX-License-Identifier: Apache-2.0
  */
 

@@ -76,6 +76,7 @@ find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
 find_package(OpenDSSC)
+find_package(OpalAsyncApi)
 
 # Check for tools
 find_program(PASTE NAMES paste)
@@ -192,6 +193,7 @@ cmake_dependent_option(WITH_NODE_MODBUS     "Build with modbus node-type"       
 cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             "${WITH_DEFAULTS}" "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          "${WITH_DEFAULTS}" "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             "${WITH_DEFAULTS}" "" OFF)
+cmake_dependent_option(WITH_NODE_OPAL_ASYNC "Build with opal.async node-type"                       "${WITH_DEFAULTS}" "OpalAsyncApi_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"                            "${WITH_DEFAULTS}" "HIREDIS_FOUND; REDISPP_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "re_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            "${WITH_DEFAULTS}" "HAS_SEMAPHORE; HAS_MMAN" OFF)

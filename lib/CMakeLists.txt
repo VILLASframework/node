@@ -76,7 +76,7 @@ if(WITH_NODE_INFINIBAND)
     list(APPEND LIB_SRC memory/ib.cpp)
 endif()
 
-if(WITH_NODE_OPAL)
+if(WITH_NODE_OPAL_ASYNC)
     add_library(OpalAsyncApi SHARED empty.cpp)
     target_link_libraries(OpalAsyncApi PRIVATE -Wl,--allow-multiple-definition  -Wl,--whole-archive ${OPAL_LIBRARIES} -Wl,--no-whole-archive)
     target_include_directories(OpalAsyncApi PUBLIC ${OPAL_INCLUDE_DIR})

@@ -72,7 +72,7 @@ if(WITH_NODE_IEC61850)
 endif()
 
 # Enable OPAL-RT Asynchronous Process support
-if(WITH_NODE_OPAL)
+if(WITH_NODE_OPAL_ASYNC)
     list(APPEND NODE_SRC opal_async.cpp)
     list(APPEND LIBRARIES OpalAsyncApi)
 endif()
