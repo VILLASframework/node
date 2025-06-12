@@ -78,9 +78,9 @@ protected:
         << std::endl
         << "         and wait for provisioning over the web interface."
         << std::endl
-        << std::endl
+        << std::endl;
 
-        << "Supported node-types:" << std::endl;
+    std::cout << "Supported node-types:" << std::endl;
     for (auto p : registry->lookup<NodeFactory>()) {
       if (!p->isHidden())
         std::cout << " - " << std::left << std::setw(18) << p->getName()
