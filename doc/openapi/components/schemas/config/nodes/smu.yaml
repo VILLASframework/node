@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    format:
+      $ref: ../format_spec.yaml
+
+    mode:
+      type: string
+      enum:
+      - MODE_ONESHOT
+      - MODE_FREERUN
+      - MODE_VIRTUAL
+      - MODE_MAX
+      description: |
+        DAQ acquisition mode.
+
+    sync:
+      type: string
+      enum:
+      - SYNC_NONE
+      - SYNC_PPS
+      - SYNC_NTP
+      - SYNC_MAX
+      description: |
+        DAQ synchronization mode.
+
+    fps:
+      type: string
+      enum:
+      - FB_10FPS
+      - FB_20FPS
+      - FB_50FPS
+      - FB_100FPS
+      - FB_200FPS
+      description: |
+        DAQ buffer frame rate (Hz / FPS).
+
+    sample_rate:
+      type: string
+      enum:
+      - FS_1kSPS
+      - FS_2kSPS
+      - FS_5kSPS
+      - FS_10kSPS
+      - FS_20kSPS
+      - FS_25kSPS
+      - FS_50kSPS
+      - FS_100kSPS
+      - FS_200kSPS
+      description: |
+        DAQ sample rate (kHz / kSPS).
+
+    dumper:
+      type: object
+
+    in:
+      type: object
+
+- $ref: ../node_signals.yaml
+- $ref: ../node.yaml
