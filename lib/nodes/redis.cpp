@@ -44,7 +44,7 @@ RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts)
         onMessage(channel, msg);
       });
 
-  logger->info("New connection: {}", opts);
+  logger->info("New connection: {}:{}", opts.host, opts.port);
 
   state = State::INITIALIZED;
 }
