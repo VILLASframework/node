@@ -25,8 +25,7 @@ RUN dnf --allowerasing -y install \
 	flex bison \
 	texinfo git git-svn curl tar patchutils \
 	protobuf-compiler protobuf-c-compiler \
-	clang-tools-extra \
-	python-devel
+	clang-tools-extra
 
 # Dependencies
 RUN dnf -y install \
@@ -50,6 +49,7 @@ RUN dnf -y install \
 	hiredis-devel \
 	libnice-devel \
 	libmodbus-devel \
+	python-devel \
 	pybind11-devel
 
 # Install unpackaged dependencies from source
