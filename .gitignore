@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 /build*/
+/deps/
+/dest/
+
 *~
 .clang_complete
 .project
@@ -11,7 +14,9 @@
 .direnv/
 .cache/
 
+*~
 *.swp
+*.rpm
 *.pyc
 *.a
 *.o
