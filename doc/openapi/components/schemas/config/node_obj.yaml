@@ -39,6 +39,7 @@ discriminator:
     mqtt: nodes/_mqtt.yaml
     nanomsg: nodes/_nanomsg.yaml
     ngsi: nodes/_ngsi.yaml
+    opal_async: nodes/_opal_async.yaml
     opendss: nodes/_opendss.yaml
     opal.orchestra: nodes/_opal_orchestra.yaml
     redis: nodes/_redis.yaml
