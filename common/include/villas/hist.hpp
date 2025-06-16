@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 #include<string>
 #include <jansson.h>
@@ -61,8 +62,9 @@ public:
   // Write the histogram in JSON format to file \p f.
   int dumpJson(FILE *f) const;
 
-  std::string promFormat(std::string metric_name, std::string node_name) const;
-  
+  std::string toPrometheusText(std::string metric_name,
+                               std::string node_name) const;
+
   // Build a libjansson / JSON object of the histogram.
   json_t *toJson() const;
 
