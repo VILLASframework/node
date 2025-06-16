@@ -150,23 +150,29 @@ void Hist::plot(Logger logger) const {
   }
 }
 
-std::string Hist::promFormat(std::string metric_name, std::string node_name) const{
-  std::string base = "#TYPE HISTOGRAM "+metric_name;
-  //need this because prometheus understands quantiles 
+std::string Hist::toPrometheusText(std::string metric_name,
+                             std::string node_name) const {
+  std::stringstream base;
+  base << "#TYPE HISTOGRAM " << metric_name;
+  // Needed because Prometheus understands quantiles.
   int s = data.size();
   Hist::cnt_t cumsum = 0;
-  for(int i=0;i<s;i++){
+  for (int i = 0; i < s; i++) {
     cumsum += data[i];
-    base += "\n"+metric_name+" {node=\""+node_name+"\" le=\""+std::to_string(((double)i+1)/s)+"\"} "+std::to_string(cumsum);
+    base << "\n"
+         << metric_name << " {node=\"" << node_name << "\" le=\""
+         << ((double)i + 1) / s << "\"} " << cumsum;
   }
-  std::string ttl = std::to_string(total);
-  base += "\n"+metric_name+" {node=\""+node_name+"\" le=\"+Inf\"} "+ttl;
-  base +="\n"+metric_name+"_count "+" {node=\""+node_name+"\"} "+ttl;
+
+  base << "\n"
+       << metric_name << " {node=\"" << node_name << "\" le=\"+Inf\"} " << total
+       << "\n"
+       << metric_name << "_count "
+       << " {node=\"" << node_name << "\"} " << total;
 
   //next line is problematic because buckets have no associated values ?
   //base +="\n"+metric_name+"_count "+" {node=\""+node_name+"} "+std::to_string(ttl);
-
-  return base;
+  return base.str();
 }
 
 char *Hist::dump() const {
