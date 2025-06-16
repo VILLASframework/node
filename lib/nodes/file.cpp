@@ -5,14 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "villas/sample.hpp"
 #include <cerrno>
-#include <cstdio>
 #include <cstring>
-#include <iostream>
+
 #include <libgen.h>
-#include <ostream>
-#include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -134,11 +130,9 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
 
   if (read_mode) {
     if (!strcmp(read_mode, "all")) {
-      n->logger->debug("read mode: all set");
       f->read_mode = file::ReadMode::READ_ALL;
     } else {
       f->read_mode = file::ReadMode::RATE_BASED;
-      n->logger->debug("read mode: rate based set");
     }
   }
   return 0;
@@ -313,10 +307,9 @@ int villas::node::file_start(NodeCompat *n) {
   sample_free(smp);
 
   if (f->read_mode == file::ReadMode::READ_ALL) {
-    n->logger->info("Reading entire file into buffer");
-
-    struct Sample *smp_buffer;
+    Sample *smp_buffer;
     int retval;
+    // unsigned sample_size = n->getInputSignals(false)->size();
 
     while (!feof(f->stream_in)) {
       smp_buffer = sample_alloc_mem(n->getInputSignals(false)->size());
@@ -331,10 +324,12 @@ int villas::node::file_start(NodeCompat *n) {
         break;
       }
 
+      if (f->epoch_mode != file::EpochMode::ORIGINAL)
+        smp_buffer->ts.origin = time_add(&smp_buffer->ts.origin, &f->offset);
+
       f->samples.push_back(smp_buffer);
     }
 
-    n->logger->info("Read {} samples into buffer", f->samples.size());
     f->read_pos = 0;
   }
 
@@ -367,19 +362,55 @@ int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
 
   if (f->read_mode == file::ReadMode::READ_ALL) {
     unsigned read_count = 0;
-
     while (f->read_pos < f->samples.size() && read_count < cnt) {
 
       sample_copy(smps[read_count], f->samples[f->read_pos++]);
-      smps[read_count]->ts.origin = time_now();
-      n->logger->debug("Time now sec: {} nanosec: {}", time_now().tv_sec,
-                       time_now().tv_nsec);
+      if (f->epoch_mode == file::EpochMode::ORIGINAL) {
+        //No waiting
+      }
+      else if (f->rate) {
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+
+        smps[read_count]->ts.origin = time_now();
+      } else {
+        smps[read_count]->ts.origin =
+            time_add(&smps[read_count]->ts.origin, &f->offset);
+        f->task.setNext(&smps[read_count]->ts.origin);
+
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+      }
       read_count++;
     }
 
     if (f->read_pos == f->samples.size()) {
-      n->logger->info("Reached end of buffer");
-      n->setState(State::STOPPING);
+      switch (f->eof_mode) {
+      case file::EOFBehaviour::REWIND:
+        n->logger->info("Rewind input file");
+
+        f->read_pos = 0;
+        break;
+
+      case file::EOFBehaviour::SUSPEND:
+        usleep(100000); // 100ms sleep
+
+        // Try to download more data if this is a remote file.
+        clearerr(f->stream_in);
+        break;
+
+      case file::EOFBehaviour::STOP:
+      default:
+        n->logger->info("Reached end of buffer");
+        n->setState(State::STOPPING);
+        return -1;
+      }
       return -1;
     }
 
