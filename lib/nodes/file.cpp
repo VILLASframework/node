@@ -309,7 +309,6 @@ int villas::node::file_start(NodeCompat *n) {
   if (f->read_mode == file::ReadMode::READ_ALL) {
     Sample *smp_buffer;
     int retval;
-    // unsigned sample_size = n->getInputSignals(false)->size();
 
     while (!feof(f->stream_in)) {
       smp_buffer = sample_alloc_mem(n->getInputSignals(false)->size());
@@ -367,8 +366,7 @@ int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
       sample_copy(smps[read_count], f->samples[f->read_pos++]);
       if (f->epoch_mode == file::EpochMode::ORIGINAL) {
         //No waiting
-      }
-      else if (f->rate) {
+      } else if (f->rate) {
         steps = f->task.wait();
         if (steps == 0)
           throw SystemError("Failed to wait for timer");
