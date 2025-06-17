@@ -93,7 +93,7 @@ class Node(object):
 
     def restart(self):
         LOGGER.info("Restarting VILLASnode instance")
-        self.request("restart")
+        self.request("restart", method="POST")
 
     @property
     def active_config(self):
