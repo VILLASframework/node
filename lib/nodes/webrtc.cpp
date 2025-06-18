@@ -28,8 +28,8 @@ static villas::node::Web *web;
 WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
     : Node(id, name),
       server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
-      peer(uuid::toString(id)), wait_seconds(0), formatter(), queue({}),
-      pool({}), dci({}) {
+      peer(uuid::toString(id)), wait_seconds(0), formatter(), queue(), pool(),
+      dci({}) {
 
 #if RTC_VERSION_NUM < 0x001400
   dci.reliability.type = rtc::Reliability::Type::Rexmit;
@@ -42,7 +42,7 @@ WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
 }
 
 WebRTCNode::~WebRTCNode() {
-  int ret = pool_destroy(&pool);
+  int const ret = pool_destroy(&pool);
   if (ret)
     logger->error("Failed to destroy pool");
 }
@@ -105,7 +105,7 @@ int WebRTCNode::parse(json_t *json) {
           throw ConfigError(json_server, "node-config-node-webrtc-ice-server",
                             "ICE servers must be provided as STUN/TURN url.");
 
-        std::string uri = json_string_value(json_server);
+        std::string const uri = json_string_value(json_server);
 
         rtcConf.iceServers.emplace_back(uri);
       }
@@ -157,7 +157,7 @@ int WebRTCNode::prepare() {
 }
 
 int WebRTCNode::start() {
-  int ret = Node::start();
+  int const ret = Node::start();
   if (!ret)
     state = State::STARTED;
 
@@ -198,7 +198,7 @@ int WebRTCNode::_read(struct Sample *smps[], unsigned cnt) {
   std::vector<Sample *> smpt;
   smpt.resize(cnt);
 
-  int pulled =
+  int const pulled =
       queue_signalled_pull_many(&queue, (void **)smpt.data(), smpt.size());
 
   sample_copy_many(smps, smpt.data(), pulled);
@@ -212,7 +212,7 @@ int WebRTCNode::_write(struct Sample *smps[], unsigned cnt) {
   size_t wbytes;
 
   buf.resize(4 * 1024);
-  int ret =
+  int const ret =
       formatter->sprint((char *)buf.data(), buf.size(), &wbytes, smps, cnt);
   if (ret < 0) {
     logger->error("Failed to format payload");

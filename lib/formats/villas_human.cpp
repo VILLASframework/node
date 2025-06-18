@@ -153,7 +153,7 @@ out:
     smp->flags |= (int)SampleFlags::HAS_DATA;
 
   if (smp->flags & (int)SampleFlags::HAS_OFFSET) {
-    struct timespec off = time_from_double(offset);
+    struct timespec const off = time_from_double(offset);
     smp->ts.received = time_add(&smp->ts.origin, &off);
 
     smp->flags |= (int)SampleFlags::HAS_TS_RECEIVED;

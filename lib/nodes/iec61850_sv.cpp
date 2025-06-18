@@ -33,7 +33,7 @@ using namespace villas::node;
 static unsigned iec61850_sv_setup_asdu(NodeCompat *n, struct Sample *smp) {
   auto *i = n->getData<struct iec61850_sv>();
 
-  unsigned new_length = MIN(list_length(&i->out.signals), smp->length);
+  unsigned const new_length = MIN(list_length(&i->out.signals), smp->length);
 
   SVPublisher_ASDU_resetBuffer(i->out.asdu);
   SVPublisher_ASDU_enableRefrTm(i->out.asdu);
@@ -78,7 +78,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
 
   const char *sv_id = SVSubscriber_ASDU_getSvId(asdu);
   int smp_cnt = SVSubscriber_ASDU_getSmpCnt(asdu);
-  size_t data_size = (size_t)SVSubscriber_ASDU_getDataSize(asdu);
+  size_t const data_size = (size_t)SVSubscriber_ASDU_getDataSize(asdu);
 
   n->logger->debug("Received sample: sv_id={}, smp_cnt={}", sv_id, smp_cnt);
 
@@ -94,7 +94,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
   smp->signals = n->getInputSignals(false);
 
   if (SVSubscriber_ASDU_hasRefrTm(asdu)) {
-    uint64_t t = SVSubscriber_ASDU_getRefrTmAsNs(asdu);
+    uint64_t const t = SVSubscriber_ASDU_getRefrTmAsNs(asdu);
 
     smp->ts.origin.tv_sec = t / 1000000000;
     smp->ts.origin.tv_nsec = t % 1000000000;
@@ -453,7 +453,7 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
   for (unsigned j = 0; j < cnt; j++) {
     auto *smp = smps[j];
 
-    unsigned asdu_length = MIN(smp->length, list_length(&i->out.signals));
+    unsigned const asdu_length = MIN(smp->length, list_length(&i->out.signals));
     if (i->out.asdu_length != asdu_length)
       i->out.asdu_length = iec61850_sv_setup_asdu(n, smp);
 
@@ -525,7 +525,8 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
       SVPublisher_ASDU_setSmpCnt(i->out.asdu, smp->sequence);
 
     if (smp->flags & (int)SampleFlags::HAS_TS_ORIGIN) {
-      uint64_t t = smp->ts.origin.tv_sec * 1000000000 + smp->ts.origin.tv_nsec;
+      uint64_t const t =
+          smp->ts.origin.tv_sec * 1000000000 + smp->ts.origin.tv_nsec;
 
       SVPublisher_ASDU_setRefrTmNs(i->out.asdu, t);
     }
@@ -563,5 +564,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = iec61850_sv_write;
   p.poll_fds = iec61850_sv_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

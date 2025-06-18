@@ -125,7 +125,7 @@ int RawFormat::sprint(char *buf, size_t len, size_t *wbytes,
     }
 
     for (unsigned j = 0; j < smp->length; j++) {
-      enum SignalType fmt = sample_format(smp, j);
+      enum SignalType const fmt = sample_format(smp, j);
       const union SignalData *data = &smp->data[j];
 
       // Check length
@@ -287,7 +287,7 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes,
   struct Sample *smp = smps[0];
 
   int o = 0;
-  int nlen = len / (bits / 8);
+  int const nlen = len / (bits / 8);
 
   if (cnt > 1)
     return -1;
@@ -355,7 +355,7 @@ int RawFormat::sscan(const char *buf, size_t len, size_t *rbytes,
 
   unsigned i;
   for (i = 0; i < smp->capacity && o < nlen; i++) {
-    enum SignalType fmt = sample_format(smp, i);
+    enum SignalType const fmt = sample_format(smp, i);
     union SignalData *data = &smp->data[i];
 
     switch (fmt) {

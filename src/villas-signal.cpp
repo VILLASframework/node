@@ -53,7 +53,7 @@ protected:
 
   std::string format;
 
-  void usage() {
+  void usage() override {
     std::cout
         << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
         << "  SIGNAL   is on of the following signal types:" << std::endl
@@ -191,7 +191,7 @@ protected:
     for (int i = 0; i < values; i++) {
       json_t *json_signal = json_pack(
           "{ s: s, s: f, s: f, s: f, s: f, s: f, s: f, s: f, s: f }", "signal",
-          strdup(type.c_str()), "frequency", frequency, "amplitude", amplitude,
+          type.c_str(), "frequency", frequency, "amplitude", amplitude,
           "stddev", stddev, "offset", offset, "pulse_width", pulse_width,
           "pulse_low", pulse_low, "pulse_high", pulse_high, "phase", phase);
 
@@ -203,7 +203,7 @@ protected:
                      "in", "signals", json_signals);
   }
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) {
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
     switch (signal) {
     case SIGALRM:
       logger->info("Reached timeout. Terminating...");
@@ -216,7 +216,7 @@ protected:
     stop = true;
   }
 
-  int main() {
+  int main() override {
     int ret;
     json_t *json, *json_format;
     json_error_t err;

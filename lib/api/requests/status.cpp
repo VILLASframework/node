@@ -56,7 +56,7 @@ public:
       throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
                   "Failed to get system information");
 
-    float f_load = 1.f / (1 << SI_LOAD_SHIFT);
+    float const f_load = 1.f / (1 << SI_LOAD_SHIFT);
 
     tzset();
 

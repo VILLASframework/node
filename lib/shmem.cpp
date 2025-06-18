@@ -93,8 +93,8 @@ retry:
 
   shared->polling = conf->polling;
 
-  int flags = (int)QueueSignalledFlags::PROCESS_SHARED;
-  enum QueueSignalledMode mode =
+  int const flags = (int)QueueSignalledFlags::PROCESS_SHARED;
+  enum QueueSignalledMode const mode =
       conf->polling ? QueueSignalledMode::POLLING : QueueSignalledMode::PTHREAD;
 
   ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, mode,

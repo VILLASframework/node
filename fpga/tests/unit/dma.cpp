@@ -44,7 +44,7 @@ Test(fpga, dma, .description = "DMA") {
 
     // Simple DMA can only transfer up to 4 kb due to PCIe page size burst
     // limitation
-    size_t len = 4 * (1 << 10);
+    size_t const len = 4 * (1 << 10);
 
 #if 0
     // Allocate memory to use with DMA
@@ -68,8 +68,8 @@ Test(fpga, dma, .description = "DMA") {
         alloc.allocateBlock(len);
     const std::shared_ptr<villas::MemoryBlock> dstBlock =
         alloc.allocateBlock(len);
-    villas::MemoryAccessor<char> src(*srcBlock);
-    villas::MemoryAccessor<char> dst(*dstBlock);
+    villas::MemoryAccessor<char> const src(*srcBlock);
+    villas::MemoryAccessor<char> const dst(*dstBlock);
 #endif
     // Make sure memory is accessible for DMA
     dma->makeAccesibleFromVA(srcBlock);

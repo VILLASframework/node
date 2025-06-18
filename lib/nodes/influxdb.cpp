@@ -194,5 +194,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.stop = influxdb_close;
   p.write = influxdb_write;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

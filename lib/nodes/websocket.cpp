@@ -70,10 +70,9 @@ static int websocket_connection_destroy(struct websocket_connection *c) {
   assert(c->state != websocket_connection::State::DESTROYED);
 
   // Return all samples to pool
-  int avail;
   struct Sample *smp;
 
-  while ((avail = queue_pull(&c->queue, (void **)&smp)))
+  while (queue_pull(&c->queue, (void **)&smp))
     sample_decref(smp);
 
   ret = queue_destroy(&c->queue);
@@ -132,7 +131,8 @@ static void websocket_connection_close(struct websocket_connection *c,
 int villas::node::websocket_protocol_cb(struct lws *wsi,
                                         enum lws_callback_reasons reason,
                                         void *user, void *in, size_t len) {
-  int ret, recvd, pulled, cnt = 128;
+  int const cnt = 128;
+  int ret, recvd, pulled;
   struct websocket_connection *c = (struct websocket_connection *)user;
 
   switch (reason) {
@@ -216,7 +216,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
                           c->toString());
 
     {
-      std::lock_guard guard(connections_lock);
+      std::lock_guard const guard(connections_lock);
       connections.push_back(c);
     }
 
@@ -239,7 +239,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
     }
 
     {
-      std::lock_guard guard(connections_lock);
+      std::lock_guard const guard(connections_lock);
       connections.remove(c);
     }
 
@@ -296,7 +296,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
 
     // We dont try to parse the frame yet, as we have to wait for the remaining fragments
     if (lws_is_final_fragment(wsi)) {
-      struct timespec ts_recv = time_now();
+      struct timespec const ts_recv = time_now();
       auto *n = c->node;
 
       int avail, enqueued;
@@ -369,7 +369,7 @@ int villas::node::websocket_init(NodeCompat *n) {
 
   w->wait = false;
 
-  int ret = list_init(&w->destinations);
+  int const ret = list_init(&w->destinations);
   if (ret)
     return ret;
 
@@ -392,7 +392,7 @@ int villas::node::websocket_start(NodeCompat *n) {
   for (size_t i = 0; i < list_length(&w->destinations); i++) {
     const char *format;
     auto *d = (struct websocket_destination *)list_at(&w->destinations, i);
-    auto *c = new struct websocket_connection;
+    auto c = std::make_unique<websocket_connection>();
     if (!c)
       throw MemoryAllocationError();
 
@@ -413,7 +413,7 @@ int villas::node::websocket_start(NodeCompat *n) {
 
     d->info.context = web->getContext();
     d->info.vhost = web->getVHost();
-    d->info.userdata = c;
+    d->info.userdata = c.release();
 
     lws_client_connect_via_info(&d->info);
   }
@@ -423,7 +423,7 @@ int villas::node::websocket_start(NodeCompat *n) {
     unsigned connected = 0, total = list_length(&w->destinations);
     do {
       {
-        std::lock_guard guard(connections_lock);
+        std::lock_guard const guard(connections_lock);
 
         connected = 0;
         for (auto *c : connections) {
@@ -452,7 +452,7 @@ int villas::node::websocket_stop(NodeCompat *n) {
   unsigned open_connections;
   do {
     {
-      std::lock_guard guard(connections_lock);
+      std::lock_guard const guard(connections_lock);
 
       open_connections = 0;
       for (auto *c : connections) {
@@ -533,7 +533,7 @@ int villas::node::websocket_write(NodeCompat *n, struct Sample *const smps[],
   sample_copy_many(cpys, smps, avail);
 
   {
-    std::lock_guard guard(connections_lock);
+    std::lock_guard const guard(connections_lock);
     for (auto *c : connections) {
       if (c->node == n)
         websocket_connection_write(c, cpys, cnt);

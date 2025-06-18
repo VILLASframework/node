@@ -418,7 +418,7 @@ static int ngsi_parse_context_response(json_t *json_response, int *code,
 
 static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb,
                                   void *userp) {
-  size_t realsize = size * nmemb;
+  size_t const realsize = size * nmemb;
   struct ngsi_response *mem = (struct ngsi_response *)userp;
 
   mem->data = (char *)realloc(mem->data, mem->len + realsize + 1);
@@ -454,7 +454,7 @@ static int ngsi_request(CURL *handle, const char *endpoint,
 
   // We don't want to leave the handle in an invalid state
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
-  CURLcode ret = curl_easy_perform(handle);
+  CURLcode const ret = curl_easy_perform(handle);
   pthread_setcancelstate(old, nullptr);
 
   if (ret) {
@@ -663,8 +663,8 @@ int villas::node::ngsi_start(NodeCompat *n) {
     json_t *json_entity = ngsi_build_entity(
         n, nullptr, 0, NGSI_ENTITY_ATTRIBUTES | NGSI_ENTITY_METADATA);
 
-    int ret = ngsi_request_context_update(i->out.curl, i->endpoint, "APPEND",
-                                          json_entity, n->logger);
+    int const ret = ngsi_request_context_update(
+        i->out.curl, i->endpoint, "APPEND", json_entity, n->logger);
     if (ret)
       throw RuntimeError("Failed to create NGSI context for node {}",
                          n->getName());
@@ -834,5 +834,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.poll_fds = ngsi_poll_fds;
   p.reverse = ngsi_reverse;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

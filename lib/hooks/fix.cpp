@@ -21,7 +21,7 @@ public:
   Hook::Reason process(struct Sample *smp) override {
     assert(state == State::STARTED);
 
-    timespec now = time_now();
+    timespec const now = time_now();
 
     if (!(smp->flags & (int)SampleFlags::HAS_SEQUENCE) && node) {
       smp->sequence = node->sequence++;

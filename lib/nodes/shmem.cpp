@@ -219,5 +219,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.prepare = shmem_prepare;
   p.init = shmem_init;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

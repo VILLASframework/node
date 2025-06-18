@@ -115,7 +115,7 @@ size_t Gpu2Rtds::getMaxFrameSize() {
   while (not registerStatusCtrl->status_ap_vld)
     ;
 
-  axilite_reg_status_t status = *registerStatus;
+  axilite_reg_status_t const status = *registerStatus;
 
   //	logger->debug("(*registerStatus).max_frame_size: {}", (*registerStatus).max_frame_size);
   //	logger->debug("status.max_frame_size: {}", status.max_frame_size);

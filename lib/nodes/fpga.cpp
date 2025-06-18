@@ -348,7 +348,7 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
     mem[i] = smps[0]->data[i].f;
   }
 
-  bool state = dma->write(*blockTx, smp->length * sizeof(float));
+  bool const state = dma->write(*blockTx, smp->length * sizeof(float));
   if (!state) {
     return -1;
   }
@@ -365,7 +365,7 @@ int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
 
 std::vector<int> FpgaNode::getPollFDs() {
   if (!lowLatencyMode && card && !card->polling) {
-    std::shared_ptr<PCIeCard> pciecard =
+    std::shared_ptr<PCIeCard> const pciecard =
         std::dynamic_pointer_cast<PCIeCard>(card);
     return pciecard->vfioDevice->getEventfdList();
   } else {

@@ -32,7 +32,7 @@ public:
   PrintHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), output(nullptr) {}
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     if (!output_path.empty()) {
@@ -47,7 +47,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     if (output)
       fclose(output);
   }
@@ -97,7 +97,7 @@ public:
 
     if (!output) {
       char *buf = output_buffer.data();
-      size_t buflen = output_buffer.size();
+      size_t const buflen = output_buffer.size();
       size_t wbytes;
 
       formatter->sprint(buf, buflen, &wbytes, smp);

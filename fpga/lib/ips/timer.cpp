@@ -46,7 +46,8 @@ bool Timer::start(uint32_t ticks) {
 }
 
 bool Timer::wait() {
-  int count = irqs[irqName].irqController->waitForInterrupt(irqs[irqName]);
+  int const count =
+      irqs[irqName].irqController->waitForInterrupt(irqs[irqName]);
   irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
   return (count == 1);

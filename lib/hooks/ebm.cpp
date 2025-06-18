@@ -55,7 +55,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     energy = 0;
@@ -64,7 +64,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void periodic() override {
+  void periodic() override {
     assert(state == State::STARTED);
 
     logger->info("Energy: {}", energy);

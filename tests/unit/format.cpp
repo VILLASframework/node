@@ -9,7 +9,7 @@
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
-#include <float.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include <villas/format.hpp>
@@ -19,8 +19,6 @@
 #include <villas/signal.hpp>
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
-
-#include "helpers.hpp"
 
 using namespace villas;
 using namespace villas::node;
@@ -117,8 +115,9 @@ void cr_assert_eq_sample(struct Sample *a, struct Sample *b, int flags) {
 
       case SignalType::INTEGER:
         cr_assert_eq(a->data[j].i, b->data[j].i,
-                     "Sample data mismatch at index %d: %lld != %lld", j,
-                     a->data[j].i, b->data[j].i);
+                     "Sample data mismatch at index %d: %" PRId64
+                     " != %" PRId64,
+                     j, a->data[j].i, b->data[j].i);
         break;
 
       case SignalType::BOOLEAN:
@@ -171,8 +170,9 @@ void cr_assert_eq_sample_raw(struct Sample *a, struct Sample *b, int flags,
 
       case SignalType::INTEGER:
         cr_assert_eq(a->data[j].i, b->data[j].i,
-                     "Sample data mismatch at index %d: %lld != %lld", j,
-                     a->data[j].i, b->data[j].i);
+                     "Sample data mismatch at index %d: %" PRId64
+                     " != %" PRId64,
+                     j, a->data[j].i, b->data[j].i);
         break;
 
       case SignalType::BOOLEAN:
@@ -240,7 +240,7 @@ ParameterizedTest(Param *p, format, lowlevel, .init = init_memory) {
   char buf[8192];
   size_t wbytes, rbytes;
 
-  Logger logger = Log::get("test:format:lowlevel");
+  Logger const logger = Log::get("test:format:lowlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
@@ -330,7 +330,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
   int ret, cnt;
   char *retp;
 
-  Logger logger = Log::get("test:format:highlevel");
+  Logger const logger = Log::get("test:format:highlevel");
 
   logger->info("Running test for format={}, cnt={}", p->fmt, p->cnt);
 
@@ -391,6 +391,7 @@ ParameterizedTest(Param *p, format, highlevel, .init = init_memory) {
 #endif
 
   rewind(stream);
+  (void)errno; // TODO: should we handle rewind errors?
 
   cnt = fmt->scan(stream, smpt, p->cnt);
   cr_assert_eq(cnt, p->cnt, "Read only %d of %d samples back", cnt, p->cnt);

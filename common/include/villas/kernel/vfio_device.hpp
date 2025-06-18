@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include <list>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -99,7 +97,7 @@ private:
   std::vector<void *> mappings;
 
   // libpci handle of the device
-  const kernel::devices::PciDevice *pci_device;
+  [[maybe_unused]] const kernel::devices::PciDevice *pci_device;
 
   Logger log;
 };

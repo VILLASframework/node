@@ -36,11 +36,11 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
 
     char *cptr = (char *)block + sizeof(struct Block);
     size_t avail = block->length;
-    uintptr_t uptr = (uintptr_t)cptr;
+    uintptr_t const uptr = (uintptr_t)cptr;
 
     /* Check alignment first; leave a gap at start of block to assure
      * alignment if necessary */
-    uintptr_t rem = uptr % alignment;
+    uintptr_t const rem = uptr % alignment;
     uintptr_t gap = 0;
     if (rem != 0) {
       gap = alignment - rem;

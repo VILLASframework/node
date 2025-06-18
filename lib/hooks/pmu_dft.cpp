@@ -324,7 +324,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void check() {
+  void check() override {
     assert(state == State::PARSED);
 
     if (endFreqency < 0 || endFreqency > sampleRate)
@@ -355,7 +355,7 @@ public:
 #endif
 
     bool run = false;
-    double smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
+    double const smpNsec = smp->ts.origin.tv_sec * 1e9 + smp->ts.origin.tv_nsec;
 
     if (smpNsec > nextCalc) {
       run = true;
@@ -394,7 +394,7 @@ public:
           }
         }
 
-        int multiplier =
+        int const multiplier =
             paddingType == PaddingType::ZERO ? 1 : windowMultiplier;
 
         DftEstimate dftEstimate = {0};
@@ -408,9 +408,9 @@ public:
               maxPos, startFrequency, frequencyResolution, multiplier,
               windowSize, windowCorrectionFactor);
         } else {
-          Point a = {absFrequencies[maxPos - 1], results[i][maxPos - 1]};
-          Point b = {absFrequencies[maxPos + 0], results[i][maxPos + 0]};
-          Point c = {absFrequencies[maxPos + 1], results[i][maxPos + 1]};
+          Point const a = {absFrequencies[maxPos - 1], results[i][maxPos - 1]};
+          Point const b = {absFrequencies[maxPos + 0], results[i][maxPos + 0]};
+          Point const c = {absFrequencies[maxPos + 1], results[i][maxPos + 1]};
 
           if (estType == EstimationType::QUADRATIC)
             dftEstimate = quadraticEstimation(
@@ -499,7 +499,7 @@ public:
     using namespace std::complex_literals;
 
     omega = exp((-2i * M_PI) / (double)(windowSize * windowMultiplier));
-    unsigned startBin = floor(startFrequency / frequencyResolution);
+    unsigned const startBin = floor(startFrequency / frequencyResolution);
 
     for (unsigned i = 0; i < freqCount; i++) {
       for (unsigned j = 0; j < windowSize * windowMultiplier; j++)
@@ -588,14 +588,14 @@ public:
                            double frequencyResolution, double multiplier,
                            double windowSize, double windowCorrectionFactor) {
     // Frequency estimation
-    double f_est = startFrequency + maxFBin * frequencyResolution;
+    double const f_est = startFrequency + maxFBin * frequencyResolution;
 
     // Amplitude estimation
-    double a_est =
+    double const a_est =
         abs(b.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
 
     //Phase estimation
-    double phase_est = atan2(b.y.imag(), b.y.real());
+    double const phase_est = atan2(b.y.imag(), b.y.real());
 
     return {a_est, f_est, phase_est};
   }
@@ -621,7 +621,7 @@ public:
     }
 
     // Frequency estimation (eq 4)
-    double f_est =
+    double const f_est =
         startFrequency + ((double)maxFBin + delta) * frequencyResolution;
 
     // Amplitude estimation (eq 9)
@@ -630,7 +630,7 @@ public:
     a_est *= 2 / (windowSize * windowCorrectionFactor * multiplier);
 
     //Phase estimation (eq 10)
-    double phase_est = atan2(b.y.imag(), b.y.real()) - M_PI * delta;
+    double const phase_est = atan2(b.y.imag(), b.y.real()) - M_PI * delta;
 
     return {a_est, f_est, phase_est};
   }
@@ -650,35 +650,37 @@ public:
                                   double windowCorrectionFactor) {
     using namespace std::complex_literals;
 
-    double ay_abs =
+    double const ay_abs =
         abs(a.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
-    double by_abs =
+    double const by_abs =
         abs(b.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
-    double cy_abs =
+    double const cy_abs =
         abs(c.y) * 2 / (windowSize * windowCorrectionFactor * multiplier);
 
     // Frequency estimation
-    double maxBinEst = (double)maxFBin +
-                       (cy_abs - ay_abs) / (2 * (2 * by_abs - ay_abs - cy_abs));
-    double f_est = startFrequency +
-                   maxBinEst * frequencyResolution; // convert bin to frequency
+    double const maxBinEst =
+        (double)maxFBin +
+        (cy_abs - ay_abs) / (2 * (2 * by_abs - ay_abs - cy_abs));
+    double const f_est =
+        startFrequency +
+        maxBinEst * frequencyResolution; // convert bin to frequency
 
     // Amplitude estimation
-    double f = (a.x * (by_abs - cy_abs) + b.x * (cy_abs - ay_abs) +
-                c.x * (ay_abs - by_abs)) /
-               ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
-    double g =
+    double const f = (a.x * (by_abs - cy_abs) + b.x * (cy_abs - ay_abs) +
+                      c.x * (ay_abs - by_abs)) /
+                     ((a.x - b.x) * (a.x - c.x) * (c.x - b.x));
+    double const g =
         (pow(a.x, 2) * (by_abs - cy_abs) + pow(b.x, 2) * (cy_abs - ay_abs) +
          pow(c.x, 2) * (ay_abs - by_abs)) /
         ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-    double h = (pow(a.x, 2) * (b.x * cy_abs - c.x * by_abs) +
-                a.x * (pow(c.x, 2) * by_abs - pow(b.x, 2) * cy_abs) +
-                b.x * c.x * ay_abs * (b.x - c.x)) /
-               ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
-    double a_est = f * pow(f_est, 2) + g * f_est + h;
+    double const h = (pow(a.x, 2) * (b.x * cy_abs - c.x * by_abs) +
+                      a.x * (pow(c.x, 2) * by_abs - pow(b.x, 2) * cy_abs) +
+                      b.x * c.x * ay_abs * (b.x - c.x)) /
+                     ((a.x - b.x) * (a.x - c.x) * (b.x - c.x));
+    double const a_est = f * pow(f_est, 2) + g * f_est + h;
 
     //Phase estimation
-    double phase_est = atan2(b.y.imag(), b.y.real());
+    double const phase_est = atan2(b.y.imag(), b.y.real());
 
     return {a_est, f_est, phase_est};
   }

@@ -168,7 +168,7 @@ void PopenStream::open() {
 }
 
 int PopenStream::close() {
-  int ret = Popen::close();
+  int const ret = Popen::close();
 
   input.stream.reset();
   output.stream.reset();

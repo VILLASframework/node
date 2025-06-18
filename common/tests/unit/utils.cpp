@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <memory>
+
 #include <criterion/criterion.h>
 
 #include <villas/colors.hpp>
@@ -22,7 +24,7 @@ TestSuite(utils, .description = "Utilities");
 Test(utils, box_muller) {
   double n;
   unsigned sigma[3] = {0};
-  unsigned iter = 1000000;
+  unsigned const iter = 1000000;
 
   for (unsigned i = 0; i < iter; i++) {
     n = boxMuller(0, 1);
@@ -54,17 +56,17 @@ Test(utils, box_muller) {
 Test(utils, cpuset) {
   using villas::utils::CpuSet;
 
-  uintmax_t int1 = 0x1234567890ABCDEFULL;
+  uintmax_t const int1 = 0x1234567890ABCDEFULL;
 
   CpuSet cset1(int1);
 
-  std::string cset1_str = cset1;
+  std::string const cset1_str = cset1;
 
   CpuSet cset2(cset1_str);
 
   cr_assert_eq(cset1, cset2);
 
-  uintmax_t int2 = cset2;
+  uintmax_t const int2 = cset2;
 
   cr_assert_eq(int1, int2);
 
@@ -86,9 +88,10 @@ Test(utils, cpuset) {
   cset4.clear(6);
   cr_assert_not(cset4[6]);
 
-  cr_assert_str_eq(static_cast<std::string>(cset4).c_str(), "1-5");
+  auto cset4_str = static_cast<std::string>(cset4);
+  cr_assert_str_eq(cset4_str.c_str(), "1-5");
 
-  cr_assert_any_throw(CpuSet cset5("0-"));
+  cr_assert_any_throw(CpuSet const cset5("0-"));
 
   CpuSet cset6;
   cr_assert(cset6.empty());
@@ -167,9 +170,9 @@ Test(utils, version) {
   Version v2 = Version("1.3");
   Version v3 = Version("55");
   Version v4 = Version("66");
-  Version v5 = Version(66);
+  Version const v5 = Version(66);
   Version v6 = Version(1, 2, 5);
-  Version v7 = Version("1.2.5");
+  Version const v7 = Version("1.2.5");
 
   cr_assert_lt(v1, v2);
   cr_assert_eq(v1, v1);
@@ -181,7 +184,10 @@ Test(utils, version) {
 
 Test(utils, sha1sum) {
   int ret;
-  FILE *f = tmpfile();
+  auto file_destructor = [](FILE *file) { fclose(file); };
+  auto f = std::unique_ptr<FILE, decltype(file_destructor)>{tmpfile(),
+                                                            file_destructor};
+  cr_assert(f);
 
   unsigned char hash[SHA_DIGEST_LENGTH];
   unsigned char expected[SHA_DIGEST_LENGTH] = {
@@ -192,15 +198,13 @@ Test(utils, sha1sum) {
   for (int i = 0, a = 0, b = 1, c; i < 512; i++, a = b, b = c) {
     c = a + b;
 
-    fwrite((void *)&c, sizeof(c), 1, f);
+    fwrite((void *)&c, sizeof(c), 1, f.get());
   }
 
-  ret = sha1sum(f, hash);
+  ret = sha1sum(f.get(), hash);
 
   cr_assert_eq(ret, 0);
   cr_assert_arr_eq(hash, expected, SHA_DIGEST_LENGTH);
-
-  fclose(f);
 }
 
 Test(utils, decolor) {

@@ -107,7 +107,7 @@ void I2c::driverWriteBlocking(u8 *dataPtr, size_t size) {
     // We need to wait for several interrupts as sending the stop condition involves generating
     // multiple interrupts before the transmission is complete.
     while (transmitIntrs == 0 && intrRetries > 0) {
-      ssize_t intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
+      ssize_t const intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
           irqs[i2cInterrupt].num);
       if (intrs == -1) {
         break;
@@ -147,7 +147,7 @@ void I2c::driverReadBlocking(u8 *dataPtr, size_t max_read) {
       }
     } while (ret == XST_IIC_BUS_BUSY && --bbRetries >= 0);
     while (receiveIntrs == 0 && intrRetries > 0) {
-      ssize_t intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
+      ssize_t const intrs = irqs[i2cInterrupt].irqController->waitForInterrupt(
           irqs[i2cInterrupt].num);
       if (intrs == -1) {
         break;
@@ -175,7 +175,7 @@ void I2c::waitForBusNotBusy() {
   //Deactivate BusNotBusy interrupt
   XIic_WriteIier(xIic.BaseAddress,
                  XIic_ReadIier(xIic.BaseAddress) & ~(XIIC_INTR_BNB_MASK));
-  uint32_t clear = XIIC_INTR_BNB_MASK;
+  uint32_t const clear = XIIC_INTR_BNB_MASK;
   XIic_WriteIisr(xIic.BaseAddress, clear);
   if (retries == 0) {
     throw RuntimeError("I2C bus stayed busy after 10 interrupts");
@@ -317,17 +317,17 @@ void I2cFactory::parse(Core &ip, json_t *cfg) {
   char *component_name = nullptr;
 
   json_error_t err;
-  int ret = json_unpack_ex(cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: s} }",
-                           "parameters", "c_iic_freq", &i2c_frequency,
-                           "c_ten_bit_adr", &i2c.xConfig.Has10BitAddr,
-                           "c_gpo_width", &i2c.xConfig.GpOutWidth,
-                           "component_name", &component_name);
+  int const ret = json_unpack_ex(
+      cfg, &err, 0, "{ s: { s?: i, s?: i, s?: i, s?: s} }", "parameters",
+      "c_iic_freq", &i2c_frequency, "c_ten_bit_adr", &i2c.xConfig.Has10BitAddr,
+      "c_gpo_width", &i2c.xConfig.GpOutWidth, "component_name",
+      &component_name);
   if (ret != 0) {
     throw ConfigError(cfg, err, "", "Failed to parse DMA configuration for {}",
                       ip.getInstanceName());
   }
   if (component_name != nullptr) {
-    char last_letter = component_name[strlen(component_name) - 1];
+    char const last_letter = component_name[strlen(component_name) - 1];
     if (last_letter >= '0' && last_letter <= '9') {
       i2c.xConfig.DeviceId = last_letter - '0';
     } else {

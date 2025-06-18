@@ -185,7 +185,7 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
     const char *name;
   };
 
-  std::list<struct desc> arrays = {
+  std::list<struct desc> const arrays = {
       {json_frequency, &s->frequency, 1, "frequency"},
       {json_amplitude, &s->amplitude, 1, "amplitude"},
       {json_stddev, &s->stddev, 0.2, "stddev"},
@@ -328,14 +328,14 @@ int villas::node::signal_node_read(NodeCompat *n, struct Sample *const smps[],
   if (s->rt)
     ts = time_now();
   else {
-    struct timespec offset = time_from_double(s->counter * 1.0 / s->rate);
+    struct timespec const offset = time_from_double(s->counter * 1.0 / s->rate);
 
     ts = time_add(&s->started, &offset);
 
     steps = 1;
   }
 
-  double running = time_delta(&s->started, &ts);
+  double const running = time_delta(&s->started, &ts);
 
   t->flags = (int)SampleFlags::HAS_TS_ORIGIN | (int)SampleFlags::HAS_DATA |
              (int)SampleFlags::HAS_SEQUENCE;
@@ -471,5 +471,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.read = signal_node_read;
   p.poll_fds = signal_node_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

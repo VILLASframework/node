@@ -177,8 +177,8 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
   if (!init && initSampleCount > windowSize)
     init = true;
 
-  timespec timeDiff = time_diff(&nextRun, &smp->ts.origin);
-  double tmpTimeDiff = time_to_double(&timeDiff);
+  timespec const timeDiff = time_diff(&nextRun, &smp->ts.origin);
+  double const tmpTimeDiff = time_to_double(&timeDiff);
   bool run = false;
   if (tmpTimeDiff > 0. && init)
     run = true;
@@ -193,8 +193,9 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
     }
 
     // Align time tag
-    double currentTimeTag = time_to_double(&smp->ts.origin);
-    double alignedTime = currentTimeTag - fmod(currentTimeTag, 1 / phasorRate);
+    double const currentTimeTag = time_to_double(&smp->ts.origin);
+    double const alignedTime =
+        currentTimeTag - fmod(currentTimeTag, 1 / phasorRate);
     nextRun = time_from_double(alignedTime + 1 / phasorRate);
 
     size_t tsPos = 0;

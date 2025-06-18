@@ -304,9 +304,9 @@ bool Dma::writeScatterGatherFast() {
   BdSts &= ~XAXIDMA_BD_STS_COMPLETE_MASK;
   XAxiDma_BdWrite(CurBdPtr, XAXIDMA_BD_STS_OFFSET, BdSts);
 
-  uintptr_t tdesc = ((uintptr_t)txRing->HwTail +
-                     (txRing->FirstBdPhysAddr - txRing->FirstBdAddr)) &
-                    XAXIDMA_DESC_LSB_MASK;
+  uintptr_t const tdesc = ((uintptr_t)txRing->HwTail +
+                           (txRing->FirstBdPhysAddr - txRing->FirstBdAddr)) &
+                          XAXIDMA_DESC_LSB_MASK;
   XAxiDma_WriteReg(txRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
 
   hwWriteLock.unlock();
@@ -417,9 +417,9 @@ bool Dma::readScatterGatherFast() {
   BdSts &= ~XAXIDMA_BD_STS_COMPLETE_MASK;
   XAxiDma_BdWrite(CurBdPtr, XAXIDMA_BD_STS_OFFSET, BdSts);
 
-  uintptr_t tdesc = ((uintptr_t)rxRing->HwTail +
-                     (rxRing->FirstBdPhysAddr - rxRing->FirstBdAddr)) &
-                    XAXIDMA_DESC_LSB_MASK;
+  uintptr_t const tdesc = ((uintptr_t)rxRing->HwTail +
+                           (rxRing->FirstBdPhysAddr - rxRing->FirstBdAddr)) &
+                          XAXIDMA_DESC_LSB_MASK;
   XAxiDma_WriteReg(rxRing->ChanBase, XAXIDMA_TDESC_OFFSET, tdesc);
 
   hwReadLock.unlock();
@@ -651,7 +651,7 @@ Dma::Completion Dma::readCompleteScatterGather() {
     logger->warn("Interrupt error or timeout: {}", intrs);
 
     // Free all RX BDs for future transmission.
-    int bds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd);
+    int const bds = XAxiDma_BdRingFromHw(rxRing, XAXIDMA_ALL_BDS, &bd);
     XAxiDma_BdRingFree(rxRing, bds, bd);
     hwReadLock.unlock();
 
@@ -922,7 +922,7 @@ void DmaFactory::parse(Core &ip, json_t *cfg) {
   dma.xConfig.SgLengthWidth = 14;
 
   json_error_t err;
-  int ret = json_unpack_ex(
+  int const ret = json_unpack_ex(
       cfg, &err, 0,
       "{ s: { s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i, "
       "s?: i, s?: i, s?: i, s?: i } }",

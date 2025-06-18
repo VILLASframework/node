@@ -47,12 +47,12 @@ public:
   Error(int e, const std::string &what, Args &&...args)
       : usb::Error((enum libusb_error)e, what, std::forward<Args>(args)...) {}
 
-  ~Error() {
+  ~Error() override {
     if (msg)
       free(msg);
   }
 
-  virtual const char *what() const noexcept { return msg; }
+  const char *what() const noexcept override { return msg; }
 };
 
 class Device {

@@ -17,8 +17,9 @@ using namespace villas;
 TestSuite(task, .description = "Periodic timer tasks");
 
 Test(task, rate, .timeout = 10) {
-  int runs = 10;
-  double rate = 5, waited;
+  int const runs = 10;
+  double const rate = 5;
+  double waited;
   struct timespec start, end;
   Task task(CLOCK_MONOTONIC);
 
@@ -50,7 +51,7 @@ Test(task, wait_until, .timeout = 5) {
 
   Task task(CLOCK_REALTIME);
 
-  double waitfor = 3.423456789;
+  double const waitfor = 3.423456789;
 
   start = time_now();
   diff = time_from_double(waitfor);
@@ -64,7 +65,7 @@ Test(task, wait_until, .timeout = 5) {
 
   cr_assert_eq(ret, 1);
 
-  double waited = time_delta(&start, &end);
+  double const waited = time_delta(&start, &end);
 
   cr_assert_float_eq(waited, waitfor, 1e-2,
                      "We slept for %f instead of %f secs", waited, waitfor);

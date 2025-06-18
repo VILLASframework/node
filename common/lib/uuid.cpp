@@ -76,7 +76,7 @@ int villas::uuid::generateFromString(uuid_t out, const std::string &data,
 int villas::uuid::generateFromJson(uuid_t out, json_t *json, const uuid_t ns) {
   char *str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
 
-  int ret = generateFromString(out, str, ns);
+  int const ret = generateFromString(out, str, ns);
 
   free(str);
 

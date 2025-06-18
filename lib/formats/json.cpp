@@ -15,7 +15,7 @@ using namespace villas;
 using namespace villas::node;
 
 enum SignalType JsonFormat::detect(const json_t *val) {
-  int type = json_typeof(val);
+  int const type = json_typeof(val);
 
   switch (type) {
   case JSON_REAL:
@@ -247,7 +247,7 @@ int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
     if (!sig)
       return -1;
 
-    enum SignalType fmt = detect(json_value);
+    enum SignalType const fmt = detect(json_value);
     if (sig->type != fmt)
       throw RuntimeError("Received invalid data type in JSON payload: Received "
                          "{}, expected {} for signal {} (index {}).",

@@ -37,7 +37,7 @@ void NodeFactory::parse(Core &ip, json_t *cfg) {
       const char *role_raw, *target_raw, *name_raw;
 
       json_error_t err;
-      int ret =
+      int const ret =
           json_unpack_ex(json_port, &err, 0, "{ s: s, s: s, s: s }", "role",
                          &role_raw, "target", &target_raw, "name", &name_raw);
       if (ret != 0)

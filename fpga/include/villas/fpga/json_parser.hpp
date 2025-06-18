@@ -8,11 +8,13 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include <jansson.h>
 #include <spdlog/common.h>
+
+#include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 
 class JsonParser {
 private:
@@ -27,13 +29,13 @@ public:
   JsonParser(const std::string &configFilePath) {
     FILE *f = fopen(configFilePath.c_str(), "r");
     if (!f)
-      throw RuntimeError("Cannot open config file: {}", configFilePath);
+      throw villas::RuntimeError("Cannot open config file: {}", configFilePath);
 
     this->json = json_loadf(f, 0, nullptr);
     if (!json) {
       logger->error("Cannot parse JSON config");
       fclose(f);
-      throw RuntimeError("Cannot parse JSON config");
+      throw villas::RuntimeError("Cannot parse JSON config");
     }
 
     fclose(f);

@@ -17,26 +17,26 @@ class Zynq : public Core {
 public:
   friend class ZynqFactory;
 
-  virtual bool init() override;
+  bool init() override;
 };
 
 class ZynqFactory : CoreFactory {
 
 public:
-  virtual std::string getName() const { return "Zynq"; }
+  std::string getName() const override { return "Zynq"; }
 
-  virtual std::string getDescription() const { return "Zynq based fpga"; }
+  std::string getDescription() const override { return "Zynq based fpga"; }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:zynq_ultra_ps_e:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new Zynq; };
+  Core *make() const override { return new Zynq; };
 
 protected:
-  virtual void parse(Core &, json_t *) override;
+  void parse(Core &, json_t *) override;
 };
 
 } /* namespace ip */

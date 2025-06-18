@@ -17,7 +17,7 @@ void BramFactory::parse(Core &ip, json_t *cfg) {
   auto &bram = dynamic_cast<Bram &>(ip);
 
   json_error_t err;
-  int ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "size", &bram.size);
+  int const ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "size", &bram.size);
   if (ret != 0)
     throw ConfigError(cfg, err, "", "Cannot parse BRAM config");
 }

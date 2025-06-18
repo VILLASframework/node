@@ -8,7 +8,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/timing.hpp>
-#include <villas/tsc.h>
+#include <villas/tsc.hpp>
 #include <villas/utils.hpp>
 
 #define CNT (1 << 18)
@@ -38,7 +38,8 @@ Test(tsc, increasing) {
 
 Test(tsc, sleep) {
   int ret;
-  double delta, duration = 1;
+  double delta;
+  double const duration = 1;
   struct timespec start, stop;
   struct Tsc tsc;
   uint64_t start_cycles, end_cycles;
@@ -57,6 +58,7 @@ Test(tsc, sleep) {
   clock_gettime(CLOCK_MONOTONIC, &stop);
   delta = time_delta(&start, &stop);
 
-  cr_assert_float_eq(delta, duration, 1e-4, "Error: %f, Delta: %lf, Freq: %llu",
-                     delta - duration, delta, tsc.frequency);
+  cr_assert_float_eq(delta, duration, 1e-4,
+                     "Error: %f, Delta: %lf, Freq: %" PRIu64, delta - duration,
+                     delta, tsc.frequency);
 }

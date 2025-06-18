@@ -28,7 +28,7 @@ public:
   InternalLoopbackNode(Node *src, unsigned id = 0,
                        unsigned ql = DEFAULT_QUEUE_LENGTH);
 
-  virtual ~InternalLoopbackNode();
+  ~InternalLoopbackNode() override;
 
   std::vector<int> getPollFDs() override;
 

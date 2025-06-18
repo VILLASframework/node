@@ -97,14 +97,14 @@ void RegisterMappingSingle::IntegerToInteger::write(int64_t integer,
 
 double
 RegisterMappingSingle::IntegerToFloat::read(uint16_t const *registers) const {
-  int64_t integer = integer_conversion.read(registers);
+  int64_t const integer = integer_conversion.read(registers);
 
   return integer * scale + offset;
 }
 
 void RegisterMappingSingle::IntegerToFloat::write(double d,
                                                   uint16_t *registers) const {
-  int64_t integer = (d - offset) / scale;
+  int64_t const integer = (d - offset) / scale;
 
   integer_conversion.write(integer, registers);
 }
@@ -215,8 +215,8 @@ modbus_addr_t RegisterMappingSingle::num_registers() const {
 }
 
 uint16_t modbus::byteswap(uint16_t i) {
-  uint8_t low = (i & 0x00FF);
-  uint8_t high = (i & 0xFF00) >> 8;
+  uint8_t const low = (i & 0x00FF);
+  uint8_t const high = (i & 0xFF00) >> 8;
   return (low << 8) | high;
 }
 
@@ -688,14 +688,14 @@ Rtu Rtu::parse(json_t *json) {
   int stop_bits = -1;
 
   json_error_t err;
-  int ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s: i, s: i, s: i }",
-                           "device", &device, "parity", &parity_str, "baudrate",
-                           &baudrate, "data_bits", &data_bits, "stop_bits",
-                           &stop_bits);
+  int const ret = json_unpack_ex(
+      json, &err, 0, "{ s: s, s: s, s: i, s: i, s: i }", "device", &device,
+      "parity", &parity_str, "baudrate", &baudrate, "data_bits", &data_bits,
+      "stop_bits", &stop_bits);
   if (ret)
     throw ConfigError(json, err, "node-config-node-modbus-rtu");
 
-  Parity parity = parseParity(parity_str);
+  Parity const parity = parseParity(parity_str);
 
   return Rtu{device, parity, baudrate, data_bits, stop_bits};
 }
@@ -706,12 +706,14 @@ Tcp Tcp::parse(json_t *json) {
   int unit_int = -1;
 
   json_error_t err;
-  int ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: i, s?: i }", "remote",
-                           &remote, "port", &port, "unit", &unit_int);
+  int const ret =
+      json_unpack_ex(json, &err, 0, "{ s: s, s?: i, s?: i }", "remote", &remote,
+                     "port", &port, "unit", &unit_int);
   if (ret)
     throw ConfigError(json, err, "node-config-node-modbus-tcp");
 
-  std::optional unit = unit_int >= 0 ? std::optional(unit_int) : std::nullopt;
+  std::optional const unit =
+      unit_int >= 0 ? std::optional(unit_int) : std::nullopt;
 
   return Tcp{
       .remote = remote,
@@ -732,7 +734,7 @@ RegisterMappingSingle RegisterMappingSingle::parse(unsigned int index,
   double scale = 1.0;
 
   json_error_t err;
-  int ret = json_unpack_ex(
+  int const ret = json_unpack_ex(
       json, &err, 0, "{ s: i, s?: i, s?: i, s?: s, s?: s, s?: F, s?: F }",
       "address", &address, "bit", &bit, "integer_registers", &integer_registers,
       "word_endianess", &word_endianess_str, "byte_endianess",

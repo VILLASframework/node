@@ -27,7 +27,7 @@ int villas::node::sample_init(struct Sample *s) {
 
   s->length = 0;
   s->capacity = (p->blocksz - sizeof(struct Sample)) / sizeof(s->data[0]);
-  s->refcnt = ATOMIC_VAR_INIT(1);
+  s->refcnt = 1;
 
   new (&s->signals) std::shared_ptr<SignalList>;
 
@@ -43,7 +43,7 @@ struct Sample *villas::node::sample_alloc(struct Pool *p) {
 
   s->pool_off = (char *)p - (char *)s;
 
-  int ret = sample_init(s);
+  int const ret = sample_init(s);
   if (ret) {
     pool_put(p, s);
     return nullptr;
@@ -53,7 +53,7 @@ struct Sample *villas::node::sample_alloc(struct Pool *p) {
 }
 
 struct Sample *villas::node::sample_alloc_mem(int capacity) {
-  size_t sz = SAMPLE_LENGTH(capacity);
+  size_t const sz = SAMPLE_LENGTH(capacity);
 
   auto *s = (struct Sample *)new char[sz];
   if (!s)
@@ -65,7 +65,7 @@ struct Sample *villas::node::sample_alloc_mem(int capacity) {
 
   s->length = 0;
   s->capacity = capacity;
-  s->refcnt = ATOMIC_VAR_INIT(1);
+  s->refcnt = 1;
 
   return s;
 }
@@ -124,7 +124,7 @@ int villas::node::sample_incref(struct Sample *s) {
 }
 
 int villas::node::sample_decref(struct Sample *s) {
-  int prev = atomic_fetch_sub(&s->refcnt, 1);
+  int const prev = atomic_fetch_sub(&s->refcnt, 1);
 
   // Did we had the last reference?
   if (prev == 1)
@@ -319,7 +319,7 @@ void villas::node::sample_data_remove(struct Sample *smp, size_t offset,
     }
   }
 
-  size_t sz = sizeof(smp->data[0]) * (smp->length - offset - len);
+  size_t const sz = sizeof(smp->data[0]) * (smp->length - offset - len);
 
   memmove(&smp->data[offset], &smp->data[offset + len], sz);
 

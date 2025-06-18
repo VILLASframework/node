@@ -167,7 +167,7 @@ void villas::node::json_object_extend_key_value_token(json_t *obj,
 
 void villas::node::json_object_extend_key_value(json_t *obj, const char *key,
                                                 const char *value) {
-  char *end, *cpy, *key1, *key2, *lasts;
+  char *end, *key1, *key2, *lasts;
 
   double real;
   long integer;
@@ -176,9 +176,9 @@ void villas::node::json_object_extend_key_value(json_t *obj, const char *key,
 
   // Is the key pointing to an object?
   subobj = obj;
-  cpy = strdup(key);
+  auto cpy = std::string{key};
 
-  key1 = strtok_r(cpy, ".", &lasts);
+  key1 = strtok_r(cpy.data(), ".", &lasts);
   key2 = strtok_r(nullptr, ".", &lasts);
 
   while (key1 && key2) {
@@ -320,19 +320,17 @@ int villas::node::json_object_extend(json_t *obj, json_t *merge) {
 }
 
 int villas::node::json_object_extend_str(json_t *obj, const char *str) {
-  char *key, *value, *cpy, *lasts;
+  char *key, *value, *lasts;
 
-  cpy = strdup(str);
+  auto cpy = std::string{str};
 
-  key = strtok_r(cpy, "=", &lasts);
+  key = strtok_r(cpy.data(), "=", &lasts);
   value = strtok_r(nullptr, "", &lasts);
 
   if (!key || !value)
     return -1;
 
   json_object_extend_key_value_token(obj, key, value);
-
-  free(cpy);
 
   return 0;
 }

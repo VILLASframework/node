@@ -137,7 +137,7 @@ void RelayConnection::write() {
 
   auto fr = outgoingFrames.front();
 
-  int ret = lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
+  int const ret = lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
   if (ret < 0)
     return;
 

@@ -25,7 +25,7 @@ using namespace villas::utils;
 
 static int ib_disconnect(NodeCompat *n) {
   auto *ib = n->getData<struct infiniband>();
-  struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)];
+  struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)]; // NOLINT
   int wcs;
 
   n->logger->debug("Starting to clean up");
@@ -38,13 +38,13 @@ static int ib_disconnect(NodeCompat *n) {
 
     ib->conn.available_recv_wrs -= wcs;
 
-    for (int j = 0; j < wcs; j++)
+    for (int j = 0; j < wcs; j++) // NOLINT
       sample_decref((struct Sample *)(intptr_t)(wc[j].wr_id));
   }
 
   // Send Queue
   while ((wcs = ibv_poll_cq(ib->ctx.send_cq, ib->send_cq_size, wc)))
-    for (int j = 0; j < wcs; j++)
+    for (int j = 0; j < wcs; j++) // NOLINT
       if (wc[j].wr_id > 0)
         sample_decref((struct Sample *)(intptr_t)(wc[j].wr_id));
 
@@ -159,9 +159,9 @@ int villas::node::ib_reverse(NodeCompat *n) {
 }
 
 int villas::node::ib_parse(NodeCompat *n, json_t *json) {
-  auto *ib = n->getData<struct infiniband>();
-
   throw ConfigError(json, "The infiniband node-type is currently broken!");
+
+  auto *ib = n->getData<struct infiniband>();
 
   int ret;
   char *local = nullptr, *remote = nullptr, *lasts;
@@ -183,17 +183,21 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
   json_t *json_out = nullptr;
   json_error_t err;
 
-  ret =
-      json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: s }", "in", &json_in,
-                     "out", &json_out, "rdma_transport_mode", &transport_mode);
+  ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: s }", //
+                       "in", &json_in,                           //
+                       "out", &json_out,                         //
+                       "rdma_transport_mode", &transport_mode);
   if (ret)
     throw ConfigError(json, err, "node-config-node-ib");
 
   if (json_in) {
-    ret = json_unpack_ex(
-        json_in, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i}", "address",
-        &local, "cq_size", &recv_cq_size, "max_wrs", &max_recv_wr, "vectorize",
-        &vectorize_in, "buffer_subtraction", &buffer_subtraction);
+    ret = json_unpack_ex(json_in, &err, 0,
+                         "{ s?: s, s?: i, s?: i, s?: i, s?: i}", //
+                         "address", &local,                      //
+                         "cq_size", &recv_cq_size,               //
+                         "max_wrs", &max_recv_wr,                //
+                         "vectorize", &vectorize_in,             //
+                         "buffer_subtraction", &buffer_subtraction);
     if (ret)
       throw ConfigError(json_in, err, "node-config-node-ib-in");
   }
@@ -201,12 +205,16 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
   if (json_out) {
     ret = json_unpack_ex(
         json_out, &err, 0,
-        "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: b, s?: i, s?: b, s?: i}",
-        "address", &remote, "resolution_timeout", &timeout, "cq_size",
-        &send_cq_size, "max_wrs", &max_send_wr, "max_inline_data",
-        &max_inline_data, "send_inline", &send_inline, "vectorize",
-        &vectorize_out, "use_fallback", &use_fallback, "periodic_signaling",
-        &ib->periodic_signaling);
+        "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: b, s?: i, s?: b, s?: i}", //
+        "address", &remote,                                                 //
+        "resolution_timeout", &timeout,                                     //
+        "cq_size", &send_cq_size,                                           //
+        "max_wrs", &max_send_wr,                                            //
+        "max_inline_data", &max_inline_data,                                //
+        "send_inline", &send_inline,                                        //
+        "vectorize", &vectorize_out,                                        //
+        "use_fallback", &use_fallback,                                      //
+        "periodic_signaling", &ib->periodic_signaling);
     if (ret)
       throw ConfigError(json_out, err, "node-config-node-ib-out");
 
@@ -770,7 +778,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
     }
 
     // Get Memory Region
-    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
+    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0]))); // NOLINT
 
     for (int i = 0; i < max_wr_post; i++) {
       int j = 0;
@@ -844,7 +852,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
        * Furthermore, in case of an unreliable connection, a 40 byte
        * global routing header is transferred. This should be substracted as well.
        */
-      int correction =
+      int const correction =
           (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
 
       // TODO: fix release logic
@@ -882,7 +890,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
     // First, write
 
     // Get Memory Region
-    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
+    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0]))); // NOLINT
 
     for (sent = 0; sent < cnt; sent++) {
       int j = 0;
@@ -1023,5 +1031,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.reverse = ib_reverse;
   p.memory_type = memory::ib;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

@@ -26,7 +26,7 @@ public:
 
   {}
 
-  void prepare() {
+  void prepare() override {
     PmuHook::prepare();
 
     const double startFrequency = nominalFreq - estimationRange;
@@ -44,7 +44,7 @@ public:
     using namespace std::complex_literals;
 
     omega = exp((-2i * M_PI) / (double)(windowSize));
-    unsigned startBin = floor(startFrequency / frequencyResolution);
+    unsigned const startBin = floor(startFrequency / frequencyResolution);
 
     for (unsigned i = 0; i < frequencyCount; i++) {
       for (unsigned j = 0; j < windowSize; j++)
@@ -53,7 +53,7 @@ public:
     }
   }
 
-  void parse(json_t *json) {
+  void parse(json_t *json) override {
     PmuHook::parse(json);
     int ret;
 
@@ -110,10 +110,11 @@ public:
       const double startFrequency = nominalFreq - estimationRange;
       const double frequencyResolution = (double)sampleRate / windowSize;
 
-      double a = abs(dftResult[maxBin - 1]);
-      double b = abs(dftResult[maxBin + 0]);
-      double c = abs(dftResult[maxBin + 1]);
-      double bPhase = atan2(dftResult[maxBin].imag(), dftResult[maxBin].real());
+      double const a = abs(dftResult[maxBin - 1]);
+      double const b = abs(dftResult[maxBin + 0]);
+      double const c = abs(dftResult[maxBin + 1]);
+      double const bPhase =
+          atan2(dftResult[maxBin].imag(), dftResult[maxBin].real());
 
       // Estimate phasor
       // Based on https://ieeexplore.ieee.org/document/7980868

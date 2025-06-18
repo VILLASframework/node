@@ -209,7 +209,7 @@ void PeerConnection::onConnectionStateChange(rtc::PeerConnection::State state) {
 
   case rtc::PeerConnection::State::Connected: {
     rtc::Candidate local, remote;
-    std::optional<std::chrono::milliseconds> rtt = conn->rtt();
+    std::optional<std::chrono::milliseconds> const rtt = conn->rtt();
     if (conn->getSelectedCandidatePair(&local, &remote)) {
       std::stringstream l, r;
       l << local, r << remote;

@@ -106,7 +106,7 @@ MmsValue *GooseSignal::toMmsValue() const {
 }
 
 MmsValue *GooseSignal::newMmsBitString(uint32_t i, int size) {
-  auto mms_bitstring = MmsValue_newBitString(size);
+  auto *mms_bitstring = MmsValue_newBitString(size);
 
   MmsValue_setBitStringFromInteger(mms_bitstring, i);
 
@@ -114,7 +114,7 @@ MmsValue *GooseSignal::newMmsBitString(uint32_t i, int size) {
 }
 
 MmsValue *GooseSignal::newMmsInteger(int64_t i, int size) {
-  auto mms_integer = MmsValue_newInteger(size);
+  auto *mms_integer = MmsValue_newInteger(size);
 
   switch (size) {
   case 8:
@@ -135,7 +135,7 @@ MmsValue *GooseSignal::newMmsInteger(int64_t i, int size) {
 }
 
 MmsValue *GooseSignal::newMmsUnsigned(uint64_t u, int size) {
-  auto mms_unsigned = MmsValue_newUnsigned(size);
+  auto *mms_unsigned = MmsValue_newUnsigned(size);
 
   switch (size) {
   case 8:
@@ -168,7 +168,8 @@ std::optional<GooseSignal::Type> GooseSignal::lookupMmsType(int mms_type) {
     return descriptor.mms_type == mms_type;
   };
 
-  auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
+  const auto *descriptor =
+      std::find_if(begin(descriptors), end(descriptors), check);
   if (descriptor != end(descriptors))
     return &*descriptor;
   else
@@ -181,7 +182,8 @@ GooseSignal::lookupMmsTypeName(char const *name) {
     return descriptor.name == name;
   };
 
-  auto descriptor = std::find_if(begin(descriptors), end(descriptors), check);
+  const auto *descriptor =
+      std::find_if(begin(descriptors), end(descriptors), check);
   if (descriptor != end(descriptors))
     return &*descriptor;
   else
@@ -231,15 +233,15 @@ void GooseNode::onEvent(GooseSubscriber subscriber,
       GooseSubscriber_needsCommission(subscriber))
     return;
 
-  int last_state_num = ctx.last_state_num;
-  int state_num = GooseSubscriber_getStNum(subscriber);
+  int const last_state_num = ctx.last_state_num;
+  int const state_num = GooseSubscriber_getStNum(subscriber);
   ctx.last_state_num = state_num;
 
   if (ctx.subscriber_config.trigger == InputTrigger::CHANGE &&
       !ctx.values.empty() && state_num == last_state_num)
     return;
 
-  auto mms_values = GooseSubscriber_getDataSetValues(subscriber);
+  auto *mms_values = GooseSubscriber_getDataSetValues(subscriber);
 
   if (MmsValue_getType(mms_values) != MmsType::MMS_ARRAY) {
     ctx.node->logger->warn("DataSet is not an array");
@@ -249,12 +251,12 @@ void GooseNode::onEvent(GooseSubscriber subscriber,
   ctx.values.clear();
 
   for (unsigned int i = 0; i < MmsValue_getArraySize(mms_values); i++) {
-    auto mms_value = MmsValue_getElement(mms_values, i);
+    auto *mms_value = MmsValue_getElement(mms_values, i);
     auto goose_value = GooseSignal::fromMmsValue(mms_value);
     ctx.values.push_back(goose_value);
   }
 
-  uint64_t timestamp = GooseSubscriber_getTimestamp(subscriber);
+  uint64_t const timestamp = GooseSubscriber_getTimestamp(subscriber);
 
   ctx.node->pushSample(timestamp);
 }
@@ -317,7 +319,7 @@ void GooseNode::addSubscriber(GooseNode::InputEventContext &ctx) noexcept {
   GooseSubscriber_setListener(
       subscriber,
       [](GooseSubscriber goose_subscriber, void *event_context) {
-        auto context = static_cast<InputEventContext *>(event_context);
+        auto *context = static_cast<InputEventContext *>(event_context);
         onEvent(goose_subscriber, *context);
       },
       &ctx);
@@ -466,7 +468,7 @@ int GooseNode::_read(Sample *samples[], unsigned sample_count) {
 void GooseNode::publish_values(GoosePublisher publisher,
                                std::vector<GooseSignal> &values, bool changed,
                                int burst) noexcept {
-  auto data_set = LinkedList_create();
+  auto *data_set = LinkedList_create();
 
   for (auto &value : values) {
     LinkedList_add(data_set, value.toMmsValue());
@@ -516,7 +518,7 @@ int GooseNode::_write(Sample *samples[], unsigned sample_count) {
   auto lock = std::unique_lock{output.send_mutex};
 
   for (unsigned int i = 0; i < sample_count; i++) {
-    auto sample = samples[i];
+    auto *sample = samples[i];
 
     for (auto &ctx : output.contexts) {
       bool changed = false;
@@ -693,7 +695,7 @@ void GooseNode::parseInputSignals(
     if (ret)
       throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-    auto mapping_type =
+    const auto *mapping_type =
         GooseSignal::lookupMmsTypeName(mapping_type_name).value();
 
     mappings.push_back(InputMapping{
@@ -745,7 +747,7 @@ void GooseNode::parsePublisherData(json_t *json,
     if (ret)
       throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
-    auto goose_type = GooseSignal::lookupMmsTypeName(mms_type).value();
+    const auto *goose_type = GooseSignal::lookupMmsTypeName(mms_type).value();
     std::optional<GooseSignal::Meta> meta = std::nullopt;
 
     if (goose_type->mms_type == MmsType::MMS_BIT_STRING && bitstring_size != -1)
@@ -764,9 +766,9 @@ void GooseNode::parsePublisherData(json_t *json,
     if (signal_str)
       signal = out.signals->getIndexByName(signal_str);
 
-    OutputData value = {.signal = signal,
-                        .default_value =
-                            GooseSignal{goose_type, signal_data, meta}};
+    OutputData const value = {.signal = signal,
+                              .default_value =
+                                  GooseSignal{goose_type, signal_data, meta}};
 
     data.push_back(value);
   };

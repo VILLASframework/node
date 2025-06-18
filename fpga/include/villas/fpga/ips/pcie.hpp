@@ -22,7 +22,7 @@ class AxiPciExpressBridge : public Core {
 public:
   friend class AxiPciExpressBridgeFactory;
 
-  virtual bool init() override;
+  bool init() override;
 
 protected:
   virtual const char *getAxiInterfaceName() { return "M_AXI"; };
@@ -44,42 +44,44 @@ protected:
 
 class XDmaBridge : public AxiPciExpressBridge {
 protected:
-  virtual const char *getAxiInterfaceName() { return "M_AXI_B"; };
+  const char *getAxiInterfaceName() override { return "M_AXI_B"; };
 };
 
 class AxiPciExpressBridgeFactory : CoreFactory {
 
 public:
-  virtual std::string getName() const { return "pcie"; }
+  std::string getName() const override { return "pcie"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Xilinx's AXI-PCIe Bridge";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_pcie:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new AxiPciExpressBridge; };
+  Core *make() const override { return new AxiPciExpressBridge; };
 
 protected:
-  virtual void parse(Core &, json_t *) override;
+  void parse(Core &, json_t *) override;
 };
 
 class XDmaBridgeFactory : public AxiPciExpressBridgeFactory {
 
 public:
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Xilinx's XDMA IP configured as AXI-PCIe Bridge";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const { return Vlnv("xilinx.com:ip:xdma:"); }
+  Vlnv getCompatibleVlnv() const override {
+    return Vlnv("xilinx.com:ip:xdma:");
+  }
 
   // Create a concrete IP instance
-  Core *make() const { return new XDmaBridge; };
+  Core *make() const override { return new XDmaBridge; };
 };
 
 } // namespace ip

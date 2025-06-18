@@ -42,7 +42,7 @@ static struct timespec file_calc_offset(const struct timespec *first,
                                         const struct timespec *epoch,
                                         enum file::EpochMode mode) {
   // Get current time
-  struct timespec now = time_now();
+  struct timespec const now = time_now();
   struct timespec offset;
 
   // Set offset depending on epoch
@@ -272,6 +272,7 @@ int villas::node::file_start(NodeCompat *n) {
   // Get timestamp of first line
   if (f->epoch_mode != file::EpochMode::ORIGINAL) {
     rewind(f->stream_in);
+    (void)errno; // TODO: should we handle errors from rewind?
 
     if (feof(f->stream_in)) {
       n->logger->warn("Empty file");
@@ -290,6 +291,7 @@ int villas::node::file_start(NodeCompat *n) {
   }
 
   rewind(f->stream_in);
+  (void)errno; // TODO: should we handle rewind errors?
 
   // Fast-forward
   struct Sample *smp = sample_alloc_mem(n->getInputSignals(false)->size());
@@ -330,6 +332,7 @@ retry:
 
         f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
         rewind(f->stream_in);
+        (void)errno; // should we handle rewind errors?
         goto retry;
 
       case file::EOFBehaviour::SUSPEND:
@@ -465,5 +468,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = file_write;
   p.poll_fds = file_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

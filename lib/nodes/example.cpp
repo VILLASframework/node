@@ -39,8 +39,8 @@ int ExampleNode::parse(json_t *json) {
   const char *setting2_str = nullptr;
 
   json_error_t err;
-  int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
-                           &setting1, "setting2", &setting2_str);
+  int const ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
+                                 &setting1, "setting2", &setting2_str);
   if (ret)
     throw ConfigError(json, err, "node-config-node-example");
 

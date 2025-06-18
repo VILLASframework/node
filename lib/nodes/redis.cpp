@@ -140,7 +140,8 @@ static int redis_get(NodeCompat *n, struct Sample *const smps[], unsigned cnt) {
   case RedisMode::KEY: {
     auto value = r->conn->context.get(r->key);
     if (value) {
-      size_t rbytes, bytes = value->size();
+      size_t rbytes;
+      size_t const bytes = value->size();
       ret = r->formatter->sscan(value->c_str(), bytes, &rbytes, smps, cnt);
 
       if (rbytes != bytes)
@@ -204,7 +205,7 @@ static void redis_on_message(NodeCompat *n, const std::string &channel,
   n->logger->debug("Message: {}: {}", channel, msg);
 
   int alloc, scanned, pushed = 0;
-  unsigned cnt = n->in.vectorize;
+  unsigned const cnt = n->in.vectorize;
   struct Sample *smps[cnt];
 
   alloc = sample_alloc_many(&r->pool, smps, cnt);
@@ -598,7 +599,7 @@ int villas::node::redis_write(NodeCompat *n, struct Sample *const smps[],
 
     std::unordered_map<std::string, std::string> kvs;
 
-    unsigned len = MIN(smp->signals->size(), smp->length);
+    unsigned const len = MIN(smp->signals->size(), smp->length);
     for (unsigned j = 0; j < len; j++) {
       const auto sig = smp->signals->getByIndex(j);
       const auto *data = &smp->data[j];
@@ -639,5 +640,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = redis_write;
   p.poll_fds = redis_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

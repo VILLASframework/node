@@ -240,7 +240,7 @@ fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
   const char *interfaceName;
   json_error_t err;
   logger->info("Found config for FPGA card {}", card_name);
-  int ret =
+  int const ret =
       json_unpack_ex(config, &err, 0, "{s: s}", "interface", &interfaceName);
   if (ret) {
     throw ConfigError(config, err, "interface",

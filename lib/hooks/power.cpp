@@ -68,7 +68,7 @@ public:
     MultiSignalHook::prepare();
 
     for (unsigned i = 0; i < pairingsStr.size(); i++) {
-      PowerPairing p = {
+      PowerPairing const p = {
           .voltageIndex = signals->getIndexByName(pairingsStr[i].voltage),
           .currentIndex = signals->getIndexByName(pairingsStr[i].current)};
 
@@ -251,9 +251,9 @@ public:
       auto pair = pairings[i];
 
       // Update U integral
-      double oldValueU =
+      double const oldValueU =
           smpMemory[pair.voltageIndex][smpMemoryPosition % windowSize];
-      double newValueU = smp->data[pair.voltageIndex].f;
+      double const newValueU = smp->data[pair.voltageIndex].f;
       smpMemory[pair.voltageIndex][smpMemoryPosition % windowSize] =
           newValueU; // Save for later
 
@@ -261,8 +261,8 @@ public:
       accumulator_u[i] += newValueU * newValueU;
 
       // Update I integral
-      double newValueI = smp->data[pair.currentIndex].f;
-      double oldValueI =
+      double const newValueI = smp->data[pair.currentIndex].f;
+      double const oldValueI =
           smpMemory[pair.currentIndex][smpMemoryPosition % windowSize];
       smpMemory[pair.currentIndex][smpMemoryPosition % windowSize] =
           newValueI; // Save for later
@@ -275,17 +275,17 @@ public:
       accumulator_ui[i] += newValueI * newValueU;
 
       // Calc active power power
-      double P = (1.0 / windowSize) * accumulator_ui[i];
+      double const P = (1.0 / windowSize) * accumulator_ui[i];
 
       // Calc apparent power
-      double S =
+      double const S =
           (1.0 / windowSize) * pow(accumulator_i[i] * accumulator_u[i], 0.5);
 
       // Calc reactive power
-      double Q = pow(S * S - P * P, 0.5);
+      double const Q = pow(S * S - P * P, 0.5);
 
       // Calc cos phi
-      double PHI = atan2(Q, P) * angleUnitFactor;
+      double const PHI = atan2(Q, P) * angleUnitFactor;
 
       if (smpMemoryPosition >= windowSize) {
         // Write to samples

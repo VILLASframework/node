@@ -35,7 +35,7 @@ static void amqp_default_ssl_info(struct amqp_ssl_info *s) {
 }
 
 static amqp_bytes_t amqp_bytes_strdup(const char *str) {
-  size_t len = strlen(str) + 1;
+  size_t const len = strlen(str) + 1;
   amqp_bytes_t buf = amqp_bytes_malloc(len);
 
   memcpy(buf.bytes, str, len);
@@ -345,7 +345,7 @@ int villas::node::amqp_write(NodeCompat *n, struct Sample *const smps[],
   if (ret <= 0)
     return -1;
 
-  amqp_bytes_t message = {.len = wbytes, .bytes = data};
+  amqp_bytes_t const message = {.len = wbytes, .bytes = data};
 
   // Send message
   ret = amqp_basic_publish(a->producer, 1, a->exchange, a->routing_key, 0, 0,
@@ -411,5 +411,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.write = amqp_write;
   p.poll_fds = amqp_poll_fds;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

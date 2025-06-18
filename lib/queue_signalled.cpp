@@ -188,12 +188,13 @@ int villas::node::queue_signalled_push_many(struct CQueueSignalled *qs,
 }
 
 int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr) {
+  auto mode = qs->mode;
   int pulled = 0;
 
   // Make sure that qs->mutex is unlocked if this thread gets cancelled
   pthread_cleanup_push(queue_signalled_cleanup, qs);
 
-  if (qs->mode == QueueSignalledMode::PTHREAD)
+  if (mode == QueueSignalledMode::PTHREAD)
     pthread_mutex_lock(&qs->pthread.mutex);
 
   while (!pulled) {
@@ -201,12 +202,12 @@ int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr) {
     if (pulled < 0)
       break;
     else if (pulled == 0) {
-      if (qs->mode == QueueSignalledMode::PTHREAD)
+      if (mode == QueueSignalledMode::PTHREAD)
         pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
-      else if (qs->mode == QueueSignalledMode::POLLING)
+      else if (mode == QueueSignalledMode::POLLING)
         continue; // Try again
 #ifdef HAS_EVENTFD
-      else if (qs->mode == QueueSignalledMode::EVENTFD) {
+      else if (mode == QueueSignalledMode::EVENTFD) {
         int ret;
         uint64_t cntr;
         ret = read(qs->eventfd, &cntr, sizeof(cntr));
@@ -229,12 +230,13 @@ int villas::node::queue_signalled_pull(struct CQueueSignalled *qs, void **ptr) {
 
 int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs,
                                             void *ptr[], size_t cnt) {
+  auto mode = qs->mode;
   int pulled = 0;
 
   // Make sure that qs->mutex is unlocked if this thread gets cancelled
   pthread_cleanup_push(queue_signalled_cleanup, qs);
 
-  if (qs->mode == QueueSignalledMode::PTHREAD)
+  if (mode == QueueSignalledMode::PTHREAD)
     pthread_mutex_lock(&qs->pthread.mutex);
 
   while (!pulled) {
@@ -242,12 +244,12 @@ int villas::node::queue_signalled_pull_many(struct CQueueSignalled *qs,
     if (pulled < 0)
       break;
     else if (pulled == 0) {
-      if (qs->mode == QueueSignalledMode::PTHREAD)
+      if (mode == QueueSignalledMode::PTHREAD)
         pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
-      else if (qs->mode == QueueSignalledMode::POLLING)
+      else if (mode == QueueSignalledMode::POLLING)
         continue; // Try again
 #ifdef HAS_EVENTFD
-      else if (qs->mode == QueueSignalledMode::EVENTFD) {
+      else if (mode == QueueSignalledMode::EVENTFD) {
         int ret;
         uint64_t cntr;
         ret = read(qs->eventfd, &cntr, sizeof(cntr));

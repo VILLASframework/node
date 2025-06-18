@@ -76,7 +76,7 @@ static void *producer(void *ctx) {
   struct param *p = (struct param *)ctx;
 
   srand((unsigned)time(0) + thread_get_id());
-  size_t nops = rand() % 1000;
+  size_t const nops = rand() % 1000;
 
   // Wait for global start signal
   while (p->start == 0)
@@ -102,7 +102,7 @@ static void *consumer(void *ctx) {
   struct param *p = (struct param *)ctx;
 
   srand((unsigned)time(0) + thread_get_id());
-  size_t nops = rand() % 1000;
+  size_t const nops = rand() % 1000;
 
   // Wait for global start signal
   while (p->start == 0)
@@ -133,7 +133,7 @@ void *producer_consumer(void *ctx) {
   struct param *p = (struct param *)ctx;
 
   srand((unsigned)time(0) + thread_get_id());
-  size_t nops = rand() % 1000;
+  size_t const nops = rand() % 1000;
 
   // Wait for global start signal
   while (p->start == 0)
@@ -166,7 +166,7 @@ void *producer_consumer_many(void *ctx) {
   struct param *p = (struct param *)ctx;
 
   srand((unsigned)time(0) + thread_get_id());
-  size_t nops = rand() % 1000;
+  size_t const nops = rand() % 1000;
 
   // Wait for global start signal
   while (p->start == 0)
@@ -269,7 +269,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
   int ret, cycpop;
   struct Tsc tsc;
 
-  Logger logger = Log::get("test:queue:multi_threaded");
+  Logger const logger = Log::get("test:queue:multi_threaded");
 
   if (!utils::isPrivileged() && p->mt == &memory::mmap_hugetlb)
     cr_skip_test("Skipping memory_mmap_hugetlb tests allocatpr because we are "
@@ -290,7 +290,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
     pthread_create(&threads[i], nullptr,
                    p->many ? producer_consumer_many : producer_consumer, p);
 
-  sleep(0.2);
+  // sleep(0.2); TODO: Is this supposed to to something? Yield?
 
   ret = tsc_init(&tsc);
   cr_assert(!ret);

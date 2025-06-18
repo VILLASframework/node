@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     const std::shared_ptr<villas::MemoryBlock> block[] = {
         alloc.allocateBlock(0x200 * sizeof(uint32_t)),
         alloc.allocateBlock(0x200 * sizeof(uint32_t))};
-    villas::MemoryAccessor<int32_t> mem[] = {*block[0], *block[1]};
+    villas::MemoryAccessor<int32_t> const mem[] = {*block[0], *block[1]};
 
     for (auto b : block) {
       dma->makeAccesibleFromVA(b);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
       }
 
       // Initiate write transfer
-      bool state = dma->write(*block[1], i * sizeof(int32_t));
+      bool const state = dma->write(*block[1], i * sizeof(int32_t));
       if (!state)
         logger->error("Failed to write to device");
 

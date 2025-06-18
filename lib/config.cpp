@@ -180,14 +180,15 @@ out:
   return files;
 }
 
+// TODO: remove this this code
 void Config::resolveEnvVars(std::string &text) {
   static const std::regex env_re{R"--(\$\{([^}]+)\})--"};
 
   std::smatch match;
   while (std::regex_search(text, match, env_re)) {
     auto const from = match[0];
-    auto const var_name = match[1].str().c_str();
-    char *var_value = std::getenv(var_name);
+    auto const var_name = match[1].str();
+    char *var_value = std::getenv(var_name.c_str());
     if (!var_value)
       throw RuntimeError("Unresolved environment variable: {}", var_name);
 
@@ -215,7 +216,7 @@ const char **Config::includeFunc(config_t *cfg, const char *include_dir,
   auto paths = resolveIncludes(path);
 
   unsigned i = 0;
-  auto files = (const char **)malloc(sizeof(char **) * (paths.size() + 1));
+  auto files = (const char **)malloc(sizeof(const char *) * (paths.size() + 1));
 
   for (auto &path : paths)
     files[i++] = strdup(path.c_str());
@@ -257,6 +258,7 @@ json_t *Config::libconfigDecode(FILE *f) {
 
   // Rewind before re-reading
   rewind(f);
+  (void)errno; // TODO: should we handle rewind errors?
 
   ret = config_read(&cfg, f);
   if (ret != CONFIG_TRUE)
@@ -323,7 +325,7 @@ json_t *Config::expandEnvVars(json_t *in) {
 json_t *Config::expandIncludes(json_t *in) {
   return walkStrings(in, [this](json_t *str) -> json_t * {
     int ret;
-    std::string text = json_string_value(str);
+    std::string const text = json_string_value(str);
     static const std::string kw = "@include ";
 
     if (text.find(kw) != 0)

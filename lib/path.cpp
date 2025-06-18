@@ -129,7 +129,7 @@ void Path::startPoll() {
                            ps->getNode()->getName());
 
       // This slot is only used if it is not masked
-      struct pollfd pfd = {.fd = fd, .events = POLLIN};
+      struct pollfd const pfd = {.fd = fd, .events = POLLIN};
 
       pfds.push_back(pfd);
     }
@@ -139,7 +139,7 @@ void Path::startPoll() {
   if (rate > 0) {
     timeout.setRate(rate);
 
-    struct pollfd pfd = {.fd = timeout.getFD(), .events = POLLIN};
+    struct pollfd const pfd = {.fd = timeout.getFD(), .events = POLLIN};
 
     if (pfd.fd < 0)
       throw RuntimeError("Failed to get file descriptor for timer of path {}",
@@ -167,7 +167,7 @@ void Path::prepare(NodeList &nodes) {
 
   // Create path sources
   std::map<Node *, PathSource::Ptr> psm;
-  unsigned i = 0, j = 0;
+  unsigned j = 0;
   for (auto me : mappings) {
     Node *n = me->node;
     PathSource::Ptr ps;
@@ -182,7 +182,7 @@ void Path::prepare(NodeList &nodes) {
        * A secondary path source uses an internal loopback node / queue
        * to forward samples from on path to another.
        */
-      bool isSecondary = n->sources.size() > 0;
+      bool const isSecondary = n->sources.size() > 0;
 
       // Create new path source
       if (isSecondary) {
@@ -223,7 +223,7 @@ void Path::prepare(NodeList &nodes) {
       psm[n] = ps;
     }
 
-    SignalList::Ptr sigs = me->node->getInputSignals();
+    SignalList::Ptr const sigs = me->node->getInputSignals();
 
     // Update signals of path
     for (unsigned j = 0; j < (unsigned)me->length; j++) {
@@ -251,7 +251,6 @@ void Path::prepare(NodeList &nodes) {
     }
 
     ps->mappings.push_back(me);
-    i++;
   }
 
   // Prepare path destinations
@@ -289,7 +288,8 @@ void Path::prepare(NodeList &nodes) {
 
 #ifdef WITH_HOOKS
   // Prepare path hooks
-  int m = builtin ? (int)Hook::Flags::PATH | (int)Hook::Flags::BUILTIN : 0;
+  int const m =
+      builtin ? (int)Hook::Flags::PATH | (int)Hook::Flags::BUILTIN : 0;
 
   // Add internal hooks if they are not already in the list
   hooks.prepare(signals, m, this, nullptr);
@@ -298,7 +298,7 @@ void Path::prepare(NodeList &nodes) {
 
   // Prepare pool
   auto osigs = getOutputSignals();
-  unsigned pool_size = MAX(1UL, destinations.size()) * queuelen;
+  unsigned const pool_size = MAX(1UL, destinations.size()) * queuelen;
 
   ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(osigs->size()), pool_mt);
   if (ret)

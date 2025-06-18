@@ -31,7 +31,7 @@ public:
     if (body != nullptr)
       throw BadRequest("Node endpoints do not accept any body data");
 
-    int ret = (node->*func)();
+    int const ret = (node->*func)();
     if (ret)
       throw BadRequest("Failed to execute action", "{ s: d }", "ret", ret);
 

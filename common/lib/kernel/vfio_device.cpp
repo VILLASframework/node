@@ -16,9 +16,6 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 
-#include <algorithm>
-#include <limits>
-#include <sstream>
 #include <string>
 
 #include <fcntl.h>
@@ -139,7 +136,7 @@ Device::~Device() {
   }
   reset();
 
-  int ret = close(fd);
+  int const ret = close(fd);
   if (ret != 0) {
     log->error("Closing device fd {} failed", fd);
   }
@@ -254,7 +251,7 @@ bool Device::pciEnable() {
 std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   std::vector<Device::IrqVectorInfo> vectors;
   for (auto info_irq_vector : info_irq_vectors) {
-    Device::IrqVectorInfo irq = {0};
+    Device::IrqVectorInfo irq = {{0}};
     const size_t irqCount = info_irq_vector.count;
     const size_t irqSetSize =
         sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
@@ -296,7 +293,7 @@ std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   return vectors;
 }
 
-int Device::pciMsiInit(int efds[]) {
+int Device::pciMsiInit(int efds[32]) {
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;
@@ -341,7 +338,7 @@ int Device::pciMsiInit(int efds[]) {
   return irqCount;
 }
 
-int Device::pciMsiDeinit(int efds[]) {
+int Device::pciMsiDeinit(int efds[32]) {
   Log::get("Device")->debug("Deinitializing MSI interrupts for device {}",
                             name);
   // Check if this is really a vfio-pci device
@@ -381,7 +378,7 @@ int Device::pciMsiDeinit(int efds[]) {
   return irqCount;
 }
 
-bool Device::pciMsiFind(int nos[]) {
+bool Device::pciMsiFind(int nos[32]) {
   int ret, idx, irq;
   char *end, *col, *last, line[1024], name[13];
   FILE *f;
@@ -467,7 +464,7 @@ bool Device::pciHotReset() {
   reset->count = 1;
   reset->group_fds[0] = groupFd;
 
-  int ret = ioctl(fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
+  int const ret = ioctl(fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
   const bool success = (ret == 0);
 
   delete[] reset_buf;

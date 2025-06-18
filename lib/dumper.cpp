@@ -40,9 +40,10 @@ int Dumper::openSocket() {
 
   sockaddr_un socketaddrUn;
   socketaddrUn.sun_family = AF_UNIX;
-  strcpy(socketaddrUn.sun_path, socketPath.c_str());
+  assert(socketPath.size() < sizeof(socketaddrUn.sun_path));
+  memcpy(socketaddrUn.sun_path, socketPath.c_str(), socketPath.size() + 1);
 
-  int ret =
+  int const ret =
       connect(socketFd, (struct sockaddr *)&socketaddrUn, sizeof(socketaddrUn));
   if (!ret)
     return ret;
@@ -51,7 +52,7 @@ int Dumper::openSocket() {
 }
 
 int Dumper::closeSocket() {
-  int ret = close(socketFd);
+  int const ret = close(socketFd);
   if (!ret)
     return ret;
 

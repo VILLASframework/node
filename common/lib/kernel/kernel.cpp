@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <memory>
+#include <system_error>
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -31,7 +33,7 @@ Version villas::kernel::getVersion() {
   if (uname(&uts) < 0)
     throw SystemError("Failed to retrieve system identification");
 
-  std::string rel = uts.release;
+  std::string const rel = uts.release;
 
   // Remove release part. E.g. 4.9.93-linuxkit-aufs
   auto sep = rel.find('-');
@@ -137,7 +139,7 @@ int villas::kernel::loadModule(const char *module) {
     return 0;
   }
 
-  pid_t pid = fork();
+  pid_t const pid = fork();
   switch (pid) {
   case -1: // Error
     return -1;
@@ -180,12 +182,14 @@ int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len) {
   int ret;
   char cmdline[512], key[128], value[128], *lasts, *tok;
 
-  FILE *f = fopen(PROCFS_PATH "/cmdline", "r");
+  auto file_destructor = [](FILE *file) { fclose(file); };
+  auto f = std::unique_ptr<FILE, decltype(file_destructor)>{
+      fopen(PROCFS_PATH "/cmdline", "r"), file_destructor};
   if (!f)
     return -1;
 
-  if (!fgets(cmdline, sizeof(cmdline), f))
-    goto out;
+  if (!fgets(cmdline, sizeof(cmdline), f.get()))
+    return -1;
 
   tok = strtok_r(cmdline, " \t", &lasts);
   do {
@@ -205,9 +209,6 @@ int villas::kernel::getCmdlineParam(const char *param, char *buf, size_t len) {
       }
     }
   } while ((tok = strtok_r(nullptr, " \t", &lasts)));
-
-out:
-  fclose(f);
 
   return -1; // Not found or error
 }
@@ -249,22 +250,24 @@ int villas::kernel::setNrHugepages(int nr) {
 int villas::kernel::setIRQAffinity(unsigned irq, uintmax_t aff,
                                    uintmax_t *old) {
   char fn[64];
-  FILE *f;
   int ret = 0;
 
   snprintf(fn, sizeof(fn), "/proc/irq/%u/smp_affinity", irq);
 
-  f = fopen(fn, "w+");
+  auto file_destructor = [](FILE *file) { fclose(file); };
+  auto f = std::unique_ptr<FILE, decltype(file_destructor)>{fopen(fn, "w+"),
+                                                            file_destructor};
   if (!f)
     return -1; // IRQ does not exist
 
+  ret = fprintf(f.get(), "%jx", aff);
+  if (ret < 0)
+    return ret;
+
   if (old)
-    ret = fscanf(f, "%jx", old);
+    return fscanf(f.get(), "%jx", old);
 
-  fprintf(f, "%jx", aff);
-  fclose(f);
-
-  return ret;
+  return 0;
 }
 
 int villas::kernel::get_cpu_frequency(uint64_t *freq) {

@@ -86,7 +86,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual villas::node::Hook::Reason process(struct Sample *smp) {
+  villas::node::Hook::Reason process(struct Sample *smp) override {
     switch (mode) {
     case Mode::SIMPLE:
       return processSimple(smp);
@@ -103,10 +103,11 @@ public:
     assert(state == State::STARTED);
 
     // Get value of PPS signal
-    float value = smp->data[signalIndex].f; // TODO check if it is really float
+    float const value =
+        smp->data[signalIndex].f; // TODO check if it is really float
 
     // Detect Edge
-    bool isEdge = lastValue < threshold && value > threshold;
+    bool const isEdge = lastValue < threshold && value > threshold;
     if (isEdge) {
       tsVirt.tv_sec = currentSecond + 1;
       tsVirt.tv_nsec = 0;
@@ -115,7 +116,7 @@ public:
       cntEdges++;
       currentSecond = 0;
     } else {
-      struct timespec tsPeriod = time_from_double(period);
+      struct timespec const tsPeriod = time_from_double(period);
       tsVirt = time_add(&tsVirt, &tsPeriod);
     }
 
@@ -145,10 +146,11 @@ public:
     assert(state == State::STARTED);
 
     // Get value of PPS signal
-    float value = smp->data[signalIndex].f; // TODO check if it is really float
+    float const value =
+        smp->data[signalIndex].f; // TODO check if it is really float
 
     // Detect Edge
-    bool isEdge = lastValue < threshold && value > threshold;
+    bool const isEdge = lastValue < threshold && value > threshold;
 
     lastValue = value;
 
@@ -161,9 +163,9 @@ public:
 
         filterWindow[cntEdges % filterWindow.size()] = cntSmpsTotal;
         // Estimated sample period over last 'horizonEstimation' seconds
-        unsigned int tmp =
+        unsigned int const tmp =
             cntEdges < filterWindow.size() ? cntEdges : horizonEstimation;
-        double cntSmpsAvg =
+        double const cntSmpsAvg =
             (cntSmpsTotal -
              filterWindow[(cntEdges - tmp) % filterWindow.size()]) /
             tmp;
@@ -195,7 +197,7 @@ public:
     smp->ts.origin = tsVirt;
     smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;
 
-    struct timespec tsPeriod = time_from_double(period);
+    struct timespec const tsPeriod = time_from_double(period);
     tsVirt = time_add(&tsVirt, &tsPeriod);
 
     if ((smp->sequence - lastSequence) > 1)

@@ -8,6 +8,7 @@
  */
 
 #include <cstring>
+#include <memory>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -128,7 +129,7 @@ Id::Id(const std::string &str) : vendor(0), device(0), class_code(0) {
 
   *s++ = 0;
   if (tmp[0] && strcmp(tmp, "*")) {
-    long int x = strtol(tmp, &e, 16);
+    long int const x = strtol(tmp, &e, 16);
 
     if ((e && *e) || (x < 0 || x > 0xffff)) {
       free(tmp);
@@ -143,7 +144,7 @@ Id::Id(const std::string &str) : vendor(0), device(0), class_code(0) {
     *c++ = 0;
 
   if (s[0] && strcmp(s, "*")) {
-    long int x = strtol(s, &e, 16);
+    long int const x = strtol(s, &e, 16);
     if ((e && *e) || (x < 0 || x > 0xffff)) {
       free(tmp);
       throw RuntimeError("Failed to parse PCI id: {}: Invalid device id", str);
@@ -153,7 +154,7 @@ Id::Id(const std::string &str) : vendor(0), device(0), class_code(0) {
   }
 
   if (c && c[0] && strcmp(s, "*")) {
-    long int x = strtol(c, &e, 16);
+    long int const x = strtol(c, &e, 16);
 
     if ((e && *e) || (x < 0 || x > 0xffff)) {
       free(tmp);
@@ -197,7 +198,7 @@ Slot::Slot(const std::string &str) : domain(0), bus(0), device(0), function(0) {
       buss = colon2;
 
       if (tmp[0] && strcmp(tmp, "*")) {
-        long int x = strtol(tmp, &e, 16);
+        long int const x = strtol(tmp, &e, 16);
         if ((e && *e) || (x < 0 || x > 0x7fffffff)) {
           free(tmp);
           throw RuntimeError("Failed to parse PCI slot: {}: invalid domain",
@@ -210,7 +211,7 @@ Slot::Slot(const std::string &str) : domain(0), bus(0), device(0), function(0) {
       buss = tmp;
 
     if (buss[0] && strcmp(buss, "*")) {
-      long int x = strtol(buss, &e, 16);
+      long int const x = strtol(buss, &e, 16);
       if ((e && *e) || (x < 0 || x > 0xff)) {
         free(tmp);
         throw RuntimeError("Failed to parse PCI slot: {}: invalid bus", str);
@@ -224,7 +225,7 @@ Slot::Slot(const std::string &str) : domain(0), bus(0), device(0), function(0) {
     *dot++ = 0;
 
   if (mid[0] && strcmp(mid, "*")) {
-    long int x = strtol(mid, &e, 16);
+    long int const x = strtol(mid, &e, 16);
 
     if ((e && *e) || (x < 0 || x > 0x1f)) {
       free(tmp);
@@ -235,7 +236,7 @@ Slot::Slot(const std::string &str) : domain(0), bus(0), device(0), function(0) {
   }
 
   if (dot && dot[0] && strcmp(dot, "*")) {
-    long int x = strtol(dot, &e, 16);
+    long int const x = strtol(dot, &e, 16);
 
     if ((e && *e) || (x < 0 || x > 7)) {
       free(tmp);
@@ -262,29 +263,34 @@ bool PciDevice::operator==(const PciDevice &f) {
 }
 
 std::list<Region> PciDevice::getRegions() const {
-  FILE *f;
   char sysfs[1024];
 
   snprintf(sysfs, sizeof(sysfs),
            "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource", SYSFS_PATH,
            slot.domain, slot.bus, slot.device, slot.function);
 
-  f = fopen(sysfs, "r");
+  auto file_destructor = [](FILE *file) { fclose(file); };
+  auto f = std::unique_ptr<FILE, decltype(file_destructor)>{fopen(sysfs, "r"),
+                                                            file_destructor};
   if (!f)
     throw SystemError("Failed to open resource mapping {}", sysfs);
 
   std::list<Region> regions;
 
-  ssize_t bytesRead;
-  char *line = nullptr;
-  size_t len = 0;
-
-  int reg_num = 0;
-
   // Cap to 8 regions, just because we don't know how many may exist.
-  while (reg_num < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
+  int reg_num = 0;
+  while (reg_num < 8) {
+    size_t len = 0;
+    char *line_ptr = nullptr;
+    auto line_destructor = [](char *line) { free(line); };
+    auto ret = getline(&line_ptr, &len, f.get());
+    auto line = std::unique_ptr<char, decltype(line_destructor)>{
+        line_ptr, line_destructor};
+    if (ret == -1)
+      break;
+
     unsigned long long tokens[3];
-    char *s = line;
+    char *s = line.get();
     for (int i = 0; i < 3; i++) {
       char *end;
       tokens[i] = strtoull(s, &end, 16);
@@ -295,12 +301,6 @@ std::list<Region> PciDevice::getRegions() const {
       }
       s = end;
     }
-
-    free(line);
-
-    // Required for getline() to allocate a new buffer on the next iteration.
-    line = nullptr;
-    len = 0;
 
     if (tokens[0] != tokens[1]) { // This is a valid region
       Region region;
@@ -315,8 +315,6 @@ std::list<Region> PciDevice::getRegions() const {
 
     reg_num++;
   }
-
-  fclose(f);
 
   return regions;
 }

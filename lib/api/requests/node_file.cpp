@@ -33,13 +33,15 @@ public:
 
     if (node->getFactory() != nf)
       throw BadRequest("This node is not a file node", "{ s: s }", "type",
-                       node->getFactory()->getName());
+                       node->getFactory()->getName().c_str());
 
     auto *nc = dynamic_cast<NodeCompat *>(node);
     auto *f = nc->getData<struct file>();
 
-    if (matches[2] == "rewind")
+    if (matches[2] == "rewind") {
       rewind(f->stream_in);
+      (void)errno; // TODO: Should we handle rewind errors?
+    }
 
     return new Response(session, HTTP_STATUS_OK);
   }

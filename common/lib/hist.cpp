@@ -45,7 +45,7 @@ void Hist::put(double value) {
       // There is no warmup phase
       // TODO resolution = ?
     } else {
-      idx_t idx = std::round((value - low) / resolution);
+      idx_t const idx = std::round((value - low) / resolution);
 
       // Check bounds and increment
       if (idx >= (idx_t)data.size())
@@ -123,7 +123,7 @@ void Hist::print(Logger logger, bool details, std::string prefix) const {
 
 void Hist::plot(Logger logger) const {
   // Get highest bar
-  Hist::cnt_t max = *std::max_element(data.begin(), data.end());
+  Hist::cnt_t const max = *std::max_element(data.begin(), data.end());
 
   std::vector<TableColumn> cols = {
       {-9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g"},
@@ -136,9 +136,9 @@ void Hist::plot(Logger logger) const {
   table.header();
 
   for (size_t i = 0; i < data.size(); i++) {
-    double value = low + (i)*resolution;
-    Hist::cnt_t cnt = data[i];
-    int bar = cols[2].getWidth() * ((double)cnt / max);
+    double const value = low + (i)*resolution;
+    Hist::cnt_t const cnt = data[i];
+    int const bar = cols[2].getWidth() * ((double)cnt / max);
 
     char *buf = strf("%s", "");
     for (int i = 0; i < bar; i++)
@@ -196,7 +196,7 @@ json_t *Hist::toJson() const {
 int Hist::dumpJson(FILE *f) const {
   json_t *j = Hist::toJson();
 
-  int ret = json_dumpf(j, f, 0);
+  int const ret = json_dumpf(j, f, 0);
 
   json_decref(j);
 

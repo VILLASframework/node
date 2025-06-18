@@ -61,7 +61,7 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
 
   auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
   uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
-  uintptr_t iovaAddr =
+  uintptr_t const iovaAddr =
       vfioContainer->memoryMap(processBaseAddr, UINTPTR_MAX, block->getSize());
 
   if (iovaAddr == UINTPTR_MAX) {
@@ -94,7 +94,7 @@ PlatformCardFactory::make(json_t *json_card, std::string card_name,
   // make sure the vfio container has the required modules
   kernel::loadModule("vfio_platform");
 
-  CardParser parser(json_card);
+  CardParser const parser(json_card);
 
   auto card = std::make_shared<fpga::PlatformCard>(vc);
   card->name = std::string(card_name);

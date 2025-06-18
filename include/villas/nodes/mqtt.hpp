@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <jansson.h>
+
 #include <villas/format.hpp>
 #include <villas/pool.hpp>
 #include <villas/queue_signalled.h>

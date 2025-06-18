@@ -59,8 +59,9 @@ void OpenDSS::parseData(json_t *json, bool in) {
       json_t *a_mode = nullptr;
       Element ele;
 
-      int ret = json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }",
-                               "name", &name, "type", &type, "data", &a_mode);
+      int const ret =
+          json_unpack_ex(json_data, &err, 0, "{ s: s, s: s, s: o }", "name",
+                         &name, "type", &type, "data", &a_mode);
       if (ret)
         throw ConfigError(json, err, "node-config-node-opendss");
 
@@ -199,7 +200,7 @@ void OpenDSS::getElementName(ElementType type,
 
 int OpenDSS::prepare() {
   // Start OpenDSS.
-  int ret = DSSI(3, 0);
+  int const ret = DSSI(3, 0);
   if (!ret) {
     throw SystemError("Failed to start OpenDSS");
   }

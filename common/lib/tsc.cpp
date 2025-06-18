@@ -35,7 +35,7 @@ int tsc_init(struct Tsc *t) {
     t->frequency = ecx * ebx / eax;
   else {
 #ifdef __linux__
-    int ret = kernel::get_cpu_frequency(&t->frequency);
+    int const ret = kernel::get_cpu_frequency(&t->frequency);
     if (ret)
       return ret;
 #endif

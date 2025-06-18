@@ -21,8 +21,8 @@ using namespace villas::node::iec60870;
 using namespace std::literals::chrono_literals;
 
 static CP56Time2a timespec_to_cp56time2a(timespec time) {
-  time_t time_ms = static_cast<time_t>(time.tv_sec) * 1000 +
-                   static_cast<time_t>(time.tv_nsec) / 1000000;
+  time_t const time_ms = static_cast<time_t>(time.tv_sec) * 1000 +
+                         static_cast<time_t>(time.tv_nsec) / 1000000;
   return CP56Time2a_createFromMsTimestamp(NULL, time_ms);
 }
 
@@ -155,7 +155,7 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
     switch (typeWithoutTimestamp()) {
     case ASDUData::SCALED_INT: {
       auto scaled_int = reinterpret_cast<MeasuredValueScaled>(io);
-      int scaled_int_value = MeasuredValueScaled_getValue(scaled_int);
+      int const scaled_int_value = MeasuredValueScaled_getValue(scaled_int);
       signal_data.i = static_cast<int64_t>(scaled_int_value);
       quality = MeasuredValueScaled_getQuality(scaled_int);
       break;
@@ -163,7 +163,7 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
     case ASDUData::NORMALIZED_FLOAT: {
       auto normalized_float = reinterpret_cast<MeasuredValueNormalized>(io);
-      float normalized_float_value =
+      float const normalized_float_value =
           MeasuredValueNormalized_getValue(normalized_float);
       signal_data.f = static_cast<double>(normalized_float_value);
       quality = MeasuredValueNormalized_getQuality(normalized_float);
@@ -172,7 +172,7 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
     case ASDUData::DOUBLE_POINT: {
       auto double_point = reinterpret_cast<DoublePointInformation>(io);
-      DoublePointValue double_point_value =
+      DoublePointValue const double_point_value =
           DoublePointInformation_getValue(double_point);
       signal_data.i = static_cast<int64_t>(double_point_value);
       quality = DoublePointInformation_getQuality(double_point);
@@ -181,7 +181,8 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
     case ASDUData::SINGLE_POINT: {
       auto single_point = reinterpret_cast<SinglePointInformation>(io);
-      bool single_point_value = SinglePointInformation_getValue(single_point);
+      bool const single_point_value =
+          SinglePointInformation_getValue(single_point);
       signal_data.b = static_cast<bool>(single_point_value);
       quality = SinglePointInformation_getQuality(single_point);
       break;
@@ -189,7 +190,7 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
     case ASDUData::SHORT_FLOAT: {
       auto short_float = reinterpret_cast<MeasuredValueShort>(io);
-      float short_float_value = MeasuredValueShort_getValue(short_float);
+      float const short_float_value = MeasuredValueShort_getValue(short_float);
       signal_data.f = static_cast<double>(short_float_value);
       quality = MeasuredValueShort_getQuality(short_float);
       break;
@@ -239,7 +240,7 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
     InformationObject_destroy(io);
 
-    std::optional<timespec> timestamp =
+    std::optional<timespec> const timestamp =
         time_cp56.has_value()
             ? std::optional{cp56time2a_to_timespec(*time_cp56)}
             : std::nullopt;
@@ -252,9 +253,6 @@ ASDUData::checkASDU(CS101_ASDU const &asdu) const {
 
 bool ASDUData::addSampleToASDU(CS101_ASDU &asdu,
                                ASDUData::Sample sample) const {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
   std::optional<CP56Time2a> timestamp =
       sample.timestamp.has_value()
           ? std::optional{timespec_to_cp56time2a(*sample.timestamp)}
@@ -348,12 +346,11 @@ bool ASDUData::addSampleToASDU(CS101_ASDU &asdu,
     throw RuntimeError{"invalid asdu data type"};
   }
 
-  bool successfully_added = CS101_ASDU_addInformationObject(asdu, io);
+  bool const successfully_added = CS101_ASDU_addInformationObject(asdu, io);
 
   InformationObject_destroy(io);
 
   return successfully_added;
-#pragma GCC diagnostic pop
 }
 
 ASDUData::ASDUData(ASDUData::Descriptor const *descriptor, int ioa,

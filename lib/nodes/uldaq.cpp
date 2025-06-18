@@ -286,7 +286,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
     throw ConfigError(json, err, "node-config-node-uldaq");
 
   if (interface_type) {
-    int iftype = uldaq_parse_interface_type(interface_type);
+    int const iftype = uldaq_parse_interface_type(interface_type);
     if (iftype < 0)
       throw ConfigError(json, "node-config-node-uldaq-interface-type",
                         "Invalid interface type: {}", interface_type);
@@ -295,7 +295,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   }
 
   if (sample_clock_source) {
-    int clksrc = uldaq_parse_clock_source(sample_clock_source);
+    int const clksrc = uldaq_parse_clock_source(sample_clock_source);
     if (clksrc < 0) {
       throw ConfigError(json, "node-config-node-uldaq-clock_source",
                         "Invalid clock source type: {}", sample_clock_source);
@@ -530,6 +530,12 @@ int villas::node::uldaq_start(NodeCompat *n) {
   // Enable the event to be notified every time samples are available
   err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize,
                       uldaq_data_available, n);
+  if (err != ERR_NO_ERROR) {
+    char buf[ERR_MSG_LEN];
+    ulGetErrMsg(err, buf);
+    throw RuntimeError("Failed to attach data event handler on DAQ device: {}",
+                       buf);
+  }
 
   // Start the acquisition
   err = ulAInScan(u->device_handle, 0, 0, (AiInputMode)0, (Range)0,
@@ -602,7 +608,7 @@ int villas::node::uldaq_read(NodeCompat *n, struct Sample *const smps[],
   if (u->in.status != SS_RUNNING)
     return -1;
 
-  size_t start_index = u->in.buffer_pos;
+  size_t const start_index = u->in.buffer_pos;
 
   // Wait for data available condition triggered by event callback
   if (start_index + n->in.vectorize * u->in.channel_count >
@@ -612,10 +618,10 @@ int villas::node::uldaq_read(NodeCompat *n, struct Sample *const smps[],
   for (unsigned j = 0; j < cnt; j++) {
     struct Sample *smp = smps[j];
 
-    long long scan_index = start_index + j * u->in.channel_count;
+    long long const scan_index = start_index + j * u->in.channel_count;
 
     for (unsigned i = 0; i < u->in.channel_count; i++) {
-      long long channel_index = (scan_index + i) % u->in.buffer_len;
+      long long const channel_index = (scan_index + i) % u->in.buffer_len;
 
       smp->data[i].f = u->in.buffer[channel_index];
     }
@@ -650,5 +656,5 @@ __attribute__((constructor(110))) static void register_plugin() {
   p.stop = uldaq_stop;
   p.read = uldaq_read;
 
-  static NodeCompatFactory ncp(&p);
+  static NodeCompatFactory const ncp(&p);
 }

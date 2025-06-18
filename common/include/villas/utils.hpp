@@ -81,8 +81,8 @@
 #endif
 #define MAX(a, b)                                                              \
   ({                                                                           \
-    __typeof__(a) _a = (a);                                                    \
-    __typeof__(b) _b = (b);                                                    \
+    __typeof__(a) const &_a = (a);                                             \
+    __typeof__(b) const &_b = (b);                                             \
     _a > _b ? _a : _b;                                                         \
   })
 
@@ -92,8 +92,8 @@
 #endif
 #define MIN(a, b)                                                              \
   ({                                                                           \
-    __typeof__(a) _a = (a);                                                    \
-    __typeof__(b) _b = (b);                                                    \
+    __typeof__(a) const &_a = (a);                                             \
+    __typeof__(b) const &_b = (b);                                             \
     _a < _b ? _a : _b;                                                         \
   })
 #define MIN3(a, b, c) MIN(MIN((a), (b)), (c))
