@@ -34,7 +34,7 @@ authors:
   affiliation: 1
 - name: Prof. Antonello Monti
   orcid: 0000-0003-1914-9801
-  affiliation: "1,2"
+  affiliation: "1, 2"
 affiliations:
 - name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
   index: 1
