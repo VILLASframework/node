@@ -91,7 +91,6 @@ Lastly, VILLAScontroller is currently under development and aims to automate sim
 - [ENSURE](https://www.kopernikus-projekte.de/projekte/ensure): Federal Ministry of Education and Research supports the project under identification 03SFK1C0-3.
 - [NFDI4Energy](https://nfdi4energy.uol.de/): Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – 501865131.
 - [HYPERRIDE](https://hyperride.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 957788.
-- [Erigrid2.0](https://erigrid2.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 870620.
 - [AI-EFFECT](https://ai-effect.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172952.
 - [EnerTEF](https://enertef.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 101172887.
 
