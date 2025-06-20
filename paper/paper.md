@@ -61,7 +61,7 @@ Node-types, hooks, and paths need to be initalized in a configuration file which
 Figure 1 shows an example of an experiment where five different node-types are used, connected by three paths, using three hooks.
 It includes queues ($q$) and registers ($r$). Queues temporarily store data before data is forwarded to registers. Registers provide the possibility to (de-)mulitplex data and to create new samples.
 
-![Example of modular exprimental design with nodes, paths, and hooks [@villasnode_docs].](VILLASnode_paths.svg)
+![Example of modular exprimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
 
 VILLASnode can be controlled remotely by an Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. This is useful if Python software tools are to be integrated in a distributed experiment.
 In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
