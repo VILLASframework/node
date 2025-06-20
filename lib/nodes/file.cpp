@@ -76,16 +76,17 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   const char *uri_tmpl = nullptr;
   const char *eof = nullptr;
   const char *epoch = nullptr;
+  const char *read_mode = nullptr;
   double epoch_flt = 0;
 
   ret = json_unpack_ex(json, &err, 0,
                        "{ s: s, s?: o, s?: { s?: s, s?: F, s?: s, s?: F, s?: "
-                       "i, s?: i }, s?: { s?: b, s?: i } }",
+                       "i, s?: i, s?: s }, s?: { s?: b, s?: i } }",
                        "uri", &uri_tmpl, "format", &json_format, "in", "eof",
                        &eof, "rate", &f->rate, "epoch_mode", &epoch, "epoch",
                        &epoch_flt, "buffer_size", &f->buffer_size_in, "skip",
-                       &f->skip_lines, "out", "flush", &f->flush, "buffer_size",
-                       &f->buffer_size_out);
+                       &f->skip_lines, "read_mode", &read_mode, "out", "flush",
+                       &f->flush, "buffer_size", &f->buffer_size_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-file");
 
@@ -127,6 +128,15 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
       throw RuntimeError("Invalid value '{}' for setting 'epoch'", epoch);
   }
 
+  if (read_mode) {
+    if (!strcmp(read_mode, "all"))
+      f->read_mode = file::ReadMode::READ_ALL;
+    else if (!strcmp(read_mode, "rate_based"))
+      f->read_mode = file::ReadMode::RATE_BASED;
+    else
+      throw RuntimeError("Invalid value '{}' for setting 'read_mode'",
+                         read_mode);
+  }
   return 0;
 }
 
@@ -136,6 +146,7 @@ char *villas::node::file_print(NodeCompat *n) {
 
   const char *epoch_str = nullptr;
   const char *eof_str = nullptr;
+  const char *read_mode = nullptr;
 
   switch (f->epoch_mode) {
   case file::EpochMode::DIRECT:
@@ -181,11 +192,25 @@ char *villas::node::file_print(NodeCompat *n) {
     break;
   }
 
+  switch (f->read_mode) {
+  case file::ReadMode::READ_ALL:
+    read_mode = "all";
+    break;
+
+  case file::ReadMode::RATE_BASED:
+    read_mode = "rate_based";
+    break;
+
+  default:
+    read_mode = "";
+    break;
+  }
+
   strcatf(
       &buf,
-      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
+      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f, in.read_mode=%s",
       f->uri ? f->uri : f->uri_tmpl, f->flush ? "yes" : "no", f->skip_lines,
-      eof_str, epoch_str, time_to_double(&f->epoch));
+      eof_str, epoch_str, time_to_double(&f->epoch), read_mode);
 
   if (f->rate)
     strcatf(&buf, ", in.rate=%.1f", f->rate);
@@ -298,11 +323,39 @@ int villas::node::file_start(NodeCompat *n) {
 
   sample_free(smp);
 
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    Sample *smp;
+    int ret;
+
+    while (!feof(f->stream_in)) {
+      smp = sample_alloc_mem(n->getInputSignals(false)->size());
+      if (!smp) {
+        n->logger->error("Failed to allocate samples");
+        break;
+      }
+
+      ret = f->formatter->scan(f->stream_in, smp);
+      if (ret < 0) {
+        sample_free(smp);
+        break;
+      }
+
+      f->samples.push_back(smp);
+    }
+
+    f->read_pos = 0;
+  }
+
   return 0;
 }
 
 int villas::node::file_stop(NodeCompat *n) {
   auto *f = n->getData<struct file>();
+
+  for (auto smp : f->samples) {
+    sample_free(smp);
+  }
+  f->samples.clear();
 
   f->task.stop();
 
@@ -319,6 +372,62 @@ int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
   uint64_t steps;
 
   assert(cnt == 1);
+
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    unsigned read_count = 0;
+    while (f->read_pos < f->samples.size() && read_count < cnt) {
+
+      sample_copy(smps[read_count], f->samples[f->read_pos++]);
+      if (f->epoch_mode == file::EpochMode::ORIGINAL) {
+        //No waiting
+      } else if (f->rate) {
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+
+        smps[read_count]->ts.origin = time_now();
+      } else {
+        smps[read_count]->ts.origin =
+            time_add(&smps[read_count]->ts.origin, &f->offset);
+        f->task.setNext(&smps[read_count]->ts.origin);
+
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+      }
+      read_count++;
+    }
+
+    if (f->read_pos == f->samples.size()) {
+      switch (f->eof_mode) {
+      case file::EOFBehaviour::REWIND:
+        n->logger->info("Rewind input file");
+
+        f->read_pos = 0;
+        break;
+
+      case file::EOFBehaviour::SUSPEND:
+        usleep(100000); // 100ms sleep
+
+        // Try to download more data if this is a remote file.
+        clearerr(f->stream_in);
+        break;
+
+      case file::EOFBehaviour::STOP:
+      default:
+        n->logger->info("Reached end of buffer");
+        n->setState(State::STOPPING);
+        return -1;
+      }
+      return -1;
+    }
+
+    return read_count;
+  }
 
 retry:
   ret = f->formatter->scan(f->stream_in, smps, cnt);
@@ -428,6 +537,8 @@ int villas::node::file_init(NodeCompat *n) {
   f->buffer_size_in = 0;
   f->buffer_size_out = 0;
   f->skip_lines = 0;
+  f->read_mode = file::ReadMode::RATE_BASED;
+  f->read = false;
 
   f->formatter = nullptr;
 
