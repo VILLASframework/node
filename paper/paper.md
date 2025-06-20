@@ -42,7 +42,7 @@ affiliations:
   index: 2
 - name: OPAL-RT Germany GmbH
   index: 3
-date: 28 May 2025
+date: 20 June 2025
 bibliography: paper.bib
 ---
 
