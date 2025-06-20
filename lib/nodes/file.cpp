@@ -129,11 +129,13 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   }
 
   if (read_mode) {
-    if (!strcmp(read_mode, "all")) {
+    if (!strcmp(read_mode, "all"))
       f->read_mode = file::ReadMode::READ_ALL;
-    } else {
+    else if (!strcmp(read_mode, "rate_based"))
       f->read_mode = file::ReadMode::RATE_BASED;
-    }
+    else
+      throw RuntimeError("Invalid value '{}' for setting 'read_mode'",
+                         read_mode);
   }
   return 0;
 }
@@ -144,6 +146,7 @@ char *villas::node::file_print(NodeCompat *n) {
 
   const char *epoch_str = nullptr;
   const char *eof_str = nullptr;
+  const char *read_mode = nullptr;
 
   switch (f->epoch_mode) {
   case file::EpochMode::DIRECT:
@@ -189,11 +192,25 @@ char *villas::node::file_print(NodeCompat *n) {
     break;
   }
 
+  switch (f->read_mode) {
+  case file::ReadMode::READ_ALL:
+    read_mode = "all";
+    break;
+
+  case file::ReadMode::RATE_BASED:
+    read_mode = "rate_based";
+    break;
+
+  default:
+    read_mode = "";
+    break;
+  }
+
   strcatf(
       &buf,
-      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
+      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f, in.read_mode=%s",
       f->uri ? f->uri : f->uri_tmpl, f->flush ? "yes" : "no", f->skip_lines,
-      eof_str, epoch_str, time_to_double(&f->epoch));
+      eof_str, epoch_str, time_to_double(&f->epoch), read_mode);
 
   if (f->rate)
     strcatf(&buf, ", in.rate=%.1f", f->rate);
@@ -307,26 +324,23 @@ int villas::node::file_start(NodeCompat *n) {
   sample_free(smp);
 
   if (f->read_mode == file::ReadMode::READ_ALL) {
-    Sample *smp_buffer;
-    int retval;
+    Sample *smp;
+    int ret;
 
     while (!feof(f->stream_in)) {
-      smp_buffer = sample_alloc_mem(n->getInputSignals(false)->size());
-      if (!smp_buffer) {
+      smp = sample_alloc_mem(n->getInputSignals(false)->size());
+      if (!smp) {
         n->logger->error("Failed to allocate samples");
         break;
       }
 
-      retval = f->formatter->scan(f->stream_in, smp_buffer);
-      if (retval < 0) {
-        sample_free(smp_buffer);
+      ret = f->formatter->scan(f->stream_in, smp);
+      if (ret < 0) {
+        sample_free(smp);
         break;
       }
 
-      if (f->epoch_mode != file::EpochMode::ORIGINAL)
-        smp_buffer->ts.origin = time_add(&smp_buffer->ts.origin, &f->offset);
-
-      f->samples.push_back(smp_buffer);
+      f->samples.push_back(smp);
     }
 
     f->read_pos = 0;
