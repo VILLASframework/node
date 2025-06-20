@@ -82,7 +82,7 @@ Firstly, it includes VILLASweb, a tool designed for the visualization and monito
 Secondly, there is VILLASfpga, which provides hard real-time capabilities for VILLASnode.
 Lastly, VILLAScontroller is currently under development and aims to automate simulation equipment.
 
-The gateway supports a wide range of established data exchange protocols. Support for various message brokers like MQTT, AMQP, nanomsg, ZeroMQ, Redis or Kafka provide connectivity to existing software platforms. Support for process bus protocols such as CAN, EtherCAT, Modbus, IEC 61850-8-1 (GOOSE), IEC 61850-9-2 (Sampled Values) enable connectivity to physical devices. A range of web-based protocols like WebRTC, WebSockets, NGSI or a HTTP REST API facilitate integration into web-based interfaces. Lastly, a set of generic protocols add support for plain UDP/TCP/Ethernet sockets, Infiniband, file-based I/O or communication with other processes via standard I/O or shared memory regions. 
+The gateway supports a wide range of established data exchange protocols. Support for various message brokers like MQTT, AMQP, nanomsg, ZeroMQ, Redis or Kafka provide connectivity to existing software platforms. Support for process bus protocols such as CAN, EtherCAT, Modbus, IEC 61850-8-1 (GOOSE), IEC 61850-9-2 (Sampled Values) enable connectivity to physical devices. A range of web-based protocols like WebRTC, WebSockets, NGSI or a HTTP REST API facilitate integration into web-based interfaces. Lastly, a set of generic protocols add support for plain UDP/TCP/Ethernet sockets, Infiniband, file-based I/O or communication with other processes via standard I/O or shared memory regions.
 
 # Acknowledgements
 
