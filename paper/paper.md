@@ -1,69 +1,63 @@
 ---
 title: 'VILLASnode: An Open-Source Real-time Multi-protocol Gateway'
 tags:
+
 - C/C++
 - Real-time
 - Distributed experiments
 - Electrical grid simulation
+
 authors:
-- name: Alexandra Bach
-  orcid: 0009-0005-7385-4642
-  affiliation: 1
-- name: Leonardo Carreras
-  orcid: 0000-0002-9033-1051
-  affiliation: 1
-- name: Laura Fuentes Grau
-  orcid: 0009-0004-8997-7009
-  affiliation: 1
+
 - name: Steffen Vogel
   orcid: 0000-0003-3384-6750
-  affiliation: "1, 3" # (Multiple affiliations must be quoted)
-- name: Manuel Pitz
-  orcid: 0000-0002-6252-2029
-  affiliation: 1
+  affiliation: "1, 3"
 - name: Niklas Eiling
   orcid: 0000-0002-7011-9846
   affiliation: 1
-- name: Felix Wege
-  orcid: 0000-0001-6602-9875
+- name: Manuel Pitz
+  orcid: 0000-0002-6252-2029
   affiliation: 1
-- name: Andres Acosta
-  orcid: 0000-0003-3066-8354
+- name: Alexandra Bach
+  orcid: 0009-0005-7385-4642
   affiliation: 1
-- name: Iris Köster
-  affiliation: 1
+- name: Marija Stevic
+  affiliation: "1, 3"
 - name: Prof. Antonello Monti
   orcid: 0000-0003-1914-9801
   affiliation: "1, 2"
+
 affiliations:
+
 - name: Institute for Automation of Complex Power Systems, RWTH Aachen University, Germany
   index: 1
 - name: Fraunhofer Institute for Applied Information Technology, Aachen, Germany
   index: 2
 - name: OPAL-RT Germany GmbH
   index: 3
+
 date: 20 June 2025
 bibliography: paper.bib
 ---
 
 # Summary
 
-VILLASnode is a software tool, designed to facilitate real-time data exchange between various components in geographically distributed real-time experiments. Components can be test beds, real-time simulators, software tools, and physical devices.
+VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be test beds, digital real-time simulators, software tools, and physical devices.
 Whereas distributed computing, systems or algortihms aim to solve a common task, geographically distributed experiments link infrastructures with different components to make these components accessible to other infrastructures. Thus, data exchanges are possible which would not be possible in one single infrastructure.
 VILLASnode serves as the gateway that connects components across different infrastructures by providing a set of protocols and customized third-party implementations, e.g., different simulators. It enables seamless collaboration in research and testing environments while safeguarding the intellectual property of the infrastructures. The components at every infrastructure appear as a black box. The infrastructure does not need to share models or confidential information.
 
-VILLASnode is a Linux command line tool and can run as installation from source or as container. It is written in C/C++ and designed in a modular way.
+VILLASnode is a Linux command line tool and can run as installation from source or as container. It is written in C/C++ and designed in a modular and extensible way.
 All components which are interfaced by the VILLASnode gateway are represented by nodes ($n$). These nodes act as sinks or sources for data specific to the component. Every node is an instance of a node-type. In a single VILLASnode instance, multiple instances of the same node-type can co-exist at the same time.
 The basic data package, common for all node-types, includes timestamped data, constituting a sample. Up to 64 values can form a sample.
 Samples may need modification or filtering. VILLASnode supports hooks ($h$) for this purpose. Hooks are simple callback functions, which are called whenever a message is processed.
 Paths ($p$) take care of the processing and define the connections and dataflows between nodes.
-Node-types, hooks, and paths need to be initalized in a configuration file which is passed when starting VILLASnode.
+Node-types, hooks, and paths need to be initalized in a JSON configuration file which is passed when starting VILLASnode.
 Figure 1 shows an example of an experiment where five different node-types are used, connected by three paths, using three hooks.
 It includes queues ($q$) and registers ($r$). Queues temporarily store data before data is forwarded to registers. Registers provide the possibility to (de-)mulitplex data and to create new samples.
 
-![Example of modular exprimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
+![Example of modular experimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
 
-VILLASnode can be controlled remotely by an Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. This is useful if Python software tools are to be integrated in a distributed experiment.
+VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. This is useful if Python software tools are to be integrated in a distributed experiment.
 In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
 Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems.
 To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
