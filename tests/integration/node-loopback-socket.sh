@@ -30,36 +30,36 @@ cat > config.json <<EOF
 {
     "nodes": {
         "node1": {
-             "type": "socket",
-             "in": {
-             	"address": "127.0.0.1:12000",
-             	"signals": {
-             		"type": "float",
-             		"count": 1
-             	}
-             },
-             "out": {
-             	"address": "127.0.0.1:12001"
-             }
+            "type": "socket",
+            "in": {
+                "address": "127.0.0.1:12000",
+                "signals": {
+                    "type": "float",
+                    "count": 1
+                }
+            },
+            "out": {
+                "address": "127.0.0.1:12001"
+            }
         },
         "node2": {
-             "type": "socket",
-             "in": {
-             	"address": "127.0.0.1:12001",
-             	"signals": {
-             		"type": "float",
-             		"count": 1
-             	}
-             },
-             "out": {
-             	"address": "127.0.0.1:12000"
-             }
+            "type": "socket",
+            "in": {
+                "address": "127.0.0.1:12001",
+                "signals": {
+                    "type": "float",
+                    "count": 1
+                }
+            },
+            "out": {
+                "address": "127.0.0.1:12000"
+            }
         }
     },
     "paths": [
         {
-             "in": "node1",
-             "out": "node1"
+            "in": "node1",
+            "out": "node1"
         }
     ]
 }
@@ -95,28 +95,28 @@ cat > config.json <<EOF
              "type": "socket",
              "layer": "tcp-server",
              "in": {
-             	"address": "127.0.0.1:12002",
-             	"signals": {
-             		"type": "float",
-             		"count": 1
-             	}
+                 "address": "127.0.0.1:12002",
+                 "signals": {
+                     "type": "float",
+                     "count": 1
+                 }
              },
              "out": {
-             	"address": "127.0.0.1:12003"
+                 "address": "127.0.0.1:12003"
              }
         },
         "node2": {
              "type": "socket",
              "layer": "tcp-client",
              "in": {
-             	"address": "127.0.0.1:12003",
-             	"signals": {
-             		"type": "float",
-             		"count": 1
-             	}
+                 "address": "127.0.0.1:12003",
+                 "signals": {
+                     "type": "float",
+                     "count": 1
+                 }
              },
              "out": {
-             	"address": "127.0.0.1:12002"
+                 "address": "127.0.0.1:12002"
              }
         },
         "siggen": {
@@ -130,11 +130,11 @@ cat > config.json <<EOF
              "in": "siggen",
              "out": "node2",
              "hooks": [
-             	{
-             		"type": "print",
+                 {
+                     "type": "print",
 
-             		"output": "input.dat"
-             	}
+                     "output": "input.dat"
+                 }
              ]
         },
         {
@@ -144,11 +144,11 @@ cat > config.json <<EOF
         {
             "in": "node2",
             "hooks": [
-             	{
-             		"type": "print",
+                 {
+                     "type": "print",
 
                     "output": "output.dat"
-             	}
+                 }
              ]
         }
     ]

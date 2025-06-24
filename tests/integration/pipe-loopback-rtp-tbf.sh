@@ -35,31 +35,31 @@ cat > src.json << EOF
     },
     "nodes": {
         "rtp_node": {
-             "type": "rtp",
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
-             "rate": ${RATE},
-             "rtcp": {
-             	"enabled": true,
-             	"mode": "aimd",
-             	"throttle_mode": "decimate"
-             },
-             "aimd": {
-             	"a": 10,
-             	"b": 0.75,
-             	"start_rate": ${RATE}
-             },
-             "in": {
-             	"address": "0.0.0.0:12002",
-             	"signals": {
-             		"count": ${NUM_VALUES},
-             		"type": "float"
-             	}
-             },
-             "out": {
-             	"address": "127.0.0.1:12000",
-             	"fwmark": 123
-             }
+            "type": "rtp",
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
+            "rate": ${RATE},
+            "rtcp": {
+                "enabled": true,
+                "mode": "aimd",
+                "throttle_mode": "decimate"
+            },
+            "aimd": {
+                "a": 10,
+                "b": 0.75,
+                "start_rate": ${RATE}
+            },
+            "in": {
+                "address": "0.0.0.0:12002",
+                "signals": {
+                    "count": ${NUM_VALUES},
+                    "type": "float"
+                }
+            },
+            "out": {
+                "address": "127.0.0.1:12000",
+                "fwmark": 123
+            }
         }
     }
 }
@@ -77,19 +77,19 @@ cat > dest.json << EOF
              "vectorize": ${VECTORIZE},
              "rate": ${RATE},
              "rtcp": {
-             	"enabled": true,
-             	"mode": "aimd",
-             	"throttle_mode": "decimate"
+                 "enabled": true,
+                 "mode": "aimd",
+                 "throttle_mode": "decimate"
              },
              "in": {
-             	"address": "0.0.0.0:12000",
-             	"signals": {
-             		"count": ${NUM_VALUES},
-             		"type": "float"
-             	}
+                 "address": "0.0.0.0:12000",
+                 "signals": {
+                     "count": ${NUM_VALUES},
+                     "type": "float"
+                 }
              },
              "out": {
-             	"address": "127.0.0.1:12002"
+                 "address": "127.0.0.1:12002"
              }
         }
     }

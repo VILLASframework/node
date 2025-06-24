@@ -23,22 +23,22 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type"   : "socket",
-             "format": "protobuf",
+            "type": "socket",
+            "format": "protobuf",
 
-             "in": {
-             	"address": "*:12000",
+            "in": {
+                "address": "*:12000",
 
-             	"multicast": {
-             		"enabled": true,
+                "multicast": {
+                    "enabled": true,
 
-             		"group"   : "224.1.2.3",
-             		"loop"    : true
-             	}
-             },
-             "out": {
-             	"address": "224.1.2.3:12000"
-             }
+                    "group": "224.1.2.3",
+                    "loop": true
+                }
+            },
+            "out": {
+                "address": "224.1.2.3:12000"
+            }
         }
     }
 }

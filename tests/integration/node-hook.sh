@@ -30,43 +30,43 @@ cat > config.json <<EOF
     "idle_stop": true,
     "nodes": {
         "sig": {
-             "type": "signal",
+            "type": "signal",
 
-             "signal": "mixed",
-             "realtime": false,
-             "limit": 10,
-             "rate": 100,
-             "values": 5
+            "signal": "mixed",
+            "realtime": false,
+            "limit": 10,
+            "rate": 100,
+            "values": 5
         },
         "file": {
-             "type": "file",
-             "uri": "output.dat"
+            "type": "file",
+            "uri": "output.dat"
         }
     },
     "paths": [
         {
-             "in": "sig",
-             "out": "file",
-             "hooks": [
-             	{
-             		"type": "average",
+            "in": "sig",
+            "out": "file",
+            "hooks": [
+                {
+                    "type": "average",
 
-             		"signals": [ "random", "sine", "square", "triangle", "ramp" ],
-             		"offset": 0
-             	},
-             	{
-             		"type": "skip_first",
+                    "signals": [ "random", "sine", "square", "triangle", "ramp" ],
+                    "offset": 0
+                },
+                {
+                    "type": "skip_first",
 
-             		"samples": 5
-             	},
-             	{
-             		"type": "scale",
+                    "samples": 5
+                },
+                {
+                    "type": "scale",
 
-             		"scale": 10,
-             		"offset": 5,
-             		"signal": "average"
-             	}
-             ]
+                    "scale": 10,
+                    "offset": 5,
+                    "signal": "average"
+                }
+            ]
         }
     ]
 }

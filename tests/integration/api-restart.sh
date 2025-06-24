@@ -33,24 +33,24 @@ cat > local.json <<EOF
     },
     "nodes": {
         "node1": {
-             "type"   : "socket",
-             "format": "csv",
+            "type"   : "socket",
+            "format": "csv",
 
-             "in": {
-             	"address"  : "*:12000"
-             },
-             "out": {
-             	"address": "127.0.0.1:12001"
-             }
+            "in": {
+                "address"  : "*:12000"
+            },
+            "out": {
+                "address": "127.0.0.1:12001"
+            }
         }
     },
     "paths": [
         {
-             "in": "node1",
-             "out": "node1",
-             "hooks": [
-             	{ "type": "print" }
-             ]
+            "in": "node1",
+            "out": "node1",
+            "hooks": [
+                { "type": "print" }
+            ]
         }
     ]
 }

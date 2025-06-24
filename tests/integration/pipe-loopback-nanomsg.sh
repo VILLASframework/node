@@ -26,22 +26,22 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "nanomsg",
+            "type": "nanomsg",
 
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
 
-             "in": {
-             	"endpoints": [ "tcp://127.0.0.1:12000" ],
+            "in": {
+                "endpoints": [ "tcp://127.0.0.1:12000" ],
 
-             	"signals": {
-             		"type": "float",
-             		"count": 5
-             	}
-             },
-             "out": {
-             	"endpoints": [ "tcp://127.0.0.1:12000" ]
-             }
+                "signals": {
+                    "type": "float",
+                    "count": 5
+                }
+            },
+            "out": {
+                "endpoints": [ "tcp://127.0.0.1:12000" ]
+            }
         }
     }
 }

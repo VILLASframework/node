@@ -27,16 +27,16 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "shmem",
-             "out": {
-             	"name": "/villas-test"
-             },
-             "in": {
-             	"name": "/villas-test"
-             },
-             "queuelen": 1024,
-             "mode": "${MODE}",
-             "vectorize": ${VECTORIZE}
+            "type": "shmem",
+            "out": {
+                "name": "/villas-test"
+            },
+            "in": {
+                "name": "/villas-test"
+            },
+            "queuelen": 1024,
+            "mode": "${MODE}",
+            "vectorize": ${VECTORIZE}
         }
     }
 }

@@ -33,33 +33,33 @@ cat > config.json << EOF
     },
     "nodes": {
         "node1": {
-             "type": "rtp",
+            "type": "rtp",
 
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
 
-             "rtcp": {
-             	"enabled": true,
-             	"throttle_mode": "limit_rate"
-             },
+            "rtcp": {
+                "enabled": true,
+                "throttle_mode": "limit_rate"
+            },
 
-             "aimd": {
-             	"start_rate": 1,
-             	"a": 10,
-             	"b": 0.5
-             },
+            "aimd": {
+                "start_rate": 1,
+                "a": 10,
+                "b": 0.5
+            },
 
-             "in": {
-             	"address": "127.0.0.1:12000",
+            "in": {
+                "address": "127.0.0.1:12000",
 
-             	"signals": {
-             		"type": "float",
-             		"count": 5
-             	}
-             },
-             "out": {
-             	"address": "127.0.0.1:12000"
-             }
+                "signals": {
+                    "type": "float",
+                    "count": 5
+                }
+            },
+            "out": {
+                "address": "127.0.0.1:12000"
+            }
         }
     }
 }

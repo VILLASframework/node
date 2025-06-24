@@ -34,26 +34,26 @@ cat > src.json << EOF
     },
     "nodes": {
         "rtp_node": {
-             "type": "rtp",
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
-             "rate": ${RATE},
-             "rtcp": true,
-             "aimd": {
-             	"a": 10,
-             	"b": 0.5,
-             	"hook_type": "decimate"
-             },
-             "in": {
-             	"address": "0.0.0.0:12002",
-             	"signals": {
-             		"count": 5,
-             		"type": "float"
-             	}
-             },
-             "out": {
-             	"address": "127.0.0.1:12000"
-             }
+            "type": "rtp",
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
+            "rate": ${RATE},
+            "rtcp": true,
+            "aimd": {
+                "a": 10,
+                "b": 0.5,
+                "hook_type": "decimate"
+            },
+            "in": {
+                "address": "0.0.0.0:12002",
+                "signals": {
+                    "count": 5,
+                    "type": "float"
+                }
+            },
+            "out": {
+                "address": "127.0.0.1:12000"
+            }
         }
     }
 }
@@ -72,20 +72,20 @@ cat > dest.json << EOF
              "rate": ${RATE},
              "rtcp": true,
              "aimd": {
-             	"a": 10,
-             	"b": 0.5,
+                 "a": 10,
+                 "b": 0.5,
 
-             	"hook_type": "decimate"
+                 "hook_type": "decimate"
              },
              "in": {
-             	"address": "0.0.0.0:12000",
-             	"signals": {
-             		"count": 5,
-             		"type": "float"
-             	}
+                 "address": "0.0.0.0:12000",
+                 "signals": {
+                     "count": 5,
+                     "type": "float"
+                 }
              },
              "out": {
-             	"address": "127.0.0.1:12002"
+                 "address": "127.0.0.1:12002"
              }
         }
     }
