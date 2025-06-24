@@ -32,21 +32,21 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "mqtt",
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
+            "type": "mqtt",
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
 
-             "username": "guest",
-             "password": "guest",
-             "host": "${HOST}",
-             "port": 1883,
+            "username": "guest",
+            "password": "guest",
+            "host": "${HOST}",
+            "port": 1883,
 
-             "out": {
-             	"publish": "test-topic"
-             },
-             "in": {
-             	"subscribe": "test-topic"
-             }
+            "out": {
+                "publish": "test-topic"
+            },
+            "in": {
+                "subscribe": "test-topic"
+            }
         }
     }
 }

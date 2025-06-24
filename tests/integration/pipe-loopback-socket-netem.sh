@@ -33,21 +33,21 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type"   : "socket",
-             "format": "protobuf",
+            "type"   : "socket",
+            "format": "protobuf",
 
-             "in": {
-             	"address": "*:12000"
-             },
-             "out": {
-             	"address": "127.0.0.1:12000",
-             	"netem": {
-             		"enabled": true,
-             		"delay": 100000,
-             		"jitter": 30000,
-             		"loss": 20
-             	}
-             }
+            "in": {
+                "address": "*:12000"
+            },
+            "out": {
+                "address": "127.0.0.1:12000",
+                "netem": {
+                    "enabled": true,
+                    "delay": 100000,
+                    "jitter": 30000,
+                    "loss": 20
+                }
+            }
         }
     }
 }

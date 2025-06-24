@@ -25,29 +25,29 @@ cat > config.json <<EOF
     },
     "nodes": {
         "testnode1": {
-             "type": "websocket",
-             "dummy": "value1"
+            "type": "websocket",
+            "dummy": "value1"
         },
         "testnode2": {
-             "type": "socket",
-             "dummy": "value2",
+            "type": "socket",
+            "dummy": "value2",
 
-             "in": {
-             	"address": "*:12001",
-             	"signals": [
-             		{ "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
-             		{ "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
-             	]
-             },
-             "out": {
-             	"address": "127.0.0.1:12000"
-             }
+            "in": {
+                "address": "*:12001",
+                "signals": [
+                    { "name": "sig1", "unit": "Volts",  "type": "float", "init": 123.0 },
+                    { "name": "sig2", "unit": "Ampere", "type": "integer", "init": 123 }
+                ]
+            },
+            "out": {
+                "address": "127.0.0.1:12000"
+            }
         }
     },
     "paths": [
         {
-             "in": "testnode2",
-             "out": "testnode1"
+            "in": "testnode2",
+            "out": "testnode1"
         }
     ]
 }

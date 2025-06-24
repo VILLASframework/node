@@ -23,29 +23,29 @@ trap finish EXIT
 
 cat > config.json <<EOF
 {
-        "nodes": {
-             	"sig_1": {
-             			"type": "signal",
-             			"values": 1,
-             			"signal": "counter",
-             			"offset": 100,
-             			"limit": 10
-             	},
-             	"file_1": {
-             			"type": "file",
-             			"uri": "output1.dat"
-             	}
+    "nodes": {
+        "sig_1": {
+            "type": "signal",
+            "values": 1,
+            "signal": "counter",
+            "offset": 100,
+            "limit": 10
         },
-        "paths": [
-             {
-             	"in": "sig_1",
-             	"out": "file_1"
-             },
-             {
-             	"in": "sig_1",
-             	"out": "file_1"
-             }
-        ]
+        "file_1": {
+            "type": "file",
+            "uri": "output1.dat"
+        }
+    },
+    "paths": [
+        {
+            "in": "sig_1",
+            "out": "file_1"
+        },
+        {
+            "in": "sig_1",
+            "out": "file_1"
+        }
+    ]
 }
 EOF
 

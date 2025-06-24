@@ -26,21 +26,21 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "zeromq",
+            "type": "zeromq",
 
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
-             "pattern": "pubsub",
-             "out": {
-             	"publish": "tcp://127.0.0.1:12000"
-             },
-             "in": {
-             	"subscribe": "tcp://127.0.0.1:12000",
-             	"signals": {
-             		"type": "float",
-             		"count": 5
-             	}
-             }
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
+            "pattern": "pubsub",
+            "out": {
+                "publish": "tcp://127.0.0.1:12000"
+            },
+            "in": {
+                "subscribe": "tcp://127.0.0.1:12000",
+                "signals": {
+                    "type": "float",
+                    "count": 5
+                }
+            }
         }
     }
 }
