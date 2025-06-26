@@ -197,7 +197,21 @@ double randf() { return (double)random() / RAND_MAX; }
 char *vstrcatf(char **dest, const char *fmt, va_list &ap) {
   char *tmp;
   int n = *dest ? strlen(*dest) : 0;
-  int i = vasprintf(&tmp, fmt, ap);
+
+  va_list va_copy;
+  va_copy(va_copy, ap);
+  int i = vasprintf(&tmp, fmt, va_copy);
+  va_end(va_copy);
+
+  // Advance va_list
+  const char *format = fmt;
+  if (strcmp(format, "%ju") == 0) {
+    va_arg(ap, unsigned int);
+  } else if (strcmp(format, "%lf") == 0) {
+    va_arg(ap, double);
+  } else if (strcmp(format, "%s") == 0) {
+    va_arg(ap, char *);
+  }
 
   *dest = (char *)(realloc(*dest, n + i + 1));
   if (*dest != nullptr)
