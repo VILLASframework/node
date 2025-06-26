@@ -163,11 +163,11 @@ char *strcatf(char **dest, const char *fmt, ...)
     __attribute__((format(printf, 2, 3)));
 
 // Variadic version of strcatf()
-char *vstrcatf(char **dest, const char *fmt, va_list va)
+char *vstrcatf(char **dest, const char *fmt, va_list &va)
     __attribute__((format(printf, 2, 0)));
 
 char *strf(const char *fmt, ...);
-char *vstrf(const char *fmt, va_list va);
+char *vstrf(const char *fmt, va_list &va);
 
 // Allocate and copy memory.
 void *memdup(const void *src, size_t bytes);

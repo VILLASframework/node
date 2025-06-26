@@ -194,7 +194,7 @@ double boxMuller(float m, float s) {
 
 double randf() { return (double)random() / RAND_MAX; }
 
-char *vstrcatf(char **dest, const char *fmt, va_list ap) {
+char *vstrcatf(char **dest, const char *fmt, va_list &ap) {
   char *tmp;
   int n = *dest ? strlen(*dest) : 0;
   int i = vasprintf(&tmp, fmt, ap);
@@ -228,7 +228,7 @@ char *strf(const char *fmt, ...) {
   return buf;
 }
 
-char *vstrf(const char *fmt, va_list va) {
+char *vstrf(const char *fmt, va_list &va) {
   char *buf = nullptr;
 
   vstrcatf(&buf, fmt, va);
