@@ -25,32 +25,48 @@ using namespace villas::utils;
 #endif
 
 int Table::resize(int w) {
-  int norm, flex, fixed, total;
-
   width = w;
 
-  norm = 0;
-  flex = 0;
-  fixed = 0;
-  total = width - columns.size() * 2;
+  float norm = 0;
+  float flex = 0;
+  float fixed = 0;
+  float total = width - columns.size() * 3; // Column separators and whitespace
 
   // Normalize width
-  for (unsigned i = 0; i < columns.size(); i++) {
-    if (columns[i].width > 0)
-      norm += columns[i].width;
-    if (columns[i].width == 0)
+  for (auto &column: columns) {
+    if (column.width > 0) {
+      norm += column.width;
+    } else if (column.width == 0) {
       flex++;
-    if (columns[i].width < 0)
-      fixed += -1 * columns[i].width;
+    } else if (column.width < 0) {
+      fixed += -1 * column.width;
+    }
   }
 
-  for (unsigned i = 0; i < columns.size(); i++) {
-    if (columns[i].width > 0)
-      columns[i]._width = columns[i].width * (float)(total - fixed) / norm;
-    if (columns[i].width == 0)
-      columns[i]._width = (float)(total - fixed) / flex;
-    if (columns[i].width < 0)
-      columns[i]._width = -1 * columns[i].width;
+  int total_used = 0;
+
+  for (auto &column: columns) {
+    if (column.width > 0) {
+      column._width = column.width * (total - fixed) / norm;
+    } else if (column.width == 0){
+      column._width = (total - fixed) / flex;
+    } else if (column.width < 0) {
+      column._width = -1 * column.width;
+    }
+
+    total_used += column._width;
+  }
+
+  // Distribute remaining space over flex columns
+  for (auto &column: columns) {
+    if (total_used >= total) {
+      break;
+    }
+
+    if (column.width >= 0) {
+      column._width++;
+      total_used++;
+    }
   }
 
   updateRowFormat();
@@ -88,33 +104,27 @@ void Table::updateRowFormat() {
 }
 
 void Table::header() {
-  if (width != Log::getInstance().getWidth())
-    resize(Log::getInstance().getWidth());
+  auto logWidth = Log::getWidth();
+  if (width != logWidth) {
+    resize(logWidth);
+  }
 
   char *line1 = nullptr;
   char *line2 = nullptr;
   char *line3 = nullptr;
 
   for (unsigned i = 0; i < columns.size(); i++) {
-    int w, u;
-    char *col, *unit;
+    auto &column = columns[i];
 
-    col = strf(CLR_BLD("%s"), columns[i].title.c_str());
-    unit = columns[i].unit.size() ? strf(CLR_YEL("%s"), columns[i].unit.c_str())
-                                  : strf("");
-
-    w = columns[i]._width + strlen(col) - strlenp(col);
-    u = columns[i]._width + strlen(unit) - strlenp(unit);
-
-    if (columns[i].align == TableColumn::Alignment::LEFT) {
-      strcatf(&line1, " %-*.*s" ANSI_RESET, w, w, col);
-      strcatf(&line2, " %-*.*s" ANSI_RESET, u, u, unit);
+    if (column.align == TableColumn::Alignment::LEFT) {
+      strcatf(&line1, CLR_BLD(" %*.*s") ANSI_RESET, column._width, column._width, column.title.c_str());
+      strcatf(&line2, CLR_YEL(" %*.*s") ANSI_RESET, column._width, column._width, column.unit.empty() ? "" : column.unit.c_str());
     } else {
-      strcatf(&line1, " %*.*s" ANSI_RESET, w, w, col);
-      strcatf(&line2, " %*.*s" ANSI_RESET, u, u, unit);
+      strcatf(&line1, CLR_BLD(" %-*.*s") ANSI_RESET, column._width, column._width, column.title.c_str());
+      strcatf(&line2, CLR_YEL(" %-*.*s") ANSI_RESET, column._width, column._width, column.unit.empty() ? "" : column.unit.c_str());
     }
 
-    for (int j = 0; j < columns[i]._width + 2; j++) {
+    for (int j = 0; j < column._width + 2; j++) {
       strcatf(&line3, "%s", BOX_LR);
     }
 
@@ -123,9 +133,6 @@ void Table::header() {
       strcatf(&line2, " %s", BOX_UD);
       strcatf(&line3, "%s", BOX_UDLR);
     }
-
-    free(col);
-    free(unit);
   }
 
   logger->info("{}", line1);
@@ -138,8 +145,9 @@ void Table::header() {
 }
 
 void Table::row(int count, ...) {
-  if (width != Log::getInstance().getWidth()) {
-    resize(Log::getInstance().getWidth());
+  auto logWidth = Log::getWidth();
+  if (width != logWidth) {
+    resize(logWidth);
     header();
   }
 
