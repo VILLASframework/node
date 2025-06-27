@@ -53,7 +53,38 @@ int Table::resize(int w) {
       columns[i]._width = -1 * columns[i].width;
   }
 
+  updateRowFormat();
+
   return 0;
+}
+
+void Table::updateRowFormat() {
+  rowFormat.clear();
+
+  for (unsigned i = 0; i < columns.size(); ++i) {
+    auto &column = columns[i];
+
+    rowFormat += " %";
+    if (column.align == TableColumn::Alignment::LEFT) {
+      rowFormat += "-";
+    }
+
+    rowFormat += std::to_string(column._width);
+
+    if (column.precision >= 0) {
+      rowFormat += ".";
+      rowFormat += std::to_string(column.precision);
+    } else if (column.format == "s") {
+      rowFormat += ".";
+      rowFormat += std::to_string(column._width);
+    }
+
+    rowFormat += column.format;
+
+    if (i != columns.size() - 1) {
+      rowFormat += " " BOX_UD;
+    }
+  }
 }
 
 void Table::header() {
@@ -112,31 +143,16 @@ void Table::row(int count, ...) {
     header();
   }
 
+  char *line;
+
   va_list args;
   va_start(args, count);
 
-  char *line = nullptr;
-
-  for (unsigned i = 0; i < columns.size(); ++i) {
-    char *col = vstrf(columns[i].format.c_str(), args);
-
-    int l = strlenp(col);
-    int r = strlen(col);
-    int w = columns[i]._width + r - l;
-
-    if (columns[i].align == TableColumn::Alignment::LEFT)
-      strcatf(&line, " %-*.*s " ANSI_RESET, w, w, col);
-    else
-      strcatf(&line, " %*.*s " ANSI_RESET, w, w, col);
-
-    if (i != columns.size() - 1)
-      strcatf(&line, BOX_UD);
-
-    free(col);
-  }
+  vasprintf(&line, rowFormat.c_str(), args);
 
   va_end(args);
 
   logger->info("{}", line);
+
   free(line);
 }

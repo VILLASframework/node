@@ -129,9 +129,9 @@ void Hist::plot(Logger logger) const {
   Hist::cnt_t max = *std::max_element(data.begin(), data.end());
 
   std::vector<TableColumn> cols = {
-      {-9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g"},
-      {-6, TableColumn::Alignment::RIGHT, "Count", "%6ju"},
-      {0, TableColumn::Alignment::LEFT, "Plot", "%s", "occurrences"}};
+      {-9, 3, TableColumn::Alignment::RIGHT, "Value", "g"},
+      {-6, -1, TableColumn::Alignment::RIGHT, "Count", "ju"},
+      {0, -1, TableColumn::Alignment::LEFT, "Plot", "s", "occurrences"}};
 
   Table table = Table(logger, cols);
 
