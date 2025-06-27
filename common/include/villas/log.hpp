@@ -54,7 +54,7 @@ public:
   Log(Level level = Level::info);
 
   // Get the real usable log output width which fits into one line.
-  int getWidth();
+  static int getWidth();
 
   void parse(json_t *json);
 
