@@ -130,7 +130,7 @@ void Hist::plot(Logger logger) const {
 
   std::vector<TableColumn> cols = {
       {-9, 3, TableColumn::Alignment::RIGHT, "Value", "g"},
-      {-6, -1, TableColumn::Alignment::RIGHT, "Count", "ju"},
+      {-6, -1, TableColumn::Alignment::RIGHT, "Count", "d"},
       {0, -1, TableColumn::Alignment::LEFT, "Plot", "s", "occurrences"}};
 
   Table table = Table(logger, cols);
@@ -147,7 +147,7 @@ void Hist::plot(Logger logger) const {
     for (int i = 0; i < bar; i++)
       buf = strcatf(&buf, "\u2588");
 
-    table.row(3, value, cnt, buf);
+    table.row(value, cnt, buf);
 
     free(buf);
   }
