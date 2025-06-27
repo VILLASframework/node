@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include <fmt/printf.h>
+
 #include <villas/log.hpp>
 
 namespace villas {
@@ -63,7 +65,16 @@ public:
   void header();
 
   // Print table rows.
-  void row(int count, ...);
+  template <class... Args>
+  void row(const Args&... args) {
+    auto logWidth = Log::getWidth();
+    if (width != logWidth) {
+      resize(logWidth);
+      header();
+    }
+
+    logger->info(rowFormat, args...);
+  }
 
   int getWidth() const { return width; }
 };

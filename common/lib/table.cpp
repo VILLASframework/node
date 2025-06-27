@@ -80,25 +80,21 @@ void Table::updateRowFormat() {
   for (unsigned i = 0; i < columns.size(); ++i) {
     auto &column = columns[i];
 
-    rowFormat += " %";
-    if (column.align == TableColumn::Alignment::LEFT) {
-      rowFormat += "-";
-    }
-
+    rowFormat += " {:" ;
+    rowFormat += column.align == TableColumn::Alignment::LEFT ? "<" : ">";
     rowFormat += std::to_string(column._width);
 
     if (column.precision >= 0) {
-      rowFormat += ".";
-      rowFormat += std::to_string(column.precision);
+      rowFormat += fmt::format(".{}", column.precision);
     } else if (column.format == "s") {
-      rowFormat += ".";
-      rowFormat += std::to_string(column._width);
+      rowFormat += fmt::format(".{}", column._width);
     }
 
     rowFormat += column.format;
+    rowFormat += "}";
 
     if (i != columns.size() - 1) {
-      rowFormat += " " BOX_UD;
+      rowFormat += "} " BOX_UD;
     }
   }
 }
@@ -109,58 +105,29 @@ void Table::header() {
     resize(logWidth);
   }
 
-  char *line1 = nullptr;
-  char *line2 = nullptr;
-  char *line3 = nullptr;
+  std::string line1;
+  std::string line2;
+  std::string line3;
 
   for (unsigned i = 0; i < columns.size(); i++) {
     auto &column = columns[i];
 
-    if (column.align == TableColumn::Alignment::LEFT) {
-      strcatf(&line1, CLR_BLD(" %*.*s") ANSI_RESET, column._width, column._width, column.title.c_str());
-      strcatf(&line2, CLR_YEL(" %*.*s") ANSI_RESET, column._width, column._width, column.unit.empty() ? "" : column.unit.c_str());
-    } else {
-      strcatf(&line1, CLR_BLD(" %-*.*s") ANSI_RESET, column._width, column._width, column.title.c_str());
-      strcatf(&line2, CLR_YEL(" %-*.*s") ANSI_RESET, column._width, column._width, column.unit.empty() ? "" : column.unit.c_str());
-    }
+    auto leftAligned = column.align == TableColumn::Alignment::LEFT;
+    line1 += fmt::format(leftAligned ? CLR_BLD(" {0:<{1}.{1}s}") : CLR_BLD(" {0:>{1}.{1}s}"), column.title, column._width);
+    line2 += fmt::format(leftAligned ? CLR_YEL(" {0:<{1}.{1}s}") : CLR_YEL(" {0:>{1}.{1}s}"), column.unit, column._width);
 
     for (int j = 0; j < column._width + 2; j++) {
-      strcatf(&line3, "%s", BOX_LR);
+      line3 += BOX_LR;
     }
 
     if (i != columns.size() - 1) {
-      strcatf(&line1, " %s", BOX_UD);
-      strcatf(&line2, " %s", BOX_UD);
-      strcatf(&line3, "%s", BOX_UDLR);
+      line1 += " " BOX_UD;
+      line2 += " " BOX_UD;
+      line3 += BOX_UDLR;
     }
   }
 
-  logger->info("{}", line1);
-  logger->info("{}", line2);
-  logger->info("{}", line3);
-
-  free(line1);
-  free(line2);
-  free(line3);
-}
-
-void Table::row(int count, ...) {
-  auto logWidth = Log::getWidth();
-  if (width != logWidth) {
-    resize(logWidth);
-    header();
-  }
-
-  char *line;
-
-  va_list args;
-  va_start(args, count);
-
-  vasprintf(&line, rowFormat.c_str(), args);
-
-  va_end(args);
-
-  logger->info("{}", line);
-
-  free(line);
+  logger->info(line1);
+  logger->info(line2);
+  logger->info(line3);
 }
