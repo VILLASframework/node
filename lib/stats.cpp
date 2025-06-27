@@ -51,18 +51,18 @@ std::unordered_map<Stats::Type, Stats::TypeDescription> Stats::types = {
     {Stats::Type::TOTAL, {"total", SignalType::INTEGER}}};
 
 std::vector<TableColumn> Stats::columns = {
-    {10, TableColumn::Alignment::LEFT, "Node", "%s"},
-    {10, TableColumn::Alignment::RIGHT, "Recv", "%ju", "pkts"},
-    {10, TableColumn::Alignment::RIGHT, "Sent", "%ju", "pkts"},
-    {10, TableColumn::Alignment::RIGHT, "Drop", "%ju", "pkts"},
-    {10, TableColumn::Alignment::RIGHT, "Skip", "%ju", "pkts"},
-    {10, TableColumn::Alignment::RIGHT, "OWD last", "%lf", "secs"},
-    {10, TableColumn::Alignment::RIGHT, "OWD mean", "%lf", "secs"},
-    {10, TableColumn::Alignment::RIGHT, "Rate last", "%lf", "pkt/sec"},
-    {10, TableColumn::Alignment::RIGHT, "Rate mean", "%lf", "pkt/sec"},
-    {10, TableColumn::Alignment::RIGHT, "Age mean", "%lf", "secs"},
-    {10, TableColumn::Alignment::RIGHT, "Age Max", "%lf", "sec"},
-    {8, TableColumn::Alignment::RIGHT, "Signals", "%ju", "signals"}};
+    {10, -1, TableColumn::Alignment::LEFT, "Node", "s"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Recv", "ju", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Sent", "ju", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Drop", "ju", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Skip", "ju", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "OWD last", "lf", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "OWD mean", "lf", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Rate last", "lf", "pkt/sec"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Rate mean", "lf", "pkt/sec"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Age mean", "lf", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Age Max", "lf", "sec"},
+    {8,  -1, TableColumn::Alignment::RIGHT, "Signals", "ju", "signals"}};
 
 enum Stats::Format Stats::lookupFormat(const std::string &str) {
   if (str == "human")
