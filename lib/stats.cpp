@@ -52,17 +52,17 @@ std::unordered_map<Stats::Type, Stats::TypeDescription> Stats::types = {
 
 std::vector<TableColumn> Stats::columns = {
     {10, -1, TableColumn::Alignment::LEFT, "Node", "s"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Recv", "ju", "pkts"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Sent", "ju", "pkts"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Drop", "ju", "pkts"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Skip", "ju", "pkts"},
-    {10, -1, TableColumn::Alignment::RIGHT, "OWD last", "lf", "secs"},
-    {10, -1, TableColumn::Alignment::RIGHT, "OWD mean", "lf", "secs"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Rate last", "lf", "pkt/sec"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Rate mean", "lf", "pkt/sec"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Age mean", "lf", "secs"},
-    {10, -1, TableColumn::Alignment::RIGHT, "Age Max", "lf", "sec"},
-    {-7,  -1, TableColumn::Alignment::RIGHT, "Signals", "ju", "signals"}};
+    {10, -1, TableColumn::Alignment::RIGHT, "Recv", "d", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Sent", "d", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Drop", "d", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Skip", "d", "pkts"},
+    {10, -1, TableColumn::Alignment::RIGHT, "OWD last", "f", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "OWD mean", "f", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Rate last", "f", "pkt/sec"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Rate mean", "f", "pkt/sec"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Age mean", "f", "secs"},
+    {10, -1, TableColumn::Alignment::RIGHT, "Age Max", "f", "sec"},
+    {-7,  -1, TableColumn::Alignment::RIGHT, "Signals", "d", "signals"}};
 
 enum Stats::Format Stats::lookupFormat(const std::string &str) {
   if (str == "human")
@@ -142,7 +142,7 @@ void Stats::printPeriodic(FILE *f, enum Format fmt, node::Node *n) const {
   switch (fmt) {
   case Format::HUMAN:
     setupTable();
-    table->row(11, n->getNameShort().c_str(),
+    table->row(n->getNameShort(),
                (uintmax_t)histograms.at(Metric::OWD).getTotal(),
                (uintmax_t)histograms.at(Metric::AGE).getTotal(),
                (uintmax_t)histograms.at(Metric::SMPS_REORDERED).getTotal(),
