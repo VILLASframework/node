@@ -43,7 +43,11 @@ If you want to contribute to VILLASnode, please visit the [contribution guidelin
 
 ## License
 
-This project is released under the terms of the [Apache 2.0 license](LICENSE).
+VILLASnode is licensed under multiple open-source licenses on a per-file basis, with no single copyright holder.
+We follow the REUSE Software guidelines by FSFE, using SPDX headers in each file to ensure proper attribution and license declaration.
+Compliance is verified via CI, including validation of license files in the `LICENSES/` directory.
+Template versions of license texts are used due to the distributed copyright.
+The [Apache 2.0 license](LICENSE) is included at the root, as it covers the majority of the code and is preferred for new contributions.
 
 We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
 
