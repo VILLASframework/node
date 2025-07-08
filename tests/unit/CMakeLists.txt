@@ -28,7 +28,7 @@ target_link_libraries(unit-tests PUBLIC
 
 add_custom_target(run-unit-tests
     COMMAND
-        /bin/bash -o pipefail -c \"
+        /usr/bin/env bash -o pipefail -c \"
             $<TARGET_FILE:unit-tests> 2>&1 | c++filt\"
     DEPENDS
         unit-tests
