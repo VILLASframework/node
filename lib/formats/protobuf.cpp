@@ -40,20 +40,23 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
                            const struct Sample *const smps[], unsigned cnt) {
   unsigned psz;
 
-  auto *pb_msg = new Villas__Node__Message;
+  auto *pb_msg = reinterpret_cast<Villas__Node__Message *>(
+      calloc(1, sizeof(Villas__Node__Message)));
   if (!pb_msg)
     throw MemoryAllocationError();
 
   villas__node__message__init(pb_msg);
 
   pb_msg->n_samples = cnt;
-  pb_msg->samples = new Villas__Node__Sample *[pb_msg->n_samples];
+  pb_msg->samples = reinterpret_cast<Villas__Node__Sample **>(
+      calloc(pb_msg->n_samples, sizeof(Villas__Node__Sample *)));
   if (!pb_msg->samples)
     throw MemoryAllocationError();
 
   for (unsigned i = 0; i < pb_msg->n_samples; i++) {
     Villas__Node__Sample *pb_smp = pb_msg->samples[i] =
-        new Villas__Node__Sample;
+        reinterpret_cast<Villas__Node__Sample *>(
+            calloc(1, sizeof(Villas__Node__Sample)));
     if (!pb_msg->samples[i])
       throw MemoryAllocationError();
 
@@ -69,7 +72,8 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
     }
 
     if (flags & smp->flags & (int)SampleFlags::HAS_TS_ORIGIN) {
-      pb_smp->ts_origin = new Villas__Node__Timestamp;
+      pb_smp->ts_origin = reinterpret_cast<Villas__Node__Timestamp *>(
+          calloc(1, sizeof(Villas__Node__Timestamp)));
       if (!pb_smp->ts_origin)
         throw MemoryAllocationError();
 
@@ -80,7 +84,8 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
     }
 
     pb_smp->n_values = smp->length;
-    pb_smp->values = new Villas__Node__Value *[pb_smp->n_values];
+    pb_smp->values = reinterpret_cast<Villas__Node__Value **>(
+        calloc(pb_smp->n_values, sizeof(Villas__Node__Value *)));
     if (!pb_smp->values)
       throw MemoryAllocationError();
 
@@ -90,7 +95,9 @@ int ProtobufFormat::sprint(char *buf, size_t len, size_t *wbytes,
     }
 
     for (unsigned j = 0; j < pb_smp->n_values; j++) {
-      Villas__Node__Value *pb_val = pb_smp->values[j] = new Villas__Node__Value;
+      Villas__Node__Value *pb_val = pb_smp->values[j] =
+          reinterpret_cast<Villas__Node__Value *>(
+              calloc(1, sizeof(Villas__Node__Value)));
       if (!pb_val)
         throw MemoryAllocationError();
 
