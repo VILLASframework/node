@@ -48,6 +48,8 @@ public:
   virtual void parse() {}
 
   virtual int run();
+
+  virtual ~Tool() {}
 };
 
 } // namespace villas
