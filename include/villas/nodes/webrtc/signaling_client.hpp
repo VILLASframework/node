@@ -73,9 +73,6 @@ protected:
 
   Logger logger;
 
-  int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
-                       void *in, size_t len);
-
   static void connectStatic(struct lws_sorted_usec_list *sul);
 
   int writable();
@@ -85,9 +82,8 @@ public:
                   const std::string &peer, Web *w);
   ~SignalingClient();
 
-  static int protocolCallbackStatic(struct lws *wsi,
-                                    enum lws_callback_reasons reason,
-                                    void *user, void *in, size_t len);
+  static int protocolCallback(struct lws *wsi, enum lws_callback_reasons reason,
+                              void *user, void *in, size_t len);
 
   void connect();
   void disconnect();

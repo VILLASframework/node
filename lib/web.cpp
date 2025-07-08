@@ -46,8 +46,7 @@ lws_protocols protocols[] = {
 #endif // WITH_NODE_WEBSOCKET
 #ifdef WITH_NODE_WEBRTC
     {.name = "webrtc-signaling",
-     .callback = webrtc::SignalingClient::protocolCallbackStatic,
-     .per_session_data_size = sizeof(webrtc::SignalingClient),
+     .callback = webrtc::SignalingClient::protocolCallback,
      .rx_buffer_size = 0},
 #endif
     {
