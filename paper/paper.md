@@ -79,6 +79,7 @@ Lastly, VILLAScontroller is currently under development and aims to automate sim
 The gateway supports a wide range of established data exchange protocols. Support for various message brokers like MQTT, AMQP, nanomsg, ZeroMQ, Redis or Kafka provide connectivity to existing software platforms. Support for process bus protocols such as CAN, EtherCAT, Modbus, IEC 61850-8-1 (GOOSE), IEC 61850-9-2 (Sampled Values) enable connectivity to physical devices. A range of web-based protocols like WebRTC, WebSockets, NGSI or a HTTP REST API facilitate integration into web-based interfaces. Lastly, a set of generic protocols add support for plain UDP/TCP/Ethernet sockets, Infiniband, file-based I/O or communication with other processes via standard I/O or shared memory regions.
 
 # Acknowledgements
+
 We like to thank several colleagues and students who supported us. Especially, we thank Leonardo Carreras, Laura Fuentes Grau, Andres Costa, and Felix Wege. 
 
 - [RESERVE](http://re-serve.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 727481.
