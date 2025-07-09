@@ -71,6 +71,12 @@ if(WITH_NODE_IEC61850)
     list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
 endif()
 
+# Enable OPAL-RT Asynchronous Process support
+if(WITH_NODE_OPAL_ASYNC)
+    list(APPEND NODE_SRC opal_async.cpp)
+    list(APPEND LIBRARIES OpalAsyncApi)
+endif()
+
 if(WITH_NODE_MODBUS)
     list(APPEND NODE_SRC modbus.cpp)
     list(APPEND LIBRARIES PkgConfig::MODBUS)
@@ -91,7 +97,7 @@ endif()
 # Enable NGSI support
 if(WITH_NODE_NGSI)
     list(APPEND NODE_SRC ngsi.cpp)
-    list(APPEND INCLUDE_DIRECTORIES ${CURL_INCLUDE_DIRS})
+    list(APPEND INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${CURL_LIBRARIES})
 endif()
 
