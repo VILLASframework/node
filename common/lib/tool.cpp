@@ -21,9 +21,7 @@ void Tool::printCopyright() {
   std::cout << PROJECT_NAME " " << CLR_BLU(PROJECT_BUILD_ID)
             << " (built on " CLR_MAG(__DATE__) " " CLR_MAG(__TIME__) ")"
             << std::endl
-            << " Copyright 2014-2021, Institute for Automation of Complex "
-               "Power Systems, RWTH Aachen University"
-            << std::endl
+            << " Copyright 2014-2025 The VILLASframework Authors" << std::endl
             << " Steffen Vogel <post@steffenvogel.de>" << std::endl;
 }
 
