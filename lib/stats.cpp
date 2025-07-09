@@ -62,7 +62,7 @@ std::vector<TableColumn> Stats::columns = {
     {10, -1, TableColumn::Alignment::RIGHT, "Rate mean", "f", "pkt/sec"},
     {10, -1, TableColumn::Alignment::RIGHT, "Age mean", "f", "secs"},
     {10, -1, TableColumn::Alignment::RIGHT, "Age Max", "f", "sec"},
-    {-7,  -1, TableColumn::Alignment::RIGHT, "Signals", "d", "signals"}};
+    {-7, -1, TableColumn::Alignment::RIGHT, "Signals", "d", "signals"}};
 
 enum Stats::Format Stats::lookupFormat(const std::string &str) {
   if (str == "human")
