@@ -33,7 +33,7 @@ int Table::resize(int w) {
   float total = width - columns.size() * 3; // Column separators and whitespace
 
   // Normalize width
-  for (auto &column: columns) {
+  for (auto &column : columns) {
     if (column.width > 0) {
       norm += column.width;
     } else if (column.width == 0) {
@@ -45,10 +45,10 @@ int Table::resize(int w) {
 
   int total_used = 0;
 
-  for (auto &column: columns) {
+  for (auto &column : columns) {
     if (column.width > 0) {
       column._width = column.width * (total - fixed) / norm;
-    } else if (column.width == 0){
+    } else if (column.width == 0) {
       column._width = (total - fixed) / flex;
     } else if (column.width < 0) {
       column._width = -1 * column.width;
@@ -58,7 +58,7 @@ int Table::resize(int w) {
   }
 
   // Distribute remaining space over flex columns
-  for (auto &column: columns) {
+  for (auto &column : columns) {
     if (total_used >= total) {
       break;
     }
@@ -80,7 +80,7 @@ void Table::updateRowFormat() {
   for (unsigned i = 0; i < columns.size(); ++i) {
     auto &column = columns[i];
 
-    rowFormat += " {:" ;
+    rowFormat += " {:";
     rowFormat += column.align == TableColumn::Alignment::LEFT ? "<" : ">";
     rowFormat += std::to_string(column._width);
 
@@ -113,8 +113,12 @@ void Table::header() {
     auto &column = columns[i];
 
     auto leftAligned = column.align == TableColumn::Alignment::LEFT;
-    line1 += fmt::format(leftAligned ? CLR_BLD(" {0:<{1}.{1}s}") : CLR_BLD(" {0:>{1}.{1}s}"), column.title, column._width);
-    line2 += fmt::format(leftAligned ? CLR_YEL(" {0:<{1}.{1}s}") : CLR_YEL(" {0:>{1}.{1}s}"), column.unit, column._width);
+    line1 += fmt::format(leftAligned ? CLR_BLD(" {0:<{1}.{1}s}")
+                                     : CLR_BLD(" {0:>{1}.{1}s}"),
+                         column.title, column._width);
+    line2 += fmt::format(leftAligned ? CLR_YEL(" {0:<{1}.{1}s}")
+                                     : CLR_YEL(" {0:>{1}.{1}s}"),
+                         column.unit, column._width);
 
     for (int j = 0; j < column._width + 2; j++) {
       line3 += BOX_LR;

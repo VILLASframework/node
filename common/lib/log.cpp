@@ -59,12 +59,12 @@ Log::Log(Level lvl) : level(lvl), pattern("%H:%M:%S %^%-4t%$ %-16n %v") {
 int Log::getWidth() {
   int width = Terminal::getCols();
 
-  width -= 8; // Timestamp
-  width -= 1; // Space
-  width -= 4; // Level
-  width -= 1; // Space
+  width -= 8;  // Timestamp
+  width -= 1;  // Space
+  width -= 4;  // Level
+  width -= 1;  // Space
   width -= 16; // Name
-  width -= 1; // Space
+  width -= 1;  // Space
   width -= getInstance().prefix.length();
 
   return width;
