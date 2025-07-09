@@ -80,7 +80,7 @@ The gateway supports a wide range of established data exchange protocols. Suppor
 
 # Acknowledgements
 
-We like to thank several colleagues and students who supported us. Especially, we thank Leonardo Carreras, Laura Fuentes Grau, Andres Costa, and Felix Wege. 
+We like to thank several colleagues and students who supported us. Especially, we thank Leonardo Carreras, Laura Fuentes Grau, Andres Costa, and Felix Wege.
 
 - [RESERVE](http://re-serve.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 727481.
 - [VILLAS](https://villas.fein-aachen.org/website/): Funding provided by [JARA-ENERGY](http://www.jara.org/en/research/energy). Jülich-Aachen Research Alliance (JARA) is an initiative of RWTH Aachen University and Forschungszentrum Jülich.
