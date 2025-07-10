@@ -36,6 +36,10 @@ if(WITH_NODE_TEST_RTT)
     list(APPEND NODE_SRC test_rtt.cpp)
 endif()
 
+if(WITH_NODE_SMU)
+    list(APPEND NODE_SRC smu.cpp)
+endif()
+
 if(WITH_NODE_SOCKET)
     list(APPEND NODE_SRC socket.cpp)
 endif()
