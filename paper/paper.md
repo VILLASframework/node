@@ -43,6 +43,7 @@ bibliography: paper.bib
 # Summary
 
 VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be test beds, digital real-time simulators, software tools, and physical devices.
+VILLASnode was originally designed for co-simulation of electrical networks, but was developped to bigger variety of use cases and domains. 
 Whereas distributed computing, systems or algortihms aim to solve a common task, geographically distributed experiments link infrastructures with different components to make these components accessible to other infrastructures. Thus, data exchanges are possible which would not be possible in one single infrastructure.
 VILLASnode serves as the gateway that connects components across different infrastructures by providing a set of protocols and customized third-party implementations, e.g., different simulators. It enables seamless collaboration in research and testing environments while safeguarding the intellectual property of the infrastructures. The components at every infrastructure appear as a black box. The infrastructure does not need to share models or confidential information.
 
@@ -57,14 +58,17 @@ It includes queues ($q$) and registers ($r$). Queues temporarily store data befo
 
 ![Example of modular experimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
 
-VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. This is useful if Python software tools are to be integrated in a distributed experiment.
+VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. 
 In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
 Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems.
 To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
 
+Other open-source co-simulation tools are available like Mosaik [@rohjans_mosaik_2013] or Helics [@hardy_helics_2024]. Mosaik uses a SimAPI to communicate with other simulators basd on fixed timesteps. Integrated simulators need to support the SimAPI which requires extra implementations. Simulators cannot reuse existing supported protocols which VILLASnode makes use of and takes core of protocol conversion. 
+Helics is designed for large-scale testing and supports bindings for different languages. It uses a broker which manages the communication between the simulators, whereas VILLASnode has a peer-to-peer architecture.  
+
 # Statement of need
 
-VILLASnode supports the coupling of real-time simulators of different hardware and software vendors, specifications and implementations [@monti_global_2018]. They play a crucial role in both academic research and industrial applications, especially within simulation of electrical power networks. They are primarily utilized for hardware-in-the-loop (HiL) simulations. For example, an electrical grid is emulated so that the physical component can interface safely via analog input and output signals [@Mehlmann2023].
+VILLASnode supports the coupling of real-time simulators of different hardware and software vendors, specifications and implementations [@monti_global_2018]. They play a crucial role in both academic research and industrial applications, especially within simulation of electrical power networks. They are primarily utilized for hardware-in-the-loop (HiL) simulations. As an example, in the scope of the ENSURE project, the German electrical grid is emulated with the ability to couple dynamically simulators and physical components which can be interfaced safely via analog input and output signals [@Mehlmann2023].
 This approach not only reduces development costs but also allows for the validation of components under scenarios that are difficult or unsafe to replicate real-world field scenarios. Moreover, VILLASnode supports the linking of simulators and real-time simulators of different vendors so that models do not need to be shared. It allows for conversation of intellectual property during collaboration. Local simulator and simulation infrastructure can be combined in a powerful arrangement unavailable at any individual infrastructure. This approach has the additional advantage of allowing to co-simulate with heterogeneus methods, algorithms and communication protocols. The communication with the components, sensors or actuators can also be implemented using VILLASnode.
 
 This can be extended to geographically distributed experiments. In this case, VILLASnode takes care of the communication between the different participants to the experiment which spans multiple infrastructures. Not only simulators can be included, but also physical devices can be integrated [@Bach2025]. Although communication latencies constrain the dynamics of the experiment for real-time applications, VILLASnode offers significant advantages such as leveraging existing infrastructure across sites and facilitating collaboration among interdisciplinary teams. Manufacturers, customers, and certifiers benefit from remote access and distributed testing while maintaining data confidentiality and intellectual property. Current work includes automation of integration of VILLASnode in practical field devices [@Pitz2024].
@@ -80,7 +84,7 @@ The gateway supports a wide range of established data exchange protocols. Suppor
 
 # Acknowledgements
 
-We like to thank several colleagues and students who supported us. Especially, we thank Leonardo Carreras, Laura Fuentes Grau, Andres Costa, and Felix Wege.
+We like to thank several colleagues and students who supported us. Especially, we thank Leonardo Carreras, Laura Fuentes Grau, Andres Acosta, and Felix Wege.
 
 - [RESERVE](http://re-serve.eu/): European Unions Horizon 2020 research and innovation programme under grant agreement No. 727481.
 - [VILLAS](https://villas.fein-aachen.org/website/): Funding provided by [JARA-ENERGY](http://www.jara.org/en/research/energy). Jülich-Aachen Research Alliance (JARA) is an initiative of RWTH Aachen University and Forschungszentrum Jülich.
