@@ -110,11 +110,30 @@
 
       # Standard flake attribute allowing you to add the villas packages to your nixpkgs
       overlays = {
-        default = final: prev: packagesWith final;
+        default = final: prev: (packagesWith final) // {
+          libiec61850 = prev.libiec61850.overrideAttrs {
+            patches = [ ./packaging/nix/libiec61850_debug_r_session.patch ];
+            cmakeFlags = (prev.cmakeFlags or []) ++ [
+              "-DCONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB=ON"
+              "-DCONFIG_EXTERNAL_MBEDTLS_DYNLIB_PATH=${final.mbedtls}/lib"
+              "-DCONFIG_EXTERNAL_MBEDTLS_INCLUDE_PATH=${final.mbedtls}/include"
+            ];
+            nativeBuildInputs = (prev.nativeBuildInputs or []) ++ [ final.buildPackages.cmake ];
+            buildInputs = [ final.mbedtls ];
+            separateDebugInfo = true;
+          };
+
+          lib60870 = prev.lib60870.overrideAttrs {
+            buildInputs = [ final.mbedtls ];
+            cmakeFlags = [ (lib.cmakeBool "WITH_MBEDTLS3" true) ];
+          };
+        };
+
         debug = final: prev: {
           jansson = addSeparateDebugInfo prev.jansson;
           libmodbus = addSeparateDebugInfo prev.libmodbus;
         };
+
         minimal = final: prev: {
           mosquitto = prev.mosquitto.override { systemd = final.systemdMinimal; };
           rdma-core = prev.rdma-core.override { udev = final.systemdMinimal; };
