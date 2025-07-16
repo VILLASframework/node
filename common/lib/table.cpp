@@ -100,7 +100,7 @@ void Table::updateRowFormat() {
 }
 
 void Table::header() {
-  auto logWidth = Log::getWidth();
+  auto logWidth = Log::getInstance().getWidth();
   if (width != logWidth) {
     resize(logWidth);
   }
@@ -108,6 +108,9 @@ void Table::header() {
   std::string line1;
   std::string line2;
   std::string line3;
+  line1.reserve(width);
+  line2.reserve(width);
+  line3.reserve(width);
 
   for (unsigned i = 0; i < columns.size(); i++) {
     auto &column = columns[i];
@@ -131,7 +134,7 @@ void Table::header() {
     }
   }
 
-  logger->info(line1);
-  logger->info(line2);
-  logger->info(line3);
+  logger->info("{}", line1);
+  logger->info("{}", line2);
+  logger->info("{}", line3);
 }
