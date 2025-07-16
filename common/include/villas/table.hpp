@@ -67,13 +67,13 @@ public:
 
   // Print table rows.
   template <class... Args> void row(const Args &...args) {
-    auto logWidth = Log::getWidth();
+    auto logWidth = Log::getInstance().getWidth();
     if (width != logWidth) {
       resize(logWidth);
       header();
     }
 
-    logger->info(rowFormat, args...);
+    logger->info(fmt::runtime(rowFormat), args...);
   }
 
   int getWidth() const { return width; }

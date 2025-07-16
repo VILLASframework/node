@@ -65,7 +65,7 @@ int Log::getWidth() {
   width -= 1;  // Space
   width -= 16; // Name
   width -= 1;  // Space
-  width -= getInstance().prefix.length();
+  width -= prefix.length();
 
   return width;
 }
