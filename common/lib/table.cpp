@@ -94,7 +94,7 @@ void Table::updateRowFormat() {
     rowFormat += "}";
 
     if (i != columns.size() - 1) {
-      rowFormat += "} " BOX_UD;
+      rowFormat += BOX_UD;
     }
   }
 }
