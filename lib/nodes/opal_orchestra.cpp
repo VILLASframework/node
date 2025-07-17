@@ -11,6 +11,7 @@
 #include <string>
 
 #include <fmt/std.h>
+#include <fmt/chrono.h>
 #include <jansson.h>
 #include <libxml/parser.h>
 #include <libxml/xmlerror.h>
@@ -29,6 +30,7 @@ extern "C" {
 #include <villas/signal_type.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
+#include <villas/config_helper.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -243,9 +245,10 @@ protected:
   double rate;
   std::optional<std::filesystem::path> dataDefinitionFilename;
 
-  unsigned int connectTimeout; // In seconds.
-  unsigned int
-      flagDelay; // Define the delay to wait, this will call the system function usleep and free the CPU. In microseconds.
+  std::chrono::seconds connectTimeout;
+
+  // Define the delay to wait, this will call the system function usleep and free the CPU.
+  std::chrono::microseconds flagDelay;
   bool
       useFlagWithTool; // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
   bool skipWaitToGo;   // Skip wait-to-go step during start.
@@ -398,6 +401,8 @@ public:
     json_t *json_in_signals = nullptr;
     json_t *json_out_signals = nullptr;
     json_t *json_connection = nullptr;
+    json_t *json_connect_timeout = nullptr;
+    json_t *json_flag_delay = nullptr;
 
     int ft = -1;
     int sw = -1;
@@ -412,8 +417,8 @@ public:
         "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: i, s?: i, s?: b, s?: b, s?: "
         "b, s?: b, s?: F, s?: { s?: o }, s?: { s?: o } }",
         "domain", &dn, "synchronous", &sy, "states", &sts, "connection",
-        &json_connection, "ddf", &ddf, "connect_timeout", &connectTimeout,
-        "flag_delay", &flagDelay, "use_flag_with_tool", &ft, "skip_wait_to_go",
+        &json_connection, "ddf", &ddf, "connect_timeout", &json_connect_timeout,
+        "flag_delay", &json_flag_delay, "use_flag_with_tool", &ft, "skip_wait_to_go",
         &sw, "ddf_overwrite", &ow, "ddf_overwrite_only", &owo, "rate", &rate,
         "in", "signals", &json_in_signals, "out", "signals", &json_out_signals);
     if (ret) {
@@ -448,6 +453,14 @@ public:
 
     if (owo >= 0) {
       dataDefinitionFileWriteOnly = owo > 0;
+    }
+
+    if (json_connect_timeout) {
+      connectTimeout = parse_duration<std::chrono::seconds>(json_connect_timeout);
+    }
+
+    if (json_flag_delay) {
+      flagDelay = parse_duration<std::chrono::microseconds>(json_flag_delay);
     }
 
     if (json_connection) {
@@ -525,8 +538,8 @@ public:
 
     auto ret = dataDefinitionFilename
                    ? RTConnectWithFile(dataDefinitionFilename->c_str(),
-                                       domain.name.c_str(), connectTimeout)
-                   : RTConnect(domain.name.c_str(), connectTimeout);
+                                       domain.name.c_str(), connectTimeout.count())
+                   : RTConnect(domain.name.c_str(), connectTimeout.count());
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to connect to Orchestra framework");
     }
@@ -538,7 +551,7 @@ public:
       throw RTError(ret, "Failed to get connection status pointer");
     }
 
-    ret = RTDefineFlagDelay(flagDelay);
+    ret = RTDefineFlagDelay(flagDelay.count());
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to set flag delay");
     }
