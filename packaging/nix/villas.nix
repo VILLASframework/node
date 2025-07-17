@@ -20,7 +20,7 @@
   # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeEthercat ? (withAllNodes && system == "x86_64-linux"),
+  withNodeEthercat ? withAllNodes,
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -143,6 +143,11 @@ stdenv.mkDerivation {
   ];
 
   buildInputs =
+    let
+      inherit (builtins) elem;
+
+      isSupported = pkg: system: elem system == pkg.meta.platforms;
+    in
     [
       libwebsockets
       openssl
@@ -150,20 +155,27 @@ stdenv.mkDerivation {
       spdlog
       bash
     ]
-    ++ lib.optionals withExtraTesting [ criterion pcre2 libgit2 ]
+    ++ lib.optionals withExtraTesting [
+      criterion
+      pcre2
+      libgit2
+    ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
     ++ lib.optionals withNodeComedi [ comedilib ]
-    ++ lib.optionals withNodeEthercat [ ethercat ]
     ++ lib.optionals withNodeIec60870 [ lib60870 ]
+    ++ lib.optionals (withNodeEthercat && isSupported ethercat system) [ ethercat ]
     ++ lib.optionals withNodeIec61850 [ libiec61850 ]
     ++ lib.optionals withNodeKafka [ rdkafka ]
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
     ++ lib.optionals withNodeOpenDSS [ opendssc ]
-    ++ lib.optionals withNodeOpalOrchestra [ orchestra libxml2 ]
+    ++ lib.optionals (withNodeOpalOrchestra && isSupported orchestra system) [
+      orchestra
+      libxml2
+    ]
     ++ lib.optionals withNodeRedis [ redis-plus-plus ]
     ++ lib.optionals withNodeRtp [ libre ]
     ++ lib.optionals withNodeSocket [ libnl ]
