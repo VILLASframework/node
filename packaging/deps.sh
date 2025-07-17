@@ -490,7 +490,17 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
-if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
+# Install componentorchestra
+if has_command dpkg && \
+    ! dpkg --status componentorchestra 2> /dev/null && \
+    [ "$(uname -m)" == "x86_64" ] && \
+    should_build "componentorchestra" "for the orchestra node-type"; then
+    COMPONENT_ORCHESTRA_DEB_URL="https://blob.opal-rt.com/softwares/rt-lab-archives/componentorchestra_7.6.2_amd64.deb?sp=r&st=2024-10-30T06:31:59Z&se=2034-11-30T14:31:59Z&spr=https&sv=2022-11-02&sr=b&sig=cnKY8RxZf8hv91gWLIBG6iBGSVziXkKR3%2BOYIE6MSkI%3D"
+    curl -L -o componentorchestra.deb "${COMPONENT_ORCHESTRA_DEB_URL}"
+    dpkg --install componentorchestra.deb
+fi
+
+if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" 2>/dev/null | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
     mkdir -p OpenDSS-C/build
