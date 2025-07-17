@@ -249,12 +249,18 @@ protected:
 
   // Define the delay to wait, this will call the system function usleep and free the CPU.
   std::chrono::microseconds flagDelay;
-  bool
-      useFlagWithTool; // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
-  bool skipWaitToGo;   // Skip wait-to-go step during start.
-  bool dataDefinitionFileOverwrite; // Overwrite the data definition file (DDF).
-  bool
-      dataDefinitionFileWriteOnly; // Overwrite the data definition file (DDF) and terminate VILLASnode.
+  
+  // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
+  bool useFlagWithTool;
+
+  // Skip wait-to-go step during start.
+  bool skipWaitToGo;
+
+  // Overwrite the data definition file (DDF).
+  bool dataDefinitionFileOverwrite;
+
+  // Overwrite the data definition file (DDF) and terminate VILLASnode.
+  bool dataDefinitionFileWriteOnly;
 
   int _read(struct Sample *smps[], unsigned cnt) override {
     if (dataDefinitionFileWriteOnly) {
