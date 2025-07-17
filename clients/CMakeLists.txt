@@ -5,5 +5,4 @@
 # SPDX-License-Identifier: Apache-2.0
 
 add_subdirectory(opal-rt/rtlab-asyncip)
-add_subdirectory(python-binding)
 add_subdirectory(shmem)
