@@ -9,7 +9,7 @@
   autoPatchelfHook,
   dpkg,
   libuuid,
-  makeWrapper ,
+  makeWrapper,
 }:
 let
   # src = requireFile {
@@ -22,7 +22,7 @@ let
     hash = "sha256-2cQtYkf1InKrDPL5UDQDHaYM7bq21Dw77itfFwuXa54=";
   };
 in
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "libOpalOrchestra";
   version = "7.6.2";
   inherit src;
@@ -41,7 +41,7 @@ stdenv.mkDerivation {
   ];
 
   installPhase = ''
-    ${dpkg}/bin/dpkg-deb -x ${src} .
+    ${dpkg}/bin/dpkg-deb -x ${finalAttrs.src} .
 
     mv usr/opalrt/exportedOrchestra $out
     mv $out/bin/OrchestraExtCommIPDebian $out/bin/OrchestraExtCommIP
@@ -52,4 +52,9 @@ stdenv.mkDerivation {
       --set LD_PRELOAD "${libredirect}/lib/libredirect.so" \
       --set NIX_REDIRECTS "/sbin/ifconfig=${nettools}/bin/ifconfig" \
   '';
-}
+
+  meta = {
+    description = "OPAL-RT Orchestra library";
+    platforms = [ "x86_64-linux" ];
+  };
+})
