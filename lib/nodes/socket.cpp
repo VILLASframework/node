@@ -66,6 +66,9 @@ int villas::node::socket_init(NodeCompat *n) {
   auto *s = n->getData<struct Socket>();
 
   s->formatter = nullptr;
+  s->sd = -1;
+  s->in.buf = nullptr;
+  s->out.buf = nullptr;
 
   return 0;
 }
@@ -75,6 +78,17 @@ int villas::node::socket_destroy(NodeCompat *n) {
 
   if (s->formatter)
     delete s->formatter;
+
+  if (s->in.buf != nullptr) {
+    memset(s->in.buf, 0, s->in.buflen);
+    delete[] s->in.buf;
+    s->in.buf = nullptr;
+  }
+  if (s->out.buf != nullptr) {
+    memset(s->out.buf, 0, s->out.buflen);
+    delete[] s->out.buf;
+    s->out.buf = nullptr;
+  }
 
   return 0;
 }
@@ -354,8 +368,16 @@ int villas::node::socket_stop(NodeCompat *n) {
       return ret;
   }
 
-  delete[] s->in.buf;
-  delete[] s->out.buf;
+  if (s->in.buf != nullptr) {
+    memset(s->in.buf, 0, s->in.buflen);
+    delete[] s->in.buf;
+    s->in.buf = nullptr;
+  }
+  if (s->out.buf != nullptr) {
+    memset(s->out.buf, 0, s->out.buflen);
+    delete[] s->out.buf;
+    s->out.buf = nullptr;
+  }
 
   return 0;
 }
