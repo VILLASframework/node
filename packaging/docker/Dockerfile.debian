@@ -51,7 +51,9 @@ RUN apt-get update && \
 	liblua5.3-dev \
 	libhiredis-dev \
 	libnice-dev \
-	libmodbus-dev
+	libmodbus-dev\
+	python3-dev \
+	python3-pybind11
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
