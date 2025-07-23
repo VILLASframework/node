@@ -40,7 +40,10 @@
         system:
         import nixpkgs {
           inherit system;
-          overlays = with self.overlays; [ default ];
+          overlays = with self.overlays; [
+            default
+            patches
+          ];
         };
 
       # Initialize development nixpkgs for the specified `system`
@@ -50,6 +53,7 @@
           inherit system;
           overlays = with self.overlays; [
             default
+            patches
             debug
           ];
         };
@@ -110,24 +114,9 @@
 
       # Standard flake attribute allowing you to add the villas packages to your nixpkgs
       overlays = {
-        default = final: prev: (packagesWith final) // {
-          libiec61850 = prev.libiec61850.overrideAttrs {
-            patches = [ ./packaging/nix/libiec61850_debug_r_session.patch ];
-            cmakeFlags = (prev.cmakeFlags or []) ++ [
-              "-DCONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB=ON"
-              "-DCONFIG_EXTERNAL_MBEDTLS_DYNLIB_PATH=${final.mbedtls}/lib"
-              "-DCONFIG_EXTERNAL_MBEDTLS_INCLUDE_PATH=${final.mbedtls}/include"
-            ];
-            nativeBuildInputs = (prev.nativeBuildInputs or []) ++ [ final.buildPackages.cmake ];
-            buildInputs = [ final.mbedtls ];
-            separateDebugInfo = true;
-          };
+        default = final: prev: packagesWith final;
 
-          lib60870 = prev.lib60870.overrideAttrs {
-            buildInputs = [ final.mbedtls ];
-            cmakeFlags = [ (lib.cmakeBool "WITH_MBEDTLS3" true) ];
-          };
-        };
+        patches = import ./packaging/nix/patches.nix;
 
         debug = final: prev: {
           jansson = addSeparateDebugInfo prev.jansson;
@@ -212,7 +201,7 @@
 
         villas = {
           imports = [ (nixDir + "/module.nix") ];
-          nixpkgs.overlays = [ self.overlays.default ];
+          nixpkgs.overlays = [ self.overlays.default self.overlays.patches ];
         };
       };
     };
