@@ -62,6 +62,12 @@ should_build() {
     return 0
 }
 
+has_command() {
+    command -v "$1" >/dev/null 2>&1
+
+    return $?
+}
+
 ## Build configuration
 
 # Use shallow git clones to speed up downloads
@@ -424,7 +430,7 @@ if ! pkg-config "nice >= 0.1.16" && \
     # Create sub-shell to constrain meson venv and ninja PATH to this build
     (
         # Install meson
-        if ! command -v meson; then
+        if ! has_command meson; then
             python3 -m venv venv
             . venv/bin/activate
             python3 -m pip install --upgrade pip setuptools
@@ -435,7 +441,7 @@ if ! pkg-config "nice >= 0.1.16" && \
         fi
 
         # Install ninja
-        if ! command -v ninja; then
+        if ! has_command ninja; then
             wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
             unzip ninja-linux.zip
             export PATH=${PATH}:.
@@ -484,7 +490,17 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
-if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
+# Install componentorchestra
+if has_command dpkg && \
+    ! dpkg --status componentorchestra 2> /dev/null && \
+    [ "$(uname -m)" == "x86_64" ] && \
+    should_build "componentorchestra" "for the orchestra node-type"; then
+    COMPONENT_ORCHESTRA_DEB_URL="https://blob.opal-rt.com/softwares/rt-lab-archives/componentorchestra_7.6.2_amd64.deb?sp=r&st=2024-10-30T06:31:59Z&se=2034-11-30T14:31:59Z&spr=https&sv=2022-11-02&sr=b&sig=cnKY8RxZf8hv91gWLIBG6iBGSVziXkKR3%2BOYIE6MSkI%3D"
+    curl -L -o componentorchestra.deb "${COMPONENT_ORCHESTRA_DEB_URL}"
+    dpkg --install componentorchestra.deb
+fi
+
+if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" 2>/dev/null | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
     mkdir -p OpenDSS-C/build
@@ -492,7 +508,7 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     for i in ${SOURCE_DIR}/patches/*-opendssc-*.patch; do patch --strip=1 --binary < "$i"; done
     popd
     pushd OpenDSS-C/build
-    if command -v g++-14 2>&1 >/dev/null; then
+    if has_command g++-14; then
         # OpenDSS rev 4020 is not compatible with GCC 15
         OPENDSS_CMAKE_OPTS="-DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14"
     else
