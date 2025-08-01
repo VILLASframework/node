@@ -67,6 +67,13 @@ if(WITH_HOOKS)
     list(APPEND SRCS villas-hook)
 endif()
 
+if(WITH_NODE_OPAL)
+    add_executable(opal-async-param opal-async-param.cpp)
+    target_link_libraries(opal-async-param PRIVATE OpalAsyncApi)
+
+    list(APPEND SRCS opal-async-param)
+endif()
+
 install(
     TARGETS ${SRCS}
     COMPONENT bin
