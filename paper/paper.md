@@ -43,7 +43,7 @@ bibliography: paper.bib
 # Summary
 
 VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be test beds, digital real-time simulators, software tools, and physical devices.
-VILLASnode was originally designed for co-simulation of electrical networks, but was developped to bigger variety of use cases and domains. 
+VILLASnode was originally designed for co-simulation of electrical networks, but was developed to bigger variety of use cases and domains.
 Whereas distributed computing, systems or algortihms aim to solve a common task, geographically distributed experiments link infrastructures with different components to make these components accessible to other infrastructures. Thus, data exchanges are possible which would not be possible in one single infrastructure.
 VILLASnode serves as the gateway that connects components across different infrastructures by providing a set of protocols and customized third-party implementations, e.g., different simulators. It enables seamless collaboration in research and testing environments while safeguarding the intellectual property of the infrastructures. The components at every infrastructure appear as a black box. The infrastructure does not need to share models or confidential information.
 
@@ -58,13 +58,13 @@ It includes queues ($q$) and registers ($r$). Queues temporarily store data befo
 
 ![Example of modular experimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
 
-VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode. 
+VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode.
 In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
 Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems.
 To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
 
-Other open-source co-simulation tools are available like Mosaik [@rohjans_mosaik_2013] or Helics [@hardy_helics_2024]. Mosaik uses a SimAPI to communicate with other simulators basd on fixed timesteps. Integrated simulators need to support the SimAPI which requires extra implementations. Simulators cannot reuse existing supported protocols which VILLASnode makes use of and takes core of protocol conversion. 
-Helics is designed for large-scale testing and supports bindings for different languages. It uses a broker which manages the communication between the simulators, whereas VILLASnode has a peer-to-peer architecture.  
+Other open-source co-simulation tools are available like Mosaik [@rohjans_mosaik_2013] or Helics [@hardy_helics_2024]. Mosaik uses a SimAPI to communicate with other simulators based on fixed timesteps. Integrated simulators need to support the SimAPI which requires extra implementations. Simulators cannot reuse existing supported protocols which VILLASnode makes use of and takes core of protocol conversion.
+Helics is designed for large-scale testing and supports bindings for different languages. It uses a broker which manages the communication between the simulators, whereas VILLASnode has a peer-to-peer architecture.
 
 # Statement of need
 
