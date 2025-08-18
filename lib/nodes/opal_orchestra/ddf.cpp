@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <memory>
 extern "C" {
 #include <RTAPI.h>
 }
@@ -71,19 +72,19 @@ void BusItem::toXml(xmlNode *parent, bool withDefault) const {
   }
 }
 
-DataItem *BusItem::upsertItem(std::vector<std::string> pathComponents,
-                              bool &inserted) {
+std::shared_ptr<DataItem>
+BusItem::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
   auto &name = pathComponents.front();
 
   auto it = items.find(name);
   if (it == items.end()) { // No item with this name exists. Create a new one.
     if (pathComponents.size() == 1) { // No bus, just a signal.
-      auto *item = new DataItem(name);
+      auto item = std::make_shared<DataItem>(name);
       items.emplace(name, item);
       inserted = true;
       return item;
     } else {
-      auto *bus = new BusItem(name);
+      auto bus = std::make_shared<BusItem>(name);
       items.emplace(name, bus);
 
       pathComponents.erase(pathComponents.begin());
@@ -91,7 +92,7 @@ DataItem *BusItem::upsertItem(std::vector<std::string> pathComponents,
     }
   } else {
     if (pathComponents.size() == 1) {
-      auto *item = dynamic_cast<DataItem *>(it->second);
+      auto item = std::dynamic_pointer_cast<DataItem>(it->second);
       if (!item) {
         throw RuntimeError("Item with name '{}' is not a data item",
                            pathComponents.front());
@@ -100,7 +101,7 @@ DataItem *BusItem::upsertItem(std::vector<std::string> pathComponents,
       inserted = false;
       return item;
     } else {
-      auto *bus = dynamic_cast<BusItem *>(it->second);
+      auto bus = std::dynamic_pointer_cast<BusItem>(it->second);
       if (!bus) {
         throw RuntimeError("Item with name '{}' is not a bus",
                            pathComponents.front());
@@ -112,23 +113,24 @@ DataItem *BusItem::upsertItem(std::vector<std::string> pathComponents,
   }
 }
 
-DataItem *DataSet::upsertItem(const std::string &path, bool &inserted) {
+std::shared_ptr<DataItem> DataSet::upsertItem(const std::string &path,
+                                              bool &inserted) {
   return upsertItem(split(path), inserted);
 }
 
-DataItem *DataSet::upsertItem(std::vector<std::string> pathComponents,
-                              bool &inserted) {
+std::shared_ptr<DataItem>
+DataSet::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
   auto &name = pathComponents.front();
 
   auto it = items.find(name);
   if (it == items.end()) { // No item with this name exists. Create a new one.
     if (pathComponents.size() == 1) { // No bus, just a signal.
-      auto *item = new DataItem(name);
+      auto item = std::make_shared<DataItem>(name);
       items.emplace(name, item);
       inserted = true;
       return item;
     } else {
-      auto *bus = new BusItem(name);
+      auto bus = std::make_shared<BusItem>(name);
       items.emplace(name, bus);
 
       pathComponents.erase(pathComponents.begin());
@@ -136,7 +138,7 @@ DataItem *DataSet::upsertItem(std::vector<std::string> pathComponents,
     }
   } else {
     if (pathComponents.size() == 1) {
-      auto *item = dynamic_cast<DataItem *>(it->second);
+      auto item = std::dynamic_pointer_cast<DataItem>(it->second);
       if (!item) {
         throw RuntimeError("Item with name '{}' is not a data item",
                            pathComponents.front());
@@ -146,7 +148,7 @@ DataItem *DataSet::upsertItem(std::vector<std::string> pathComponents,
       return item;
     } else {
       // Item with this name exists. Check if it is a bus.
-      auto *bus = dynamic_cast<BusItem *>(it->second);
+      auto bus = std::dynamic_pointer_cast<BusItem>(it->second);
       if (!bus) {
         throw RuntimeError("Item with name '{}' is not a bus",
                            pathComponents.front());
@@ -333,7 +335,7 @@ void ConnectionDolphin::parse(json_t *json) {
   }
 }
 
-Connection *Connection::fromJson(json_t *json) {
+std::shared_ptr<Connection> Connection::fromJson(json_t *json) {
   const char *type = nullptr;
   json_error_t err;
 
@@ -343,16 +345,16 @@ Connection *Connection::fromJson(json_t *json) {
                       "Failed to parse connection type");
   }
 
-  Connection *c = nullptr;
+  std::shared_ptr<Connection> c;
 
   if (strcmp(type, "local") == 0) {
-    c = new ConnectionLocal();
+    c = std::make_shared<ConnectionLocal>();
     c->parse(json);
   } else if (strcmp(type, "remote") == 0) {
-    c = new ConnectionRemote();
+    c = std::make_shared<ConnectionRemote>();
     c->parse(json);
   } else if (strcmp(type, "dolphin") == 0) {
-    c = new ConnectionDolphin();
+    c = std::make_shared<ConnectionDolphin>();
     c->parse(json);
   } else {
     throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
