@@ -14,6 +14,10 @@ extern "C" {
 
 #include <villas/nodes/opal_orchestra/locks.hpp>
 
+// Global lock for access to OPAL-RT's RTAPI Orchestra API.
+// The Orchestra RTAPI is non-thread-safe and non-reentrant.
+// Hence, this mutex is needed for mediating access to the API
+// by a single thread at a time.
 static std::mutex globalLock;
 
 using namespace villas::node::orchestra;
