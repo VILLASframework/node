@@ -42,7 +42,7 @@ bibliography: paper.bib
 
 # Summary
 
-VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be test beds, digital real-time simulators, software tools, and physical devices.
+VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be test beds, digital real-time simulators, software tools, and physical devices. It is designed for the co-simulation of power system and related energy applications.
 VILLASnode was originally designed for co-simulation of electrical networks, but was developed to bigger variety of use cases and domains.
 Whereas distributed computing, systems or algortihms aim to solve a common task, geographically distributed experiments link infrastructures with different components to make these components accessible to other infrastructures. Thus, data exchanges are possible which would not be possible in one single infrastructure.
 VILLASnode serves as the gateway that connects components across different infrastructures by providing a set of protocols and customized third-party implementations, e.g., different simulators. It enables seamless collaboration in research and testing environments while safeguarding the intellectual property of the infrastructures. The components at every infrastructure appear as a black box. The infrastructure does not need to share models or confidential information.
