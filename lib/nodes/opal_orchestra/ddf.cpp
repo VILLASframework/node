@@ -174,22 +174,22 @@ std::string ConnectionLocal::getDetails() const {
     details += fmt::format(", extcomm={}", *extcomm);
 
     if (addressFramework) {
-      details += fmt::format(", addrframework={}", *addressFramework);
+      details += fmt::format(", addr_framework={}", *addressFramework);
     }
     if (portFramework) {
-      details += fmt::format(", portframework={}", portFramework.value());
+      details += fmt::format(", port_framework={}", portFramework.value());
     }
     if (nicFramework) {
-      details += fmt::format(", nicframework={}", *nicFramework);
+      details += fmt::format(", nic_framework={}", *nicFramework);
     }
     if (nicClient) {
-      details += fmt::format(", nicclient={}", *nicClient);
+      details += fmt::format(", nic_client={}", *nicClient);
     }
     if (coreFramework) {
-      details += fmt::format(", coreframework={}", coreFramework.value());
+      details += fmt::format(", core_framework={}", coreFramework.value());
     }
     if (coreClient) {
-      details += fmt::format(", coreclient={}", coreClient.value());
+      details += fmt::format(", core_client={}", coreClient.value());
     }
   }
   details += " }";
@@ -243,9 +243,9 @@ void ConnectionLocal::parse(json_t *json) {
 
   auto ret = json_unpack_ex(
       json, &err, 0, "{ s?: s, s?: s, s?: i, s?: s, s?: s, s?: i, s?: i }",
-      "extcomm", &ec, "addrframework", &af, "portframework", &pf,
-      "nicframework", &nf, "nicclient", &nc, "coreframework", &cf, "coreclient",
-      &cc);
+      "extcomm", &ec, "addr_framework", &af, "port_framework", &pf,
+      "nic_framework", &nf, "nic_client", &nc, "core_framework", &cf,
+      "core_client", &cc);
   if (ret) {
     throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
                       "Failed to parse configuration of local connection");
@@ -275,7 +275,7 @@ void ConnectionLocal::parse(json_t *json) {
 }
 
 std::string ConnectionRemote::getDetails() const {
-  return fmt::format(", connection={{ type=remote, name={}, pciindex={} }}",
+  return fmt::format(", connection={{ type=remote, name={}, pci_index={} }}",
                      name, pciIndex);
 }
 
@@ -295,7 +295,7 @@ void ConnectionRemote::parse(json_t *json) {
   json_error_t err;
 
   int ret = json_unpack_ex(json, &err, 0, "{ s: s, s: i }", "card", &nme,
-                           "pciindex", &pciIndex);
+                           "pci_index", &pciIndex);
   if (ret) {
     throw ConfigError(
         json, err, "node-config-node-opal-orchestra-rfm",
@@ -307,7 +307,7 @@ void ConnectionRemote::parse(json_t *json) {
 
 std::string ConnectionDolphin::getDetails() const {
   return fmt::format(
-      ", connection={{ type=dolphin, nodeIdFramework={}, segmentId={} }}",
+      ", connection={{ type=dolphin, node_id_framework={}, segment_id={} }}",
       nodeIdFramework, segmentId);
 }
 
@@ -324,8 +324,9 @@ void ConnectionDolphin::toXml(xmlNode *domain) const {
 
 void ConnectionDolphin::parse(json_t *json) {
   json_error_t err;
-  auto ret = json_unpack_ex(json, &err, 0, "{ s: i, s: i }", "nodeIdFramework",
-                            &nodeIdFramework, "segmentId", &segmentId);
+  auto ret =
+      json_unpack_ex(json, &err, 0, "{ s: i, s: i }", "node_id_framework",
+                     &nodeIdFramework, "segment_id", &segmentId);
   if (ret) {
     throw ConfigError(json, err, "node-config-node-opal-orchestra-connection",
                       "Failed to parse configuration of dolphin connection");
