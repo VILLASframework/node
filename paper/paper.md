@@ -58,8 +58,8 @@ It includes queues ($q$) and registers ($r$). Queues temporarily store data befo
 
 ![Example of modular experimental design with nodes, paths, and hooks [@villasnode_docs].](figures/VILLASnode_paths.svg)
 
-VILLASnode can be controlled remotely by an HTTP REST-style Application Programming Interface (API). It is used by the Python Wrapper allowing to control, configure and execute most of the functions of VILLASnode.
-In general, the interaction with VILLASnode is available for other tools and coding languages by using clients that implement basic functionalities, custom configurations and data conversions.
+External software tools and programming languages can be interfaced with VILLASnode via several methods: Locally, they can be spawned as sub-processes and exchange data via shared-memory or standard I/O streams. Remotely, they can be interfaced via any of the supported node-types and protocols, such as MQTT or e.g. plain TCP sockets.
+Additionally, VILLASnode can be configured and controlled remotely by an HTTP REST-style Application Programming Interface (API). An OpenAPI specification of the API is provided in order to generate API bindings for a variety of different programming languages.
 Since VILLASnode is written in C/C++ it supports real-time capabilites and can supports real-time tuning for Linux systems.
 To provide all necassary information, VILLASnode has a detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
 
