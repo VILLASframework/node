@@ -45,7 +45,7 @@ public:
   // Cached signal indices
   // We keep a vector of indices to map the signal index in the signal list.
   SignalList::Ptr signalList; // Signal list for which the indices are valid.
-  std::vector<int> indices;
+  std::vector<std::optional<unsigned>> indices;
 
   // Run-time members which will be retrieved from Orchestra in prepare().
   unsigned short key;
@@ -56,22 +56,22 @@ public:
   OpalOrchestraMapping(DataItem *item, const std::string &path)
       : item(item), path(path), signals(), signalList(), indices() {}
 
-  void addSignal(Signal::Ptr signal, int orchestraIdx) {
-    if (orchestraIdx < 0) {
+  void addSignal(Signal::Ptr signal, std::optional<unsigned> orchestraIdx) {
+    if (!orchestraIdx) {
       orchestraIdx = signals.size();
     }
 
-    if (orchestraIdx < static_cast<int>(signals.size())) {
-      if (signals[orchestraIdx]) {
+    if (*orchestraIdx < signals.size()) {
+      if (signals[*orchestraIdx]) {
         throw RuntimeError("Index {} of Orchestra signal already mapped",
-                           orchestraIdx);
+                           *orchestraIdx);
       }
     } else {
-      signals.resize(orchestraIdx + 1, nullptr);
+      signals.resize(*orchestraIdx + 1, nullptr);
       item->length = signals.size();
     }
 
-    signals[orchestraIdx] = signal;
+    signals[*orchestraIdx] = signal;
   }
 
   void check() {
@@ -152,17 +152,17 @@ public:
 
     auto *orchestraDataPtr = buffer;
     for (auto &index : indices) {
-      if (index < 0 || index >= static_cast<int>(smp->length)) {
+      if (!index || *index >= smp->length) {
         orchestraDataPtr += typeSize;
         continue; // Unused index or index out of range.
       }
 
-      auto signal = smp->signals->getByIndex(index);
+      auto signal = smp->signals->getByIndex(*index);
       if (!signal) {
         throw RuntimeError("Signal {} not found", index);
       }
 
-      toOrchestraSignalData(orchestraDataPtr, item->type, smp->data[index],
+      toOrchestraSignalData(orchestraDataPtr, item->type, smp->data[*index],
                             signal->type);
 
       orchestraDataPtr += typeSize;
@@ -174,27 +174,27 @@ public:
 
     auto *orchestraDataPtr = buffer;
     for (auto &index : indices) {
-      if (index < 0 || index >= static_cast<int>(smp->capacity)) {
+      if (!index || *index >= smp->capacity) {
         continue; // Unused index or index out of range.
       }
 
-      for (int i = static_cast<int>(smp->length); i < index; i++) {
+      for (unsigned i = smp->length; i < *index; i++) {
         smp->data[i].i = 0;
       }
 
-      auto signal = smp->signals->getByIndex(index);
+      auto signal = smp->signals->getByIndex(*index);
       if (!signal) {
-        throw RuntimeError("Signal {} not found", index);
+        throw RuntimeError("Signal {} not found", *index);
       }
 
       node::SignalType villasType;
       SignalData villasData =
           toNodeSignalData(orchestraDataPtr, item->type, villasType);
 
-      smp->data[index] = villasData.cast(villasType, signal->type);
+      smp->data[*index] = villasData.cast(villasType, signal->type);
 
       if (index >= static_cast<int>(smp->length)) {
-        smp->length = index + 1;
+        smp->length = *index + 1;
       }
 
       orchestraDataPtr += typeSize;
@@ -218,7 +218,7 @@ protected:
 
         indices.push_back(idx);
       } else {
-        indices.push_back(-1); // Unused index
+        indices.emplace_back(); // Unused index
       }
     }
 
@@ -348,14 +348,20 @@ public:
 
       const char *nme = nullptr;
       const char *typ = nullptr;
-      int orchestraIdx = -1;
+      int oi = -1;
 
       auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
                                 "orchestra_name", &nme, "orchestra_type", &typ,
-                                "orchestra_index", &orchestraIdx);
+                                "orchestra_index", &oi);
       if (ret) {
         throw ConfigError(json_signal, err,
                           "node-config-node-opal-orchestra-signals");
+      }
+
+      std::optional<unsigned> orchestraIdx;
+
+      if (oi >= 0) {
+        orchestraIdx = oi;
       }
 
       auto defaultValue =
