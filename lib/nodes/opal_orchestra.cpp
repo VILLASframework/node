@@ -38,7 +38,7 @@ using namespace villas::node::orchestra;
 // An OpalOrchestraMapping maps one or more VILLASnode signals to an Orchestra data item.
 class OpalOrchestraMapping {
 public:
-  DataItem *item;
+  std::shared_ptr<DataItem> item;
   std::string path;
   std::vector<Signal::Ptr> signals;
 
@@ -53,7 +53,7 @@ public:
   unsigned int typeSize; // sizeof() of the signal type. See RTSignalType.
   unsigned short length;
 
-  OpalOrchestraMapping(DataItem *item, const std::string &path)
+  OpalOrchestraMapping(std::shared_ptr<DataItem> item, const std::string &path)
       : item(item), path(path), signals(), signalList(), indices() {}
 
   void addSignal(Signal::Ptr signal, std::optional<unsigned> orchestraIdx) {
@@ -237,8 +237,8 @@ protected:
 
   Domain domain; // The domain to which the node belongs.
 
-  std::map<DataItem *, OpalOrchestraMapping> subscribeMappings;
-  std::map<DataItem *, OpalOrchestraMapping> publishMappings;
+  std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> subscribeMappings;
+  std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> publishMappings;
 
   double rate;
   std::optional<std::filesystem::path> dataDefinitionFilename;
@@ -332,8 +332,9 @@ public:
         skipWaitToGo(false), dataDefinitionFileOverwrite(false),
         dataDefinitionFileWriteOnly(false) {}
 
-  void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
-                    std::map<DataItem *, OpalOrchestraMapping> &mappings) {
+  void parseSignals(
+      json_t *json, SignalList::Ptr signals, DataSet &dataSet,
+      std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> &mappings) {
     if (!json_is_array(json)) {
       throw ConfigError(json, "node-config-node-opal-orchestra-signals",
                         "Signals must be an array");
@@ -373,7 +374,7 @@ public:
       auto orchestraName = nme ? nme : signal->name;
 
       bool inserted = false;
-      auto *item = dataSet.upsertItem(orchestraName, inserted);
+      auto item = dataSet.upsertItem(orchestraName, inserted);
 
       if (inserted) {
         item->type = orchestraType;
@@ -552,7 +553,8 @@ public:
       throw RTError(ret, "Failed to check ready to go");
     }
 
-    if (auto *c = dynamic_cast<ConnectionRemote *>(domain.connection)) {
+    if (std::shared_ptr<ConnectionRemote> c =
+            std::dynamic_pointer_cast<ConnectionRemote>(domain.connection)) {
       ret = RTSetupRefMemRemoteConnection(c->name.c_str(), c->pciIndex);
       if (ret != RTAPI_SUCCESS) {
         throw RTError(ret,

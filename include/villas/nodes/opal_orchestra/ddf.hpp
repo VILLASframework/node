@@ -48,25 +48,27 @@ public:
 
 class BusItem : public Item {
 public:
-  std::map<std::string, Item *> items;
+  std::map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
   BusItem(const std::string &name) : items(), name(name) {}
 
-  DataItem *upsertItem(std::vector<std::string> pathComponents, bool &inserted);
+  std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,
+                                       bool &inserted);
 
   void toXml(xmlNode *parent, bool withDefault) const override;
 };
 
 class DataSet {
 public:
-  std::map<std::string, Item *> items;
+  std::map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
   DataSet(const std::string &name) : items(), name(name) {}
 
-  DataItem *upsertItem(const std::string &path, bool &inserted);
-  DataItem *upsertItem(std::vector<std::string> pathComponents, bool &inserted);
+  std::shared_ptr<DataItem> upsertItem(const std::string &path, bool &inserted);
+  std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,
+                                       bool &inserted);
 
   void toXml(xmlNode *parent, bool withDefault) const;
 };
@@ -77,7 +79,7 @@ public:
   virtual std::string getDetails() const = 0;
   virtual void parse(json_t *json) = 0;
 
-  static Connection *fromJson(json_t *json);
+  static std::shared_ptr<Connection> fromJson(json_t *json);
 };
 
 class ConnectionLocal : public Connection {
@@ -124,7 +126,7 @@ public:
 class Domain {
 public:
   std::string name;
-  Connection *connection;
+  std::shared_ptr<Connection> connection;
   bool synchronous;
   bool states;
   bool multiplePublishAllowed;
