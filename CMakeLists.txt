@@ -149,7 +149,7 @@ endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
 # Check if submodules for VILLASfpga are present
-if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/thirdparty/libxil/CMakeLists.txt")
+if(EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/libxil/CMakeLists.txt")
     set(FOUND_FPGA_SUBMODULES ON)
 else()
     set(FOUND_FPGA_SUBMODULES OFF)
