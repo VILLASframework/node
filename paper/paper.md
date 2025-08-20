@@ -42,8 +42,8 @@ bibliography: paper.bib
 
 # Summary
 
-VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically distributed real-time experiments. Components can be testbeds, digital real-time simulators, software tools, and physical devices. It is designed for the co-simulation of power system and related energy applications.
-VILLASnode was originally designed for the co-simulation of electrical networks, but since then was further extended to cover a bigger variety of use cases and domains.
+VILLASnode is a multi-protocol gateway, designed to facilitate real-time data exchange between various components of geographically-distributed real-time experiments. Components can be testbeds, digital real-time simulators, software tools, and physical devices. It is designed for the co-simulation of power system and related energy applications.
+VILLASnode was originally designed for the co-simulation of electrical networks, but since then was further extended to cover a larger variety of use cases and domains.
 VILLASnode serves as the gateway that connects components across different infrastructures by providing a set of protocols and customized third-party implementations, e.g., different simulators. It enables seamless collaboration in research and testing environments while safeguarding the intellectual property of the infrastructures. The components of every infrastructure appear as a black box. The infrastructure does not need to share models or confidential information.
 
 VILLASnode is a set of Linux command line tools and shared library.
@@ -54,7 +54,7 @@ All components that are interfaced by the VILLASnode gateway are represented by 
 The basic data package, common for all node-types, includes timestamped data, constituting a sample. Up to 64 values can form a sample.
 Samples may need modification or filtering. VILLASnode supports hooks ($h$) for this purpose. Hooks are simple callback functions, which are called whenever a message is processed.
 Paths ($p$) take care of the processing and define the connections and dataflows between nodes.
-Node-types, hooks, and paths need to be initalized in a JSON configuration file which is passed when starting VILLASnode.
+Node-types, hooks, and paths need to be initalized in a JSON configuration file that is passed when starting VILLASnode.
 Figure 1 shows an example of an experiment where five different node-types are used, connected by three paths, using three hooks.
 It includes queues ($q$) and registers ($r$). Queues temporarily store data before data is forwarded to registers. Registers provide the possibility to (de-)mulitplex data and to create new samples.
 
@@ -65,26 +65,26 @@ Additionally, VILLASnode can be configured and controlled remotely by an HTTP RE
 VILLASnode is written in C++ and supports real-time execution on real-time Linux systems.
 To provide all necassary information, VILLASnode has detailed documentation [@villasnode_docs]. It includes installation recommendations and best practices for development as well as example configurations and beginners guides, so-called labs.
 
-Other open-source co-simulation tools are available, like Mosaik [@rohjans_mosaik_2013] or Helics [@hardy_helics_2024]. Mosaik uses a SimAPI to communicate with other simulators based on fixed timesteps. Integrated simulators need to support the SimAPI which requires extra implementations. Simulators cannot reuse existing supported protocols which VILLASnode makes use of and takes core of protocol conversion.
+VILLASnode can be compared with other available open-source co-simulation tools, such as Mosaik [@rohjans_mosaik_2013] or Helics [@hardy_helics_2024]. Mosaik uses a SimAPI to communicate with other simulators based on fixed timesteps. Integrated simulators need to support the SimAPI, which requires extra implementations. Simulators cannot reuse existing supported protocols, which VILLASnode makes use of and takes care of protocol conversion.
 Helics is designed for large-scale testing and supports bindings for different languages. It uses a broker that manages the communication between the simulators, whereas VILLASnode has a peer-to-peer architecture.
 
 # Statement of need
 
-VILLASnode supports the coupling of real-time simulators of different hardware and software vendors, specifications, and implementations [@monti_global_2018]. These simulators play a crucial role in both academic research and industrial applications, especially within simulation of electrical power networks. They are primarily utilized for hardware-in-the-loop (HiL) simulations. As an example, in the scope of the ENSURE project, the German electrical grid is emulated with the ability to couple dynamically simulators and physical components which can be interfaced safely via analog input and output signals [@Mehlmann2023].
-This approach not only reduces development costs but also allows for the validation of components under scenarios in which it is difficult or unsafe to replicate real-world field scenarios. Moreover, VILLASnode supports the linking of simulators and real-time simulators from different vendors so that models do not need to be shared. It allows for communication between proprietary simulation models that cannot be shared, thus protecting intellectual property during collaboration. Local simulators and simulation infrastructure can be combined in a powerful arrangement unavailable at any individual infrastructure. This approach has the additional advantage of allowing co-simulation with heterogeneus methods, algorithms, and communication protocols. The communication with the components, sensors, or actuators can also be implemented using VILLASnode.
+VILLASnode supports the coupling of real-time simulators of different hardware and software vendors, specifications, and implementations [@monti_global_2018]. These simulators play a crucial role in both academic research and industrial applications, especially within simulation of electrical power networks. They are primarily utilized for hardware-in-the-loop (HiL) simulations. As an example, in the scope of the ENSURE project, the German electrical grid is emulated with the ability to couple dynamically simulators and physical components that can be interfaced safely via analog input and output signals [@Mehlmann2023].
+This approach not only reduces development costs but also allows for the validation of components under scenarios in which it is difficult or unsafe to replicate real-world field scenarios. Moreover, VILLASnode supports the linking of simulators and real-time simulators from different vendors so that models do not need to be shared. It allows for communication between proprietary simulation models that cannot be shared, thus protecting intellectual property during collaboration. Local simulators and simulation infrastructure can be combined in a powerful arrangement unavailable in any individual infrastructure. This approach has the additional advantage of allowing co-simulation with heterogeneus methods, algorithms, and communication protocols. Communication with  components, sensors, or actuators can also be implemented using VILLASnode.
 
-This can be extended to geographically distributed experiments. In this case, VILLASnode takes care of the communication between the different participants to the experiment that spans multiple infrastructures. Not only simulators can be included, but physical devices can also be integrated [@Bach2025]. Although communication latencies constrain the dynamics of the experiment for real-time applications, VILLASnode offers significant advantages such as leveraging existing infrastructure across sites and facilitating collaboration among interdisciplinary teams. Manufacturers, customers, and certifiers benefit from remote access and distributed testing while maintaining data confidentiality and intellectual property. Current work includes automation of integration of VILLASnode in practical field devices [@Pitz2024].
+This can be extended to geographically-distributed experiments. In this case, VILLASnode takes care of the communication between the different participants within an experiment that spans multiple infrastructures. Not only can simulators  be included, but physical devices can also be integrated [@Bach2025]. Although communication latencies constrain the dynamics of experiments for real-time applications, VILLASnode offers significant advantages such as leveraging existing infrastructure across sites and facilitating collaboration among interdisciplinary teams. Manufacturers, customers, and certifiers benefit from remote access and distributed testing while maintaining data confidentiality and intellectual property. Current work includes automation of integration of VILLASnode in practical field devices [@Pitz2024].
 
 # Features
 
 As the gateway, VILLASnode is the main component of the VILLASframework, which offers several key features.
 
 The gateway supports a wide range of established data exchange protocols. Support for various message brokers like MQTT, AMQP, nanomsg, ZeroMQ, Redis, and Kafka provide connectivity to existing software platforms. Support for process bus protocols such as CAN, EtherCAT, Modbus, IEC 61850-8-1 (GOOSE), and IEC 61850-9-2 (Sampled Values) enable connectivity to physical devices. A range of web-based protocols like WebRTC, WebSockets, NGSI, and a HTTP REST API facilitate integration into web-based interfaces. And a set of generic protocols add support for plain UDP/TCP/Ethernet sockets, Infiniband, file-based I/O, and communication with other processes via standard I/O or shared memory regions.
-For custom interfaces which require hard real-time timeing guarantees, the gateway supports communicating with Xilinx/AMD FPGA evaluation boards via PCIexpress and user space drivers implemented on top of VFIO.
+For custom interfaces that require hard real-time timeing guarantees, the gateway supports communicating with Xilinx/AMD FPGA evaluation boards via PCIexpress and user space drivers implemented on top of VFIO.
 
-Other components of the framework include:
-VILLASweb provides visualization and monitoring of distributed experiments via a web browser.
-VILLAScontroller integrates and orchestrates the execution of gateways and related hardware and software component in a joint experiment.
+Other components of the framework include
+VILLASweb, which provides visualization and monitoring of distributed experiments via a web browser, and
+VILLAScontroller, which integrates and orchestrates the execution of gateways and related hardware and software component in a joint experiment.
 
 # Acknowledgements
 
