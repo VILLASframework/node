@@ -49,7 +49,8 @@ public:
 
 protected:
   // Keep a map of already mapped memory blocks
-  std::map<MemoryManager::AddressSpaceId, std::shared_ptr<MemoryBlock>>
+  std::unordered_map<MemoryManager::AddressSpaceId,
+                     std::shared_ptr<MemoryBlock>>
       memoryBlocksMapped;
 
   Logger logger;

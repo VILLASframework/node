@@ -17,7 +17,11 @@
   };
 
   outputs =
-    { self, nixpkgs, ... }:
+    {
+      self,
+      nixpkgs,
+      ...
+    }:
     let
       inherit (nixpkgs) lib;
 
@@ -106,6 +110,7 @@
         # Third-party dependencies
 
         opendssc = pkgs.callPackage (nixDir + "/opendssc.nix") { };
+        orchestra = pkgs.callPackage (nixDir + "/orchestra.nix") { };
       };
     in
     {

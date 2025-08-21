@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <fstream>
 #include <list>
-#include <map>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #include <villas/graph/edge.hpp>
 #include <villas/graph/vertex.hpp>
@@ -245,8 +245,8 @@ protected:
   VertexIdentifier lastVertexId;
   EdgeIdentifier lastEdgeId;
 
-  std::map<VertexIdentifier, std::shared_ptr<VertexType>> vertices;
-  std::map<EdgeIdentifier, std::shared_ptr<EdgeType>> edges;
+  std::unordered_map<VertexIdentifier, std::shared_ptr<VertexType>> vertices;
+  std::unordered_map<EdgeIdentifier, std::shared_ptr<EdgeType>> edges;
 
   Logger logger;
 };

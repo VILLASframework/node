@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 #include <fmt/ostream.h>
 #include <jansson.h>
@@ -76,7 +76,7 @@ public:
     return *portsMaster.at(name);
   }
 
-  const std::map<std::string, std::shared_ptr<StreamVertex>> &
+  const std::unordered_map<std::string, std::shared_ptr<StreamVertex>> &
   getMasterPorts() const {
     return portsMaster;
   }
@@ -85,7 +85,7 @@ public:
     return *portsSlave.at(name);
   }
 
-  const std::map<std::string, std::shared_ptr<StreamVertex>> &
+  const std::unordered_map<std::string, std::shared_ptr<StreamVertex>> &
   getSlavePorts() const {
     return portsSlave;
   }
@@ -128,8 +128,8 @@ private:
   std::pair<std::string, std::string> getLoopbackPorts() const;
 
 protected:
-  std::map<std::string, std::shared_ptr<StreamVertex>> portsMaster;
-  std::map<std::string, std::shared_ptr<StreamVertex>> portsSlave;
+  std::unordered_map<std::string, std::shared_ptr<StreamVertex>> portsMaster;
+  std::unordered_map<std::string, std::shared_ptr<StreamVertex>> portsSlave;
 
   static StreamGraph streamGraph;
 };

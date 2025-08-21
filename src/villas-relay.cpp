@@ -7,9 +7,9 @@
 
 #include <cstring>
 #include <iostream>
-#include <map>
 #include <queue>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include <jansson.h>
@@ -97,7 +97,7 @@ json_t *RelaySession::toJson() const {
                    "connects", connects);
 }
 
-std::map<std::string, RelaySession *> RelaySession::sessions;
+std::unordered_map<std::string, RelaySession *> RelaySession::sessions;
 
 RelayConnection::RelayConnection(Relay *r, lws *w, bool lo)
     : wsi(w), currentFrame(std::make_shared<Frame>()), outgoingFrames(),

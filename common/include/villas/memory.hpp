@@ -275,7 +275,8 @@ public:
   static HostDmaRamAllocator &getAllocator(int num = 0);
 
 private:
-  static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
+  static std::unordered_map<int, std::unique_ptr<HostDmaRamAllocator>>
+      allocators;
 
   static std::string getUdmaBufName(int num);
 
