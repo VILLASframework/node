@@ -27,7 +27,7 @@ DeviceConnection DeviceConnection::from(
 
   // Bind the devicetree device to vfio driver
   LinuxDriver driver(
-      std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
+      fs::path("/sys/bus/platform/drivers/vfio-platform"));
   driver.attach(device);
 
   // Attach vfio container to the iommu group

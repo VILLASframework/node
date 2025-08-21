@@ -88,7 +88,7 @@ bool PlatformCard::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
 std::shared_ptr<PlatformCard>
 PlatformCardFactory::make(json_t *json_card, std::string card_name,
                           std::shared_ptr<kernel::vfio::Container> vc,
-                          const std::filesystem::path &searchPath) {
+                          const fs::path &searchPath) {
   auto logger = villas::Log::get("PlatformCardFactory");
 
   // make sure the vfio container has the required modules
