@@ -237,8 +237,10 @@ protected:
 
   Domain domain; // The domain to which the node belongs.
 
-  std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> subscribeMappings;
-  std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> publishMappings;
+  std::unordered_map<std::shared_ptr<DataItem>, OpalOrchestraMapping>
+      subscribeMappings;
+  std::unordered_map<std::shared_ptr<DataItem>, OpalOrchestraMapping>
+      publishMappings;
 
   double rate;
   std::optional<std::filesystem::path> dataDefinitionFilename;
@@ -332,9 +334,9 @@ public:
         skipWaitToGo(false), dataDefinitionFileOverwrite(false),
         dataDefinitionFileWriteOnly(false) {}
 
-  void parseSignals(
-      json_t *json, SignalList::Ptr signals, DataSet &dataSet,
-      std::map<std::shared_ptr<DataItem>, OpalOrchestraMapping> &mappings) {
+  void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
+                    std::unordered_map<std::shared_ptr<DataItem>,
+                                       OpalOrchestraMapping> &mappings) {
     if (!json_is_array(json)) {
       throw ConfigError(json, "node-config-node-opal-orchestra-signals",
                         "Signals must be an array");
