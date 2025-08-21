@@ -53,8 +53,7 @@ public:
 
   BusItem(const std::string &name) : items(), name(name) {}
 
-  std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,
-                                       bool &inserted);
+  std::shared_ptr<DataItem> upsertItem(std::string_view path, bool &inserted);
 
   void toXml(xmlNode *parent, bool withDefault) const override;
 };
@@ -66,9 +65,7 @@ public:
 
   DataSet(const std::string &name) : items(), name(name) {}
 
-  std::shared_ptr<DataItem> upsertItem(const std::string &path, bool &inserted);
-  std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,
-                                       bool &inserted);
+  std::shared_ptr<DataItem> upsertItem(std::string_view path, bool &inserted);
 
   void toXml(xmlNode *parent, bool withDefault) const;
 };

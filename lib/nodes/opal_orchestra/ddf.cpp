@@ -20,22 +20,6 @@ extern "C" {
 using namespace villas::node;
 using namespace villas::node::orchestra;
 
-static std::vector<std::string> split(const std::string &path,
-                                      char delimiter = '/') {
-  std::vector<std::string> components;
-  size_t start = 0, end = 0;
-  while ((end = path.find(delimiter, start)) != std::string::npos) {
-    if (end != start) {
-      components.push_back(path.substr(start, end - start));
-    }
-    start = end + 1;
-  }
-  if (start < path.size()) {
-    components.push_back(path.substr(start));
-  }
-  return components;
-}
-
 void DataItem::toXml(xmlNode *parent, bool withDefault) const {
   xmlNode *item = xmlNewChild(parent, nullptr, BAD_CAST "item", nullptr);
   xmlNewProp(item, BAD_CAST "name", BAD_CAST name.c_str());
@@ -72,13 +56,15 @@ void BusItem::toXml(xmlNode *parent, bool withDefault) const {
   }
 }
 
-std::shared_ptr<DataItem>
-BusItem::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
-  auto &name = pathComponents.front();
+std::shared_ptr<DataItem> BusItem::upsertItem(std::string_view path,
+                                              bool &inserted) {
+  auto separator = path.find('/');
+  auto isSignal = separator == std::string::npos; // No bus, just a signal.
+  auto name = std::string(path.substr(0, separator));
 
   auto it = items.find(name);
   if (it == items.end()) { // No item with this name exists. Create a new one.
-    if (pathComponents.size() == 1) { // No bus, just a signal.
+    if (isSignal) {
       auto item = std::make_shared<DataItem>(name);
       items.emplace(name, item);
       inserted = true;
@@ -87,15 +73,13 @@ BusItem::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
       auto bus = std::make_shared<BusItem>(name);
       items.emplace(name, bus);
 
-      pathComponents.erase(pathComponents.begin());
-      return bus->upsertItem(pathComponents, inserted);
+      return bus->upsertItem(path.substr(separator + 1), inserted);
     }
   } else {
-    if (pathComponents.size() == 1) {
+    if (isSignal) {
       auto item = std::dynamic_pointer_cast<DataItem>(it->second);
       if (!item) {
-        throw RuntimeError("Item with name '{}' is not a data item",
-                           pathComponents.front());
+        throw RuntimeError("Item with name '{}' is not a data item", name);
       }
 
       inserted = false;
@@ -103,59 +87,45 @@ BusItem::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
     } else {
       auto bus = std::dynamic_pointer_cast<BusItem>(it->second);
       if (!bus) {
-        throw RuntimeError("Item with name '{}' is not a bus",
-                           pathComponents.front());
+        throw RuntimeError("Item with name '{}' is not a bus", name);
       }
 
-      pathComponents.erase(pathComponents.begin());
-      return bus->upsertItem(pathComponents, inserted);
+      return bus->upsertItem(path.substr(separator + 1), inserted);
     }
   }
 }
 
-std::shared_ptr<DataItem> DataSet::upsertItem(const std::string &path,
+std::shared_ptr<DataItem> DataSet::upsertItem(std::string_view path,
                                               bool &inserted) {
-  return upsertItem(split(path), inserted);
-}
-
-std::shared_ptr<DataItem>
-DataSet::upsertItem(std::vector<std::string> pathComponents, bool &inserted) {
-  auto &name = pathComponents.front();
-
+  auto separator = path.find('/');
+  auto name = std::string(path.substr(0, separator));
   auto it = items.find(name);
   if (it == items.end()) { // No item with this name exists. Create a new one.
-    if (pathComponents.size() == 1) { // No bus, just a signal.
+    if (separator == std::string_view::npos) { // No bus, just a signal.
       auto item = std::make_shared<DataItem>(name);
-      items.emplace(name, item);
+      items.emplace(std::move(name), item);
       inserted = true;
       return item;
     } else {
       auto bus = std::make_shared<BusItem>(name);
-      items.emplace(name, bus);
-
-      pathComponents.erase(pathComponents.begin());
-      return bus->upsertItem(pathComponents, inserted);
+      items.emplace(std::move(name), bus);
+      return bus->upsertItem(path.substr(separator + 1), inserted);
     }
   } else {
-    if (pathComponents.size() == 1) {
+    if (separator == std::string_view::npos) {
       auto item = std::dynamic_pointer_cast<DataItem>(it->second);
       if (!item) {
-        throw RuntimeError("Item with name '{}' is not a data item",
-                           pathComponents.front());
+        throw RuntimeError("Item with name '{}' is not a data item", name);
       }
-
       inserted = false;
       return item;
     } else {
       // Item with this name exists. Check if it is a bus.
       auto bus = std::dynamic_pointer_cast<BusItem>(it->second);
       if (!bus) {
-        throw RuntimeError("Item with name '{}' is not a bus",
-                           pathComponents.front());
+        throw RuntimeError("Item with name '{}' is not a bus", name);
       }
-
-      pathComponents.erase(pathComponents.begin());
-      return bus->upsertItem(pathComponents, inserted);
+      return bus->upsertItem(path.substr(separator + 1), inserted);
     }
   }
 }
