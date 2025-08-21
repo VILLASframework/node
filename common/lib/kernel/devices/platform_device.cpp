@@ -15,36 +15,31 @@ using villas::kernel::devices::PlatformDevice;
 using villas::utils::write_to_file;
 
 std::optional<std::unique_ptr<Driver>> PlatformDevice::driver() const {
-  std::filesystem::path driver_symlink =
-      this->m_path / std::filesystem::path("driver");
+  fs::path driver_symlink = this->m_path / fs::path("driver");
 
-  if (!std::filesystem::is_symlink(driver_symlink))
+  if (!fs::is_symlink(driver_symlink))
     return std::nullopt;
 
-  std::filesystem::path driver_path =
-      std::filesystem::canonical(driver_symlink);
+  fs::path driver_path = fs::canonical(driver_symlink);
   return std::make_optional(std::make_unique<LinuxDriver>(driver_path));
 }
 
 std::optional<int> PlatformDevice::iommu_group() const {
-  std::filesystem::path symlink =
-      std::filesystem::path(this->m_path.u8string() + "/iommu_group");
+  fs::path symlink = fs::path(this->m_path.u8string() + "/iommu_group");
 
-  std::filesystem::path link = std::filesystem::read_symlink(symlink);
+  fs::path link = fs::read_symlink(symlink);
   std::string delimiter = "iommu_groups/";
   int pos = link.u8string().find(delimiter);
   int iommu_group = std::stoi(link.u8string().substr(pos + delimiter.length()));
   return std::make_optional<int>(iommu_group);
 }
 
-std::filesystem::path PlatformDevice::path() const { return this->m_path; };
+fs::path PlatformDevice::path() const { return this->m_path; };
 
 void PlatformDevice::probe() const {
   write_to_file(this->name(), this->m_probe_path);
 }
 
-std::filesystem::path PlatformDevice::override_path() const {
-  return this->m_override_path;
-}
+fs::path PlatformDevice::override_path() const { return this->m_override_path; }
 
 std::string PlatformDevice::name() const { return this->m_path.filename(); }

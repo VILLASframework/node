@@ -63,7 +63,7 @@ static void init() {
   cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
   // Create all FPGA card instances using the corresponding plugin
-  auto configDir = std::filesystem::path(fn).parent_path();
+  auto configDir = fs::path(fn).parent_path();
   auto cards = std::list<std::shared_ptr<fpga::Card>>();
   fpga::createCards(json, cards, configDir);
   state.cards = cards;

@@ -26,8 +26,7 @@ DeviceConnection DeviceConnection::from(
   auto logger = villas::Log::get("Builder: DeviceConnection");
 
   // Bind the devicetree device to vfio driver
-  LinuxDriver driver(
-      std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
+  LinuxDriver driver(fs::path("/sys/bus/platform/drivers/vfio-platform"));
   driver.attach(device);
 
   // Attach vfio container to the iommu group

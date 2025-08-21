@@ -8,13 +8,13 @@
 #pragma once
 
 #include <cstdio>
-#include <filesystem>
 #include <functional>
 #include <regex>
 
 #include <jansson.h>
 #include <unistd.h>
 
+#include <villas/fs.hpp>
 #include <villas/log.hpp>
 #include <villas/node/config.hpp>
 

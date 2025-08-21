@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include <filesystem>
-
+#include <villas/fs.hpp>
 #include <villas/kernel/devices/device.hpp>
 #include <villas/kernel/devices/driver.hpp>
 
@@ -23,18 +22,17 @@ private:
   static constexpr char OVERRIDE_DEFAULT[] = "driver_override";
 
 private:
-  const std::filesystem::path m_path;
-  const std::filesystem::path m_probe_path;
-  const std::filesystem::path m_override_path;
+  const fs::path m_path;
+  const fs::path m_probe_path;
+  const fs::path m_override_path;
 
 public:
-  PlatformDevice(const std::filesystem::path path)
-      : PlatformDevice(path, std::filesystem::path(PROBE_DEFAULT),
-                       path / std::filesystem::path(OVERRIDE_DEFAULT)){};
+  PlatformDevice(const fs::path path)
+      : PlatformDevice(path, fs::path(PROBE_DEFAULT),
+                       path / fs::path(OVERRIDE_DEFAULT)) {};
 
-  PlatformDevice(const std::filesystem::path path,
-                 const std::filesystem::path probe_path,
-                 const std::filesystem::path override_path)
+  PlatformDevice(const fs::path path, const fs::path probe_path,
+                 const fs::path override_path)
       : m_path(path), m_probe_path(probe_path),
         m_override_path(override_path){};
 
@@ -42,8 +40,8 @@ public:
   std::optional<std::unique_ptr<Driver>> driver() const override;
   std::optional<int> iommu_group() const override;
   std::string name() const override;
-  std::filesystem::path override_path() const override;
-  std::filesystem::path path() const override;
+  fs::path override_path() const override;
+  fs::path path() const override;
   void probe() const override;
 };
 
