@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <list>
-#include <map>
+#include <unordered_map>
 
 #include <fnmatch.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -19,7 +19,7 @@
 
 using namespace villas;
 
-static std::map<spdlog::level::level_enum, std::string> levelNames = {
+static std::unordered_map<spdlog::level::level_enum, std::string> levelNames = {
     {spdlog::level::trace, "trc"}, {spdlog::level::debug, "dbg"},
     {spdlog::level::info, "info"}, {spdlog::level::warn, "warn"},
     {spdlog::level::err, "err"},   {spdlog::level::critical, "crit"},

@@ -11,8 +11,8 @@
 #pragma once
 
 #include <list>
-#include <map>
 #include <memory>
+#include <unordered_map>
 
 #include <fmt/ostream.h>
 #include <jansson.h>
@@ -194,16 +194,18 @@ protected:
   IpIdentifier id;
 
   // All interrupts of this IP with their associated interrupt controller
-  std::map<std::string, IrqPort> irqs;
+  std::unordered_map<std::string, IrqPort> irqs;
 
   // Cached translations from the process address space to each memory block
-  std::map<MemoryBlockName, MemoryTranslation> addressTranslations;
+  std::unordered_map<MemoryBlockName, MemoryTranslation> addressTranslations;
 
   // Lookup for IP's slave address spaces (= memory blocks)
-  std::map<MemoryBlockName, MemoryManager::AddressSpaceId> slaveAddressSpaces;
+  std::unordered_map<MemoryBlockName, MemoryManager::AddressSpaceId>
+      slaveAddressSpaces;
 
   // AXI bus master interfaces to access memory somewhere
-  std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
+  std::unordered_map<std::string, MemoryManager::AddressSpaceId>
+      busMasterInterfaces;
 
   size_t baseaddr = 0;
 };

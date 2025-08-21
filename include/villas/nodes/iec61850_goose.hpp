@@ -11,11 +11,11 @@
 #include <condition_variable>
 #include <cstdint>
 #include <ctime>
-#include <map>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <thread>
+#include <unordered_map>
 
 #include <libiec61850/goose_publisher.h>
 #include <libiec61850/goose_receiver.h>
@@ -164,7 +164,7 @@ protected:
     CQueueSignalled queue;
     Pool pool;
 
-    std::map<std::string, InputEventContext> contexts;
+    std::unordered_map<std::string, InputEventContext> contexts;
     std::vector<InputMapping> mappings;
     std::string interface_id;
     std::string local_address;
@@ -244,8 +244,9 @@ protected:
   void parseInput(json_t *json);
   void parseSessionKey(json_t *json);
   void parseSubscriber(json_t *json, SubscriberConfig &sc);
-  void parseSubscribers(json_t *json,
-                        std::map<std::string, InputEventContext> &ctx);
+  void
+  parseSubscribers(json_t *json,
+                   std::unordered_map<std::string, InputEventContext> &ctx);
   void parseInputSignals(json_t *json, std::vector<InputMapping> &mappings);
 
   void parseOutput(json_t *json);

@@ -490,7 +490,7 @@ graph_t *SuperNode::getGraph() {
 
   g = agopen((char *)"g", Agdirected, 0);
 
-  std::map<Node *, Agnode_t *> nodeMap;
+  std::unordered_map<Node *, Agnode_t *> nodeMap;
 
   for (auto *n : nodes) {
     nodeMap[n] = agnode(g, (char *)n->getNameShort().c_str(), 1);

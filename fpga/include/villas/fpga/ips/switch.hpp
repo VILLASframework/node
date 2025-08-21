@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 
 #include <xilinx/xaxis_switch.h>
 
@@ -45,7 +45,7 @@ private:
   XAxis_Switch xSwitch;
   XAxis_Switch_Config xConfig;
 
-  std::map<std::string, std::string> portMapping;
+  std::unordered_map<std::string, std::string> portMapping;
 };
 
 class AxiStreamSwitchFactory : NodeFactory {

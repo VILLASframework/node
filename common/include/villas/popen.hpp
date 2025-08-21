@@ -8,10 +8,10 @@
 #pragma once
 
 #include <istream>
-#include <map>
 #include <memory>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <ext/stdio_filebuf.h>
@@ -24,7 +24,7 @@ class Popen {
 
 public:
   using arg_list = std::vector<std::string>;
-  using env_map = std::map<std::string, std::string>;
+  using env_map = std::unordered_map<std::string, std::string>;
 
   using char_type = char;
   using stdio_buf = __gnu_cxx::stdio_filebuf<char_type>;

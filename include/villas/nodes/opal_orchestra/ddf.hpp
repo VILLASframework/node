@@ -9,9 +9,9 @@
 #pragma once
 
 #include <filesystem>
-#include <map>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <libxml/tree.h>
@@ -48,7 +48,7 @@ public:
 
 class BusItem : public Item {
 public:
-  std::map<std::string, std::shared_ptr<Item>> items;
+  std::unordered_map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
   BusItem(const std::string &name) : items(), name(name) {}
@@ -61,7 +61,7 @@ public:
 
 class DataSet {
 public:
-  std::map<std::string, std::shared_ptr<Item>> items;
+  std::unordered_map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
   DataSet(const std::string &name) : items(), name(name) {}

@@ -8,9 +8,9 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #include <fmt/ostream.h>
 #include <unistd.h>
@@ -214,7 +214,7 @@ private:
   MemoryGraph memoryGraph;
 
   // Cache mapping of names to address space ids for fast lookup
-  std::map<std::string, AddressSpaceId> addrSpaceLookup;
+  std::unordered_map<std::string, AddressSpaceId> addrSpaceLookup;
 
   // Logger for universal access in this class
   Logger logger;
