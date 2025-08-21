@@ -489,6 +489,7 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
+# Build & Install OpenDSS
 if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
@@ -505,6 +506,19 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     fi
     cmake -DMyOutputType=DLL \
           ${OPENDSS_CMAKE_OPTS} \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+# Build & Install ghc::filesystem
+if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "ghc_filesystem" "for compatability with older compilers"; then
+    git clone ${GIT_OPTS} --branch v1.5.14 https://github.com/gulrak/filesystem.git
+    mkdir -p filesystem/build
+    pushd filesystem/build
+    cmake -DGHC_FILESYSTEM_BUILD_TESTING=OFF \
+          -DGHC_FILESYSTEM_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd

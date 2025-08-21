@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include <filesystem>
 #include <vector>
 
+#include <villas/fs.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/core_connection.hpp>
 
@@ -39,7 +39,7 @@ public:
   static std::shared_ptr<PlatformCard>
   make(json_t *json_card, std::string card_name,
        std::shared_ptr<kernel::vfio::Container> vc,
-       const std::filesystem::path &searchPath);
+       const fs::path &searchPath);
 };
 
 } /* namespace fpga */
