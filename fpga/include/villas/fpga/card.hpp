@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <filesystem>
 #include <string>
 
 #include <villas/fpga/core.hpp>
+#include <villas/fs.hpp>
 #include <villas/kernel/vfio_container.hpp>
 
 namespace villas {
@@ -61,7 +61,7 @@ private:
 
 public:
   static void loadIps(std::shared_ptr<Card> card, json_t *json_ips,
-                      const std::filesystem::path &searchPath);
+                      const fs::path &searchPath);
   static void loadSwitch(std::shared_ptr<Card> card, json_t *json_paths);
 };
 

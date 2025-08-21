@@ -53,5 +53,6 @@
 
 // Library features
 #cmakedefine FMT_LEGACY_OSTREAM_FORMATTER
+#cmakedefine WITH_GHC_FS
 
 // clang-format on

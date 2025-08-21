@@ -31,7 +31,7 @@ static const kernel::devices::PciDevice defaultFilter(
 std::shared_ptr<PCIeCard>
 PCIeCardFactory::make(json_t *json_card, std::string card_name,
                       std::shared_ptr<kernel::vfio::Container> vc,
-                      const std::filesystem::path &searchPath) {
+                      const fs::path &searchPath) {
   auto logger = getStaticLogger();
 
   // make sure the vfio container has the required modules
