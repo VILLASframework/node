@@ -76,19 +76,18 @@ find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
 find_package(OpenDSSC)
+find_package(OpalAsyncApi)
 
 # Check for tools
+find_program(PROTOBUFC_COMPILER NAMES protoc-c)
+find_program(PROTOBUF_COMPILER NAMES protoc)
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
     message(SEND_ERROR "GNU paste is missing. Please install coreutils")
 endif()
 
-# Check programs
-find_program(PROTOBUFC_COMPILER NAMES protoc-c)
-find_program(PROTOBUF_COMPILER NAMES protoc)
-
-# Build without any GPL-code
-option(WITHOUT_GPL "Build VILLASnode without any GPL code" OFF)
+# Check for libraries
+find_library(STDCXX_FS NAMES stdc++fs)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
@@ -151,13 +150,21 @@ endif()
 FindSymbol(${LWS_LOCATION} lws_extension_callback_pm_deflate LWS_DEFLATE_FOUND)
 
 # Check if submodules for VILLASfpga are present
-if(EXISTS "${PROJECT_SOURCE_DIR}/fpga/thirdparty/libxil/CMakeLists.txt")
+if(EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/libxil/CMakeLists.txt")
     set(FOUND_FPGA_SUBMODULES ON)
 else()
     set(FOUND_FPGA_SUBMODULES OFF)
 endif()
 
+if(STDCXX_FS)
+    set(STDCXX_FS_NOT_FOUND OFF)
+else()
+    set(STDCXX_FS_NOT_FOUND ON)
+endif()
+
 # Build options
+cmake_dependent_option(WITHOUT_GPL          "Build VILLASnode without any GPL code"                 OFF                "" ON)
+cmake_dependent_option(WITH_GHC_FS          "Build using ghc::filesystem, a drop in replacement for std::filesystem"  ON "STDCXX_FS_NOT_FOUND" OFF)
 cmake_dependent_option(WITH_DEFAULTS        "Defaults for non required build options"               ON                 "" OFF)
 
 cmake_dependent_option(WITH_API             "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
@@ -192,6 +199,7 @@ cmake_dependent_option(WITH_NODE_MODBUS     "Build with modbus node-type"       
 cmake_dependent_option(WITH_NODE_MQTT       "Build with mqtt node-type"                             "${WITH_DEFAULTS}" "MOSQUITTO_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NANOMSG    "Build with nanomsg node-type"                          "${WITH_DEFAULTS}" "NANOMSG_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_NGSI       "Build with ngsi node-type"                             "${WITH_DEFAULTS}" "" OFF)
+cmake_dependent_option(WITH_NODE_OPAL_ASYNC "Build with opal.async node-type"                       "${WITH_DEFAULTS}" "OpalAsyncApi_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_REDIS      "Build with redis node-type"                            "${WITH_DEFAULTS}" "HIREDIS_FOUND; REDISPP_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_RTP        "Build with rtp node-type"                              "${WITH_DEFAULTS}" "re_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"                            "${WITH_DEFAULTS}" "HAS_SEMAPHORE; HAS_MMAN" OFF)
@@ -206,7 +214,7 @@ cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"    
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_OPENDSS    "Build with opendss node-type"                          "${WITH_DEFAULTS}" "OpenDSSC_FOUND" OFF)
 
-# set a default for the build type
+# Set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
@@ -225,6 +233,11 @@ if(VILLAS_COMPILE_WARNING_AS_ERROR)
     add_compile_options(-Werror)
 else()
     add_compile_options(-Wno-error)
+endif()
+
+if(WITH_GHC_FS)
+    find_package(ghc_filesystem 1.5.14 REQUIRED)
+    include_directories($<TARGET_PROPERTY:ghcFilesystem::ghc_filesystem,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 # Get version info and buildid from Git
@@ -299,6 +312,7 @@ add_feature_info(NODE_MQTT              WITH_NODE_MQTT              "Build with 
 add_feature_info(NODE_NANOMSG           WITH_NODE_NANOMSG           "Build with nanomsg node-type")
 add_feature_info(NODE_NGSI              WITH_NODE_NGSI              "Build with ngsi node-type")
 add_feature_info(NODE_OPENDSS           WITH_NODE_OPENDSS           "Build with opendss node-type")
+add_feature_info(NODE_OPAL_ASYNC        WITH_NODE_OPAL_ASYNC        "Build with opal.async node-type")
 add_feature_info(NODE_REDIS             WITH_NODE_REDIS             "Build with redis node-type")
 add_feature_info(NODE_RTP               WITH_NODE_RTP               "Build with rtp node-type")
 add_feature_info(NODE_SHMEM             WITH_NODE_SHMEM             "Build with shmem node-type")

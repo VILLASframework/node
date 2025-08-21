@@ -11,7 +11,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
-#include <filesystem>
 #include <list>
 #include <string>
 #include <vector>
@@ -21,6 +20,7 @@
 #include <signal.h>
 #include <sys/types.h>
 
+#include <villas/fs.hpp>
 #include <villas/config.hpp>
 
 #ifdef __GNUC__
@@ -212,9 +212,9 @@ template <class... Ts> struct overloaded : Ts... {
 // Explicit deduction guide (not needed as of C++20)
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-void write_to_file(std::string data, const std::filesystem::path file);
+void write_to_file(std::string data, const fs::path file);
 std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &directory);
+read_names_in_directory(const fs::path &directory);
 
 namespace base64 {
 

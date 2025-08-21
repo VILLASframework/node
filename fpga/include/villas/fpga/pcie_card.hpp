@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include <filesystem>
 #include <list>
 #include <set>
 #include <string>
 
 #include <jansson.h>
 
+#include <villas/fs.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
@@ -65,7 +65,7 @@ public:
   static std::shared_ptr<PCIeCard>
   make(json_t *json, std::string card_name,
        std::shared_ptr<kernel::vfio::Container> vc,
-       const std::filesystem::path &searchPath);
+       const fs::path &searchPath);
 
   static PCIeCard *make() { return new PCIeCard(); }
 

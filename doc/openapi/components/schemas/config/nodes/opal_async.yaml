@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# Author: Steffen Vogel <steffen.vogel@opal-rt.com>
+# SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+  - type: object
+    properties:
+      id:
+        description: The Send/Recv ID of the RT-Lab OpAsyncSend/Recv blocks.
+        min: 1
+        default: 1
+        type: integer
+
+      in:
+        type: object
+        properties:
+          reply:
+            description: Send a confirmation to the Simulink model that signals have been received and processed.
+            default: false
+            type: boolean
+
+  - $ref: ../node_signals.yaml
+  - $ref: ../node.yaml

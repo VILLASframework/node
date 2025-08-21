@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -28,6 +27,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <villas/fs.hpp>
 #include <villas/colors.hpp>
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
@@ -354,7 +354,7 @@ bool isPrivileged() {
   return true;
 }
 
-void write_to_file(std::string data, const std::filesystem::path file) {
+void write_to_file(std::string data, const fs::path file) {
   villas::Log::get("Filewriter")->debug("{} > {}", data, file.u8string());
   std::ofstream outputFile(file.u8string());
 
@@ -362,15 +362,15 @@ void write_to_file(std::string data, const std::filesystem::path file) {
     outputFile << data;
     outputFile.close();
   } else {
-    throw std::filesystem::filesystem_error("Cannot open outputfile",
+    throw fs::filesystem_error("Cannot open outputfile",
                                             std::error_code());
   }
 }
 
 std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &directory) {
+read_names_in_directory(const fs::path &directory) {
   std::vector<std::string> names;
-  for (auto const &dir_entry : std::filesystem::directory_iterator{directory}) {
+  for (auto const &dir_entry : fs::directory_iterator{directory}) {
     names.push_back(dir_entry.path().filename());
   }
   return names;

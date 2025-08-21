@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-[submodule "fpga/thirdparty/libxil"]
-	path = fpga/thirdparty/libxil
+[submodule "thirdparty/libxil"]
+	path = thirdparty/libxil
 	url = https://github.com/VILLASframework/libxil.git
-[submodule "fpga/thirdparty/udmabuf"]
-	path = fpga/thirdparty/udmabuf
+[submodule "thirdparty/udmabuf"]
+	path = thirdparty/udmabuf
 	url = https://github.com/ikwzm/udmabuf
