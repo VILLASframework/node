@@ -29,7 +29,7 @@ private:
 public:
   PlatformDevice(const fs::path path)
       : PlatformDevice(path, fs::path(PROBE_DEFAULT),
-                       path / fs::path(OVERRIDE_DEFAULT)) {};
+                       path / fs::path(OVERRIDE_DEFAULT)){};
 
   PlatformDevice(const fs::path path, const fs::path probe_path,
                  const fs::path override_path)
