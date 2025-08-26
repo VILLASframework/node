@@ -53,7 +53,7 @@ villas::node::orchestra::toNodeSignalType(orchestra::SignalType t) {
 }
 
 orchestra::SignalType
-villas::node::orchestra::signalTypeFromString(const std::string &t) {
+villas::node::orchestra::signalTypeFromString(std::string_view &t) {
   if (t == "boolean") {
     return orchestra::SignalType::BOOLEAN;
   } else if (t == "unsigned int8") {

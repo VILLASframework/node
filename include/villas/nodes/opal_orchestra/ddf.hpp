@@ -39,7 +39,7 @@ public:
   unsigned short length;
   double defaultValue;
 
-  DataItem(const std::string &name) : name(name) {}
+  DataItem(std::string name) : name(std::move(name)) {}
 
   static const unsigned int IDENTIFIER_NAME_LENGTH = 64;
 
@@ -51,7 +51,7 @@ public:
   std::unordered_map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
-  BusItem(const std::string &name) : items(), name(name) {}
+  BusItem(std::string name) : items(), name(std::move(name)) {}
 
   std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,
                                        bool &inserted);
@@ -64,7 +64,7 @@ public:
   std::unordered_map<std::string, std::shared_ptr<Item>> items;
   std::string name;
 
-  DataSet(const std::string &name) : items(), name(name) {}
+  DataSet(std::string name) : items(), name(std::move(name)) {}
 
   std::shared_ptr<DataItem> upsertItem(const std::string &path, bool &inserted);
   std::shared_ptr<DataItem> upsertItem(std::vector<std::string> pathComponents,

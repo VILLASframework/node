@@ -38,7 +38,7 @@ orchestra::SignalType toOrchestraSignalType(node::SignalType t);
 
 node::SignalType toNodeSignalType(orchestra::SignalType t);
 
-orchestra::SignalType signalTypeFromString(const std::string &t);
+orchestra::SignalType signalTypeFromString(std::string_view &t);
 
 std::string signalTypeToString(orchestra::SignalType t);
 
