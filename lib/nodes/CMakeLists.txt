@@ -189,6 +189,12 @@ if(WITH_NODE_WEBRTC)
     list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
+# Enable Delta Sharing
+if(WITH_NODE_DELTASHARE)
+    list(APPEND NODE_SRC delta_share.cpp)
+    list(APPEND LIBRARIES DeltaSharingClient)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})
