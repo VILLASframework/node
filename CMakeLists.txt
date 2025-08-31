@@ -15,7 +15,7 @@ project(villas-node
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2025 The VILLASframework Authors")
+set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
@@ -205,6 +205,7 @@ cmake_dependent_option(WITH_NODE_WEBRTC     "Build with webrtc node-type"       
 cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_OPENDSS    "Build with opendss node-type"                          "${WITH_DEFAULTS}" "OpenDSSC_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_DELTASHARE "Build with delta-share node-type"                      "${WITH_DEFAULTS}" "" ON)
 
 # set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")

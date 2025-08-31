@@ -1,0 +1,321 @@
+/* Node type: Delta_Share.
+ *
+ * Author:
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "villas/nodes/delta_share/Protocol.h"
+#include "villas/timing.hpp"
+#include <arrow/array/array_binary.h>
+#include <arrow/type_fwd.h>
+#include <boost/optional.hpp>
+#include <exception>
+#include <jansson.h>
+#include <memory>
+#include <string>
+
+#include <villas/exceptions.hpp>
+#include <villas/node_compat.hpp>
+
+#include <villas/nodes/delta_share/delta_share.hpp>
+#include <villas/nodes/delta_share/functions.h>
+#include <arrow/array.h>
+#include <arrow/builder.h>
+#include <arrow/table.h>
+#include <arrow/type.h>
+
+using namespace villas;
+using namespace villas::node;
+
+static const char *const OP_READ = "read";
+static const char *const OP_WRITE = "write";
+static const char *const OP_NOOP = "noop";
+
+int villas::node::deltaShare_parse(NodeCompat *n, json_t *json) {
+  auto *d = n->getData<struct delta_share>();
+
+  int ret;
+  json_error_t err;
+
+  const char *profile_path = nullptr;
+  const char *cache_dir = nullptr;
+  const char *table_path = nullptr;
+  const char *op = nullptr;
+  const char *schema = nullptr;
+  const char *share = nullptr;
+  const char *table = nullptr;
+  int batch_size = 0;
+
+  ret = json_unpack_ex(json, &err, 0,
+                       "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: i }",
+                       "profile_path", &profile_path, "schema", &schema,
+                       "share", &share, "table", &table,"cache_dir", &cache_dir, "table_path",
+                       &table_path, "op", &op, "batch_size", &batch_size);
+
+  if (ret)
+    throw ConfigError(json, err, "node-config-node-delta_share");
+
+  if (profile_path)
+    d->profile_path = profile_path;
+  if (share)
+    d->share = share;
+  if (schema)
+    d->schema = schema;
+  if (table)
+    d->table = table;
+  if (cache_dir)
+    d->cache_dir = cache_dir;
+  if (table_path)
+    d->table_path = table_path;
+  if (batch_size > 0)
+    d->batch_size = static_cast<size_t>(batch_size);
+
+  if (op) {
+    if (strcmp(op, OP_READ) == 0)
+      d->table_op = delta_share::TableOp::TABLE_READ;
+    else if (strcmp(op, OP_WRITE) == 0)
+      d->table_op = delta_share::TableOp::TABLE_WRITE;
+    else
+      d->table_op = delta_share::TableOp::TABLE_NOOP;
+  }
+
+  return 0;
+}
+
+char *villas::node::deltaShare_print(NodeCompat *n) {
+  auto *d = n->getData<struct delta_share>();
+
+  std::string info =
+      std::string("profile_path=") + d->profile_path + ", share =" + d->share +
+      ", schema =" + d->schema + ", table =" + d->table +
+      ", cache_dir=" + d->cache_dir + ", table_path=" + d->table_path +
+      ", op=" +
+      (d->table_op == delta_share::TableOp::TABLE_READ
+           ? OP_READ
+           : (d->table_op == delta_share::TableOp::TABLE_WRITE ? OP_WRITE
+                                                               : OP_NOOP));
+
+  return strdup(info.c_str());
+}
+
+
+int villas::node::deltaShare_start(NodeCompat *n) {
+  auto *d = n->getData<struct delta_share>();
+
+  if (d->profile_path.empty())
+    throw RuntimeError(
+        "'profile_path' must be configured for delta_share node");
+
+  boost::optional<std::string> cache_opt =
+      d->cache_dir.empty() ? boost::none
+                           : boost::optional<std::string>(d->cache_dir);
+
+  d->client = DeltaSharing::NewDeltaSharingClient(d->profile_path, cache_opt);
+
+  if (!d->client)
+    throw RuntimeError("Failed to create Delta Sharing client");
+
+  //List all shares from the profile path
+  d->shares = d->client->ListShares(100, "");
+
+  const auto &shares = *d->shares;
+
+  for (const auto &share : shares) {
+    n->logger->info("Listing share {}", share.name);
+    d->schemas = d->client->ListSchemas(share, 100, "");
+    //List all tables in a share
+    d->tables = d->client->ListAllTables(share, 100, "");
+    //Check if tables are fetched correctly
+    n->logger->info("Table 1 {}", d->tables->at(0).name);
+
+  }
+
+  return 0;
+}
+
+int villas::node::deltaShare_stop(NodeCompat *n) {
+  auto *d = n->getData<struct delta_share>();
+  d->table_ptr.reset();
+  d->tables.reset();
+  d->shares.reset();
+  d->client.reset();
+  return 0;
+}
+
+int villas::node::deltaShare_init(NodeCompat *n) {
+  auto *d = n->getData<struct delta_share>();
+
+  d->profile_path = "";
+  d->cache_dir = "";
+  d->table_path = "";
+  d->batch_size = 0;
+
+  d->client.reset();
+  d->table_ptr.reset();
+  d->tables.reset();
+  d->shares.reset();
+  d->table_op = delta_share::TableOp::TABLE_NOOP;
+  n->logger->info("Init for Delta Share node");
+
+  return 0;
+}
+
+int villas::node::deltaShare_destroy(NodeCompat *n) {
+  auto *d = n->getData<struct delta_share>();
+  d->client.reset();
+  if (d->table_ptr != NULL)
+    d->table_ptr.reset();
+  if (d->tables != NULL)
+    d->tables.reset();
+  if (d->shares != NULL)
+    d->shares.reset();
+  return 0;
+}
+
+int villas::node::deltaShare_poll_fds(NodeCompat *n, int fds[]) {
+  (void)n;
+  (void)fds;
+  return -1; // no polling support
+}
+
+int villas::node::deltaShare_read(NodeCompat *n, struct Sample *const smps[],
+                                  unsigned cnt) {
+
+  auto *d = n->getData<struct delta_share>();
+
+  if (!d->client) {
+    n->logger->error("Delta Sharing client not initialized");
+    return -1;
+  }
+
+  if (d->table_path.empty()) {
+    n->logger->error("No table path configured");
+    return -1;
+  }
+
+  try {
+    auto path = DeltaSharing::ParseURL(d->table_path);
+
+    if (path.size() != 4) {
+      n->logger->error("Invalid table path format. Expected: server#share.schema.table");
+      return -1;
+    }
+
+    DeltaSharing::DeltaSharingProtocol::Table table;
+    table.share = path[1];
+    table.schema = path[2];
+    table.name = path[3];
+
+    //Get files in the table
+    auto files = d->client->ListFilesInTable(table);
+    if (!files || files->empty()) {
+      n->logger->info("No files found in table");
+      return 0;
+    }
+
+    for (const auto &f : *files) {
+      d->client->PopulateCache(f.url);
+    }
+
+    //Load the first file as an Arrow table
+    if (!d->table_ptr) {
+      d->table_ptr = d->client->LoadAsArrowTable(files->at(0).url);
+
+      if (!d->table_ptr) {
+        n->logger->error("Failed to laod table from Delta Sharing server");
+      }
+    }
+
+    unsigned samples_read = 0;
+    auto num_rows = d->table_ptr->num_rows();
+    unsigned num_cols = d->table_ptr->num_columns();
+
+    auto signals = n->getInputSignals(false);
+    if (!signals) {
+      n->logger->error("No input signals configured");
+      return -1;
+    }
+
+    for (unsigned i = 0; i < cnt && i < num_rows; i++) {
+      auto *smp = smps[i];
+      n->logger->info("Row name {}", d->table_ptr->ColumnNames().at(3));
+      smp->length = signals->size();
+      smp->capacity = signals->size();
+      smp->ts.origin = time_now();
+
+      for (unsigned col = 0; col < num_cols && col < signals->size(); col++) {
+        auto chunked_array = d->table_ptr->column(col);
+        auto first_chunk = chunked_array->chunk(0);
+        n->logger->info("Column type {}", first_chunk->type_id());
+        switch (first_chunk->type_id()) {
+        case arrow::Type::DOUBLE: {
+          auto double_array =
+              std::static_pointer_cast<arrow::DoubleArray>(first_chunk);
+          smp->data[col].f = double_array->Value(i);
+          break;
+        }
+        case arrow::Type::FLOAT: {
+          auto float_array =
+              std::static_pointer_cast<arrow::FloatArray>(first_chunk);
+          smp->data[col].f = float_array->Value(i);
+        }
+        case arrow::Type::INT64: {
+          auto int_array = std::static_pointer_cast<arrow::Int64Array>(first_chunk);
+          smp->data[col].i = int_array->Value(i);
+          break;
+        }
+        case arrow::Type::INT32: {
+          auto int_array = std::static_pointer_cast<arrow::Int32Array>(first_chunk);
+          smp->data[col].i = int_array->Value(i);
+          break;
+        }
+        /* case arrow::Type::STRING: {
+          auto string_array =
+              std::static_pointer_cast<arrow::StringArray>(first_chunk);
+          smp->data[col].
+          } */
+        default:
+          n->logger->warn("Unsupported data type for column {}", col);
+          smp->data[col].f = 0.0;
+        }
+      }
+      samples_read++;
+    }
+
+    n->logger->debug("Read {} samples from Delta Sharing table", samples_read);
+    return samples_read;
+  } catch (const std::exception &e) {
+    n->logger->error("Error reading from Delta Sharing table: {}", e.what());
+    return -1;
+    }
+  }
+
+//TODO: write table to delta share server
+int villas::node::deltaShare_write(NodeCompat *n, struct Sample *const smps[],
+                                   unsigned cnt) {
+  (void)n;
+  (void)smps;
+  (void)cnt;
+  return 0; // not implemented yet
+}
+
+static NodeCompatType p;
+
+__attribute__((constructor(110))) static void register_plugin() {
+  p.name = "delta_share";
+  p.description = "Delta Sharing protocol node";
+  p.vectorize = 1;
+  p.size = sizeof(struct delta_share);
+  p.init = deltaShare_init;
+  p.destroy = deltaShare_destroy;
+  p.parse = deltaShare_parse;
+  p.print = deltaShare_print;
+  p.start = deltaShare_start;
+  p.stop = deltaShare_stop;
+  p.read = deltaShare_read;
+  p.write = deltaShare_write;
+  p.poll_fds = deltaShare_poll_fds;
+
+  static NodeCompatFactory ncp(&p);
+}
