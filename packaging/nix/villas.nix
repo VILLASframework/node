@@ -48,16 +48,19 @@
   stdenv,
   system,
   # Optional dependencies
+  boxfort,
   comedilib,
   criterion,
   curl,
   czmq,
+  cyrus_sasl,
   ethercat,
   gnugrep,
   jansson,
   lib60870,
   libconfig,
   libdatachannel,
+  libffi,
   libiec61850,
   libgit2,
   libmodbus,
@@ -148,9 +151,11 @@ stdenv.mkDerivation {
       bash
     ]
     ++ lib.optionals withExtraTesting [
+      boxfort
       criterion
-      pcre2
+      libffi
       libgit2
+      pcre2
     ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
@@ -159,7 +164,10 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeEthercat [ ethercat ]
     ++ lib.optionals withNodeIec60870 [ lib60870 ]
     ++ lib.optionals withNodeIec61850 [ libiec61850 ]
-    ++ lib.optionals withNodeKafka [ rdkafka ]
+    ++ lib.optionals withNodeKafka [
+      rdkafka
+      cyrus_sasl
+    ]
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
