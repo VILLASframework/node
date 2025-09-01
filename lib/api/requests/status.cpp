@@ -63,19 +63,18 @@ public:
     json_error_t err;
     json_t *json_status = json_pack_ex(
         &err, 0,
-        "{ s: s, s: s, s: s, s: s, s: s, s: s, s: s, s: f, s: f, s: { s: s, s: "
+        "{ s: s, s: s, s: s, s: s, s: f, s: f, s: { s: s, s: "
         "I, s: b }, s: { s: s, s: s, s: s, s: s, s: s, s: s}, s: { s: i, s: i, "
         "s: I, s: I, s: [ f, f, f ], s: { s: I, s, I, s: I, s: I }, s: { s: I, "
         "s: I }, s: { s: I, s: I } } }",
         "state", stateToString(sn->getState()).c_str(), "version",
-        PROJECT_VERSION_STR, "release", PROJECT_RELEASE, "build_id",
-        PROJECT_BUILD_ID, "build_date", PROJECT_BUILD_DATE, "hostname", hname,
-        "uuid", uuid::toString(sn->getUuid()).c_str(), "time_now",
-        time_to_double(&now), "time_started", time_to_double(&started),
-        "timezone", "name", tzname[daylight], "offset", (json_int_t)timezone,
-        "dst", daylight, "kernel", "sysname", uts.sysname, "nodename",
-        uts.nodename, "release", uts.release, "version", uts.version, "machine",
-        uts.machine, "domainname", uts.domainname, "system", "cores_configured",
+        PROJECT_VERSION, "hostname", hname, "uuid",
+        uuid::toString(sn->getUuid()).c_str(), "time_now", time_to_double(&now),
+        "time_started", time_to_double(&started), "timezone", "name",
+        tzname[daylight], "offset", (json_int_t)timezone, "dst", daylight,
+        "kernel", "sysname", uts.sysname, "nodename", uts.nodename, "release",
+        uts.release, "version", uts.version, "machine", uts.machine,
+        "domainname", uts.domainname, "system", "cores_configured",
         get_nprocs_conf(), "cores", get_nprocs(), "processes",
         (json_int_t)sinfo.procs, "uptime", (json_int_t)sinfo.uptime, "load",
         f_load * sinfo.loads[0], f_load * sinfo.loads[1],

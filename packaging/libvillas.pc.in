@@ -6,9 +6,9 @@ libdir=@CMAKE_INSTALL_LIBDIR@
 sharedlibdir=@CMAKE_INSTALL_LIBDIR@
 includedir=@CMAKE_INSTALL_INCLUDEDIR@
 
-Name: @PROJECT_NAME@
-Description: @PROJECT_DESCRIPTION@
-Version: @PROJECT_VERSION@
+Name: @CMAKE_PROJECT_NAME@
+Description: @CMAKE_PROJECT_DESCRIPTION@
+Version: @CMAKE_PROJECT_VERSION@
 
 Requires:
 Libs: -L${libdir} -L${sharedlibdir} -lz
