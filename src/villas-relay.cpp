@@ -258,9 +258,9 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason,
     }
 
     json_body = json_pack("{ s: o, s: s, s: s, s: s, s: { s: b, s: i, s: s } }",
-                          "sessions", json_sessions, "version",
-                          PROJECT_VERSION_STR, "hostname", r->hostname.c_str(),
-                          "uuid", uuid::toString(r->uuid).c_str(), "options",
+                          "sessions", json_sessions, "version", PROJECT_VERSION,
+                          "hostname", r->hostname.c_str(), "uuid",
+                          uuid::toString(r->uuid).c_str(), "options",
                           "loopback", r->loopback, "port", r->port, "protocol",
                           r->protocol.c_str());
     if (!json_body)

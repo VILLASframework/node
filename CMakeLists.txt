@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(villas-node
     VERSION 1.0.1
-    DESCRIPTION "VILLASnode"
+    DESCRIPTION "Open-Source Real-time Multi-protocol Gateway"
     HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
 )
@@ -48,7 +48,6 @@ include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
 include(GNUInstallDirs)
-include(GetVersion)
 include(FindSymbol)
 include(CMakeDependentOption)
 
@@ -238,9 +237,6 @@ if(WITH_GHC_FS)
     include_directories($<TARGET_PROPERTY:ghcFilesystem::ghc_filesystem,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
-# Get version info and buildid from Git
-GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
-
 if(WITH_FPGA)
     add_subdirectory(fpga)
 endif()
@@ -325,19 +321,11 @@ add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with 
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
-    message(STATUS "Building ${CMAKE_PROJECT_DESCRIPTION}:")
+    message(STATUS "Building ${PROJECT_NAME}:")
     message(STATUS "${FEATURES}")
 
-    if(FOUND_GIT_VERSION)
-        message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
-        message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
-        message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
-        message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
-        message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
-        message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
-        message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
-    endif()
 
+    message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
     message(STATUS "  ARCH:            ${CMAKE_SYSTEM_PROCESSOR}")
     message(STATUS "  OS:              ${CMAKE_SYSTEM_NAME}")
 endif()
