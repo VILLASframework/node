@@ -77,6 +77,7 @@ find_package(LibDataChannel)
 find_package(re)
 find_package(OpenDSSC)
 find_package(FileSystem)
+find_package(Criterion)
 
 # Check for tools
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
