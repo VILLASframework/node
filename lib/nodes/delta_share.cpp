@@ -7,14 +7,17 @@
 
 #include "villas/nodes/delta_share/Protocol.h"
 #include "villas/timing.hpp"
+#include <arrow/array/array_base.h>
 #include <arrow/array/array_binary.h>
 #include <arrow/type_fwd.h>
 #include <boost/optional.hpp>
 #include <exception>
 #include <jansson.h>
 #include <memory>
+#include <parquet/exception.h>
 #include <string>
 
+#include <vector>
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 
@@ -247,7 +250,6 @@ int villas::node::deltaShare_read(NodeCompat *n, struct Sample *const smps[],
       for (unsigned col = 0; col < num_cols && col < signals->size(); col++) {
         auto chunked_array = d->table_ptr->column(col);
         auto first_chunk = chunked_array->chunk(0);
-        n->logger->info("Column type {}", first_chunk->type_id());
         switch (first_chunk->type_id()) {
         case arrow::Type::DOUBLE: {
           auto double_array =
@@ -291,13 +293,103 @@ int villas::node::deltaShare_read(NodeCompat *n, struct Sample *const smps[],
     }
   }
 
-//TODO: write table to delta share server
+//TODO: write table to delta share server. Implementation to be tested
 int villas::node::deltaShare_write(NodeCompat *n, struct Sample *const smps[],
                                    unsigned cnt) {
-  (void)n;
-  (void)smps;
-  (void)cnt;
-  return 0; // not implemented yet
+  auto *d = n->getData<struct delta_share>();
+
+  if (!d->client) {
+    n->logger->error("Delta Sharing client not initialized");
+    return -1;
+  }
+
+  if (d->table_path.empty()) {
+    n->logger->error("No table path configured");
+    return -1;
+  }
+
+  try {
+    auto path_parts = DeltaSharing::ParseURL(d->table_path);
+    if (path_parts.size() != 4) {
+      n->logger->error("Invalid table path format. Expected: server#share.schema.table");
+      return -1;
+    }
+
+    auto signals = n->getOutputSignals(false);
+    if (!signals) {
+      n->logger->error("No output signals configured");
+      return -1;
+    }
+
+    std::vector<std::shared_ptr<arrow::Array>> arrays;
+    std::vector<std::shared_ptr<arrow::Field>> fields;
+
+    for (unsigned col = 0; col < signals->size(); col++) {
+      auto signal = signals->at(col);
+
+      std::string field_name = signal->name;
+      if (field_name.empty()) {
+        field_name = "col_" + std::to_string(col);
+      }
+
+      //Determine arrow data type from signal data type
+      std::shared_ptr<arrow::DataType> data_type;
+      switch (signal->type) {
+      case SignalType::FLOAT:
+        data_type = arrow::float64();
+        break;
+      case SignalType::INTEGER:
+        data_type = arrow::int64();
+        break;
+      default:
+        data_type = arrow::float64();
+      }
+
+      fields.push_back(arrow::field(field_name, data_type));
+
+      //create Arrow array from sampled data
+      std::shared_ptr<arrow::Array> array;
+      switch (signal->type) {
+      case SignalType::FLOAT: {
+        std::vector<double> values;
+        for (unsigned i = 0; i < cnt; i++) {
+          values.push_back(smps[i]->data[col].f);
+        }
+        arrow::DoubleBuilder builder;
+        PARQUET_THROW_NOT_OK(builder.AppendValues(values));
+        PARQUET_THROW_NOT_OK(builder.Finish(&array));
+        break;
+      }
+      case SignalType::INTEGER: {
+         std::vector<int64_t> values;
+          for (unsigned i = 0; i < cnt; i++) {
+            values.push_back(smps[i]->data[col].i);
+          }
+          arrow::Int64Builder builder;
+          PARQUET_THROW_NOT_OK(builder.AppendValues(values));
+          PARQUET_THROW_NOT_OK(builder.Finish(&array));
+          break;
+      }
+        default:
+          n->logger->warn("Unsupported signal type for column {}", col);
+          continue;
+        }
+
+        arrays.push_back(array);
+    }
+       // Create Arrow schema and table
+    auto schema = std::make_shared<arrow::Schema>(fields);
+    auto table = arrow::Table::Make(schema, arrays);
+
+    // Store the table for potential future use
+    d->table_ptr = table;
+
+    n->logger->debug("Wrote {} samples to Delta Sharing table", cnt);
+    return cnt;
+  } catch (const std::exception &e) {
+    n->logger->error("Error writing to Delta Sharing: {}", e.what());
+    return -1;
+  }
 }
 
 static NodeCompatType p;
