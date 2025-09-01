@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <map>
 #include <memory>
 #include <queue>
+#include <unordered_map>
 #include <vector>
 
 #include <libwebsockets.h>
@@ -54,11 +54,11 @@ protected:
   Identifier identifier;
   Logger logger;
 
-  std::map<lws *, RelayConnection *> connections;
+  std::unordered_map<lws *, RelayConnection *> connections;
 
   int connects;
 
-  static std::map<std::string, RelaySession *> sessions;
+  static std::unordered_map<std::string, RelaySession *> sessions;
 
 public:
   static RelaySession *get(Relay *r, lws *wsi);

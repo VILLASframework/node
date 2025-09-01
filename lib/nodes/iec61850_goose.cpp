@@ -823,7 +823,7 @@ void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc) {
 }
 
 void GooseNode::parseSubscribers(
-    json_t *json, std::map<std::string, InputEventContext> &ctx) {
+    json_t *json, std::unordered_map<std::string, InputEventContext> &ctx) {
   char const *key;
   json_t *json_subscriber;
 

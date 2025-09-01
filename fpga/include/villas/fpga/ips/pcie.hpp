@@ -38,8 +38,8 @@ protected:
     uintptr_t translation;
   };
 
-  std::map<std::string, AxiBar> axiToPcieTranslations;
-  std::map<std::string, PciBar> pcieToAxiTranslations;
+  std::unordered_map<std::string, AxiBar> axiToPcieTranslations;
+  std::unordered_map<std::string, PciBar> pcieToAxiTranslations;
 };
 
 class XDmaBridge : public AxiPciExpressBridge {
