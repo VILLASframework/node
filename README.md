@@ -50,10 +50,9 @@ For attribution, please refer to the SPDX headers in each file.
 The [Apache 2.0 license](./LICENSE) covers most of the codebase and is preferred for new contributions.
 License compliance is automatically checked in CI, including validation of licenses in the `LICENSES/` directory.
 
-We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
+We kindly ask all academic publications employing components of VILLASframework to cite one of the following paper:
 
-- A. Monti et al., "[A Global Real-Time Superlab: Enabling High Penetration of Power Electronics in the Electric Grid](https://ieeexplore.ieee.org/document/8458285/)," in IEEE Power Electronics Magazine, vol. 5, no. 3, pp. 35-44, Sept. 2018.
-- S. Vogel, M. Mirz, L. Razik and A. Monti, "[An open solution for next-generation real-time power system simulation](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8245739&isnumber=8244404)," 2017 IEEE Conference on Energy Internet and Energy System Integration (EI2), Beijing, 2017, pp. 1-6.
+- S. Vogel, N. Eiling, M. Pitz, A. Bach, M. Stevic, and P. A. Monti, “VILLASnode: An Open-Source Real-time Multi-protocol Gateway,” Journal of Open Source Software, vol. 10, no. 112, p. 8401, Aug. 2025, doi: [10.21105/joss.08401](https://doi.org/10.21105/joss.08401).
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
 
