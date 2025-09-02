@@ -183,13 +183,6 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeInfiniband [ rdma-core ]
     ++ lib.optionals withExtraConfig [ libconfig ];
 
-  # TODO: Remove once pkgs.linuxHeaders has been upgrade to 6.14
-  preBuild = ''
-    mkdir -p include/linux
-    cp ${linuxHeaders}/include/linux/pkt_cls.h include/linux
-    patch -F10 -u -p1 < ${./reverse-struct-group.patch}
-  '';
-
   meta = {
     mainProgram = "villas";
     description = "a tool connecting real-time power grid simulation equipment";
