@@ -19,13 +19,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
 	apt-get install -y \
 	gcc g++ \
-	pkg-config cmake make \
-	autoconf automake autogen libtool \
+	pkg-config cmake make meson \
+	autoconf automake autogen libtool ninja-build \
 	texinfo git git-svn curl tar wget diffutils \
 	flex bison \
 	protobuf-compiler protobuf-c-compiler \
 	clang-format clangd \
-	python3-venv \
+	python3-venv unzip \
 	ninja-build mercurial \
 	xmlto udev
 

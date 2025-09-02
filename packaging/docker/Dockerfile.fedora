@@ -15,7 +15,7 @@ ARG DISTRO
 # Toolchain
 RUN dnf -y install \
 	gcc-14 g++-14 \
-	pkgconfig cmake make \
+	pkgconfig cmake make meson ninja \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
