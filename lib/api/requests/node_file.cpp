@@ -24,16 +24,18 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::GET && method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("File endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "File endpoint does not accept any body data");
 
     NodeFactory *nf = plugin::registry->lookup<NodeFactory>("file");
 
     if (node->getFactory() != nf)
-      throw BadRequest("This node is not a file node", "{ s: s }", "type",
-                       node->getFactory()->getName());
+      throw Error::badRequest(nullptr, "This node is not a file node",
+                              "{ s: s }", "type",
+                              node->getFactory()->getName());
 
     auto *nc = dynamic_cast<NodeCompat *>(node);
     auto *f = nc->getData<struct file>();

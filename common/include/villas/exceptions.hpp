@@ -23,19 +23,17 @@ namespace villas {
 class SystemError : public std::system_error {
 
 public:
-  SystemError(const std::string &what)
-      : std::system_error(errno, std::system_category(), what) {}
-
   template <typename... Args>
-  SystemError(const std::string &what, Args &&...args)
-      : SystemError(fmt::format(what, std::forward<Args>(args)...)) {}
+  SystemError(fmt::format_string<Args...> what, Args &&...args)
+      : std::system_error(errno, std::system_category(),
+                          fmt::format(what, std::forward<Args>(args)...)) {}
 };
 
 class RuntimeError : public std::runtime_error {
 
 public:
   template <typename... Args>
-  RuntimeError(const std::string &what, Args &&...args)
+  RuntimeError(fmt::format_string<Args...> what, Args &&...args)
       : std::runtime_error(fmt::format(what, std::forward<Args>(args)...)) {}
 };
 
@@ -98,17 +96,10 @@ public:
   }
 
   template <typename... Args>
-  ConfigError(json_t *s, const std::string &i,
-              const std::string &what = "Failed to parse configuration")
-      : std::runtime_error(what), id(i), setting(s) {
-    error.position = -1;
-
-    msg = strdup(getMessage().c_str());
-  }
-
-  template <typename... Args>
-  ConfigError(json_t *s, const std::string &i, const std::string &what,
-              Args &&...args)
+  ConfigError(
+      json_t *s, const std::string &i,
+      fmt::format_string<Args...> what = "Failed to parse configuration",
+      Args &&...args)
       : std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
         id(i), setting(s) {
     error.position = -1;
@@ -117,15 +108,10 @@ public:
   }
 
   template <typename... Args>
-  ConfigError(json_t *s, const json_error_t &e, const std::string &i,
-              const std::string &what = "Failed to parse configuration")
-      : std::runtime_error(what), id(i), setting(s), error(e) {
-    msg = strdup(getMessage().c_str());
-  }
-
-  template <typename... Args>
-  ConfigError(json_t *s, const json_error_t &e, const std::string &i,
-              const std::string &what, Args &&...args)
+  ConfigError(
+      json_t *s, const json_error_t &e, const std::string &i,
+      fmt::format_string<Args...> what = "Failed to parse configuration",
+      Args &&...args)
       : std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
         id(i), setting(s), error(e) {
     msg = strdup(getMessage().c_str());
@@ -137,7 +123,7 @@ public:
     return baseUri + id;
   }
 
-  virtual const char *what() const noexcept { return msg; }
+  const char *what() const noexcept override { return msg; }
 };
 
 } // namespace villas

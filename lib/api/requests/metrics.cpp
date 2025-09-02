@@ -28,11 +28,12 @@ public:
 
   virtual Response *execute() {
     if (method != Session::Method::GET) {
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
     }
 
     if (body != nullptr) {
-      throw BadRequest("The metrics endpoint does not accept any body data");
+      throw Error::badRequest(
+          nullptr, "The metrics endpoint does not accept any body data");
     }
 
     std::stringstream ss;
