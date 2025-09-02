@@ -26,10 +26,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Nodes endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Nodes endpoint does not accept any body data");
 
     json_t *json_nodes = session->getSuperNode()->getNodes().toJson();
 

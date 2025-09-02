@@ -240,8 +240,8 @@ int villas::node::temper_type_start(villas::node::SuperNode *sn) {
     auto *dev = TEMPerDevice::make(devs[i]);
 
     logger->debug(
-        "Found Temper device at bus={03d}, port={03d}, vendor_id={04x}, "
-        "product_id={04x}, manufacturer={}, product={}, serial={}",
+        "Found Temper device at bus={:03d}, port={:03d}, vendor_id={:04x}, "
+        "product_id={:04x}, manufacturer={}, product={}, serial={}",
         dev->getBus(), dev->getPort(), dev->getDescriptor().idVendor,
         dev->getDescriptor().idProduct, dev->getManufacturer(),
         dev->getProduct(), dev->getSerial());
@@ -305,15 +305,17 @@ int villas::node::temper_parse(NodeCompat *n, json_t *json) {
 char *villas::node::temper_print(NodeCompat *n) {
   auto *t = n->getData<struct temper>();
 
-  return strf("product=%s, manufacturer=%s, serial=%s humidity=%s, "
-              "temperature=%d, usb.vendor_id=%#x, usb.product_id=%#x, "
-              "calibration.scale=%f, calibration.offset=%f",
-              t->device->getProduct(), t->device->getManufacturer(),
-              t->device->getSerial(),
-              t->device->hasHumiditySensor() ? "yes" : "no",
-              t->device->getNumSensors(), t->device->getDescriptor().idVendor,
-              t->device->getDescriptor().idProduct, t->calibration.scale,
-              t->calibration.offset);
+  return strdup(
+      fmt::format(
+          "product={}, manufacturer={}, serial={}, humidity={}, "
+          "temperature={}, usb.vendor_id={:04x}, usb.product_id={:04x}, "
+          "calibration.scale={}, calibration.offset={}",
+          t->device->getProduct(), t->device->getManufacturer(),
+          t->device->getSerial(), t->device->hasHumiditySensor() ? "yes" : "no",
+          t->device->getNumSensors(), t->device->getDescriptor().idVendor,
+          t->device->getDescriptor().idProduct, t->calibration.scale,
+          t->calibration.offset)
+          .c_str());
 }
 
 int villas::node::temper_prepare(NodeCompat *n) {

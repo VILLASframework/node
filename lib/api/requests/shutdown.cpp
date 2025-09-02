@@ -22,10 +22,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Shutdown endpoint does not accept any body data");
+      throw Error::badRequest(
+          nullptr, "Shutdown endpoint does not accept any body data");
 
     utils::killme(SIGTERM);
 

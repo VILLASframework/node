@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <regex>
 #include <string>
 
 #include <glob.h>
@@ -338,7 +339,8 @@ json_t *Config::expandIncludes(json_t *in) {
       for (auto &path : resolveIncludes(pattern)) {
         json_t *other = load(path);
         if (!other)
-          throw ConfigError(str, "Failed to include config file from {}", path);
+          throw ConfigError(str, "include",
+                            "Failed to include config file from {}", path);
 
         if (!incl)
           incl = other;
@@ -346,12 +348,14 @@ json_t *Config::expandIncludes(json_t *in) {
           ret = json_object_update_recursive(incl, other);
           if (ret)
             throw ConfigError(
-                str, "Can not mix object and array-typed include files");
+                str, "include",
+                "Can not mix object and array-typed include files");
         } else if (json_is_array(incl) && json_is_array(other)) {
           ret = json_array_extend(incl, other);
           if (ret)
             throw ConfigError(
-                str, "Can not mix object and array-typed include files");
+                str, "include",
+                "Can not mix object and array-typed include files");
         }
 
         logger->debug("Included config from: {}", path);

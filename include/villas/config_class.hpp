@@ -9,7 +9,6 @@
 
 #include <cstdio>
 #include <functional>
-#include <regex>
 
 #include <jansson.h>
 #include <unistd.h>

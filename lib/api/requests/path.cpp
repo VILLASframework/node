@@ -16,11 +16,12 @@ void PathRequest::prepare() {
 
   ret = uuid_parse(matches[1].c_str(), uuid);
   if (ret)
-    throw BadRequest("Invalid UUID", "{ s: s }", "uuid", matches[1].c_str());
+    throw Error::badRequest(json_pack("{ s: s }", "uuid", matches[1].c_str()),
+                            "Invalid UUID");
 
   auto paths = session->getSuperNode()->getPaths();
   path = paths.lookup(uuid);
   if (!path)
-    throw BadRequest("No path found with with matching UUID", "{ s: s }",
-                     "uuid", matches[1].c_str());
+    throw Error::badRequest(json_pack("{ s: s }", "uuid", matches[1].c_str()),
+                            "No path found with with matching UUID");
 }

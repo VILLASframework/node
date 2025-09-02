@@ -15,7 +15,7 @@ using namespace villas::node::api;
 void Request::decode() {
   body = buffer.decode();
   if (!body)
-    throw BadRequest("Failed to decode request payload");
+    throw Error::badRequest(nullptr, "Failed to decode request payload");
 }
 
 std::string Request::toString() {
@@ -46,6 +46,8 @@ Request *RequestFactory::create(Session *s, const std::string &uri,
     return p;
   }
 
-  throw BadRequest("Unknown API request", "{ s: s, s: s }", "uri", uri.c_str(),
-                   "method", Session::methodToString(meth).c_str());
+  throw Error::badRequest(json_pack("{ s: s, s: s }", "uri", uri.c_str(),
+                                    "method",
+                                    Session::methodToString(meth).c_str()),
+                          "Unknown API request");
 }
