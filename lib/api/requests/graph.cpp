@@ -36,10 +36,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Status endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Status endpoint does not accept any body data");
 
     auto *sn = session->getSuperNode();
     auto *graph = sn->getGraph();
@@ -59,12 +60,12 @@ public:
     auto lit =
         std::find(supportedLayouts.begin(), supportedLayouts.end(), layout);
     if (lit == supportedLayouts.end())
-      throw BadRequest("Unsupported layout: {}", layout);
+      throw Error::badRequest(nullptr, "Unsupported layout: {}", layout);
 
     auto fit =
         std::find(supportedFormats.begin(), supportedFormats.end(), format);
     if (fit == supportedFormats.end())
-      throw BadRequest("Unsupported format: {}", format);
+      throw Error::badRequest(nullptr, "Unsupported format: {}", format);
 
     std::string ct = "text/plain";
     if (format == "svg")

@@ -116,11 +116,11 @@ void Table::header() {
     auto &column = columns[i];
 
     auto leftAligned = column.align == TableColumn::Alignment::LEFT;
-    line1 += fmt::format(leftAligned ? CLR_BLD(" {0:<{1}.{1}s}")
-                                     : CLR_BLD(" {0:>{1}.{1}s}"),
+    line1 += fmt::format(fmt::runtime(leftAligned ? CLR_BLD(" {0:<{1}.{1}s}")
+                                                  : CLR_BLD(" {0:>{1}.{1}s}")),
                          column.title, column._width);
-    line2 += fmt::format(leftAligned ? CLR_YEL(" {0:<{1}.{1}s}")
-                                     : CLR_YEL(" {0:>{1}.{1}s}"),
+    line2 += fmt::format(fmt::runtime(leftAligned ? CLR_YEL(" {0:<{1}.{1}s}")
+                                                  : CLR_YEL(" {0:>{1}.{1}s}")),
                          column.unit, column._width);
 
     for (int j = 0; j < column._width + 2; j++) {

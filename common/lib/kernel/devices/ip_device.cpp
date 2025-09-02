@@ -20,7 +20,7 @@ IpDevice IpDevice::from(const fs::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
     throw RuntimeError(
         "Path {} failed validation as IpDevicePath [adress in hex].[name] ",
-        unsafe_path.u8string());
+        unsafe_path.string());
   return IpDevice(unsafe_path);
 }
 

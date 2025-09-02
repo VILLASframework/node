@@ -26,10 +26,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Endpoint does not accept any body data");
 
     return new JsonResponse(session, HTTP_STATUS_OK, path->toJson());
   }

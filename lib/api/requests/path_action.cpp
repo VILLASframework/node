@@ -26,10 +26,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Path endpoints do not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Path endpoints do not accept any body data");
 
     (path->*func)();
 
