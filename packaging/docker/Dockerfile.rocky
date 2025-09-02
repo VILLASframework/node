@@ -20,8 +20,8 @@ RUN dnf config-manager --set-enabled crb
 # Toolchain
 RUN dnf --allowerasing -y install \
 	gcc gcc-c++ \
-	pkgconfig cmake make \
-	autoconf automake libtool \
+	pkgconfig cmake make meson \
+	autoconf automake libtool ninja-build \
 	flex bison \
 	texinfo git git-svn curl tar patchutils \
 	protobuf-compiler protobuf-c-compiler \
