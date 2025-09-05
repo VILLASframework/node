@@ -26,11 +26,13 @@ public:
     if (body != nullptr)
       throw BadRequest("This endpoint does not accept any body data");
 
-    auto *info = json_pack(
-        "{ s: s, s: s, s: { s: s, s: s } }", "id", node->getNameShort().c_str(),
-        "uuid", uuid::toString(node->getUuid()).c_str(),
+    auto *info = json_pack("{ s: s, s: s, s: { s: s, s: s } }", //
+                           "id", node->getNameShort().c_str(),  //
+                           "uuid", uuid::toString(node->getUuid()).c_str(),
 
-        "transport", "type", "villas", "version", PROJECT_VERSION);
+                           "transport",      //
+                           "type", "villas", //
+                           "version", PROJECT_VERSION);
 
     return new JsonResponse(session, HTTP_STATUS_OK, info);
   }
