@@ -57,3 +57,11 @@ repos:
       - id: markdownlint
         exclude: ^paper\.md$
         args: [-r, "~MD013,~MD033,~MD024"]
+
+  - repo: local
+    hooks:
+      - id: dco-hook
+        name: check DCO
+        entry: ./tools/pre-commit-dco-hook.sh
+        language: script
+        stages: [prepare-commit-msg]
