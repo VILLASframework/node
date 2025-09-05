@@ -434,7 +434,7 @@ int villas::node::kafka_start(NodeCompat *n) {
 kafka_config_error:
   rd_kafka_conf_destroy(rdkconf);
 
-  throw RuntimeError(errstr);
+  throw RuntimeError("{}", errstr);
 
   return -1;
 }

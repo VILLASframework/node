@@ -16,6 +16,6 @@ void UniversalRequest::prepare() {
 
   api_node = dynamic_cast<APINode *>(node);
   if (!api_node)
-    throw BadRequest("Node {} is not an univeral API node!",
-                     node->getNameShort());
+    throw Error::badRequest(nullptr, "Node {} is not an univeral API node!",
+                            node->getNameShort());
 }

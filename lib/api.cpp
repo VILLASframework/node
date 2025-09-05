@@ -18,10 +18,11 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::node::api;
 
-InvalidMethod::InvalidMethod(Request *req)
-    : BadRequest("The '{}' API endpoint does not support {} requests",
-                 req->factory->getName(),
-                 Session::methodToString(req->method)) {}
+Error Error::invalidMethod(Request *req) {
+  return badRequest(
+      nullptr, "The '{}' API endpoint does not support {} requests",
+      req->factory->getName(), Session::methodToString(req->method));
+}
 
 Api::Api(SuperNode *sn)
     : logger(Log::get("api")), state(State::INITIALIZED), super_node(sn) {}

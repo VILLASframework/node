@@ -34,34 +34,22 @@ class Error : public RuntimeError {
 
 public:
   template <typename... Args>
-  Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        const std::string &msg = "Invalid API request", Args &&...args)
-      : RuntimeError(msg, std::forward<Args>(args)...), code(c), json(nullptr) {
-  }
+  Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR, json_t *json = nullptr,
+        fmt::format_string<Args...> what = "Invalid API request",
+        Args &&...args)
+      : RuntimeError(what, std::forward<Args>(args)...), code(c), json(json) {}
 
   template <typename... Args>
-  Error(int c = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        const std::string &msg = "Invalid API request",
-        const char *fmt = nullptr, Args &&...args)
-      : RuntimeError(msg), code(c),
-        json(fmt ? json_pack(fmt, std::forward<Args>(args)...) : nullptr) {}
+  static Error badRequest(json_t *json = nullptr,
+                          fmt::format_string<Args...> what = "Bad API request",
+                          Args &&...args) {
+    return {HTTP_STATUS_BAD_REQUEST, json, what, std::forward<Args>(args)...};
+  }
+
+  static Error invalidMethod(Request *req);
 
   int code;
   json_t *json;
-};
-
-class BadRequest : public Error {
-
-public:
-  template <typename... Args>
-  BadRequest(const std::string &msg = "Bad API request", Args &&...args)
-      : Error(HTTP_STATUS_BAD_REQUEST, msg, std::forward<Args>(args)...) {}
-};
-
-class InvalidMethod : public BadRequest {
-
-public:
-  InvalidMethod(Request *req);
 };
 
 } // namespace api

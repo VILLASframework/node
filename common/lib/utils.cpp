@@ -9,12 +9,10 @@
 #include <cctype>
 #include <cmath>
 #include <cstdarg>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -355,8 +353,8 @@ bool isPrivileged() {
 }
 
 void write_to_file(std::string data, const fs::path file) {
-  villas::Log::get("Filewriter")->debug("{} > {}", data, file.u8string());
-  std::ofstream outputFile(file.u8string());
+  villas::Log::get("Filewriter")->debug("{} > {}", data, file.string());
+  std::ofstream outputFile(file.string());
 
   if (outputFile.is_open()) {
     outputFile << data;

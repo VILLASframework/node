@@ -105,9 +105,9 @@ public:
     size_t chars;
     if ((chars = std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
                                value)) > (int)formatStringSize) {
-      throw RuntimeError("Output buffer too small. Expected " +
-                         std::to_string(formatStringSize) +
-                         " characters, got " + std::to_string(chars));
+      throw RuntimeError(
+          "Output buffer too small. Expected {} characters, got {}",
+          formatStringSize, chars);
     }
   }
 

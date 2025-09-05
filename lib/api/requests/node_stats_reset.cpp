@@ -27,14 +27,15 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Stats endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Stats endpoint does not accept any body data");
 
     if (node->getStats() == nullptr)
-      throw BadRequest(
-          "The statistics collection for this node is not enabled");
+      throw Error::badRequest(
+          nullptr, "The statistics collection for this node is not enabled");
 
     node->getStats()->reset();
 
