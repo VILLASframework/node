@@ -22,7 +22,7 @@ classifiers = [
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
     'requests==2.32.3',
-    'protobuf==6.30.2',
+    'protobuf==6.31.1',
 ]
 optional-dependencies.dev = [
     'black==25.1.0',

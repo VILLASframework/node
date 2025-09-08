@@ -4,8 +4,9 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-ARG DISTRO=rockylinux
-ARG ROCKY_VERSION=9.3
+ARG DISTRO=quay.io/rockylinux/rockylinux
+ARG ROCKY_VERSION=10.0
+ARG CMAKE_OPTS=""
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
@@ -13,7 +14,7 @@ ARG DISTRO
 
 USER root
 
-# Enable Extra Packages for Enterprise Linux (EPEL) repo and PowerTools
+# Enable Extra Packages for Enterprise Linux (EPEL) and CRB (CodeReady Builder) repository
 RUN dnf -y install epel-release dnf-plugins-core
 RUN dnf config-manager --set-enabled crb
 
@@ -22,6 +23,7 @@ RUN dnf --allowerasing -y install \
 	gcc gcc-c++ \
 	pkgconfig cmake make \
 	autoconf automake libtool \
+	meson ninja-build \
 	flex bison \
 	texinfo git git-svn curl tar patchutils \
 	protobuf-compiler protobuf-c-compiler \
@@ -29,26 +31,28 @@ RUN dnf --allowerasing -y install \
 
 # Dependencies
 RUN dnf -y install \
-	openssl-devel \
+	fmt-devel \
 	graphviz-devel \
-	protobuf-devel \
-	protobuf-c-devel \
-	libuuid-devel \
-	libconfig-devel \
-	libnl3-devel \
-	libcurl-devel \
+	hiredis-devel \
 	jansson-devel \
-	zeromq-devel \
-	librabbitmq-devel \
-	mosquitto-devel \
-	librdkafka-devel \
+	libconfig-devel \
+	libcurl-devel \
 	libibverbs-devel \
+	libnice-devel \
+	libnl3-devel \
+	librabbitmq-devel \
+	librdkafka-devel \
 	librdmacm-devel \
 	libusb1-devel \
+	libuuid-devel \
+	libwebsockets-devel \
 	lua-devel \
-	hiredis-devel \
-	libnice-devel \
-	libmodbus-devel
+	mosquitto-devel \
+	openssl-devel \
+	protobuf-c-devel \
+	protobuf-devel \
+	spdlog-devel \
+	zeromq-devel
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

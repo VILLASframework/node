@@ -48,16 +48,19 @@
   stdenv,
   system,
   # Optional dependencies
+  boxfort,
   comedilib,
   criterion,
   curl,
   czmq,
+  cyrus_sasl,
   ethercat,
   gnugrep,
   jansson,
   lib60870,
   libconfig,
   libdatachannel,
+  libffi,
   libiec61850,
   libgit2,
   libmodbus,
@@ -147,7 +150,13 @@ stdenv.mkDerivation {
       spdlog
       bash
     ]
-    ++ lib.optionals withExtraTesting [ criterion pcre2 libgit2 ]
+    ++ lib.optionals withExtraTesting [
+      boxfort
+      criterion
+      libffi
+      libgit2
+      pcre2
+    ]
     ++ lib.optionals withExtraGraphviz [ graphviz ]
     ++ lib.optionals withHookLua [ lua ]
     ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
@@ -155,7 +164,10 @@ stdenv.mkDerivation {
     ++ lib.optionals withNodeEthercat [ ethercat ]
     ++ lib.optionals withNodeIec60870 [ lib60870 ]
     ++ lib.optionals withNodeIec61850 [ libiec61850 ]
-    ++ lib.optionals withNodeKafka [ rdkafka ]
+    ++ lib.optionals withNodeKafka [
+      rdkafka
+      cyrus_sasl
+    ]
     ++ lib.optionals withNodeModbus [ libmodbus ]
     ++ lib.optionals withNodeMqtt [ mosquitto ]
     ++ lib.optionals withNodeNanomsg [ nanomsg ]
@@ -182,13 +194,6 @@ stdenv.mkDerivation {
     ]
     ++ lib.optionals withNodeInfiniband [ rdma-core ]
     ++ lib.optionals withExtraConfig [ libconfig ];
-
-  # TODO: Remove once pkgs.linuxHeaders has been upgrade to 6.14
-  preBuild = ''
-    mkdir -p include/linux
-    cp ${linuxHeaders}/include/linux/pkt_cls.h include/linux
-    patch -F10 -u -p1 < ${./reverse-struct-group.patch}
-  '';
 
   meta = {
     mainProgram = "villas";
