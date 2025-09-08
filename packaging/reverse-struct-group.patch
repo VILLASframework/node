@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2025, OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+--- b/include/linux/pkt_cls.h
++++ a/include/linux/pkt_cls.h
+@@ -246,19 +246,16 @@
+ };
+ struct tc_u32_sel {
++	unsigned char		flags;
++	unsigned char		offshift;
++	unsigned char		nkeys;
++
++	__be16			offmask;
++	__u16			off;
++	short			offoff;
++
++	short			hoff;
++	__be32			hmask;
+-	/* New members MUST be added within the __struct_group() macro below. */
+-	__struct_group(tc_u32_sel_hdr, hdr, /* no attrs */,
+-		unsigned char		flags;
+-		unsigned char		offshift;
+-		unsigned char		nkeys;
+-
+-		__be16			offmask;
+-		__u16			off;
+-		short			offoff;
+-
+-		short			hoff;
+-		__be32			hmask;
+-	);
+ 	struct tc_u32_key	keys[];
+ };
