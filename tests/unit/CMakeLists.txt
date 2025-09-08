@@ -37,7 +37,7 @@ add_custom_target(run-unit-tests
 
 add_custom_target(run-python-binding-tests
     COMMAND
-        python3 ${CMAKE_SOURCE_DIR}/tests/unit/python_binding.py
+        python3 -m unittest discover ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS
         python-binding
     USES_TERMINAL

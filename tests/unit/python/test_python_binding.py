@@ -11,12 +11,15 @@ import uuid
 import villas_node as vn
 
 
-class SimpleWrapperTests(unittest.TestCase):
+class BindingUnitTests(unittest.TestCase):
     def setUp(self):
         try:
             self.node_uuid = str(uuid.uuid4())
             self.config = json.dumps(test_node_config, indent=2)
             self.test_node = vn.node_new(self.node_uuid, self.config)
+            node_uuid = str(uuid.uuid4())
+            config = json.dumps(signal_test_node_config, indent=2)
+            self.signal_test_node = vn.node_new(node_uuid, config)
         except Exception as e:
             self.fail(f"new_node err: {e}")
 
@@ -30,10 +33,11 @@ class SimpleWrapperTests(unittest.TestCase):
     def test_start(self):
         try:
             self.assertEqual(0, vn.node_start(self.test_node))
+            self.assertEqual(0, vn.node_start(self.signal_test_node))
             # socket node will cause a RuntimeError
             # the behavior is not consistent for each node
-            # with self.assertRaises((AssertionError, RuntimeError)):
-            #     vn.node_start(self.test_node)
+            with self.assertRaises((AssertionError, RuntimeError)):
+                vn.node_start(self.test_node)
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -81,7 +85,6 @@ class SimpleWrapperTests(unittest.TestCase):
         try:
             self.assertEqual(0, vn.node_stop(self.test_node))
             self.assertEqual(0, vn.node_stop(self.test_node))
-            vn.node_restart(self.test_node)
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -104,9 +107,6 @@ class SimpleWrapperTests(unittest.TestCase):
 
     def test_node_name_short(self):
         try:
-            print()
-            print(f"node name short: {vn.node_name_short(self.test_node)}")
-            print()
             self.assertEqual("test_node", vn.node_name_short(self.test_node))
         except Exception as e:
             self.fail(f"err: {e}")
@@ -157,8 +157,13 @@ class SimpleWrapperTests(unittest.TestCase):
 
     def test_reverse(self):
         try:
+            # socket has reverse() implemented, expected return 0
             self.assertEqual(0, vn.node_reverse(self.test_node))
             self.assertEqual(0, vn.node_reverse(self.test_node))
+
+            # signal.v2 has not reverse() implemented, expected return 1
+            self.assertEqual(-1, vn.node_reverse(self.signal_test_node))
+            self.assertEqual(-1, vn.node_reverse(self.signal_test_node))
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -173,6 +178,35 @@ test_node_config = {
             "signals": [{"name": "tap_position", "type": "integer", "init": 0}],
         },
         "out": {"address": "127.0.0.1:12001"},
+    }
+}
+
+signal_test_node_config = {
+    "signal_test_node": {
+        "type": "signal.v2",
+        "limit": 100,
+        "rate": 10,
+        "in": {
+            "signals": [
+                {
+                    "amplitude": 2,
+                    "name": "voltage",
+                    "phase": 90,
+                    "signal": "sine",
+                    "type": "float",
+                    "unit": "V",
+                },
+                {
+                    "amplitude": 1,
+                    "name": "current",
+                    "phase": 0,
+                    "signal": "sine",
+                    "type": "float",
+                    "unit": "A",
+                },
+            ],
+            "hooks": [{"type": "print", "format": "villas.human"}],
+        },
     }
 }
 
