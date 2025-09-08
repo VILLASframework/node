@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 
 #include <jansson.h>
 
@@ -53,7 +53,7 @@ protected:
 
   int code;
   std::string contentType;
-  std::map<std::string, std::string> headers;
+  std::unordered_map<std::string, std::string> headers;
 };
 
 class JsonResponse : public Response {

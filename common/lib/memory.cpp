@@ -155,7 +155,7 @@ HostRam::HostRamAllocator::HostRamAllocator()
   };
 }
 
-std::map<int, std::unique_ptr<HostDmaRam::HostDmaRamAllocator>>
+std::unordered_map<int, std::unique_ptr<HostDmaRam::HostDmaRamAllocator>>
     HostDmaRam::allocators;
 
 HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num)
