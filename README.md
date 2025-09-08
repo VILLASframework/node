@@ -50,9 +50,11 @@ For attribution, please refer to the SPDX headers in each file.
 The [Apache 2.0 license](./LICENSE) covers most of the codebase and is preferred for new contributions.
 License compliance is automatically checked in CI, including validation of licenses in the `LICENSES/` directory.
 
-We kindly ask all academic publications employing components of VILLASframework to cite one of the following paper:
+We kindly ask all academic publications employing components of VILLASframework to cite the following paper:
 
 - S. Vogel, N. Eiling, M. Pitz, A. Bach, M. Stevic, and P. A. Monti, “VILLASnode: An Open-Source Real-time Multi-protocol Gateway,” Journal of Open Source Software, vol. 10, no. 112, p. 8401, Aug. 2025, doi: [10.21105/joss.08401](https://doi.org/10.21105/joss.08401).
+
+More publications using, or about VILLASnode [can be found in the documentation](https://villas.fein-aachen.org/docs/publications/).
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
 
