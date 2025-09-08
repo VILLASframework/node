@@ -4,8 +4,8 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-ARG DISTRO=rockylinux
-ARG ROCKY_VERSION=9.3
+ARG DISTRO=rockylinux/rockylinux
+ARG ROCKY_VERSION=9.6
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
