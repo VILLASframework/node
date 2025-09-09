@@ -60,7 +60,7 @@ RedisConnection::get(const sw::redis::ConnectionOptions &opts) {
     try {
       conn = new RedisConnection(opts);
     } catch (sw::redis::IoError &e) {
-      throw RuntimeError(e.what());
+      throw RuntimeError("{}", e.what());
     }
 
     connections[opts] = conn;

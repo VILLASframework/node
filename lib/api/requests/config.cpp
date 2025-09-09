@@ -23,10 +23,11 @@ public:
     json_t *json = session->getSuperNode()->getConfig();
 
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Config endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Config endpoint does not accept any body data");
 
     auto *json_config = json ? json_incref(json) : json_object();
 

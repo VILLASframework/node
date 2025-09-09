@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
+#include <bit>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -108,11 +108,7 @@ void readFromDmaToStdOut(
     try {
       for (size_t i = 0; i * 4 < c.bytes; i++) {
         int32_t ival = mem[cur][i];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-        float fval =
-            *((float *)(&ival)); // cppcheck-suppress invalidPointerCast
-#pragma GCC diagnostic pop
+        float fval = std::bit_cast<float>(ival);
         formatter->format(fval);
         printf("%d: %#x\n", cnt++, ival);
       }

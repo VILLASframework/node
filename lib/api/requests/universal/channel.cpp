@@ -20,27 +20,29 @@ public:
 
   Response *executeGet(const std::string &signalName, PayloadType payload) {
     if (body != nullptr)
-      throw BadRequest("This endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "This endpoint does not accept any body data");
 
     pthread_mutex_lock(&api_node->write.mutex);
 
     auto *smp = api_node->write.sample;
     if (!smp) {
       pthread_mutex_unlock(&api_node->write.mutex);
-      throw Error(HTTP_STATUS_NOT_FOUND, "No data available");
+      throw Error(HTTP_STATUS_NOT_FOUND, nullptr, "No data available");
     }
 
     auto idx = smp->signals->getIndexByName(signalName);
     if (idx < 0) {
       pthread_mutex_unlock(&api_node->write.mutex);
-      throw Error(HTTP_STATUS_NOT_FOUND, "Unknown signal id: {}", signalName);
+      throw Error(HTTP_STATUS_NOT_FOUND, nullptr, "Unknown signal id: {}",
+                  signalName);
     }
 
     auto sig = smp->signals->getByIndex(idx);
     auto ch = api_node->write.channels.at(idx);
 
     if (payload != ch->payload)
-      throw BadRequest("Mismatching payload type");
+      throw Error::badRequest(nullptr, "Mismatching payload type");
 
     auto *json_signal =
         json_pack("{ s: f, s: o, s: s, s: s, s: s }", "timestamp",
@@ -66,20 +68,21 @@ public:
     auto *smp = api_node->read.sample;
     if (!smp) {
       pthread_mutex_unlock(&api_node->read.mutex);
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, "Not initialized yet");
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
+                  "Not initialized yet");
     }
 
     auto idx = smp->signals->getIndexByName(signalName);
     if (idx < 0) {
       pthread_mutex_unlock(&api_node->read.mutex);
-      throw BadRequest("Unknown signal id: {}", signalName);
+      throw Error::badRequest(nullptr, "Unknown signal id: {}", signalName);
     }
 
     auto sig = smp->signals->getByIndex(idx);
     auto ch = api_node->read.channels.at(idx);
 
     if (payload != ch->payload)
-      throw BadRequest("Mismatching payload type");
+      throw Error::badRequest(nullptr, "Mismatching payload type");
 
     double timestamp = 0;
     json_t *json_value;
@@ -94,7 +97,7 @@ public:
                          "source", &source);
     if (ret) {
       pthread_mutex_unlock(&api_node->read.mutex);
-      throw BadRequest("Malformed body: {}", err.text);
+      throw Error::badRequest(nullptr, "Malformed body: {}", err.text);
     }
 
     if (validity)
@@ -109,7 +112,7 @@ public:
     ret = smp->data[idx].parseJson(sig->type, json_value);
     if (ret) {
       pthread_mutex_unlock(&api_node->read.mutex);
-      throw BadRequest("Malformed value");
+      throw Error::badRequest(nullptr, "Malformed value");
     }
 
     smp->ts.origin = time_from_double(timestamp);
@@ -130,7 +133,8 @@ public:
     else if (subResource == "sample")
       payload = PayloadType::EVENTS;
     else
-      throw BadRequest("Unsupported sub-resource: {}", subResource);
+      throw Error::badRequest(nullptr, "Unsupported sub-resource: {}",
+                              subResource);
 
     switch (method) {
     case Session::Method::GET:
@@ -138,7 +142,7 @@ public:
     case Session::Method::PUT:
       return executePut(signalName, payload);
     default:
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
     }
   }
 };

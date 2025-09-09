@@ -447,10 +447,12 @@ static void ib_continue_as_listen(NodeCompat *n, struct rdma_cm_event *event) {
   if (ib->conn.use_fallback)
     n->logger->warn("Trying to continue as listening node");
   else
-    throw RuntimeError("Cannot establish a connection with remote host! If you "
-                       "want that {} tries to "
-                       "continue as listening node in such cases, set "
-                       "use_fallback = true in the configuration");
+    throw RuntimeError(
+        "Cannot establish a connection with remote host! If you \n"
+        "want that {} tries to \n"
+        "continue as listening node in such cases, set \n"
+        "use_fallback = true in the configuration\n",
+        n->getNameShort());
 
   n->setState(State::STARTED);
 
@@ -770,7 +772,8 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
     }
 
     // Get Memory Region
-    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
+    mr = memory::ib_get_mr(pool_buffer( // cppcheck-suppress dangerousTypeCast
+        sample_pool(smps[0])));
 
     for (int i = 0; i < max_wr_post; i++) {
       int j = 0;
@@ -882,7 +885,8 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
     // First, write
 
     // Get Memory Region
-    mr = memory::ib_get_mr(pool_buffer(sample_pool(smps[0])));
+    mr = memory::ib_get_mr(pool_buffer( // cppcheck-suppress dangerousTypeCast
+        sample_pool(smps[0])));
 
     for (sent = 0; sent < cnt; sent++) {
       int j = 0;
@@ -961,7 +965,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
          * and prepare them to be released
          */
         n->logger->debug(
-            "Bad WR occured with ID: {:#x} and S/G address: {:#x}: {}",
+            "Bad WR occured with ID: {:#x} and S/G address: {:p}: {}",
             bad_wr->wr_id, (void *)bad_wr->sg_list, ret);
 
         while (1) {

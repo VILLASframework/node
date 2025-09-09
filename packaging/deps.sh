@@ -101,15 +101,39 @@ TMPDIR=$(mktemp -d)
 echo "Entering ${TMPDIR}"
 pushd ${TMPDIR} >/dev/null
 
+# Enter python venv
+python3 -m venv venv
+. venv/bin/activate
+python3 -m pip install --upgrade pip setuptools
+
+# Install meson
+if ! command -v meson; then
+    # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
+    pip3 install meson==0.61.5
+fi
+
+# Install ninja
+if ! command -v ninja; then
+    curl -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip > ninja-linux.zip
+    unzip ninja-linux.zip
+    export PATH=${PATH}:.
+fi
+
 # Build & Install Criterion
 if ! pkg-config "criterion >= 2.4.1" && \
    [ "${ARCH}" == "x86_64" ] && \
    should_build "criterion" "for unit tests"; then
-    git clone ${GIT_OPTS} --branch v2.3.3 --recursive https://github.com/Snaipe/Criterion.git
-    mkdir -p Criterion/build
-    pushd Criterion/build
-    cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    git clone ${GIT_OPTS} --branch v2.4.2 --recursive https://github.com/Snaipe/Criterion.git
+    pushd Criterion
+
+    meson setup \
+        --prefix=${PREFIX} \
+        --cmake-prefix-path=${PREFIX} \
+        --backend=ninja \
+        build
+    meson compile -C build
+    meson install -C build
+
     popd
 fi
 
@@ -426,34 +450,13 @@ if ! pkg-config "nice >= 0.1.16" && \
     mkdir -p libnice/build
     pushd libnice
 
-    # Create sub-shell to constrain meson venv and ninja PATH to this build
-    (
-        # Install meson
-        if ! command -v meson; then
-            python3 -m venv venv
-            . venv/bin/activate
-            python3 -m pip install --upgrade pip setuptools
-
-
-            # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
-            pip3 install meson==0.61.5
-        fi
-
-        # Install ninja
-        if ! command -v ninja; then
-            curl -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip > ninja-linux.zip
-            unzip ninja-linux.zip
-            export PATH=${PATH}:.
-        fi
-
-        meson setup \
-            --prefix=${PREFIX} \
-            --cmake-prefix-path=${PREFIX} \
-            --backend=ninja \
-            build
-        meson compile -C build
-        meson install -C build
-    )
+    meson setup \
+        --prefix=${PREFIX} \
+        --cmake-prefix-path=${PREFIX} \
+        --backend=ninja \
+        build
+    meson compile -C build
+    meson install -C build
 
     popd
 fi

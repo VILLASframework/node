@@ -20,10 +20,11 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("This endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "This endpoint does not accept any body data");
 
     auto *json_sigs = json_array();
 

@@ -11,7 +11,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   CMAKE_BUILD_OPTS: "--parallel 16"
-  CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
+  CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release"
   CACHIX_CACHE_NAME: villas
 
 stages:
@@ -101,8 +101,12 @@ build:source:
   parallel:
     matrix:
       - DISTRO: [fedora, fedora-minimal, debian, rocky, ubuntu]
+      - DISTRO: fedora
+        CMAKE_EXTRA_OPTS: >
+          -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
       - DISTRO: fedora-minimal
-        CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+        CMAKE_EXTRA_OPTS: >
+          -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
           -DWITH_API=OFF
           -DWITH_CLIENTS=OFF
           -DWITH_CONFIG=OFF

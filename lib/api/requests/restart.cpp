@@ -48,14 +48,14 @@ public:
     json_error_t err;
 
     if (method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     json_t *json_config = nullptr;
 
     if (body) {
       ret = json_unpack_ex(body, &err, 0, "{ s?: o }", "config", &json_config);
       if (ret < 0)
-        throw BadRequest("Failed to parse request body");
+        throw Error::badRequest(nullptr, "Failed to parse request body");
     }
 
     if (json_config) {
@@ -69,14 +69,15 @@ public:
 
         ret = json_dumpf(json_config, configFile, JSON_INDENT(4));
         if (ret < 0)
-          throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+          throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                       "Failed to create temporary config file");
 
         fclose(configFile);
         configUri = configUriBuf;
       } else if (json_config != nullptr)
-        throw BadRequest("Parameter 'config' must be either a URL (string) or "
-                         "a configuration (object)");
+        throw Error::badRequest(
+            nullptr, "Parameter 'config' must be either a URL (string) or "
+                     "a configuration (object)");
     } else // If no config is provided via request, we will use the previous one
       configUri = session->getSuperNode()->getConfigPath();
 
@@ -98,7 +99,7 @@ public:
     // Register exit handler
     ret = atexit(handler);
     if (ret)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                   "Failed to restart VILLASnode instance");
 
     // Properly terminate current instance

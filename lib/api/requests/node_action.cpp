@@ -26,14 +26,16 @@ public:
 
   Response *execute() override {
     if (method != Session::Method::POST)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Node endpoints do not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Node endpoints do not accept any body data");
 
     int ret = (node->*func)();
     if (ret)
-      throw BadRequest("Failed to execute action", "{ s: d }", "ret", ret);
+      throw Error::badRequest(nullptr, "Failed to execute action", "{ s: d }",
+                              "ret", ret);
 
     return new Response(session, HTTP_STATUS_OK);
   }

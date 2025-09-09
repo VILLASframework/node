@@ -27,10 +27,11 @@ public:
     int ret;
 
     if (method != Session::Method::GET)
-      throw InvalidMethod(this);
+      throw Error::invalidMethod(this);
 
     if (body != nullptr)
-      throw BadRequest("Status endpoint does not accept any body data");
+      throw Error::badRequest(nullptr,
+                              "Status endpoint does not accept any body data");
 
     auto *sn = session->getSuperNode();
 
@@ -43,17 +44,17 @@ public:
 
     ret = gethostname(hname, sizeof(hname));
     if (ret)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                   "Failed to get system hostname");
 
     ret = uname(&uts);
     if (ret)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                   "Failed to get kernel information");
 
     ret = sysinfo(&sinfo);
     if (ret)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                   "Failed to get system information");
 
     float f_load = 1.f / (1 << SI_LOAD_SHIFT);
@@ -118,7 +119,7 @@ public:
         "total", (json_int_t)(sinfo.totalhigh * sinfo.mem_unit), //
         "free", (json_int_t)(sinfo.freehigh * sinfo.mem_unit));
     if (!json_status)
-      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      throw Error(HTTP_STATUS_INTERNAL_SERVER_ERROR, nullptr,
                   "Failed to prepare response: {}", err.text);
 
     return new JsonResponse(session, HTTP_STATUS_OK, json_status);
