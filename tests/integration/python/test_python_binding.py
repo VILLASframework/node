@@ -71,14 +71,12 @@ class BindingIntegrationTests(unittest.TestCase):
             #   function test_rw_socket_and_reverse() below
             self.assertEqual(1, vn.node_input_signals_max_cnt(self.test_node))
             self.assertEqual(0, vn.node_output_signals_max_cnt(self.test_node))
-            # self.assertEqual(0, vn.node_input_signals_max_cnt(self.test_node))
-            # self.assertEqual(1, vn.node_output_signals_max_cnt(self.test_node))
         except Exception as e:
             self.fail(f"Reversing node in and output failed: {e}")
 
-    # Test whether or not a node can be recreated with the string from node_to_json_str
-    # node_to_json_str has a wrong config format causing the config string to create
-    # a node without a name
+    # Test if a node can be recreated with the string from node_to_json_str
+    # node_to_json_str has a wrong config format causing the config string
+    # to create a node without a name
     # uuid can not match
     def test_config_from_string(self):
         try:
@@ -91,7 +89,9 @@ class BindingIntegrationTests(unittest.TestCase):
 
             self.assertEqual(
                 re.sub(
-                    r"^[^:]+: uuid=[0-9a-fA-F-]+, ", "", vn.node_name_full(test_node)
+                    r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
+                    "",
+                    vn.node_name_full(test_node),
                 ),
                 re.sub(
                     r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
@@ -120,7 +120,7 @@ class BindingIntegrationTests(unittest.TestCase):
                     raise RuntimeError("Failed to verify node configuration")
                 if vn.node_prepare(node):
                     raise RuntimeError(
-                        f"Failed to verify {vn.node_name(node)} node configuration"
+                        f"Failed to verify {vn.node_name(node)} node config"
                     )
                 vn.node_start(node)
 
@@ -130,15 +130,19 @@ class BindingIntegrationTests(unittest.TestCase):
             recv_smpls = vn.smps_array(100)
 
             for i in range(100):
-                # send_smpls holds a new sample each time, but the old one still has a reference in the socket buffer (below)
-                # it is necessary to allocate a new sample each time to send_smpls
+                # send_smpls holds a new sample each time, but the
+                # old one still has a reference in the socket buffer (below)
+                # it is necessary to allocate a new sample each time
                 send_smpls[0] = vn.sample_alloc(2)
                 intmdt_smpls[i] = vn.sample_alloc(2)
                 recv_smpls[i] = vn.sample_alloc(2)
 
                 # Generate signals and send over send_socket
                 self.assertEqual(
-                    vn.node_read(test_nodes["signal_generator"], send_smpls, 1), 1
+                    vn.node_read(
+                        test_nodes["signal_generator"], send_smpls, 1
+                    ),
+                    1,
                 )
                 self.assertEqual(
                     vn.node_write(test_nodes["send_socket"], send_smpls, 1), 1
@@ -146,10 +150,12 @@ class BindingIntegrationTests(unittest.TestCase):
 
             # read received signals and send them to recv_socket
             self.assertEqual(
-                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                100,
             )
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                100,
             )
 
             # confirm rev_socket signals
@@ -173,7 +179,8 @@ class BindingIntegrationTests(unittest.TestCase):
                 vn.node_write(test_nodes["recv_socket"], recv_smpls, 100), 100
             )
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                100,
             )
 
             # cleanup
@@ -192,7 +199,9 @@ test_node_config = {
         "layer": "udp",
         "in": {
             "address": "*:12000",
-            "signals": [{"name": "tap_position", "type": "integer", "init": 0}],
+            "signals": [
+                {"name": "tap_position", "type": "integer", "init": 0}
+            ],
         },
         "out": {"address": "127.0.0.1:12001"},
     }

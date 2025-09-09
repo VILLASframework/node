@@ -20,8 +20,8 @@ class SamplesArray:
     Wrapper for a block of samples with automatic memory management.
 
     Supports:
-        - Reading block slices in combination with node_read().
-        - Writing block slices in combination with node_write().
+        - Reading block slices in combination with `node_read()`.
+        - Writing block slices in combination with `node_write()`.
         - Automatic (de-)allocation of samples.
 
     Notes:
@@ -39,7 +39,8 @@ class SamplesArray:
 
         Notes:
             - Block is determined by `start_idx`, `end_idx`
-            - A sample can hold multiple signals. smpl_length corresponds to the number of signals.
+            - Samples can hold multiple signals.
+            - `smpl_length` corresponds to the number of signals.
         """
         return self._smps.bulk_alloc(start_idx, end_idx, smpl_length)
 
@@ -48,10 +49,10 @@ class SamplesArray:
         Get a handle to a block of samples.
 
         Args:
-            start_idx (Optional[int]): Starting index of the block. Defaults to 0.
+            start_idx (Optional[int]): Starting index of the block. Default 0.
 
         Returns:
-            vsample**: Pointer/handle to the underlying block masked as `void *`.
+            vsample**: Handle to the underlying block masked as `void *`.
         """
         if start_idx is None:
             return self._smps.get_block(0)
@@ -63,18 +64,21 @@ class SamplesArray:
         Initialize a SamplesArray.
 
         Notes:
-            Each sample slot can hold one node::Sample allocated via node_read().
-            node::Sample can contain multiple signals, depending on smpl_length.
+            - Each sample slot can hold one sample allocated via `node_read()`.
+            - Sample can contain multiple signals, depending on `smpl_length`.
         """
         self._smps = vn.smps_array(length)
         self._len = length
 
     def __len__(self):
-        """Returns the length of the SamplesArray, which corresponds to the amount of samples it holds."""
+        """
+        Returns the length of the SamplesArray.
+        Corresponds to the amount of samples it holds.
+        """
         return self._len
 
     def __getitem__(self, idx: Union[int, slice]):
-        """Return a tuple containing self and an index or slice for node operations."""
+        """Return tuple containing self and index/slice for node operations."""
         if isinstance(idx, slice):
             return (self, idx)
         elif isinstance(idx, int):
@@ -99,7 +103,7 @@ class SamplesArray:
 #   that would return -1 if a function is not implemented
 def _warn_if_not_implemented(func):
     """
-    Decorator to warn if specific node_* functions are not implemented and return -1.
+    Decorator to warn if specific `node_*()` functions are not implemented.
 
     Returns:
         Wrapping function that logs a warning if the return value is -1.
@@ -109,7 +113,8 @@ def _warn_if_not_implemented(func):
     def wrapper(*args, **kwargs):
         ret = func(*args, **kwargs)
         if ret == -1:
-            msg = f"[\033[33mWarning\033[0m]: Function '{func.__name__}()' is not implemented for node type '{vn.node_name(*args)}'."
+            msg = f"[\033[33mWarning\033[0m]: Function '{func.__name__}()' \
+                    is not implemented for node type '{vn.node_name(*args)}'."
             logger.warning(msg)
         return ret
 
@@ -183,7 +188,8 @@ def node_new(config, uuid: Optional[str] = None):
 
     Args:
         config (json/str): Configuration of the node.
-        uuid (Optional[str]): Unique identifier of the node. If `None`/empty, VILLASnode will assign one by default.
+        uuid (Optional[str]): Unique identifier of the node.
+                              If `None`, VILLASnode will assign one by default.
 
     Returns:
         vnode *: Handle to a node.
@@ -215,11 +221,11 @@ def node_prepare(node):
 @_warn_if_not_implemented
 def node_read(node, samples, sample_length, count):
     """
-    Read samples from a node into a SamplesArray or a block slice of its samples.
+    Read samples from a node into SamplesArray or a block slice of its samples.
 
     Args:
         node: Node handle.
-        samples: Either a SamplesArray or a tuple of (SamplesArray, index/slice).
+        samples: Either a SamplesArray or a tuple (SamplesArray, index/slice).
         sample_length: Length of each sample (number of signals).
         count: Number of samples to read.
 
@@ -241,7 +247,7 @@ def node_read(node, samples, sample_length, count):
 
         # check for length mismatch
         if (stop - start) != count:
-            raise ValueError("Sample slice length and sample count do not match.")
+            raise ValueError("Slice length and sample count do not match.")
         # check if out of bounds
         if stop > len(smpls):
             raise IndexError("Out of bounds")
@@ -273,7 +279,8 @@ def node_reverse(node):
 
     Notes:
         - Hooks are not reversed.
-        - Some nodes should be stopped or restarted before reversing. Especially nodes with in-/output buffers.
+        - Some nodes should be stopped or restarted before reversing.
+        - Nodes with in-/output buffers should be stopped before reversing.
     """
     return vn.node_reverse(node)
 
@@ -294,6 +301,7 @@ def node_stop(node):
 
     Notes:
         - Use before starting a node again.
+        - May delete in-/output buffers of a node.
     """
     return vn.node_stop(node)
 
@@ -329,7 +337,7 @@ def node_write(node, samples, count):
 
     Args:
         node: Node handle.
-        samples: Either a SamplesArray or a tuple of (SamplesArray, index/slice).
+        samples: Either a SamplesArray or a tuple (SamplesArray, index/slice).
         count: Number of samples to write.
 
     Returns:
@@ -348,7 +356,7 @@ def node_write(node, samples, count):
 
         # check for length mismatch
         if (stop - start) != count:
-            raise ValueError("Sample slice length and sample count do not match.")
+            raise ValueError("Slice length and sample count do not match.")
         # check for out of bounds
         if stop > len(smpls):
             raise IndexError("Out of bounds")

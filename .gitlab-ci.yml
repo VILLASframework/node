@@ -173,8 +173,8 @@ test:unit:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
     - cmake -S . -B build ${CMAKE_OPTS}
-    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/clients/python-binding/:${PWD}/python/villas/node/
-    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common run-python-binding-tests
+    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/python/binding/:${PWD}/python/villas/node/
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common run-python-unit-tests
   needs:
     - job: "build:source: [fedora]"
       artifacts: true
@@ -184,7 +184,8 @@ test:integration:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
     - cmake -S . -B build ${CMAKE_OPTS}
-    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-integration-tests
+    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/python/binding/:${PWD}/python/villas/node/
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-integration-tests run-python-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always

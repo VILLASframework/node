@@ -46,7 +46,7 @@ class BindingUnitTests(unittest.TestCase):
     The behavior is Node specific.
     """
     )
-    def test_start(self):
+    def test_start_err(self):
         try:
             self.assertEqual(0, vn.node_start(self.test_node))
             with self.assertRaises((AssertionError, RuntimeError)):
@@ -127,12 +127,15 @@ class BindingUnitTests(unittest.TestCase):
 
     def test_node_name_full(self):
         try:
+            node = self.test_node
             self.assertEqual(
                 "test_node(socket)"
                 + ": uuid="
                 + self.node_uuid
-                + ", #in.signals=1/1, #in.hooks=0, #out.hooks=0, in.vectorize=1, out.vectorize=1, out.netem=no, layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
-                re.sub(r"\x1b\[[0-9;]*m", "", vn.node_name_full(self.test_node)),
+                + ", #in.signals=1/1, #in.hooks=0, #out.hooks=0"
+                + ", in.vectorize=1, out.vectorize=1, out.netem=no, layer=udp"
+                + ", in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
+                re.sub(r"\x1b\[[0-9;]*m", "", vn.node_name_full(node)),
             )
         except Exception as e:
             self.fail(f"err: {e}")
@@ -140,7 +143,9 @@ class BindingUnitTests(unittest.TestCase):
     def test_details(self):
         try:
             self.assertEqual(
-                "layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
+                "layer=udp, "
+                + "in.address=0.0.0.0:12000, "
+                + "out.address=127.0.0.1:12001",
                 vn.node_details(self.test_node),
             )
         except Exception as e:
@@ -160,12 +165,18 @@ class BindingUnitTests(unittest.TestCase):
 
     def test_node_is_valid_name(self):
         try:
-            self.assertFalse(vn.node_is_valid_name(""))
-            self.assertFalse(vn.node_is_valid_name("###"))
-            self.assertFalse(vn.node_is_valid_name("v@l:d T3xt w;th invalid symb#ls"))
-            self.assertFalse(vn.node_is_valid_name("33_characters_long_string_invalid"))
-            self.assertTrue(vn.node_is_valid_name("32_characters_long_strings_valid"))
-            self.assertTrue(vn.node_is_valid_name("valid_name"))
+            invalid_names = [
+                "",
+                "###",
+                "v@l:d T3xt w;th invalid symb#ls",
+                "33_characters_long_string_invalid",
+            ]
+            valid_names = ["32_characters_long_strings_valid", "valid_name"]
+
+            for name in invalid_names:
+                self.assertFalse(vn.node_is_valid_name(name))
+            for name in valid_names:
+                self.assertFalse(vn.node_is_valid_name(name))
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -189,7 +200,9 @@ test_node_config = {
         "layer": "udp",
         "in": {
             "address": "*:12000",
-            "signals": [{"name": "tap_position", "type": "integer", "init": 0}],
+            "signals": [
+                {"name": "tap_position", "type": "integer", "init": 0}
+            ],
         },
         "out": {"address": "127.0.0.1:12001"},
     }
