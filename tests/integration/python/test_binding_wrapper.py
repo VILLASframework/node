@@ -8,10 +8,10 @@ import json
 import re
 import unittest
 import uuid
-import villas_node as vn
+import binding as vn
 
 
-class BindingIntegrationTests(unittest.TestCase):
+class BindingWrapperIntegrationTests(unittest.TestCase):
     def setUp(self):
         try:
             self.config = json.dumps(test_node_config, indent=2)
@@ -87,7 +87,7 @@ class BindingIntegrationTests(unittest.TestCase):
 
             config_copy_str = json.dumps(config_obj, indent=2)
 
-            test_node = vn.node_new(config_copy_str, "")
+            test_node = vn.node_new(config_copy_str)
 
             self.assertEqual(
                 re.sub(
@@ -125,20 +125,14 @@ class BindingIntegrationTests(unittest.TestCase):
                 vn.node_start(node)
 
             # Arrays to store samples
-            send_smpls = vn.smps_array(1)
-            intmdt_smpls = vn.smps_array(100)
-            recv_smpls = vn.smps_array(100)
+            send_smpls = vn.SamplesArray(1)
+            intmdt_smpls = vn.SamplesArray(100)
+            recv_smpls = vn.SamplesArray(100)
 
             for i in range(100):
-                # send_smpls holds a new sample each time, but the old one still has a reference in the socket buffer (below)
-                # it is necessary to allocate a new sample each time to send_smpls
-                send_smpls[0] = vn.sample_alloc(2)
-                intmdt_smpls[i] = vn.sample_alloc(2)
-                recv_smpls[i] = vn.sample_alloc(2)
-
                 # Generate signals and send over send_socket
                 self.assertEqual(
-                    vn.node_read(test_nodes["signal_generator"], send_smpls, 1), 1
+                    vn.node_read(test_nodes["signal_generator"], send_smpls, 2, 1), 1
                 )
                 self.assertEqual(
                     vn.node_write(test_nodes["send_socket"], send_smpls, 1), 1
@@ -146,15 +140,21 @@ class BindingIntegrationTests(unittest.TestCase):
 
             # read received signals and send them to recv_socket
             self.assertEqual(
-                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 2, 100), 100
             )
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls[0:50], 50), 50
+            )
+            self.assertEqual(
+                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls[50:100], 50), 50
             )
 
             # confirm rev_socket signals
             self.assertEqual(
-                vn.node_read(test_nodes["recv_socket"], recv_smpls, 100), 100
+                vn.node_read(test_nodes["recv_socket"], recv_smpls[0:50], 2, 50), 50
+            )
+            self.assertEqual(
+                vn.node_read(test_nodes["recv_socket"], recv_smpls[50:100], 2, 50), 50
             )
 
             # reversing in and outputs
@@ -169,11 +169,13 @@ class BindingIntegrationTests(unittest.TestCase):
             for node in test_nodes.values():
                 vn.node_start(node)
 
+            # if another 100 samples have not been allocated, sending 200 at once is impossible with recv_smpls
             self.assertEqual(
                 vn.node_write(test_nodes["recv_socket"], recv_smpls, 100), 100
             )
+            # try writing as full slice
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100), 100
+                vn.node_write(test_nodes["intmdt_socket"], recv_smpls[0:100], 100), 100
             )
 
             # cleanup

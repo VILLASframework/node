@@ -173,7 +173,7 @@ test:unit:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   script:
     - cmake -S . -B build ${CMAKE_OPTS}
-    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/clients/python-binding
+    - export PYTHONPATH=$PYTHONPATH:${PWD}/build/clients/python-binding/:${PWD}/python/villas/node/
     - cmake --build build ${CMAKE_BUILD_OPTS} --target run-unit-tests run-unit-tests-common run-python-binding-tests
   needs:
     - job: "build:source: [fedora]"

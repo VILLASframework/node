@@ -8,10 +8,10 @@ import json
 import re
 import unittest
 import uuid
-import villas_node as vn
+import binding as vn
 
 
-class BindingUnitTests(unittest.TestCase):
+class BindingWrapperUnitTests(unittest.TestCase):
     def setUp(self):
         try:
             self.config = json.dumps(test_node_config, indent=2)
@@ -40,11 +40,9 @@ class BindingUnitTests(unittest.TestCase):
             self.fail(f"err: {e}")
 
     @unittest.skip(
-        """
-    Starting a socket twice will result in a RuntimeError.
+        """Starting a socket twice will result in a RuntimeError.
     Thise will leave the socket IP bound and may mess with other tests.
-    The behavior is Node specific.
-    """
+    The behavior is Node specific."""
     )
     def test_start(self):
         try:
@@ -143,6 +141,19 @@ class BindingUnitTests(unittest.TestCase):
                 "layer=udp, in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
                 vn.node_details(self.test_node),
             )
+        except Exception as e:
+            self.fail(f"err: {e}")
+
+    def test_node_to_json(self):
+        try:
+            if not isinstance(vn.node_to_json(self.test_node), dict):
+                self.fail("Not a JSON object (dict)")
+        except Exception as e:
+            self.fail(f"err: {e}")
+
+    def test_node_to_json_str(self):
+        try:
+            json.loads(vn.node_to_json_str(self.test_node))
         except Exception as e:
             self.fail(f"err: {e}")
 
