@@ -35,6 +35,18 @@ public:
     delete[] smps;
   }
 
+  void *get_block(unsigned int start) { return (void *)&smps[start]; }
+
+  void bulk_alloc(unsigned int start_idx, unsigned int stop_idx,
+                  unsigned int smpl_len) {
+    for (unsigned int i = start_idx; i < stop_idx; ++i) {
+      if (smps[i]) {
+        sample_decref(smps[i]);
+      }
+      smps[i] = sample_alloc(smpl_len);
+    }
+  }
+
   vsample *&operator[](unsigned int idx) { return smps[idx]; }
 
   vsample *&operator[](unsigned int idx) const { return smps[idx]; }
@@ -99,7 +111,7 @@ PYBIND11_MODULE(villas_node, m) {
 
   m.def(
       "node_new",
-      [](const char *id_str, const char *json_str) -> vnode * {
+      [](const char *json_str, const char *id_str) -> vnode * {
         json_error_t err;
         uuid_t id;
 
@@ -139,6 +151,10 @@ PYBIND11_MODULE(villas_node, m) {
     return node_read((vnode *)n, a.get_smps(), cnt);
   });
 
+  m.def("node_read", [](void *n, void *smpls, unsigned cnt) -> int {
+    return node_read((vnode *)n, (vsample **)smpls, cnt);
+  });
+
   m.def("node_restart",
         [](void *n) -> int { return node_restart((vnode *)n); });
 
@@ -150,17 +166,6 @@ PYBIND11_MODULE(villas_node, m) {
   m.def("node_start", [](void *n) -> int { return node_start((vnode *)n); });
 
   m.def("node_stop", [](void *n) -> int { return node_stop((vnode *)n); });
-
-  m.def("node_to_json", [](void *n) -> py::str {
-    auto json = reinterpret_cast<villas::node::Node *>(n)->toJson();
-    char *json_str = json_dumps(json, 0);
-    auto py_str = py::str(json_str);
-
-    json_decref(json);
-    free(json_str);
-
-    return py_str;
-  });
 
   m.def("node_to_json_str", [](void *n) -> py::str {
     auto json = reinterpret_cast<villas::node::Node *>(n)->toJson();
@@ -175,6 +180,10 @@ PYBIND11_MODULE(villas_node, m) {
 
   m.def("node_write", [](void *n, Array &a, unsigned cnt) -> int {
     return node_write((vnode *)n, a.get_smps(), cnt);
+  });
+
+  m.def("node_write", [](void *n, void *smpls, unsigned cnt) -> int {
+    return node_write((vnode *)n, (vsample **)smpls, cnt);
   });
 
   m.def(
@@ -209,18 +218,17 @@ PYBIND11_MODULE(villas_node, m) {
       .def(py::init<unsigned int>(), py::arg("len"))
       .def("__getitem__",
            [](Array &a, unsigned int idx) {
-             if (idx >= a.size()) {
-               throw py::index_error("Index out of bounds");
-             }
+             assert(idx < a.size() && "Index out of bounds");
              return a[idx];
            })
-      .def("__setitem__", [](Array &a, unsigned int idx, void *smp) {
-        if (idx >= a.size()) {
-          throw py::index_error("Index out of bounds");
-        }
-        if (a[idx]) {
-          sample_decref(a[idx]);
-        }
-        a[idx] = (vsample *)smp;
-      });
+      .def("__setitem__",
+           [](Array &a, unsigned int idx, void *smp) {
+             assert(idx < a.size() && "Index out of bounds");
+             if (a[idx]) {
+               sample_decref(a[idx]);
+             }
+             a[idx] = (vsample *)smp;
+           })
+      .def("get_block", &Array::get_block)
+      .def("bulk_alloc", &Array::bulk_alloc);
 }
