@@ -10,7 +10,7 @@ import functools
 import json
 import logging
 
-import villas_node as vn
+import villas.node.python_binding as vn
 
 logger = logging.getLogger("villas.node")
 

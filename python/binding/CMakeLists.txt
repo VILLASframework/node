@@ -11,25 +11,29 @@ if(pybind11_FOUND)
   find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
   execute_process(
-    COMMAND "${Python3_EXECUTABLE}" -c "import sysconfig; print(sysconfig.get_path('stdlib') + '/lib-dynload')"
-    OUTPUT_VARIABLE PYTHON_LIB_DYNLOAD_DIR
+    COMMAND "${Python3_EXECUTABLE}" -c "import sysconfig; print(sysconfig.get_path('purelib'))"
+    OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
   message(STATUS "Found Python version: ${Python_VERSION}")
   message(STATUS "Python major version: ${Python_VERSION_MAJOR}")
   message(STATUS "Python minor version: ${Python_VERSION_MINOR}")
-  message(STATUS "Python .so install directory: ${PYTHON_LIB_DYNLOAD_DIR}")
 
-  pybind11_add_module(python-binding villas-python-binding.cpp)
-  set_target_properties(python-binding PROPERTIES OUTPUT_NAME villas_node)
-  target_link_libraries(python-binding PUBLIC villas)
+  pybind11_add_module(python_binding capi_python_binding.cpp)
+  target_link_libraries(python_binding PUBLIC villas)
 
   install(
-    TARGETS python-binding
+    TARGETS python_binding
     COMPONENT lib
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${PYTHON_LIB_DYNLOAD_DIR}
+    LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}/villas/node/
+  )
+  file(WRITE "${CMAKE_BINARY_DIR}/python/villas/__init__.py" "")
+  file(WRITE "${CMAKE_BINARY_DIR}/python/villas/node/__init__.py" "")
+  install(
+    DIRECTORY "${CMAKE_BINARY_DIR}/python/villas"
+    DESTINATION "${PYTHON_SITE_PACKAGES}"
+    FILES_MATCHING PATTERN "__init__.py"
   )
 else()
   message(STATUS "pybind11 not found. Skipping Python wrapper build.")

@@ -67,7 +67,7 @@ private:
  * @param villas_node   Name of the module to be bound
  * @param m             Access variable for modifying the module code
  */
-PYBIND11_MODULE(villas_node, m) {
+PYBIND11_MODULE(python_binding, m) {
   m.def("memory_init", &memory_init);
 
   m.def("node_check", [](void *n) -> int { return node_check((vnode *)n); });

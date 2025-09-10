@@ -8,7 +8,7 @@ import json
 import re
 import unittest
 import uuid
-import villas_node as vn
+import villas.node.python_binding as pb
 
 
 class BindingIntegrationTests(unittest.TestCase):
@@ -16,61 +16,61 @@ class BindingIntegrationTests(unittest.TestCase):
         try:
             self.config = json.dumps(test_node_config, indent=2)
             self.node_uuid = str(uuid.uuid4())
-            self.test_node = vn.node_new(self.config, self.node_uuid)
+            self.test_node = pb.node_new(self.config, self.node_uuid)
         except Exception as e:
             self.fail(f"new_node err: {e}")
 
     def tearDown(self):
         try:
-            vn.node_stop(self.test_node)
-            vn.node_destroy(self.test_node)
+            pb.node_stop(self.test_node)
+            pb.node_destroy(self.test_node)
         except Exception as e:
             self.fail(f"node cleanup error: {e}")
 
     def test_activity_changes(self):
         try:
-            vn.node_check(self.test_node)
-            vn.node_prepare(self.test_node)
+            pb.node_check(self.test_node)
+            pb.node_prepare(self.test_node)
             # starting twice
-            self.assertEqual(0, vn.node_start(self.test_node))
+            self.assertEqual(0, pb.node_start(self.test_node))
 
             # check if the node is running
-            self.assertTrue(vn.node_is_enabled(self.test_node))
+            self.assertTrue(pb.node_is_enabled(self.test_node))
 
             # pausing twice
-            self.assertEqual(0, vn.node_pause(self.test_node))
-            self.assertEqual(-1, vn.node_pause(self.test_node))
+            self.assertEqual(0, pb.node_pause(self.test_node))
+            self.assertEqual(-1, pb.node_pause(self.test_node))
 
             # resuming
-            self.assertEqual(0, vn.node_resume(self.test_node))
+            self.assertEqual(0, pb.node_resume(self.test_node))
 
             # stopping twice
-            self.assertEqual(0, vn.node_stop(self.test_node))
-            self.assertEqual(0, vn.node_stop(self.test_node))
+            self.assertEqual(0, pb.node_stop(self.test_node))
+            self.assertEqual(0, pb.node_stop(self.test_node))
 
             # restarting
-            vn.node_restart(self.test_node)
+            pb.node_restart(self.test_node)
 
             # check if everything still works after restarting
-            vn.node_pause(self.test_node)
-            vn.node_resume(self.test_node)
-            vn.node_stop(self.test_node)
-            vn.node_start(self.test_node)
+            pb.node_pause(self.test_node)
+            pb.node_resume(self.test_node)
+            pb.node_stop(self.test_node)
+            pb.node_start(self.test_node)
         except Exception as e:
             self.fail(f" err: {e}")
 
     def test_reverse_node(self):
         try:
-            self.assertEqual(1, vn.node_input_signals_max_cnt(self.test_node))
-            self.assertEqual(0, vn.node_output_signals_max_cnt(self.test_node))
+            self.assertEqual(1, pb.node_input_signals_max_cnt(self.test_node))
+            self.assertEqual(0, pb.node_output_signals_max_cnt(self.test_node))
 
-            self.assertEqual(0, vn.node_reverse(self.test_node))
+            self.assertEqual(0, pb.node_reverse(self.test_node))
 
             # input and output hooks/details are not reversed
             # input and output are reversed, can be seen with wireshark and
             #   function test_rw_socket_and_reverse() below
-            self.assertEqual(1, vn.node_input_signals_max_cnt(self.test_node))
-            self.assertEqual(0, vn.node_output_signals_max_cnt(self.test_node))
+            self.assertEqual(1, pb.node_input_signals_max_cnt(self.test_node))
+            self.assertEqual(0, pb.node_output_signals_max_cnt(self.test_node))
         except Exception as e:
             self.fail(f"Reversing node in and output failed: {e}")
 
@@ -80,23 +80,23 @@ class BindingIntegrationTests(unittest.TestCase):
     # uuid can not match
     def test_config_from_string(self):
         try:
-            config_str = vn.node_to_json_str(self.test_node)
+            config_str = pb.node_to_json_str(self.test_node)
             config_obj = json.loads(config_str)
 
             config_copy_str = json.dumps(config_obj, indent=2)
 
-            test_node = vn.node_new(config_copy_str, "")
+            test_node = pb.node_new(config_copy_str, "")
 
             self.assertEqual(
                 re.sub(
                     r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
                     "",
-                    vn.node_name_full(test_node),
+                    pb.node_name_full(test_node),
                 ),
                 re.sub(
                     r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
                     "",
-                    vn.node_name_full(self.test_node),
+                    pb.node_name_full(self.test_node),
                 ),
             )
         except Exception as e:
@@ -113,54 +113,52 @@ class BindingIntegrationTests(unittest.TestCase):
                 config = json.dumps(obj, indent=2)
                 id = str(uuid.uuid4())
 
-                test_nodes[name] = vn.node_new(config, id)
+                test_nodes[name] = pb.node_new(config, id)
 
             for node in test_nodes.values():
-                if vn.node_check(node):
+                if pb.node_check(node):
                     raise RuntimeError("Failed to verify node configuration")
-                if vn.node_prepare(node):
+                if pb.node_prepare(node):
                     raise RuntimeError(
-                        f"Failed to verify {vn.node_name(node)} node config"
+                        f"Failed to verify {pb.node_name(node)} node config"
                     )
-                vn.node_start(node)
+                pb.node_start(node)
 
             # Arrays to store samples
-            send_smpls = vn.smps_array(1)
-            intmdt_smpls = vn.smps_array(100)
-            recv_smpls = vn.smps_array(100)
+            send_smpls = pb.smps_array(1)
+            intmdt_smpls = pb.smps_array(100)
+            recv_smpls = pb.smps_array(100)
 
             for i in range(100):
                 # send_smpls holds a new sample each time, but the
                 # old one still has a reference in the socket buffer (below)
                 # it is necessary to allocate a new sample each time
-                send_smpls[0] = vn.sample_alloc(2)
-                intmdt_smpls[i] = vn.sample_alloc(2)
-                recv_smpls[i] = vn.sample_alloc(2)
+                send_smpls[0] = pb.sample_alloc(2)
+                intmdt_smpls[i] = pb.sample_alloc(2)
+                recv_smpls[i] = pb.sample_alloc(2)
 
                 # Generate signals and send over send_socket
                 self.assertEqual(
-                    vn.node_read(
-                        test_nodes["signal_generator"], send_smpls, 1
-                    ),
+                    pb.node_read(test_nodes["signal_generator"], send_smpls, 1),
                     1,
                 )
                 self.assertEqual(
-                    vn.node_write(test_nodes["send_socket"], send_smpls, 1), 1
+                    pb.node_write(test_nodes["send_socket"], send_smpls, 1), 1
                 )
 
             # read received signals and send them to recv_socket
             self.assertEqual(
-                vn.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                pb.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 100),
                 100,
             )
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                pb.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
                 100,
             )
 
             # confirm rev_socket signals
             self.assertEqual(
-                vn.node_read(test_nodes["recv_socket"], recv_smpls, 100), 100
+                pb.node_read(test_nodes["recv_socket"], recv_smpls, 100), 100
             )
 
             # reversing in and outputs
@@ -169,24 +167,24 @@ class BindingIntegrationTests(unittest.TestCase):
             #   this can be confirmed when observing network traffic
             #   node details do not represent this properly as of now
             for node in test_nodes.values():
-                vn.node_reverse(node)
-                vn.node_stop(node)
+                pb.node_reverse(node)
+                pb.node_stop(node)
 
             for node in test_nodes.values():
-                vn.node_start(node)
+                pb.node_start(node)
 
             self.assertEqual(
-                vn.node_write(test_nodes["recv_socket"], recv_smpls, 100), 100
+                pb.node_write(test_nodes["recv_socket"], recv_smpls, 100), 100
             )
             self.assertEqual(
-                vn.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
+                pb.node_write(test_nodes["intmdt_socket"], intmdt_smpls, 100),
                 100,
             )
 
             # cleanup
             for node in test_nodes.values():
-                vn.node_stop(node)
-                vn.node_destroy(node)
+                pb.node_stop(node)
+                pb.node_destroy(node)
 
         except Exception as e:
             self.fail(f" err: {e}")
@@ -199,9 +197,7 @@ test_node_config = {
         "layer": "udp",
         "in": {
             "address": "*:12000",
-            "signals": [
-                {"name": "tap_position", "type": "integer", "init": 0}
-            ],
+            "signals": [{"name": "tap_position", "type": "integer", "init": 0}],
         },
         "out": {"address": "127.0.0.1:12001"},
     }
