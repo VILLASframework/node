@@ -181,11 +181,11 @@ test:python_unit_integration:
     - cmake --build build ${CMAKE_BUILD_OPTS} --target python_binding
 
     - binding_path=$(find ${PWD}/build/python/binding/ -name "python_binding*.so" | head -n1)
-    - link_path=${PWD}/python/villas/node/$(basename $python_binding)
+    - link_path=${PWD}/python/villas/node/$(basename $binding_path)
     - ln -sf $binding_path $link_path
 
     - cmake --build build ${CMAKE_BUILD_OPTS} --target run-python-unit-tests run-python-integration-tests
-    - rm $node_path
+    - rm $link_path
   needs:
     - job: "build:source: [fedora]"
       artifacts: true

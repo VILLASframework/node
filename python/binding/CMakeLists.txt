@@ -28,13 +28,6 @@ if(pybind11_FOUND)
     COMPONENT lib
     LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}/villas/node/
   )
-  file(WRITE "${CMAKE_BINARY_DIR}/python/villas/__init__.py" "")
-  file(WRITE "${CMAKE_BINARY_DIR}/python/villas/node/__init__.py" "")
-  install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/python/villas"
-    DESTINATION "${PYTHON_SITE_PACKAGES}"
-    FILES_MATCHING PATTERN "__init__.py"
-  )
 else()
   message(STATUS "pybind11 not found. Skipping Python wrapper build.")
 endif()
