@@ -34,9 +34,9 @@
 #pragma once
 
 #include <atomic>
-
 #include <cstddef>
 #include <cstdint>
+
 #include <unistd.h>
 
 #include <villas/common.hpp>

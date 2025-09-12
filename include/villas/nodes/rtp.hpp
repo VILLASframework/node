@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <pthread.h>
-
 #include <fstream>
+
+#include <pthread.h>
 
 #include <villas/dsp/pid.hpp>
 #include <villas/format.hpp>
@@ -24,6 +24,7 @@ extern "C" {
 // clang-format off
 #include <re/re_types.h>
 #include <re/re_sa.h>
+#include <re/re_list.h>
 #include <re/re_rtp.h>
 // clang-format on
 }

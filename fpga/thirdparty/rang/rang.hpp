@@ -31,8 +31,9 @@
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
 #endif
 
-#include <io.h>
 #include <memory>
+
+#include <io.h>
 #include <windows.h>
 
 // Only defined in windows 10 onwards, redefining in lower windows since it

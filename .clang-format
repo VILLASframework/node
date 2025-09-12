@@ -7,3 +7,18 @@ BasedOnStyle: LLVM
 # Disable automatic line-breaks in comments
 # as this breaks SPDX headers
 ReflowComments: false
+
+# Regroup #include directives to villas - std - other
+IncludeBlocks: Regroup
+IncludeIsMainRegex: / # disable main header heuristic
+IncludeCategories:
+  - Regex: '^<villas/'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '^<[[:lower:]_]+>$'
+    Priority: 1
+    CaseSensitive: true
+  - Regex: '^<.*>$'
+    Priority: 2
+  - Regex: '^".*"$'
+    Priority: 4

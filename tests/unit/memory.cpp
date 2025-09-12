@@ -5,10 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cerrno>
+
 #include <criterion/criterion.h>
 #include <criterion/theories.h>
-
-#include <cerrno>
 
 #include <villas/log.hpp>
 #include <villas/node/memory.hpp>

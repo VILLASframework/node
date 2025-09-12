@@ -18,14 +18,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <sstream>
 #include <string>
 
-#include <cstdlib>
-#include <cstring>
-
-#include <cstdint>
 #include <fcntl.h>
 #include <linux/pci_regs.h>
 #include <sys/eventfd.h>
@@ -215,8 +214,9 @@ std::shared_ptr<Device> Container::attachDevice(devices::PciDevice &pdev) {
         e.what() +
         std::string(
             "\nBAR of device is in inconsistent state. Rewriting the BAR "
-            "failed. Please remove, rescan and reset the device and "
-            "try again."));
+            "failed. This can happend due to missing privileges or bad device "
+            "state. Consider running with root privileges or remove, rescan "
+            "and reset the device."));
   }
 
   // Get IOMMU group of device

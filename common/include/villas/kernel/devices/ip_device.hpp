@@ -8,7 +8,9 @@
 
 #pragma once
 
-#include <filesystem>
+#include <vector>
+
+#include <villas/fs.hpp>
 #include <villas/kernel/devices/platform_device.hpp>
 
 namespace villas {
@@ -17,13 +19,12 @@ namespace devices {
 
 class IpDevice : public PlatformDevice {
 public:
-  static IpDevice from(const std::filesystem::path unsafe_path);
-  static bool is_path_valid(const std::filesystem::path unsafe_path);
+  static IpDevice from(const fs::path unsafe_path);
+  static bool is_path_valid(const fs::path unsafe_path);
 
 private:
   IpDevice() = delete;
-  IpDevice(
-      const std::filesystem::path valid_path) //! Dont allow unvalidated paths
+  IpDevice(const fs::path valid_path) //! Dont allow unvalidated paths
       : PlatformDevice(valid_path){};
 
 public:
@@ -31,7 +32,7 @@ public:
   std::string ip_name() const;
 
   static std::vector<villas::kernel::devices::IpDevice>
-  from_directory(std::filesystem::path devices_directory);
+  from_directory(fs::path devices_directory);
 };
 
 } // namespace devices

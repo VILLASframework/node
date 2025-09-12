@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include <filesystem>
 #include <optional>
+
+#include <villas/fs.hpp>
 #include <villas/kernel/devices/driver.hpp>
 
 namespace villas {
@@ -23,8 +24,8 @@ public:
   virtual std::optional<std::unique_ptr<Driver>> driver() const = 0;
   virtual std::optional<int> iommu_group() const = 0;
   virtual std::string name() const = 0;
-  virtual std::filesystem::path override_path() const = 0;
-  virtual std::filesystem::path path() const = 0;
+  virtual fs::path override_path() const = 0;
+  virtual fs::path path() const = 0;
   virtual void probe() const = 0;
 };
 

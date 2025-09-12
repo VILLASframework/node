@@ -7,10 +7,12 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include <fmt/ostream.h>
+
 #include <villas/config.hpp>
 
 namespace villas {

@@ -10,7 +10,6 @@
 #include <map>
 
 #include <fnmatch.h>
-
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/syslog_sink.h>
 
@@ -58,10 +57,15 @@ Log::Log(Level lvl) : level(lvl), pattern("%H:%M:%S %^%-4t%$ %-16n %v") {
 }
 
 int Log::getWidth() {
-  int width = Terminal::getCols() - 50;
+  int width = Terminal::getCols();
 
-  if (!prefix.empty())
-    width -= prefix.length();
+  width -= 8;  // Timestamp
+  width -= 1;  // Space
+  width -= 4;  // Level
+  width -= 1;  // Space
+  width -= 16; // Name
+  width -= 1;  // Space
+  width -= prefix.length();
 
   return width;
 }

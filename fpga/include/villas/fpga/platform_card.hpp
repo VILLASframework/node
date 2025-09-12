@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <filesystem>
 #include <vector>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/core_connection.hpp>
+#include <villas/fs.hpp>
 
 namespace villas {
 namespace fpga {
@@ -38,8 +38,7 @@ class PlatformCardFactory {
 public:
   static std::shared_ptr<PlatformCard>
   make(json_t *json_card, std::string card_name,
-       std::shared_ptr<kernel::vfio::Container> vc,
-       const std::filesystem::path &searchPath);
+       std::shared_ptr<kernel::vfio::Container> vc, const fs::path &searchPath);
 };
 
 } /* namespace fpga */

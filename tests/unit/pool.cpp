@@ -5,11 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <vector>
+
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
-
 #include <signal.h>
-#include <vector>
 
 #include <villas/log.hpp>
 #include <villas/pool.hpp>

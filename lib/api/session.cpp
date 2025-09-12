@@ -9,12 +9,11 @@
 
 #include <libwebsockets.h>
 
-#include <villas/node/memory.hpp>
-#include <villas/web.hpp>
-
 #include <villas/api/request.hpp>
 #include <villas/api/response.hpp>
 #include <villas/api/session.hpp>
+#include <villas/node/memory.hpp>
+#include <villas/web.hpp>
 
 using namespace villas;
 using namespace villas::node;

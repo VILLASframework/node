@@ -132,7 +132,7 @@ if ! ( pkg-config "lua >= 5.1" || \
        pkg-config "lua51" || \
        { [[ -n "${RTLAB_ROOT:+x}" ]] && [[ -f "/usr/local/include/lua.h" ]]; } \
      ) && should_build "lua" "for the lua hook"; then
-    wget http://www.lua.org/ftp/lua-5.4.7.tar.gz -O - | tar -xz
+    curl -L http://www.lua.org/ftp/lua-5.4.7.tar.gz | tar -xz
     pushd lua-5.4.4
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
     make ${MAKE_OPTS} MYCFLAGS=-fPIC INSTALL_TOP=${PREFIX} install
@@ -194,6 +194,11 @@ fi
 if ! pkg-config "libiec61850 >= 1.6.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
     git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
+
+    pushd libiec61850/third_party/mbedtls/
+    curl -L https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz | tar -xz
+    popd
+
     mkdir -p libiec61850/build
     pushd libiec61850/build
     cmake -DBUILD_EXAMPLES=OFF \
@@ -436,7 +441,7 @@ if ! pkg-config "nice >= 0.1.16" && \
 
         # Install ninja
         if ! command -v ninja; then
-            wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+            curl -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip > ninja-linux.zip
             unzip ninja-linux.zip
             export PATH=${PATH}:.
         fi
@@ -484,6 +489,7 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
+# Build & Install OpenDSS
 if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     should_build "opendss" "For opendss node-type"; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
@@ -500,6 +506,19 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     fi
     cmake -DMyOutputType=DLL \
           ${OPENDSS_CMAKE_OPTS} \
+          ${CMAKE_OPTS} ..
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+# Build & Install ghc::filesystem
+if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "ghc_filesystem" "for compatability with older compilers"; then
+    git clone ${GIT_OPTS} --branch v1.5.14 https://github.com/gulrak/filesystem.git
+    mkdir -p filesystem/build
+    pushd filesystem/build
+    cmake -DGHC_FILESYSTEM_BUILD_TESTING=OFF \
+          -DGHC_FILESYSTEM_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
     make ${MAKE_OPTS} install
     popd

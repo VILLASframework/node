@@ -5,9 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/plugin.hpp>
-
 #include <villas/fpga/ips/gpio.hpp>
+#include <villas/plugin.hpp>
 
 using namespace villas::fpga::ip;
 

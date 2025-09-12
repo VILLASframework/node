@@ -13,7 +13,6 @@ find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(spdlog 1.6.0 REQUIRED)
 find_package(fmt 6.0.0 REQUIRED)
-find_package(Criterion)
 
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)

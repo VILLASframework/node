@@ -8,7 +8,6 @@
 #pragma once
 
 #include <cmath>
-
 #include <vector>
 
 #include <villas/dsp/window.hpp>

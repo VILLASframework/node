@@ -32,36 +32,36 @@ RUN apt-get update && \
 # Dependencies
 RUN apt-get update && \
 	apt-get install -y \
-	libssl-dev \
-	libgraphviz-dev \
-	libprotobuf-dev \
-	libprotobuf-c-dev \
-	uuid-dev \
-	libconfig-dev \
-	libnl-3-dev libnl-route-3-dev \
-	libcurl4-openssl-dev \
-	libjansson-dev \
-	libzmq3-dev \
-	libnanomsg-dev \
-	librabbitmq-dev \
-	libmosquitto-dev \
-	librdkafka-dev \
 	libcomedi-dev \
+	libconfig-dev \
+	libcriterion-dev \
+	libcurl4-openssl-dev \
+	libfmt-dev \
+	libglib2.0-dev \
+	libgraphviz-dev \
+	libhiredis-dev \
 	libibverbs-dev \
+	libjansson-dev \
+	liblua5.3-dev \
+	libmodbus-dev \
+	libmosquitto-dev \
+	libnanomsg-dev \
+	libnice-dev \
+	libnl-3-dev libnl-route-3-dev \
+	libprotobuf-c-dev \
+	libprotobuf-dev \
+	librabbitmq-dev \
+	librdkafka-dev \
 	librdmacm-dev \
+	libre2-dev \
+	libspdlog-dev \
+	libssl-dev \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
-	libfmt-dev \
-	libspdlog-dev \
-	liblua5.3-dev \
-	libhiredis-dev \
-	libnice-dev \
-	libmodbus-dev \
-	libre2-dev \
-	libglib2.0-dev \
-	libcriterion-dev \
+	libzmq3-dev \
 	python3-dev \
-	python3-pybind11
+	python3-pybind11 \
+	uuid-dev
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

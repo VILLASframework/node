@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include <sys/socket.h>
-
 #include <netlink/netlink.h>
 #include <netlink/route/link.h>
 #include <netlink/route/route.h>
+#include <sys/socket.h>
 
 namespace villas {
 namespace kernel {

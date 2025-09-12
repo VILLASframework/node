@@ -23,17 +23,17 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "file",
+            "type": "file",
 
-             "uri": "file.dat",
+            "uri": "file.dat",
 
-             "in": {
-             	"epoch_mode": "original",
-             	"eof": "wait"
-             },
-             "out": {
-             	"flush": true
-             }
+            "in": {
+                "epoch_mode": "original",
+                "eof": "wait"
+            },
+            "out": {
+                "flush": true
+            }
         }
     }
 }

@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <criterion/criterion.h>
+
 #include <villas/graph/directed.hpp>
 #include <villas/log.hpp>
 #include <villas/memory_manager.hpp>

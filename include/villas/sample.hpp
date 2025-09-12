@@ -8,7 +8,6 @@
 #pragma once
 
 #include <atomic>
-
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>

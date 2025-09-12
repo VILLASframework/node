@@ -27,18 +27,18 @@ cat > config.json << EOF
 {
     "nodes": {
         "relay1": {
-             "type": "websocket",
+            "type": "websocket",
 
-             "wait_connected": true,
+            "wait_connected": true,
             "destinations": [
                 "http://localhost:8123/node"
             ]
         },
 
         "relay2": {
-             "type": "websocket",
+            "type": "websocket",
 
-             "wait_connected": true,
+            "wait_connected": true,
             "destinations": [
                 "http://localhost:8123/node"
             ]

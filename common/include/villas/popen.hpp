@@ -7,16 +7,15 @@
 
 #pragma once
 
-#include <signal.h>
-
-#include <ext/stdio_filebuf.h>
-
 #include <istream>
 #include <map>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
+
+#include <ext/stdio_filebuf.h>
+#include <signal.h>
 
 namespace villas {
 namespace utils {

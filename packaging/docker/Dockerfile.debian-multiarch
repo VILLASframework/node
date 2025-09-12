@@ -37,30 +37,30 @@ RUN apt-get update && \
 # Build-time dependencies
 RUN apt-get update && \
 	apt-get install -y \
-		libssl-dev:${ARCH} \
-		libgraphviz-dev:${ARCH} \
-		libprotobuf-dev:${ARCH} \
-		libprotobuf-c-dev:${ARCH} \
-		uuid-dev:${ARCH} \
-		libconfig-dev:${ARCH} \
-		libnl-3-dev \
-		libnl-route-3-dev:${ARCH} \
-		libcurl4-openssl-dev:${ARCH} \
-		libjansson-dev:${ARCH} \
-		libzmq3-dev:${ARCH} \
-		libnanomsg-dev:${ARCH} \
-		librabbitmq-dev:${ARCH} \
-		libmosquitto-dev:${ARCH} \
-		librdkafka-dev:${ARCH} \
-		libcomedi-dev:${ARCH} \
-		libibverbs-dev:${ARCH} \
-		librdmacm-dev:${ARCH} \
-		libusb-1.0-0-dev:${ARCH} \
-		liblua5.3-dev:${ARCH} \
-		libhiredis-dev:${ARCH} \
-		libmodbus-dev:${ARCH} \
-		python3-dev:${ARCH} \
-		python3-pybind11:${ARCH}
+	libcomedi-dev:${ARCH} \
+	libconfig-dev:${ARCH} \
+	libcurl4-openssl-dev:${ARCH} \
+	libgraphviz-dev:${ARCH} \
+	libhiredis-dev:${ARCH} \
+	libibverbs-dev:${ARCH} \
+	libjansson-dev:${ARCH} \
+	liblua5.3-dev:${ARCH} \
+	libmodbus-dev:${ARCH} \
+	libmosquitto-dev:${ARCH} \
+	libnanomsg-dev:${ARCH} \
+	libnl-3-dev \
+	libnl-route-3-dev:${ARCH} \
+	libprotobuf-c-dev:${ARCH} \
+	libprotobuf-dev:${ARCH} \
+	librabbitmq-dev:${ARCH} \
+	librdkafka-dev:${ARCH} \
+	librdmacm-dev:${ARCH} \
+	libssl-dev:${ARCH} \
+	libusb-1.0-0-dev:${ARCH} \
+	libzmq3-dev:${ARCH} \
+	python3-dev:${ARCH} \
+	python3-pybind11:${ARCH} \
+	uuid-dev:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 

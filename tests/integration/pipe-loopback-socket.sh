@@ -57,22 +57,22 @@ cat > config.json << EOF
 {
     "nodes": {
         "node1": {
-             "type": "socket",
+            "type": "socket",
 
-             "vectorize": ${VECTORIZE},
-             "format": "${FORMAT}",
-             "layer": "${LAYER}",
+            "vectorize": ${VECTORIZE},
+            "format": "${FORMAT}",
+            "layer": "${LAYER}",
 
-             "out": {
-             	"address": "${REMOTE}"
-             },
-             "in": {
-             	"address": "${LOCAL}",
-             	"signals": {
-             		"count": ${NUM_VALUES},
-             		"type": "float"
-             	}
-             }
+            "out": {
+                "address": "${REMOTE}"
+            },
+            "in": {
+                "address": "${LOCAL}",
+                "signals": {
+                    "count": ${NUM_VALUES},
+                    "type": "float"
+                }
+            }
         }
     }
 }

@@ -10,6 +10,7 @@
 #ifdef __linux__
 
 #include <cstdint>
+
 #include <sched.h>
 
 #include <villas/exceptions.hpp>

@@ -8,11 +8,13 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
 #include <iostream>
-#include <jansson.h>
 #include <list>
 #include <string>
+
+#include <fmt/ostream.h>
+#include <jansson.h>
+
 #include <villas/common.hpp>
 #include <villas/config.hpp>
 #include <villas/log.hpp>

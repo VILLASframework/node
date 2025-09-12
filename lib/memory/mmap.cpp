@@ -6,12 +6,12 @@
  */
 
 #include <cstdlib>
-#include <unistd.h>
 
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 // Required to allocate hugepages on Apple OS X
 #ifdef __MACH__

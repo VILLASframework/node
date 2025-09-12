@@ -7,15 +7,15 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(villas-node
-    VERSION 0.0.0
-    DESCRIPTION "VILLASnode"
+    VERSION 1.0.1
+    DESCRIPTION "Open-Source Real-time Multi-protocol Gateway"
     HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
 )
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_COPYRIGHT "2014-2025 The VILLASframework Authors")
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
@@ -48,7 +48,6 @@ include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
 include(GNUInstallDirs)
-include(GetVersion)
 include(FindSymbol)
 include(CMakeDependentOption)
 
@@ -76,19 +75,17 @@ find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
 find_package(OpenDSSC)
+find_package(FileSystem)
+find_package(Criterion)
 
 # Check for tools
+find_program(PROTOBUFC_COMPILER NAMES protoc-c)
+find_program(PROTOBUF_COMPILER NAMES protoc)
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
     message(SEND_ERROR "GNU paste is missing. Please install coreutils")
 endif()
 
-# Check programs
-find_program(PROTOBUFC_COMPILER NAMES protoc-c)
-find_program(PROTOBUF_COMPILER NAMES protoc)
-
-# Build without any GPL-code
-option(WITHOUT_GPL "Build VILLASnode without any GPL code" OFF)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
@@ -157,7 +154,15 @@ else()
     set(FOUND_FPGA_SUBMODULES OFF)
 endif()
 
+if(CXX17_FILESYSTEM)
+    set(STDCXX_FS_NOT_FOUND OFF)
+else()
+    set(STDCXX_FS_NOT_FOUND ON)
+endif()
+
 # Build options
+cmake_dependent_option(WITHOUT_GPL          "Build VILLASnode without any GPL code"                 OFF                "" ON)
+cmake_dependent_option(WITH_GHC_FS          "Build using ghc::filesystem, a drop in replacement for std::filesystem"  ON "STDCXX_FS_NOT_FOUND" OFF)
 cmake_dependent_option(WITH_DEFAULTS        "Defaults for non required build options"               ON                 "" OFF)
 
 cmake_dependent_option(WITH_API             "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
@@ -206,7 +211,7 @@ cmake_dependent_option(WITH_NODE_WEBSOCKET  "Build with websocket node-type"    
 cmake_dependent_option(WITH_NODE_ZEROMQ     "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
 cmake_dependent_option(WITH_NODE_OPENDSS    "Build with opendss node-type"                          "${WITH_DEFAULTS}" "OpenDSSC_FOUND" OFF)
 
-# set a default for the build type
+# Set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
@@ -227,8 +232,10 @@ else()
     add_compile_options(-Wno-error)
 endif()
 
-# Get version info and buildid from Git
-GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
+if(WITH_GHC_FS)
+    find_package(ghc_filesystem 1.5.14 REQUIRED)
+    include_directories($<TARGET_PROPERTY:ghcFilesystem::ghc_filesystem,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 
 if(WITH_FPGA)
     add_subdirectory(fpga)
@@ -314,19 +321,11 @@ add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with 
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
-    message(STATUS "Building ${CMAKE_PROJECT_DESCRIPTION}:")
+    message(STATUS "Building ${PROJECT_NAME}:")
     message(STATUS "${FEATURES}")
 
-    if(FOUND_GIT_VERSION)
-        message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
-        message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
-        message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
-        message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
-        message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
-        message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
-        message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
-    endif()
 
+    message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
     message(STATUS "  ARCH:            ${CMAKE_SYSTEM_PROCESSOR}")
     message(STATUS "  OS:              ${CMAKE_SYSTEM_NAME}")
 endif()

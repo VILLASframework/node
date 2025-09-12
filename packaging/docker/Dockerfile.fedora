@@ -41,32 +41,31 @@ RUN pip install \
 
 # Dependencies
 RUN dnf -y install \
-	openssl-devel \
-	libuuid-devel \
-	libconfig-devel \
-	libwebsockets-devel \
-	libcurl-devel \
-	jansson-devel \
-	spdlog-devel \
 	fmt-devel \
-	libnl3-devel \
 	graphviz-devel \
-	protobuf-devel \
-	protobuf-c-devel \
-	zeromq-devel \
-	librabbitmq-devel \
-	mosquitto-devel \
-	librdkafka-devel \
+	hiredis-devel \
+	jansson-devel \
+	libconfig-devel \
+	libcurl-devel \
 	libibverbs-devel \
+	libmodbus-devel \
+	# nanomsg-devel \ # TODO: v1.2.1 seems broken. Re-enable once new version is available
+	libnice-devel \
+	libnl3-devel \
+	librabbitmq-devel \
+	librdkafka-devel \
 	librdmacm-devel \
 	libusb1-devel \
+	libuuid-devel \
+	libwebsockets-devel \
 	lua-devel \
-	hiredis-devel \
-	libnice-devel \
-	libmodbus-devel \
-	pybind11-devel
-# TODO: v1.2.1 seems broken. Re-enable once new version is available
-# nanomsg-devel
+	mosquitto-devel \
+	openssl-devel \
+	protobuf-c-devel \
+	protobuf-devel \
+	pybind11-devel \
+	spdlog-devel \
+	zeromq-devel
 
 # Install unpackaged dependencies from source
 # TODO: We currently need to build with GCC 14 to get OpenDSSC working

@@ -42,29 +42,29 @@ cat > src.json << EOF
     },
     "nodes": {
         "rtp_node": {
-             "type": "rtp",
-             "format": "${FORMAT}",
-             "vectorize": ${VECTORIZE},
-             "rate": ${RATE},
-             "rtcp": {
-             	"enabled": true,
-             	"mode": "aimd",
-             	"throttle_mode": "decimate"
-             },
-             "aimd": {
-             	"a": 10,
-             	"b": 0.5
-             },
-             "in": {
-             	"address": "0.0.0.0:33466",
-             	"signals": {
-             		"count": 5,
-             		"type": "float"
-             	}
-             },
-             "out": {
-             	"address": "${REMOTE_ADDR}:33464"
-             }
+            "type": "rtp",
+            "format": "${FORMAT}",
+            "vectorize": ${VECTORIZE},
+            "rate": ${RATE},
+            "rtcp": {
+                "enabled": true,
+                "mode": "aimd",
+                "throttle_mode": "decimate"
+            },
+            "aimd": {
+                "a": 10,
+                "b": 0.5
+            },
+            "in": {
+                "address": "0.0.0.0:33466",
+                "signals": {
+                    "count": 5,
+                    "type": "float"
+                }
+            },
+            "out": {
+                "address": "${REMOTE_ADDR}:33464"
+            }
         }
     }
 }
@@ -84,23 +84,23 @@ cat > dest.json << EOF
              "vectorize": ${VECTORIZE},
              "rate": ${RATE},
              "rtcp": {
-             	"enabled": true,
-             	"mode": "aimd",
-             	"throttle_mode": "decimate"
+                 "enabled": true,
+                 "mode": "aimd",
+                 "throttle_mode": "decimate"
              },
              "aimd": {
-             	"a": 10,
-             	"b": 0.5
+                 "a": 10,
+                 "b": 0.5
              },
              "in": {
-             	"address": "0.0.0.0:33464",
-             	"signals": {
-             		"count": 5,
-             		"type": "float"
-             	}
+                 "address": "0.0.0.0:33464",
+                 "signals": {
+                     "count": 5,
+                     "type": "float"
+                 }
              },
              "out": {
-             	"address": "${LOCAL_ADDR}:33466"
+                 "address": "${LOCAL_ADDR}:33466"
              }
         }
     }

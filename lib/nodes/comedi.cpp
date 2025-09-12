@@ -7,9 +7,10 @@
  */
 
 #include <cmath>
+#include <cstring>
+
 #include <comedi_errno.h>
 #include <comedilib.h>
-#include <cstring>
 #include <sys/mman.h>
 
 #include <villas/exceptions.hpp>

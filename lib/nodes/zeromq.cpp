@@ -6,6 +6,7 @@
  */
 
 #include <cstring>
+
 #include <zmq.h>
 
 #if ZMQ_VERSION_MAJOR < 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR <= 1)

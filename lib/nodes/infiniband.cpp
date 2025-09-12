@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <cstring>
+
 #include <netdb.h>
 
 #include <villas/exceptions.hpp>

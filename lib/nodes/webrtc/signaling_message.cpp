@@ -8,7 +8,9 @@
  */
 
 #include <algorithm>
+
 #include <fmt/format.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/nodes/webrtc/signaling_message.hpp>
 #include <villas/utils.hpp>

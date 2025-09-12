@@ -5,13 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <string>
 #include <utility>
-
-#include <cstring>
 
 #include <jansson.h>
 #include <unistd.h>
@@ -259,11 +258,14 @@ int Relay::httpProtocolCallback(lws *wsi, enum lws_callback_reasons reason,
     }
 
     json_body = json_pack("{ s: o, s: s, s: s, s: s, s: { s: b, s: i, s: s } }",
-                          "sessions", json_sessions, "version",
-                          PROJECT_VERSION_STR, "hostname", r->hostname.c_str(),
-                          "uuid", uuid::toString(r->uuid).c_str(), "options",
-                          "loopback", r->loopback, "port", r->port, "protocol",
-                          r->protocol.c_str());
+                          "sessions", json_sessions,               //
+                          "version", PROJECT_VERSION,              //
+                          "hostname", r->hostname.c_str(),         //
+                          "uuid", uuid::toString(r->uuid).c_str(), //
+
+                          "options", "loopback", r->loopback, //
+                          "port", r->port,                    //
+                          "protocol", r->protocol.c_str());
     if (!json_body)
       return -1;
 

@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+cff-version: "1.2.0"
+authors:
+- family-names: Vogel
+  given-names: Steffen
+  orcid: "https://orcid.org/0000-0003-3384-6750"
+- family-names: Eiling
+  given-names: Niklas
+  orcid: "https://orcid.org/0000-0002-7011-9846"
+- family-names: Pitz
+  given-names: Manuel
+  orcid: "https://orcid.org/0000-0002-6252-2029"
+- family-names: Bach
+  given-names: Alexandra
+  orcid: "https://orcid.org/0009-0005-7385-4642"
+- family-names: Stevic
+  given-names: Marija
+- family-names: Monti
+  given-names: Prof. Antonello
+  orcid: "https://orcid.org/0000-0003-1914-9801"
+doi: 10.5281/zenodo.16917994
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Vogel
+    given-names: Steffen
+    orcid: "https://orcid.org/0000-0003-3384-6750"
+  - family-names: Eiling
+    given-names: Niklas
+    orcid: "https://orcid.org/0000-0002-7011-9846"
+  - family-names: Pitz
+    given-names: Manuel
+    orcid: "https://orcid.org/0000-0002-6252-2029"
+  - family-names: Bach
+    given-names: Alexandra
+    orcid: "https://orcid.org/0009-0005-7385-4642"
+  - family-names: Stevic
+    given-names: Marija
+  - family-names: Monti
+    given-names: Prof. Antonello
+    orcid: "https://orcid.org/0000-0003-1914-9801"
+  date-published: 2025-08-29
+  doi: 10.21105/joss.08401
+  issn: 2475-9066
+  issue: 112
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 8401
+  title: "VILLASnode: An Open-Source Real-time Multi-protocol Gateway"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.08401"
+  volume: 10
+title: "VILLASnode: An Open-Source Real-time Multi-protocol Gateway"

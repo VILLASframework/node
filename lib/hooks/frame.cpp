@@ -7,10 +7,12 @@
 
 #include <cstdint>
 #include <cstring>
-#include <jansson.h>
 #include <limits>
 #include <memory>
 #include <optional>
+
+#include <jansson.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/sample.hpp>

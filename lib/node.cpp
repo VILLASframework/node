@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <openssl/md5.h>
 #include <regex>
+
+#include <openssl/md5.h>
 
 #ifdef __linux__
 extern "C" {

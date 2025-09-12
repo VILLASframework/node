@@ -6,9 +6,8 @@
  */
 
 #include <cmath>
-#include <cstring>
-
 #include <complex>
+#include <cstring>
 
 #include <villas/dsp/window.hpp>
 #include <villas/hook.hpp>

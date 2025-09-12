@@ -53,35 +53,35 @@ cat > config.json <<EOF
              "uri": "output.dat"
         },
         "ib_node_source": {
-             "type": "infiniband",
-             "rdma_port_space": "MODE",
-             "in": {
-             	"address": "10.0.0.2:1337",
-             	"max_wrs": 8192,
-             	"cq_size": 8192,
-             	"poll_mode": "BUSY",
-             	"buffer_subtraction": 128
-             },
-             "out": {
-             	"address": "10.0.0.1:1337",
-             	"resolution_timeout": 1000,
-             	"max_wrs": 8192,
-             	"cq_size": 256,
-             	"send_inline": true,
-             	"max_inline_data": 60,
-             	"use_fallback": true
-             }
+            "type": "infiniband",
+            "rdma_port_space": "MODE",
+            "in": {
+               "address": "10.0.0.2:1337",
+               "max_wrs": 8192,
+               "cq_size": 8192,
+               "poll_mode": "BUSY",
+               "buffer_subtraction": 128
+            },
+            "out": {
+                "address": "10.0.0.1:1337",
+                "resolution_timeout": 1000,
+                "max_wrs": 8192,
+                "cq_size": 256,
+                "send_inline": true,
+                "max_inline_data": 60,
+                "use_fallback": true
+            }
         },
         "ib_node_target": {
-             "type": "infiniband",
-             "rdma_port_space": "MODE",
-             "in": {
-             	"address": "10.0.0.1:1337",
-             	"max_wrs": 8192,
-             	"cq_size": 8192,
-             	"poll_mode": "BUSY",
-             	"buffer_subtraction": 128
-             }
+            "type": "infiniband",
+            "rdma_port_space": "MODE",
+            "in": {
+                "address": "10.0.0.1:1337",
+                "max_wrs": 8192,
+                "cq_size": 8192,
+                "poll_mode": "BUSY",
+                "buffer_subtraction": 128
+            }
         }
     }
 }

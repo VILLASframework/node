@@ -4,8 +4,8 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-ARG DISTRO=rockylinux
-ARG ROCKY_VERSION=9.3
+ARG DISTRO=rockylinux/rockylinux
+ARG ROCKY_VERSION=9.6
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
@@ -61,6 +61,11 @@ RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
+
+# Workaround for broken Linux headers
+ADD packaging/reverse-struct-group.patch .
+RUN cat /usr/include/linux/pkt_cls.h
+RUN patch -F3 -d /usr -p1 -u < reverse-struct-group.patch
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80

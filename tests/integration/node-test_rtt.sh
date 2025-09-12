@@ -28,33 +28,33 @@ cat > config.json <<EOF
     "stats": 1,
     "nodes": {
         "test": {
-             "type": "test_rtt",
-             "cooldown": 2,
-             "output": "./logs",
-             "cases": [
-             	{
-             		"rates": 55.0,
-             		"values": 5,
-             		"limit": 100
-             	},
-             	{
-             		"rates": [ 10, 10, 1000 ],
-             		"values": [ 2, 10, 20, 50 ],
-             		"duration": 5
-             	}
-             ],
-             "hooks": [
-             	{
-             		"type": "stats",
-             		"verbose": false
-             	}
-             ]
+            "type": "test_rtt",
+            "cooldown": 2,
+            "output": "./logs",
+            "cases": [
+                {
+                    "rates": 55.0,
+                    "values": 5,
+                    "limit": 100
+                },
+                {
+                    "rates": [ 10, 10, 1000 ],
+                    "values": [ 2, 10, 20, 50 ],
+                    "duration": 5
+                }
+            ],
+            "hooks": [
+                {
+                    "type": "stats",
+                    "verbose": false
+                }
+            ]
         }
     },
     "paths": [
         {
-             "in": "test",
-             "out": "test"
+            "in": "test",
+            "out": "test"
         }
     ]
 }

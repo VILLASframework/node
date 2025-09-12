@@ -6,13 +6,13 @@
  */
 
 #include <cstdlib>
-#include <strings.h>
-#include <unistd.h>
 
+#include <strings.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <villas/exceptions.hpp>
 #include <villas/log.hpp>

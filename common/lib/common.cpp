@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/common.hpp>
-
 #include <cstdlib>
+
+#include <villas/common.hpp>
 
 std::string stateToString(enum State s) {
   switch (s) {

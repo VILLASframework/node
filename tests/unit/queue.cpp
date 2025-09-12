@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <villas/log.hpp>
 #include <villas/node/memory.hpp>

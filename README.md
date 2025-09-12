@@ -1,8 +1,9 @@
 # <img src="doc/pictures/villas_node.png" width=40 /> VILLASnode
 
 [![build status](https://git.rwth-aachen.de/acs/public/villas/node/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/node/-/pipelines/)
+[![status](https://joss.theoj.org/papers/37c2509d36586f4cec2885d5c2088e8f/status.svg)](https://joss.theoj.org/papers/37c2509d36586f4cec2885d5c2088e8f)
 
-This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
+This is VILLASnode, a gateway for processing and forwarding simulation data between real-time simulators.
 VILLASnode is a client/server application to connect simulation equipment and software such as:
 
 - OPAL-RT RT-LAB,
@@ -43,20 +44,21 @@ If you want to contribute to VILLASnode, please visit the [contribution guidelin
 
 ## License
 
-This project is released under the terms of the [Apache 2.0 license](LICENSE).
+VILLASnode is licensed on a per-file basis under multiple open-source licenses.
+Each source file contains an SPDX license identifier and copyright attribution in accordance with the [REUSE Software guidelines](https://reuse.software/).
+For attribution, please refer to the SPDX headers in each file.
+The [Apache 2.0 license](./LICENSE) covers most of the codebase and is preferred for new contributions.
+License compliance is automatically checked in CI, including validation of licenses in the `LICENSES/` directory.
 
-We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
+We kindly ask all academic publications employing components of VILLASframework to cite the following paper:
 
-- A. Monti et al., "[A Global Real-Time Superlab: Enabling High Penetration of Power Electronics in the Electric Grid](https://ieeexplore.ieee.org/document/8458285/)," in IEEE Power Electronics Magazine, vol. 5, no. 3, pp. 35-44, Sept. 2018.
-- S. Vogel, M. Mirz, L. Razik and A. Monti, "[An open solution for next-generation real-time power system simulation](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8245739&isnumber=8244404)," 2017 IEEE Conference on Energy Internet and Energy System Integration (EI2), Beijing, 2017, pp. 1-6.
+- S. Vogel, N. Eiling, M. Pitz, A. Bach, M. Stevic, and P. A. Monti, “VILLASnode: An Open-Source Real-time Multi-protocol Gateway,” Journal of Open Source Software, vol. 10, no. 112, p. 8401, Aug. 2025, doi: [10.21105/joss.08401](https://doi.org/10.21105/joss.08401).
+
+More publications using, or about VILLASnode [can be found in the documentation](https://villas.fein-aachen.org/docs/publications/).
 
 For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
 
-- SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
-- SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
-- SPDX-FileCopyrightText: 2022-2025 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- SPDX-FileCopyrightText: 2018-2025 Steffen Vogel <post@steffenvogel.de>
-- SPDX-FileCopyrightText: 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
+- SPDX-FileCopyrightText: 2014-2025 The VILLASframework Authors
 - SPDX-License-Identifier: Apache-2.0
 
 ## Contact
@@ -64,7 +66,7 @@ For other licensing options please consult [Prof. Antonello Monti](mailto:amonti
 [![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
 
 - Steffen Vogel <post@steffenvogel.de>
-- Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+- Niklas Eiling <niklas@eil.ing>
 - Felix Wege <fwege@eonerc.rwth-aachen.de>
 - Alexandra Bach <alexandra.bach@eonerc.rwth-aachen.de>
 

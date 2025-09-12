@@ -5,9 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/fpga/ips/zynq.hpp>
-
 #include <villas/fpga/card.hpp>
+#include <villas/fpga/ips/zynq.hpp>
 #include <villas/memory.hpp>
 
 using namespace villas::fpga::ip;

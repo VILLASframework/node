@@ -7,9 +7,8 @@
 
 #include <cstdint>
 
-#include <villas/utils.hpp>
-
 #include <villas/fpga/ips/aurora_xilinx.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::fpga::ip;
 

@@ -40,7 +40,10 @@
         system:
         import nixpkgs {
           inherit system;
-          overlays = with self.overlays; [ default ];
+          overlays = with self.overlays; [
+            default
+            patches
+          ];
         };
 
       # Initialize development nixpkgs for the specified `system`
@@ -50,6 +53,7 @@
           inherit system;
           overlays = with self.overlays; [
             default
+            patches
             debug
           ];
         };
@@ -111,10 +115,14 @@
       # Standard flake attribute allowing you to add the villas packages to your nixpkgs
       overlays = {
         default = final: prev: packagesWith final;
+
+        patches = import ./packaging/nix/patches.nix;
+
         debug = final: prev: {
           jansson = addSeparateDebugInfo prev.jansson;
           libmodbus = addSeparateDebugInfo prev.libmodbus;
         };
+
         minimal = final: prev: {
           mosquitto = prev.mosquitto.override { systemd = final.systemdMinimal; };
           rdma-core = prev.rdma-core.override { udev = final.systemdMinimal; };
@@ -133,6 +141,7 @@
             boxfort
             clang-tools
             criterion
+            gdb
             jq
             libffi
             libgit2
@@ -192,7 +201,7 @@
 
         villas = {
           imports = [ (nixDir + "/module.nix") ];
-          nixpkgs.overlays = [ self.overlays.default ];
+          nixpkgs.overlays = [ self.overlays.default self.overlays.patches ];
         };
       };
     };

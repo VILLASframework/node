@@ -5,8 +5,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+
 #include <dirent.h>
 #include <fcntl.h>
+#include <fmt/core.h>
 #include <paths.h>
 #include <signal.h>
 #include <sys/stat.h>
@@ -14,14 +21,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-
-#include <iostream>
-
-#include <fmt/core.h>
 #include <villas/exceptions.hpp>
 #include <villas/popen.hpp>
 #include <villas/utils.hpp>

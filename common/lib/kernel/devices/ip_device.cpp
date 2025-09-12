@@ -6,17 +6,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <filesystem>
 #include <regex>
 #include <stdexcept>
 
 #include <villas/exceptions.hpp>
+#include <villas/fs.hpp>
 #include <villas/kernel/devices/ip_device.hpp>
 #include <villas/utils.hpp>
 
 using villas::kernel::devices::IpDevice;
 
-IpDevice IpDevice::from(const std::filesystem::path unsafe_path) {
+IpDevice IpDevice::from(const fs::path unsafe_path) {
   if (!is_path_valid(unsafe_path))
     throw RuntimeError(
         "Path {} failed validation as IpDevicePath [adress in hex].[name] ",
@@ -42,7 +42,7 @@ size_t IpDevice::addr() const {
   return addr;
 }
 
-bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
+bool IpDevice::is_path_valid(const fs::path unsafe_path) {
   std::string assumed_device_name = unsafe_path.filename();
 
   // Match format of hexaddr.devicename
@@ -55,15 +55,14 @@ bool IpDevice::is_path_valid(const std::filesystem::path unsafe_path) {
 }
 
 std::vector<villas::kernel::devices::IpDevice>
-IpDevice::from_directory(std::filesystem::path devices_directory) {
+IpDevice::from_directory(fs::path devices_directory) {
   std::vector<villas::kernel::devices::IpDevice> devices;
 
   const std::vector<std::string> devicetree_names =
       villas::utils::read_names_in_directory(devices_directory);
 
   for (auto devicetree_name : devicetree_names) {
-    auto path_to_device =
-        devices_directory / std::filesystem::path(devicetree_name);
+    auto path_to_device = devices_directory / fs::path(devicetree_name);
     try {
       auto device = villas::kernel::devices::IpDevice::from(path_to_device);
       devices.push_back(device);

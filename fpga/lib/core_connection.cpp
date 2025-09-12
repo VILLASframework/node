@@ -26,8 +26,7 @@ CoreConnection
 CoreConnection::from(std::shared_ptr<villas::fpga::ip::Core> ip,
                      std::shared_ptr<kernel::vfio::Container> vfio_container) {
   // Find matching OS device for ip
-  const std::filesystem::path PLATFORM_DEVICES_DIRECTORY(
-      "/sys/bus/platform/devices");
+  const fs::path PLATFORM_DEVICES_DIRECTORY("/sys/bus/platform/devices");
   std::vector<villas::kernel::devices::IpDevice> devices =
       villas::kernel::devices::IpDevice::from_directory(
           PLATFORM_DEVICES_DIRECTORY);

@@ -10,21 +10,20 @@
 
 #pragma once
 
-#include <filesystem>
-#include <jansson.h>
 #include <list>
 #include <set>
 #include <string>
 
-#include <villas/memory.hpp>
-#include <villas/plugin.hpp>
-
-#include <villas/kernel/devices/pci_device.hpp>
-#include <villas/kernel/vfio_container.hpp>
+#include <jansson.h>
 
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/config.h>
 #include <villas/fpga/core.hpp>
+#include <villas/fs.hpp>
+#include <villas/kernel/devices/pci_device.hpp>
+#include <villas/kernel/vfio_container.hpp>
+#include <villas/memory.hpp>
+#include <villas/plugin.hpp>
 
 namespace villas {
 namespace fpga {
@@ -65,8 +64,7 @@ class PCIeCardFactory : public plugin::Plugin {
 public:
   static std::shared_ptr<PCIeCard>
   make(json_t *json, std::string card_name,
-       std::shared_ptr<kernel::vfio::Container> vc,
-       const std::filesystem::path &searchPath);
+       std::shared_ptr<kernel::vfio::Container> vc, const fs::path &searchPath);
 
   static PCIeCard *make() { return new PCIeCard(); }
 

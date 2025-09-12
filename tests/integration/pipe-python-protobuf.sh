@@ -42,16 +42,16 @@ cat > config.json << EOF
 {
     "nodes": {
         "py-client": {
-             "type": "socket",
-             "layer": "${LAYER}",
-             "format": "${FORMAT}",
+            "type": "socket",
+            "layer": "${LAYER}",
+            "format": "${FORMAT}",
 
-             "in": {
-             	"address": "${LOCAL}"
-             },
-             "out": {
-             	"address": "${REMOTE}"
-             }
+            "in": {
+                "address": "${LOCAL}"
+            },
+            "out": {
+                "address": "${REMOTE}"
+            }
         }
     }
 }

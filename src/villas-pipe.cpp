@@ -5,13 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cstdlib>
-#include <signal.h>
-#include <unistd.h>
-
 #include <atomic>
+#include <cstdlib>
 #include <iostream>
 #include <thread>
+
+#include <signal.h>
+#include <unistd.h>
 
 #include <villas/colors.hpp>
 #include <villas/config_helper.hpp>

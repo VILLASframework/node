@@ -7,19 +7,15 @@
  */
 
 #include <csignal>
-#include <filesystem>
 #include <iostream>
-#include <jansson.h>
 #include <regex>
 #include <string>
 #include <vector>
 
+#include <jansson.h>
 #include <rang.hpp>
 
 #include <villas/exceptions.hpp>
-#include <villas/log.hpp>
-#include <villas/utils.hpp>
-
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/ips/aurora_xilinx.hpp>
@@ -29,6 +25,9 @@
 #include <villas/fpga/platform_card.hpp>
 #include <villas/fpga/utils.hpp>
 #include <villas/fpga/vlnv.hpp>
+#include <villas/fs.hpp>
+#include <villas/log.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 
@@ -233,10 +232,10 @@ void fpga::setupColorHandling() {
 }
 
 std::shared_ptr<fpga::Card>
-fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
+fpga::createCard(json_t *config, const fs::path &searchPath,
                  std::shared_ptr<kernel::vfio::Container> vfioContainer,
                  std::string card_name) {
-  auto configDir = std::filesystem::path().parent_path();
+  auto configDir = fs::path().parent_path();
 
   const char *interfaceName;
   json_error_t err;
@@ -264,13 +263,13 @@ fpga::createCard(json_t *config, const std::filesystem::path &searchPath,
 
 int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
-                      const std::filesystem::path &searchPath,
+                      const fs::path &searchPath,
                       std::shared_ptr<kernel::vfio::Container> vfioContainer) {
   int numFpgas = 0;
   if (vfioContainer == nullptr) {
     vfioContainer = std::make_shared<kernel::vfio::Container>();
   }
-  auto configDir = std::filesystem::path().parent_path();
+  auto configDir = fs::path().parent_path();
 
   json_t *fpgas = json_object_get(config, "fpgas");
   if (fpgas == nullptr) {
@@ -295,13 +294,13 @@ int fpga::createCards(json_t *config,
                       std::list<std::shared_ptr<fpga::Card>> &cards,
                       const std::string &searchPath,
                       std::shared_ptr<kernel::vfio::Container> vfioContainer) {
-  const auto fsPath = std::filesystem::path(searchPath);
+  const auto fsPath = fs::path(searchPath);
   return createCards(config, cards, fsPath, vfioContainer);
 }
 
 std::shared_ptr<fpga::Card> fpga::setupFpgaCard(const std::string &configFile,
                                                 const std::string &fpgaName) {
-  auto configDir = std::filesystem::path(configFile).parent_path();
+  auto configDir = fs::path(configFile).parent_path();
 
   // Parse FPGA configuration
   FILE *f = fopen(configFile.c_str(), "r");

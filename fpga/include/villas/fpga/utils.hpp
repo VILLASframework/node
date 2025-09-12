@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+
 #include <villas/fpga/ips/aurora_xilinx.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/pcie_card.hpp>
@@ -18,13 +19,13 @@ std::shared_ptr<fpga::Card> setupFpgaCard(const std::string &configFile,
                                           const std::string &fpgaName);
 
 std::shared_ptr<fpga::Card>
-createCard(json_t *config, const std::filesystem::path &searchPath,
+createCard(json_t *config, const fs::path &searchPath,
            std::shared_ptr<kernel::vfio::Container> vfioContainer,
            std::string card_name = "anonymous Card");
 
 int createCards(
     json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,
-    const std::filesystem::path &searchPath,
+    const fs::path &searchPath,
     std::shared_ptr<kernel::vfio::Container> vfioContainer = nullptr);
 int createCards(
     json_t *config, std::list<std::shared_ptr<fpga::Card>> &cards,

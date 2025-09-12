@@ -37,13 +37,16 @@ void Hist::put(double value) {
   if (data.size()) {
     if (total < warmup) {
       // We are still in warmup phase... Waiting for more samples...
-    } else if (data.size() && total == warmup && warmup != 0) {
-      low = getMean() - 3 * getStddev();
-      high = getMean() + 3 * getStddev();
+    } else if (total == warmup) {
+      if (warmup != 0) {
+        low = getMean() - 3 * getStddev();
+        high = getMean() + 3 * getStddev();
+      } else {
+        low = -10;
+        high = 10;
+      }
+
       resolution = (high - low) / data.size();
-    } else if (data.size() && (total == warmup) && (warmup == 0)) {
-      // There is no warmup phase
-      // TODO resolution = ?
     } else {
       idx_t idx = std::round((value - low) / resolution);
 
@@ -126,9 +129,9 @@ void Hist::plot(Logger logger) const {
   Hist::cnt_t max = *std::max_element(data.begin(), data.end());
 
   std::vector<TableColumn> cols = {
-      {-9, TableColumn::Alignment::RIGHT, "Value", "%+9.3g"},
-      {-6, TableColumn::Alignment::RIGHT, "Count", "%6ju"},
-      {0, TableColumn::Alignment::LEFT, "Plot", "%s", "occurrences"}};
+      {-9, 3, TableColumn::Alignment::RIGHT, "Value", "g"},
+      {-6, -1, TableColumn::Alignment::RIGHT, "Count", "d"},
+      {0, -1, TableColumn::Alignment::LEFT, "Plot", "s", "occurrences"}};
 
   Table table = Table(logger, cols);
 
@@ -136,7 +139,7 @@ void Hist::plot(Logger logger) const {
   table.header();
 
   for (size_t i = 0; i < data.size(); i++) {
-    double value = low + (i)*resolution;
+    double value = low + (double)i * resolution;
     Hist::cnt_t cnt = data[i];
     int bar = cols[2].getWidth() * ((double)cnt / max);
 
@@ -144,10 +147,40 @@ void Hist::plot(Logger logger) const {
     for (int i = 0; i < bar; i++)
       buf = strcatf(&buf, "\u2588");
 
-    table.row(3, value, cnt, buf);
+    table.row(value, cnt, buf);
 
     free(buf);
   }
+}
+
+std::string Hist::toPrometheusText(const std::string &metric_name,
+                                   const std::string &node_name) const {
+  std::stringstream base;
+  base << "#TYPE HISTOGRAM " << metric_name;
+
+  // Needed because Prometheus understands quantiles.
+  cnt_t cumsum = 0;
+  for (size_t i = 0; i < data.size(); i++) {
+    double value = low + ((double)i + 0.5) * resolution;
+
+    if (cumsum <= UINTMAX_MAX - data[i]) {
+      cumsum += data[i];
+    } else {
+      cumsum = UINTMAX_MAX; // Avoid overflow
+    }
+
+    base << "\n"
+         << metric_name << " {node=\"" << node_name << "\" le=\"" << value
+         << "\"} " << cumsum;
+  }
+
+  base << "\n"
+       << metric_name << " {node=\"" << node_name << "\" le=\"+Inf\"} " << total
+       << "\n"
+       << metric_name << "_count "
+       << " {node=\"" << node_name << "\"} " << total;
+
+  return base.str();
 }
 
 char *Hist::dump() const {

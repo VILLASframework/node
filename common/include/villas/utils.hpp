@@ -8,21 +8,20 @@
 
 #pragma once
 
-#include <filesystem>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
 #include <list>
 #include <string>
 #include <vector>
 
-#include <cassert>
-#include <cstdint>
-#include <cstdlib>
+#include <openssl/sha.h>
 #include <sched.h>
 #include <signal.h>
 #include <sys/types.h>
 
-#include <openssl/sha.h>
-
 #include <villas/config.hpp>
+#include <villas/fs.hpp>
 
 #ifdef __GNUC__
 #define LIKELY(x) __builtin_expect((x), 1)
@@ -213,9 +212,8 @@ template <class... Ts> struct overloaded : Ts... {
 // Explicit deduction guide (not needed as of C++20)
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-void write_to_file(std::string data, const std::filesystem::path file);
-std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &directory);
+void write_to_file(std::string data, const fs::path file);
+std::vector<std::string> read_names_in_directory(const fs::path &directory);
 
 namespace base64 {
 

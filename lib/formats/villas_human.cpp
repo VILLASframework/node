@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include <openssl/crypto.h>
+
 #include <villas/formats/villas_human.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>

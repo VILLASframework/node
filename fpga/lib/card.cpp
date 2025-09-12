@@ -129,7 +129,7 @@ bool Card::mapMemoryBlock(const std::shared_ptr<MemoryBlock> block) {
 }
 
 void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
-                          const std::filesystem::path &searchPath) {
+                          const fs::path &searchPath) {
   auto logger = getStaticLogger();
 
   // Load IPs from a separate json file
@@ -140,8 +140,7 @@ void CardFactory::loadIps(std::shared_ptr<Card> card, json_t *json_ips,
   }
 
   if (!searchPath.empty()) {
-    std::filesystem::path json_ips_path =
-        searchPath / json_string_value(json_ips);
+    fs::path json_ips_path = searchPath / json_string_value(json_ips);
     logger->debug("searching for FPGA IP cors config at {}",
                   json_ips_path.string());
     json_ips = json_load_file(json_ips_path.c_str(), 0, nullptr);

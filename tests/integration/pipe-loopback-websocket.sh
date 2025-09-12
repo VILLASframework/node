@@ -29,13 +29,13 @@ cat > config1.json << EOF
     },
     "nodes": {
         "node1": {
-             "type": "websocket",
+            "type": "websocket",
 
-             "destinations": [
-             	"ws://127.0.0.1:8080/node2.protobuf"
-             ],
+            "destinations": [
+               "ws://127.0.0.1:8080/node2.protobuf"
+            ],
 
-             "wait_connected": true
+            "wait_connected": true
         }
     }
 }

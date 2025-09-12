@@ -8,6 +8,7 @@
  */
 
 #include <criterion/criterion.h>
+#include <spdlog/spdlog.h>
 
 #include <villas/fpga/core.hpp>
 #include <villas/fpga/pcie_card.hpp>
@@ -15,8 +16,6 @@
 #include <villas/fpga/vlnv.hpp>
 
 #include "global.hpp"
-
-#include <spdlog/spdlog.h>
 
 #define FPGA_CARD "vc707"
 #define TEST_CONFIG "../etc/fpga.json"
@@ -64,7 +63,7 @@ static void init() {
   cr_assert_not_null(fpgaCardFactory, "No plugin for FPGA card found");
 
   // Create all FPGA card instances using the corresponding plugin
-  auto configDir = std::filesystem::path(fn).parent_path();
+  auto configDir = fs::path(fn).parent_path();
   auto cards = std::list<std::shared_ptr<fpga::Card>>();
   fpga::createCards(json, cards, configDir);
   state.cards = cards;

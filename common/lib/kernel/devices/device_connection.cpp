@@ -6,10 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/kernel/devices/device_connection.hpp>
-
 #include <memory>
 
+#include <villas/kernel/devices/device_connection.hpp>
 #include <villas/kernel/devices/linux_driver.hpp>
 #include <villas/memory_manager.hpp>
 
@@ -27,8 +26,7 @@ DeviceConnection DeviceConnection::from(
   auto logger = villas::Log::get("Builder: DeviceConnection");
 
   // Bind the devicetree device to vfio driver
-  LinuxDriver driver(
-      std::filesystem::path("/sys/bus/platform/drivers/vfio-platform"));
+  LinuxDriver driver(fs::path("/sys/bus/platform/drivers/vfio-platform"));
   driver.attach(device);
 
   // Attach vfio container to the iommu group

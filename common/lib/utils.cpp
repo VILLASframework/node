@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include <cctype>
 #include <cmath>
 #include <cstdarg>
@@ -17,22 +13,24 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <dirent.h>
-#include <fcntl.h>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <pthread.h>
-#include <unistd.h>
+#include <string>
+#include <vector>
 
+#include <dirent.h>
+#include <fcntl.h>
 #include <jansson.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #include <villas/colors.hpp>
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/fs.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
 
@@ -356,7 +354,7 @@ bool isPrivileged() {
   return true;
 }
 
-void write_to_file(std::string data, const std::filesystem::path file) {
+void write_to_file(std::string data, const fs::path file) {
   villas::Log::get("Filewriter")->debug("{} > {}", data, file.u8string());
   std::ofstream outputFile(file.u8string());
 
@@ -364,15 +362,13 @@ void write_to_file(std::string data, const std::filesystem::path file) {
     outputFile << data;
     outputFile.close();
   } else {
-    throw std::filesystem::filesystem_error("Cannot open outputfile",
-                                            std::error_code());
+    throw fs::filesystem_error("Cannot open outputfile", std::error_code());
   }
 }
 
-std::vector<std::string>
-read_names_in_directory(const std::filesystem::path &directory) {
+std::vector<std::string> read_names_in_directory(const fs::path &directory) {
   std::vector<std::string> names;
-  for (auto const &dir_entry : std::filesystem::directory_iterator{directory}) {
+  for (auto const &dir_entry : fs::directory_iterator{directory}) {
     names.push_back(dir_entry.path().filename());
   }
   return names;

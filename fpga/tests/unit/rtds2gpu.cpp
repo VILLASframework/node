@@ -5,19 +5,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <criterion/criterion.h>
-
 #include <iostream>
 
-#include <villas/fpga/card.hpp>
-#include <villas/log.hpp>
-#include <villas/memory.hpp>
+#include <criterion/criterion.h>
 
+#include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/gpu2rtds.hpp>
 #include <villas/fpga/ips/rtds.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
 #include <villas/fpga/ips/switch.hpp>
+#include <villas/log.hpp>
+#include <villas/memory.hpp>
 
 #include "global.hpp"
 

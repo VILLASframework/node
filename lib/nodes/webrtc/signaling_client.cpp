@@ -99,58 +99,63 @@ void SignalingClient::connectStatic(struct lws_sorted_usec_list *sul) {
   }
 }
 
-int SignalingClient::protocolCallbackStatic(struct lws *wsi,
-                                            enum lws_callback_reasons reason,
-                                            void *user, void *in, size_t len) {
-  auto *c = reinterpret_cast<SignalingClient *>(user);
-
-  return c->protocolCallback(wsi, reason, in, len);
-}
-
 int SignalingClient::protocolCallback(struct lws *wsi,
                                       enum lws_callback_reasons reason,
-                                      void *in, size_t len) {
+                                      void *user, void *in, size_t len) {
+  auto *c = reinterpret_cast<SignalingClient *>(user);
+
   int ret;
 
   switch (reason) {
-  case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-    cbError(in ? (char *)in : "unknown error");
+  case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
+    assert(c);
+    c->cbError(in ? (char *)in : "unknown error");
     goto do_retry;
+  }
 
-  case LWS_CALLBACK_CLIENT_RECEIVE:
+  case LWS_CALLBACK_CLIENT_RECEIVE: {
+    assert(c);
+    auto &buffer = c->buffer;
+
     if (lws_is_first_fragment(wsi))
       buffer.clear();
 
     buffer.append((char *)in, len);
 
     if (lws_is_final_fragment(wsi)) {
-      logger->trace("Signaling message received: {:.{}}", buffer.data(),
-                    buffer.size());
+      c->logger->trace("Signaling message received: {:.{}}", buffer.data(),
+                       buffer.size());
 
       auto *json = buffer.decode();
       if (json == nullptr) {
-        logger->error("Failed to decode JSON");
+        c->logger->error("Failed to decode JSON");
         goto do_retry;
       }
 
-      cbMessage(SignalingMessage::fromJson(json));
+      c->cbMessage(SignalingMessage::fromJson(json));
 
       json_decref(json);
     }
 
     break;
+  }
 
-  case LWS_CALLBACK_CLIENT_ESTABLISHED:
-    retry_count = 0;
-    cbConnected();
+  case LWS_CALLBACK_CLIENT_ESTABLISHED: {
+    assert(c);
+    c->retry_count = 0;
+    c->cbConnected();
     break;
+  }
 
-  case LWS_CALLBACK_CLIENT_CLOSED:
-    cbDisconnected();
+  case LWS_CALLBACK_CLIENT_CLOSED: {
+    assert(c);
+    c->cbDisconnected();
     goto do_retry;
+  }
 
   case LWS_CALLBACK_CLIENT_WRITEABLE: {
-    ret = writable();
+    assert(c);
+    ret = c->writable();
     if (ret)
       goto do_retry;
 
@@ -161,10 +166,10 @@ int SignalingClient::protocolCallback(struct lws *wsi,
     break;
   }
 
-  return lws_callback_http_dummy(wsi, reason, this, in, len);
+  return lws_callback_http_dummy(wsi, reason, user, in, len);
 
 do_retry:
-  logger->info("Attempting to reconnect...");
+  c->logger->info("Attempting to reconnect...");
 
   /* Retry the connection to keep it nailed up
    *
@@ -175,9 +180,9 @@ do_retry:
    * elements in the backoff table, it will never give up and keep
    * retrying at the last backoff delay plus the random jitter amount.
    */
-  if (lws_retry_sul_schedule_retry_wsi(wsi, &sul_helper.sul, connectStatic,
-                                       &retry_count))
-    logger->error("Signaling connection attempts exhausted");
+  if (lws_retry_sul_schedule_retry_wsi(wsi, &c->sul_helper.sul, connectStatic,
+                                       &c->retry_count))
+    c->logger->error("Signaling connection attempts exhausted");
 
   return -1;
 }

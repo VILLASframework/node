@@ -8,9 +8,10 @@
 
 #pragma once
 
-#include <filesystem>
 #include <fstream>
 #include <iostream>
+
+#include <villas/fs.hpp>
 #include <villas/kernel/devices/driver.hpp>
 
 namespace villas {
@@ -23,20 +24,19 @@ private:
   static constexpr char UNBIND_DEFAULT[] = "unbind";
 
 public:
-  const std::filesystem::path path;
+  const fs::path path;
 
 private:
-  const std::filesystem::path bind_path;
-  const std::filesystem::path unbind_path;
+  const fs::path bind_path;
+  const fs::path unbind_path;
 
 public:
-  LinuxDriver(const std::filesystem::path path)
-      : LinuxDriver(path, path / std::filesystem::path(BIND_DEFAULT),
-                    path / std::filesystem::path(UNBIND_DEFAULT)){};
+  LinuxDriver(const fs::path path)
+      : LinuxDriver(path, path / fs::path(BIND_DEFAULT),
+                    path / fs::path(UNBIND_DEFAULT)){};
 
-  LinuxDriver(const std::filesystem::path path,
-              const std::filesystem::path bind_path,
-              const std::filesystem::path unbind_path)
+  LinuxDriver(const fs::path path, const fs::path bind_path,
+              const fs::path unbind_path)
       : path(path), bind_path(bind_path), unbind_path(unbind_path){};
 
 public:
