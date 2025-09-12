@@ -35,5 +35,13 @@ add_custom_target(run-unit-tests
     USES_TERMINAL
 )
 
+add_custom_target(run-python-unit-tests
+    COMMAND
+        python3 -m unittest discover ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS
+        python_binding
+    USES_TERMINAL
+)
+
 add_dependencies(tests unit-tests)
-add_dependencies(run-tests run-unit-tests)
+add_dependencies(run-tests run-unit-tests run-python-unit-tests)

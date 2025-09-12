@@ -4,6 +4,8 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
+add_subdirectory(binding)
+
 if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
     add_custom_command(
         OUTPUT
