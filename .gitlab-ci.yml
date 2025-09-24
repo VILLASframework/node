@@ -136,6 +136,16 @@ build:nix:
       --print-build-logs
       ".#villas-node-${SYSTEM}"
 
+build:openapi:
+  stage: build
+  needs: []
+  image: node:24-alpine
+  script:
+    - npx -y @redocly/cli build-docs doc/openapi/openapi.yaml --output openapi.html
+  artifacts:
+    paths:
+      - openapi.html
+
 # Stage: test
 
 test:pre-commit:
