@@ -8,28 +8,14 @@ allOf:
     trigger:
       description: The trigger for new frames.
       type: string
-      default: sequence
+      default: timestamp
       enum:
       - sequence
       - timestamp
 
-    unit:
-      description: The type of a timestamp trigger.
-      type: string
-      enum:
-      - milliseconds
-      - seconds
-      - minutes
-      - hours
-
     interval:
       description: The interval in which frames are annotated.
-      type: number
-      default: 1
-
-    offset:
-      description: An offset in the interval for the annotation of new frames.
-      type: number
-      default: 0
+      default: "1s"
+      $ref: ../../duration.yaml
 
 - $ref: ../hook.yaml
