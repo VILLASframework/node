@@ -11,7 +11,7 @@ GIT_AUTHOR="$(git var GIT_AUTHOR_IDENT | sed -n 's|^\(.*>\).*$|\1|p')"
 SIGNOFF="Signed-off-by: $GIT_AUTHOR"
 
 if ! grep --quiet --fixed-strings --line-regexp "$SIGNOFF" "$MESSAGE_FILE" ; then
-  printf "\n%s" "$SIGNOFF" >> "$MESSAGE_FILE"
+  printf "\n%s\n" "$SIGNOFF" >> "$MESSAGE_FILE"
 fi
 
 exit 0
