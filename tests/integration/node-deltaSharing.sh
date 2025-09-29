@@ -18,7 +18,7 @@
 
 # trap finish EXIT
 
-# cat > deltaShareTest.share <<EOF
+# cat > deltaSharingTest.share <<EOF
 # {
 #   "shareCredentialsVersion": 1,
 #   "endpoint": "https://sharing.delta.io/delta-sharing/",
@@ -29,7 +29,7 @@
 # cat > config.conf <<EOF
 # nodes = {
 #     node1 = {
-#         type = "delta_share"
+#         type = "delta_sharing"
 #         profile_path = "open-datasets.share"
 #         table_path = "open-datasets.share#delta_sharing.default.COVID_19_NYT"
 #         op = "read"
@@ -64,13 +64,13 @@
 #!/bin/bash
 
 # Delta Share Node Integration Test
-# This test verifies the delta_share node can connect to an open Delta Sharing server
+# This test verifies the delta_sharing node can connect to an open Delta Sharing server
 # and read/write data
 
 set -e
 
 # Test configuration
-TEST_NAME="delta_share_integration"
+TEST_NAME="delta_sharing_integration"
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${TEST_DIR}/../../../../build"
 # VILLAS_NODE="${BUILD_DIR}/src/villas-node"
@@ -78,7 +78,7 @@ VILLAS_NODE="villas-node"
 
 # Test data paths
 TEST_PROFILE="${TEST_DIR}/open_delta_profile.json"
-TEST_CACHE="/tmp/delta_share_test_cache"
+TEST_CACHE="/tmp/delta_sharing_test_cache"
 TEST_CONFIG="${TEST_DIR}/test_config.json"
 TEST_OUTPUT="${TEST_DIR}/test_output.json"
 TEST_INPUT="${TEST_DIR}/test_input.json"
@@ -156,7 +156,7 @@ EOF
 {
     "nodes": {
         "delta_reader": {
-            "type": "delta_share",
+            "type": "delta_sharing",
             "profile_path": "${TEST_PROFILE}",
             "cache_dir": "${TEST_CACHE}",
             "table_path": "open-datasets.share#delta_sharing.default.COVID_19_NYT",
@@ -164,7 +164,7 @@ EOF
             "batch_size": 10
         },
         "delta_writer": {
-            "type": "delta_share",
+            "type": "delta_sharing",
             "profile_path": "${TEST_PROFILE}",
             "cache_dir": "${TEST_CACHE}",
             "table_path": "open-delta-sharing.s3.us-west-2.amazonaws.com#samples.test_output",
@@ -239,11 +239,11 @@ test_config_parsing() {
     log_info "Testing node configuration parsing..."
 
     # Test if the node type is recognized
-    if ! "${VILLAS_NODE}" --help  | grep -i "delta_share"; then
-        log_error "delta_share node type not found in villas-node"
+    if ! "${VILLAS_NODE}" --help  | grep -i "delta_sharing"; then
+        log_error "delta_sharing node type not found in villas-node"
         return 1
     else
-        log_info "delta_share node type present in villas-node"
+        log_info "delta_sharing node type present in villas-node"
     fi
 
     #Test if the configuration can be parsed

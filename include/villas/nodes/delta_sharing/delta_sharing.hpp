@@ -14,8 +14,8 @@
 
 #include <jansson.h>
 
-#include "villas/nodes/delta_share/Protocol.h"
-#include "villas/nodes/delta_share/DeltaSharingClient.h"
+#include <villas/nodes/delta_sharing/Protocol.h>
+#include <villas/nodes/delta_sharing/DeltaSharingClient.h>
 
 namespace arrow { class Table; }
 
@@ -25,7 +25,7 @@ namespace node {
 // Forward declarations
 class NodeCompat;
 
-struct delta_share {
+struct delta_sharing {
   // Configuration
   std::string profile_path;
   std::string cache_dir;
@@ -45,23 +45,23 @@ struct delta_share {
   enum class TableOp { TABLE_NOOP, TABLE_READ, TABLE_WRITE } table_op;
 };
 
-char *deltaShare_print(NodeCompat *n);
+char *deltaSharing_print(NodeCompat *n);
 
-int deltaShare_parse(NodeCompat *n, json_t *json);
+int deltaSharing_parse(NodeCompat *n, json_t *json);
 
-int deltaShare_start(NodeCompat *n);
+int deltaSharing_start(NodeCompat *n);
 
-int deltaShare_stop(NodeCompat *n);
+int deltaSharing_stop(NodeCompat *n);
 
-int deltaShare_init(NodeCompat *n);
+int deltaSharing_init(NodeCompat *n);
 
-int deltaShare_destroy(NodeCompat *n);
+int deltaSharing_destroy(NodeCompat *n);
 
-int deltaShare_poll_fds(NodeCompat *n, int fds[]);
+int deltaSharing_poll_fds(NodeCompat *n, int fds[]);
 
-int deltaShare_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
+int deltaSharing_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int deltaShare_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
+int deltaSharing_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
 } // namespace node
 } // namespace villas
