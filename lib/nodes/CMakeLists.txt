@@ -3,7 +3,7 @@
 # Author: Steffen Vogel <post@steffenvogel.de>
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
-
+include (ExternalProject)
 set(NODE_SRC
     loopback_internal.cpp
 )
@@ -190,9 +190,62 @@ if(WITH_NODE_WEBRTC)
 endif()
 
 # Enable Delta Sharing
-if(WITH_NODE_DELTASHARE)
-    list(APPEND NODE_SRC delta_share.cpp)
-    list(APPEND LIBRARIES DeltaSharingClient)
+if(WITH_NODE_DELTASHARING)
+    list(APPEND NODE_SRC
+        delta_sharing/delta_sharing.cpp
+        delta_sharing/DeltaSharingClient.cpp
+        delta_sharing/DeltaSharingRestClient.cpp
+        delta_sharing/functions.cpp
+    )
+
+    ExternalProject_Add(restclient
+    GIT_REPOSITORY https://github.com/mrtazz/restclient-cpp
+    GIT_TAG 0.5.2
+    SOURCE_DIR restclient
+    BUILD_IN_SOURCE 1
+    UPDATE_COMMAND ""
+     PATCH_COMMAND ""
+    CONFIGURE_COMMAND ./autogen.sh && ./configure
+    BUILD_COMMAND make
+    INSTALL_COMMAND sudo make install
+    )
+
+    # ExternalProject_Add(restclient
+    # GIT_REPOSITORY https://github.com/mrtazz/restclient-cpp
+    # GIT_TAG 0.5.2
+    # PREFIX ${CMAKE_BINARY_DIR}/restclient
+    # INSTALL_DIR ${CMAKE_BINARY_DIR}/restclient/install
+    # CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/restclient/install
+    # UPDATE_COMMAND ""
+    # PATCH_COMMAND ""
+    # BUILD_ALWAYS OFF
+    # )
+
+    # Create imported target
+    add_library(restclient-cpp SHARED IMPORTED)
+    set_target_properties(restclient-cpp PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}restclient-cpp${CMAKE_SHARED_LIBRARY_SUFFIX}
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_INSTALL_PREFIX}/include
+    )
+
+    # Add dependency
+    add_dependencies(restclient-cpp restclient)
+
+    pkg_check_modules(ARROW REQUIRED arrow)
+    pkg_check_modules(PARQUET REQUIRED parquet)
+
+
+    list(APPEND LIBRARIES
+        # Arrow::arrow
+        # Parquet::parquet
+        # PkgConfig::Arrow
+        # PkgConfig::Parquet
+        restclient-cpp
+        PkgConfig::JANSSON
+        ${ARROW_LIBRARIES}
+        ${PARQUET_LIBRARIES}
+        ${RESTCLIENT_LIBRARIES}
+    )
 endif()
 
 add_library(nodes STATIC ${NODE_SRC})

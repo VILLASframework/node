@@ -1,11 +1,11 @@
-/* Node type: Delta_Share.
+/* Node type: delta_sharing.
  *
  * Author:
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "villas/nodes/delta_share/Protocol.h"
+#include "villas/nodes/delta_sharing/Protocol.h"
 #include "villas/timing.hpp"
 #include <arrow/array/array_base.h>
 #include <arrow/array/array_binary.h>
@@ -21,8 +21,8 @@
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 
-#include <villas/nodes/delta_share/delta_share.hpp>
-#include <villas/nodes/delta_share/functions.h>
+#include <villas/nodes/delta_sharing/delta_sharing.hpp>
+#include <villas/nodes/delta_sharing/functions.h>
 #include <arrow/array.h>
 #include <arrow/builder.h>
 #include <arrow/table.h>
@@ -35,8 +35,8 @@ static const char *const OP_READ = "read";
 static const char *const OP_WRITE = "write";
 static const char *const OP_NOOP = "noop";
 
-int villas::node::deltaShare_parse(NodeCompat *n, json_t *json) {
-  auto *d = n->getData<struct delta_share>();
+int villas::node::deltaSharing_parse(NodeCompat *n, json_t *json) {
+  auto *d = n->getData<struct delta_sharing>();
 
   int ret;
   json_error_t err;
@@ -57,7 +57,7 @@ int villas::node::deltaShare_parse(NodeCompat *n, json_t *json) {
                        &table_path, "op", &op, "batch_size", &batch_size);
 
   if (ret)
-    throw ConfigError(json, err, "node-config-node-delta_share");
+    throw ConfigError(json, err, "node-config-node-delta_sharing");
 
   if (profile_path)
     d->profile_path = profile_path;
@@ -76,39 +76,39 @@ int villas::node::deltaShare_parse(NodeCompat *n, json_t *json) {
 
   if (op) {
     if (strcmp(op, OP_READ) == 0)
-      d->table_op = delta_share::TableOp::TABLE_READ;
+      d->table_op = delta_sharing::TableOp::TABLE_READ;
     else if (strcmp(op, OP_WRITE) == 0)
-      d->table_op = delta_share::TableOp::TABLE_WRITE;
+      d->table_op = delta_sharing::TableOp::TABLE_WRITE;
     else
-      d->table_op = delta_share::TableOp::TABLE_NOOP;
+      d->table_op = delta_sharing::TableOp::TABLE_NOOP;
   }
 
   return 0;
 }
 
-char *villas::node::deltaShare_print(NodeCompat *n) {
-  auto *d = n->getData<struct delta_share>();
+char *villas::node::deltaSharing_print(NodeCompat *n) {
+  auto *d = n->getData<struct delta_sharing>();
 
   std::string info =
       std::string("profile_path=") + d->profile_path + ", share =" + d->share +
       ", schema =" + d->schema + ", table =" + d->table +
       ", cache_dir=" + d->cache_dir + ", table_path=" + d->table_path +
       ", op=" +
-      (d->table_op == delta_share::TableOp::TABLE_READ
+      (d->table_op == delta_sharing::TableOp::TABLE_READ
            ? OP_READ
-           : (d->table_op == delta_share::TableOp::TABLE_WRITE ? OP_WRITE
+           : (d->table_op == delta_sharing::TableOp::TABLE_WRITE ? OP_WRITE
                                                                : OP_NOOP));
 
   return strdup(info.c_str());
 }
 
 
-int villas::node::deltaShare_start(NodeCompat *n) {
-  auto *d = n->getData<struct delta_share>();
+int villas::node::deltaSharing_start(NodeCompat *n) {
+  auto *d = n->getData<struct delta_sharing>();
 
   if (d->profile_path.empty())
     throw RuntimeError(
-        "'profile_path' must be configured for delta_share node");
+        "'profile_path' must be configured for delta_sharing node");
 
   boost::optional<std::string> cache_opt =
       d->cache_dir.empty() ? boost::none
@@ -137,8 +137,8 @@ int villas::node::deltaShare_start(NodeCompat *n) {
   return 0;
 }
 
-int villas::node::deltaShare_stop(NodeCompat *n) {
-  auto *d = n->getData<struct delta_share>();
+int villas::node::deltaSharing_stop(NodeCompat *n) {
+  auto *d = n->getData<struct delta_sharing>();
   d->table_ptr.reset();
   d->tables.reset();
   d->shares.reset();
@@ -146,26 +146,26 @@ int villas::node::deltaShare_stop(NodeCompat *n) {
   return 0;
 }
 
-int villas::node::deltaShare_init(NodeCompat *n) {
-  auto *d = n->getData<struct delta_share>();
+int villas::node::deltaSharing_init(NodeCompat *n) {
+  auto *d = n->getData<struct delta_sharing>();
 
-  d->profile_path = "";
-  d->cache_dir = "";
-  d->table_path = "";
+  // d->profile_path = "";
+  // d->cache_dir = "";
+  // d->table_path = "";
   d->batch_size = 0;
 
   d->client.reset();
   d->table_ptr.reset();
   d->tables.reset();
   d->shares.reset();
-  d->table_op = delta_share::TableOp::TABLE_NOOP;
+  d->table_op = delta_sharing::TableOp::TABLE_NOOP;
   n->logger->info("Init for Delta Share node");
 
   return 0;
 }
 
-int villas::node::deltaShare_destroy(NodeCompat *n) {
-  auto *d = n->getData<struct delta_share>();
+int villas::node::deltaSharing_destroy(NodeCompat *n) {
+  auto *d = n->getData<struct delta_sharing>();
   d->client.reset();
   if (d->table_ptr != NULL)
     d->table_ptr.reset();
@@ -176,16 +176,16 @@ int villas::node::deltaShare_destroy(NodeCompat *n) {
   return 0;
 }
 
-int villas::node::deltaShare_poll_fds(NodeCompat *n, int fds[]) {
+int villas::node::deltaSharing_poll_fds(NodeCompat *n, int fds[]) {
   (void)n;
   (void)fds;
   return -1; // no polling support
 }
 
-int villas::node::deltaShare_read(NodeCompat *n, struct Sample *const smps[],
+int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
                                   unsigned cnt) {
 
-  auto *d = n->getData<struct delta_share>();
+  auto *d = n->getData<struct delta_sharing>();
 
   if (!d->client) {
     n->logger->error("Delta Sharing client not initialized");
@@ -294,9 +294,9 @@ int villas::node::deltaShare_read(NodeCompat *n, struct Sample *const smps[],
   }
 
 //TODO: write table to delta share server. Implementation to be tested
-int villas::node::deltaShare_write(NodeCompat *n, struct Sample *const smps[],
+int villas::node::deltaSharing_write(NodeCompat *n, struct Sample *const smps[],
                                    unsigned cnt) {
-  auto *d = n->getData<struct delta_share>();
+  auto *d = n->getData<struct delta_sharing>();
 
   if (!d->client) {
     n->logger->error("Delta Sharing client not initialized");
@@ -395,19 +395,19 @@ int villas::node::deltaShare_write(NodeCompat *n, struct Sample *const smps[],
 static NodeCompatType p;
 
 __attribute__((constructor(110))) static void register_plugin() {
-  p.name = "delta_share";
+  p.name = "delta_sharing";
   p.description = "Delta Sharing protocol node";
   p.vectorize = 1;
-  p.size = sizeof(struct delta_share);
-  p.init = deltaShare_init;
-  p.destroy = deltaShare_destroy;
-  p.parse = deltaShare_parse;
-  p.print = deltaShare_print;
-  p.start = deltaShare_start;
-  p.stop = deltaShare_stop;
-  p.read = deltaShare_read;
-  p.write = deltaShare_write;
-  p.poll_fds = deltaShare_poll_fds;
+  p.size = sizeof(struct delta_sharing);
+  p.init = deltaSharing_init;
+  p.destroy = deltaSharing_destroy;
+  p.parse = deltaSharing_parse;
+  p.print = deltaSharing_print;
+  p.start = deltaSharing_start;
+  p.stop = deltaSharing_stop;
+  p.read = deltaSharing_read;
+  p.write = deltaSharing_write;
+  p.poll_fds = deltaSharing_poll_fds;
 
   static NodeCompatFactory ncp(&p);
 }
