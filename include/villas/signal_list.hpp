@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <list>
 #include <memory>
 
 #include <jansson.h>

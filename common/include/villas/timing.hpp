@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <chrono>
 #include <cstdio>
 #include <ctime>
 
@@ -33,3 +33,14 @@ double time_to_double(const struct timespec *ts);
 
 // Convert double containing seconds after 1970 to timespec.
 struct timespec time_from_double(double secs);
+
+// Convert timespec to an std::chrono::time_point.
+template <typename Duration = std::chrono::nanoseconds>
+std::chrono::time_point<std::chrono::system_clock, Duration>
+time_to_timepoint(const struct timespec *ts) {
+  auto dur =
+      std::chrono::seconds(ts->tv_sec) + std::chrono::nanoseconds(ts->tv_nsec);
+
+  return std::chrono::time_point<std::chrono::system_clock, Duration>(
+      std::chrono::duration_cast<Duration>(dur));
+}

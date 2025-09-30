@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <memory>
 
 #include <villas/log.hpp>
 #include <villas/signal.hpp>
@@ -54,7 +55,12 @@ enum class SampleFlags {
   ALL = -1
 };
 
+// Decrease reference count and release memory if last reference was held.
+int sample_decref(struct Sample *s);
+
 struct Sample {
+  using PtrUnique = std::unique_ptr<Sample, decltype(&sample_decref)>;
+
   uint64_t sequence; // The sequence number of this sample.
   unsigned length;   // The number of values in sample::values which are valid.
   unsigned
@@ -114,9 +120,6 @@ void sample_free_many(struct Sample *smps[], int cnt);
 
 // Increase reference count of sample
 int sample_incref(struct Sample *s);
-
-// Decrease reference count and release memory if last reference was held.
-int sample_decref(struct Sample *s);
 
 int sample_copy(struct Sample *dst, const struct Sample *src);
 
