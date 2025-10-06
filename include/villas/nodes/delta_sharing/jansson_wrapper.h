@@ -1,5 +1,11 @@
-#ifndef __JANSSON_WRAPPER_H__
-#define __JANSSON_WRAPPER_H__
+/* Node type: Delta Share.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
 
 #include <jansson.h>
 #include <string>
@@ -11,7 +17,6 @@
 namespace DeltaSharing {
 namespace JanssonWrapper {
 
-// RAII wrapper for json_t
 class JsonValue {
 private:
     json_t* m_json;
@@ -226,7 +231,6 @@ public:
     }
 
     // Object manipulation
-    // void set(const std::string& key, const JsonValue& value) {
     void set(const std::string& key, JsonValue value) {
         if (is_object()) {
             json_object_set_new(m_json, key.c_str(), value.release());
@@ -234,7 +238,6 @@ public:
     }
 
     // Array manipulation
-    // void push_back(const JsonValue& value) {
     void push_back(JsonValue value) {
         if (is_array()) {
             json_array_append_new(m_json, value.release());
@@ -250,5 +253,3 @@ using json = JsonValue;
 
 } // namespace JanssonWrapper
 } // namespace DeltaSharing
-
-#endif

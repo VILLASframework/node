@@ -193,8 +193,8 @@ endif()
 if(WITH_NODE_DELTASHARING)
     list(APPEND NODE_SRC
         delta_sharing/delta_sharing.cpp
-        delta_sharing/DeltaSharingClient.cpp
-        delta_sharing/DeltaSharingRestClient.cpp
+        delta_sharing/delta_sharing_client.cpp
+        delta_sharing/delta_sharing_rest_client.cpp
         delta_sharing/functions.cpp
     )
 
@@ -209,17 +209,6 @@ if(WITH_NODE_DELTASHARING)
     BUILD_COMMAND make
     INSTALL_COMMAND sudo make install
     )
-
-    # ExternalProject_Add(restclient
-    # GIT_REPOSITORY https://github.com/mrtazz/restclient-cpp
-    # GIT_TAG 0.5.2
-    # PREFIX ${CMAKE_BINARY_DIR}/restclient
-    # INSTALL_DIR ${CMAKE_BINARY_DIR}/restclient/install
-    # CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/restclient/install
-    # UPDATE_COMMAND ""
-    # PATCH_COMMAND ""
-    # BUILD_ALWAYS OFF
-    # )
 
     # Create imported target
     add_library(restclient-cpp SHARED IMPORTED)
@@ -236,10 +225,6 @@ if(WITH_NODE_DELTASHARING)
 
 
     list(APPEND LIBRARIES
-        # Arrow::arrow
-        # Parquet::parquet
-        # PkgConfig::Arrow
-        # PkgConfig::Parquet
         restclient-cpp
         PkgConfig::JANSSON
         ${ARROW_LIBRARIES}

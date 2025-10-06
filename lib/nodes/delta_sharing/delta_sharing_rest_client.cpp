@@ -1,5 +1,12 @@
-#include <villas/nodes/delta_sharing/DeltaSharingRestClient.h>
-#include "villas/nodes/delta_sharing/Protocol.h"
+/* Node type: delta_sharing.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <villas/nodes/delta_sharing/delta_sharing_rest_client.h>
+#include <villas/nodes/delta_sharing/Protocol.h>
 #include <fstream>
 #include <sstream>
 #include <restclient-cpp/restclient.h>

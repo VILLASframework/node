@@ -15,7 +15,7 @@ project(villas-node
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2014-2021, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_COPYRIGHT "2014-2025 The VILLASframework Authors")
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
