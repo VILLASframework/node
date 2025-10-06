@@ -1,8 +1,14 @@
-#ifndef __PROTOCOL_H__
-#define __PROTOCOL_H__
+/* Node type: Delta Share.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
 
 #include <iostream>
-#include "jansson_wrapper.h"
+#include <villas/nodes/delta_sharing/jansson_wrapper.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -135,8 +141,6 @@ namespace DeltaSharing
                 {
                     for (auto it = arr.begin(); it != arr.end(); ++it)
                     {
-                        // For jansson, we need to handle the array differently
-                        // This assumes partitionValues is an array of objects with key-value pairs
                         json item = *it;
                         if (item.is_object()) {
                             for (auto kv_it = item.begin(); kv_it != item.end(); ++kv_it) {
@@ -292,5 +296,3 @@ namespace DeltaSharing
 
     };
 };
-
-#endif

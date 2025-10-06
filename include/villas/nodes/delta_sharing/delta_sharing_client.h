@@ -1,15 +1,20 @@
+/* Node type: Delta Share.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef __DELTASHARINGCLIENT_H__
-#define __DELTASHARINGCLIENT_H__
+#pragma once
 
 #include <iostream>
-#include "DeltaSharingRestClient.h"
+#include <villas/nodes/delta_sharing/delta_sharing_rest_client.h>
 #include <arrow/table.h>
 
 namespace DeltaSharing
 {
-    
-    struct DeltaSharingClient 
+
+    struct DeltaSharingClient
     {
     public:
         DeltaSharingClient(std::string filename, boost::optional<std::string> cacheLocation);
@@ -30,5 +35,3 @@ namespace DeltaSharing
         int maxThreads;
     };
 };
-
-#endif

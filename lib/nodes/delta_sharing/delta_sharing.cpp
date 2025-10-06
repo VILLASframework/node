@@ -1,12 +1,12 @@
 /* Node type: delta_sharing.
  *
- * Author:
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "villas/nodes/delta_sharing/Protocol.h"
-#include "villas/timing.hpp"
+#include <villas/nodes/delta_sharing/Protocol.h>
+#include <villas/timing.hpp>
 #include <arrow/array/array_base.h>
 #include <arrow/array/array_binary.h>
 #include <arrow/type_fwd.h>

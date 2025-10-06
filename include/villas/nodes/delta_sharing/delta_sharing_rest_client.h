@@ -1,16 +1,19 @@
+/* Node type: Delta Share.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef __DELTASHARINGRESTCLIENT_H__
-#define __DELTASHARINGRESTCLIENT_H__
+#pragma once
 
 #include <iostream>
-// #include <nlohmann/json.hpp>
-#include "jansson_wrapper.h"
+#include <villas/nodes/delta_sharing/jansson_wrapper.h>
 #include <list>
-#include "Protocol.h"
+#include <villas/nodes/delta_sharing/Protocol.h>
 #include <restclient-cpp/restclient.h>
 #include <restclient-cpp/connection.h>
 
-// using json = DeltaSharing::JanssonWrapper::json;
 
 namespace DeltaSharing
 {
@@ -39,5 +42,3 @@ namespace DeltaSharing
         static const std::string user_agent;
     };
 };
-
-#endif

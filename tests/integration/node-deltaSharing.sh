@@ -1,66 +1,3 @@
-#!/usr/bin/env bash
-#
-# Test hooks in villas node
-#
-# Author: Ritesh Karki
-# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
-# SPDX-License-Identifier: Apache-2.0
-
-# set -e
-
-# DIR=$(mktemp -d)
-# pushd ${DIR}
-
-# function finish {
-#     popd
-#     rm -rf ${DIR}
-# }
-
-# trap finish EXIT
-
-# cat > deltaSharingTest.share <<EOF
-# {
-#   "shareCredentialsVersion": 1,
-#   "endpoint": "https://sharing.delta.io/delta-sharing/",
-#   "bearerToken": "faaie590d541265bcab1f2de9813274bf233"
-# }
-# EOF
-
-# cat > config.conf <<EOF
-# nodes = {
-#     node1 = {
-#         type = "delta_sharing"
-#         profile_path = "open-datasets.share"
-#         table_path = "open-datasets.share#delta_sharing.default.COVID_19_NYT"
-#         op = "read"
-#     },
-#     node2 = {
-#         type = "file"
-#         uri = "delta_output.dat"
-#         in = {
-#             epoch_mode = "direct"
-#             read_mode = "all"
-#             eof = "stop"
-#         }
-#         out = {
-
-#         }
-#     }
-
-# }
-# paths = (
-#     {
-#         in = "node1"
-#         out = "node2"
-#     }
-# )
-# EOF
-
-# villas node config.conf
-
-
-
-
 #!/bin/bash
 
 # Delta Share Node Integration Test
@@ -88,7 +25,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # Helper functions
 log_info() {
@@ -122,8 +59,6 @@ setup_test() {
     # Create test cache directory
     mkdir -p "${TEST_CACHE}"
 
-    # Create test profile for open Delta Sharing server
-    # You'll need to replace this with your actual profile
     cat > "${TEST_PROFILE}" << 'EOF'
 {
   "shareCredentialsVersion": 1,

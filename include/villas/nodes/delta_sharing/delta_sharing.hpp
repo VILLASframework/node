@@ -1,6 +1,6 @@
-/* Node type: Delta Share.
+/* Node type: Delta Sharing.
  *
- * Author:
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,7 +15,7 @@
 #include <jansson.h>
 
 #include <villas/nodes/delta_sharing/Protocol.h>
-#include <villas/nodes/delta_sharing/DeltaSharingClient.h>
+#include <villas/nodes/delta_sharing/delta_sharing_client.h>
 
 namespace arrow { class Table; }
 

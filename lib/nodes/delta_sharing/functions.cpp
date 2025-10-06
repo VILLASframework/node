@@ -1,5 +1,12 @@
+/* Node type: delta_sharing.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <cstddef>
-#include "villas/nodes/delta_sharing/functions.h"
+#include <villas/nodes/delta_sharing/functions.h>
 
 
 namespace DeltaSharing
