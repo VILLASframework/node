@@ -27,7 +27,7 @@ RUN dnf -y install \
 	openssh-clients \
 	jq nmap-ncat \
 	iproute iproute-tc \
-	python python-devel python-pip \
+	python-devel python-pip \
 	gdb gdb-gdbserver \
 	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
@@ -63,6 +63,7 @@ RUN dnf -y install \
 	openssl-devel \
 	protobuf-c-devel \
 	protobuf-devel \
+	pybind11-devel \
 	spdlog-devel \
 	zeromq-devel
 
