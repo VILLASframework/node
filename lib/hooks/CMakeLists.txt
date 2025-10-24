@@ -6,6 +6,7 @@
 
 set(HOOK_SRC
     average.cpp
+    monitoring_hook.cpp
     cast.cpp
     decimate.cpp
     digest.cpp
