@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required:
+- node_id_framework
+- segment_id
+properties:
+  node_id_framework:
+    type: integer
+    min: 4
+    max: 4096
+    description: >-
+      Node ID for Dolphin node which hosts the Orchestra framework.
+
+  segment_id:
+    type: integer
+    min: 1
+    max: 65535
+    description: >-
+      Segment ID used to uniquely identify the framework domain.
+      Note that another segment ID is automatically calculated outside of this range to identify the client segment.

@@ -40,6 +40,7 @@ discriminator:
     nanomsg: nodes/_nanomsg.yaml
     ngsi: nodes/_ngsi.yaml
     opendss: nodes/_opendss.yaml
+    opal.orchestra: nodes/_opal_orchestra.yaml
     redis: nodes/_redis.yaml
     rtp: nodes/_rtp.yaml
     shmem: nodes/_shmem.yaml
