@@ -70,14 +70,17 @@ Duration parse_duration(std::string_view input) {
 
   std::chrono::nanoseconds total_duration{0};
 
-  for (auto i = begin; i != end; ++i) {
-    auto match = *i;
-    auto number_str = match[1];
-    auto unit_str = match[2];
+  for (auto match = begin; match != end; ++match) {
+    if (match->size() != 3) {
+      throw RuntimeError("Invalid duration format: {}", match->str());
+    }
+
+    auto number_str = match->str(1);
+    auto unit_str = match->str(2);
 
     auto it = unit_map.find(unit_str);
     if (it == unit_map.end()) {
-      throw RuntimeError("Unknown duration unit: {}", unit_str.str());
+      throw RuntimeError("Unknown duration unit: {}", unit_str);
     }
 
     auto unit = it->second;
@@ -86,10 +89,10 @@ Duration parse_duration(std::string_view input) {
     try {
       number = std::stoul(number_str);
     } catch (const std::invalid_argument &e) {
-      throw RuntimeError("Invalid number in duration: {}", match.str());
+      throw RuntimeError("Invalid number in duration: {}", match->str());
     } catch (const std::out_of_range &e) {
       throw RuntimeError("Duration overflows maximum representable value: {}",
-                         match.str());
+                         match->str());
     }
 
     auto duration = unit * number;
@@ -100,8 +103,7 @@ Duration parse_duration(std::string_view input) {
     if (unit.count() != 0 &&
         duration.count() / unit.count() != number) // Check for overflow.
       throw RuntimeError("Duration overflows maximum representable value: {}",
-                         match.str());
-    ;
+                         match->str());
 
     total_duration += duration;
   }
