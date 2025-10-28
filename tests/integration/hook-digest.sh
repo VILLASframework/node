@@ -50,7 +50,7 @@ cat > expect.digest <<EOF
 1548104309.637440300-6 1548104309.736158700-7 sha256 B296F08F65FB7A2DE522BFBC5187D77D0EDDD898EB45731472999694087A063C
 EOF
 
-villas hook frame -o interval=2 < input.dat > frame.dat
+villas hook frame -o trigger=sequence -o interval=2 < input.dat > frame.dat
 villas hook digest -o algorithm=sha256 -o uri=output.digest < frame.dat > output.dat
 
 villas compare output.dat expect.dat
