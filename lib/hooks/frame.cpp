@@ -86,8 +86,8 @@ public:
         throw ConfigError(json, "node-config-hook-frame-interval",
                           "Interval must be greater than zero");
     } else if (!strcmp(trigger_str, "sequence")) {
-      if (!json_is_integer(json))
-        throw ConfigError(json, "node-config-hook-frame-interval",
+      if (!json_is_integer(json_interval))
+        throw ConfigError(json_interval, "node-config-hook-frame-interval",
                           "Interval must be an integer");
 
       interval = SequenceInterval(json_integer_value(json_interval));
