@@ -53,8 +53,8 @@ public:
   unsigned int typeSize; // sizeof() of the signal type. See RTSignalType.
   unsigned short length;
 
-  OpalOrchestraMapping(std::shared_ptr<DataItem> item, const std::string &path)
-      : item(item), path(path), signals(), signalList(), indices() {}
+  OpalOrchestraMapping(std::shared_ptr<DataItem> item, std::string path)
+      : item(item), path(std::move(path)), signals(), signalList(), indices() {}
 
   void addSignal(Signal::Ptr signal, std::optional<unsigned> orchestraIdx) {
     if (!orchestraIdx) {
