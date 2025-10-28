@@ -6,10 +6,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <optional>
 #include <string>
 
+#include <fmt/chrono.h>
 #include <fmt/std.h>
 #include <jansson.h>
 #include <libxml/parser.h>
@@ -19,6 +22,7 @@ extern "C" {
 #include <RTAPI.h>
 }
 
+#include <villas/config_helper.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/opal_orchestra/ddf.hpp>
@@ -245,12 +249,12 @@ protected:
   double rate;
   std::optional<std::filesystem::path> dataDefinitionFilename;
 
-  unsigned int connectTimeout; // In seconds.
-  unsigned int
-      flagDelay; // Define the delay to wait, this will call the system function usleep and free the CPU. In microseconds.
-  bool
-      useFlagWithTool; // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
-  bool skipWaitToGo;   // Skip wait-to-go step during start.
+  std::chrono::seconds connectTimeout;
+  std::optional<std::chrono::microseconds>
+      flagDelay; // Define a delay to wait, this will call the system function usleep and free the CPU.
+  std::optional<std::chrono::microseconds>
+      flagDelayTool; // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
+  bool skipWaitToGo; // Skip wait-to-go step during start.
   bool dataDefinitionFileOverwrite; // Overwrite the data definition file (DDF).
   bool
       dataDefinitionFileWriteOnly; // Overwrite the data definition file (DDF) and terminate VILLASnode.
@@ -330,7 +334,7 @@ public:
   OpalOrchestraNode(const uuid_t &id = {}, const std::string &name = "",
                     unsigned int key = 0)
       : Node(id, name), task(), connectionKey(key), domain(),
-        subscribeMappings(), publishMappings(), connectTimeout(5), flagDelay(0),
+        subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
         skipWaitToGo(false), dataDefinitionFileOverwrite(false),
         dataDefinitionFileWriteOnly(false) {}
 
@@ -400,8 +404,10 @@ public:
     json_t *json_in_signals = nullptr;
     json_t *json_out_signals = nullptr;
     json_t *json_connection = nullptr;
+    json_t *json_connect_timeout = nullptr;
+    json_t *json_flag_delay = nullptr;
+    json_t *json_flag_delay_tool = nullptr;
 
-    int ft = -1;
     int sw = -1;
     int ow = -1;
     int owo = -1;
@@ -411,13 +417,14 @@ public:
     json_error_t err;
     ret = json_unpack_ex(
         json, &err, 0,
-        "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: i, s?: i, s?: b, s?: b, s?: "
+        "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: o, s?: o, s?: o, s?: b, s?: "
         "b, s?: b, s?: F, s?: { s?: o }, s?: { s?: o } }",
         "domain", &dn, "synchronous", &sy, "states", &sts, "connection",
-        &json_connection, "ddf", &ddf, "connect_timeout", &connectTimeout,
-        "flag_delay", &flagDelay, "use_flag_with_tool", &ft, "skip_wait_to_go",
-        &sw, "ddf_overwrite", &ow, "ddf_overwrite_only", &owo, "rate", &rate,
-        "in", "signals", &json_in_signals, "out", "signals", &json_out_signals);
+        &json_connection, "ddf", &ddf, "connect_timeout", &json_connect_timeout,
+        "flag_delay", &json_flag_delay, "flag_delay_tool",
+        &json_flag_delay_tool, "skip_wait_to_go", &sw, "ddf_overwrite", &ow,
+        "ddf_overwrite_only", &owo, "rate", &rate, "in", "signals",
+        &json_in_signals, "out", "signals", &json_out_signals);
     if (ret) {
       throw ConfigError(json, err, "node-config-node-opal-orchestra");
     }
@@ -440,16 +447,26 @@ public:
       skipWaitToGo = sw > 0;
     }
 
-    if (ft >= 0) {
-      useFlagWithTool = ft > 0;
-    }
-
     if (ow >= 0) {
       dataDefinitionFileOverwrite = ow > 0;
     }
 
     if (owo >= 0) {
       dataDefinitionFileWriteOnly = owo > 0;
+    }
+
+    if (json_connect_timeout) {
+      connectTimeout =
+          parse_duration<std::chrono::seconds>(json_connect_timeout);
+    }
+
+    if (json_flag_delay) {
+      *flagDelay = parse_duration<std::chrono::microseconds>(json_flag_delay);
+    }
+
+    if (json_flag_delay_tool) {
+      *flagDelayTool =
+          parse_duration<std::chrono::microseconds>(json_flag_delay_tool);
     }
 
     if (json_connection) {
@@ -525,10 +542,11 @@ public:
 
     RTConnectionLockGuard guard(connectionKey);
 
-    auto ret = dataDefinitionFilename
-                   ? RTConnectWithFile(dataDefinitionFilename->c_str(),
-                                       domain.name.c_str(), connectTimeout)
-                   : RTConnect(domain.name.c_str(), connectTimeout);
+    auto ret =
+        dataDefinitionFilename
+            ? RTConnectWithFile(dataDefinitionFilename->c_str(),
+                                domain.name.c_str(), connectTimeout.count())
+            : RTConnect(domain.name.c_str(), connectTimeout.count());
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to connect to Orchestra framework");
     }
@@ -540,14 +558,18 @@ public:
       throw RTError(ret, "Failed to get connection status pointer");
     }
 
-    ret = RTDefineFlagDelay(flagDelay);
-    if (ret != RTAPI_SUCCESS) {
-      throw RTError(ret, "Failed to set flag delay");
+    if (flagDelay) {
+      ret = RTDefineFlagDelay(flagDelay->count());
+      if (ret != RTAPI_SUCCESS) {
+        throw RTError(ret, "Failed to set flag delay");
+      }
     }
 
-    ret = RTUseFlagWithTool(useFlagWithTool);
-    if (ret != RTAPI_SUCCESS) {
-      throw RTError(ret, "Failed to set flag with tool");
+    if (flagDelayTool) {
+      ret = RTUseFlagWithTool(flagDelayTool->count());
+      if (ret != RTAPI_SUCCESS) {
+        throw RTError(ret, "Failed to set flag with tool");
+      }
     }
 
     ret = RTSetSkipWaitToGoAtConnection(skipWaitToGo);
@@ -629,12 +651,19 @@ public:
       details += fmt::format(", ddf={}", *dataDefinitionFilename);
     }
 
+    details += fmt::format(", connect_timeout={}, skip_wait_to_go={}",
+                           connectTimeout, skipWaitToGo);
+
+    if (flagDelay)
+      details += fmt::format(", flag_delay = {}", *flagDelay);
+
+    if (flagDelayTool)
+      details += fmt::format(", flag_delay_tool = {}", *flagDelayTool);
+
     details += fmt::format(
-        ", connect_timeout={}, flag_delay={}, use_flag_with_tool={}, "
-        "skip_wait_to_go={}, #publish_items={}, #subcribe_items={}, "
+        ", #publish_items={}, #subcribe_items={}, "
         "connection_key={}, synchronous={}, states={}, "
         "multiple_publish_allowed={}, connection={{ {} }}",
-        connectTimeout, flagDelay, useFlagWithTool, skipWaitToGo,
         domain.publish.items.size(), domain.subscribe.items.size(),
         connectionKey, domain.synchronous, domain.states,
         domain.multiplePublishAllowed, domain.connection->getDetails());
