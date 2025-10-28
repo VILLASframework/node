@@ -24,11 +24,9 @@ class RTError : public RuntimeError {
 
 public:
   template <typename... Args>
-  RTError(RTAPIReturn_t rc, const std::string &what = std::string(),
-          Args &&...args)
-      : RuntimeError(fmt::format("{}: {}",
-                                 fmt::format(what, std::forward<Args>(args)...),
-                                 RTGetErrorMessage(rc))),
+  RTError(RTAPIReturn_t rc, fmt::format_string<Args...> fmt, Args &&...args)
+      : RuntimeError("{}: {}", fmt::format(fmt, std::forward<Args>(args)...),
+                     RTGetErrorMessage(rc)),
         returnCode(rc) {}
 
   RTAPIReturn_t returnCode;
