@@ -193,7 +193,7 @@ int villas::node::sample_copy_many(struct Sample *const dsts[],
 
 int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
                              int flags) {
-  if ((a->flags & b->flags & flags) != flags) {
+  if ((a->flags & flags) != (b->flags & flags)) {
     printf("flags: a=%#x, b=%#x, wanted=%#x\n", a->flags, b->flags, flags);
     return -1;
   }
