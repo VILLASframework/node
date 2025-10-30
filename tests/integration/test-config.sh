@@ -12,7 +12,7 @@ set -e
 CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
 
 for CONFIG in ${CONFIGS}; do
-    if [ "$(basename ${CONFIG})" == "opal.conf" ] ||
+    if [ "$(basename ${CONFIG})" == "opal_orchestra.conf" ] ||
        [ "$(basename ${CONFIG})" == "fpga.conf" ] ||
        [ "$(basename ${CONFIG})" == "paths.conf" ] ||
        [ "$(basename ${CONFIG})" == "tricks.json" ] ||
