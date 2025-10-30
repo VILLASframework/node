@@ -29,7 +29,7 @@
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
   withNodeOpenDSS ? withAllNodes,
-  withNodeOpalOrchestra ? withAllNodes,
+  withNodeOpalOrchestra ? (withAllNodes && system == "x86_64-linux"),
   withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
@@ -145,59 +145,60 @@ stdenv.mkDerivation {
     protobufcBuildBuild
   ];
 
-  buildInputs =
-    [
-      libwebsockets
-      openssl
-      curl
-      spdlog
-      bash
-    ]
-    ++ lib.optionals withExtraTesting [
-      boxfort
-      criterion
-      libffi
-      libgit2
-      pcre2
-    ]
-    ++ lib.optionals withExtraGraphviz [ graphviz ]
-    ++ lib.optionals withHookLua [ lua ]
-    ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
-    ++ lib.optionals withNodeComedi [ comedilib ]
-    ++ lib.optionals withNodeEthercat [ ethercat ]
-    ++ lib.optionals withNodeIec60870 [ lib60870 ]
-    ++ lib.optionals withNodeIec61850 [ libiec61850 ]
-    ++ lib.optionals withNodeKafka [
-      rdkafka
-      cyrus_sasl
-    ]
-    ++ lib.optionals withNodeModbus [ libmodbus ]
-    ++ lib.optionals withNodeMqtt [ mosquitto ]
-    ++ lib.optionals withNodeNanomsg [ nanomsg ]
-    ++ lib.optionals withNodeOpenDSS [ opendssc ]
-    ++ lib.optionals withNodeOpalOrchestra [ orchestra libxml2 ]
-    ++ lib.optionals withNodeRedis [ redis-plus-plus ]
-    ++ lib.optionals withNodeRtp [ libre ]
-    ++ lib.optionals withNodeSocket [ libnl ]
-    ++ lib.optionals withNodeTemper [ libusb1 ]
-    ++ lib.optionals withNodeUldaq [ libuldaq ]
-    ++ lib.optionals withNodeWebrtc [ libdatachannel ]
-    ++ lib.optionals withNodeZeromq [
-      czmq
-      libsodium
-    ];
+  buildInputs = [
+    libwebsockets
+    openssl
+    curl
+    spdlog
+    bash
+  ]
+  ++ lib.optionals withExtraTesting [
+    boxfort
+    criterion
+    libffi
+    libgit2
+    pcre2
+  ]
+  ++ lib.optionals withExtraGraphviz [ graphviz ]
+  ++ lib.optionals withHookLua [ lua ]
+  ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
+  ++ lib.optionals withNodeComedi [ comedilib ]
+  ++ lib.optionals withNodeEthercat [ ethercat ]
+  ++ lib.optionals withNodeIec60870 [ lib60870 ]
+  ++ lib.optionals withNodeIec61850 [ libiec61850 ]
+  ++ lib.optionals withNodeKafka [
+    rdkafka
+    cyrus_sasl
+  ]
+  ++ lib.optionals withNodeModbus [ libmodbus ]
+  ++ lib.optionals withNodeMqtt [ mosquitto ]
+  ++ lib.optionals withNodeNanomsg [ nanomsg ]
+  ++ lib.optionals withNodeOpenDSS [ opendssc ]
+  ++ lib.optionals withNodeOpalOrchestra [
+    orchestra
+    libxml2
+  ]
+  ++ lib.optionals withNodeRedis [ redis-plus-plus ]
+  ++ lib.optionals withNodeRtp [ libre ]
+  ++ lib.optionals withNodeSocket [ libnl ]
+  ++ lib.optionals withNodeTemper [ libusb1 ]
+  ++ lib.optionals withNodeUldaq [ libuldaq ]
+  ++ lib.optionals withNodeWebrtc [ libdatachannel ]
+  ++ lib.optionals withNodeZeromq [
+    czmq
+    libsodium
+  ];
 
-  propagatedBuildInputs =
-    [
-      libuuid
-      jansson
-    ]
-    ++ lib.optionals withFormatProtobuf [
-      protobuf
-      protobufc
-    ]
-    ++ lib.optionals withNodeInfiniband [ rdma-core ]
-    ++ lib.optionals withExtraConfig [ libconfig ];
+  propagatedBuildInputs = [
+    libuuid
+    jansson
+  ]
+  ++ lib.optionals withFormatProtobuf [
+    protobuf
+    protobufc
+  ]
+  ++ lib.optionals withNodeInfiniband [ rdma-core ]
+  ++ lib.optionals withExtraConfig [ libconfig ];
 
   meta = {
     mainProgram = "villas";
