@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=rockylinux/rockylinux
-ARG ROCKY_VERSION=10
+ARG ROCKY_VERSION=9.6
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
@@ -48,12 +48,7 @@ RUN dnf -y install \
 	lua-devel \
 	hiredis-devel \
 	libnice-devel \
-	fmt-devel \
-	spdlog-devel \
-	nanomsg-devel \
-	libnice-devel \
-	libre-devel \
-	libwebsockets-devel
+	libmodbus-devel
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
@@ -100,7 +95,7 @@ LABEL \
 	org.label-schema.vendor="The VILLASframework authors" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="post@steffenvogel.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Rocky Linux" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Rocky Linux 9" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
 	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"
