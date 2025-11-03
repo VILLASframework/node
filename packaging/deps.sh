@@ -505,6 +505,33 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     popd
 fi
 
+# Build and install Apache Arrow with Parquet and Snappy
+if ! cmake --find-package -DNAME=Arrow -DCOMPILER_ID=GNU -DLANGUAGE-CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "apache-arrow" "for Arrow/Parquet support"; then
+    ARROW_TAG=${ARROW_TAG:-apache-arrow-16.1.0}
+    ARROW_REPO=${ARROW_REPO:-https://github.com/apache/arrow.git}
+
+    git clone ${GIT_OPTS} --branch ${ARROW_TAG} ${ARROW_REPO} apache-arrow
+    mkdir -p apache-arrow/cpp/build
+    pushd apache-arrow/cpp/build
+
+    cmake -S ../ \
+          -B . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DARROW_BUILD_SHARED=ON \
+          -DARROW_BUILD_STATIC=OFF \
+          -DARROW_DEPENDENCY_SOURCE=BUNDLED \
+          -DARROW_FILESYSTEM=ON \
+          -DARROW_CSV=ON \
+          -DARROW_JSON=ON \
+          -DARROW_PARQUET=ON \
+          -DPARQUET_BUILD_EXECUTABLES=OFF \
+          -DPARQUET_BUILD_EXAMPLES=OFF
+    make ${MAKE_OPTS} install
+    popd
+fi
+
 popd >/dev/null
 rm -rf ${TMPDIR}
 
