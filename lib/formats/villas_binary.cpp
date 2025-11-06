@@ -27,7 +27,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes,
   char *ptr = buf;
 
   for (i = 0; i < cnt; i++) {
-    struct Message *msg = (struct Message *)ptr;
+    struct Message *msg = reinterpret_cast<struct Message *>(ptr);
     const struct Sample *smp = smps[i];
 
     if (ptr + MSG_LEN(smp->length) > buf + len)
@@ -38,7 +38,7 @@ int VillasBinaryFormat::sprint(char *buf, size_t len, size_t *wbytes,
       return ret;
 
     if (web) {
-      // TODO: convert to little endian
+      // TODO: Convert to little endian.
     } else
       msg_hton(msg);
 
@@ -59,39 +59,40 @@ int VillasBinaryFormat::sscan(const char *buf, size_t len, size_t *rbytes,
   uint8_t sid; // source_index
 
   if (len % 4 != 0)
-    return -1; // Packet size is invalid: Must be multiple of 4 bytes
+    return -1; // Packet size is invalid: Must be multiple of 4 bytes.
 
   for (i = 0, j = 0; i < cnt; i++) {
-    struct Message *msg = (struct Message *)ptr;
-    struct Sample *smp = smps[j];
+    auto *msg = reinterpret_cast<const struct Message *>(ptr);
+    auto *smp = smps[j];
 
     smp->signals = signals;
 
-    // Complete buffer has been parsed
+    // Complete buffer has been parsed.
     if (ptr == buf + len)
       break;
 
-    // Check if header is still in buffer bounaries
+    // Check if header is still in buffer bounaries.
     if (ptr + sizeof(struct Message) > buf + len)
-      return -2; // Invalid msg received
+      return -2; // Invalid message received.
 
     values = web ? msg->length : ntohs(msg->length);
 
-    // Check if remainder of message is in buffer boundaries
+    // Check if remainder of message is in buffer boundaries.
     if (ptr + MSG_LEN(values) > buf + len)
-      return -3; // Invalid msg receive
+      return -3; // Invalid message received.
 
     if (web) {
-      // TODO: convert from little endian
+      // TODO: convert from little endian.
     } else
-      msg_ntoh(msg);
+      // TODO: Check if this is safe...
+      msg_ntoh(const_cast<Message *>(msg));
 
     ret = msg_to_sample(msg, smp, signals, &sid);
     if (ret)
-      return ret; // Invalid msg received
+      return ret; // Invalid msg received.
 
     if (validate_source_index && sid != source_index) {
-      // source index mismatch: we skip this sample
+      // Source index mismatch: we skip this sample.
     } else
       j++;
 

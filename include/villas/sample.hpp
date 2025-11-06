@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <memory>
+#include <optional>
 
 #include <villas/log.hpp>
 #include <villas/signal.hpp>
@@ -95,10 +96,7 @@ struct Sample {
 #define SAMPLE_NON_POOL PTRDIFF_MIN
 
 // Get the address of the pool to which the sample belongs.
-#define sample_pool(s)                                                         \
-  ((s)->pool_off == SAMPLE_NON_POOL                                            \
-       ? nullptr                                                               \
-       : (struct Pool *)((char *)(s) + (s)->pool_off))
+std::optional<struct Pool *> sample_pool(const struct Sample *smp);
 
 struct Sample *sample_alloc(struct Pool *p);
 

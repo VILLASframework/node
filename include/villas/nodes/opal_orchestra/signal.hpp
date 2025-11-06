@@ -42,11 +42,11 @@ orchestra::SignalType signalTypeFromString(const std::string &t);
 
 std::string signalTypeToString(orchestra::SignalType t);
 
-node::SignalData toNodeSignalData(const char *orchestraData,
+node::SignalData toNodeSignalData(const void *orchestraData,
                                   orchestra::SignalType orchestraType,
                                   node::SignalType &villasType);
 
-void toOrchestraSignalData(char *orchestraData,
+void toOrchestraSignalData(void *orchestraData,
                            orchestra::SignalType orchestraType,
                            const SignalData &villasData,
                            node::SignalType villasType);

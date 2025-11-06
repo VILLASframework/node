@@ -14,6 +14,10 @@
 
 using namespace villas;
 
+const char *villas::node::pool_buffer(const struct Pool *pool) {
+  return reinterpret_cast<const char *>(pool) + pool->buffer_off;
+}
+
 int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz,
                             struct memory::Type *m) {
   int ret;
@@ -33,7 +37,8 @@ int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz,
 
   logger->debug("Allocated {:#x} bytes for memory pool", p->len);
 
-  p->buffer_off = (char *)buffer - (char *)p;
+  p->buffer_off =
+      reinterpret_cast<char *>(buffer) - reinterpret_cast<char *>(p);
 
   ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
   if (ret)
@@ -57,7 +62,7 @@ int villas::node::pool_destroy(struct Pool *p) {
   if (ret)
     return ret;
 
-  void *buffer = (char *)p + p->buffer_off;
+  void *buffer = reinterpret_cast<char *>(p) + p->buffer_off;
   ret = memory::free(buffer);
   if (ret == 0)
     p->state = State::DESTROYED;

@@ -428,14 +428,14 @@ int villas::node::uldaq_check(NodeCompat *n) {
 
   for (int i = 0; i < num_ranges_diff; i++) {
     err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i,
-                      (long long *)&ranges_diff[i]);
+                      reinterpret_cast<long long *>(&ranges_diff[i]));
     if (err != ERR_NO_ERROR)
       return -1;
   }
 
   for (int i = 0; i < num_ranges_se; i++) {
     err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i,
-                      (long long *)&ranges_se[i]);
+                      reinterpret_cast<long long *>(&ranges_se[i]));
     if (err != ERR_NO_ERROR)
       return -1;
   }

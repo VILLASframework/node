@@ -58,7 +58,8 @@ public:
   unsigned short length;
 
   OpalOrchestraMapping(std::shared_ptr<DataItem> item, std::string path)
-      : item(item), path(std::move(path)), signals(), signalList(), indices() {}
+      : item(item), path(std::move(path)), signals(), signalList(), indices(),
+        key(0), buffer(nullptr), typeSize(0), length(0) {}
 
   void addSignal(Signal::Ptr signal, std::optional<unsigned> orchestraIdx) {
     if (!orchestraIdx) {
@@ -333,7 +334,7 @@ protected:
 public:
   OpalOrchestraNode(const uuid_t &id = {}, const std::string &name = "",
                     unsigned int key = 0)
-      : Node(id, name), task(), connectionKey(key), domain(),
+      : Node(id, name), task(), connectionKey(key), status(nullptr), domain(),
         subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
         skipWaitToGo(false), dataDefinitionFileOverwrite(false),
         dataDefinitionFileWriteOnly(false) {}

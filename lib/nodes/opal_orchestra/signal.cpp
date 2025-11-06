@@ -116,7 +116,7 @@ villas::node::orchestra::signalTypeToString(orchestra::SignalType t) {
 }
 
 SignalData
-villas::node::orchestra::toNodeSignalData(const char *orchestraData,
+villas::node::orchestra::toNodeSignalData(const void *orchestraData,
                                           orchestra::SignalType orchestraType,
                                           node::SignalType &villasType) {
 
@@ -165,7 +165,7 @@ villas::node::orchestra::toNodeSignalData(const char *orchestraData,
 }
 
 void villas::node::orchestra::toOrchestraSignalData(
-    char *orchestraData, orchestra::SignalType orchestraType,
+    void *orchestraData, orchestra::SignalType orchestraType,
     const SignalData &villasData, node::SignalType villasType) {
   auto villasTypeCasted = toNodeSignalType(orchestraType);
   auto villasDataCasted = villasData.cast(villasType, villasTypeCasted);

@@ -17,6 +17,7 @@ cppcheck -j $(nproc) \
     --platform=unix64 \
     --error-exitcode=1 \
     --inline-suppr \
+    --std=c++20 \
     --enable=warning,performance,portability \
     --suppressions-list=${SCRIPT_DIR}/cppcheck-supressions.txt \
     --project=${BUILD_DIR}/compile_commands.json \
