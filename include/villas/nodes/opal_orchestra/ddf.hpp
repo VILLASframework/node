@@ -16,11 +16,11 @@
 
 #include <libxml/tree.h>
 
+#include <villas/fs.hpp>
 #include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/signal_list.hpp>
-#include <villas/fs.hpp>
 
 namespace villas {
 namespace node {
