@@ -11,12 +11,12 @@ extern "C" {
 #include <RTAPI.h>
 }
 
+#include <villas/fs.hpp>
 #include <villas/nodes/opal_orchestra/ddf.hpp>
 #include <villas/nodes/opal_orchestra/error.hpp>
 #include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
-#include <villas/fs.hpp>
 
 using namespace villas::node;
 using namespace villas::node::orchestra;
@@ -368,8 +368,7 @@ xmlNode *DataDefinitionFile::toXml() const {
   return rootNode;
 }
 
-void DataDefinitionFile::writeToFile(
-    const fs::path &filename) const {
+void DataDefinitionFile::writeToFile(const fs::path &filename) const {
   // Create a new XML document
   auto *doc = xmlNewDoc(BAD_CAST "1.0");
   auto *rootNode = toXml();

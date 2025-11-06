@@ -24,6 +24,7 @@ extern "C" {
 
 #include <villas/config_helper.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/fs.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/opal_orchestra/ddf.hpp>
 #include <villas/nodes/opal_orchestra/error.hpp>
@@ -33,7 +34,6 @@ extern "C" {
 #include <villas/signal_type.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
-#include <villas/fs.hpp>
 
 using namespace villas;
 using namespace villas::node;

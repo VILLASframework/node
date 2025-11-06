@@ -6,8 +6,8 @@
  */
 
 extern "C" {
-#include <graphviz/gvc.h>
 #include <graphviz/graphviz_version.h>
+#include <graphviz/gvc.h>
 }
 
 #include <villas/api/request.hpp>
