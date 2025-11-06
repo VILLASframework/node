@@ -88,7 +88,7 @@ invalid_format:
 }
 
 MappingEntry::MappingEntry()
-    : node(nullptr), type(Type::UNKNOWN), length(0), offset(0), data(0),
+    : node(nullptr), type(Type::UNKNOWN), length(0), offset(0),
       nodeName() {}
 
 int MappingEntry::parse(json_t *json) {

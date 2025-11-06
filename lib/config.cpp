@@ -327,7 +327,8 @@ json_t *Config::expandIncludes(json_t *in) {
     std::string text = json_string_value(str);
     static const std::string kw = "@include ";
 
-    if (!text.starts_with(kw))
+    auto res = std::mismatch(kw.begin(), kw.end(), text.begin());
+    if (res.first != kw.end())
       return json_incref(str);
     else {
       std::string pattern = text.substr(kw.size());
