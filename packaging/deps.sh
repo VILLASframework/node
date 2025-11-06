@@ -362,7 +362,7 @@ fi
 # Build & Install libxil
 if ! pkg-config "libxil >= 1.0.0" && \
     should_build "libxil" "for the fpga node-type"; then
-    git clone ${GIT_OPTS} --branch master https://git.rwth-aachen.de/acs/public/villas/fpga/libxil.git
+    git clone ${GIT_OPTS} --branch master https://github.com/VILLASframework/libxil.git
     mkdir -p libxil/build
     pushd libxil/build
     cmake ${CMAKE_OPTS} ..
