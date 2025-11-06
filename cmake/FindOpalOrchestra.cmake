@@ -7,13 +7,13 @@
 find_path(OPAL_ORCHESTRA_INCLUDE_DIR
     NAMES RTAPI.h
     PATHS
-        /usr/opalrt/common/bin
+        /usr/opalrt/common/include_target
 )
 
 find_library(OPAL_ORCHESTRA_LIBRARY
     NAMES OpalOrchestra
     PATHS
-        /usr/opalrt/common/include
+        /usr/opalrt/common/bin
 )
 
 include(FindPackageHandleStandardArgs)
