@@ -62,6 +62,22 @@ should_build() {
     return 0
 }
 
+has_command() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+check_cmake_version() {
+    local cmake_version
+    cmake_version=$(cmake --version | head -n1 | awk '{print $3}')
+    local required_version=$1
+
+    if [ "$(printf '%s\n%s\n' "$required_version" "$cmake_version" | sort -V | head -n1)" = "$required_version" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 ## Build configuration
 
 # Use shallow git clones to speed up downloads
@@ -69,61 +85,72 @@ GIT_OPTS+=" --depth=1 --recurse-submodules --shallow-submodules --config advice.
 
 # Install destination
 PREFIX=${PREFIX:-/usr/local}
+if [[ "${PREFIX}" == "/usr/local" ]]; then
+    PIP_PREFIX="$(pwd)/venv"
+    PATH="${PIP_PREFIX}/bin:${PREFIX}/bin:${PATH}"
+else
+    PIP_PREFIX="${PREFIX}"
+    PATH="${PREFIX}/bin:${PATH}"
+fi
 
 # Cross-compile
 TRIPLET=${TRIPLET:-$(gcc -dumpmachine)}
 ARCH=${ARCH:-$(uname -m)}
 
 # CMake
-CMAKE_OPTS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
+CMAKE_OPTS+=" -Wno-dev -G=Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
 # Autotools
 CONFIGURE_OPTS+=" --host=${TRIPLET} --prefix=${PREFIX}"
 
 # Make
-MAKE_THREADS=${MAKE_THREADS:-$(nproc)}
-MAKE_OPTS+="--jobs=${MAKE_THREADS}"
+PARALLEL=${PARALLEL:-$(nproc)}
+MAKE_OPTS+=" -j ${PARALLEL}"
+
+# Ninja
+NINJA_OPTS+=" -j ${PARALLEL}"
 
 # pkg-config
 PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-}${PKG_CONFIG_PATH:+:}${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/share/pkgconfig
 export PKG_CONFIG_PATH
 
-# IS_OPAL_RTLINUX=$(uname -r | grep -q opalrtlinux && echo true)
-# if [ -n "${IS_OPAL_RTLINUX}" ]; then
-#     GIT_OPTS+=" -c http.sslVerify=false"
-# fi
-
 SOURCE_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
 # Build in a temporary directory
 TMPDIR=$(mktemp -d)
+trap "rm -rf ${TMPDIR}" EXIT
 
 echo "Entering ${TMPDIR}"
 pushd ${TMPDIR} >/dev/null
 
+# Check for pkg-config
+if ! has_command pkg-config; then
+    echo -e "Error: pkg-config is required to check for existing dependencies."
+    exit 1
+fi
+
 # Enter python venv
-python3 -m venv venv
-. venv/bin/activate
-python3 -m pip install --upgrade pip setuptools
+python3 -m venv ${PIP_PREFIX}
+. ${PIP_PREFIX}/bin/activate
 
-# Install meson
-if ! command -v meson; then
-    # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
-    pip3 install meson==0.61.5
-fi
+# Install some build-tools
+python3 -m pip install \
+    --prefix=${PIP_PREFIX} \
+    --upgrade \
+    pip \
+    setuptools \
 
-# Install ninja
-if ! command -v ninja; then
-    curl -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip > ninja-linux.zip
-    unzip ninja-linux.zip
-    export PATH=${PATH}:.
-fi
+python3 -m pip install \
+    --prefix=${PIP_PREFIX} \
+    cmake==3.31.6 \
+    meson==1.9.1 \
+    ninja==1.11.1.4
 
 # Build & Install Criterion
 if ! pkg-config "criterion >= 2.4.1" && \
    [ "${ARCH}" == "x86_64" ] && \
    should_build "criterion" "for unit tests"; then
-    git clone ${GIT_OPTS} --branch v2.4.2 --recursive https://github.com/Snaipe/Criterion.git
+    git clone ${GIT_OPTS} --branch v2.4.3 --recursive https://github.com/Snaipe/Criterion.git
     pushd Criterion
 
     meson setup \
@@ -141,10 +168,16 @@ fi
 if ! pkg-config "jansson >= 2.13" && \
     should_build "jansson" "for configuration parsing" "required"; then
     git clone ${GIT_OPTS} --branch v2.14.1 https://github.com/akheron/jansson.git
-    pushd jansson
-    autoreconf -i
-    ./configure ${CONFIGURE_OPTS}
-    make ${MAKE_OPTS} install
+    mkdir -p jansson/build
+    pushd jansson/build
+    cmake -DJANSSON_BUILD_SHARED_LIBS=ON \
+          -DJANSSON_BUILD_STATIC_LIBS=OFF \
+          -DJANSSON_WITHOUT_TESTS=ON \
+          -DJANSSON_EXAMPLES=OFF \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -157,7 +190,7 @@ if ! ( pkg-config "lua >= 5.1" || \
        { [[ -n "${RTLAB_ROOT:+x}" ]] && [[ -f "/usr/local/include/lua.h" ]]; } \
      ) && should_build "lua" "for the lua hook"; then
     curl -L http://www.lua.org/ftp/lua-5.4.7.tar.gz | tar -xz
-    pushd lua-5.4.4
+    pushd lua-5.4.7
     make ${MAKE_OPTS} MYCFLAGS=-fPIC linux
     make ${MAKE_OPTS} MYCFLAGS=-fPIC INSTALL_TOP=${PREFIX} install
     popd
@@ -166,7 +199,7 @@ fi
 # Build & Install mosquitto
 if ! pkg-config "libmosquitto >= 1.4.15" && \
     should_build "mosquitto" "for the mqtt node-type"; then
-    git clone ${GIT_OPTS} --branch v2.0.21 https://github.com/eclipse/mosquitto.git
+    git clone ${GIT_OPTS} --branch v2.0.22 https://github.com/eclipse/mosquitto.git
     mkdir -p mosquitto/build
     pushd mosquitto/build
     cmake -DWITH_BROKER=OFF \
@@ -174,7 +207,9 @@ if ! pkg-config "libmosquitto >= 1.4.15" && \
           -DWITH_APPS=OFF \
           -DDOCUMENTATION=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -185,7 +220,9 @@ if ! pkg-config "librabbitmq >= 0.13.0" && \
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -199,14 +236,16 @@ if ! pkg-config "libzmq >= 2.2.0" && \
           -DZMQ_BUILD_TESTS=OFF \
           -DENABLE_CPACK=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install EtherLab
 if ! pkg-config "libethercat >= 1.5.2" && \
     should_build "ethercat" "for the ethercat node-type"; then
-    git clone ${GIT_OPTS} --branch 1.6.3 https://gitlab.com/etherlab.org/ethercat.git
+    git clone ${GIT_OPTS} --branch 1.6.8 https://gitlab.com/etherlab.org/ethercat.git
     pushd ethercat
     ./bootstrap
     ./configure --enable-userlib=yes --enable-kernel=no ${CONFIGURE_OPTS}
@@ -217,7 +256,7 @@ fi
 # Build & Install libiec61850
 if ! pkg-config "libiec61850 >= 1.6.0" && \
     should_build "iec61850" "for the iec61850 node-type"; then
-    git clone ${GIT_OPTS} --branch v1.6.0 https://github.com/mz-automation/libiec61850.git
+    git clone ${GIT_OPTS} --branch v1.6.1 https://github.com/mz-automation/libiec61850.git
 
     pushd libiec61850/third_party/mbedtls/
     curl -L https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz | tar -xz
@@ -228,34 +267,40 @@ if ! pkg-config "libiec61850 >= 1.6.0" && \
     cmake -DBUILD_EXAMPLES=OFF \
           -DBUILD_PYTHON_BINDINGS=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install lib60870
 if ! pkg-config "lib60870 >= 2.3.1" && \
     should_build "iec60870" "for the iec60870 node-type"; then
-    git clone ${GIT_OPTS} --branch v2.3.4 https://github.com/mz-automation/lib60870.git
+    git clone ${GIT_OPTS} --branch v2.3.6 https://github.com/mz-automation/lib60870.git
     mkdir -p lib60870/build
     pushd lib60870/build
     cmake -DBUILD_EXAMPLES=OFF \
           -DBUILD_TESTS=OFF \
           ${CMAKE_OPTS} ../lib60870-C
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install librdkafka
 if ! pkg-config "rdkafka >= 1.5.0" && \
     should_build "rdkafka" "for the kafka node-type"; then
-    git clone ${GIT_OPTS} --branch v2.8.0 https://github.com/edenhill/librdkafka.git
+    git clone ${GIT_OPTS} --branch v2.12.1 https://github.com/edenhill/librdkafka.git
     mkdir -p librdkafka/build
     pushd librdkafka/build
     cmake -DRDKAFKA_BUILD_TESTS=OFF \
           -DRDKAFKA_BUILD_EXAMPLES=OFF \
           -DWITH_CURL=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -263,10 +308,10 @@ fi
 if ! ( pkg-config "libcgraph >= 2.30" && \
        pkg-config "libgvc >= 2.30" \
      ) && should_build "graphviz" "for villas-graph"; then
-    git clone ${GIT_OPTS} --branch 2.50.0 https://gitlab.com/graphviz/graphviz.git
-    mkdir -p graphviz/build
-    pushd graphviz/build
-    cmake ${CMAKE_OPTS} ..
+    curl -L https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/14.0.2/graphviz-14.0.2.tar.gz | tar -xz
+    mkdir -p graphviz-14.0.2
+    pushd graphviz-14.0.2
+    ./configure --enable-shared ${CONFIGURE_OPTS}
     make ${MAKE_OPTS} install
     popd
 fi
@@ -301,14 +346,16 @@ fi
 # Build & Install libconfig
 if ! pkg-config "libconfig >= 1.4.9" && \
     should_build "libconfig" "for libconfig configuration syntax"; then
-    git clone ${GIT_OPTS} --branch v1.7.3 https://github.com/hyperrealm/libconfig.git
-    pushd libconfig
-    autoreconf -i
-    ./configure ${CONFIGURE_OPTS} \
-        --disable-tests \
-        --disable-examples \
-        --disable-doc
-    make ${MAKE_OPTS} install
+    git clone ${GIT_OPTS} --branch v1.8.1 https://github.com/hyperrealm/libconfig.git
+    mkdir -p libconfig/build
+    pushd libconfig/build
+    cmake -DBUILD_EXAMPLES=OFF \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_CXX=OFF \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -328,17 +375,18 @@ fi
 # Build & Install libre
 if ! pkg-config "libre >= 3.6.0" && \
     should_build "libre" "for the rtp node-type"; then
-    git clone ${GIT_OPTS} --branch v3.21.0 https://github.com/baresip/re.git
+    git clone ${GIT_OPTS} --branch v4.2.0 https://github.com/baresip/re.git
     mkdir -p re/build
     pushd re/build
-    cmake -DUSE_LIBREM=OFF \
-          -DUSE_BFCP=OFF \
+    cmake -DUSE_BFCP=OFF \
           -DUSE_PCP=OFF \
           -DUSE_RTMP=OFF \
           -DUSE_SIP=OFF \
           -DLIBRE_BUILD_STATIC=OFF  \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -346,7 +394,7 @@ fi
 if ! pkg-config "nanomsg >= 1.0.0" && \
     should_build "nanomsg" "for the nanomsg node-type"; then
     # TODO: v1.2.1 seems to be broken: https://github.com/nanomsg/nanomsg/issues/1111
-    git clone ${GIT_OPTS} --branch 1.2 https://github.com/nanomsg/nanomsg.git
+    git clone ${GIT_OPTS} --branch 1.2.2 https://github.com/nanomsg/nanomsg.git
     mkdir -p nanomsg/build
     pushd nanomsg/build
     cmake -DNN_TESTS=OFF \
@@ -355,7 +403,9 @@ if ! pkg-config "nanomsg >= 1.0.0" && \
           -DNN_ENABLE_DOC=OFF \
           -DNN_ENABLE_COVERAGE=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -366,27 +416,31 @@ if ! pkg-config "libxil >= 1.0.0" && \
     mkdir -p libxil/build
     pushd libxil/build
     cmake ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install hiredis
 if ! pkg-config "hiredis >= 1.0.0" && \
     should_build "hiredis" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch v1.2.0 https://github.com/redis/hiredis.git
+    git clone ${GIT_OPTS} --branch v1.3.0 https://github.com/redis/hiredis.git
     mkdir -p hiredis/build
     pushd hiredis/build
     cmake -DDISABLE_TESTS=ON \
           -DENABLE_SSL=ON \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
     should_build "redis++" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch 1.3.14 https://github.com/sewenew/redis-plus-plus.git
+    git clone ${GIT_OPTS} --branch 1.3.15 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
@@ -397,27 +451,31 @@ if ! pkg-config "redis++ >= 1.2.3" && \
           -DREDIS_PLUS_PLUS_BUILD_STATIC=OFF \
           -DREDIS_PLUS_PLUS_CXX_STANDARD=17 \
           ${REDISPP_CMAKE_OPTS} ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install VERBOSE=1
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install Fmtlib
 if ! pkg-config "fmt >= 6.1.2" && \
     should_build "fmt" "for logging" "required"; then
-    git clone ${GIT_OPTS} --branch 11.0.2 --recursive https://github.com/fmtlib/fmt.git
+    git clone ${GIT_OPTS} --branch 12.1.0 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
     pushd fmt/build
     cmake -DBUILD_SHARED_LIBS=1 \
           -DFMT_TEST=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install spdlog
 if ! pkg-config "spdlog >= 1.8.2" && \
     should_build "spdlog" "for logging" "required"; then
-    git clone ${GIT_OPTS} --branch v1.15.0 --recursive https://github.com/gabime/spdlog.git
+    git clone ${GIT_OPTS} --branch v1.16.0 --recursive https://github.com/gabime/spdlog.git
     mkdir -p spdlog/build
     pushd spdlog/build
     cmake -DSPDLOG_FMT_EXTERNAL=ON \
@@ -425,21 +483,25 @@ if ! pkg-config "spdlog >= 1.8.2" && \
           -DSPDLOG_BUILD_SHARED=ON \
           -DSPDLOG_BUILD_TESTS=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 # Build & Install libwebsockets
 if ! pkg-config "libwebsockets >= 4.3.0" && \
     should_build "libwebsockets" "for the websocket node and VILLASweb" "required"; then
-    git clone ${GIT_OPTS} --branch v4.3.5 https://github.com/warmcat/libwebsockets.git
+    git clone ${GIT_OPTS} --branch v4.3.6 https://github.com/warmcat/libwebsockets.git
     mkdir -p libwebsockets/build
     pushd libwebsockets/build
     cmake -DLWS_WITH_IPV6=ON \
           -DLWS_WITHOUT_TESTAPPS=ON \
           -DLWS_WITHOUT_EXTENSIONS=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -464,7 +526,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v0.22.6 https://github.com/paullouisageneau/libdatachannel.git
+    git clone ${GIT_OPTS} --recursive --branch v0.23.2 https://github.com/paullouisageneau/libdatachannel.git
     mkdir -p libdatachannel/build
     pushd libdatachannel/build
 
@@ -476,7 +538,9 @@ if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX
           -DNO_WEBSOCKET=ON \
           ${CMAKE_DATACHANNEL_USE_NICE-} \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -494,7 +558,8 @@ fi
 
 # Build & Install OpenDSS
 if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
-    should_build "opendss" "For opendss node-type"; then
+    should_build "opendss" "For opendss node-type" &&
+    has_command git-svn; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
     mkdir -p OpenDSS-C/build
     pushd OpenDSS-C
@@ -510,7 +575,9 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     cmake -DMyOutputType=DLL \
           ${OPENDSS_CMAKE_OPTS} \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
@@ -523,12 +590,13 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     cmake -DGHC_FILESYSTEM_BUILD_TESTING=OFF \
           -DGHC_FILESYSTEM_BUILD_EXAMPLES=OFF \
           ${CMAKE_OPTS} ..
-    make ${MAKE_OPTS} install
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
     popd
 fi
 
 popd >/dev/null
-rm -rf ${TMPDIR}
 
 # Update linker cache
 if [ -z "${SKIP_LDCONFIG+x}${DEPS_SCAN+x}" ]; then
