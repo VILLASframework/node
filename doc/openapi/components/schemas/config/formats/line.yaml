@@ -1,11 +1,28 @@
 # yaml-language-server: $schema=http://json-schema.org/draft-07/schema
-# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 ---
 allOf:
 - type: object
   properties:
-    separator:
+    delimiter:
       type: string
+      description: The character that separates lines.
+      default: "\\n"
+
+    header:
+      description: Whether or not to emit a header.
+      type: boolean
+      default: true
+
+    skip_first_line:
+      description: Whether or not to skip the first line of the input.
+      type: boolean
+      default: false
+
+    comment_prefix:
+      description: Lines starting with this prefix are ignored.
+      type: string
+      default: "#"
 
 - $ref: ../format.yaml
