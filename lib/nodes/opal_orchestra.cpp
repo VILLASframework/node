@@ -33,6 +33,7 @@ extern "C" {
 #include <villas/signal_type.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
+#include <villas/fs.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -248,7 +249,7 @@ protected:
       publishMappings;
 
   double rate;
-  std::optional<std::filesystem::path> dataDefinitionFilename;
+  std::optional<fs::path> dataDefinitionFilename;
 
   std::chrono::seconds connectTimeout;
   std::optional<std::chrono::microseconds>
@@ -499,7 +500,7 @@ public:
 
   int check() override {
     if (dataDefinitionFilename) {
-      if (!std::filesystem::exists(*dataDefinitionFilename) &&
+      if (!fs::exists(*dataDefinitionFilename) &&
           !dataDefinitionFileOverwrite) {
         throw RuntimeError("OPAL-RT Orchestra Data Definition file (DDF) at "
                            "'{}' does not exist",

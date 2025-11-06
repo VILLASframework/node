@@ -20,6 +20,7 @@
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/signal_list.hpp>
+#include <villas/fs.hpp>
 
 namespace villas {
 namespace node {
@@ -148,7 +149,7 @@ public:
 
   xmlNode *toXml() const;
 
-  void writeToFile(const std::filesystem::path &filename) const;
+  void writeToFile(const fs::path &filename) const;
 };
 
 } // namespace orchestra
