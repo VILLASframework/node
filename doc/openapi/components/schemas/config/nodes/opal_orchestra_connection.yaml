@@ -13,6 +13,6 @@ properties:
 discriminator:
   propertyName: type
   mapping:
-    local: opal_orchestra_connection_local.yaml
-    remote: opal_orchestra_connection_remote.yaml
-    dolphin: opal_orchestra_connection_dolphin.yaml
+    local: ./opal_orchestra_connection_local.yaml
+    remote: ./opal_orchestra_connection_remote.yaml
+    dolphin: ./opal_orchestra_connection_dolphin.yaml

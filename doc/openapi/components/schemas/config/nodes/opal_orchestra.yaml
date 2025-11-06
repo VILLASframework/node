@@ -27,20 +27,20 @@ allOf:
         The path to the DDF file that describes the data exchanged in the specified domain.
 
     connect_timeout:
-      $ref: ../../duration.yaml
+      $ref: ../duration.yaml
       default: 5s
       description: >-
         The duration after which a failed connection attempt times out.
 
     flag_delay:
-      $ref: ../../duration.yaml
+      $ref: ../duration.yaml
       default: 0s
       description: >-
         Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
         Flags are recommended for better performance: they are faster but also more CPU-consuming.
 
     flag_delay_tool:
-      $ref: ../../duration.yaml
+      $ref: ../duration.yaml
       description: >-
         Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
         Flags are recommended for better performance: they are faster but also more CPU-consuming.
