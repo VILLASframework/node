@@ -16,6 +16,7 @@ extern "C" {
 #include <villas/nodes/opal_orchestra/signal.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
+#include <villas/fs.hpp>
 
 using namespace villas::node;
 using namespace villas::node::orchestra;
@@ -368,7 +369,7 @@ xmlNode *DataDefinitionFile::toXml() const {
 }
 
 void DataDefinitionFile::writeToFile(
-    const std::filesystem::path &filename) const {
+    const fs::path &filename) const {
   // Create a new XML document
   auto *doc = xmlNewDoc(BAD_CAST "1.0");
   auto *rootNode = toXml();
