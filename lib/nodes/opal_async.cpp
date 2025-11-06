@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 #include <unistd.h>
 
@@ -51,7 +52,7 @@ static std::thread awaiter;
 
 static std::mutex lock; // Protecting state and nodeMap
 static int state;
-static std::map<int, OpalAsyncNode *> nodeMap;
+static std::unordered_map<int, OpalAsyncNode *> nodeMap;
 
 static void waitForModelState(int state) {
   while (OpalGetAsyncModelState() != state)
@@ -59,7 +60,7 @@ static void waitForModelState(int state) {
 }
 
 static void waitForAsyncSendRequests() {
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
   int ret;
   unsigned id;
 
@@ -88,7 +89,7 @@ static void waitForAsyncSendRequests() {
 }
 
 static int dumpGlobal() {
-  auto logger = logging.get("node:opal");
+  auto logger = Log::get("node:opal");
 
   logger->debug("Controller ID: {}", params.controllerID);
 
@@ -131,9 +132,7 @@ void LogSink::sink_it_(const spdlog::details::log_msg &msg) {
   buf.clear();
   formatter_->format(msg, buf);
 
-  char *bufPtr;
-
-  bufPtr = bufPtr.data();
+  auto bufPtr = buf.data();
   bufPtr[buf.size()] = '\0';
 
   OpalPrint(bufPtr);
@@ -349,7 +348,7 @@ void OpalAsyncNode::waitReady() {
   ready = false;
 }
 
-int OpalAsyncNode::start(SuperNode *sn) {
+int OpalAsyncNodeFactory::start(SuperNode *sn) {
   int ret, idsRecvLen, idsSendLen;
 
   auto *shmemAsyncNamePtr = std::getenv("OPAL_ASYNC_SHMEM_NAME");
@@ -365,7 +364,7 @@ int OpalAsyncNode::start(SuperNode *sn) {
 
   // Register OpalPrint sink for spdlog
   sink = std::make_shared<LogSink>(shmemSystemCtrlName);
-  logging.replaceStdSink(sink);
+  Log::getInstance().replaceStdSink(sink);
 
   // Open shared memory region created by the RT-LAB model.
   ret = OpalOpenAsyncMem(shmemAsyncSize,
@@ -402,7 +401,7 @@ int OpalAsyncNode::start(SuperNode *sn) {
   return NodeFactory::start(sn);
 }
 
-int OpalAsyncNode::stop() {
+int OpalAsyncNodeFactory::stop() {
   int ret;
 
   logger->debug("Stopping waiter thread");
