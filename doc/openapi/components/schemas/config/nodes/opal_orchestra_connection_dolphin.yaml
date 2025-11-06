@@ -4,9 +4,13 @@
 ---
 type: object
 required:
-- node_id_framework
-- segment_id
+  - node_id_framework
+  - segment_id
 properties:
+  type:
+    description: The type of connection to the OPAL-RT Orchestra framework.
+    type: string
+
   node_id_framework:
     type: integer
     min: 4

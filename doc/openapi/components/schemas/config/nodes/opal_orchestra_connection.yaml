@@ -6,9 +6,10 @@ type: object
 description: |
   Configuration of the connection to the OPAL-RT Orchestra framework.
 required:
-- type
+  - type
 properties:
   type:
+    description: The type of connection to the OPAL-RT Orchestra framework.
     type: string
 discriminator:
   propertyName: type
