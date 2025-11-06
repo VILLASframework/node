@@ -7,6 +7,7 @@
 
 extern "C" {
 #include <graphviz/gvc.h>
+#include <graphviz/graphviz_version.h>
 }
 
 #include <villas/api/request.hpp>
@@ -46,7 +47,12 @@ public:
     auto *graph = sn->getGraph();
 
     char *data;
-    unsigned len;
+
+#if GRAPHVIZ_VERSION_MAJOR >= 13
+    size_t len;
+#else
+    unsigned int len;
+#endif
 
     std::list<std::string> supportedLayouts = {
         "circo", "dot",   "fdp",       "neato", "nop",  "nop1",
