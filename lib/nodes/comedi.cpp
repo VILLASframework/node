@@ -327,9 +327,9 @@ static int comedi_start_out(NodeCompat *n) {
                                           d->chanspecs[channel].maxdata);
 
     if (d->sample_size == sizeof(sampl_t))
-      *((sampl_t *)d->bufptr) = raw;
+      *reinterpret_cast<sampl_t *>(d->bufptr) = raw;
     else
-      *((lsampl_t *)d->bufptr) = raw;
+      *reinterpret_cast<lsampl_t *>(d->bufptr) = raw;
 
     d->bufptr += d->sample_size;
   }
@@ -578,9 +578,9 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
           unsigned int raw;
 
           if (d->sample_size == sizeof(sampl_t))
-            raw = *((sampl_t *)(c->bufptr));
+            raw = *reinterpret_cast<sampl_t *>(c->bufptr);
           else
-            raw = *((lsampl_t *)(c->bufptr));
+            raw = *reinterpret_cast<lsampl_t *>(c->bufptr);
 
           c->bufptr += d->sample_size;
 
@@ -904,9 +904,9 @@ int villas::node::comedi_write(NodeCompat *n, struct Sample *const smps[],
       }
 
       if (d->sample_size == sizeof(sampl_t))
-        *((sampl_t *)d->bufptr) = raw_value;
+        *(reinterpret_cast<sampl_t *>(d->bufptr)) = raw_value;
       else
-        *((lsampl_t *)d->bufptr) = raw_value;
+        *(reinterpret_cast<lsampl_t *>(d->bufptr)) = raw_value;
 
       d->bufptr += d->sample_size;
     }

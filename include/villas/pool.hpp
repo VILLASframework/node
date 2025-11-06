@@ -20,23 +20,23 @@
 namespace villas {
 namespace node {
 
-// A thread-safe memory pool
+// A thread-safe memory pool.
 struct Pool {
   enum State state;
 
   off_t
-      buffer_off; // Offset from the struct address to the underlying memory area
+      buffer_off; // Offset from the struct address to the underlying memory area.
 
-  size_t len;       // Length of the underlying memory area
-  size_t blocksz;   // Length of a block in bytes
-  size_t alignment; // Alignment of a block in bytes
+  size_t len;       // Length of the underlying memory area.
+  size_t blocksz;   // Length of a block in bytes.
+  size_t alignment; // Alignment of a block in bytes.
 
-  struct CQueue queue; // The queue which is used to keep track of free blocks
+  struct CQueue queue; // The queue which is used to keep track of free blocks.
 };
 
-#define pool_buffer(p) ((char *)(p) + (p)->buffer_off)
+const char *pool_buffer(const struct Pool *pool);
 
-/* Initiazlize a pool
+/* Initialize a pool.
  *
  * @param[inout] p The pool data structure.
  * @param[in] cnt The total number of blocks which are reserverd by this pool.

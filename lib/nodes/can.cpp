@@ -199,7 +199,8 @@ int villas::node::can_start(NodeCompat *n) {
   addr.can_family = AF_CAN;
   addr.can_ifindex = ifr.ifr_ifindex;
 
-  ret = bind(c->socket, (struct sockaddr *)&addr, sizeof(addr));
+  ret =
+      bind(c->socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
   if (ret < 0)
     throw SystemError("Could not bind to interface with name '{}' ({}).",
                       c->interface_name, ifr.ifr_ifindex);

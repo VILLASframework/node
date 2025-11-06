@@ -22,7 +22,7 @@ int OpalAsyncIPFormat::sprint(char *buf, size_t len, size_t *wbytes,
   ssize_t slen = len;
 
   for (i = 0; i < cnt && ptr - buf < slen; i++) {
-    auto *pl = (struct Payload *)ptr;
+    auto *pl = reinterpret_cast<struct Payload *>(ptr);
     auto *smp = smps[i];
 
     auto wlen = smp->length * sizeof(double) + sizeof(struct Payload);
@@ -66,7 +66,7 @@ int OpalAsyncIPFormat::sscan(const char *buf, size_t len, size_t *rbytes,
     return -1; // Packet size is invalid: Must be multiple of 8 bytes
 
   for (i = 0; i < cnt && ptr - buf + sizeof(struct Payload) < len; i++) {
-    auto *pl = (struct Payload *)ptr;
+    auto *pl = reinterpret_cast<const struct Payload *>(ptr);
     auto *smp = smps[i];
 
     auto rlen = le16toh(pl->msg_len);

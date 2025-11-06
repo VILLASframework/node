@@ -56,7 +56,8 @@ int villas::node::queue_init(struct CQueue *q, size_t size,
   if (!buffer)
     return -2;
 
-  q->buffer_off = (char *)buffer - (char *)q;
+  q->buffer_off =
+      reinterpret_cast<char *>(buffer) - reinterpret_cast<char *>(q);
 
   for (size_t i = 0; i != size; i += 1)
     std::atomic_store_explicit(&buffer[i].sequence, i,
@@ -76,7 +77,7 @@ int villas::node::queue_init(struct CQueue *q, size_t size,
 }
 
 int villas::node::queue_destroy(struct CQueue *q) {
-  void *buffer = (char *)q + q->buffer_off;
+  void *buffer = reinterpret_cast<char *>(q) + q->buffer_off;
   int ret = 0;
 
   if (q->state == State::DESTROYED)
@@ -103,7 +104,8 @@ int villas::node::queue_push(struct CQueue *q, void *ptr) {
       State::STOPPED)
     return -1;
 
-  buffer = (struct CQueue_cell *)((char *)q + q->buffer_off);
+  buffer = reinterpret_cast<struct CQueue_cell *>(reinterpret_cast<char *>(q) +
+                                                  q->buffer_off);
   pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
   while (true) {
     cell = &buffer[pos & q->buffer_mask];
@@ -121,7 +123,7 @@ int villas::node::queue_push(struct CQueue *q, void *ptr) {
       pos = std::atomic_load_explicit(&q->tail, std::memory_order_relaxed);
   }
 
-  cell->data_off = (char *)ptr - (char *)q;
+  cell->data_off = reinterpret_cast<char *>(ptr) - reinterpret_cast<char *>(q);
   std::atomic_store_explicit(&cell->sequence, pos + 1,
                              std::memory_order_release);
 
@@ -137,7 +139,8 @@ int villas::node::queue_pull(struct CQueue *q, void **ptr) {
       State::STOPPED)
     return -1;
 
-  buffer = (struct CQueue_cell *)((char *)q + q->buffer_off);
+  buffer = reinterpret_cast<struct CQueue_cell *>(reinterpret_cast<char *>(q) +
+                                                  q->buffer_off);
   pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
   while (true) {
     cell = &buffer[pos & q->buffer_mask];
@@ -155,7 +158,7 @@ int villas::node::queue_pull(struct CQueue *q, void **ptr) {
       pos = std::atomic_load_explicit(&q->head, std::memory_order_relaxed);
   }
 
-  *ptr = (char *)q + cell->data_off;
+  *ptr = reinterpret_cast<char *>(q) + cell->data_off;
   std::atomic_store_explicit(&cell->sequence, pos + q->buffer_mask + 1,
                              std::memory_order_release);
 

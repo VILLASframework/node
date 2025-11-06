@@ -82,7 +82,8 @@ public:
     if (offset >= smp->length)
       return Reason::ERROR;
 
-    sample_data_insert(smp, (union SignalData *)&avg, offset, 1);
+    sample_data_insert(smp, reinterpret_cast<union SignalData *>(&avg), offset,
+                       1);
 
     return Reason::OK;
   }

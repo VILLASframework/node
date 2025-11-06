@@ -38,7 +38,9 @@ public:
   unsigned short length;
   double defaultValue;
 
-  explicit DataItem(std::string name) : name(std::move(name)) {}
+  explicit DataItem(std::string name)
+      : name(std::move(name)), type(SignalType::BOOLEAN), length(0),
+        defaultValue(0) {}
 
   static const unsigned int IDENTIFIER_NAME_LENGTH = 64;
 

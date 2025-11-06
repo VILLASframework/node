@@ -42,9 +42,7 @@ public:
   using Ptr = std::shared_ptr<MappingEntry>;
 
   enum class Type { UNKNOWN, DATA, STATS, HEADER, TIMESTAMP };
-
   enum class HeaderType { LENGTH, SEQUENCE };
-
   enum class TimestampType { ORIGIN, RECEIVED };
 
   Node *node;     // The node to which this mapping refers.
