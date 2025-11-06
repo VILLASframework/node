@@ -4,9 +4,13 @@
 ---
 type: object
 required:
-- card
-- pci_index
+  - card
+  - pci_index
 properties:
+  type:
+    description: The type of connection to the OPAL-RT Orchestra framework.
+    type: string
+
   card:
     type: string
     example: VMIPCI5565-64M

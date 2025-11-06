@@ -4,13 +4,17 @@
 ---
 type: object
 properties:
+  type:
+    description: The type of connection to the OPAL-RT Orchestra framework.
+    type: string
+
   extcomm:
     type: string
     default: none
     enum:
-    - udp
-    - tcp
-    - none
+      - udp
+      - tcp
+      - none
     description: Type of external communication protocol helper which should be started.
 
   addr_framework:
