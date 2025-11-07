@@ -579,6 +579,8 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
         --target install \
         --parallel ${PARALLEL}
     popd
+
+    echo "${PREFIX}/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf
 fi
 
 # Build & Install ghc::filesystem

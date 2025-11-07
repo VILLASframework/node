@@ -58,8 +58,6 @@ RUN apt-get update && \
 ADD packaging/patches /deps/patches
 ADD packaging/deps.sh /deps
 RUN bash /deps/deps.sh
-RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
-	ldconfig
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
