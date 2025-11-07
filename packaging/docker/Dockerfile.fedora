@@ -82,10 +82,9 @@ RUN bash /deps/deps.sh
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
+# Install Python dev tools for CI
 COPY ./python /python
-RUN python -m venv /venv && \
-	source /venv/bin/activate && \
-	pip install /python[dev] && \
+RUN pip install /python[dev] && \
 	rm -r /python
 
 # Expose ports for HTTP and WebSocket frontend
