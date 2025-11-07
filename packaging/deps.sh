@@ -66,6 +66,10 @@ has_command() {
     command -v "$1" >/dev/null 2>&1
 }
 
+has_git_svn() {
+    git svn --version > /dev/null 2>&1
+}
+
 check_cmake_version() {
     local cmake_version
     cmake_version=$(cmake --version | head -n1 | awk '{print $3}')
@@ -559,7 +563,7 @@ fi
 # Build & Install OpenDSS
 if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     should_build "opendss" "For opendss node-type" &&
-    has_command git-svn; then
+    has_git_svn; then
     git svn clone -r 4020:4020 https://svn.code.sf.net/p/electricdss/code/trunk/VersionC OpenDSS-C
     mkdir -p OpenDSS-C/build
     pushd OpenDSS-C
