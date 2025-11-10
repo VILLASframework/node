@@ -21,7 +21,6 @@ classifiers = [
 ]
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
-    'requests==2.32.3',
     'protobuf==6.31.1',
 ]
 optional-dependencies.dev = [
@@ -29,7 +28,6 @@ optional-dependencies.dev = [
     'flake8==7.2.0',
     'mypy==1.15.0',
     'pytest==8.3.5',
-    'types-requests==2.32.0.20250328',
     'types-protobuf==5.29.1.20250403',
 ]
 
