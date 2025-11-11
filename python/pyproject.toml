@@ -12,7 +12,7 @@ description = 'Python support for the VILLASnode simulation-data gateway'
 readme = 'README.md'
 requires-python = '>=3.10'
 keywords = ['simulation', 'power', 'system', 'real-time', 'villas']
-license = 'Apache-2.0'
+# license = 'Apache-2.0'
 classifiers = [
     'Development Status :: 4 - Beta',
     'Topic :: Scientific/Engineering',
@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
     'protobuf==6.31.1',
+    'libconf==2.0.1',
 ]
 optional-dependencies.dev = [
     'black==25.1.0',
@@ -30,6 +31,9 @@ optional-dependencies.dev = [
     'pytest==8.3.5',
     'types-protobuf==5.29.1.20250403',
 ]
+
+[project.scripts]
+villas-conf2orchestra-ddf = "villas.node.opal_orchestra_ddf:main"
 
 [project.urls]
 GitHub = 'https://github.com/VILLASframework/node'
