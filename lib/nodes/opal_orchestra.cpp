@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <cstdlib>
 
 #include <fmt/chrono.h>
 #include <fmt/std.h>
@@ -722,6 +723,25 @@ public:
 
   std::string getDescription() const override {
     return "OPAL-RT Orchestra client";
+  }
+
+  int start(SuperNode *sn) override {
+    const std::string opalBin = "/usr/opalrt/common/bin";
+
+    // Append /usr/opalrt/common/bin to PATH on OPAL-RT Linux systems
+    // for finding OrchestraExtComm tools.
+    std::string path = getenv("PATH");
+
+    if (path.find(opalBin) == std::string::npos) {
+      path = path + ":" + opalBin;
+        
+      auto ret = setenv("PATH", path.c_str(), 1);
+      if (ret != 0) {
+        throw RuntimeError("Failed to set PATH environment variable");
+      }
+    }
+    
+    return 0;
   }
 };
 
