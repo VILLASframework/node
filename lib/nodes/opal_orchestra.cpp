@@ -715,8 +715,7 @@ public:
   int getFlags() const override {
     return (int)NodeFactory::Flags::SUPPORTS_READ |
            (int)NodeFactory::Flags::SUPPORTS_WRITE |
-           (int)NodeFactory::Flags::SUPPORTS_POLL |
-           (int)NodeFactory::Flags::HIDDEN;
+           (int)NodeFactory::Flags::SUPPORTS_POLL;
   }
 
   std::string getName() const override { return "opal.orchestra"; }
