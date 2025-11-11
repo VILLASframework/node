@@ -20,6 +20,8 @@
 
 extern "C" {
 #include <RTAPI.h>
+
+__attribute__((weak)) void op_license_feature_register() {}
 }
 
 #include <villas/config_helper.hpp>

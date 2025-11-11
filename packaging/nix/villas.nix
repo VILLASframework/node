@@ -200,6 +200,11 @@ stdenv.mkDerivation {
   ++ lib.optionals withNodeInfiniband [ rdma-core ]
   ++ lib.optionals withExtraConfig [ libconfig ];
 
+  preFixup = lib.optional withNodeOpalOrchestra ''
+    wrapProgram $out/bin/villas-node \
+      --prefix PATH : ${orchestra}/bin/
+  '';
+
   meta = {
     mainProgram = "villas";
     description = "a tool connecting real-time power grid simulation equipment";

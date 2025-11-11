@@ -90,8 +90,13 @@
 
         # Cross-compiled packages
 
-        villas-node-x86_64-linux = if pkgs.system == "x86_64-linux" then pkgs.villas-node else pkgs.pkgsCross.x86_64-linux.villas-node;
-        villas-node-aarch64-linux = if pkgs.system == "aarch64-linux" then pkgs.villas-node else pkgs.pkgsCross.aarch64-multiplatform.villas-node;
+        villas-node-x86_64-linux =
+          if pkgs.system == "x86_64-linux" then pkgs.villas-node else pkgs.pkgsCross.x86_64-linux.villas-node;
+        villas-node-aarch64-linux =
+          if pkgs.system == "aarch64-linux" then
+            pkgs.villas-node
+          else
+            pkgs.pkgsCross.aarch64-multiplatform.villas-node;
 
         dockerImage-x86_64-linux = pkgs.dockerTools.buildLayeredImage {
           name = "villas-node";
@@ -206,7 +211,10 @@
 
         villas = {
           imports = [ (nixDir + "/module.nix") ];
-          nixpkgs.overlays = [ self.overlays.default self.overlays.patches ];
+          nixpkgs.overlays = [
+            self.overlays.default
+            self.overlays.patches
+          ];
         };
       };
     };
