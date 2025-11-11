@@ -2,35 +2,81 @@
 # SPDX-License-Identifier: Apache-2.0
 
 {
+  version ? "2025.1.3",
+
+  lib,
   stdenv,
+  autoPatchelfHook,
+  makeWrapper,
+  runCommand,
+  fetchurl,
+
   libredirect,
   nettools,
-  fetchurl,
-  autoPatchelfHook,
-  dpkg,
   libuuid,
-  makeWrapper ,
+  unzip,
+  rpm,
+  cpio,
+  cacert,
+  jq,
+  curl,
+  gnused,
 }:
 let
-  # src = requireFile {
-  #   name = "componentorchestra_7.6.2_amd64.deb";
-  #   hash = "sha256-2cQtYkf1InKrDPL5UDQDHaYM7bq21Dw77itfFwuXa54=";
-  # };
+  inherit (lib)
+    concatStringsSep
+    escapeURL
+    mapAttrsToList
+    replaceStrings
+    ;
 
-  src = fetchurl {
-    url = "https://blob.opal-rt.com/softwares/rt-lab-archives/componentorchestra_7.6.2_amd64.deb?sp=r&st=2024-10-30T06:31:59Z&se=2034-11-30T14:31:59Z&spr=https&sv=2022-11-02&sr=b&sig=cnKY8RxZf8hv91gWLIBG6iBGSVziXkKR3%2BOYIE6MSkI%3D";
-    hash = "sha256-2cQtYkf1InKrDPL5UDQDHaYM7bq21Dw77itfFwuXa54=";
+  versionHashes = {
+    "2025.1.2" = "sha256-XZp5lprMwBAst3LTIVYoOfUpk1p66EJ4mY/nYPdBfIE=";
+    "2025.1.3" = "sha256-ISoRxPUHE1KpdvXfLyFujLixTtfcG6jRJoKgMwIwynY=";
   };
+
+  blobName = "RT-LAB_${version}.zip";
+
+  megainstaller-zip =
+    runCommand blobName
+      {
+        outputHash = versionHashes.${version};
+        outputHashAlgo = null;
+
+        buildInputs = [
+          cacert
+          curl
+          jq
+          gnused
+        ];
+      }
+      ''
+        SAS=$(curl -s https://www.opal-rt.com/wp-json/wp/v2/pages/2058 | jq -r .content.rendered | sed -En 's|.*https://blob\.opal-rt\.com/softwares/[^?]+\?([^"]*).*|\1|p' | sed 's|&amp;|\&|g' | head -1)
+        curl -o $out "https://blob.opal-rt.com/softwares/RT-LAB/${blobName}?$SAS"
+      '';
+
+  megainstaller = runCommand "rtlab-megainstaller-${version}" { inherit version; } ''
+    ${unzip}/bin/unzip ${megainstaller-zip} -d $out
+  '';
+
+  target = runCommand "rtlab-target-${version}" { inherit version; } ''
+    ${unzip}/bin/unzip ${megainstaller}/Files/RT-LAB/data/target.zip
+    mv target $out
+  '';
+
+  target_rpm = runCommand "rtlab-target-${version}-rpm" { inherit version; } ''
+    mkdir $out
+    cd $out
+
+    ${rpm}/bin/rpm2cpio ${target}/rt_linux64/rtlab-rt_linux64-*.rpm | ${cpio}/bin/cpio -idmv
+  '';
 in
 stdenv.mkDerivation {
   pname = "libOpalOrchestra";
-  version = "7.6.2";
-  inherit src;
-
-  dontUnpack = true;
+  inherit version;
+  src = target_rpm;
 
   nativeBuildInputs = [
-    dpkg
     autoPatchelfHook
     makeWrapper
   ];
@@ -41,10 +87,14 @@ stdenv.mkDerivation {
   ];
 
   installPhase = ''
-    ${dpkg}/bin/dpkg-deb -x ${src} .
+    mkdir -p $out/{lib,bin,include}
 
-    mv usr/opalrt/exportedOrchestra $out
-    mv $out/bin/OrchestraExtCommIPDebian $out/bin/OrchestraExtCommIP
+    cd usr/opalrt/v2025.1.3.77/common
+
+    cp "bin/OrchestraExtCommIP" "$out/bin/"
+    cp "include_target/RTAPI.h" "$out/include/"
+    cp "bin/libsimulation-configuration.so" "$out/lib/"
+    cp "bin/libOpalOrchestra.so" "$out/lib/libOpalOrchestra.so"
   '';
 
   preFixup = ''
