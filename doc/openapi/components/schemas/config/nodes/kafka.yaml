@@ -56,7 +56,7 @@ allOf:
     in:
       type: object
       properties:
-        consume:
+        topic:
           type: string
           description: The Kafka topic to which this node-type will subscribe for receiving messages.
 
@@ -67,7 +67,7 @@ allOf:
     out:
       type: object
       properties:
-        produce:
+        topic:
           type: string
           description: The Kafka topic to which this node-type will publish messages.
 
