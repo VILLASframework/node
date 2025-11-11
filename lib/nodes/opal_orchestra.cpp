@@ -235,13 +235,15 @@ protected:
 class OpalOrchestraNode : public Node {
 
 protected:
-  Task task; // The task which is used to pace the node in asynchronous mode.
+  // The task which is used to pace the node in asynchronous mode.
+  Task task;
 
-  unsigned int
-      connectionKey; // A connection key identifies a connection between a specific combo of  Orchestra's framework and client.
+  // A connection key identifies a connection between a specific combo of  Orchestra's framework and client.
+  unsigned int connectionKey;
   unsigned int *status;
 
-  Domain domain; // The domain to which the node belongs.
+  // The domain to which the node belongs.
+  Domain domain;
 
   std::unordered_map<std::shared_ptr<DataItem>, OpalOrchestraMapping>
       subscribeMappings;
@@ -252,14 +254,21 @@ protected:
   std::optional<fs::path> dataDefinitionFilename;
 
   std::chrono::seconds connectTimeout;
-  std::optional<std::chrono::microseconds>
-      flagDelay; // Define a delay to wait, this will call the system function usleep and free the CPU.
-  std::optional<std::chrono::microseconds>
-      flagDelayTool; // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
-  bool skipWaitToGo; // Skip wait-to-go step during start.
-  bool dataDefinitionFileOverwrite; // Overwrite the data definition file (DDF).
-  bool
-      dataDefinitionFileWriteOnly; // Overwrite the data definition file (DDF) and terminate VILLASnode.
+
+  // Define a delay to wait, this will call the system function usleep and free the CPU.
+  std::optional<std::chrono::microseconds> flagDelay;
+
+  // Force the local Orchestra communication to be made with flag instead of semaphore when using an external communication process.
+  std::optional<std::chrono::microseconds> flagDelayTool;
+
+  // Skip wait-to-go step during start.
+  bool skipWaitToGo;
+
+  // Overwrite the data definition file (DDF).
+  bool dataDefinitionFileOverwrite;
+
+  // Overwrite the data definition file (DDF) and terminate VILLASnode.
+  bool dataDefinitionFileWriteOnly; 
 
   int _read(struct Sample *smps[], unsigned cnt) override {
     if (dataDefinitionFileWriteOnly) {
