@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of
+#                         Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
 import villas_pb2
-import time, socket, errno, sys, os, signal
+import time
+import socket
+import errno
+import sys
+import os
+import signal
 
 layer = sys.argv[1] if len(sys.argv) == 2 else "udp"
 
@@ -50,6 +56,7 @@ msg = villas_pb2.Message()
 
 # Gracefully shutdown
 def sighandler(signum, frame):
+    global running
     running = False
 
 

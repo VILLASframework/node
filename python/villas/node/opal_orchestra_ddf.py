@@ -1,3 +1,9 @@
+"""
+Author: Steffen Vogel <steffen.vogel@opal-rt.com>
+SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+SPDX-License-Identifier: Apache-2.0
+"""  # noqa: E501
+
 import argparse
 import sys
 import xml.etree.ElementTree as ET
@@ -14,7 +20,8 @@ def generate_ddf(node_cfg):
     Generate an OPAL-RT Orchestra DDF XML file from a VILLASnode configuration.
 
     Args:
-        node_cfg: Dictionary containing the node configuration from VILLASnode config
+        node_cfg: Dictionary containing the node configuration
+                  from VILLASnode config
 
     Returns:
         str: XML-encoded string representing the Orchestra DDF
@@ -65,15 +72,14 @@ def generate_ddf(node_cfg):
 
 def add_connection(parent_elem, conn_cfg):
     """
-    Add a connection element to the parent XML element based on connection configuration.
+    Add a connection element to the parent XML element based
+    on connection configuration.
 
     Args:
         parent_elem: ET.Element to add the connection to
         conn_cfg: Dictionary containing connection configuration
     """
     conn_type = conn_cfg.get("type", "local")
-
-    conn_attrs = {}
 
     if conn_type == "local":
         conn_elem = ET.SubElement(
@@ -118,7 +124,8 @@ def add_signals_to_set(parent_elem, signals, is_publish=True):
     Args:
         parent_elem: ET.Element to add signals to
         signals: List of signal configurations
-        is_publish: Boolean indicating if this is for PUBLISH (True) or SUBSCRIBE (False)
+        is_publish: Boolean indicating if this is for
+                    PUBLISH (True) or SUBSCRIBE (False)
     """
     # Group signals by their orchestra names and build nested structure
     signal_tree = {}
@@ -155,11 +162,11 @@ def add_signals_to_set(parent_elem, signals, is_publish=True):
                 else:
                     if orchestra_type != signal["type"]:
                         raise RuntimeError(
-                            f"Conflicting definitions for signal '{orchestra_name}'"
+                            "Conflicting definitions for signal " + f"'{orchestra_name}'"
                         )
 
                     index = orchestra_index
-                    if index == None:
+                    if index is None:
                         index = signal["length"]
 
                     if index >= signal["length"]:
@@ -210,7 +217,10 @@ def build_xml_from_tree(parent_elem, tree, is_publish):
                         else:
                             default_text = str(default_val)
                     else:
-                        default_text = "0" if signal["type"] != "boolean" else "no"
+                        if signal["type"] == "boolean":
+                            default_text = "no"
+                        else:
+                            default_text = "0"
                     ET.SubElement(item, "default").text = default_text
         elif children:
             # This is a bus without direct signals

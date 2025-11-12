@@ -162,8 +162,8 @@ test:python:
   script:
     - cd python
     - pytest --verbose .
-    - black --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
-    - flake8 --extend-exclude="*.pyi,*_pb2.py" .
+    - black --line-length=90 --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
+    - flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
     - mypy .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   needs:
