@@ -12,7 +12,8 @@ from xml.dom import minidom
 try:
     import libconf
 except ImportError:
-    from . import libconf
+    # In case we use a local copy of libconf
+    from . import libconf  # type: ignore
 
 
 def generate_ddf(node_cfg):
