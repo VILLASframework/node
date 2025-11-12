@@ -269,7 +269,7 @@ protected:
   bool dataDefinitionFileOverwrite;
 
   // Overwrite the data definition file (DDF) and terminate VILLASnode.
-  bool dataDefinitionFileWriteOnly; 
+  bool dataDefinitionFileWriteOnly;
 
   int _read(struct Sample *smps[], unsigned cnt) override {
     if (dataDefinitionFileWriteOnly) {
@@ -734,13 +734,13 @@ public:
 
     if (path.find(opalBin) == std::string::npos) {
       path = path + ":" + opalBin;
-        
+
       auto ret = setenv("PATH", path.c_str(), 1);
       if (ret != 0) {
         throw RuntimeError("Failed to set PATH environment variable");
       }
     }
-    
+
     return 0;
   }
 };
