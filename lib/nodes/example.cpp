@@ -66,13 +66,13 @@ protected:
 
 public:
   ExampleNode(const uuid_t &id = {}, const std::string &name = "")
-    : Node(id, name), setting1(72), setting2("something"), state1(0) {}
+      : Node(id, name), setting1(72), setting2("something"), state1(0) {}
 
   /* All of the following virtual-declared functions are optional.
    * Have a look at node.hpp/node.cpp for the default behaviour.
    */
 
-  virtual ~ExampleNode() { }
+  virtual ~ExampleNode() {}
 
   int prepare() override {
     state1 = setting1;
@@ -90,7 +90,7 @@ public:
 
     json_error_t err;
     int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
-                            &setting1, "setting2", &setting2_str);
+                             &setting1, "setting2", &setting2_str);
     if (ret)
       throw ConfigError(json, err, "node-config-node-example");
 

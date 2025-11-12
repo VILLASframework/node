@@ -2,16 +2,17 @@
 """
 HWH File Parser
 
-Author:     Steffen Vogel <post@steffenvogel.de>
-Author:     Daniel Krebs <github@daniel-krebs.net>
-Author:     Hatim Kanchwala <hatim@hatimak.me>
-Author:		Pascal Bauer <pascal.bauer@rwth-aachen.de>
-Author:     Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de
+Author: Steffen Vogel <post@steffenvogel.de>
+Author: Daniel Krebs <github@daniel-krebs.net>
+Author: Hatim Kanchwala <hatim@hatimak.me>
+Author:	Pascal Bauer <pascal.bauer@rwth-aachen.de>
+Author: Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de
 SPDX-FileCopyrightText: 2017-2022 Steffen Vogel <post@steffenvogel.de>
 SPDX-FileCopyrightText: 2017-2022 Daniel Krebs <github@daniel-krebs.net>
 SPDX-FileCopyrightText: 2017-2022 Hatim Kanchwala <hatim@hatimak.me>
 SPDX-FileCopyrightText: 2023 Pascal Bauer <pascal.bauer@rwth-aachen.de>
-SPDX-FileCopyrightText: 2024 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
+SPDX-FileCopyrightText: 2024 Niklas Eiling
+                        <niklas.eiling@eonerc.rwth-aachen.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 
 This program is free software: you can redistribute it and/or modify
@@ -28,7 +29,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from multiprocessing.sharedctypes import Value
 from lxml import etree
 import zipfile
 import sys
@@ -63,8 +63,9 @@ whitelist = [
     ["acs.eonerc.rwth-aachen.de", "sysgen"],
 ]
 
-# List of VLNI ids of AXI4-Stream infrastructure IP cores which do not alter data
-# see PG085 (AXI4-Stream Infrastructure IP Suite v2.2)
+# List of VLNI ids of AXI4-Stream infrastructure IP cores
+# which do not alter data see
+# PG085 (AXI4-Stream Infrastructure IP Suite v2.2)
 axi_converter_whitelist = [
     ["xilinx.com", "ip", "axis_subset_converter"],
     ["xilinx.com", "ip", "axis_clock_converter"],
@@ -86,9 +87,8 @@ opponent = {
 
 def bus_trace(root, busname, type, whitelist):
     module = root.xpath(
-        './/MODULE[.//BUSINTERFACE[@BUSNAME="{}" and (@TYPE="{}" or @TYPE="{}")]]'.format(
-            busname, type[0], type[1]
-        )
+        './/MODULE[.//BUSINTERFACE[@BUSNAME="{}" '.format(busname)
+        + 'and (@TYPE="{}" or @TYPE="{}")]]'.format(type[0], type[1])
     )
 
     vlnv = module[0].get("VLNV")
@@ -120,7 +120,7 @@ def vlnv_match(vlnv, whitelist):
 
 
 def remove_prefix(text, prefix):
-    return text[text.startswith(prefix) and len(prefix) :]
+    return text[text.startswith(prefix) and len(prefix) :]  # noqa: E203
 
 
 def sanitize_name(name):
@@ -138,23 +138,23 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 try:
-    # read .hwdef which is actually a zip-file
+    # Read .hwdef which is actually a zip-file
     zip = zipfile.ZipFile(sys.argv[1], "r")
     hwh = zip.read("top.hwh")
-except:
+except Exception:
     f = open(sys.argv[1], "r")
     hwh = f.read()
 
-# parse .hwh file which is actually XML
+# Parse .hwh file which is actually XML
 try:
     root = etree.XML(hwh)
-except:
+except Exception:
     print('Bad format of "{}"! Did you choose the right file?'.format(sys.argv[1]))
     sys.exit(1)
 
 ips = {}
 
-# find all whitelisted modules
+# Find all whitelisted modules
 modules = root.find(".//MODULES")
 for module in modules:
     instance = module.get("INSTANCE")
@@ -166,11 +166,11 @@ for module in modules:
 
     ips[instance] = {"vlnv": vlnv}
 
-    # populate parameters
+    # Populate parameters
     params = module.find(".//PARAMETERS")
     if (
         params is not None and instance != "zynq_ultra_ps_e_0"
-    ):  #! Parameters of "zynq" ignored
+    ):  # Parameters of "zynq" ignored
         p = ips[instance].setdefault("parameters", {})
 
         for param in params:
@@ -186,7 +186,7 @@ for module in modules:
 
             p[name] = value
 
-    # populate memory view
+    # Populate memory view
     mmap = module.find(".//MEMORYMAP")
     if mmap is None:
         continue
@@ -206,7 +206,7 @@ for module in modules:
         _block["size"] = _block["highaddr"] - _block["baseaddr"] + 1
 
 
-# find AXI-Stream switch port mapping
+# Find AXI-Stream switch port mapping
 switch = root.find('.//MODULE[@MODTYPE="axis_switch"]')
 busifs = switch.find(".//BUSINTERFACES")
 switch_ports = 0
@@ -254,13 +254,10 @@ for busif in busifs:
             }
         )
 
-# set number of master/slave port pairs for switch
+# Set number of master/slave port pairs for switch
 ips[switch.get("INSTANCE")]["num_ports"] = int(switch_ports / 2)
 
-# find interrupt assignments
-
-
-# find interrupt assignments
+# Find interrupt assignments
 intr_controllers = []
 intr_signals = []
 
@@ -281,9 +278,8 @@ for intc in intc_zynq:
 
 for intc, intr in zip(intr_controllers, intr_signals):
     concat = root.xpath(
-        './/MODULE[@MODTYPE="xlconcat" and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(
-            intr
-        )
+        './/MODULE[@MODTYPE="xlconcat" '
+        + 'and .//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(intr)
     )[0]
     ports = concat.xpath('.//PORT[@DIR="I"]')
 
@@ -299,9 +295,9 @@ for intc, intr in zip(intr_controllers, intr_signals):
         m = r.search(name)
 
         irq = int(m.group(1))
-        ip = root.xpath(
-            './/MODULE[.//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(signame)
-        )[0]
+        ip = root.xpath('.//MODULE[.//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(signame))[
+            0
+        ]
 
         instance = ip.get("INSTANCE")
         vlnv = ip.get("VLNV")
@@ -309,11 +305,12 @@ for intc, intr in zip(intr_controllers, intr_signals):
 
         originators = []
 
-        # follow one level of OR gates merging interrupts (may be generalized later)
+        # Follow one level of OR gates merging interrupts
+        # (may be generalized later)
         if modtype == "util_vector_logic":
             logic_op = ip.xpath('.//PARAMETER[@NAME="C_OPERATION"]')[0]
             if logic_op.get("VALUE") == "or":
-                # hardware interrupts sharing the same IRQ at the controller
+                # Hardware interrupts sharing the same IRQ at the controller
                 ports = ip.xpath('.//PORT[@DIR="I"]')
                 for port in ports:
                     signame = port.get("SIGNAME")
@@ -323,7 +320,7 @@ for intc, intr in zip(intr_controllers, intr_signals):
                     instance = ip.get("INSTANCE")
                     originators.append((instance, signame))
         else:
-            # consider this instance as originator
+            # Consider this instance as originator
             originators.append((instance, signame))
 
         for instance, signame in originators:
@@ -361,7 +358,7 @@ for pcie in pcies:
         ("PCIEBAR", "AXIBAR", pcie_bars),
     ):
         barnum = pcie.find('.//PARAMETER[@NAME="C_{}_NUM"]'.format(from_bar))
-        if barnum == None:
+        if barnum is None:
             barnum = pcie.find('.//PARAMETER[@NAME="{}_NUM"]'.format(from_bar))
         from_bar_num = int(barnum.get("VALUE"))
 

@@ -128,18 +128,18 @@ class Node(object):
     def request(self, action, method="GET", **args):
         timeout = args.get("timeout", 1)
         json_data = args.get("json")
-        
+
         url = f"{self.api_url}/api/{self.api_version}/{action}"
-        
+
         # Prepare the request
         req = urllib.request.Request(url, method=method)
-        
+
         # Add JSON data if provided
         if json_data:
             req.add_header("Content-Type", "application/json")
             data = json.dumps(json_data).encode("utf-8")
             req.data = data
-        
+
         try:
             with urllib.request.urlopen(req, timeout=timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
