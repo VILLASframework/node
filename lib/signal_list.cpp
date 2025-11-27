@@ -17,66 +17,78 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-int SignalList::parse(json_t *json) {
-  int ret;
+SignalList::SignalList(json_t *json_signals) { parse(json_signals); }
 
-  if (!json_is_array(json))
-    return -1;
+SignalList::SignalList(unsigned len, enum SignalType typ) {
+  auto typ_str = signalTypeToString(typ);
+
+  auto *json_signals = json_pack("{ s: s, s: s, s: i }", "name", "signal",
+                                 "type", typ_str.c_str(), "count", len);
+
+  parse(json_signals);
+}
+
+SignalList::SignalList(std::string_view dt) {
+  json_t *json_signals = json_array();
+
+  int i = 0;
+  char *e;
+
+  auto *dtc = dt.data();
+
+  for (const char *t = dtc; *t; t = e + 1) {
+    auto len = strtoul(t, &e, 10);
+    if (t == e)
+      len = 1;
+
+    auto name = fmt::format("signal_{}", i++);
+
+    auto typ = signalTypeFromFormatString(*e);
+    if (typ == SignalType::INVALID)
+      throw RuntimeError("Failed to create signal list");
+
+    auto typ_str = signalTypeToString(typ);
+
+    auto *json_signal = json_pack("{ s: s, s: s, s: i }", "name", name.c_str(),
+                                  "type", typ_str.c_str(), "count", len);
+
+    json_array_append_new(json_signals, json_signal);
+  }
+
+  parse(json_signals);
+}
+
+void SignalList::parse(json_t *json_signals) {
+  clear();
+
+  if (json_is_string(json_signals)) {
+    SignalList(json_string_value(json_signals));
+  } else if (json_is_object(json_signals)) {
+    auto *json_tmp = json_signals;
+
+    json_signals = json_array();
+    json_array_append_new(json_signals, json_tmp);
+  } else {
+    throw ConfigError(json_signals, "Invalid signal list");
+  }
 
   size_t i;
   json_t *json_signal;
-  json_array_foreach(json, i, json_signal) {
+  json_array_foreach(json_signals, i, json_signal) {
+    if (!json_is_object(json_signal)) {
+      throw ConfigError(json_signal,
+                        "Signal definitions must be a JSON object");
+    }
+
     auto sig = std::make_shared<Signal>();
     if (!sig)
       throw MemoryAllocationError();
 
-    ret = sig->parse(json_signal);
+    auto ret = sig->parse(json_signal);
     if (ret)
-      return ret;
+      throw ConfigError(json_signal, "Failed to parse signal definition");
 
     push_back(sig);
-  }
-
-  return 0;
-}
-
-SignalList::SignalList(unsigned len, enum SignalType typ) {
-  char name[32];
-
-  for (unsigned i = 0; i < len; i++) {
-    snprintf(name, sizeof(name), "signal%u", i);
-
-    auto sig = std::make_shared<Signal>(name, "", typ);
-    if (!sig)
-      throw RuntimeError("Failed to create signal list");
-
-    push_back(sig);
-  }
-}
-
-SignalList::SignalList(const char *dt) {
-  int len, i = 0;
-  char name[32], *e;
-  enum SignalType typ;
-
-  for (const char *t = dt; *t; t = e + 1) {
-    len = strtoul(t, &e, 10);
-    if (t == e)
-      len = 1;
-
-    typ = signalTypeFromFormatString(*e);
-    if (typ == SignalType::INVALID)
-      throw RuntimeError("Failed to create signal list");
-
-    for (int j = 0; j < len; j++) {
-      snprintf(name, sizeof(name), "signal%d", i++);
-
-      auto sig = std::make_shared<Signal>(name, "", typ);
-      if (!sig)
-        throw RuntimeError("Failed to create signal list");
-
-      push_back(sig);
-    }
   }
 }
 
@@ -122,7 +134,7 @@ json_t *SignalList::toJson() const {
 
 Signal::Ptr SignalList::getByIndex(unsigned idx) { return this->at(idx); }
 
-int SignalList::getIndexByName(const std::string &name) {
+int SignalList::getIndexByName(std::string_view name) {
   unsigned i = 0;
   for (auto s : *this) {
     if (name == s->name)
@@ -134,7 +146,7 @@ int SignalList::getIndexByName(const std::string &name) {
   return -1;
 }
 
-Signal::Ptr SignalList::getByName(const std::string &name) {
+Signal::Ptr SignalList::getByName(std::string_view name) {
   for (auto s : *this) {
     if (name == s->name)
       return s;

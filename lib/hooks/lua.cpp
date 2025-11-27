@@ -420,7 +420,9 @@ void LuaHook::parseExpressions(json_t *json_sigs) {
   size_t i;
   json_t *json_sig;
 
+  expressions.clear();
   signalsExpressions->clear();
+
   ret = signalsExpressions->parse(json_sigs);
   if (ret)
     throw ConfigError(json_sigs, "node-config-hook-lua-signals",

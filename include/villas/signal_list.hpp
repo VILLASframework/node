@@ -8,6 +8,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <string_view>
 
 #include <jansson.h>
 
@@ -24,16 +26,9 @@ public:
   using Ptr = std::shared_ptr<SignalList>;
 
   SignalList() {}
-
+  SignalList(json_t *json);
+  SignalList(std::string_view dt);
   SignalList(unsigned len, enum SignalType fmt);
-  SignalList(const char *dt);
-  SignalList(json_t *json) {
-    int ret = parse(json);
-    if (ret)
-      throw RuntimeError("Failed to parse signal list");
-  }
-
-  int parse(json_t *json);
 
   Ptr clone();
 
@@ -42,9 +37,11 @@ public:
 
   json_t *toJson() const;
 
-  int getIndexByName(const std::string &name);
-  Signal::Ptr getByName(const std::string &name);
+  int getIndexByName(std::string_view name);
+  Signal::Ptr getByName(std::string_view name);
   Signal::Ptr getByIndex(unsigned idx);
+
+  void parse(json_t *json_signals);
 };
 
 } // namespace node

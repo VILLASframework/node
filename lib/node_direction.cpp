@@ -44,53 +44,10 @@ int NodeDirection::parse(json_t *json) {
     signals = std::make_shared<SignalList>();
     if (!signals)
       throw MemoryAllocationError();
-  } else if (json_is_object(json_signals) || json_is_array(json_signals)) {
-    signals = std::make_shared<SignalList>();
+  } else if (json_signals) {
+    signals = std::make_shared<SignalList>(json_signals);
     if (!signals)
       throw MemoryAllocationError();
-
-    if (json_is_object(json_signals)) {
-      json_t *json_name, *json_signal = json_signals;
-      int count;
-
-      ret = json_unpack_ex(json_signal, &err, 0, "{ s: i }", "count", &count);
-      if (ret)
-        throw ConfigError(json_signals, "node-config-node-signals",
-                          "Invalid signal definition");
-
-      json_signals = json_array();
-      for (int i = 0; i < count; i++) {
-        json_t *json_signal_copy = json_copy(json_signal);
-
-        json_object_del(json_signal, "count");
-
-        // Append signal index
-        json_name = json_object_get(json_signal_copy, "name");
-        if (json_name) {
-          const char *name = json_string_value(json_name);
-          char *name_new;
-
-          int ret __attribute__((unused));
-          ret = asprintf(&name_new, "%s%d", name, i);
-
-          json_string_set(json_name, name_new);
-        }
-
-        json_array_append_new(json_signals, json_signal_copy);
-      }
-      json_object_set_new(json, "signals", json_signals);
-    }
-
-    ret = signals->parse(json_signals);
-    if (ret)
-      throw ConfigError(json_signals, "node-config-node-signals",
-                        "Failed to parse signal definition");
-  } else if (json_is_string(json_signals)) {
-    const char *dt = json_string_value(json_signals);
-
-    signals = std::make_shared<SignalList>(dt);
-    if (!signals)
-      return -1;
   } else {
     signals =
         std::make_shared<SignalList>(DEFAULT_SAMPLE_LENGTH, SignalType::FLOAT);
