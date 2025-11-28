@@ -115,6 +115,10 @@ pkg_check_modules(CGRAPH IMPORTED_TARGET libcgraph>=2.30)
 pkg_check_modules(GVC IMPORTED_TARGET libgvc>=2.30)
 pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0>=1.0.23)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
+pkg_check_modules(ARROW IMPORTED_TARGET REQUIRED arrow)
+pkg_check_modules(PARQUET IMPORTED_TARGET REQUIRED parquet)
+# pkg_check_modules(RESTCLIENT IMPORTED_TARGET REQUIRED restclient-cpp)
+
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
@@ -214,6 +218,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ          "Build with uldaq node-type"    
 cmake_dependent_option(WITH_NODE_WEBRTC         "Build with webrtc node-type"                           "${WITH_DEFAULTS}" "WITH_WEB; LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET      "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ         "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
+cmake_dependent_option(WITH_NODE_DELTASHARING   "Build with delta_sharing node-type"                    "${WITH_DEFAULTS}" "" OFF)
 
 # Set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
