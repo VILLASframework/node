@@ -42,12 +42,14 @@ public:
   // Parse signal description.
   int parse(json_t *json);
 
-  std::string toString(const union SignalData *d = nullptr) const;
+  virtual std::string toString(const union SignalData *d = nullptr) const;
 
   // Produce JSON representation of signal.
-  json_t *toJson() const;
+  virtual json_t *toJson() const;
 
   bool isNext(const Signal &sig);
+
+  static Signal::Ptr fromJson(json_t *json);
 };
 
 } // namespace node

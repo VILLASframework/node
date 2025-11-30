@@ -408,7 +408,7 @@ public:
   }
 
   int parse(json_t *json) override {
-    int ret = Node::parse(json);
+    int ret = Node::parseCommon(json);
     if (ret)
       return ret;
 

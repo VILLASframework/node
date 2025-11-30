@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <functional>
 #include <iostream>
 
 #include <fmt/ostream.h>
@@ -105,6 +106,13 @@ protected:
   virtual int _write(struct Sample *smps[], unsigned cnt) { return -1; }
 
   virtual json_t *_readStatus() const { return nullptr; }
+
+  int parseCommon(
+      json_t *json,
+      std::function<Signal::Ptr(json_t *, NodeDirection::Direction)>
+          parse_signal = [](json_t *j, NodeDirection::Direction d) {
+            return Signal::fromJson(j);
+          });
 
 public:
   // Initialize node with default values
@@ -277,7 +285,6 @@ public:
 };
 
 class NodeFactory : public villas::plugin::Plugin {
-
   friend Node;
 
 protected:

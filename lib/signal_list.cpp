@@ -17,7 +17,10 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
-SignalList::SignalList(json_t *json_signals) { parse(json_signals); }
+SignalList::SignalList(json_t *json_signals,
+                       std::function<Signal::Ptr(json_t *)> parse_signal) {
+  parse(json_signals, parse_signal);
+}
 
 SignalList::SignalList(unsigned len, enum SignalType typ) {
   auto typ_str = signalTypeToString(typ);
@@ -58,7 +61,8 @@ SignalList::SignalList(std::string_view dt) {
   parse(json_signals);
 }
 
-void SignalList::parse(json_t *json_signals) {
+void SignalList::parse(json_t *json_signals,
+                       std::function<Signal::Ptr(json_t *)> parse_signal) {
   clear();
 
   if (json_is_string(json_signals)) {
@@ -68,8 +72,9 @@ void SignalList::parse(json_t *json_signals) {
 
     json_signals = json_array();
     json_array_append_new(json_signals, json_tmp);
-  } else {
-    throw ConfigError(json_signals, "Invalid signal list");
+  } else if (!json_is_array(json_signals)) {
+    throw ConfigError(json_signals, "node-config-node-signals",
+                      "Invalid signal list");
   }
 
   size_t i;
@@ -77,18 +82,45 @@ void SignalList::parse(json_t *json_signals) {
   json_array_foreach(json_signals, i, json_signal) {
     if (!json_is_object(json_signal)) {
       throw ConfigError(json_signal,
+                        "node-config-node-signal"
                         "Signal definitions must be a JSON object");
     }
 
-    auto sig = std::make_shared<Signal>();
-    if (!sig)
-      throw MemoryAllocationError();
+    std::string baseName = "signal";
+    bool appendIndex = false;
 
-    auto ret = sig->parse(json_signal);
-    if (ret)
-      throw ConfigError(json_signal, "Failed to parse signal definition");
+    int count = 1;
+    const char *nme = nullptr;
 
-    push_back(sig);
+    int ret = json_unpack(json_signal, "{ s?: i, s?: s }", "count", &count,
+                          "name", &nme);
+    if (ret) {
+      throw ConfigError(json_signal, "node-config-node-signal",
+                        "Failed to parse signal definition");
+    }
+
+    if (count > 1) {
+      json_object_del(json_signal, "count");
+      appendIndex = true;
+    }
+
+    if (nme) {
+      baseName = nme;
+    }
+
+    for (int j = 0; j < count; j++) {
+      if (appendIndex) {
+        auto name = fmt::format("{}_{}", baseName, j);
+        json_object_set_new(json_signal, "name", json_string(name.c_str()));
+      }
+
+      auto signal = parse_signal(json_signal);
+      if (!signal)
+        throw ConfigError(json_signal, "node-config-node-signal",
+                          "Failed to parse signal definition");
+
+      push_back(signal);
+    }
   }
 }
 

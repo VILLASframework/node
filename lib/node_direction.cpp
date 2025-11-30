@@ -22,7 +22,8 @@ NodeDirection::NodeDirection(enum NodeDirection::Direction dir, Node *n)
     : direction(dir), path(nullptr), node(n), enabled(1), builtin(1),
       vectorize(1), config(nullptr) {}
 
-int NodeDirection::parse(json_t *json) {
+int NodeDirection::parse(json_t *json,
+                         std::function<Signal::Ptr(json_t *)> parse_signal) {
   int ret;
 
   json_error_t err;
@@ -45,7 +46,7 @@ int NodeDirection::parse(json_t *json) {
     if (!signals)
       throw MemoryAllocationError();
   } else if (json_signals) {
-    signals = std::make_shared<SignalList>(json_signals);
+    signals = std::make_shared<SignalList>(json_signals, parse_signal);
     if (!signals)
       throw MemoryAllocationError();
   } else {

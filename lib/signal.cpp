@@ -123,3 +123,13 @@ bool Signal::isNext(const Signal &sig) {
 
   return isNextName(name, sig.name);
 }
+
+Signal::Ptr Signal::fromJson(json_t *json) {
+  auto signal = std::make_shared<Signal>();
+
+  auto ret = signal->parse(json);
+  if (ret)
+    return nullptr;
+
+  return signal;
+}

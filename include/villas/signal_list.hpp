@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -26,7 +27,8 @@ public:
   using Ptr = std::shared_ptr<SignalList>;
 
   SignalList() {}
-  SignalList(json_t *json);
+  SignalList(json_t *json, std::function<Signal::Ptr(json_t *)> parse_signal =
+                               Signal::fromJson);
   SignalList(std::string_view dt);
   SignalList(unsigned len, enum SignalType fmt);
 
@@ -41,7 +43,9 @@ public:
   Signal::Ptr getByName(std::string_view name);
   Signal::Ptr getByIndex(unsigned idx);
 
-  void parse(json_t *json_signals);
+  void
+  parse(json_t *json_signals,
+        std::function<Signal::Ptr(json_t *)> parse_signal = Signal::fromJson);
 };
 
 } // namespace node

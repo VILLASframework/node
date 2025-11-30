@@ -94,11 +94,13 @@ const std::string &LoopbackNode::getDetails() {
 }
 
 int LoopbackNode::parse(json_t *json) {
+  int ret = Node::parseCommon(json);
+  if (ret)
+    return ret;
+
   const char *mode_str = nullptr;
 
   json_error_t err;
-  int ret;
-
   ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "queuelen", &queuelen,
                        "mode", &mode_str);
   if (ret)
@@ -120,7 +122,7 @@ int LoopbackNode::parse(json_t *json) {
                         "Unknown mode '{}'", mode_str);
   }
 
-  return Node::parse(json);
+  return 0;
 }
 
 // Register node

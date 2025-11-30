@@ -97,7 +97,12 @@ int Node::prepare() {
   return 0;
 }
 
-int Node::parse(json_t *json) {
+int Node::parse(json_t *json) { return parseCommon(json); }
+
+int Node::parseCommon(
+    json_t *json,
+    std::function<Signal::Ptr(json_t *, NodeDirection::Direction d)>
+        parse_signal) {
   assert(state == State::INITIALIZED || state == State::PARSED ||
          state == State::CHECKED);
 
@@ -138,31 +143,37 @@ int Node::parse(json_t *json) {
 #endif // WITH_NETEM
   }
 
-  struct {
+  struct Direction {
     const char *str;
-    struct NodeDirection *dir;
-  } dirs[] = {{"in", &in}, {"out", &out}};
+    struct NodeDirection *obj;
+    enum NodeDirection::Direction dir;
+  };
+  std::vector<Direction> dirs = {{"in", &in, NodeDirection::Direction::IN},
+                                 {"out", &out, NodeDirection::Direction::OUT}};
 
-  const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};
+  std::vector<std::string> fields = {"signals", "builtin", "vectorize",
+                                     "hooks"};
 
-  for (unsigned j = 0; j < ARRAY_LEN(dirs); j++) {
-    json_t *json_dir = json_object_get(json, dirs[j].str);
+  for (auto &dir : dirs) {
+    json_t *json_dir = json_object_get(json, dir.str);
 
     // Skip if direction is unused
     if (!json_dir) {
       json_dir = json_pack("{ s: b }", "enabled", 0);
     }
 
-    // Copy missing fields from main node config to direction config
-    for (unsigned i = 0; i < ARRAY_LEN(fields); i++) {
-      json_t *json_field_dir = json_object_get(json_dir, fields[i]);
-      json_t *json_field_node = json_object_get(json, fields[i]);
+    // Copy missing fields from main node config to direction config.
+    for (auto &field : fields) {
+      json_t *json_field_dir = json_object_get(json_dir, field.c_str());
+      json_t *json_field_node = json_object_get(json, field.c_str());
 
-      if (json_field_node && !json_field_dir)
-        json_object_set(json_dir, fields[i], json_field_node);
+      if (json_field_node && !json_field_dir) {
+        json_object_set(json_dir, field.c_str(), json_field_node);
+      }
     }
 
-    ret = dirs[j].dir->parse(json_dir);
+    ret = dir.obj->parse(json_dir,
+                         [&](json_t *j) { return parse_signal(j, dir.dir); });
     if (ret)
       return ret;
   }

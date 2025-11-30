@@ -88,7 +88,7 @@ int APINode::_write(struct Sample *smps[], unsigned cnt) {
 }
 
 int APINode::parse(json_t *json) {
-  int ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
 

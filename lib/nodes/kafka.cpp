@@ -235,6 +235,10 @@ public:
   }
 
   int parse(json_t *json) override {
+    int ret = Node::parseCommon(json);
+    if (ret)
+      return ret;
+
     const char *svr;
     const char *prod = nullptr;
     const char *cons = nullptr;
@@ -243,15 +247,11 @@ public:
     const char *gid = nullptr;
     double to = -1;
 
-    int ret = Node::parse(json);
-    if (ret)
-      return ret;
-
-    json_error_t err;
     json_t *json_ssl = nullptr;
     json_t *json_sasl = nullptr;
     json_t *json_format = nullptr;
 
+    json_error_t err;
     ret = json_unpack_ex(json, &err, 0,
                          "{ s?: { s?: s }, s?: { s?: s, s?: s }, s?: o, s: s, "
                          "s?: F, s: s, s?: s, s?: o, s?: o }",
