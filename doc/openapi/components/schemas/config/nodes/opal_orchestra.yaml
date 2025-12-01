@@ -59,12 +59,6 @@ allOf:
       description: >-
         If true, the DDF file provided in the 'dff' setting will be overwriting with settings and signals from the VILLASnode configuration.
 
-    ddf_overwrite_only:
-      type: boolean
-      default: false
-      description: >-
-        If true, VILLASnode will overwrite the file provided in the 'ddf' setting, and terminate immediately afterwards.
-
     rate:
       type: number
       default: 1

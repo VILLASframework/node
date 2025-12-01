@@ -269,16 +269,7 @@ protected:
   // Overwrite the data definition file (DDF).
   bool dataDefinitionFileOverwrite;
 
-  // Overwrite the data definition file (DDF) and terminate VILLASnode.
-  bool dataDefinitionFileWriteOnly;
-
   int _read(struct Sample *smps[], unsigned cnt) override {
-    if (dataDefinitionFileWriteOnly) {
-      logger->warn("Stopping node after writing the DDF file");
-      setState(State::STOPPING);
-      return -1;
-    }
-
     assert(cnt == 1);
 
     if (!domain.synchronous) {
@@ -314,12 +305,6 @@ protected:
   }
 
   int _write(struct Sample *smps[], unsigned cnt) override {
-    if (dataDefinitionFileWriteOnly) {
-      logger->warn("Stopping node after writing the DDF file");
-      setState(State::STOPPING);
-      return -1;
-    }
-
     assert(cnt == 1);
 
     try {
@@ -348,8 +333,7 @@ public:
                     unsigned int key = 0)
       : Node(id, name), task(), connectionKey(key), status(nullptr), domain(),
         subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
-        skipWaitToGo(false), dataDefinitionFileOverwrite(false),
-        dataDefinitionFileWriteOnly(false) {}
+        skipWaitToGo(false), dataDefinitionFileOverwrite(false) {}
 
   void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
                     std::unordered_map<std::shared_ptr<DataItem>,
@@ -431,13 +415,13 @@ public:
     ret = json_unpack_ex(
         json, &err, 0,
         "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: o, s?: o, s?: o, s?: b, s?: "
-        "b, s?: b, s?: F, s?: { s?: o }, s?: { s?: o } }",
+        "b, s?: F, s?: { s?: o }, s?: { s?: o } }",
         "domain", &dn, "synchronous", &sy, "states", &sts, "connection",
         &json_connection, "ddf", &ddf, "connect_timeout", &json_connect_timeout,
         "flag_delay", &json_flag_delay, "flag_delay_tool",
         &json_flag_delay_tool, "skip_wait_to_go", &sw, "ddf_overwrite", &ow,
-        "ddf_overwrite_only", &owo, "rate", &rate, "in", "signals",
-        &json_in_signals, "out", "signals", &json_out_signals);
+        "rate", &rate, "in", "signals", &json_in_signals, "out", "signals",
+        &json_out_signals);
     if (ret) {
       throw ConfigError(json, err, "node-config-node-opal-orchestra");
     }
@@ -462,10 +446,6 @@ public:
 
     if (ow >= 0) {
       dataDefinitionFileOverwrite = ow > 0;
-    }
-
-    if (owo >= 0) {
-      dataDefinitionFileWriteOnly = owo > 0;
     }
 
     if (json_connect_timeout) {
@@ -531,8 +511,7 @@ public:
 
   int prepare() override {
     // Write DDF.
-    if (dataDefinitionFilename &&
-        (dataDefinitionFileOverwrite || dataDefinitionFileWriteOnly)) {
+    if (dataDefinitionFilename && dataDefinitionFileOverwrite) {
 
       // TODO: Possibly merge Orchestra domains from all nodes into one DDF.
       auto ddf = DataDefinitionFile();
@@ -541,10 +520,6 @@ public:
 
       logger->info("Wrote Orchestra Data Definition file (DDF) to '{}'",
                    *dataDefinitionFilename);
-
-      if (dataDefinitionFileWriteOnly) {
-        return Node::prepare();
-      }
     }
 
     logger->debug("Connecting to Orchestra framework: domain={}, ddf={}, "
@@ -623,13 +598,7 @@ public:
   }
 
   int start() override {
-    if (dataDefinitionFileWriteOnly) {
-      return Node::start();
-    }
-
     RTConnectionLockGuard guard(connectionKey);
-
-    RTWaitReadyToGo();
 
     if (!domain.synchronous) {
       task.setRate(rate);
