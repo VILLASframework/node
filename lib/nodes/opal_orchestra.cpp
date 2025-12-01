@@ -530,11 +530,15 @@ public:
 
     RTConnectionLockGuard guard(connectionKey);
 
-    auto ret =
-        dataDefinitionFilename
-            ? RTConnectWithFile(dataDefinitionFilename->c_str(),
-                                domain.name.c_str(), connectTimeout.count())
-            : RTConnect(domain.name.c_str(), connectTimeout.count());
+    auto ret = RTSetSkipWaitToGoAtConnection(skipWaitToGo);
+    if (ret != RTAPI_SUCCESS) {
+      throw RTError(ret, "Failed to check ready to go");
+    }
+
+    ret = dataDefinitionFilename
+              ? RTConnectWithFile(dataDefinitionFilename->c_str(),
+                                  domain.name.c_str(), connectTimeout.count())
+              : RTConnect(domain.name.c_str(), connectTimeout.count());
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to connect to Orchestra framework");
     }
@@ -558,11 +562,6 @@ public:
       if (ret != RTAPI_SUCCESS) {
         throw RTError(ret, "Failed to set flag with tool");
       }
-    }
-
-    ret = RTSetSkipWaitToGoAtConnection(skipWaitToGo);
-    if (ret != RTAPI_SUCCESS) {
-      throw RTError(ret, "Failed to check ready to go");
     }
 
     if (std::shared_ptr<ConnectionRemote> c =
