@@ -335,93 +335,91 @@ public:
         subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
         skipWaitToGo(false), dataDefinitionFileOverwrite(false) {}
 
-  void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
-                    std::unordered_map<std::shared_ptr<DataItem>,
-                                       OpalOrchestraMapping> &mappings) {
-    if (!json_is_array(json)) {
-      throw ConfigError(json, "node-config-node-opal-orchestra-signals",
-                        "Signals must be an array");
-    }
+  Signal::Ptr parseSignal(json_t *json_signal, NodeDirection::Direction dir) {
+    auto signal = Signal::fromJson(json_signal);
 
-    size_t i;
-    json_t *json_signal;
+    DataSet &dataSet =
+        dir == NodeDirection::Direction::IN ? domain.publish : domain.subscribe;
+    std::unordered_map<std::shared_ptr<DataItem>, OpalOrchestraMapping>
+        &mappings = dir == NodeDirection::Direction::IN ? publishMappings
+                                                        : subscribeMappings;
+
+    const char *nme = nullptr;
+    const char *typ = nullptr;
+    int oi = -1;
+
     json_error_t err;
-
-    json_array_foreach(json, i, json_signal) {
-      auto signal = signals->getByIndex(i);
-
-      const char *nme = nullptr;
-      const char *typ = nullptr;
-      int oi = -1;
-
-      auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
-                                "orchestra_name", &nme, "orchestra_type", &typ,
-                                "orchestra_index", &oi);
-      if (ret) {
-        throw ConfigError(json_signal, err,
-                          "node-config-node-opal-orchestra-signals");
-      }
-
-      std::optional<unsigned> orchestraIdx;
-
-      if (oi >= 0) {
-        orchestraIdx = oi;
-      }
-
-      auto defaultValue =
-          signal->init.cast(signal->type, node::SignalType::FLOAT);
-
-      auto orchestraType = typ ? orchestra::signalTypeFromString(typ)
-                               : orchestra::toOrchestraSignalType(signal->type);
-
-      auto orchestraName = nme ? nme : signal->name;
-
-      bool inserted = false;
-      auto item = dataSet.upsertItem(orchestraName, inserted);
-
-      if (inserted) {
-        item->type = orchestraType;
-        item->defaultValue = defaultValue.f;
-
-        mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
-      }
-
-      auto &mapping = mappings.at(item);
-      mapping.addSignal(signal, orchestraIdx);
+    auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
+                              "orchestra_name", &nme, "orchestra_type", &typ,
+                              "orchestra_index", &oi);
+    if (ret) {
+      throw ConfigError(json_signal, err,
+                        "node-config-node-opal-orchestra-signals");
     }
+
+    std::optional<unsigned> orchestraIdx;
+
+    if (oi >= 0) {
+      orchestraIdx = oi;
+    }
+
+    auto defaultValue =
+        signal->init.cast(signal->type, node::SignalType::FLOAT);
+
+    auto orchestraType = typ ? orchestra::signalTypeFromString(typ)
+                             : orchestra::toOrchestraSignalType(signal->type);
+
+    auto orchestraName = nme ? nme : signal->name;
+
+    bool inserted = false;
+    auto item = dataSet.upsertItem(orchestraName, inserted);
+
+    if (inserted) {
+      item->type = orchestraType;
+      item->defaultValue = defaultValue.f;
+
+      mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
+    }
+
+    auto &mapping = mappings.at(item);
+    mapping.addSignal(signal, orchestraIdx);
+
+    return signal;
   }
 
   int parse(json_t *json) override {
-    int ret = Node::parseCommon(json);
-    if (ret)
-      return ret;
+    domain = Domain();
+    publishMappings.clear();
+    subscribeMappings.clear();
 
+    int reti = parseCommon(
+        json, [&](json_t *json_signal, NodeDirection::Direction dir) {
+          return parseSignal(json_signal, dir);
+        });
+    if (reti)
+      return reti;
+
+    int sw = -1;
+    int ow = -1;
+    int sy = -1;
+    int sts = -1;
     const char *dn = nullptr;
     const char *ddf = nullptr;
-    json_t *json_in_signals = nullptr;
-    json_t *json_out_signals = nullptr;
     json_t *json_connection = nullptr;
     json_t *json_connect_timeout = nullptr;
     json_t *json_flag_delay = nullptr;
     json_t *json_flag_delay_tool = nullptr;
 
-    int sw = -1;
-    int ow = -1;
-    int owo = -1;
-    int sy = -1;
-    int sts = -1;
-
     json_error_t err;
-    ret = json_unpack_ex(
+    auto ret = json_unpack_ex(
         json, &err, 0,
         "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: o, s?: o, s?: o, s?: b, s?: "
-        "b, s?: F, s?: { s?: o }, s?: { s?: o } }",
+        "b, s?: F }",
         "domain", &dn, "synchronous", &sy, "states", &sts, "connection",
         &json_connection, "ddf", &ddf, "connect_timeout", &json_connect_timeout,
         "flag_delay", &json_flag_delay, "flag_delay_tool",
         &json_flag_delay_tool, "skip_wait_to_go", &sw, "ddf_overwrite", &ow,
-        "rate", &rate, "in", "signals", &json_in_signals, "out", "signals",
-        &json_out_signals);
+        "rate", &rate);
     if (ret) {
       throw ConfigError(json, err, "node-config-node-opal-orchestra");
     }
@@ -464,16 +462,6 @@ public:
 
     if (json_connection) {
       domain.connection = Connection::fromJson(json_connection);
-    }
-
-    if (json_in_signals) {
-      parseSignals(json_in_signals, in.getSignals(false), domain.publish,
-                   publishMappings);
-    }
-
-    if (json_out_signals) {
-      parseSignals(json_out_signals, out.getSignals(false), domain.subscribe,
-                   subscribeMappings);
     }
 
     return 0;
