@@ -5,28 +5,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <villas/nodes/delta_sharing/protocol.hpp>
-#include <villas/timing.hpp>
-#include <arrow/array/array_base.h>
-#include <arrow/array/array_binary.h>
-#include <arrow/type_fwd.h>
 #include <exception>
-#include <jansson.h>
 #include <memory>
-#include <parquet/exception.h>
 #include <optional>
 #include <string>
-
 #include <vector>
-#include <villas/exceptions.hpp>
-#include <villas/node_compat.hpp>
 
-#include <villas/nodes/delta_sharing/delta_sharing.hpp>
-#include <villas/nodes/delta_sharing/functions.hpp>
 #include <arrow/array.h>
+#include <arrow/array/array_base.h>
+#include <arrow/array/array_binary.h>
 #include <arrow/builder.h>
 #include <arrow/table.h>
 #include <arrow/type.h>
+#include <arrow/type_fwd.h>
+#include <jansson.h>
+#include <parquet/exception.h>
+
+#include <villas/exceptions.hpp>
+#include <villas/node_compat.hpp>
+#include <villas/nodes/delta_sharing/delta_sharing.hpp>
+#include <villas/nodes/delta_sharing/functions.hpp>
+#include <villas/nodes/delta_sharing/protocol.hpp>
+#include <villas/timing.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -50,11 +50,12 @@ int villas::node::deltaSharing_parse(NodeCompat *n, json_t *json) {
   const char *table = nullptr;
   int batch_size = 0;
 
-  ret = json_unpack_ex(json, &err, 0,
-                       "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: i }",
-                       "profile_path", &profile_path, "schema", &schema,
-                       "share", &share, "table", &table,"cache_dir", &cache_dir, "table_path",
-                       &table_path, "op", &op, "batch_size", &batch_size);
+  ret = json_unpack_ex(
+      json, &err, 0,
+      "{ s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: s, s?: i }",
+      "profile_path", &profile_path, "schema", &schema, "share", &share,
+      "table", &table, "cache_dir", &cache_dir, "table_path", &table_path, "op",
+      &op, "batch_size", &batch_size);
 
   if (ret)
     throw ConfigError(json, err, "node-config-node-delta_sharing");
@@ -97,11 +98,10 @@ char *villas::node::deltaSharing_print(NodeCompat *n) {
       (d->table_op == delta_sharing::TableOp::TABLE_READ
            ? OP_READ
            : (d->table_op == delta_sharing::TableOp::TABLE_WRITE ? OP_WRITE
-                                                               : OP_NOOP));
+                                                                 : OP_NOOP));
 
   return strdup(info.c_str());
 }
-
 
 int villas::node::deltaSharing_start(NodeCompat *n) {
   auto *d = n->getData<struct delta_sharing>();
@@ -112,7 +112,7 @@ int villas::node::deltaSharing_start(NodeCompat *n) {
 
   std::optional<std::string> cache_opt =
       d->cache_dir.empty() ? std::nullopt
-                            : std::optional<std::string>(d->cache_dir);
+                           : std::optional<std::string>(d->cache_dir);
 
   d->client = DeltaSharing::NewDeltaSharingClient(d->profile_path, cache_opt);
 
@@ -131,7 +131,6 @@ int villas::node::deltaSharing_start(NodeCompat *n) {
     d->tables = d->client->ListAllTables(share, 100, "");
     //Check if tables are fetched correctly
     n->logger->info("Table 1 {}", d->tables->at(0).name);
-
   }
 
   return 0;
@@ -183,7 +182,7 @@ int villas::node::deltaSharing_poll_fds(NodeCompat *n, int fds[]) {
 }
 
 int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
-                                  unsigned cnt) {
+                                    unsigned cnt) {
 
   auto *d = n->getData<struct delta_sharing>();
 
@@ -201,7 +200,8 @@ int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
     auto path = DeltaSharing::ParseURL(d->table_path);
 
     if (path.size() != 4) {
-      n->logger->error("Invalid table path format. Expected: server#share.schema.table");
+      n->logger->error(
+          "Invalid table path format. Expected: server#share.schema.table");
       return -1;
     }
 
@@ -263,12 +263,14 @@ int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
           smp->data[col].f = float_array->Value(i);
         }
         case arrow::Type::INT64: {
-          auto int_array = std::static_pointer_cast<arrow::Int64Array>(first_chunk);
+          auto int_array =
+              std::static_pointer_cast<arrow::Int64Array>(first_chunk);
           smp->data[col].i = int_array->Value(i);
           break;
         }
         case arrow::Type::INT32: {
-          auto int_array = std::static_pointer_cast<arrow::Int32Array>(first_chunk);
+          auto int_array =
+              std::static_pointer_cast<arrow::Int32Array>(first_chunk);
           smp->data[col].i = int_array->Value(i);
           break;
         }
@@ -290,12 +292,12 @@ int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
   } catch (const std::exception &e) {
     n->logger->error("Error reading from Delta Sharing table: {}", e.what());
     return -1;
-    }
   }
+}
 
 //TODO: write table to delta sharing server. Implementation to be tested
 int villas::node::deltaSharing_write(NodeCompat *n, struct Sample *const smps[],
-                                   unsigned cnt) {
+                                     unsigned cnt) {
   auto *d = n->getData<struct delta_sharing>();
 
   if (!d->client) {
@@ -311,7 +313,8 @@ int villas::node::deltaSharing_write(NodeCompat *n, struct Sample *const smps[],
   try {
     auto path_parts = DeltaSharing::ParseURL(d->table_path);
     if (path_parts.size() != 4) {
-      n->logger->error("Invalid table path format. Expected: server#share.schema.table");
+      n->logger->error(
+          "Invalid table path format. Expected: server#share.schema.table");
       return -1;
     }
 
@@ -361,23 +364,23 @@ int villas::node::deltaSharing_write(NodeCompat *n, struct Sample *const smps[],
         break;
       }
       case SignalType::INTEGER: {
-         std::vector<int64_t> values;
-          for (unsigned i = 0; i < cnt; i++) {
-            values.push_back(smps[i]->data[col].i);
-          }
-          arrow::Int64Builder builder;
-          PARQUET_THROW_NOT_OK(builder.AppendValues(values));
-          PARQUET_THROW_NOT_OK(builder.Finish(&array));
-          break;
-      }
-        default:
-          n->logger->warn("Unsupported signal type for column {}", col);
-          continue;
+        std::vector<int64_t> values;
+        for (unsigned i = 0; i < cnt; i++) {
+          values.push_back(smps[i]->data[col].i);
         }
+        arrow::Int64Builder builder;
+        PARQUET_THROW_NOT_OK(builder.AppendValues(values));
+        PARQUET_THROW_NOT_OK(builder.Finish(&array));
+        break;
+      }
+      default:
+        n->logger->warn("Unsupported signal type for column {}", col);
+        continue;
+      }
 
-        arrays.push_back(array);
+      arrays.push_back(array);
     }
-       // Create Arrow schema and table
+    // Create Arrow schema and table
     auto schema = std::make_shared<arrow::Schema>(fields);
     auto table = arrow::Table::Make(schema, arrays);
 

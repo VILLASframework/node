@@ -7,12 +7,14 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
 #include <iostream>
-#include <arrow/table.h>
-#include <villas/nodes/delta_sharing/delta_sharing_client.hpp>
+#include <string>
 #include <thread>
+#include <vector>
+
+#include <arrow/table.h>
+
+#include <villas/nodes/delta_sharing/delta_sharing_client.hpp>
 
 namespace DeltaSharing {
 
@@ -22,6 +24,6 @@ NewDeltaSharingClient(std::string profile,
                       std::optional<std::string> cacheLocation);
 const std::shared_ptr<arrow::Table> LoadAsArrowTable(std::string path,
                                                      int fileno);
-};
+}; // namespace DeltaSharing
 
 // namespace DeltaSharing

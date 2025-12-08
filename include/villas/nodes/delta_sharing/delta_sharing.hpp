@@ -14,10 +14,12 @@
 
 #include <jansson.h>
 
-#include <villas/nodes/delta_sharing/protocol.hpp>
 #include <villas/nodes/delta_sharing/delta_sharing_client.hpp>
+#include <villas/nodes/delta_sharing/protocol.hpp>
 
-namespace arrow { class Table; }
+namespace arrow {
+class Table;
+}
 
 namespace villas {
 namespace node {
@@ -37,10 +39,13 @@ struct delta_sharing {
 
   // Client and state
   std::shared_ptr<DeltaSharing::DeltaSharingClient> client;
-  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Schema>> schemas;
+  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Schema>>
+      schemas;
   std::shared_ptr<arrow::Table> table_ptr;
-  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Table>> tables;
-  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Share>> shares;
+  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Table>>
+      tables;
+  std::shared_ptr<std::vector<DeltaSharing::DeltaSharingProtocol::Share>>
+      shares;
 
   enum class TableOp { TABLE_NOOP, TABLE_READ, TABLE_WRITE } table_op;
 };
@@ -61,7 +66,8 @@ int deltaSharing_poll_fds(NodeCompat *n, int fds[]);
 
 int deltaSharing_read(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
 
-int deltaSharing_write(NodeCompat *n, struct Sample *const smps[], unsigned cnt);
+int deltaSharing_write(NodeCompat *n, struct Sample *const smps[],
+                       unsigned cnt);
 
 } // namespace node
 } // namespace villas

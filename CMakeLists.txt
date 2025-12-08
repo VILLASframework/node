@@ -117,7 +117,6 @@ pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0>=1.0.23)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 pkg_check_modules(ARROW IMPORTED_TARGET REQUIRED arrow)
 pkg_check_modules(PARQUET IMPORTED_TARGET REQUIRED parquet)
-# pkg_check_modules(RESTCLIENT IMPORTED_TARGET REQUIRED restclient-cpp)
 
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
@@ -329,6 +328,7 @@ add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with 
 add_feature_info(NODE_WEBRTC            WITH_NODE_WEBRTC            "Build with webrtc node-type")
 add_feature_info(NODE_WEBSOCKET         WITH_NODE_WEBSOCKET         "Build with websocket node-type")
 add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with zeromq node-type")
+add_feature_info(NODE_DELTASHARING      WITH_NODE_DELTASHARING      "Build with delta-sharing node-type")
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
