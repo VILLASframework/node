@@ -117,6 +117,7 @@ pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0>=1.0.23)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 pkg_check_modules(ARROW IMPORTED_TARGET REQUIRED arrow)
 pkg_check_modules(PARQUET IMPORTED_TARGET REQUIRED parquet)
+pkg_check_modules(RESTCLIENTCPP REQUIRED restclient-cpp)
 
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)

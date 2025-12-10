@@ -637,7 +637,10 @@ if ! find ${PREFIX}/{lib,lib64} -name "*restclient-cpp*" 2>/dev/null | grep -q .
     pushd restclient-cpp
     ./autogen.sh
     ./configure ${CONFIGURE_OPTS}
+    pc_src=restclient-cpp.pc
+    sed -i -E 's/^[[:space:]]*Requires[[:space:]]*:[[:space:]]*curl[[:space:]]*$/Requires.private: libcurl/' "$pc_src"
     make ${MAKE_OPTS} install
+    cp ./restclient-cpp.pc /usr/local/lib/pkgconfig/
     popd
 fi
 
