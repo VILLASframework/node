@@ -204,10 +204,10 @@ endif()
 
 # Enable Delta Sharing
 if(WITH_NODE_DELTASHARING)
-    list(APPEND NODE_SRC delta_sharing/delta_sharing.cpp delta_sharing/delta_sharing_client.cpp 
+    list(APPEND NODE_SRC delta_sharing/delta_sharing.cpp delta_sharing/delta_sharing_client.cpp
         delta_sharing/delta_sharing_rest_client.cpp delta_sharing/functions.cpp
     )
-    list(APPEND LIBRARIES ${ARROW_LIBRARIES} ${PARQUET_LIBRARIES} ${RESTCLIENT_LIBRARIES})
+    list(APPEND LIBRARIES ${ARROW_LIBRARIES} ${PARQUET_LIBRARIES} ${RESTCLIENTCPP_LIBRARIES})
 endif()
 
 add_library(nodes STATIC ${NODE_SRC})
