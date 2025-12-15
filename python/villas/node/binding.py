@@ -4,97 +4,17 @@ SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Syst
 SPDX-License-Identifier: Apache-2.0
 """  # noqa: E501
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import functools
 import json
 import logging
+import weakref
 
 import villas.node.python_binding as vn
 
+Capsule = Any
 logger = logging.getLogger("villas.node")
-
-
-class SamplesArray:
-    """
-    Wrapper for a block of samples with automatic memory management.
-
-    Supports:
-        - Reading block slices in combination with `node_read()`.
-        - Writing block slices in combination with `node_write()`.
-        - Automatic (de-)allocation of samples.
-
-    Notes:
-        - Block slices are a slices with step size 1
-    """
-
-    def _bulk_allocation(self, start_idx: int, end_idx: int, smpl_length: int):
-        """
-        Allocates a block of samples.
-
-        Args:
-            start_idx (int): Starting Index of a block.
-            end_idx (int): One past the last index to allocate.
-            smpl_length (int): length of sample per slot
-
-        Notes:
-            - Block is determined by `start_idx`, `end_idx`
-            - Samples can hold multiple signals.
-            - `smpl_length` corresponds to the number of signals.
-        """
-        return self._smps.bulk_alloc(start_idx, end_idx, smpl_length)
-
-    def _get_block_handle(self, start_idx: Optional[int] = None):
-        """
-        Get a handle to a block of samples.
-
-        Args:
-            start_idx (Optional[int]): Starting index of the block. Default 0.
-
-        Returns:
-            vsample**: Handle to the underlying block masked as `void *`.
-        """
-        if start_idx is None:
-            return self._smps.get_block(0)
-        else:
-            return self._smps.get_block(start_idx)
-
-    def __init__(self, length: int):
-        """
-        Initialize a SamplesArray.
-
-        Notes:
-            - Each sample slot can hold one sample allocated via `node_read()`.
-            - Sample can contain multiple signals, depending on `smpl_length`.
-        """
-        self._smps = vn.smps_array(length)
-        self._len = length
-
-    def __len__(self):
-        """
-        Returns the length of the SamplesArray.
-        Corresponds to the amount of samples it holds.
-        """
-        return self._len
-
-    def __getitem__(self, idx: Union[int, slice]):
-        """Return tuple containing self and index/slice for node operations."""
-        if isinstance(idx, slice):
-            return (self, idx)
-        elif isinstance(idx, int):
-            return (self, idx)
-        else:
-            logger.warning("Improper array index")
-            raise ValueError("Improper Index")
-
-    def __copy__(self):
-        """Disallow shallow copying."""
-        raise RuntimeError("Copying SamplesArray is not allowed")
-
-    def __deepcopy__(self):
-        """Disallow deep copying."""
-        raise RuntimeError("Copying SamplesArray is not allowed")
-
 
 # helper functions
 
@@ -110,11 +30,14 @@ def _warn_if_not_implemented(func):
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        ret = func(*args, **kwargs)
-        if ret == -1:
-            msg = f"[\033[33mWarning\033[0m]: Function '{func.__name__}()' \
-                    is not implemented for node type '{vn.node_name(*args)}'."
+    def wrapper(self, *args, **kwargs):
+        ret = func(self, *args, **kwargs)
+        if ret == -1 and hasattr(self, "_hndle") and self._hndle is not None:
+            msg = (
+                f"[\033[93mWarning\033[0m]: Function '{func.__name__}()' "
+                + "is not implemented for node type "
+                + f"'{vn.node_name(self._hndle)}'."
+            )
             logger.warning(msg)
         return ret
 
@@ -124,258 +47,484 @@ def _warn_if_not_implemented(func):
 # node API bindings
 
 
-def memory_init(*args):
-    return vn.memory_init(*args)
+class Node:
+    class _SampleSlice:
+        """
+        Helper class to achieve overloaded functions.
+        Nodes accessed via the `[]` operator, it always returns a _SampleSlice.
+        """
 
+        def __init__(self, node, idx):
+            self.node = weakref.proxy(node)
+            self.idx = idx
 
-def node_check(node):
-    """Check node."""
-    return vn.node_check(node)
+        def details(self):
+            return self.node.sample_details(self.idx)
 
+        def read_from(self, sample_length, count=None):
+            return self.node.read_from(sample_length, count, self.idx)
 
-def node_destroy(node):
-    """
-    Delete a node.
+        def write_to(self, node, count=None):
+            return self.node.write_to(node, count, self.idx)
 
-    Notes:
-        - Note should be stopped first.
-    """
-    return vn.node_destroy(node)
+        def pack_from(
+            self,
+            values: Union[float, list[float], Capsule],
+            ts_origin: Optional[int] = None,
+            ts_received: Optional[int] = None,
+            seq: int = 0,
+        ):
+            if isinstance(values, self.__class__):
+                return self.node.pack_from(
+                    self.idx,
+                    values.node._smps[values.idx],
+                    ts_origin,
+                    ts_received,
+                    seq,
+                )
+            else:
+                return self.node.pack_from(
+                    self.idx, values, ts_origin, ts_received, seq
+                )
 
+        def unpack_to(
+            self,
+            target: Capsule,
+            ts_origin: Optional[int] = None,
+            ts_received: Optional[int] = None,
+        ):
+            if isinstance(target, self.__class__):
+                return self.node.unpack_to(
+                    self.idx,
+                    target.node,
+                    target.idx,
+                    ts_origin,
+                    ts_received,
+                )
+            else:
+                raise ValueError(
+                    "The destination must be an existing Node with an index!"
+                )
 
-def node_details(node):
-    """Get node details."""
-    return vn.node_details(node)
+    # helper functions
+    @staticmethod
+    def _ensure_capacity(smps, cap: int):
+        """
+        Resize SamplesArray if its capacity is less than the desired capacity.
 
+        Args:
+            smps: SamplesArray stored in the Node
+            cap (int): Desired capacity of the SamplesArray
+        """
+        smp_cap = len(smps)
+        if smp_cap < cap:
+            smps.grow(cap - smp_cap)
 
-def node_input_signals_max_cnt(node):
-    """Get max input signal count."""
-    return vn.node_input_signals_max_cnt(node)
+    @staticmethod
+    def _resolve_range(
+        start: Optional[int], stop: Optional[int], count: Optional[int]
+    ) -> tuple[int, int, int]:
+        """
+        Resolve a range dependent on start, stop and count.
+        At least two must be provided.
 
+        Args:
+            start (int): Desired start index
+            stop (int): Desired stop index
+            count (int): Desired span of the range
 
-def node_is_enabled(node):
-    """Check whether or not node is enabled."""
-    return vn.node_is_enabled(node)
+        Returns:
+            tuple(start, stop, count)
+        """
+        provided = sum(i is not None for i in (start, stop, count))
+        if provided == 1:
+            raise ValueError("Two of start, stop, count must be provided")
+        elif provided == 2:
+            if start is None:
+                start = stop - count
+                if start < 0:
+                    raise ValueError("Negative start index")
+            elif stop is None:
+                stop = start + count
+            else:
+                count = stop - start
+        return start, stop, count
 
+    def __init__(self, config, uuid: Optional[str] = None, size=0):
+        """
+        Initiallize a new node from config.
 
-def node_is_valid_name(name: str):
-    """Check if a name can be used for a node."""
-    return vn.node_is_valid_name(name)
+        Notes:
+            - Capsule is available via self._hndle.
+            - Capsule is available via self.config.
+        """
+        self.config = config
+        self._smps = vn.smps_array(size)
+        if uuid is None:
+            self._hndle = vn.node_new(config, "")
+        else:
+            self._hndle = vn.node_new(config, uuid)
 
+    def __del__(self):
+        """
+        Stop and delete a node if the class object is deleted.
+        """
+        vn.node_stop(self._hndle)
+        vn.node_destroy(self._hndle)
 
-def node_name(node):
-    """Get node name."""
-    return vn.node_name(node)
+    def __getitem__(self, idx: Union[int, slice]):
+        """Return tuple containing self and index/slice for node operations."""
+        if isinstance(idx, (int, slice)):
+            return Node._SampleSlice(self, idx)
+        else:
+            logger.warning("Improper array index")
+            raise ValueError("Improper Index")
 
+    def __setitem__(self, obj):
+        if isinstance(obj, Node):
+            self.__del__()
+            self.config = obj.config
+            self._smps = obj._smps
+        else:
+            raise RuntimeError(f"{obj} is not of type `Node`")
 
-def node_name_full(node):
-    """Get node name with full details."""
-    return vn.node_name_full(node)
+    def __len__(self):
+        return len(self._smps)
 
+    def __copy__(self):
+        """Disallow shallow copying."""
+        raise RuntimeError("Copying Node is not allowed")
 
-def node_name_short(node):
-    """Get node name with less details."""
-    return vn.node_name_short(node)
+    def __deepcopy__(self):
+        """Disallow deep copying"""
+        raise RuntimeError("Copying a Node is not allowed")
 
+    # bindings
+    @staticmethod
+    def memory_init(hugepages: int):
+        """
+        Initialize internal VILLASnode memory system.
 
-def node_netem_fds(*args):
-    return vn.node_netem_fds(*args)
+        Args:
+            hugepages (int): Amount of hugepages to be used.
 
+        Notes:
+            - Should be called once before any memory allocation is done.
+            - Falls back to mmap if hugepages or root privilege unavailable.
+        """
+        return vn.memory_init(hugepages)
 
-def node_new(config, uuid: Optional[str] = None):
-    """
-    Create a new node.
+    def check(self):
+        """Check node."""
+        return vn.node_check(self._hndle)
 
-    Args:
-        config (json/str): Configuration of the node.
-        uuid (Optional[str]): Unique identifier of the node.
-                              If `None`, VILLASnode will assign one by default.
+    def details(self):
+        """Get node details."""
+        return vn.node_details(self._hndle)
 
-    Returns:
-        vnode *: Handle to a node.
-    """
-    if uuid is None:
-        return vn.node_new(config, "")
-    else:
-        return vn.node_new(config, uuid)
+    def input_signals_max_cnt(self):
+        """Get max input signal count."""
+        return vn.node_input_signals_max_cnt(self._hndle)
 
+    def is_enabled(self):
+        """Check whether or not node is enabled."""
+        return vn.node_is_enabled(self._hndle)
 
-def node_output_signals_max_cnt(node):
-    return vn.node_output_signals_max_cnt(node)
+    @staticmethod
+    def is_valid_name(name: str):
+        """Check if a name can be used for a node."""
+        return vn.node_is_valid_name(name)
 
+    def name(self):
+        """Get node name."""
+        return vn.node_name(self._hndle)
 
-def node_pause(node):
-    """Pause a node"""
-    return vn.node_pause(node)
+    def name_full(self):
+        """Get node name with full details."""
+        return vn.node_name_full(self._hndle)
 
+    def name_short(self):
+        """Get node name with less details."""
+        return vn.node_name_short(self._hndle)
 
-def node_poll_fds(*args):
-    return vn.node_poll_fds(*args)
+    def output_signals_max_cnt(self):
+        """Get max output signal count."""
+        return vn.node_output_signals_max_cnt(self._hndle)
 
+    def pause(self):
+        """Pause a node"""
+        return vn.node_pause(self._hndle)
 
-def node_prepare(node):
-    """Prepare a node"""
-    return vn.node_prepare(node)
+    def prepare(self):
+        """Prepare a node"""
+        return vn.node_prepare(self._hndle)
 
+    @_warn_if_not_implemented
+    def read_from(
+        self,
+        sample_length: int,
+        cnt: Optional[int] = None,
+        idx=None,
+    ):
+        """
+        Read samples from a node into SamplesArray or block slice of samples.
 
-@_warn_if_not_implemented
-def node_read(node, samples, sample_length, count):
-    """
-    Read samples from a node into SamplesArray or a block slice of its samples.
+        Args:
+            sample_length (int): Length of each sample (number of signals).
+            cnt (int): Number of samples to read.
 
-    Args:
-        node: Node handle.
-        samples: Either a SamplesArray or a tuple (SamplesArray, index/slice).
-        sample_length: Length of each sample (number of signals).
-        count: Number of samples to read.
+        Returns:
+            int: Number of samples read on success or -1.
 
-    Returns:
-        int: Number of samples read on success or -1 if not implemented.
+        Notes:
+            - Return value may vary depending on node type.
+            - This function may be blocking.
+        """
+        if idx is None:
+            if cnt is None:
+                raise ValueError("Count is None")
 
-    Notes:
-        - Return value may vary depending on node type.
-        - This function may be blocking.
-    """
-    if isinstance(samples, SamplesArray):
-        samples._bulk_allocation(0, len(samples), sample_length)
-        return vn.node_read(node, samples._get_block_handle(0), count)
-    elif isinstance(samples, tuple):
-        smpls = samples[0]
-        if not isinstance(samples[1], slice):
-            raise ValueError("Invalid samples Parameter")
-        start, stop, _ = samples[1].indices(len(smpls))
+            # resize _smps if too small
+            Node._ensure_capacity(self._smps, cnt)
 
-        # check for length mismatch
-        if (stop - start) != count:
-            raise ValueError("Slice length and sample count do not match.")
-        # check if out of bounds
-        if stop > len(smpls):
-            raise IndexError("Out of bounds")
+            # allocate new samples
+            self._smps.bulk_alloc(0, len(self._smps), sample_length)
 
-        # allocate new samples and get block handle
-        samples[0]._bulk_allocation(start, stop, sample_length)
-        handle = samples[0]._get_block_handle(start)
+            return vn.node_read(self._hndle, self._smps.get_block(0), cnt)
 
-        return vn.node_read(node, handle, count)
-    else:
+        if isinstance(idx, int):
+            if cnt is None:
+                raise ValueError("Count is None")
+            start = idx
+            stop = start + cnt
+
+            # if too small, resize _smps to match stop index
+            Node._ensure_capacity(self._smps, stop)
+
+            # allocate new samples
+            self._smps.bulk_alloc(start, stop, sample_length)
+
+            # read onward from index start
+            return vn.node_read(self._hndle, self._smps.get_block(start), cnt)
+
+        elif isinstance(idx, slice):
+            start, stop, cnt = Node._resolve_range(idx.start, idx.stop, cnt)
+
+            # check for length mismatch
+            if (stop - start) != cnt:
+                raise ValueError("Slice length and sample count do not match!")
+            # if too small, resize _smps to match stop index
+            Node._ensure_capacity(self._smps, stop)
+
+            # allocate new samples
+            self._smps.bulk_alloc(start, stop, sample_length)
+
+            # read onward from index start
+            return vn.node_read(self._hndle, self._smps.get_block(start), cnt)
+
+        else:
+            logger.warning("Invalid samples Parameter")
+            return -1
+
+    def restart(self):
+        """Restart a node."""
+        return vn.node_restart(self._hndle)
+
+    def resume(self):
+        """Resume a node."""
+        return vn.node_resume(self._hndle)
+
+    @_warn_if_not_implemented
+    def reverse(self):
+        """
+        Reverse node input and output.
+
+        Notes:
+            - Hooks are not reversed.
+            - Some nodes should be stopped or restarted before reversing.
+            - Nodes with in-/output buffers should be stopped before reversing.
+        """
+        return vn.node_reverse(self._hndle)
+
+    def start(self):
+        """
+        Start a node.
+
+        Notes:
+            - Nodes are not meant to be started again without stopping first.
+        """
+        return vn.node_start(self._hndle)
+
+    def stop(self):
+        """
+        Stop a node.
+
+        Notes:
+            - Use before starting a node again.
+            - May delete in-/output buffers of a node.
+        """
+        return vn.node_stop(self._hndle)
+
+    def to_json(self):
+        """
+        Return the node configuration as json object.
+
+        Notes:
+            - Node configuration may not match self made configurations.
+            - Node configuration does not contain node name.
+        """
+        json_str = vn.node_to_json_str(self._hndle)
+        json_obj = json.loads(json_str)
+        return json_obj
+
+    def to_json_str(self):
+        """
+        Returns the node configuration as string.
+
+        Notes:
+            - Node configuration may not match self made configurations.
+            - Node configuration does not contain node name.
+        """
+        return vn.node_to_json_str(self._hndle)
+
+    @_warn_if_not_implemented
+    def write_to(self, node, cnt: Optional[int] = None, idx=None):
+        """
+        Write samples from a SamplesArray fully or as block slice into a node.
+
+        Args:
+            node: Node handle.
+            cnt (int): Number of samples to write.
+
+        Returns:
+            int: Number of samples written on success or -1.
+
+        Notes:
+            - Return value may vary depending on node type.
+        """
+        if idx is None:
+            if cnt is None:
+                raise ValueError("Count is None")
+
+            return vn.node_write(self._hndle, node._smps.get_block(0), cnt)
+
+        if isinstance(idx, int):
+            if cnt is None:
+                raise ValueError("Count is None")
+
+            start = idx
+            stop = start + cnt
+
+            return vn.node_write(self._hndle, node._smps.get_block(start), cnt)
+
+        if isinstance(idx, slice):
+            start, stop, _ = idx.indices(len(self._smps))
+
+            if cnt is None:
+                cnt = stop - start
+
+            print(start, stop, cnt, len(self._smps))
+
+            # check for length mismatch
+            if (stop - start) != cnt:
+                raise ValueError("Slice length and sample count do not match.")
+            # check for out of bounds
+            if stop > len(self._smps):
+                raise IndexError("Out of bounds")
+
+            return vn.node_write(self._hndle, node._smps.get_block(start), cnt)
+
         logger.warning("Invalid samples Parameter")
         return -1
 
+    def sample_length(self, idx: int):
+        """Get the length of a sample."""
+        if 0 <= idx and idx < len(self._smps):
+            return vn.sample_length(self._smps[idx])
+        else:
+            raise IndexError(f"No Sample at index: {idx}")
 
-def node_restart(node):
-    """Restart a node."""
-    return vn.node_restart(node)
+    def pack_from(
+        self,
+        idx: int,
+        values: Union[float, list[float], Capsule],
+        ts_orig: Optional[int] = None,
+        ts_recv: Optional[int] = None,
+        seq: int = 0,
+    ):
+        """
+        Packs a given sample from a source sample or value list.
 
+        Args:
+            idx (int): Node index to store packed sample in.
+            ts_orig (Optional[int]): Supposed creation time in ns.
+            ts_recv (Optional[int]): Supposed arrival time in ns.
+            values (Union[float, list[float], sample]):
+                - Packed sample will only hold referenced values.
+            seq (int): supposed sequence number of the sample.
+        """
+        if seq < 0:
+            raise ValueError("seq has to be positive")
 
-def node_resume(node):
-    """Resume a node."""
-    return vn.node_resume(node)
+        Node._ensure_capacity(self._smps, idx + 1)
+        if len(self._smps) <= idx:
+            self._smps.grow(idx + 1 - len(self._smps))
 
+        if isinstance(values, (float, int)):
+            self._smps[idx] = vn.sample_pack(
+                [values],
+                ts_orig,
+                ts_recv,
+                seq,
+            )
+        elif isinstance(values, list):
+            self._smps[idx] = vn.sample_alloc(len(values))
+            self._smps[idx] = vn.sample_pack(values, ts_orig, ts_recv, seq)
+        else:  # assume a PyCapsule
+            self._smps[idx] = vn.sample_pack(values, ts_orig, ts_recv)
 
-@_warn_if_not_implemented
-def node_reverse(node):
-    """
-    Reverse node input and output.
+    def unpack_to(
+        self,
+        r_idx: int,
+        target_node,
+        w_idx: int,
+        ts_orig: Optional[int] = None,
+        ts_recv: Optional[int] = None,
+    ):
+        """
+        Unpacks a given sample to a destined target.
 
-    Notes:
-        - Hooks are not reversed.
-        - Some nodes should be stopped or restarted before reversing.
-        - Nodes with in-/output buffers should be stopped before reversing.
-    """
-    return vn.node_reverse(node)
+        Args:
+            r_idx (int): Originating Node index to read from.
+            ts_orig (Optional[int]): Supposed creation time in ns.
+            ts_recv (Optional[int]): Supposed arrival time in ns.
+            target_node (Node): Target node.
+            w_idx (int): Target Node index to unpack to.
+        """
+        Node._ensure_capacity(self._smps, r_idx + 1)
+        Node._ensure_capacity(target_node._smps, w_idx + 1)
 
+        vn.sample_unpack(
+            self._smps.get_block(r_idx),
+            target_node._smps.get_block(w_idx),
+            ts_orig,
+            ts_recv,
+        )
 
-def node_start(node):
-    """
-    Start a node.
+    def sample_details(self, idx):
+        """
+        Retrieve a dict with information about a sample.
 
-    Notes:
-        - Nodes are not meant to be started again without stopping first.
-    """
-    return vn.node_start(node)
+        Keys:
+            `sequence` (int): Sequence number of the sample.
+            `length` (int): Sample length.
+            `capacity` (int): Allocated sample length.
+            `flags` (int): Number representing flags set of the sample.
+            `refcnt` (int): Reference count of the given sample.
+            `ts_origin` (float): Supposed timestamp of creation.
+            `ts_received` (float): Supposed timestamp of arrival.
 
-
-def node_stop(node):
-    """
-    Stop a node.
-
-    Notes:
-        - Use before starting a node again.
-        - May delete in-/output buffers of a node.
-    """
-    return vn.node_stop(node)
-
-
-def node_to_json(node):
-    """
-    Return the node configuration as json object.
-
-    Notes:
-        - Node configuration may not match self made configurations.
-        - Node configuration does not contain node name.
-    """
-    json_str = vn.node_to_json_str(node)
-    json_obj = json.loads(json_str)
-    return json_obj
-
-
-def node_to_json_str(node):
-    """
-    Returns the node configuration as string.
-
-    Notes:
-        - Node configuration may not match self made configurations.
-        - Node configuration does not contain node name.
-    """
-    return vn.node_to_json_str(node)
-
-
-@_warn_if_not_implemented
-def node_write(node, samples, count):
-    """
-    Write samples from a SamplesArray, fully or as block slice, into a node.
-
-    Args:
-        node: Node handle.
-        samples: Either a SamplesArray or a tuple (SamplesArray, index/slice).
-        count: Number of samples to write.
-
-    Returns:
-        int: Number of samples written on success, or -1 if not implemented.
-
-    Notes:
-        - Return value may vary depending on node type.
-    """
-    if isinstance(samples, SamplesArray):
-        return vn.node_write(node, samples._get_block_handle(), count)
-    elif isinstance(samples, tuple):
-        smpls = samples[0]
-        if not isinstance(samples[1], slice):
-            raise ValueError("Invalid samples Parameter")
-        start, stop, _ = samples[1].indices(len(smpls))
-
-        # check for length mismatch
-        if (stop - start) != count:
-            raise ValueError("Slice length and sample count do not match.")
-        # check for out of bounds
-        if stop > len(smpls):
-            raise IndexError("Out of bounds")
-
-        # get block handle
-        handle = samples[0]._get_block_handle(start)
-
-        return vn.node_write(node, handle, count)
-    else:
-        logger.warning("Invalid samples Parameter")
-
-
-def sample_length(*args):
-    vn.sample_length(*args)
-
-
-def sample_pack(*args):
-    vn.sample_pack(*args)
-
-
-def sample_unpack(*args):
-    vn.sample_unpack(*args)
+        Returns:
+            Dict with listed keys and values.
+        """
+        return vn.sample_details(self._smps[idx])

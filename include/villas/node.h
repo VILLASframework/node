@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 #include <jansson.h>
 #include <stdbool.h>
@@ -67,11 +68,11 @@ unsigned sample_length(vsample *smp);
 
 void sample_decref(vsample *smp);
 
-vsample *sample_pack(unsigned seq, struct timespec *ts_origin,
+vsample *sample_pack(uint64_t *seq, struct timespec *ts_origin,
                      struct timespec *ts_received, unsigned len,
                      double *values);
 
-void sample_unpack(vsample *s, unsigned *seq, struct timespec *ts_origin,
+void sample_unpack(vsample *s, uint64_t *seq, struct timespec *ts_origin,
                    struct timespec *ts_received, int *flags, unsigned *len,
                    double *values);
 
