@@ -8,7 +8,7 @@ import json
 import re
 import unittest
 import uuid
-import villas.node.binding as b
+from villas.node.binding import Node
 
 
 class BindingWrapperUnitTests(unittest.TestCase):
@@ -16,26 +16,17 @@ class BindingWrapperUnitTests(unittest.TestCase):
         try:
             self.config = json.dumps(test_node_config, indent=2)
             self.node_uuid = str(uuid.uuid4())
-            self.test_node = b.node_new(self.config, self.node_uuid)
+            self.test_node = Node(self.config, self.node_uuid)
             config = json.dumps(signal_test_node_config, indent=2)
             node_uuid = str(uuid.uuid4())
-            self.signal_test_node = b.node_new(config, node_uuid)
+            self.signal_test_node = Node(config, node_uuid)
         except Exception as e:
             self.fail(f"new_node err: {e}")
 
-    def tearDown(self):
-        try:
-            b.node_stop(self.test_node)
-            b.node_destroy(self.test_node)
-            b.node_stop(self.signal_test_node)
-            b.node_destroy(self.signal_test_node)
-        except Exception as e:
-            self.fail(f"node cleanup error: {e}")
-
     def test_start(self):
         try:
-            self.assertEqual(0, b.node_start(self.test_node))
-            self.assertEqual(0, b.node_start(self.signal_test_node))
+            self.assertEqual(0, self.test_node.start())
+            self.assertEqual(0, self.signal_test_node.start())
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -46,9 +37,9 @@ class BindingWrapperUnitTests(unittest.TestCase):
     )
     def test_start_err(self):
         try:
-            self.assertEqual(0, b.node_start(self.test_node))
+            self.assertEqual(0, self.test_node.start())
             with self.assertRaises((AssertionError, RuntimeError)):
-                b.node_start(self.test_node)
+                self.test_node.start()
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -56,54 +47,54 @@ class BindingWrapperUnitTests(unittest.TestCase):
         try:
             node_config = json.dumps(test_node_config, indent=2)
             node_uuid = str(uuid.uuid4())
-            node = b.node_new(node_config, node_uuid)
+            node = Node(node_config, node_uuid)
             self.assertIsNotNone(node)
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_check(self):
         try:
-            b.node_check(self.test_node)
+            self.test_node.check()
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_prepare(self):
         try:
-            b.node_prepare(self.test_node)
+            self.test_node.prepare()
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_is_enabled(self):
         try:
-            self.assertTrue(b.node_is_enabled(self.test_node))
+            self.assertTrue(self.test_node.is_enabled())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_pause(self):
         try:
-            self.assertEqual(-1, b.node_pause(self.test_node))
-            self.assertEqual(-1, b.node_pause(self.test_node))
+            self.assertEqual(-1, self.test_node.pause())
+            self.assertEqual(-1, self.test_node.pause())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_resume(self):
         try:
-            self.assertEqual(0, b.node_resume(self.test_node))
+            self.assertEqual(0, self.test_node.resume())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_stop(self):
         try:
-            self.assertEqual(0, b.node_start(self.test_node))
-            self.assertEqual(0, b.node_stop(self.test_node))
-            self.assertEqual(0, b.node_stop(self.test_node))
+            self.assertEqual(0, self.test_node.start())
+            self.assertEqual(0, self.test_node.stop())
+            self.assertEqual(0, self.test_node.stop())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_restart(self):
         try:
-            self.assertEqual(0, b.node_restart(self.test_node))
-            self.assertEqual(0, b.node_restart(self.test_node))
+            self.assertEqual(0, self.test_node.restart())
+            self.assertEqual(0, self.test_node.restart())
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -112,14 +103,14 @@ class BindingWrapperUnitTests(unittest.TestCase):
             # remove color codes before checking for equality
             self.assertEqual(
                 "test_node(socket)",
-                re.sub(r"\x1b\[[0-9;]*m", "", b.node_name(self.test_node)),
+                re.sub(r"\x1b\[[0-9;]*m", "", self.test_node.name()),
             )
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_node_name_short(self):
         try:
-            self.assertEqual("test_node", b.node_name_short(self.test_node))
+            self.assertEqual("test_node", self.test_node.name_short())
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -133,7 +124,7 @@ class BindingWrapperUnitTests(unittest.TestCase):
                 + ", #in.signals=1/1, #in.hooks=0, #out.hooks=0"
                 + ", in.vectorize=1, out.vectorize=1, out.netem=no, layer=udp"
                 + ", in.address=0.0.0.0:12000, out.address=127.0.0.1:12001",
-                re.sub(r"\x1b\[[0-9;]*m", "", b.node_name_full(node)),
+                re.sub(r"\x1b\[[0-9;]*m", "", node.name_full()),
             )
         except Exception as e:
             self.fail(f"err: {e}")
@@ -144,33 +135,33 @@ class BindingWrapperUnitTests(unittest.TestCase):
                 "layer=udp, "
                 + "in.address=0.0.0.0:12000, "
                 + "out.address=127.0.0.1:12001",
-                b.node_details(self.test_node),
+                self.test_node.details(),
             )
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_node_to_json(self):
         try:
-            if not isinstance(b.node_to_json(self.test_node), dict):
+            if not isinstance(self.test_node.to_json(), dict):
                 self.fail("Not a JSON object (dict)")
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_node_to_json_str(self):
         try:
-            json.loads(b.node_to_json_str(self.test_node))
+            json.loads(self.test_node.to_json_str())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_input_signals_max_cnt(self):
         try:
-            self.assertEqual(1, b.node_input_signals_max_cnt(self.test_node))
+            self.assertEqual(1, self.test_node.input_signals_max_cnt())
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_node_output_signals_max_cnt(self):
         try:
-            self.assertEqual(0, b.node_output_signals_max_cnt(self.test_node))
+            self.assertEqual(0, self.test_node.output_signals_max_cnt())
         except Exception as e:
             self.fail(f"err: {e}")
 
@@ -185,21 +176,21 @@ class BindingWrapperUnitTests(unittest.TestCase):
             valid_names = ["32_characters_long_strings_valid", "valid_name"]
 
             for name in invalid_names:
-                self.assertFalse(b.node_is_valid_name(name))
+                self.assertFalse(Node.is_valid_name(name))
             for name in valid_names:
-                self.assertTrue(b.node_is_valid_name(name))
+                self.assertTrue(Node.is_valid_name(name))
         except Exception as e:
             self.fail(f"err: {e}")
 
     def test_reverse(self):
         try:
             # socket has reverse() implemented, expected return 0
-            self.assertEqual(0, b.node_reverse(self.test_node))
-            self.assertEqual(0, b.node_reverse(self.test_node))
+            self.assertEqual(0, self.test_node.reverse())
+            self.assertEqual(0, self.test_node.reverse())
 
             # signal.v2 has not reverse() implemented, expected return 1
-            self.assertEqual(-1, b.node_reverse(self.signal_test_node))
-            self.assertEqual(-1, b.node_reverse(self.signal_test_node))
+            self.assertEqual(-1, self.signal_test_node.reverse())
+            self.assertEqual(-1, self.signal_test_node.reverse())
         except Exception as e:
             self.fail(f"err: {e}")
 

@@ -8,7 +8,7 @@ import json
 import re
 import unittest
 import uuid
-import villas.node.binding as b
+from villas.node.binding import Node
 
 
 class BindingWrapperIntegrationTests(unittest.TestCase):
@@ -16,61 +16,54 @@ class BindingWrapperIntegrationTests(unittest.TestCase):
         try:
             self.config = json.dumps(test_node_config, indent=2)
             self.node_uuid = str(uuid.uuid4())
-            self.test_node = b.node_new(self.config, self.node_uuid)
+            self.test_node = Node(self.config, self.node_uuid)
         except Exception as e:
             self.fail(f"new_node err: {e}")
 
-    def tearDown(self):
-        try:
-            b.node_stop(self.test_node)
-            b.node_destroy(self.test_node)
-        except Exception as e:
-            self.fail(f"node cleanup error: {e}")
-
     def test_activity_changes(self):
         try:
-            b.node_check(self.test_node)
-            b.node_prepare(self.test_node)
+            self.test_node.check()
+            self.test_node.prepare()
             # starting twice
-            self.assertEqual(0, b.node_start(self.test_node))
+            self.assertEqual(0, self.test_node.start())
 
             # check if the node is running
-            self.assertTrue(b.node_is_enabled(self.test_node))
+            self.assertTrue(self.test_node.is_enabled())
 
             # pausing twice
-            self.assertEqual(0, b.node_pause(self.test_node))
-            self.assertEqual(-1, b.node_pause(self.test_node))
+            self.assertEqual(0, self.test_node.pause())
+            self.assertEqual(-1, self.test_node.pause())
 
             # resuming
-            self.assertEqual(0, b.node_resume(self.test_node))
+            self.assertEqual(0, self.test_node.resume())
 
             # stopping twice
-            self.assertEqual(0, b.node_stop(self.test_node))
-            self.assertEqual(0, b.node_stop(self.test_node))
+            self.assertEqual(0, self.test_node.stop())
+            self.assertEqual(0, self.test_node.stop())
 
             # restarting
-            b.node_restart(self.test_node)
+            self.test_node.restart()
 
             # check if everything still works after restarting
-            b.node_pause(self.test_node)
-            b.node_resume(self.test_node)
-            b.node_stop(self.test_node)
-            b.node_start(self.test_node)
+            self.test_node.pause()
+            self.test_node.resume()
+            self.test_node.stop()
+            self.test_node.start()
         except Exception as e:
             self.fail(f" err: {e}")
 
     def test_reverse_node(self):
         try:
-            self.assertEqual(1, b.node_input_signals_max_cnt(self.test_node))
-            self.assertEqual(0, b.node_output_signals_max_cnt(self.test_node))
+            self.assertEqual(1, self.test_node.input_signals_max_cnt())
+            self.assertEqual(0, self.test_node.output_signals_max_cnt())
 
-            self.assertEqual(0, b.node_reverse(self.test_node))
+            self.assertEqual(0, self.test_node.reverse())
 
             # input and output hooks/details are not reversed
             # input and output are reversed, can be seen with wireshark and
             #   function test_rw_socket_and_reverse() below
-            self.assertEqual(1, b.node_input_signals_max_cnt(self.test_node))
-            self.assertEqual(0, b.node_output_signals_max_cnt(self.test_node))
+            self.assertEqual(1, self.test_node.input_signals_max_cnt())
+            self.assertEqual(0, self.test_node.output_signals_max_cnt())
         except Exception as e:
             self.fail(f"Reversing node in and output failed: {e}")
 
@@ -80,23 +73,23 @@ class BindingWrapperIntegrationTests(unittest.TestCase):
     # uuid can not match
     def test_config_from_string(self):
         try:
-            config_str = b.node_to_json_str(self.test_node)
+            config_str = self.test_node.to_json_str()
             config_obj = json.loads(config_str)
 
             config_copy_str = json.dumps(config_obj, indent=2)
 
-            test_node = b.node_new(config_copy_str)
+            test_node = Node(config_copy_str)
 
             self.assertEqual(
                 re.sub(
                     r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
                     "",
-                    b.node_name_full(test_node),
+                    test_node.name_full(),
                 ),
                 re.sub(
                     r"^[^:]+: uuid=[0-9a-fA-F-]+, ",
                     "",
-                    b.node_name_full(self.test_node),
+                    self.test_node.name_full(),
                 ),
             )
         except Exception as e:
@@ -113,55 +106,43 @@ class BindingWrapperIntegrationTests(unittest.TestCase):
                 config = json.dumps(obj, indent=2)
                 id = str(uuid.uuid4())
 
-                test_nodes[name] = b.node_new(config, id)
+                test_nodes[name] = Node(config, id)
 
             for node in test_nodes.values():
-                if b.node_check(node):
+                if node.check():
                     raise RuntimeError("Failed to verify node configuration")
-                if b.node_prepare(node):
-                    raise RuntimeError(
-                        f"Failed to verify {b.node_name(node)} node config"
-                    )
-                b.node_start(node)
-
-            # Arrays to store samples
-            send_smpls = b.SamplesArray(1)
-            intmdt_smpls = b.SamplesArray(100)
-            recv_smpls = b.SamplesArray(100)
+                if node.prepare():
+                    raise RuntimeError(f"Failed to verify {node.name()} node config")
+                node.start()
 
             for i in range(100):
                 # Generate signals and send over send_socket
+                self.assertEqual(test_nodes["signal_generator"][i].read_from(2, 1), 1)
                 self.assertEqual(
-                    b.node_read(test_nodes["signal_generator"], send_smpls, 2, 1),
+                    test_nodes["send_socket"][i].write_to(
+                        test_nodes["signal_generator"], 1
+                    ),
                     1,
                 )
-                self.assertEqual(
-                    b.node_write(test_nodes["send_socket"], send_smpls, 1), 1
-                )
+            self.assertEqual(test_nodes["signal_generator"].sample_length(0), 2)
 
             # read received signals and send them to recv_socket
+            self.assertEqual(test_nodes["intmdt_socket"].read_from(2, 100), 100)
             self.assertEqual(
-                b.node_read(test_nodes["intmdt_socket"], intmdt_smpls, 2, 100),
-                100,
+                test_nodes["intmdt_socket"][:30].write_to(
+                    test_nodes["intmdt_socket"], 30
+                ),
+                30,
             )
             self.assertEqual(
-                b.node_write(test_nodes["intmdt_socket"], intmdt_smpls[0:50], 50),
-                50,
+                test_nodes["intmdt_socket"][30:].write_to(test_nodes["intmdt_socket"]),
+                70,
             )
-            self.assertEqual(
-                b.node_write(test_nodes["intmdt_socket"], intmdt_smpls[50:100], 50),
-                50,
-            )
+            # print(len(test_nodes["intmdt_socket"]._smps))
 
             # confirm rev_socket signals
-            self.assertEqual(
-                b.node_read(test_nodes["recv_socket"], recv_smpls[0:50], 2, 50),
-                50,
-            )
-            self.assertEqual(
-                b.node_read(test_nodes["recv_socket"], recv_smpls[50:100], 2, 50),
-                50,
-            )
+            self.assertEqual(test_nodes["recv_socket"].read_from(2, 30), 30)
+            self.assertEqual(test_nodes["recv_socket"][30].read_from(2, 70), 70)
 
             # reversing in and outputs
             # stopping the socket is necessary to clean up buffers
@@ -169,30 +150,64 @@ class BindingWrapperIntegrationTests(unittest.TestCase):
             #   this can be confirmed when observing network traffic
             #   node details do not represent this properly as of now
             for node in test_nodes.values():
-                b.node_reverse(node)
-                b.node_stop(node)
+                node.reverse()
+                node.stop()
 
             for node in test_nodes.values():
-                b.node_start(node)
+                node.start()
 
-            # if another 50 samples have not been allocated,
-            # sending 100 at once is impossible with recv_smpls
+            # if another 30+70 samples are not allocated,
+            # sending 100 at once is impossible
             self.assertEqual(
-                b.node_write(test_nodes["recv_socket"], recv_smpls, 100), 100
+                test_nodes["recv_socket"].write_to(test_nodes["recv_socket"], 100),
+                100,
             )
             # try writing as full slice
             self.assertEqual(
-                b.node_write(test_nodes["intmdt_socket"], recv_smpls[0:100], 100),
+                test_nodes["intmdt_socket"][0:100].write_to(
+                    test_nodes["recv_socket"], 100
+                ),
                 100,
             )
 
-            # cleanup
-            for node in test_nodes.values():
-                b.node_stop(node)
-                b.node_destroy(node)
-
         except Exception as e:
             self.fail(f" err: {e}")
+
+    def test_sample_pack_unpack(self):
+        try:
+            self.test_node.pack_from(0, [0.01, 1.01, 2.01, 3.01, 4.01])
+            self.test_node[1].pack_from(
+                [1.01, 2.01, 3.01, 4.01, 5.01], int(1e9), int(1e9) + 100
+            )
+            self.test_node[2].pack_from(42, int(1e9), int(1e9) + 100)
+            self.test_node[3].pack_from(self.test_node[1], int(1e9), int(1e9) + 100)
+            self.test_node[2].unpack_to(self.test_node[1], int(1e9), int(1e9) + 100)
+            self.assertEqual([42.0], self.test_node[1].details()["data"])
+            self.test_node[0].unpack_to(self.test_node[1], int(2e9), int(2e9) + 100)
+            self.assertEqual(
+                [0.01, 1.01, 2.01, 3.01, 4.01],
+                self.test_node[1].details()["data"],
+            )
+            self.test_node[0].unpack_to(self.test_node[2], int(2e9), int(2e9) + 100)
+            self.test_node[0].unpack_to(self.test_node[4], int(2e9), int(2e9) + 100)
+            self.test_node[1].unpack_to(self.test_node[2], int(2e9), int(2e9) + 100)
+        except Exception as e:
+            self.fail(f"err: {e}")
+
+    def test_samplesarray_size(self):
+        try:
+            node_config = json.dumps(test_node_config, indent=2)
+            node_uuid = str(uuid.uuid4())
+            node = Node(node_config, node_uuid, 100)
+            self.assertEqual(len(node), 100)
+            node[199].pack_from(
+                [1.01, 2.01, 3.01, 4.01, 5.01], int(1e9), int(1e9) + 100
+            )
+            self.assertEqual(len(node), 200)
+            node[199].unpack_to(node[299], int(2e9), int(2e9) + 100)
+            self.assertEqual(len(node), 300)
+        except Exception as e:
+            self.fail(f"err: {e}")
 
 
 test_node_config = {
