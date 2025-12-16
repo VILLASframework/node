@@ -83,9 +83,7 @@ class Node:
                     seq,
                 )
             else:
-                return self.node.pack_from(
-                    self.idx, values, ts_origin, ts_received, seq
-                )
+                return self.node.pack_from(self.idx, values, ts_origin, ts_received, seq)
 
         def unpack_to(
             self,

@@ -200,9 +200,7 @@ class BindingWrapperIntegrationTests(unittest.TestCase):
             node_uuid = str(uuid.uuid4())
             node = Node(node_config, node_uuid, 100)
             self.assertEqual(len(node), 100)
-            node[199].pack_from(
-                [1.01, 2.01, 3.01, 4.01, 5.01], int(1e9), int(1e9) + 100
-            )
+            node[199].pack_from([1.01, 2.01, 3.01, 4.01, 5.01], int(1e9), int(1e9) + 100)
             self.assertEqual(len(node), 200)
             node[199].unpack_to(node[299], int(2e9), int(2e9) + 100)
             self.assertEqual(len(node), 300)
