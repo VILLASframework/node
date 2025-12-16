@@ -9,7 +9,8 @@
     villas node <(python3 etc/python/example.py)
 
  Author: Steffen Vogel <post@steffenvogel.de>
- SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ SPDX-FileCopyrightText: 2014-2023 Institute for Automation of
+                         Complex Power Systems, RWTH Aachen University
  SPDX-License-Identifier: Apache-2.0
 """
 
@@ -38,7 +39,10 @@ for i in range(N):
         "type": "socket",
         "layer": "udp",
         "format": "protobuf",
-        "in": {"address": "*:12000", "signals": [{"name": "in", "type": "float"}]},
+        "in": {
+            "address": "*:12000",
+            "signals": [{"name": "in", "type": "float"}],
+        },
         "out": {"address": f"5.6.7.8:{port}"},
     }
 

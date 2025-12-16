@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG DISTRO=rockylinux/rockylinux
-ARG ROCKY_VERSION=9.6
+ARG ROCKY_VERSION=10
 
 FROM ${DISTRO}:${ROCKY_VERSION} AS dev
 
@@ -20,8 +20,8 @@ RUN dnf config-manager --set-enabled crb
 # Toolchain
 RUN dnf --allowerasing -y install \
 	gcc gcc-c++ \
-	pkgconfig cmake make \
-	autoconf automake libtool \
+	pkgconfig cmake make meson \
+	autoconf automake libtool ninja-build \
 	flex bison \
 	texinfo git git-svn curl tar patchutils \
 	protobuf-compiler protobuf-c-compiler \
@@ -48,7 +48,12 @@ RUN dnf -y install \
 	lua-devel \
 	hiredis-devel \
 	libnice-devel \
-	libmodbus-devel \
+	fmt-devel \
+	spdlog-devel \
+	nanomsg-devel \
+	libnice-devel \
+	libre-devel \
+	libwebsockets-devel \
 	python-devel \
 	pybind11-devel
 
@@ -56,8 +61,6 @@ RUN dnf -y install \
 ADD packaging/patches /deps/patches
 ADD packaging/deps.sh /deps
 RUN bash /deps/deps.sh
-RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
-	ldconfig
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
@@ -94,10 +97,10 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="Apache-2.0" \
-	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.vendor="The VILLASframework authors" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="post@steffenvogel.de" \
-	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Rocky Linux" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
-	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
+	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"

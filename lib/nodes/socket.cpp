@@ -399,8 +399,8 @@ static void socket_tcp_connection(NodeCompat *n, Socket *s) {
     while (retries < MAX_CONNECTION_RETRIES) {
       n->logger->info("Attempting to connect to TCP server: attempt={}...",
                       retries + 1);
-      ret =
-          connect(s->sd, (struct sockaddr *)&s->out.saddr, sizeof(s->in.saddr));
+      ret = connect(s->sd, reinterpret_cast<struct sockaddr *>(&s->out.saddr),
+                    sizeof(s->in.saddr));
       if (ret == 0) {
         s->tcp_connected = true;
         break;
@@ -473,7 +473,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
 
   // Strip IP header from packet
   if (s->layer == SocketLayer::IP) {
-    struct ip *iphdr = (struct ip *)ptr;
+    struct ip *iphdr = reinterpret_cast<struct ip *>(ptr);
 
     bytes -= iphdr->ip_hl * 4;
     ptr += iphdr->ip_hl * 4;
@@ -494,7 +494,7 @@ int villas::node::socket_read(NodeCompat *n, struct Sample *const smps[],
   }
 
   if (s->verify_source && socket_compare_addr(&src.sa, &s->out.saddr.sa) != 0) {
-    char *buf = socket_print_addr((struct sockaddr *)&src);
+    char *buf = socket_print_addr(reinterpret_cast<struct sockaddr *>(&src));
     n->logger->warn("Received packet from unauthorized source: {}", buf);
     free(buf);
 

@@ -9,148 +9,159 @@
  */
 
 #include <villas/exceptions.hpp>
-#include <villas/node_compat.hpp>
-#include <villas/nodes/example.hpp>
 #include <villas/sample.hpp>
 #include <villas/super_node.hpp>
+#include <villas/timing.hpp>
 #include <villas/utils.hpp>
 
 using namespace villas;
-using namespace villas::node;
 using namespace villas::utils;
+using namespace villas::node;
 
-ExampleNode::ExampleNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), setting1(72), setting2("something"), state1(0) {}
+class ExampleNode : public Node {
 
-ExampleNode::~ExampleNode() {}
+protected:
+  // Place any configuration and per-node state here
 
-int ExampleNode::prepare() {
-  state1 = setting1;
+  // Settings
+  int setting1;
 
-  if (setting2 == "double")
-    state1 *= 2;
+  std::string setting2;
 
-  return 0;
-}
+  // States
+  int state1;
+  struct timespec start_time;
 
-int ExampleNode::parse(json_t *json) {
-  // TODO: Add implementation here. The following is just an example
+  int _read(struct Sample *smps[], unsigned cnt) override {
+    int read;
+    struct timespec now;
 
-  const char *setting2_str = nullptr;
+    // TODO: Add implementation here. The following is just an example
 
-  json_error_t err;
-  int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
-                           &setting1, "setting2", &setting2_str);
-  if (ret)
-    throw ConfigError(json, err, "node-config-node-example");
+    assert(cnt >= 1 && smps[0]->capacity >= 1);
 
-  if (setting2_str)
-    setting2 = setting2_str;
+    now = time_now();
 
-  return 0;
-}
+    smps[0]->data[0].f = time_delta(&now, &start_time);
 
-int ExampleNode::check() {
-  if (setting1 > 100 || setting1 < 0)
-    return -1;
+    /* Dont forget to set other flags in struct Sample::flags
+    * E.g. for sequence no, timestamps... */
+    smps[0]->flags = (int)SampleFlags::HAS_DATA;
+    smps[0]->signals = getInputSignals(false);
 
-  if (setting2.empty() || setting2.size() > 10)
-    return -1;
+    read = 1; // The number of samples read
 
-  return Node::check();
-}
+    return read;
+  }
 
-int ExampleNode::start() {
-  // TODO add implementation here
+  int _write(struct Sample *smps[], unsigned cnt) override {
+    int written;
 
-  start_time = time_now();
+    // TODO: Add implementation here.
 
-  return 0;
-}
+    written = 0; // The number of samples written
 
-// int ExampleNode::stop()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+    return written;
+  }
 
-// int ExampleNode::pause()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+public:
+  ExampleNode(const uuid_t &id = {}, const std::string &name = "")
+      : Node(id, name), setting1(72), setting2("something"), state1(0) {}
 
-// int ExampleNode::resume()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+  /* All of the following virtual-declared functions are optional.
+   * Have a look at node.hpp/node.cpp for the default behaviour.
+   */
 
-// int ExampleNode::restart()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+  virtual ~ExampleNode() {}
 
-// int ExampleNode::reverse()
-// {
-// 	// TODO add implementation here
-// 	return 0;
-// }
+  int prepare() override {
+    state1 = setting1;
 
-// std::vector<int> ExampleNode::getPollFDs()
-// {
-// 	// TODO add implementation here
-// 	return {};
-// }
+    if (setting2 == "double")
+      state1 *= 2;
 
-// std::vector<int> ExampleNode::getNetemFDs()
-// {
-// 	// TODO add implementation here
-// 	return {};
-// }
+    return 0;
+  }
 
-// struct villas::node::memory::Type * ExampleNode::getMemoryType()
-// {
-//	// TODO add implementation here
-// }
+  int parse(json_t *json) override {
+    // TODO: Add implementation here. The following is just an example
 
-const std::string &ExampleNode::getDetails() {
-  details = fmt::format("setting1={}, setting2={}", setting1, setting2);
-  return details;
-}
+    const char *setting2_str = nullptr;
 
-int ExampleNode::_read(struct Sample *smps[], unsigned cnt) {
-  int read;
-  struct timespec now;
+    json_error_t err;
+    int ret = json_unpack_ex(json, &err, 0, "{ s?: i, s?: s }", "setting1",
+                             &setting1, "setting2", &setting2_str);
+    if (ret)
+      throw ConfigError(json, err, "node-config-node-example");
 
-  // TODO: Add implementation here. The following is just an example
+    if (setting2_str)
+      setting2 = setting2_str;
 
-  assert(cnt >= 1 && smps[0]->capacity >= 1);
+    return 0;
+  }
 
-  now = time_now();
+  int check() override {
+    if (setting1 > 100 || setting1 < 0)
+      return -1;
 
-  smps[0]->data[0].f = time_delta(&now, &start_time);
+    if (setting2.empty() || setting2.size() > 10)
+      return -1;
 
-  /* Dont forget to set other flags in struct Sample::flags
-   * E.g. for sequence no, timestamps... */
-  smps[0]->flags = (int)SampleFlags::HAS_DATA;
-  smps[0]->signals = getInputSignals(false);
+    return Node::check();
+  }
 
-  read = 1; // The number of samples read
+  const std::string &getDetails() override {
+    details = fmt::format("setting1={}, setting2={}", setting1, setting2);
+    return details;
+  }
 
-  return read;
-}
+  int start() override {
+    // TODO add implementation here
 
-int ExampleNode::_write(struct Sample *smps[], unsigned cnt) {
-  int written;
+    start_time = time_now();
 
-  // TODO: Add implementation here.
+    return 0;
+  }
 
-  written = 0; // The number of samples written
+  // int ExampleNode::stop() override {
+  //   // TODO add implementation here
+  //   return 0;
+  // }
 
-  return written;
-}
+  // int ExampleNode::pause() override {
+  //   // TODO add implementation here
+  //   return 0;
+  // }
+
+  // int ExampleNode::resume() override {
+  //   // TODO add implementation here
+  //   return 0;
+  // }
+
+  // int ExampleNode::restart() override {
+  //   // TODO add implementation here
+  //   return 0;
+  // }
+
+  // int ExampleNode::reverse() override {
+  //   // TODO add implementation here
+  //   return 0;
+  // }
+
+  // std::vector<int> ExampleNode::getPollFDs() override {
+  //   // TODO add implementation here
+  //   return {};
+  // }
+
+  // std::vector<int> ExampleNode::getNetemFDs() override {
+  //   // TODO add implementation here
+  //   return {};
+  // }
+
+  // struct villas::node::memory::Type * ExampleNode::getMemoryType() override {
+  //   // TODO add implementation here
+  // }
+};
 
 // Register node
 static char n[] = "example";

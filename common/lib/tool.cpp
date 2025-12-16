@@ -40,6 +40,9 @@ int Tool::run() {
   try {
     int ret;
 
+    // Setup environment
+    std::setlocale(LC_ALL, "en_US.UTF-8");
+
     logger->info("This is VILLASnode {} (built on {}, {})",
                  CLR_BLD(CLR_YEL(PROJECT_VERSION)), CLR_BLD(CLR_MAG(__DATE__)),
                  CLR_BLD(CLR_MAG(__TIME__)));

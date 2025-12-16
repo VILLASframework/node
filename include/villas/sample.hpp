@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <memory>
+#include <optional>
 
 #include <villas/log.hpp>
 #include <villas/signal.hpp>
@@ -54,7 +56,12 @@ enum class SampleFlags {
   ALL = -1
 };
 
+// Decrease reference count and release memory if last reference was held.
+int sample_decref(struct Sample *s);
+
 struct Sample {
+  using PtrUnique = std::unique_ptr<Sample, decltype(&sample_decref)>;
+
   uint64_t sequence; // The sequence number of this sample.
   unsigned length;   // The number of values in sample::values which are valid.
   unsigned
@@ -89,10 +96,7 @@ struct Sample {
 #define SAMPLE_NON_POOL PTRDIFF_MIN
 
 // Get the address of the pool to which the sample belongs.
-#define sample_pool(s)                                                         \
-  ((s)->pool_off == SAMPLE_NON_POOL                                            \
-       ? nullptr                                                               \
-       : (struct Pool *)((char *)(s) + (s)->pool_off))
+std::optional<struct Pool *> sample_pool(const struct Sample *smp);
 
 struct Sample *sample_alloc(struct Pool *p);
 
@@ -114,9 +118,6 @@ void sample_free_many(struct Sample *smps[], int cnt);
 
 // Increase reference count of sample
 int sample_incref(struct Sample *s);
-
-// Decrease reference count and release memory if last reference was held.
-int sample_decref(struct Sample *s);
 
 int sample_copy(struct Sample *dst, const struct Sample *src);
 

@@ -7,12 +7,12 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'villas-node'
-version = '1.0.1'
+version = '1.1.0'
 description = 'Python support for the VILLASnode simulation-data gateway'
 readme = 'README.md'
 requires-python = '>=3.10'
 keywords = ['simulation', 'power', 'system', 'real-time', 'villas']
-license = 'Apache-2.0'
+# license = 'Apache-2.0'
 classifiers = [
     'Development Status :: 4 - Beta',
     'Topic :: Scientific/Engineering',
@@ -21,17 +21,19 @@ classifiers = [
 ]
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
-    'requests==2.32.3',
-    'protobuf==6.31.1',
+    'protobuf==6.32.1',
+    'libconf==2.0.1',
 ]
 optional-dependencies.dev = [
-    'black==25.1.0',
-    'flake8==7.2.0',
-    'mypy==1.15.0',
-    'pytest==8.3.5',
-    'types-requests==2.32.0.20250328',
-    'types-protobuf==5.29.1.20250403',
+    'black==25.11.0',
+    'flake8==7.3.0',
+    'mypy==1.19.0',
+    'pytest==9.0.1',
+    'types-protobuf==6.32.1.20251105',
 ]
+
+[project.scripts]
+villas-conf2orchestra-ddf = "villas.node.opal_orchestra_ddf:main"
 
 [project.urls]
 GitHub = 'https://github.com/VILLASframework/node'
@@ -50,8 +52,14 @@ email = 'Philipp.Jungkamp@opal-rt.com'
 module = ['google']
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ['libconf']
+ignore_missing_imports = true
+
+
 [tool.black]
 extend-exclude = '''.*(\.pyi|_pb2.py)$'''
+line-length = 90
 
 [tool.setuptools.packages.find]
 include = ["villas.node"]

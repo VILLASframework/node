@@ -11,7 +11,7 @@ variables:
   DOCKER_IMAGE_DEV: ${DOCKER_IMAGE}/dev-${DISTRO}
   DOCKER_CLI_EXPERIMENTAL: enabled
   CMAKE_BUILD_OPTS: "--parallel 16"
-  CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release -DVILLAS_COMPILE_WARNING_AS_ERROR=ON"
+  CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release"
   CACHIX_CACHE_NAME: villas
 
 stages:
@@ -71,7 +71,7 @@ prepare:docker:
     TARGET: dev
   parallel:
     matrix:
-      - DISTRO: [ubuntu, debian, rocky]
+      - DISTRO: [ubuntu, debian, rocky, rocky9]
       - DISTRO: fedora
         DOCKER_OPTS: --tag ${DOCKER_IMAGE}/dev:${DOCKER_TAG}
       - DISTRO: fedora
@@ -100,9 +100,13 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-      - DISTRO: [fedora, fedora-minimal, debian, rocky, ubuntu]
+      - DISTRO: [fedora, fedora-minimal, debian, rocky, rocky9, ubuntu]
+      - DISTRO: fedora
+        CMAKE_EXTRA_OPTS: >
+          -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
       - DISTRO: fedora-minimal
-        CMAKE_EXTRA_OPTS: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+        CMAKE_EXTRA_OPTS: >
+          -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
           -DWITH_API=OFF
           -DWITH_CLIENTS=OFF
           -DWITH_CONFIG=OFF
@@ -132,6 +136,16 @@ build:nix:
       --print-build-logs
       ".#villas-node-${SYSTEM}"
 
+build:openapi:
+  stage: build
+  needs: []
+  image: node:24-alpine
+  script:
+    - npx -y @redocly/cli build-docs doc/openapi/openapi.yaml --output openapi.html
+  artifacts:
+    paths:
+      - openapi.html
+
 # Stage: test
 
 test:pre-commit:
@@ -147,10 +161,10 @@ test:python:
   stage: test
   script:
     - cd python
-    - /venv/bin/pytest --verbose .
-    - /venv/bin/black --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
-    - /venv/bin/flake8 --extend-exclude="*.pyi,*_pb2.py" .
-    - /venv/bin/mypy .
+    - pytest --verbose .
+    - black --line-length=90 --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
+    - flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
+    - mypy .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   needs:
     - job: "build:source: [fedora]"

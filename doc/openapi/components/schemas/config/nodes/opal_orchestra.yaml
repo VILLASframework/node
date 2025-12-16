@@ -1,0 +1,77 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    domain:
+      type: string
+      description: >-
+        The name of the domain to which the connection is requested. This domain must exist in the DDF read by an RT-LAB subsystem.
+
+    synchronous:
+      type: boolean
+      description: >-
+        Determines whether domain participants exchange simulation data synchronously or asynchronously.
+
+    states:
+      type: boolean
+
+    connection:
+      $ref: ./opal_orchestra_connection.yaml
+
+    ddf:
+      type: string
+      description: >-
+        The path to the DDF file that describes the data exchanged in the specified domain.
+
+    connect_timeout:
+      $ref: ../duration.yaml
+      default: 5s
+      description: >-
+        The duration after which a failed connection attempt times out.
+
+    flag_delay:
+      $ref: ../duration.yaml
+      default: 0s
+      description: >-
+        Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
+        Flags are recommended for better performance: they are faster but also more CPU-consuming.
+
+    flag_delay_tool:
+      $ref: ../duration.yaml
+      description: >-
+        Forces the local Orchestra communication to be made with flags instead of semaphores when using an external communication process.
+        Flags are recommended for better performance: they are faster but also more CPU-consuming.
+
+    skip_wait_to_go:
+      type: boolean
+      default: false
+      description: >-
+        Sets the WaitToGo setting of the model.
+        When true, VILLASnode ignores the WaitToGo during the connection step.
+        When false, VILLASnode performs the WaitToGo during the connection step.
+
+    ddf_overwrite:
+      type: boolean
+      default: false
+      description: >-
+        If true, the DDF file provided in the 'dff' setting will be overwriting with settings and signals from the VILLASnode configuration.
+
+    ddf_overwrite_only:
+      type: boolean
+      default: false
+      description: >-
+        If true, VILLASnode will overwrite the file provided in the 'ddf' setting, and terminate immediately afterwards.
+
+    rate:
+      type: number
+      default: 1
+      description: >-
+        In asynchronous mode (see 'synchronous' setting), this rate defines how often per second the data exchange with the Orchestra domain takes place.
+
+  required:
+  - domain
+- $ref: ../node_signals.yaml
+- $ref: ../node.yaml

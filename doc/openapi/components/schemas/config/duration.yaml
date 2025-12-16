@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+oneOf:
+- type: string
+  description: |
+    Duration as a string, e.g., "1h30m", "45s", "200ms".
+  pattern: (\d+d)?(\d+h)?(\d+m)?(\d+s)?(\d+ms)?(\d+us)?(\d+ns)?
+  examples:
+  - "6d23h30m50s40ms"
+  - "45s"
+  - "2d200ms"
+- type: integer
+  description: |
+    Duration as integer.
+  minimum: 0
+  examples:
+  - 5400000
+  - 45000
+  - 200

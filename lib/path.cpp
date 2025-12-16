@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
-#include <map>
+#include <unordered_map>
 
 #include <poll.h>
 #include <unistd.h>
@@ -166,7 +166,7 @@ void Path::prepare(NodeList &nodes) {
                        this->toString());
 
   // Create path sources
-  std::map<Node *, PathSource::Ptr> psm;
+  std::unordered_map<Node *, PathSource::Ptr> psm;
   unsigned i = 0, j = 0;
   for (auto me : mappings) {
     Node *n = me->node;

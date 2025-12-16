@@ -44,7 +44,7 @@ RedisConnection::RedisConnection(const sw::redis::ConnectionOptions &opts)
         onMessage(channel, msg);
       });
 
-  logger->info("New connection: {}", opts);
+  logger->info("New connection: {}:{}", opts.host, opts.port);
 
   state = State::INITIALIZED;
 }
@@ -60,7 +60,7 @@ RedisConnection::get(const sw::redis::ConnectionOptions &opts) {
     try {
       conn = new RedisConnection(opts);
     } catch (sw::redis::IoError &e) {
-      throw RuntimeError(e.what());
+      throw RuntimeError("{}", e.what());
     }
 
     connections[opts] = conn;

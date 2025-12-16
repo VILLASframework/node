@@ -253,7 +253,7 @@ static void *RecvFromIPPort(void *arg) {
     for (int i = 0; i < msg->length; i++)
       mdldata[i] = (double)msg->data[i].f;
 
-    // Update OPAL model
+    // Update OPAL-RT model
     OpalSetAsyncRecvIconStatus(msg->sequence,
                                RecvID); // Set the Status to the message ID
 #elif PROTOCOL == GTNET_SKT
@@ -292,7 +292,7 @@ int main(int argc, char *argv[]) {
   // Check for the proper arguments to the program
   if (argc < 4) {
     printf("Invalid Arguments: 1-AsyncShmemName 2-AsyncShmemSize "
-           "3-PrintShmemName\n");
+           "3-SystemCtrlShmemName\n");
     exit(0);
   }
 

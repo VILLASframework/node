@@ -34,7 +34,7 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
     if (block->used)
       continue;
 
-    char *cptr = (char *)block + sizeof(struct Block);
+    char *cptr = reinterpret_cast<char *>(block) + sizeof(struct Block);
     size_t avail = block->length;
     uintptr_t uptr = (uintptr_t)cptr;
 
@@ -58,7 +58,8 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
          * position, so we just change its len and create a new block
          * descriptor for the actual block we're handling. */
         block->length = gap - sizeof(struct Block);
-        struct Block *newblock = (struct Block *)(cptr - sizeof(struct Block));
+        struct Block *newblock =
+            reinterpret_cast<struct Block *>(cptr - sizeof(struct Block));
         newblock->prev = block;
         newblock->next = block->next;
         block->next = newblock;
@@ -73,7 +74,7 @@ static struct Allocation *managed_alloc(size_t len, size_t alignment,
 
       if (avail > len + sizeof(struct Block)) {
         // Imperfect fit, so create another block for the remaining part
-        struct Block *newblock = (struct Block *)(cptr + len);
+        struct Block *newblock = reinterpret_cast<struct Block *>(cptr + len);
         newblock->prev = block;
         newblock->next = block->next;
         block->next = newblock;
@@ -160,7 +161,7 @@ struct Type *villas::node::memory::managed(void *ptr, size_t len) {
   cptr += ALIGN(sizeof(struct Type), sizeof(void *));
 
   // Initialize first free memory block
-  mb = (struct Block *)cptr;
+  mb = reinterpret_cast<struct Block *>(cptr);
   mb->prev = nullptr;
   mb->next = nullptr;
   mb->used = false;

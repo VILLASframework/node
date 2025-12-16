@@ -121,8 +121,8 @@ struct rtnl_link *villas::kernel::nl::get_egress_link(struct sockaddr *sa) {
   switch (sa->sa_family) {
   case AF_INET:
   case AF_INET6: {
-    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+    struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(sa);
+    struct sockaddr_in6 *sin6 = reinterpret_cast<struct sockaddr_in6 *>(sa);
 
     struct nl_addr *addr =
         (sa->sa_family == AF_INET)
@@ -139,7 +139,7 @@ struct rtnl_link *villas::kernel::nl::get_egress_link(struct sockaddr *sa) {
   }
 
   case AF_PACKET: {
-    struct sockaddr_ll *sll = (struct sockaddr_ll *)sa;
+    struct sockaddr_ll *sll = reinterpret_cast<struct sockaddr_ll *>(sa);
 
     ifindex = sll->sll_ifindex;
     break;

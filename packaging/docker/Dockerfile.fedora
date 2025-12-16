@@ -15,7 +15,7 @@ ARG DISTRO
 # Toolchain
 RUN dnf -y install \
 	gcc-14 g++-14 \
-	pkgconfig cmake make \
+	pkgconfig cmake make meson ninja \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
@@ -79,16 +79,13 @@ RUN echo /usr/local/lib   >> /etc/ld.so.conf
 ADD packaging/patches /deps/patches
 ADD packaging/deps.sh /deps
 RUN bash /deps/deps.sh
-RUN echo "/usr/local/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf && \
-	ldconfig
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
+# Install Python dev tools for CI
 COPY ./python /python
-RUN python -m venv /venv && \
-	source /venv/bin/activate && \
-	pip install /python[dev] && \
+RUN pip install /python[dev] && \
 	rm -r /python
 
 # Expose ports for HTTP and WebSocket frontend
@@ -135,10 +132,10 @@ LABEL \
 	org.label-schema.schema-version="1.0" \
 	org.label-schema.name="VILLASnode" \
 	org.label-schema.license="Apache-2.0" \
-	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.vendor="The VILLASframework authors" \
 	org.label-schema.author.name="Steffen Vogel" \
 	org.label-schema.author.email="post@steffenvogel.de" \
 	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Fedora" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
-	org.label-schema.vcs-url="https://git.rwth-aachen.de/acs/public/villas/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
+	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"

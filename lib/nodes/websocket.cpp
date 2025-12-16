@@ -593,6 +593,12 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json) {
                           "node-config-node-websocket-destinations",
                           "Failed to parse WebSocket URI: '{}'", uri);
 
+      if (strlen(path) == 0) {
+        throw ConfigError(json_dest, "node-config-node-websocket-destinations",
+                          "Missing node name / path in destination URI: '{}'",
+                          d->uri);
+      }
+
       d->info.ssl_connection = !strcmp(prot, "https");
       d->info.address = strdup(ads);
       d->info.path = strf("/%s", path);

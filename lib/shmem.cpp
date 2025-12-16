@@ -137,7 +137,7 @@ retry:
 
   cptr =
       (char *)base + sizeof(struct memory::Type) + sizeof(struct memory::Block);
-  shared = (struct ShmemShared *)cptr;
+  shared = reinterpret_cast<struct ShmemShared *>(cptr);
   shm->read.base = base;
   shm->read.name = rname;
   shm->read.len = len;

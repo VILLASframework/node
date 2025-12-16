@@ -6,7 +6,7 @@
  */
 
 #include <cstdio>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 extern "C" {
@@ -464,7 +464,7 @@ void LuaHook::parse(json_t *json) {
 void LuaHook::lookupFunctions() {
   int ret;
 
-  std::map<const char *, int *> funcs = {
+  std::unordered_map<const char *, int *> funcs = {
       {"start", &functions.start},       {"stop", &functions.stop},
       {"restart", &functions.restart},   {"prepare", &functions.prepare},
       {"periodic", &functions.periodic}, {"process", &functions.process}};

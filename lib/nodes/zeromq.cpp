@@ -39,10 +39,10 @@ static int get_monitor_event(void *monitor, int *value, char **address) {
 
   assert(zmq_msg_more(&msg));
 
-  uint8_t *data = (uint8_t *)zmq_msg_data(&msg);
-  uint16_t event = *(uint16_t *)(data);
+  uint8_t *data = reinterpret_cast<uint8_t *>(zmq_msg_data(&msg));
+  uint16_t event = *reinterpret_cast<uint16_t *>(data);
   if (value)
-    *value = *(uint32_t *)(data + 2);
+    *value = *reinterpret_cast<uint32_t *>(data + 2);
 
   // Second frame in message contains event address
   zmq_msg_init(&msg);

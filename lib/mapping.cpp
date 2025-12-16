@@ -87,7 +87,7 @@ invalid_format:
   throw RuntimeError("Failed to parse mapping expression: {}", str);
 }
 
-MappingEntry::MappingEntry()
+MappingEntry::MappingEntry() // cppcheck-suppress uninitMemberVar
     : node(nullptr), type(Type::UNKNOWN), length(0), offset(0), nodeName() {}
 
 int MappingEntry::parse(json_t *json) {

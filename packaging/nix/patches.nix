@@ -10,7 +10,7 @@ let
 in
 {
   libiec61850 = prev.libiec61850.overrideAttrs {
-    patches = [ ./libiec61850_debug_r_session.patch ];
+    patches = [ ../patches/libiec61850_debug_r_session.patch ];
     cmakeFlags = (prev.cmakeFlags or [ ]) ++ [
       "-DCONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB=ON"
       "-DCONFIG_EXTERNAL_MBEDTLS_DYNLIB_PATH=${final.mbedtls}/lib"

@@ -24,7 +24,7 @@ using namespace villas::node;
 using namespace villas::utils;
 
 char *villas::node::socket_print_addr(struct sockaddr *saddr) {
-  union sockaddr_union *sa = (union sockaddr_union *)saddr;
+  union sockaddr_union *sa = reinterpret_cast<union sockaddr_union *>(saddr);
   auto *buf = reinterpret_cast<char *>(::malloc(256));
   if (!buf)
     throw MemoryAllocationError();
@@ -82,7 +82,7 @@ char *villas::node::socket_print_addr(struct sockaddr *saddr) {
 int villas::node::socket_parse_address(const char *addr, struct sockaddr *saddr,
                                        enum SocketLayer layer, int flags) {
   // TODO: Add support for IPv6
-  union sockaddr_union *sa = (union sockaddr_union *)saddr;
+  union sockaddr_union *sa = reinterpret_cast<union sockaddr_union *>(saddr);
 
   char *copy = strdup(addr);
   int ret;
@@ -195,8 +195,8 @@ int villas::node::socket_compare_addr(struct sockaddr *x, struct sockaddr *y) {
   if (a != b)                                                                  \
   return a < b ? -1 : 1
 
-  union sockaddr_union *xu = (union sockaddr_union *)x;
-  union sockaddr_union *yu = (union sockaddr_union *)y;
+  union sockaddr_union *xu = reinterpret_cast<union sockaddr_union *>(x);
+  union sockaddr_union *yu = reinterpret_cast<union sockaddr_union *>(y);
 
   CMP(x->sa_family, y->sa_family);
 

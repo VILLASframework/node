@@ -50,6 +50,16 @@ repos:
     hooks:
       - id: black-jupyter
         exclude: .*_pb2.pyi?$
+        args:
+        - --line-length=90
+
+  - repo: https://github.com/pycqa/flake8
+    rev: "7.3.0"
+    hooks:
+      - id: flake8
+        exclude: .*_pb2.pyi?$
+        args:
+        - --max-line-length=90
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: "v0.13.0"

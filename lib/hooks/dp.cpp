@@ -279,7 +279,8 @@ public:
       istep(coeffs, &signal);
 
       sample_data_remove(smp, signal_index, fharmonics_len);
-      sample_data_insert(smp, (union SignalData *)&signal, signal_index, 1);
+      sample_data_insert(smp, reinterpret_cast<union SignalData *>(&signal),
+                         signal_index, 1);
     } else {
       double signal = smp->data[signal_index].f;
       std::complex<float> coeffs[fharmonics_len];
@@ -287,8 +288,8 @@ public:
       step(&signal, coeffs);
 
       sample_data_remove(smp, signal_index, 1);
-      sample_data_insert(smp, (union SignalData *)coeffs, signal_index,
-                         fharmonics_len);
+      sample_data_insert(smp, reinterpret_cast<union SignalData *>(coeffs),
+                         signal_index, fharmonics_len);
     }
 
     time += timestep;

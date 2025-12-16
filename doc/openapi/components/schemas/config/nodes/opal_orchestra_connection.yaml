@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+description: |
+  Configuration of the connection to the OPAL-RT Orchestra framework.
+required:
+  - type
+properties:
+  type:
+    description: The type of connection to the OPAL-RT Orchestra framework.
+    type: string
+discriminator:
+  propertyName: type
+  mapping:
+    local: ./opal_orchestra_connection_local.yaml
+    remote: ./opal_orchestra_connection_remote.yaml
+    dolphin: ./opal_orchestra_connection_dolphin.yaml

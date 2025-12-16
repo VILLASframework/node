@@ -156,8 +156,7 @@ class VillasHuman(Format):
             return None
 
         m = re.match(
-            r"(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?"
-            r"(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?",
+            r"(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?" r"(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?",
             fields[0],
         )
 
@@ -315,12 +314,12 @@ class Protobuf(Format):
         for value in sample.data:
             pb_value = pb.Value()
 
-            if isinstance(value, int):
-                pb_value.i = value
+            if isinstance(value, bool):
+                pb_value.b = value
             elif isinstance(value, float):
                 pb_value.f = value
-            elif isinstance(value, bool):
-                pb_value.b = value
+            elif isinstance(value, int):
+                pb_value.i = value
             elif isinstance(value, complex):
                 pb_value.z.real = value.real
                 pb_value.z.imag = value.imag

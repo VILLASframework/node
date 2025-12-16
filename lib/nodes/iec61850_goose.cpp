@@ -173,7 +173,7 @@ MmsValue *GooseSignal::newMmsFloat(double d, int size) {
 }
 
 std::optional<GooseSignal::Type> GooseSignal::lookupMmsType(int mms_type) {
-  auto check = [mms_type](Descriptor descriptor) {
+  auto check = [mms_type](const Descriptor &descriptor) {
     return descriptor.mms_type == mms_type;
   };
 
@@ -186,7 +186,7 @@ std::optional<GooseSignal::Type> GooseSignal::lookupMmsType(int mms_type) {
 
 std::optional<GooseSignal::Type>
 GooseSignal::lookupMmsTypeName(char const *name) {
-  auto check = [name](Descriptor descriptor) {
+  auto check = [name](const Descriptor &descriptor) {
     return descriptor.name == name;
   };
 
@@ -823,7 +823,7 @@ void GooseNode::parseSubscriber(json_t *json, GooseNode::SubscriberConfig &sc) {
 }
 
 void GooseNode::parseSubscribers(
-    json_t *json, std::map<std::string, InputEventContext> &ctx) {
+    json_t *json, std::unordered_map<std::string, InputEventContext> &ctx) {
   char const *key;
   json_t *json_subscriber;
 

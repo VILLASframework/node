@@ -65,12 +65,12 @@ protected:
     double getEstimatedDuration() const;
   };
 
-  Task task;             // The periodic task for test_rtt_read()
-  Format::Ptr formatter; // The format of the output file
+  Task task;             // The periodic task for test_rtt_read().
+  Format::Ptr formatter; // The format of the output file.
   FILE *stream;
 
-  std::list<Case> cases;             // List of test cases
-  std::list<Case>::iterator current; // Currently running test case
+  std::list<Case> cases;             // List of test cases.
+  std::list<Case>::iterator current; // Currently running test case.
 
   std::string output; // The directory where we place the results.
   std::string prefix; // An optional prefix in the filename.
@@ -92,7 +92,7 @@ public:
   };
 
   TestRTT(const uuid_t &id = {}, const std::string &name = "")
-      : Node(id, name), task(), formatter(nullptr), stream(nullptr),
+      : Node(id, name), task(), formatter(nullptr), stream(nullptr), current(),
         shutdown(false) {}
 
   virtual ~TestRTT(){};

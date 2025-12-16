@@ -23,10 +23,12 @@ using namespace villas::node;
 using namespace villas::utils;
 
 int villas::node::sample_init(struct Sample *s) {
-  struct Pool *p = sample_pool(s);
+  auto pool = sample_pool(s);
 
   s->length = 0;
-  s->capacity = (p->blocksz - sizeof(struct Sample)) / sizeof(s->data[0]);
+  s->capacity =
+      pool ? ((*pool)->blocksz - sizeof(struct Sample)) / sizeof(s->data[0])
+           : 0;
   s->refcnt = ATOMIC_VAR_INIT(1);
 
   new (&s->signals) std::shared_ptr<SignalList>;
@@ -41,7 +43,7 @@ struct Sample *villas::node::sample_alloc(struct Pool *p) {
   if (!s)
     return nullptr;
 
-  s->pool_off = (char *)p - (char *)s;
+  s->pool_off = reinterpret_cast<char *>(p) - reinterpret_cast<char *>(s);
 
   int ret = sample_init(s);
   if (ret) {
@@ -55,7 +57,7 @@ struct Sample *villas::node::sample_alloc(struct Pool *p) {
 struct Sample *villas::node::sample_alloc_mem(int capacity) {
   size_t sz = SAMPLE_LENGTH(capacity);
 
-  auto *s = (struct Sample *)new char[sz];
+  auto *s = reinterpret_cast<struct Sample *>(new char[sz]);
   if (!s)
     throw MemoryAllocationError();
 
@@ -71,12 +73,11 @@ struct Sample *villas::node::sample_alloc_mem(int capacity) {
 }
 
 void villas::node::sample_free(struct Sample *s) {
-  struct Pool *p = sample_pool(s);
-
-  if (p)
-    pool_put(p, s);
+  auto pool = sample_pool(s);
+  if (pool)
+    pool_put(*pool, s);
   else
-    delete[] (char *)s;
+    delete[] reinterpret_cast<char *>(s);
 }
 
 int villas::node::sample_alloc_many(struct Pool *p, struct Sample *smps[],
@@ -88,7 +89,8 @@ int villas::node::sample_alloc_many(struct Pool *p, struct Sample *smps[],
     return ret;
 
   for (int i = 0; i < ret; i++) {
-    smps[i]->pool_off = (char *)p - (char *)smps[i];
+    smps[i]->pool_off =
+        reinterpret_cast<char *>(p) - reinterpret_cast<char *>(smps[i]);
 
     sample_init(smps[i]);
   }
@@ -148,13 +150,12 @@ int villas::node::sample_copy(struct Sample *dst, const struct Sample *src) {
 
 struct Sample *villas::node::sample_clone(struct Sample *orig) {
   struct Sample *clone;
-  struct Pool *pool;
 
-  pool = sample_pool(orig);
+  auto pool = sample_pool(orig);
   if (!pool)
     return nullptr;
 
-  clone = sample_alloc(pool);
+  clone = sample_alloc(*pool);
   if (!clone)
     return nullptr;
 
@@ -166,19 +167,15 @@ struct Sample *villas::node::sample_clone(struct Sample *orig) {
 int villas::node::sample_clone_many(struct Sample *dsts[],
                                     const struct Sample *const srcs[],
                                     int cnt) {
-  int alloced, copied;
-  struct Pool *pool;
-
   if (cnt <= 0)
     return 0;
 
-  pool = sample_pool(srcs[0]);
+  auto pool = sample_pool(srcs[0]);
   if (!pool)
     return 0;
 
-  alloced = sample_alloc_many(pool, dsts, cnt);
-
-  copied = sample_copy_many(dsts, srcs, alloced);
+  auto alloced = sample_alloc_many(*pool, dsts, cnt);
+  auto copied = sample_copy_many(dsts, srcs, alloced);
 
   return copied;
 }
@@ -193,7 +190,7 @@ int villas::node::sample_copy_many(struct Sample *const dsts[],
 
 int villas::node::sample_cmp(struct Sample *a, struct Sample *b, double epsilon,
                              int flags) {
-  if ((a->flags & b->flags & flags) != flags) {
+  if ((a->flags & flags) != (b->flags & flags)) {
     printf("flags: a=%#x, b=%#x, wanted=%#x\n", a->flags, b->flags, flags);
     return -1;
   }
@@ -324,4 +321,17 @@ void villas::node::sample_data_remove(struct Sample *smp, size_t offset,
   memmove(&smp->data[offset], &smp->data[offset + len], sz);
 
   smp->length -= len;
+}
+
+// Get the address of the pool to which the sample belongs.
+std::optional<struct Pool *>
+villas::node::sample_pool(const struct Sample *smp) {
+  if (smp->pool_off == SAMPLE_NON_POOL)
+    return {};
+
+  auto *cptr = reinterpret_cast<const char *>(smp) + smp->pool_off;
+  auto *ptr = const_cast<char *>(cptr);
+  auto *pool = reinterpret_cast<struct Pool *>(ptr);
+
+  return std::optional(pool);
 }

@@ -7,10 +7,16 @@
 
 #pragma once
 
+#include <chrono>
+#include <regex>
+#include <stdexcept>
+
 #include <jansson.h>
 
 #include <villas/node/config.hpp>
 #include <villas/sample.hpp>
+
+#include "villas/exceptions.hpp"
 
 #ifdef WITH_CONFIG
 #include <libconfig.h>
@@ -41,6 +47,96 @@ void json_object_extend_key_value_token(json_t *obj, const char *key,
 int json_object_extend(json_t *orig, json_t *merge);
 
 json_t *json_load_cli(int argc, const char *argv[]);
+
+template <typename Duration = std::chrono::nanoseconds>
+Duration parse_duration(std::string_view input) {
+  using namespace std::literals::chrono_literals;
+
+  // Map unit strings to their corresponding chrono durations
+  static const std::unordered_map<std::string, std::chrono::nanoseconds>
+      unit_map = {
+          {"d", 24h},  // days
+          {"h", 1h},   // hours
+          {"m", 1min}, // minutes
+          {"s", 1s},   // seconds
+          {"ms", 1ms}, // milliseconds
+          {"us", 1us}, // microseconds
+          {"ns", 1ns}  // nanoseconds
+      };
+
+  std::regex token_re(R"((\d+)([a-z]+))");
+  auto begin = std::regex_iterator(input.begin(), input.end(), token_re);
+  auto end = std::regex_iterator<std::string_view::const_iterator>();
+
+  std::chrono::nanoseconds total_duration{0};
+
+  for (auto match = begin; match != end; ++match) {
+    if (match->size() != 3) {
+      throw RuntimeError("Invalid duration format: {}", match->str());
+    }
+
+    auto number_str = match->str(1);
+    auto unit_str = match->str(2);
+
+    auto it = unit_map.find(unit_str);
+    if (it == unit_map.end()) {
+      throw RuntimeError("Unknown duration unit: {}", unit_str);
+    }
+
+    auto unit = it->second;
+
+    int64_t number;
+    try {
+      number = std::stoul(number_str);
+    } catch (const std::invalid_argument &e) {
+      throw RuntimeError("Invalid number in duration: {}", match->str());
+    } catch (const std::out_of_range &e) {
+      throw RuntimeError("Duration overflows maximum representable value: {}",
+                         match->str());
+    }
+
+    auto duration = unit * number;
+
+    if (duration > Duration::zero() && duration < Duration(1))
+      throw RuntimeError("Duration underflows minimum representable value");
+
+    if (unit.count() != 0 &&
+        duration.count() / unit.count() != number) // Check for overflow.
+      throw RuntimeError("Duration overflows maximum representable value: {}",
+                         match->str());
+
+    total_duration += duration;
+  }
+
+  return std::chrono::duration_cast<Duration>(total_duration);
+}
+
+template <typename Duration = std::chrono::nanoseconds>
+Duration parse_duration(json_t *json) {
+  switch (json_typeof(json)) {
+  case JSON_INTEGER: {
+    int64_t value = json_integer_value(json);
+    if (value < 0) {
+      throw ConfigError(json, "duration-negative", "Negative duration value");
+    }
+
+    return Duration(value);
+  }
+
+  case JSON_STRING: {
+    try {
+      return parse_duration<Duration>(
+          std::string_view(json_string_value(json), json_string_length(json)));
+    } catch (const RuntimeError &e) {
+      throw ConfigError(json, "duration", "{}", e.what());
+    }
+  }
+
+  default:
+    throw ConfigError(json, "duration",
+                      "Expected a string or integer for duration");
+  }
+}
 
 } // namespace node
 } // namespace villas

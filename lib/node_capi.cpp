@@ -164,7 +164,7 @@ vsample *sample_pack(uint64_t *seq, struct timespec *ts_origin,
   smp->flags = (int)SampleFlags::HAS_SEQUENCE | (int)SampleFlags::HAS_DATA |
                (int)SampleFlags::HAS_TS_ORIGIN;
 
-  memcpy((double *)smp->data, values, sizeof(double) * len);
+  memcpy(reinterpret_cast<double *>(smp->data), values, sizeof(double) * len);
 
   return (vsample *)smp;
 }

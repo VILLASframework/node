@@ -25,12 +25,12 @@ std::optional<std::unique_ptr<Driver>> PlatformDevice::driver() const {
 }
 
 std::optional<int> PlatformDevice::iommu_group() const {
-  fs::path symlink = fs::path(this->m_path.u8string() + "/iommu_group");
+  fs::path symlink = fs::path(this->m_path.string() + "/iommu_group");
 
   fs::path link = fs::read_symlink(symlink);
   std::string delimiter = "iommu_groups/";
-  int pos = link.u8string().find(delimiter);
-  int iommu_group = std::stoi(link.u8string().substr(pos + delimiter.length()));
+  int pos = link.string().find(delimiter);
+  int iommu_group = std::stoi(link.string().substr(pos + delimiter.length()));
   return std::make_optional<int>(iommu_group);
 }
 

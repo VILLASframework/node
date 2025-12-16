@@ -11,8 +11,8 @@ import os
 import signal
 import subprocess
 from tempfile import NamedTemporaryFile
-
-import requests
+import urllib.request
+import urllib.error
 
 LOGGER = logging.getLogger("villas.node")
 
@@ -126,15 +126,25 @@ class Node(object):
         self.request("restart", method="POST", json=req)
 
     def request(self, action, method="GET", **args):
-        if "timeout" not in args:
-            args["timeout"] = 1
+        timeout = args.get("timeout", 1)
+        json_data = args.get("json")
 
-        r = requests.request(
-            method, f"{self.api_url}/api/{self.api_version}/{action}", **args
-        )
-        r.raise_for_status()
+        url = f"{self.api_url}/api/{self.api_version}/{action}"
 
-        return r.json()
+        # Prepare the request
+        req = urllib.request.Request(url, method=method)
+
+        # Add JSON data if provided
+        if json_data:
+            req.add_header("Content-Type", "application/json")
+            data = json.dumps(json_data).encode("utf-8")
+            req.data = data
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            raise e
 
     def get_local_version(self):
         ver = subprocess.check_output([self.executable, "-V"])

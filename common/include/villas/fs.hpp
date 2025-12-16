@@ -5,12 +5,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#pragma once
+
 #include <villas/config.hpp>
 
 #ifdef WITH_GHC_FS
+
+#include <fmt/ostream.h>
 #include <ghc/filesystem.hpp>
+
 namespace fs = ghc::filesystem;
+
+template <> class fmt::formatter<fs::path> : public fmt::ostream_formatter {};
+
 #else
+
 #include <filesystem>
 namespace fs = std::filesystem;
+
 #endif
