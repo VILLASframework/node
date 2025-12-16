@@ -88,16 +88,12 @@ class Node:
         def unpack_to(
             self,
             target: Capsule,
-            ts_origin: Optional[int] = None,
-            ts_received: Optional[int] = None,
         ):
             if isinstance(target, self.__class__):
                 return self.node.unpack_to(
                     self.idx,
                     target.node,
                     target.idx,
-                    ts_origin,
-                    ts_received,
                 )
             else:
                 raise ValueError(
@@ -486,16 +482,12 @@ class Node:
         r_idx: int,
         target_node,
         w_idx: int,
-        ts_orig: Optional[int] = None,
-        ts_recv: Optional[int] = None,
     ):
         """
         Unpacks a given sample to a destined target.
 
         Args:
             r_idx (int): Originating Node index to read from.
-            ts_orig (Optional[int]): Supposed creation time in ns.
-            ts_recv (Optional[int]): Supposed arrival time in ns.
             target_node (Node): Target node.
             w_idx (int): Target Node index to unpack to.
         """
@@ -503,10 +495,8 @@ class Node:
         Node._ensure_capacity(target_node._smps, w_idx + 1)
 
         vn.sample_unpack(
-            self._smps.get_block(r_idx),
+            self._smps[r_idx],
             target_node._smps.get_block(w_idx),
-            ts_orig,
-            ts_recv,
         )
 
     def sample_details(self, idx):

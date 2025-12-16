@@ -36,8 +36,6 @@ class Node:
         def unpack_to(
             self,
             target: Capsule,
-            ts_origin: int | None,
-            ts_received: int | None,
         ): ...
 
     config: Incomplete
@@ -96,7 +94,5 @@ class Node:
         r_idx: int,
         target_node,
         w_idx: int,
-        ts_orig: int | None = None,
-        ts_recv: int | None = None,
     ): ...
     def sample_details(self, idx): ...
