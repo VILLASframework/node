@@ -152,12 +152,12 @@ unsigned sample_length(vsample *s) {
   return smp->length;
 }
 
-vsample *sample_pack(unsigned seq, struct timespec *ts_origin,
+vsample *sample_pack(uint64_t *seq, struct timespec *ts_origin,
                      struct timespec *ts_received, unsigned len,
                      double *values) {
   auto *smp = sample_alloc_mem(len);
 
-  smp->sequence = seq;
+  smp->sequence = *seq;
   smp->ts.origin = *ts_origin;
   smp->ts.received = *ts_received;
   smp->length = len;
@@ -169,7 +169,7 @@ vsample *sample_pack(unsigned seq, struct timespec *ts_origin,
   return (vsample *)smp;
 }
 
-void sample_unpack(vsample *s, unsigned *seq, struct timespec *ts_origin,
+void sample_unpack(vsample *s, uint64_t *seq, struct timespec *ts_origin,
                    struct timespec *ts_received, int *flags, unsigned *len,
                    double *values) {
   auto *smp = (Sample *)s;

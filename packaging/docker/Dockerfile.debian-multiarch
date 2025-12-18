@@ -58,6 +58,8 @@ RUN apt-get update && \
 	libssl-dev:${ARCH} \
 	libusb-1.0-0-dev:${ARCH} \
 	libzmq3-dev:${ARCH} \
+	python3-dev:${ARCH} \
+	python3-pybind11:${ARCH} \
 	uuid-dev:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /

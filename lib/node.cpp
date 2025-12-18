@@ -440,7 +440,7 @@ Node *NodeFactory::make(json_t *json, const uuid_t &id,
   std::string type;
   Node *n;
 
-  if (json_is_object(json))
+  if (!json_is_object(json))
     throw ConfigError(json, "node-config-node",
                       "Node configuration must be an object");
 

@@ -18,4 +18,12 @@ add_custom_target(run-integration-tests
         villas-hook
 )
 
-add_dependencies(run-tests run-integration-tests)
+add_custom_target(run-python-integration-tests
+    COMMAND
+        python3 -m unittest discover ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS
+        python_binding
+    USES_TERMINAL
+)
+
+add_dependencies(run-tests run-integration-tests run-python-integration-tests)

@@ -53,7 +53,9 @@ RUN dnf -y install \
 	nanomsg-devel \
 	libnice-devel \
 	libre-devel \
-	libwebsockets-devel
+	libwebsockets-devel \
+	python-devel \
+	pybind11-devel
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

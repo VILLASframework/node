@@ -164,7 +164,7 @@ test:python:
     - pytest --verbose .
     - black --line-length=90 --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
     - flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
-    - mypy .
+    - mypy --explicit-package-bases .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   needs:
     - job: "build:source: [fedora]"
@@ -181,6 +181,28 @@ test:cppcheck:
     paths:
       - cppcheck.log
     expose_as: cppcheck
+
+test:python_unit_integration:
+  stage: test
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  before_script:
+    # dependency from node.py, which gets imported because of __init__.py in node/villas/python/node
+    - pip install requests
+  script:
+    # build binding and symlink to villas.node folder
+    # helps with correct imports and compatiblity for CI, binding wrapper and binding install
+    - export PYTHONPATH=$PYTHONPATH:${PWD}/python
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target python_binding
+
+    - binding_path=$(find ${PWD}/build/python/binding/ -name "python_binding*.so" | head -n1)
+    - link_path=${PWD}/python/villas/node/$(basename $binding_path)
+    - ln -sf $binding_path $link_path
+
+    - cmake --build build ${CMAKE_BUILD_OPTS} --target run-python-unit-tests run-python-integration-tests
+    - rm $link_path
+  needs:
+    - job: "build:source: [fedora]"
+      artifacts: true
 
 test:unit:
   stage: test
