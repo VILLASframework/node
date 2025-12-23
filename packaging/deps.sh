@@ -475,7 +475,6 @@ if ! pkg-config "fmt >= 6.1.2" && \
         --parallel ${PARALLEL}
     popd
 fi
-
 # Build & Install spdlog
 if ! pkg-config "spdlog >= 1.8.2" && \
     should_build "spdlog" "for logging" "required"; then
@@ -599,6 +598,28 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     cmake --build . \
         --target install \
         --parallel ${PARALLEL}
+    popd
+fi
+
+# Build and install nlohmann/josn required for hook create_chronics
+if ! find ${PREFIX}/{include,share} -name "*nlohmann*" 2>/dev/null | grep -q . && \
+    should_build "nlohman_json" "for the delta-sharing node-type"; then
+    git clone https://github.com/nlohmann/json.git json
+    mkdir -p json/build
+    pushd json/build
+    cmake ..
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+# Build and install Bzip2 required for hook create_chronics
+if ! [ -f /usr/local/include/bzlib.h ] && ldconfig -p | grep -q libbz2 && \
+    should_build "BZip2" "for create_chronics hook"; then
+    git clone https://github.com/libarchive/bzip2.git bzip2
+    mkdir -p bzip2/build
+    pushd bzip2/build
+    cmake ..
+    make ${MAKE_OPTS} install
     popd
 fi
 
