@@ -613,7 +613,7 @@ if ! find ${PREFIX}/{include,share} -name "*nlohmann*" 2>/dev/null | grep -q . &
 fi
 
 # Build and install Bzip2 required for hook create_chronics
-if ! [ -f /usr/local/include/bzlib.h ] && ldconfig -p | grep -q libbz2 && \
+if !{ [ -f /usr/local/include/bzlib.h ] && ldconfig -p} | grep -q libbz2 && \
     should_build "BZip2" "for create_chronics hook"; then
     git clone https://github.com/libarchive/bzip2.git bzip2
     mkdir -p bzip2/build

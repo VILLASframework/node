@@ -25,7 +25,7 @@ public:
 private:
   IpDevice() = delete;
   IpDevice(const fs::path valid_path) //! Dont allow unvalidated paths
-      : PlatformDevice(valid_path){};
+      : PlatformDevice(valid_path) {};
 
 public:
   size_t addr() const;
