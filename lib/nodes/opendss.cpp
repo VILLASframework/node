@@ -133,8 +133,7 @@ void OpenDSS::parseData(json_t *json, bool in) {
 }
 
 int OpenDSS::parse(json_t *json) {
-
-  int ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
 

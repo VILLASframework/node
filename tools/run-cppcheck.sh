@@ -8,7 +8,7 @@ SOURCE_DIR=${SCRIPT_DIR}/..
 BUILD_DIR=${SOURCE_DIR}/build
 
 # Generate compilation database
-cmake -S ${SOURCE_DIR} -B ${BUILD_DIR} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -S ${SOURCE_DIR} -B ${BUILD_DIR}
 
 touch ${BUILD_DIR}/lib/formats/villas.pb-c.{c,h}
 

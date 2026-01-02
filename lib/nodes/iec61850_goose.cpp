@@ -622,16 +622,15 @@ GooseNode::~GooseNode() {
 }
 
 int GooseNode::parse(json_t *json) {
-  int ret;
-  json_error_t err;
-
-  ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
 
   json_t *json_keys = nullptr;
   json_t *json_in = nullptr;
   json_t *json_out = nullptr;
+
+  json_error_t err;
   ret = json_unpack_ex(json, &err, 0,          //
                        "{ s:?o, s:?o, s:?o }", //
                        "keys", &json_keys,     //

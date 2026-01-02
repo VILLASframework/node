@@ -195,15 +195,15 @@ int SignalNode::prepare() {
 }
 
 int SignalNode::parse(json_t *json) {
-  int r = -1, m = -1, ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
 
+  int r = -1;
+  int m = -1;
+  json_t *json_signals;
+
   json_error_t err;
-
-  size_t i;
-  json_t *json_signals, *json_signal;
-
   ret = json_unpack_ex(json, &err, 0,
                        "{ s?: b, s?: i, s?: F, s?: b, s: { s: o } }",
                        "realtime", &r, "limit", &limit, "rate", &rate,
@@ -218,7 +218,11 @@ int SignalNode::parse(json_t *json) {
     monitor_missed = m != 0;
 
   signals.clear();
+
   unsigned j = 0;
+
+  size_t i;
+  json_t *json_signal;
   json_array_foreach(json_signals, i, json_signal) {
     auto sig = SignalNodeSignal(json_signal);
 

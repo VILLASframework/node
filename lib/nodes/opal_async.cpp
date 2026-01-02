@@ -139,11 +139,12 @@ void LogSink::sink_it_(const spdlog::details::log_msg &msg) {
 }
 
 int OpalAsyncNode::parse(json_t *json) {
-  int ret, rply = -1, id = -1;
-
-  ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
+
+  int rply = -1;
+  int id = -1;
 
   json_error_t err;
   ret = json_unpack_ex(json, &err, 0, "{ s: i, s?: { s?: b } }", "id", &id,

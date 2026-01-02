@@ -269,16 +269,7 @@ protected:
   // Overwrite the data definition file (DDF).
   bool dataDefinitionFileOverwrite;
 
-  // Overwrite the data definition file (DDF) and terminate VILLASnode.
-  bool dataDefinitionFileWriteOnly;
-
   int _read(struct Sample *smps[], unsigned cnt) override {
-    if (dataDefinitionFileWriteOnly) {
-      logger->warn("Stopping node after writing the DDF file");
-      setState(State::STOPPING);
-      return -1;
-    }
-
     assert(cnt == 1);
 
     if (!domain.synchronous) {
@@ -314,12 +305,6 @@ protected:
   }
 
   int _write(struct Sample *smps[], unsigned cnt) override {
-    if (dataDefinitionFileWriteOnly) {
-      logger->warn("Stopping node after writing the DDF file");
-      setState(State::STOPPING);
-      return -1;
-    }
-
     assert(cnt == 1);
 
     try {
@@ -348,96 +333,93 @@ public:
                     unsigned int key = 0)
       : Node(id, name), task(), connectionKey(key), status(nullptr), domain(),
         subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
-        skipWaitToGo(false), dataDefinitionFileOverwrite(false),
-        dataDefinitionFileWriteOnly(false) {}
+        skipWaitToGo(false), dataDefinitionFileOverwrite(false) {}
 
-  void parseSignals(json_t *json, SignalList::Ptr signals, DataSet &dataSet,
-                    std::unordered_map<std::shared_ptr<DataItem>,
-                                       OpalOrchestraMapping> &mappings) {
-    if (!json_is_array(json)) {
-      throw ConfigError(json, "node-config-node-opal-orchestra-signals",
-                        "Signals must be an array");
-    }
+  Signal::Ptr parseSignal(json_t *json_signal, NodeDirection::Direction dir) {
+    auto signal = Signal::fromJson(json_signal);
 
-    size_t i;
-    json_t *json_signal;
+    DataSet &dataSet =
+        dir == NodeDirection::Direction::IN ? domain.publish : domain.subscribe;
+    std::unordered_map<std::shared_ptr<DataItem>, OpalOrchestraMapping>
+        &mappings = dir == NodeDirection::Direction::IN ? publishMappings
+                                                        : subscribeMappings;
+
+    const char *nme = nullptr;
+    const char *typ = nullptr;
+    int oi = -1;
+
     json_error_t err;
-
-    json_array_foreach(json, i, json_signal) {
-      auto signal = signals->getByIndex(i);
-
-      const char *nme = nullptr;
-      const char *typ = nullptr;
-      int oi = -1;
-
-      auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
-                                "orchestra_name", &nme, "orchestra_type", &typ,
-                                "orchestra_index", &oi);
-      if (ret) {
-        throw ConfigError(json_signal, err,
-                          "node-config-node-opal-orchestra-signals");
-      }
-
-      std::optional<unsigned> orchestraIdx;
-
-      if (oi >= 0) {
-        orchestraIdx = oi;
-      }
-
-      auto defaultValue =
-          signal->init.cast(signal->type, node::SignalType::FLOAT);
-
-      auto orchestraType = typ ? orchestra::signalTypeFromString(typ)
-                               : orchestra::toOrchestraSignalType(signal->type);
-
-      auto orchestraName = nme ? nme : signal->name;
-
-      bool inserted = false;
-      auto item = dataSet.upsertItem(orchestraName, inserted);
-
-      if (inserted) {
-        item->type = orchestraType;
-        item->defaultValue = defaultValue.f;
-
-        mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
-      }
-
-      auto &mapping = mappings.at(item);
-      mapping.addSignal(signal, orchestraIdx);
+    auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
+                              "orchestra_name", &nme, "orchestra_type", &typ,
+                              "orchestra_index", &oi);
+    if (ret) {
+      throw ConfigError(json_signal, err,
+                        "node-config-node-opal-orchestra-signals");
     }
+
+    std::optional<unsigned> orchestraIdx;
+
+    if (oi >= 0) {
+      orchestraIdx = oi;
+    }
+
+    auto defaultValue =
+        signal->init.cast(signal->type, node::SignalType::FLOAT);
+
+    auto orchestraType = typ ? orchestra::signalTypeFromString(typ)
+                             : orchestra::toOrchestraSignalType(signal->type);
+
+    auto orchestraName = nme ? nme : signal->name;
+
+    bool inserted = false;
+    auto item = dataSet.upsertItem(orchestraName, inserted);
+
+    if (inserted) {
+      item->type = orchestraType;
+      item->defaultValue = defaultValue.f;
+
+      mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
+    }
+
+    auto &mapping = mappings.at(item);
+    mapping.addSignal(signal, orchestraIdx);
+
+    return signal;
   }
 
   int parse(json_t *json) override {
-    int ret = Node::parse(json);
-    if (ret)
-      return ret;
+    domain = Domain();
+    publishMappings.clear();
+    subscribeMappings.clear();
 
+    int reti = parseCommon(
+        json, [&](json_t *json_signal, NodeDirection::Direction dir) {
+          return parseSignal(json_signal, dir);
+        });
+    if (reti)
+      return reti;
+
+    int sw = -1;
+    int ow = -1;
+    int sy = -1;
+    int sts = -1;
     const char *dn = nullptr;
     const char *ddf = nullptr;
-    json_t *json_in_signals = nullptr;
-    json_t *json_out_signals = nullptr;
     json_t *json_connection = nullptr;
     json_t *json_connect_timeout = nullptr;
     json_t *json_flag_delay = nullptr;
     json_t *json_flag_delay_tool = nullptr;
 
-    int sw = -1;
-    int ow = -1;
-    int owo = -1;
-    int sy = -1;
-    int sts = -1;
-
     json_error_t err;
-    ret = json_unpack_ex(
+    auto ret = json_unpack_ex(
         json, &err, 0,
         "{ s: s, s?: b, s?: b, s?: o, s?: s, s?: o, s?: o, s?: o, s?: b, s?: "
-        "b, s?: b, s?: F, s?: { s?: o }, s?: { s?: o } }",
+        "b, s?: F }",
         "domain", &dn, "synchronous", &sy, "states", &sts, "connection",
         &json_connection, "ddf", &ddf, "connect_timeout", &json_connect_timeout,
         "flag_delay", &json_flag_delay, "flag_delay_tool",
         &json_flag_delay_tool, "skip_wait_to_go", &sw, "ddf_overwrite", &ow,
-        "ddf_overwrite_only", &owo, "rate", &rate, "in", "signals",
-        &json_in_signals, "out", "signals", &json_out_signals);
+        "rate", &rate);
     if (ret) {
       throw ConfigError(json, err, "node-config-node-opal-orchestra");
     }
@@ -464,10 +446,6 @@ public:
       dataDefinitionFileOverwrite = ow > 0;
     }
 
-    if (owo >= 0) {
-      dataDefinitionFileWriteOnly = owo > 0;
-    }
-
     if (json_connect_timeout) {
       connectTimeout =
           parse_duration<std::chrono::seconds>(json_connect_timeout);
@@ -484,16 +462,6 @@ public:
 
     if (json_connection) {
       domain.connection = Connection::fromJson(json_connection);
-    }
-
-    if (json_in_signals) {
-      parseSignals(json_in_signals, in.getSignals(false), domain.publish,
-                   publishMappings);
-    }
-
-    if (json_out_signals) {
-      parseSignals(json_out_signals, out.getSignals(false), domain.subscribe,
-                   subscribeMappings);
     }
 
     return 0;
@@ -531,8 +499,7 @@ public:
 
   int prepare() override {
     // Write DDF.
-    if (dataDefinitionFilename &&
-        (dataDefinitionFileOverwrite || dataDefinitionFileWriteOnly)) {
+    if (dataDefinitionFilename && dataDefinitionFileOverwrite) {
 
       // TODO: Possibly merge Orchestra domains from all nodes into one DDF.
       auto ddf = DataDefinitionFile();
@@ -541,10 +508,6 @@ public:
 
       logger->info("Wrote Orchestra Data Definition file (DDF) to '{}'",
                    *dataDefinitionFilename);
-
-      if (dataDefinitionFileWriteOnly) {
-        return Node::prepare();
-      }
     }
 
     logger->debug("Connecting to Orchestra framework: domain={}, ddf={}, "
@@ -555,11 +518,15 @@ public:
 
     RTConnectionLockGuard guard(connectionKey);
 
-    auto ret =
-        dataDefinitionFilename
-            ? RTConnectWithFile(dataDefinitionFilename->c_str(),
-                                domain.name.c_str(), connectTimeout.count())
-            : RTConnect(domain.name.c_str(), connectTimeout.count());
+    auto ret = RTSetSkipWaitToGoAtConnection(skipWaitToGo);
+    if (ret != RTAPI_SUCCESS) {
+      throw RTError(ret, "Failed to check ready to go");
+    }
+
+    ret = dataDefinitionFilename
+              ? RTConnectWithFile(dataDefinitionFilename->c_str(),
+                                  domain.name.c_str(), connectTimeout.count())
+              : RTConnect(domain.name.c_str(), connectTimeout.count());
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to connect to Orchestra framework");
     }
@@ -583,11 +550,6 @@ public:
       if (ret != RTAPI_SUCCESS) {
         throw RTError(ret, "Failed to set flag with tool");
       }
-    }
-
-    ret = RTSetSkipWaitToGoAtConnection(skipWaitToGo);
-    if (ret != RTAPI_SUCCESS) {
-      throw RTError(ret, "Failed to check ready to go");
     }
 
     if (std::shared_ptr<ConnectionRemote> c =
@@ -623,13 +585,7 @@ public:
   }
 
   int start() override {
-    if (dataDefinitionFileWriteOnly) {
-      return Node::start();
-    }
-
     RTConnectionLockGuard guard(connectionKey);
-
-    RTWaitReadyToGo();
 
     if (!domain.synchronous) {
       task.setRate(rate);

@@ -677,7 +677,7 @@ SlaveNode::SlaveNode(const uuid_t &id, const std::string &name)
 SlaveNode::~SlaveNode() { destroySlave(); }
 
 int SlaveNode::parse(json_t *json) {
-  int ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret)
     return ret;
 

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <jansson.h>
 
 #include <villas/common.hpp>
@@ -50,7 +52,7 @@ public:
 
   NodeDirection(enum NodeDirection::Direction dir, Node *n);
 
-  int parse(json_t *json);
+  int parse(json_t *json, std::function<Signal::Ptr(json_t *)> parse_signal);
   void check();
   int prepare();
   int start();

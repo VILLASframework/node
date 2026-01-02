@@ -416,15 +416,13 @@ LuaHook::LuaHook(Path *p, Node *n, int fl, int prio, bool en)
 LuaHook::~LuaHook() { lua_close(L); }
 
 void LuaHook::parseExpressions(json_t *json_sigs) {
-  int ret;
   size_t i;
   json_t *json_sig;
 
+  expressions.clear();
   signalsExpressions->clear();
-  ret = signalsExpressions->parse(json_sigs);
-  if (ret)
-    throw ConfigError(json_sigs, "node-config-hook-lua-signals",
-                      "Setting 'signals' must be a list of dicts");
+
+  signalsExpressions->parse(json_sigs);
 
   // cppcheck-suppress unknownMacro
   json_array_foreach(json_sigs, i, json_sig)

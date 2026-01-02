@@ -818,7 +818,8 @@ unsigned int ModbusNode::parseMappings(std::vector<RegisterMapping> &mappings,
 }
 
 int ModbusNode::parse(json_t *json) {
-  if (auto ret = Node::parse(json))
+  int ret = Node::parseCommon(json);
+  if (ret)
     return ret;
 
   json_error_t err;

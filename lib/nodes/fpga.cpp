@@ -112,7 +112,7 @@ int FpgaNode::prepare() {
 int FpgaNode::stop() { return Node::stop(); }
 
 int FpgaNode::parse(json_t *json) {
-  int ret = Node::parse(json);
+  int ret = Node::parseCommon(json);
   if (ret) {
     return ret;
   }
