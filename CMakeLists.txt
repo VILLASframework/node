@@ -80,6 +80,8 @@ find_package(Criterion)
 find_package(OpalOrchestra)
 find_package(LibXml2)
 find_package(OpalAsyncApi)
+find_package(Protobuf)
+find_package(gRPC)
 
 # Check for tools
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
@@ -214,6 +216,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ          "Build with uldaq node-type"    
 cmake_dependent_option(WITH_NODE_WEBRTC         "Build with webrtc node-type"                           "${WITH_DEFAULTS}" "WITH_WEB; LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET      "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ         "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
+cmake_dependent_option(WITH_GRPC                "Build with grpc api"                                   "${WITH_DEFAULTS}" "gRPC_FOUND" OFF)
 
 # Set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")

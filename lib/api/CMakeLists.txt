@@ -42,6 +42,20 @@ if(WITH_GRAPHVIZ)
     list(APPEND LIBRARIES PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
 
+if (WITH_GRPC)
+    find_path(REFLECTION_INCLUDE_DIR
+        NAMES grpc/reflection/v1alpha/reflection.pb.cc
+    )
+    if (REFLECTION_INCLUDE_DIR)
+        list(APPEND API_SRC
+            requests/gateway/grpc.cpp
+            ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.pb.cc
+            ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.grpc.pb.cc
+        )
+        list(APPEND LIBRARIES protobuf::libprotobuf gRPC::grpc++)
+    endif()
+endif()
+
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(api PUBLIC ${LIBRARIES})
