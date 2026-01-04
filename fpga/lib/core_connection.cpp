@@ -20,7 +20,7 @@ CoreConnection::CoreConnection(
     std::shared_ptr<villas::fpga::ip::Core> ip,
     villas::kernel::devices::DeviceConnection device_connection)
     : logger(villas::Log::get("CoreConnection")), ip(ip),
-      device_connection(device_connection){};
+      device_connection(device_connection) {};
 
 CoreConnection
 CoreConnection::from(std::shared_ptr<villas::fpga::ip::Core> ip,

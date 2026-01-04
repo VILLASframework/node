@@ -20,8 +20,7 @@ namespace fpga {
 namespace ip {
 
 #define I2C_SWTICH_ADDR 0x70
-#define I2C_SWITCH_CHANNEL_MAP                                                 \
-  { 0x20, 0x80, 0x02, 0x08, 0x10, 0x40, 0x01, 0x04 }
+#define I2C_SWITCH_CHANNEL_MAP {0x20, 0x80, 0x02, 0x08, 0x10, 0x40, 0x01, 0x04}
 #define I2C_IOEXT_ADDR 0x20
 #define I2C_IOEXT_REG_DIR 0x03
 #define I2C_IOEXT_REG_OUT 0x01
@@ -48,7 +47,7 @@ public:
   public:
     Switch(I2c *i2c, uint8_t address, Logger logger = villas::Log::get("i2c"))
         : i2c(i2c), address(address), channel(0), readOnce(false), switchLock(),
-          logger(logger){};
+          logger(logger) {};
     Switch(const Switch &other) = delete;
     Switch &operator=(const Switch &other) = delete;
     void setChannel(uint8_t channel);

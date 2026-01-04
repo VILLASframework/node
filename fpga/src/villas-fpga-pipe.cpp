@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     for (auto aurora : aurora_channels)
       aurora->dump();
 
-      // Configure Crossbar switch
+    // Configure Crossbar switch
 #if 1
     aurora_channels[3]->connect(aurora_channels[3]->getDefaultMasterPort(),
                                 dma->getDefaultSlavePort());

@@ -92,15 +92,15 @@ void *polled_consumer(void *ctx) {
 
 ParameterizedTestParameters(queue_signalled, simple) {
   static struct param params[] = {
-    {QueueSignalledMode::AUTO, 0, false},
-    {QueueSignalledMode::PTHREAD, 0, false},
-    {QueueSignalledMode::PTHREAD, 0, false},
-    {QueueSignalledMode::PTHREAD, (int)QueueSignalledFlags::PROCESS_SHARED,
-     false},
-    {QueueSignalledMode::POLLING, 0, false},
+      {QueueSignalledMode::AUTO, 0, false},
+      {QueueSignalledMode::PTHREAD, 0, false},
+      {QueueSignalledMode::PTHREAD, 0, false},
+      {QueueSignalledMode::PTHREAD, (int)QueueSignalledFlags::PROCESS_SHARED,
+       false},
+      {QueueSignalledMode::POLLING, 0, false},
 #if defined(__linux__) && defined(HAS_EVENTFD)
-    {QueueSignalledMode::EVENTFD, 0, false},
-    {QueueSignalledMode::EVENTFD, 0, true}
+      {QueueSignalledMode::EVENTFD, 0, false},
+      {QueueSignalledMode::EVENTFD, 0, true}
 #endif
   };
 
