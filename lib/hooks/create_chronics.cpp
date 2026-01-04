@@ -53,7 +53,7 @@ static double round_dec(double value, unsigned decimals) {
 
 static void parse_table(const nlohmann::json &table_df,
                         std::unordered_map<int, int> &target,
-                        const std::string col) {
+                        const std::string &col) {
   const nlohmann::json &load = table_df.at("_object").at(col);
   std::string s = table_df["_object"][col]["_object"].get<std::string>();
 
