@@ -66,7 +66,8 @@ RUN apt-get update && \
 	libwebsockets-dev \
 	libzmq3-dev \
 	uuid-dev \
-	nlohmann-json3-dev
+	nlohmann-json3-dev \
+	protobuf-compiler-grpc
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
