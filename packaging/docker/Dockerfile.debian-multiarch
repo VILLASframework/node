@@ -59,6 +59,7 @@ RUN apt-get update && \
 	libssl-dev:${ARCH} \
 	libusb-1.0-0-dev:${ARCH} \
 	libzmq3-dev:${ARCH} \
+	protobuf-compiler-grpc:${ARCH} \
 	uuid-dev:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
