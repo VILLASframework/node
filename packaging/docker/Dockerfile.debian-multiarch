@@ -41,6 +41,7 @@ RUN apt-get update && \
 	libconfig-dev:${ARCH} \
 	libcurl4-openssl-dev:${ARCH} \
 	libgraphviz-dev:${ARCH} \
+	libgrpc++-dev:${ARCH} \
 	libhiredis-dev:${ARCH} \
 	libibverbs-dev:${ARCH} \
 	libjansson-dev:${ARCH} \

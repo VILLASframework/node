@@ -34,6 +34,7 @@ RUN apt-get update && \
 	libcurl4-openssl-dev \
 	libfmt-dev \
 	libgraphviz-dev \
+	libgrpc++-dev \
 	libhiredis-dev \
 	libibverbs-dev \
 	libjansson-dev \
