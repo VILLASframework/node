@@ -602,6 +602,23 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     popd
 fi
 
+# Get and complie gRPC server reflection proto description file
+if ! find /usr/{local,}/include -name reflection.pb.cc | grep -q . &&
+    should_build "gRPC reflection" "For API gateway node-type"; then
+    mkdir -p gRPC_reflection
+    pushd gRPC_reflection
+    curl https://raw.githubusercontent.com/grpc/grpc/refs/heads/master/src/proto/grpc/reflection/v1alpha/reflection.proto -o reflection.proto
+    protoc  -I. \
+            --cpp_out=. \
+            --grpc_out=. \
+            --plugin=protoc-gen-grpc=/usr/bin/grpc_cpp_plugin \
+            reflection.proto
+    mkdir -p /usr/local/include/grpc/reflection/v1alpha
+    cp *.h /usr/local/include/grpc/reflection/v1alpha/
+    cp *.cc /usr/local/include/grpc/reflection/v1alpha/
+    popd
+fi
+
 popd >/dev/null
 
 # Update linker cache

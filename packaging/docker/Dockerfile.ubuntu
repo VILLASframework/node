@@ -39,6 +39,7 @@ RUN apt-get update && \
 	libfmt-dev \
 	libglib2.0-dev \
 	libgraphviz-dev \
+	libgrpc++-dev \
 	libhiredis-dev \
 	libibverbs-dev \
 	libjansson-dev \
