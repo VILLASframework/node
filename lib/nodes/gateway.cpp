@@ -1,8 +1,17 @@
+/* Node type: API gateway.
+ *
+ * Author: Jitpanu Maneeratpongsuk <jitpanu.maneeratpongsuk@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <cstring>
+
 #include <pthread.h>
+
 #include <villas/exceptions.hpp>
 #include <villas/nodes/gateway.hpp>
+
 #include "villas/sample.hpp"
 
 using namespace villas;
@@ -37,9 +46,7 @@ int GatewayNode::prepare() {
   return Node::prepare();
 }
 
-int GatewayNode::check() {
-  return Node::check();
-}
+int GatewayNode::check() { return Node::check(); }
 
 int GatewayNode::_read(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
@@ -54,7 +61,8 @@ int GatewayNode::_write(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
   sample_copy(write.sample, smps[0]);
 
-  int ret = formatter->sprint(write.buf, write.buflen, &write.wbytes, smps, cnt);
+  int ret =
+      formatter->sprint(write.buf, write.buflen, &write.wbytes, smps, cnt);
   if (ret < 0) {
     logger->warn("Failed to format payload: reason={}", ret);
     return ret;
@@ -74,17 +82,17 @@ int GatewayNode::parse(json_t *json) {
   // json_t *remote = nullptr;
   const char *endpoint_address, *gateway_type;
   json_error_t err;
-  ret = json_unpack_ex(json, &err, 0, "{ s?:o, s:s, s:s}",
-                       "format", &json_format, "gateway_type", &gateway_type, "address", &endpoint_address);
+  ret = json_unpack_ex(json, &err, 0, "{ s?:o, s:s, s:s}", "format",
+                       &json_format, "gateway_type", &gateway_type, "address",
+                       &endpoint_address);
   if (ret)
     throw ConfigError(json, err, "node-config-node-gateway");
 
   formatter = json_format ? FormatFactory::make(json_format)
-                            : FormatFactory::make("villas.binary");
+                          : FormatFactory::make("villas.binary");
   if (!formatter)
     throw ConfigError(json_format, "node-config-node-gateway-format",
                       "Invalid format configuration");
-
 
   address = endpoint_address;
   if (!strcmp(gateway_type, "gRPC")) {
@@ -115,15 +123,13 @@ int GatewayNode::stop() {
   return 0;
 }
 
-GatewayNode::~GatewayNode() {
-
-}
+GatewayNode::~GatewayNode() {}
 
 // Register node
 static char n[] = "gateway";
 static char d[] = "A node providing a Gateway";
 static NodePlugin<GatewayNode, n, d,
                   (int)NodeFactory::Flags::SUPPORTS_READ |
-                  (int)NodeFactory::Flags::SUPPORTS_WRITE,
+                      (int)NodeFactory::Flags::SUPPORTS_WRITE,
                   1>
     p;
