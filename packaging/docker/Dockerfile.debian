@@ -53,6 +53,7 @@ RUN apt-get update && \
 	libssl-dev \
 	libusb-1.0-0-dev \
 	libzmq3-dev \
+	protobuf-compiler-grpc \
 	uuid-dev
 
 # Install unpackaged dependencies from source

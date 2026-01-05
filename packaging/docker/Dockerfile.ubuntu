@@ -60,6 +60,7 @@ RUN apt-get update && \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
 	libzmq3-dev \
+	protobuf-compiler-grpc \
 	uuid-dev
 
 # Install unpackaged dependencies from source
