@@ -43,12 +43,7 @@ public:
               file_descs->add_file();
           file_desc->ParseFromString(bytes);
         }
-      } else {
-        return nullptr;
       }
-    } else {
-      std::cerr << "Reflection failed" << std::endl;
-      return nullptr;
     }
     stream->WritesDone();
     grpc::Status status = stream->Finish();
@@ -115,7 +110,8 @@ public:
         generic_stub.PrepareUnaryCall(&context, methodFullName, req_buf, &cq);
     grpc::Status status;
     call->StartCall();
-    call->Finish(&resp_buf, &status, (void *)1);
+    int tag = 1;
+    call->Finish(&resp_buf, &status, &tag);
     void *got_tag;
     bool ok = false;
     cq.Next(&got_tag, &ok);
@@ -165,20 +161,21 @@ public:
         refl_client.GetFileDescriptor(gRPC_package + "." + gRPC_service);
     bool server_reflection;
 
-    // Check if server reflection complete
-    auto pool = std::make_unique<DescriptorPool>();
+    // Make descriptor database
+    SimpleDescriptorDatabase db;
+    for (int i = 0; i < protos->file_size(); i++) {
+      db.Add(protos->file(i));
+    }
+    auto pool = std::make_unique<DescriptorPool>(&db);
     const Descriptor *resp_desc;
-    if (!protos) {
+    // Check if server reflection complete
+    if (protos->file_size() == 0) {
       server_reflection = false;
       req_buf = form_request();
     } else {
       server_reflection = true;
-      const FileDescriptor *file;
-      for (int i = protos->file_size() - 1; i >= 0; i--) {
-        const FileDescriptorProto &fd = protos->file(i);
-        file = pool->BuildFile(fd);
-      }
-      const ServiceDescriptor *svc = file->FindServiceByName(gRPC_service);
+      const ServiceDescriptor *svc =
+          pool->FindServiceByName(gRPC_package + "." + gRPC_service);
       if (!svc) {
         throw Error(HTTP_STATUS_NOT_FOUND, nullptr, "gRPC service not found");
       }
@@ -204,7 +201,8 @@ public:
     grpc::Status status;
 
     call->StartCall();
-    call->Finish(&resp_buf, &status, (void *)1);
+    int tag = 1;
+    call->Finish(&resp_buf, &status, &tag);
     void *got_tag;
     bool ok = false;
     cq.Next(&got_tag, &ok);
@@ -225,7 +223,6 @@ public:
     // Empty gRPC response
     if (recv_data.length() <= 0) {
       return new JsonResponse(session, HTTP_STATUS_OK, nullptr);
-      ;
     }
 
     json_t *json_response;
