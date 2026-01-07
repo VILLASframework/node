@@ -42,11 +42,7 @@ public:
   std::string address;
   ApiType type;
 
-  Format *formatter;
-
-  char *buf;
-  size_t buflen;
-  size_t wbytes;
+  Format::Ptr formatter;
 
   int prepare() override;
 
