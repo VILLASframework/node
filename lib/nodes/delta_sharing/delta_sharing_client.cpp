@@ -26,7 +26,7 @@
 #include <villas/nodes/delta_sharing/delta_sharing_client.hpp>
 
 namespace DeltaSharing {
-DeltaSharingClient::DeltaSharingClient(std::string filename,
+DeltaSharingClient::DeltaSharingClient(const std::string &filename,
                                        std::optional<std::string> cacheLocation)
     : restClient(filename) {
   auto path = std::filesystem::current_path().generic_string();
@@ -165,31 +165,35 @@ DeltaSharingClient::ReadTableFromCache(std::string &completePath) {
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Share>>
-DeltaSharingClient::ListShares(int maxResult, std::string pageToken) const {
+DeltaSharingClient::ListShares(int maxResult,
+                               const std::string &pageToken) const {
   return this->restClient.ListShares(maxResult, pageToken);
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Schema>>
 DeltaSharingClient::ListSchemas(const DeltaSharingProtocol::Share &share,
-                                int maxResult, std::string pageToken) const {
+                                int maxResult,
+                                const std::string &pageToken) const {
   return this->restClient.ListSchemas(share, maxResult, pageToken);
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
 DeltaSharingClient::ListTables(const DeltaSharingProtocol::Schema &schema,
-                               int maxResult, std::string pageToken) const {
+                               int maxResult,
+                               const std::string &pageToken) const {
   return this->restClient.ListTables(schema, maxResult, pageToken);
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
 DeltaSharingClient::ListAllTables(const DeltaSharingProtocol::Share &share,
-                                  int maxResult, std::string pageToken) const {
+                                  int maxResult,
+                                  const std::string &pageToken) const {
   return this->restClient.ListAllTables(share, maxResult, pageToken);
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::File>>
 DeltaSharingClient::ListFilesInTable(
-    const DeltaSharingProtocol::Table table) const {
+    const DeltaSharingProtocol::Table &table) const {
   return this->restClient.ListFilesInTable(table);
 };
 

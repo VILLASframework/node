@@ -23,7 +23,7 @@ namespace DeltaSharing {
 const std::string DeltaSharingRestClient::user_agent =
     "delta-sharing-CPP/0.0.1";
 
-DeltaSharingRestClient::DeltaSharingRestClient(std::string filename) {
+DeltaSharingRestClient::DeltaSharingRestClient(const std::string &filename) {
   json j = ReadFromFile(filename);
   if (j.empty()) {
     return;
@@ -37,7 +37,8 @@ DeltaSharingRestClient::~DeltaSharingRestClient() {
 };
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Share>>
-DeltaSharingRestClient::ListShares(int maxResult, std::string pageToken) const {
+DeltaSharingRestClient::ListShares(int maxResult,
+                                   const std::string &pageToken) const {
   std::unique_ptr<RestClient::Connection> c =
       std::unique_ptr<RestClient::Connection>(
           new RestClient::Connection(this->profile.endpoint));
@@ -57,7 +58,7 @@ DeltaSharingRestClient::ListShares(int maxResult, std::string pageToken) const {
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Schema>>
 DeltaSharingRestClient::ListSchemas(const DeltaSharingProtocol::Share &share,
                                     int maxResult,
-                                    std::string pageToken) const {
+                                    const std::string &pageToken) const {
   std::unique_ptr<RestClient::Connection> c =
       std::unique_ptr<RestClient::Connection>(
           new RestClient::Connection(this->profile.endpoint));
@@ -78,7 +79,8 @@ DeltaSharingRestClient::ListSchemas(const DeltaSharingProtocol::Share &share,
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
 DeltaSharingRestClient::ListTables(const DeltaSharingProtocol::Schema &schema,
-                                   int maxResult, std::string pageToken) const {
+                                   int maxResult,
+                                   const std::string &pageToken) const {
   std::unique_ptr<RestClient::Connection> c =
       std::unique_ptr<RestClient::Connection>(
           new RestClient::Connection(this->profile.endpoint));
@@ -100,7 +102,7 @@ DeltaSharingRestClient::ListTables(const DeltaSharingProtocol::Schema &schema,
 const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
 DeltaSharingRestClient::ListAllTables(const DeltaSharingProtocol::Share &share,
                                       int maxResult,
-                                      std::string pageToken) const {
+                                      const std::string &pageToken) const {
   std::unique_ptr<RestClient::Connection> c =
       std::unique_ptr<RestClient::Connection>(
           new RestClient::Connection(this->profile.endpoint));
@@ -142,7 +144,7 @@ const DeltaSharingProtocol::Metadata DeltaSharingRestClient::QueryTableMetadata(
   return m;
 };
 
-json DeltaSharingRestClient::ReadFromFile(std::string filename) {
+json DeltaSharingRestClient::ReadFromFile(const std::string &filename) {
   std::ifstream is;
   try {
     is.open(filename, std::ifstream::in);
@@ -162,8 +164,8 @@ DeltaSharingRestClient::GetProfile() const {
   return this->profile;
 }
 
-void DeltaSharingRestClient::PopulateCache(std::string url,
-                                           std::string cacheLocation) {
+void DeltaSharingRestClient::PopulateCache(const std::string &url,
+                                           const std::string &cacheLocation) {
   int protocolLength = 0;
   if ((url.find("http://")) != std::string::npos) {
     protocolLength = 7;
@@ -229,7 +231,7 @@ void DeltaSharingRestClient::PopulateCache(std::string url,
 
 const std::shared_ptr<std::vector<DeltaSharingProtocol::File>>
 DeltaSharingRestClient::ListFilesInTable(
-    DeltaSharingProtocol::Table table) const {
+    const DeltaSharingProtocol::Table &table) const {
   std::unique_ptr<RestClient::Connection> c =
       std::unique_ptr<RestClient::Connection>(
           new RestClient::Connection(this->profile.endpoint));
@@ -240,7 +242,7 @@ DeltaSharingRestClient::ListFilesInTable(
   h.insert({"Content-Type", "application/json; charset=UTF-8"});
   h.insert({"Authorization", "Bearer: " + this->profile.bearerToken});
   c->SetHeaders(h);
-  DeltaSharingProtocol::data d;
+  DeltaSharingProtocol::data d{};
   json j = d;
   RestClient::Response r = c->post(path, j.dump());
   int cnt = 0;

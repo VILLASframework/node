@@ -12,7 +12,7 @@
 
 namespace DeltaSharing {
 
-const std::vector<std::string> ParseURL(std::string path) {
+const std::vector<std::string> ParseURL(const std::string &path) {
   std::vector<std::string> urlparts;
   std::string url = path;
   auto pos = url.find_last_of('#');
@@ -42,7 +42,7 @@ NewDeltaSharingClient(std::string profile,
   return std::make_shared<DeltaSharingClient>(profile, cacheLocation);
 };
 
-const std::shared_ptr<arrow::Table> LoadAsArrowTable(std::string path,
+const std::shared_ptr<arrow::Table> LoadAsArrowTable(const std::string &path,
                                                      int fileno) {
 
   auto p = ParseURL(path);

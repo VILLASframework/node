@@ -18,7 +18,7 @@
 
 namespace DeltaSharing {
 
-const std::vector<std::string> ParseURL(std::string path);
+const std::vector<std::string> ParseURL(const std::string &path);
 std::shared_ptr<DeltaSharingClient>
 NewDeltaSharingClient(std::string profile,
                       std::optional<std::string> cacheLocation);
