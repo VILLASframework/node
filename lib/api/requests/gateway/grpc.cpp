@@ -495,7 +495,6 @@ public:
 
     if (method == Session::PUT) {
       sample_copy(gateway_node->read.sample, sample_dummy);
-      gateway_node->read.buf = recv_data.data();
       pthread_cond_signal(&gateway_node->read.cv);
     }
 
