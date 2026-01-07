@@ -18,7 +18,7 @@ using namespace villas;
 using namespace villas::node;
 
 GatewayNode::GatewayNode(const uuid_t &id, const std::string &name)
-    : Node(id, name), read(), write() {
+    : Node(id, name), read(), write(), type(), formatter() {
   int ret;
   auto dirs = std::vector{&read, &write};
 
@@ -88,8 +88,9 @@ int GatewayNode::parse(json_t *json) {
   if (ret)
     throw ConfigError(json, err, "node-config-node-gateway");
 
-  formatter = json_format ? FormatFactory::make(json_format)
+  auto *fmt = json_format ? FormatFactory::make(json_format)
                           : FormatFactory::make("villas.binary");
+  formatter = Format::Ptr(fmt);
   if (!formatter)
     throw ConfigError(json_format, "node-config-node-gateway-format",
                       "Invalid format configuration");
