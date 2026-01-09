@@ -24,6 +24,7 @@
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
   withNodeEthercat ? (withAllNodes && stdenv.hostPlatform.system == "x86_64-linux"),
+  withNodeGateway ? withAllNodes,
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -63,6 +64,10 @@
   czmq,
   cyrus_sasl,
   ethercat,
+  gnugrep,
+  grpc,
+  grpc-server-reflection,
+  jansson,
   lib60870,
   libconfig,
   libdatachannel,
@@ -168,6 +173,8 @@ gcc14Stdenv.mkDerivation {
   ++ lib.optionals withNodeAmqp [ rabbitmq-c ]
   ++ lib.optionals withNodeComedi [ comedilib ]
   ++ lib.optionals withNodeEthercat [ ethercat ]
+  ++ lib.optionals withNodeGateway [ grpc ]
+  ++ lib.optionals withNodeGateway [ grpc-server-reflection ]
   ++ lib.optionals withNodeIec60870 [ lib60870 ]
   ++ lib.optionals withNodeIec61850 [ libiec61850 ]
   ++ lib.optionals withNodeKafka [

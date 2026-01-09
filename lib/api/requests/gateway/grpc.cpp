@@ -249,7 +249,7 @@ public:
     int field_count = req_desc->field_count();
     for (int i = 0; i < field_count; i++) {
       if (const FieldDescriptor *f = req_desc->field(i)) {
-        json_t *json_val = json_object_get(body, f->name().c_str());
+        json_t *json_val = json_object_get(body, f->name().data());
         if (!json_val) {
           if (f->is_required()) {
             std::cerr << "Missing required field: " << f->name() << std::endl;
@@ -432,32 +432,32 @@ public:
                 break;
               }
             }
-            json_object_set_new(root, f->name().c_str(), json_arr);
+            json_object_set_new(root, f->name().data(), json_arr);
           } else {
             switch (f->type()) {
             case grpc::protobuf::FieldDescriptor::Type::TYPE_STRING:
               json_object_set_new(
-                  root, f->name().c_str(),
+                  root, f->name().data(),
                   json_string(resp_refl->GetString(*response, f).c_str()));
               break;
             case grpc::protobuf::FieldDescriptor::Type::TYPE_INT32:
               json_object_set_new(
-                  root, f->name().c_str(),
+                  root, f->name().data(),
                   json_integer(resp_refl->GetInt32(*response, f)));
               break;
             case grpc::protobuf::FieldDescriptor::Type::TYPE_INT64:
               json_object_set_new(
-                  root, f->name().c_str(),
+                  root, f->name().data(),
                   json_integer(resp_refl->GetInt64(*response, f)));
               break;
             case grpc::protobuf::FieldDescriptor::Type::TYPE_DOUBLE:
               json_object_set_new(
-                  root, f->name().c_str(),
+                  root, f->name().data(),
                   json_real(resp_refl->GetDouble(*response, f)));
               break;
             case grpc::protobuf::FieldDescriptor::Type::TYPE_BOOL:
               json_object_set_new(
-                  root, f->name().c_str(),
+                  root, f->name().data(),
                   json_boolean(resp_refl->GetBool(*response, f)));
               break;
             default:
