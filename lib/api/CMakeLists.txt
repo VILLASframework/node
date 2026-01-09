@@ -52,7 +52,7 @@ if (WITH_GRPC)
             ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.pb.cc
             ${REFLECTION_INCLUDE_DIR}/grpc/reflection/v1alpha/reflection.grpc.pb.cc
         )
-        list(APPEND LIBRARIES protobuf::libprotobuf gRPC::grpc++)
+        list(APPEND LIBRARIES PkgConfig::PROTOBUF PkgConfig::GRPC)
     endif()
 endif()
 
