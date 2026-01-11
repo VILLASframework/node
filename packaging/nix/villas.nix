@@ -48,6 +48,7 @@
   pkg-config,
   stdenv,
   system,
+  bzip2,
   # Optional dependencies
   boxfort,
   comedilib,
@@ -151,6 +152,7 @@ stdenv.mkDerivation {
     curl
     spdlog
     bash
+    bzip2
   ]
   ++ lib.optionals withExtraTesting [
     boxfort
