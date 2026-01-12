@@ -29,12 +29,12 @@ private:
 public:
   PlatformDevice(const fs::path path)
       : PlatformDevice(path, fs::path(PROBE_DEFAULT),
-                       path / fs::path(OVERRIDE_DEFAULT)) {};
+                       path / fs::path(OVERRIDE_DEFAULT)){};
 
   PlatformDevice(const fs::path path, const fs::path probe_path,
                  const fs::path override_path)
       : m_path(path), m_probe_path(probe_path),
-        m_override_path(override_path) {};
+        m_override_path(override_path){};
 
   // Implement device interface
   std::optional<std::unique_ptr<Driver>> driver() const override;
