@@ -24,7 +24,7 @@
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
   withNodeEthercat ? (withAllNodes && stdenv.hostPlatform.system == "x86_64-linux"),
-  withNodeGateway ? withAllNodes,
+  withNodeGateway ? (withAllNodes && system == "x86_64-linux"),
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
