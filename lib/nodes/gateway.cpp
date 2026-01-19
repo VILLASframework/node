@@ -53,6 +53,7 @@ int GatewayNode::_read(struct Sample *smps[], unsigned cnt) {
 
   pthread_cond_wait(&read.cv, &read.mutex);
   sample_copy(smps[0], read.sample);
+  logger->debug("Gateway read sample {}", smps[0]->length);
 
   return 1;
 }
@@ -60,6 +61,7 @@ int GatewayNode::_read(struct Sample *smps[], unsigned cnt) {
 int GatewayNode::_write(struct Sample *smps[], unsigned cnt) {
   assert(cnt == 1);
   sample_copy(write.sample, smps[0]);
+  logger->debug("Gateway write sample {}", smps[0]->length);
 
   int ret =
       formatter->sprint(write.buf, write.buflen, &write.wbytes, smps, cnt);
