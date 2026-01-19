@@ -15,6 +15,7 @@
 #include <villas/api/response.hpp>
 #include <villas/nodes/gateway.hpp>
 #include <villas/timing.hpp>
+#include "villas/log.hpp"
 
 using namespace google::protobuf;
 
@@ -30,7 +31,7 @@ public:
     request.set_file_containing_symbol(symbol);
     bool streamstatus = stream->Write(request);
     if (!streamstatus)
-      std::cout << "Server not allow reflection" << std::endl;
+      std::cout << "Server does not allow reflection" << std::endl;
 
     grpc::reflection::v1alpha::ServerReflectionResponse response;
     google::protobuf::FileDescriptorSet *file_descs =
@@ -167,7 +168,7 @@ public:
       db.Add(protos->file(i));
     }
     auto pool = std::make_unique<DescriptorPool>(&db);
-    const Descriptor *resp_desc;
+    const Descriptor *resp_desc = nullptr;
     // Check if server reflection complete
     if (protos->file_size() == 0) {
       server_reflection = false;
@@ -370,6 +371,7 @@ public:
       size_t dummy_wbytes;
       ret = gateway_node->formatter->sprint(dummy_buf, dummy_buflen,
                                             &dummy_wbytes, sample_dummy);
+      logger->debug("gRPC Request Sample length {}", sample_dummy->length);
       if (ret < 0) {
         logger->warn("Failed to format request payload");
       }
@@ -482,6 +484,7 @@ public:
     Sample *sample_dummy = sample_alloc_mem(64);
     int ret = gateway_node->formatter->sscan(
         recv_data.c_str(), resp_buf.Length(), &rbytes, sample_dummy);
+    logger->debug("gRPC Response Sample length {}", sample_dummy->length);
     if (ret < 0) {
       std::cerr << "Formatting Failed: " << ret << std::endl;
     }
@@ -493,10 +496,8 @@ public:
                              time_to_double(&sample_dummy->ts.origin), "value",
                              json_ch);
 
-    if (method == Session::PUT) {
-      sample_copy(gateway_node->read.sample, sample_dummy);
-      pthread_cond_signal(&gateway_node->read.cv);
-    }
+    sample_copy(gateway_node->read.sample, sample_dummy);
+    pthread_cond_signal(&gateway_node->read.cv);
 
     sample_free(sample_dummy);
     pthread_mutex_unlock(&gateway_node->read.mutex);
