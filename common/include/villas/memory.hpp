@@ -135,8 +135,9 @@ public:
     derivedAlloc = nullptr;
   }
 
-  virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+  virtual ~BaseAllocator() = default;
 
+  virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
   allocateBlock(size_t size) = 0;
 
   template <typename T> MemoryAccessor<T> allocate(size_t num) {
@@ -217,8 +218,8 @@ public:
 
   std::string getName() const;
 
-  virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-  allocateBlock(size_t size);
+  std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+  allocateBlock(size_t size) override;
 
 private:
   static constexpr size_t alignBytes = sizeof(uintptr_t);
@@ -247,7 +248,7 @@ public:
     std::string getName() const { return "HostRamAlloc"; }
 
     std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-    allocateBlock(size_t size);
+    allocateBlock(size_t size) override;
   };
 
   static HostRamAllocator &getAllocator() {
@@ -264,7 +265,7 @@ public:
   public:
     HostDmaRamAllocator(int num);
 
-    virtual ~HostDmaRamAllocator();
+    ~HostDmaRamAllocator() override;
 
     std::string getName() const { return getUdmaBufName(num); }
 
