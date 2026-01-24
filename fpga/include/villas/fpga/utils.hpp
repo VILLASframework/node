@@ -80,6 +80,7 @@ public:
     }
     currentBufLoc = 0;
   }
+  virtual ~BufferedSampleFormatter() = default;
 
 protected:
   std::vector<char> buf;
