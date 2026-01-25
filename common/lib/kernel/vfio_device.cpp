@@ -296,7 +296,7 @@ std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   return vectors;
 }
 
-int Device::pciMsiInit(int efds[]) {
+int Device::pciMsiInit(int efds[32]) {
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;
@@ -341,7 +341,7 @@ int Device::pciMsiInit(int efds[]) {
   return irqCount;
 }
 
-int Device::pciMsiDeinit(int efds[]) {
+int Device::pciMsiDeinit(int efds[32]) {
   Log::get("Device")->debug("Deinitializing MSI interrupts for device {}",
                             name);
   // Check if this is really a vfio-pci device
@@ -381,7 +381,7 @@ int Device::pciMsiDeinit(int efds[]) {
   return irqCount;
 }
 
-bool Device::pciMsiFind(int nos[]) {
+bool Device::pciMsiFind(int nos[32]) {
   int ret, idx, irq;
   char *end, *col, *last, line[1024], name[13];
   FILE *f;
