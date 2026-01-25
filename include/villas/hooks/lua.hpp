@@ -21,7 +21,7 @@ namespace node {
 
 // Forward declarations
 class LuaHook;
-enum SignalType;
+enum class SignalType;
 
 class LuaSignalExpression {
 
