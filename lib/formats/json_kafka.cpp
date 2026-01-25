@@ -64,7 +64,7 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp) {
 
     json_field =
         json_pack("{ s: s, s: b, s: s }", "type", villasToKafkaType(sig->type),
-                  "optional", false, "field", sig->name);
+                  "optional", false, "field", sig->name.c_str());
 
     json_value = data->toJson(sig->type);
 
