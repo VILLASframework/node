@@ -267,7 +267,7 @@ pkg:nix:arx:
       nix bundle
       --print-build-logs
       --out-link bundle-arx
-      --bundler github:NixOS/bundlers#toArx
+      --bundler github:nix-community/nix-bundle
       ".#villas-node-${SYSTEM}"
 
     - mkdir -p artifacts
