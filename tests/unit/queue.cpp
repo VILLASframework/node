@@ -290,7 +290,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20,
     pthread_create(&threads[i], nullptr,
                    p->many ? producer_consumer_many : producer_consumer, p);
 
-  sleep(0.2);
+  usleep(200'000);
 
   ret = tsc_init(&tsc);
   cr_assert(!ret);
