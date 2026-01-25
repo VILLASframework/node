@@ -54,8 +54,8 @@ Test(config, include) {
   std::fputs(cfg_f1.c_str(), f1);
   std::rewind(f1);
 
-  auto env = fmt::format("INCLUDE_FILE={}", f2_fn_tpl).c_str();
-  putenv((char *)env);
+  auto env = fmt::format("{}", f2_fn_tpl);
+  setenv("INCLUDE_FILE", env.c_str(), true);
 
   auto c = Config();
 
