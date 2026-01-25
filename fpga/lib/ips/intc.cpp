@@ -29,7 +29,7 @@ bool InterruptController::init() {
   this->vfioDevice = pciecard->vfioDevice;
 
   const uintptr_t base = getBaseAddr(registerMemory);
-  kernel::vfio::Device::IrqVectorInfo irq_vector = {0};
+  kernel::vfio::Device::IrqVectorInfo irq_vector = {.eventFds = {0}};
   irq_vector.numFds = this->vfioDevice->pciMsiInit(irq_vector.eventFds);
   irq_vector.automask = true;
   irq_vectors.push_back(irq_vector);
