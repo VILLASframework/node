@@ -55,7 +55,7 @@ static const char *vfio_pci_irq_names[] = {
 Device::Device(const std::string &name, int groupFileDescriptor,
                const kernel::devices::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
-      info(), info_irq_vectors(), regions(), mappings(), pci_device(pci_device),
+      info(), info_irq_vectors(), regions(), mappings(),
       log(Log::get("kernel:vfio:device")) {
   if (groupFileDescriptor < 0)
     throw RuntimeError("Invalid group file descriptor");
