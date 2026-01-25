@@ -167,7 +167,7 @@ void Path::prepare(NodeList &nodes) {
 
   // Create path sources
   std::unordered_map<Node *, PathSource::Ptr> psm;
-  unsigned i = 0, j = 0;
+  unsigned i = 0;
   for (auto me : mappings) {
     Node *n = me->node;
     PathSource::Ptr ps;
@@ -208,7 +208,7 @@ void Path::prepare(NodeList &nodes) {
       if (masked.empty() ||
           std::find(masked.begin(), masked.end(), n) != masked.end()) {
         ps->masked = true;
-        mask.set(j);
+        mask.set(i);
       }
 
       /* Get the real node backing this path source
@@ -219,7 +219,7 @@ void Path::prepare(NodeList &nodes) {
       rn->sources.push_back(ps);
 
       sources.push_back(ps);
-      j++;
+      i++;
       psm[n] = ps;
     }
 
@@ -251,7 +251,6 @@ void Path::prepare(NodeList &nodes) {
     }
 
     ps->mappings.push_back(me);
-    i++;
   }
 
   // Prepare path destinations

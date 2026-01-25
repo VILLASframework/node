@@ -59,7 +59,7 @@ protected:
 public:
   OpenDSS(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~OpenDSS();
+  ~OpenDSS() override;
 
   int prepare() override;
 

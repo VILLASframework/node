@@ -53,8 +53,8 @@ public:
   enum Gain { GAIN_1 = 0, GAIN_2 = 1, GAIN_5 = 2, GAIN_10 = 3 };
 
   Dino();
-  virtual ~Dino();
-  virtual bool init() override;
+  ~Dino() override;
+  bool init() override;
   void setI2c(std::shared_ptr<I2c> i2cdev, uint8_t i2c_channel) {
     this->i2cdev = i2cdev;
     this->i2c_channel = i2c_channel;
@@ -89,8 +89,8 @@ protected:
 class DinoAdc : public Dino {
 public:
   DinoAdc();
-  virtual ~DinoAdc();
-  virtual void configureHardware() override;
+  ~DinoAdc() override;
+  void configureHardware() override;
 
   /* Set the configuration of the ADC registers
    *
@@ -109,42 +109,40 @@ public:
 class DinoDac : public Dino {
 public:
   DinoDac();
-  virtual ~DinoDac();
-  virtual void configureHardware() override;
+  ~DinoDac() override;
+  void configureHardware() override;
   void setGain(Gain gain);
   Gain getGain();
 };
 
 class DinoFactory : NodeFactory {
 public:
-  virtual std::string getDescription() const override {
-    return "Dino Analog I/O";
-  }
+  std::string getDescription() const override { return "Dino Analog I/O"; }
 
 protected:
-  virtual void parse(Core &ip, json_t *json) override;
+  void parse(Core &ip, json_t *json) override;
 };
 
 class DinoAdcFactory : DinoFactory {
 public:
-  virtual std::string getName() const { return "dinoAdc"; }
+  std::string getName() const override { return "dinoAdc"; }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:module_ref:dinoif_adc:");
   }
-  Core *make() const { return new DinoAdc; };
+  Core *make() const override { return new DinoAdc; };
 };
 
 class DinoDacFactory : DinoFactory {
 public:
-  virtual std::string getName() const { return "dinoDac"; }
+  std::string getName() const override { return "dinoDac"; }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:module_ref:dinoif_dac:");
   }
-  Core *make() const { return new DinoDac; };
+  Core *make() const override { return new DinoDac; };
 };
 
 } // namespace ip

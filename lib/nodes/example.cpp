@@ -72,7 +72,7 @@ public:
    * Have a look at node.hpp/node.cpp for the default behaviour.
    */
 
-  virtual ~ExampleNode() {}
+  ~ExampleNode() override {}
 
   int prepare() override {
     state1 = setting1;

@@ -25,7 +25,7 @@ class Timer : public Core {
   friend class TimerFactory;
 
 public:
-  virtual bool init() override;
+  bool init() override;
 
   bool start(uint32_t ticks);
   bool wait();
@@ -38,7 +38,7 @@ public:
   static constexpr uint32_t getFrequency() { return FPGA_AXI_HZ; }
 
 private:
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 

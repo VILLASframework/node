@@ -138,23 +138,23 @@ class NodeFactory : public CoreFactory {
 public:
   using CoreFactory::CoreFactory;
 
-  virtual void parse(Core &, json_t *);
+  void parse(Core &, json_t *) override;
 };
 
 template <typename T, const char *name, const char *desc, const char *vlnv>
 class NodePlugin : public NodeFactory {
 
 public:
-  virtual std::string getName() const { return name; }
+  std::string getName() const override { return name; }
 
-  virtual std::string getDescription() const { return desc; }
+  std::string getDescription() const override { return desc; }
 
 private:
   // Get a VLNV identifier for which this IP / Node type can be used.
-  virtual Vlnv getCompatibleVlnv() const { return Vlnv(vlnv); }
+  Vlnv getCompatibleVlnv() const override { return Vlnv(vlnv); }
 
   // Create a concrete IP instance
-  Core *make() const { return new T; }
+  Core *make() const override { return new T; }
 };
 
 } // namespace ip

@@ -105,7 +105,7 @@ protected:
 public:
   LuaHook(Path *p, Node *n, int fl, int prio, bool en = true);
 
-  virtual ~LuaHook();
+  ~LuaHook() override;
 
   void parse(json_t *json) override;
 

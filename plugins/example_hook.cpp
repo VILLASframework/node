@@ -16,7 +16,7 @@ class ExampleHook : public Hook {
 public:
   using Hook::Hook;
 
-  virtual void restart() {
+  void restart() override {
     logger->info("The path {} restarted!", path->toString());
   }
 };

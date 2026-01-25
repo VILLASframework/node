@@ -102,7 +102,7 @@ public:
   BufferedSampleFormatterShort(size_t bufSizeInSamples)
       : BufferedSampleFormatter(bufSizeInSamples, formatStringSize){};
 
-  virtual void format(float value) override {
+  void format(float value) override {
     size_t chars;
     if ((chars = std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
                                value)) > (int)formatStringSize) {
@@ -123,7 +123,7 @@ public:
       : BufferedSampleFormatter(bufSizeInSamples, formatStringSize),
         sampleCnt(0){};
 
-  virtual void format(float value) override {
+  void format(float value) override {
     if (std::snprintf(nextBufPos(), formatStringSize + 1, formatString,
                       sampleCnt, value) > (int)formatStringSize) {
       throw RuntimeError("Output buffer too small");

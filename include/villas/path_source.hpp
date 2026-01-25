@@ -81,7 +81,7 @@ public:
 
   const SecondaryPathSourceList &getSecondaries() { return secondaries; }
 
-  virtual void writeToSecondaries(struct Sample *smps[], unsigned cnt);
+  void writeToSecondaries(struct Sample *smps[], unsigned cnt) override;
 };
 
 } // namespace node

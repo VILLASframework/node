@@ -42,7 +42,7 @@ protected:
   bool check;
   bool dump;
 
-  void usage() {
+  void usage() override {
     std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
               << "  CONFIG is the path to an optional configuration file"
               << std::endl
@@ -59,7 +59,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     int c;
     while ((c = getopt(argc, argv, "hcVD")) != -1) {
       switch (c) {
@@ -90,7 +90,7 @@ protected:
     uri = argv[optind];
   }
 
-  int main() {
+  int main() override {
     SuperNode sn;
 
     sn.parse(uri);

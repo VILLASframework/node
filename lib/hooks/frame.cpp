@@ -65,7 +65,7 @@ public:
       : Hook(p, n, fl, prio, en), interval(TimeInterval(0)),
         last_smp{nullptr, &sample_decref} {}
 
-  virtual ~FrameHook() { (void)last_smp.release(); }
+  ~FrameHook() override { (void)last_smp.release(); }
 
   void parse(json_t *json) override {
     Hook::parse(json);
@@ -94,7 +94,7 @@ public:
     }
   }
 
-  virtual Hook::Reason process(Sample *smp) override {
+  Hook::Reason process(Sample *smp) override {
     Hook::process(smp);
 
     if (updateInterval(smp))
@@ -108,7 +108,7 @@ public:
     return Reason::OK;
   }
 
-  virtual void stop() override {
+  void stop() override {
     Hook::stop();
 
     last_smp = nullptr;
