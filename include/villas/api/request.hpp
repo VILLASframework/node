@@ -103,7 +103,7 @@ public:
 
   virtual void init(Request *r) { r->logger = getLogger(); }
 
-  virtual std::string getType() const { return "api:request"; }
+  std::string getType() const override { return "api:request"; }
 
   virtual bool isHidden() const { return false; }
 };
@@ -117,7 +117,7 @@ protected:
 public:
   RequestPlugin() : RequestFactory(), regex(re) {}
 
-  virtual Request *make(Session *s) {
+  Request *make(Session *s) override {
     auto *r = new T(s);
 
     init(r);
@@ -126,12 +126,12 @@ public:
   }
 
   // Get plugin name
-  virtual std::string getName() const { return name; }
+  std::string getName() const override { return name; }
 
   // Get plugin description
-  virtual std::string getDescription() const { return desc; }
+  std::string getDescription() const override { return desc; }
 
-  virtual bool match(const std::string &uri, std::smatch &match) const {
+  bool match(const std::string &uri, std::smatch &match) const override {
     return std::regex_match(uri, match, regex);
   }
 };

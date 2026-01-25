@@ -36,7 +36,7 @@ protected:
 public:
   LuaError(lua_State *l, int e) : RuntimeError(""), L(l), err(e) {}
 
-  virtual const char *what() const noexcept {
+  const char *what() const noexcept override {
     const char *msg;
     switch (err) {
     case LUA_ERRSYNTAX:

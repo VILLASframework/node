@@ -18,9 +18,9 @@ namespace ip {
 class AxisCache : public Node {
 public:
   AxisCache();
-  virtual ~AxisCache();
-  virtual bool init() override;
-  virtual bool check() override;
+  ~AxisCache() override;
+  bool init() override;
+  bool check() override;
   void invalidate();
 
 protected:

@@ -127,7 +127,7 @@ public:
 
   virtual void init(Format *f) { f->logger = getLogger(); }
 
-  virtual std::string getType() const { return "format"; }
+  std::string getType() const override { return "format"; }
 
   virtual bool isHidden() const { return false; }
 };
@@ -138,7 +138,7 @@ class FormatPlugin : public FormatFactory {
 public:
   using FormatFactory::FormatFactory;
 
-  virtual Format *make() {
+  Format *make() override {
     auto *f = new T(flags);
 
     init(f);
@@ -146,9 +146,9 @@ public:
     return f;
   }
 
-  virtual std::string getName() const { return name; }
+  std::string getName() const override { return name; }
 
-  virtual std::string getDescription() const { return desc; }
+  std::string getDescription() const override { return desc; }
 };
 
 } // namespace node

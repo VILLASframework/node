@@ -18,17 +18,19 @@ public:
   static constexpr const char *masterPort = "m_axis";
   static constexpr const char *slavePort = "s_axis";
 
-  virtual void dump() override;
+  void dump() override;
 
   double getDt();
 
-  std::list<std::string> getMemoryBlocks() const { return {registerMemory}; }
+  std::list<std::string> getMemoryBlocks() const override {
+    return {registerMemory};
+  }
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(slavePort);
   }
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(masterPort);
   }
 

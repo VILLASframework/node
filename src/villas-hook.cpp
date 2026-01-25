@@ -68,9 +68,11 @@ protected:
 
   json_t *config;
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) { stop = true; }
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
+    stop = true;
+  }
 
-  void usage() {
+  void usage() override {
     std::cout << "Usage: villas-hook [OPTIONS] NAME" << std::endl
               << "  NAME      the name of the hook function" << std::endl
               << "  PARAM*    a string of configuration settings for the hook"
@@ -111,7 +113,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     int ret;
     std::string file;
 
@@ -188,7 +190,7 @@ protected:
     hook = argv[optind];
   }
 
-  int main() {
+  int main() override {
     int ret, recv, sent;
     struct Sample *smps[cnt];
 
