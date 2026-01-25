@@ -254,7 +254,7 @@ bool Device::pciEnable() {
 std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   std::vector<Device::IrqVectorInfo> vectors;
   for (auto info_irq_vector : info_irq_vectors) {
-    Device::IrqVectorInfo irq = {0};
+    Device::IrqVectorInfo irq = {.eventFds = {0}};
     const size_t irqCount = info_irq_vector.count;
     const size_t irqSetSize =
         sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
