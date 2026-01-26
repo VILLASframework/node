@@ -208,7 +208,7 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
       throw ConfigError(json_type, "node-config-node-signal",
                         "Length of values must match");
 
-    json_array_foreach(json_type, i, json_value) {
+    json_array_foreach (json_type, i, json_value) {
       type_str = json_string_value(json_value);
       if (!type_str)
         throw ConfigError(json_value, "node-config-node-signal",
@@ -249,7 +249,7 @@ int villas::node::signal_node_parse(NodeCompat *n, json_t *json) {
 
         size_t i;
         json_t *json_value;
-        json_array_foreach(a.json, i, json_value) {
+        json_array_foreach (a.json, i, json_value) {
           if (!json_is_number(json_value))
             throw ConfigError(
                 json_value, "node-config-node-signal",

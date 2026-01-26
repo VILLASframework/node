@@ -73,7 +73,7 @@ int ExecNode::parse(json_t *json) {
 
     size_t i;
     json_t *json_arg;
-    json_array_foreach(json_exec, i, json_arg) {
+    json_array_foreach (json_exec, i, json_arg) {
       if (!json_is_string(json_arg))
         throw ConfigError(json_arg, "node-config-node-exec-exec",
                           "All arguments must be of string type");
@@ -90,7 +90,7 @@ int ExecNode::parse(json_t *json) {
     const char *key;
     json_t *json_value;
 
-    json_object_foreach(json_env, key, json_value) {
+    json_object_foreach (json_env, key, json_value) {
       if (!json_is_string(json_value))
         throw ConfigError(json_value, "node-config-node-exec-environment",
                           "Environment variables must be of string type");

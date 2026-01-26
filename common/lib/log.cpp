@@ -141,8 +141,8 @@ void Log::parse(json_t *json) {
     json_t *json_expression;
 
     // cppcheck-suppress unknownMacro
-    json_array_foreach(json_expressions, i, json_expression)
-        expressions.emplace_back(json_expression);
+    json_array_foreach (json_expressions, i, json_expression)
+      expressions.emplace_back(json_expression);
   }
 }
 

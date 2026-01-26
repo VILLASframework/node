@@ -149,8 +149,8 @@ public:
       json_t *json_metadata;
 
       // cppcheck-suppress unknownMacro
-      json_array_foreach(json_metadatas, j, json_metadata)
-          metadata.emplace_back(json_metadata);
+      json_array_foreach (json_metadatas, j, json_metadata)
+        metadata.emplace_back(json_metadata);
     }
 
     // Metadata: index(integer)=j
@@ -264,7 +264,7 @@ static int ngsi_parse_entity(NodeCompat *n, json_t *json_entity,
   if (strcmp(id, i->entity_id) || strcmp(type, i->entity_type))
     return -2;
 
-  json_array_foreach(json_attrs, l, json_attr) {
+  json_array_foreach (json_attrs, l, json_attr) {
     NgsiAttribute *attr;
     json_error_t err;
     json_t *json_metadata, *json_value;
@@ -299,7 +299,7 @@ static int ngsi_parse_entity(NodeCompat *n, json_t *json_entity,
       return -6;
 
     size_t k;
-    json_array_foreach(json_value, k, json_tuple) {
+    json_array_foreach (json_value, k, json_tuple) {
       struct Sample *smp = smps[k];
 
       // Check sample format
@@ -379,7 +379,7 @@ static int ngsi_parse_signals(json_t *json_signals, struct List *ngsi_signals,
   if (!json_is_array(json_signals))
     return -1;
 
-  json_array_foreach(json_signals, j, json_signal) {
+  json_array_foreach (json_signals, j, json_signal) {
     auto s = node_signals->getByIndex(j);
     auto *a = new NgsiAttribute(json_signal, j, s);
     if (!a)

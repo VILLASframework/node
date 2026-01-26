@@ -143,7 +143,7 @@ int JsonReserveFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
   smp->flags = 0;
   smp->length = 0;
 
-  json_array_foreach(json_data, i, json_value) {
+  json_array_foreach (json_data, i, json_value) {
     const char *name, *unit = nullptr;
     double value;
 
