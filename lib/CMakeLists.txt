@@ -23,7 +23,6 @@ set(LIBRARIES
 set(LIB_SRC
     capabilities.cpp
     config_helper.cpp
-    config.cpp
     dumper.cpp
     format.cpp
     mapping.cpp
