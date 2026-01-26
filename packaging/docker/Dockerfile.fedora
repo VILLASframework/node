@@ -65,7 +65,8 @@ RUN dnf -y install \
 	protobuf-c-devel \
 	protobuf-devel \
 	spdlog-devel \
-	zeromq-devel
+	zeromq-devel \
+	json-devel
 
 # Install unpackaged dependencies from source
 # TODO: We currently need to build with GCC 14 to get OpenDSSC working
