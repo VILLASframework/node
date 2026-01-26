@@ -1,9 +1,13 @@
 # SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
 {
+  lib,
+  stdenv,
+  makeWrapper,
   # General configuration
   src,
   version,
+  system,
   withGpl ? true,
   withAllExtras ? false,
   withAllFormats ? false,
@@ -41,23 +45,25 @@
   bash,
   cmake,
   coreutils,
+  curl,
+  gnugrep,
   graphviz,
+  jansson,
   jq,
-  lib,
-  makeWrapper,
+  libuuid,
+  libwebsockets,
+  nlohmann_json,
+  openssl,
   pkg-config,
   gcc14Stdenv,
-  system,
+  spdlog,
   # Optional dependencies
   boxfort,
   comedilib,
   criterion,
-  curl,
   czmq,
   cyrus_sasl,
   ethercat,
-  gnugrep,
-  jansson,
   lib60870,
   libconfig,
   libdatachannel,
@@ -70,14 +76,11 @@
   libsodium,
   libuldaq,
   libusb1,
-  libuuid,
-  libwebsockets,
   libxml2,
   lua,
   mosquitto,
   nanomsg,
   opendssc,
-  openssl,
   orchestra,
   pcre2,
   pkgsBuildBuild,
@@ -89,7 +92,6 @@
   rdkafka,
   rdma-core,
   redis-plus-plus,
-  spdlog,
   linuxHeaders,
 }:
 
@@ -193,8 +195,9 @@ gcc14Stdenv.mkDerivation {
   ];
 
   propagatedBuildInputs = [
-    libuuid
     jansson
+    libuuid
+    nlohmann_json
   ]
   ++ lib.optionals withFormatProtobuf [
     protobuf

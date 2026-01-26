@@ -7,7 +7,8 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <map>
+
+#include <nlohmann/json.hpp>
 
 #include <villas/config_helper.hpp>
 #include <villas/hook_list.hpp>
@@ -21,6 +22,8 @@
 #include <villas/super_node.hpp>
 #include <villas/timing.hpp>
 #include <villas/uuid.hpp>
+
+#include "villas/json.hpp"
 
 #ifdef WITH_NETEM
 #include <villas/kernel/nl.hpp>
@@ -60,10 +63,18 @@ SuperNode::SuperNode()
   logger = Log::get("super_node");
 }
 
-void SuperNode::parse(const std::string &u) {
-  config.root = config.load(u);
+void SuperNode::parse(fs::path const &path) {
+  configPath = path;
 
-  parse(config.root);
+  load_config_file(path,
+                   {
+                       .allow_libconfig = true,
+                       .allow_environment = true,
+                       .allow_include = true,
+                   })
+      .get_to(configRoot);
+
+  parse(configRoot.get());
 }
 
 void SuperNode::parse(json_t *root) {

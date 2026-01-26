@@ -602,6 +602,19 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     popd
 fi
 
+# Build and install nlohmann_json
+if ! pkg-config "nlohmann_json" &&
+    should_build "nlohman_json" "for configuration parsing"; then
+    git clone --branch v3.12.0 https://github.com/nlohmann/json.git json
+    mkdir -p json/build
+    pushd json/build
+    cmake ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
 popd >/dev/null
 
 # Update linker cache
