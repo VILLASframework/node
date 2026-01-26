@@ -164,7 +164,7 @@ test:python:
     - pytest --verbose .
     - black --line-length=90 --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
     - flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
-    - mypy .
+    - mypy --namespace-packages --explicit-package-bases .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   needs:
     - job: "build:source: [fedora]"
