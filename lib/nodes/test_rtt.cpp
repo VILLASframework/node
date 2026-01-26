@@ -203,7 +203,7 @@ int TestRTT::parse(json_t *json) {
                       "The 'cases' setting must be an array.");
 
   int id = 0;
-  json_array_foreach(json_cases, i, json_case) {
+  json_array_foreach (json_cases, i, json_case) {
 
     const char *mode_str = nullptr;
     int count = count_default;          // in no of samples
@@ -242,7 +242,7 @@ int TestRTT::parse(json_t *json) {
 
     if (json_is_array(json_rates)) {
       size_t j;
-      json_array_foreach(json_rates, j, json_val) {
+      json_array_foreach (json_rates, j, json_val) {
         if (!json_is_number(json_val))
           throw ConfigError(
               json_val, "node-config-node-test-rtt-rates",
@@ -255,7 +255,7 @@ int TestRTT::parse(json_t *json) {
 
     if (json_is_array(json_values)) {
       size_t j;
-      json_array_foreach(json_values, j, json_val) {
+      json_array_foreach (json_values, j, json_val) {
         if (!json_is_integer(json_val))
           throw ConfigError(
               json_val, "node-config-node-test-rtt-values",

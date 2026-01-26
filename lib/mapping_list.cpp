@@ -26,7 +26,7 @@ int MappingList::parse(json_t *json) {
   else
     return -1;
 
-  json_array_foreach(json_mapping, i, json_entry) {
+  json_array_foreach (json_mapping, i, json_entry) {
     auto me = std::make_shared<MappingEntry>();
     if (!me)
       throw MemoryAllocationError();

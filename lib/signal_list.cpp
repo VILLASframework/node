@@ -25,7 +25,7 @@ int SignalList::parse(json_t *json) {
 
   size_t i;
   json_t *json_signal;
-  json_array_foreach(json, i, json_signal) {
+  json_array_foreach (json, i, json_signal) {
     auto sig = std::make_shared<Signal>();
     if (!sig)
       throw MemoryAllocationError();

@@ -98,7 +98,7 @@ int villas::node::json_to_config(json_t *json, config_setting_t *parent) {
     const char *key;
     json_t *json_value;
 
-    json_object_foreach(json, key, json_value) {
+    json_object_foreach (json, key, json_value) {
       type = json_to_config_type(json_typeof(json_value));
 
       cfg = config_setting_add(parent, key, type);
@@ -113,7 +113,7 @@ int villas::node::json_to_config(json_t *json, config_setting_t *parent) {
     size_t i;
     json_t *json_value;
 
-    json_array_foreach(json, i, json_value) {
+    json_array_foreach (json, i, json_value) {
       type = json_to_config_type(json_typeof(json_value));
 
       cfg = config_setting_add(parent, nullptr, type);
@@ -305,7 +305,7 @@ int villas::node::json_object_extend(json_t *obj, json_t *merge) {
   if (!json_is_object(obj) || !json_is_object(merge))
     return -1;
 
-  json_object_foreach(merge, key, merge_value) {
+  json_object_foreach (merge, key, merge_value) {
     obj_value = json_object_get(obj, key);
     if (obj_value && json_is_object(obj_value))
       ret = json_object_extend(obj_value, merge_value);

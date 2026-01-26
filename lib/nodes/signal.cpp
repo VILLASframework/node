@@ -219,7 +219,7 @@ int SignalNode::parse(json_t *json) {
 
   signals.clear();
   unsigned j = 0;
-  json_array_foreach(json_signals, i, json_signal) {
+  json_array_foreach (json_signals, i, json_signal) {
     auto sig = SignalNodeSignal(json_signal);
 
     if (sig.type == SignalNodeSignal::Type::MIXED)

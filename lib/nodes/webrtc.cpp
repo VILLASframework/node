@@ -100,7 +100,7 @@ int WebRTCNode::parse(json_t *json) {
 
       size_t i;
       json_t *json_server;
-      json_array_foreach(json_servers, i, json_server) {
+      json_array_foreach (json_servers, i, json_server) {
         if (!json_is_string(json_server))
           throw ConfigError(json_server, "node-config-node-webrtc-ice-server",
                             "ICE servers must be provided as STUN/TURN url.");

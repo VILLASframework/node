@@ -66,7 +66,7 @@ static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json) {
     if (!data)
       throw MemoryAllocationError();
 
-    json_array_foreach(json, idx, elm) {
+    json_array_foreach (json, idx, elm) {
       if (!json_is_integer(elm))
         return -1;
 

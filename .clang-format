@@ -22,3 +22,11 @@ IncludeCategories:
     Priority: 2
   - Regex: '^".*"$'
     Priority: 4
+
+# Add libjansson foreach macros
+ForEachMacros:
+  - 'json_array_foreach'
+  - 'json_object_foreach'
+  - 'json_object_foreach_safe'
+  - 'json_object_keylen_foreach'
+  - 'json_object_keylen_foreach_safe'

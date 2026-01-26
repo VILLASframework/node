@@ -418,7 +418,7 @@ void Path::parseMask(json_t *json_mask, NodeList &nodes) {
     throw ConfigError(json_mask, "node-config-path-mask",
                       "The 'mask' setting must be a list of node names");
 
-  json_array_foreach(json_mask, i, json_entry) {
+  json_array_foreach (json_mask, i, json_entry) {
     const char *name;
     Node *node;
 

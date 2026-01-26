@@ -111,7 +111,7 @@ void AxiPciExpressBridgeFactory::parse(Core &ip, json_t *cfg) {
 
     json_t *json_bar;
     const char *bar_name;
-    json_object_foreach(json_bars, bar_name, json_bar) {
+    json_object_foreach (json_bars, bar_name, json_bar) {
       unsigned int translation;
 
       json_error_t err;

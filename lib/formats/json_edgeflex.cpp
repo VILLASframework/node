@@ -51,7 +51,7 @@ int JsonEdgeflexFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
   if (json_typeof(json_smp) != JSON_OBJECT)
     return -1;
 
-  json_object_foreach(json_smp, key, json_value) {
+  json_object_foreach (json_smp, key, json_value) {
     if (!strcmp(key, "created"))
       json_created = json_incref(json_value);
     else {

@@ -649,7 +649,7 @@ int GooseNode::parse(json_t *json) {
     json_t *json_key;
     assert(json_is_array(json_keys));
     keys.reserve(json_array_size(json_keys));
-    json_array_foreach(json_keys, index, json_key) {
+    json_array_foreach (json_keys, index, json_key) {
       assert(json_is_object(json_key));
       parseSessionKey(json_key);
     }
@@ -698,7 +698,7 @@ void GooseNode::parseInput(json_t *json) {
       json_t *json_multicast_group;
       assert(json_is_array(json_multicast_groups));
       input.multicast_groups.reserve(json_array_size(json_multicast_groups));
-      json_array_foreach(json_multicast_groups, index, json_multicast_group) {
+      json_array_foreach (json_multicast_groups, index, json_multicast_group) {
         assert(json_is_string(json_multicast_group));
         input.multicast_groups.emplace_back(
             json_string_value(json_multicast_group));
@@ -834,7 +834,7 @@ void GooseNode::parseSubscribers(
   if (!json_is_object(json))
     throw RuntimeError("subscribers is not an object");
 
-  json_object_foreach(json, key, json_subscriber) {
+  json_object_foreach (json, key, json_subscriber) {
     SubscriberConfig sc;
 
     parseSubscriber(json_subscriber, sc);
@@ -852,7 +852,7 @@ void GooseNode::parseInputSignals(
 
   mappings.clear();
 
-  json_array_foreach(json, index, value) {
+  json_array_foreach (json, index, value) {
     char *mapping_subscriber;
     unsigned int mapping_index;
     char *mapping_type_name;
@@ -945,7 +945,7 @@ void GooseNode::parsePublisherData(json_t *json,
   if (!json_is_array(json))
     throw RuntimeError("publisher data is not an array");
 
-  json_array_foreach(json, index, json_signal_or_value) {
+  json_array_foreach (json, index, json_signal_or_value) {
     char const *mms_type = nullptr;
     char const *signal_str = nullptr;
     json_t *json_value = nullptr;
@@ -1038,7 +1038,7 @@ void GooseNode::parsePublishers(json_t *json, std::vector<OutputContext> &ctx) {
   int index;
   json_t *json_publisher;
 
-  json_array_foreach(json, index, json_publisher) {
+  json_array_foreach (json, index, json_publisher) {
     PublisherConfig pc;
 
     parsePublisher(json_publisher, pc);

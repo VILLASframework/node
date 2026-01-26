@@ -287,7 +287,7 @@ json_t *Config::walkStrings(json_t *root, str_walk_fcn_t cb) {
   case JSON_OBJECT:
     new_root = json_object();
 
-    json_object_foreach(root, key, val) {
+    json_object_foreach (root, key, val) {
       new_val = walkStrings(val, cb);
 
       json_object_set_new(new_root, key, new_val);
@@ -298,7 +298,7 @@ json_t *Config::walkStrings(json_t *root, str_walk_fcn_t cb) {
   case JSON_ARRAY:
     new_root = json_array();
 
-    json_array_foreach(root, index, val) {
+    json_array_foreach (root, index, val) {
       new_val = walkStrings(val, cb);
 
       json_array_append_new(new_root, new_val);

@@ -72,7 +72,7 @@ int villas::node::shmem_parse(NodeCompat *n, json_t *json) {
 
     size_t i;
     json_t *json_val;
-    json_array_foreach(json_exec, i, json_val) {
+    json_array_foreach (json_exec, i, json_val) {
       val = json_string_value(json_val);
       if (!val)
         throw SystemError("Setting 'exec' must be an array of strings");

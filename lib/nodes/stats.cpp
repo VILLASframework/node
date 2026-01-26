@@ -180,7 +180,7 @@ int villas::node::stats_node_parse(NodeCompat *n, json_t *json) {
     throw ConfigError(json, "node-config-node-stats-in-signals",
                       "Setting 'in.signals' must be an array");
 
-  json_array_foreach(json_signals, i, json_signal) {
+  json_array_foreach (json_signals, i, json_signal) {
     auto *stats_sig = new struct stats_node_signal;
     if (!stats_sig)
       throw MemoryAllocationError();
