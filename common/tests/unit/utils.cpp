@@ -86,7 +86,7 @@ Test(utils, cpuset) {
   cset4.clear(6);
   cr_assert_not(cset4[6]);
 
-  cr_assert_str_eq(static_cast<std::string>(cset4).c_str(), "1-5");
+  cr_assert_eq(static_cast<std::string>(cset4), "1-5");
 
   cr_assert_any_throw(CpuSet cset5("0-"));
 

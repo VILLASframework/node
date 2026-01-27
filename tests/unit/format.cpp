@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cinttypes>
 #include <complex>
+#include <cstdio>
 
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
-#include <float.h>
-#include <stdio.h>
 
 #include <villas/format.hpp>
 #include <villas/log.hpp>
@@ -117,8 +117,9 @@ void cr_assert_eq_sample(struct Sample *a, struct Sample *b, int flags) {
 
       case SignalType::INTEGER:
         cr_assert_eq(a->data[j].i, b->data[j].i,
-                     "Sample data mismatch at index %d: %lld != %lld", j,
-                     a->data[j].i, b->data[j].i);
+                     "Sample data mismatch at index %d: %" PRId64
+                     " != %" PRId64,
+                     j, a->data[j].i, b->data[j].i);
         break;
 
       case SignalType::BOOLEAN:
@@ -171,8 +172,9 @@ void cr_assert_eq_sample_raw(struct Sample *a, struct Sample *b, int flags,
 
       case SignalType::INTEGER:
         cr_assert_eq(a->data[j].i, b->data[j].i,
-                     "Sample data mismatch at index %d: %lld != %lld", j,
-                     a->data[j].i, b->data[j].i);
+                     "Sample data mismatch at index %d: %" PRId64
+                     " != %" PRId64,
+                     j, a->data[j].i, b->data[j].i);
         break;
 
       case SignalType::BOOLEAN:

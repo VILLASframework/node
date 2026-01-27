@@ -65,9 +65,9 @@ public:
   JsonResponse(Session *s, int c, json_t *r)
       : Response(s, c, "application/json"), response(r) {}
 
-  virtual ~JsonResponse();
+  ~JsonResponse() override;
 
-  virtual void encodeBody();
+  void encodeBody() override;
 };
 
 class ErrorResponse : public JsonResponse {

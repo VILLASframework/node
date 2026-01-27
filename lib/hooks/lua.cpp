@@ -36,7 +36,7 @@ protected:
 public:
   LuaError(lua_State *l, int e) : RuntimeError(""), L(l), err(e) {}
 
-  virtual const char *what() const noexcept {
+  const char *what() const noexcept override {
     const char *msg;
     switch (err) {
     case LUA_ERRSYNTAX:
@@ -283,74 +283,6 @@ static void lua_pushjson(lua_State *L, json_t *json) {
     lua_pushnil(L);
     break;
   }
-}
-
-static json_t *lua_tojson(lua_State *L, int index = -1) {
-  double n;
-  const char *s;
-  bool b;
-
-  switch (lua_type(L, index)) {
-  case LUA_TFUNCTION:
-  case LUA_TUSERDATA:
-  case LUA_TTHREAD:
-  case LUA_TLIGHTUSERDATA:
-  case LUA_TNIL:
-    return json_null();
-
-  case LUA_TNUMBER:
-    n = lua_tonumber(L, index);
-    return n == (int)n ? json_integer(n) : json_real(n);
-
-  case LUA_TBOOLEAN:
-    b = lua_toboolean(L, index);
-    return json_boolean(b);
-
-  case LUA_TSTRING:
-    s = lua_tostring(L, index);
-    return json_string(s);
-
-  case LUA_TTABLE: {
-    int keys_total = 0, keys_int = 0, key_highest = -1;
-
-    lua_pushnil(L);
-    while (lua_next(L, index) != 0) {
-      keys_total++;
-      if (lua_type(L, -2) == LUA_TNUMBER) {
-        int key = lua_tonumber(L, -1);
-
-        if (key == (int)key) {
-          keys_int++;
-          if (key > key_highest)
-            key_highest = key;
-        }
-      }
-      lua_pop(L, 1);
-    }
-
-    bool is_array = keys_total == keys_int && key_highest / keys_int > 0.5;
-
-    json_t *json = is_array ? json_array() : json_object();
-
-    lua_pushnil(L);
-    while (lua_next(L, index) != 0) {
-      json_t *val = lua_tojson(L, -1);
-      if (is_array) {
-        int key = lua_tonumber(L, -2);
-        json_array_set(json, key, val);
-      } else {
-        const char *key = lua_tostring(L, -2);
-        if (key) // Skip table entries whose keys are neither string or number!
-          json_object_set(json, key, val);
-      }
-      lua_pop(L, 1);
-    }
-
-    return json;
-  }
-  }
-
-  return nullptr;
 }
 
 namespace villas {

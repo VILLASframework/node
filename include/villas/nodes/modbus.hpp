@@ -275,7 +275,7 @@ private:
 public:
   ModbusNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~ModbusNode();
+  ~ModbusNode() override;
 
   int prepare() override;
 

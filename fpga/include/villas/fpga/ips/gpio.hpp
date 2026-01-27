@@ -16,12 +16,12 @@ namespace ip {
 
 class Gpio : public Core {
 public:
-  virtual bool init() override;
+  bool init() override;
 
 private:
   static constexpr char registerMemory[] = "Reg";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 };

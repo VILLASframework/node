@@ -32,7 +32,7 @@ public:
   PrintHook(Path *p, Node *n, int fl, int prio, bool en = true)
       : Hook(p, n, fl, prio, en), output(nullptr) {}
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     if (!output_path.empty()) {
@@ -47,7 +47,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     if (output)
       fclose(output);
   }

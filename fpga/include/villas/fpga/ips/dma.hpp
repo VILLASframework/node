@@ -25,9 +25,9 @@ class Dma : public Node {
 public:
   friend class DmaFactory;
 
-  virtual ~Dma();
+  ~Dma() override;
 
-  virtual bool init() override;
+  bool init() override;
 
   bool reset() override;
 
@@ -84,7 +84,7 @@ public:
   bool isMemoryBlockAccesible(const MemoryBlock &mem,
                               const std::string &interface);
 
-  virtual void dump() override;
+  void dump() override;
 
 private:
   bool writeScatterGather(const void *buf, size_t len);
@@ -154,14 +154,14 @@ private:
 class DmaFactory : NodeFactory {
 
 public:
-  virtual std::string getName() const override { return "dma"; }
+  std::string getName() const override { return "dma"; }
 
-  virtual std::string getDescription() const override {
+  std::string getDescription() const override {
     return "Xilinx's AXI4 Direct Memory Access Controller";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const override {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_dma:");
   }
 
@@ -169,9 +169,9 @@ private:
   Core *make() const override { return new Dma; };
 
 protected:
-  virtual void parse(Core &ip, json_t *json) override;
+  void parse(Core &ip, json_t *json) override;
 
-  virtual void configurePollingMode(Core &ip, PollingMode mode) override {
+  void configurePollingMode(Core &ip, PollingMode mode) override {
     dynamic_cast<Dma &>(ip).polling = (mode == POLL);
   }
 };

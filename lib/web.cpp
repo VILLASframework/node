@@ -77,6 +77,7 @@ static lws_http_mount mounts[] = {
 #endif // WITH_API
 };
 
+#ifndef LWS_WITHOUT_EXTENSIONS
 // List of libwebsockets extensions.
 static const lws_extension extensions[] = {
 #ifdef LWS_DEFLATE_FOUND
@@ -88,6 +89,7 @@ static const lws_extension extensions[] = {
      .client_offer = "deflate_frame"},
 #endif // LWS_DEFLATE_FOUND
     {nullptr /* terminator */}};
+#endif
 
 void Web::lwsLogger(int lws_lvl, const char *msg) {
   char *nl;

@@ -55,7 +55,7 @@ static const char *vfio_pci_irq_names[] = {
 Device::Device(const std::string &name, int groupFileDescriptor,
                const kernel::devices::PciDevice *pci_device)
     : name(name), fd(-1), attachedToGroup(false), groupFd(groupFileDescriptor),
-      info(), info_irq_vectors(), regions(), mappings(), pci_device(pci_device),
+      info(), info_irq_vectors(), regions(), mappings(),
       log(Log::get("kernel:vfio:device")) {
   if (groupFileDescriptor < 0)
     throw RuntimeError("Invalid group file descriptor");
@@ -254,7 +254,7 @@ bool Device::pciEnable() {
 std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   std::vector<Device::IrqVectorInfo> vectors;
   for (auto info_irq_vector : info_irq_vectors) {
-    Device::IrqVectorInfo irq = {0};
+    Device::IrqVectorInfo irq = {.eventFds = {0}};
     const size_t irqCount = info_irq_vector.count;
     const size_t irqSetSize =
         sizeof(struct vfio_irq_set) + sizeof(int) * irqCount;
@@ -296,7 +296,7 @@ std::vector<Device::IrqVectorInfo> Device::initEventFds() {
   return vectors;
 }
 
-int Device::pciMsiInit(int efds[]) {
+int Device::pciMsiInit(int efds[32]) {
   // Check if this is really a vfio-pci device
   if (not isVfioPciDevice())
     return -1;
@@ -341,7 +341,7 @@ int Device::pciMsiInit(int efds[]) {
   return irqCount;
 }
 
-int Device::pciMsiDeinit(int efds[]) {
+int Device::pciMsiDeinit(int efds[32]) {
   Log::get("Device")->debug("Deinitializing MSI interrupts for device {}",
                             name);
   // Check if this is really a vfio-pci device
@@ -381,7 +381,7 @@ int Device::pciMsiDeinit(int efds[]) {
   return irqCount;
 }
 
-bool Device::pciMsiFind(int nos[]) {
+bool Device::pciMsiFind(int nos[32]) {
   int ret, idx, irq;
   char *end, *col, *last, line[1024], name[13];
   FILE *f;

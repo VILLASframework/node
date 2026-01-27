@@ -19,7 +19,7 @@ protected:
 public:
   using Hook::Hook;
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED || state == State::STOPPED);
 
     prev = nullptr;
@@ -27,7 +27,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     if (prev)
@@ -60,7 +60,7 @@ public:
     return Reason::OK;
   }
 
-  virtual void restart() {
+  void restart() override {
     assert(state == State::STARTED);
 
     if (prev) {

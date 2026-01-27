@@ -51,7 +51,7 @@ protected:
   std::string uri;
   bool showCapabilities = false;
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) {
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
     switch (signal) {
     case SIGALRM:
       logger->info("Reached timeout. Terminating...");
@@ -64,7 +64,7 @@ protected:
     sn.setState(State::STOPPING);
   }
 
-  void usage() {
+  void usage() override {
     std::cout
         << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl
         << "  OPTIONS is one or more of the following options:" << std::endl
@@ -119,7 +119,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     // Parse optional command line arguments
     int c;
     while ((c = getopt(argc, argv, "hCVd:")) != -1) {
@@ -153,7 +153,7 @@ protected:
     }
   }
 
-  int main() { return showCapabilities ? capabilities() : daemon(); }
+  int main() override { return showCapabilities ? capabilities() : daemon(); }
 
   int capabilities() {
     auto *json_caps = getCapabilities();

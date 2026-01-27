@@ -164,7 +164,7 @@ test:python:
     - pytest --verbose .
     - black --line-length=90 --extend-exclude=".*(\\.pyi|_pb2.py)$" --check .
     - flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
-    - mypy --explicit-package-bases villas/
+    - mypy --namespace-packages --explicit-package-bases .
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   needs:
     - job: "build:source: [fedora]"
@@ -267,7 +267,7 @@ pkg:nix:arx:
       nix bundle
       --print-build-logs
       --out-link bundle-arx
-      --bundler github:NixOS/bundlers#toArx
+      --bundler github:nix-community/nix-bundle
       ".#villas-node-${SYSTEM}"
 
     - mkdir -p artifacts

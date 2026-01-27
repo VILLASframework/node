@@ -53,7 +53,7 @@ protected:
 
   std::string format;
 
-  void usage() {
+  void usage() override {
     std::cout
         << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
         << "  SIGNAL   is on of the following signal types:" << std::endl
@@ -203,7 +203,7 @@ protected:
                      "in", "signals", json_signals);
   }
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) {
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
     switch (signal) {
     case SIGALRM:
       logger->info("Reached timeout. Terminating...");
@@ -216,7 +216,7 @@ protected:
     stop = true;
   }
 
-  int main() {
+  int main() override {
     int ret;
     json_t *json, *json_format;
     json_error_t err;

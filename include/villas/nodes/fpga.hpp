@@ -80,7 +80,7 @@ protected:
 public:
   FpgaNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~FpgaNode();
+  ~FpgaNode() override;
 
   int prepare() override;
 

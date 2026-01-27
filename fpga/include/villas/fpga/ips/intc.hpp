@@ -22,10 +22,10 @@ public:
   using IrqMaskType = uint32_t;
   static constexpr int maxIrqs = 32;
 
-  virtual ~InterruptController();
+  ~InterruptController() override;
 
-  virtual bool init() override;
-  virtual bool stop() override;
+  bool init() override;
+  bool stop() override;
 
   virtual bool enableInterrupt(IrqMaskType mask, bool polling);
   bool enableInterrupt(const IrqPort &irq, bool polling) {
@@ -47,7 +47,7 @@ protected:
 
   std::shared_ptr<villas::kernel::vfio::Device> vfioDevice = nullptr;
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 

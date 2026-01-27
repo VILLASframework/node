@@ -28,7 +28,7 @@ protected:
 public:
   LoopbackNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~LoopbackNode();
+  ~LoopbackNode() override;
 
   int prepare() override;
 

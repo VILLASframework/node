@@ -56,14 +56,14 @@ protected:
 
   std::string configFilename;
 
-  void usage() {
+  void usage() override {
     std::cout << "Usage: villas-graph [OPTIONS]" << std::endl
               << "For OPTIONS see dot(1).";
 
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     gvParseArgs(gvc, argc, argv);
 
     std::list<std::string> filenames;
@@ -77,7 +77,7 @@ protected:
     configFilename = filenames.front();
   }
 
-  virtual void handler(int signal, siginfo_t *siginfp, void *) {
+  void handler(int signal, siginfo_t *siginfp, void *) override {
 #ifndef _WIN32
     switch (signal) {
     case SIGINT:
@@ -98,7 +98,7 @@ protected:
 #endif // _WIN32
   }
 
-  int main() {
+  int main() override {
     int ret;
 
     villas::node::SuperNode sn;

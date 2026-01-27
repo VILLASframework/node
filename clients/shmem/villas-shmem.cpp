@@ -34,7 +34,7 @@ public:
 protected:
   std::atomic<bool> stop;
 
-  void usage() {
+  void usage() override {
     std::cout
         << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
         << "  WNAME     name of the shared memory object for the output queue"
@@ -47,9 +47,9 @@ protected:
     printCopyright();
   }
 
-  void handler(int, siginfo_t *, void *) { stop = true; }
+  void handler(int, siginfo_t *, void *) override { stop = true; }
 
-  int main() {
+  int main() override {
     int ret, readcnt, writecnt, avail;
 
     struct ShmemInterface shm;
