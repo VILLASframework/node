@@ -15,6 +15,7 @@
 #include <villas/api/response.hpp>
 #include <villas/nodes/gateway.hpp>
 #include <villas/timing.hpp>
+
 #include "villas/log.hpp"
 
 using namespace google::protobuf;
