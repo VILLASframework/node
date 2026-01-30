@@ -134,7 +134,7 @@ protected:
     int id;
     RSecurityAlgorithm security;
     RSignatureAlgorithm signature;
-    std::vector<uint8_t> data;
+    std::vector<std::byte> data;
   };
 
   struct InputMapping {

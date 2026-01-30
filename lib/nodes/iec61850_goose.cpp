@@ -353,7 +353,8 @@ void GooseNode::createReceiver() noexcept(false) {
       throw RuntimeError("failed to set local address for R-GOOSE session");
 
     for (auto &key : keys) {
-      err = RSession_addKey(input.session, key.id, key.data.data(),
+      err = RSession_addKey(input.session, key.id,
+                            reinterpret_cast<std::uint8_t *>(key.data.data()),
                             key.data.size(), key.security, key.signature);
       if (err != R_SESSION_ERROR_OK)
         throw RuntimeError("failed to add key with id {} to R-GOOSE session",
@@ -423,7 +424,8 @@ void GooseNode::createPublishers() {
                          output.remote_address);
 
     for (auto &key : keys) {
-      err = RSession_addKey(output.session, key.id, key.data.data(),
+      err = RSession_addKey(output.session, key.id,
+                            reinterpret_cast<std::uint8_t *>(key.data.data()),
                             key.data.size(), key.security, key.signature);
       if (err != R_SESSION_ERROR_OK)
         throw RuntimeError("failed to add key with id {} to R-GOOSE session",
@@ -725,14 +727,16 @@ void GooseNode::parseSessionKey(json_t *json) {
   char const *security_str;
   char const *signature_str;
   char const *data_str = nullptr;
+  std::size_t data_str_len;
   char const *data_base64 = nullptr;
-  ret = json_unpack_ex(json, &err, 0,                   //
-                       "{ s:i, s:s, s:s, s:?s, s:?s }", //
-                       "id", &id,                       //
-                       "security", &security_str,       //
-                       "signature", &signature_str,     //
-                       "string", &data_str,             //
-                       "base64", &data_base64);
+  std::size_t data_base64_len;
+  ret = json_unpack_ex(json, &err, 0,                      //
+                       "{ s:i, s:s, s:s, s:?s%, s:?s% }",  //
+                       "id", &id,                          //
+                       "security", &security_str,          //
+                       "signature", &signature_str,        //
+                       "string", &data_str, &data_str_len, //
+                       "base64", &data_base64, &data_base64_len);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
@@ -768,13 +772,13 @@ void GooseNode::parseSessionKey(json_t *json) {
   else
     throw RuntimeError("unknown signature algorithm {}", signature_str);
 
-  std::vector<uint8_t> data;
+  std::vector<std::byte> data;
   if (data_str && data_base64)
     throw RuntimeError(
         "can't use both 'base64' and 'string' for R-GOOSE key with id {}", id);
   else if (data_str) {
-    auto data_sv = std::string_view(data_str);
-    data = std::vector<uint8_t>(begin(data_sv), end(data_sv));
+    auto data_bytes = std::as_bytes(std::span{data_str, data_str_len});
+    data = std::vector(data_bytes.begin(), data_bytes.end());
   } else if (data_base64) {
     data = base64::decode(data_base64);
   } else {

@@ -16,8 +16,9 @@ using namespace villas::utils::base64;
 // cppcheck-suppress unknownMacro
 TestSuite(base64, .description = "Base64 En/decoder");
 
-static std::vector<byte> vec(const char *str) {
-  return std::vector<byte>((byte *)str, (byte *)str + strlen(str));
+static std::vector<std::byte> vec(const char *str) {
+  auto bytes = std::as_bytes(std::span{str, strlen(str)});
+  return std::vector<std::byte>(bytes.begin(), bytes.end());
 }
 
 Test(base64, encoding) {
