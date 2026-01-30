@@ -23,20 +23,6 @@
 #include <villas/config.hpp>
 #include <villas/fs.hpp>
 
-// Check assertion and exit if failed.
-#ifndef assert
-#define assert(exp)                                                            \
-  do {                                                                         \
-    if (!EXPECT(exp, 0))                                                       \
-      error("Assertion failed: '%s' in %s(), %s:%d", XSTR(exp), __FUNCTION__,  \
-            __BASE_FILE__, __LINE__);                                          \
-  } while (0)
-#endif
-
-// CPP stringification
-#define XSTR(x) STR(x)
-#define STR(x) #x
-
 #define CONCAT_DETAIL(x, y) x##y
 #define CONCAT(x, y) CONCAT_DETAIL(x, y)
 #define UNIQUE(x) CONCAT(x, __COUNTER__)
