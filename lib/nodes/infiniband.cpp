@@ -153,7 +153,7 @@ static int ib_connect_request(NodeCompat *n, struct rdma_cm_id *id) {
 int villas::node::ib_reverse(NodeCompat *n) {
   auto *ib = n->getData<struct infiniband>();
 
-  SWAP(ib->conn.src_addr, ib->conn.dst_addr);
+  std::swap(ib->conn.src_addr, ib->conn.dst_addr);
 
   return 0;
 }

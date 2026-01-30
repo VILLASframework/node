@@ -432,7 +432,7 @@ json_t *Node::toJson() const {
   return json_node;
 }
 
-void Node::swapSignals() { SWAP(in.signals, out.signals); }
+void Node::swapSignals() { std::swap(in.signals, out.signals); }
 
 Node *NodeFactory::make(json_t *json, const uuid_t &id,
                         const std::string &name) {

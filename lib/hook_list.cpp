@@ -132,7 +132,7 @@ int HookList::process(struct Sample *smps[], unsigned cnt) {
     }
 
   stop:
-    SWAP(smps[processed], smps[current]);
+    std::swap(smps[processed], smps[current]);
     processed++;
   skip: {}
   }
