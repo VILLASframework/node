@@ -30,13 +30,6 @@
 #define ALIGN_MASK(x, m) (((uintptr_t)(x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t)x)
 
-#define SWAP(x, y)                                                             \
-  do {                                                                         \
-    auto t = x;                                                                \
-    x = y;                                                                     \
-    y = t;                                                                     \
-  } while (0)
-
 // Round-up integer division
 #define CEIL(x, y) (((x) + (y)-1) / (y))
 

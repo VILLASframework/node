@@ -117,7 +117,7 @@ static void *kafka_loop_thread(void *ctx) {
 int villas::node::kafka_reverse(NodeCompat *n) {
   auto *k = n->getData<struct kafka>();
 
-  SWAP(k->produce, k->consume);
+  std::swap(k->produce, k->consume);
 
   return 0;
 }

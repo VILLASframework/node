@@ -804,7 +804,7 @@ int villas::node::ngsi_reverse(NodeCompat *n) {
   auto *i = n->getData<struct ngsi>();
 
   n->swapSignals();
-  SWAP(i->in.signals, i->out.signals);
+  std::swap(i->in.signals, i->out.signals);
 
   return 0;
 }
