@@ -87,7 +87,7 @@ protected:
         outsmps[i]->sequence = insmps[i]->sequence;
         outsmps[i]->ts = insmps[i]->ts;
 
-        int len = MIN(insmps[i]->length, outsmps[i]->capacity);
+        int len = std::min(insmps[i]->length, outsmps[i]->capacity);
         memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LENGTH(len));
 
         outsmps[i]->length = len;

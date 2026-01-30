@@ -205,7 +205,8 @@ int villas::node::stats_node_read(NodeCompat *n, struct Sample *const smps[],
 
   s->task.wait();
 
-  unsigned len = MIN(list_length(&s->signals), smps[0]->capacity);
+  unsigned len = std::min(static_cast<unsigned>(list_length(&s->signals)),
+                          smps[0]->capacity);
 
   for (size_t i = 0; i < len; i++) {
     struct stats_node_signal *sig =

@@ -28,8 +28,8 @@ public:
 
     auto *json_sigs = json_array();
 
-    for (size_t i = 0; i < MIN(api_node->getOutputSignals()->size(),
-                               api_node->write.channels.size());
+    for (size_t i = 0; i < std::min(api_node->getOutputSignals()->size(),
+                                    api_node->write.channels.size());
          i++) {
       auto sig = api_node->getOutputSignals()->at(i);
       auto ch = api_node->write.channels.at(i);
@@ -38,8 +38,8 @@ public:
       json_array_append(json_sigs, json_sig);
     }
 
-    for (size_t i = 0; i < MIN(api_node->getInputSignals()->size(),
-                               api_node->read.channels.size());
+    for (size_t i = 0; i < std::min(api_node->getInputSignals()->size(),
+                                    api_node->read.channels.size());
          i++) {
       auto sig = api_node->getInputSignals()->at(i);
       auto ch = api_node->read.channels.at(i);

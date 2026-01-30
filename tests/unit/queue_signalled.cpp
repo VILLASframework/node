@@ -18,7 +18,7 @@ using namespace villas::node;
 
 extern void init_memory();
 
-#define NUM_ELEM 1000
+constexpr static auto NUM_ELEM = 1000;
 
 struct param {
   enum QueueSignalledMode mode;
@@ -116,8 +116,9 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5,
 
   pthread_t t1, t2;
 
-  ret = queue_signalled_init(&q, std::bit_ceil(NUM_ELEM), &memory::heap,
-                             param->mode, param->flags);
+  ret = queue_signalled_init(&q,
+                             std::bit_ceil(static_cast<std::size_t>(NUM_ELEM)),
+                             &memory::heap, param->mode, param->flags);
   cr_assert_eq(ret, 0, "Failed to initialize queue: mode=%d, flags=%#x, ret=%d",
                (int)param->mode, param->flags, ret);
 

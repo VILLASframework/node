@@ -532,7 +532,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
     const size_t bytes_requested = cnt * villas_sample_size;
 
     ret = read(comedi_fileno(c->dev), c->bufptr,
-               MIN(bytes_requested, buffer_bytes_free));
+               std::min(bytes_requested, buffer_bytes_free));
     if (ret < 0) {
       if (errno == EAGAIN)
         throw RuntimeError("Failed read()");

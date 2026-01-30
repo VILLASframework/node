@@ -341,7 +341,7 @@ int villas::node::signal_node_read(NodeCompat *n, struct Sample *const smps[],
              (int)SampleFlags::HAS_SEQUENCE;
   t->ts.origin = ts;
   t->sequence = s->counter;
-  t->length = MIN(s->values, t->capacity);
+  t->length = std::min(s->values, t->capacity);
   t->signals = n->getInputSignals(false);
 
   for (unsigned i = 0; i < t->length; i++) {

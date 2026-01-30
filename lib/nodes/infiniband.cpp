@@ -25,7 +25,7 @@ using namespace villas::utils;
 
 static int ib_disconnect(NodeCompat *n) {
   auto *ib = n->getData<struct infiniband>();
-  struct ibv_wc wc[MAX(ib->recv_cq_size, ib->send_cq_size)];
+  struct ibv_wc wc[std::max(ib->recv_cq_size, ib->send_cq_size)];
   int wcs;
 
   n->logger->debug("Starting to clean up");

@@ -33,29 +33,6 @@
 // Round-up integer division
 #define CEIL(x, y) (((x) + (y)-1) / (y))
 
-// Return the bigger value
-#ifdef MAX
-#undef MAX
-#endif
-#define MAX(a, b)                                                              \
-  ({                                                                           \
-    __typeof__(a) _a = (a);                                                    \
-    __typeof__(b) _b = (b);                                                    \
-    _a > _b ? _a : _b;                                                         \
-  })
-
-// Return the smaller value
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a, b)                                                              \
-  ({                                                                           \
-    __typeof__(a) _a = (a);                                                    \
-    __typeof__(b) _b = (b);                                                    \
-    _a < _b ? _a : _b;                                                         \
-  })
-#define MIN3(a, b, c) MIN(MIN((a), (b)), (c))
-
 #ifndef offsetof
 #define offsetof(type, member) __builtin_offsetof(type, member)
 #endif

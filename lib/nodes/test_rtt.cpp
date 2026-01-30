@@ -274,11 +274,11 @@ int TestRTT::parse(json_t *json) {
 
         switch (mode) {
         case Mode::MIN:
-          count_effective = MIN(count, count_duration);
+          count_effective = std::min(count, count_duration);
           break;
 
         case Mode::MAX:
-          count_effective = MAX(count, count_duration);
+          count_effective = std::max(count, count_duration);
           break;
 
         case Mode::STOP_COUNT:
