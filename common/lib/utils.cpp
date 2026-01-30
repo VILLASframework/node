@@ -364,13 +364,5 @@ void write_to_file(std::string data, const fs::path file) {
   }
 }
 
-std::vector<std::string> read_names_in_directory(const fs::path &directory) {
-  std::vector<std::string> names;
-  for (auto const &dir_entry : fs::directory_iterator{directory}) {
-    names.push_back(dir_entry.path().filename());
-  }
-  return names;
-}
-
 } // namespace utils
 } // namespace villas
