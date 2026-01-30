@@ -116,7 +116,7 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5,
 
   pthread_t t1, t2;
 
-  ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory::heap,
+  ret = queue_signalled_init(&q, std::bit_ceil(NUM_ELEM), &memory::heap,
                              param->mode, param->flags);
   cr_assert_eq(ret, 0, "Failed to initialize queue: mode=%d, flags=%#x, ret=%d",
                (int)param->mode, param->flags, ret);

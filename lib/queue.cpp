@@ -44,7 +44,7 @@ int villas::node::queue_init(struct CQueue *q, size_t size,
   // Queue size must be 2 exponent
   if (!IS_POW2(size)) {
     size_t old_size = size;
-    size = LOG2_CEIL(size);
+    size = std::bit_ceil(size);
 
     auto logger = Log::get("queue");
     logger->warn("A queue size was changed from {} to {}", old_size, size);

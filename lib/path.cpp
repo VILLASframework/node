@@ -444,7 +444,7 @@ void Path::check() {
                        this->toString());
 
   if (!IS_POW2(queuelen)) {
-    queuelen = LOG2_CEIL(queuelen);
+    queuelen = std::bit_ceil(queuelen);
     logger->warn("Queue length should always be a power of 2. Adjusting to {}",
                  queuelen);
   }
