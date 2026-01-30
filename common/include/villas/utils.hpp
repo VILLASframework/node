@@ -9,10 +9,11 @@
 #pragma once
 
 #include <cassert>
-#include <cstdint>
 #include <cstdlib>
 #include <list>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <openssl/sha.h>
@@ -135,10 +136,8 @@ std::vector<std::string> read_names_in_directory(const fs::path &directory);
 
 namespace base64 {
 
-using byte = std::uint8_t;
-
-std::string encode(const std::vector<byte> &input);
-std::vector<byte> decode(const std::string &input);
+std::string encode(std::span<const std::byte> input);
+std::vector<std::byte> decode(std::string_view input);
 
 } // namespace base64
 } // namespace utils
