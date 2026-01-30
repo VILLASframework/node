@@ -23,17 +23,6 @@
 
 #define LIST_CHUNKSIZE 16
 
-// Static list initialization
-#define LIST_INIT_STATIC(l)                                                    \
-  __attribute__((constructor(105))) static void UNIQUE(__ctor)() {             \
-    int ret __attribute__((unused));                                           \
-    ret = list_init(l);                                                        \
-  }                                                                            \
-  __attribute__((destructor(105))) static void UNIQUE(__dtor)() {              \
-    int ret __attribute__((unused));                                           \
-    ret = list_destroy(l, nullptr, false);                                     \
-  }
-
 #define list_length(list) ((list)->length)
 #define list_at_safe(list, index)                                              \
   ((list)->length > index ? (list)->array[index] : nullptr)
