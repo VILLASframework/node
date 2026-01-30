@@ -46,11 +46,6 @@ namespace utils {
 std::vector<std::string> tokenize(const std::string &s,
                                   const std::string &delimiter);
 
-template <typename T> void assertExcept(bool condition, const T &exception) {
-  if (not condition)
-    throw exception;
-}
-
 // Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM.
 int signalsInit(void (*cb)(int signal, siginfo_t *sinfo, void *ctx),
                 std::list<int> cbSignals = {},
