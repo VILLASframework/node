@@ -58,13 +58,9 @@ std::vector<villas::kernel::devices::IpDevice>
 IpDevice::from_directory(fs::path devices_directory) {
   std::vector<villas::kernel::devices::IpDevice> devices;
 
-  const std::vector<std::string> devicetree_names =
-      villas::utils::read_names_in_directory(devices_directory);
-
-  for (auto devicetree_name : devicetree_names) {
-    auto path_to_device = devices_directory / fs::path(devicetree_name);
+  for (auto devicetree : fs::directory_iterator{devices_directory}) {
     try {
-      auto device = villas::kernel::devices::IpDevice::from(path_to_device);
+      auto device = villas::kernel::devices::IpDevice::from(devicetree.path());
       devices.push_back(device);
     } catch (std::runtime_error &e) {
     }
