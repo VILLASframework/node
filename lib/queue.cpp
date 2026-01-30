@@ -42,7 +42,7 @@ using namespace villas;
 int villas::node::queue_init(struct CQueue *q, size_t size,
                              struct memory::Type *m) {
   // Queue size must be 2 exponent
-  if (!IS_POW2(size)) {
+  if (!std::has_single_bit(size)) {
     size_t old_size = size;
     size = std::bit_ceil(size);
 
