@@ -23,14 +23,6 @@
 #include <villas/config.hpp>
 #include <villas/fs.hpp>
 
-#ifdef __GNUC__
-#define LIKELY(x) __builtin_expect((x), 1)
-#define UNLIKELY(x) __builtin_expect((x), 0)
-#else
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
-#endif
-
 // Check assertion and exit if failed.
 #ifndef assert
 #define assert(exp)                                                            \
