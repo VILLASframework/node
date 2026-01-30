@@ -642,7 +642,7 @@ int villas::node::websocket_poll_fds(NodeCompat *n, int fds[]) {
   return 1;
 }
 
-__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+__attribute__((constructor(110))) static void register_plugin() {
   p.name = "websocket";
   p.description =
       "Send and receive samples of a WebSocket connection (libwebsockets)";

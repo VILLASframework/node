@@ -23,10 +23,6 @@
 #include <villas/config.hpp>
 #include <villas/fs.hpp>
 
-#define CONCAT_DETAIL(x, y) x##y
-#define CONCAT(x, y) CONCAT_DETAIL(x, y)
-#define UNIQUE(x) CONCAT(x, __COUNTER__)
-
 #ifdef ALIGN
 #undef ALIGN
 #endif
