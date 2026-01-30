@@ -163,7 +163,8 @@ SignalList::Ptr NodeDirection::getSignals(int after_hooks) const {
 unsigned NodeDirection::getSignalsMaxCount() const {
 #ifdef WITH_HOOKS
   if (hooks.size() > 0)
-    return MAX(signals->size(), hooks.getSignalsMaxCount());
+    return std::max(static_cast<unsigned>(signals->size()),
+                    hooks.getSignalsMaxCount());
 #endif // WITH_HOOKS
 
   return signals->size();

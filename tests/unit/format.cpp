@@ -105,7 +105,7 @@ void cr_assert_eq_sample(struct Sample *a, struct Sample *b, int flags) {
   }
 
   if (flags & (int)SampleFlags::HAS_DATA) {
-    for (unsigned j = 0; j < MIN(a->length, b->length); j++) {
+    for (unsigned j = 0; j < std::min(a->length, b->length); j++) {
       cr_assert_eq(sample_format(a, j), sample_format(b, j));
 
       switch (sample_format(b, j)) {
@@ -159,7 +159,7 @@ void cr_assert_eq_sample_raw(struct Sample *a, struct Sample *b, int flags,
   }
 
   if (flags & (int)SampleFlags::HAS_DATA) {
-    for (unsigned j = 0; j < MIN(a->length, b->length); j++) {
+    for (unsigned j = 0; j < std::min(a->length, b->length); j++) {
       cr_assert_eq(sample_format(a, j), sample_format(b, j));
 
       switch (sample_format(b, j)) {

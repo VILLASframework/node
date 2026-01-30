@@ -273,7 +273,10 @@ int FpgaNode::fastRead(Sample *smps[], unsigned cnt) {
   // We assume a lot without checking at this point. All for the latency!
 
   smp->length = 0;
-  for (unsigned i = 0; i < MIN(read / sizeof(uint32_t), smp->capacity); i++) {
+  for (unsigned i = 0;
+       i <
+       std::min(static_cast<unsigned>(read / sizeof(uint32_t)), smp->capacity);
+       i++) {
     if (i >= in.signals->size()) {
       logger->warn(
           "Received more data than expected. Maybe the descriptor cache needs "
@@ -317,7 +320,7 @@ int FpgaNode::slowRead(Sample *smps[], unsigned cnt) {
   auto mem = MemoryAccessor<float>(*blockRx);
 
   smp->length = 0;
-  for (unsigned i = 0; i < MIN(read, smp->capacity); i++) {
+  for (unsigned i = 0; i < std::min(read, smp->capacity); i++) {
     smp->data[i].f = static_cast<double>(mem[i]);
     smp->length++;
   }

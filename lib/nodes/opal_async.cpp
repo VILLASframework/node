@@ -322,7 +322,7 @@ int OpalAsyncNode::_write(struct Sample *smps[], unsigned cnt) {
   } else
     realLen = smp->length;
 
-  for (unsigned i = 0; i < MIN(realLen, smp->signals->size()); i++) {
+  for (unsigned i = 0; i < std::min(realLen, smp->signals->size()); i++) {
     auto sig = smp->signals->getByIndex(i);
     data[i] = smp->data[i].cast(sig->type, SignalType::FLOAT).f;
   }

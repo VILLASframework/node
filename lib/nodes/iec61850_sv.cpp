@@ -33,7 +33,8 @@ using namespace villas::node;
 static unsigned iec61850_sv_setup_asdu(NodeCompat *n, struct Sample *smp) {
   auto *i = n->getData<struct iec61850_sv>();
 
-  unsigned new_length = MIN(list_length(&i->out.signals), smp->length);
+  unsigned new_length = std::min(
+      static_cast<unsigned>(list_length(&i->out.signals)), smp->length);
 
   SVPublisher_ASDU_resetBuffer(i->out.asdu);
   SVPublisher_ASDU_enableRefrTm(i->out.asdu);
@@ -78,7 +79,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
 
   const char *sv_id = SVSubscriber_ASDU_getSvId(asdu);
   int smp_cnt = SVSubscriber_ASDU_getSmpCnt(asdu);
-  size_t data_size = (size_t)SVSubscriber_ASDU_getDataSize(asdu);
+  unsigned data_size = SVSubscriber_ASDU_getDataSize(asdu);
 
   n->logger->debug("Received sample: sv_id={}, smp_cnt={}", sv_id, smp_cnt);
 
@@ -101,9 +102,10 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx,
     smp->flags |= (int)SampleFlags::HAS_TS_ORIGIN;
   }
 
-  for (size_t j = 0, off = 0;
-       j < MIN(list_length(&i->in.signals), smp->capacity) &&
-       off < MIN(i->in.total_size, data_size);
+  for (unsigned j = 0, off = 0;
+       j < std::min(static_cast<unsigned>(list_length(&i->in.signals)),
+                    smp->capacity) &&
+       off < std::min(i->in.total_size, data_size);
        j++) {
     struct iec61850_type_descriptor *td =
         (struct iec61850_type_descriptor *)list_at(&i->in.signals, j);
@@ -453,7 +455,8 @@ int villas::node::iec61850_sv_write(NodeCompat *n, struct Sample *const smps[],
   for (unsigned j = 0; j < cnt; j++) {
     auto *smp = smps[j];
 
-    unsigned asdu_length = MIN(smp->length, list_length(&i->out.signals));
+    unsigned asdu_length = std::min(
+        smp->length, static_cast<unsigned>(list_length(&i->out.signals)));
     if (i->out.asdu_length != asdu_length)
       i->out.asdu_length = iec61850_sv_setup_asdu(n, smp);
 

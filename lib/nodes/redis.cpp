@@ -598,7 +598,8 @@ int villas::node::redis_write(NodeCompat *n, struct Sample *const smps[],
 
     std::unordered_map<std::string, std::string> kvs;
 
-    unsigned len = MIN(smp->signals->size(), smp->length);
+    unsigned len =
+        std::min(static_cast<unsigned>(smp->signals->size()), smp->length);
     for (unsigned j = 0; j < len; j++) {
       const auto sig = smp->signals->getByIndex(j);
       const auto *data = &smp->data[j];

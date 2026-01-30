@@ -66,8 +66,9 @@ int villas::node::msg_to_sample(const struct Message *msg, struct Sample *smp,
   if (ret)
     return ret;
 
-  unsigned len = MIN(msg->length, smp->capacity);
-  for (i = 0; i < MIN(len, sigs->size()); i++) {
+  unsigned len = std::min({static_cast<unsigned>(msg->length),
+                           static_cast<unsigned>(sigs->size()), smp->capacity});
+  for (i = 0; i < len; i++) {
     auto sig = sigs->getByIndex(i);
     if (!sig)
       return -1;

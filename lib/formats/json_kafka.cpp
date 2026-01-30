@@ -58,7 +58,8 @@ int JsonKafkaFormat::packSample(json_t **json_smp, const struct Sample *smp) {
   }
 
   // Include sample data
-  for (size_t i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
+  for (size_t i = 0;
+       i < std::min(std::size_t{smp->length}, smp->signals->size()); i++) {
     const auto sig = smp->signals->getByIndex(i);
     const auto *data = &smp->data[i];
 

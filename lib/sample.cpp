@@ -136,7 +136,7 @@ int villas::node::sample_decref(struct Sample *s) {
 }
 
 int villas::node::sample_copy(struct Sample *dst, const struct Sample *src) {
-  dst->length = MIN(src->length, dst->capacity);
+  dst->length = std::min(src->length, dst->capacity);
 
   dst->sequence = src->sequence;
   dst->flags = src->flags;

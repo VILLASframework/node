@@ -297,7 +297,7 @@ void Path::prepare(NodeList &nodes) {
 
   // Prepare pool
   auto osigs = getOutputSignals();
-  unsigned pool_size = MAX(1UL, destinations.size()) * queuelen;
+  unsigned pool_size = std::max(1UL, destinations.size()) * queuelen;
 
   ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(osigs->size()), pool_mt);
   if (ret)
@@ -647,7 +647,8 @@ SignalList::Ptr Path::getOutputSignals(bool after_hooks) {
 unsigned Path::getOutputSignalsMaxCount() {
 #ifdef WITH_HOOKS
   if (hooks.size() > 0)
-    return MAX(signals->size(), hooks.getSignalsMaxCount());
+    return std::max(static_cast<unsigned>(signals->size()),
+                    hooks.getSignalsMaxCount());
 #endif // WITH_HOOKS
 
   return signals->size();

@@ -586,7 +586,8 @@ void SlaveNode::sendPeriodicASDUsForSample(Sample const *sample) const
   for (auto const &type : output.asdu_types) {
     // Search all occurrences of this ASDU type
     for (unsigned signal = 0;
-         signal < MIN(sample->length, output.mapping.size());) {
+         signal < std::min(sample->length,
+                           static_cast<unsigned>(output.mapping.size()));) {
       // Create an ASDU for periodic transmission
       CS101_ASDU asdu = CS101_ASDU_create(server.asdu_app_layer_parameters, 0,
                                           CS101_COT_PERIODIC, 0,
@@ -618,7 +619,8 @@ void SlaveNode::sendPeriodicASDUsForSample(Sample const *sample) const
                                                        timestamp}) == false)
           // ASDU is full -> dispatch -> create a new one
           break;
-      } while (++signal < MIN(sample->length, output.mapping.size()));
+      } while (++signal < std::min(sample->length, static_cast<unsigned>(
+                                                       output.mapping.size())));
 
       if (CS101_ASDU_getNumberOfElements(asdu) != 0)
         CS104_Slave_enqueueASDU(server.slave, asdu);
@@ -637,7 +639,9 @@ int SlaveNode::_write(Sample *samples[], unsigned sample_count) {
 
     // Update last_values
     output.last_values_mutex.lock();
-    for (unsigned i = 0; i < MIN(sample->length, output.last_values.size());
+    for (unsigned i = 0;
+         i < std::min(sample->length,
+                      static_cast<unsigned>(output.last_values.size()));
          i++)
       output.last_values[i] = sample->data[i];
 

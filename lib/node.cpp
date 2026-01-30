@@ -271,7 +271,7 @@ int Node::read(struct Sample *smps[], unsigned cnt) {
     vect = cnt;
 
   while (cnt - nread > 0) {
-    toread = MIN(cnt - nread, vect);
+    toread = std::min(cnt - nread, vect);
     readd = _read(&smps[nread], toread);
     if (readd < 0)
       return readd;
@@ -325,7 +325,7 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
     vect = cnt;
 
   while (cnt > static_cast<unsigned>(nsent)) {
-    tosend = MIN(cnt - nsent, vect);
+    tosend = std::min(cnt - nsent, vect);
     sent = _write(&smps[nsent], tosend);
     if (sent < 0)
       return sent;
