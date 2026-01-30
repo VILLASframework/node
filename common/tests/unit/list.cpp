@@ -38,10 +38,10 @@ Test(list, list_search) {
   cr_assert_eq(ret, 0);
 
   // Fill list
-  for (unsigned i = 0; i < ARRAY_LEN(nouns); i++)
+  for (unsigned i = 0; i < std::size(nouns); i++)
     list_push(&l, (void *)nouns[i]);
 
-  cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
+  cr_assert_eq(list_length(&l), std::size(nouns));
 
   // Declare on stack!
   char positive[] = "woman";

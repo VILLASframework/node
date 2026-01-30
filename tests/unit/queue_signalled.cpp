@@ -48,7 +48,7 @@ static void *consumer(void *ctx) {
   void *data[NUM_ELEM];
 
   for (intptr_t i = 0; i < NUM_ELEM;) {
-    ret = queue_signalled_pull_many(q, data, ARRAY_LEN(data));
+    ret = queue_signalled_pull_many(q, data, std::size(data));
     if (ret <= 0)
       return (void *)1; // Indicates an error to the parent thread
 
@@ -104,7 +104,7 @@ ParameterizedTestParameters(queue_signalled, simple) {
 #endif
   };
 
-  return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+  return cr_make_param_array(struct param, params, std::size(params));
 }
 
 // cppcheck-suppress unknownMacro
