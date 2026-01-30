@@ -33,9 +33,6 @@
 // Round-up integer division
 #define CEIL(x, y) (((x) + (y)-1) / (y))
 
-// Get nearest up-rounded power of 2
-#define LOG2_CEIL(x) (1 << (villas::utils::log2i((x)-1) + 1))
-
 // Check if the number is a power of 2
 #define IS_POW2(x) (((x) != 0) && !((x) & ((x)-1)))
 
