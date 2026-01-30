@@ -135,19 +135,6 @@ Test(utils, ceil) {
   cr_assert_eq(CEIL(4, 3), 2);
 }
 
-Test(utils, is_pow2) {
-  // Positive
-  cr_assert(IS_POW2(1));
-  cr_assert(IS_POW2(2));
-  cr_assert(IS_POW2(64));
-
-  // Negative
-  cr_assert(!IS_POW2(0));
-  cr_assert(!IS_POW2(3));
-  cr_assert(!IS_POW2(11111));
-  cr_assert(!IS_POW2(-1));
-}
-
 Test(utils, strf) {
   char *buf = nullptr;
 

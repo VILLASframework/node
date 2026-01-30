@@ -443,7 +443,7 @@ void Path::check() {
     throw RuntimeError("Setting 'rate' of path {} must be a positive number.",
                        this->toString());
 
-  if (!IS_POW2(queuelen)) {
+  if (!std::has_single_bit(queuelen)) {
     queuelen = std::bit_ceil(queuelen);
     logger->warn("Queue length should always be a power of 2. Adjusting to {}",
                  queuelen);
