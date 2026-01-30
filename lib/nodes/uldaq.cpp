@@ -92,7 +92,7 @@ static const struct {
                      {"external", SO_EXTCLOCK}};
 
 static AiInputMode uldaq_parse_input_mode(const char *str) {
-  for (unsigned i = 0; i < ARRAY_LEN(input_modes); i++) {
+  for (unsigned i = 0; i < std::size(input_modes); i++) {
     if (!strcmp(input_modes[i].name, str))
       return input_modes[i].mode;
   }
@@ -101,7 +101,7 @@ static AiInputMode uldaq_parse_input_mode(const char *str) {
 }
 
 static DaqDeviceInterface uldaq_parse_interface_type(const char *str) {
-  for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
+  for (unsigned i = 0; i < std::size(interface_types); i++) {
     if (!strcmp(interface_types[i].name, str))
       return interface_types[i].interface;
   }
@@ -110,7 +110,7 @@ static DaqDeviceInterface uldaq_parse_interface_type(const char *str) {
 }
 
 static const char *uldaq_print_interface_type(DaqDeviceInterface iftype) {
-  for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
+  for (unsigned i = 0; i < std::size(interface_types); i++) {
     if (interface_types[i].interface == iftype)
       return interface_types[i].name;
   }
@@ -119,7 +119,7 @@ static const char *uldaq_print_interface_type(DaqDeviceInterface iftype) {
 }
 
 static Range uldaq_parse_range(const char *str) {
-  for (unsigned i = 0; i < ARRAY_LEN(ranges); i++) {
+  for (unsigned i = 0; i < std::size(ranges); i++) {
     if (!strcmp(ranges[i].name, str))
       return ranges[i].range;
   }
@@ -128,7 +128,7 @@ static Range uldaq_parse_range(const char *str) {
 }
 
 static ScanOption uldaq_parse_clock_source(const char *str) {
-  for (unsigned i = 0; i < ARRAY_LEN(clock_sources); i++) {
+  for (unsigned i = 0; i < std::size(clock_sources); i++) {
     if (!strcmp(clock_sources[i].name, str))
       return clock_sources[i].clock_source;
   }

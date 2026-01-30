@@ -145,7 +145,7 @@ int Node::parse(json_t *json) {
 
   const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};
 
-  for (unsigned j = 0; j < ARRAY_LEN(dirs); j++) {
+  for (unsigned j = 0; j < std::size(dirs); j++) {
     json_t *json_dir = json_object_get(json, dirs[j].str);
 
     // Skip if direction is unused
@@ -154,7 +154,7 @@ int Node::parse(json_t *json) {
     }
 
     // Copy missing fields from main node config to direction config
-    for (unsigned i = 0; i < ARRAY_LEN(fields); i++) {
+    for (unsigned i = 0; i < std::size(fields); i++) {
       json_t *json_field_dir = json_object_get(json_dir, fields[i]);
       json_t *json_field_node = json_object_get(json, fields[i]);
 

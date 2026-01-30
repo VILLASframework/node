@@ -260,7 +260,7 @@ ParameterizedTestParameters(queue, multi_threaded) {
                                    .batch_size = 10,
                                    .mt = &memory::mmap_hugetlb}};
 
-  return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+  return cr_make_param_array(struct param, params, std::size(params));
 }
 
 // cppcheck-suppress unknownMacro

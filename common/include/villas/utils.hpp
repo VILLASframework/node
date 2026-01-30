@@ -33,9 +33,6 @@
 // Round-up integer division
 #define CEIL(x, y) (((x) + (y)-1) / (y))
 
-// Calculate the number of elements in an array.
-#define ARRAY_LEN(a) (sizeof(a) / sizeof(a)[0])
-
 // Return the bigger value
 #ifdef MAX
 #undef MAX

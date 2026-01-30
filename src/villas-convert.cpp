@@ -37,7 +37,7 @@ public:
     if (ret)
       throw RuntimeError("Failed to initialize memory");
 
-    for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+    for (unsigned i = 0; i < std::size(dirs); i++) {
       dirs[i].name = i == 0 ? "in" : "out";
       dirs[i].format = "villas.human";
     }
@@ -108,7 +108,7 @@ protected:
   int main() override {
     int ret;
 
-    for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+    for (unsigned i = 0; i < std::size(dirs); i++) {
       json_t *json_format;
       json_error_t err;
       std::string format = dirs[i].format;
@@ -150,7 +150,7 @@ protected:
       dirs[1].formatter->print(stdout, smps, ret);
     }
 
-    for (unsigned i = 0; i < ARRAY_LEN(dirs); i++)
+    for (unsigned i = 0; i < std::size(dirs); i++)
       delete dirs[i].formatter;
 
     return 0;

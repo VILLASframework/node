@@ -651,7 +651,7 @@ int villas::node::ngsi_start(NodeCompat *n) {
 
   CURL *handles[] = {i->in.curl, i->out.curl};
 
-  for (unsigned p = 0; p < ARRAY_LEN(handles); p++) {
+  for (unsigned p = 0; p < std::size(handles); p++) {
     curl_easy_setopt(handles[p], CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
     curl_easy_setopt(handles[p], CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
     curl_easy_setopt(handles[p], CURLOPT_HTTPHEADER, i->headers);
