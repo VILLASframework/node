@@ -182,8 +182,8 @@ MemoryTranslation::operator+=(const MemoryTranslation &other) {
   logger->debug("other_src_high: {:#x}", other_src_high);
 
   // Make sure there is a common memory area
-  assertExcept(other.src < this_dst_high, MemoryManager::InvalidTranslation());
-  assertExcept(this->dst < other_src_high, MemoryManager::InvalidTranslation());
+  if (other.src < this_dst_high or this->dst < other_src_high)
+    throw MemoryManager::InvalidTranslation();
 
   const uintptr_t hi = std::max(this_dst_high, other_src_high);
   const uintptr_t lo = std::min(this->dst, other.src);
