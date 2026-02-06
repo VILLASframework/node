@@ -48,6 +48,8 @@ struct delta_sharing {
       shares;
 
   enum class TableOp { TABLE_NOOP, TABLE_READ, TABLE_WRITE } table_op;
+
+  size_t current_row;
 };
 
 char *deltaSharing_print(NodeCompat *n);

@@ -15,6 +15,7 @@
 #include <arrow/array/array_base.h>
 #include <arrow/array/array_binary.h>
 #include <arrow/builder.h>
+#include <arrow/scalar.h>
 #include <arrow/table.h>
 #include <arrow/type.h>
 #include <arrow/type_fwd.h>
@@ -27,6 +28,8 @@
 #include <villas/nodes/delta_sharing/functions.hpp>
 #include <villas/nodes/delta_sharing/protocol.hpp>
 #include <villas/timing.hpp>
+
+#include "villas/log.hpp"
 
 using namespace villas;
 using namespace villas::node;
@@ -152,6 +155,7 @@ int villas::node::deltaSharing_init(NodeCompat *n) {
   // d->cache_dir = "";
   // d->table_path = "";
   d->batch_size = 0;
+  d->current_row = 0;
 
   d->client.reset();
   d->table_ptr.reset();
@@ -226,12 +230,12 @@ int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
       d->table_ptr = d->client->LoadAsArrowTable(files->at(0).url);
 
       if (!d->table_ptr) {
-        n->logger->error("Failed to laod table from Delta Sharing server");
+        n->logger->error("Failed to load table from Delta Sharing server");
+        return -1;
       }
     }
 
-    unsigned samples_read = 0;
-    auto num_rows = d->table_ptr->num_rows();
+    unsigned num_rows = d->table_ptr->num_rows();
     unsigned num_cols = d->table_ptr->num_columns();
 
     auto signals = n->getInputSignals(false);
@@ -240,54 +244,74 @@ int villas::node::deltaSharing_read(NodeCompat *n, struct Sample *const smps[],
       return -1;
     }
 
-    for (unsigned i = 0; i < cnt && i < num_rows; i++) {
-      auto *smp = smps[i];
-      n->logger->info("Row name {}", d->table_ptr->ColumnNames().at(3));
-      smp->length = signals->size();
-      smp->capacity = signals->size();
+    unsigned samples_read = 0;
+    while (samples_read < cnt && d->current_row < num_rows) {
+      auto *smp = smps[samples_read];
+      // Set smp length and capacity to the number of columns in the table.
+      smp->length = d->table_ptr->num_columns();
+      smp->capacity = d->table_ptr->num_columns();
       smp->ts.origin = time_now();
+      smp->flags = (int)SampleFlags::HAS_DATA;
+      smp->sequence = d->current_row;
 
       for (unsigned col = 0; col < num_cols && col < signals->size(); col++) {
         auto chunked_array = d->table_ptr->column(col);
-        auto first_chunk = chunked_array->chunk(0);
-        switch (first_chunk->type_id()) {
+        auto scalar_result = chunked_array->GetScalar(d->current_row);
+
+        if (!scalar_result.ok()) {
+          n->logger->warn("Failed to get scalar at row {}, col {}: {}",
+                          d->current_row, col,
+                          scalar_result.status().ToString());
+          continue;
+        }
+
+        auto scalar = *scalar_result;
+        auto sig_type = signals->at(col)->type;
+
+        switch (scalar->type->id()) {
         case arrow::Type::DOUBLE: {
-          auto double_array =
-              std::static_pointer_cast<arrow::DoubleArray>(first_chunk);
-          smp->data[col].f = double_array->Value(i);
+          auto double_scalar =
+              std::static_pointer_cast<arrow::DoubleScalar>(scalar)->value;
+          smp->data[col].f = double_scalar;
           break;
         }
         case arrow::Type::FLOAT: {
-          auto float_array =
-              std::static_pointer_cast<arrow::FloatArray>(first_chunk);
-          smp->data[col].f = float_array->Value(i);
+          auto float_scalar =
+              std::static_pointer_cast<arrow::FloatScalar>(scalar)->value;
+          smp->data[col].f = float_scalar;
+          break;
         }
         case arrow::Type::INT64: {
-          auto int_array =
-              std::static_pointer_cast<arrow::Int64Array>(first_chunk);
-          smp->data[col].i = int_array->Value(i);
+          auto int64_scalar =
+              std::static_pointer_cast<arrow::Int64Scalar>(scalar)->value;
+          smp->data[col].f = int64_scalar;
           break;
         }
         case arrow::Type::INT32: {
-          auto int_array =
-              std::static_pointer_cast<arrow::Int32Array>(first_chunk);
-          smp->data[col].i = int_array->Value(i);
+          auto int32_scalar =
+              std::static_pointer_cast<arrow::Int32Scalar>(scalar)->value;
+          smp->data[col].f = int32_scalar;
           break;
         }
-        /* case arrow::Type::STRING: {
-          auto string_array =
-              std::static_pointer_cast<arrow::StringArray>(first_chunk);
-          smp->data[col].
-          } */
         default:
-          n->logger->warn("Unsupported data type for column {}", col);
-          smp->data[col].f = 0.0;
+          n->logger->warn("Unsupported arrow data type for column {}", col);
+          if (sig_type == SignalType::FLOAT)
+            smp->data[col].f = 0.0;
+          else if (sig_type == SignalType::INTEGER)
+            smp->data[col].i = 0;
         }
       }
+      d->current_row++;
       samples_read++;
     }
 
-    n->logger->debug("Read {} samples from Delta Sharing table", samples_read);
+    if (samples_read < cnt && d->current_row >= num_rows) {
+      n->logger->info("End of table reached at row {}", d->current_row);
+    }
+
+    n->logger->debug(
+        "Read {} samples from Delta Sharing table (current row: {})",
+        samples_read, d->current_row);
     return samples_read;
   } catch (const std::exception &e) {
     n->logger->error("Error reading from Delta Sharing table: {}", e.what());
