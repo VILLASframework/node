@@ -445,9 +445,13 @@ void GooseNode::createPublishers() {
 
       ctx.publisher =
           GoosePublisher_createEx(&comm, output.interface_id.c_str(), false);
+      if (!ctx.publisher)
+        throw RuntimeError{"failed to create GOOSE publisher"};
     } else {
       ctx.publisher =
           GoosePublisher_createRemote(output.session, ctx.config.app_id);
+      if (!ctx.publisher)
+        throw RuntimeError{"failed to create R-GOOSE publisher"};
     }
 
     if (!ctx.config.go_id.empty())
