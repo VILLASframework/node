@@ -625,7 +625,8 @@ if ! cmake --find-package -DNAME=Arrow -DCOMPILER_ID=GNU -DLANGUAGE-CXX -DMODE=E
           -DARROW_DATASET=ON \
           -DARROW_PARQUET=ON \
           -DPARQUET_BUILD_EXECUTABLES=OFF \
-          -DPARQUET_BUILD_EXAMPLES=OFF
+          -DPARQUET_BUILD_EXAMPLES=OFF \
+          -DARROW_WITH_SNAPPY=ON
     make ${MAKE_OPTS} install
     popd
 fi
