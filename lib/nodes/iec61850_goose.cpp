@@ -1065,6 +1065,8 @@ int GooseNode::prepare() {
 
   if (in.enabled) {
     createReceiver();
+  }
+  if (out.enabled) {
     createPublishers();
   }
 
