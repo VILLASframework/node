@@ -61,7 +61,7 @@ public:
 
     // Initialize memory
     unsigned pool_size =
-        std::bit_ceil(std::max(node->out.vectorize, node->in.vectorize));
+        std::bit_ceil(std::max({node->out.vectorize, node->in.vectorize, 16U}));
 
     int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH),
                         node->getMemoryType());
