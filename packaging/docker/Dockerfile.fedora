@@ -43,6 +43,7 @@ RUN pip install \
 RUN dnf -y install \
 	fmt-devel \
 	graphviz-devel \
+	grpc-devel \
 	hiredis-devel \
 	jansson-devel \
 	libconfig-devel \

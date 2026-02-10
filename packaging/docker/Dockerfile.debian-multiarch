@@ -41,6 +41,7 @@ RUN apt-get update && \
 	libconfig-dev:${ARCH} \
 	libcurl4-openssl-dev:${ARCH} \
 	libgraphviz-dev:${ARCH} \
+	libgrpc++-dev:${ARCH} \
 	libhiredis-dev:${ARCH} \
 	libibverbs-dev:${ARCH} \
 	libjansson-dev:${ARCH} \
@@ -58,6 +59,7 @@ RUN apt-get update && \
 	libssl-dev:${ARCH} \
 	libusb-1.0-0-dev:${ARCH} \
 	libzmq3-dev:${ARCH} \
+	protobuf-compiler-grpc:${ARCH} \
 	uuid-dev:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /

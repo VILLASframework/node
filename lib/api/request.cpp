@@ -25,7 +25,7 @@ std::string Request::toString() {
 
 Request *RequestFactory::create(Session *s, const std::string &uri,
                                 Session::Method meth, unsigned long ct) {
-  s->logger->info("Lookup request handler for: uri={}", uri);
+  s->logger->debug("Lookup request handler for: uri={}", uri);
 
   for (auto *rf : plugin::registry->lookup<RequestFactory>()) {
     std::smatch mr;
