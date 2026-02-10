@@ -744,7 +744,7 @@ int SlaveNode::parse(json_t *json) {
     size_t i;
     std::optional<ASDUData> last_data = std::nullopt;
 
-    json_array_foreach(json_signals, i, json_signal) {
+    json_array_foreach (json_signals, i, json_signal) {
       auto signal = signals ? signals->getByIndex(i) : Signal::Ptr{};
       auto asdu_data =
           ASDUData::parse(json_signal, last_data, duplicate_ioa_is_sequence);

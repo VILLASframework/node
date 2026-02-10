@@ -44,7 +44,7 @@ std::list<IpIdentifier> CoreFactory::parseIpIdentifier(json_t *json_ips) {
 
   const char *ipName;
   json_t *json_ip;
-  json_object_foreach(json_ips, ipName, json_ip) {
+  json_object_foreach (json_ips, ipName, json_ip) {
     const char *vlnv;
 
     json_error_t err;
@@ -168,7 +168,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
       const char *irqName;
       json_t *json_irq;
-      json_object_foreach(json_irqs, irqName, json_irq) {
+      json_object_foreach (json_irqs, irqName, json_irq) {
         const char *irqEntry = json_string_value(json_irq);
 
         auto tokens = utils::tokenize(irqEntry, ":");
@@ -223,7 +223,7 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
       // Now find all slave address spaces this master can access
       const char *bus_name;
       json_t *json_bus;
-      json_object_foreach(json_memory_view, bus_name, json_bus) {
+      json_object_foreach (json_memory_view, bus_name, json_bus) {
 
         // This IP has a memory view => it is a bus master somewhere
 
@@ -239,11 +239,11 @@ CoreFactory::configureIps(std::list<IpIdentifier> orderedIps, json_t *json_ips,
 
         const char *instance_name;
         json_t *json_instance;
-        json_object_foreach(json_bus, instance_name, json_instance) {
+        json_object_foreach (json_bus, instance_name, json_instance) {
 
           const char *block_name;
           json_t *json_block;
-          json_object_foreach(json_instance, block_name, json_block) {
+          json_object_foreach (json_instance, block_name, json_block) {
 
             json_int_t base, high, size;
             json_error_t err;

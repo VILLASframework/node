@@ -311,7 +311,7 @@ int villas::node::uldaq_parse(NodeCompat *n, json_t *json) {
   if (!u->in.queues)
     throw MemoryAllocationError();
 
-  json_array_foreach(json_signals, i, json_signal) {
+  json_array_foreach (json_signals, i, json_signal) {
     const char *range_str = nullptr, *input_mode_str = nullptr;
     int channel = -1, input_mode, range;
 

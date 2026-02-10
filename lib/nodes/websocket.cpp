@@ -570,7 +570,7 @@ int villas::node::websocket_parse(NodeCompat *n, json_t *json) {
                         "node-config-node-websocket-destinations",
                         "The 'destinations' setting must be an array of URLs");
 
-    json_array_foreach(json_dests, i, json_dest) {
+    json_array_foreach (json_dests, i, json_dest) {
       const char *uri, *prot, *ads, *path;
 
       uri = json_string_value(json_dest);

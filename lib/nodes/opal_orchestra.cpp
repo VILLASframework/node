@@ -363,7 +363,7 @@ public:
     json_t *json_signal;
     json_error_t err;
 
-    json_array_foreach(json, i, json_signal) {
+    json_array_foreach (json, i, json_signal) {
       auto signal = signals->getByIndex(i);
 
       const char *nme = nullptr;

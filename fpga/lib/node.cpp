@@ -30,7 +30,7 @@ void NodeFactory::parse(Core &ip, json_t *cfg) {
   if (json_ports && json_is_array(json_ports)) {
     size_t index;
     json_t *json_port;
-    json_array_foreach(json_ports, index, json_port) {
+    json_array_foreach (json_ports, index, json_port) {
       if (not json_is_object(json_port))
         throw ConfigError(json_port, "", "Port {} is not an object", index);
 

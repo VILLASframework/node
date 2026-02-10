@@ -65,7 +65,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d,
   if (!d->chanspecs)
     throw MemoryAllocationError();
 
-  json_array_foreach(json_chans, i, json_chan) {
+  json_array_foreach (json_chans, i, json_chan) {
     int num, range, aref;
     ret = json_unpack_ex(json_chan, &err, 0, "{ s: i, s: i, s: i }", "channel",
                          &num, "range", &range, "aref", &aref);
