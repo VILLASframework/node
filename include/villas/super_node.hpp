@@ -140,7 +140,7 @@ public:
 
   json_t *getConfig() { return config.root; }
 
-  const std::string &getConfigPath() const { return config.getConfigPath(); }
+  fs::path const &getConfigPath() const { return config.getConfigPath(); }
 
   int getAffinity() const { return affinity; }
 

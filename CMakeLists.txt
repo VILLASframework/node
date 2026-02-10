@@ -74,6 +74,7 @@ endif()
 # Check packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(nlohmann_json REQUIRED)
 find_package(OpenMP)
 find_package(IBVerbs)
 find_package(RDMACM)

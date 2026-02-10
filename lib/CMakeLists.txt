@@ -13,6 +13,7 @@ list(APPEND INCLUDE_DIRS
 
 set(LIBRARIES
     villas-common
+    nlohmann_json::nlohmann_json
     PkgConfig::JANSSON
     PkgConfig::UUID
     m
@@ -26,6 +27,7 @@ set(LIB_SRC
     config.cpp
     dumper.cpp
     format.cpp
+    json.cpp
     mapping.cpp
     mapping_list.cpp
     memory.cpp
