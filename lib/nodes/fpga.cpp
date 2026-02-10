@@ -221,9 +221,9 @@ int FpgaNode::start() {
 // If fastWrite receives less signals than expected, the previous data
 // will be reused for the remaining signals
 int FpgaNode::fastWrite(Sample *smps[], unsigned cnt) {
-  Sample *smp = smps[0];
-
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
+
+  Sample *smp = smps[0];
 
   for (unsigned i = 0; i < smp->length; i++) {
     if (smp->signals->getByIndex(i)->type == SignalType::FLOAT) {
@@ -340,10 +340,9 @@ int FpgaNode::_write(Sample *smps[], unsigned cnt) {
 }
 
 int FpgaNode::slowWrite(Sample *smps[], unsigned cnt) {
-  // unsigned int written;
-  Sample *smp = smps[0];
-
   assert(cnt == 1 && smps != nullptr && smps[0] != nullptr);
+
+  Sample *smp = smps[0];
 
   auto mem = MemoryAccessor<float>(*blockTx);
 
