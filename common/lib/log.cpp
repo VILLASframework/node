@@ -6,7 +6,6 @@
  */
 
 #include <algorithm>
-#include <list>
 #include <unordered_map>
 
 #include <fnmatch.h>
@@ -14,6 +13,7 @@
 #include <spdlog/sinks/syslog_sink.h>
 
 #include <villas/exceptions.hpp>
+#include <villas/jansson.hpp>
 #include <villas/log.hpp>
 #include <villas/terminal.hpp>
 
@@ -100,17 +100,15 @@ void Log::parse(json_t *json) {
   const char *path = nullptr;
   const char *pattern = nullptr;
 
-  int ret, syslog = 0;
-
-  json_error_t err;
+  int syslog = 0;
   json_t *json_expressions = nullptr;
 
-  ret = json_unpack_ex(json, &err, JSON_STRICT,
-                       "{ s?: s, s?: s, s?: o, s?: b, s?: s }", "level", &level,
-                       "file", &path, "expressions", &json_expressions,
-                       "syslog", &syslog, "pattern", &pattern);
-  if (ret)
-    throw ConfigError(json, err, "node-config-logging");
+  janssonUnpack(json, "{ s?: s, s?: s, s?: o, s?: b, s?: s }", //
+                "level", &level,                               //
+                "file", &path,                                 //
+                "expressions", &json_expressions,              //
+                "syslog", &syslog,                             //
+                "pattern", &pattern);
 
   if (level)
     setLevel(level);
@@ -179,22 +177,16 @@ Log::Level Log::getLevel() const { return level; }
 std::string Log::getLevelName() const {
   auto sv = spdlog::level::to_string_view(level);
 
-  return std::string(sv.data());
+  return std::string(sv.begin(), sv.end());
 }
 
 Log::Expression::Expression(json_t *json) {
-  int ret;
-
   const char *nme;
   const char *lvl;
 
-  json_error_t err;
-
-  ret = json_unpack_ex(json, &err, JSON_STRICT, "{ s: s, s: s }", "name", &nme,
-                       "level", &lvl);
-  if (ret)
-    throw ConfigError(json, err, "node-config-logging-expressions");
-
+  janssonUnpack(json, "{ s: s, s: s }", //
+                "name", &nme,           //
+                "level", &lvl);
   level = spdlog::level::from_str(lvl);
   name = nme;
 }
