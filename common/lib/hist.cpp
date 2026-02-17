@@ -11,6 +11,7 @@
 #include <villas/config.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/hist.hpp>
+#include <villas/jansson.hpp>
 #include <villas/table.hpp>
 #include <villas/utils.hpp>
 
@@ -203,15 +204,24 @@ char *Hist::dump() const {
 json_t *Hist::toJson() const {
   json_t *json_buckets, *json_hist;
 
-  json_hist = json_pack("{ s: f, s: f, s: i }", "low", low, "high", high,
-                        "total", total);
+  json_hist = janssonPack("{ s:f, s:f, s:I }", //
+                          "low", low,          //
+                          "high", high,        //
+                          "total", static_cast<json_int_t>(total))
+                  .release();
 
   if (total > 0) {
-    json_object_update(json_hist,
-                       json_pack("{ s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
-                                 "higher", higher, "lower", lower, "highest",
-                                 highest, "lowest", lowest, "mean", getMean(),
-                                 "variance", getVar(), "stddev", getStddev()));
+    json_object_update_new(
+        json_hist,
+        janssonPack("{ s:I, s:I, s:f, s:f, s:f, s:f, s:f }",   //
+                    "higher", static_cast<json_int_t>(higher), //
+                    "lower", static_cast<json_int_t>(lower),   //
+                    "highest", highest,                        //
+                    "lowest", lowest,                          //
+                    "mean", getMean(),                         //
+                    "variance", getVar(),                      //
+                    "stddev", getStddev())
+            .release());
   }
 
   if (total - lower - higher > 0) {
@@ -220,7 +230,7 @@ json_t *Hist::toJson() const {
     for (auto elm : data)
       json_array_append(json_buckets, json_integer(elm));
 
-    json_object_set(json_hist, "buckets", json_buckets);
+    json_object_set_new(json_hist, "buckets", json_buckets);
   }
 
   return json_hist;
