@@ -63,16 +63,17 @@ int WebRTCNode::parse(json_t *json) {
   json_t *json_format = nullptr;
 
   janssonUnpack(json,
-                "{ s:s, s?s, s?s, s?i, s?i, s?b, s?{ s?o, s?b }, s?o }", //
-                "session", &sess,                                        //
-                "peer", &pr,                                             //
-                "server", &svr,                                          //
-                "wait_seconds", &wait_seconds,                           //
-                "max_retransmits", &rexmit,                              //
-                "ordered", &ord,                                         //
-                "ice",                                                   //
-                /* ice */ "servers", &json_servers,                      //
-                /* ice */ "tcp", &tcp,                                   //
+                "{ s: s, s?: s, s?: s, s?: i, s?: i, s?: b, s?: { s?: o, s?: b "
+                "}, s?: o }",                       //
+                "session", &sess,                   //
+                "peer", &pr,                        //
+                "server", &svr,                     //
+                "wait_seconds", &wait_seconds,      //
+                "max_retransmits", &rexmit,         //
+                "ordered", &ord,                    //
+                "ice",                              //
+                /* ice */ "servers", &json_servers, //
+                /* ice */ "tcp", &tcp,              //
                 "format", &json_format);
 
   session = sess;

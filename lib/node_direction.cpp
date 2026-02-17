@@ -30,11 +30,11 @@ int NodeDirection::parse(json_t *json) {
 
   config = json;
 
-  janssonUnpack(json, "{ s?o, s?o, s?i, s?b, s?b }", //
-                "hooks", &json_hooks,                //
-                "signals", &json_signals,            //
-                "vectorize", &vectorize,             //
-                "builtin", &builtin,                 //
+  janssonUnpack(json, "{ s?: o, s?: o, s?: i, s?: b, s?: b }", //
+                "hooks", &json_hooks,                          //
+                "signals", &json_signals,                      //
+                "vectorize", &vectorize,                       //
+                "builtin", &builtin,                           //
                 "enabled", &enabled);
 
   if (node->getFactory()->getFlags() &
@@ -52,7 +52,7 @@ int NodeDirection::parse(json_t *json) {
       json_t *json_name, *json_signal = json_signals;
       int count;
 
-      janssonUnpack(json_signal, "{ s:i }", "count", &count);
+      janssonUnpack(json_signal, "{ s: i }", "count", &count);
 
       json_signals = json_array();
       for (int i = 0; i < count; i++) {
