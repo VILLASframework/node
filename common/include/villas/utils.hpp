@@ -131,6 +131,10 @@ template <class... Ts> struct overloaded : Ts... {
 // Explicit deduction guide (not needed as of C++20)
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
+// glob-style filesystem pattern matching
+std::vector<fs::path> glob(fs::path const &pattern,
+                           std::span<const fs::path> searchDirectories);
+
 void write_to_file(std::string data, const fs::path file);
 
 namespace base64 {

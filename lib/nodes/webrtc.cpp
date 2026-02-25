@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <villas/exceptions.hpp>
+#include <villas/jansson.hpp>
 #include <villas/node/config.hpp>
 #include <villas/node_compat.hpp>
 #include <villas/nodes/webrtc.hpp>
@@ -57,17 +58,22 @@ int WebRTCNode::parse(json_t *json) {
   const char *pr = nullptr;
   int ord = -1;
   int &rexmit = dci.reliability.rexmit.emplace<int>(0);
-  json_t *json_ice = nullptr;
+  json_t *json_servers = nullptr;
+  int tcp = -1;
   json_t *json_format = nullptr;
 
-  json_error_t err;
-  ret = json_unpack_ex(
-      json, &err, 0, "{ s: s, s?: s, s?: s, s?: i, s?: i, s?: b, s?: o }",
-      "session", &sess, "peer", &pr, "server", &svr, "wait_seconds",
-      &wait_seconds, "max_retransmits", &rexmit, "ordered", &ord, "ice",
-      &json_ice, "format", &json_format);
-  if (ret)
-    throw ConfigError(json, err, "node-config-node-webrtc");
+  janssonUnpack(json,
+                "{ s:s, s?s, s?s, s?i, s?i, s?b, s?{ s?o, s?b }, s?o }", //
+                "session", &sess,                                        //
+                "peer", &pr,                                             //
+                "server", &svr,                                          //
+                "wait_seconds", &wait_seconds,                           //
+                "max_retransmits", &rexmit,                              //
+                "ordered", &ord,                                         //
+                "ice",                                                   //
+                /* ice */ "servers", &json_servers,                      //
+                /* ice */ "tcp", &tcp,                                   //
+                "format", &json_format);
 
   session = sess;
 
@@ -80,39 +86,28 @@ int WebRTCNode::parse(json_t *json) {
   if (ord)
     dci.reliability.unordered = !ord;
 
-  if (json_ice) {
-    json_t *json_servers = nullptr;
+  if (json_servers) {
+    rtcConf.iceServers.clear();
 
-    int tcp = -1;
+    if (!json_is_array(json_servers))
+      throw ConfigError(
+          json_servers, "node-config-node-webrtc-ice-servers",
+          "ICE Servers must be a an array of server configurations.");
 
-    ret = json_unpack_ex(json_ice, &err, 0, "{ s?: o, s?: b }", "servers",
-                         &json_servers, "tcp", &tcp);
-    if (ret)
-      throw ConfigError(json, err, "node-config-node-webrtc-ice");
+    size_t i;
+    json_t *json_server;
+    json_array_foreach (json_servers, i, json_server) {
+      if (!json_is_string(json_server))
+        throw ConfigError(json_server, "node-config-node-webrtc-ice-server",
+                          "ICE servers must be provided as STUN/TURN url.");
 
-    if (json_servers) {
-      rtcConf.iceServers.clear();
+      std::string uri = json_string_value(json_server);
 
-      if (!json_is_array(json_servers))
-        throw ConfigError(
-            json_servers, "node-config-node-webrtc-ice-servers",
-            "ICE Servers must be a an array of server configurations.");
-
-      size_t i;
-      json_t *json_server;
-      json_array_foreach (json_servers, i, json_server) {
-        if (!json_is_string(json_server))
-          throw ConfigError(json_server, "node-config-node-webrtc-ice-server",
-                            "ICE servers must be provided as STUN/TURN url.");
-
-        std::string uri = json_string_value(json_server);
-
-        rtcConf.iceServers.emplace_back(uri);
-      }
-
-      if (tcp > 0)
-        rtcConf.enableIceTcp = tcp > 0;
+      rtcConf.iceServers.emplace_back(uri);
     }
+
+    if (tcp > 0)
+      rtcConf.enableIceTcp = tcp > 0;
   }
 
   auto *fmt = json_format ? FormatFactory::make(json_format)

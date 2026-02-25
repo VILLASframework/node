@@ -9,68 +9,89 @@
 #include <cstdlib>
 
 #include <criterion/criterion.h>
+#include <criterion/internal/assert.h>
+#include <nlohmann/json.hpp>
 
-#include <villas/config_class.hpp>
+#include <villas/fs.hpp>
+#include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/utils.hpp>
 
-using namespace villas::node;
+using namespace std::string_view_literals;
+using FileDeleter = decltype([](std::FILE *f) { std::fclose(f); });
+using FilePtr = std::unique_ptr<std::FILE, FileDeleter>;
+
+constexpr auto fileNameTemplate = "villas.unit-test.XXXXXX.conf"sv;
+constexpr auto fileNameSuffix = ".conf"sv;
 
 // cppcheck-suppress syntaxError
 Test(config, env) {
-  const char *cfg_f = "test = \"${MY_ENV_VAR}\"\n";
+  auto config_string = R"libconfig(
+    test = "${MY_ENV_VAR}"
+  )libconfig";
 
-  std::FILE *f = std::tmpfile();
-  std::fputs(cfg_f, f);
-  std::rewind(f);
+  auto config_path_template =
+      std::string(fs::temp_directory_path() / fileNameTemplate);
+  auto config_fd =
+      ::mkstemps(config_path_template.data(), fileNameSuffix.length());
+  auto config_file = FilePtr(::fdopen(config_fd, "w"));
+  auto config_path = fs::path(config_path_template);
+  std::fputs(config_string, config_file.get());
+  config_file.reset();
 
-  auto c = Config();
+  auto config = villas::load_config_deprecated(config_path, true, true)
+                    .get<villas::JanssonPtr>();
+  ::setenv("MY_ENV_VAR", "mobydick", true);
 
-  char env[] = "MY_ENV_VAR=mobydick";
-  putenv(env);
+  auto *root = config.get();
+  cr_assert_not_null(root);
 
-  auto *r = c.load(f);
-  cr_assert_not_null(r);
-
-  auto *j = json_object_get(r, "test");
-  cr_assert_not_null(j);
-
-  cr_assert(json_is_string(j));
-  cr_assert_str_eq("mobydick", json_string_value(j));
+  auto *string = json_object_get(root, "test");
+  cr_assert_not_null(string);
+  cr_assert(json_is_string(string));
+  cr_assert_str_eq("mobydick", json_string_value(string));
 }
 
 Test(config, include) {
-  const char *cfg_f2 = "magic = 1234\n";
+  auto incString = R"libconfig(
+    magic = 1234
+  )libconfig";
 
-  char f2_fn_tpl[] = "/tmp/villas.unit-test.XXXXXX";
-  int f2_fd = mkstemp(f2_fn_tpl);
+  auto inc_path_template =
+      std::string(fs::temp_directory_path() / fileNameTemplate);
+  auto inc_fd = ::mkstemps(inc_path_template.data(), fileNameSuffix.length());
+  cr_assert(inc_fd >= 0);
+  auto inc_file = FilePtr(::fdopen(inc_fd, "w"));
+  cr_assert_not_null(inc_file);
+  auto inc_path = fs::path(inc_path_template);
+  std::fputs(incString, inc_file.get());
+  inc_file.reset();
 
-  std::FILE *f2 = fdopen(f2_fd, "w");
-  std::fputs(cfg_f2, f2);
-  std::rewind(f2);
+  auto config_string = fmt::format(R"libconfig(
+    subval = {{ @include "{}" }}
+  )libconfig",
+                                   inc_path.string());
+  auto config_path_template =
+      std::string(fs::temp_directory_path() / fileNameTemplate);
+  auto config_fd =
+      ::mkstemps(config_path_template.data(), fileNameSuffix.length());
+  cr_assert(config_fd >= 0);
+  auto config_file = FilePtr(::fdopen(config_fd, "w"));
+  cr_assert_not_null(config_file);
+  auto config_path = fs::path(config_path_template);
+  std::fputs(config_string.c_str(), config_file.get());
+  config_file.reset();
 
-  auto cfg_f1 = fmt::format("subval = \"@include {}\"\n", f2_fn_tpl);
+  auto config = villas::load_config_deprecated(config_path, true, true)
+                    .get<villas::JanssonPtr>();
+  auto *root = config.get();
+  cr_assert_not_null(root);
 
-  std::FILE *f1 = std::tmpfile();
-  std::fputs(cfg_f1.c_str(), f1);
-  std::rewind(f1);
+  auto *subval = json_object_get(root, "subval");
+  cr_assert_not_null(subval);
 
-  auto env = fmt::format("{}", f2_fn_tpl);
-  setenv("INCLUDE_FILE", env.c_str(), true);
-
-  auto c = Config();
-
-  auto *r = c.load(f1);
-  cr_assert_not_null(r);
-
-  auto *j = json_object_get(r, "subval");
-  cr_assert_not_null(j);
-
-  auto *j2 = json_object_get(j, "magic");
-  cr_assert_not_null(j2);
-
-  cr_assert(json_is_integer(j2));
-  cr_assert_eq(json_number_value(j2), 1234);
-
-  std::fclose(f2);
-  std::remove(f2_fn_tpl);
+  auto *magic = json_object_get(subval, "magic");
+  cr_assert_not_null(magic);
+  cr_assert(json_is_integer(magic));
+  cr_assert_eq(json_number_value(magic), 1234);
 }

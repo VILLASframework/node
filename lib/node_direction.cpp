@@ -9,6 +9,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/jansson.hpp>
 #include <villas/node.hpp>
 #include <villas/node_compat_type.hpp>
 #include <villas/node_direction.hpp>
@@ -24,19 +25,17 @@ NodeDirection::NodeDirection(enum NodeDirection::Direction dir, Node *n)
 
 int NodeDirection::parse(json_t *json) {
   int ret;
-
-  json_error_t err;
   json_t *json_hooks = nullptr;
   json_t *json_signals = nullptr;
 
   config = json;
 
-  ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
-                       "hooks", &json_hooks, "signals", &json_signals,
-                       "vectorize", &vectorize, "builtin", &builtin, "enabled",
-                       &enabled);
-  if (ret)
-    throw ConfigError(json, err, "node-config-node-in");
+  janssonUnpack(json, "{ s?o, s?o, s?i, s?b, s?b }", //
+                "hooks", &json_hooks,                //
+                "signals", &json_signals,            //
+                "vectorize", &vectorize,             //
+                "builtin", &builtin,                 //
+                "enabled", &enabled);
 
   if (node->getFactory()->getFlags() &
       (int)NodeFactory::Flags::PROVIDES_SIGNALS) {
@@ -53,10 +52,7 @@ int NodeDirection::parse(json_t *json) {
       json_t *json_name, *json_signal = json_signals;
       int count;
 
-      ret = json_unpack_ex(json_signal, &err, 0, "{ s: i }", "count", &count);
-      if (ret)
-        throw ConfigError(json_signals, "node-config-node-signals",
-                          "Invalid signal definition");
+      janssonUnpack(json_signal, "{ s:i }", "count", &count);
 
       json_signals = json_array();
       for (int i = 0; i < count; i++) {

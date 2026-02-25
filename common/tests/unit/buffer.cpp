@@ -9,9 +9,9 @@
 #include <ctime>
 
 #include <criterion/criterion.h>
-#include <jansson.h>
 
 #include <villas/buffer.hpp>
+#include <villas/jansson.hpp>
 
 using namespace villas;
 
@@ -95,7 +95,7 @@ Test(buffer, multiple) {
   std::srand(std::time(nullptr));
 
   for (int i = 0; i < N; i++) {
-    k[i] = json_pack("{ s: i }", "id", std::rand());
+    k[i] = janssonPack("{ s:i }", "id", std::rand()).release();
     cr_assert_not_null(k[i]);
 
     ret = buf.encode(k[i]);

@@ -15,11 +15,10 @@ extern "C" {
 }
 #endif
 
-#include <fstream>
-
 #include <villas/api.hpp>
 #include <villas/common.hpp>
-#include <villas/config_class.hpp>
+#include <villas/fs.hpp>
+#include <villas/jansson.hpp>
 #include <villas/kernel/if.hpp>
 #include <villas/log.hpp>
 #include <villas/node.hpp>
@@ -68,7 +67,8 @@ protected:
 
   struct timespec started; // The time at which the instance has been started.
 
-  Config config; // The configuration file.
+  fs::path configPath;
+  JanssonPtr configRoot; // The configuration file.
 
 public:
   // Inititalize configuration object before parsing the configuration.
@@ -77,7 +77,7 @@ public:
   int init();
 
   // Wrapper for parse() which loads the config first.
-  void parse(const std::string &name);
+  void parse(fs::path const &path);
 
   /* Parse super-node configuration.
    *
@@ -138,9 +138,9 @@ public:
   Web *getWeb() { return &web; }
 #endif
 
-  json_t *getConfig() { return config.root; }
+  json_t *getConfig() { return configRoot.get(); }
 
-  const std::string &getConfigPath() const { return config.getConfigPath(); }
+  fs::path const &getConfigPath() const { return configPath; }
 
   int getAffinity() const { return affinity; }
 

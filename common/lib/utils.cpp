@@ -12,12 +12,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <jansson.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
@@ -350,6 +352,70 @@ bool isPrivileged() {
   fclose(f);
 
   return true;
+}
+
+// internal glob implementation details
+namespace {
+bool isGlobPattern(fs::path const &path) {
+  static const auto specialCharacters = fs::path("?*[").native();
+  auto const &string = path.native();
+  return std::ranges::find_first_of(string, specialCharacters) != string.end();
+}
+
+bool isGlobMatch(fs::path const &pattern, fs::path const &path) {
+  return ::fnmatch(pattern.c_str(), path.c_str(), FNM_PATHNAME) == 0;
+}
+
+void globImpl(std::vector<fs::path> &result, fs::path &&path,
+              std::ranges::subrange<fs::path::iterator> pattern) {
+  [[maybe_unused]] auto discardErrorCode = std::error_code{};
+
+  if (pattern.empty()) {
+    // we've reached the end of our pattern
+    if (fs::exists(path, discardErrorCode))
+      result.push_back(path);
+    return;
+  }
+
+  if (not fs::is_directory(path, discardErrorCode))
+    return;
+
+  if (not isGlobPattern(pattern.front())) {
+    path /= pattern.front();
+    return globImpl(result, std::move(path), std::move(pattern).next());
+  } else {
+    auto nextPattern = pattern.next();
+    for (auto entry : fs::directory_iterator(path)) {
+      if (not isGlobMatch(pattern.front(), entry.path().filename()))
+        continue;
+
+      globImpl(result, fs::path(entry.path()), nextPattern);
+    }
+  }
+}
+} // namespace
+
+std::vector<fs::path> glob(fs::path const &pattern,
+                           std::span<const fs::path> searchDirectories) {
+  auto logger = Log::get("glob");
+  std::vector<fs::path> result;
+  if (pattern.is_absolute()) {
+    logger->debug("Matching absolute pattern {:?}", pattern.string());
+    globImpl(result, pattern.root_path(), pattern);
+  } else {
+    for (auto path : searchDirectories) {
+      logger->debug("Matching relative pattern {:?} in {:?}", pattern.string(),
+                    path.string());
+      globImpl(result, std::move(path), pattern);
+    }
+  }
+
+  if (result.empty()) {
+    throw std::runtime_error(
+        fmt::format("Could not find any file matching {:?}", pattern.string()));
+  }
+
+  return result;
 }
 
 void write_to_file(std::string data, const fs::path file) {
