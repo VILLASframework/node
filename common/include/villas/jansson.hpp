@@ -144,7 +144,9 @@ enum class JanssonNestedStructure {
 template <typename... Args> class JanssonUnpackFormatString {
 public:
   consteval JanssonUnpackFormatString(char const *fmt) : fmt(fmt) {
+#ifdef __cpp_lib_constexpr_vector
     validate(fmt);
+#endif
   }
 
   constexpr char const *c_str() const { return fmt; }
@@ -297,7 +299,9 @@ void janssonUnpack(::json_t *json,
 template <typename... Args> class JanssonPackFormatString {
 public:
   consteval JanssonPackFormatString(char const *fmt) : fmt(fmt) {
+#ifdef __cpp_lib_constexpr_vector
     validate(fmt);
+#endif
   }
 
   constexpr char const *c_str() const { return fmt; }
