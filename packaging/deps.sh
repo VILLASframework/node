@@ -602,6 +602,60 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     popd
 fi
 
+# Build and install Apache Arrow with Parquet and Snappy
+if ! cmake --find-package -DNAME=Arrow -DCOMPILER_ID=GNU -DLANGUAGE-CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "apache-arrow" "for Arrow/Parquet support"; then
+    ARROW_TAG=${ARROW_TAG:-apache-arrow-16.1.0}
+    ARROW_REPO=${ARROW_REPO:-https://github.com/apache/arrow.git}
+
+    git clone ${GIT_OPTS} --branch ${ARROW_TAG} ${ARROW_REPO} apache-arrow
+    mkdir -p apache-arrow/cpp/build
+    pushd apache-arrow/cpp/build
+
+    cmake -S ../ \
+          -B . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DARROW_BUILD_SHARED=ON \
+          -DARROW_BUILD_STATIC=OFF \
+          -DARROW_DEPENDENCY_SOURCE=BUNDLED \
+          -DARROW_FILESYSTEM=ON \
+          -DARROW_CSV=OFF \
+          -DARROW_JSON=ON \
+          -DARROW_DATASET=ON \
+          -DARROW_PARQUET=ON \
+          -DPARQUET_BUILD_EXECUTABLES=OFF \
+          -DPARQUET_BUILD_EXAMPLES=OFF \
+          -DARROW_WITH_SNAPPY=ON
+    make ${MAKE_OPTS} install
+    popd
+fi
+
+# Build and install restclient-cpp required for delta_sharing node
+if ! find ${PREFIX}/{lib,lib64} -name "*restclient-cpp*" 2>/dev/null | grep -q . && \
+    should_build "restclient-cpp" "for the delta-sharing node-type"; then
+    git clone ${GIT_OPTS} --branch 0.5.2 https://github.com/mrtazz/restclient-cpp.git
+    pushd restclient-cpp
+    ./autogen.sh
+    ./configure ${CONFIGURE_OPTS}
+    pc_src=restclient-cpp.pc
+    sed -i -E 's/^[[:space:]]*Requires[[:space:]]*:[[:space:]]*curl[[:space:]]*$/Requires.private: libcurl/' "$pc_src"
+    make ${MAKE_OPTS} install
+    cp ./restclient-cpp.pc /usr/local/lib/pkgconfig/
+    popd
+fi
+
+# Build and install nlohmann/josn required for delta_sharing node
+if ! find ${PREFIX}/{include,share} -name "*nlohmann*" 2>/dev/null | grep -q . && \
+    should_build "nlohman_json" "for the delta-sharing node-type"; then
+    git clone https://github.com/nlohmann/json.git json
+    mkdir -p json/build
+    pushd json/build
+    cmake ..
+    make ${MAKE_OPTS} install
+    popd
+fi
+
 popd >/dev/null
 
 # Update linker cache

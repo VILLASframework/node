@@ -1,0 +1,53 @@
+/* Node type: Delta Sharing.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+#include <iostream>
+#include <list>
+
+#include <nlohmann/json.hpp>
+#include <restclient-cpp/connection.h>
+#include <restclient-cpp/restclient.h>
+
+#include <villas/nodes/delta_sharing/protocol.hpp>
+
+using json = nlohmann::json;
+
+namespace DeltaSharing {
+struct DeltaSharingRestClient {
+public:
+  DeltaSharingRestClient(const std::string &filename);
+  ~DeltaSharingRestClient();
+  const std::shared_ptr<std::vector<DeltaSharingProtocol::Share>>
+  ListShares(int maxResult, const std::string &pageToken) const;
+  const std::shared_ptr<std::vector<DeltaSharingProtocol::Schema>>
+  ListSchemas(const DeltaSharingProtocol::Share &share, int maxResult,
+              const std::string &pageToken) const;
+  const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
+  ListTables(const DeltaSharingProtocol::Schema &schema, int maxResult,
+             const std::string &pageToken) const;
+  const std::shared_ptr<std::vector<DeltaSharingProtocol::Table>>
+  ListAllTables(const DeltaSharingProtocol::Share &share, int maxResult,
+                const std::string &pageToken) const;
+  const std::shared_ptr<std::vector<DeltaSharingProtocol::File>>
+  ListFilesInTable(const DeltaSharingProtocol::Table &) const;
+  const DeltaSharingProtocol::Metadata
+  QueryTableMetadata(const DeltaSharingProtocol::Table &table) const;
+  const DeltaSharingProtocol::DeltaSharingProfile &GetProfile() const;
+  RestClient::Response get(std::string url);
+  void PopulateCache(const std::string &url, const std::string &cacheLocation);
+  const bool shouldRetry(RestClient::Response &response) const;
+
+protected:
+  json ReadFromFile(const std::string &filename);
+
+private:
+  DeltaSharingProtocol::DeltaSharingProfile profile;
+  static const std::string user_agent;
+};
+}; // namespace DeltaSharing

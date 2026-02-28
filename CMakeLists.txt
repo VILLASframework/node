@@ -122,10 +122,19 @@ pkg_check_modules(CGRAPH IMPORTED_TARGET libcgraph>=2.30)
 pkg_check_modules(GVC IMPORTED_TARGET libgvc>=2.30)
 pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0>=1.0.23)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
+pkg_check_modules(ARROW IMPORTED_TARGET arrow)
+pkg_check_modules(PARQUET IMPORTED_TARGET parquet)
+pkg_check_modules(RESTCLIENTCPP restclient-cpp)
+
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
 
+if(ARROW_FOUND AND PARQUET_FOUND AND RESTCLIENTCPP_FOUND)
+    set(DELTALIBS_FOUND ON)
+else()
+    set(DELTALIBS_FOUND OFF)
+endif()
 
 if (REDISPP_FOUND)
     file(READ "${REDISPP_INCLUDEDIR}/sw/redis++/tls.h" CONTENTS)
@@ -187,6 +196,7 @@ cmake_dependent_option(WITH_SRC                 "Build executables"             
 cmake_dependent_option(WITH_TESTS               "Run tests"                                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_TOOLS               "Build auxilary tools"                                  "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_WEB                 "Build with internal webserver"                         "${WITH_DEFAULTS}" "LIBWEBSOCKETS_FOUND" OFF)
+cmake_dependent_option(WITH_DELTASHARING        "Build with delta sharing active"                       "${WITH_DEFAULTS}" "DELTALIBS_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP           "Build with amqp node-type"                             "${WITH_DEFAULTS}" "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_CAN            "Build with can node-type"                              "${WITH_DEFAULTS}" "" OFF)
@@ -221,6 +231,7 @@ cmake_dependent_option(WITH_NODE_ULDAQ          "Build with uldaq node-type"    
 cmake_dependent_option(WITH_NODE_WEBRTC         "Build with webrtc node-type"                           "${WITH_DEFAULTS}" "WITH_WEB; LibDataChannel_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_WEBSOCKET      "Build with websocket node-type"                        "${WITH_DEFAULTS}" "WITH_WEB" OFF)
 cmake_dependent_option(WITH_NODE_ZEROMQ         "Build with zeromq node-type"                           "${WITH_DEFAULTS}" "LIBZMQ_FOUND; NOT WITHOUT_GPL" OFF)
+cmake_dependent_option(WITH_NODE_DELTASHARING   "Build with delta_sharing node-type"                    "${WITH_DEFAULTS}" "WITH_DELTASHARING" OFF)
 
 # Set a default for the build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -331,6 +342,7 @@ add_feature_info(NODE_ULDAQ             WITH_NODE_ULDAQ             "Build with 
 add_feature_info(NODE_WEBRTC            WITH_NODE_WEBRTC            "Build with webrtc node-type")
 add_feature_info(NODE_WEBSOCKET         WITH_NODE_WEBSOCKET         "Build with websocket node-type")
 add_feature_info(NODE_ZEROMQ            WITH_NODE_ZEROMQ            "Build with zeromq node-type")
+add_feature_info(NODE_DELTASHARING      WITH_NODE_DELTASHARING      "Build with delta-sharing node-type")
 
 if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
