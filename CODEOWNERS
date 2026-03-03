@@ -23,6 +23,13 @@ fpga                                                @n-eiling
 /etc/fpga                                           @n-eiling
 /doc/openapi/components/schemas/nodes/fpga.yaml     @n-eiling
 
+# IEC 61850
+/lib/nodes/iec61850.cpp                             @windrad6
+/include/villas/nodes/iec61850.hpp                  @windrad6
+/lib/nodes/iec61850_goose.cpp                       @windrad6
+/include/villas/nodes/iec61850_goose.hpp            @windrad6
+/lib/nodes/iec61850_sv.cpp                          @windrad6
+/include/villas/nodes/iec61850_sv.hpp               @windrad6
 
 # PMU
 /lib/nodes/libiec61850_goose.cpp                    @windrad6
