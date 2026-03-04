@@ -47,47 +47,40 @@ class OpalOrchestraMapping {
 public:
   std::shared_ptr<DataItem> item;
   std::string path;
-  std::vector<Signal::Ptr> signals;
+  Signal::Ptr firstSignal;
+  Signal::Ptr lastSignal;
 
-  // Cached signal indices
-  // We keep a vector of indices to map the signal index in the signal list.
-  SignalList::Ptr signalList; // Signal list for which the indices are valid.
-  std::vector<std::optional<unsigned>> indices;
+  unsigned villasOffset;
+  unsigned villasLength;
 
   // Run-time members which will be retrieved from Orchestra in prepare().
-  unsigned short key;
-  char *buffer;
-  unsigned int typeSize; // sizeof() of the signal type. See RTSignalType.
-  unsigned short length;
+  unsigned short orchestraLength;
+  unsigned short orchestraKey;
+  char *orchestraBuffer;
+  unsigned int orchestraTypeSize; // sizeof() of the signal type. See RTSignalType.
 
   OpalOrchestraMapping(std::shared_ptr<DataItem> item, std::string path)
-      : item(item), path(std::move(path)), signals(), signalList(), indices(),
-        key(0), buffer(nullptr), typeSize(0), length(0) {}
+      : item(item), path(std::move(path)),
+        orchestraKey(0), orchestraBuffer(nullptr), orchestraTypeSize(0) {}
 
-  void addSignal(Signal::Ptr signal, std::optional<unsigned> orchestraIdx) {
-    if (!orchestraIdx) {
-      orchestraIdx = signals.size();
+  void addSignal(Signal::Ptr signal, unsigned index) {
+    if (!firstSignal) {
+      villasOffset = index;
+      firstSignal = signal;
+    } else if (signal->type != lastSignal->type) {
+      throw RuntimeError("Signal type mismatch: '{}' != '{}' for signal '{}'",
+                         signalTypeToString(signal->type),
+                         signalTypeToString(lastSignal->type), signal->name);
+    } else if (signal->init.f != lastSignal->init.f) {
+      throw RuntimeError("Signal default value mismatch for signal '{}'",
+                         signal->name);
     }
 
-    if (*orchestraIdx < signals.size()) {
-      if (signals[*orchestraIdx]) {
-        throw RuntimeError("Index {} of Orchestra signal already mapped",
-                           *orchestraIdx);
-      }
-    } else {
-      signals.resize(*orchestraIdx + 1, nullptr);
-      item->length = signals.size();
-    }
-
-    signals[*orchestraIdx] = signal;
+    lastSignal = signal;
+    villasLength++;
   }
 
   void check() {
-    if (signals.empty()) {
-      throw RuntimeError("No signal mapped to Orchestra signal '{}'",
-                         item->name);
-    }
-
     if (item->name.empty()) {
       throw RuntimeError("Signal name cannot be empty");
     }
@@ -105,24 +98,6 @@ public:
       throw RuntimeError("Signal name '{}' is too long", item->name);
     }
 
-    auto firstSignal = signals[0];
-
-    for (auto &signal : signals) {
-      if (signal->type != firstSignal->type) {
-        throw RuntimeError("Signal type mismatch: {} vs {} for signal '{}'",
-                           signalTypeToString(signal->type),
-                           signalTypeToString(firstSignal->type), signal->name);
-      }
-
-      if (signal->init.f != firstSignal->init.f) {
-        throw RuntimeError("Signal default value mismatch: {} vs {} for signal "
-                           "'{}'",
-                           signal->init.toString(signal->type),
-                           firstSignal->init.toString(firstSignal->type),
-                           signal->name);
-      }
-    }
-
     auto orchestraType = toOrchestraSignalType(firstSignal->type);
     if (item->type != orchestraType) {
       throw RuntimeError("Signal type mismatch: {} vs {} for signal '{}'",
@@ -131,106 +106,59 @@ public:
     }
   }
 
-  void prepare(unsigned int connectionKey) {
-    auto ret = RTGetInfoForItem(path.c_str(), &typeSize, &length);
+  void prepare(unsigned int orchestraConnectionKey) {
+    auto ret = RTGetInfoForItem(path.c_str(), &orchestraTypeSize, &orchestraLength);
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to get info for signal '{}'", item->name);
     }
 
-    ret = RTGetKeyForItem(path.c_str(), &key);
+    ret = RTGetKeyForItem(path.c_str(), &orchestraKey);
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to get key for signal '{}'", item->name);
     }
 
-    ret = RTGetBuffer(connectionKey, key, (void **)&buffer);
+    ret = RTGetBuffer(orchestraConnectionKey, orchestraKey, (void **)&orchestraBuffer);
     if (ret != RTAPI_SUCCESS) {
       throw RTError(ret, "Failed to get buffer for signal '{}'", item->name);
     }
 
     auto logger = Log::get("orchestra");
     logger->trace(
-        "Prepared mapping: path='{}', type={}, typeSize={}, key={}, buffer={}"
-        "length={}, default={}",
-        path, orchestra::signalTypeToString(item->type), key, buffer, typeSize,
-        length, item->defaultValue);
+        "Prepared mapping: path='{}', type={}, orchestra.type_size={}, orchestra.key={}, orchestra.buffer={}"
+        "orchestra.length={}, villas.length={}, villas.offset={}, default={}",
+        path, orchestra::signalTypeToString(item->type), orchestraTypeSize, orchestraKey, orchestraBuffer,
+        orchestraLength, villasLength, villasOffset, item->defaultValue);
   }
 
   void publish(struct Sample *smp) {
-    updateIndices(smp->signals);
+    unsigned length;
 
-    auto *orchestraDataPtr = buffer;
-    for (auto &index : indices) {
-      if (!index || *index >= smp->length) {
-        orchestraDataPtr += typeSize;
-        continue; // Unused index or index out of range.
-      }
+    length = MIN(villasLength, orchestraLength);
+    length = MIN(length, smp->length);
 
-      auto signal = smp->signals->getByIndex(*index);
-      if (!signal) {
-        throw RuntimeError("Signal {} not found", index);
-      }
-
-      toOrchestraSignalData(orchestraDataPtr, item->type, smp->data[*index],
-                            signal->type);
-
-      orchestraDataPtr += typeSize;
+    for (unsigned index = villasOffset; index < length; index++) {
+      toOrchestraSignalData(orchestraBuffer + index * orchestraTypeSize, item->type, smp->data[villasOffset + index],
+                            firstSignal->type);
     }
   }
 
   void subscribe(struct Sample *smp) {
-    updateIndices(smp->signals);
+    unsigned length;
+    
+    length = MIN(villasLength, orchestraLength);
+    length = MIN(length, smp->capacity);
 
-    auto *orchestraDataPtr = buffer;
-    for (auto &index : indices) {
-      if (!index || *index >= smp->capacity) {
-        continue; // Unused index or index out of range.
-      }
-
-      for (unsigned i = smp->length; i < *index; i++) {
-        smp->data[i].i = 0;
-      }
-
-      auto signal = smp->signals->getByIndex(*index);
-      if (!signal) {
-        throw RuntimeError("Signal {} not found", *index);
-      }
-
+    for (unsigned index = 0; index < length; index++) {
       node::SignalType villasType;
       SignalData villasData =
-          toNodeSignalData(orchestraDataPtr, item->type, villasType);
-
-      smp->data[*index] = villasData.cast(villasType, signal->type);
-
-      if (index >= static_cast<int>(smp->length)) {
-        smp->length = *index + 1;
-      }
-
-      orchestraDataPtr += typeSize;
-    }
-  }
-
-protected:
-  void updateIndices(SignalList::Ptr newSignalList) {
-    if (signalList == newSignalList) {
-      return; // Already up to date.
+          toNodeSignalData(orchestraBuffer + index * orchestraTypeSize, item->type, villasType);
+      
+      smp->data[villasOffset + index] = villasData.cast(villasType, firstSignal->type);
     }
 
-    indices.clear();
-
-    for (const auto &signal : signals) {
-      if (signal) {
-        auto idx = newSignalList->getIndexByName(signal->name);
-        if (idx < 0) {
-          throw RuntimeError("Signal '{}' not found", signal->name);
-        }
-
-        indices.push_back(idx);
-      } else {
-        indices.emplace_back(); // Unused index
-      }
+    if (villasOffset + length > smp->length) {
+      smp->length = villasOffset + length;
     }
-
-    signalList = newSignalList;
   }
 };
 
@@ -328,14 +256,34 @@ protected:
     }
   }
 
+  void checkDuplicateNames() {
+    for (auto &[name, item] : domain.publish.items) {
+      if (domain.subscribe.items.find(name) != domain.subscribe.items.end()) {
+        throw RuntimeError(
+            "Orchestra signal '{}' is used for both publish and subscribe",
+            name);
+      }
+    }
+  }
+
+  void checkMappings() {
+    for (auto &mapping : subscribeMappings) {
+      mapping.second.check();
+    }
+
+    for (auto &mapping : publishMappings) {
+      mapping.second.check();
+    }
+  }
+
 public:
   OpalOrchestraNode(const uuid_t &id = {}, const std::string &name = "",
                     unsigned int key = 0)
       : Node(id, name), task(), connectionKey(key), status(nullptr), domain(),
-        subscribeMappings(), publishMappings(), rate(1), connectTimeout(5),
+        subscribeMappings(), publishMappings(), rate(1000), connectTimeout(5),
         skipWaitToGo(false), dataDefinitionFileOverwrite(false) {}
 
-  Signal::Ptr parseSignal(json_t *json_signal, NodeDirection::Direction dir) {
+  Signal::Ptr parseSignal(json_t *json_signal, NodeDirection::Direction dir, unsigned index) {
     auto signal = Signal::fromJson(json_signal);
 
     DataSet &dataSet =
@@ -346,22 +294,17 @@ public:
 
     const char *nme = nullptr;
     const char *typ = nullptr;
-    int oi = -1;
+    int length = 1;
 
     json_error_t err;
-    auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
-                              "orchestra_name", &nme, "orchestra_type", &typ,
-                              "orchestra_index", &oi);
+    auto ret = json_unpack_ex(json_signal, &err, 0, "{ s?: i, s?: s, s?: s }",
+                              "length", &length,"orchestra_name", &nme, "orchestra_type", &typ);
     if (ret) {
       throw ConfigError(json_signal, err,
                         "node-config-node-opal-orchestra-signals");
     }
-
-    std::optional<unsigned> orchestraIdx;
-
-    if (oi >= 0) {
-      orchestraIdx = oi;
-    }
+    
+    bool isVector = length > 1;
 
     auto defaultValue =
         signal->init.cast(signal->type, node::SignalType::FLOAT);
@@ -379,10 +322,12 @@ public:
       item->defaultValue = defaultValue.f;
 
       mappings.emplace(item, OpalOrchestraMapping(item, orchestraName));
+    } else if (!isVector) {
+      throw ConfigError(json_signal, "node-config-node-opal-orchestra.signals", "Only vectors can have same Orchestra item name");
     }
 
     auto &mapping = mappings.at(item);
-    mapping.addSignal(signal, orchestraIdx);
+    mapping.addSignal(signal, index);
 
     return signal;
   }
@@ -393,8 +338,8 @@ public:
     subscribeMappings.clear();
 
     int reti = parseCommon(
-        json, [&](json_t *json_signal, NodeDirection::Direction dir) {
-          return parseSignal(json_signal, dir);
+        json, [&](json_t *json_signal, NodeDirection::Direction dir, unsigned index) {
+          return parseSignal(json_signal, dir, index);
         });
     if (reti)
       return reti;
@@ -467,22 +412,12 @@ public:
     return 0;
   }
 
-  void checkDuplicateNames(const DataSet &a, const DataSet &b) {
-    for (auto &[name, item] : a.items) {
-      if (b.items.find(name) != b.items.end()) {
-        throw RuntimeError(
-            "Orchestra signal '{}' is used for both publish and subscribe",
-            name);
-      }
-    }
-  }
-
   int check() override {
     if (dataDefinitionFilename) {
       if (!fs::exists(*dataDefinitionFilename) &&
           !dataDefinitionFileOverwrite) {
         throw RuntimeError("OPAL-RT Orchestra Data Definition file (DDF) at "
-                           "'{}' does not exist",
+                           "{} does not exist",
                            *dataDefinitionFilename);
       }
     } else {
@@ -492,7 +427,8 @@ public:
       }
     }
 
-    checkDuplicateNames(domain.publish, domain.subscribe);
+    checkDuplicateNames();
+    checkMappings();
 
     return Node::check();
   }

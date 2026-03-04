@@ -16,9 +16,6 @@ namespace node {
 // Forward declarations
 class NodeCompat;
 
-// The maximum length of a packet which contains stuct msg.
-#define NANOMSG_MAX_PACKET_LEN 1500
-
 struct nanomsg {
   struct {
     int socket;

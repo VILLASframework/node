@@ -52,7 +52,7 @@ cat > src.json << EOF
             "in": {
                 "address": "0.0.0.0:12002",
                 "signals": {
-                    "count": ${NUM_VALUES},
+                    "length": ${NUM_VALUES},
                     "type": "float"
                 }
             },
@@ -84,7 +84,7 @@ cat > dest.json << EOF
              "in": {
                  "address": "0.0.0.0:12000",
                  "signals": {
-                     "count": ${NUM_VALUES},
+                     "length": ${NUM_VALUES},
                      "type": "float"
                  }
              },

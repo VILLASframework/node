@@ -18,7 +18,7 @@ function finish {
 trap finish EXIT
 
 cat > input.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
+# seconds.nanoseconds+offset(sequence)	signal_0	signal_1	signal_2	signal_3	signal_4
 1551015508.801653200(0)	0.022245	0.000000	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	58.778500	-1.000000	0.600000	0.100000
 1551015509.001653200(2)	0.027500	95.105700	-1.000000	0.200000	0.200000
@@ -32,7 +32,7 @@ cat > input.dat <<EOF
 EOF
 
 cat > expect.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	signal0	test[V]	signal2	signal3	signal4
+# seconds.nanoseconds+offset(sequence)	signal_0	test[V]	signal_2	signal_3	signal_4
 1551015508.801653200(0)	0.022245	0	-1.000000	1.000000	0.000000
 1551015508.901653200(1)	0.015339	58	-1.000000	0.600000	0.100000
 1551015509.001653200(2)	0.027500	95	-1.000000	0.200000	0.200000
@@ -45,6 +45,6 @@ cat > expect.dat <<EOF
 1551015509.701653200(9)	0.060849	-58	1.000000	0.600000	0.900000
 EOF
 
-villas hook cast -o new_name=test -o new_unit=V -o new_type=integer -o signal=signal1 < input.dat > output.dat
+villas hook cast -o new_name=test -o new_unit=V -o new_type=integer -o signal=signal_1 < input.dat > output.dat
 
 villas compare output.dat expect.dat

@@ -52,7 +52,7 @@ public:
 
   NodeDirection(enum NodeDirection::Direction dir, Node *n);
 
-  int parse(json_t *json, std::function<Signal::Ptr(json_t *)> parse_signal);
+  int parse(json_t *json, std::function<Signal::Ptr(json_t *json, unsigned index)> parse_signal);
   void check();
   int prepare();
   int start();

@@ -226,8 +226,6 @@ public:
       signals->insert(signals->begin() + signal_index, new_sig);
     } else {
       auto orig_sig = signals->getByIndex(signal_index);
-      if (!orig_sig)
-        throw RuntimeError("Failed to find signal");
 
       if (orig_sig->type != SignalType::FLOAT)
         throw RuntimeError("Signal is not float");

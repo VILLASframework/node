@@ -565,7 +565,7 @@ int villas::node::redis_write(NodeCompat *n, struct Sample *const smps[],
   switch (r->mode) {
   case RedisMode::CHANNEL:
     for (unsigned i = 0; i < cnt; i++) {
-      char buf[1500];
+      char buf[DEFAULT_FORMAT_BUFFER_LENGTH];
       size_t wbytes;
 
       ret = r->formatter->sprint(buf, sizeof(buf), &wbytes, &smps[i], cnt);
@@ -579,7 +579,7 @@ int villas::node::redis_write(NodeCompat *n, struct Sample *const smps[],
     break;
 
   case RedisMode::KEY: {
-    char buf[1500];
+    char buf[DEFAULT_FORMAT_BUFFER_LENGTH];
     size_t wbytes;
 
     ret = r->formatter->sprint(buf, sizeof(buf), &wbytes, smps, cnt);

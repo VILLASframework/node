@@ -338,7 +338,7 @@ int villas::node::amqp_write(NodeCompat *n, struct Sample *const smps[],
                              unsigned cnt) {
   int ret;
   auto *a = n->getData<struct amqp>();
-  char data[1500];
+  char data[DEFAULT_FORMAT_BUFFER_LENGTH];
   size_t wbytes;
 
   ret = a->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);

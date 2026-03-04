@@ -24,7 +24,7 @@ int Signal::parse(json_t *json) {
   json_t *json_init = nullptr;
   const char *name_str = nullptr;
   const char *unit_str = nullptr;
-  const char *type_str = "float";
+  const char *type_str = nullptr;
 
   ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: o }", "name",
                        &name_str, "unit", &unit_str, "type", &type_str, "init",
@@ -42,7 +42,8 @@ int Signal::parse(json_t *json) {
     type = signalTypeFromString(type_str);
     if (type == SignalType::INVALID)
       return -1;
-  }
+  } else
+    type = SignalType::FLOAT;
 
   if (json_init) {
     ret = init.parseJson(type, json_init);
@@ -86,42 +87,6 @@ std::string Signal::toString(const union SignalData *d) const {
     ss << " = " << d->toString(type);
 
   return ss.str();
-}
-
-/* Check if two signal names are numbered ascendingly
- *
- * E.g. signal3 -> signal4
- */
-static bool isNextName(const std::string &a, const std::string &b) {
-  // Find common prefix
-  std::string::const_iterator ia, ib;
-  for (ia = a.cbegin(), ib = b.cbegin();
-       ia != b.cend() && ib != b.cend() && *ia == *ib; ++ia, ++ib)
-    ;
-
-  // Suffixes
-  auto sa = std::string(ia, a.cend());
-  auto sb = std::string(ib, b.cend());
-
-  try {
-    size_t ea, eb;
-    auto na = std::stoul(sa, &ea, 10);
-    auto nb = std::stoul(sb, &eb, 10);
-
-    return na + 1 == nb;
-  } catch (std::exception &) {
-    return false;
-  }
-}
-
-bool Signal::isNext(const Signal &sig) {
-  if (type != sig.type)
-    return false;
-
-  if (!unit.empty() && !sig.unit.empty() && unit != sig.unit)
-    return false;
-
-  return isNextName(name, sig.name);
 }
 
 Signal::Ptr Signal::fromJson(json_t *json) {

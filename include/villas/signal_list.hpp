@@ -27,8 +27,10 @@ public:
   using Ptr = std::shared_ptr<SignalList>;
 
   SignalList() {}
-  SignalList(json_t *json, std::function<Signal::Ptr(json_t *)> parse_signal =
-                               Signal::fromJson);
+  SignalList(json_t *json, std::function<Signal::Ptr(json_t *json, unsigned index)> parse_signal =
+                               [](json_t *json, unsigned index) {
+                                return Signal::fromJson(json);
+                              });
   SignalList(std::string_view dt);
   SignalList(unsigned len, enum SignalType fmt);
 
@@ -45,7 +47,9 @@ public:
 
   void
   parse(json_t *json_signals,
-        std::function<Signal::Ptr(json_t *)> parse_signal = Signal::fromJson);
+        std::function<Signal::Ptr(json_t *json, unsigned index)> parse_signal = [](json_t *json, unsigned index) {
+          return Signal::fromJson(json);
+         });
 };
 
 } // namespace node

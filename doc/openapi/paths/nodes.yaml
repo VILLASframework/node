@@ -41,28 +41,28 @@ get:
                     signals:
                       - type: float
                         enabled: true
-                        name: signal0
+                        name: signal_0
                       - type: float
                         enabled: true
-                        name: signal1
+                        name: signal_1
                       - type: float
                         enabled: true
-                        name: signal2
+                        name: signal_2
                       - type: float
                         enabled: true
-                        name: signal3
+                        name: signal_3
                   out:
                     vectorize: 2
                     signals:
                       - type: float
                         enabled: true
-                        name: signal0
+                        name: signal_0
                       - type: float
                         enabled: true
-                        name: signal1
+                        name: signal_1
                       - type: float
                         enabled: true
-                        name: signal2
+                        name: signal_2
                   type: websocket
                   vectorize: 2
                   series:

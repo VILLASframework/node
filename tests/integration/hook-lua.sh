@@ -20,11 +20,11 @@ trap finish EXIT
 cat > config.json <<EOF
 {
     "signals": [
-        { "name": "signal1_positive", "expression": "smp.data.signal1 >= 0", "type": "boolean" },
-        { "name": "abs(signal1)",     "expression": "math.abs(smp.data.signal1)" },
-        { "name": "signal4_scaled",   "expression": "smp.data.signal4 * 100 + 55" },
-        { "name": "sequence",         "expression": "smp.sequence", "type": "integer" },
-        { "name": "ts_origin",        "expression": "smp.ts_origin[0] + smp.ts_origin[1] * 1e-9" }
+        { "name": "signal_1_positive", "expression": "smp.data.signal_1 >= 0", "type": "boolean" },
+        { "name": "abs(signal_1)",     "expression": "math.abs(smp.data.signal_1)" },
+        { "name": "signal_4_scaled",   "expression": "smp.data.signal_4 * 100 + 55" },
+        { "name": "sequence",          "expression": "smp.sequence", "type": "integer" },
+        { "name": "ts_origin",         "expression": "smp.ts_origin[0] + smp.ts_origin[1] * 1e-9" }
     ]
 }
 EOF
@@ -44,7 +44,7 @@ cat > input.dat <<EOF
 EOF
 
 cat > expect.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	signal1_positive	abs(signal1)	signal4_scaled	sequence	ts_origin
+# seconds.nanoseconds+offset(sequence)	signal_1_positive	abs(signal_1)	signal4_scaled	sequence	ts_origin
 1551015508.801653200+6.430676e+07(0)	1	0.000000	55.000000	0	1551015508.801653
 1551015508.901653200+6.430676e+07(1)	1	0.587785	65.000000	1	1551015508.901653
 1551015509.001653200+6.430676e+07(2)	1	0.951057	75.000000	2	1551015509.001653

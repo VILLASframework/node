@@ -132,7 +132,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual void restart() {
+  virtual void restart() override {
     assert(state == State::STARTED);
 
     stats->reset();

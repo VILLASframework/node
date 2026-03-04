@@ -20,6 +20,8 @@
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 
+#include <villas/formats/msg_format.hpp>
+
 using namespace villas;
 using namespace villas::utils;
 using namespace villas::node;
@@ -40,6 +42,8 @@ protected:
   std::string ssl_ca;    // SSL CA file.
 
   struct {
+    std::vector<char> buffer;
+    
     std::unique_ptr<RdKafka::Producer> client;
     std::unique_ptr<RdKafka::Topic> topic;
   } producer;
@@ -78,26 +82,25 @@ protected:
   int _write(struct Sample *smps[], unsigned cnt) override {
     assert(producer.client != nullptr);
 
+    if (produce.empty()) {
+        logger->warn(
+          "No produce possible because no produce topic is configured");
+          return 0;
+        }
+
     size_t wbytes;
-
-    char data[DEFAULT_FORMAT_BUFFER_LENGTH];
-
-    auto ret = formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
+    auto ret = formatter->sprint(producer.buffer.data(), producer.buffer.size(), &wbytes, smps, cnt);
     if (ret < 0)
       return ret;
-
-    if (!produce.empty()) {
-      auto ret = producer.client->produce(
-          producer.topic.get(), RdKafka::Topic::PARTITION_UA,
-          RdKafka::Producer::RK_MSG_COPY, data, wbytes, NULL, 0, NULL);
-      if (ret != RdKafka::ErrorCode::ERR_NO_ERROR) {
-        logger->warn("Publish failed");
-        return -abs(ret);
-      }
-    } else
-      logger->warn(
-          "No produce possible because no produce topic is configured");
-
+    
+    auto pr = producer.client->produce(
+      producer.topic.get(), RdKafka::Topic::PARTITION_UA,
+      RdKafka::Producer::RK_MSG_COPY, producer.buffer.data(), wbytes, NULL, 0, NULL);
+    if (pr != RdKafka::ErrorCode::ERR_NO_ERROR) {
+      logger->warn("Publish failed");
+      return -abs(pr);
+    }
+  
     return cnt;
   }
 
@@ -163,10 +166,16 @@ protected:
     uint64_t incr = 1;
     consumer.queue->io_event_enable(consumer.eventFd, &incr, sizeof(incr));
 
-    auto ec = consumer.client->start(consumer.topic.get(), 0, 0,
+    auto ec = consumer.client->start(consumer.topic.get(), 0, RdKafka::Topic::OFFSET_END,
                                      consumer.queue.get());
     if (ec != RdKafka::ErrorCode::ERR_NO_ERROR)
       throw RuntimeError("Error subscribing to {} at {}: {}", consume, server,
+                         RdKafka::err2str(ec));
+
+
+    ec = consumer.client->seek(consumer.topic.get(), 0, RdKafka::Topic::OFFSET_END, 0);
+    if (ec != RdKafka::ErrorCode::ERR_NO_ERROR)
+      throw RuntimeError("Error seeking to end of {} at {}: {}", consume, server,
                          RdKafka::err2str(ec));
 
     logger->info("Subscribed consumer from bootstrap server {}", server);
@@ -224,7 +233,11 @@ protected:
 public:
   KafkaNode(const uuid_t &id = {}, const std::string &name = "")
       : Node(id, name), timeout(1000), client_id("villas-node"), producer({}),
-        consumer({.eventFd = -1}) {}
+        consumer({}) {
+          consumer.eventFd = -1;
+
+          producer.buffer = std::vector<char>(MSG_LEN(100000));
+        }
 
   virtual ~KafkaNode() {}
 

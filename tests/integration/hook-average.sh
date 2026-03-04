@@ -31,7 +31,7 @@ cat > input.dat <<EOF
 EOF
 
 cat > expect.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	average	signal0	signal1	signal2	signal3	signal4
+# seconds.nanoseconds+offset(sequence)	average	signal_0	signal_1	signal_2	signal_3	signal_4
 1548104309.033621000(0)	0.062250	0.022245	0.590769	-1.000000	0.597649	0.100588
 1548104309.133998900(1)	0.073071	0.015339	0.952914	-1.000000	0.196137	0.200966
 1548104309.233542500(2)	0.015207	0.027500	0.950063	-1.000000	-0.202037	0.300509
@@ -45,6 +45,6 @@ cat > expect.dat <<EOF
 EOF
 
 # Average over first and third signal (mask = 0b101 = 5)
-villas hook -o offset=0 -o signals=signal0,signal1,signal2,signal3,signal4 average < input.dat > output.dat
+villas hook -o offset=0 -o signals=signal_0,signal_1,signal_2,signal_3,signal_4 average < input.dat > output.dat
 
 villas compare output.dat expect.dat

@@ -455,7 +455,7 @@ int villas::node::mqtt_write(NodeCompat *n, struct Sample *const smps[],
 
   size_t wbytes;
 
-  char data[1500];
+  char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 
   ret = m->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
   if (ret < 0)

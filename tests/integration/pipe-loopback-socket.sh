@@ -69,7 +69,7 @@ cat > config.json << EOF
             "in": {
                 "address": "${LOCAL}",
                 "signals": {
-                    "count": ${NUM_VALUES},
+                    "length": ${NUM_VALUES},
                     "type": "float"
                 }
             }

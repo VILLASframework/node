@@ -109,9 +109,9 @@ protected:
 
   int parseCommon(
       json_t *json,
-      std::function<Signal::Ptr(json_t *, NodeDirection::Direction)>
-          parse_signal = [](json_t *j, NodeDirection::Direction d) {
-            return Signal::fromJson(j);
+      std::function<Signal::Ptr(json_t *json, NodeDirection::Direction dir, unsigned index)>
+          parse_signal = [](json_t *json, NodeDirection::Direction dir, unsigned index) {
+            return Signal::fromJson(json);
           });
 
 public:

@@ -38,7 +38,7 @@ function process(smp)
 
     counter = counter + 1
 
-    smp.data.signal1 = smp.data.signal2 + smp.data.signal3
+    smp.data.signal_1 = smp.data.signal_2 + smp.data.signal_3
 
     return 0
 end
@@ -54,7 +54,7 @@ cat > config.json <<EOF
     "signals": [
         { "name": "global_var",     "expression": "global_var" },
         { "name": "counter",        "expression": "counter" },
-        { "name": "signal1",        "expression": "smp.data.signal1" },
+        { "name": "signal_1",       "expression": "smp.data.signal_1" },
         { "name": "ts_origin.sec",  "expression": "smp.ts_origin.sec" },
         { "name": "ts_origin.sec",  "expression": "smp.ts_origin.nsec" },
         { "name": "sequence",       "expression": "smp.sequence" }
@@ -77,7 +77,7 @@ cat > input.dat <<EOF
 EOF
 
 cat > expect.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	global_var	counter	signal1	ts_origin.sec	ts_origin.sec	sequence
+# seconds.nanoseconds+offset(sequence)	global_var	counter	signal_1	ts_origin.sec	ts_origin.sec	sequence
 1551015508.801653200+6.430638e+07(0)	555.000000	1.000000	0.000000	1.000000	0.000000	0.000000
 1551015508.901653200+6.430638e+07(1)	555.000000	2.000000	-0.400000	0.600000	0.100000	1.000000
 1551015509.001653200+6.430638e+07(2)	555.000000	3.000000	-0.800000	0.200000	0.200000	2.000000

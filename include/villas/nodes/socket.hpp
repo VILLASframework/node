@@ -17,8 +17,7 @@ namespace node {
 // Forward declarations
 class NodeCompat;
 
-// The maximum length of a packet which contains stuct msg.
-#define SOCKET_INITIAL_BUFFER_LEN (64 * 1024)
+#define SOCKET_INITIAL_BUFFER_LEN DEFAULT_FORMAT_BUFFER_LENGTH
 
 struct Socket {
   int sd;     // The socket descriptor

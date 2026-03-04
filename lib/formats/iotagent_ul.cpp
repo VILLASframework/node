@@ -15,6 +15,7 @@
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/timing.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -25,10 +26,8 @@ int IotAgentUltraLightFormat::sprint(char *buf, size_t len, size_t *wbytes,
   size_t printed = 0;
   const struct Sample *smp = smps[0];
 
-  for (unsigned i = 0; (i < smp->length) && (printed < len); i++) {
+  for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()) && printed < len; i++) {
     auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      return -1;
 
     if (!sig->name.empty())
       printed += snprintf(buf + printed, len - printed, "%s|%f|",

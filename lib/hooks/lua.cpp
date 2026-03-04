@@ -691,8 +691,6 @@ Hook::Reason LuaHook::process(struct Sample *smp) {
 
     for (unsigned i = 0; i < expressions.size(); i++) {
       auto sig = signalsExpressions->getByIndex(i);
-      if (!sig)
-        continue;
 
       expressions[i].evaluate(&smp->data[i], sig->type);
     }

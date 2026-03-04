@@ -38,7 +38,7 @@ cat > config.json << EOF
                 "subscribe": "tcp://127.0.0.1:12000",
                 "signals": {
                     "type": "float",
-                    "count": 5
+                    "length": 5
                 }
             }
         }

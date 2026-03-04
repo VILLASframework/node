@@ -224,7 +224,7 @@ int villas::node::nanomsg_read(NodeCompat *n, struct Sample *const smps[],
                                unsigned cnt) {
   auto *m = n->getData<struct nanomsg>();
   int bytes;
-  char data[NANOMSG_MAX_PACKET_LEN];
+  char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 
   // Receive payload
   bytes = nn_recv(m->in.socket, data, sizeof(data), 0);
@@ -241,7 +241,7 @@ int villas::node::nanomsg_write(NodeCompat *n, struct Sample *const smps[],
 
   size_t wbytes;
 
-  char data[NANOMSG_MAX_PACKET_LEN];
+  char data[DEFAULT_FORMAT_BUFFER_LENGTH];
 
   ret = m->formatter->sprint(data, sizeof(data), &wbytes, smps, cnt);
   if (ret <= 0)

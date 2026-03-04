@@ -49,10 +49,8 @@ size_t VILLASHumanFormat::sprintLine(char *buf, size_t len,
   }
 
   if (flags & (int)SampleFlags::HAS_DATA) {
-    for (unsigned i = 0; i < smp->length; i++) {
+    for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
       auto sig = smp->signals->getByIndex(i);
-      if (!sig)
-        break;
 
       off += snprintf(buf + off, len - off, "\t");
       off += smp->data[i].printString(sig->type, buf + off, len - off,
@@ -131,13 +129,11 @@ size_t VILLASHumanFormat::sscanLine(const char *buf, size_t len,
   }
 
   unsigned i;
-  for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
+  for (ptr = end + 1, i = 0; i < MIN(smp->capacity, signals->size()); ptr = end + 1, i++) {
     if (*end == delimiter)
       goto out;
 
     auto sig = signals->getByIndex(i);
-    if (!sig)
-      goto out;
 
     ret = smp->data[i].parseString(sig->type, ptr, &end);
     if (ret || end == ptr) // There are no valid values anymore.

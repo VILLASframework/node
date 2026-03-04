@@ -32,7 +32,7 @@ cat > input.dat <<EOF
 EOF
 
 cat > expect.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
+# seconds.nanoseconds+offset(sequence)	signal_0	signal_1	signal_2	signal_3	signal_4
 1561591854.277376100(0)	0.022245	-0.136359	1.000000	-0.912920	0.104354
 1561591854.475834300(2)	0.027500	-0.088233	1.000000	-0.943756	0.302812
 1561591854.675955300(4)	0.026079	-0.092019	1.000000	-0.941336	0.502933

@@ -18,7 +18,7 @@ function finish {
 trap finish EXIT
 
 cat > input.dat <<EOF
-# seconds.nanoseconds+offset(sequence)	signal0	signal1	signal2	signal3	signal4
+# seconds.nanoseconds+offset(sequence)	signal_0	signal_1	signal_2	signal_3	signal_4
 1490500399.776379108(0)	0.000000	0.000000	0.000000	0.000000
 1490500399.876379108(1)	0.587785	0.587785	0.587785	0.587785
 1490500399.976379108(2)	0.951057	0.951057	0.951057	0.951057

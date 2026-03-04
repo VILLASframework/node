@@ -8,6 +8,7 @@
 #include <villas/formats/value.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::node;
 
@@ -22,10 +23,8 @@ int ValueFormat::sprint(char *buf, size_t len, size_t *wbytes,
 
   buf[0] = '\0';
 
-  for (i = 0; i < smp->length; i++) {
+  for (i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
     auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      return -1;
 
     off += smp->data[i].printString(sig->type, buf, len, real_precision);
     off += snprintf(buf + off, len - off, "\n");
@@ -49,10 +48,8 @@ int ValueFormat::sscan(const char *buf, size_t len, size_t *rbytes,
 
   printf("Reading: %s", buf);
 
-  if (smp->capacity >= 1) {
+  if (smp->capacity >= 1 && signals->size() >= 1) {
     auto sig = signals->getByIndex(i);
-    if (!sig)
-      return -1;
 
     ret = smp->data[i].parseString(sig->type, ptr, &end);
     if (ret || end == ptr) // There are no valid values anymore.

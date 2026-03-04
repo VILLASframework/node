@@ -54,7 +54,7 @@ cat > config.json << EOF
 
                 "signals": {
                     "type": "float",
-                    "count": 5
+                    "length": 5
                 }
             },
             "out": {

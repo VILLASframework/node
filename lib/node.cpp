@@ -101,7 +101,7 @@ int Node::parse(json_t *json) { return parseCommon(json); }
 
 int Node::parseCommon(
     json_t *json,
-    std::function<Signal::Ptr(json_t *, NodeDirection::Direction d)>
+    std::function<Signal::Ptr(json_t *json, NodeDirection::Direction dir, unsigned index)>
         parse_signal) {
   assert(state == State::INITIALIZED || state == State::PARSED ||
          state == State::CHECKED);
@@ -173,7 +173,9 @@ int Node::parseCommon(
     }
 
     ret = dir.obj->parse(json_dir,
-                         [&](json_t *j) { return parse_signal(j, dir.dir); });
+                         [&](json_t *json,  unsigned index) {
+                          return parse_signal(json, dir.dir, index);
+                        });
     if (ret)
       return ret;
   }

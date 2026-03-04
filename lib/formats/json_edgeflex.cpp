@@ -9,6 +9,7 @@
 
 #include <villas/formats/json_edgeflex.hpp>
 #include <villas/timing.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::node;
 
@@ -22,10 +23,8 @@ int JsonEdgeflexFormat::packSample(json_t **json_smp,
 
   json_data = json_object();
 
-  for (unsigned i = 0; i < smp->length; i++) {
+  for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
     auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      return -1;
 
     json_value = smp->data[i].toJson(sig->type);
     json_object_set(json_data, sig->name.c_str(), json_value);

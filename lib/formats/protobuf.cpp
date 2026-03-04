@@ -184,14 +184,12 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
       smp->ts.origin.tv_nsec = pb_smp->ts_origin->nsec;
     }
 
-    for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
+    for (j = 0; j < MIN(pb_smp->n_values, MIN(smp->length, signals->size())); j++) {
       Villas__Node__Value *pb_val = pb_smp->values[j];
 
       enum SignalType fmt = detect(pb_val);
 
-      auto sig = smp->signals->getByIndex(j);
-      if (!sig)
-        return -1;
+      auto sig = signals->getByIndex(j);
 
       if (sig->type != fmt)
         throw RuntimeError("Received invalid data type in Protobuf payload: "

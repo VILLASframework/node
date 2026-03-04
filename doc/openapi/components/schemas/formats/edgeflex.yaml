@@ -34,9 +34,9 @@ additionalProperties:
 
 example:
 - created: 1633791645123
-  signal0: 123.456
-  signal1: true
-  signal2: 1234
-  signal3:
+  signal_0: 123.456
+  signal_1: true
+  signal_2: 1234
+  signal_3:
     real: 1234.4556
     imag: 23232.12312

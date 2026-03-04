@@ -9,6 +9,7 @@
 
 #include <villas/formats/json_reserve.hpp>
 #include <villas/timing.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas::node;
 
@@ -32,10 +33,8 @@ int JsonReserveFormat::packSample(json_t **json_smp, const struct Sample *smp) {
 
   json_data = json_array();
 
-  for (unsigned i = 0; i < smp->length; i++) {
+  for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
     auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      return -1;
 
     if (!sig->name.empty())
       json_name = json_string(sig->name.c_str());

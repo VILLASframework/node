@@ -58,7 +58,7 @@ cat > src.json << EOF
             "in": {
                 "address": "0.0.0.0:33466",
                 "signals": {
-                    "count": 5,
+                    "length": 5,
                     "type": "float"
                 }
             },
@@ -95,7 +95,7 @@ cat > dest.json << EOF
              "in": {
                  "address": "0.0.0.0:33464",
                  "signals": {
-                     "count": 5,
+                     "length": 5,
                      "type": "float"
                  }
              },

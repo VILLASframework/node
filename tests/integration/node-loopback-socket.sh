@@ -35,7 +35,7 @@ cat > config.json <<EOF
                 "address": "127.0.0.1:12000",
                 "signals": {
                     "type": "float",
-                    "count": 1
+                    "length": 1
                 }
             },
             "out": {
@@ -48,7 +48,7 @@ cat > config.json <<EOF
                 "address": "127.0.0.1:12001",
                 "signals": {
                     "type": "float",
-                    "count": 1
+                    "length": 1
                 }
             },
             "out": {
@@ -98,7 +98,7 @@ cat > config.json <<EOF
                  "address": "127.0.0.1:12002",
                  "signals": {
                      "type": "float",
-                     "count": 1
+                     "length": 1
                  }
              },
              "out": {
@@ -112,7 +112,7 @@ cat > config.json <<EOF
                  "address": "127.0.0.1:12003",
                  "signals": {
                      "type": "float",
-                     "count": 1
+                     "length": 1
                  }
              },
              "out": {

@@ -13,6 +13,7 @@
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
 #include <villas/timing.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -48,10 +49,8 @@ size_t ColumnLineFormat::sprintLine(char *buf, size_t len,
 
   if (flags & (int)SampleFlags::HAS_DATA) {
     if (smp->flags & (int)SampleFlags::HAS_DATA) {
-      for (unsigned i = 0; i < smp->length; i++) {
+      for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
         auto sig = smp->signals->getByIndex(i);
-        if (!sig)
-          break;
 
         off += snprintf(buf + off, len - off, "%c", separator);
         off += smp->data[i].printString(sig->type, buf + off, len - off,
@@ -107,17 +106,15 @@ size_t ColumnLineFormat::sscanLine(const char *buf, size_t len,
 
   smp->flags |= (int)SampleFlags::HAS_SEQUENCE;
 
-  for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
+  for (ptr = end + 1, i = 0; i < MIN(smp->capacity, signals->size()); ptr = end + 1, i++) {
     if (*end == delimiter)
-      goto out;
+      break;
 
-    auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      goto out;
+    auto sig = signals->getByIndex(i);
 
     ret = smp->data[i].parseString(sig->type, ptr, &end);
     if (ret || end == ptr) // There are no valid values anymore.
-      goto out;
+      break;
   }
 
 out:
@@ -151,8 +148,6 @@ void ColumnLineFormat::header(FILE *f, const SignalList::Ptr sigs) {
   if (flags & (int)SampleFlags::HAS_DATA) {
     for (unsigned i = 0; i < sigs->size(); i++) {
       auto sig = sigs->getByIndex(i);
-      if (!sig)
-        break;
 
       if (!sig->name.empty())
         fprintf(f, "%s", sig->name.c_str());

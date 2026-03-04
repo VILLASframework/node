@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <jansson.h>
 
@@ -35,6 +36,8 @@ public:
   union SignalData init; // The initial value of the signal.
   enum SignalType type;
 
+  Signal::Ptr previous; // Previous signal in vector.
+
   // Initialize a signal with default values.
   Signal(const std::string &n = "", const std::string &u = "",
          enum SignalType t = SignalType::INVALID);
@@ -46,8 +49,6 @@ public:
 
   // Produce JSON representation of signal.
   virtual json_t *toJson() const;
-
-  bool isNext(const Signal &sig);
 
   static Signal::Ptr fromJson(json_t *json);
 };

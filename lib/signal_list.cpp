@@ -18,15 +18,15 @@ using namespace villas::node;
 using namespace villas::utils;
 
 SignalList::SignalList(json_t *json_signals,
-                       std::function<Signal::Ptr(json_t *)> parse_signal) {
+                       std::function<Signal::Ptr(json_t *json, unsigned index)> parse_signal) {
   parse(json_signals, parse_signal);
 }
 
-SignalList::SignalList(unsigned len, enum SignalType typ) {
+SignalList::SignalList(unsigned length, enum SignalType typ) {
   auto typ_str = signalTypeToString(typ);
 
   auto *json_signals = json_pack("{ s: s, s: s, s: i }", "name", "signal",
-                                 "type", typ_str.c_str(), "count", len);
+                                 "type", typ_str.c_str(), "length", length);
 
   parse(json_signals);
 }
@@ -40,9 +40,9 @@ SignalList::SignalList(std::string_view dt) {
   auto *dtc = dt.data();
 
   for (const char *t = dtc; *t; t = e + 1) {
-    auto len = strtoul(t, &e, 10);
+    auto length = strtoul(t, &e, 10);
     if (t == e)
-      len = 1;
+      length = 1;
 
     auto name = fmt::format("signal_{}", i++);
 
@@ -53,7 +53,7 @@ SignalList::SignalList(std::string_view dt) {
     auto typ_str = signalTypeToString(typ);
 
     auto *json_signal = json_pack("{ s: s, s: s, s: i }", "name", name.c_str(),
-                                  "type", typ_str.c_str(), "count", len);
+                                  "type", typ_str.c_str(), "length", length);
 
     json_array_append_new(json_signals, json_signal);
   }
@@ -62,7 +62,7 @@ SignalList::SignalList(std::string_view dt) {
 }
 
 void SignalList::parse(json_t *json_signals,
-                       std::function<Signal::Ptr(json_t *)> parse_signal) {
+                       std::function<Signal::Ptr(json_t *json, unsigned index)> parse_signal) {
   clear();
 
   if (json_is_string(json_signals)) {
@@ -77,6 +77,8 @@ void SignalList::parse(json_t *json_signals,
                       "Invalid signal list");
   }
 
+  unsigned index = 0;
+  
   size_t i;
   json_t *json_signal;
   json_array_foreach(json_signals, i, json_signal) {
@@ -89,18 +91,17 @@ void SignalList::parse(json_t *json_signals,
     std::string baseName = "signal";
     bool appendIndex = false;
 
-    int count = 1;
+    int length = 1;
     const char *nme = nullptr;
 
-    int ret = json_unpack(json_signal, "{ s?: i, s?: s }", "count", &count,
+    int ret = json_unpack(json_signal, "{ s?: i, s?: s }", "length", &length,
                           "name", &nme);
     if (ret) {
       throw ConfigError(json_signal, "node-config-node-signal",
                         "Failed to parse signal definition");
     }
 
-    if (count > 1) {
-      json_object_del(json_signal, "count");
+    if (length > 1) {
       appendIndex = true;
     }
 
@@ -108,18 +109,22 @@ void SignalList::parse(json_t *json_signals,
       baseName = nme;
     }
 
-    for (int j = 0; j < count; j++) {
+    Signal::Ptr previousSignal;
+    for (int j = 0; j < length; j++) {
       if (appendIndex) {
         auto name = fmt::format("{}_{}", baseName, j);
         json_object_set_new(json_signal, "name", json_string(name.c_str()));
       }
 
-      auto signal = parse_signal(json_signal);
+      auto signal = parse_signal(json_signal, index++);
       if (!signal)
         throw ConfigError(json_signal, "node-config-node-signal",
                           "Failed to parse signal definition");
 
       push_back(signal);
+      
+      signal->previous = previousSignal;
+      previousSignal = signal;
     }
   }
 }
@@ -129,12 +134,12 @@ void SignalList::dump(Logger logger, const union SignalData *data,
   const char *pfx;
   bool abbrev = false;
 
-  Signal::Ptr prevSig;
+  Signal::Ptr previousSignal;
   unsigned i = 0;
-  for (auto sig : *this) {
+  for (auto signal : *this) {
     // Check if this is a sequence of similar signals which can be abbreviated
     if (i >= 1 && i < size() - 1) {
-      if (prevSig->isNext(*sig)) {
+      if (signal->previous == previousSignal) {
         abbrev = true;
         goto skip;
       }
@@ -147,10 +152,10 @@ void SignalList::dump(Logger logger, const union SignalData *data,
       pfx = "   ";
 
     logger->info(" {}{:>3}: {}", pfx, i,
-                 sig->toString(i < len ? &data[i] : nullptr));
+                 signal->toString(i < len ? &data[i] : nullptr));
 
   skip:
-    prevSig = sig;
+    previousSignal = signal;
     i++;
   }
 }

@@ -69,8 +69,6 @@ int villas::node::msg_to_sample(const struct Message *msg, struct Sample *smp,
   unsigned len = MIN(msg->length, smp->capacity);
   for (i = 0; i < MIN(len, sigs->size()); i++) {
     auto sig = sigs->getByIndex(i);
-    if (!sig)
-      return -1;
 
     switch (sig->type) {
     case SignalType::FLOAT:
@@ -111,10 +109,8 @@ int villas::node::msg_from_sample(struct Message *msg_in,
   msg_in->ts.sec = smp->ts.origin.tv_sec;
   msg_in->ts.nsec = smp->ts.origin.tv_nsec;
 
-  for (unsigned i = 0; i < smp->length; i++) {
+  for (unsigned i = 0; i < MIN(smp->length, sigs->size()); i++) {
     auto sig = sigs->getByIndex(i);
-    if (!sig)
-      return -1;
 
     switch (sig->type) {
     case SignalType::FLOAT:

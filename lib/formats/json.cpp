@@ -10,6 +10,7 @@
 #include <villas/formats/json.hpp>
 #include <villas/sample.hpp>
 #include <villas/signal.hpp>
+#include <villas/utils.hpp>
 
 using namespace villas;
 using namespace villas::node;
@@ -165,10 +166,8 @@ int JsonFormat::packSample(json_t **json_smp, const struct Sample *smp) {
   if (flags & (int)SampleFlags::HAS_DATA) {
     json_t *json_data = json_array();
 
-    for (unsigned i = 0; i < smp->length; i++) {
+    for (unsigned i = 0; i < MIN(smp->length, smp->signals->size()); i++) {
       auto sig = smp->signals->getByIndex(i);
-      if (!sig)
-        return -1;
 
       json_t *json_value = smp->data[i].toJson(sig->type);
 
@@ -240,12 +239,10 @@ int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
   }
 
   json_array_foreach(json_data, i, json_value) {
-    if (i >= smp->capacity)
+    if (i >= smp->capacity || i >= signals->size())
       break;
 
-    auto sig = smp->signals->getByIndex(i);
-    if (!sig)
-      return -1;
+    auto sig = signals->getByIndex(i);
 
     enum SignalType fmt = detect(json_value);
     if (sig->type != fmt)

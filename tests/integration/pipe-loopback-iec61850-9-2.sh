@@ -36,13 +36,13 @@ cat > config.json << EOF
                 "sv_id": "1234",
                 "signals": {
                     "iec_type": "float32",
-                    "count": 64
+                    "length": 64
                 }
             },
             "in": {
                 "signals": {
                     "iec_type": "float32",
-                    "count": 64
+                    "length": 64
                 }
             }
         }
