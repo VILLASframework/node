@@ -10,6 +10,7 @@ set(NODE_SRC
 
 if(WITH_WEB)
     list(APPEND NODE_SRC api.cpp)
+    list(APPEND NODE_SRC gateway.cpp)
 endif()
 
 if(LIBNL3_ROUTE_FOUND)
