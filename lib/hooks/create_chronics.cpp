@@ -173,15 +173,6 @@ void ChronicsHook::discover_files_from_node(struct file *f) {
 
   load_files = glob_sorted(options.loads_dir, "Load");
   sgen_files = glob_sorted(options.sgens_dir, "SGen");
-
-  std::sort(load_files.begin(), load_files.end(),
-            [](const auto &a, const auto &b) {
-              return extract_file_number(a) < extract_file_number(b);
-            });
-  std::sort(sgen_files.begin(), sgen_files.end(),
-            [](const auto &a, const auto &b) {
-              return extract_file_number(a) < extract_file_number(b);
-            });
 }
 
 void ChronicsHook::process_load_files() {
@@ -275,7 +266,7 @@ void ChronicsHook::process_samples_from_file(
     int col_idx = static_cast<int>(load_p_columns.size());
     std::string col_name =
         "load_" + std::to_string(bus_id) + "_" + std::to_string(col_idx - 1);
-    // TODO: Logic to write the column names to the column name vector
+
     if (!load_col_names.empty())
       load_col_names += ';';
     load_col_names += col_name;
@@ -294,7 +285,6 @@ void ChronicsHook::process_samples_from_file(
     // Create a vector for prod_v
     std::vector<double> prod_v;
     for (size_t i = 0; i < prod_p_columns[0].size(); i++) {
-      // prod_v[i] = options.voltage;
       prod_v.push_back(options.voltage);
     }
     prod_v_columns.push_back(prod_v);
@@ -379,7 +369,7 @@ static void write_bz2(const std::filesystem::path &path,
       bz2_write_all(bzf, line.str());
     }
     unsigned int nbytes_in = 0, nbytes_out = 0;
-    BZ2_bzWriteClose(&err, bzf, /*abandon*/ 0, &nbytes_in, &nbytes_out);
+    BZ2_bzWriteClose(&err, bzf, 0, &nbytes_in, &nbytes_out);
     bzf = nullptr; // safety
     std::fclose(fp);
     if (err != BZ_OK)
@@ -387,7 +377,7 @@ static void write_bz2(const std::filesystem::path &path,
   } catch (...) {
     int dummy = BZ_OK;
     if (bzf)
-      BZ2_bzWriteClose(&dummy, bzf, /*abandon*/ 1, nullptr, nullptr);
+      BZ2_bzWriteClose(&dummy, bzf, 1, nullptr, nullptr);
     std::fclose(fp);
     throw;
   }
@@ -431,7 +421,6 @@ void ChronicsHook::run() {
 void ChronicsHook::flush() {}
 
 void ChronicsHook::prepare() {
-
   try {
     sgen_idx = 0;
     options = ChronicsOptions::from_json(*config);
