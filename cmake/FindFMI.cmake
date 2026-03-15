@@ -1,4 +1,8 @@
-
+# CMakeLists.txt.
+#
+# Author: Ritesh Karki
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 find_path(FMI_INCLUDE_DIR
     NAMES fmilib.h

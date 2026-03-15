@@ -28,7 +28,6 @@
 using namespace villas;
 using namespace villas::node;
 
-
 FmuNode::FmuNode(const uuid_t &id, const std::string &name)
     : Node(id, name), writingTurn(false), path(""), unpack_path(""), fmu(),
       context() {
@@ -109,14 +108,14 @@ int FmuNode::_read(struct Sample *smps[], unsigned cnt) {
 
   while (remainingStep > 0.0) {
     bool eventHandlingNeeded = false;
-    bool terminateSimulation  = false;
+    bool terminateSimulation = false;
     bool earlyReturn = false;
     double lastSuccessfulTime = currentTime;
 
     // Perform step
     fmi3_status_t status = fmi3_import_do_step(
-      fmu, currentTime, stepSize, fmi3_true, &eventHandlingNeeded,
-      &terminateSimulation, &earlyReturn, &lastSuccessfulTime);
+        fmu, currentTime, stepSize, fmi3_true, &eventHandlingNeeded,
+        &terminateSimulation, &earlyReturn, &lastSuccessfulTime);
 
     if (status == fmi3_status_error)
       throw RuntimeError("Error during step");
@@ -129,7 +128,8 @@ int FmuNode::_read(struct Sample *smps[], unsigned cnt) {
     }
 
     if (earlyReturn) {
-      logger->info("FMU returned early at {}, target time {}", lastSuccessfulTime, targetTime);
+      logger->info("FMU returned early at {}, target time {}",
+                   lastSuccessfulTime, targetTime);
       currentTime = lastSuccessfulTime;
       remainingStep = targetTime - currentTime;
 
