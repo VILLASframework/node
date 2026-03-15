@@ -587,6 +587,21 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     echo "${PREFIX}/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf
 fi
 
+# Build & Install fmi-library
+if ! find /usr/{local/,}{lib,lib64} -name "libfmilib_shared.so" | grep -q . &&
+    should_build "fmi-library" "For FMI node-type"; then
+    git clone https://github.com/modelon-community/fmi-library.git
+    mkdir -p fmi-library/build
+    pushd fmi-library/build
+    cmake -DFMILIB_GENERATE_DOXYGEN_DOC=OFF \
+          -DFMILIB_BUILD_TESTS=OFF \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
 # Build & Install ghc::filesystem
 if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "ghc_filesystem" "for compatability with older compilers"; then
