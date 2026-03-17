@@ -1,6 +1,6 @@
 /* Node type: Functional Mock-up unit.
  *
- * Author: Jitpanu Maneeratpongsuk <jitpanu.maneeratpongsuk@rwth-aachen.de>
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
