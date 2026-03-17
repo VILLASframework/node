@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+    fmu_path:
+      format: uri
+      description: |
+        Specifies the URI to a FMU model
+
+    fmu_unpack_path:
+      format: uri
+      description: |
+        Specifies the URI to a directory which has the unpacked files of the FMU model (mainly the shared library and the modelDescription.xml for the model)
+
+    fmuWritefirst:
+      type: boolean
+      description: |
+        Specifies whether the model has to be writtem with input values before running. `true` denotes that the model should use the input values. `false` would make the model use default values instead.
+
+    startTime:
+      type: number
+      description: |
+        Specifies the start time for the simulation. Value has to be at least one `stepSize` lesser than `stopTime`.
+
+    stopTime:
+      type: number
+      description: |
+        Specifies the stop time for the simulation. The number of steps is calculated then by the difference between `startTime` and `stopTime` divided by the `stepSize`.
+
+    stepSize:
+      type: number
+      description: |
+        Specifies the stepSize for the simulation. Special care has to be taken to ensure that the value is equal to the value mantioned in modelDescription.xml.
+
+    in:
+      type: object
+      properties:
+        signals:
+          type: array
+          description: |
+            The input signals for the model have to be mentioned here as elements of an array while specifying the name (should be the same as that found in the modelDescription file) and the datatype.
+
+            **Example**:
+
+            ```
+            signals = (
+                {name = "In1", type = "float"},
+                {name = "In2", type = "int"}
+            )
+            ```
+    out:
+      type: object
+      properties:
+        signals:
+          type: array
+          description: |
+            The output signals for the model have to be mentioned here as elements of an array while specifying the name (should be the same as that found in the modelDescription file) and the datatype.
+
+            **Example**:
+
+            ```
+            signals = (
+                {name = "Out1", type = "float"}
+            )
+            ```
+
+- $ref: ../node_signals.yaml
+- $ref: ../node.yaml
