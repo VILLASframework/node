@@ -34,12 +34,12 @@ Test(fpga, rtds, .description = "RTDS") {
   for (auto &ip : state.cards.front()->ips) {
     if (*ip ==
         villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")) {
-      auto rtds = reinterpret_cast<villas::fpga::ip::RtdsGtfpga *>(ip.get());
+      auto rtds = dynamic_cast<villas::fpga::ip::RtdsGtfpga *>(ip.get());
       rtdsIps.push_back(rtds);
     }
 
     if (*ip == villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")) {
-      auto dma = reinterpret_cast<villas::fpga::ip::Dma *>(ip.get());
+      auto dma = dynamic_cast<villas::fpga::ip::Dma *>(ip.get());
       dmaIps.push_back(dma);
     }
   }

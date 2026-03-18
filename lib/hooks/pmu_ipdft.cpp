@@ -26,7 +26,7 @@ public:
 
   {}
 
-  void prepare() {
+  void prepare() override {
     PmuHook::prepare();
 
     const double startFrequency = nominalFreq - estimationRange;
@@ -53,7 +53,7 @@ public:
     }
   }
 
-  void parse(json_t *json) {
+  void parse(json_t *json) override {
     PmuHook::parse(json);
     int ret;
 
@@ -77,7 +77,7 @@ public:
   }
 
   PmuHook::Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                 const PmuHook::Phasor &lastPhasor) {
+                                 const PmuHook::Phasor &lastPhasor) override {
     PmuHook::Phasor phasor = {0};
 
     // Calculate DFT

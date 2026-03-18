@@ -16,9 +16,9 @@ namespace ip {
 class Register : public Node {
 public:
   Register();
-  virtual ~Register();
-  virtual bool init() override;
-  virtual bool check() override;
+  ~Register() override;
+  bool init() override;
+  bool check() override;
   void setRegister(size_t reg, uint32_t value);
   void setRegister(size_t reg, float value);
   uint32_t getRegister(size_t reg);

@@ -80,7 +80,9 @@ public:
     return full ^ *this;
   }
 
-  bool operator==(const CpuSet &rhs) { return CPU_EQUAL_S(sz, setp, rhs.setp); }
+  friend bool operator==(const CpuSet &lhs, const CpuSet &rhs) {
+    return CPU_EQUAL_S(lhs.sz, lhs.setp, rhs.setp);
+  }
 
   CpuSet &operator&=(const CpuSet &rhs) {
     CPU_AND_S(sz, setp, setp, rhs.setp);

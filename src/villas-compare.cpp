@@ -101,7 +101,7 @@ protected:
 
   std::vector<std::string> filenames;
 
-  void usage() {
+  void usage() override {
     std::cout << "Usage: villas-compare [OPTIONS] FILE1 FILE2 ... FILEn"
               << std::endl
               << "  FILE     a list of files to compare" << std::endl
@@ -130,7 +130,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     // Parse Arguments
     int c;
     char *endptr;
@@ -192,7 +192,7 @@ protected:
       filenames.push_back(argv[optind + i]);
   }
 
-  int main() {
+  int main() override {
     int ret, rc = 0, failed;
     unsigned eofs;
 

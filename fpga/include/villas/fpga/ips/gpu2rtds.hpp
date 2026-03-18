@@ -21,7 +21,7 @@ class Gpu2Rtds : public Node, public Hls {
 public:
   friend class Gpu2RtdsFactory;
 
-  virtual bool init() override;
+  bool init() override;
 
   void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 
@@ -31,7 +31,7 @@ public:
 
   size_t getMaxFrameSize();
 
-  const StreamVertex &getDefaultMasterPort() const {
+  const StreamVertex &getDefaultMasterPort() const override {
     return getMasterPort(rtdsOutputStreamPort);
   }
 

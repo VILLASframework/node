@@ -140,7 +140,7 @@ int Node::parse(json_t *json) {
 
   struct {
     const char *str;
-    struct NodeDirection *dir;
+    NodeDirection *dir;
   } dirs[] = {{"in", &in}, {"out", &out}};
 
   const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};

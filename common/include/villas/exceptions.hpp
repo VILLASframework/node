@@ -90,7 +90,7 @@ protected:
   }
 
 public:
-  ~ConfigError() {
+  ~ConfigError() override {
     if (msg)
       free(msg);
   }

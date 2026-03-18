@@ -26,7 +26,7 @@ public:
   ZmqKeygen(int argc, char *argv[]) : Tool(argc, argv, "zmq-keygen") {}
 
 protected:
-  int main() {
+  int main() override {
     int ret;
     char public_key[41];
     char secret_key[41];

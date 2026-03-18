@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(villas-node
-    VERSION 1.0.1
+    VERSION 1.1.0
     DESCRIPTION "Open-Source Real-time Multi-protocol Gateway"
     HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/"
     LANGUAGES C CXX
@@ -52,7 +52,14 @@ include(FindSymbol)
 include(CMakeDependentOption)
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
-add_compile_options(-Wall -Wno-unknown-pragmas -fdiagnostics-color=auto)
+add_compile_options(
+    -Wall
+    -Wno-unknown-pragmas
+    -Wno-unknown-warning-option
+    -Wno-vla-cxx-extension
+    -Wno-unused-command-line-argument
+    -fdiagnostics-color=auto
+)
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)

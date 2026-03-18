@@ -27,7 +27,7 @@ protected:
 
   T correctionFactor;
 
-  virtual T filter(T in, size_type i) const { return in * coefficients[i]; }
+  T filter(T in, size_type i) const override { return in * coefficients[i]; }
 
 public:
   CosineWindow(double a0, double a1, double a2, double a3, double a4,

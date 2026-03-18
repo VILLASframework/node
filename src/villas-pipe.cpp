@@ -69,11 +69,7 @@ public:
       throw RuntimeError("Failed to allocate memory for pool.");
   }
 
-  ~PipeDirection() {
-    int ret __attribute__((unused));
-
-    ret = pool_destroy(&pool);
-  }
+  virtual ~PipeDirection() { std::ignore = pool_destroy(&pool); }
 
   virtual void run() = 0;
 
@@ -103,7 +99,7 @@ public:
   PipeSendDirection(Node *n, Format *i, bool en = true, int lim = -1)
       : PipeDirection(n, i, en, lim, "send") {}
 
-  virtual void run() {
+  void run() override {
     logger->debug("Send thread started");
 
     unsigned last_sequenceno = 0;
@@ -169,7 +165,7 @@ public:
   PipeReceiveDirection(Node *n, Format *i, bool en = true, int lim = -1)
       : PipeDirection(n, i, en, lim, "recv") {}
 
-  virtual void run() {
+  void run() override {
     logger->debug("Receive thread started");
 
     int recv, allocated = 0;
@@ -265,7 +261,7 @@ protected:
     std::unique_ptr<PipeSendDirection> dir;
   } send;
 
-  void handler(int signal, siginfo_t *sinfo, void *ctx) {
+  void handler(int signal, siginfo_t *sinfo, void *ctx) override {
     logger->debug("Received {} signal.", strsignal(signal));
 
     switch (signal) {
@@ -295,7 +291,7 @@ protected:
     }
   }
 
-  void usage() {
+  void usage() override {
     std::cout
         << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl
         << "  CONFIG  path to a configuration file" << std::endl
@@ -324,7 +320,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     int c, ret;
     char *endptr;
     while ((c = getopt(argc, argv, "Vhxrsd:l:L:T:f:t:o:")) != -1) {
@@ -398,7 +394,7 @@ protected:
     nodestr = argv[optind + 1];
   }
 
-  int main() {
+  int main() override {
     int ret;
     Node *node;
     json_t *json_format;
