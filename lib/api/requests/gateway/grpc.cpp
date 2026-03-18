@@ -345,7 +345,7 @@ public:
       sample_dummy->ts.origin = time_from_double(timestamp);
       sample_dummy->length = 0;
       auto siglists = std::make_shared<SignalList>();
-      json_array_foreach(json_value, i, json_data) {
+      json_array_foreach (json_value, i, json_data) {
         auto sig = std::make_shared<Signal>();
         switch (json_data->type) {
         case json_type::JSON_INTEGER:
