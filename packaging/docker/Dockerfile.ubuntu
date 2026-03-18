@@ -39,6 +39,7 @@ RUN apt-get update && \
 	libfmt-dev \
 	libglib2.0-dev \
 	libgraphviz-dev \
+	libgrpc++-dev \
 	libhiredis-dev \
 	libibverbs-dev \
 	libjansson-dev \
@@ -59,6 +60,7 @@ RUN apt-get update && \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
 	libzmq3-dev \
+	protobuf-compiler-grpc \
 	uuid-dev
 
 # Install unpackaged dependencies from source
