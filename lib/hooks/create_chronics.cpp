@@ -26,8 +26,8 @@
 #include <villas/hooks/create_chronics.hpp>
 #include <villas/sample.hpp>
 
-#include "villas/node_compat.hpp"
-#include "villas/nodes/file.hpp"
+#include <villas/node_compat.hpp>
+#include <villas/nodes/file.hpp>
 
 using namespace villas;
 using namespace villas::node;
