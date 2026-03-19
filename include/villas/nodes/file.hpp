@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdio>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <villas/format.hpp>
 #include <villas/task.hpp>
@@ -57,6 +61,24 @@ struct file {
   struct timespec epoch; // The epoch timestamp from the configuration.
   struct timespec
       offset; // An offset between the timestamp in the input file and the current time
+
+  std::vector<Sample *> samples;
+  size_t read_pos;
+
+  enum class ReadMode { RATE_BASED, READ_ALL } read_mode;
+  bool read;
+
+  // For multi-file support
+  std::vector<std::string> uri_templates;
+  std::vector<std::string> uris;
+
+  std::map<std::string, std::vector<Sample *>>
+      file_samples; // Map: filename --> filesamples
+  std::map<std::string, size_t>
+      file_read_pos; // Map: filename --> current read position in file
+  bool multi_file_mode;
+  size_t
+      total_files_size; //To calculate the total number of lines to be read across multiple files
 };
 
 char *file_print(NodeCompat *n);
