@@ -125,6 +125,6 @@ EOF
 
 # TODO: Add an example grid net file
 
-villas node confif.conf
+villas node config.conf
 
 # TODO: Compare with pre-generated csv files
