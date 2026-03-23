@@ -59,7 +59,9 @@ RUN apt-get update && \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
 	libzmq3-dev \
-	uuid-dev
+	uuid-dev \
+    libbz2-dev \
+    nlohmann-json-dev
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

@@ -602,7 +602,7 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
 fi
 
 # Build and install nlohmann/josn required for hook create_chronics
-if ! find ${PREFIX}/{include,share} -name "*nlohmann*" 2>/dev/null | grep -q . && \
+if ! pkg-config "nlohmann_json" && \
     should_build "nlohman_json" "for the delta-sharing node-type"; then
     git clone https://github.com/nlohmann/json.git json
     mkdir -p json/build
@@ -613,7 +613,7 @@ if ! find ${PREFIX}/{include,share} -name "*nlohmann*" 2>/dev/null | grep -q . &
 fi
 
 # Build and install Bzip2 required for hook create_chronics
-if ! { [ -f /usr/local/include/bzlib.h ] && ldconfig -p  | grep -q libbz2; } && \
+if ! pkg-config "bzip2" && \
     should_build "BZip2" "for create_chronics hook"; then
     git clone https://github.com/libarchive/bzip2.git bzip2
     mkdir -p bzip2/build
@@ -621,7 +621,7 @@ if ! { [ -f /usr/local/include/bzlib.h ] && ldconfig -p  | grep -q libbz2; } && 
     cmake ..
     make ${MAKE_OPTS} install
     popd
-fi
+    fi
 
 popd >/dev/null
 

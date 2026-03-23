@@ -48,7 +48,9 @@ RUN dnf -y install \
 	lua-devel \
 	hiredis-devel \
 	libnice-devel \
-	libmodbus-devel
+	libmodbus-devel \
+    bzip2-devel \
+    json-devel
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

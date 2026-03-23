@@ -58,7 +58,9 @@ RUN apt-get update && \
 	libssl-dev:${ARCH} \
 	libusb-1.0-0-dev:${ARCH} \
 	libzmq3-dev:${ARCH} \
-	uuid-dev:${ARCH}
+	uuid-dev:${ARCH} \
+    nlohmann-json3-dev:${ARCH} \
+    libbz2:${ARCH}
 
 ADD cmake/toolchains/debian-${ARCH}.cmake /
 
