@@ -33,7 +33,7 @@ additionalProperties:
         type: number
 
 example:
-- created: 1633791645123
+  created: 1633791645123
   signal0: 123.456
   signal1: true
   signal2: 1234

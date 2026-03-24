@@ -20,7 +20,7 @@ allOf:
       type: number
       description: The rate of the input samples. Exclusive with `dt` setting.
     harmonics:
-      type: object
+      type: array
       description: A list of selected harmonics which should be calculated.
       example: [0, 1, 3, 5 ]
       items:

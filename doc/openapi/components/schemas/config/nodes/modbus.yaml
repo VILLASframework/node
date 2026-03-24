@@ -4,7 +4,7 @@
 ---
 allOf:
 - type: object
-  requires: [transport]
+  required: [transport]
   properties:
     response_timeout:
       type: number

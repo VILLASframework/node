@@ -64,6 +64,6 @@ example:
   device: pmu-abc0
   timestamp: '2021-10-07T10:11:12.1231241+02:00'
   component: 7a30b61a-2913-11ec-9621-0242ac130002
-  measurand: voltagemagnitude
+  measurand: voltmagnitude
   phase: A
   data: 123124
