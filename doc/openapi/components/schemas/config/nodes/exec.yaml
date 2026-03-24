@@ -18,33 +18,33 @@ allOf:
         If not set, we will directly execute the sub-process via `execvpe(2)`.
         In this case the exec setting must be given as an array (`argv[]`).
 
-      exec:
-        description: |
-          The program which should be executed in the sub-process.
+    exec:
+      description: |
+        The program which should be executed in the sub-process.
 
-          The option is passed to the system shell for execution.
+        The option is passed to the system shell for execution.
 
-        oneOf:
-        - type: array
-          items:
-            type: string
-        - type: string
+      oneOf:
+      - type: array
+        items:
+          type: string
+      - type: string
 
-      flush:
-        type: boolean
-        default: true
-        description: |
-          Flush stream every time VILLASnode passes data the sub-process.
+    flush:
+      type: boolean
+      default: true
+      description: |
+        Flush stream every time VILLASnode passes data the sub-process.
 
-      working_directory:
-        type: string
-        description: |
-          If set, the working directory for the sub-process will be changed.
+    working_directory:
+      type: string
+      description: |
+        If set, the working directory for the sub-process will be changed.
 
-      environment:
-        type: object
-        description: |
-          A object of key/value pairs of environment variables which should be passed to the sub-process in addition to the parent environment.
+    environment:
+      type: object
+      description: |
+        A object of key/value pairs of environment variables which should be passed to the sub-process in addition to the parent environment.
 
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml

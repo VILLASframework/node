@@ -23,6 +23,6 @@ allOf:
         signals:
           type: array
           items:
-            $$ref: ./signals/can_signal.yaml
+            $ref: ./signals/can_signal.yaml
 
 - $ref: ../node.yaml

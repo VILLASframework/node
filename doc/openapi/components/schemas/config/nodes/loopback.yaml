@@ -8,12 +8,12 @@ allOf:
 
     queuelen:
       type: integer
-      min: 0
+      minimum: 0
       description: The queue length of the internal queue which buffers the samples.
 
     samplelen:
       type: integer
-      min: 0
+      minimum: 0
       description: The number of values each buffered sample can store.
 
     mode:
