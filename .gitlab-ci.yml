@@ -141,7 +141,8 @@ build:openapi:
   needs: []
   image: node:24-alpine
   script:
-    - npx -y @redocly/cli build-docs doc/openapi/openapi.yaml --output openapi.html
+    - npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
+    - npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
   artifacts:
     paths:
       - openapi.html
