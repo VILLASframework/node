@@ -36,6 +36,7 @@ set(HOOK_SRC
     skip_first.cpp
     stats.cpp
     ts.cpp
+    create_chronics.cpp
 )
 
 if(WITH_LUA)
@@ -49,3 +50,4 @@ endif()
 add_library(hooks STATIC ${HOOK_SRC})
 target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(hooks PUBLIC ${LIBRARIES})
+target_link_libraries(hooks PUBLIC ${BZIP2_LIBRARIES})

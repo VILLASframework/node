@@ -52,7 +52,9 @@ RUN apt-get update && \
 	libssl-dev \
 	libusb-1.0-0-dev \
 	libzmq3-dev \
-	uuid-dev
+	uuid-dev \
+    libbz2-dev \
+    nlohmann-json3-dev
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches

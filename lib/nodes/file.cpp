@@ -6,8 +6,15 @@
  */
 
 #include <cerrno>
+#include <cstddef>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include <jansson.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -19,6 +26,9 @@
 #include <villas/queue.h>
 #include <villas/timing.hpp>
 #include <villas/utils.hpp>
+
+#include "villas/config_class.hpp"
+#include "villas/sample.hpp"
 
 using namespace villas;
 using namespace villas::node;
@@ -76,16 +86,17 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
   const char *uri_tmpl = nullptr;
   const char *eof = nullptr;
   const char *epoch = nullptr;
+  const char *read_mode = nullptr;
   double epoch_flt = 0;
 
   ret = json_unpack_ex(json, &err, 0,
                        "{ s: s, s?: o, s?: { s?: s, s?: F, s?: s, s?: F, s?: "
-                       "i, s?: i }, s?: { s?: b, s?: i } }",
+                       "i, s?: i, s?: s }, s?: { s?: b, s?: i } }",
                        "uri", &uri_tmpl, "format", &json_format, "in", "eof",
                        &eof, "rate", &f->rate, "epoch_mode", &epoch, "epoch",
                        &epoch_flt, "buffer_size", &f->buffer_size_in, "skip",
-                       &f->skip_lines, "out", "flush", &f->flush, "buffer_size",
-                       &f->buffer_size_out);
+                       &f->skip_lines, "read_mode", &read_mode, "out", "flush",
+                       &f->flush, "buffer_size", &f->buffer_size_out);
   if (ret)
     throw ConfigError(json, err, "node-config-node-file");
 
@@ -127,6 +138,36 @@ int villas::node::file_parse(NodeCompat *n, json_t *json) {
       throw RuntimeError("Invalid value '{}' for setting 'epoch'", epoch);
   }
 
+  if (read_mode) {
+    if (!strcmp(read_mode, "all"))
+      f->read_mode = file::ReadMode::READ_ALL;
+    else if (!strcmp(read_mode, "rate_based"))
+      f->read_mode = file::ReadMode::RATE_BASED;
+    else
+      throw RuntimeError("Invalid value '{}' for setting 'read_mode'",
+                         read_mode);
+  }
+
+  json_t *json_uri = json_object_get(json, "uri");
+  json_t *json_uris = json_object_get(json, "uris");
+
+  if (json_uris && json_is_array(json_uris)) {
+    f->multi_file_mode = true;
+    size_t idx;
+    json_t *json_uri_item;
+
+    json_array_foreach(json_uris, idx, json_uri_item) {
+      if (json_is_string(json_uri_item)) {
+        const char *uri_str = json_string_value(json_uri_item);
+        f->uri_templates.push_back(std::string(uri_str));
+      }
+    }
+  } else if (json_uri && json_is_string(json_uri)) {
+    f->multi_file_mode = false;
+  } else
+    throw ConfigError(json, "node-config-node-file",
+                      "Must specify either 'uri' or 'uris'");
+
   return 0;
 }
 
@@ -136,6 +177,7 @@ char *villas::node::file_print(NodeCompat *n) {
 
   const char *epoch_str = nullptr;
   const char *eof_str = nullptr;
+  const char *read_mode = nullptr;
 
   switch (f->epoch_mode) {
   case file::EpochMode::DIRECT:
@@ -181,11 +223,25 @@ char *villas::node::file_print(NodeCompat *n) {
     break;
   }
 
-  strcatf(
-      &buf,
-      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
-      f->uri ? f->uri : f->uri_tmpl, f->flush ? "yes" : "no", f->skip_lines,
-      eof_str, epoch_str, time_to_double(&f->epoch));
+  switch (f->read_mode) {
+  case file::ReadMode::READ_ALL:
+    read_mode = "all";
+    break;
+
+  case file::ReadMode::RATE_BASED:
+    read_mode = "rate_based";
+    break;
+
+  default:
+    read_mode = "";
+    break;
+  }
+
+  strcatf(&buf,
+          "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, "
+          "in.epoch=%.2f, in.read_mode=%s",
+          f->uri ? f->uri : f->uri_tmpl, f->flush ? "yes" : "no", f->skip_lines,
+          eof_str, epoch_str, time_to_double(&f->epoch), read_mode);
 
   if (f->rate)
     strcatf(&buf, ", in.rate=%.1f", f->rate);
@@ -245,6 +301,59 @@ int villas::node::file_start(NodeCompat *n) {
 
   f->formatter->start(n->getInputSignals(false));
 
+  //Experimental code for testing multi file read mode
+  if (f->multi_file_mode && f->read_mode == file::ReadMode::READ_ALL) {
+    struct timespec now = time_now();
+
+    for (const auto &uri_tmpl : f->uri_templates) {
+      char *resolved_uri = file_format_name(uri_tmpl.c_str(), &now);
+      std::string filename = resolved_uri;
+      delete[] resolved_uri;
+
+      FILE *file_stream = fopen(filename.c_str(), "r");
+      if (!file_stream) {
+        n->logger->warn("Failed to open file: {}", filename);
+        continue;
+      }
+
+      std::vector<Sample *> file_data;
+      while (true) {
+        Sample *smp = sample_alloc_mem(n->getInputSignals(false)->size());
+        if (!smp) {
+          n->logger->error("Failed to allocate sample for file: {}",
+                           filename.c_str());
+          break;
+        }
+
+        int ret = f->formatter->scan(file_stream, smp);
+        if (ret < 0) {
+          sample_free(smp);
+          n->logger->error("Failed to scan file stream");
+          break;
+        }
+        if (ret == 0) {
+          sample_free(smp);
+          n->logger->debug("Finished reating from file_stream");
+          break;
+        }
+
+        file_data.push_back(smp);
+      }
+
+      f->file_samples[filename] = std::move(file_data);
+      f->file_read_pos[filename] = 0;
+      f->uris.push_back(filename);
+    }
+
+    for (auto &file_sample_pair : f->file_samples) {
+      const std::vector<Sample *> &current_file = file_sample_pair.second;
+      f->total_files_size += current_file.size();
+    }
+    f->read_pos = 0;
+
+    return 0;
+  }
+
   // Open file
   f->stream_out = fopen(f->uri, "a+");
   if (!f->stream_out)
@@ -298,11 +407,50 @@ int villas::node::file_start(NodeCompat *n) {
 
   sample_free(smp);
 
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    Sample *smp;
+    int ret;
+
+    while (!feof(f->stream_in)) {
+      smp = sample_alloc_mem(n->getInputSignals(false)->size());
+      if (!smp) {
+        n->logger->error("Failed to allocate samples");
+        break;
+      }
+
+      ret = f->formatter->scan(f->stream_in, smp);
+      if (ret < 0) {
+        sample_free(smp);
+        break;
+      }
+
+      f->samples.push_back(smp);
+    }
+
+    f->read_pos = 0;
+  }
   return 0;
 }
 
 int villas::node::file_stop(NodeCompat *n) {
   auto *f = n->getData<struct file>();
+  n->logger->info("Stopping node {}", n->getName());
+  // Experimental code to implement multi file read
+  if (f->multi_file_mode) {
+    for (auto &[filename, samples] : f->file_samples) {
+      for (auto smp : samples) {
+        sample_free(smp);
+      }
+    }
+    f->file_samples.clear();
+    f->file_read_pos.clear();
+    f->uris.clear();
+  }
+
+  for (auto smp : f->samples) {
+    sample_free(smp);
+  }
+  f->samples.clear();
 
   f->task.stop();
 
@@ -311,14 +459,97 @@ int villas::node::file_stop(NodeCompat *n) {
 
   return 0;
 }
-
 int villas::node::file_read(NodeCompat *n, struct Sample *const smps[],
                             unsigned cnt) {
   auto *f = n->getData<struct file>();
+  // size_t file_pos = 0;
+
+  // Experimental code to implement multi file read
+  if (f->multi_file_mode && f->read_mode == file::ReadMode::READ_ALL) {
+    unsigned read_count = 0;
+
+    //Trying sequential read
+
+    for (const auto &filename : f->uris) {
+      if (read_count >= cnt)
+        break;
+      auto &samples = f->file_samples[filename];
+      size_t &pos = f->file_read_pos[filename];
+      while (pos < samples.size() && read_count < cnt) {
+        sample_copy(smps[read_count], samples[pos++]);
+        f->read_pos++;
+        read_count++;
+      }
+    }
+
+    if (f->read_pos == f->total_files_size) {
+      n->logger->info("Reached end of buffer");
+      n->setState(State::STOPPING);
+      return -1;
+    }
+    return (read_count > 0) ? read_count : -1;
+  }
+
   int ret;
   uint64_t steps;
 
   assert(cnt == 1);
+
+  if (f->read_mode == file::ReadMode::READ_ALL) {
+    unsigned read_count = 0;
+    while (f->read_pos < f->samples.size() && read_count < cnt) {
+
+      sample_copy(smps[read_count], f->samples[f->read_pos++]);
+      if (f->epoch_mode == file::EpochMode::ORIGINAL) {
+        //No waiting
+      } else if (f->rate) {
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+
+        smps[read_count]->ts.origin = time_now();
+      } else {
+        smps[read_count]->ts.origin =
+            time_add(&smps[read_count]->ts.origin, &f->offset);
+        f->task.setNext(&smps[read_count]->ts.origin);
+
+        steps = f->task.wait();
+        if (steps == 0)
+          throw SystemError("Failed to wait for timer");
+        else if (steps != 1)
+          n->logger->warn("Missed steps: {}", steps - 1);
+      }
+      read_count++;
+    }
+
+    if (f->read_pos == f->samples.size()) {
+      switch (f->eof_mode) {
+      case file::EOFBehaviour::REWIND:
+        n->logger->info("Rewind input file");
+
+        f->read_pos = 0;
+        break;
+
+      case file::EOFBehaviour::SUSPEND:
+        usleep(100000); // 100ms sleep
+
+        // Try to download more data if this is a remote file.
+        clearerr(f->stream_in);
+        break;
+
+      case file::EOFBehaviour::STOP:
+      default:
+        n->logger->info("Reached end of buffer");
+        n->setState(State::STOPPING);
+        return -1;
+      }
+      return -1;
+    }
+
+    return read_count;
+  }
 
 retry:
   ret = f->formatter->scan(f->stream_in, smps, cnt);
@@ -419,6 +650,9 @@ int villas::node::file_init(NodeCompat *n) {
   // We require a real-time clock here as we can sync against the
   // timestamps in the file.
   new (&f->task) Task(CLOCK_REALTIME);
+  new (&f->file_samples) decltype(f->file_samples)(); // std::map ctor
+  new (&f->file_read_pos) decltype(f->file_read_pos)();
+  new (&f->uris) decltype(f->uris)();
 
   // Default values
   f->rate = 0;
@@ -428,7 +662,9 @@ int villas::node::file_init(NodeCompat *n) {
   f->buffer_size_in = 0;
   f->buffer_size_out = 0;
   f->skip_lines = 0;
-
+  f->read_mode = file::ReadMode::RATE_BASED;
+  f->read = false;
+  f->total_files_size = 0;
   f->formatter = nullptr;
 
   return 0;
