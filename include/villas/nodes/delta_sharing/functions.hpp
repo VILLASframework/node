@@ -1,0 +1,29 @@
+/* Node type: Delta Sharing.
+ *
+ * Author: Ritesh Karki <ritesh.karki@rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <thread>
+#include <vector>
+
+#include <arrow/table.h>
+
+#include <villas/nodes/delta_sharing/delta_sharing_client.hpp>
+
+namespace DeltaSharing {
+
+const std::vector<std::string> ParseURL(const std::string &path);
+std::shared_ptr<DeltaSharingClient>
+NewDeltaSharingClient(std::string profile,
+                      std::optional<std::string> cacheLocation);
+const std::shared_ptr<arrow::Table> LoadAsArrowTable(std::string path,
+                                                     int fileno);
+}; // namespace DeltaSharing
+
+// namespace DeltaSharing
