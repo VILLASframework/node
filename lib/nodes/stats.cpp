@@ -180,7 +180,7 @@ int villas::node::stats_node_parse(NodeCompat *n, json_t *json) {
     throw ConfigError(json, "node-config-node-stats-in-signals",
                       "Setting 'in.signals' must be an array");
 
-  json_array_foreach(json_signals, i, json_signal) {
+  json_array_foreach (json_signals, i, json_signal) {
     auto *stats_sig = new struct stats_node_signal;
     if (!stats_sig)
       throw MemoryAllocationError();
@@ -205,7 +205,8 @@ int villas::node::stats_node_read(NodeCompat *n, struct Sample *const smps[],
 
   s->task.wait();
 
-  unsigned len = MIN(list_length(&s->signals), smps[0]->capacity);
+  unsigned len = std::min(static_cast<unsigned>(list_length(&s->signals)),
+                          smps[0]->capacity);
 
   for (size_t i = 0; i < len; i++) {
     struct stats_node_signal *sig =

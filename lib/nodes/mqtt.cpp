@@ -113,7 +113,7 @@ static void mqtt_subscribe_cb(struct mosquitto *mosq, void *ctx, int mid,
 int villas::node::mqtt_reverse(NodeCompat *n) {
   auto *m = n->getData<struct mqtt>();
 
-  SWAP(m->publish, m->subscribe);
+  std::swap(m->publish, m->subscribe);
 
   return 0;
 }

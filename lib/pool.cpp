@@ -40,7 +40,7 @@ int villas::node::pool_init(struct Pool *p, size_t cnt, size_t blocksz,
   p->buffer_off =
       reinterpret_cast<char *>(buffer) - reinterpret_cast<char *>(p);
 
-  ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
+  ret = queue_init(&p->queue, std::bit_ceil(cnt), m);
   if (ret)
     return ret;
 

@@ -70,7 +70,7 @@ PCIeCardFactory::make(json_t *json_card, std::string card_name,
   // Parse ignored ip names to list
   size_t index;
   json_t *value;
-  json_array_foreach(ignored_ips_array, index, value) {
+  json_array_foreach (ignored_ips_array, index, value) {
     card->ignored_ip_names.push_back(json_string_value(value));
   }
 

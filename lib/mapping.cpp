@@ -149,7 +149,8 @@ int MappingEntry::update(struct Sample *remapped,
 
   case Type::DATA:
     for (unsigned j = data.offset, i = offset;
-         j < MIN(original->length, (unsigned)(data.offset + length));
+         j < std::min(original->length,
+                      static_cast<unsigned>(data.offset + length));
          j++, i++) {
       if (j >= original->length)
         remapped->data[i].f = -1;
@@ -157,7 +158,8 @@ int MappingEntry::update(struct Sample *remapped,
         remapped->data[i] = original->data[j];
     }
 
-    len = MIN((unsigned)length, original->length - data.offset);
+    len =
+        std::min(static_cast<unsigned>(length), original->length - data.offset);
     break;
 
   case Type::UNKNOWN:

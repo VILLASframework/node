@@ -11,6 +11,6 @@ allOf:
   properties:
     window_size:
       type: integer
-      min: 1
+      minimum: 1
       example: 1000
       description: The number of samples in the window.

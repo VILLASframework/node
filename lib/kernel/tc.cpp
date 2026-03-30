@@ -34,7 +34,7 @@ int villas::kernel::tc::prio(Interface *i, struct rtnl_qdisc **qd,
   /* This is the default priomap used by the tc-prio qdisc
    * We will use the first 'bands' bands internally */
   uint8_t map[] = QDISC_PRIO_DEFAULT_PRIOMAP;
-  for (unsigned i = 0; i < ARRAY_LEN(map); i++)
+  for (unsigned i = 0; i < std::size(map); i++)
     map[i] += bands;
 
   rtnl_tc_set_link(TC_CAST(q), i->nl_link);

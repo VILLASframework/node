@@ -66,7 +66,7 @@ int JsonFormat::unpackFlags(json_t *json_flags, struct Sample *smp) {
 
   size_t i;
   json_t *json_flag;
-  json_array_foreach(json_flags, i, json_flag) {
+  json_array_foreach (json_flags, i, json_flag) {
     char *flag;
     json_error_t err;
     if (auto ret = json_unpack_ex(json_flag, &err, 0, "s", &flag))
@@ -239,7 +239,7 @@ int JsonFormat::unpackSample(json_t *json_smp, struct Sample *smp) {
     smp->flags |= (int)SampleFlags::HAS_SEQUENCE;
   }
 
-  json_array_foreach(json_data, i, json_value) {
+  json_array_foreach (json_data, i, json_value) {
     if (i >= smp->capacity)
       break;
 
@@ -276,7 +276,7 @@ int JsonFormat::unpackSamples(json_t *json_smps, struct Sample *const smps[],
   if (!json_is_array(json_smps))
     return -1;
 
-  json_array_foreach(json_smps, i, json_smp) {
+  json_array_foreach (json_smps, i, json_smp) {
     if (i >= cnt)
       break;
 

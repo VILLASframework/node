@@ -65,7 +65,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d,
   if (!d->chanspecs)
     throw MemoryAllocationError();
 
-  json_array_foreach(json_chans, i, json_chan) {
+  json_array_foreach (json_chans, i, json_chan) {
     int num, range, aref;
     ret = json_unpack_ex(json_chan, &err, 0, "{ s: i, s: i, s: i }", "channel",
                          &num, "range", &range, "aref", &aref);
@@ -532,7 +532,7 @@ int villas::node::comedi_read(NodeCompat *n, struct Sample *const smps[],
     const size_t bytes_requested = cnt * villas_sample_size;
 
     ret = read(comedi_fileno(c->dev), c->bufptr,
-               MIN(bytes_requested, buffer_bytes_free));
+               std::min(bytes_requested, buffer_bytes_free));
     if (ret < 0) {
       if (errno == EAGAIN)
         throw RuntimeError("Failed read()");

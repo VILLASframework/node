@@ -18,7 +18,7 @@ using namespace villas::node;
 
 extern void init_memory();
 
-#define NUM_ELEM 1000
+constexpr static auto NUM_ELEM = 1000;
 
 struct param {
   enum QueueSignalledMode mode;
@@ -48,7 +48,7 @@ static void *consumer(void *ctx) {
   void *data[NUM_ELEM];
 
   for (intptr_t i = 0; i < NUM_ELEM;) {
-    ret = queue_signalled_pull_many(q, data, ARRAY_LEN(data));
+    ret = queue_signalled_pull_many(q, data, std::size(data));
     if (ret <= 0)
       return (void *)1; // Indicates an error to the parent thread
 
@@ -104,7 +104,7 @@ ParameterizedTestParameters(queue_signalled, simple) {
 #endif
   };
 
-  return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+  return cr_make_param_array(struct param, params, std::size(params));
 }
 
 // cppcheck-suppress unknownMacro
@@ -116,8 +116,9 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5,
 
   pthread_t t1, t2;
 
-  ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory::heap,
-                             param->mode, param->flags);
+  ret = queue_signalled_init(&q,
+                             std::bit_ceil(static_cast<std::size_t>(NUM_ELEM)),
+                             &memory::heap, param->mode, param->flags);
   cr_assert_eq(ret, 0, "Failed to initialize queue: mode=%d, flags=%#x, ret=%d",
                (int)param->mode, param->flags, ret);
 

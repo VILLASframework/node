@@ -6,15 +6,14 @@ allOf:
 - type: object
   properties:
 
-    path:
-      file_path: string
-      format: uri
+    file_path:
+      type: string
       description: |
         Specifies the URI to a OpenDSS file.
 
     in:
       type: array
-      item:
+      items:
         type: object
         properties:
           name:

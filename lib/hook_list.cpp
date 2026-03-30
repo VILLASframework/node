@@ -22,7 +22,7 @@ void HookList::parse(json_t *json, int mask, Path *o, Node *n) {
 
   size_t i;
   json_t *json_hook;
-  json_array_foreach(json, i, json_hook) {
+  json_array_foreach (json, i, json_hook) {
     int ret;
     const char *type;
     Hook::Ptr h;
@@ -132,7 +132,7 @@ int HookList::process(struct Sample *smps[], unsigned cnt) {
     }
 
   stop:
-    SWAP(smps[processed], smps[current]);
+    std::swap(smps[processed], smps[current]);
     processed++;
   skip: {}
   }

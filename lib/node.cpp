@@ -145,7 +145,7 @@ int Node::parse(json_t *json) {
 
   const char *fields[] = {"signals", "builtin", "vectorize", "hooks"};
 
-  for (unsigned j = 0; j < ARRAY_LEN(dirs); j++) {
+  for (unsigned j = 0; j < std::size(dirs); j++) {
     json_t *json_dir = json_object_get(json, dirs[j].str);
 
     // Skip if direction is unused
@@ -154,7 +154,7 @@ int Node::parse(json_t *json) {
     }
 
     // Copy missing fields from main node config to direction config
-    for (unsigned i = 0; i < ARRAY_LEN(fields); i++) {
+    for (unsigned i = 0; i < std::size(fields); i++) {
       json_t *json_field_dir = json_object_get(json_dir, fields[i]);
       json_t *json_field_node = json_object_get(json, fields[i]);
 
@@ -271,7 +271,7 @@ int Node::read(struct Sample *smps[], unsigned cnt) {
     vect = cnt;
 
   while (cnt - nread > 0) {
-    toread = MIN(cnt - nread, vect);
+    toread = std::min(cnt - nread, vect);
     readd = _read(&smps[nread], toread);
     if (readd < 0)
       return readd;
@@ -325,7 +325,7 @@ int Node::write(struct Sample *smps[], unsigned cnt) {
     vect = cnt;
 
   while (cnt > static_cast<unsigned>(nsent)) {
-    tosend = MIN(cnt - nsent, vect);
+    tosend = std::min(cnt - nsent, vect);
     sent = _write(&smps[nsent], tosend);
     if (sent < 0)
       return sent;
@@ -432,7 +432,7 @@ json_t *Node::toJson() const {
   return json_node;
 }
 
-void Node::swapSignals() { SWAP(in.signals, out.signals); }
+void Node::swapSignals() { std::swap(in.signals, out.signals); }
 
 Node *NodeFactory::make(json_t *json, const uuid_t &id,
                         const std::string &name) {

@@ -353,7 +353,8 @@ void GooseNode::createReceiver() noexcept(false) {
       throw RuntimeError("failed to set local address for R-GOOSE session");
 
     for (auto &key : keys) {
-      err = RSession_addKey(input.session, key.id, key.data.data(),
+      err = RSession_addKey(input.session, key.id,
+                            reinterpret_cast<std::uint8_t *>(key.data.data()),
                             key.data.size(), key.security, key.signature);
       if (err != R_SESSION_ERROR_OK)
         throw RuntimeError("failed to add key with id {} to R-GOOSE session",
@@ -423,7 +424,8 @@ void GooseNode::createPublishers() {
                          output.remote_address);
 
     for (auto &key : keys) {
-      err = RSession_addKey(output.session, key.id, key.data.data(),
+      err = RSession_addKey(output.session, key.id,
+                            reinterpret_cast<std::uint8_t *>(key.data.data()),
                             key.data.size(), key.security, key.signature);
       if (err != R_SESSION_ERROR_OK)
         throw RuntimeError("failed to add key with id {} to R-GOOSE session",
@@ -445,9 +447,13 @@ void GooseNode::createPublishers() {
 
       ctx.publisher =
           GoosePublisher_createEx(&comm, output.interface_id.c_str(), false);
+      if (!ctx.publisher)
+        throw RuntimeError{"failed to create GOOSE publisher"};
     } else {
       ctx.publisher =
           GoosePublisher_createRemote(output.session, ctx.config.app_id);
+      if (!ctx.publisher)
+        throw RuntimeError{"failed to create R-GOOSE publisher"};
     }
 
     if (!ctx.config.go_id.empty())
@@ -645,7 +651,7 @@ int GooseNode::parse(json_t *json) {
     json_t *json_key;
     assert(json_is_array(json_keys));
     keys.reserve(json_array_size(json_keys));
-    json_array_foreach(json_keys, index, json_key) {
+    json_array_foreach (json_keys, index, json_key) {
       assert(json_is_object(json_key));
       parseSessionKey(json_key);
     }
@@ -694,7 +700,7 @@ void GooseNode::parseInput(json_t *json) {
       json_t *json_multicast_group;
       assert(json_is_array(json_multicast_groups));
       input.multicast_groups.reserve(json_array_size(json_multicast_groups));
-      json_array_foreach(json_multicast_groups, index, json_multicast_group) {
+      json_array_foreach (json_multicast_groups, index, json_multicast_group) {
         assert(json_is_string(json_multicast_group));
         input.multicast_groups.emplace_back(
             json_string_value(json_multicast_group));
@@ -721,14 +727,16 @@ void GooseNode::parseSessionKey(json_t *json) {
   char const *security_str;
   char const *signature_str;
   char const *data_str = nullptr;
+  std::size_t data_str_len;
   char const *data_base64 = nullptr;
-  ret = json_unpack_ex(json, &err, 0,                   //
-                       "{ s:i, s:s, s:s, s:?s, s:?s }", //
-                       "id", &id,                       //
-                       "security", &security_str,       //
-                       "signature", &signature_str,     //
-                       "string", &data_str,             //
-                       "base64", &data_base64);
+  std::size_t data_base64_len;
+  ret = json_unpack_ex(json, &err, 0,                      //
+                       "{ s:i, s:s, s:s, s:?s%, s:?s% }",  //
+                       "id", &id,                          //
+                       "security", &security_str,          //
+                       "signature", &signature_str,        //
+                       "string", &data_str, &data_str_len, //
+                       "base64", &data_base64, &data_base64_len);
   if (ret)
     throw ConfigError(json, err, "node-config-node-iec61850-8-1");
 
@@ -764,13 +772,13 @@ void GooseNode::parseSessionKey(json_t *json) {
   else
     throw RuntimeError("unknown signature algorithm {}", signature_str);
 
-  std::vector<uint8_t> data;
+  std::vector<std::byte> data;
   if (data_str && data_base64)
     throw RuntimeError(
         "can't use both 'base64' and 'string' for R-GOOSE key with id {}", id);
   else if (data_str) {
-    auto data_sv = std::string_view(data_str);
-    data = std::vector<uint8_t>(begin(data_sv), end(data_sv));
+    auto data_bytes = std::as_bytes(std::span{data_str, data_str_len});
+    data = std::vector(data_bytes.begin(), data_bytes.end());
   } else if (data_base64) {
     data = base64::decode(data_base64);
   } else {
@@ -830,7 +838,7 @@ void GooseNode::parseSubscribers(
   if (!json_is_object(json))
     throw RuntimeError("subscribers is not an object");
 
-  json_object_foreach(json, key, json_subscriber) {
+  json_object_foreach (json, key, json_subscriber) {
     SubscriberConfig sc;
 
     parseSubscriber(json_subscriber, sc);
@@ -848,7 +856,7 @@ void GooseNode::parseInputSignals(
 
   mappings.clear();
 
-  json_array_foreach(json, index, value) {
+  json_array_foreach (json, index, value) {
     char *mapping_subscriber;
     unsigned int mapping_index;
     char *mapping_type_name;
@@ -941,7 +949,7 @@ void GooseNode::parsePublisherData(json_t *json,
   if (!json_is_array(json))
     throw RuntimeError("publisher data is not an array");
 
-  json_array_foreach(json, index, json_signal_or_value) {
+  json_array_foreach (json, index, json_signal_or_value) {
     char const *mms_type = nullptr;
     char const *signal_str = nullptr;
     json_t *json_value = nullptr;
@@ -1034,7 +1042,7 @@ void GooseNode::parsePublishers(json_t *json, std::vector<OutputContext> &ctx) {
   int index;
   json_t *json_publisher;
 
-  json_array_foreach(json, index, json_publisher) {
+  json_array_foreach (json, index, json_publisher) {
     PublisherConfig pc;
 
     parsePublisher(json_publisher, pc);
@@ -1061,6 +1069,8 @@ int GooseNode::prepare() {
 
   if (in.enabled) {
     createReceiver();
+  }
+  if (out.enabled) {
     createPublishers();
   }
 

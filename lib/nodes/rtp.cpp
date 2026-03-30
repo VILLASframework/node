@@ -104,8 +104,8 @@ int villas::node::rtp_init(NodeCompat *n) {
 int villas::node::rtp_reverse(NodeCompat *n) {
   auto *r = n->getData<struct rtp>();
 
-  SWAP(r->in.saddr_rtp, r->out.saddr_rtp);
-  SWAP(r->in.saddr_rtcp, r->out.saddr_rtcp);
+  std::swap(r->in.saddr_rtp, r->out.saddr_rtp);
+  std::swap(r->in.saddr_rtcp, r->out.saddr_rtcp);
 
   return 0;
 }

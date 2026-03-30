@@ -280,7 +280,7 @@ int fpga::createCards(json_t *config,
   const char *card_name;
   json_t *json_card;
   std::shared_ptr<fpga::Card> card;
-  json_object_foreach(fpgas, card_name, json_card) {
+  json_object_foreach (fpgas, card_name, json_card) {
     card = createCard(json_card, searchPath, vfioContainer, card_name);
     if (card != nullptr) {
       cards.push_back(card);

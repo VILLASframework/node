@@ -110,7 +110,7 @@ static int zeromq_parse_endpoints(json_t *json_ep, struct List *epl) {
 
   switch (json_typeof(json_ep)) {
   case JSON_ARRAY:
-    json_array_foreach(json_ep, i, json_val) {
+    json_array_foreach (json_ep, i, json_val) {
       ep = json_string_value(json_val);
       if (!ep)
         throw ConfigError(json_val, "node-config-node-publish",

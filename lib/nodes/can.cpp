@@ -135,13 +135,13 @@ int villas::node::can_parse(NodeCompat *n, json_t *json) {
   if (!c->out)
     throw MemoryAllocationError();
 
-  json_array_foreach(json_in_signals, i, json_signal) {
+  json_array_foreach (json_in_signals, i, json_signal) {
     ret = can_parse_signal(json_signal, n->in.signals, c->in, i);
     if (ret)
       throw RuntimeError("at signal {}.", i);
   }
 
-  json_array_foreach(json_out_signals, i, json_signal) {
+  json_array_foreach (json_out_signals, i, json_signal) {
     ret = can_parse_signal(json_signal, n->out.signals, c->out, i);
     if (ret)
       throw RuntimeError("at signal {}.", i);

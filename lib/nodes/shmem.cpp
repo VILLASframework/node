@@ -72,7 +72,7 @@ int villas::node::shmem_parse(NodeCompat *n, json_t *json) {
 
     size_t i;
     json_t *json_val;
-    json_array_foreach(json_exec, i, json_val) {
+    json_array_foreach (json_exec, i, json_val) {
       val = json_string_value(json_val);
       if (!val)
         throw SystemError("Setting 'exec' must be an array of strings");
@@ -90,16 +90,16 @@ int villas::node::shmem_prepare(NodeCompat *n) {
   auto *shm = n->getData<struct shmem>();
 
   if (shm->conf.queuelen < 0)
-    shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
+    shm->conf.queuelen = std::max(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
 
   if (shm->conf.samplelen < 0) {
-    auto input_sigs = n->getInputSignals(false)->size();
+    auto input_sigs = static_cast<unsigned>(n->getInputSignals(false)->size());
     auto output_sigs = 0U;
 
     if (n->getOutputSignals(true))
       output_sigs = n->getOutputSignals(true)->size();
 
-    shm->conf.samplelen = MAX(input_sigs, output_sigs);
+    shm->conf.samplelen = std::max(input_sigs, output_sigs);
   }
 
   return 0;

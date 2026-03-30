@@ -23,7 +23,7 @@ using namespace villas::node;
 PathSource::PathSource(Path *p, Node *n) : node(n), path(p), masked(false) {
   int ret;
 
-  int pool_size = MAX(DEFAULT_QUEUE_LENGTH, 20 * node->in.vectorize);
+  int pool_size = std::max(DEFAULT_QUEUE_LENGTH, 20 * node->in.vectorize);
   ret = pool_init(&pool, pool_size,
                   SAMPLE_LENGTH(node->getInputSignalsMaxCount()),
                   node->getMemoryType());

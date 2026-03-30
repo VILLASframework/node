@@ -61,7 +61,7 @@ static void ethercat_cyclic_task(NodeCompat *n) {
       continue;
     }
 
-    smp->length = MIN(w->in.num_channels, smp->capacity);
+    smp->length = std::min(w->in.num_channels, smp->capacity);
     smp->flags = (int)SampleFlags::HAS_DATA;
     smp->signals = n->getInputSignals(false);
 

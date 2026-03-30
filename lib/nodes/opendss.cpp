@@ -52,7 +52,7 @@ void OpenDSS::parseData(json_t *json, bool in) {
   json_t *json_data;
   json_error_t err;
 
-  json_array_foreach(json, i, json_data) {
+  json_array_foreach (json, i, json_data) {
     if (in) {
       const char *name;
       const char *type;
@@ -82,7 +82,7 @@ void OpenDSS::parseData(json_t *json, bool in) {
 
       size_t n;
       json_t *json_mode;
-      json_array_foreach(a_mode, n, json_mode) {
+      json_array_foreach (a_mode, n, json_mode) {
         const char *mode = json_string_value(json_mode);
         // Assign mode according to the OpenDSS function mode.
         switch (ele.type) {

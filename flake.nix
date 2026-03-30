@@ -158,6 +158,7 @@
             jq
             libffi
             libgit2
+            nodejs
             pcre
             reuse
             cppcheck

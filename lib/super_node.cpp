@@ -123,7 +123,7 @@ void SuperNode::parse(json_t *root) {
 
     const char *node_name;
     json_t *json_node;
-    json_object_foreach(json_nodes, node_name, json_node) {
+    json_object_foreach (json_nodes, node_name, json_node) {
       uuid_t node_uuid;
       const char *node_type;
       const char *node_uuid_str = nullptr;
@@ -172,7 +172,7 @@ void SuperNode::parse(json_t *root) {
 
     size_t i;
     json_t *json_path;
-    json_array_foreach(json_paths, i, json_path) {
+    json_array_foreach (json_paths, i, json_path) {
     parse:
       auto *p = new Path();
       if (!p)

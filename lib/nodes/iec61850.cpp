@@ -62,7 +62,7 @@ static int users = 0;
 
 const struct iec61850_type_descriptor *
 villas::node::iec61850_lookup_type(const char *name) {
-  for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {
+  for (unsigned i = 0; i < std::size(type_descriptors); i++) {
     if (!strcmp(name, type_descriptors[i].name))
       return &type_descriptors[i];
   }
@@ -85,7 +85,7 @@ int villas::node::iec61850_parse_signals(json_t *json_signals,
   if (json_is_array(json_signals)) {
     json_t *json_signal;
     size_t i;
-    json_array_foreach(json_signals, i, json_signal) {
+    json_array_foreach (json_signals, i, json_signal) {
       json_unpack_ex(json_signal, &err, 0, "{ s?: s }", "iec_type", &iec_type);
 
       // Try to deduct the IEC 61850 data type from VILLAS signal format

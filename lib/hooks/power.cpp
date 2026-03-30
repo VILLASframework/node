@@ -225,7 +225,7 @@ public:
 
     size_t i = 0;
     json_t *json_pairings_value;
-    json_array_foreach(json_pairings, i, json_pairings_value) {
+    json_array_foreach (json_pairings, i, json_pairings_value) {
       const char *voltageNameC = nullptr;
       const char *currentNameC = nullptr;
 

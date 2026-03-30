@@ -141,7 +141,7 @@ python3 -m venv ${PIP_PREFIX}
 python3 -m pip install \
     --prefix=${PIP_PREFIX} \
     --upgrade \
-    pip \
+    pip==25.3 \
     setuptools \
 
 python3 -m pip install \

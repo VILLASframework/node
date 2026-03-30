@@ -33,7 +33,6 @@ allOf:
           type: string
 
     rate:
-      optional: true
       type: number
       description: |
         Expected refresh-rate in Hertz of this channel

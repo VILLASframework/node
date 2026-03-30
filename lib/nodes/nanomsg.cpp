@@ -59,7 +59,7 @@ static int nanomsg_parse_endpoints(struct List *l, json_t *json) {
 
   switch (json_typeof(json)) {
   case JSON_ARRAY:
-    json_array_foreach(json, i, json_val) {
+    json_array_foreach (json, i, json_val) {
       ep = json_string_value(json_val);
       if (!ep)
         return -1;

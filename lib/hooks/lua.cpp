@@ -251,7 +251,7 @@ static void lua_pushjson(lua_State *L, json_t *json) {
   switch (json_typeof(json)) {
   case JSON_OBJECT:
     lua_newtable(L);
-    json_object_foreach(json, key, json_value) {
+    json_object_foreach (json, key, json_value) {
       lua_pushjson(L, json_value);
       lua_setfield(L, -2, key);
     }
@@ -259,7 +259,7 @@ static void lua_pushjson(lua_State *L, json_t *json) {
 
   case JSON_ARRAY:
     lua_newtable(L);
-    json_array_foreach(json, i, json_value) {
+    json_array_foreach (json, i, json_value) {
       lua_pushjson(L, json_value);
       lua_rawseti(L, -2, i);
     }
@@ -359,8 +359,8 @@ void LuaHook::parseExpressions(json_t *json_sigs) {
                       "Setting 'signals' must be a list of dicts");
 
   // cppcheck-suppress unknownMacro
-  json_array_foreach(json_sigs, i, json_sig)
-      expressions.emplace_back(L, json_sig);
+  json_array_foreach (json_sigs, i, json_sig)
+    expressions.emplace_back(L, json_sig);
 
   hasExpressions = true;
 }

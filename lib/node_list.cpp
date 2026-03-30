@@ -50,7 +50,7 @@ int NodeList::parse(json_t *json, NodeList &all) {
     break;
 
   case JSON_ARRAY:
-    json_array_foreach(json, index, elm) {
+    json_array_foreach (json, index, elm) {
       if (!json_is_string(elm))
         goto invalid;
 

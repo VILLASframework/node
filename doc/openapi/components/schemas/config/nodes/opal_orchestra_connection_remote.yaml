@@ -19,6 +19,6 @@ properties:
 
   pci_index:
     type: integer
-    min: 1
+    minimum: 1
     description: >-
       PCI index that corresponds to the communication card used for remote connection.

@@ -22,7 +22,7 @@ void ChannelList::parse(json_t *json, bool readable, bool writable) {
 
   size_t i;
   json_t *json_channel;
-  json_array_foreach(json, i, json_channel) {
+  json_array_foreach (json, i, json_channel) {
     auto channel = std::make_shared<Channel>();
 
     channel->parse(json_channel);
@@ -73,7 +73,7 @@ void Channel::parse(json_t *json) {
 
       range_options.clear();
 
-      json_array_foreach(json_range, i, json_option) {
+      json_array_foreach (json_range, i, json_option) {
         if (!json_is_string(json_option))
           throw ConfigError(json, err, "node-config-node-api-signals-range",
                             "Channel range options must be strings");

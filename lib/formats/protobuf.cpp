@@ -159,7 +159,7 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
   if (!pb_msg)
     return -1;
 
-  for (i = 0; i < MIN(pb_msg->n_samples, cnt); i++) {
+  for (i = 0; i < std::min(pb_msg->n_samples, std::size_t{cnt}); i++) {
     struct Sample *smp = smps[i];
     Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
@@ -184,7 +184,8 @@ int ProtobufFormat::sscan(const char *buf, size_t len, size_t *rbytes,
       smp->ts.origin.tv_nsec = pb_smp->ts_origin->nsec;
     }
 
-    for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
+    for (j = 0; j < std::min(pb_smp->n_values, std::size_t{smp->capacity});
+         j++) {
       Villas__Node__Value *pb_val = pb_smp->values[j];
 
       enum SignalType fmt = detect(pb_val);

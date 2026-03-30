@@ -808,7 +808,7 @@ unsigned int ModbusNode::parseMappings(std::vector<RegisterMapping> &mappings,
   json_t *signal_json;
   auto signals = getInputSignals(false);
 
-  json_array_foreach(json, i, signal_json) {
+  json_array_foreach (json, i, signal_json) {
     auto signal = signals->getByIndex(i);
 
     mappings.push_back(RegisterMappingSingle::parse(i, signal, signal_json));

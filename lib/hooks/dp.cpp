@@ -179,7 +179,7 @@ public:
     if (!fharmonics || !coeffs)
       throw MemoryAllocationError();
 
-    json_array_foreach(json_harmonics, i, json_harmonic) {
+    json_array_foreach (json_harmonics, i, json_harmonic) {
       if (!json_is_integer(json_harmonic))
         throw ConfigError(json_harmonic, "node-config-hook-dp-harmonics",
                           "Setting 'harmonics' must be a list of integers");

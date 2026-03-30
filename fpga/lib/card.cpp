@@ -179,7 +179,7 @@ void CardFactory::loadSwitch(std::shared_ptr<Card> card, json_t *json_paths) {
 
     size_t i;
     json_t *json_path;
-    json_array_foreach(json_paths, i, json_path) {
+    json_array_foreach (json_paths, i, json_path) {
       const char *from, *to;
       int reverse = 0;
 

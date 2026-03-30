@@ -219,7 +219,7 @@ int SignalNode::parse(json_t *json) {
 
   signals.clear();
   unsigned j = 0;
-  json_array_foreach(json_signals, i, json_signal) {
+  json_array_foreach (json_signals, i, json_signal) {
     auto sig = SignalNodeSignal(json_signal);
 
     if (sig.type == SignalNodeSignal::Type::MIXED)
@@ -294,7 +294,7 @@ int SignalNode::_read(struct Sample *smps[], unsigned cnt) {
              (int)SampleFlags::HAS_SEQUENCE;
   t->ts.origin = ts;
   t->sequence = sequence;
-  t->length = MIN(signals.size(), t->capacity);
+  t->length = std::min(signals.size(), std::size_t{t->capacity});
   t->signals = in.signals;
 
   for (unsigned i = 0; i < t->length; i++) {

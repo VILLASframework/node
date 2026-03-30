@@ -38,7 +38,7 @@ int OpalAsyncIPFormat::sprint(char *buf, size_t len, size_t *wbytes,
                    "We only send the first {}..",
                    MAXSIZE, MAXSIZE);
 
-    for (unsigned j = 0; j < MIN(MAXSIZE, smp->length); j++) {
+    for (unsigned j = 0; j < std::min(MAXSIZE, smp->length); j++) {
       auto sig = smp->signals->getByIndex(j);
       auto d = smp->data[j];
 
@@ -78,7 +78,7 @@ int OpalAsyncIPFormat::sscan(const char *buf, size_t len, size_t *rbytes,
     smp->flags = (int)SampleFlags::HAS_SEQUENCE | (int)SampleFlags::HAS_DATA;
     smp->signals = signals;
 
-    for (unsigned j = 0; j < MIN(smp->length, smp->capacity); j++) {
+    for (unsigned j = 0; j < std::min(smp->length, smp->capacity); j++) {
       auto sig = signals->getByIndex(j);
 
       SignalData d;

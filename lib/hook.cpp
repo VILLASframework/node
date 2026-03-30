@@ -116,7 +116,7 @@ void MultiSignalHook::parse(json_t *json) {
       throw ConfigError(json_signals, "node-config-hook-signals",
                         "Setting 'signals' must be a list of signal names");
 
-    json_array_foreach(json_signals, i, json_signal) {
+    json_array_foreach (json_signals, i, json_signal) {
       if (!json_is_string(json_signal))
         throw ConfigError(json_signal, "node-config-hook-signals",
                           "Invalid value for setting 'signals'");

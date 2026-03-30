@@ -62,7 +62,7 @@ RelayMessage::RelayMessage(json_t *json) {
   char *expires;
   json_t *json_server;
   size_t i;
-  json_array_foreach(json, i, json_server) {
+  json_array_foreach (json, i, json_server) {
     ret = json_unpack(json_server, "{ s: s, s: s, s: s, s: s, s: s }", "url",
                       &url, "user", &user, "pass", &pass, "realm", &realm,
                       "expires", &expires);
@@ -106,7 +106,8 @@ ControlMessage::ControlMessage(json_t *j) {
   json_t *json_peer;
   size_t i;
   // cppcheck-suppress unknownMacro
-  json_array_foreach(json_peers, i, json_peer) peers.emplace_back(json_peer);
+  json_array_foreach (json_peers, i, json_peer)
+    peers.emplace_back(json_peer);
 }
 
 json_t *SignalingMessage::toJson() const {
