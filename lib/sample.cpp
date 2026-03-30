@@ -29,7 +29,7 @@ int villas::node::sample_init(struct Sample *s) {
   s->capacity =
       pool ? ((*pool)->blocksz - sizeof(struct Sample)) / sizeof(s->data[0])
            : 0;
-  s->refcnt = ATOMIC_VAR_INIT(1);
+  s->refcnt = 1;
 
   new (&s->signals) std::shared_ptr<SignalList>;
 
@@ -67,7 +67,7 @@ struct Sample *villas::node::sample_alloc_mem(int capacity) {
 
   s->length = 0;
   s->capacity = capacity;
-  s->refcnt = ATOMIC_VAR_INIT(1);
+  s->refcnt = 1;
 
   return s;
 }

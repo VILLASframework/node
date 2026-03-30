@@ -70,6 +70,11 @@ public:
   void open();
   int close();
 
+  template <typename T>
+  friend std::istream &operator>>(villas::utils::PopenStream &po, T &value) {
+    return *(po.input.stream) >> value;
+  }
+
 protected:
   struct {
     std::unique_ptr<std::istream> stream;
@@ -84,8 +89,3 @@ protected:
 
 } // namespace utils
 } // namespace villas
-
-template <typename T>
-std::istream &operator>>(villas::utils::PopenStream &po, T &value) {
-  return *(po.input.stream) >> value;
-}

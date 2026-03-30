@@ -201,7 +201,7 @@ protected:
 public:
   SlaveNode(const uuid_t &id = {}, const std::string &name = "");
 
-  virtual ~SlaveNode() override;
+  ~SlaveNode() override;
 
   int parse(json_t *json) override;
 

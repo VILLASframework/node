@@ -24,10 +24,10 @@ class AxiStreamSwitch : public Node {
 public:
   friend class AxiStreamSwitchFactory;
 
-  virtual bool init() override;
+  bool init() override;
 
   bool connectInternal(const std::string &slavePort,
-                       const std::string &masterPort);
+                       const std::string &masterPort) override;
 
   void printConfig() const;
 
@@ -38,7 +38,7 @@ private:
 
   static constexpr char registerMemory[] = "Reg";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 
@@ -51,22 +51,22 @@ private:
 class AxiStreamSwitchFactory : NodeFactory {
 
 public:
-  virtual std::string getName() const { return "switch"; }
+  std::string getName() const override { return "switch"; }
 
-  virtual std::string getDescription() const {
+  std::string getDescription() const override {
     return "Xilinx's AXI4-Stream switch";
   }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axis_switch:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new AxiStreamSwitch; };
+  Core *make() const override { return new AxiStreamSwitch; };
 
 protected:
-  virtual void parse(Core &, json_t *) override;
+  void parse(Core &, json_t *) override;
 };
 
 } // namespace ip

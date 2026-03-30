@@ -98,7 +98,7 @@ public:
         inverse(0), f0(50.0), timestep(50e-6), time(), steps(0), coeffs(),
         fharmonics(), fharmonics_len(0) {}
 
-  virtual ~DPHook() {
+  ~DPHook() override {
     // Release memory
     if (fharmonics)
       delete fharmonics;
@@ -110,7 +110,7 @@ public:
       free(signal_name);
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     time = 0;
@@ -249,7 +249,7 @@ public:
     state = State::PREPARED;
   }
 
-  virtual void check() {
+  void check() override {
     assert(state == State::PARSED);
 
     if (signal_index < 0)

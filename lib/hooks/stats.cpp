@@ -32,7 +32,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 class StatsReadHook : public Hook {
@@ -50,7 +50,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     last = nullptr;
@@ -58,7 +58,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     if (last)
@@ -67,7 +67,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual Hook::Reason process(struct Sample *smp);
+  Hook::Reason process(struct Sample *smp) override;
 };
 
 class StatsHook : public Hook {
@@ -109,7 +109,7 @@ public:
   StatsHook &operator=(const StatsHook &) = delete;
   StatsHook(const StatsHook &) = delete;
 
-  virtual void start() override {
+  void start() override {
     assert(state == State::PREPARED);
 
     if (!uri.empty()) {
@@ -121,7 +121,7 @@ public:
     state = State::STARTED;
   }
 
-  virtual void stop() override {
+  void stop() override {
     assert(state == State::STARTED);
 
     stats->print(uri.empty() ? stdout : output, format, verbose);
@@ -132,7 +132,7 @@ public:
     state = State::STOPPED;
   }
 
-  virtual void restart() {
+  void restart() override {
     assert(state == State::STARTED);
 
     stats->reset();
@@ -146,7 +146,7 @@ public:
     return Hook::Reason::OK;
   }
 
-  virtual void periodic() override {
+  void periodic() override {
     assert(state == State::STARTED);
 
     stats->printPeriodic(uri.empty() ? stdout : output, format, node);

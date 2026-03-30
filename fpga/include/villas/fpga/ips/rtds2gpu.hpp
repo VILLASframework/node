@@ -30,11 +30,11 @@ class Rtds2Gpu : public Node, public Hls {
 public:
   friend class Rtds2GpuFactory;
 
-  virtual bool init() override;
+  bool init() override;
 
   void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 
-  virtual void dump() override { dump(spdlog::level::info); }
+  void dump() override { dump(spdlog::level::info); }
 
   bool startOnce(const MemoryBlock &mem, size_t frameSize, size_t dataOffset,
                  size_t doorbellOffset);
@@ -49,11 +49,11 @@ public:
 
   void doorbellReset(uint32_t &doorbellRegister) const { doorbellRegister = 0; }
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 
-  const StreamVertex &getDefaultSlavePort() const {
+  const StreamVertex &getDefaultSlavePort() const override {
     return getSlavePort(rtdsInputStreamPort);
   }
 

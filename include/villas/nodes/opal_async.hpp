@@ -81,9 +81,9 @@ protected:
   std::mutex readyLock;
   std::condition_variable readyCv;
 
-  virtual int _read(struct Sample *smps[], unsigned cnt) override;
+  int _read(struct Sample *smps[], unsigned cnt) override;
 
-  virtual int _write(struct Sample *smps[], unsigned cnt) override;
+  int _write(struct Sample *smps[], unsigned cnt) override;
 
 public:
   OpalAsyncNode(const uuid_t &id = {}, const std::string &name = "")
@@ -98,12 +98,12 @@ public:
     out.length = 0;
   }
 
-  virtual const std::string &getDetails() override;
+  const std::string &getDetails() override;
 
-  virtual int start() override;
-  virtual int stop() override;
+  int start() override;
+  int stop() override;
 
-  virtual int parse(json_t *json) override;
+  int parse(json_t *json) override;
 
   void markReady();
   void waitReady();
@@ -114,8 +114,7 @@ class OpalAsyncNodeFactory : public NodeFactory {
 public:
   using NodeFactory::NodeFactory;
 
-  virtual Node *make(const uuid_t &id = {},
-                     const std::string &nme = "") override {
+  Node *make(const uuid_t &id = {}, const std::string &nme = "") override {
     auto *n = new OpalAsyncNode(id, nme);
 
     init(n);
@@ -123,23 +122,23 @@ public:
     return n;
   }
 
-  virtual int getFlags() const override {
+  int getFlags() const override {
     return (int)NodeFactory::Flags::SUPPORTS_READ |
            (int)NodeFactory::Flags::SUPPORTS_WRITE |
            (int)NodeFactory::Flags::PROVIDES_SIGNALS;
   }
 
-  virtual std::string getName() const override { return "opal.async"; }
+  std::string getName() const override { return "opal.async"; }
 
-  virtual std::string getDescription() const override {
+  std::string getDescription() const override {
     return "OPAL Asynchronous Process (libOpalAsyncApi)";
   }
 
-  virtual int getVectorize() const override { return 1; }
+  int getVectorize() const override { return 1; }
 
-  virtual int start(SuperNode *sn) override;
+  int start(SuperNode *sn) override;
 
-  virtual int stop() override;
+  int stop() override;
 };
 
 } // namespace node

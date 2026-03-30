@@ -20,14 +20,16 @@ class Bram : public Core {
   friend class BramFactory;
 
 public:
-  virtual bool init() override;
+  bool init() override;
 
   LinearAllocator &getAllocator() { return *allocator; }
 
 private:
   static constexpr const char *memoryBlock = "Mem0";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const { return {memoryBlock}; }
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
+    return {memoryBlock};
+  }
 
   size_t size;
   std::unique_ptr<LinearAllocator> allocator;
@@ -36,20 +38,20 @@ private:
 class BramFactory : public CoreFactory {
 
 public:
-  virtual std::string getName() const { return "bram"; }
+  std::string getName() const override { return "bram"; }
 
-  virtual std::string getDescription() const { return "Block RAM"; }
+  std::string getDescription() const override { return "Block RAM"; }
 
 private:
-  virtual Vlnv getCompatibleVlnv() const {
+  Vlnv getCompatibleVlnv() const override {
     return Vlnv("xilinx.com:ip:axi_bram_ctrl:");
   }
 
   // Create a concrete IP instance
-  Core *make() const { return new Bram; };
+  Core *make() const override { return new Bram; };
 
 protected:
-  virtual void parse(Core &, json_t *) override;
+  void parse(Core &, json_t *) override;
 };
 
 } // namespace ip

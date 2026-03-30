@@ -28,8 +28,8 @@ static villas::node::Web *web;
 WebRTCNode::WebRTCNode(const uuid_t &id, const std::string &name)
     : Node(id, name),
       server("https://villas.k8s.eonerc.rwth-aachen.de/ws/signaling"),
-      peer(uuid::toString(id)), wait_seconds(0), formatter(), queue({}),
-      pool({}), dci({}) {
+      peer(uuid::toString(id)), wait_seconds(0), formatter(), queue(), pool(),
+      dci() {
 
 #if RTC_VERSION_NUM < 0x001400
   dci.reliability.type = rtc::Reliability::Type::Rexmit;

@@ -33,7 +33,7 @@ public:
       layout = "neato";
   }
 
-  ~GraphRequest() { gvFreeContext(gvc); }
+  ~GraphRequest() override { gvFreeContext(gvc); }
 
   Response *execute() override {
     if (method != Session::Method::GET)

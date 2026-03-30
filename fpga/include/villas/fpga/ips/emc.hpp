@@ -17,7 +17,7 @@ namespace ip {
 
 class EMC : public Core {
 public:
-  virtual bool init() override;
+  bool init() override;
 
   bool flash(uint32_t offset, const std::string &filename);
   bool flash(uint32_t offset, uint32_t length, uint8_t *data);
@@ -29,7 +29,7 @@ private:
 
   static constexpr char registerMemory[] = "Reg";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory};
   }
 };

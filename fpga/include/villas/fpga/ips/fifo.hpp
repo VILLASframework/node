@@ -22,9 +22,9 @@ class Fifo : public Node {
 public:
   friend class FifoFactory;
 
-  virtual bool init() override;
+  bool init() override;
 
-  virtual bool stop() override;
+  bool stop() override;
 
   size_t write(const void *buf, size_t len);
   size_t read(void *buf, size_t len);
@@ -34,7 +34,7 @@ private:
   static constexpr char axi4Memory[] = "Mem1";
   static constexpr char irqName[] = "interrupt";
 
-  std::list<MemoryBlockName> getMemoryBlocks() const {
+  std::list<MemoryBlockName> getMemoryBlocks() const override {
     return {registerMemory, axi4Memory};
   }
 

@@ -316,7 +316,7 @@ public:
   static Node *make(const std::string &type, const uuid_t &id = {},
                     const std::string &name = "");
 
-  virtual std::string getType() const { return "node"; }
+  std::string getType() const override { return "node"; }
 
   friend std::ostream &operator<<(std::ostream &os, const NodeFactory &f) {
     os << f.getName();
@@ -346,7 +346,7 @@ template <typename T, const char *name, const char *desc, int flags = 0,
 class NodePlugin : public NodeFactory {
 
 public:
-  virtual Node *make(const uuid_t &id = {}, const std::string &nme = "") {
+  Node *make(const uuid_t &id = {}, const std::string &nme = "") override {
     T *n = new T(id, nme);
 
     init(n);
@@ -354,13 +354,13 @@ public:
     return n;
   }
 
-  virtual int getFlags() const { return flags; }
+  int getFlags() const override { return flags; }
 
-  virtual int getVectorize() const { return vectorize; }
+  int getVectorize() const override { return vectorize; }
 
-  virtual std::string getName() const { return name; }
+  std::string getName() const override { return name; }
 
-  virtual std::string getDescription() const { return desc; }
+  std::string getDescription() const override { return desc; }
 };
 
 } // namespace node

@@ -26,14 +26,14 @@ public:
   Config2Json(int argc, char *argv[]) : Tool(argc, argv, "conf2json") {}
 
 protected:
-  void usage() {
+  void usage() override {
     std::cout << "Usage: conf2json input.conf > output.json" << std::endl
               << std::endl;
 
     printCopyright();
   }
 
-  int main() {
+  int main() override {
     int ret;
     config_t cfg;
     config_setting_t *cfg_root;

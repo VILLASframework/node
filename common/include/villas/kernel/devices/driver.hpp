@@ -1,4 +1,4 @@
-/* Interface for device drivers. OS/platform independend.
+/* Interface for device drivers. OS/platform independent.
  * Implemented for Linux/Unix drivers in linux_driver.hpp
  *
  * Author: Pascal Bauer <pascal.bauer@rwth-aachen.de>
@@ -24,6 +24,7 @@ public:
   virtual std::string name() const = 0;
   virtual void override(const Device &device) const = 0;
   virtual void unbind(const Device &device) const = 0;
+  virtual ~Driver() = default;
 };
 
 } // namespace devices

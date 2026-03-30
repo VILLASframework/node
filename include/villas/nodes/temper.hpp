@@ -52,7 +52,7 @@ public:
 class TEMPer1Device : public TEMPerDevice {
 
 protected:
-  virtual void decode(unsigned char *answer, float *temp);
+  void decode(unsigned char *answer, float *temp) override;
 
   using TEMPerDevice::TEMPerDevice;
 
@@ -65,7 +65,7 @@ public:
 class TEMPer2Device : public TEMPer1Device {
 
 protected:
-  virtual void decode(unsigned char *answer, float *temp);
+  void decode(unsigned char *answer, float *temp) override;
 
   using TEMPer1Device::TEMPer1Device;
 
@@ -74,13 +74,13 @@ public:
 
   static std::string getName() { return "TEMPer2"; }
 
-  virtual int getNumSensors() const { return 2; }
+  int getNumSensors() const override { return 2; }
 };
 
 class TEMPerHUMDevice : public TEMPerDevice {
 
 protected:
-  virtual void decode(unsigned char *answer, float *temp);
+  void decode(unsigned char *answer, float *temp) override;
 
   using TEMPerDevice::TEMPerDevice;
 
@@ -89,7 +89,7 @@ public:
 
   static std::string getName() { return "TEMPerHUM"; }
 
-  virtual bool hasHumiditySensor() const { return true; }
+  bool hasHumiditySensor() const override { return true; }
 };
 
 struct temper {

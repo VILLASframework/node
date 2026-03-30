@@ -324,7 +324,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual void check() {
+  void check() override {
     assert(state == State::PARSED);
 
     if (endFreqency < 0 || endFreqency > sampleRate)

@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'villas-node'
-version = '1.0.1'
+version = '1.1.0'
 description = 'Python support for the VILLASnode simulation-data gateway'
 readme = 'README.md'
 requires-python = '>=3.10'
@@ -21,15 +21,15 @@ classifiers = [
 ]
 dependencies = [
     'linuxfd==1.5; platform_system=="Linux"',
-    'protobuf==6.31.1',
+    'protobuf==6.32.1',
     'libconf==2.0.1',
 ]
 optional-dependencies.dev = [
-    'black==25.1.0',
-    'flake8==7.2.0',
-    'mypy==1.15.0',
-    'pytest==8.3.5',
-    'types-protobuf==5.29.1.20250403',
+    'black==25.11.0',
+    'flake8==7.3.0',
+    'mypy==1.19.0',
+    'pytest==9.0.1',
+    'types-protobuf==6.32.1.20251105',
 ]
 
 [project.scripts]

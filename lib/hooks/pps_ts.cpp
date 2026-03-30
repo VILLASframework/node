@@ -86,7 +86,7 @@ public:
     state = State::PARSED;
   }
 
-  virtual villas::node::Hook::Reason process(struct Sample *smp) {
+  villas::node::Hook::Reason process(struct Sample *smp) override {
     switch (mode) {
     case Mode::SIMPLE:
       return processSimple(smp);

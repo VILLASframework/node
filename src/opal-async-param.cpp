@@ -3,7 +3,7 @@
  * Author: Steffen Vogel <steffen.vogel@opal-rt.com>
  * SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
  * SPDX-License-Identifier: Apache-2.0
- *
+ */
 
 #include <cstring>
 #include <iostream>

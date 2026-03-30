@@ -42,7 +42,7 @@ public:
       : Node(id, name), stream_in(nullptr), stream_out(nullptr), flush(true),
         shell(false) {}
 
-  virtual ~ExecNode();
+  ~ExecNode() override;
 
   const std::string &getDetails() override;
 

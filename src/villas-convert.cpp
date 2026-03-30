@@ -52,7 +52,7 @@ protected:
     Format *formatter;
   } dirs[2];
 
-  void usage() {
+  void usage() override {
     std::cout << "Usage: villas-convert [OPTIONS]" << std::endl
               << "  OPTIONS are:" << std::endl
               << "    -i FMT           set the input format" << std::endl
@@ -67,7 +67,7 @@ protected:
     printCopyright();
   }
 
-  void parse() {
+  void parse() override {
     // Parse optional command line arguments
     int c;
     while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
@@ -105,7 +105,7 @@ protected:
     }
   }
 
-  int main() {
+  int main() override {
     int ret;
 
     for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
