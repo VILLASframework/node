@@ -100,7 +100,7 @@ build:source:
     CMAKE: cmake
   parallel:
     matrix:
-      - DISTRO: [fedora, fedora-minimal, debian, rocky, rocky9, ubuntu]
+      - DISTRO: [debian, rocky, rocky9, ubuntu]
       - DISTRO: fedora
         CMAKE_EXTRA_OPTS: >
           -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
