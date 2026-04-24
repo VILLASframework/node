@@ -979,9 +979,14 @@ void GooseNode::parsePublisherData(json_t *json,
 
     auto signal = std::optional<int>{};
 
-    if (signal_str)
+    if (signal_str){
       signal = out.signals->getIndexByName(signal_str);
-
+      if (!signal || *signal == -1)
+        throw RuntimeError("Name not found in output signal section");
+        
+    }
+    if (!json_value && !signal_str)
+      throw RuntimeError("Need either signal name or signal value");
     OutputData value = {.signal = signal,
                         .default_value =
                             GooseSignal{goose_type, signal_data, meta}};
