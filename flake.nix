@@ -163,6 +163,7 @@
             libgit2
             nodejs
             pcre
+            redocly
             reuse
             cppcheck
             pre-commit
