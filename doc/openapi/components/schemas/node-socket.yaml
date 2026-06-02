@@ -1,0 +1,142 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, in, out]
+properties:
+  type:
+    type: string
+    const: socket
+
+  format:
+    default: villas.binary
+    $ref: ./format.yaml
+
+  layer:
+    type: string
+    enum:
+    - udp
+    - ip
+    - eth
+    - unix
+    - local
+    - tcp-client
+    - tcp-server
+    default: udp
+    description: |
+      Select the network layer which should be used for the socket. Please note that `eth` can only be used locally in a LAN as it contains no routing information for the internet.
+
+  in:
+    type: object
+    required:
+    - address
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      address:
+        type: string
+        description: |
+          The local address and port number this node should listen for incoming packets.
+
+          Use `*` to listen on all interfaces: `local = "*:12000"`.
+
+      verify_source:
+        type: boolean
+        default: false
+        description: |
+          Check if source address of incoming packets matches the remote address.
+
+      multicast:
+        type: object
+        required:
+        - group
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: |
+              Weather or not multicast group subscription is active.
+
+          group:
+            type: string
+            description: |
+              The multicast group. Must be within 224.0.0.0/4
+
+          interface:
+            type: string
+            description: |
+              The address of the interface which should join the multicast group.
+
+          ttl:
+            type: integer
+            minimum: 0
+            default: 255
+            description: |
+              The time to live for outgoing multicast packets.
+
+          loop:
+            type: boolean
+            default: false
+            description: |
+              Whether or not sent multicast packets should be looped back to the local socket.
+
+        additionalProperties: false
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required:
+    - address
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      address:
+        type: string
+        description: |
+          The remote address and port number to which this node will send data.
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

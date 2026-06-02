@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: integer
+minimum: 0
+maximum: 31
+description: |
+  Pretty-print the result, using newlines between array and object items, and indenting with n spaces.
+  If the settings is not used or is 0, no newlines are inserted between array and object items.

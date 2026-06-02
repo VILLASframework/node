@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, interface_name]
+properties:
+  type:
+    type: string
+    const: can
+
+  interface_name:
+    type: string
+    description: Name of the Socket CAN interface
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-can-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-can-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-can-signal:
+    type: object
+    properties:
+      can_id:
+        type: integer
+        default: 0
+
+      can_size:
+        type: integer
+        default: 8
+
+      can_offset:
+        type: integer
+        default: 0
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

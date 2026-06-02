@@ -14,7 +14,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/config.yaml
+            type: object
           examples:
             example1:
               value:

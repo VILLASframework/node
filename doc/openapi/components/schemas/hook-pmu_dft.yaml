@@ -1,0 +1,136 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: pmu_dft
+
+  sample_rate:
+    type: integer
+    default: 0
+    minimum: 0
+    example: 10000
+    description: The sampling rate of the input signal.
+
+  start_frequency:
+    type: number
+    minimum: 0
+    example: 49.7
+    description: The lowest frequency bin.
+
+  end_frequency:
+    type: number
+    example: 50.3
+    minimum: 0
+    description: The highest frequency bin.
+
+  frequency_resolution:
+    type: number
+    example: 0.1
+    minimum: 0
+    description: The frequency resolution of the DFT.
+
+  dft_rate:
+    type: integer
+    example: 1
+    minimum: 1
+    description: The number of phasor calculations performed per second.
+
+  window_size_factor:
+    type: integer
+    default: 1
+    description: A factor that increases the automatically determined window size by a multiplicative factor.
+
+  window_type:
+    type: string
+    enum:
+    - flattop
+    - hamming
+    - hann
+    - none
+    default: none
+    description: The window type.
+
+  padding_type:
+    type: string
+    enum:
+    - zero
+    - signal_repeat
+    default: none
+    description: The padding type.
+
+  estimate_type:
+    type: string
+    enum:
+    - quadratic
+    default: none
+    description: The frequency estimation type.
+
+  pps_index:
+    type: integer
+    description: The signal index of the PPS signal. This is only needed if data dumper is active.
+    default: 0
+
+  angle_unit:
+    type: string
+    enum:
+    - rad
+    - degree
+    default: rad
+    description: The unit of the phase angle.
+
+  add_channel_name:
+    type: boolean
+    default: false
+    description: Adds the name of the channel as a suffix to the signal name e.g `amplitude_ch1`.
+
+  timestamp_align:
+    enum:
+    - left
+    - center
+    - right
+    default: center
+    description: The timestamp alignment in respect to the the window.
+
+  phase_offset:
+    type: number
+    default: 0.0
+    example: 10.0
+    description: An offset added to a calculated phase.
+
+  amplitude_offset:
+    type: number
+    default: 0.0
+    example: 10.0
+    description: An offset added to the calculated amplitude.
+
+  frequency_offset:
+    type: number
+    default: 0.0
+    example: 0.2
+    description: An offset added to the calculated frequency.
+
+  rocof_offset:
+    type: number
+    default: 0.0
+    example: 1.0
+    description: An offset added to the calculated RoCoF. This setting does not really make sense but is available for completeness reasons
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

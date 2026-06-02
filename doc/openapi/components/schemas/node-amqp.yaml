@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Advanced Messaging & Queuing Protocol (AMQP)
+type: object
+required: [type, exchange, routing_key]
+properties:
+  type:
+    type: string
+    const: amqp
+
+  format:
+    $ref: ./format.yaml
+
+  uri:
+    type: string
+    format: uri
+    example: "amqp://guest:guest@localhost:5672/"
+    description: |
+      A complete AMQP connection URI.
+
+      If set, it takes precedence over the individual `host`, `port`, `username`, `password` and `vhost` settings, which are otherwise used to construct the URI.
+
+      See also: https://www.rabbitmq.com/uri-spec.html
+
+  host:
+    type: string
+    default: localhost
+    description: |
+      The hostname of the AMQP broker.
+      Used to construct the connection URI when `uri` is not set.
+
+  port:
+    type: integer
+    default: 5672
+    description: |
+      The port number of the AMQP broker.
+      Used to construct the connection URI when `uri` is not set.
+
+  username:
+    type: string
+    default: guest
+    description: |
+      The username used for authentication with the AMQP broker.
+      Used to construct the connection URI when `uri` is not set.
+
+  password:
+    type: string
+    default: guest
+    description: |
+      The password used for authentication with the AMQP broker.
+      Used to construct the connection URI when `uri` is not set.
+
+  vhost:
+    type: string
+    default: "/"
+    description: |
+      The AMQP virtual host.
+      Used to construct the connection URI when `uri` is not set.
+
+  exchange:
+    type: string
+    description: |
+      The name of the AMQP exchange the node will publish the messages to.
+
+  routing_key:
+    type: string
+    description: |
+      The routing key of published messages as well as the routing key which is used to bind the subcriber queue.
+
+  ssl:
+    description: |
+      Note: These settings are only used if the `uri` setting is using the `amqps://` schema.
+
+    type: object
+    properties:
+      verify_hostname:
+        type: boolean
+        default: true
+
+      verify_peer:
+        type: boolean
+        default: true
+
+      ca_cert:
+        type: string
+        description: Path to a CA certificate file used to verify the broker.
+
+      client_cert:
+        type: string
+        description: Path to the client certificate file.
+
+      client_key:
+        type: string
+        description: Path to the client private key file.
+
+    additionalProperties: false
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  out:
+    $ref: ./shared-node-out.yaml
+
+additionalProperties: false

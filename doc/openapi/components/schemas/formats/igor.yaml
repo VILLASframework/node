@@ -70,7 +70,6 @@ properties:
     items:
       type: object
       properties:
-
         channel:
           type: string
           description: Name of the monitored bus
@@ -90,3 +89,5 @@ properties:
         rocof:
           type: number
           description: Rate of change of frequency [Hz/s]
+      additionalProperties: false
+additionalProperties: false

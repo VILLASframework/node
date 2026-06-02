@@ -1,0 +1,140 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, server, protocol]
+properties:
+  type:
+    type: string
+    const: kafka
+
+  format:
+    default: villas.binary
+    $ref: ./format.yaml
+
+  server:
+    type: string
+    description: |
+      The bootstrap server `{ip}:{port}` of the Kafka message brokers cluster.
+
+  protocol:
+    type: string
+    enum:
+    - PLAINTEXT
+    - SASL_PLAINTEXT
+    - SASL_SSL
+    - SSL
+    description: |
+      The [security protocol](https://kafka.apache.org/24/javadoc/org/apache/kafka/common/security/auth/SecurityProtocol.html) which is used for authentication with the Kafka cluster.
+
+  client_id:
+    type: string
+    default: villas-node
+    description: The Kafka client identifier.
+
+  timeout:
+    type: number
+    description: A timeout in seconds for the broker connection.
+    default: 1.0
+
+  ssl:
+    type: object
+    required:
+    - ca
+    properties:
+      ca:
+        type: string
+        description: Path to a Certificate Authority (CA) bundle which is used to validate broker server certificate.
+
+    additionalProperties: false
+
+  sasl:
+    type: object
+    description: |
+      An object for configuring the SASL authentication against the broker.
+      This setting is used if the `protocol` setting is on of `SASL_PLAINTEXT` or `SASL_SSL`.
+
+    required:
+    - mechanisms
+    - username
+    - password
+    properties:
+      mechanisms:
+        type: string
+
+      username:
+        type: string
+
+      password:
+        type: string
+
+    additionalProperties: false
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      consume:
+        type: string
+        description: The Kafka topic to which this node-type will subscribe for receiving messages.
+
+      group_id:
+        type: string
+        description: The group id of the Kafka client used for receiving messages.
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      produce:
+        type: string
+        description: The Kafka topic to which this node-type will publish messages.
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

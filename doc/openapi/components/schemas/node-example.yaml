@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Example Node
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: example
+
+  setting1:
+    type: integer
+    minimum: 0    # Make sure any constraints of the values are checked by ExampleNode::check().
+    maximum: 100
+    default: 72 # Make sure the default values match ExampleNode::ExampleNode().
+    description: A first setting
+
+  setting2:
+    type: string
+    minimum: 0
+    maximum: 10
+    default: something
+    description: Another setting
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  out:
+    $ref: ./shared-node-out.yaml
+
+additionalProperties: false

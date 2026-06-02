@@ -1,0 +1,108 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Shared Memory
+type: object
+required: [type, in, out]
+properties:
+  type:
+    type: string
+    const: shmem
+
+  queuelen:
+    type: integer
+    default: <DEFAULT_SHMEM_QUEUELEN>
+    description: Length of the input and output queues in elements.
+
+  mode:
+    type: string
+    default: pthread
+    enum:
+    - pthread
+    - polling
+    description: |
+      If set to `pthread`, POSIX condition variables (CV) are used to signal writes between processes.
+      If set to `polling`, no CV's are used, meaning that blocking writes have to be implemented using polling, leading to performance improvements at a cost of unnecessary CPU usage.
+
+  exec:
+    description: |
+      Optional name and command-line arguments (as passed to `execve`) of a command to be executed during node startup.
+      This can be used to start the external program directly from VILLASNode. If unset, no command is executed.
+    type: array
+    items:
+      type: string
+
+  in:
+    type: object
+    required:
+    - name
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+      name:
+        type: string
+        description: |
+          Name of the POSIX shared memory object.
+          Must start with a forward slash (/).
+          The same name should be passed to the external program somehow in its configuration or command-line arguments.
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required:
+    - name
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+      name:
+        type: string
+        description: |
+          Name of the POSIX shared memory object.
+          Must start with a forward slash (/).
+          The same name should be passed to the external program somehow in its configuration or command-line arguments.
+
+    additionalProperties: false
+
+additionalProperties: false

@@ -70,3 +70,6 @@ properties:
              - reactivepower: single phase power, unit voltampere reactive
              - apparentpower: single phase power, unit voltampere
              - frequency: unit hertz
+
+      additionalProperties: false
+additionalProperties: false

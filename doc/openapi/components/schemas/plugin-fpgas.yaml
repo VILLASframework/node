@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+$schema: http://json-schema.org/draft-07/schema
+description: Global FPGA configuration
+type: object
+additionalProperties:
+  allOf:
+  - $ref: ./shared-fpga-card.yaml
+  - not:
+      required: [name]

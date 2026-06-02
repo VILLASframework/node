@@ -1,0 +1,377 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: IEC 61850-8-1 (GOOSE)
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: iec61850-8-1
+
+  keys:
+    type: array
+    description: |
+      Session keys used for R-GOOSE (routed GOOSE).
+    items:
+      $ref: "#/definitions/node-iec61850-8-1-key"
+
+  in:
+    type: object
+    required:
+    - subscribers
+    - signals
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-iec61850-8-1-subscriber-signal"
+
+      subscribers:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/node-iec61850-8-1-subscriber"
+
+      routed:
+        type: boolean
+        default: false
+        description: |
+          Use R-GOOSE (routed GOOSE) instead of layer 2 GOOSE.
+
+      local_address:
+        type: string
+        default: localhost
+        description: |
+          Local address to bind to for R-GOOSE.
+
+      local_port:
+        type: integer
+        default: 102
+        description: |
+          Local port to bind to for R-GOOSE.
+
+      multicast_groups:
+        type: array
+        items:
+          type: string
+        description: |
+          Multicast groups to join for R-GOOSE.
+
+      interface:
+        type: string
+        default: lo
+        description: |
+          Name of the ethernet interface to receive on (layer 2 GOOSE).
+
+      with_timestamp:
+        type: boolean
+        default: true
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required:
+    - publishers
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+      publishers:
+        type: array
+        items:
+          $ref: "#/definitions/node-iec61850-8-1-publisher"
+
+      routed:
+        type: boolean
+        default: false
+        description: |
+          Use R-GOOSE (routed GOOSE) instead of layer 2 GOOSE.
+
+      local_address:
+        type: string
+        default: localhost
+        description: |
+          Local address to bind to for R-GOOSE.
+
+      local_port:
+        type: integer
+        default: 0
+        description: |
+          Local port to bind to for R-GOOSE.
+
+      remote_address:
+        type: string
+        default: localhost
+        description: |
+          Remote address to send to for R-GOOSE.
+
+      remote_port:
+        type: integer
+        default: 102
+        description: |
+          Remote port to send to for R-GOOSE.
+
+      key_id:
+        type: integer
+        description: |
+          The id of the session key (see 'keys') to use for R-GOOSE.
+
+      interface:
+        type: string
+        default: lo
+        description: |
+          Name of the ethernet interface to send on (layer 2 GOOSE).
+
+      resend_interval:
+        type: number
+        description: |
+          Time interval for periodic resend of last sample in floating point seconds.
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-iec61850-8-1-key:
+    type: object
+    required:
+    - id
+    - security
+    - signature
+    properties:
+      id:
+        type: integer
+        description: |
+          Numeric identifier of the session key.
+
+      security:
+        type: string
+        enum:
+        - aes_128_gcm
+        - aes_256_gcm
+        - none
+        description: |
+          Security (encryption) algorithm for the session key.
+
+      signature:
+        type: string
+        enum:
+        - aes_gmac_64
+        - aes_gmac_128
+        - hmac_sha256_80
+        - hmac_sha256_128
+        - hmac_sha256_256
+        - hmac_sha3_80
+        - hmac_sha3_128
+        - hmac_sha3_256
+        - none
+        description: |
+          Signature algorithm for the session key.
+
+      string:
+        type: string
+        description: |
+          The key material as a raw string. Mutually exclusive with 'base64'.
+
+      base64:
+        type: string
+        description: |
+          The key material as a base64 encoded string. Mutually exclusive with 'string'.
+
+    additionalProperties: false
+
+  node-iec61850-8-1-subscriber:
+    type: object
+    required:
+    - go_cb_ref
+    properties:
+      go_cb_ref:
+        type: string
+
+      dst_address:
+        type: string
+
+      app_id:
+        type: integer
+
+      trigger:
+        type: string
+        enum:
+        - always
+        - change
+        default: always
+
+    additionalProperties: false
+
+  node-iec61850-8-1-subscriber-signal:
+    type: object
+    required:
+    - subscriber
+    - index
+    - mms_type
+    properties:
+      subscriber:
+        type: string
+        description: |
+          Name of the subscriber (see 'subscribers') this signal is mapped to.
+
+      index:
+        type: integer
+        description: |
+          Index within the received GOOSE event array.
+
+      mms_type:
+        type: string
+        enum:
+        - boolean
+        - int8
+        - int16
+        - int32
+        - int64
+        - int8u
+        - int16u
+        - int32u
+        - bitstring
+        - float32
+        - float64
+        description: |
+          Expected basic data type in received array.
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+
+    additionalProperties: false
+
+  node-iec61850-8-1-publisher:
+    type: object
+    required:
+    - go_cb_ref
+    - data_set_ref
+    - app_id
+    - conf_rev
+    - time_allowed_to_live
+    - data
+    properties:
+      go_id:
+        type: string
+
+      go_cb_ref:
+        type: string
+
+      data_set_ref:
+        type: string
+
+      dst_address:
+        type: string
+
+      app_id:
+        type: integer
+
+      conf_rev:
+        type: integer
+
+      time_allowed_to_live:
+        type: integer
+
+      burst:
+        type: integer
+        default: 1
+
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/node-iec61850-8-1-publisher-data"
+
+    additionalProperties: false
+
+  node-iec61850-8-1-publisher-data:
+    type: object
+    required:
+    - mms_type
+    properties:
+      mms_type:
+        type: string
+        enum:
+        - boolean
+        - int8
+        - int16
+        - int32
+        - int64
+        - int8u
+        - int16u
+        - int32u
+        - bitstring
+        - float32
+        - float64
+        description: |
+          Basic data type of the value in the transmitted array.
+
+      signal:
+        type: string
+        description: |
+          Name of the input signal for the value.
+
+      value:
+        type: [integer, number, boolean]
+        description: |
+          Constant signal value.
+
+      mms_bitstring_size:
+        type: integer
+        default: 32
+        description: |
+          Size metadata for mms_type bitstring.
+
+    additionalProperties: false

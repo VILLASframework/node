@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+description: List of signal definition objects
+type: array
+example:
+- name: tap_position
+  type: integer
+  init: 0
+- name: voltage
+  type: float
+  unit: V
+  init: 230.0
+items:
+  $ref: ./shared-signal-description.yaml

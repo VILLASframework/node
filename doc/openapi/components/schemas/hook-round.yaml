@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: round
+
+  precision:
+    type: integer
+    default: 1
+    example: 4
+    description: The number of decimal digits to which the signal is rounded.
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

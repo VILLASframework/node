@@ -1,0 +1,220 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Read and write Modbus registers
+type: object
+required: [type, transport]
+properties:
+  type:
+    type: string
+    const: modbus
+
+  transport:
+    type: string
+    description: The transport protocol used for Modbus communication.
+    enum:
+    - tcp
+    - rtu
+
+  response_timeout:
+    type: number
+    description: The timeout in seconds when waiting for responses from a Modbus server.
+    default: 1.0
+    example: 1.0
+
+  reconnect_interval:
+    type: number
+    description: The interval in seconds for trying to reconnect on connection loss.
+    default: 10.0
+
+  min_block_usage:
+    type: number
+    description: |
+      The minimum ratio of used registers to queried registers for a merged block of registers.
+      This caps the amount of unnecessary data transmitted.
+    default: 0.25
+
+  max_block_size:
+    type: integer
+    description: The maximum size (in registers) of a merged block of register mappings.
+    default: 32
+
+  rate:
+    type: number
+    description: The rate at which Modbus device registers are queried for changes.
+    example: 1.0
+
+  remote:
+    type: string
+    description: The hostname or IP of the Modbus TCP device. Only used with `transport = tcp`.
+    example: example.com
+
+  port:
+    type: integer
+    description: The port number of the Modbus TCP device. Only used with `transport = tcp`.
+    default: 502
+
+  device:
+    type: string
+    description: Path to the serial device file. Only used with `transport = rtu`.
+    example: /dev/ttyS0
+
+  baudrate:
+    type: integer
+    description: The baudrate used for serial communication. Only used with `transport = rtu`.
+    example: 9600
+
+  parity:
+    type: string
+    enum:
+    - none
+    - even
+    - odd
+    description: The parity used for serial communication. Only used with `transport = rtu`.
+    example: none
+
+  data_bits:
+    type: integer
+    description: The data bits used for serial communication. Only used with `transport = rtu`.
+    minimum: 5
+    maximum: 8
+    example: 5
+
+  stop_bits:
+    type: integer
+    description: The stop bits used for serial communication. Only used with `transport = rtu`.
+    minimum: 1
+    maximum: 2
+    example: 1
+
+  unit:
+    type: integer
+    description: The addressed unit used for communication. Optional for TCP.
+    minimum: 0
+    maximum: 65535
+    example: 1
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-modbus-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-modbus-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-modbus-signal:
+    type: object
+    required: [address]
+    properties:
+      address:
+        type: integer
+        description: The modbus register address.
+
+      integer_registers:
+        type: integer
+        description: |
+          The number of consecutive registers combined into a single integer value.
+        minimum: 1
+        maximum: 4
+
+      word_endianess:
+        type: string
+        enum:
+        - big
+        - little
+        description: The ordering of two modbus registers joined together to form a larger number.
+        default: "big"
+
+      byte_endianess:
+        type: string
+        enum:
+        - big
+        - little
+        description: The ordering of the bytes within a modbus register.
+        default: "big"
+
+      scale:
+        type: number
+        description: The scale of the register's value.
+        default: 1.0
+
+      offset:
+        type: number
+        description: The offset of the register's value.
+        default: 0.0
+
+      bit:
+        type: integer
+        description: The bit index within a register.
+        minimum: 0
+        maximum: 15
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

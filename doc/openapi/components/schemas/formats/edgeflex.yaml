@@ -31,6 +31,7 @@ additionalProperties:
         type: number
       imag:
         type: number
+    additionalProperties: false
 
 example:
   created: 1633791645123

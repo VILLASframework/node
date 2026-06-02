@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: integer
+minimum: 1
+description: |
+  Firewall mark (fwmark) which is applied to all outgoing packets of this node.
+
+  This can be used together with the `tc` traffic control subsystem (see also `netem`)
+  to classify and shape the traffic emitted by this node.

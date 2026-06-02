@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+description: |
+  Send and interpret the first three signals of each sample as the following header fields:
+  - sequence number
+  - timestamp seconds
+  - timestamp nano-seconds
+type: boolean
