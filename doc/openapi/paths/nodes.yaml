@@ -16,7 +16,7 @@ get:
             schema:
               type: array
               items:
-                $ref: ../components/schemas/config/node_obj.yaml
+                $ref: ../components/schemas/node.yaml
             example1:
               value:
                 - name: udp_node1

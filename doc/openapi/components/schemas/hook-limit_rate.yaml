@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, rate]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: limit_rate
+
+  rate:
+    type: number
+    exclusiveMinimum: 0
+    description: The maximum sample rate in `1/s` before this hook will drop samples.
+
+  mode:
+    type: string
+    default: local
+    description: Timestamp which should be used for rate estimation.
+    enum:
+    - local
+    - received
+    - origin
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml

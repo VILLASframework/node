@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+description: FPGA Card configuration
+type: object
+required: [interface]
+properties:
+  interface:
+    type: string
+    enum: [pcie, platform]
+  name:
+    type: string
+  ips:
+    type: string
+  affinity:
+    type: integer
+  do_reset:
+    type: boolean
+  slot:
+    type: string
+  id:
+    type: string
+  polling:
+    type: boolean
+  paths:
+    type: array
+    items:
+      type: object
+      required: [from, to]
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        reverse:
+          type: boolean
+      additionalProperties: false
+  ignore_ips:
+    type: array
+    items:
+      type: string
+additionalProperties: false

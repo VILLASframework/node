@@ -1,0 +1,120 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, estimation_range]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: ip-dft-pmu
+
+  estimation_range:
+    type: number
+    exclusiveMinimum: 0
+    example: 1.0
+    description: |
+      The frequency range in Hz around the nominal frequency searched for the fundamental.
+
+      The DFT is computed over the interval `[nominal_freq - estimation_range, nominal_freq + estimation_range]`.
+
+  sample_rate:
+    type: integer
+    default: 1
+    minimum: 1
+    example: 10000
+    description: The sampling rate of the input signal in Hz.
+
+  dft_rate:
+    type: number
+    default: 1.0
+    exclusiveMinimum: 0
+    example: 10.0
+    description: The number of phasor calculations performed per second.
+
+  nominal_freq:
+    type: number
+    default: 1.0
+    exclusiveMinimum: 0
+    example: 50.0
+    description: The nominal frequency of the power system in Hz.
+
+  number_plc:
+    type: number
+    default: 1.0
+    exclusiveMinimum: 0
+    example: 5.0
+    description: The number of power line cycles used to determine the analysis window size.
+
+  window_type:
+    type: string
+    enum:
+    - flattop
+    - hamming
+    - hann
+    - nuttal
+    - blackman
+    - none
+    default: none
+    description: The window function applied to each analysis window.
+
+  angle_unit:
+    type: string
+    enum:
+    - rad
+    - degree
+    default: rad
+    description: The unit of the output phase angle.
+
+  add_channel_name:
+    type: boolean
+    default: true
+    description: Append the input channel name as a suffix to each output signal name.
+
+  timestamp_align:
+    type: string
+    enum:
+    - left
+    - center
+    - right
+    default: center
+    description: The position within the analysis window used as the output sample timestamp.
+
+  phase_offset:
+    type: number
+    default: 0.0
+    example: 10.0
+    description: An offset added to each calculated phase angle.
+
+  amplitude_offset:
+    type: number
+    default: 0.0
+    example: 10.0
+    description: An offset added to each calculated amplitude.
+
+  frequency_offset:
+    type: number
+    default: 0.0
+    example: 0.2
+    description: An offset added to each calculated frequency.
+
+  rocof_offset:
+    type: number
+    default: 0.0
+    example: 1.0
+    description: An offset added to each calculated RoCoF.
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

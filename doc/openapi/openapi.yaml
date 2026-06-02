@@ -52,7 +52,31 @@ tags:
     This section decribes the schema of the VILLASnode configuration file.
     Please use the `>` to expand the individual sub-sections.
 
-    <SchemaDefinition schemaRef="#/components/schemas/config" />
+    <SchemaDefinition schemaRef="#/components/schemas/Config" />
+
+- name: node
+  x-displayName: VILLASnode node configuration
+  description: |
+    This section decribes the schema of a VILLASnode node.
+    Please use the `>` to expand the individual sub-sections.
+
+    <SchemaDefinition schemaRef="#/components/schemas/Node" />
+
+- name: hook
+  x-displayName: VILLASnode hook configuration
+  description: |
+    This section decribes the schema of the VILLASnode hook.
+    Please use the `>` to expand the individual sub-sections.
+
+    <SchemaDefinition schemaRef="#/components/schemas/Hook" />
+
+- name: format
+  x-displayName: VILLASnode format configuration
+  description: |
+    This section decribes the schema of the VILLASnode hook.
+    Please use the `>` to expand the individual sub-sections.
+
+    <SchemaDefinition schemaRef="#/components/schemas/Format" />
 
 - name: format-edgeflex
   x-displayName: Edgeflex Format
@@ -140,6 +164,12 @@ components:
   schemas:
     Config:
       $ref: components/schemas/config.yaml
+    Node:
+      $ref: components/schemas/node.yaml
+    Hook:
+      $ref: components/schemas/hook.yaml
+    Format:
+      $ref: components/schemas/format.yaml
     FormatEdgeflex:
       $ref: components/schemas/formats/edgeflex.yaml
     FormatIgor:

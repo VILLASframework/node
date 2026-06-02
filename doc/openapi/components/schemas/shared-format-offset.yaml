@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Include Timestamp Offset
+type: boolean
+description: |
+  Include difference between received and origin timestamp.

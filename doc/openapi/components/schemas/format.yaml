@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+$schema: http://json-schema.org/draft-07/schema
+
+description: |
+  The payload format which is used to encode and decode exchanged messages.
+example: villas.human
+
+type: [object, string]
+discriminator:
+  x-villas-plugin: format
+  propertyName: type
+  mapping:
+    csv: ./format-csv.yaml
+    gtnet: ./format-gtnet.yaml
+    iotagent_ul: ./format-iotagent_ul.yaml
+    json: ./format-json.yaml
+    json.edgeflex: ./format-json_edgeflex.yaml
+    json.kafka: ./format-json_kafka.yaml
+    json.reserve: ./format-json_reserve.yaml
+    opal.asyncip: ./format-opal_asyncip.yaml
+    protobuf: ./format-protobuf.yaml
+    raw: ./format-raw.yaml
+    tsv: ./format-tsv.yaml
+    value: ./format-value.yaml
+    villas.binary: ./format-villas_binary.yaml
+    villas.human: ./format-villas_human.yaml
+    villas.web: ./format-villas_web.yaml

@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: IEC 60870-5-104
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: iec60870-5-104
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  address:
+    type: string
+    default: localhost
+    description: |
+      Hostname or IP address for the IEC60870 slave to listen on.
+
+  port:
+    type: integer
+    default: 2404
+    description: |
+      Port number of the IEC60870 slave.
+
+  ca:
+    type: integer
+    default: 1
+    description: |
+      Common Address of the IEC60870 slave.
+
+  low_priority_queue:
+    type: integer
+    default: 100
+    description: |
+      Message queue size for the periodic messages (increase on dropped simulation data messages).
+
+  high_priority_queue:
+    type: integer
+    default: 100
+    description: |
+      Message queue size for interrogation responses (increase on missing signals in interrogation response).
+
+  apci_t0:
+    type: integer
+
+  apci_t1:
+    type: integer
+
+  apci_t2:
+    type: integer
+
+  apci_t3:
+    type: integer
+
+  apci_k:
+    type: integer
+
+  apci_w:
+    type: integer
+
+  out:
+    type: object
+    required:
+    - signals
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      duplicate_ioa_is_sequence:
+        type: boolean
+        default: false
+        description: |
+          Treat consecutive signals with the same IOA as a sequence by assigning subsequent IOAs.
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-iec60870-5-104-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-iec60870-5-104-signal:
+    type: object
+    required:
+    - ioa
+    properties:
+      asdu_type:
+        description: Human readable names for the supported IEC60870 message types.
+        type: string
+        enum:
+        - single-point
+        - double-point
+        - scaled-int
+        - normalized-float
+        - short-float
+
+      with_timestamp:
+        description: Only for use with the human readable asdu_type.
+        type: boolean
+        default: false
+
+      asdu_type_id:
+        description: The IEC60870 standard type id.
+        type: string
+        enum:
+        - M_SP_NA_1
+        - M_SP_TB_1
+        - M_DP_NA_1
+        - M_DP_TB_1
+        - M_ME_NB_1
+        - M_ME_TB_1
+        - M_ME_NA_1
+        - M_ME_TA_1
+        - M_ME_NC_1
+        - M_ME_TC_1
+
+      ioa:
+        description: The IEC60870 information object address associated with this signal.
+        type: integer
+        minimum: 1
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

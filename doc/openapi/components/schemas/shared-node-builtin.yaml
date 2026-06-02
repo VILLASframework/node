@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: boolean
+default: true
+title: Builtin hook functions
+description: |
+  By default, each node and paths has a couple of default hooks attached to them. With this setting the attachment of built-in hooks can be disabled.

@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type, window_size, pairings]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: power
+
+  window_size:
+    type: integer
+    minimum: 1
+    example: 100
+    description: The number of samples in the sliding integration window.
+
+  pairings:
+    type: array
+    minItems: 1
+    description: |
+      The voltage/current signal pairs for which power quantities are calculated.
+
+      Each pairing produces up to four output signals: active power (W),
+      reactive power (VAr), apparent power (VA), and power factor (cos φ).
+    items:
+      type: object
+      required: [voltage, current]
+      additionalProperties: false
+      properties:
+        voltage:
+          type: string
+          description: The name of the voltage signal.
+          example: voltage_a
+
+        current:
+          type: string
+          description: The name of the current signal.
+          example: current_a
+
+  active_power:
+    type: boolean
+    default: true
+    description: Include the active power (P) in the output signals.
+
+  reactive_power:
+    type: boolean
+    default: true
+    description: Include the reactive power (Q) in the output signals.
+
+  apparent_power:
+    type: boolean
+    default: true
+    description: Include the apparent power (S) in the output signals.
+
+  cos_phi:
+    type: boolean
+    default: true
+    description: Include the power factor (cos φ) in the output signals.
+
+  add_channel_name:
+    type: boolean
+    default: false
+    description: Append the input channel name as a suffix to each output signal name.
+
+  angle_unit:
+    type: string
+    enum:
+    - rad
+    - degree
+    default: rad
+    description: The unit used for the power factor angle output.
+
+  timestamp_align:
+    type: string
+    enum:
+    - left
+    - center
+    - right
+    default: center
+    description: The position within the integration window used as the output sample timestamp.
+
+  priority:
+    default: 99
+    $ref: ./shared-hook-priority.yaml
+
+  signal:
+    $ref: ./shared-hook-signal.yaml
+
+  signals:
+    $ref: ./shared-hook-signals.yaml
+
+oneOf:
+- required: [signals]
+- required: [signal]

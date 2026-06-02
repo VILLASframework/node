@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+additionalProperties: false
+properties:
+  type:
+    type: string
+    const: json.reserve
+
+  indent:
+    default: 0
+    $ref: ./shared-format-json-indent.yaml
+
+  compact:
+    default: false
+    $ref: ./shared-format-json-compact.yaml
+
+  ensure_ascii:
+    default: false
+    $ref: ./shared-format-json-ensure_ascii.yaml
+
+  sort_keys:
+    default: false
+    $ref: ./shared-format-json-sort_keys.yaml
+
+  escape_slash:
+    default: false
+    $ref: ./shared-format-json-escape_slash.yaml
+
+  real_precision:
+    default: 17
+    $ref: ./shared-format-real_precision.yaml
+
+  ts_origin:
+    default: true
+    $ref: ./shared-format-ts_origin.yaml
+
+  ts_received:
+    default: false
+    $ref: ./shared-format-ts_received.yaml
+
+  sequence:
+    default: true
+    $ref: ./shared-format-sequence.yaml
+
+  data:
+    default: true
+    $ref: ./shared-format-data.yaml
+
+  offset:
+    default: false
+    $ref: ./shared-format-offset.yaml

@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: zeromq
+
+  format:
+    default: villas.binary
+    $ref: ./format.yaml
+
+  pattern:
+    type: string
+    enum:
+    - pubsub
+    - radiodish
+    description: The ZeroMQ messaging pattern which is used by this node.
+
+  ipv6:
+    type: boolean
+    default: false
+
+  curve:
+    title: CurveZMQ cryptography
+    description: |
+      **Note:** This feature is currently broken.
+
+      You can use the [`villas zmq-keygen`](../usage/villas-zmq-keygen.md) command to create a new keypair for the following configuration options:
+
+    type: object
+    required:
+    - public_key
+    - secret_key
+    properties:
+      enabled:
+        type: boolean
+        description: Whether or not the encryption is enabled.
+
+      public_key:
+        type: string
+        description: |
+          The public key of the server.
+
+      secret_key:
+        type: string
+        description: |
+          The secret key of the server.
+
+    additionalProperties: false
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      subscribe:
+        description: A single endpoint URI or list of URIs to which this node should connect as a subscriber.
+        oneOf:
+        - type: string
+          format: uri
+        - type: array
+          items:
+            type: string
+            format: uri
+
+      filter:
+        type: string
+        description: A filter which is used to select messages to receive.
+
+      bind:
+        type: boolean
+        description: Whether this node binds to the endpoint instead of connecting to it.
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      publish:
+        description: A single endpoint URI or list of URIs on which this node should publish messages.
+        oneOf:
+        - type: string
+          format: uri
+        - type: array
+          items:
+            type: string
+            format: uri
+
+      filter:
+        type: string
+        description: A filter which is prepended to published messages.
+
+      bind:
+        type: boolean
+        description: Whether this node binds to the endpoint instead of connecting to it.
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

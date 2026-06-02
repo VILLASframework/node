@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Loopback
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: loopback
+
+  queuelen:
+    type: integer
+    minimum: 0
+    description: The queue length of the internal queue which buffers the samples.
+
+  mode:
+    type: string
+    enum:
+    - pthread
+    - polling
+    - eventfd
+    - auto
+    default: auto
+    description: Specify the synchronization mode of the internal queue.
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  out:
+    $ref: ./shared-node-out.yaml
+
+additionalProperties: false

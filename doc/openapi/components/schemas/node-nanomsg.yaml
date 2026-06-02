@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: nanomsg
+
+  format:
+    default: json
+    $ref: ./format.yaml
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      endpoints:
+        description: A single endpoint URI or list of URIs to which this node should connect as a subscriber.
+        oneOf:
+        - type: string
+          format: uri
+        - type: array
+          items:
+            type: string
+            format: uri
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      endpoints:
+        description: A single endpoint URI or list of URIs on which this node should listen for subscribers.
+        oneOf:
+        - type: string
+          format: uri
+        - type: array
+          items:
+            type: string
+            format: uri
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

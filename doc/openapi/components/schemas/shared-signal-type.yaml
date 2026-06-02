@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: string
+title: Signal data-type
+description: |
+  The data-type of the signal.
+default: float
+enum:
+- integer
+- float
+- boolean
+- complex

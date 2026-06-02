@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: FIWARE NGSI 9/10
+type: object
+required: [type, endpoint, entity_id, entity_type]
+properties:
+  type:
+    type: string
+    const: ngsi
+
+  endpoint:
+    type: string
+    format: uri
+
+  entity_id:
+    type: string
+    description: ID of NGSI entity.
+
+  entity_type:
+    type: string
+    description: Type of NGSI entity.
+
+  ssl_verify:
+    type: boolean
+    default: true
+    description: Verify SSL certificate against local trust store.
+
+  timeout:
+    description: Timeout in seconds for HTTP requests.
+    type: number
+    default: 1.0
+
+  rate:
+    description: Polling rate in Hz for requesting entity updates from broker.
+    type: number
+    default: 1.0
+
+  access_token:
+    type: string
+    description: Send 'Auth-Token' header with every HTTP request.
+
+  create:
+    type: boolean
+    default: true
+    description: Create NGSI entities during startup of node.
+
+  delete:
+    type: boolean
+    default: true
+    description: Remove NGSI entities during shutdown of node.
+
+  in:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-ngsi-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        items:
+          $ref: "#/definitions/node-ngsi-signal"
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-ngsi-signal:
+    type: object
+    properties:
+      ngsi_attribute_name:
+        type: string
+        description: |
+          Name of the NGSI attribute this signal is mapped to.
+          Defaults to the signal name.
+
+      ngsi_attribute_type:
+        type: string
+        description: |
+          Type of the NGSI attribute this signal is mapped to.
+          Defaults to the signal unit.
+
+      ngsi_metadatas:
+        type: array
+        items:
+          type: object
+          required: [name, type, value]
+          properties:
+            name:
+              type: string
+
+            type:
+              type: string
+
+            value:
+              type: string
+
+          additionalProperties: false
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

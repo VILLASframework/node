@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: VILLASfpga node-type
+type: object
+required: [type, card]
+properties:
+  type:
+    type: string
+    const: fpga
+
+  card:
+    description: |
+      The FPGA card to use for this node.
+      Either the name of a card defined elsewhere, or an inline card definition object.
+    oneOf:
+    - type: string
+      description: The name of the FPGA card.
+    - allOf:
+      - $ref: ./shared-fpga-card.yaml
+      - required: [name]
+
+  connect:
+    type: array
+    description: A list of connect strings describing the internal FPGA IP interconnections.
+    items:
+      type: string
+
+  low_latency_mode:
+    type: boolean
+    description: Enables low-latency mode using scatter-gather DMA.
+
+  timestep:
+    type: number
+    default: 0.01
+    description: The simulation timestep in seconds.
+
+  in:
+    $ref: ./shared-node-in.yaml
+
+  out:
+    $ref: ./shared-node-out.yaml
+
+additionalProperties: false

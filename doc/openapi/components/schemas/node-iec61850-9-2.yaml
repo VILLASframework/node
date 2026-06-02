@@ -1,0 +1,177 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: IEC 61850-9-2 (Sampled Values)
+type: object
+required: [type, interface]
+properties:
+  type:
+    type: string
+    const: iec61850-9-2
+
+  interface:
+    type: string
+    description: Name of network interface to/from which this node will publish/subscribe for SV frames.
+
+  app_id:
+    type: integer
+    default: 0x4000
+
+  dst_address:
+    type: string
+    default: 01:0c:cd:01:00:01
+
+  in:
+    type: object
+    required: [signals]
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      check_dst_address:
+        type: boolean
+        default: false
+
+      signals:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/definitions/node-iec61850-9-2-signal"
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required:
+    - signals
+    - sv_id
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/definitions/node-iec61850-9-2-signal"
+
+      sv_id:
+        type: string
+
+      conf_rev:
+        type: integer
+
+      smp_mod:
+        type: string
+        enum:
+        - per_nominal_period
+        - samples_per_second
+        - seconds_per_sample
+
+      smp_synch:
+        type: string
+        enum:
+        - not_synchronized
+        - local_clock
+        - global_clock
+
+      smp_rate:
+        type: integer
+
+      vlan:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          id:
+            type: integer
+            default: 0
+
+          priority:
+            type: integer
+            default: 4
+
+        additionalProperties: false
+
+    additionalProperties: false
+
+additionalProperties: false
+
+definitions:
+  node-iec61850-9-2-signal:
+    type: object
+    properties:
+      iec_type:
+        type: string
+        enum:
+        - boolean
+        - int8
+        - int16
+        - int32
+        - int64
+        - int8u
+        - int16u
+        - int32u
+        - int64u
+        - float32
+        - float64
+        - enumerated
+        - coded_enum
+        - octet_string
+        - visible_string
+        - objectname
+        - objectreference
+        - timestamp
+        - entrytime
+        - bitstring
+
+      name:
+        $ref: ./shared-signal-name.yaml
+
+      unit:
+        $ref: ./shared-signal-unit.yaml
+
+      type:
+        $ref: ./shared-signal-type.yaml
+
+      init:
+        $ref: ./shared-signal-init.yaml
+
+      enabled:
+        $ref: ./shared-signal-enabled.yaml
+    additionalProperties: false

@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2018-2020 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+title: Send and receive samples over an EtherCAT connection
+type: object
+required: [type]
+properties:
+  type:
+    type: string
+    const: ethercat
+
+  rate:
+    type: number
+    default: 1000
+    description: The cyclic rate in Hertz at which process data is exchanged.
+
+  in:
+    type: object
+    required: [num_channels]
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      num_channels:
+        type: integer
+        default: 8
+
+      range:
+        type: number
+        default: 10.0
+
+      position:
+        type: integer
+        default: 2
+
+      product_code:
+        type: integer
+
+      vendor_id:
+        type: integer
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+  out:
+    type: object
+    required: [num_channels]
+    properties:
+      enabled:
+        default: true
+        $ref: ./shared-node-enabled.yaml
+
+      num_channels:
+        type: integer
+        default: 8
+
+      range:
+        type: number
+        default: 10.0
+
+      position:
+        type: integer
+        default: 1
+
+      product_code:
+        type: integer
+
+      vendor_id:
+        type: integer
+
+      netem:
+        $ref: ./shared-node-netem.yaml
+
+      fwmark:
+        $ref: ./shared-node-fwmark.yaml
+
+      builtin:
+        default: true
+        $ref: ./shared-node-builtin.yaml
+
+      vectorize:
+        default: 1
+        $ref: ./shared-node-vectorize.yaml
+
+      hooks:
+        default: []
+        $ref: ./shared-hook-list.yaml
+
+      signals:
+        $ref: ./shared-signal-list.yaml
+
+    additionalProperties: false
+
+additionalProperties: false

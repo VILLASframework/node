@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+type: boolean
+description: |
+  If this flag is used, all the objects in output are sorted by key.
+  This is useful e.g. if two JSON texts are diffed or visually compared.

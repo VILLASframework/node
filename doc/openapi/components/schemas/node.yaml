@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+$schema: http://json-schema.org/draft-07/schema
+
+type: object
+discriminator:
+  x-villas-plugin: node
+  propertyName: type
+  mapping:
+    amqp: ./node-amqp.yaml
+    c37.118: ./node-c37_118.yaml
+    can: ./node-can.yaml
+    comedi: ./node-comedi.yaml
+    ethercat: ./node-ethercat.yaml
+    example: ./node-example.yaml
+    exec: ./node-exec.yaml
+    file: ./node-file.yaml
+    fpga: ./node-fpga.yaml
+    iec60870-5-104: ./node-iec60870-5-104.yaml
+    iec61850-8-1: ./node-iec61850-8-1.yaml
+    iec61850-9-2: ./node-iec61850-9-2.yaml
+    infiniband: ./node-infiniband.yaml
+    influxdb: ./node-influxdb.yaml
+    kafka: ./node-kafka.yaml
+    loopback: ./node-loopback.yaml
+    modbus: ./node-modbus.yaml
+    mqtt: ./node-mqtt.yaml
+    nanomsg: ./node-nanomsg.yaml
+    ngsi: ./node-ngsi.yaml
+    opal.async: ./node-opal_async.yaml
+    opal.orchestra: ./node-opal_orchestra.yaml
+    opendss: ./node-opendss.yaml
+    redis: ./node-redis.yaml
+    rtp: ./node-rtp.yaml
+    shmem: ./node-shmem.yaml
+    signal: ./node-signal.yaml
+    signal.v2: ./node-signal_v2.yaml
+    socket: ./node-socket.yaml
+    stats: ./node-stats.yaml
+    temper: ./node-temper.yaml
+    test_rtt: ./node-test_rtt.yaml
+    uldaq: ./node-uldaq.yaml
+    webrtc: ./node-webrtc.yaml
+    websocket: ./node-websocket.yaml
+    zeromq: ./node-zeromq.yaml
