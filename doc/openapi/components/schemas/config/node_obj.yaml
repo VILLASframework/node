@@ -20,7 +20,6 @@ discriminator:
   propertyName: type
   mapping:
     amqp: nodes/_amqp.yaml
-    api: nodes/_api.yaml
     can: nodes/_can.yaml
     comedi: nodes/_comedi.yaml
     ethercat: nodes/_ethercat.yaml

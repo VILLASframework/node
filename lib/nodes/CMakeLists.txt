@@ -8,10 +8,6 @@ set(NODE_SRC
     loopback_internal.cpp
 )
 
-if(WITH_WEB)
-    list(APPEND NODE_SRC api.cpp)
-endif()
-
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
 endif()

@@ -9,11 +9,9 @@ set(API_SRC
     session.cpp
     request.cpp
     response.cpp
-    universal.cpp
 
     requests/node.cpp
     requests/path.cpp
-    requests/universal.cpp
 
     requests/status.cpp
     requests/capabiltities.cpp
@@ -30,11 +28,6 @@ set(API_SRC
     requests/paths.cpp
     requests/path_info.cpp
     requests/path_action.cpp
-
-    requests/universal/status.cpp
-    requests/universal/info.cpp
-    requests/universal/channel.cpp
-    requests/universal/channels.cpp
 )
 
 if(WITH_GRAPHVIZ)
