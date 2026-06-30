@@ -1,0 +1,333 @@
+# yaml-language-server: $schema=http://json-schema.org/draft-07/schema
+# SPDX-FileCopyrightText: 2024-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+---
+allOf:
+- type: object
+  properties:
+
+    in:
+      type: object
+      description: |
+        Client (PDC) side. When an address is given, the node connects to a
+        remote PMU / PDC, requests its configuration and reads data frames.
+      properties:
+
+        address:
+          type: string
+          description: |
+            Hostname or IP address of the remote PMU / PDC in the format
+            `host[:port]`. The port defaults to the C37.118 port 4712 when
+            omitted.
+
+        idcode:
+          type: integer
+          default: 1
+          minimum: 0
+          maximum: 65535
+          description: |
+            IDCODE placed in the command frames sent to the remote device.
+
+    out:
+      type: object
+      description: |
+        Server (PMU / PDC) side. When an address is given, the node listens for
+        a connecting PDC, answers configuration and command frames and streams
+        data frames built from the samples written to the node.
+      required:
+      - address
+      - data_rate
+      - pmus
+      properties:
+
+        address:
+          type: string
+          description: |
+            Local address to bind to in the format `host[:port]`. An empty host
+            binds to all interfaces. The port defaults to the C37.118 port 4712
+            when omitted.
+
+        idcode:
+          type: integer
+          default: 1
+          minimum: 0
+          maximum: 65535
+          description: |
+            IDCODE reported in the frames served to the connecting PDC.
+
+        testing:
+          type: boolean
+          default: false
+          description: |
+            Enable "testing" mode. This is only intended to be used by our
+            integration tests.
+
+            This causes the server to not discard samples when no client is
+            connected. This option effectively makes the server busy-wait
+            for a client to connect and can easily exhaust the internal
+            queue of sent samples.
+
+        time_base:
+          type: integer
+          default: 1000000
+          minimum: 1
+          maximum: 16777215
+          description: |
+            Resolution of the fractional second (FRACSEC) timestamp, i.e. the
+            number of sub-second units per second. The C37.118 TIME_BASE field
+            is 24 bits wide, so the value must not exceed 16777215.
+
+        data_rate:
+          type: number
+          minimum: 3.05175e-5
+          maximum: 32767
+          description: |
+            Reporting rate in frames per second. Rates below one frame per
+            second are supported (e.g. 0.5 for one frame every two seconds) and
+            are encoded using the C37.118 seconds-per-frame representation.
+
+        pmus:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/definitions/node-c37.118-pmu'
+          description: |
+            The list of PMU configurations served by this node.
+
+- $ref: ../node.yaml
+
+definitions:
+  node-c37.118-pmu:
+    type: object
+    description: |
+      Configuration of a single PMU.
+    required:
+    - name
+    - frequency
+    - rocof
+    properties:
+
+      name:
+        type: string
+        maxLength: 255
+        description: |
+          Station name of the PMU. Clients using revision 2005 of the protocol
+          might see the name truncated to 16 characters.
+
+      idcode:
+        type: integer
+        default: 1
+        minimum: 0
+        maximum: 65535
+        description: |
+          Data stream ID code of the PMU.
+
+      guid:
+        type: string
+        format: uuid
+        description: |
+          Global PMU identifier. Defaults to the node's UUID.
+
+      nominal_frequency:
+        type: number
+        enum:
+        - 50
+        - 60
+        default: 50
+        description: |
+          Nominal line frequency in Hz.
+
+      latitude:
+        type: number
+        description: |
+          Latitude of the PMU in degrees (CONFIG3 only). Defaults to unknown.
+
+      longitude:
+        type: number
+        description: |
+          Longitude of the PMU in degrees (CONFIG3 only). Defaults to unknown.
+
+      elevation:
+        type: number
+        description: |
+          Elevation of the PMU in meters (CONFIG3 only). Defaults to unknown.
+
+      service_class:
+        type: string
+        default: measurement
+        enum:
+        - measurement
+        - protection
+        description: |
+          Performance/service class of the PMU (CONFIG3 only). `measurement`
+          maps to service class M, `protection` to service class P.
+
+      window:
+        type: integer
+        default: 0
+        minimum: 0
+        description: |
+          Phasor measurement window length in microseconds (CONFIG3 only).
+
+      group_delay:
+        type: integer
+        default: 0
+        minimum: 0
+        description: |
+          Phasor measurement group delay in microseconds (CONFIG3 only).
+
+      frequency:
+        type: string
+        description: |
+          Name of the input signal providing the measured frequency (server
+          direction only).
+
+      rocof:
+        type: string
+        description: |
+          Name of the input signal providing the rate of change of frequency
+          (server direction only).
+
+      phasor:
+        type: array
+        items:
+          $ref: '#/definitions/node-c37.118-phasor'
+        description: |
+          The phasor channels of the PMU.
+
+      analog:
+        type: array
+        items:
+          $ref: '#/definitions/node-c37.118-analog'
+        description: |
+          The analog channels of the PMU.
+
+      digital:
+        type: array
+        items:
+          $ref: '#/definitions/node-c37.118-digital'
+        description: |
+          The digital status bits of the PMU. Every 16 bits form one digital
+          status word.
+
+  node-c37.118-phasor:
+    type: object
+    description: |
+      Configuration of a single phasor channel.
+    required:
+    - signal
+    - unit
+    properties:
+
+      signal:
+        type: string
+        description: |
+          Name of the input signal mapped to this phasor (server direction).
+
+      name:
+        type: string
+        maxLength: 255
+        description: |
+          Name of the phasor channel. Defaults to the signal name. Clients using
+          revision 2005 of the protocol might see the name truncated to 16
+          characters.
+
+      unit:
+        type: string
+        enum:
+        - volt
+        - ampere
+        description: |
+          Physical unit of the phasor.
+
+      component:
+        type: string
+        default: phase_a
+        enum:
+        - zero_sequence
+        - positive_sequence
+        - negative_sequence
+        - phase_a
+        - phase_b
+        - phase_c
+        description: |
+          The phasor component (sequence or phase) that this phasor represents.
+
+      modifications:
+        type: array
+        uniqueItems: true
+        description: |
+          Measurement modifications applied to the phasor (CONFIG3 only).
+        items:
+          type: string
+          enum:
+          - upsampled_with_interpolation
+          - upsampled_with_extrapolation
+          - downsampled_with_reselection
+          - downsampled_with_fir_filter
+          - downsampled_with_non_fir_filter
+          - filtered_without_resampling
+          - magnitude_adjusted_for_calibration
+          - phase_adjusted_for_calibration
+          - phase_adjusted_for_rotation
+          - pseudo_phasor_value
+          - other
+
+  node-c37.118-analog:
+    type: object
+    description: |
+      Configuration of a single analog channel.
+    required:
+    - signal
+    properties:
+
+      signal:
+        type: string
+        description: |
+          Name of the input signal mapped to this analog channel (server
+          direction).
+
+      name:
+        type: string
+        maxLength: 255
+        description: |
+          Name of the analog channel. Defaults to the signal name. Clients using
+          revision 2005 of the protocol might see the name truncated to 16
+          characters.
+
+      unit:
+        type: string
+        default: point_on_wave
+        enum:
+        - point_on_wave
+        - rms
+        - peak
+        description: |
+          Type of the analog value.
+
+  node-c37.118-digital:
+    type: object
+    description: |
+      Configuration of a single digital status bit. Every 16 bits form one
+      digital status word.
+    required:
+    - signal
+    properties:
+
+      signal:
+        type: string
+        description: |
+          Name of the input signal mapped to this bit (server direction).
+
+      name:
+        type: string
+        maxLength: 255
+        description: |
+          Name of the bit. Defaults to the signal name. Clients using revision
+          2005 of the protocol might see the name truncated to 16 characters.
+
+      normal:
+        type: boolean
+        default: false
+        description: |
+          Normal state of the digital status bit.

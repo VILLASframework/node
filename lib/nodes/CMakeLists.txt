@@ -6,6 +6,7 @@
 
 set(NODE_SRC
     loopback_internal.cpp
+    c37_118.cpp
 )
 
 if(LIBNL3_ROUTE_FOUND)

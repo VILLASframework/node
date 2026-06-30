@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 type: object
-title: Format Object
+title: Node Object
 required:
 - type
 properties:
@@ -20,6 +20,7 @@ discriminator:
   propertyName: type
   mapping:
     amqp: nodes/_amqp.yaml
+    c37.118: nodes/_c37_118.yaml
     can: nodes/_can.yaml
     comedi: nodes/_comedi.yaml
     ethercat: nodes/_ethercat.yaml
