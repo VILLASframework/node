@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(TEST_SRC
+    c37_118.cpp
     config_json.cpp
     config.cpp
     format.cpp
@@ -23,6 +24,7 @@ add_executable(unit-tests ${TEST_SRC})
 target_link_libraries(unit-tests PUBLIC
     PkgConfig::CRITERION
     Threads::Threads
+    nodes
     villas
 )
 
