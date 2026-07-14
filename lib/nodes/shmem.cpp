@@ -176,6 +176,10 @@ int villas::node::shmem_write(NodeCompat *n, struct Sample *const smps[],
   if (copied < avail)
     n->logger->warn("Outgoing pool underrun");
 
+  /* signals is a heap shared_ptr; a reader in another process can't deref it */
+  for (int i = 0; i < copied; i++)
+    shared_smps[i]->signals.reset();
+
   pushed = shmem_int_write(&shm->intf, shared_smps, copied);
   if (pushed != avail)
     n->logger->warn("Outgoing queue overrun for node");
