@@ -43,22 +43,6 @@ public:
   MemoryAllocationError() : RuntimeError("Failed to allocate memory") {}
 };
 
-class JsonError : public std::runtime_error {
-
-protected:
-  json_error_t error;
-
-public:
-  template <typename... Args>
-  JsonError(const json_t *s, const json_error_t &e,
-            const std::string &what = std::string(), Args &&...args)
-      : std::runtime_error(
-            fmt::format("{}: {} in {}:{}:{}",
-                        fmt::format(what, std::forward<Args>(args)...),
-                        error.text, error.source, error.line, error.column)),
-        error(e) {}
-};
-
 class ConfigError : public std::runtime_error {
 
 protected:

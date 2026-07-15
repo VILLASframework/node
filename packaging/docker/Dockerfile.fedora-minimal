@@ -25,7 +25,8 @@ RUN dnf -y install \
 	spdlog-devel \
 	fmt-devel \
 	libwebsockets-devel \
-	json-devel
+	json-devel \
+	json-schema-validator-devel
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8

@@ -587,6 +587,22 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     echo "${PREFIX}/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf
 fi
 
+# Build & Install nlohmann_json_schema_validator
+if ! cmake --find-package -DNAME=nlohmann_json_schema_validator -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
+    should_build "nlohmann_json_schema_validator" "for JSON schema validation" "required"; then
+    git clone ${GIT_OPTS} --branch 2.4.0 https://github.com/pboettch/json-schema-validator.git
+    mkdir -p json-schema-validator/build
+    pushd json-schema-validator/build
+    cmake -DJSON_VALIDATOR_BUILD_TESTS=OFF \
+          -DJSON_VALIDATOR_BUILD_EXAMPLES=OFF \
+          -DBUILD_SHARED_LIBS=ON \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
 # Build & Install ghc::filesystem
 if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "ghc_filesystem" "for compatability with older compilers"; then
