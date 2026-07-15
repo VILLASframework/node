@@ -26,7 +26,7 @@ repos:
         exclude: .devcontainer/devcontainer\.json
       - id: check-toml
       - id: check-added-large-files
-        exclude: ^paper\.md$
+        exclude: ^(?:paper\.md|lib/json_schema\.cpp)$
       - id: pretty-format-json
         # black has its own mind of formatting Jupyter notebooks
         exclude: \.ipynb$|^.devcontainer/devcontainer\.json$|package-lock\.json$

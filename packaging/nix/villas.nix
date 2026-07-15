@@ -52,6 +52,7 @@
   libuuid,
   libwebsockets,
   nlohmann_json,
+  nlohmann_json_schema_validator,
   openssl,
   pkg-config,
   gcc14Stdenv,
@@ -150,6 +151,7 @@ gcc14Stdenv.mkDerivation {
   ];
 
   buildInputs = [
+    nlohmann_json_schema_validator
     libwebsockets
     openssl
     curl
