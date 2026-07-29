@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 {
   lib,
-  stdenv,
+  gcc14Stdenv,
   cmake,
   fetchsvn,
   libuuid,
 }:
-stdenv.mkDerivation {
+
+# We need to stick to gcc14 because OpenDSS is broken and doesn't build on GCC 15.
+# See: https://sourceforge.net/p/electricdss/discussion/experts/thread/732634c990/
+gcc14Stdenv.mkDerivation {
   pname = "opendssc";
   version = "10.1.0.1";
 
