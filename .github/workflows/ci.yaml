@@ -89,3 +89,20 @@ jobs:
       docker_image: ${{ needs.setup.outputs.docker_image }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
     secrets: inherit
+
+  tag-minor-release:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    needs:
+      - setup
+      - checks
+      - paper
+      - nix
+      - prepare
+      - build
+      - test
+      - packaging-docker
+      - packaging-nix
+      - deploy
+      - deploy-nix
+    uses: ./.github/workflows/tag-minor-release.yaml
+    secrets: inherit
