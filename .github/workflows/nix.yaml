@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Nix
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-nix:
+    name: "Nix [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Attic Cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.0l.de
+          cache: villas
+          token: ${{ secrets.ATTIC_TOKEN }}
+
+      - name: Build
+        run: nix build --print-build-logs ".#villas-node-${{ matrix.system }}"

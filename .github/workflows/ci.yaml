@@ -1,0 +1,91 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      docker_image: ${{ steps.image.outputs.docker_image }}
+    steps:
+      - name: Compute image name for the current repository
+        id: image
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
+
+  checks:
+    uses: ./.github/workflows/checks.yaml
+    secrets: inherit
+
+  paper:
+    uses: ./.github/workflows/paper.yaml
+    secrets: inherit
+
+  nix:
+    uses: ./.github/workflows/nix.yaml
+    secrets: inherit
+
+  prepare:
+    needs: [setup]
+    uses: ./.github/workflows/prepare.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  build:
+    needs: [setup, prepare]
+    uses: ./.github/workflows/build.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  test:
+    needs: [setup, build]
+    uses: ./.github/workflows/test.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  packaging-docker:
+    needs: [setup, test, prepare]
+    uses: ./.github/workflows/packaging-docker.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  packaging-nix:
+    needs: [setup, nix]
+    uses: ./.github/workflows/packaging-nix.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  deploy:
+    needs: [setup, packaging-docker]
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+      is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    secrets: inherit
+
+  deploy-nix:
+    needs: [setup, packaging-nix]
+    uses: ./.github/workflows/deploy-nix.yaml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+      is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    secrets: inherit

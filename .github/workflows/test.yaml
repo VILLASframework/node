@@ -1,0 +1,166 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
+
+env:
+  CMAKE_BUILD_OPTS: --parallel $(nproc)
+  CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=${PREFIX}
+  CCACHE: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+permissions:
+  contents: read
+  packages: read
+  actions: read
+
+jobs:
+  test-python:
+    name: Python
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Run Python tests
+        run: |
+          cd python
+          pytest --verbose .
+
+      - name: Check formatting
+        run: |
+          cd python
+          black --line-length=90 --extend-exclude=".*(\.pyi|_pb2.py)$" --check .
+
+      - name: Lint with flake8
+        run: |
+          cd python
+          flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
+
+      - name: Type check with mypy
+        run: |
+          cd python
+          mypy --namespace-packages --explicit-package-bases .
+
+  test-cppcheck:
+    name: CPPCheck
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Run cppcheck
+        run: ./tools/run-cppcheck.sh | tee cppcheck.log
+
+      - name: Upload CPPCheck Log
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: cppcheck-log
+          path: cppcheck.log
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Reuse compiled tree from Build Source [fedora]
+        uses: actions/download-artifact@v7
+        with:
+          name: build-fedora
+          path: build
+
+      - name: Setup ccache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
+
+      - name: Configure
+        run: cmake -S . -B build ${{ env.CCACHE }}
+
+      - name: Build and run unit tests
+        run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      options: --user root
+    services:
+      rabbitmq:
+        image: rwthacs/rabbitmq
+      redis:
+        image: redis:6.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Reuse compiled tree from Build Source [fedora]
+        uses: actions/download-artifact@v7
+        with:
+          name: build-fedora
+          path: build
+
+      - name: Setup ccache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
+
+      - name: Start Mosquitto
+        run: |
+          echo "127.0.0.1 mosquitto" >> /etc/hosts
+          cat > /tmp/mosquitto.conf <<'EOF'
+          listener 1883
+          allow_anonymous true
+          EOF
+          mosquitto -c /tmp/mosquitto.conf -d
+
+      - name: Configure
+        run: |
+          cmake -S . -B build ${{ env.CCACHE }}
+          cmake --build build --target install
+
+      - name: Build and run Integration Tests
+        run: cmake --build build --target run-integration-tests
+
+      - name: Upload Integration Test Artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: integration-tests
+          path: build/tests/integration/
