@@ -9,6 +9,12 @@ on:
       docker_image:
         required: true
         type: string
+      ref:
+        required: true
+        type: string
+      ref_name:
+        required: true
+        type: string
       is_version_tag:
         required: false
         type: boolean
@@ -39,7 +45,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Create and push multi-arch manifest
         run: |
@@ -64,7 +72,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Publish dev image for current ref
         run: |
@@ -88,13 +98,15 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Publish dev-vscode image for current ref
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ steps.ref.outputs.tag }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ github.sha }}"
+            "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ inputs.ref }}"
 
   latest-docker:
     name: Docker Images as latest
@@ -114,7 +126,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Tag and Push Image as latest
         run: |
@@ -141,7 +155,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Tag and push dev image as latest
         run: |

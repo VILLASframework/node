@@ -4,6 +4,10 @@ name: Draft PDF
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
 
 jobs:
   paper:
@@ -13,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Build Draft PDF
         uses: openjournals/openjournals-draft-action@v1.0
