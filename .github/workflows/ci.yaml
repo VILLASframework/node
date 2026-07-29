@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   setup:
-    name: setup
+    name: Setup Variables
     runs-on: ubuntu-latest
     outputs:
       docker_image: ${{ steps.image.outputs.docker_image }}
@@ -28,70 +28,80 @@ jobs:
         run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
 
   checks:
-    uses: ./.github/workflows/checks.yaml
+    name: Run Checks
     secrets: inherit
+    uses: ./.github/workflows/checks.yaml
 
   paper:
-    uses: ./.github/workflows/paper.yaml
+    name: Build Paper Draft
     secrets: inherit
+    uses: ./.github/workflows/paper.yaml
 
   nix:
-    uses: ./.github/workflows/nix.yaml
+    name: Build with Nix
     secrets: inherit
+    uses: ./.github/workflows/nix.yaml
 
   prepare:
+    name: Prepare Docker Images
     needs: [setup]
+    secrets: inherit
     uses: ./.github/workflows/prepare.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
-    secrets: inherit
 
   build:
+    name: Build from Source
     needs: [setup, prepare]
+    secrets: inherit
     uses: ./.github/workflows/build.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
-    secrets: inherit
 
   test:
+    name: Run Tests
     needs: [setup, build]
+    secrets: inherit
     uses: ./.github/workflows/test.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
-    secrets: inherit
 
   packaging-docker:
+    name: Build Docker Images
     needs: [setup, test, prepare]
+    secrets: inherit
     uses: ./.github/workflows/packaging-docker.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
-    secrets: inherit
 
   packaging-nix:
+    name: Bundle Artifacts with Nix
     needs: [setup, nix]
+    secrets: inherit
     uses: ./.github/workflows/packaging-nix.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
-    secrets: inherit
 
   deploy:
+    name: Deploy Docker Images
     needs: [setup, packaging-docker]
+    secrets: inherit
     uses: ./.github/workflows/deploy.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
-    secrets: inherit
 
   deploy-nix:
+    name: Deploy Nix Artifacts
     needs: [setup, packaging-nix]
+    secrets: inherit
     uses: ./.github/workflows/deploy-nix.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
-    secrets: inherit
 
-  tag-minor-release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+  all:
+    name: All prerequisites completed
     needs:
       - setup
       - checks
@@ -104,5 +114,14 @@ jobs:
       - packaging-nix
       - deploy
       - deploy-nix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependency barrier
+        run: echo "All prerequisite jobs finished."
+
+  tag-minor-release:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    needs:
+      - all
     uses: ./.github/workflows/tag-minor-release.yaml
     secrets: inherit
