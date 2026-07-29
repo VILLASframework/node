@@ -9,6 +9,9 @@ on:
       docker_image:
         required: true
         type: string
+      ref:
+        required: true
+        type: string
 
 env:
   CMAKE_BUILD_OPTS: --parallel $(nproc)
@@ -26,12 +29,13 @@ jobs:
     name: Python
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
           submodules: recursive
 
@@ -59,12 +63,13 @@ jobs:
     name: CPPCheck
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
           submodules: recursive
 
@@ -82,12 +87,13 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
           submodules: recursive
 
@@ -101,7 +107,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ccache-fedora-${{ github.sha }}
+          key: ccache-fedora-${{ inputs.ref }}
           restore-keys: ccache-fedora-
 
       - name: Configure
@@ -114,7 +120,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     services:
       rabbitmq:
@@ -125,6 +131,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
           submodules: recursive
 
@@ -138,7 +145,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ccache-fedora-${{ github.sha }}
+          key: ccache-fedora-${{ inputs.ref }}
           restore-keys: ccache-fedora-
 
       - name: Start Mosquitto

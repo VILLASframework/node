@@ -9,11 +9,17 @@ on:
       docker_image:
         required: true
         type: string
+      ref:
+        required: true
+        type: string
+      ref_name:
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
   DOCKER_IMAGE: ${{ inputs.docker_image }}
-  DOCKER_TAG: ${{ github.sha }}
+  DOCKER_TAG: ${{ inputs.ref }}
 
 permissions:
   contents: read
@@ -53,6 +59,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
           submodules: recursive
 
@@ -68,7 +75,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Build and Push Image
         uses: docker/build-push-action@v7

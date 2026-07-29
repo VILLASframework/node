@@ -5,6 +5,10 @@ name: Checks
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Lint OpenAPI Specification
         run: npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
@@ -43,6 +49,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Add Git safe Directory
         run: git config --global --add safe.directory '*'
@@ -66,6 +74,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@v6

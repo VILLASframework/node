@@ -8,6 +8,7 @@ on:
     branches: [master]
     tags: ["v*"]
   pull_request:
+  pull_request_target:
   workflow_dispatch:
 
 concurrency:
@@ -17,9 +18,16 @@ concurrency:
 jobs:
   setup:
     name: Setup Variables
+    # Forks get a read-only GITHUB_TOKEN, so they run via pull_request_target.
+    if: >-
+      github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork
+      || github.event_name != 'pull_request_target' && !github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'pull_request_target' && 'fork-pr' || 'internal' }}
     outputs:
       docker_image: ${{ steps.image.outputs.docker_image }}
+      ref: ${{ steps.ref.outputs.ref }}
+      ref_name: ${{ steps.ref.outputs.ref_name }}
     steps:
       - name: Compute image name for the current repository
         id: image
@@ -27,20 +35,39 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
 
+      # Under pull_request_target GITHUB_SHA and GITHUB_REF_NAME point at the base branch.
+      - name: Resolve the revision under test
+        id: ref
+        env:
+          REF: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+          REF_NAME: ${{ github.event_name == 'pull_request_target' && format('{0}/merge', github.event.pull_request.number) || github.ref_name }}
+        run: |
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "ref_name=$REF_NAME" >> "$GITHUB_OUTPUT"
+
   checks:
     name: Run Checks
+    needs: [setup]
     secrets: inherit
     uses: ./.github/workflows/checks.yaml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
 
   paper:
     name: Build Paper Draft
+    needs: [setup]
     secrets: inherit
     uses: ./.github/workflows/paper.yaml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
 
   nix:
     name: Build with Nix
+    needs: [setup]
     secrets: inherit
     uses: ./.github/workflows/nix.yaml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
 
   prepare:
     name: Prepare Docker Images
@@ -49,6 +76,8 @@ jobs:
     uses: ./.github/workflows/prepare.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
+      ref_name: ${{ needs.setup.outputs.ref_name }}
 
   build:
     name: Build from Source
@@ -57,6 +86,7 @@ jobs:
     uses: ./.github/workflows/build.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
 
   test:
     name: Run Tests
@@ -65,6 +95,7 @@ jobs:
     uses: ./.github/workflows/test.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
 
   packaging-docker:
     name: Build Docker Images
@@ -73,6 +104,8 @@ jobs:
     uses: ./.github/workflows/packaging-docker.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
+      ref_name: ${{ needs.setup.outputs.ref_name }}
 
   packaging-nix:
     name: Bundle Artifacts with Nix
@@ -81,6 +114,8 @@ jobs:
     uses: ./.github/workflows/packaging-nix.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
+      ref_name: ${{ needs.setup.outputs.ref_name }}
 
   deploy:
     name: Deploy Docker Images
@@ -89,6 +124,8 @@ jobs:
     uses: ./.github/workflows/deploy.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref: ${{ needs.setup.outputs.ref }}
+      ref_name: ${{ needs.setup.outputs.ref_name }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
   deploy-nix:
@@ -98,6 +135,7 @@ jobs:
     uses: ./.github/workflows/deploy-nix.yaml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
+      ref_name: ${{ needs.setup.outputs.ref_name }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
   all:

@@ -9,6 +9,9 @@ on:
       docker_image:
         required: true
         type: string
+      ref_name:
+        required: true
+        type: string
       is_version_tag:
         required: false
         type: boolean
@@ -39,7 +42,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Create and Push Multi-arch Nix Manifest
         run: |
@@ -66,7 +71,9 @@ jobs:
 
       - name: Compute safe ref Tag
         id: ref
-        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.ref_name }}
+        run: echo "tag=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Tag Nix Manifest as latest-nix
         run: |
