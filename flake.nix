@@ -179,12 +179,6 @@
               nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
               propagatedBuildInputs = pkg.propagatedBuildInputs;
               propagatedNativeBuildInputs = pkg.propagatedNativeBuildInputs;
-
-              # configure nix-ld for pre-commit
-              env = {
-                NIX_LD = lib.fileContents "${stdenv.cc}/nix-support/dynamic-linker";
-                NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gcc-unwrapped.lib ];
-              };
             };
         in
         rec {
