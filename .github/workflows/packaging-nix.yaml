@@ -56,7 +56,7 @@ jobs:
         with:
           name: villas-arx-${{ matrix.system }}
           path: artifacts/
-          retention-days: 365
+          retention-days: 90
 
   pkg-nix-rpm:
     name: "RPM [${{ matrix.system }}]"
@@ -95,7 +95,7 @@ jobs:
         with:
           name: villas-rpm-${{ matrix.system }}
           path: artifacts/
-          retention-days: 365
+          retention-days: 90
 
   pkg-nix-docker:
     name: "Docker [${{ matrix.system }}]"
