@@ -41,7 +41,7 @@ WORKDIR /villas/build
 RUN cmake ${CMAKE_OPTS} -DCPACK_GENERATOR=RPM .. && \
 	make -j$(nproc) package
 
-FROM ${DISTRO}:${FEDORA_VERSION} as app
+FROM ${DISTRO}:${FEDORA_VERSION} AS app
 
 COPY --from=builder /villas/build/*.rpm /tmp/
 RUN dnf -y install /tmp/*.rpm
