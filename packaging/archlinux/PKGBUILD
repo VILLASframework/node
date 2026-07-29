@@ -18,9 +18,9 @@ makedepends=('libconfig')
 depends=('libwebsockets' 'zeromq' 'nanomsg' 'libxil' 'openssl' 'jansson' 'curl'
          'libnl' 'protobuf' 'libpgm')
 
-repo=VILLASnode
-url="https://git.rwth-aachen.de/acs/public/villas/$repo"
-source=("$url/repository/$branch/archive.tar.bz2")
+repo=node
+url="https://github.com/VILLASframework/$repo"
+source=("$url/archive/refs/heads/$branch.tar.gz")
 sha256sums=(SKIP)
 
 prepare() {
