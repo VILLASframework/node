@@ -19,7 +19,6 @@ oneOf:
     type: float
     unit: V
     init: 230.0
-
   items:
     $ref: ./signal.yaml
 

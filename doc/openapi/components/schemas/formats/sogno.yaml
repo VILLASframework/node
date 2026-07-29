@@ -8,11 +8,7 @@ example:
   device: device1
   timestamp: '2020-05-20T10:27:57.980802+00:00'
   readings:
-    - component: BUS1
-      measurand: voltmagnitude
-      phase: A
-      data: 123
-    - component: BUS2
+    - component: 7a30b61a-2913-11ec-9621-0242ac130002
       measurand: voltmagnitude
       phase: A
       data: 123

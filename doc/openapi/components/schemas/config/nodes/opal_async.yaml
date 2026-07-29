@@ -8,7 +8,7 @@ allOf:
     properties:
       id:
         description: The Send/Recv ID of the RT-Lab OpAsyncSend/Recv blocks.
-        min: 1
+        minimum: 1
         default: 1
         type: integer
 

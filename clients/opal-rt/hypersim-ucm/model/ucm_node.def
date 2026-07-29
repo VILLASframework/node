@@ -776,10 +776,10 @@ struct sockaddr_in rec_addr;
 		msg->data[1].f = datain1;
 		msg->data[2].f = datain2;
 		msg->data[3].f = datain3;
-		msg->data[3].f = datain3;
 		msg->data[4].f = datain4;
 		msg->data[5].f = datain5;
 		msg->data[6].f = datain6;
+		msg->data[7].f = datain7;
 
 		msg->data[0].i = htonl(msg->data[0].i);
 		msg->data[1].i = htonl(msg->data[1].i);

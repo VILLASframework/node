@@ -19,15 +19,15 @@ properties:
 
   addr_framework:
     type: string
-    min: 0
-    max: 65535
+    minimum: 0
+    maximum: 65535
     description: >-
       The IP address of the target on which the framework is running.
 
   port_framework:
     type: integer
-    min: 0
-    max: 65535
+    minimum: 0
+    maximum: 65535
     description: >-
       The port on which the framework will be reachable.
 
@@ -43,12 +43,12 @@ properties:
 
   core_framework:
     type: integer
-    min: 0
+    minimum: 0
     description: >-
       The core on which the tool of the framework is running. The index starts at 0.
 
   core_client:
     type: integer
-    min: 0
+    minimum: 0
     description: >-
       The core on which the tool of the client is running. The index starts at 0.

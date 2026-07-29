@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 ---
-openapi: 3.0.3
+openapi: 3.1.0
 
 info:
   title: VILLASnode API
@@ -139,15 +139,6 @@ components:
   schemas:
     Config:
       $ref: components/schemas/config.yaml
-
-    TypeField:
-      type: object
-      required:
-      - type
-      properties:
-        type:
-          type: string
-
     FormatEdgeflex:
       $ref: components/schemas/formats/edgeflex.yaml
     FormatIgor:

@@ -12,7 +12,7 @@ get:
       description: Success
       content:
         application/json:
-          examples:
+          example:
             schema:
               type: array
               items:

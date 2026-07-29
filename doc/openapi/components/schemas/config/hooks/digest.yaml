@@ -6,15 +6,13 @@ allOf:
 - type: object
   required:
     - uri
-    - mode
-    - interval
     - algorithm
+
   properties:
     uri:
       description: The output file for digests.
       example: digest.txt
       type: string
-      format: uri
 
     algorithm:
       description: The algorithm used for calculating digests.

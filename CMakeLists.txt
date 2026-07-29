@@ -72,7 +72,11 @@ if(${NO_EVENTFD})
 endif()
 
 # Check packages
+find_package(CURL 7.29 REQUIRED)
+find_package(fmt REQUIRED)
+find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenMP)
 find_package(IBVerbs)
@@ -95,7 +99,6 @@ find_program(PASTE NAMES paste)
 if(NOT PASTE)
     message(SEND_ERROR "GNU paste is missing. Please install coreutils")
 endif()
-
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
@@ -171,9 +174,10 @@ else()
 endif()
 
 # Build options
-cmake_dependent_option(WITHOUT_GPL              "Build VILLASnode without any GPL code"                 OFF                "" ON)
+option(LOG_COLOR_DISABLE                        "Disable any colored log output"                        OFF)
+option(WITHOUT_GPL                              "Build VILLASnode without any GPL code"                 OFF)
+option(WITH_DEFAULTS                            "Defaults for non required build options"               ON)
 cmake_dependent_option(WITH_GHC_FS              "Build using ghc::filesystem, a drop in replacement for std::filesystem"    ON "STDCXX_FS_NOT_FOUND" OFF)
-cmake_dependent_option(WITH_DEFAULTS            "Defaults for non required build options"               ON                 "" OFF)
 cmake_dependent_option(WITH_API                 "Build with remote control API"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_CLIENTS             "Build client applications"                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_CONFIG              "Build with support for libconfig configuration syntax" "${WITH_DEFAULTS}" "LIBCONFIG_FOUND" OFF)

@@ -4,8 +4,6 @@
 ---
 allOf:
 - type: object
-  required:
-  - sample_rate
   properties:
 
     interface_type:
@@ -19,12 +17,14 @@ allOf:
 
     device_id:
       type: string
-      example: 10000
+      example: "10000"
       description: The used device type. If empty it is auto detected.
 
     in:
       type: object
       description: Configuration for the ul201
+      required:
+      - sample_rate
 
       properties:
 
@@ -35,7 +35,7 @@ allOf:
 
         sample_rate:
           type: integer
-          min: 0
+          minimum: 0
           example: 10000
           description: The default sampling rate of the input signals.
 

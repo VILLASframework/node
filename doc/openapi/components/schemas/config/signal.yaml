@@ -36,7 +36,6 @@ properties:
       The initial value of the signal.
 
     oneOf:
-    - type: integer
     - type: number
     - type: boolean
     - type: object

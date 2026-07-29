@@ -14,28 +14,28 @@ allOf:
     sample_rate:
       type: integer
       default: 0
-      min: 0
+      minimum: 0
       example: 10000
       description: The sampling rate of the input signal.
     start_frequency:
       type: number
-      min: 0
+      minimum: 0
       example: 49.7
       description: The lowest frequency bin.
     end_frequency:
       type: number
       example: 50.3
-      min: 0
+      minimum: 0
       description: The highest frequency bin.
     frequency_resolution:
       type: number
       example: 0.1
-      min: 0
+      minimum: 0
       description: The frequency resolution of the DFT.
     dft_rate:
       type: integer
       example: 1
-      min: 1
+      minimum: 1
       description: The number of phasor calculations performed per second.
     window_size_factor:
       type: integer

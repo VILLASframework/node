@@ -68,54 +68,54 @@ allOf:
             | `absolute` 	| `epoch - first` 	| `epoch` |
             | `original` 	| `0` 			| immediately |
 
-          rate:
-            type: number
-            default: 0
-            description: |
-              By default `send_rate` has the value `0` which means that the time between consecutive samples is the same as in the `in` file based on the timestamps in the first column.
+        rate:
+          type: number
+          default: 0
+          description: |
+            By default `send_rate` has the value `0` which means that the time between consecutive samples is the same as in the `in` file based on the timestamps in the first column.
 
-              If this setting has a non-zero value, the default behavior is overwritten with a fixed rate.
+            If this setting has a non-zero value, the default behavior is overwritten with a fixed rate.
 
-          eof:
-            type: string
-            default: exit
-            enum:
-            - rewind
-            - wait
-            - exit
+        eof:
+          type: string
+          default: exit
+          enum:
+          - rewind
+          - wait
+          - exit
 
-            description: |
-              Defines the behavior if the end of file of the input file is reached.
+          description: |
+            Defines the behavior if the end of file of the input file is reached.
 
-              - `rewind` will rewind the file pointer and restart reading samples from the beginning of the file.
-              - `exit` will terminated the program.
-              - `wait` will periodically test if there are new samples which have been appended to the file.
+            - `rewind` will rewind the file pointer and restart reading samples from the beginning of the file.
+            - `exit` will terminated the program.
+            - `wait` will periodically test if there are new samples which have been appended to the file.
 
-          buffer_size:
-            type: integer
-            min: 0
-            default: 0
-            description: |
-              Similar to the [`out.buffer_size` setting](#out-buffer_size). This means that the data is loaded into the buffer before it is passed on to the node.
+        buffer_size:
+          type: integer
+          minimum: 0
+          default: 0
+          description: |
+            Similar to the [`out.buffer_size` setting](#out-buffer_size). This means that the data is loaded into the buffer before it is passed on to the node.
 
-              If `in.buffer_size = 0`, no buffer will be generated.
+            If `in.buffer_size = 0`, no buffer will be generated.
 
-      out:
-        type: object
-        properties:
-          flush:
-            type: boolean
-            description: |
-              With this setting enabled, the outgoing file is flushed whenever new samples have been written to it.
+    out:
+      type: object
+      properties:
+        flush:
+          type: boolean
+          description: |
+            With this setting enabled, the outgoing file is flushed whenever new samples have been written to it.
 
-          buffer_size:
-            type: integer
-            default: 0
-            min: 0
-            description: |
-              If this is set to a positive value `<X>`, the node will generate a full [stream buffer](https://linux.die.net/man/3/setvbuf) with a size of `<X>` bytes. This means that the data is buffered and not written until the buffer is full or until the node is stopped.
+        buffer_size:
+          type: integer
+          default: 0
+          minimum: 0
+          description: |
+            If this is set to a positive value `<X>`, the node will generate a full [stream buffer](https://linux.die.net/man/3/setvbuf) with a size of `<X>` bytes. This means that the data is buffered and not written until the buffer is full or until the node is stopped.
 
-              If `out.buffer_size = 0`, no buffer will be generated.
+            If `out.buffer_size = 0`, no buffer will be generated.
 
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml

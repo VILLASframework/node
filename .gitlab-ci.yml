@@ -12,6 +12,24 @@ variables:
   DOCKER_CLI_EXPERIMENTAL: enabled
   CMAKE_BUILD_OPTS: "--parallel 16"
   CMAKE_EXTRA_OPTS: "-DCMAKE_BUILD_TYPE=Release"
+  CMAKE_EXTRA_OPTS_FEDORA_MINIMAL: >
+    -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+    -DWITH_API=OFF
+    -DWITH_CLIENTS=OFF
+    -DWITH_CONFIG=OFF
+    -DWITH_DOC=OFF
+    -DWITH_FPGA=OFF
+    -DWITH_GRAPHVIZ=OFF
+    -DWITH_HOOKS=OFF
+    -DWITH_LUA=OFF
+    -DWITH_OPENMP=OFF
+    -DWITH_PLUGINS=OFF
+    -DWITH_SRC=OFF
+    -DWITH_TESTS=OFF
+    -DWITH_TOOLS=OFF
+    -DWITH_WEB=OFF
+    -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+    -DCMAKE_PREFIX_PATH=/usr/local
   CACHIX_CACHE_NAME: villas
 
 stages:
@@ -106,23 +124,7 @@ build:source:
           -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
       - DISTRO: fedora-minimal
         CMAKE_EXTRA_OPTS: >
-          -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
-          -DWITH_API=OFF
-          -DWITH_CLIENTS=OFF
-          -DWITH_CONFIG=OFF
-          -DWITH_DOC=OFF
-          -DWITH_FPGA=OFF
-          -DWITH_GRAPHVIZ=OFF
-          -DWITH_HOOKS=OFF
-          -DWITH_LUA=OFF
-          -DWITH_OPENMP=OFF
-          -DWITH_PLUGINS=OFF
-          -DWITH_SRC=OFF
-          -DWITH_TESTS=OFF
-          -DWITH_TOOLS=OFF
-          -DWITH_WEB=OFF
-          -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
-          -DCMAKE_PREFIX_PATH=/usr/local
+          ${CMAKE_EXTRA_OPTS_FEDORA_MINIMAL}
 
 build:nix:
   <<: *nix
@@ -141,7 +143,8 @@ build:openapi:
   needs: []
   image: node:24-alpine
   script:
-    - npx -y @redocly/cli build-docs doc/openapi/openapi.yaml --output openapi.html
+    - npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
+    - npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
   artifacts:
     paths:
       - openapi.html

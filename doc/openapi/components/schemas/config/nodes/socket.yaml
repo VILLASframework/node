@@ -65,7 +65,7 @@ allOf:
 
             ttl:
               type: integer
-              min: 0
+              minimum: 0
               description: |
                 The time to live for outgoing multicast packets.
 

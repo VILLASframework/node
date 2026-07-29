@@ -16,7 +16,7 @@ allOf:
       - short-float
 
     asdu_type_id:
-      descrition: The IEC60870 standard type id.
+      description: The IEC60870 standard type id.
       type: string
       enum:
       - M_SP_NA_1
@@ -38,6 +38,6 @@ allOf:
     ioa:
       description: The IEC60870 information object address associated with this signal.
       type: number
-      min: 1
+      minimum: 1
 
 - $ref: ../../signal.yaml

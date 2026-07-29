@@ -50,55 +50,55 @@ allOf:
 
             binds the node to the local device which is bound to `10.0.0.1`. It will use port `1337` for communication related to the connection.
 
-          max_wrs:
-            type: integer
-            default: 128
-            description: |
-              Before a packet can be received with Infiniband, the application has to describe how this will be handled (e.g., to what address the data will be written).
-              This happens in a so called Work Request (WR).
+        max_wrs:
+          type: integer
+          default: 128
+          description: |
+            Before a packet can be received with Infiniband, the application has to describe how this will be handled (e.g., to what address the data will be written).
+            This happens in a so called Work Request (WR).
 
-              `in.max_wrs` sets the maximum number of receive Work Requests which can be posted to the receive queue of the Queue Pair.
+            `in.max_wrs` sets the maximum number of receive Work Requests which can be posted to the receive queue of the Queue Pair.
 
-              For higher throughput, it is recommended to increase this value since it will serve as a buffer.
+            For higher throughput, it is recommended to increase this value since it will serve as a buffer.
 
-            cq_size:
-              type: integer
-              default: 128
-              description: |
-                This value defines the number of Work Completions the Completion Queue can hold.
+        cq_size:
+          type: integer
+          default: 128
+          description: |
+            This value defines the number of Work Completions the Completion Queue can hold.
 
-                If a packet is received, the Queue Pair will write a Work Completion to the Completion Queue.
-                The node polls this queue to process received packets. If the Completion Queue gets full, which is often caused by `cq_size` being to small, and thus the receive queue is not able to post Work Completions, the node will abort.
+            If a packet is received, the Queue Pair will write a Work Completion to the Completion Queue.
+            The node polls this queue to process received packets. If the Completion Queue gets full, which is often caused by `cq_size` being to small, and thus the receive queue is not able to post Work Completions, the node will abort.
 
-                If a connection is disconnected, all outstanding Work Requests—even is they are not used—are flushed to the Completion Queue.
-                Here applies the same as mentioned above: if the Completion Queue has fewer space left than outstanding Work Requests are available, this will result in an error.
+            If a connection is disconnected, all outstanding Work Requests—even is they are not used—are flushed to the Completion Queue.
+            Here applies the same as mentioned above: if the Completion Queue has fewer space left than outstanding Work Requests are available, this will result in an error.
 
-                It is therefor recommended to set the value of `cq_size` to at least
+            It is therefor recommended to set the value of `cq_size` to at least
 
-                ```
-                in.cq_size >= in.max_wrs - in.buffer_subtraction
-                ```
+            ```
+            in.cq_size >= in.max_wrs - in.buffer_subtraction
+            ```
 
-              buffer_subtraction:
-                type: integer
-                default: 16
-                description: |
-                  As mentioned in the `in.max_wrs` settings, Work Requests have to be present in the receive queue, for it to be able to process received data.
-                  To take full advantage of the zero-copy capabilities of Infiniband this node-type directly posts addresses from the VILLASnode to the receive queue instead of copying all data over after receiving it.
+        buffer_subtraction:
+          type: integer
+          default: 16
+          description: |
+            As mentioned in the `in.max_wrs` settings, Work Requests have to be present in the receive queue, for it to be able to process received data.
+            To take full advantage of the zero-copy capabilities of Infiniband this node-type directly posts addresses from the VILLASnode to the receive queue instead of copying all data over after receiving it.
 
-                  This technique relies on the exchange of addresses. This means that if an array of `in.vectorize` addresses is handed over to the node-type, max `release` <= `in.vectorize` addresses that point to received data can be returned.
+            This technique relies on the exchange of addresses. This means that if an array of `in.vectorize` addresses is handed over to the node-type, max `release` <= `in.vectorize` addresses that point to received data can be returned.
 
-                  Furthermore, if `release` addresses should be returned, `release` addresses from the original array must be posted to the receive queue.
-                  To ensure that we can always post at least `in.vectorize` new samples to the receive queue, `in.buffer_subtraction` must always be bigger than `in.vectorize`.
+            Furthermore, if `release` addresses should be returned, `release` addresses from the original array must be posted to the receive queue.
+            To ensure that we can always post at least `in.vectorize` new samples to the receive queue, `in.buffer_subtraction` must always be bigger than `in.vectorize`.
 
-                  A second factor is performance: if `in.buffer_subtraction` is too small it might take long before the node starts to process data since it has to fill almost the complete queue first.
-                  If `in.buffer_subtraction` is too big, the receive buffer might be too small.
+            A second factor is performance: if `in.buffer_subtraction` is too small it might take long before the node starts to process data since it has to fill almost the complete queue first.
+            If `in.buffer_subtraction` is too big, the receive buffer might be too small.
 
-                  Thus, the maximum number of Work Requests to be present in the receive queue is defined as follows:
+            Thus, the maximum number of Work Requests to be present in the receive queue is defined as follows:
 
-                  ```c
-                  max_wrs_posted = in.max_wrs - in.buffer_subtraction
-                  ```
+            ```c
+            max_wrs_posted = in.max_wrs - in.buffer_subtraction
+            ```
     out:
       type: object
       properties:

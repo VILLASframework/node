@@ -1,13 +1,16 @@
 {
   "name": "villasnode-api",
   "version": "1.1.0",
+  "type": "module",
   "dependencies": {
-    "@redocly/openapi-cli": "^1.0.0-beta.69"
+    "@redocly/cli": "^2.25.0"
   },
   "private": true,
   "scripts": {
-    "start": "openapi preview-docs",
-    "build": "openapi bundle -o dist",
-    "test": "openapi lint"
+    "redocly": "redocly",
+    "preview": "redocly preview",
+    "build": "redocly build-docs openapi/openapi.yaml",
+    "bundle": "redocly bundle -o dist openapi/openapi.yaml",
+    "test": "redocly lint openapi/openapi.yaml"
   }
 }
