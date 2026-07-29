@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <numbers>
+
 #include <villas/hooks/pmu.hpp>
 #include <villas/timing.hpp>
 
@@ -28,15 +30,11 @@ void PmuHook::prepare() {
     // Add signals
     auto freqSig =
         std::make_shared<Signal>("frequency", "Hz", SignalType::FLOAT);
-    auto amplSig =
-        std::make_shared<Signal>("amplitude", "V", SignalType::FLOAT);
-    auto phaseSig = std::make_shared<Signal>(
-        "phase", (angleUnitFactor) ? "rad" : "deg",
-        SignalType::FLOAT); //angleUnitFactor==1 means rad
+    auto amplSig = std::make_shared<Signal>("phasor", "V", SignalType::COMPLEX);
     auto rocofSig =
         std::make_shared<Signal>("rocof", "Hz/s", SignalType::FLOAT);
 
-    if (!freqSig || !amplSig || !phaseSig || !rocofSig)
+    if (!freqSig || !amplSig || !rocofSig)
       throw RuntimeError("Failed to create new signals");
 
     if (channelNameEnable) {
@@ -44,13 +42,11 @@ void PmuHook::prepare() {
 
       freqSig->name += suffix;
       amplSig->name += suffix;
-      phaseSig->name += suffix;
       rocofSig->name += suffix;
     }
 
     signals->push_back(freqSig);
     signals->push_back(amplSig);
-    signals->push_back(phaseSig);
     signals->push_back(rocofSig);
 
     lastPhasors.push_back({0., 0., 0., 0.});
@@ -216,18 +212,17 @@ Hook::Reason PmuHook::process(struct Sample *smp) {
   // Make sure to update phasors after window update but estimate them before
   if (run) {
     for (unsigned i = 0; i < signalIndices.size(); i++) {
-      smp->data[i * 4 + 0].f =
+      smp->data[i * 3 + 0].f =
           lastPhasors[i].frequency + frequencyOffset; // Frequency
-      smp->data[i * 4 + 1].f = (lastPhasors[i].amplitude / pow(2, 0.5)) +
-                               amplitudeOffset; // Amplitude
-      smp->data[i * 4 + 2].f =
-          (lastPhasors[i].phase * 180 / M_PI) + phaseOffset;       // Phase
-      smp->data[i * 4 + 3].f = lastPhasors[i].rocof + rocofOffset; /* ROCOF */
+      smp->data[i * 3 + 1].z =
+          std::polar(lastPhasors[i].amplitude / std::numbers::sqrt2,
+                     lastPhasors[i].phase);                        // Phasor
+      smp->data[i * 3 + 2].f = lastPhasors[i].rocof + rocofOffset; // ROCOF
       ;
     }
     smp->ts.origin = phasorTimestamp;
 
-    smp->length = signalIndices.size() * 4;
+    smp->length = signalIndices.size() * 3;
   }
 
   if (!run || phasorStatus != Status::VALID)
