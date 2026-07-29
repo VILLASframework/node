@@ -125,6 +125,9 @@ pkg_check_modules(CGRAPH IMPORTED_TARGET libcgraph>=2.30)
 pkg_check_modules(GVC IMPORTED_TARGET libgvc>=2.30)
 pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0>=1.0.23)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
+pkg_check_modules(BZIP2 IMPORTED_TARGET bzip2)
+pkg_check_modules(NLOHMANN_JSON IMPORTED_TARGET nlohmann_json)
+
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
@@ -191,6 +194,7 @@ cmake_dependent_option(WITH_SRC                 "Build executables"             
 cmake_dependent_option(WITH_TESTS               "Run tests"                                             "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_TOOLS               "Build auxilary tools"                                  "${WITH_DEFAULTS}" "TOPLEVEL_PROJECT" OFF)
 cmake_dependent_option(WITH_WEB                 "Build with internal webserver"                         "${WITH_DEFAULTS}" "LIBWEBSOCKETS_FOUND" OFF)
+cmake_dependent_option(WITH_VILLAS_CHRONICS     "Build with villas-chronics"                            "${WITH_DEFAULTS}" "BZIP2_FOUND; NLOHMANN_JSON_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP           "Build with amqp node-type"                             "${WITH_DEFAULTS}" "RABBITMQ_C_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_CAN            "Build with can node-type"                              "${WITH_DEFAULTS}" "" OFF)

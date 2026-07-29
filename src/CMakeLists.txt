@@ -74,6 +74,13 @@ if(WITH_NODE_OPAL)
     list(APPEND SRCS opal-async-param)
 endif()
 
+if(WITH_VILLAS_CHRONICS)
+    add_executable(villas-chronics villas-chronics.cpp)
+    target_link_libraries(villas-chronics PUBLIC villas PkgConfig::BZIP2)
+
+    list(APPEND SRCS villas-chronics)
+endif()
+
 install(
     TARGETS ${SRCS}
     COMPONENT bin

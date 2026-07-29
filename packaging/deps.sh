@@ -602,6 +602,32 @@ if ! cmake --find-package -DNAME=ghc_filesystem -DCOMPILER_ID=GNU -DLANGUAGE=CXX
     popd
 fi
 
+# Build and install nlohmann/json required for villas-chronics
+if ! pkg-config "nlohmann_json" &&
+    should_build "nlohman_json" "for the delta-sharing node-type"; then
+    git clone https://github.com/nlohmann/json.git json
+    mkdir -p json/build
+    pushd json/build
+    cmake ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
+# Build and install Bzip2 required for villas-chronics
+if ! pkg-config "bzip2" &&
+    should_build "BZip2" "for create_chronics hook"; then
+    git clone https://github.com/libarchive/bzip2.git bzip2
+    mkdir -p bzip2/build
+    pushd bzip2/build
+    cmake ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
+fi
+
 popd >/dev/null
 
 # Update linker cache
