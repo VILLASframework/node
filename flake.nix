@@ -163,7 +163,7 @@
             reuse
             cppcheck
             pre-commit
-            ruby # for pre-commit markdownlint hook
+            ruby # For pre-commit markdownlint hook
           ];
 
           mkShellFor =
@@ -171,10 +171,10 @@
             stdenv.mkDerivation {
               name = "${pkg.pname}-${stdenv.cc.cc.pname}-devShell";
 
-              # disable all hardening to suppress warnings in debug builds
+              # Disable all hardening to suppress warnings in debug builds
               hardeningDisable = [ "all" ];
 
-              # inherit inputs from pkg
+              # Inherit inputs from pkg
               buildInputs = pkg.buildInputs ++ packages;
               nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
               propagatedBuildInputs = pkg.propagatedBuildInputs;
