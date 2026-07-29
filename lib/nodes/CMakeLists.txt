@@ -202,6 +202,14 @@ if(WITH_NODE_WEBRTC)
     list(APPEND LIBRARIES LibDataChannel::LibDataChannel)
 endif()
 
+# Enable Delta Sharing
+if(WITH_NODE_DELTASHARING)
+    list(APPEND NODE_SRC delta_sharing/delta_sharing.cpp delta_sharing/delta_sharing_client.cpp
+        delta_sharing/delta_sharing_rest_client.cpp delta_sharing/functions.cpp
+    )
+    list(APPEND LIBRARIES ${ARROW_LIBRARIES} ${PARQUET_LIBRARIES} ${RESTCLIENTCPP_LIBRARIES})
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes PUBLIC ${LIBRARIES})

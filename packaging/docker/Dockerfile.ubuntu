@@ -7,11 +7,13 @@
 # You can choose between Debian and Ubuntu here
 ARG DISTRO=ubuntu
 ARG UBUNTU_VERSION=24.04
+ARG UBUNTU_CODENAME=noble
 ARG DISTRO=${DISTRO}
 
 FROM ${DISTRO}:${UBUNTU_VERSION} AS dev
 
 ARG DISTRO
+ARG UBUNTU_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -59,7 +61,17 @@ RUN apt-get update && \
 	libusb-1.0-0-dev \
 	libwebsockets-dev \
 	libzmq3-dev \
-	uuid-dev
+	uuid-dev \
+	nlohmann-json3-dev
+
+# Get debian package from Apache for arrow and parquet from official apache repositories.
+ARG UBUNTU_CODENAME
+RUN wget https://packages.apache.org/artifactory/arrow/${DISTRO}/apache-arrow-apt-source-latest-${UBUNTU_CODENAME}.deb
+ARG UBUNTU_CODENAME
+RUN apt-get install -y -V ./apache-arrow-apt-source-latest-${UBUNTU_CODENAME}.deb
+RUN apt-get update && \
+    apt-get install -y \
+    libarrow-dev libarrow-dataset-dev libparquet-dev
 
 # Install unpackaged dependencies from source
 ADD packaging/patches /deps/patches
