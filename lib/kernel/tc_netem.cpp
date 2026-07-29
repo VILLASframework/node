@@ -15,7 +15,6 @@
 #include <villas/exceptions.hpp>
 #include <villas/kernel/if.hpp>
 #include <villas/kernel/kernel.hpp>
-#include <villas/kernel/nl-private.h>
 #include <villas/kernel/nl.hpp>
 #include <villas/kernel/tc_netem.hpp>
 #include <villas/utils.hpp>
@@ -25,33 +24,6 @@ using namespace villas::utils;
 using namespace villas::kernel;
 
 static const double max_percent_value = 0xffffffff;
-
-/*
- * Set the delay distribution. Latency/jitter must be set before applying.
- * @arg qdisc Netem qdisc.
- * @return 0 on success, error code on failure.
- */
-static int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc,
-                                                  short *data, size_t len) {
-  struct rtnl_netem *netem;
-
-  if (!(netem = (struct rtnl_netem *)rtnl_tc_data(TC_CAST(qdisc))))
-    return -1;
-
-  if (len > MAXDIST)
-    return -NLE_INVAL;
-
-  netem->qnm_dist.dist_data = (int16_t *)calloc(len, sizeof(int16_t));
-
-  size_t i;
-  for (i = 0; i < len; i++)
-    netem->qnm_dist.dist_data[i] = data[i];
-
-  netem->qnm_dist.dist_size = len;
-  netem->qnm_mask |= SCH_NETEM_ATTR_DIST;
-
-  return 0;
-}
 
 // Customized version of rtnl_netem_set_delay_distribution() of libnl
 static int set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json) {
