@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Checks
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-openapi:
+    name: Build OpenAPI Documentation
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-alpine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Lint OpenAPI Specification
+        run: npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
+
+      - name: Build OpenAPI Documentation
+        run: npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
+
+      - name: Upload OpenAPI HTML Documentation
+        uses: actions/upload-artifact@v7
+        with:
+          name: openapi
+          path: openapi.html
+
+  pre-commit:
+    name: Run pre-commit
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.10-slim-bookworm
+      options: --user root
+    steps:
+      - name: Install Git and Ruby
+        run: apt-get update && apt-get -y install git ruby
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Add Git safe Directory
+        run: git config --global --add safe.directory '*'
+
+      - name: Install pre-commit
+        run: pip install --no-cache-dir pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+      - name: Upload Log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pre-commit-log
+          path: /github/home/.cache/pre-commit/pre-commit.log
+
+  reuse:
+    name: Check REUSE Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v6

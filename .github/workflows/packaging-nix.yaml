@@ -1,0 +1,148 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Packaging (Nix)
+
+on:
+  workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE: ${{ inputs.docker_image }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  pkg-nix-arx:
+    name: "ARX [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Attic Cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.0l.de
+          cache: villas
+          token: ${{ secrets.ATTIC_TOKEN }}
+
+      - name: Bundle as arx
+        run: |
+          nix bundle --print-build-logs --out-link bundle-arx \
+            --bundler github:nix-community/nix-bundle \
+            ".#villas-node-${{ matrix.system }}"
+          mkdir -p artifacts
+          cp -L bundle-arx artifacts/villas-${{ matrix.system }}
+
+      - name: Upload ARX Archives
+        uses: actions/upload-artifact@v7
+        with:
+          name: villas-arx-${{ matrix.system }}
+          path: artifacts/
+          retention-days: 365
+
+  pkg-nix-rpm:
+    name: "RPM [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Attic Cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.0l.de
+          cache: villas
+          token: ${{ secrets.ATTIC_TOKEN }}
+
+      - name: Bundle as RPM
+        run: |
+          nix bundle --print-build-logs --out-link bundle-rpm \
+            --bundler github:NixOS/bundlers#toRPM \
+            ".#villas-node-${{ matrix.system }}"
+          mkdir -p artifacts
+          cp -L bundle-rpm/*.rpm artifacts/villas-${{ matrix.system }}.rpm
+
+      - name: Upload RPM Package
+        uses: actions/upload-artifact@v7
+        with:
+          name: villas-rpm-${{ matrix.system }}
+          path: artifacts/
+          retention-days: 365
+
+  pkg-nix-docker:
+    name: "Docker [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Attic Cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.0l.de
+          cache: villas
+          token: ${{ secrets.ATTIC_TOKEN }}
+
+      - name: Bundle as Docker Image
+        run: |
+          mkdir -p /var/tmp/
+          nix bundle --print-build-logs --out-link bundle-docker \
+            --bundler github:NixOS/bundlers#toDockerImage \
+            ".#villas-node-${{ matrix.system }}"
+
+      - name: Compute safe ref Tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Push to Registry
+        env:
+          CONTAINERS_REGISTRIES_CONF: ${{ runner.temp }}/registries.conf
+        run: |
+          echo 'unqualified-search-registries = []' > "$CONTAINERS_REGISTRIES_CONF"
+          nix run nixpkgs#skopeo -- login \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}" \
+            "${{ env.REGISTRY }}"
+          nix run nixpkgs#skopeo -- \
+            --tmpdir="${{ runner.temp }}" \
+            --insecure-policy \
+            copy "docker-archive:./bundle-docker" \
+            "docker://${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix-${{ matrix.system }}"

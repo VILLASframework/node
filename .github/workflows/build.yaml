@@ -1,0 +1,93 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
+
+env:
+  CMAKE_BUILD_OPTS: --parallel $(nproc)
+  CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-source:
+    name: "Build Source [${{ matrix.distro }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}/dev-${{ matrix.image_name }}:${{ github.sha }}
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: fedora
+            image_name: fedora
+            cmake_extra_opts: >-
+              -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          - distro: fedora-minimal
+            image_name: fedora-minimal
+            cmake_extra_opts: >-
+              -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+              -DWITH_API=OFF
+              -DWITH_CLIENTS=OFF
+              -DWITH_CONFIG=OFF
+              -DWITH_DOC=OFF
+              -DWITH_FPGA=OFF
+              -DWITH_GRAPHVIZ=OFF
+              -DWITH_HOOKS=OFF
+              -DWITH_LUA=OFF
+              -DWITH_OPENMP=OFF
+              -DWITH_PLUGINS=OFF
+              -DWITH_SRC=OFF
+              -DWITH_TESTS=OFF
+              -DWITH_TOOLS=OFF
+              -DWITH_WEB=OFF
+              -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+              -DCMAKE_PREFIX_PATH=/usr/local
+          - distro: debian
+            image_name: debian
+          - distro: rocky
+            image_name: rocky
+          - distro: rocky9
+            image_name: rocky9
+          - distro: ubuntu
+            image_name: ubuntu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup ccache
+        if: matrix.distro == 'fedora'
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
+
+      - name: Configure
+        run: cmake -S . -B build ${{ matrix.cmake_extra_opts || env.CMAKE_EXTRA_OPTS }}
+
+      - name: Build
+        run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ matrix.distro }}
+          path: build/
+          retention-days: 7

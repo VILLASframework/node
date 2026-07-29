@@ -5,10 +5,10 @@
 
   nixConfig = {
     extra-substituters = [
-      "https://villas.cachix.org"
+      "https://cache.0l.de/villas"
     ];
     extra-trusted-public-keys = [
-      "villas.cachix.org-1:vCWp9IzwxFT6ovZivQAvn5ZuLST01bpAGXWwlGTZ9fA="
+      "villas:vZYuJcdoDPp60fe/LagBlf8vSQfVJpxmEd/pGxSS+DQ="
     ];
   };
 
@@ -166,24 +166,26 @@
             ruby # for pre-commit markdownlint hook
           ];
 
-          mkShellFor = stdenv: pkg: stdenv.mkDerivation {
-            name = "${pkg.pname}-${stdenv.cc.cc.pname}-devShell";
+          mkShellFor =
+            stdenv: pkg:
+            stdenv.mkDerivation {
+              name = "${pkg.pname}-${stdenv.cc.cc.pname}-devShell";
 
-            # disable all hardening to suppress warnings in debug builds
-            hardeningDisable = [ "all" ];
+              # disable all hardening to suppress warnings in debug builds
+              hardeningDisable = [ "all" ];
 
-            # inherit inputs from pkg
-            buildInputs = pkg.buildInputs ++ packages;
-            nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
-            propagatedBuildInputs = pkg.propagatedBuildInputs;
-            propagatedNativeBuildInputs = pkg.propagatedNativeBuildInputs;
+              # inherit inputs from pkg
+              buildInputs = pkg.buildInputs ++ packages;
+              nativeBuildInputs = pkg.nativeBuildInputs ++ packages;
+              propagatedBuildInputs = pkg.propagatedBuildInputs;
+              propagatedNativeBuildInputs = pkg.propagatedNativeBuildInputs;
 
-            # configure nix-ld for pre-commit
-            env = {
-              NIX_LD = lib.fileContents "${stdenv.cc}/nix-support/dynamic-linker";
-              NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gcc-unwrapped.lib ];
+              # configure nix-ld for pre-commit
+              env = {
+                NIX_LD = lib.fileContents "${stdenv.cc}/nix-support/dynamic-linker";
+                NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gcc-unwrapped.lib ];
+              };
             };
-          };
         in
         rec {
           default = gcc;

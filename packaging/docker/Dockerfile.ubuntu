@@ -15,6 +15,11 @@ ARG DISTRO
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Prefer the Azure mirror (archive.ubuntu.com throttles from CI); default kept as fallback
+RUN sed -i -E \
+	's#https?://(archive|security)\.ubuntu\.com/ubuntu/?#http://azure.archive.ubuntu.com/ubuntu/ &#g' \
+	/etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+
 # Toolchain
 RUN apt-get update && \
 	apt-get install -y \

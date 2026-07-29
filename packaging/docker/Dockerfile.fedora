@@ -6,7 +6,8 @@
 
 ARG DISTRO=fedora
 ARG FEDORA_VERSION=42
-ARG REF=unknown
+ARG ARCH=x86_64
+ARG REF=villasnode
 
 FROM ${DISTRO}:${FEDORA_VERSION} AS dev
 
@@ -15,7 +16,7 @@ ARG DISTRO
 # Toolchain
 RUN dnf -y install \
 	gcc-14 g++-14 \
-	pkgconfig cmake make meson ninja \
+	pkgconfig cmake make meson ninja ccache \
 	autoconf automake autogen libtool \
 	texinfo git awk git-svn curl tar patchutils \
 	flex bison \
@@ -111,6 +112,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
 FROM dev AS app
 
 ARG CMAKE_OPTS
+ARG DISTRO
+ARG FEDORA_VERSION
+ARG ARCH
+ARG REF
 
 COPY . /villas/
 
