@@ -169,10 +169,3 @@ jobs:
       - name: Dependency barrier
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1
-
-  tag-minor-release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-    needs:
-      - all
-    uses: ./.github/workflows/tag-minor-release.yaml
-    secrets: inherit
