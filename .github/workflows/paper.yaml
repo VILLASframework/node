@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
+          allow-unsafe-pr-checkout: true
 
       - name: Build Draft PDF
         uses: openjournals/openjournals-draft-action@v1.0

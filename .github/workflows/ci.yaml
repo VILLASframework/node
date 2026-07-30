@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,8 +20,11 @@ jobs:
     name: Setup Variables
     # Forks get a read-only GITHUB_TOKEN, so they run via pull_request_target.
     if: >-
-      github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork
-      || github.event_name != 'pull_request_target' && !github.event.pull_request.head.repo.fork
+      github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
+      || github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      || github.event_name == 'pull_request_target'
+      && github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'pull_request_target' && 'fork-pr' || 'internal' }}
     outputs:
@@ -139,7 +142,16 @@ jobs:
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
   all:
-    name: All prerequisites completed
+    # Only the real run may claim the required check name. Mirrors setup.
+    name: >-
+      ${{ (github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
+      || github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      || github.event_name == 'pull_request_target'
+      && github.event.pull_request.head.repo.full_name != github.repository)
+      && 'All prerequisites completed' || 'CI not applicable' }}
+    # A skipped required check counts as passing.
+    if: always()
     needs:
       - setup
       - checks
@@ -155,7 +167,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dependency barrier
-        run: echo "All prerequisite jobs finished."
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
 
   tag-minor-release:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
