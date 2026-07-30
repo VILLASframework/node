@@ -65,7 +65,7 @@ repos:
     rev: "v0.13.0"
     hooks:
       - id: markdownlint
-        exclude: ^paper\.md$
+        exclude: ^paper\.md$|^CHANGELOG\.md$
         args: [-r, "~MD013,~MD033,~MD024"]
 
   - repo: https://github.com/fsfe/reuse-tool
