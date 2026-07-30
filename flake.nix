@@ -119,6 +119,7 @@
 
         opendssc = pkgs.callPackage (nixDir + "/opendssc.nix") { };
         orchestra = pkgs.callPackage (nixDir + "/orchestra.nix") { };
+        grpc-server-reflection = pkgs.callPackage (nixDir + "/grpc_server_reflection.nix") { };
       };
     in
     {
