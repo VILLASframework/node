@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: 2025 OPAL-RT Germany GmbH
 # SPDX-License-Identifier: Apache-2.0
 
+# Only run hooks for the pre-commit stage unless specified otherwise
+default_stages: [pre-commit]
+
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
