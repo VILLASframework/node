@@ -1,4 +1,4 @@
-/* Json configuration parsing implementation.
+/* JSON configuration parsing implementation.
  *
  * Author: Philipp Jungkamp <philipp.jungkamp@rwth-aachen.de>
  * SPDX-FileCopyrightText: 2024-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
@@ -149,7 +149,7 @@ void to_json(Json &json, JanssonPtr const &jansson) {
 
 namespace {
 
-// implementation of deprecated variable substitutions
+// Implement the deprecated variable substitution syntax.
 void expand_substitutions(Json &value, bool resolve_env,
                           fs::path const *include_dir) {
   if (not value.is_string())
@@ -164,20 +164,20 @@ void expand_substitutions(Json &value, bool resolve_env,
   auto do_include = false;
   auto expanded = std::size_t{0};
 
-  // check for legacy @include keyword
+  // Check for deprecated @include directives.
   if (include_dir and string.starts_with(DEPRECATED_INCLUDE_KEYWORD)) {
     do_include = true;
     expanded = DEPRECATED_INCLUDE_KEYWORD.length();
   }
 
-  // legacy environment variable substitution syntax
+  // Check for deprecated environment variable substitutions.
   static auto const env_regex = std::regex(R"--(\$\{([^}]+)\})--");
   enum : std::size_t {
     CAPTURE_ALL = 0,
     CAPTURE_NAME,
   };
 
-  // expand deprecated environment substition syntax
+  // Try to expand environment substitions.
   std::smatch match;
   while (resolve_env and std::regex_search(string.cbegin() + expanded,
                                            string.cend(), match, env_regex)) {
@@ -193,7 +193,7 @@ void expand_substitutions(Json &value, bool resolve_env,
     expanded += match.position() + env_value.length();
   }
 
-  // expand deprecated @include directive
+  // Try to expand @include directives.
   if (do_include) {
     auto pattern =
         std::string_view(string).substr(DEPRECATED_INCLUDE_KEYWORD.length());
