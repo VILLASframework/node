@@ -12,7 +12,7 @@ permissions:
   packages: write
 
 jobs:
-  cleanup-packages:
+  packages:
     name: Packages
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +24,7 @@ jobs:
         with:
           token: ${{ github.token }}
           owner: ${{ github.repository_owner }}
-          packages: ^villas/node(/.*)?$
+          packages: ^node(/.*)?$
           expand-packages: true
           use-regex: true
           exclude-tags: ^(latest|master.*|v.*)$

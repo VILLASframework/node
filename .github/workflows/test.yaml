@@ -6,7 +6,7 @@ name: Test
 on:
   workflow_call:
     inputs:
-      docker_image:
+      container_image:
         required: true
         type: string
       ref:
@@ -25,11 +25,11 @@ permissions:
   actions: read
 
 jobs:
-  test-python:
+  python:
     name: Python
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
+      image: ${{ inputs.container_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
@@ -60,11 +60,11 @@ jobs:
           cd python
           mypy --namespace-packages --explicit-package-bases .
 
-  test-cppcheck:
+  cppcheck:
     name: CPPCheck
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
+      image: ${{ inputs.container_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
@@ -85,11 +85,11 @@ jobs:
           name: cppcheck-log
           path: cppcheck.log
 
-  test-unit:
+  unit:
     name: Unit Tests
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
+      image: ${{ inputs.container_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     steps:
       - name: Checkout
@@ -119,11 +119,11 @@ jobs:
       - name: Build and run unit tests
         run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
 
-  test-integration:
+  integration:
     name: Integration Tests
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-fedora:${{ inputs.ref }}
+      image: ${{ inputs.container_image }}/dev-fedora:${{ inputs.ref }}
       options: --user root
     services:
       rabbitmq:

@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  build-nix:
+  build:
     name: "Nix [${{ matrix.system }}]"
     runs-on: ubuntu-latest
     strategy:

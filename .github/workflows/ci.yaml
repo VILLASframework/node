@@ -28,15 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'pull_request_target' && 'fork-pr' || 'internal' }}
     outputs:
-      docker_image: ${{ steps.image.outputs.docker_image }}
+      container_image: ${{ steps.image.outputs.container_image }}
       ref: ${{ steps.ref.outputs.ref }}
       ref_name: ${{ steps.ref.outputs.ref_name }}
     steps:
       - name: Compute image name for the current repository
         id: image
         env:
-          OWNER: ${{ github.repository_owner }}
-        run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
+          REPOSITORY: ${{ github.repository }}
+        run: echo "container_image=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       # Under pull_request_target GITHUB_SHA and GITHUB_REF_NAME point at the base branch.
       - name: Resolve the revision under test
@@ -73,12 +73,12 @@ jobs:
       ref: ${{ needs.setup.outputs.ref }}
 
   prepare:
-    name: Prepare Docker Images
+    name: Prepare Container Images
     needs: [setup]
     secrets: inherit
     uses: ./.github/workflows/prepare.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
 
@@ -88,7 +88,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/build.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
 
   test:
@@ -97,16 +97,16 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/test.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
 
-  packaging-docker:
-    name: Build Docker Images
+  packaging-container:
+    name: Build Container Images
     needs: [setup, test, prepare]
     secrets: inherit
-    uses: ./.github/workflows/packaging-docker.yaml
+    uses: ./.github/workflows/packaging-container.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
 
@@ -116,17 +116,17 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/packaging-nix.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
 
   deploy:
-    name: Deploy Docker Images
-    needs: [setup, packaging-docker]
+    name: Deploy Container Images
+    needs: [setup, packaging-container]
     secrets: inherit
     uses: ./.github/workflows/deploy.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref: ${{ needs.setup.outputs.ref }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -137,7 +137,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/deploy-nix.yaml
     with:
-      docker_image: ${{ needs.setup.outputs.docker_image }}
+      container_image: ${{ needs.setup.outputs.container_image }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
@@ -160,7 +160,7 @@ jobs:
       - prepare
       - build
       - test
-      - packaging-docker
+      - packaging-container
       - packaging-nix
       - deploy
       - deploy-nix
