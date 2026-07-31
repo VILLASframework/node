@@ -105,4 +105,4 @@ LABEL \
 	org.label-schema.description="An image containing all build-time dependencies for VILLASnode based on Ubuntu" \
 	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
 	org.label-schema.vcs-url="https://github.com/VILLASframework/node" \
-	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#docker"
+	org.label-schema.usage="https://villas.fein-aachen.org/docs/node/installation#container"
