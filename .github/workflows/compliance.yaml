@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Compliance checks
+
+on:
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  conventional-commits:
+    name: Conventional commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json
