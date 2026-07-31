@@ -6,7 +6,7 @@ name: Build
 on:
   workflow_call:
     inputs:
-      docker_image:
+      container_image:
         required: true
         type: string
       ref:
@@ -23,11 +23,11 @@ permissions:
   packages: write
 
 jobs:
-  build-source:
+  source:
     name: "Build Source [${{ matrix.distro }}]"
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.docker_image }}/dev-${{ matrix.image_name }}:${{ inputs.ref }}
+      image: ${{ inputs.container_image }}/dev-${{ matrix.image_name }}:${{ inputs.ref }}
       options: --user root
     strategy:
       fail-fast: false

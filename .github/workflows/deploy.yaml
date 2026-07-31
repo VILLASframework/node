@@ -6,7 +6,7 @@ name: Deploy
 on:
   workflow_call:
     inputs:
-      docker_image:
+      container_image:
         required: true
         type: string
       ref:
@@ -20,17 +20,13 @@ on:
         type: boolean
         default: false
 
-env:
-  REGISTRY: ghcr.io
-  DOCKER_IMAGE: ${{ inputs.docker_image }}
-
 permissions:
   contents: read
   packages: write
 
 jobs:
-  deploy-docker:
-    name: Docker Images
+  container:
+    name: Container Images
     runs-on: ubuntu-latest
     steps:
       - name: Build Image
@@ -39,7 +35,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -52,12 +48,12 @@ jobs:
       - name: Create and push multi-arch manifest
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}" \
-            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64" \
-            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64"
+            -t "${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}" \
+            "${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-x86_64" \
+            "${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-arm64"
 
-  deploy-docker-dev:
-    name: Docker Dev Images
+  container-dev:
+    name: Container Dev Images
     runs-on: ubuntu-latest
     steps:
       - name: Build Image
@@ -66,7 +62,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -79,11 +75,11 @@ jobs:
       - name: Publish dev image for current ref
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ steps.ref.outputs.tag }}"
+            -t "${{ inputs.container_image }}/dev:${{ steps.ref.outputs.tag }}" \
+            "${{ inputs.container_image }}/dev-fedora:${{ steps.ref.outputs.tag }}"
 
-  deploy-docker-dev-vscode:
-    name: Docker Dev VSCode Images
+  container-dev-vscode:
+    name: Container Dev VSCode Images
     runs-on: ubuntu-latest
     steps:
       - name: Build Image
@@ -92,7 +88,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -105,13 +101,13 @@ jobs:
       - name: Publish dev-vscode image for current ref
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ steps.ref.outputs.tag }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ inputs.ref }}"
+            -t "${{ inputs.container_image }}/dev-vscode:${{ steps.ref.outputs.tag }}" \
+            "${{ inputs.container_image }}/dev-vscode:${{ inputs.ref }}"
 
-  latest-docker:
-    name: Docker Images as latest
+  latest-container:
+    name: Container Images as latest
     if: ${{ inputs.is_version_tag }}
-    needs: [deploy-docker]
+    needs: [container]
     runs-on: ubuntu-latest
     steps:
       - name: Build Image
@@ -120,7 +116,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -133,14 +129,14 @@ jobs:
       - name: Tag and Push Image as latest
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}:latest" \
-            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64" \
-            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64"
+            -t "${{ inputs.container_image }}:latest" \
+            "${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-x86_64" \
+            "${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-arm64"
 
-  latest-docker-dev:
-    name: Docker Dev Images as latest
+  latest-container-dev:
+    name: Container Dev Images as latest
     if: ${{ inputs.is_version_tag }}
-    needs: [deploy-docker-dev]
+    needs: [container-dev]
     runs-on: ubuntu-latest
     steps:
       - name: Build Image
@@ -149,7 +145,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -162,5 +158,5 @@ jobs:
       - name: Tag and push dev image as latest
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev:latest" \
-            "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}"
+            -t "${{ inputs.container_image }}/dev:latest" \
+            "${{ inputs.container_image }}/dev:${{ steps.ref.outputs.tag }}"

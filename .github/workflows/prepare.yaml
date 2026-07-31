@@ -6,7 +6,7 @@ name: Prepare
 on:
   workflow_call:
     inputs:
-      docker_image:
+      container_image:
         required: true
         type: string
       ref:
@@ -16,18 +16,13 @@ on:
         required: true
         type: string
 
-env:
-  REGISTRY: ghcr.io
-  DOCKER_IMAGE: ${{ inputs.docker_image }}
-  DOCKER_TAG: ${{ inputs.ref }}
-
 permissions:
   contents: read
   packages: write
 
 jobs:
-  prepare-docker:
-    name: "Prepare Docker Dev Images [${{ matrix.name }}]"
+  container:
+    name: "Prepare Container Dev Images [${{ matrix.name }}]"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -67,7 +62,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -90,13 +85,13 @@ jobs:
           cache-from: type=gha,scope=dev-${{ matrix.image_name }}
           cache-to: ${{ github.event_name != 'pull_request_target' && format('type=gha,mode=max,scope=dev-{0}', matrix.image_name) || '' }}
           tags: |
-            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}
-            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.ref.outputs.tag }}
+            ${{ inputs.container_image }}/dev-${{ matrix.image_name }}:${{ inputs.ref }}
+            ${{ inputs.container_image }}/dev-${{ matrix.image_name }}:${{ steps.ref.outputs.tag }}
 
       - name: Publish fedora dev alias
         if: matrix.name == 'fedora'
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev:${{ env.DOCKER_TAG }}" \
-            -t "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ env.DOCKER_TAG }}"
+            -t "${{ inputs.container_image }}/dev:${{ inputs.ref }}" \
+            -t "${{ inputs.container_image }}/dev:${{ steps.ref.outputs.tag }}" \
+            "${{ inputs.container_image }}/dev-fedora:${{ inputs.ref }}"

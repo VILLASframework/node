@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.195.0/containers/cpp
 {
   "name": "VILLASnode",
-  "image": "ghcr.io/villasframework/villas/node/dev-vscode:master",
+  "image": "ghcr.io/villasframework/node/dev-vscode:master",
   // Uncomment to build the devcontainer locally
   // "build": {
   // 	"dockerfile": "../packaging/docker/Dockerfile.fedora",

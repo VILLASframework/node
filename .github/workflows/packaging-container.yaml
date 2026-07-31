@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
 # SPDX-License-Identifier: Apache-2.0
 
-name: Packaging (Docker)
+name: Packaging (Containers)
 
 on:
   workflow_call:
     inputs:
-      docker_image:
+      container_image:
         required: true
         type: string
       ref:
@@ -17,8 +17,6 @@ on:
         type: string
 
 env:
-  REGISTRY: ghcr.io
-  DOCKER_IMAGE: ${{ inputs.docker_image }}
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
   DOCKER_FILE: packaging/docker/Dockerfile.debian
 
@@ -27,8 +25,8 @@ permissions:
   packages: write
 
 jobs:
-  pkg-docker-x86_64:
-    name: "Docker [x86_64]"
+  container-x86_64:
+    name: "Container [x86_64]"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -47,7 +45,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -74,10 +72,10 @@ jobs:
             ARCH=x86_64
             TRIPLET=x86_64-linux-gnu
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64
+          tags: ${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-x86_64
 
-  pkg-docker-arm64:
-    name: "Docker [arm64]"
+  container-arm64:
+    name: "Container [arm64]"
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -94,7 +92,7 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -108,7 +106,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: packaging/docker/Dockerfile.debian
+          file: ${{ env.DOCKER_FILE }}
           target: app
           push: true
           pull: true
@@ -119,4 +117,4 @@ jobs:
             ARCH=arm64
             TRIPLET=aarch64-linux-gnu
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64
+          tags: ${{ inputs.container_image }}:${{ steps.ref.outputs.tag }}-arm64
