@@ -21,13 +21,13 @@ jobs:
       - id: release
         uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           target-branch: master
 
       # A tag pushed with GITHUB_TOKEN starts no workflow, but a dispatch always does.
       - name: Start the release pipeline
         if: steps.release.outputs.release_created == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag_name }}
         run: gh workflow run ci.yaml --repo "${GITHUB_REPOSITORY}" --ref "${TAG}"

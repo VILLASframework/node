@@ -22,7 +22,7 @@ jobs:
       - name: Cleanup GHCR Packages
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           owner: ${{ github.repository_owner }}
           packages: ^villas/node(/.*)?$
           expand-packages: true

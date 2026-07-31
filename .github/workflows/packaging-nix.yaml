@@ -153,7 +153,7 @@ jobs:
           echo 'unqualified-search-registries = []' > "$CONTAINERS_REGISTRIES_CONF"
           nix run nixpkgs#skopeo -- login \
             --username "${{ github.actor }}" \
-            --password "${{ secrets.GITHUB_TOKEN }}" \
+            --password "${{ github.token }}" \
             "${{ env.REGISTRY }}"
           nix run nixpkgs#skopeo -- \
             --tmpdir="${{ runner.temp }}" \
