@@ -342,7 +342,7 @@ int FmuNode::stop() {
   fmi3_import_destroy_dllfmu(fmu);
   fmi3_import_free(fmu);
   fmi_import_free_context(context);
-  return 0;
+  return Node::stop();
 }
 
 // Register node
