@@ -466,6 +466,7 @@ if ! pkg-config "fmt >= 6.1.2" && \
     should_build "fmt" "for logging" "required"; then
     git clone ${GIT_OPTS} --branch 12.1.0 --recursive https://github.com/fmtlib/fmt.git
     mkdir -p fmt/build
+    git checkout 12.1.0
     pushd fmt/build
     cmake -DBUILD_SHARED_LIBS=1 \
           -DFMT_TEST=OFF \
@@ -585,6 +586,21 @@ if ! find /usr/{local/,}{lib,bin} -name "libOpenDSSC.so" | grep -q . &&
     popd
 
     echo "${PREFIX}/openDSSC/bin/" > /etc/ld.so.conf.d/opendssc.conf
+fi
+
+# Build & Install fmi-library
+if ! find /usr/{local/,}{lib,lib64} -name "libfmilib_shared.so" -o -name "*FMILIB*.cmake"| grep -q . &&
+    should_build "fmi-library" "For FMI node-type"; then
+    git clone https://github.com/modelon-community/fmi-library.git
+    mkdir -p fmi-library/build
+    pushd fmi-library/build
+    cmake -DFMILIB_GENERATE_DOXYGEN_DOC=OFF \
+          -DFMILIB_BUILD_TESTS=OFF \
+          ${CMAKE_OPTS} ..
+    cmake --build . \
+        --target install \
+        --parallel ${PARALLEL}
+    popd
 fi
 
 # Build & Install ghc::filesystem
