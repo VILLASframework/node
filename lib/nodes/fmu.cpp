@@ -52,15 +52,6 @@ FmuNode::FmuNode(const uuid_t &id, const std::string &name)
 }
 
 int FmuNode::prepare() {
-  callbacks.malloc = malloc;
-  callbacks.calloc = calloc;
-  callbacks.realloc = realloc;
-  callbacks.free = free;
-  callbacks.logger = nullptr;
-  callbacks.log_level = jm_log_level_info;
-  callbacks.context = nullptr;
-  context = fmi_import_allocate_context(&callbacks);
-
   struct stat sb;
   if (stat(unpackPath, &sb) != 0)
     logger->error("The unpack path is invalid: {}, {}", strerror(errno),
