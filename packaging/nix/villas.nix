@@ -7,7 +7,6 @@
   # General configuration
   src,
   version,
-  system,
   withGpl ? true,
   withAllExtras ? false,
   withAllFormats ? false,
@@ -16,7 +15,7 @@
   # Extra features
   withExtraConfig ? withAllExtras,
   withExtraGraphviz ? withAllExtras,
-  withExtraTesting ? (withAllExtras && system == "x86_64-linux"),
+  withExtraTesting ? (withAllExtras && stdenv.hostPlatform.system == "x86_64-linux"),
   # Format-types
   withFormatProtobuf ? withAllFormats,
   # Hook-types
@@ -24,7 +23,7 @@
   # Node-types
   withNodeAmqp ? withAllNodes,
   withNodeComedi ? withAllNodes,
-  withNodeEthercat ? (withAllNodes && system == "x86_64-linux"),
+  withNodeEthercat ? (withAllNodes && stdenv.hostPlatform.system == "x86_64-linux"),
   withNodeIec60870 ? withAllNodes,
   withNodeIec61850 ? withAllNodes,
   withNodeInfiniband ? withAllNodes,
@@ -33,7 +32,7 @@
   withNodeMqtt ? withAllNodes,
   withNodeNanomsg ? withAllNodes,
   withNodeOpenDSS ? withAllNodes,
-  withNodeOpalOrchestra ? (withAllNodes && system == "x86_64-linux"),
+  withNodeOpalOrchestra ? (withAllNodes && stdenv.hostPlatform.system == "x86_64-linux"),
   withNodeRedis ? withAllNodes,
   withNodeRtp ? withAllNodes,
   withNodeSocket ? withAllNodes,
