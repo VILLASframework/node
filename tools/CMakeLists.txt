@@ -25,3 +25,10 @@ install(
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     RENAME villas-api
 )
+
+install(
+    PROGRAMS grid2op-timeseries-converter.sh
+    COMPONENT bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RENAME grid2op-timeseries-converter
+)
