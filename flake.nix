@@ -94,9 +94,12 @@
 
         # Cross-compiled packages
         villas-node-x86_64-linux =
-          if pkgs.system == "x86_64-linux" then pkgs.villas-node else pkgs.pkgsCross.x86_64-linux.villas-node;
+          if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+            pkgs.villas-node
+          else
+            pkgs.pkgsCross.x86_64-linux.villas-node;
         villas-node-aarch64-linux =
-          if pkgs.system == "aarch64-linux" then
+          if pkgs.stdenv.hostPlatform.system == "aarch64-linux" then
             pkgs.villas-node
           else
             pkgs.pkgsCross.aarch64-multiplatform.villas-node;
