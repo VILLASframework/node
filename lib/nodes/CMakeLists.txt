@@ -6,8 +6,11 @@
 
 set(NODE_SRC
     loopback_internal.cpp
-    c37_118.cpp
 )
+
+if(WITH_NODE_C37_118)
+    list(APPEND NODE_SRC c37_118.cpp)
+endif()
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
