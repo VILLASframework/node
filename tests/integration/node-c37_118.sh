@@ -8,6 +8,11 @@
 
 set -e
 
+if ! villas node -h | grep -q '^ - c37\.118\b'; then
+    echo "The c37.118 node-type is not supported by this build"
+    exit 99
+fi
+
 DIR=$(mktemp -d)
 pushd ${DIR}
 

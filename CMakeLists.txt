@@ -65,6 +65,8 @@ add_compile_options(
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
 check_include_file("semaphore.h" HAS_SEMAPHORE)
 check_include_file("sys/mman.h" HAS_MMAN)
+check_include_file("netdb.h" HAS_NETDB)
+check_include_file("poll.h" HAS_POLL)
 
 # Use the switch NO_EVENTFD to deactivate eventfd usage indepentent of availability on OS
 if(${NO_EVENTFD})
@@ -194,6 +196,7 @@ cmake_dependent_option(WITH_TOOLS               "Build auxilary tools"          
 cmake_dependent_option(WITH_WEB                 "Build with internal webserver"                         "${WITH_DEFAULTS}" "LIBWEBSOCKETS_FOUND" OFF)
 
 cmake_dependent_option(WITH_NODE_AMQP           "Build with amqp node-type"                             "${WITH_DEFAULTS}" "RABBITMQ_C_FOUND" OFF)
+cmake_dependent_option(WITH_NODE_C37_118        "Build with c37_118 node-type"                          "${WITH_DEFAULTS}" "HAS_NETDB; HAS_POLL" OFF)
 cmake_dependent_option(WITH_NODE_CAN            "Build with can node-type"                              "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_COMEDI         "Build with comedi node-type"                           "${WITH_DEFAULTS}" "COMEDILIB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_ETHERCAT       "Build with ethercat node-type"                         "${WITH_DEFAULTS}" "ETHERLAB_FOUND; NOT WITHOUT_GPL" OFF)
