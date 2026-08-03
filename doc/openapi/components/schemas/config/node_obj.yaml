@@ -27,6 +27,7 @@ discriminator:
     example: nodes/_example.yaml
     exec: nodes/_exec.yaml
     file: nodes/_file.yaml
+    fmu: nodes/_fmu.yaml
     fpga: nodes/_fpga.yaml
     iec60870-5-104: nodes/_iec60870-5-104.yaml
     iec61850-8-1: nodes/_iec61850-8-1.yaml
