@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0](https://github.com/VILLASframework/node/compare/v1.1.0...v1.2.0) (2026-08-03)
+
+
+### Features
+
+* **nodes:** Add c37.118 node-type with WITH_NODE_C37_118 build option ([b87d6b4](https://github.com/VILLASframework/node/commit/b87d6b4477ff0758aedc06923d2e1650ce3738a3))
+
+
+### Bug Fixes
+
+* **ci:** Refactor Docker -&gt; Container ([bdf670f](https://github.com/VILLASframework/node/commit/bdf670f03392ae5a47bca1ff9016af69e1eb4772))
+* **ci:** Refactor secrets.GITHUB_TOKEN to github.token context ([2582ec7](https://github.com/VILLASframework/node/commit/2582ec7040e775b1db68f3d633a726de55733d1c))
+* **cmake:** Remove superfluous CMake variable ([0d256a6](https://github.com/VILLASframework/node/commit/0d256a6d1d3cdb7feb65bbe37161025a4a494968))
+* **container:** Update links in container usage labels ([e3e09ff](https://github.com/VILLASframework/node/commit/e3e09ff00c219558ef14696d9e61ff62ad582d26))
+* **nix:** Remove deprecated usage of pkgs.system ([6e972d4](https://github.com/VILLASframework/node/commit/6e972d411956663156f3dbd0d659e105b9d7950d))
+* Remove GPL-2.0 licensed pcimem tool and related files ([b1bcb16](https://github.com/VILLASframework/node/commit/b1bcb161801d46338d04de1b7de7ce950bee8658))
+
 ## [1.1.0](https://github.com/VILLASframework/node/compare/v1.0.1...v1.1.0) (2026-07-30)
 
 
