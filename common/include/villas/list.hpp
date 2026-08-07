@@ -64,7 +64,7 @@ void list_push(struct List *l, void *p);
 // Clear list.
 void list_clear(struct List *l);
 
-// Remove all occurences of a list item.
+// Remove all occurrences of a list item.
 void list_remove_all(struct List *l, void *p);
 
 int list_remove(struct List *l, size_t idx);
@@ -74,7 +74,7 @@ int list_insert(struct List *l, size_t idx, void *p);
 // Return the first element of the list for which cmp returns zero.
 void *list_search(struct List *l, cmp_cb_t cmp, const void *ctx);
 
-// Returns the number of occurences for which cmp returns zero when called on all list elements.
+// Returns the number of occurrences for which cmp returns zero when called on all list elements.
 int list_count(struct List *l, cmp_cb_t cmp, void *ctx);
 
 // Return 0 if list contains pointer p.

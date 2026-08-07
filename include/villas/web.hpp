@@ -67,7 +67,7 @@ public:
 
   Api *getApi() { return api; }
 
-  // for C-compatability
+  // for C-compatibility
   lws_context *getContext() { return context; }
 
   lws_vhost *getVHost() { return vhost; }

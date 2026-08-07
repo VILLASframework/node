@@ -241,7 +241,7 @@ protected:
 
     ret = node->getFactory()->start(nullptr);
     if (ret)
-      throw RuntimeError("Failed to intialize node type {}: reason={}",
+      throw RuntimeError("Failed to initialize node type {}: reason={}",
                          node->getFactory()->getName(), ret);
 
     ret = node->check();
@@ -295,7 +295,7 @@ protected:
 
     ret = node->getFactory()->stop();
     if (ret)
-      throw RuntimeError("Failed to de-intialize node type {}: reason={}",
+      throw RuntimeError("Failed to de-initialize node type {}: reason={}",
                          node->getFactory()->getName(), ret);
 
     delete node;

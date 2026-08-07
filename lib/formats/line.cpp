@@ -92,7 +92,7 @@ int LineFormat::scan(FILE *f, struct Sample *const smps[], unsigned cnt) {
     if (!first_line_skipped) {
       bytes = getdelim(&in.buffer, &in.buflen, delimiter, f);
       if (bytes < 0)
-        return -1; // An error or eof occured
+        return -1; // An error or EOF occurred
 
       first_line_skipped = true;
     }
@@ -107,7 +107,7 @@ int LineFormat::scan(FILE *f, struct Sample *const smps[], unsigned cnt) {
     if (feof(f))
       break;
     else if (bytes < 0)
-      return -1; // An error or eof occured
+      return -1; // An error or EOF occurred
 
     // Skip whitespaces, empty and comment lines
     for (ptr = in.buffer; isspace(*ptr); ptr++)

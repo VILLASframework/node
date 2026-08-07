@@ -40,7 +40,7 @@ enum class SocketLayer { ETH, IP, UDP, UNIX, TCP_CLIENT, TCP_SERVER };
 /* Generate printable socket address depending on the address family
  *
  * A IPv4 address is formatted as dotted decimals followed by the port/protocol number
- * A link layer address is formatted in hexadecimals digits seperated by colons and the inferface name
+ * A link layer address is formatted in hexadecimals digits separated by colons and the interface name
  *
  * @param sa	A pointer to the socket address.
  * @return	The buffer containing the textual representation of the address. The caller is responsible to free() this buffer!
