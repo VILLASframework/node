@@ -59,7 +59,7 @@ export NUM_SAMPLES
 
 TESTS=${SRCDIR}/tests/integration/${FILTER}.sh
 
-# Preperations
+# Preparations
 mkdir -p ${LOGDIR}
 
 PASSED=0
@@ -105,7 +105,7 @@ for TEST in ${TESTS}; do
              SKIPPED=$((${SKIPPED} + 1))
              ;;
         124)
-             echo -e "\e[33m[TIME] \e[39m ${TESTNAME} (ran for more then ${TIMEOUT})"
+             echo -e "\e[33m[TIME] \e[39m ${TESTNAME} (ran for more than ${TIMEOUT})"
              TIMEDOUT=$((${TIMEDOUT} + 1))
              FAILED=$((${FAILED} + 1))
              ;;
