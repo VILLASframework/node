@@ -67,17 +67,21 @@ def communicate(
     send_cb: SendCallback | None = None,
     wait: bool = True,
 ):
+    rt = None
     if recv_cb is not None:
         rt = RecvThread(recv_cb)
         rt.start()
 
+    st = None
     if send_cb is not None:
         st = SendThread(send_cb, rate)
         st.start()
 
     if wait:
         try:
-            rt.join()
-            st.join()
+            if rt is not None:
+                rt.join()
+            if st is not None:
+                st.join()
         except KeyboardInterrupt:
             logger.info("Received Ctrl+C. Stopping send/recv threads")
