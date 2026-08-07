@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -e # Abort on error
-die() { echo "$1"; exit -1; }
+die() { echo "$1"; exit 1; }
 
 # Apply netem qdisc also for reverse path
 REVERSE=0
@@ -75,7 +75,7 @@ if (( $REVERSE )); then
     $NF -t nat -I PREROUTING $FILTER_REV -j mark --mark-set 124 --mark-target CONTINUE
     $NF -t nat -I PREROUTING $FILTER_REV -j dnat --to-dst $SRC --dnat-target CONTINUE
 
-    $NF -t nat -I POSTROUTING --mark 123 -j snat --to-src $MY
+    $NF -t nat -I POSTROUTING --mark 124 -j snat --to-src $MY
 
     # Add classful qdisc to egress (outgoing) network device
     $TC qdisc  replace dev $SRC_IF root handle 4000 prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
@@ -92,7 +92,7 @@ if (( $REVERSE )); then
 fi
 
 # Some debug and status output
-if [ -n $DEBUG ]; then
+if [ -n "$DEBUG" ]; then
     if [ "$SRC_IF" == "$DST_IF" ]; then
         IFNS="$SRC_IF"
     else
@@ -101,7 +101,7 @@ if [ -n $DEBUG ]; then
 
     for inf in $IFNS; do
         for cmd in qdisc filter class; do
-             echo -e "\nTC ==> $if: $cmd"
+             echo -e "\nTC ==> $inf: $cmd"
              tc -d -p $cmd show dev $inf
         done
     done
