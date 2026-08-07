@@ -64,7 +64,7 @@ properties:
 
   mask:
     description: |
-      This setting allows masking the the input nodes which can trigger the path.
+      This setting allows masking the input nodes which can trigger the path.
 
       See also `mode` setting.
 
@@ -107,7 +107,7 @@ properties:
       A boolean flag which enables the poll-based mode for reading samples from multiple path sources.
 
       **Note:** This is an advanced setting.
-      Most users should use the the default value which will always do the right thing based on the number and type of input nodes for this path.
+      Most users should use the default value which will always do the right thing based on the number and type of input nodes for this path.
 
     type: boolean
 

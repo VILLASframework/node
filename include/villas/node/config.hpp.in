@@ -18,7 +18,7 @@
 #define MAX_SAMPLE_LENGTH 512u
 #define DEFAULT_FORMAT_BUFFER_LENGTH 4096u
 
-/* Number of hugepages which are requested from the the kernel.
+/* Number of hugepages which are requested from the kernel.
  * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
  */
 #define DEFAULT_NR_HUGEPAGES 100

@@ -84,7 +84,7 @@ allOf:
       - center
       - right
       default: center
-      description: The timestamp alignment in respect to the the window.
+      description: The timestamp alignment in respect to the window.
     phase_offset:
       type: number
       default: 0.0
