@@ -43,14 +43,14 @@ std::vector<std::string> tokenize(const std::string &s,
   std::vector<std::string> tokens;
 
   size_t lastPos = 0;
-  size_t curentPos;
+  size_t currentPos;
 
-  while ((curentPos = s.find(delimiter, lastPos)) != std::string::npos) {
-    const size_t tokenLength = curentPos - lastPos;
+  while ((currentPos = s.find(delimiter, lastPos)) != std::string::npos) {
+    const size_t tokenLength = currentPos - lastPos;
     tokens.push_back(s.substr(lastPos, tokenLength));
 
     // Advance in string
-    lastPos = curentPos + delimiter.length();
+    lastPos = currentPos + delimiter.length();
   }
 
   // Check if there's a last token behind the last delimiter.
