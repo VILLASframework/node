@@ -36,7 +36,7 @@ protected:
 
   void usage() override {
     std::cout
-        << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
+        << "Usage: villas-test-shmem WNAME RNAME VECTORIZE" << std::endl
         << "  WNAME     name of the shared memory object for the output queue"
         << std::endl
         << "  RNAME     name of the shared memory object for the input queue"
