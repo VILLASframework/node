@@ -253,8 +253,8 @@ public:
         json, &err, 0,
         "{ s?: i, s?: F, s?: F, s?: F, s?: i, s?: i, s?: s, s?: s, s?: s, s?: "
         "i, s?: s, s?: b, s?: s, s?: F, s?: F, s?: F, s?: F}",
-        "sample_rate", &sampleRate, "start_freqency", &startFrequency,
-        "end_freqency", &endFreqency, "frequency_resolution",
+        "sample_rate", &sampleRate, "start_frequency", &startFrequency,
+        "end_frequency", &endFreqency, "frequency_resolution",
         &frequencyResolution, "dft_rate", &rate, "window_size_factor",
         &windowSizeFactor, "window_type", &windowTypeC, "padding_type",
         &paddingTypeC, "estimate_type", &estimateTypeC, "pps_index", &ppsIndex,
@@ -264,6 +264,14 @@ public:
         &frequencyOffset, "rocof_offset", &rocofOffset);
     if (ret)
       throw ConfigError(json, err, "node-config-hook-dft");
+
+    // Backward-compatibility: accept the previously misspelled keys.
+    json_t *json_start = json_object_get(json, "start_freqency");
+    if (json_start)
+      startFrequency = json_number_value(json_start);
+    json_t *json_end = json_object_get(json, "end_freqency");
+    if (json_end)
+      endFreqency = json_number_value(json_end);
 
     windowSize = sampleRate * windowSizeFactor / (double)rate;
     logger->info(
