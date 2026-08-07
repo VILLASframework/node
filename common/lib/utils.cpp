@@ -159,7 +159,7 @@ char *decolor(char *str) {
 }
 
 void killme(int sig) {
-  // Send only to main thread in case the ID was initilized by signalsInit()
+  // Send only to main thread in case the ID was initialized by signalsInit()
   if (main_thread)
     pthread_kill(main_thread, sig);
   else

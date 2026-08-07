@@ -56,7 +56,7 @@ struct ShmemInterface {
  * calls will be written to this pointer.
  * @param[in] conf Configuration parameters for the output queue.
  * @retval 0 The objects were opened and initialized successfully.
- * @retval <0 An error occured; errno is set accordingly.
+ * @retval <0 An error occurred; errno is set accordingly.
  */
 int shmem_int_open(const char *wname, const char *rname,
                    struct ShmemInterface *shm, struct ShmemConfig *conf);

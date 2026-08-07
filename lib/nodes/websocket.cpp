@@ -206,7 +206,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
       websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION,
                                  "Internal error");
       c->node->logger->warn(
-          "Failed to intialize WebSocket connection: reason={}", ret);
+          "Failed to initialize WebSocket connection: reason={}", ret);
       return -1;
     }
 

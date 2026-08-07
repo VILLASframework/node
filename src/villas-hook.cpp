@@ -199,7 +199,7 @@ protected:
 
     ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH));
     if (ret)
-      throw RuntimeError("Failed to initilize memory pool");
+      throw RuntimeError("Failed to initialize memory pool");
 
     // Initialize IO
     struct desc {

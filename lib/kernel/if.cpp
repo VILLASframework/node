@@ -183,7 +183,7 @@ int Interface::setAffinity(int affinity) {
     if (file) {
       if (fprintf(file, "%8lx", (unsigned long)cset_pin) < 0)
         throw SystemError(
-            "Failed to set affinity for for IRQ {} on interface '{}'", irq,
+            "Failed to set affinity for IRQ {} on interface '{}'", irq,
             getName());
 
       fclose(file);
@@ -192,7 +192,7 @@ int Interface::setAffinity(int affinity) {
                     (std::string)cset_pin);
     } else
       throw SystemError(
-          "Failed to set affinity for for IRQ {} on interface '{}'", irq,
+          "Failed to set affinity for IRQ {} on interface '{}'", irq,
           getName());
   }
 
