@@ -21,13 +21,25 @@ fi
 
 ACTION=$1
 REQUEST=${2:-\{\}}
-ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-ENDPOINT=${ENDPOINT:-http://localhost:80/api/v1}
+ENDPOINT=${ENDPOINT:-http://localhost:8080/api/v2}
 
-echo "Issuing API request: action=${ACTION}, id=${ID}, request=${REQUEST}, endpoint=${ENDPOINT}"
+# GET actions have no body; actions carrying a request body use POST
+case "${ACTION}" in
+    status|capabilities|config|nodes|paths)
+        METHOD=GET
+        ;;
+    *)
+        METHOD=POST
+        ;;
+esac
 
-curl -s -X POST --data "{
-    \"action\" : \"${ACTION}\",
-    \"id\": \"${ID}\",
-    \"request\": ${REQUEST}
-}" ${ENDPOINT} | jq .
+echo "Issuing API request: ${METHOD} ${ENDPOINT}/${ACTION}, request=${REQUEST}"
+
+if [ "${METHOD}" = "GET" ]; then
+    curl -s "${ENDPOINT}/${ACTION}" | jq .
+else
+    curl -s -X POST \
+        -H "Content-Type: application/json" \
+        --data "${REQUEST}" \
+        "${ENDPOINT}/${ACTION}" | jq .
+fi
