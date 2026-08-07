@@ -14,7 +14,7 @@ set(API_SRC
     requests/path.cpp
 
     requests/status.cpp
-    requests/capabiltities.cpp
+    requests/capabilities.cpp
     requests/config.cpp
     requests/shutdown.cpp
     requests/restart.cpp

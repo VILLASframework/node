@@ -1,4 +1,4 @@
-/* The "capabiltities" API ressource.
+/* The "capabilities" API resource.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
@@ -36,7 +36,7 @@ public:
 static char n[] = "capabilities";
 static char r[] = "/capabilities";
 static char d[] =
-    "get capabiltities and details about this VILLASnode instance";
+    "get capabilities and details about this VILLASnode instance";
 static RequestPlugin<CapabilitiesRequest, n, r, d> p;
 
 } // namespace api
