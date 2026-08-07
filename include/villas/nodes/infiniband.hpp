@@ -76,11 +76,11 @@ struct infiniband {
     // Counter to keep track of available recv. WRs
     unsigned available_recv_wrs;
 
-    /* Fixed number to substract from min. number available
+    /* Fixed number to subtract from min. number available
      * WRs in receive queue */
     unsigned buffer_subtraction;
 
-    // Unrealiable connectionless data
+    // Unreliable connectionless data
     struct ud_s {
       ::rdma_ud_param ud;
       ::ibv_ah *ah;

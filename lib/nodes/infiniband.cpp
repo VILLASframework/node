@@ -320,14 +320,14 @@ int villas::node::ib_parse(NodeCompat *n, json_t *json) {
 int villas::node::ib_check(NodeCompat *n) {
   auto *ib = n->getData<struct infiniband>();
 
-  // Check if read substraction makes sense
+  // Check if read subtraction makes sense
   if (ib->conn.buffer_subtraction < 2 * n->in.vectorize)
     throw RuntimeError(
-        "The buffer substraction value must be bigger than 2 * in.vectorize");
+        "The buffer subtraction value must be bigger than 2 * in.vectorize");
 
   if (ib->conn.buffer_subtraction >=
       ib->qp_init.cap.max_recv_wr - n->in.vectorize)
-    throw RuntimeError("The buffer substraction value cannot be bigger than "
+    throw RuntimeError("The buffer subtraction value cannot be bigger than "
                        "in.max_wrs - in.vectorize");
 
   // Check if the set value is a power of 2, and warn the user if this is not the case
@@ -644,7 +644,7 @@ int villas::node::ib_start(NodeCompat *n) {
   }
 
   /* Several events should occur on the event channel, to make
-   * sure the nodes are succesfully connected.
+   * sure the nodes are successfully connected.
    */
   n->logger->debug("Starting to monitor events on rdma_cm_id");
 
@@ -829,7 +829,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
       throw RuntimeError("Was unable to post receive WR: {}, bad WR ID: {:#x}",
                          ret, bad_wr->wr_id);
 
-    n->logger->debug("Succesfully posted receive Work Requests");
+    n->logger->debug("Successfully posted receive Work Requests");
 
     // Doesn't start if wcs == 0
     for (int j = 0; j < wcs; j++) {
@@ -844,9 +844,9 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
         n->logger->warn("Work Completion status was not IBV_WC_SUCCESS: {}",
                         (int)wc[j].status);
 
-      /* 32 byte of meta data is always transferred. We should substract it.
+      /* 32 byte of meta data is always transferred. We should subtract it.
        * Furthermore, in case of an unreliable connection, a 40 byte
-       * global routing header is transferred. This should be substracted as well.
+       * global routing header is transferred. This should be subtracted as well.
        */
       int correction =
           (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
