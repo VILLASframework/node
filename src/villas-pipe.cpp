@@ -1,4 +1,4 @@
-/* Receive messages from server snd print them on stdout.
+/* Receive messages from server and print them on stdout.
  *
  * Author: Steffen Vogel <post@steffenvogel.de>
  * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
