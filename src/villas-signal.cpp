@@ -80,6 +80,13 @@ protected:
         << std::endl
         << "    -o OFF  the DC bias" << std::endl
         << "    -l NUM  only send LIMIT messages and stop" << std::endl
+        << "    -p FLT  the phase of the signal" << std::endl
+        << "    -w FLT  the pulse width (for 'square'/'pulse' signals)"
+        << std::endl
+        << "    -L FLT  the low level (for 'square'/'pulse' signals)"
+        << std::endl
+        << "    -H FLT  the high level (for 'square'/'pulse' signals)"
+        << std::endl
         << std::endl;
 
     printCopyright();
@@ -105,7 +112,7 @@ protected:
     // Parse optional command line arguments
     int c;
     char *endptr;
-    while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hVp:")) != -1) {
+    while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hVp:w:L:H:")) != -1) {
       switch (c) {
       case 'n':
         rt = 0;
