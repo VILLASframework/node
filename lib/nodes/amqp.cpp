@@ -398,7 +398,7 @@ static NodeCompatType p;
 
 __attribute__((constructor(110))) static void register_plugin() {
   p.name = "amqp";
-  p.description = "Advanced Message Queueing Protoocl (rabbitmq-c)";
+  p.description = "Advanced Message Queueing Protocol (rabbitmq-c)";
   p.vectorize = 0;
   p.size = sizeof(struct amqp);
   p.init = amqp_init;
