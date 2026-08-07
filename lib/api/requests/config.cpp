@@ -20,7 +20,7 @@ public:
   using Request::Request;
 
   Response *execute() override {
-    json_t *json = session->getSuperNode()->getConfig();
+    JanssonPtr json = session->getSuperNode()->getConfig();
 
     if (method != Session::Method::GET)
       throw Error::invalidMethod(this);
@@ -29,8 +29,7 @@ public:
       throw Error::badRequest(nullptr,
                               "Config endpoint does not accept any body data");
 
-    auto *json_config = json ? json_incref(json) : json_object();
-
+    auto *json_config = json ? json.release() : json_object();
     return new JsonResponse(session, HTTP_STATUS_OK, json_config);
   }
 };

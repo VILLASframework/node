@@ -10,7 +10,6 @@
 
 #include <criterion/criterion.h>
 #include <criterion/internal/assert.h>
-#include <nlohmann/json.hpp>
 
 #include <villas/fs.hpp>
 #include <villas/jansson.hpp>

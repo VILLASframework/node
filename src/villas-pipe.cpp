@@ -236,15 +236,14 @@ public:
 protected:
   std::atomic<bool> stop;
 
-  SuperNode sn; // The global configuration
   Format *formatter;
 
   int timeout;
   bool reverse;
   std::string format;
   std::string dtypes;
-  std::string uri;
-  std::string nodestr;
+  fs::path config_path;
+  std::string node_name;
 
   json_t *config_cli;
 
@@ -390,8 +389,8 @@ protected:
       exit(EXIT_FAILURE);
     }
 
-    uri = argv[optind];
-    nodestr = argv[optind + 1];
+    config_path = argv[optind];
+    node_name = argv[optind + 1];
   }
 
   int main() override {
@@ -402,11 +401,13 @@ protected:
 
     logger->info("Logging level: {}", Log::getInstance().getLevelName());
 
-    if (!uri.empty())
-      sn.parse(uri);
-    else
-      logger->warn("No configuration file specified. Starting unconfigured. "
-                   "Use the API to configure this instance.");
+    auto config = load_config_file(config_path, {
+                                                    .allow_libconfig = true,
+                                                    .allow_environment = true,
+                                                    .allow_include = true,
+                                                });
+
+    villas::node::SuperNode sn(std::move(config), config_path.parent_path());
 
     // Try parsing format config as JSON
     json_format = json_loads(format.c_str(), 0, &err);
@@ -417,21 +418,21 @@ protected:
 
     formatter->start(dtypes);
 
-    node = sn.getNode(nodestr);
+    node = sn.getNode(node_name);
     if (!node)
-      throw RuntimeError("Node {} does not exist!", nodestr);
+      throw RuntimeError("Node {} does not exist!", node_name);
 
     if (recv.enabled && !(node->getFactory()->getFlags() &
                           (int)NodeFactory::Flags::SUPPORTS_READ))
       throw RuntimeError("Node {} can not receive data. Consider using "
                          "send-only mode by using '-s' option",
-                         nodestr);
+                         node_name);
 
     if (send.enabled && !(node->getFactory()->getFlags() &
                           (int)NodeFactory::Flags::SUPPORTS_WRITE))
       throw RuntimeError("Node {} can not send data. Consider using "
                          "receive-only mode by using '-r' option",
-                         nodestr);
+                         node_name);
 
 #if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
     // Only start web subsystem if villas-pipe is used with a websocket node

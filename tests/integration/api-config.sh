@@ -45,4 +45,4 @@ curl -s http://localhost:8080/api/v2/config > fetched.json
 kill $!
 
 # Compare local config with the fetched one
-diff -u <(jq -S . < fetched.json) <(jq -S . < config.json)
+diff -u <(jq -S < fetched.json) <(villas config -m -D config.json | jq -S)
