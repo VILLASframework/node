@@ -61,10 +61,14 @@ protected:
 
   void parse() override {
     int c;
-    while ((c = getopt(argc, argv, "hcVD")) != -1) {
+    while ((c = getopt(argc, argv, "hcVDd:")) != -1) {
       switch (c) {
       case 'c':
         check = true;
+        break;
+
+      case 'd':
+        Log::getInstance().setLevel(optarg);
         break;
 
       case 'D':
