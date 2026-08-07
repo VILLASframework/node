@@ -230,11 +230,12 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
 
     return -1;
 
-  case LWS_CALLBACK_CLOSED:
+  case LWS_CALLBACK_CLOSED: {
+    auto old_state = c->state;
     c->state = websocket_connection::State::CLOSED;
     c->node->logger->debug("Closed WebSocket connection: {}", c->toString());
 
-    if (c->state != websocket_connection::State::CLOSING) {
+    if (old_state != websocket_connection::State::CLOSING) {
       // TODO: Attempt reconnect here
     }
 
@@ -251,6 +252,7 @@ int villas::node::websocket_protocol_cb(struct lws *wsi,
       delete c;
 
     break;
+  }
 
   case LWS_CALLBACK_CLIENT_WRITEABLE:
   case LWS_CALLBACK_SERVER_WRITEABLE: {
