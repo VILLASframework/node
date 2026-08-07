@@ -25,13 +25,14 @@ class Node(object):
         api_url=None,
         log_filename=None,
         config_filename=None,
-        config={},
+        config=None,
         executable="villas-node",
         **kwargs,
     ):
         self.api_url = api_url
         self.log_filename = log_filename
         self.executable = executable
+        self.child = None
 
         if config_filename and config:
             raise RuntimeError(
@@ -42,11 +43,11 @@ class Node(object):
             with open(config_filename) as f:
                 self.config = json.load(f)
         else:
-            self.config = config
+            self.config = config if config is not None else {}
 
         # Try to deduct api_url from config
         if self.api_url is None:
-            port = config.get("http", {}).get("port")
+            port = self.config.get("http", {}).get("port")
             if port is None:
                 port = 80 if os.getuid() == 0 else 8080
 
