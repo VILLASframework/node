@@ -183,7 +183,8 @@ char *villas::node::file_print(NodeCompat *n) {
 
   strcatf(
       &buf,
-      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, in.epoch=%.2f",
+      "uri=%s, out.flush=%s, in.skip=%d, in.eof=%s, in.epoch=%s, "
+      "in.epoch_value=%.2f",
       f->uri ? f->uri : f->uri_tmpl, f->flush ? "yes" : "no", f->skip_lines,
       eof_str, epoch_str, time_to_double(&f->epoch));
 
