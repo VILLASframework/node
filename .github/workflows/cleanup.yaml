@@ -18,16 +18,17 @@ jobs:
     steps:
       # Deletes PR, branch, SHA and content-hash image versions older than
       # 14 days. Version tags (v*), master and latest are kept forever.
-      # Starts in dry-run: review one run's log, then set dry-run to false.
       - name: Cleanup GHCR Packages
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           token: ${{ github.token }}
           owner: ${{ github.repository_owner }}
-          packages: ^node(/.*)?$
+          # Written as top-level alternation instead of ^node(/.*)?$ because
+          # the action's ReDoS safety check (safe-regex2) rejects quantified
+          # groups containing .*
+          packages: ^node$|^node/.*$
           expand-packages: true
           use-regex: true
           exclude-tags: ^(latest|master.*|v.*)$
-          older-than: 14 days
+          older-than: 30 days
           delete-untagged: true
-          dry-run: true
