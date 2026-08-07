@@ -56,8 +56,6 @@ modprobe sch_netem || die "The netem qdisc is not compiled in this kernel!"
 $NF -t nat -F
 $NF -t nat -X
 
-exit
-
 # Add new chain, mark packets from $SRC and redirect them to $DEST
 
 # Insert new chain into flow
@@ -66,8 +64,6 @@ $NF -t nat -A PREROUTING -i $SRC_IF -s $SRC -j dnat --to-dst $DST --dnat-target 
 
 $NF -t nat -A PREROUTING -i $DST_IF -s $DST -j mark --mark-set $MARK --mark-target CONTINUE
 $NF -t nat -A PREROUTING -i $DST_IF -s $DST -j dnat --to-dst $SRC --dnat-target ACCEPT
-
-exit
 
 # Clean traffic control
 $TC qdisc delete dev $DST_IF root || true
@@ -86,7 +82,7 @@ if (( $REVERSE )); then
     echo -e "   $NETEM_REV"
 fi
 
-if [ -n $DEBUG ]; then
+if [ -n "$DEBUG" ]; then
     if [ "$SRC_IF" == "$DST_IF" ]; then
         IFNS="$SRC_IF"
     else
@@ -95,7 +91,7 @@ if [ -n $DEBUG ]; then
 
     for inf in $IFNS; do
         for cmd in qdisc filter class; do
-             echo -e "\nTC ==> $if: $cmd"
+             echo -e "\nTC ==> $inf: $cmd"
              tc -d -p $cmd show dev $inf
         done
     done
