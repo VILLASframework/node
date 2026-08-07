@@ -8,12 +8,13 @@
 
 format_file() {
   FILE="${1}"
-  if [ -f ${FILE} ]; then
-    if ! clang-format --Werror --dry-run ${FILE}; then
-      clang-format -i ${FILE}
+  if [ -f "${FILE}" ]; then
+    if ! clang-format --Werror --dry-run "${FILE}"; then
+      clang-format -i "${FILE}"
       return 1
     fi
   fi
+  return 0
 }
 
 case "${1}" in
@@ -37,7 +38,7 @@ case "${1}" in
 
     if (( ${CHANGES} > 0 )); then
       echo "Formatting of ${CHANGES} files has been fixed. Please stage and commit again."
-      exit -1
+      exit 1
     fi
     ;;
 esac
