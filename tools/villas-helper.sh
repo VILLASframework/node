@@ -35,5 +35,5 @@ function colorize() {
 
 function villas() {
     VILLAS_LOG_PREFIX=${VILLAS_LOG_PREFIX:-$(colorize "[$1-$((${RANDOM} % 100))} ")} \
-    command villas $@
+    command villas "$@"
 }
