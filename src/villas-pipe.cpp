@@ -447,7 +447,7 @@ protected:
 
     ret = node->getFactory()->start(&sn);
     if (ret)
-      throw RuntimeError("Failed to initialize node type {}: reason={},
+      throw RuntimeError("Failed to initialize node type {}: reason={}",
                          node->getFactory()->getName(), ret);
 
     sn.startInterfaces();
