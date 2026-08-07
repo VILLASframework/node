@@ -258,9 +258,9 @@ if ! pkg-config "libethercat >= 1.5.2" && \
 fi
 
 # Build & Install libiec61850
-if ! pkg-config "libiec61850 >= 1.6.0" && \
+if ! pkg-config "libiec61850 >= 1.6.2" && \
     should_build "iec61850" "for the iec61850 node-type"; then
-    git clone ${GIT_OPTS} --branch v1.6.1 https://github.com/mz-automation/libiec61850.git
+    git clone ${GIT_OPTS} --branch v1.6.2 https://github.com/mz-automation/libiec61850.git
 
     pushd libiec61850/third_party/mbedtls/
     curl -L https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz | tar -xz
