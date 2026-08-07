@@ -123,7 +123,7 @@ endif()
 # Enable Kafka support
 if(WITH_NODE_KAFKA)
     list(APPEND NODE_SRC kafka.cpp)
-    list(APPEND LIBRARIES  PkgConfig::RDKAFKA)
+    list(APPEND LIBRARIES PkgConfig::RDKAFKAPP)
 endif()
 
 # Enable Comedi support
