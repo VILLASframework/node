@@ -4,3 +4,6 @@
 ---
 Diagnostics:
   UnusedIncludes: Strict
+
+CompileFlags:
+  CompilationDatabase: build
