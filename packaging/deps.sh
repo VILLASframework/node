@@ -23,7 +23,7 @@ should_build() {
         optional) ;;
         required) ;;
         *)
-            echo >&2 "Error: invalid parameter '$2' for should_build. should be one of 'optional' and 'required', default is 'optional'"
+            echo >&2 "Error: invalid parameter '$3' for should_build. should be one of 'optional' and 'required', default is 'optional'"
             exit 1
             ;;
     esac
@@ -31,7 +31,7 @@ should_build() {
     local deps="${@:4}"
 
     if [[ -n "${DEPS_SCAN+x}" ]]; then
-        echo "${requirement} dependendency ${id} should be installed ${use}."
+        echo "${requirement} dependency ${id} should be installed ${use}."
         [[ -n "${deps[*]}" ]] && echo " transitive dependencies: ${deps}"
         echo
         return 1
@@ -45,7 +45,7 @@ should_build() {
 
     if [[ -z "${DEPS_NONINTERACTIVE+x}" ]] && [[ -t 1 ]]; then
         echo
-        read -p "Do you wan't to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
+        read -p "Do you want to install '${id}' into '${PREFIX}'? This is used ${use}. (y/N) "
         case "${REPLY}" in
             y | Y)
                 echo "Installing '${id}'"
