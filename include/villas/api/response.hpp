@@ -9,11 +9,10 @@
 
 #include <unordered_map>
 
-#include <jansson.h>
-
 #include <villas/api.hpp>
 #include <villas/buffer.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/jansson.hpp>
 #include <villas/log.hpp>
 #include <villas/plugin.hpp>
 

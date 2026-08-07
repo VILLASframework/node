@@ -12,6 +12,7 @@ add_custom_target(run-integration-tests
             ${PROJECT_SOURCE_DIR}/tools/integration-tests.sh 2>&1 | c++filt\"
     USES_TERMINAL
     DEPENDS
+        villas-config
         villas-node
         villas-pipe
         villas-signal

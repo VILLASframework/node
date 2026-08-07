@@ -5,19 +5,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(SRCS
+    villas-config
     villas-convert
     villas-node
     villas-pipe
     villas-signal
     villas-compare
-    villas-test-config
 )
+
+add_executable(villas-config villas-config.cpp)
+target_link_libraries(villas-config PUBLIC villas)
 
 add_executable(villas-node villas-node.cpp)
 target_link_libraries(villas-node PUBLIC villas)
-
-add_executable(villas-test-config villas-test-config.cpp)
-target_link_libraries(villas-test-config PUBLIC villas)
 
 add_executable(villas-compare villas-compare.cpp)
 target_link_libraries(villas-compare PUBLIC villas)
@@ -44,13 +44,6 @@ if(WITH_WEB)
     target_link_libraries(villas-relay PRIVATE PkgConfig::UUID villas)
 
     list(APPEND SRCS villas-relay)
-endif()
-
-if(WITH_CONFIG)
-    add_executable(villas-conf2json villas-conf2json.cpp)
-    target_link_libraries(villas-conf2json PUBLIC villas)
-
-    list(APPEND SRCS villas-conf2json)
 endif()
 
 if(LIBZMQ_FOUND)

@@ -18,6 +18,7 @@
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/pcie_card.hpp>
 #include <villas/fpga/utils.hpp>
+#include <villas/jansson.hpp>
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
 #include <villas/nodes/fpga.hpp>
@@ -381,8 +382,9 @@ int FpgaNodeFactory::start(SuperNode *sn) {
   }
 
   if (cards.empty()) {
-    auto searchPath = sn->getConfigPath();
-    createCards(sn->getConfig(), cards, searchPath, vfioContainer);
+    JanssonPtr config = sn->getConfig();
+    auto searchPath = sn->getSearchPath();
+    createCards(config.get(), cards, searchPath, vfioContainer);
   }
 
   return NodeFactory::start(sn);

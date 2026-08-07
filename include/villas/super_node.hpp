@@ -18,7 +18,7 @@ extern "C" {
 #include <villas/api.hpp>
 #include <villas/common.hpp>
 #include <villas/fs.hpp>
-#include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/if.hpp>
 #include <villas/log.hpp>
 #include <villas/node.hpp>
@@ -28,14 +28,19 @@ extern "C" {
 #include <villas/web.hpp>
 
 namespace villas {
+
 namespace node {
 
 // Forward declarations
 class Node;
 
+struct SuperNodeValidateOptions {
+  bool apply_migrations = false;
+  bool apply_defaults = false;
+};
+
 // Global configuration
 class SuperNode {
-
 protected:
   enum State state;
 
@@ -67,28 +72,17 @@ protected:
 
   struct timespec started; // The time at which the instance has been started.
 
-  fs::path configPath;
-  JanssonPtr configRoot; // The configuration file.
+  fs::path search_path;
+  Json config; // The configuration file.
 
-public:
-  // Inititalize configuration object before parsing the configuration.
-  SuperNode();
-
-  int init();
-
-  // Wrapper for parse() which loads the config first.
-  void parse(fs::path const &path);
-
-  /* Parse super-node configuration.
-   *
-   * @param json A libjansson object which contains the configuration.
-   */
   void parse(json_t *json);
-
-  // Check validity of super node configuration.
   void check();
 
-  // Initialize after parsing the configuration file.
+public:
+  SuperNode(Json config, fs::path search_path = {});
+
+  static void validate(Json &config, SuperNodeValidateOptions const &opts);
+
   void prepare();
   void start();
   void stop();
@@ -138,9 +132,8 @@ public:
   Web *getWeb() { return &web; }
 #endif
 
-  json_t *getConfig() { return configRoot.get(); }
-
-  fs::path const &getConfigPath() const { return configPath; }
+  Json const &getConfig() const { return config; }
+  fs::path const &getSearchPath() const { return search_path; }
 
   int getAffinity() const { return affinity; }
 

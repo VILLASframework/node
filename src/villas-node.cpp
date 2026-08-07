@@ -18,6 +18,7 @@
 #include <villas/exceptions.hpp>
 #include <villas/format.hpp>
 #include <villas/hook.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/log.hpp>
@@ -46,9 +47,8 @@ public:
   Node(int argc, char *argv[]) : Tool(argc, argv, "node") {}
 
 protected:
-  SuperNode sn;
-
-  std::string uri;
+  SuperNode *super_node;
+  fs::path config_path;
   bool showCapabilities = false;
 
   void handler(int signal, siginfo_t *sinfo, void *ctx) override {
@@ -61,7 +61,8 @@ protected:
       logger->info("Received {} signal. Terminating...", strsignal(signal));
     }
 
-    sn.setState(State::STOPPING);
+    if (super_node)
+      super_node->setState(State::STOPPING);
   }
 
   void usage() override {
@@ -146,7 +147,7 @@ protected:
     }
 
     if (argc == optind + 1)
-      uri = argv[optind];
+      config_path = argv[optind];
     else if (argc != optind) {
       usage();
       exit(EXIT_FAILURE);
@@ -164,13 +165,24 @@ protected:
   }
 
   int daemon() {
-    if (!uri.empty())
-      sn.parse(uri);
-    else
-      logger->warn("No configuration file specified. Starting unconfigured. "
-                   "Use the API to configure this instance.");
+    auto sn = std::invoke([&]() {
+      if (config_path.empty()) {
+        logger->warn("No configuration file specified. Starting unconfigured. "
+                     "Use the API to configure this instance.");
 
-    sn.check();
+        return SuperNode(Json::object());
+      }
+
+      auto config = load_config_file(config_path, {
+                                                      .allow_libconfig = true,
+                                                      .allow_environment = true,
+                                                      .allow_include = true,
+                                                  });
+
+      return SuperNode(config, config_path.parent_path());
+    });
+
+    super_node = &sn;
     sn.prepare();
     sn.start();
     sn.run();

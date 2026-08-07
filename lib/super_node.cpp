@@ -7,23 +7,27 @@
 
 #include <cstdlib>
 #include <cstring>
-
-#include <nlohmann/json.hpp>
+#include <ranges>
 
 #include <villas/config_helper.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/format.hpp>
+#include <villas/hook.hpp>
 #include <villas/hook_list.hpp>
+#include <villas/jansson.hpp>
+#include <villas/json.hpp>
 #include <villas/kernel/if.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/log.hpp>
 #include <villas/node.hpp>
 #include <villas/node/exceptions.hpp>
+#include <villas/node/json_schema.hpp>
 #include <villas/node/memory.hpp>
 #include <villas/path.hpp>
+#include <villas/plugin.hpp>
 #include <villas/super_node.hpp>
 #include <villas/timing.hpp>
 #include <villas/uuid.hpp>
-
-#include "villas/json.hpp"
 
 #ifdef WITH_NETEM
 #include <villas/kernel/nl.hpp>
@@ -32,7 +36,7 @@
 using namespace villas;
 using namespace villas::node;
 
-SuperNode::SuperNode()
+SuperNode::SuperNode(Json config, fs::path search_path)
     : state(State::INITIALIZED), idleStop(false),
 #ifdef WITH_API
       api(this),
@@ -45,7 +49,8 @@ SuperNode::SuperNode()
 #endif
 #endif
       seed(0), priority(0), affinity(0), hugepages(DEFAULT_NR_HUGEPAGES),
-      statsRate(1.0), task(), started(time_now()) {
+      statsRate(1.0), task(), started(time_now()),
+      search_path(std::move(search_path)), config(std::move(config)) {
   int ret;
 
   char hname[128];
@@ -61,20 +66,244 @@ SuperNode::SuperNode()
 #endif                // WITH_NETEM
 
   logger = Log::get("super_node");
+
+  try {
+    validate(this->config, {
+                               .apply_migrations = true,
+                               .apply_defaults = true,
+                           });
+  } catch (JsonError const &error) {
+    for (auto const &[ptr, msg] : error) {
+      if (not ptr.empty())
+        logger->error("config[{}]: {}", ptr, msg);
+      else
+        logger->error("config[/]: {}", msg);
+    }
+
+    throw RuntimeError("Failed to parse configuration");
+  }
+
+  JanssonPtr jansson = this->config;
+  parse(jansson.get());
+  check();
 }
 
-void SuperNode::parse(fs::path const &path) {
-  configPath = path;
+// migrate path `reverse` property
+static Json migrate_paths(Json const &json) {
+  auto patch = Json::array();
 
-  load_config_file(path,
-                   {
-                       .allow_libconfig = true,
-                       .allow_environment = true,
-                       .allow_include = true,
-                   })
-      .get_to(configRoot);
+  auto paths = json.find("paths");
+  if (paths == json.end() or not paths->is_array())
+    return patch;
 
-  parse(configRoot.get());
+  for (auto const index : std::views::iota(size_t(0), paths->size())) {
+    auto const &path = (*paths)[index];
+    if (not path.is_object())
+      continue;
+
+    auto reverse = path.find("reverse");
+    if (reverse == path.end())
+      continue;
+
+    auto ptr = "/paths"_json_pointer / index;
+
+    if (reverse->is_boolean() and reverse->get<bool>()) {
+      auto in = path.find("in");
+      auto out = path.find("out");
+
+      if (in == path.end() or not in->is_string() or
+          not Node::isValidName(in->get_ref<std::string const &>()) or
+          out == path.end() or not out->is_string() or
+          not Node::isValidName(out->get_ref<std::string const &>()))
+        throw JsonError({
+            .pointer = ptr,
+            .message = "Only a path between two single nodes can be reversed",
+        });
+
+      if (*in == *out)
+        throw JsonError({
+            .pointer = ptr,
+            .message = "Can not reverse a path with identical in and out nodes",
+        });
+
+      auto reversed = path;
+      reversed.erase("reverse");
+      reversed["in"] = *out;
+      reversed["out"] = *in;
+
+      patch.push_back(Json::object({
+          {"op", "add"},
+          {"path", ("/paths"_json_pointer / "-").to_string()},
+          {"value", std::move(reversed)},
+      }));
+    }
+
+    patch.push_back(Json::object({
+        {"op", "remove"},
+        {"path", (ptr / "reverse").to_string()},
+    }));
+  }
+
+  return patch;
+}
+
+static void validate_walk_schema(Json &instance, JsonPointer const &ptr,
+                                 Json const &schema,
+                                 SuperNodeValidateOptions const &opts);
+
+template <typename T>
+static void validate_plugin(Json &instance, JsonPointer const &ptr,
+                            SuperNodeValidateOptions const &opts) {
+  Json name;
+  if (instance.is_string())
+    name = instance;
+  else if (instance.is_object() and instance.contains("type"))
+    name = instance["type"];
+  else
+    throw JsonError({
+        .pointer = ptr,
+        .message = fmt::format("unknown plugin type"),
+    });
+
+  auto factory = plugin::registry->lookup<T>(name);
+  if (not factory) {
+    throw JsonError({
+        .pointer = instance.is_string() ? ptr : ptr / "type",
+        .message = fmt::format("unknown plugin type '{}'", name),
+    });
+  }
+
+  if (instance.is_object()) {
+    auto const &schema = factory->getSchema();
+
+    if (opts.apply_migrations) {
+      Json migration_patch =
+          JsonError::context(ptr, [&]() { return factory->migrate(instance); });
+
+      auto logger = factory->getLogger();
+      for (auto const &op : migration_patch)
+        logger->warn("migrate[{}]: {}", ptr, op);
+
+      instance.patch_inplace(migration_patch);
+    }
+
+    auto default_values =
+        JsonError::context(ptr, [&]() { return schema.validate(instance); });
+    if (opts.apply_defaults)
+      instance.patch_inplace(default_values);
+
+    validate_walk_schema(instance, ptr, schema.json(), opts);
+  }
+}
+
+static void validate_walk_schema(Json &instance, JsonPointer const &ptr,
+                                 Json const &schema,
+                                 SuperNodeValidateOptions const &opts) {
+  if (not schema.is_object())
+    return;
+
+  std::vector<JsonDiagnostic> diagnostics;
+
+  if (auto discriminator = schema.find("discriminator");
+      discriminator != schema.end()) {
+    if (auto plugin = discriminator->find("x-villas-plugin");
+        plugin != discriminator->end()) {
+      try {
+        if (*plugin == "node")
+          validate_plugin<NodeFactory>(instance, ptr, opts);
+        else if (*plugin == "hook")
+          validate_plugin<HookFactory>(instance, ptr, opts);
+        else if (*plugin == "format")
+          validate_plugin<FormatFactory>(instance, ptr, opts);
+        else
+          throw RuntimeError("invalid x-villas-plugin annotation {} in schema",
+                             *plugin);
+      } catch (JsonError &error) {
+        diagnostics.insert(diagnostics.end(), error.begin(), error.end());
+      }
+    }
+  }
+
+  auto properties = schema.value("properties", Json::object());
+  auto additionalProperties = schema.find("additionalProperties");
+  if (instance.is_object() and
+      (not properties.empty() or additionalProperties != schema.end())) {
+    for (auto const &[property, value] : instance.items()) {
+      try {
+        if (auto subschema = properties.find(property);
+            subschema != properties.end())
+          validate_walk_schema(value, ptr / property, *subschema, opts);
+        else if (additionalProperties != schema.end())
+          validate_walk_schema(value, ptr / property, *additionalProperties,
+                               opts);
+      } catch (JsonError &error) {
+        diagnostics.insert(diagnostics.end(), error.begin(), error.end());
+      }
+    }
+  }
+
+  if (auto items = schema.find("items");
+      instance.is_array() and items != schema.end()) {
+    if (items->is_array()) {
+      auto additionalItems = schema.find("additionalItems");
+      for (auto const index : std::views::iota(size_t(0), instance.size())) {
+        try {
+          if (index < items->size())
+            validate_walk_schema(instance[index], ptr / index, (*items)[index],
+                                 opts);
+          else if (additionalItems != schema.end())
+            validate_walk_schema(instance[index], ptr / index, *additionalItems,
+                                 opts);
+          else
+            break;
+        } catch (JsonError &error) {
+          diagnostics.insert(diagnostics.end(), error.begin(), error.end());
+        }
+      }
+    } else {
+      for (auto const index : std::views::iota(size_t(0), instance.size())) {
+        try {
+          validate_walk_schema(instance[index], ptr / index, *items, opts);
+        } catch (JsonError &error) {
+          diagnostics.insert(diagnostics.end(), error.begin(), error.end());
+        }
+      }
+    }
+  }
+
+  if (auto subschemas = schema.find("allOf"); subschemas != schema.end()) {
+    for (auto const &subschema : *subschemas) {
+      try {
+        validate_walk_schema(instance, ptr, subschema, opts);
+      } catch (JsonError &error) {
+        diagnostics.insert(diagnostics.end(), error.begin(), error.end());
+      }
+    }
+  }
+
+  if (not diagnostics.empty())
+    throw JsonError(diagnostics);
+}
+
+void SuperNode::validate(Json &json, const SuperNodeValidateOptions &opts) {
+  static auto schema = JsonSchema(
+      bundled_schemas().at("/components/schemas/Config"_json_pointer));
+
+  if (opts.apply_migrations) {
+    Json patch = migrate_paths(json);
+
+    auto logger = Log::get("super_node");
+    for (auto const &op : patch)
+      logger->warn("migration: {}", op);
+
+    json.patch_inplace(patch);
+  }
+
+  auto default_values = schema.validate(json);
+  if (opts.apply_defaults)
+    json.patch_inplace(default_values);
+
+  validate_walk_schema(json, JsonPointer{}, schema.json(), opts);
 }
 
 void SuperNode::parse(json_t *root) {
@@ -162,7 +391,7 @@ void SuperNode::parse(json_t *root) {
       if (!n)
         throw MemoryAllocationError();
 
-      n->configPath = getConfigPath();
+      n->configPath = getSearchPath();
 
       ret = n->parse(json_node);
       if (ret) {
@@ -184,7 +413,6 @@ void SuperNode::parse(json_t *root) {
     size_t i;
     json_t *json_path;
     json_array_foreach (json_paths, i, json_path) {
-    parse:
       auto *p = new Path();
       if (!p)
         throw MemoryAllocationError();
@@ -192,29 +420,6 @@ void SuperNode::parse(json_t *root) {
       p->parse(json_path, nodes, uuid);
 
       paths.push_back(p);
-
-      if (p->isReversed()) {
-        // Only simple paths can be reversed
-        ret = p->isSimple();
-        if (!ret)
-          throw RuntimeError("Complex paths can not be reversed!");
-
-        // Parse a second time with in/out reversed
-        json_path = json_copy(json_path);
-
-        json_t *json_in = json_object_get(json_path, "in");
-        json_t *json_out = json_object_get(json_path, "out");
-
-        if (json_equal(json_in, json_out))
-          throw RuntimeError(
-              "Can not reverse path with identical in/out nodes!");
-
-        json_object_set(json_path, "reverse", json_false());
-        json_object_set(json_path, "in", json_out);
-        json_object_set(json_path, "out", json_in);
-
-        goto parse;
-      }
     }
   }
 
