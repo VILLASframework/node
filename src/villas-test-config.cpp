@@ -50,7 +50,7 @@ protected:
               << std::endl
               << "    -d LVL  set debug level" << std::endl
               << "    -V      show version and exit" << std::endl
-              << "    -c      perform plausability checks on config"
+              << "    -c      perform plausibility checks on config"
               << std::endl
               << "    -D      dump config in JSON format" << std::endl
               << "    -h      show usage and exit" << std::endl
