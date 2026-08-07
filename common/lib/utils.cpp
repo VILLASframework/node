@@ -198,9 +198,17 @@ char *vstrcatf(char **dest, const char *fmt, va_list ap) {
   int n = *dest ? strlen(*dest) : 0;
   int i = vasprintf(&tmp, fmt, ap);
 
-  *dest = (char *)(realloc(*dest, n + i + 1));
-  if (*dest != nullptr)
-    strncpy(*dest + n, tmp, i + 1);
+  if (i < 0)
+    return *dest;
+
+  char *p = (char *)realloc(*dest, n + i + 1);
+  if (p == nullptr) {
+    free(tmp);
+    return *dest;
+  }
+
+  *dest = p;
+  strncpy(*dest + n, tmp, i + 1);
 
   free(tmp);
 
