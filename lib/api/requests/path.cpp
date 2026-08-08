@@ -23,5 +23,5 @@ void PathRequest::prepare() {
   path = paths.lookup(uuid);
   if (!path)
     throw Error::badRequest(json_pack("{ s: s }", "uuid", matches[1].c_str()),
-                            "No path found with with matching UUID");
+                            "No path found with matching UUID");
 }
