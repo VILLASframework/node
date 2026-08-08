@@ -57,7 +57,7 @@ public:
     ret =
         json_unpack_ex(json, &err, 0, "{ s?: i }", "window_size", &windowSize);
     if (ret)
-      throw ConfigError(json, err, "node-config-hook-rms");
+      throw ConfigError(json, err, "node-config-hook-ma");
 
     state = State::PARSED;
   }
