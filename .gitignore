@@ -22,6 +22,8 @@ compile_commands.json
 
 python/dist/
 python/.eggs/
+python/.venv/
+__pycache__/
 
 # YouCompleteMe
 .ycm_extra_conf.py
