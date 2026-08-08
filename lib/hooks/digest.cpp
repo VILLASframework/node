@@ -193,8 +193,8 @@ public:
     Hook::parse(json);
 
     char const *uri_str;
-    char const *mode_str;
-    char const *algorithm_str;
+    char const *mode_str = nullptr;
+    char const *algorithm_str = nullptr;
 
     json_error_t err;
     int ret =
