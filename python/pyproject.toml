@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ['setuptools>=61.0']
-build-backend = 'setuptools.build_meta'
+requires = ['hatchling']
+build-backend = 'hatchling.build'
 
 [project]
 name = 'villas-node'
@@ -63,5 +63,15 @@ extend-exclude = ['*.pyi', '*_pb2.py']
 [tool.ruff.lint]
 select = ['E', 'F', 'I', 'W']
 
-[tool.setuptools.packages.find]
-include = ["villas.node"]
+[tool.hatch.build.targets.wheel]
+packages = ['villas']
+
+[tool.hatch.build.targets.sdist]
+include = [
+    'villas',
+    'examples',
+    'README.md',
+    'CMakeLists.txt',
+    'pyproject.toml',
+    'uv.lock',
+]
