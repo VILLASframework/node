@@ -43,7 +43,7 @@ public:
 
     json_error_t err;
 
-    const char *mode_str;
+    const char *mode_str = nullptr;
 
     assert(state != State::STARTED);
 
