@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from cmath import sqrt
 
-from villas.node.formats import SignalList, VillasHuman, Protobuf
+from villas.node.formats import Protobuf, SignalList, VillasHuman
 from villas.node.sample import Sample, Timestamp
 
 
