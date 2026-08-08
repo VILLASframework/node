@@ -25,6 +25,6 @@ void NodeRequest::prepare() {
     node = nodes.lookup(uuid);
     if (!node)
       throw Error::badRequest(json_pack("{ s: s }", "uuid", matches[1].c_str()),
-                              "No node found with with matching UUID");
+                              "No node found with matching UUID");
   }
 }
