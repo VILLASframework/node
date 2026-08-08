@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ['setuptools>=61.0']
-build-backend = 'setuptools.build_meta'
+requires = ['hatchling']
+build-backend = 'hatchling.build'
 
 [project]
 name = 'villas-node'
@@ -25,10 +25,9 @@ dependencies = [
     'libconf==2.0.1',
 ]
 optional-dependencies.dev = [
-    'black==25.11.0',
-    'flake8==7.3.0',
     'mypy==1.19.0',
     'pytest==9.0.1',
+    'ruff==0.14.10',
     'types-protobuf==6.32.1.20251105',
 ]
 
@@ -57,9 +56,22 @@ module = ['libconf']
 ignore_missing_imports = true
 
 
-[tool.black]
-extend-exclude = '''.*(\.pyi|_pb2.py)$'''
-line-length = 90
+[tool.ruff]
+line-length = 120
+extend-exclude = ['*.pyi', '*_pb2.py']
 
-[tool.setuptools.packages.find]
-include = ["villas.node"]
+[tool.ruff.lint]
+select = ['E', 'F', 'I', 'W']
+
+[tool.hatch.build.targets.wheel]
+packages = ['villas']
+
+[tool.hatch.build.targets.sdist]
+include = [
+    'villas',
+    'examples',
+    'README.md',
+    'CMakeLists.txt',
+    'pyproject.toml',
+    'uv.lock',
+]

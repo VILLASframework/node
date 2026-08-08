@@ -81,9 +81,7 @@ def test_digest_fromframe():
 
     algorithm = "sha256"
 
-    digest_hex = (
-        "a573e3b0953a1e4f69addf631d6229bb714d263b4f362f0847e96c3838c83217"  # noqa: E501
-    )
+    digest_hex = "a573e3b0953a1e4f69addf631d6229bb714d263b4f362f0847e96c3838c83217"  # noqa: E501
 
     digest = Digest(
         first=(Timestamp(123456780), 4),
@@ -102,9 +100,7 @@ def test_digest():
         first=(Timestamp(1695904705, 856457323), 0),
         last=(Timestamp(1695904709, 956060462), 41),
         algorithm="sha256",
-        bytes=bytes.fromhex(
-            "8E49482DDDAFF6E3B7411D7D20CA338002126FE109EC1BA5932C02FC5E7EFD23"
-        ),  # noqa: E501
+        bytes=bytes.fromhex("8E49482DDDAFF6E3B7411D7D20CA338002126FE109EC1BA5932C02FC5E7EFD23"),  # noqa: E501
     )
 
     assert Digest.parse(digest_str) == digest

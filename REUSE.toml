@@ -28,13 +28,14 @@ path = [
     "paper/figures/**",
     "paper/paper.md",
     "paper/paper.bib",
+    "python/uv.lock",
 ]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2018-2023, Institute for Automation of Complex Power Systems, RWTH Aachen University"
+SPDX-FileCopyrightText = "2018-2026, Institute for Automation of Complex Power Systems, RWTH Aachen University"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = ["flake.lock", "**.patch"]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2025 OPAL-RT Germany GmbH"
+SPDX-FileCopyrightText = "2025-2026 OPAL-RT Germany GmbH"
 SPDX-License-Identifier = "Apache-2.0"

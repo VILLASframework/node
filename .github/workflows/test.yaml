@@ -40,25 +40,30 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Sync Python environment
+        run: |
+          cd python
+          uv sync --locked --extra dev
+
       - name: Run Python tests
         run: |
           cd python
-          pytest --verbose .
+          uv run pytest --verbose .
 
       - name: Check formatting
         run: |
           cd python
-          black --line-length=90 --extend-exclude=".*(\.pyi|_pb2.py)$" --check .
+          uv run ruff format --check .
 
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
           cd python
-          flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
+          uv run ruff check .
 
       - name: Type check with mypy
         run: |
           cd python
-          mypy --namespace-packages --explicit-package-bases .
+          uv run mypy --namespace-packages --explicit-package-bases .
 
   cppcheck:
     name: CPPCheck

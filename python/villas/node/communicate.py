@@ -10,6 +10,7 @@ from threading import Thread
 from typing import Callable
 
 import linuxfd  # type: ignore[import]
+
 from villas.node.formats import VillasHuman
 from villas.node.sample import Sample
 

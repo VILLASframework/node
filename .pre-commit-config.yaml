@@ -28,7 +28,7 @@ repos:
       - id: check-added-large-files
         exclude: ^paper\.md$
       - id: pretty-format-json
-        # black has its own mind of formatting Jupyter notebooks
+        # ruff-format has its own mind of formatting Jupyter notebooks
         exclude: \.ipynb$|^.devcontainer/devcontainer\.json$|package-lock\.json$
         args:
           - --no-sort-keys
@@ -51,22 +51,14 @@ repos:
         - -exclude
         - ^LICENSE$|^LICENSES/|\.ecf$
 
-  # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: "23.3.0"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.14.10"
     hooks:
-      - id: black-jupyter
+      - id: ruff
         exclude: .*_pb2.pyi?$
-        args:
-        - --line-length=90
-
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.3.0"
-    hooks:
-      - id: flake8
+        args: [--fix]
+      - id: ruff-format
         exclude: .*_pb2.pyi?$
-        args:
-        - --max-line-length=90
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: "v0.13.0"

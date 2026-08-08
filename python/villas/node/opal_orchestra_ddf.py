@@ -36,9 +36,7 @@ def generate_ddf(node_cfg):
     ET.SubElement(domain, "synchronous").text = "yes" if synchronous else "no"
 
     multiple_publish = node_cfg.get("multiple_publish_allowed", False)
-    ET.SubElement(domain, "multiplePublishAllowed").text = (
-        "yes" if multiple_publish else "no"
-    )
+    ET.SubElement(domain, "multiplePublishAllowed").text = "yes" if multiple_publish else "no"
 
     states = node_cfg.get("states", False)
     ET.SubElement(domain, "states").text = "yes" if states else "no"
@@ -162,9 +160,7 @@ def add_signals_to_set(parent_elem, signals, is_publish=True):
                     }
                 else:
                     if orchestra_type != signal["type"]:
-                        raise RuntimeError(
-                            "Conflicting definitions for signal " + f"'{orchestra_name}'"
-                        )
+                        raise RuntimeError("Conflicting definitions for signal " + f"'{orchestra_name}'")
 
                     index = orchestra_index
                     if index is None:
@@ -231,9 +227,7 @@ def build_xml_from_tree(parent_elem, tree, is_publish):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="VILLASnode OPAL Orchestra configuration generator"
-    )
+    parser = argparse.ArgumentParser(description="VILLASnode OPAL Orchestra configuration generator")
     parser.add_argument(
         "--villas-config",
         "-i",

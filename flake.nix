@@ -14,12 +14,33 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      pyproject-nix,
+      uv2nix,
+      pyproject-build-systems,
       ...
     }:
     let
@@ -66,7 +87,10 @@
       packagesWith = pkgs: rec {
         default = villas-node;
 
-        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") { src = ./.; };
+        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") {
+          src = ./.;
+          inherit uv2nix pyproject-nix pyproject-build-systems;
+        };
 
         villas-node-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
           src = ./.;
@@ -190,19 +214,9 @@
           gcc = mkShellFor pkgs.stdenv pkgs.villas-node;
           clang = mkShellFor pkgs.clangStdenv pkgs.villas-node;
 
-          python = pkgs.mkShell {
-            name = "villas-python-devShell";
-            hardeningDisable = [ "all" ];
-            inputsFrom = with pkgs; [ villas-node-python ];
-            packages =
-              with pkgs;
-              packages
-              ++ [
-                (python3.withPackages (python-pkgs: [
-                  python-pkgs.build
-                  python-pkgs.twine
-                ]))
-              ];
+          python = pkgs.callPackage (nixDir + "/python-shell.nix") {
+            inherit (pkgs) villas-node-python;
+            extraPackages = packages;
           };
         }
       );

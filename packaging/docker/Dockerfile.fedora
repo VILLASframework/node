@@ -38,7 +38,8 @@ RUN dnf -y install \
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \
-	protobuf
+	protobuf \
+	uv
 
 # Dependencies
 RUN dnf -y install \
@@ -84,10 +85,15 @@ RUN bash /deps/deps.sh
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
-# Install Python dev tools for CI
+# Pre-install Python dependencies for CI
 COPY ./python /python
-RUN pip install /python[dev] && \
-	rm -r /python
+RUN cd /python && \
+	uv sync --locked --extra dev && \
+	cp -r .venv /opt/villas-python-venv && \
+	cd / && \
+	rm -rf /python
+ENV VIRTUAL_ENV=/opt/villas-python-venv
+ENV PATH="/opt/villas-python-venv/bin:$PATH"
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
