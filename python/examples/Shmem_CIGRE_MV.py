@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 """  # noqa: E501
 
 import time
+
 from villas.node.node import Node as VILLASnode
 
 # This could be moved to the DPsim Python code later

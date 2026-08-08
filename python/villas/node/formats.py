@@ -9,8 +9,8 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import Iterable
 
-from villas.node.sample import Sample, Signal, Timestamp
 import villas.node.villas_pb2 as pb
+from villas.node.sample import Sample, Signal, Timestamp
 
 
 class SignalList(list[type]):
@@ -156,7 +156,8 @@ class VillasHuman(Format):
             return None
 
         m = re.match(
-            r"(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?" r"(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?",
+            r"(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?"
+            r"(?:e[+-]?\d+)?)?(?:\((\d+)\))?(F)?",
             fields[0],
         )
 
@@ -219,7 +220,7 @@ class VillasHuman(Format):
 
         for ty, value in zip(self.signal_list, smp.data):
             s += self.separator
-            assert ty == type(value)
+            assert ty is type(value)
             match value:
                 case bool():
                     s += str(int(value))
@@ -265,14 +266,10 @@ class Protobuf(Format):
         sample = Sample()
 
         if pb_sample.HasField("ts_origin"):
-            sample.ts_origin = Timestamp(
-                pb_sample.ts_origin.sec, pb_sample.ts_origin.nsec
-            )
+            sample.ts_origin = Timestamp(pb_sample.ts_origin.sec, pb_sample.ts_origin.nsec)
 
         if pb_sample.HasField("ts_received"):
-            sample.ts_received = Timestamp(
-                pb_sample.ts_received.sec, pb_sample.ts_received.nsec
-            )
+            sample.ts_received = Timestamp(pb_sample.ts_received.sec, pb_sample.ts_received.nsec)
 
         if pb_sample.HasField("new_frame"):
             sample.new_frame = pb_sample.new_frame

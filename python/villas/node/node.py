@@ -10,9 +10,9 @@ import logging
 import os
 import signal
 import subprocess
-from tempfile import NamedTemporaryFile
-import urllib.request
 import urllib.error
+import urllib.request
+from tempfile import NamedTemporaryFile
 
 LOGGER = logging.getLogger("villas.node")
 
@@ -34,9 +34,7 @@ class Node(object):
         self.executable = executable
 
         if config_filename and config:
-            raise RuntimeError(
-                "Can't provide config_filename and " "config at the same time!"
-            )
+            raise RuntimeError("Can't provide config_filename and config at the same time!")
 
         if config_filename:
             with open(config_filename) as f:
