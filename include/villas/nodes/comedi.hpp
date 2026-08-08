@@ -34,7 +34,7 @@ struct comedi_direction {
   int sample_rate_hz;                // Sample rate in Hz
   bool present;                      // Config present
   bool enabled;                      // Card is started successfully
-  bool running;                      // Card is actively transfering samples
+  bool running;                      // Card is actively transferring samples
   struct timespec started;           // Timestamp when sampling started
   struct timespec last_debug;        // Timestamp of last debug output
   size_t counter;                    // Number of villas samples transfered

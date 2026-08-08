@@ -834,7 +834,7 @@ int villas::node::ib_read(NodeCompat *n, struct Sample *const smps[],
     // Doesn't start if wcs == 0
     for (int j = 0; j < wcs; j++) {
       if (!((wc[j].opcode & IBV_WC_RECV) && wc[j].status == IBV_WC_SUCCESS)) {
-        // Drop all values, we don't know where the error occured
+        // Drop all values, we don't know where the error occurred
         read_values = 0;
       }
 
@@ -967,7 +967,7 @@ int villas::node::ib_write(NodeCompat *n, struct Sample *const smps[],
          * and prepare them to be released
          */
         n->logger->debug(
-            "Bad WR occured with ID: {:#x} and S/G address: {:p}: {}",
+            "Bad WR occurred with ID: {:#x} and S/G address: {:p}: {}",
             bad_wr->wr_id, (void *)bad_wr->sg_list, ret);
 
         while (1) {
