@@ -4,12 +4,20 @@
 ---
 type: object
 properties:
+  enabled:
+    type: boolean
+    default: true
+    title: Enable HTTP/WebSocket server
+    description: |
+      Whether the HTTP & WebSocket server listens on a port.
+
   port:
     type: integer
-    default: 80
+    default: 8080
     title: Listening port
     description: |
-      The TCP port number on which HTTP & WebSocket server.
+      The TCP port number on which the HTTP & WebSocket server listens.
+      Defaults to 80 when running as root, otherwise 8080.
 
   ssl_cert:
     type: string
