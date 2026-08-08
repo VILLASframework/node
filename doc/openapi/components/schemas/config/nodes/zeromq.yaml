@@ -14,6 +14,15 @@ allOf:
       - pubsub
       - radiodish
 
+    pattern:
+      type: string
+      enum:
+      - pubsub
+      - radiodish
+      default: pubsub
+      description: |
+        The ZeroMQ socket pattern to use.
+
     publish:
       type: string
       format: uri
@@ -49,10 +58,10 @@ allOf:
           description: |
             The public key of the server.
 
-        private_key:
+        secret_key:
           type: string
           description: |
-            The private key of the server.
+            The secret (private) key of the server.
 
     out:
       type: object

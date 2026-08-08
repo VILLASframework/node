@@ -29,5 +29,12 @@ allOf:
         format: uri
         description: A WebSocket URI
 
+    wait_connected:
+      type: boolean
+      default: true
+      description: |
+        Wait until all configured client connections in `destinations` are
+        established before finishing node startup.
+
 - $ref: ../node_signals.yaml
 - $ref: ../node.yaml
