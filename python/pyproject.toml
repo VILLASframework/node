@@ -25,10 +25,9 @@ dependencies = [
     'libconf==2.0.1',
 ]
 optional-dependencies.dev = [
-    'black==25.11.0',
-    'flake8==7.3.0',
     'mypy==1.19.0',
     'pytest==9.0.1',
+    'ruff==0.14.10',
     'types-protobuf==6.32.1.20251105',
 ]
 
@@ -57,9 +56,12 @@ module = ['libconf']
 ignore_missing_imports = true
 
 
-[tool.black]
-extend-exclude = '''.*(\.pyi|_pb2.py)$'''
-line-length = 90
+[tool.ruff]
+line-length = 120
+extend-exclude = ['*.pyi', '*_pb2.py']
+
+[tool.ruff.lint]
+select = ['E', 'F', 'I', 'W']
 
 [tool.setuptools.packages.find]
 include = ["villas.node"]

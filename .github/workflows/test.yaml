@@ -48,12 +48,12 @@ jobs:
       - name: Check formatting
         run: |
           cd python
-          black --line-length=90 --extend-exclude=".*(\.pyi|_pb2.py)$" --check .
+          ruff format --check .
 
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
           cd python
-          flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
+          ruff check .
 
       - name: Type check with mypy
         run: |
