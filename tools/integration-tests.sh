@@ -20,11 +20,11 @@ LANG=C
 export PATH SRCDIR BUILDDIR LOGDIR LANG
 
 # Default values
-VERBOSE=${VERBOSE:-0}
-FAIL_FAST=${FAIL_FAST:-0}
-FILTER=${FILTER:-'*'}
-NUM_SAMPLES=${NUM_SAMPLES:-100}
-TIMEOUT=${TIMEOUT:-1m}
+: ${VERBOSE:=0}
+: ${FAIL_FAST:=0}
+: ${FILTER:='*'}
+: ${NUM_SAMPLES:=100}
+: ${TIMEOUT:=1m}
 
 # Parse command line arguments
 while getopts ":f:l:t:vg" OPT; do
@@ -54,18 +54,35 @@ while getopts ":f:l:t:vg" OPT; do
     esac
 done
 
-export VERBOSE
-export NUM_SAMPLES
+export VERBOSE NUM_SAMPLES TIMEOUT
 
-TESTS=${SRCDIR}/tests/integration/${FILTER}.sh
+TESTS="${SRCDIR}/tests/integration/"${FILTER}.sh
 
 # Preparations
-mkdir -p ${LOGDIR}
+mkdir -p "${LOGDIR}"
 
 PASSED=0
 FAILED=0
 SKIPPED=0
 TIMEDOUT=0
+
+run_test() {
+    : "${1:?run_test requires a script parameter}"
+
+    export STATUS_FILE=$(mktemp)
+    echo 1 > "$STATUS_FILE"
+
+    setsid --wait bash -c '
+        timeout "${TIMEOUT}" "$0" "$@"
+        echo "$?" > "$STATUS_FILE"
+        kill -TERM -- -$$ 2>/dev/null
+    ' "$@"
+
+    local status="$(cat "$STATUS_FILE")"
+    unlink "$STATUS_FILE"
+
+    return "$status"
+}
 
 # Preamble
 echo -e "Starting integration tests for VILLASnode:\n"
@@ -78,10 +95,10 @@ for TEST in ${TESTS}; do
 
     # Run test
     if (( ${VERBOSE} == 0 )); then
-        timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
+        run_test ${TEST} &> ${LOGDIR}/${TESTNAME}.log
         RC=$?
     else
-        timeout ${TIMEOUT} ${TEST} | tee ${LOGDIR}/${TESTNAME}.log
+        run_test ${TEST} | tee ${LOGDIR}/${TESTNAME}.log
         RC=${PIPESTATUS[0]}
     fi
 
