@@ -35,8 +35,7 @@ public:
 // Register API request
 static char n[] = "capabilities";
 static char r[] = "/capabilities";
-static char d[] =
-    "get capabilities and details about this VILLASnode instance";
+static char d[] = "get capabilities and details about this VILLASnode instance";
 static RequestPlugin<CapabilitiesRequest, n, r, d> p;
 
 } // namespace api
